@@ -4,39 +4,36 @@
 
 @layer base {
   :root {
-    --border: 214.3 31.8% 91.4%;
-    --input: 216 33% 97%;
-    --ring: 215 20.2% 65.1%;
-
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 150 40% 98%;
+    --foreground: 222 33% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 33% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 222 33% 10%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 156 91% 31%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 219 20% 20%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 29% 95%;
+    --muted-foreground: 215 16% 38%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 155 62% 92%;
+    --accent-foreground: 160 84% 18%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 76% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 210 24% 90%;
+    --input: 210 24% 90%;
+    --ring: 156 91% 31%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
+    --app-max-width: 390px;
   }
 
   .dark {
@@ -74,7 +71,23 @@
   * {
     @apply border-border;
   }
+  html {
+    font-family: "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at top, rgba(7, 149, 95, 0.18), transparent 32%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(240, 249, 244, 0.94));
+    min-height: 100vh;
+  }
+  main {
+    width: 100%;
+  }
+}
+
+@layer components {
+  .mobile-frame {
+    width: min(100%, var(--app-max-width));
   }
 }

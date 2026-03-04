@@ -58,6 +58,9 @@ const config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      maxWidth: {
+        app: "var(--app-max-width)",
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

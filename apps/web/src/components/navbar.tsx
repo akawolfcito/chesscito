@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { Menu, ExternalLink } from "lucide-react"
 
@@ -15,6 +14,8 @@ import { ConnectButton } from "@/components/connect-button"
 
 const navLinks = [
   { name: "Home", href: "/" },
+  { name: "Levels", href: "/levels" },
+  { name: "Leaderboard", href: "/leaderboard" },
   { name: "Docs", href: "https://docs.celo.org", external: true },
 ]
 
@@ -23,7 +24,7 @@ export function Navbar() {
   
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
+      <div className="mx-auto flex h-16 w-full max-w-screen-lg items-center justify-between px-4">
         <div className="flex items-center gap-2">
           {/* Mobile menu button */}
           <Sheet>
@@ -34,8 +35,7 @@ export function Navbar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-80">
-              <div className="flex items-center gap-2 mb-8">
-
+              <div className="mb-8 flex items-center gap-2">
                 <span className="font-bold text-lg">
                   chesscito
                 </span>
@@ -55,18 +55,15 @@ export function Navbar() {
                     {link.external && <ExternalLink className="h-4 w-4" />}
                   </Link>
                 ))}
-                <div className="mt-6 pt-6 border-t">
-                  <Button asChild className="w-full">
-                    <WalletConnectButton />
-                  </Button>
+                <div className="mt-6 border-t pt-6">
+                  <ConnectButton />
                 </div>
               </nav>
             </SheetContent>
           </Sheet>
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-
+          <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
             <span className="hidden font-bold text-xl sm:inline-block">
               chesscito
             </span>
@@ -93,7 +90,7 @@ export function Navbar() {
           ))}
           
           <div className="flex items-center gap-3">
-            <WalletConnectButton />
+            <ConnectButton />
           </div>
         </nav>
       </div>

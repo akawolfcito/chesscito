@@ -1,53 +1,28 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { UserBalance } from "@/components/user-balance";
-import { Zap } from "lucide-react";
+import { AppShell } from "@/components/app-shell";
 
 export default function Home() {
   return (
-<main className="flex-1">
-  {/* Hero Section */}
-  <section className="relative py-20 lg:py-32">
-    <div className="container px-4 mx-auto max-w-7xl">
-      <div className="text-center max-w-4xl mx-auto">
-        {/* Badge */}
-        <div
-          className="inline-flex items-center gap-2 px-3 py-1 mb-8 text-sm font-medium bg-primary/10 text-primary rounded-full border border-primary/20"
-        >
-          <Zap className="h-4 w-4" />
-          Built on Celo
+    <AppShell
+      eyebrow="MiniPay MiniApp"
+      title="Chesscito"
+      description="Mini-juegos pre-ajedrecisticos para bienestar cognitivo: cortos, medibles y listos para llevar prueba on-chain en Celo."
+      cta={{ href: "/levels", label: "Ver niveles" }}
+      secondaryCta={{ href: "/leaderboard", label: "Leaderboard" }}
+    >
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl bg-slate-950 px-4 py-4 text-white">
+          <p className="text-xs uppercase tracking-[0.2em] text-white/60">Focus</p>
+          <p className="mt-2 text-sm leading-6 text-white/90">Tower first. Bishop and Knight later.</p>
         </div>
-
-        {/* Main Heading */}
-        <h1
-          className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
-        >
-          Welcome to{" "}
-          <span className="text-primary">chesscito</span>
-        </h1>
-
-        {/* Subtitle */}
-        <p
-          className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed"
-        >
-          Start building your decentralized application on Celo. Fast and secure blockchain for everyone.
-        </p>
-
-        {/* User Balance Display */}
-        <UserBalance />
-
-        {/* CTA Buttons */}
-        <div
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
-        >
-          <Button size="lg" className="px-8 py-3 text-base font-medium">
-            Get Started
-          </Button>
+        <div className="rounded-2xl bg-slate-100 px-4 py-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Proof</p>
+          <p className="mt-2 text-sm leading-6 text-slate-700">submitScore + claimBadge live in the next slices.</p>
+        </div>
+        <div className="rounded-2xl bg-slate-100 px-4 py-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Mode</p>
+          <p className="mt-2 text-sm leading-6 text-slate-700">Mobile-first routes ready for MiniPay device testing.</p>
         </div>
       </div>
-    </div>
-  </section>
-
-</main>
+    </AppShell>
   );
 }
