@@ -7,8 +7,8 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
-    "test:game": "rm -rf .tmp/game-tests && tsc -p tsconfig.test.json && node --test .tmp/game-tests/lib/game/__tests__/rook.test.js && rm -rf .tmp/game-tests",
-    "type-check": "next build >/dev/null && tsc --noEmit"
+    "test:game": "rm -rf .tmp/game-tests .tmp/tsconfig.test.tsbuildinfo && tsc -p tsconfig.test.json && node --test .tmp/game-tests/lib/game/__tests__/rook.test.js && rm -rf .tmp/game-tests .tmp/tsconfig.test.tsbuildinfo",
+    "type-check": "rm -rf .next && next build >/dev/null && tsc --noEmit"
   },
   "dependencies": {
     "next": "^14.0.0",
