@@ -1,3 +1,4 @@
+import { ResultActions } from "@/app/result/result-actions";
 import { AppShell } from "@/components/app-shell";
 
 type ResultPageProps = {
@@ -51,6 +52,7 @@ export default function ResultPage({ searchParams }: ResultPageProps) {
           </p>
         </div>
       </div>
+      <ResultActions piece={piece} score={score} moves={moves} status={status} />
     </AppShell>
   );
 }
