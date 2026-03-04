@@ -1,4 +1,5 @@
 import type { BoardPiece, BoardPosition, SquareState } from "@/lib/game/types";
+import { getRookMoves } from "@/lib/game/rules/rook";
 
 const BOARD_SIZE = 8;
 const FILE_LABELS = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -26,22 +27,8 @@ export function getPositionLabel(position: BoardPosition) {
   return `${FILE_LABELS[position.file]}${position.rank + 1}`;
 }
 
-export function getRookTargets(position: BoardPosition) {
-  const targets: BoardPosition[] = [];
-
-  for (let file = 0; file < BOARD_SIZE; file += 1) {
-    if (file !== position.file) {
-      targets.push({ file, rank: position.rank });
-    }
-  }
-
-  for (let rank = 0; rank < BOARD_SIZE; rank += 1) {
-    if (rank !== position.rank) {
-      targets.push({ file: position.file, rank });
-    }
-  }
-
-  return targets;
+export function getRookTargets(position: BoardPosition, blockers: BoardPosition[] = []) {
+  return getRookMoves(position, blockers);
 }
 
 export function movePiece(piece: BoardPiece, nextPosition: BoardPosition): BoardPiece {
