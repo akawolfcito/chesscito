@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, ExternalLink } from "lucide-react"
+import { Menu } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,7 +16,6 @@ const navLinks = [
   { name: "Home", href: "/" },
   { name: "Levels", href: "/levels" },
   { name: "Leaderboard", href: "/leaderboard" },
-  { name: "Docs", href: "https://docs.celo.org", external: true },
 ]
 
 export function Navbar() {
@@ -45,14 +44,11 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    target={link.external ? "_blank" : undefined}
-                    rel={link.external ? "noopener noreferrer" : undefined}
                     className={`flex items-center gap-2 text-base font-medium transition-colors hover:text-primary ${
                       pathname === link.href ? "text-foreground" : "text-foreground/70"
                     }`}
                   >
                     {link.name}
-                    {link.external && <ExternalLink className="h-4 w-4" />}
                   </Link>
                 ))}
                 <div className="mt-6 border-t pt-6">
@@ -76,8 +72,6 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              target={link.external ? "_blank" : undefined}
-              rel={link.external ? "noopener noreferrer" : undefined}
               className={`flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary ${
                 pathname === link.href
                   ? "text-foreground"
@@ -85,7 +79,6 @@ export function Navbar() {
               }`}
             >
               {link.name}
-              {link.external && <ExternalLink className="h-4 w-4" />}
             </Link>
           ))}
           

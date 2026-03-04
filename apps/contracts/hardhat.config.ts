@@ -14,13 +14,13 @@ const config: HardhatUserConfig = {
   networks: {
     // Celo Mainnet
     celo: {
-      url: "https://forno.celo.org",
+      url: process.env.CELO_RPC_URL || "https://forno.celo.org",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 42220,
     },
     // Celo Sepolia Testnet
-    celo-sepolia: {
-      url: "https://forno.celo-sepolia.celo-testnet.org/",
+    "celo-sepolia": {
+      url: process.env.CELO_SEPOLIA_RPC_URL || "https://forno.celo-sepolia.celo-testnet.org/",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 11142220,
     },
@@ -33,7 +33,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       celo: process.env.ETHERSCAN_API_KEY || "",
-      celo-sepolia: process.env.ETHERSCAN_API_KEY || "",
+      "celo-sepolia": process.env.ETHERSCAN_API_KEY || "",
     },
     customChains: [
       {

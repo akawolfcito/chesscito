@@ -7,9 +7,9 @@
     "build": "hardhat compile",
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy": "hardhat ignition deploy ignition/modules/Lock.ts",
-    "deploy:celo-sepolia": "hardhat ignition deploy ignition/modules/Lock.ts --network celo-sepolia",
-    "deploy:celo": "hardhat ignition deploy ignition/modules/Lock.ts --network celo",
+    "deploy": "hardhat ignition deploy ignition/modules/Scoreboard.ts",
+    "deploy:celo-sepolia": "hardhat ignition deploy ignition/modules/Scoreboard.ts --network celo-sepolia",
+    "deploy:celo": "hardhat ignition deploy ignition/modules/Scoreboard.ts --network celo",
     "verify": "hardhat verify",
     "clean": "hardhat clean",
     "typechain": "hardhat typechain"
