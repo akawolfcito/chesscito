@@ -5,6 +5,7 @@ This package contains the on-chain proof layer for Chesscito on Celo.
 ## Contracts
 
 - `Scoreboard.sol`: event-based score submission with anti-spam controls
+- `Badges.sol`: ERC-1155 badge claims with one mint per wallet and level
 
 ## Local workflow
 
@@ -19,12 +20,16 @@ pnpm --filter hardhat test
 pnpm --filter hardhat deploy
 pnpm --filter hardhat deploy:celo-sepolia
 pnpm --filter hardhat deploy:celo
+pnpm --filter hardhat deploy:badges
+pnpm --filter hardhat deploy:badges:celo-sepolia
+pnpm --filter hardhat deploy:badges:celo
 ```
 
 Default ignition parameters:
 - `submitCooldown=60`
 - `maxSubmissionsPerDay=20`
 - `initialOwner=deployer`
+- `baseURI=ipfs://chesscito/badges/`
 
 ## Environment
 
@@ -42,3 +47,4 @@ CELO_SEPOLIA_RPC_URL=https://forno.celo-sepolia.celo-testnet.org/
 - Never commit `.env` with real keys
 - Use Celo Sepolia before Celo Mainnet
 - The Scoreboard contract emits `ScoreSubmitted` and enforces cooldown plus max submissions per day
+- The Badges contract exposes `claimBadge(levelId)` and serves metadata as `baseURI + tokenId + .json`
