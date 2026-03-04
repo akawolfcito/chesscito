@@ -13,6 +13,8 @@
 - Each commit should represent a single logical step that can be reviewed independently.
 - Do not batch unrelated changes into the same commit.
 - Prefer conventional commit messages such as `feat(web): add levels route skeleton`.
+- The active git identity for this repo must remain `Luis Fernando <guffenix@gmail.com>`.
+- A repo-local `pre-commit` hook blocks commits when the identity does not match that policy.
 
 ## Pull Request Policy
 
