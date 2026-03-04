@@ -2,11 +2,18 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useAccount, useChainId, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useChainId,
+  useReadContract,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
 
 import { Button } from "@/components/ui/button";
 import { useMiniPay } from "@/hooks/use-minipay";
-import { getMiniPayFeeCurrency, getScoreboardAddress } from "@/lib/contracts/chains";
+import { badgesAbi } from "@/lib/contracts/badges";
+import { getBadgesAddress, getMiniPayFeeCurrency, getScoreboardAddress } from "@/lib/contracts/chains";
 import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 
 type ResultActionsProps = {
@@ -24,22 +31,54 @@ export function ResultActions({ piece, score, moves, status }: ResultActionsProp
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { isMiniPay, hasProvider, isReady } = useMiniPay();
-  const { data: hash, error, isPending, writeContract, reset } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+  const {
+    data: submitHash,
+    error: submitError,
+    isPending: isSubmitPending,
+    writeContract: writeSubmitContract,
+    reset: resetSubmit,
+  } = useWriteContract();
+  const {
+    data: claimHash,
+    error: claimError,
+    isPending: isClaimPending,
+    writeContract: writeClaimContract,
+    reset: resetClaim,
+  } = useWriteContract();
+  const { isLoading: isSubmitConfirming, isSuccess: isSubmitConfirmed } = useWaitForTransactionReceipt({
     chainId,
-    hash,
+    hash: submitHash,
     query: {
-      enabled: Boolean(hash),
+      enabled: Boolean(submitHash),
+    },
+  });
+  const { isLoading: isClaimConfirming, isSuccess: isClaimConfirmed } = useWaitForTransactionReceipt({
+    chainId,
+    hash: claimHash,
+    query: {
+      enabled: Boolean(claimHash),
     },
   });
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [claimBadgeError, setClaimBadgeError] = useState<string | null>(null);
 
   const scoreboardAddress = useMemo(() => getScoreboardAddress(chainId), [chainId]);
+  const badgesAddress = useMemo(() => getBadgesAddress(chainId), [chainId]);
   const feeCurrency = useMemo(() => getMiniPayFeeCurrency(chainId), [chainId]);
   const levelId = useMemo(() => getLevelId(piece), [piece]);
   const parsedScore = BigInt(Number.parseInt(score, 10) || 0);
   const parsedMoves = BigInt(Number.parseInt(moves, 10) || 0);
   const parsedTimeMs = parsedMoves > 0n ? parsedMoves * 1000n : 1000n;
+  const { data: hasClaimedBadge, refetch: refetchClaimedBadge } = useReadContract({
+    address: badgesAddress ?? undefined,
+    abi: badgesAbi,
+    functionName: "hasClaimedBadge",
+    args: address && levelId > 0n ? [address, levelId] : undefined,
+    chainId,
+    query: {
+      enabled: Boolean(address && badgesAddress && levelId > 0n),
+    },
+  });
 
   const canSubmit =
     isReady &&
@@ -49,6 +88,15 @@ export function ResultActions({ piece, score, moves, status }: ResultActionsProp
     Boolean(scoreboardAddress) &&
     levelId > 0n &&
     status === "success";
+  const canClaimBadge =
+    isReady &&
+    hasProvider &&
+    isConnected &&
+    Boolean(address) &&
+    Boolean(badgesAddress) &&
+    levelId > 0n &&
+    status === "success" &&
+    !hasClaimedBadge;
 
   const handleSubmitScore = async () => {
     if (!canSubmit || !scoreboardAddress) {
@@ -56,7 +104,7 @@ export function ResultActions({ piece, score, moves, status }: ResultActionsProp
     }
 
     setSubmissionError(null);
-    reset();
+    resetSubmit();
 
     const baseRequest = {
       address: scoreboardAddress,
@@ -69,18 +117,54 @@ export function ResultActions({ piece, score, moves, status }: ResultActionsProp
     } as const;
 
     try {
-      writeContract(
+      writeSubmitContract(
         (feeCurrency
           ? {
               ...baseRequest,
               feeCurrency,
             }
-          : baseRequest) as Parameters<typeof writeContract>[0]
+          : baseRequest) as Parameters<typeof writeSubmitContract>[0]
       );
     } catch (submitError) {
       setSubmissionError(submitError instanceof Error ? submitError.message : "Could not submit score");
     }
   };
+
+  const handleClaimBadge = async () => {
+    if (!canClaimBadge || !badgesAddress) {
+      return;
+    }
+
+    setClaimBadgeError(null);
+    resetClaim();
+
+    const baseRequest = {
+      address: badgesAddress,
+      abi: badgesAbi,
+      functionName: "claimBadge" as const,
+      args: [levelId],
+      chainId,
+      account: address,
+      type: isMiniPay ? ("legacy" as const) : undefined,
+    } as const;
+
+    try {
+      writeClaimContract(
+        (feeCurrency
+          ? {
+              ...baseRequest,
+              feeCurrency,
+            }
+          : baseRequest) as Parameters<typeof writeClaimContract>[0]
+      );
+    } catch (claimErrorCandidate) {
+      setClaimBadgeError(
+        claimErrorCandidate instanceof Error ? claimErrorCandidate.message : "Could not claim badge"
+      );
+    }
+  };
+
+  const explorerBaseUrl = `https://${chainId === 11142220 ? "sepolia." : ""}celoscan.io/tx/`;
 
   return (
     <div className="space-y-3 rounded-[28px] border border-slate-200 bg-white p-5">
@@ -118,11 +202,47 @@ export function ResultActions({ piece, score, moves, status }: ResultActionsProp
             {scoreboardAddress ?? "Missing NEXT_PUBLIC_SCOREBOARD_ADDRESS_*"}
           </p>
         </div>
+        <div className="rounded-2xl bg-slate-100 px-4 py-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Badge state</p>
+          <p className="mt-2 text-sm font-semibold text-slate-950">
+            {hasClaimedBadge ? "Claimed" : "Unclaimed"}
+          </p>
+        </div>
+        <div className="rounded-2xl bg-slate-100 px-4 py-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Badges contract</p>
+          <p className="mt-2 break-all text-sm font-semibold text-slate-950">
+            {badgesAddress ?? "Missing NEXT_PUBLIC_BADGES_ADDRESS_*"}
+          </p>
+        </div>
       </div>
 
-      <Button className="w-full sm:w-auto" disabled={!canSubmit || isPending || isConfirming} onClick={handleSubmitScore}>
-        {isPending ? "Esperando wallet..." : isConfirming ? "Confirmando..." : "Enviar puntaje on-chain"}
-      </Button>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button
+          className="w-full sm:w-auto"
+          disabled={!canSubmit || isSubmitPending || isSubmitConfirming}
+          onClick={handleSubmitScore}
+        >
+          {isSubmitPending
+            ? "Esperando wallet..."
+            : isSubmitConfirming
+              ? "Confirmando..."
+              : "Enviar puntaje on-chain"}
+        </Button>
+        <Button
+          className="w-full sm:w-auto"
+          variant="outline"
+          disabled={!canClaimBadge || isClaimPending || isClaimConfirming}
+          onClick={handleClaimBadge}
+        >
+          {hasClaimedBadge
+            ? "Badge claimed"
+            : isClaimPending
+              ? "Esperando wallet..."
+              : isClaimConfirming
+                ? "Confirmando..."
+                : "Reclamar badge (NFT)"}
+        </Button>
+      </div>
 
       {!hasProvider ? (
         <p className="text-sm text-slate-600">
@@ -141,24 +261,51 @@ export function ResultActions({ piece, score, moves, status }: ResultActionsProp
           Falta configurar la direccion del contrato Scoreboard para la red actual.
         </p>
       ) : null}
+      {!badgesAddress ? (
+        <p className="text-sm text-amber-700">
+          Falta configurar la direccion del contrato Badges para la red actual.
+        </p>
+      ) : null}
 
       {submissionError ? <p className="text-sm text-rose-700">{submissionError}</p> : null}
-      {error ? <p className="text-sm text-rose-700">{error.message}</p> : null}
+      {submitError ? <p className="text-sm text-rose-700">{submitError.message}</p> : null}
+      {claimBadgeError ? <p className="text-sm text-rose-700">{claimBadgeError}</p> : null}
+      {claimError ? <p className="text-sm text-rose-700">{claimError.message}</p> : null}
 
-      {hash ? (
+      {submitHash ? (
         <div className="rounded-2xl bg-emerald-50 px-4 py-4 text-sm text-slate-700">
-          <p className="font-semibold text-slate-950">Transaction hash</p>
-          <p className="mt-2 break-all font-mono text-xs text-slate-700">{hash}</p>
+          <p className="font-semibold text-slate-950">Score tx hash</p>
+          <p className="mt-2 break-all font-mono text-xs text-slate-700">{submitHash}</p>
           <p className="mt-2 text-xs text-slate-600">
-            {isConfirmed ? "Confirmed" : "Submitted"}
+            {isSubmitConfirmed ? "Confirmed" : "Submitted"}
           </p>
           <Link
-            href={`https://${chainId === 11142220 ? "sepolia." : ""}celoscan.io/tx/${hash}`}
+            href={`${explorerBaseUrl}${submitHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex text-xs font-semibold text-primary"
           >
-            Ver en explorer ({shortenHash(hash)})
+            Ver en explorer ({shortenHash(submitHash)})
+          </Link>
+        </div>
+      ) : null}
+      {claimHash ? (
+        <div className="rounded-2xl bg-emerald-50 px-4 py-4 text-sm text-slate-700">
+          <p className="font-semibold text-slate-950">Badge tx hash</p>
+          <p className="mt-2 break-all font-mono text-xs text-slate-700">{claimHash}</p>
+          <p className="mt-2 text-xs text-slate-600">
+            {isClaimConfirmed ? "Confirmed" : "Submitted"}
+          </p>
+          <Link
+            href={`${explorerBaseUrl}${claimHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex text-xs font-semibold text-primary"
+            onClick={() => {
+              void refetchClaimedBadge();
+            }}
+          >
+            Ver en explorer ({shortenHash(claimHash)})
           </Link>
         </div>
       ) : null}

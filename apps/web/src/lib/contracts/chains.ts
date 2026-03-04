@@ -13,6 +13,18 @@ export function getScoreboardAddress(chainId: number | undefined): `0x${string}`
   return null;
 }
 
+export function getBadgesAddress(chainId: number | undefined): `0x${string}` | null {
+  if (chainId === CELO_MAINNET_ID) {
+    return normalizeAddress(process.env.NEXT_PUBLIC_BADGES_ADDRESS_CELO);
+  }
+
+  if (chainId === CELO_SEPOLIA_ID) {
+    return normalizeAddress(process.env.NEXT_PUBLIC_BADGES_ADDRESS_CELO_SEPOLIA);
+  }
+
+  return null;
+}
+
 export function getMiniPayFeeCurrency(chainId: number | undefined): `0x${string}` | undefined {
   if (chainId === CELO_MAINNET_ID) {
     return normalizeAddress(process.env.NEXT_PUBLIC_MINIPAY_FEE_CURRENCY_CELO) ?? undefined;
