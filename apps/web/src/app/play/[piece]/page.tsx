@@ -1,5 +1,11 @@
+"use client";
+
+import { useState } from "react";
+
 import { AppShell } from "@/components/app-shell";
 import { Board } from "@/components/board";
+import { TutorialPanel } from "@/components/tutorial-panel";
+import { rookTutorial } from "@/lib/levels/rook-tutorial";
 
 const pieceCopy: Record<
   string,
@@ -35,6 +41,7 @@ export default function PlayPiecePage({
 }: {
   params: { piece: string };
 }) {
+  const [isPracticeMode, setIsPracticeMode] = useState(false);
   const piece = pieceCopy[params.piece] ?? {
     title: "Pieza desconocida",
     description: "Esta ruta existe para soportar el esquema del juego, pero la pieza aun no esta configurada.",
@@ -51,7 +58,19 @@ export default function PlayPiecePage({
       secondaryCta={{ href: "/levels", label: "Cambiar pieza" }}
     >
       {piece.isPlayable ? (
-        <Board />
+        <div className="space-y-4">
+          {!isPracticeMode ? (
+            <TutorialPanel
+              eyebrow={rookTutorial.eyebrow}
+              title={rookTutorial.title}
+              description={rookTutorial.description}
+              cues={rookTutorial.cues}
+              ctaLabel={rookTutorial.practiceLabel}
+              onStart={() => setIsPracticeMode(true)}
+            />
+          ) : null}
+          <Board mode={isPracticeMode ? "practice" : "tutorial"} />
+        </div>
       ) : (
         <div className="rounded-3xl border border-dashed border-primary/30 bg-primary/5 p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
