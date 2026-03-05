@@ -12,8 +12,12 @@
     "contracts:compile": "turbo run compile --filter=hardhat",
     "contracts:test": "turbo run test --filter=hardhat",
     "contracts:deploy": "turbo run deploy --filter=hardhat",
+    "contracts:deploy:alfajores": "turbo run deploy:alfajores --filter=hardhat",
     "contracts:deploy:celo-sepolia": "turbo run deploy:celo-sepolia --filter=hardhat",
-    "contracts:deploy:celo": "turbo run deploy:celo --filter=hardhat"
+    "contracts:deploy:celo": "turbo run deploy:celo --filter=hardhat",
+    "contracts:verify:alfajores": "turbo run verify:alfajores --filter=hardhat",
+    "contracts:verify:celo-sepolia": "turbo run verify:celo-sepolia --filter=hardhat",
+    "contracts:verify:celo": "turbo run verify:celo --filter=hardhat"
   },
   "devDependencies": {
     "@types/node": "^20.8.0",

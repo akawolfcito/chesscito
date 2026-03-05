@@ -7,13 +7,14 @@
     "build": "hardhat compile",
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy": "hardhat ignition deploy ignition/modules/Scoreboard.ts",
-    "deploy:celo-sepolia": "hardhat ignition deploy ignition/modules/Scoreboard.ts --network celo-sepolia",
-    "deploy:celo": "hardhat ignition deploy ignition/modules/Scoreboard.ts --network celo",
-    "deploy:badges": "hardhat ignition deploy ignition/modules/Badges.ts",
-    "deploy:badges:celo-sepolia": "hardhat ignition deploy ignition/modules/Badges.ts --network celo-sepolia",
-    "deploy:badges:celo": "hardhat ignition deploy ignition/modules/Badges.ts --network celo",
-    "verify": "hardhat verify",
+    "deploy": "hardhat run scripts/deploy-proxies.ts",
+    "deploy:alfajores": "hardhat run scripts/deploy-proxies.ts --network alfajores",
+    "deploy:celo-sepolia": "hardhat run scripts/deploy-proxies.ts --network celo-sepolia",
+    "deploy:celo": "hardhat run scripts/deploy-proxies.ts --network celo",
+    "verify": "hardhat run scripts/verify-implementations.ts",
+    "verify:alfajores": "hardhat run scripts/verify-implementations.ts --network alfajores",
+    "verify:celo-sepolia": "hardhat run scripts/verify-implementations.ts --network celo-sepolia",
+    "verify:celo": "hardhat run scripts/verify-implementations.ts --network celo",
     "clean": "hardhat clean",
     "typechain": "hardhat typechain"
   },
@@ -29,17 +30,17 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
-    "@nomicfoundation/hardhat-ignition": "^0.15.0",
-    "@nomicfoundation/hardhat-ignition-ethers": "^0.15.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.9.1",
     "@typechain/ethers-v6": "^0.5.0",
     "@typechain/hardhat": "^9.0.0",
     "@types/chai": "^4.2.0",
     "@types/mocha": ">=9.1.0",
     "chai": "^4.2.0",
+    "dotenv": "^16.6.1",
     "ethers": "^6.4.0",
     "hardhat": "^2.19.0",
     "hardhat-gas-reporter": "^1.0.8",
@@ -50,6 +51,7 @@
     "viem": "^2.0.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.0.0"
+    "@openzeppelin/contracts": "^5.0.0",
+    "@openzeppelin/contracts-upgradeable": "^5.0.0"
   }
 }
