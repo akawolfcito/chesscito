@@ -158,7 +158,6 @@ export function ResultActions({ piece, score, moves, status }: ResultActionsProp
         ],
         chainId,
         account: address,
-        type: isMiniPay ? ("legacy" as const) : undefined,
       } as const;
 
       writeSubmitContract(
@@ -195,7 +194,6 @@ export function ResultActions({ piece, score, moves, status }: ResultActionsProp
         args: [levelId, BigInt(signed.nonce), BigInt(signed.deadline), signed.signature],
         chainId,
         account: address,
-        type: isMiniPay ? ("legacy" as const) : undefined,
       } as const;
 
       writeClaimContract(
