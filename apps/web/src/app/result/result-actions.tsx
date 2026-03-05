@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import {
   useAccount,
   useChainId,
+  usePublicClient,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
@@ -56,6 +57,7 @@ async function requestSignature(endpoint: "/api/sign-badge" | "/api/sign-score",
 export function ResultActions({ piece, score, moves, status }: ResultActionsProps) {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+  const publicClient = usePublicClient({ chainId });
   const { isMiniPay, hasProvider, isReady } = useMiniPay();
   const {
     data: submitHash,
@@ -160,13 +162,25 @@ export function ResultActions({ piece, score, moves, status }: ResultActionsProp
         account: address,
       } as const;
 
+      let gasOverride: bigint | undefined;
+      try {
+        const estimatedGas = await publicClient?.estimateContractGas(baseRequest);
+        gasOverride = estimatedGas ? (estimatedGas * 12n) / 10n : undefined;
+      } catch {
+        gasOverride = undefined;
+      }
+
       writeSubmitContract(
         (feeCurrency
           ? {
               ...baseRequest,
               feeCurrency,
+              ...(gasOverride ? { gas: gasOverride } : {}),
             }
-          : baseRequest) as Parameters<typeof writeSubmitContract>[0]
+          : {
+              ...baseRequest,
+              ...(gasOverride ? { gas: gasOverride } : {}),
+            }) as Parameters<typeof writeSubmitContract>[0]
       );
     } catch (error) {
       setSubmissionError(error instanceof Error ? error.message : "Could not submit score");
@@ -196,13 +210,25 @@ export function ResultActions({ piece, score, moves, status }: ResultActionsProp
         account: address,
       } as const;
 
+      let gasOverride: bigint | undefined;
+      try {
+        const estimatedGas = await publicClient?.estimateContractGas(baseRequest);
+        gasOverride = estimatedGas ? (estimatedGas * 12n) / 10n : undefined;
+      } catch {
+        gasOverride = undefined;
+      }
+
       writeClaimContract(
         (feeCurrency
           ? {
               ...baseRequest,
               feeCurrency,
+              ...(gasOverride ? { gas: gasOverride } : {}),
             }
-          : baseRequest) as Parameters<typeof writeClaimContract>[0]
+          : {
+              ...baseRequest,
+              ...(gasOverride ? { gas: gasOverride } : {}),
+            }) as Parameters<typeof writeClaimContract>[0]
       );
     } catch (error) {
       setClaimBadgeError(error instanceof Error ? error.message : "Could not claim badge");
