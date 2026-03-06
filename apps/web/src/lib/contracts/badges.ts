@@ -29,6 +29,8 @@ export const badgesAbi = [
       { indexed: true, name: "player", type: "address" },
       { indexed: true, name: "levelId", type: "uint256" },
       { indexed: true, name: "tokenId", type: "uint256" },
+      { indexed: false, name: "nonce", type: "uint256" },
+      { indexed: false, name: "deadline", type: "uint256" },
     ],
   },
 ] as const;

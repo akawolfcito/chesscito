@@ -23,6 +23,7 @@ export const scoreboardAbi = [
       { indexed: false, name: "score", type: "uint256" },
       { indexed: false, name: "timeMs", type: "uint256" },
       { indexed: false, name: "nonce", type: "uint256" },
+      { indexed: false, name: "deadline", type: "uint256" },
     ],
   },
 ] as const;
