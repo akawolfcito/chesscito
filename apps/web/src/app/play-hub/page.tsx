@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
-import { erc20Abi, formatUnits } from "viem";
+import { erc20Abi } from "viem";
 import {
   useAccount,
   useChainId,
@@ -14,15 +13,12 @@ import {
 } from "wagmi";
 
 import { Board } from "@/components/board";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { LeaderboardSheet } from "@/components/play-hub/leaderboard-sheet";
+import { MissionPanel } from "@/components/play-hub/mission-panel";
+import { OnChainActionsPanel } from "@/components/play-hub/onchain-actions-panel";
+import { PurchaseConfirmSheet } from "@/components/play-hub/purchase-confirm-sheet";
+import { ShopSheet } from "@/components/play-hub/shop-sheet";
+import { StatusStrip } from "@/components/play-hub/status-strip";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { badgesAbi } from "@/lib/contracts/badges";
 import {
@@ -114,6 +110,7 @@ export default function PlayHubPage() {
   const [submitTxHash, setSubmitTxHash] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [purchasePhase, setPurchasePhase] = useState<"idle" | "approving" | "buying">("idle");
+  const [qaLevelInput, setQaLevelInput] = useState("2");
 
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain = configuredChainId != null && chainId === configuredChainId;
@@ -122,7 +119,14 @@ export default function PlayHubPage() {
   const shopAddress = useMemo(() => getShopAddress(chainId), [chainId]);
   const usdcAddress = useMemo(() => getUsdcAddress(chainId), [chainId]);
   const feeCurrency = useMemo(() => getMiniPayFeeCurrency(chainId), [chainId]);
-  const levelId = useMemo(() => getLevelId(selectedPiece), [selectedPiece]);
+  const defaultLevelId = useMemo(() => getLevelId(selectedPiece), [selectedPiece]);
+  const qaEnabled = useMemo(() => process.env.NEXT_PUBLIC_QA_MODE === "1", []);
+  const qaLevel = useMemo(() => Number.parseInt(qaLevelInput, 10), [qaLevelInput]);
+  const isQaLevelValid = Number.isInteger(qaLevel) && qaLevel >= 1 && qaLevel <= 9999;
+  const levelId = useMemo(
+    () => (qaEnabled ? (isQaLevelValid ? BigInt(qaLevel) : 0n) : defaultLevelId),
+    [defaultLevelId, isQaLevelValid, qaEnabled, qaLevel]
+  );
   const score = 100n;
   const timeMs = useMemo(() => {
     if (phase !== "success") {
@@ -199,11 +203,25 @@ export default function PlayHubPage() {
     },
   });
 
-  useWaitForTransactionReceipt({
+  const { isLoading: isShopConfirming } = useWaitForTransactionReceipt({
     chainId,
     hash: shopTxHash as `0x${string}` | undefined,
     query: {
       enabled: Boolean(shopTxHash),
+    },
+  });
+  const { isLoading: isClaimConfirming } = useWaitForTransactionReceipt({
+    chainId,
+    hash: claimTxHash as `0x${string}` | undefined,
+    query: {
+      enabled: Boolean(claimTxHash),
+    },
+  });
+  const { isLoading: isSubmitConfirming } = useWaitForTransactionReceipt({
+    chainId,
+    hash: submitTxHash as `0x${string}` | undefined,
+    query: {
+      enabled: Boolean(submitTxHash),
     },
   });
 
@@ -215,6 +233,8 @@ export default function PlayHubPage() {
     isCorrectChain &&
     phase === "success" &&
     levelId > 0n;
+  const isClaimBusy = isWriting || isClaimConfirming;
+  const isSubmitBusy = isWriting || isSubmitConfirming;
 
   async function writeWithOptionalFeeCurrency(request: Parameters<typeof writeContractAsync>[0]) {
     try {
@@ -401,211 +421,95 @@ export default function PlayHubPage() {
 
   return (
     <main className="mx-auto w-full max-w-screen-sm px-4 pb-52 pt-6 sm:px-6">
-      <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_20px_60px_rgba(8,15,31,0.08)]">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">Play Hub</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-950">Juega, compra y guarda on-chain</h1>
-          <p className="text-sm text-slate-600">
-            MVP de una pantalla: challenge + claim/submit + store USDC. MiniPay puede mostrar Unknown transaction.
-          </p>
-        </div>
+      <MissionPanel
+        selectedPiece={selectedPiece}
+        onSelectPiece={(piece) => {
+          setSelectedPiece(piece);
+          resetBoard();
+        }}
+        pieces={[
+          { key: "rook", label: "Torre", enabled: true },
+          { key: "bishop", label: "Alfil", enabled: false },
+          { key: "knight", label: "Caballo", enabled: false },
+        ]}
+        phase={phase}
+        board={
+          <Board
+            key={boardKey}
+            mode="practice"
+            targetPosition={challengeTarget}
+            isLocked={phase === "failure" || phase === "success"}
+            onMove={handleMove}
+          />
+        }
+      />
 
-        <div className="flex gap-2">
-          {([
-            { key: "rook", label: "Torre", enabled: true },
-            { key: "bishop", label: "Alfil", enabled: false },
-            { key: "knight", label: "Caballo", enabled: false },
-          ] as const).map((piece) => (
-            <button
-              key={piece.key}
-              type="button"
-              disabled={!piece.enabled}
-              onClick={() => {
-                setSelectedPiece(piece.key);
-                resetBoard();
-              }}
-              className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
-                selectedPiece === piece.key
-                  ? "bg-slate-950 text-white"
-                  : "bg-slate-100 text-slate-700 disabled:opacity-50"
-              }`}
-            >
-              {piece.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-700">
-          Objetivo: capturar <span className="font-semibold">h1</span> en un movimiento.
-        </div>
-
-        <Board
-          key={boardKey}
-          mode="practice"
-          targetPosition={challengeTarget}
-          isLocked={phase === "failure" || phase === "success"}
-          onMove={handleMove}
-        />
-
-        {phase === "failure" ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            Jugada incorrecta. Reinicia para intentar de nuevo.
-          </div>
-        ) : null}
-        {phase === "success" ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            Objetivo completado. Ya puedes claim badge y submit score.
-          </div>
-        ) : null}
-      </section>
-
-      <section className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 px-4 pb-4 pt-3 backdrop-blur sm:px-6">
+      <section className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-700 bg-slate-950/92 px-4 pb-4 pt-3 backdrop-blur sm:px-6">
         <div className="mx-auto w-full max-w-screen-sm space-y-3">
-          <div className="grid grid-cols-3 gap-3 text-xs text-slate-600">
-            <div className="rounded-xl bg-slate-100 px-3 py-2">
-              <p>Score</p>
-              <p className="mt-1 text-sm font-semibold text-slate-950">{score.toString()}</p>
-            </div>
-            <div className="rounded-xl bg-slate-100 px-3 py-2">
-              <p>Time</p>
-              <p className="mt-1 text-sm font-semibold text-slate-950">{timeMs.toString()} ms</p>
-            </div>
-            <div className="rounded-xl bg-slate-100 px-3 py-2">
-              <p>Moves</p>
-              <p className="mt-1 text-sm font-semibold text-slate-950">{moves}</p>
-            </div>
-          </div>
+          <OnChainActionsPanel
+            score={score.toString()}
+            timeMs={timeMs.toString()}
+            moves={moves}
+            effectiveLevelId={levelId.toString()}
+            canClaim={qaEnabled ? canSendOnChain && isQaLevelValid : canSendOnChain && !Boolean(hasClaimedBadge)}
+            canSubmit={canSendOnChain}
+            isClaimBusy={isClaimBusy}
+            isSubmitBusy={isSubmitBusy}
+            isGlobalBusy={isWriting}
+            qaEnabled={qaEnabled}
+            qaLevelInput={qaLevelInput}
+            isQaLevelValid={isQaLevelValid}
+            onQaLevelInputChange={setQaLevelInput}
+            onClaim={() => void handleClaimBadge()}
+            onSubmit={() => void handleSubmitScore()}
+            onReset={resetBoard}
+            shopControl={
+              <ShopSheet
+                open={storeOpen}
+                onOpenChange={setStoreOpen}
+                items={shopCatalog}
+                onSelectItem={(itemId) => {
+                  setSelectedItemId(itemId);
+                  setConfirmOpen(true);
+                }}
+              />
+            }
+            leaderboardControl={
+              <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} rows={leaderboardRows} />
+            }
+          />
 
-          <div className="grid grid-cols-2 gap-2">
-            <Button disabled={!canSendOnChain || Boolean(hasClaimedBadge) || isWriting} onClick={() => void handleClaimBadge()}>
-              Claim badge
-            </Button>
-            <Button variant="outline" disabled={!canSendOnChain || isWriting} onClick={() => void handleSubmitScore()}>
-              Guardar score
-            </Button>
-            <Sheet open={storeOpen} onOpenChange={setStoreOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline">Store</Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-3xl">
-                <SheetHeader>
-                  <SheetTitle>Store (USDC)</SheetTitle>
-                  <SheetDescription>Compras simples con precio fijo en stablecoin.</SheetDescription>
-                </SheetHeader>
-                <div className="mt-4 space-y-3">
-                  {shopCatalog.map((item) => (
-                    <div key={item.itemId.toString()} className="rounded-2xl border border-slate-200 p-3">
-                      <p className="text-sm font-semibold text-slate-950">{item.label}</p>
-                      <p className="text-xs text-slate-500">{item.subtitle}</p>
-                      <p className="mt-2 text-sm text-slate-700">
-                        {item.configured ? `${formatUnits(item.onChainPrice, 6)} USDC` : "No configurado"}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {item.configured ? (item.enabled ? "Disponible" : "Deshabilitado") : "No disponible"}
-                      </p>
-                      <Button
-                        className="mt-3 w-full"
-                        variant="outline"
-                        disabled={!item.configured || !item.enabled}
-                        onClick={() => {
-                          setSelectedItemId(item.itemId);
-                          setConfirmOpen(true);
-                        }}
-                      >
-                        Comprar
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </SheetContent>
-            </Sheet>
-            <Sheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline">Leaderboard</Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-3xl">
-                <SheetHeader>
-                  <SheetTitle>Leaderboard</SheetTitle>
-                  <SheetDescription>Vista rapida sin salir del Play Hub.</SheetDescription>
-                </SheetHeader>
-                <div className="mt-4 space-y-2">
-                  {leaderboardRows.map((row) => (
-                    <div key={row.rank} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl border border-slate-200 px-3 py-2">
-                      <p className="text-sm font-semibold text-slate-900">#{row.rank}</p>
-                      <p className="text-sm text-slate-700">{row.player}</p>
-                      <p className="text-sm font-semibold text-slate-900">{row.score}</p>
-                    </div>
-                  ))}
-                  <Link className="mt-2 inline-flex text-xs font-semibold text-primary" href="/leaderboard">
-                    Ver leaderboard completo
-                  </Link>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-
-          <Button variant="outline" onClick={resetBoard}>Reset board</Button>
-
-          <div className="rounded-xl bg-slate-100 px-3 py-2 text-xs text-slate-600">
-            <p>Chain: {chainId ?? "n/a"}</p>
-            <p>Badge: {hasClaimedBadge ? "Claimed" : "Pending"}</p>
-            <p>Shop tx: {shopTxHash ?? "n/a"}</p>
-            <p>Claim tx: {claimTxHash ?? "n/a"}</p>
-            <p>Submit tx: {submitTxHash ?? "n/a"}</p>
-            {lastError ? <p className="text-rose-700">Error: {lastError}</p> : null}
-          </div>
-
-          {shopTxHash ? (
-            <Link className="inline-flex text-xs font-semibold text-primary" href={txLink(chainId, shopTxHash)} target="_blank" rel="noopener noreferrer">
-              Ver compra en Celoscan
-            </Link>
-          ) : null}
+          <StatusStrip
+            chainId={chainId}
+            isConnected={isConnected}
+            isCorrectChain={isCorrectChain}
+            missionCompleted={phase === "success"}
+            hasClaimedBadge={hasClaimedBadge}
+            shopTxHash={shopTxHash}
+            claimTxHash={claimTxHash}
+            submitTxHash={submitTxHash}
+            isShopConfirming={isShopConfirming}
+            isClaimConfirming={isClaimConfirming}
+            isSubmitConfirming={isSubmitConfirming}
+            lastError={lastError}
+            txLink={(txHash) => txLink(chainId, txHash)}
+          />
         </div>
       </section>
 
-      <Sheet open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl">
-          <SheetHeader>
-            <SheetTitle>Confirmar compra</SheetTitle>
-            <SheetDescription>
-              Revisa detalle antes de enviar la transaccion.
-            </SheetDescription>
-          </SheetHeader>
-          {selectedItem ? (
-            <div className="mt-4 space-y-2 text-sm text-slate-700">
-              <p>Label: <span className="font-semibold">{selectedItem.label}</span></p>
-              <p>Precio: <span className="font-semibold">{formatUnits(selectedItem.onChainPrice, 6)} USDC</span></p>
-              <p>Estado: <span className="font-semibold">{selectedItem.configured ? (selectedItem.enabled ? "Disponible" : "Deshabilitado") : "No configurado"}</span></p>
-              <p>Red: <span className="font-semibold">{chainId ?? "n/a"}</span></p>
-              <p>Shop: <span className="break-all font-mono text-xs">{shopAddress ?? "missing"}</span></p>
-              <p>USDC: <span className="break-all font-mono text-xs">{usdcAddress ?? "missing"}</span></p>
-              <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                MiniPay puede mostrar &quot;Unknown transaction&quot;. Este modal describe la accion esperada antes de firmar.
-              </p>
-              <Button
-                className="mt-2 w-full"
-                disabled={
-                  isWriting ||
-                  purchasePhase !== "idle" ||
-                  !shopAddress ||
-                  !usdcAddress ||
-                  !isConnected ||
-                  !isCorrectChain ||
-                  !selectedItem.configured ||
-                  !selectedItem.enabled
-                }
-                onClick={() => void handleConfirmPurchase()}
-              >
-                {purchasePhase === "approving"
-                  ? "Aprobando USDC..."
-                  : purchasePhase === "buying"
-                    ? "Comprando..."
-                    : "Confirmar compra"}
-              </Button>
-            </div>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+      <PurchaseConfirmSheet
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        selectedItem={selectedItem}
+        chainId={chainId}
+        shopAddress={shopAddress}
+        usdcAddress={usdcAddress}
+        isConnected={isConnected}
+        isCorrectChain={isCorrectChain}
+        isWriting={isWriting}
+        purchasePhase={purchasePhase}
+        onConfirm={() => void handleConfirmPurchase()}
+      />
 
       {isMiniPay ? null : (
         <p className="mt-4 text-xs text-slate-500">En navegador normal puedes probar submit/claim. En MiniPay valida el flujo real de firma.</p>

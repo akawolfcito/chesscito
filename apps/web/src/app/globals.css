@@ -90,4 +90,32 @@
   .mobile-frame {
     width: min(100%, var(--app-max-width));
   }
+
+  .mission-shell {
+    background:
+      radial-gradient(circle at 20% 0%, rgba(34, 211, 238, 0.14), transparent 35%),
+      radial-gradient(circle at 95% 10%, rgba(163, 230, 53, 0.12), transparent 30%),
+      linear-gradient(180deg, #0d1117 0%, #0f1624 100%);
+    color: #f3f6fb;
+    border-color: #2a3442;
+  }
+
+  .mission-card {
+    background: linear-gradient(180deg, rgba(21, 27, 35, 0.95), rgba(18, 23, 31, 0.95));
+    border: 1px solid #2a3442;
+    color: #f3f6fb;
+    box-shadow: 0 24px 70px rgba(2, 6, 23, 0.45);
+  }
+
+  .mission-soft {
+    background: rgba(31, 41, 55, 0.65);
+    border: 1px solid #374151;
+    color: #cbd5e1;
+  }
+
+  .mission-chip {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid #334155;
+    color: #cbd5e1;
+  }
 }
