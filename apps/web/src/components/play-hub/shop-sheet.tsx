@@ -1,0 +1,64 @@
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { formatUnits } from "viem";
+
+type CatalogItem = {
+  itemId: bigint;
+  label: string;
+  subtitle: string;
+  configured: boolean;
+  enabled: boolean;
+  onChainPrice: bigint;
+};
+
+type ShopSheetProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  items: CatalogItem[];
+  onSelectItem: (itemId: bigint) => void;
+};
+
+export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheetProps) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetTrigger asChild>
+        <Button variant="outline">Store</Button>
+      </SheetTrigger>
+      <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-slate-700">
+        <SheetHeader>
+          <SheetTitle>Store (USDC)</SheetTitle>
+          <SheetDescription>Compras simples con precio fijo en stablecoin.</SheetDescription>
+        </SheetHeader>
+        <div className="mt-4 space-y-3">
+          {items.map((item) => (
+            <div key={item.itemId.toString()} className="mission-soft rounded-2xl p-3">
+              <p className="text-sm font-semibold text-slate-100">{item.label}</p>
+              <p className="text-xs text-slate-400">{item.subtitle}</p>
+              <p className="mt-2 text-sm text-slate-200">
+                {item.configured ? `${formatUnits(item.onChainPrice, 6)} USDC` : "No configurado"}
+              </p>
+              <p className="text-xs text-slate-400">
+                {item.configured ? (item.enabled ? "Disponible" : "Deshabilitado") : "No disponible"}
+              </p>
+              <Button
+                className="mt-3 w-full"
+                variant="outline"
+                disabled={!item.configured || !item.enabled}
+                onClick={() => onSelectItem(item.itemId)}
+              >
+                Comprar
+              </Button>
+            </div>
+          ))}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}

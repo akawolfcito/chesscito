@@ -14,7 +14,7 @@ import { ConnectButton } from "@/components/connect-button"
 
 const navLinks = [
   { name: "Home", href: "/" },
-  { name: "Levels", href: "/levels" },
+  { name: "Play Hub", href: "/play-hub" },
   { name: "Leaderboard", href: "/leaderboard" },
 ]
 

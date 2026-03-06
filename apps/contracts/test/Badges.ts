@@ -9,7 +9,7 @@ describe("BadgesUpgradeable", function () {
     const factory = await ethers.getContractFactory("BadgesUpgradeable");
     const badges = await upgrades.deployProxy(
       factory,
-      ["ipfs://chesscito/badges", signingWallet.address, owner.address],
+      ["ipfs://chesscito/badges", signingWallet.address, owner.address, 10n],
       { kind: "transparent", initializer: "initialize" }
     );
 
@@ -71,6 +71,7 @@ describe("BadgesUpgradeable", function () {
 
     expect(await badges.owner()).to.equal(owner.address);
     expect(await badges.signer()).to.equal(signingWallet.address);
+    expect(await badges.maxLevelId()).to.equal(10n);
     expect(await badges.uri(3n)).to.equal("ipfs://chesscito/badges/3.json");
     expect(await badges.baseURI()).to.equal("ipfs://chesscito/badges/");
   });

@@ -12,8 +12,8 @@ export default function LeaderboardPage() {
       eyebrow="Leaderboard"
       title="Top 10"
       description="Aqui se conectara el endpoint que leerá eventos on-chain. Por ahora dejamos la ruta y la estructura movil."
-      cta={{ href: "/levels", label: "Volver a jugar" }}
-      secondaryCta={{ href: "/result", label: "Ver resultado" }}
+      cta={{ href: "/play-hub", label: "Volver al Play Hub" }}
+      secondaryCta={{ href: "/", label: "Inicio" }}
     >
       <div className="space-y-3">
         {rows.map((row) => (

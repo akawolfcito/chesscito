@@ -46,7 +46,7 @@ export function enforceRateLimit(ip: string) {
 }
 
 export function createNonce() {
-  return BigInt(ethers.hexlify(ethers.randomBytes(32)));
+  return BigInt(ethers.hexlify(ethers.randomBytes(8)));
 }
 
 export function createDeadline() {

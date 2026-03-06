@@ -6,10 +6,14 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
+/**
+ * @title BadgesUpgradeable
+ * @notice ERC-1155 badge contract. One badge per level, claimed via EIP-712 signed voucher.
+ * @dev UUPS-compatible (gaps preserved). Deploy behind an ERC1967Proxy.
+ */
 contract BadgesUpgradeable is
     Initializable,
     ERC1155Upgradeable,
@@ -17,37 +21,63 @@ contract BadgesUpgradeable is
     PausableUpgradeable,
     EIP712Upgradeable
 {
+    // ─────────────────────────── Errors ────────────────────────────────────
     error BadgeAlreadyClaimed(address player, uint256 levelId);
     error InvalidSignature();
     error SignatureExpired(uint256 deadline);
     error NonceUsed(address player, uint256 nonce);
     error InvalidSigner();
     error InvalidBaseURI();
+    error InvalidLevel(uint256 levelId);
 
-    event BadgeClaimed(address indexed player, uint256 indexed levelId, uint256 indexed tokenId);
+    // ─────────────────────────── Events ────────────────────────────────────
+    event BadgeClaimed(
+        address indexed player,
+        uint256 indexed levelId,
+        uint256 indexed tokenId,
+        uint256 nonce,
+        uint256 deadline
+    );
     event BaseURIUpdated(string baseURI);
     event SignerUpdated(address indexed signer);
+    event MaxLevelUpdated(uint256 maxLevelId);
 
+    // ─────────────────────────── Constants ─────────────────────────────────
     bytes32 private constant CLAIM_TYPEHASH =
         keccak256("BadgeClaim(address player,uint256 levelId,uint256 nonce,uint256 deadline)");
 
+    // ─────────────────────────── Storage ───────────────────────────────────
+    /// @dev player → levelId → claimed
     mapping(address => mapping(uint256 => bool)) public hasClaimedBadge;
+    /// @dev player → nonce → used
     mapping(address => mapping(uint256 => bool)) public usedNonces;
 
     string private baseMetadataURI;
     address public signer;
+    /// @notice Maximum valid levelId. Owner-adjustable as new levels ship.
+    uint256 public maxLevelId;
 
+    // ─────────────────────────── Constructor ───────────────────────────────
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
+    // ─────────────────────────── Initializer ───────────────────────────────
+    /**
+     * @param initialBaseURI    IPFS / CDN base URI (e.g. "ipfs://Qm.../")
+     * @param initialSigner     Backend hot-wallet that signs vouchers
+     * @param initialOwner      Multisig / deployer
+     * @param initialMaxLevelId Number of levels live at deploy time
+     */
     function initialize(
         string memory initialBaseURI,
         address initialSigner,
-        address initialOwner
+        address initialOwner,
+        uint256 initialMaxLevelId
     ) public initializer {
         if (initialSigner == address(0)) revert InvalidSigner();
+        if (initialMaxLevelId == 0) revert InvalidLevel(initialMaxLevelId);
 
         __ERC1155_init("");
         __Ownable_init(initialOwner);
@@ -56,17 +86,26 @@ contract BadgesUpgradeable is
 
         baseMetadataURI = _normalizeBaseURI(initialBaseURI);
         signer = initialSigner;
+        maxLevelId = initialMaxLevelId;
 
         emit BaseURIUpdated(baseMetadataURI);
         emit SignerUpdated(initialSigner);
+        emit MaxLevelUpdated(initialMaxLevelId);
     }
 
+    // ─────────────────────────── Core ──────────────────────────────────────
+    /**
+     * @notice Claim a badge for a completed level.
+     * @dev Signature must be produced by `signer` off-chain after verifying level completion.
+     *      One badge per (player, levelId). Nonces are single-use.
+     */
     function claimBadgeSigned(
         uint256 levelId,
         uint256 nonce,
         uint256 deadline,
         bytes calldata signature
     ) external whenNotPaused {
+        if (levelId == 0 || levelId > maxLevelId) revert InvalidLevel(levelId);
         if (block.timestamp > deadline) revert SignatureExpired(deadline);
         if (usedNonces[msg.sender][nonce]) revert NonceUsed(msg.sender, nonce);
         if (hasClaimedBadge[msg.sender][levelId]) revert BadgeAlreadyClaimed(msg.sender, levelId);
@@ -74,35 +113,59 @@ contract BadgesUpgradeable is
         _verifyClaimSignature(msg.sender, levelId, nonce, deadline, signature);
 
         usedNonces[msg.sender][nonce] = true;
-
-        uint256 tokenId = tokenIdForLevel(levelId);
         hasClaimedBadge[msg.sender][levelId] = true;
 
+        uint256 tokenId = tokenIdForLevel(levelId);
         _mint(msg.sender, tokenId, 1, "");
-        emit BadgeClaimed(msg.sender, levelId, tokenId);
+
+        emit BadgeClaimed(msg.sender, levelId, tokenId, nonce, deadline);
     }
 
+    // ─────────────────────────── Views ─────────────────────────────────────
+    /// @notice tokenId is 1:1 with levelId for simplicity.
     function tokenIdForLevel(uint256 levelId) public pure returns (uint256) {
         return levelId;
-    }
-
-    function setSigner(address nextSigner) external onlyOwner {
-        if (nextSigner == address(0)) revert InvalidSigner();
-        signer = nextSigner;
-        emit SignerUpdated(nextSigner);
-    }
-
-    function setBaseURI(string memory nextBaseURI) external onlyOwner {
-        baseMetadataURI = _normalizeBaseURI(nextBaseURI);
-        emit BaseURIUpdated(baseMetadataURI);
     }
 
     function baseURI() external view returns (string memory) {
         return baseMetadataURI;
     }
 
+    /// @notice Returns full metadata URI for a given tokenId.
     function uri(uint256 tokenId) public view override returns (string memory) {
         return string.concat(baseMetadataURI, Strings.toString(tokenId), ".json");
+    }
+
+    // ─────────────────────────── ERC-165 ───────────────────────────────────
+    /**
+     * @dev Explicit override required when multiple parents expose supportsInterface.
+     */
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC1155Upgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
+    // ─────────────────────────── Admin ─────────────────────────────────────
+    function setSigner(address nextSigner) external onlyOwner {
+        if (nextSigner == address(0)) revert InvalidSigner();
+        signer = nextSigner;
+        emit SignerUpdated(nextSigner);
+    }
+
+    /// @notice Call this whenever a new batch of levels goes live.
+    function setMaxLevelId(uint256 nextMaxLevelId) external onlyOwner {
+        if (nextMaxLevelId == 0) revert InvalidLevel(nextMaxLevelId);
+        maxLevelId = nextMaxLevelId;
+        emit MaxLevelUpdated(nextMaxLevelId);
+    }
+
+    function setBaseURI(string memory nextBaseURI) external onlyOwner {
+        baseMetadataURI = _normalizeBaseURI(nextBaseURI);
+        emit BaseURIUpdated(baseMetadataURI);
     }
 
     function pause() external onlyOwner {
@@ -113,6 +176,7 @@ contract BadgesUpgradeable is
         _unpause();
     }
 
+    // ─────────────────────────── Internals ─────────────────────────────────
     function _verifyClaimSignature(
         address player,
         uint256 levelId,
@@ -127,13 +191,27 @@ contract BadgesUpgradeable is
         if (recovered != signer) revert InvalidSignature();
     }
 
+    /**
+     * @dev Ensures baseURI always ends with "/" for clean concatenation.
+     *      Reverts on empty string or bare "/".
+     */
     function _normalizeBaseURI(string memory input) internal pure returns (string memory) {
         bytes memory b = bytes(input);
         if (b.length == 0) revert InvalidBaseURI();
+        // Reject a URI that is only "/"
         if (b.length == 1 && b[0] == bytes1("/")) revert InvalidBaseURI();
         if (b[b.length - 1] == bytes1("/")) return input;
         return string.concat(input, "/");
     }
 
-    uint256[50] private __gap;
+    // ─────────────────────────── Gap ───────────────────────────────────────
+    // Inherited slot budgets (OZ v5):
+    //   Initializable          : 0  (uses InitializableStorageLayout, not raw slots)
+    //   ERC1155Upgradeable     : __gap[47]
+    //   OwnableUpgradeable     : __gap[49]
+    //   PausableUpgradeable    : __gap[49]
+    //   EIP712Upgradeable      : __gap[48]
+    // Own vars (5 slots): hasClaimedBadge, usedNonces, baseMetadataURI, signer, maxLevelId
+    // Reserve 50 slots so total own-contract budget stays at 50 (5 used + 45 free).
+    uint256[45] private __gap;
 }

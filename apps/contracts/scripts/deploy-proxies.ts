@@ -9,6 +9,7 @@ type DeploymentRecord = {
   deployedAt: string;
   safeOwner: string;
   signer: string;
+  maxLevelId: string;
   proxyAdmin?: string;
   badgesProxy: string;
   badgesImpl: string;
@@ -53,6 +54,7 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   const { chainId } = await ethers.provider.getNetwork();
   const badgesBaseURI = process.env.BADGES_BASE_URI ?? "ipfs://chesscito/badges";
+  const maxLevelId = BigInt(process.env.INITIAL_MAX_LEVEL_ID ?? "10");
   const submitCooldown = BigInt(process.env.SCOREBOARD_SUBMIT_COOLDOWN ?? "60");
   const maxSubmissionsPerDay = BigInt(process.env.SCOREBOARD_MAX_SUBMISSIONS_PER_DAY ?? "25");
 
@@ -71,7 +73,7 @@ async function main() {
   const badgesFactory = await ethers.getContractFactory("BadgesUpgradeable");
   const badges = await upgrades.deployProxy(
     badgesFactory,
-    [badgesBaseURI, signerWallet.address, safeOwner],
+    [badgesBaseURI, signerWallet.address, safeOwner, maxLevelId],
     transparentProxyOptions
   );
   await badges.waitForDeployment();
@@ -96,6 +98,7 @@ async function main() {
     deployedAt: new Date().toISOString(),
     safeOwner,
     signer: signerWallet.address,
+    maxLevelId: maxLevelId.toString(),
     proxyAdmin,
     badgesProxy,
     badgesImpl,

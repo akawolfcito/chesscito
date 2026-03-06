@@ -1,19 +1,19 @@
 # Route Inventory
 
-## M0 App Skeleton
+## Product Routes (Current)
 
 - `/`
   - Home and product framing
-  - CTA to `/levels`
-- `/levels`
-  - Piece selection hub
-  - Tower active, Bishop/Knight reserved
-- `/play/[piece]`
-  - Piece-specific gameplay entry point
-  - Tutorial/challenge slot for future slices
-- `/result`
-  - Local result placeholder
-  - Future home for `submitScore` and `claimBadge`
+  - CTA principal a `/play-hub`
+- `/play-hub`
+  - Experiencia central (single-screen + overlays)
+  - Claim badge, submit score y compra en shop
 - `/leaderboard`
-  - Top 10 placeholder
-  - Future home for event-driven ranking
+  - Vista resumida de posiciones
+  - Enlace de soporte al loop principal (`/play-hub`)
+
+## Deprecated/Removed Routes
+
+- `/levels` (removed)
+- `/play/[piece]` (removed)
+- `/result` (removed)

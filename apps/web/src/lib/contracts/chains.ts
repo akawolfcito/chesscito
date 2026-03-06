@@ -16,6 +16,22 @@ export function getBadgesAddress(chainId: number | undefined): `0x${string}` | n
   return normalizeAddress(process.env.NEXT_PUBLIC_BADGES_ADDRESS);
 }
 
+export function getShopAddress(chainId: number | undefined): `0x${string}` | null {
+  if (!chainId || chainId !== getConfiguredChainId()) {
+    return null;
+  }
+
+  return normalizeAddress(process.env.NEXT_PUBLIC_SHOP_ADDRESS);
+}
+
+export function getUsdcAddress(chainId: number | undefined): `0x${string}` | null {
+  if (!chainId || chainId !== getConfiguredChainId()) {
+    return null;
+  }
+
+  return normalizeAddress(process.env.NEXT_PUBLIC_USDC_ADDRESS);
+}
+
 export function getMiniPayFeeCurrency(chainId: number | undefined): `0x${string}` | undefined {
   if (!chainId || chainId !== getConfiguredChainId()) {
     return undefined;
