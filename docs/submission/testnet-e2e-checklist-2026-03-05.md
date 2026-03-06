@@ -1,6 +1,34 @@
 # Testnet E2E Checklist (2026-03-05)
 
-Estado: `PARCIAL` (testnet estable operativo; pendiente cierre QA/publicación final)
+Estado: `COMPLETO` (claim + submit + buy validados en MiniPay/Sepolia con evidencias on-chain y QA de repetición por `levelId` en una sola wallet)
+
+## Evidencias sesión (2026-03-06)
+
+- Validación local:
+  - `pnpm --filter hardhat test` -> OK (`13 passing`)
+  - `pnpm --filter web build` -> OK
+  - `pnpm --filter web dev` -> OK (arranca en `http://localhost:3000`)
+- Sepolia (tx reales):
+  - `claimBadgeSigned`:
+    - tx: `0xd881a87eaa34020eb0ca149239c7ac166f15920b4d312f32ab9cc40bcb463371`
+    - explorer: `https://sepolia.celoscan.io/tx/0xd881a87eaa34020eb0ca149239c7ac166f15920b4d312f32ab9cc40bcb463371`
+  - `submitScoreSigned`:
+    - tx: `0x9240a04f64775210ee91222f9015ceb1a3a89a8fb4045be1d52d5b5fe1c8dc85`
+    - explorer: `https://sepolia.celoscan.io/tx/0x9240a04f64775210ee91222f9015ceb1a3a89a8fb4045be1d52d5b5fe1c8dc85`
+  - `buyItem` en `play-hub`:
+    - `approve` tx: `0x7f21f76c85fbdac4311c188234237c3943455b7f766e6706760fd5377bf4a5d1`
+    - `approve` explorer: `https://sepolia.celoscan.io/tx/0x7f21f76c85fbdac4311c188234237c3943455b7f766e6706760fd5377bf4a5d1`
+    - `buyItem` tx: `0xa070902c46fd84ee13219f718228f112ed61e33135548ba29473b9abd75dc311`
+    - `buyItem` explorer: `https://sepolia.celoscan.io/tx/0xa070902c46fd84ee13219f718228f112ed61e33135548ba29473b9abd75dc311`
+    - item comprado: `itemId=1` (`10000` = `0.01 USDC`)
+- QA UI `play-hub` (single-screen):
+  - estado `ready`: guía visible de misión antes del primer movimiento
+  - estado `failure`: feedback explícito + reset
+  - estado `success`: habilita claim/submit según conexión/red
+  - estados de transacción: `pending` y `success` visibles por operación (`claim`, `submit`, `buy`)
+  - móvil: acciones críticas accesibles en panel inferior fijo y overlays (`store`, `leaderboard`, `confirmación compra`)
+  - repetición de flujo en MiniPay (misma wallet): `QA mode` con override de `levelId` en `play-hub` (`NEXT_PUBLIC_QA_MODE=1`)
+  - validación adicional en dispositivo: `claimBadgeSigned` exitoso usando `levelId=10` (mismo wallet, sin cambio de cuenta)
 
 ## Verificaciones ejecutadas
 
@@ -70,12 +98,13 @@ Estado: `PARCIAL` (testnet estable operativo; pendiente cierre QA/publicación f
    - `pnpm --filter hardhat test`
 
 7. Validación real en MiniPay (device)
-   - Abrir `/result` y `/tx-lab` en MiniPay
-   - Ejecutar:
-     - `claimBadgeSigned` (ok)
-     - `submitScoreSigned` (ok)
-     - compra en `play-hub` (ok)
-   - Confirmar tx hashes en CeloScan Sepolia
+  - Abrir `/play-hub` y `/tx-lab` en MiniPay
+  - Ejecutar:
+    - `claimBadgeSigned` (ok, hash capturado)
+    - `submitScoreSigned` (ok, hash capturado)
+    - compra en `play-hub` (ok, hash capturado)
+  - Confirmar tx hashes en CeloScan Sepolia
+  - Nota: rutas legacy `/levels`, `/play/[piece]`, `/result` fueron retiradas; el flujo oficial queda en `/play-hub` + `/tx-lab`.
 
 ## Criterio de salida
 
