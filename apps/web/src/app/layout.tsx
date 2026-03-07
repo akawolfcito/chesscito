@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
-import { Navbar } from '@/components/navbar';
 import { WalletProvider } from "@/components/wallet-provider"
 
 export const metadata: Metadata = {
@@ -19,7 +18,6 @@ export default function RootLayout({
       <body>
         <div className="relative flex min-h-screen flex-col bg-background text-foreground">
           <WalletProvider>
-            <Navbar />
             <main className="flex flex-1 flex-col">
               {children}
             </main>
