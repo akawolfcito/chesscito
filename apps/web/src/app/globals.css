@@ -39,6 +39,9 @@
       url("/art/bg-playhub-forest-mobile.webp") type("image/webp"),
       url("/art/bg-playhub-forest-mobile.png") type("image/png")
     );
+    --intro-bg-mobile: image-set(
+      url("/art/bg-intro.png") type("image/png")
+    );
     --playhub-bg-desktop: image-set(
       url("/art/bg-playhub-forest-desktop.avif") type("image/avif"),
       url("/art/bg-playhub-forest-desktop.webp") type("image/webp"),
@@ -128,6 +131,16 @@
     background-repeat: no-repeat;
     color: #f3f6fb;
     border-color: #2b4252;
+  }
+
+  .intro-shell {
+    background:
+      linear-gradient(180deg, rgba(2, 6, 23, 0.72), rgba(2, 6, 23, 0.5)),
+      var(--intro-bg-mobile),
+      linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+    background-position: center top;
+    background-size: cover;
+    background-repeat: no-repeat;
   }
 
   .mission-card {
