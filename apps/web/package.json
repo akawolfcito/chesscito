@@ -8,7 +8,8 @@
     "lint": "next lint",
     "start": "next start",
     "test:game": "rm -rf .tmp/game-tests .tmp/tsconfig.test.tsbuildinfo && tsc -p tsconfig.test.json && node --test .tmp/game-tests/lib/game/__tests__/rook.test.js && rm -rf .tmp/game-tests .tmp/tsconfig.test.tsbuildinfo",
-    "type-check": "rm -rf .next && next build >/dev/null && tsc --noEmit"
+    "type-check": "rm -rf .next && next build >/dev/null && tsc --noEmit",
+    "art:optimize": "bash scripts/optimize-art-assets.sh"
   },
   "dependencies": {
     "next": "^14.0.0",

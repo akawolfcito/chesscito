@@ -34,11 +34,31 @@
 
     --radius: 1rem;
     --app-max-width: 390px;
-    --playhub-bg-mobile: url("/art/bg-playhub-forest-mobile.png");
-    --playhub-bg-desktop: url("/art/bg-playhub-forest-desktop.png");
-    --playhub-rune-frame: url("/art/panel-frame-rune.png");
-    --playhub-slot-frame: url("/art/shop-slot-frame.png");
-    --playhub-reward-glow: url("/art/reward-glow.png");
+    --playhub-bg-mobile: image-set(
+      url("/art/bg-playhub-forest-mobile.avif") type("image/avif"),
+      url("/art/bg-playhub-forest-mobile.webp") type("image/webp"),
+      url("/art/bg-playhub-forest-mobile.png") type("image/png")
+    );
+    --playhub-bg-desktop: image-set(
+      url("/art/bg-playhub-forest-desktop.avif") type("image/avif"),
+      url("/art/bg-playhub-forest-desktop.webp") type("image/webp"),
+      url("/art/bg-playhub-forest-desktop.png") type("image/png")
+    );
+    --playhub-rune-frame: image-set(
+      url("/art/panel-frame-rune.avif") type("image/avif"),
+      url("/art/panel-frame-rune.webp") type("image/webp"),
+      url("/art/panel-frame-rune.png") type("image/png")
+    );
+    --playhub-slot-frame: image-set(
+      url("/art/shop-slot-frame.avif") type("image/avif"),
+      url("/art/shop-slot-frame.webp") type("image/webp"),
+      url("/art/shop-slot-frame.png") type("image/png")
+    );
+    --playhub-reward-glow: image-set(
+      url("/art/reward-glow.avif") type("image/avif"),
+      url("/art/reward-glow.webp") type("image/webp"),
+      url("/art/reward-glow.png") type("image/png")
+    );
   }
 
   .dark {
