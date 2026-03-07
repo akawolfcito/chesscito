@@ -165,4 +165,19 @@
     position: relative;
     z-index: 1;
   }
+
+  .reward-burst {
+    animation: reward-pop 320ms ease-out both;
+  }
+
+  @keyframes reward-pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 }
