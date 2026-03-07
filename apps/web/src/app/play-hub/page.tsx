@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { erc20Abi } from "viem";
 import {
   useAccount,
@@ -111,6 +111,7 @@ export default function PlayHubPage() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [purchasePhase, setPurchasePhase] = useState<"idle" | "approving" | "buying">("idle");
   const [qaLevelInput, setQaLevelInput] = useState("2");
+  const [showRewardMoment, setShowRewardMoment] = useState(false);
 
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain = configuredChainId != null && chainId === configuredChainId;
@@ -257,6 +258,7 @@ export default function PlayHubPage() {
   function resetBoard() {
     setBoardKey((previous) => previous + 1);
     setPhase("ready");
+    setShowRewardMoment(false);
     setMoves(0);
     setElapsedMs(0);
   }
@@ -268,6 +270,7 @@ export default function PlayHubPage() {
     if (isTarget) {
       setPhase("success");
       setElapsedMs(1000);
+      setShowRewardMoment(true);
       return;
     }
 
@@ -419,6 +422,18 @@ export default function PlayHubPage() {
     }
   }
 
+  useEffect(() => {
+    if (!showRewardMoment) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setShowRewardMoment(false);
+    }, 6000);
+
+    return () => window.clearTimeout(timeout);
+  }, [showRewardMoment]);
+
   return (
     <main className="mission-shell mx-auto min-h-screen w-full max-w-screen-sm px-4 pb-52 pt-6 sm:px-6">
       <MissionPanel
@@ -433,6 +448,11 @@ export default function PlayHubPage() {
           { key: "knight", label: "Caballo", enabled: false },
         ]}
         phase={phase}
+        showRewardMoment={showRewardMoment}
+        levelIdLabel={levelId.toString()}
+        claimState={claimTxHash ? (isClaimConfirming ? "pending" : "done") : "idle"}
+        submitState={submitTxHash ? (isSubmitConfirming ? "pending" : "done") : "idle"}
+        onDismissReward={() => setShowRewardMoment(false)}
         board={
           <Board
             key={boardKey}
