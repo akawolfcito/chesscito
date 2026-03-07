@@ -65,26 +65,30 @@ export function OnChainActionsPanel({
       </div>
 
       {qaEnabled ? (
-        <div className="mission-soft rune-frame space-y-2 rounded-xl px-3 py-3 text-xs text-slate-200">
-          <p className="font-semibold uppercase tracking-[0.2em] text-cyan-300">QA mode</p>
-          <label className="block">
-            Level ID override
-            <input
-              type="number"
-              min={1}
-              max={9999}
-              step={1}
-              value={qaLevelInput}
-              onChange={(event) => onQaLevelInputChange(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-cyan-600/45 bg-slate-900/90 px-3 py-2 text-sm text-cyan-50"
-            />
-          </label>
-          {!isQaLevelValid ? (
-            <p className="text-rose-300">Usa un entero entre 1 y 9999.</p>
-          ) : (
-            <p className="text-emerald-300">Claim y submit usaran levelId {effectiveLevelId}.</p>
-          )}
-        </div>
+        <details className="mission-soft rune-frame rounded-xl px-3 py-2 text-xs text-slate-200">
+          <summary className="cursor-pointer list-none font-semibold uppercase tracking-[0.2em] text-cyan-300">
+            QA mode
+          </summary>
+          <div className="mt-2 space-y-2">
+            <label className="block">
+              Level ID override
+              <input
+                type="number"
+                min={1}
+                max={9999}
+                step={1}
+                value={qaLevelInput}
+                onChange={(event) => onQaLevelInputChange(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-cyan-600/45 bg-slate-900/90 px-3 py-2 text-sm text-cyan-50"
+              />
+            </label>
+            {!isQaLevelValid ? (
+              <p className="text-rose-300">Usa un entero entre 1 y 9999.</p>
+            ) : (
+              <p className="text-emerald-300">Claim y submit usaran levelId {effectiveLevelId}.</p>
+            )}
+          </div>
+        </details>
       ) : null}
 
       <div className="grid grid-cols-2 gap-2">

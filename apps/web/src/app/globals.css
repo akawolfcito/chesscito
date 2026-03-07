@@ -34,10 +34,11 @@
 
     --radius: 1rem;
     --app-max-width: 390px;
-    --playhub-bg-mobile: url("/art/bg-playhub-forest-mobile.webp");
-    --playhub-bg-desktop: url("/art/bg-playhub-forest-desktop.webp");
-    --playhub-rune-frame: url("/art/panel-frame-rune.webp");
-    --playhub-reward-glow: url("/art/reward-glow.webp");
+    --playhub-bg-mobile: url("/art/bg-playhub-forest-mobile.png");
+    --playhub-bg-desktop: url("/art/bg-playhub-forest-desktop.png");
+    --playhub-rune-frame: url("/art/panel-frame-rune.png");
+    --playhub-slot-frame: url("/art/shop-slot-frame.png");
+    --playhub-reward-glow: url("/art/reward-glow.png");
   }
 
   .dark {
@@ -144,6 +145,15 @@
     border-radius: 18px;
     background-image:
       var(--playhub-rune-frame),
+      linear-gradient(180deg, rgba(8, 33, 46, 0.58), rgba(8, 28, 40, 0.72));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .shop-slot-frame {
+    background-image:
+      var(--playhub-slot-frame),
       linear-gradient(180deg, rgba(8, 33, 46, 0.58), rgba(8, 28, 40, 0.72));
     background-size: cover;
     background-position: center;

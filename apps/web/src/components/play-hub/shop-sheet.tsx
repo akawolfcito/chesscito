@@ -38,7 +38,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
         </SheetHeader>
         <div className="mt-4 flex snap-x gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0">
           {items.map((item) => (
-            <div key={item.itemId.toString()} className="mission-soft rune-frame min-w-[74%] snap-center rounded-2xl p-3 sm:min-w-0">
+            <div key={item.itemId.toString()} className="mission-soft rune-frame shop-slot-frame min-w-[74%] snap-center rounded-2xl p-3 sm:min-w-0">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-slate-100">{item.label}</p>
