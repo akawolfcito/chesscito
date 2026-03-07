@@ -41,11 +41,11 @@ export function PurchaseConfirmSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-slate-700">
         <SheetHeader>
-          <SheetTitle>Confirmar compra</SheetTitle>
-          <SheetDescription>Revisa detalle antes de enviar la transaccion.</SheetDescription>
+          <SheetTitle className="fantasy-title text-cyan-50">Confirmar compra</SheetTitle>
+          <SheetDescription className="text-cyan-100/75">Revisa detalle del artefacto antes de firmar.</SheetDescription>
         </SheetHeader>
         {selectedItem ? (
-          <div className="mt-4 space-y-2 text-sm text-slate-200">
+          <div className="mission-soft rune-frame mt-4 space-y-2 rounded-2xl p-3 text-sm text-slate-200">
             <p>
               Label: <span className="font-semibold text-slate-100">{selectedItem.label}</span>
             </p>
@@ -67,11 +67,11 @@ export function PurchaseConfirmSheet({
             <p>
               USDC: <span className="break-all font-mono text-xs">{usdcAddress ?? "missing"}</span>
             </p>
-            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="rounded-xl border border-amber-400/45 bg-amber-900/30 px-3 py-2 text-xs text-amber-100">
               MiniPay puede mostrar &quot;Unknown transaction&quot;. Este modal describe la accion esperada antes de firmar.
             </p>
             <Button
-              className="mt-2 w-full"
+              className="mt-2 w-full bg-cyan-300 text-slate-900 hover:bg-cyan-200"
               disabled={
                 isWriting ||
                 purchasePhase !== "idle" ||

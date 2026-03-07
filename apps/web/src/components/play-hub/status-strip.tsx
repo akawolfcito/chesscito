@@ -36,7 +36,7 @@ export function StatusStrip({
 
   return (
     <div className="space-y-2">
-      <div className="mission-soft rounded-xl px-3 py-2 text-xs">
+      <div className="mission-soft rune-frame rounded-xl px-3 py-2 text-xs text-cyan-50">
         <p>Estado: {readiness}</p>
         <p>Chain: {chainId ?? "n/a"}</p>
         <p>Mision: {missionStatus}</p>

@@ -45,27 +45,27 @@ export function OnChainActionsPanel({
 }: OnChainActionsPanelProps) {
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 text-xs text-slate-300 sm:grid-cols-4">
-        <div className="mission-soft rounded-xl px-3 py-2">
+      <div className="grid grid-cols-2 gap-3 text-xs text-slate-200 sm:grid-cols-4">
+        <div className="mission-soft rune-frame rounded-xl px-3 py-2">
           <p>Score</p>
-          <p className="mt-1 text-sm font-semibold text-slate-100">{score}</p>
+          <p className="mt-1 text-sm font-semibold text-cyan-100">{score}</p>
         </div>
-        <div className="mission-soft rounded-xl px-3 py-2">
+        <div className="mission-soft rune-frame rounded-xl px-3 py-2">
           <p>Time</p>
-          <p className="mt-1 text-sm font-semibold text-slate-100">{timeMs} ms</p>
+          <p className="mt-1 text-sm font-semibold text-cyan-100">{timeMs} ms</p>
         </div>
-        <div className="mission-soft rounded-xl px-3 py-2">
+        <div className="mission-soft rune-frame rounded-xl px-3 py-2">
           <p>Level</p>
-          <p className="mt-1 text-sm font-semibold text-slate-100">{effectiveLevelId}</p>
+          <p className="mt-1 text-sm font-semibold text-cyan-100">{effectiveLevelId}</p>
         </div>
-        <div className="mission-soft rounded-xl px-3 py-2">
+        <div className="mission-soft rune-frame rounded-xl px-3 py-2">
           <p>Moves</p>
-          <p className="mt-1 text-sm font-semibold text-slate-100">{moves}</p>
+          <p className="mt-1 text-sm font-semibold text-cyan-100">{moves}</p>
         </div>
       </div>
 
       {qaEnabled ? (
-        <div className="mission-soft space-y-2 rounded-xl px-3 py-3 text-xs text-slate-300">
+        <div className="mission-soft rune-frame space-y-2 rounded-xl px-3 py-3 text-xs text-slate-200">
           <p className="font-semibold uppercase tracking-[0.2em] text-cyan-300">QA mode</p>
           <label className="block">
             Level ID override
@@ -76,7 +76,7 @@ export function OnChainActionsPanel({
               step={1}
               value={qaLevelInput}
               onChange={(event) => onQaLevelInputChange(event.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+              className="mt-1 w-full rounded-lg border border-cyan-600/45 bg-slate-900/90 px-3 py-2 text-sm text-cyan-50"
             />
           </label>
           {!isQaLevelValid ? (
@@ -88,17 +88,17 @@ export function OnChainActionsPanel({
       ) : null}
 
       <div className="grid grid-cols-2 gap-2">
-        <Button disabled={!canClaim || isClaimBusy || isGlobalBusy} onClick={onClaim}>
+        <Button className="bg-cyan-300 text-slate-900 hover:bg-cyan-200" disabled={!canClaim || isClaimBusy || isGlobalBusy} onClick={onClaim}>
           {isClaimBusy ? "Confirmando claim..." : "Claim badge"}
         </Button>
-        <Button variant="outline" disabled={!canSubmit || isSubmitBusy || isGlobalBusy} onClick={onSubmit}>
+        <Button className="border-cyan-500/40 text-cyan-100 hover:bg-cyan-900/35" variant="outline" disabled={!canSubmit || isSubmitBusy || isGlobalBusy} onClick={onSubmit}>
           {isSubmitBusy ? "Confirmando score..." : "Guardar score"}
         </Button>
         {shopControl}
         {leaderboardControl}
       </div>
 
-      <Button variant="outline" onClick={onReset}>
+      <Button className="border-cyan-500/40 text-cyan-100 hover:bg-cyan-900/35" variant="outline" onClick={onReset}>
         Reset board
       </Button>
     </div>

@@ -29,16 +29,16 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="outline">Store</Button>
+        <Button className="border-cyan-500/40 text-cyan-100 hover:bg-cyan-900/35" variant="outline">Store</Button>
       </SheetTrigger>
       <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-slate-700">
         <SheetHeader>
-          <SheetTitle>Store (USDC)</SheetTitle>
-          <SheetDescription>Compras simples con precio fijo en stablecoin.</SheetDescription>
+          <SheetTitle className="fantasy-title text-cyan-50">Arcane Store (USDC)</SheetTitle>
+          <SheetDescription className="text-cyan-100/75">Selecciona un artefacto para comprar on-chain.</SheetDescription>
         </SheetHeader>
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           {items.map((item) => (
-            <div key={item.itemId.toString()} className="mission-soft rounded-2xl p-3">
+            <div key={item.itemId.toString()} className="mission-soft rune-frame rounded-2xl p-3">
               <p className="text-sm font-semibold text-slate-100">{item.label}</p>
               <p className="text-xs text-slate-400">{item.subtitle}</p>
               <p className="mt-2 text-sm text-slate-200">
@@ -48,7 +48,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
                 {item.configured ? (item.enabled ? "Disponible" : "Deshabilitado") : "No disponible"}
               </p>
               <Button
-                className="mt-3 w-full"
+                className="mt-3 w-full border-cyan-500/40 text-cyan-100 hover:bg-cyan-900/35"
                 variant="outline"
                 disabled={!item.configured || !item.enabled}
                 onClick={() => onSelectItem(item.itemId)}
