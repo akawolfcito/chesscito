@@ -30,6 +30,21 @@ Estado: `COMPLETO` (claim + submit + buy validados en MiniPay/Sepolia con eviden
   - repetición de flujo en MiniPay (misma wallet): `QA mode` con override de `levelId` en `play-hub` (`NEXT_PUBLIC_QA_MODE=1`)
   - validación adicional en dispositivo: `claimBadgeSigned` exitoso usando `levelId=10` (mismo wallet, sin cambio de cuenta)
 
+## Evidencias visuales Sprint UI (2026-03-07)
+
+- Integración de artes en `apps/web/public/art` (formato PNG):
+  - `bg-playhub-forest-mobile.png`
+  - `bg-playhub-forest-desktop.png`
+  - `panel-frame-rune.png`
+  - `shop-slot-frame.png`
+  - `reward-glow.png`
+- Capturas Playwright baseline con arte aplicado:
+  - `docs/design/play-hub-with-art-2026-03-07-desktop-v3.png`
+  - `docs/design/play-hub-with-art-2026-03-07-mobile-v3.png`
+- Ajustes responsive de cierre:
+  - panel inferior con `max-height` y scroll interno para viewport móvil
+  - bloque QA colapsable para reducir altura visible por defecto
+
 ## Verificaciones ejecutadas
 
 - Contratos:
