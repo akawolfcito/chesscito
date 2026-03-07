@@ -420,7 +420,7 @@ export default function PlayHubPage() {
   }
 
   return (
-    <main className="mission-shell mx-auto min-h-screen w-full max-w-screen-sm px-4 pb-52 pt-6 sm:px-6">
+    <main className="mission-shell mx-auto min-h-screen w-full max-w-screen-sm px-4 pb-72 pt-6 sm:px-6">
       <MissionPanel
         selectedPiece={selectedPiece}
         onSelectPiece={(piece) => {
@@ -445,7 +445,7 @@ export default function PlayHubPage() {
       />
 
       <section className="fixed bottom-0 left-0 right-0 z-40 border-t border-cyan-800/45 bg-slate-950/94 px-4 pb-4 pt-3 backdrop-blur sm:px-6">
-        <div className="mx-auto w-full max-w-screen-sm space-y-3">
+        <div className="mx-auto max-h-[56vh] w-full max-w-screen-sm space-y-3 overflow-y-auto pr-1">
           <OnChainActionsPanel
             score={score.toString()}
             timeMs={timeMs.toString()}

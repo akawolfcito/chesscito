@@ -38,7 +38,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
         </SheetHeader>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           {items.map((item) => (
-            <div key={item.itemId.toString()} className="mission-soft rune-frame rounded-2xl p-3">
+            <div key={item.itemId.toString()} className="mission-soft rune-frame shop-slot-frame rounded-2xl p-3">
               <p className="text-sm font-semibold text-slate-100">{item.label}</p>
               <p className="text-xs text-slate-400">{item.subtitle}</p>
               <p className="mt-2 text-sm text-slate-200">
