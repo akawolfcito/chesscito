@@ -108,8 +108,12 @@
   body {
     @apply bg-background text-foreground antialiased;
     background-image:
-      radial-gradient(circle at top, rgba(7, 149, 95, 0.18), transparent 32%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(240, 249, 244, 0.94));
+      linear-gradient(180deg, rgba(2, 6, 23, 0.42), rgba(2, 6, 23, 0.55)),
+      var(--playhub-game-bg);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     min-height: 100vh;
   }
   main {
@@ -124,11 +128,8 @@
 
   .mission-shell {
     background:
-      var(--playhub-bg-mobile),
-      radial-gradient(circle at 18% 0%, rgba(56, 189, 248, 0.22), transparent 35%),
-      radial-gradient(circle at 85% 12%, rgba(74, 222, 128, 0.16), transparent 32%),
-      radial-gradient(circle at 50% 115%, rgba(16, 185, 129, 0.22), transparent 40%),
-      linear-gradient(180deg, #09131b 0%, #0c1d2a 45%, #0b1723 100%);
+      linear-gradient(180deg, rgba(2, 6, 23, 0.35), rgba(2, 6, 23, 0.45)),
+      var(--playhub-game-bg);
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -283,11 +284,8 @@
   @layer components {
     .mission-shell {
       background-image:
-        var(--playhub-bg-desktop),
-        radial-gradient(circle at 18% 0%, rgba(56, 189, 248, 0.22), transparent 35%),
-        radial-gradient(circle at 85% 12%, rgba(74, 222, 128, 0.16), transparent 32%),
-        radial-gradient(circle at 50% 115%, rgba(16, 185, 129, 0.22), transparent 40%),
-        linear-gradient(180deg, #09131b 0%, #0c1d2a 45%, #0b1723 100%);
+        linear-gradient(180deg, rgba(2, 6, 23, 0.35), rgba(2, 6, 23, 0.45)),
+        var(--playhub-game-bg);
     }
 
     .intro-shell {
