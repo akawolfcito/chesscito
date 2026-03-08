@@ -13,12 +13,14 @@ import {
 } from "wagmi";
 
 import { Board } from "@/components/board";
+import { ExerciseStarsBar } from "@/components/play-hub/exercise-stars-bar";
 import { LeaderboardSheet } from "@/components/play-hub/leaderboard-sheet";
 import { MissionPanel } from "@/components/play-hub/mission-panel";
 import { OnChainActionsPanel } from "@/components/play-hub/onchain-actions-panel";
 import { PurchaseConfirmSheet } from "@/components/play-hub/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/play-hub/shop-sheet";
 import { StatusStrip } from "@/components/play-hub/status-strip";
+import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { badgesAbi } from "@/lib/contracts/badges";
 import {
@@ -112,6 +114,15 @@ export default function PlayHubPage() {
   const [purchasePhase, setPurchasePhase] = useState<"idle" | "approving" | "buying">("idle");
   const [qaLevelInput, setQaLevelInput] = useState("2");
   const [isLocalhost, setIsLocalhost] = useState(false);
+
+  const {
+    progress,
+    currentExercise,
+    badgeEarned,
+    completeExercise,
+    advanceExercise,
+    goToExercise,
+  } = useExerciseProgress(selectedPiece);
 
   useEffect(() => {
     const host = window.location.hostname;
@@ -234,14 +245,13 @@ export default function PlayHubPage() {
     },
   });
 
-  const challengeTarget: BoardPosition = { file: 7, rank: 0 };
-
   const canSendOnChain =
     Boolean(address) &&
     isConnected &&
     isCorrectChain &&
     phase === "success" &&
-    levelId > 0n;
+    levelId > 0n &&
+    badgeEarned;
   const isClaimBusy = isWriting || isClaimConfirming;
   const isSubmitBusy = isWriting || isSubmitConfirming;
 
@@ -270,13 +280,17 @@ export default function PlayHubPage() {
     setElapsedMs(0);
   }
 
-  function handleMove(position: BoardPosition) {
-    const isTarget = position.file === challengeTarget.file && position.rank === challengeTarget.rank;
-    setMoves((previous) => previous + 1);
+  function handleMove(position: BoardPosition, movesCount: number) {
+    const isTarget =
+      position.file === currentExercise.targetPos.file &&
+      position.rank === currentExercise.targetPos.rank;
+
+    setMoves(movesCount);
 
     if (isTarget) {
       setPhase("success");
       setElapsedMs(1000);
+      completeExercise(movesCount);
       return;
     }
 
@@ -440,8 +454,8 @@ export default function PlayHubPage() {
           }}
           pieces={[
             { key: "rook", label: "Torre", enabled: true },
-            { key: "bishop", label: "Alfil", enabled: false },
-            { key: "knight", label: "Caballo", enabled: false },
+            { key: "bishop", label: "Alfil", enabled: true },
+            { key: "knight", label: "Caballo", enabled: true },
           ]}
           phase={phase}
           score={score.toString()}
@@ -501,10 +515,19 @@ export default function PlayHubPage() {
           board={
             <Board
               key={boardKey}
+              pieceType={selectedPiece}
+              startPosition={currentExercise.startPos}
               mode="practice"
-              targetPosition={challengeTarget}
+              targetPosition={currentExercise.targetPos}
               isLocked={phase === "failure" || phase === "success"}
               onMove={handleMove}
+            />
+          }
+          starsBar={
+            <ExerciseStarsBar
+              stars={progress.stars}
+              activeIndex={progress.exerciseIndex}
+              onSelect={goToExercise}
             />
           }
         />
