@@ -11,10 +11,22 @@ type MissionPanelProps = {
   onSelectPiece: (piece: PieceOption["key"]) => void;
   pieces: readonly PieceOption[];
   phase: "ready" | "success" | "failure";
+  score: string;
+  timeMs: string;
+  level: string;
   board: ReactNode;
 };
 
-export function MissionPanel({ selectedPiece, onSelectPiece, pieces, phase, board }: MissionPanelProps) {
+export function MissionPanel({
+  selectedPiece,
+  onSelectPiece,
+  pieces,
+  phase,
+  score,
+  timeMs,
+  level,
+  board,
+}: MissionPanelProps) {
   return (
     <section className="stage-vignette space-y-4 p-4">
       <div className="space-y-2">
@@ -51,6 +63,21 @@ export function MissionPanel({ selectedPiece, onSelectPiece, pieces, phase, boar
       </div>
 
       {board}
+
+      <div className="chesscito-stats-bar">
+        <div className="chesscito-stats-item">
+          <span className="chesscito-stats-label">SCORE</span>
+          <span className="chesscito-stats-value">{score}</span>
+        </div>
+        <div className="chesscito-stats-item">
+          <span className="chesscito-stats-label">TIME</span>
+          <span className="chesscito-stats-value">{timeMs} ms</span>
+        </div>
+        <div className="chesscito-stats-item">
+          <span className="chesscito-stats-label">LEVEL</span>
+          <span className="chesscito-stats-value">{level}</span>
+        </div>
+      </div>
 
       {phase === "failure" ? (
         <div className="rounded-2xl border border-rose-500/40 bg-rose-900/35 px-4 py-3 text-sm text-rose-200">

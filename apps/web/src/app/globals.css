@@ -278,6 +278,50 @@
     width: min(100%, 24.5rem);
     padding: 2.4rem 1.1rem 1.35rem;
   }
+
+  .chesscito-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    border: 1px solid rgba(167, 243, 208, 0.32);
+    border-radius: 14px;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(15, 54, 64, 0.6), rgba(7, 37, 46, 0.78)),
+      linear-gradient(90deg, rgba(45, 212, 191, 0.08), rgba(34, 211, 238, 0.08));
+    box-shadow:
+      inset 0 0 0 1px rgba(186, 230, 253, 0.14),
+      0 10px 28px rgba(3, 20, 30, 0.32);
+  }
+
+  .chesscito-stats-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 12px;
+    min-height: 52px;
+    text-align: center;
+  }
+
+  .chesscito-stats-item + .chesscito-stats-item {
+    border-left: 1px solid rgba(186, 230, 253, 0.2);
+  }
+
+  .chesscito-stats-label {
+    font-size: 0.74rem;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    color: rgba(207, 250, 254, 0.92);
+    font-weight: 700;
+  }
+
+  .chesscito-stats-value {
+    font-size: 1.12rem;
+    line-height: 1;
+    font-weight: 700;
+    color: #e6fffb;
+  }
 }
 
 @media (min-width: 640px) {

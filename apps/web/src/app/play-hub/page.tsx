@@ -444,6 +444,9 @@ export default function PlayHubPage() {
             { key: "knight", label: "Caballo", enabled: false },
           ]}
           phase={phase}
+          score={score.toString()}
+          timeMs={timeMs.toString()}
+          level={levelId.toString()}
           board={
             <Board
               key={boardKey}
@@ -458,10 +461,6 @@ export default function PlayHubPage() {
         <section className="fixed bottom-0 left-0 right-0 z-40 border-t border-cyan-800/45 bg-slate-950/94 px-4 pb-4 pt-3 backdrop-blur sm:px-6">
           <div className="mx-auto max-h-[56vh] w-full max-w-screen-sm space-y-3 overflow-y-auto pr-1">
             <OnChainActionsPanel
-              score={score.toString()}
-              timeMs={timeMs.toString()}
-              moves={moves}
-              effectiveLevelId={levelId.toString()}
               canClaim={qaEnabled ? canSendOnChain && isQaLevelValid : canSendOnChain && !Boolean(hasClaimedBadge)}
               canSubmit={canSendOnChain}
               isClaimBusy={isClaimBusy}

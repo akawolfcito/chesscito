@@ -3,10 +3,6 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
 type OnChainActionsPanelProps = {
-  score: string;
-  timeMs: string;
-  moves: number;
-  effectiveLevelId: string;
   canClaim: boolean;
   canSubmit: boolean;
   isClaimBusy: boolean;
@@ -24,10 +20,6 @@ type OnChainActionsPanelProps = {
 };
 
 export function OnChainActionsPanel({
-  score,
-  timeMs,
-  moves,
-  effectiveLevelId,
   canClaim,
   canSubmit,
   isClaimBusy,
@@ -45,25 +37,6 @@ export function OnChainActionsPanel({
 }: OnChainActionsPanelProps) {
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 text-xs text-slate-200 sm:grid-cols-4">
-        <div className="mission-soft rune-frame rounded-xl px-3 py-2">
-          <p>Score</p>
-          <p className="mt-1 text-sm font-semibold text-cyan-100">{score}</p>
-        </div>
-        <div className="mission-soft rune-frame rounded-xl px-3 py-2">
-          <p>Time</p>
-          <p className="mt-1 text-sm font-semibold text-cyan-100">{timeMs} ms</p>
-        </div>
-        <div className="mission-soft rune-frame rounded-xl px-3 py-2">
-          <p>Level</p>
-          <p className="mt-1 text-sm font-semibold text-cyan-100">{effectiveLevelId}</p>
-        </div>
-        <div className="mission-soft rune-frame rounded-xl px-3 py-2">
-          <p>Moves</p>
-          <p className="mt-1 text-sm font-semibold text-cyan-100">{moves}</p>
-        </div>
-      </div>
-
       {qaEnabled ? (
         <details className="mission-soft rune-frame rounded-xl px-3 py-2 text-xs text-slate-200">
           <summary className="cursor-pointer list-none font-semibold uppercase tracking-[0.2em] text-cyan-300">
