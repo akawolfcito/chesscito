@@ -170,7 +170,7 @@ export function Board({
                         <span className="playhub-board-label">{square.label}</span>
                         {square.isHighlighted ? <span className="playhub-board-dot" /> : null}
                         {square.isTarget && !square.piece ? (
-                          <span className="playhub-board-target">◎</span>
+                          <span className="playhub-board-target" />
                         ) : null}
                         {square.piece ? <span className="playhub-board-piece">♖</span> : null}
                       </button>

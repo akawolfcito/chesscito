@@ -110,9 +110,11 @@
   html {
     font-family: "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
     overflow-x: hidden;
+    background-color: #0b1220;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
+    background-color: #0b1220;
     background-image: var(--playhub-game-bg);
     background-position: center top;
     /* 1024/826 = safe-area fills viewport width; larger screens reveal bleed area */
@@ -317,10 +319,27 @@
   .playhub-board-target {
     position: absolute;
     left: 50%;
-    bottom: 8%;
-    transform: translateX(-50%);
-    font-size: clamp(0.8rem, 3.1vw, 1.02rem);
-    color: rgba(224, 242, 254, 0.9);
+    top: 46%;
+    width: clamp(32px, 11.5vw, 52px);
+    height: clamp(32px, 11.5vw, 52px);
+    transform: translate(-50%, -50%) scaleY(0.52);
+    background-image: url("/art/target-circle.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    animation: chesscito-target-pulse 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes chesscito-target-pulse {
+    0%, 100% {
+      opacity: 0.85;
+      transform: translate(-50%, -50%) scaleY(0.52) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scaleY(0.52) scale(1.12);
+    }
   }
 
   .playhub-board-piece {
@@ -345,43 +364,51 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
-    border: 1px solid rgba(167, 243, 208, 0.32);
-    border-radius: 14px;
+    border-radius: 10px;
     overflow: hidden;
-    background: rgba(2, 18, 32, 0.45);
-    backdrop-filter: blur(4px);
+    background: linear-gradient(
+      180deg,
+      rgba(8, 16, 32, 0.92) 0%,
+      rgba(4, 10, 22, 0.96) 100%
+    );
+    border: 1px solid rgba(120, 180, 220, 0.14);
     box-shadow:
-      inset 0 0 0 1px rgba(186, 230, 253, 0.14),
-      0 10px 28px rgba(3, 20, 30, 0.32);
+      inset 0 1px 0 rgba(180, 230, 255, 0.16),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+      0 6px 24px rgba(0, 0, 0, 0.5);
   }
 
   .chesscito-stats-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 10px 12px;
-    min-height: 52px;
-    text-align: center;
+    gap: 9px;
+    padding: 11px 8px;
+    min-height: 48px;
   }
 
   .chesscito-stats-item + .chesscito-stats-item {
-    border-left: 1px solid rgba(186, 230, 253, 0.2);
+    border-left: 1px solid rgba(140, 200, 240, 0.14);
   }
 
   .chesscito-stats-label {
-    font-size: 0.74rem;
+    font-size: 0.6rem;
     line-height: 1;
-    letter-spacing: 0.14em;
-    color: rgba(207, 250, 254, 0.92);
-    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: rgba(160, 205, 225, 0.58);
+    font-weight: 600;
+    text-transform: uppercase;
   }
 
   .chesscito-stats-value {
-    font-size: 1.12rem;
+    font-size: 0.95rem;
     line-height: 1;
     font-weight: 700;
-    color: #e6fffb;
+    letter-spacing: 0.04em;
+    color: rgba(235, 252, 255, 0.97);
+    text-shadow:
+      0 0 10px rgba(103, 232, 249, 0.5),
+      0 0 24px rgba(103, 232, 249, 0.2);
   }
 }
 
