@@ -16,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="relative flex min-h-screen flex-col bg-background text-foreground">
+        <div className="relative flex min-h-screen flex-col text-foreground">
           <WalletProvider>
             <main className="flex flex-1 flex-col">
               {children}
