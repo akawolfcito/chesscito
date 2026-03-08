@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { erc20Abi } from "viem";
 import {
   useAccount,
@@ -118,11 +118,14 @@ export default function PlayHubPage() {
   const {
     progress,
     currentExercise,
+    isLastExercise,
     badgeEarned,
     completeExercise,
     advanceExercise,
     goToExercise,
   } = useExerciseProgress(selectedPiece);
+
+  const autoResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const host = window.location.hostname;
@@ -274,6 +277,7 @@ export default function PlayHubPage() {
   }
 
   function resetBoard() {
+    if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
     setBoardKey((previous) => previous + 1);
     setPhase("ready");
     setMoves(0);
@@ -291,10 +295,22 @@ export default function PlayHubPage() {
       setPhase("success");
       setElapsedMs(1000);
       completeExercise(movesCount);
+      // Avanzar automáticamente al siguiente ejercicio tras 1.5s
+      autoResetTimer.current = setTimeout(() => {
+        if (!isLastExercise) advanceExercise();
+        resetBoard();
+      }, 1500);
       return;
     }
 
-    setPhase("failure");
+    // Solo ejercicios de 1 movimiento: el primer click incorrecto = auto-reset
+    // Ejercicios multi-movimiento: el jugador sigue navegando libremente
+    if (currentExercise.optimalMoves === 1) {
+      setPhase("failure");
+      autoResetTimer.current = setTimeout(() => {
+        resetBoard();
+      }, 1500);
+    }
   }
 
   async function handleClaimBadge() {
