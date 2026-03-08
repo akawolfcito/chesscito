@@ -21,17 +21,18 @@ function parseLabel(label: string): BoardPosition {
 
 type Point = { x: number; y: number };
 
-// Calibrated corners (% of canvas) for chesscito-board.png perspective
-const BOARD_TOP_LEFT: Point = { x: 18.4, y: 8.6 };
-const BOARD_TOP_RIGHT: Point = { x: 88.9, y: 8.6 };
-const BOARD_BOTTOM_LEFT: Point = { x: 1.5, y: 93.7 };
-const BOARD_BOTTOM_RIGHT: Point = { x: 98.4, y: 93.7 };
+// Corners calibrated from bg-with-grid.png pixel analysis (% of 1011×934 canvas)
+const BOARD_TOP_LEFT: Point = { x: 11.6, y: 1.4 };
+const BOARD_TOP_RIGHT: Point = { x: 88.2, y: 1.4 };
+const BOARD_BOTTOM_LEFT: Point = { x: 0.1, y: 98.2 };
+const BOARD_BOTTOM_RIGHT: Point = { x: 99.2, y: 98.2 };
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-const BOARD_V_GAMMA = 1.0;
+// Gamma > 1 compresses top rows to match board perspective foreshortening
+const BOARD_V_GAMMA = 1.15;
 
 function interpolateQuad(u: number, v: number): Point {
   const vg = Math.pow(v, BOARD_V_GAMMA);
