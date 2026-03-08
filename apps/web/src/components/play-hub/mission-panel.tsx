@@ -18,6 +18,12 @@ type MissionPanelProps = {
   actionPanel: ReactNode;
 };
 
+const SELECTED_PIECE_ART: Record<PieceOption["key"], string> = {
+  rook: "/art/torre-selected.webp",
+  bishop: "/art/alfil-selected.webp",
+  knight: "/art/caballo-selected.webp",
+};
+
 export function MissionPanel({
   selectedPiece,
   onSelectPiece,
@@ -45,11 +51,20 @@ export function MissionPanel({
             type="button"
             disabled={!piece.enabled}
             onClick={() => onSelectPiece(piece.key)}
-            className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
+            className={`relative h-10 min-w-[110px] overflow-hidden rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] transition ${
               selectedPiece === piece.key
-                ? "bg-cyan-300 text-slate-900 shadow-[0_0_20px_rgba(103,232,249,0.45)]"
+                ? "text-cyan-50 shadow-[0_0_20px_rgba(103,232,249,0.45)]"
                 : "mission-chip disabled:opacity-50"
             }`}
+            style={
+              selectedPiece === piece.key
+                ? {
+                    backgroundImage: `linear-gradient(180deg, rgba(2,6,23,0.42), rgba(2,6,23,0.42)), url("${SELECTED_PIECE_ART[piece.key]}")`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
+                : undefined
+            }
           >
             {piece.label}
           </button>
