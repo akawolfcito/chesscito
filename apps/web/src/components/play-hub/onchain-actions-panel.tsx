@@ -1,7 +1,5 @@
 import type { ReactNode } from "react";
 
-import { Button } from "@/components/ui/button";
-
 type OnChainActionsPanelProps = {
   effectiveLevelId: string;
   canClaim: boolean;
@@ -19,6 +17,38 @@ type OnChainActionsPanelProps = {
   shopControl: ReactNode;
   leaderboardControl: ReactNode;
 };
+
+function ActionBtn({
+  icon,
+  label,
+  onClick,
+  disabled,
+  busy,
+  variant = "default",
+}: {
+  icon: string;
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  busy?: boolean;
+  variant?: "default" | "primary";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || busy}
+      className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl py-2 text-[10px] font-semibold uppercase tracking-[0.14em] transition disabled:opacity-35 ${
+        variant === "primary"
+          ? "bg-cyan-400/20 text-cyan-200 shadow-[inset_0_0_0_1px_rgba(103,232,249,0.35)]"
+          : "mission-chip text-cyan-100/80"
+      }`}
+    >
+      <span className="text-base leading-none">{busy ? "⏳" : icon}</span>
+      <span>{busy ? "..." : label}</span>
+    </button>
+  );
+}
 
 export function OnChainActionsPanel({
   effectiveLevelId,
@@ -38,7 +68,7 @@ export function OnChainActionsPanel({
   leaderboardControl,
 }: OnChainActionsPanelProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {qaEnabled ? (
         <details className="mission-soft rune-frame rounded-xl px-3 py-2 text-xs text-slate-200">
           <summary className="cursor-pointer list-none font-semibold uppercase tracking-[0.2em] text-cyan-300">
@@ -66,20 +96,28 @@ export function OnChainActionsPanel({
         </details>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-2">
-        <Button className="bg-cyan-300 text-slate-900 hover:bg-cyan-200" disabled={!canClaim || isClaimBusy || isGlobalBusy} onClick={onClaim}>
-          {isClaimBusy ? "Confirmando claim..." : "Claim badge"}
-        </Button>
-        <Button className="border-cyan-500/40 text-cyan-100 hover:bg-cyan-900/35" variant="outline" disabled={!canSubmit || isSubmitBusy || isGlobalBusy} onClick={onSubmit}>
-          {isSubmitBusy ? "Confirmando score..." : "Guardar score"}
-        </Button>
+      {/* Icon action bar */}
+      <div className="flex gap-2">
+        <ActionBtn icon="↺" label="Reset" onClick={onReset} disabled={isGlobalBusy} />
+        <ActionBtn
+          icon="🏅"
+          label="Badge"
+          onClick={onClaim}
+          disabled={!canClaim}
+          busy={isClaimBusy}
+          variant="primary"
+        />
+        <ActionBtn
+          icon="📊"
+          label="Score"
+          onClick={onSubmit}
+          disabled={!canSubmit}
+          busy={isSubmitBusy}
+          variant="primary"
+        />
         {shopControl}
         {leaderboardControl}
       </div>
-
-      <Button className="border-cyan-500/40 text-cyan-100 hover:bg-cyan-900/35" variant="outline" onClick={onReset}>
-        Reset board
-      </Button>
     </div>
   );
 }

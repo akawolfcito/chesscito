@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -29,7 +28,13 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
-        <Button className="border-cyan-500/40 text-cyan-100 hover:bg-cyan-900/35" variant="outline">Store</Button>
+        <button
+          type="button"
+          className="mission-chip flex flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/80 transition"
+        >
+          <span className="text-base leading-none">🛒</span>
+          <span>Tienda</span>
+        </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-slate-700">
         <SheetHeader>
