@@ -36,10 +36,6 @@ export function MissionPanel({
           <span className="glow-dot" />
           Arcane Play Hub
         </p>
-        <h1 className="fantasy-title text-3xl font-semibold tracking-tight text-cyan-50">Realm Tactics Console</h1>
-        <p className="text-sm text-slate-300">
-          Completa la misión, reclama badge y registra score on-chain sin salir del tablero.
-        </p>
       </div>
 
       <div className="flex gap-2">
