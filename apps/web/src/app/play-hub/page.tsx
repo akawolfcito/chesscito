@@ -431,7 +431,7 @@ export default function PlayHubPage() {
   return (
     <>
       <div className="playhub-intro-overlay" aria-hidden="true" />
-      <main className="mission-shell mx-auto min-h-screen w-full max-w-none px-0 pb-72 pt-0 sm:px-0">
+      <main className="mission-shell mx-auto min-h-screen w-full max-w-none px-0 pb-8 pt-0 sm:px-0">
         <MissionPanel
           selectedPiece={selectedPiece}
           onSelectPiece={(piece) => {
@@ -447,6 +447,57 @@ export default function PlayHubPage() {
           score={score.toString()}
           timeMs={timeMs.toString()}
           level={levelId.toString()}
+          actionPanel={
+            <div className="space-y-3">
+              <OnChainActionsPanel
+                effectiveLevelId={levelId.toString()}
+                canClaim={qaEnabled ? canSendOnChain && isQaLevelValid : canSendOnChain && !Boolean(hasClaimedBadge)}
+                canSubmit={canSendOnChain}
+                isClaimBusy={isClaimBusy}
+                isSubmitBusy={isSubmitBusy}
+                isGlobalBusy={isWriting}
+                qaEnabled={qaEnabled}
+                qaLevelInput={qaLevelInput}
+                isQaLevelValid={isQaLevelValid}
+                onQaLevelInputChange={setQaLevelInput}
+                onClaim={() => void handleClaimBadge()}
+                onSubmit={() => void handleSubmitScore()}
+                onReset={resetBoard}
+                shopControl={
+                  <ShopSheet
+                    open={storeOpen}
+                    onOpenChange={setStoreOpen}
+                    items={shopCatalog}
+                    onSelectItem={(itemId) => {
+                      setSelectedItemId(itemId);
+                      setConfirmOpen(true);
+                    }}
+                  />
+                }
+                leaderboardControl={
+                  <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} rows={leaderboardRows} />
+                }
+              />
+
+              {isLocalhost ? (
+                <StatusStrip
+                  chainId={chainId}
+                  isConnected={isConnected}
+                  isCorrectChain={isCorrectChain}
+                  missionCompleted={phase === "success"}
+                  hasClaimedBadge={hasClaimedBadge}
+                  shopTxHash={shopTxHash}
+                  claimTxHash={claimTxHash}
+                  submitTxHash={submitTxHash}
+                  isShopConfirming={isShopConfirming}
+                  isClaimConfirming={isClaimConfirming}
+                  isSubmitConfirming={isSubmitConfirming}
+                  lastError={lastError}
+                  txLink={(txHash) => txLink(chainId, txHash)}
+                />
+              ) : null}
+            </div>
+          }
           board={
             <Board
               key={boardKey}
@@ -457,58 +508,6 @@ export default function PlayHubPage() {
             />
           }
         />
-
-        <section className="fixed bottom-0 left-0 right-0 z-40 border-t border-cyan-800/45 bg-slate-950/94 px-4 pb-4 pt-3 backdrop-blur sm:px-6">
-          <div className="mx-auto max-h-[56vh] w-full max-w-screen-sm space-y-3 overflow-y-auto pr-1">
-            <OnChainActionsPanel
-              effectiveLevelId={levelId.toString()}
-              canClaim={qaEnabled ? canSendOnChain && isQaLevelValid : canSendOnChain && !Boolean(hasClaimedBadge)}
-              canSubmit={canSendOnChain}
-              isClaimBusy={isClaimBusy}
-              isSubmitBusy={isSubmitBusy}
-              isGlobalBusy={isWriting}
-              qaEnabled={qaEnabled}
-              qaLevelInput={qaLevelInput}
-              isQaLevelValid={isQaLevelValid}
-              onQaLevelInputChange={setQaLevelInput}
-              onClaim={() => void handleClaimBadge()}
-              onSubmit={() => void handleSubmitScore()}
-              onReset={resetBoard}
-              shopControl={
-                <ShopSheet
-                  open={storeOpen}
-                  onOpenChange={setStoreOpen}
-                  items={shopCatalog}
-                  onSelectItem={(itemId) => {
-                    setSelectedItemId(itemId);
-                    setConfirmOpen(true);
-                  }}
-                />
-              }
-              leaderboardControl={
-                <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} rows={leaderboardRows} />
-              }
-            />
-
-            {isLocalhost ? (
-              <StatusStrip
-                chainId={chainId}
-                isConnected={isConnected}
-                isCorrectChain={isCorrectChain}
-                missionCompleted={phase === "success"}
-                hasClaimedBadge={hasClaimedBadge}
-                shopTxHash={shopTxHash}
-                claimTxHash={claimTxHash}
-                submitTxHash={submitTxHash}
-                isShopConfirming={isShopConfirming}
-                isClaimConfirming={isClaimConfirming}
-                isSubmitConfirming={isSubmitConfirming}
-                lastError={lastError}
-                txLink={(txHash) => txLink(chainId, txHash)}
-              />
-            ) : null}
-          </div>
-        </section>
 
         <PurchaseConfirmSheet
           open={confirmOpen}

@@ -15,6 +15,7 @@ type MissionPanelProps = {
   timeMs: string;
   level: string;
   board: ReactNode;
+  actionPanel: ReactNode;
 };
 
 export function MissionPanel({
@@ -26,6 +27,7 @@ export function MissionPanel({
   timeMs,
   level,
   board,
+  actionPanel,
 }: MissionPanelProps) {
   return (
     <section className="stage-vignette space-y-4 p-4">
@@ -78,6 +80,8 @@ export function MissionPanel({
           <span className="chesscito-stats-value">{level}</span>
         </div>
       </div>
+
+      {actionPanel}
 
       {phase === "failure" ? (
         <div className="rounded-2xl border border-rose-500/40 bg-rose-900/35 px-4 py-3 text-sm text-rose-200">
