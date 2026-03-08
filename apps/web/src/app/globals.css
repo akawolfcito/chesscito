@@ -345,11 +345,15 @@
   .playhub-board-piece {
     position: absolute;
     left: 50%;
-    top: 50%;
+    top: 48%;
     transform: translate(-50%, -50%);
-    font-size: clamp(1rem, 4vw, 1.45rem);
-    color: #d9f7ff;
-    filter: drop-shadow(0 0 8px rgba(8, 145, 178, 0.75));
+    height: clamp(28px, 9.5vw, 42px);
+    width: auto;
+    object-fit: contain;
+    pointer-events: none;
+    filter:
+      drop-shadow(0 0 6px rgba(103, 232, 249, 0.6))
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
   }
 
   .playhub-game-grid {

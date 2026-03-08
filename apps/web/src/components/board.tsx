@@ -11,6 +11,12 @@ import {
 } from "@/lib/game/board";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
 
+const PIECE_IMG: Record<PieceId, string> = {
+  rook:   "/art/piece-rook.png",
+  bishop: "/art/piece-bishop.png",
+  knight: "/art/piece-knight.png",
+};
+
 function parseLabel(label: string): BoardPosition {
   const file = label.charCodeAt(0) - 97;
   const rank = Number(label.slice(1)) - 1;
@@ -172,7 +178,13 @@ export function Board({
                         {square.isTarget && !square.piece ? (
                           <span className="playhub-board-target" />
                         ) : null}
-                        {square.piece ? <span className="playhub-board-piece">♖</span> : null}
+                        {square.piece ? (
+                          <img
+                            src={PIECE_IMG[square.piece.type]}
+                            alt={square.piece.type}
+                            className="playhub-board-piece"
+                          />
+                        ) : null}
                       </button>
                     );
                   })()
