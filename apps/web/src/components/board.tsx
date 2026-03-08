@@ -6,7 +6,6 @@ import {
   INITIAL_ROOK,
   arePositionsEqual,
   buildBoardSquares,
-  getPositionLabel,
   getRookTargets,
   movePiece,
 } from "@/lib/game/board";
@@ -109,14 +108,13 @@ export function Board({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="playhub-stage-shell">
-        <div className="playhub-game-stage">
-          <div className="playhub-game-grid">
-            <div className="playhub-board-canvas">
-              <div className="playhub-board-hitgrid" role="grid" aria-label="Chess board">
-                {squares.map((square) =>
-                  (() => {
+    <div className="playhub-stage-shell w-full">
+      <div className="playhub-game-stage">
+        <div className="playhub-game-grid">
+          <div className="playhub-board-canvas">
+            <div className="playhub-board-hitgrid" role="grid" aria-label="Chess board">
+              {squares.map((square) =>
+                (() => {
                     const row = 7 - square.rank;
                     const col = square.file;
                     const u0 = col / 8;
@@ -173,39 +171,6 @@ export function Board({
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl bg-slate-950 px-4 py-4 text-white">
-          <p className="text-xs uppercase tracking-[0.2em] text-white/60">Piece</p>
-          <p className="mt-2 text-lg font-semibold">Torre</p>
-          <p className="mt-1 text-sm text-white/75">
-            {mode === "tutorial"
-              ? "Las flechas verdes marcan la fila y la columna completas."
-              : targetPosition
-                ? "Selecciona la Torre y captura el objetivo en un solo movimiento."
-                : "Toca la pieza para ver movimientos legales."}
-          </p>
-        </div>
-        <div className="rounded-2xl bg-slate-100 px-4 py-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-            {mode === "tutorial" ? "Tutorial state" : targetPosition ? "Target square" : "Current square"}
-          </p>
-          <p className="mt-2 text-lg font-semibold text-slate-950">
-            {mode === "tutorial"
-              ? "Trayectorias activas"
-              : targetPosition
-                ? getPositionLabel(targetPosition)
-                : getPositionLabel(piece.position)}
-          </p>
-          <p className="mt-1 text-sm text-slate-600">
-            {mode === "tutorial"
-              ? "Pulsa Probar para convertir estas trayectorias en movimiento interactivo."
-              : targetPosition
-                ? "El circulo marca la captura objetivo."
-                : "Toca una casilla marcada para mover la Torre."}
-          </p>
         </div>
       </div>
     </div>
