@@ -36,7 +36,7 @@ export function MissionPanel({
   actionPanel,
 }: MissionPanelProps) {
   return (
-    <section className="stage-vignette space-y-4 p-4">
+    <section className="stage-vignette mx-auto w-full max-w-app space-y-4 p-4">
       <div className="space-y-2">
         <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">
           <span className="glow-dot" />
