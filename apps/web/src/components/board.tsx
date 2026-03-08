@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { BoardSquare } from "@/components/board-square";
 import {
   INITIAL_ROOK,
   arePositionsEqual,
@@ -88,16 +87,32 @@ export function Board({
 
   return (
     <div className="space-y-4">
-      <div className="playhub-game-stage">
-        <div className="playhub-game-grid">
-          <div className="grid grid-cols-8 gap-2">
-          {squares.map((square) => (
-            <BoardSquare
-              key={square.label}
-              square={square}
-              onPress={handleSquarePress}
-            />
-          ))}
+      <div className="playhub-stage-shell">
+        <div className="playhub-game-stage">
+          <div className="playhub-game-grid">
+            <div className="playhub-board-canvas">
+              <div className="playhub-board-hitgrid" role="grid" aria-label="Chess board">
+                {squares.map((square) => (
+                  <button
+                    key={square.label}
+                    type="button"
+                    role="gridcell"
+                    aria-label={`Square ${square.label}`}
+                    onClick={() => handleSquarePress(square.label)}
+                    className={[
+                      "playhub-board-cell",
+                      square.isHighlighted ? "is-highlighted" : "",
+                      square.isSelected ? "is-selected" : "",
+                    ].join(" ")}
+                  >
+                    <span className="playhub-board-label">{square.label}</span>
+                    {square.isHighlighted ? <span className="playhub-board-dot" /> : null}
+                    {square.isTarget && !square.piece ? <span className="playhub-board-target">◎</span> : null}
+                    {square.piece ? <span className="playhub-board-piece">♖</span> : null}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
