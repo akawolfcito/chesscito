@@ -65,6 +65,8 @@
       url("/art/reward-glow.png") type("image/png")
     );
     --playhub-game-bg: image-set(
+      url("/art/bg-game.avif") type("image/avif"),
+      url("/art/bg-game.webp") type("image/webp"),
       url("/art/bg-game.png") type("image/png")
     );
   }
