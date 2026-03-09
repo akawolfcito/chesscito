@@ -103,10 +103,10 @@ pnpm contracts:deploy:celo        # deploy to Celo Mainnet
 
 | | |
 |-|-----|
-| Live demo | TBD |
-| Demo video | TBD |
-| Presentation deck | TBD |
-| Karma GAP project | TBD |
+| Live demo | [chesscito.vercel.app](https://chesscito.vercel.app/) |
+| Demo video | [youtube.com/watch?v=h-DGIxbEoms](https://www.youtube.com/watch?v=h-DGIxbEoms) |
+| Presentation deck | [Google Slides](https://docs.google.com/presentation/d/e/2PACX-1vQpOSWoGHS1hKB5H9uHAHmWVVKfuOUADdVL0NV2jHzr3ZeQxelNS8tNjNKlxHRdm0ae5VYBWSpI3gLF/pub?start=false&loop=false&delayms=3000) |
+| Karma GAP project | [karmahq.xyz/project/chesscito](https://www.karmahq.xyz/project/chesscito) |
 | Public repo | [github.com/wolfcito/chesscito](https://github.com/wolfcito/chesscito) |
 
 ---
