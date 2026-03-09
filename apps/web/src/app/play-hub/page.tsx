@@ -561,7 +561,10 @@ export default function PlayHubPage() {
 
         <PurchaseConfirmSheet
           open={confirmOpen}
-          onOpenChange={setConfirmOpen}
+          onOpenChange={(open) => {
+            setConfirmOpen(open);
+            if (!open) setPurchasePhase("idle");
+          }}
           selectedItem={selectedItem}
           chainId={chainId}
           shopAddress={shopAddress}
