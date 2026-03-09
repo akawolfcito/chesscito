@@ -1,21 +1,24 @@
 import { AppShell } from "@/components/app-shell";
+import { CTA_LABELS } from "@/lib/content/editorial";
+import { fetchLeaderboard } from "@/lib/server/leaderboard";
 
-const rows = [
-  { rank: 1, player: "0x71...2d4c", score: 980, time: "18.4s" },
-  { rank: 2, player: "0x8a...96bb", score: 910, time: "20.1s" },
-  { rank: 3, player: "0x0f...cc31", score: 860, time: "22.7s" },
-];
+export const revalidate = 60;
 
-export default function LeaderboardPage() {
+export default async function LeaderboardPage() {
+  const rows = await fetchLeaderboard().catch(() => []);
+
   return (
     <AppShell
       eyebrow="Leaderboard"
       title="Top 10"
-      description="Aqui se conectara el endpoint que leerá eventos on-chain. Por ahora dejamos la ruta y la estructura movil."
-      cta={{ href: "/play-hub", label: "Volver al Play Hub" }}
-      secondaryCta={{ href: "/", label: "Inicio" }}
+      description="Los mejores scores registrados on-chain."
+      cta={{ href: "/play-hub", label: CTA_LABELS.backToPlay }}
+      secondaryCta={{ href: "/", label: CTA_LABELS.startTrial }}
     >
       <div className="space-y-3">
+        {rows.length === 0 && (
+          <p className="text-center text-sm text-slate-500">Aún no hay scores registrados.</p>
+        )}
         {rows.map((row) => (
           <div
             key={row.rank}
@@ -26,11 +29,10 @@ export default function LeaderboardPage() {
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-950">{row.player}</p>
-              <p className="text-sm text-slate-500">Tiempo {row.time}</p>
             </div>
             <div className="text-right">
               <p className="text-lg font-semibold text-slate-950">{row.score}</p>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">pts</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">score</p>
             </div>
           </div>
         ))}
