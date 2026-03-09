@@ -27,8 +27,8 @@ const SELECTED_PIECE_ART: Record<PieceOption["key"], string> = {
 
 const PHASE_STATUS: Record<MissionPanelProps["phase"], { text: string; className: string } | null> = {
   ready: null,
-  success: { text: "✓ ¡Correcto! Siguiente ejercicio...", className: "text-emerald-300" },
-  failure: { text: "✗ No era esa casilla, inténtalo de nuevo", className: "text-rose-300" },
+  success: { text: "Path complete. Continue.", className: "text-emerald-300" },
+  failure: { text: "Not this square. Try again.", className: "text-rose-300" },
 };
 
 export function MissionPanel({

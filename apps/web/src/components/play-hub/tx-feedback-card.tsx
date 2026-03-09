@@ -24,7 +24,7 @@ export function TxFeedbackCard({ tone, title, message, txHash, txHref }: TxFeedb
       {txHash ? <p className="mt-2 break-all font-mono">{txHash}</p> : null}
       {txHash && txHref ? (
         <Link className="mt-2 inline-flex font-semibold underline underline-offset-2" href={txHref} rel="noopener noreferrer" target="_blank">
-          Ver en CeloScan
+          View on CeloScan
         </Link>
       ) : null}
     </div>

@@ -1,4 +1,5 @@
 import { TxFeedbackCard } from "@/components/play-hub/tx-feedback-card";
+import { GLOSSARY } from "@/lib/content/editorial";
 
 type StatusStripProps = {
   chainId: number | undefined;
@@ -31,23 +32,23 @@ export function StatusStrip({
   lastError,
   txLink,
 }: StatusStripProps) {
-  const readiness = !isConnected ? "Wallet desconectada" : isCorrectChain ? "Red correcta" : "Red incorrecta";
-  const missionStatus = missionCompleted ? "Challenge completado" : "Challenge pendiente";
+  const readiness = !isConnected ? "Wallet not connected" : isCorrectChain ? "Network ready" : "Switch to the supported network";
+  const piecePathStatus = missionCompleted ? "Piece Path complete" : "Piece Path in progress";
 
   return (
     <div className="space-y-2">
       <div className="mission-soft rune-frame rounded-xl px-3 py-2 text-xs text-cyan-50">
-        <p>Estado: {readiness}</p>
+        <p>Status: {readiness}</p>
         <p>Chain: {chainId ?? "n/a"}</p>
-        <p>Mision: {missionStatus}</p>
-        <p>Badge: {hasClaimedBadge ? "Claimed" : "Pending"}</p>
+        <p>{GLOSSARY.piecePath}: {piecePathStatus}</p>
+        <p>{GLOSSARY.badge}: {hasClaimedBadge ? "Claimed" : "Ready to claim"}</p>
       </div>
 
       {submitTxHash && isSubmitConfirming ? (
         <TxFeedbackCard
           tone="pending"
-          title="Submit en progreso"
-          message="Esperando confirmacion on-chain para submit score."
+          title="Submitting score"
+          message="Waiting for onchain confirmation."
           txHash={submitTxHash}
           txHref={txLink(submitTxHash)}
         />
@@ -55,8 +56,8 @@ export function StatusStrip({
       {submitTxHash && !isSubmitConfirming ? (
         <TxFeedbackCard
           tone="success"
-          title="Score guardado"
-          message="Transaccion confirmada para submit score."
+          title="Score submitted"
+          message="Your score is now recorded onchain."
           txHash={submitTxHash}
           txHref={txLink(submitTxHash)}
         />
@@ -65,8 +66,8 @@ export function StatusStrip({
       {claimTxHash && isClaimConfirming ? (
         <TxFeedbackCard
           tone="pending"
-          title="Claim en progreso"
-          message="Esperando confirmacion on-chain para claim badge."
+          title="Claiming badge"
+          message="Waiting for onchain confirmation."
           txHash={claimTxHash}
           txHref={txLink(claimTxHash)}
         />
@@ -74,8 +75,8 @@ export function StatusStrip({
       {claimTxHash && !isClaimConfirming ? (
         <TxFeedbackCard
           tone="success"
-          title="Badge reclamado"
-          message="Transaccion confirmada para claim badge."
+          title="Badge claimed"
+          message="Your badge is now confirmed onchain."
           txHash={claimTxHash}
           txHref={txLink(claimTxHash)}
         />
@@ -84,8 +85,8 @@ export function StatusStrip({
       {shopTxHash && isShopConfirming ? (
         <TxFeedbackCard
           tone="pending"
-          title="Compra en progreso"
-          message="Esperando confirmacion on-chain de la compra."
+          title="Processing purchase"
+          message="Waiting for onchain confirmation."
           txHash={shopTxHash}
           txHref={txLink(shopTxHash)}
         />
@@ -93,8 +94,8 @@ export function StatusStrip({
       {shopTxHash && !isShopConfirming ? (
         <TxFeedbackCard
           tone="success"
-          title="Compra completada"
-          message="Compra on-chain confirmada."
+          title="Purchase complete"
+          message="Your purchase is now confirmed onchain."
           txHash={shopTxHash}
           txHref={txLink(shopTxHash)}
         />

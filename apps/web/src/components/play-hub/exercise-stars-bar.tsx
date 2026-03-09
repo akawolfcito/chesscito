@@ -35,7 +35,7 @@ export function ExerciseStarsBar({
                 ? "bg-cyan-900/40 ring-1 ring-cyan-500/50"
                 : "opacity-60 hover:opacity-90",
             ].join(" ")}
-            aria-label={`Ejercicio ${index + 1}: ${exerciseStars} estrella${exerciseStars !== 1 ? "s" : ""}`}
+            aria-label={`Trial ${index + 1}: ${exerciseStars} star${exerciseStars !== 1 ? "s" : ""}`}
           >
             <span className="text-[0.6rem] font-semibold tracking-widest text-cyan-400/70">
               {index + 1}
