@@ -1,0 +1,11 @@
+{
+  "name": "Knight Ascendant",
+  "description": "Awarded for completing the Knight piece path in Chesscito.",
+  "image": "ipfs://bafybeicjqvwqnqaoqe23jlbyzwzg4bjg7g4fplx3icgtz5qb62dakamb2a/badge-knight.png",
+  "attributes": [
+    { "trait_type": "Piece", "value": "Knight" },
+    { "trait_type": "Rank", "value": "Ascendant" },
+    { "trait_type": "Category", "value": "Badge" },
+    { "trait_type": "App", "value": "Chesscito" }
+  ]
+}
