@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 import { WalletProvider } from "@/components/wallet-provider"
@@ -6,6 +6,9 @@ import { WalletProvider } from "@/components/wallet-provider"
 export const metadata: Metadata = {
   title: 'chesscito',
   description: 'MiniPay MiniApp for playful cognitive enrichment through pre-chess challenges.',
+};
+
+export const viewport: Viewport = {
   themeColor: '#0b1220',
 };
 
