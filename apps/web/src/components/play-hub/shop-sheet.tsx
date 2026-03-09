@@ -61,7 +61,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
                 {item.configured ? (item.enabled ? "Available" : "Unavailable") : "Unavailable"}
               </p>
               <Button
-                className="mt-3 w-full border-cyan-500/40 text-cyan-100 hover:bg-cyan-900/35"
+                className="mt-3 w-full border-cyan-500/40 text-white hover:bg-cyan-900/35"
                 variant="outline"
                 disabled={!item.configured || !item.enabled}
                 onClick={() => onSelectItem(item.itemId)}
