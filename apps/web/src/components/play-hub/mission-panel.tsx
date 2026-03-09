@@ -55,7 +55,7 @@ export function MissionPanel({
             type="button"
             disabled={!piece.enabled}
             onClick={() => onSelectPiece(piece.key)}
-            className={`relative h-9 min-w-[90px] overflow-hidden rounded-full px-3 text-xs font-semibold uppercase tracking-[0.2em] transition disabled:opacity-40 ${
+            className={`relative h-9 min-w-[72px] shrink overflow-hidden rounded-full px-3 text-xs font-semibold uppercase tracking-[0.2em] transition disabled:opacity-40 ${
               selectedPiece === piece.key
                 ? "text-cyan-50 shadow-[0_0_20px_rgba(103,232,249,0.45)]"
                 : "mission-chip"
@@ -79,7 +79,7 @@ export function MissionPanel({
             {status.text}
           </span>
         ) : (
-          <span className="ml-auto shrink-0 text-xs text-cyan-300/60 tracking-[0.16em] uppercase">
+          <span className="ml-auto shrink-0 whitespace-nowrap text-xs text-cyan-300/80 tracking-[0.16em] uppercase">
             Lv {level}
           </span>
         )}

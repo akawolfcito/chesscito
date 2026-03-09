@@ -7,7 +7,7 @@ type ExerciseStarsBarProps = {
 function StarIcon({ filled }: { filled: boolean }) {
   return (
     <span
-      className={filled ? "text-amber-400" : "text-cyan-900/60"}
+      className={filled ? "text-amber-400" : "text-slate-600"}
       aria-hidden="true"
     >
       ★
@@ -37,7 +37,7 @@ export function ExerciseStarsBar({
             ].join(" ")}
             aria-label={`Trial ${index + 1}: ${exerciseStars} star${exerciseStars !== 1 ? "s" : ""}`}
           >
-            <span className="text-[0.6rem] font-semibold tracking-widest text-cyan-400/70">
+            <span className="text-[0.6rem] font-semibold tracking-widest text-cyan-400">
               {index + 1}
             </span>
             <div className="flex text-[0.65rem] leading-none">
