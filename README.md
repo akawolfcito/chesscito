@@ -1,106 +1,116 @@
-# Chesscito
+<div align="center">
+  <img src="apps/web/public/art/bg-splash-chesscito.png" alt="Chesscito" width="320" />
 
-Chesscito is a MiniPay MiniApp for cognitive enrichment through short pre-chess challenges. The product direction is educational, playful, and measurable. It must not make medical claims.
+  <h3>Pre-chess puzzles on Celo — playable inside MiniPay</h3>
 
-## Submission Links
+  <p>
+    <a href="https://celo.org"><img src="https://img.shields.io/badge/Celo-Mainnet-FCFF52?style=flat-square&labelColor=1A1A2E" alt="Celo Mainnet" /></a>
+    <a href="https://docs.celo.org/build/build-on-minipay/overview"><img src="https://img.shields.io/badge/MiniPay-Compatible-35D07F?style=flat-square&labelColor=1A1A2E" alt="MiniPay" /></a>
+    <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-14-white?style=flat-square&logo=next.js&labelColor=1A1A2E" alt="Next.js 14" /></a>
+    <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&labelColor=1A1A2E" alt="TypeScript" /></a>
+    <img src="https://img.shields.io/badge/license-MIT-8B5CF6?style=flat-square&labelColor=1A1A2E" alt="MIT License" />
+  </p>
+</div>
 
-- Live demo URL: `TBD`
-- Celo Mainnet deployment: `TBD`
-- Presentation deck: `TBD`
-- Demo video: `TBD`
-- Karma GAP project: `TBD`
-- Public GitHub repo: https://github.com/wolfcito/chesscito
+---
 
-## North Star
+## What is Chesscito?
 
-Ship a MiniPay MiniApp on Celo Mainnet with:
-- Gameplay MVP for Tower first, then Bishop/Knight if time remains
-- On-chain proof via `submitScoreSigned` and `claimBadgeSigned`
-- Functional Top 10 leaderboard
-- Submission pack complete in Karma GAP
+Chesscito is an educational MiniApp distributed via **MiniPay on Celo**. Players solve short pre-chess puzzles — moving a single piece to a target square in the fewest moves possible — earning on-chain badges and scores as proof of progress.
+
+- **Learn** how chess pieces move through interactive puzzles
+- **Earn** on-chain badges and leaderboard scores on Celo Mainnet
+- **Play** directly inside MiniPay — no wallet setup required
+
+## Gameplay
+
+Three pieces. Five puzzles each. Stars awarded by precision.
+
+| Piece | Trials | Badge |
+|-------|--------|-------|
+| Rook (Torre) | 5 | Rook Ascendant |
+| Bishop (Alfil) | 5 | Bishop Ascendant |
+| Knight (Caballo) | 5 | Knight Ascendant |
+
+Stars are awarded based on move efficiency:
+- **3 stars** — solved in the optimal number of moves
+- **2 stars** — one extra move used
+- **1 star** — two extra moves used
+
+Earn ≥ 10/15 stars per piece to unlock your on-chain badge.
+
+## On-chain Contracts (Celo Mainnet)
+
+| Contract | Address |
+|----------|---------|
+| Badges (ERC-1155) | [`0xf92759E5...`](https://celoscan.io/address/0xf92759E5525763554515DD25E7650f72204a6739) |
+| Scoreboard | [`0x1681aAA1...`](https://celoscan.io/address/0x1681aAA176d5f46e45789A8b18C8E990f663959a) |
+| Shop | [`0xc66773A9...`](https://celoscan.io/address/0xc66773A9e897641951DAACa8Bae90dA15d90588B) |
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 14 App Router + TypeScript |
+| Styling | Tailwind CSS |
+| Blockchain | Celo Mainnet (chain ID 42220) |
+| Wallet | MiniPay via wagmi + viem |
+| Monorepo | Turborepo + pnpm |
+| Contracts | Solidity + Hardhat + OpenZeppelin v5 |
 
 ## Project Structure
 
-This monorepo is managed by Turborepo:
-
-- `apps/web` — Next.js 14 MiniApp frontend
-- `apps/contracts` — Hardhat contracts and deployment scripts
-- `docs/planning` — roadmap, backlog, and execution notes
-- `docs/submission` — deck outline and demo video script
-- `.github` — PR workflow defaults and templates
-
-## Workflow
-
-- Use granular, frequent commits during implementation.
-- Land changes through small PRs aligned to a single issue or vertical slice.
-- Enable auto-merge for PRs after checks pass.
-- Follow the project workflow in `CONTRIBUTING.md`.
+```
+chesscito/
+├── apps/
+│   ├── web/          # Next.js 14 MiniApp frontend
+│   └── contracts/    # Hardhat contracts and deploy scripts
+└── docs/             # Planning and submission assets
+```
 
 ## Getting Started
 
-1. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-2. Start the development server:
-   ```bash
-   pnpm dev
-   ```
-3. Open `http://localhost:3000`.
+```bash
+pnpm install
+pnpm dev
+```
 
-## Available Scripts
+Open [http://localhost:3000](http://localhost:3000).
 
-- `pnpm dev` — start local development
-- `pnpm build` — build all workspaces
-- `pnpm lint` — lint all workspaces
-- `pnpm type-check` — type-check all workspaces
-- `pnpm contracts:compile` — compile contracts
-- `pnpm contracts:test` — run contract tests
-- `pnpm contracts:deploy` — deploy to local network
-- `pnpm contracts:deploy:alfajores` — deploy to Alfajores
-- `pnpm contracts:deploy:celo-sepolia` — deploy to Celo Sepolia
-- `pnpm contracts:deploy:celo` — deploy to Celo Mainnet
+### Available Scripts
 
-## Testing in MiniPay (Device)
+```bash
+pnpm dev                          # start local development
+pnpm build                        # build all workspaces
+pnpm lint                         # lint all workspaces
+pnpm type-check                   # type-check all workspaces
+pnpm contracts:compile            # compile contracts
+pnpm contracts:deploy:alfajores   # deploy to Alfajores testnet
+pnpm contracts:deploy:celo        # deploy to Celo Mainnet
+```
 
-MiniPay validation must happen on a real mobile device. Do not use an emulator.
+## Testing in MiniPay
 
-1. Start the web app:
-   ```bash
-   pnpm --filter web dev
-   ```
-2. Expose the local app:
-   ```bash
-   ngrok http 3000
-   ```
-3. On your phone, open MiniPay.
-4. Go to `Settings > About`.
-5. Tap the `Version` row repeatedly until Developer Mode is enabled.
-6. Open `Developer Settings`.
-7. Tap `Load Test Page`.
-8. Paste the current HTTPS `ngrok` URL and launch the app.
+1. Start the dev server: `pnpm --filter web dev`
+2. Expose it via ngrok: `ngrok http 3000`
+3. In MiniPay → Settings → About → tap **Version** repeatedly to enable Developer Mode
+4. Open **Developer Settings** → **Load Test Page**
+5. Paste the HTTPS ngrok URL and launch
 
-Compatibility rules:
-- Guard wallet initialization behind `window.provider` or `window.ethereum`.
-- Hide redundant connect-wallet UX inside MiniPay.
-- Assume legacy transactions only in MiniPay.
-- Treat `feeCurrency` as optional and validate support in the target environment before enabling it.
+> MiniPay uses legacy transactions. `feeCurrency` is optional and validated at runtime.
 
-Troubleshooting:
-- If no provider appears, reload the page inside MiniPay and confirm you opened it from `Load Test Page`, not a normal browser tab.
-- If the connect button still shows inside MiniPay, verify `window.ethereum?.isMiniPay` is present in the device session and hard-refresh the page.
-- If the `ngrok` URL stops working, restart `ngrok`, copy the new HTTPS URL, and update `Load Test Page`.
+## Submission Links
 
-References:
-- MiniPay quickstart: https://docs.celo.org/build/build-on-minipay/quickstart
-- MiniPay quickstart (current path): https://docs.celo.org/build-on-celo/build-on-minipay/quickstart
-- ngrok setup: https://docs.celo.org/build/build-on-minipay/prerequisites/ngrok-setup
-- viem on Celo: https://docs.celo.org/developer/viem
+| | |
+|-|-----|
+| Live demo | TBD |
+| Demo video | TBD |
+| Presentation deck | TBD |
+| Karma GAP project | TBD |
+| Public repo | [github.com/wolfcito/chesscito](https://github.com/wolfcito/chesscito) |
 
-## Delivery Definition
+---
 
-- `pnpm lint` and `pnpm build` pass in `apps/web`
-- Contracts have reproducible testnet and mainnet deploy flows
-- Demo is recorded on a real mobile device inside MiniPay
-- No redundant wallet connect prompt is shown inside MiniPay
-- Basic anti-spam protections exist for score submission and badge claim
+<div align="center">
+  <sub>Built with love on Celo · <a href="https://github.com/wolfcito">@wolfcito</a></sub>
+</div>
