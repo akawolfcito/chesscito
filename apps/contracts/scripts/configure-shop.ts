@@ -10,11 +10,7 @@ import { ethers } from "hardhat";
 // ── Item catalogue ─────────────────────────────────────────────────────────
 // itemId should match your off-chain item IDs exactly.
 const ITEMS: { itemId: bigint; price: bigint; enabled: boolean; label: string }[] = [
-  { itemId: 1n, price: 10_000n,  enabled: true,  label: "Basic Skin"     }, // 0.01 USDC
-  { itemId: 2n, price: 25_000n,  enabled: true,  label: "Rare Skin"      }, // 0.025 USDC
-  { itemId: 3n, price: 5_000n,   enabled: true,  label: "Potion x1"      }, // 0.005 USDC
-  { itemId: 4n, price: 40_000n,  enabled: true,  label: "Potion x10"     }, // 0.04 USDC
-  { itemId: 5n, price: 100_000n, enabled: true,  label: "Legendary Skin" }, // 0.10 USDC
+  { itemId: 1n, price: 100_000n, enabled: true, label: "Founder Badge" }, // 0.10 USDC
 ];
 
 async function main() {

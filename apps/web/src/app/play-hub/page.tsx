@@ -33,19 +33,17 @@ import {
 } from "@/lib/contracts/chains";
 import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
+import { CTA_LABELS, PIECE_LABELS } from "@/lib/content/editorial";
 import type { BoardPosition } from "@/lib/game/types";
 
 const SHOP_ITEMS = [
-  { itemId: 1n, label: "Vidas x5", subtitle: "Pack base", price: 10_000n },
-  { itemId: 2n, label: "Hechizo Lvl 3", subtitle: "Boost tactico", price: 20_000n },
-  { itemId: 3n, label: "Pocion de vida", subtitle: "Recuperacion instantanea", price: 50_000n },
+  {
+    itemId: 1n,
+    label: "Founder Badge",
+    subtitle: "Support Chesscito with an exclusive founder badge minted to your wallet.",
+  },
 ] as const;
 
-const leaderboardRows = [
-  { rank: 1, player: "0x71...2d4c", score: 980, time: "18.4s" },
-  { rank: 2, player: "0x8a...96bb", score: 910, time: "20.1s" },
-  { rank: 3, player: "0x0f...cc31", score: 860, time: "22.7s" },
-] as const;
 
 type SignatureResponse =
   | { nonce: string; deadline: string; signature: `0x${string}`; error?: never }
@@ -482,9 +480,9 @@ export default function PlayHubPage() {
             resetBoard();
           }}
           pieces={[
-            { key: "rook", label: "Torre", enabled: true },
-            { key: "bishop", label: "Alfil", enabled: true },
-            { key: "knight", label: "Caballo", enabled: true },
+            { key: "rook", label: PIECE_LABELS.rook, enabled: true },
+            { key: "bishop", label: PIECE_LABELS.bishop, enabled: true },
+            { key: "knight", label: PIECE_LABELS.knight, enabled: true },
           ]}
           phase={phase}
           score={score.toString()}
@@ -518,7 +516,7 @@ export default function PlayHubPage() {
                   />
                 }
                 leaderboardControl={
-                  <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} rows={leaderboardRows} />
+                  <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
                 }
               />
 
@@ -576,7 +574,7 @@ export default function PlayHubPage() {
         />
 
         {isMiniPay ? null : (
-          <p className="mt-4 text-xs text-cyan-100/65">En navegador normal puedes probar submit/claim. En MiniPay valida el flujo real de firma.</p>
+          <p className="mt-4 text-xs text-cyan-100/65">{CTA_LABELS.claimBadge} and {CTA_LABELS.submitScore} are available here. Open MiniPay to confirm the live signing flow.</p>
         )}
       </main>
     </div>
