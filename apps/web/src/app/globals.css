@@ -192,6 +192,54 @@
     background: rgba(2, 18, 32, 0.36);
   }
 
+  /* Sheet backgrounds: blurred image + dark overlay */
+  .sheet-bg-leaderboard,
+  .sheet-bg-shop {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sheet-bg-leaderboard::before,
+  .sheet-bg-shop::before {
+    content: "";
+    position: absolute;
+    inset: -12px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(6px);
+    z-index: 0;
+  }
+
+  .sheet-bg-leaderboard::before {
+    background-image: image-set(
+      url("/art/leaderboard-hall-chesscito.webp") type("image/webp"),
+      url("/art/leaderboard-hall-chesscito.png") type("image/png")
+    );
+  }
+
+  .sheet-bg-shop::before {
+    background-image: image-set(
+      url("/art/shop-magic-chesscito.webp") type("image/webp"),
+      url("/art/shop-magic-chesscito.png") type("image/png")
+    );
+  }
+
+  .sheet-bg-leaderboard::after,
+  .sheet-bg-shop::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 20, 25, 0.35);
+    z-index: 0;
+  }
+
+  .sheet-bg-leaderboard > *,
+  .sheet-bg-shop > * {
+    position: relative;
+    z-index: 1;
+  }
+
   .glow-dot {
     width: 8px;
     height: 8px;

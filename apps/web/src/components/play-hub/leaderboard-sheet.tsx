@@ -27,13 +27,14 @@ export function LeaderboardSheet({ open, onOpenChange, rows }: LeaderboardSheetP
       <SheetTrigger asChild>
         <button
           type="button"
-          className="mission-chip flex flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/80 transition"
+          aria-label="Ranking"
+          className="mission-chip relative flex h-14 flex-1 items-center justify-center overflow-hidden rounded-2xl transition"
         >
-          <span className="text-base leading-none">🏆</span>
-          <span>Ranking</span>
+          <img src="/art/ranking-chesscito.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-1.5" />
+          <span className="sr-only">Ranking</span>
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-slate-700">
+      <SheetContent side="bottom" className="mission-shell sheet-bg-leaderboard rounded-t-3xl border-slate-700">
         <SheetHeader>
           <SheetTitle className="fantasy-title text-cyan-50">Hall of Rooks</SheetTitle>
           <SheetDescription className="text-cyan-100/75">Vista rápida sin salir del tablero.</SheetDescription>

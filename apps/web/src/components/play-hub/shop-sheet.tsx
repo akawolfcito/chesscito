@@ -31,13 +31,14 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
       <SheetTrigger asChild>
         <button
           type="button"
-          className="mission-chip flex flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/80 transition"
+          aria-label="Tienda"
+          className="mission-chip relative flex h-14 flex-1 items-center justify-center overflow-hidden rounded-2xl transition"
         >
-          <span className="text-base leading-none">🛒</span>
-          <span>Tienda</span>
+          <img src="/art/shop-chesscito.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-1.5" />
+          <span className="sr-only">Tienda</span>
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-slate-700">
+      <SheetContent side="bottom" className="mission-shell sheet-bg-shop rounded-t-3xl border-slate-700">
         <SheetHeader>
           <SheetTitle className="fantasy-title text-cyan-50">Arcane Store (USDC)</SheetTitle>
           <SheetDescription className="text-cyan-100/75">Selecciona un artefacto para comprar on-chain.</SheetDescription>
