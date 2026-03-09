@@ -207,7 +207,7 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    filter: blur(6px);
+    filter: blur(4px);
     z-index: 0;
   }
 
@@ -230,7 +230,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(10, 20, 25, 0.35);
+    background: rgba(10, 20, 25, 0.58);
     z-index: 0;
   }
 
