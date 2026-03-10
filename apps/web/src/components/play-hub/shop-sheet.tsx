@@ -49,14 +49,8 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           {items.map((item) => (
             <div key={item.itemId.toString()} className="mission-soft rune-frame shop-slot-frame rounded-2xl p-3">
-              <p className="text-sm font-semibold text-slate-100">
-                {item.itemId === 1n ? "Founder Badge" : item.label}
-              </p>
-              <p className="text-xs text-slate-400">
-                {item.itemId === 1n
-                  ? "Support Chesscito and receive an exclusive founder badge in your wallet."
-                  : item.subtitle}
-              </p>
+              <p className="text-sm font-semibold text-slate-100">{item.label}</p>
+              <p className="text-xs text-slate-400">{item.subtitle}</p>
               <p className="mt-2 text-sm text-slate-200">
                 {item.configured ? `${formatUnits(item.onChainPrice, 6)} USDC` : "Not configured"}
               </p>
@@ -69,7 +63,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
                 disabled={!item.configured || !item.enabled}
                 onClick={() => onSelectItem(item.itemId)}
               >
-                {item.itemId === 1n ? "Buy with USDC" : "Buy"}
+                Buy with USDC
               </button>
             </div>
           ))}
