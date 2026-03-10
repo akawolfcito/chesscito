@@ -42,7 +42,7 @@ function ActionBtn({
       onClick={onClick}
       disabled={disabled || busy}
       aria-label={busy ? `${label} in progress` : label}
-      className={`relative flex h-14 flex-1 flex-col items-center justify-center overflow-hidden rounded-2xl transition disabled:opacity-35 ${
+      className={`relative flex h-14 flex-1 flex-col items-center justify-center rounded-2xl transition disabled:opacity-35 ${
         variant === "primary"
           ? "bg-cyan-400/20 shadow-[inset_0_0_0_1px_rgba(103,232,249,0.35)]"
           : "mission-chip text-cyan-100/80"
