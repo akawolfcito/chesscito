@@ -1,6 +1,5 @@
 import { formatUnits } from "viem";
 
-import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type SelectedItem = {
@@ -70,8 +69,9 @@ export function PurchaseConfirmSheet({
             <p className="rounded-xl border border-amber-400/45 bg-amber-900/30 px-3 py-2 text-xs text-amber-100">
               MiniPay may show &quot;Unknown transaction&quot;. This screen describes the expected action before signing.
             </p>
-            <Button
-              className="mt-2 w-full bg-cyan-300 text-slate-900 hover:bg-cyan-200"
+            <button
+              type="button"
+              className="mt-2 w-full rounded-xl bg-cyan-600 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-40"
               disabled={
                 isWriting ||
                 purchasePhase !== "idle" ||
@@ -89,7 +89,7 @@ export function PurchaseConfirmSheet({
                 : purchasePhase === "buying"
                   ? "Buying..."
                   : "Confirm purchase"}
-            </Button>
+            </button>
           </div>
         ) : null}
       </SheetContent>

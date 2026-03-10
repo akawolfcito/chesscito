@@ -6,7 +6,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { formatUnits } from "viem";
 
 type CatalogItem = {
@@ -64,14 +63,14 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
               <p className="text-xs text-slate-400">
                 {item.configured ? (item.enabled ? "Available" : "Unavailable") : "Unavailable"}
               </p>
-              <Button
-                className="mt-3 w-full border-cyan-500/40 text-white hover:bg-cyan-900/35"
-                variant="outline"
+              <button
+                type="button"
+                className="mt-3 w-full rounded-xl bg-cyan-600 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-40"
                 disabled={!item.configured || !item.enabled}
                 onClick={() => onSelectItem(item.itemId)}
               >
                 {item.itemId === 1n ? "Buy with USDC" : "Buy"}
-              </Button>
+              </button>
             </div>
           ))}
         </div>
