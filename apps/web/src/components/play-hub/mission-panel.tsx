@@ -22,6 +22,8 @@ type MissionPanelProps = {
   starsBar: ReactNode;
   actionPanel: ReactNode;
   tutorialBanner?: ReactNode;
+  shieldCount?: number;
+  onUseShield?: () => void;
 };
 
 type FlashConfig = { text: string; accent: string };
@@ -32,7 +34,15 @@ const PHASE_FLASH: Record<MissionPanelProps["phase"], FlashConfig | null> = {
   failure: { text: "Try again", accent: "text-rose-300" },
 };
 
-function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
+function PhaseFlash({
+  phase,
+  shieldCount = 0,
+  onUseShield,
+}: {
+  phase: MissionPanelProps["phase"];
+  shieldCount?: number;
+  onUseShield?: () => void;
+}) {
   const [visible, setVisible] = useState(false);
   const [fading, setFading] = useState(false);
   const flash = PHASE_FLASH[phase];
@@ -47,22 +57,28 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
     setVisible(true);
     setFading(false);
 
-    const fadeTimer = setTimeout(() => setFading(true), 700);
-    const hideTimer = setTimeout(() => setVisible(false), 1100);
+    const hasShield = phase === "failure" && shieldCount > 0;
+    const fadeDelay = hasShield ? 2600 : 700;
+    const hideDelay = hasShield ? 3000 : 1100;
+
+    const fadeTimer = setTimeout(() => setFading(true), fadeDelay);
+    const hideTimer = setTimeout(() => setVisible(false), hideDelay);
 
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
-  }, [phase, flash]);
+  }, [phase, flash, shieldCount]);
 
   if (!visible || !flash) return null;
 
+  const hasShield = phase === "failure" && shieldCount > 0;
+
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 pointer-events-none transition-opacity duration-400 ${
-        fading ? "opacity-0" : "opacity-100"
-      }`}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 transition-opacity duration-400 ${
+        hasShield ? "" : "pointer-events-none"
+      } ${fading ? "opacity-0" : "opacity-100"}`}
     >
       <div className="flex flex-col items-center gap-4 animate-in zoom-in-90 duration-300">
         <img
@@ -74,6 +90,18 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
         <span className={`fantasy-title text-3xl drop-shadow-lg ${flash.accent}`}>
           {flash.text}
         </span>
+        {hasShield && onUseShield ? (
+          <button
+            type="button"
+            onClick={() => {
+              setVisible(false);
+              onUseShield();
+            }}
+            className="mt-2 rounded-xl bg-amber-500/90 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-amber-400 active:scale-95"
+          >
+            Use Shield ({shieldCount} left)
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -92,6 +120,8 @@ export function MissionPanel({
   starsBar,
   actionPanel,
   tutorialBanner,
+  shieldCount,
+  onUseShield,
 }: MissionPanelProps) {
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden">
@@ -153,7 +183,7 @@ export function MissionPanel({
       </div>
 
       {/* Fullscreen phase flash — auto-fades */}
-      <PhaseFlash phase={phase} />
+      <PhaseFlash phase={phase} shieldCount={shieldCount} onUseShield={onUseShield} />
     </section>
   );
 }
