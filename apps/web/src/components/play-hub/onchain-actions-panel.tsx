@@ -42,10 +42,10 @@ function ActionBtn({
       onClick={onClick}
       disabled={disabled || busy}
       aria-label={busy ? `${label} in progress` : label}
-      className={`relative flex h-16 flex-1 flex-col items-center justify-center rounded-2xl transition disabled:opacity-35 ${
+      className={`relative flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl transition disabled:opacity-35 ${
         variant === "primary"
-          ? "bg-cyan-400/20 shadow-[inset_0_0_0_1px_rgba(103,232,249,0.35)]"
-          : "mission-chip text-cyan-100/80"
+          ? "bg-cyan-400/15 shadow-[inset_0_0_0_1px_rgba(103,232,249,0.25)]"
+          : "text-cyan-100/70"
       }`}
     >
       {busy ? (
@@ -114,7 +114,7 @@ export function OnChainActionsPanel({
       ) : null}
 
       {/* Icon action bar */}
-      <div className="flex gap-2">
+      <div className="flex items-center justify-around">
         <ActionBtn icon="/art/refresh-chesscito.png" label={CTA_LABELS.resetTrial} onClick={onReset} disabled={isGlobalBusy} />
         <ActionBtn
           icon="/art/badge-chesscito.png"
