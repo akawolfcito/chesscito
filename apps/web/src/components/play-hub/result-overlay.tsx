@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { PIECE_LABELS, RESULT_OVERLAY_COPY } from "@/lib/content/editorial";
+import { BADGE_EARNED_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY } from "@/lib/content/editorial";
 
 type PieceKey = "rook" | "bishop" | "knight";
 type SuccessVariant = "badge" | "score" | "shop";
@@ -183,6 +183,70 @@ export function ResultOverlay({
             <span className="text-[0.65rem] text-cyan-100/30">on Celo</span>
           </div>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+type BadgeEarnedPromptProps = {
+  pieceType: PieceKey;
+  totalStars: number;
+  onClaimBadge: () => void;
+  onSubmitScore: () => void;
+  onLater: () => void;
+};
+
+export function BadgeEarnedPrompt({
+  pieceType,
+  totalStars,
+  onClaimBadge,
+  onSubmitScore,
+  onLater,
+}: BadgeEarnedPromptProps) {
+  const title = BADGE_EARNED_COPY.title(PIECE_LABELS[pieceType]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 animate-in fade-in duration-300"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
+      <div className="flex w-full max-w-xs flex-col items-center gap-6 px-6 py-10 text-center animate-in zoom-in-95 fade-in duration-400">
+        <SuccessImage variant="badge" pieceType={pieceType} />
+
+        <StarsRow totalStars={totalStars} />
+
+        <h2 className="fantasy-title text-2xl text-cyan-50">{title}</h2>
+
+        <div className="mt-2 flex w-full flex-col gap-2">
+          <button
+            type="button"
+            onClick={onClaimBadge}
+            className="w-full rounded-xl bg-cyan-600 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500"
+          >
+            {BADGE_EARNED_COPY.claimBadge}
+          </button>
+          <button
+            type="button"
+            onClick={onSubmitScore}
+            className="w-full rounded-xl bg-cyan-600/60 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500"
+          >
+            {BADGE_EARNED_COPY.submitScore}
+          </button>
+          <button
+            type="button"
+            onClick={onLater}
+            className="w-full py-2 text-sm text-cyan-100/60 transition hover:text-cyan-100"
+          >
+            {BADGE_EARNED_COPY.later}
+          </button>
+        </div>
+
+        <div className="mt-4 flex flex-col items-center gap-0.5">
+          <span className="fantasy-title text-sm text-cyan-100/50">chesscito</span>
+          <span className="text-[0.65rem] text-cyan-100/30">on Celo</span>
+        </div>
       </div>
     </div>
   );
