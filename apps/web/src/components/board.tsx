@@ -54,6 +54,7 @@ type BoardProps = {
   targetPosition?: BoardPosition | null;
   isLocked?: boolean;
   onMove?: (position: BoardPosition, movesCount: number) => void;
+  tutorialHints?: Set<string>;
 };
 
 export function Board({
@@ -63,6 +64,7 @@ export function Board({
   targetPosition = null,
   isLocked = false,
   onMove,
+  tutorialHints,
 }: BoardProps) {
   const [piece, setPiece] = useState(() => makePiece(pieceType, startPosition));
   const [selectedPosition, setSelectedPosition] = useState<BoardPosition | null>(
@@ -174,6 +176,7 @@ export function Board({
                           "playhub-board-cell",
                           square.isHighlighted ? "is-highlighted" : "",
                           square.isSelected ? "is-selected" : "",
+                          tutorialHints?.has(square.label) ? "is-tutorial-hint" : "",
                         ].join(" ")}
                       >
                         <span className="playhub-board-label">{square.label}</span>
