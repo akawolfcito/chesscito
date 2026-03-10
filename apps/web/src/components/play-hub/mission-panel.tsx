@@ -25,10 +25,10 @@ const SELECTED_PIECE_ART: Record<PieceOption["key"], string> = {
   knight: "/art/caballo-selected.webp",
 };
 
-const PHASE_STATUS: Record<MissionPanelProps["phase"], { text: string; className: string } | null> = {
+const PHASE_TOAST: Record<MissionPanelProps["phase"], { text: string; bg: string } | null> = {
   ready: null,
-  success: { text: "Path complete. Continue.", className: "text-emerald-300" },
-  failure: { text: "Not this square. Try again.", className: "text-rose-300" },
+  success: { text: "Well done!", bg: "bg-emerald-900/70 ring-emerald-400/40" },
+  failure: { text: "Try again", bg: "bg-rose-900/60 ring-rose-400/40" },
 };
 
 export function MissionPanel({
@@ -43,7 +43,7 @@ export function MissionPanel({
   starsBar,
   actionPanel,
 }: MissionPanelProps) {
-  const status = PHASE_STATUS[phase];
+  const toast = PHASE_TOAST[phase];
 
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden px-3 pb-3 pt-2">
@@ -74,22 +74,31 @@ export function MissionPanel({
           </button>
         ))}
 
-        {status ? (
-          <span className={`ml-auto shrink-0 text-xs font-semibold ${status.className}`}>
-            {status.text}
-          </span>
-        ) : (
-          <span className="ml-auto shrink-0 whitespace-nowrap text-xs text-cyan-300/80 tracking-[0.16em] uppercase">
-            Lv {level}
-          </span>
-        )}
+        <span className="ml-auto shrink-0 whitespace-nowrap text-xs text-cyan-300/80 tracking-[0.16em] uppercase">
+          Lv {level}
+        </span>
       </div>
 
       {/* Board — fills remaining space */}
       <div className="min-h-0 flex-1">{board}</div>
 
+      {/* Phase feedback toast with wolf mascot */}
+      <div className="relative mt-2 flex h-8 shrink-0 items-center justify-center">
+        {toast ? (
+          <div className={`flex items-center gap-2 rounded-full px-4 py-1.5 ring-1 animate-in fade-in zoom-in-95 duration-300 ${toast.bg}`}>
+            <img
+              src="/art/favicon-wolf.png"
+              alt=""
+              aria-hidden="true"
+              className="h-5 w-5 rounded-full"
+            />
+            <span className="text-xs font-semibold text-white">{toast.text}</span>
+          </div>
+        ) : null}
+      </div>
+
       {/* Exercise stars */}
-      <div className="mt-2 shrink-0">{starsBar}</div>
+      <div className="shrink-0">{starsBar}</div>
 
       {/* Stats bar */}
       <div className="chesscito-stats-bar mt-2 shrink-0">
