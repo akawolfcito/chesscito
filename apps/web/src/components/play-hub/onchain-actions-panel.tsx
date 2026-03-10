@@ -26,6 +26,7 @@ function ActionBtn({
   disabled,
   busy,
   variant = "default",
+  showNotification,
 }: {
   icon: string;
   label: string;
@@ -33,6 +34,7 @@ function ActionBtn({
   disabled?: boolean;
   busy?: boolean;
   variant?: "default" | "primary";
+  showNotification?: boolean;
 }) {
   return (
     <button
@@ -55,6 +57,12 @@ function ActionBtn({
           <img src={icon} alt="" aria-hidden="true" className="h-full w-full object-contain p-1" />
         </picture>
       )}
+      {showNotification && !disabled && !busy ? (
+        <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+          <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400" />
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -115,6 +123,7 @@ export function OnChainActionsPanel({
           disabled={!canClaim}
           busy={isClaimBusy}
           variant="primary"
+          showNotification={canClaim}
         />
         <ActionBtn
           icon="/art/score-chesscito.png"
@@ -123,6 +132,7 @@ export function OnChainActionsPanel({
           disabled={!canSubmit}
           busy={isSubmitBusy}
           variant="primary"
+          showNotification={canSubmit}
         />
         {shopControl}
         {leaderboardControl}
