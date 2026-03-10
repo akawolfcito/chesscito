@@ -65,3 +65,10 @@ export const RESULT_OVERLAY_COPY = {
     viewOnCeloscan: "View on CeloScan",
   },
 } as const;
+
+export const BADGE_EARNED_COPY = {
+  title: (piece: string) => `${piece} Ascendant Earned`,
+  claimBadge: "Claim Badge",
+  submitScore: "Submit Score",
+  later: "Later",
+} as const;
