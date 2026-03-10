@@ -155,6 +155,7 @@ export default function PlayHubPage() {
   } | null>(null);
   const [showBadgeEarned, setShowBadgeEarned] = useState(false);
   const [badgeSheetOpen, setBadgeSheetOpen] = useState(false);
+  const [shieldCount, setShieldCount] = useState(0);
   const [qaLevelInput, setQaLevelInput] = useState("2");
   const [isLocalhost, setIsLocalhost] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -183,6 +184,21 @@ export default function PlayHubPage() {
     const host = window.location.hostname;
     setIsLocalhost(host === "localhost" || host === "127.0.0.1" || host === "::1");
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("chesscito:shields");
+      if (raw) setShieldCount(Number.parseInt(raw, 10) || 0);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  function updateShieldCount(next: number) {
+    const clamped = Math.max(0, next);
+    setShieldCount(clamped);
+    localStorage.setItem("chesscito:shields", String(clamped));
+  }
 
   useEffect(() => {
     setCaptureHintSeen(false);
@@ -588,6 +604,9 @@ export default function PlayHubPage() {
         variant: "shop",
         txHash: buyHash,
       });
+      if (selectedItem.itemId === 2n) {
+        updateShieldCount(shieldCount + 3);
+      }
       console.info("[MiniPayTx] result", {
         label: selectedItem.label,
         txHash: buyHash,
