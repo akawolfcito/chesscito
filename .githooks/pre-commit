@@ -1,7 +1,7 @@
 #!/bin/sh
 
 EXPECTED_NAME="Luis Fernando"
-EXPECTED_EMAIL="guffenix@gmail.com"
+EXPECTED_EMAIL="791301+wolfcito@users.noreply.github.com"
 
 CURRENT_NAME="$(git config user.name)"
 CURRENT_EMAIL="$(git config user.email)"
