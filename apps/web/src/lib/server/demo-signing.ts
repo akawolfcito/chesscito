@@ -61,9 +61,17 @@ export function enforceOrigin(request: Request) {
 
   const origin = request.headers.get("origin");
   const referer = request.headers.get("referer");
-  const source = origin ?? referer ?? "";
+  const source = origin ?? referer;
 
-  if (!source.includes(allowedHost)) {
+  if (!source) throw new Error("Forbidden");
+
+  try {
+    const sourceHost = new URL(source).host;
+    // Exact host match — prevents subdomain spoofing (e.g. allowedHost.evil.com)
+    if (sourceHost !== allowedHost && sourceHost !== allowedHost.replace(/^https?:\/\//, "")) {
+      throw new Error("Forbidden");
+    }
+  } catch {
     throw new Error("Forbidden");
   }
 }

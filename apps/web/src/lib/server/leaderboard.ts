@@ -15,6 +15,25 @@ const SCORE_SUBMITTED_TOPIC = ethers.id(
   "ScoreSubmitted(address,uint256,uint256,uint256,uint256,uint256)"
 );
 
+const CHUNK_SIZE = 5_000;
+
+async function getLogsPaginated(
+  provider: ethers.JsonRpcProvider,
+  filter: { address: string; topics: string[]; fromBlock: number; toBlock: number }
+): Promise<ethers.Log[]> {
+  const allLogs: ethers.Log[] = [];
+  let from = filter.fromBlock;
+
+  while (from <= filter.toBlock) {
+    const to = Math.min(from + CHUNK_SIZE - 1, filter.toBlock);
+    const chunk = await provider.getLogs({ ...filter, fromBlock: from, toBlock: to });
+    allLogs.push(...chunk);
+    from = to + 1;
+  }
+
+  return allLogs;
+}
+
 export async function fetchLeaderboard(): Promise<LeaderboardRow[]> {
   const address = process.env.NEXT_PUBLIC_SCOREBOARD_ADDRESS ?? "";
   if (!address) return [];
@@ -22,7 +41,7 @@ export async function fetchLeaderboard(): Promise<LeaderboardRow[]> {
   const provider = new ethers.JsonRpcProvider(RPC_URL);
   const currentBlock = await provider.getBlockNumber();
 
-  const logs = await provider.getLogs({
+  const logs = await getLogsPaginated(provider, {
     address,
     topics: [SCORE_SUBMITTED_TOPIC],
     fromBlock: DEPLOY_BLOCK,
