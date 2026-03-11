@@ -34,6 +34,7 @@ export function MissionBriefing({
       className={`mission-briefing-scrim ${exiting ? "is-exiting" : ""}`}
       aria-modal="true"
       role="dialog"
+      aria-labelledby="mission-briefing-objective"
     >
       <div className={`mission-briefing-card ${exiting ? "is-exiting" : ""}`}>
         <img
@@ -45,7 +46,7 @@ export function MissionBriefing({
         <p className="mb-1.5 text-center text-xs font-bold uppercase tracking-[0.14em] text-cyan-400">
           {MISSION_BRIEFING_COPY.label}
         </p>
-        <p className="text-center text-sm font-medium text-slate-100">
+        <p id="mission-briefing-objective" className="text-center text-sm font-medium text-slate-100">
           {objective}
         </p>
         <p className="mt-1.5 text-center text-[11px] text-cyan-100/45">
@@ -53,6 +54,7 @@ export function MissionBriefing({
         </p>
         <button
           type="button"
+          autoFocus
           onClick={handlePlay}
           className="mt-5 w-full rounded-2xl bg-gradient-to-r from-cyan-600 to-cyan-500 py-3 text-sm font-bold tracking-wide text-white shadow-[0_0_20px_rgba(6,182,212,0.4)] transition active:scale-95"
         >

@@ -36,33 +36,3 @@ export function getBishopMoves(
   return moves;
 }
 
-export function canBishopMoveTo(
-  origin: BoardPosition,
-  target: BoardPosition,
-  blockers: BoardPosition[] = []
-) {
-  return getBishopMoves(origin, blockers).some((m) => samePosition(m, target));
-}
-
-/**
- * Mínimo de movimientos del alfil de `from` a `to`.
- * - 0 si es la misma casilla
- * - Infinity si distinto color (alfil no puede cambiar de color)
- * - 1 si están en la misma diagonal
- * - 2 si mismo color pero distinta diagonal
- */
-export function getBishopOptimalMoves(
-  from: BoardPosition,
-  to: BoardPosition
-): number {
-  if (samePosition(from, to)) return 0;
-
-  const sameColor = (from.file + from.rank) % 2 === (to.file + to.rank) % 2;
-  if (!sameColor) return Infinity;
-
-  const df = Math.abs(to.file - from.file);
-  const dr = Math.abs(to.rank - from.rank);
-  if (df === dr) return 1; // misma diagonal
-
-  return 2; // mismo color, distinta diagonal
-}

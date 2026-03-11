@@ -165,6 +165,7 @@ export function ResultOverlay({
 
           <button
             type="button"
+            autoFocus={!(isError && onRetry)}
             onClick={onDismiss}
             className={
               isError && onRetry
@@ -210,18 +211,19 @@ export function BadgeEarnedPrompt({
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 animate-in fade-in duration-300"
       role="dialog"
       aria-modal="true"
-      aria-label={title}
+      aria-labelledby="badge-earned-title"
     >
       <div className="flex w-full max-w-xs flex-col items-center gap-6 px-6 py-10 text-center animate-in zoom-in-95 fade-in duration-400">
         <SuccessImage variant="badge" pieceType={pieceType} />
 
         <StarsRow totalStars={totalStars} />
 
-        <h2 className="fantasy-title text-2xl text-cyan-50">{title}</h2>
+        <h2 id="badge-earned-title" className="fantasy-title text-2xl text-cyan-50">{title}</h2>
 
         <div className="mt-2 flex w-full flex-col gap-2">
           <button
             type="button"
+            autoFocus
             onClick={onClaimBadge}
             className="w-full rounded-xl bg-cyan-600 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500"
           >

@@ -1,4 +1,4 @@
-import type { BoardPiece, BoardPosition } from "../types";
+import type { BoardPosition } from "../types";
 
 function samePosition(a: BoardPosition, b: BoardPosition) {
   return a.file === b.file && a.rank === b.rank;
@@ -46,31 +46,3 @@ export function getRookMoves(
   return sortByDistance(origin, moves);
 }
 
-export function canRookMoveTo(
-  origin: BoardPosition,
-  target: BoardPosition,
-  blockers: BoardPosition[] = []
-) {
-  return getRookMoves(origin, blockers).some((move) => samePosition(move, target));
-}
-
-export function getBlockersForPiece(piece: BoardPiece, pieces: BoardPiece[]) {
-  return pieces
-    .filter((candidate) => candidate.id !== piece.id)
-    .map((candidate) => candidate.position);
-}
-
-/**
- * Mínimo de movimientos de la torre de `from` a `to`.
- * - 0 si misma casilla
- * - 1 si misma fila o columna
- * - 2 en cualquier otro caso
- */
-export function getRookOptimalMoves(
-  from: BoardPosition,
-  to: BoardPosition
-): number {
-  if (from.file === to.file && from.rank === to.rank) return 0;
-  if (from.file === to.file || from.rank === to.rank) return 1;
-  return 2;
-}

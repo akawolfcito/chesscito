@@ -10,9 +10,6 @@ export function makePiece(type: PieceId, position: BoardPosition): BoardPiece {
   return { id: `${type}-1`, type, position };
 }
 
-/** @deprecated Usar makePiece("rook", { file: 0, rank: 0 }) */
-export const INITIAL_ROOK: BoardPiece = makePiece("rook", { file: 0, rank: 0 });
-
 export function arePositionsEqual(a: BoardPosition, b: BoardPosition) {
   return a.file === b.file && a.rank === b.rank;
 }
@@ -41,11 +38,6 @@ export function getValidTargets(
     case "knight": return getKnightMoves(position);
     default:       return [];
   }
-}
-
-/** @deprecated Usar getValidTargets */
-export function getRookTargets(position: BoardPosition, blockers: BoardPosition[] = []) {
-  return getRookMoves(position, blockers);
 }
 
 export function movePiece(piece: BoardPiece, nextPosition: BoardPosition): BoardPiece {
