@@ -21,7 +21,7 @@ type MissionPanelProps = {
   board: ReactNode;
   starsBar: ReactNode;
   actionPanel: ReactNode;
-  tutorialBanner?: ReactNode;
+  pieceHint?: string;
   shieldCount?: number;
   onUseShield?: () => void;
 };
@@ -119,7 +119,7 @@ export function MissionPanel({
   board,
   starsBar,
   actionPanel,
-  tutorialBanner,
+  pieceHint,
   shieldCount,
   onUseShield,
 }: MissionPanelProps) {
@@ -154,8 +154,7 @@ export function MissionPanel({
 
       {/* Zone 2: Board Stage — hero, fills all remaining space */}
       <div className="min-h-0 flex-1 px-1">
-        {/* Fixed-height slot so the board never shifts when the banner fades */}
-        <div className="min-h-[32px]">{tutorialBanner}</div>
+        {pieceHint ? <p className="piece-hint">{pieceHint}</p> : null}
         {board}
         {/* Progress bar flush below board */}
         <div className="px-2">{starsBar}</div>
