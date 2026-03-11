@@ -1,9 +1,11 @@
 import { ethers } from "ethers";
+import { checkPassportScores } from "./passport";
 
 export type LeaderboardRow = {
   rank: number;
   player: string;
   score: number;
+  isVerified?: boolean;
 };
 
 const RPC_URL = process.env.CELO_RPC_URL ?? "https://forno.celo.org";
@@ -36,12 +38,17 @@ export async function fetchLeaderboard(): Promise<LeaderboardRow[]> {
     if (score > prev) best.set(player, score);
   }
 
-  return Array.from(best.entries())
+  const sorted = Array.from(best.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([addr, score], i) => ({
-      rank: i + 1,
-      player: addr.slice(0, 6) + "..." + addr.slice(-4),
-      score,
-    }));
+    .slice(0, 10);
+
+  const fullAddresses = sorted.map(([addr]) => addr);
+  const verifiedMap = await checkPassportScores(fullAddresses);
+
+  return sorted.map(([addr, score], i) => ({
+    rank: i + 1,
+    player: addr.slice(0, 6) + "..." + addr.slice(-4),
+    score,
+    isVerified: verifiedMap.get(addr) ?? false,
+  }));
 }
