@@ -278,13 +278,21 @@ export default function PlayHubPage() {
   };
   const hasClaimedBadge = badgesClaimed[selectedPiece];
 
-  const { isLoading: isShopConfirming } = useWaitForTransactionReceipt({
+  const [pendingShieldCredit, setPendingShieldCredit] = useState(false);
+  const { isLoading: isShopConfirming, isSuccess: isShopConfirmed } = useWaitForTransactionReceipt({
     chainId,
     hash: shopTxHash as `0x${string}` | undefined,
     query: {
       enabled: Boolean(shopTxHash),
     },
   });
+
+  useEffect(() => {
+    if (isShopConfirmed && pendingShieldCredit) {
+      updateShieldCount(shieldCount + 3);
+      setPendingShieldCredit(false);
+    }
+  }, [isShopConfirmed, pendingShieldCredit]);
   const { isLoading: isClaimConfirming } = useWaitForTransactionReceipt({
     chainId,
     hash: claimTxHash as `0x${string}` | undefined,
@@ -327,13 +335,13 @@ export default function PlayHubPage() {
     }
   }
 
-  function resetBoard() {
+  function resetBoard(showBriefingOverlay = false) {
     if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
     setBoardKey((previous) => previous + 1);
     setPhase("ready");
     setMoves(0);
     setElapsedMs(0);
-    setShowBriefing(true);
+    if (showBriefingOverlay) setShowBriefing(true);
   }
 
   function handleMove(position: BoardPosition, movesCount: number) {
@@ -367,7 +375,7 @@ export default function PlayHubPage() {
           resetBoard();
         } else if (nextPiece) {
           setSelectedPiece(nextPiece);
-          resetBoard();
+          resetBoard(true);
         }
       }, 1500);
       return;
@@ -398,7 +406,7 @@ export default function PlayHubPage() {
         resetBoard();
       } else if (nextPiece) {
         setSelectedPiece(nextPiece);
-        resetBoard();
+        resetBoard(true);
       }
     }, 500);
   }
@@ -558,7 +566,7 @@ export default function PlayHubPage() {
         txHash: buyHash,
       });
       if (selectedItem.itemId === 2n) {
-        updateShieldCount(shieldCount + 3);
+        setPendingShieldCredit(true);
       }
       console.info("[MiniPayTx] result", {
         label: selectedItem.label,
@@ -597,7 +605,7 @@ export default function PlayHubPage() {
           selectedPiece={selectedPiece}
           onSelectPiece={(piece) => {
             setSelectedPiece(piece);
-            resetBoard();
+            resetBoard(true);
           }}
           pieces={[
             { key: "rook", label: PIECE_LABELS.rook, enabled: true },

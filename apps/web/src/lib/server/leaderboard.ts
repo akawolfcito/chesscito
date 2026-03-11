@@ -31,7 +31,8 @@ export async function fetchLeaderboard(): Promise<LeaderboardRow[]> {
 
   const best = new Map<string, number>();
   for (const log of logs) {
-    const player = ethers.getAddress("0x" + log.topics[1]?.slice(26));
+    if (!log.topics[1]) continue;
+    const player = ethers.getAddress("0x" + log.topics[1].slice(26));
     // data: score (32 bytes) | timeMs | nonce | deadline
     const score = Number(ethers.toBigInt(log.data.slice(0, 66)));
     const prev = best.get(player) ?? 0;
