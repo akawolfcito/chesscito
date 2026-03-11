@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { CTA_LABELS, LEADERBOARD_COPY } from "@/lib/content/editorial";
+import { CTA_LABELS, LEADERBOARD_COPY, PASSPORT_COPY } from "@/lib/content/editorial";
 import { fetchLeaderboard } from "@/lib/server/leaderboard";
 
 export const revalidate = 60;
@@ -15,6 +15,17 @@ export default async function LeaderboardPage() {
       cta={{ href: "/play-hub", label: CTA_LABELS.backToPlay }}
       secondaryCta={{ href: "/", label: CTA_LABELS.startTrial }}
     >
+      <p className="mb-4 text-center text-xs text-slate-500">
+        {PASSPORT_COPY.infoBanner}{" "}
+        <a
+          href={PASSPORT_COPY.passportUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-primary hover:text-primary/80"
+        >
+          Get verified
+        </a>
+      </p>
       <div className="space-y-3">
         {rows.length === 0 && (
           <p className="text-center text-sm text-slate-500">{LEADERBOARD_COPY.empty}</p>
@@ -28,7 +39,14 @@ export default async function LeaderboardPage() {
               {row.rank}
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-950">{row.player}</p>
+              <p className="text-sm font-semibold text-slate-950">
+                {row.player}
+                {row.isVerified && (
+                  <span className="ml-1.5 text-emerald-600" title={PASSPORT_COPY.verifiedLabel}>
+                    ✓
+                  </span>
+                )}
+              </p>
             </div>
             <div className="text-right">
               <p className="text-lg font-semibold text-slate-950">{row.score}</p>
