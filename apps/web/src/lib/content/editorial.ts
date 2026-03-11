@@ -106,5 +106,6 @@ export const SHIELD_COPY = {
 export const PASSPORT_COPY = {
   verifiedLabel: "Verified",
   infoBanner: "Verify with Gitcoin Passport to earn a ✓",
+  ctaLabel: "Get verified",
   passportUrl: "https://passport.gitcoin.co",
 } as const;

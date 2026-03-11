@@ -23,7 +23,7 @@ export default async function LeaderboardPage() {
           rel="noopener noreferrer"
           className="underline text-primary hover:text-primary/80"
         >
-          Get verified
+          {PASSPORT_COPY.ctaLabel}
         </a>
       </p>
       <div className="space-y-3">

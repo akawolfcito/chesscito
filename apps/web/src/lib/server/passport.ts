@@ -7,12 +7,16 @@ export async function checkPassportScore(address: string): Promise<boolean> {
   if (!apiKey || !scorerId) return false;
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5_000);
     const res = await fetch(
       `${PASSPORT_API_BASE}/${scorerId}/score/${address}`,
       {
         headers: { "X-API-KEY": apiKey },
+        signal: controller.signal,
       }
     );
+    clearTimeout(timeout);
     if (!res.ok) return false;
     const data = await res.json();
     return data.passing_score === true;

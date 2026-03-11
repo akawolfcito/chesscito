@@ -63,7 +63,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
             rel="noopener noreferrer"
             className="underline text-cyan-300/80 hover:text-cyan-200"
           >
-            Get verified
+            {PASSPORT_COPY.ctaLabel}
           </a>
         </p>
         <div className="mt-4 space-y-2">
