@@ -437,7 +437,7 @@
     left: 50%;
     top: 48%;
     transform: translate(-50%, -50%);
-    height: clamp(28px, 9.5vw, 42px);
+    height: clamp(44px, 15vw, 64px);
     width: auto;
     object-fit: contain;
     pointer-events: none;
@@ -455,7 +455,7 @@
   }
 
   .playhub-board-piece-img {
-    height: clamp(28px, 9.5vw, 42px);
+    height: clamp(44px, 15vw, 64px);
     width: auto;
     object-fit: contain;
     filter:
