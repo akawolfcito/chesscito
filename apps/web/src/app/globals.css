@@ -463,6 +463,47 @@
       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
   }
 
+  /* Mission briefing overlay */
+  .mission-briefing-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 20, 25, 0.70);
+    animation: mission-briefing-fade-in 300ms ease-out;
+  }
+
+  .mission-briefing-scrim.is-exiting {
+    animation: mission-briefing-fade-out 400ms ease-in forwards;
+  }
+
+  .mission-briefing-card {
+    width: 85%;
+    max-width: 280px;
+    background: rgba(2, 12, 24, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(103, 232, 249, 0.25);
+    border-radius: 20px;
+    padding: 28px 24px 24px;
+    animation: mission-briefing-card-in 400ms ease-out;
+  }
+
+  .mission-briefing-card.is-exiting {
+    animation: mission-briefing-card-exit 400ms ease-in forwards;
+  }
+
+  /* Persistent piece hint */
+  .piece-hint {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(207, 250, 254, 0.5);
+    padding: 6px 0;
+    min-height: 28px;
+  }
+
   .playhub-game-grid {
     position: relative;
     z-index: 1;
@@ -529,40 +570,37 @@
     padding: 6px 12px;
   }
 
-  .tutorial-banner {
-    background: rgba(2, 12, 24, 0.65);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(103, 232, 249, 0.2);
-    border-radius: 12px;
-    padding: 8px 16px;
-    animation: tutorial-banner-in 400ms ease-out;
-  }
-
-  .tutorial-banner.is-fading {
-    animation: tutorial-banner-out 500ms ease-in forwards;
-  }
 }
 
-@keyframes tutorial-banner-in {
+@keyframes mission-briefing-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mission-briefing-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes mission-briefing-card-in {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: scale(0.85);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1);
   }
 }
 
-@keyframes tutorial-banner-out {
+@keyframes mission-briefing-card-exit {
   from {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1);
   }
   to {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: scale(0.85);
   }
 }
 
