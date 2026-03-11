@@ -95,10 +95,12 @@ export function useExerciseProgress(piece: PieceId) {
 
   const goToExercise = useCallback((index: number) => {
     setProgress((prev) => {
-      const next: PieceProgress = {
-        ...prev,
-        exerciseIndex: Math.max(0, Math.min(index, EXERCISES_PER_PIECE - 1)),
-      };
+      const clamped = Math.max(0, Math.min(index, EXERCISES_PER_PIECE - 1));
+      // Only allow navigating to completed exercises or the next unlocked one
+      const highestUnlocked = prev.stars.findIndex((s) => s === 0);
+      const maxAllowed = highestUnlocked === -1 ? EXERCISES_PER_PIECE - 1 : highestUnlocked;
+      if (clamped > maxAllowed) return prev;
+      const next: PieceProgress = { ...prev, exerciseIndex: clamped };
       saveProgress(next);
       return next;
     });

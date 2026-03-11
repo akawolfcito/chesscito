@@ -35,6 +35,7 @@ import {
 import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
 import { CAPTURE_COPY, CTA_LABELS, MISSION_BRIEFING_COPY, PIECE_LABELS } from "@/lib/content/editorial";
+import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
 import { BadgeEarnedPrompt, ResultOverlay } from "@/components/play-hub/result-overlay";
 import { BadgeSheet } from "@/components/play-hub/badge-sheet";
@@ -159,17 +160,21 @@ export default function PlayHubPage() {
     setIsLocalhost(host === "localhost" || host === "127.0.0.1" || host === "::1");
   }, []);
 
+  const MAX_SHIELDS = 30; // reasonable cap: 10 purchases × 3 shields each
   useEffect(() => {
     try {
       const raw = localStorage.getItem("chesscito:shields");
-      if (raw) setShieldCount(Number.parseInt(raw, 10) || 0);
+      if (raw) {
+        const parsed = Number.parseInt(raw, 10) || 0;
+        setShieldCount(Math.min(parsed, MAX_SHIELDS));
+      }
     } catch {
       // ignore
     }
   }, []);
 
   function updateShieldCount(next: number) {
-    const clamped = Math.max(0, next);
+    const clamped = Math.max(0, Math.min(next, MAX_SHIELDS));
     setShieldCount(clamped);
     localStorage.setItem("chesscito:shields", String(clamped));
   }
@@ -600,6 +605,13 @@ export default function PlayHubPage() {
     ? MISSION_BRIEFING_COPY.captureHintCompact
     : MISSION_BRIEFING_COPY.pieceHint[selectedPiece];
 
+  // Show movement lane hints on the first exercise of each piece (until the player earns stars)
+  const tutorialHints = useMemo(() => {
+    if (progress.exerciseIndex !== 0 || progress.stars[0] > 0) return undefined;
+    const targets = getValidTargets(selectedPiece, currentExercise.startPos);
+    return new Set(targets.map(getPositionLabel));
+  }, [selectedPiece, progress.exerciseIndex, progress.stars, currentExercise.startPos]);
+
   return (
     <div className="relative w-full overflow-x-hidden">
       <div className="playhub-intro-overlay" aria-hidden="true" />
@@ -692,6 +704,7 @@ export default function PlayHubPage() {
               isLocked={phase === "failure" || phase === "success"}
               onMove={handleMove}
               isCapture={currentExercise.isCapture}
+              tutorialHints={tutorialHints}
             />
           }
           starsBar={
