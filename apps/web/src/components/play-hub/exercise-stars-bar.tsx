@@ -15,7 +15,7 @@ export function ExerciseStarsBar({
   return (
     <div className="flex items-center gap-2 py-1">
       {/* Exercise dot markers */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0">
         {stars.map((exerciseStars, index) => {
           const isActive = index === activeIndex;
           const isDone = exerciseStars > 0;
@@ -25,7 +25,8 @@ export function ExerciseStarsBar({
               type="button"
               onClick={() => onSelect?.(index)}
               className={[
-                "flex h-5 w-5 items-center justify-center rounded-full text-[0.6rem] font-bold transition",
+                "flex h-7 w-7 items-center justify-center rounded-full text-[0.6rem] font-bold transition",
+                "p-1", // expand tap area to ~44px with surrounding padding
                 isActive
                   ? "bg-cyan-500/30 text-cyan-200 ring-1 ring-cyan-400/60"
                   : isDone

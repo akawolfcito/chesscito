@@ -76,7 +76,7 @@ function PhaseFlash({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 transition-opacity duration-400 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 transition-opacity duration-[400ms] ${
         hasShield ? "" : "pointer-events-none"
       } ${fading ? "opacity-0" : "opacity-100"}`}
     >
@@ -134,7 +134,7 @@ export function MissionPanel({
               type="button"
               disabled={!piece.enabled}
               onClick={() => onSelectPiece(piece.key)}
-              className={`relative h-8 px-3 text-xs font-semibold uppercase tracking-[0.16em] transition disabled:opacity-40 ${
+              className={`relative h-11 px-3 text-xs font-semibold uppercase tracking-[0.16em] transition disabled:opacity-40 ${
                 selectedPiece === piece.key
                   ? "text-cyan-50"
                   : "text-cyan-200/50"

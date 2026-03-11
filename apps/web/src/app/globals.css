@@ -34,20 +34,10 @@
 
     --radius: 1rem;
     --app-max-width: 390px;
-    --playhub-bg-mobile: image-set(
-      url("/art/bg-playhub-forest-mobile.avif") type("image/avif"),
-      url("/art/bg-playhub-forest-mobile.webp") type("image/webp"),
-      url("/art/bg-playhub-forest-mobile.png") type("image/png")
-    );
     --intro-bg-mobile: image-set(
       url("/art/bg-splash-chesscito.avif") type("image/avif"),
       url("/art/bg-splash-chesscito.webp") type("image/webp"),
       url("/art/bg-splash-chesscito.png") type("image/png")
-    );
-    --playhub-bg-desktop: image-set(
-      url("/art/bg-playhub-forest-desktop.avif") type("image/avif"),
-      url("/art/bg-playhub-forest-desktop.webp") type("image/webp"),
-      url("/art/bg-playhub-forest-desktop.png") type("image/png")
     );
     --playhub-rune-frame: image-set(
       url("/art/panel-frame-rune.avif") type("image/avif"),
@@ -134,34 +124,10 @@
 }
 
 @layer components {
-  .mobile-frame {
-    width: min(100%, var(--app-max-width));
-  }
-
   .mission-shell {
     width: 100%;
     overflow-x: clip;
     color: #f3f6fb;
-  }
-
-  .intro-shell {
-    background:
-      linear-gradient(180deg, rgba(2, 6, 23, 0.38), rgba(2, 6, 23, 0.18)),
-      var(--intro-bg-mobile),
-      linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
-    background-position: center top;
-    /* 1024/826 — same safe-area scaling as playhub bg */
-    background-size: calc(1024 / 826 * 100%) auto, calc(1024 / 826 * 100%) auto, cover;
-    background-repeat: no-repeat;
-  }
-
-  .mission-card {
-    background:
-      radial-gradient(circle at 50% 0%, rgba(103, 232, 249, 0.13), transparent 38%),
-      linear-gradient(180deg, rgba(10, 26, 34, 0.96), rgba(10, 22, 30, 0.97));
-    border: 1px solid #335266;
-    color: #f3f6fb;
-    box-shadow: 0 26px 80px rgba(2, 12, 22, 0.6);
   }
 
   .mission-soft {
@@ -169,12 +135,6 @@
     backdrop-filter: blur(4px);
     border: 1px solid rgba(125, 211, 252, 0.34);
     color: #e4f6fb;
-  }
-
-  .mission-chip {
-    background: rgba(2, 18, 32, 0.5);
-    border: 1px solid rgba(125, 211, 252, 0.3);
-    color: #e8f7fb;
   }
 
   .fantasy-title {
@@ -253,27 +213,6 @@
   .sheet-bg-leaderboard > *,
   .sheet-bg-shop > *,
   .sheet-bg-badges > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  .glow-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 9999px;
-    background: #67e8f9;
-    box-shadow: 0 0 16px rgba(103, 232, 249, 0.8);
-  }
-
-  .stage-vignette {
-    position: relative;
-  }
-
-  .stage-vignette::before {
-    content: none;
-  }
-
-  .stage-vignette > * {
     position: relative;
     z-index: 1;
   }
@@ -432,20 +371,6 @@
     }
   }
 
-  .playhub-board-piece {
-    position: absolute;
-    left: 50%;
-    top: 48%;
-    transform: translate(-50%, -50%);
-    height: clamp(44px, 15vw, 64px);
-    width: auto;
-    object-fit: contain;
-    pointer-events: none;
-    filter:
-      drop-shadow(0 0 6px rgba(103, 232, 249, 0.6))
-      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
-  }
-
   .playhub-board-piece-float {
     position: absolute;
     z-index: 10;
@@ -528,10 +453,6 @@
     padding: 0;
   }
 
-  .chesscito-stats-item + .chesscito-stats-item {
-    border-left: none;
-  }
-
   .chesscito-stats-label {
     font-size: 0.6rem;
     line-height: 1;
@@ -601,17 +522,6 @@
   to {
     opacity: 0;
     transform: scale(0.85);
-  }
-}
-
-@media (min-width: 640px) {
-  @layer components {
-    .intro-shell {
-      background-image:
-        linear-gradient(180deg, rgba(2, 6, 23, 0.38), rgba(2, 6, 23, 0.18)),
-        var(--intro-bg-mobile),
-        linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
-    }
   }
 }
 
