@@ -410,7 +410,7 @@ export default function PlayHubPage() {
         const starDelta = Math.max(0, newStars - prevStarValue);
         const newTotal = totalStars + starDelta;
 
-        if (newTotal >= BADGE_THRESHOLD) {
+        if (newTotal >= BADGE_THRESHOLD && !hasClaimedBadge) {
           setShowBadgeEarned(true);
           return; // Don't start auto-advance timer — prompt will handle it
         }
