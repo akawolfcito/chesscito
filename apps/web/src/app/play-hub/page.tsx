@@ -611,6 +611,8 @@ export default function PlayHubPage() {
 
       setShopTxHash(buyHash);
       setConfirmOpen(false);
+      setStoreOpen(false);
+      setSelectedItemId(null);
       setResultOverlay({
         variant: "shop",
         txHash: buyHash,
@@ -811,13 +813,7 @@ export default function PlayHubPage() {
             celoscanHref={resultOverlay.txHash ? txLink(chainId, resultOverlay.txHash) : undefined}
             errorMessage={resultOverlay.errorMessage}
             totalStars={totalStars}
-            onDismiss={() => {
-              setResultOverlay(null);
-              if (resultOverlay.variant === "shop") {
-                setStoreOpen(false);
-                setSelectedItemId(null);
-              }
-            }}
+            onDismiss={() => setResultOverlay(null)}
             onRetry={resultOverlay.retryAction}
           />
         ) : null}
