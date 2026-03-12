@@ -63,15 +63,19 @@ export function enforceOrigin(request: Request) {
   const referer = request.headers.get("referer");
   const source = origin ?? referer;
 
-  if (!source) throw new Error("Forbidden");
+  // MiniPay's WebView may omit Origin/Referer on same-site fetches — allow through.
+  // Security is still enforced by rate limiting, nonce uniqueness, and signature verification.
+  if (!source) return;
 
+  let sourceHost: string;
   try {
-    const sourceHost = new URL(source).host;
-    // Exact host match — prevents subdomain spoofing (e.g. allowedHost.evil.com)
-    if (sourceHost !== allowedHost && sourceHost !== allowedHost.replace(/^https?:\/\//, "")) {
-      throw new Error("Forbidden");
-    }
+    sourceHost = new URL(source).host;
   } catch {
+    throw new Error("Forbidden");
+  }
+
+  const normalizedAllowed = allowedHost.replace(/^https?:\/\//, "");
+  if (sourceHost !== allowedHost && sourceHost !== normalizedAllowed) {
     throw new Error("Forbidden");
   }
 }
