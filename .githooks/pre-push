@@ -1,0 +1,15 @@
+#!/bin/sh
+# Pre-push hook: runs critical server tests before pushing.
+# Install: git config core.hooksPath .githooks
+
+echo "🧪 Running server tests before push..."
+cd apps/web && npm run test:server
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Server tests failed — push blocked."
+  echo "   Fix the failing tests and try again."
+  exit 1
+fi
+
+echo "✅ Tests passed — pushing."
