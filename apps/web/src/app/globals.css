@@ -437,7 +437,17 @@
     padding: 0.5rem 0.2rem 0;
   }
 
-  .chesscito-stats-bar {
+  .chesscito-footer {
+    background: rgba(2, 12, 24, 0.55);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: 20px 20px 0 0;
+    padding: 10px 12px 0;
+  }
+
+  .chesscito-hud-strip {
     display: flex;
     align-items: center;
     justify-content: space-around;
@@ -445,7 +455,7 @@
     padding: 0 4px;
   }
 
-  .chesscito-stats-item {
+  .chesscito-hud-item {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -453,7 +463,7 @@
     padding: 0;
   }
 
-  .chesscito-stats-label {
+  .chesscito-hud-label {
     font-size: 0.6rem;
     line-height: 1;
     letter-spacing: 0.18em;
@@ -462,7 +472,7 @@
     text-transform: uppercase;
   }
 
-  .chesscito-stats-value {
+  .chesscito-hud-value {
     font-size: 0.95rem;
     line-height: 1;
     font-weight: 700;
@@ -473,14 +483,14 @@
       0 0 24px rgba(103, 232, 249, 0.2);
   }
 
-  .chesscito-dock {
-    background: rgba(2, 12, 24, 0.55);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
-    border-radius: 20px 20px 0 0;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  .chesscito-hud-target {
+    color: rgba(103, 232, 249, 0.95);
+  }
+
+  .chesscito-hud-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(160, 205, 225, 0.15);
   }
 
   .hud-bar {
