@@ -106,6 +106,7 @@ contract ShopUpgradeable is
         if (!cfg.enabled) revert ItemDisabled(itemId);
 
         uint256 unitAmount = _normalizePrice(cfg.priceUsd6, tokenDecimals);
+        if (unitAmount == 0) revert InvalidPrice();
         uint256 totalAmount = unitAmount * quantity;
         address t = treasury;
 
@@ -130,7 +131,7 @@ contract ShopUpgradeable is
     // ─────────────────────────── Admin ─────────────────────────────────────
     function setAcceptedToken(address token, uint8 tokenDecimals) external onlyOwner {
         if (token == address(0)) revert InvalidAddress();
-        if (tokenDecimals == 0) revert InvalidDecimals();
+        if (tokenDecimals < 6 || tokenDecimals > 18) revert InvalidDecimals();
         acceptedTokens[token] = tokenDecimals;
         emit AcceptedTokenUpdated(token, tokenDecimals);
     }

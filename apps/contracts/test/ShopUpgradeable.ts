@@ -205,6 +205,28 @@ describe("ShopUpgradeable", function () {
       ).to.be.rejectedWith("InvalidDecimals");
     });
 
+    it("rejects setAcceptedToken with decimals < 6", async function () {
+      const { owner, shop } = await loadFixture(deployFixture);
+      const mockFactory = await ethers.getContractFactory("MockERC20");
+      const lowDec = await mockFactory.deploy("Low", "LOW", 4);
+      await lowDec.waitForDeployment();
+
+      await expect(
+        shop.connect(owner).setAcceptedToken(await lowDec.getAddress(), 4)
+      ).to.be.rejectedWith("InvalidDecimals");
+    });
+
+    it("rejects setAcceptedToken with decimals > 18", async function () {
+      const { owner, shop } = await loadFixture(deployFixture);
+      const mockFactory = await ethers.getContractFactory("MockERC20");
+      const highDec = await mockFactory.deploy("High", "HIGH", 24);
+      await highDec.waitForDeployment();
+
+      await expect(
+        shop.connect(owner).setAcceptedToken(await highDec.getAddress(), 24)
+      ).to.be.rejectedWith("InvalidDecimals");
+    });
+
     it("rejects setAcceptedToken with address(0)", async function () {
       const { owner, shop } = await loadFixture(deployFixture);
 
