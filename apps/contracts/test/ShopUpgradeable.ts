@@ -76,9 +76,20 @@ describe("ShopUpgradeable", function () {
       const tx = await shop.connect(buyer).buyItem(1n, 1n, usdcAddr);
       const receipt = await tx.wait();
 
-      // Verify treasury received funds as proxy for event correctness
-      expect(await usdc.balanceOf(treasury.address)).to.equal(100_000n);
-      expect(receipt).to.not.be.null;
+      // Parse event from receipt logs
+      const iface = shop.interface;
+      const event = receipt!.logs
+        .map((log) => { try { return iface.parseLog(log); } catch { return null; } })
+        .find((e) => e?.name === "ItemPurchased");
+
+      expect(event).to.not.be.null;
+      expect(event!.args[0]).to.equal(buyer.address);     // buyer
+      expect(event!.args[1]).to.equal(1n);                 // itemId
+      expect(event!.args[2]).to.equal(1n);                 // quantity
+      expect(event!.args[3]).to.equal(100_000n);           // unitPriceUsd6
+      expect(event!.args[4]).to.equal(100_000n);           // totalTokenAmount
+      expect(event!.args[5]).to.equal(usdcAddr);           // token
+      expect(event!.args[6]).to.equal(treasury.address);   // treasury
     });
   });
 
@@ -249,6 +260,36 @@ describe("ShopUpgradeable", function () {
 
       expect(price).to.equal(100_000n);
       expect(enabled).to.equal(false);
+    });
+
+    it("setItems configures multiple items in batch", async function () {
+      const { owner, shop } = await loadFixture(deployFixture);
+
+      await shop.connect(owner).setItems([3n, 4n], [50_000n, 75_000n], [true, false]);
+
+      const [price3, enabled3] = await shop.getItem(3n);
+      expect(price3).to.equal(50_000n);
+      expect(enabled3).to.equal(true);
+
+      const [price4, enabled4] = await shop.getItem(4n);
+      expect(price4).to.equal(75_000n);
+      expect(enabled4).to.equal(false);
+    });
+
+    it("setItems reverts on length mismatch", async function () {
+      const { owner, shop } = await loadFixture(deployFixture);
+
+      await expect(
+        shop.connect(owner).setItems([3n, 4n], [50_000n], [true, false])
+      ).to.be.rejectedWith("LengthMismatch");
+    });
+
+    it("setItems reverts if any price is zero", async function () {
+      const { owner, shop } = await loadFixture(deployFixture);
+
+      await expect(
+        shop.connect(owner).setItems([3n, 4n], [50_000n, 0n], [true, true])
+      ).to.be.rejectedWith("InvalidPrice");
     });
 
     it("non-owner cannot call admin functions", async function () {

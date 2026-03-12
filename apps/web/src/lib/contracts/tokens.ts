@@ -14,7 +14,7 @@ export function normalizePrice(priceUsd6: bigint, tokenDecimals: number): bigint
   return priceUsd6 / 10n ** BigInt(6 - tokenDecimals);
 }
 
-/** Format priceUsd6 as a human-readable USD string (e.g. 25000 → "$0.03"). */
+/** Format priceUsd6 as a human-readable USD string (e.g. 100000 → "$0.10"). */
 export function formatUsd(priceUsd6: bigint): string {
   const dollars = Number(priceUsd6) / 1_000_000;
   return `$${dollars.toFixed(2)}`;
