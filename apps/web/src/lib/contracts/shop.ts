@@ -5,7 +5,7 @@ export const shopAbi = [
     name: "getItem",
     inputs: [{ name: "itemId", type: "uint256" }],
     outputs: [
-      { name: "price", type: "uint256" },
+      { name: "priceUsd6", type: "uint256" },
       { name: "enabled", type: "bool" },
     ],
   },
@@ -16,8 +16,16 @@ export const shopAbi = [
     inputs: [
       { name: "itemId", type: "uint256" },
       { name: "quantity", type: "uint256" },
+      { name: "token", type: "address" },
     ],
     outputs: [],
+  },
+  {
+    type: "function",
+    stateMutability: "view",
+    name: "acceptedTokens",
+    inputs: [{ name: "token", type: "address" }],
+    outputs: [{ name: "decimals", type: "uint8" }],
   },
   {
     type: "event",
@@ -27,9 +35,9 @@ export const shopAbi = [
       { indexed: true, name: "buyer", type: "address" },
       { indexed: true, name: "itemId", type: "uint256" },
       { indexed: false, name: "quantity", type: "uint256" },
-      { indexed: false, name: "unitPrice", type: "uint256" },
-      { indexed: false, name: "totalPrice", type: "uint256" },
-      { indexed: false, name: "paymentToken", type: "address" },
+      { indexed: false, name: "unitPriceUsd6", type: "uint256" },
+      { indexed: false, name: "totalTokenAmount", type: "uint256" },
+      { indexed: true, name: "token", type: "address" },
       { indexed: false, name: "treasury", type: "address" },
     ],
   },
