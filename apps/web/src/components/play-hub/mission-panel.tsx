@@ -20,10 +20,9 @@ type MissionPanelProps = {
   level: string;
   board: ReactNode;
   starsBar: ReactNode;
-  actionPanel: ReactNode;
+  contextualAction: ReactNode;
+  persistentDock: ReactNode;
   pieceHint?: string;
-  shieldCount?: number;
-  onUseShield?: () => void;
 };
 
 type FlashConfig = { text: string; accent: string };
@@ -34,15 +33,7 @@ const PHASE_FLASH: Record<MissionPanelProps["phase"], FlashConfig | null> = {
   failure: { text: "Try again", accent: "text-rose-300" },
 };
 
-function PhaseFlash({
-  phase,
-  shieldCount = 0,
-  onUseShield,
-}: {
-  phase: MissionPanelProps["phase"];
-  shieldCount?: number;
-  onUseShield?: () => void;
-}) {
+function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
   const [visible, setVisible] = useState(false);
   const [fading, setFading] = useState(false);
   const flash = PHASE_FLASH[phase];
@@ -57,28 +48,20 @@ function PhaseFlash({
     setVisible(true);
     setFading(false);
 
-    const hasShield = phase === "failure" && shieldCount > 0;
-    const fadeDelay = hasShield ? 2600 : 700;
-    const hideDelay = hasShield ? 3000 : 1100;
-
-    const fadeTimer = setTimeout(() => setFading(true), fadeDelay);
-    const hideTimer = setTimeout(() => setVisible(false), hideDelay);
+    const fadeTimer = setTimeout(() => setFading(true), 700);
+    const hideTimer = setTimeout(() => setVisible(false), 1100);
 
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
     };
-  }, [phase, flash, shieldCount]);
+  }, [phase, flash]);
 
   if (!visible || !flash) return null;
 
-  const hasShield = phase === "failure" && shieldCount > 0;
-
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 transition-opacity duration-[400ms] ${
-        hasShield ? "" : "pointer-events-none"
-      } ${fading ? "opacity-0" : "opacity-100"}`}
+      className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/60 transition-opacity duration-[400ms] ${fading ? "opacity-0" : "opacity-100"}`}
     >
       <div className="flex flex-col items-center gap-4 animate-in zoom-in-90 duration-300">
         <img
@@ -90,18 +73,6 @@ function PhaseFlash({
         <span className={`fantasy-title text-3xl drop-shadow-lg ${flash.accent}`}>
           {flash.text}
         </span>
-        {hasShield && onUseShield ? (
-          <button
-            type="button"
-            onClick={() => {
-              setVisible(false);
-              onUseShield();
-            }}
-            className="mt-2 rounded-xl bg-amber-500/90 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-amber-400 active:scale-95"
-          >
-            Use Shield ({shieldCount} left)
-          </button>
-        ) : null}
       </div>
     </div>
   );
@@ -118,10 +89,9 @@ export function MissionPanel({
   level,
   board,
   starsBar,
-  actionPanel,
+  contextualAction,
+  persistentDock,
   pieceHint,
-  shieldCount,
-  onUseShield,
 }: MissionPanelProps) {
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden">
@@ -160,30 +130,35 @@ export function MissionPanel({
         <div className="px-2">{starsBar}</div>
       </div>
 
-      {/* Zone 3: Bottom Dock — stats + actions */}
-      <div className="chesscito-dock shrink-0">
-        {/* Stats row */}
-        <div className="chesscito-stats-bar mb-2">
-          <div className="chesscito-stats-item">
-            <span className="chesscito-stats-label">SCORE</span>
-            <span className="chesscito-stats-value">{score}</span>
+      {/* Zone 3: Footer — HUD strip + contextual action + persistent dock */}
+      <div className="chesscito-footer shrink-0">
+        {/* Layer 1: HUD strip (non-interactive) */}
+        <div className="chesscito-hud-strip">
+          <div className="chesscito-hud-item">
+            <span className="chesscito-hud-label">SCORE</span>
+            <span className="chesscito-hud-value">{score}</span>
           </div>
-          <div className="chesscito-stats-item">
-            <span className="chesscito-stats-label">TIME</span>
-            <span className="chesscito-stats-value">{Number(timeMs) / 1000}s</span>
+          <div className="chesscito-hud-divider" />
+          <div className="chesscito-hud-item">
+            <span className="chesscito-hud-label">TIME</span>
+            <span className="chesscito-hud-value">{Number(timeMs) / 1000}s</span>
           </div>
-          <div className="chesscito-stats-item">
-            <span className="chesscito-stats-label">TARGET</span>
-            <span className="chesscito-stats-value">{targetLabel}</span>
+          <div className="chesscito-hud-divider" />
+          <div className="chesscito-hud-item">
+            <span className="chesscito-hud-label">TARGET</span>
+            <span className="chesscito-hud-value chesscito-hud-target">{targetLabel}</span>
           </div>
         </div>
 
-        {/* Action buttons */}
-        {actionPanel}
+        {/* Layer 2: Contextual action slot (1 CTA at a time) */}
+        {contextualAction}
+
+        {/* Layer 3: Persistent dock (navigation) */}
+        {persistentDock}
       </div>
 
       {/* Fullscreen phase flash — auto-fades */}
-      <PhaseFlash phase={phase} shieldCount={shieldCount} onUseShield={onUseShield} />
+      <PhaseFlash phase={phase} />
     </section>
   );
 }
