@@ -11,6 +11,7 @@
   "include": [
     "src/lib/game/types.ts",
     "src/lib/game/board.ts",
+    "src/lib/game/context-action.ts",
     "src/lib/game/rules/**/*.ts",
     "src/lib/game/__tests__/**/*.ts"
   ],

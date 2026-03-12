@@ -7,9 +7,9 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
-    "test:game": "rm -rf .tmp/game-tests .tmp/tsconfig.test.tsbuildinfo && tsc -p tsconfig.test.json && node --test .tmp/game-tests/lib/game/__tests__/rook.test.js && rm -rf .tmp/game-tests .tmp/tsconfig.test.tsbuildinfo",
+    "test:game": "rm -rf .tmp/game-tests .tmp/tsconfig.test.tsbuildinfo && tsc -p tsconfig.test.json && node --test .tmp/game-tests/lib/game/__tests__/context-action.test.js && rm -rf .tmp/game-tests .tmp/tsconfig.test.tsbuildinfo",
     "test:server": "rm -rf .tmp/server-tests .tmp/tsconfig.test-server.tsbuildinfo && tsc -p tsconfig.test-server.json && node --test .tmp/server-tests/lib/server/__tests__/demo-signing.test.js && rm -rf .tmp/server-tests .tmp/tsconfig.test-server.tsbuildinfo",
-    "test": "npm run test:server",
+    "test": "npm run test:server && npm run test:game",
     "type-check": "rm -rf .next && next build >/dev/null && tsc --noEmit",
     "art:optimize": "bash scripts/optimize-art-assets.sh"
   },
