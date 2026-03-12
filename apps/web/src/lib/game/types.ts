@@ -34,4 +34,5 @@ export type PieceProgress = {
   piece: PieceId;
   exerciseIndex: number;     // índice del ejercicio activo (0–4)
   stars: [number, number, number, number, number]; // 0–3 por ejercicio
+  completed?: boolean;       // true after score has been submitted on-chain
 };

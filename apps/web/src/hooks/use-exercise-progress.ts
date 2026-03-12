@@ -106,14 +106,24 @@ export function useExerciseProgress(piece: PieceId) {
     });
   }, []);
 
+  const markCompleted = useCallback(() => {
+    setProgress((prev) => {
+      const next: PieceProgress = { ...prev, completed: true };
+      saveProgress(next);
+      return next;
+    });
+  }, []);
+
   return {
     progress,
     currentExercise,
     isLastExercise,
     totalStars: total,
     badgeEarned,
+    pieceCompleted: progress.completed ?? false,
     completeExercise,
     advanceExercise,
     goToExercise,
+    markCompleted,
   };
 }
