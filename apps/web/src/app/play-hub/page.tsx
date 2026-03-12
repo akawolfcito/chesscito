@@ -502,7 +502,7 @@ export default function PlayHubPage() {
       setLastError(message);
       setResultOverlay({
         variant: "error",
-        errorMessage: classifyTxError(error),
+        errorMessage: `[DEBUG] ${message.slice(0, 200)}`,
         retryAction: () => void handleSubmitScore(),
       });
       console.warn("[MiniPayTx] error", { label: "submit-score", levelId: Number(levelId), error: message });
