@@ -3,7 +3,7 @@ import { Composition } from "remotion";
 import { ChesscitPromo } from "./ChesscitPromo";
 
 const FPS = 30;
-const DURATION_FRAMES = 660; // ~22s at 30fps (will be updated after transitions)
+const DURATION_FRAMES = 615; // ~20.5s at 30fps (accounts for 3 fade transitions of 15 frames each)
 
 export const RemotionRoot: React.FC = () => {
   return (
