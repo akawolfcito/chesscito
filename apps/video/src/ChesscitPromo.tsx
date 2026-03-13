@@ -1,16 +1,13 @@
 import React from "react";
-import { AbsoluteFill } from "remotion";
+import { AbsoluteFill, Sequence } from "remotion";
+import { SplashIntro } from "./scenes/SplashIntro";
 
 export const ChesscitPromo: React.FC = () => {
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: "#0a0f1a",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <div style={{ color: "white", fontSize: 48 }}>Chesscito Promo</div>
+    <AbsoluteFill>
+      <Sequence durationInFrames={120} premountFor={30}>
+        <SplashIntro />
+      </Sequence>
     </AbsoluteFill>
   );
 };
