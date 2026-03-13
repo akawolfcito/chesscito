@@ -111,6 +111,13 @@ export const SHIELD_COPY = {
   buyLabel: "Buy (3 uses)",
 } as const;
 
+export const INVITE_COPY = {
+  button: "Invite",
+  text: "Come learn chess with me on Chesscito!",
+  url: "https://chesscito.vercel.app",
+  copied: "Link copied!",
+} as const;
+
 export const SHARE_COPY = {
   button: "Share",
   badge: (piece: string, stars: number) =>

@@ -17,6 +17,7 @@ import { LeaderboardSheet } from "@/components/play-hub/leaderboard-sheet";
 import { MissionBriefing } from "@/components/play-hub/mission-briefing";
 import { MissionPanel } from "@/components/play-hub/mission-panel";
 import { ContextualActionSlot } from "@/components/play-hub/contextual-action-slot";
+import { InviteButton } from "@/components/play-hub/invite-button";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
 import { PurchaseConfirmSheet } from "@/components/play-hub/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/play-hub/shop-sheet";
@@ -727,6 +728,7 @@ export default function PlayHubPage() {
               leaderboardControl={
                 <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
               }
+              inviteControl={<InviteButton />}
             />
           }
           board={
