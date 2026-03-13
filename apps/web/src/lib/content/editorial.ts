@@ -111,6 +111,18 @@ export const SHIELD_COPY = {
   buyLabel: "Buy (3 uses)",
 } as const;
 
+export const SHARE_COPY = {
+  button: "Share",
+  badge: (piece: string, stars: number) =>
+    `I just earned the ${piece} Ascendant badge on Chesscito! ${stars}/15 stars`,
+  score: (stars: number) =>
+    `I just submitted my score on Chesscito! ${stars}/15 stars`,
+  shop: (item: string) =>
+    `I just got ${item} on Chesscito!`,
+  fallbackCopied: "Copied to clipboard!",
+  url: "https://chesscito.vercel.app",
+} as const;
+
 export const PHASE_FLASH_COPY = {
   success: "Well done!",
   failure: "Try again",

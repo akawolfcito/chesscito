@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { BADGE_EARNED_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY } from "@/lib/content/editorial";
+import { useState } from "react";
+import { BADGE_EARNED_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
 
 type PieceKey = "rook" | "bishop" | "knight";
 type SuccessVariant = "badge" | "score" | "shop";
@@ -92,6 +93,56 @@ function StarsRow({ totalStars }: { totalStars: number }) {
   );
 }
 
+function getShareText(variant: SuccessVariant, pieceType?: PieceKey, itemLabel?: string, totalStars?: number): string {
+  switch (variant) {
+    case "badge":
+      return SHARE_COPY.badge(PIECE_LABELS[pieceType ?? "rook"], totalStars ?? 0);
+    case "score":
+      return SHARE_COPY.score(totalStars ?? 0);
+    case "shop":
+      return SHARE_COPY.shop(itemLabel ?? "an item");
+  }
+}
+
+function ShareButton({ variant, pieceType, itemLabel, totalStars }: {
+  variant: SuccessVariant;
+  pieceType?: PieceKey;
+  itemLabel?: string;
+  totalStars?: number;
+}) {
+  const [copied, setCopied] = useState(false);
+  const text = getShareText(variant, pieceType, itemLabel, totalStars);
+
+  async function handleShare() {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ text, url: SHARE_COPY.url });
+        return;
+      } catch {
+        // User cancelled or share failed — fall through to clipboard
+      }
+    }
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(`${text}\n${SHARE_COPY.url}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard also failed — silently ignore
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleShare()}
+      className="w-full rounded-xl border border-cyan-400/30 py-3 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/10 active:scale-[0.98]"
+    >
+      {copied ? SHARE_COPY.fallbackCopied : SHARE_COPY.button}
+    </button>
+  );
+}
+
 export function ResultOverlay({
   variant,
   pieceType,
@@ -153,6 +204,10 @@ export function ResultOverlay({
 
         {/* CTA buttons */}
         <div className="mt-2 flex w-full flex-col gap-2">
+          {!isError ? (
+            <ShareButton variant={variant} pieceType={pieceType} itemLabel={itemLabel} totalStars={totalStars} />
+          ) : null}
+
           {isError && onRetry ? (
             <button
               type="button"
@@ -236,6 +291,7 @@ export function BadgeEarnedPrompt({
           >
             {BADGE_EARNED_COPY.submitScore}
           </button>
+          <ShareButton variant="badge" pieceType={pieceType} totalStars={totalStars} />
           <button
             type="button"
             onClick={onLater}
