@@ -7,6 +7,7 @@ type PromotionChoice = "q" | "r" | "b" | "n";
 
 type Props = {
   onSelect: (piece: PromotionChoice) => void;
+  onCancel: () => void;
 };
 
 const CHOICES: { key: PromotionChoice; label: string }[] = [
@@ -23,10 +24,17 @@ const PIECE_KEY_MAP: Record<PromotionChoice, keyof typeof ARENA_PIECE_IMG> = {
   n: "knight",
 };
 
-export function PromotionOverlay({ onSelect }: Props) {
+export function PromotionOverlay({ onSelect, onCancel }: Props) {
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70">
-      <div className="flex flex-col items-center gap-3 rounded-2xl bg-slate-800/95 p-5">
+    <div
+      className="absolute inset-0 z-30 flex items-center justify-center bg-black/70"
+      onClick={onCancel}
+    >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div
+        className="flex flex-col items-center gap-3 rounded-2xl bg-slate-800/95 p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
         <p className="text-sm font-semibold text-white/80">
           {ARENA_COPY.promotionTitle}
         </p>
