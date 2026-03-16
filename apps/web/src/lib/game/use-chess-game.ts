@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import type { Square } from "chess.js";
 import type { ArenaDifficulty, ArenaStatus, ChessBoardPiece } from "./types";
@@ -22,8 +22,10 @@ export type ChessGameState = {
   checkSquare: string | null;
   pendingPromotion: { from: string; to: string } | null;
   difficulty: ArenaDifficulty;
+  errorMessage: string | null;
   selectSquare: (square: string) => void;
   promoteWith: (piece: "q" | "r" | "b" | "n") => void;
+  cancelPromotion: () => void;
   reset: () => void;
   resign: () => void;
   setDifficulty: (d: ArenaDifficulty) => void;
@@ -38,14 +40,15 @@ export function useChessGame(): ChessGameState {
   const [legalMoves, setLegalMoves] = useState<string[]>([]);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const gameRef = useRef(new Chess());
   const workerRef = useRef<Worker | null>(null);
   const [fen, setFen] = useState(gameRef.current.fen());
 
-  const pieces = fenToPieces(fen);
+  const pieces = useMemo(() => fenToPieces(fen), [fen]);
 
-  const checkSquare = (() => {
+  const checkSquare = useMemo(() => {
     const game = gameRef.current;
     if (!game.isCheck()) return null;
     const board = game.board();
@@ -60,7 +63,8 @@ export function useChessGame(): ChessGameState {
       }
     }
     return null;
-  })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fen]);
 
   const handleAiMove = useCallback((moveStr: string) => {
     const game = gameRef.current;
@@ -124,6 +128,7 @@ export function useChessGame(): ChessGameState {
         case "error":
           console.error("Stockfish error:", msg.message);
           setIsThinking(false);
+          setErrorMessage(msg.message);
           break;
       }
     };
@@ -131,6 +136,7 @@ export function useChessGame(): ChessGameState {
     worker.onerror = (err) => {
       console.error("Worker crashed", err);
       setIsThinking(false);
+      setErrorMessage("AI disconnected");
     };
 
     worker.postMessage({ type: "init" });
@@ -216,6 +222,16 @@ export function useChessGame(): ChessGameState {
     }
   }, [pendingPromotion, triggerAiMove]);
 
+  const cancelPromotion = useCallback(() => {
+    if (!pendingPromotion) return;
+    setPendingPromotion(null);
+    setSelectedSquare(pendingPromotion.from);
+    // Re-show legal moves for the pawn
+    const game = gameRef.current;
+    const moves = game.moves({ square: pendingPromotion.from as Square, verbose: true });
+    setLegalMoves(moves.map((m) => m.to));
+  }, [pendingPromotion]);
+
   const reset = useCallback(() => {
     // Terminate old worker so a fresh one is created on next startGame
     workerRef.current?.terminate();
@@ -228,6 +244,7 @@ export function useChessGame(): ChessGameState {
     setLastMove(null);
     setPendingPromotion(null);
     setIsThinking(false);
+    setErrorMessage(null);
     setStatus("selecting");
   }, []);
 
@@ -243,6 +260,7 @@ export function useChessGame(): ChessGameState {
     setLegalMoves([]);
     setLastMove(null);
     setPendingPromotion(null);
+    setErrorMessage(null);
     setStatus("loading");
   }, []);
 
@@ -257,8 +275,10 @@ export function useChessGame(): ChessGameState {
     checkSquare,
     pendingPromotion,
     difficulty,
+    errorMessage,
     selectSquare,
     promoteWith,
+    cancelPromotion,
     reset,
     resign,
     setDifficulty,
