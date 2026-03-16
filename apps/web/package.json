@@ -22,6 +22,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "ethers": "^6.16.0",
+    "lila-stockfish-web": "^0.0.11",
     "lucide-react": "^0.292.0",
     "next": "^14.0.0",
     "react": "^18.2.0",
