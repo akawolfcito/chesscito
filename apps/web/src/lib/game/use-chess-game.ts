@@ -1,0 +1,253 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Chess } from "chess.js";
+import type { Square } from "chess.js";
+import type { ArenaDifficulty, ArenaStatus, ChessBoardPiece } from "./types";
+import { fenToPieces } from "./arena-utils";
+
+type WorkerMessage =
+  | { type: "ready" }
+  | { type: "bestmove"; move: string }
+  | { type: "error"; message: string };
+
+export type ChessGameState = {
+  fen: string;
+  pieces: ChessBoardPiece[];
+  status: ArenaStatus;
+  isThinking: boolean;
+  selectedSquare: string | null;
+  legalMoves: string[];
+  lastMove: { from: string; to: string } | null;
+  checkSquare: string | null;
+  pendingPromotion: { from: string; to: string } | null;
+  difficulty: ArenaDifficulty;
+  selectSquare: (square: string) => void;
+  promoteWith: (piece: "q" | "r" | "b" | "n") => void;
+  reset: () => void;
+  resign: () => void;
+  setDifficulty: (d: ArenaDifficulty) => void;
+  startGame: () => void;
+};
+
+export function useChessGame(): ChessGameState {
+  const [difficulty, setDifficulty] = useState<ArenaDifficulty>("easy");
+  const [status, setStatus] = useState<ArenaStatus>("selecting");
+  const [isThinking, setIsThinking] = useState(false);
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [legalMoves, setLegalMoves] = useState<string[]>([]);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
+
+  const gameRef = useRef(new Chess());
+  const workerRef = useRef<Worker | null>(null);
+  const [fen, setFen] = useState(gameRef.current.fen());
+
+  const pieces = fenToPieces(fen);
+
+  const checkSquare = (() => {
+    const game = gameRef.current;
+    if (!game.isCheck()) return null;
+    const board = game.board();
+    const turn = game.turn();
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const cell = board[r][f];
+        if (cell && cell.type === "k" && cell.color === turn) {
+          const fileChar = String.fromCharCode(97 + f);
+          return `${fileChar}${8 - r}`;
+        }
+      }
+    }
+    return null;
+  })();
+
+  const handleAiMove = useCallback((moveStr: string) => {
+    const game = gameRef.current;
+    const from = moveStr.slice(0, 2);
+    const to = moveStr.slice(2, 4);
+    const promotion = moveStr.length > 4 ? moveStr[4] as "q" | "r" | "b" | "n" : undefined;
+
+    try {
+      game.move({ from, to, promotion });
+      setFen(game.fen());
+      setLastMove({ from, to });
+      setIsThinking(false);
+
+      if (game.isCheckmate()) setStatus("checkmate");
+      else if (game.isStalemate()) setStatus("stalemate");
+      else if (game.isDraw()) setStatus("draw");
+    } catch {
+      console.error("Invalid AI move:", moveStr);
+      setIsThinking(false);
+    }
+  }, []);
+
+  const triggerAiMove = useCallback(() => {
+    const worker = workerRef.current;
+    const game = gameRef.current;
+    if (!worker || game.turn() !== "b") return;
+
+    setIsThinking(true);
+    worker.postMessage({
+      type: "search",
+      fen: game.fen(),
+      difficulty,
+    });
+  }, [difficulty]);
+
+  // Initialize worker when status changes to "loading"
+  useEffect(() => {
+    if (status !== "loading") return;
+
+    const worker = new Worker(
+      new URL("./arena-worker.ts", import.meta.url),
+      { type: "module" }
+    );
+
+    worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
+      const msg = e.data;
+      switch (msg.type) {
+        case "ready":
+          workerRef.current = worker;
+          setStatus("playing");
+          break;
+        case "bestmove":
+          handleAiMove(msg.move);
+          break;
+        case "error":
+          console.error("Stockfish error:", msg.message);
+          setIsThinking(false);
+          break;
+      }
+    };
+
+    worker.onerror = () => {
+      console.error("Worker crashed");
+      setIsThinking(false);
+    };
+
+    worker.postMessage({ type: "init" });
+
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
+
+  const selectSquare = useCallback((square: string) => {
+    const game = gameRef.current;
+    if (status !== "playing" || isThinking || game.turn() !== "w") return;
+
+    const piece = game.get(square as Square);
+
+    // Clicking own piece → select and show legal moves
+    if (piece && piece.color === "w") {
+      setSelectedSquare(square);
+      const moves = game.moves({ square: square as Square, verbose: true });
+      setLegalMoves(moves.map((m) => m.to));
+      return;
+    }
+
+    // Clicking a legal move target
+    if (selectedSquare && legalMoves.includes(square)) {
+      // Check for pawn promotion
+      const movingPiece = game.get(selectedSquare as Square);
+      const targetRank = Number(square[1]);
+      if (movingPiece?.type === "p" && targetRank === 8) {
+        setPendingPromotion({ from: selectedSquare, to: square });
+        return;
+      }
+
+      try {
+        game.move({ from: selectedSquare, to: square });
+        setFen(game.fen());
+        setLastMove({ from: selectedSquare, to: square });
+        setSelectedSquare(null);
+        setLegalMoves([]);
+
+        if (game.isCheckmate()) setStatus("checkmate");
+        else if (game.isStalemate()) setStatus("stalemate");
+        else if (game.isDraw()) setStatus("draw");
+        else triggerAiMove();
+      } catch {
+        setSelectedSquare(null);
+        setLegalMoves([]);
+      }
+      return;
+    }
+
+    // Deselect
+    setSelectedSquare(null);
+    setLegalMoves([]);
+  }, [status, isThinking, selectedSquare, legalMoves, triggerAiMove]);
+
+  const promoteWith = useCallback((piece: "q" | "r" | "b" | "n") => {
+    if (!pendingPromotion) return;
+    const game = gameRef.current;
+
+    try {
+      game.move({ from: pendingPromotion.from, to: pendingPromotion.to, promotion: piece });
+      setFen(game.fen());
+      setLastMove({ from: pendingPromotion.from, to: pendingPromotion.to });
+      setPendingPromotion(null);
+      setSelectedSquare(null);
+      setLegalMoves([]);
+
+      if (game.isCheckmate()) setStatus("checkmate");
+      else if (game.isStalemate()) setStatus("stalemate");
+      else if (game.isDraw()) setStatus("draw");
+      else triggerAiMove();
+    } catch {
+      setPendingPromotion(null);
+      setSelectedSquare(null);
+      setLegalMoves([]);
+    }
+  }, [pendingPromotion, triggerAiMove]);
+
+  const reset = useCallback(() => {
+    gameRef.current = new Chess();
+    setFen(gameRef.current.fen());
+    setSelectedSquare(null);
+    setLegalMoves([]);
+    setLastMove(null);
+    setPendingPromotion(null);
+    setIsThinking(false);
+    setStatus("selecting");
+  }, []);
+
+  const resign = useCallback(() => {
+    setStatus("resigned");
+    setIsThinking(false);
+  }, []);
+
+  const startGame = useCallback(() => {
+    gameRef.current = new Chess();
+    setFen(gameRef.current.fen());
+    setSelectedSquare(null);
+    setLegalMoves([]);
+    setLastMove(null);
+    setPendingPromotion(null);
+    setStatus("loading");
+  }, []);
+
+  return {
+    fen,
+    pieces,
+    status,
+    isThinking,
+    selectedSquare,
+    legalMoves,
+    lastMove,
+    checkSquare,
+    pendingPromotion,
+    difficulty,
+    selectSquare,
+    promoteWith,
+    reset,
+    resign,
+    setDifficulty,
+    startGame,
+  };
+}
