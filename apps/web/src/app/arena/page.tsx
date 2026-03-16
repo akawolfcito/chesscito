@@ -25,12 +25,19 @@ export default function ArenaPage() {
   if (game.status === "loading") {
     return (
       <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#0a1628]/80">
-        <div className="flex flex-col items-center gap-4">
-          <span className="text-xs font-semibold uppercase tracking-widest text-cyan-300/60">
-            {ARENA_COPY.difficulty[game.difficulty]}
-          </span>
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
-          <p className="text-sm text-white/60">{ARENA_COPY.preparingAi}</p>
+        <div className="flex flex-col items-center gap-5">
+          <img
+            src="/art/favicon-wolf.png"
+            alt=""
+            aria-hidden="true"
+            className="h-16 w-16 animate-pulse drop-shadow-[0_0_20px_rgba(103,232,249,0.5)]"
+          />
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300/50">
+              {ARENA_COPY.difficulty[game.difficulty]}
+            </span>
+            <p className="text-sm text-white/50">{ARENA_COPY.preparingAi}</p>
+          </div>
         </div>
       </main>
     );
@@ -46,7 +53,7 @@ export default function ArenaPage() {
           onStart={game.startGame}
         />
         {game.errorMessage && (
-          <div className="mt-4 rounded-xl bg-rose-500/15 px-4 py-2 text-center text-sm text-rose-300">
+          <div className="mx-6 mt-2 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-2.5 text-center text-sm text-rose-300">
             {game.errorMessage}
           </div>
         )}
@@ -58,7 +65,11 @@ export default function ArenaPage() {
   return (
     <main className="flex min-h-[100dvh] flex-col items-center bg-[#0a1628]/80">
       <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-col">
-        <ArenaHud difficulty={game.difficulty} isThinking={game.isThinking} />
+        <ArenaHud
+          difficulty={game.difficulty}
+          isThinking={game.isThinking}
+          onBack={game.reset}
+        />
 
         <div className="relative w-full">
           <ArenaBoard
@@ -77,12 +88,12 @@ export default function ArenaPage() {
 
         {/* Error banner */}
         {game.errorMessage && (
-          <div className="flex items-center justify-center gap-3 px-4 py-2">
+          <div className="mx-3 mt-2 flex items-center justify-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-2.5">
             <span className="text-sm text-rose-300">{game.errorMessage}</span>
             <button
               type="button"
               onClick={game.reset}
-              className="rounded-lg bg-rose-500/20 px-3 py-1 text-xs font-semibold text-rose-300 transition-all hover:bg-rose-500/30 active:scale-95"
+              className="shrink-0 rounded-xl bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-300 transition-all hover:bg-rose-500/30 active:scale-95"
             >
               {ARENA_COPY.restartMatch}
             </button>
@@ -91,11 +102,11 @@ export default function ArenaPage() {
 
         {/* Actions bar */}
         {!isEndState && !game.errorMessage && (
-          <div className="flex items-center justify-center gap-3 px-4 py-3">
+          <div className="flex items-center justify-center px-4 py-3">
             <button
               type="button"
               onClick={game.resign}
-              className="rounded-xl bg-white/10 px-5 py-2 text-sm font-semibold text-white/70 transition-all hover:bg-white/20 active:scale-95"
+              className="rounded-2xl border border-white/8 bg-white/5 px-8 py-2.5 text-sm font-semibold text-white/50 backdrop-blur-sm transition-all hover:bg-white/10 hover:text-white/70 active:scale-95"
             >
               {ARENA_COPY.resign}
             </button>
