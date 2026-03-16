@@ -24,7 +24,7 @@ export default function ArenaPage() {
   // Loading state
   if (game.status === "loading") {
     return (
-      <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#0a1628] bg-[image:url('/art/bg-game.png')] bg-cover bg-center">
+      <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#0a1628]/80">
         <div className="flex flex-col items-center gap-4">
           <span className="text-xs font-semibold uppercase tracking-widest text-cyan-300/60">
             {ARENA_COPY.difficulty[game.difficulty]}
@@ -39,7 +39,7 @@ export default function ArenaPage() {
   // Difficulty selection
   if (game.status === "selecting") {
     return (
-      <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#0a1628] bg-[image:url('/art/bg-game.png')] bg-cover bg-center">
+      <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#0a1628]/80">
         <DifficultySelector
           selected={game.difficulty}
           onSelect={game.setDifficulty}
@@ -51,7 +51,7 @@ export default function ArenaPage() {
 
   // Playing + end states
   return (
-    <main className="flex min-h-[100dvh] flex-col items-center bg-[#0a1628] bg-[image:url('/art/bg-game.png')] bg-cover bg-center">
+    <main className="flex min-h-[100dvh] flex-col items-center bg-[#0a1628]/80">
       <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-col">
         <ArenaHud difficulty={game.difficulty} isThinking={game.isThinking} />
 
