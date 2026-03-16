@@ -220,3 +220,41 @@ export const MISSION_BRIEFING_COPY = {
   },
   captureHintCompact: "♜ Capture the target",
 } as const;
+
+export const ARENA_COPY = {
+  title: "Free Play",
+  subtitle: "Challenge the AI",
+  difficulty: {
+    easy: "Easy",
+    medium: "Medium",
+    hard: "Hard",
+  },
+  difficultyDesc: {
+    easy: "Friendly AI — makes mistakes often",
+    medium: "Solid player — a fair challenge",
+    hard: "Expert — plays to win",
+  },
+  startMatch: "Start Match",
+  backToHub: "Back to Hub",
+  resign: "Resign",
+  newGame: "New Game",
+  aiThinking: "AI is thinking...",
+  preparingAi: "Preparing AI...",
+  promotionTitle: "Promote pawn to:",
+  endState: {
+    checkmate: {
+      win: "Checkmate — You Win!",
+      lose: "Checkmate — AI Wins",
+    },
+    stalemate: "Stalemate — Draw",
+    draw: "Draw",
+    resigned: "You Resigned",
+  },
+  playAgain: "Play Again",
+  softGate: "Try learning a piece first?",
+  softGateSkip: "Skip",
+  aiError: "AI disconnected",
+  aiTimeout: "AI timed out",
+  restartMatch: "Restart Match",
+  noWasm: "Your browser doesn't support the AI engine",
+} as const;
