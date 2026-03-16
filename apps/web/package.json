@@ -14,18 +14,20 @@
     "art:optimize": "bash scripts/optimize-art-assets.sh"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@rainbow-me/rainbowkit": "^2.0.0",
+    "@tanstack/react-query": "^5.0.0",
+    "chess.js": "^1.4.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "ethers": "^6.16.0",
+    "lila-stockfish-web": "^0.0.11",
+    "lucide-react": "^0.292.0",
     "next": "^14.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@radix-ui/react-dialog": "^1.0.5",
-    "@radix-ui/react-slot": "^1.0.2",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.0.0",
     "tailwind-merge": "^2.0.0",
-    "lucide-react": "^0.292.0",
-    "@rainbow-me/rainbowkit": "^2.0.0",
-    "@tanstack/react-query": "^5.0.0",
-    "ethers": "^6.16.0",
     "viem": "^2.0.0",
     "wagmi": "^2.0.0"
   },
@@ -33,12 +35,12 @@
     "@types/node": "^20.8.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.17",
     "eslint": "^8.50.0",
     "eslint-config-next": "^14.0.0",
-    "typescript": "^5.2.2",
-    "tailwindcss": "^3.4.4",
     "postcss": "^8.4.35",
-    "autoprefixer": "^10.4.17",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss": "^3.4.4",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.2.2"
   }
 }

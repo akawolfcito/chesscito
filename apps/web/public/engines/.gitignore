@@ -1,0 +1,4 @@
+# WASM files copied from node_modules at build time
+*.wasm
+*.js
+!.gitignore

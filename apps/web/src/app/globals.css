@@ -388,6 +388,109 @@
       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
   }
 
+  /* ── Arena background (badges hall) ── */
+
+  .arena-bg {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .arena-bg::before {
+    content: "";
+    position: absolute;
+    inset: -12px;
+    background-image: image-set(
+      url("/art/bg-badges-chesscito.avif") type("image/avif"),
+      url("/art/bg-badges-chesscito.webp") type("image/webp"),
+      url("/art/bg-badges-chesscito.png") type("image/png")
+    );
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+  }
+
+  .arena-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 14, 24, 0.62);
+    z-index: 0;
+  }
+
+  .arena-bg > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Arena board (full chess) ── */
+
+  .arena-board-cell {
+    position: absolute;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    transition: background 150ms ease;
+  }
+
+  .arena-board-cell:active {
+    transform: scale(0.98);
+  }
+
+  .arena-board-cell.is-highlighted {
+    background: rgba(251, 191, 36, 0.22);
+    box-shadow:
+      inset 0 0 0 1.5px rgba(252, 211, 77, 0.6),
+      0 0 6px rgba(251, 191, 36, 0.3);
+  }
+
+  .arena-board-cell.is-selected {
+    background: rgba(252, 211, 77, 0.3);
+    box-shadow:
+      inset 0 0 0 1.5px rgba(253, 224, 71, 0.85),
+      0 0 8px rgba(252, 211, 77, 0.4);
+  }
+
+  .arena-board-cell.is-last-move {
+    background: rgba(139, 92, 246, 0.15);
+    box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.3);
+  }
+
+  .arena-board-cell.is-check {
+    background: rgba(239, 68, 68, 0.3);
+    box-shadow:
+      inset 0 0 0 2px rgba(239, 68, 68, 0.6),
+      0 0 12px rgba(239, 68, 68, 0.4);
+  }
+
+  .arena-board-cell.is-capturable {
+    background: rgba(251, 191, 36, 0.15);
+  }
+
+  .arena-piece-float {
+    position: absolute;
+    z-index: 10;
+    transform: translate(-50%, -55%);
+    pointer-events: none;
+    transition: left 320ms ease-in-out, top 320ms ease-in-out, opacity 300ms ease;
+  }
+
+  .arena-piece-img {
+    height: clamp(44px, 15vw, 64px);
+    width: auto;
+    object-fit: contain;
+  }
+
+  .piece-white {
+    filter: sepia(0.3) saturate(1.5) brightness(1.1);
+  }
+
+  .piece-black {
+    filter: hue-rotate(260deg) saturate(0.8) brightness(0.7);
+  }
+
   /* Mission briefing overlay */
   .mission-briefing-scrim {
     position: fixed;

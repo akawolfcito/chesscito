@@ -10,6 +10,7 @@ import {
   movePiece,
 } from "@/lib/game/board";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
+import { interpolateQuad, type Point } from "@/lib/game/board-geometry";
 
 const PIECE_IMG: Record<PieceId, string> = {
   rook:   "/art/piece-rook.png",
@@ -22,29 +23,6 @@ function parseLabel(label: string): BoardPosition {
   const rank = Number(label.slice(1)) - 1;
 
   return { file, rank };
-}
-
-type Point = { x: number; y: number };
-
-// Corners calibrated from bg-with-grid.png pixel analysis (% of 1011×934 canvas)
-const BOARD_TOP_LEFT: Point = { x: 11.6, y: 1.4 };
-const BOARD_TOP_RIGHT: Point = { x: 88.2, y: 1.4 };
-const BOARD_BOTTOM_LEFT: Point = { x: 0.1, y: 98.2 };
-const BOARD_BOTTOM_RIGHT: Point = { x: 99.2, y: 98.2 };
-
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * t;
-}
-
-// Gamma > 1 compresses top rows to match board perspective foreshortening
-const BOARD_V_GAMMA = 1.15;
-
-function interpolateQuad(u: number, v: number): Point {
-  const vg = Math.pow(v, BOARD_V_GAMMA);
-  return {
-    x: lerp(lerp(BOARD_TOP_LEFT.x, BOARD_TOP_RIGHT.x, u), lerp(BOARD_BOTTOM_LEFT.x, BOARD_BOTTOM_RIGHT.x, u), vg),
-    y: lerp(lerp(BOARD_TOP_LEFT.y, BOARD_TOP_RIGHT.y, u), lerp(BOARD_BOTTOM_LEFT.y, BOARD_BOTTOM_RIGHT.y, u), vg),
-  };
 }
 
 type BoardProps = {

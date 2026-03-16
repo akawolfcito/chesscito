@@ -36,3 +36,26 @@ export type PieceProgress = {
   stars: [number, number, number, number, number]; // 0–3 por ejercicio
   completed?: boolean;       // true after score has been submitted on-chain
 };
+
+/* ── Arena (full chess) types ── */
+
+export type ChessPieceId = PieceId | "pawn" | "queen" | "king";
+
+export type PieceColor = "w" | "b";
+
+export type ChessBoardPiece = {
+  type: ChessPieceId;
+  color: PieceColor;
+  square: string; // algebraic notation, e.g. "e4"
+};
+
+export type ArenaDifficulty = "easy" | "medium" | "hard";
+
+export type ArenaStatus =
+  | "loading"
+  | "selecting"
+  | "playing"
+  | "checkmate"
+  | "stalemate"
+  | "draw"
+  | "resigned";
