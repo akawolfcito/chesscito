@@ -99,6 +99,7 @@ export function ArenaBoard({
                     className={[
                       "arena-board-cell",
                       sq.isHighlighted ? "is-highlighted" : "",
+                      sq.isHighlighted && pieceMap.has(sq.label) ? "is-capturable" : "",
                       sq.isSelected ? "is-selected" : "",
                       sq.isLastMove ? "is-last-move" : "",
                       sq.isCheck ? "is-check" : "",
