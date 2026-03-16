@@ -13,18 +13,18 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Arena page needs cross-origin isolation for SharedArrayBuffer (Stockfish WASM)
-        source: "/arena",
+        // Cross-origin isolation required globally for SharedArrayBuffer (Stockfish WASM).
+        // Using "credentialless" instead of "require-corp" so external resources
+        // (images, fonts, etc.) still load without explicit CORP headers.
+        source: "/:path*",
         headers: [
-          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          { key: "Cross-Origin-Embedder-Policy", value: "credentialless" },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
         ],
       },
       {
         source: "/engines/:path*",
         headers: [
-          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
-          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
