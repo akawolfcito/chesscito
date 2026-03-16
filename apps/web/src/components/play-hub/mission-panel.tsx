@@ -123,7 +123,7 @@ export function MissionPanel({
           </span>
           <Link
             href="/arena"
-            className="ml-2 shrink-0 rounded-lg bg-cyan-500/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-cyan-300 transition-all hover:bg-cyan-500/30 active:scale-95"
+            className="ml-3 shrink-0 rounded-lg bg-cyan-500/20 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-cyan-300 ring-1 ring-cyan-400/30 transition-all hover:bg-cyan-500/30 active:scale-95"
           >
             ♟ Free Play
           </Link>
