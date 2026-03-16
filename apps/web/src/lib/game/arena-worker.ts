@@ -79,7 +79,7 @@ async function initEngine() {
     engine = sf;
 
     // Start UCI protocol handshake — "ready" is sent when we receive "readyok"
-    engine.uci("uci");
+    sf.uci("uci");
   } catch (err) {
     postOut({ type: "error", message: `Engine load failed: ${err}` });
   }

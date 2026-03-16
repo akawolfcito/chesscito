@@ -96,9 +96,15 @@ export function useChessGame(): ChessGameState {
     });
   }, [difficulty]);
 
-  // Initialize worker when status changes to "loading"
+  // Initialize worker once when status enters "loading".
+  // We use a ref to track whether we've already spawned a worker so the
+  // effect can depend on [status] without killing the worker when status
+  // transitions from "loading" → "playing".
+  const workerSpawnedRef = useRef(false);
+
   useEffect(() => {
-    if (status !== "loading") return;
+    if (status !== "loading" || workerSpawnedRef.current) return;
+    workerSpawnedRef.current = true;
 
     const worker = new Worker(
       new URL("./arena-worker.ts", import.meta.url),
@@ -122,19 +128,23 @@ export function useChessGame(): ChessGameState {
       }
     };
 
-    worker.onerror = () => {
-      console.error("Worker crashed");
+    worker.onerror = (err) => {
+      console.error("Worker crashed", err);
       setIsThinking(false);
     };
 
     worker.postMessage({ type: "init" });
-
-    return () => {
-      worker.terminate();
-      workerRef.current = null;
-    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
+
+  // Cleanup worker on unmount only
+  useEffect(() => {
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+      workerSpawnedRef.current = false;
+    };
+  }, []);
 
   const selectSquare = useCallback((square: string) => {
     const game = gameRef.current;
@@ -207,6 +217,10 @@ export function useChessGame(): ChessGameState {
   }, [pendingPromotion, triggerAiMove]);
 
   const reset = useCallback(() => {
+    // Terminate old worker so a fresh one is created on next startGame
+    workerRef.current?.terminate();
+    workerRef.current = null;
+    workerSpawnedRef.current = false;
     gameRef.current = new Chess();
     setFen(gameRef.current.fen());
     setSelectedSquare(null);
