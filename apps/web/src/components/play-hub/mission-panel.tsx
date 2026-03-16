@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { PHASE_FLASH_COPY } from "@/lib/content/editorial";
 
 type PieceOption = {
@@ -120,6 +121,12 @@ export function MissionPanel({
           <span className="ml-auto shrink-0 text-xs text-cyan-300/70 tracking-[0.14em] uppercase">
             Lv {level}
           </span>
+          <Link
+            href="/arena"
+            className="ml-2 shrink-0 rounded-lg bg-cyan-500/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-cyan-300 transition-all hover:bg-cyan-500/30 active:scale-95"
+          >
+            ♟ Free Play
+          </Link>
         </div>
       </div>
 
