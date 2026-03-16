@@ -45,6 +45,11 @@ export default function ArenaPage() {
           onSelect={game.setDifficulty}
           onStart={game.startGame}
         />
+        {game.errorMessage && (
+          <div className="mt-4 rounded-xl bg-rose-500/15 px-4 py-2 text-center text-sm text-rose-300">
+            {game.errorMessage}
+          </div>
+        )}
       </main>
     );
   }

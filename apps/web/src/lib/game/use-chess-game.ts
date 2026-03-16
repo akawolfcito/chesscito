@@ -115,32 +115,6 @@ export function useChessGame(): ChessGameState {
       { type: "module" }
     );
 
-    worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
-      const msg = e.data;
-      switch (msg.type) {
-        case "ready":
-          workerRef.current = worker;
-          setStatus("playing");
-          break;
-        case "bestmove":
-          handleAiMove(msg.move);
-          break;
-        case "error":
-          console.error("Stockfish error:", msg.message);
-          setIsThinking(false);
-          setErrorMessage(msg.message);
-          break;
-      }
-    };
-
-    worker.onerror = (err) => {
-      console.error("Worker crashed", err);
-      setIsThinking(false);
-      setErrorMessage("AI disconnected");
-    };
-
-    worker.postMessage({ type: "init" });
-
     // Timeout: if engine doesn't become ready in 15s, show error
     const loadTimeout = setTimeout(() => {
       if (!workerRef.current) {
@@ -151,11 +125,38 @@ export function useChessGame(): ChessGameState {
       }
     }, 15_000);
 
-    // Clear timeout if worker becomes ready (status changes from "loading")
-    const clearOnReady = () => clearTimeout(loadTimeout);
-    workerRef.current === null && worker.addEventListener("message", (e) => {
-      if (e.data?.type === "ready") clearOnReady();
-    });
+    worker.onmessage = (e: MessageEvent<WorkerMessage>) => {
+      const msg = e.data;
+      switch (msg.type) {
+        case "ready":
+          clearTimeout(loadTimeout);
+          workerRef.current = worker;
+          setStatus("playing");
+          break;
+        case "bestmove":
+          handleAiMove(msg.move);
+          break;
+        case "error":
+          console.error("Stockfish error:", msg.message);
+          setIsThinking(false);
+          setErrorMessage(msg.message);
+          // If still loading (engine init failed), go back to selector
+          setStatus((prev) => prev === "loading" ? "selecting" : prev);
+          break;
+      }
+    };
+
+    worker.onerror = (err) => {
+      console.error("Worker crashed", err);
+      clearTimeout(loadTimeout);
+      worker.terminate();
+      workerSpawnedRef.current = false;
+      setIsThinking(false);
+      setErrorMessage("AI disconnected");
+      setStatus("selecting");
+    };
+
+    worker.postMessage({ type: "init" });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
