@@ -22,7 +22,7 @@ export function DifficultySelector({ selected, onSelect, onStart }: Props) {
       <h1 className="text-2xl font-bold text-white">{ARENA_COPY.title}</h1>
       <p className="text-sm text-white/60">{ARENA_COPY.subtitle}</p>
 
-      <div className="flex w-full max-w-[280px] flex-col gap-3">
+      <div className="flex w-full max-w-[320px] flex-col gap-3">
         {LEVELS.map(({ key, dot }) => (
           <button
             key={key}
@@ -51,7 +51,7 @@ export function DifficultySelector({ selected, onSelect, onStart }: Props) {
       <button
         type="button"
         onClick={onStart}
-        className="mt-2 rounded-xl bg-cyan-500 px-8 py-3 font-bold text-white transition-all hover:bg-cyan-400 active:scale-95"
+        className="mt-2 w-full max-w-[320px] rounded-xl bg-cyan-500 py-3 font-bold text-white transition-all hover:bg-cyan-400 active:scale-95"
       >
         {ARENA_COPY.startMatch}
       </button>
