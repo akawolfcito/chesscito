@@ -11,8 +11,7 @@
     "test:server": "rm -rf .tmp/server-tests .tmp/tsconfig.test-server.tsbuildinfo && tsc -p tsconfig.test-server.json && node --test .tmp/server-tests/lib/server/__tests__/demo-signing.test.js && rm -rf .tmp/server-tests .tmp/tsconfig.test-server.tsbuildinfo",
     "test": "npm run test:server && npm run test:game",
     "type-check": "rm -rf .next && next build >/dev/null && tsc --noEmit",
-    "art:optimize": "bash scripts/optimize-art-assets.sh",
-    "postinstall": "bash scripts/copy-stockfish.sh"
+    "art:optimize": "bash scripts/optimize-art-assets.sh"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
@@ -23,7 +22,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "ethers": "^6.16.0",
-    "lila-stockfish-web": "^0.0.11",
+    "js-chess-engine": "^2.4.6",
     "lucide-react": "^0.292.0",
     "next": "^14.0.0",
     "react": "^18.2.0",
