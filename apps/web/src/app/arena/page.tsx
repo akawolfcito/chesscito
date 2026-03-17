@@ -9,12 +9,13 @@ import {
   useReadContracts,
   useWriteContract,
 } from "wagmi";
+import { decodeEventLog } from "viem";
 import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { DifficultySelector } from "@/components/arena/difficulty-selector";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
-import { ArenaEndState } from "@/components/arena/arena-end-state";
+import { ArenaEndState, type MintPhase } from "@/components/arena/arena-end-state";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
 import { victoryAbi } from "@/lib/contracts/victory";
@@ -39,8 +40,8 @@ export default function ArenaPage() {
   const publicClient = usePublicClient({ chainId });
   const { writeContractAsync } = useWriteContract();
 
-  const [hasMinted, setHasMinted] = useState(false);
-  const [isMinting, setIsMinting] = useState(false);
+  const [mintPhase, setMintPhase] = useState<MintPhase>("idle");
+  const [tokenId, setTokenId] = useState<bigint | null>(null);
   const [mintError, setMintError] = useState<string | null>(null);
 
   const isEndState = ["checkmate", "stalemate", "draw", "resigned"].includes(game.status);
@@ -90,7 +91,8 @@ export default function ArenaPage() {
   async function handleMintVictory() {
     if (!canMint || !address || !victoryNFTAddress || !publicClient) return;
 
-    setIsMinting(true);
+    setMintPhase("minting");
+    setMintError(null);
     try {
       // 1. Get server signature
       const res = await fetch("/api/sign-victory", {
@@ -151,23 +153,41 @@ export default function ArenaPage() {
         chainId,
         account: address,
       });
-      await publicClient.waitForTransactionReceipt({ hash: mintHash });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: mintHash });
 
-      setHasMinted(true);
+      // 5. Extract tokenId from VictoryMinted event
+      let extractedTokenId: bigint | null = null;
+      for (const log of receipt.logs) {
+        try {
+          const decoded = decodeEventLog({
+            abi: victoryAbi,
+            data: log.data,
+            topics: log.topics,
+          });
+          if (decoded.eventName === "VictoryMinted" && "tokenId" in decoded.args) {
+            extractedTokenId = decoded.args.tokenId as bigint;
+            break;
+          }
+        } catch {
+          // Not our event — skip
+        }
+      }
+
+      setTokenId(extractedTokenId);
+      setMintPhase("minted");
       setMintError(null);
     } catch (err) {
       console.error("Mint failed:", err);
       const msg = err instanceof Error ? err.message : "Mint failed";
       setMintError(msg.includes("User rejected") ? null : "Mint failed. Try again.");
-    } finally {
-      setIsMinting(false);
+      setMintPhase("idle");
     }
   }
 
   // Reset mint state when starting a new game
   const handlePlayAgain = () => {
-    setHasMinted(false);
-    setIsMinting(false);
+    setMintPhase("idle");
+    setTokenId(null);
     setMintError(null);
     game.reset();
   };
@@ -249,11 +269,14 @@ export default function ArenaPage() {
           isPlayerWin={isPlayerWin}
           onPlayAgain={handlePlayAgain}
           onBackToHub={handleBackToHub}
+          mintPhase={mintPhase}
           onMintVictory={canMint ? () => void handleMintVictory() : undefined}
-          isMinting={isMinting}
-          hasMinted={hasMinted}
           mintPrice={mintPriceLabel}
           mintError={mintError}
+          tokenId={tokenId}
+          moves={game.moveCount}
+          elapsedMs={game.elapsedMs}
+          difficulty={game.difficulty}
         />
       )}
     </main>
