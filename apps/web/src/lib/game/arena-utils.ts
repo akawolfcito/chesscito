@@ -63,3 +63,14 @@ export function squareToFileRank(square: string): { file: number; rank: number }
     rank: Number(square[1]) - 1,
   };
 }
+
+/**
+ * Format milliseconds as m:ss string.
+ * e.g. 75000 → "1:15"
+ */
+export function formatTime(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${min}:${sec.toString().padStart(2, "0")}`;
+}

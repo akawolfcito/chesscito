@@ -229,6 +229,21 @@ export const VICTORY_MINT_COPY = {
   approving: "Approving...",
 } as const;
 
+export const VICTORY_CELEBRATION_COPY = {
+  title: "Victory!",
+  mintedTitle: (id: number | bigint) => `Victory #${id} Minted!`,
+  mintedTitleFallback: "Victory Minted!",
+  mintedSubtitle: "on Celo blockchain",
+  shareWin: "Share Win",
+  shareVictory: "Share Victory",
+  mintingMessage: "Minting your victory...",
+  copiedToast: "Copied!",
+  shareTextBasic: (moves: number, url: string) =>
+    `♟ Checkmate in ${moves} moves. Can you beat that?\nPlay Chesscito on Celo 👉 ${url}`,
+  shareTextMinted: (moves: number, tokenId: bigint | number, url: string) =>
+    `♟ Checkmate in ${moves} moves. Can you beat that?\nVictory #${tokenId} minted on-chain 👉 ${url}`,
+} as const;
+
 export const ARENA_COPY = {
   title: "Free Play",
   subtitle: "Challenge the AI",
