@@ -164,6 +164,13 @@ export default function PlayHubPage() {
     setIsLocalhost(host === "localhost" || host === "127.0.0.1" || host === "::1");
   }, []);
 
+  // Cleanup autoResetTimer on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
+    };
+  }, []);
+
   const MAX_SHIELDS = 30; // reasonable cap: 10 purchases × 3 shields each
   useEffect(() => {
     try {
