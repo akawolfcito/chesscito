@@ -21,7 +21,7 @@ export default function ArenaPage() {
 
   const handleBackToHub = () => router.push("/play-hub");
 
-  // Loading state
+  // Loading state — animated progress dots + cancel
   if (game.status === "loading") {
     return (
       <main className="flex min-h-[100dvh] flex-col items-center justify-center arena-bg">
@@ -37,7 +37,19 @@ export default function ArenaPage() {
               {ARENA_COPY.difficulty[game.difficulty]}
             </span>
             <p className="text-sm text-white/50">{ARENA_COPY.preparingAi}</p>
+            <div className="flex items-center gap-1.5 pt-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400/70 animate-bounce [animation-delay:0ms]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400/70 animate-bounce [animation-delay:150ms]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400/70 animate-bounce [animation-delay:300ms]" />
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={game.reset}
+            className="mt-2 text-xs text-white/30 transition-colors hover:text-white/50"
+          >
+            Cancel
+          </button>
         </div>
       </main>
     );
@@ -53,8 +65,15 @@ export default function ArenaPage() {
           onStart={game.startGame}
         />
         {game.errorMessage && (
-          <div className="mx-6 mt-2 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-2.5 text-center text-sm text-rose-300">
-            {game.errorMessage}
+          <div className="mx-6 mt-2 flex flex-col items-center gap-2.5 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3">
+            <span className="text-center text-sm text-rose-300">{game.errorMessage}</span>
+            <button
+              type="button"
+              onClick={game.startGame}
+              className="rounded-xl bg-cyan-500/20 px-5 py-1.5 text-xs font-semibold text-cyan-300 transition-all hover:bg-cyan-500/30 active:scale-95"
+            >
+              {ARENA_COPY.loadingRetry}
+            </button>
           </div>
         )}
       </main>

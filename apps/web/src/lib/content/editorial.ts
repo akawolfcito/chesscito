@@ -256,5 +256,6 @@ export const ARENA_COPY = {
   aiError: "AI disconnected",
   aiTimeout: "AI timed out",
   restartMatch: "Restart Match",
-  noWasm: "Your browser doesn't support the AI engine",
+  noWasm: "Could not load the AI engine. Try again or use a different browser.",
+  loadingRetry: "Retry",
 } as const;
