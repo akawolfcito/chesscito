@@ -25,6 +25,7 @@ const DIFFICULTY_CONFIG = {
 let engine: { uci: (cmd: string) => void } | null = null;
 let uciReady = false;
 let resolveMove: ((move: string) => void) | null = null;
+let searchTimeoutId: ReturnType<typeof setTimeout> | null = null;
 // Queue search requests that arrive before UCI is ready
 let pendingSearch: { fen: string; difficulty: SearchMessage["difficulty"] } | null = null;
 
@@ -91,6 +92,10 @@ function search(fen: string, difficulty: SearchMessage["difficulty"]) {
     return;
   }
 
+  // Clear stale timeout/callback from a previous search
+  if (searchTimeoutId) clearTimeout(searchTimeoutId);
+  resolveMove = null;
+
   const config = DIFFICULTY_CONFIG[difficulty];
 
   engine.uci(`setoption name Skill Level value ${config.skillLevel}`);
@@ -99,15 +104,17 @@ function search(fen: string, difficulty: SearchMessage["difficulty"]) {
   engine.uci(`position fen ${fen}`);
   engine.uci(`go depth ${config.depth}`);
 
-  const timeoutId = setTimeout(() => {
+  searchTimeoutId = setTimeout(() => {
     if (resolveMove) {
       resolveMove = null;
+      searchTimeoutId = null;
       postOut({ type: "error", message: "AI timed out" });
     }
   }, 10_000);
 
   resolveMove = (move: string) => {
-    clearTimeout(timeoutId);
+    if (searchTimeoutId) clearTimeout(searchTimeoutId);
+    searchTimeoutId = null;
     postOut({ type: "bestmove", move });
   };
 }
