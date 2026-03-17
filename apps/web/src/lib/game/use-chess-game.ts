@@ -185,10 +185,13 @@ export function useChessGame(): ChessGameState {
 
     // Clicking a legal move target
     if (selectedSquare && legalMoves.includes(square)) {
-      // Check for pawn promotion
+      // Check for pawn promotion (rank 8 for white, rank 1 for black)
       const movingPiece = game.get(selectedSquare as Square);
       const targetRank = Number(square[1]);
-      if (movingPiece?.type === "p" && targetRank === 8) {
+      const isPromotion = movingPiece?.type === "p" &&
+        ((movingPiece.color === "w" && targetRank === 8) ||
+         (movingPiece.color === "b" && targetRank === 1));
+      if (isPromotion) {
         setPendingPromotion({ from: selectedSquare, to: square });
         return;
       }
