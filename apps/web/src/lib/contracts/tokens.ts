@@ -1,5 +1,7 @@
 import { erc20Abi } from "viem";
 
+import type { ArenaDifficulty } from "@/lib/game/types";
+
 export const ACCEPTED_TOKENS = [
   { symbol: "USDC", address: "0xcebA9300f2b948710d2653dD7B07f33A8B32118C" as const, decimals: 6 },
   { symbol: "USDT", address: "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e" as const, decimals: 6 },
@@ -21,3 +23,16 @@ export function formatUsd(priceUsd6: bigint): string {
 }
 
 export { erc20Abi };
+
+export const DIFFICULTY_TO_CHAIN: Record<ArenaDifficulty, number> = {
+  easy: 1,
+  medium: 2,
+  hard: 3,
+};
+
+export const VICTORY_PRICES: Record<number, bigint> = {
+  1: 5_000n,   // Easy  — $0.005
+  2: 10_000n,  // Medium — $0.01
+  3: 20_000n,  // Hard  — $0.02
+};
+

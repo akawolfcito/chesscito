@@ -221,6 +221,14 @@ export const MISSION_BRIEFING_COPY = {
   captureHintCompact: "♜ Capture the target",
 } as const;
 
+export const VICTORY_MINT_COPY = {
+  mintButton: "Mint Victory",
+  mintedButton: "Victory Minted",
+  mintConfirm: "Mint your win as an NFT",
+  minting: "Minting...",
+  approving: "Approving...",
+} as const;
+
 export const ARENA_COPY = {
   title: "Free Play",
   subtitle: "Challenge the AI",

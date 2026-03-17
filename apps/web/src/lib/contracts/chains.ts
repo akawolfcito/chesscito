@@ -32,6 +32,11 @@ export function getUsdcAddress(chainId: number | undefined): `0x${string}` | nul
   return normalizeAddress(process.env.NEXT_PUBLIC_USDC_ADDRESS);
 }
 
+export function getVictoryNFTAddress(chainId: number | undefined): `0x${string}` | null {
+  if (!chainId || chainId !== getConfiguredChainId()) return null;
+  return normalizeAddress(process.env.NEXT_PUBLIC_VICTORY_NFT_ADDRESS);
+}
+
 export function getMiniPayFeeCurrency(chainId: number | undefined): `0x${string}` | undefined {
   if (!chainId || chainId !== getConfiguredChainId()) {
     return undefined;
