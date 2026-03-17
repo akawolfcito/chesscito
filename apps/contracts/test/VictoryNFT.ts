@@ -17,7 +17,7 @@ describe("VictoryNFTUpgradeable", function () {
     const victory = await upgrades.deployProxy(
       factory,
       [treasuryWallet.address, prizePoolWallet.address, signingWallet.address, owner.address],
-      { kind: "transparent", initializer: "initialize" }
+      { kind: "transparent", initializer: "initialize", unsafeAllow: ["constructor"] }
     );
     await victory.waitForDeployment();
 
@@ -359,7 +359,7 @@ describe("VictoryNFTUpgradeable", function () {
     const fresh = await upgrades.deployProxy(
       factory,
       [treasuryW.address, prizePoolW.address, signingWallet.address, owner.address],
-      { kind: "transparent", initializer: "initialize" }
+      { kind: "transparent", initializer: "initialize", unsafeAllow: ["constructor"] }
     );
     await fresh.waitForDeployment();
     const freshAddress = await fresh.getAddress();

@@ -24,7 +24,7 @@ export const victoryAbi = [
       { indexed: false, name: "difficulty", type: "uint8" },
       { indexed: false, name: "totalMoves", type: "uint16" },
       { indexed: false, name: "timeMs", type: "uint32" },
-      { indexed: false, name: "token", type: "address" },
+      { indexed: true, name: "token", type: "address" },
       { indexed: false, name: "totalAmount", type: "uint256" },
     ],
   },

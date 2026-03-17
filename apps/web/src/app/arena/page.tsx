@@ -41,6 +41,7 @@ export default function ArenaPage() {
 
   const [hasMinted, setHasMinted] = useState(false);
   const [isMinting, setIsMinting] = useState(false);
+  const [mintError, setMintError] = useState<string | null>(null);
 
   const isEndState = ["checkmate", "stalemate", "draw", "resigned"].includes(game.status);
   const isPlayerWin = game.status === "checkmate" && game.fen.includes(" b ");
@@ -133,8 +134,8 @@ export default function ArenaPage() {
         await publicClient.waitForTransactionReceipt({ hash: approveHash });
       }
 
-      // 4. Mint
-      await writeContractAsync({
+      // 4. Mint and wait for confirmation
+      const mintHash = await writeContractAsync({
         address: victoryNFTAddress,
         abi: victoryAbi,
         functionName: "mintSigned",
@@ -150,10 +151,14 @@ export default function ArenaPage() {
         chainId,
         account: address,
       });
+      await publicClient.waitForTransactionReceipt({ hash: mintHash });
 
       setHasMinted(true);
+      setMintError(null);
     } catch (err) {
       console.error("Mint failed:", err);
+      const msg = err instanceof Error ? err.message : "Mint failed";
+      setMintError(msg.includes("User rejected") ? null : "Mint failed. Try again.");
     } finally {
       setIsMinting(false);
     }
@@ -163,6 +168,7 @@ export default function ArenaPage() {
   const handlePlayAgain = () => {
     setHasMinted(false);
     setIsMinting(false);
+    setMintError(null);
     game.reset();
   };
 
@@ -247,6 +253,7 @@ export default function ArenaPage() {
           isMinting={isMinting}
           hasMinted={hasMinted}
           mintPrice={mintPriceLabel}
+          mintError={mintError}
         />
       )}
     </main>

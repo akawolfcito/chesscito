@@ -12,6 +12,7 @@ type Props = {
   isMinting?: boolean;
   hasMinted?: boolean;
   mintPrice?: string;
+  mintError?: string | null;
 };
 
 function getResultText(status: ArenaStatus, isPlayerWin: boolean): string {
@@ -40,6 +41,7 @@ export function ArenaEndState({
   isMinting,
   hasMinted,
   mintPrice,
+  mintError,
 }: Props) {
   const text = getResultText(status, isPlayerWin);
   if (!text) return null;
@@ -82,6 +84,9 @@ export function ArenaEndState({
                   ? VICTORY_MINT_COPY.minting
                   : `${VICTORY_MINT_COPY.mintButton} — ${mintPrice ?? ""}`}
             </button>
+          )}
+          {mintError && (
+            <p className="text-xs text-rose-300">{mintError}</p>
           )}
           <div className="flex gap-3">
             <button

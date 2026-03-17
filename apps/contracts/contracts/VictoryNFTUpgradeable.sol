@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -11,28 +12,21 @@ import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC72
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
+/**
+ * @title VictoryNFTUpgradeable
+ * @notice ERC-721 victory NFT. Players mint wins with micro-fees split 80/20 (treasury/prizePool).
+ * @dev Deploy behind a TransparentUpgradeableProxy.
+ *      OZ v5 ReentrancyGuard uses ERC-7201 namespaced storage, so it is proxy-safe.
+ */
 contract VictoryNFTUpgradeable is
     Initializable,
     ERC721Upgradeable,
     OwnableUpgradeable,
     PausableUpgradeable,
-    EIP712Upgradeable
+    EIP712Upgradeable,
+    ReentrancyGuard
 {
     using SafeERC20 for IERC20;
-
-    // Reentrancy guard (upgrade-safe, no constructor)
-    uint256 private constant _NOT_ENTERED = 1;
-    uint256 private constant _ENTERED = 2;
-    uint256 private _reentrancyStatus;
-
-    error ReentrancyGuardReentrantCall();
-
-    modifier nonReentrant() {
-        if (_reentrancyStatus == _ENTERED) revert ReentrancyGuardReentrantCall();
-        _reentrancyStatus = _ENTERED;
-        _;
-        _reentrancyStatus = _NOT_ENTERED;
-    }
 
     // Errors
     error InvalidDifficulty(uint8 difficulty);
@@ -93,10 +87,10 @@ contract VictoryNFTUpgradeable is
     uint256 private _nextTokenId;
     string private _baseTokenURI;
 
-    // Own slots: _reentrancyStatus, acceptedTokens, priceUsd6, treasury, prizePool, signer,
-    //   mintCooldown, lastMintAt, usedNonces, victories, _nextTokenId, _baseTokenURI = 12
-    // Gap: 50 - 12 = 38 free
-    uint256[38] private __gap;
+    // Own slots: acceptedTokens, priceUsd6, treasury, prizePool, signer,
+    //   mintCooldown, lastMintAt, usedNonces, victories, _nextTokenId, _baseTokenURI = 11
+    // Gap: 50 - 11 = 39 free
+    uint256[39] private __gap;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() { _disableInitializers(); }
@@ -116,8 +110,6 @@ contract VictoryNFTUpgradeable is
         __Ownable_init(initialOwner);
         __Pausable_init();
         __EIP712_init("VictoryNFT", "1");
-
-        _reentrancyStatus = _NOT_ENTERED;
 
         treasury = initialTreasury;
         prizePool = initialPrizePool;
@@ -258,7 +250,10 @@ contract VictoryNFTUpgradeable is
         emit AcceptedTokenRemoved(token);
     }
 
+    error InvalidBaseURI();
+
     function setBaseURI(string memory baseURI) external onlyOwner {
+        if (bytes(baseURI).length == 0) revert InvalidBaseURI();
         _baseTokenURI = baseURI;
     }
 
