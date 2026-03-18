@@ -380,8 +380,7 @@
   }
 
   .playhub-board-piece-img {
-    height: clamp(44px, 15vw, 64px);
-    width: auto;
+    height: auto;
     object-fit: contain;
     filter:
       drop-shadow(0 0 6px rgba(103, 232, 249, 0.6))
@@ -478,7 +477,6 @@
   }
 
   .arena-piece-img {
-    width: clamp(28px, 9vw, 42px);
     height: auto;
     object-fit: contain;
   }

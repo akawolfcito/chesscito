@@ -72,3 +72,13 @@ export function cellCenter(file: number, rank: number): Point {
   const col = file;
   return interpolateQuad((col + 0.5) / 8, (row + 0.5) / 8);
 }
+
+/**
+ * Get piece width (% of canvas) that scales gently with perspective.
+ * Blends 40% actual cell width + 60% uniform width to avoid extreme size variation.
+ */
+export function pieceWidth(file: number, rank: number): number {
+  const geo = cellGeometry(file, rank);
+  const uniform = (BOARD_BOTTOM_RIGHT.x - BOARD_BOTTOM_LEFT.x) / 8;
+  return (geo.width * 0.4 + uniform * 0.6) * 0.82;
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { cellGeometry, cellCenter } from "@/lib/game/board-geometry";
+import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 import { ARENA_PIECE_IMG, squareToFileRank } from "@/lib/game/arena-utils";
 import type { ChessBoardPiece } from "@/lib/game/types";
 
@@ -116,6 +116,7 @@ export function ArenaBoard({
               {pieces.map((p) => {
                 const { file, rank } = squareToFileRank(p.square);
                 const center = cellCenter(file, rank);
+                const pw = pieceWidth(file, rank);
                 const src = ARENA_PIECE_IMG[p.color][p.type];
                 return (
                   <picture
@@ -124,6 +125,7 @@ export function ArenaBoard({
                     style={{
                       left: `${center.x}%`,
                       top: `${center.y}%`,
+                      width: `${pw}%`,
                     }}
                   >
                     <source
@@ -138,6 +140,7 @@ export function ArenaBoard({
                       src={src}
                       alt={`${p.color === "w" ? "White" : "Black"} ${p.type}`}
                       className="arena-piece-img"
+                      style={{ width: "100%" }}
                     />
                   </picture>
                 );

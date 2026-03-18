@@ -10,7 +10,7 @@ import {
   movePiece,
 } from "@/lib/game/board";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
-import { cellGeometry, cellCenter } from "@/lib/game/board-geometry";
+import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 
 const PIECE_IMG: Record<PieceId, string> = {
   rook:   "/art/pieces/w-rook.png",
@@ -151,12 +151,14 @@ export function Board({
               {/* Floating piece layer — same element moves with transition */}
               {(() => {
                 const center = cellCenter(piece.position.file, piece.position.rank);
+                const pw = pieceWidth(piece.position.file, piece.position.rank);
                 return (
                   <picture
                     className="playhub-board-piece-float"
                     style={{
                       left: `${center.x}%`,
                       top: `${center.y}%`,
+                      width: `${pw}%`,
                     }}
                   >
                     <source srcSet={PIECE_IMG[piece.type].replace(".png", ".avif")} type="image/avif" />
@@ -165,6 +167,7 @@ export function Board({
                       src={PIECE_IMG[piece.type]}
                       alt={`White ${piece.type}`}
                       className="playhub-board-piece-img"
+                      style={{ width: "100%" }}
                     />
                   </picture>
                 );
