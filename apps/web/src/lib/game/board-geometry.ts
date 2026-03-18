@@ -14,7 +14,8 @@ export function lerp(a: number, b: number, t: number) {
 }
 
 // Gamma > 1 compresses top rows to match board perspective foreshortening
-export const BOARD_V_GAMMA = 1.15;
+// New board has milder perspective than original — nearly uniform row heights
+export const BOARD_V_GAMMA = 1.0;
 
 export function interpolateQuad(u: number, v: number): Point {
   const vg = Math.pow(v, BOARD_V_GAMMA);
