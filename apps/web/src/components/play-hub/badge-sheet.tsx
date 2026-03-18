@@ -174,13 +174,9 @@ export function BadgeSheet({
         <button
           type="button"
           aria-label="Badges"
-          className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-cyan-100/70 transition"
+          className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
         >
-          <picture className="h-full w-full">
-            <source srcSet="/art/badge-chesscito.avif" type="image/avif" />
-            <source srcSet="/art/badge-chesscito.webp" type="image/webp" />
-            <img src="/art/badge-chesscito.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
-          </picture>
+          <img src="/art/badge-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
           {showNotification ? (
             <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />

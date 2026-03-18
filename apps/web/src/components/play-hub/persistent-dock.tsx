@@ -16,18 +16,23 @@ export function PersistentDock({
   inviteControl,
 }: PersistentDockProps) {
   return (
-    <div className="flex items-center justify-around px-6 pb-[calc(4px+env(safe-area-inset-bottom))] pt-2">
-      {badgeControl}
-      {shopControl}
+    <nav className="chesscito-dock" aria-label="Game navigation">
+      <div className="chesscito-dock-item">{badgeControl}</div>
+      <div className="chesscito-dock-item">{shopControl}</div>
+
+      {/* Center — primary action with glow pill */}
       <Link
         href="/arena"
-        className="flex flex-col items-center gap-0.5 text-cyan-200/40 transition-colors hover:text-cyan-200/70"
+        className="chesscito-dock-center"
       >
-        <span className="text-base">&#9823;</span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.1em]">{ARENA_COPY.title}</span>
+        <img src="/art/play-menu.png" alt="" aria-hidden="true" className="h-8 w-8 object-contain" />
+        <span className="text-[8px] font-bold uppercase tracking-[0.14em]">
+          {ARENA_COPY.title}
+        </span>
       </Link>
-      {leaderboardControl}
-      {inviteControl}
-    </div>
+
+      <div className="chesscito-dock-item">{leaderboardControl}</div>
+      <div className="chesscito-dock-item">{inviteControl}</div>
+    </nav>
   );
 }

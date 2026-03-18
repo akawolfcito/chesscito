@@ -40,13 +40,9 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
         <button
           type="button"
           aria-label="Leaderboard"
-          className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-cyan-100/70 transition"
+          className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
         >
-          <picture className="h-full w-full">
-            <source srcSet="/art/ranking-chesscito.avif" type="image/avif" />
-            <source srcSet="/art/ranking-chesscito.webp" type="image/webp" />
-            <img src="/art/ranking-chesscito.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
-          </picture>
+          <img src="/art/leaderboard-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
           <span className="sr-only">Leaderboard</span>
         </button>
       </SheetTrigger>
