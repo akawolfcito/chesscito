@@ -221,12 +221,23 @@ export const MISSION_BRIEFING_COPY = {
   captureHintCompact: "♜ Capture the target",
 } as const;
 
-export const VICTORY_MINT_COPY = {
-  mintButton: "Mint Victory",
-  mintedButton: "Victory Minted",
-  mintConfirm: "Mint your win as an NFT",
-  minting: "Minting...",
-  approving: "Approving...",
+export const VICTORY_CLAIM_COPY = {
+  claimButton: "Claim Victory",
+  claimHelper: "Claim to unlock your share card",
+  claiming: "Claiming Victory...",
+  claimProgress1: "Recording your result onchain",
+  claimProgress2: "Preparing your victory card",
+  successTitle: "Victory Recorded",
+  successSubtitle: "Your onchain result is live. Your share card is ready.",
+  errorTitle: "Couldn't record victory",
+  errorSubtitle: "Something went wrong while saving your result onchain.",
+  tryAgain: "Try Again",
+  shareCard: "Share Card",
+  shareToX: "Share to X",
+  shareToWhatsApp: "Share to WhatsApp",
+  copyLink: "Copy Link",
+  downloadCard: "Download Card",
+  copiedToast: "Copied!",
 } as const;
 
 export const VICTORY_CELEBRATION_COPY = {
@@ -235,16 +246,10 @@ export const VICTORY_CELEBRATION_COPY = {
     `Solved in ${moves} moves — ${time}`,
   performanceLineCheckmate: (moves: number, time: string) =>
     `Checkmate in ${moves} moves — ${time}`,
-  mintedTitle: (id: number | bigint) => `Victory #${id} Minted!`,
-  mintedTitleFallback: "Victory Minted!",
-  mintedSubtitle: "on Celo blockchain",
-  shareVictory: "Share Victory",
-  mintingMessage: "Minting your victory...",
-  copiedToast: "Copied!",
   shareTextBasic: (moves: number, url: string) =>
     `♟ Checkmate in ${moves} moves. Can you beat that?\nPlay Chesscito on Celo 👉 ${url}`,
-  shareTextMinted: (moves: number, tokenId: bigint | number, url: string) =>
-    `♟ Checkmate in ${moves} moves. Can you beat that?\nVictory #${tokenId} minted on-chain 👉 ${url}`,
+  shareTextClaimed: (moves: number, tokenId: bigint | number, url: string) =>
+    `♟ Checkmate in ${moves} moves. Can you beat that?\nVictory #${tokenId} claimed on-chain 👉 ${url}`,
   stats: { difficulty: "level", moves: "moves", time: "time" },
 } as const;
 

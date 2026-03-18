@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       signature,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not sign victory mint";
+    const message = error instanceof Error ? error.message : "Could not sign victory claim";
     const status = message === "Rate limit exceeded" ? 429 : message === "Forbidden" ? 403 : 400;
     return NextResponse.json({ error: message }, { status });
   }

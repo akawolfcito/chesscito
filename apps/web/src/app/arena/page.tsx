@@ -15,7 +15,7 @@ import { ArenaBoard } from "@/components/arena/arena-board";
 import { DifficultySelector } from "@/components/arena/difficulty-selector";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
-import { ArenaEndState, type MintPhase } from "@/components/arena/arena-end-state";
+import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData } from "@/components/arena/arena-end-state";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
 import { victoryAbi } from "@/lib/contracts/victory";
@@ -40,9 +40,15 @@ export default function ArenaPage() {
   const publicClient = usePublicClient({ chainId });
   const { writeContractAsync } = useWriteContract();
 
-  const [mintPhase, setMintPhase] = useState<MintPhase>("idle");
-  const [tokenId, setTokenId] = useState<bigint | null>(null);
-  const [mintError, setMintError] = useState<string | null>(null);
+  const [claimPhase, setClaimPhase] = useState<ClaimPhase>("ready");
+  const [claimData, setClaimData] = useState<ClaimData>({
+    tokenId: null,
+    claimTxHash: null,
+    shareCardUrl: null,
+    shareLinkUrl: null,
+  });
+  const [shareStatus, setShareStatus] = useState<ShareStatus>("locked");
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   const isEndState = ["checkmate", "stalemate", "draw", "resigned"].includes(game.status);
   const isPlayerWin = game.status === "checkmate" && game.fen.includes(" b ");
@@ -53,9 +59,9 @@ export default function ArenaPage() {
 
   const chainDifficulty = DIFFICULTY_TO_CHAIN[game.difficulty];
   const mintPriceUsd6 = VICTORY_PRICES[chainDifficulty] ?? 0n;
-  const mintPriceLabel = formatUsd(mintPriceUsd6);
+  const claimPriceLabel = formatUsd(mintPriceUsd6);
 
-  const canMint = isConnected && isCorrectChain && isPlayerWin && victoryNFTAddress != null;
+  const canClaim = isConnected && isCorrectChain && isPlayerWin && victoryNFTAddress != null;
 
   // Token balances for payment selection
   const { data: tokenBalances } = useReadContracts({
@@ -67,7 +73,7 @@ export default function ArenaPage() {
       chainId,
     })),
     allowFailure: true,
-    query: { enabled: Boolean(address && canMint) },
+    query: { enabled: Boolean(address && canClaim) },
   });
 
   const selectPaymentToken = useCallback(
@@ -88,11 +94,11 @@ export default function ArenaPage() {
 
   const handleBackToHub = () => router.push("/play-hub");
 
-  async function handleMintVictory() {
-    if (!canMint || !address || !victoryNFTAddress || !publicClient) return;
+  async function handleClaimVictory() {
+    if (!canClaim || !address || !victoryNFTAddress || !publicClient) return;
 
-    setMintPhase("minting");
-    setMintError(null);
+    setClaimPhase("claiming");
+    setClaimError(null);
     try {
       // 1. Get server signature
       const res = await fetch("/api/sign-victory", {
@@ -136,8 +142,8 @@ export default function ArenaPage() {
         await publicClient.waitForTransactionReceipt({ hash: approveHash });
       }
 
-      // 4. Mint and wait for confirmation
-      const mintHash = await writeContractAsync({
+      // 4. Claim (mint) and wait for confirmation
+      const claimHash = await writeContractAsync({
         address: victoryNFTAddress,
         abi: victoryAbi,
         functionName: "mintSigned",
@@ -153,7 +159,7 @@ export default function ArenaPage() {
         chainId,
         account: address,
       });
-      const receipt = await publicClient.waitForTransactionReceipt({ hash: mintHash });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: claimHash });
 
       // 5. Extract tokenId from VictoryMinted event
       let extractedTokenId: bigint | null = null;
@@ -173,22 +179,36 @@ export default function ArenaPage() {
         }
       }
 
-      setTokenId(extractedTokenId);
-      setMintPhase("minted");
-      setMintError(null);
+      // 6. Update claim data and transition to success
+      setClaimData({
+        tokenId: extractedTokenId,
+        claimTxHash: claimHash,
+        shareCardUrl: null, // Future: generate card URL from tokenId
+        shareLinkUrl: null, // Future: generate share link from tokenId
+      });
+      setShareStatus("ready"); // For now, share is immediately ready post-claim
+      setClaimPhase("success");
+      setClaimError(null);
     } catch (err) {
-      console.error("Mint failed:", err);
-      const msg = err instanceof Error ? err.message : "Mint failed";
-      setMintError(msg.includes("User rejected") ? null : "Mint failed. Try again.");
-      setMintPhase("idle");
+      console.error("Claim failed:", err);
+      const msg = err instanceof Error ? err.message : "Claim failed";
+      const isUserCancel = /user (rejected|denied|cancelled)|ACTION_REJECTED/i.test(msg);
+      if (isUserCancel) {
+        // User cancelled — go back to ready, not error
+        setClaimPhase("ready");
+        return;
+      }
+      setClaimError(msg);
+      setClaimPhase("error");
     }
   }
 
-  // Reset mint state when starting a new game
+  // Reset claim state when starting a new game
   const handlePlayAgain = () => {
-    setMintPhase("idle");
-    setTokenId(null);
-    setMintError(null);
+    setClaimPhase("ready");
+    setClaimData({ tokenId: null, claimTxHash: null, shareCardUrl: null, shareLinkUrl: null });
+    setShareStatus("locked");
+    setClaimError(null);
     game.reset();
   };
 
@@ -269,11 +289,12 @@ export default function ArenaPage() {
           isPlayerWin={isPlayerWin}
           onPlayAgain={handlePlayAgain}
           onBackToHub={handleBackToHub}
-          mintPhase={mintPhase}
-          onMintVictory={canMint ? () => void handleMintVictory() : undefined}
-          mintPrice={mintPriceLabel}
-          mintError={mintError}
-          tokenId={tokenId}
+          claimPhase={claimPhase}
+          shareStatus={shareStatus}
+          claimData={claimData}
+          onClaimVictory={canClaim ? () => void handleClaimVictory() : undefined}
+          claimPrice={claimPriceLabel}
+          claimError={claimError}
           moves={game.moveCount}
           elapsedMs={game.elapsedMs}
           difficulty={game.difficulty}

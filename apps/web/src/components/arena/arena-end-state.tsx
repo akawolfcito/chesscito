@@ -3,21 +3,32 @@
 import { ARENA_COPY } from "@/lib/content/editorial";
 import type { ArenaStatus } from "@/lib/game/types";
 import { VictoryCelebration } from "./victory-celebration";
-import { VictoryMinting } from "./victory-minting";
-import { VictoryReceipt } from "./victory-receipt";
+import { VictoryClaiming } from "./victory-claiming";
+import { VictoryClaimSuccess } from "./victory-claim-success";
+import { VictoryClaimError } from "./victory-claim-error";
 
-export type MintPhase = "idle" | "minting" | "minted";
+export type ClaimPhase = "ready" | "claiming" | "success" | "error";
+
+export type ShareStatus = "locked" | "generating" | "ready";
+
+export type ClaimData = {
+  tokenId: bigint | null;
+  claimTxHash: string | null;
+  shareCardUrl: string | null;
+  shareLinkUrl: string | null;
+};
 
 type Props = {
   status: ArenaStatus;
   isPlayerWin: boolean;
   onPlayAgain: () => void;
   onBackToHub: () => void;
-  mintPhase: MintPhase;
-  onMintVictory?: () => void;
-  mintPrice?: string;
-  mintError?: string | null;
-  tokenId?: bigint | null;
+  claimPhase: ClaimPhase;
+  shareStatus: ShareStatus;
+  claimData: ClaimData;
+  onClaimVictory?: () => void;
+  claimPrice?: string;
+  claimError?: string | null;
   moves: number;
   elapsedMs: number;
   difficulty: string;
@@ -43,44 +54,54 @@ export function ArenaEndState({
   isPlayerWin,
   onPlayAgain,
   onBackToHub,
-  mintPhase,
-  onMintVictory,
-  mintPrice,
-  mintError,
-  tokenId,
+  claimPhase,
+  shareStatus,
+  claimData,
+  onClaimVictory,
+  claimPrice,
+  claimError,
   moves,
   elapsedMs,
   difficulty,
 }: Props) {
   if (isPlayerWin) {
-    if (mintPhase === "minting") {
-      return <VictoryMinting />;
+    const sharedProps = {
+      moves,
+      elapsedMs,
+      difficulty,
+      isCheckmate: status === "checkmate",
+      onPlayAgain,
+      onBackToHub,
+    };
+
+    switch (claimPhase) {
+      case "claiming":
+        return <VictoryClaiming {...sharedProps} />;
+      case "success":
+        return (
+          <VictoryClaimSuccess
+            {...sharedProps}
+            claimData={claimData}
+            shareStatus={shareStatus}
+          />
+        );
+      case "error":
+        return (
+          <VictoryClaimError
+            {...sharedProps}
+            errorMessage={claimError}
+            onRetry={onClaimVictory}
+          />
+        );
+      default:
+        return (
+          <VictoryCelebration
+            {...sharedProps}
+            onClaimVictory={onClaimVictory}
+            claimPrice={claimPrice}
+          />
+        );
     }
-    if (mintPhase === "minted") {
-      return (
-        <VictoryReceipt
-          tokenId={tokenId ?? null}
-          moves={moves}
-          elapsedMs={elapsedMs}
-          difficulty={difficulty}
-          onPlayAgain={onPlayAgain}
-          onBackToHub={onBackToHub}
-        />
-      );
-    }
-    return (
-      <VictoryCelebration
-        moves={moves}
-        elapsedMs={elapsedMs}
-        difficulty={difficulty}
-        isCheckmate={status === "checkmate"}
-        onPlayAgain={onPlayAgain}
-        onBackToHub={onBackToHub}
-        onMintVictory={onMintVictory}
-        mintPrice={mintPrice}
-        mintError={mintError}
-      />
-    );
   }
 
   const text = getLoseText(status);

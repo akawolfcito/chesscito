@@ -1,6 +1,6 @@
 "use client";
 
-import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
+import { VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
@@ -11,10 +11,8 @@ type Props = {
   elapsedMs: number;
   difficulty: string;
   isCheckmate?: boolean;
-  onPlayAgain: () => void;
-  onBackToHub: () => void;
-  onClaimVictory?: () => void;
-  claimPrice?: string;
+  onPlayAgain?: () => void;
+  onBackToHub?: () => void;
 };
 
 function StatCard({ icon, value, label }: { icon: string; value: string; label: string }) {
@@ -27,15 +25,11 @@ function StatCard({ icon, value, label }: { icon: string; value: string; label: 
   );
 }
 
-export function VictoryCelebration({
+export function VictoryClaiming({
   moves,
   elapsedMs,
   difficulty,
   isCheckmate = true,
-  onPlayAgain,
-  onBackToHub,
-  onClaimVictory,
-  claimPrice,
 }: Props) {
   const time = formatTime(elapsedMs);
   const performanceLine = isCheckmate
@@ -53,7 +47,7 @@ export function VictoryCelebration({
         <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-[0.18]" />
       </div>
 
-      {/* Card */}
+      {/* Card — same layout as ready state */}
       <div className="relative z-10 mx-4 flex w-full max-w-[340px] flex-col items-center rounded-3xl border border-white/[0.08] bg-[#0a1424]/92 px-6 pb-6 pt-8 backdrop-blur-2xl shadow-[0_0_60px_rgba(20,184,166,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
 
         {/* Hero — Trophy */}
@@ -81,41 +75,22 @@ export function VictoryCelebration({
           <StatCard icon="⏱" value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
         </div>
 
-        {/* CTAs */}
-        <div className="flex w-full flex-col gap-2.5">
-          {/* Primary: Play Again */}
+        {/* Claiming state CTAs */}
+        <div className="flex w-full flex-col items-center gap-3">
+          {/* Disabled claiming button */}
           <button
             type="button"
-            onClick={onPlayAgain}
-            className="w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-400 py-3 text-sm font-bold text-white shadow-[0_0_16px_rgba(20,184,166,0.25)] transition-all hover:shadow-[0_0_24px_rgba(20,184,166,0.4)] active:scale-[0.97]"
+            disabled
+            className="w-full rounded-2xl border border-amber-400/20 bg-amber-500/[0.08] py-2.5 text-sm font-semibold text-amber-300/80 animate-pulse"
           >
-            {ARENA_COPY.playAgain}
+            {VICTORY_CLAIM_COPY.claiming}
           </button>
 
-          {/* Secondary: Claim Victory */}
-          {onClaimVictory && (
-            <button
-              type="button"
-              onClick={onClaimVictory}
-              className="w-full rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.10] py-2.5 text-sm font-semibold text-emerald-300/90 transition-all hover:bg-emerald-500/[0.18] active:scale-[0.97]"
-            >
-              {`${VICTORY_CLAIM_COPY.claimButton} — ${claimPrice ?? ""}`}
-            </button>
-          )}
-
-          {/* Locked share hint */}
-          <p className="text-center text-[0.65rem] text-cyan-100/35">
-            {VICTORY_CLAIM_COPY.claimHelper}
-          </p>
-
-          {/* Tertiary: Back to Hub */}
-          <button
-            type="button"
-            onClick={onBackToHub}
-            className="w-full py-2 text-center text-xs font-medium text-white/30 transition-all hover:text-white/50 active:scale-[0.97]"
-          >
-            {ARENA_COPY.backToHub}
-          </button>
+          {/* Progress text */}
+          <div className="flex flex-col items-center gap-1">
+            <p className="text-[0.65rem] text-cyan-100/40">{VICTORY_CLAIM_COPY.claimProgress1}</p>
+            <p className="text-[0.65rem] text-cyan-100/30">{VICTORY_CLAIM_COPY.claimProgress2}</p>
+          </div>
         </div>
       </div>
     </div>

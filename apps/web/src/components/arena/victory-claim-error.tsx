@@ -13,8 +13,8 @@ type Props = {
   isCheckmate?: boolean;
   onPlayAgain: () => void;
   onBackToHub: () => void;
-  onClaimVictory?: () => void;
-  claimPrice?: string;
+  errorMessage?: string | null;
+  onRetry?: () => void;
 };
 
 function StatCard({ icon, value, label }: { icon: string; value: string; label: string }) {
@@ -27,15 +27,15 @@ function StatCard({ icon, value, label }: { icon: string; value: string; label: 
   );
 }
 
-export function VictoryCelebration({
+export function VictoryClaimError({
   moves,
   elapsedMs,
   difficulty,
   isCheckmate = true,
   onPlayAgain,
   onBackToHub,
-  onClaimVictory,
-  claimPrice,
+  errorMessage,
+  onRetry,
 }: Props) {
   const time = formatTime(elapsedMs);
   const performanceLine = isCheckmate
@@ -48,33 +48,43 @@ export function VictoryCelebration({
       role="alert"
       aria-live="assertive"
     >
-      {/* Sparkles background */}
+      {/* Sparkles background — dimmed */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-[0.18]" />
+        <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-[0.10]" />
       </div>
 
       {/* Card */}
-      <div className="relative z-10 mx-4 flex w-full max-w-[340px] flex-col items-center rounded-3xl border border-white/[0.08] bg-[#0a1424]/92 px-6 pb-6 pt-8 backdrop-blur-2xl shadow-[0_0_60px_rgba(20,184,166,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+      <div className="relative z-10 mx-4 flex w-full max-w-[340px] flex-col items-center rounded-3xl border border-white/[0.08] bg-[#0a1424]/92 px-6 pb-6 pt-8 backdrop-blur-2xl shadow-[0_0_60px_rgba(251,113,133,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
 
-        {/* Hero — Trophy */}
+        {/* Hero — Trophy (context retention) */}
         <div className="relative mb-4 flex items-center justify-center">
-          <div className="absolute h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.18)_0%,rgba(217,180,74,0.06)_50%,transparent_70%)]" />
-          <div className="relative h-32 w-32">
+          <div className="absolute h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(251,113,133,0.12)_0%,transparent_70%)]" />
+          <div className="relative h-32 w-32 opacity-50 grayscale-[30%]">
             <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
           </div>
         </div>
 
-        {/* Title */}
-        <h2 className="fantasy-title mb-1 text-3xl font-bold text-emerald-300/90 drop-shadow-[0_0_12px_rgba(20,184,166,0.35)]">
-          {VICTORY_CELEBRATION_COPY.title}
+        {/* Error title */}
+        <h2 className="fantasy-title mb-1 text-2xl font-bold text-rose-300/90 drop-shadow-[0_0_12px_rgba(251,113,133,0.3)]">
+          {VICTORY_CLAIM_COPY.errorTitle}
         </h2>
 
-        {/* Performance summary */}
-        <p className="mb-5 text-sm text-cyan-100/50">
+        {/* Error subtitle */}
+        <p className="mb-3 text-center text-sm text-cyan-100/40">
+          {VICTORY_CLAIM_COPY.errorSubtitle}
+        </p>
+
+        {/* Specific error detail */}
+        {errorMessage && (
+          <p className="mb-2 text-center text-xs text-rose-300/60">{errorMessage}</p>
+        )}
+
+        {/* Performance — still visible for context */}
+        <p className="mb-5 text-xs text-cyan-100/30">
           {performanceLine}
         </p>
 
-        {/* Stats — 3 mini-cards */}
+        {/* Stats */}
         <div className="mb-6 flex w-full gap-2">
           <StatCard icon="⚔" value={difficulty.toUpperCase()} label={VICTORY_CELEBRATION_COPY.stats.difficulty} />
           <StatCard icon="♟" value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
@@ -83,32 +93,27 @@ export function VictoryCelebration({
 
         {/* CTAs */}
         <div className="flex w-full flex-col gap-2.5">
-          {/* Primary: Play Again */}
+          {/* Primary: Try Again */}
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-400 py-3 text-sm font-bold text-white shadow-[0_0_16px_rgba(20,184,166,0.25)] transition-all hover:shadow-[0_0_24px_rgba(20,184,166,0.4)] active:scale-[0.97]"
+            >
+              {VICTORY_CLAIM_COPY.tryAgain}
+            </button>
+          )}
+
+          {/* Play Again */}
           <button
             type="button"
             onClick={onPlayAgain}
-            className="w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-400 py-3 text-sm font-bold text-white shadow-[0_0_16px_rgba(20,184,166,0.25)] transition-all hover:shadow-[0_0_24px_rgba(20,184,166,0.4)] active:scale-[0.97]"
+            className="w-full rounded-2xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-white/60 transition-all hover:bg-white/10 active:scale-[0.97]"
           >
             {ARENA_COPY.playAgain}
           </button>
 
-          {/* Secondary: Claim Victory */}
-          {onClaimVictory && (
-            <button
-              type="button"
-              onClick={onClaimVictory}
-              className="w-full rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.10] py-2.5 text-sm font-semibold text-emerald-300/90 transition-all hover:bg-emerald-500/[0.18] active:scale-[0.97]"
-            >
-              {`${VICTORY_CLAIM_COPY.claimButton} — ${claimPrice ?? ""}`}
-            </button>
-          )}
-
-          {/* Locked share hint */}
-          <p className="text-center text-[0.65rem] text-cyan-100/35">
-            {VICTORY_CLAIM_COPY.claimHelper}
-          </p>
-
-          {/* Tertiary: Back to Hub */}
+          {/* Back to Hub */}
           <button
             type="button"
             onClick={onBackToHub}
