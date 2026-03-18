@@ -11,14 +11,24 @@ const PIECE_MAP: Record<string, ChessPieceId> = {
   k: "king",
 };
 
-/** All piece image paths keyed by ChessPieceId */
-export const ARENA_PIECE_IMG: Record<ChessPieceId, string> = {
-  pawn: "/art/piece-pawn.png",
-  knight: "/art/piece-knight.png",
-  bishop: "/art/piece-bishop.png",
-  rook: "/art/piece-rook.png",
-  queen: "/art/piece-queen.png",
-  king: "/art/piece-king.png",
+/** All piece image paths keyed by color and ChessPieceId */
+export const ARENA_PIECE_IMG: Record<PieceColor, Record<ChessPieceId, string>> = {
+  w: {
+    pawn: "/art/pieces/w-pawn.png",
+    knight: "/art/pieces/w-knight.png",
+    bishop: "/art/pieces/w-bishop.png",
+    rook: "/art/pieces/w-rook.png",
+    queen: "/art/pieces/w-queen.png",
+    king: "/art/pieces/w-king.png",
+  },
+  b: {
+    pawn: "/art/pieces/b-pawn.png",
+    knight: "/art/pieces/b-knight.png",
+    bishop: "/art/pieces/b-bishop.png",
+    rook: "/art/pieces/b-rook.png",
+    queen: "/art/pieces/b-queen.png",
+    king: "/art/pieces/b-king.png",
+  },
 };
 
 /**

@@ -16,9 +16,9 @@ import type { PieceId } from "@/lib/game/types";
 const PIECES: PieceId[] = ["rook", "bishop", "knight"];
 
 const BADGE_ART: Record<PieceId, string> = {
-  rook: "/art/piece-rook.png",
-  bishop: "/art/piece-bishop.png",
-  knight: "/art/piece-knight.png",
+  rook: "/art/pieces/w-rook.png",
+  bishop: "/art/pieces/w-bishop.png",
+  knight: "/art/pieces/w-knight.png",
 };
 
 type BadgeState = "claimed" | "claimable" | "locked";

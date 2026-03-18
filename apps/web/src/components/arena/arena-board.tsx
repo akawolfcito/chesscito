@@ -116,7 +116,7 @@ export function ArenaBoard({
               {pieces.map((p) => {
                 const { file, rank } = squareToFileRank(p.square);
                 const center = cellCenter(file, rank);
-                const tintClass = p.color === "w" ? "piece-white" : "piece-black";
+                const src = ARENA_PIECE_IMG[p.color][p.type];
                 return (
                   <picture
                     key={`${p.color}-${p.type}-${p.square}`}
@@ -127,17 +127,17 @@ export function ArenaBoard({
                     }}
                   >
                     <source
-                      srcSet={ARENA_PIECE_IMG[p.type].replace(".png", ".avif")}
+                      srcSet={src.replace(".png", ".avif")}
                       type="image/avif"
                     />
                     <source
-                      srcSet={ARENA_PIECE_IMG[p.type].replace(".png", ".webp")}
+                      srcSet={src.replace(".png", ".webp")}
                       type="image/webp"
                     />
                     <img
-                      src={ARENA_PIECE_IMG[p.type]}
+                      src={src}
                       alt={`${p.color === "w" ? "White" : "Black"} ${p.type}`}
-                      className={`arena-piece-img ${tintClass}`}
+                      className="arena-piece-img"
                     />
                   </picture>
                 );

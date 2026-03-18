@@ -17,7 +17,7 @@ const CHOICES: { key: PromotionChoice; label: string }[] = [
   { key: "n", label: "Knight" },
 ];
 
-const PIECE_KEY_MAP: Record<PromotionChoice, keyof typeof ARENA_PIECE_IMG> = {
+const PIECE_KEY_MAP: Record<PromotionChoice, keyof typeof ARENA_PIECE_IMG.w> = {
   q: "queen",
   r: "rook",
   b: "bishop",
@@ -47,9 +47,9 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
               className="flex flex-col items-center gap-1 rounded-xl bg-white/10 p-3 transition-all hover:bg-white/20 active:scale-95"
             >
               <img
-                src={ARENA_PIECE_IMG[PIECE_KEY_MAP[key]]}
+                src={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]]}
                 alt={label}
-                className="h-10 w-10 object-contain piece-white"
+                className="h-10 w-10 object-contain"
               />
               <span className="text-xs text-white/60">{label}</span>
             </button>

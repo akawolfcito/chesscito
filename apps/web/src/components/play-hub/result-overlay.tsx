@@ -21,16 +21,16 @@ type ResultOverlayProps = {
 };
 
 const VARIANT_IMG: Record<SuccessVariant, string> = {
-  badge: "/art/piece-rook.png", // overridden by pieceType
+  badge: "/art/pieces/w-rook.png", // overridden by pieceType
   score: "/art/score-chesscito.png",
   shop: "/art/badge-chesscito.png",
 };
 
 function getBadgeImg(pieceType?: PieceKey): string {
   const map: Record<PieceKey, string> = {
-    rook: "/art/piece-rook.png",
-    bishop: "/art/piece-bishop.png",
-    knight: "/art/piece-knight.png",
+    rook: "/art/pieces/w-rook.png",
+    bishop: "/art/pieces/w-bishop.png",
+    knight: "/art/pieces/w-knight.png",
   };
   return map[pieceType ?? "rook"];
 }

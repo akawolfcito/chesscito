@@ -13,9 +13,9 @@ import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { cellGeometry, cellCenter } from "@/lib/game/board-geometry";
 
 const PIECE_IMG: Record<PieceId, string> = {
-  rook:   "/art/piece-rook.png",
-  bishop: "/art/piece-bishop.png",
-  knight: "/art/piece-knight.png",
+  rook:   "/art/pieces/w-rook.png",
+  bishop: "/art/pieces/w-bishop.png",
+  knight: "/art/pieces/w-knight.png",
 };
 
 function parseLabel(label: string): BoardPosition {
