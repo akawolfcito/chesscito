@@ -6,6 +6,7 @@ import { ShareButton } from "@/components/ui/share-button";
 import { StatPill } from "@/components/ui/stat-pill";
 import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
+import trophyData from "@/../public/animations/trophy.json";
 
 type Props = {
   moves: number;
@@ -43,13 +44,10 @@ export function VictoryCelebration({
 
       {/* Card */}
       <div className="relative z-10 flex flex-col items-center gap-5 rounded-3xl border border-white/10 bg-[#0b1628]/90 px-8 py-8 backdrop-blur-xl shadow-[0_0_40px_rgba(52,211,153,0.15)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-        {/* Wolf icon */}
-        <img
-          src="/art/favicon-wolf.png"
-          alt=""
-          aria-hidden="true"
-          className="h-16 w-16 drop-shadow-[0_0_20px_rgba(103,232,249,0.5)]"
-        />
+        {/* Trophy animation */}
+        <div className="h-24 w-24 drop-shadow-[0_0_20px_rgba(217,180,74,0.5)]">
+          <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
+        </div>
 
         {/* Title */}
         <h2 className="fantasy-title text-3xl font-bold text-emerald-300 drop-shadow-[0_0_16px_rgba(52,211,153,0.5)]">
