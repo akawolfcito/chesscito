@@ -2,20 +2,22 @@
 
 export type Point = { x: number; y: number };
 
-// Corners calibrated from new-board.png alpha-channel pixel analysis (% of 1024×1024 canvas)
-// Top edge y=5.5%: x spans 9.4%–89.2%; Bottom edge y=91%: x spans 0%–99.2%
-export const BOARD_TOP_LEFT: Point = { x: 9.5, y: 5.5 };
-export const BOARD_TOP_RIGHT: Point = { x: 89.2, y: 5.5 };
-export const BOARD_BOTTOM_LEFT: Point = { x: 0.2, y: 91.0 };
-export const BOARD_BOTTOM_RIGHT: Point = { x: 99.2, y: 91.0 };
+// Corners calibrated from chesscito-board.png grid-line analysis (% of 1024x1024 canvas)
+// Horizontal grid lines at y: 5.6%, 15.0%, 24.7%, 34.8%, 45.3%, 56.1%, 67.1%, 79.4%, 90.6%
+// Vertical edges converge toward top (perspective trapezoid)
+export const BOARD_TOP_LEFT: Point = { x: 9.0, y: 6.8 };
+export const BOARD_TOP_RIGHT: Point = { x: 89.2, y: 6.8 };
+export const BOARD_BOTTOM_LEFT: Point = { x: 0.0, y: 90.6 };
+export const BOARD_BOTTOM_RIGHT: Point = { x: 99.6, y: 90.6 };
 
 export function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
 // Gamma > 1 compresses top rows to match board perspective foreshortening
-// New board has milder perspective than original — nearly uniform row heights
-export const BOARD_V_GAMMA = 1.0;
+// Measured row heights (top→bottom): 97, 99, 103, 108, 110, 113, 126, 115 px
+// Best-fit gamma via least-squares: 1.08
+export const BOARD_V_GAMMA = 1.08;
 
 export function interpolateQuad(u: number, v: number): Point {
   const vg = Math.pow(v, BOARD_V_GAMMA);
