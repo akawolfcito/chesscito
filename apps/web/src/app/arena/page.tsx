@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   useAccount,
@@ -50,6 +50,41 @@ export default function ArenaPage() {
   const [shareStatus, setShareStatus] = useState<ShareStatus>("locked");
   const [claimError, setClaimError] = useState<string | null>(null);
   const claimingRef = useRef(false);
+
+  // Persist claim success so returning from share keeps context
+  useEffect(() => {
+    if (claimPhase === "success" && claimData.claimTxHash) {
+      try {
+        sessionStorage.setItem("chesscito:claim", JSON.stringify({
+          phase: "success",
+          tokenId: claimData.tokenId?.toString() ?? null,
+          claimTxHash: claimData.claimTxHash,
+          moves: game.moveCount,
+          elapsedMs: game.elapsedMs,
+          difficulty: game.difficulty,
+        }));
+      } catch { /* storage full or unavailable */ }
+    }
+  }, [claimPhase, claimData, game.moveCount, game.elapsedMs, game.difficulty]);
+
+  // Restore claim success on mount (e.g., returning from WhatsApp)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("chesscito:claim");
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (saved.phase === "success") {
+        setClaimPhase("success");
+        setClaimData({
+          tokenId: saved.tokenId ? BigInt(saved.tokenId) : null,
+          claimTxHash: saved.claimTxHash,
+          shareCardUrl: null,
+          shareLinkUrl: null,
+        });
+        setShareStatus("ready");
+      }
+    } catch { /* corrupt data — ignore */ }
+  }, []);
 
   const isEndState = ["checkmate", "stalemate", "draw", "resigned"].includes(game.status);
   const isPlayerWin = game.status === "checkmate" && game.fen.includes(" b ");
@@ -217,6 +252,7 @@ export default function ArenaPage() {
   // Reset claim state when starting a new game
   const handlePlayAgain = () => {
     claimingRef.current = false;
+    try { sessionStorage.removeItem("chesscito:claim"); } catch { /* ignore */ }
     setClaimPhase("ready");
     setClaimData({ tokenId: null, claimTxHash: null, shareCardUrl: null, shareLinkUrl: null });
     setShareStatus("locked");

@@ -19,18 +19,6 @@ type Props = {
   shareStatus: ShareStatus;
 };
 
-function SocialButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex-1 rounded-xl border border-white/[0.06] bg-white/[0.03] px-2 py-2 text-[0.6rem] font-semibold text-cyan-100/60 transition-all hover:bg-white/[0.08] hover:text-cyan-100/80 active:scale-95"
-    >
-      {label}
-    </button>
-  );
-}
-
 export function VictoryClaimSuccess({
   moves,
   elapsedMs,
@@ -40,46 +28,54 @@ export function VictoryClaimSuccess({
   claimData,
   shareStatus,
 }: Props) {
-  const [copied, setCopied] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const time = formatTime(elapsedMs);
 
-  const shareText = claimData.tokenId != null
-    ? VICTORY_CELEBRATION_COPY.shareTextClaimed(moves, claimData.tokenId, SHARE_COPY.url)
-    : VICTORY_CELEBRATION_COPY.shareTextBasic(moves, SHARE_COPY.url);
-
   const shareUrl = claimData.shareLinkUrl ?? SHARE_COPY.url;
+  const challengeText = VICTORY_CLAIM_COPY.challengeText(moves, shareUrl);
   const isShareReady = shareStatus === "ready";
 
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2000);
+  }
+
+  /** Primary: native share (best UX — keeps context) */
   async function handleShareCard() {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ text: shareText, url: shareUrl });
+        await navigator.share({ text: challengeText, url: shareUrl });
+        showToast(VICTORY_CLAIM_COPY.sharedToast);
         return;
       } catch { /* cancelled */ }
     }
+    // Fallback: copy to clipboard
     try {
-      await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(`${challengeText}\n${shareUrl}`);
+      showToast(VICTORY_CLAIM_COPY.copiedToast);
     } catch { /* silent */ }
   }
 
-  function handleShareToX() {
-    const text = encodeURIComponent(shareText);
-    const url = encodeURIComponent(shareUrl);
-    window.open(`https://x.com/intent/tweet?text=${text}&url=${url}`, "_blank", "noopener,noreferrer");
-  }
-
-  function handleShareToWhatsApp() {
-    const text = encodeURIComponent(`${shareText}\n${shareUrl}`);
-    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+  /** Secondary: challenge a friend (native share with challenge text) */
+  async function handleChallengeFriend() {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ text: challengeText, url: shareUrl });
+        showToast(VICTORY_CLAIM_COPY.sharedToast);
+        return;
+      } catch { /* cancelled */ }
+    }
+    // Fallback: copy challenge text
+    try {
+      await navigator.clipboard.writeText(`${challengeText}\n${shareUrl}`);
+      showToast(VICTORY_CLAIM_COPY.copiedToast);
+    } catch { /* silent */ }
   }
 
   async function handleCopyLink() {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      showToast(VICTORY_CLAIM_COPY.copiedToast);
     } catch { /* silent */ }
   }
 
@@ -122,31 +118,42 @@ export function VictoryClaimSuccess({
           <StatCard icon="⏱" value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
         </div>
 
-        {/* Share area — unlocked reward block */}
+        {/* Share area */}
         <div className="flex w-full flex-col gap-2.5">
-          {/* Primary: Share Card */}
+          {/* Primary: Share Card (native share — best UX) */}
           <button
             type="button"
             onClick={() => void handleShareCard()}
             disabled={!isShareReady}
             className="w-full rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 py-3 text-sm font-bold text-white shadow-[0_0_16px_rgba(245,158,11,0.3)] transition-all hover:shadow-[0_0_24px_rgba(245,158,11,0.5)] active:scale-[0.97] disabled:opacity-50"
           >
-            {copied ? VICTORY_CLAIM_COPY.copiedToast : VICTORY_CLAIM_COPY.shareCard}
+            {VICTORY_CLAIM_COPY.shareCard}
           </button>
 
-          {/* Social actions row */}
+          {/* Secondary row: Challenge + Copy Link */}
           {isShareReady && (
             <div className="flex w-full gap-1.5">
-              <SocialButton label={VICTORY_CLAIM_COPY.shareToX} onClick={handleShareToX} />
-              <SocialButton label={VICTORY_CLAIM_COPY.shareToWhatsApp} onClick={handleShareToWhatsApp} />
-              <SocialButton label={VICTORY_CLAIM_COPY.copyLink} onClick={() => void handleCopyLink()} />
+              <button
+                type="button"
+                onClick={() => void handleChallengeFriend()}
+                className="flex-1 rounded-xl border border-amber-400/15 bg-amber-500/[0.06] px-2 py-2 text-[0.6rem] font-semibold text-amber-300/70 transition-all hover:bg-amber-500/[0.12] active:scale-95"
+              >
+                {VICTORY_CLAIM_COPY.challengeFriend}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleCopyLink()}
+                className="flex-1 rounded-xl border border-white/[0.06] bg-white/[0.03] px-2 py-2 text-[0.6rem] font-semibold text-cyan-100/60 transition-all hover:bg-white/[0.08] active:scale-95"
+              >
+                {VICTORY_CLAIM_COPY.copyLink}
+              </button>
             </div>
           )}
 
-          {/* Generating state hint */}
-          {shareStatus === "generating" && (
-            <p className="text-center text-[0.65rem] text-amber-300/50 animate-pulse">
-              {VICTORY_CLAIM_COPY.claimProgress2}
+          {/* Toast feedback */}
+          {toast && (
+            <p className="text-center text-xs font-semibold text-emerald-400 animate-in fade-in duration-200">
+              {toast}
             </p>
           )}
 

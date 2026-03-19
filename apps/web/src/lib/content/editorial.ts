@@ -237,11 +237,12 @@ export const VICTORY_CLAIM_COPY = {
   errorSubtitle: "Something went wrong while saving your result onchain.",
   tryAgain: "Try Again",
   shareCard: "Share Card",
-  shareToX: "Share to X",
-  shareToWhatsApp: "Share to WhatsApp",
+  challengeFriend: "Challenge a Friend",
+  challengeText: (moves: number, url: string) =>
+    `I solved this in ${moves} moves. Can you beat me?\nPlay Chesscito on Celo 👉 ${url}`,
   copyLink: "Copy Link",
-  downloadCard: "Download Card",
   copiedToast: "Copied!",
+  sharedToast: "Shared!",
 } as const;
 
 export const VICTORY_CELEBRATION_COPY = {
@@ -258,7 +259,7 @@ export const VICTORY_CELEBRATION_COPY = {
 } as const;
 
 export const ARENA_COPY = {
-  title: "Free Play",
+  title: "Arena",
   subtitle: "Challenge the AI",
   difficulty: {
     easy: "Easy",
@@ -270,7 +271,7 @@ export const ARENA_COPY = {
     medium: "Solid player — a fair challenge",
     hard: "Expert — plays to win",
   },
-  startMatch: "Start Match",
+  startMatch: "Enter Arena",
   backToHub: "Back to Hub",
   resign: "Resign",
   newGame: "New Game",
