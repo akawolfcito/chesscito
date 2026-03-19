@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { createPublicClient, http } from "viem";
 import { celo } from "viem/chains";
 import { victoryAbi } from "@/lib/contracts/victory";
+import { clampMoves, clampTime, formatPlayer, truncateId } from "@/lib/og/og-utils";
 
 export const runtime = "edge";
 
@@ -10,51 +11,95 @@ const H = 630;
 
 const DIFFICULTY_LABEL: Record<number, string> = { 1: "EASY", 2: "MEDIUM", 3: "HARD" };
 
-function formatTime(ms: number): string {
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return m > 0 ? `${m}:${String(sec).padStart(2, "0")}` : `0:${String(sec).padStart(2, "0")}`;
+// R2: cache headers
+const SUCCESS_HEADERS = {
+  "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+  "CDN-Cache-Control": "public, s-maxage=86400",
+};
+const ERROR_HEADERS = { "Cache-Control": "no-store" };
+
+// R5: module-scope client reuse
+const contractAddress = process.env.NEXT_PUBLIC_VICTORY_NFT_ADDRESS as `0x${string}` | undefined;
+const client = contractAddress
+  ? createPublicClient({ chain: celo, transport: http() })
+  : null;
+
+// R3: error card — "Victory not found" with 404 + no-store
+function errorCard() {
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: W,
+          height: H,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "sans-serif",
+          color: "#e4f6fb",
+          background: "linear-gradient(160deg, #0a1424 0%, #0b1628 40%, #0f1d35 70%, #0a1424 100%)",
+          position: "relative",
+        }}
+      >
+        <div style={{ display: "flex", fontSize: 36, fontWeight: 700, color: "rgba(94,234,212,0.5)", letterSpacing: "0.04em", marginBottom: 16 }}>
+          Victory not found
+        </div>
+        <div style={{ display: "flex", fontSize: 16, fontWeight: 400, color: "rgba(160,205,225,0.4)", marginBottom: 32 }}>
+          This victory may not exist yet
+        </div>
+        <div style={{ display: "flex", fontSize: 14, fontWeight: 700, letterSpacing: "0.15em", color: "rgba(20,184,166,0.35)" }}>
+          CHESSCITO
+        </div>
+      </div>
+    ),
+    { width: W, height: H, status: 404, headers: ERROR_HEADERS },
+  );
 }
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const tokenId = BigInt(params.id);
-  const contractAddress = process.env.NEXT_PUBLIC_VICTORY_NFT_ADDRESS as `0x${string}` | undefined;
-
-  let moves = "7";
-  let time = "0:16";
-  let difficulty = "EASY";
-  let player = "0x...";
-
-  if (contractAddress) {
-    try {
-      const client = createPublicClient({ chain: celo, transport: http() });
-
-      const [victoryData, owner] = await Promise.all([
-        client.readContract({
-          address: contractAddress,
-          abi: victoryAbi,
-          functionName: "victories",
-          args: [tokenId],
-        }),
-        client.readContract({
-          address: contractAddress,
-          abi: victoryAbi,
-          functionName: "ownerOf",
-          args: [tokenId],
-        }),
-      ]);
-
-      const [diff, totalMoves, timeMs] = victoryData as [number, number, number];
-      moves = String(totalMoves);
-      time = formatTime(timeMs);
-      difficulty = DIFFICULTY_LABEL[diff] ?? "EASY";
-      const ownerAddr = owner as string;
-      player = `${ownerAddr.slice(0, 6)}...${ownerAddr.slice(-4)}`;
-    } catch {
-      // Token may not exist yet — use defaults
-    }
+  // R1: input validation
+  const raw = params.id;
+  if (!raw || !/^\d{1,78}$/.test(raw)) {
+    return new Response("Invalid token ID", { status: 400 });
   }
+  const tokenId = BigInt(raw);
+
+  if (!client || !contractAddress) {
+    return errorCard();
+  }
+
+  let moves: string;
+  let time: string;
+  let difficulty: string;
+  let player: string;
+
+  try {
+    const [victoryData, owner] = await Promise.all([
+      client.readContract({
+        address: contractAddress,
+        abi: victoryAbi,
+        functionName: "victories",
+        args: [tokenId],
+      }),
+      client.readContract({
+        address: contractAddress,
+        abi: victoryAbi,
+        functionName: "ownerOf",
+        args: [tokenId],
+      }),
+    ]);
+
+    const [diff, totalMoves, timeMs] = victoryData as [number, number, number];
+    moves = clampMoves(totalMoves);        // R8: value clamping
+    time = clampTime(timeMs);              // R8: value clamping
+    difficulty = DIFFICULTY_LABEL[diff] ?? "EASY";
+    player = formatPlayer(owner as string); // R11: player formatting
+  } catch {
+    return errorCard(); // R3: no fake stats
+  }
+
+  const displayId = truncateId(raw); // R11: ID truncation
 
   return new ImageResponse(
     (
@@ -94,7 +139,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
         {/* Player + Victory ID */}
         <div style={{ display: "flex", fontSize: 16, fontWeight: 400, color: "rgba(160,205,225,0.4)", marginBottom: 8 }}>
-          {`Victory #${params.id} \u2022 ${player}`}
+          {`Victory #${displayId} \u2022 by ${player}`}
         </div>
 
         {/* Brand */}
@@ -103,6 +148,6 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
         </div>
       </div>
     ),
-    { width: W, height: H },
+    { width: W, height: H, headers: SUCCESS_HEADERS },
   );
 }
