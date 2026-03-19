@@ -3,7 +3,6 @@ import { createPublicClient, http } from "viem";
 import { celo } from "viem/chains";
 import { victoryAbi } from "@/lib/contracts/victory";
 import { clampMoves, clampTime, formatPlayer, truncateId } from "@/lib/og/og-utils";
-import { KING_DATA_URI } from "@/lib/og/king-svg";
 
 export const runtime = "edge";
 
@@ -27,6 +26,7 @@ const client = contractAddress
   : null;
 
 const FONT_PATH = "/fonts/Cinzel-Bold.ttf";
+const BG_PATH = "/art/bg-card-og.jpg";
 
 // R3: error card — "Victory not found" with 404 + no-store
 function errorCard() {
@@ -116,6 +116,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
   const displayId = truncateId(raw); // R11: ID truncation
 
+  const bgUrl = new URL(BG_PATH, req.url).toString();
+
   return new ImageResponse(
     (
       <div
@@ -128,37 +130,30 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
           justifyContent: "center",
           fontFamily: "sans-serif",
           color: "#e4f6fb",
-          background: "radial-gradient(ellipse at 65% 50%, #0b1628 0%, #0a1424 70%)",
+          background: "#0a1424",
           position: "relative",
-          padding: PAD,
         }}
       >
-        {/* Teal atmosphere glow — decorative */}
-        <div style={{
-          position: "absolute",
-          top: "10%",
-          left: "30%",
-          width: 600,
-          height: 400,
-          borderRadius: "50%",
-          background: "radial-gradient(ellipse, rgba(94,234,212,0.03) 0%, transparent 70%)",
-          display: "flex",
-        }} />
-
-        {/* King watermark — decorative */}
+        {/* Background plate — enchanted art */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={KING_DATA_URI}
+          src={bgUrl}
           alt=""
-          width={280}
-          height={336}
-          style={{
-            position: "absolute",
-            right: 100,
-            top: 147,
-            opacity: 0.045,
-          }}
+          width={W}
+          height={H}
+          style={{ position: "absolute", top: 0, left: 0 }}
         />
+
+        {/* Central dark scrim for text readability */}
+        <div style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: W,
+          height: H,
+          background: "radial-gradient(ellipse at 50% 50%, rgba(5,10,20,0.55) 0%, rgba(5,10,20,0.15) 65%, transparent 100%)",
+          display: "flex",
+        }} />
 
         {/* Headline */}
         <div style={{
@@ -168,9 +163,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
           fontFamily: cinzelData ? "Cinzel" : "serif",
           letterSpacing: "0.08em",
           color: "#5eead4",
-          textShadow: "0 0 30px rgba(94,234,212,0.20)",
+          textShadow: "0 0 40px rgba(94,234,212,0.35), 0 2px 4px rgba(0,0,0,0.5)",
           lineHeight: 1,
-          marginBottom: 20,
+          marginBottom: 16,
         }}>
           CHECKMATE
         </div>
@@ -178,35 +173,63 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         {/* Separator */}
         <div style={{
           display: "flex",
-          width: 200,
+          width: 180,
           height: 1,
-          background: "rgba(94,234,212,0.15)",
-          marginBottom: 20,
+          background: "rgba(94,234,212,0.25)",
+          marginBottom: 16,
         }} />
 
         {/* Performance */}
-        <div style={{ display: "flex", fontSize: 38, fontWeight: 700, color: "#f5f5f5", letterSpacing: "0.04em", marginBottom: 20 }}>
+        <div style={{
+          display: "flex",
+          fontSize: 36,
+          fontWeight: 700,
+          color: "#f5f5f5",
+          letterSpacing: "0.04em",
+          textShadow: "0 2px 8px rgba(0,0,0,0.6)",
+          marginBottom: 16,
+        }}>
           {`${moves} MOVES \u2022 ${time}`}
         </div>
 
         {/* Difficulty pill */}
-        <div style={{ display: "flex", padding: "6px 24px", borderRadius: 20, border: "1px solid rgba(160,205,225,0.12)", background: "rgba(255,255,255,0.03)", fontSize: 14, fontWeight: 600, letterSpacing: "0.12em", color: "rgba(160,205,225,0.45)", marginBottom: 28 }}>
+        <div style={{
+          display: "flex",
+          padding: "5px 20px",
+          borderRadius: 16,
+          border: "1px solid rgba(160,205,225,0.20)",
+          background: "rgba(0,0,0,0.25)",
+          fontSize: 13,
+          fontWeight: 600,
+          letterSpacing: "0.12em",
+          color: "rgba(180,215,235,0.6)",
+          marginBottom: 20,
+        }}>
           {difficulty}
         </div>
 
         {/* Challenge line */}
-        <div style={{ display: "flex", fontSize: 28, fontWeight: 600, color: "#fbbf24", letterSpacing: "0.02em", marginBottom: 28 }}>
+        <div style={{
+          display: "flex",
+          fontSize: 26,
+          fontWeight: 600,
+          color: "#fbbf24",
+          letterSpacing: "0.02em",
+          textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+          marginBottom: 24,
+        }}>
           Can you beat this?
         </div>
 
         {/* Player + Victory ID */}
-        <div style={{ display: "flex", fontSize: 16, fontWeight: 400, color: "rgba(160,205,225,0.4)", marginBottom: 8 }}>
+        <div style={{
+          display: "flex",
+          fontSize: 15,
+          fontWeight: 400,
+          color: "rgba(180,210,230,0.5)",
+          textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+        }}>
           {`Victory #${displayId} \u2022 by ${player}`}
-        </div>
-
-        {/* Brand */}
-        <div style={{ display: "flex", fontSize: 14, fontWeight: 700, letterSpacing: "0.15em", color: "rgba(20,184,166,0.30)", alignSelf: "flex-end" }}>
-          CHESSCITO
         </div>
       </div>
     ),
