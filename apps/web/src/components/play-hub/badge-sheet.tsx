@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import Link from "next/link";
+import { Check, Trophy } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -201,6 +202,14 @@ export function BadgeSheet({
             />
           ))}
         </div>
+        <Link
+          href="/trophies"
+          onClick={() => onOpenChange(false)}
+          className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-300 ring-1 ring-amber-400/20 transition hover:bg-amber-500/20"
+        >
+          <Trophy className="h-4 w-4" />
+          {BADGE_SHEET_COPY.viewTrophies}
+        </Link>
       </SheetContent>
     </Sheet>
   );

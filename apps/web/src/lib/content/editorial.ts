@@ -89,6 +89,7 @@ export const BADGE_SHEET_COPY = {
   claiming: "Claiming...",
   locked: (needed: number) => `Need ${needed} more ★ to unlock`,
   notStarted: "Complete trials to start",
+  viewTrophies: "View your Victories",
 } as const;
 
 export const TUTORIAL_COPY = {
