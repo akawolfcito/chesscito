@@ -55,22 +55,26 @@ Top to bottom, single scroll:
 
 ## Data Source
 
-### Event
+### Event (exact contract signature)
 
 ```solidity
+// Source: VictoryNFTUpgradeable.sol line 48-56
 event VictoryMinted(
-    address indexed player,
-    uint256 indexed tokenId,
-    uint8 difficulty,
-    uint16 totalMoves,
-    uint32 timeMs,
-    address indexed token,
-    uint256 totalAmount
+    address indexed player,      // topics[1]
+    uint256 indexed tokenId,     // topics[2]
+    uint8 difficulty,            // data
+    uint16 totalMoves,           // data
+    uint32 timeMs,               // data
+    address indexed token,       // topics[3] — payment token, IGNORED by UI
+    uint256 totalAmount          // data — fee paid, IGNORED by UI
 );
 ```
 
 Contract: `0x0eE22F830a99e7a67079018670711C0F94Abeeb0` (Celo Mainnet)
 Deployed: 2026-03-17
+
+**Fields used by UI**: `player`, `tokenId`, `difficulty`, `totalMoves`, `timeMs`
+**Fields intentionally ignored**: `token`, `totalAmount` (payment info, not relevant for trophy display)
 
 ### Query strategy
 
@@ -97,13 +101,13 @@ const myLogs = await getLogsPaginated(client, {
   address: VICTORY_NFT_ADDRESS,
   event: VictoryMintedEvent,
   args: { player: connectedAddress },
-}, DEPLOY_BLOCK, latestBlock);
+}, EVENT_SCAN_START, latestBlock);
 
 // Hall of Fame — unfiltered
 const allLogs = await getLogsPaginated(client, {
   address: VICTORY_NFT_ADDRESS,
   event: VictoryMintedEvent,
-}, DEPLOY_BLOCK, latestBlock);
+}, EVENT_SCAN_START, latestBlock);
 ```
 
 ### Block timestamp resolution
@@ -117,13 +121,15 @@ The `VictoryMinted` event does not include a timestamp. To display the victory d
 
 If multiple logs share the same blockNumber, one `getBlock` call covers all of them.
 
-### `DEPLOY_BLOCK`
+### `EVENT_SCAN_START`
 
 ```typescript
-const DEPLOY_BLOCK = 61_250_000n; // VictoryNFT proxy deployed 2026-03-17
+/** Known safe start block for VictoryMinted event scanning.
+ *  VictoryNFT proxy deployed 2026-03-17 — no events exist before this block. */
+const EVENT_SCAN_START = 61_250_000n;
 ```
 
-All `getLogs` queries use this as `fromBlock` to avoid scanning the entire chain. This value is a safe lower bound — the exact deploy tx is within a few hundred blocks of this.
+All `getLogs` queries use this as `fromBlock` to avoid scanning the entire chain.
 
 ---
 
@@ -131,8 +137,12 @@ All `getLogs` queries use this as `fromBlock` to avoid scanning the entire chain
 
 | Section | Sort | Limit |
 |---------|------|-------|
-| My Victories | `blockNumber` desc (newest first) | No limit (all user victories) |
-| Hall of Fame | `blockNumber` desc (newest first) | 10 items |
+| My Victories | `blockNumber` desc, then `logIndex` desc (newest first, deterministic tie-break) | No limit (all user victories) |
+| Hall of Fame | `blockNumber` desc, then `logIndex` desc | 10 items |
+
+**Hall of Fame pipeline**: fetch all matching logs → sort descending → take first 10. The limit is applied **after** sorting, never before.
+
+Multiple mints can occur in the same block — `logIndex` ensures stable ordering.
 
 ---
 
@@ -142,9 +152,10 @@ All `getLogs` queries use this as `fromBlock` to avoid scanning the entire chain
 |-----------|---------|
 | Loading (fetching logs) | Skeleton cards (3 placeholder cards with pulse animation) |
 | No wallet connected | "Connect wallet to see your victories" |
-| Wallet connected, zero victories | "No victories yet — win in the Arena to earn your first trophy" + CTA to `/arena` |
+| Wallet connected, zero victories | "No victories yet — win in the Arena to earn your first trophy" + CTA to `/arena` (use `ARENA_COPY` from `editorial.ts` for consistent naming) |
 | Hall of Fame, zero events globally | "No victories recorded yet — be the first!" |
-| RPC error (network failure, rate limit) | "Could not load victories — tap to retry" with retry button |
+| RPC error (network, timeout, rate limit) | "Could not load victories — tap to retry" with retry button |
+| Config error (missing contract address) | "Trophies unavailable" — no retry button (non-retryable) |
 
 ---
 
@@ -162,11 +173,11 @@ All `getLogs` queries use this as `fromBlock` to avoid scanning the entire chain
 
 ## Performance Notes
 
-- `fromBlock = DEPLOY_BLOCK` — never scan from genesis
+- `fromBlock = EVENT_SCAN_START` — never scan from genesis
 - Single fetch on mount, no polling or refetch interval
 - Block timestamp fetching batched by unique blockNumber (deduped)
 - `getBlock` calls can run in parallel via `Promise.all`
-- No SSR data fetching — client-side only (depends on wallet state)
+- Page shell and metadata render server-side normally; event data fetching is client-side in v1
 - Hall of Fame could be SSR in future, but client-side is fine for v1
 - Pagination for My Victories is out of scope — acceptable because early-stage volume is low
 
@@ -179,7 +190,7 @@ All `getLogs` queries use this as `fromBlock` to avoid scanning the entire chain
 | `app/trophies/page.tsx` | Route page, metadata, layout shell |
 | `components/trophies/trophy-list.tsx` | Renders list of `TrophyCard`s. Accepts `victories: VictoryEntry[]`, `showPlayer: boolean`, `showShare: boolean` |
 | `components/trophies/trophy-card.tsx` | Single victory card: difficulty pill, moves, time, date, optional player address, optional re-share |
-| `lib/game/victory-events.ts` | `fetchMyVictories(client, player)`, `fetchHallOfFame(client)`, block timestamp resolution, `DEPLOY_BLOCK` constant |
+| `lib/game/victory-events.ts` | `fetchMyVictories(client, player)`, `fetchHallOfFame(client)`, block timestamp resolution, `EVENT_SCAN_START` constant |
 
 ---
 
@@ -193,6 +204,7 @@ type VictoryEntry = {
   totalMoves: number;
   timeMs: number;
   blockNumber: bigint;
+  logIndex: number;       // tie-breaker for same-block ordering
   timestamp: number;      // unix seconds, resolved from block
 };
 
@@ -206,20 +218,28 @@ type VictoryEntry = {
 
 ## Entry Points to `/trophies`
 
-- **Persistent dock**: replace the `invite` slot (5th position) with a Trophy icon linking to `/trophies`. The dock keeps its 5-item layout with "Free Play" centered at slot 3.
-- **Post-mint success screen**: add "View your trophies →" link in `victory-claim-success.tsx`
+**v1 scope (this implementation):**
+- Route is navigable directly at `/trophies`
+
+**Follow-up (separate PR):**
+- Persistent dock: replace `invite` slot (5th position) with Trophy icon
+- Post-mint success screen: "View your trophies →" link in `victory-claim-success.tsx`
+
+Dock and post-mint integration are out of scope for this PR to keep the first merge focused on the page itself.
 
 ---
 
 ## Acceptance Criteria
 
 - [ ] `/trophies` route renders on mobile (390px)
-- [ ] "My Victories" shows connected user's minted victories, newest first
+- [ ] "My Victories" shows connected user's minted victories, sorted by `blockNumber` desc + `logIndex` desc
 - [ ] Each personal victory card has a working re-share button
-- [ ] "Hall of Fame" shows last 10 global victories with player addresses
-- [ ] All three empty states display correctly
+- [ ] "Hall of Fame" shows last 10 global victories with truncated player addresses
+- [ ] All empty states display correctly (loading, no wallet, zero victories, zero global, RPC error, config error)
 - [ ] Victory dates are resolved from block timestamps
+- [ ] Chunked `getLogs` fetching works across large block ranges
 - [ ] Roadmap banner visible at bottom: "More coming soon → Tournaments • VIP Passes • Seasonal Rewards"
 - [ ] No contract changes
 - [ ] No new dependencies beyond what's already in the project
 - [ ] Page feels premium and consistent with existing dark fantasy aesthetic
+- [ ] All copy sourced from `editorial.ts`
