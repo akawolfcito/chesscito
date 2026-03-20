@@ -1,15 +1,19 @@
 import { TrophyCard } from "./trophy-card";
+import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
 function SkeletonCards() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="h-28 animate-pulse rounded-2xl border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
+          className="h-[72px] animate-pulse rounded-xl border border-white/[0.08] bg-[#121c2f]"
         />
       ))}
+      <p className="pt-1 text-center text-xs text-slate-500">
+        {TROPHY_VITRINE_COPY.loadingText}
+      </p>
     </div>
   );
 }
@@ -19,8 +23,7 @@ type Props = {
   loading: boolean;
   error?: string | null;
   emptyMessage: string;
-  showPlayer?: boolean;
-  showShare?: boolean;
+  variant: "victory" | "hall-of-fame";
   onRetry?: () => void;
 };
 
@@ -29,15 +32,14 @@ export function TrophyList({
   loading,
   error,
   emptyMessage,
-  showPlayer,
-  showShare,
+  variant,
   onRetry,
 }: Props) {
   if (loading) return <SkeletonCards />;
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-center">
+      <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center">
         <p className="text-sm text-red-400">{error}</p>
         {onRetry && (
           <button
@@ -59,13 +61,13 @@ export function TrophyList({
   }
 
   return (
-    <div className="space-y-3">
-      {victories.map((v) => (
+    <div className="space-y-2">
+      {victories.map((v, i) => (
         <TrophyCard
           key={String(v.tokenId)}
           entry={v}
-          showPlayer={showPlayer}
-          showShare={showShare}
+          variant={variant}
+          rank={variant === "hall-of-fame" ? i + 1 : undefined}
         />
       ))}
     </div>
