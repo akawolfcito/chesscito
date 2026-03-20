@@ -86,9 +86,9 @@ export function useSplashLoader(): SplashState {
 
   const loaded = assetsReady && walletReady;
 
-  // Returning users: no splash at all
-  // First visit: show splash until loaded
-  const showSplash = isFirstVisit && !loaded;
+  // Always show splash while loading assets/wallet
+  // Briefing only on first visit (after splash finishes)
+  const showSplash = !loaded;
   const showBriefing = isFirstVisit && loaded;
 
   function markOnboarded() {
