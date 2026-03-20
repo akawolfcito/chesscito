@@ -7,7 +7,7 @@ function SkeletonCards() {
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="h-28 animate-pulse rounded-2xl border border-white/10 bg-white/5"
+          className="h-28 animate-pulse rounded-2xl border border-slate-600/50 bg-slate-800/60 backdrop-blur-sm"
         />
       ))}
     </div>

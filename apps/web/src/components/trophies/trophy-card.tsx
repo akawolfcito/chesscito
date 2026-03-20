@@ -19,6 +19,7 @@ function formatTimeMs(ms: number): string {
 }
 
 function formatDate(unix: number): string {
+  if (unix <= 0) return "—";
   return new Date(unix * 1000).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
