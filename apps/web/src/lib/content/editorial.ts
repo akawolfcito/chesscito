@@ -265,6 +265,22 @@ export const VICTORY_CELEBRATION_COPY = {
   stats: { difficulty: "level", moves: "moves", time: "time" },
 } as const;
 
+export const TROPHY_VITRINE_COPY = {
+  pageTitle: "Trophy Vitrine",
+  pageDescription: "Your onchain victories, immortalized.",
+  myVictories: "My Victories",
+  hallOfFame: "Hall of Fame",
+  movesLabel: "moves",
+  shareLabel: "Share",
+  connectWallet: "Connect wallet to see your victories",
+  noVictories: "No victories yet — win in the Arena to earn your first trophy",
+  noGlobalVictories: "No victories recorded yet — be the first!",
+  loadError: "Could not load victories — tap to retry",
+  configError: "Trophies unavailable",
+  roadmap: "More coming soon → Tournaments • VIP Passes • Seasonal Rewards",
+  arenaLink: "Go to Arena",
+} as const;
+
 export const ARENA_COPY = {
   title: "Arena",
   subtitle: "Challenge the AI",
