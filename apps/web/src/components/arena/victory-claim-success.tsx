@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { RotateCcw, Share2, Users, Link2 } from "lucide-react";
+import Link from "next/link";
+import { RotateCcw, Share2, Users, Link2, Trophy } from "lucide-react";
 import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { StatCard } from "@/components/arena/stat-card";
@@ -157,6 +158,14 @@ export function VictoryClaimSuccess({
               {toast}
             </p>
           )}
+
+          {/* View Trophies */}
+          <Link
+            href="/trophies"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/15 bg-amber-500/[0.06] py-2.5 text-sm font-semibold text-amber-300 transition-all hover:bg-amber-500/[0.12] active:scale-[0.97]"
+          >
+            <Trophy size={16} /> {VICTORY_CLAIM_COPY.viewTrophies}
+          </Link>
 
           {/* Play Again */}
           <button

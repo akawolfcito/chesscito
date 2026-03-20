@@ -244,6 +244,7 @@ export const VICTORY_CLAIM_COPY = {
   copyLink: "Copy Link",
   copiedToast: "Copied!",
   sharedToast: "Shared!",
+  viewTrophies: "View your Victories",
   card: {
     headline: "CHECKMATE",
     challengeLine: "Can you beat this?",
