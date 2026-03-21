@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Star, Timer, Crosshair } from "lucide-react";
-import { PHASE_FLASH_COPY } from "@/lib/content/editorial";
+import { PHASE_FLASH_COPY, PRACTICE_COPY } from "@/lib/content/editorial";
 
 type PieceOption = {
   key: "rook" | "bishop" | "knight";
@@ -21,7 +21,8 @@ type MissionPanelProps = {
   timeMs: string;
   level: string;
   board: ReactNode;
-  starsBar: ReactNode;
+  exerciseDrawer: ReactNode;
+  isReplay: boolean;
   contextualAction: ReactNode;
   persistentDock: ReactNode;
   pieceHint?: string;
@@ -93,7 +94,8 @@ export function MissionPanel({
   timeMs,
   level,
   board,
-  starsBar,
+  exerciseDrawer,
+  isReplay,
   contextualAction,
   persistentDock,
   pieceHint,
@@ -121,9 +123,12 @@ export function MissionPanel({
               ) : null}
             </button>
           ))}
-          <span className="ml-auto shrink-0 text-xs text-cyan-300/70 tracking-[0.14em] uppercase">
-            Lv {level}
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            {exerciseDrawer}
+            <span className="shrink-0 text-xs text-cyan-300/70 tracking-[0.14em] uppercase">
+              Lv {level}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -132,7 +137,11 @@ export function MissionPanel({
         {pieceHint ? <p className="piece-hint">{pieceHint}</p> : null}
         {board}
         {/* Progress bar flush below board */}
-        <div className="px-2">{starsBar}</div>
+        {isReplay ? (
+          <p className="px-2 py-1 text-center text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-cyan-400/50">
+            {PRACTICE_COPY.label}
+          </p>
+        ) : null}
       </div>
 
       {/* Zone 3: Footer — HUD strip + contextual action + persistent dock */}
