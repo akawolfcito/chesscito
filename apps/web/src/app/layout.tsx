@@ -3,7 +3,10 @@ import './globals.css';
 
 import { WalletProvider } from "@/components/wallet-provider"
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://chesscito.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(BASE_URL),
   title: 'chesscito',
   description: 'MiniPay MiniApp for playful cognitive enrichment through pre-chess challenges.',
   icons: {
@@ -13,7 +16,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'chesscito',
     description: 'Learn chess piece movements with gamified on-chain challenges on Celo.',
-    images: [{ url: '/art/bg-splash-chesscito.webp', width: 390, height: 844 }],
+    images: [{ url: '/art/og-home.jpg', width: 1200, height: 630, type: 'image/jpeg' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'chesscito',
+    description: 'Learn chess piece movements with gamified on-chain challenges on Celo.',
+    images: ['/art/og-home.jpg'],
   },
 };
 
