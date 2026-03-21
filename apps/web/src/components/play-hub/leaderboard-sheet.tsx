@@ -43,7 +43,10 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
           aria-label="Leaderboard"
           className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
         >
-          <img src="/art/leaderboard-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+          <picture>
+            <source srcSet="/art/leaderboard-menu.webp" type="image/webp" />
+            <img src="/art/leaderboard-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+          </picture>
           <span className="sr-only">Leaderboard</span>
         </button>
       </SheetTrigger>

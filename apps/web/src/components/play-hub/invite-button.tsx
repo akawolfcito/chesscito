@@ -31,7 +31,10 @@ export function InviteButton() {
       onClick={() => void handleInvite()}
       className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
     >
-      <img src="/art/invite-share-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+      <picture>
+        <source srcSet="/art/invite-share-menu.webp" type="image/webp" />
+        <img src="/art/invite-share-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+      </picture>
       <span className="sr-only">{INVITE_COPY.button}</span>
       {copied ? (
         <span className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-emerald-600 px-2 py-0.5 text-[0.6rem] font-semibold text-white shadow-lg">

@@ -10,7 +10,8 @@
     "test:game": "rm -rf .tmp/game-tests .tmp/tsconfig.test.tsbuildinfo && tsc -p tsconfig.test.json && node --test .tmp/game-tests/lib/game/__tests__/context-action.test.js && rm -rf .tmp/game-tests .tmp/tsconfig.test.tsbuildinfo",
     "test:server": "rm -rf .tmp/server-tests .tmp/tsconfig.test-server.tsbuildinfo && tsc -p tsconfig.test-server.json && node --test .tmp/server-tests/lib/server/__tests__/demo-signing.test.js && rm -rf .tmp/server-tests .tmp/tsconfig.test-server.tsbuildinfo",
     "test:og": "rm -rf .tmp/og-tests .tmp/tsconfig.test-og.tsbuildinfo && tsc -p tsconfig.test-og.json && node --test .tmp/og-tests/lib/og/__tests__/og-utils.test.js && rm -rf .tmp/og-tests .tmp/tsconfig.test-og.tsbuildinfo",
-    "test": "npm run test:server && npm run test:game && npm run test:og",
+    "test:assets": "rm -rf .tmp/asset-tests .tmp/tsconfig.test-assets.tsbuildinfo && tsc -p tsconfig.test-assets.json && node --test .tmp/asset-tests/lib/assets/__tests__/asset-integrity.test.js && rm -rf .tmp/asset-tests .tmp/tsconfig.test-assets.tsbuildinfo",
+    "test": "npm run test:server && npm run test:game && npm run test:og && npm run test:assets",
     "type-check": "rm -rf .next && next build >/dev/null && tsc --noEmit",
     "art:optimize": "bash scripts/optimize-art-assets.sh"
   },

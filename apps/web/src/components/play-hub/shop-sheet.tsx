@@ -35,7 +35,10 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
           aria-label="Shop"
           className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
         >
-          <img src="/art/shop-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+          <picture>
+            <source srcSet="/art/shop-menu.webp" type="image/webp" />
+            <img src="/art/shop-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+          </picture>
           <span className="sr-only">Shop</span>
         </button>
       </SheetTrigger>

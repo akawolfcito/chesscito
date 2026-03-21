@@ -115,12 +115,15 @@ export function ArenaEndState({
       aria-live="assertive"
     >
       <div className="flex flex-col items-center gap-6 rounded-3xl border border-white/10 bg-[#0b1628]/90 px-8 py-8 backdrop-blur-xl shadow-[0_0_40px_rgba(251,113,133,0.1)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-        <img
-          src="/art/favicon-wolf.png"
-          alt=""
-          aria-hidden="true"
-          className="h-14 w-14 drop-shadow-[0_0_20px_rgba(103,232,249,0.5)]"
-        />
+        <picture>
+          <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
+          <img
+            src="/art/favicon-wolf.png"
+            alt=""
+            aria-hidden="true"
+            className="h-14 w-14 drop-shadow-[0_0_20px_rgba(103,232,249,0.5)]"
+          />
+        </picture>
         <h2 className="fantasy-title text-2xl font-bold text-rose-300 drop-shadow-[0_0_16px_rgba(251,113,133,0.4)]">
           {text}
         </h2>

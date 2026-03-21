@@ -38,12 +38,15 @@ export function MissionBriefing({
       aria-labelledby="mission-briefing-objective"
     >
       <div className={`mission-briefing-card ${exiting ? "is-exiting" : ""}`}>
-        <img
-          src="/art/favicon-wolf.png"
-          alt=""
-          aria-hidden="true"
-          className="mx-auto mb-4 h-20 w-20 rounded-full drop-shadow-[0_0_24px_rgba(103,232,249,0.3)]"
-        />
+        <picture>
+          <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
+          <img
+            src="/art/favicon-wolf.png"
+            alt=""
+            aria-hidden="true"
+            className="mx-auto mb-4 h-20 w-20 rounded-full drop-shadow-[0_0_24px_rgba(103,232,249,0.3)]"
+          />
+        </picture>
         <p className="mb-1.5 text-center text-xs font-bold uppercase tracking-[0.14em] text-cyan-400">
           {MISSION_BRIEFING_COPY.label}
         </p>

@@ -11,12 +11,15 @@ export default function PlayHubError({
 }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
-      <img
-        src="/art/favicon-wolf.png"
-        alt=""
-        aria-hidden="true"
-        className="h-16 w-16 rounded-full opacity-60"
-      />
+      <picture>
+        <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
+        <img
+          src="/art/favicon-wolf.png"
+          alt=""
+          aria-hidden="true"
+          className="h-16 w-16 rounded-full opacity-60"
+        />
+      </picture>
       <h2 className="text-xl font-bold text-cyan-50">{ERROR_PAGE_COPY.boardCrashed}</h2>
       <p className="text-sm text-cyan-100/60">
         {error.message || ERROR_PAGE_COPY.gameFallback}

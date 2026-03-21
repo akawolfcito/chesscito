@@ -25,7 +25,10 @@ export function PersistentDock({
         href="/arena"
         className="chesscito-dock-center"
       >
-        <img src="/art/play-menu.png" alt="" aria-hidden="true" className="h-6 w-6 object-contain" />
+        <picture>
+          <source srcSet="/art/play-menu.webp" type="image/webp" />
+          <img src="/art/play-menu.png" alt="" aria-hidden="true" className="h-6 w-6 object-contain" />
+        </picture>
         <span className="text-[7px] font-bold uppercase tracking-[0.12em]">
           {ARENA_COPY.title}
         </span>
