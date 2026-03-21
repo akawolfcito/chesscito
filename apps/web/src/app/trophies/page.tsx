@@ -74,7 +74,7 @@ export default function TrophiesPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a2a3f] to-[#0a1424] opacity-80" />
         <div className="relative z-10 flex items-center gap-3">
           <Link
-            href="/play-hub"
+            href="/"
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5"
           >
             <ArrowLeft className="h-4 w-4 text-slate-400" />

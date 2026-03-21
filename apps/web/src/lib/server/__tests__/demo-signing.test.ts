@@ -110,7 +110,7 @@ describe("enforceOrigin", () => {
   it("falls back to referer when origin is absent", () => {
     withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
       assert.doesNotThrow(() =>
-        enforceOrigin(fakeRequest({ referer: "https://chesscito.vercel.app/play-hub" }))
+        enforceOrigin(fakeRequest({ referer: "https://chesscito.vercel.app/" }))
       );
     });
   });

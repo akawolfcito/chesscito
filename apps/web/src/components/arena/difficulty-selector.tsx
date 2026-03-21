@@ -62,7 +62,7 @@ export function DifficultySelector({ selected, onSelect, onStart }: Props) {
       </button>
 
       <Link
-        href="/play-hub"
+        href="/"
         className="mt-1 text-sm text-white/35 transition-colors hover:text-white/55"
       >
         <ArrowLeft size={14} className="inline -mt-0.5" /> {ARENA_COPY.backToHub}

@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    return [{ source: '/', destination: '/play-hub' }];
+    return [{ source: '/play-hub', destination: '/' }];
   },
   webpack: (config) => {
     config.resolve.alias = {

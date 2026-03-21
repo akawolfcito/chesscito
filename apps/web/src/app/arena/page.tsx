@@ -130,7 +130,7 @@ export default function ArenaPage() {
     [tokenBalances]
   );
 
-  const handleBackToHub = () => router.push("/play-hub");
+  const handleBackToHub = () => router.push("/");
 
   async function handleClaimVictory() {
     if (!canClaim || !address || !victoryNFTAddress || !publicClient) return;

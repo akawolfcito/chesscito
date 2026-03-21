@@ -13,7 +13,7 @@ export default async function LeaderboardPage() {
       eyebrow="Leaderboard"
       title="Top 10"
       description={LEADERBOARD_COPY.description}
-      cta={{ href: "/play-hub", label: CTA_LABELS.backToPlay }}
+      cta={{ href: "/", label: CTA_LABELS.backToPlay }}
       secondaryCta={{ href: "/", label: CTA_LABELS.startTrial }}
     >
       <p className="mb-4 text-center text-xs text-slate-500">

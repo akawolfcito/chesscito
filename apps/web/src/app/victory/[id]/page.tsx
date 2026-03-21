@@ -124,7 +124,7 @@ export default async function VictoryPage({ params }: { params: { id: string } }
         </Link>
 
         <Link
-          href="/play-hub"
+          href="/"
           className="mt-3 text-xs text-white/30 transition-colors hover:text-white/50"
         >
           Back to Hub
