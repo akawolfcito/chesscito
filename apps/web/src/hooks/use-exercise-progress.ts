@@ -27,6 +27,12 @@ function loadProgress(piece: PieceId): PieceProgress {
         parsed.exerciseIndex >= 0 &&
         parsed.exerciseIndex < EXERCISES_PER_PIECE
       ) {
+        const validStars = parsed.stars.every(
+          (s: unknown) => typeof s === "number" && s >= 0 && s <= 3
+        );
+        if (!validStars) {
+          return { piece, exerciseIndex: 0, stars: [...EMPTY_STARS] };
+        }
         return parsed;
       }
     }
@@ -62,11 +68,13 @@ export function useExerciseProgress(piece: PieceId) {
   const isLastExercise = progress.exerciseIndex === EXERCISES_PER_PIECE - 1;
   const total = totalStars(progress.stars);
   const badgeEarned = total >= BADGE_THRESHOLD;
+  const isReplay = progress.stars[progress.exerciseIndex] > 0;
 
   const completeExercise = useCallback(
     (movesUsed: number) => {
       setProgress((prev) => {
-        const stars = computeStars(movesUsed, currentExercise.optimalMoves);
+        const exercise = EXERCISES[piece][prev.exerciseIndex];
+        const stars = computeStars(movesUsed, exercise.optimalMoves);
         const newStars = [...prev.stars] as PieceProgress["stars"];
         newStars[prev.exerciseIndex] = Math.max(
           newStars[prev.exerciseIndex],
@@ -78,7 +86,7 @@ export function useExerciseProgress(piece: PieceId) {
         return next;
       });
     },
-    [currentExercise.optimalMoves]
+    [piece]
   );
 
   const advanceExercise = useCallback(() => {
@@ -120,6 +128,7 @@ export function useExerciseProgress(piece: PieceId) {
     isLastExercise,
     totalStars: total,
     badgeEarned,
+    isReplay,
     pieceCompleted: progress.completed ?? false,
     completeExercise,
     advanceExercise,
