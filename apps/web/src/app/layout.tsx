@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'chesscito',
     description: 'Learn chess piece movements with gamified on-chain challenges on Celo.',
+    url: BASE_URL,
     images: [{ url: '/art/og-home.jpg', width: 1200, height: 630, type: 'image/jpeg' }],
     type: 'website',
   },
