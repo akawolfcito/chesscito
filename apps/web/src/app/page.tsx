@@ -233,6 +233,7 @@ export default function PlayHubPage() {
     allowFailure: true,
     query: {
       enabled: Boolean(shopAddress),
+      staleTime: 5 * 60_000, // shop items rarely change
     },
   });
 
@@ -275,7 +276,7 @@ export default function PlayHubPage() {
       chainId,
     })),
     allowFailure: true,
-    query: { enabled: Boolean(address) },
+    query: { enabled: Boolean(address), staleTime: 15_000 },
   });
 
   const { data: paymentAllowance } = useReadContract({
@@ -314,6 +315,7 @@ export default function PlayHubPage() {
     })),
     query: {
       enabled: Boolean(address && badgesAddress),
+      staleTime: 2 * 60_000, // badges change only after mint
     },
   });
 

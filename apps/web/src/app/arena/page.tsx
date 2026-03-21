@@ -111,7 +111,7 @@ export default function ArenaPage() {
       chainId,
     })),
     allowFailure: true,
-    query: { enabled: Boolean(address && canClaim) },
+    query: { enabled: Boolean(address && canClaim), staleTime: 15_000 },
   });
 
   const selectPaymentToken = useCallback(

@@ -33,7 +33,14 @@ const wagmiConfig = createConfig({
   ssr: true,
 });
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000, // 30s — avoid redundant RPC refetches on remount
+      refetchOnWindowFocus: false, // MiniPay WebView triggers focus often
+    },
+  },
+});
 
 function WalletProviderInner({ children }: { children: React.ReactNode }) {
   const { connect, connectors } = useConnect();

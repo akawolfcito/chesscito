@@ -2,20 +2,37 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useAccount, usePublicClient } from "wagmi";
+import { useAccount } from "wagmi";
 import { Crown, ArrowLeft } from "lucide-react";
 import { TrophyList } from "@/components/trophies/trophy-list";
-import {
-  fetchMyVictories,
-  fetchHallOfFame,
-  getVictoryAddress,
-} from "@/lib/game/victory-events";
+import { getVictoryAddress } from "@/lib/game/victory-events";
 import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
+type ApiVictoryRow = {
+  tokenId: string;
+  player: string;
+  difficulty: number;
+  totalMoves: number;
+  timeMs: number;
+  timestamp: number;
+};
+
+function toVictoryEntry(row: ApiVictoryRow): VictoryEntry {
+  return {
+    tokenId: BigInt(row.tokenId),
+    player: row.player,
+    difficulty: row.difficulty,
+    totalMoves: row.totalMoves,
+    timeMs: row.timeMs,
+    blockNumber: 0n,
+    logIndex: 0,
+    timestamp: row.timestamp,
+  };
+}
+
 export default function TrophiesPage() {
   const { address, isConnected } = useAccount();
-  const client = usePublicClient();
 
   const [myVictories, setMyVictories] = useState<VictoryEntry[]>();
   const [hallOfFame, setHallOfFame] = useState<VictoryEntry[]>();
@@ -27,35 +44,39 @@ export default function TrophiesPage() {
   const configured = getVictoryAddress() !== null;
 
   const loadHallOfFame = useCallback(async () => {
-    if (!client || !configured) {
+    if (!configured) {
       setHofLoading(false);
       return;
     }
     setHofLoading(true);
     setHofError(null);
     try {
-      const data = await fetchHallOfFame(client);
-      setHallOfFame(data);
+      const res = await fetch("/api/hall-of-fame");
+      if (!res.ok) throw new Error("fetch failed");
+      const rows = (await res.json()) as ApiVictoryRow[];
+      setHallOfFame(rows.map(toVictoryEntry));
     } catch {
       setHofError(TROPHY_VITRINE_COPY.loadError);
     } finally {
       setHofLoading(false);
     }
-  }, [client, configured]);
+  }, [configured]);
 
   const loadMyVictories = useCallback(async () => {
-    if (!client || !address || !configured) return;
+    if (!address || !configured) return;
     setMyLoading(true);
     setMyError(null);
     try {
-      const data = await fetchMyVictories(client, address);
-      setMyVictories(data);
+      const res = await fetch(`/api/my-victories?player=${address}`);
+      if (!res.ok) throw new Error("fetch failed");
+      const rows = (await res.json()) as ApiVictoryRow[];
+      setMyVictories(rows.map(toVictoryEntry));
     } catch {
       setMyError(TROPHY_VITRINE_COPY.loadError);
     } finally {
       setMyLoading(false);
     }
-  }, [client, address, configured]);
+  }, [address, configured]);
 
   useEffect(() => {
     void loadHallOfFame();
