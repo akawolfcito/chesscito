@@ -32,7 +32,7 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
     >
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className="flex flex-col items-center gap-3 rounded-2xl bg-slate-800/95 p-5"
+        className="flex flex-col items-center gap-3 rounded-2xl border border-white/[0.08] bg-[#0a1424]/92 p-5 backdrop-blur-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="text-sm font-semibold text-white/80">
