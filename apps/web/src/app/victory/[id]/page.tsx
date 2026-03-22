@@ -73,7 +73,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       title,
       description,
       url,
-      images: [{ url: ogImage, width: 1200, height: 630, alt: title, type: "image/png" }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title, type: "image/jpeg" }],
       type: "website",
     },
     twitter: {

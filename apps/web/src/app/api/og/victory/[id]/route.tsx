@@ -1,10 +1,11 @@
 import { ImageResponse } from "next/og";
 import { createPublicClient, http } from "viem";
 import { celo } from "viem/chains";
+import sharp from "sharp";
 import { victoryAbi } from "@/lib/contracts/victory";
 import { clampMoves, clampTime, formatPlayer, truncateId } from "@/lib/og/og-utils";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 const W = 1200;
 const H = 630;
@@ -118,7 +119,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
   const bgUrl = new URL(BG_PATH, req.url).toString();
 
-  return new ImageResponse(
+  const pngResponse = new ImageResponse(
     (
       <div
         style={{
@@ -236,7 +237,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     {
       width: W,
       height: H,
-      headers: SUCCESS_HEADERS,
       ...(cinzelData ? {
         fonts: [{
           name: "Cinzel",
@@ -247,4 +247,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       } : {}),
     },
   );
+
+  // Convert Satori's uncompressed PNG (~1.3MB) to JPEG (~50-80KB)
+  const pngBuffer = Buffer.from(await pngResponse.arrayBuffer());
+  const jpegBuffer = await sharp(pngBuffer).jpeg({ quality: 80 }).toBuffer();
+
+  return new Response(new Uint8Array(jpegBuffer), {
+    headers: {
+      "Content-Type": "image/jpeg",
+      ...SUCCESS_HEADERS,
+    },
+  });
 }
