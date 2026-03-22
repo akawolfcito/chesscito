@@ -16,7 +16,6 @@ import { DifficultySelector } from "@/components/arena/difficulty-selector";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData } from "@/components/arena/arena-end-state";
-import { Flag } from "lucide-react";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { formatTime } from "@/lib/game/arena-utils";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
@@ -293,6 +292,8 @@ export default function ArenaPage() {
           difficulty={game.difficulty}
           isThinking={game.isThinking}
           onBack={game.reset}
+          onResign={game.resign}
+          isEndState={isEndState}
         />
 
         <div className="relative w-full">
@@ -324,18 +325,6 @@ export default function ArenaPage() {
           </div>
         )}
 
-        {/* Actions bar */}
-        {!isEndState && !game.errorMessage && (
-          <div className="flex items-center justify-center px-4 py-3">
-            <button
-              type="button"
-              onClick={game.resign}
-              className="rounded-2xl border border-white/8 bg-white/5 px-8 py-2.5 text-sm font-semibold text-white/50 backdrop-blur-sm transition-all hover:bg-white/10 hover:text-white/70 active:scale-95"
-            >
-              <Flag size={14} className="inline -mt-0.5" /> {ARENA_COPY.resign}
-            </button>
-          </div>
-        )}
       </div>
 
       {isEndState && (
