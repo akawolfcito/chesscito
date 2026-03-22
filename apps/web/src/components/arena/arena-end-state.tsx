@@ -2,6 +2,7 @@
 
 import { RotateCcw } from "lucide-react";
 import { ARENA_COPY } from "@/lib/content/editorial";
+import { Button } from "@/components/ui/button";
 import type { ArenaStatus } from "@/lib/game/types";
 import { VictoryCelebration } from "./victory-celebration";
 import { VictoryClaiming } from "./victory-claiming";
@@ -128,20 +129,23 @@ export function ArenaEndState({
           {text}
         </h2>
         <div className="flex gap-3">
-          <button
+          <Button
             type="button"
+            variant="game-primary"
+            size="game"
             onClick={onPlayAgain}
-            className="rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-400 px-6 py-2.5 font-semibold text-white shadow-[0_0_16px_rgba(34,211,238,0.3)] transition-all hover:shadow-[0_0_24px_rgba(34,211,238,0.5)] active:scale-95"
+            className="shadow-[0_0_16px_rgba(34,211,238,0.3)] hover:shadow-[0_0_24px_rgba(34,211,238,0.5)]"
           >
             <RotateCcw size={16} className="inline -mt-0.5" /> {ARENA_COPY.playAgain}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="game-ghost"
+            size="game-sm"
             onClick={onBackToHub}
-            className="rounded-2xl border border-white/10 bg-white/5 px-6 py-2.5 font-semibold text-white/70 transition-all hover:bg-white/10 active:scale-95"
           >
             {ARENA_COPY.backToHub}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { ArrowLeft, Play } from "lucide-react";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import type { ArenaDifficulty } from "@/lib/game/types";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   selected: ArenaDifficulty;
@@ -54,13 +55,15 @@ export function DifficultySelector({ selected, onSelect, onStart, onBack }: Prop
           ))}
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="game-primary"
+          size="game"
           onClick={onStart}
-          className="w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-400 py-3.5 font-bold text-white shadow-[0_0_24px_rgba(34,211,238,0.25)] transition-all hover:shadow-[0_0_32px_rgba(34,211,238,0.4)] active:scale-[0.97]"
+          className="shadow-[0_0_24px_rgba(34,211,238,0.25)] hover:shadow-[0_0_32px_rgba(34,211,238,0.4)]"
         >
           <Play size={18} className="inline -mt-0.5" fill="currentColor" /> {ARENA_COPY.startMatch}
-        </button>
+        </Button>
       </div>
 
       <button

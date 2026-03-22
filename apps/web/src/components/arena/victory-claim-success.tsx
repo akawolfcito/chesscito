@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { RotateCcw, Share2, Users, Link2, Trophy } from "lucide-react";
 import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
+import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { StatCard } from "@/components/arena/stat-card";
 import { formatTime } from "@/lib/game/arena-utils";
@@ -168,22 +169,26 @@ export function VictoryClaimSuccess({
           </Link>
 
           {/* Play Again */}
-          <button
+          <Button
             type="button"
+            variant="game-primary"
+            size="game-sm"
             onClick={onPlayAgain}
-            className="w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-400 py-2.5 text-sm font-bold text-white shadow-[0_0_12px_rgba(20,184,166,0.2)] transition-all hover:shadow-[0_0_20px_rgba(20,184,166,0.35)] active:scale-[0.97]"
+            className="shadow-[0_0_12px_rgba(20,184,166,0.2)] hover:shadow-[0_0_20px_rgba(20,184,166,0.35)]"
           >
             <RotateCcw size={16} className="inline -mt-0.5" /> {ARENA_COPY.playAgain}
-          </button>
+          </Button>
 
           {/* Back to Hub */}
-          <button
+          <Button
             type="button"
+            variant="game-text"
+            size="game-sm"
             onClick={onBackToHub}
-            className="w-full py-2 text-center text-xs font-medium text-white/30 transition-all hover:text-white/50 active:scale-[0.97]"
+            className="text-xs"
           >
             {ARENA_COPY.backToHub}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
