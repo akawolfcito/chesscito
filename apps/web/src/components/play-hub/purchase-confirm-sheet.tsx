@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { formatUsd } from "@/lib/contracts/tokens";
-import { PURCHASE_CONFIRM_COPY, SHOP_SHEET_COPY } from "@/lib/content/editorial";
+import { PURCHASE_CONFIRM_COPY, PURCHASE_FIELD_LABELS, CHAIN_NAMES, SHOP_SHEET_COPY } from "@/lib/content/editorial";
 
 type SelectedItem = {
   label: string;
@@ -46,27 +46,24 @@ export function PurchaseConfirmSheet({
         {selectedItem ? (
           <div className="mission-soft rune-frame mt-4 space-y-2 rounded-2xl p-3 text-sm text-slate-200">
             <p>
-              Label: <span className="font-semibold text-slate-100">{selectedItem.label}</span>
+              {PURCHASE_FIELD_LABELS.item}: <span className="font-semibold text-slate-100">{selectedItem.label}</span>
             </p>
             <p>
-              Price: <span className="font-semibold text-slate-100">{formatUsd(selectedItem.onChainPrice)}</span>
+              {PURCHASE_FIELD_LABELS.price}: <span className="font-semibold text-slate-100">{formatUsd(selectedItem.onChainPrice)}</span>
             </p>
             {paymentTokenSymbol ? (
               <p>
-                Paying with: <span className="font-semibold text-slate-100">{paymentTokenSymbol}</span>
+                {PURCHASE_FIELD_LABELS.payingWith}: <span className="font-semibold text-slate-100">{paymentTokenSymbol}</span>
               </p>
             ) : null}
             <p>
-              Status:{" "}
+              {PURCHASE_FIELD_LABELS.status}:{" "}
               <span className="font-semibold text-slate-100">
                 {selectedItem.configured ? (selectedItem.enabled ? SHOP_SHEET_COPY.status.available : SHOP_SHEET_COPY.status.unavailable) : SHOP_SHEET_COPY.status.notConfigured}
               </span>
             </p>
             <p>
-              Network: <span className="font-semibold text-slate-100">{chainId ?? "n/a"}</span>
-            </p>
-            <p>
-              Shop: <span className="break-all font-mono text-xs">{shopAddress ?? "missing"}</span>
+              {PURCHASE_FIELD_LABELS.network}: <span className="font-semibold text-slate-100">{chainId ? (CHAIN_NAMES[chainId] ?? `Chain ${chainId}`) : "—"}</span>
             </p>
             <p className="rounded-xl border border-amber-400/45 bg-amber-900/30 px-3 py-2 text-xs text-amber-100">
               {PURCHASE_CONFIRM_COPY.miniPayWarning}
