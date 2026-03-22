@@ -274,6 +274,7 @@ export default function ArenaPage() {
           selected={game.difficulty}
           onSelect={game.setDifficulty}
           onStart={game.startGame}
+          onBack={handleBackToHub}
         />
         {game.errorMessage && (
           <div className="mx-6 mt-2 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-2.5 text-center text-sm text-rose-300">
