@@ -12,6 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { BADGE_SHEET_COPY, PIECE_LABELS } from "@/lib/content/editorial";
+import { Button } from "@/components/ui/button";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 
@@ -109,14 +110,15 @@ function BadgeCard({
             <Check className="h-3.5 w-3.5" aria-hidden="true" /> {BADGE_SHEET_COPY.owned}
           </span>
         ) : isClaimable ? (
-          <button
+          <Button
             type="button"
+            variant="game-solid"
             onClick={onClaim}
             disabled={isClaimBusy}
-            className="rounded-xl bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-50"
+            className="rounded-xl px-3 py-1.5 text-xs"
           >
             {isClaimBusy ? BADGE_SHEET_COPY.claiming : BADGE_SHEET_COPY.claimBadge}
-          </button>
+          </Button>
         ) : null}
       </div>
     </div>

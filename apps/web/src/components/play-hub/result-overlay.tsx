@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { BADGE_EARNED_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
+import { Button } from "@/components/ui/button";
 
 type PieceKey = "rook" | "bishop" | "knight";
 type SuccessVariant = "badge" | "score" | "shop";
@@ -209,27 +210,37 @@ export function ResultOverlay({
           ) : null}
 
           {isError && onRetry ? (
-            <button
+            <Button
               type="button"
+              variant="game-solid"
+              size="game"
               onClick={onRetry}
-              className="w-full rounded-xl bg-cyan-600 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500"
             >
               {RESULT_OVERLAY_COPY.cta.tryAgain}
-            </button>
+            </Button>
           ) : null}
 
-          <button
-            type="button"
-            autoFocus={!(isError && onRetry)}
-            onClick={onDismiss}
-            className={
-              isError && onRetry
-                ? "w-full py-2 text-sm text-cyan-100/60 transition hover:text-cyan-100"
-                : "w-full rounded-xl bg-cyan-600 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500"
-            }
-          >
-            {isError ? RESULT_OVERLAY_COPY.cta.dismiss : RESULT_OVERLAY_COPY.cta.continue}
-          </button>
+          {isError && onRetry ? (
+            <Button
+              type="button"
+              variant="game-text"
+              size="game-sm"
+              autoFocus={false}
+              onClick={onDismiss}
+            >
+              {RESULT_OVERLAY_COPY.cta.dismiss}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="game-solid"
+              size="game"
+              autoFocus={!(isError && onRetry)}
+              onClick={onDismiss}
+            >
+              {RESULT_OVERLAY_COPY.cta.continue}
+            </Button>
+          )}
         </div>
 
         {/* Branding footer (success only) */}
@@ -276,29 +287,33 @@ export function BadgeEarnedPrompt({
         <h2 id="badge-earned-title" className="fantasy-title text-2xl text-cyan-50">{title}</h2>
 
         <div className="mt-2 flex w-full flex-col gap-2">
-          <button
+          <Button
             type="button"
+            variant="game-solid"
+            size="game"
             autoFocus
             onClick={onClaimBadge}
-            className="w-full rounded-xl bg-cyan-600 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500"
           >
             {BADGE_EARNED_COPY.claimBadge}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="game-solid"
+            size="game"
             onClick={onSubmitScore}
-            className="w-full rounded-xl bg-cyan-600/60 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500"
+            className="bg-cyan-600/60 hover:bg-cyan-500"
           >
             {BADGE_EARNED_COPY.submitScore}
-          </button>
+          </Button>
           <ShareButton variant="badge" pieceType={pieceType} totalStars={totalStars} />
-          <button
+          <Button
             type="button"
+            variant="game-text"
+            size="game-sm"
             onClick={onLater}
-            className="w-full py-2 text-sm text-cyan-100/60 transition hover:text-cyan-100"
           >
             {BADGE_EARNED_COPY.later}
-          </button>
+          </Button>
         </div>
 
         <div className="mt-4 flex flex-col items-center gap-0.5">

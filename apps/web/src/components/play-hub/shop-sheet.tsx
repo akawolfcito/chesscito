@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { formatUnits } from "viem";
 import { SHOP_SHEET_COPY } from "@/lib/content/editorial";
+import { Button } from "@/components/ui/button";
 
 type CatalogItem = {
   itemId: bigint;
@@ -64,14 +65,16 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
                   <><CircleDashed className="h-3 w-3 text-slate-500" /><span className="text-slate-500">{SHOP_SHEET_COPY.status.unavailable}</span></>
                 )}
               </p>
-              <button
+              <Button
                 type="button"
-                className="mt-3 w-full rounded-xl bg-cyan-600 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-40"
+                variant="game-solid"
+                size="game"
+                className="mt-3"
                 disabled={!item.configured || !item.enabled}
                 onClick={() => onSelectItem(item.itemId)}
               >
                 {SHOP_SHEET_COPY.buyButton}
-              </button>
+              </Button>
             </div>
           ))}
         </div>

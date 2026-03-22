@@ -1,6 +1,7 @@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { PURCHASE_CONFIRM_COPY, PURCHASE_FIELD_LABELS, CHAIN_NAMES, SHOP_SHEET_COPY } from "@/lib/content/editorial";
+import { Button } from "@/components/ui/button";
 
 type SelectedItem = {
   label: string;
@@ -68,9 +69,11 @@ export function PurchaseConfirmSheet({
             <p className="rounded-xl border border-amber-400/45 bg-amber-900/30 px-3 py-2 text-xs text-amber-100">
               {PURCHASE_CONFIRM_COPY.miniPayWarning}
             </p>
-            <button
+            <Button
               type="button"
-              className="mt-2 w-full rounded-xl bg-cyan-600 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-40"
+              variant="game-solid"
+              size="game"
+              className="mt-2"
               disabled={
                 isWriting ||
                 purchasePhase !== "idle" ||
@@ -88,7 +91,7 @@ export function PurchaseConfirmSheet({
                 : purchasePhase === "buying"
                   ? PURCHASE_CONFIRM_COPY.buying
                   : PURCHASE_CONFIRM_COPY.confirmButton}
-            </button>
+            </Button>
           </div>
         ) : null}
       </SheetContent>

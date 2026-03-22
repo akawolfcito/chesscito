@@ -5,6 +5,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { ARENA_COPY, MISSION_BRIEFING_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
+import { Button } from "@/components/ui/button";
 
 type MissionBriefingProps = {
   pieceType: PieceId;
@@ -69,14 +70,16 @@ export function MissionBriefing({
         <p className="mt-1.5 text-center text-[11px] text-cyan-100/45">
           {hint}
         </p>
-        <button
+        <Button
           type="button"
+          variant="game-primary"
+          size="game"
           autoFocus
           onClick={handleDismiss}
-          className="mt-5 w-full rounded-2xl bg-gradient-to-r from-cyan-600 to-cyan-500 py-3 text-sm font-bold tracking-wide text-white shadow-[0_0_20px_rgba(6,182,212,0.4)] transition active:scale-95"
+          className="mt-5 rounded-2xl from-cyan-600 to-cyan-500 font-bold tracking-wide shadow-[0_0_20px_rgba(6,182,212,0.4)] active:scale-95"
         >
           {MISSION_BRIEFING_COPY.play}
-        </button>
+        </Button>
         <Link
           href="/arena"
           className="mt-3 block text-center text-[11px] text-cyan-300/50 underline underline-offset-4 transition-colors hover:text-cyan-200/70"
