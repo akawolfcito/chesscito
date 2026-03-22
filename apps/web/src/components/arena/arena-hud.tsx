@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, Brain, Flag } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Brain, Check, Flag } from "lucide-react";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import type { ArenaDifficulty } from "@/lib/game/types";
 
@@ -18,7 +19,31 @@ const DOT_COLOR: Record<ArenaDifficulty, string> = {
   hard: "bg-rose-400",
 };
 
+const CONFIRM_TIMEOUT_MS = 3000;
+
 export function ArenaHud({ difficulty, isThinking, onBack, onResign, isEndState }: Props) {
+  const [confirmingResign, setConfirmingResign] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  function handleResignClick() {
+    if (!onResign) return;
+
+    if (confirmingResign) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setConfirmingResign(false);
+      onResign();
+    } else {
+      setConfirmingResign(true);
+      timerRef.current = setTimeout(() => setConfirmingResign(false), CONFIRM_TIMEOUT_MS);
+    }
+  }
+
   return (
     <div className="hud-bar mx-2 mt-2 flex items-center justify-between">
       <button
@@ -47,11 +72,23 @@ export function ArenaHud({ difficulty, isThinking, onBack, onResign, isEndState 
         {onResign && !isEndState && (
           <button
             type="button"
-            onClick={onResign}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/35 transition-colors hover:text-rose-400"
+            onClick={handleResignClick}
+            className={[
+              "flex h-8 shrink-0 items-center justify-center rounded-full border transition-all",
+              confirmingResign
+                ? "w-auto gap-1.5 border-rose-400/40 bg-rose-500/15 px-3 text-rose-400 animate-pulse"
+                : "w-8 border-white/10 bg-white/5 text-white/35 hover:text-rose-400",
+            ].join(" ")}
             aria-label={ARENA_COPY.resign}
           >
-            <Flag className="h-3.5 w-3.5" />
+            {confirmingResign ? (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                <span className="text-[0.65rem] font-semibold">{ARENA_COPY.resign}</span>
+              </>
+            ) : (
+              <Flag className="h-3.5 w-3.5" />
+            )}
           </button>
         )}
       </div>
