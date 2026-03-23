@@ -133,22 +133,34 @@ export function VictoryClaimSuccess({
             <Share2 size={16} className="inline -mt-0.5" /> {VICTORY_CLAIM_COPY.shareCard}
           </button>
 
-          {/* Secondary row: Challenge + Copy Link */}
+          {/* Secondary row: icon-only share buttons (X, WhatsApp, Copy) */}
           {isShareReady && (
-            <div className="flex w-full gap-1.5">
-              <button
-                type="button"
-                onClick={() => void handleChallengeFriend()}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-amber-400/15 bg-amber-500/[0.06] px-2 py-2 text-[0.6rem] font-semibold text-amber-300/70 transition-all hover:bg-amber-500/[0.12] active:scale-95"
+            <div className="flex w-full items-center justify-center gap-3">
+              <a
+                href={`https://x.com/intent/tweet?text=${encodeURIComponent(challengeText)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Share on X"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-cyan-100/70 transition-all hover:bg-white/[0.1] active:scale-90"
               >
-                <Users size={12} /> {VICTORY_CLAIM_COPY.challengeFriend}
-              </button>
+                <span className="text-base font-bold leading-none">{"\ud835\udd4f"}</span>
+              </a>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(challengeText)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Share on WhatsApp"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-cyan-100/70 transition-all hover:bg-white/[0.1] active:scale-90"
+              >
+                <Users size={18} />
+              </a>
               <button
                 type="button"
                 onClick={() => void handleCopyLink()}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-2 py-2 text-[0.6rem] font-semibold text-cyan-100/60 transition-all hover:bg-white/[0.08] active:scale-95"
+                aria-label="Copy link"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-cyan-100/70 transition-all hover:bg-white/[0.1] active:scale-90"
               >
-                <Link2 size={12} /> {VICTORY_CLAIM_COPY.copyLink}
+                <Link2 size={18} />
               </button>
             </div>
           )}
