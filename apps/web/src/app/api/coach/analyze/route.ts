@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { validateGameRecord } from "@/lib/coach/validate-game";
 import { normalizeCoachResponse } from "@/lib/coach/normalize";
 import { buildCoachPrompt } from "@/lib/coach/prompt-template";
@@ -9,13 +9,14 @@ import type { GameRecord, CoachAnalysisRecord, PlayerSummary } from "@/lib/coach
 
 const redis = Redis.fromEnv();
 
-const MODEL = process.env.COACH_LLM_MODEL ?? "claude-haiku-4-5-20251001";
+const MODEL = process.env.COACH_LLM_MODEL ?? "gpt-4o-mini";
+const BASE_URL = process.env.COACH_LLM_BASE_URL ?? "https://api.openai.com/v1";
 const MAX_OUTPUT_TOKENS = 1500;
 const LLM_TIMEOUT_MS = 45_000;
 const ANALYSIS_VERSION = "1.0.0";
 
-const anthropic = process.env.ANTHROPIC_API_KEY
-  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const llm = process.env.COACH_LLM_API_KEY
+  ? new OpenAI({ apiKey: process.env.COACH_LLM_API_KEY, baseURL: BASE_URL })
   : null;
 
 export async function POST(req: Request) {
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
     }
 
     // --- Check LLM availability ---
-    if (!anthropic) {
+    if (!llm) {
       return NextResponse.json({ error: "Coach is not configured" }, { status: 503 });
     }
 
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
 
-      const message = await anthropic.messages.create(
+      const completion = await llm.chat.completions.create(
         {
           model: MODEL,
           max_tokens: MAX_OUTPUT_TOKENS,
@@ -105,7 +106,7 @@ export async function POST(req: Request) {
 
       clearTimeout(timeout);
 
-      const text = message.content[0].type === "text" ? message.content[0].text : "";
+      const text = completion.choices[0]?.message?.content ?? "";
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error("No JSON found in LLM response");
