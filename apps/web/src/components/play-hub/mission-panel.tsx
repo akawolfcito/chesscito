@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Star, Timer, Crosshair } from "lucide-react";
-import { PHASE_FLASH_COPY, PRACTICE_COPY } from "@/lib/content/editorial";
+import { PHASE_FLASH_COPY, PIECE_ICONS, PRACTICE_COPY } from "@/lib/content/editorial";
 
 type PieceOption = {
   key: "rook" | "bishop" | "knight";
@@ -117,7 +117,7 @@ export function MissionPanel({
                   : "text-cyan-200/50"
               }`}
             >
-              {piece.label}
+              {PIECE_ICONS[piece.key as keyof typeof PIECE_ICONS]}{" "}{piece.label}
               {selectedPiece === piece.key ? (
                 <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(103,232,249,0.6)]" />
               ) : null}
