@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GraduationCap } from "lucide-react";
 import { COACH_COPY } from "@/lib/content/editorial";
 import type { CoachResponse } from "@/lib/coach/types";
@@ -13,6 +13,11 @@ type Props = {
 
 export function CoachLoading({ jobId, onReady, onFailed }: Props) {
   const [dots, setDots] = useState(".");
+  const onReadyRef = useRef(onReady);
+  const onFailedRef = useRef(onFailed);
+
+  onReadyRef.current = onReady;
+  onFailedRef.current = onFailed;
 
   useEffect(() => {
     const dotInterval = setInterval(() => {
@@ -26,10 +31,10 @@ export function CoachLoading({ jobId, onReady, onFailed }: Props) {
         const data = await res.json();
         if (data.status === "ready") {
           clearInterval(pollInterval);
-          onReady(data.response);
+          onReadyRef.current(data.response);
         } else if (data.status === "failed") {
           clearInterval(pollInterval);
-          onFailed(data.reason ?? "Unknown error");
+          onFailedRef.current(data.reason ?? "Unknown error");
         }
       } catch { /* retry on next poll */ }
     }, 3000);
@@ -38,7 +43,7 @@ export function CoachLoading({ jobId, onReady, onFailed }: Props) {
       clearInterval(dotInterval);
       clearInterval(pollInterval);
     };
-  }, [jobId, onReady, onFailed]);
+  }, [jobId]);
 
   return (
     <div className="flex flex-col items-center gap-4 px-6 py-12">
