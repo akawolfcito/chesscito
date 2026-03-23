@@ -428,4 +428,5 @@ export const COACH_COPY = {
   welcomePackDetail: "Key moments · Lessons · Praise",
   claimFree: "Claim Free Analyses",
   welcomeNote: "After your free analyses, credit packs start at $0.05",
+  creditComingSoon: "Credit packs coming soon!",
 } as const;
