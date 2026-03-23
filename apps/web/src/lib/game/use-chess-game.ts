@@ -25,6 +25,7 @@ export type ChessGameState = {
   pendingPromotion: { from: string; to: string } | null;
   difficulty: ArenaDifficulty;
   moveCount: number;
+  moveHistory: string[];
   elapsedMs: number;
   errorMessage: string | null;
   selectSquare: (square: string) => void;
@@ -46,6 +47,7 @@ export function useChessGame(): ChessGameState {
   const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [moveCount, setMoveCount] = useState(0);
+  const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [elapsedMs, setElapsedMs] = useState(0);
   const gameStartRef = useRef<number>(0);
 
@@ -109,6 +111,7 @@ export function useChessGame(): ChessGameState {
         setFen(game.fen());
         setLastMove({ from, to });
         setMoveCount(c => c + 1);
+        setMoveHistory(game.history());
         setIsThinking(false);
 
         if (game.isCheckmate()) setStatus("checkmate");
@@ -153,6 +156,7 @@ export function useChessGame(): ChessGameState {
         setFen(game.fen());
         setLastMove({ from: selectedSquare, to: square });
         setMoveCount(c => c + 1);
+        setMoveHistory(game.history());
         setSelectedSquare(null);
         setLegalMoves([]);
 
@@ -181,6 +185,7 @@ export function useChessGame(): ChessGameState {
       setFen(game.fen());
       setLastMove({ from: pendingPromotion.from, to: pendingPromotion.to });
       setMoveCount(c => c + 1);
+      setMoveHistory(game.history());
       setPendingPromotion(null);
       setSelectedSquare(null);
       setLegalMoves([]);
@@ -216,6 +221,7 @@ export function useChessGame(): ChessGameState {
     setIsThinking(false);
     setErrorMessage(null);
     setMoveCount(0);
+    setMoveHistory([]);
     setElapsedMs(0);
     gameStartRef.current = 0;
     setStatus("selecting");
@@ -235,6 +241,7 @@ export function useChessGame(): ChessGameState {
     setPendingPromotion(null);
     setErrorMessage(null);
     setMoveCount(0);
+    setMoveHistory([]);
     setElapsedMs(0);
     gameStartRef.current = Date.now();
     setStatus("playing");
@@ -252,6 +259,7 @@ export function useChessGame(): ChessGameState {
     pendingPromotion,
     difficulty,
     moveCount,
+    moveHistory,
     elapsedMs,
     errorMessage,
     selectSquare,
