@@ -29,7 +29,7 @@ Players should feel rewarded because they understand their mistakes, improve fas
 ### Access model
 
 1. **Server-paid analysis** — user pays a micro-fee through MiniPay via a credit system. 1 credit = 1 full AI analysis.
-2. **Rule-based fallback** — no wallet or no credits required. Basic pattern-based guidance as acquisition funnel and degraded mode.
+2. **Heuristic review (fallback)** — no wallet or no credits required. Lightweight rule-based review using game metrics (move count, result, difficulty, game length). Does not perform deep analysis or engine-level evaluation — serves as acquisition funnel and graceful degraded mode.
 
 ### Important positioning
 
@@ -61,20 +61,24 @@ User taps "Ask the Coach"
       |   POST /api/coach/analyze
       |   { gameId, walletAddress }
       |     |
-      |     +-- Verify credit balance on-chain
-      |     +-- Validate game record server-side (legal moves via chess.js)
+      |     +-- Check idempotency: existing result for wallet+gameId? return it
+      |     +-- Check idempotency: pending job for wallet+gameId? return jobId
+      |     +-- Verify off-chain credit balance (derived from on-chain purchases)
+      |     +-- Validate game record server-side (replay moves via chess.js)
+      |     +-- Recompute result server-side (verify client claim)
       |     +-- Build prompt (server-side template, no user-controlled text)
-      |     +-- Call LLM (server-side, budget-capped)
+      |     +-- Call LLM (server-side, budget-capped, single model)
       |     +-- Validate response (Zod schema)
       |     +-- Normalize -> CoachResponse
       |     +-- Store analysis record server-side
+      |     +-- Decrement credit (only on success)
       |     +-- Return to client
       |
       +-- No wallet / no credits? --> Fallback Mode
             |
             v
-          Rule-based engine (runs client-side, no LLM)
-          Detects: blunders, piece loss, move count, game length
+          Heuristic/rule-based review engine (runs client-side, no LLM)
+          Analyzes: move count, game length, result, difficulty
           Returns: BasicCoachResponse (subset of CoachResponse)
       |
       v
@@ -90,7 +94,7 @@ Post-Game Coach UI renders response
 apps/web/src/
 +-- lib/coach/
 |   +-- types.ts              # GameRecord, CoachResponse, BasicCoachResponse
-|   +-- fallback-engine.ts    # Rule-based analysis (client-side, no LLM)
+|   +-- fallback-engine.ts    # Heuristic review (client-side, no LLM, no engine eval)
 |   +-- normalize.ts          # Zod validation + safe defaults
 |   +-- badge-evaluator.ts    # Objective metrics -> badge progress
 |
@@ -98,12 +102,13 @@ apps/web/src/
 |   +-- games/route.ts        # POST: save game record (wallet-keyed)
 |   |                         # GET: retrieve game history
 |   +-- coach/
-|   |   +-- analyze/route.ts  # POST: paid LLM analysis
-|   |                         #   1. verify credit balance
-|   |                         #   2. validate game
-|   |                         #   3. call LLM
-|   |                         #   4. validate+normalize response
-|   |                         #   5. store + return
+|   |   +-- analyze/route.ts  # POST: paid LLM analysis (idempotent per wallet+gameId)
+|   |                         #   1. idempotency check
+|   |                         #   2. verify off-chain credit balance
+|   |                         #   3. validate + recompute game
+|   |                         #   4. call LLM (budget-capped)
+|   |                         #   5. validate+normalize response
+|   |                         #   6. store + decrement credit + return
 |   +-- coach/
 |       +-- history/route.ts  # GET: past analyses for wallet
 |       +-- job/[id]/route.ts # GET: poll async job status
@@ -163,14 +168,22 @@ If the LLM returns invalid data, Zod rejects. The client receives a friendly err
  * The server validates moves by replaying them with chess.js.
  */
 
+/**
+ * Trust boundaries:
+ *   moves:      client input, validated server-side by replaying with chess.js
+ *   result:     client claim, recomputed server-side from final position
+ *   totalMoves: derived server-side from moves.length (client value ignored)
+ *   timestamp:  client timestamp for display; server adds receivedAt on save
+ */
 type GameRecord = {
   gameId: string;             // crypto.randomUUID()
   moves: string[];            // SAN: ["e4", "e5", "Nf3", "Nc6", ...]
-  result: GameResult;
+  result: GameResult;         // client claim — server recomputes
   difficulty: "easy" | "medium" | "hard";
-  totalMoves: number;
+  totalMoves: number;         // derived server-side from moves.length
   elapsedMs: number;
-  timestamp: number;
+  timestamp: number;          // client-side timestamp
+  receivedAt?: number;        // server-side timestamp, added on POST /api/games
 };
 
 /**
@@ -252,22 +265,30 @@ Server listens for ShopPurchase event (same pattern as existing shop items)
 Server increments credit balance in Upstash: credits:{wallet} += N
 ```
 
-**Consumption flow (off-chain):**
+**Consumption flow (off-chain, idempotent):**
 
 ```
 POST /api/coach/analyze { gameId, walletAddress }
       |
       v
-Server reads credits:{wallet} from Upstash
+Idempotency check (wallet + gameId)
+      |
+      +-- Result already exists? -> return existing result (no credit consumed)
+      +-- Pending job exists? -> return existing jobId (no new job)
+      |
+      v
+Server reads credits:{wallet} from Upstash (off-chain balance)
       |
       +-- credits > 0 AND no pending job for this wallet:
       |     1. Create job (status: pending)
-      |     2. Call LLM
+      |     2. Call LLM (timeout: 45s, max_tokens: 1500)
       |     3. On success: decrement credits:{wallet}, store result, mark job ready
       |     4. On failure: mark job failed, do NOT decrement credits
       |
       +-- credits == 0 -> return 402, client shows paywall
 ```
+
+Never more than 1 credit consumed per wallet + gameId, regardless of retries or re-requests.
 
 **Why this approach:**
 - No new contract needed — reuses ShopUpgradeable (proven, audited)
@@ -279,26 +300,11 @@ Server reads credits:{wallet} from Upstash
 
 ### Badge progression — 100% objective, 0% LLM
 
-```typescript
-type BadgeCriteria = {
-  area: string;
-  metric: string;
-  threshold: number;
-  windowSize: number;
-};
-
-const BADGE_DEFINITIONS: BadgeCriteria[] = [
-  { area: "tactics",     metric: "win_rate_hard",       threshold: 0.4, windowSize: 10 },
-  { area: "efficiency",  metric: "avg_moves_to_win",    threshold: 25,  windowSize: 10 },
-  { area: "consistency", metric: "win_streak",          threshold: 5,   windowSize: 20 },
-  { area: "endgame",     metric: "win_rate_long_games", threshold: 0.5, windowSize: 10 },
-];
-```
-
 - Computed server-side from GameRecord[]
 - No LLM intervention
 - Deterministic, reproducible, not manipulable
 - The coach can explain why you earned/missed a badge, but cannot grant it
+- Anti-farming guardrails prevent grinding easy games for badges (see Badge guardrails section below)
 
 ### Storage strategy
 
@@ -352,6 +358,82 @@ Client polls GET /api/coach/job/{jobId} every 3s
 ```
 
 If the WebView suspends, the job keeps running. The client stores the jobId in localStorage and checks on re-entry.
+
+### Idempotency rules
+
+One analysis per wallet + gameId. The server enforces this at the analyze endpoint:
+
+1. If an analysis result already exists for this wallet + gameId: return the existing result immediately. No credit consumed.
+2. If a pending job already exists for this wallet + gameId: return the existing jobId. No new job created.
+3. If neither exists: create a new job (if credits > 0).
+
+This means a user can never be charged twice for the same game, and re-requesting an analysis is always safe.
+
+### Job lifecycle
+
+| State | TTL | Behavior |
+|-------|-----|----------|
+| pending | 60 seconds | If the LLM hasn't responded within 60s, the job transitions to failed. |
+| ready | 30 days | Results are retained for 30 days. After that, cleaned up by a scheduled job. |
+| failed | 24 hours | Failed jobs are retained briefly for debugging, then cleaned up. |
+
+- **Timeout handling**: The server sets a 45-second timeout on the LLM call. If exceeded, the job is marked failed with reason "Analysis timed out". No credit is consumed.
+- **Cleanup**: A lightweight cron or on-read expiry in Upstash TTL handles expired jobs. No separate cleanup service needed for v1.
+- **Rate limit**: 1 pending job per wallet at a time. Additional requests return 429.
+
+### LLM operational limits (v1)
+
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| Model | Single model, chosen at deploy time (e.g., claude-haiku-4-5-20251001) | Simplicity. One model = predictable cost and quality. |
+| Request timeout | 45 seconds | Generous for a chess analysis. Covers slow responses without blocking indefinitely. |
+| Max input tokens | ~2000 (prompt template + moves + summary) | A 40-move game in SAN is ~200 tokens. Template + summary adds ~1500. Leaves headroom. |
+| Max output tokens | 1500 | Enough for summary + 5 mistakes + 5 lessons + 3 praises in JSON. |
+| Retries | 0 in v1 | On failure, mark job as failed. User can retry manually. Avoids compounding costs. |
+| Spend ceiling | Set on the API key (provider dashboard) | Hard cap to prevent runaway costs. |
+
+### Editorial tone by result
+
+The LLM prompt template adjusts section emphasis based on game result:
+
+| Result | Summary focus | KEY MOMENTS focus | WHAT YOU DID WELL focus | TAKEAWAYS focus |
+|--------|--------------|-------------------|------------------------|-----------------|
+| **win** | Strengths shown | Missed improvements — moments where a stronger opponent would have punished | Specific strong decisions | How to win more efficiently or at higher difficulty |
+| **lose** | What went wrong (encouraging tone) | Critical mistakes that turned the game | Defensive moves or good attempts | Concrete skills to practice |
+| **draw** | Why the game didn't resolve | Moments where either side could have pressed advantage | Solid defensive play | How to convert drawn positions |
+| **resigned** | The turning point | The position that felt lost + a safer continuation | Moves before the collapse | Pattern recognition for similar positions |
+
+This is encoded in the prompt template, not in the UI. The UI renders whatever the LLM returns — but the prompt steers the tone.
+
+### Badge guardrails
+
+To prevent farming on easy difficulty:
+
+```typescript
+const BADGE_DEFINITIONS: BadgeCriteria[] = [
+  // "tactics" — requires hard difficulty games
+  { area: "tactics",     metric: "win_rate_hard",       threshold: 0.4, windowSize: 10,
+    minDifficulty: "hard" },
+
+  // "efficiency" — requires medium+ difficulty
+  { area: "efficiency",  metric: "avg_moves_to_win",    threshold: 25,  windowSize: 10,
+    minDifficulty: "medium" },
+
+  // "consistency" — requires diversity: at least 2 different difficulties in window
+  { area: "consistency", metric: "win_streak",          threshold: 5,   windowSize: 20,
+    minDiverseDifficulties: 2 },
+
+  // "endgame" — requires medium+ difficulty, long games only
+  { area: "endgame",     metric: "win_rate_long_games", threshold: 0.5, windowSize: 10,
+    minDifficulty: "medium" },
+];
+```
+
+Rules:
+- `minDifficulty`: only games at this difficulty or higher count toward the badge.
+- `minDiverseDifficulties`: the evaluation window must contain games from at least N different difficulties.
+- A player grinding only easy games cannot earn any skill badge.
+- Badge evaluator filters the game window before computing metrics.
 
 ---
 
@@ -446,7 +528,7 @@ Bottom sheet (same mechanic as existing Shop). Reuses purchase-confirm-sheet flo
 
 **Goal:** Show progress while the server processes the LLM analysis. Handle WebView suspension gracefully.
 
-**Entry condition:** Analysis job started (credit burned server-side, job ID received).
+**Entry condition:** Analysis job started (job ID received, credit will be consumed on success).
 
 **UI structure:**
 
@@ -459,9 +541,6 @@ Bottom sheet (same mechanic as existing Shop). Reuses purchase-confirm-sheet flo
 |                             |
 |   [progress bar]            |
 |   Reviewing your moves      |
-|                             |
-|   This usually takes        |
-|   10-15 seconds             |
 |                             |
 |   You can leave -- we'll    |
 |   keep your result ready    |
@@ -656,7 +735,7 @@ Same layout skeleton as Screen 4 but simpler, rule-based content:
 |  YOUR PROGRESS              |
 |                             |
 |  Games analyzed: 8          |
-|  Most improved: Defense     |
+|  Highest difficulty: Hard   |
 |  Current streak: 3 wins     |
 |                             |
 +-----------------------------+
@@ -672,9 +751,9 @@ Same layout skeleton as Screen 4 but simpler, rule-based content:
 | Result + context | GameRecord | "Win - Hard - 18 moves" |
 
 **Progress summary block** (bottom of list):
-Computed server-side from GameRecord[] using objective badge metrics:
+Computed server-side from GameRecord[] using objective metrics:
 - Games analyzed (total count)
-- Most improved area (area with most positive trend in recent window)
+- Highest difficulty played (factual, not interpretive)
 - Current streak (consecutive wins)
 
 **Notes:**
