@@ -86,9 +86,7 @@ export async function GET() {
         "Cache-Control": "s-maxage=120, stale-while-revalidate=300",
       },
     });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch hall of fame";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch hall of fame" }, { status: 500 });
   }
 }

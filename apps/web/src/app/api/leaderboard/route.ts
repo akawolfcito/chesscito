@@ -13,8 +13,7 @@ export async function GET() {
     return NextResponse.json(rows, {
       headers: { "Cache-Control": "s-maxage=60, stale-while-revalidate=120" },
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to fetch leaderboard";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch leaderboard" }, { status: 500 });
   }
 }

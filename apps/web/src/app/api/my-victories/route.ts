@@ -95,9 +95,7 @@ export async function GET(request: NextRequest) {
         "Cache-Control": "s-maxage=30, stale-while-revalidate=60",
       },
     });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch victories";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch victories" }, { status: 500 });
   }
 }
