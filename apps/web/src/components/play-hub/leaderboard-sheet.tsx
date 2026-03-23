@@ -78,7 +78,9 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
           )}
           {rows.map((row) => (
             <div key={row.rank} className="mission-soft rune-frame grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl px-3 py-2">
-              <p className="text-sm font-semibold text-cyan-100">#{row.rank}</p>
+              <p className="text-sm font-semibold text-cyan-100">
+                {row.rank <= 3 ? ["🥇","🥈","🥉"][row.rank - 1] : `#${row.rank}`}
+              </p>
               <p className="truncate text-sm text-slate-300">
                 {`${row.player.slice(0, 6)}...${row.player.slice(-4)}`}
                 {row.isVerified && (

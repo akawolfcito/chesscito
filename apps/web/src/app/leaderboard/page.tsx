@@ -37,7 +37,7 @@ export default async function LeaderboardPage() {
             className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-slate-200 px-4 py-4"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">
-              {row.rank}
+              {row.rank <= 3 ? ["🥇","🥈","🥉"][row.rank - 1] : row.rank}
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-950">
