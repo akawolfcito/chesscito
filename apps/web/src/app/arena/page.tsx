@@ -376,8 +376,8 @@ export default function ArenaPage() {
     }
   }
 
-  // Reset claim state when starting a new game
-  const handlePlayAgain = () => {
+  // Reset all arena state (claim + coach + session storage)
+  const resetArenaState = useCallback(() => {
     claimingRef.current = false;
     try { sessionStorage.removeItem("chesscito:claim"); } catch { /* ignore */ }
     setClaimPhase("ready");
@@ -388,6 +388,15 @@ export default function ArenaPage() {
     setCoachJobId(null);
     setCoachResponse(null);
     setCoachFallbackResponse(null);
+  }, []);
+
+  const handlePlayAgain = () => {
+    resetArenaState();
+    game.reset();
+  };
+
+  const handleBack = () => {
+    resetArenaState();
     game.reset();
   };
 
@@ -417,7 +426,7 @@ export default function ArenaPage() {
         <ArenaHud
           difficulty={game.difficulty}
           isThinking={game.isThinking}
-          onBack={game.reset}
+          onBack={handleBack}
           onResign={game.resign}
           isEndState={isEndState}
         />
@@ -475,7 +484,15 @@ export default function ArenaPage() {
       {/* Coach phases */}
       {coachPhase === "welcome" && (
         <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)]">
-          <div className="mx-4 w-full max-w-[340px] rounded-3xl border border-white/[0.08] bg-[var(--surface-frosted)] backdrop-blur-2xl shadow-[0_0_60px_rgba(16,185,129,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+          <div className="relative mx-4 w-full max-w-[340px] rounded-3xl border border-white/[0.08] bg-[var(--surface-frosted)] backdrop-blur-2xl shadow-[0_0_60px_rgba(16,185,129,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => setCoachPhase("idle")}
+              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-cyan-100/40 transition hover:bg-white/[0.06] hover:text-cyan-100/70"
+            >
+              &times;
+            </button>
             <CoachWelcome onClaim={handleClaimWelcome} />
           </div>
         </div>
