@@ -16,6 +16,7 @@
     "art:optimize": "bash scripts/optimize-art-assets.sh"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-slot": "^1.0.2",
     "@rainbow-me/rainbowkit": "^2.0.0",
@@ -35,7 +36,8 @@
     "sharp": "^0.34.5",
     "tailwind-merge": "^2.0.0",
     "viem": "^2.0.0",
-    "wagmi": "^2.0.0"
+    "wagmi": "^2.0.0",
+    "zod": "3"
   },
   "devDependencies": {
     "@types/node": "^20.8.0",
