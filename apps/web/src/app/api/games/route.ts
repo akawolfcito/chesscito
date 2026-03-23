@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import type { GameRecord } from "@/lib/coach/types";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_MOVES = 500;
 
 const redis = Redis.fromEnv();
 
@@ -12,6 +16,15 @@ export async function POST(req: Request) {
 
     if (!walletAddress || !game?.gameId) {
       return NextResponse.json({ error: "Missing walletAddress or game" }, { status: 400 });
+    }
+    if (!isAddress(walletAddress)) {
+      return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
+    }
+    if (!UUID_RE.test(game.gameId)) {
+      return NextResponse.json({ error: "Invalid gameId format" }, { status: 400 });
+    }
+    if (!Array.isArray(game.moves) || game.moves.length > MAX_MOVES) {
+      return NextResponse.json({ error: "Invalid moves" }, { status: 400 });
     }
 
     const wallet = walletAddress.toLowerCase();
@@ -36,7 +49,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const wallet = url.searchParams.get("wallet")?.toLowerCase();
-  if (!wallet) return NextResponse.json({ error: "Missing wallet" }, { status: 400 });
+  if (!wallet || !isAddress(wallet)) return NextResponse.json({ error: "Invalid wallet" }, { status: 400 });
 
   const gameIds = await redis.lrange<string>(REDIS_KEYS.gameList(wallet), 0, 19);
   const games = await Promise.all(

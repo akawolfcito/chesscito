@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import OpenAI from "openai";
+import { isAddress } from "viem";
 import { validateGameRecord } from "@/lib/coach/validate-game";
 import { normalizeCoachResponse } from "@/lib/coach/normalize";
 import { buildCoachPrompt } from "@/lib/coach/prompt-template";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import type { GameRecord, CoachAnalysisRecord, PlayerSummary } from "@/lib/coach/types";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const redis = Redis.fromEnv();
 
@@ -26,6 +29,12 @@ export async function POST(req: Request) {
 
     if (!gameId || !walletAddress) {
       return NextResponse.json({ error: "Missing gameId or walletAddress" }, { status: 400 });
+    }
+    if (!isAddress(walletAddress)) {
+      return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
+    }
+    if (!UUID_RE.test(gameId)) {
+      return NextResponse.json({ error: "Invalid gameId format" }, { status: 400 });
     }
 
     const wallet = walletAddress.toLowerCase();
@@ -147,10 +156,11 @@ export async function POST(req: Request) {
 
       return NextResponse.json({ status: "ready", response: normalized.data });
     } catch (err) {
-      const reason = err instanceof Error ? err.message : "Unknown error";
+      const internal = err instanceof Error ? err.message : "Unknown error";
+      const reason = "Analysis failed, please retry";
 
       await Promise.all([
-        redis.set(REDIS_KEYS.job(jobId), { status: "failed", reason }, { ex: 24 * 60 * 60 }),
+        redis.set(REDIS_KEYS.job(jobId), { status: "failed", reason, internal }, { ex: 24 * 60 * 60 }),
         redis.del(REDIS_KEYS.pendingJob(wallet)),
         redis.del(REDIS_KEYS.jobByGame(wallet, gameId)),
       ]);

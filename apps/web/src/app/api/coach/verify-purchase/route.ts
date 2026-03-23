@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, isAddress, keccak256, toBytes } from "viem";
 import { celo } from "viem/chains";
 import { Redis } from "@upstash/redis";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
+
+const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
+const SHOP_PURCHASE_TOPIC = keccak256(toBytes("ShopPurchase(address,uint256,address,uint256)"));
 
 const redis = Redis.fromEnv();
 const SHOP_ADDRESS = process.env.NEXT_PUBLIC_SHOP_ADDRESS as `0x${string}` | undefined;
@@ -21,6 +24,12 @@ export async function POST(req: Request) {
     if (!txHash || !walletAddress || !client || !SHOP_ADDRESS) {
       return NextResponse.json({ error: "Missing params or not configured" }, { status: 400 });
     }
+    if (!isAddress(walletAddress)) {
+      return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
+    }
+    if (!TX_HASH_RE.test(txHash)) {
+      return NextResponse.json({ error: "Invalid transaction hash" }, { status: 400 });
+    }
 
     const wallet = walletAddress.toLowerCase();
 
@@ -37,9 +46,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Transaction failed on-chain" }, { status: 400 });
     }
 
-    // Find ShopPurchase event for coach items
+    // Find ShopPurchase event for coach items (verify event signature + contract address)
     const logs = receipt.logs.filter(
-      (log) => log.address.toLowerCase() === SHOP_ADDRESS.toLowerCase()
+      (log) =>
+        log.address.toLowerCase() === SHOP_ADDRESS.toLowerCase() &&
+        log.topics[0] === SHOP_PURCHASE_TOPIC
     );
 
     let creditsToAdd = 0;

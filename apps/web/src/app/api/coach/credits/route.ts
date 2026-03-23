@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 
 const redis = Redis.fromEnv();
@@ -9,7 +10,7 @@ const FREE_CREDITS = 3;
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const wallet = url.searchParams.get("wallet")?.toLowerCase();
-  if (!wallet) return NextResponse.json({ error: "Missing wallet" }, { status: 400 });
+  if (!wallet || !isAddress(wallet)) return NextResponse.json({ error: "Invalid wallet" }, { status: 400 });
 
   // Seed free credits on first query (atomic — setnx prevents race conditions)
   const seededKey = `coach:seeded:${wallet}`;
