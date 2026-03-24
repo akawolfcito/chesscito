@@ -500,7 +500,7 @@ export const LEGAL_COPY = {
       },
       {
         heading: "Contact",
-        body: "For privacy-related questions, visit our Support page or email ${NEXT_PUBLIC_SUPPORT_EMAIL}.",
+        body: `For privacy-related questions, visit our Support page or email ${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "our support team"}.`,
       },
     ],
   },
@@ -510,8 +510,8 @@ export const SUPPORT_COPY = {
   title: "Support",
   primaryChannel: {
     label: "Email",
-    value: "${NEXT_PUBLIC_SUPPORT_EMAIL}",
-    href: "mailto:${NEXT_PUBLIC_SUPPORT_EMAIL}",
+    value: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "",
+    href: `mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? ""}`,
   },
   secondaryChannel: {
     label: "GitHub Issues",
