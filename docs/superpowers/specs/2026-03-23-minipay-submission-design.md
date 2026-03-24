@@ -37,7 +37,7 @@ Both are intentional. The tagline is the public-facing description; the package 
 - PageSpeed Insights artifact
 - Security headers
 - PWA manifest
-- Submission document with all 10 form fields
+- Submission document with all required form fields
 
 ---
 
@@ -116,7 +116,7 @@ Content specific to Chesscito:
 ### 1.3 Support (`/support`)
 
 - **Primary support:** `${NEXT_PUBLIC_SUPPORT_EMAIL}`
-- **Secondary / technical issues:** GitHub Issues (link to repo)
+- **Secondary / technical issues:** [GitHub Issues](https://github.com/akawolfcito/chesscito/issues) (`TODO: verify exact repo URL before merge`)
 - **How to report:** Describe the issue, include screenshots if possible, mention your device/browser.
 - **What you can report:** Loading problems, transaction errors, UI bugs, gameplay questions, feature requests.
 - **Response time:** "We aim to respond within 48 hours"
@@ -171,7 +171,7 @@ Each page renders from these constants. "Last updated" as editable field in each
 - **Legal validity:** Content is reasonable but does not constitute legal advice. If formal compliance is needed later, review with a lawyer.
 - **Language:** Copy in English (consistent with rest of UI). If MiniPay requires localization, add later.
 - **Email as primary support:** If MiniPay prefers a more direct channel, pivot is quick.
-- **Submission rejection:** If MiniPay rejects the submission, iterate based on their feedback and target resubmission within 1 week.
+- **Submission rejection:** Iterate based on reviewer feedback.
 
 ---
 
@@ -333,10 +333,10 @@ Next.js App Router serves `/manifest.webmanifest` automatically from this file. 
 
 ### 3.7 MiniPay WebView Testing Notes
 
-- **Pre-merge:** Deploy to Vercel preview branch and open in MiniPay testnet
-- **Verify:** App loads, wallet auto-connects, transactions work, assets render
-- **If something fails:** First suspect is `X-Frame-Options`. Remove and re-test
-- **Document:** Test results in PR description
+- **Preview (safety testing):** Deploy to Vercel preview branch and open in MiniPay testnet. Verify: app loads, wallet auto-connects, transactions work, assets render.
+- **Production (final submission validation):** After merge and deploy, re-verify the same checks on the production URL before filling the submission form.
+- **If something fails:** First suspect is `X-Frame-Options`. Remove and re-test.
+- **Document:** Test results in PR description.
 
 ---
 
@@ -368,7 +368,7 @@ Next.js App Router serves `/manifest.webmanifest` automatically from this file. 
 
 ### 4.2 Acceptance Criteria
 
-1. Document complete with all 10 fields, no blanks
+1. Document complete with all required submission fields, no blanks
 2. All URLs point to real, functional pages in production
 3. Icon 512x512 exists and is high quality
 4. Network manifest based on real audit
