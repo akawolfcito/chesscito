@@ -20,7 +20,7 @@
 ## Supporting Artifacts
 
 - **Network manifest:** [docs/network-manifest.md](./network-manifest.md)
-- **PageSpeed report:** `TODO: run after production deploy, save to docs/pagespeed-report-YYYY-MM-DD.md`
+- **PageSpeed report:** [docs/pagespeed-report-2026-03-23.md](./pagespeed-report-2026-03-23.md) — Performance: 54, Accessibility: 89, Best Practices: 96, SEO: 100 (mobile, Lighthouse 12.8.2)
 - **Verified contracts on Celoscan:**
   - Badges: [0xf92759E5525763554515DD25E7650f72204a6739](https://celoscan.io/address/0xf92759E5525763554515DD25E7650f72204a6739)
   - Scoreboard: [0x1681aAA176d5f46e45789A8b18C8E990f663959a](https://celoscan.io/address/0x1681aAA176d5f46e45789A8b18C8E990f663959a)
@@ -31,7 +31,7 @@
 ## Pre-Submission Checklist
 
 - [ ] All URLs open correctly on mobile (no 404, no auth required)
-- [ ] PageSpeed Insights measured on production (mobile profile)
+- [x] PageSpeed Insights measured on production (mobile profile)
 - [ ] Google Form fields verified against current form
 - [ ] Icon 512x512 ready for upload
 - [ ] Network manifest complete
