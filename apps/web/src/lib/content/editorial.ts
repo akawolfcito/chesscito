@@ -430,3 +430,114 @@ export const COACH_COPY = {
   welcomeNote: "After your free analyses, credit packs start at $0.05",
   creditComingSoon: "Credit packs coming soon!",
 } as const;
+
+export const LEGAL_COPY = {
+  terms: {
+    title: "Terms of Service",
+    lastUpdated: "March 2026",
+    sections: [
+      {
+        heading: "Service Description",
+        body: "Chesscito is an educational pre-chess game experience on the Celo blockchain, accessible via MiniPay. The service provides interactive chess piece movement puzzles with on-chain collectibles.",
+      },
+      {
+        heading: "Eligibility",
+        body: "You must have a compatible wallet (such as MiniPay) to use Chesscito. Age eligibility is determined by your applicable jurisdiction.",
+      },
+      {
+        heading: "Wallet Responsibility",
+        body: "You are solely responsible for the security of your wallet, private keys, and seed phrases. Chesscito never requests, stores, or has access to these.",
+      },
+      {
+        heading: "On-Chain Transactions",
+        body: "Certain actions — including badge claims, score submissions, shop purchases, and NFT mints — interact with smart contracts on the Celo blockchain. These transactions are irreversible once confirmed on-chain.",
+      },
+      {
+        heading: "Digital Assets",
+        body: "NFTs, badges, and shop items obtained through Chesscito have no guaranteed value, liquidity, or appreciation. They are game collectibles, not financial instruments.",
+      },
+      {
+        heading: "Third-Party Dependencies",
+        body: "Some features depend on third-party infrastructure, wallets, and blockchain networks that may be unavailable, delayed, or behave unexpectedly.",
+      },
+      {
+        heading: "Service Changes",
+        body: "Chesscito may modify, pause, or discontinue features at any time without prior notice.",
+      },
+      {
+        heading: "Limitation of Liability",
+        body: 'The service is provided "as is". Chesscito and its operator are not liable for losses arising from blockchain transactions, wallet issues, or service interruptions.',
+      },
+    ],
+  },
+  privacy: {
+    title: "Privacy Policy",
+    lastUpdated: "March 2026",
+    sections: [
+      {
+        heading: "Data We Handle",
+        body: "When you use Chesscito, the following data is involved: your public wallet address (provided by your wallet at connection), on-chain interaction data such as scores, badges, and purchases (publicly visible on the Celo blockchain), and local app state including tutorial progress, shield count, and gameplay preferences.",
+      },
+      {
+        heading: "Data We Do Not Collect",
+        body: "Chesscito does not collect passwords, seed phrases, government-issued identification, personal identifiable information (PII), or analytics and tracking cookies.",
+      },
+      {
+        heading: "Local Storage",
+        body: "Tutorial state, gameplay preferences, retry shields, and UX settings are stored on your device for UX purposes. On-chain actions and related blockchain data are public by nature and may be transmitted through wallet and network infrastructure required to operate the app.",
+      },
+      {
+        heading: "Third-Party Infrastructure",
+        body: "Chesscito uses Celo RPC providers for blockchain reads and writes, and WalletConnect for wallet connection. We do not use analytics vendors or ad networks.",
+      },
+      {
+        heading: "Purpose of Data Use",
+        body: "Data is used solely to operate the game: validate moves, record scores, process purchases, and mint collectibles.",
+      },
+      {
+        heading: "Data Retention",
+        body: "On-chain data is permanent by nature of blockchain. Local data stored on your device can be cleared by you at any time through your browser settings.",
+      },
+      {
+        heading: "Contact",
+        body: "For privacy-related questions, visit our Support page or email ${NEXT_PUBLIC_SUPPORT_EMAIL}.",
+      },
+    ],
+  },
+} as const;
+
+export const SUPPORT_COPY = {
+  title: "Support",
+  primaryChannel: {
+    label: "Email",
+    value: "${NEXT_PUBLIC_SUPPORT_EMAIL}",
+    href: "mailto:${NEXT_PUBLIC_SUPPORT_EMAIL}",
+  },
+  secondaryChannel: {
+    label: "GitHub Issues",
+    value: "Report a bug or request a feature",
+    href: "https://github.com/akawolfcito/chesscito/issues",
+  },
+  howToReport: "Describe the issue, include screenshots if possible, and mention your device and browser.",
+  reportableIssues: [
+    "Loading problems",
+    "Transaction errors",
+    "UI bugs",
+    "Gameplay questions",
+    "Feature requests",
+  ],
+  responseTime: "We aim to respond within 48 hours.",
+} as const;
+
+export const ABOUT_COPY = {
+  title: "Chesscito",
+  operatedBy: "Operated by Wolfcito",
+  handle: "@akawolfcito",
+  version: "v0.1.0",
+  links: {
+    support: "Support",
+    privacy: "Privacy Policy",
+    terms: "Terms of Service",
+    invite: "Invite a Friend",
+  },
+} as const;
