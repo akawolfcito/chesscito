@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 import {
   useAccount,
   useChainId,
@@ -777,6 +779,15 @@ export default function PlayHubPage() {
             />
           }
           isReplay={isReplay}
+          moreAction={
+            <Link
+              href="/about"
+              className="flex h-11 w-11 items-center justify-center text-cyan-300/50 transition hover:text-cyan-50"
+              aria-label="More options"
+            >
+              <MoreHorizontal size={18} />
+            </Link>
+          }
         />
 
         <PurchaseConfirmSheet

@@ -26,6 +26,7 @@ type MissionPanelProps = {
   contextualAction: ReactNode;
   persistentDock: ReactNode;
   pieceHint?: string;
+  moreAction?: ReactNode;
 };
 
 type FlashConfig = { text: string; accent: string };
@@ -99,6 +100,7 @@ export function MissionPanel({
   contextualAction,
   persistentDock,
   pieceHint,
+  moreAction,
 }: MissionPanelProps) {
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden">
@@ -128,6 +130,7 @@ export function MissionPanel({
             <span className="shrink-0 text-xs text-cyan-300/70 tracking-[0.14em] uppercase">
               Lv {level}
             </span>
+            {moreAction}
           </div>
         </div>
       </div>
