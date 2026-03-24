@@ -26,7 +26,11 @@
   - Scoreboard: [0x1681aAA176d5f46e45789A8b18C8E990f663959a](https://celoscan.io/address/0x1681aAA176d5f46e45789A8b18C8E990f663959a)
   - Shop: [0x24846C772af7233ADfD98b9A96273120f3a1f74b](https://celoscan.io/address/0x24846C772af7233ADfD98b9A96273120f3a1f74b)
   - VictoryNFT: [0x0eE22F830a99e7a67079018670711C0F94Abeeb0](https://celoscan.io/address/0x0eE22F830a99e7a67079018670711C0F94Abeeb0)
-- **Sample transactions:** `TODO: add one tx link per user-facing method`
+- **Sample transactions:**
+  - claimBadgeSigned: [0x8be605...](https://celoscan.io/tx/0x8be6052c7f833af83fd2d3d5c04d76406ce9f1fcbcdf82ff5007ce35daf0ec67)
+  - submitScoreSigned: [0x95940a...](https://celoscan.io/tx/0x95940aca9ca1c95ffb0fe9f305d1d7062865d99a5492e4cc2626b1fecf6905f6)
+  - buyItem (Shop): [0x13c066...](https://celoscan.io/tx/0x13c066f8) `TODO: verify — proxy selector, confirm on Celoscan`
+  - mintVictory: [0x04846f...](https://celoscan.io/tx/0x04846fe2caec32f66ea48c6ce5a2ea30e31d8eee3b99c496f534e09a0d9a1b84)
 
 ## Pre-Submission Checklist
 

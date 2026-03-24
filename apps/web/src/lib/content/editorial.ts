@@ -516,7 +516,7 @@ export const SUPPORT_COPY = {
   secondaryChannel: {
     label: "GitHub Issues",
     value: "Report a bug or request a feature",
-    href: "https://github.com/akawolfcito/chesscito/issues",
+    href: "https://github.com/wolfcito/chesscito/issues",
   },
   howToReport: "Describe the issue, include screenshots if possible, and mention your device and browser.",
   reportableIssues: [

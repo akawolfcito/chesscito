@@ -20,7 +20,7 @@
 | `passport.gitcoin.co` | HTTPS | Gitcoin Passport onboarding link — shown in UI when passport not verified | `connect-src` |
 | `x.com` | HTTPS | Twitter/X share intent — victory share button | `connect-src` |
 | `wa.me` | HTTPS | WhatsApp share link — victory share button | `connect-src` |
-| `github.com` | HTTPS | Bug report link — feedback item in editorial.ts (`/akawolfcito/chesscito/issues`) | `connect-src` |
+| `github.com` | HTTPS | Bug report link — feedback item in editorial.ts (`/wolfcito/chesscito/issues`) | `connect-src` |
 | `*.walletconnect.com` | HTTPS/WSS | WalletConnect v2 relay — RainbowKit wallet connection (`NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`) | `connect-src` |
 | `explorer-api.walletconnect.com` | HTTPS | WalletConnect wallet registry — injected wallet discovery via RainbowKit | `connect-src` |
 

@@ -116,7 +116,7 @@ Content specific to Chesscito:
 ### 1.3 Support (`/support`)
 
 - **Primary support:** `${NEXT_PUBLIC_SUPPORT_EMAIL}`
-- **Secondary / technical issues:** [GitHub Issues](https://github.com/akawolfcito/chesscito/issues) (`TODO: verify exact repo URL before merge`)
+- **Secondary / technical issues:** [GitHub Issues](https://github.com/wolfcito/chesscito/issues) (verified: `wolfcito/chesscito`)
 - **How to report:** Describe the issue, include screenshots if possible, mention your device/browser.
 - **What you can report:** Loading problems, transaction errors, UI bugs, gameplay questions, feature requests.
 - **Response time:** "We aim to respond within 48 hours"
