@@ -104,29 +104,36 @@ export function MissionPanel({
 }: MissionPanelProps) {
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden">
-      {/* Zone 1: Floating HUD — piece selector + level */}
+      {/* Zone 1: Floating HUD — piece selector + utilities */}
       <div className="shrink-0 px-3 pt-2 pb-1">
-        <div className="hud-bar flex items-center gap-1">
-          {pieces.map((piece) => (
-            <button
-              key={piece.key}
-              type="button"
-              disabled={!piece.enabled}
-              onClick={() => onSelectPiece(piece.key)}
-              className={`relative h-11 px-3 text-xs font-semibold uppercase tracking-[0.16em] transition disabled:opacity-40 ${
-                selectedPiece === piece.key
-                  ? "text-cyan-50"
-                  : "text-cyan-200/50"
-              }`}
-            >
-              {PIECE_ICONS[piece.key as keyof typeof PIECE_ICONS]}{" "}{piece.label}
-              {selectedPiece === piece.key ? (
-                <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(103,232,249,0.6)]" />
-              ) : null}
-            </button>
-          ))}
-          <div className="ml-auto flex items-center gap-1.5">
-            <span className="shrink-0 text-[10px] text-cyan-300/50 tracking-[0.14em] uppercase">
+        <div className="hud-bar flex items-center justify-between">
+          {/* Piece selector — icon-only tabs for maximum breathing room */}
+          <div className="flex items-center">
+            {pieces.map((piece) => (
+              <button
+                key={piece.key}
+                type="button"
+                disabled={!piece.enabled}
+                onClick={() => onSelectPiece(piece.key)}
+                className={`relative flex h-11 w-11 items-center justify-center text-lg transition-all disabled:opacity-30 ${
+                  selectedPiece === piece.key
+                    ? "text-cyan-50 scale-110"
+                    : "text-cyan-200/40 hover:text-cyan-200/70"
+                }`}
+                aria-label={piece.label}
+                title={piece.label}
+              >
+                {PIECE_ICONS[piece.key as keyof typeof PIECE_ICONS]}
+                {selectedPiece === piece.key ? (
+                  <span className="absolute bottom-1 left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(103,232,249,0.7)]" />
+                ) : null}
+              </button>
+            ))}
+          </div>
+
+          {/* Right cluster — level, progress, more */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-medium text-cyan-300/40 tracking-widest uppercase">
               Lv{level}
             </span>
             {exerciseDrawer}
