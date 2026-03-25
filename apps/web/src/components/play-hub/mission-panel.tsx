@@ -125,11 +125,11 @@ export function MissionPanel({
               ) : null}
             </button>
           ))}
-          <div className="ml-auto flex items-center gap-2">
-            {exerciseDrawer}
-            <span className="shrink-0 text-xs text-cyan-300/70 tracking-[0.14em] uppercase">
-              Lv {level}
+          <div className="ml-auto flex items-center gap-1.5">
+            <span className="shrink-0 text-[10px] text-cyan-300/50 tracking-[0.14em] uppercase">
+              Lv{level}
             </span>
+            {exerciseDrawer}
             {moreAction}
           </div>
         </div>
