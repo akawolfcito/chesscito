@@ -8,10 +8,3 @@ export const REDIS_KEYS = {
   credits: (wallet: string) => `coach:credits:${wallet}`,
   pendingJob: (wallet: string) => `coach:pending:${wallet}`,
 } as const;
-
-export const HOF_KEYS = {
-  lastBlock: "hof:lastBlock",
-  entries: "hof:entries",
-  player: (address: string) => `hof:player:${address.toLowerCase()}`,
-  refreshLock: "hof:refresh:lock",
-} as const;

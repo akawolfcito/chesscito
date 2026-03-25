@@ -16,8 +16,7 @@
     "test:coach": "rm -rf .tmp/coach-tests .tmp/tsconfig.test-coach.tsbuildinfo && tsc -p tsconfig.test-coach.json && node --test .tmp/coach-tests/lib/coach/__tests__/*.test.js && rm -rf .tmp/coach-tests .tmp/tsconfig.test-coach.tsbuildinfo",
     "test": "npm run test:server && npm run test:game && npm run test:og && npm run test:assets && npm run test:coach",
     "type-check": "rm -rf .next && next build >/dev/null && tsc --noEmit",
-    "art:optimize": "bash scripts/optimize-art-assets.sh",
-    "backfill:hof": "set -a && . ./.env && set +a && npx tsx scripts/backfill-hof.ts"
+    "art:optimize": "bash scripts/optimize-art-assets.sh"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
