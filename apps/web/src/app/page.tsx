@@ -157,6 +157,7 @@ export default function PlayHubPage() {
 
   const autoResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerStart = useRef<number>(0);
+  const boardGeneration = useRef(0);
 
   const PIECE_ORDER: PieceKey[] = ["rook", "bishop", "knight"];
   const currentPieceIndex = PIECE_ORDER.indexOf(selectedPiece);
@@ -433,7 +434,9 @@ export default function PlayHubPage() {
           setShowBadgeEarned(true);
           // Safety-net: auto-dismiss badge prompt and reset board if user
           // doesn't interact within 15 seconds (prevents phase stuck forever)
+          const gen = boardGeneration.current;
           autoResetTimer.current = setTimeout(() => {
+            if (gen !== boardGeneration.current) return;
             setShowBadgeEarned(false);
             resetBoard();
           }, 15_000);
@@ -441,16 +444,16 @@ export default function PlayHubPage() {
         }
       }
 
+      const gen = boardGeneration.current;
       autoResetTimer.current = setTimeout(() => {
+        if (gen !== boardGeneration.current) return; // stale — user navigated
         if (!isLastExercise) {
           advanceExercise();
           resetBoard();
         } else if (nextPiece && pieceCompleted) {
-          // Only auto-advance to next piece if score was already submitted
           setSelectedPiece(nextPiece);
           resetBoard();
         } else {
-          // Last exercise done but score not submitted yet — just reset board
           resetBoard();
         }
       }, 1500);
@@ -475,6 +478,7 @@ export default function PlayHubPage() {
 
   function handleExerciseNavigate(index: number) {
     if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
+    boardGeneration.current++;
     goToExercise(index);
     resetBoard();
   }
@@ -482,7 +486,9 @@ export default function PlayHubPage() {
   function handleBadgeEarnedDismiss() {
     if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
     setShowBadgeEarned(false);
+    const gen = boardGeneration.current;
     autoResetTimer.current = setTimeout(() => {
+      if (gen !== boardGeneration.current) return; // stale — user navigated
       if (nextPiece && pieceCompleted) {
         setSelectedPiece(nextPiece);
         resetBoard();
@@ -704,6 +710,8 @@ export default function PlayHubPage() {
         <MissionPanel
           selectedPiece={selectedPiece}
           onSelectPiece={(piece) => {
+            if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
+            boardGeneration.current++;
             setSelectedPiece(piece);
             resetBoard();
           }}
@@ -801,7 +809,10 @@ export default function PlayHubPage() {
           open={confirmOpen}
           onOpenChange={(open) => {
             setConfirmOpen(open);
-            if (!open) setPurchasePhase("idle");
+            if (!open) {
+              setPurchasePhase("idle");
+              setSelectedItemId(null);
+            }
           }}
           selectedItem={selectedItem}
           chainId={chainId}
