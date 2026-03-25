@@ -49,6 +49,9 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
           <SheetDescription className="text-cyan-100/75">{SHOP_SHEET_COPY.description}</SheetDescription>
         </SheetHeader>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {items.length === 0 && (
+            <p className="col-span-full text-center text-sm text-cyan-100/50">{SHOP_SHEET_COPY.empty}</p>
+          )}
           {items.map((item) => (
             <div key={item.itemId.toString()} className="mission-soft rune-frame shop-slot-frame rounded-2xl p-3">
               <p className="text-sm font-semibold text-slate-100">{item.label}</p>

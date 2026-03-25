@@ -146,6 +146,7 @@ export const SHOP_SHEET_COPY = {
   title: "Arcane Store",
   description: "Choose an item to purchase with USDC.",
   buyButton: "Buy with USDC",
+  empty: "Shop items are not available right now.",
   status: {
     available: "Available",
     unavailable: "Unavailable",
