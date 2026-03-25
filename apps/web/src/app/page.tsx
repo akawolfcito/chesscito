@@ -813,10 +813,10 @@ export default function PlayHubPage() {
           moreAction={
             <Link
               href="/about"
-              className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-cyan-500/10 text-cyan-300/80 transition hover:text-cyan-50"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-cyan-200/70 transition hover:bg-white/10 hover:text-cyan-50"
               aria-label="More options"
             >
-              <MoreVertical size={20} strokeWidth={2.5} />
+              <MoreVertical size={18} strokeWidth={2} />
             </Link>
           }
         />

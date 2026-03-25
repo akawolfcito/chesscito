@@ -105,37 +105,37 @@ export function MissionPanel({
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden">
       {/* Zone 1: Floating HUD — piece selector + utilities */}
-      <div className="shrink-0 px-3 pt-2 pb-1">
+      <div className="shrink-0 mx-2 mt-2 mb-1">
         <div className="hud-bar flex items-center justify-between">
-          {/* Piece selector — icon-only tabs for maximum breathing room */}
-          <div className="flex items-center">
-            {pieces.map((piece) => (
-              <button
-                key={piece.key}
-                type="button"
-                disabled={!piece.enabled}
-                onClick={() => onSelectPiece(piece.key)}
-                className={`relative flex h-11 w-11 items-center justify-center text-lg transition-all disabled:opacity-30 ${
-                  selectedPiece === piece.key
-                    ? "text-cyan-50 scale-110"
-                    : "text-cyan-200/40 hover:text-cyan-200/70"
-                }`}
-                aria-label={piece.label}
-                title={piece.label}
-              >
-                {PIECE_ICONS[piece.key as keyof typeof PIECE_ICONS]}
-                {selectedPiece === piece.key ? (
-                  <span className="absolute bottom-1 left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(103,232,249,0.7)]" />
-                ) : null}
-              </button>
-            ))}
+          {/* Piece tabs — selected shows label, inactive icon-only */}
+          <div className="flex items-center gap-1">
+            {pieces.map((piece) => {
+              const isActive = selectedPiece === piece.key;
+              const icon = PIECE_ICONS[piece.key as keyof typeof PIECE_ICONS];
+              return (
+                <button
+                  key={piece.key}
+                  type="button"
+                  disabled={!piece.enabled}
+                  onClick={() => onSelectPiece(piece.key)}
+                  className={`relative flex h-11 items-center justify-center transition-all disabled:opacity-50 ${
+                    isActive
+                      ? "gap-1.5 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-3 text-cyan-50"
+                      : "w-11 rounded-full text-cyan-200/55 hover:text-cyan-200/80"
+                  }`}
+                  aria-label={piece.label}
+                >
+                  <span className="text-base">{icon}</span>
+                  {isActive && (
+                    <span className="text-[11px] font-semibold uppercase tracking-widest">{piece.label}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Right cluster — level, progress, more */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-medium text-cyan-300/40 tracking-widest uppercase">
-              Lv{level}
-            </span>
+          {/* Right cluster — progress chip + more */}
+          <div className="flex items-center gap-1.5">
             {exerciseDrawer}
             {moreAction}
           </div>
