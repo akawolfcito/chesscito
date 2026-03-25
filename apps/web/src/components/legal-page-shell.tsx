@@ -17,13 +17,7 @@ export function LegalPageShell({ title, children }: LegalPageShellProps) {
         <header className="mb-6 flex items-center gap-3">
           <button
             type="button"
-            onClick={() => {
-              if (window.history.length > 1) {
-                router.back();
-              } else {
-                router.push("/about");
-              }
-            }}
+            onClick={() => router.push("/about")}
             className="flex h-11 w-11 items-center justify-center rounded-full text-cyan-200/70 transition hover:text-cyan-50"
             aria-label="Go back"
           >
