@@ -746,7 +746,7 @@ export default function PlayHubPage() {
               badgeControl={
                 <BadgeSheet
                   open={badgeSheetOpen}
-                  onOpenChange={setBadgeSheetOpen}
+                  onOpenChange={(v) => { if (!v && isClaimBusy) return; setBadgeSheetOpen(v); }}
                   badgesClaimed={badgesClaimed}
                   onClaim={(piece) => void handleClaimBadge(piece)}
                   isClaimBusy={isClaimBusy}
