@@ -116,6 +116,17 @@ export default function ArenaPage() {
 
   const canClaim = isConnected && isCorrectChain && isPlayerWin && victoryNFTAddress != null;
 
+  // Reset claim error when wallet reconnects — lets "Try Again" work after disconnect
+  const prevConnected = useRef(isConnected);
+  useEffect(() => {
+    if (isConnected && !prevConnected.current && claimPhase === "error") {
+      setClaimPhase("ready");
+      setClaimError(null);
+      claimingRef.current = false;
+    }
+    prevConnected.current = isConnected;
+  }, [isConnected, claimPhase]);
+
   // Token balances for payment selection
   const { data: tokenBalances } = useReadContracts({
     contracts: ACCEPTED_TOKENS.map((t) => ({
@@ -473,7 +484,11 @@ export default function ArenaPage() {
           claimData={claimData}
           onClaimVictory={canClaim ? () => void handleClaimVictory() : undefined}
           claimPrice={claimPriceLabel}
-          claimError={claimError}
+          claimError={
+            claimPhase === "error" && !isConnected
+              ? "Wallet disconnected — reconnect to try again"
+              : claimError
+          }
           moves={game.moveCount}
           elapsedMs={game.elapsedMs}
           difficulty={game.difficulty}
@@ -501,6 +516,7 @@ export default function ArenaPage() {
         <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)]">
           <CoachLoading
             jobId={coachJobId}
+            wallet={address?.toLowerCase()}
             onReady={(response) => { setCoachResponse(response); setCoachCredits((c) => Math.max(0, c - 1)); setCoachPhase("result"); }}
             onFailed={() => {
               const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
