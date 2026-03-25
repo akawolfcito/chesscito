@@ -17,7 +17,7 @@ const ABOUT_LINKS = [
 
 export default function AboutPage() {
   return (
-    <LegalPageShell title="About">
+    <LegalPageShell title="About" backHref="/">
       {/* Identity */}
       <div className="flex flex-col items-center gap-2 pb-2 text-center">
         <picture>

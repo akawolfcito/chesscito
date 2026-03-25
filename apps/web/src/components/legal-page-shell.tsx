@@ -5,10 +5,11 @@ import { ArrowLeft } from "lucide-react";
 
 type LegalPageShellProps = {
   title: string;
+  backHref?: string;
   children: React.ReactNode;
 };
 
-export function LegalPageShell({ title, children }: LegalPageShellProps) {
+export function LegalPageShell({ title, backHref = "/about", children }: LegalPageShellProps) {
   const router = useRouter();
 
   return (
@@ -17,7 +18,7 @@ export function LegalPageShell({ title, children }: LegalPageShellProps) {
         <header className="mb-6 flex items-center gap-3">
           <button
             type="button"
-            onClick={() => router.push("/about")}
+            onClick={() => router.push(backHref)}
             className="flex h-11 w-11 items-center justify-center rounded-full text-cyan-200/70 transition hover:text-cyan-50"
             aria-label="Go back"
           >
