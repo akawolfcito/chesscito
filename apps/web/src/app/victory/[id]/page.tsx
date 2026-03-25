@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createPublicClient, http } from "viem";
 import { celo } from "viem/chains";
@@ -86,6 +87,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 export default async function VictoryPage({ params }: { params: { id: string } }) {
   const v = await fetchVictory(params.id);
+  if (!v) notFound();
 
   return (
     <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width)] flex-col items-center justify-center arena-bg px-6">
@@ -95,19 +97,17 @@ export default async function VictoryPage({ params }: { params: { id: string } }
 
         {/* Title */}
         <h1 className="fantasy-title mb-2 text-2xl font-bold text-emerald-300/90 drop-shadow-[0_0_12px_rgba(20,184,166,0.35)]">
-          {v ? VICTORY_PAGE_COPY.metaCheckmate(v.moves) : `Victory #${params.id}`}
+          {VICTORY_PAGE_COPY.metaCheckmate(v.moves)}
         </h1>
 
         {/* Stats */}
-        {v && (
-          <div className="mb-6 flex gap-3 text-sm text-cyan-100/50">
-            <span>{v.difficulty}</span>
-            <span>•</span>
-            <span>{formatTime(v.timeMs)}</span>
-            <span>•</span>
-            <span>{v.player}</span>
-          </div>
-        )}
+        <div className="mb-6 flex gap-3 text-sm text-cyan-100/50">
+          <span>{v.difficulty}</span>
+          <span>•</span>
+          <span>{formatTime(v.timeMs)}</span>
+          <span>•</span>
+          <span>{v.player}</span>
+        </div>
 
         {/* Challenge line */}
         <p className="mb-8 text-lg font-semibold text-amber-400">
