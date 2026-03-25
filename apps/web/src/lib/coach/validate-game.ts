@@ -35,9 +35,13 @@ export function validateGameRecord(input: ValidationInput): ValidationResult {
   } else if (game.isStalemate() || game.isDraw()) {
     computedResult = "draw";
   } else if (input.result === "resigned") {
+    if (input.moves.length < 2) {
+      return { valid: false, error: "Too few moves to resign" };
+    }
     computedResult = "resigned";
   } else {
-    computedResult = "draw";
+    // Game still in progress but not resigned — reject
+    return { valid: false, error: `Result "${input.result}" does not match board state` };
   }
 
   return {

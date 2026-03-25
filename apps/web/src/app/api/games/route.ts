@@ -27,7 +27,8 @@ export async function POST(req: Request) {
     if (!UUID_RE.test(game.gameId)) {
       return NextResponse.json({ error: "Invalid gameId format" }, { status: 400 });
     }
-    if (!Array.isArray(game.moves) || game.moves.length > MAX_MOVES) {
+    if (!Array.isArray(game.moves) || game.moves.length > MAX_MOVES ||
+        game.moves.some((m: unknown) => typeof m !== "string" || m.length > 10)) {
       return NextResponse.json({ error: "Invalid moves" }, { status: 400 });
     }
 
