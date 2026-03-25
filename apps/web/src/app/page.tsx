@@ -713,6 +713,10 @@ export default function PlayHubPage() {
             if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
             boardGeneration.current++;
             setSelectedPiece(piece);
+            setResultOverlay(null);
+            setClaimTxHash(null);
+            setSubmitTxHash(null);
+            setShowBadgeEarned(false);
             resetBoard();
           }}
           pieces={[
