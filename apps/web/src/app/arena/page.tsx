@@ -313,7 +313,13 @@ export default function ArenaPage() {
         await publicClient.waitForTransactionReceipt({ hash: approveHash });
       }
 
-      // 4. Claim (mint) and wait for confirmation
+      // 4. Check signature hasn't expired (30s buffer for tx propagation)
+      const nowSec = BigInt(Math.floor(Date.now() / 1000));
+      if (nowSec + 30n >= BigInt(payload.deadline)) {
+        throw new Error("Signature expired — please try again");
+      }
+
+      // 5. Claim (mint) and wait for confirmation
       const claimHash = await writeContractAsync({
         address: victoryNFTAddress,
         abi: victoryAbi,
@@ -375,7 +381,8 @@ export default function ArenaPage() {
         return;
       }
       // Sanitize error — map known patterns to user-friendly messages
-      const friendly = /insufficient/i.test(raw) ? "Insufficient balance"
+      const friendly = /expired/i.test(raw) ? "Signature expired — tap to get a fresh one"
+        : /insufficient/i.test(raw) ? "Insufficient balance"
         : /network/i.test(raw) ? "Network error — check your connection"
         : /timeout/i.test(raw) ? "Request timed out — try again"
         : /revert/i.test(raw) ? "Transaction reverted"
@@ -523,6 +530,7 @@ export default function ArenaPage() {
               setCoachFallbackResponse(quick);
               setCoachPhase("fallback");
             }}
+            onCancel={() => setCoachPhase("idle")}
           />
         </div>
       )}
