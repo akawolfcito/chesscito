@@ -123,6 +123,7 @@ export function Board({
                         type="button"
                         role="gridcell"
                         aria-label={`Square ${square.label}`}
+                        disabled={isLocked}
                         onClick={() => handleSquarePress(square.label)}
                         style={{
                           left: `${geo.left}%`,
