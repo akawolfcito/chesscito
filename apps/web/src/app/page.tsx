@@ -471,7 +471,7 @@ export default function PlayHubPage() {
   }
 
   function handleUseShield() {
-    if (shieldCount <= 0) return;
+    if (phase !== "failure" || shieldCount <= 0) return;
     updateShieldCount(shieldCount - 1);
     resetBoard();
   }
