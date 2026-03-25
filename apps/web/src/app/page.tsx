@@ -431,6 +431,12 @@ export default function PlayHubPage() {
 
         if (newTotal >= BADGE_THRESHOLD && !hasClaimedBadge) {
           setShowBadgeEarned(true);
+          // Safety-net: auto-dismiss badge prompt and reset board if user
+          // doesn't interact within 15 seconds (prevents phase stuck forever)
+          autoResetTimer.current = setTimeout(() => {
+            setShowBadgeEarned(false);
+            resetBoard();
+          }, 15_000);
           return;
         }
       }
@@ -474,6 +480,7 @@ export default function PlayHubPage() {
   }
 
   function handleBadgeEarnedDismiss() {
+    if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
     setShowBadgeEarned(false);
     autoResetTimer.current = setTimeout(() => {
       if (nextPiece && pieceCompleted) {
@@ -821,10 +828,12 @@ export default function PlayHubPage() {
             pieceType={selectedPiece}
             totalStars={totalStars}
             onClaimBadge={() => {
+              if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
               setShowBadgeEarned(false);
               void handleClaimBadge();
             }}
             onSubmitScore={() => {
+              if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
               setShowBadgeEarned(false);
               void handleSubmitScore();
             }}
