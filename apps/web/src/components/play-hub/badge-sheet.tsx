@@ -66,10 +66,10 @@ function BadgeCard({
       className={[
         "relative flex items-center gap-3 rounded-2xl px-3 py-3 transition",
         isClaimed
-          ? "bg-emerald-500/12 ring-1 ring-emerald-500/20 shadow-[inset_0_0_16px_rgba(16,185,129,0.12)]"
+          ? "bg-emerald-500/15 ring-1 ring-emerald-500/25 shadow-[inset_0_0_20px_rgba(16,185,129,0.15)]"
           : isClaimable
-            ? "bg-cyan-500/10 ring-1 ring-cyan-400/30"
-            : "bg-slate-800/20",
+            ? "bg-cyan-500/12 ring-1 ring-cyan-400/35 shadow-[inset_0_0_12px_rgba(34,211,238,0.06)]"
+            : "bg-white/[0.04] border border-white/[0.06]",
       ].join(" ")}
     >
       {isClaimed && (
@@ -199,12 +199,13 @@ export function BadgeSheet({
           ) : null}
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="mission-shell sheet-bg-badges rounded-t-3xl border-slate-700">
-        <div className="h-0.5 w-full bg-gradient-to-r from-emerald-500/40 via-emerald-400/20 to-emerald-500/40" />
-        <SheetHeader>
-          <SheetTitle className="fantasy-title flex items-center gap-2 text-cyan-50"><Trophy size={20} className="text-emerald-400/40" />{BADGE_SHEET_COPY.title}</SheetTitle>
-          <SheetDescription className="text-cyan-100/75">{BADGE_SHEET_COPY.subtitle}</SheetDescription>
-        </SheetHeader>
+      <SheetContent side="bottom" className="mission-shell sheet-bg-badges rounded-t-3xl border-white/[0.10]">
+        <div className="flex items-center justify-between border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
+          <SheetHeader className="flex-1">
+            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><Trophy size={20} className="text-emerald-400/60" />{BADGE_SHEET_COPY.title}</SheetTitle>
+            <SheetDescription className="text-cyan-100/75">{BADGE_SHEET_COPY.subtitle}</SheetDescription>
+          </SheetHeader>
+        </div>
         <div className="mt-4 space-y-2">
           {badges.map((badge) => (
             <BadgeCard
