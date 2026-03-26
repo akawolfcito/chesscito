@@ -57,14 +57,14 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
           {items.map((item, index) => {
             const isFeatured = index === 0 && item.configured && item.enabled;
             return (
-            <div key={item.itemId.toString()} className={`rounded-2xl border p-3 relative ${isFeatured ? "border-amber-400/50 bg-[rgba(6,14,28,0.92)] ring-2 ring-amber-400/50 shadow-[0_0_24px_rgba(245,158,11,0.15),inset_0_0_16px_rgba(245,158,11,0.04)]" : "border-white/[0.05] bg-white/[0.02] opacity-75"}`}>
+            <div key={item.itemId.toString()} className={`rounded-2xl p-3 relative ${isFeatured ? "" : "border border-white/[0.05] bg-white/[0.02] opacity-75"}`} style={isFeatured ? { background: "linear-gradient(180deg, rgba(18,14,8,0.95) 0%, rgba(10,8,6,0.90) 100%)", border: "1.5px solid rgba(200,170,100,0.30)", boxShadow: "inset 0 1px 3px rgba(255,255,255,0.05), inset 0 -2px 4px rgba(0,0,0,0.4), 0 0 20px rgba(200,170,100,0.10), 0 4px 12px rgba(0,0,0,0.3)" } : undefined}>
               {isFeatured && (
-                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full border border-amber-400/45 bg-amber-500/25 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-amber-400/80">
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[rgba(220,200,140,0.85)]" style={{ background: "rgba(200,170,100,0.15)", border: "1px solid rgba(200,170,100,0.35)" }}>
                   Featured
                 </span>
               )}
-              <p className={`text-sm font-semibold ${isFeatured ? "text-slate-100" : "text-slate-300"}`}>{item.label}</p>
-              <p className={`text-xs ${isFeatured ? "text-slate-400" : "text-slate-500"}`}>{item.subtitle}</p>
+              <p className={`text-sm font-semibold ${isFeatured ? "text-[rgba(240,230,200,0.95)]" : "text-slate-300"}`}>{item.label}</p>
+              <p className={`text-xs ${isFeatured ? "text-[rgba(180,160,120,0.60)]" : "text-slate-500"}`}>{item.subtitle}</p>
               <p className="mt-2 text-sm text-slate-200">
                 {item.configured ? `${formatUnits(item.onChainPrice, 6)} USDC` : SHOP_SHEET_COPY.status.notConfigured}
               </p>
