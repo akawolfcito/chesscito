@@ -176,8 +176,11 @@ export function MissionPanel({
       </div>
 
       {/* Zone A2: Utility Band — Lv + stars + more */}
-      <div className="flex shrink-0 items-center justify-between px-4 h-8">
-        <span className="text-[11px] font-bold text-purple-400/50">
+      <div
+        className="flex shrink-0 items-center justify-between px-4 h-8"
+        style={{ background: "linear-gradient(180deg, rgba(12,20,35,0.42) 0%, rgba(6,14,28,0.24) 100%)", borderTop: "1px solid rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(0,0,0,0.15)" }}
+      >
+        <span className="text-[11px] font-bold text-purple-400/60">
           Lv {level}
         </span>
         <div className="flex items-center gap-2">
@@ -208,14 +211,14 @@ export function MissionPanel({
       {/* Zone C: Footer — micro-stats + CTA merged, then dock */}
       <div className="chesscito-footer shrink-0">
         {/* Layer 1: Micro-stats + CTA (merged) */}
-        <div className="flex items-center justify-center gap-4 pt-2 pb-1.5">
-          <span className="flex items-center gap-1 text-[10px] font-semibold text-white/35">
-            <Star size={12} className="opacity-25" />
+        <div className="mx-2 flex items-center justify-center gap-4 rounded-[10px] py-1.5 px-3" style={{ background: "rgba(0,0,0,0.13)", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-white/40">
+            <Star size={12} className="opacity-30" />
             {score}
           </span>
           <span className="text-[10px] text-white/15">&middot;</span>
-          <span className="flex items-center gap-1 text-[10px] font-semibold text-white/35">
-            <Timer size={12} className="opacity-25" />
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-white/40">
+            <Timer size={12} className="opacity-30" />
             {Number(timeMs) / 1000}s
           </span>
         </div>
