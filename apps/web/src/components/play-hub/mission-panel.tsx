@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Star, Timer } from "lucide-react";
 import { PHASE_FLASH_COPY, PIECE_ICONS, PRACTICE_COPY } from "@/lib/content/editorial";
@@ -102,6 +102,18 @@ export function MissionPanel({
   pieceHint,
   moreAction,
 }: MissionPanelProps) {
+  const prevPieceRef = useRef(selectedPiece);
+  const [plopping, setPlopping] = useState(false);
+
+  useEffect(() => {
+    if (prevPieceRef.current !== selectedPiece) {
+      prevPieceRef.current = selectedPiece;
+      setPlopping(true);
+      const timer = setTimeout(() => setPlopping(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedPiece]);
+
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden">
       {/* Zone A: Hero Selector — centered piece + mission target */}
@@ -119,16 +131,16 @@ export function MissionPanel({
                 onClick={() => onSelectPiece(piece.key)}
                 className={`relative flex flex-col items-center justify-center rounded-full transition-all ${
                   isActive
-                    ? "h-16 w-16 border-2 border-cyan-400/45 bg-cyan-500/[0.12] shadow-[0_0_16px_rgba(34,211,238,0.20)]"
-                    : "h-9 w-9 border border-white/[0.06] opacity-30 disabled:opacity-20"
+                    ? `h-16 w-16 border-2 border-cyan-300/60 bg-gradient-to-b from-cyan-400/15 to-cyan-600/8 shadow-[0_0_20px_rgba(34,211,238,0.30)] ${plopping ? "animate-[hero-plop_300ms_cubic-bezier(0.34,1.56,0.64,1)]" : ""}`
+                    : "h-8 w-8 min-h-[44px] min-w-[44px] border border-white/[0.06] opacity-[0.22] disabled:opacity-20"
                 }`}
                 aria-label={piece.label}
               >
-                <span className={isActive ? "text-2xl drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" : "text-lg"}>
+                <span className={isActive ? "text-3xl drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" : "text-lg"}>
                   {icon}
                 </span>
                 {isActive && (
-                  <span className="text-[7px] font-bold uppercase tracking-[0.12em] text-cyan-200">
+                  <span className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-cyan-100">
                     {piece.label}
                   </span>
                 )}
@@ -151,7 +163,7 @@ export function MissionPanel({
               <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-cyan-400/35">
                 Move to
               </p>
-              <p className="text-lg font-extrabold text-cyan-400/90 drop-shadow-[0_0_12px_rgba(34,211,238,0.20)]">
+              <p className="text-xl font-black text-cyan-400/90 drop-shadow-[0_0_12px_rgba(34,211,238,0.20)]">
                 {targetLabel}
               </p>
             </>
