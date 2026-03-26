@@ -57,14 +57,14 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
           {items.map((item, index) => {
             const isFeatured = index === 0 && item.configured && item.enabled;
             return (
-            <div key={item.itemId.toString()} className={`rounded-2xl border p-3 relative ${isFeatured ? "border-amber-400/40 bg-[rgba(6,14,28,0.90)] ring-2 ring-amber-400/40 shadow-[0_0_20px_rgba(245,158,11,0.12)]" : "border-white/[0.08] bg-white/[0.04] opacity-90"}`}>
+            <div key={item.itemId.toString()} className={`rounded-2xl border p-3 relative ${isFeatured ? "border-amber-400/50 bg-[rgba(6,14,28,0.92)] ring-2 ring-amber-400/50 shadow-[0_0_24px_rgba(245,158,11,0.15),inset_0_0_16px_rgba(245,158,11,0.04)]" : "border-white/[0.05] bg-white/[0.02] opacity-75"}`}>
               {isFeatured && (
-                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full border border-amber-400/35 bg-amber-500/20 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-amber-400/60">
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full border border-amber-400/45 bg-amber-500/25 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-amber-400/80">
                   Featured
                 </span>
               )}
-              <p className="text-sm font-semibold text-slate-100">{item.label}</p>
-              <p className="text-xs text-slate-400">{item.subtitle}</p>
+              <p className={`text-sm font-semibold ${isFeatured ? "text-slate-100" : "text-slate-300"}`}>{item.label}</p>
+              <p className={`text-xs ${isFeatured ? "text-slate-400" : "text-slate-500"}`}>{item.subtitle}</p>
               <p className="mt-2 text-sm text-slate-200">
                 {item.configured ? `${formatUnits(item.onChainPrice, 6)} USDC` : SHOP_SHEET_COPY.status.notConfigured}
               </p>
