@@ -521,15 +521,6 @@
     animation: mission-briefing-card-exit 400ms ease-in forwards;
   }
 
-  /* Persistent piece hint */
-  .piece-hint {
-    text-align: center;
-    font-size: 11px;
-    color: rgba(207, 250, 254, 0.5);
-    padding: 6px 0;
-    min-height: 28px;
-  }
-
   .playhub-game-grid {
     position: relative;
     z-index: 1;
@@ -602,65 +593,6 @@
   .chesscito-dock-center:active {
     background: rgba(20, 184, 166, 0.2);
     box-shadow: 0 0 16px rgba(20, 184, 166, 0.2);
-  }
-
-  .chesscito-hud-strip {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    gap: 0;
-    padding: 0 4px;
-  }
-
-  .chesscito-hud-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    padding: 0;
-  }
-
-  .chesscito-hud-label {
-    font-size: 0.6rem;
-    line-height: 1;
-    letter-spacing: 0.18em;
-    color: rgba(160, 205, 225, 0.58);
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  .chesscito-hud-icon {
-    color: rgba(160, 205, 225, 0.5);
-    flex-shrink: 0;
-  }
-
-  .chesscito-hud-value {
-    font-size: 0.95rem;
-    line-height: 1;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    color: rgba(235, 252, 255, 0.97);
-    text-shadow:
-      0 0 10px rgba(103, 232, 249, 0.5),
-      0 0 24px rgba(103, 232, 249, 0.2);
-  }
-
-  .chesscito-hud-target {
-    color: rgba(103, 232, 249, 0.95);
-  }
-
-  .chesscito-hud-divider {
-    width: 1px;
-    height: 20px;
-    background: rgba(160, 205, 225, 0.15);
-  }
-
-  .hud-bar {
-    background: rgba(2, 12, 24, 0.45);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 16px;
-    padding: 6px 12px;
   }
 
 }
