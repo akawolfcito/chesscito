@@ -12,9 +12,9 @@ const DIFFICULTY_CHIP: Record<number, { label: string; className: string }> = {
 };
 
 const RANK_ACCENT: Record<number, string> = {
-  1: "border-amber-400/40 shadow-[0_0_10px_rgba(251,191,36,0.12)]",
-  2: "border-slate-300/40 shadow-[0_0_10px_rgba(203,213,225,0.12)]",
-  3: "border-orange-600/40 shadow-[0_0_10px_rgba(234,88,12,0.12)]",
+  1: "border-[rgba(220,190,100,0.35)] shadow-[inset_0_1px_3px_rgba(255,255,255,0.04),inset_0_-1px_3px_rgba(0,0,0,0.3),0_0_10px_rgba(200,170,100,0.10)]",
+  2: "border-slate-300/35 shadow-[inset_0_1px_3px_rgba(255,255,255,0.04),inset_0_-1px_3px_rgba(0,0,0,0.3),0_0_8px_rgba(203,213,225,0.08)]",
+  3: "border-orange-600/35 shadow-[inset_0_1px_3px_rgba(255,255,255,0.04),inset_0_-1px_3px_rgba(0,0,0,0.3),0_0_8px_rgba(234,88,12,0.08)]",
 };
 
 function formatTimeMs(ms: number): string {
@@ -46,7 +46,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
   const [toast, setToast] = useState<string | null>(null);
   const chip = DIFFICULTY_CHIP[entry.difficulty] ?? DIFFICULTY_CHIP[1];
   const isHoF = variant === "hall-of-fame";
-  const accentClass = rank && rank <= 3 ? RANK_ACCENT[rank] : "border-white/[0.08]";
+  const accentClass = rank && rank <= 3 ? RANK_ACCENT[rank] : "border-[rgba(200,170,100,0.20)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.03),inset_0_-1px_2px_rgba(0,0,0,0.2)]";
 
   const victoryUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/victory/${entry.tokenId}`;
 
@@ -69,9 +69,10 @@ export function TrophyCard({ entry, variant, rank }: Props) {
   return (
     <div
       className={[
-        "rounded-xl border bg-[#121c2f] px-3 py-2.5",
+        "rounded-xl border px-3 py-2.5",
         accentClass,
       ].join(" ")}
+      style={{ background: "linear-gradient(180deg, rgba(16,12,8,0.90) 0%, rgba(10,8,6,0.85) 100%)" }}
     >
       <div className="flex items-center gap-2">
         {isHoF && rank ? (
@@ -79,7 +80,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
             {rank}
           </span>
         ) : (
-          <Trophy className="h-4 w-4 shrink-0 text-amber-400" />
+          <Trophy className="h-4 w-4 shrink-0 text-amber-400 drop-shadow-[0_0_4px_rgba(200,170,100,0.3)]" />
         )}
         <span
           className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold leading-none ${chip.className}`}
