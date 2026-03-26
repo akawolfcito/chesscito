@@ -64,14 +64,19 @@ function BadgeCard({
   return (
     <div
       className={[
-        "flex items-center gap-3 rounded-2xl px-3 py-3 transition",
+        "relative flex items-center gap-3 rounded-2xl px-3 py-3 transition",
         isClaimed
-          ? "bg-emerald-500/10 ring-1 ring-emerald-500/20"
+          ? "bg-emerald-500/10 ring-1 ring-emerald-500/20 shadow-[inset_0_0_16px_rgba(16,185,129,0.12)]"
           : isClaimable
             ? "bg-cyan-500/10 ring-1 ring-cyan-400/30"
             : "bg-slate-800/30",
       ].join(" ")}
     >
+      {isClaimed && (
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+          &#10003;
+        </span>
+      )}
       <picture className={`h-12 w-12 shrink-0 ${isLocked ? "grayscale opacity-40" : ""}`}>
         <source srcSet={BADGE_ART[badge.piece].replace(".png", ".avif")} type="image/avif" />
         <source srcSet={BADGE_ART[badge.piece].replace(".png", ".webp")} type="image/webp" />
