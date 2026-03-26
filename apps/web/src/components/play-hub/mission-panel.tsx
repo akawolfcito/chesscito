@@ -116,11 +116,11 @@ export function MissionPanel({
 
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden">
-      {/* Zone A: Hero Selector — rail + mission target, fixed layout */}
+      {/* Zone A: Hero Selector — rail + Lv/help controls + mission target */}
       <div className="shrink-0 w-full px-4 pt-[max(env(safe-area-inset-top),12px)]">
-        {/* Piece selector rail — fixed 60px height */}
-        <div className="flex justify-center">
-          <div className="hero-rail">
+        {/* Piece selector rail + utility controls side by side */}
+        <div className="flex items-center gap-2">
+          <div className="hero-rail flex-1 min-w-0">
             {pieces.map((piece) => {
               const isActive = selectedPiece === piece.key;
               const src = PIECE_IMAGES[piece.key as keyof typeof PIECE_IMAGES];
@@ -171,10 +171,18 @@ export function MissionPanel({
               );
             })}
           </div>
+
+          {/* Utility cluster — Lv badge + help button */}
+          <div className="flex shrink-0 flex-col items-center gap-0.5">
+            <span className="text-[11px] font-bold text-purple-400/60">
+              Lv {level}
+            </span>
+            {moreAction}
+          </div>
         </div>
 
-        {/* Mission label slot — fixed 48px height */}
-        <div className="mt-3 h-12 text-center">
+        {/* Mission label slot — collapses to content */}
+        <div className="mt-1 py-1 text-center">
           {pieceHint ? (
             <p className="text-[11px] font-medium text-cyan-200/50">{pieceHint}</p>
           ) : (
@@ -190,26 +198,8 @@ export function MissionPanel({
         </div>
       </div>
 
-      {/* Zone A2: Utility Band — Lv + stars + more */}
-      <div
-        className="flex shrink-0 items-center justify-between px-4 h-8"
-        style={{ background: "linear-gradient(180deg, rgba(12,20,35,0.42) 0%, rgba(6,14,28,0.24) 100%)", borderTop: "1px solid rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(0,0,0,0.15)" }}
-      >
-        <span className="text-[11px] font-bold text-purple-400/60">
-          Lv {level}
-        </span>
-        <div className="flex items-center gap-2">
-          {exerciseDrawer}
-          {moreAction && (
-            <div className="[&>button]:flex [&>button]:h-10 [&>button]:w-10 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:border [&>button]:border-white/[0.12] [&>button]:bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.04))] [&>button]:text-white/60 [&>button]:shadow-[inset_0_1px_2px_rgba(255,255,255,0.04),inset_0_-1px_2px_rgba(0,0,0,0.15),0_1px_3px_rgba(0,0,0,0.2)] [&>button]:transition-all [&>button]:active:scale-95 [&>button]:active:bg-white/[0.12]">
-              {moreAction}
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Zone B: Board Stage — flex-1, maximum space */}
-      <div className="min-h-0 flex-1 px-1 mt-2">
+      <div className="min-h-0 flex-1 px-1 mt-1">
         <div className="h-full rounded-lg overflow-hidden shadow-[inset_0_0_40px_rgba(0,0,0,0.3)]">
           {board}
         </div>
@@ -225,17 +215,24 @@ export function MissionPanel({
 
       {/* Zone C: Footer — micro-stats + CTA merged, then dock */}
       <div className="chesscito-footer shrink-0">
-        {/* Layer 1: Micro-stats + CTA (merged) */}
-        <div className="mx-2 flex items-center justify-center gap-4 rounded-[10px] py-1.5 px-3" style={{ background: "rgba(0,0,0,0.13)", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-          <span className="flex items-center gap-1 text-[10px] font-semibold text-white/40">
-            <Star size={12} className="opacity-30" />
-            {score}
-          </span>
-          <span className="text-[10px] text-white/15">&middot;</span>
-          <span className="flex items-center gap-1 text-[10px] font-semibold text-white/40">
-            <Timer size={12} className="opacity-30" />
-            {Number(timeMs) / 1000}s
-          </span>
+        {/* Layer 1: Interactive progress chip + passive stats */}
+        <div className="mx-2 flex items-center gap-3 rounded-[10px] py-1.5 px-3" style={{ background: "rgba(0,0,0,0.20)", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+          {/* Interactive chip — exercise drawer trigger */}
+          <div className="shrink-0">{exerciseDrawer}</div>
+          {/* Separator */}
+          <span className="h-3 w-px bg-white/10" />
+          {/* Passive stats */}
+          <div className="flex flex-1 items-center justify-center gap-4">
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-white/60">
+              <Star size={12} className="opacity-50" />
+              {score}
+            </span>
+            <span className="text-[10px] text-white/20">&middot;</span>
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-white/60">
+              <Timer size={12} className="opacity-50" />
+              {Number(timeMs) / 1000}s
+            </span>
+          </div>
         </div>
         <div className="px-3 pb-1.5">
           {contextualAction}

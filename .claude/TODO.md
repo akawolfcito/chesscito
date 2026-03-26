@@ -1,3 +1,46 @@
+## Session Plan — 2026-03-26: Practice Hub Re-Architecture
+
+### Summary
+Re-architecture of the main play-hub screen based on approved v2 UX proposal.
+Full spec: `docs/superpowers/plans/2026-03-26-practice-hub-rearchitecture.md`
+
+### Current State
+- ✅ **Completed**: UX diagnosis, v1 proposal, v2 "approved with adjustments", implementation spec written
+- 🚧 **In Progress**: Ready to begin PR1
+- ⚠️ **Blockers**: None
+- 🔧 **Tech Debt**: 9 hardcoded `#0a1424` values, 48 raw `<button>` elements (out of scope)
+
+### Next Steps (Prioritized)
+
+#### Priority 1: Critical (P0)
+1. **PR1: Dock semantics + active routing** — S
+   - Files: `editorial.ts`, `persistent-dock.tsx`
+   - Acceptance: Dock reads "Practice", links to `/`, active state wired
+2. **PR2: Eliminate utility band + redistribute** — M
+   - Files: `mission-panel.tsx`, `page.tsx`, `exercise-drawer.tsx`
+   - Acceptance: No utility band, Lv beside rail, stars in stats bar, HelpCircle icon
+
+#### Priority 2: High (P1)
+3. **PR3: Piece selector state simplification** — S
+   - Files: `globals.css`
+   - Acceptance: No border/border-radius on `.piece-hero`, subtler glow
+4. **PR4: Opacity + spacing tuning** — S
+   - Files: `globals.css`, `mission-panel.tsx`
+   - Acceptance: Dock 0.55, inactive tabs 0.45, board mt-1, label h-auto
+
+#### Priority 3: Validation
+5. **PR5: MiniPay QA** — S
+   - 7 states screenshotted, before/after comparison
+   - Decides whether dock slot reorder is needed in future pass
+
+### Key Decisions (Locked)
+- Screen = Practice Hub (not Home/Arena)
+- Dock center = "Practice" (new `DOCK_LABELS` constant, NOT `ARENA_COPY.title` mutation)
+- Zero new assets — CSS/layout only
+- Dock slots: no reorder in this pass
+
+---
+
 ## Session Plan — 2026-03-18: Victory Screen Refactor (Claim → Share)
 
 ### Spec Summary

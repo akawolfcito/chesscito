@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { ARENA_COPY } from "@/lib/content/editorial";
+import { DOCK_LABELS } from "@/lib/content/editorial";
 
 type PersistentDockProps = {
   badgeControl: ReactNode;
@@ -15,22 +18,30 @@ export function PersistentDock({
   leaderboardControl,
   inviteControl,
 }: PersistentDockProps) {
+  const pathname = usePathname();
+  const isCenterActive = pathname === "/";
+
   return (
     <nav className="chesscito-dock" aria-label="Game navigation">
       <div className="chesscito-dock-item">{badgeControl}</div>
       <div className="chesscito-dock-item">{shopControl}</div>
 
-      {/* Center — primary action with glow pill */}
+      {/* Center — Practice Hub with route-aware active state */}
       <Link
-        href="/arena"
-        className="chesscito-dock-center"
+        href="/"
+        className={`chesscito-dock-center${isCenterActive ? " is-active" : ""}`}
       >
         <picture>
           <source srcSet="/art/play-menu.webp" type="image/webp" />
-          <img src="/art/play-menu.png" alt="" aria-hidden="true" className="h-6 w-6 object-contain" />
+          <img
+            src="/art/play-menu.png"
+            alt=""
+            aria-hidden="true"
+            className={`h-6 w-6 object-contain ${isCenterActive ? "dock-treat-active" : "dock-treat-base"}`}
+          />
         </picture>
         <span className="text-[7px] font-bold uppercase tracking-[0.12em]">
-          {ARENA_COPY.title}
+          {DOCK_LABELS.practice}
         </span>
       </Link>
 

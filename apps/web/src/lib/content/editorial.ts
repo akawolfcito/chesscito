@@ -388,6 +388,10 @@ export const PRACTICE_COPY = {
   label: "Practice mode",
 } as const;
 
+export const DOCK_LABELS = {
+  practice: "Practice",
+} as const;
+
 export const COACH_COPY = {
   askCoach: "Ask the Coach",
   askCoachSub: "What can I improve?",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MoreVertical } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import Link from "next/link";
 import {
   useAccount,
@@ -814,9 +814,9 @@ export default function PlayHubPage() {
             <Link
               href="/about"
               className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-cyan-200/70 transition hover:bg-white/10 hover:text-cyan-50"
-              aria-label="More options"
+              aria-label="Help"
             >
-              <MoreVertical size={18} strokeWidth={2} />
+              <HelpCircle size={18} strokeWidth={2} />
             </Link>
           }
         />
