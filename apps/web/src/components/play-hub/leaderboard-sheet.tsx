@@ -49,7 +49,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
         >
           <picture>
             <source srcSet="/art/leaderboard-menu.webp" type="image/webp" />
-            <img src="/art/leaderboard-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+            <img src="/art/leaderboard-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5 dock-treat-base" />
           </picture>
           <span className="sr-only">Leaderboard</span>
         </button>

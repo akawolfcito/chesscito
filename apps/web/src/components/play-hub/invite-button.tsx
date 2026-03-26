@@ -33,7 +33,7 @@ export function InviteButton() {
     >
       <picture>
         <source srcSet="/art/invite-share-menu.webp" type="image/webp" />
-        <img src="/art/invite-share-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+        <img src="/art/invite-share-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5 dock-treat-base" />
       </picture>
       <span className="sr-only">{INVITE_COPY.button}</span>
       {copied ? (

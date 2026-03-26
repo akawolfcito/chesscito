@@ -38,7 +38,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
         >
           <picture>
             <source srcSet="/art/shop-menu.webp" type="image/webp" />
-            <img src="/art/shop-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+            <img src="/art/shop-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5 dock-treat-base" />
           </picture>
           <span className="sr-only">Shop</span>
         </button>

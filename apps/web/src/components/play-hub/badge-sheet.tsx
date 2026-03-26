@@ -83,7 +83,7 @@ function BadgeCard({
           &#10003;
         </span>
       )}
-      <picture className={`h-12 w-12 shrink-0 ${isLocked ? "grayscale opacity-40" : isClaimed ? "drop-shadow-[0_0_8px_rgba(16,185,129,0.2)]" : ""}`}>
+      <picture className={`h-12 w-12 shrink-0 ${isLocked ? "badge-treat-locked" : isClaimed ? "badge-treat-owned" : isClaimable ? "badge-treat-claimable" : ""}`}>
         <source srcSet={BADGE_ART[badge.piece].replace(".png", ".avif")} type="image/avif" />
         <source srcSet={BADGE_ART[badge.piece].replace(".png", ".webp")} type="image/webp" />
         <img
@@ -195,7 +195,7 @@ export function BadgeSheet({
         >
           <picture>
             <source srcSet="/art/badge-menu.webp" type="image/webp" />
-            <img src="/art/badge-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5" />
+            <img src="/art/badge-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5 dock-treat-base" />
           </picture>
           {showNotification ? (
             <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
