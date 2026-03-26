@@ -492,26 +492,34 @@ export default function ArenaPage() {
       </div>
 
       {isEndState && (
-        <ArenaEndState
-          status={game.status}
-          isPlayerWin={isPlayerWin}
-          onPlayAgain={handlePlayAgain}
-          onBackToHub={handleBackToHub}
-          claimPhase={claimPhase}
-          shareStatus={shareStatus}
-          claimData={claimData}
-          onClaimVictory={canClaim ? () => void handleClaimVictory() : undefined}
-          claimPrice={claimPriceLabel}
-          claimError={
-            claimPhase === "error" && !isConnected
-              ? "Wallet disconnected — reconnect to try again"
-              : claimError
-          }
-          moves={game.moveCount}
-          elapsedMs={game.elapsedMs}
-          difficulty={game.difficulty}
-          onAskCoach={coachPhase === "idle" ? handleAskCoach : undefined}
-        />
+        <div
+          className={`transition-opacity duration-200 ${
+            coachPhase !== "idle"
+              ? "opacity-0 pointer-events-none"
+              : "opacity-100 pointer-events-auto"
+          }`}
+        >
+          <ArenaEndState
+            status={game.status}
+            isPlayerWin={isPlayerWin}
+            onPlayAgain={handlePlayAgain}
+            onBackToHub={handleBackToHub}
+            claimPhase={claimPhase}
+            shareStatus={shareStatus}
+            claimData={claimData}
+            onClaimVictory={canClaim ? () => void handleClaimVictory() : undefined}
+            claimPrice={claimPriceLabel}
+            claimError={
+              claimPhase === "error" && !isConnected
+                ? "Wallet disconnected — reconnect to try again"
+                : claimError
+            }
+            moves={game.moveCount}
+            elapsedMs={game.elapsedMs}
+            difficulty={game.difficulty}
+            onAskCoach={coachPhase === "idle" ? handleAskCoach : undefined}
+          />
+        </div>
       )}
 
       {/* Coach phases */}
