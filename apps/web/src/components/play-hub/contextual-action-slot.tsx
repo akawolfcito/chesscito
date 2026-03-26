@@ -71,12 +71,12 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
   const label = isBusy && copy.loading ? copy.loading : copy.label;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 px-5 py-2 duration-200">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
       <button
         type="button"
         onClick={handler}
         disabled={isBusy}
-        className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold uppercase tracking-wide transition-transform active:scale-[0.98] disabled:opacity-70 ${style.bg} ${style.glow} ${style.text} ${action === "retry" ? "border border-[rgba(190,210,255,0.08)]" : ""}`}
+        className={`flex h-12 w-full items-center justify-center gap-2 rounded-[14px] text-[13px] font-bold uppercase tracking-wide transition-transform active:scale-[0.98] disabled:opacity-70 ${style.bg} ${style.glow} ${style.text} ${action === "retry" ? "border border-[rgba(190,210,255,0.08)]" : ""}`}
       >
         {isBusy ? (
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
