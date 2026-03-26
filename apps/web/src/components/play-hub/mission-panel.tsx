@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Star, Timer } from "lucide-react";
-import { PHASE_FLASH_COPY, PIECE_ICONS, PRACTICE_COPY } from "@/lib/content/editorial";
+import { PHASE_FLASH_COPY, PIECE_IMAGES, PRACTICE_COPY } from "@/lib/content/editorial";
 
 type PieceOption = {
   key: "rook" | "bishop" | "knight";
@@ -123,7 +123,7 @@ export function MissionPanel({
           <div className="hero-rail">
             {pieces.map((piece) => {
               const isActive = selectedPiece === piece.key;
-              const icon = PIECE_ICONS[piece.key as keyof typeof PIECE_ICONS];
+              const src = PIECE_IMAGES[piece.key as keyof typeof PIECE_IMAGES];
               return (
                 <button
                   key={piece.key}
@@ -133,15 +133,30 @@ export function MissionPanel({
                   className={`hero-rail-tab ${isActive ? "is-active" : "is-inactive"}`}
                   aria-label={piece.label}
                 >
-                  <span
-                    className={
+                  <picture
+                    className={[
+                      "h-7 w-7 shrink-0",
                       isActive
-                        ? `text-[26px] leading-none drop-shadow-[0_0_6px_rgba(200,170,100,0.4)] ${plopping ? "animate-[hero-plop_300ms_cubic-bezier(0.34,1.56,0.64,1)]" : ""}`
-                        : "text-[20px] leading-none"
-                    }
+                        ? `piece-hero ${plopping ? "animate-[hero-plop_300ms_cubic-bezier(0.34,1.56,0.64,1)]" : ""}`
+                        : "piece-inactive",
+                    ].join(" ")}
                   >
-                    {icon}
-                  </span>
+                    <source srcSet={`${src}.avif`} type="image/avif" />
+                    <source srcSet={`${src}.webp`} type="image/webp" />
+                    <img
+                      src={`${src}.png`}
+                      alt={piece.label}
+                      className="h-full w-full object-contain"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.style.display = "none";
+                        const fallback = document.createElement("span");
+                        fallback.textContent = piece.label[0];
+                        fallback.className = "text-[20px] leading-none text-slate-400";
+                        target.parentElement?.appendChild(fallback);
+                      }}
+                    />
+                  </picture>
                   {isActive && (
                     <span className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-[rgba(220,200,150,0.9)]">
                       {piece.label}

@@ -32,10 +32,10 @@ export const PIECE_LABELS = {
   knight: "Knight",
 } as const;
 
-export const PIECE_ICONS: Record<keyof typeof PIECE_LABELS, string> = {
-  rook: "\u265C",
-  bishop: "\u265D",
-  knight: "\u265E",
+export const PIECE_IMAGES: Record<keyof typeof PIECE_LABELS, string> = {
+  rook: "/art/pieces/w-rook",
+  bishop: "/art/pieces/w-bishop",
+  knight: "/art/pieces/w-knight",
 } as const;
 
 export const BADGE_TITLES = {
