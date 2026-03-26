@@ -116,46 +116,50 @@ export function MissionPanel({
 
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden">
-      {/* Zone A: Hero Selector — centered piece + mission target */}
-      <div className="shrink-0 px-4 pt-[max(env(safe-area-inset-top),12px)]">
-        {/* Piece selector row — centered */}
-        <div className="flex items-center justify-center gap-2">
-          {pieces.map((piece) => {
-            const isActive = selectedPiece === piece.key;
-            const icon = PIECE_ICONS[piece.key as keyof typeof PIECE_ICONS];
-            return (
-              <button
-                key={piece.key}
-                type="button"
-                disabled={!piece.enabled}
-                onClick={() => onSelectPiece(piece.key)}
-                className={`relative flex flex-col items-center justify-center rounded-full transition-all ${
-                  isActive
-                    ? `h-16 w-16 border-2 border-cyan-300/60 bg-gradient-to-b from-cyan-400/18 to-cyan-600/10 shadow-[0_0_20px_rgba(34,211,238,0.30)] ${plopping ? "animate-[hero-plop_300ms_cubic-bezier(0.34,1.56,0.64,1)]" : ""}`
-                    : "h-8 w-8 min-h-[44px] min-w-[44px] border border-transparent opacity-[0.16] disabled:opacity-20"
-                }`}
-                aria-label={piece.label}
-              >
-                <span className={isActive ? "text-3xl drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" : "text-lg"}>
-                  {icon}
-                </span>
-                {isActive && (
-                  <span className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-white">
-                    {piece.label}
+      {/* Zone A: Hero Selector — rail + mission target, fixed layout */}
+      <div className="shrink-0 w-full px-4 pt-[max(env(safe-area-inset-top),12px)]">
+        {/* Piece selector rail — fixed 60px height */}
+        <div className="flex justify-center">
+          <div className="hero-rail">
+            {pieces.map((piece) => {
+              const isActive = selectedPiece === piece.key;
+              const icon = PIECE_ICONS[piece.key as keyof typeof PIECE_ICONS];
+              return (
+                <button
+                  key={piece.key}
+                  type="button"
+                  disabled={!piece.enabled}
+                  onClick={() => onSelectPiece(piece.key)}
+                  className={`hero-rail-tab ${isActive ? "is-active" : "is-inactive"}`}
+                  aria-label={piece.label}
+                >
+                  <span
+                    className={
+                      isActive
+                        ? `text-[26px] leading-none drop-shadow-[0_0_6px_rgba(34,211,238,0.5)] ${plopping ? "animate-[hero-plop_300ms_cubic-bezier(0.34,1.56,0.64,1)]" : ""}`
+                        : "text-[20px] leading-none"
+                    }
+                  >
+                    {icon}
                   </span>
-                )}
-                {!piece.enabled && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/10 bg-slate-600/80 text-[7px]">
-                    &#128274;
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                  {isActive && (
+                    <span className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-white">
+                      {piece.label}
+                    </span>
+                  )}
+                  {!piece.enabled && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/10 bg-slate-600/80 text-[7px]">
+                      &#128274;
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Mission label slot — target OR tutorial (mutually exclusive) */}
-        <div className="mt-3 text-center">
+        {/* Mission label slot — fixed 48px height */}
+        <div className="mt-3 h-12 text-center">
           {pieceHint ? (
             <p className="text-[11px] font-medium text-cyan-200/50">{pieceHint}</p>
           ) : (
