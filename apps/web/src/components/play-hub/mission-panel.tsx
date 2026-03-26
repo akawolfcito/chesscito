@@ -131,8 +131,8 @@ export function MissionPanel({
                 onClick={() => onSelectPiece(piece.key)}
                 className={`relative flex flex-col items-center justify-center rounded-full transition-all ${
                   isActive
-                    ? `h-16 w-16 border-2 border-cyan-300/60 bg-gradient-to-b from-cyan-400/15 to-cyan-600/8 shadow-[0_0_20px_rgba(34,211,238,0.30)] ${plopping ? "animate-[hero-plop_300ms_cubic-bezier(0.34,1.56,0.64,1)]" : ""}`
-                    : "h-8 w-8 min-h-[44px] min-w-[44px] border border-white/[0.06] opacity-[0.22] disabled:opacity-20"
+                    ? `h-16 w-16 border-2 border-cyan-300/60 bg-gradient-to-b from-cyan-400/18 to-cyan-600/10 shadow-[0_0_20px_rgba(34,211,238,0.30)] ${plopping ? "animate-[hero-plop_300ms_cubic-bezier(0.34,1.56,0.64,1)]" : ""}`
+                    : "h-8 w-8 min-h-[44px] min-w-[44px] border border-transparent opacity-[0.16] disabled:opacity-20"
                 }`}
                 aria-label={piece.label}
               >
@@ -140,7 +140,7 @@ export function MissionPanel({
                   {icon}
                 </span>
                 {isActive && (
-                  <span className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-cyan-100">
+                  <span className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-white">
                     {piece.label}
                   </span>
                 )}
@@ -155,12 +155,12 @@ export function MissionPanel({
         </div>
 
         {/* Mission label slot — target OR tutorial (mutually exclusive) */}
-        <div className="mt-2 text-center">
+        <div className="mt-3 text-center">
           {pieceHint ? (
             <p className="text-[11px] font-medium text-cyan-200/50">{pieceHint}</p>
           ) : (
             <>
-              <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-cyan-400/35">
+              <p className="text-[8px] font-semibold uppercase tracking-[0.16em] text-cyan-400/25">
                 Move to
               </p>
               <p className="text-xl font-black text-cyan-400/90 drop-shadow-[0_0_12px_rgba(34,211,238,0.20)]">
