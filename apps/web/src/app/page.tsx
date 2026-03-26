@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HelpCircle } from "lucide-react";
-import Link from "next/link";
 import {
   useAccount,
   useChainId,
@@ -140,6 +139,7 @@ export default function PlayHubPage() {
   const [isLocalhost, setIsLocalhost] = useState(false);
   const { showSplash, showBriefing, markOnboarded } = useSplashLoader();
   const [exerciseDrawerOpen, setExerciseDrawerOpen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const {
     progress,
@@ -811,13 +811,14 @@ export default function PlayHubPage() {
           }
           isReplay={isReplay}
           moreAction={
-            <Link
-              href="/about"
+            <button
+              type="button"
+              onClick={() => setShowHelp(true)}
               className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-cyan-200/70 transition hover:bg-white/10 hover:text-cyan-50"
               aria-label="Help"
             >
               <HelpCircle size={18} strokeWidth={2} />
-            </Link>
+            </button>
           }
         />
 
@@ -841,12 +842,15 @@ export default function PlayHubPage() {
           onConfirm={() => void handleConfirmPurchase()}
         />
 
-        {showBriefing ? (
+        {(showBriefing || showHelp) ? (
           <MissionBriefing
             pieceType={selectedPiece}
             targetLabel={targetLabel}
             isCapture={Boolean(currentExercise.isCapture)}
-            onPlay={() => markOnboarded()}
+            onPlay={() => {
+              if (showBriefing) markOnboarded();
+              setShowHelp(false);
+            }}
           />
         ) : null}
 

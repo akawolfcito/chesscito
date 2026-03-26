@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import type { ContextAction } from "@/lib/game/context-action";
 import type { LucideIcon } from "lucide-react";
-import { Star, Shield, Award, RotateCcw } from "lucide-react";
-import { FOOTER_CTA_COPY } from "@/lib/content/editorial";
+import { Star, Shield, Award, RotateCcw, Swords } from "lucide-react";
+import { FOOTER_CTA_COPY, ARENA_CTA_COPY } from "@/lib/content/editorial";
 
 type ContextualActionSlotProps = {
   action: ContextAction;
@@ -63,7 +64,17 @@ function getHandler(
 export function ContextualActionSlot(props: ContextualActionSlotProps) {
   const { action, shieldsAvailable, isBusy } = props;
 
-  if (!action) return null;
+  if (!action) {
+    return (
+      <Link
+        href="/arena"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-teal-400/15 bg-teal-500/[0.08] text-[13px] font-bold uppercase tracking-wide text-teal-300/80 transition-transform active:scale-[0.98]"
+      >
+        <Swords size={18} />
+        <span>{ARENA_CTA_COPY.label}</span>
+      </Link>
+    );
+  }
 
   const copy = FOOTER_CTA_COPY[action];
   const style = ACTION_STYLES[action];

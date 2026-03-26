@@ -392,6 +392,14 @@ export const DOCK_LABELS = {
   practice: "Practice",
 } as const;
 
+export const ARENA_CTA_COPY = {
+  label: "Enter Arena",
+} as const;
+
+export const ABOUT_LINK_COPY = {
+  label: "About Chesscito",
+} as const;
+
 export const COACH_COPY = {
   askCoach: "Ask the Coach",
   askCoachSub: "What can I improve?",

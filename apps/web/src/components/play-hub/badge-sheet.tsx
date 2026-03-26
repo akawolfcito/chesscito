@@ -11,7 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { BADGE_SHEET_COPY, PIECE_LABELS } from "@/lib/content/editorial";
+import { ABOUT_LINK_COPY, BADGE_SHEET_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
@@ -229,6 +229,13 @@ export function BadgeSheet({
         >
           <Trophy className="h-5 w-5" />
           {BADGE_SHEET_COPY.viewTrophies}
+        </Link>
+        <Link
+          href="/about"
+          onClick={() => onOpenChange(false)}
+          className="mt-3 block text-center text-[11px] text-cyan-300/40 transition-colors hover:text-cyan-200/60"
+        >
+          {ABOUT_LINK_COPY.label}
         </Link>
       </SheetContent>
     </Sheet>
