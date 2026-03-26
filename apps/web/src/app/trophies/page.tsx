@@ -113,7 +113,7 @@ export default function TrophiesPage() {
       </header>
 
       {/* List zone — clean dark background */}
-      <div className="flex-1 px-4 pb-8" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom))" }}>
+      <div className="flex-1 px-4 pt-4 pb-8" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom))" }}>
         {!configured && (
           <p className="py-6 text-center text-sm text-slate-500">
             {TROPHY_VITRINE_COPY.configError}
@@ -124,7 +124,7 @@ export default function TrophiesPage() {
           <>
             {/* My Victories */}
             <section className="mb-6">
-              <h2 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
                 <Crown className="h-3.5 w-3.5 text-amber-400" />
                 {TROPHY_VITRINE_COPY.myVictories}
               </h2>
@@ -156,7 +156,7 @@ export default function TrophiesPage() {
 
             {/* Hall of Fame */}
             <section className="mb-6">
-              <h2 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
                 <Crown className="h-3.5 w-3.5 text-purple-400" />
                 {TROPHY_VITRINE_COPY.hallOfFame}
               </h2>
