@@ -66,11 +66,17 @@ function BadgeCard({
       className={[
         "relative flex items-center gap-3 rounded-2xl px-3 py-3 transition",
         isClaimed
-          ? "bg-emerald-500/15 ring-1 ring-emerald-500/25 shadow-[inset_0_0_20px_rgba(16,185,129,0.15)]"
+          ? "border border-emerald-500/25 shadow-[inset_0_2px_4px_rgba(255,255,255,0.04),inset_0_-2px_4px_rgba(0,0,0,0.3),0_0_10px_rgba(16,185,129,0.08)]"
           : isClaimable
-            ? "bg-cyan-500/12 ring-1 ring-cyan-400/35 shadow-[inset_0_0_12px_rgba(34,211,238,0.06)]"
-            : "bg-white/[0.04] border border-white/[0.06]",
+            ? "border border-cyan-400/25 shadow-[inset_0_2px_4px_rgba(255,255,255,0.04),inset_0_-2px_4px_rgba(0,0,0,0.3),inset_0_0_12px_rgba(34,211,238,0.06)]"
+            : "border border-white/[0.06] shadow-[inset_0_1px_2px_rgba(255,255,255,0.02),inset_0_-1px_2px_rgba(0,0,0,0.15)]",
       ].join(" ")}
+      style={isClaimed
+        ? { background: "linear-gradient(180deg, rgba(10,22,18,0.85) 0%, rgba(6,16,12,0.75) 100%)" }
+        : isClaimable
+          ? { background: "linear-gradient(180deg, rgba(10,18,28,0.85) 0%, rgba(6,14,22,0.75) 100%)" }
+          : { background: "rgba(255,255,255,0.03)" }
+      }
     >
       {isClaimed && (
         <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white shadow-[0_0_8px_rgba(16,185,129,0.3)]">
