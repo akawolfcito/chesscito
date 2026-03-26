@@ -173,6 +173,7 @@
     box-shadow:
       var(--treat-carved-hi),
       var(--treat-carved-lo),
+      inset 0 0 0 1px rgba(103, 232, 249, 0.12),
       0 8px 24px rgba(2, 12, 22, 0.22);
     border-radius: 18px;
     background: rgba(2, 18, 32, 0.36);
@@ -770,6 +771,7 @@
   border-radius: 8px;
 }
 
+/* Reserved — consumed when interaction states are wired */
 .piece-pressed {
   filter: brightness(0.90) saturate(0.85);
   box-shadow: var(--treat-carved-lo);
@@ -782,11 +784,13 @@
   box-shadow: var(--treat-carved-lo);
 }
 
+/* Reserved — consumed when route-aware dock state is wired */
 .dock-treat-active {
   filter: var(--treat-neutral-tint-active);
   box-shadow: var(--treat-carved-hi), var(--treat-carved-lo), var(--treat-depth-outer);
 }
 
+/* Reserved — consumed when interaction states are wired */
 .dock-treat-pressed {
   filter: brightness(0.65) saturate(0.6);
   box-shadow: var(--treat-carved-lo);
@@ -818,11 +822,13 @@
    Color filters + drop-shadow defined together in Task 6. */
 
 /* ── 5. Decorative Frames ── */
+/* Reserved — consumed when frame wrappers adopt treatment system */
 .frame-structural {
   filter: var(--treat-neutral-tint);
   box-shadow: var(--treat-carved-hi), var(--treat-carved-lo);
 }
 
+/* Reserved — consumed when featured frame slots adopt treatment system */
 .frame-showcase {
   box-shadow: var(--treat-carved-hi), var(--treat-carved-lo), var(--treat-depth-outer);
   border: 1px solid var(--treat-semi-border);
