@@ -73,8 +73,8 @@ export function ExerciseDrawer({
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-white/[0.10]" style={{ background: "var(--surface-b)", backdropFilter: "blur(20px)" }}>
-        <div className="flex items-center justify-between border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
-          <SheetHeader className="flex-1">
+        <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
+          <SheetHeader>
             <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><Crosshair size={20} className="text-cyan-400/60" />{EXERCISE_DRAWER_COPY.title}</SheetTitle>
             <SheetDescription className="text-cyan-100/75">
               {PIECE_LABELS[piece]}

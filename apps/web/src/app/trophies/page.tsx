@@ -89,7 +89,8 @@ export default function TrophiesPage() {
   }, [isConnected, address, loadMyVictories]);
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] w-full max-w-[var(--app-max-width)] flex-col bg-[var(--surface-a)] backdrop-blur-2xl">
+    <div className="mission-shell flex min-h-[100dvh] justify-center bg-black/50">
+    <div className="mx-auto flex w-full max-w-[var(--app-max-width)] flex-col bg-[var(--surface-a)] backdrop-blur-2xl rounded-t-3xl">
       {/* Header Pattern B */}
       <header className="relative flex min-h-40 max-h-[200px] items-end border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] px-4 pb-5 pt-6 rounded-t-3xl">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a2a3f] to-transparent opacity-40 rounded-t-3xl" />
@@ -177,6 +178,7 @@ export default function TrophiesPage() {
           {TROPHY_VITRINE_COPY.roadmap}
         </div>
       </div>
+    </div>
     </div>
   );
 }

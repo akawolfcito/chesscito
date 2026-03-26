@@ -200,8 +200,8 @@ export function BadgeSheet({
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="mission-shell sheet-bg-badges rounded-t-3xl border-white/[0.10]">
-        <div className="flex items-center justify-between border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
-          <SheetHeader className="flex-1">
+        <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
+          <SheetHeader>
             <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><Trophy size={20} className="text-emerald-400/60" />{BADGE_SHEET_COPY.title}</SheetTitle>
             <SheetDescription className="text-cyan-100/75">{BADGE_SHEET_COPY.subtitle}</SheetDescription>
           </SheetHeader>
