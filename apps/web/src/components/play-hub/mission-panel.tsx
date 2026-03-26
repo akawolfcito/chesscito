@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Star, Timer, Crosshair } from "lucide-react";
+import { Star, Timer } from "lucide-react";
 import { PHASE_FLASH_COPY, PIECE_ICONS, PRACTICE_COPY } from "@/lib/content/editorial";
 
 type PieceOption = {
@@ -170,42 +170,35 @@ export function MissionPanel({
         </div>
       </div>
 
-      {/* Zone 2: Board Stage — hero, fills all remaining space */}
-      <div className="min-h-0 flex-1 px-1">
-        {pieceHint ? <p className="piece-hint">{pieceHint}</p> : null}
+      {/* Zone B: Board Stage — flex-1, maximum space */}
+      <div className="min-h-0 flex-1 px-1 mt-2">
         {board}
-        {/* Progress bar flush below board */}
-        {isReplay ? (
+        {isReplay && (
           <p className="px-2 py-1 text-center text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-cyan-400/50">
             {PRACTICE_COPY.label}
           </p>
-        ) : null}
+        )}
       </div>
 
-      {/* Zone 3: Footer — HUD strip + contextual action + persistent dock */}
+      {/* Zone C: Footer — micro-stats + CTA merged, then dock */}
       <div className="chesscito-footer shrink-0">
-        {/* Layer 1: HUD strip (non-interactive) */}
-        <div className="chesscito-hud-strip">
-          <div className="chesscito-hud-item">
-            <Star className="chesscito-hud-icon" size={14} />
-            <span className="chesscito-hud-value">{score}</span>
-          </div>
-          <div className="chesscito-hud-divider" />
-          <div className="chesscito-hud-item">
-            <Timer className="chesscito-hud-icon" size={14} />
-            <span className="chesscito-hud-value">{Number(timeMs) / 1000}s</span>
-          </div>
-          <div className="chesscito-hud-divider" />
-          <div className="chesscito-hud-item">
-            <Crosshair className="chesscito-hud-icon" size={14} />
-            <span className="chesscito-hud-value chesscito-hud-target">{targetLabel}</span>
-          </div>
+        {/* Layer 1: Micro-stats + CTA (merged) */}
+        <div className="flex items-center justify-center gap-4 pt-2 pb-1.5">
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-white/35">
+            <Star size={12} className="opacity-25" />
+            {score}
+          </span>
+          <span className="text-[10px] text-white/15">&middot;</span>
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-white/35">
+            <Timer size={12} className="opacity-25" />
+            {Number(timeMs) / 1000}s
+          </span>
+        </div>
+        <div className="px-3 pb-1.5">
+          {contextualAction}
         </div>
 
-        {/* Layer 2: Contextual action slot (1 CTA at a time) */}
-        {contextualAction}
-
-        {/* Layer 3: Persistent dock (navigation) */}
+        {/* Layer 2: Dock (navigation) */}
         {persistentDock}
       </div>
 
