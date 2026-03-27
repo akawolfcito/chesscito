@@ -140,6 +140,9 @@ export default function PlayHubPage() {
   const { showSplash, showBriefing, markOnboarded } = useSplashLoader();
   const [exerciseDrawerOpen, setExerciseDrawerOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [justClaimed, setJustClaimed] = useState<Record<PieceKey, boolean>>({
+    rook: false, bishop: false, knight: false,
+  });
 
   const {
     progress,
@@ -373,11 +376,13 @@ export default function PlayHubPage() {
   const isClaimBusy = isWriting || isClaimConfirming;
   const isSubmitBusy = isWriting || isSubmitConfirming;
 
+  const allExercisesAttempted = progress.stars.every(s => s > 0);
+
   const contextAction = getContextAction({
     phase,
     shieldsAvailable: shieldCount,
-    scorePending: canSendOnChain,
-    badgeClaimable: badgeEarned && !hasClaimedBadge,
+    scorePending: canSendOnChain && allExercisesAttempted,
+    badgeClaimable: badgeEarned && !hasClaimedBadge && !justClaimed[selectedPiece],
     isConnected,
     isCorrectChain,
   });
@@ -525,6 +530,7 @@ export default function PlayHubPage() {
       });
 
       setClaimTxHash(txHash);
+      setJustClaimed(prev => ({ ...prev, [targetPiece]: true }));
       void refetchAllBadges();
       setResultOverlay({
         variant: "badge",
@@ -858,12 +864,6 @@ export default function PlayHubPage() {
           <BadgeEarnedPrompt
             pieceType={selectedPiece}
             totalStars={totalStars}
-            onClaimBadge={() => {
-              boardGeneration.current++;
-              if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
-              setShowBadgeEarned(false);
-              void handleClaimBadge();
-            }}
             onSubmitScore={() => {
               if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
               setShowBadgeEarned(false);

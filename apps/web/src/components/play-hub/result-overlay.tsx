@@ -258,7 +258,6 @@ export function ResultOverlay({
 type BadgeEarnedPromptProps = {
   pieceType: PieceKey;
   totalStars: number;
-  onClaimBadge: () => void;
   onSubmitScore: () => void;
   onLater: () => void;
 };
@@ -266,7 +265,6 @@ type BadgeEarnedPromptProps = {
 export function BadgeEarnedPrompt({
   pieceType,
   totalStars,
-  onClaimBadge,
   onSubmitScore,
   onLater,
 }: BadgeEarnedPromptProps) {
@@ -292,16 +290,7 @@ export function BadgeEarnedPrompt({
             variant="game-solid"
             size="game"
             autoFocus
-            onClick={onClaimBadge}
-          >
-            {BADGE_EARNED_COPY.claimBadge}
-          </Button>
-          <Button
-            type="button"
-            variant="game-solid"
-            size="game"
             onClick={onSubmitScore}
-            className="bg-cyan-600/60 hover:bg-cyan-500"
           >
             {BADGE_EARNED_COPY.submitScore}
           </Button>
