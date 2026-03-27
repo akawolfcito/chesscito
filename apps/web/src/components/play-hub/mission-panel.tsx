@@ -197,7 +197,7 @@ export function MissionPanel({
 
       {/* Zone B: Board Stage — flex-1, maximum space */}
       <div className="min-h-0 flex-1 px-1 mt-1">
-        <div className="h-full rounded-lg overflow-hidden shadow-[inset_0_0_40px_rgba(0,0,0,0.3)]">
+        <div className="h-full rounded-xl overflow-hidden border border-white/[0.04] shadow-[inset_0_0_40px_rgba(0,0,0,0.3),0_4px_20px_rgba(0,0,0,0.25)]">
           {board}
         </div>
         {isReplay && (
@@ -213,20 +213,23 @@ export function MissionPanel({
       {/* Zone C: Footer — micro-stats + CTA merged, then dock */}
       <div className="chesscito-footer shrink-0">
         {/* Layer 1: Interactive progress chip + passive stats */}
-        <div className="mx-2 flex items-center gap-3 rounded-[10px] py-1.5 px-3" style={{ background: "rgba(0,0,0,0.20)", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+        <div
+          className="mx-2 flex items-center gap-3 rounded-xl border border-white/[0.06] py-1.5 px-3"
+          style={{ background: "linear-gradient(180deg, rgba(12,20,35,0.55) 0%, rgba(6,14,28,0.45) 100%)", boxShadow: "inset 0 1px 2px rgba(255,255,255,0.04), inset 0 -1px 2px rgba(0,0,0,0.2)" }}
+        >
           {/* Interactive chip — exercise drawer trigger */}
           <div className="shrink-0">{exerciseDrawer}</div>
           {/* Separator */}
-          <span className="h-3 w-px bg-white/10" />
+          <span className="h-4 w-px bg-white/8" />
           {/* Passive stats */}
           <div className="flex flex-1 items-center justify-center gap-4">
-            <span className="flex items-center gap-1 text-[10px] font-semibold text-white/60">
-              <Star size={12} className="opacity-50" />
+            <span className="flex items-center gap-1 text-xs font-bold tabular-nums text-white/75">
+              <Star size={14} className="opacity-65" />
               {score}
             </span>
-            <span className="text-[10px] text-white/20">&middot;</span>
-            <span className="flex items-center gap-1 text-[10px] font-semibold text-white/60">
-              <Timer size={12} className="opacity-50" />
+            <span className="text-xs text-white/15">&middot;</span>
+            <span className="flex items-center gap-1 text-xs font-bold tabular-nums text-white/75">
+              <Timer size={14} className="opacity-65" />
               {Number(timeMs) / 1000}s
             </span>
           </div>
