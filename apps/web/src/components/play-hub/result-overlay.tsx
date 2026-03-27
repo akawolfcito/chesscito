@@ -172,7 +172,7 @@ export function ResultOverlay({
       aria-modal="true"
       aria-label={title}
     >
-      <div className="flex w-full max-w-xs flex-col items-center gap-6 px-6 py-10 text-center animate-in zoom-in-95 fade-in duration-400">
+      <div className="flex w-full max-w-xs flex-col items-center gap-6 rounded-3xl border border-white/[0.06] bg-[var(--surface-frosted)] px-6 py-10 text-center backdrop-blur-2xl animate-in zoom-in-95 fade-in duration-400">
         {/* Image or error icon */}
         {isError ? (
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-rose-900/40 ring-1 ring-rose-500/40">
@@ -183,7 +183,7 @@ export function ResultOverlay({
         )}
 
         {/* Title */}
-        <h2 className={`fantasy-title text-2xl ${isError ? "text-rose-100" : "text-cyan-50"}`}>
+        <h2 className={`fantasy-title text-2xl ${isError ? "text-rose-100" : "text-cyan-50 drop-shadow-[0_0_8px_rgba(34,211,238,0.2)]"}`}>
           {title}
         </h2>
 
@@ -239,7 +239,7 @@ export function ResultOverlay({
           ) : (
             <Button
               type="button"
-              variant="game-solid"
+              variant="game-primary"
               size="game"
               autoFocus={!(isError && onRetry)}
               onClick={handleDismiss}
