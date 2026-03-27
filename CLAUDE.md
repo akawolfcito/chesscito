@@ -41,9 +41,12 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 
 ## Seguridad — Reglas Duras
 - **NUNCA** commitear ni mostrar en pantalla: `.env`, private keys, API keys, seeds, credenciales, datos personales, ni nada dentro de `private/`
+- **NUNCA** imprimir, loguear ni mostrar en output de terminal: tokens, service role keys, connection strings, passwords, ni cualquier secreto — ni siquiera parcialmente
 - **NUNCA** stagear archivos sensibles — siempre revisar `git diff --staged` antes de commitear
-- Usar `.env.example` como referencia pública; los valores reales van solo en `.env` (gitignored)
-- Si accidentalmente se expone un secreto: rotar inmediatamente, no solo eliminarlo del historial
+- **NUNCA** usar `NEXT_PUBLIC_` para claves de servicio (Supabase service role, signer keys, etc.) — solo server-side
+- Usar `.env.template` como referencia pública; los valores reales van solo en `.env` (gitignored)
+- Si accidentalmente se expone un secreto: alertar al usuario para rotar inmediatamente, no solo eliminarlo del historial
+- Supabase: `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` son server-only — jamás exponerlos al cliente
 
 ## Convenciones
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
