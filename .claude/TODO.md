@@ -1,3 +1,34 @@
+## Session Plan — 2026-03-27: Systems & Content Expansion
+
+### Phase
+Systems & Content Expansion — adding depth, progression, and data infrastructure.
+Re-Architecture + UI Pro Phase 1 are formally closed.
+
+### Current State
+- ✅ **Completed**: PR-2 Supabase bootstrap (schema, client, types, migration)
+- 🚧 **In Progress**: PR-1 (6-piece types) next up
+- ⚠️ **Blockers**: PR-4 (score re-submission) requires contract verification
+
+### Next Steps (Prioritized)
+1. **PR-1: 6-piece foundation** — S — extend PieceId, editorial, images
+2. **PR-3: Pawn exercises** — M — 5 exercises with forward-only validation
+3. **PR-4: Score re-submission** — M — remove markCompleted, add Improve Score
+4. **PR-5: Unlock gating** — S — sequential piece unlock via badges
+5. **PR-6: Queen exercises** — S — 5 exercises reusing Rook+Bishop
+6. **PR-7: Practice move logging** — M — write to Supabase on completion
+7. **PR-8: Hall performance** — M — incremental scan + Supabase materialization
+8. **PR-9: King exercises** — M — single-step + castling demo
+9. **PR-10: Coach for Practice** — L — LLM analysis of logged moves
+10. **PR-11: Global progress** — S — stars counter + unlock celebration
+
+### Key Decisions
+- Supabase = derived data only, on-chain remains source of truth
+- Server-side only (no NEXT_PUBLIC_ vars)
+- Graceful degradation if Supabase unavailable
+- 5 tables: practice_runs, practice_move_logs, coach_summaries, player_progress_snapshots, hall_victory_index
+
+---
+
 ## Session Plan — 2026-03-26: Practice Hub Re-Architecture
 
 ### Summary
