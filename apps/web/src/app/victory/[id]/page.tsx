@@ -5,6 +5,7 @@ import { createPublicClient, http } from "viem";
 import { celo } from "viem/chains";
 import { victoryAbi } from "@/lib/contracts/victory";
 import { DIFFICULTY_LABELS, VICTORY_PAGE_COPY } from "@/lib/content/editorial";
+import { VictoryTrophy } from "./victory-trophy";
 
 function formatTime(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -93,7 +94,7 @@ export default async function VictoryPage({ params }: { params: { id: string } }
     <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width)] flex-col items-center justify-center arena-bg px-6">
       <div className="flex w-full max-w-[340px] flex-col items-center rounded-3xl border border-white/[0.08] bg-[var(--surface-frosted)] px-6 pb-8 pt-10 backdrop-blur-2xl shadow-[0_0_60px_rgba(20,184,166,0.08)]">
         {/* Trophy */}
-        <div className="mb-4 text-6xl">🏆</div>
+        <VictoryTrophy />
 
         {/* Title */}
         <h1 className="fantasy-title mb-2 text-2xl font-bold text-emerald-300/90 drop-shadow-[0_0_12px_rgba(20,184,166,0.35)]">
