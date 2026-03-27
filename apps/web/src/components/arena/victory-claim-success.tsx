@@ -7,6 +7,7 @@ import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } 
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { StatCard } from "@/components/arena/stat-card";
+import { AskCoachButton } from "@/components/coach/ask-coach-button";
 import { formatTime } from "@/lib/game/arena-utils";
 import type { ClaimData, ShareStatus } from "./arena-end-state";
 import sparklesData from "@/../public/animations/sparkles.json";
@@ -20,6 +21,7 @@ type Props = {
   onBackToHub: () => void;
   claimData: ClaimData;
   shareStatus: ShareStatus;
+  onAskCoach?: () => void;
 };
 
 export function VictoryClaimSuccess({
@@ -30,6 +32,7 @@ export function VictoryClaimSuccess({
   onBackToHub,
   claimData,
   shareStatus,
+  onAskCoach,
 }: Props) {
   const [toast, setToast] = useState<string | null>(null);
   const time = formatTime(elapsedMs);
@@ -183,6 +186,9 @@ export function VictoryClaimSuccess({
           >
             <Trophy size={16} /> {VICTORY_CLAIM_COPY.viewTrophies}
           </Link>
+
+          {/* Ask Coach */}
+          {onAskCoach && <AskCoachButton onClick={onAskCoach} />}
 
           {/* Play Again */}
           <Button

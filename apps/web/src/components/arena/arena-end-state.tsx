@@ -88,6 +88,7 @@ export function ArenaEndState({
             {...sharedProps}
             claimData={claimData}
             shareStatus={shareStatus}
+            onAskCoach={onAskCoach}
           />
         );
       case "error":
