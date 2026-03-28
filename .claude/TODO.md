@@ -1,31 +1,66 @@
-## Session Plan — 2026-03-27: Systems & Content Expansion
+## Session Plan — 2026-03-28: Systems & Content Expansion (continued)
 
 ### Phase
-Systems & Content Expansion — adding depth, progression, and data infrastructure.
-Re-Architecture + UI Pro Phase 1 are formally closed.
+Systems & Content Expansion — progression loop now closed.
+Re-Architecture + UI Pro Phase 1 formally closed earlier.
+
+### Completed This Session (28 commits across 2 sessions)
+
+**Re-Architecture + UI Pro Phase 1 (session 1):**
+- Practice Hub re-architecture (PR1-PR4 bundled)
+- Semantic cleanup (?, About, Arena CTA)
+- Flow hardening (double-claim, score gating, prompt)
+- Coach in VictoryClaimSuccess
+- P0 UI Pro blockers (exit animations, shield off, Lv removed)
+- UI Pro Phase 1 (PR-A stats/CTA/board, PR-B victory surfaces, PR-C microinteractions)
+- Phase closure (touch targets, press feedback)
+
+**Systems & Content Expansion (session 2):**
+- PR-1 ✅ 6-piece foundation (types, editorial, images for all 6 pieces)
+- PR-2 ✅ Supabase bootstrap (5 tables, server client, migration SQL)
+- PR-3 ✅ Pawn exercises (5 exercises + forward-only validation + teaching correction)
+- PR-4 ✅ Score re-submission (removed markCompleted lock, score always re-submittable)
+- PR-5 ✅ Unlock gating (done in previous session)
+- PR-6 ✅ Queen exercises (done in previous session)
+- PR-7 ✅ Practice move logging (done in previous session)
+- PR-8 ✅ Hall performance (done in previous session)
+- PR-9 ✅ King exercises (done in previous session)
+- PR-11 ✅ Global progress + unlock celebration + ? button removed
+
+**Visual/UX polish (session 2):**
+- Cell inset glow system (movement highlights v1 + v2 with endpoint hierarchy)
+- Target piece v1 (visible enemy piece for capture exercises)
+- Practice clarity (center dots, mission card, no deselection)
+- Mission card typewriter + capture differentiation
+- dotLottie support + 4 animations integrated
+- Security rules hardened
 
 ### Current State
-- ✅ **Completed**: PR-2 Supabase bootstrap (schema, client, types, migration)
-- 🚧 **In Progress**: PR-1 (6-piece types) next up
-- ⚠️ **Blockers**: PR-4 (score re-submission) requires contract verification
+- ✅ **Completed**: All PRs except PR-10
+- 🚧 **Next**: PR-10 Coach for Practice (LLM analysis of logged moves)
+- ⚠️ **Blocker for PR-10**: needs real practice session data in Supabase before prompt design
 
-### Next Steps (Prioritized)
-1. **PR-1: 6-piece foundation** — S — extend PieceId, editorial, images
-2. **PR-3: Pawn exercises** — M — 5 exercises with forward-only validation
-3. **PR-4: Score re-submission** — M — remove markCompleted, add Improve Score
-4. **PR-5: Unlock gating** — S — sequential piece unlock via badges
-5. **PR-6: Queen exercises** — S — 5 exercises reusing Rook+Bishop
-6. **PR-7: Practice move logging** — M — write to Supabase on completion
-7. **PR-8: Hall performance** — M — incremental scan + Supabase materialization
-8. **PR-9: King exercises** — M — single-step + castling demo
-9. **PR-10: Coach for Practice** — L — LLM analysis of logged moves
-10. **PR-11: Global progress** — S — stars counter + unlock celebration
+### Remaining Roadmap
+1. **PR-10: Coach for Practice** — L — LLM analysis of practice_move_logs
+   - Needs: variety of real sessions in Supabase before building prompt
+   - Depends on: PR-7 (done) generating real data
 
-### Key Decisions
+### Should-fix backlog (not blocking)
+- Victory CTA reorder (Claim above Play Again)
+- VictoryClaimSuccess CTA reduction (View Trophies → text link)
+- active:scale unification global
+- Arena overlay exit animations
+- Arena highlight reduction (center dots only)
+- Attempt budget + auto-advance (learning loop v2)
+- Progressive hints system
+
+### Key Decisions Made
 - Supabase = derived data only, on-chain remains source of truth
-- Server-side only (no NEXT_PUBLIC_ vars)
-- Graceful degradation if Supabase unavailable
-- 5 tables: practice_runs, practice_move_logs, coach_summaries, player_progress_snapshots, hall_victory_index
+- Score re-submission allowed (contract has no blocker)
+- Pawn diagonals only on isCapture exercises (pedagogically correct)
+- ? button removed (mission card replaced it)
+- dotLottie format supported alongside JSON
+- Wolf mascot stays static PNG until custom Lottie created
 
 ---
 
