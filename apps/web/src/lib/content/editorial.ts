@@ -307,6 +307,11 @@ export const VICTORY_CLAIM_COPY = {
     byLine: (player: string) => `by ${player}`,
     brand: "Chesscito",
   },
+  // --- Secondary Screen Cohesion (2026-03-28) ---
+  progressSteps: ["Signing", "Confirming", "Done"] as const,
+  progressTimeHint: "This usually takes a few seconds",
+  claimedBadge: "Victory NFT Claimed",
+  errorRecoveryHint: "Your game result is saved. You can try claiming again anytime.",
 } as const;
 
 export const VICTORY_CELEBRATION_COPY = {
@@ -467,6 +472,10 @@ export const COACH_COPY = {
   claimFree: "Claim Free Analyses",
   welcomeNote: "After your free analyses, credit packs start at $0.05",
   creditComingSoon: "Credit packs coming soon!",
+  // --- Secondary Screen Cohesion (2026-03-28) ---
+  loadingCanLeave: "You can leave — your result will be ready when you return.",
+  creditPackSubtitle: (n: number) => `${n} game analyses`,
+  unlockFullAnalysis: "Unlock Full Analysis",
 } as const;
 
 export const LEGAL_COPY = {
