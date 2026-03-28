@@ -72,6 +72,11 @@ export function VictoryClaimError({
           <p className="mb-2 text-center text-xs text-rose-300/60">{errorMessage}</p>
         )}
 
+        {/* Recovery reassurance */}
+        <p className="mb-2 text-center text-xs text-cyan-100/30">
+          {VICTORY_CLAIM_COPY.errorRecoveryHint}
+        </p>
+
         {/* Performance — still visible for context */}
         <p className="mb-5 text-xs text-cyan-100/30">
           {performanceLine}
