@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { Swords } from "lucide-react";
 import { DOCK_LABELS } from "@/lib/content/editorial";
 
 type PersistentDockProps = {
@@ -19,29 +20,21 @@ export function PersistentDock({
   inviteControl,
 }: PersistentDockProps) {
   const pathname = usePathname();
-  const isCenterActive = pathname === "/";
+  const isArenaActive = pathname === "/arena";
 
   return (
     <nav className="chesscito-dock" aria-label="Game navigation">
       <div className="chesscito-dock-item">{badgeControl}</div>
       <div className="chesscito-dock-item">{shopControl}</div>
 
-      {/* Center — Practice Hub with route-aware active state */}
+      {/* Center — Arena / Free Play with route-aware active state */}
       <Link
-        href="/"
-        className={`chesscito-dock-center${isCenterActive ? " is-active" : ""}`}
+        href="/arena"
+        className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
       >
-        <picture>
-          <source srcSet="/art/play-menu.webp" type="image/webp" />
-          <img
-            src="/art/play-menu.png"
-            alt=""
-            aria-hidden="true"
-            className={`h-6 w-6 object-contain ${isCenterActive ? "dock-treat-active" : "dock-treat-base"}`}
-          />
-        </picture>
+        <Swords size={20} />
         <span className="text-[7px] font-bold uppercase tracking-[0.12em]">
-          {DOCK_LABELS.practice}
+          {DOCK_LABELS.freePlay}
         </span>
       </Link>
 

@@ -422,7 +422,7 @@ export const PRACTICE_COPY = {
 } as const;
 
 export const DOCK_LABELS = {
-  practice: "Practice",
+  freePlay: "Free Play",
 } as const;
 
 export const ARENA_CTA_COPY = {
