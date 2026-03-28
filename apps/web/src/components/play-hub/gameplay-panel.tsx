@@ -12,7 +12,7 @@ export function GameplayPanel({ mission, stats, action }: GameplayPanelProps) {
 
   return (
     <div
-      className="mx-2 overflow-hidden"
+      className="mx-2 shrink-0 overflow-hidden"
       style={{
         borderRadius: "var(--shell-radius)",
         border: "1px solid var(--shell-border)",
