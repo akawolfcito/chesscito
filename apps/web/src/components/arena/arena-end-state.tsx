@@ -105,7 +105,6 @@ export function ArenaEndState({
             {...sharedProps}
             onClaimVictory={onClaimVictory}
             claimPrice={claimPrice}
-            onAskCoach={onAskCoach}
           />
         );
     }
