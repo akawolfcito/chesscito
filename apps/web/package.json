@@ -19,6 +19,7 @@
     "art:optimize": "bash scripts/optimize-art-assets.sh"
   },
   "dependencies": {
+    "@lottiefiles/dotlottie-react": "^0.18.7",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-slot": "^1.0.2",
     "@rainbow-me/rainbowkit": "^2.0.0",

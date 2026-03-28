@@ -121,6 +121,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@lottiefiles/dotlottie-react':
+        specifier: ^0.18.7
+        version: 0.18.7(react@18.3.1)
       '@radix-ui/react-dialog':
         specifier: ^1.0.5
         version: 1.1.15(@types/react-dom@18.3.7)(@types/react@18.3.28)(react-dom@18.3.1)(react@18.3.1)
@@ -1803,6 +1806,19 @@ packages:
     resolution: {integrity: sha512-pbCDiVMnne1lYUIaYNN5wrwQXDtHaYtg7YEFPeW+hws6U47WeFvISGUWekPGKWOP1ygrs0ef0o1VJMk1exos5A==}
     dependencies:
       '@lit-labs/ssr-dom-shim': 1.5.1
+    dev: false
+
+  /@lottiefiles/dotlottie-react@0.18.7(react@18.3.1):
+    resolution: {integrity: sha512-aEUS3GR7U3ldT74Xt4l1pPz5KfY4IOXM30e4LMChXH2qNcwy3PZdoT7i44jf+vV+qgEffXshAAepVAZD6XZmTw==}
+    peerDependencies:
+      react: ^17 || ^18 || ^19
+    dependencies:
+      '@lottiefiles/dotlottie-web': 0.67.0
+      react: 18.3.1
+    dev: false
+
+  /@lottiefiles/dotlottie-web@0.67.0:
+    resolution: {integrity: sha512-XdMbVQAKqI8NLGqwN1RYQv0eGDM74JhISJFOovBf7k2Uh5B3QJwMOYhMqz8L0UZAs+LzXYdP/wZR7s8hh0uo2g==}
     dev: false
 
   /@mediabunny/aac-encoder@1.37.0(mediabunny@1.37.0):
