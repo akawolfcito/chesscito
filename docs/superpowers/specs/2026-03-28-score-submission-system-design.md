@@ -270,15 +270,15 @@ These are the core functional changes. Without them, the score system remains di
 1. **Leaderboard indexer rewrite** — change from `max(score)` to `Sum of max(score per levelId)`. Read `levelId` from event topics. Explicit tie handling (same rank, skip next, deterministic order among ties).
 2. **maxSubmissionsPerDay audit** — read current value from mainnet contract. If too low for multi-piece sessions, raise via admin call.
 3. **CTA priority fix** — Claim Badge > Submit Score when both available.
-4. **Global total in success overlay** — after submission, show `"Total: X,XXX pts"` below the piece score, computed from localStorage.
-5. **Editorial constants** — updated success subtitle, cancel toast, failure toast, global total label.
+4. **Wallet-state CTA slot** — show "Connect Wallet" / "Switch Network" when submission would otherwise be available but wallet blocks it.
+5. **Submission feedback toasts** — cancel: `"Submission canceled"` (2s). Failure: `"Submission failed — try again"` (3s).
+6. **Global total in success overlay** — after submission, show `"Total: X,XXX pts"` below the piece score, computed from localStorage.
+7. **Editorial constants** — updated success subtitle, cancel toast, failure toast, global total label.
 
 ### P0 Good-to-Ship
 
 These improve the experience meaningfully but are not blocking.
 
-6. **Wallet-state CTA slot** — show "Connect Wallet" / "Switch Network" when submission would otherwise be available but wallet blocks it.
-7. **Submission feedback toasts** — cancel: `"Submission canceled"` (2s). Failure: `"Submission failed — try again"` (3s).
 8. **First-time submission hint** — one-line subtitle on first Submit CTA appearance, dismissed via localStorage.
 
 ### P1 — Next Iteration
