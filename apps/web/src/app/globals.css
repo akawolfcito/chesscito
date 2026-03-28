@@ -368,14 +368,15 @@
 
   .playhub-board-dot {
     position: absolute;
-    right: 10%;
-    top: 12%;
-    width: 0.3rem;
-    height: 0.3rem;
-    border-radius: 999px;
-    background: rgba(217, 180, 74, 0.90);
-    box-shadow: 0 0 6px rgba(217, 180, 74, 0.70);
-    opacity: 0.85;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scaleY(0.65);
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: rgba(217, 180, 74, 0.65);
+    box-shadow: 0 0 6px rgba(217, 180, 74, 0.40);
+    pointer-events: none;
   }
 
   .playhub-board-target {

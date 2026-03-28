@@ -207,6 +207,18 @@ export function MissionPanel({
         )}
       </div>
 
+      {/* Mission strip — persistent objective reminder */}
+      <div className="mx-2 mt-1 flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: "rgba(0,0,0,0.15)" }}>
+        <picture className="h-5 w-5 shrink-0">
+          <source srcSet={`${PIECE_IMAGES[selectedPiece as keyof typeof PIECE_IMAGES]}.avif`} type="image/avif" />
+          <source srcSet={`${PIECE_IMAGES[selectedPiece as keyof typeof PIECE_IMAGES]}.webp`} type="image/webp" />
+          <img src={`${PIECE_IMAGES[selectedPiece as keyof typeof PIECE_IMAGES]}.png`} alt="" className="h-full w-full object-contain opacity-60" />
+        </picture>
+        <span className="text-[11px] font-semibold text-white/60 truncate">
+          {pieceHint ? pieceHint : `Move to ${targetLabel}`}
+        </span>
+      </div>
+
       {/* Visual transition between board and footer */}
       <div className="h-px bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent" />
 

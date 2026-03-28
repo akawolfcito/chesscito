@@ -94,7 +94,8 @@ export function Board({
     const piecePosition = piece.position;
 
     if (arePositionsEqual(piecePosition, nextPosition)) {
-      setSelectedPosition((current) => (current ? null : piecePosition));
+      // If already selected, ignore tap (no accidental deselection)
+      if (!selectedPosition) setSelectedPosition(piecePosition);
       return;
     }
 
