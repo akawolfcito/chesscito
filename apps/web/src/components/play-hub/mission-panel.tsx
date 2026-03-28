@@ -164,7 +164,7 @@ export function MissionPanel({
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden">
       {/* Zone A: Hero Selector — rail + Lv/help controls + mission target */}
-      <div className="shrink-0 w-full px-4 pt-[max(env(safe-area-inset-top),12px)]">
+      <div className="shell-header-rail shrink-0 w-full">
         {/* Piece selector rail + utility controls side by side */}
         <div className="flex items-center gap-2">
           <div className="hero-rail flex-1 min-w-0">

@@ -861,6 +861,22 @@
   border-color: rgba(255, 255, 255, 0.10);
 }
 
+/* ── Shell header rail — anchoring treatment ── */
+.shell-header-rail {
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-top: max(env(safe-area-inset-top), 12px);
+  margin-bottom: var(--shell-gap-xs);
+}
+
+.shell-header-rail::after {
+  content: "";
+  display: block;
+  height: 1px;
+  margin-top: 6px;
+  background: linear-gradient(to right, transparent, var(--shell-border), transparent);
+}
+
 /* ═══════════════════════════════════════════════════
    Asset Treatment System — Category Classes
    ═══════════════════════════════════════════════════ */
