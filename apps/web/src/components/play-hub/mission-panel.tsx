@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Star, Timer } from "lucide-react";
 import { MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS, PRACTICE_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
+import { GameplayPanel } from "@/components/play-hub/gameplay-panel";
 
 type PieceOption = {
   key: "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
@@ -120,6 +121,28 @@ export function MissionPanel({
     }
   }, [selectedPiece]);
 
+  const missionContent = (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-cyan-400/70">
+          {MISSION_BRIEFING_COPY.label}
+        </p>
+        <p key={targetLabel} className="mission-typewriter text-sm font-bold text-slate-100">
+          {isCapture
+            ? <>Move your {PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to <span className="text-rose-400">CAPTURE</span></>
+            : `Move your ${PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to ${targetLabel}`}
+        </p>
+        <p key={`hint-${targetLabel}`} className="mission-typewriter text-[11px] text-cyan-100/40" style={{ animationDelay: "1s" }}>
+          {MISSION_BRIEFING_COPY.moveHint[selectedPiece as keyof typeof MISSION_BRIEFING_COPY.moveHint]}
+        </p>
+      </div>
+      <picture className="h-12 w-12 shrink-0">
+        <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
+        <img src="/art/favicon-wolf.png" alt="" aria-hidden="true" className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(103,232,249,0.3)]" />
+      </picture>
+    </div>
+  );
+
   return (
     <section className="mission-shell flex h-[100dvh] flex-col overflow-hidden">
       {/* Zone A: Hero Selector — rail + Lv/help controls + mission target */}
@@ -194,29 +217,8 @@ export function MissionPanel({
         )}
       </div>
 
-      {/* Mission card — persistent objective with wolf mascot */}
-      <div className="mx-2 mt-1 flex items-center gap-3 rounded-2xl border border-white/[0.06] px-4 py-2.5" style={{ background: "linear-gradient(180deg, rgba(12,20,35,0.60) 0%, rgba(6,14,28,0.50) 100%)", boxShadow: "inset 0 1px 2px rgba(255,255,255,0.04), inset 0 -1px 2px rgba(0,0,0,0.2)" }}>
-        <div className="flex-1 min-w-0">
-          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-cyan-400/70">
-            {MISSION_BRIEFING_COPY.label}
-          </p>
-          <p key={targetLabel} className="mission-typewriter text-sm font-bold text-slate-100">
-            {isCapture
-              ? <>Move your {PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to <span className="text-rose-400">CAPTURE</span></>
-              : `Move your ${PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to ${targetLabel}`}
-          </p>
-          <p key={`hint-${targetLabel}`} className="mission-typewriter text-[11px] text-cyan-100/40" style={{ animationDelay: "1s" }}>
-            {MISSION_BRIEFING_COPY.moveHint[selectedPiece as keyof typeof MISSION_BRIEFING_COPY.moveHint]}
-          </p>
-        </div>
-        <picture className="h-12 w-12 shrink-0">
-          <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
-          <img src="/art/favicon-wolf.png" alt="" aria-hidden="true" className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(103,232,249,0.3)]" />
-        </picture>
-      </div>
-
-      {/* Visual transition between board and footer */}
-      <div className="h-px bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent" />
+      {/* GameplayPanel — mission + stats + action */}
+      <GameplayPanel mission={missionContent} />
 
       {/* Zone C: Footer — micro-stats + CTA merged, then dock */}
       <div className="chesscito-footer shrink-0">
