@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { COACH_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
+import { Button } from "@/components/ui/button";
 import type { CoachResponse } from "@/lib/coach/types";
 
 const TIMEOUT_MS = 60_000;
@@ -12,7 +13,7 @@ type Props = {
   wallet?: string;
   onReady: (response: CoachResponse) => void;
   onFailed: (reason: string) => void;
-  onCancel?: () => void;
+  onCancel: () => void;
 };
 
 export function CoachLoading({ jobId, wallet, onReady, onFailed, onCancel }: Props) {
@@ -22,6 +23,15 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed, onCancel }: Pro
 
   onReadyRef.current = onReady;
   onFailedRef.current = onFailed;
+
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setElapsed((e) => e + 1), 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const filledDots = Math.min(5, elapsed + 1);
 
   useEffect(() => {
     const dotInterval = setInterval(() => {
@@ -63,16 +73,34 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed, onCancel }: Pro
       </div>
       <p className="text-lg font-semibold text-white">{COACH_COPY.analyzing}{dots}</p>
       <p className="text-sm text-cyan-100/40">{COACH_COPY.reviewingMoves}</p>
-      <p className="mt-4 text-xs text-cyan-100/30">{COACH_COPY.canLeave}</p>
-      {onCancel && (
-        <button
-          type="button"
-          onClick={onCancel}
-          className="mt-2 min-h-[44px] text-xs text-cyan-100/40 underline transition-colors hover:text-cyan-100/70"
-        >
-          {COACH_COPY.cancel}
-        </button>
-      )}
+
+      {/* Progress dots */}
+      <div className="flex items-center gap-2">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div
+            key={i}
+            className={`h-2 w-2 rounded-full ${
+              i < filledDots
+                ? i === filledDots - 1
+                  ? "bg-emerald-400 animate-pulse"
+                  : "bg-emerald-400"
+                : "bg-cyan-100/20"
+            }`}
+          />
+        ))}
+      </div>
+
+      <p className="mt-2 text-xs text-cyan-100/30">{COACH_COPY.loadingCanLeave}</p>
+
+      <Button
+        type="button"
+        variant="game-text"
+        size="game-sm"
+        onClick={onCancel}
+        className="mt-2 text-xs"
+      >
+        {COACH_COPY.cancel}
+      </Button>
     </div>
   );
 }
