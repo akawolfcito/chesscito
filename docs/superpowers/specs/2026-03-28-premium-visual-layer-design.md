@@ -103,6 +103,7 @@ One reusable class `.atmosphere` applied to background containers. Layers implem
 - Light rim: `inset 0 1px 0 rgba(255,255,255,0.08)` (stronger top edge)
 - Contextual glow: optional and sparse, not default. Applied only when the surface is the single dominant showcase element in the viewport.
 - Use cases: result overlay card, victory celebration card, badge earned prompt
+- **Boundary:** `panel-showcase` is reserved for modal, reward, or high-emphasis moments — never for routine browsing surfaces
 
 ### Rules
 
@@ -296,7 +297,7 @@ All keyframe animations and scale transitions must be disabled when `prefers-red
 2. Adopt `panel-elevated` on GameplayPanel
 3. Adopt `panel-showcase` on ResultOverlay card
 4. Activate reserved treatment classes (`piece-pressed`, `dock-treat-active`, `dock-treat-pressed`)
-5. Apply `panel-base` to secondary containers
+5. Apply `panel-base` to Play Hub secondary containers only; sheet-wide adoption belongs to Phase C
 6. **Gate: mobile visual review under MiniPay WebView conditions**
 
 ### Phase C — Secondary Screen Cohesion
@@ -316,3 +317,7 @@ All keyframe animations and scale transitions must be disabled when `prefers-red
 - Implement only after the world and material system feel premium
 
 **Each phase is independently shippable, visually verifiable, and gated by MiniPay review.**
+
+### Visual rollback rule
+
+If a phase increases richness but reduces clarity, hierarchy, or MiniPay performance, revert to the simpler treatment and re-tune before proceeding.
