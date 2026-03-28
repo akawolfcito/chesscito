@@ -17,6 +17,7 @@ export type SquareState = {
   label: string;
   isDark: boolean;
   isHighlighted: boolean;
+  isEndpoint: boolean;
   isSelected: boolean;
   isTarget: boolean;
   piece: BoardPiece | null;

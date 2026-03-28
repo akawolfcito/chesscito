@@ -140,6 +140,7 @@ export function Board({
                         className={[
                           "playhub-board-cell",
                           square.isHighlighted ? "is-highlighted" : "",
+                          square.isEndpoint ? "is-endpoint" : "",
                           square.isSelected ? "is-selected" : "",
                           tutorialHints?.has(square.label) ? "is-tutorial-hint" : "",
                         ].join(" ")}

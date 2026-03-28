@@ -310,18 +310,43 @@
 
   /* ── Cell Inset Glow system — light emanates from within ── */
 
+  /* Valid move cells — subtle inner glow, no fill */
   .playhub-board-cell.is-highlighted {
     background: transparent;
     box-shadow:
       inset 0 0 8px rgba(217, 180, 74, 0.15),
       inset 0 0 0 1px rgba(217, 180, 74, 0.18);
+    transition: box-shadow 180ms ease-out, background 180ms ease-out;
   }
 
+  /* Endpoint cells — brighter rim, stronger glow (farthest in each ray) */
+  .playhub-board-cell.is-highlighted.is-endpoint {
+    box-shadow:
+      inset 0 0 10px rgba(217, 180, 74, 0.22),
+      inset 0 0 0 1px rgba(217, 180, 74, 0.30);
+  }
+
+  /* Origin — radial halo under the piece */
   .playhub-board-cell.is-selected {
     background: radial-gradient(circle at 50% 55%, rgba(217, 180, 74, 0.18) 0%, transparent 70%);
     box-shadow:
       inset 0 0 12px rgba(217, 180, 74, 0.25),
       inset 0 0 0 1px rgba(217, 180, 74, 0.40);
+    transition: box-shadow 180ms ease-out, background 180ms ease-out;
+  }
+
+  /* Target cell — warm amber inset glow (beneath the pulsing target circle) */
+  .playhub-board-cell.is-highlighted:has(.playhub-board-target) {
+    box-shadow:
+      inset 0 0 12px rgba(217, 180, 74, 0.18),
+      inset 0 0 0 1px rgba(217, 180, 74, 0.25);
+  }
+
+  /* Capture target cell — warmer, more energetic */
+  .playhub-board-cell.is-highlighted:has(.playhub-board-target-capture) {
+    box-shadow:
+      inset 0 0 14px rgba(245, 158, 11, 0.20),
+      inset 0 0 0 1px rgba(245, 158, 11, 0.28);
   }
 
   .playhub-board-cell.is-tutorial-hint:not(.is-highlighted):not(.is-selected) {
