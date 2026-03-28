@@ -50,22 +50,23 @@ export function CoachFallback({
         </section>
       )}
 
-      <Button
-        type="button"
-        variant="game-solid"
-        size="game"
-        onClick={onGetFullAnalysis}
-        className="border-emerald-400/20 bg-emerald-500/[0.08] text-emerald-300"
-      >
-        <span className="flex flex-col items-center leading-tight">
-          <span className="font-bold">{COACH_COPY.getFullAnalysis}</span>
-          <span className="text-[0.6rem] text-emerald-200/40">{COACH_COPY.getFullAnalysisSub}</span>
-        </span>
-      </Button>
-
+      {/* Primary: Play Again — retention first */}
       <Button type="button" variant="game-primary" size="game" onClick={onPlayAgain}>
         <RotateCcw size={16} className="inline -mt-0.5" /> {ARENA_COPY.playAgain}
       </Button>
+
+      {/* Secondary: Unlock Full Analysis — subtle upsell */}
+      <Button
+        type="button"
+        variant="game-ghost"
+        size="game-sm"
+        onClick={onGetFullAnalysis}
+        className="border-emerald-400/10 text-emerald-300/70"
+      >
+        {COACH_COPY.unlockFullAnalysis}
+      </Button>
+
+      {/* Tertiary: Back to Hub */}
       <Button type="button" variant="game-text" size="game-sm" onClick={onBackToHub}>
         {ARENA_COPY.backToHub}
       </Button>
