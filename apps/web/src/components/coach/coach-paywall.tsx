@@ -35,14 +35,16 @@ export function CoachPaywall({ open, onOpenChange, onBuy, onQuickReview }: Props
           >
             <p className="text-lg font-bold text-white">{COACH_COPY.creditPack5}</p>
             <p className="text-sm text-cyan-100/50">$0.05</p>
+            <p className="mt-1 text-xs text-cyan-100/40">{COACH_COPY.creditPackSubtitle(5)}</p>
           </button>
           <button
             type="button"
             onClick={() => handleBuy(20)}
-            className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.04] p-4 text-center transition-all hover:bg-emerald-500/[0.08]"
+            className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] ring-1 ring-emerald-400/10 p-4 text-center transition-all hover:bg-emerald-500/[0.08]"
           >
             <p className="text-lg font-bold text-white">{COACH_COPY.creditPack20}</p>
             <p className="text-sm text-cyan-100/50">$0.10</p>
+            <p className="mt-1 text-xs text-cyan-100/40">{COACH_COPY.creditPackSubtitle(20)}</p>
             <span className="mt-1 inline-block rounded-full bg-emerald-500/20 px-2 py-0.5 text-[0.6rem] font-bold text-emerald-300">{COACH_COPY.creditBest}</span>
           </button>
         </div>
@@ -51,7 +53,7 @@ export function CoachPaywall({ open, onOpenChange, onBuy, onQuickReview }: Props
             {COACH_COPY.creditComingSoon}
           </p>
         )}
-        <p className="mt-4 text-center text-xs text-cyan-100/30">
+        <p className="mt-4 text-center text-[0.65rem] text-cyan-100/25">
           <button type="button" onClick={onQuickReview} className="underline hover:text-cyan-100/50">
             {COACH_COPY.orQuickReview}
           </button>
