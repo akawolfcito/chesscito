@@ -147,14 +147,40 @@ export function Board({
                       >
                         <span className="playhub-board-label">{square.label}</span>
                         {square.isHighlighted ? <span className="playhub-board-dot" /> : null}
-                        {square.isTarget && !square.piece ? (
-                          <span className={isCapture ? "playhub-board-target-capture" : "playhub-board-target"} />
+                        {square.isTarget && !square.piece && !isCapture ? (
+                          <span className="playhub-board-target" />
                         ) : null}
                         {/* Piece rendered as floating layer below */}
                       </button>
                     );
                   })()
                 )}
+              {/* Target piece — visible enemy piece for capture exercises */}
+              {isCapture && targetPosition && !(piece.position.file === targetPosition.file && piece.position.rank === targetPosition.rank) && (() => {
+                const tc = cellCenter(targetPosition.file, targetPosition.rank);
+                const tw = pieceWidth(targetPosition.file, targetPosition.rank);
+                const targetImg = PIECE_IMG[pieceType].replace("/w-", "/b-");
+                return (
+                  <picture
+                    className="playhub-board-target-piece"
+                    style={{
+                      left: `${tc.x}%`,
+                      top: `${tc.y}%`,
+                      width: `${tw * 0.88}%`,
+                    }}
+                  >
+                    <source srcSet={targetImg.replace(".png", ".avif")} type="image/avif" />
+                    <source srcSet={targetImg.replace(".png", ".webp")} type="image/webp" />
+                    <img
+                      src={targetImg}
+                      alt="Capture target"
+                      className="playhub-board-target-piece-img"
+                      style={{ width: "100%" }}
+                    />
+                  </picture>
+                );
+              })()}
+
               {/* Floating piece layer — same element moves with transition */}
               {(() => {
                 const center = cellCenter(piece.position.file, piece.position.rank);

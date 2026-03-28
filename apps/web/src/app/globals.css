@@ -444,6 +444,35 @@
       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
   }
 
+  /* ── Target piece — visible enemy for capture exercises ── */
+  .playhub-board-target-piece {
+    position: absolute;
+    z-index: 5;
+    transform: translate(-50%, -55%);
+    pointer-events: none;
+    animation: target-piece-pulse 2.5s ease-in-out infinite;
+  }
+
+  .playhub-board-target-piece-img {
+    height: auto;
+    object-fit: contain;
+    filter:
+      brightness(0.7) saturate(0.5)
+      drop-shadow(0 0 10px rgba(244, 63, 94, 0.35))
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  }
+
+  @keyframes target-piece-pulse {
+    0%, 100% {
+      opacity: 0.80;
+      transform: translate(-50%, -55%) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(-50%, -55%) scale(1.04);
+    }
+  }
+
   /* ── Arena background ── */
 
   .arena-bg {
