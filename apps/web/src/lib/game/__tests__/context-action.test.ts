@@ -15,17 +15,39 @@ const BASE: ContextActionState = {
 
 describe("getContextAction", () => {
   // ── Wallet guards ──────────────────────────────────────
-  it("returns null when wallet is disconnected", () => {
+  it("returns null when disconnected and nothing pending", () => {
     assert.equal(
-      getContextAction({ ...BASE, phase: "failure", isConnected: false }),
+      getContextAction({ ...BASE, isConnected: false }),
       null
     );
   });
 
-  it("returns null when on wrong chain", () => {
+  it("returns null when wrong chain and nothing pending", () => {
     assert.equal(
-      getContextAction({ ...BASE, phase: "failure", isCorrectChain: false }),
+      getContextAction({ ...BASE, isCorrectChain: false }),
       null
+    );
+  });
+
+  // ── Wallet-state actions ───────────────────────────────
+  it("returns connectWallet when disconnected with score pending", () => {
+    assert.equal(
+      getContextAction({ ...BASE, isConnected: false, scorePending: true }),
+      "connectWallet"
+    );
+  });
+
+  it("returns switchNetwork when wrong chain with score pending", () => {
+    assert.equal(
+      getContextAction({ ...BASE, isConnected: true, isCorrectChain: false, scorePending: true }),
+      "switchNetwork"
+    );
+  });
+
+  it("returns connectWallet when disconnected with badge claimable", () => {
+    assert.equal(
+      getContextAction({ ...BASE, isConnected: false, badgeClaimable: true }),
+      "connectWallet"
     );
   });
 
@@ -56,6 +78,13 @@ describe("getContextAction", () => {
     );
   });
 
+  it("returns null on failure when disconnected", () => {
+    assert.equal(
+      getContextAction({ ...BASE, phase: "failure", isConnected: false }),
+      null
+    );
+  });
+
   // ── Progression states ─────────────────────────────────
   it("returns submitScore when score is pending", () => {
     assert.equal(
@@ -71,15 +100,15 @@ describe("getContextAction", () => {
     );
   });
 
-  // ── Priority: scorePending > badgeClaimable ────────────
-  it("prioritizes submitScore over claimBadge", () => {
+  // ── Priority: claimBadge > submitScore ─────────────────
+  it("prioritizes claimBadge over submitScore", () => {
     assert.equal(
       getContextAction({ ...BASE, scorePending: true, badgeClaimable: true }),
-      "submitScore"
+      "claimBadge"
     );
   });
 
-  // ── Priority: failure > scorePending ───────────────────
+  // ── Priority: failure > everything ─────────────────────
   it("prioritizes useShield over scorePending on failure", () => {
     assert.equal(
       getContextAction({

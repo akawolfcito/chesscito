@@ -3,6 +3,8 @@ export type ContextAction =
   | "useShield"
   | "claimBadge"
   | "retry"
+  | "connectWallet"
+  | "switchNetwork"
   | null;
 
 export type ContextActionState = {
@@ -15,12 +17,24 @@ export type ContextActionState = {
 };
 
 export function getContextAction(state: ContextActionState): ContextAction {
-  if (!state.isConnected || !state.isCorrectChain) return null;
+  // Failure recovery always takes priority
+  if (state.phase === "failure") {
+    if (!state.isConnected || !state.isCorrectChain) return null;
+    return state.shieldsAvailable > 0 ? "useShield" : "retry";
+  }
 
-  if (state.phase === "failure") return "retry";
+  // Badge > Score when both available (reward before record)
+  if (state.isConnected && state.isCorrectChain) {
+    if (state.badgeClaimable) return "claimBadge";
+    if (state.scorePending) return "submitScore";
+    return null;
+  }
 
-  if (state.scorePending) return "submitScore";
-  if (state.badgeClaimable) return "claimBadge";
+  // Wallet-state actions: show resolutive CTA when score is pending but wallet blocks
+  if (state.scorePending || state.badgeClaimable) {
+    if (!state.isConnected) return "connectWallet";
+    if (!state.isCorrectChain) return "switchNetwork";
+  }
 
   return null;
 }
