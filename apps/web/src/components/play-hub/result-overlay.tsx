@@ -61,12 +61,10 @@ function getSubtitle(variant: Variant, pieceType?: PieceKey, itemLabel?: string,
   }
 }
 
-function SuccessImage({ variant, pieceType }: { variant: SuccessVariant; pieceType?: PieceKey }) {
+function SuccessImage({ variant, pieceType, glowClass }: { variant: SuccessVariant; pieceType?: PieceKey; glowClass?: string }) {
   const src = variant === "badge" ? getBadgeImg(pieceType) : VARIANT_IMG[variant];
   return (
-    <div className="relative flex items-center justify-center">
-      {/* Glow behind image */}
-      <div className="absolute h-48 w-48 rounded-full bg-[image:var(--playhub-reward-glow)] bg-contain bg-center bg-no-repeat opacity-70 blur-sm" />
+    <div className={`relative flex items-center justify-center ${glowClass ?? "reward-glow-progress"}`}>
       <picture className="reward-burst relative z-10">
         <source srcSet={src.replace(".png", ".avif")} type="image/avif" />
         <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
@@ -185,7 +183,7 @@ export function ResultOverlay({
             <LottieAnimation src="/animations/error-alert.lottie" loop className="h-full w-full" />
           </div>
         ) : (
-          <SuccessImage variant={variant} pieceType={pieceType} />
+          <SuccessImage variant={variant} pieceType={pieceType} glowClass="reward-glow-progress" />
         )}
 
         {/* Title */}
@@ -303,7 +301,7 @@ export function BadgeEarnedPrompt({
       aria-labelledby="badge-earned-title"
     >
       <div className="panel-showcase flex w-full max-w-xs flex-col items-center gap-6 px-6 py-10 text-center animate-in zoom-in-95 fade-in duration-350">
-        <SuccessImage variant="badge" pieceType={pieceType} />
+        <SuccessImage variant="badge" pieceType={pieceType} glowClass="reward-glow-achievement reward-glow-pulse" />
 
         <StarsRow totalStars={totalStars} />
 
