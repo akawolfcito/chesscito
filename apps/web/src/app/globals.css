@@ -268,6 +268,63 @@
     }
   }
 
+/* ═══════════════════════════════════════════════════
+   Reward Glow Backdrops — Phase D
+   ═══════════════════════════════════════════════════ */
+
+.reward-glow-progress,
+.reward-glow-achievement {
+  position: relative;
+}
+
+.reward-glow-progress::before,
+.reward-glow-achievement::before {
+  content: "";
+  position: absolute;
+  inset: -32px;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.reward-glow-progress::before {
+  background: radial-gradient(
+    circle,
+    rgba(20, 184, 166, 0.18) 0%,
+    rgba(20, 184, 166, 0.06) 50%,
+    transparent 70%
+  );
+}
+
+.reward-glow-achievement::before {
+  background: radial-gradient(
+    circle,
+    rgba(245, 158, 11, 0.18) 0%,
+    rgba(245, 158, 11, 0.06) 50%,
+    transparent 70%
+  );
+}
+
+@keyframes glow-pulse-once {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.reward-glow-achievement.reward-glow-pulse::before {
+  animation: glow-pulse-once 600ms ease-in-out 1;
+}
+
+@keyframes star-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
   .playhub-game-stage {
     position: relative;
     overflow: hidden;
@@ -1095,5 +1152,13 @@
   .chesscito-dock-center:active svg {
     transform: none !important;
     transition: none !important;
+  }
+  .reward-glow-achievement.reward-glow-pulse::before {
+    animation: none !important;
+  }
+  .star-reveal-animated {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
