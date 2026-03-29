@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Star, Timer } from "lucide-react";
+import { Lock, Star, Timer } from "lucide-react";
 import { MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS, PRACTICE_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { GameplayPanel } from "@/components/play-hub/gameplay-panel";
@@ -170,14 +170,15 @@ export function MissionPanel({
           <div className="hero-rail flex-1 min-w-0">
             {pieces.map((piece) => {
               const isActive = selectedPiece === piece.key;
+              const isLocked = !piece.enabled;
               const src = PIECE_IMAGES[piece.key as keyof typeof PIECE_IMAGES];
               return (
                 <button
                   key={piece.key}
                   type="button"
-                  disabled={!piece.enabled}
+                  disabled={isLocked}
                   onClick={() => onSelectPiece(piece.key)}
-                  className={`hero-rail-tab ${isActive ? "is-active" : "is-inactive"}`}
+                  className={`hero-rail-tab ${isActive ? "is-active" : isLocked ? "is-locked" : "is-inactive"}`}
                   aria-label={piece.label}
                 >
                   <picture
@@ -185,7 +186,9 @@ export function MissionPanel({
                       "h-7 w-7 shrink-0",
                       isActive
                         ? `piece-hero ${plopping ? "animate-[hero-plop_300ms_cubic-bezier(0.34,1.56,0.64,1)]" : ""}`
-                        : "piece-inactive",
+                        : isLocked
+                          ? "piece-locked"
+                          : "piece-inactive",
                     ].join(" ")}
                   >
                     <source srcSet={`${src}.avif`} type="image/avif" />
@@ -209,9 +212,9 @@ export function MissionPanel({
                       {piece.label}
                     </span>
                   )}
-                  {!piece.enabled && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/10 bg-slate-600/80 text-[7px]">
-                      &#128274;
+                  {isLocked && (
+                    <span className="lock-indicator">
+                      <Lock size={14} />
                     </span>
                   )}
                 </button>
