@@ -37,7 +37,8 @@ Amber = achievement. Used for badge milestone moments.
 2. Glow must never reduce text contrast or CTA legibility.
 3. Glow must not affect hit targets (`pointer-events: none`).
 4. Glow remains subordinate to the panel surface — it is decorative support, not the primary source of hierarchy.
-5. Replaces the current `--playhub-reward-glow` image asset with CSS-only radial gradients. Lighter, more coherent with the system.
+5. The glow host surface must establish a local positioning context (`position: relative`) before the glow pseudo-element can be used.
+6. Replaces the current `--playhub-reward-glow` image asset with CSS-only radial gradients. Lighter, more coherent with the system.
 
 ---
 
@@ -54,7 +55,8 @@ Amber = achievement. Used for badge milestone moments.
 
 1. Only **earned** stars animate with the staggered Gentle Fade.
 2. Unearned stars appear in subdued static form (`opacity: 0.3`, no animation) after the reveal sequence completes.
-3. `prefers-reduced-motion`: stagger disabled — all stars appear simultaneously with no scale transition. Static glow backdrop remains visible.
+3. The staggered star reveal begins only after the overlay surface is visible (post-mount, not during entry animation).
+4. `prefers-reduced-motion`: stagger disabled — all stars appear simultaneously with no scale transition. Static glow backdrop remains visible.
 
 ### CSS keyframe
 
@@ -121,8 +123,7 @@ Arena celebrations are not modified in Phase D.
 | File | Changes |
 |------|---------|
 | `globals.css` | `.reward-glow-progress`, `.reward-glow-achievement`, `@keyframes star-reveal`, `@keyframes glow-pulse-once`, `prefers-reduced-motion` rules |
-| `result-overlay.tsx` | Apply glow classes by context, implement staggered star reveal with `animation-delay` |
-| `badge-sheet.tsx` | `BadgeEarnedPrompt` adopts `panel-showcase` surface |
+| `result-overlay.tsx` | Apply glow classes by context, implement staggered star reveal with `animation-delay`, `BadgeEarnedPrompt` adopts `panel-showcase` surface |
 
 ---
 
