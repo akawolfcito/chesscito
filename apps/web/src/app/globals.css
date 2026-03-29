@@ -802,7 +802,8 @@
     align-items: center;
     justify-content: space-around;
     padding: 6px 8px 4px;
-    border-top: 1px solid var(--shell-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(6, 14, 28, 0.90);
   }
 
   .chesscito-dock-item {
@@ -820,7 +821,7 @@
     overflow: hidden;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid var(--shell-border);
-    opacity: 0.55;
+    opacity: 0.65;
     transition: opacity 0.15s, background 200ms, border-color 200ms;
   }
 
@@ -859,10 +860,16 @@
   }
 
   .chesscito-dock-center.is-active {
-    background: rgba(20, 184, 166, 0.12);
-    border-color: rgba(20, 184, 166, 0.2);
+    background: rgba(20, 184, 166, 0.15);
+    border-color: rgba(20, 184, 166, 0.25);
     color: rgba(160, 225, 220, 0.8);
-    box-shadow: 0 0 12px rgba(20, 184, 166, 0.1);
+    box-shadow: 0 0 16px rgba(20, 184, 166, 0.14);
+    transform: scale(1.04);
+  }
+
+  /* Center action: structurally present even when inactive */
+  .chesscito-dock-center:not(.is-active) {
+    transform: scale(1.01);
   }
 
   /* Lucide icons: color + opacity only, no filter (spec Section 5) */
@@ -874,6 +881,7 @@
   .chesscito-dock-center:active {
     background: rgba(20, 184, 166, 0.2);
     box-shadow: 0 0 16px rgba(20, 184, 166, 0.2);
+    transform: scale(0.98);
   }
 
   .chesscito-dock-center:active svg {
