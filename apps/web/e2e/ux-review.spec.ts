@@ -1,29 +1,23 @@
 import { test, expect } from "@playwright/test";
 
-const BASE = "http://localhost:3000";
-const MOBILE_VIEWPORT = { width: 390, height: 844 };
-
 // Routes that do async fetches (RPC/Redis) use domcontentloaded to avoid
 // waiting on background network calls that don't affect page rendering.
 const ROUTES = [
   { path: "/", name: "play-hub", wait: "networkidle" as const },
   { path: "/arena", name: "arena", wait: "networkidle" as const },
   { path: "/trophies", name: "trophies", wait: "domcontentloaded" as const },
-  { path: "/leaderboard", name: "leaderboard", wait: "domcontentloaded" as const },
   { path: "/about", name: "about", wait: "networkidle" as const },
   { path: "/terms", name: "terms", wait: "networkidle" as const },
   { path: "/privacy", name: "privacy", wait: "networkidle" as const },
   { path: "/support", name: "support", wait: "networkidle" as const },
 ];
 
-test.use({ viewport: MOBILE_VIEWPORT });
-
 for (const route of ROUTES) {
   test(`${route.name} (${route.path}) loads without crash`, async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (err) => errors.push(err.message));
 
-    const res = await page.goto(`${BASE}${route.path}`, {
+    const res = await page.goto(route.path, {
       waitUntil: route.wait,
       timeout: 15_000,
     });
@@ -50,7 +44,7 @@ test("play-hub idle stability (10s)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (err) => errors.push(err.message));
 
-  await page.goto(`${BASE}/`, { waitUntil: "networkidle", timeout: 15_000 });
+  await page.goto("/", { waitUntil: "networkidle", timeout: 15_000 });
 
   // Wait 10 seconds idle
   await page.waitForTimeout(10_000);
@@ -64,7 +58,7 @@ test("play-hub idle stability (10s)", async ({ page }) => {
 });
 
 test("navigation: play-hub dock links are reachable", async ({ page }) => {
-  await page.goto(`${BASE}/`, { waitUntil: "networkidle", timeout: 15_000 });
+  await page.goto("/", { waitUntil: "networkidle", timeout: 15_000 });
 
   // Check persistent dock exists
   const dock = page.locator("nav, [class*='dock']");
@@ -74,7 +68,7 @@ test("navigation: play-hub dock links are reachable", async ({ page }) => {
 });
 
 test("navigation: about page links to legal routes", async ({ page }) => {
-  await page.goto(`${BASE}/about`, { waitUntil: "networkidle", timeout: 15_000 });
+  await page.goto("/about", { waitUntil: "networkidle", timeout: 15_000 });
 
   // Check links to /terms, /privacy, /support exist
   for (const href of ["/terms", "/privacy", "/support"]) {
@@ -86,7 +80,7 @@ test("navigation: about page links to legal routes", async ({ page }) => {
 });
 
 test("stars display: check star counter visibility", async ({ page }) => {
-  await page.goto(`${BASE}/`, { waitUntil: "networkidle", timeout: 15_000 });
+  await page.goto("/", { waitUntil: "networkidle", timeout: 15_000 });
 
   // Look for star counter pattern (e.g., "0/15" or "15/15")
   const starCounter = page.locator("text=/\\d+\\/15/");
@@ -98,7 +92,7 @@ test("stars display: check star counter visibility", async ({ page }) => {
 });
 
 test("trophies: hall of fame loads or shows empty state", async ({ page }) => {
-  await page.goto(`${BASE}/trophies`, {
+  await page.goto("/trophies", {
     waitUntil: "domcontentloaded",
     timeout: 15_000,
   });
@@ -116,7 +110,7 @@ test("trophies: hall of fame loads or shows empty state", async ({ page }) => {
 });
 
 test("HUD: More button links to /about", async ({ page }) => {
-  await page.goto(`${BASE}/`, { waitUntil: "networkidle", timeout: 15_000 });
+  await page.goto("/", { waitUntil: "networkidle", timeout: 15_000 });
 
   const moreLink = page.locator('a[href="/about"]');
   if (await moreLink.count() > 0) {

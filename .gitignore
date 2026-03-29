@@ -125,6 +125,8 @@ _bmad-output/
 # Temporary scripts and test artifacts
 .tmp/
 test-results/
+e2e-results/
+playwright-report/
 
 # Generated non-code artifacts (presentations, exports)
 artifacts/
