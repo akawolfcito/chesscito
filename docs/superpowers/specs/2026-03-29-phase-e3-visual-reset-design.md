@@ -54,7 +54,7 @@ Game font for the display layer only. Body text stays neutral (SF Pro / system).
 Font: **Fredoka One** (Google Fonts, free, ~15-20KB via `next/font`).
 - Bold, rounded, friendly — aligned with Chesscito's educational tone
 - High readability at mobile scale over complex backgrounds
-- Weight 700 for titles/CTAs, 400 for key labels (if variable weight available)
+- Single display face (weight 700). Hierarchy comes from size, text-shadow intensity, and casing — not from multiple font weights
 
 Text treatment: multi-layer `text-shadow` system.
 - Layer 1: color glow (e.g., `0 0 20px rgba(34,211,238,0.3)`)
@@ -119,7 +119,7 @@ Redefine the material language for all panel tiers, buttons, piece rail, and doc
 |-------|---------|--------|
 | `.panel-base` | `rgba` gradient + blur + 1px border | Solid 2-3 stop gradient (dark→darker), 2px border with top highlight, multi-layer box-shadow |
 | `.panel-elevated` | Slightly darker + carved inset | Richer gradient, pronounced bevel (inset white/0.08 top + inset black/0.3 bottom), outer drop shadow |
-| `.panel-showcase` | Heaviest opacity + shadow | Decorative border treatment (corner accents or gradient border), deepest shadow stack |
+| `.panel-showcase` | Heaviest opacity + shadow | CSS-first decorative border (gradient border or multi-layer box-shadow for corner emphasis), deepest shadow stack. No 9-slice asset or border-image unless CSS proves insufficient. |
 
 **CTA buttons:**
 - Multi-layer box-shadow: outer shadow (depth) + inset highlight (top edge) + inset shadow (bottom edge)
