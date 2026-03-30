@@ -656,31 +656,28 @@
   /* ── Panel tier system — material surfaces ── */
 
   .panel-base {
-    background: linear-gradient(to bottom, rgba(12, 20, 35, 0.50), rgba(6, 14, 28, 0.40));
-    border: 1px solid var(--shell-border);
+    background: var(--panel-bg-base);
+    border: var(--panel-border-base);
     border-radius: var(--shell-radius);
-    box-shadow: var(--treat-carved-lo);
+    box-shadow: var(--panel-shadow-base);
   }
 
   .panel-elevated {
     position: relative;
-    background: linear-gradient(to bottom, rgba(12, 20, 35, 0.65), rgba(6, 14, 28, 0.55));
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--panel-bg-elevated);
+    border: 2px solid rgba(255, 255, 255, 0.10);
     border-radius: var(--shell-radius);
-    box-shadow:
-      var(--treat-carved-hi),
-      var(--treat-carved-lo),
-      var(--treat-depth-outer);
+    box-shadow: var(--panel-shadow-elevated);
   }
 
   .panel-elevated::after {
     content: "";
     position: absolute;
     top: 0;
-    left: 1px;
-    right: 1px;
+    left: 2px;
+    right: 2px;
     height: 1px;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.10);
     pointer-events: none;
     z-index: 2;
     border-radius: var(--shell-radius) var(--shell-radius) 0 0;
@@ -688,23 +685,20 @@
 
   .panel-showcase {
     position: relative;
-    background: linear-gradient(to bottom, rgba(14, 22, 38, 0.80), rgba(6, 14, 28, 0.70));
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: var(--panel-bg-showcase);
+    border: 2px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--shell-radius);
-    box-shadow:
-      var(--treat-carved-hi),
-      var(--treat-carved-lo),
-      var(--treat-depth-outer);
+    box-shadow: var(--panel-shadow-showcase);
   }
 
   .panel-showcase::after {
     content: "";
     position: absolute;
     top: 0;
-    left: 1px;
-    right: 1px;
+    left: 2px;
+    right: 2px;
     height: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.14);
     pointer-events: none;
     z-index: 2;
     border-radius: var(--shell-radius) var(--shell-radius) 0 0;
