@@ -65,7 +65,7 @@ function SuccessImage({ variant, pieceType, glowClass }: { variant: SuccessVaria
   const src = variant === "badge" ? getBadgeImg(pieceType) : VARIANT_IMG[variant];
   return (
     <div className={`relative flex items-center justify-center ${glowClass ?? "reward-glow-progress"}`}>
-      <picture className="reward-burst relative z-10">
+      <picture className="reward-icon-showcase reward-burst relative z-10">
         <source srcSet={src.replace(".png", ".avif")} type="image/avif" />
         <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
         <img src={src} alt="" className="h-32 w-32 object-contain drop-shadow-lg" />
