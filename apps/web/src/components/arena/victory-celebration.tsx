@@ -64,7 +64,6 @@ export function VictoryCelebration({
           className="fantasy-title victory-text-slam mb-1 text-3xl font-bold text-emerald-300/90"
           style={{
             textShadow: "var(--text-shadow-hero-emerald)",
-            animation: "victory-text-slam 400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
           }}
         >
           {VICTORY_CELEBRATION_COPY.title}

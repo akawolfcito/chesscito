@@ -89,7 +89,6 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
           className={`fantasy-title victory-text-slam text-3xl ${flash.accent}`}
           style={{
             textShadow: phase === "success" ? "var(--text-shadow-hero-emerald)" : "var(--text-shadow-hero-rose)",
-            animation: "victory-text-slam 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
           }}
         >
           {flash.text}
