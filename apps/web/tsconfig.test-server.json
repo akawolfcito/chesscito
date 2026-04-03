@@ -10,6 +10,7 @@
   },
   "include": [
     "src/lib/server/demo-signing.ts",
+    "src/lib/server/crypto.ts",
     "src/lib/server/__tests__/**/*.ts"
   ],
   "exclude": []
