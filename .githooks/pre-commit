@@ -15,3 +15,10 @@ if [ "$CURRENT_NAME" != "$EXPECTED_NAME" ] || [ "$CURRENT_EMAIL" != "$EXPECTED_E
   echo "  git config user.email \"$EXPECTED_EMAIL\"" >&2
   exit 1
 fi
+
+# Block commits that contain a non-empty DRAGON value in .env* files
+if git diff --cached --diff-filter=ACM -- '*.env*' '.env*' | grep -q 'DRAGON=.'; then
+  echo "ERROR: DRAGON must never be committed with a value" >&2
+  echo "Remove the value from your .env file before committing." >&2
+  exit 1
+fi
