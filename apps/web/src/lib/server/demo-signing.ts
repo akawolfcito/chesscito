@@ -1,7 +1,7 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { ethers } from "ethers";
-import { decryptSignerKey } from "./crypto.js";
+import { decryptSignerKey } from "./crypto";
 
 const MAX_REQUESTS_PER_IP = 5;
 const MAX_REQUESTS_PER_ADDRESS = 3;
