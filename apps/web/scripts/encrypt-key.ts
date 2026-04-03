@@ -9,6 +9,9 @@ const ALGO = "aes-256-gcm";
 const IV_BYTES = 12;
 
 function encrypt(plainKey: string, passphrase: string): string {
+  if (!/^[0-9a-fA-F]{64}$/.test(passphrase)) {
+    throw new Error("Passphrase must be exactly 64 hex characters (32 bytes)");
+  }
   const iv = randomBytes(IV_BYTES);
   const key = Buffer.from(passphrase, "hex");
   const cipher = createCipheriv(ALGO, key, iv);
