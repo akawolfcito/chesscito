@@ -102,13 +102,18 @@ export default async function VictoryPage({ params }: { params: { id: string } }
         </h1>
 
         {/* Stats */}
-        <div className="mb-6 flex gap-3 text-sm text-cyan-100/50">
+        <div className="mb-3 flex gap-3 text-sm text-cyan-100/50">
           <span>{v.difficulty}</span>
           <span>•</span>
           <span>{formatTime(v.timeMs)}</span>
           <span>•</span>
           <span>{v.player}</span>
         </div>
+
+        {/* Tagline for new visitors */}
+        <p className="mb-4 text-center text-xs text-cyan-100/40">
+          {VICTORY_PAGE_COPY.tagline}
+        </p>
 
         {/* Challenge line */}
         <p className="mb-8 text-lg font-semibold text-amber-400">
