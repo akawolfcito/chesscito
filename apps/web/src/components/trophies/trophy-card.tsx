@@ -72,7 +72,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
         "rounded-xl border px-3 py-2.5",
         accentClass,
       ].join(" ")}
-      style={{ background: "linear-gradient(180deg, rgba(16,12,8,0.90) 0%, rgba(10,8,6,0.85) 100%)" }}
+      style={{ background: "var(--trophy-card-bg)" }}
     >
       <div className="flex items-center gap-2">
         {isHoF && rank ? (

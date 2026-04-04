@@ -45,6 +45,7 @@
     --surface-c-heavy: rgba(6, 14, 28, 0.72);
     --header-zone-bg: rgba(255, 255, 255, 0.08);
     --header-zone-border: rgba(255, 255, 255, 0.08);
+    --trophy-card-bg: linear-gradient(180deg, rgba(16,12,8,0.90) 0%, rgba(10,8,6,0.85) 100%);
 
     /* ── Shell Cohesion — layout tokens ── */
     --shell-radius: 16px;
