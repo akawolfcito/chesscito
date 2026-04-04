@@ -62,6 +62,8 @@ export const LEADERBOARD_COPY = {
   empty: "No scores recorded yet.",
 } as const;
 
+export const SCORE_UNIT = "pts";
+
 export const RESULT_OVERLAY_COPY = {
   badge: {
     title: "Badge Claimed!",
@@ -70,7 +72,6 @@ export const RESULT_OVERLAY_COPY = {
   score: {
     title: "Score Recorded!",
     subtitle: "Your score is now recorded on the blockchain.",
-    globalTotalLabel: (total: number) => `Total: ${total.toLocaleString()} pts`,
   },
   shop: {
     title: "Purchase Complete!",
@@ -254,6 +255,7 @@ export const MISSION_BRIEFING_COPY = {
 } as const;
 
 export const VICTORY_PAGE_COPY = {
+  tagline: "Learn chess moves, earn on-chain — a Celo MiniPay game",
   challengeLine: "Can you beat this?",
   acceptChallenge: "Accept Challenge",
   backToHub: "Back to Hub",
@@ -289,6 +291,7 @@ export const VICTORY_CLAIM_COPY = {
   teaserLabel: "Unlock on claim",
   teaserCheckmate: (moves: number) => `Checkmate in ${moves} moves`,
   teaserShare: "SHARE",
+  claimingInProgress: "Claiming in progress...",
   claiming: "Claiming Victory...",
   claimProgress1: "Recording your result onchain",
   claimProgress2: "Preparing your victory card",

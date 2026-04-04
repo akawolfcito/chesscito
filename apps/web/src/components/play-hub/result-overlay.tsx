@@ -226,10 +226,10 @@ export function ResultOverlay({
           <StarsRow totalStars={totalStars} staggered />
         ) : null}
 
-        {/* Global total (score variant only) */}
+        {/* Global total (score variant only) — TODO Task 2: remove this block */}
         {!isError && variant === "score" && globalTotal != null && globalTotal > 0 ? (
           <p className="text-sm font-semibold text-cyan-100/60">
-            {RESULT_OVERLAY_COPY.score.globalTotalLabel(globalTotal)}
+            {`Total: ${globalTotal.toLocaleString()} pts`}
           </p>
         ) : null}
 

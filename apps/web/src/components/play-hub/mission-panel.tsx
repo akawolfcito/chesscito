@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Lock, Star, Timer } from "lucide-react";
-import { MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS, PRACTICE_COPY } from "@/lib/content/editorial";
+import { MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS, PRACTICE_COPY, SCORE_UNIT } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { GameplayPanel } from "@/components/play-hub/gameplay-panel";
 
@@ -133,7 +133,7 @@ export function MissionPanel({
       <div className="flex flex-1 items-center justify-center gap-4">
         <span className="game-label flex items-center gap-1 text-xs font-bold tabular-nums text-white/85">
           <Star size={14} className="opacity-65" />
-          {score}
+          {score} <span className="text-white/40">{SCORE_UNIT}</span>
         </span>
         <span className="text-xs text-white/15">&middot;</span>
         <span className="game-label flex items-center gap-1 text-xs font-bold tabular-nums text-white/85">
