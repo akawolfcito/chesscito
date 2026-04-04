@@ -111,7 +111,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
               type="button"
               onClick={() => void handleShare()}
               aria-label={TROPHY_VITRINE_COPY.shareLabel}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-cyan-100/50 transition hover:bg-white/5 active:scale-90"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-cyan-100/50 transition hover:bg-white/5 active:scale-90"
             >
               <Share2 className="h-4 w-4" />
             </button>
