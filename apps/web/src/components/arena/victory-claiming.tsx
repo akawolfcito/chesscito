@@ -115,9 +115,10 @@ export function VictoryClaiming({
             variant="game-text"
             size="game-sm"
             onClick={onBackToHub}
+            disabled={claimStep !== "done"}
             className="mt-2 text-xs"
           >
-            {ARENA_COPY.backToHub}
+            {claimStep === "done" ? ARENA_COPY.backToHub : VICTORY_CLAIM_COPY.claimingInProgress}
           </Button>
         </div>
       </div>
