@@ -95,6 +95,19 @@ export const RESULT_OVERLAY_COPY = {
   },
 } as const;
 
+export const PIECE_COMPLETE_COPY = {
+  title: "All Exercises Complete!",
+  subtitleWithNext: (next: string) =>
+    `Great work! Ready to move on to the ${next}?`,
+  subtitleFinal:
+    "You've completed every exercise. Test your skills in a real match!",
+  subtitleKeepPracticing:
+    "Keep improving your stars to earn the badge!",
+  tryArena: "Try Arena",
+  nextPiece: (piece: string) => `Start ${piece}`,
+  practiceAgain: "Practice Again",
+} as const;
+
 export const BADGE_EARNED_COPY = {
   title: (piece: string) => `${piece} Ascendant Earned`,
   claimBadge: "Claim Badge",
@@ -164,6 +177,8 @@ export const SHOP_SHEET_COPY = {
   title: "Arcane Store",
   description: "Choose an item to purchase with USDC.",
   buyButton: "Buy with USDC",
+  buyButtonComingSoon: "Coming soon",
+  buyButtonUnavailable: "Unavailable",
   empty: "Shop items are not available right now.",
   status: {
     available: "Available",

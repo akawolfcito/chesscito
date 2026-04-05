@@ -110,6 +110,35 @@
   --text-shadow-hero-rose: 0 0 24px rgba(251, 113, 133, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
   --text-shadow-hero-emerald: 0 0 24px rgba(52, 211, 153, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
 
+  /* ── CTA Button tokens ── */
+  --cta-brand-from: #23C8F3;
+  --cta-brand-to: #16A9E0;
+  --cta-brand-glow: 0 0 20px rgba(35, 200, 243, 0.24);
+  --cta-reward-from: #F6A400;
+  --cta-reward-to: #EE8B00;
+  --cta-reward-glow: 0 0 20px rgba(246, 164, 0, 0.22);
+  --cta-reward-text: #FFF8ED;
+  --cta-special-from: #9B59FF;
+  --cta-special-to: #7B3FF2;
+  --cta-special-glow: 0 0 20px rgba(155, 89, 255, 0.22);
+  --cta-muted-bg: rgba(148, 170, 210, 0.14);
+  --cta-muted-text: rgba(234, 242, 255, 0.82);
+  --cta-muted-border: rgba(190, 210, 255, 0.08);
+
+  /* ── Misc surface tokens ── */
+  --skeleton-bg: #121c2f;
+  --link-row-bg: rgba(8, 47, 73, 0.40);
+  --link-row-bg-hover: rgba(8, 47, 73, 0.60);
+  --accent-drop-shadow: 0 0 20px rgba(103, 232, 249, 0.5);
+  --accent-drop-shadow-sm: 0 0 8px rgba(103, 232, 249, 0.3);
+  --warm-label-text: rgba(220, 200, 150, 0.9);
+  --featured-badge-text: rgba(220, 200, 140, 0.85);
+  --featured-badge-bg: rgba(200, 170, 100, 0.15);
+  --featured-badge-border: rgba(200, 170, 100, 0.35);
+  --featured-title-text: rgba(240, 230, 200, 0.95);
+  --featured-subtitle-text: rgba(180, 160, 120, 0.60);
+  --featured-cta-glow: 0 0 12px rgba(245, 158, 11, 0.15);
+
   /* ── E3 Display Font ── */
   --font-game-display: var(--font-fredoka), "Fredoka One", sans-serif;
     --intro-bg-mobile: image-set(
@@ -364,6 +393,15 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes badge-countdown {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
   }
 }
 

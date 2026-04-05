@@ -59,12 +59,12 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
             return (
             <div key={item.itemId.toString()} className={`p-3 relative ${isFeatured ? "panel-elevated" : "panel-base"}`} style={isFeatured ? { borderColor: "var(--treat-warm-border)" } : undefined}>
               {isFeatured && (
-                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[rgba(220,200,140,0.85)]" style={{ background: "rgba(200,170,100,0.15)", border: "1px solid rgba(200,170,100,0.35)" }}>
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-[var(--featured-badge-text)]" style={{ background: "var(--featured-badge-bg)", border: "1px solid var(--featured-badge-border)" }}>
                   Featured
                 </span>
               )}
-              <p className={`text-sm font-semibold ${isFeatured ? "text-[rgba(240,230,200,0.95)]" : "text-slate-300"}`}>{item.label}</p>
-              <p className={`text-xs ${isFeatured ? "text-[rgba(180,160,120,0.60)]" : "text-slate-500"}`}>{item.subtitle}</p>
+              <p className={`text-sm font-semibold ${isFeatured ? "text-[var(--featured-title-text)]" : "text-slate-300"}`}>{item.label}</p>
+              <p className={`text-xs ${isFeatured ? "text-[var(--featured-subtitle-text)]" : "text-slate-500"}`}>{item.subtitle}</p>
               <p className="mt-2 text-sm text-slate-200">
                 {item.configured ? `${formatUnits(item.onChainPrice, 6)} USDC` : SHOP_SHEET_COPY.status.notConfigured}
               </p>
@@ -81,11 +81,15 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
                 type="button"
                 variant="game-solid"
                 size="game"
-                className={`mt-3 ${isFeatured ? "shadow-[0_0_12px_rgba(245,158,11,0.15)]" : ""}`}
+                className={`mt-3 ${isFeatured ? "shadow-[var(--featured-cta-glow)]" : ""}`}
                 disabled={!item.configured || !item.enabled}
                 onClick={() => onSelectItem(item.itemId)}
               >
-                {SHOP_SHEET_COPY.buyButton}
+                {!item.configured
+                  ? SHOP_SHEET_COPY.buyButtonComingSoon
+                  : !item.enabled
+                    ? SHOP_SHEET_COPY.buyButtonUnavailable
+                    : SHOP_SHEET_COPY.buyButton}
               </Button>
             </div>
             );

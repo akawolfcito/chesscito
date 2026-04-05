@@ -81,7 +81,7 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
               src="/art/favicon-wolf.png"
               alt=""
               aria-hidden="true"
-              className="h-20 w-20 drop-shadow-[0_0_20px_rgba(103,232,249,0.5)]"
+              className="h-20 w-20 drop-shadow-[var(--accent-drop-shadow)]"
             />
           </picture>
         </div>
@@ -161,7 +161,7 @@ export function MissionPanel({
       </div>
       <picture className="h-12 w-12 shrink-0">
         <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
-        <img src="/art/favicon-wolf.png" alt="" aria-hidden="true" className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(103,232,249,0.3)]" />
+        <img src="/art/favicon-wolf.png" alt="" aria-hidden="true" className="h-full w-full object-contain drop-shadow-[var(--accent-drop-shadow-sm)]" />
       </picture>
     </div>
   );
@@ -214,7 +214,7 @@ export function MissionPanel({
                   </picture>
                   {isActive && (
                     <span
-                      className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-[rgba(220,200,150,0.9)]"
+                      className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-[var(--warm-label-text)]"
                       style={{ fontFamily: "var(--font-game-display)", textShadow: "var(--text-shadow-label)" }}
                     >
                       {piece.label}

@@ -42,7 +42,7 @@ import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, MISSION_BRIEFING_COPY, PIECE
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
-import { BadgeEarnedPrompt, ResultOverlay } from "@/components/play-hub/result-overlay";
+import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/components/play-hub/result-overlay";
 import { BadgeSheet } from "@/components/play-hub/badge-sheet";
 import { classifyTxError, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
@@ -133,6 +133,7 @@ export default function PlayHubPage() {
     retryAction?: () => void;
   } | null>(null);
   const [showBadgeEarned, setShowBadgeEarned] = useState(false);
+  const [showPieceComplete, setShowPieceComplete] = useState(false);
   const [badgeSheetOpen, setBadgeSheetOpen] = useState(false);
   const [shieldCount, setShieldCount] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
@@ -465,11 +466,9 @@ export default function PlayHubPage() {
         if (!isLastExercise) {
           advanceExercise();
           resetBoard();
-        } else if (nextPiece && hasClaimedBadge) {
-          setSelectedPiece(nextPiece);
-          resetBoard();
         } else {
-          resetBoard();
+          // Last exercise — show completion guide instead of silent reset
+          setShowPieceComplete(true);
         }
       }, 1500);
       return;
@@ -501,16 +500,7 @@ export default function PlayHubPage() {
   function handleBadgeEarnedDismiss() {
     if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
     setShowBadgeEarned(false);
-    const gen = boardGeneration.current;
-    autoResetTimer.current = setTimeout(() => {
-      if (gen !== boardGeneration.current) return; // stale — user navigated
-      if (nextPiece && hasClaimedBadge) {
-        setSelectedPiece(nextPiece);
-        resetBoard();
-      } else {
-        resetBoard();
-      }
-    }, 500);
+    setShowPieceComplete(true);
   }
 
   async function handleClaimBadge(piece?: PieceKey) {
@@ -699,6 +689,7 @@ export default function PlayHubPage() {
       });
     } catch (error) {
       if (isUserCancellation(error)) return;
+      setConfirmOpen(false);
       const message = toErrorMessage(error);
       setLastError(message);
       setResultOverlay({
@@ -863,6 +854,28 @@ export default function PlayHubPage() {
             targetLabel={targetLabel}
             isCapture={Boolean(currentExercise.isCapture)}
             onPlay={() => markOnboarded()}
+          />
+        ) : null}
+
+        {showPieceComplete ? (
+          <PieceCompletePrompt
+            pieceType={selectedPiece}
+            nextPiece={nextPiece ?? null}
+            hasClaimedBadge={!!hasClaimedBadge}
+            totalStars={totalStars}
+            onNextPiece={() => {
+              setShowPieceComplete(false);
+              if (nextPiece) setSelectedPiece(nextPiece);
+              resetBoard();
+            }}
+            onArena={() => {
+              setShowPieceComplete(false);
+              window.location.href = "/arena";
+            }}
+            onPracticeAgain={() => {
+              setShowPieceComplete(false);
+              resetBoard();
+            }}
           />
         ) : null}
 

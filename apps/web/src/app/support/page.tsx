@@ -17,7 +17,7 @@ export default function SupportPage() {
         </h2>
         <a
           href={SUPPORT_COPY.primaryChannel.href}
-          className="flex min-h-[44px] items-center gap-3 rounded-xl bg-cyan-950/40 px-4 py-3 text-cyan-100 transition hover:bg-cyan-950/60"
+          className="flex min-h-[44px] items-center gap-3 rounded-xl bg-[var(--link-row-bg)] px-4 py-3 text-cyan-100 transition hover:bg-[var(--link-row-bg-hover)]"
         >
           <Mail size={18} className="shrink-0 text-cyan-400" />
           <div>
@@ -36,7 +36,7 @@ export default function SupportPage() {
           href={SUPPORT_COPY.secondaryChannel.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-h-[44px] items-center gap-3 rounded-xl bg-cyan-950/40 px-4 py-3 text-cyan-100 transition hover:bg-cyan-950/60"
+          className="flex min-h-[44px] items-center gap-3 rounded-xl bg-[var(--link-row-bg)] px-4 py-3 text-cyan-100 transition hover:bg-[var(--link-row-bg-hover)]"
         >
           <Github size={18} className="shrink-0 text-cyan-400" />
           <div>

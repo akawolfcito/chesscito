@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { BADGE_EARNED_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
+import { BADGE_EARNED_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
@@ -298,6 +298,8 @@ type BadgeEarnedPromptProps = {
   onLater: () => void;
 };
 
+const BADGE_AUTO_DISMISS_MS = 15_000;
+
 export function BadgeEarnedPrompt({
   pieceType,
   totalStars,
@@ -320,9 +322,18 @@ export function BadgeEarnedPrompt({
       aria-labelledby="badge-earned-title"
     >
       <div
-        className="panel-showcase reward-ceremony-panel flex w-full max-w-xs flex-col items-center gap-6 px-6 py-10 text-center"
+        className="panel-showcase reward-ceremony-panel flex w-full max-w-xs flex-col items-center gap-6 px-6 py-10 text-center relative overflow-hidden"
         style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
       >
+        {/* Auto-dismiss countdown bar */}
+        <div className="absolute inset-x-0 top-0 h-1 bg-cyan-400/20">
+          <div
+            className="h-full bg-cyan-400/60 rounded-r-full"
+            style={{
+              animation: `badge-countdown ${BADGE_AUTO_DISMISS_MS}ms linear forwards`,
+            }}
+          />
+        </div>
         <SuccessImage variant="badge" pieceType={pieceType} glowClass="reward-glow-achievement reward-glow-pulse" />
 
         <StarsRow totalStars={totalStars} staggered />
@@ -350,6 +361,105 @@ export function BadgeEarnedPrompt({
             onClick={handleLater}
           >
             {BADGE_EARNED_COPY.later}
+          </Button>
+        </div>
+
+        <div className="mt-4 flex flex-col items-center gap-0.5">
+          <span className="fantasy-title text-sm text-cyan-100/50">chesscito</span>
+          <span className="text-[0.65rem] text-cyan-100/30">on Celo</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type PieceCompletePromptProps = {
+  pieceType: PieceKey;
+  nextPiece: PieceKey | null;
+  hasClaimedBadge: boolean;
+  totalStars: number;
+  onNextPiece: () => void;
+  onArena: () => void;
+  onPracticeAgain: () => void;
+};
+
+export function PieceCompletePrompt({
+  pieceType,
+  nextPiece,
+  hasClaimedBadge,
+  totalStars,
+  onNextPiece,
+  onArena,
+  onPracticeAgain,
+}: PieceCompletePromptProps) {
+  const [exiting, setExiting] = useState(false);
+
+  const subtitle = nextPiece && hasClaimedBadge
+    ? PIECE_COMPLETE_COPY.subtitleWithNext(PIECE_LABELS[nextPiece])
+    : !hasClaimedBadge
+      ? PIECE_COMPLETE_COPY.subtitleKeepPracticing
+      : PIECE_COMPLETE_COPY.subtitleFinal;
+
+  function handleAction(cb: () => void) {
+    setExiting(true);
+    setTimeout(cb, 250);
+  }
+
+  return (
+    <div
+      className={`fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={PIECE_COMPLETE_COPY.title}
+    >
+      <div
+        className="panel-showcase reward-ceremony-panel flex w-full max-w-xs flex-col items-center gap-6 px-6 py-10 text-center"
+        style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
+      >
+        <SuccessImage variant="badge" pieceType={pieceType} glowClass="reward-glow-progress" />
+
+        <StarsRow totalStars={totalStars} staggered />
+
+        <h2 className="fantasy-title text-2xl text-cyan-50">
+          {PIECE_COMPLETE_COPY.title}
+        </h2>
+
+        <p className="text-sm leading-relaxed text-cyan-100/80">
+          {subtitle}
+        </p>
+
+        <div
+          className="reward-ceremony-buttons mt-2 flex w-full flex-col gap-2"
+          style={{ opacity: 0, animation: "reward-buttons-enter 300ms ease-out 1300ms forwards" }}
+        >
+          {nextPiece && hasClaimedBadge ? (
+            <Button
+              type="button"
+              variant="game-solid"
+              size="game"
+              autoFocus
+              onClick={() => handleAction(onNextPiece)}
+            >
+              {PIECE_COMPLETE_COPY.nextPiece(PIECE_LABELS[nextPiece])}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="game-solid"
+              size="game"
+              autoFocus
+              onClick={() => handleAction(onArena)}
+            >
+              {PIECE_COMPLETE_COPY.tryArena}
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="game-text"
+            size="game-sm"
+            onClick={() => handleAction(onPracticeAgain)}
+          >
+            {PIECE_COMPLETE_COPY.practiceAgain}
           </Button>
         </div>
 
