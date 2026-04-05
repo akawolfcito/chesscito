@@ -40,10 +40,12 @@ export function PurchaseConfirmSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="mission-shell sheet-bg-shop rounded-t-3xl border-slate-700">
-        <SheetHeader>
-          <SheetTitle className="fantasy-title text-cyan-50">{PURCHASE_CONFIRM_COPY.title}</SheetTitle>
-          <SheetDescription className="text-cyan-100/75">{PURCHASE_CONFIRM_COPY.description}</SheetDescription>
-        </SheetHeader>
+        <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
+          <SheetHeader>
+            <SheetTitle className="fantasy-title text-cyan-50">{PURCHASE_CONFIRM_COPY.title}</SheetTitle>
+            <SheetDescription className="text-cyan-100/75">{PURCHASE_CONFIRM_COPY.description}</SheetDescription>
+          </SheetHeader>
+        </div>
         {selectedItem ? (
           <div className="mission-soft rune-frame mt-4 space-y-2 rounded-2xl p-3 text-sm text-slate-200">
             <p>
