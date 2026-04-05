@@ -64,7 +64,7 @@ export function VictoryClaimSuccess({
       </div>
 
       {/* Card */}
-      <div className="relative z-10 mx-4 flex w-full max-w-[340px] flex-col items-center rounded-3xl border border-white/[0.08] bg-[var(--surface-frosted)] px-6 pb-6 pt-8 backdrop-blur-2xl shadow-[0_0_60px_rgba(245,158,11,0.12)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+      <div className="panel-showcase relative z-10 mx-4 flex w-full max-w-[340px] flex-col items-center px-6 pb-6 pt-8 shadow-[0_0_60px_rgba(245,158,11,0.12)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
 
         {/* Hero — Trophy with amber glow (reward state) */}
         <div className="relative mb-4 flex items-center justify-center">
