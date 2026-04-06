@@ -62,6 +62,7 @@ export default function ArenaPage() {
 
   // Preparing state (loading between difficulty selection and game start)
   const [isPreparing, setIsPreparing] = useState(false);
+  const preparingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Coach state
   type CoachPhase = "idle" | "welcome" | "loading" | "result" | "fallback" | "paywall";
@@ -70,6 +71,7 @@ export default function ArenaPage() {
   const [coachResponse, setCoachResponse] = useState<CoachResponse | null>(null);
   const [coachFallbackResponse, setCoachFallbackResponse] = useState<BasicCoachResponse | null>(null);
   const [coachCredits, setCoachCredits] = useState(0);
+  const coachAbortRef = useRef<AbortController | null>(null);
 
   // Persist claim success so returning from share keeps context
   useEffect(() => {
@@ -169,9 +171,15 @@ export default function ArenaPage() {
     if (!address) return;
     const gameResult = mapArenaResult(game.status, isPlayerWin);
 
+    // Abort any previous in-flight analysis
+    coachAbortRef.current?.abort();
+    const controller = new AbortController();
+    coachAbortRef.current = controller;
+    const { signal } = controller;
+
     try {
       // Re-fetch credits (may have been seeded by welcome)
-      const creditsRes = await fetch(`/api/coach/credits?wallet=${address}`);
+      const creditsRes = await fetch(`/api/coach/credits?wallet=${address}`, { signal });
       const creditsData = await creditsRes.json();
       const credits = creditsData.credits ?? 0;
       setCoachCredits(credits);
@@ -196,12 +204,14 @@ export default function ArenaPage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ walletAddress: address, game: gameRecord }),
+        signal,
       });
 
       const analyzeRes = await fetch("/api/coach/analyze", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ gameId: gameRecord.gameId, walletAddress: address }),
+        signal,
       });
       const analyzeData = await analyzeRes.json();
 
@@ -223,7 +233,8 @@ export default function ArenaPage() {
         setCoachFallbackResponse(quick);
         setCoachPhase("fallback");
       }
-    } catch {
+    } catch (err) {
+      if (signal.aborted) return; // Reset happened — don't update state
       const quick = generateQuickReview({
         result: gameResult,
         difficulty: game.difficulty,
@@ -370,9 +381,13 @@ export default function ArenaPage() {
 
       // 6. Build victory URL + OG image URL
       const origin = typeof window !== "undefined" ? window.location.origin : "";
-      const victoryId = extractedTokenId ? String(extractedTokenId) : claimHash.slice(0, 10);
-      const victoryUrl = `${origin}/victory/${victoryId}`;
-      const ogImageUrl = `${origin}/api/og/victory/${victoryId}`;
+      const victoryId = extractedTokenId ? String(extractedTokenId) : null;
+      const victoryUrl = victoryId
+        ? `${origin}/victory/${victoryId}`
+        : `https://celoscan.io/tx/${claimHash}`;
+      const ogImageUrl = victoryId
+        ? `${origin}/api/og/victory/${victoryId}`
+        : null;
 
       setClaimData({
         tokenId: extractedTokenId,
@@ -409,6 +424,7 @@ export default function ArenaPage() {
   // Reset all arena state (claim + coach + session storage)
   const resetArenaState = useCallback(() => {
     claimingRef.current = false;
+    coachAbortRef.current?.abort();
     try { sessionStorage.removeItem("chesscito:claim"); } catch { /* ignore */ }
     setClaimPhase("ready");
     setClaimData({ tokenId: null, claimTxHash: null, shareCardUrl: null, shareLinkUrl: null });
@@ -418,6 +434,7 @@ export default function ArenaPage() {
     setCoachJobId(null);
     setCoachResponse(null);
     setCoachFallbackResponse(null);
+    setCoachCredits(0);
   }, []);
 
   const handlePlayAgain = () => {
@@ -430,10 +447,18 @@ export default function ArenaPage() {
     game.reset();
   };
 
+  // Cleanup preparing timer on unmount
+  useEffect(() => {
+    return () => {
+      if (preparingTimer.current) clearTimeout(preparingTimer.current);
+    };
+  }, []);
+
   const handleStartWithLoading = useCallback(() => {
     setIsPreparing(true);
     // Brief delay so the user sees the preparing state before the board renders
-    setTimeout(() => {
+    preparingTimer.current = setTimeout(() => {
+      preparingTimer.current = null;
       game.startGame();
       setIsPreparing(false);
     }, 400);
