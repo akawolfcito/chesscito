@@ -7,8 +7,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { formatUnits } from "viem";
 import { SHOP_SHEET_COPY } from "@/lib/content/editorial";
+import { formatUsd } from "@/lib/contracts/tokens";
 import { Button } from "@/components/ui/button";
 
 type CatalogItem = {
@@ -66,7 +66,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
               <p className={`text-sm font-semibold ${isFeatured ? "text-[var(--featured-title-text)]" : "text-slate-300"}`}>{item.label}</p>
               <p className={`text-xs ${isFeatured ? "text-[var(--featured-subtitle-text)]" : "text-slate-500"}`}>{item.subtitle}</p>
               <p className="mt-2 text-sm text-slate-200">
-                {item.configured ? `${formatUnits(item.onChainPrice, 6)} USDC` : SHOP_SHEET_COPY.status.notConfigured}
+                {item.configured ? formatUsd(item.onChainPrice) : SHOP_SHEET_COPY.status.notConfigured}
               </p>
               <p className="flex items-center gap-1 text-xs">
                 {item.configured && item.enabled ? (
