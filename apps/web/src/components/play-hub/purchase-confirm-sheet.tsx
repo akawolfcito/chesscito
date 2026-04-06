@@ -39,7 +39,7 @@ export function PurchaseConfirmSheet({
 }: PurchaseConfirmSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="mission-shell sheet-bg-shop rounded-t-3xl border-slate-700">
+      <SheetContent side="bottom" className="mission-shell sheet-bg-shop rounded-t-3xl border-white/[0.10]">
         <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
           <SheetHeader>
             <SheetTitle className="fantasy-title text-cyan-50">{PURCHASE_CONFIRM_COPY.title}</SheetTitle>
