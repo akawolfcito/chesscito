@@ -14,11 +14,15 @@ function formatTime(ms: number): string {
   return m > 0 ? `${m}:${String(sec).padStart(2, "0")}` : `0:${String(sec).padStart(2, "0")}`;
 }
 
+/** Arena difficulty values (1–3) represent checkmate victories */
+const ARENA_DIFFICULTIES = new Set([1, 2, 3]);
+
 type VictoryInfo = {
   id: string;
   moves: number;
   timeMs: number;
   difficulty: string;
+  difficultyRaw: number;
   player: string;
 };
 
@@ -43,6 +47,7 @@ async function fetchVictory(id: string): Promise<VictoryInfo | null> {
       moves: totalMoves,
       timeMs,
       difficulty: DIFFICULTY_LABELS[diff] ?? "Easy",
+      difficultyRaw: diff,
       player: `${ownerAddr.slice(0, 6)}...${ownerAddr.slice(-4)}`,
     };
   } catch {
@@ -53,7 +58,10 @@ async function fetchVictory(id: string): Promise<VictoryInfo | null> {
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const v = await fetchVictory(params.id);
 
-  const title = v ? VICTORY_PAGE_COPY.metaCheckmate(v.moves) : `Victory #${params.id}`;
+  const isCheckmate = v ? ARENA_DIFFICULTIES.has(v.difficultyRaw) : false;
+  const title = v
+    ? (isCheckmate ? VICTORY_PAGE_COPY.metaCheckmate(v.moves) : VICTORY_PAGE_COPY.metaComplete(v.moves))
+    : `Victory #${params.id}`;
   const description = v
     ? `${VICTORY_PAGE_COPY.metaChallenge(params.id)} ${v.difficulty} • ${formatTime(v.timeMs)}`
     : VICTORY_PAGE_COPY.metaFallback;
@@ -98,7 +106,9 @@ export default async function VictoryPage({ params }: { params: { id: string } }
 
         {/* Title */}
         <h1 className="fantasy-title mb-2 text-2xl font-bold text-emerald-300/90 drop-shadow-[0_0_12px_rgba(20,184,166,0.35)]">
-          {VICTORY_PAGE_COPY.metaCheckmate(v.moves)}
+          {ARENA_DIFFICULTIES.has(v.difficultyRaw)
+            ? VICTORY_PAGE_COPY.metaCheckmate(v.moves)
+            : VICTORY_PAGE_COPY.metaComplete(v.moves)}
         </h1>
 
         {/* Stats */}

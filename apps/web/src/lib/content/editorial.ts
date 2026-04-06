@@ -277,6 +277,7 @@ export const VICTORY_PAGE_COPY = {
   acceptChallenge: "Accept Challenge",
   backToHub: "Back to Hub",
   metaCheckmate: (moves: number) => `Checkmate in ${moves} moves`,
+  metaComplete: (moves: number) => `Complete in ${moves} moves`,
   metaChallenge: (id: string) => `Can you beat that? Victory #${id} claimed onchain.`,
   metaFallback: "Can you beat this? Play Chesscito on Celo.",
 } as const;
