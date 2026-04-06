@@ -190,6 +190,7 @@ export const SHOP_SHEET_COPY = {
 export const LEADERBOARD_SHEET_COPY = {
   title: "Hall of Rooks",
   description: "Check the leaderboard without leaving the board.",
+  columnScore: "★",
   loading: "Loading...",
   empty: "No scores recorded yet.",
   error: "Could not load the leaderboard.",

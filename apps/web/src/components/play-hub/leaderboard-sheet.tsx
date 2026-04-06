@@ -76,6 +76,13 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
           </a>
         </p>
         <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-2">
+          {!loading && !error && rows.length > 0 && (
+            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-3 pb-1 text-xs font-medium uppercase tracking-wide text-cyan-100/50">
+              <p>#</p>
+              <p />
+              <p>{LEADERBOARD_SHEET_COPY.columnScore}</p>
+            </div>
+          )}
           {loading && (
             <p className="text-center text-sm text-cyan-100/60">{LEADERBOARD_SHEET_COPY.loading}</p>
           )}
