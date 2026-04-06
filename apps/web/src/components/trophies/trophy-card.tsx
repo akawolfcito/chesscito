@@ -87,7 +87,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
         >
           {chip.label}
         </span>
-        <span className="text-[0.65rem] text-slate-500">#{String(entry.tokenId)}</span>
+        <span className="text-[0.65rem] text-slate-500">{TROPHY_VITRINE_COPY.nftIdPrefix} #{String(entry.tokenId)}</span>
         <span className="ml-auto text-[0.65rem] text-slate-500">{formatDate(entry.timestamp)}</span>
       </div>
 

@@ -375,6 +375,7 @@ export const TROPHY_VITRINE_COPY = {
   configError: "Trophies unavailable",
   roadmap: "More coming soon — Tournaments • VIP Passes • Seasonal Rewards",
   arenaLink: "Go to Arena",
+  nftIdPrefix: "NFT",
 } as const;
 
 export const ARENA_COPY = {
