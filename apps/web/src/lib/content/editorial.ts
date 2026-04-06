@@ -39,6 +39,10 @@ export const PIECE_LABELS = {
   king: "King",
 } as const;
 
+export const PIECE_RAIL_COPY = {
+  comingSoon: "Soon",
+} as const;
+
 export const PIECE_IMAGES: Record<keyof typeof PIECE_LABELS, string> = {
   rook: "/art/pieces/w-rook",
   bishop: "/art/pieces/w-bishop",

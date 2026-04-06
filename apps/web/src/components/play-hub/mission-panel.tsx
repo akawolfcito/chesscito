@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Lock, Star, Timer } from "lucide-react";
-import { MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS, PRACTICE_COPY, SCORE_UNIT } from "@/lib/content/editorial";
+import { MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS, PIECE_RAIL_COPY, PRACTICE_COPY, SCORE_UNIT } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { GameplayPanel } from "@/components/play-hub/gameplay-panel";
 
@@ -223,6 +223,11 @@ export function MissionPanel({
                   {isLocked && (
                     <span className="lock-indicator">
                       <Lock size={14} />
+                    </span>
+                  )}
+                  {isLocked && (
+                    <span className="text-[7px] font-bold uppercase tracking-[0.12em] text-white/35">
+                      {PIECE_RAIL_COPY.comingSoon}
                     </span>
                   )}
                 </button>
