@@ -73,7 +73,7 @@ export function ArenaHud({ difficulty, isThinking, onBack, onResign, isEndState 
         className={[
           "relative flex h-11 shrink-0 items-center justify-center rounded-full border overflow-hidden transition-all active:scale-[0.97]",
           confirmingBack
-            ? "w-auto gap-1.5 border-white/30 bg-white/12 backdrop-blur-md px-3 text-white"
+            ? "w-auto gap-1.5 border-white/30 bg-white/[0.12] backdrop-blur-md px-3 text-white"
             : "w-11 border-white/[0.12] bg-[var(--surface-c-mid)] backdrop-blur-md text-white/80 hover:text-white",
         ].join(" ")}
         aria-label={ARENA_COPY.backToHub}
@@ -81,7 +81,7 @@ export function ArenaHud({ difficulty, isThinking, onBack, onResign, isEndState 
         {confirmingBack ? (
           <>
             <Check className="h-3.5 w-3.5" />
-            <span className="text-[0.65rem] font-semibold">{ARENA_COPY.backToHub}</span>
+            <span className="text-xs font-semibold">{ARENA_COPY.backToHub}</span>
             <span className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-white/40" style={{ animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards` }} />
           </>
         ) : (
@@ -120,7 +120,7 @@ export function ArenaHud({ difficulty, isThinking, onBack, onResign, isEndState 
             {confirmingResign ? (
               <>
                 <Check className="h-3.5 w-3.5" />
-                <span className="text-[0.65rem] font-semibold">{ARENA_COPY.resign}</span>
+                <span className="text-xs font-semibold">{ARENA_COPY.resign}</span>
                 <span className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-rose-400/60" style={{ animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards` }} />
               </>
             ) : (

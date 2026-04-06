@@ -38,8 +38,8 @@ export function DifficultySelector({ selected, onSelect, onStart, onBack }: Prop
               className={[
                 "flex items-center gap-3.5 rounded-2xl px-5 py-3.5 text-left transition-all",
                 selected === key
-                  ? "bg-white/12 ring-2 ring-cyan-400/50 shadow-[0_0_20px_rgba(103,232,249,0.1)]"
-                  : "bg-white/5 hover:bg-white/8",
+                  ? "bg-white/[0.12] ring-2 ring-cyan-400/50 shadow-[0_0_20px_rgba(103,232,249,0.1)]"
+                  : "bg-white/[0.05] hover:bg-white/[0.08]",
               ].join(" ")}
             >
               <span className={`h-3 w-3 shrink-0 rounded-full ${dot}`} />
@@ -71,7 +71,7 @@ export function DifficultySelector({ selected, onSelect, onStart, onBack }: Prop
         onClick={onBack}
         className="flex items-center gap-2 text-sm text-white/35 transition-colors hover:text-white/55"
       >
-        <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.05]">
           <ArrowLeft className="h-4 w-4" />
         </span>
         {ARENA_COPY.backToHub}
