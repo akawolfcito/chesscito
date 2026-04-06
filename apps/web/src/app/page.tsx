@@ -111,7 +111,9 @@ export default function PlayHubPage() {
   const { openConnectModal } = useConnectModal();
   const { switchChain } = useSwitchChain();
   const { isMiniPay } = useMiniPay();
-  const { writeContractAsync, isPending: isWriting } = useWriteContract();
+  const { writeContractAsync: writeScoreAsync, isPending: isScoreWriting } = useWriteContract();
+  const { writeContractAsync: writeBadgeAsync, isPending: isBadgeWriting } = useWriteContract();
+  const { writeContractAsync: writeShopAsync, isPending: isShopWriting } = useWriteContract();
   const [selectedPiece, setSelectedPiece] = useState<PieceKey>("rook");
   const [phase, setPhase] = useState<"ready" | "success" | "failure">("ready");
   const [boardKey, setBoardKey] = useState(0);
@@ -228,6 +230,8 @@ export default function PlayHubPage() {
   const POINTS_PER_STAR = 100n;
   const score = useMemo(() => BigInt(Math.max(1, totalStars)) * POINTS_PER_STAR, [totalStars]);
 
+  // v1: tracks last-exercise time only. 1000n fallback after board reset
+  // is safe — on-chain time is informational, not used for scoring.
   const timeMs = useMemo(() => {
     if (phase !== "success") {
       return 1000n;
@@ -384,8 +388,9 @@ export default function PlayHubPage() {
     isCorrectChain &&
     levelId > 0n &&
     badgeEarned;
-  const isClaimBusy = isWriting || isClaimConfirming;
-  const isSubmitBusy = isWriting || isSubmitConfirming;
+  const isClaimBusy = isBadgeWriting || isClaimConfirming;
+  const isSubmitBusy = isScoreWriting || isSubmitConfirming;
+  const isShopBusy = isShopWriting || isShopConfirming;
 
   const allExercisesAttempted = progress.stars.every(s => s > 0);
 
@@ -398,21 +403,24 @@ export default function PlayHubPage() {
     isCorrectChain,
   });
 
-  async function writeWithOptionalFeeCurrency(request: Parameters<typeof writeContractAsync>[0]) {
+  async function writeWithOptionalFeeCurrency(
+    writer: typeof writeScoreAsync,
+    request: Parameters<typeof writeScoreAsync>[0],
+  ) {
     try {
       const feeManagedRequest = feeCurrency
         ? ({
             ...request,
             feeCurrency,
-          } as unknown as Parameters<typeof writeContractAsync>[0])
+          } as unknown as Parameters<typeof writeScoreAsync>[0])
         : request;
-      return await writeContractAsync(feeManagedRequest);
+      return await writer(feeManagedRequest);
     } catch (error) {
       if (!feeCurrency) {
         throw error;
       }
 
-      return writeContractAsync(request);
+      return writer(request);
     }
   }
 
@@ -520,7 +528,7 @@ export default function PlayHubPage() {
         levelId: Number(claimLevelId),
       });
 
-      const txHash = await writeWithOptionalFeeCurrency({
+      const txHash = await writeWithOptionalFeeCurrency(writeBadgeAsync, {
         address: badgesAddress,
         abi: badgesAbi,
         functionName: "claimBadgeSigned" as const,
@@ -569,7 +577,7 @@ export default function PlayHubPage() {
         timeMs: Number(timeMs),
       });
 
-      const txHash = await writeWithOptionalFeeCurrency({
+      const txHash = await writeWithOptionalFeeCurrency(writeScoreAsync, {
         address: scoreboardAddress,
         abi: scoreboardAbi,
         functionName: "submitScoreSigned" as const,
@@ -643,7 +651,7 @@ export default function PlayHubPage() {
         : 0n;
       if (freshAllowance < normalizedTotal) {
         setPurchasePhase("approving");
-        const approveHash = await writeWithOptionalFeeCurrency({
+        const approveHash = await writeWithOptionalFeeCurrency(writeShopAsync, {
           address: paymentToken.address,
           abi: erc20Abi,
           functionName: "approve" as const,
@@ -666,7 +674,7 @@ export default function PlayHubPage() {
       }
 
       setPurchasePhase("buying");
-      const buyHash = await writeWithOptionalFeeCurrency({
+      const buyHash = await writeWithOptionalFeeCurrency(writeShopAsync, {
         address: shopAddress,
         abi: shopAbi,
         functionName: "buyItem" as const,
@@ -761,7 +769,7 @@ export default function PlayHubPage() {
             <ContextualActionSlot
               action={contextAction}
               shieldsAvailable={shieldCount}
-              isBusy={isWriting || isSubmitConfirming || isClaimConfirming}
+              isBusy={isScoreWriting || isBadgeWriting || isSubmitConfirming || isClaimConfirming}
               onSubmitScore={() => void handleSubmitScore()}
               onUseShield={handleUseShield}
               onClaimBadge={() => void handleClaimBadge()}
@@ -845,7 +853,7 @@ export default function PlayHubPage() {
           paymentTokenSymbol={paymentToken?.symbol ?? null}
           isConnected={isConnected}
           isCorrectChain={isCorrectChain}
-          isWriting={isWriting}
+          isWriting={isShopWriting}
           purchasePhase={purchasePhase}
           onConfirm={() => void handleConfirmPurchase()}
         />
@@ -859,7 +867,7 @@ export default function PlayHubPage() {
           />
         ) : null}
 
-        {showPieceComplete ? (
+        {showPieceComplete && !showBadgeEarned ? (
           <PieceCompletePrompt
             pieceType={selectedPiece}
             nextPiece={nextPiece ?? null}
