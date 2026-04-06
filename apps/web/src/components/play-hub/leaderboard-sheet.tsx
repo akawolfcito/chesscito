@@ -79,7 +79,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
           {!loading && !error && rows.length > 0 && (
             <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-3 pb-1 text-xs font-medium uppercase tracking-wide text-cyan-100/50">
               <p>#</p>
-              <p />
+              <p>{LEADERBOARD_SHEET_COPY.columnPlayer}</p>
               <p>{LEADERBOARD_SHEET_COPY.columnScore}</p>
             </div>
           )}
