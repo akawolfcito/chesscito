@@ -454,7 +454,7 @@ export default function PlayHubPage() {
           autoResetTimer.current = setTimeout(() => {
             if (gen !== boardGeneration.current) return;
             setShowBadgeEarned(false);
-            resetBoard();
+            setShowPieceComplete(true);
           }, 15_000);
           return;
         }
