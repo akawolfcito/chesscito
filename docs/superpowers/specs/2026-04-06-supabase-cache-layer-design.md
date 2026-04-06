@@ -10,7 +10,7 @@ Three-layer write strategy with Supabase as the single read source:
 
 1. **Optimistic (frontend)** — after tx confirmation in wallet, insert into local React state. UI shows the player immediately. Cleans up if Supabase doesn't confirm on next fetch.
 2. **Write-through (API)** — after `waitForTransactionReceipt`, frontend calls `POST /api/cache-score` or `POST /api/cache-victory` with tx data. API route inserts into Supabase.
-3. **Cron safety net (every 5 min)** — reads new on-chain events since `last_synced_block`, inserts with `ON CONFLICT DO NOTHING`, updates passport verification cache.
+3. **Cron safety net (every 5 min)** — reads new on-chain events since `last_synced_block`, inserts with `ON CONFLICT (tx_hash) DO UPDATE` (cron is authoritative — overwrites any manipulated write-through data), updates passport verification cache.
 
 Read path: all API routes query Supabase directly (~5ms). No blockchain RPC, no Blockscout, no Redis.
 
@@ -79,7 +79,7 @@ FROM (
 ) sub
 LEFT JOIN passport_cache pc ON pc.player = sub.player
 GROUP BY sub.player, pc.is_verified
-ORDER BY total_score DESC
+ORDER BY total_score DESC, sub.player ASC
 LIMIT 10;
 ```
 
@@ -128,19 +128,19 @@ Called by frontend after successful `mintSigned` tx receipt.
 3. Insert into `victories` with `ON CONFLICT (tx_hash) DO NOTHING`
 4. Return 200
 
-Both endpoints use `enforceOrigin()` for basic protection. No auth needed — the data is public on-chain anyway, and the cron corrects any discrepancies.
+Both endpoints use `enforceOrigin()` for basic protection. No additional auth needed — the data is public on-chain anyway. Write-through inserts with `DO NOTHING` (fast, optimistic). The cron is the authoritative writer — it uses `DO UPDATE` to overwrite any manipulated data within the 5-minute window.
 
 ## Cron Sync
 
 **Endpoint:** `GET /api/cron/sync`
 **Schedule:** Every 5 minutes (`*/5 * * * *` in vercel.json)
-**Authorization:** `CRON_SECRET` header (Vercel built-in)
+**Authorization:** Vercel injects `Authorization: Bearer <CRON_SECRET>`. Validate with `request.headers.get('authorization') === \`Bearer ${process.env.CRON_SECRET}\``.
 
 **Logic:**
 1. Read `last_synced_block` from `sync_state` (default: deploy block)
 2. Fetch `ScoreSubmitted` events from `last_synced_block + 1` to `latest` via ethers.js
 3. Fetch `VictoryMinted` events in same range via ethers.js
-4. Batch insert scores and victories with `ON CONFLICT DO NOTHING`
+4. Batch insert scores with `ON CONFLICT (tx_hash) DO UPDATE SET score=EXCLUDED.score, time_ms=EXCLUDED.time_ms` (authoritative overwrite); victories with same pattern
 5. Update `passport_cache` for top-10 leaderboard players
 6. Write new `last_synced_block` to `sync_state`
 
@@ -155,6 +155,7 @@ After `handleSubmitScore` succeeds:
 2. Store optimistic entry in sessionStorage: `chesscito:optimistic-score`
 3. LeaderboardSheet merges optimistic entry with API data on render
 4. On next API fetch, if the score appears in Supabase data, clear optimistic entry
+5. TTL guard: discard optimistic entry if older than 2 minutes (covers write-through failure)
 
 ### Victory Claim (arena/page.tsx)
 
@@ -163,6 +164,7 @@ After `handleClaimVictory` succeeds:
 2. Store optimistic entry in sessionStorage: `chesscito:optimistic-victory`
 3. Trophies page merges optimistic entry on render
 4. On next API fetch, clear if present in Supabase data
+5. TTL guard: discard optimistic entry if older than 2 minutes
 
 ## Read Path Changes
 
