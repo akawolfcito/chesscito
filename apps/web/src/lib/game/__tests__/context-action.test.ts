@@ -78,10 +78,10 @@ describe("getContextAction", () => {
     );
   });
 
-  it("returns null on failure when disconnected", () => {
+  it("returns retry on failure when disconnected", () => {
     assert.equal(
       getContextAction({ ...BASE, phase: "failure", isConnected: false }),
-      null
+      "retry"
     );
   });
 

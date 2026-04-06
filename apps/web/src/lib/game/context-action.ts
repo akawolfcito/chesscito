@@ -19,8 +19,8 @@ export type ContextActionState = {
 export function getContextAction(state: ContextActionState): ContextAction {
   // Failure recovery always takes priority
   if (state.phase === "failure") {
-    if (!state.isConnected || !state.isCorrectChain) return null;
-    return state.shieldsAvailable > 0 ? "useShield" : "retry";
+    if (state.isConnected && state.isCorrectChain && state.shieldsAvailable > 0) return "useShield";
+    return "retry";
   }
 
   // Badge > Score when both available (reward before record)
