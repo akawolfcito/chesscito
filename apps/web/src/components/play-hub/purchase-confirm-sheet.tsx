@@ -98,7 +98,7 @@ export function PurchaseConfirmSheet({
               type="button"
               className="mt-2 w-full py-2 text-center text-sm font-medium text-cyan-100/60 hover:text-cyan-100/80 transition-colors min-h-[44px]"
               onClick={() => onOpenChange(false)}
-              disabled={isWriting}
+              disabled={isWriting || purchasePhase !== "idle"}
             >
               {PURCHASE_CONFIRM_COPY.cancel}
             </button>
