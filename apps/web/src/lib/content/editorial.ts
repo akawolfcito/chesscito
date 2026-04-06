@@ -506,7 +506,7 @@ export const COACH_COPY = {
 export const LEGAL_COPY = {
   terms: {
     title: "Terms of Service",
-    lastUpdated: "March 2026",
+    lastUpdated: "March 15, 2026",
     sections: [
       {
         heading: "Service Description",
@@ -544,7 +544,7 @@ export const LEGAL_COPY = {
   },
   privacy: {
     title: "Privacy Policy",
-    lastUpdated: "March 2026",
+    lastUpdated: "March 15, 2026",
     sections: [
       {
         heading: "Data We Handle",
