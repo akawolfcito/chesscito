@@ -373,7 +373,7 @@ export const TROPHY_VITRINE_COPY = {
   noGlobalVictories: "No victories recorded yet — be the first!",
   loadError: "Could not load victories — tap to retry",
   configError: "Trophies unavailable",
-  roadmap: "More coming soon → Tournaments • VIP Passes • Seasonal Rewards",
+  roadmap: "More coming soon — Tournaments • VIP Passes • Seasonal Rewards",
   arenaLink: "Go to Arena",
 } as const;
 
