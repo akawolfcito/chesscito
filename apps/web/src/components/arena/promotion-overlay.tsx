@@ -1,6 +1,6 @@
 "use client";
 
-import { ARENA_COPY } from "@/lib/content/editorial";
+import { ARENA_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { ARENA_PIECE_IMG } from "@/lib/game/arena-utils";
 
 type PromotionChoice = "q" | "r" | "b" | "n";
@@ -11,10 +11,10 @@ type Props = {
 };
 
 const CHOICES: { key: PromotionChoice; label: string }[] = [
-  { key: "q", label: "Queen" },
-  { key: "r", label: "Rook" },
-  { key: "b", label: "Bishop" },
-  { key: "n", label: "Knight" },
+  { key: "q", label: PIECE_LABELS.queen },
+  { key: "r", label: PIECE_LABELS.rook },
+  { key: "b", label: PIECE_LABELS.bishop },
+  { key: "n", label: PIECE_LABELS.knight },
 ];
 
 const PIECE_KEY_MAP: Record<PromotionChoice, keyof typeof ARENA_PIECE_IMG.w> = {
