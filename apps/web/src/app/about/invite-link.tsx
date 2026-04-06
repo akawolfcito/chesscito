@@ -18,7 +18,7 @@ export function InviteLink() {
           void navigator.clipboard.writeText("https://chesscito.vercel.app");
         }
       }}
-      className="flex min-h-[44px] w-full items-center gap-3 rounded-xl bg-cyan-950/40 px-4 py-3 text-cyan-100 transition hover:bg-cyan-950/60"
+      className="flex min-h-[44px] w-full items-center gap-3 rounded-xl bg-[var(--link-row-bg)] px-4 py-3 text-cyan-100 transition hover:bg-[var(--link-row-bg-hover)]"
     >
       <Share2 size={18} className="shrink-0 text-cyan-400" />
       <span className="text-sm font-medium">{ABOUT_COPY.links.invite}</span>
