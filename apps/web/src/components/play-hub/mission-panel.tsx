@@ -153,7 +153,7 @@ export function MissionPanel({
         <p key={targetLabel} className="mission-typewriter text-[15px] font-bold text-slate-50">
           {isCapture
             ? <>Move your {PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to <span className="text-rose-400">CAPTURE</span></>
-            : `Move your ${PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to ${targetLabel}`}
+            : <>{MISSION_BRIEFING_COPY.targetPrefix} <span className="text-cyan-300">{targetLabel}</span></>}
         </p>
         <p key={`hint-${targetLabel}`} className="mission-typewriter text-[11px] text-cyan-100/55" style={{ animationDelay: "1s" }}>
           {MISSION_BRIEFING_COPY.moveHint[selectedPiece as keyof typeof MISSION_BRIEFING_COPY.moveHint]}
