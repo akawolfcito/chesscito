@@ -592,6 +592,32 @@ export default function PlayHubPage() {
         txHash,
       });
       console.info("[MiniPayTx] result", { label: "submit-score", txHash, levelId: Number(levelId) });
+
+      // Write-through to Supabase (fire-and-forget)
+      void fetch("/api/cache-score", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          player: address,
+          levelId: Number(levelId),
+          score: Number(score),
+          timeMs: Number(timeMs),
+          txHash: txHash,
+        }),
+      }).catch(() => {});
+
+      // Optimistic entry for leaderboard
+      try {
+        sessionStorage.setItem(
+          "chesscito:optimistic-score",
+          JSON.stringify({
+            player: address.toLowerCase(),
+            score: Number(score),
+            levelId: Number(levelId),
+            ts: Date.now(),
+          }),
+        );
+      } catch { /* storage unavailable */ }
     } catch (error) {
       if (isUserCancellation(error)) {
         showToast(FOOTER_CTA_COPY.submitCanceled, 2000);

@@ -14,6 +14,27 @@ import {
 import type { LeaderboardRow } from "@/lib/server/leaderboard";
 import { LEADERBOARD_SHEET_COPY, PASSPORT_COPY } from "@/lib/content/editorial";
 
+const OPTIMISTIC_TTL_MS = 2 * 60 * 1000; // 2 minutes
+
+function getOptimisticScore(): { player: string; score: number } | null {
+  try {
+    const raw = sessionStorage.getItem("chesscito:optimistic-score");
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    if (Date.now() - entry.ts > OPTIMISTIC_TTL_MS) {
+      sessionStorage.removeItem("chesscito:optimistic-score");
+      return null;
+    }
+    return { player: entry.player, score: entry.score };
+  } catch {
+    return null;
+  }
+}
+
+function clearOptimisticScore() {
+  try { sessionStorage.removeItem("chesscito:optimistic-score"); } catch { /* ignore */ }
+}
+
 type LeaderboardSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,7 +53,27 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
         if (!r.ok) throw new Error("fetch failed");
         return r.json();
       })
-      .then((data: unknown) => setRows(Array.isArray(data) ? data : []))
+      .then((data: unknown) => {
+        const apiRows = Array.isArray(data) ? (data as LeaderboardRow[]) : [];
+        const optimistic = getOptimisticScore();
+        if (optimistic) {
+          const found = apiRows.some(
+            (r) => r.player.includes(optimistic.player.slice(2, 6)),
+          );
+          if (found) {
+            clearOptimisticScore();
+            setRows(apiRows);
+            return;
+          }
+          const truncated = optimistic.player.slice(0, 6) + "..." + optimistic.player.slice(-4);
+          setRows([
+            ...apiRows,
+            { rank: apiRows.length + 1, player: truncated, score: optimistic.score, isVerified: false },
+          ]);
+        } else {
+          setRows(apiRows);
+        }
+      })
       .catch(() => setError(LEADERBOARD_SHEET_COPY.error))
       .finally(() => setLoading(false));
   }, []);
