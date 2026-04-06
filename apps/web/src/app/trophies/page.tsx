@@ -157,7 +157,7 @@ export default function TrophiesPage() {
               {isConnected && myVictories?.length === 0 && !myLoading && !myError && (
                 <Link
                   href="/arena"
-                  className="mt-1 block min-h-[44px] flex items-center justify-center text-center text-sm font-semibold text-cyan-400 underline"
+                  className="mt-1 min-h-[44px] flex items-center justify-center text-center text-sm font-semibold text-cyan-400 underline"
                 >
                   {TROPHY_VITRINE_COPY.arenaLink}
                 </Link>
