@@ -129,7 +129,7 @@ export function MissionPanel({
   const statsContent = (
     <div className="flex items-center gap-3">
       <div className="shrink-0">{exerciseDrawer}</div>
-      <span className="h-4 w-px bg-white/[0.08]" />
+      <span className="h-4 w-px bg-[var(--shell-divider)]" />
       <div className="flex flex-1 items-center justify-center gap-4">
         <span className="game-label flex items-center gap-1 text-xs font-bold tabular-nums text-white/85">
           <Star size={14} className="opacity-65" />
@@ -240,7 +240,7 @@ export function MissionPanel({
           {board}
         </div>
         {isReplay && (
-          <p className="px-2 py-1 text-center text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-cyan-400/50">
+          <p className="px-2 py-1 text-center text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-cyan-400/50">
             {PRACTICE_COPY.label}
           </p>
         )}
