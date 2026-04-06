@@ -32,6 +32,34 @@ function toVictoryEntry(row: ApiVictoryRow): VictoryEntry {
   };
 }
 
+const OPTIMISTIC_TTL_MS = 2 * 60 * 1000;
+
+function getOptimisticVictory(): ApiVictoryRow | null {
+  try {
+    const raw = sessionStorage.getItem("chesscito:optimistic-victory");
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    if (Date.now() - entry.ts > OPTIMISTIC_TTL_MS) {
+      sessionStorage.removeItem("chesscito:optimistic-victory");
+      return null;
+    }
+    return {
+      tokenId: entry.tokenId,
+      player: entry.player,
+      difficulty: entry.difficulty,
+      totalMoves: entry.totalMoves,
+      timeMs: entry.timeMs,
+      timestamp: Math.floor(entry.ts / 1000),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function clearOptimisticVictory() {
+  try { sessionStorage.removeItem("chesscito:optimistic-victory"); } catch { /* ignore */ }
+}
+
 export default function TrophiesPage() {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -56,7 +84,17 @@ export default function TrophiesPage() {
       const res = await fetch("/api/hall-of-fame");
       if (!res.ok) throw new Error("fetch failed");
       const rows = (await res.json()) as ApiVictoryRow[];
-      setHallOfFame(rows.map(toVictoryEntry));
+      const entries = rows.map(toVictoryEntry);
+      const optimistic = getOptimisticVictory();
+      if (optimistic) {
+        const found = entries.some((e) => e.player.toLowerCase() === optimistic.player.toLowerCase());
+        if (found) {
+          clearOptimisticVictory();
+        } else {
+          entries.unshift(toVictoryEntry(optimistic));
+        }
+      }
+      setHallOfFame(entries);
     } catch {
       setHofError(TROPHY_VITRINE_COPY.loadError);
     } finally {
@@ -72,7 +110,17 @@ export default function TrophiesPage() {
       const res = await fetch(`/api/my-victories?player=${address}`);
       if (!res.ok) throw new Error("fetch failed");
       const rows = (await res.json()) as ApiVictoryRow[];
-      setMyVictories(rows.map(toVictoryEntry));
+      const entries = rows.map(toVictoryEntry);
+      const optimistic = getOptimisticVictory();
+      if (optimistic && optimistic.player.toLowerCase() === address?.toLowerCase()) {
+        const found = entries.some((e) => String(e.tokenId) === optimistic.tokenId);
+        if (found) {
+          clearOptimisticVictory();
+        } else {
+          entries.unshift(toVictoryEntry(optimistic));
+        }
+      }
+      setMyVictories(entries);
     } catch {
       setMyError(TROPHY_VITRINE_COPY.loadError);
     } finally {

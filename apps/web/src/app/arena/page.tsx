@@ -398,6 +398,35 @@ export default function ArenaPage() {
       setShareStatus("ready"); // For now, share is immediately ready post-claim
       setClaimPhase("success");
       setClaimError(null);
+
+      // Write-through to Supabase (fire-and-forget)
+      void fetch("/api/cache-victory", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          player: address,
+          tokenId: extractedTokenId ? String(extractedTokenId) : "0",
+          difficulty: chainDifficulty,
+          totalMoves: game.moveCount,
+          timeMs: game.elapsedMs,
+          txHash: claimHash,
+        }),
+      }).catch(() => {});
+
+      // Optimistic entry for trophies page
+      try {
+        sessionStorage.setItem(
+          "chesscito:optimistic-victory",
+          JSON.stringify({
+            tokenId: extractedTokenId ? String(extractedTokenId) : "0",
+            player: address.toLowerCase(),
+            difficulty: chainDifficulty,
+            totalMoves: game.moveCount,
+            timeMs: game.elapsedMs,
+            ts: Date.now(),
+          }),
+        );
+      } catch { /* storage unavailable */ }
     } catch (err) {
       console.error("Claim failed:", err);
       const raw = err instanceof Error ? err.message : "Claim failed";
