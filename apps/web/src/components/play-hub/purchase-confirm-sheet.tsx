@@ -94,6 +94,14 @@ export function PurchaseConfirmSheet({
                   ? PURCHASE_CONFIRM_COPY.buying
                   : PURCHASE_CONFIRM_COPY.confirmButton}
             </Button>
+            <button
+              type="button"
+              className="mt-2 w-full py-2 text-center text-sm font-medium text-cyan-100/60 hover:text-cyan-100/80 transition-colors min-h-[44px]"
+              onClick={() => onOpenChange(false)}
+              disabled={isWriting}
+            >
+              {PURCHASE_CONFIRM_COPY.cancel}
+            </button>
           </div>
         ) : null}
       </SheetContent>
