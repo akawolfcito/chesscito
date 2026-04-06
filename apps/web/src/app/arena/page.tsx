@@ -60,6 +60,9 @@ export default function ArenaPage() {
   const [claimError, setClaimError] = useState<string | null>(null);
   const claimingRef = useRef(false);
 
+  // Preparing state (loading between difficulty selection and game start)
+  const [isPreparing, setIsPreparing] = useState(false);
+
   // Coach state
   type CoachPhase = "idle" | "welcome" | "loading" | "result" | "fallback" | "paywall";
   const [coachPhase, setCoachPhase] = useState<CoachPhase>("idle");
@@ -429,16 +432,32 @@ export default function ArenaPage() {
     game.reset();
   };
 
+  const handleStartWithLoading = useCallback(() => {
+    setIsPreparing(true);
+    // Brief delay so the user sees the preparing state before the board renders
+    setTimeout(() => {
+      game.startGame();
+      setIsPreparing(false);
+    }, 400);
+  }, [game]);
+
   // Difficulty selection
   if (game.status === "selecting") {
     return (
       <main className="flex min-h-[100dvh] flex-col items-center justify-center arena-bg">
-        <DifficultySelector
-          selected={game.difficulty}
-          onSelect={game.setDifficulty}
-          onStart={game.startGame}
-          onBack={handleBackToHub}
-        />
+        {isPreparing ? (
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-400" />
+            <p className="text-sm font-medium text-cyan-100/70">{ARENA_COPY.preparingAi}</p>
+          </div>
+        ) : (
+          <DifficultySelector
+            selected={game.difficulty}
+            onSelect={game.setDifficulty}
+            onStart={handleStartWithLoading}
+            onBack={handleBackToHub}
+          />
+        )}
         {game.errorMessage && (
           <div className="mx-6 mt-2 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-2.5 text-center text-sm text-rose-300">
             {game.errorMessage}
