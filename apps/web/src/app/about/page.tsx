@@ -31,7 +31,7 @@ export default function AboutPage() {
         <h2 className="text-xl font-bold text-cyan-50 drop-shadow-[0_0_8px_rgba(103,232,249,0.2)]">{ABOUT_COPY.title}</h2>
         <p className="text-xs text-cyan-300/60">{ABOUT_COPY.operatedBy}</p>
         <p className="text-xs text-cyan-300/40">{ABOUT_COPY.handle}</p>
-        <p className="text-[10px] text-cyan-300/30">{ABOUT_COPY.version}</p>
+        <p className="text-xs text-cyan-300/50">{ABOUT_COPY.version}</p>
       </div>
 
       {/* Links */}
