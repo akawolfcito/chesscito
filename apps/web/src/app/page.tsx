@@ -555,7 +555,7 @@ export default function PlayHubPage() {
   }
 
   async function handleSubmitScore() {
-    if (!canSendOnChain || !address || !scoreboardAddress) {
+    if (!canSendOnChain || !address || !scoreboardAddress || isSubmitBusy) {
       return;
     }
 
