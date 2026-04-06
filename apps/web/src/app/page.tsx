@@ -740,6 +740,7 @@ export default function PlayHubPage() {
             setClaimTxHash(null);
             setSubmitTxHash(null);
             setShowBadgeEarned(false);
+            setShowPieceComplete(false);
             resetBoard();
           }}
           pieces={[
