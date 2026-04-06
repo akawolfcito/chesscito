@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAddress } from "viem";
-
-import { getPlayerVictories } from "@/lib/server/hof-blockscout";
+import { getPlayerVictories } from "@/lib/server/hof";
 import { enforceOrigin } from "@/lib/server/demo-signing";
 
 export const runtime = "nodejs";
@@ -22,10 +21,5 @@ export async function GET(request: NextRequest) {
   }
 
   const rows = await getPlayerVictories(player);
-
-  return NextResponse.json(rows, {
-    headers: {
-      "Cache-Control": "s-maxage=30, stale-while-revalidate=60",
-    },
-  });
+  return NextResponse.json(rows);
 }
