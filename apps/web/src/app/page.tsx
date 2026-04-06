@@ -791,6 +791,7 @@ export default function PlayHubPage() {
                     setSelectedItemId(itemId);
                     const item = shopCatalog.find((i) => i.itemId === itemId);
                     if (item) setPaymentToken(selectPaymentToken(item.onChainPrice));
+                    setStoreOpen(false);
                     setConfirmOpen(true);
                   }}
                 />
