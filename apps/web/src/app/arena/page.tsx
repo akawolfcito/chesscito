@@ -103,13 +103,11 @@ export default function ArenaPage() {
         });
         setShareStatus("ready");
       } else if (saved.phase === "claiming") {
-        // Refresh mid-claim: block button if deadline still valid, otherwise clear
-        const nowSec = Math.floor(Date.now() / 1000);
-        if (saved.deadline && Number(saved.deadline) > nowSec + 30) {
-          setClaimPhase("claiming");
-        } else {
-          sessionStorage.removeItem("chesscito:claim");
-        }
+        // Stale claiming state from a previous session — clear it.
+        // The game resets on mount so there's no end state to show the
+        // claiming overlay. Keeping stale "claiming" would be invisible
+        // and block future claims.
+        sessionStorage.removeItem("chesscito:claim");
       }
     } catch { /* corrupt data — ignore */ }
   }, []);
