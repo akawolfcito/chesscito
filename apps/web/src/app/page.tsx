@@ -138,13 +138,23 @@ export default function PlayHubPage() {
   const [showPieceComplete, setShowPieceComplete] = useState(false);
   const [badgeSheetOpen, setBadgeSheetOpen] = useState(false);
   const [shieldCount, setShieldCount] = useState(0);
+  const [claimingPiece, setClaimingPiece] = useState<PieceKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+  const displayedToast = useRef<string>("");
   const toastTimer = useRef<ReturnType<typeof setTimeout>>();
+  const toastFadeTimer = useRef<ReturnType<typeof setTimeout>>();
 
   function showToast(msg: string, durationMs = 2000) {
     clearTimeout(toastTimer.current);
+    clearTimeout(toastFadeTimer.current);
+    displayedToast.current = msg;
     setToast(msg);
-    toastTimer.current = setTimeout(() => setToast(null), durationMs);
+    setToastVisible(true);
+    toastTimer.current = setTimeout(() => {
+      setToastVisible(false);
+      toastFadeTimer.current = setTimeout(() => setToast(null), 200);
+    }, durationMs);
   }
   const [qaLevelInput, setQaLevelInput] = useState("2");
   const [isLocalhost, setIsLocalhost] = useState(false);
@@ -521,6 +531,7 @@ export default function PlayHubPage() {
     if (badgesClaimed[targetPiece] || isClaimBusy) return;
 
     setLastError(null);
+    setClaimingPiece(targetPiece);
 
     try {
       const signed = await requestSignature("/api/sign-badge", {
@@ -559,6 +570,8 @@ export default function PlayHubPage() {
         retryAction: () => void handleClaimBadge(piece),
       });
       console.warn("[MiniPayTx] error", { label: "claim-badge", levelId: Number(claimLevelId), error: message });
+    } finally {
+      setClaimingPiece(null);
     }
   }
 
@@ -813,6 +826,7 @@ export default function PlayHubPage() {
                   badgesClaimed={badgesClaimed}
                   onClaim={(piece) => void handleClaimBadge(piece)}
                   isClaimBusy={isClaimBusy}
+                  claimingPiece={claimingPiece}
                   showNotification={canSendOnChain && !Boolean(hasClaimedBadge)}
                 />
               }
@@ -1021,11 +1035,13 @@ export default function PlayHubPage() {
             </div>
           </details>
         ) : null}
-        {toast && (
-          <div className="fixed bottom-24 left-1/2 z-[70] -translate-x-1/2 rounded-2xl border border-white/[0.08] bg-[var(--surface-frosted)] px-4 py-2.5 text-sm text-cyan-100/80 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
-            {toast}
-          </div>
-        )}
+        <div
+          className={`fixed bottom-24 left-1/2 z-[70] -translate-x-1/2 rounded-2xl border border-white/[0.08] bg-[var(--surface-frosted)] px-4 py-2.5 text-sm text-cyan-100/80 backdrop-blur-xl transition-all duration-200 ${
+            toastVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"
+          }`}
+        >
+          {toast ?? displayedToast.current}
+        </div>
       </main>
     </div>
   );
