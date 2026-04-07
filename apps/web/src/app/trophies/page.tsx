@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Crown, ArrowLeft } from "lucide-react";
+import { Crown, Trophy, ArrowLeft } from "lucide-react";
 import { TrophyList } from "@/components/trophies/trophy-list";
 import { getVictoryAddress } from "@/lib/game/victory-events";
 import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
@@ -205,7 +205,7 @@ export default function TrophiesPage() {
               {isConnected && myVictories?.length === 0 && !myLoading && !myError && (
                 <Link
                   href="/arena"
-                  className="mt-1 min-h-[44px] flex items-center justify-center text-center text-sm font-semibold text-cyan-400 underline"
+                  className="mt-3 flex min-h-[44px] items-center justify-center rounded-2xl bg-cyan-500/15 px-6 text-center text-sm font-semibold text-cyan-300 transition-all hover:bg-cyan-500/25 active:scale-[0.97]"
                 >
                   {TROPHY_VITRINE_COPY.arenaLink}
                 </Link>
@@ -215,7 +215,7 @@ export default function TrophiesPage() {
             {/* Hall of Fame */}
             <section className="mb-6">
               <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[rgba(200,180,130,0.55)]" style={{ textShadow: "var(--text-shadow-label)" }}>
-                <Crown className="h-3.5 w-3.5 text-[rgba(220,190,100,0.7)] drop-shadow-[0_0_3px_rgba(200,170,100,0.2)]" />
+                <Trophy className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.4)]" />
                 {TROPHY_VITRINE_COPY.hallOfFame}
               </h2>
 
@@ -231,10 +231,12 @@ export default function TrophiesPage() {
           </>
         )}
 
-        {/* Roadmap Banner */}
-        <div className="mt-auto rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3 text-center text-xs text-purple-300">
-          {TROPHY_VITRINE_COPY.roadmap}
-        </div>
+        {/* Roadmap Banner — only shown to connected users with victories */}
+        {isConnected && myVictories && myVictories.length > 0 && (
+          <div className="mt-auto rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3 text-center text-xs text-purple-300">
+            {TROPHY_VITRINE_COPY.roadmap}
+          </div>
+        )}
       </div>
     </div>
     </div>
