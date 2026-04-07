@@ -66,8 +66,7 @@ export function ExerciseDrawer({
         <button
           type="button"
           aria-label="Exercises"
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-full px-2.5 text-[10px] font-bold text-[rgba(220,200,140,0.85)] transition hover:brightness-110 active:scale-[0.97] active:brightness-90"
-          style={{ background: "linear-gradient(180deg, rgba(20,16,10,0.70) 0%, rgba(12,10,8,0.60) 100%)", border: "1px solid rgba(180,160,100,0.20)", boxShadow: "inset 0 1px 2px rgba(255,255,255,0.05), inset 0 -1px 2px rgba(0,0,0,0.25), 0 1px 4px rgba(0,0,0,0.2)" }}
+          className="exercise-drawer-trigger flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-full px-2.5 text-[10px] font-bold text-[rgba(220,200,140,0.85)] transition hover:brightness-110 active:scale-[0.97] active:brightness-90"
         >
           <Star size={10} className="fill-[rgba(220,190,100,0.9)] text-[rgba(220,190,100,0.9)]" />
           <span className="tabular-nums">{totalStars}/{maxStars}</span>
@@ -96,8 +95,9 @@ export function ExerciseDrawer({
                 type="button"
                 disabled={isLocked}
                 onClick={() => handleSelect(index)}
+                style={{ animationDelay: `${index * 50}ms` }}
                 className={[
-                  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition",
+                  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-backwards",
                   isActive
                     ? "bg-cyan-500/18 ring-1 ring-cyan-400/45 shadow-[inset_0_0_12px_rgba(34,211,238,0.06)]"
                     : isDone
