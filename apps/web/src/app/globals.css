@@ -979,6 +979,7 @@
     box-shadow:
       inset 0 0 0 2px rgba(239, 68, 68, 0.6),
       0 0 12px rgba(239, 68, 68, 0.4);
+    animation: check-pulse 1.5s ease-in-out infinite;
   }
 
   .arena-board-cell.is-capturable {
@@ -1006,6 +1007,12 @@
 
   .arena-piece-img.arena-treat-black {
     filter: hue-rotate(260deg) saturate(0.8) brightness(0.7) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  }
+
+  /* Check state — red pulse on king square */
+  @keyframes check-pulse {
+    0%, 100% { background: var(--cell-check-bg); }
+    50% { background: rgba(239, 68, 68, 0.45); }
   }
 
   /* Checkmate pause — gold pulse on final board position */
