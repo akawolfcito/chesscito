@@ -121,6 +121,9 @@ function BadgeCard({
             disabled={isClaimBusy}
             className="min-h-[44px] rounded-xl px-3 text-xs"
           >
+            {isClaimBusy && (
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            )}
             {isClaimBusy ? BADGE_SHEET_COPY.claiming : BADGE_SHEET_COPY.claimBadge}
           </Button>
         ) : (

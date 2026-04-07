@@ -88,6 +88,9 @@ export function PurchaseConfirmSheet({
               }
               onClick={onConfirm}
             >
+              {(isWriting || purchasePhase !== "idle") && (
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               {purchasePhase === "approving"
                 ? PURCHASE_CONFIRM_COPY.approving(paymentTokenSymbol ?? "")
                 : purchasePhase === "buying"

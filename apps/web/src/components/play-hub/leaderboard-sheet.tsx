@@ -145,7 +145,15 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
             </div>
           )}
           {loading && (
-            <p className="text-center text-sm text-cyan-100/60">{LEADERBOARD_SHEET_COPY.loading}</p>
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="panel-base grid grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-2.5">
+                  <div className="h-4 w-6 animate-pulse rounded bg-cyan-100/10" />
+                  <div className="h-4 w-32 animate-pulse rounded bg-cyan-100/10" />
+                  <div className="h-4 w-10 animate-pulse rounded bg-cyan-100/10" />
+                </div>
+              ))}
+            </div>
           )}
           {error && (
             <div className="flex flex-col items-center gap-2">
