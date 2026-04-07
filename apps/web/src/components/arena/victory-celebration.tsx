@@ -87,18 +87,20 @@ export function VictoryCelebration({
         <div className="flex w-full flex-col gap-2.5">
           {/* Primary: Claim Victory */}
           {onClaimVictory && (
-            <button
+            <Button
               type="button"
+              variant="game-solid"
+              size="game"
               onClick={onClaimVictory}
-              className="w-full rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.08] py-3.5 transition-all hover:bg-emerald-500/[0.15] hover:border-emerald-400/30 hover:shadow-[0_0_20px_rgba(52,211,153,0.12)] active:scale-[0.97]"
+              className="w-full flex-col gap-0.5 py-3.5"
             >
-              <span className="flex items-center justify-center gap-1.5 text-sm font-bold text-emerald-300/90">
+              <span className="flex items-center gap-1.5 text-sm font-bold">
                 <Trophy size={16} /> {VICTORY_CLAIM_COPY.claimButton}
               </span>
-              <span className="block text-xs text-emerald-200/60 mt-0.5">
+              <span className="block text-xs opacity-70 font-normal">
                 {VICTORY_CLAIM_COPY.claimValueHint(claimPrice ?? "")}
               </span>
-            </button>
+            </Button>
           )}
 
           {/* Secondary: Play Again */}
