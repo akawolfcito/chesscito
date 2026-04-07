@@ -532,7 +532,10 @@ export default function ArenaPage() {
     return (
       <main className="flex min-h-[100dvh] flex-col items-center justify-center arena-bg">
         {isPreparing ? (
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
+            <p className="text-sm font-semibold text-amber-400/80">
+              {ARENA_COPY.difficulty[game.difficulty as keyof typeof ARENA_COPY.difficulty]}
+            </p>
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-400" />
             <p className="text-sm font-medium text-cyan-100/70">{ARENA_COPY.preparingAi}</p>
           </div>
