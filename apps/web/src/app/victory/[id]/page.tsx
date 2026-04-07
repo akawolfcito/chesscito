@@ -93,8 +93,8 @@ export default async function VictoryPage({ params }: { params: { id: string } }
   if (!v) notFound();
 
   return (
-    <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width)] flex-col items-center justify-center arena-bg px-6">
-      <div className="flex w-full max-w-[340px] flex-col items-center rounded-3xl border border-white/[0.08] bg-[var(--surface-frosted)] px-6 pb-8 pt-10 backdrop-blur-2xl shadow-[0_0_60px_rgba(20,184,166,0.08)]">
+    <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width)] flex-col items-center justify-center arena-bg px-6 animate-in fade-in duration-500">
+      <div className="flex w-full max-w-[340px] flex-col items-center rounded-3xl border border-white/[0.08] bg-[var(--surface-frosted)] px-6 pb-8 pt-10 backdrop-blur-2xl shadow-[0_0_60px_rgba(20,184,166,0.08)] animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Trophy */}
         <VictoryTrophy />
 
