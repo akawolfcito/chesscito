@@ -11,6 +11,7 @@ import {
 } from "@/lib/game/board";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
+import { hapticTap, hapticReject, hapticSuccess } from "@/lib/haptics";
 
 const PIECE_IMG: Record<PieceId, string> = {
   rook:   "/art/pieces/w-rook.png",
@@ -107,11 +108,23 @@ export function Board({
       setMovesCount(nextMoves);
       setPiece((current) => movePiece(current, nextPosition));
       setSelectedPosition(null);
+
+      const isTargetReached =
+        targetPosition !== null &&
+        nextPosition.file === targetPosition.file &&
+        nextPosition.rank === targetPosition.rank;
+      if (isTargetReached) {
+        hapticSuccess();
+      } else {
+        hapticTap();
+      }
+
       onMove?.(nextPosition, nextMoves);
       return;
     }
 
     // Invalid tap — shake the piece briefly
+    hapticReject();
     setIsRejecting(true);
     setTimeout(() => setIsRejecting(false), 200);
     setSelectedPosition(null);

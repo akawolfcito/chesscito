@@ -27,6 +27,7 @@ import { CoachPaywall } from "@/components/coach/coach-paywall";
 import { CoachWelcome } from "@/components/coach/coach-welcome";
 import type { CoachResponse, BasicCoachResponse, GameRecord } from "@/lib/coach/types";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
+import { hapticImpact, hapticSuccess } from "@/lib/haptics";
 import { victoryAbi } from "@/lib/contracts/victory";
 import {
   ACCEPTED_TOKENS,
@@ -406,6 +407,7 @@ export default function ArenaPage() {
         shareLinkUrl: victoryUrl,
       });
       setShareStatus("ready"); // For now, share is immediately ready post-claim
+      hapticSuccess();
       setClaimPhase("success");
       setClaimError(null);
 
@@ -497,6 +499,7 @@ export default function ArenaPage() {
   // Delay end overlay 800ms so user sees the final board position before results appear
   useEffect(() => {
     if (isEndState) {
+      hapticImpact();
       setShowEndOverlay(false);
       endOverlayTimer.current = setTimeout(() => {
         endOverlayTimer.current = null;

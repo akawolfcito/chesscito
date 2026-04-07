@@ -48,6 +48,7 @@ import { classifyTxError, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, EXERCISES } from "@/lib/game/exercises";
 import { computeStars } from "@/lib/game/scoring";
+import { hapticReject, hapticSuccess } from "@/lib/haptics";
 
 const SHOP_ITEMS = [
   {
@@ -452,6 +453,7 @@ export default function PlayHubPage() {
     if (movesCount === 1) timerStart.current = Date.now();
 
     if (isTarget) {
+      hapticSuccess();
       setPhase("success");
       setElapsedMs(timerStart.current > 0 ? Date.now() - timerStart.current : 1000);
       completeExercise(movesCount);
@@ -495,6 +497,7 @@ export default function PlayHubPage() {
     // Solo ejercicios de 1 movimiento: el primer click incorrecto = auto-reset
     // Ejercicios multi-movimiento: el jugador sigue navegando libremente
     if (currentExercise.optimalMoves === 1) {
+      hapticReject();
       setPhase("failure");
       autoResetTimer.current = setTimeout(() => {
         resetBoard();
@@ -548,6 +551,7 @@ export default function PlayHubPage() {
         account: address,
       });
 
+      hapticSuccess();
       setClaimTxHash(txHash);
       setJustClaimed(prev => ({ ...prev, [targetPiece]: true }));
       void refetchAllBadges();
@@ -599,6 +603,7 @@ export default function PlayHubPage() {
         account: address,
       });
 
+      hapticSuccess();
       setSubmitTxHash(txHash);
       setResultOverlay({
         variant: "score",

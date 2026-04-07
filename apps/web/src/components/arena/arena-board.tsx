@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 import { ARENA_PIECE_IMG, squareToFileRank } from "@/lib/game/arena-utils";
+import { hapticTap } from "@/lib/haptics";
 import type { ChessBoardPiece } from "@/lib/game/types";
 
 type ArenaSquareState = {
@@ -107,7 +108,7 @@ export function ArenaBoard({
                     role="gridcell"
                     aria-label={`Square ${sq.label}`}
                     disabled={isLocked}
-                    onClick={() => onSquareClick(sq.label)}
+                    onClick={() => { hapticTap(); onSquareClick(sq.label); }}
                     style={{
                       left: `${geo.left}%`,
                       top: `${geo.top}%`,
