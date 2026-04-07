@@ -54,6 +54,7 @@ export function Board({
     startPosition
   );
   const [movesCount, setMovesCount] = useState(0);
+  const [isRejecting, setIsRejecting] = useState(false);
   const mountedRef = useRef(false);
   useEffect(() => { mountedRef.current = true; }, []);
 
@@ -110,6 +111,9 @@ export function Board({
       return;
     }
 
+    // Invalid tap — shake the piece briefly
+    setIsRejecting(true);
+    setTimeout(() => setIsRejecting(false), 200);
     setSelectedPosition(null);
   };
 
@@ -188,7 +192,7 @@ export function Board({
                 const pw = pieceWidth(piece.position.file, piece.position.rank);
                 return (
                   <picture
-                    className="playhub-board-piece-float"
+                    className={`playhub-board-piece-float${isRejecting ? " piece-reject" : ""}`}
                     style={{
                       left: `${center.x}%`,
                       top: `${center.y}%`,
