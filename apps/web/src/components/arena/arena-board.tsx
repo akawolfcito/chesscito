@@ -125,14 +125,19 @@ export function ArenaBoard({
                 );
               })}
 
-              {pieces.map((p) => {
+              {(() => {
+                const groupCount: Record<string, number> = {};
+                return pieces.map((p) => {
+                const groupKey = `${p.color}-${p.type}`;
+                const idx = groupCount[groupKey] ?? 0;
+                groupCount[groupKey] = idx + 1;
                 const { file, rank } = squareToFileRank(p.square);
                 const center = cellCenter(file, rank);
                 const pw = pieceWidth(file, rank);
                 const src = ARENA_PIECE_IMG[p.color][p.type];
                 return (
                   <picture
-                    key={`${p.color}-${p.type}-${p.square}`}
+                    key={`${p.color}-${p.type}-${idx}`}
                     className="arena-piece-float"
                     style={{
                       left: `${center.x}%`,
@@ -156,7 +161,8 @@ export function ArenaBoard({
                     />
                   </picture>
                 );
-              })}
+              });
+              })()}
             </div>
           </div>
         </div>
