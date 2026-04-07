@@ -104,9 +104,17 @@ export async function fetchLeaderboardFromDb(): Promise<LeaderboardRow[]> {
   const supabase = getSupabaseServer();
   if (!supabase) return [];
 
-  const { data } = await supabase
-    .from("leaderboard_v")
-    .select("rank, player, total_score, is_verified");
+  // Use RPC to query the view — more reliable than direct view access
+  // which can fail if PostgREST schema cache is stale
+  const { data, error } = await supabase.rpc("get_leaderboard");
+
+  if (error) {
+    // Fallback: try direct view access
+    const { data: viewData } = await supabase
+      .from("leaderboard_v")
+      .select("rank, player, total_score, is_verified");
+    return (viewData as LeaderboardRow[]) ?? [];
+  }
 
   return (data as LeaderboardRow[]) ?? [];
 }

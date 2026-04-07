@@ -10,7 +10,8 @@ export async function GET() {
   try {
     const rows = await fetchLeaderboard();
     return NextResponse.json(rows);
-  } catch {
+  } catch (err) {
+    console.error("[leaderboard] error:", err);
     return NextResponse.json({ error: "Failed to fetch leaderboard" }, { status: 500 });
   }
 }
