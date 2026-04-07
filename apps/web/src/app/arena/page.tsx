@@ -65,6 +65,10 @@ export default function ArenaPage() {
   const [isPreparing, setIsPreparing] = useState(false);
   const preparingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Delayed end overlay: gives the user 800ms to see the final board state
+  const [showEndOverlay, setShowEndOverlay] = useState(false);
+  const endOverlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Coach state
   type CoachPhase = "idle" | "welcome" | "loading" | "result" | "fallback" | "paywall";
   const [coachPhase, setCoachPhase] = useState<CoachPhase>("idle");
@@ -490,6 +494,29 @@ export default function ArenaPage() {
     };
   }, []);
 
+  // Delay end overlay 800ms so user sees the final board position before results appear
+  useEffect(() => {
+    if (isEndState) {
+      setShowEndOverlay(false);
+      endOverlayTimer.current = setTimeout(() => {
+        endOverlayTimer.current = null;
+        setShowEndOverlay(true);
+      }, 800);
+    } else {
+      if (endOverlayTimer.current) {
+        clearTimeout(endOverlayTimer.current);
+        endOverlayTimer.current = null;
+      }
+      setShowEndOverlay(false);
+    }
+    return () => {
+      if (endOverlayTimer.current) {
+        clearTimeout(endOverlayTimer.current);
+        endOverlayTimer.current = null;
+      }
+    };
+  }, [isEndState]);
+
   const handleStartWithLoading = useCallback(() => {
     setIsPreparing(true);
     // Brief delay so the user sees the preparing state before the board renders
@@ -547,6 +574,7 @@ export default function ArenaPage() {
             checkSquare={game.checkSquare}
             isLocked={game.isThinking || isEndState || !!game.pendingPromotion}
             onSquareClick={game.selectSquare}
+            isCheckmatePause={isEndState && !showEndOverlay}
           />
           {game.pendingPromotion && (
             <PromotionOverlay onSelect={game.promoteWith} onCancel={game.cancelPromotion} />
@@ -569,9 +597,9 @@ export default function ArenaPage() {
 
       </div>
 
-      {isEndState && (
+      {isEndState && showEndOverlay && (
         <div
-          className={`transition-opacity duration-200 ${
+          className={`transition-opacity duration-300 ${
             coachPhase !== "idle"
               ? "opacity-0 pointer-events-none"
               : "opacity-100 pointer-events-auto"
