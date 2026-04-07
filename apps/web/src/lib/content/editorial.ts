@@ -213,7 +213,7 @@ export const PURCHASE_CONFIRM_COPY = {
 } as const;
 
 export const STATUS_STRIP_COPY = {
-  walletNotConnected: "Wallet not connected",
+  walletNotConnected: "Connect your wallet to play",
   networkReady: "Network ready",
   switchNetwork: "Switch to the supported network",
   piecePathComplete: "Piece Path complete",

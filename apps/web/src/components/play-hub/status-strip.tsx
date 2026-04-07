@@ -1,5 +1,5 @@
 import { TxFeedbackCard } from "@/components/play-hub/tx-feedback-card";
-import { GLOSSARY, STATUS_STRIP_COPY } from "@/lib/content/editorial";
+import { CHAIN_NAMES, GLOSSARY, STATUS_STRIP_COPY } from "@/lib/content/editorial";
 
 type StatusStripProps = {
   chainId: number | undefined;
@@ -38,8 +38,8 @@ export function StatusStrip({
   return (
     <div className="space-y-2">
       <div className="mission-soft rune-frame rounded-xl px-3 py-2 text-xs text-cyan-50">
-        <p>Status: {readiness}</p>
-        <p>Chain: {chainId ?? "n/a"}</p>
+        <p>{readiness}</p>
+        <p>Network: {chainId != null ? (CHAIN_NAMES[chainId] ?? `Chain ${chainId}`) : "n/a"}</p>
         <p>{GLOSSARY.piecePath}: {piecePathStatus}</p>
         <p>{GLOSSARY.badge}: {hasClaimedBadge ? STATUS_STRIP_COPY.badgeClaimed : STATUS_STRIP_COPY.badgeReady}</p>
       </div>
