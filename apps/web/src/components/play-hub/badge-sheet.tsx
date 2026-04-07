@@ -52,10 +52,12 @@ function BadgeCard({
   badge,
   onClaim,
   isClaimBusy,
+  claimingPiece,
 }: {
   badge: BadgeInfo;
   onClaim: () => void;
   isClaimBusy: boolean;
+  claimingPiece: PieceId | null;
 }) {
   const label = PIECE_LABELS[badge.piece];
   const title = `${label} Ascendant`;
@@ -63,6 +65,7 @@ function BadgeCard({
   const isClaimable = badge.state === "claimable";
   const isLocked = badge.state === "locked";
   const needed = Math.max(0, BADGE_THRESHOLD - badge.totalStars);
+  const isThisBusy = claimingPiece === badge.piece;
 
   return (
     <div
@@ -121,10 +124,10 @@ function BadgeCard({
             disabled={isClaimBusy}
             className="min-h-[44px] rounded-xl px-3 text-xs"
           >
-            {isClaimBusy && (
+            {isThisBusy && (
               <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             )}
-            {isClaimBusy ? BADGE_SHEET_COPY.claiming : BADGE_SHEET_COPY.claimBadge}
+            {isThisBusy ? BADGE_SHEET_COPY.claiming : BADGE_SHEET_COPY.claimBadge}
           </Button>
         ) : (
           <Lock className="h-4 w-4 text-cyan-100/20" aria-hidden="true" />
@@ -140,6 +143,7 @@ type BadgeSheetProps = {
   badgesClaimed: Record<PieceId, boolean | undefined>;
   onClaim: (piece: PieceId) => void;
   isClaimBusy: boolean;
+  claimingPiece?: PieceId | null;
   showNotification: boolean;
 };
 
@@ -149,6 +153,7 @@ export function BadgeSheet({
   badgesClaimed,
   onClaim,
   isClaimBusy,
+  claimingPiece = null,
   showNotification,
 }: BadgeSheetProps) {
   const defaultStars = Object.fromEntries(
@@ -226,6 +231,7 @@ export function BadgeSheet({
               badge={badge}
               onClaim={() => onClaim(badge.piece)}
               isClaimBusy={isClaimBusy}
+              claimingPiece={claimingPiece}
             />
           ))}
         </div>
