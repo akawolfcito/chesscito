@@ -136,7 +136,7 @@ export function ArenaEndState({
           />
         </picture>
         <h2
-          className="fantasy-title text-2xl font-bold text-rose-300"
+          className="fantasy-title text-2xl font-bold text-rose-300 animate-in fade-in slide-in-from-bottom-2 duration-300"
           style={{ textShadow: "var(--text-shadow-hero-rose)" }}
         >
           {text}
