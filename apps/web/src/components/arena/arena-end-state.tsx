@@ -1,10 +1,12 @@
 "use client";
 
 import { RotateCcw } from "lucide-react";
-import { ARENA_COPY } from "@/lib/content/editorial";
+import { ARENA_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import type { ArenaStatus } from "@/lib/game/types";
 import { AskCoachButton } from "@/components/coach/ask-coach-button";
+import { StatCard } from "@/components/arena/stat-card";
+import { formatTime } from "@/lib/game/arena-utils";
 import { VictoryCelebration } from "./victory-celebration";
 import { VictoryClaiming } from "./victory-claiming";
 import { VictoryClaimSuccess } from "./victory-claim-success";
@@ -27,6 +29,7 @@ type Props = {
   onPlayAgain: () => void;
   onBackToHub: () => void;
   claimPhase: ClaimPhase;
+  claimStep?: "signing" | "confirming" | "done";
   shareStatus: ShareStatus;
   claimData: ClaimData;
   onClaimVictory?: () => void;
@@ -59,6 +62,7 @@ export function ArenaEndState({
   onPlayAgain,
   onBackToHub,
   claimPhase,
+  claimStep,
   shareStatus,
   claimData,
   onClaimVictory,
@@ -81,7 +85,7 @@ export function ArenaEndState({
 
     switch (claimPhase) {
       case "claiming":
-        return <VictoryClaiming {...sharedProps} />;
+        return <VictoryClaiming {...sharedProps} claimStep={claimStep} />;
       case "success":
         return (
           <VictoryClaimSuccess
@@ -113,13 +117,15 @@ export function ArenaEndState({
   const text = getLoseText(status);
   if (!text) return null;
 
+  const time = formatTime(elapsedMs);
+
   return (
     <div
       className="pointer-events-auto fixed inset-0 z-50 flex items-end justify-center bg-[var(--overlay-scrim)] pb-[15vh] animate-in fade-in duration-300"
       role="alert"
       aria-live="assertive"
     >
-      <div className="panel-showcase mx-4 flex w-full max-w-[340px] flex-col items-center gap-6 px-6 pb-6 pt-8 shadow-[0_0_60px_rgba(251,113,133,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+      <div className="panel-showcase mx-4 flex w-full max-w-[340px] flex-col items-center gap-4 px-6 pb-6 pt-8 shadow-[0_0_60px_rgba(251,113,133,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
         <picture>
           <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
           <img
@@ -135,6 +141,11 @@ export function ArenaEndState({
         >
           {text}
         </h2>
+        <div className="flex w-full gap-2">
+          <StatCard icon="⚔" value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty} label={VICTORY_CELEBRATION_COPY.stats.difficulty} />
+          <StatCard icon="♟" value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
+          <StatCard icon="⏱" value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
+        </div>
         <div className="flex flex-col gap-2 w-full max-w-[260px]">
           <Button
             type="button"

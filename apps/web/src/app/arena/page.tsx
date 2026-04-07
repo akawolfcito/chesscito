@@ -50,6 +50,7 @@ export default function ArenaPage() {
   const { writeContractAsync } = useWriteContract();
 
   const [claimPhase, setClaimPhase] = useState<ClaimPhase>("ready");
+  const [claimStep, setClaimStep] = useState<"signing" | "confirming" | "done">("signing");
   const [claimData, setClaimData] = useState<ClaimData>({
     tokenId: null,
     claimTxHash: null,
@@ -289,6 +290,7 @@ export default function ArenaPage() {
     claimingRef.current = true;
 
     setClaimPhase("claiming");
+    setClaimStep("signing");
     setClaimError(null);
     try {
       // 1. Get server signature
@@ -335,6 +337,9 @@ export default function ArenaPage() {
         });
         await publicClient.waitForTransactionReceipt({ hash: approveHash });
       }
+
+      // Approve done — move to confirming step
+      setClaimStep("confirming");
 
       // 4. Check signature hasn't expired (30s buffer for tx propagation)
       const nowSec = BigInt(Math.floor(Date.now() / 1000));
@@ -389,6 +394,7 @@ export default function ArenaPage() {
         ? `${origin}/api/og/victory/${victoryId}`
         : null;
 
+      setClaimStep("done");
       setClaimData({
         tokenId: extractedTokenId,
         claimTxHash: claimHash,
@@ -456,6 +462,7 @@ export default function ArenaPage() {
     coachAbortRef.current?.abort();
     try { sessionStorage.removeItem("chesscito:claim"); } catch { /* ignore */ }
     setClaimPhase("ready");
+    setClaimStep("signing");
     setClaimData({ tokenId: null, claimTxHash: null, shareCardUrl: null, shareLinkUrl: null });
     setShareStatus("locked");
     setClaimError(null);
@@ -576,6 +583,7 @@ export default function ArenaPage() {
             onPlayAgain={handlePlayAgain}
             onBackToHub={handleBackToHub}
             claimPhase={claimPhase}
+            claimStep={claimStep}
             shareStatus={shareStatus}
             claimData={claimData}
             onClaimVictory={canClaim ? () => void handleClaimVictory() : undefined}
