@@ -110,6 +110,21 @@
   --text-shadow-hero-rose: 0 0 24px rgba(251, 113, 133, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
   --text-shadow-hero-emerald: 0 0 24px rgba(52, 211, 153, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
 
+  /* ── Motion vocabulary ── */
+  --duration-snap: 120ms;
+  --duration-enter: 300ms;
+  --duration-ceremony: 500ms;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Arena board cell state tokens ── */
+  --cell-last-move-bg: rgba(139, 92, 246, 0.15);
+  --cell-check-bg: rgba(239, 68, 68, 0.3);
+
+  /* ── Destructive / danger CTA tokens ── */
+  --cta-danger-bg: rgba(244, 63, 94, 0.15);
+  --cta-danger-text: #fda4af;
+  --cta-danger-border: rgba(244, 63, 94, 0.25);
+
   /* ── CTA Button tokens ── */
   --cta-brand-from: #23C8F3;
   --cta-brand-to: #16A9E0;
@@ -457,7 +472,25 @@
   }
 }
 
-/* P1: confetti burst — keyframe ready, not yet wired to DOM */
+/* M33: invalid move shake */
+@keyframes piece-reject {
+  0%, 100% { transform: translate(-50%, -55%) translateX(0); }
+  20% { transform: translate(-50%, -55%) translateX(-3px); }
+  40% { transform: translate(-50%, -55%) translateX(3px); }
+  60% { transform: translate(-50%, -55%) translateX(-2px); }
+  80% { transform: translate(-50%, -55%) translateX(1px); }
+}
+.piece-reject {
+  animation: piece-reject 180ms ease-out;
+}
+
+/* C3: confetti burst — wired to win overlay */
+.reward-confetti-burst {
+  animation: reward-confetti-burst 600ms ease-out forwards;
+  pointer-events: none;
+}
+
+/* P1: confetti burst keyframe */
 @keyframes reward-confetti-burst {
   0% {
     opacity: 0;
@@ -474,7 +507,7 @@
 
 /* ── E3 Victory text slam ── */
 .victory-text-slam {
-  animation: victory-text-slam 400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: victory-text-slam 400ms var(--ease-spring) forwards;
 }
 
 @keyframes victory-text-slam {
@@ -561,7 +594,7 @@
     margin: 0;
     color: #d9f7ff;
     cursor: pointer;
-    transition: transform 120ms ease, background-color 120ms ease;
+    transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
   }
 
   .playhub-board-cell:active {
@@ -850,7 +883,7 @@
       0 4px 10px rgba(0, 0, 0, 0.35),
       inset 0 1px 0 rgba(255, 255, 255, 0.15),
       inset 0 -2px 0 rgba(0, 0, 0, 0.25);
-    transition: all 120ms ease-out;
+    transition: all var(--duration-snap) ease-out;
     font-family: var(--font-game-display);
     text-shadow: var(--text-shadow-label);
   }
@@ -937,12 +970,12 @@
   }
 
   .arena-board-cell.is-last-move {
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--cell-last-move-bg);
     box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.3);
   }
 
   .arena-board-cell.is-check {
-    background: rgba(239, 68, 68, 0.3);
+    background: var(--cell-check-bg);
     box-shadow:
       inset 0 0 0 2px rgba(239, 68, 68, 0.6),
       0 0 12px rgba(239, 68, 68, 0.4);
@@ -957,7 +990,7 @@
     z-index: 10;
     transform: translate(-50%, -55%);
     pointer-events: none;
-    transition: left 320ms ease-in-out, top 320ms ease-in-out, opacity 300ms ease;
+    transition: left 320ms ease-in-out, top 320ms ease-in-out, opacity var(--duration-enter) ease;
   }
 
   .arena-piece-img {
@@ -984,7 +1017,7 @@
     align-items: center;
     justify-content: center;
     background: rgba(10, 20, 25, 0.70);
-    animation: mission-briefing-fade-in 300ms ease-out;
+    animation: mission-briefing-fade-in var(--duration-enter) ease-out;
   }
 
   .mission-briefing-scrim.is-exiting {
@@ -1052,7 +1085,7 @@
     box-shadow:
       0 2px 4px rgba(0, 0, 0, 0.25),
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    transition: opacity 0.15s, background 200ms, border-color 200ms, transform 120ms;
+    transition: opacity 0.15s, background 200ms, border-color 200ms, transform var(--duration-snap);
   }
 
   .chesscito-dock-item > button:active,
@@ -1062,14 +1095,14 @@
     opacity: 0.65;
     transform: scale(0.92) translateY(1px);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    transition: transform 120ms, opacity 120ms, background 120ms;
+    transition: transform var(--duration-snap), opacity var(--duration-snap), background var(--duration-snap);
   }
 
   /* dock-treat-pressed on dock item images (no scale — button container handles it) */
   .chesscito-dock-item > button:active img,
   .chesscito-dock-item > [role="button"]:active img {
     filter: brightness(0.65) saturate(0.6);
-    transition: filter 120ms;
+    transition: filter var(--duration-snap);
   }
 
   /* Center tab — route-aware glow pill */
@@ -1123,7 +1156,7 @@
 
   .chesscito-dock-center:active svg {
     transform: scale(0.92);
-    transition: transform 120ms;
+    transition: transform var(--duration-snap);
   }
 
 }
@@ -1405,7 +1438,7 @@
   filter: brightness(0.90) saturate(0.85);
   box-shadow: var(--treat-carved-lo);
   transform: scale(0.92);
-  transition: transform 120ms, filter 120ms, box-shadow 120ms;
+  transition: transform var(--duration-snap), filter var(--duration-snap), box-shadow var(--duration-snap);
 }
 
 /* Auto-activate piece-pressed on hero rail tap */
@@ -1414,7 +1447,7 @@
   filter: brightness(0.90) saturate(0.85);
   box-shadow: var(--treat-carved-lo);
   transform: scale(0.92);
-  transition: transform 120ms, filter 120ms, box-shadow 120ms;
+  transition: transform var(--duration-snap), filter var(--duration-snap), box-shadow var(--duration-snap);
 }
 
 /* ── 2. Dock Icons (persistent navigation) ── */
