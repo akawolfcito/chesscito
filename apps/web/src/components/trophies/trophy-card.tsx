@@ -11,6 +11,12 @@ const DIFFICULTY_CHIP: Record<number, { className: string }> = {
   3: { className: "bg-rose-500/20 text-rose-400" },
 };
 
+const DIFFICULTY_TINT: Record<number, string> = {
+  1: "border-l-emerald-500/40",
+  2: "border-l-amber-500/40",
+  3: "border-l-purple-500/40",
+};
+
 const RANK_ACCENT: Record<number, string> = {
   1: "border-[rgba(220,190,100,0.35)] shadow-[inset_0_1px_3px_rgba(255,255,255,0.04),inset_0_-1px_3px_rgba(0,0,0,0.3),0_0_10px_rgba(200,170,100,0.10)]",
   2: "border-slate-300/35 shadow-[inset_0_1px_3px_rgba(255,255,255,0.04),inset_0_-1px_3px_rgba(0,0,0,0.3),0_0_8px_rgba(203,213,225,0.08)]",
@@ -48,6 +54,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
   const difficultyLabel = DIFFICULTY_LABELS[entry.difficulty] ?? DIFFICULTY_LABELS[1];
   const isHoF = variant === "hall-of-fame";
   const accentClass = rank && rank <= 3 ? RANK_ACCENT[rank] : "border-[rgba(200,170,100,0.20)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.03),inset_0_-1px_2px_rgba(0,0,0,0.2)]";
+  const difficultyTint = DIFFICULTY_TINT[entry.difficulty] ?? "";
 
   const victoryUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/victory/${entry.tokenId}`;
 
@@ -70,8 +77,9 @@ export function TrophyCard({ entry, variant, rank }: Props) {
   return (
     <div
       className={[
-        "rounded-xl border px-3 py-2.5",
+        "rounded-xl border border-l-2 px-3 py-2.5",
         accentClass,
+        difficultyTint,
       ].join(" ")}
       style={{ background: "var(--trophy-card-bg)" }}
     >
