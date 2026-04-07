@@ -46,6 +46,8 @@ export function VictoryCelebration({
       <div className="pointer-events-none absolute inset-0 z-0">
         <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-[0.18]" />
       </div>
+      {/* Confetti burst */}
+      <div className="reward-confetti-burst pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_40%,rgba(52,211,153,0.18)_0%,rgba(217,180,74,0.10)_35%,transparent_65%)]" />
 
       {/* Card */}
       <div className="panel-showcase relative z-10 mx-4 flex w-full max-w-[340px] flex-col items-center px-6 pb-6 pt-8 shadow-[0_0_60px_rgba(20,184,166,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
