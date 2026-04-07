@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BadgeCheck, Crown } from "lucide-react";
 
 import {
@@ -44,43 +44,53 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
-  const fetchLeaderboard = useCallback(() => {
-    setLoading(true);
+  const applyRows = useCallback((data: unknown) => {
+    const apiRows = Array.isArray(data) ? (data as LeaderboardRow[]) : [];
+    const optimistic = getOptimisticScore();
+    if (optimistic) {
+      const found = apiRows.some(
+        (r) => r.player.includes(optimistic.player.slice(2, 6)),
+      );
+      if (found) {
+        clearOptimisticScore();
+        setRows(apiRows);
+        return;
+      }
+      const truncated = optimistic.player.slice(0, 6) + "..." + optimistic.player.slice(-4);
+      setRows([
+        ...apiRows,
+        { rank: apiRows.length + 1, player: truncated, score: optimistic.score, isVerified: false },
+      ]);
+    } else {
+      setRows(apiRows);
+    }
+  }, []);
+
+  const fetchLeaderboard = useCallback((showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     fetch("/api/leaderboard")
       .then((r) => {
         if (!r.ok) throw new Error("fetch failed");
         return r.json();
       })
-      .then((data: unknown) => {
-        const apiRows = Array.isArray(data) ? (data as LeaderboardRow[]) : [];
-        const optimistic = getOptimisticScore();
-        if (optimistic) {
-          const found = apiRows.some(
-            (r) => r.player.includes(optimistic.player.slice(2, 6)),
-          );
-          if (found) {
-            clearOptimisticScore();
-            setRows(apiRows);
-            return;
-          }
-          const truncated = optimistic.player.slice(0, 6) + "..." + optimistic.player.slice(-4);
-          setRows([
-            ...apiRows,
-            { rank: apiRows.length + 1, player: truncated, score: optimistic.score, isVerified: false },
-          ]);
-        } else {
-          setRows(apiRows);
-        }
-      })
+      .then(applyRows)
       .catch(() => setError(LEADERBOARD_SHEET_COPY.error))
       .finally(() => setLoading(false));
-  }, []);
+  }, [applyRows]);
 
+  // Prefetch on mount — data ready before user opens the sheet
   useEffect(() => {
-    if (!open) return;
     fetchLeaderboard();
+    hasFetched.current = true;
+  }, [fetchLeaderboard]);
+
+  // On open: show cached data immediately, refresh in background
+  useEffect(() => {
+    if (!open || !hasFetched.current) return;
+    fetchLeaderboard(false); // silent refresh, no loading flash
   }, [open, fetchLeaderboard]);
 
   return (
@@ -132,7 +142,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
               <p className="text-center text-sm text-rose-400">{error}</p>
               <button
                 type="button"
-                onClick={fetchLeaderboard}
+                onClick={() => fetchLeaderboard()}
                 className="min-h-[44px] text-xs text-cyan-300/70 underline transition-colors hover:text-cyan-200"
               >
                 {LEADERBOARD_SHEET_COPY.retry}
@@ -148,7 +158,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
                 {row.rank <= 3 ? ["🥇","🥈","🥉"][row.rank - 1] : `#${row.rank}`}
               </p>
               <p className="truncate text-sm text-slate-300">
-                {`${row.player.slice(0, 6)}...${row.player.slice(-4)}`}
+                {row.player}
                 {row.isVerified && (
                   <span title={PASSPORT_COPY.verifiedLabel}><BadgeCheck className="ml-1.5 inline-block h-3.5 w-3.5 text-emerald-400" /></span>
                 )}
