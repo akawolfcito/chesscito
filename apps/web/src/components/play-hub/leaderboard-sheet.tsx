@@ -35,16 +35,26 @@ function clearOptimisticScore() {
   try { sessionStorage.removeItem("chesscito:optimistic-score"); } catch { /* ignore */ }
 }
 
+// Module-level prefetch: warms the serverless function during page load
+// (fires before React mounts any component — cold start happens during splash)
+let prefetchedRows: LeaderboardRow[] | null = null;
+if (typeof window !== "undefined") {
+  fetch("/api/leaderboard")
+    .then((r) => r.ok ? r.json() : null)
+    .then((data) => { if (Array.isArray(data)) prefetchedRows = data; })
+    .catch(() => {});
+}
+
 type LeaderboardSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
 export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) {
-  const [rows, setRows] = useState<LeaderboardRow[]>([]);
+  const [rows, setRows] = useState<LeaderboardRow[]>(prefetchedRows ?? []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hasFetched = useRef(false);
+  const hasFetched = useRef(prefetchedRows !== null);
 
   const applyRows = useCallback((data: unknown) => {
     const apiRows = Array.isArray(data) ? (data as LeaderboardRow[]) : [];
