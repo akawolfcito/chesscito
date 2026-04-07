@@ -164,7 +164,12 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
           )}
           {rows.map((row) => (
             <div key={`${row.rank}-${row.player}`} className="panel-base grid grid-cols-[auto_1fr_auto] items-center gap-3 px-3 py-2.5">
-              <p className="text-sm font-semibold text-cyan-100">
+              <p className={`text-sm font-semibold ${
+                row.rank === 1 ? "text-amber-400" :
+                row.rank === 2 ? "text-slate-300" :
+                row.rank === 3 ? "text-amber-700" :
+                "text-cyan-100"
+              }`}>
                 {row.rank <= 3 ? ["🥇","🥈","🥉"][row.rank - 1] : `#${row.rank}`}
               </p>
               <p className="truncate text-sm text-slate-300">
