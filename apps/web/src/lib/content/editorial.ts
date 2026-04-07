@@ -594,7 +594,11 @@ export const SUPPORT_COPY = {
   primaryChannel: {
     label: "Email",
     value: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "",
-    href: `mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? ""}`,
+    // href is undefined when env var is missing — support page guards the <a> render
+    href: process.env.NEXT_PUBLIC_SUPPORT_EMAIL
+      ? `mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`
+      : undefined,
+    unavailable: "Contact unavailable",
   },
   secondaryChannel: {
     label: "GitHub Issues",

@@ -48,25 +48,25 @@ export function PurchaseConfirmSheet({
         </div>
         {selectedItem ? (
           <div className="mission-soft rune-frame mt-4 space-y-2 rounded-2xl p-3 text-sm text-slate-200">
-            <p>
-              {PURCHASE_FIELD_LABELS.item}: <span className="font-semibold text-slate-100">{selectedItem.label}</span>
-            </p>
-            <p>
-              {PURCHASE_FIELD_LABELS.price}: <span className="font-semibold text-slate-100">{formatUsd(selectedItem.onChainPrice)}</span>
-            </p>
+            {/* Hero: item name */}
+            <p className="text-base font-bold text-white">{selectedItem.label}</p>
+            {/* Prominent price */}
+            <p className="text-lg font-extrabold text-amber-300">{formatUsd(selectedItem.onChainPrice)}</p>
+            <div className="my-1 border-t border-white/[0.06]" />
+            {/* Secondary details */}
             {paymentTokenSymbol ? (
-              <p>
-                {PURCHASE_FIELD_LABELS.payingWith}: <span className="font-semibold text-slate-100">{paymentTokenSymbol}</span>
+              <p className="text-xs text-slate-400">
+                {PURCHASE_FIELD_LABELS.payingWith}: <span className="font-semibold text-slate-300">{paymentTokenSymbol}</span>
               </p>
             ) : null}
-            <p>
+            <p className="text-xs text-slate-400">
               {PURCHASE_FIELD_LABELS.status}:{" "}
-              <span className="font-semibold text-slate-100">
+              <span className="font-semibold text-slate-300">
                 {selectedItem.configured ? (selectedItem.enabled ? SHOP_SHEET_COPY.status.available : SHOP_SHEET_COPY.status.unavailable) : SHOP_SHEET_COPY.status.notConfigured}
               </span>
             </p>
-            <p>
-              {PURCHASE_FIELD_LABELS.network}: <span className="font-semibold text-slate-100">{chainId ? (CHAIN_NAMES[chainId] ?? "Unknown network") : "—"}</span>
+            <p className="text-xs text-slate-400">
+              {PURCHASE_FIELD_LABELS.network}: <span className="font-semibold text-slate-300">{chainId ? (CHAIN_NAMES[chainId] ?? "Unknown network") : "—"}</span>
             </p>
             <p className="rounded-xl border border-amber-400/45 bg-amber-900/30 px-3 py-2 text-xs text-amber-100">
               {PURCHASE_CONFIRM_COPY.miniPayWarning}

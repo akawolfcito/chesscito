@@ -46,11 +46,21 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
               onClick={() => onSelect(key)}
               className="flex flex-col items-center gap-1 rounded-xl bg-white/10 p-3 transition-all hover:bg-white/20 active:scale-95"
             >
-              <img
-                src={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]]}
-                alt={label}
-                className="h-12 w-12 object-contain"
-              />
+              <picture>
+                <source
+                  srcSet={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]].replace(".png", ".avif")}
+                  type="image/avif"
+                />
+                <source
+                  srcSet={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]].replace(".png", ".webp")}
+                  type="image/webp"
+                />
+                <img
+                  src={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]]}
+                  alt={label}
+                  className="h-12 w-12 object-contain"
+                />
+              </picture>
             </button>
           ))}
         </div>

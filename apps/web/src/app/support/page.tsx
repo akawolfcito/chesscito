@@ -15,16 +15,23 @@ export default function SupportPage() {
         <h2 className="mb-3 text-sm font-semibold text-cyan-200">
           {SUPPORT_COPY.sections.contactUs}
         </h2>
-        <a
-          href={SUPPORT_COPY.primaryChannel.href}
-          className="flex min-h-[44px] items-center gap-3 rounded-xl bg-[var(--link-row-bg)] px-4 py-3 text-cyan-100 transition hover:bg-[var(--link-row-bg-hover)]"
-        >
-          <Mail size={18} className="shrink-0 text-cyan-400" />
-          <div>
-            <p className="text-sm font-medium">{SUPPORT_COPY.primaryChannel.label}</p>
-            <p className="text-xs text-cyan-300/60">{SUPPORT_COPY.primaryChannel.value}</p>
+        {SUPPORT_COPY.primaryChannel.href ? (
+          <a
+            href={SUPPORT_COPY.primaryChannel.href}
+            className="flex min-h-[44px] items-center gap-3 rounded-xl bg-[var(--link-row-bg)] px-4 py-3 text-cyan-100 transition hover:bg-[var(--link-row-bg-hover)]"
+          >
+            <Mail size={18} className="shrink-0 text-cyan-400" />
+            <div>
+              <p className="text-sm font-medium">{SUPPORT_COPY.primaryChannel.label}</p>
+              <p className="text-xs text-cyan-300/60">{SUPPORT_COPY.primaryChannel.value}</p>
+            </div>
+          </a>
+        ) : (
+          <div className="flex min-h-[44px] items-center gap-3 rounded-xl bg-[var(--link-row-bg)] px-4 py-3 text-cyan-100/50">
+            <Mail size={18} className="shrink-0 text-cyan-400/40" />
+            <p className="text-sm font-medium">{SUPPORT_COPY.primaryChannel.unavailable}</p>
           </div>
-        </a>
+        )}
       </section>
 
       {/* Secondary channel */}

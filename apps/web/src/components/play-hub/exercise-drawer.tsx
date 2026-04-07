@@ -153,7 +153,7 @@ export function ExerciseDrawer({
               style={{ width: `${(totalStars / maxStars) * 100}%` }}
             />
             <div
-              className="absolute top-0 h-full w-0.5 bg-cyan-400/50"
+              className="absolute top-0 h-full w-1 bg-cyan-400/70"
               style={{ left: `${(BADGE_THRESHOLD / maxStars) * 100}%` }}
             />
           </div>

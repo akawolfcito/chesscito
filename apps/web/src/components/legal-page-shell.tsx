@@ -30,7 +30,7 @@ export function LegalPageShell({ title, backHref = "/about", children }: LegalPa
           >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-lg font-semibold text-slate-100">{title}</h1>
+          <h1 className="text-xl font-bold text-slate-100">{title}</h1>
         </header>
         <div className="flex-1 space-y-6 px-5 pb-8 pt-6 text-sm leading-relaxed text-cyan-100/80">
           {children}

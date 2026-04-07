@@ -104,7 +104,7 @@ function StarsRow({ totalStars, staggered = false }: { totalStars: number; stagg
             }
             aria-hidden="true"
           >
-            ★
+            {isEarned ? "★" : "☆"}
           </span>
         );
       })}
@@ -261,7 +261,6 @@ export function ResultOverlay({
               type="button"
               variant="game-text"
               size="game-sm"
-              autoFocus={false}
               onClick={handleDismiss}
             >
               {RESULT_OVERLAY_COPY.cta.dismiss}
@@ -271,7 +270,6 @@ export function ResultOverlay({
               type="button"
               variant="game-primary"
               size="game"
-              autoFocus={!(isError && onRetry)}
               onClick={handleDismiss}
             >
               {RESULT_OVERLAY_COPY.cta.continue}
@@ -348,7 +346,6 @@ export function BadgeEarnedPrompt({
             type="button"
             variant="game-solid"
             size="game"
-            autoFocus
             onClick={onSubmitScore}
           >
             {BADGE_EARNED_COPY.submitScore}
@@ -437,7 +434,6 @@ export function PieceCompletePrompt({
               type="button"
               variant="game-solid"
               size="game"
-              autoFocus
               onClick={() => handleAction(onNextPiece)}
             >
               {PIECE_COMPLETE_COPY.nextPiece(PIECE_LABELS[nextPiece])}
@@ -447,7 +443,6 @@ export function PieceCompletePrompt({
               type="button"
               variant="game-solid"
               size="game"
-              autoFocus
               onClick={() => handleAction(onArena)}
             >
               {PIECE_COMPLETE_COPY.tryArena}

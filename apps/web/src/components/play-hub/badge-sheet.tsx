@@ -156,11 +156,12 @@ export function BadgeSheet({
   claimingPiece = null,
   showNotification,
 }: BadgeSheetProps) {
-  const defaultStars = Object.fromEntries(
-    PIECES.map((p) => [p, [0, 0, 0, 0, 0]])
-  ) as Record<PieceId, number[]>;
-
-  const [starsByPiece, setStarsByPiece] = useState<Record<PieceId, number[]>>(defaultStars);
+  // Initialize synchronously from localStorage to avoid progress bar flashing from 0%
+  const [starsByPiece, setStarsByPiece] = useState<Record<PieceId, number[]>>(() =>
+    Object.fromEntries(
+      PIECES.map((p) => [p, readStarsFromStorage(p)])
+    ) as Record<PieceId, number[]>
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -189,6 +190,7 @@ export function BadgeSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
+        {/* No explicit h/w classes needed: .chesscito-dock-item > button in globals.css enforces 2.75rem x 2.75rem via !important */}
         <button
           type="button"
           aria-label="Badges"

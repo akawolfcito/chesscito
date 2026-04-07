@@ -5,7 +5,7 @@ import type { VictoryEntry } from "@/lib/game/victory-events";
 function SkeletonCards() {
   return (
     <div className="space-y-2">
-      {[1, 2, 3].map((i) => (
+      {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
           className="h-[72px] animate-pulse rounded-xl border border-white/[0.08] bg-[var(--skeleton-bg)]"

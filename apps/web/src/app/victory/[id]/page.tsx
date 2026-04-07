@@ -5,14 +5,8 @@ import { createPublicClient, http } from "viem";
 import { celo } from "viem/chains";
 import { victoryAbi } from "@/lib/contracts/victory";
 import { DIFFICULTY_LABELS, VICTORY_PAGE_COPY } from "@/lib/content/editorial";
+import { formatTime } from "@/lib/game/arena-utils";
 import { VictoryTrophy } from "./victory-trophy";
-
-function formatTime(ms: number): string {
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return m > 0 ? `${m}:${String(sec).padStart(2, "0")}` : `0:${String(sec).padStart(2, "0")}`;
-}
 
 /** Arena difficulty values (1–3) represent checkmate victories */
 const ARENA_DIFFICULTIES = new Set([1, 2, 3]);

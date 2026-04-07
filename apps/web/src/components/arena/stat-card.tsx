@@ -1,3 +1,8 @@
+// NOTE: The `icon` prop accepts emoji strings (e.g. ⚔, ♟, ⏱).
+// Emoji rendering varies across Android versions — MiniPay targets Android 9+
+// which supports emoji 11.0+ (includes ⚔ U+2694, ♟ U+265F, ⏱ U+23F1).
+// If inconsistencies appear in the future, replace with lucide-react icons
+// (Swords, Crown, Clock) and update all StatCard call sites in arena-hud.tsx.
 export function StatCard({ icon, value, label }: { icon: string; value: string; label: string }) {
   return (
     <div

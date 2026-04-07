@@ -11,6 +11,8 @@ const DIFFICULTY_CHIP: Record<number, { className: string }> = {
   3: { className: "bg-rose-500/20 text-rose-400" },
 };
 
+const UNKNOWN_CHIP = { className: "bg-slate-500/20 text-slate-300" };
+
 const DIFFICULTY_TINT: Record<number, string> = {
   1: "border-l-emerald-500/40",
   2: "border-l-amber-500/40",
@@ -50,8 +52,8 @@ type Props = {
 
 export function TrophyCard({ entry, variant, rank }: Props) {
   const [toast, setToast] = useState<string | null>(null);
-  const chip = DIFFICULTY_CHIP[entry.difficulty] ?? DIFFICULTY_CHIP[1];
-  const difficultyLabel = DIFFICULTY_LABELS[entry.difficulty] ?? DIFFICULTY_LABELS[1];
+  const chip = DIFFICULTY_CHIP[entry.difficulty] ?? UNKNOWN_CHIP;
+  const difficultyLabel = DIFFICULTY_LABELS[entry.difficulty] ?? "???";
   const isHoF = variant === "hall-of-fame";
   const accentClass = rank && rank <= 3 ? RANK_ACCENT[rank] : "border-[rgba(200,170,100,0.20)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.03),inset_0_-1px_2px_rgba(0,0,0,0.2)]";
   const difficultyTint = DIFFICULTY_TINT[entry.difficulty] ?? "";
@@ -92,12 +94,12 @@ export function TrophyCard({ entry, variant, rank }: Props) {
           <Trophy className="h-4 w-4 shrink-0 text-amber-400 drop-shadow-[0_0_4px_rgba(200,170,100,0.3)]" />
         )}
         <span
-          className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold leading-none ${chip.className}`}
+          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none ${chip.className}`}
         >
           {difficultyLabel}
         </span>
-        <span className="text-[0.65rem] text-slate-500">{TROPHY_VITRINE_COPY.nftIdPrefix} #{String(entry.tokenId)}</span>
-        <span className="ml-auto text-[0.65rem] text-slate-500">{formatDate(entry.timestamp)}</span>
+        <span className="text-[10px] text-slate-500">{TROPHY_VITRINE_COPY.nftIdPrefix} #{String(entry.tokenId)}</span>
+        <span className="ml-auto text-[10px] text-slate-500">{formatDate(entry.timestamp)}</span>
       </div>
 
       <div className="mt-1.5 flex items-center gap-3 text-xs text-slate-400">
@@ -112,7 +114,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
 
         <span className="ml-auto">
           {isHoF ? (
-            <span className="text-[0.65rem] text-slate-500">
+            <span className="text-[10px] text-slate-500">
               {truncateAddress(entry.player)}
             </span>
           ) : (
@@ -129,7 +131,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
       </div>
 
       {toast && (
-        <p className="mt-1 text-center text-[0.6rem] font-semibold text-emerald-400 animate-in fade-in duration-200">
+        <p className="mt-1 text-center text-[10px] font-semibold text-emerald-400 animate-in fade-in duration-200">
           {toast}
         </p>
       )}
