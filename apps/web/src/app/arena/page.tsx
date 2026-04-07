@@ -573,6 +573,7 @@ export default function ArenaPage() {
             lastMove={game.lastMove}
             checkSquare={game.checkSquare}
             isLocked={game.isThinking || isEndState || !!game.pendingPromotion}
+            isThinking={game.isThinking}
             onSquareClick={game.selectSquare}
             isCheckmatePause={isEndState && !showEndOverlay}
           />

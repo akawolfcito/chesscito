@@ -22,6 +22,7 @@ type ArenaBoardProps = {
   lastMove: { from: string; to: string } | null;
   checkSquare: string | null;
   isLocked: boolean;
+  isThinking?: boolean;
   onSquareClick: (square: string) => void;
   isCheckmatePause?: boolean;
 };
@@ -61,6 +62,7 @@ export function ArenaBoard({
   lastMove,
   checkSquare,
   isLocked,
+  isThinking = false,
   onSquareClick,
   isCheckmatePause = false,
 }: ArenaBoardProps) {
@@ -91,7 +93,10 @@ export function ArenaBoard({
     <div className="playhub-stage-shell w-full">
       <div className="playhub-game-stage">
         <div className="playhub-game-grid">
-          <div className="playhub-board-canvas arena-board-canvas" data-checkmate={isCheckmatePause ? "true" : undefined}>
+          <div className="playhub-board-canvas arena-board-canvas relative" data-checkmate={isCheckmatePause ? "true" : undefined}>
+            {isThinking && (
+              <div className="pointer-events-none absolute inset-0 animate-pulse rounded-2xl ring-2 ring-amber-400/20" />
+            )}
             <div className="playhub-board-hitgrid" role="grid" aria-label="Chess board">
               {squares.map((sq) => {
                 const geo = cellGeometry(sq.file, sq.rank);
