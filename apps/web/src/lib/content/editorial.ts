@@ -414,6 +414,7 @@ export const ARENA_COPY = {
   softGateSkip: "Skip",
   aiError: "AI disconnected",
   aiTimeout: "AI timed out",
+  engineError: "Engine error — please restart the match",
   restartMatch: "Restart Match",
 } as const;
 

@@ -132,6 +132,7 @@ export function useChessGame(): ChessGameState {
       } catch (err) {
         console.error("AI move error:", err);
         setIsThinking(false);
+        setErrorMessage("Engine error — please restart the match");
       }
     }, 50);
   }, []);
