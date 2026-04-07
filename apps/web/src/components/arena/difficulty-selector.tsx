@@ -21,7 +21,7 @@ const LEVELS: { key: ArenaDifficulty; dot: string }[] = [
 export function DifficultySelector({ selected, onSelect, onStart, onBack }: Props) {
   return (
     <div className="flex flex-col items-center gap-5 px-6 py-8">
-      <div className="w-full max-w-[320px] rounded-3xl border border-white/[0.08] bg-[var(--surface-b-plus)] px-6 pb-6 pt-8 backdrop-blur-2xl shadow-[0_0_60px_rgba(20,184,166,0.08)]">
+      <div className="panel-base w-full max-w-[320px] rounded-3xl px-6 pb-6 pt-8 backdrop-blur-2xl shadow-[0_0_60px_rgba(20,184,166,0.08)]">
         <div className="flex flex-col items-center gap-2 mb-5">
           <h1 className="fantasy-title text-3xl font-bold text-white drop-shadow-[0_0_12px_rgba(103,232,249,0.3)]">
             {ARENA_COPY.title}
