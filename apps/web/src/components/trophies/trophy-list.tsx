@@ -47,7 +47,7 @@ export function TrophyList({
             onClick={onRetry}
             className="mt-2 text-xs font-semibold text-rose-300 underline"
           >
-            Tap to retry
+            {TROPHY_VITRINE_COPY.tapToRetry}
           </button>
         )}
       </div>

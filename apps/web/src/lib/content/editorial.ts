@@ -75,7 +75,7 @@ export const RESULT_OVERLAY_COPY = {
   },
   score: {
     title: "Score Recorded!",
-    subtitle: "Your score is now recorded on the blockchain.",
+    subtitle: "Sealed on Celo — this record is yours forever.",
   },
   shop: {
     title: "Purchase Complete!",
@@ -102,11 +102,11 @@ export const RESULT_OVERLAY_COPY = {
 export const PIECE_COMPLETE_COPY = {
   title: "All Exercises Complete!",
   subtitleWithNext: (next: string) =>
-    `Great work! Ready to move on to the ${next}?`,
+    `You've mastered this piece! The ${next} awaits.`,
   subtitleFinal:
-    "You've completed every exercise. Test your skills in a real match!",
+    "You've conquered every piece. Now prove it in the Arena!",
   subtitleKeepPracticing:
-    "Keep improving your stars to earn the badge!",
+    "Keep pushing — more stars unlock your badge!",
   tryArena: "Try Arena",
   nextPiece: (piece: string) => `Start ${piece}`,
   practiceAgain: "Practice Again",
@@ -369,9 +369,11 @@ export const TROPHY_VITRINE_COPY = {
   loadingText: "Loading victories...",
   copiedToast: "Link copied!",
   connectWallet: "Connect wallet to see your victories",
+  connectWalletButton: "Connect Wallet",
   noVictories: "No victories yet — win in the Arena to earn your first trophy",
   noGlobalVictories: "No victories recorded yet — be the first!",
   loadError: "Could not load victories — tap to retry",
+  tapToRetry: "Tap to retry",
   configError: "Trophies unavailable",
   roadmap: "More coming soon — Tournaments • VIP Passes • Seasonal Rewards",
   arenaLink: "Go to Arena",
@@ -607,6 +609,11 @@ export const SUPPORT_COPY = {
     "Feature requests",
   ],
   responseTime: "We aim to respond within 48 hours.",
+  sections: {
+    contactUs: "Contact Us",
+    technicalIssues: "Technical Issues",
+    howToReport: "How to Report an Issue",
+  },
 } as const;
 
 export const ABOUT_COPY = {
@@ -619,5 +626,18 @@ export const ABOUT_COPY = {
     privacy: "Privacy Policy",
     terms: "Terms of Service",
     invite: "Invite a Friend",
+  },
+  clipboardFeedback: "Copied!",
+} as const;
+
+export const UNLOCK_COPY = {
+  title: (piece: string) => `${piece} Unlocked!`,
+  cta: (piece: string) => `Start ${piece}`,
+} as const;
+
+export const SHOP_ITEM_COPY = {
+  founderBadge: {
+    label: "Founder Badge",
+    subtitle: "Support Chesscito with an exclusive founder badge minted to your wallet.",
   },
 } as const;

@@ -38,7 +38,7 @@ import {
 import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
 import { ACCEPTED_TOKENS, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
-import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, TUTORIAL_COPY } from "@/lib/content/editorial";
+import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SHOP_ITEM_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
@@ -52,8 +52,8 @@ import { computeStars } from "@/lib/game/scoring";
 const SHOP_ITEMS = [
   {
     itemId: 1n,
-    label: "Founder Badge",
-    subtitle: "Support Chesscito with an exclusive founder badge minted to your wallet.",
+    label: SHOP_ITEM_COPY.founderBadge.label,
+    subtitle: SHOP_ITEM_COPY.founderBadge.subtitle,
   },
   // Shield disabled — no gameplay penalty justifies the cost yet
 ] as const;
@@ -960,7 +960,7 @@ export default function PlayHubPage() {
                 </picture>
               </div>
               <h2 className="fantasy-title text-2xl text-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]">
-                {PIECE_LABELS[unlockedPiece]} Unlocked!
+                {UNLOCK_COPY.title(PIECE_LABELS[unlockedPiece])}
               </h2>
               <p className="text-sm text-cyan-100/50">
                 {TUTORIAL_COPY[unlockedPiece]}
@@ -974,7 +974,7 @@ export default function PlayHubPage() {
                 }}
                 className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 text-sm font-bold text-white shadow-[0_0_16px_rgba(245,158,11,0.3),inset_0_1px_0_rgba(255,255,255,0.10)] transition-all active:scale-[0.97] active:shadow-none active:brightness-90"
               >
-                Start {PIECE_LABELS[unlockedPiece]}
+                {UNLOCK_COPY.cta(PIECE_LABELS[unlockedPiece])}
               </button>
             </div>
           </div>

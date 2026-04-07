@@ -32,7 +32,7 @@ export function InviteLink() {
         <Share2 size={18} className="shrink-0 text-cyan-400" />
       )}
       <span className="text-sm font-medium">
-        {copied ? "Copied!" : ABOUT_COPY.links.invite}
+        {copied ? ABOUT_COPY.clipboardFeedback : ABOUT_COPY.links.invite}
       </span>
     </button>
   );

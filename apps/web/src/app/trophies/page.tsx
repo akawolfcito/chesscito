@@ -188,7 +188,7 @@ export default function TrophiesPage() {
                     onClick={() => openConnectModal?.()}
                     className="min-h-[44px] rounded-xl bg-white/[0.08] px-6 py-2 text-sm font-semibold text-cyan-300 transition-colors hover:bg-white/[0.12]"
                   >
-                    Connect Wallet
+                    {TROPHY_VITRINE_COPY.connectWalletButton}
                   </button>
                 </div>
               ) : (

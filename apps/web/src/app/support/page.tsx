@@ -13,7 +13,7 @@ export default function SupportPage() {
       {/* Primary channel */}
       <section>
         <h2 className="mb-3 text-sm font-semibold text-cyan-200">
-          Contact Us
+          {SUPPORT_COPY.sections.contactUs}
         </h2>
         <a
           href={SUPPORT_COPY.primaryChannel.href}
@@ -30,7 +30,7 @@ export default function SupportPage() {
       {/* Secondary channel */}
       <section>
         <h2 className="mb-3 text-sm font-semibold text-cyan-200">
-          Technical Issues
+          {SUPPORT_COPY.sections.technicalIssues}
         </h2>
         <a
           href={SUPPORT_COPY.secondaryChannel.href}
@@ -49,7 +49,7 @@ export default function SupportPage() {
       {/* How to report */}
       <section>
         <h2 className="mb-3 text-sm font-semibold text-cyan-200">
-          How to Report an Issue
+          {SUPPORT_COPY.sections.howToReport}
         </h2>
         <p className="mb-3">{SUPPORT_COPY.howToReport}</p>
         <ul className="list-inside list-disc space-y-1 text-cyan-100/70">

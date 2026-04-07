@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { Trophy, Clock, Footprints, Share2 } from "lucide-react";
-import { TROPHY_VITRINE_COPY, VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
+import { DIFFICULTY_LABELS, TROPHY_VITRINE_COPY, VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
-const DIFFICULTY_CHIP: Record<number, { label: string; className: string }> = {
-  1: { label: "Easy", className: "bg-emerald-500/20 text-emerald-400" },
-  2: { label: "Medium", className: "bg-amber-500/20 text-amber-400" },
-  3: { label: "Hard", className: "bg-rose-500/20 text-rose-400" },
+const DIFFICULTY_CHIP: Record<number, { className: string }> = {
+  1: { className: "bg-emerald-500/20 text-emerald-400" },
+  2: { className: "bg-amber-500/20 text-amber-400" },
+  3: { className: "bg-rose-500/20 text-rose-400" },
 };
 
 const RANK_ACCENT: Record<number, string> = {
@@ -45,6 +45,7 @@ type Props = {
 export function TrophyCard({ entry, variant, rank }: Props) {
   const [toast, setToast] = useState<string | null>(null);
   const chip = DIFFICULTY_CHIP[entry.difficulty] ?? DIFFICULTY_CHIP[1];
+  const difficultyLabel = DIFFICULTY_LABELS[entry.difficulty] ?? DIFFICULTY_LABELS[1];
   const isHoF = variant === "hall-of-fame";
   const accentClass = rank && rank <= 3 ? RANK_ACCENT[rank] : "border-[rgba(200,170,100,0.20)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.03),inset_0_-1px_2px_rgba(0,0,0,0.2)]";
 
@@ -85,7 +86,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
         <span
           className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold leading-none ${chip.className}`}
         >
-          {chip.label}
+          {difficultyLabel}
         </span>
         <span className="text-[0.65rem] text-slate-500">{TROPHY_VITRINE_COPY.nftIdPrefix} #{String(entry.tokenId)}</span>
         <span className="ml-auto text-[0.65rem] text-slate-500">{formatDate(entry.timestamp)}</span>
