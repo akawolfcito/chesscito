@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Share2, Check } from "lucide-react";
 import { ABOUT_COPY } from "@/lib/content/editorial";
+import { hapticSuccess } from "@/lib/haptics";
 
 export function InviteLink() {
   const [copied, setCopied] = useState(false);
@@ -19,6 +20,7 @@ export function InviteLink() {
           });
         } else {
           void navigator.clipboard.writeText("https://chesscito.vercel.app").then(() => {
+            hapticSuccess();
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
           });
@@ -27,7 +29,7 @@ export function InviteLink() {
       className="flex min-h-[44px] w-full items-center gap-3 rounded-xl bg-[var(--link-row-bg)] px-4 py-3 text-cyan-100 transition hover:bg-[var(--link-row-bg-hover)]"
     >
       {copied ? (
-        <Check size={18} className="shrink-0 text-emerald-400" />
+        <Check size={18} className="shrink-0 animate-bounce text-emerald-400" />
       ) : (
         <Share2 size={18} className="shrink-0 text-cyan-400" />
       )}
