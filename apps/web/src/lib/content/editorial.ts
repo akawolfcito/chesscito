@@ -474,6 +474,7 @@ export const COACH_COPY = {
   takeaways: "TAKEAWAYS",
   tips: "TIPS",
   yourSessions: "Your Sessions",
+  pastSessions: "Past Sessions",
   yourProgress: "YOUR PROGRESS",
   gamesAnalyzed: (n: number) => `Games analyzed: ${n}`,
   highestDifficulty: (d: string) => `Highest difficulty: ${d}`,

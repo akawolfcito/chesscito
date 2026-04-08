@@ -14,6 +14,7 @@ type Props = {
   credits: number;
   onPlayAgain: () => void;
   onBackToHub: () => void;
+  onViewHistory?: () => void;
 };
 
 export function CoachPanel({
@@ -24,6 +25,7 @@ export function CoachPanel({
   credits,
   onPlayAgain,
   onBackToHub,
+  onViewHistory,
 }: Props) {
   const time = formatTime(elapsedMs);
   const diffLabel = ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty;
@@ -72,11 +74,16 @@ export function CoachPanel({
         </section>
       )}
 
-      {/* CTAs — Play Again primary, Back to Hub tertiary */}
+      {/* CTAs — Play Again primary, History secondary, Back to Hub tertiary */}
       <div className="mt-4 flex flex-col gap-2">
         <Button type="button" variant="game-primary" size="game" onClick={onPlayAgain}>
           <RotateCcw size={16} className="inline -mt-0.5" /> {ARENA_COPY.playAgain}
         </Button>
+        {onViewHistory && (
+          <Button type="button" variant="game-ghost" size="game-sm" onClick={onViewHistory}>
+            {COACH_COPY.pastSessions}
+          </Button>
+        )}
         <Button type="button" variant="game-text" size="game-sm" onClick={onBackToHub}>
           {ARENA_COPY.backToHub}
         </Button>

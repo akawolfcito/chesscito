@@ -25,10 +25,12 @@ import { CoachPanel } from "@/components/coach/coach-panel";
 import { CoachFallback } from "@/components/coach/coach-fallback";
 import { CoachPaywall } from "@/components/coach/coach-paywall";
 import { CoachWelcome } from "@/components/coach/coach-welcome";
+import { CoachHistory } from "@/components/coach/coach-history";
 import type { CoachResponse, BasicCoachResponse, GameRecord } from "@/lib/coach/types";
-import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
+import { getConfiguredChainId, getVictoryNFTAddress, getShopAddress } from "@/lib/contracts/chains";
 import { hapticImpact, hapticSuccess } from "@/lib/haptics";
 import { victoryAbi } from "@/lib/contracts/victory";
+import { shopAbi } from "@/lib/contracts/shop";
 import {
   ACCEPTED_TOKENS,
   DIFFICULTY_TO_CHAIN,
@@ -71,7 +73,7 @@ export default function ArenaPage() {
   const endOverlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Coach state
-  type CoachPhase = "idle" | "welcome" | "loading" | "result" | "fallback" | "paywall";
+  type CoachPhase = "idle" | "welcome" | "loading" | "result" | "fallback" | "paywall" | "history";
   const [coachPhase, setCoachPhase] = useState<CoachPhase>("idle");
   const [coachJobId, setCoachJobId] = useState<string | null>(null);
   const [coachResponse, setCoachResponse] = useState<CoachResponse | null>(null);
@@ -126,6 +128,7 @@ export default function ArenaPage() {
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain = configuredChainId != null && chainId === configuredChainId;
   const victoryNFTAddress = useMemo(() => getVictoryNFTAddress(chainId), [chainId]);
+  const shopAddress = useMemo(() => getShopAddress(chainId), [chainId]);
 
   const chainDifficulty = DIFFICULTY_TO_CHAIN[game.difficulty];
   const mintPriceUsd6 = VICTORY_PRICES[chainDifficulty] ?? 0n;
@@ -154,7 +157,7 @@ export default function ArenaPage() {
       chainId,
     })),
     allowFailure: true,
-    query: { enabled: Boolean(address && canClaim), staleTime: 15_000 },
+    query: { enabled: Boolean(address && isConnected), staleTime: 15_000 },
   });
 
   const selectPaymentToken = useCallback(
@@ -286,6 +289,81 @@ export default function ArenaPage() {
     setCoachPhase("idle");
     void startCoachAnalysis();
   }, [startCoachAnalysis]);
+
+  // Coach credit purchase: maps pack → itemId, then approve → buyItem → verify-purchase
+  const COACH_PACK_ITEMS: Record<5 | 20, { itemId: bigint; priceUsd6: bigint }> = {
+    5: { itemId: 3n, priceUsd6: 50_000n },   // $0.05
+    20: { itemId: 4n, priceUsd6: 100_000n },  // $0.10
+  };
+
+  async function handleBuyCredits(pack: 5 | 20) {
+    if (!address || !shopAddress || !publicClient || !isCorrectChain) return;
+
+    const { itemId, priceUsd6 } = COACH_PACK_ITEMS[pack];
+    const token = selectPaymentToken(priceUsd6);
+    if (!token) {
+      setCoachPhase("idle");
+      return;
+    }
+
+    const normalizedTotal = normalizePrice(priceUsd6, token.decimals);
+
+    try {
+      // 1. Check allowance and approve if needed
+      const allowance = await publicClient.readContract({
+        address: token.address,
+        abi: erc20Abi,
+        functionName: "allowance",
+        args: [address, shopAddress],
+      });
+
+      if ((allowance as bigint) < normalizedTotal) {
+        const approveHash = await writeContractAsync({
+          address: token.address,
+          abi: erc20Abi,
+          functionName: "approve",
+          args: [shopAddress, normalizedTotal],
+          chainId,
+          account: address,
+        });
+        await publicClient.waitForTransactionReceipt({ hash: approveHash });
+      }
+
+      // 2. Buy item from shop
+      const buyHash = await writeContractAsync({
+        address: shopAddress,
+        abi: shopAbi,
+        functionName: "buyItem",
+        args: [itemId, 1n, token.address],
+        chainId,
+        account: address,
+      });
+      await publicClient.waitForTransactionReceipt({ hash: buyHash });
+
+      // 3. Verify purchase and credit wallet
+      const verifyRes = await fetch("/api/coach/verify-purchase", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ txHash: buyHash, walletAddress: address }),
+      });
+      const verifyData = await verifyRes.json();
+
+      if (verifyData.ok) {
+        setCoachCredits(verifyData.credits);
+        hapticSuccess();
+        // Credits acquired — start analysis automatically
+        setCoachPhase("idle");
+        void startCoachAnalysis();
+      } else {
+        setCoachPhase("idle");
+      }
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : "";
+      const isUserCancel = /user (rejected|denied|cancelled)|ACTION_REJECTED/i.test(raw);
+      if (!isUserCancel) console.warn("[CoachPurchase] error", raw);
+      // Stay on paywall so user can retry or use quick review
+    }
+  }
 
   const handleBackToHub = () => router.push("/");
 
@@ -678,6 +756,7 @@ export default function ArenaPage() {
               credits={coachCredits}
               onPlayAgain={handlePlayAgain}
               onBackToHub={handleBackToHub}
+              onViewHistory={address ? () => setCoachPhase("history") : undefined}
             />
           </div>
         </div>
@@ -702,13 +781,37 @@ export default function ArenaPage() {
         <CoachPaywall
           open
           onOpenChange={() => setCoachPhase("idle")}
-          onBuy={() => { /* TODO: integrate shop purchase flow */ setCoachPhase("idle"); }}
+          onBuy={(pack) => void handleBuyCredits(pack)}
           onQuickReview={() => {
             const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
             setCoachFallbackResponse(quick);
             setCoachPhase("fallback");
           }}
         />
+      )}
+      {coachPhase === "history" && address && (
+        <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)]">
+          <div className="mx-auto max-w-[var(--app-max-width,390px)] pt-8">
+            <button
+              type="button"
+              onClick={() => setCoachPhase(coachResponse ? "result" : "idle")}
+              className="mb-4 ml-4 flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.10] text-cyan-200/80 transition hover:text-cyan-50"
+              aria-label="Go back"
+            >
+              &larr;
+            </button>
+            <CoachHistory
+              walletAddress={address.toLowerCase()}
+              credits={coachCredits}
+              onSelectEntry={(entry) => {
+                if (entry.response.kind === "full") {
+                  setCoachResponse(entry.response);
+                  setCoachPhase("result");
+                }
+              }}
+            />
+          </div>
+        </div>
       )}
     </main>
   );

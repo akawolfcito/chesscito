@@ -6,7 +6,9 @@ import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
-const SHOP_PURCHASE_TOPIC = keccak256(toBytes("ShopPurchase(address,uint256,address,uint256)"));
+const ITEM_PURCHASED_TOPIC = keccak256(
+  toBytes("ItemPurchased(address,uint256,uint256,uint256,uint256,address,address)")
+);
 
 const redis = Redis.fromEnv();
 const SHOP_ADDRESS = process.env.NEXT_PUBLIC_SHOP_ADDRESS as `0x${string}` | undefined;
@@ -50,11 +52,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Transaction failed on-chain" }, { status: 400 });
     }
 
-    // Find ShopPurchase event for coach items (verify event signature + contract address)
+    // Find ItemPurchased event for coach items (verify event signature + contract address)
     const logs = receipt.logs.filter(
       (log) =>
         log.address.toLowerCase() === SHOP_ADDRESS.toLowerCase() &&
-        log.topics[0] === SHOP_PURCHASE_TOPIC
+        log.topics[0] === ITEM_PURCHASED_TOPIC
     );
 
     let creditsToAdd = 0;
