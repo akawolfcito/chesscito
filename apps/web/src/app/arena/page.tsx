@@ -40,6 +40,8 @@ import {
   normalizePrice,
 } from "@/lib/contracts/tokens";
 
+const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
+
 type SignatureResponse =
   | { nonce: string; deadline: string; signature: `0x${string}`; error?: never }
   | { error: string };
@@ -709,109 +711,113 @@ export default function ArenaPage() {
             moves={game.moveCount}
             elapsedMs={game.elapsedMs}
             difficulty={game.difficulty}
-            onAskCoach={coachPhase === "idle" ? handleAskCoach : undefined}
+            onAskCoach={ENABLE_COACH && coachPhase === "idle" ? handleAskCoach : undefined}
           />
         </div>
       )}
 
-      {/* Coach phases */}
-      {coachPhase === "welcome" && (
-        <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)]">
-          <div className="relative mx-4 w-full max-w-[340px] rounded-3xl border border-white/[0.08] bg-[var(--surface-frosted)] backdrop-blur-2xl shadow-[0_0_60px_rgba(16,185,129,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={() => setCoachPhase("idle")}
-              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-cyan-100/40 transition hover:bg-white/[0.06] hover:text-cyan-100/70"
-            >
-              &times;
-            </button>
-            <CoachWelcome onClaim={handleClaimWelcome} />
-          </div>
-        </div>
-      )}
-      {coachPhase === "loading" && coachJobId && (
-        <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)]">
-          <CoachLoading
-            jobId={coachJobId}
-            wallet={address?.toLowerCase()}
-            onReady={(response) => { setCoachResponse(response); setCoachCredits((c) => Math.max(0, c - 1)); setCoachPhase("result"); }}
-            onFailed={() => {
-              const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
-              setCoachFallbackResponse(quick);
-              setCoachPhase("fallback");
-            }}
-            onCancel={() => setCoachPhase("idle")}
-          />
-        </div>
-      )}
-      {coachPhase === "result" && coachResponse && (
-        <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)]">
-          <div className="mx-auto max-w-[var(--app-max-width,390px)] pt-8">
-            <CoachPanel
-              response={coachResponse}
-              difficulty={game.difficulty}
-              totalMoves={game.moveCount}
-              elapsedMs={game.elapsedMs}
-              credits={coachCredits}
-              onPlayAgain={handlePlayAgain}
-              onBackToHub={handleBackToHub}
-              onViewHistory={address ? () => setCoachPhase("history") : undefined}
-            />
-          </div>
-        </div>
-      )}
-      {coachPhase === "fallback" && coachFallbackResponse && (
-        <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)]">
-          <div className="mx-auto max-w-[var(--app-max-width,390px)] pt-8">
-            <CoachFallback
-              response={coachFallbackResponse}
-              difficulty={game.difficulty}
-              totalMoves={game.moveCount}
-              elapsedMs={game.elapsedMs}
-              result={mapArenaResult(game.status, isPlayerWin)}
-              onGetFullAnalysis={() => setCoachPhase(isConnected ? "paywall" : "idle")}
-              onPlayAgain={handlePlayAgain}
-              onBackToHub={handleBackToHub}
-            />
-          </div>
-        </div>
-      )}
-      {coachPhase === "paywall" && (
-        <CoachPaywall
-          open
-          onOpenChange={() => setCoachPhase("idle")}
-          onBuy={(pack) => void handleBuyCredits(pack)}
-          onQuickReview={() => {
-            const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
-            setCoachFallbackResponse(quick);
-            setCoachPhase("fallback");
-          }}
-        />
-      )}
-      {coachPhase === "history" && address && (
-        <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)]">
-          <div className="mx-auto max-w-[var(--app-max-width,390px)] pt-8">
-            <button
-              type="button"
-              onClick={() => setCoachPhase(coachResponse ? "result" : "idle")}
-              className="mb-4 ml-4 flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.10] text-cyan-200/80 transition hover:text-cyan-50"
-              aria-label="Go back"
-            >
-              &larr;
-            </button>
-            <CoachHistory
-              walletAddress={address.toLowerCase()}
-              credits={coachCredits}
-              onSelectEntry={(entry) => {
-                if (entry.response.kind === "full") {
-                  setCoachResponse(entry.response);
-                  setCoachPhase("result");
-                }
+      {/* Coach phases (behind NEXT_PUBLIC_ENABLE_COACH flag) */}
+      {ENABLE_COACH && (
+        <>
+          {coachPhase === "welcome" && (
+            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)]">
+              <div className="relative mx-4 w-full max-w-[340px] rounded-3xl border border-white/[0.08] bg-[var(--surface-frosted)] backdrop-blur-2xl shadow-[0_0_60px_rgba(16,185,129,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+                <button
+                  type="button"
+                  aria-label="Close"
+                  onClick={() => setCoachPhase("idle")}
+                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-cyan-100/40 transition hover:bg-white/[0.06] hover:text-cyan-100/70"
+                >
+                  &times;
+                </button>
+                <CoachWelcome onClaim={handleClaimWelcome} />
+              </div>
+            </div>
+          )}
+          {coachPhase === "loading" && coachJobId && (
+            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)]">
+              <CoachLoading
+                jobId={coachJobId}
+                wallet={address?.toLowerCase()}
+                onReady={(response) => { setCoachResponse(response); setCoachCredits((c) => Math.max(0, c - 1)); setCoachPhase("result"); }}
+                onFailed={() => {
+                  const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
+                  setCoachFallbackResponse(quick);
+                  setCoachPhase("fallback");
+                }}
+                onCancel={() => setCoachPhase("idle")}
+              />
+            </div>
+          )}
+          {coachPhase === "result" && coachResponse && (
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)]">
+              <div className="mx-auto max-w-[var(--app-max-width,390px)] pt-8">
+                <CoachPanel
+                  response={coachResponse}
+                  difficulty={game.difficulty}
+                  totalMoves={game.moveCount}
+                  elapsedMs={game.elapsedMs}
+                  credits={coachCredits}
+                  onPlayAgain={handlePlayAgain}
+                  onBackToHub={handleBackToHub}
+                  onViewHistory={address ? () => setCoachPhase("history") : undefined}
+                />
+              </div>
+            </div>
+          )}
+          {coachPhase === "fallback" && coachFallbackResponse && (
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)]">
+              <div className="mx-auto max-w-[var(--app-max-width,390px)] pt-8">
+                <CoachFallback
+                  response={coachFallbackResponse}
+                  difficulty={game.difficulty}
+                  totalMoves={game.moveCount}
+                  elapsedMs={game.elapsedMs}
+                  result={mapArenaResult(game.status, isPlayerWin)}
+                  onGetFullAnalysis={() => setCoachPhase(isConnected ? "paywall" : "idle")}
+                  onPlayAgain={handlePlayAgain}
+                  onBackToHub={handleBackToHub}
+                />
+              </div>
+            </div>
+          )}
+          {coachPhase === "paywall" && (
+            <CoachPaywall
+              open
+              onOpenChange={() => setCoachPhase("idle")}
+              onBuy={(pack) => void handleBuyCredits(pack)}
+              onQuickReview={() => {
+                const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
+                setCoachFallbackResponse(quick);
+                setCoachPhase("fallback");
               }}
             />
-          </div>
-        </div>
+          )}
+          {coachPhase === "history" && address && (
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)]">
+              <div className="mx-auto max-w-[var(--app-max-width,390px)] pt-8">
+                <button
+                  type="button"
+                  onClick={() => setCoachPhase(coachResponse ? "result" : "idle")}
+                  className="mb-4 ml-4 flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.10] text-cyan-200/80 transition hover:text-cyan-50"
+                  aria-label="Go back"
+                >
+                  &larr;
+                </button>
+                <CoachHistory
+                  walletAddress={address.toLowerCase()}
+                  credits={coachCredits}
+                  onSelectEntry={(entry) => {
+                    if (entry.response.kind === "full") {
+                      setCoachResponse(entry.response);
+                      setCoachPhase("result");
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </>
       )}
     </main>
   );
