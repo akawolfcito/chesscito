@@ -214,8 +214,8 @@ export function MissionPanel({
                   </picture>
                   {isActive && (
                     <span
-                      className="text-nano font-extrabold uppercase tracking-[0.15em] text-[var(--warm-label-text)]"
-                      style={{ fontFamily: "var(--font-game-display)", textShadow: "var(--text-shadow-label)" }}
+                      className="fantasy-title text-nano font-extrabold uppercase tracking-[0.15em] text-[var(--warm-label-text)]"
+                      style={{ textShadow: "var(--text-shadow-label)" }}
                     >
                       {piece.label}
                     </span>

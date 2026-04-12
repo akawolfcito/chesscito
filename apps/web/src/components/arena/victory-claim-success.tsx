@@ -75,7 +75,7 @@ export function VictoryClaimSuccess({
         </div>
 
         {/* Title — amber reward state */}
-        <h2 className="fantasy-title mb-1 text-2xl font-bold text-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
+        <h2 className="fantasy-title mb-1 text-3xl font-bold text-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
           {VICTORY_CLAIM_COPY.successTitle}
         </h2>
 

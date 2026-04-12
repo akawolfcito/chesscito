@@ -99,7 +99,7 @@ export default async function VictoryPage({ params }: { params: { id: string } }
         <VictoryTrophy />
 
         {/* Title */}
-        <h1 className="fantasy-title mb-2 text-2xl font-bold text-emerald-300/90 drop-shadow-[0_0_12px_rgba(20,184,166,0.35)]">
+        <h1 className="fantasy-title mb-2 text-3xl font-bold text-emerald-300/90 drop-shadow-[0_0_12px_rgba(20,184,166,0.35)]">
           {ARENA_DIFFICULTIES.has(v.difficultyRaw)
             ? VICTORY_PAGE_COPY.metaCheckmate(v.moves)
             : VICTORY_PAGE_COPY.metaComplete(v.moves)}
