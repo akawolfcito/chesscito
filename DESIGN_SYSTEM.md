@@ -39,10 +39,14 @@ Standardize on: `bg-black/70` for fullscreen overlays.
 
 | Level | Pattern |
 |---|---|
-| Page title | `fantasy-title text-2xl font-bold` |
+| Hero title | `fantasy-title text-3xl font-bold` |
+| Page title | `fantasy-title text-xl font-bold` |
 | Section header | `text-xs font-semibold uppercase tracking-widest` |
 | Body | `text-sm` |
 | Caption / label | `text-xs` |
+| Micro label | `text-nano font-bold uppercase` |
+
+**Rule:** No arbitrary `text-[Xpx]` values. Use the scale above. If a new size is genuinely needed, add it as a named token in `tailwind.config.js` first.
 
 ---
 
