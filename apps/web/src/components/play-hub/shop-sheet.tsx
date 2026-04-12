@@ -59,7 +59,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
             return (
             <div key={item.itemId.toString()} className={`p-3 relative ${isFeatured ? "panel-elevated" : "panel-base"}`} style={isFeatured ? { borderColor: "var(--treat-warm-border)" } : undefined}>
               {isFeatured && (
-                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[var(--featured-badge-text)]" style={{ background: "var(--featured-badge-bg)", border: "1px solid var(--featured-badge-border)" }}>
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-widest text-[var(--featured-badge-text)]" style={{ background: "var(--featured-badge-bg)", border: "1px solid var(--featured-badge-border)" }}>
                   Featured
                 </span>
               )}

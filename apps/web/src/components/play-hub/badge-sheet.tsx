@@ -75,7 +75,7 @@ function BadgeCard({
       ].join(" ")}
     >
       {isClaimed && (
-        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white shadow-[0_0_8px_rgba(16,185,129,0.3)]">
           &#10003;
         </span>
       )}
@@ -100,12 +100,12 @@ function BadgeCard({
               style={{ width: `${(badge.totalStars / badge.maxStars) * 100}%` }}
             />
           </div>
-          <span className="text-[0.6rem] font-semibold text-cyan-100/50 tabular-nums">
+          <span className="text-xs font-semibold text-cyan-100/50 tabular-nums">
             {badge.totalStars}/{badge.maxStars}
           </span>
         </div>
         {isLocked ? (
-          <p className="mt-0.5 text-[0.65rem] text-cyan-100/40">
+          <p className="mt-0.5 text-xs text-cyan-100/40">
             {badge.totalStars === 0 ? BADGE_SHEET_COPY.notStarted : BADGE_SHEET_COPY.locked(needed)}
           </p>
         ) : null}
@@ -249,7 +249,7 @@ export function BadgeSheet({
           <Link
             href="/about"
             onClick={() => onOpenChange(false)}
-            className="mt-3 block text-center text-[11px] text-cyan-300/40 transition-colors hover:text-cyan-200/60"
+            className="mt-3 block text-center text-xs text-cyan-300/40 transition-colors hover:text-cyan-200/60"
           >
             {ABOUT_LINK_COPY.label}
           </Link>

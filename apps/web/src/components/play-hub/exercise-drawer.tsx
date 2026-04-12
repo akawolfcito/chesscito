@@ -66,7 +66,7 @@ export function ExerciseDrawer({
         <button
           type="button"
           aria-label="Exercises"
-          className="exercise-drawer-trigger flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-full px-2.5 text-[10px] font-bold text-[rgba(220,200,140,0.85)] transition hover:brightness-110 active:scale-[0.97] active:brightness-90"
+          className="exercise-drawer-trigger flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-full px-2.5 text-xs font-bold text-[rgba(220,200,140,0.85)] transition hover:brightness-110 active:scale-[0.97] active:brightness-90"
         >
           <Star size={10} className="fill-[rgba(220,190,100,0.9)] text-[rgba(220,190,100,0.9)]" />
           <span className="tabular-nums">{totalStars}/{maxStars}</span>
@@ -125,7 +125,7 @@ export function ExerciseDrawer({
                   <p className={`text-sm font-medium ${isLocked ? "text-slate-500" : "text-slate-100"}`}>
                     {description}
                   </p>
-                  <p className="flex items-center gap-1 text-[0.65rem] text-slate-400">
+                  <p className="flex items-center gap-1 text-xs text-slate-400">
                     {exercise.isCapture ? (
                       <><Swords size={10} /> Capture</>
                     ) : (
@@ -138,7 +138,7 @@ export function ExerciseDrawer({
                 {isDone ? (
                   <StarDisplay count={stars[index]} />
                 ) : isLocked ? (
-                  <span className="text-[0.6rem] text-slate-600">{EXERCISE_DRAWER_COPY.locked}</span>
+                  <span className="text-xs text-slate-600">{EXERCISE_DRAWER_COPY.locked}</span>
                 ) : null}
               </button>
             );
@@ -157,7 +157,7 @@ export function ExerciseDrawer({
               style={{ left: `${(BADGE_THRESHOLD / maxStars) * 100}%` }}
             />
           </div>
-          <p className="text-center text-[0.6rem] text-cyan-100/40">
+          <p className="text-center text-xs text-cyan-100/40">
             {EXERCISE_DRAWER_COPY.badgeThresholdHint(BADGE_THRESHOLD)}
           </p>
         </div>

@@ -85,7 +85,7 @@ export function VictoryClaiming({
                       }`}
                     />
                     <span
-                      className={`text-[0.6rem] ${
+                      className={`text-xs ${
                         isDone
                           ? "text-emerald-400/70"
                           : isActive
@@ -107,7 +107,7 @@ export function VictoryClaiming({
               );
             })}
           </div>
-          <p className="text-[0.65rem] text-cyan-100/40">
+          <p className="text-xs text-cyan-100/40">
             {VICTORY_CLAIM_COPY.progressTimeHint}
           </p>
           <Button

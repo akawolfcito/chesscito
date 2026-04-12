@@ -20,7 +20,7 @@ export function AskCoachButton({ onClick }: Props) {
       <GraduationCap size={18} className="inline -mt-0.5" />
       <span className="flex flex-col items-start leading-tight">
         <span className="font-bold">{COACH_COPY.askCoach}</span>
-        <span className="text-[0.6rem] text-emerald-200/50">{COACH_COPY.askCoachSub}</span>
+        <span className="text-xs text-emerald-200/50">{COACH_COPY.askCoachSub}</span>
       </span>
     </Button>
   );

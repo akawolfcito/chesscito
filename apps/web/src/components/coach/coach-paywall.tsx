@@ -49,7 +49,7 @@ export function CoachPaywall({ open, onOpenChange, onBuy, onQuickReview }: Props
             <p className="text-lg font-bold text-white">{COACH_COPY.creditPack20}</p>
             <p className="text-sm text-cyan-100/50">$0.10</p>
             <p className="mt-1 text-xs text-cyan-100/40">{COACH_COPY.creditPackSubtitle(20)}</p>
-            <span className="mt-1 inline-block rounded-full bg-emerald-500/20 px-2 py-0.5 text-[0.6rem] font-bold text-emerald-300">{COACH_COPY.creditBest}</span>
+            <span className="mt-1 inline-block rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-300">{COACH_COPY.creditBest}</span>
             {buying === 20 && (
               <div className="mx-auto mt-2 h-4 w-4 animate-spin rounded-full border-2 border-emerald-400/30 border-t-emerald-400" />
             )}
@@ -60,7 +60,7 @@ export function CoachPaywall({ open, onOpenChange, onBuy, onQuickReview }: Props
             {COACH_COPY.buyWithUsdc}
           </p>
         )}
-        <p className="mt-4 text-center text-[0.65rem] text-cyan-100/25">
+        <p className="mt-4 text-center text-xs text-cyan-100/25">
           <button type="button" onClick={onQuickReview} disabled={buying !== null} className="underline hover:text-cyan-100/50 disabled:opacity-50">
             {COACH_COPY.orQuickReview}
           </button>

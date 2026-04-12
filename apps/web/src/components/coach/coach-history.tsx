@@ -64,11 +64,11 @@ export function CoachHistory({ walletAddress, credits, onSelectEntry }: Props) {
               <p className="text-sm font-semibold text-white/80">
                 {entry.game.result.charAt(0).toUpperCase() + entry.game.result.slice(1)} - {diffLabel} - {entry.game.totalMoves} moves
               </p>
-              <span className="text-[0.6rem] font-semibold text-cyan-100/40">{typeLabel}</span>
+              <span className="text-xs font-semibold text-cyan-100/40">{typeLabel}</span>
             </div>
             <p className="mt-1 truncate text-xs italic text-cyan-100/50">{`"${topTakeaway}"`}</p>
             {momentCount > 0 && (
-              <p className="mt-0.5 text-[0.6rem] text-cyan-100/30">{COACH_COPY.keyMomentsCount(momentCount)}</p>
+              <p className="mt-0.5 text-xs text-cyan-100/30">{COACH_COPY.keyMomentsCount(momentCount)}</p>
             )}
           </button>
         );

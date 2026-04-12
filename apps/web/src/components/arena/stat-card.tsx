@@ -11,7 +11,7 @@ export function StatCard({ icon, value, label }: { icon: string; value: string; 
     >
       <span className="text-sm leading-none opacity-60">{icon}</span>
       <span className="text-base font-bold leading-none text-white">{value}</span>
-      <span className="text-[0.6rem] uppercase tracking-widest text-cyan-200/50">{label}</span>
+      <span className="text-xs uppercase tracking-widest text-cyan-200/50">{label}</span>
     </div>
   );
 }

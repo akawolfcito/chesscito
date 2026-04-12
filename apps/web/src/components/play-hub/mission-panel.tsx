@@ -147,15 +147,15 @@ export function MissionPanel({
   const missionContent = (
     <div className="flex items-center gap-3">
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-        <p className="game-label text-[10px] font-bold uppercase tracking-[0.14em] text-cyan-400/85">
+        <p className="game-label text-xs font-bold uppercase tracking-[0.14em] text-cyan-400/85">
           {MISSION_BRIEFING_COPY.label}
         </p>
-        <p key={targetLabel} className="mission-typewriter text-[15px] font-bold text-slate-50">
+        <p key={targetLabel} className="mission-typewriter text-sm font-bold text-slate-50">
           {isCapture
             ? <>Move your {PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to <span className="text-rose-400">CAPTURE</span></>
             : <>{MISSION_BRIEFING_COPY.targetPrefix} <span className="text-cyan-300">{targetLabel}</span></>}
         </p>
-        <p key={`hint-${targetLabel}`} className="mission-typewriter text-[11px] text-cyan-100/55" style={{ animationDelay: "1s" }}>
+        <p key={`hint-${targetLabel}`} className="mission-typewriter text-xs text-cyan-100/55" style={{ animationDelay: "1s" }}>
           {MISSION_BRIEFING_COPY.moveHint[selectedPiece as keyof typeof MISSION_BRIEFING_COPY.moveHint]}
         </p>
       </div>
@@ -207,14 +207,14 @@ export function MissionPanel({
                         target.style.display = "none";
                         const fallback = document.createElement("span");
                         fallback.textContent = piece.label[0];
-                        fallback.className = "text-[20px] leading-none text-slate-400";
+                        fallback.className = "text-lg leading-none text-slate-400";
                         target.parentElement?.appendChild(fallback);
                       }}
                     />
                   </picture>
                   {isActive && (
                     <span
-                      className="text-[8px] font-extrabold uppercase tracking-[0.15em] text-[var(--warm-label-text)]"
+                      className="text-nano font-extrabold uppercase tracking-[0.15em] text-[var(--warm-label-text)]"
                       style={{ fontFamily: "var(--font-game-display)", textShadow: "var(--text-shadow-label)" }}
                     >
                       {piece.label}
@@ -226,7 +226,7 @@ export function MissionPanel({
                     </span>
                   )}
                   {isLocked && (
-                    <span className="text-[7px] font-bold uppercase tracking-[0.12em] text-white/35">
+                    <span className="text-nano font-bold uppercase tracking-[0.12em] text-white/35">
                       {PIECE_RAIL_COPY.comingSoon}
                     </span>
                   )}
@@ -245,7 +245,7 @@ export function MissionPanel({
           {board}
         </div>
         {isReplay && (
-          <p className="px-2 py-1 text-center text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-cyan-400/50">
+          <p className="px-2 py-1 text-center text-xs font-semibold uppercase tracking-[0.16em] text-cyan-400/50">
             {PRACTICE_COPY.label}
           </p>
         )}

@@ -281,7 +281,7 @@ export function ResultOverlay({
         {!isError ? (
           <div className="mt-4 flex flex-col items-center gap-0.5">
             <span className="fantasy-title text-sm text-cyan-100/50">chesscito</span>
-            <span className="text-[0.65rem] text-cyan-100/30">on Celo</span>
+            <span className="text-xs text-cyan-100/30">on Celo</span>
           </div>
         ) : null}
       </div>
@@ -363,7 +363,7 @@ export function BadgeEarnedPrompt({
 
         <div className="mt-4 flex flex-col items-center gap-0.5">
           <span className="fantasy-title text-sm text-cyan-100/50">chesscito</span>
-          <span className="text-[0.65rem] text-cyan-100/30">on Celo</span>
+          <span className="text-xs text-cyan-100/30">on Celo</span>
         </div>
       </div>
     </div>
@@ -460,7 +460,7 @@ export function PieceCompletePrompt({
 
         <div className="mt-4 flex flex-col items-center gap-0.5">
           <span className="fantasy-title text-sm text-cyan-100/50">chesscito</span>
-          <span className="text-[0.65rem] text-cyan-100/30">on Celo</span>
+          <span className="text-xs text-cyan-100/30">on Celo</span>
         </div>
       </div>
     </div>

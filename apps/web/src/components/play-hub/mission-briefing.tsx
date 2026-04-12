@@ -67,7 +67,7 @@ export function MissionBriefing({
         <p id="mission-briefing-objective" className="text-center text-sm font-medium text-slate-100">
           {objective}
         </p>
-        <p className="mt-1.5 text-center text-[11px] text-cyan-100/45">
+        <p className="mt-1.5 text-center text-xs text-cyan-100/45">
           {hint}
         </p>
         <Button
@@ -82,7 +82,7 @@ export function MissionBriefing({
         </Button>
         <Link
           href="/arena"
-          className="mt-3 block text-center text-[11px] text-cyan-300/50 underline underline-offset-4 transition-colors hover:text-cyan-200/70"
+          className="mt-3 block text-center text-xs text-cyan-300/50 underline underline-offset-4 transition-colors hover:text-cyan-200/70"
         >
           or try {ARENA_COPY.title} vs AI
         </Link>

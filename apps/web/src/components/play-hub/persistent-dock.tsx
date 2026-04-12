@@ -33,7 +33,7 @@ export function PersistentDock({
         className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
       >
         <Swords size={20} />
-        <span className="game-label text-[7px] font-bold uppercase tracking-[0.12em]">
+        <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
           {DOCK_LABELS.freePlay}
         </span>
       </Link>

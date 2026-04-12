@@ -94,12 +94,12 @@ export function TrophyCard({ entry, variant, rank }: Props) {
           <Trophy className="h-4 w-4 shrink-0 text-amber-400 drop-shadow-[0_0_4px_rgba(200,170,100,0.3)]" />
         )}
         <span
-          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none ${chip.className}`}
+          className={`rounded-full px-2 py-0.5 text-xs font-semibold leading-none ${chip.className}`}
         >
           {difficultyLabel}
         </span>
-        <span className="text-[10px] text-slate-500">{TROPHY_VITRINE_COPY.nftIdPrefix} #{String(entry.tokenId)}</span>
-        <span className="ml-auto text-[10px] text-slate-500">{formatDate(entry.timestamp)}</span>
+        <span className="text-xs text-slate-500">{TROPHY_VITRINE_COPY.nftIdPrefix} #{String(entry.tokenId)}</span>
+        <span className="ml-auto text-xs text-slate-500">{formatDate(entry.timestamp)}</span>
       </div>
 
       <div className="mt-1.5 flex items-center gap-3 text-xs text-slate-400">
@@ -114,7 +114,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
 
         <span className="ml-auto">
           {isHoF ? (
-            <span className="text-[10px] text-slate-500">
+            <span className="text-xs text-slate-500">
               {truncateAddress(entry.player)}
             </span>
           ) : (
@@ -131,7 +131,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
       </div>
 
       {toast && (
-        <p className="mt-1 text-center text-[10px] font-semibold text-emerald-400 animate-in fade-in duration-200">
+        <p className="mt-1 text-center text-xs font-semibold text-emerald-400 animate-in fade-in duration-200">
           {toast}
         </p>
       )}

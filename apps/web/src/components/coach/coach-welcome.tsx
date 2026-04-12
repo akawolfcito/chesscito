@@ -43,7 +43,7 @@ export function CoachWelcome({ onClaim }: Props) {
         {COACH_COPY.claimFree}
       </Button>
 
-      <p className="text-center text-[0.65rem] text-cyan-100/30">{COACH_COPY.welcomeNote}</p>
+      <p className="text-center text-xs text-cyan-100/30">{COACH_COPY.welcomeNote}</p>
     </div>
   );
 }
