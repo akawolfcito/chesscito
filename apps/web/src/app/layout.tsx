@@ -34,6 +34,9 @@ export const metadata: Metadata = {
     description: 'Learn chess piece movements with gamified on-chain challenges on Celo.',
     images: ['/art/og-home.jpg'],
   },
+  other: {
+    'talentapp:project_verification': '24912a54c2fbb019a7fd89ea904c1355dc572b6f955d4146c3078576fb4c77513b57c9f59e765b9fc63400005bcb9948f88b266c8862be94aef6d2adbf8473ee',
+  },
 };
 
 export const viewport: Viewport = {
