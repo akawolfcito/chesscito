@@ -1,8 +1,8 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
 import { ARENA_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
+import { CandyButton } from "@/components/redesign/candy-button";
 import type { ArenaStatus } from "@/lib/game/types";
 import { AskCoachButton } from "@/components/coach/ask-coach-button";
 import { StatCard } from "@/components/arena/stat-card";
@@ -146,16 +146,13 @@ export function ArenaEndState({
           <StatCard icon="♟" value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
           <StatCard icon="⏱" value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
         </div>
-        <div className="flex flex-col gap-2 w-full max-w-[260px]">
-          <Button
-            type="button"
-            variant="game-primary"
-            size="game"
+        <div className="flex flex-col items-center gap-2 w-full max-w-[260px]">
+          <CandyButton
+            variant="play"
             onClick={onPlayAgain}
-            className="shadow-[0_0_16px_rgba(34,211,238,0.3)] hover:shadow-[0_0_24px_rgba(34,211,238,0.5)]"
-          >
-            <RotateCcw size={16} className="inline -mt-0.5" /> {ARENA_COPY.playAgain}
-          </Button>
+            ariaLabel={ARENA_COPY.playAgain}
+            className="w-full"
+          />
           {onAskCoach && (
             <AskCoachButton onClick={onAskCoach} />
           )}
