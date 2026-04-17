@@ -641,8 +641,8 @@ export default function ArenaPage() {
 
   // Playing + end states
   return (
-    <main className="flex min-h-[100dvh] flex-col items-center arena-bg">
-      <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-col">
+    <main className="flex h-[100dvh] flex-col items-center arena-bg">
+      <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-1 flex-col min-h-0">
         <ArenaHud
           difficulty={game.difficulty}
           isThinking={game.isThinking}
@@ -651,7 +651,7 @@ export default function ArenaPage() {
           isEndState={isEndState}
         />
 
-        <div className="relative w-full">
+        <div className="relative w-full flex-1 min-h-0">
           <ArenaBoard
             pieces={game.pieces}
             selectedSquare={game.selectedSquare}
