@@ -1608,3 +1608,47 @@
     inset 0 -1px 2px rgba(0, 0, 0, 0.25),
     0 1px 4px rgba(0, 0, 0, 0.2);
 }
+
+/* ═══════════════════════════════════════════════════
+   Redesign components — candy-game aesthetic
+   ═══════════════════════════════════════════════════ */
+
+.candy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: transform var(--duration-snap) var(--ease-spring),
+              filter var(--duration-snap) ease;
+}
+
+.candy-button:active {
+  transform: translateY(2px) scale(0.97);
+  filter: brightness(0.95);
+}
+
+.candy-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.candy-button-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.candy-button-play {
+  width: min(100%, 16rem);
+}
+
+.candy-button-resign,
+.candy-button-undo {
+  width: 3.75rem;
+}
