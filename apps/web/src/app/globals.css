@@ -1652,3 +1652,29 @@
 .candy-button-undo {
   width: 3.75rem;
 }
+
+.wooden-banner {
+  display: block;
+  line-height: 0;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
+}
+
+.wooden-banner-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.wooden-banner-chess {
+  width: min(100%, 18rem);
+}
+
+.wooden-banner-your-turn {
+  width: min(100%, 18rem);
+}
+
+.wooden-banner-vs {
+  width: 3rem;
+}
