@@ -116,6 +116,21 @@
   --duration-ceremony: 500ms;
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
+  /* ── Redesign palette (candy-game aesthetic) ── */
+  --redesign-cream: #F6E6B4;
+  --redesign-olive: #64AB53;
+  --redesign-deep-green: #347909;
+  --redesign-wood-gold: #FDD257;
+  --redesign-sky-blue: #49A2FB;
+  --redesign-coral-red: #FC7C83;
+  --redesign-candy-green: #82D51E;
+  --redesign-rock-gray: #727690;
+
+  /* ── Board colors (aliased to redesign palette) ── */
+  --board-light: var(--redesign-cream);
+  --board-dark: var(--redesign-olive);
+  --board-border: var(--redesign-deep-green);
+
   /* ── Arena board cell state tokens ── */
   --cell-last-move-bg: rgba(139, 92, 246, 0.15);
   --cell-check-bg: rgba(239, 68, 68, 0.3);
@@ -558,6 +573,9 @@
     position: relative;
     overflow: hidden;
     height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .playhub-game-stage::before {
@@ -568,17 +586,26 @@
     margin: 0 auto;
     width: min(100%, 24.5rem);
     height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .playhub-board-canvas {
     position: relative;
     margin: 0 auto;
-    width: min(100%, 23.5rem);
+    /* Height-first sizing: the square fits the smaller of container width/height,
+       preventing the bottom rank from being clipped when vertical space is tight */
     aspect-ratio: 1 / 1;
-    background-image: var(--playhub-board-bg);
-    background-position: center;
-    background-size: contain;
-    background-repeat: no-repeat;
+    height: 100%;
+    max-height: 23.5rem;
+    max-width: 100%;
+    width: auto;
+    background-color: var(--board-border);
+    border-radius: 8px;
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .playhub-board-hitgrid {
@@ -589,12 +616,19 @@
   .playhub-board-cell {
     position: absolute;
     border: 0;
-    background: transparent;
     padding: 0;
     margin: 0;
     color: #d9f7ff;
     cursor: pointer;
     transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+  }
+
+  .playhub-board-cell.is-light {
+    background-color: var(--board-light);
+  }
+
+  .playhub-board-cell.is-dark {
+    background-color: var(--board-dark);
   }
 
   .playhub-board-cell:active {
@@ -654,8 +688,8 @@
     font-size: clamp(0.38rem, 1.6vw, 0.5rem);
     line-height: 1;
     letter-spacing: 0.08em;
-    color: rgba(186, 230, 253, 0.35);
-    font-weight: 400;
+    color: rgba(52, 121, 9, 0.45);
+    font-weight: 500;
     text-transform: uppercase;
   }
 
@@ -663,7 +697,7 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%) scaleY(0.65);
+    transform: translate(-50%, -50%);
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
@@ -675,10 +709,10 @@
   .playhub-board-target {
     position: absolute;
     left: 50%;
-    top: 46%;
+    top: 50%;
     width: clamp(32px, 11.5vw, 52px);
     height: clamp(32px, 11.5vw, 52px);
-    transform: translate(-50%, -50%) scaleY(0.52);
+    transform: translate(-50%, -50%);
     background-image: image-set(
       url("/art/target-circle.avif") type("image/avif"),
       url("/art/target-circle.webp") type("image/webp"),
@@ -694,10 +728,10 @@
   .playhub-board-target-capture {
     position: absolute;
     left: 50%;
-    top: 46%;
+    top: 50%;
     width: clamp(32px, 11.5vw, 52px);
     height: clamp(32px, 11.5vw, 52px);
-    transform: translate(-50%, -50%) scaleY(0.52);
+    transform: translate(-50%, -50%);
     background-image: image-set(
       url("/art/target-circle.avif") type("image/avif"),
       url("/art/target-circle.webp") type("image/webp"),
@@ -714,11 +748,11 @@
   @keyframes chesscito-target-pulse {
     0%, 100% {
       opacity: 0.85;
-      transform: translate(-50%, -50%) scaleY(0.52) scale(1);
+      transform: translate(-50%, -50%) scale(1);
     }
     50% {
       opacity: 1;
-      transform: translate(-50%, -50%) scaleY(0.52) scale(1.12);
+      transform: translate(-50%, -50%) scale(1.12);
     }
   }
 
@@ -944,11 +978,18 @@
   .arena-board-cell {
     position: absolute;
     border: 0;
-    background: transparent;
     padding: 0;
     margin: 0;
     cursor: pointer;
     transition: background 150ms ease;
+  }
+
+  .arena-board-cell.is-light {
+    background-color: var(--board-light);
+  }
+
+  .arena-board-cell.is-dark {
+    background-color: var(--board-dark);
   }
 
   .arena-board-cell:active {
