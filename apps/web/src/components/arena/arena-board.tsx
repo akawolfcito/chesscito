@@ -10,6 +10,7 @@ type ArenaSquareState = {
   file: number;
   rank: number;
   label: string;
+  isDark: boolean;
   isHighlighted: boolean;
   isSelected: boolean;
   isLastMove: boolean;
@@ -45,6 +46,7 @@ function buildArenaSquares(
         file,
         rank,
         label,
+        isDark: (file + rank) % 2 === 0,
         isHighlighted: legalSet.has(label),
         isSelected: label === selectedSquare,
         isLastMove: label === lastMove?.from || label === lastMove?.to,
@@ -114,10 +116,10 @@ export function ArenaBoard({
                       top: `${geo.top}%`,
                       width: `${geo.width}%`,
                       height: `${geo.height}%`,
-                      clipPath: geo.clipPath,
                     }}
                     className={[
                       "arena-board-cell",
+                      sq.isDark ? "is-dark" : "is-light",
                       sq.isHighlighted ? "is-highlighted" : "",
                       sq.isHighlighted && pieceMap.has(sq.label) ? "is-capturable" : "",
                       sq.isSelected ? "is-selected" : "",
@@ -141,7 +143,7 @@ export function ArenaBoard({
                 groupCount[groupKey] = idx + 1;
                 const { file, rank } = squareToFileRank(p.square);
                 const center = cellCenter(file, rank);
-                const pw = pieceWidth(file, rank);
+                const pw = pieceWidth();
                 const src = ARENA_PIECE_IMG[p.color][p.type];
                 return (
                   <picture

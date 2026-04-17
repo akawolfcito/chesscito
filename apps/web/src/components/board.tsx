@@ -52,7 +52,7 @@ export function Board({
 }: BoardProps) {
   const [piece, setPiece] = useState(() => makePiece(pieceType, startPosition));
   const [selectedPosition, setSelectedPosition] = useState<BoardPosition | null>(
-    startPosition
+    null
   );
   const [movesCount, setMovesCount] = useState(0);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -66,7 +66,7 @@ export function Board({
   // to avoid false-positive re-runs when the parent creates a new object with the same coordinates.
   useEffect(() => {
     setPiece(makePiece(pieceType, startPosition));
-    setSelectedPosition(startPosition);
+    setSelectedPosition(null);
     setMovesCount(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pieceType, startPosition.file, startPosition.rank, mode]);
@@ -153,10 +153,10 @@ export function Board({
                           top: `${geo.top}%`,
                           width: `${geo.width}%`,
                           height: `${geo.height}%`,
-                          clipPath: geo.clipPath,
                         }}
                         className={[
                           "playhub-board-cell",
+                          square.isDark ? "is-dark" : "is-light",
                           square.isHighlighted ? "is-highlighted" : "",
                           square.isEndpoint ? "is-endpoint" : "",
                           square.isSelected ? "is-selected" : "",
@@ -176,7 +176,7 @@ export function Board({
               {/* Target piece — visible enemy piece for capture exercises */}
               {isCapture && targetPosition && !(piece.position.file === targetPosition.file && piece.position.rank === targetPosition.rank) && (() => {
                 const tc = cellCenter(targetPosition.file, targetPosition.rank);
-                const tw = pieceWidth(targetPosition.file, targetPosition.rank);
+                const tw = pieceWidth();
                 const targetImg = PIECE_IMG[pieceType].replace("/w-", "/b-");
                 return (
                   <picture
@@ -202,7 +202,7 @@ export function Board({
               {/* Floating piece layer — same element moves with transition */}
               {(() => {
                 const center = cellCenter(piece.position.file, piece.position.rank);
-                const pw = pieceWidth(piece.position.file, piece.position.rank);
+                const pw = pieceWidth();
                 return (
                   <picture
                     className={`playhub-board-piece-float${isRejecting ? " piece-reject" : ""}`}
