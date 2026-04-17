@@ -1,4 +1,5 @@
 import { Chess } from "chess.js";
+import { THEME_CONFIG } from "@/lib/theme";
 import type { ChessBoardPiece, ChessPieceId, PieceColor } from "./types";
 
 /** Map chess.js single-char piece types to our ChessPieceId */
@@ -11,23 +12,25 @@ const PIECE_MAP: Record<string, ChessPieceId> = {
   k: "king",
 };
 
-/** All piece image paths keyed by color and ChessPieceId */
+const BASE = THEME_CONFIG.piecesBase;
+
+/** All piece image paths keyed by color and ChessPieceId (theme-aware) */
 export const ARENA_PIECE_IMG: Record<PieceColor, Record<ChessPieceId, string>> = {
   w: {
-    pawn: "/art/pieces/w-pawn.png",
-    knight: "/art/pieces/w-knight.png",
-    bishop: "/art/pieces/w-bishop.png",
-    rook: "/art/pieces/w-rook.png",
-    queen: "/art/pieces/w-queen.png",
-    king: "/art/pieces/w-king.png",
+    pawn: `${BASE}/w-pawn.png`,
+    knight: `${BASE}/w-knight.png`,
+    bishop: `${BASE}/w-bishop.png`,
+    rook: `${BASE}/w-rook.png`,
+    queen: `${BASE}/w-queen.png`,
+    king: `${BASE}/w-king.png`,
   },
   b: {
-    pawn: "/art/pieces/b-pawn.png",
-    knight: "/art/pieces/b-knight.png",
-    bishop: "/art/pieces/b-bishop.png",
-    rook: "/art/pieces/b-rook.png",
-    queen: "/art/pieces/b-queen.png",
-    king: "/art/pieces/b-king.png",
+    pawn: `${BASE}/b-pawn.png`,
+    knight: `${BASE}/b-knight.png`,
+    bishop: `${BASE}/b-bishop.png`,
+    rook: `${BASE}/b-rook.png`,
+    queen: `${BASE}/b-queen.png`,
+    king: `${BASE}/b-king.png`,
   },
 };
 

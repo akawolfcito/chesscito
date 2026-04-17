@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 import { ARENA_PIECE_IMG, squareToFileRank } from "@/lib/game/arena-utils";
 import { hapticTap } from "@/lib/haptics";
+import { THEME_CONFIG } from "@/lib/theme";
 import type { ChessBoardPiece } from "@/lib/game/types";
 
 type ArenaSquareState = {
@@ -155,18 +156,22 @@ export function ArenaBoard({
                       width: `${pw}%`,
                     }}
                   >
-                    <source
-                      srcSet={src.replace(".png", ".avif")}
-                      type="image/avif"
-                    />
-                    <source
-                      srcSet={src.replace(".png", ".webp")}
-                      type="image/webp"
-                    />
+                    {THEME_CONFIG.hasOptimizedFormats && (
+                      <>
+                        <source
+                          srcSet={src.replace(".png", ".avif")}
+                          type="image/avif"
+                        />
+                        <source
+                          srcSet={src.replace(".png", ".webp")}
+                          type="image/webp"
+                        />
+                      </>
+                    )}
                     <img
                       src={src}
                       alt={`${p.color === "w" ? "White" : "Black"} ${p.type}`}
-                      className={`arena-piece-img ${p.color === "w" ? "arena-treat-white" : "arena-treat-black"}`}
+                      className={`arena-piece-img ${THEME_CONFIG.pieceTintClass[p.color]}`}
                       style={{ width: "100%" }}
                     />
                   </picture>

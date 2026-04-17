@@ -1050,6 +1050,11 @@
     filter: hue-rotate(260deg) saturate(0.8) brightness(0.7) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   }
 
+  /* Candy theme: pieces already carry final colors — apply only depth shadow */
+  .arena-piece-img.arena-treat-natural {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  }
+
   /* Check state — red pulse on king square */
   @keyframes check-pulse {
     0%, 100% { background: var(--cell-check-bg); }
