@@ -17,6 +17,7 @@
     "test": "npm run test:server && npm run test:game && npm run test:og && npm run test:assets && npm run test:coach",
     "test:e2e": "playwright test",
     "test:e2e:visual": "playwright test e2e/visual-snapshot.spec.ts",
+    "test:e2e:redesign": "playwright test e2e/redesign-validation.spec.ts",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "type-check": "rm -rf .next && next build >/dev/null && tsc --noEmit",
