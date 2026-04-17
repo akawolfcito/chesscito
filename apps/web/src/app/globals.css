@@ -1698,3 +1698,14 @@
   flex: 1 1 0;
   min-width: 0;
 }
+
+.arena-hud-chess-banner {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 14rem;
+  margin-inline: auto;
+}
+
+.arena-hud-matchup {
+  min-height: 0;
+}
