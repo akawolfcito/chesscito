@@ -1723,3 +1723,16 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.10),
     inset 0 -2px 0 rgba(110, 65, 15, 0.18);
 }
+
+.mission-shell-candy .panel-elevated {
+  background: linear-gradient(
+    180deg,
+    rgba(253, 210, 87, 0.22) 0%,
+    rgba(253, 210, 87, 0.10) 100%
+  );
+  border: 2px solid rgba(145, 85, 25, 0.35);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.28),
+    inset 0 2px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(110, 65, 15, 0.28);
+}
