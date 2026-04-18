@@ -601,16 +601,21 @@
     max-height: 23.5rem;
     max-width: 100%;
     width: auto;
-    background-color: var(--board-border);
-    border-radius: 8px;
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background-color: transparent;
+    background-image: url("/art/redesign/board/board-ch.png");
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   .playhub-board-hitgrid {
     position: absolute;
-    inset: 0;
+    /* Align with the 8x8 playable area baked into the board image.
+       Measured from 1024x1024 source: grid occupies (105,68) -> (927,910).
+       Inset: top right bottom left */
+    inset: 6.5% 9.5% 11% 10.5%;
   }
 
   .playhub-board-cell {
@@ -623,12 +628,10 @@
     transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
   }
 
-  .playhub-board-cell.is-light {
-    background-color: var(--board-light);
-  }
-
+  .playhub-board-cell.is-light,
   .playhub-board-cell.is-dark {
-    background-color: var(--board-dark);
+    /* Tile colors come from the background board image, not per-cell fills */
+    background-color: transparent;
   }
 
   .playhub-board-cell:active {
@@ -980,12 +983,10 @@
     transition: background 150ms ease;
   }
 
-  .arena-board-cell.is-light {
-    background-color: var(--board-light);
-  }
-
+  .arena-board-cell.is-light,
   .arena-board-cell.is-dark {
-    background-color: var(--board-dark);
+    /* Tile colors come from the board background image, not per-cell fills */
+    background-color: transparent;
   }
 
   .arena-board-cell:active {
