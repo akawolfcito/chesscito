@@ -645,10 +645,8 @@ export default function ArenaPage() {
     <main className="flex h-[100dvh] flex-col items-center arena-bg">
       <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-1 flex-col min-h-0">
         <ArenaHud
-          difficulty={game.difficulty}
           isThinking={game.isThinking}
           onBack={handleBack}
-          onResign={game.resign}
           isEndState={isEndState}
         />
 
