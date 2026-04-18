@@ -1,3 +1,5 @@
+import { THEME_CONFIG } from "@/lib/theme";
+
 export const GLOSSARY = {
   badge: "Badge",
   claimBadge: "Claim Badge",
@@ -42,8 +44,6 @@ export const PIECE_LABELS = {
 export const PIECE_RAIL_COPY = {
   comingSoon: "Soon",
 } as const;
-
-import { THEME_CONFIG } from "@/lib/theme";
 
 const PIECE_BASE = THEME_CONFIG.piecesBase;
 
