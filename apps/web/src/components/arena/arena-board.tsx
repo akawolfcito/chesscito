@@ -146,10 +146,11 @@ export function ArenaBoard({
                 const center = cellCenter(file, rank);
                 const pw = pieceWidth();
                 const src = ARENA_PIECE_IMG[p.color][p.type];
+                const isPieceSelected = p.square === selectedSquare;
                 return (
                   <picture
                     key={`${p.color}-${p.type}-${idx}`}
-                    className="arena-piece-float"
+                    className={`arena-piece-float${isPieceSelected ? " is-selected" : ""}`}
                     style={{
                       left: `${center.x}%`,
                       top: `${center.y}%`,

@@ -756,7 +756,15 @@
     z-index: 10;
     transform: translate(-50%, -55%);
     pointer-events: none;
-    transition: left 320ms ease-in-out, top 320ms ease-in-out;
+    transition:
+      left 320ms ease-in-out,
+      top 320ms ease-in-out,
+      transform var(--duration-snap, 120ms) var(--ease-spring, ease-out);
+  }
+
+  .playhub-board-piece-float.is-selected {
+    transform: translate(-50%, -55%) scale(1.12);
+    z-index: 11;
   }
 
   .playhub-board-piece-img {
@@ -1025,7 +1033,16 @@
     z-index: 10;
     transform: translate(-50%, -55%);
     pointer-events: none;
-    transition: left 320ms ease-in-out, top 320ms ease-in-out, opacity var(--duration-enter) ease;
+    transition:
+      left 320ms ease-in-out,
+      top 320ms ease-in-out,
+      opacity var(--duration-enter) ease,
+      transform var(--duration-snap, 120ms) var(--ease-spring, ease-out);
+  }
+
+  .arena-piece-float.is-selected {
+    transform: translate(-50%, -55%) scale(1.12);
+    z-index: 11;
   }
 
   .arena-piece-img {

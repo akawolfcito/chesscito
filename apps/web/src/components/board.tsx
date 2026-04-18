@@ -214,9 +214,16 @@ export function Board({
               {(() => {
                 const center = cellCenter(piece.position.file, piece.position.rank);
                 const pw = pieceWidth();
+                const isPieceSelected =
+                  selectedPosition !== null &&
+                  arePositionsEqual(selectedPosition, piece.position);
                 return (
                   <picture
-                    className={`playhub-board-piece-float${isRejecting ? " piece-reject" : ""}`}
+                    className={[
+                      "playhub-board-piece-float",
+                      isPieceSelected ? "is-selected" : "",
+                      isRejecting ? "piece-reject" : "",
+                    ].filter(Boolean).join(" ")}
                     style={{
                       left: `${center.x}%`,
                       top: `${center.y}%`,
