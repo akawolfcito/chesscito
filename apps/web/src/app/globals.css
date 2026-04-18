@@ -45,7 +45,7 @@
     --surface-c-heavy: rgba(6, 14, 28, 0.72);
     --header-zone-bg: rgba(255, 255, 255, 0.08);
     --header-zone-border: rgba(255, 255, 255, 0.08);
-    --trophy-card-bg: linear-gradient(180deg, rgba(16,12,8,0.90) 0%, rgba(10,8,6,0.85) 100%);
+    --trophy-card-bg: linear-gradient(180deg, rgba(16, 12, 8, 0.90) 0%, rgba(10, 8, 6, 0.85) 100%);
 
     /* ── Shell Cohesion — layout tokens ── */
     --shell-radius: 16px;
@@ -74,126 +74,112 @@
     --treat-semi-border: rgba(180, 160, 110, 0.15);
     --treat-semi-tint: sepia(0.15) saturate(1.1) brightness(1.0);
 
-  /* ── E3 Surface Material tokens ── */
-  --panel-bg-base: linear-gradient(
-    180deg,
-    hsl(220, 40%, 12%) 0%,
-    hsl(220, 45%, 8%) 100%
-  );
-  --panel-bg-elevated: linear-gradient(
-    180deg,
-    hsl(220, 38%, 14%) 0%,
-    hsl(222, 42%, 9%) 100%
-  );
-  --panel-bg-showcase: linear-gradient(
-    180deg,
-    hsl(218, 36%, 16%) 0%,
-    hsl(222, 44%, 10%) 100%
-  );
-  --panel-border-base: 2px solid rgba(255, 255, 255, 0.08);
-  --panel-shadow-base:
-    0 2px 6px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
-  --panel-shadow-elevated:
-    0 4px 12px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.35);
-  --panel-shadow-showcase:
-    0 6px 20px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+    /* ── E3 Surface Material tokens ── */
+    --panel-bg-base: linear-gradient(180deg,
+        hsl(220, 40%, 12%) 0%,
+        hsl(220, 45%, 8%) 100%);
+    --panel-bg-elevated: linear-gradient(180deg,
+        hsl(220, 38%, 14%) 0%,
+        hsl(222, 42%, 9%) 100%);
+    --panel-bg-showcase: linear-gradient(180deg,
+        hsl(218, 36%, 16%) 0%,
+        hsl(222, 44%, 10%) 100%);
+    --panel-border-base: 2px solid rgba(255, 255, 255, 0.08);
+    --panel-shadow-base:
+      0 2px 6px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+    --panel-shadow-elevated:
+      0 4px 12px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+    --panel-shadow-showcase:
+      0 6px 20px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.4);
 
-  /* ── E3 Text Shadow system ── */
-  --text-shadow-hero: 0 0 24px rgba(34, 211, 238, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
-  --text-shadow-display: 0 0 12px rgba(34, 211, 238, 0.25), 0 1px 0 rgba(0, 0, 0, 0.6);
-  --text-shadow-label: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --text-shadow-hero-amber: 0 0 24px rgba(217, 180, 74, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
-  --text-shadow-hero-rose: 0 0 24px rgba(251, 113, 133, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
-  --text-shadow-hero-emerald: 0 0 24px rgba(52, 211, 153, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
+    /* ── E3 Text Shadow system ── */
+    --text-shadow-hero: 0 0 24px rgba(34, 211, 238, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
+    --text-shadow-display: 0 0 12px rgba(34, 211, 238, 0.25), 0 1px 0 rgba(0, 0, 0, 0.6);
+    --text-shadow-label: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --text-shadow-hero-amber: 0 0 24px rgba(217, 180, 74, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
+    --text-shadow-hero-rose: 0 0 24px rgba(251, 113, 133, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
+    --text-shadow-hero-emerald: 0 0 24px rgba(52, 211, 153, 0.4), 0 2px 0 rgba(0, 0, 0, 0.8);
 
-  /* ── Motion vocabulary ── */
-  --duration-snap: 120ms;
-  --duration-enter: 300ms;
-  --duration-ceremony: 500ms;
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* ── Motion vocabulary ── */
+    --duration-snap: 120ms;
+    --duration-enter: 300ms;
+    --duration-ceremony: 500ms;
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* ── Redesign palette (candy-game aesthetic) ── */
-  --redesign-cream: #F6E6B4;
-  --redesign-olive: #64AB53;
-  --redesign-deep-green: #347909;
-  --redesign-wood-gold: #FDD257;
-  --redesign-sky-blue: #49A2FB;
-  --redesign-coral-red: #FC7C83;
-  --redesign-candy-green: #82D51E;
-  --redesign-rock-gray: #727690;
+    /* ── Redesign palette (candy-game aesthetic) ── */
+    --redesign-cream: #F6E6B4;
+    --redesign-olive: #64AB53;
+    --redesign-deep-green: #347909;
+    --redesign-wood-gold: #FDD257;
+    --redesign-sky-blue: #49A2FB;
+    --redesign-coral-red: #FC7C83;
+    --redesign-candy-green: #82D51E;
+    --redesign-rock-gray: #727690;
 
-  /* ── Board colors (aliased to redesign palette) ── */
-  --board-light: var(--redesign-cream);
-  --board-dark: var(--redesign-olive);
-  --board-border: var(--redesign-deep-green);
+    /* ── Board colors (aliased to redesign palette) ── */
+    --board-light: var(--redesign-cream);
+    --board-dark: var(--redesign-olive);
+    --board-border: var(--redesign-deep-green);
 
-  /* ── Arena board cell state tokens ── */
-  --cell-last-move-bg: rgba(139, 92, 246, 0.15);
-  --cell-check-bg: rgba(239, 68, 68, 0.3);
+    /* ── Arena board cell state tokens ── */
+    --cell-last-move-bg: rgba(139, 92, 246, 0.15);
+    --cell-check-bg: rgba(239, 68, 68, 0.3);
 
-  /* ── Destructive / danger CTA tokens ── */
-  --cta-danger-bg: rgba(244, 63, 94, 0.15);
-  --cta-danger-text: #fda4af;
-  --cta-danger-border: rgba(244, 63, 94, 0.25);
+    /* ── Destructive / danger CTA tokens ── */
+    --cta-danger-bg: rgba(244, 63, 94, 0.15);
+    --cta-danger-text: #fda4af;
+    --cta-danger-border: rgba(244, 63, 94, 0.25);
 
-  /* ── CTA Button tokens ── */
-  --cta-brand-from: #23C8F3;
-  --cta-brand-to: #16A9E0;
-  --cta-brand-glow: 0 0 20px rgba(35, 200, 243, 0.24);
-  --cta-reward-from: #F6A400;
-  --cta-reward-to: #EE8B00;
-  --cta-reward-glow: 0 0 20px rgba(246, 164, 0, 0.22);
-  --cta-reward-text: #FFF8ED;
-  --cta-special-from: #9B59FF;
-  --cta-special-to: #7B3FF2;
-  --cta-special-glow: 0 0 20px rgba(155, 89, 255, 0.22);
-  --cta-muted-bg: rgba(148, 170, 210, 0.14);
-  --cta-muted-text: rgba(234, 242, 255, 0.82);
-  --cta-muted-border: rgba(190, 210, 255, 0.08);
+    /* ── CTA Button tokens ── */
+    --cta-brand-from: #23C8F3;
+    --cta-brand-to: #16A9E0;
+    --cta-brand-glow: 0 0 20px rgba(35, 200, 243, 0.24);
+    --cta-reward-from: #F6A400;
+    --cta-reward-to: #EE8B00;
+    --cta-reward-glow: 0 0 20px rgba(246, 164, 0, 0.22);
+    --cta-reward-text: #FFF8ED;
+    --cta-special-from: #9B59FF;
+    --cta-special-to: #7B3FF2;
+    --cta-special-glow: 0 0 20px rgba(155, 89, 255, 0.22);
+    --cta-muted-bg: rgba(148, 170, 210, 0.14);
+    --cta-muted-text: rgba(234, 242, 255, 0.82);
+    --cta-muted-border: rgba(190, 210, 255, 0.08);
 
-  /* ── Misc surface tokens ── */
-  --skeleton-bg: #121c2f;
-  --link-row-bg: rgba(8, 47, 73, 0.40);
-  --link-row-bg-hover: rgba(8, 47, 73, 0.60);
-  --accent-drop-shadow: 0 0 20px rgba(103, 232, 249, 0.5);
-  --accent-drop-shadow-sm: 0 0 8px rgba(103, 232, 249, 0.3);
-  --warm-label-text: rgba(220, 200, 150, 0.9);
-  --featured-badge-text: rgba(220, 200, 140, 0.85);
-  --featured-badge-bg: rgba(200, 170, 100, 0.15);
-  --featured-badge-border: rgba(200, 170, 100, 0.35);
-  --featured-title-text: rgba(240, 230, 200, 0.95);
-  --featured-subtitle-text: rgba(180, 160, 120, 0.60);
-  --featured-cta-glow: 0 0 12px rgba(245, 158, 11, 0.15);
+    /* ── Misc surface tokens ── */
+    --skeleton-bg: #121c2f;
+    --link-row-bg: rgba(8, 47, 73, 0.40);
+    --link-row-bg-hover: rgba(8, 47, 73, 0.60);
+    --accent-drop-shadow: 0 0 20px rgba(103, 232, 249, 0.5);
+    --accent-drop-shadow-sm: 0 0 8px rgba(103, 232, 249, 0.3);
+    --warm-label-text: rgba(220, 200, 150, 0.9);
+    --featured-badge-text: rgba(220, 200, 140, 0.85);
+    --featured-badge-bg: rgba(200, 170, 100, 0.15);
+    --featured-badge-border: rgba(200, 170, 100, 0.35);
+    --featured-title-text: rgba(240, 230, 200, 0.95);
+    --featured-subtitle-text: rgba(180, 160, 120, 0.60);
+    --featured-cta-glow: 0 0 12px rgba(245, 158, 11, 0.15);
 
-  /* ── E3 Display Font ── */
-  --font-game-display: var(--font-fredoka), "Fredoka One", sans-serif;
-    --intro-bg-mobile: image-set(
-      url("/art/bg-splash-chesscito.avif") type("image/avif"),
-      url("/art/bg-splash-chesscito.webp") type("image/webp"),
-      url("/art/bg-splash-chesscito.png") type("image/png")
-    );
-    --playhub-rune-frame: image-set(
-      url("/art/panel-frame-rune.avif") type("image/avif"),
-      url("/art/panel-frame-rune.webp") type("image/webp"),
-      url("/art/panel-frame-rune.png") type("image/png")
-    );
-    --playhub-slot-frame: image-set(
-      url("/art/shop-slot-frame.avif") type("image/avif"),
-      url("/art/shop-slot-frame.webp") type("image/webp"),
-      url("/art/shop-slot-frame.png") type("image/png")
-    );
+    /* ── E3 Display Font ── */
+    --font-game-display: var(--font-fredoka), "Fredoka One", sans-serif;
+    --intro-bg-mobile: image-set(url("/art/bg-splash-chesscito.avif") type("image/avif"),
+        url("/art/bg-splash-chesscito.webp") type("image/webp"),
+        url("/art/bg-splash-chesscito.png") type("image/png"));
+    --playhub-rune-frame: image-set(url("/art/panel-frame-rune.avif") type("image/avif"),
+        url("/art/panel-frame-rune.webp") type("image/webp"),
+        url("/art/panel-frame-rune.png") type("image/png"));
+    --playhub-slot-frame: image-set(url("/art/shop-slot-frame.avif") type("image/avif"),
+        url("/art/shop-slot-frame.webp") type("image/webp"),
+        url("/art/shop-slot-frame.png") type("image/png"));
     --playhub-game-bg: url("/art/redesign/bg/bg-ch.png");
-    --playhub-board-bg: image-set(
-      url("/art/chesscito-board.avif") type("image/avif"),
-      url("/art/chesscito-board.webp") type("image/webp"),
-      url("/art/chesscito-board.png") type("image/png")
-    );
+    --playhub-board-bg: image-set(url("/art/chesscito-board.avif") type("image/avif"),
+        url("/art/chesscito-board.webp") type("image/webp"),
+        url("/art/chesscito-board.png") type("image/png"));
   }
 
   .dark {
@@ -231,11 +217,13 @@
   * {
     @apply border-border;
   }
+
   html {
     font-family: "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
     overflow-x: hidden;
     background-color: #0b1220;
   }
+
   body {
     @apply text-foreground antialiased;
     background-color: #0b1220;
@@ -248,6 +236,7 @@
     min-height: 100vh;
     overflow-x: hidden;
   }
+
   main {
     width: 100%;
   }
@@ -311,27 +300,21 @@
   }
 
   .sheet-bg-leaderboard::before {
-    background-image: image-set(
-      url("/art/leaderboard-hall-chesscito.avif") type("image/avif"),
-      url("/art/leaderboard-hall-chesscito.webp") type("image/webp"),
-      url("/art/leaderboard-hall-chesscito.png") type("image/png")
-    );
+    background-image: image-set(url("/art/leaderboard-hall-chesscito.avif") type("image/avif"),
+        url("/art/leaderboard-hall-chesscito.webp") type("image/webp"),
+        url("/art/leaderboard-hall-chesscito.png") type("image/png"));
   }
 
   .sheet-bg-shop::before {
-    background-image: image-set(
-      url("/art/shop-magic-chesscito.avif") type("image/avif"),
-      url("/art/shop-magic-chesscito.webp") type("image/webp"),
-      url("/art/shop-magic-chesscito.png") type("image/png")
-    );
+    background-image: image-set(url("/art/shop-magic-chesscito.avif") type("image/avif"),
+        url("/art/shop-magic-chesscito.webp") type("image/webp"),
+        url("/art/shop-magic-chesscito.png") type("image/png"));
   }
 
   .sheet-bg-badges::before {
-    background-image: image-set(
-      url("/art/bg-badges-chesscito.avif") type("image/avif"),
-      url("/art/bg-badges-chesscito.webp") type("image/webp"),
-      url("/art/bg-badges-chesscito.png") type("image/png")
-    );
+    background-image: image-set(url("/art/bg-badges-chesscito.avif") type("image/avif"),
+        url("/art/bg-badges-chesscito.webp") type("image/webp"),
+        url("/art/bg-badges-chesscito.png") type("image/png"));
   }
 
   .sheet-bg-leaderboard::after,
@@ -344,9 +327,9 @@
     z-index: 0;
   }
 
-  .sheet-bg-leaderboard > *,
-  .sheet-bg-shop > *,
-  .sheet-bg-badges > * {
+  .sheet-bg-leaderboard>*,
+  .sheet-bg-shop>*,
+  .sheet-bg-badges>* {
     position: relative;
     z-index: 1;
   }
@@ -360,212 +343,247 @@
       opacity: 0;
       transform: scale(0.92);
     }
+
     100% {
       opacity: 1;
       transform: scale(1);
     }
   }
 
-/* ═══════════════════════════════════════════════════
+  /* ═══════════════════════════════════════════════════
    Reward Glow Backdrops — Phase D
    ═══════════════════════════════════════════════════ */
 
-.reward-glow-progress,
-.reward-glow-achievement {
-  position: relative;
-}
+  .reward-glow-progress,
+  .reward-glow-achievement {
+    position: relative;
+  }
 
-.reward-glow-progress::before,
-.reward-glow-achievement::before {
-  content: "";
-  position: absolute;
-  inset: -32px;
-  border-radius: 9999px;
-  pointer-events: none;
-  z-index: 0;
-}
+  .reward-glow-progress::before,
+  .reward-glow-achievement::before {
+    content: "";
+    position: absolute;
+    inset: -32px;
+    border-radius: 9999px;
+    pointer-events: none;
+    z-index: 0;
+  }
 
-.reward-glow-progress::before {
-  background: radial-gradient(
-    circle,
-    rgba(20, 184, 166, 0.18) 0%,
-    rgba(20, 184, 166, 0.06) 50%,
-    transparent 70%
-  );
-}
+  .reward-glow-progress::before {
+    background: radial-gradient(circle,
+        rgba(20, 184, 166, 0.18) 0%,
+        rgba(20, 184, 166, 0.06) 50%,
+        transparent 70%);
+  }
 
-.reward-glow-achievement::before {
-  background: radial-gradient(
-    circle,
-    rgba(245, 158, 11, 0.18) 0%,
-    rgba(245, 158, 11, 0.06) 50%,
-    transparent 70%
-  );
-}
+  .reward-glow-achievement::before {
+    background: radial-gradient(circle,
+        rgba(245, 158, 11, 0.18) 0%,
+        rgba(245, 158, 11, 0.06) 50%,
+        transparent 70%);
+  }
 
-@keyframes glow-pulse-once {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.04); }
-}
+  @keyframes glow-pulse-once {
 
-.reward-glow-achievement.reward-glow-pulse::before {
-  animation: glow-pulse-once 600ms ease-in-out 1;
-}
+    0%,
+    100% {
+      transform: scale(1);
+    }
 
-/* ── E3 Reward Ceremony v1 ── */
-@keyframes reward-panel-enter {
-  from {
-    opacity: 0;
-    transform: translateY(40px) scale(0.95);
+    50% {
+      transform: scale(1.04);
+    }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
 
-@keyframes badge-countdown {
-  from {
-    width: 100%;
+  .reward-glow-achievement.reward-glow-pulse::before {
+    animation: glow-pulse-once 600ms ease-in-out 1;
   }
-  to {
-    width: 0%;
-  }
-}
 
-@keyframes reward-star-bounce {
-  0% {
-    opacity: 0;
-    transform: scale(0);
-  }
-  60% {
-    opacity: 1;
-    transform: scale(1.25);
-  }
-  80% {
-    transform: scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+  /* ── E3 Reward Ceremony v1 ── */
+  @keyframes reward-panel-enter {
+    from {
+      opacity: 0;
+      transform: translateY(40px) scale(0.95);
+    }
 
-@keyframes reward-star-glow {
-  0% {
-    box-shadow: 0 0 0 rgba(217, 180, 74, 0);
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
-  50% {
-    box-shadow: 0 0 12px rgba(217, 180, 74, 0.5);
-  }
-  100% {
-    box-shadow: 0 0 0 rgba(217, 180, 74, 0);
-  }
-}
 
-@keyframes reward-icon-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+  @keyframes badge-countdown {
+    from {
+      width: 100%;
+    }
 
-@keyframes reward-buttons-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
+    to {
+      width: 0%;
+    }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-/* M33: invalid move shake */
-@keyframes piece-reject {
-  0%, 100% { transform: translate(-50%, -55%) translateX(0); }
-  20% { transform: translate(-50%, -55%) translateX(-3px); }
-  40% { transform: translate(-50%, -55%) translateX(3px); }
-  60% { transform: translate(-50%, -55%) translateX(-2px); }
-  80% { transform: translate(-50%, -55%) translateX(1px); }
-}
-.piece-reject {
-  animation: piece-reject 180ms ease-out;
-}
+  @keyframes reward-star-bounce {
+    0% {
+      opacity: 0;
+      transform: scale(0);
+    }
 
-/* C3: confetti burst — wired to win overlay */
-.reward-confetti-burst {
-  animation: reward-confetti-burst 600ms ease-out forwards;
-  pointer-events: none;
-}
+    60% {
+      opacity: 1;
+      transform: scale(1.25);
+    }
 
-/* P1: confetti burst keyframe */
-@keyframes reward-confetti-burst {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  30% {
-    opacity: 0.7;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(2);
-  }
-}
+    80% {
+      transform: scale(0.95);
+    }
 
-/* ── E3 Victory text slam ── */
-.victory-text-slam {
-  animation: victory-text-slam 400ms var(--ease-spring) forwards;
-}
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 
-@keyframes victory-text-slam {
-  0% {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1.06);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+  @keyframes reward-star-glow {
+    0% {
+      box-shadow: 0 0 0 rgba(217, 180, 74, 0);
+    }
 
-@media (prefers-reduced-motion: reduce) {
-  .reward-ceremony-panel,
-  .reward-ceremony-icon,
-  .reward-ceremony-star,
-  .reward-ceremony-buttons,
+    50% {
+      box-shadow: 0 0 12px rgba(217, 180, 74, 0.5);
+    }
+
+    100% {
+      box-shadow: 0 0 0 rgba(217, 180, 74, 0);
+    }
+  }
+
+  @keyframes reward-icon-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes reward-buttons-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* M33: invalid move shake */
+  @keyframes piece-reject {
+
+    0%,
+    100% {
+      transform: translate(-50%, -55%) translateX(0);
+    }
+
+    20% {
+      transform: translate(-50%, -55%) translateX(-3px);
+    }
+
+    40% {
+      transform: translate(-50%, -55%) translateX(3px);
+    }
+
+    60% {
+      transform: translate(-50%, -55%) translateX(-2px);
+    }
+
+    80% {
+      transform: translate(-50%, -55%) translateX(1px);
+    }
+  }
+
+  .piece-reject {
+    animation: piece-reject 180ms ease-out;
+  }
+
+  /* C3: confetti burst — wired to win overlay */
+  .reward-confetti-burst {
+    animation: reward-confetti-burst 600ms ease-out forwards;
+    pointer-events: none;
+  }
+
+  /* P1: confetti burst keyframe */
+  @keyframes reward-confetti-burst {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+
+    30% {
+      opacity: 0.7;
+    }
+
+    100% {
+      opacity: 0;
+      transform: scale(2);
+    }
+  }
+
+  /* ── E3 Victory text slam ── */
   .victory-text-slam {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
+    animation: victory-text-slam 400ms var(--ease-spring) forwards;
   }
-}
 
-/* ── Reward icon showcase treatment (Phase E2) ── */
-.reward-icon-showcase {
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
-}
+  @keyframes victory-text-slam {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
 
-.reward-icon-showcase::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 15%;
-  right: 15%;
-  height: 20%;
-  background: radial-gradient(ellipse at 50% 90%, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
-  pointer-events: none;
-  border-radius: 50%;
-}
+    70% {
+      opacity: 1;
+      transform: scale(1.06);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    .reward-ceremony-panel,
+    .reward-ceremony-icon,
+    .reward-ceremony-star,
+    .reward-ceremony-buttons,
+    .victory-text-slam {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+
+  /* ── Reward icon showcase treatment (Phase E2) ── */
+  .reward-icon-showcase {
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+  }
+
+  .reward-icon-showcase::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 15%;
+    right: 15%;
+    height: 20%;
+    background: radial-gradient(ellipse at 50% 90%, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
+    pointer-events: none;
+    border-radius: 50%;
+  }
 
   .playhub-game-stage {
     position: relative;
@@ -600,20 +618,33 @@
     max-width: 100%;
     width: auto;
     background-color: transparent;
+    background-image: none;
+    border-radius: 0;
+    box-shadow: none;
+    isolation: isolate;
+  }
+  /* Board image moved to pseudo-element so filter: drop-shadow follows the
+     image's rounded silhouette instead of the rectangular canvas bounds. */
+  .playhub-board-canvas::before {
+    content: "";
+    position: absolute;
+    inset: 0;
     background-image: url("/art/redesign/board/board-ch.png");
     background-size: 100% 100%;
     background-position: center;
     background-repeat: no-repeat;
-    border-radius: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+    pointer-events: none;
+    z-index: -1;
   }
 
   .playhub-board-hitgrid {
     position: absolute;
     /* Align with the 8x8 playable area baked into the board image.
        Measured from 1024x1024 source: grid occupies (105,68) -> (927,910).
-       Inset: top right bottom left */
-    inset: 6.5% 9.5% 11% 10.5%;
+       Inset: top right bottom left — slightly loosened from measured values
+       to account for the candy-style image's rounded tile edges. */
+    inset: 5.25% 9.25% 12.75% 10.25%;
   }
 
   .playhub-board-cell {
@@ -698,8 +729,13 @@
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
-    background: rgba(217, 180, 74, 0.65);
-    box-shadow: 0 0 6px rgba(217, 180, 74, 0.40);
+    /* Warm ivory to match the candy white pieces — dark rim keeps it legible
+       on both cream (light) and olive (dark) squares. */
+    background: rgba(250, 246, 234, 0.98);
+    box-shadow:
+      0 0 3px 0.5px rgba(0, 0, 0, 0.3),
+      0 1px 2px rgba(0, 0, 0, 0.25),
+      0 0 6px rgba(250, 246, 234, 0.45);
     pointer-events: none;
   }
 
@@ -710,11 +746,9 @@
     width: clamp(32px, 11.5vw, 52px);
     height: clamp(32px, 11.5vw, 52px);
     transform: translate(-50%, -50%);
-    background-image: image-set(
-      url("/art/target-circle.avif") type("image/avif"),
-      url("/art/target-circle.webp") type("image/webp"),
-      url("/art/target-circle.png") type("image/png")
-    );
+    background-image: image-set(url("/art/target-circle.avif") type("image/avif"),
+        url("/art/target-circle.webp") type("image/webp"),
+        url("/art/target-circle.png") type("image/png"));
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -729,11 +763,9 @@
     width: clamp(32px, 11.5vw, 52px);
     height: clamp(32px, 11.5vw, 52px);
     transform: translate(-50%, -50%);
-    background-image: image-set(
-      url("/art/target-circle.avif") type("image/avif"),
-      url("/art/target-circle.webp") type("image/webp"),
-      url("/art/target-circle.png") type("image/png")
-    );
+    background-image: image-set(url("/art/target-circle.avif") type("image/avif"),
+        url("/art/target-circle.webp") type("image/webp"),
+        url("/art/target-circle.png") type("image/png"));
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -743,10 +775,13 @@
   }
 
   @keyframes chesscito-target-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
       opacity: 0.85;
       transform: translate(-50%, -50%) scale(1);
     }
+
     50% {
       opacity: 1;
       transform: translate(-50%, -50%) scale(1.12);
@@ -773,8 +808,7 @@
     height: auto;
     object-fit: contain;
     filter:
-      drop-shadow(0 0 6px rgba(103, 232, 249, 0.6))
-      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+      drop-shadow(0 0 6px rgba(103, 232, 249, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
   }
 
   /* ── Target piece — visible enemy for capture exercises ── */
@@ -790,16 +824,17 @@
     height: auto;
     object-fit: contain;
     filter:
-      brightness(0.7) saturate(0.5)
-      drop-shadow(0 0 10px rgba(244, 63, 94, 0.35))
-      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+      brightness(0.7) saturate(0.5) drop-shadow(0 0 10px rgba(244, 63, 94, 0.35)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
   }
 
   @keyframes target-piece-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
       opacity: 0.80;
       transform: translate(-50%, -55%) scale(1);
     }
+
     50% {
       opacity: 1;
       transform: translate(-50%, -55%) scale(1.04);
@@ -818,11 +853,9 @@
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    background: radial-gradient(
-      ellipse at 50% 40%,
-      transparent 50%,
-      rgba(0, 0, 0, 0.45) 100%
-    );
+    background: radial-gradient(ellipse at 50% 40%,
+        transparent 50%,
+        rgba(0, 0, 0, 0.45) 100%);
   }
 
   .atmosphere::after {
@@ -836,7 +869,7 @@
       linear-gradient(to bottom, transparent 70%, rgba(6, 14, 28, 0.35) 100%);
   }
 
-  .atmosphere > * {
+  .atmosphere>* {
     position: relative;
     z-index: 1;
   }
@@ -852,15 +885,13 @@
     inset: 0;
     pointer-events: none;
     z-index: 0;
-    background: radial-gradient(
-      ellipse 70% 55% at 50% 42%,
-      transparent 40%,
-      rgba(0, 0, 0, 0.30) 75%,
-      rgba(0, 0, 0, 0.50) 100%
-    );
+    background: radial-gradient(ellipse 70% 55% at 50% 42%,
+        transparent 40%,
+        rgba(0, 0, 0, 0.30) 75%,
+        rgba(0, 0, 0, 0.50) 100%);
   }
 
-  .board-stage-focus > * {
+  .board-stage-focus>* {
     position: relative;
     z-index: 1;
   }
@@ -969,11 +1000,11 @@
       radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0, 0, 0, 0.25) 100%),
       linear-gradient(to bottom, transparent 0%, rgba(6, 14, 28, 0.10) 55%, rgba(6, 14, 28, 0.20) 100%),
       linear-gradient(to bottom, transparent 70%, rgba(6, 14, 28, 0.25) 100%),
-      rgba(6, 14, 24, 0.72);
+      rgba(6, 14, 24, 0);
     z-index: 0;
   }
 
-  .arena-bg > * {
+  .arena-bg>* {
     position: relative;
     z-index: 1;
   }
@@ -1000,34 +1031,54 @@
   }
 
   .arena-board-cell.is-highlighted {
-    background: rgba(217, 180, 74, 0.38);
-    box-shadow:
-      inset 0 0 0 1.5px rgba(217, 180, 74, 0.6),
-      0 0 6px rgba(217, 180, 74, 0.3);
+    /* Cell background/ring removed: the square fill reveals hitgrid vs image
+       misalignment. The centered dot (.playhub-board-dot) is the only legal-
+       move indicator since it sits at the cell center where offset is
+       imperceptible. */
+    background: transparent;
+    box-shadow: none;
   }
 
   .arena-board-cell.is-selected {
-    background: rgba(217, 180, 74, 0.48);
-    box-shadow:
-      inset 0 0 0 1.5px rgba(217, 180, 74, 0.85),
-      0 0 8px rgba(217, 180, 74, 0.45);
+    /* Selected-cell highlight removed: misaligned against the image grid.
+       The gold ring on the piece itself (.arena-piece-float.is-selected)
+       conveys selection. */
+    background: transparent;
+    box-shadow: none;
   }
 
   .arena-board-cell.is-last-move {
-    background: var(--cell-last-move-bg);
-    box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.3);
+    /* Cell fill removed to hide hitgrid/image offset. A small centered dot
+       at the cell center (where misalignment is imperceptible) signals the
+       last move's from/to squares. */
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .arena-board-cell.is-last-move::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: rgba(139, 92, 246, 0.45);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
   }
 
   .arena-board-cell.is-check {
-    background: var(--cell-check-bg);
-    box-shadow:
-      inset 0 0 0 2px rgba(239, 68, 68, 0.6),
-      0 0 12px rgba(239, 68, 68, 0.4);
+    /* Cell highlight removed: red glow now lives on the king's silhouette
+       (.arena-piece-float.is-check) to avoid revealing hitgrid offset. */
+    background: transparent;
+    box-shadow: none;
     animation: check-pulse 1.5s ease-in-out infinite;
   }
 
   .arena-board-cell.is-capturable {
-    background: rgba(251, 191, 36, 0.15);
+    /* No cell fill — the target piece already signals the capture. */
+    background: transparent;
   }
 
   .arena-piece-float {
@@ -1045,6 +1096,26 @@
   .arena-piece-float.is-selected {
     transform: translate(-50%, -55%) scale(1.12);
     z-index: 11;
+  }
+
+  /* Check state: red drop-shadow on the king's silhouette (composes with the
+     img's existing piece filter). Pulses to draw attention without painting
+     the cell underneath. */
+  .arena-piece-float.is-check {
+    animation: arena-check-pulse 1.4s ease-in-out infinite;
+    z-index: 12;
+  }
+  @keyframes arena-check-pulse {
+    0%, 100% {
+      filter:
+        drop-shadow(0 0 4px rgba(239, 68, 68, 0.85))
+        drop-shadow(0 0 10px rgba(239, 68, 68, 0.45));
+    }
+    50% {
+      filter:
+        drop-shadow(0 0 8px rgba(239, 68, 68, 1))
+        drop-shadow(0 0 18px rgba(239, 68, 68, 0.7));
+    }
   }
 
   .arena-piece-img {
@@ -1071,22 +1142,35 @@
   .arena-piece-img.arena-treat-natural,
   .playhub-board-piece-img.arena-treat-natural {
     filter:
-      drop-shadow(0 0 1px rgba(0, 0, 0, 0.6))
-      drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45))
-      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.4));
+      drop-shadow(0 0 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45)) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.4));
   }
 
   /* Check state — red pulse on king square */
   @keyframes check-pulse {
-    0%, 100% { background: var(--cell-check-bg); }
-    50% { background: rgba(239, 68, 68, 0.45); }
+
+    0%,
+    100% {
+      background: var(--cell-check-bg);
+    }
+
+    50% {
+      background: rgba(239, 68, 68, 0.45);
+    }
   }
 
   /* Checkmate pause — gold pulse on final board position */
   @keyframes checkmate-flash {
-    0%   { box-shadow: inset 0 0 0 0 rgba(217, 180, 74, 0); }
-    50%  { box-shadow: inset 0 0 40px 10px rgba(217, 180, 74, 0.15); }
-    100% { box-shadow: inset 0 0 0 0 rgba(217, 180, 74, 0); }
+    0% {
+      box-shadow: inset 0 0 0 0 rgba(217, 180, 74, 0);
+    }
+
+    50% {
+      box-shadow: inset 0 0 40px 10px rgba(217, 180, 74, 0.15);
+    }
+
+    100% {
+      box-shadow: inset 0 0 0 0 rgba(217, 180, 74, 0);
+    }
   }
 
   .arena-board-canvas[data-checkmate="true"] {
@@ -1144,11 +1228,9 @@
     justify-content: space-around;
     padding: 6px 8px 4px;
     border-top: 2px solid rgba(255, 255, 255, 0.12);
-    background: linear-gradient(
-      180deg,
-      hsl(220, 42%, 11%) 0%,
-      hsl(222, 48%, 7%) 100%
-    );
+    background: linear-gradient(180deg,
+        hsl(220, 42%, 11%) 0%,
+        hsl(222, 48%, 7%) 100%);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.06),
       0 -4px 12px rgba(0, 0, 0, 0.3);
@@ -1161,8 +1243,8 @@
   }
 
   /* Consistent framing for all dock trigger buttons */
-  .chesscito-dock-item > button,
-  .chesscito-dock-item > [role="button"] {
+  .chesscito-dock-item>button,
+  .chesscito-dock-item>[role="button"] {
     width: 2.75rem !important;
     height: 2.75rem !important;
     border-radius: 14px !important;
@@ -1176,8 +1258,8 @@
     transition: opacity 0.15s, background 200ms, border-color 200ms, transform var(--duration-snap);
   }
 
-  .chesscito-dock-item > button:active,
-  .chesscito-dock-item > [role="button"]:active {
+  .chesscito-dock-item>button:active,
+  .chesscito-dock-item>[role="button"]:active {
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(160, 205, 225, 0.20);
     opacity: 0.65;
@@ -1187,8 +1269,8 @@
   }
 
   /* dock-treat-pressed on dock item images (no scale — button container handles it) */
-  .chesscito-dock-item > button:active img,
-  .chesscito-dock-item > [role="button"]:active img {
+  .chesscito-dock-item>button:active img,
+  .chesscito-dock-item>[role="button"]:active img {
     filter: brightness(0.65) saturate(0.6);
     transition: filter var(--duration-snap);
   }
@@ -1250,13 +1332,23 @@
 }
 
 @keyframes mission-briefing-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes mission-briefing-fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes mission-briefing-card-in {
@@ -1264,6 +1356,7 @@
     opacity: 0;
     transform: scale(0.85);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -1275,6 +1368,7 @@
     opacity: 1;
     transform: scale(1);
   }
+
   to {
     opacity: 0;
     transform: scale(0.85);
@@ -1305,6 +1399,7 @@
   from {
     transform: scaleX(1);
   }
+
   to {
     transform: scaleX(0);
   }
@@ -1315,10 +1410,12 @@
     opacity: 1;
     visibility: visible;
   }
+
   70% {
     opacity: 1;
     visibility: visible;
   }
+
   100% {
     opacity: 0;
     visibility: hidden;
@@ -1332,6 +1429,7 @@
     transform: scale(0.95);
   }
 }
+
 .modal-exiting {
   animation: modal-exit 250ms ease-out forwards;
   pointer-events: none;
@@ -1349,17 +1447,29 @@
 }
 
 @keyframes mission-typing {
-  to { width: 100%; }
+  to {
+    width: 100%;
+  }
 }
 
 @keyframes mission-cursor {
-  50% { border-color: transparent; }
+  50% {
+    border-color: transparent;
+  }
 }
 
 @keyframes hero-plop {
-  0% { transform: scale(0.95); }
-  40% { transform: scale(1.03); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.95);
+  }
+
+  40% {
+    transform: scale(1.03);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* ── Hero selector rail ── */
@@ -1369,11 +1479,9 @@
   gap: 2px;
   height: 60px;
   /* Wooden shelf — warm gold base, brown edges */
-  background: linear-gradient(
-    180deg,
-    var(--redesign-wood-gold) 0%,
-    #d4a836 100%
-  );
+  background: linear-gradient(180deg,
+      var(--redesign-wood-gold) 0%,
+      #d4a836 100%);
   border: 2px solid rgba(145, 85, 25, 0.45);
   border-radius: 36px;
   padding: 4px 5px;
@@ -1406,11 +1514,9 @@
 
 .hero-rail-tab.is-active {
   /* Candy active state — cream recess on wood shelf */
-  background: linear-gradient(
-    180deg,
-    rgba(255, 250, 230, 0.85) 0%,
-    rgba(245, 225, 180, 0.70) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(255, 250, 230, 0.85) 0%,
+      rgba(245, 225, 180, 0.70) 100%);
   border-color: rgba(145, 85, 25, 0.55);
   box-shadow:
     0 3px 8px rgba(0, 0, 0, 0.4),
@@ -1606,17 +1712,19 @@
    Reduced Motion — disable scale transitions
    ═══════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
+
   .piece-pressed,
   .hero-rail-tab:active .piece-hero,
   .hero-rail-tab:active .piece-inactive,
-  .chesscito-dock-item > button:active,
-  .chesscito-dock-item > [role="button"]:active,
-  .chesscito-dock-item > button:active img,
-  .chesscito-dock-item > [role="button"]:active img,
+  .chesscito-dock-item>button:active,
+  .chesscito-dock-item>[role="button"]:active,
+  .chesscito-dock-item>button:active img,
+  .chesscito-dock-item>[role="button"]:active img,
   .chesscito-dock-center:active svg {
     transform: none !important;
     transition: none !important;
   }
+
   .reward-glow-achievement.reward-glow-pulse::before {
     animation: none !important;
   }
@@ -1645,7 +1753,7 @@
   padding: 0;
   cursor: pointer;
   transition: transform var(--duration-snap) var(--ease-spring),
-              filter var(--duration-snap) ease;
+    filter var(--duration-snap) ease;
 }
 
 .candy-button:active {
@@ -1846,11 +1954,9 @@
 
 /* ── Mission shell candy variant ── */
 .mission-shell-candy .panel-base {
-  background: linear-gradient(
-    180deg,
-    rgba(253, 210, 87, 0.14) 0%,
-    rgba(253, 210, 87, 0.06) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(253, 210, 87, 0.14) 0%,
+      rgba(253, 210, 87, 0.06) 100%);
   border: 1.5px solid rgba(145, 85, 25, 0.28);
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.25),
@@ -1859,11 +1965,9 @@
 }
 
 .mission-shell-candy .panel-elevated {
-  background: linear-gradient(
-    180deg,
-    rgba(253, 210, 87, 0.22) 0%,
-    rgba(253, 210, 87, 0.10) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(253, 210, 87, 0.22) 0%,
+      rgba(253, 210, 87, 0.10) 100%);
   border: 2px solid rgba(145, 85, 25, 0.35);
   box-shadow:
     0 6px 20px rgba(0, 0, 0, 0.28),

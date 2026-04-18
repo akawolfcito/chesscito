@@ -147,10 +147,11 @@ export function ArenaBoard({
                 const pw = pieceWidth();
                 const src = ARENA_PIECE_IMG[p.color][p.type];
                 const isPieceSelected = p.square === selectedSquare;
+                const isPieceInCheck = p.square === checkSquare;
                 return (
                   <picture
                     key={`${p.color}-${p.type}-${idx}`}
-                    className={`arena-piece-float${isPieceSelected ? " is-selected" : ""}`}
+                    className={`arena-piece-float${isPieceSelected ? " is-selected" : ""}${isPieceInCheck ? " is-check" : ""}`}
                     style={{
                       left: `${center.x}%`,
                       top: `${center.y}%`,
