@@ -1060,11 +1060,18 @@
     filter: hue-rotate(260deg) saturate(0.8) brightness(0.7) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   }
 
-  /* Candy theme: pieces already carry final colors — apply only depth shadow.
+  /* Candy theme: pieces already carry final colors. Stack three drop-shadows
+     so white pieces keep a legible silhouette on the cream tiles:
+       1. tight dark rim (prevents the piece edge from bleeding into cream)
+       2. short contact shadow
+       3. broader depth shadow
      Shared between Arena and Play Hub piece rendering. */
   .arena-piece-img.arena-treat-natural,
   .playhub-board-piece-img.arena-treat-natural {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    filter:
+      drop-shadow(0 0 1px rgba(0, 0, 0, 0.6))
+      drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45))
+      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.4));
   }
 
   /* Check state — red pulse on king square */
