@@ -44,8 +44,8 @@ export function ArenaHud({ isThinking, onBack, isEndState }: Props) {
 
   return (
     <div className="arena-hud mx-2 mt-2 flex flex-col gap-2">
-      {/* Row 1: Back | Chess banner | (symmetry spacer) */}
-      <div className="flex items-center justify-between gap-2">
+      {/* Row 1: Back */}
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={handleBackClick}
@@ -67,10 +67,6 @@ export function ArenaHud({ isThinking, onBack, isEndState }: Props) {
             <ArrowLeft className="h-4 w-4" />
           )}
         </button>
-
-        <WoodenBanner variant="chess" className="arena-hud-chess-banner" />
-
-        <span className="h-11 w-11 shrink-0" aria-hidden="true" />
       </div>
 
       {/* Row 2: You | VS | Bot with thinking indicator overlay */}

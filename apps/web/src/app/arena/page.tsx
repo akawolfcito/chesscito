@@ -670,7 +670,6 @@ export default function ArenaPage() {
         <ArenaActionBar
           onResign={game.resign}
           canUndo={false}
-          isPlayerTurn={game.status === "playing" && !game.isThinking}
           isEndState={isEndState}
         />
 

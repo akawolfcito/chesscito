@@ -3,13 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Flag, RotateCcw } from "lucide-react";
 import { ARENA_COPY } from "@/lib/content/editorial";
-import { WoodenBanner } from "@/components/redesign/wooden-banner";
 
 type Props = {
   onResign: () => void;
   onUndo?: () => void;
   canUndo: boolean;
-  isPlayerTurn: boolean;
   isEndState: boolean;
 };
 
@@ -19,7 +17,6 @@ export function ArenaActionBar({
   onResign,
   onUndo,
   canUndo,
-  isPlayerTurn,
   isEndState,
 }: Props) {
   const [confirmingResign, setConfirmingResign] = useState(false);
@@ -73,15 +70,7 @@ export function ArenaActionBar({
         ) : null}
       </button>
 
-      <div className="arena-action-banner-slot flex-1">
-        {isPlayerTurn ? (
-          <WoodenBanner
-            variant="your-turn"
-            alt={ARENA_COPY.yourTurn}
-            className="arena-action-banner"
-          />
-        ) : null}
-      </div>
+      <div className="arena-action-banner-slot flex-1" />
 
       <button
         type="button"
