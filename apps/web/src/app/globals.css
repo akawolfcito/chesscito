@@ -1345,18 +1345,19 @@
   align-items: center;
   gap: 2px;
   height: 60px;
+  /* Wooden shelf — warm gold base, brown edges */
   background: linear-gradient(
     180deg,
-    hsl(220, 40%, 13%) 0%,
-    hsl(222, 45%, 8%) 100%
+    var(--redesign-wood-gold) 0%,
+    #d4a836 100%
   );
-  border: 2px solid rgba(160, 140, 100, 0.18);
+  border: 2px solid rgba(145, 85, 25, 0.45);
   border-radius: 36px;
   padding: 4px 5px;
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.30),
+    inset 0 -2px 0 rgba(110, 65, 15, 0.35);
 }
 
 .hero-rail-tab {
@@ -1381,12 +1382,13 @@
 }
 
 .hero-rail-tab.is-active {
+  /* Candy active state — cream recess on wood shelf */
   background: linear-gradient(
     180deg,
-    hsl(220, 35%, 16%) 0%,
-    hsl(222, 40%, 10%) 100%
+    rgba(255, 250, 230, 0.85) 0%,
+    rgba(245, 225, 180, 0.70) 100%
   );
-  border-color: rgba(180, 160, 110, 0.45);
+  border-color: rgba(145, 85, 25, 0.55);
   box-shadow:
     0 3px 8px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -1427,26 +1429,26 @@
 }
 
 .hero-rail-tab.is-inactive {
-  opacity: 0.45;
-  border-color: rgba(255, 255, 255, 0.06);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+  opacity: 0.70;
+  border-color: rgba(110, 65, 15, 0.15);
+  background: linear-gradient(180deg, rgba(110, 65, 15, 0.12) 0%, rgba(80, 45, 10, 0.08) 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(80, 45, 10, 0.18);
 }
 
 .hero-rail-tab.is-inactive:active {
-  opacity: 0.70;
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.10);
+  opacity: 0.90;
+  background: rgba(110, 65, 15, 0.20);
+  border-color: rgba(110, 65, 15, 0.30);
 }
 
 /* ── Locked piece relic treatment (Phase E) ── */
 .hero-rail-tab.is-locked {
-  opacity: 0.35;
-  border-color: transparent;
-  background: rgba(0, 0, 0, 0.15);
-  box-shadow: none;
+  opacity: 0.50;
+  border-color: rgba(110, 65, 15, 0.12);
+  background: rgba(110, 65, 15, 0.08);
+  box-shadow: inset 0 1px 2px rgba(80, 45, 10, 0.2);
   cursor: default;
 }
 
@@ -1464,8 +1466,8 @@
 }
 
 .hero-rail-tab.is-locked .lock-indicator svg {
-  opacity: 0.4;
-  color: rgba(186, 230, 253, 0.5);
+  opacity: 0.55;
+  color: rgba(80, 45, 10, 0.7);
 }
 
 /* ── Shell header rail — anchoring treatment ── */
