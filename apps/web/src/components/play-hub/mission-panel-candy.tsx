@@ -167,7 +167,7 @@ export function MissionPanelCandy({
   );
 
   return (
-    <section className="mission-shell atmosphere flex h-[100dvh] flex-col overflow-hidden">
+    <section className="mission-shell mission-shell-candy atmosphere flex h-[100dvh] flex-col overflow-hidden">
       {/* Zone A: Hero Selector — rail + Lv/help controls + mission target */}
       <div className="shell-header-rail shrink-0 w-full">
         {/* Piece selector rail + utility controls side by side */}
