@@ -18,6 +18,10 @@ import { ExerciseDrawer } from "@/components/play-hub/exercise-drawer";
 import { LeaderboardSheet } from "@/components/play-hub/leaderboard-sheet";
 import { MissionBriefing } from "@/components/play-hub/mission-briefing";
 import { MissionPanel } from "@/components/play-hub/mission-panel";
+import { MissionPanelCandy } from "@/components/play-hub/mission-panel-candy";
+import { ASSET_THEME } from "@/lib/theme";
+
+const ActiveMissionPanel = ASSET_THEME === "candy" ? MissionPanelCandy : MissionPanel;
 import { ContextualActionSlot } from "@/components/play-hub/contextual-action-slot";
 import { InviteButton } from "@/components/play-hub/invite-button";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
@@ -782,7 +786,7 @@ export default function PlayHubPage() {
         </div>
       )}
       <main className="mission-shell min-h-screen w-full max-w-none px-0 pb-8 pt-0 sm:px-0">
-        <MissionPanel
+        <ActiveMissionPanel
           selectedPiece={selectedPiece}
           onSelectPiece={(piece) => {
             if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
