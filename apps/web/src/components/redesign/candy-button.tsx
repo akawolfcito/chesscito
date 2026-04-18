@@ -1,31 +1,57 @@
 "use client";
 
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-export type CandyButtonVariant = "play" | "resign" | "undo";
+export type CandyButtonVariant = "play" | "resign" | "undo" | "ghost";
 
-type Variant = {
+type SpriteVariantConfig = {
   src: string;
   defaultLabel: string;
 };
 
-const VARIANTS: Record<CandyButtonVariant, Variant> = {
+const SPRITE_VARIANTS: Record<Exclude<CandyButtonVariant, "ghost">, SpriteVariantConfig> = {
   play: { src: "/art/redesign/banners/btn-play.png", defaultLabel: "Play" },
   resign: { src: "/art/redesign/banners/btn-resign.png", defaultLabel: "Resign" },
   undo: { src: "/art/redesign/banners/btn-undo.png", defaultLabel: "Undo" },
 };
 
-type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
-  variant: CandyButtonVariant;
+type BaseButton = ButtonHTMLAttributes<HTMLButtonElement>;
+
+type SpriteProps = Omit<BaseButton, "children"> & {
+  variant: Exclude<CandyButtonVariant, "ghost">;
   ariaLabel?: string;
 };
 
-export function CandyButton({ variant, ariaLabel, className = "", ...buttonProps }: Props) {
-  const { src, defaultLabel } = VARIANTS[variant];
+type GhostProps = BaseButton & {
+  variant: "ghost";
+  children: ReactNode;
+  ariaLabel?: string;
+};
+
+type Props = SpriteProps | GhostProps;
+
+export function CandyButton(props: Props) {
+  const { variant, ariaLabel, className = "", ...rest } = props;
+
+  if (variant === "ghost") {
+    const { children, ...buttonProps } = rest as GhostProps;
+    return (
+      <button
+        {...buttonProps}
+        type={buttonProps.type ?? "button"}
+        aria-label={ariaLabel}
+        className={`candy-button candy-button-ghost ${className}`.trim()}
+      >
+        <span className="candy-button-ghost-label">{children}</span>
+      </button>
+    );
+  }
+
+  const { src, defaultLabel } = SPRITE_VARIANTS[variant];
   return (
     <button
-      {...buttonProps}
-      type={buttonProps.type ?? "button"}
+      {...(rest as SpriteProps)}
+      type={(rest as SpriteProps).type ?? "button"}
       aria-label={ariaLabel ?? defaultLabel}
       className={`candy-button candy-button-${variant} ${className}`.trim()}
     >

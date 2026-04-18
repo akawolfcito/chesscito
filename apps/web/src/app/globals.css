@@ -1676,6 +1676,34 @@
   width: 3.75rem;
 }
 
+/* Ghost variant — candy frame without a sprite. Used for dynamic-label
+   context actions where the label changes at runtime (continue, retry,
+   claim, etc.). Matches the press/disabled physics of sprite variants. */
+.candy-button-ghost {
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -2px 0 rgba(120, 53, 15, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.25);
+  color: #3f2208;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.candy-button-ghost-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  pointer-events: none;
+}
+
 .wooden-banner {
   display: block;
   line-height: 0;
