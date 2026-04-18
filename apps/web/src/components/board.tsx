@@ -12,15 +12,22 @@ import {
 import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 import { hapticTap, hapticReject, hapticSuccess } from "@/lib/haptics";
+import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
+
+const PIECE_BASE = THEME_CONFIG.piecesBase;
 
 const PIECE_IMG: Record<PieceId, string> = {
-  rook:   "/art/pieces/w-rook.png",
-  bishop: "/art/pieces/w-bishop.png",
-  knight: "/art/pieces/w-knight.png",
-  pawn:   "/art/pieces/w-pawn.png",
-  queen:  "/art/pieces/w-queen.png",
-  king:   "/art/pieces/w-king.png",
+  rook:   `${PIECE_BASE}/w-rook.png`,
+  bishop: `${PIECE_BASE}/w-bishop.png`,
+  knight: `${PIECE_BASE}/w-knight.png`,
+  pawn:   `${PIECE_BASE}/w-pawn.png`,
+  queen:  `${PIECE_BASE}/w-queen.png`,
+  king:   `${PIECE_BASE}/w-king.png`,
 };
+
+const PIECE_IMG_CLASS = ASSET_THEME === "candy"
+  ? "playhub-board-piece-img arena-treat-natural"
+  : "playhub-board-piece-img";
 
 function parseLabel(label: string): BoardPosition {
   const file = label.charCodeAt(0) - 97;
@@ -187,8 +194,12 @@ export function Board({
                       width: `${tw * 0.88}%`,
                     }}
                   >
-                    <source srcSet={targetImg.replace(".png", ".avif")} type="image/avif" />
-                    <source srcSet={targetImg.replace(".png", ".webp")} type="image/webp" />
+                    {THEME_CONFIG.hasOptimizedFormats && (
+                      <>
+                        <source srcSet={targetImg.replace(".png", ".avif")} type="image/avif" />
+                        <source srcSet={targetImg.replace(".png", ".webp")} type="image/webp" />
+                      </>
+                    )}
                     <img
                       src={targetImg}
                       alt="Capture target"
@@ -212,12 +223,16 @@ export function Board({
                       width: `${pw}%`,
                     }}
                   >
-                    <source srcSet={PIECE_IMG[piece.type].replace(".png", ".avif")} type="image/avif" />
-                    <source srcSet={PIECE_IMG[piece.type].replace(".png", ".webp")} type="image/webp" />
+                    {THEME_CONFIG.hasOptimizedFormats && (
+                      <>
+                        <source srcSet={PIECE_IMG[piece.type].replace(".png", ".avif")} type="image/avif" />
+                        <source srcSet={PIECE_IMG[piece.type].replace(".png", ".webp")} type="image/webp" />
+                      </>
+                    )}
                     <img
                       src={PIECE_IMG[piece.type]}
                       alt={`White ${piece.type}`}
-                      className="playhub-board-piece-img"
+                      className={PIECE_IMG_CLASS}
                       style={{ width: "100%" }}
                     />
                   </picture>
