@@ -14,6 +14,7 @@ import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { DifficultySelector } from "@/components/arena/difficulty-selector";
 import { ArenaHud } from "@/components/arena/arena-hud";
+import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData } from "@/components/arena/arena-end-state";
 import { ARENA_COPY } from "@/lib/content/editorial";
@@ -667,6 +668,13 @@ export default function ArenaPage() {
             <PromotionOverlay onSelect={game.promoteWith} onCancel={game.cancelPromotion} />
           )}
         </div>
+
+        <ArenaActionBar
+          onResign={game.resign}
+          canUndo={false}
+          isPlayerTurn={game.status === "playing" && !game.isThinking}
+          isEndState={isEndState}
+        />
 
         {/* Error banner */}
         {game.errorMessage && (

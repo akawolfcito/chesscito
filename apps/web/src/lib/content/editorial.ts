@@ -400,6 +400,8 @@ export const ARENA_COPY = {
   startMatch: "Enter Arena",
   backToHub: "Back to Hub",
   resign: "Resign",
+  undo: "Undo",
+  yourTurn: "Your Turn",
   newGame: "New Game",
   aiThinking: "AI is thinking...",
   preparingAi: "Preparing AI...",
