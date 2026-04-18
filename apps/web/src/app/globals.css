@@ -186,11 +186,7 @@
       url("/art/shop-slot-frame.webp") type("image/webp"),
       url("/art/shop-slot-frame.png") type("image/png")
     );
-    --playhub-game-bg: image-set(
-      url("/art/bg-chesscitov3.avif") type("image/avif"),
-      url("/art/bg-chesscitov3.webp") type("image/webp"),
-      url("/art/bg-chesscitov3.png") type("image/png")
-    );
+    --playhub-game-bg: url("/art/redesign/bg/bg-ch.png");
     --playhub-board-bg: image-set(
       url("/art/chesscito-board.avif") type("image/avif"),
       url("/art/chesscito-board.webp") type("image/webp"),

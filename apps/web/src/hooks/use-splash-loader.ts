@@ -8,9 +8,8 @@ const ONBOARDED_KEY = "chesscito:onboarded";
 
 /** Critical images to preload before revealing the game. */
 const PRELOAD_ASSETS = [
-  "/art/chesscito-board.webp",
-  "/art/torre-selected.webp",
-  "/art/bg-chesscitov3.webp",
+  "/art/redesign/board/board-ch.png",
+  "/art/redesign/bg/bg-ch.png",
 ];
 
 /** Max time (ms) to wait before revealing anyway. */
