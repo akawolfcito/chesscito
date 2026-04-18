@@ -6,6 +6,7 @@ import { BADGE_EARNED_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_CO
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
+import { THEME_CONFIG } from "@/lib/theme";
 
 type PieceKey = "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
 type SuccessVariant = "badge" | "score" | "shop";
@@ -24,19 +25,20 @@ type ResultOverlayProps = {
 };
 
 const VARIANT_IMG: Record<SuccessVariant, string> = {
-  badge: "/art/pieces/w-rook.png", // overridden by pieceType
+  badge: `${THEME_CONFIG.piecesBase}/w-rook.png`, // overridden by pieceType
   score: "/art/score-chesscito.png",
   shop: "/art/badge-chesscito.png",
 };
 
 function getBadgeImg(pieceType?: PieceKey): string {
+  const base = THEME_CONFIG.piecesBase;
   const map: Record<PieceKey, string> = {
-    rook: "/art/pieces/w-rook.png",
-    bishop: "/art/pieces/w-bishop.png",
-    knight: "/art/pieces/w-knight.png",
-    pawn: "/art/pieces/w-pawn.png",
-    queen: "/art/pieces/w-queen.png",
-    king: "/art/pieces/w-king.png",
+    rook: `${base}/w-rook.png`,
+    bishop: `${base}/w-bishop.png`,
+    knight: `${base}/w-knight.png`,
+    pawn: `${base}/w-pawn.png`,
+    queen: `${base}/w-queen.png`,
+    king: `${base}/w-king.png`,
   };
   return map[pieceType ?? "rook"];
 }
@@ -63,14 +65,19 @@ function getSubtitle(variant: Variant, pieceType?: PieceKey, itemLabel?: string,
 
 function SuccessImage({ variant, pieceType, glowClass }: { variant: SuccessVariant; pieceType?: PieceKey; glowClass?: string }) {
   const src = variant === "badge" ? getBadgeImg(pieceType) : VARIANT_IMG[variant];
+  const hasOptimized = variant === "badge" ? THEME_CONFIG.hasOptimizedFormats : true;
   return (
     <div className={`relative flex items-center justify-center ${glowClass ?? "reward-glow-progress"}`}>
       <picture
         className="reward-icon-showcase reward-ceremony-icon relative z-10"
         style={{ animation: "reward-icon-enter 250ms ease-out 200ms both" }}
       >
-        <source srcSet={src.replace(".png", ".avif")} type="image/avif" />
-        <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
+        {hasOptimized && (
+          <>
+            <source srcSet={src.replace(".png", ".avif")} type="image/avif" />
+            <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
+          </>
+        )}
         <img src={src} alt="" className="h-32 w-32 object-contain drop-shadow-lg" />
       </picture>
     </div>

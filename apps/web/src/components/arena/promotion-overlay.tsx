@@ -2,6 +2,7 @@
 
 import { ARENA_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { ARENA_PIECE_IMG } from "@/lib/game/arena-utils";
+import { THEME_CONFIG } from "@/lib/theme";
 
 type PromotionChoice = "q" | "r" | "b" | "n";
 
@@ -47,14 +48,18 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
               className="flex flex-col items-center gap-1 rounded-xl bg-white/10 p-3 transition-all hover:bg-white/20 active:scale-95"
             >
               <picture>
-                <source
-                  srcSet={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]].replace(".png", ".avif")}
-                  type="image/avif"
-                />
-                <source
-                  srcSet={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]].replace(".png", ".webp")}
-                  type="image/webp"
-                />
+                {THEME_CONFIG.hasOptimizedFormats && (
+                  <>
+                    <source
+                      srcSet={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]].replace(".png", ".avif")}
+                      type="image/avif"
+                    />
+                    <source
+                      srcSet={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]].replace(".png", ".webp")}
+                      type="image/webp"
+                    />
+                  </>
+                )}
                 <img
                   src={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]]}
                   alt={label}

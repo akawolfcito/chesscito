@@ -43,13 +43,17 @@ export const PIECE_RAIL_COPY = {
   comingSoon: "Soon",
 } as const;
 
+import { THEME_CONFIG } from "@/lib/theme";
+
+const PIECE_BASE = THEME_CONFIG.piecesBase;
+
 export const PIECE_IMAGES: Record<keyof typeof PIECE_LABELS, string> = {
-  rook: "/art/pieces/w-rook",
-  bishop: "/art/pieces/w-bishop",
-  knight: "/art/pieces/w-knight",
-  pawn: "/art/pieces/w-pawn",
-  queen: "/art/pieces/w-queen",
-  king: "/art/pieces/w-king",
+  rook: `${PIECE_BASE}/w-rook`,
+  bishop: `${PIECE_BASE}/w-bishop`,
+  knight: `${PIECE_BASE}/w-knight`,
+  pawn: `${PIECE_BASE}/w-pawn`,
+  queen: `${PIECE_BASE}/w-queen`,
+  king: `${PIECE_BASE}/w-king`,
 } as const;
 
 export const BADGE_TITLES = {

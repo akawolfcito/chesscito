@@ -6,6 +6,7 @@ import { Lock, Star, Timer } from "lucide-react";
 import { MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS, PIECE_RAIL_COPY, PRACTICE_COPY, SCORE_UNIT } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { GameplayPanel } from "@/components/play-hub/gameplay-panel";
+import { THEME_CONFIG } from "@/lib/theme";
 
 type PieceOption = {
   key: "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
@@ -196,8 +197,12 @@ export function MissionPanel({
                           : "piece-inactive",
                     ].join(" ")}
                   >
-                    <source srcSet={`${src}.avif`} type="image/avif" />
-                    <source srcSet={`${src}.webp`} type="image/webp" />
+                    {THEME_CONFIG.hasOptimizedFormats && (
+                      <>
+                        <source srcSet={`${src}.avif`} type="image/avif" />
+                        <source srcSet={`${src}.webp`} type="image/webp" />
+                      </>
+                    )}
                     <img
                       src={`${src}.png`}
                       alt={piece.label}

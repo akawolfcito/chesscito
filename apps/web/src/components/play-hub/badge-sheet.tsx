@@ -14,17 +14,18 @@ import {
 import { ABOUT_LINK_COPY, BADGE_SHEET_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
+import { THEME_CONFIG } from "@/lib/theme";
 import type { PieceId } from "@/lib/game/types";
 
 const PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
 
 const BADGE_ART: Record<PieceId, string> = {
-  rook: "/art/pieces/w-rook.png",
-  bishop: "/art/pieces/w-bishop.png",
-  knight: "/art/pieces/w-knight.png",
-  pawn: "/art/pieces/w-pawn.png",
-  queen: "/art/pieces/w-queen.png",
-  king: "/art/pieces/w-king.png",
+  rook: `${THEME_CONFIG.piecesBase}/w-rook.png`,
+  bishop: `${THEME_CONFIG.piecesBase}/w-bishop.png`,
+  knight: `${THEME_CONFIG.piecesBase}/w-knight.png`,
+  pawn: `${THEME_CONFIG.piecesBase}/w-pawn.png`,
+  queen: `${THEME_CONFIG.piecesBase}/w-queen.png`,
+  king: `${THEME_CONFIG.piecesBase}/w-king.png`,
 };
 
 type BadgeState = "claimed" | "claimable" | "locked";
@@ -80,8 +81,12 @@ function BadgeCard({
         </span>
       )}
       <picture className={`h-12 w-12 shrink-0 ${isLocked ? "badge-treat-locked" : isClaimed ? "badge-treat-owned" : isClaimable ? "badge-treat-claimable" : ""}`}>
-        <source srcSet={BADGE_ART[badge.piece].replace(".png", ".avif")} type="image/avif" />
-        <source srcSet={BADGE_ART[badge.piece].replace(".png", ".webp")} type="image/webp" />
+        {THEME_CONFIG.hasOptimizedFormats && (
+          <>
+            <source srcSet={BADGE_ART[badge.piece].replace(".png", ".avif")} type="image/avif" />
+            <source srcSet={BADGE_ART[badge.piece].replace(".png", ".webp")} type="image/webp" />
+          </>
+        )}
         <img
           src={BADGE_ART[badge.piece]}
           alt={title}

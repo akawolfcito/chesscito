@@ -19,7 +19,7 @@ import { LeaderboardSheet } from "@/components/play-hub/leaderboard-sheet";
 import { MissionBriefing } from "@/components/play-hub/mission-briefing";
 import { MissionPanel } from "@/components/play-hub/mission-panel";
 import { MissionPanelCandy } from "@/components/play-hub/mission-panel-candy";
-import { ASSET_THEME } from "@/lib/theme";
+import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 
 const ActiveMissionPanel = ASSET_THEME === "candy" ? MissionPanelCandy : MissionPanel;
 import { ContextualActionSlot } from "@/components/play-hub/contextual-action-slot";
@@ -977,8 +977,12 @@ export default function PlayHubPage() {
                   <LottieAnimation src="/animations/sparkle-burst.lottie" loop={false} className="h-full w-full" />
                 </div>
                 <picture className="relative z-10 h-20 w-20">
-                  <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.avif`} type="image/avif" />
-                  <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.webp`} type="image/webp" />
+                  {THEME_CONFIG.hasOptimizedFormats && (
+                    <>
+                      <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.avif`} type="image/avif" />
+                      <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.webp`} type="image/webp" />
+                    </>
+                  )}
                   <img src={`${PIECE_IMAGES[unlockedPiece]}.png`} alt={PIECE_LABELS[unlockedPiece]} className="h-full w-full object-contain drop-shadow-[0_0_16px_rgba(217,180,74,0.5)]" />
                 </picture>
               </div>
