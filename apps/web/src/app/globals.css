@@ -773,8 +773,8 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    width: clamp(24px, 8.5vw, 40px);
-    height: clamp(24px, 8.5vw, 40px);
+    width: 90%;
+    height: 90%;
     transform: translate(-50%, -50%);
     background-image: image-set(url("/art/redesign/icons/star.avif") type("image/avif"),
         url("/art/redesign/icons/star.webp") type("image/webp"),
@@ -784,6 +784,8 @@
     background-position: center;
     animation: chesscito-target-pulse 2s ease-in-out infinite;
     pointer-events: none;
+    filter:
+      drop-shadow(0 0 10px rgba(255, 200, 80, 0.55)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   }
 
   @keyframes chesscito-target-pulse {
@@ -829,7 +831,7 @@
     z-index: 5;
     transform: translate(-50%, -55%);
     pointer-events: none;
-    animation: target-piece-pulse 2.5s ease-in-out infinite;
+    animation: target-piece-pulse 2s ease-in-out infinite;
   }
 
   .playhub-board-target-piece-img {
@@ -845,13 +847,13 @@
 
     0%,
     100% {
-      opacity: 0.80;
+      opacity: 0.85;
       transform: translate(-50%, -55%) scale(1);
     }
 
     50% {
       opacity: 1;
-      transform: translate(-50%, -55%) scale(1.04);
+      transform: translate(-50%, -55%) scale(1.12);
     }
   }
 
