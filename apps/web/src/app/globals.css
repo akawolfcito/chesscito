@@ -1811,6 +1811,48 @@
   width: min(100%, 11rem);
 }
 
+/* ── Candy frame — sculpted wooden/scroll surface for peek cards + CTAs ── */
+.candy-frame {
+  background: linear-gradient(180deg, var(--candy-frame-from, #f6cf63) 0%, var(--candy-frame-to, #d4a836) 100%);
+  border: 2px solid var(--candy-frame-border, rgba(110, 65, 15, 0.55));
+  border-radius: 14px;
+  box-shadow:
+    0 4px 0 var(--candy-frame-shadow, rgba(110, 65, 15, 0.45)),
+    0 6px 14px rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.30),
+    inset 0 -2px 0 rgba(110, 65, 15, 0.20);
+  color: var(--candy-frame-text, rgba(63, 34, 8, 0.95));
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.30);
+  transition: transform var(--duration-snap), box-shadow var(--duration-snap);
+}
+
+.candy-frame:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 var(--candy-frame-shadow, rgba(110, 65, 15, 0.45)),
+    0 3px 8px rgba(0, 0, 0, 0.30),
+    inset 0 2px 0 rgba(255, 255, 255, 0.20),
+    inset 0 -1px 0 rgba(110, 65, 15, 0.18);
+}
+
+/* Variant: amber (warm peek card) */
+.candy-frame-amber {
+  --candy-frame-from: #f6cf63;
+  --candy-frame-to: #d4a836;
+  --candy-frame-border: rgba(110, 65, 15, 0.55);
+  --candy-frame-shadow: rgba(110, 65, 15, 0.45);
+  --candy-frame-text: rgba(63, 34, 8, 0.95);
+}
+
+/* Variant: gold (claim CTA — brighter, more saturated) */
+.candy-frame-gold {
+  --candy-frame-from: #ffe066;
+  --candy-frame-to: #f6a400;
+  --candy-frame-border: rgba(120, 65, 5, 0.65);
+  --candy-frame-shadow: rgba(120, 65, 5, 0.55);
+  --candy-frame-text: rgba(50, 25, 5, 0.95);
+}
+
 /* ── Mission shell candy variant ── */
 .mission-shell-candy .panel-base {
   background: linear-gradient(180deg,

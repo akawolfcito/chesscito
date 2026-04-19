@@ -150,20 +150,20 @@ export function MissionPanelCandy({
   const missionPeek = (
     <button
       type="button"
-      className="panel-elevated mx-2 flex w-[calc(100%-1rem)] items-center gap-3 overflow-hidden px-4 py-2.5 text-left transition-all active:scale-[0.99]"
+      className="candy-frame candy-frame-amber mx-2 flex w-[calc(100%-1rem)] items-center gap-3 overflow-hidden px-4 py-2.5 text-left"
       style={{ marginTop: "var(--shell-gap-xs)" }}
       aria-label="Open mission details"
     >
-      <p key={targetLabel} className="mission-typewriter flex-1 truncate text-sm font-bold text-slate-50">
+      <p key={targetLabel} className="mission-typewriter flex-1 truncate text-sm font-bold">
         {isCapture
-          ? <>Move your {PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to <span className="text-rose-400">CAPTURE</span></>
-          : <>{MISSION_BRIEFING_COPY.targetPrefix} <span className="text-cyan-300">{targetLabel}</span></>}
+          ? <>Move your {PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to <span className="text-rose-700">CAPTURE</span></>
+          : <>{MISSION_BRIEFING_COPY.targetPrefix} <span className="text-amber-900">{targetLabel}</span></>}
       </p>
-      <span className="flex shrink-0 items-center gap-1">
-        <span className="game-label text-xs font-bold tabular-nums text-white/65">
+      <span className="flex shrink-0 items-center gap-1.5">
+        <span className="game-label text-xs font-extrabold tabular-nums">
           {score}
         </span>
-        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400/80 shadow-[0_0_6px_rgba(34,211,238,0.6)]" aria-hidden="true" />
+        <span className="h-2 w-2 rounded-full bg-amber-900/80 shadow-[0_0_4px_rgba(120,65,5,0.5)]" aria-hidden="true" />
       </span>
     </button>
   );
@@ -181,11 +181,10 @@ export function MissionPanelCandy({
         <span className="ml-auto">{exerciseDrawer}</span>
       </div>
 
-      {/* Zone B: Board Stage — flex-1, maximum space */}
+      {/* Zone B: Board Stage — flex-1, maximum space. No panel frame so the
+          board image floats directly on the grass field bg. */}
       <div className="board-stage-focus min-h-0 flex-1 mx-2 mt-2">
-        <div className="panel-base h-full overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
-          {board}
-        </div>
+        {board}
       </div>
 
       {/* Mission peek — single line, tap to expand */}

@@ -85,13 +85,21 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
   const handler = getHandler(action, props);
   const label = isBusy && copy.loading ? copy.loading : copy.label;
 
+  // claimBadge gets the candy-frame treatment (warm gold, sculpted), every
+  // other action keeps the standard CTA gradient + game-cta-depth chrome.
+  const isCandyClaim = action === "claimBadge";
+  const baseLayout = "flex h-[52px] w-full items-center justify-center gap-2 text-sm font-extrabold uppercase tracking-wide disabled:opacity-70";
+  const buttonClassName = isCandyClaim
+    ? `${baseLayout} candy-frame candy-frame-gold`
+    : `game-cta-depth rounded-2xl ${baseLayout} ${style.bg} ${style.glow} ${style.text}${action === "retry" ? " border border-[var(--cta-muted-border)]" : ""}`;
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
       <button
         type="button"
         onClick={handler}
         disabled={isBusy}
-        className={`game-cta-depth flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold uppercase tracking-wide disabled:opacity-70 ${style.bg} ${style.glow} ${style.text} ${action === "retry" ? "border border-[var(--cta-muted-border)]" : ""}`}
+        className={buttonClassName}
       >
         {isBusy ? (
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
