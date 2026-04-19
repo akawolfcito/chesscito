@@ -482,6 +482,11 @@ export const ABOUT_LINK_COPY = {
   label: "About Chesscito",
 } as const;
 
+export const SPLASH_COPY = {
+  loading: "Loading…",
+  subtitle: "Setting up the board",
+} as const;
+
 export const COACH_COPY = {
   askCoach: "Ask the Coach",
   askCoachSub: "What can I improve?",

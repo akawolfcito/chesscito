@@ -1397,11 +1397,13 @@
   inset: 0;
   z-index: 80;
   pointer-events: none;
-  background-color: #0b1220;
-  background-image: var(--intro-bg-mobile);
-  background-position: center top;
-  background-size: cover;
-  background-repeat: no-repeat;
+  /* Solid surface — functional loading state, not a decorative splash */
+  background-color: var(--surface-frosted-solid, #0b1220);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
   opacity: 0;
   visibility: hidden;
 }

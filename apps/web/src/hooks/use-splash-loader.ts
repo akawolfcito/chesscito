@@ -6,10 +6,12 @@ import { isMiniPayEnv } from "@/lib/minipay";
 
 const ONBOARDED_KEY = "chesscito:onboarded";
 
-/** Critical images to preload before revealing the game. */
+/** Critical images to preload before revealing the game. Uses AVIF since
+ *  that's what the modern-browser image-set() picks up; PNG fallback is
+ *  only ever served to legacy browsers and would waste bandwidth here. */
 const PRELOAD_ASSETS = [
-  "/art/redesign/board/board-ch.png",
-  "/art/redesign/bg/bg-ch.png",
+  "/art/redesign/board/board-ch.avif",
+  "/art/redesign/bg/bg-ch.avif",
 ];
 
 /** Max time (ms) to wait before revealing anyway. */
