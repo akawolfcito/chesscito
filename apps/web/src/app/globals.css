@@ -1229,8 +1229,8 @@
     padding: 6px 8px 4px;
     background-color: transparent;
     background-image: url("/art/redesign/bg/menu-wall.png");
-    background-size: 100% 100%;
-    background-position: center;
+    background-size: cover;
+    background-position: bottom center;
     background-repeat: no-repeat;
     border-top: 0;
     box-shadow: none;
@@ -1271,6 +1271,8 @@
 
   /* Center tab — route-aware glow pill */
   .chesscito-dock-center {
+    position: relative;
+    isolation: isolate;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1287,8 +1289,31 @@
   }
 
   .chesscito-dock-center.is-active {
-    color: rgba(160, 225, 220, 0.9);
-    transform: scale(1.04);
+    color: rgba(255, 240, 180, 0.95);
+    transform: scale(1.08);
+  }
+
+  /* Active-route halo behind the sprite — three redundant signals (halo +
+     scale + drop-shadow) so the active dock tab is unambiguous. */
+  .chesscito-dock-center.is-active::before {
+    content: "";
+    position: absolute;
+    inset: -2px 4px 6px;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at 50% 45%,
+      rgba(255, 220, 120, 0.40) 0%,
+      rgba(255, 200, 80, 0.18) 45%,
+      transparent 75%
+    );
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .chesscito-dock-center.is-active img {
+    filter:
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))
+      drop-shadow(0 0 6px rgba(255, 200, 80, 0.45));
   }
 
   .chesscito-dock-center:active {
