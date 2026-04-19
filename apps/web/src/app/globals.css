@@ -773,8 +773,8 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    width: clamp(32px, 11.5vw, 52px);
-    height: clamp(32px, 11.5vw, 52px);
+    width: clamp(24px, 8.5vw, 40px);
+    height: clamp(24px, 8.5vw, 40px);
     transform: translate(-50%, -50%);
     background-image: image-set(url("/art/redesign/icons/star.avif") type("image/avif"),
         url("/art/redesign/icons/star.webp") type("image/webp"),
