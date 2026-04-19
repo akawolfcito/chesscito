@@ -56,7 +56,7 @@ type SplashState = {
 
 export function useSplashLoader(): SplashState {
   const { isConnected } = useAccount();
-  const [isFirstVisit] = useState(() => !readOnboarded());
+  const [isFirstVisit, setIsFirstVisit] = useState(() => !readOnboarded());
   const [assetsReady, setAssetsReady] = useState(false);
   const [walletReady, setWalletReady] = useState(false);
 
@@ -94,6 +94,10 @@ export function useSplashLoader(): SplashState {
 
   function markOnboarded() {
     writeOnboarded();
+    // Flip the in-memory flag too so showBriefing turns false and the
+    // parent unmounts <MissionBriefing>. Without this the scrim lingers
+    // in the DOM at opacity 0 until the next full page load.
+    setIsFirstVisit(false);
   }
 
   return { showSplash, showBriefing, markOnboarded };
