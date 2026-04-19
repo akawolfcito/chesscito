@@ -431,6 +431,7 @@ export const ARENA_COPY = {
   aiTimeout: "AI timed out",
   engineError: "Engine error — please restart the match",
   restartMatch: "Restart Match",
+  boardError: "Board error — please restart the game",
 } as const;
 
 export const EXERCISE_DRAWER_COPY = {
@@ -482,6 +483,7 @@ export const ABOUT_LINK_COPY = {
 export const COACH_COPY = {
   askCoach: "Ask the Coach",
   askCoachSub: "What can I improve?",
+  loading: "Loading...",
   quickReviewTitle: "Quick Review",
   coachAnalysisTitle: "Coach Analysis",
   keyMoments: "KEY MOMENTS",

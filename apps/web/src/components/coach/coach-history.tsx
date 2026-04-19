@@ -43,7 +43,7 @@ export function CoachHistory({ walletAddress, credits, onSelectEntry }: Props) {
         <span className="text-xs text-cyan-100/40">{credits} credits</span>
       </div>
 
-      {loading && <p className="text-center text-sm text-cyan-100/40">Loading...</p>}
+      {loading && <p className="text-center text-sm text-cyan-100/40">{COACH_COPY.loading}</p>}
 
       {!loading && entries.map((entry) => {
         const diffLabel = ARENA_COPY.difficulty[entry.game.difficulty as keyof typeof ARENA_COPY.difficulty] ?? entry.game.difficulty;

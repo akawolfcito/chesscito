@@ -31,7 +31,7 @@ export function CoachPaywall({ open, onOpenChange, onBuy, onQuickReview }: Props
             type="button"
             disabled={buying !== null}
             onClick={() => handleBuy(5)}
-            className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-center transition-all hover:bg-white/[0.06] disabled:opacity-50"
+            className="min-h-[56px] rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-center transition-all hover:bg-white/[0.06] disabled:opacity-50"
           >
             <p className="text-lg font-bold text-white">{COACH_COPY.creditPack5}</p>
             <p className="text-sm text-cyan-100/50">$0.05</p>
@@ -44,7 +44,7 @@ export function CoachPaywall({ open, onOpenChange, onBuy, onQuickReview }: Props
             type="button"
             disabled={buying !== null}
             onClick={() => handleBuy(20)}
-            className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] ring-1 ring-emerald-400/10 p-4 text-center transition-all hover:bg-emerald-500/[0.08] disabled:opacity-50"
+            className="min-h-[56px] rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] ring-1 ring-emerald-400/10 p-4 text-center transition-all hover:bg-emerald-500/[0.08] disabled:opacity-50"
           >
             <p className="text-lg font-bold text-white">{COACH_COPY.creditPack20}</p>
             <p className="text-sm text-cyan-100/50">$0.10</p>
