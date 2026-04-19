@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowLeft, Play } from "lucide-react";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import type { ArenaDifficulty } from "@/lib/game/types";
 import { Button } from "@/components/ui/button";
@@ -62,7 +61,12 @@ export function DifficultySelector({ selected, onSelect, onStart, onBack }: Prop
           onClick={onStart}
           className="shadow-[0_0_24px_rgba(34,211,238,0.25)] hover:shadow-[0_0_32px_rgba(34,211,238,0.4)]"
         >
-          <Play size={18} className="inline -mt-0.5" fill="currentColor" /> {ARENA_COPY.startMatch}
+          <img
+            src="/art/redesign/banners/btn-play.png"
+            alt=""
+            aria-hidden="true"
+            className="inline h-5 w-5 -mt-0.5 object-contain"
+          /> {ARENA_COPY.startMatch}
         </Button>
       </div>
 
@@ -71,8 +75,13 @@ export function DifficultySelector({ selected, onSelect, onStart, onBack }: Prop
         onClick={onBack}
         className="flex items-center gap-2 text-sm text-white/35 transition-colors hover:text-white/55"
       >
-        <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.05]">
-          <ArrowLeft className="h-4 w-4" />
+        <span className="flex h-11 w-11 items-center justify-center">
+          <img
+            src="/art/redesign/banners/btn-back.png"
+            alt=""
+            aria-hidden="true"
+            className="h-7 w-7 object-contain"
+          />
         </span>
         {ARENA_COPY.backToHub}
       </button>

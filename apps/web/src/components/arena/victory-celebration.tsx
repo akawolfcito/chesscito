@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Trophy } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -95,7 +95,13 @@ export function VictoryCelebration({
               className="w-full flex-col gap-0.5 py-3.5"
             >
               <span className="flex items-center gap-1.5 text-sm font-bold">
-                <Trophy size={16} /> {VICTORY_CLAIM_COPY.claimButton}
+                <img
+                  src="/art/redesign/banners/btn-claim.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-5 w-5 object-contain"
+                />
+                {VICTORY_CLAIM_COPY.claimButton}
               </span>
               <span className="block text-xs opacity-70 font-normal">
                 {VICTORY_CLAIM_COPY.claimValueHint(claimPrice ?? "")}
@@ -110,7 +116,7 @@ export function VictoryCelebration({
             size="game"
             onClick={onPlayAgain}
           >
-            <RotateCcw size={16} className="inline -mt-0.5" /> {ARENA_COPY.playAgain}
+            <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
           </Button>
 
           {/* Tertiary: Back to Hub */}

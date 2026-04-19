@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
 import type { BasicCoachResponse } from "@/lib/coach/types";
@@ -52,7 +52,7 @@ export function CoachFallback({
 
       {/* Primary: Play Again — retention first */}
       <Button type="button" variant="game-primary" size="game" onClick={onPlayAgain}>
-        <RotateCcw size={16} className="inline -mt-0.5" /> {ARENA_COPY.playAgain}
+        <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
       </Button>
 
       {/* Secondary: Unlock Full Analysis — subtle upsell */}

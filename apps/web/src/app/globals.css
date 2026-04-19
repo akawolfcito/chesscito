@@ -1227,13 +1227,13 @@
     align-items: center;
     justify-content: space-around;
     padding: 6px 8px 4px;
-    border-top: 2px solid rgba(255, 255, 255, 0.12);
-    background: linear-gradient(180deg,
-        hsl(220, 42%, 11%) 0%,
-        hsl(222, 48%, 7%) 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      0 -4px 12px rgba(0, 0, 0, 0.3);
+    background-color: transparent;
+    background-image: url("/art/redesign/bg/menu-wall.png");
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-top: 0;
+    box-shadow: none;
   }
 
   .chesscito-dock-item {
@@ -1242,30 +1242,24 @@
     justify-content: center;
   }
 
-  /* Consistent framing for all dock trigger buttons */
+  /* Consistent hit area for all dock trigger buttons. Frame/depth come from
+     the candy sprite itself — no wrapper bg/border, and no overflow clip so
+     notification dots can sit outside the icon bounds. */
   .chesscito-dock-item>button,
   .chesscito-dock-item>[role="button"] {
     width: 2.75rem !important;
     height: 2.75rem !important;
     border-radius: 14px !important;
-    overflow: hidden;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-    border: 1.5px solid rgba(255, 255, 255, 0.08);
-    opacity: 0.65;
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
     transition: opacity 0.15s, background 200ms, border-color 200ms, transform var(--duration-snap);
   }
 
   .chesscito-dock-item>button:active,
   .chesscito-dock-item>[role="button"]:active {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(160, 205, 225, 0.20);
-    opacity: 0.65;
     transform: scale(0.92) translateY(1px);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    transition: transform var(--duration-snap), opacity var(--duration-snap), background var(--duration-snap);
+    transition: transform var(--duration-snap);
   }
 
   /* dock-treat-pressed on dock item images (no scale — button container handles it) */
@@ -1282,51 +1276,23 @@
     align-items: center;
     justify-content: center;
     gap: 1px;
-    overflow: hidden;
     width: 3.5rem;
     height: 3rem;
-    border-radius: 16px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
+    border: 0;
     color: rgba(160, 225, 220, 0.55);
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    transition: all 200ms;
+    box-shadow: none;
+    transition: transform var(--duration-snap, 120ms);
     font-family: var(--font-game-display);
   }
 
   .chesscito-dock-center.is-active {
-    background: rgba(20, 184, 166, 0.15);
-    border-color: rgba(20, 184, 166, 0.30);
-    color: rgba(160, 225, 220, 0.8);
-    box-shadow:
-      0 0 16px rgba(20, 184, 166, 0.14),
-      0 2px 6px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(20, 184, 166, 0.12);
+    color: rgba(160, 225, 220, 0.9);
     transform: scale(1.04);
   }
 
-  /* Center action: structurally present even when inactive */
-  .chesscito-dock-center:not(.is-active) {
-    transform: scale(1.01);
-  }
-
-  /* Lucide icons: color + opacity only, no filter (spec Section 5) */
-  .chesscito-dock-center.is-active svg {
-    color: rgba(160, 225, 220, 0.9);
-    opacity: 1;
-  }
-
   .chesscito-dock-center:active {
-    background: rgba(20, 184, 166, 0.2);
-    box-shadow: 0 0 16px rgba(20, 184, 166, 0.2);
-    transform: scale(0.98);
-  }
-
-  .chesscito-dock-center:active svg {
-    transform: scale(0.92);
-    transition: transform var(--duration-snap);
+    transform: scale(0.92) translateY(1px);
   }
 
 }
@@ -1904,18 +1870,16 @@
   justify-content: center;
   width: 3rem;
   height: 3rem;
-  border-radius: 9999px;
   color: rgba(63, 34, 8, 0.85);
-  background: linear-gradient(180deg, #d1d5db 0%, #9ca3af 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -2px 0 rgba(55, 65, 81, 0.4),
-    0 2px 4px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
+  background-image: url("/art/redesign/banners/btn-stone-bg.png");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .arena-action-pill.is-confirming .arena-action-pill-icon {
-  background: linear-gradient(180deg, #fca5a5 0%, #dc2626 100%);
+  /* Subtle red wash on top of the stone for the resign-confirm state. */
+  filter: hue-rotate(330deg) saturate(1.4) brightness(1.05);
   color: #fff;
 }
 

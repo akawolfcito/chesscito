@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PlayerCard } from "@/components/redesign/player-card";
@@ -49,22 +49,35 @@ export function ArenaHud({ isThinking, onBack, isEndState }: Props) {
         <button
           type="button"
           onClick={handleBackClick}
+          style={{
+            backgroundImage: confirmingBack
+              ? undefined
+              : "url('/art/redesign/banners/btn-stone-bg.png')",
+            backgroundSize: "100% 100%",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
           className={[
-            "relative flex h-11 shrink-0 items-center justify-center rounded-full border overflow-hidden transition-all active:scale-[0.97]",
+            "relative flex h-11 shrink-0 items-center justify-center transition-all active:scale-[0.97]",
             confirmingBack
-              ? "w-auto gap-1.5 border-white/30 bg-white/[0.12] backdrop-blur-md px-3 text-white"
-              : "w-11 border-white/[0.12] bg-[var(--surface-c-mid)] backdrop-blur-md text-white/80 hover:text-white",
+              ? "w-auto gap-1.5 rounded-full border border-white/30 bg-white/[0.12] backdrop-blur-md px-3 text-white overflow-hidden"
+              : "w-11 text-white/90",
           ].join(" ")}
           aria-label={ARENA_COPY.backToHub}
         >
           {confirmingBack ? (
             <>
-              <Check className="h-3.5 w-3.5" />
+              <CandyIcon name="check" className="h-4 w-4" />
               <span className="text-xs font-semibold">{ARENA_COPY.backToHub}</span>
               <span className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-white/40" style={{ animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards` }} />
             </>
           ) : (
-            <ArrowLeft className="h-4 w-4" />
+            <img
+              src="/art/redesign/banners/btn-back.png"
+              alt=""
+              aria-hidden="true"
+              className="h-7 w-7 object-contain"
+            />
           )}
         </button>
       </div>

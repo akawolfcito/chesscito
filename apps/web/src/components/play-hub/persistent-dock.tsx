@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { Swords } from "lucide-react";
 import { DOCK_LABELS } from "@/lib/content/editorial";
 
 type PersistentDockProps = {
@@ -32,7 +31,12 @@ export function PersistentDock({
         href="/arena"
         className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
       >
-        <Swords size={20} />
+        <img
+          src="/art/redesign/banners/btn-battle.png"
+          alt=""
+          aria-hidden="true"
+          className="h-9 w-9 object-contain"
+        />
         <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
           {DOCK_LABELS.freePlay}
         </span>

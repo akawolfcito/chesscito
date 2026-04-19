@@ -1,4 +1,5 @@
-import { CheckCircle2, XCircle, CircleDashed, ShoppingBag, Award, Shield } from "lucide-react";
+import { CircleDashed, ShoppingBag } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
   SheetContent,
@@ -36,10 +37,12 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
           aria-label="Shop"
           className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
         >
-          <picture>
-            <source srcSet="/art/shop-menu.webp" type="image/webp" />
-            <img src="/art/shop-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5 dock-treat-base" />
-          </picture>
+          <img
+            src="/art/shop-menu.png"
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-contain p-0.5 dock-treat-base"
+          />
           <span className="sr-only">Shop</span>
         </button>
       </SheetTrigger>
@@ -65,9 +68,9 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
               )}
               <p className={`flex items-center gap-1.5 text-sm font-semibold ${isFeatured ? "text-[var(--featured-title-text)]" : "text-slate-300"}`}>
                 {item.label.toLowerCase().includes("badge") ? (
-                  <Award className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+                  <CandyIcon name="trophy" className="h-4 w-4 shrink-0 opacity-80" />
                 ) : (
-                  <Shield className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+                  <CandyIcon name="shield" className="h-4 w-4 shrink-0 opacity-80" />
                 )}
                 {item.label}
               </p>
@@ -77,9 +80,9 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
               </p>
               <p className="flex items-center gap-1 text-xs">
                 {item.configured && item.enabled ? (
-                  <><CheckCircle2 className="h-3 w-3 text-emerald-400" /><span className="text-emerald-400">{SHOP_SHEET_COPY.status.available}</span></>
+                  <><CandyIcon name="check" className="h-3 w-3" /><span className="text-emerald-400">{SHOP_SHEET_COPY.status.available}</span></>
                 ) : item.configured ? (
-                  <><XCircle className="h-3 w-3 text-rose-400" /><span className="text-rose-400">{SHOP_SHEET_COPY.status.unavailable}</span></>
+                  <><CandyIcon name="close" className="h-3 w-3" /><span className="text-rose-400">{SHOP_SHEET_COPY.status.unavailable}</span></>
                 ) : (
                   <><CircleDashed className="h-3 w-3 text-slate-500" /><span className="text-slate-500">{SHOP_SHEET_COPY.status.unavailable}</span></>
                 )}

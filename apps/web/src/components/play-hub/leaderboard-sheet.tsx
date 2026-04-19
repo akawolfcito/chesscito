@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BadgeCheck, Crown } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 
 import {
   Sheet,
@@ -111,17 +111,19 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
           aria-label="Leaderboard"
           className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
         >
-          <picture>
-            <source srcSet="/art/leaderboard-menu.webp" type="image/webp" />
-            <img src="/art/leaderboard-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5 dock-treat-base" />
-          </picture>
+          <img
+            src="/art/leaderboard-menu.png"
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-contain p-0.5 dock-treat-base"
+          />
           <span className="sr-only">Leaderboard</span>
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="mission-shell sheet-bg-leaderboard flex max-h-[85dvh] flex-col rounded-t-3xl border-white/[0.10]">
         <div className="shrink-0 border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
           <SheetHeader>
-            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><Crown size={20} className="text-purple-400/60" />{LEADERBOARD_SHEET_COPY.title}</SheetTitle>
+            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><CandyIcon name="crown" className="h-5 w-5" />{LEADERBOARD_SHEET_COPY.title}</SheetTitle>
             <SheetDescription className="text-cyan-100/75">{LEADERBOARD_SHEET_COPY.description}</SheetDescription>
           </SheetHeader>
         </div>
@@ -183,7 +185,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
               <p className="truncate text-sm text-slate-300">
                 {row.player}
                 {row.isVerified && (
-                  <span title={PASSPORT_COPY.verifiedLabel}><BadgeCheck className="ml-1.5 inline-block h-3.5 w-3.5 text-emerald-400" /></span>
+                  <span title={PASSPORT_COPY.verifiedLabel}><CandyIcon name="check" className="ml-1.5 inline-block h-3.5 w-3.5" /></span>
                 )}
               </p>
               <p className="text-sm font-semibold text-cyan-100">{row.score}</p>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Share2, Check } from "lucide-react";
+import { Share2 } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ABOUT_COPY } from "@/lib/content/editorial";
 import { hapticSuccess } from "@/lib/haptics";
 
@@ -29,7 +30,7 @@ export function InviteLink() {
       className="flex min-h-[44px] w-full items-center gap-3 rounded-xl bg-[var(--link-row-bg)] px-4 py-3 text-cyan-100 transition hover:bg-[var(--link-row-bg-hover)]"
     >
       {copied ? (
-        <Check size={18} className="shrink-0 animate-bounce text-emerald-400" />
+        <CandyIcon name="check" className="h-5 w-5 shrink-0 animate-bounce" />
       ) : (
         <Share2 size={18} className="shrink-0 text-cyan-400" />
       )}

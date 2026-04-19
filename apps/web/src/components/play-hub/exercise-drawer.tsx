@@ -1,4 +1,4 @@
-import { Crosshair, Lock, Swords, MoveRight, Star } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
   SheetContent,
@@ -30,10 +30,10 @@ function StarDisplay({ count }: { count: number }) {
   return (
     <span className="flex gap-0.5">
       {[1, 2, 3].map((i) => (
-        <Star
+        <CandyIcon
           key={i}
-          size={12}
-          className={i <= count ? "fill-amber-400 text-amber-400" : "text-slate-600"}
+          name="star"
+          className={`h-3 w-3 ${i <= count ? "opacity-100" : "opacity-25"}`}
         />
       ))}
     </span>
@@ -68,14 +68,14 @@ export function ExerciseDrawer({
           aria-label="Exercises"
           className="exercise-drawer-trigger flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-full px-2.5 text-xs font-bold text-[rgba(220,200,140,0.85)] transition hover:brightness-110 active:scale-[0.97] active:brightness-90"
         >
-          <Star size={10} className="fill-[rgba(220,190,100,0.9)] text-[rgba(220,190,100,0.9)]" />
+          <CandyIcon name="star" className="h-2.5 w-2.5" />
           <span className="tabular-nums">{totalStars}/{maxStars}</span>
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-white/[0.10]" style={{ background: "var(--surface-b)", backdropFilter: "blur(20px)" }}>
         <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
           <SheetHeader>
-            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><Crosshair size={20} className="text-cyan-400/60" />{EXERCISE_DRAWER_COPY.title}</SheetTitle>
+            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><CandyIcon name="crosshair" className="h-5 w-5" />{EXERCISE_DRAWER_COPY.title}</SheetTitle>
             <SheetDescription className="text-cyan-100/75">
               {PIECE_LABELS[piece]}
             </SheetDescription>
@@ -117,7 +117,7 @@ export function ExerciseDrawer({
                         : "bg-slate-700/50 text-slate-500",
                   ].join(" ")}
                 >
-                  {isLocked ? <Lock size={12} /> : index + 1}
+                  {isLocked ? <CandyIcon name="lock" className="h-3 w-3" /> : index + 1}
                 </span>
 
                 {/* Description + type */}
@@ -127,9 +127,9 @@ export function ExerciseDrawer({
                   </p>
                   <p className="flex items-center gap-1 text-xs text-slate-400">
                     {exercise.isCapture ? (
-                      <><Swords size={10} /> Capture</>
+                      <><CandyIcon name="crosshair" className="h-2.5 w-2.5" /> Capture</>
                     ) : (
-                      <><MoveRight size={10} /> Movement</>
+                      <><CandyIcon name="move" className="h-2.5 w-2.5" /> Movement</>
                     )}
                   </p>
                 </div>

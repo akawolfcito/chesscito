@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Crown, Trophy, ArrowLeft } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { TrophyList } from "@/components/trophies/trophy-list";
 import { getVictoryAddress } from "@/lib/game/victory-events";
 import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
@@ -149,7 +149,12 @@ export default function TrophiesPage() {
             href="/"
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.10]"
           >
-            <ArrowLeft className="h-4 w-4 text-slate-300" />
+            <img
+              src="/art/redesign/banners/btn-back.png"
+              alt=""
+              aria-hidden="true"
+              className="h-7 w-7 object-contain"
+            />
           </Link>
           <div>
             <h1 className="text-xl font-bold text-slate-100">
@@ -176,7 +181,7 @@ export default function TrophiesPage() {
             <section className="mb-6">
               {/* TODO: tokenize rgba(200,180,130,0.55) → CSS variable e.g. var(--color-label-gold) */}
               <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[rgba(200,180,130,0.55)]" style={{ textShadow: "var(--text-shadow-label)" }}>
-                <Crown className="h-3.5 w-3.5 text-[rgba(220,190,100,0.7)] drop-shadow-[0_0_3px_rgba(200,170,100,0.2)]" />
+                <CandyIcon name="crown" className="h-4 w-4" />
                 {TROPHY_VITRINE_COPY.myVictories}
               </h2>
 
@@ -217,7 +222,7 @@ export default function TrophiesPage() {
             <section className="mb-6">
               {/* TODO: tokenize rgba(200,180,130,0.55) → CSS variable e.g. var(--color-label-gold) */}
               <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[rgba(200,180,130,0.55)]" style={{ textShadow: "var(--text-shadow-label)" }}>
-                <Trophy className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.4)]" />
+                <CandyIcon name="trophy" className="h-4 w-4" />
                 {TROPHY_VITRINE_COPY.hallOfFame}
               </h2>
 

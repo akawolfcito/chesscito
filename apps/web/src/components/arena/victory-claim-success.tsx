@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { RotateCcw, Link2 } from "lucide-react";
+import { Link2 } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -106,7 +107,7 @@ export function VictoryClaimSuccess({
             onClick={onPlayAgain}
             className="shadow-[0_0_16px_rgba(20,184,166,0.25)] hover:shadow-[0_0_24px_rgba(20,184,166,0.4)]"
           >
-            <RotateCcw size={16} className="inline -mt-0.5" /> {ARENA_COPY.playAgain}
+            <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
           </Button>
 
           {/* Secondary (utility): Share icon strip */}

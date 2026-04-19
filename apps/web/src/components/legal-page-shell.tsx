@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
 type LegalPageShellProps = {
   title: string;
@@ -14,10 +13,15 @@ export function LegalPageShell({ title, backHref = "/about", children }: LegalPa
         <header className="flex items-center gap-3 border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] px-5 py-5 rounded-t-3xl">
           <Link
             href={backHref}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.10] text-cyan-200/80 transition hover:text-cyan-50"
+            className="flex h-11 w-11 items-center justify-center"
             aria-label="Go back"
           >
-            <ArrowLeft size={20} />
+            <img
+              src="/art/redesign/banners/btn-back.png"
+              alt=""
+              aria-hidden="true"
+              className="h-8 w-8 object-contain"
+            />
           </Link>
           <h1 className="text-xl font-bold text-slate-100">{title}</h1>
         </header>

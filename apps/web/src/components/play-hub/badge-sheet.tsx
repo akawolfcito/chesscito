@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, Lock, Trophy } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
   SheetContent,
@@ -119,7 +119,7 @@ function BadgeCard({
       <div className="shrink-0">
         {isClaimed ? (
           <span className="flex items-center gap-1 text-xs font-semibold text-emerald-400">
-            <Check className="h-3.5 w-3.5" aria-hidden="true" /> {BADGE_SHEET_COPY.owned}
+            <CandyIcon name="check" className="h-3.5 w-3.5" /> {BADGE_SHEET_COPY.owned}
           </span>
         ) : isClaimable ? (
           <Button
@@ -135,7 +135,7 @@ function BadgeCard({
             {isThisBusy ? BADGE_SHEET_COPY.claiming : BADGE_SHEET_COPY.claimBadge}
           </Button>
         ) : (
-          <Lock className="h-4 w-4 text-cyan-100/20" aria-hidden="true" />
+          <CandyIcon name="lock" className="h-4 w-4 opacity-50" />
         )}
       </div>
     </div>
@@ -201,10 +201,12 @@ export function BadgeSheet({
           aria-label="Badges"
           className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
         >
-          <picture>
-            <source srcSet="/art/badge-menu.webp" type="image/webp" />
-            <img src="/art/badge-menu.png" alt="" aria-hidden="true" className="h-full w-full object-contain p-0.5 dock-treat-base" />
-          </picture>
+          <img
+            src="/art/badge-menu.png"
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-contain p-0.5 dock-treat-base"
+          />
           {showNotification ? (
             <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
@@ -216,7 +218,7 @@ export function BadgeSheet({
       <SheetContent side="bottom" className="mission-shell sheet-bg-badges flex max-h-[85dvh] flex-col rounded-t-3xl border-white/[0.10]">
         <div className="shrink-0 border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
           <SheetHeader>
-            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><Trophy size={20} className="text-emerald-400/60" />{BADGE_SHEET_COPY.title}</SheetTitle>
+            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><CandyIcon name="trophy" className="h-5 w-5" />{BADGE_SHEET_COPY.title}</SheetTitle>
             <SheetDescription className="text-cyan-100/75">{BADGE_SHEET_COPY.subtitle}</SheetDescription>
             <div className="mt-2 flex items-center gap-2">
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-700/50">
@@ -248,7 +250,7 @@ export function BadgeSheet({
             onClick={() => onOpenChange(false)}
             className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-amber-500/[0.08] px-4 py-3.5 text-sm font-semibold text-amber-300 ring-1 ring-amber-400/15 transition hover:bg-amber-500/20"
           >
-            <Trophy className="h-5 w-5" />
+            <CandyIcon name="trophy" className="h-5 w-5" />
             {BADGE_SHEET_COPY.viewTrophies}
           </Link>
           <Link

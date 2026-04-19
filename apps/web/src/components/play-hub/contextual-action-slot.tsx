@@ -1,8 +1,7 @@
 "use client";
 
 import type { ContextAction } from "@/lib/game/context-action";
-import type { LucideIcon } from "lucide-react";
-import { Star, Shield, Award, RotateCcw, Wallet, ArrowLeftRight } from "lucide-react";
+import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
 import { FOOTER_CTA_COPY } from "@/lib/content/editorial";
 
 type ContextualActionSlotProps = {
@@ -53,13 +52,13 @@ const ACTION_STYLES: Record<
   },
 };
 
-const ACTION_ICON: Record<Exclude<ContextAction, null>, LucideIcon> = {
-  submitScore: Star,
-  useShield: Shield,
-  claimBadge: Award,
-  retry: RotateCcw,
-  connectWallet: Wallet,
-  switchNetwork: ArrowLeftRight,
+const ACTION_ICON: Record<Exclude<ContextAction, null>, CandyIconName> = {
+  submitScore: "star",
+  useShield: "shield",
+  claimBadge: "trophy",
+  retry: "refresh",
+  connectWallet: "wallet",
+  switchNetwork: "refresh", // no dedicated swap-chain sprite yet
 };
 
 function getHandler(
@@ -97,7 +96,7 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
         {isBusy ? (
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
         ) : (
-          (() => { const Icon = ACTION_ICON[action]; return <Icon size={18} />; })()
+          <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
         )}
         <span>{label}</span>
         {action === "useShield" && !isBusy ? (

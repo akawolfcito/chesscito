@@ -9,11 +9,11 @@ type Variant = {
 
 const VARIANTS: Record<PlayerCardVariant, Variant> = {
   you: {
-    src: "/art/redesign/avatars/card-you.png",
+    src: "/art/redesign/avatars/player-you.png",
     defaultAlt: "You",
   },
   bot: {
-    src: "/art/redesign/avatars/card-bot.png",
+    src: "/art/redesign/avatars/player-opponent.png",
     defaultAlt: "Bot",
   },
 };

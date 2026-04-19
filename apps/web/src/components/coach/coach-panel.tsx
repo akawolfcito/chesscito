@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
 import type { CoachResponse } from "@/lib/coach/types";
@@ -77,7 +77,7 @@ export function CoachPanel({
       {/* CTAs — Play Again primary, History secondary, Back to Hub tertiary */}
       <div className="mt-4 flex flex-col gap-2">
         <Button type="button" variant="game-primary" size="game" onClick={onPlayAgain}>
-          <RotateCcw size={16} className="inline -mt-0.5" /> {ARENA_COPY.playAgain}
+          <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
         </Button>
         {onViewHistory && (
           <Button type="button" variant="game-ghost" size="game-sm" onClick={onViewHistory}>

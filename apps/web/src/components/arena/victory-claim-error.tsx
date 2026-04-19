@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, RefreshCw } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -100,7 +100,7 @@ export function VictoryClaimError({
               onClick={onRetry}
               className="shadow-[0_0_16px_rgba(20,184,166,0.25)] hover:shadow-[0_0_24px_rgba(20,184,166,0.4)]"
             >
-              <RefreshCw size={16} className="inline -mt-0.5" /> {VICTORY_CLAIM_COPY.tryAgain}
+              <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {VICTORY_CLAIM_COPY.tryAgain}
             </Button>
           )}
 
@@ -111,7 +111,7 @@ export function VictoryClaimError({
             size="game-sm"
             onClick={onPlayAgain}
           >
-            <RotateCcw size={14} className="inline -mt-0.5" /> {ARENA_COPY.playAgain}
+            <CandyIcon name="refresh" className="inline h-3.5 w-3.5 -mt-0.5" /> {ARENA_COPY.playAgain}
           </Button>
 
           {/* Back to Hub */}

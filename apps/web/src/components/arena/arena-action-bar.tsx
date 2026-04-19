@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Flag, RotateCcw } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ARENA_COPY } from "@/lib/content/editorial";
 
 type Props = {
@@ -54,9 +54,14 @@ export function ArenaActionBar({
       >
         <span className="arena-action-pill-icon">
           {confirmingResign ? (
-            <Check className="h-5 w-5" />
+            <CandyIcon name="check" className="h-7 w-7" />
           ) : (
-            <Flag className="h-5 w-5" />
+            <img
+              src="/art/redesign/banners/btn-resign.png"
+              alt=""
+              aria-hidden="true"
+              className="h-7 w-7 object-contain"
+            />
           )}
         </span>
         <span className="arena-action-pill-label">{ARENA_COPY.resign}</span>
@@ -80,7 +85,12 @@ export function ArenaActionBar({
         aria-label={ARENA_COPY.undo}
       >
         <span className="arena-action-pill-icon">
-          <RotateCcw className="h-5 w-5" />
+          <img
+            src="/art/redesign/banners/btn-undo.png"
+            alt=""
+            aria-hidden="true"
+            className="h-7 w-7 object-contain"
+          />
         </span>
         <span className="arena-action-pill-label">{ARENA_COPY.undo}</span>
       </button>

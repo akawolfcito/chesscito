@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ARENA_COPY, MISSION_BRIEFING_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ export function MissionBriefing({
           className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full text-white/30 transition-colors hover:text-white/60"
           aria-label="Close"
         >
-          <X className="h-4 w-4" />
+          <CandyIcon name="close" className="h-5 w-5" />
         </button>
         <picture>
           <source srcSet="/art/favicon-wolf.webp" type="image/webp" />

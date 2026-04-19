@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Trophy, Clock, Footprints, Share2 } from "lucide-react";
+import { Share2 } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { DIFFICULTY_LABELS, TROPHY_VITRINE_COPY, VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
@@ -91,7 +92,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
             {rank}
           </span>
         ) : (
-          <Trophy className="h-4 w-4 shrink-0 text-amber-400 drop-shadow-[0_0_4px_rgba(200,170,100,0.3)]" />
+          <CandyIcon name="trophy" className="h-4 w-4 shrink-0" />
         )}
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-semibold leading-none ${chip.className}`}
@@ -104,11 +105,11 @@ export function TrophyCard({ entry, variant, rank }: Props) {
 
       <div className="mt-1.5 flex items-center gap-3 text-xs text-slate-400">
         <span className="flex items-center gap-1">
-          <Footprints className="h-3.5 w-3.5" />
+          <CandyIcon name="move" className="h-3.5 w-3.5" />
           {entry.totalMoves} {TROPHY_VITRINE_COPY.movesLabel}
         </span>
         <span className="flex items-center gap-1">
-          <Clock className="h-3.5 w-3.5" />
+          <CandyIcon name="time" className="h-3.5 w-3.5" />
           {formatTimeMs(entry.timeMs)}
         </span>
 

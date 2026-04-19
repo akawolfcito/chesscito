@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Lock, Star, Timer } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS, PIECE_RAIL_COPY, PRACTICE_COPY, SCORE_UNIT } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { GameplayPanel } from "@/components/play-hub/gameplay-panel";
@@ -133,12 +133,12 @@ export function MissionPanel({
       <span className="h-4 w-px bg-[var(--shell-divider)]" />
       <div className="flex flex-1 items-center justify-center gap-4">
         <span className="game-label flex items-center gap-1 text-xs font-bold tabular-nums text-white/85">
-          <Star size={14} className="opacity-65" />
+          <CandyIcon name="star" className="h-3.5 w-3.5 opacity-80" />
           {score} <span className="text-white/40">{SCORE_UNIT}</span>
         </span>
         <span className="text-xs text-white/15">&middot;</span>
         <span className="game-label flex items-center gap-1 text-xs font-bold tabular-nums text-white/85">
-          <Timer size={14} className="opacity-65" />
+          <CandyIcon name="time" className="h-3.5 w-3.5 opacity-80" />
           {Number(timeMs) / 1000}s
         </span>
       </div>
@@ -227,7 +227,7 @@ export function MissionPanel({
                   )}
                   {isLocked && (
                     <span className="lock-indicator">
-                      <Lock size={14} />
+                      <CandyIcon name="lock" className="h-3.5 w-3.5" />
                     </span>
                   )}
                   {isLocked && (
