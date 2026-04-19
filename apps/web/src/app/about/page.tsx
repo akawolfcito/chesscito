@@ -21,6 +21,7 @@ export default function AboutPage() {
       {/* Identity */}
       <div className="flex flex-col items-center gap-2 pb-2 text-center">
         <picture>
+          <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
           <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
           <img
             src="/art/favicon-wolf.png"

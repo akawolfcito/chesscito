@@ -53,6 +53,7 @@ export function MissionBriefing({
           <CandyIcon name="close" className="h-4 w-4" />
         </button>
         <picture>
+          <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
           <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
           <img
             src="/art/favicon-wolf.png"

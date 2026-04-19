@@ -54,6 +54,7 @@ export function MissionDetailSheet({
 
         <div className="mt-4 flex items-center gap-3">
           <picture className="h-14 w-14 shrink-0">
+            <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
             <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
             <img
               src="/art/favicon-wolf.png"

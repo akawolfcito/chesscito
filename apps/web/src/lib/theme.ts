@@ -15,7 +15,7 @@ const THEMES: Record<AssetTheme, ThemeConfig> = {
   },
   candy: {
     piecesBase: "/art/redesign/pieces",
-    hasOptimizedFormats: false,
+    hasOptimizedFormats: true,
     pieceTintClass: { w: "arena-treat-natural", b: "arena-treat-natural" },
   },
 };

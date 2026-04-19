@@ -78,6 +78,7 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
             </div>
           )}
           <picture className="relative z-10">
+            <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
             <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
             <img
               src="/art/favicon-wolf.png"

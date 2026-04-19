@@ -12,6 +12,7 @@ export default function PlayHubError({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
       <picture>
+        <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
         <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
         <img
           src="/art/favicon-wolf.png"

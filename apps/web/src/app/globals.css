@@ -663,7 +663,11 @@
     content: "";
     position: absolute;
     inset: 0;
-    background-image: url("/art/redesign/board/board-ch.png");
+    background-image: image-set(
+      url("/art/redesign/board/board-ch.avif") type("image/avif"),
+      url("/art/redesign/board/board-ch.webp") type("image/webp"),
+      url("/art/redesign/board/board-ch.png") type("image/png")
+    );
     background-size: 100% 100%;
     background-position: center;
     background-repeat: no-repeat;

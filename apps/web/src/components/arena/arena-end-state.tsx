@@ -128,6 +128,7 @@ export function ArenaEndState({
     >
       <div className="panel-showcase mx-4 flex w-full max-w-[340px] flex-col items-center gap-4 px-6 pb-6 pt-8 shadow-[0_0_60px_rgba(251,113,133,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
         <picture>
+          <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
           <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
           <img
             src="/art/favicon-wolf.png"

@@ -10,6 +10,7 @@ export default function VictoryError({
   return (
     <div className="mx-auto flex min-h-[100dvh] w-full max-w-[var(--app-max-width)] flex-col items-center justify-center gap-4 bg-[var(--surface-frosted-solid)] px-6 text-center">
       <picture>
+        <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
         <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
         <img
           src="/art/favicon-wolf.png"
