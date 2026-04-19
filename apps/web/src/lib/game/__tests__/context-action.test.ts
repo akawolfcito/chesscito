@@ -1,5 +1,4 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, expect } from "vitest";
 
 import { getContextAction } from "../context-action.js";
 import type { ContextActionState } from "../context-action.js";
@@ -16,120 +15,78 @@ const BASE: ContextActionState = {
 describe("getContextAction", () => {
   // ── Wallet guards ──────────────────────────────────────
   it("returns null when disconnected and nothing pending", () => {
-    assert.equal(
-      getContextAction({ ...BASE, isConnected: false }),
-      null
-    );
+    expect(getContextAction({ ...BASE, isConnected: false })).toEqual(null);
   });
 
   it("returns null when wrong chain and nothing pending", () => {
-    assert.equal(
-      getContextAction({ ...BASE, isCorrectChain: false }),
-      null
-    );
+    expect(getContextAction({ ...BASE, isCorrectChain: false })).toEqual(null);
   });
 
   // ── Wallet-state actions ───────────────────────────────
   it("returns connectWallet when disconnected with score pending", () => {
-    assert.equal(
-      getContextAction({ ...BASE, isConnected: false, scorePending: true }),
-      "connectWallet"
-    );
+    expect(getContextAction({ ...BASE, isConnected: false, scorePending: true })).toEqual("connectWallet");
   });
 
   it("returns switchNetwork when wrong chain with score pending", () => {
-    assert.equal(
-      getContextAction({ ...BASE, isConnected: true, isCorrectChain: false, scorePending: true }),
-      "switchNetwork"
-    );
+    expect(getContextAction({ ...BASE, isConnected: true, isCorrectChain: false, scorePending: true })).toEqual("switchNetwork");
   });
 
   it("returns connectWallet when disconnected with badge claimable", () => {
-    assert.equal(
-      getContextAction({ ...BASE, isConnected: false, badgeClaimable: true }),
-      "connectWallet"
-    );
+    expect(getContextAction({ ...BASE, isConnected: false, badgeClaimable: true })).toEqual("connectWallet");
   });
 
   // ── Normal gameplay ────────────────────────────────────
   it("returns null during normal gameplay (ready phase)", () => {
-    assert.equal(getContextAction(BASE), null);
+    expect(getContextAction(BASE)).toEqual(null);
   });
 
   it("returns null during success phase (auto-advance)", () => {
-    assert.equal(
-      getContextAction({ ...BASE, phase: "success" }),
-      null
-    );
+    expect(getContextAction({ ...BASE, phase: "success" })).toEqual(null);
   });
 
   // ── Failure states ─────────────────────────────────────
   it("returns useShield on failure with shields available", () => {
-    assert.equal(
-      getContextAction({ ...BASE, phase: "failure", shieldsAvailable: 3 }),
-      "useShield"
-    );
+    expect(getContextAction({ ...BASE, phase: "failure", shieldsAvailable: 3 })).toEqual("useShield");
   });
 
   it("returns retry on failure with no shields", () => {
-    assert.equal(
-      getContextAction({ ...BASE, phase: "failure", shieldsAvailable: 0 }),
-      "retry"
-    );
+    expect(getContextAction({ ...BASE, phase: "failure", shieldsAvailable: 0 })).toEqual("retry");
   });
 
   it("returns retry on failure when disconnected", () => {
-    assert.equal(
-      getContextAction({ ...BASE, phase: "failure", isConnected: false }),
-      "retry"
-    );
+    expect(getContextAction({ ...BASE, phase: "failure", isConnected: false })).toEqual("retry");
   });
 
   // ── Progression states ─────────────────────────────────
   it("returns submitScore when score is pending", () => {
-    assert.equal(
-      getContextAction({ ...BASE, scorePending: true }),
-      "submitScore"
-    );
+    expect(getContextAction({ ...BASE, scorePending: true })).toEqual("submitScore");
   });
 
   it("returns claimBadge when badge is claimable", () => {
-    assert.equal(
-      getContextAction({ ...BASE, badgeClaimable: true }),
-      "claimBadge"
-    );
+    expect(getContextAction({ ...BASE, badgeClaimable: true })).toEqual("claimBadge");
   });
 
   // ── Priority: claimBadge > submitScore ─────────────────
   it("prioritizes claimBadge over submitScore", () => {
-    assert.equal(
-      getContextAction({ ...BASE, scorePending: true, badgeClaimable: true }),
-      "claimBadge"
-    );
+    expect(getContextAction({ ...BASE, scorePending: true, badgeClaimable: true })).toEqual("claimBadge");
   });
 
   // ── Priority: failure > everything ─────────────────────
   it("prioritizes useShield over scorePending on failure", () => {
-    assert.equal(
-      getContextAction({
+    expect(getContextAction({
         ...BASE,
         phase: "failure",
         shieldsAvailable: 2,
         scorePending: true,
-      }),
-      "useShield"
-    );
+      })).toEqual("useShield");
   });
 
   it("prioritizes retry over badgeClaimable on failure without shields", () => {
-    assert.equal(
-      getContextAction({
+    expect(getContextAction({
         ...BASE,
         phase: "failure",
         shieldsAvailable: 0,
         badgeClaimable: true,
-      }),
-      "retry"
-    );
+      })).toEqual("retry");
   });
 });

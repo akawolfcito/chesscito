@@ -1,5 +1,4 @@
-import { describe, it, beforeEach, afterEach } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, beforeEach, afterEach, expect } from "vitest";
 
 import {
   enforceOrigin,
@@ -55,72 +54,58 @@ describe("enforceOrigin", () => {
 
   it("allows requests with no origin/referer (MiniPay WebView)", () => {
     withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
-      assert.doesNotThrow(() => enforceOrigin(fakeRequest()));
+      expect(() => enforceOrigin(fakeRequest())).not.toThrow();
     });
   });
 
   it("allows requests when no allowed hosts are configured (dev)", () => {
-    assert.doesNotThrow(() =>
-      enforceOrigin(fakeRequest({ origin: "http://localhost:3000" }))
-    );
+    expect(() =>
+      enforceOrigin(fakeRequest({ origin: "http://localhost:3000" }))).not.toThrow();
   });
 
   it("allows matching origin with VERCEL_PROJECT_PRODUCTION_URL", () => {
     withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
-      assert.doesNotThrow(() =>
-        enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app" }))
-      );
+      expect(() =>
+        enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app" }))).not.toThrow();
     });
   });
 
   it("allows matching origin with NEXT_PUBLIC_APP_URL (with protocol)", () => {
     withEnv({ NEXT_PUBLIC_APP_URL: "https://chesscito.vercel.app" }, () => {
-      assert.doesNotThrow(() =>
-        enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app" }))
-      );
+      expect(() =>
+        enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app" }))).not.toThrow();
     });
   });
 
   it("allows matching origin with VERCEL_URL (deployment URL)", () => {
     withEnv({ VERCEL_URL: "chesscito-abc123.vercel.app" }, () => {
-      assert.doesNotThrow(() =>
-        enforceOrigin(fakeRequest({ origin: "https://chesscito-abc123.vercel.app" }))
-      );
+      expect(() =>
+        enforceOrigin(fakeRequest({ origin: "https://chesscito-abc123.vercel.app" }))).not.toThrow();
     });
   });
 
   it("rejects mismatched origin", () => {
     withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
-      assert.throws(
-        () => enforceOrigin(fakeRequest({ origin: "https://evil.com" })),
-        { message: "Forbidden" }
-      );
+      expect(() => enforceOrigin(fakeRequest({ origin: "https://evil.com" }))).toThrow("Forbidden");
     });
   });
 
   it("rejects subdomain spoofing (e.g. chesscito.vercel.app.evil.com)", () => {
     withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
-      assert.throws(
-        () => enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app.evil.com" })),
-        { message: "Forbidden" }
-      );
+      expect(() => enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app.evil.com" }))).toThrow("Forbidden");
     });
   });
 
   it("falls back to referer when origin is absent", () => {
     withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
-      assert.doesNotThrow(() =>
-        enforceOrigin(fakeRequest({ referer: "https://chesscito.vercel.app/" }))
-      );
+      expect(() =>
+        enforceOrigin(fakeRequest({ referer: "https://chesscito.vercel.app/" }))).not.toThrow();
     });
   });
 
   it("rejects malformed URLs", () => {
     withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
-      assert.throws(
-        () => enforceOrigin(fakeRequest({ origin: "not-a-url" })),
-        { message: "Forbidden" }
-      );
+      expect(() => enforceOrigin(fakeRequest({ origin: "not-a-url" }))).toThrow("Forbidden");
     });
   });
 
@@ -130,13 +115,11 @@ describe("enforceOrigin", () => {
       VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app",
     }, () => {
       // Production alias
-      assert.doesNotThrow(() =>
-        enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app" }))
-      );
+      expect(() =>
+        enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app" }))).not.toThrow();
       // Deployment URL
-      assert.doesNotThrow(() =>
-        enforceOrigin(fakeRequest({ origin: "https://chesscito-deploy123.vercel.app" }))
-      );
+      expect(() =>
+        enforceOrigin(fakeRequest({ origin: "https://chesscito-deploy123.vercel.app" }))).not.toThrow();
     });
   });
 });
@@ -150,22 +133,22 @@ describe("enforceOrigin", () => {
 describe("parseAddress", () => {
   it("accepts valid checksummed address", () => {
     const result = parseAddress("0xCc4179A22b473Ea2eB2B9b9b210458d0F60Fc2dD");
-    assert.equal(result, "0xCc4179A22b473Ea2eB2B9b9b210458d0F60Fc2dD");
+    expect(result).toEqual("0xCc4179A22b473Ea2eB2B9b9b210458d0F60Fc2dD");
   });
 
   it("accepts valid lowercase address and checksums it", () => {
     const result = parseAddress("0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd");
-    assert.equal(result, "0xCc4179A22b473Ea2eB2B9b9b210458d0F60Fc2dD");
+    expect(result).toEqual("0xCc4179A22b473Ea2eB2B9b9b210458d0F60Fc2dD");
   });
 
   it("rejects non-string input", () => {
-    assert.throws(() => parseAddress(123), { message: "Invalid player address" });
-    assert.throws(() => parseAddress(null), { message: "Invalid player address" });
-    assert.throws(() => parseAddress(undefined), { message: "Invalid player address" });
+    expect(() => parseAddress(123)).toThrow("Invalid player address");
+    expect(() => parseAddress(null)).toThrow("Invalid player address");
+    expect(() => parseAddress(undefined)).toThrow("Invalid player address");
   });
 
   it("rejects invalid address string", () => {
-    assert.throws(() => parseAddress("not-an-address"));
+    expect(() => parseAddress("not-an-address")).toThrow();
   });
 });
 
@@ -173,38 +156,38 @@ describe("parseAddress", () => {
 
 describe("parseInteger", () => {
   it("accepts valid integer within range", () => {
-    assert.equal(parseInteger(5, "test", 1, 10), 5n);
+    expect(parseInteger(5, "test", 1, 10)).toEqual(5n);
   });
 
   it("accepts boundary values", () => {
-    assert.equal(parseInteger(1, "test", 1, 10), 1n);
-    assert.equal(parseInteger(10, "test", 1, 10), 10n);
+    expect(parseInteger(1, "test", 1, 10)).toEqual(1n);
+    expect(parseInteger(10, "test", 1, 10)).toEqual(10n);
   });
 
   it("rejects value below min", () => {
-    assert.throws(() => parseInteger(0, "score", 1, 1500), { message: "Invalid score" });
+    expect(() => parseInteger(0, "score", 1, 1500)).toThrow("Invalid score");
   });
 
   it("rejects value above max", () => {
-    assert.throws(() => parseInteger(1501, "score", 1, 1500), { message: "Invalid score" });
+    expect(() => parseInteger(1501, "score", 1, 1500)).toThrow("Invalid score");
   });
 
   it("rejects non-integer", () => {
-    assert.throws(() => parseInteger(1.5, "test", 1, 10), { message: "Invalid test" });
+    expect(() => parseInteger(1.5, "test", 1, 10)).toThrow("Invalid test");
   });
 
   it("rejects non-number types", () => {
-    assert.throws(() => parseInteger("5", "test", 1, 10), { message: "Invalid test" });
-    assert.throws(() => parseInteger(null, "test", 1, 10), { message: "Invalid test" });
+    expect(() => parseInteger("5", "test", 1, 10)).toThrow("Invalid test");
+    expect(() => parseInteger(null, "test", 1, 10)).toThrow("Invalid test");
   });
 
   it("validates score range matches game structure (1-1500)", () => {
     // 1 star minimum × 100 pts
-    assert.equal(parseInteger(100, "score", 0, 1500), 100n);
+    expect(parseInteger(100, "score", 0, 1500)).toEqual(100n);
     // 15 stars maximum × 100 pts
-    assert.equal(parseInteger(1500, "score", 0, 1500), 1500n);
+    expect(parseInteger(1500, "score", 0, 1500)).toEqual(1500n);
     // Over max
-    assert.throws(() => parseInteger(1501, "score", 0, 1500), { message: "Invalid score" });
+    expect(() => parseInteger(1501, "score", 0, 1500)).toThrow("Invalid score");
   });
 });
 
@@ -212,15 +195,15 @@ describe("parseInteger", () => {
 
 describe("getRequestIp", () => {
   it("extracts IP from x-forwarded-for (first entry)", () => {
-    assert.equal(getRequestIp(fakeRequest({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" })), "1.2.3.4");
+    expect(getRequestIp(fakeRequest({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" }))).toEqual("1.2.3.4");
   });
 
   it("falls back to x-real-ip", () => {
-    assert.equal(getRequestIp(fakeRequest({ "x-real-ip": "9.8.7.6" })), "9.8.7.6");
+    expect(getRequestIp(fakeRequest({ "x-real-ip": "9.8.7.6" }))).toEqual("9.8.7.6");
   });
 
   it("returns 'unknown' when no IP headers present", () => {
-    assert.equal(getRequestIp(fakeRequest()), "unknown");
+    expect(getRequestIp(fakeRequest())).toEqual("unknown");
   });
 });
 
@@ -228,13 +211,13 @@ describe("getRequestIp", () => {
 
 describe("createNonce", () => {
   it("returns a bigint", () => {
-    assert.equal(typeof createNonce(), "bigint");
+    expect(typeof createNonce()).toEqual("bigint");
   });
 
   it("returns unique values", () => {
     const a = createNonce();
     const b = createNonce();
-    assert.notEqual(a, b);
+    expect(a).not.toEqual(b);
   });
 });
 
@@ -244,6 +227,6 @@ describe("createDeadline", () => {
     const deadline = createDeadline();
     const diff = deadline - now;
     // Should be between 9 and 11 minutes (account for execution time)
-    assert.ok(diff >= 540n && diff <= 660n, `Deadline diff ${diff}s not in expected range`);
+    expect(diff >= 540n && diff <= 660n).toBeTruthy();
   });
 });

@@ -1,5 +1,4 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, expect } from "vitest";
 import { generateQuickReview } from "../fallback-engine.js";
 
 describe("generateQuickReview", () => {
@@ -10,7 +9,7 @@ describe("generateQuickReview", () => {
       totalMoves: 12,
       elapsedMs: 30000,
     });
-    assert.equal(result.kind, "quick");
+    expect(result.kind).toEqual("quick");
   });
 
   it("generates summary for a win", () => {
@@ -20,7 +19,7 @@ describe("generateQuickReview", () => {
       totalMoves: 12,
       elapsedMs: 30000,
     });
-    assert.ok(result.summary.length > 0);
+    expect(result.summary.length > 0).toBeTruthy();
   });
 
   it("suggests harder difficulty on easy win", () => {
@@ -30,7 +29,7 @@ describe("generateQuickReview", () => {
       totalMoves: 10,
       elapsedMs: 20000,
     });
-    assert.ok(result.tips.some((t) => t.toLowerCase().includes("medium") || t.toLowerCase().includes("harder")));
+    expect(result.tips.some((t) => t.toLowerCase().includes("medium") || t.toLowerCase().includes("harder"))).toBeTruthy();
   });
 
   it("encourages on a loss", () => {
@@ -40,8 +39,8 @@ describe("generateQuickReview", () => {
       totalMoves: 40,
       elapsedMs: 120000,
     });
-    assert.ok(result.summary.length > 0);
-    assert.ok(result.tips.length > 0);
+    expect(result.summary.length > 0).toBeTruthy();
+    expect(result.tips.length > 0).toBeTruthy();
   });
 
   it("handles resigned result", () => {
@@ -51,7 +50,7 @@ describe("generateQuickReview", () => {
       totalMoves: 15,
       elapsedMs: 45000,
     });
-    assert.equal(result.kind, "quick");
-    assert.ok(result.tips.length > 0);
+    expect(result.kind).toEqual("quick");
+    expect(result.tips.length > 0).toBeTruthy();
   });
 });

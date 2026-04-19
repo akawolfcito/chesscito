@@ -1,5 +1,4 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, expect } from "vitest";
 import { normalizeCoachResponse } from "../normalize.js";
 
 describe("normalizeCoachResponse", () => {
@@ -12,17 +11,17 @@ describe("normalizeCoachResponse", () => {
       praise: ["Good opening"],
     };
     const result = normalizeCoachResponse(raw);
-    assert.equal(result.success, true);
+    expect(result.success).toEqual(true);
     if (result.success) {
-      assert.equal(result.data.kind, "full");
-      assert.equal(result.data.mistakes.length, 1);
+      expect(result.data.kind).toEqual("full");
+      expect(result.data.mistakes.length).toEqual(1);
     }
   });
 
   it("rejects response missing kind", () => {
     const raw = { summary: "test", mistakes: [], lessons: [], praise: [] };
     const result = normalizeCoachResponse(raw);
-    assert.equal(result.success, false);
+    expect(result.success).toEqual(false);
   });
 
   it("rejects summary over 500 chars", () => {
@@ -34,7 +33,7 @@ describe("normalizeCoachResponse", () => {
       praise: [],
     };
     const result = normalizeCoachResponse(raw);
-    assert.equal(result.success, false);
+    expect(result.success).toEqual(false);
   });
 
   it("caps mistakes at 10", () => {
@@ -46,14 +45,14 @@ describe("normalizeCoachResponse", () => {
     }));
     const raw = { kind: "full", summary: "test", mistakes, lessons: [], praise: [] };
     const result = normalizeCoachResponse(raw);
-    assert.equal(result.success, true);
+    expect(result.success).toEqual(true);
     if (result.success) {
-      assert.ok(result.data.mistakes.length <= 10);
+      expect(result.data.mistakes.length <= 10).toBeTruthy();
     }
   });
 
   it("returns failure for completely invalid data", () => {
     const result = normalizeCoachResponse("not an object");
-    assert.equal(result.success, false);
+    expect(result.success).toEqual(false);
   });
 });

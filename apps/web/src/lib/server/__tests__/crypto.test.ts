@@ -1,5 +1,4 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, expect } from "vitest";
 
 import { encryptSignerKey, decryptSignerKey } from "../crypto.js";
 
@@ -11,16 +10,16 @@ describe("encryptSignerKey", () => {
   it("returns iv:authTag:ciphertext format (3 hex segments)", () => {
     const result = encryptSignerKey(TEST_KEY, TEST_PASSPHRASE);
     const segments = result.split(":");
-    assert.equal(segments.length, 3, `Expected 3 segments, got ${segments.length}`);
+    expect(segments.length).toEqual(3);
     for (const seg of segments) {
-      assert.match(seg, /^[0-9a-f]+$/i, `Segment is not valid hex: ${seg}`);
+      expect(seg).toMatch(/^[0-9a-f]+$/i);
     }
   });
 
   it("produces different ciphertext each call (random IV)", () => {
     const a = encryptSignerKey(TEST_KEY, TEST_PASSPHRASE);
     const b = encryptSignerKey(TEST_KEY, TEST_PASSPHRASE);
-    assert.notEqual(a, b);
+    expect(a).not.toEqual(b);
   });
 });
 
@@ -28,46 +27,29 @@ describe("decryptSignerKey", () => {
   it("roundtrips: encrypt then decrypt returns original key", () => {
     const encrypted = encryptSignerKey(TEST_KEY, TEST_PASSPHRASE);
     const decrypted = decryptSignerKey(encrypted, TEST_PASSPHRASE);
-    assert.equal(decrypted, TEST_KEY);
+    expect(decrypted).toEqual(TEST_KEY);
   });
 
   it("throws on wrong passphrase", () => {
     const encrypted = encryptSignerKey(TEST_KEY, TEST_PASSPHRASE);
     const wrongPassphrase = "b".repeat(64);
-    assert.throws(() => decryptSignerKey(encrypted, wrongPassphrase));
+    expect(() => decryptSignerKey(encrypted, wrongPassphrase)).toThrow();
   });
 
   it("throws on malformed input (wrong segment count)", () => {
-    assert.throws(
-      () => decryptSignerKey("onlyone", TEST_PASSPHRASE),
-      { message: "Invalid encrypted format: expected iv:authTag:ciphertext" }
-    );
-    assert.throws(
-      () => decryptSignerKey("one:two", TEST_PASSPHRASE),
-      { message: "Invalid encrypted format: expected iv:authTag:ciphertext" }
-    );
-    assert.throws(
-      () => decryptSignerKey("one:two:three:four", TEST_PASSPHRASE),
-      { message: "Invalid encrypted format: expected iv:authTag:ciphertext" }
-    );
+    expect(() => decryptSignerKey("onlyone", TEST_PASSPHRASE)).toThrow("Invalid encrypted format: expected iv:authTag:ciphertext");
+    expect(() => decryptSignerKey("one:two", TEST_PASSPHRASE)).toThrow("Invalid encrypted format: expected iv:authTag:ciphertext");
+    expect(() => decryptSignerKey("one:two:three:four", TEST_PASSPHRASE)).toThrow("Invalid encrypted format: expected iv:authTag:ciphertext");
   });
 
   it("throws on invalid hex in segments", () => {
-    assert.throws(
-      () => decryptSignerKey("zzzz:yyyy:xxxx", TEST_PASSPHRASE)
-    );
+    expect(() => decryptSignerKey("zzzz:yyyy:xxxx", TEST_PASSPHRASE)).toThrow();
   });
 
   it("throws on invalid passphrase format", () => {
     const encrypted = encryptSignerKey(TEST_KEY, TEST_PASSPHRASE);
-    assert.throws(
-      () => decryptSignerKey(encrypted, "too-short"),
-      { message: "Passphrase must be exactly 64 hex characters (32 bytes)" }
-    );
-    assert.throws(
-      () => decryptSignerKey(encrypted, "z".repeat(64)),
-      { message: "Passphrase must be exactly 64 hex characters (32 bytes)" }
-    );
+    expect(() => decryptSignerKey(encrypted, "too-short")).toThrow("Passphrase must be exactly 64 hex characters (32 bytes)");
+    expect(() => decryptSignerKey(encrypted, "z".repeat(64))).toThrow("Passphrase must be exactly 64 hex characters (32 bytes)");
   });
 });
 
@@ -80,7 +62,7 @@ describe("getDemoConfig integration", () => {
 
     // Decrypt and verify it's a valid hex key
     const decrypted = decryptSignerKey(encrypted, passphrase);
-    assert.equal(decrypted, testKey);
-    assert.match(decrypted, /^0x[0-9a-fA-F]{64}$/);
+    expect(decrypted).toEqual(testKey);
+    expect(decrypted).toMatch(/^0x[0-9a-fA-F]{64}$/);
   });
 });

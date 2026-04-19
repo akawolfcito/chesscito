@@ -1,5 +1,4 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, expect } from "vitest";
 import { validateGameRecord } from "../validate-game.js";
 
 describe("validateGameRecord", () => {
@@ -9,10 +8,10 @@ describe("validateGameRecord", () => {
       result: "win",
       difficulty: "easy",
     });
-    assert.equal(result.valid, true);
+    expect(result.valid).toEqual(true);
     if (result.valid) {
-      assert.equal(result.computedResult, "win");
-      assert.equal(result.totalMoves, 7);
+      expect(result.computedResult).toEqual("win");
+      expect(result.totalMoves).toEqual(7);
     }
   });
 
@@ -22,9 +21,9 @@ describe("validateGameRecord", () => {
       result: "win",
       difficulty: "easy",
     });
-    assert.equal(result.valid, false);
+    expect(result.valid).toEqual(false);
     if (!result.valid) {
-      assert.ok(result.error.includes("Illegal move"));
+      expect(result.error.includes("Illegal move")).toBeTruthy();
     }
   });
 
@@ -34,9 +33,9 @@ describe("validateGameRecord", () => {
       result: "draw",
       difficulty: "easy",
     });
-    assert.equal(result.valid, true);
+    expect(result.valid).toEqual(true);
     if (result.valid) {
-      assert.equal(result.computedResult, "win");
+      expect(result.computedResult).toEqual("win");
     }
   });
 
@@ -46,7 +45,7 @@ describe("validateGameRecord", () => {
       result: "draw",
       difficulty: "easy",
     });
-    assert.equal(result.valid, false);
+    expect(result.valid).toEqual(false);
   });
 
   it("accepts a valid resignation (non-terminal position)", () => {
@@ -55,9 +54,9 @@ describe("validateGameRecord", () => {
       result: "resigned",
       difficulty: "medium",
     });
-    assert.equal(result.valid, true);
+    expect(result.valid).toEqual(true);
     if (result.valid) {
-      assert.equal(result.computedResult, "resigned");
+      expect(result.computedResult).toEqual("resigned");
     }
   });
 });

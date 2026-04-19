@@ -1,5 +1,4 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
+import { describe, it, expect } from "vitest";
 import { evaluateBadges } from "../badge-evaluator.js";
 import type { GameRecord } from "../types.js";
 
@@ -19,14 +18,14 @@ function makeGame(overrides: Partial<GameRecord> = {}): GameRecord {
 describe("evaluateBadges", () => {
   it("returns no earned badges for empty game list", () => {
     const badges = evaluateBadges([]);
-    assert.ok(badges.every((b) => b.earned === false));
+    expect(badges.every((b) => b.earned === false)).toBeTruthy();
   });
 
   it("does not award tactics badge on easy games only", () => {
     const games = Array.from({ length: 10 }, () => makeGame({ difficulty: "easy", result: "win" }));
     const badges = evaluateBadges(games);
     const tactics = badges.find((b) => b.area === "tactics");
-    assert.equal(tactics?.earned, false);
+    expect(tactics?.earned).toEqual(false);
   });
 
   it("awards tactics badge with 40%+ win rate on hard", () => {
@@ -36,14 +35,14 @@ describe("evaluateBadges", () => {
     ];
     const badges = evaluateBadges(games);
     const tactics = badges.find((b) => b.area === "tactics");
-    assert.equal(tactics?.earned, true);
+    expect(tactics?.earned).toEqual(true);
   });
 
   it("requires diversity for consistency badge", () => {
     const games = Array.from({ length: 20 }, () => makeGame({ difficulty: "easy", result: "win" }));
     const badges = evaluateBadges(games);
     const consistency = badges.find((b) => b.area === "consistency");
-    assert.equal(consistency?.earned, false);
+    expect(consistency?.earned).toEqual(false);
   });
 
   it("awards consistency badge with diverse difficulties", () => {
@@ -53,6 +52,6 @@ describe("evaluateBadges", () => {
     ];
     const badges = evaluateBadges(games);
     const consistency = badges.find((b) => b.area === "consistency");
-    assert.equal(consistency?.earned, true);
+    expect(consistency?.earned).toEqual(true);
   });
 });
