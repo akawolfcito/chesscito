@@ -40,7 +40,6 @@ import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
 import { ACCEPTED_TOKENS, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
 import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SHOP_ITEM_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
-import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
@@ -778,9 +777,9 @@ export default function PlayHubPage() {
     <div className="relative w-full overflow-x-hidden">
       {showSplash && (
         <div className="playhub-intro-overlay is-active" role="status" aria-live="polite" aria-busy="true">
-          <CandyIcon name="loading" className="h-20 w-20 animate-pulse" />
-          <p className="text-sm font-semibold text-cyan-100/85">{SPLASH_COPY.loading}</p>
-          <p className="text-xs text-cyan-100/45">{SPLASH_COPY.subtitle}</p>
+          {/* Splash art carries the visual; copy below provides status. */}
+          <p className="text-sm font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] animate-pulse">{SPLASH_COPY.loading}</p>
+          <p className="text-xs text-white/70 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{SPLASH_COPY.subtitle}</p>
         </div>
       )}
       <main className="mission-shell h-[100dvh] w-full max-w-none px-0 py-0 sm:px-0">
