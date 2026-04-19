@@ -45,7 +45,7 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
               key={key}
               type="button"
               onClick={() => onSelect(key)}
-              className="flex flex-col items-center gap-1 rounded-xl bg-white/10 p-3 transition-all hover:bg-white/20 active:scale-95"
+              className="flex min-h-[44px] flex-col items-center gap-1 rounded-xl bg-white/10 p-3 transition-all hover:bg-white/20 active:scale-95"
             >
               <picture>
                 {THEME_CONFIG.hasOptimizedFormats && (

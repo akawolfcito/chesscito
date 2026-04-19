@@ -82,26 +82,32 @@ export function MissionDetailSheet({
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2">
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.04] px-3 py-2.5">
-            <span className="game-label flex items-center gap-1 text-xs font-bold uppercase tracking-[0.10em] text-white/55">
-              <CandyIcon name="star" className="h-3 w-3" />
-              {MISSION_DETAIL_COPY.scoreLabel}
-            </span>
-            <p className="mt-1 text-lg font-bold tabular-nums text-white">
-              {score} <span className="text-sm text-white/45">{SCORE_UNIT}</span>
-            </p>
+        {Number(score) > 0 || Number(timeMs) > 0 ? (
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.04] px-3 py-2.5">
+              <span className="game-label flex items-center gap-1 text-xs font-bold uppercase tracking-[0.10em] text-white/55">
+                <CandyIcon name="star" className="h-3 w-3" />
+                {MISSION_DETAIL_COPY.scoreLabel}
+              </span>
+              <p className="mt-1 text-lg font-bold tabular-nums text-white">
+                {score} <span className="text-sm text-white/45">{SCORE_UNIT}</span>
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.04] px-3 py-2.5">
+              <span className="game-label flex items-center gap-1 text-xs font-bold uppercase tracking-[0.10em] text-white/55">
+                <CandyIcon name="time" className="h-3 w-3" />
+                {MISSION_DETAIL_COPY.timeLabel}
+              </span>
+              <p className="mt-1 text-lg font-bold tabular-nums text-white">
+                {Number(timeMs) / 1000}s
+              </p>
+            </div>
           </div>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.04] px-3 py-2.5">
-            <span className="game-label flex items-center gap-1 text-xs font-bold uppercase tracking-[0.10em] text-white/55">
-              <CandyIcon name="time" className="h-3 w-3" />
-              {MISSION_DETAIL_COPY.timeLabel}
-            </span>
-            <p className="mt-1 text-lg font-bold tabular-nums text-white">
-              {Number(timeMs) / 1000}s
-            </p>
-          </div>
-        </div>
+        ) : (
+          <p className="mt-5 text-center text-sm text-cyan-100/45">
+            {MISSION_DETAIL_COPY.preFirstMoveHint}
+          </p>
+        )}
       </SheetContent>
     </Sheet>
   );

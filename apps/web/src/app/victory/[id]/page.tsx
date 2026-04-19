@@ -134,7 +134,7 @@ export default async function VictoryPage({ params }: { params: { id: string } }
 
         <Link
           href="/"
-          className="mt-3 min-h-[44px] flex items-center text-sm text-white/50 transition-colors hover:text-white/70"
+          className="mt-3 min-h-[44px] flex items-center px-3 text-sm text-white/50 transition-colors hover:text-white/70"
         >
           {VICTORY_PAGE_COPY.backToHub}
         </Link>

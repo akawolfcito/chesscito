@@ -68,7 +68,7 @@ export function ArenaHud({ isThinking, onBack, isEndState }: Props) {
         >
           {confirmingBack ? (
             <>
-              <CandyIcon name="check" className="h-4 w-4" />
+              <CandyIcon name="check" className="h-3.5 w-3.5" />
               <span className="text-xs font-semibold">{ARENA_COPY.backToHub}</span>
               <span className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-white/40" style={{ animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards` }} />
             </>

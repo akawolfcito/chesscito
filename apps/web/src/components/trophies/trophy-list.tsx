@@ -1,4 +1,5 @@
 import { TrophyCard } from "./trophy-card";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
@@ -56,7 +57,10 @@ export function TrophyList({
 
   if (!victories || victories.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-slate-500">{emptyMessage}</p>
+      <div className="flex flex-col items-center gap-2 py-6 text-center">
+        <CandyIcon name="trophy" className="h-10 w-10 opacity-30" />
+        <p className="text-sm text-slate-500">{emptyMessage}</p>
+      </div>
     );
   }
 

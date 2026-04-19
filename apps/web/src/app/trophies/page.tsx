@@ -175,8 +175,7 @@ export default function TrophiesPage() {
           <>
             {/* My Victories */}
             <section className="mb-6">
-              {/* TODO: tokenize rgba(200,180,130,0.55) → CSS variable e.g. var(--color-label-gold) */}
-              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[rgba(200,180,130,0.55)]" style={{ textShadow: "var(--text-shadow-label)" }}>
+              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-label-gold)]" style={{ textShadow: "var(--text-shadow-label)" }}>
                 <CandyIcon name="crown" className="h-4 w-4" />
                 {TROPHY_VITRINE_COPY.myVictories}
               </h2>
@@ -216,8 +215,7 @@ export default function TrophiesPage() {
 
             {/* Hall of Fame */}
             <section className="mb-6">
-              {/* TODO: tokenize rgba(200,180,130,0.55) → CSS variable e.g. var(--color-label-gold) */}
-              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[rgba(200,180,130,0.55)]" style={{ textShadow: "var(--text-shadow-label)" }}>
+              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-label-gold)]" style={{ textShadow: "var(--text-shadow-label)" }}>
                 <CandyIcon name="trophy" className="h-4 w-4" />
                 {TROPHY_VITRINE_COPY.hallOfFame}
               </h2>

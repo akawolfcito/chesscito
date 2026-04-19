@@ -134,10 +134,17 @@
     /* ── Arena action pill stone text color ── */
     --redesign-stone-text: rgba(63, 34, 8, 0.85);
 
+    /* ── Dock + label color tokens ── */
+    --redesign-cyan-dim: rgba(160, 225, 220, 0.55);
+    --color-label-gold: rgba(200, 180, 130, 0.55);
+    --mission-text: #f3f6fb;
+    --mission-text-soft: #e4f6fb;
+
     /* ── Destructive / danger CTA tokens ── */
     --cta-danger-bg: rgba(244, 63, 94, 0.15);
     --cta-danger-text: #fda4af;
     --cta-danger-border: rgba(244, 63, 94, 0.25);
+    --cta-confirming-text: #fff;
 
     /* ── CTA Button tokens ── */
     --cta-brand-from: #23C8F3;
@@ -251,18 +258,36 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════
+   Z-INDEX STACKING LADDER (rendered top to bottom)
+   ───────────────────────────────────────────────────
+   60   Coach welcome modal
+   50   Radix overlays (sheets, dialogs, Promotion overlay)
+   40   Mission briefing scrim
+   30   Promotion overlay (within arena)
+   12   Pieces in check (arena pulse)
+   11   Selected piece (arena)
+   10   Default piece float (arena)
+    1   Page content default
+    0   Background layers (.arena-bg::before, ::after)
+   -1   Stamped backgrounds inside isolated stacking contexts
+
+   Add new layers above 60 for top-of-stack toasts/overlays.
+   Always pair fixed-position elements with safe-area-inset compensation.
+   ═══════════════════════════════════════════════════ */
+
 @layer components {
   .mission-shell {
     width: 100%;
     overflow-x: clip;
-    color: #f3f6fb;
+    color: var(--mission-text);
   }
 
   .mission-soft {
     background: rgba(2, 18, 32, 0.42);
     backdrop-filter: blur(4px);
     border: 1px solid rgba(125, 211, 252, 0.34);
-    color: #e4f6fb;
+    color: var(--mission-text-soft);
   }
 
   .fantasy-title {
@@ -1266,7 +1291,7 @@
     background: transparent;
     border: 0;
     box-shadow: none;
-    transition: opacity 0.15s, background 200ms, border-color 200ms, transform var(--duration-snap);
+    transition: opacity 0.15s, transform var(--duration-snap);
   }
 
   .chesscito-dock-item>button:active,
@@ -1295,7 +1320,7 @@
     height: 3rem;
     background: transparent;
     border: 0;
-    color: rgba(160, 225, 220, 0.55);
+    color: var(--redesign-cyan-dim);
     box-shadow: none;
     transition: transform var(--duration-snap, 120ms);
     font-family: var(--font-game-display);
@@ -1750,7 +1775,7 @@
 .arena-action-pill.is-confirming .arena-action-pill-icon {
   /* Subtle red wash on top of the stone for the resign-confirm state. */
   filter: hue-rotate(330deg) saturate(1.4) brightness(1.05);
-  color: #fff;
+  color: var(--cta-confirming-text);
 }
 
 .arena-action-pill-label {
