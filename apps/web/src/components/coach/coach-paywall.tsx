@@ -21,8 +21,8 @@ export function CoachPaywall({ open, onOpenChange, onBuy, onQuickReview }: Props
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!buying) onOpenChange(v); }}>
-      <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-slate-700">
-        <SheetHeader>
+      <SheetContent side="bottom" className="mission-shell flex h-[100dvh] flex-col rounded-none border-slate-700">
+        <SheetHeader className="pt-[env(safe-area-inset-top)]">
           <SheetTitle className="fantasy-title text-cyan-50">{COACH_COPY.creditTitle}</SheetTitle>
           <SheetDescription className="text-cyan-100/75">{COACH_COPY.creditExplain}</SheetDescription>
         </SheetHeader>

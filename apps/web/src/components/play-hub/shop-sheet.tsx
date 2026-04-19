@@ -45,8 +45,8 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
           <span className="sr-only">Shop</span>
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="mission-shell sheet-bg-shop rounded-t-3xl border-white/[0.10]">
-        <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
+      <SheetContent side="bottom" className="mission-shell sheet-bg-shop flex h-[100dvh] flex-col rounded-none border-white/[0.10]">
+        <div className="shrink-0 border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
           <SheetHeader>
             <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><CandyIcon name="shop" className="h-5 w-5" />{SHOP_SHEET_COPY.title}</SheetTitle>
             <SheetDescription className="text-cyan-100/75">{SHOP_SHEET_COPY.description}</SheetDescription>
