@@ -84,9 +84,9 @@ export function VictoryClaimError({
 
         {/* Stats */}
         <div className="mb-6 flex w-full gap-2">
-          <StatCard icon="⚔" value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty} label={VICTORY_CELEBRATION_COPY.stats.difficulty} />
-          <StatCard icon="♟" value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
-          <StatCard icon="⏱" value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
+          <StatCard icon={<CandyIcon name="crosshair" className="h-4 w-4" />} value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty} label={VICTORY_CELEBRATION_COPY.stats.difficulty} />
+          <StatCard icon={<CandyIcon name="move" className="h-4 w-4" />} value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
+          <StatCard icon={<CandyIcon name="time" className="h-4 w-4" />} value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
         </div>
 
         {/* CTAs */}
@@ -111,7 +111,7 @@ export function VictoryClaimError({
             size="game-sm"
             onClick={onPlayAgain}
           >
-            <CandyIcon name="refresh" className="inline h-3.5 w-3.5 -mt-0.5" /> {ARENA_COPY.playAgain}
+            <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
           </Button>
 
           {/* Back to Hub */}

@@ -131,6 +131,9 @@
     --cell-last-move-bg: rgba(139, 92, 246, 0.15);
     --cell-check-bg: rgba(239, 68, 68, 0.3);
 
+    /* ── Arena action pill stone text color ── */
+    --redesign-stone-text: rgba(63, 34, 8, 0.85);
+
     /* ── Destructive / danger CTA tokens ── */
     --cta-danger-bg: rgba(244, 63, 94, 0.15);
     --cta-danger-text: #fda4af;
@@ -999,8 +1002,7 @@
     background:
       radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0, 0, 0, 0.25) 100%),
       linear-gradient(to bottom, transparent 0%, rgba(6, 14, 28, 0.10) 55%, rgba(6, 14, 28, 0.20) 100%),
-      linear-gradient(to bottom, transparent 70%, rgba(6, 14, 28, 0.25) 100%),
-      rgba(6, 14, 24, 0);
+      linear-gradient(to bottom, transparent 70%, rgba(6, 14, 28, 0.25) 100%);
     z-index: 0;
   }
 
@@ -1226,7 +1228,7 @@
     display: flex;
     align-items: center;
     justify-content: space-around;
-    padding: 6px 8px 4px;
+    padding: 6px 8px calc(4px + env(safe-area-inset-bottom, 0px));
     background-color: transparent;
     background-image: url("/art/redesign/bg/menu-wall.png");
     background-size: cover;
@@ -1463,181 +1465,11 @@
   }
 }
 
-/* ── Hero selector rail ── */
-.hero-rail {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  height: 60px;
-  /* Wooden shelf — warm gold base, brown edges */
-  background: linear-gradient(180deg,
-      var(--redesign-wood-gold) 0%,
-      #d4a836 100%);
-  border: 2px solid rgba(145, 85, 25, 0.45);
-  border-radius: 36px;
-  padding: 4px 5px;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    inset 0 2px 0 rgba(255, 255, 255, 0.30),
-    inset 0 -2px 0 rgba(110, 65, 15, 0.35);
-}
-
-.hero-rail-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 68px;
-  height: 52px;
-  border-radius: 28px;
-  border: 1.5px solid transparent;
-  background: transparent;
-  cursor: pointer;
-  position: relative;
-  transition: opacity 150ms ease-out, border-color 150ms ease-out, background 150ms ease-out, box-shadow 250ms ease-out, transform 250ms ease-out;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-rail-tab {
-    transition: none;
-  }
-}
-
-.hero-rail-tab.is-active {
-  /* Candy active state — cream recess on wood shelf */
-  background: linear-gradient(180deg,
-      rgba(255, 250, 230, 0.85) 0%,
-      rgba(245, 225, 180, 0.70) 100%);
-  border-color: rgba(145, 85, 25, 0.55);
-  box-shadow:
-    0 3px 8px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.4),
-    0 0 14px rgba(200, 170, 100, 0.18);
-  transform: scale(1.05);
-}
-
-/* ── Champion ring frame (Phase E2) ── */
-.hero-rail-tab.is-active::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border-radius: 32px;
-  border: 1.5px solid rgba(180, 160, 110, 0.22);
-  box-shadow: 0 0 24px rgba(200, 170, 100, 0.10), inset 0 0 24px rgba(200, 170, 100, 0.05);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── Champion pedestal glow (Phase E2) ── */
-.hero-rail-tab.is-active::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 10%;
-  right: 10%;
-  height: 35%;
-  background: radial-gradient(ellipse at 50% 85%, rgba(200, 170, 100, 0.25) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-  border-radius: 0 0 28px 28px;
-}
-
-.hero-rail-tab.is-active:active {
-  transform: scale(0.97);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
-}
-
-.hero-rail-tab.is-inactive {
-  opacity: 0.70;
-  border-color: rgba(110, 65, 15, 0.15);
-  background: linear-gradient(180deg, rgba(110, 65, 15, 0.12) 0%, rgba(80, 45, 10, 0.08) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -1px 0 rgba(80, 45, 10, 0.18);
-}
-
-.hero-rail-tab.is-inactive:active {
-  opacity: 0.90;
-  background: rgba(110, 65, 15, 0.20);
-  border-color: rgba(110, 65, 15, 0.30);
-}
-
-/* ── Locked piece relic treatment (Phase E) ── */
-.hero-rail-tab.is-locked {
-  opacity: 0.50;
-  border-color: rgba(110, 65, 15, 0.12);
-  background: rgba(110, 65, 15, 0.08);
-  box-shadow: inset 0 1px 2px rgba(80, 45, 10, 0.2);
-  cursor: default;
-}
-
-.hero-rail-tab.is-locked .piece-locked {
-  filter: brightness(0.35) saturate(0) contrast(0.8);
-}
-
-.hero-rail-tab.is-locked .lock-indicator {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.hero-rail-tab.is-locked .lock-indicator svg {
-  opacity: 0.55;
-  color: rgba(80, 45, 10, 0.7);
-}
-
-/* ── Shell header rail — anchoring treatment ── */
-.shell-header-rail {
-  padding-left: 8px;
-  padding-right: 8px;
-  padding-top: max(env(safe-area-inset-top), 12px);
-  margin-bottom: var(--shell-gap-xs);
-}
-
-.shell-header-rail::after {
-  content: "";
-  display: block;
-  height: 1px;
-  margin-top: 6px;
-  background: linear-gradient(to right, transparent, var(--shell-border), transparent);
-}
-
 /* ═══════════════════════════════════════════════════
    Asset Treatment System — Category Classes
    ═══════════════════════════════════════════════════ */
 
-/* ── 1. Piece Icons (hero selector) ── */
-.piece-hero {
-  filter: var(--treat-warm-tint) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.6));
-  box-shadow: var(--treat-carved-hi), var(--treat-carved-lo), var(--treat-warm-glow);
-}
-
-.piece-inactive {
-  filter: var(--treat-neutral-tint);
-  box-shadow: var(--treat-carved-hi), var(--treat-carved-lo);
-}
-
-.piece-pressed {
-  filter: brightness(0.90) saturate(0.85);
-  box-shadow: var(--treat-carved-lo);
-  transform: scale(0.92);
-  transition: transform var(--duration-snap), filter var(--duration-snap), box-shadow var(--duration-snap);
-}
-
-/* Auto-activate piece-pressed on hero rail tap */
-.hero-rail-tab:active .piece-hero,
-.hero-rail-tab:active .piece-inactive {
-  filter: brightness(0.90) saturate(0.85);
-  box-shadow: var(--treat-carved-lo);
-  transform: scale(0.92);
-  transition: transform var(--duration-snap), filter var(--duration-snap), box-shadow var(--duration-snap);
-}
-
-/* ── 2. Dock Icons (persistent navigation) ── */
+/* ── 1. Dock Icons (persistent navigation) ── */
 .dock-treat-base {
   filter: var(--dock-treat-warm);
   box-shadow: var(--treat-carved-lo);
@@ -1704,14 +1536,11 @@
    ═══════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
 
-  .piece-pressed,
-  .hero-rail-tab:active .piece-hero,
-  .hero-rail-tab:active .piece-inactive,
   .chesscito-dock-item>button:active,
   .chesscito-dock-item>[role="button"]:active,
   .chesscito-dock-item>button:active img,
   .chesscito-dock-item>[role="button"]:active img,
-  .chesscito-dock-center:active svg {
+  .chesscito-dock-center:active img {
     transform: none !important;
     transition: none !important;
   }
@@ -1895,9 +1724,10 @@
   justify-content: center;
   width: 3rem;
   height: 3rem;
-  color: rgba(63, 34, 8, 0.85);
+  aspect-ratio: 1 / 1;
+  color: var(--redesign-stone-text);
   background-image: url("/art/redesign/banners/btn-stone-bg.png");
-  background-size: 100% 100%;
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }

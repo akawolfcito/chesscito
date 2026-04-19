@@ -105,11 +105,11 @@ export function TrophyCard({ entry, variant, rank }: Props) {
 
       <div className="mt-1.5 flex items-center gap-3 text-xs text-slate-400">
         <span className="flex items-center gap-1">
-          <CandyIcon name="move" className="h-3.5 w-3.5" />
+          <CandyIcon name="move" className="h-4 w-4" />
           {entry.totalMoves} {TROPHY_VITRINE_COPY.movesLabel}
         </span>
         <span className="flex items-center gap-1">
-          <CandyIcon name="time" className="h-3.5 w-3.5" />
+          <CandyIcon name="time" className="h-4 w-4" />
           {formatTimeMs(entry.timeMs)}
         </span>
 

@@ -60,7 +60,7 @@ export function ArenaActionBar({
               src="/art/redesign/banners/btn-resign.png"
               alt=""
               aria-hidden="true"
-              className="h-7 w-7 object-contain"
+              className="h-9 w-9 object-contain"
             />
           )}
         </span>
@@ -89,7 +89,7 @@ export function ArenaActionBar({
             src="/art/redesign/banners/btn-undo.png"
             alt=""
             aria-hidden="true"
-            className="h-7 w-7 object-contain"
+            className="h-9 w-9 object-contain"
           />
         </span>
         <span className="arena-action-pill-label">{ARENA_COPY.undo}</span>

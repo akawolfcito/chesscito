@@ -3,6 +3,7 @@
 import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { StatCard } from "@/components/arena/stat-card";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { formatTime } from "@/lib/game/arena-utils";
 import { Button } from "@/components/ui/button";
 import sparklesData from "@/../public/animations/sparkles.json";
@@ -59,9 +60,9 @@ export function VictoryClaiming({
 
         {/* Stats — 3 mini-cards */}
         <div className="mb-6 flex w-full gap-2">
-          <StatCard icon="⚔" value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty} label={VICTORY_CELEBRATION_COPY.stats.difficulty} />
-          <StatCard icon="♟" value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
-          <StatCard icon="⏱" value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
+          <StatCard icon={<CandyIcon name="crosshair" className="h-4 w-4" />} value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty} label={VICTORY_CELEBRATION_COPY.stats.difficulty} />
+          <StatCard icon={<CandyIcon name="move" className="h-4 w-4" />} value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
+          <StatCard icon={<CandyIcon name="time" className="h-4 w-4" />} value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
         </div>
 
         {/* Progress indicator */}

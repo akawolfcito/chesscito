@@ -78,7 +78,7 @@ function getHandler(
 export function ContextualActionSlot(props: ContextualActionSlotProps) {
   const { action, shieldsAvailable, isBusy } = props;
 
-  if (!action) return <div className="min-h-[52px]" />;
+  if (!action) return null;
 
   const copy = FOOTER_CTA_COPY[action];
   const style = ACTION_STYLES[action];

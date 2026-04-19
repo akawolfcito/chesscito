@@ -191,6 +191,7 @@ export const PHASE_FLASH_COPY = {
 export const SHOP_SHEET_COPY = {
   title: "Arcane Store",
   description: "Choose an item to purchase with USDC.",
+  featured: "Featured",
   buyButton: "Buy with USDC",
   buyButtonComingSoon: "Coming soon",
   buyButtonUnavailable: "Unavailable",
@@ -651,6 +652,10 @@ export const ABOUT_COPY = {
     invite: "Invite a Friend",
   },
   clipboardFeedback: "Copied!",
+  shareTitle: "Chesscito",
+  shareText:
+    "Learn chess piece movements with gamified on-chain challenges on Celo.",
+  shareUrl: "https://chesscito.vercel.app",
 } as const;
 
 export const UNLOCK_COPY = {

@@ -50,7 +50,7 @@ export function MissionBriefing({
           className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full text-white/30 transition-colors hover:text-white/60"
           aria-label="Close"
         >
-          <CandyIcon name="close" className="h-5 w-5" />
+          <CandyIcon name="close" className="h-4 w-4" />
         </button>
         <picture>
           <source srcSet="/art/favicon-wolf.webp" type="image/webp" />

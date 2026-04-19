@@ -92,9 +92,9 @@ export function VictoryClaimSuccess({
 
         {/* Stats */}
         <div className="mb-5 flex w-full gap-2">
-          <StatCard icon="⚔" value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty} label={VICTORY_CELEBRATION_COPY.stats.difficulty} />
-          <StatCard icon="♟" value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
-          <StatCard icon="⏱" value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
+          <StatCard icon={<CandyIcon name="crosshair" className="h-4 w-4" />} value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty} label={VICTORY_CELEBRATION_COPY.stats.difficulty} />
+          <StatCard icon={<CandyIcon name="move" className="h-4 w-4" />} value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
+          <StatCard icon={<CandyIcon name="time" className="h-4 w-4" />} value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
         </div>
 
         {/* CTAs — retention first */}

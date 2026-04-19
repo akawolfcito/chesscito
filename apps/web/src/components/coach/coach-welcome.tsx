@@ -12,8 +12,8 @@ export function CoachWelcome({ onClaim }: Props) {
   return (
     <div className="flex flex-col items-center gap-5 px-6 py-10">
       <div className="relative flex items-center justify-center">
-        <div className="absolute h-24 w-24 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.15)_0%,transparent_70%)]" />
-        <CandyIcon name="coach" className="relative h-16 w-16" />
+        <div className="absolute h-20 w-20 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.15)_0%,transparent_70%)]" />
+        <CandyIcon name="coach" className="relative h-12 w-12" />
       </div>
 
       <h2 className="fantasy-title text-2xl font-bold text-white">{COACH_COPY.welcomeTitle}</h2>

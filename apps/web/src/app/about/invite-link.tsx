@@ -15,12 +15,12 @@ export function InviteLink() {
       onClick={() => {
         if (navigator.share) {
           void navigator.share({
-            title: "Chesscito",
-            text: "Learn chess piece movements with gamified on-chain challenges on Celo.",
-            url: "https://chesscito.vercel.app",
+            title: ABOUT_COPY.shareTitle,
+            text: ABOUT_COPY.shareText,
+            url: ABOUT_COPY.shareUrl,
           });
         } else {
-          void navigator.clipboard.writeText("https://chesscito.vercel.app").then(() => {
+          void navigator.clipboard.writeText(ABOUT_COPY.shareUrl).then(() => {
             hapticSuccess();
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
