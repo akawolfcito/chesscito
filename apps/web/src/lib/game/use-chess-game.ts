@@ -55,6 +55,10 @@ export function useChessGame(): ChessGameState {
   const gameRef = useRef(new Chess());
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [fen, setFen] = useState(gameRef.current.fen());
+  /** square -> stable piece id, used to keep React keys consistent as pieces
+   *  re-sort between renders. Persists across games (ids are opaque). */
+  const pieceIdsRef = useRef<Map<string, string>>(new Map());
+  const pieceCounterRef = useRef(0);
 
   /** Snapshot end time and set terminal status (prevents elapsedMs race with reset) */
   function endGameWith(s: ArenaStatus) {
@@ -62,7 +66,50 @@ export function useChessGame(): ChessGameState {
     setStatus(s);
   }
 
-  const pieces = useMemo(() => fenToPieces(fen), [fen]);
+  const pieces = useMemo<ChessBoardPiece[]>(() => {
+    const raw = fenToPieces(fen);
+    const prev = pieceIdsRef.current;
+    const next = new Map<string, string>();
+
+    // Map of newSquare -> oldSquare for pieces that relocated this turn.
+    // Covers the plain move plus the rook side of a castle (chess.js reports
+    // only the king's from/to in lastMove, so we reconstruct the rook hop
+    // from the king's two-square lateral jump).
+    const moveMap = new Map<string, string>();
+    if (lastMove) {
+      moveMap.set(lastMove.to, lastMove.from);
+      const fileFrom = lastMove.from.charCodeAt(0);
+      const fileTo = lastMove.to.charCodeAt(0);
+      const rank = lastMove.from[1];
+      if (rank === lastMove.to[1] && Math.abs(fileTo - fileFrom) === 2) {
+        const mover = raw.find((p) => p.square === lastMove.to);
+        if (mover?.type === "king") {
+          const kingside = fileTo > fileFrom;
+          moveMap.set(
+            (kingside ? "f" : "d") + rank,
+            (kingside ? "h" : "a") + rank,
+          );
+        }
+      }
+    }
+
+    const withIds: ChessBoardPiece[] = raw.map((p) => {
+      const sourceSq = moveMap.get(p.square) ?? p.square;
+      let id = prev.get(sourceSq);
+      if (!id) {
+        pieceCounterRef.current += 1;
+        id = `${p.color}-${p.type}-${pieceCounterRef.current}`;
+      }
+      next.set(p.square, id);
+      return { ...p, id };
+    });
+
+    pieceIdsRef.current = next;
+    return withIds;
+  // lastMove is set in the same render as fen, so memoizing on fen alone
+  // would still capture the current lastMove via closure — include it for
+  // correctness under future render orderings.
+  }, [fen, lastMove]);
 
   const checkSquare = useMemo(() => {
     const game = gameRef.current;

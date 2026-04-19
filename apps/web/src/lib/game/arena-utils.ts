@@ -34,15 +34,19 @@ export const ARENA_PIECE_IMG: Record<PieceColor, Record<ChessPieceId, string>> =
   },
 };
 
+/** Raw piece data from FEN — identity (`id`) is attached later by the hook
+ *  based on the previous board state so moved pieces keep their React key. */
+export type RawPiece = Omit<ChessBoardPiece, "id">;
+
 /**
- * Convert a FEN string to an array of ChessBoardPiece.
+ * Convert a FEN string to an array of raw pieces (no stable id).
  * Uses chess.js board() which returns an 8x8 grid.
  */
-export function fenToPieces(fen: string): ChessBoardPiece[] {
+export function fenToPieces(fen: string): RawPiece[] {
   try {
     const game = new Chess(fen);
     const board = game.board();
-    const pieces: ChessBoardPiece[] = [];
+    const pieces: RawPiece[] = [];
 
     for (let rank = 0; rank < 8; rank++) {
       for (let file = 0; file < 8; file++) {

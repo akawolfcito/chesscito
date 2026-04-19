@@ -136,12 +136,7 @@ export function ArenaBoard({
                 );
               })}
 
-              {(() => {
-                const groupCount: Record<string, number> = {};
-                return pieces.map((p) => {
-                const groupKey = `${p.color}-${p.type}`;
-                const idx = groupCount[groupKey] ?? 0;
-                groupCount[groupKey] = idx + 1;
+              {pieces.map((p) => {
                 const { file, rank } = squareToFileRank(p.square);
                 const center = cellCenter(file, rank);
                 const pw = pieceWidth();
@@ -150,7 +145,7 @@ export function ArenaBoard({
                 const isPieceInCheck = p.square === checkSquare;
                 return (
                   <picture
-                    key={`${p.color}-${p.type}-${idx}`}
+                    key={p.id}
                     className={`arena-piece-float${isPieceSelected ? " is-selected" : ""}${isPieceInCheck ? " is-check" : ""}`}
                     style={{
                       left: `${center.x}%`,
@@ -178,8 +173,7 @@ export function ArenaBoard({
                     />
                   </picture>
                 );
-              });
-              })()}
+              })}
             </div>
           </div>
         </div>

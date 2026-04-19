@@ -44,6 +44,9 @@ export type ChessPieceId = PieceId;
 export type PieceColor = "w" | "b";
 
 export type ChessBoardPiece = {
+  /** Stable identity that survives moves — used as React key to keep CSS
+   *  transitions attached to the same DOM node when pieces re-sort. */
+  id: string;
   type: ChessPieceId;
   color: PieceColor;
   square: string; // algebraic notation, e.g. "e4"
