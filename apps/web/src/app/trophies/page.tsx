@@ -140,7 +140,7 @@ export default function TrophiesPage() {
   }, [isConnected, address, loadMyVictories]);
 
   return (
-    <div className="mission-shell flex min-h-[100dvh] justify-center bg-black/50">
+    <div className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center">
     <div className="mx-auto flex w-full max-w-[var(--app-max-width)] flex-col bg-[var(--surface-a)] backdrop-blur-2xl rounded-t-3xl">
       {/* Header Pattern B */}
       <header className="relative flex min-h-[96px] max-h-[120px] items-end border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] px-4 pb-4 pt-4 rounded-t-3xl">

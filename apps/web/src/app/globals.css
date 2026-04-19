@@ -894,6 +894,20 @@
     z-index: 1;
   }
 
+  /* ── Secondary page scrim ──
+     Used by about / support / privacy / terms / trophies. A flat
+     bg-black/50 makes these pages feel "distant" from the candy hub
+     aesthetic. This radial gradient keeps the 390px panel legible on
+     any viewport while letting the body candy bg peek through at the
+     edges, so the routes stay visually tied to the hub. */
+  .secondary-page-scrim {
+    background:
+      radial-gradient(ellipse at center,
+        rgba(6, 14, 28, 0.35) 0%,
+        rgba(6, 14, 28, 0.55) 55%,
+        rgba(6, 14, 28, 0.72) 100%);
+  }
+
   /* ── Panel tier system — material surfaces ── */
 
   .panel-base {
