@@ -137,17 +137,10 @@ describe("Asset integrity", () => {
     const oversized: string[] = [];
     const MAX_SIZE = 3 * 1024 * 1024; // 3MB
 
-    // Known offenders — tracked for follow-up compression. Keep this list
-    // SHORT and add a TODO in PENDING/NEXT to resize, don't grow it.
-    const KNOWN_OVERSIZED = new Set<string>([
-      "/art/redesign/bg/bg-ch.png", // 8MB candy bg — served via AVIF/WebP first; PNG fallback needs resize
-    ]);
-
     for (const file of allFiles) {
       const stat = statSync(file);
       if (stat.size > MAX_SIZE) {
         const relative = file.replace(PUBLIC, "");
-        if (KNOWN_OVERSIZED.has(relative)) continue;
         oversized.push(`${relative} (${(stat.size / 1024 / 1024).toFixed(1)}MB)`);
       }
     }
