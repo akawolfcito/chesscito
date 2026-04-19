@@ -24,7 +24,7 @@ test.describe("Arena — setup flow", () => {
 
     // Board renders with 32 pieces (16 white + 16 black) after the 400ms
     // "preparing AI" delay inside the arena page.
-    const pieces = page.locator(".playhub-board-piece-float");
+    const pieces = page.locator(".arena-piece-float");
     await expect(pieces).toHaveCount(32, { timeout: 5000 });
 
     // And the 64 cells are present

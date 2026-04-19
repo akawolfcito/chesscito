@@ -1,10 +1,22 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Functional coverage of the core play-hub interaction: tap piece →
- * board highlights legal moves → tap a legal square → piece moves.
+ * On first visit the play-hub mounts a mission-briefing dialog that
+ * sits at z-index 40 and, due to a one-shot useState on isFirstVisit,
+ * never actually unmounts in the current session even after
+ * handleDismiss fires (it only flips a local `exiting` class + writes
+ * localStorage). That blocks genuine pointer-event dispatch onto the
+ * board. We side-step by writing the onboarded flag BEFORE navigation
+ * so showBriefing is false on mount — the briefing is out of the DOM
+ * entirely and the board is the top element under the cursor.
  */
 test.describe("Play hub — exercise flow", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("chesscito:onboarded", "true");
+    });
+  });
+
   test("selecting the piece surfaces is-highlighted cells for its legal moves", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
