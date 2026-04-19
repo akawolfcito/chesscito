@@ -269,7 +269,6 @@
    11   Selected piece (arena)
    10   Default piece float (arena)
     1   Page content default
-    0   Background layers (.arena-bg::before, ::after)
    -1   Stamped backgrounds inside isolated stacking contexts
 
    Add new layers above 60 for top-of-stack toasts/overlays.
@@ -974,36 +973,6 @@
   .arena-bg {
     position: relative;
     overflow: hidden;
-  }
-
-  /* Arena bg image is painted by body — this pseudo only existed to repaint
-     the bg inside the 390px column, which would render at a different scale
-     than the body bg and create a visible discontinuity on wider viewports.
-     Keep the rule as a no-op anchor so the ::after gradient still has a
-     stacking context. */
-  .arena-bg::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .arena-bg::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0, 0, 0, 0.25) 100%),
-      linear-gradient(to bottom, transparent 0%, rgba(6, 14, 28, 0.10) 55%, rgba(6, 14, 28, 0.20) 100%),
-      linear-gradient(to bottom, transparent 70%, rgba(6, 14, 28, 0.25) 100%);
-    z-index: 0;
-  }
-
-  .arena-bg>* {
-    position: relative;
-    z-index: 1;
   }
 
   /* ── Arena board (full chess) ── */
