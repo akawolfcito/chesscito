@@ -203,7 +203,7 @@ export function Board({
                     style={{
                       left: `${tc.x}%`,
                       top: `${tc.y}%`,
-                      width: `${tw * 0.88}%`,
+                      width: `${tw * 1.10}%`,
                     }}
                   >
                     {THEME_CONFIG.hasOptimizedFormats && (
