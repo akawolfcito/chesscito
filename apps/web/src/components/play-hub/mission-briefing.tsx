@@ -25,7 +25,7 @@ export function MissionBriefing({
   const pieceName = PIECE_LABELS[pieceType] ?? pieceType;
   const objective = isCapture
     ? MISSION_BRIEFING_COPY.captureHint
-    : `Move your ${pieceName} to ${targetLabel}`;
+    : MISSION_BRIEFING_COPY.moveObjective(pieceName, targetLabel);
   const hint = MISSION_BRIEFING_COPY.moveHint[pieceType];
 
   function handleDismiss() {

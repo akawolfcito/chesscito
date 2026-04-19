@@ -43,6 +43,13 @@ export const PIECE_LABELS = {
 
 export const PIECE_RAIL_COPY = {
   comingSoon: "Soon",
+  title: "Choose a piece",
+} as const;
+
+export const MISSION_DETAIL_COPY = {
+  title: "Mission",
+  scoreLabel: "Score",
+  timeLabel: "Time",
 } as const;
 
 const PIECE_BASE = THEME_CONFIG.piecesBase;
@@ -270,6 +277,8 @@ export const MISSION_BRIEFING_COPY = {
     king: "The King moves one square at a time",
   },
   captureHint: "Capture the target piece",
+  moveObjective: (piece: string, target: string) =>
+    `Move your ${piece} to ${target}`,
   pieceHint: {
     rook: "♜ Straight lines",
     bishop: "♝ Diagonal moves",
