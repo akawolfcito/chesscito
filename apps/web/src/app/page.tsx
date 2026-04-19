@@ -782,7 +782,7 @@ export default function PlayHubPage() {
           </p>
         </div>
       )}
-      <main className="mission-shell min-h-screen w-full max-w-none px-0 pb-8 pt-0 sm:px-0">
+      <main className="mission-shell min-h-[100dvh] w-full max-w-none px-0 pb-8 pt-0 sm:px-0">
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onSelectPiece={(piece) => {

@@ -51,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${fredoka.variable}`} suppressHydrationWarning>
       <body>
-        <div className="flex min-h-screen justify-center">
+        <div className="flex min-h-[100dvh] justify-center">
           <div className="relative flex w-full max-w-[var(--app-max-width)] flex-col text-foreground">
             <WalletProvider>
               <main className="flex flex-1 flex-col">
