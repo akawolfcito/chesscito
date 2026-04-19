@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CandyBanner } from "@/components/redesign/candy-banner";
 import { ARENA_COPY } from "@/lib/content/editorial";
 
 type Props = {
@@ -56,12 +57,7 @@ export function ArenaActionBar({
           {confirmingResign ? (
             <CandyIcon name="check" className="h-7 w-7" />
           ) : (
-            <img
-              src="/art/redesign/banners/btn-resign.png"
-              alt=""
-              aria-hidden="true"
-              className="h-9 w-9 object-contain"
-            />
+            <CandyBanner name="btn-resign" className="h-9 w-9" />
           )}
         </span>
         <span className="arena-action-pill-label">{ARENA_COPY.resign}</span>
@@ -85,12 +81,7 @@ export function ArenaActionBar({
         aria-label={ARENA_COPY.undo}
       >
         <span className="arena-action-pill-icon">
-          <img
-            src="/art/redesign/banners/btn-undo.png"
-            alt=""
-            aria-hidden="true"
-            className="h-9 w-9 object-contain"
-          />
+          <CandyBanner name="btn-undo" className="h-9 w-9" />
         </span>
         <span className="arena-action-pill-label">{ARENA_COPY.undo}</span>
       </button>

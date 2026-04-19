@@ -1,4 +1,3 @@
-import { CircleDashed, ShoppingBag } from "lucide-react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
@@ -49,7 +48,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
       <SheetContent side="bottom" className="mission-shell sheet-bg-shop rounded-t-3xl border-white/[0.10]">
         <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
           <SheetHeader>
-            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><ShoppingBag size={20} className="text-amber-400/60" />{SHOP_SHEET_COPY.title}</SheetTitle>
+            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><CandyIcon name="shop" className="h-5 w-5" />{SHOP_SHEET_COPY.title}</SheetTitle>
             <SheetDescription className="text-cyan-100/75">{SHOP_SHEET_COPY.description}</SheetDescription>
           </SheetHeader>
         </div>
@@ -84,7 +83,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
                 ) : item.configured ? (
                   <><CandyIcon name="close" className="h-3 w-3" /><span className="text-rose-400">{SHOP_SHEET_COPY.status.unavailable}</span></>
                 ) : (
-                  <><CircleDashed className="h-3 w-3 text-slate-500" /><span className="text-slate-500">{SHOP_SHEET_COPY.status.unavailable}</span></>
+                  <><CandyIcon name="loading" className="h-3 w-3 opacity-70" /><span className="text-slate-500">{SHOP_SHEET_COPY.status.unavailable}</span></>
                 )}
               </p>
               <Button

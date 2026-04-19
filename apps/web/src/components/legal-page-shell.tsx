@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CandyBanner } from "@/components/redesign/candy-banner";
 
 type LegalPageShellProps = {
   title: string;
@@ -16,12 +17,7 @@ export function LegalPageShell({ title, backHref = "/about", children }: LegalPa
             className="flex h-11 w-11 items-center justify-center"
             aria-label="Go back"
           >
-            <img
-              src="/art/redesign/banners/btn-back.png"
-              alt=""
-              aria-hidden="true"
-              className="h-8 w-8 object-contain"
-            />
+            <CandyBanner name="btn-back" className="h-8 w-8" />
           </Link>
           <h1 className="text-xl font-bold text-slate-100">{title}</h1>
         </header>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Link2 } from "lucide-react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
@@ -141,7 +140,7 @@ export function VictoryClaimSuccess({
                 aria-label="Copy link"
                 className="flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-cyan-100/70 transition-all hover:bg-white/[0.1] active:scale-90"
               >
-                <Link2 size={16} />
+                <CandyIcon name="copy" className="h-4 w-4" />
               </button>
             </div>
           )}

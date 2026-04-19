@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CandyBanner } from "@/components/redesign/candy-banner";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PlayerCard } from "@/components/redesign/player-card";
@@ -52,7 +53,7 @@ export function ArenaHud({ isThinking, onBack, isEndState }: Props) {
           style={{
             backgroundImage: confirmingBack
               ? undefined
-              : "url('/art/redesign/banners/btn-stone-bg.png')",
+              : `image-set(url('/art/redesign/banners/btn-stone-bg.avif') type('image/avif'), url('/art/redesign/banners/btn-stone-bg.webp') type('image/webp'), url('/art/redesign/banners/btn-stone-bg.png') type('image/png'))`,
             backgroundSize: "100% 100%",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
@@ -72,12 +73,7 @@ export function ArenaHud({ isThinking, onBack, isEndState }: Props) {
               <span className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-white/40" style={{ animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards` }} />
             </>
           ) : (
-            <img
-              src="/art/redesign/banners/btn-back.png"
-              alt=""
-              aria-hidden="true"
-              className="h-7 w-7 object-contain"
-            />
+            <CandyBanner name="btn-back" className="h-7 w-7" />
           )}
         </button>
       </div>

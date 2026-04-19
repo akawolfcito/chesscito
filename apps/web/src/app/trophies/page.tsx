@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CandyBanner } from "@/components/redesign/candy-banner";
 import { TrophyList } from "@/components/trophies/trophy-list";
 import { getVictoryAddress } from "@/lib/game/victory-events";
 import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
@@ -149,12 +150,7 @@ export default function TrophiesPage() {
             href="/"
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.10]"
           >
-            <img
-              src="/art/redesign/banners/btn-back.png"
-              alt=""
-              aria-hidden="true"
-              className="h-7 w-7 object-contain"
-            />
+            <CandyBanner name="btn-back" className="h-7 w-7" />
           </Link>
           <div>
             <h1 className="text-xl font-bold text-slate-100">

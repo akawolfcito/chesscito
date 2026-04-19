@@ -1,6 +1,7 @@
 "use client";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CandyBanner } from "@/components/redesign/candy-banner";
 import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -95,12 +96,7 @@ export function VictoryCelebration({
               className="w-full flex-col gap-0.5 py-3.5"
             >
               <span className="flex items-center gap-1.5 text-sm font-bold">
-                <img
-                  src="/art/redesign/banners/btn-claim.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-5 w-5 object-contain"
-                />
+                <CandyBanner name="btn-claim" className="h-5 w-5" />
                 {VICTORY_CLAIM_COPY.claimButton}
               </span>
               <span className="block text-xs opacity-70 font-normal">

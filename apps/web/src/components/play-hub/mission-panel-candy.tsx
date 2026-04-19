@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PiecePickerSheet } from "@/components/play-hub/piece-picker-sheet";
@@ -143,7 +143,7 @@ export function MissionPanelCandy({
       >
         {activePiece?.label ?? PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]}
       </span>
-      <ChevronDown className="h-3.5 w-3.5 text-white/55" aria-hidden="true" />
+      <CandyIcon name="chevron-down" className="h-3.5 w-3.5 opacity-70" />
     </button>
   );
 

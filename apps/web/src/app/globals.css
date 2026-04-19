@@ -179,7 +179,11 @@
     --playhub-slot-frame: image-set(url("/art/shop-slot-frame.avif") type("image/avif"),
         url("/art/shop-slot-frame.webp") type("image/webp"),
         url("/art/shop-slot-frame.png") type("image/png"));
-    --playhub-game-bg: url("/art/redesign/bg/bg-ch.png");
+    --playhub-game-bg: image-set(
+        url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
+        url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
+        url("/art/redesign/bg/bg-ch.png") type("image/png")
+      );
     --playhub-board-bg: image-set(url("/art/chesscito-board.avif") type("image/avif"),
         url("/art/chesscito-board.webp") type("image/webp"),
         url("/art/chesscito-board.png") type("image/png"));
@@ -231,9 +235,11 @@
     @apply text-foreground antialiased;
     background-color: #0b1220;
     background-image: var(--playhub-game-bg);
-    background-position: center top;
-    /* Cap bg to mobile width so it doesn't stretch on desktop */
-    background-size: min(calc(1024 / 826 * 100%), 484px) auto;
+    background-position: center center;
+    /* Viewport cover — the 3840x2400 asset has a 600px central safe zone
+       (always visible inside the 390px content column) and decorative
+       trees/rocks at the edges that reveal on wider viewports. */
+    background-size: cover;
     background-repeat: no-repeat;
     background-attachment: scroll;
     min-height: 100vh;
@@ -982,14 +988,15 @@
     overflow: hidden;
   }
 
+  /* Arena bg image is painted by body — this pseudo only existed to repaint
+     the bg inside the 390px column, which would render at a different scale
+     than the body bg and create a visible discontinuity on wider viewports.
+     Keep the rule as a no-op anchor so the ::after gradient still has a
+     stacking context. */
   .arena-bg::before {
     content: "";
     position: absolute;
-    inset: -12px;
-    background-image: var(--playhub-game-bg);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    inset: 0;
     pointer-events: none;
     z-index: 0;
   }
@@ -1230,7 +1237,11 @@
     justify-content: space-around;
     padding: 6px 8px calc(4px + env(safe-area-inset-bottom, 0px));
     background-color: transparent;
-    background-image: url("/art/redesign/bg/menu-wall.png");
+    background-image: image-set(
+      url("/art/redesign/bg/menu-wall.avif") type("image/avif"),
+      url("/art/redesign/bg/menu-wall.webp") type("image/webp"),
+      url("/art/redesign/bg/menu-wall.png") type("image/png")
+    );
     background-size: cover;
     background-position: bottom center;
     background-repeat: no-repeat;
@@ -1726,7 +1737,11 @@
   height: 3rem;
   aspect-ratio: 1 / 1;
   color: var(--redesign-stone-text);
-  background-image: url("/art/redesign/banners/btn-stone-bg.png");
+  background-image: image-set(
+    url("/art/redesign/banners/btn-stone-bg.avif") type("image/avif"),
+    url("/art/redesign/banners/btn-stone-bg.webp") type("image/webp"),
+    url("/art/redesign/banners/btn-stone-bg.png") type("image/png")
+  );
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

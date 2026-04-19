@@ -3,21 +3,21 @@
 export type WoodenBannerVariant = "chess" | "your-turn" | "vs";
 
 type Variant = {
-  src: string;
+  base: string;
   defaultAlt: string;
 };
 
 const VARIANTS: Record<WoodenBannerVariant, Variant> = {
   chess: {
-    src: "/art/redesign/banners/banner-chess.png",
+    base: "/art/redesign/banners/banner-chess",
     defaultAlt: "Chess",
   },
   "your-turn": {
-    src: "/art/redesign/banners/banner-your-turn.png",
+    base: "/art/redesign/banners/banner-your-turn",
     defaultAlt: "Your Turn — Move a piece",
   },
   vs: {
-    src: "/art/redesign/banners/vs-medal.png",
+    base: "/art/redesign/banners/vs-medal",
     defaultAlt: "VS",
   },
 };
@@ -29,10 +29,12 @@ type Props = {
 };
 
 export function WoodenBanner({ variant, alt, className = "" }: Props) {
-  const { src, defaultAlt } = VARIANTS[variant];
+  const { base, defaultAlt } = VARIANTS[variant];
   return (
     <picture className={`wooden-banner wooden-banner-${variant} ${className}`.trim()}>
-      <img src={src} alt={alt ?? defaultAlt} className="wooden-banner-img" />
+      <source srcSet={`${base}.avif`} type="image/avif" />
+      <source srcSet={`${base}.webp`} type="image/webp" />
+      <img src={`${base}.png`} alt={alt ?? defaultAlt} className="wooden-banner-img" />
     </picture>
   );
 }

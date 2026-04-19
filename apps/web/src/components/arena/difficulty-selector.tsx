@@ -1,6 +1,7 @@
 "use client";
 
 import { ARENA_COPY } from "@/lib/content/editorial";
+import { CandyBanner } from "@/components/redesign/candy-banner";
 import type { ArenaDifficulty } from "@/lib/game/types";
 import { Button } from "@/components/ui/button";
 
@@ -61,12 +62,7 @@ export function DifficultySelector({ selected, onSelect, onStart, onBack }: Prop
           onClick={onStart}
           className="shadow-[0_0_24px_rgba(34,211,238,0.25)] hover:shadow-[0_0_32px_rgba(34,211,238,0.4)]"
         >
-          <img
-            src="/art/redesign/banners/btn-play.png"
-            alt=""
-            aria-hidden="true"
-            className="inline h-5 w-5 -mt-0.5 object-contain"
-          /> {ARENA_COPY.startMatch}
+          <CandyBanner name="btn-play" className="inline h-5 w-5 -mt-0.5" /> {ARENA_COPY.startMatch}
         </Button>
       </div>
 
@@ -76,12 +72,7 @@ export function DifficultySelector({ selected, onSelect, onStart, onBack }: Prop
         className="flex items-center gap-2 text-sm text-white/35 transition-colors hover:text-white/55"
       >
         <span className="flex h-11 w-11 items-center justify-center">
-          <img
-            src="/art/redesign/banners/btn-back.png"
-            alt=""
-            aria-hidden="true"
-            className="h-7 w-7 object-contain"
-          />
+          <CandyBanner name="btn-back" className="h-7 w-7" />
         </span>
         {ARENA_COPY.backToHub}
       </button>

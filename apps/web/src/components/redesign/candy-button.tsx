@@ -5,14 +5,14 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 export type CandyButtonVariant = "play" | "resign" | "undo" | "ghost";
 
 type SpriteVariantConfig = {
-  src: string;
+  base: string;
   defaultLabel: string;
 };
 
 const SPRITE_VARIANTS: Record<Exclude<CandyButtonVariant, "ghost">, SpriteVariantConfig> = {
-  play: { src: "/art/redesign/banners/btn-play.png", defaultLabel: "Play" },
-  resign: { src: "/art/redesign/banners/btn-resign.png", defaultLabel: "Resign" },
-  undo: { src: "/art/redesign/banners/btn-undo.png", defaultLabel: "Undo" },
+  play: { base: "/art/redesign/banners/btn-play", defaultLabel: "Play" },
+  resign: { base: "/art/redesign/banners/btn-resign", defaultLabel: "Resign" },
+  undo: { base: "/art/redesign/banners/btn-undo", defaultLabel: "Undo" },
 };
 
 type BaseButton = ButtonHTMLAttributes<HTMLButtonElement>;
@@ -47,7 +47,7 @@ export function CandyButton(props: Props) {
     );
   }
 
-  const { src, defaultLabel } = SPRITE_VARIANTS[variant];
+  const { base, defaultLabel } = SPRITE_VARIANTS[variant];
   return (
     <button
       {...(rest as SpriteProps)}
@@ -55,7 +55,11 @@ export function CandyButton(props: Props) {
       aria-label={ariaLabel ?? defaultLabel}
       className={`candy-button candy-button-${variant} ${className}`.trim()}
     >
-      <img src={src} alt="" aria-hidden="true" className="candy-button-img" />
+      <picture className="candy-button-img">
+        <source srcSet={`${base}.avif`} type="image/avif" />
+        <source srcSet={`${base}.webp`} type="image/webp" />
+        <img src={`${base}.png`} alt="" aria-hidden="true" className="block h-full w-full object-contain" />
+      </picture>
     </button>
   );
 }

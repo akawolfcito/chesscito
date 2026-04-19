@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Share2 } from "lucide-react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ABOUT_COPY } from "@/lib/content/editorial";
 import { hapticSuccess } from "@/lib/haptics";
@@ -32,7 +31,7 @@ export function InviteLink() {
       {copied ? (
         <CandyIcon name="check" className="h-5 w-5 shrink-0 animate-bounce" />
       ) : (
-        <Share2 size={18} className="shrink-0 text-cyan-400" />
+        <CandyIcon name="share" className="h-5 w-5 shrink-0" />
       )}
       <span className="text-sm font-medium">
         {copied ? ABOUT_COPY.clipboardFeedback : ABOUT_COPY.links.invite}

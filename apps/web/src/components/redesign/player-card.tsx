@@ -3,17 +3,17 @@
 export type PlayerCardVariant = "you" | "bot";
 
 type Variant = {
-  src: string;
+  base: string;
   defaultAlt: string;
 };
 
 const VARIANTS: Record<PlayerCardVariant, Variant> = {
   you: {
-    src: "/art/redesign/avatars/player-you.png",
+    base: "/art/redesign/avatars/player-you",
     defaultAlt: "You",
   },
   bot: {
-    src: "/art/redesign/avatars/player-opponent.png",
+    base: "/art/redesign/avatars/player-opponent",
     defaultAlt: "Bot",
   },
 };
@@ -25,10 +25,12 @@ type Props = {
 };
 
 export function PlayerCard({ variant, alt, className = "" }: Props) {
-  const { src, defaultAlt } = VARIANTS[variant];
+  const { base, defaultAlt } = VARIANTS[variant];
   return (
     <picture className={`player-card player-card-${variant} ${className}`.trim()}>
-      <img src={src} alt={alt ?? defaultAlt} className="player-card-img" />
+      <source srcSet={`${base}.avif`} type="image/avif" />
+      <source srcSet={`${base}.webp`} type="image/webp" />
+      <img src={`${base}.png`} alt={alt ?? defaultAlt} className="player-card-img" />
     </picture>
   );
 }
