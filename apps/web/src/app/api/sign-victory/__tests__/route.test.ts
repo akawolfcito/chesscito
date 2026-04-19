@@ -32,6 +32,8 @@ function goodConfig() {
   const signTypedData = vi.fn().mockResolvedValue("0xsig");
   mockedConfig.mockReturnValue({
     chainId: 11142220,
+    badgesAddress: "0xf92759E52aA5EC5d6fDb6CE03b9AC9Cd9f000001",
+    scoreboardAddress: "0x1681aAA12aA5EC5d6fDb6CE03b9AC9Cd9f000002",
     victoryNFTAddress: "0x87cC9fe03E76A5894De2FE1372E85D6f5Bb922A9",
     signer: { signTypedData } as unknown as ReturnType<typeof getDemoConfig>["signer"],
   });
@@ -57,7 +59,7 @@ describe("POST /api/sign-victory", () => {
     mockedOrigin.mockImplementation(() => {});
     mockedRate.mockResolvedValue(undefined);
     mockedAddress.mockReturnValue(VALID_ADDRESS);
-    mockedInteger.mockImplementation((v) => BigInt(v as number) as unknown as number);
+    mockedInteger.mockImplementation((v) => BigInt(v as number));
   });
 
   it("returns 200 with a signature payload on a valid request", async () => {
@@ -102,7 +104,7 @@ describe("POST /api/sign-victory", () => {
 
   it("returns 400 when parseInteger rejects an out-of-range field", async () => {
     goodConfig();
-    mockedInteger.mockImplementationOnce((v) => BigInt(v as number) as unknown as number) // difficulty ok
+    mockedInteger.mockImplementationOnce((v) => BigInt(v as number)) // difficulty ok
       .mockImplementationOnce(() => { throw new Error("totalMoves must be between 1 and 10000"); });
     const res = await POST(makeRequest({ player: VALID_ADDRESS, difficulty: 1, totalMoves: 99999, timeMs: 11583 }));
     expect(res.status).toEqual(400);
