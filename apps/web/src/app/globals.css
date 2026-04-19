@@ -885,26 +885,13 @@
     position: relative;
   }
 
-  .atmosphere::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background: radial-gradient(ellipse at 50% 40%,
-        transparent 50%,
-        rgba(0, 0, 0, 0.45) 100%);
-  }
-
+  /* Atmospheric dimming disabled — the bright candy bg-ch.png reads better
+     without the radial + linear darkening that was useful with the older
+     muted background. Pseudo-elements kept as no-ops so the class still
+     establishes a stacking context for any future use. */
+  .atmosphere::before,
   .atmosphere::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background:
-      linear-gradient(to bottom, transparent 0%, rgba(6, 14, 28, 0.20) 55%, rgba(6, 14, 28, 0.35) 100%),
-      linear-gradient(to bottom, transparent 70%, rgba(6, 14, 28, 0.35) 100%);
+    content: none;
   }
 
   .atmosphere>* {
@@ -917,16 +904,11 @@
     position: relative;
   }
 
+  /* Board focal vignette disabled — the dark radial overlay was darkening
+     the candy board edges. Bright bg-ch.png provides enough contrast on
+     its own. */
   .board-stage-focus::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background: radial-gradient(ellipse 70% 55% at 50% 42%,
-        transparent 40%,
-        rgba(0, 0, 0, 0.30) 75%,
-        rgba(0, 0, 0, 0.50) 100%);
+    content: none;
   }
 
   .board-stage-focus>* {
