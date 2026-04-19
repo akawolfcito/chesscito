@@ -861,8 +861,10 @@
   .playhub-board-target-piece-img {
     height: auto;
     object-fit: contain;
+    /* Warm gold glow + dark drop-shadow. Brightness/saturate dimming was
+       removed so the candy star sprite keeps its gold color. */
     filter:
-      brightness(0.7) saturate(0.5) drop-shadow(0 0 10px rgba(244, 63, 94, 0.35)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+      drop-shadow(0 0 10px rgba(255, 200, 80, 0.55)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   }
 
   @keyframes target-piece-pulse {

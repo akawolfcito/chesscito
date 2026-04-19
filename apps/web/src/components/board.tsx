@@ -25,17 +25,9 @@ const PIECE_IMG: Record<PieceId, string> = {
   king:   `${PIECE_BASE}/w-king.png`,
 };
 
-/** Target (capture-objective) variants. Chained piece visuals signal the
- *  target won't move. Pieces without a dedicated target asset fall back to
- *  the standard black variant. */
-const TARGET_PIECE_IMG: Record<PieceId, string> = {
-  rook:   `${PIECE_BASE}/b-rook-target.png`,
-  bishop: `${PIECE_BASE}/b-bishop.png`,
-  knight: `${PIECE_BASE}/b-knight.png`,
-  pawn:   `${PIECE_BASE}/b-pawn.png`,
-  queen:  `${PIECE_BASE}/b-queen.png`,
-  king:   `${PIECE_BASE}/b-king.png`,
-};
+/** Capture-objective marker. Universal star sprite — clearer than a chained
+ *  enemy piece and avoids per-piece asset production. */
+const TARGET_MARKER_SRC = "/art/redesign/icons/star.png";
 
 const PIECE_IMG_CLASS = ASSET_THEME === "candy"
   ? "playhub-board-piece-img arena-treat-natural"
@@ -196,14 +188,14 @@ export function Board({
               {isCapture && targetPosition && !(piece.position.file === targetPosition.file && piece.position.rank === targetPosition.rank) && (() => {
                 const tc = cellCenter(targetPosition.file, targetPosition.rank);
                 const tw = pieceWidth();
-                const targetImg = TARGET_PIECE_IMG[pieceType];
+                const targetImg = TARGET_MARKER_SRC;
                 return (
                   <picture
                     className="playhub-board-target-piece"
                     style={{
                       left: `${tc.x}%`,
                       top: `${tc.y}%`,
-                      width: `${tw * 1.10}%`,
+                      width: `${tw * 1.0}%`,
                     }}
                   >
                     {THEME_CONFIG.hasOptimizedFormats && (
