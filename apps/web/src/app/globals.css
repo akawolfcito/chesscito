@@ -654,21 +654,14 @@
     background-image: none;
     border-radius: 0;
     box-shadow: none;
+    isolation: isolate;
   }
   /* Board image moved to pseudo-element so filter: drop-shadow follows the
-     image's rounded silhouette instead of the rectangular canvas bounds.
-     No z-index: -1 or isolation here — MiniPay's Android WebView doesn't
-     always respect isolation: isolate, which made z-index: -1 push the
-     pseudo behind an ancestor and the board disappeared. The hitgrid and
-     piece children come after in DOM order, so they naturally paint on
-     top of ::before without needing a negative z-index. Fallback url()
-     before image-set() so WebViews that can't parse image-set(...type())
-     still get the PNG. */
+     image's rounded silhouette instead of the rectangular canvas bounds. */
   .playhub-board-canvas::before {
     content: "";
     position: absolute;
     inset: 0;
-    background-image: url("/art/redesign/board/board-ch.png");
     background-image: image-set(
       url("/art/redesign/board/board-ch.avif") type("image/avif"),
       url("/art/redesign/board/board-ch.webp") type("image/webp"),
@@ -679,6 +672,7 @@
     background-repeat: no-repeat;
     filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
     pointer-events: none;
+    z-index: -1;
   }
 
   .playhub-board-hitgrid {
