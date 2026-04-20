@@ -121,8 +121,15 @@ export default function PlayHubPage() {
   const [boardKey, setBoardKey] = useState(0);
   const [moves, setMoves] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [storeOpen, setStoreOpen] = useState(false);
-  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  // One exclusive dock tab at a time. Persistent-dock game UX: tapping
+  // a different tab auto-closes the current one rather than stacking.
+  // Per-sheet `open` + `onOpenChange` are derived below so the sheet
+  // components don't need to know about this refactor.
+  const [activeDockTab, setActiveDockTab] = useState<"badge" | "shop" | "leaderboard" | null>(null);
+  const storeOpen = activeDockTab === "shop";
+  const setStoreOpen = (v: boolean) => setActiveDockTab(v ? "shop" : null);
+  const leaderboardOpen = activeDockTab === "leaderboard";
+  const setLeaderboardOpen = (v: boolean) => setActiveDockTab(v ? "leaderboard" : null);
   const [selectedItemId, setSelectedItemId] = useState<bigint | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [shopTxHash, setShopTxHash] = useState<string | null>(null);
@@ -138,7 +145,8 @@ export default function PlayHubPage() {
   } | null>(null);
   const [showBadgeEarned, setShowBadgeEarned] = useState(false);
   const [showPieceComplete, setShowPieceComplete] = useState(false);
-  const [badgeSheetOpen, setBadgeSheetOpen] = useState(false);
+  const badgeSheetOpen = activeDockTab === "badge";
+  const setBadgeSheetOpen = (v: boolean) => setActiveDockTab(v ? "badge" : null);
   const [shieldCount, setShieldCount] = useState(0);
   const [claimingPiece, setClaimingPiece] = useState<PieceKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
