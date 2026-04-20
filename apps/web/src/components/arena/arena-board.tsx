@@ -99,6 +99,14 @@ export function ArenaBoard({
       <div className="playhub-game-stage">
         <div className="playhub-game-grid">
           <div className="playhub-board-canvas arena-board-canvas relative" data-checkmate={isCheckmatePause ? "true" : undefined}>
+            {/* Same <picture>/<img> pattern as the exercise board to avoid
+                the iOS WebKit rendering bug around CSS ::before + filter
+                + negative z-index. */}
+            <picture aria-hidden="true" className="playhub-board-img">
+              <source srcSet="/art/redesign/board/board-ch.avif" type="image/avif" />
+              <source srcSet="/art/redesign/board/board-ch.webp" type="image/webp" />
+              <img src="/art/redesign/board/board-ch.png" alt="" />
+            </picture>
             {isThinking && (
               <div className="pointer-events-none absolute inset-0 animate-pulse rounded-2xl ring-2 ring-amber-400/20" />
             )}

@@ -146,6 +146,17 @@ export function Board({
       <div className="playhub-game-stage">
         <div className="playhub-game-grid">
           <div className="playhub-board-canvas">
+            {/* Board sprite rendered as a real <picture>/<img> instead of a
+                CSS ::before pseudo. iOS WebKit has rendering bugs with the
+                combo pseudo + z-index: -1 + isolation: isolate + filter,
+                which was hiding the entire board on iPhone Safari/Chrome/
+                Brave since the candy redesign. <img> paints reliably
+                everywhere and supports drop-shadow via filter. */}
+            <picture aria-hidden="true" className="playhub-board-img">
+              <source srcSet="/art/redesign/board/board-ch.avif" type="image/avif" />
+              <source srcSet="/art/redesign/board/board-ch.webp" type="image/webp" />
+              <img src="/art/redesign/board/board-ch.png" alt="" />
+            </picture>
             <div className="playhub-board-hitgrid" role="grid" aria-label="Chess board">
               {squares.map((square) =>
                 (() => {

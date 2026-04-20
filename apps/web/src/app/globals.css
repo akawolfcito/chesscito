@@ -654,25 +654,27 @@
     background-image: none;
     border-radius: 0;
     box-shadow: none;
-    isolation: isolate;
   }
-  /* Board image moved to pseudo-element so filter: drop-shadow follows the
-     image's rounded silhouette instead of the rectangular canvas bounds. */
-  .playhub-board-canvas::before {
-    content: "";
+
+  /* Board sprite — real <picture>/<img> instead of a CSS ::before. iOS
+     WebKit never reliably painted the old pseudo pattern (pseudo +
+     isolation: isolate + z-index: -1 + filter: drop-shadow), which is
+     why the board was invisible on iPhone browsers since the candy
+     redesign. A real <img> element avoids all four of those moving
+     parts and paints everywhere. The filter stays — on an <img>, drop-
+     shadow still follows the sprite's rounded silhouette. */
+  .playhub-board-img {
     position: absolute;
     inset: 0;
-    background-image: image-set(
-      url("/art/redesign/board/board-ch.avif") type("image/avif"),
-      url("/art/redesign/board/board-ch.webp") type("image/webp"),
-      url("/art/redesign/board/board-ch.png") type("image/png")
-    );
-    background-size: 100% 100%;
-    background-position: center;
-    background-repeat: no-repeat;
-    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+    display: block;
     pointer-events: none;
-    z-index: -1;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+  }
+  .playhub-board-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    display: block;
   }
 
   .playhub-board-hitgrid {
