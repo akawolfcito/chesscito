@@ -652,7 +652,14 @@
        the canvas never collapses. */
     width: min(100%, 23.5rem);
     aspect-ratio: 1 / 1;
-    max-height: 100%;
+    /* NO max-height relative to parent — on iOS WebKit, the flex chain
+       up to .board-stage-focus sometimes resolves to 0 height, which
+       makes `max-height: 100%` clamp the canvas to 0 and then
+       `overflow: hidden` on .playhub-game-stage clips EVERYTHING
+       including the board sprite and piece floats. An absolute pixel
+       cap matching the width cap keeps the square sized regardless of
+       the parent chain. */
+    max-height: 23.5rem;
     background-color: transparent;
     background-image: none;
     border-radius: 0;
