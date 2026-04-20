@@ -261,8 +261,8 @@
 /* ═══════════════════════════════════════════════════
    Z-INDEX STACKING LADDER (rendered top to bottom)
    ───────────────────────────────────────────────────
-   60   Coach welcome modal
-   50   Radix overlays (sheets, dialogs, Promotion overlay)
+   60   Coach welcome modal + .chesscito-dock (persistent over sheets)
+   50   Radix overlays (destination sheets, pickers, promotion overlay)
    40   Mission briefing scrim
    30   Promotion overlay (within arena)
    12   Pieces in check (arena pulse)
@@ -1205,6 +1205,13 @@
 
   /* ── Dock navigation ── */
   .chesscito-dock {
+    /* position: relative + z-index creates a stacking context at z 60,
+       which sits above the Radix Sheet scrim (z 50). The dock stays
+       visible on top of destination sheets (badge/shop/leaderboard/
+       coach-paywall) so users keep their nav reachable — the Clash-
+       Royale-style persistent dock pattern. */
+    position: relative;
+    z-index: 60;
     display: flex;
     align-items: center;
     justify-content: space-around;
