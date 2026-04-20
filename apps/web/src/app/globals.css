@@ -643,13 +643,16 @@
   .playhub-board-canvas {
     position: relative;
     margin: 0 auto;
-    /* Height-first sizing: the square fits the smaller of container width/height,
-       preventing the bottom rank from being clipped when vertical space is tight */
+    /* Width-first sizing: the old `height: 100% + width: auto` combo with
+       aspect-ratio collapsed to 0x0 on some mobile viewports (iOS Safari
+       + Chromium mobile), leaving the board + pieces invisible because
+       their percentage-based positions resolve against a 0-sized parent.
+       Width-first always has a concrete containing-block width to
+       resolve against, so height derives cleanly from aspect-ratio and
+       the canvas never collapses. */
+    width: min(100%, 23.5rem);
     aspect-ratio: 1 / 1;
-    height: 100%;
-    max-height: 23.5rem;
-    max-width: 100%;
-    width: auto;
+    max-height: 100%;
     background-color: transparent;
     background-image: none;
     border-radius: 0;
