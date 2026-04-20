@@ -621,6 +621,14 @@
   .playhub-game-stage {
     position: relative;
     overflow: hidden;
+    /* Explicit width breaks the circular-intrinsic-size trap: stage is
+       a flex item of a flex container, so without `width: 100%` it
+       defaults to intrinsic size, which itself depends on the child
+       grid's width: 100% → stage shrinks to padding (~6px), canvas
+       gets 0 containing-block width, and the whole board collapses to
+       0×0. Verified empirically via Playwright — canvas was 0×0 on
+       both mobile and desktop before this. */
+    width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
