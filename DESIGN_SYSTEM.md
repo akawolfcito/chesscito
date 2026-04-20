@@ -137,25 +137,26 @@ Every new UI surface falls into exactly one of these. No in-between.
 | Type | Triggered by | Height | Dock visible? | Scrim | Examples |
 |---|---|---|---|---|---|
 | **A. Full page** | Route change (`<Link>`) | 100dvh | Depends on route | None | `/arena`, `/trophies`, `/about` |
-| **B. Destination sheet** | Dock tap | `max-h-[85dvh]` bottom-anchored | **Yes** | Radix scrim z-50 | Badge, Shop, Leaderboard, Coach Paywall |
+| **B. Destination sheet** | Dock tap | `h-[92dvh]` bottom-anchored | **Yes** | Radix scrim z-50 | Badge, Shop, Leaderboard, Coach Paywall |
 | **C. Quick picker** | Inline action | `auto` bottom-anchored | **Yes** | Radix scrim z-50 | Piece picker, Mission detail, Exercise drawer, Purchase confirm |
 | **D. System modal** | Blocks user until resolved | 100dvh or centered | **No** | Opaque scrim | Promotion overlay, Coach welcome, Victory claim flow |
 
 Implementation requirements per type (no "creer" — follow these literally):
 
-**B. Destination sheet** (`max-h-[85dvh]` + `rounded-t-3xl`):
+**B. Destination sheet** (`h-[92dvh]` + `rounded-t-3xl`):
 ```tsx
-<SheetContent side="bottom" className="flex max-h-[85dvh] flex-col rounded-t-3xl pb-[5rem]">
+<SheetContent side="bottom" className="flex h-[92dvh] flex-col rounded-t-3xl pb-[5rem]">
   <div className="... rounded-t-3xl px-6 pb-5 pt-5">
     {/* header */}
   </div>
   {/* body */}
 </SheetContent>
 ```
-- `max-h-[85dvh]` exposes 15dvh of the underlying play-hub at the top (scrim tints it).
+- `h-[92dvh]` (fixed, not `max-h`) so the sheet always feels like a destination — short content doesn't collapse the panel into a tiny modal.
+- The 8dvh strip at the top exposes the play-hub backdrop (dimmed by the Radix scrim).
 - `rounded-t-3xl` on both wrapper AND inner header zone (match).
-- `pb-[5rem]` on wrapper so body content clears the dock's ~72px overlap.
-- **Do NOT** add `pt-[calc(env(safe-area-inset-top)+...)]` — the sheet top is at 15dvh, well below the notch.
+- `pb-[5rem]` on wrapper so body content clears the persistent dock's ~72px overlap at the bottom.
+- **Do NOT** add `pt-[calc(env(safe-area-inset-top)+...)]` — the sheet top is at 8dvh, well below the notch.
 
 **C. Quick picker** (auto height, bottom-anchored):
 ```tsx
@@ -193,7 +194,7 @@ Otherwise → Full Page (A) and add a back-navigation pattern.
 
 | Anti-pattern | Why it's wrong | Correct move |
 |---|---|---|
-| Destination sheet with `h-[100dvh] rounded-none` | Web-app pattern. Player loses dock context, feels like a different app. | `max-h-[85dvh] rounded-t-3xl` (Type B) |
+| Destination sheet with `h-[100dvh] rounded-none` | Web-app pattern. Player loses dock context, feels like a different app. | `h-[92dvh] rounded-t-3xl` (Type B) |
 | Quick picker at `h-[100dvh]` | Turns a 2-tap action into a modal "visit". | `auto` height (Type C) |
 | Full-screen modal with dock visible | Implies user can nav away, but the flow blocks them. Confusing. | Either allow real nav (make it B) or explicitly hide the dock (D) |
 | Radix overlay raised above `z-60` | Covers the dock, breaks the persistent-dock rule. | Leave scrim at `z-50`, that's the invariant |

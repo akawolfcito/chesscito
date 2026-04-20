@@ -215,7 +215,7 @@ export function BadgeSheet({
           ) : null}
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="mission-shell sheet-bg-badges flex max-h-[85dvh] flex-col rounded-t-3xl border-white/[0.10] pb-[5rem]">
+      <SheetContent side="bottom" className="mission-shell sheet-bg-badges flex h-[92dvh] flex-col rounded-t-3xl border-white/[0.10] pb-[5rem]">
         <div className="shrink-0 border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 pb-5 pt-5">
           <SheetHeader>
             <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><CandyIcon name="trophy" className="h-5 w-5" />{BADGE_SHEET_COPY.title}</SheetTitle>
