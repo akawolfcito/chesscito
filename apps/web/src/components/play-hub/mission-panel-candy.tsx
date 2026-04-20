@@ -203,9 +203,13 @@ export function MissionPanelCandy({
         <div className="mx-2 mt-2 shrink-0">{contextualAction}</div>
       ) : null}
 
-      {/* Dock — persistent navigation */}
+      {/* Dock — persistent navigation. z-[60] must live on the direct
+          child of .atmosphere to escape the z-index: 1 stacking context
+          that .atmosphere > * establishes — otherwise the dock's own
+          z-60 is trapped inside the parent's z-1 context and loses to
+          the Radix Sheet portal (z-50) at body root. */}
       <div
-        className="shrink-0"
+        className="shrink-0 relative z-[60]"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", marginTop: "var(--shell-gap-sm)" }}
       >
         {persistentDock}
