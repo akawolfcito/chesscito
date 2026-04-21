@@ -694,14 +694,14 @@ export default function ArenaPage() {
             <button
               type="button"
               onClick={handleChangeDifficulty}
-              className="flex items-center gap-1.5 rounded-full border border-white/[0.10] bg-white/[0.06] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cyan-100/70 transition-all hover:bg-white/[0.10] hover:text-cyan-100 active:scale-[0.97]"
+              className="flex items-center gap-1.5 rounded-full border border-amber-300/45 bg-amber-400/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider shadow-[0_1px_0_rgba(251,191,36,0.20)] transition-all hover:bg-amber-400/25 active:scale-[0.97]"
               aria-label={`Difficulty: ${ARENA_COPY.difficulty[game.difficulty]}. Tap to change.`}
             >
-              <span className="text-amber-300/90">
+              <span className="text-amber-200">
                 {ARENA_COPY.difficulty[game.difficulty]}
               </span>
-              <span aria-hidden="true" className="text-cyan-100/40">·</span>
-              <span className="text-cyan-100/45">tap to change</span>
+              <span aria-hidden="true" className="text-amber-100/50">·</span>
+              <span className="text-amber-100/75">tap to change</span>
             </button>
           </div>
         )}
