@@ -103,6 +103,15 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
             </div>
             );
           })}
+          {items.length > 0 && items.length < 3 && (
+            <div className="col-span-full mt-1 flex items-center gap-3 rounded-2xl border border-amber-300/20 bg-amber-400/[0.04] px-4 py-3">
+              <CandyIcon name="shop" className="h-6 w-6 shrink-0 opacity-70" />
+              <div className="flex flex-col">
+                <p className="text-sm font-bold text-amber-200">{SHOP_SHEET_COPY.moreSoonTitle}</p>
+                <p className="text-xs text-amber-100/60">{SHOP_SHEET_COPY.moreSoonHint}</p>
+              </div>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>

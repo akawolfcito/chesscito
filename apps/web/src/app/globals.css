@@ -365,27 +365,30 @@
   .sheet-bg-badges::after {
     background: linear-gradient(
       to bottom,
-      rgba(251, 191, 36, 0.22) 0%,
-      rgba(6, 14, 28, 0.78) 45%,
-      rgba(6, 14, 28, 0.90) 100%
+      rgba(251, 191, 36, 0.24) 0%,
+      rgba(6, 14, 28, 0.58) 30%,
+      rgba(6, 14, 28, 0.78) 70%,
+      rgba(6, 14, 28, 0.88) 100%
     );
   }
 
   .sheet-bg-shop::after {
     background: linear-gradient(
       to bottom,
-      rgba(244, 63, 94, 0.22) 0%,
-      rgba(6, 14, 28, 0.78) 45%,
-      rgba(6, 14, 28, 0.90) 100%
+      rgba(244, 63, 94, 0.24) 0%,
+      rgba(6, 14, 28, 0.58) 30%,
+      rgba(6, 14, 28, 0.78) 70%,
+      rgba(6, 14, 28, 0.88) 100%
     );
   }
 
   .sheet-bg-leaderboard::after {
     background: linear-gradient(
       to bottom,
-      rgba(139, 92, 246, 0.22) 0%,
-      rgba(6, 14, 28, 0.78) 45%,
-      rgba(6, 14, 28, 0.90) 100%
+      rgba(139, 92, 246, 0.24) 0%,
+      rgba(6, 14, 28, 0.58) 30%,
+      rgba(6, 14, 28, 0.78) 70%,
+      rgba(6, 14, 28, 0.88) 100%
     );
   }
 
@@ -1880,6 +1883,14 @@
 .player-card-bot {
   flex: 1 1 0;
   min-width: 0;
+}
+
+/* Amber glow on the player avatar so "you" reads as protagonist,
+   not symmetric with the enemy avatar. */
+.player-card-you {
+  filter:
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))
+    drop-shadow(0 0 8px rgba(251, 191, 36, 0.35));
 }
 
 .arena-hud-chess-banner {

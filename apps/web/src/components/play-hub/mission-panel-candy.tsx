@@ -139,7 +139,7 @@ export function MissionPanelCandy({
   const pieceChip = (
     <button
       type="button"
-      className="flex items-center gap-2 rounded-full border border-white/[0.10] bg-[var(--surface-c-mid)] px-2.5 py-1.5 backdrop-blur-md transition-all active:scale-[0.97]"
+      className="flex items-center gap-2 rounded-full border border-amber-300/25 bg-[var(--surface-c-mid)] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.35)] backdrop-blur-md transition-all active:scale-[0.97]"
       aria-label={`Switch piece (current: ${activePiece?.label ?? selectedPiece})`}
     >
       <picture className="h-7 w-7 shrink-0">

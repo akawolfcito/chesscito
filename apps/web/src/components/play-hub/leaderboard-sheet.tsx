@@ -127,17 +127,20 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
             <SheetDescription className="text-cyan-100/75">{LEADERBOARD_SHEET_COPY.description}</SheetDescription>
           </SheetHeader>
         </div>
-        <p className="shrink-0 mt-3 text-center text-xs text-cyan-100/60">
-          {PASSPORT_COPY.infoBanner}{" "}
+        <div className="shrink-0 mt-3 flex flex-col items-center gap-2">
+          <p className="text-center text-xs text-cyan-100/60">
+            {PASSPORT_COPY.infoBanner}
+          </p>
           <a
             href={PASSPORT_COPY.passportUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline text-cyan-300/80 hover:text-cyan-200"
+            className="inline-flex items-center gap-1.5 rounded-full border border-violet-300/40 bg-violet-400/15 px-3 py-1 text-xs font-semibold text-violet-100 transition-all hover:bg-violet-400/25 active:scale-[0.97]"
           >
+            <CandyIcon name="shield" className="h-3 w-3" />
             {PASSPORT_COPY.ctaLabel}
           </a>
-        </p>
+        </div>
         <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-2">
           {!loading && !error && rows.length > 0 && (
             <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-3 pb-1 text-xs font-medium uppercase tracking-widest text-cyan-100/50">

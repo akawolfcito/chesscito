@@ -197,6 +197,8 @@ export const SHOP_SHEET_COPY = {
   buyButtonComingSoon: "Coming soon",
   buyButtonUnavailable: "Unavailable",
   empty: "Shop items are not available right now.",
+  moreSoonTitle: "More treasures coming",
+  moreSoonHint: "Skins, cosmetics and boosters are brewing in the workshop.",
   status: {
     available: "Available",
     unavailable: "Unavailable",
