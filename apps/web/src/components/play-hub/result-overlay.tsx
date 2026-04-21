@@ -225,99 +225,91 @@ export function ResultOverlay({
 
   return (
     <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
+      className={`fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={title}
+      onClick={handleDismiss}
     >
       <div
-        className={`${isError ? "panel-elevated" : "panel-showcase"} reward-ceremony-panel flex w-full max-w-xs flex-col items-center gap-6 px-6 py-10 text-center`}
+        className="relative w-full max-w-xs"
         style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Image or error icon */}
-        {isError ? (
-          <div className="h-20 w-20">
-            <LottieAnimation src="/animations/error-alert.lottie" loop className="h-full w-full" />
-          </div>
-        ) : (
-          <SuccessImage variant={variant} pieceType={pieceType} glowClass={variant === "badge" ? "reward-glow-achievement reward-glow-pulse" : "reward-glow-progress"} />
-        )}
-
-        {/* Title */}
-        <h2 className={`fantasy-title text-2xl ${isError ? "text-rose-100" : "text-cyan-50 drop-shadow-[0_0_8px_rgba(34,211,238,0.2)]"}`}>
-          {title}
-        </h2>
-
-        {/* Subtitle */}
-        <p className={`text-sm leading-relaxed ${isError ? "text-rose-200/80" : "text-cyan-100/80"}`}>
-          {subtitle}
-        </p>
-
-        {/* Stars (badge/score only) */}
-        {!isError && variant !== "shop" && totalStars != null ? (
-          <StarsRow totalStars={totalStars} staggered />
-        ) : null}
-
-        {/* CeloScan link (success only) */}
-        {!isError && txHash && celoscanHref ? (
-          <Link
-            href={celoscanHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs font-semibold text-cyan-400 underline underline-offset-2"
-          >
-            {RESULT_OVERLAY_COPY.cta.viewOnCeloscan}
-          </Link>
-        ) : null}
-
-        {/* CTA buttons */}
-        <div
-          className="reward-ceremony-buttons mt-2 flex w-full flex-col gap-2"
-          style={{ opacity: 0, animation: "reward-buttons-enter 300ms ease-out 1300ms forwards" }}
+        <PaperPanel
+          ribbonTitle={title}
+          onClose={handleDismiss}
+          closeLabel={RESULT_OVERLAY_COPY.cta.dismiss}
+          cta={
+            isError && onRetry ? (
+              <div className="flex flex-col gap-1.5">
+                <Button type="button" variant="game-solid" size="game" onClick={onRetry} className="w-full">
+                  {RESULT_OVERLAY_COPY.cta.tryAgain}
+                </Button>
+                <button
+                  type="button"
+                  onClick={handleDismiss}
+                  className="w-full py-1 text-xs font-semibold text-amber-800/70 underline underline-offset-2"
+                >
+                  {RESULT_OVERLAY_COPY.cta.dismiss}
+                </button>
+              </div>
+            ) : (
+              <Button type="button" variant="game-primary" size="game" onClick={handleDismiss} className="w-full">
+                {RESULT_OVERLAY_COPY.cta.continue}
+              </Button>
+            )
+          }
+          meta={
+            !isError ? (
+              <>
+                <span className="fantasy-title">chesscito</span>
+                <span className="opacity-70"> · on Celo</span>
+              </>
+            ) : null
+          }
         >
-          {!isError ? (
-            <ShareButton variant={variant} pieceType={pieceType} itemLabel={itemLabel} totalStars={totalStars} />
-          ) : null}
+          <div className="flex flex-col items-center gap-2 text-center">
+            {isError ? (
+              <div className="h-16 w-16">
+                <LottieAnimation src="/animations/error-alert.lottie" loop className="h-full w-full" />
+              </div>
+            ) : (
+              <SuccessImage
+                variant={variant}
+                pieceType={pieceType}
+                glowClass={variant === "badge" ? "reward-glow-achievement reward-glow-pulse" : "reward-glow-progress"}
+                size="sm"
+              />
+            )}
 
-          {isError && onRetry ? (
-            <Button
-              type="button"
-              variant="game-solid"
-              size="game"
-              onClick={onRetry}
-            >
-              {RESULT_OVERLAY_COPY.cta.tryAgain}
-            </Button>
-          ) : null}
+            {!isError && variant !== "shop" && totalStars != null ? (
+              <StarsRow totalStars={totalStars} staggered tone="paper" />
+            ) : null}
 
-          {isError && onRetry ? (
-            <Button
-              type="button"
-              variant="game-text"
-              size="game-sm"
-              onClick={handleDismiss}
+            <p
+              className={`text-sm leading-snug ${isError ? "text-rose-700" : ""}`}
+              style={!isError ? { color: "var(--paper-text)" } : undefined}
             >
-              {RESULT_OVERLAY_COPY.cta.dismiss}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="game-primary"
-              size="game"
-              onClick={handleDismiss}
-            >
-              {RESULT_OVERLAY_COPY.cta.continue}
-            </Button>
-          )}
-        </div>
+              {subtitle}
+            </p>
 
-        {/* Branding footer (success only) */}
-        {!isError ? (
-          <div className="mt-4 flex flex-col items-center gap-0.5">
-            <span className="fantasy-title text-sm text-cyan-100/50">chesscito</span>
-            <span className="text-xs text-cyan-100/30">on Celo</span>
+            {!isError && txHash && celoscanHref ? (
+              <Link
+                href={celoscanHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-amber-800 underline underline-offset-2"
+              >
+                {RESULT_OVERLAY_COPY.cta.viewOnCeloscan}
+              </Link>
+            ) : null}
+
+            {!isError ? (
+              <ShareButton variant={variant} pieceType={pieceType} itemLabel={itemLabel} totalStars={totalStars} tone="paper" />
+            ) : null}
           </div>
-        ) : null}
+        </PaperPanel>
       </div>
     </div>
   );
@@ -459,64 +451,68 @@ export function PieceCompletePrompt({
 
   return (
     <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
+      className={`fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={PIECE_COMPLETE_COPY.title}
+      onClick={() => handleAction(onPracticeAgain)}
     >
       <div
-        className="panel-showcase reward-ceremony-panel flex w-full max-w-xs flex-col items-center gap-6 px-6 py-10 text-center"
+        className="relative w-full max-w-xs"
         style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <SuccessImage variant="badge" pieceType={pieceType} glowClass="reward-glow-progress" />
-
-        <StarsRow totalStars={totalStars} staggered />
-
-        <h2 className="fantasy-title text-2xl text-cyan-50">
-          {PIECE_COMPLETE_COPY.title}
-        </h2>
-
-        <p className="text-sm leading-relaxed text-cyan-100/80">
-          {subtitle}
-        </p>
-
-        <div
-          className="reward-ceremony-buttons mt-2 flex w-full flex-col gap-2"
-          style={{ opacity: 0, animation: "reward-buttons-enter 300ms ease-out 1300ms forwards" }}
+        <PaperPanel
+          ribbonTitle={PIECE_COMPLETE_COPY.title}
+          onClose={() => handleAction(onPracticeAgain)}
+          closeLabel={PIECE_COMPLETE_COPY.practiceAgain}
+          cta={
+            <div className="flex flex-col gap-1.5">
+              {nextPiece && hasClaimedBadge ? (
+                <Button
+                  type="button"
+                  variant="game-solid"
+                  size="game"
+                  onClick={() => handleAction(onNextPiece)}
+                  className="w-full"
+                >
+                  {PIECE_COMPLETE_COPY.nextPiece(PIECE_LABELS[nextPiece])}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="game-solid"
+                  size="game"
+                  onClick={() => handleAction(onArena)}
+                  className="w-full"
+                >
+                  {PIECE_COMPLETE_COPY.tryArena}
+                </Button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleAction(onPracticeAgain)}
+                className="w-full py-1 text-xs font-semibold text-amber-800/70 underline underline-offset-2"
+              >
+                {PIECE_COMPLETE_COPY.practiceAgain}
+              </button>
+            </div>
+          }
+          meta={
+            <>
+              <span className="fantasy-title">chesscito</span>
+              <span className="opacity-70"> · on Celo</span>
+            </>
+          }
         >
-          {nextPiece && hasClaimedBadge ? (
-            <Button
-              type="button"
-              variant="game-solid"
-              size="game"
-              onClick={() => handleAction(onNextPiece)}
-            >
-              {PIECE_COMPLETE_COPY.nextPiece(PIECE_LABELS[nextPiece])}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="game-solid"
-              size="game"
-              onClick={() => handleAction(onArena)}
-            >
-              {PIECE_COMPLETE_COPY.tryArena}
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="game-text"
-            size="game-sm"
-            onClick={() => handleAction(onPracticeAgain)}
-          >
-            {PIECE_COMPLETE_COPY.practiceAgain}
-          </Button>
-        </div>
-
-        <div className="mt-4 flex flex-col items-center gap-0.5">
-          <span className="fantasy-title text-sm text-cyan-100/50">chesscito</span>
-          <span className="text-xs text-cyan-100/30">on Celo</span>
-        </div>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <SuccessImage variant="badge" pieceType={pieceType} glowClass="reward-glow-progress" size="sm" />
+            <StarsRow totalStars={totalStars} staggered tone="paper" />
+            <p className="text-sm leading-snug" style={{ color: "var(--paper-text)" }}>
+              {subtitle}
+            </p>
+          </div>
+        </PaperPanel>
       </div>
     </div>
   );
