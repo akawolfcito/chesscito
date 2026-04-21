@@ -10,7 +10,7 @@ type LegalPageShellProps = {
 export function LegalPageShell({ title, backHref = "/about", children }: LegalPageShellProps) {
   return (
     <div className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center">
-      <div className="flex w-full max-w-[var(--app-max-width)] flex-col rounded-t-3xl bg-[var(--surface-a)] backdrop-blur-2xl">
+      <div className="candy-page-panel flex w-full max-w-[var(--app-max-width)] flex-col rounded-t-3xl bg-[var(--surface-a)] backdrop-blur-2xl">
         <header className="flex items-center gap-3 border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] px-5 py-5 rounded-t-3xl">
           <Link
             href={backHref}

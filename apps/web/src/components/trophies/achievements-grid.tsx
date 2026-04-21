@@ -33,8 +33,8 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
       className={[
         "flex min-h-[88px] flex-col rounded-2xl border px-3 py-2.5 transition-all",
         earned
-          ? "border-amber-400/40 bg-amber-500/[0.08] shadow-[0_0_12px_rgba(251,191,36,0.10)]"
-          : "border-white/[0.08] bg-white/[0.03]",
+          ? "border-amber-400/50 bg-amber-500/[0.10] shadow-[0_0_14px_rgba(251,191,36,0.18)]"
+          : "border-amber-300/[0.12] bg-amber-400/[0.04]",
       ].join(" ")}
       aria-label={`${copy.title} — ${earned ? ACHIEVEMENTS_COPY.earnedLabel : ACHIEVEMENTS_COPY.lockedLabel}`}
     >
@@ -49,7 +49,7 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
         <p
           className={[
             "text-xs font-bold uppercase tracking-wider",
-            earned ? "text-amber-300" : "text-white/40",
+            earned ? "text-amber-300" : "text-amber-100/55",
           ].join(" ")}
         >
           {copy.title}
@@ -58,7 +58,7 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
       <p
         className={[
           "mt-1 text-[11px] leading-tight",
-          earned ? "text-amber-100/75" : "text-white/35",
+          earned ? "text-amber-100/75" : "text-amber-100/45",
         ].join(" ")}
       >
         {copy.description}
