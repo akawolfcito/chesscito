@@ -7,8 +7,10 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { TrophyList } from "@/components/trophies/trophy-list";
+import { AchievementsGrid } from "@/components/trophies/achievements-grid";
 import { getVictoryAddress } from "@/lib/game/victory-events";
-import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
+import { TROPHY_VITRINE_COPY, ACHIEVEMENTS_COPY, ROADMAP_COPY } from "@/lib/content/editorial";
+import { computeAchievements } from "@/lib/achievements/compute";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
 type ApiVictoryRow = {
@@ -213,6 +215,28 @@ export default function TrophiesPage() {
               )}
             </section>
 
+            {/* Achievements (feature #23) — derived from Victory NFT data. */}
+            {(() => {
+              const summary = computeAchievements(myVictories);
+              return (
+                <section className="mb-6">
+                  <h2 className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-label-gold)]" style={{ textShadow: "var(--text-shadow-label)" }}>
+                    <CandyIcon name="star" className="h-4 w-4" />
+                    {ACHIEVEMENTS_COPY.sectionTitle}
+                  </h2>
+                  <p className="mb-3 text-[11px] text-slate-400">
+                    {ACHIEVEMENTS_COPY.sectionDescription(summary.earnedCount, summary.total)}
+                  </p>
+                  <AchievementsGrid achievements={summary.list} />
+                  {summary.earnedCount === 0 && (
+                    <p className="mt-3 text-center text-[11px] text-slate-500">
+                      {ACHIEVEMENTS_COPY.emptyHint}
+                    </p>
+                  )}
+                </section>
+              );
+            })()}
+
             {/* Hall of Fame */}
             <section className="mb-6">
               <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-label-gold)]" style={{ textShadow: "var(--text-shadow-label)" }}>
@@ -232,12 +256,34 @@ export default function TrophiesPage() {
           </>
         )}
 
-        {/* Roadmap Banner — only shown to connected users with victories */}
-        {isConnected && myVictories && myVictories.length > 0 && (
-          <div className="mt-auto rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3 text-center text-xs text-purple-300">
-            {TROPHY_VITRINE_COPY.roadmap}
-          </div>
-        )}
+        {/* Roadmap (feature #23) — always visible, non-speculative. */}
+        <section className="mt-auto">
+          <h2 className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-label-gold)]" style={{ textShadow: "var(--text-shadow-label)" }}>
+            <CandyIcon name="crown" className="h-4 w-4" />
+            {ROADMAP_COPY.sectionTitle}
+          </h2>
+          <p className="mb-3 text-[11px] text-slate-400">{ROADMAP_COPY.sectionDescription}</p>
+          <ul className="flex flex-col gap-2" role="list">
+            {ROADMAP_COPY.items.map((item) => (
+              <li
+                key={item.title}
+                className="rounded-2xl border border-purple-400/15 bg-purple-500/[0.06] px-3 py-2.5"
+              >
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-purple-200">
+                    {item.title}
+                  </p>
+                  <span className="ml-auto rounded-full bg-purple-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-200">
+                    {ROADMAP_COPY.soonTag}
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] leading-tight text-purple-100/70">
+                  {item.description}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
     </div>
     </div>

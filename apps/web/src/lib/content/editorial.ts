@@ -395,6 +395,69 @@ export const TROPHY_VITRINE_COPY = {
   nftIdPrefix: "NFT",
 } as const;
 
+/** Achievement surface copy (feature #23). Achievements are derived from
+ *  existing on-chain Victory NFT data — no new contracts. Keep titles
+ *  short (2–3 words) and descriptions under 60 chars. */
+export const ACHIEVEMENTS_COPY = {
+  sectionTitle: "Achievements",
+  sectionDescription: (earned: number, total: number) => `${earned} of ${total} unlocked`,
+  emptyHint: "Win in the Arena to start unlocking achievements.",
+  lockedLabel: "Locked",
+  earnedLabel: "Earned",
+  progressLabel: (current: number, goal: number) => `${current}/${goal}`,
+  items: {
+    "first-victory": {
+      title: "First Victory",
+      description: "Win your first Arena match.",
+    },
+    "arena-champion-medium": {
+      title: "Solid Player",
+      description: "Beat the AI on Medium or Hard.",
+    },
+    "arena-champion-hard": {
+      title: "Arena Champion",
+      description: "Beat the AI on Hard.",
+    },
+    speedrunner: {
+      title: "Speedrunner",
+      description: "Win a match in 20 moves or fewer.",
+    },
+    "rapid-finish": {
+      title: "Rapid Finish",
+      description: "Win a match in under 30 seconds.",
+    },
+    "five-crowns": {
+      title: "Five Crowns",
+      description: "Win 5 Arena matches.",
+    },
+    dedication: {
+      title: "Dedication",
+      description: "Win 25 Arena matches.",
+    },
+  },
+} as const;
+
+/** Roadmap surface (feature #23). Non-speculative — explicitly "soon". */
+export const ROADMAP_COPY = {
+  sectionTitle: "On the roadmap",
+  sectionDescription: "What's coming to Chesscito.",
+  soonTag: "Soon",
+  items: [
+    {
+      title: "Tournaments",
+      description: "Scheduled brackets with shared prize pools.",
+    },
+    {
+      title: "VIP Passes",
+      description: "Entry passes tied to future Celo community events.",
+    },
+    {
+      title: "Seasonal Rewards",
+      description: "Rotating challenges with unique on-chain collectibles.",
+    },
+  ],
+} as const;
+
 export const ARENA_COPY = {
   title: "Arena",
   subtitle: "Challenge the AI",
