@@ -94,19 +94,31 @@ export default async function VictoryPage({ params }: { params: { id: string } }
 
   return (
     <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width)] flex-col items-center justify-center arena-bg px-6 animate-in fade-in duration-500">
-      <div className="flex w-full max-w-[340px] flex-col items-center rounded-3xl border border-white/[0.08] bg-[var(--surface-frosted)] px-6 pb-8 pt-10 backdrop-blur-2xl shadow-[0_0_60px_rgba(20,184,166,0.08)] animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="relative flex w-full max-w-[340px] flex-col items-center overflow-hidden rounded-3xl border-2 border-amber-400/40 bg-[var(--surface-frosted)] px-6 pb-8 pt-10 backdrop-blur-2xl shadow-[0_0_40px_rgba(251,191,36,0.22),inset_0_0_0_1px_rgba(251,191,36,0.10)] animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* Trophy spotlight — subtle amber glow behind the trophy */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-48"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(251,191,36,0.18) 0%, rgba(251,191,36,0) 70%)",
+          }}
+        />
+
         {/* Trophy */}
-        <VictoryTrophy />
+        <div className="relative z-10">
+          <VictoryTrophy />
+        </div>
 
         {/* Title */}
-        <h1 className="fantasy-title mb-2 text-3xl font-bold text-emerald-300/90 drop-shadow-[0_0_12px_rgba(20,184,166,0.35)]">
+        <h1 className="fantasy-title relative z-10 mb-2 text-3xl font-bold text-amber-200 drop-shadow-[0_0_12px_rgba(251,191,36,0.45)]">
           {ARENA_DIFFICULTIES.has(v.difficultyRaw)
             ? VICTORY_PAGE_COPY.metaCheckmate(v.moves)
             : VICTORY_PAGE_COPY.metaComplete(v.moves)}
         </h1>
 
         {/* Stats */}
-        <div className="mb-3 flex gap-3 text-sm text-cyan-100/50">
+        <div className="relative z-10 mb-3 flex gap-3 text-sm text-amber-100/60">
           <span>{v.difficulty}</span>
           <span>•</span>
           <span>{formatTime(v.timeMs)}</span>
@@ -115,26 +127,26 @@ export default async function VictoryPage({ params }: { params: { id: string } }
         </div>
 
         {/* Tagline for new visitors */}
-        <p className="mb-4 text-center text-xs text-cyan-100/40">
+        <p className="relative z-10 mb-4 text-center text-xs text-amber-100/45">
           {VICTORY_PAGE_COPY.tagline}
         </p>
 
         {/* Challenge line */}
-        <p className="mb-8 text-lg font-semibold text-amber-400">
+        <p className="relative z-10 mb-8 text-lg font-semibold text-amber-300">
           {VICTORY_PAGE_COPY.challengeLine}
         </p>
 
         {/* CTA */}
         <Link
           href="/arena"
-          className="w-full rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-400 py-3 text-center text-sm font-bold text-white shadow-[0_0_16px_rgba(20,184,166,0.25)] transition-all hover:shadow-[0_0_24px_rgba(20,184,166,0.4)] active:scale-[0.97]"
+          className="relative z-10 w-full rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 py-3 text-center text-sm font-bold text-[rgba(63,34,8,0.95)] shadow-[0_0_18px_rgba(251,191,36,0.35)] transition-all hover:shadow-[0_0_26px_rgba(251,191,36,0.55)] active:scale-[0.97]"
         >
           {VICTORY_PAGE_COPY.acceptChallenge}
         </Link>
 
         <Link
           href="/"
-          className="mt-3 min-h-[44px] flex items-center px-3 text-sm text-white/50 transition-colors hover:text-white/70"
+          className="relative z-10 mt-3 min-h-[44px] flex items-center px-3 text-sm text-amber-100/45 transition-colors hover:text-amber-100/70"
         >
           {VICTORY_PAGE_COPY.backToHub}
         </Link>
