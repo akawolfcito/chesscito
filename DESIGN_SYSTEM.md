@@ -159,12 +159,29 @@ Implementation requirements per type (no "creer" — follow these literally):
 
 **C. Quick picker** (auto height, bottom-anchored):
 ```tsx
-<SheetContent side="bottom" className="rounded-t-3xl">
+<SheetContent side="bottom" className="rounded-t-3xl pb-[5rem]">
   {/* short content — auto height */}
 </SheetContent>
 ```
-- No explicit height; short content means the sheet naturally ends above the dock.
-- No `pb-[5rem]` needed.
+- No explicit height; short content means the sheet naturally ends above the dock area.
+- `pb-[5rem]` IS needed so the bottom row of content clears the persistent dock (z-60 sits on top of the sheet at the viewport bottom). Without it, the bottom ~72px of picker content disappear under the dock.
+- Controlled `open` / `onOpenChange` props passed from the parent. Auto-close pickers when a dock destination sheet opens (effect on `isDockSheetOpen` — see `components/play-hub/mission-panel-candy.tsx`).
+- Always include a `<SheetDescription>` — Radix Dialog in v1.0+ logs a console warning without one. Use `className="sr-only"` if the description would be visually redundant with the title.
+
+**When to re-evaluate Type C → Type B** (promote to Destination)
+
+Keep the surface as Quick picker (C) unless ALL of the following are true — then promote to Destination (B):
+
+- Content grows past ~6 items or needs subcategories/filters
+- User typically spends >3s on the surface (reading, comparing, tracking progress)
+- Losing board context would improve focus rather than hurt it
+
+Examples where we'd promote if requirements changed:
+- `ExerciseDrawer` (5 items today) → if it gains per-exercise history, star-delta analytics, or subcategory tabs, promote to B.
+- `MissionDetail` (single mission today) → if it adds a mission log, difficulty breakdown, or timed leaderboard per mission, promote to B.
+- `PiecePicker` (6 pieces today) → if each piece gets a comparison card (stats, unlocked exercises, best-time-per-piece), promote to B.
+
+Don't promote speculatively. The sheet stays C until the three conditions above are met.
 
 **D. System modal** (explicit full-screen with dock hidden):
 - Uses fixed-position portal, NOT `<Sheet>`.

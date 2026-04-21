@@ -807,6 +807,7 @@ export default function PlayHubPage() {
           targetLabel={targetLabel}
           pieceHint={pieceHint}
           isCapture={Boolean(currentExercise.isCapture)}
+          isDockSheetOpen={activeDockTab !== null}
           score={score.toString()}
           timeMs={timeMs.toString()}
           contextualAction={

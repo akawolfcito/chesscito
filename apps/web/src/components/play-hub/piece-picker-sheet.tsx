@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -19,6 +19,10 @@ type PieceOption = {
 };
 
 type Props = {
+  /** Controlled open state — parent closes it when a dock sheet opens,
+   *  so the user never sees stacked pickers. */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   selectedPiece: PieceOption["key"];
   pieces: readonly PieceOption[];
   onSelectPiece: (piece: PieceOption["key"]) => void;
@@ -26,20 +30,18 @@ type Props = {
   trigger: React.ReactNode;
 };
 
-export function PiecePickerSheet({ selectedPiece, pieces, onSelectPiece, trigger }: Props) {
-  const [open, setOpen] = useState(false);
-
+export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, onSelectPiece, trigger }: Props) {
   function handleSelect(piece: PieceOption["key"]) {
     onSelectPiece(piece);
-    setOpen(false);
+    onOpenChange(false);
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side="bottom"
-        className="mission-shell rounded-t-3xl border-white/[0.10]"
+        className="mission-shell rounded-t-3xl border-white/[0.10] pb-[5rem]"
         style={{ background: "var(--surface-b)", backdropFilter: "blur(20px)" }}
       >
         <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
@@ -47,6 +49,9 @@ export function PiecePickerSheet({ selectedPiece, pieces, onSelectPiece, trigger
             <SheetTitle className="fantasy-title text-slate-100">
               {PIECE_RAIL_COPY.title}
             </SheetTitle>
+            <SheetDescription className="sr-only">
+              {PIECE_RAIL_COPY.title}
+            </SheetDescription>
           </SheetHeader>
         </div>
 

@@ -30,6 +30,11 @@ type MissionPanelProps = {
   persistentDock: ReactNode;
   pieceHint?: string;
   isCapture?: boolean;
+  /** Signal from the parent that a dock destination sheet is open.
+   *  When true, we close piece-picker and mission-detail so the user
+   *  never sees a picker stacked behind a badge/shop/leaderboard
+   *  sheet. */
+  isDockSheetOpen: boolean;
 };
 
 type FlashConfig = { text: string; accent: string };
@@ -114,9 +119,22 @@ export function MissionPanelCandy({
   contextualAction,
   persistentDock,
   isCapture = false,
+  isDockSheetOpen,
 }: MissionPanelProps) {
   const activePiece = pieces.find((p) => p.key === selectedPiece);
   const activeSrc = PIECE_IMAGES[selectedPiece as keyof typeof PIECE_IMAGES];
+
+  // Quick-picker (Type C) open state — owned here so we can auto-close
+  // them when the parent signals a dock destination sheet is opening.
+  const [piecePickerOpen, setPiecePickerOpen] = useState(false);
+  const [missionDetailOpen, setMissionDetailOpen] = useState(false);
+
+  useEffect(() => {
+    if (isDockSheetOpen) {
+      setPiecePickerOpen(false);
+      setMissionDetailOpen(false);
+    }
+  }, [isDockSheetOpen]);
 
   const pieceChip = (
     <button
@@ -174,6 +192,8 @@ export function MissionPanelCandy({
       {/* Zone A: compact header — piece chip + exercise drawer */}
       <div className="shrink-0 mx-2 mt-2 flex items-center gap-2">
         <PiecePickerSheet
+          open={piecePickerOpen}
+          onOpenChange={setPiecePickerOpen}
           selectedPiece={selectedPiece}
           pieces={pieces}
           onSelectPiece={onSelectPiece}
@@ -190,6 +210,8 @@ export function MissionPanelCandy({
 
       {/* Mission peek — single line, tap to expand */}
       <MissionDetailSheet
+        open={missionDetailOpen}
+        onOpenChange={setMissionDetailOpen}
         selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
         targetLabel={targetLabel}
         isCapture={isCapture}
