@@ -72,7 +72,7 @@ export function ExerciseDrawer({
           <span className="tabular-nums">{totalStars}/{maxStars}</span>
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-white/[0.10] pb-[5rem]" style={{ background: "var(--surface-b)", backdropFilter: "blur(20px)" }}>
+      <SheetContent side="bottom" className="mission-shell sheet-bg-hub rounded-t-3xl border-white/[0.10] pb-[5rem]">
         <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
           <SheetHeader>
             <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><CandyIcon name="crosshair" className="h-5 w-5" />{EXERCISE_DRAWER_COPY.title}</SheetTitle>

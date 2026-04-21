@@ -41,8 +41,7 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side="bottom"
-        className="mission-shell rounded-t-3xl border-white/[0.10] pb-[5rem]"
-        style={{ background: "var(--surface-b)", backdropFilter: "blur(20px)" }}
+        className="mission-shell sheet-bg-hub rounded-t-3xl border-white/[0.10] pb-[5rem]"
       >
         <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
           <SheetHeader>
