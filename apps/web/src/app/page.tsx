@@ -810,6 +810,8 @@ export default function PlayHubPage() {
           isDockSheetOpen={activeDockTab !== null}
           score={score.toString()}
           timeMs={timeMs.toString()}
+          currentStars={totalStars}
+          claimedBadges={badgesClaimed}
           contextualAction={
             <ContextualActionSlot
               action={contextAction}

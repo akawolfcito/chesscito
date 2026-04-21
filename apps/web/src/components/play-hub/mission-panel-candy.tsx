@@ -30,6 +30,13 @@ type MissionPanelProps = {
   persistentDock: ReactNode;
   pieceHint?: string;
   isCapture?: boolean;
+  /** Total stars earned on the current piece (0–15). Feeds the
+   *  mission-detail journey rail so the user sees how close they are
+   *  to claiming the badge. */
+  currentStars: number;
+  /** On-chain badge claim status per piece. Feeds the journey rail
+   *  unlock/locked tiers. */
+  claimedBadges: Partial<Record<PieceOption["key"], boolean>>;
   /** Signal from the parent that a dock destination sheet is open.
    *  When true, we close piece-picker and mission-detail so the user
    *  never sees a picker stacked behind a badge/shop/leaderboard
@@ -119,6 +126,8 @@ export function MissionPanelCandy({
   contextualAction,
   persistentDock,
   isCapture = false,
+  currentStars,
+  claimedBadges,
   isDockSheetOpen,
 }: MissionPanelProps) {
   const activePiece = pieces.find((p) => p.key === selectedPiece);
@@ -217,6 +226,8 @@ export function MissionPanelCandy({
         isCapture={isCapture}
         score={score}
         timeMs={timeMs}
+        currentStars={currentStars}
+        claimedBadges={claimedBadges}
         trigger={missionPeek}
       />
 
