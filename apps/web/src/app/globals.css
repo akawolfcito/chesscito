@@ -431,6 +431,74 @@
     z-index: 1;
   }
 
+  /* ── Hub action sheets (piece picker / exercise drawer) ──
+     Share the same candy grass bg as destination sheets, but with a
+     cyan/teal tint — these are "inside the hub" action surfaces, not
+     destinations. */
+  .sheet-bg-hub {
+    position: relative;
+    overflow: hidden;
+  }
+  .sheet-bg-hub::before {
+    content: "";
+    position: absolute;
+    inset: -12px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: image-set(
+      url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
+      url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
+      url("/art/redesign/bg/bg-ch.png") type("image/png")
+    );
+    z-index: 0;
+  }
+  .sheet-bg-hub::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(34, 211, 238, 0.18) 0%,
+      rgba(6, 14, 28, 0.82) 40%,
+      rgba(6, 14, 28, 0.92) 100%
+    );
+  }
+  .sheet-bg-hub > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Candy page panel ──
+     Secondary routes (trophies / about / support / privacy / terms)
+     render an opaque dark panel over the candy body bg, which reads as
+     a different app. This utility paints subtle candy radials inside
+     the panel (amber top, emerald bottom) so the panel stays legible
+     for text while picking up the hub's candy character. */
+  .candy-page-panel {
+    position: relative;
+    overflow: hidden;
+  }
+  .candy-page-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 110% 32% at 50% 0%,
+        rgba(251, 191, 36, 0.10) 0%,
+        rgba(251, 191, 36, 0.00) 65%),
+      radial-gradient(ellipse 130% 45% at 50% 100%,
+        rgba(34, 197, 94, 0.10) 0%,
+        rgba(34, 197, 94, 0.00) 65%);
+    z-index: 0;
+  }
+  .candy-page-panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
   .reward-burst {
     animation: reward-pop 320ms ease-out both;
   }
@@ -981,15 +1049,22 @@
   /* ── Secondary page scrim ──
      Used by about / support / privacy / terms / trophies. A flat
      bg-black/50 makes these pages feel "distant" from the candy hub
-     aesthetic. This radial gradient keeps the 390px panel legible on
+     aesthetic. This layered gradient keeps the 390px panel legible on
      any viewport while letting the body candy bg peek through at the
-     edges, so the routes stay visually tied to the hub. */
+     edges, and layers subtle amber (top) + emerald (bottom) candy
+     radials so the routes stay visually tied to the hub. */
   .secondary-page-scrim {
     background:
+      radial-gradient(ellipse 120% 40% at 50% 0%,
+        rgba(251, 191, 36, 0.10) 0%,
+        rgba(251, 191, 36, 0.00) 60%),
+      radial-gradient(ellipse 140% 50% at 50% 100%,
+        rgba(34, 197, 94, 0.12) 0%,
+        rgba(34, 197, 94, 0.00) 65%),
       radial-gradient(ellipse at center,
-        rgba(6, 14, 28, 0.35) 0%,
-        rgba(6, 14, 28, 0.55) 55%,
-        rgba(6, 14, 28, 0.72) 100%);
+        rgba(6, 14, 28, 0.30) 0%,
+        rgba(6, 14, 28, 0.48) 55%,
+        rgba(6, 14, 28, 0.66) 100%);
   }
 
   /* ── Panel tier system — material surfaces ── */
