@@ -825,6 +825,7 @@ export default function PlayHubPage() {
           }
           persistentDock={
             <PersistentDock
+              activeDockTab={activeDockTab}
               badgeControl={
                 <BadgeSheet
                   open={badgeSheetOpen}

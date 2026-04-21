@@ -534,7 +534,17 @@ export const PRACTICE_COPY = {
 } as const;
 
 export const DOCK_LABELS = {
-  freePlay: "Free Play",
+  /** Center tab — routes to /arena. Short name matches the route + the
+   *  page's own title ("Arena"). Previous label "Free Play" was
+   *  ambiguous ("is there Paid Play?"). */
+  arena: "Arena",
+  /** Item labels — only rendered when the tab is active so the dock
+   *  stays compact + the active state feels like a lift out of the
+   *  bar. */
+  badge: "Badges",
+  shop: "Shop",
+  leaderboard: "Leaders",
+  invite: "Invite",
 } as const;
 
 export const ARENA_CTA_COPY = {

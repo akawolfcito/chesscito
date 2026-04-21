@@ -332,32 +332,96 @@
     z-index: 0;
   }
 
-  .sheet-bg-leaderboard::before {
-    background-image: image-set(url("/art/leaderboard-hall-chesscito.avif") type("image/avif"),
-        url("/art/leaderboard-hall-chesscito.webp") type("image/webp"),
-        url("/art/leaderboard-hall-chesscito.png") type("image/png"));
-  }
-
-  .sheet-bg-shop::before {
-    background-image: image-set(url("/art/shop-magic-chesscito.avif") type("image/avif"),
-        url("/art/shop-magic-chesscito.webp") type("image/webp"),
-        url("/art/shop-magic-chesscito.png") type("image/png"));
-  }
-
+  /* Candy-coherent bg: all destination sheets share the same hub grass
+     bg (referenced from :root --playhub-game-bg) and differentiate via
+     a color-coded tinted scrim. Keeps sheets feeling "inside the hub"
+     rather than lifting the user into a different-looking world. */
+  .sheet-bg-leaderboard::before,
+  .sheet-bg-shop::before,
   .sheet-bg-badges::before {
-    background-image: image-set(url("/art/bg-badges-chesscito.avif") type("image/avif"),
-        url("/art/bg-badges-chesscito.webp") type("image/webp"),
-        url("/art/bg-badges-chesscito.png") type("image/png"));
+    background-image: image-set(
+      url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
+      url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
+      url("/art/redesign/bg/bg-ch.png") type("image/png")
+    );
   }
 
+  /* Per-sheet tint — color semantics:
+       amber = achievement/trophy (badges)
+       rose  = commerce/purchase (shop)
+       violet = competition/ranking (leaderboard)
+     Top of the sheet is tinted + lighter so the candy grass bleeds
+     through subtly; bottom stays darker to keep existing dark content
+     cards readable. */
   .sheet-bg-leaderboard::after,
   .sheet-bg-shop::after,
   .sheet-bg-badges::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: var(--surface-b);
     z-index: 0;
+  }
+
+  .sheet-bg-badges::after {
+    background: linear-gradient(
+      to bottom,
+      rgba(251, 191, 36, 0.22) 0%,
+      rgba(6, 14, 28, 0.78) 45%,
+      rgba(6, 14, 28, 0.90) 100%
+    );
+  }
+
+  .sheet-bg-shop::after {
+    background: linear-gradient(
+      to bottom,
+      rgba(244, 63, 94, 0.22) 0%,
+      rgba(6, 14, 28, 0.78) 45%,
+      rgba(6, 14, 28, 0.90) 100%
+    );
+  }
+
+  .sheet-bg-leaderboard::after {
+    background: linear-gradient(
+      to bottom,
+      rgba(139, 92, 246, 0.22) 0%,
+      rgba(6, 14, 28, 0.78) 45%,
+      rgba(6, 14, 28, 0.90) 100%
+    );
+  }
+
+  .sheet-bg-coach::before,
+  .sheet-bg-coach::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    z-index: 0;
+  }
+  .sheet-bg-coach::before {
+    inset: -12px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: image-set(
+      url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
+      url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
+      url("/art/redesign/bg/bg-ch.png") type("image/png")
+    );
+  }
+  .sheet-bg-coach::after {
+    background: linear-gradient(
+      to bottom,
+      rgba(34, 211, 238, 0.22) 0%,
+      rgba(6, 14, 28, 0.78) 45%,
+      rgba(6, 14, 28, 0.90) 100%
+    );
+  }
+  .sheet-bg-coach {
+    position: relative;
+    overflow: hidden;
+  }
+  .sheet-bg-coach > * {
+    position: relative;
+    z-index: 1;
   }
 
   .sheet-bg-leaderboard>*,
@@ -1331,6 +1395,50 @@
 
   .chesscito-dock-center:active {
     transform: scale(0.92) translateY(1px);
+  }
+
+  /* Destination dock items — active state mirrors the center tab: scale up,
+     warm glow halo behind the sprite, label appears below. Keeps the user
+     oriented ("you are here") while matching the game-convention language
+     of the center button. */
+  .chesscito-dock-item.is-active {
+    position: relative;
+    isolation: isolate;
+    transform: scale(1.08);
+    transition: transform var(--duration-snap, 120ms);
+  }
+
+  .chesscito-dock-item.is-active::before {
+    content: "";
+    position: absolute;
+    inset: -2px 2px 6px;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at 50% 45%,
+      rgba(255, 220, 120, 0.40) 0%,
+      rgba(255, 200, 80, 0.18) 45%,
+      transparent 75%
+    );
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .chesscito-dock-item.is-active img {
+    filter:
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))
+      drop-shadow(0 0 6px rgba(255, 200, 80, 0.45));
+  }
+
+  .chesscito-dock-item-label {
+    position: absolute;
+    top: -0.65rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 240, 180, 0.95);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    pointer-events: none;
+    font-family: var(--font-game-display);
   }
 
 }
