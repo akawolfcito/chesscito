@@ -495,6 +495,7 @@
     max-width: 340px;
     aspect-ratio: 808 / 1073;
     margin-inline: auto;
+    background-color: var(--paper-bg);
     background-image: image-set(
       url("/art/redesign/panels/paper-panel.avif") type("image/avif"),
       url("/art/redesign/panels/paper-panel.webp") type("image/webp"),
@@ -503,6 +504,7 @@
     background-size: 100% 100%;
     background-repeat: no-repeat;
     background-position: center top;
+    border-radius: 1.25rem;
   }
 
   .paper-panel-ribbon {
@@ -527,23 +529,23 @@
 
   .paper-panel-close {
     position: absolute;
-    top: -0.5rem;
-    right: -0.5rem;
+    top: 2.5%;
+    right: 3%;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    min-width: 44px;
-    min-height: 44px;
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 40px;
+    min-height: 40px;
     border-radius: 9999px;
     background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
-    border: 3px solid rgba(255, 240, 210, 0.95);
+    border: 2px solid rgba(255, 240, 210, 0.95);
     box-shadow:
-      0 3px 0 rgba(139, 30, 30, 0.55),
-      0 4px 10px rgba(0, 0, 0, 0.20);
+      0 2px 0 rgba(139, 30, 30, 0.55),
+      0 3px 8px rgba(0, 0, 0, 0.18);
     transition: transform 150ms ease;
-    z-index: 2;
+    z-index: 3;
   }
   .paper-panel-close:active {
     transform: scale(0.94);

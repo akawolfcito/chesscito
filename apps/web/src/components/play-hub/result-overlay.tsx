@@ -5,6 +5,7 @@ import { useState } from "react";
 import { BADGE_EARNED_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
+import { PaperPanel } from "@/components/redesign/paper-panel";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 
@@ -63,9 +64,20 @@ function getSubtitle(variant: Variant, pieceType?: PieceKey, itemLabel?: string,
   }
 }
 
-function SuccessImage({ variant, pieceType, glowClass }: { variant: SuccessVariant; pieceType?: PieceKey; glowClass?: string }) {
+function SuccessImage({
+  variant,
+  pieceType,
+  glowClass,
+  size = "lg",
+}: {
+  variant: SuccessVariant;
+  pieceType?: PieceKey;
+  glowClass?: string;
+  size?: "sm" | "lg";
+}) {
   const src = variant === "badge" ? getBadgeImg(pieceType) : VARIANT_IMG[variant];
   const hasOptimized = variant === "badge" ? THEME_CONFIG.hasOptimizedFormats : true;
+  const sizeClass = size === "sm" ? "h-20 w-20" : "h-32 w-32";
   return (
     <div className={`relative flex items-center justify-center ${glowClass ?? "reward-glow-progress"}`}>
       <picture
@@ -78,7 +90,7 @@ function SuccessImage({ variant, pieceType, glowClass }: { variant: SuccessVaria
             <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
           </>
         )}
-        <img src={src} alt="" className="h-32 w-32 object-contain drop-shadow-lg" />
+        <img src={src} alt="" className={`${sizeClass} object-contain drop-shadow-lg`} />
       </picture>
     </div>
   );
@@ -86,8 +98,19 @@ function SuccessImage({ variant, pieceType, glowClass }: { variant: SuccessVaria
 
 const MAX_STARS = EXERCISES_PER_PIECE * 3;
 
-function StarsRow({ totalStars, staggered = false }: { totalStars: number; staggered?: boolean }) {
+function StarsRow({
+  totalStars,
+  staggered = false,
+  tone = "dark",
+}: {
+  totalStars: number;
+  staggered?: boolean;
+  tone?: "dark" | "paper";
+}) {
   const filled = Math.min(EXERCISES_PER_PIECE, Math.ceil(totalStars / 3));
+  const earnedClass = tone === "paper" ? "text-amber-500" : "text-amber-400";
+  const emptyClass = tone === "paper" ? "text-amber-700/25" : "text-amber-400/30";
+  const counterClass = tone === "paper" ? "text-amber-800/70" : "text-cyan-100/70";
   return (
     <div className="flex items-center gap-1.5">
       {Array.from({ length: EXERCISES_PER_PIECE }, (_, i) => {
@@ -97,9 +120,7 @@ function StarsRow({ totalStars, staggered = false }: { totalStars: number; stagg
           <span
             key={i}
             className={
-              isEarned
-                ? "reward-ceremony-star text-amber-400 inline-block"
-                : "text-amber-400/30"
+              isEarned ? `reward-ceremony-star ${earnedClass} inline-block` : emptyClass
             }
             style={
               isEarned && staggered
@@ -116,7 +137,7 @@ function StarsRow({ totalStars, staggered = false }: { totalStars: number; stagg
         );
       })}
       <span
-        className="reward-ceremony-buttons ml-1 text-xs text-cyan-100/70"
+        className={`reward-ceremony-buttons ml-1 text-xs ${counterClass}`}
         style={staggered ? { opacity: 0, animation: "reward-buttons-enter 250ms ease-out 1200ms forwards" } : undefined}
       >
         {totalStars}/{MAX_STARS}
@@ -136,11 +157,12 @@ function getShareText(variant: SuccessVariant, pieceType?: PieceKey, itemLabel?:
   }
 }
 
-function ShareButton({ variant, pieceType, itemLabel, totalStars }: {
+function ShareButton({ variant, pieceType, itemLabel, totalStars, tone = "dark" }: {
   variant: SuccessVariant;
   pieceType?: PieceKey;
   itemLabel?: string;
   totalStars?: number;
+  tone?: "dark" | "paper";
 }) {
   const [copied, setCopied] = useState(false);
   const text = getShareText(variant, pieceType, itemLabel, totalStars);
@@ -164,11 +186,16 @@ function ShareButton({ variant, pieceType, itemLabel, totalStars }: {
     }
   }
 
+  const toneClass =
+    tone === "paper"
+      ? "border-amber-700/35 text-amber-800 hover:bg-amber-400/10"
+      : "border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10";
+
   return (
     <button
       type="button"
       onClick={() => void handleShare()}
-      className="w-full rounded-xl border border-cyan-400/30 py-3 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/10 active:scale-[0.98]"
+      className={`w-full rounded-xl border py-3 text-sm font-semibold transition active:scale-[0.98] ${toneClass}`}
     >
       {copied ? SHARE_COPY.fallbackCopied : SHARE_COPY.button}
     </button>
@@ -321,57 +348,78 @@ export function BadgeEarnedPrompt({
 
   return (
     <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
+      className={`fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="badge-earned-title"
+      onClick={handleLater}
     >
       <div
-        className="panel-showcase reward-ceremony-panel flex w-full max-w-xs flex-col items-center gap-6 px-6 py-10 text-center relative overflow-hidden"
+        className="relative w-full max-w-xs"
         style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Auto-dismiss countdown bar */}
-        <div className="absolute inset-x-0 top-0 h-1 bg-cyan-400/20">
+        {/* Auto-dismiss countdown bar — sits above the paper frame so it
+            reads as a "timer on the modal" rather than a paper element. */}
+        <div className="absolute left-1/2 top-[-0.6rem] z-10 h-1 w-[60%] -translate-x-1/2 overflow-hidden rounded-full bg-amber-900/15">
           <div
-            className="h-full bg-cyan-400/60 rounded-r-full"
-            style={{
-              animation: `badge-countdown ${BADGE_AUTO_DISMISS_MS}ms linear forwards`,
-            }}
+            className="h-full rounded-full bg-amber-500/70"
+            style={{ animation: `badge-countdown ${BADGE_AUTO_DISMISS_MS}ms linear forwards` }}
           />
         </div>
-        <SuccessImage variant="badge" pieceType={pieceType} glowClass="reward-glow-achievement reward-glow-pulse" />
 
-        <StarsRow totalStars={totalStars} staggered />
-
-        <h2 id="badge-earned-title" className="fantasy-title text-2xl text-cyan-50">{title}</h2>
-
-        <div
-          className="reward-ceremony-buttons mt-2 flex w-full flex-col gap-2"
-          style={{ opacity: 0, animation: "reward-buttons-enter 300ms ease-out 1300ms forwards" }}
+        <PaperPanel
+          ribbonTitle="Badge Earned"
+          onClose={handleLater}
+          closeLabel={BADGE_EARNED_COPY.later}
+          cta={
+            <div className="flex flex-col gap-1.5">
+              <Button
+                type="button"
+                variant="game-solid"
+                size="game"
+                onClick={onSubmitScore}
+                className="w-full"
+              >
+                {BADGE_EARNED_COPY.submitScore}
+              </Button>
+              <button
+                type="button"
+                onClick={handleLater}
+                className="w-full py-1 text-xs font-semibold text-amber-800/70 underline underline-offset-2"
+              >
+                {BADGE_EARNED_COPY.later}
+              </button>
+            </div>
+          }
+          meta={
+            <>
+              <span className="fantasy-title">chesscito</span>
+              <span className="opacity-70"> · on Celo</span>
+            </>
+          }
         >
-          <Button
-            type="button"
-            variant="game-solid"
-            size="game"
-            onClick={onSubmitScore}
-          >
-            {BADGE_EARNED_COPY.submitScore}
-          </Button>
-          <ShareButton variant="badge" pieceType={pieceType} totalStars={totalStars} />
-          <Button
-            type="button"
-            variant="game-text"
-            size="game-sm"
-            onClick={handleLater}
-          >
-            {BADGE_EARNED_COPY.later}
-          </Button>
-        </div>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <SuccessImage
+              variant="badge"
+              pieceType={pieceType}
+              glowClass="reward-glow-achievement reward-glow-pulse"
+              size="sm"
+            />
 
-        <div className="mt-4 flex flex-col items-center gap-0.5">
-          <span className="fantasy-title text-sm text-cyan-100/50">chesscito</span>
-          <span className="text-xs text-cyan-100/30">on Celo</span>
-        </div>
+            <StarsRow totalStars={totalStars} staggered tone="paper" />
+
+            <h2
+              id="badge-earned-title"
+              className="fantasy-title text-base font-bold leading-tight"
+              style={{ color: "var(--paper-text)" }}
+            >
+              {title}
+            </h2>
+
+            <ShareButton variant="badge" pieceType={pieceType} totalStars={totalStars} tone="paper" />
+          </div>
+        </PaperPanel>
       </div>
     </div>
   );
