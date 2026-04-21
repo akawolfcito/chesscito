@@ -762,21 +762,15 @@
     }
   }
 
-  /* Subtle "tap me" pulse for the compact claim pin when it first
-     appears. Draws the eye without becoming a nag loop. */
+  /* Scale-only bounce so the candy-frame-gold sculpt (box-shadow stack)
+     survives intact. Finite iterations — a three-beat nudge, then rest. */
   @keyframes action-pin-pulse {
-    0%, 100% {
-      transform: scale(1);
-      box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.55);
-    }
-    50% {
-      transform: scale(1.04);
-      box-shadow: 0 0 0 6px rgba(251, 191, 36, 0);
-    }
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
   }
 
   .action-pin-attention {
-    animation: action-pin-pulse 1.8s ease-in-out infinite;
+    animation: action-pin-pulse 1.4s ease-in-out 3;
   }
 
   @keyframes reward-star-bounce {
