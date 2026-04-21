@@ -47,6 +47,18 @@
     --header-zone-border: rgba(255, 255, 255, 0.08);
     --trophy-card-bg: linear-gradient(180deg, rgba(16, 12, 8, 0.90) 0%, rgba(10, 8, 6, 0.85) 100%);
 
+    /* ── Paper panel tokens (light candy modals) ──
+       Used by PaperPanel (mission detail, claim flows) — cream
+       parchment surface with amber/brown ink palette. Complement to
+       the dark surface-a/b family. */
+    --paper-bg: #f6e6b8;
+    --paper-bg-inner-tray: #eed59a;
+    --paper-text: rgba(63, 34, 8, 0.95);
+    --paper-text-muted: rgba(110, 65, 15, 0.70);
+    --paper-text-subtle: rgba(110, 65, 15, 0.45);
+    --paper-divider: rgba(110, 65, 15, 0.20);
+    --paper-accent: rgba(251, 191, 36, 0.95);
+
     /* ── Shell Cohesion — layout tokens ── */
     --shell-radius: 16px;
     --shell-border: rgba(255, 255, 255, 0.06);
@@ -471,6 +483,164 @@
   .sheet-bg-hub > * {
     position: relative;
     z-index: 1;
+  }
+
+  /* ── Paper panel (light candy modal surface) ──
+     Cream parchment with baked-in ribbon header. Fixed aspect ratio
+     keeps the ribbon from distorting at any screen size. Content
+     flows inside the cream region via percentage padding. */
+  .paper-panel {
+    position: relative;
+    width: 100%;
+    max-width: 340px;
+    aspect-ratio: 808 / 1073;
+    margin-inline: auto;
+    background-image: image-set(
+      url("/art/redesign/panels/paper-panel.avif") type("image/avif"),
+      url("/art/redesign/panels/paper-panel.webp") type("image/webp"),
+      url("/art/redesign/panels/paper-panel.png") type("image/png")
+    );
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center top;
+  }
+
+  .paper-panel-ribbon {
+    position: absolute;
+    top: 2.5%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 56%;
+    font-family: var(--font-game-display);
+    font-size: clamp(0.95rem, 4vw, 1.25rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-align: center;
+    color: rgba(120, 65, 5, 0.95);
+    text-shadow:
+      0 1px 0 rgba(255, 220, 140, 0.7),
+      0 2px 3px rgba(120, 65, 5, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .paper-panel-close {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+    border: 3px solid rgba(255, 240, 210, 0.95);
+    box-shadow:
+      0 3px 0 rgba(139, 30, 30, 0.55),
+      0 4px 10px rgba(0, 0, 0, 0.20);
+    transition: transform 150ms ease;
+    z-index: 2;
+  }
+  .paper-panel-close:active {
+    transform: scale(0.94);
+  }
+
+  .paper-panel-body {
+    position: absolute;
+    inset: 13.5% 8% auto 8%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    color: var(--paper-text);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .paper-panel-cta {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 11%;
+  }
+
+  .paper-panel-meta {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 5.5%;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--paper-text-subtle);
+  }
+
+  /* Inner tray: a slightly darker cream rectangle for rows/lists. */
+  .paper-tray {
+    border-radius: 0.875rem;
+    background: var(--paper-bg-inner-tray);
+    border: 1px solid var(--paper-divider);
+    padding: 0.5rem 0.75rem;
+    box-shadow: inset 0 1px 2px rgba(120, 65, 5, 0.08);
+  }
+
+  .paper-row {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding-block: 0.4rem;
+    color: var(--paper-text);
+    font-size: 0.875rem;
+  }
+  .paper-row + .paper-row {
+    border-top: 1px dashed var(--paper-divider);
+  }
+
+  .journey-row-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 9999px;
+    background: rgba(251, 191, 36, 0.18);
+    flex-shrink: 0;
+  }
+  .journey-row[data-status="done"] .journey-row-icon {
+    background: rgba(34, 197, 94, 0.25);
+  }
+  .journey-row[data-status="locked"] .journey-row-icon {
+    background: rgba(110, 65, 15, 0.10);
+    opacity: 0.65;
+  }
+
+  .journey-row-label {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--paper-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .journey-row[data-status="locked"] .journey-row-label {
+    color: var(--paper-text-muted);
+  }
+
+  .journey-row-progress {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--paper-text-muted);
+    flex-shrink: 0;
+  }
+  .journey-row-progress[data-status="active"] {
+    color: rgba(180, 83, 9, 0.95);
+  }
+  .journey-row-progress[data-status="done"] {
+    color: rgba(21, 128, 61, 0.95);
   }
 
   /* ── Candy page panel ──
