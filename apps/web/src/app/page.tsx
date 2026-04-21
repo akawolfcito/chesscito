@@ -28,6 +28,7 @@ import { StatusStrip } from "@/components/play-hub/status-strip";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { useSplashLoader } from "@/hooks/use-splash-loader";
+import { useAutoResetTimer } from "@/hooks/use-auto-reset-timer";
 import { badgesAbi } from "@/lib/contracts/badges";
 import {
   getBadgesAddress,
@@ -187,9 +188,12 @@ export default function PlayHubPage() {
     goToExercise,
   } = useExerciseProgress(selectedPiece);
 
-  const autoResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerStart = useRef<number>(0);
-  const boardGeneration = useRef(0);
+  // Single source of truth for the board's auto-reset timer. The hook
+  // handles the pending-timer-replacement, generation-based stale
+  // callback protection, and unmount cleanup that used to be spread
+  // across ~8 sites with autoResetTimer.current + boardGeneration.
+  const autoReset = useAutoResetTimer();
 
   const PIECE_ORDER: PieceKey[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
   const currentPieceIndex = PIECE_ORDER.indexOf(selectedPiece);
@@ -202,12 +206,7 @@ export default function PlayHubPage() {
     setIsLocalhost(host === "localhost" || host === "127.0.0.1" || host === "::1");
   }, []);
 
-  // Cleanup autoResetTimer on unmount to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
-    };
-  }, []);
+  // (Timer cleanup now lives inside useAutoResetTimer.)
 
   const MAX_SHIELDS = 30; // reasonable cap: 10 purchases × 3 shields each
   useEffect(() => {
@@ -445,7 +444,7 @@ export default function PlayHubPage() {
   }
 
   function resetBoard() {
-    if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
+    autoReset.clear();
     setBoardKey((previous) => previous + 1);
     setPhase("ready");
     setMoves(0);
@@ -479,9 +478,7 @@ export default function PlayHubPage() {
           setShowBadgeEarned(true);
           // Safety-net: auto-dismiss badge prompt and reset board if user
           // doesn't interact within 15 seconds (prevents phase stuck forever)
-          const gen = boardGeneration.current;
-          autoResetTimer.current = setTimeout(() => {
-            if (gen !== boardGeneration.current) return;
+          autoReset.schedule(() => {
             setShowBadgeEarned(false);
             setShowPieceComplete(true);
           }, 15_000);
@@ -489,9 +486,7 @@ export default function PlayHubPage() {
         }
       }
 
-      const gen = boardGeneration.current;
-      autoResetTimer.current = setTimeout(() => {
-        if (gen !== boardGeneration.current) return; // stale — user navigated
+      autoReset.schedule(() => {
         if (!isLastExercise) {
           advanceExercise();
           resetBoard();
@@ -508,9 +503,7 @@ export default function PlayHubPage() {
     if (currentExercise.optimalMoves === 1) {
       hapticReject();
       setPhase("failure");
-      autoResetTimer.current = setTimeout(() => {
-        resetBoard();
-      }, 1500);
+      autoReset.schedule(() => resetBoard(), 1500);
     }
   }
 
@@ -521,14 +514,13 @@ export default function PlayHubPage() {
   }
 
   function handleExerciseNavigate(index: number) {
-    if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
-    boardGeneration.current++;
+    autoReset.invalidate();
     goToExercise(index);
     resetBoard();
   }
 
   function handleBadgeEarnedDismiss() {
-    if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
+    autoReset.clear();
     setShowBadgeEarned(false);
     setShowPieceComplete(true);
   }
@@ -794,8 +786,7 @@ export default function PlayHubPage() {
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onSelectPiece={(piece) => {
-            if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
-            boardGeneration.current++;
+            autoReset.invalidate();
             setSelectedPiece(piece);
             setResultOverlay(null);
             setClaimTxHash(null);
@@ -948,7 +939,7 @@ export default function PlayHubPage() {
             pieceType={selectedPiece}
             totalStars={totalStars}
             onSubmitScore={() => {
-              if (autoResetTimer.current) clearTimeout(autoResetTimer.current);
+              autoReset.clear();
               setShowBadgeEarned(false);
               void handleSubmitScore();
             }}
