@@ -70,6 +70,11 @@ export default function ArenaPage() {
   // Preparing state (loading between difficulty selection and game start)
   const [isPreparing, setIsPreparing] = useState(false);
   const preparingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Auto-launch on mount using the last difficulty the player used.
+  // Skips the Difficulty Selector for returning users — a pill near the
+  // HUD lets them change it without leaving the match.
+  const LAST_DIFFICULTY_KEY = "chesscito:arena-last-difficulty";
+  const autoStartAttemptedRef = useRef(false);
 
   // Delayed end overlay: gives the user 800ms to see the final board state
   const [showEndOverlay, setShowEndOverlay] = useState(false);
@@ -602,6 +607,11 @@ export default function ArenaPage() {
   }, [isEndState]);
 
   const handleStartWithLoading = useCallback(() => {
+    // Remember for next visit — so returning users skip the selector.
+    try {
+      localStorage.setItem(LAST_DIFFICULTY_KEY, game.difficulty);
+    } catch { /* storage full / disabled — harmless */ }
+
     setIsPreparing(true);
     // Brief delay so the user sees the preparing state before the board renders
     preparingTimer.current = setTimeout(() => {
@@ -609,6 +619,32 @@ export default function ArenaPage() {
       game.startGame();
       setIsPreparing(false);
     }, 400);
+  }, [game]);
+
+  // Auto-launch on mount with last-used difficulty (Option B — reduces
+  // friction: returning users go straight into a match and use the
+  // "Change difficulty" pill if they want a different tier). Runs exactly
+  // once per page mount via the ref guard.
+  useEffect(() => {
+    if (autoStartAttemptedRef.current) return;
+    if (game.status !== "selecting") return;
+
+    autoStartAttemptedRef.current = true;
+    let last: string | null = null;
+    try {
+      last = localStorage.getItem(LAST_DIFFICULTY_KEY);
+    } catch { /* ignore */ }
+
+    if (last === "easy" || last === "medium" || last === "hard") {
+      game.setDifficulty(last);
+      handleStartWithLoading();
+    }
+  }, [game, handleStartWithLoading]);
+
+  // "Change difficulty" pill — returns to the Difficulty Selector without
+  // touching LS (the new pick overwrites it on next Enter Arena).
+  const handleChangeDifficulty = useCallback(() => {
+    game.reset();
   }, [game]);
 
   // Difficulty selection
@@ -649,6 +685,26 @@ export default function ArenaPage() {
           onBack={handleBack}
           isEndState={isEndState}
         />
+
+        {/* Difficulty pill — returning users auto-launch with last pick;
+            this is their non-intrusive escape hatch to change tier without
+            losing any match since reset is safe while the game is fresh. */}
+        {!isEndState && (
+          <div className="mx-3 mt-1 flex justify-center">
+            <button
+              type="button"
+              onClick={handleChangeDifficulty}
+              className="flex items-center gap-1.5 rounded-full border border-white/[0.10] bg-white/[0.06] px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cyan-100/70 transition-all hover:bg-white/[0.10] hover:text-cyan-100 active:scale-[0.97]"
+              aria-label={`Difficulty: ${ARENA_COPY.difficulty[game.difficulty]}. Tap to change.`}
+            >
+              <span className="text-amber-300/90">
+                {ARENA_COPY.difficulty[game.difficulty]}
+              </span>
+              <span aria-hidden="true" className="text-cyan-100/40">·</span>
+              <span className="text-cyan-100/45">tap to change</span>
+            </button>
+          </div>
+        )}
 
         <div className="relative w-full flex-1 min-h-0">
           <ArenaBoard
