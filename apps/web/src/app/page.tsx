@@ -823,6 +823,7 @@ export default function PlayHubPage() {
               onRetry={() => resetBoard()}
               onConnectWallet={() => openConnectModal?.()}
               onSwitchNetwork={() => configuredChainId != null && switchChain({ chainId: configuredChainId })}
+              compact
             />
           }
           persistentDock={

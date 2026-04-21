@@ -14,6 +14,10 @@ type ContextualActionSlotProps = {
   onRetry: () => void;
   onConnectWallet: () => void;
   onSwitchNetwork: () => void;
+  /** When true, progressive actions collapse to a 44×44 icon pin that
+   *  sits inline with the mission peek row. connectWallet keeps its
+   *  full-width gate look so wallet-not-connected is never discreet. */
+  compact?: boolean;
 };
 
 const ACTION_STYLES: Record<
@@ -76,7 +80,7 @@ function getHandler(
 }
 
 export function ContextualActionSlot(props: ContextualActionSlotProps) {
-  const { action, shieldsAvailable, isBusy } = props;
+  const { action, shieldsAvailable, isBusy, compact = false } = props;
 
   if (!action) return null;
 
@@ -85,8 +89,39 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
   const handler = getHandler(action, props);
   const label = isBusy && copy.loading ? copy.loading : copy.label;
 
-  // claimBadge gets the candy-frame treatment (warm gold, sculpted), every
-  // other action keeps the standard CTA gradient + game-cta-depth chrome.
+  if (compact) {
+    const isCandyClaim = action === "claimBadge";
+    const pinClass = isCandyClaim
+      ? "candy-frame candy-frame-gold action-pin-attention"
+      : `game-cta-depth rounded-full ${style.bg} ${style.glow} ${style.text}${action === "retry" ? " border border-[var(--cta-muted-border)]" : ""}`;
+
+    return (
+      <button
+        type="button"
+        onClick={handler}
+        disabled={isBusy}
+        aria-label={label}
+        className={`relative flex h-11 w-11 shrink-0 items-center justify-center disabled:opacity-70 animate-in fade-in zoom-in-95 duration-200 ${pinClass}`}
+      >
+        {isBusy ? (
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        ) : (
+          <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
+        )}
+        {action === "useShield" && !isBusy ? (
+          <span
+            aria-hidden="true"
+            className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[0.6rem] font-bold text-white shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
+          >
+            {shieldsAvailable}
+          </span>
+        ) : null}
+      </button>
+    );
+  }
+
+  // Full-width treatment — claimBadge gets candy-frame gold, others keep
+  // the standard CTA gradient + game-cta-depth chrome.
   const isCandyClaim = action === "claimBadge";
   const baseLayout = "flex h-[52px] w-full items-center justify-center gap-2 text-sm font-extrabold uppercase tracking-wide disabled:opacity-70";
   const buttonClassName = isCandyClaim

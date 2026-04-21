@@ -178,20 +178,19 @@ export function MissionPanelCandy({
   const missionPeek = (
     <button
       type="button"
-      className="candy-frame candy-frame-amber mx-2 flex w-[calc(100%-1rem)] items-center gap-3 overflow-hidden px-4 py-2.5 text-left"
-      style={{ marginTop: "var(--shell-gap-xs)" }}
+      className="candy-frame candy-frame-amber flex min-w-0 flex-1 items-center gap-2 overflow-hidden px-3 py-1.5 text-left"
       aria-label="Open mission details"
     >
-      <p key={targetLabel} className="mission-typewriter flex-1 truncate text-sm font-bold">
+      <p key={targetLabel} className="mission-typewriter flex-1 truncate text-xs font-bold leading-tight">
         {isCapture
           ? <>Move your {PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to <span className="text-rose-700">CAPTURE</span></>
           : <>{MISSION_BRIEFING_COPY.targetPrefix} <span className="text-amber-900">{targetLabel}</span></>}
       </p>
-      <span className="flex shrink-0 items-center gap-1.5">
-        <span className="game-label text-xs font-extrabold tabular-nums">
+      <span className="flex shrink-0 items-center gap-1">
+        <span className="game-label text-[0.65rem] font-extrabold tabular-nums">
           {score}
         </span>
-        <span className="h-2 w-2 rounded-full bg-amber-900/80 shadow-[0_0_4px_rgba(120,65,5,0.5)]" aria-hidden="true" />
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-900/80 shadow-[0_0_3px_rgba(120,65,5,0.5)]" aria-hidden="true" />
       </span>
     </button>
   );
@@ -217,24 +216,27 @@ export function MissionPanelCandy({
         {board}
       </div>
 
-      {/* Mission peek — single line, tap to expand */}
-      <MissionDetailSheet
-        open={missionDetailOpen}
-        onOpenChange={setMissionDetailOpen}
-        selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
-        targetLabel={targetLabel}
-        isCapture={isCapture}
-        score={score}
-        timeMs={timeMs}
-        currentStars={currentStars}
-        claimedBadges={claimedBadges}
-        trigger={missionPeek}
-      />
-
-      {/* Contextual action — only rendered when present (claim badge, retry, etc.) */}
-      {contextualAction ? (
-        <div className="mx-2 mt-2 shrink-0">{contextualAction}</div>
-      ) : null}
+      {/* Mission peek + contextual action — share one inline row so the
+          action-slot no longer eats vertical space below the board. The
+          pin collapses to 44×44 via the `compact` prop on the slot. */}
+      <div
+        className="mx-2 flex shrink-0 items-center gap-2"
+        style={{ marginTop: "var(--shell-gap-xs)" }}
+      >
+        <MissionDetailSheet
+          open={missionDetailOpen}
+          onOpenChange={setMissionDetailOpen}
+          selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
+          targetLabel={targetLabel}
+          isCapture={isCapture}
+          score={score}
+          timeMs={timeMs}
+          currentStars={currentStars}
+          claimedBadges={claimedBadges}
+          trigger={missionPeek}
+        />
+        {contextualAction}
+      </div>
 
       {/* Dock — persistent navigation.
           - z-[60] on the direct child of .atmosphere escapes the
