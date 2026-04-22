@@ -910,26 +910,28 @@ export default function ArenaPage() {
             />
           )}
           {coachPhase === "history" && address && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)]">
-              <div className="mx-auto max-w-[var(--app-max-width,390px)] pt-8">
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] px-4 py-8">
+              <div className="mx-auto max-w-[var(--app-max-width,390px)]">
                 <button
                   type="button"
                   onClick={() => setCoachPhase(coachResponse ? "result" : "idle")}
-                  className="mb-4 ml-4 flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.10] text-cyan-200/80 transition hover:text-cyan-50"
+                  className="mb-4 flex h-9 w-9 items-center justify-center rounded-full border border-amber-300/40 bg-amber-400/15 text-amber-100 transition hover:bg-amber-400/25 active:scale-[0.97]"
                   aria-label="Go back"
                 >
                   &larr;
                 </button>
-                <CoachHistory
-                  walletAddress={address.toLowerCase()}
-                  credits={coachCredits}
-                  onSelectEntry={(entry) => {
-                    if (entry.response.kind === "full") {
-                      setCoachResponse(entry.response);
-                      setCoachPhase("result");
-                    }
-                  }}
-                />
+                <div className="paper-surface p-5">
+                  <CoachHistory
+                    walletAddress={address.toLowerCase()}
+                    credits={coachCredits}
+                    onSelectEntry={(entry) => {
+                      if (entry.response.kind === "full") {
+                        setCoachResponse(entry.response);
+                        setCoachPhase("result");
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </div>
           )}
