@@ -178,26 +178,29 @@ export function MissionPanelCandy({
   const missionPeek = (
     <button
       type="button"
-      className="candy-frame candy-frame-amber flex min-w-0 flex-1 items-center gap-2 overflow-hidden px-3 py-1.5 text-left"
-      aria-label="Open mission details"
+      className="flex min-h-[44px] items-center gap-2 rounded-full border border-amber-300/25 bg-[var(--surface-c-mid)] px-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.35),0_0_10px_rgba(245,158,11,0.18)] backdrop-blur-md transition-all active:scale-[0.97]"
+      aria-label={`Open mission details${isCapture ? " — capture target" : ` — target ${targetLabel}`}`}
     >
-      <p key={targetLabel} className="mission-typewriter flex-1 truncate text-xs font-bold leading-tight">
-        {isCapture
-          ? <>Move your {PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]} to <span className="text-rose-700">CAPTURE</span></>
-          : <>{MISSION_BRIEFING_COPY.targetPrefix} <span className="text-amber-900">{targetLabel}</span></>}
-      </p>
-      <span className="flex shrink-0 items-center gap-1">
-        <span className="game-label text-[0.65rem] font-extrabold tabular-nums">
-          {score}
-        </span>
-        <span className="h-1.5 w-1.5 rounded-full bg-amber-900/80 shadow-[0_0_3px_rgba(120,65,5,0.5)]" aria-hidden="true" />
+      <CandyIcon
+        name="crosshair"
+        className="h-4 w-4 shrink-0"
+        style={{ filter: "drop-shadow(0 0 2px rgba(245,158,11,0.5))" }}
+      />
+      <span
+        key={targetLabel}
+        className="fantasy-title text-xs font-extrabold text-[var(--warm-label-text)]"
+        style={{ textShadow: "var(--text-shadow-label)" }}
+      >
+        {isCapture ? "Capture" : `${MISSION_BRIEFING_COPY.targetPrefix.replace(":", "")} ${targetLabel}`}
       </span>
     </button>
   );
 
   return (
     <section className="mission-shell mission-shell-candy atmosphere flex h-[100dvh] flex-col overflow-hidden">
-      {/* Zone A: compact header — piece chip + exercise drawer */}
+      {/* Zone A: context header — piece chip + mission chip + exercise drawer.
+          Piece identity and current mission target live here together so the
+          action row below can be dedicated to the CTA pin. */}
       <div className="shrink-0 mx-2 mt-2 flex items-center gap-2">
         <PiecePickerSheet
           open={piecePickerOpen}
@@ -207,22 +210,6 @@ export function MissionPanelCandy({
           onSelectPiece={onSelectPiece}
           trigger={pieceChip}
         />
-        <span className="ml-auto">{exerciseDrawer}</span>
-      </div>
-
-      {/* Zone B: Board Stage — flex-1, maximum space. No panel frame so the
-          board image floats directly on the grass field bg. */}
-      <div className="board-stage-focus min-h-0 flex-1 mx-2 mt-2">
-        {board}
-      </div>
-
-      {/* Mission peek + contextual action — share one inline row so the
-          action-slot no longer eats vertical space below the board. The
-          pin collapses to 44×44 via the `compact` prop on the slot. */}
-      <div
-        className="mx-2 flex shrink-0 items-center gap-2"
-        style={{ marginTop: "var(--shell-gap-xs)" }}
-      >
         <MissionDetailSheet
           open={missionDetailOpen}
           onOpenChange={setMissionDetailOpen}
@@ -235,6 +222,21 @@ export function MissionPanelCandy({
           claimedBadges={claimedBadges}
           trigger={missionPeek}
         />
+        <span className="ml-auto">{exerciseDrawer}</span>
+      </div>
+
+      {/* Zone B: Board Stage — flex-1, maximum space. No panel frame so the
+          board image floats directly on the grass field bg. */}
+      <div className="board-stage-focus min-h-0 flex-1 mx-2 mt-2">
+        {board}
+      </div>
+
+      {/* Zone C: action pin — centered, now the sole inhabitant of this row
+          so the CTA is the visual anchor of the bottom half. */}
+      <div
+        className="mx-2 flex shrink-0 items-center justify-center"
+        style={{ marginTop: "var(--shell-gap-xs)" }}
+      >
         {contextualAction}
       </div>
 
