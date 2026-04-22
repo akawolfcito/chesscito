@@ -1631,7 +1631,7 @@
 
   .chesscito-dock-center.is-active {
     color: rgba(255, 240, 180, 0.95);
-    transform: scale(1.08);
+    transform: scale(1.18);
   }
 
   /* Active-route halo behind the sprite — three redundant signals (halo +
@@ -1668,7 +1668,7 @@
   .chesscito-dock-item.is-active {
     position: relative;
     isolation: isolate;
-    transform: scale(1.08);
+    transform: scale(1.18);
     transition: transform var(--duration-snap, 120ms);
   }
 

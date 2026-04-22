@@ -40,7 +40,7 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
             src="/art/shop-menu.png"
             alt=""
             aria-hidden="true"
-            className="h-full w-full object-contain p-0.5 dock-treat-base"
+            className="h-full w-full object-contain"
           />
           <span className="sr-only">Shop</span>
         </button>

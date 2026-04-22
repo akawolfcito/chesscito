@@ -115,7 +115,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
             src="/art/leaderboard-menu.png"
             alt=""
             aria-hidden="true"
-            className="h-full w-full object-contain p-0.5 dock-treat-base"
+            className="h-full w-full object-contain"
           />
           <span className="sr-only">Leaderboard</span>
         </button>

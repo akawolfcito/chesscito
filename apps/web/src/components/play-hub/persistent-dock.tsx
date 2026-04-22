@@ -65,9 +65,11 @@ export function PersistentDock({
         className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
       >
         <CandyBanner name="btn-battle" className="h-9 w-9" />
-        <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
-          {DOCK_LABELS.arena}
-        </span>
+        {isArenaActive && (
+          <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
+            {DOCK_LABELS.arena}
+          </span>
+        )}
       </Link>
 
       <DockItem id="leaderboard" label={DOCK_LABELS.leaderboard} control={leaderboardControl} activeDockTab={activeDockTab} />

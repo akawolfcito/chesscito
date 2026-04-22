@@ -662,7 +662,7 @@ export default function ArenaPage() {
           src={src}
           alt=""
           aria-hidden="true"
-          className="h-full w-full object-contain p-0.5 dock-treat-base"
+          className="h-full w-full object-contain"
         />
       </Link>
     );

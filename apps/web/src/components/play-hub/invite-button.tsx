@@ -35,7 +35,7 @@ export function InviteButton() {
         src="/art/invite-share-menu.png"
         alt=""
         aria-hidden="true"
-        className="h-full w-full object-contain p-0.5 dock-treat-base"
+        className="h-full w-full object-contain"
       />
       <span className="sr-only">{INVITE_COPY.button}</span>
       {copied ? (

@@ -205,7 +205,7 @@ export function BadgeSheet({
             src="/art/badge-menu.png"
             alt=""
             aria-hidden="true"
-            className="h-full w-full object-contain p-0.5 dock-treat-base"
+            className="h-full w-full object-contain"
           />
           {showNotification ? (
             <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
