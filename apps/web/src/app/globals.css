@@ -404,41 +404,6 @@
     );
   }
 
-  .sheet-bg-coach::before,
-  .sheet-bg-coach::after {
-    position: absolute;
-    inset: 0;
-    content: "";
-    z-index: 0;
-  }
-  .sheet-bg-coach::before {
-    inset: -12px;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-image: image-set(
-      url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
-      url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-ch.png") type("image/png")
-    );
-  }
-  .sheet-bg-coach::after {
-    background: linear-gradient(
-      to bottom,
-      rgba(34, 211, 238, 0.22) 0%,
-      rgba(6, 14, 28, 0.78) 45%,
-      rgba(6, 14, 28, 0.90) 100%
-    );
-  }
-  .sheet-bg-coach {
-    position: relative;
-    overflow: hidden;
-  }
-  .sheet-bg-coach > * {
-    position: relative;
-    z-index: 1;
-  }
-
   .sheet-bg-leaderboard>*,
   .sheet-bg-shop>*,
   .sheet-bg-badges>* {

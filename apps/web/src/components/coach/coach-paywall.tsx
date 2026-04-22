@@ -21,47 +21,70 @@ export function CoachPaywall({ open, onOpenChange, onBuy, onQuickReview }: Props
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!buying) onOpenChange(v); }}>
-      <SheetContent side="bottom" className="mission-shell sheet-bg-coach flex h-[100dvh] flex-col rounded-none border-slate-700 pb-[5rem]">
+      <SheetContent
+        side="bottom"
+        className="mission-shell paper-surface flex h-[100dvh] flex-col rounded-none pb-[5rem]"
+      >
         <SheetHeader className="pt-[env(safe-area-inset-top)]">
-          <SheetTitle className="fantasy-title text-cyan-50">{COACH_COPY.creditTitle}</SheetTitle>
-          <SheetDescription className="text-cyan-100/75">{COACH_COPY.creditExplain}</SheetDescription>
+          <SheetTitle className="fantasy-title" style={{ color: "var(--paper-text)" }}>
+            {COACH_COPY.creditTitle}
+          </SheetTitle>
+          <SheetDescription style={{ color: "var(--paper-text-muted)" }}>
+            {COACH_COPY.creditExplain}
+          </SheetDescription>
         </SheetHeader>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <button
             type="button"
             disabled={buying !== null}
             onClick={() => handleBuy(5)}
-            className="min-h-[56px] rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-center transition-all hover:bg-white/[0.06] disabled:opacity-50"
+            className="candy-frame candy-frame-amber min-h-[56px] p-4 text-center disabled:opacity-60"
           >
-            <p className="text-lg font-bold text-white">{COACH_COPY.creditPack5}</p>
-            <p className="text-sm text-cyan-100/50">$0.05</p>
-            <p className="mt-1 text-xs text-cyan-100/40">{COACH_COPY.creditPackSubtitle(5)}</p>
+            <p className="text-lg font-extrabold">{COACH_COPY.creditPack5}</p>
+            <p className="text-sm opacity-75">$0.05</p>
+            <p className="mt-1 text-xs opacity-60">{COACH_COPY.creditPackSubtitle(5)}</p>
             {buying === 5 && (
-              <div className="mx-auto mt-2 h-4 w-4 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-400" />
+              <div className="mx-auto mt-2 h-4 w-4 animate-spin rounded-full border-2 border-[rgba(110,65,15,0.3)] border-t-[rgba(110,65,15,0.85)]" />
             )}
           </button>
           <button
             type="button"
             disabled={buying !== null}
             onClick={() => handleBuy(20)}
-            className="min-h-[56px] rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] ring-1 ring-emerald-400/10 p-4 text-center transition-all hover:bg-emerald-500/[0.08] disabled:opacity-50"
+            className="candy-frame candy-frame-gold min-h-[56px] p-4 text-center disabled:opacity-60"
           >
-            <p className="text-lg font-bold text-white">{COACH_COPY.creditPack20}</p>
-            <p className="text-sm text-cyan-100/50">$0.10</p>
-            <p className="mt-1 text-xs text-cyan-100/40">{COACH_COPY.creditPackSubtitle(20)}</p>
-            <span className="mt-1 inline-block rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-300">{COACH_COPY.creditBest}</span>
+            <p className="text-lg font-extrabold">{COACH_COPY.creditPack20}</p>
+            <p className="text-sm opacity-80">$0.10</p>
+            <p className="mt-1 text-xs opacity-65">{COACH_COPY.creditPackSubtitle(20)}</p>
+            <span
+              className="mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-extrabold uppercase tracking-wide"
+              style={{
+                background: "rgba(120, 65, 5, 0.85)",
+                color: "rgba(255, 240, 180, 0.98)",
+              }}
+            >
+              {COACH_COPY.creditBest}
+            </span>
             {buying === 20 && (
-              <div className="mx-auto mt-2 h-4 w-4 animate-spin rounded-full border-2 border-emerald-400/30 border-t-emerald-400" />
+              <div className="mx-auto mt-2 h-4 w-4 animate-spin rounded-full border-2 border-[rgba(120,65,5,0.3)] border-t-[rgba(120,65,5,0.85)]" />
             )}
           </button>
         </div>
         {buying && (
-          <p className="mt-3 text-center text-sm font-semibold text-amber-400 animate-in fade-in duration-200">
+          <p
+            className="mt-3 text-center text-sm font-semibold animate-in fade-in duration-200"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
             {COACH_COPY.buyWithUsdc}
           </p>
         )}
-        <p className="mt-4 text-center text-xs text-cyan-100/25">
-          <button type="button" onClick={onQuickReview} disabled={buying !== null} className="underline hover:text-cyan-100/50 disabled:opacity-50">
+        <p className="mt-4 text-center text-xs" style={{ color: "var(--paper-text-subtle)" }}>
+          <button
+            type="button"
+            onClick={onQuickReview}
+            disabled={buying !== null}
+            className="underline hover:opacity-80 disabled:opacity-50"
+          >
             {COACH_COPY.orQuickReview}
           </button>
         </p>
