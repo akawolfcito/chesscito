@@ -19,7 +19,8 @@ import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData } from "@/components/arena/arena-end-state";
-import { ARENA_COPY } from "@/lib/content/editorial";
+import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
+import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
 import { generateQuickReview } from "@/lib/coach/fallback-engine";
@@ -823,18 +824,25 @@ export default function ArenaPage() {
       {ENABLE_COACH && (
         <>
           {coachPhase === "welcome" && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)]">
-              <div className="relative mx-4 w-full max-w-[340px] rounded-3xl border border-white/[0.08] bg-[var(--surface-frosted)] backdrop-blur-2xl shadow-[0_0_60px_rgba(16,185,129,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-                <button
-                  type="button"
-                  aria-label="Close"
-                  onClick={() => setCoachPhase("idle")}
-                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-cyan-100/40 transition hover:bg-white/[0.06] hover:text-cyan-100/70"
-                >
-                  &times;
-                </button>
-                <CoachWelcome onClaim={handleClaimWelcome} />
-              </div>
+            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] px-4">
+              <PaperPanel
+                ribbonTitle="Welcome"
+                onClose={() => setCoachPhase("idle")}
+                cta={
+                  <Button
+                    type="button"
+                    variant="game-primary"
+                    size="game"
+                    onClick={handleClaimWelcome}
+                    className="w-full"
+                  >
+                    {COACH_COPY.claimFree}
+                  </Button>
+                }
+                meta={COACH_COPY.welcomeNote}
+              >
+                <CoachWelcome />
+              </PaperPanel>
             </div>
           )}
           {coachPhase === "loading" && coachJobId && (
