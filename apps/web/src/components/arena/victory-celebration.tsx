@@ -1,14 +1,28 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
-import { StatCard } from "@/components/arena/stat-card";
 import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
 import trophyData from "@/../public/animations/trophy.json";
+
+function PaperStatCard({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
+  return (
+    <div className="paper-tray flex flex-1 flex-col items-center gap-1 !px-2 !py-2">
+      <span className="flex h-5 items-center justify-center opacity-80">{icon}</span>
+      <span className="text-base font-extrabold leading-none" style={{ color: "var(--paper-text)" }}>
+        {value}
+      </span>
+      <span className="text-xs uppercase tracking-widest" style={{ color: "var(--paper-text-muted)" }}>
+        {label}
+      </span>
+    </div>
+  );
+}
 
 type Props = {
   moves: number;
@@ -43,20 +57,20 @@ export function VictoryCelebration({
       role="alert"
       aria-live="assertive"
     >
-      {/* Sparkles background */}
+      {/* Sparkles background — warm-tuned opacity so they read on paper */}
       <div className="pointer-events-none absolute inset-0 z-0">
         <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-[0.18]" />
       </div>
-      {/* Confetti burst */}
-      <div className="reward-confetti-burst pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_40%,rgba(52,211,153,0.18)_0%,rgba(217,180,74,0.10)_35%,transparent_65%)]" />
+      {/* Confetti burst — warm amber radial outside the card */}
+      <div className="reward-confetti-burst pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_40%,rgba(245,158,11,0.18)_0%,rgba(217,180,74,0.10)_35%,transparent_65%)]" />
 
       {/* Card */}
-      <div className="panel-showcase relative z-10 mx-4 flex w-full max-w-[340px] flex-col items-center px-6 pb-6 pt-8 shadow-[0_0_60px_rgba(20,184,166,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+      <div className="paper-surface relative z-10 mx-4 flex w-full max-w-[340px] flex-col items-center px-6 pb-6 pt-8 animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
 
-        {/* Hero — Trophy with breathing halo */}
+        {/* Hero — Trophy with breathing halo (amber tones for paper cohesion) */}
         <div className="relative mb-4 flex items-center justify-center">
-          <div className="absolute h-40 w-40 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.22)_0%,rgba(20,184,166,0.08)_40%,rgba(217,180,74,0.04)_65%,transparent_80%)]" />
-          <div className="absolute h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(52,211,153,0.12)_0%,transparent_70%)]" />
+          <div className="absolute h-40 w-40 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.28)_0%,rgba(217,180,74,0.12)_40%,rgba(217,180,74,0.05)_65%,transparent_80%)]" />
+          <div className="absolute h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(255,220,120,0.20)_0%,transparent_70%)]" />
           <div className="relative h-32 w-32">
             <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
           </div>
@@ -64,24 +78,37 @@ export function VictoryCelebration({
 
         {/* Title */}
         <h2
-          className="fantasy-title victory-text-slam mb-1 text-3xl font-bold text-emerald-300/90"
+          className="fantasy-title victory-text-slam mb-1 text-3xl font-bold"
           style={{
-            textShadow: "var(--text-shadow-hero-emerald)",
+            color: "rgba(110, 65, 15, 0.98)",
+            textShadow: "0 1px 0 rgba(255, 235, 180, 0.8), 0 2px 6px rgba(120, 65, 5, 0.35)",
           }}
         >
           {VICTORY_CELEBRATION_COPY.title}
         </h2>
 
         {/* Performance summary */}
-        <p className="mb-5 text-sm text-cyan-100/50">
+        <p className="mb-5 text-sm" style={{ color: "var(--paper-text-muted)" }}>
           {performanceLine}
         </p>
 
         {/* Stats — 3 mini-cards */}
         <div className="mb-5 flex w-full gap-2">
-          <StatCard icon={<CandyIcon name="crosshair" className="h-4 w-4" />} value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty} label={VICTORY_CELEBRATION_COPY.stats.difficulty} />
-          <StatCard icon={<CandyIcon name="move" className="h-4 w-4" />} value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
-          <StatCard icon={<CandyIcon name="time" className="h-4 w-4" />} value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
+          <PaperStatCard
+            icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
+            value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty}
+            label={VICTORY_CELEBRATION_COPY.stats.difficulty}
+          />
+          <PaperStatCard
+            icon={<CandyIcon name="move" className="h-4 w-4" />}
+            value={String(moves)}
+            label={VICTORY_CELEBRATION_COPY.stats.moves}
+          />
+          <PaperStatCard
+            icon={<CandyIcon name="time" className="h-4 w-4" />}
+            value={time}
+            label={VICTORY_CELEBRATION_COPY.stats.time}
+          />
         </div>
 
         {/* CTAs — Claim primary, Play Again secondary */}
@@ -122,6 +149,7 @@ export function VictoryCelebration({
             size="game-sm"
             onClick={onBackToHub}
             className="text-xs"
+            style={{ color: "var(--paper-text-muted)" }}
           >
             {ARENA_COPY.backToHub}
           </Button>
