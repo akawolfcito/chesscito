@@ -651,12 +651,22 @@ export default function ArenaPage() {
 
   // Difficulty selection
   if (game.status === "selecting") {
-    const navIcon = (src: string, label: string) => (
+    const navIcon = (
+      src: string,
+      label: string,
+      sheetKey?: "badge" | "shop" | "leaderboard",
+    ) => (
       <Link
         href="/"
         role="button"
         aria-label={label}
         className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
+        onClick={() => {
+          if (!sheetKey) return;
+          try {
+            sessionStorage.setItem("chesscito:open-sheet", sheetKey);
+          } catch { /* storage unavailable */ }
+        }}
       >
         <img
           src={src}
@@ -697,9 +707,9 @@ export default function ArenaPage() {
         >
           <PersistentDock
             activeDockTab={null}
-            badgeControl={navIcon("/art/badge-menu.png", "Badges")}
-            shopControl={navIcon("/art/shop-menu.png", "Shop")}
-            leaderboardControl={navIcon("/art/leaderboard-menu.png", "Leaderboard")}
+            badgeControl={navIcon("/art/badge-menu.png", "Badges", "badge")}
+            shopControl={navIcon("/art/shop-menu.png", "Shop", "shop")}
+            leaderboardControl={navIcon("/art/leaderboard-menu.png", "Leaderboard", "leaderboard")}
             inviteControl={navIcon("/art/invite-share-menu.png", "Invite")}
           />
         </div>

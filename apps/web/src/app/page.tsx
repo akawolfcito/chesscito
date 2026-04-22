@@ -206,6 +206,20 @@ export default function PlayHubPage() {
     setIsLocalhost(host === "localhost" || host === "127.0.0.1" || host === "::1");
   }, []);
 
+  // Dock handoff from /arena: if the arena dock wrote a sheet key before
+  // navigating here, open that sheet so the user lands on the surface they
+  // tapped. Whitelist-validated so a poisoned storage value can't set an
+  // unexpected tab.
+  useEffect(() => {
+    try {
+      const key = sessionStorage.getItem("chesscito:open-sheet");
+      if (key === "badge" || key === "shop" || key === "leaderboard") {
+        setActiveDockTab(key);
+      }
+      sessionStorage.removeItem("chesscito:open-sheet");
+    } catch { /* storage unavailable */ }
+  }, []);
+
   // (Timer cleanup now lives inside useAutoResetTimer.)
 
   const MAX_SHIELDS = 30; // reasonable cap: 10 purchases × 3 shields each
