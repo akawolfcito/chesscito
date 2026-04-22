@@ -1505,11 +1505,6 @@
     position: relative;
     width: 85%;
     max-width: 280px;
-    background: rgba(2, 12, 24, 0.92);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(103, 232, 249, 0.25);
-    border-radius: 20px;
     padding: 28px 24px 24px;
     animation: mission-briefing-card-in 400ms ease-out;
   }
