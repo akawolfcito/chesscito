@@ -579,6 +579,22 @@
     color: var(--paper-text-subtle);
   }
 
+  /* Paper surface — flexible cream container for scrollable/long content.
+     Mirrors paper-panel's visual language (cream bg, warm brown text,
+     sculpted border) WITHOUT the fixed aspect ratio of paper-panel.png.
+     Use when content is content-driven in height: coach overlays, long
+     lists, scrollable panels. */
+  .paper-surface {
+    background: var(--paper-bg);
+    color: var(--paper-text);
+    border: 2px solid rgba(110, 65, 15, 0.35);
+    border-radius: 1.25rem;
+    box-shadow:
+      0 4px 0 rgba(110, 65, 15, 0.25),
+      0 6px 16px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 245, 215, 0.55);
+  }
+
   /* Inner tray: a slightly darker cream rectangle for rows/lists. */
   .paper-tray {
     border-radius: 0.875rem;
