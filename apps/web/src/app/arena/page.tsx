@@ -73,7 +73,6 @@ export default function ArenaPage() {
 
   // Preparing state (loading between difficulty selection and game start)
   const [isPreparing, setIsPreparing] = useState(false);
-  const preparingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Auto-launch on mount using the last difficulty the player used.
   // Skips the Difficulty Selector for returning users — a pill near the
   // HUD lets them change it without leaving the match.
@@ -579,12 +578,21 @@ export default function ArenaPage() {
     game.reset();
   };
 
-  // Cleanup preparing timer on unmount
+  // Preparing timer — scheduled inside a useEffect tied to isPreparing so
+  // React Strict Mode's mount→cleanup→remount cycle re-establishes the
+  // timer after cleanup clears it. Previously the timer lived inside
+  // handleStartWithLoading and a separate unmount cleanup; under Strict
+  // Mode the cleanup ran on the simulated-unmount and the auto-launch
+  // ref-guard blocked re-scheduling, so the user got stuck on "Preparing
+  // AI..." forever.
   useEffect(() => {
-    return () => {
-      if (preparingTimer.current) clearTimeout(preparingTimer.current);
-    };
-  }, []);
+    if (!isPreparing) return;
+    const timer = setTimeout(() => {
+      game.startGame();
+      setIsPreparing(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [isPreparing, game]);
 
   // Delay end overlay 800ms so user sees the final board position before results appear
   useEffect(() => {
@@ -616,13 +624,10 @@ export default function ArenaPage() {
       localStorage.setItem(LAST_DIFFICULTY_KEY, game.difficulty);
     } catch { /* storage full / disabled — harmless */ }
 
+    // The actual delay + startGame transition lives in the isPreparing
+    // useEffect above — keeps the timer lifecycle compatible with
+    // Strict Mode's mount→unmount→remount cycle.
     setIsPreparing(true);
-    // Brief delay so the user sees the preparing state before the board renders
-    preparingTimer.current = setTimeout(() => {
-      preparingTimer.current = null;
-      game.startGame();
-      setIsPreparing(false);
-    }, 400);
   }, [game]);
 
   // Auto-launch on mount with last-used difficulty (Option B — reduces
