@@ -654,6 +654,7 @@ export default function ArenaPage() {
     const navIcon = (src: string, label: string) => (
       <Link
         href="/"
+        role="button"
         aria-label={label}
         className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
       >
