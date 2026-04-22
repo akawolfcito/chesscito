@@ -29,6 +29,7 @@ import { CoachFallback } from "@/components/coach/coach-fallback";
 import { CoachPaywall } from "@/components/coach/coach-paywall";
 import { CoachWelcome } from "@/components/coach/coach-welcome";
 import { CoachHistory } from "@/components/coach/coach-history";
+import { PaperPanel } from "@/components/redesign/paper-panel";
 import type { CoachResponse, BasicCoachResponse, GameRecord } from "@/lib/coach/types";
 import { getConfiguredChainId, getVictoryNFTAddress, getShopAddress } from "@/lib/contracts/chains";
 import { hapticImpact, hapticSuccess } from "@/lib/haptics";
@@ -837,18 +838,23 @@ export default function ArenaPage() {
             </div>
           )}
           {coachPhase === "loading" && coachJobId && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)]">
-              <CoachLoading
-                jobId={coachJobId}
-                wallet={address?.toLowerCase()}
-                onReady={(response) => { setCoachResponse(response); setCoachCredits((c) => Math.max(0, c - 1)); setCoachPhase("result"); }}
-                onFailed={() => {
-                  const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
-                  setCoachFallbackResponse(quick);
-                  setCoachPhase("fallback");
-                }}
-                onCancel={() => setCoachPhase("idle")}
-              />
+            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] px-4">
+              <PaperPanel
+                ribbonTitle="Coach"
+                onClose={() => setCoachPhase("idle")}
+                closeLabel="Cancel"
+              >
+                <CoachLoading
+                  jobId={coachJobId}
+                  wallet={address?.toLowerCase()}
+                  onReady={(response) => { setCoachResponse(response); setCoachCredits((c) => Math.max(0, c - 1)); setCoachPhase("result"); }}
+                  onFailed={() => {
+                    const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
+                    setCoachFallbackResponse(quick);
+                    setCoachPhase("fallback");
+                  }}
+                />
+              </PaperPanel>
             </div>
           )}
           {coachPhase === "result" && coachResponse && (
