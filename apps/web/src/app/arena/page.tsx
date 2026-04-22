@@ -10,9 +10,11 @@ import {
   useWriteContract,
 } from "wagmi";
 import { decodeEventLog } from "viem";
+import Link from "next/link";
 import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { DifficultySelector } from "@/components/arena/difficulty-selector";
+import { PersistentDock } from "@/components/play-hub/persistent-dock";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
@@ -649,29 +651,57 @@ export default function ArenaPage() {
 
   // Difficulty selection
   if (game.status === "selecting") {
+    const navIcon = (src: string, label: string) => (
+      <Link
+        href="/"
+        aria-label={label}
+        className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
+      >
+        <img
+          src={src}
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-contain p-0.5 dock-treat-base"
+        />
+      </Link>
+    );
     return (
-      <main className="flex min-h-[100dvh] flex-col items-center justify-center arena-bg">
-        {isPreparing ? (
-          <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
-            <p className="text-sm font-semibold text-amber-400/80">
-              {ARENA_COPY.difficulty[game.difficulty as keyof typeof ARENA_COPY.difficulty]}
-            </p>
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-400" />
-            <p className="text-sm font-medium text-cyan-100/70">{ARENA_COPY.preparingAi}</p>
-          </div>
-        ) : (
-          <DifficultySelector
-            selected={game.difficulty}
-            onSelect={game.setDifficulty}
-            onStart={handleStartWithLoading}
-            onBack={handleBackToHub}
+      <main className="flex min-h-[100dvh] flex-col arena-bg">
+        <div className="flex flex-1 flex-col items-center justify-center">
+          {isPreparing ? (
+            <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
+              <p className="text-sm font-semibold text-amber-400/80">
+                {ARENA_COPY.difficulty[game.difficulty as keyof typeof ARENA_COPY.difficulty]}
+              </p>
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-400" />
+              <p className="text-sm font-medium text-cyan-100/70">{ARENA_COPY.preparingAi}</p>
+            </div>
+          ) : (
+            <DifficultySelector
+              selected={game.difficulty}
+              onSelect={game.setDifficulty}
+              onStart={handleStartWithLoading}
+              onBack={handleBackToHub}
+            />
+          )}
+          {game.errorMessage && (
+            <div className="mx-6 mt-2 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-2.5 text-center text-sm text-rose-300">
+              {game.errorMessage}
+            </div>
+          )}
+        </div>
+        <div
+          className="shrink-0 relative z-[60] pointer-events-auto"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          <PersistentDock
+            activeDockTab={null}
+            badgeControl={navIcon("/art/badge-menu.png", "Badges")}
+            shopControl={navIcon("/art/shop-menu.png", "Shop")}
+            leaderboardControl={navIcon("/art/leaderboard-menu.png", "Leaderboard")}
+            inviteControl={navIcon("/art/invite-share-menu.png", "Invite")}
           />
-        )}
-        {game.errorMessage && (
-          <div className="mx-6 mt-2 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-2.5 text-center text-sm text-rose-300">
-            {game.errorMessage}
-          </div>
-        )}
+        </div>
       </main>
     );
   }

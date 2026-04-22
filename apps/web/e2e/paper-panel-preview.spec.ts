@@ -56,4 +56,48 @@ test.describe("Paper panel previews", () => {
       fullPage: true,
     });
   });
+
+  test("piece complete prompt", async ({ page }) => {
+    await page.goto("/", { waitUntil: "load", timeout: 30_000 });
+    await expect(page.locator(".playhub-intro-overlay")).toBeHidden({ timeout: 15_000 });
+
+    // Same rook-5 completion as above. After BadgeEarned appears, click Later
+    // to reveal the PieceComplete prompt below.
+    await page.getByRole("gridcell", { name: "Square h8" }).click();
+    await page.getByRole("gridcell", { name: "Square h3" }).click();
+    await page.waitForTimeout(250);
+    await page.getByRole("gridcell", { name: "Square h3" }).click();
+    await page.getByRole("gridcell", { name: "Square b3" }).click();
+
+    await expect(page.getByText("Badge Earned", { exact: true })).toBeVisible({
+      timeout: 5_000,
+    });
+    // Close badge-earned via the visible "Later" text link. (The × pin
+    // carries the same "Later" aria-label, so we pick the text node to
+    // disambiguate.)
+    await page.getByText("Later", { exact: true }).click();
+
+    await expect(page.getByText("All Exercises Complete!", { exact: true })).toBeVisible({
+      timeout: 5_000,
+    });
+    await page.waitForTimeout(1_500);
+
+    await page.screenshot({
+      path: `${SNAPSHOT_DIR}/paper-panel-piece-complete.png`,
+      fullPage: true,
+    });
+  });
+
+  test("arena selector with dock", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("chesscito:onboarded", "true");
+    });
+    await page.goto("/arena", { waitUntil: "load", timeout: 30_000 });
+    await page.waitForTimeout(1_500);
+
+    await page.screenshot({
+      path: `${SNAPSHOT_DIR}/arena-selector-with-dock.png`,
+      fullPage: true,
+    });
+  });
 });
