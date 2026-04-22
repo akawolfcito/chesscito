@@ -882,8 +882,8 @@ export default function ArenaPage() {
             </div>
           )}
           {coachPhase === "fallback" && coachFallbackResponse && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)]">
-              <div className="mx-auto max-w-[var(--app-max-width,390px)] pt-8">
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] px-4 py-8">
+              <div className="paper-surface mx-auto max-w-[var(--app-max-width,390px)] p-5">
                 <CoachFallback
                   response={coachFallbackResponse}
                   difficulty={game.difficulty}

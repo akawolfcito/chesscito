@@ -31,20 +31,29 @@ export function CoachFallback({
   const diffLabel = ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty;
 
   return (
-    <div className="flex flex-col gap-4 px-4 pb-8">
-      <h2 className="fantasy-title text-xl font-bold text-white">{COACH_COPY.quickReviewTitle}</h2>
-      <p className="text-xs text-cyan-100/50">{diffLabel} - {totalMoves} moves - {result}</p>
+    <div className="flex flex-col gap-4">
+      <h2 className="fantasy-title text-xl font-bold" style={{ color: "var(--paper-text)" }}>
+        {COACH_COPY.quickReviewTitle}
+      </h2>
+      <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+        {diffLabel} - {totalMoves} moves - {result}
+      </p>
 
-      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-        <p className="text-sm text-cyan-100/70">{response.summary}</p>
+      <div className="paper-tray">
+        <p className="text-sm" style={{ color: "var(--paper-text)" }}>{response.summary}</p>
       </div>
 
       {response.tips.length > 0 && (
         <section>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-400">{COACH_COPY.tips}</h3>
+          <h3
+            className="mb-2 text-xs font-semibold uppercase tracking-widest"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {COACH_COPY.tips}
+          </h3>
           <ul className="flex flex-col gap-1">
             {response.tips.map((t, i) => (
-              <li key={i} className="text-sm text-cyan-100/60">- {t}</li>
+              <li key={i} className="text-sm" style={{ color: "var(--paper-text)" }}>- {t}</li>
             ))}
           </ul>
         </section>
@@ -61,13 +70,22 @@ export function CoachFallback({
         variant="game-ghost"
         size="game-sm"
         onClick={onGetFullAnalysis}
-        className="border-emerald-400/10 text-emerald-300/70"
+        style={{
+          borderColor: "rgba(110, 65, 15, 0.25)",
+          color: "var(--paper-text-muted)",
+        }}
       >
         {COACH_COPY.unlockFullAnalysis}
       </Button>
 
       {/* Tertiary: Back to Hub */}
-      <Button type="button" variant="game-text" size="game-sm" onClick={onBackToHub}>
+      <Button
+        type="button"
+        variant="game-text"
+        size="game-sm"
+        onClick={onBackToHub}
+        style={{ color: "var(--paper-text-muted)" }}
+      >
         {ARENA_COPY.backToHub}
       </Button>
     </div>
