@@ -4,7 +4,7 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
-import { StatCard } from "@/components/arena/stat-card";
+import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
 import trophyData from "@/../public/animations/trophy.json";
@@ -47,46 +47,66 @@ export function VictoryClaimError({
       </div>
 
       {/* Card */}
-      <div className="panel-showcase relative z-10 mx-4 flex w-full max-w-[340px] flex-col items-center px-6 pb-6 pt-8 shadow-[0_0_60px_rgba(251,113,133,0.08)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+      <div className="paper-surface relative z-10 mx-4 flex w-full max-w-[340px] flex-col items-center px-6 pb-6 pt-8 animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
 
-        {/* Hero — Trophy (context retention) */}
+        {/* Hero — Trophy (dimmed for error context) with soft rose halo */}
         <div className="relative mb-4 flex items-center justify-center">
-          <div className="absolute h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(251,113,133,0.12)_0%,transparent_70%)]" />
+          <div className="absolute h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(190,18,60,0.12)_0%,transparent_70%)]" />
           <div className="relative h-32 w-32 opacity-50 grayscale-[30%]">
             <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
           </div>
         </div>
 
         {/* Error title */}
-        <h2 className="fantasy-title mb-1 text-2xl font-bold text-rose-300/90 drop-shadow-[0_0_12px_rgba(251,113,133,0.3)]">
+        <h2
+          className="fantasy-title mb-1 text-2xl font-bold"
+          style={{
+            color: "rgba(159, 18, 57, 0.95)",
+            textShadow: "0 1px 0 rgba(255, 235, 220, 0.75)",
+          }}
+        >
           {VICTORY_CLAIM_COPY.errorTitle}
         </h2>
 
         {/* Error subtitle */}
-        <p className="mb-3 text-center text-sm text-cyan-100/40">
+        <p className="mb-3 text-center text-sm" style={{ color: "var(--paper-text-muted)" }}>
           {VICTORY_CLAIM_COPY.errorSubtitle}
         </p>
 
         {/* Specific error detail */}
         {errorMessage && (
-          <p className="mb-2 text-center text-xs text-rose-300/60">{errorMessage}</p>
+          <p className="mb-2 text-center text-xs" style={{ color: "rgba(159, 18, 57, 0.8)" }}>
+            {errorMessage}
+          </p>
         )}
 
         {/* Recovery reassurance */}
-        <p className="mb-2 text-center text-xs text-cyan-100/30">
+        <p className="mb-2 text-center text-xs" style={{ color: "var(--paper-text-subtle)" }}>
           {VICTORY_CLAIM_COPY.errorRecoveryHint}
         </p>
 
         {/* Performance — still visible for context */}
-        <p className="mb-5 text-xs text-cyan-100/30">
+        <p className="mb-5 text-xs" style={{ color: "var(--paper-text-subtle)" }}>
           {performanceLine}
         </p>
 
         {/* Stats */}
         <div className="mb-6 flex w-full gap-2">
-          <StatCard icon={<CandyIcon name="crosshair" className="h-4 w-4" />} value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty} label={VICTORY_CELEBRATION_COPY.stats.difficulty} />
-          <StatCard icon={<CandyIcon name="move" className="h-4 w-4" />} value={String(moves)} label={VICTORY_CELEBRATION_COPY.stats.moves} />
-          <StatCard icon={<CandyIcon name="time" className="h-4 w-4" />} value={time} label={VICTORY_CELEBRATION_COPY.stats.time} />
+          <PaperStatCard
+            icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
+            value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty}
+            label={VICTORY_CELEBRATION_COPY.stats.difficulty}
+          />
+          <PaperStatCard
+            icon={<CandyIcon name="move" className="h-4 w-4" />}
+            value={String(moves)}
+            label={VICTORY_CELEBRATION_COPY.stats.moves}
+          />
+          <PaperStatCard
+            icon={<CandyIcon name="time" className="h-4 w-4" />}
+            value={time}
+            label={VICTORY_CELEBRATION_COPY.stats.time}
+          />
         </div>
 
         {/* CTAs */}
@@ -98,7 +118,6 @@ export function VictoryClaimError({
               variant="game-primary"
               size="game"
               onClick={onRetry}
-              className="shadow-[0_0_16px_rgba(20,184,166,0.25)] hover:shadow-[0_0_24px_rgba(20,184,166,0.4)]"
             >
               <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {VICTORY_CLAIM_COPY.tryAgain}
             </Button>
@@ -110,6 +129,10 @@ export function VictoryClaimError({
             variant="game-ghost"
             size="game-sm"
             onClick={onPlayAgain}
+            style={{
+              borderColor: "rgba(110, 65, 15, 0.25)",
+              color: "var(--paper-text-muted)",
+            }}
           >
             <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
           </Button>
@@ -121,6 +144,7 @@ export function VictoryClaimError({
             size="game-sm"
             onClick={onBackToHub}
             className="text-xs"
+            style={{ color: "var(--paper-text-muted)" }}
           >
             {ARENA_COPY.backToHub}
           </Button>
