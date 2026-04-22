@@ -1,28 +1,14 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
+import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
 import trophyData from "@/../public/animations/trophy.json";
-
-function PaperStatCard({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
-  return (
-    <div className="paper-tray flex flex-1 flex-col items-center gap-1 !px-2 !py-2">
-      <span className="flex h-5 items-center justify-center opacity-80">{icon}</span>
-      <span className="text-base font-extrabold leading-none" style={{ color: "var(--paper-text)" }}>
-        {value}
-      </span>
-      <span className="text-xs uppercase tracking-widest" style={{ color: "var(--paper-text-muted)" }}>
-        {label}
-      </span>
-    </div>
-  );
-}
 
 type Props = {
   moves: number;
