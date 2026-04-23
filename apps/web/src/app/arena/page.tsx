@@ -638,6 +638,16 @@ export default function ArenaPage() {
     if (autoStartAttemptedRef.current) return;
     if (game.status !== "selecting") return;
 
+    // Honor any in-flight FEN restore (useChessGame rehydrates from
+    // localStorage on the same mount). If a saved game exists we must
+    // not start a fresh match — it would overwrite the restored FEN via
+    // startGame() (R2 from the red-team review).
+    let hasSavedGame = false;
+    try {
+      hasSavedGame = Boolean(localStorage.getItem("chesscito:arena-game"));
+    } catch { /* ignore */ }
+    if (hasSavedGame) return;
+
     autoStartAttemptedRef.current = true;
     let last: string | null = null;
     try {

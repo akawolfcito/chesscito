@@ -6,6 +6,7 @@ import type { Square } from "chess.js";
 import { aiMove } from "js-chess-engine";
 import type { ArenaDifficulty, ArenaStatus, ChessBoardPiece } from "./types";
 import { fenToPieces } from "./arena-utils";
+import { clearArenaGame, loadArenaGame, saveArenaGame } from "./arena-persistence";
 
 const DIFFICULTY_LEVEL: Record<ArenaDifficulty, number> = {
   easy: 1,
@@ -63,6 +64,7 @@ export function useChessGame(): ChessGameState {
   /** Snapshot end time and set terminal status (prevents elapsedMs race with reset) */
   function endGameWith(s: ArenaStatus) {
     gameEndRef.current = Date.now();
+    clearArenaGame();
     setStatus(s);
   }
 
@@ -299,6 +301,7 @@ export function useChessGame(): ChessGameState {
     setElapsedMs(0);
     gameStartRef.current = 0;
     gameEndRef.current = 0;
+    clearArenaGame();
     setStatus("selecting");
   }, []);
 
@@ -322,8 +325,60 @@ export function useChessGame(): ChessGameState {
     setElapsedMs(0);
     gameStartRef.current = Date.now();
     gameEndRef.current = 0;
+    clearArenaGame();
     setStatus("playing");
   }, []);
+
+  // Restore a saved in-progress game on mount. Runs once; if a valid
+  // save exists (<24h old, parseable FEN) we rehydrate the hook into
+  // status="playing" directly so the arena page skips the selector.
+  // gameStartRef is adjusted so the live-tick timer continues from
+  // savedElapsedMs (R10 from the red-team review). If it's black's
+  // turn when we resume, kick the AI so the match isn't stuck.
+  useEffect(() => {
+    const saved = loadArenaGame();
+    if (!saved) return;
+    try {
+      gameRef.current = new Chess(saved.fen);
+    } catch {
+      clearArenaGame();
+      return;
+    }
+    gameStartRef.current = Date.now() - saved.elapsedMs;
+    gameEndRef.current = 0;
+    setFen(saved.fen);
+    setMoveHistory(saved.moveHistory);
+    setMoveCount(saved.moveCount);
+    setElapsedMs(saved.elapsedMs);
+    setDifficulty(saved.difficulty);
+    setSelectedSquare(null);
+    setLegalMoves([]);
+    setLastMove(null);
+    setPendingPromotion(null);
+    setErrorMessage(null);
+    setStatus("playing");
+    if (gameRef.current.turn() === "b" && !gameRef.current.isGameOver()) {
+      triggerAiMove(saved.difficulty);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist after every player / AI move. elapsedMs is NOT in deps so
+  // the 1s live-tick doesn't trigger a save every tick (R8 from the
+  // red-team review). moveHistory changes on every move already so
+  // the save stays fresh.
+  useEffect(() => {
+    if (status !== "playing") return;
+    if (moveCount === 0) return;
+    saveArenaGame({
+      fen,
+      moveHistory,
+      moveCount,
+      elapsedMs,
+      difficulty,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fen, status, moveCount, difficulty]);
 
   return {
     fen,
