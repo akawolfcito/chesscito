@@ -322,113 +322,28 @@
     box-shadow: var(--treat-carved-hi), var(--treat-carved-lo);
   }
 
-  /* Sheet backgrounds: blurred image + dark overlay */
-  .sheet-bg-leaderboard,
+  /* ── Candy-light sheet backgrounds ──
+     All hub + destination sheets share one background treatment: forest
+     bg-ch.png + neutral cream wash. Color semantics (amber/rose/violet)
+     live on inner chips/icons, not on the sheet surface, so every sheet
+     feels like the same room rather than a differently-painted wing. */
+  .sheet-bg-hub,
+  .sheet-bg-badges,
   .sheet-bg-shop,
-  .sheet-bg-badges {
+  .sheet-bg-leaderboard {
     position: relative;
     overflow: hidden;
   }
 
-  .sheet-bg-leaderboard::before,
+  .sheet-bg-hub::before,
+  .sheet-bg-badges::before,
   .sheet-bg-shop::before,
-  .sheet-bg-badges::before {
+  .sheet-bg-leaderboard::before {
     content: "";
     position: absolute;
     inset: -12px;
-    /* `cover` fills the sheet (no seam). `25% 0%` = modest left shift:
-       on portrait 390px mobile the crop is biased slightly so the left
-       edge of the landscape image's tree band peeks into the safe area
-       without dominating the header text. Right side still shows
-       mid-image grass. `top left` was too aggressive and made header
-       titles illegible over dense tree textures. */
-    background-size: cover;
-    background-position: 25% 0%;
-    background-repeat: no-repeat;
-    z-index: 0;
-  }
-
-  /* Candy-coherent bg: all destination sheets share the same hub grass
-     bg (referenced from :root --playhub-game-bg) and differentiate via
-     a color-coded tinted scrim. Keeps sheets feeling "inside the hub"
-     rather than lifting the user into a different-looking world. */
-  .sheet-bg-leaderboard::before,
-  .sheet-bg-shop::before,
-  .sheet-bg-badges::before {
-    background-image: image-set(
-      url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
-      url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-ch.png") type("image/png")
-    );
-  }
-
-  /* Per-sheet tint — color semantics:
-       amber = achievement/trophy (badges)
-       rose  = commerce/purchase (shop)
-       violet = competition/ranking (leaderboard)
-     Top of the sheet is tinted + lighter so the candy grass bleeds
-     through subtly; bottom stays darker to keep existing dark content
-     cards readable. */
-  .sheet-bg-leaderboard::after,
-  .sheet-bg-shop::after,
-  .sheet-bg-badges::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-  }
-
-  /* Light candy wash — subtle semantic tint at top fading into a
-     cream overlay that keeps text legible over the forest image. */
-  .sheet-bg-badges::after {
-    background: linear-gradient(
-      to bottom,
-      rgba(251, 191, 36, 0.35) 0%,
-      rgba(255, 245, 215, 0.30) 40%,
-      rgba(246, 230, 184, 0.45) 100%
-    );
-  }
-
-  .sheet-bg-shop::after {
-    background: linear-gradient(
-      to bottom,
-      rgba(244, 63, 94, 0.30) 0%,
-      rgba(255, 245, 215, 0.30) 40%,
-      rgba(246, 230, 184, 0.45) 100%
-    );
-  }
-
-  .sheet-bg-leaderboard::after {
-    background: linear-gradient(
-      to bottom,
-      rgba(139, 92, 246, 0.30) 0%,
-      rgba(255, 245, 215, 0.30) 40%,
-      rgba(246, 230, 184, 0.45) 100%
-    );
-  }
-
-  .sheet-bg-leaderboard>*,
-  .sheet-bg-shop>*,
-  .sheet-bg-badges>* {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* ── Hub action sheets (piece picker / exercise drawer) ──
-     Share the same candy grass bg as destination sheets, but with a
-     cyan/teal tint — these are "inside the hub" action surfaces, not
-     destinations. */
-  .sheet-bg-hub {
-    position: relative;
-    overflow: hidden;
-  }
-  .sheet-bg-hub::before {
-    content: "";
-    position: absolute;
-    inset: -12px;
-    /* `cover` fills the sheet so no seam appears on tall sheets; `top
-       center` lands the tree band at the top. Same strategy shared
-       with the other destination sheets. */
+    /* `cover` fills the sheet (no seam on tall sheets); `top center`
+       keeps the tree band at the top, consistent across all sheets. */
     background-size: cover;
     background-position: top center;
     background-repeat: no-repeat;
@@ -439,13 +354,17 @@
     );
     z-index: 0;
   }
-  .sheet-bg-hub::after {
+
+  .sheet-bg-hub::after,
+  .sheet-bg-badges::after,
+  .sheet-bg-shop::after,
+  .sheet-bg-leaderboard::after {
     content: "";
     position: absolute;
     inset: 0;
     z-index: 0;
-    /* Cream wash over the forest image — subtle enough that trees and
-       grass stay visible, strong enough that cards on top read. */
+    /* Cream wash — subtle enough that trees stay visible, strong enough
+       that warm-brown text + translucent cards read cleanly on top. */
     background: linear-gradient(
       to bottom,
       rgba(255, 255, 255, 0.15) 0%,
@@ -453,7 +372,11 @@
       rgba(246, 230, 184, 0.45) 100%
     );
   }
-  .sheet-bg-hub > * {
+
+  .sheet-bg-hub > *,
+  .sheet-bg-badges > *,
+  .sheet-bg-shop > *,
+  .sheet-bg-leaderboard > * {
     position: relative;
     z-index: 1;
   }
@@ -1342,6 +1265,28 @@
   .arena-bg {
     position: relative;
     overflow: hidden;
+  }
+
+  /* Cream wash over the body's forest bg-ch so Arena shares the same
+     "inside the hub" feeling as every sheet — the DifficultySelector
+     glass panel sits on a washed forest, not on bare green canvas. */
+  .arena-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 245, 215, 0.30) 40%,
+      rgba(246, 230, 184, 0.45) 100%
+    );
+  }
+
+  .arena-bg > * {
+    position: relative;
+    z-index: 1;
   }
 
   /* ── Arena board (full chess) ── */
