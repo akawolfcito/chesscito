@@ -39,36 +39,82 @@ export function PurchaseConfirmSheet({
 }: PurchaseConfirmSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="mission-shell sheet-bg-shop rounded-t-3xl border-white/[0.10]">
-        <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
+      <SheetContent side="bottom" className="mission-shell sheet-bg-shop rounded-t-3xl border-0">
+        <div className="border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
           <SheetHeader>
-            <SheetTitle className="fantasy-title text-cyan-50">{PURCHASE_CONFIRM_COPY.title}</SheetTitle>
-            <SheetDescription className="text-cyan-100/75">{PURCHASE_CONFIRM_COPY.description}</SheetDescription>
+            <SheetTitle
+              className="fantasy-title"
+              style={{
+                color: "rgba(110, 65, 15, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+              }}
+            >
+              {PURCHASE_CONFIRM_COPY.title}
+            </SheetTitle>
+            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+              {PURCHASE_CONFIRM_COPY.description}
+            </SheetDescription>
           </SheetHeader>
         </div>
         {selectedItem ? (
-          <div className="mission-soft rune-frame mt-4 space-y-2 rounded-2xl p-3 text-sm text-slate-200">
+          <div
+            className="mt-4 space-y-2 rounded-2xl border p-3 text-sm"
+            style={{
+              borderColor: "rgba(255, 255, 255, 0.45)",
+              background: "rgba(255, 255, 255, 0.15)",
+              color: "rgba(63, 34, 8, 0.95)",
+            }}
+          >
             {/* Hero: item name */}
-            <p className="text-base font-bold text-white">{selectedItem.label}</p>
+            <p
+              className="text-base font-extrabold"
+              style={{
+                color: "rgba(63, 34, 8, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+              }}
+            >
+              {selectedItem.label}
+            </p>
             {/* Prominent price */}
-            <p className="text-lg font-extrabold text-amber-300">{formatUsd(selectedItem.onChainPrice)}</p>
-            <div className="my-1 border-t border-white/[0.06]" />
+            <p
+              className="text-lg font-extrabold"
+              style={{
+                color: "rgba(120, 65, 5, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+              }}
+            >
+              {formatUsd(selectedItem.onChainPrice)}
+            </p>
+            <div className="my-1 border-t" style={{ borderColor: "rgba(110, 65, 15, 0.18)" }} />
             {/* Secondary details */}
             {paymentTokenSymbol ? (
-              <p className="text-xs text-slate-400">
-                {PURCHASE_FIELD_LABELS.payingWith}: <span className="font-semibold text-slate-300">{paymentTokenSymbol}</span>
+              <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+                {PURCHASE_FIELD_LABELS.payingWith}:{" "}
+                <span className="font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+                  {paymentTokenSymbol}
+                </span>
               </p>
             ) : null}
-            <p className="text-xs text-slate-400">
+            <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
               {PURCHASE_FIELD_LABELS.status}:{" "}
-              <span className="font-semibold text-slate-300">
+              <span className="font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
                 {selectedItem.configured ? (selectedItem.enabled ? SHOP_SHEET_COPY.status.available : SHOP_SHEET_COPY.status.unavailable) : SHOP_SHEET_COPY.status.notConfigured}
               </span>
             </p>
-            <p className="text-xs text-slate-400">
-              {PURCHASE_FIELD_LABELS.network}: <span className="font-semibold text-slate-300">{chainId ? (CHAIN_NAMES[chainId] ?? "Unknown network") : "—"}</span>
+            <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+              {PURCHASE_FIELD_LABELS.network}:{" "}
+              <span className="font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+                {chainId ? (CHAIN_NAMES[chainId] ?? "Unknown network") : "—"}
+              </span>
             </p>
-            <p className="rounded-xl border border-amber-400/45 bg-amber-900/30 px-3 py-2 text-xs text-amber-100">
+            <p
+              className="rounded-xl px-3 py-2 text-xs font-semibold"
+              style={{
+                background: "rgba(245, 158, 11, 0.22)",
+                boxShadow: "inset 0 0 0 1px rgba(245, 158, 11, 0.55)",
+                color: "rgba(120, 65, 5, 0.95)",
+              }}
+            >
               {PURCHASE_CONFIRM_COPY.miniPayWarning}
             </p>
             <Button
@@ -99,7 +145,8 @@ export function PurchaseConfirmSheet({
             </Button>
             <button
               type="button"
-              className="mt-2 w-full py-3 text-center text-sm font-medium text-cyan-100/60 hover:text-cyan-100/80 transition-colors min-h-[44px]"
+              className="mt-2 min-h-[44px] w-full py-3 text-center text-sm font-semibold transition-colors hover:opacity-80"
+              style={{ color: "rgba(110, 65, 15, 0.70)" }}
               onClick={() => onOpenChange(false)}
               disabled={isWriting || purchasePhase !== "idle"}
             >
