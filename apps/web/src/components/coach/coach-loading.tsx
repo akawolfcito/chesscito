@@ -65,14 +65,20 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
   }, [jobId, wallet]);
 
   return (
-    <div className="flex flex-col items-center gap-3 py-2">
+    <div className="flex flex-col items-center gap-3 py-2 text-center">
       <div className="h-16 w-16">
         <LottieAnimation src="/animations/sandy-loading.lottie" loop className="h-full w-full" />
       </div>
-      <p className="text-base font-bold" style={{ color: "var(--paper-text)" }}>
+      <p
+        className="text-base font-bold"
+        style={{
+          color: "rgba(63, 34, 8, 0.95)",
+          textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+        }}
+      >
         {COACH_COPY.analyzing}{dots}
       </p>
-      <p className="text-sm" style={{ color: "var(--paper-text-muted)" }}>
+      <p className="text-sm" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
         {COACH_COPY.reviewingMoves}
       </p>
 
@@ -88,12 +94,12 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
                   : "bg-emerald-500"
                 : ""
             }`}
-            style={i >= filledDots ? { background: "var(--paper-divider)" } : undefined}
+            style={i >= filledDots ? { background: "rgba(110, 65, 15, 0.25)" } : undefined}
           />
         ))}
       </div>
 
-      <p className="mt-1 text-xs" style={{ color: "var(--paper-text-subtle)" }}>
+      <p className="mt-1 text-xs" style={{ color: "rgba(110, 65, 15, 0.55)" }}>
         {COACH_COPY.loadingCanLeave}
       </p>
     </div>

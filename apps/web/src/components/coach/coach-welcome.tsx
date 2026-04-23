@@ -5,23 +5,26 @@ import { COACH_COPY } from "@/lib/content/editorial";
 
 export function CoachWelcome() {
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-3 text-center">
       <div className="relative flex items-center justify-center">
-        <div className="absolute h-16 w-16 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.22)_0%,transparent_70%)]" />
-        <CandyIcon name="coach" className="relative h-10 w-10" />
+        <div className="absolute h-20 w-20 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.28)_0%,rgba(217,180,74,0.12)_50%,transparent_75%)]" />
+        <CandyIcon name="coach" className="relative h-12 w-12" />
       </div>
 
-      <h2 className="fantasy-title text-xl font-bold" style={{ color: "var(--paper-text)" }}>
-        {COACH_COPY.welcomeTitle}
-      </h2>
-      <p className="text-center text-xs" style={{ color: "var(--paper-text-muted)" }}>
+      <p
+        className="text-sm"
+        style={{
+          color: "rgba(110, 65, 15, 0.85)",
+          textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+        }}
+      >
         {COACH_COPY.welcomeSub}
       </p>
 
       {/* Value card with crossed-out price — gold candy-frame to emphasize the free offer. */}
       <div className="candy-frame candy-frame-gold w-full p-3">
         <div className="flex items-center justify-between">
-          <div className="min-w-0">
+          <div className="min-w-0 text-left">
             <p className="text-sm font-extrabold truncate">{COACH_COPY.welcomePack}</p>
             <p className="mt-0.5 text-[0.7rem] leading-tight opacity-75">{COACH_COPY.welcomePackDetail}</p>
           </div>

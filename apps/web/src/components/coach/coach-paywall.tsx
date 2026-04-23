@@ -23,16 +23,24 @@ export function CoachPaywall({ open, onOpenChange, onBuy, onQuickReview }: Props
     <Sheet open={open} onOpenChange={(v) => { if (!buying) onOpenChange(v); }}>
       <SheetContent
         side="bottom"
-        className="mission-shell paper-surface flex h-[100dvh] flex-col rounded-none pb-[5rem]"
+        className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
-        <SheetHeader className="pt-[env(safe-area-inset-top)]">
-          <SheetTitle className="fantasy-title" style={{ color: "var(--paper-text)" }}>
-            {COACH_COPY.creditTitle}
-          </SheetTitle>
-          <SheetDescription style={{ color: "var(--paper-text-muted)" }}>
-            {COACH_COPY.creditExplain}
-          </SheetDescription>
-        </SheetHeader>
+        <div className="border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
+          <SheetHeader>
+            <SheetTitle
+              className="fantasy-title"
+              style={{
+                color: "rgba(110, 65, 15, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+              }}
+            >
+              {COACH_COPY.creditTitle}
+            </SheetTitle>
+            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.75)" }}>
+              {COACH_COPY.creditExplain}
+            </SheetDescription>
+          </SheetHeader>
+        </div>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <button
             type="button"
@@ -73,12 +81,12 @@ export function CoachPaywall({ open, onOpenChange, onBuy, onQuickReview }: Props
         {buying && (
           <p
             className="mt-3 text-center text-sm font-semibold animate-in fade-in duration-200"
-            style={{ color: "var(--paper-text-muted)" }}
+            style={{ color: "rgba(110, 65, 15, 0.75)" }}
           >
             {COACH_COPY.buyWithUsdc}
           </p>
         )}
-        <p className="mt-4 text-center text-xs" style={{ color: "var(--paper-text-subtle)" }}>
+        <p className="mt-4 text-center text-xs" style={{ color: "rgba(110, 65, 15, 0.55)" }}>
           <button
             type="button"
             onClick={onQuickReview}

@@ -36,17 +36,21 @@ export function CoachHistory({ walletAddress, credits, onSelectEntry }: Props) {
     else break;
   }
 
+  const warmText = "rgba(63, 34, 8, 0.95)";
+  const warmMuted = "rgba(110, 65, 15, 0.75)";
+  const warmSubtle = "rgba(110, 65, 15, 0.55)";
+  const cream = "0 1px 0 rgba(255, 245, 215, 0.55)";
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h2 className="fantasy-title text-xl font-bold" style={{ color: "var(--paper-text)" }}>
-          {COACH_COPY.yourSessions}
-        </h2>
-        <span className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>{credits} credits</span>
+      <div className="flex items-center justify-end">
+        <span className="text-xs font-semibold" style={{ color: warmSubtle }}>
+          {credits} credits
+        </span>
       </div>
 
       {loading && (
-        <p className="text-center text-sm" style={{ color: "var(--paper-text-muted)" }}>
+        <p className="text-center text-sm" style={{ color: warmMuted }}>
           {COACH_COPY.loading}
         </p>
       )}
@@ -64,21 +68,21 @@ export function CoachHistory({ walletAddress, credits, onSelectEntry }: Props) {
             key={entry.gameId}
             type="button"
             onClick={() => onSelectEntry(entry)}
-            className="paper-tray w-full text-left transition-all active:scale-[0.99]"
+            className="candy-tray w-full text-left transition-all active:scale-[0.99]"
           >
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold" style={{ color: "var(--paper-text)" }}>
+              <p className="text-sm font-semibold" style={{ color: warmText, textShadow: cream }}>
                 {entry.game.result.charAt(0).toUpperCase() + entry.game.result.slice(1)} - {diffLabel} - {entry.game.totalMoves} moves
               </p>
-              <span className="text-xs font-semibold" style={{ color: "var(--paper-text-muted)" }}>
+              <span className="text-xs font-semibold" style={{ color: warmMuted }}>
                 {typeLabel}
               </span>
             </div>
-            <p className="mt-1 truncate text-xs italic" style={{ color: "var(--paper-text-muted)" }}>
+            <p className="mt-1 truncate text-xs italic" style={{ color: warmMuted }}>
               {`"${topTakeaway}"`}
             </p>
             {momentCount > 0 && (
-              <p className="mt-0.5 text-xs" style={{ color: "var(--paper-text-subtle)" }}>
+              <p className="mt-0.5 text-xs" style={{ color: warmSubtle }}>
                 {COACH_COPY.keyMomentsCount(momentCount)}
               </p>
             )}
@@ -87,21 +91,21 @@ export function CoachHistory({ walletAddress, credits, onSelectEntry }: Props) {
       })}
 
       {!loading && entries.length > 0 && (
-        <div className="paper-tray">
+        <div className="candy-tray">
           <h3
             className="mb-1 text-xs font-semibold uppercase tracking-widest"
-            style={{ color: "var(--paper-text-muted)" }}
+            style={{ color: warmMuted }}
           >
             {COACH_COPY.yourProgress}
           </h3>
-          <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+          <p className="text-xs" style={{ color: warmMuted }}>
             {COACH_COPY.gamesAnalyzed(gamesAnalyzed)}
           </p>
-          <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+          <p className="text-xs" style={{ color: warmMuted }}>
             {COACH_COPY.highestDifficulty(ARENA_COPY.difficulty[highestDiff as keyof typeof ARENA_COPY.difficulty] ?? highestDiff)}
           </p>
           {streak > 0 && (
-            <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+            <p className="text-xs" style={{ color: warmMuted }}>
               {COACH_COPY.currentStreak(streak)}
             </p>
           )}

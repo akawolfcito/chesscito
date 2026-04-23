@@ -30,7 +30,7 @@ import { CoachFallback } from "@/components/coach/coach-fallback";
 import { CoachPaywall } from "@/components/coach/coach-paywall";
 import { CoachWelcome } from "@/components/coach/coach-welcome";
 import { CoachHistory } from "@/components/coach/coach-history";
-import { PaperPanel } from "@/components/redesign/paper-panel";
+import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import type { CoachResponse, BasicCoachResponse, GameRecord } from "@/lib/coach/types";
 import { getConfiguredChainId, getVictoryNFTAddress, getShopAddress } from "@/lib/contracts/chains";
 import { hapticImpact, hapticSuccess } from "@/lib/haptics";
@@ -846,78 +846,93 @@ export default function ArenaPage() {
       {ENABLE_COACH && (
         <>
           {coachPhase === "welcome" && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] px-4">
-              <PaperPanel
-                hollow
-                ribbonTitle="Welcome"
-                onClose={() => setCoachPhase("idle")}
-                cta={
-                  <Button
-                    type="button"
-                    variant="game-primary"
-                    size="game"
-                    onClick={handleClaimWelcome}
-                    className="w-full"
-                  >
-                    {COACH_COPY.claimFree}
-                  </Button>
-                }
-                meta={COACH_COPY.welcomeNote}
-              >
-                <CoachWelcome />
-              </PaperPanel>
+            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] animate-in fade-in duration-300 px-4">
+              <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+                <CandyGlassShell
+                  title={COACH_COPY.welcomeTitle}
+                  onClose={() => setCoachPhase("idle")}
+                  closeLabel="Close"
+                  cta={
+                    <Button
+                      type="button"
+                      variant="game-primary"
+                      size="game"
+                      onClick={handleClaimWelcome}
+                      className="w-full"
+                    >
+                      {COACH_COPY.claimFree}
+                    </Button>
+                  }
+                  meta={COACH_COPY.welcomeNote}
+                >
+                  <CoachWelcome />
+                </CandyGlassShell>
+              </div>
             </div>
           )}
           {coachPhase === "loading" && coachJobId && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] px-4">
-              <PaperPanel
-                hollow
-                ribbonTitle="Coach"
-                onClose={() => setCoachPhase("idle")}
-                closeLabel="Cancel"
-              >
-                <CoachLoading
-                  jobId={coachJobId}
-                  wallet={address?.toLowerCase()}
-                  onReady={(response) => { setCoachResponse(response); setCoachCredits((c) => Math.max(0, c - 1)); setCoachPhase("result"); }}
-                  onFailed={() => {
-                    const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
-                    setCoachFallbackResponse(quick);
-                    setCoachPhase("fallback");
-                  }}
-                />
-              </PaperPanel>
+            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] animate-in fade-in duration-300 px-4">
+              <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+                <CandyGlassShell
+                  title="Coach"
+                  onClose={() => setCoachPhase("idle")}
+                  closeLabel="Cancel"
+                >
+                  <CoachLoading
+                    jobId={coachJobId}
+                    wallet={address?.toLowerCase()}
+                    onReady={(response) => { setCoachResponse(response); setCoachCredits((c) => Math.max(0, c - 1)); setCoachPhase("result"); }}
+                    onFailed={() => {
+                      const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
+                      setCoachFallbackResponse(quick);
+                      setCoachPhase("fallback");
+                    }}
+                  />
+                </CandyGlassShell>
+              </div>
             </div>
           )}
           {coachPhase === "result" && coachResponse && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] px-4 py-8">
-              <div className="paper-surface mx-auto max-w-[var(--app-max-width,390px)] p-5">
-                <CoachPanel
-                  response={coachResponse}
-                  difficulty={game.difficulty}
-                  totalMoves={game.moveCount}
-                  elapsedMs={game.elapsedMs}
-                  credits={coachCredits}
-                  onPlayAgain={handlePlayAgain}
-                  onBackToHub={handleBackToHub}
-                  onViewHistory={address ? () => setCoachPhase("history") : undefined}
-                />
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] animate-in fade-in duration-300 px-4 py-8">
+              <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+                <CandyGlassShell
+                  title={COACH_COPY.coachAnalysisTitle}
+                  onClose={handleBackToHub}
+                  closeLabel={ARENA_COPY.backToHub}
+                >
+                  <CoachPanel
+                    response={coachResponse}
+                    difficulty={game.difficulty}
+                    totalMoves={game.moveCount}
+                    elapsedMs={game.elapsedMs}
+                    credits={coachCredits}
+                    onPlayAgain={handlePlayAgain}
+                    onBackToHub={handleBackToHub}
+                    onViewHistory={address ? () => setCoachPhase("history") : undefined}
+                  />
+                </CandyGlassShell>
               </div>
             </div>
           )}
           {coachPhase === "fallback" && coachFallbackResponse && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] px-4 py-8">
-              <div className="paper-surface mx-auto max-w-[var(--app-max-width,390px)] p-5">
-                <CoachFallback
-                  response={coachFallbackResponse}
-                  difficulty={game.difficulty}
-                  totalMoves={game.moveCount}
-                  elapsedMs={game.elapsedMs}
-                  result={mapArenaResult(game.status, isPlayerWin)}
-                  onGetFullAnalysis={() => setCoachPhase(isConnected ? "paywall" : "idle")}
-                  onPlayAgain={handlePlayAgain}
-                  onBackToHub={handleBackToHub}
-                />
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] animate-in fade-in duration-300 px-4 py-8">
+              <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+                <CandyGlassShell
+                  title={COACH_COPY.quickReviewTitle}
+                  onClose={handleBackToHub}
+                  closeLabel={ARENA_COPY.backToHub}
+                >
+                  <CoachFallback
+                    response={coachFallbackResponse}
+                    difficulty={game.difficulty}
+                    totalMoves={game.moveCount}
+                    elapsedMs={game.elapsedMs}
+                    result={mapArenaResult(game.status, isPlayerWin)}
+                    onGetFullAnalysis={() => setCoachPhase(isConnected ? "paywall" : "idle")}
+                    onPlayAgain={handlePlayAgain}
+                    onBackToHub={handleBackToHub}
+                  />
+                </CandyGlassShell>
               </div>
             </div>
           )}
@@ -934,17 +949,13 @@ export default function ArenaPage() {
             />
           )}
           {coachPhase === "history" && address && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] px-4 py-8">
-              <div className="mx-auto max-w-[var(--app-max-width,390px)]">
-                <button
-                  type="button"
-                  onClick={() => setCoachPhase(coachResponse ? "result" : "idle")}
-                  className="mb-4 flex h-9 w-9 items-center justify-center rounded-full border border-amber-300/40 bg-amber-400/15 text-amber-100 transition hover:bg-amber-400/25 active:scale-[0.97]"
-                  aria-label="Go back"
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] animate-in fade-in duration-300 px-4 py-8">
+              <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+                <CandyGlassShell
+                  title={COACH_COPY.yourSessions}
+                  onClose={() => setCoachPhase(coachResponse ? "result" : "idle")}
+                  closeLabel="Go back"
                 >
-                  &larr;
-                </button>
-                <div className="paper-surface p-5">
                   <CoachHistory
                     walletAddress={address.toLowerCase()}
                     credits={coachCredits}
@@ -955,7 +966,7 @@ export default function ArenaPage() {
                       }
                     }}
                   />
-                </div>
+                </CandyGlassShell>
               </div>
             </div>
           )}

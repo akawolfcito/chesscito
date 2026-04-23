@@ -30,30 +30,31 @@ export function CoachFallback({
   const time = formatTime(elapsedMs);
   const diffLabel = ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty;
 
+  const warmText = "rgba(63, 34, 8, 0.95)";
+  const warmMuted = "rgba(110, 65, 15, 0.75)";
+  const cream = "0 1px 0 rgba(255, 245, 215, 0.55)";
+
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="fantasy-title text-xl font-bold" style={{ color: "var(--paper-text)" }}>
-        {COACH_COPY.quickReviewTitle}
-      </h2>
-      <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+      <p className="text-xs" style={{ color: warmMuted }}>
         {diffLabel} - {totalMoves} moves - {result}
       </p>
 
-      <div className="paper-tray">
-        <p className="text-sm" style={{ color: "var(--paper-text)" }}>{response.summary}</p>
+      <div className="candy-tray">
+        <p className="text-sm" style={{ color: warmText, textShadow: cream }}>{response.summary}</p>
       </div>
 
       {response.tips.length > 0 && (
         <section>
           <h3
             className="mb-2 text-xs font-semibold uppercase tracking-widest"
-            style={{ color: "var(--paper-text-muted)" }}
+            style={{ color: warmMuted }}
           >
             {COACH_COPY.tips}
           </h3>
           <ul className="flex flex-col gap-1">
             {response.tips.map((t, i) => (
-              <li key={i} className="text-sm" style={{ color: "var(--paper-text)" }}>- {t}</li>
+              <li key={i} className="text-sm" style={{ color: warmText, textShadow: cream }}>- {t}</li>
             ))}
           </ul>
         </section>
@@ -72,22 +73,21 @@ export function CoachFallback({
         onClick={onGetFullAnalysis}
         style={{
           borderColor: "rgba(110, 65, 15, 0.25)",
-          color: "var(--paper-text-muted)",
+          color: warmMuted,
         }}
       >
         {COACH_COPY.unlockFullAnalysis}
       </Button>
 
       {/* Tertiary: Back to Hub */}
-      <Button
+      <button
         type="button"
-        variant="game-text"
-        size="game-sm"
         onClick={onBackToHub}
-        style={{ color: "var(--paper-text-muted)" }}
+        className="w-full py-1 text-xs font-semibold underline underline-offset-2"
+        style={{ color: "rgba(110, 65, 15, 0.70)" }}
       >
         {ARENA_COPY.backToHub}
-      </Button>
+      </button>
     </div>
   );
 }
