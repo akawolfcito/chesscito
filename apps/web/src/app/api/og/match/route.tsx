@@ -51,22 +51,22 @@ export async function GET(req: Request) {
     ? `chesscito.vercel.app \u2022 by ${name}`
     : "chesscito.vercel.app";
 
+  const chip = `${RESULT_TITLE[result]} \u2022 ${DIFFICULTY_LABEL[difficulty]} \u2022 ${clampMoves(moves)} moves \u2022 ${clampTime(timeMs)}`;
+
   const pngResponse = new ImageResponse(
     (
       <CardShell
         bgUrl={bgUrl}
         mascotUrl={mascotUrl}
-        title={RESULT_TITLE[result]}
-        subtitle={`${clampMoves(moves)} moves \u2022 ${clampTime(timeMs)}`}
-        difficulty={DIFFICULTY_LABEL[difficulty]}
+        chip={chip}
         footer={footer}
         useCinzel={useCinzel}
-        rightSlot={
+        heroSlot={
           fen ? (
             <BoardRender
               fen={fen}
               origin={origin}
-              size={420}
+              size={440}
               flipped={flipped}
             />
           ) : undefined

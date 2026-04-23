@@ -3,15 +3,8 @@ import type { ReactNode } from "react";
 const W = 1200;
 const H = 630;
 
-const WARM_TEXT = "rgb(63, 34, 8)";
 const WARM_MUTED = "rgb(110, 65, 15)";
 const CREAM_SHADOW = "0 2px 0 rgba(255, 245, 215, 0.85)";
-
-const DIFFICULTY_STYLE: Record<string, { bg: string; fg: string }> = {
-  EASY: { bg: "rgb(16, 185, 129)", fg: "rgb(236, 253, 245)" },
-  MEDIUM: { bg: "rgb(245, 158, 11)", fg: "rgb(63, 34, 8)" },
-  HARD: { bg: "rgb(244, 63, 94)", fg: "rgb(255, 241, 242)" },
-};
 
 export type CardShellProps = {
   /** Absolute URL to the forest bg-ch.png. Pass null to drop the forest
@@ -20,41 +13,40 @@ export type CardShellProps = {
   bgUrl: string | null;
   /** Absolute URL to the wolf mascot. */
   mascotUrl: string;
-  /** Main headline (e.g. "CHECKMATE!"). */
-  title: string;
-  /** Subtitle or performance line (e.g. "12 moves · 1:34"). Hidden if falsy. */
-  subtitle?: string;
-  /** Difficulty chip copy (EASY / MEDIUM / HARD) — colored by tier. */
-  difficulty?: string;
-  /** Right-side slot — typically the board render. */
-  rightSlot?: ReactNode;
-  /** Footer text, e.g. "chesscito.vercel.app · Victory #42 · by 0xABC…123". */
+  /** Hero content occupying the 440×440 slot on the left — board render,
+   *  piece art, trophy illustration, etc. */
+  heroSlot?: ReactNode;
+  /** Contextual chip (e.g. "Rook puzzle", "Easy · 12 moves · 1:34",
+   *  "Piece Complete"). Rendered as a warm-brown pill under the brand
+   *  wordmark — the single piece of content text the card carries. */
+  chip?: string;
+  /** Footer URL. Defaults to "chesscito.vercel.app". Set empty string
+   *  to hide. */
   footer?: string;
   /** True when the Cinzel font was loaded; otherwise we fall back to serif. */
   useCinzel: boolean;
 };
 
 /**
- * CardShell — candy-light branded OG card (1200×630).
+ * CardShell v2 — Duolingo-style branded OG card (1200×630).
  *
  * Layout:
- *   - Full-bleed forest bg-ch + cream gradient wash (matches in-app sheets)
- *   - Left column: fantasy-title headline, subtitle, difficulty chip, footer
- *   - Right slot: optional board render (or trophy / badge art)
- *   - Wolf mascot peeks from the bottom-right so every card carries brand
+ *   - Left: hero slot (board / piece art / trophy) at the visual center
+ *   - Right: oversized wolf mascot peek
+ *   - Bottom-left: CHESSCITO wordmark + single context chip + url
+ *   - Optional forest bg; cream gradient always underneath
+ * The shell deliberately carries minimal text so the hero content does
+ * the talking. Callers pick the hero + one chip and ship.
  */
 export function CardShell({
   bgUrl,
   mascotUrl,
-  title,
-  subtitle,
-  difficulty,
-  rightSlot,
-  footer,
+  heroSlot,
+  chip,
+  footer = "chesscito.vercel.app",
   useCinzel,
 }: CardShellProps) {
   const fontFamily = useCinzel ? "Cinzel" : "serif";
-  const diffStyle = difficulty ? DIFFICULTY_STYLE[difficulty] ?? DIFFICULTY_STYLE.MEDIUM : null;
 
   return (
     <div
@@ -90,131 +82,99 @@ export function CardShell({
         }}
       />
 
-      {/* Wolf mascot — bottom-right peek */}
+      {/* Hero slot — left, 440×440 */}
+      {heroSlot && (
+        <div
+          style={{
+            position: "absolute",
+            left: 60,
+            top: 60,
+            width: 440,
+            height: 440,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {heroSlot}
+        </div>
+      )}
+
+      {/* Mascot — big peek bottom-right */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={mascotUrl}
         alt=""
-        width={220}
-        height={220}
+        width={360}
+        height={360}
         style={{
           position: "absolute",
-          right: 56,
-          bottom: 28,
-          filter: "drop-shadow(0 8px 12px rgba(120, 65, 5, 0.35))",
+          right: -20,
+          bottom: -30,
+          filter: "drop-shadow(0 8px 16px rgba(120, 65, 5, 0.35))",
         }}
       />
 
-      {/* Right content slot (board / art) */}
-      {rightSlot && (
+      {/* Brand wordmark — bottom-left, above the chip */}
+      <div
+        style={{
+          position: "absolute",
+          left: 60,
+          top: 520,
+          display: "flex",
+          fontSize: 28,
+          fontFamily,
+          fontWeight: 700,
+          letterSpacing: "0.28em",
+          color: WARM_MUTED,
+          textShadow: CREAM_SHADOW,
+        }}
+      >
+        CHESSCITO
+      </div>
+
+      {/* Context chip — single piece of descriptive text */}
+      {chip && (
         <div
           style={{
             position: "absolute",
-            right: 72,
-            top: 84,
+            left: 60,
+            top: 562,
             display: "flex",
+            alignSelf: "flex-start",
+            padding: "8px 18px",
+            borderRadius: 999,
+            background: "rgb(120, 65, 5)",
+            color: "rgb(255, 240, 180)",
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
           }}
         >
-          {rightSlot}
+          {chip}
         </div>
       )}
 
-      {/* Left content column */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          position: "absolute",
-          left: 80,
-          top: 100,
-          width: 620,
-          gap: 18,
-        }}
-      >
-        {/* Brand tag */}
-        <div
-          style={{
-            display: "flex",
-            fontSize: 22,
-            fontWeight: 700,
-            letterSpacing: "0.24em",
-            color: WARM_MUTED,
-            textShadow: CREAM_SHADOW,
-          }}
-        >
-          CHESSCITO
-        </div>
-
-        {/* Headline */}
-        <div
-          style={{
-            display: "flex",
-            fontSize: 84,
-            fontFamily,
-            fontWeight: 700,
-            letterSpacing: "0.02em",
-            color: WARM_TEXT,
-            textShadow: CREAM_SHADOW,
-            lineHeight: 1,
-          }}
-        >
-          {title}
-        </div>
-
-        {/* Subtitle */}
-        {subtitle && (
-          <div
-            style={{
-              display: "flex",
-              fontSize: 34,
-              fontWeight: 600,
-              color: WARM_MUTED,
-              textShadow: CREAM_SHADOW,
-            }}
-          >
-            {subtitle}
-          </div>
-        )}
-
-        {/* Difficulty chip */}
-        {difficulty && diffStyle && (
-          <div
-            style={{
-              display: "flex",
-              alignSelf: "flex-start",
-              padding: "8px 20px",
-              borderRadius: 999,
-              background: diffStyle.bg,
-              color: diffStyle.fg,
-              fontSize: 18,
-              fontWeight: 800,
-              letterSpacing: "0.16em",
-              boxShadow: "0 2px 6px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
-            }}
-          >
-            {difficulty}
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
+      {/* Footer URL */}
       {footer && (
         <div
           style={{
             position: "absolute",
-            left: 80,
-            bottom: 48,
+            left: 60,
+            top: 612,
             display: "flex",
-            fontSize: 20,
+            fontSize: 14,
             fontWeight: 600,
             color: WARM_MUTED,
             textShadow: CREAM_SHADOW,
-            opacity: 0.8,
+            opacity: 0.7,
           }}
         >
           {footer}
         </div>
       )}
+
     </div>
   );
 }

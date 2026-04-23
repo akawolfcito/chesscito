@@ -52,39 +52,39 @@ export async function GET(req: Request) {
   const useCinzel = Boolean(cinzelData);
 
   // Subtitle picks the most specific context the caller passed.
-  const subtitle = piece
-    ? from
-      ? `${from} is solving a ${PIECE_LABEL[piece]} puzzle.`
-      : `Come solve this ${PIECE_LABEL[piece]} puzzle with me.`
-    : from
-      ? `${from} is playing Chesscito.`
-      : "Learn chess on Celo.";
+  // Chip picks the most specific context the caller passed.
+  const chip = piece
+    ? `${PIECE_LABEL[piece]} puzzle`
+    : "Play with me";
+  const footer = from
+    ? `chesscito.vercel.app \u2022 by ${from}`
+    : "chesscito.vercel.app";
 
-  // Right slot: board render when FEN provided, piece art when only
-  // piece, badge art as the generic fallback.
-  let rightSlot;
+  // Hero: board render when FEN provided, piece art when only piece,
+  // badge art as the generic fallback.
+  let heroSlot;
   if (fen) {
     const overlays = star
       ? [{ rank: 7 - star.rank, file: star.file, iconUrl: starUrl }]
       : [];
-    rightSlot = (
+    heroSlot = (
       <BoardRender
         fen={fen}
         origin={origin}
-        size={420}
+        size={440}
         flipped={flipped}
         overlays={overlays}
       />
     );
   } else if (piece) {
     const pieceUrl = origin + THEME_CONFIG.piecesBase + "/w-" + piece + ".png";
-    rightSlot = (
+    heroSlot = (
       <div
         style={{
           position: "relative",
           display: "flex",
-          width: 360,
-          height: 360,
+          width: 440,
+          height: 440,
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -92,8 +92,8 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "absolute",
-            width: 360,
-            height: 360,
+            width: 440,
+            height: 440,
             borderRadius: 9999,
             background:
               "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
@@ -104,23 +104,23 @@ export async function GET(req: Request) {
         <img
           src={pieceUrl}
           alt=""
-          width={280}
-          height={280}
+          width={340}
+          height={340}
           style={{
             position: "relative",
-            filter: "drop-shadow(0 10px 20px rgba(120, 65, 5, 0.35))",
+            filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
           }}
         />
       </div>
     );
   } else {
-    rightSlot = (
+    heroSlot = (
       <div
         style={{
           position: "relative",
           display: "flex",
-          width: 360,
-          height: 360,
+          width: 440,
+          height: 440,
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -128,8 +128,8 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "absolute",
-            width: 360,
-            height: 360,
+            width: 440,
+            height: 440,
             borderRadius: 9999,
             background:
               "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
@@ -140,11 +140,11 @@ export async function GET(req: Request) {
         <img
           src={badgeUrl}
           alt=""
-          width={300}
-          height={300}
+          width={360}
+          height={360}
           style={{
             position: "relative",
-            filter: "drop-shadow(0 10px 20px rgba(120, 65, 5, 0.35))",
+            filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
           }}
         />
       </div>
@@ -156,11 +156,10 @@ export async function GET(req: Request) {
       <CardShell
         bgUrl={null}
         mascotUrl={mascotUrl}
-        title="PLAY WITH ME"
-        subtitle={subtitle}
-        footer="chesscito.vercel.app"
+        chip={chip}
+        footer={footer}
         useCinzel={useCinzel}
-        rightSlot={rightSlot}
+        heroSlot={heroSlot}
       />
     ),
     {

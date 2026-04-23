@@ -34,10 +34,8 @@ function errorCard(useCinzel: boolean, bgUrl: string, mascotUrl: string) {
       <CardShell
         bgUrl={bgUrl}
         mascotUrl={mascotUrl}
-        title="NOT FOUND"
-        subtitle="This victory may not exist yet."
+        chip="Victory not found"
         useCinzel={useCinzel}
-        footer="chesscito.vercel.app"
       />
     ),
     { width: W, height: H, status: 404, headers: ERROR_HEADERS },
@@ -92,17 +90,51 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 
   const displayId = truncateId(raw); // R11: ID truncation
+  const badgeUrl = new URL("/art/badge-chesscito.png", req.url).toString();
 
   const pngResponse = new ImageResponse(
     (
       <CardShell
         bgUrl={bgUrl}
         mascotUrl={mascotUrl}
-        title="CHECKMATE!"
-        subtitle={`${moves} moves \u2022 ${time}`}
-        difficulty={difficulty}
+        chip={`Checkmate \u2022 ${difficulty} \u2022 ${moves} moves \u2022 ${time}`}
         footer={`Victory #${displayId} \u2022 by ${player}`}
         useCinzel={useCinzel}
+        heroSlot={
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              width: 440,
+              height: 440,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                width: 440,
+                height: 440,
+                borderRadius: 9999,
+                background:
+                  "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 80%)",
+                display: "flex",
+              }}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={badgeUrl}
+              alt=""
+              width={360}
+              height={360}
+              style={{
+                position: "relative",
+                filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
+              }}
+            />
+          </div>
+        }
       />
     ),
     {

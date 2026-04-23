@@ -61,22 +61,23 @@ export async function GET(req: Request) {
     ? `chesscito.vercel.app \u2022 by ${name}`
     : "chesscito.vercel.app";
 
+  const chip = `${TYPE_TITLE[type]} \u2022 ${PIECE_LABEL[piece]} \u2022 ${stars}/${maxStars}`;
+
   const pngResponse = new ImageResponse(
     (
       <CardShell
         bgUrl={bgUrl}
         mascotUrl={mascotUrl}
-        title={TYPE_TITLE[type]}
-        subtitle={`${PIECE_LABEL[piece]} \u2022 ${stars}/${maxStars} stars`}
+        chip={chip}
         footer={footer}
         useCinzel={useCinzel}
-        rightSlot={
+        heroSlot={
           <div
             style={{
               position: "relative",
               display: "flex",
-              width: 360,
-              height: 360,
+              width: 440,
+              height: 440,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -84,11 +85,11 @@ export async function GET(req: Request) {
             <div
               style={{
                 position: "absolute",
-                width: 360,
-                height: 360,
+                width: 440,
+                height: 440,
                 borderRadius: 9999,
                 background:
-                  "radial-gradient(circle, rgba(245, 158, 11, 0.35) 0%, rgba(217, 180, 74, 0.15) 45%, rgba(217, 180, 74, 0.04) 70%, transparent 85%)",
+                  "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 80%)",
                 display: "flex",
               }}
             />
@@ -96,11 +97,11 @@ export async function GET(req: Request) {
             <img
               src={pieceUrl}
               alt=""
-              width={260}
-              height={260}
+              width={320}
+              height={320}
               style={{
                 position: "relative",
-                filter: "drop-shadow(0 10px 20px rgba(120, 65, 5, 0.35))",
+                filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
               }}
             />
           </div>
