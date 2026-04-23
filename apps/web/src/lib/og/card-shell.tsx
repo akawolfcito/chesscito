@@ -13,12 +13,12 @@ export type CardShellProps = {
   bgUrl: string | null;
   /** Absolute URL to the wolf mascot. */
   mascotUrl: string;
-  /** Hero content occupying the 440×440 slot on the left — board render,
+  /** Hero content occupying the 540×540 left slot — board render,
    *  piece art, trophy illustration, etc. */
   heroSlot?: ReactNode;
   /** Contextual chip (e.g. "Rook puzzle", "Easy · 12 moves · 1:34",
-   *  "Piece Complete"). Rendered as a warm-brown pill under the brand
-   *  wordmark — the single piece of content text the card carries. */
+   *  "Piece Complete"). Rendered as a warm-brown pill next to the
+   *  brand wordmark — the single piece of content text the card carries. */
   chip?: string;
   /** Footer URL. Defaults to "chesscito.vercel.app". Set empty string
    *  to hide. */
@@ -31,9 +31,9 @@ export type CardShellProps = {
  * CardShell v2 — Duolingo-style branded OG card (1200×630).
  *
  * Layout:
- *   - Left: hero slot (board / piece art / trophy) at the visual center
- *   - Right: oversized wolf mascot peek
- *   - Bottom-left: CHESSCITO wordmark + single context chip + url
+ *   - Left: 540×540 hero slot (board / piece art / trophy)
+ *   - Right: oversized wolf mascot peeking off the bottom-right corner
+ *   - Under the hero: CHESSCITO wordmark inline with a single chip
  *   - Optional forest bg; cream gradient always underneath
  * The shell deliberately carries minimal text so the hero content does
  * the talking. Callers pick the hero + one chip and ship.
@@ -82,15 +82,15 @@ export function CardShell({
         }}
       />
 
-      {/* Hero slot — left, 440×440 */}
+      {/* Hero slot — left-hero, 540×540 so the board dominates the card */}
       {heroSlot && (
         <div
           style={{
             position: "absolute",
-            left: 60,
-            top: 60,
-            width: 440,
-            height: 440,
+            left: 40,
+            top: 30,
+            width: 540,
+            height: 540,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -105,24 +105,24 @@ export function CardShell({
       <img
         src={mascotUrl}
         alt=""
-        width={360}
-        height={360}
+        width={380}
+        height={380}
         style={{
           position: "absolute",
-          right: -20,
-          bottom: -30,
+          right: -30,
+          bottom: -40,
           filter: "drop-shadow(0 8px 16px rgba(120, 65, 5, 0.35))",
         }}
       />
 
-      {/* Brand wordmark — bottom-left, above the chip */}
+      {/* Brand wordmark — bottom-left, right under the hero */}
       <div
         style={{
           position: "absolute",
-          left: 60,
-          top: 520,
+          left: 50,
+          top: 580,
           display: "flex",
-          fontSize: 28,
+          fontSize: 22,
           fontFamily,
           fontWeight: 700,
           letterSpacing: "0.28em",
@@ -133,20 +133,20 @@ export function CardShell({
         CHESSCITO
       </div>
 
-      {/* Context chip — single piece of descriptive text */}
+      {/* Context chip — single piece of descriptive text, inline right of brand */}
       {chip && (
         <div
           style={{
             position: "absolute",
-            left: 60,
-            top: 562,
+            left: 220,
+            top: 575,
             display: "flex",
             alignSelf: "flex-start",
-            padding: "8px 18px",
+            padding: "6px 16px",
             borderRadius: 999,
             background: "rgb(120, 65, 5)",
             color: "rgb(255, 240, 180)",
-            fontSize: 20,
+            fontSize: 17,
             fontWeight: 700,
             letterSpacing: "0.04em",
             boxShadow: "0 2px 6px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
@@ -156,25 +156,24 @@ export function CardShell({
         </div>
       )}
 
-      {/* Footer URL */}
+      {/* Footer URL — tiny accent bottom-right-ish */}
       {footer && (
         <div
           style={{
             position: "absolute",
-            left: 60,
-            top: 612,
+            right: 420,
+            top: 608,
             display: "flex",
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: 600,
             color: WARM_MUTED,
             textShadow: CREAM_SHADOW,
-            opacity: 0.7,
+            opacity: 0.6,
           }}
         >
           {footer}
         </div>
       )}
-
     </div>
   );
 }

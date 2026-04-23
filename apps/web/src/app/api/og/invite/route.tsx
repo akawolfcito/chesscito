@@ -71,7 +71,7 @@ export async function GET(req: Request) {
       <BoardRender
         fen={fen}
         origin={origin}
-        size={440}
+        size={540}
         flipped={flipped}
         overlays={overlays}
       />
@@ -83,8 +83,8 @@ export async function GET(req: Request) {
         style={{
           position: "relative",
           display: "flex",
-          width: 440,
-          height: 440,
+          width: 540,
+          height: 540,
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -92,8 +92,8 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "absolute",
-            width: 440,
-            height: 440,
+            width: 540,
+            height: 540,
             borderRadius: 9999,
             background:
               "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
@@ -104,8 +104,8 @@ export async function GET(req: Request) {
         <img
           src={pieceUrl}
           alt=""
-          width={340}
-          height={340}
+          width={420}
+          height={420}
           style={{
             position: "relative",
             filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
@@ -119,8 +119,8 @@ export async function GET(req: Request) {
         style={{
           position: "relative",
           display: "flex",
-          width: 440,
-          height: 440,
+          width: 540,
+          height: 540,
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -128,8 +128,8 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "absolute",
-            width: 440,
-            height: 440,
+            width: 540,
+            height: 540,
             borderRadius: 9999,
             background:
               "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
@@ -140,8 +140,8 @@ export async function GET(req: Request) {
         <img
           src={badgeUrl}
           alt=""
-          width={360}
-          height={360}
+          width={440}
+          height={440}
           style={{
             position: "relative",
             filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",

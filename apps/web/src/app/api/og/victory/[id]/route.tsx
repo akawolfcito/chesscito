@@ -105,8 +105,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
             style={{
               position: "relative",
               display: "flex",
-              width: 440,
-              height: 440,
+              width: 540,
+              height: 540,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -114,8 +114,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
             <div
               style={{
                 position: "absolute",
-                width: 440,
-                height: 440,
+                width: 540,
+                height: 540,
                 borderRadius: 9999,
                 background:
                   "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 80%)",
@@ -126,8 +126,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
             <img
               src={badgeUrl}
               alt=""
-              width={360}
-              height={360}
+              width={440}
+              height={440}
               style={{
                 position: "relative",
                 filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",

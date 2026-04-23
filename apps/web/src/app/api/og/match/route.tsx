@@ -66,7 +66,7 @@ export async function GET(req: Request) {
             <BoardRender
               fen={fen}
               origin={origin}
-              size={440}
+              size={540}
               flipped={flipped}
             />
           ) : undefined
