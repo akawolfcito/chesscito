@@ -71,12 +71,14 @@ function BadgeCard({
   return (
     <div
       className={[
-        "relative flex items-center gap-3 px-3 py-3 transition",
-        isLocked ? "panel-base" : "panel-elevated",
+        "relative flex items-center gap-3 rounded-2xl border px-3 py-3 transition-all",
+        isLocked
+          ? "border-[rgba(255,255,255,0.35)] bg-white/10 opacity-85"
+          : "border-[rgba(255,255,255,0.45)] bg-white/15",
       ].join(" ")}
     >
       {isClaimed && (
-        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white shadow-[0_0_8px_rgba(5,150,105,0.35)]">
           &#10003;
         </span>
       )}
@@ -95,22 +97,30 @@ function BadgeCard({
       </picture>
 
       <div className="flex-1 min-w-0">
-        <p className={`text-sm ${isClaimed ? "font-bold text-white" : "font-semibold text-cyan-50"}`}>{title}</p>
+        <p
+          className="text-sm font-extrabold"
+          style={{
+            color: "rgba(63, 34, 8, 0.95)",
+            textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+          }}
+        >
+          {title}
+        </p>
         <div className="mt-0.5 flex items-center gap-1.5">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-700/50">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(110, 65, 15, 0.18)" }}>
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                isClaimed ? "bg-gradient-to-r from-emerald-400 to-emerald-300" : "bg-amber-400"
+                isClaimed ? "bg-gradient-to-r from-emerald-500 to-emerald-400" : "bg-amber-500"
               }`}
               style={{ width: `${(badge.totalStars / badge.maxStars) * 100}%` }}
             />
           </div>
-          <span className="text-xs font-semibold text-cyan-100/50 tabular-nums">
+          <span className="text-xs font-bold tabular-nums" style={{ color: "rgba(110, 65, 15, 0.85)" }}>
             {badge.totalStars}/{badge.maxStars}
           </span>
         </div>
         {isLocked ? (
-          <p className="mt-0.5 text-xs text-cyan-100/40">
+          <p className="mt-0.5 text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
             {badge.totalStars === 0 ? BADGE_SHEET_COPY.notStarted : BADGE_SHEET_COPY.locked(needed)}
           </p>
         ) : null}
@@ -118,7 +128,7 @@ function BadgeCard({
 
       <div className="shrink-0">
         {isClaimed ? (
-          <span className="flex items-center gap-1 text-xs font-semibold text-emerald-400">
+          <span className="flex items-center gap-1 text-xs font-bold text-emerald-700">
             <CandyIcon name="check" className="h-3.5 w-3.5" /> {BADGE_SHEET_COPY.owned}
           </span>
         ) : isClaimable ? (
@@ -135,7 +145,17 @@ function BadgeCard({
             {isThisBusy ? BADGE_SHEET_COPY.claiming : BADGE_SHEET_COPY.claimBadge}
           </Button>
         ) : (
-          <CandyIcon name="lock" className="h-4 w-4 opacity-50" />
+          <span
+            className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-nano font-extrabold uppercase"
+            style={{
+              background: "rgba(120, 65, 5, 0.85)",
+              color: "rgba(255, 240, 180, 0.98)",
+              letterSpacing: "0.10em",
+            }}
+          >
+            <CandyIcon name="lock" className="h-2.5 w-2.5" />
+            Locked
+          </span>
         )}
       </div>
     </div>
@@ -215,19 +235,36 @@ export function BadgeSheet({
           ) : null}
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="mission-shell sheet-bg-badges flex h-[100dvh] flex-col rounded-none border-white/[0.10] pb-[5rem]">
-        <div className="shrink-0 border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
+      <SheetContent side="bottom" className="mission-shell sheet-bg-badges flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]">
+        <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
           <SheetHeader>
-            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><CandyIcon name="trophy" className="h-5 w-5" />{BADGE_SHEET_COPY.title}</SheetTitle>
-            <SheetDescription className="text-cyan-100/75">{BADGE_SHEET_COPY.subtitle}</SheetDescription>
+            <SheetTitle
+              className="fantasy-title flex items-center gap-2"
+              style={{
+                color: "rgba(110, 65, 15, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+              }}
+            >
+              <CandyIcon name="trophy" className="h-5 w-5" />
+              {BADGE_SHEET_COPY.title}
+            </SheetTitle>
+            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+              {BADGE_SHEET_COPY.subtitle}
+            </SheetDescription>
             <div className="mt-2 flex items-center gap-2">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-700/50">
+              <div className="h-2 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(110, 65, 15, 0.18)" }}>
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-700"
+                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-700"
                   style={{ width: `${(badges.reduce((s, b) => s + b.totalStars, 0) / badges.reduce((s, b) => s + b.maxStars, 0)) * 100}%` }}
                 />
               </div>
-              <span className="text-xs font-bold tabular-nums text-amber-300/80">
+              <span
+                className="text-xs font-extrabold tabular-nums"
+                style={{
+                  color: "rgba(110, 65, 15, 0.95)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                }}
+              >
                 {badges.reduce((s, b) => s + b.totalStars, 0)}/{badges.reduce((s, b) => s + b.maxStars, 0)}
               </span>
             </div>
@@ -248,7 +285,13 @@ export function BadgeSheet({
           <Link
             href="/trophies"
             onClick={() => onOpenChange(false)}
-            className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-amber-500/[0.08] px-4 py-3.5 text-sm font-semibold text-amber-300 ring-1 ring-amber-400/15 transition hover:bg-amber-500/20"
+            className="mt-4 flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold transition hover:bg-amber-500/30"
+            style={{
+              background: "rgba(245, 158, 11, 0.22)",
+              color: "rgba(120, 65, 5, 0.95)",
+              boxShadow: "inset 0 0 0 1px rgba(245, 158, 11, 0.45)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+            }}
           >
             <CandyIcon name="trophy" className="h-5 w-5" />
             {BADGE_SHEET_COPY.viewTrophies}
@@ -256,7 +299,8 @@ export function BadgeSheet({
           <Link
             href="/about"
             onClick={() => onOpenChange(false)}
-            className="mt-3 block text-center text-xs text-cyan-300/40 transition-colors hover:text-cyan-200/60"
+            className="mt-3 block text-center text-xs transition-colors hover:opacity-80"
+            style={{ color: "rgba(110, 65, 15, 0.65)" }}
           >
             {ABOUT_LINK_COPY.label}
           </Link>

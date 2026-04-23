@@ -372,33 +372,33 @@
     z-index: 0;
   }
 
+  /* Light candy wash — the grass-forest bg-ch.png behind reads through
+     while a semantic color stamps the top, fading into cream/amber.
+     Same pattern as .sheet-bg-hub (#103 sweep). */
   .sheet-bg-badges::after {
     background: linear-gradient(
       to bottom,
-      rgba(251, 191, 36, 0.24) 0%,
-      rgba(6, 14, 28, 0.58) 30%,
-      rgba(6, 14, 28, 0.78) 70%,
-      rgba(6, 14, 28, 0.88) 100%
+      rgba(251, 191, 36, 0.35) 0%,
+      rgba(255, 245, 215, 0.38) 35%,
+      rgba(246, 230, 184, 0.55) 100%
     );
   }
 
   .sheet-bg-shop::after {
     background: linear-gradient(
       to bottom,
-      rgba(244, 63, 94, 0.24) 0%,
-      rgba(6, 14, 28, 0.58) 30%,
-      rgba(6, 14, 28, 0.78) 70%,
-      rgba(6, 14, 28, 0.88) 100%
+      rgba(244, 63, 94, 0.28) 0%,
+      rgba(255, 245, 215, 0.38) 35%,
+      rgba(246, 230, 184, 0.55) 100%
     );
   }
 
   .sheet-bg-leaderboard::after {
     background: linear-gradient(
       to bottom,
-      rgba(139, 92, 246, 0.24) 0%,
-      rgba(6, 14, 28, 0.58) 30%,
-      rgba(6, 14, 28, 0.78) 70%,
-      rgba(6, 14, 28, 0.88) 100%
+      rgba(139, 92, 246, 0.28) 0%,
+      rgba(255, 245, 215, 0.38) 35%,
+      rgba(246, 230, 184, 0.55) 100%
     );
   }
 
