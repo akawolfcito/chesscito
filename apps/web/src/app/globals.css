@@ -336,8 +336,12 @@
     content: "";
     position: absolute;
     inset: -12px;
-    background-size: cover;
-    background-position: center;
+    /* Width-first scaling — the bg-ch.png is 1920x1200 landscape; `cover`
+       on tall portrait sheets (h-[100dvh]) crops the side trees out.
+       `100% auto + top` keeps the forest frame intact at the top; the
+       cream ::after gradient takes over below the image ends. */
+    background-size: 100% auto;
+    background-position: top center;
     background-repeat: no-repeat;
     z-index: 0;
   }
@@ -421,8 +425,11 @@
     content: "";
     position: absolute;
     inset: -12px;
-    background-size: cover;
-    background-position: center;
+    /* Width-first scaling — ensures the forest frame (trees on sides)
+       stays visible at the top of tall sheets like the exercise drawer.
+       Same strategy as destination sheets (.sheet-bg-badges/shop/...). */
+    background-size: 100% auto;
+    background-position: top center;
     background-repeat: no-repeat;
     background-image: image-set(
       url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
