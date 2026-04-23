@@ -11,13 +11,18 @@ export default function PrivacyPage() {
 
   return (
     <LegalPageShell title={title}>
-      <p className="text-xs text-cyan-300/50">Last updated: {lastUpdated}</p>
+      <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>
+        Last updated: {lastUpdated}
+      </p>
       {sections.map((section) => (
         <section key={section.heading}>
-          <h2 className="mb-2 text-sm font-semibold text-cyan-200">
+          <h2
+            className="mb-2 text-sm font-bold"
+            style={{ color: "var(--paper-text)" }}
+          >
             {section.heading}
           </h2>
-          <p>{section.body}</p>
+          <p style={{ color: "var(--paper-text-muted)" }}>{section.body}</p>
         </section>
       ))}
     </LegalPageShell>
