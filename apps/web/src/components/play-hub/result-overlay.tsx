@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { useState } from "react";
 import { BADGE_EARNED_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
+import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 
@@ -62,87 +62,6 @@ function getSubtitle(variant: Variant, pieceType?: PieceKey, itemLabel?: string,
     case "error":
       return errorMessage ?? RESULT_OVERLAY_COPY.error.unknown;
   }
-}
-
-/** Candy-glass modal shell — matches piece-picker aesthetic: translucent
- *  white over a dimmed scrim, warm-brown header title, red translucent
- *  close × button, content area, optional CTA + meta footers. Shared by
- *  the three result-overlay variants (generic result, badge earned,
- *  piece complete) so they feel cohesive with the rest of the app. */
-function CandyGlassShell({
-  title,
-  onClose,
-  closeLabel,
-  children,
-  cta,
-  meta,
-}: {
-  title: string;
-  onClose: () => void;
-  closeLabel: string;
-  children: ReactNode;
-  cta?: ReactNode;
-  meta?: ReactNode;
-}) {
-  return (
-    <div
-      className="relative flex w-full flex-col gap-3 overflow-hidden rounded-3xl px-5 py-5"
-      style={{
-        background: "rgba(255, 255, 255, 0.18)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
-        border: "1px solid rgba(255, 255, 255, 0.45)",
-        boxShadow:
-          "0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
-      }}
-    >
-      <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] pb-3 -mx-2">
-        <h2
-          className="fantasy-title px-2 text-lg font-extrabold"
-          style={{
-            color: "rgba(110, 65, 15, 0.95)",
-            textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-          }}
-        >
-          {title}
-        </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={closeLabel}
-          className="mr-2 flex h-10 w-10 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
-          style={{
-            background: "rgba(255, 255, 255, 0.15)",
-            borderColor: "rgba(255, 255, 255, 0.45)",
-            color: "#dc2626",
-            backdropFilter: "blur(6px)",
-          }}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </button>
-      </div>
-      <div className="flex flex-col gap-2">{children}</div>
-      {cta}
-      {meta ? (
-        <p
-          className="text-center text-xs"
-          style={{ color: "rgba(110, 65, 15, 0.60)" }}
-        >
-          {meta}
-        </p>
-      ) : null}
-    </div>
-  );
 }
 
 function SuccessImage({

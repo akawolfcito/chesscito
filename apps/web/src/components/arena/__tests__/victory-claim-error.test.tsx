@@ -42,18 +42,15 @@ describe("VictoryClaimError — empty-wallet / insufficient balance path", () =>
   it("invokes onRetry when the primary CTA is clicked", async () => {
     const onRetry = vi.fn();
     render(<VictoryClaimError {...baseProps} onRetry={onRetry} errorMessage="Insufficient balance" />);
-    // Primary CTA is the first button in the CTA column
     const user = userEvent.setup();
-    const buttons = screen.getAllByRole("button");
-    await user.click(buttons[0]);
+    const tryAgain = screen.getByRole("button", { name: /try again/i });
+    await user.click(tryAgain);
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
   it("omits the primary CTA when onRetry is not provided", () => {
     render(<VictoryClaimError {...baseProps} onRetry={undefined} errorMessage="Insufficient balance" />);
-    // Without retry, still shows Play Again + Back to Hub, but no first Try Again
-    const buttons = screen.getAllByRole("button");
-    expect(buttons.length).toEqual(2);
+    expect(screen.queryByRole("button", { name: /try again/i })).toBeNull();
   });
 
   it("renders stats (difficulty/moves/time) for user context", () => {
