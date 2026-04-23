@@ -92,7 +92,8 @@ export function BoardRender({
       {pieces.map((p, i) => {
         const r = flipped ? 7 - p.rank : p.rank;
         const f = flipped ? 7 - p.file : p.file;
-        const src = `${origin}/art/pieces/${p.color}-${PIECE_FILENAME[p.piece]}.png`;
+        const pieceFile = p.color + "-" + PIECE_FILENAME[p.piece] + ".png";
+        const src = origin + "/art/pieces/" + pieceFile;
         return (
           // eslint-disable-next-line @next/next/no-img-element
           <img
