@@ -6,17 +6,20 @@ import type { ReactNode } from "react";
 import { DOCK_LABELS } from "@/lib/content/editorial";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 
-export type DockTab = "badge" | "shop" | "leaderboard" | null;
+export type DockTab = "badge" | "shop" | "leaderboard" | "arena" | null;
 
 type PersistentDockProps = {
   badgeControl: ReactNode;
   shopControl: ReactNode;
   leaderboardControl: ReactNode;
   inviteControl: ReactNode;
+  /** Optional arena sheet trigger. When provided, the center button
+   *  opens the arena entry sheet instead of navigating. When omitted
+   *  (e.g., from /arena itself) the center falls back to a Link. */
+  arenaControl?: ReactNode;
   /** Which destination tab is currently active. Drives the lift +
    *  label treatment on that item so the user always knows where
-   *  they are. Null = no destination active (e.g., on /arena, which
-   *  uses route-based active state on the center button). */
+   *  they are. Null = no destination active. */
   activeDockTab: DockTab;
 };
 
@@ -49,28 +52,41 @@ export function PersistentDock({
   shopControl,
   leaderboardControl,
   inviteControl,
+  arenaControl,
   activeDockTab,
 }: PersistentDockProps) {
   const pathname = usePathname();
-  const isArenaActive = pathname === "/arena";
+  const isArenaRoute = pathname === "/arena";
+  const isArenaActive = isArenaRoute || activeDockTab === "arena";
 
   return (
     <nav className="chesscito-dock" aria-label="Game navigation">
       <DockItem id="badge" label={DOCK_LABELS.badge} control={badgeControl} activeDockTab={activeDockTab} />
       <DockItem id="shop" label={DOCK_LABELS.shop} control={shopControl} activeDockTab={activeDockTab} />
 
-      {/* Center — Arena with route-aware active state */}
-      <Link
-        href="/arena"
-        className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
-      >
-        <CandyBanner name="btn-battle" className="h-9 w-9" />
-        {isArenaActive && (
-          <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
-            {DOCK_LABELS.arena}
-          </span>
-        )}
-      </Link>
+      {/* Center — Arena sheet trigger (preferred) or route Link fallback */}
+      {arenaControl ? (
+        <div className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}>
+          {arenaControl}
+          {isArenaActive && (
+            <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
+              {DOCK_LABELS.arena}
+            </span>
+          )}
+        </div>
+      ) : (
+        <Link
+          href="/arena"
+          className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
+        >
+          <CandyBanner name="btn-battle" className="h-9 w-9" />
+          {isArenaActive && (
+            <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
+              {DOCK_LABELS.arena}
+            </span>
+          )}
+        </Link>
+      )}
 
       <DockItem id="leaderboard" label={DOCK_LABELS.leaderboard} control={leaderboardControl} activeDockTab={activeDockTab} />
       {/* Invite is a transient share action — no persistent active state. */}

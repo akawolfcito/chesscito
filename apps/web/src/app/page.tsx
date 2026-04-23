@@ -46,6 +46,8 @@ import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
 import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/components/play-hub/result-overlay";
 import { BadgeSheet } from "@/components/play-hub/badge-sheet";
+import { ArenaEntrySheet } from "@/components/play-hub/arena-entry-sheet";
+import { CandyBanner } from "@/components/redesign/candy-banner";
 import { classifyTxError, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, EXERCISES } from "@/lib/game/exercises";
@@ -126,7 +128,7 @@ export default function PlayHubPage() {
   // a different tab auto-closes the current one rather than stacking.
   // Per-sheet `open` + `onOpenChange` are derived below so the sheet
   // components don't need to know about this refactor.
-  const [activeDockTab, setActiveDockTab] = useState<"badge" | "shop" | "leaderboard" | null>(null);
+  const [activeDockTab, setActiveDockTab] = useState<"badge" | "shop" | "leaderboard" | "arena" | null>(null);
   const storeOpen = activeDockTab === "shop";
   const setStoreOpen = (v: boolean) => setActiveDockTab(v ? "shop" : null);
   const leaderboardOpen = activeDockTab === "leaderboard";
@@ -148,6 +150,8 @@ export default function PlayHubPage() {
   const [showPieceComplete, setShowPieceComplete] = useState(false);
   const badgeSheetOpen = activeDockTab === "badge";
   const setBadgeSheetOpen = (v: boolean) => setActiveDockTab(v ? "badge" : null);
+  const arenaSheetOpen = activeDockTab === "arena";
+  const setArenaSheetOpen = (v: boolean) => setActiveDockTab(v ? "arena" : null);
   const [shieldCount, setShieldCount] = useState(0);
   const [claimingPiece, setClaimingPiece] = useState<PieceKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -870,6 +874,21 @@ export default function PlayHubPage() {
               }
               leaderboardControl={
                 <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
+              }
+              arenaControl={
+                <ArenaEntrySheet
+                  open={arenaSheetOpen}
+                  onOpenChange={setArenaSheetOpen}
+                  trigger={
+                    <button
+                      type="button"
+                      aria-label="Free Play"
+                      className="flex h-full w-full items-center justify-center"
+                    >
+                      <CandyBanner name="btn-battle" className="h-9 w-9" />
+                    </button>
+                  }
+                />
               }
               inviteControl={<InviteButton />}
             />
