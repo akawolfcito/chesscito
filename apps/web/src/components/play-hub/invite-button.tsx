@@ -4,7 +4,18 @@ import { useState } from "react";
 import { INVITE_COPY } from "@/lib/content/editorial";
 import { ShareModal } from "@/components/share/share-modal";
 
-export function InviteButton() {
+type Props = {
+  /** Override the default invite card URL with a context-aware one
+   *  (e.g. `/api/og/invite?piece=rook&fen=...`). Falls back to the
+   *  generic `/api/og/invite` card when omitted. */
+  cardUrl?: string;
+  /** Override the share text; defaults to INVITE_COPY.text. */
+  text?: string;
+  /** Override the share URL; defaults to INVITE_COPY.url. */
+  url?: string;
+};
+
+export function InviteButton({ cardUrl, text, url }: Props = {}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -27,9 +38,9 @@ export function InviteButton() {
       <ShareModal
         open={open}
         onOpenChange={setOpen}
-        cardUrl="/api/og/invite"
-        text={INVITE_COPY.text}
-        url={INVITE_COPY.url}
+        cardUrl={cardUrl ?? "/api/og/invite"}
+        text={text ?? INVITE_COPY.text}
+        url={url ?? INVITE_COPY.url}
         title={INVITE_COPY.button}
       />
     </>

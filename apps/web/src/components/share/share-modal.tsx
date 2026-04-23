@@ -94,25 +94,30 @@ export function ShareModal({
         </div>
       </div>
 
-      {/* Share sheet */}
+      {/* Share sheet — sheet-bg-hub for parity with dock sheets */}
       <div
-        className="w-full animate-in slide-in-from-bottom-8 duration-300"
+        className="sheet-bg-hub w-full animate-in slide-in-from-bottom-8 duration-300"
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "rgba(255, 255, 255, 0.95)",
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
           paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)",
           boxShadow: "0 -8px 24px rgba(0, 0, 0, 0.18)",
         }}
       >
-        <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.15)] px-5 py-4">
+        <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] px-5 py-4">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
             aria-label="Close"
-            className="flex h-9 w-9 items-center justify-center rounded-full transition active:scale-[0.94]"
-            style={{ color: "rgba(110, 65, 15, 0.70)" }}
+            className="flex h-10 w-10 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
+            style={{
+              background: "rgba(255, 255, 255, 0.15)",
+              borderColor: "rgba(255, 255, 255, 0.45)",
+              color: "#dc2626",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+            }}
           >
             <svg
               viewBox="0 0 24 24"
@@ -127,12 +132,15 @@ export function ShareModal({
             </svg>
           </button>
           <h3
-            className="text-xs font-bold uppercase tracking-[0.18em]"
-            style={{ color: "rgba(110, 65, 15, 0.75)" }}
+            className="fantasy-title text-sm font-extrabold uppercase tracking-[0.18em]"
+            style={{
+              color: "rgba(110, 65, 15, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+            }}
           >
             {title}
           </h3>
-          <span className="h-9 w-9" aria-hidden="true" />
+          <span className="h-10 w-10" aria-hidden="true" />
         </div>
         <div className="px-5 pt-5">
           <ShareGrid text={text} url={url ?? SHARE_COPY.url} />

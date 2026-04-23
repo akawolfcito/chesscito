@@ -890,7 +890,12 @@ export default function PlayHubPage() {
                   }
                 />
               }
-              inviteControl={<InviteButton />}
+              inviteControl={
+                <InviteButton
+                  cardUrl={`/api/og/invite?piece=${selectedPiece}`}
+                  text={`I'm learning the ${selectedPiece} on Chesscito — come play with me!`}
+                />
+              }
             />
           }
           board={

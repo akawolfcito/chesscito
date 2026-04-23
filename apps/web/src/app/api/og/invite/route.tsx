@@ -1,8 +1,14 @@
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import { CardShell } from "@/lib/og/card-shell";
+import { BoardRender } from "@/lib/og/board-render";
 import { loadCinzelFont } from "@/lib/og/font-loader";
-import { sanitizeName, readSearchParams } from "@/lib/og/validators";
+import {
+  sanitizeName,
+  sanitizeFen,
+  parseEnumParam,
+  readSearchParams,
+} from "@/lib/og/validators";
 
 export const runtime = "nodejs";
 
@@ -14,20 +20,122 @@ const SUCCESS_HEADERS = {
   "CDN-Cache-Control": "public, s-maxage=3600",
 };
 
+const PIECE_ALLOWED = ["rook", "bishop", "knight", "pawn", "queen", "king"] as const;
+const PIECE_LABEL: Record<(typeof PIECE_ALLOWED)[number], string> = {
+  rook: "Rook",
+  bishop: "Bishop",
+  knight: "Knight",
+  pawn: "Pawn",
+  queen: "Queen",
+  king: "King",
+};
+
 export async function GET(req: Request) {
   const qs = readSearchParams(req);
   const from = sanitizeName(qs.get("from"), 20);
+  const rawPiece = qs.get("piece");
+  const piece = rawPiece && (PIECE_ALLOWED as readonly string[]).includes(rawPiece)
+    ? (rawPiece as (typeof PIECE_ALLOWED)[number])
+    : null;
+  const fen = sanitizeFen(qs.get("fen"));
+  const flipped = parseEnumParam(qs.get("color"), ["w", "b"] as const) === "b";
 
   const bgUrl = new URL("/art/redesign/bg/bg-ch.png", req.url).toString();
   const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  const boardUrl = new URL("/art/redesign/board/board-ch.png", req.url).toString();
   const badgeUrl = new URL("/art/badge-chesscito.png", req.url).toString();
+  const origin = new URL(req.url).origin;
 
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
 
-  const subtitle = from
-    ? `${from} is playing Chesscito.`
-    : "Learn chess on Celo.";
+  // Subtitle picks the most specific context the caller passed.
+  const subtitle = piece
+    ? from
+      ? `${from} is solving a ${PIECE_LABEL[piece]} puzzle.`
+      : `Come solve this ${PIECE_LABEL[piece]} puzzle with me.`
+    : from
+      ? `${from} is playing Chesscito.`
+      : "Learn chess on Celo.";
+
+  // Right slot picks the richest available: board render > piece art > badge art.
+  const rightSlot = fen ? (
+    <BoardRender
+      fen={fen}
+      boardUrl={boardUrl}
+      origin={origin}
+      size={420}
+      flipped={flipped}
+    />
+  ) : piece ? (
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        width: 360,
+        height: 360,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          width: 360,
+          height: 360,
+          borderRadius: 9999,
+          background:
+            "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
+          display: "flex",
+        }}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={origin + "/art/pieces/w-" + piece + ".png"}
+        alt=""
+        width={280}
+        height={280}
+        style={{
+          position: "relative",
+          filter: "drop-shadow(0 10px 20px rgba(120, 65, 5, 0.35))",
+        }}
+      />
+    </div>
+  ) : (
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        width: 360,
+        height: 360,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          width: 360,
+          height: 360,
+          borderRadius: 9999,
+          background:
+            "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
+          display: "flex",
+        }}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={badgeUrl}
+        alt=""
+        width={300}
+        height={300}
+        style={{
+          position: "relative",
+          filter: "drop-shadow(0 10px 20px rgba(120, 65, 5, 0.35))",
+        }}
+      />
+    </div>
+  );
 
   const pngResponse = new ImageResponse(
     (
@@ -38,41 +146,7 @@ export async function GET(req: Request) {
         subtitle={subtitle}
         footer="chesscito.vercel.app"
         useCinzel={useCinzel}
-        rightSlot={
-          <div
-            style={{
-              position: "relative",
-              display: "flex",
-              width: 360,
-              height: 360,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                width: 360,
-                height: 360,
-                borderRadius: 9999,
-                background:
-                  "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
-                display: "flex",
-              }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={badgeUrl}
-              alt=""
-              width={300}
-              height={300}
-              style={{
-                position: "relative",
-                filter: "drop-shadow(0 10px 20px rgba(120, 65, 5, 0.35))",
-              }}
-            />
-          </div>
-        }
+        rightSlot={rightSlot}
       />
     ),
     {
