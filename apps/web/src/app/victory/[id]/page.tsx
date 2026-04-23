@@ -94,14 +94,24 @@ export default async function VictoryPage({ params }: { params: { id: string } }
 
   return (
     <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width)] flex-col items-center justify-center arena-bg px-6 animate-in fade-in duration-500">
-      <div className="relative flex w-full max-w-[340px] flex-col items-center overflow-hidden rounded-3xl border-2 border-amber-400/40 bg-[var(--surface-frosted)] px-6 pb-8 pt-10 backdrop-blur-2xl shadow-[0_0_40px_rgba(251,191,36,0.22),inset_0_0_0_1px_rgba(251,191,36,0.10)] animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {/* Trophy spotlight — subtle amber glow behind the trophy */}
+      <div
+        className="relative flex w-full max-w-[340px] flex-col items-center overflow-hidden rounded-3xl border-2 px-6 pb-8 pt-10 animate-in fade-in slide-in-from-bottom-4 duration-500"
+        style={{
+          background: "rgba(255, 255, 255, 0.18)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderColor: "rgba(251, 191, 36, 0.65)",
+          boxShadow:
+            "0 0 40px rgba(251, 191, 36, 0.22), inset 0 0 0 1px rgba(255, 245, 215, 0.45)",
+        }}
+      >
+        {/* Trophy spotlight — warm amber glow behind the trophy */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 h-48"
           style={{
             background:
-              "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(251,191,36,0.18) 0%, rgba(251,191,36,0) 70%)",
+              "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(251,191,36,0.28) 0%, rgba(251,191,36,0) 70%)",
           }}
         />
 
@@ -111,14 +121,24 @@ export default async function VictoryPage({ params }: { params: { id: string } }
         </div>
 
         {/* Title */}
-        <h1 className="fantasy-title relative z-10 mb-2 text-3xl font-bold text-amber-200 drop-shadow-[0_0_12px_rgba(251,191,36,0.45)]">
+        <h1
+          className="fantasy-title relative z-10 mb-2 text-3xl font-bold"
+          style={{
+            color: "rgba(110, 65, 15, 0.98)",
+            textShadow:
+              "0 1px 0 rgba(255, 235, 180, 0.80), 0 2px 6px rgba(120, 65, 5, 0.35)",
+          }}
+        >
           {ARENA_DIFFICULTIES.has(v.difficultyRaw)
             ? VICTORY_PAGE_COPY.metaCheckmate(v.moves)
             : VICTORY_PAGE_COPY.metaComplete(v.moves)}
         </h1>
 
         {/* Stats */}
-        <div className="relative z-10 mb-3 flex gap-3 text-sm text-amber-100/60">
+        <div
+          className="relative z-10 mb-3 flex gap-3 text-sm font-semibold"
+          style={{ color: "rgba(110, 65, 15, 0.80)" }}
+        >
           <span>{v.difficulty}</span>
           <span>•</span>
           <span>{formatTime(v.timeMs)}</span>
@@ -127,12 +147,21 @@ export default async function VictoryPage({ params }: { params: { id: string } }
         </div>
 
         {/* Tagline for new visitors */}
-        <p className="relative z-10 mb-4 text-center text-xs text-amber-100/45">
+        <p
+          className="relative z-10 mb-4 text-center text-xs"
+          style={{ color: "rgba(110, 65, 15, 0.65)" }}
+        >
           {VICTORY_PAGE_COPY.tagline}
         </p>
 
         {/* Challenge line */}
-        <p className="relative z-10 mb-8 text-lg font-semibold text-amber-300">
+        <p
+          className="relative z-10 mb-8 text-lg font-extrabold"
+          style={{
+            color: "rgba(120, 65, 5, 0.95)",
+            textShadow: "0 1px 0 rgba(255, 245, 215, 0.70)",
+          }}
+        >
           {VICTORY_PAGE_COPY.challengeLine}
         </p>
 
@@ -146,7 +175,8 @@ export default async function VictoryPage({ params }: { params: { id: string } }
 
         <Link
           href="/"
-          className="relative z-10 mt-3 min-h-[44px] flex items-center px-3 text-sm text-amber-100/45 transition-colors hover:text-amber-100/70"
+          className="relative z-10 mt-3 flex min-h-[44px] items-center px-3 text-sm transition-colors hover:opacity-80"
+          style={{ color: "rgba(110, 65, 15, 0.65)" }}
         >
           {VICTORY_PAGE_COPY.backToHub}
         </Link>
