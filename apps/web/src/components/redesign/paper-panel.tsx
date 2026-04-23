@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CandyIcon } from "@/components/redesign/candy-icon";
 
 type PaperPanelProps = {
   /** Text shown inside the yellow ribbon at the top. */
@@ -51,10 +50,20 @@ export function PaperPanel({
         <button
           type="button"
           onClick={onClose}
-          className="paper-panel-close"
+          className="paper-panel-close text-white"
           aria-label={closeLabel}
         >
-          <CandyIcon name="close" className="h-5 w-5 text-white" />
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
         </button>
       ) : null}
 

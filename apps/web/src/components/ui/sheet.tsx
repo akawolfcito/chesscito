@@ -71,7 +71,17 @@ const SheetContent = React.forwardRef<
           boxShadow: "0 2px 0 rgba(139, 30, 30, 0.55), 0 3px 8px rgba(0, 0, 0, 0.18)",
         }}
       >
-        <CandyIcon name="close" className="h-4 w-4" />
+        <svg
+          viewBox="0 0 24 24"
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>
     </SheetPrimitive.Content>
