@@ -6,23 +6,23 @@ import { DIFFICULTY_LABELS, TROPHY_VITRINE_COPY, VICTORY_CLAIM_COPY } from "@/li
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
 const DIFFICULTY_CHIP: Record<number, { className: string }> = {
-  1: { className: "bg-emerald-500/20 text-emerald-400" },
-  2: { className: "bg-amber-500/20 text-amber-400" },
-  3: { className: "bg-rose-500/20 text-rose-400" },
+  1: { className: "bg-emerald-500/25 text-emerald-800" },
+  2: { className: "bg-amber-500/30 text-amber-800" },
+  3: { className: "bg-rose-500/25 text-rose-800" },
 };
 
-const UNKNOWN_CHIP = { className: "bg-slate-500/20 text-slate-300" };
+const UNKNOWN_CHIP = { className: "bg-[rgba(110,65,15,0.18)] text-[rgba(63,34,8,0.85)]" };
 
 const DIFFICULTY_TINT: Record<number, string> = {
-  1: "border-l-emerald-500/40",
-  2: "border-l-amber-500/40",
-  3: "border-l-purple-500/40",
+  1: "border-l-emerald-500/60",
+  2: "border-l-amber-500/70",
+  3: "border-l-purple-500/60",
 };
 
 const RANK_ACCENT: Record<number, string> = {
-  1: "border-[rgba(220,190,100,0.35)] shadow-[inset_0_1px_3px_rgba(255,255,255,0.04),inset_0_-1px_3px_rgba(0,0,0,0.3),0_0_10px_rgba(200,170,100,0.10)]",
-  2: "border-slate-300/35 shadow-[inset_0_1px_3px_rgba(255,255,255,0.04),inset_0_-1px_3px_rgba(0,0,0,0.3),0_0_8px_rgba(203,213,225,0.08)]",
-  3: "border-orange-600/35 shadow-[inset_0_1px_3px_rgba(255,255,255,0.04),inset_0_-1px_3px_rgba(0,0,0,0.3),0_0_8px_rgba(234,88,12,0.08)]",
+  1: "border-amber-500/55 shadow-[inset_0_1px_2px_rgba(255,245,215,0.55),0_0_10px_rgba(251,191,36,0.20)]",
+  2: "border-slate-400/55 shadow-[inset_0_1px_2px_rgba(255,245,215,0.55),0_0_8px_rgba(148,163,184,0.18)]",
+  3: "border-orange-600/55 shadow-[inset_0_1px_2px_rgba(255,245,215,0.55),0_0_8px_rgba(234,88,12,0.18)]",
 };
 
 function formatTimeMs(ms: number): string {
@@ -55,7 +55,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
   const chip = DIFFICULTY_CHIP[entry.difficulty] ?? UNKNOWN_CHIP;
   const difficultyLabel = DIFFICULTY_LABELS[entry.difficulty] ?? "???";
   const isHoF = variant === "hall-of-fame";
-  const accentClass = rank && rank <= 3 ? RANK_ACCENT[rank] : "border-[rgba(200,170,100,0.20)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.03),inset_0_-1px_2px_rgba(0,0,0,0.2)]";
+  const accentClass = rank && rank <= 3 ? RANK_ACCENT[rank] : "border-[rgba(110,65,15,0.25)] shadow-[inset_0_1px_2px_rgba(255,245,215,0.45)]";
   const difficultyTint = DIFFICULTY_TINT[entry.difficulty] ?? "";
 
   const victoryUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/victory/${entry.tokenId}`;
@@ -79,30 +79,42 @@ export function TrophyCard({ entry, variant, rank }: Props) {
   return (
     <div
       className={[
-        "rounded-xl border border-l-2 px-3 py-2.5",
+        "rounded-xl border border-l-2 bg-white/15 px-3 py-2.5",
         accentClass,
         difficultyTint,
       ].join(" ")}
-      style={{ background: "var(--trophy-card-bg)" }}
     >
       <div className="flex items-center gap-2">
         {isHoF && rank ? (
-          <span className="text-sm font-bold text-slate-100 w-5 text-center">
+          <span
+            className="w-5 text-center text-sm font-extrabold"
+            style={{
+              color: "rgba(63, 34, 8, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+            }}
+          >
             {rank}
           </span>
         ) : (
           <CandyIcon name="trophy" className="h-4 w-4 shrink-0" />
         )}
         <span
-          className={`rounded-full px-2 py-0.5 text-xs font-semibold leading-none ${chip.className}`}
+          className={`rounded-full px-2 py-0.5 text-xs font-extrabold leading-none ${chip.className}`}
         >
           {difficultyLabel}
         </span>
-        <span className="text-xs text-slate-500">{TROPHY_VITRINE_COPY.nftIdPrefix} #{String(entry.tokenId)}</span>
-        <span className="ml-auto text-xs text-slate-500">{formatDate(entry.timestamp)}</span>
+        <span className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+          {TROPHY_VITRINE_COPY.nftIdPrefix} #{String(entry.tokenId)}
+        </span>
+        <span className="ml-auto text-xs" style={{ color: "var(--paper-text-muted)" }}>
+          {formatDate(entry.timestamp)}
+        </span>
       </div>
 
-      <div className="mt-1.5 flex items-center gap-3 text-xs text-slate-400">
+      <div
+        className="mt-1.5 flex items-center gap-3 text-xs font-semibold"
+        style={{ color: "rgba(110, 65, 15, 0.75)" }}
+      >
         <span className="flex items-center gap-1">
           <CandyIcon name="move" className="h-4 w-4" />
           {entry.totalMoves} {TROPHY_VITRINE_COPY.movesLabel}
@@ -114,7 +126,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
 
         <span className="ml-auto">
           {isHoF ? (
-            <span className="text-xs text-slate-500">
+            <span className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
               {truncateAddress(entry.player)}
             </span>
           ) : (
@@ -122,7 +134,8 @@ export function TrophyCard({ entry, variant, rank }: Props) {
               type="button"
               onClick={() => void handleShare()}
               aria-label={TROPHY_VITRINE_COPY.shareLabel}
-              className="flex h-11 w-11 items-center justify-center rounded-lg text-cyan-100/50 transition hover:bg-white/5 active:scale-90"
+              className="flex h-11 w-11 items-center justify-center rounded-lg transition hover:bg-white/20 active:scale-90"
+              style={{ color: "rgba(110, 65, 15, 0.70)" }}
             >
               <CandyIcon name="share" className="h-4 w-4" />
             </button>
@@ -131,7 +144,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
       </div>
 
       {toast && (
-        <p className="mt-1 text-center text-xs font-semibold text-emerald-400 animate-in fade-in duration-200">
+        <p className="mt-1 text-center text-xs font-bold text-emerald-700 animate-in fade-in duration-200">
           {toast}
         </p>
       )}

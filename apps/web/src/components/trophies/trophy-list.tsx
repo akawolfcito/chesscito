@@ -9,10 +9,10 @@ function SkeletonCards() {
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className="h-[72px] animate-pulse rounded-xl border border-white/[0.08] bg-[var(--skeleton-bg)]"
+          className="h-[72px] animate-pulse rounded-xl border border-[rgba(255,255,255,0.45)] bg-white/15"
         />
       ))}
-      <p className="pt-1 text-center text-xs text-slate-500">
+      <p className="pt-1 text-center text-xs" style={{ color: "var(--paper-text-muted)" }}>
         {TROPHY_VITRINE_COPY.loadingText}
       </p>
     </div>
@@ -40,13 +40,22 @@ export function TrophyList({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4 text-center">
-        <p className="text-sm text-rose-400">{error}</p>
+      <div
+        className="rounded-xl border p-4 text-center"
+        style={{
+          borderColor: "rgba(190, 18, 60, 0.35)",
+          background: "rgba(254, 226, 226, 0.55)",
+        }}
+      >
+        <p className="text-sm" style={{ color: "rgba(159, 18, 57, 0.95)" }}>
+          {error}
+        </p>
         {onRetry && (
           <button
             type="button"
             onClick={onRetry}
-            className="mt-2 inline-flex min-h-[44px] items-center justify-center px-3 text-xs font-semibold text-rose-300 underline"
+            className="mt-2 inline-flex min-h-[44px] items-center justify-center px-3 text-xs font-bold underline hover:opacity-80"
+            style={{ color: "rgba(159, 18, 57, 0.95)" }}
           >
             {TROPHY_VITRINE_COPY.tapToRetry}
           </button>
@@ -58,8 +67,8 @@ export function TrophyList({
   if (!victories || victories.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 py-6 text-center">
-        <CandyIcon name="trophy" className="h-10 w-10 opacity-30" />
-        <p className="text-sm text-slate-500">{emptyMessage}</p>
+        <CandyIcon name="trophy" className="h-10 w-10 opacity-40" />
+        <p className="text-sm" style={{ color: "var(--paper-text-muted)" }}>{emptyMessage}</p>
       </div>
     );
   }

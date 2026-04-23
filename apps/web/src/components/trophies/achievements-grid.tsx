@@ -33,8 +33,8 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
       className={[
         "flex min-h-[88px] flex-col rounded-2xl border px-3 py-2.5 transition-all",
         earned
-          ? "border-amber-400/50 bg-amber-500/[0.10] shadow-[0_0_14px_rgba(251,191,36,0.18)]"
-          : "border-amber-300/[0.12] bg-amber-400/[0.04]",
+          ? "border-amber-400/70 bg-amber-400/25 shadow-[0_0_14px_rgba(251,191,36,0.25)]"
+          : "border-[rgba(110,65,15,0.20)] bg-white/15",
       ].join(" ")}
       aria-label={`${copy.title} — ${earned ? ACHIEVEMENTS_COPY.earnedLabel : ACHIEVEMENTS_COPY.lockedLabel}`}
     >
@@ -43,28 +43,30 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
           name={earned ? "trophy" : "lock"}
           className={[
             "h-4 w-4",
-            earned ? "drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" : "opacity-40",
+            earned ? "drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" : "opacity-55",
           ].join(" ")}
         />
         <p
-          className={[
-            "text-xs font-bold uppercase tracking-wider",
-            earned ? "text-amber-300" : "text-amber-100/55",
-          ].join(" ")}
+          className="text-xs font-extrabold uppercase tracking-wider"
+          style={{
+            color: earned ? "rgba(120, 65, 5, 0.95)" : "rgba(110, 65, 15, 0.65)",
+            textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+          }}
         >
           {copy.title}
         </p>
       </div>
       <p
-        className={[
-          "mt-1 text-[11px] leading-tight",
-          earned ? "text-amber-100/75" : "text-amber-100/45",
-        ].join(" ")}
+        className="mt-1 text-[11px] leading-tight"
+        style={{ color: earned ? "rgba(110, 65, 15, 0.85)" : "rgba(110, 65, 15, 0.55)" }}
       >
         {copy.description}
       </p>
       {progress && !earned && (
-        <p className="mt-auto pt-1 text-[10px] font-semibold text-white/50">
+        <p
+          className="mt-auto pt-1 text-[10px] font-bold"
+          style={{ color: "rgba(110, 65, 15, 0.75)" }}
+        >
           {ACHIEVEMENTS_COPY.progressLabel(progress.current, progress.goal)}
         </p>
       )}

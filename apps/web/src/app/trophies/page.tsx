@@ -143,32 +143,45 @@ export default function TrophiesPage() {
 
   return (
     <div className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center">
-    <div className="candy-page-panel mx-auto flex w-full max-w-[var(--app-max-width)] flex-col bg-[var(--surface-a)] backdrop-blur-2xl rounded-t-3xl">
-      {/* Header Pattern B */}
-      <header className="relative flex min-h-[96px] max-h-[120px] items-end border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] px-4 pb-4 pt-4 rounded-t-3xl">
-        <div className="absolute inset-0 bg-gradient-to-b from-[var(--surface-frosted-solid)] to-transparent opacity-30 rounded-t-3xl" />
+    <div
+      className="candy-page-panel mx-auto flex w-full max-w-[var(--app-max-width)] flex-col rounded-t-3xl"
+      style={{ background: "var(--paper-bg)" }}
+    >
+      {/* Header — warm chrome on cream; grass-forest scene bleeds through
+          the candy-page-panel radial gradients baked into globals.css. */}
+      <header
+        className="relative flex min-h-[96px] max-h-[120px] items-end border-b px-4 pb-4 pt-4 rounded-t-3xl"
+        style={{ borderColor: "rgba(110, 65, 15, 0.30)" }}
+      >
         <div className="relative z-10 flex items-center gap-3">
           <Link
             href="/"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.10]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center"
+            aria-label={TROPHY_VITRINE_COPY.pageTitle}
           >
-            <CandyBanner name="btn-back" className="h-7 w-7" />
+            <CandyBanner name="btn-back" className="h-8 w-8" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-slate-100">
+            <h1
+              className="fantasy-title text-xl font-bold"
+              style={{
+                color: "rgba(110, 65, 15, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+              }}
+            >
               {TROPHY_VITRINE_COPY.pageTitle}
             </h1>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
               {TROPHY_VITRINE_COPY.pageDescription}
             </p>
           </div>
         </div>
       </header>
 
-      {/* List zone — clean dark background */}
+      {/* List zone — cream parchment backing */}
       <div className="flex-1 px-4 pt-4 pb-8" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom))" }}>
         {!configured && (
-          <p className="py-6 text-center text-sm text-slate-500">
+          <p className="py-6 text-center text-sm" style={{ color: "var(--paper-text-muted)" }}>
             {TROPHY_VITRINE_COPY.configError}
           </p>
         )}
@@ -184,12 +197,18 @@ export default function TrophiesPage() {
 
               {!isConnected ? (
                 <div className="flex flex-col items-center gap-3 py-4">
-                  <p className="text-center text-sm text-slate-500">
+                  <p className="text-center text-sm" style={{ color: "var(--paper-text-muted)" }}>
                     {TROPHY_VITRINE_COPY.connectWallet}
                   </p>
                   <button
                     onClick={() => openConnectModal?.()}
-                    className="min-h-[44px] rounded-xl bg-white/[0.08] px-6 py-2 text-sm font-semibold text-cyan-300 transition-colors hover:bg-white/[0.12]"
+                    className="min-h-[44px] rounded-xl px-6 py-2 text-sm font-extrabold transition-all active:scale-[0.97]"
+                    style={{
+                      background: "rgba(245, 158, 11, 0.22)",
+                      boxShadow: "inset 0 0 0 1px rgba(245, 158, 11, 0.55)",
+                      color: "rgba(120, 65, 5, 0.95)",
+                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                    }}
                   >
                     {TROPHY_VITRINE_COPY.connectWalletButton}
                   </button>
@@ -208,7 +227,13 @@ export default function TrophiesPage() {
               {isConnected && myVictories?.length === 0 && !myLoading && !myError && (
                 <Link
                   href="/arena"
-                  className="mt-3 flex min-h-[44px] items-center justify-center rounded-2xl bg-cyan-500/15 px-6 text-center text-sm font-semibold text-cyan-300 transition-all hover:bg-cyan-500/25 active:scale-[0.97]"
+                  className="mt-3 flex min-h-[44px] items-center justify-center rounded-2xl px-6 text-center text-sm font-extrabold transition-all active:scale-[0.97]"
+                  style={{
+                    background: "rgba(34, 211, 238, 0.22)",
+                    boxShadow: "inset 0 0 0 1px rgba(34, 211, 238, 0.50)",
+                    color: "rgba(22, 78, 99, 0.95)",
+                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                  }}
                 >
                   {TROPHY_VITRINE_COPY.arenaLink}
                 </Link>
@@ -224,12 +249,12 @@ export default function TrophiesPage() {
                     <CandyIcon name="star" className="h-4 w-4" />
                     {ACHIEVEMENTS_COPY.sectionTitle}
                   </h2>
-                  <p className="mb-3 text-[11px] text-slate-400">
+                  <p className="mb-3 text-[11px]" style={{ color: "var(--paper-text-muted)" }}>
                     {ACHIEVEMENTS_COPY.sectionDescription(summary.earnedCount, summary.total)}
                   </p>
                   <AchievementsGrid achievements={summary.list} />
                   {summary.earnedCount === 0 && (
-                    <p className="mt-3 text-center text-[11px] text-slate-500">
+                    <p className="mt-3 text-center text-[11px]" style={{ color: "var(--paper-text-subtle)" }}>
                       {ACHIEVEMENTS_COPY.emptyHint}
                     </p>
                   )}
@@ -262,22 +287,43 @@ export default function TrophiesPage() {
             <CandyIcon name="crown" className="h-4 w-4" />
             {ROADMAP_COPY.sectionTitle}
           </h2>
-          <p className="mb-3 text-[11px] text-slate-400">{ROADMAP_COPY.sectionDescription}</p>
+          <p className="mb-3 text-[11px]" style={{ color: "var(--paper-text-muted)" }}>
+            {ROADMAP_COPY.sectionDescription}
+          </p>
           <ul className="flex flex-col gap-2" role="list">
             {ROADMAP_COPY.items.map((item) => (
               <li
                 key={item.title}
-                className="rounded-2xl border border-purple-400/15 bg-purple-500/[0.06] px-3 py-2.5"
+                className="rounded-2xl px-3 py-2.5"
+                style={{
+                  background: "rgba(139, 92, 246, 0.15)",
+                  boxShadow: "inset 0 0 0 1px rgba(139, 92, 246, 0.40)",
+                }}
               >
                 <div className="flex items-center gap-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-purple-200">
+                  <p
+                    className="text-xs font-extrabold uppercase tracking-wider"
+                    style={{
+                      color: "rgba(55, 16, 120, 0.95)",
+                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                    }}
+                  >
                     {item.title}
                   </p>
-                  <span className="ml-auto rounded-full bg-purple-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-200">
+                  <span
+                    className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider"
+                    style={{
+                      background: "rgba(139, 92, 246, 0.85)",
+                      color: "rgba(255, 240, 215, 0.98)",
+                    }}
+                  >
                     {ROADMAP_COPY.soonTag}
                   </span>
                 </div>
-                <p className="mt-1 text-[11px] leading-tight text-purple-100/70">
+                <p
+                  className="mt-1 text-[11px] leading-tight"
+                  style={{ color: "rgba(75, 40, 130, 0.85)" }}
+                >
                   {item.description}
                 </p>
               </li>
