@@ -1,13 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
-import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
+import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
+import { ShareModal } from "@/components/share/share-modal";
 import { formatTime } from "@/lib/game/arena-utils";
+import type { PlayerColor } from "@/lib/game/use-chess-game";
 import sparklesData from "@/../public/animations/sparkles.json";
 import trophyData from "@/../public/animations/trophy.json";
 
@@ -20,6 +23,10 @@ type Props = {
   onBackToHub: () => void;
   onClaimVictory?: () => void;
   claimPrice?: string;
+  /** Final FEN — used to render the board on the /api/og/match card. */
+  fen?: string;
+  /** Player color — flips the board on the share card when playing black. */
+  playerColor?: PlayerColor;
 };
 
 
@@ -32,11 +39,25 @@ export function VictoryCelebration({
   onBackToHub,
   onClaimVictory,
   claimPrice,
+  fen,
+  playerColor,
 }: Props) {
   const time = formatTime(elapsedMs);
+  const [shareOpen, setShareOpen] = useState(false);
   const performanceLine = isCheckmate
     ? VICTORY_CELEBRATION_COPY.performanceLineCheckmate(moves, time)
     : VICTORY_CELEBRATION_COPY.performanceLine(moves, time);
+
+  const cardParams = new URLSearchParams({
+    moves: String(moves),
+    time: String(elapsedMs),
+    diff: difficulty,
+    result: "win",
+  });
+  if (fen) cardParams.set("fen", fen);
+  if (playerColor) cardParams.set("color", playerColor);
+  const cardUrl = `/api/og/match?${cardParams.toString()}`;
+  const challengeText = VICTORY_CLAIM_COPY.challengeText(moves, SHARE_COPY.url);
 
   return (
     <div
@@ -78,6 +99,15 @@ export function VictoryCelebration({
               )}
               <Button type="button" variant="game-ghost" size="game" onClick={onPlayAgain}>
                 <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
+              </Button>
+              <Button
+                type="button"
+                variant="game-ghost"
+                size="game-sm"
+                onClick={() => setShareOpen(true)}
+                className="w-full"
+              >
+                {SHARE_COPY.button}
               </Button>
               <button
                 type="button"
@@ -126,6 +156,13 @@ export function VictoryCelebration({
           </div>
         </CandyGlassShell>
       </div>
+
+      <ShareModal
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        cardUrl={cardUrl}
+        text={challengeText}
+      />
     </div>
   );
 }

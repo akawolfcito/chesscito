@@ -859,6 +859,8 @@ export default function ArenaPage() {
             moves={game.moveCount}
             elapsedMs={game.elapsedMs}
             difficulty={game.difficulty}
+            fen={game.fen}
+            playerColor={game.playerColor}
             onAskCoach={ENABLE_COACH && coachPhase === "idle" ? handleAskCoach : undefined}
           />
         </div>

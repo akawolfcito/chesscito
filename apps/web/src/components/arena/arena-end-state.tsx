@@ -8,6 +8,7 @@ import { AskCoachButton } from "@/components/coach/ask-coach-button";
 import { StatCard } from "@/components/arena/stat-card";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { formatTime } from "@/lib/game/arena-utils";
+import type { PlayerColor } from "@/lib/game/use-chess-game";
 import { VictoryCelebration } from "./victory-celebration";
 import { VictoryClaiming } from "./victory-claiming";
 import { VictoryClaimSuccess } from "./victory-claim-success";
@@ -39,6 +40,8 @@ type Props = {
   moves: number;
   elapsedMs: number;
   difficulty: string;
+  fen?: string;
+  playerColor?: PlayerColor;
   onAskCoach?: () => void;
 };
 
@@ -72,6 +75,8 @@ export function ArenaEndState({
   moves,
   elapsedMs,
   difficulty,
+  fen,
+  playerColor,
   onAskCoach,
 }: Props) {
   if (isPlayerWin) {
@@ -110,6 +115,8 @@ export function ArenaEndState({
             {...sharedProps}
             onClaimVictory={onClaimVictory}
             claimPrice={claimPrice}
+            fen={fen}
+            playerColor={playerColor}
           />
         );
     }
