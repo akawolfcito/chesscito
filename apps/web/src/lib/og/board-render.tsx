@@ -127,13 +127,8 @@ export function BoardRender({
         const pieceFile = p.color + "-" + PIECE_FILENAME[p.piece] + ".png";
         const src = piecesBase + "/" + pieceFile;
         return (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <div
             key={"p-" + i}
-            src={src}
-            alt=""
-            width={size / 8}
-            height={size / 8}
             style={{
               position: "absolute",
               top: r * pct + "%",
@@ -141,21 +136,26 @@ export function BoardRender({
               width: pct + "%",
               height: pct + "%",
               display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
-          />
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt=""
+              height={Math.round((size / 8) * 0.9)}
+              style={{ display: "flex" }}
+            />
+          </div>
         );
       })}
       {overlays.map((o, i) => {
         const r = flipped ? 7 - o.rank : o.rank;
         const f = flipped ? 7 - o.file : o.file;
         return (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <div
             key={"o-" + i}
-            src={o.iconUrl}
-            alt=""
-            width={size / 8}
-            height={size / 8}
             style={{
               position: "absolute",
               top: r * pct + "%",
@@ -163,8 +163,18 @@ export function BoardRender({
               width: pct + "%",
               height: pct + "%",
               display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
-          />
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={o.iconUrl}
+              alt=""
+              height={Math.round((size / 8) * 0.75)}
+              style={{ display: "flex" }}
+            />
+          </div>
         );
       })}
     </div>
