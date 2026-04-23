@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 
-/** Cream paper-tray variant of the StatCard — used inside paper-surface
+/** Cream paper-tray variant of the StatCard — nested inside CandyGlassShell
  *  arena end-state panels (victory-celebration, claiming, claim-error,
- *  claim-success). Visually matches .paper-tray + warm text tokens. */
+ *  claim-success). The cream chip on translucent glass gives the stats a
+ *  "parchment inside scroll" hierarchy distinct from the shell body. */
 export function PaperStatCard({
   icon,
   value,

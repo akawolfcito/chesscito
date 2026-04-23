@@ -1,14 +1,15 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * One-off captures for the two new paper-panel surfaces so we can eyeball
- * the migration without manual clicks: Mission Detail (trivial) and Badge
- * Earned (pre-seeded progress + two board taps to cross the threshold).
+ * One-off captures for the migrated candy-light shell surfaces so we can
+ * eyeball them without manual clicks: Mission Detail, Badge Earned,
+ * Piece Complete (pre-seeded rook progress + two board taps), and the
+ * Arena selector with its dock.
  */
 
 const SNAPSHOT_DIR = "e2e-results/snapshots";
 
-test.describe("Paper panel previews", () => {
+test.describe("Candy-light shell previews", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
@@ -28,7 +29,7 @@ test.describe("Paper panel previews", () => {
     await page.waitForTimeout(600);
 
     await page.screenshot({
-      path: `${SNAPSHOT_DIR}/paper-panel-mission-detail.png`,
+      path: `${SNAPSHOT_DIR}/candy-shell-mission-detail.png`,
       fullPage: true,
     });
   });
@@ -52,7 +53,7 @@ test.describe("Paper panel previews", () => {
     await page.waitForTimeout(1_500); // let stars stagger in
 
     await page.screenshot({
-      path: `${SNAPSHOT_DIR}/paper-panel-badge-earned.png`,
+      path: `${SNAPSHOT_DIR}/candy-shell-badge-earned.png`,
       fullPage: true,
     });
   });
@@ -83,7 +84,7 @@ test.describe("Paper panel previews", () => {
     await page.waitForTimeout(1_500);
 
     await page.screenshot({
-      path: `${SNAPSHOT_DIR}/paper-panel-piece-complete.png`,
+      path: `${SNAPSHOT_DIR}/candy-shell-piece-complete.png`,
       fullPage: true,
     });
   });
