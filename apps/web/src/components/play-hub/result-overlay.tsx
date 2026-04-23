@@ -6,6 +6,7 @@ import { BADGE_EARNED_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_CO
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { ShareGrid } from "@/components/share/share-grid";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 
@@ -159,48 +160,14 @@ function getShareText(variant: SuccessVariant, pieceType?: PieceKey, itemLabel?:
   }
 }
 
-function ShareButton({ variant, pieceType, itemLabel, totalStars }: {
+function ShareRow({ variant, pieceType, itemLabel, totalStars }: {
   variant: SuccessVariant;
   pieceType?: PieceKey;
   itemLabel?: string;
   totalStars?: number;
 }) {
-  const [copied, setCopied] = useState(false);
   const text = getShareText(variant, pieceType, itemLabel, totalStars);
-
-  async function handleShare() {
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({ text, url: SHARE_COPY.url });
-        return;
-      } catch {
-        // User cancelled or share failed — fall through to clipboard
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(`${text}\n${SHARE_COPY.url}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard also failed — silently ignore
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => void handleShare()}
-      className="w-full rounded-xl border py-3 text-sm font-bold transition active:scale-[0.98]"
-      style={{
-        background: "rgba(255, 255, 255, 0.18)",
-        borderColor: "rgba(255, 255, 255, 0.50)",
-        color: "rgba(110, 65, 15, 0.90)",
-        textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-      }}
-    >
-      {copied ? SHARE_COPY.fallbackCopied : SHARE_COPY.button}
-    </button>
-  );
+  return <ShareGrid text={text} url={SHARE_COPY.url} />;
 }
 
 export function ResultOverlay({
@@ -314,7 +281,7 @@ export function ResultOverlay({
             ) : null}
 
             {!isError ? (
-              <ShareButton variant={variant} pieceType={pieceType} itemLabel={itemLabel} totalStars={totalStars} />
+              <ShareRow variant={variant} pieceType={pieceType} itemLabel={itemLabel} totalStars={totalStars} />
             ) : null}
           </div>
         </CandyGlassShell>
@@ -421,7 +388,7 @@ export function BadgeEarnedPrompt({
               {title}
             </h2>
 
-            <ShareButton variant="badge" pieceType={pieceType} totalStars={totalStars} />
+            <ShareRow variant="badge" pieceType={pieceType} totalStars={totalStars} />
           </div>
         </CandyGlassShell>
       </div>
