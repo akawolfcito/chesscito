@@ -328,12 +328,6 @@
   .sheet-bg-badges {
     position: relative;
     overflow: hidden;
-    /* Solid cream base — the ::before bg-image is `100% auto` so it
-       only covers the top ~29% on 390px mobile. Without this, the
-       Sheet's default --background token shows through below the
-       image, creating a visible horizontal seam (#103 audit M1
-       escalated to CRITICAL 2026-04-23). */
-    background-color: var(--paper-bg);
   }
 
   .sheet-bg-leaderboard::before,
@@ -342,11 +336,12 @@
     content: "";
     position: absolute;
     inset: -12px;
-    /* Width-first scaling — the bg-ch.png is 1920x1200 landscape; `cover`
-       on tall portrait sheets (h-[100dvh]) crops the side trees out.
-       `100% auto + top` keeps the forest frame intact at the top; the
-       cream ::after gradient takes over below the image ends. */
-    background-size: 100% auto;
+    /* `cover` keeps the forest image filling the entire sheet (no seam).
+       `top center` biases framing so the image's top band — where the
+       trees live — always lands at the top of the sheet. Tall sheets
+       still crop the sides, but the look stays consistent and not
+       broken. */
+    background-size: cover;
     background-position: top center;
     background-repeat: no-repeat;
     z-index: 0;
@@ -382,19 +377,15 @@
     z-index: 0;
   }
 
-  /* Light candy wash over the forest image.
-     The gradient ramps cream opacity UP where the ::before image edge
-     ends on 390px mobile (~29% down) so the seam is masked. Top 15%
-     carries the semantic color tint; 30-100% is strong cream so the
-     cards below the image sit on a single consistent backdrop. */
+  /* Light candy wash — subtle semantic tint at top (amber/rose/violet)
+     fading into a cream overlay that keeps text legible over the
+     forest image. */
   .sheet-bg-badges::after {
     background: linear-gradient(
       to bottom,
-      rgba(251, 191, 36, 0.32) 0%,
-      rgba(255, 245, 215, 0.10) 18%,
-      rgba(246, 230, 184, 0.65) 32%,
-      rgba(246, 230, 184, 0.80) 60%,
-      rgba(246, 230, 184, 0.88) 100%
+      rgba(251, 191, 36, 0.30) 0%,
+      rgba(255, 245, 215, 0.30) 40%,
+      rgba(246, 230, 184, 0.45) 100%
     );
   }
 
@@ -402,10 +393,8 @@
     background: linear-gradient(
       to bottom,
       rgba(244, 63, 94, 0.28) 0%,
-      rgba(255, 245, 215, 0.10) 18%,
-      rgba(246, 230, 184, 0.65) 32%,
-      rgba(246, 230, 184, 0.80) 60%,
-      rgba(246, 230, 184, 0.88) 100%
+      rgba(255, 245, 215, 0.30) 40%,
+      rgba(246, 230, 184, 0.45) 100%
     );
   }
 
@@ -413,10 +402,8 @@
     background: linear-gradient(
       to bottom,
       rgba(139, 92, 246, 0.28) 0%,
-      rgba(255, 245, 215, 0.10) 18%,
-      rgba(246, 230, 184, 0.65) 32%,
-      rgba(246, 230, 184, 0.80) 60%,
-      rgba(246, 230, 184, 0.88) 100%
+      rgba(255, 245, 215, 0.30) 40%,
+      rgba(246, 230, 184, 0.45) 100%
     );
   }
 
@@ -434,16 +421,15 @@
   .sheet-bg-hub {
     position: relative;
     overflow: hidden;
-    background-color: var(--paper-bg);
   }
   .sheet-bg-hub::before {
     content: "";
     position: absolute;
     inset: -12px;
-    /* Width-first scaling — ensures the forest frame (trees on sides)
-       stays visible at the top of tall sheets like the exercise drawer.
-       Same strategy as destination sheets (.sheet-bg-badges/shop/...). */
-    background-size: 100% auto;
+    /* `cover` fills the sheet so no seam appears on tall sheets; `top
+       center` lands the tree band at the top. Same strategy shared
+       with the other destination sheets. */
+    background-size: cover;
     background-position: top center;
     background-repeat: no-repeat;
     background-image: image-set(
@@ -458,16 +444,13 @@
     position: absolute;
     inset: 0;
     z-index: 0;
-    /* Cream wash that masks the ::before image edge near 29% on mobile.
-       Top 18% lets the forest through lightly; strong cream kicks in
-       at 32% so cards below the image never show a seam. */
+    /* Cream wash over the forest image — subtle enough that trees and
+       grass stay visible, strong enough that cards on top read. */
     background: linear-gradient(
       to bottom,
       rgba(255, 255, 255, 0.15) 0%,
-      rgba(255, 245, 215, 0.10) 18%,
-      rgba(246, 230, 184, 0.60) 32%,
-      rgba(246, 230, 184, 0.78) 60%,
-      rgba(246, 230, 184, 0.88) 100%
+      rgba(255, 245, 215, 0.30) 40%,
+      rgba(246, 230, 184, 0.45) 100%
     );
   }
   .sheet-bg-hub > * {
