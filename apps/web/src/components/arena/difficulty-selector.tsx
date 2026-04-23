@@ -2,7 +2,6 @@
 
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { CandyBanner } from "@/components/redesign/candy-banner";
-import { PaperPanel } from "@/components/redesign/paper-panel";
 import type { ArenaDifficulty } from "@/lib/game/types";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
 import { Button } from "@/components/ui/button";
@@ -36,93 +35,148 @@ export function DifficultySelector({
   onBack,
 }: Props) {
   return (
-    <div className="relative w-full max-w-xs px-4 py-4">
-      <PaperPanel
-          hollow
-          ribbonTitle={ARENA_COPY.title}
-          cta={
-            <Button
-              type="button"
-              variant="game-primary"
-              size="game"
-              onClick={onStart}
-              className="w-full shadow-[0_0_18px_rgba(34,211,238,0.25)]"
-            >
-              <CandyBanner name="btn-play" className="inline h-5 w-5 -mt-0.5" /> {ARENA_COPY.startMatch}
-            </Button>
-          }
-          meta={
-            <button
-              type="button"
-              onClick={onBack}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-amber-800/80 underline underline-offset-2"
-            >
-              <CandyBanner name="btn-back" className="h-4 w-4" />
-              {ARENA_COPY.backToHub}
-            </button>
-          }
+    <div
+      className="relative mx-auto flex w-full max-w-xs flex-col gap-3 overflow-hidden rounded-3xl px-5 py-5"
+      style={{
+        background: "rgba(255, 255, 255, 0.18)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        border: "1px solid rgba(255, 255, 255, 0.45)",
+        boxShadow:
+          "0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+      }}
+    >
+      {/* Header — title + close */}
+      <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] pb-3 -mx-2">
+        <h2
+          className="fantasy-title px-2 text-lg font-extrabold"
+          style={{
+            color: "rgba(110, 65, 15, 0.95)",
+            textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+          }}
         >
-          <p className="text-center text-xs" style={{ color: "var(--paper-text-muted)" }}>
-            {ARENA_COPY.subtitle}
-          </p>
-
-          {/* Color toggle — Play as White / Black */}
-          <div
-            className="grid grid-cols-2 gap-1.5 rounded-full p-1"
-            style={{
-              background: "var(--paper-bg-inner-tray)",
-              border: "1px solid var(--paper-divider)",
-            }}
-            role="group"
-            aria-label="Choose your color"
+          {ARENA_COPY.title}
+        </h2>
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label={ARENA_COPY.backToHub}
+          className="mr-2 flex h-10 w-10 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
+          style={{
+            background: "rgba(255, 255, 255, 0.15)",
+            borderColor: "rgba(255, 255, 255, 0.45)",
+            color: "#dc2626",
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            aria-hidden="true"
           >
-            {COLOR_OPTIONS.map(({ key, label }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => onSelectColor(key)}
-                aria-pressed={playerColor === key}
-                className={[
-                  "rounded-full px-2 py-1.5 text-xs font-bold transition-all",
-                  playerColor === key
-                    ? "bg-amber-500/95 text-[rgba(63,34,8,0.95)] shadow-[0_1px_0_rgba(110,65,15,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]"
-                    : "text-[rgba(110,65,15,0.70)] active:scale-[0.97]",
-                ].join(" ")}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
 
-          <div className="flex flex-col gap-1.5">
-            {LEVELS.map(({ key, dot }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => onSelect(key)}
-                className={[
-                  "paper-tray flex items-center gap-2.5 !px-2.5 !py-2 text-left transition-all",
-                  selected === key
-                    ? "ring-2 ring-amber-500/60 shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
-                    : "opacity-85 hover:opacity-100",
-                ].join(" ")}
+      <p
+        className="text-center text-xs"
+        style={{ color: "rgba(110, 65, 15, 0.70)" }}
+      >
+        {ARENA_COPY.subtitle}
+      </p>
+
+      {/* Color toggle — Play as White / Black */}
+      <div
+        className="grid grid-cols-2 gap-1.5 rounded-full p-1"
+        style={{
+          background: "rgba(255, 255, 255, 0.18)",
+          border: "1px solid rgba(255, 255, 255, 0.45)",
+        }}
+        role="group"
+        aria-label="Choose your color"
+      >
+        {COLOR_OPTIONS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onSelectColor(key)}
+            aria-pressed={playerColor === key}
+            className={[
+              "rounded-full px-2 py-1.5 text-xs font-bold transition-all",
+              playerColor === key
+                ? "bg-amber-500/95 text-[rgba(63,34,8,0.95)] shadow-[0_1px_0_rgba(110,65,15,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]"
+                : "text-[rgba(110,65,15,0.75)] active:scale-[0.97]",
+            ].join(" ")}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Difficulty levels */}
+      <div className="flex flex-col gap-1.5">
+        {LEVELS.map(({ key, dot }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onSelect(key)}
+            aria-pressed={selected === key}
+            className={[
+              "flex items-center gap-2.5 rounded-2xl border px-2.5 py-2 text-left transition-all",
+              selected === key
+                ? "border-amber-500/75 bg-amber-400/20 ring-2 ring-amber-400/40"
+                : "border-[rgba(255,255,255,0.45)] bg-white/15 hover:bg-white/25 active:scale-[0.98]",
+            ].join(" ")}
+          >
+            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
+            <div className="min-w-0 flex-1">
+              <span
+                className="text-sm font-extrabold"
+                style={{
+                  color: "rgba(63, 34, 8, 0.95)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                }}
               >
-                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
-                <div className="min-w-0 flex-1">
-                  <span className="text-sm font-bold" style={{ color: "var(--paper-text)" }}>
-                    {ARENA_COPY.difficulty[key]}
-                  </span>
-                  <p
-                    className="text-[0.7rem] leading-snug truncate"
-                    style={{ color: "var(--paper-text-muted)" }}
-                  >
-                    {ARENA_COPY.difficultyDesc[key]}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </PaperPanel>
+                {ARENA_COPY.difficulty[key]}
+              </span>
+              <p
+                className="truncate text-[0.7rem] leading-snug"
+                style={{ color: "rgba(110, 65, 15, 0.70)" }}
+              >
+                {ARENA_COPY.difficultyDesc[key]}
+              </p>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Primary CTA */}
+      <Button
+        type="button"
+        variant="game-primary"
+        size="game"
+        onClick={onStart}
+        className="mt-1 w-full"
+      >
+        <CandyBanner name="btn-play" className="inline h-5 w-5 -mt-0.5" />{" "}
+        {ARENA_COPY.startMatch}
+      </Button>
+
+      {/* Secondary: Back */}
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex items-center justify-center gap-1 text-xs font-semibold underline underline-offset-2 hover:opacity-80"
+        style={{ color: "rgba(110, 65, 15, 0.75)" }}
+      >
+        <CandyBanner name="btn-back" className="h-4 w-4" />
+        {ARENA_COPY.backToHub}
+      </button>
     </div>
   );
 }
