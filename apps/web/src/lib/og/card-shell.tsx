@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 
-const W = 1200;
-const H = 630;
+/** Card dimensions — portrait 4:5, matches the Duolingo reference
+ *  composition. Still unfurls on Twitter (smart-cropped to center,
+ *  where the board + chip sit), WhatsApp/IG/FB render native. */
+export const CARD_WIDTH = 1080;
+export const CARD_HEIGHT = 1350;
 
 const WARM_MUTED = "rgb(110, 65, 15)";
 const CREAM_SHADOW = "0 2px 0 rgba(255, 245, 215, 0.85)";
@@ -13,12 +16,12 @@ export type CardShellProps = {
   bgUrl: string | null;
   /** Absolute URL to the wolf mascot. */
   mascotUrl: string;
-  /** Hero content occupying the 540×540 left slot — board render,
+  /** Hero content occupying the 860×860 slot at the top — board render,
    *  piece art, trophy illustration, etc. */
   heroSlot?: ReactNode;
   /** Contextual chip (e.g. "Rook puzzle", "Easy · 12 moves · 1:34",
-   *  "Piece Complete"). Rendered as a warm-brown pill next to the
-   *  brand wordmark — the single piece of content text the card carries. */
+   *  "Piece Complete"). Rendered as a warm-brown pill under the brand
+   *  wordmark — the single piece of content text the card carries. */
   chip?: string;
   /** Footer URL. Defaults to "chesscito.vercel.app". Set empty string
    *  to hide. */
@@ -28,15 +31,15 @@ export type CardShellProps = {
 };
 
 /**
- * CardShell v2 — Duolingo-style branded OG card (1200×630).
+ * CardShell — Duolingo-style branded OG card (1080×1350 portrait 4:5).
  *
  * Layout:
- *   - Left: 540×540 hero slot (board / piece art / trophy)
- *   - Right: oversized wolf mascot peeking off the bottom-right corner
- *   - Under the hero: CHESSCITO wordmark inline with a single chip
+ *   - Top: hero slot (board / piece art / trophy) centered, big
+ *   - Bottom-left: CHESSCITO wordmark + single context chip
+ *   - Bottom-right: oversized wolf mascot peeking off the card edge
  *   - Optional forest bg; cream gradient always underneath
- * The shell deliberately carries minimal text so the hero content does
- * the talking. Callers pick the hero + one chip and ship.
+ * The shell carries minimal text so the hero content does the talking.
+ * Callers pick the hero + one chip and ship.
  */
 export function CardShell({
   bgUrl,
@@ -51,8 +54,8 @@ export function CardShell({
   return (
     <div
       style={{
-        width: W,
-        height: H,
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
         display: "flex",
         position: "relative",
         background: "#f6e6b8",
@@ -64,8 +67,8 @@ export function CardShell({
         <img
           src={bgUrl}
           alt=""
-          width={W}
-          height={H}
+          width={CARD_WIDTH}
+          height={CARD_HEIGHT}
           style={{ position: "absolute", top: 0, left: 0 }}
         />
       )}
@@ -82,15 +85,15 @@ export function CardShell({
         }}
       />
 
-      {/* Hero slot — left-hero, 540×540 so the board dominates the card */}
+      {/* Hero slot — top-center, 860×860, the board fills the upper two-thirds */}
       {heroSlot && (
         <div
           style={{
             position: "absolute",
-            left: 40,
-            top: 30,
-            width: 540,
-            height: 540,
+            left: 110,
+            top: 80,
+            width: 860,
+            height: 860,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -100,32 +103,32 @@ export function CardShell({
         </div>
       )}
 
-      {/* Mascot — big peek bottom-right */}
+      {/* Mascot — big peek bottom-right, overflows card edge */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={mascotUrl}
         alt=""
-        width={380}
-        height={380}
+        width={460}
+        height={460}
         style={{
           position: "absolute",
           right: -30,
-          bottom: -40,
-          filter: "drop-shadow(0 8px 16px rgba(120, 65, 5, 0.35))",
+          bottom: -50,
+          filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
         }}
       />
 
-      {/* Brand wordmark — bottom-left, right under the hero */}
+      {/* Brand wordmark — bottom-left */}
       <div
         style={{
           position: "absolute",
-          left: 50,
-          top: 580,
+          left: 90,
+          top: 990,
           display: "flex",
-          fontSize: 22,
+          fontSize: 46,
           fontFamily,
           fontWeight: 700,
-          letterSpacing: "0.28em",
+          letterSpacing: "0.22em",
           color: WARM_MUTED,
           textShadow: CREAM_SHADOW,
         }}
@@ -133,38 +136,38 @@ export function CardShell({
         CHESSCITO
       </div>
 
-      {/* Context chip — single piece of descriptive text, inline right of brand */}
+      {/* Context chip — single piece of descriptive text under the brand */}
       {chip && (
         <div
           style={{
             position: "absolute",
-            left: 220,
-            top: 575,
+            left: 90,
+            top: 1070,
             display: "flex",
             alignSelf: "flex-start",
-            padding: "6px 16px",
+            padding: "10px 22px",
             borderRadius: 999,
             background: "rgb(120, 65, 5)",
             color: "rgb(255, 240, 180)",
-            fontSize: 17,
+            fontSize: 26,
             fontWeight: 700,
             letterSpacing: "0.04em",
-            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
+            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
           }}
         >
           {chip}
         </div>
       )}
 
-      {/* Footer URL — tiny accent bottom-right-ish */}
+      {/* Footer URL — tiny accent bottom-left under the chip */}
       {footer && (
         <div
           style={{
             position: "absolute",
-            right: 420,
-            top: 608,
+            left: 90,
+            top: 1150,
             display: "flex",
-            fontSize: 13,
+            fontSize: 20,
             fontWeight: 600,
             color: WARM_MUTED,
             textShadow: CREAM_SHADOW,

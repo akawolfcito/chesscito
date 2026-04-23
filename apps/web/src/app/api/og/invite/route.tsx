@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
-import { CardShell } from "@/lib/og/card-shell";
+import { CardShell, CARD_WIDTH as W, CARD_HEIGHT as H } from "@/lib/og/card-shell";
 import { BoardRender } from "@/lib/og/board-render";
 import { loadCinzelFont } from "@/lib/og/font-loader";
 import {
@@ -13,9 +13,6 @@ import {
 import { THEME_CONFIG } from "@/lib/theme";
 
 export const runtime = "nodejs";
-
-const W = 1200;
-const H = 630;
 
 const SUCCESS_HEADERS = {
   "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
@@ -71,7 +68,7 @@ export async function GET(req: Request) {
       <BoardRender
         fen={fen}
         origin={origin}
-        size={540}
+        size={860}
         flipped={flipped}
         overlays={overlays}
       />
@@ -83,8 +80,8 @@ export async function GET(req: Request) {
         style={{
           position: "relative",
           display: "flex",
-          width: 540,
-          height: 540,
+          width: 860,
+          height: 860,
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -92,8 +89,8 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "absolute",
-            width: 540,
-            height: 540,
+            width: 860,
+            height: 860,
             borderRadius: 9999,
             background:
               "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
@@ -104,11 +101,11 @@ export async function GET(req: Request) {
         <img
           src={pieceUrl}
           alt=""
-          width={420}
-          height={420}
+          width={660}
+          height={660}
           style={{
             position: "relative",
-            filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
+            filter: "drop-shadow(0 14px 28px rgba(120, 65, 5, 0.40))",
           }}
         />
       </div>
@@ -119,8 +116,8 @@ export async function GET(req: Request) {
         style={{
           position: "relative",
           display: "flex",
-          width: 540,
-          height: 540,
+          width: 860,
+          height: 860,
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -128,8 +125,8 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "absolute",
-            width: 540,
-            height: 540,
+            width: 860,
+            height: 860,
             borderRadius: 9999,
             background:
               "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
@@ -140,11 +137,11 @@ export async function GET(req: Request) {
         <img
           src={badgeUrl}
           alt=""
-          width={440}
-          height={440}
+          width={680}
+          height={680}
           style={{
             position: "relative",
-            filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
+            filter: "drop-shadow(0 14px 28px rgba(120, 65, 5, 0.40))",
           }}
         />
       </div>

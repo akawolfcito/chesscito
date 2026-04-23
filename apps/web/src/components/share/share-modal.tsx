@@ -61,9 +61,9 @@ export function ShareModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div
-          className="relative w-full max-w-[340px] overflow-hidden rounded-2xl animate-in zoom-in-95 fade-in duration-300"
+          className="relative w-full max-w-[320px] overflow-hidden rounded-2xl animate-in zoom-in-95 fade-in duration-300"
           style={{
-            aspectRatio: "1200 / 630",
+            aspectRatio: "1080 / 1350",
             background: "rgba(255, 255, 255, 0.18)",
             boxShadow: "0 20px 40px rgba(0, 0, 0, 0.35)",
           }}

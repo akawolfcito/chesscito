@@ -4,13 +4,10 @@ import { celo } from "viem/chains";
 import sharp from "sharp";
 import { victoryAbi } from "@/lib/contracts/victory";
 import { clampMoves, clampTime, formatPlayer, truncateId } from "@/lib/og/og-utils";
-import { CardShell } from "@/lib/og/card-shell";
+import { CardShell, CARD_WIDTH as W, CARD_HEIGHT as H } from "@/lib/og/card-shell";
 import { loadCinzelFont } from "@/lib/og/font-loader";
 
 export const runtime = "nodejs";
-
-const W = 1200;
-const H = 630;
 
 const DIFFICULTY_LABEL: Record<number, string> = { 1: "EASY", 2: "MEDIUM", 3: "HARD" };
 
@@ -105,8 +102,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
             style={{
               position: "relative",
               display: "flex",
-              width: 540,
-              height: 540,
+              width: 860,
+              height: 860,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -114,8 +111,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
             <div
               style={{
                 position: "absolute",
-                width: 540,
-                height: 540,
+                width: 860,
+                height: 860,
                 borderRadius: 9999,
                 background:
                   "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 80%)",
@@ -126,11 +123,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
             <img
               src={badgeUrl}
               alt=""
-              width={440}
-              height={440}
+              width={680}
+              height={680}
               style={{
                 position: "relative",
-                filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
+                filter: "drop-shadow(0 14px 28px rgba(120, 65, 5, 0.40))",
               }}
             />
           </div>

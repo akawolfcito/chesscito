@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import { clampMoves, clampTime } from "@/lib/og/og-utils";
-import { CardShell } from "@/lib/og/card-shell";
+import { CardShell, CARD_WIDTH as W, CARD_HEIGHT as H } from "@/lib/og/card-shell";
 import { BoardRender } from "@/lib/og/board-render";
 import { loadCinzelFont } from "@/lib/og/font-loader";
 import {
@@ -13,9 +13,6 @@ import {
 } from "@/lib/og/validators";
 
 export const runtime = "nodejs";
-
-const W = 1200;
-const H = 630;
 
 const DIFFICULTY_LABEL = { easy: "EASY", medium: "MEDIUM", hard: "HARD" } as const;
 const RESULT_TITLE = {
@@ -66,7 +63,7 @@ export async function GET(req: Request) {
             <BoardRender
               fen={fen}
               origin={origin}
-              size={540}
+              size={860}
               flipped={flipped}
             />
           ) : undefined

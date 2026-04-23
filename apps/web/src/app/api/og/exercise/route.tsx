@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
-import { CardShell } from "@/lib/og/card-shell";
+import { CardShell, CARD_WIDTH as W, CARD_HEIGHT as H } from "@/lib/og/card-shell";
 import { loadCinzelFont } from "@/lib/og/font-loader";
 import {
   parseIntParam,
@@ -11,9 +11,6 @@ import {
 import { THEME_CONFIG } from "@/lib/theme";
 
 export const runtime = "nodejs";
-
-const W = 1200;
-const H = 630;
 
 const PIECE_LABEL = {
   rook: "Rook",
@@ -76,8 +73,8 @@ export async function GET(req: Request) {
             style={{
               position: "relative",
               display: "flex",
-              width: 540,
-              height: 540,
+              width: 860,
+              height: 860,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -85,8 +82,8 @@ export async function GET(req: Request) {
             <div
               style={{
                 position: "absolute",
-                width: 540,
-                height: 540,
+                width: 860,
+                height: 860,
                 borderRadius: 9999,
                 background:
                   "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 80%)",
@@ -97,11 +94,11 @@ export async function GET(req: Request) {
             <img
               src={pieceUrl}
               alt=""
-              width={400}
-              height={400}
+              width={640}
+              height={640}
               style={{
                 position: "relative",
-                filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
+                filter: "drop-shadow(0 14px 28px rgba(120, 65, 5, 0.40))",
               }}
             />
           </div>
