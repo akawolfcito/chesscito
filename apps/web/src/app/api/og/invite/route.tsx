@@ -44,7 +44,6 @@ export async function GET(req: Request) {
   const star = parseSquare(qs.get("star"));
 
   const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
-  const boardUrl = new URL("/art/redesign/board/board-ch.png", req.url).toString();
   const badgeUrl = new URL("/art/badge-chesscito.png", req.url).toString();
   const starUrl = new URL("/art/redesign/icons/star.png", req.url).toString();
   const origin = new URL(req.url).origin;
@@ -71,7 +70,6 @@ export async function GET(req: Request) {
     rightSlot = (
       <BoardRender
         fen={fen}
-        boardUrl={boardUrl}
         origin={origin}
         size={420}
         flipped={flipped}

@@ -42,7 +42,6 @@ export async function GET(req: Request) {
 
   const bgUrl = new URL("/art/redesign/bg/bg-ch.png", req.url).toString();
   const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
-  const boardUrl = new URL("/art/redesign/board/board-ch.png", req.url).toString();
   const origin = new URL(req.url).origin;
 
   const cinzelData = await loadCinzelFont(req.url);
@@ -66,7 +65,6 @@ export async function GET(req: Request) {
           fen ? (
             <BoardRender
               fen={fen}
-              boardUrl={boardUrl}
               origin={origin}
               size={420}
               flipped={flipped}

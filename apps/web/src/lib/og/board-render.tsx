@@ -51,8 +51,6 @@ export type BoardOverlay = {
 type BoardRenderProps = {
   /** FEN string — only the board portion is consumed. */
   fen: string;
-  /** Absolute URL to the board background asset. */
-  boardUrl: string;
   /** Absolute origin used to build piece PNG URLs. */
   origin: string;
   /** Rendered edge length in px. */
@@ -64,16 +62,18 @@ type BoardRenderProps = {
   overlays?: BoardOverlay[];
 };
 
+const LIGHT_SQUARE = "rgb(245, 234, 198)"; // warm cream
+const DARK_SQUARE = "rgb(118, 150, 86)";   // candy olive-green
+
 /**
- * Board renderer for Satori. Renders the painted board asset + piece
- * PNGs positioned by FEN coordinates, with optional overlay icons on
- * top for capture/target markers. Satori's flex subset can't express
- * the grid cleanly so each element is absolutely positioned as a
- * percentage of the board edge.
+ * Board renderer for Satori. Draws a flat 8×8 grid of candy-cream /
+ * olive-green squares (no PNG frame, so piece coords line up with the
+ * grid exactly — avoids the inset-calibration we'd otherwise need for
+ * board-ch.png's decorative border + a/1 labels). Piece PNGs + overlay
+ * icons are positioned as percentages of the board edge.
  */
 export function BoardRender({
   fen,
-  boardUrl,
   origin,
   size,
   flipped = false,
@@ -90,19 +90,37 @@ export function BoardRender({
         width: size,
         height: size,
         display: "flex",
+        flexDirection: "column",
         borderRadius: 12,
         overflow: "hidden",
         boxShadow: "0 8px 24px rgba(0, 0, 0, 0.28)",
+        border: "4px solid rgb(92, 128, 66)",
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={boardUrl}
-        alt=""
-        width={size}
-        height={size}
-        style={{ position: "absolute", top: 0, left: 0 }}
-      />
+      {/* 8×8 grid — rows top (rank 8) to bottom (rank 1) */}
+      {Array.from({ length: 8 }).map((_, row) => (
+        <div
+          key={"row-" + row}
+          style={{
+            display: "flex",
+            flex: 1,
+          }}
+        >
+          {Array.from({ length: 8 }).map((__, col) => {
+            const isLight = (row + col) % 2 === 0;
+            return (
+              <div
+                key={"c-" + row + "-" + col}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  background: isLight ? LIGHT_SQUARE : DARK_SQUARE,
+                }}
+              />
+            );
+          })}
+        </div>
+      ))}
       {pieces.map((p, i) => {
         const r = flipped ? 7 - p.rank : p.rank;
         const f = flipped ? 7 - p.file : p.file;
