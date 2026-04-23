@@ -4,16 +4,17 @@ import { celo } from "viem/chains";
 import sharp from "sharp";
 import { victoryAbi } from "@/lib/contracts/victory";
 import { clampMoves, clampTime, formatPlayer, truncateId } from "@/lib/og/og-utils";
+import { CardShell } from "@/lib/og/card-shell";
+import { loadCinzelFont } from "@/lib/og/font-loader";
 
 export const runtime = "nodejs";
 
 const W = 1200;
 const H = 630;
-const PAD = 80;
 
 const DIFFICULTY_LABEL: Record<number, string> = { 1: "EASY", 2: "MEDIUM", 3: "HARD" };
 
-// R2: cache headers
+// R2: cache headers — one-day edge cache, week-long stale-while-revalidate
 const SUCCESS_HEADERS = {
   "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
   "CDN-Cache-Control": "public, s-maxage=86400",
@@ -26,37 +27,18 @@ const client = contractAddress
   ? createPublicClient({ chain: celo, transport: http() })
   : null;
 
-const FONT_PATH = "/fonts/Cinzel-Bold.ttf";
-const BG_PATH = "/art/bg-card-og.jpg";
-
-// R3: error card — "Victory not found" with 404 + no-store
-function errorCard() {
+// R3: error card — candy-light branded "Victory not found"
+function errorCard(useCinzel: boolean, bgUrl: string, mascotUrl: string) {
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: W,
-          height: H,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "sans-serif",
-          color: "#e4f6fb",
-          background: "radial-gradient(ellipse at 65% 50%, #0b1628 0%, #0a1424 70%)",
-          position: "relative",
-        }}
-      >
-        <div style={{ display: "flex", fontSize: 36, fontWeight: 700, color: "rgba(94,234,212,0.5)", letterSpacing: "0.04em", marginBottom: 16 }}>
-          Victory not found
-        </div>
-        <div style={{ display: "flex", fontSize: 16, fontWeight: 400, color: "rgba(160,205,225,0.4)", marginBottom: 32 }}>
-          This victory may not exist yet
-        </div>
-        <div style={{ display: "flex", fontSize: 14, fontWeight: 700, letterSpacing: "0.15em", color: "rgba(20,184,166,0.35)" }}>
-          CHESSCITO
-        </div>
-      </div>
+      <CardShell
+        bgUrl={bgUrl}
+        mascotUrl={mascotUrl}
+        title="NOT FOUND"
+        subtitle="This victory may not exist yet."
+        useCinzel={useCinzel}
+        footer="chesscito.vercel.app"
+      />
     ),
     { width: W, height: H, status: 404, headers: ERROR_HEADERS },
   );
@@ -70,19 +52,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
   const tokenId = BigInt(raw);
 
-  if (!client || !contractAddress) {
-    return errorCard();
-  }
+  const bgUrl = new URL("/art/redesign/bg/bg-ch.png", req.url).toString();
+  const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  const cinzelData = await loadCinzelFont(req.url);
+  const useCinzel = Boolean(cinzelData);
 
-  // Font loading — fetch from public/ via HTTP (file:// not supported in edge runtime)
-  let cinzelData: ArrayBuffer | null = null;
-  try {
-    const fontUrl = new URL(FONT_PATH, req.url);
-    const res = await fetch(fontUrl);
-    if (!res.ok) throw new Error(`Font fetch ${res.status}`);
-    cinzelData = await res.arrayBuffer();
-  } catch {
-    /* system serif fallback — card still renders */
+  if (!client || !contractAddress) {
+    return errorCard(useCinzel, bgUrl, mascotUrl);
   }
 
   let moves: string;
@@ -112,139 +88,36 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     difficulty = DIFFICULTY_LABEL[diff] ?? "EASY";
     player = formatPlayer(owner as string); // R11: player formatting
   } catch {
-    return errorCard(); // R3: no fake stats
+    return errorCard(useCinzel, bgUrl, mascotUrl); // R3: no fake stats
   }
 
   const displayId = truncateId(raw); // R11: ID truncation
 
-  const bgUrl = new URL(BG_PATH, req.url).toString();
-
   const pngResponse = new ImageResponse(
     (
-      <div
-        style={{
-          width: W,
-          height: H,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "sans-serif",
-          color: "#e4f6fb",
-          background: "#0a1424",
-          position: "relative",
-        }}
-      >
-        {/* Background plate — enchanted art */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={bgUrl}
-          alt=""
-          width={W}
-          height={H}
-          style={{ position: "absolute", top: 0, left: 0 }}
-        />
-
-        {/* Central dark scrim for text readability */}
-        <div style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: W,
-          height: H,
-          background: "radial-gradient(ellipse at 50% 50%, rgba(5,10,20,0.55) 0%, rgba(5,10,20,0.15) 65%, transparent 100%)",
-          display: "flex",
-        }} />
-
-        {/* Headline */}
-        <div style={{
-          display: "flex",
-          fontSize: 72,
-          fontWeight: 700,
-          fontFamily: cinzelData ? "Cinzel" : "serif",
-          letterSpacing: "0.08em",
-          color: "#5eead4",
-          textShadow: "0 0 40px rgba(94,234,212,0.35), 0 2px 4px rgba(0,0,0,0.5)",
-          lineHeight: 1,
-          marginBottom: 16,
-        }}>
-          CHECKMATE
-        </div>
-
-        {/* Separator */}
-        <div style={{
-          display: "flex",
-          width: 180,
-          height: 1,
-          background: "rgba(94,234,212,0.25)",
-          marginBottom: 16,
-        }} />
-
-        {/* Performance */}
-        <div style={{
-          display: "flex",
-          fontSize: 36,
-          fontWeight: 700,
-          color: "#f5f5f5",
-          letterSpacing: "0.04em",
-          textShadow: "0 2px 8px rgba(0,0,0,0.6)",
-          marginBottom: 16,
-        }}>
-          {`${moves} MOVES \u2022 ${time}`}
-        </div>
-
-        {/* Difficulty pill */}
-        <div style={{
-          display: "flex",
-          padding: "5px 20px",
-          borderRadius: 16,
-          border: "1px solid rgba(160,205,225,0.20)",
-          background: "rgba(0,0,0,0.25)",
-          fontSize: 13,
-          fontWeight: 600,
-          letterSpacing: "0.12em",
-          color: "rgba(180,215,235,0.6)",
-          marginBottom: 20,
-        }}>
-          {difficulty}
-        </div>
-
-        {/* Challenge line */}
-        <div style={{
-          display: "flex",
-          fontSize: 26,
-          fontWeight: 600,
-          color: "#fbbf24",
-          letterSpacing: "0.02em",
-          textShadow: "0 2px 8px rgba(0,0,0,0.5)",
-          marginBottom: 24,
-        }}>
-          Can you beat this?
-        </div>
-
-        {/* Player + Victory ID */}
-        <div style={{
-          display: "flex",
-          fontSize: 15,
-          fontWeight: 400,
-          color: "rgba(180,210,230,0.5)",
-          textShadow: "0 1px 4px rgba(0,0,0,0.5)",
-        }}>
-          {`Victory #${displayId} \u2022 by ${player}`}
-        </div>
-      </div>
+      <CardShell
+        bgUrl={bgUrl}
+        mascotUrl={mascotUrl}
+        title="CHECKMATE!"
+        subtitle={`${moves} moves \u2022 ${time}`}
+        difficulty={difficulty}
+        footer={`Victory #${displayId} \u2022 by ${player}`}
+        useCinzel={useCinzel}
+      />
     ),
     {
       width: W,
       height: H,
-      ...(cinzelData ? {
-        fonts: [{
-          name: "Cinzel",
-          data: cinzelData,
-          weight: 700 as const,
-          style: "normal" as const,
-        }],
-      } : {}),
+      ...(cinzelData
+        ? {
+            fonts: [{
+              name: "Cinzel",
+              data: cinzelData,
+              weight: 700 as const,
+              style: "normal" as const,
+            }],
+          }
+        : {}),
     },
   );
 

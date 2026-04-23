@@ -1,0 +1,117 @@
+import type { ReactNode } from "react";
+
+type ParsedPiece = { piece: string; color: "w" | "b"; rank: number; file: number };
+
+/**
+ * Parse the board portion of a FEN string into a flat list of pieces
+ * with rank (0 = top = rank 8) and file (0 = left = file a) indices.
+ * Returns an empty list for malformed input — caller renders the empty
+ * board as a fallback.
+ */
+export function parseFenBoard(fen: string): ParsedPiece[] {
+  const boardPart = fen.split(" ")[0] ?? "";
+  const ranks = boardPart.split("/");
+  if (ranks.length !== 8) return [];
+
+  const pieces: ParsedPiece[] = [];
+  for (let r = 0; r < 8; r++) {
+    let file = 0;
+    for (const ch of ranks[r]) {
+      if (file > 7) return [];
+      if (/[1-8]/.test(ch)) {
+        file += Number(ch);
+        continue;
+      }
+      if (!/[prnbqkPRNBQK]/.test(ch)) return [];
+      const color = ch === ch.toUpperCase() ? "w" : "b";
+      pieces.push({ piece: ch.toLowerCase(), color, rank: r, file });
+      file += 1;
+    }
+  }
+  return pieces;
+}
+
+const PIECE_FILENAME: Record<string, string> = {
+  p: "pawn",
+  r: "rook",
+  n: "knight",
+  b: "bishop",
+  q: "queen",
+  k: "king",
+};
+
+type BoardRenderProps = {
+  /** FEN string — only the board portion is consumed. */
+  fen: string;
+  /** Absolute URL to the board background asset. */
+  boardUrl: string;
+  /** Absolute origin used to build piece PNG URLs. */
+  origin: string;
+  /** Rendered edge length in px. */
+  size: number;
+  /** Render from black's perspective (player chose black). */
+  flipped?: boolean;
+};
+
+/**
+ * Board renderer for Satori. Renders the painted board asset + piece
+ * PNGs positioned by FEN coordinates. Satori's flex subset can't
+ * express the grid cleanly so each piece is absolutely positioned as
+ * a percentage of the board edge.
+ */
+export function BoardRender({
+  fen,
+  boardUrl,
+  origin,
+  size,
+  flipped = false,
+}: BoardRenderProps): ReactNode {
+  const pieces = parseFenBoard(fen);
+  const pct = 100 / 8;
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: size,
+        height: size,
+        display: "flex",
+        borderRadius: 12,
+        overflow: "hidden",
+        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.28)",
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={boardUrl}
+        alt=""
+        width={size}
+        height={size}
+        style={{ position: "absolute", top: 0, left: 0 }}
+      />
+      {pieces.map((p, i) => {
+        const r = flipped ? 7 - p.rank : p.rank;
+        const f = flipped ? 7 - p.file : p.file;
+        const src = `${origin}/art/pieces/${p.color}-${PIECE_FILENAME[p.piece]}.png`;
+        return (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={i}
+            src={src}
+            alt=""
+            width={size / 8}
+            height={size / 8}
+            style={{
+              position: "absolute",
+              top: `${r * pct}%`,
+              left: `${f * pct}%`,
+              width: `${pct}%`,
+              height: `${pct}%`,
+              display: "flex",
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
