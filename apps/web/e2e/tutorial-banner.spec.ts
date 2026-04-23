@@ -22,10 +22,7 @@ test.describe("Play hub — mission briefing first-visit", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Briefing scrim + dialog must render.
-    const scrim = page.locator(".mission-briefing-scrim");
-    await expect(scrim).toBeVisible();
-
+    // Briefing is a role="dialog" with aria-labelledby="mission-briefing-objective"
     const dialog = page.getByRole("dialog", { name: /./ });
     await expect(dialog).toBeVisible();
   });
@@ -38,7 +35,8 @@ test.describe("Play hub — mission briefing first-visit", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.locator(".mission-briefing-scrim")).toHaveCount(0);
+    // The mission-briefing dialog is labelled by #mission-briefing-objective
+    await expect(page.locator("#mission-briefing-objective")).toHaveCount(0);
   });
 
   test("tapping Play dismisses the briefing and sets the onboarded flag", async ({ page }) => {
@@ -49,14 +47,15 @@ test.describe("Play hub — mission briefing first-visit", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const scrim = page.locator(".mission-briefing-scrim");
-    await expect(scrim).toBeVisible();
+    const dialog = page.getByRole("dialog", { name: /./ });
+    await expect(dialog).toBeVisible();
 
-    // Play button is the autoFocus CTA inside the modal.
-    await page.getByRole("button", { name: /play/i }).click();
+    // Play button is the autoFocus CTA inside the modal. Scope by the
+    // dialog to avoid colliding with the dock's "Free Play" trigger.
+    await dialog.getByRole("button", { name: /play/i }).click();
 
     // Exit animation runs ~400ms, then the modal unmounts.
-    await expect(scrim).toHaveCount(0, { timeout: 2_000 });
+    await expect(page.locator("#mission-briefing-objective")).toHaveCount(0, { timeout: 2_000 });
 
     const onboarded = await page.evaluate(() =>
       window.localStorage.getItem("chesscito:onboarded"),

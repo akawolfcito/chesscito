@@ -36,7 +36,11 @@ test.describe("Arena — setup flow", () => {
     await page.goto("/arena");
     await page.waitForLoadState("networkidle");
 
-    await page.getByRole("button", { name: /Back to Hub/i }).click();
+    // Two "Back to Hub" controls exist on the panel — the × button in the
+    // header (aria-labelled) and the underlined text link at the bottom.
+    // Use the header × which is explicitly aria-labelled, picked via
+    // getByLabel to avoid strict-mode collisions.
+    await page.getByLabel("Back to Hub").click();
     await page.waitForURL("**/");
     await expect(page.locator(".chesscito-dock")).toBeVisible();
   });
