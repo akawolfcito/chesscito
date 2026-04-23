@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { ARENA_COPY, MISSION_BRIEFING_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ export function MissionBriefing({
   return (
     /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
     <div
-      className={`mission-briefing-scrim ${exiting ? "is-exiting" : ""}`}
+      className={`fixed inset-0 z-40 flex items-center justify-center bg-[var(--overlay-scrim)] transition-opacity duration-300 ${exiting ? "opacity-0" : "animate-in fade-in duration-300"}`}
       aria-modal="true"
       role="dialog"
       aria-labelledby="mission-briefing-objective"
@@ -44,63 +44,75 @@ export function MissionBriefing({
     >
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className={`mission-briefing-card ${exiting ? "is-exiting" : ""}`}
+        className={`relative z-10 mx-4 w-full max-w-[320px] transition-all duration-400 ${exiting ? "scale-95 opacity-0" : "animate-in zoom-in-95 slide-in-from-bottom-4 duration-400"}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={handleDismiss}
-          className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full text-amber-100/70 transition-colors hover:text-amber-50"
-          aria-label="Close"
+        <CandyGlassShell
+          title={MISSION_BRIEFING_COPY.label}
+          onClose={handleDismiss}
+          closeLabel="Close"
+          cta={
+            <div className="flex w-full flex-col gap-2.5">
+              <Button
+                type="button"
+                variant="game-primary"
+                size="game"
+                autoFocus
+                onClick={handleDismiss}
+                className="w-full"
+              >
+                {MISSION_BRIEFING_COPY.play}
+              </Button>
+              <Link
+                href="/arena"
+                className="block text-center text-xs font-semibold underline underline-offset-2"
+                style={{ color: "rgba(110, 65, 15, 0.70)" }}
+              >
+                or try {ARENA_COPY.title} vs AI
+              </Link>
+            </div>
+          }
         >
-          <CandyIcon name="close" className="h-4 w-4" />
-        </button>
-        <picture>
-          <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
-          <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
-          <img
-            src="/art/favicon-wolf.png"
-            alt=""
-            aria-hidden="true"
-            className="mx-auto mb-4 h-20 w-20 rounded-full drop-shadow-[0_0_24px_rgba(245,158,11,0.55)]"
-          />
-        </picture>
-        <p
-          className="mb-1.5 text-center text-xs font-bold uppercase tracking-[0.14em] text-amber-200/90"
-          style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)" }}
-        >
-          {MISSION_BRIEFING_COPY.label}
-        </p>
-        <p
-          id="mission-briefing-objective"
-          className="text-center text-sm font-bold text-amber-50"
-          style={{ textShadow: "0 1px 3px rgba(0, 0, 0, 0.75)" }}
-        >
-          {objective}
-        </p>
-        <p
-          className="mt-1.5 text-center text-xs text-amber-100/80"
-          style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)" }}
-        >
-          {hint}
-        </p>
-        <Button
-          type="button"
-          variant="game-primary"
-          size="game"
-          autoFocus
-          onClick={handleDismiss}
-          className="mt-5 w-full"
-        >
-          {MISSION_BRIEFING_COPY.play}
-        </Button>
-        <Link
-          href="/arena"
-          className="mt-3 block text-center text-xs text-amber-100/60 underline underline-offset-4 transition-colors hover:text-amber-50/90"
-          style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.55)" }}
-        >
-          or try {ARENA_COPY.title} vs AI
-        </Link>
+          <div className="flex flex-col items-center gap-3 text-center">
+            {/* Wolf portrait with amber halo */}
+            <div className="relative flex items-center justify-center">
+              <div className="absolute h-24 w-24 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.35)_0%,rgba(217,180,74,0.15)_50%,transparent_75%)]" />
+              <picture>
+                <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
+                <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
+                <img
+                  src="/art/favicon-wolf.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="relative h-20 w-20 rounded-full drop-shadow-[0_2px_8px_rgba(120,65,5,0.35)]"
+                />
+              </picture>
+            </div>
+
+            {/* Objective */}
+            <p
+              id="mission-briefing-objective"
+              className="text-sm font-bold"
+              style={{
+                color: "rgba(63, 34, 8, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+              }}
+            >
+              {objective}
+            </p>
+
+            {/* Hint */}
+            <p
+              className="text-xs"
+              style={{
+                color: "rgba(110, 65, 15, 0.75)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
+            >
+              {hint}
+            </p>
+          </div>
+        </CandyGlassShell>
       </div>
     </div>
   );

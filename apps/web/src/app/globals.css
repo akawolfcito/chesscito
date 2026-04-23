@@ -1504,33 +1504,6 @@
   }
 
   /* Mission briefing overlay */
-  .mission-briefing-scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(10, 20, 25, 0.70);
-    animation: mission-briefing-fade-in var(--duration-enter) ease-out;
-  }
-
-  .mission-briefing-scrim.is-exiting {
-    animation: mission-briefing-fade-out 400ms ease-in forwards;
-  }
-
-  .mission-briefing-card {
-    position: relative;
-    width: 85%;
-    max-width: 280px;
-    padding: 28px 24px 24px;
-    animation: mission-briefing-card-in 400ms ease-out;
-  }
-
-  .mission-briefing-card.is-exiting {
-    animation: mission-briefing-card-exit 400ms ease-in forwards;
-  }
-
   .playhub-game-grid {
     position: relative;
     z-index: 1;
@@ -1696,50 +1669,6 @@
     line-height: 1;
   }
 
-}
-
-@keyframes mission-briefing-fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes mission-briefing-fade-out {
-  from {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes mission-briefing-card-in {
-  from {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes mission-briefing-card-exit {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  to {
-    opacity: 0;
-    transform: scale(0.85);
-  }
 }
 
 .playhub-intro-overlay {
