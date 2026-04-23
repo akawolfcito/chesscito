@@ -1268,7 +1268,7 @@
   }
 
   /* Cream wash over the body's forest bg-ch so Arena shares the same
-     "inside the hub" feeling as every sheet — the DifficultySelector
+     "inside the hub" feeling as every sheet — the ArenaEntryPanel
      glass panel sits on a washed forest, not on bare green canvas. */
   .arena-bg::before {
     content: "";

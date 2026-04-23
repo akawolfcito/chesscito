@@ -13,7 +13,7 @@ import { decodeEventLog } from "viem";
 import Link from "next/link";
 import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
-import { DifficultySelector } from "@/components/arena/difficulty-selector";
+import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
@@ -638,7 +638,7 @@ export default function ArenaPage() {
   //      the dock ArenaEntrySheet; honor its difficulty+color picks.
   //   2. localStorage LAST_DIFFICULTY_KEY — returning user, reuse
   //      their last tier (Option B, reduces friction).
-  //   3. No auto-start — show inline DifficultySelector.
+  //   3. No auto-start — show inline ArenaEntryPanel.
   // Guarded by a ref so it runs exactly once per mount.
   useEffect(() => {
     if (autoStartAttemptedRef.current) return;
@@ -730,10 +730,10 @@ export default function ArenaPage() {
               <p className="text-sm font-medium text-cyan-100/70">{ARENA_COPY.preparingAi}</p>
             </div>
           ) : (
-            <DifficultySelector
-              selected={game.difficulty}
-              onSelect={game.setDifficulty}
+            <ArenaEntryPanel
+              difficulty={game.difficulty}
               playerColor={game.playerColor}
+              onSelectDifficulty={game.setDifficulty}
               onSelectColor={game.setPlayerColor}
               onStart={handleStartWithLoading}
               onBack={handleBackToHub}
