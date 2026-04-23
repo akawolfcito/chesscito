@@ -26,7 +26,8 @@ export function InviteLink() {
           });
         }
       }}
-      className="flex min-h-[44px] w-full items-center gap-3 rounded-xl bg-[var(--link-row-bg)] px-4 py-3 text-cyan-100 transition hover:bg-[var(--link-row-bg-hover)]"
+      className="paper-tray flex min-h-[44px] w-full items-center gap-3 transition active:scale-[0.99]"
+      style={{ color: "var(--paper-text)" }}
     >
       {copied ? (
         <CandyIcon name="check" className="h-5 w-5 shrink-0 animate-bounce" />

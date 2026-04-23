@@ -26,13 +26,21 @@ export default function AboutPage() {
           <img
             src="/art/favicon-wolf.png"
             alt="Chesscito logo"
-            className="h-16 w-16 drop-shadow-[0_0_24px_rgba(103,232,249,0.15)]"
+            className="h-16 w-16 drop-shadow-[0_0_24px_rgba(245,158,11,0.35)]"
           />
         </picture>
-        <h2 className="text-xl font-bold text-cyan-50 drop-shadow-[0_0_8px_rgba(103,232,249,0.2)]">{ABOUT_COPY.title}</h2>
-        <p className="text-xs text-cyan-300/60">{ABOUT_COPY.operatedBy}</p>
-        <p className="text-xs text-cyan-300/40">{ABOUT_COPY.handle}</p>
-        <p className="text-xs text-cyan-300/50">{ABOUT_COPY.version}</p>
+        <h2
+          className="fantasy-title text-xl font-bold"
+          style={{
+            color: "var(--paper-text)",
+            textShadow: "0 1px 0 rgba(255, 235, 180, 0.7)",
+          }}
+        >
+          {ABOUT_COPY.title}
+        </h2>
+        <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>{ABOUT_COPY.operatedBy}</p>
+        <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>{ABOUT_COPY.handle}</p>
+        <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>{ABOUT_COPY.version}</p>
       </div>
 
       {/* Links */}
@@ -41,10 +49,11 @@ export default function AboutPage() {
           <Link
             key={href}
             href={href}
-            className="flex min-h-[44px] items-center gap-3 rounded-2xl border border-white/[0.10] bg-white/[0.06] px-4 py-3 text-cyan-100 transition hover:bg-white/[0.10]"
+            className="paper-tray flex min-h-[44px] items-center gap-3 transition active:scale-[0.99]"
+            style={{ color: "var(--paper-text)" }}
           >
-            <Icon size={18} className="shrink-0 text-cyan-400" />
-            <span className="text-sm font-medium">{label}</span>
+            <Icon size={18} className="shrink-0" style={{ color: "rgba(180, 110, 20, 0.95)" }} />
+            <span className="text-sm font-semibold">{label}</span>
           </Link>
         ))}
 
