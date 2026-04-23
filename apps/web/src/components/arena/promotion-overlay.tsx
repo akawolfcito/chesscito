@@ -35,18 +35,20 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
       <div
         className="flex flex-col items-center gap-3 rounded-2xl border p-5"
         style={{
-          background: "rgba(255, 255, 255, 0.20)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
+          background: "rgba(255, 255, 255, 0.18)",
+          backdropFilter: "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)",
           borderColor: "rgba(255, 255, 255, 0.45)",
+          boxShadow:
+            "0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <p
           className="fantasy-title text-sm font-extrabold uppercase tracking-[0.10em]"
           style={{
-            color: "rgba(255, 255, 255, 0.95)",
-            textShadow: "0 1px 0 rgba(120,65,5,0.55), 0 2px 6px rgba(0,0,0,0.55)",
+            color: "rgba(110, 65, 15, 0.95)",
+            textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
           }}
         >
           {ARENA_COPY.promotionTitle}
