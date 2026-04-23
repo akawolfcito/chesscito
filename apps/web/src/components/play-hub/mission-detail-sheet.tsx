@@ -70,6 +70,7 @@ export function MissionDetailSheet({
         </SheetDescription>
 
         <PaperPanel
+          hollow
           ribbonTitle={MISSION_DETAIL_COPY.title}
           onClose={() => onOpenChange(false)}
           closeLabel={MISSION_DETAIL_COPY.title}

@@ -237,6 +237,7 @@ export function ResultOverlay({
         onClick={(e) => e.stopPropagation()}
       >
         <PaperPanel
+          hollow
           ribbonTitle={title}
           onClose={handleDismiss}
           closeLabel={RESULT_OVERLAY_COPY.cta.dismiss}
@@ -361,6 +362,7 @@ export function BadgeEarnedPrompt({
         </div>
 
         <PaperPanel
+          hollow
           ribbonTitle="Badge Earned"
           onClose={handleLater}
           closeLabel={BADGE_EARNED_COPY.later}
@@ -463,6 +465,7 @@ export function PieceCompletePrompt({
         onClick={(e) => e.stopPropagation()}
       >
         <PaperPanel
+          hollow
           ribbonTitle={PIECE_COMPLETE_COPY.title}
           onClose={() => handleAction(onPracticeAgain)}
           closeLabel={PIECE_COMPLETE_COPY.practiceAgain}

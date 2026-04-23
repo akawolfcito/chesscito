@@ -848,6 +848,7 @@ export default function ArenaPage() {
           {coachPhase === "welcome" && (
             <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] px-4">
               <PaperPanel
+                hollow
                 ribbonTitle="Welcome"
                 onClose={() => setCoachPhase("idle")}
                 cta={
@@ -870,6 +871,7 @@ export default function ArenaPage() {
           {coachPhase === "loading" && coachJobId && (
             <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] px-4">
               <PaperPanel
+                hollow
                 ribbonTitle="Coach"
                 onClose={() => setCoachPhase("idle")}
                 closeLabel="Cancel"

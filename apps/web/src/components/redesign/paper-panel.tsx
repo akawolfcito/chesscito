@@ -16,6 +16,11 @@ type PaperPanelProps = {
   cta?: ReactNode;
   /** Optional muted meta row under the CTA (timers, info). */
   meta?: ReactNode;
+  /** When true, drop the cream fill so the ribbon + border chrome is
+   *  drawn on a transparent body. The underlying scrim (or page bg)
+   *  shows through — use when the panel should feel "floating" rather
+   *  than a physical parchment artifact. */
+  hollow?: boolean;
   className?: string;
 };
 
@@ -33,10 +38,11 @@ export function PaperPanel({
   children,
   cta,
   meta,
+  hollow = false,
   className = "",
 }: PaperPanelProps) {
   return (
-    <div className={`paper-panel ${className}`.trim()}>
+    <div className={`paper-panel${hollow ? " paper-panel-hollow" : ""} ${className}`.trim()}>
       {/* Ribbon title (text laid over the baked-in ribbon artwork). */}
       <h2 className="paper-panel-ribbon">{ribbonTitle}</h2>
 

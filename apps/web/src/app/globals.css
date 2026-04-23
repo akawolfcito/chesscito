@@ -470,6 +470,13 @@
     border-radius: 1.25rem;
   }
 
+  /* Drop the cream fill so the chrome (ribbon + border outlines baked into
+     paper-panel.png) renders on a transparent body. The scrim / page bg
+     shows through. Use via PaperPanel's `hollow` prop. */
+  .paper-panel-hollow {
+    background-color: transparent;
+  }
+
   .paper-panel-ribbon {
     position: absolute;
     top: 2.5%;

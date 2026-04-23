@@ -44,14 +44,13 @@ export function MissionBriefing({
     >
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className={`paper-surface mission-briefing-card ${exiting ? "is-exiting" : ""}`}
+        className={`mission-briefing-card ${exiting ? "is-exiting" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={handleDismiss}
-          className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full transition-colors"
-          style={{ color: "var(--paper-text-subtle)" }}
+          className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full text-amber-100/70 transition-colors hover:text-amber-50"
           aria-label="Close"
         >
           <CandyIcon name="close" className="h-4 w-4" />
@@ -63,23 +62,26 @@ export function MissionBriefing({
             src="/art/favicon-wolf.png"
             alt=""
             aria-hidden="true"
-            className="mx-auto mb-4 h-20 w-20 rounded-full drop-shadow-[0_0_24px_rgba(245,158,11,0.35)]"
+            className="mx-auto mb-4 h-20 w-20 rounded-full drop-shadow-[0_0_24px_rgba(245,158,11,0.55)]"
           />
         </picture>
         <p
-          className="mb-1.5 text-center text-xs font-bold uppercase tracking-[0.14em]"
-          style={{ color: "var(--paper-text-muted)" }}
+          className="mb-1.5 text-center text-xs font-bold uppercase tracking-[0.14em] text-amber-200/90"
+          style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)" }}
         >
           {MISSION_BRIEFING_COPY.label}
         </p>
         <p
           id="mission-briefing-objective"
-          className="text-center text-sm font-semibold"
-          style={{ color: "var(--paper-text)" }}
+          className="text-center text-sm font-bold text-amber-50"
+          style={{ textShadow: "0 1px 3px rgba(0, 0, 0, 0.75)" }}
         >
           {objective}
         </p>
-        <p className="mt-1.5 text-center text-xs" style={{ color: "var(--paper-text-muted)" }}>
+        <p
+          className="mt-1.5 text-center text-xs text-amber-100/80"
+          style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.6)" }}
+        >
           {hint}
         </p>
         <Button
@@ -94,8 +96,8 @@ export function MissionBriefing({
         </Button>
         <Link
           href="/arena"
-          className="mt-3 block text-center text-xs underline underline-offset-4 transition-colors"
-          style={{ color: "var(--paper-text-subtle)" }}
+          className="mt-3 block text-center text-xs text-amber-100/60 underline underline-offset-4 transition-colors hover:text-amber-50/90"
+          style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.55)" }}
         >
           or try {ARENA_COPY.title} vs AI
         </Link>

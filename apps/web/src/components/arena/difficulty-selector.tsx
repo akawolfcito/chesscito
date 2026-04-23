@@ -38,6 +38,7 @@ export function DifficultySelector({
   return (
     <div className="relative w-full max-w-xs px-4 py-4">
       <PaperPanel
+          hollow
           ribbonTitle={ARENA_COPY.title}
           cta={
             <Button
