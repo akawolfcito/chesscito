@@ -1740,7 +1740,10 @@
   inset: 0;
   z-index: 80;
   pointer-events: none;
-  background-color: var(--surface-frosted-solid, #0b1220);
+  /* Fallback for the half-second before splash-loading.png loads — cream
+     paper instead of dark slate, so a slow connection never flashes
+     dark between navigation and splash image (#103 sweep). */
+  background-color: var(--paper-bg, #f6e6b8);
   background-image: image-set(
     url("/art/redesign/bg/splash-loading.avif") type("image/avif"),
     url("/art/redesign/bg/splash-loading.webp") type("image/webp"),
