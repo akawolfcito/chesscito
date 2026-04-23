@@ -64,11 +64,10 @@ const SheetContent = React.forwardRef<
     >
       {children}
       <SheetPrimitive.Close
-        className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 transition-transform focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 active:scale-[0.94] disabled:pointer-events-none"
+        className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex h-10 w-10 items-center justify-center rounded-full border transition-all hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 active:scale-[0.94] disabled:pointer-events-none"
         style={{
-          background: "rgba(255, 255, 255, 0.82)",
-          borderColor: "rgba(110, 65, 15, 0.35)",
-          boxShadow: "0 2px 0 rgba(110, 65, 15, 0.25), 0 3px 8px rgba(0, 0, 0, 0.18)",
+          background: "rgba(255, 255, 255, 0.15)",
+          borderColor: "rgba(255, 255, 255, 0.45)",
           color: "#dc2626",
           backdropFilter: "blur(6px)",
         }}
