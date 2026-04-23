@@ -336,13 +336,14 @@
     content: "";
     position: absolute;
     inset: -12px;
-    /* `cover` keeps the forest image filling the entire sheet (no seam).
-       `top center` biases framing so the image's top band — where the
-       trees live — always lands at the top of the sheet. Tall sheets
-       still crop the sides, but the look stays consistent and not
-       broken. */
+    /* `cover` fills the sheet (no seam). `25% 0%` = modest left shift:
+       on portrait 390px mobile the crop is biased slightly so the left
+       edge of the landscape image's tree band peeks into the safe area
+       without dominating the header text. Right side still shows
+       mid-image grass. `top left` was too aggressive and made header
+       titles illegible over dense tree textures. */
     background-size: cover;
-    background-position: top center;
+    background-position: 25% 0%;
     background-repeat: no-repeat;
     z-index: 0;
   }
@@ -377,13 +378,12 @@
     z-index: 0;
   }
 
-  /* Light candy wash — subtle semantic tint at top (amber/rose/violet)
-     fading into a cream overlay that keeps text legible over the
-     forest image. */
+  /* Light candy wash — subtle semantic tint at top fading into a
+     cream overlay that keeps text legible over the forest image. */
   .sheet-bg-badges::after {
     background: linear-gradient(
       to bottom,
-      rgba(251, 191, 36, 0.30) 0%,
+      rgba(251, 191, 36, 0.35) 0%,
       rgba(255, 245, 215, 0.30) 40%,
       rgba(246, 230, 184, 0.45) 100%
     );
@@ -392,7 +392,7 @@
   .sheet-bg-shop::after {
     background: linear-gradient(
       to bottom,
-      rgba(244, 63, 94, 0.28) 0%,
+      rgba(244, 63, 94, 0.30) 0%,
       rgba(255, 245, 215, 0.30) 40%,
       rgba(246, 230, 184, 0.45) 100%
     );
@@ -401,7 +401,7 @@
   .sheet-bg-leaderboard::after {
     background: linear-gradient(
       to bottom,
-      rgba(139, 92, 246, 0.28) 0%,
+      rgba(139, 92, 246, 0.30) 0%,
       rgba(255, 245, 215, 0.30) 40%,
       rgba(246, 230, 184, 0.45) 100%
     );
