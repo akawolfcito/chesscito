@@ -175,8 +175,6 @@
 
     /* ── Misc surface tokens ── */
     --skeleton-bg: #121c2f;
-    --link-row-bg: rgba(8, 47, 73, 0.40);
-    --link-row-bg-hover: rgba(8, 47, 73, 0.60);
     --accent-drop-shadow: 0 0 20px rgba(103, 232, 249, 0.5);
     --accent-drop-shadow-sm: 0 0 8px rgba(103, 232, 249, 0.3);
     --warm-label-text: rgba(220, 200, 150, 0.9);
