@@ -137,6 +137,19 @@ export function useChessGame(): ChessGameState {
     }
   }, [status]);
 
+  // Live-tick elapsedMs once per second while playing so the HUD timer
+  // reflects real duration. The end-game effect above overrides the final
+  // value on terminal status, so sign-victory / stats see the definitive
+  // snapshot rather than the last tick.
+  useEffect(() => {
+    if (status !== "playing") return;
+    if (!gameStartRef.current) return;
+    const interval = setInterval(() => {
+      setElapsedMs(Date.now() - gameStartRef.current);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [status]);
+
   const triggerAiMove = useCallback((currentDifficulty: ArenaDifficulty) => {
     const game = gameRef.current;
     if (game.turn() !== "b") return;

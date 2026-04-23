@@ -732,6 +732,7 @@ export default function ArenaPage() {
           isThinking={game.isThinking}
           onBack={handleBack}
           isEndState={isEndState}
+          elapsedMs={game.elapsedMs}
         />
 
         {/* Difficulty pill — returning users auto-launch with last pick;

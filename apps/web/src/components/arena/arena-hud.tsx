@@ -7,16 +7,18 @@ import { ARENA_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PlayerCard } from "@/components/redesign/player-card";
 import { WoodenBanner } from "@/components/redesign/wooden-banner";
+import { formatTime } from "@/lib/game/arena-utils";
 
 type Props = {
   isThinking: boolean;
   onBack: () => void;
   isEndState?: boolean;
+  elapsedMs: number;
 };
 
 const CONFIRM_TIMEOUT_MS = 3000;
 
-export function ArenaHud({ isThinking, onBack, isEndState }: Props) {
+export function ArenaHud({ isThinking, onBack, isEndState, elapsedMs }: Props) {
   const [confirmingBack, setConfirmingBack] = useState(false);
   const backTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -45,7 +47,7 @@ export function ArenaHud({ isThinking, onBack, isEndState }: Props) {
 
   return (
     <div className="arena-hud mx-2 mt-2 flex flex-col gap-2">
-      {/* Row 1: Back */}
+      {/* Row 1: Back + live timer */}
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -76,6 +78,26 @@ export function ArenaHud({ isThinking, onBack, isEndState }: Props) {
             <CandyBanner name="btn-back" className="h-7 w-7" />
           )}
         </button>
+
+        {/* Live game timer — stops ticking on end-state (parent snapshots the
+            final value into elapsedMs via the end-game effect in useChessGame). */}
+        <div
+          className="ml-auto flex min-h-[44px] items-center gap-1.5 rounded-full border border-amber-300/25 bg-[var(--surface-c-mid)] px-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.35)] backdrop-blur-md"
+          aria-label="Elapsed time"
+          role="timer"
+        >
+          <CandyIcon
+            name="time"
+            className="h-4 w-4 shrink-0"
+            style={{ filter: "drop-shadow(0 0 2px rgba(245,158,11,0.45))" }}
+          />
+          <span
+            className="fantasy-title text-xs font-extrabold tabular-nums tracking-[0.08em] text-[var(--warm-label-text)]"
+            style={{ textShadow: "var(--text-shadow-label)" }}
+          >
+            {formatTime(elapsedMs)}
+          </span>
+        </div>
       </div>
 
       {/* Row 2: You | VS | Bot with thinking indicator overlay */}
