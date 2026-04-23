@@ -50,7 +50,7 @@ export function PaperPanel({
         <button
           type="button"
           onClick={onClose}
-          className="paper-panel-close text-white"
+          className="paper-panel-close"
           aria-label={closeLabel}
         >
           <svg

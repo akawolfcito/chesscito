@@ -512,10 +512,13 @@
     min-width: 40px;
     min-height: 40px;
     border-radius: 9999px;
-    background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
-    border: 2px solid rgba(255, 240, 210, 0.95);
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 2px solid rgba(110, 65, 15, 0.35);
+    color: #dc2626;
     box-shadow:
-      0 2px 0 rgba(139, 30, 30, 0.55),
+      0 2px 0 rgba(110, 65, 15, 0.25),
       0 3px 8px rgba(0, 0, 0, 0.18);
     transition: transform 150ms ease;
     z-index: 3;
