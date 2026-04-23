@@ -43,9 +43,15 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
         side="bottom"
         className="mission-shell sheet-bg-hub rounded-t-3xl border-white/[0.10] pb-[5rem]"
       >
-        <div className="border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
+        <div className="border-b border-[rgba(110,65,15,0.35)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
           <SheetHeader>
-            <SheetTitle className="fantasy-title text-slate-100">
+            <SheetTitle
+              className="fantasy-title"
+              style={{
+                color: "rgba(110, 65, 15, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+              }}
+            >
               {PIECE_RAIL_COPY.title}
             </SheetTitle>
             <SheetDescription className="sr-only">
@@ -68,12 +74,13 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
                 className={[
                   "flex flex-col items-center gap-1.5 rounded-2xl border px-2 py-3 transition-all min-h-[88px]",
                   isActive
-                    ? "border-cyan-400/60 bg-cyan-400/10 ring-2 ring-cyan-400/30"
+                    ? "border-cyan-400/75 bg-cyan-400/15 ring-2 ring-cyan-400/40"
                     : isLocked
-                      ? "border-white/[0.04] bg-white/[0.02] opacity-50 cursor-not-allowed"
-                      : "border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] active:scale-[0.97]",
+                      ? "border-[rgba(255,255,255,0.25)] bg-white/10 opacity-55 cursor-not-allowed"
+                      : "border-[rgba(255,255,255,0.45)] bg-white/15 hover:bg-white/25 active:scale-[0.97]",
                 ].join(" ")}
                 aria-label={piece.label}
+                aria-pressed={isActive}
               >
                 <picture className="h-10 w-10 shrink-0">
                   {THEME_CONFIG.hasOptimizedFormats && (
@@ -89,12 +96,25 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
                     className="h-full w-full object-contain"
                   />
                 </picture>
-                <span className="game-label text-xs font-bold uppercase tracking-[0.10em] text-white/85">
+                <span
+                  className="fantasy-title text-xs font-extrabold uppercase tracking-[0.10em]"
+                  style={{
+                    color: "rgba(63, 34, 8, 0.95)",
+                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                  }}
+                >
                   {PIECE_LABELS[piece.key as keyof typeof PIECE_LABELS]}
                 </span>
                 {isLocked ? (
-                  <span className="flex items-center gap-1 text-nano font-bold uppercase tracking-[0.12em] text-white/40">
-                    <CandyIcon name="lock" className="h-3 w-3" />
+                  <span
+                    className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-nano font-extrabold uppercase tracking-[0.12em]"
+                    style={{
+                      background: "rgba(120, 65, 5, 0.85)",
+                      color: "rgba(255, 240, 180, 0.98)",
+                      letterSpacing: "0.10em",
+                    }}
+                  >
+                    <CandyIcon name="lock" className="h-2.5 w-2.5" />
                     {PIECE_RAIL_COPY.comingSoon}
                   </span>
                 ) : null}

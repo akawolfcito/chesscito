@@ -436,11 +436,14 @@
     position: absolute;
     inset: 0;
     z-index: 0;
+    /* Light candy wash — the grass-forest bg-ch.png behind reads through
+       while a subtle cream/amber gradient keeps cards legible without the
+       heavy dark tint that dominated the original (#103 sweep). */
     background: linear-gradient(
       to bottom,
-      rgba(34, 211, 238, 0.18) 0%,
-      rgba(6, 14, 28, 0.82) 40%,
-      rgba(6, 14, 28, 0.92) 100%
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(246, 230, 184, 0.45) 50%,
+      rgba(217, 180, 74, 0.35) 100%
     );
   }
   .sheet-bg-hub > * {
