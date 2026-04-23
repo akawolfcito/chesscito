@@ -33,10 +33,22 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
     >
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className="flex flex-col items-center gap-3 rounded-2xl border border-white/[0.08] bg-[var(--surface-frosted)] p-5 backdrop-blur-2xl"
+        className="flex flex-col items-center gap-3 rounded-2xl border p-5"
+        style={{
+          background: "rgba(255, 255, 255, 0.20)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderColor: "rgba(255, 255, 255, 0.45)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-sm font-semibold text-white/80">
+        <p
+          className="fantasy-title text-sm font-extrabold uppercase tracking-[0.10em]"
+          style={{
+            color: "rgba(255, 255, 255, 0.95)",
+            textShadow: "0 1px 0 rgba(120,65,5,0.55), 0 2px 6px rgba(0,0,0,0.55)",
+          }}
+        >
           {ARENA_COPY.promotionTitle}
         </p>
         <div className="flex gap-3">
@@ -45,7 +57,12 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
               key={key}
               type="button"
               onClick={() => onSelect(key)}
-              className="flex min-h-[44px] flex-col items-center gap-1 rounded-xl bg-white/10 p-3 transition-all hover:bg-white/20 active:scale-95"
+              className="flex min-h-[44px] flex-col items-center gap-1 rounded-xl border p-3 transition-all hover:bg-white/25 active:scale-95"
+              style={{
+                background: "rgba(255, 255, 255, 0.15)",
+                borderColor: "rgba(255, 255, 255, 0.45)",
+              }}
+              aria-label={label}
             >
               <picture>
                 {THEME_CONFIG.hasOptimizedFormats && (
