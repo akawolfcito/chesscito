@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
-import { ShareGrid } from "@/components/share/share-grid";
+import { ShareModal } from "@/components/share/share-modal";
 import { AskCoachButton } from "@/components/coach/ask-coach-button";
 import { formatTime } from "@/lib/game/arena-utils";
 import type { ClaimData, ShareStatus } from "./arena-end-state";
@@ -35,6 +36,7 @@ export function VictoryClaimSuccess({
   onAskCoach,
 }: Props) {
   const time = formatTime(elapsedMs);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const shareUrl = claimData.shareLinkUrl ?? SHARE_COPY.url;
   const challengeText = VICTORY_CLAIM_COPY.challengeText(moves, shareUrl);
@@ -63,7 +65,17 @@ export function VictoryClaimSuccess({
                 <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
               </Button>
 
-              {isShareReady && <ShareGrid text={challengeText} url={shareUrl} />}
+              {isShareReady && (
+                <Button
+                  type="button"
+                  variant="game-ghost"
+                  size="game"
+                  onClick={() => setShareOpen(true)}
+                  className="w-full"
+                >
+                  <CandyIcon name="copy" className="inline h-4 w-4 -mt-0.5" /> {SHARE_COPY.button}
+                </Button>
+              )}
 
               {onAskCoach && <AskCoachButton onClick={onAskCoach} />}
 
@@ -131,6 +143,14 @@ export function VictoryClaimSuccess({
           </div>
         </CandyGlassShell>
       </div>
+
+      <ShareModal
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        cardUrl={claimData.shareCardUrl}
+        text={challengeText}
+        url={shareUrl}
+      />
     </div>
   );
 }

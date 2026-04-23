@@ -6,7 +6,7 @@ import { BADGE_EARNED_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_CO
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
-import { ShareGrid } from "@/components/share/share-grid";
+import { ShareModal } from "@/components/share/share-modal";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 
@@ -160,14 +160,48 @@ function getShareText(variant: SuccessVariant, pieceType?: PieceKey, itemLabel?:
   }
 }
 
+function getCardUrl(variant: SuccessVariant, pieceType?: PieceKey, totalStars?: number): string {
+  if (variant === "badge") {
+    const piece = pieceType ?? "rook";
+    const stars = Math.min(totalStars ?? 0, 15);
+    return `/api/og/exercise?piece=${piece}&stars=${stars}&type=badge-earned`;
+  }
+  if (variant === "score") {
+    const piece = pieceType ?? "rook";
+    const stars = Math.min(totalStars ?? 0, 15);
+    return `/api/og/exercise?piece=${piece}&stars=${stars}&type=piece-complete`;
+  }
+  return "/api/og/invite";
+}
+
 function ShareRow({ variant, pieceType, itemLabel, totalStars }: {
   variant: SuccessVariant;
   pieceType?: PieceKey;
   itemLabel?: string;
   totalStars?: number;
 }) {
+  const [open, setOpen] = useState(false);
   const text = getShareText(variant, pieceType, itemLabel, totalStars);
-  return <ShareGrid text={text} url={SHARE_COPY.url} />;
+  const cardUrl = getCardUrl(variant, pieceType, totalStars);
+  return (
+    <>
+      <Button
+        type="button"
+        variant="game-ghost"
+        size="game"
+        onClick={() => setOpen(true)}
+        className="w-full"
+      >
+        {SHARE_COPY.button}
+      </Button>
+      <ShareModal
+        open={open}
+        onOpenChange={setOpen}
+        cardUrl={cardUrl}
+        text={text}
+      />
+    </>
+  );
 }
 
 export function ResultOverlay({
