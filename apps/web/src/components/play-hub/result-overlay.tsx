@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { BADGE_EARNED_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
-import { PaperPanel } from "@/components/redesign/paper-panel";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 
@@ -64,6 +64,87 @@ function getSubtitle(variant: Variant, pieceType?: PieceKey, itemLabel?: string,
   }
 }
 
+/** Candy-glass modal shell — matches piece-picker aesthetic: translucent
+ *  white over a dimmed scrim, warm-brown header title, red translucent
+ *  close × button, content area, optional CTA + meta footers. Shared by
+ *  the three result-overlay variants (generic result, badge earned,
+ *  piece complete) so they feel cohesive with the rest of the app. */
+function CandyGlassShell({
+  title,
+  onClose,
+  closeLabel,
+  children,
+  cta,
+  meta,
+}: {
+  title: string;
+  onClose: () => void;
+  closeLabel: string;
+  children: ReactNode;
+  cta?: ReactNode;
+  meta?: ReactNode;
+}) {
+  return (
+    <div
+      className="relative flex w-full flex-col gap-3 overflow-hidden rounded-3xl px-5 py-5"
+      style={{
+        background: "rgba(255, 255, 255, 0.18)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        border: "1px solid rgba(255, 255, 255, 0.45)",
+        boxShadow:
+          "0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+      }}
+    >
+      <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] pb-3 -mx-2">
+        <h2
+          className="fantasy-title px-2 text-lg font-extrabold"
+          style={{
+            color: "rgba(110, 65, 15, 0.95)",
+            textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+          }}
+        >
+          {title}
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={closeLabel}
+          className="mr-2 flex h-10 w-10 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
+          style={{
+            background: "rgba(255, 255, 255, 0.15)",
+            borderColor: "rgba(255, 255, 255, 0.45)",
+            color: "#dc2626",
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
+      <div className="flex flex-col gap-2">{children}</div>
+      {cta}
+      {meta ? (
+        <p
+          className="text-center text-xs"
+          style={{ color: "rgba(110, 65, 15, 0.60)" }}
+        >
+          {meta}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function SuccessImage({
   variant,
   pieceType,
@@ -101,16 +182,11 @@ const MAX_STARS = EXERCISES_PER_PIECE * 3;
 function StarsRow({
   totalStars,
   staggered = false,
-  tone = "dark",
 }: {
   totalStars: number;
   staggered?: boolean;
-  tone?: "dark" | "paper";
 }) {
   const filled = Math.min(EXERCISES_PER_PIECE, Math.ceil(totalStars / 3));
-  const earnedClass = tone === "paper" ? "text-amber-500" : "text-amber-400";
-  const emptyClass = tone === "paper" ? "text-amber-700/25" : "text-amber-400/30";
-  const counterClass = tone === "paper" ? "text-amber-800/70" : "text-cyan-100/70";
   return (
     <div className="flex items-center gap-1.5">
       {Array.from({ length: EXERCISES_PER_PIECE }, (_, i) => {
@@ -120,7 +196,9 @@ function StarsRow({
           <span
             key={i}
             className={
-              isEarned ? `reward-ceremony-star ${earnedClass} inline-block` : emptyClass
+              isEarned
+                ? "reward-ceremony-star text-amber-500 inline-block"
+                : "text-amber-700/25"
             }
             style={
               isEarned && staggered
@@ -137,8 +215,13 @@ function StarsRow({
         );
       })}
       <span
-        className={`reward-ceremony-buttons ml-1 text-xs ${counterClass}`}
-        style={staggered ? { opacity: 0, animation: "reward-buttons-enter 250ms ease-out 1200ms forwards" } : undefined}
+        className="reward-ceremony-buttons ml-1 text-xs"
+        style={{
+          color: "rgba(110, 65, 15, 0.75)",
+          ...(staggered
+            ? { opacity: 0, animation: "reward-buttons-enter 250ms ease-out 1200ms forwards" }
+            : {}),
+        }}
       >
         {totalStars}/{MAX_STARS}
       </span>
@@ -157,12 +240,11 @@ function getShareText(variant: SuccessVariant, pieceType?: PieceKey, itemLabel?:
   }
 }
 
-function ShareButton({ variant, pieceType, itemLabel, totalStars, tone = "dark" }: {
+function ShareButton({ variant, pieceType, itemLabel, totalStars }: {
   variant: SuccessVariant;
   pieceType?: PieceKey;
   itemLabel?: string;
   totalStars?: number;
-  tone?: "dark" | "paper";
 }) {
   const [copied, setCopied] = useState(false);
   const text = getShareText(variant, pieceType, itemLabel, totalStars);
@@ -176,7 +258,6 @@ function ShareButton({ variant, pieceType, itemLabel, totalStars, tone = "dark" 
         // User cancelled or share failed — fall through to clipboard
       }
     }
-    // Fallback: copy to clipboard
     try {
       await navigator.clipboard.writeText(`${text}\n${SHARE_COPY.url}`);
       setCopied(true);
@@ -186,16 +267,17 @@ function ShareButton({ variant, pieceType, itemLabel, totalStars, tone = "dark" 
     }
   }
 
-  const toneClass =
-    tone === "paper"
-      ? "border-amber-700/35 text-amber-800 hover:bg-amber-400/10"
-      : "border-cyan-400/30 text-cyan-300 hover:bg-cyan-400/10";
-
   return (
     <button
       type="button"
       onClick={() => void handleShare()}
-      className={`w-full rounded-xl border py-3 text-sm font-semibold transition active:scale-[0.98] ${toneClass}`}
+      className="w-full rounded-xl border py-3 text-sm font-bold transition active:scale-[0.98]"
+      style={{
+        background: "rgba(255, 255, 255, 0.18)",
+        borderColor: "rgba(255, 255, 255, 0.50)",
+        color: "rgba(110, 65, 15, 0.90)",
+        textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+      }}
     >
       {copied ? SHARE_COPY.fallbackCopied : SHARE_COPY.button}
     </button>
@@ -236,9 +318,8 @@ export function ResultOverlay({
         style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <PaperPanel
-          hollow
-          ribbonTitle={title}
+        <CandyGlassShell
+          title={title}
           onClose={handleDismiss}
           closeLabel={RESULT_OVERLAY_COPY.cta.dismiss}
           cta={
@@ -250,7 +331,8 @@ export function ResultOverlay({
                 <button
                   type="button"
                   onClick={handleDismiss}
-                  className="w-full py-1 text-xs font-semibold text-amber-800/70 underline underline-offset-2"
+                  className="w-full py-1 text-xs font-semibold underline underline-offset-2"
+                  style={{ color: "rgba(110, 65, 15, 0.70)" }}
                 >
                   {RESULT_OVERLAY_COPY.cta.dismiss}
                 </button>
@@ -285,12 +367,17 @@ export function ResultOverlay({
             )}
 
             {!isError && variant !== "shop" && totalStars != null ? (
-              <StarsRow totalStars={totalStars} staggered tone="paper" />
+              <StarsRow totalStars={totalStars} staggered />
             ) : null}
 
             <p
-              className={`text-sm leading-snug ${isError ? "text-rose-700" : ""}`}
-              style={!isError ? { color: "var(--paper-text)" } : undefined}
+              className="text-sm leading-snug"
+              style={{
+                color: isError
+                  ? "rgba(159, 18, 57, 0.95)"
+                  : "rgba(63, 34, 8, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
             >
               {subtitle}
             </p>
@@ -300,17 +387,18 @@ export function ResultOverlay({
                 href={celoscanHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs font-semibold text-amber-800 underline underline-offset-2"
+                className="text-xs font-semibold underline underline-offset-2"
+                style={{ color: "rgba(120, 65, 5, 0.95)" }}
               >
                 {RESULT_OVERLAY_COPY.cta.viewOnCeloscan}
               </Link>
             ) : null}
 
             {!isError ? (
-              <ShareButton variant={variant} pieceType={pieceType} itemLabel={itemLabel} totalStars={totalStars} tone="paper" />
+              <ShareButton variant={variant} pieceType={pieceType} itemLabel={itemLabel} totalStars={totalStars} />
             ) : null}
           </div>
-        </PaperPanel>
+        </CandyGlassShell>
       </div>
     </div>
   );
@@ -352,8 +440,8 @@ export function BadgeEarnedPrompt({
         style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Auto-dismiss countdown bar — sits above the paper frame so it
-            reads as a "timer on the modal" rather than a paper element. */}
+        {/* Auto-dismiss countdown bar — sits above the glass card so it reads
+            as a "timer on the modal" rather than a card element. */}
         <div className="absolute left-1/2 top-[-0.6rem] z-10 h-1 w-[60%] -translate-x-1/2 overflow-hidden rounded-full bg-amber-900/15">
           <div
             className="h-full rounded-full bg-amber-500/70"
@@ -361,9 +449,8 @@ export function BadgeEarnedPrompt({
           />
         </div>
 
-        <PaperPanel
-          hollow
-          ribbonTitle="Badge Earned"
+        <CandyGlassShell
+          title="Badge Earned"
           onClose={handleLater}
           closeLabel={BADGE_EARNED_COPY.later}
           cta={
@@ -380,7 +467,8 @@ export function BadgeEarnedPrompt({
               <button
                 type="button"
                 onClick={handleLater}
-                className="w-full py-1 text-xs font-semibold text-amber-800/70 underline underline-offset-2"
+                className="w-full py-1 text-xs font-semibold underline underline-offset-2"
+                style={{ color: "rgba(110, 65, 15, 0.70)" }}
               >
                 {BADGE_EARNED_COPY.later}
               </button>
@@ -401,19 +489,22 @@ export function BadgeEarnedPrompt({
               size="sm"
             />
 
-            <StarsRow totalStars={totalStars} staggered tone="paper" />
+            <StarsRow totalStars={totalStars} staggered />
 
             <h2
               id="badge-earned-title"
               className="fantasy-title text-base font-bold leading-tight"
-              style={{ color: "var(--paper-text)" }}
+              style={{
+                color: "rgba(63, 34, 8, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
             >
               {title}
             </h2>
 
-            <ShareButton variant="badge" pieceType={pieceType} totalStars={totalStars} tone="paper" />
+            <ShareButton variant="badge" pieceType={pieceType} totalStars={totalStars} />
           </div>
-        </PaperPanel>
+        </CandyGlassShell>
       </div>
     </div>
   );
@@ -464,9 +555,8 @@ export function PieceCompletePrompt({
         style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <PaperPanel
-          hollow
-          ribbonTitle={PIECE_COMPLETE_COPY.title}
+        <CandyGlassShell
+          title={PIECE_COMPLETE_COPY.title}
           onClose={() => handleAction(onPracticeAgain)}
           closeLabel={PIECE_COMPLETE_COPY.practiceAgain}
           cta={
@@ -495,7 +585,8 @@ export function PieceCompletePrompt({
               <button
                 type="button"
                 onClick={() => handleAction(onPracticeAgain)}
-                className="w-full py-1 text-xs font-semibold text-amber-800/70 underline underline-offset-2"
+                className="w-full py-1 text-xs font-semibold underline underline-offset-2"
+                style={{ color: "rgba(110, 65, 15, 0.70)" }}
               >
                 {PIECE_COMPLETE_COPY.practiceAgain}
               </button>
@@ -510,12 +601,18 @@ export function PieceCompletePrompt({
         >
           <div className="flex flex-col items-center gap-2 text-center">
             <SuccessImage variant="badge" pieceType={pieceType} glowClass="reward-glow-progress" size="sm" />
-            <StarsRow totalStars={totalStars} staggered tone="paper" />
-            <p className="text-sm leading-snug" style={{ color: "var(--paper-text)" }}>
+            <StarsRow totalStars={totalStars} staggered />
+            <p
+              className="text-sm leading-snug"
+              style={{
+                color: "rgba(63, 34, 8, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
+            >
               {subtitle}
             </p>
           </div>
-        </PaperPanel>
+        </CandyGlassShell>
       </div>
     </div>
   );
