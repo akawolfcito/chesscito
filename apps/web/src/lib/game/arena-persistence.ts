@@ -1,5 +1,6 @@
 import { Chess } from "chess.js";
 import type { ArenaDifficulty } from "./types";
+import type { PlayerColor } from "./use-chess-game";
 
 export const ARENA_GAME_KEY = "chesscito:arena-game";
 
@@ -12,11 +13,16 @@ export type ArenaGameSave = {
   moveCount: number;
   elapsedMs: number;
   difficulty: ArenaDifficulty;
+  playerColor: PlayerColor;
   savedAt: number;
 };
 
 function isArenaDifficulty(value: unknown): value is ArenaDifficulty {
   return value === "easy" || value === "medium" || value === "hard";
+}
+
+function isPlayerColor(value: unknown): value is PlayerColor {
+  return value === "w" || value === "b";
 }
 
 /** Parse + validate a localStorage payload. Returns null if corrupt,
@@ -53,12 +59,20 @@ export function loadArenaGame(): ArenaGameSave | null {
       return null;
     }
 
+    // playerColor was added after the initial release. If a pre-feature
+    // save is found, default to white so the user doesn't lose their
+    // in-progress game (RB5 from the play-as-black red-team review).
+    const playerColor: PlayerColor = isPlayerColor(parsed.playerColor)
+      ? parsed.playerColor
+      : "w";
+
     return {
       fen: parsed.fen,
       moveHistory: parsed.moveHistory.filter((m): m is string => typeof m === "string"),
       moveCount: parsed.moveCount,
       elapsedMs: parsed.elapsedMs,
       difficulty: parsed.difficulty,
+      playerColor,
       savedAt: parsed.savedAt,
     };
   } catch {

@@ -14,6 +14,8 @@ const DIFFICULTY_LEVEL: Record<ArenaDifficulty, number> = {
   hard: 5,
 };
 
+export type PlayerColor = "w" | "b";
+
 export type ChessGameState = {
   fen: string;
   pieces: ChessBoardPiece[];
@@ -25,6 +27,7 @@ export type ChessGameState = {
   checkSquare: string | null;
   pendingPromotion: { from: string; to: string } | null;
   difficulty: ArenaDifficulty;
+  playerColor: PlayerColor;
   moveCount: number;
   moveHistory: string[];
   elapsedMs: number;
@@ -35,11 +38,13 @@ export type ChessGameState = {
   reset: () => void;
   resign: () => void;
   setDifficulty: (d: ArenaDifficulty) => void;
+  setPlayerColor: (c: PlayerColor) => void;
   startGame: () => void;
 };
 
 export function useChessGame(): ChessGameState {
   const [difficulty, setDifficulty] = useState<ArenaDifficulty>("easy");
+  const [playerColor, setPlayerColor] = useState<PlayerColor>("w");
   const [status, setStatus] = useState<ArenaStatus>("selecting");
   const [isThinking, setIsThinking] = useState(false);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
@@ -152,9 +157,10 @@ export function useChessGame(): ChessGameState {
     return () => clearInterval(interval);
   }, [status]);
 
-  const triggerAiMove = useCallback((currentDifficulty: ArenaDifficulty) => {
+  const triggerAiMove = useCallback((currentDifficulty: ArenaDifficulty, currentPlayerColor: PlayerColor) => {
     const game = gameRef.current;
-    if (game.turn() !== "b") return;
+    // Skip if it's the human's turn — AI only moves on the opposite color.
+    if (game.turn() === currentPlayerColor) return;
 
     setIsThinking(true);
 
@@ -202,12 +208,12 @@ export function useChessGame(): ChessGameState {
   const selectSquare = useCallback((square: string) => {
     try {
       const game = gameRef.current;
-      if (status !== "playing" || isThinking || game.turn() !== "w") return;
+      if (status !== "playing" || isThinking || game.turn() !== playerColor) return;
 
       const piece = game.get(square as Square);
 
       // Clicking own piece → select and show legal moves
-      if (piece && piece.color === "w") {
+      if (piece && piece.color === playerColor) {
         setSelectedSquare(square);
         const moves = game.moves({ square: square as Square, verbose: true });
         setLegalMoves(moves.map((m) => m.to));
@@ -237,7 +243,7 @@ export function useChessGame(): ChessGameState {
         if (game.isCheckmate()) endGameWith("checkmate");
         else if (game.isStalemate()) endGameWith("stalemate");
         else if (game.isDraw()) endGameWith("draw");
-        else triggerAiMove(difficulty);
+        else triggerAiMove(difficulty, playerColor);
         return;
       }
 
@@ -249,7 +255,7 @@ export function useChessGame(): ChessGameState {
       setSelectedSquare(null);
       setLegalMoves([]);
     }
-  }, [status, isThinking, selectedSquare, legalMoves, triggerAiMove, difficulty]);
+  }, [status, isThinking, selectedSquare, legalMoves, triggerAiMove, difficulty, playerColor]);
 
   const promoteWith = useCallback((piece: "q" | "r" | "b" | "n") => {
     if (!pendingPromotion || isThinking) return;
@@ -268,13 +274,13 @@ export function useChessGame(): ChessGameState {
       if (game.isCheckmate()) endGameWith("checkmate");
       else if (game.isStalemate()) endGameWith("stalemate");
       else if (game.isDraw()) endGameWith("draw");
-      else triggerAiMove(difficulty);
+      else triggerAiMove(difficulty, playerColor);
     } catch {
       setPendingPromotion(null);
       setSelectedSquare(null);
       setLegalMoves([]);
     }
-  }, [pendingPromotion, isThinking, triggerAiMove, difficulty]);
+  }, [pendingPromotion, isThinking, triggerAiMove, difficulty, playerColor]);
 
   const cancelPromotion = useCallback(() => {
     if (!pendingPromotion) return;
@@ -302,6 +308,7 @@ export function useChessGame(): ChessGameState {
     gameStartRef.current = 0;
     gameEndRef.current = 0;
     clearArenaGame();
+    // Keep playerColor — it's a user preference, same as difficulty.
     setStatus("selecting");
   }, []);
 
@@ -327,14 +334,19 @@ export function useChessGame(): ChessGameState {
     gameEndRef.current = 0;
     clearArenaGame();
     setStatus("playing");
-  }, []);
+    // If the human picked black, white (AI) moves first.
+    if (playerColor === "b") {
+      triggerAiMove(difficulty, playerColor);
+    }
+  }, [playerColor, difficulty, triggerAiMove]);
 
   // Restore a saved in-progress game on mount. Runs once; if a valid
   // save exists (<24h old, parseable FEN) we rehydrate the hook into
   // status="playing" directly so the arena page skips the selector.
   // gameStartRef is adjusted so the live-tick timer continues from
-  // savedElapsedMs (R10 from the red-team review). If it's black's
-  // turn when we resume, kick the AI so the match isn't stuck.
+  // savedElapsedMs (R10 from the red-team review). If the AI owes a
+  // move on resume (save taken mid-exchange), kick it so the board
+  // isn't stuck.
   useEffect(() => {
     const saved = loadArenaGame();
     if (!saved) return;
@@ -351,14 +363,18 @@ export function useChessGame(): ChessGameState {
     setMoveCount(saved.moveCount);
     setElapsedMs(saved.elapsedMs);
     setDifficulty(saved.difficulty);
+    setPlayerColor(saved.playerColor);
     setSelectedSquare(null);
     setLegalMoves([]);
     setLastMove(null);
     setPendingPromotion(null);
     setErrorMessage(null);
     setStatus("playing");
-    if (gameRef.current.turn() === "b" && !gameRef.current.isGameOver()) {
-      triggerAiMove(saved.difficulty);
+    if (
+      gameRef.current.turn() !== saved.playerColor &&
+      !gameRef.current.isGameOver()
+    ) {
+      triggerAiMove(saved.difficulty, saved.playerColor);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -376,9 +392,10 @@ export function useChessGame(): ChessGameState {
       moveCount,
       elapsedMs,
       difficulty,
+      playerColor,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fen, status, moveCount, difficulty]);
+  }, [fen, status, moveCount, difficulty, playerColor]);
 
   return {
     fen,
@@ -391,6 +408,7 @@ export function useChessGame(): ChessGameState {
     checkSquare,
     pendingPromotion,
     difficulty,
+    playerColor,
     moveCount,
     moveHistory,
     elapsedMs,
@@ -401,6 +419,7 @@ export function useChessGame(): ChessGameState {
     reset,
     resign,
     setDifficulty,
+    setPlayerColor,
     startGame,
   };
 }

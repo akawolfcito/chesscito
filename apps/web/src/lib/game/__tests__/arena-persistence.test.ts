@@ -16,6 +16,7 @@ function makeSave(overrides: Partial<ReturnType<typeof loadArenaGame>> = {}) {
     moveCount: 1,
     elapsedMs: 5000,
     difficulty: "easy" as const,
+    playerColor: "w" as const,
     savedAt: Date.now(),
     ...overrides,
   };
@@ -39,6 +40,7 @@ describe("arena-persistence", () => {
         moveCount: 1,
         elapsedMs: 1000,
         difficulty: "medium",
+        playerColor: "w",
       });
 
       const raw = localStorage.getItem(ARENA_GAME_KEY);
@@ -62,6 +64,7 @@ describe("arena-persistence", () => {
         moveCount: 1,
         elapsedMs: 5000,
         difficulty: "hard",
+        playerColor: "b",
       });
 
       const loaded = loadArenaGame();
@@ -69,6 +72,19 @@ describe("arena-persistence", () => {
       expect(loaded!.fen).toEqual(AFTER_E4_FEN);
       expect(loaded!.moveCount).toEqual(1);
       expect(loaded!.difficulty).toEqual("hard");
+      expect(loaded!.playerColor).toEqual("b");
+    });
+
+    it("defaults playerColor to 'w' on pre-feature saves (RB5)", () => {
+      // Simulate a save written before play-as-black shipped: no
+      // playerColor field. The loader must still accept it so users
+      // don't lose their in-progress match on the version bump.
+      const legacy = makeSave();
+      const { playerColor: _playerColor, ...legacyWithoutColor } = legacy;
+      localStorage.setItem(ARENA_GAME_KEY, JSON.stringify(legacyWithoutColor));
+      const loaded = loadArenaGame();
+      expect(loaded).not.toBeNull();
+      expect(loaded!.playerColor).toEqual("w");
     });
 
     it("discards corrupt JSON and clears the key", () => {
@@ -135,6 +151,7 @@ describe("arena-persistence", () => {
         moveCount: 0,
         elapsedMs: 0,
         difficulty: "easy",
+        playerColor: "w",
       });
       clearArenaGame();
       expect(localStorage.getItem(ARENA_GAME_KEY)).toBeNull();
