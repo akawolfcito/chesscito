@@ -14,8 +14,10 @@ const DIFFICULTY_STYLE: Record<string, { bg: string; fg: string }> = {
 };
 
 export type CardShellProps = {
-  /** Absolute URL to the forest bg-ch.png. */
-  bgUrl: string;
+  /** Absolute URL to the forest bg-ch.png. Pass null to drop the forest
+   *  image and render only the cream gradient (cleaner look for invite
+   *  / lobby cards that don't need the hub context). */
+  bgUrl: string | null;
   /** Absolute URL to the wolf mascot. */
   mascotUrl: string;
   /** Main headline (e.g. "CHECKMATE!"). */
@@ -64,24 +66,27 @@ export function CardShell({
         background: "#f6e6b8",
       }}
     >
-      {/* Forest bg */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={bgUrl}
-        alt=""
-        width={W}
-        height={H}
-        style={{ position: "absolute", top: 0, left: 0 }}
-      />
+      {/* Forest bg — optional, omitted on invite/lobby cards */}
+      {bgUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={bgUrl}
+          alt=""
+          width={W}
+          height={H}
+          style={{ position: "absolute", top: 0, left: 0 }}
+        />
+      )}
 
-      {/* Cream wash — matches in-app sheet-bg-hub::after gradient */}
+      {/* Cream wash — over forest when present, stands alone otherwise */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           display: "flex",
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,245,215,0.45) 40%, rgba(246,230,184,0.62) 100%)",
+          background: bgUrl
+            ? "linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,245,215,0.45) 40%, rgba(246,230,184,0.62) 100%)"
+            : "linear-gradient(180deg, rgba(255,250,235,1) 0%, rgba(250,240,210,1) 55%, rgba(240,225,185,1) 100%)",
         }}
       />
 

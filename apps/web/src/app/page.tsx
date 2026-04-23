@@ -48,6 +48,7 @@ import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/compone
 import { BadgeSheet } from "@/components/play-hub/badge-sheet";
 import { ArenaEntrySheet } from "@/components/play-hub/arena-entry-sheet";
 import { CandyBanner } from "@/components/redesign/candy-banner";
+import { buildExerciseFen, toAlgebraic } from "@/lib/og/exercise-fen";
 import { classifyTxError, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, EXERCISES } from "@/lib/game/exercises";
@@ -892,8 +893,16 @@ export default function PlayHubPage() {
               }
               inviteControl={
                 <InviteButton
-                  cardUrl={`/api/og/invite?piece=${selectedPiece}`}
-                  text={`I'm learning the ${selectedPiece} on Chesscito — come play with me!`}
+                  cardUrl={(() => {
+                    const fen = buildExerciseFen(selectedPiece, currentExercise.startPos);
+                    const params = new URLSearchParams({
+                      piece: selectedPiece,
+                      fen,
+                      star: toAlgebraic(currentExercise.targetPos),
+                    });
+                    return `/api/og/invite?${params.toString()}`;
+                  })()}
+                  text={`I'm solving a ${selectedPiece} puzzle on Chesscito — come play with me!`}
                 />
               }
             />

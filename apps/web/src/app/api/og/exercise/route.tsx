@@ -8,6 +8,7 @@ import {
   sanitizeName,
   readSearchParams,
 } from "@/lib/og/validators";
+import { THEME_CONFIG } from "@/lib/theme";
 
 export const runtime = "nodejs";
 
@@ -51,7 +52,7 @@ export async function GET(req: Request) {
   const bgUrl = new URL("/art/redesign/bg/bg-ch.png", req.url).toString();
   const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
   const pieceFile = "w-" + piece + ".png";
-  const pieceUrl = new URL("/art/pieces/" + pieceFile, req.url).toString();
+  const pieceUrl = new URL(THEME_CONFIG.piecesBase + "/" + pieceFile, req.url).toString();
 
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);

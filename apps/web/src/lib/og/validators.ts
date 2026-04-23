@@ -64,6 +64,19 @@ export function sanitizeFen(raw: string | null): string | null {
   return boardPart;
 }
 
+/**
+ * Parse an algebraic chess square ("a1" … "h8") into 0-indexed file/rank
+ * where rank 0 = rank 1 (bottom). Returns null on malformed input so
+ * callers can skip the overlay gracefully.
+ */
+export function parseSquare(raw: string | null): { file: number; rank: number } | null {
+  if (!raw || raw.length !== 2) return null;
+  const file = "abcdefgh".indexOf(raw[0].toLowerCase());
+  const rank = Number.parseInt(raw[1], 10) - 1;
+  if (file < 0 || rank < 0 || rank > 7 || !Number.isFinite(rank)) return null;
+  return { file, rank };
+}
+
 /** Read URL search params regardless of whether req is Request or NextRequest. */
 export function readSearchParams(req: Request | NextRequest): URLSearchParams {
   return new URL(req.url).searchParams;

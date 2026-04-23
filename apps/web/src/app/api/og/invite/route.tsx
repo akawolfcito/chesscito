@@ -7,8 +7,10 @@ import {
   sanitizeName,
   sanitizeFen,
   parseEnumParam,
+  parseSquare,
   readSearchParams,
 } from "@/lib/og/validators";
+import { THEME_CONFIG } from "@/lib/theme";
 
 export const runtime = "nodejs";
 
@@ -39,11 +41,12 @@ export async function GET(req: Request) {
     : null;
   const fen = sanitizeFen(qs.get("fen"));
   const flipped = parseEnumParam(qs.get("color"), ["w", "b"] as const) === "b";
+  const star = parseSquare(qs.get("star"));
 
-  const bgUrl = new URL("/art/redesign/bg/bg-ch.png", req.url).toString();
   const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
   const boardUrl = new URL("/art/redesign/board/board-ch.png", req.url).toString();
   const badgeUrl = new URL("/art/badge-chesscito.png", req.url).toString();
+  const starUrl = new URL("/art/redesign/icons/star.png", req.url).toString();
   const origin = new URL(req.url).origin;
 
   const cinzelData = await loadCinzelFont(req.url);
@@ -58,89 +61,102 @@ export async function GET(req: Request) {
       ? `${from} is playing Chesscito.`
       : "Learn chess on Celo.";
 
-  // Right slot picks the richest available: board render > piece art > badge art.
-  const rightSlot = fen ? (
-    <BoardRender
-      fen={fen}
-      boardUrl={boardUrl}
-      origin={origin}
-      size={420}
-      flipped={flipped}
-    />
-  ) : piece ? (
-    <div
-      style={{
-        position: "relative",
-        display: "flex",
-        width: 360,
-        height: 360,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+  // Right slot: board render when FEN provided, piece art when only
+  // piece, badge art as the generic fallback.
+  let rightSlot;
+  if (fen) {
+    const overlays = star
+      ? [{ rank: 7 - star.rank, file: star.file, iconUrl: starUrl }]
+      : [];
+    rightSlot = (
+      <BoardRender
+        fen={fen}
+        boardUrl={boardUrl}
+        origin={origin}
+        size={420}
+        flipped={flipped}
+        overlays={overlays}
+      />
+    );
+  } else if (piece) {
+    const pieceUrl = origin + THEME_CONFIG.piecesBase + "/w-" + piece + ".png";
+    rightSlot = (
       <div
         style={{
-          position: "absolute",
+          position: "relative",
+          display: "flex",
           width: 360,
           height: 360,
-          borderRadius: 9999,
-          background:
-            "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
-          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={origin + "/art/pieces/w-" + piece + ".png"}
-        alt=""
-        width={280}
-        height={280}
-        style={{
-          position: "relative",
-          filter: "drop-shadow(0 10px 20px rgba(120, 65, 5, 0.35))",
-        }}
-      />
-    </div>
-  ) : (
-    <div
-      style={{
-        position: "relative",
-        display: "flex",
-        width: 360,
-        height: 360,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+      >
+        <div
+          style={{
+            position: "absolute",
+            width: 360,
+            height: 360,
+            borderRadius: 9999,
+            background:
+              "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
+            display: "flex",
+          }}
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={pieceUrl}
+          alt=""
+          width={280}
+          height={280}
+          style={{
+            position: "relative",
+            filter: "drop-shadow(0 10px 20px rgba(120, 65, 5, 0.35))",
+          }}
+        />
+      </div>
+    );
+  } else {
+    rightSlot = (
       <div
         style={{
-          position: "absolute",
+          position: "relative",
+          display: "flex",
           width: 360,
           height: 360,
-          borderRadius: 9999,
-          background:
-            "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
-          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={badgeUrl}
-        alt=""
-        width={300}
-        height={300}
-        style={{
-          position: "relative",
-          filter: "drop-shadow(0 10px 20px rgba(120, 65, 5, 0.35))",
-        }}
-      />
-    </div>
-  );
+      >
+        <div
+          style={{
+            position: "absolute",
+            width: 360,
+            height: 360,
+            borderRadius: 9999,
+            background:
+              "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
+            display: "flex",
+          }}
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={badgeUrl}
+          alt=""
+          width={300}
+          height={300}
+          style={{
+            position: "relative",
+            filter: "drop-shadow(0 10px 20px rgba(120, 65, 5, 0.35))",
+          }}
+        />
+      </div>
+    );
+  }
 
   const pngResponse = new ImageResponse(
     (
       <CardShell
-        bgUrl={bgUrl}
+        bgUrl={null}
         mascotUrl={mascotUrl}
         title="PLAY WITH ME"
         subtitle={subtitle}

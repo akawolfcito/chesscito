@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { THEME_CONFIG } from "@/lib/theme";
 
 type ParsedPiece = { piece: string; color: "w" | "b"; rank: number; file: number };
 
@@ -40,6 +41,13 @@ const PIECE_FILENAME: Record<string, string> = {
   k: "king",
 };
 
+/** Overlay marker positioned on a specific square (e.g. capture-target star). */
+export type BoardOverlay = {
+  rank: number; // 0 = top (rank 8), 7 = bottom (rank 1)
+  file: number; // 0 = file a, 7 = file h
+  iconUrl: string;
+};
+
 type BoardRenderProps = {
   /** FEN string — only the board portion is consumed. */
   fen: string;
@@ -51,13 +59,17 @@ type BoardRenderProps = {
   size: number;
   /** Render from black's perspective (player chose black). */
   flipped?: boolean;
+  /** Extra markers painted above the pieces (stars for capture targets,
+   *  move-to hints, etc). */
+  overlays?: BoardOverlay[];
 };
 
 /**
  * Board renderer for Satori. Renders the painted board asset + piece
- * PNGs positioned by FEN coordinates. Satori's flex subset can't
- * express the grid cleanly so each piece is absolutely positioned as
- * a percentage of the board edge.
+ * PNGs positioned by FEN coordinates, with optional overlay icons on
+ * top for capture/target markers. Satori's flex subset can't express
+ * the grid cleanly so each element is absolutely positioned as a
+ * percentage of the board edge.
  */
 export function BoardRender({
   fen,
@@ -65,9 +77,11 @@ export function BoardRender({
   origin,
   size,
   flipped = false,
+  overlays = [],
 }: BoardRenderProps): ReactNode {
   const pieces = parseFenBoard(fen);
   const pct = 100 / 8;
+  const piecesBase = origin + THEME_CONFIG.piecesBase;
 
   return (
     <div
@@ -93,21 +107,43 @@ export function BoardRender({
         const r = flipped ? 7 - p.rank : p.rank;
         const f = flipped ? 7 - p.file : p.file;
         const pieceFile = p.color + "-" + PIECE_FILENAME[p.piece] + ".png";
-        const src = origin + "/art/pieces/" + pieceFile;
+        const src = piecesBase + "/" + pieceFile;
         return (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            key={i}
+            key={"p-" + i}
             src={src}
             alt=""
             width={size / 8}
             height={size / 8}
             style={{
               position: "absolute",
-              top: `${r * pct}%`,
-              left: `${f * pct}%`,
-              width: `${pct}%`,
-              height: `${pct}%`,
+              top: r * pct + "%",
+              left: f * pct + "%",
+              width: pct + "%",
+              height: pct + "%",
+              display: "flex",
+            }}
+          />
+        );
+      })}
+      {overlays.map((o, i) => {
+        const r = flipped ? 7 - o.rank : o.rank;
+        const f = flipped ? 7 - o.file : o.file;
+        return (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={"o-" + i}
+            src={o.iconUrl}
+            alt=""
+            width={size / 8}
+            height={size / 8}
+            style={{
+              position: "absolute",
+              top: r * pct + "%",
+              left: f * pct + "%",
+              width: pct + "%",
+              height: pct + "%",
               display: "flex",
             }}
           />
