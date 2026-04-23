@@ -134,7 +134,10 @@ export default function ArenaPage() {
   }, []);
 
   const isEndState = ["checkmate", "stalemate", "draw", "resigned"].includes(game.status);
-  const isPlayerWin = game.status === "checkmate" && game.fen.includes(" b ");
+  // Player wins on checkmate when it's the OPPONENT's turn to move
+  // (i.e. the opponent is the one who got mated).
+  const opponentColor = game.playerColor === "w" ? "b" : "w";
+  const isPlayerWin = game.status === "checkmate" && game.fen.includes(` ${opponentColor} `);
 
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain = configuredChainId != null && chainId === configuredChainId;
@@ -708,6 +711,8 @@ export default function ArenaPage() {
             <DifficultySelector
               selected={game.difficulty}
               onSelect={game.setDifficulty}
+              playerColor={game.playerColor}
+              onSelectColor={game.setPlayerColor}
               onStart={handleStartWithLoading}
               onBack={handleBackToHub}
             />
@@ -776,6 +781,7 @@ export default function ArenaPage() {
             isThinking={game.isThinking}
             onSquareClick={game.selectSquare}
             isCheckmatePause={isEndState && !showEndOverlay}
+            playerColor={game.playerColor}
           />
           {game.pendingPromotion && (
             <PromotionOverlay onSelect={game.promoteWith} onCancel={game.cancelPromotion} />

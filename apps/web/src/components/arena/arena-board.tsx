@@ -7,6 +7,7 @@ import { ARENA_COPY } from "@/lib/content/editorial";
 import { hapticTap } from "@/lib/haptics";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { ChessBoardPiece } from "@/lib/game/types";
+import type { PlayerColor } from "@/lib/game/use-chess-game";
 
 type ArenaSquareState = {
   file: number;
@@ -29,6 +30,10 @@ type ArenaBoardProps = {
   isThinking?: boolean;
   onSquareClick: (square: string) => void;
   isCheckmatePause?: boolean;
+  /** When "b", the board is flipped to render from black's perspective
+   *  (h-file on the left, rank 8 at the bottom). Square labels stay
+   *  logical — click handlers still receive "a1" for the a1 square. */
+  playerColor?: PlayerColor;
 };
 
 function buildArenaSquares(
@@ -70,7 +75,9 @@ export function ArenaBoard({
   isThinking = false,
   onSquareClick,
   isCheckmatePause = false,
+  playerColor = "w",
 }: ArenaBoardProps) {
+  const flipped = playerColor === "b";
   const squares = useMemo(
     () => buildArenaSquares(selectedSquare, legalMoves, lastMove, checkSquare),
     [selectedSquare, legalMoves, lastMove, checkSquare],
@@ -112,7 +119,9 @@ export function ArenaBoard({
             )}
             <div className="playhub-board-hitgrid" role="grid" aria-label="Chess board">
               {squares.map((sq) => {
-                const geo = cellGeometry(sq.file, sq.rank);
+                const vf = flipped ? 7 - sq.file : sq.file;
+                const vr = flipped ? 7 - sq.rank : sq.rank;
+                const geo = cellGeometry(vf, vr);
                 return (
                   <button
                     key={sq.label}
@@ -147,7 +156,9 @@ export function ArenaBoard({
 
               {pieces.map((p) => {
                 const { file, rank } = squareToFileRank(p.square);
-                const center = cellCenter(file, rank);
+                const vf = flipped ? 7 - file : file;
+                const vr = flipped ? 7 - rank : rank;
+                const center = cellCenter(vf, vr);
                 const pw = pieceWidth();
                 const src = ARENA_PIECE_IMG[p.color][p.type];
                 const isPieceSelected = p.square === selectedSquare;

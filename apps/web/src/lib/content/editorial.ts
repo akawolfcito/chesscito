@@ -475,6 +475,8 @@ export const ARENA_COPY = {
   },
   startMatch: "Enter Arena",
   backToHub: "Back to Hub",
+  playAsWhite: "Play as White",
+  playAsBlack: "Play as Black",
   resign: "Resign",
   undo: "Undo",
   yourTurn: "Your Turn",
