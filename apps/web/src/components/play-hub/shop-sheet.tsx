@@ -45,52 +45,110 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
           <span className="sr-only">Shop</span>
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="mission-shell sheet-bg-shop flex h-[100dvh] flex-col rounded-none border-white/[0.10] pb-[5rem]">
-        <div className="shrink-0 border-b border-[var(--header-zone-border)] bg-[var(--header-zone-bg)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
+      <SheetContent side="bottom" className="mission-shell sheet-bg-shop flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]">
+        <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
           <SheetHeader>
-            <SheetTitle className="fantasy-title flex items-center gap-2 text-slate-100"><CandyIcon name="shop" className="h-5 w-5" />{SHOP_SHEET_COPY.title}</SheetTitle>
-            <SheetDescription className="text-cyan-100/75">{SHOP_SHEET_COPY.description}</SheetDescription>
+            <SheetTitle
+              className="fantasy-title flex items-center gap-2"
+              style={{
+                color: "rgba(110, 65, 15, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+              }}
+            >
+              <CandyIcon name="shop" className="h-5 w-5" />
+              {SHOP_SHEET_COPY.title}
+            </SheetTitle>
+            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+              {SHOP_SHEET_COPY.description}
+            </SheetDescription>
           </SheetHeader>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           {items.length === 0 && (
-            <p className="col-span-full text-center text-sm text-cyan-100/50">{SHOP_SHEET_COPY.empty}</p>
+            <p
+              className="col-span-full text-center text-sm"
+              style={{ color: "rgba(110, 65, 15, 0.70)" }}
+            >
+              {SHOP_SHEET_COPY.empty}
+            </p>
           )}
           {items.map((item, index) => {
             const isFeatured = index === 0 && item.configured && item.enabled;
             return (
-            <div key={item.itemId.toString()} className={`p-3 relative ${isFeatured ? "panel-elevated" : "panel-base"}`} style={isFeatured ? { borderColor: "var(--treat-warm-border)" } : undefined}>
+            <div
+              key={item.itemId.toString()}
+              className={[
+                "relative rounded-2xl border p-3",
+                isFeatured
+                  ? "border-amber-400/70 bg-white/20 shadow-[0_0_0_2px_rgba(251,191,36,0.28)]"
+                  : "border-[rgba(255,255,255,0.45)] bg-white/15",
+              ].join(" ")}
+            >
               {isFeatured && (
-                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-widest text-[var(--featured-badge-text)]" style={{ background: "var(--featured-badge-bg)", border: "1px solid var(--featured-badge-border)" }}>
+                <span
+                  className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-xs font-extrabold uppercase tracking-widest"
+                  style={{
+                    background: "rgba(120, 65, 5, 0.90)",
+                    color: "rgba(255, 240, 180, 0.98)",
+                    border: "1px solid rgba(255, 240, 180, 0.70)",
+                  }}
+                >
                   {SHOP_SHEET_COPY.featured}
                 </span>
               )}
-              <p className={`flex items-center gap-1.5 text-sm font-semibold ${isFeatured ? "text-[var(--featured-title-text)]" : "text-slate-300"}`}>
+              <p
+                className="flex items-center gap-1.5 text-sm font-extrabold"
+                style={{
+                  color: "rgba(63, 34, 8, 0.95)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                }}
+              >
                 {item.label.toLowerCase().includes("badge") ? (
-                  <CandyIcon name="trophy" className="h-4 w-4 shrink-0 opacity-80" />
+                  <CandyIcon name="trophy" className="h-4 w-4 shrink-0 opacity-90" />
                 ) : (
-                  <CandyIcon name="shield" className="h-4 w-4 shrink-0 opacity-80" />
+                  <CandyIcon name="shield" className="h-4 w-4 shrink-0 opacity-90" />
                 )}
                 {item.label}
               </p>
-              <p className={`text-xs ${isFeatured ? "text-[var(--featured-subtitle-text)]" : "text-slate-500"}`}>{item.subtitle}</p>
-              <p className="mt-2 text-sm text-slate-200">
+              <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+                {item.subtitle}
+              </p>
+              <p
+                className="mt-2 text-sm font-extrabold"
+                style={{
+                  color: "rgba(63, 34, 8, 0.95)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                }}
+              >
                 {item.configured ? formatUsd(item.onChainPrice) : SHOP_SHEET_COPY.status.notConfigured}
               </p>
-              <p className="flex items-center gap-1 text-xs">
+              <p className="flex items-center gap-1 text-xs font-semibold">
                 {item.configured && item.enabled ? (
-                  <><CandyIcon name="check" className="h-3 w-3" /><span className="text-emerald-400">{SHOP_SHEET_COPY.status.available}</span></>
+                  <>
+                    <CandyIcon name="check" className="h-3 w-3" />
+                    <span className="text-emerald-700">{SHOP_SHEET_COPY.status.available}</span>
+                  </>
                 ) : item.configured ? (
-                  <><CandyIcon name="close" className="h-3 w-3" /><span className="text-rose-400">{SHOP_SHEET_COPY.status.unavailable}</span></>
+                  <>
+                    <CandyIcon name="close" className="h-3 w-3" />
+                    <span style={{ color: "rgba(159, 18, 57, 0.95)" }}>
+                      {SHOP_SHEET_COPY.status.unavailable}
+                    </span>
+                  </>
                 ) : (
-                  <><CandyIcon name="loading" className="h-3 w-3 opacity-70" /><span className="text-slate-500">{SHOP_SHEET_COPY.status.unavailable}</span></>
+                  <>
+                    <CandyIcon name="loading" className="h-3 w-3 opacity-70" />
+                    <span style={{ color: "rgba(110, 65, 15, 0.65)" }}>
+                      {SHOP_SHEET_COPY.status.unavailable}
+                    </span>
+                  </>
                 )}
               </p>
               <Button
                 type="button"
                 variant="game-solid"
                 size="game"
-                className={`mt-3 ${isFeatured ? "shadow-[var(--featured-cta-glow)]" : ""}`}
+                className="mt-3"
                 disabled={!item.configured || !item.enabled}
                 onClick={() => onSelectItem(item.itemId)}
               >
@@ -104,11 +162,27 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
             );
           })}
           {items.length > 0 && items.length < 3 && (
-            <div className="col-span-full mt-1 flex items-center gap-3 rounded-2xl border border-amber-300/20 bg-amber-400/[0.04] px-4 py-3">
-              <CandyIcon name="shop" className="h-6 w-6 shrink-0 opacity-70" />
+            <div
+              className="col-span-full mt-1 flex items-center gap-3 rounded-2xl px-4 py-3"
+              style={{
+                background: "rgba(245, 158, 11, 0.22)",
+                boxShadow: "inset 0 0 0 1px rgba(245, 158, 11, 0.45)",
+              }}
+            >
+              <CandyIcon name="shop" className="h-6 w-6 shrink-0 opacity-85" />
               <div className="flex flex-col">
-                <p className="text-sm font-bold text-amber-200">{SHOP_SHEET_COPY.moreSoonTitle}</p>
-                <p className="text-xs text-amber-100/60">{SHOP_SHEET_COPY.moreSoonHint}</p>
+                <p
+                  className="text-sm font-extrabold"
+                  style={{
+                    color: "rgba(120, 65, 5, 0.95)",
+                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                  }}
+                >
+                  {SHOP_SHEET_COPY.moreSoonTitle}
+                </p>
+                <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
+                  {SHOP_SHEET_COPY.moreSoonHint}
+                </p>
               </div>
             </div>
           )}
