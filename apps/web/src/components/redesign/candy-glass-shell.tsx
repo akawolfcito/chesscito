@@ -22,11 +22,11 @@ type CandyGlassShellProps = {
 /**
  * CandyGlassShell — the canonical "candy-light modal" shell.
  *
- * Translucent white/18 card with backdrop blur, warm-brown fantasy
- * title, red translucent × close button, optional CTA + meta
- * footers. Matches the piece-picker aesthetic now shared across
- * mission-detail, arena difficulty selector, result overlays, and
- * arena end-state celebrations.
+ * Uses the SAME `.sheet-bg-hub` painting as the dock sheets so the
+ * forest bg-ch + cream wash are visible INSIDE the card, not just the
+ * scrim behind it. Warm-brown fantasy title, red translucent × close
+ * button, optional CTA + meta footers. Reference aesthetic:
+ * piece-picker / mission-detail / dock sheets.
  *
  * Compose inside a `fixed inset-0 candy-modal-scrim` scrim
  * wrapper for modal-over-game presentations.
@@ -42,11 +42,8 @@ export function CandyGlassShell({
 }: CandyGlassShellProps) {
   return (
     <div
-      className={`relative flex w-full flex-col gap-3 overflow-hidden rounded-3xl px-5 py-5 ${className}`.trim()}
+      className={`sheet-bg-hub flex w-full flex-col gap-3 rounded-3xl px-5 py-5 ${className}`.trim()}
       style={{
-        background: "rgba(255, 255, 255, 0.18)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
         border: "1px solid rgba(255, 255, 255, 0.45)",
         boxShadow:
           "0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
