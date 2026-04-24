@@ -156,15 +156,35 @@ export default function TrophiesPage() {
         </p>
       )}
 
-      {configured && (
-        <>
+      {configured && (() => {
+        /* Rookie = not connected yet, OR connected but no wins recorded.
+           Champions = at least one recorded victory. Rookies lead with
+           Hall of Fame (social proof / inspiration); champions lead
+           with their own trophies (identity). Achievements sits after
+           the hero in both cases — it's the bridge, not the anchor. */
+        const hasVictories = (myVictories?.length ?? 0) > 0;
+        const isChampion = isConnected && hasVictories;
+        const isEmptyConnected =
+          isConnected && myVictories?.length === 0 && !myLoading && !myError;
+        const summary = computeAchievements(myVictories);
+
+        const myVictoriesSection = (
           <PageSection
+            key="my-victories"
             icon={<CandyIcon name="crown" className="h-4 w-4" />}
             title={TROPHY_VITRINE_COPY.myVictories}
           >
             {!isConnected ? (
-              <div className="flex flex-col items-center gap-3 py-4">
-                <p className="text-center text-sm" style={{ color: "var(--paper-text-muted)" }}>
+              <div
+                className="flex flex-col items-center gap-3 rounded-2xl px-4 py-5 text-center"
+                style={{
+                  background: "rgba(255, 245, 215, 0.55)",
+                  border: "1px solid rgba(110, 65, 15, 0.22)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.65)",
+                }}
+              >
+                <CandyIcon name="wallet" className="h-8 w-8" />
+                <p className="text-sm" style={{ color: "var(--paper-text-muted)" }}>
                   {TROPHY_VITRINE_COPY.connectWallet}
                 </p>
                 <Button
@@ -174,6 +194,38 @@ export default function TrophiesPage() {
                   onClick={() => openConnectModal?.()}
                 >
                   {TROPHY_VITRINE_COPY.connectWalletButton}
+                </Button>
+              </div>
+            ) : isEmptyConnected ? (
+              /* Rookie CTA card — replaces the old subtle link with a
+                 proper invitation. Trophy icon + headline + body + big
+                 primary button. */
+              <div
+                className="flex flex-col items-center gap-3 rounded-2xl px-4 py-5 text-center"
+                style={{
+                  background: "rgba(255, 245, 215, 0.55)",
+                  border: "1px solid rgba(110, 65, 15, 0.22)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.65)",
+                }}
+              >
+                <div className="relative flex h-14 w-14 items-center justify-center">
+                  <div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(245, 158, 11, 0.28) 0%, rgba(217, 180, 74, 0.12) 55%, transparent 80%)",
+                    }}
+                  />
+                  <CandyIcon name="trophy" className="relative h-10 w-10" />
+                </div>
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: "var(--paper-text)" }}
+                >
+                  {TROPHY_VITRINE_COPY.noVictories}
+                </p>
+                <Button asChild variant="game-primary" size="game-sm">
+                  <Link href="/arena">{TROPHY_VITRINE_COPY.arenaLink}</Link>
                 </Button>
               </div>
             ) : (
@@ -186,45 +238,31 @@ export default function TrophiesPage() {
                 onRetry={loadMyVictories}
               />
             )}
+          </PageSection>
+        );
 
-            {isConnected && myVictories?.length === 0 && !myLoading && !myError && (
-              <Link
-                href="/arena"
-                className="mt-3 flex min-h-[44px] items-center justify-center rounded-2xl px-6 text-center text-sm font-extrabold transition-all active:scale-[0.97]"
-                style={{
-                  background: "rgba(255, 245, 215, 0.55)",
-                  border: "1px solid rgba(110, 65, 15, 0.28)",
-                  color: "rgba(110, 65, 15, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                }}
+        const achievementsSection = (
+          <PageSection
+            key="achievements"
+            icon={<CandyIcon name="star" className="h-4 w-4" />}
+            title={ACHIEVEMENTS_COPY.sectionTitle}
+            description={ACHIEVEMENTS_COPY.sectionDescription(summary.earnedCount, summary.total)}
+          >
+            <AchievementsGrid achievements={summary.list} />
+            {summary.earnedCount === 0 && (
+              <p
+                className="mt-3 text-center text-[11px]"
+                style={{ color: "rgba(110, 65, 15, 0.60)" }}
               >
-                {TROPHY_VITRINE_COPY.arenaLink}
-              </Link>
+                {ACHIEVEMENTS_COPY.emptyHint}
+              </p>
             )}
           </PageSection>
+        );
 
-          {(() => {
-            const summary = computeAchievements(myVictories);
-            return (
-              <PageSection
-                icon={<CandyIcon name="star" className="h-4 w-4" />}
-                title={ACHIEVEMENTS_COPY.sectionTitle}
-                description={ACHIEVEMENTS_COPY.sectionDescription(summary.earnedCount, summary.total)}
-              >
-                <AchievementsGrid achievements={summary.list} />
-                {summary.earnedCount === 0 && (
-                  <p
-                    className="mt-3 text-center text-[11px]"
-                    style={{ color: "rgba(110, 65, 15, 0.60)" }}
-                  >
-                    {ACHIEVEMENTS_COPY.emptyHint}
-                  </p>
-                )}
-              </PageSection>
-            );
-          })()}
-
+        const hallOfFameSection = (
           <PageSection
+            key="hall-of-fame"
             icon={<CandyIcon name="trophy" className="h-4 w-4" />}
             title={TROPHY_VITRINE_COPY.hallOfFame}
           >
@@ -237,8 +275,14 @@ export default function TrophiesPage() {
               onRetry={loadHallOfFame}
             />
           </PageSection>
-        </>
-      )}
+        );
+
+        const ordered = isChampion
+          ? [myVictoriesSection, achievementsSection, hallOfFameSection]
+          : [hallOfFameSection, myVictoriesSection, achievementsSection];
+
+        return <>{ordered}</>;
+      })()}
 
       <PageSection
         icon={<CandyIcon name="crown" className="h-4 w-4" />}
