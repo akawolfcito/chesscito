@@ -36,13 +36,11 @@
     --app-max-width: 390px;
     --surface-frosted: rgba(10, 20, 36, 0.92);
     --surface-frosted-solid: #0a1424;
-    /* Warm-brown scrim token — used for inline/contained overlays like
-       promotion-overlay that sit ON TOP of an existing board and must
-       NOT paint the forest bg (arena is its own visual world). Full-
-       screen modal overlays use the .candy-modal-scrim class instead,
-       which bakes in the forest + warm dim so the modal feels at home
-       in the candy-family. */
-    --overlay-scrim: rgba(63, 34, 8, 0.70);
+    /* Scrim token — same ~60% black the Radix Sheet overlay uses, so
+       every dimmer surface (inline promotion-overlay, full-screen
+       modals via .candy-modal-scrim, dock sheets via Radix default)
+       speaks the same visual language. */
+    --overlay-scrim: rgba(0, 0, 0, 0.60);
     --surface-a: rgba(6, 14, 28, 0.95);
     --surface-b: rgba(6, 14, 28, 0.82);
     --surface-b-plus: rgba(6, 14, 28, 0.90);
@@ -342,21 +340,12 @@
      board) still use bg-[var(--overlay-scrim)] directly because they
      MUST NOT repaint the forest over their host surface. */
   .candy-modal-scrim {
-    /* Layer 1 (top): warm-brown tint over everything.
-       Layer 2 (bottom): forest bg-ch covering the whole scrim area,
-       aligned to LEFT TOP so the portrait-mobile viewport samples the
-       left tree band (the default `center` crop zooms into the grass
-       safe-zone and hides the forest entirely on 390px portrait). */
-    background-image:
-      linear-gradient(rgba(63, 34, 8, 0.68), rgba(63, 34, 8, 0.68)),
-      image-set(
-        url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
-        url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
-        url("/art/redesign/bg/bg-ch.png") type("image/png")
-      );
-    background-size: cover;
-    background-position: left top;
-    background-repeat: no-repeat;
+    /* Matches the Radix SheetOverlay the dock sheets use
+       (`bg-black/60`). One scrim language across every overlay in
+       the app — modals and sheets both dim the backdrop to the same
+       60% black so the only difference between them is the card
+       shell, never the scrim. */
+    background-color: rgba(0, 0, 0, 0.60);
   }
 
   /* ── Candy-light sheet backgrounds ──
