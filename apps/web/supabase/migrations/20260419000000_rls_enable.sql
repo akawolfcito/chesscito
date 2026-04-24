@@ -1,0 +1,3 @@
+-- Baseline migration — captured retrospectively.
+-- Row Level Security enabled across user-facing tables on 2026-04-19.
+-- Already applied; placeholder for tracking alignment.
