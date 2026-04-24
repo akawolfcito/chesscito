@@ -22,6 +22,7 @@ import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData } from
 import { ARENA_COPY, COACH_COPY, DOCK_LABELS } from "@/lib/content/editorial";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { hasAnyPieceProgress } from "@/lib/game/has-progress";
+import { usePrizePoolBalance } from "@/lib/contracts/use-prize-pool";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
@@ -82,6 +83,8 @@ export default function ArenaPage() {
   useEffect(() => {
     setSoftGateOpen(!hasAnyPieceProgress());
   }, []);
+
+  const prizePool = usePrizePoolBalance(chainId);
 
   // Preparing state (loading between difficulty selection and game start)
   const [isPreparing, setIsPreparing] = useState(false);
@@ -802,6 +805,10 @@ export default function ArenaPage() {
                     }
                   : undefined
               }
+              prizePool={{
+                formatted: prizePool.formatted,
+                isLoading: prizePool.isLoading,
+              }}
             />
           )}
           {game.errorMessage && (

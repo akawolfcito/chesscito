@@ -507,6 +507,13 @@ export const ARENA_COPY = {
   softGateBody: "Learn a piece in under 2 minutes, then challenge the AI.",
   softGateLearn: "Learn a piece",
   softGateEnter: "Jump into Arena",
+  /** Prize pool surface — shown above the difficulty picker on direct
+   *  /arena entry. Communicates what the 20% mint-fee cut becomes,
+   *  transparently acknowledging distribution is not yet live. */
+  prizePoolLabel: "Community prize pool",
+  prizePoolLoading: "Loading pool…",
+  prizePoolUnavailable: "Pool unavailable",
+  prizePoolSoonHint: "Distribution v2 coming — 20% of every Victory mint",
   aiError: "AI disconnected",
   aiTimeout: "AI timed out",
   engineError: "Engine error — please restart the match",

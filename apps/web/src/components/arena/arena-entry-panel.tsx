@@ -2,6 +2,7 @@
 
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { CandyBanner } from "@/components/redesign/candy-banner";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import type { ArenaDifficulty } from "@/lib/game/types";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
@@ -25,6 +26,12 @@ type Props = {
   softGate?: {
     onLearn: () => void;
     onDismiss: () => void;
+  };
+  /** Live prize pool balance rendered as a transparent "coming soon"
+   *  pill. Caller owns the read (usePrizePoolBalance). Omit to hide. */
+  prizePool?: {
+    formatted: string | null;
+    isLoading: boolean;
   };
 };
 
@@ -56,6 +63,7 @@ export function ArenaEntryPanel({
   onBack,
   bare = false,
   softGate,
+  prizePool,
 }: Props) {
   const shellStyle = bare
     ? undefined
@@ -176,6 +184,42 @@ export function ArenaEntryPanel({
             >
               {ARENA_COPY.softGateEnter}
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Prize pool pill — transparent communication about the 20%
+          mint-fee cut. No hype, no promises: shows the live balance
+          plus an honest "distribution v2 coming" hint. */}
+      {prizePool && (
+        <div
+          className="flex items-center gap-2 rounded-full px-3 py-1.5"
+          style={{
+            background: "rgba(255, 245, 215, 0.45)",
+            border: "1px solid rgba(110, 65, 15, 0.25)",
+          }}
+          aria-label={ARENA_COPY.prizePoolLabel}
+        >
+          <CandyIcon name="trophy" className="h-4 w-4 shrink-0" />
+          <div className="flex min-w-0 flex-1 flex-col leading-tight">
+            <span
+              className="text-[0.7rem] font-bold"
+              style={{ color: "rgba(63, 34, 8, 0.95)" }}
+            >
+              {ARENA_COPY.prizePoolLabel}
+              {" · "}
+              <span className="tabular-nums">
+                {prizePool.isLoading
+                  ? ARENA_COPY.prizePoolLoading
+                  : prizePool.formatted ?? ARENA_COPY.prizePoolUnavailable}
+              </span>
+            </span>
+            <span
+              className="text-[0.6rem]"
+              style={{ color: "rgba(110, 65, 15, 0.70)" }}
+            >
+              {ARENA_COPY.prizePoolSoonHint}
+            </span>
           </div>
         </div>
       )}
