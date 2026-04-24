@@ -89,7 +89,7 @@ export function VictoryCelebration({
           onClose={onBackToHub}
           closeLabel={ARENA_COPY.backToHub}
           cta={
-            <div className="flex w-full flex-col gap-2.5">
+            <div className="flex w-full flex-col gap-2.5 animate-in fade-in duration-300 fill-mode-both [animation-delay:600ms]">
               {onClaimVictory && (
                 <Button
                   type="button"
@@ -140,10 +140,12 @@ export function VictoryCelebration({
               </div>
             </div>
 
-            {/* Emotion headline — big, first, emotional. The stats line
-                below carries context; this line carries the feeling. */}
+            {/* Emotion headline — big, first, emotional. Spring-slams
+                in via the shared .victory-text-slam animation (400ms
+                --ease-spring). The stats line below carries context;
+                this line carries the feeling. */}
             <h3
-              className="fantasy-title text-3xl font-extrabold leading-tight"
+              className="fantasy-title victory-text-slam text-3xl font-extrabold leading-tight"
               style={{
                 color: "rgba(110, 65, 15, 0.95)",
                 textShadow: "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 6px rgba(245, 158, 11, 0.35)",
@@ -154,13 +156,17 @@ export function VictoryCelebration({
                 : VICTORY_CELEBRATION_COPY.headlineWin}
             </h3>
 
-            {/* Performance summary — secondary after the headline */}
-            <p className="text-sm" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
+            {/* Performance summary — secondary after the headline,
+                fades in on --duration-enter after the headline lands. */}
+            <p
+              className="text-sm animate-in fade-in duration-300 fill-mode-both [animation-delay:400ms]"
+              style={{ color: "rgba(110, 65, 15, 0.75)" }}
+            >
               {performanceLine}
             </p>
 
-            {/* Stats — 3 mini-cards */}
-            <div className="flex w-full gap-2">
+            {/* Stats — 3 mini-cards, enter after the performance line */}
+            <div className="flex w-full gap-2 animate-in fade-in slide-in-from-bottom-1 duration-300 fill-mode-both [animation-delay:500ms]">
               <PaperStatCard
                 icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
                 value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty}
