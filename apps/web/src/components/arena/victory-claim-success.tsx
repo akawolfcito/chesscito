@@ -44,7 +44,7 @@ export function VictoryClaimSuccess({
 
   return (
     <div
-      className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay-scrim)] animate-in fade-in duration-300"
+      className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300"
       role="alert"
       aria-live="assertive"
     >

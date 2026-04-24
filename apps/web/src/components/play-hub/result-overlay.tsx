@@ -227,7 +227,7 @@ export function ResultOverlay({
 
   return (
     <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
+      className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -349,7 +349,7 @@ export function BadgeEarnedPrompt({
 
   return (
     <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
+      className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="badge-earned-title"
@@ -464,7 +464,7 @@ export function PieceCompletePrompt({
 
   return (
     <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
+      className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={PIECE_COMPLETE_COPY.title}

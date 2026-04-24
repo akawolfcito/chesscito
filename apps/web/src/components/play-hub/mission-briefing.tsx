@@ -36,7 +36,7 @@ export function MissionBriefing({
   return (
     /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
     <div
-      className={`fixed inset-0 z-40 flex items-center justify-center bg-[var(--overlay-scrim)] transition-opacity duration-300 ${exiting ? "opacity-0" : "animate-in fade-in duration-300"}`}
+      className={`fixed inset-0 z-40 flex items-center justify-center candy-modal-scrim transition-opacity duration-300 ${exiting ? "opacity-0" : "animate-in fade-in duration-300"}`}
       aria-modal="true"
       role="dialog"
       aria-labelledby="mission-briefing-objective"

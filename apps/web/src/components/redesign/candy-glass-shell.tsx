@@ -28,7 +28,7 @@ type CandyGlassShellProps = {
  * mission-detail, arena difficulty selector, result overlays, and
  * arena end-state celebrations.
  *
- * Compose inside a `fixed inset-0 bg-[var(--overlay-scrim)]` scrim
+ * Compose inside a `fixed inset-0 candy-modal-scrim` scrim
  * wrapper for modal-over-game presentations.
  */
 export function CandyGlassShell({

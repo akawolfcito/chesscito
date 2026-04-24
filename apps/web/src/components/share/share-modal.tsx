@@ -45,7 +45,7 @@ export function ShareModal({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex flex-col items-center justify-end bg-[var(--overlay-scrim)] animate-in fade-in duration-200"
+      className="fixed inset-0 z-[70] flex flex-col items-center justify-end candy-modal-scrim animate-in fade-in duration-200"
       onClick={() => onOpenChange(false)}
       onKeyDown={(e) => {
         if (e.key === "Escape") onOpenChange(false);

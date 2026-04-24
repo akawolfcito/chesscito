@@ -999,7 +999,7 @@ export default function PlayHubPage() {
 
         {unlockedPiece && !resultOverlay && (
           <div
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] animate-in fade-in duration-250"
+            className="fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-250"
             role="dialog"
             aria-modal="true"
           >

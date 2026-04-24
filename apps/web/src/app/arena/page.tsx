@@ -900,7 +900,7 @@ export default function ArenaPage() {
       {ENABLE_COACH && (
         <>
           {coachPhase === "welcome" && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] animate-in fade-in duration-300 px-4">
+            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300 px-4">
               <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
                   title={COACH_COPY.welcomeTitle}
@@ -925,7 +925,7 @@ export default function ArenaPage() {
             </div>
           )}
           {coachPhase === "loading" && coachJobId && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-[var(--overlay-scrim)] animate-in fade-in duration-300 px-4">
+            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300 px-4">
               <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
                   title="Coach"
@@ -947,7 +947,7 @@ export default function ArenaPage() {
             </div>
           )}
           {coachPhase === "result" && coachResponse && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] animate-in fade-in duration-300 px-4 py-8">
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto candy-modal-scrim animate-in fade-in duration-300 px-4 py-8">
               <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
                   title={COACH_COPY.coachAnalysisTitle}
@@ -969,7 +969,7 @@ export default function ArenaPage() {
             </div>
           )}
           {coachPhase === "fallback" && coachFallbackResponse && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] animate-in fade-in duration-300 px-4 py-8">
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto candy-modal-scrim animate-in fade-in duration-300 px-4 py-8">
               <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
                   title={COACH_COPY.quickReviewTitle}
@@ -1003,7 +1003,7 @@ export default function ArenaPage() {
             />
           )}
           {coachPhase === "history" && address && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto bg-[var(--overlay-scrim)] animate-in fade-in duration-300 px-4 py-8">
+            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto candy-modal-scrim animate-in fade-in duration-300 px-4 py-8">
               <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
                   title={COACH_COPY.yourSessions}
