@@ -8,6 +8,10 @@ const PAGES = [
   { path: "/arena", name: "arena" },
   { path: "/trophies", name: "trophies" },
   { path: "/about", name: "about" },
+  // Victory #1 — first on-chain mint on Celo mainnet. If the contract
+  // read fails locally (missing NEXT_PUBLIC_VICTORY_NFT_ADDRESS), the
+  // page hits notFound() and we still capture the migrated 404 chrome.
+  { path: "/victory/1", name: "victory-page" },
 ];
 
 // Bottom sheets opened from the play-hub dock
