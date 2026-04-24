@@ -114,9 +114,16 @@ private/
 # AI-tool config directories
 .agents/
 .claude/projects/
+.claude/skills/
 .cursor/
 .gemini/
 .superpowers/
+
+# Session handoff notes — personal, not project
+SESSION.md
+
+# Supabase CLI temp artifacts
+**/.temp/
 
 # BMAD agent workspace
 _bmad/
