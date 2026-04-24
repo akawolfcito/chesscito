@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { LegalPageShell } from "@/components/legal-page-shell";
+import { TrophyPageShell } from "@/components/trophies/trophy-page-shell";
 import { PageSection } from "@/components/redesign/page-section";
 import { CandyChip } from "@/components/redesign/candy-chip";
 import { Button } from "@/components/ui/button";
@@ -145,7 +145,7 @@ export default function TrophiesPage() {
   }, [isConnected, address, loadMyVictories]);
 
   return (
-    <LegalPageShell
+    <TrophyPageShell
       title={TROPHY_VITRINE_COPY.pageTitle}
       subtitle={TROPHY_VITRINE_COPY.pageDescription}
       backHref="/"
@@ -282,6 +282,6 @@ export default function TrophiesPage() {
           ))}
         </ul>
       </PageSection>
-    </LegalPageShell>
+    </TrophyPageShell>
   );
 }
