@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { ERROR_PAGE_COPY } from "@/lib/content/editorial";
+import { track } from "@/lib/telemetry";
 
 export default function PlayHubError({
   error,
@@ -9,6 +11,10 @@ export default function PlayHubError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    track("error_boundary_shown", { scope: "root", digest: error.digest ?? null });
+  }, [error.digest]);
+
   return (
     <div
       className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-6 text-center"

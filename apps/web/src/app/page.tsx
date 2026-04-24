@@ -467,8 +467,18 @@ export default function PlayHubPage() {
     if (isTarget) {
       hapticSuccess();
       setPhase("success");
-      setElapsedMs(timerStart.current > 0 ? Date.now() - timerStart.current : 1000);
+      const elapsed = timerStart.current > 0 ? Date.now() - timerStart.current : 1000;
+      setElapsedMs(elapsed);
       completeExercise(movesCount);
+      track("exercise_complete", {
+        piece: selectedPiece,
+        exercise_id: currentExercise.id,
+        moves: movesCount,
+        optimal_moves: currentExercise.optimalMoves,
+        elapsed_ms: elapsed,
+        is_capture: Boolean(currentExercise.isCapture),
+        is_replay: isReplay,
+      });
 
       // On last exercise: check if badge is earned (including this completion)
       if (isLastExercise && !isReplay) {
@@ -507,6 +517,12 @@ export default function PlayHubPage() {
     if (currentExercise.optimalMoves === 1) {
       hapticReject();
       setPhase("failure");
+      track("exercise_fail", {
+        piece: selectedPiece,
+        exercise_id: currentExercise.id,
+        moves: movesCount,
+        is_capture: Boolean(currentExercise.isCapture),
+      });
       autoReset.schedule(() => resetBoard(), 1500);
     }
   }
@@ -540,6 +556,7 @@ export default function PlayHubPage() {
 
     setLastError(null);
     setClaimingPiece(targetPiece);
+    track("badge_claim_tx", { stage: "start", piece: targetPiece });
 
     try {
       const signed = await requestSignature("/api/sign-badge", {
@@ -558,6 +575,7 @@ export default function PlayHubPage() {
 
       hapticSuccess();
       setClaimTxHash(txHash);
+      track("badge_claim_tx", { stage: "success", piece: targetPiece });
       setJustClaimed(prev => ({ ...prev, [targetPiece]: true }));
       void refetchAllBadges();
       // Queue unlock celebration for the next piece
@@ -573,9 +591,13 @@ export default function PlayHubPage() {
       });
       console.info("[MiniPayTx] result", { label: "claim-badge", txHash, levelId: Number(claimLevelId) });
     } catch (error) {
-      if (isUserCancellation(error)) return;
+      if (isUserCancellation(error)) {
+        track("badge_claim_tx", { stage: "cancelled", piece: targetPiece });
+        return;
+      }
       const message = toErrorMessage(error);
       setLastError(message);
+      track("badge_claim_tx", { stage: "error", piece: targetPiece, error_kind: classifyTxError(error) });
       setResultOverlay({
         variant: "error",
         errorMessage: classifyTxError(error),
@@ -593,6 +615,7 @@ export default function PlayHubPage() {
     }
 
     setLastError(null);
+    track("score_submit_tx", { stage: "start", piece: selectedPiece });
 
     try {
       const signed = await requestSignature("/api/sign-score", {
@@ -613,6 +636,7 @@ export default function PlayHubPage() {
 
       hapticSuccess();
       setSubmitTxHash(txHash);
+      track("score_submit_tx", { stage: "success", piece: selectedPiece });
       setResultOverlay({
         variant: "score",
         txHash,
@@ -646,11 +670,13 @@ export default function PlayHubPage() {
       } catch { /* storage unavailable */ }
     } catch (error) {
       if (isUserCancellation(error)) {
+        track("score_submit_tx", { stage: "cancelled", piece: selectedPiece });
         showToast(FOOTER_CTA_COPY.submitCanceled, 2000);
         return;
       }
       const message = toErrorMessage(error);
       setLastError(message);
+      track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: classifyTxError(error) });
       setResultOverlay({
         variant: "error",
         errorMessage: classifyTxError(error),

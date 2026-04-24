@@ -31,6 +31,7 @@ import { CoachPaywall } from "@/components/coach/coach-paywall";
 import { CoachWelcome } from "@/components/coach/coach-welcome";
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { track } from "@/lib/telemetry";
 import type { CoachResponse, BasicCoachResponse, GameRecord } from "@/lib/coach/types";
 import { getConfiguredChainId, getVictoryNFTAddress, getShopAddress } from "@/lib/contracts/chains";
 import { hapticImpact, hapticSuccess } from "@/lib/haptics";
@@ -389,6 +390,12 @@ export default function ArenaPage() {
     setClaimPhase("claiming");
     setClaimStep("signing");
     setClaimError(null);
+    track("victory_claim_tx", {
+      stage: "start",
+      difficulty: game.difficulty,
+      moves: game.moveCount,
+      elapsed_ms: game.elapsedMs,
+    });
     try {
       // 1. Get server signature
       const res = await fetch("/api/sign-victory", {
@@ -502,6 +509,11 @@ export default function ArenaPage() {
       hapticSuccess();
       setClaimPhase("success");
       setClaimError(null);
+      track("victory_claim_tx", {
+        stage: "success",
+        difficulty: game.difficulty,
+        has_token_id: Boolean(extractedTokenId),
+      });
 
       // Write-through to Supabase (fire-and-forget)
       void fetch("/api/cache-victory", {
@@ -536,19 +548,27 @@ export default function ArenaPage() {
       const raw = err instanceof Error ? err.message : "Claim failed";
       const isUserCancel = /user (rejected|denied|cancelled)|ACTION_REJECTED/i.test(raw);
       if (isUserCancel) {
+        track("victory_claim_tx", { stage: "cancelled" });
         setClaimPhase("ready");
         claimingRef.current = false;
         return;
       }
       // Sanitize error — map known patterns to user-friendly messages
-      const friendly = /expired/i.test(raw) ? "Signature expired — tap to get a fresh one"
-        : /insufficient/i.test(raw) ? "Insufficient balance"
-        : /network/i.test(raw) ? "Network error — check your connection"
-        : /timeout/i.test(raw) ? "Request timed out — try again"
-        : /revert/i.test(raw) ? "Transaction reverted"
+      const errorKind = /expired/i.test(raw) ? "expired"
+        : /insufficient/i.test(raw) ? "insufficient_balance"
+        : /network/i.test(raw) ? "network"
+        : /timeout/i.test(raw) ? "timeout"
+        : /revert/i.test(raw) ? "revert"
+        : "unknown";
+      const friendly = errorKind === "expired" ? "Signature expired — tap to get a fresh one"
+        : errorKind === "insufficient_balance" ? "Insufficient balance"
+        : errorKind === "network" ? "Network error — check your connection"
+        : errorKind === "timeout" ? "Request timed out — try again"
+        : errorKind === "revert" ? "Transaction reverted"
         : "Something went wrong — try again";
       setClaimError(friendly);
       setClaimPhase("error");
+      track("victory_claim_tx", { stage: "error", error_kind: errorKind });
     } finally {
       claimingRef.current = false;
     }
@@ -627,11 +647,37 @@ export default function ArenaPage() {
       localStorage.setItem(LAST_DIFFICULTY_KEY, game.difficulty);
     } catch { /* storage full / disabled — harmless */ }
 
+    track("arena_game_start", {
+      difficulty: game.difficulty,
+      player_color: game.playerColor,
+    });
+
     // The actual delay + startGame transition lives in the isPreparing
     // useEffect above — keeps the timer lifecycle compatible with
     // Strict Mode's mount→unmount→remount cycle.
     setIsPreparing(true);
   }, [game]);
+
+  // arena_game_end — fires once per transition into a terminal state.
+  const endTrackedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const terminal = ["checkmate", "stalemate", "draw", "resigned"];
+    if (!terminal.includes(game.status)) {
+      endTrackedRef.current = null;
+      return;
+    }
+    const key = `${game.status}:${game.moveCount}:${game.elapsedMs}`;
+    if (endTrackedRef.current === key) return;
+    endTrackedRef.current = key;
+    track("arena_game_end", {
+      status: game.status,
+      is_player_win: isPlayerWin,
+      difficulty: game.difficulty,
+      player_color: game.playerColor,
+      moves: game.moveCount,
+      elapsed_ms: game.elapsedMs,
+    });
+  }, [game.status, game.moveCount, game.elapsedMs, game.difficulty, game.playerColor, isPlayerWin]);
 
   // Auto-launch on mount. Priority order:
   //   1. sessionStorage "chesscito:arena-intent" — just landed from

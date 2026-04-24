@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import { track } from "@/lib/telemetry";
+
 export default function VictoryError({
   error,
   reset,
@@ -7,6 +10,10 @@ export default function VictoryError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    track("error_boundary_shown", { scope: "victory", digest: error.digest ?? null });
+  }, [error.digest]);
+
   return (
     <div
       className="mx-auto flex min-h-[100dvh] w-full max-w-[var(--app-max-width)] flex-col items-center justify-center gap-4 px-6 text-center"
