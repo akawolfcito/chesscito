@@ -93,17 +93,12 @@ export default async function VictoryPage({ params }: { params: { id: string } }
   if (!v) notFound();
 
   return (
-    <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width)] flex-col items-center justify-center arena-bg px-6 animate-in fade-in duration-500">
+    <main
+      className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center animate-in fade-in duration-500"
+    >
       <div
-        className="relative flex w-full max-w-[340px] flex-col items-center overflow-hidden rounded-3xl border-2 px-6 pb-8 pt-10 animate-in fade-in slide-in-from-bottom-4 duration-500"
-        style={{
-          background: "rgba(255, 255, 255, 0.18)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          borderColor: "rgba(251, 191, 36, 0.65)",
-          boxShadow:
-            "0 0 40px rgba(251, 191, 36, 0.22), inset 0 0 0 1px rgba(255, 245, 215, 0.45)",
-        }}
+        className="candy-page-panel flex w-full max-w-[var(--app-max-width)] flex-col items-center rounded-t-3xl px-6 pb-8 pt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
+        style={{ background: "var(--paper-bg)" }}
       >
         {/* Trophy spotlight — warm amber glow behind the trophy */}
         <div
@@ -111,22 +106,20 @@ export default async function VictoryPage({ params }: { params: { id: string } }
           className="pointer-events-none absolute inset-x-0 top-0 h-48"
           style={{
             background:
-              "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(251,191,36,0.28) 0%, rgba(251,191,36,0) 70%)",
+              "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(245, 158, 11, 0.28) 0%, rgba(245, 158, 11, 0) 70%)",
           }}
         />
 
-        {/* Trophy */}
         <div className="relative z-10">
           <VictoryTrophy />
         </div>
 
-        {/* Title */}
         <h1
-          className="fantasy-title relative z-10 mb-2 text-3xl font-bold"
+          className="fantasy-title relative z-10 mb-2 mt-2 text-3xl font-bold text-center"
           style={{
             color: "rgba(110, 65, 15, 0.98)",
             textShadow:
-              "0 1px 0 rgba(255, 235, 180, 0.80), 0 2px 6px rgba(120, 65, 5, 0.35)",
+              "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 6px rgba(120, 65, 5, 0.35)",
           }}
         >
           {ARENA_DIFFICULTIES.has(v.difficultyRaw)
@@ -134,7 +127,6 @@ export default async function VictoryPage({ params }: { params: { id: string } }
             : VICTORY_PAGE_COPY.metaComplete(v.moves)}
         </h1>
 
-        {/* Stats */}
         <div
           className="relative z-10 mb-3 flex gap-3 text-sm font-semibold"
           style={{ color: "rgba(110, 65, 15, 0.80)" }}
@@ -146,7 +138,6 @@ export default async function VictoryPage({ params }: { params: { id: string } }
           <span>{v.player}</span>
         </div>
 
-        {/* Tagline for new visitors */}
         <p
           className="relative z-10 mb-4 text-center text-xs"
           style={{ color: "rgba(110, 65, 15, 0.65)" }}
@@ -154,9 +145,8 @@ export default async function VictoryPage({ params }: { params: { id: string } }
           {VICTORY_PAGE_COPY.tagline}
         </p>
 
-        {/* Challenge line */}
         <p
-          className="relative z-10 mb-8 text-lg font-extrabold"
+          className="relative z-10 mb-8 text-lg font-extrabold text-center"
           style={{
             color: "rgba(120, 65, 5, 0.95)",
             textShadow: "0 1px 0 rgba(255, 245, 215, 0.70)",
@@ -165,18 +155,23 @@ export default async function VictoryPage({ params }: { params: { id: string } }
           {VICTORY_PAGE_COPY.challengeLine}
         </p>
 
-        {/* CTA */}
         <Link
           href="/arena"
-          className="relative z-10 w-full rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 py-3 text-center text-sm font-bold text-[rgba(63,34,8,0.95)] shadow-[0_0_18px_rgba(251,191,36,0.35)] transition-all hover:shadow-[0_0_26px_rgba(251,191,36,0.55)] active:scale-[0.97]"
+          className="relative z-10 w-full rounded-2xl py-3 text-center text-sm font-extrabold transition-all active:scale-[0.97]"
+          style={{
+            background: "rgb(120, 65, 5)",
+            color: "rgb(255, 240, 180)",
+            boxShadow:
+              "0 4px 12px rgba(120, 65, 5, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
+          }}
         >
           {VICTORY_PAGE_COPY.acceptChallenge}
         </Link>
 
         <Link
           href="/"
-          className="relative z-10 mt-3 flex min-h-[44px] items-center px-3 text-sm transition-colors hover:opacity-80"
-          style={{ color: "rgba(110, 65, 15, 0.65)" }}
+          className="relative z-10 mt-3 flex min-h-[44px] items-center px-3 text-sm font-semibold underline underline-offset-2 transition-colors hover:opacity-80"
+          style={{ color: "rgba(110, 65, 15, 0.70)" }}
         >
           {VICTORY_PAGE_COPY.backToHub}
         </Link>

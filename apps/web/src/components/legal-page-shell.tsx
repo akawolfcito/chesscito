@@ -3,11 +3,14 @@ import { CandyBanner } from "@/components/redesign/candy-banner";
 
 type LegalPageShellProps = {
   title: string;
+  /** Optional one-line description under the title. Used by /trophies
+   *  and other pages that want a subtitle; legal pages omit it. */
+  subtitle?: string;
   backHref?: string;
   children: React.ReactNode;
 };
 
-export function LegalPageShell({ title, backHref = "/about", children }: LegalPageShellProps) {
+export function LegalPageShell({ title, subtitle, backHref = "/about", children }: LegalPageShellProps) {
   return (
     <div className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center">
       <div
@@ -25,9 +28,16 @@ export function LegalPageShell({ title, backHref = "/about", children }: LegalPa
           >
             <CandyBanner name="btn-back" className="h-8 w-8" />
           </Link>
-          <h1 className="fantasy-title text-xl font-bold" style={{ color: "var(--paper-text)" }}>
-            {title}
-          </h1>
+          <div>
+            <h1 className="fantasy-title text-xl font-bold" style={{ color: "var(--paper-text)" }}>
+              {title}
+            </h1>
+            {subtitle ? (
+              <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+                {subtitle}
+              </p>
+            ) : null}
+          </div>
         </header>
         <div
           className="flex-1 space-y-6 px-5 pb-8 pt-6 text-sm leading-relaxed"

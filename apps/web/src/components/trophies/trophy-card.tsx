@@ -2,27 +2,23 @@
 
 import { useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CandyChip } from "@/components/redesign/candy-chip";
 import { DIFFICULTY_LABELS, TROPHY_VITRINE_COPY, VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
-const DIFFICULTY_CHIP: Record<number, { className: string }> = {
-  1: { className: "bg-emerald-500/25 text-emerald-800" },
-  2: { className: "bg-amber-500/30 text-amber-800" },
-  3: { className: "bg-rose-500/25 text-rose-800" },
+// Three warm-brown accent tints for the top-3 rank border — light,
+// medium, deep. Uses the same palette as every other candy-light
+// surface: no amber/slate/orange one-offs.
+const RANK_SHADOW: Record<number, string> = {
+  1: "inset 0 1px 2px rgba(255,245,215,0.55), 0 0 10px rgba(245, 158, 11, 0.22)",
+  2: "inset 0 1px 2px rgba(255,245,215,0.55), 0 0 8px rgba(217, 180, 74, 0.18)",
+  3: "inset 0 1px 2px rgba(255,245,215,0.55), 0 0 8px rgba(190, 18, 60, 0.16)",
 };
 
-const UNKNOWN_CHIP = { className: "bg-[rgba(110,65,15,0.18)] text-[rgba(63,34,8,0.85)]" };
-
-const DIFFICULTY_TINT: Record<number, string> = {
-  1: "border-l-emerald-500/60",
-  2: "border-l-amber-500/70",
-  3: "border-l-purple-500/60",
-};
-
-const RANK_ACCENT: Record<number, string> = {
-  1: "border-amber-500/55 shadow-[inset_0_1px_2px_rgba(255,245,215,0.55),0_0_10px_rgba(251,191,36,0.20)]",
-  2: "border-slate-400/55 shadow-[inset_0_1px_2px_rgba(255,245,215,0.55),0_0_8px_rgba(148,163,184,0.18)]",
-  3: "border-orange-600/55 shadow-[inset_0_1px_2px_rgba(255,245,215,0.55),0_0_8px_rgba(234,88,12,0.18)]",
+const DIFFICULTY_VARIANT: Record<number, "success" | "warm" | "danger"> = {
+  1: "success", // easy = muted success green
+  2: "warm",    // medium = warm brown
+  3: "danger",  // hard = muted rose
 };
 
 function formatTimeMs(ms: number): string {
@@ -52,11 +48,10 @@ type Props = {
 
 export function TrophyCard({ entry, variant, rank }: Props) {
   const [toast, setToast] = useState<string | null>(null);
-  const chip = DIFFICULTY_CHIP[entry.difficulty] ?? UNKNOWN_CHIP;
   const difficultyLabel = DIFFICULTY_LABELS[entry.difficulty] ?? "???";
+  const chipVariant = DIFFICULTY_VARIANT[entry.difficulty] ?? "warm";
   const isHoF = variant === "hall-of-fame";
-  const accentClass = rank && rank <= 3 ? RANK_ACCENT[rank] : "border-[rgba(110,65,15,0.25)] shadow-[inset_0_1px_2px_rgba(255,245,215,0.45)]";
-  const difficultyTint = DIFFICULTY_TINT[entry.difficulty] ?? "";
+  const rankShadow = rank && rank <= 3 ? RANK_SHADOW[rank] : "inset 0 1px 2px rgba(255,245,215,0.45)";
 
   const victoryUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/victory/${entry.tokenId}`;
 
@@ -78,11 +73,12 @@ export function TrophyCard({ entry, variant, rank }: Props) {
 
   return (
     <div
-      className={[
-        "rounded-xl border border-l-2 bg-white/15 px-3 py-2.5",
-        accentClass,
-        difficultyTint,
-      ].join(" ")}
+      className="rounded-xl px-3 py-2.5"
+      style={{
+        background: "rgba(255, 255, 255, 0.18)",
+        border: "1px solid rgba(110, 65, 15, 0.25)",
+        boxShadow: rankShadow,
+      }}
     >
       <div className="flex items-center gap-2">
         {isHoF && rank ? (
@@ -98,15 +94,19 @@ export function TrophyCard({ entry, variant, rank }: Props) {
         ) : (
           <CandyIcon name="trophy" className="h-4 w-4 shrink-0" />
         )}
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-extrabold leading-none ${chip.className}`}
-        >
+        <CandyChip variant={chipVariant} tone="subtle">
           {difficultyLabel}
-        </span>
-        <span className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+        </CandyChip>
+        <span
+          className="text-xs"
+          style={{ color: "rgba(110, 65, 15, 0.70)" }}
+        >
           {TROPHY_VITRINE_COPY.nftIdPrefix} #{String(entry.tokenId)}
         </span>
-        <span className="ml-auto text-xs" style={{ color: "var(--paper-text-muted)" }}>
+        <span
+          className="ml-auto text-xs"
+          style={{ color: "rgba(110, 65, 15, 0.70)" }}
+        >
           {formatDate(entry.timestamp)}
         </span>
       </div>
@@ -126,7 +126,10 @@ export function TrophyCard({ entry, variant, rank }: Props) {
 
         <span className="ml-auto">
           {isHoF ? (
-            <span className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+            <span
+              className="text-xs"
+              style={{ color: "rgba(110, 65, 15, 0.70)" }}
+            >
               {truncateAddress(entry.player)}
             </span>
           ) : (
@@ -144,7 +147,10 @@ export function TrophyCard({ entry, variant, rank }: Props) {
       </div>
 
       {toast && (
-        <p className="mt-1 text-center text-xs font-bold text-emerald-700 animate-in fade-in duration-200">
+        <p
+          className="mt-1 text-center text-xs font-bold animate-in fade-in duration-200"
+          style={{ color: "rgba(6, 95, 70, 0.95)" }}
+        >
           {toast}
         </p>
       )}

@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { CandyBanner } from "@/components/redesign/candy-banner";
+import { LegalPageShell } from "@/components/legal-page-shell";
+import { PageSection } from "@/components/redesign/page-section";
+import { CandyChip } from "@/components/redesign/candy-chip";
+import { Button } from "@/components/ui/button";
 import { TrophyList } from "@/components/trophies/trophy-list";
 import { AchievementsGrid } from "@/components/trophies/achievements-grid";
 import { getVictoryAddress } from "@/lib/game/victory-events";
@@ -28,10 +31,10 @@ function toVictoryEntry(row: ApiVictoryRow): VictoryEntry {
     player: row.player,
     difficulty: row.difficulty,
     totalMoves: row.totalMoves,
-    timeMs: row.timeMs,
     blockNumber: 0n,
     logIndex: 0,
     timestamp: row.timestamp,
+    timeMs: row.timeMs,
   };
 }
 
@@ -142,196 +145,143 @@ export default function TrophiesPage() {
   }, [isConnected, address, loadMyVictories]);
 
   return (
-    <div className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center">
-    <div
-      className="candy-page-panel mx-auto flex w-full max-w-[var(--app-max-width)] flex-col rounded-t-3xl"
-      style={{ background: "var(--paper-bg)" }}
+    <LegalPageShell
+      title={TROPHY_VITRINE_COPY.pageTitle}
+      subtitle={TROPHY_VITRINE_COPY.pageDescription}
+      backHref="/"
     >
-      {/* Header — warm chrome on cream; grass-forest scene bleeds through
-          the candy-page-panel radial gradients baked into globals.css. */}
-      <header
-        className="relative flex min-h-[96px] max-h-[120px] items-end border-b px-4 pb-4 pt-4 rounded-t-3xl"
-        style={{ borderColor: "rgba(110, 65, 15, 0.30)" }}
-      >
-        <div className="relative z-10 flex items-center gap-3">
-          <Link
-            href="/"
-            className="flex h-11 w-11 shrink-0 items-center justify-center"
-            aria-label={TROPHY_VITRINE_COPY.pageTitle}
+      {!configured && (
+        <p className="py-6 text-center text-sm" style={{ color: "var(--paper-text-muted)" }}>
+          {TROPHY_VITRINE_COPY.configError}
+        </p>
+      )}
+
+      {configured && (
+        <>
+          <PageSection
+            icon={<CandyIcon name="crown" className="h-4 w-4" />}
+            title={TROPHY_VITRINE_COPY.myVictories}
           >
-            <CandyBanner name="btn-back" className="h-8 w-8" />
-          </Link>
-          <div>
-            <h1
-              className="fantasy-title text-xl font-bold"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              {TROPHY_VITRINE_COPY.pageTitle}
-            </h1>
-            <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
-              {TROPHY_VITRINE_COPY.pageDescription}
-            </p>
-          </div>
-        </div>
-      </header>
-
-      {/* List zone — cream parchment backing */}
-      <div className="flex-1 px-4 pt-4 pb-8" style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom))" }}>
-        {!configured && (
-          <p className="py-6 text-center text-sm" style={{ color: "var(--paper-text-muted)" }}>
-            {TROPHY_VITRINE_COPY.configError}
-          </p>
-        )}
-
-        {configured && (
-          <>
-            {/* My Victories */}
-            <section className="mb-6">
-              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-label-gold)]" style={{ textShadow: "var(--text-shadow-label)" }}>
-                <CandyIcon name="crown" className="h-4 w-4" />
-                {TROPHY_VITRINE_COPY.myVictories}
-              </h2>
-
-              {!isConnected ? (
-                <div className="flex flex-col items-center gap-3 py-4">
-                  <p className="text-center text-sm" style={{ color: "var(--paper-text-muted)" }}>
-                    {TROPHY_VITRINE_COPY.connectWallet}
-                  </p>
-                  <button
-                    onClick={() => openConnectModal?.()}
-                    className="min-h-[44px] rounded-xl px-6 py-2 text-sm font-extrabold transition-all active:scale-[0.97]"
-                    style={{
-                      background: "rgba(245, 158, 11, 0.22)",
-                      boxShadow: "inset 0 0 0 1px rgba(245, 158, 11, 0.55)",
-                      color: "rgba(120, 65, 5, 0.95)",
-                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                    }}
-                  >
-                    {TROPHY_VITRINE_COPY.connectWalletButton}
-                  </button>
-                </div>
-              ) : (
-                <TrophyList
-                  victories={myVictories}
-                  loading={myLoading}
-                  error={myError}
-                  emptyMessage={TROPHY_VITRINE_COPY.noVictories}
-                  variant="victory"
-                  onRetry={loadMyVictories}
-                />
-              )}
-
-              {isConnected && myVictories?.length === 0 && !myLoading && !myError && (
-                <Link
-                  href="/arena"
-                  className="mt-3 flex min-h-[44px] items-center justify-center rounded-2xl px-6 text-center text-sm font-extrabold transition-all active:scale-[0.97]"
-                  style={{
-                    background: "rgba(34, 211, 238, 0.22)",
-                    boxShadow: "inset 0 0 0 1px rgba(34, 211, 238, 0.50)",
-                    color: "rgba(22, 78, 99, 0.95)",
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                  }}
+            {!isConnected ? (
+              <div className="flex flex-col items-center gap-3 py-4">
+                <p className="text-center text-sm" style={{ color: "var(--paper-text-muted)" }}>
+                  {TROPHY_VITRINE_COPY.connectWallet}
+                </p>
+                <Button
+                  type="button"
+                  variant="game-primary"
+                  size="game-sm"
+                  onClick={() => openConnectModal?.()}
                 >
-                  {TROPHY_VITRINE_COPY.arenaLink}
-                </Link>
-              )}
-            </section>
-
-            {/* Achievements (feature #23) — derived from Victory NFT data. */}
-            {(() => {
-              const summary = computeAchievements(myVictories);
-              return (
-                <section className="mb-6">
-                  <h2 className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-label-gold)]" style={{ textShadow: "var(--text-shadow-label)" }}>
-                    <CandyIcon name="star" className="h-4 w-4" />
-                    {ACHIEVEMENTS_COPY.sectionTitle}
-                  </h2>
-                  <p className="mb-3 text-[11px]" style={{ color: "var(--paper-text-muted)" }}>
-                    {ACHIEVEMENTS_COPY.sectionDescription(summary.earnedCount, summary.total)}
-                  </p>
-                  <AchievementsGrid achievements={summary.list} />
-                  {summary.earnedCount === 0 && (
-                    <p className="mt-3 text-center text-[11px]" style={{ color: "var(--paper-text-subtle)" }}>
-                      {ACHIEVEMENTS_COPY.emptyHint}
-                    </p>
-                  )}
-                </section>
-              );
-            })()}
-
-            {/* Hall of Fame */}
-            <section className="mb-6">
-              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-label-gold)]" style={{ textShadow: "var(--text-shadow-label)" }}>
-                <CandyIcon name="trophy" className="h-4 w-4" />
-                {TROPHY_VITRINE_COPY.hallOfFame}
-              </h2>
-
+                  {TROPHY_VITRINE_COPY.connectWalletButton}
+                </Button>
+              </div>
+            ) : (
               <TrophyList
-                victories={hallOfFame}
-                loading={hofLoading}
-                error={hofError}
-                emptyMessage={TROPHY_VITRINE_COPY.noGlobalVictories}
-                variant="hall-of-fame"
-                onRetry={loadHallOfFame}
+                victories={myVictories}
+                loading={myLoading}
+                error={myError}
+                emptyMessage={TROPHY_VITRINE_COPY.noVictories}
+                variant="victory"
+                onRetry={loadMyVictories}
               />
-            </section>
-          </>
-        )}
+            )}
 
-        {/* Roadmap (feature #23) — always visible, non-speculative. */}
-        <section className="mt-auto">
-          <h2 className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-label-gold)]" style={{ textShadow: "var(--text-shadow-label)" }}>
-            <CandyIcon name="crown" className="h-4 w-4" />
-            {ROADMAP_COPY.sectionTitle}
-          </h2>
-          <p className="mb-3 text-[11px]" style={{ color: "var(--paper-text-muted)" }}>
-            {ROADMAP_COPY.sectionDescription}
-          </p>
-          <ul className="flex flex-col gap-2" role="list">
-            {ROADMAP_COPY.items.map((item) => (
-              <li
-                key={item.title}
-                className="rounded-2xl px-3 py-2.5"
+            {isConnected && myVictories?.length === 0 && !myLoading && !myError && (
+              <Link
+                href="/arena"
+                className="mt-3 flex min-h-[44px] items-center justify-center rounded-2xl px-6 text-center text-sm font-extrabold transition-all active:scale-[0.97]"
                 style={{
-                  background: "rgba(139, 92, 246, 0.15)",
-                  boxShadow: "inset 0 0 0 1px rgba(139, 92, 246, 0.40)",
+                  background: "rgba(255, 245, 215, 0.55)",
+                  border: "1px solid rgba(110, 65, 15, 0.28)",
+                  color: "rgba(110, 65, 15, 0.95)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
                 }}
               >
-                <div className="flex items-center gap-2">
+                {TROPHY_VITRINE_COPY.arenaLink}
+              </Link>
+            )}
+          </PageSection>
+
+          {(() => {
+            const summary = computeAchievements(myVictories);
+            return (
+              <PageSection
+                icon={<CandyIcon name="star" className="h-4 w-4" />}
+                title={ACHIEVEMENTS_COPY.sectionTitle}
+                description={ACHIEVEMENTS_COPY.sectionDescription(summary.earnedCount, summary.total)}
+              >
+                <AchievementsGrid achievements={summary.list} />
+                {summary.earnedCount === 0 && (
                   <p
-                    className="text-xs font-extrabold uppercase tracking-wider"
-                    style={{
-                      color: "rgba(55, 16, 120, 0.95)",
-                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                    }}
+                    className="mt-3 text-center text-[11px]"
+                    style={{ color: "rgba(110, 65, 15, 0.60)" }}
                   >
-                    {item.title}
+                    {ACHIEVEMENTS_COPY.emptyHint}
                   </p>
-                  <span
-                    className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider"
-                    style={{
-                      background: "rgba(139, 92, 246, 0.85)",
-                      color: "rgba(255, 240, 215, 0.98)",
-                    }}
-                  >
-                    {ROADMAP_COPY.soonTag}
-                  </span>
-                </div>
+                )}
+              </PageSection>
+            );
+          })()}
+
+          <PageSection
+            icon={<CandyIcon name="trophy" className="h-4 w-4" />}
+            title={TROPHY_VITRINE_COPY.hallOfFame}
+          >
+            <TrophyList
+              victories={hallOfFame}
+              loading={hofLoading}
+              error={hofError}
+              emptyMessage={TROPHY_VITRINE_COPY.noGlobalVictories}
+              variant="hall-of-fame"
+              onRetry={loadHallOfFame}
+            />
+          </PageSection>
+        </>
+      )}
+
+      <PageSection
+        icon={<CandyIcon name="crown" className="h-4 w-4" />}
+        title={ROADMAP_COPY.sectionTitle}
+        description={ROADMAP_COPY.sectionDescription}
+      >
+        <ul className="flex flex-col gap-2" role="list">
+          {ROADMAP_COPY.items.map((item) => (
+            <li
+              key={item.title}
+              className="rounded-2xl px-3 py-2.5"
+              style={{
+                background: "rgba(255, 245, 215, 0.55)",
+                border: "1px solid rgba(110, 65, 15, 0.22)",
+                boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.65)",
+              }}
+            >
+              <div className="flex items-center gap-2">
                 <p
-                  className="mt-1 text-[11px] leading-tight"
-                  style={{ color: "rgba(75, 40, 130, 0.85)" }}
+                  className="text-xs font-extrabold uppercase tracking-wider"
+                  style={{
+                    color: "rgba(110, 65, 15, 0.95)",
+                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                  }}
                 >
-                  {item.description}
+                  {item.title}
                 </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-    </div>
-    </div>
+                <span className="ml-auto">
+                  <CandyChip variant="warm" tone="solid">
+                    {ROADMAP_COPY.soonTag}
+                  </CandyChip>
+                </span>
+              </div>
+              <p
+                className="mt-1 text-[11px] leading-tight"
+                style={{ color: "rgba(110, 65, 15, 0.75)" }}
+              >
+                {item.description}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </PageSection>
+    </LegalPageShell>
   );
 }

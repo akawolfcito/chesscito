@@ -30,12 +30,20 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
 
   return (
     <li
-      className={[
-        "flex min-h-[88px] flex-col rounded-2xl border px-3 py-2.5 transition-all",
+      className="flex min-h-[88px] flex-col rounded-2xl px-3 py-2.5 transition-all"
+      style={
         earned
-          ? "border-amber-400/70 bg-amber-400/25 shadow-[0_0_14px_rgba(251,191,36,0.25)]"
-          : "border-[rgba(110,65,15,0.20)] bg-white/15",
-      ].join(" ")}
+          ? {
+              background: "rgba(245, 158, 11, 0.22)",
+              border: "1px solid rgba(245, 158, 11, 0.55)",
+              boxShadow: "0 0 14px rgba(245, 158, 11, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.65)",
+            }
+          : {
+              background: "rgba(255, 255, 255, 0.18)",
+              border: "1px solid rgba(110, 65, 15, 0.22)",
+              boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+            }
+      }
       aria-label={`${copy.title} — ${earned ? ACHIEVEMENTS_COPY.earnedLabel : ACHIEVEMENTS_COPY.lockedLabel}`}
     >
       <div className="flex items-center gap-2">
@@ -43,7 +51,7 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
           name={earned ? "trophy" : "lock"}
           className={[
             "h-4 w-4",
-            earned ? "drop-shadow-[0_0_4px_rgba(251,191,36,0.5)]" : "opacity-55",
+            earned ? "drop-shadow-[0_0_4px_rgba(245,158,11,0.45)]" : "opacity-55",
           ].join(" ")}
         />
         <p
