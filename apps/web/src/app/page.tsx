@@ -48,6 +48,8 @@ import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/compone
 import { BadgeSheet } from "@/components/play-hub/badge-sheet";
 import { ArenaEntrySheet } from "@/components/play-hub/arena-entry-sheet";
 import { CandyBanner } from "@/components/redesign/candy-banner";
+import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { Button } from "@/components/ui/button";
 import { buildExerciseFen, toAlgebraic } from "@/lib/og/exercise-fen";
 import { classifyTxError, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
@@ -1019,38 +1021,55 @@ export default function PlayHubPage() {
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex w-full max-w-xs flex-col items-center gap-5 rounded-3xl border border-white/[0.06] bg-[var(--surface-frosted)] px-6 py-10 text-center backdrop-blur-2xl animate-in zoom-in-95 fade-in duration-350">
-              <div className="relative flex items-center justify-center">
-                <div className="pointer-events-none absolute h-36 w-36">
-                  <LottieAnimation src="/animations/sparkle-burst.lottie" loop={false} className="h-full w-full" />
-                </div>
-                <picture className="relative z-10 h-20 w-20">
-                  {THEME_CONFIG.hasOptimizedFormats && (
-                    <>
-                      <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.avif`} type="image/avif" />
-                      <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.webp`} type="image/webp" />
-                    </>
-                  )}
-                  <img src={`${PIECE_IMAGES[unlockedPiece]}.png`} alt={PIECE_LABELS[unlockedPiece]} className="h-full w-full object-contain drop-shadow-[0_0_16px_rgba(217,180,74,0.5)]" />
-                </picture>
-              </div>
-              <h2 className="fantasy-title text-2xl text-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]">
-                {UNLOCK_COPY.title(PIECE_LABELS[unlockedPiece])}
-              </h2>
-              <p className="text-sm text-cyan-100/50">
-                {TUTORIAL_COPY[unlockedPiece]}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setUnlockedPiece(null);
-                  setSelectedPiece(unlockedPiece);
-                  resetBoard();
-                }}
-                className="flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 text-sm font-bold text-white shadow-[0_0_16px_rgba(245,158,11,0.3),inset_0_1px_0_rgba(255,255,255,0.10)] transition-all active:scale-[0.97] active:shadow-none active:brightness-90"
+            <div className="relative z-10 mx-4 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+              <CandyGlassShell
+                title={UNLOCK_COPY.title(PIECE_LABELS[unlockedPiece])}
+                onClose={() => setUnlockedPiece(null)}
+                closeLabel="Close"
+                cta={
+                  <Button
+                    type="button"
+                    variant="game-primary"
+                    size="game"
+                    autoFocus
+                    onClick={() => {
+                      setUnlockedPiece(null);
+                      setSelectedPiece(unlockedPiece);
+                      resetBoard();
+                    }}
+                    className="w-full"
+                  >
+                    {UNLOCK_COPY.cta(PIECE_LABELS[unlockedPiece])}
+                  </Button>
+                }
               >
-                {UNLOCK_COPY.cta(PIECE_LABELS[unlockedPiece])}
-              </button>
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <div className="relative flex items-center justify-center">
+                    <div className="pointer-events-none absolute h-36 w-36">
+                      <LottieAnimation src="/animations/sparkle-burst.lottie" loop={false} className="h-full w-full" />
+                    </div>
+                    <div className="absolute h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.28)_0%,rgba(217,180,74,0.12)_50%,transparent_75%)]" />
+                    <picture className="relative z-10 h-20 w-20">
+                      {THEME_CONFIG.hasOptimizedFormats && (
+                        <>
+                          <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.avif`} type="image/avif" />
+                          <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.webp`} type="image/webp" />
+                        </>
+                      )}
+                      <img src={`${PIECE_IMAGES[unlockedPiece]}.png`} alt={PIECE_LABELS[unlockedPiece]} className="h-full w-full object-contain drop-shadow-[0_4px_12px_rgba(120,65,5,0.35)]" />
+                    </picture>
+                  </div>
+                  <p
+                    className="text-sm"
+                    style={{
+                      color: "rgba(110, 65, 15, 0.85)",
+                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                    }}
+                  >
+                    {TUTORIAL_COPY[unlockedPiece]}
+                  </p>
+                </div>
+              </CandyGlassShell>
             </div>
           </div>
         )}
@@ -1097,9 +1116,18 @@ export default function PlayHubPage() {
           </details>
         ) : null}
         <div
-          className={`fixed bottom-24 left-1/2 z-[70] -translate-x-1/2 rounded-2xl border border-white/[0.08] bg-[var(--surface-frosted)] px-4 py-2.5 text-sm text-cyan-100/80 backdrop-blur-xl transition-all duration-200 ${
+          className={`fixed bottom-24 left-1/2 z-[70] -translate-x-1/2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
             toastVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"
           }`}
+          style={{
+            background: "rgba(255, 255, 255, 0.85)",
+            border: "1px solid rgba(255, 255, 255, 0.45)",
+            color: "rgba(110, 65, 15, 0.95)",
+            textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
+            boxShadow: "0 4px 14px rgba(120, 65, 5, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+          }}
         >
           {toast ?? displayedToast.current}
         </div>

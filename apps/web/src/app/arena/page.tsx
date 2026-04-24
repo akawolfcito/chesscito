@@ -740,7 +740,16 @@ export default function ArenaPage() {
             />
           )}
           {game.errorMessage && (
-            <div className="mx-6 mt-2 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-2.5 text-center text-sm text-rose-300">
+            <div
+              className="mx-6 mt-2 rounded-2xl px-4 py-2.5 text-center text-sm font-semibold"
+              style={{
+                background: "rgba(255, 255, 255, 0.18)",
+                border: "1px solid rgba(190, 18, 60, 0.35)",
+                color: "rgba(159, 18, 57, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                backdropFilter: "blur(6px)",
+              }}
+            >
               {game.errorMessage}
             </div>
           )}
@@ -818,12 +827,33 @@ export default function ArenaPage() {
 
         {/* Error banner */}
         {game.errorMessage && (
-          <div className="mx-3 mt-2 flex items-center justify-center gap-3 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-2.5">
-            <span className="text-sm text-rose-300">{game.errorMessage}</span>
+          <div
+            className="mx-3 mt-2 flex items-center justify-center gap-3 rounded-2xl px-4 py-2.5"
+            style={{
+              background: "rgba(255, 255, 255, 0.18)",
+              border: "1px solid rgba(190, 18, 60, 0.35)",
+              backdropFilter: "blur(6px)",
+              boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+            }}
+          >
+            <span
+              className="text-sm font-semibold"
+              style={{
+                color: "rgba(159, 18, 57, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
+            >
+              {game.errorMessage}
+            </span>
             <button
               type="button"
               onClick={game.reset}
-              className="shrink-0 min-h-[44px] rounded-xl bg-rose-500/20 px-3 text-xs font-semibold text-rose-300 transition-all hover:bg-rose-500/30 active:scale-[0.97]"
+              className="shrink-0 min-h-[44px] rounded-xl px-3 text-xs font-semibold transition-all active:scale-[0.97]"
+              style={{
+                background: "rgba(190, 18, 60, 0.15)",
+                color: "rgba(159, 18, 57, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
             >
               {ARENA_COPY.restartMatch}
             </button>

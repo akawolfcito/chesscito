@@ -48,8 +48,8 @@ type FlashConfig = { text: string; accent: string };
 
 const PHASE_FLASH: Record<MissionPanelProps["phase"], FlashConfig | null> = {
   ready: null,
-  success: { text: PHASE_FLASH_COPY.success, accent: "text-emerald-300" },
-  failure: { text: PHASE_FLASH_COPY.failure, accent: "text-rose-300" },
+  success: { text: PHASE_FLASH_COPY.success, accent: "rgb(4, 120, 87)" },
+  failure: { text: PHASE_FLASH_COPY.failure, accent: "rgb(159, 18, 57)" },
 };
 
 function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
@@ -80,7 +80,7 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
 
   return (
     <div
-      className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/60 transition-opacity duration-400 ${fading ? "opacity-0" : "opacity-100"}`}
+      className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-[var(--overlay-scrim)] transition-opacity duration-400 ${fading ? "opacity-0" : "opacity-100"}`}
     >
       <div className="flex flex-col items-center gap-4 animate-in zoom-in-90 duration-300">
         <div className="relative flex items-center justify-center">
@@ -96,14 +96,15 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
               src="/art/favicon-wolf.png"
               alt=""
               aria-hidden="true"
-              className="h-20 w-20 drop-shadow-[var(--accent-drop-shadow)]"
+              className="h-20 w-20 drop-shadow-[0_4px_12px_rgba(120,65,5,0.45)]"
             />
           </picture>
         </div>
         <span
-          className={`fantasy-title victory-text-slam text-3xl ${flash.accent}`}
+          className="fantasy-title victory-text-slam text-3xl font-extrabold"
           style={{
-            textShadow: phase === "success" ? "var(--text-shadow-hero-emerald)" : "var(--text-shadow-hero-rose)",
+            color: flash.accent,
+            textShadow: "0 2px 0 rgba(255, 245, 215, 0.80)",
           }}
         >
           {flash.text}
