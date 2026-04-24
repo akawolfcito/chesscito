@@ -284,48 +284,43 @@ export default function TrophiesPage() {
         return <>{ordered}</>;
       })()}
 
-      <PageSection
-        icon={<CandyIcon name="crown" className="h-4 w-4" />}
-        title={ROADMAP_COPY.sectionTitle}
-        description={ROADMAP_COPY.sectionDescription}
+      {/* Roadmap — footer register. Demoted from full PageSection so
+          it reads as transparency, not a competing surface. Smaller
+          type, thinner dividers, no big icon heading. */}
+      <footer
+        className="mt-2 border-t pt-4"
+        style={{ borderColor: "var(--paper-divider)" }}
       >
-        <ul className="flex flex-col gap-2" role="list">
+        <p
+          className="mb-2 text-[11px] font-semibold uppercase tracking-widest"
+          style={{ color: "rgba(110, 65, 15, 0.60)" }}
+        >
+          {ROADMAP_COPY.sectionTitle}
+        </p>
+        <ul className="flex flex-col gap-1.5" role="list">
           {ROADMAP_COPY.items.map((item) => (
             <li
               key={item.title}
-              className="rounded-2xl px-3 py-2.5"
-              style={{
-                background: "rgba(255, 245, 215, 0.55)",
-                border: "1px solid rgba(110, 65, 15, 0.22)",
-                boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.65)",
-              }}
+              className="flex items-baseline gap-2 text-[11px] leading-tight"
             >
-              <div className="flex items-center gap-2">
-                <p
-                  className="text-xs font-extrabold uppercase tracking-wider"
-                  style={{
-                    color: "rgba(110, 65, 15, 0.95)",
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                  }}
-                >
-                  {item.title}
-                </p>
-                <span className="ml-auto">
-                  <CandyChip variant="warm" tone="solid">
-                    {ROADMAP_COPY.soonTag}
-                  </CandyChip>
-                </span>
-              </div>
-              <p
-                className="mt-1 text-[11px] leading-tight"
-                style={{ color: "rgba(110, 65, 15, 0.75)" }}
+              <span
+                className="font-bold"
+                style={{ color: "rgba(110, 65, 15, 0.80)" }}
               >
-                {item.description}
-              </p>
+                {item.title}
+              </span>
+              <span style={{ color: "rgba(110, 65, 15, 0.55)" }}>
+                · {item.description}
+              </span>
+              <span className="ml-auto shrink-0">
+                <CandyChip variant="warm" tone="subtle">
+                  {ROADMAP_COPY.soonTag}
+                </CandyChip>
+              </span>
             </li>
           ))}
         </ul>
-      </PageSection>
+      </footer>
     </TrophyPageShell>
   );
 }
