@@ -10,7 +10,6 @@ test.describe("Secondary pages — boot cleanly", () => {
   for (const [path, expectedHeading] of [
     ["/about", /About/i],
     ["/support", /Support/i],
-    ["/trophies", /Trophies|Hall of Fame/i],
     ["/privacy", /Privacy/i],
     ["/terms", /Terms/i],
   ] as const) {

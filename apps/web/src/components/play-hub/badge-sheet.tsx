@@ -170,6 +170,9 @@ type BadgeSheetProps = {
   isClaimBusy: boolean;
   claimingPiece?: PieceId | null;
   showNotification: boolean;
+  /** Switch to the Trophies sheet. Parent closes this sheet and opens
+   *  the trophy drawer in-place — no route navigation. */
+  onNavigateToTrophies: () => void;
 };
 
 export function BadgeSheet({
@@ -180,6 +183,7 @@ export function BadgeSheet({
   isClaimBusy,
   claimingPiece = null,
   showNotification,
+  onNavigateToTrophies,
 }: BadgeSheetProps) {
   // Initialize synchronously from localStorage to avoid progress bar flashing from 0%
   const [starsByPiece, setStarsByPiece] = useState<Record<PieceId, number[]>>(() =>
@@ -282,10 +286,10 @@ export function BadgeSheet({
           ))}
         </div>
         <div className="shrink-0">
-          <Link
-            href="/trophies"
-            onClick={() => onOpenChange(false)}
-            className="mt-4 flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold transition hover:bg-amber-500/30"
+          <button
+            type="button"
+            onClick={onNavigateToTrophies}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold transition hover:bg-amber-500/30 active:scale-[0.98]"
             style={{
               background: "rgba(245, 158, 11, 0.22)",
               color: "rgba(120, 65, 5, 0.95)",
@@ -295,7 +299,7 @@ export function BadgeSheet({
           >
             <CandyIcon name="trophy" className="h-5 w-5" />
             {BADGE_SHEET_COPY.viewTrophies}
-          </Link>
+          </button>
           <Link
             href="/about"
             onClick={() => onOpenChange(false)}

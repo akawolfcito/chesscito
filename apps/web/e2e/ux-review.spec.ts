@@ -5,7 +5,6 @@ import { test, expect } from "@playwright/test";
 const ROUTES = [
   { path: "/", name: "play-hub", wait: "networkidle" as const },
   { path: "/arena", name: "arena", wait: "networkidle" as const },
-  { path: "/trophies", name: "trophies", wait: "domcontentloaded" as const },
   { path: "/about", name: "about", wait: "networkidle" as const },
   { path: "/terms", name: "terms", wait: "networkidle" as const },
   { path: "/privacy", name: "privacy", wait: "networkidle" as const },
@@ -91,13 +90,14 @@ test("stars display: check star counter visibility", async ({ page }) => {
   await page.screenshot({ path: "e2e-results/play-hub-stars.png" });
 });
 
-test("trophies: hall of fame loads or shows empty state", async ({ page }) => {
-  await page.goto("/trophies", {
-    waitUntil: "domcontentloaded",
-    timeout: 15_000,
-  });
+test("trophies sheet: opens from dock and loads without crash", async ({ page }) => {
+  await page.goto("/", { waitUntil: "networkidle", timeout: 15_000 });
 
-  // Wait for content to settle (async fetch)
+  // Trophies is now a bottom sheet opened from the persistent dock —
+  // not a standalone route. Open it via the dock tab label.
+  await page.getByRole("button", { name: "Trophies" }).first().click();
+
+  // Wait for sheet content to settle (async fetch)
   await page.waitForTimeout(3_000);
 
   // Should either show trophy cards or empty/loading state — not crash

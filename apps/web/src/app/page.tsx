@@ -872,6 +872,7 @@ export default function PlayHubPage() {
                   isClaimBusy={isClaimBusy}
                   claimingPiece={claimingPiece}
                   showNotification={canSendOnChain && !Boolean(hasClaimedBadge)}
+                  onNavigateToTrophies={() => setActiveDockTab("trophies")}
                 />
               }
               shopControl={
