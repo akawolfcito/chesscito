@@ -36,7 +36,12 @@
     --app-max-width: 390px;
     --surface-frosted: rgba(10, 20, 36, 0.92);
     --surface-frosted-solid: #0a1424;
-    --overlay-scrim: rgba(0, 0, 0, 0.7);
+    /* Warm-brown scrim keeps the modal blocking (same ~70% density as
+       the old black/70) but lives in the candy palette — the forest
+       bg-ch behind dims to a warm amber-chocolate instead of a hard
+       black void, so centered modals feel like they belong to the
+       same world as the sheets. */
+    --overlay-scrim: rgba(63, 34, 8, 0.70);
     --surface-a: rgba(6, 14, 28, 0.95);
     --surface-b: rgba(6, 14, 28, 0.82);
     --surface-b-plus: rgba(6, 14, 28, 0.90);
