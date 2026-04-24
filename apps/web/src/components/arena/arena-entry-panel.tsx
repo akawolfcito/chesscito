@@ -109,12 +109,18 @@ export function ArenaEntryPanel({
         </div>
       )}
 
-      <p
-        className="text-center text-xs"
-        style={{ color: "rgba(110, 65, 15, 0.70)" }}
-      >
-        {ARENA_COPY.subtitle}
-      </p>
+      {/* Subtitle only rendered in standalone mode — when the panel is
+          embedded in ArenaEntrySheet (bare=true), the Sheet header
+          already carries the subtitle via SheetDescription, so we'd
+          otherwise duplicate "Challenge the AI". */}
+      {!bare && (
+        <p
+          className="text-center text-xs"
+          style={{ color: "rgba(110, 65, 15, 0.70)" }}
+        >
+          {ARENA_COPY.subtitle}
+        </p>
+      )}
 
       {/* Color toggle — Play as White / Black */}
       <div
