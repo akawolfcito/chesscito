@@ -19,9 +19,9 @@ import { LeaderboardSheet } from "@/components/play-hub/leaderboard-sheet";
 import { MissionBriefing } from "@/components/play-hub/mission-briefing";
 import { MissionPanelCandy } from "@/components/play-hub/mission-panel-candy";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
-import Link from "next/link";
 import { ContextualActionSlot } from "@/components/play-hub/contextual-action-slot";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
+import { TrophiesSheet } from "@/components/play-hub/trophies-sheet";
 import { PurchaseConfirmSheet } from "@/components/play-hub/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/play-hub/shop-sheet";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
@@ -39,7 +39,7 @@ import {
 import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
 import { ACCEPTED_TOKENS, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
-import { CAPTURE_COPY, CTA_LABELS, DOCK_LABELS, FOOTER_CTA_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SHOP_ITEM_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
+import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SHOP_ITEM_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
@@ -48,7 +48,6 @@ import { BadgeSheet } from "@/components/play-hub/badge-sheet";
 import { ArenaEntrySheet } from "@/components/play-hub/arena-entry-sheet";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
-import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
 import { classifyTxError, isUserCancellation } from "@/lib/errors";
@@ -131,7 +130,7 @@ export default function PlayHubPage() {
   // a different tab auto-closes the current one rather than stacking.
   // Per-sheet `open` + `onOpenChange` are derived below so the sheet
   // components don't need to know about this refactor.
-  const [activeDockTab, setActiveDockTab] = useState<"badge" | "shop" | "leaderboard" | "arena" | null>(null);
+  const [activeDockTab, setActiveDockTab] = useState<"badge" | "shop" | "trophies" | "leaderboard" | "arena" | null>(null);
   const storeOpen = activeDockTab === "shop";
   const setStoreOpen = (v: boolean) => setActiveDockTab(v ? "shop" : null);
   const leaderboardOpen = activeDockTab === "leaderboard";
@@ -155,6 +154,8 @@ export default function PlayHubPage() {
   const setBadgeSheetOpen = (v: boolean) => setActiveDockTab(v ? "badge" : null);
   const arenaSheetOpen = activeDockTab === "arena";
   const setArenaSheetOpen = (v: boolean) => setActiveDockTab(v ? "arena" : null);
+  const trophiesSheetOpen = activeDockTab === "trophies";
+  const setTrophiesSheetOpen = (v: boolean) => setActiveDockTab(v ? "trophies" : null);
   const [shieldCount, setShieldCount] = useState(0);
   const [claimingPiece, setClaimingPiece] = useState<PieceKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -213,7 +214,7 @@ export default function PlayHubPage() {
   useEffect(() => {
     try {
       const key = sessionStorage.getItem("chesscito:open-sheet");
-      if (key === "badge" || key === "shop" || key === "leaderboard") {
+      if (key === "badge" || key === "shop" || key === "leaderboard" || key === "trophies") {
         setActiveDockTab(key);
       }
       sessionStorage.removeItem("chesscito:open-sheet");
@@ -906,14 +907,10 @@ export default function PlayHubPage() {
                 />
               }
               trophiesControl={
-                <Link
-                  href="/trophies"
-                  role="button"
-                  aria-label={DOCK_LABELS.trophies}
-                  className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
-                >
-                  <CandyIcon name="trophy" className="h-full w-full" />
-                </Link>
+                <TrophiesSheet
+                  open={trophiesSheetOpen}
+                  onOpenChange={setTrophiesSheetOpen}
+                />
               }
             />
           }

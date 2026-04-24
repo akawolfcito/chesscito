@@ -756,7 +756,7 @@ export default function ArenaPage() {
     const navIcon = (
       src: string,
       label: string,
-      sheetKey?: "badge" | "shop" | "leaderboard",
+      sheetKey?: "badge" | "shop" | "leaderboard" | "trophies",
     ) => (
       <Link
         href="/"
@@ -836,10 +836,15 @@ export default function ArenaPage() {
             shopControl={navIcon("/art/shop-menu.png", "Shop", "shop")}
             trophiesControl={
               <Link
-                href="/trophies"
+                href="/"
                 role="button"
                 aria-label={DOCK_LABELS.trophies}
                 className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem("chesscito:open-sheet", "trophies");
+                  } catch { /* storage unavailable */ }
+                }}
               >
                 <CandyIcon name="trophy" className="h-full w-full" />
               </Link>
