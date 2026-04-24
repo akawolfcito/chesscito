@@ -342,6 +342,11 @@
      board) still use bg-[var(--overlay-scrim)] directly because they
      MUST NOT repaint the forest over their host surface. */
   .candy-modal-scrim {
+    /* Layer 1 (top): warm-brown tint over everything.
+       Layer 2 (bottom): forest bg-ch covering the whole scrim area,
+       aligned to LEFT TOP so the portrait-mobile viewport samples the
+       left tree band (the default `center` crop zooms into the grass
+       safe-zone and hides the forest entirely on 390px portrait). */
     background-image:
       linear-gradient(rgba(63, 34, 8, 0.68), rgba(63, 34, 8, 0.68)),
       image-set(
@@ -350,7 +355,7 @@
         url("/art/redesign/bg/bg-ch.png") type("image/png")
       );
     background-size: cover;
-    background-position: top center;
+    background-position: left top;
     background-repeat: no-repeat;
   }
 
