@@ -1392,14 +1392,24 @@
        slot + safe area. */
     height: calc(68px + env(safe-area-inset-bottom, 0px));
     padding: 6px 8px calc(4px + env(safe-area-inset-bottom, 0px));
-    background-color: transparent;
+    /* Solid dark-blue fallback matching the menu-wall tile tone. The
+       menu-wall PNG has transparent alpha near the bottom edge; without
+       this fallback the body's forest bg-ch bleeds through as a lime
+       stripe under the dock. With the fallback, any alpha falls back
+       to the dock's own palette. */
+    background-color: rgb(43, 56, 84);
     background-image: image-set(
       url("/art/redesign/bg/menu-wall.avif") type("image/avif"),
       url("/art/redesign/bg/menu-wall.webp") type("image/webp"),
       url("/art/redesign/bg/menu-wall.png") type("image/png")
     );
-    background-size: cover;
-    background-position: bottom center;
+    /* `100% 100%` stretches the image to fully fill the dock edge-to-
+       edge so any bottom-alpha region is covered by the image pixels
+       themselves rather than relying on the fallback color. The 68px
+       height keeps aspect close enough to the source to avoid visible
+       distortion. */
+    background-size: 100% 100%;
+    background-position: center;
     background-repeat: no-repeat;
     border-top: 0;
     box-shadow: none;
