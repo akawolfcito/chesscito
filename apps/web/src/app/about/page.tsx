@@ -57,7 +57,7 @@ export default function AboutPage() {
           </Link>
         ))}
 
-        {/* Invite / Share — duplicated from dock, not moved */}
+        {/* Invite / Share — primary surface after dock slot was reclaimed for Trophies. */}
         <InviteLink />
       </nav>
     </LegalPageShell>
