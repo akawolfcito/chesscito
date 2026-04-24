@@ -2,6 +2,7 @@
 
 import { ARENA_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { ARENA_PIECE_IMG } from "@/lib/game/arena-utils";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { THEME_CONFIG } from "@/lib/theme";
 
 type PromotionChoice = "q" | "r" | "b" | "n";
@@ -33,7 +34,7 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
     >
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className="flex flex-col items-center gap-3 rounded-2xl border p-5"
+        className="relative flex flex-col items-center gap-3 rounded-2xl border p-5"
         style={{
           background: "rgba(255, 255, 255, 0.18)",
           backdropFilter: "blur(14px)",
@@ -44,6 +45,20 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Explicit dismiss affordance — click-outside still works but
+            on touch the close icon is the discoverable path. */}
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label="Cancel promotion"
+          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full transition-all active:scale-95"
+          style={{
+            background: "rgba(255, 255, 255, 0.30)",
+            border: "1px solid rgba(110, 65, 15, 0.25)",
+          }}
+        >
+          <CandyIcon name="close" className="h-4 w-4" />
+        </button>
         <p
           className="fantasy-title text-sm font-extrabold uppercase tracking-[0.10em]"
           style={{
