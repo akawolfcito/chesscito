@@ -365,6 +365,11 @@ export const VICTORY_CLAIM_COPY = {
 
 export const VICTORY_CELEBRATION_COPY = {
   title: "Victory",
+  /** Emotion headline shown big and first, BEFORE the stats line.
+   *  Games are felt before they're counted — lead with the word the
+   *  player came to hear. */
+  headlineCheckmate: "Checkmate!",
+  headlineWin: "Victory!",
   performanceLine: (moves: number, time: string) =>
     `Solved in ${moves} moves — ${time}`,
   performanceLineCheckmate: (moves: number, time: string) =>

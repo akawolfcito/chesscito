@@ -140,7 +140,21 @@ export function VictoryCelebration({
               </div>
             </div>
 
-            {/* Performance summary */}
+            {/* Emotion headline — big, first, emotional. The stats line
+                below carries context; this line carries the feeling. */}
+            <h3
+              className="fantasy-title text-3xl font-extrabold leading-tight"
+              style={{
+                color: "rgba(110, 65, 15, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 6px rgba(245, 158, 11, 0.35)",
+              }}
+            >
+              {isCheckmate
+                ? VICTORY_CELEBRATION_COPY.headlineCheckmate
+                : VICTORY_CELEBRATION_COPY.headlineWin}
+            </h3>
+
+            {/* Performance summary — secondary after the headline */}
             <p className="text-sm" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
               {performanceLine}
             </p>
