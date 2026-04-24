@@ -544,11 +544,13 @@ export const DOCK_LABELS = {
   arena: "Arena",
   /** Item labels — only rendered when the tab is active so the dock
    *  stays compact + the active state feels like a lift out of the
-   *  bar. */
+   *  bar. Trophies replaced Invite in the primary dock: Invite is a
+   *  transient share action (lives in About + Victory share), while
+   *  Trophies is a retention destination that earns a persistent slot. */
   badge: "Badges",
   shop: "Shop",
+  trophies: "Trophies",
   leaderboard: "Leaders",
-  invite: "Invite",
 } as const;
 
 export const ARENA_CTA_COPY = {

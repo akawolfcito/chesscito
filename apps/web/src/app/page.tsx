@@ -19,8 +19,8 @@ import { LeaderboardSheet } from "@/components/play-hub/leaderboard-sheet";
 import { MissionBriefing } from "@/components/play-hub/mission-briefing";
 import { MissionPanelCandy } from "@/components/play-hub/mission-panel-candy";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
+import Link from "next/link";
 import { ContextualActionSlot } from "@/components/play-hub/contextual-action-slot";
-import { InviteButton } from "@/components/play-hub/invite-button";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
 import { PurchaseConfirmSheet } from "@/components/play-hub/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/play-hub/shop-sheet";
@@ -39,7 +39,7 @@ import {
 import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
 import { ACCEPTED_TOKENS, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
-import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SHOP_ITEM_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
+import { CAPTURE_COPY, CTA_LABELS, DOCK_LABELS, FOOTER_CTA_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SHOP_ITEM_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
@@ -48,8 +48,8 @@ import { BadgeSheet } from "@/components/play-hub/badge-sheet";
 import { ArenaEntrySheet } from "@/components/play-hub/arena-entry-sheet";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
-import { buildExerciseFen, toAlgebraic } from "@/lib/og/exercise-fen";
 import { track } from "@/lib/telemetry";
 import { classifyTxError, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
@@ -905,19 +905,15 @@ export default function PlayHubPage() {
                   }
                 />
               }
-              inviteControl={
-                <InviteButton
-                  cardUrl={(() => {
-                    const fen = buildExerciseFen(selectedPiece, currentExercise.startPos);
-                    const params = new URLSearchParams({
-                      piece: selectedPiece,
-                      fen,
-                      star: toAlgebraic(currentExercise.targetPos),
-                    });
-                    return `/api/og/invite?${params.toString()}`;
-                  })()}
-                  text={`I'm solving a ${selectedPiece} puzzle on Chesscito — come play with me!`}
-                />
+              trophiesControl={
+                <Link
+                  href="/trophies"
+                  role="button"
+                  aria-label={DOCK_LABELS.trophies}
+                  className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
+                >
+                  <CandyIcon name="trophy" className="h-full w-full" />
+                </Link>
               }
             />
           }

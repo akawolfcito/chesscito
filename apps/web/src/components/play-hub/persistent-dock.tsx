@@ -7,13 +7,13 @@ import { DOCK_LABELS } from "@/lib/content/editorial";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { track } from "@/lib/telemetry";
 
-export type DockTab = "badge" | "shop" | "leaderboard" | "arena" | null;
+export type DockTab = "badge" | "shop" | "trophies" | "leaderboard" | "arena" | null;
 
 type PersistentDockProps = {
   badgeControl: ReactNode;
   shopControl: ReactNode;
+  trophiesControl: ReactNode;
   leaderboardControl: ReactNode;
-  inviteControl: ReactNode;
   /** Optional arena sheet trigger. When provided, the center button
    *  opens the arena entry sheet instead of navigating. When omitted
    *  (e.g., from /arena itself) the center falls back to a Link. */
@@ -25,7 +25,7 @@ type PersistentDockProps = {
 };
 
 type ItemProps = {
-  id: "badge" | "shop" | "leaderboard";
+  id: "badge" | "shop" | "trophies" | "leaderboard";
   label: string;
   control: ReactNode;
   activeDockTab: DockTab;
@@ -52,8 +52,8 @@ function DockItem({ id, label, control, activeDockTab }: ItemProps) {
 export function PersistentDock({
   badgeControl,
   shopControl,
+  trophiesControl,
   leaderboardControl,
-  inviteControl,
   arenaControl,
   activeDockTab,
 }: PersistentDockProps) {
@@ -94,14 +94,8 @@ export function PersistentDock({
         </Link>
       )}
 
+      <DockItem id="trophies" label={DOCK_LABELS.trophies} control={trophiesControl} activeDockTab={activeDockTab} />
       <DockItem id="leaderboard" label={DOCK_LABELS.leaderboard} control={leaderboardControl} activeDockTab={activeDockTab} />
-      {/* Invite is a transient share action — no persistent active state. */}
-      <div
-        className="chesscito-dock-item"
-        onClickCapture={() => track("dock_tap", { item: "invite" })}
-      >
-        {inviteControl}
-      </div>
     </nav>
   );
 }

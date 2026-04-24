@@ -19,7 +19,8 @@ import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData } from "@/components/arena/arena-end-state";
-import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
+import { ARENA_COPY, COACH_COPY, DOCK_LABELS } from "@/lib/content/editorial";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
@@ -808,8 +809,17 @@ export default function ArenaPage() {
             activeDockTab={null}
             badgeControl={navIcon("/art/badge-menu.png", "Badges", "badge")}
             shopControl={navIcon("/art/shop-menu.png", "Shop", "shop")}
+            trophiesControl={
+              <Link
+                href="/trophies"
+                role="button"
+                aria-label={DOCK_LABELS.trophies}
+                className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
+              >
+                <CandyIcon name="trophy" className="h-full w-full" />
+              </Link>
+            }
             leaderboardControl={navIcon("/art/leaderboard-menu.png", "Leaderboard", "leaderboard")}
-            inviteControl={navIcon("/art/invite-share-menu.png", "Invite")}
           />
         </div>
       </main>
