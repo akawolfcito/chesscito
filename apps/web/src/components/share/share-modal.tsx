@@ -106,6 +106,15 @@ export function ShareModal({
         }}
       >
         <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] px-5 py-4">
+          <h3
+            className="fantasy-title text-sm font-extrabold uppercase tracking-[0.18em]"
+            style={{
+              color: "rgba(110, 65, 15, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+            }}
+          >
+            {title}
+          </h3>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
@@ -131,19 +140,9 @@ export function ShareModal({
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
-          <h3
-            className="fantasy-title text-sm font-extrabold uppercase tracking-[0.18em]"
-            style={{
-              color: "rgba(110, 65, 15, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-            }}
-          >
-            {title}
-          </h3>
-          <span className="h-10 w-10" aria-hidden="true" />
         </div>
         <div className="px-5 pt-5">
-          <ShareGrid text={text} url={url ?? SHARE_COPY.url} />
+          <ShareGrid text={text} url={url ?? SHARE_COPY.url} cardUrl={cardUrl ?? undefined} />
         </div>
       </div>
     </div>

@@ -9,6 +9,12 @@ type Props = {
   text: string;
   /** URL to share (falls back to SHARE_COPY.url). */
   url?: string;
+  /** Relative or absolute URL to the OG card PNG/JPEG. When present
+   *  the "Copy" tile becomes "Save" (downloads the card image) and
+   *  the "More" tile attaches the card image to navigator.share via
+   *  the Web Share Level 2 `files` payload — letting the OS picker
+   *  forward the actual PNG to Messenger / IG / Telegram. */
+  cardUrl?: string;
 };
 
 type Service = {
@@ -30,10 +36,11 @@ type Service = {
  * (covers Messenger, Instagram, Telegram, etc.). "Copy" puts the text
  * on the clipboard with a toast.
  */
-export function ShareGrid({ text, url }: Props) {
+export function ShareGrid({ text, url, cardUrl }: Props) {
   const shareUrl = url ?? SHARE_COPY.url;
   const payload = `${text}\n${shareUrl}`;
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   async function handleCopy() {
     try {
@@ -43,14 +50,54 @@ export function ShareGrid({ text, url }: Props) {
     } catch { /* silent */ }
   }
 
+  async function fetchCardFile(): Promise<File | null> {
+    if (!cardUrl) return null;
+    try {
+      const res = await fetch(cardUrl);
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      const extension = blob.type.includes("png") ? "png" : "jpg";
+      return new File([blob], `chesscito-${Date.now()}.${extension}`, { type: blob.type });
+    } catch {
+      return null;
+    }
+  }
+
+  async function handleSave() {
+    const file = await fetchCardFile();
+    if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objectUrl);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  }
+
   async function handleNativeShare() {
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({ text, url: shareUrl });
-      } catch { /* user cancelled */ }
+    if (typeof navigator === "undefined" || !navigator.share) {
+      void handleCopy();
       return;
     }
-    void handleCopy();
+    // Try file share first — Web Share Level 2 lets the OS picker
+    // forward the actual PNG to Messenger/IG/Telegram/etc. Fall back
+    // to text+url if the browser can't carry files.
+    if (cardUrl) {
+      const file = await fetchCardFile();
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], text, url: shareUrl });
+          return;
+        } catch { /* user cancelled — fall through */ return; }
+      }
+    }
+    try {
+      await navigator.share({ text, url: shareUrl });
+    } catch { /* user cancelled */ }
   }
 
   const services: Service[] = [
@@ -98,13 +145,27 @@ export function ShareGrid({ text, url }: Props) {
         </svg>
       ),
     },
-    {
-      key: "copy",
-      label: copied ? SHARE_COPY.fallbackCopied : "Copy",
-      background: "rgba(110, 65, 15, 0.18)",
-      onClick: handleCopy,
-      icon: <CandyIcon name="copy" className="h-5 w-5" />,
-    },
+    cardUrl
+      ? {
+          key: "save",
+          label: saved ? "Saved" : "Save",
+          background: "rgba(110, 65, 15, 0.18)",
+          onClick: handleSave,
+          icon: (
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="rgba(110,65,15,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          ),
+        }
+      : {
+          key: "copy",
+          label: copied ? SHARE_COPY.fallbackCopied : "Copy",
+          background: "rgba(110, 65, 15, 0.18)",
+          onClick: handleCopy,
+          icon: <CandyIcon name="copy" className="h-5 w-5" />,
+        },
     {
       key: "more",
       label: "More",
