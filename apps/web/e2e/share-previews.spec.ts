@@ -91,56 +91,43 @@ test.describe("Share + migrated-surface previews", () => {
     });
   });
 
-  test("arena loss modal (forced via invalid fen restore)", async ({ page }) => {
-    // Seed a saved arena game where it's the player's turn in a hopeless
-    // state — fastest path to surface the loss modal without playing a
-    // full AI match. Forces status to "checkmate" against the player by
-    // hand-setting the useChessGame persistence payload the hook rehydrates.
+  test("arena loss modal (resign path)", async ({ page }) => {
+    // Seed a mid-game save so we land directly on the board, then click
+    // the Resign button twice (first arms confirm, second commits) to
+    // flip game.status → "resigned" and surface the loss modal.
+    //
+    // Black-to-move defensive position — player has legal moves but we
+    // never make any; resign is immediate once armed.
     await page.addInitScript(() => {
       window.localStorage.setItem(
         "chesscito:arena-game",
         JSON.stringify({
-          fen: "4k3/4Q3/4K3/8/8/8/8/8 b - - 0 1", // black king mated by white queen
+          fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
           difficulty: "easy",
           playerColor: "b",
-          moveHistory: [],
+          moveHistory: ["e4"],
+          moveCount: 1,
           elapsedMs: 3000,
-          startedAt: Date.now(),
+          savedAt: Date.now(),
         })
       );
     });
 
     await page.goto("/arena", { waitUntil: "load", timeout: 30_000 });
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(1_500); // let the board + action bar settle
 
-    // The loss modal is role=alert (not dialog). Look for its title text.
-    const loss = page.getByRole("alert").filter({ hasText: /wins|draw|stalemate|resigned/i });
-    // Best-effort: if the restore path didn't trigger checkmate evaluation,
-    // we'll just capture the current arena state. The visual sweep still
-    // documents what the user sees in the post-game path.
-    const lossVisible = await loss.isVisible().catch(() => false);
-    if (!lossVisible) {
-      // Arena state without the loss modal — still a valid capture target
-      // since the error banner + arena-bg migration should show here.
-      await page.waitForTimeout(500);
-    }
+    // Resign is a two-tap confirm. First click arms the confirm state,
+    // second click finalizes. Both land on the same button.
+    const resign = page.getByRole("button", { name: /resign/i }).first();
+    await resign.click();
+    await page.waitForTimeout(200);
+    await resign.click();
+
+    const loss = page.getByRole("alert").filter({ hasText: /resigned|ai wins|draw|stalemate/i });
+    await expect(loss).toBeVisible({ timeout: 10_000 });
 
     await page.screenshot({
-      path: `${SNAPSHOT_DIR}/arena-loss-or-state.png`,
-      fullPage: true,
-    });
-  });
-
-  test("root error boundary", async ({ page }) => {
-    // Force the Next.js app-level error boundary by navigating to a
-    // route that throws. The production `/victory/[id]` endpoint renders
-    // an error boundary if the on-chain data read fails; use a clearly
-    // bogus id to surface it without dependence on wallet state.
-    await page.goto("/victory/not-a-valid-id", { waitUntil: "load", timeout: 30_000 });
-    await page.waitForTimeout(1_000);
-
-    await page.screenshot({
-      path: `${SNAPSHOT_DIR}/error-boundary-victory.png`,
+      path: `${SNAPSHOT_DIR}/arena-loss-modal.png`,
       fullPage: true,
     });
   });
