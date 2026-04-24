@@ -494,8 +494,14 @@ export const ARENA_COPY = {
     resigned: "You Resigned",
   },
   playAgain: "Play Again",
-  softGate: "Try learning a piece first?",
-  softGateSkip: "Skip",
+  /** Soft-gate banner shown only on direct /arena entry when the player
+   *  has no recorded piece-path progress. Intent: guide rookies into the
+   *  tutorial without gatekeeping. Two decisive CTAs replace the old
+   *  question + Skip pattern: games don't ask permission to exist. */
+  softGateTitle: "Want a warm-up first?",
+  softGateBody: "Learn a piece in under 2 minutes, then challenge the AI.",
+  softGateLearn: "Learn a piece",
+  softGateEnter: "Jump into Arena",
   aiError: "AI disconnected",
   aiTimeout: "AI timed out",
   engineError: "Engine error — please restart the match",

@@ -19,6 +19,13 @@ type Props = {
    *  a Sheet that already paints its own background (e.g. ArenaEntrySheet
    *  inside sheet-bg-hub). */
   bare?: boolean;
+  /** Render the rookie soft-gate banner above the picker. Caller owns
+   *  the detection (e.g. no recorded piece progress) and the dismiss
+   *  action. Two decisive CTAs — never a question. */
+  softGate?: {
+    onLearn: () => void;
+    onDismiss: () => void;
+  };
 };
 
 const LEVELS: { key: ArenaDifficulty; dot: string }[] = [
@@ -48,6 +55,7 @@ export function ArenaEntryPanel({
   onStart,
   onBack,
   bare = false,
+  softGate,
 }: Props) {
   const shellStyle = bare
     ? undefined
@@ -120,6 +128,56 @@ export function ArenaEntryPanel({
         >
           {ARENA_COPY.subtitle}
         </p>
+      )}
+
+      {/* Rookie soft-gate — two decisive CTAs, no question mark. Only
+          renders when caller opts in. Dismissing keeps the player on
+          this panel so they can still pick difficulty + start. */}
+      {softGate && (
+        <div
+          className="rounded-2xl border px-3 py-2.5"
+          style={{
+            background: "rgba(255, 255, 255, 0.28)",
+            borderColor: "rgba(110, 65, 15, 0.25)",
+            boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+          }}
+        >
+          <p
+            className="text-sm font-extrabold"
+            style={{
+              color: "rgba(63, 34, 8, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+            }}
+          >
+            {ARENA_COPY.softGateTitle}
+          </p>
+          <p
+            className="mt-0.5 text-[0.7rem] leading-snug"
+            style={{ color: "rgba(110, 65, 15, 0.75)" }}
+          >
+            {ARENA_COPY.softGateBody}
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
+            <Button
+              type="button"
+              variant="game-primary"
+              size="game"
+              onClick={softGate.onLearn}
+              className="w-full"
+            >
+              {ARENA_COPY.softGateLearn}
+            </Button>
+            <Button
+              type="button"
+              variant="game-ghost"
+              size="game"
+              onClick={softGate.onDismiss}
+              className="w-full"
+            >
+              {ARENA_COPY.softGateEnter}
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Color toggle — Play as White / Black */}

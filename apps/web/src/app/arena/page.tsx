@@ -21,6 +21,7 @@ import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData } from "@/components/arena/arena-end-state";
 import { ARENA_COPY, COACH_COPY, DOCK_LABELS } from "@/lib/content/editorial";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { hasAnyPieceProgress } from "@/lib/game/has-progress";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
@@ -72,6 +73,15 @@ export default function ArenaPage() {
   const [shareStatus, setShareStatus] = useState<ShareStatus>("locked");
   const [claimError, setClaimError] = useState<string | null>(null);
   const claimingRef = useRef(false);
+
+  /** Soft-gate visibility — rendered above the difficulty picker only
+   *  when the player has no recorded piece-path progress. Starts false
+   *  to avoid SSR/hydration flashing; the effect flips it client-side
+   *  after reading localStorage. */
+  const [softGateOpen, setSoftGateOpen] = useState(false);
+  useEffect(() => {
+    setSoftGateOpen(!hasAnyPieceProgress());
+  }, []);
 
   // Preparing state (loading between difficulty selection and game start)
   const [isPreparing, setIsPreparing] = useState(false);
@@ -784,6 +794,14 @@ export default function ArenaPage() {
               onSelectColor={game.setPlayerColor}
               onStart={handleStartWithLoading}
               onBack={handleBackToHub}
+              softGate={
+                softGateOpen
+                  ? {
+                      onLearn: () => router.push("/"),
+                      onDismiss: () => setSoftGateOpen(false),
+                    }
+                  : undefined
+              }
             />
           )}
           {game.errorMessage && (
