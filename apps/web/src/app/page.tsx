@@ -24,7 +24,6 @@ import { InviteButton } from "@/components/play-hub/invite-button";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
 import { PurchaseConfirmSheet } from "@/components/play-hub/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/play-hub/shop-sheet";
-import { StatusStrip } from "@/components/play-hub/status-strip";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { useSplashLoader } from "@/hooks/use-splash-loader";
@@ -174,8 +173,6 @@ export default function PlayHubPage() {
       toastFadeTimer.current = setTimeout(() => setToast(null), 200);
     }, durationMs);
   }
-  const [qaLevelInput, setQaLevelInput] = useState("2");
-  const [isLocalhost, setIsLocalhost] = useState(false);
   const { showSplash, showBriefing, markOnboarded } = useSplashLoader();
   const [exerciseDrawerOpen, setExerciseDrawerOpen] = useState(false);
   const [justClaimed, setJustClaimed] = useState<Record<PieceKey, boolean>>({
@@ -207,11 +204,6 @@ export default function PlayHubPage() {
   const nextPiece = currentPieceIndex < PIECE_ORDER.length - 1
     ? PIECE_ORDER[currentPieceIndex + 1]
     : null;
-
-  useEffect(() => {
-    const host = window.location.hostname;
-    setIsLocalhost(host === "localhost" || host === "127.0.0.1" || host === "::1");
-  }, []);
 
   // Dock handoff from /arena: if the arena dock wrote a sheet key before
   // navigating here, open that sheet so the user lands on the surface they
@@ -256,17 +248,7 @@ export default function PlayHubPage() {
   const shopAddress = useMemo(() => getShopAddress(chainId), [chainId]);
   const [paymentToken, setPaymentToken] = useState<typeof ACCEPTED_TOKENS[number] | null>(null);
   const feeCurrency = useMemo(() => getMiniPayFeeCurrency(chainId), [chainId]);
-  const defaultLevelId = useMemo(() => getLevelId(selectedPiece), [selectedPiece]);
-  const qaEnabled = useMemo(
-    () => process.env.NEXT_PUBLIC_QA_MODE === "1" && isLocalhost,
-    [isLocalhost]
-  );
-  const qaLevel = useMemo(() => Number.parseInt(qaLevelInput, 10), [qaLevelInput]);
-  const isQaLevelValid = Number.isInteger(qaLevel) && qaLevel >= 1 && qaLevel <= 9999;
-  const levelId = useMemo(
-    () => (qaEnabled ? (isQaLevelValid ? BigInt(qaLevel) : 0n) : defaultLevelId),
-    [defaultLevelId, isQaLevelValid, qaEnabled, qaLevel]
-  );
+  const levelId = useMemo(() => getLevelId(selectedPiece), [selectedPiece]);
   const POINTS_PER_STAR = 100n;
   const score = useMemo(() => BigInt(Math.max(1, totalStars)) * POINTS_PER_STAR, [totalStars]);
 
@@ -1074,47 +1056,6 @@ export default function PlayHubPage() {
           </div>
         )}
 
-        {qaEnabled && !isMiniPay ? (
-          <details className="fixed bottom-2 left-2 right-2 z-30 rounded-xl bg-slate-900/95 px-3 py-2 text-xs text-slate-200 shadow-lg backdrop-blur">
-            <summary className="cursor-pointer list-none font-semibold uppercase tracking-[0.2em] text-cyan-300">
-              QA mode
-            </summary>
-            <div className="mt-2 space-y-2">
-              <label className="block">
-                Level ID override
-                <input
-                  type="number"
-                  min={1}
-                  max={9999}
-                  step={1}
-                  value={qaLevelInput}
-                  onChange={(event) => setQaLevelInput(event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-cyan-600/45 bg-slate-900/90 px-3 py-2 text-sm text-cyan-50"
-                />
-              </label>
-              {!isQaLevelValid ? (
-                <p className="text-rose-300">Use a whole number between 1 and 9999.</p>
-              ) : (
-                <p className="text-emerald-300">{CTA_LABELS.claimBadge} and {CTA_LABELS.submitScore} will use levelId {levelId.toString()}.</p>
-              )}
-              <StatusStrip
-                chainId={chainId}
-                isConnected={isConnected}
-                isCorrectChain={isCorrectChain}
-                missionCompleted={phase === "success"}
-                hasClaimedBadge={hasClaimedBadge}
-                shopTxHash={shopTxHash}
-                claimTxHash={claimTxHash}
-                submitTxHash={submitTxHash}
-                isShopConfirming={isShopConfirming}
-                isClaimConfirming={isClaimConfirming}
-                isSubmitConfirming={isSubmitConfirming}
-                lastError={lastError}
-                txLink={(txHash) => txLink(chainId, txHash)}
-              />
-            </div>
-          </details>
-        ) : null}
         <div
           className={`fixed bottom-24 left-1/2 z-[70] -translate-x-1/2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
             toastVisible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"
