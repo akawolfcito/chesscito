@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { ARENA_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { CandyButton } from "@/components/redesign/candy-button";
@@ -10,6 +11,7 @@ import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { formatTime } from "@/lib/game/arena-utils";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
+import { track } from "@/lib/telemetry";
 import { VictoryCelebration } from "./victory-celebration";
 import { VictoryClaiming } from "./victory-claiming";
 import { VictoryClaimSuccess } from "./victory-claim-success";
@@ -124,6 +126,17 @@ export function ArenaEndState({
   }
 
   const text = getLoseText(status);
+
+  useEffect(() => {
+    if (!text || isPlayerWin) return;
+    track("modal_open", {
+      id: "arena-loss",
+      status,
+      difficulty,
+      moves,
+    });
+  }, [text, isPlayerWin, status, difficulty, moves]);
+
   if (!text) return null;
 
   const time = formatTime(elapsedMs);

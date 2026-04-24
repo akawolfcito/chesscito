@@ -50,6 +50,7 @@ import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { Button } from "@/components/ui/button";
 import { buildExerciseFen, toAlgebraic } from "@/lib/og/exercise-fen";
+import { track } from "@/lib/telemetry";
 import { classifyTxError, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, EXERCISES } from "@/lib/game/exercises";
@@ -562,7 +563,10 @@ export default function PlayHubPage() {
       // Queue unlock celebration for the next piece
       const claimedIndex = PIECE_ORDER.indexOf(targetPiece);
       const nextUnlock = claimedIndex < PIECE_ORDER.length - 1 ? PIECE_ORDER[claimedIndex + 1] : null;
-      if (nextUnlock) setUnlockedPiece(nextUnlock);
+      if (nextUnlock) {
+        setUnlockedPiece(nextUnlock);
+        track("modal_open", { id: "piece-unlocked", piece: nextUnlock });
+      }
       setResultOverlay({
         variant: "badge",
         txHash,

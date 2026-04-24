@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { track } from "@/lib/telemetry";
 import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -44,6 +45,15 @@ export function VictoryCelebration({
 }: Props) {
   const time = formatTime(elapsedMs);
   const [shareOpen, setShareOpen] = useState(false);
+
+  useEffect(() => {
+    track("modal_open", {
+      id: "victory-celebration",
+      difficulty,
+      moves,
+      can_claim: Boolean(onClaimVictory),
+    });
+  }, [difficulty, moves, onClaimVictory]);
   const performanceLine = isCheckmate
     ? VICTORY_CELEBRATION_COPY.performanceLineCheckmate(moves, time)
     : VICTORY_CELEBRATION_COPY.performanceLine(moves, time);

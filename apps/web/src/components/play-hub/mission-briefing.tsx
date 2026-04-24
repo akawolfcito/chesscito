@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { ARENA_COPY, MISSION_BRIEFING_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
 import { Button } from "@/components/ui/button";
+import { track } from "@/lib/telemetry";
 
 type MissionBriefingProps = {
   pieceType: PieceId;
@@ -21,6 +22,10 @@ export function MissionBriefing({
   onPlay,
 }: MissionBriefingProps) {
   const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    track("modal_open", { id: "mission-briefing", piece: pieceType });
+  }, [pieceType]);
 
   const pieceName = PIECE_LABELS[pieceType] ?? pieceType;
   const objective = isCapture

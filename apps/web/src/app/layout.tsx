@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Fredoka } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 import { WalletProvider } from "@/components/wallet-provider"
@@ -60,6 +61,7 @@ export default function RootLayout({
             </WalletProvider>
           </div>
         </div>
+        <Analytics />
       </body>
     </html>
   );

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BADGE_EARNED_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
+import { track } from "@/lib/telemetry";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
@@ -342,6 +343,10 @@ export function BadgeEarnedPrompt({
   const [exiting, setExiting] = useState(false);
   const title = BADGE_EARNED_COPY.title(PIECE_LABELS[pieceType]);
 
+  useEffect(() => {
+    track("modal_open", { id: "badge-earned", piece: pieceType, stars: totalStars });
+  }, [pieceType, totalStars]);
+
   function handleLater() {
     setExiting(true);
     setTimeout(onLater, 250);
@@ -450,6 +455,10 @@ export function PieceCompletePrompt({
   onPracticeAgain,
 }: PieceCompletePromptProps) {
   const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    track("modal_open", { id: "piece-complete", piece: pieceType, stars: totalStars, next_piece: nextPiece ?? null });
+  }, [pieceType, totalStars, nextPiece]);
 
   const subtitle = nextPiece && hasClaimedBadge
     ? PIECE_COMPLETE_COPY.subtitleWithNext(PIECE_LABELS[nextPiece])

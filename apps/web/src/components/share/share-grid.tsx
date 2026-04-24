@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { SHARE_COPY } from "@/lib/content/editorial";
+import { track } from "@/lib/telemetry";
 
 type Props = {
   /** Text to share (typically a challenge/achievement sentence). */
@@ -45,9 +46,12 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(payload);
+      track("share_tile_tap", { tile: "copy", success: true });
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
-    } catch { /* silent */ }
+    } catch {
+      track("share_tile_tap", { tile: "copy", success: false });
+    }
   }
 
   async function fetchCardFile(): Promise<File | null> {
@@ -65,7 +69,10 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
 
   async function handleSave() {
     const file = await fetchCardFile();
-    if (!file) return;
+    if (!file) {
+      track("share_tile_tap", { tile: "save", success: false });
+      return;
+    }
     const objectUrl = URL.createObjectURL(file);
     const a = document.createElement("a");
     a.href = objectUrl;
@@ -74,30 +81,36 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(objectUrl);
+    track("share_tile_tap", { tile: "save", success: true });
     setSaved(true);
     setTimeout(() => setSaved(false), 1800);
   }
 
   async function handleNativeShare() {
     if (typeof navigator === "undefined" || !navigator.share) {
+      track("share_tile_tap", { tile: "more", path: "no_api_fallback_copy" });
       void handleCopy();
       return;
     }
-    // Try file share first — Web Share Level 2 lets the OS picker
-    // forward the actual PNG to Messenger/IG/Telegram/etc. Fall back
-    // to text+url if the browser can't carry files.
     if (cardUrl) {
       const file = await fetchCardFile();
       if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({ files: [file], text, url: shareUrl });
+          track("share_tile_tap", { tile: "more", path: "native_files" });
           return;
-        } catch { /* user cancelled — fall through */ return; }
+        } catch {
+          track("share_tile_tap", { tile: "more", path: "native_files_cancelled" });
+          return;
+        }
       }
     }
     try {
       await navigator.share({ text, url: shareUrl });
-    } catch { /* user cancelled */ }
+      track("share_tile_tap", { tile: "more", path: "native_text_only" });
+    } catch {
+      track("share_tile_tap", { tile: "more", path: "native_text_cancelled" });
+    }
   }
 
   const services: Service[] = [
@@ -216,6 +229,7 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
               rel="noopener noreferrer"
               aria-label={`Share on ${s.label}`}
               className="flex flex-col items-center gap-1.5"
+              onClick={() => track("share_tile_tap", { tile: s.key })}
             >
               {body}
             </a>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { SHARE_COPY } from "@/lib/content/editorial";
 import { ShareGrid } from "@/components/share/share-grid";
+import { track } from "@/lib/telemetry";
 
 type Props = {
   /** Modal visibility. */
@@ -38,8 +39,15 @@ export function ShareModal({
   const [imgLoaded, setImgLoaded] = useState(false);
 
   useEffect(() => {
-    if (!open) setImgLoaded(false);
-  }, [open]);
+    if (!open) {
+      setImgLoaded(false);
+      return;
+    }
+    track("share_modal_open", {
+      title,
+      has_card: Boolean(cardUrl),
+    });
+  }, [open, title, cardUrl]);
 
   if (!open) return null;
 

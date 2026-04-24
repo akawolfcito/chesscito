@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { DOCK_LABELS } from "@/lib/content/editorial";
 import { CandyBanner } from "@/components/redesign/candy-banner";
+import { track } from "@/lib/telemetry";
 
 export type DockTab = "badge" | "shop" | "leaderboard" | "arena" | null;
 
@@ -36,6 +37,7 @@ function DockItem({ id, label, control, activeDockTab }: ItemProps) {
     <div
       className={`chesscito-dock-item${isActive ? " is-active" : ""}`}
       data-dock-id={id}
+      onClickCapture={() => track("dock_tap", { item: id })}
     >
       {control}
       {isActive && (
@@ -66,7 +68,10 @@ export function PersistentDock({
 
       {/* Center — Arena sheet trigger (preferred) or route Link fallback */}
       {arenaControl ? (
-        <div className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}>
+        <div
+          className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
+          onClickCapture={() => track("dock_tap", { item: "arena" })}
+        >
           {arenaControl}
           {isArenaActive && (
             <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
@@ -78,6 +83,7 @@ export function PersistentDock({
         <Link
           href="/arena"
           className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
+          onClick={() => track("dock_tap", { item: "arena" })}
         >
           <CandyBanner name="btn-battle" className="h-9 w-9" />
           {isArenaActive && (
@@ -90,7 +96,12 @@ export function PersistentDock({
 
       <DockItem id="leaderboard" label={DOCK_LABELS.leaderboard} control={leaderboardControl} activeDockTab={activeDockTab} />
       {/* Invite is a transient share action — no persistent active state. */}
-      <div className="chesscito-dock-item">{inviteControl}</div>
+      <div
+        className="chesscito-dock-item"
+        onClickCapture={() => track("dock_tap", { item: "invite" })}
+      >
+        {inviteControl}
+      </div>
     </nav>
   );
 }

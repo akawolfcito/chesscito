@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { track } from "@/lib/telemetry";
 import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -37,6 +38,14 @@ export function VictoryClaimSuccess({
 }: Props) {
   const time = formatTime(elapsedMs);
   const [shareOpen, setShareOpen] = useState(false);
+
+  useEffect(() => {
+    track("modal_open", {
+      id: "victory-claim-success",
+      difficulty,
+      moves,
+    });
+  }, [difficulty, moves]);
 
   const shareUrl = claimData.shareLinkUrl ?? SHARE_COPY.url;
   const challengeText = VICTORY_CLAIM_COPY.challengeText(moves, shareUrl);
