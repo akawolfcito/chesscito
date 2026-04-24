@@ -82,6 +82,22 @@ export function ArenaEndState({
   playerColor,
   onAskCoach,
 }: Props) {
+  /* Hooks must run unconditionally on every render (React rules-of-hooks).
+     Compute `text` here so the effect — and the early-return path below —
+     share the same source. The effect's own guard skips the track() call
+     on win / no-text, preserving previous behavior. */
+  const text = getLoseText(status);
+
+  useEffect(() => {
+    if (!text || isPlayerWin) return;
+    track("modal_open", {
+      id: "arena-loss",
+      status,
+      difficulty,
+      moves,
+    });
+  }, [text, isPlayerWin, status, difficulty, moves]);
+
   if (isPlayerWin) {
     const sharedProps = {
       moves,
@@ -124,18 +140,6 @@ export function ArenaEndState({
         );
     }
   }
-
-  const text = getLoseText(status);
-
-  useEffect(() => {
-    if (!text || isPlayerWin) return;
-    track("modal_open", {
-      id: "arena-loss",
-      status,
-      difficulty,
-      moves,
-    });
-  }, [text, isPlayerWin, status, difficulty, moves]);
 
   if (!text) return null;
 
