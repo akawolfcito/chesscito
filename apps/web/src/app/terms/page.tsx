@@ -1,4 +1,5 @@
 import { LegalPageShell } from "@/components/legal-page-shell";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LEGAL_COPY } from "@/lib/content/editorial";
 
 export const metadata = {
@@ -11,9 +12,12 @@ export default function TermsPage() {
 
   return (
     <LegalPageShell title={title}>
-      <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>
-        Last updated: {lastUpdated}
-      </p>
+      <div className="flex items-center gap-2">
+        <CandyIcon name="lock" className="h-5 w-5" />
+        <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>
+          Last updated: {lastUpdated}
+        </p>
+      </div>
       {sections.map((section) => (
         <section key={section.heading}>
           <h2
