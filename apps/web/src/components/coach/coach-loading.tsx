@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { COACH_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import type { CoachResponse } from "@/lib/coach/types";
 
 const TIMEOUT_MS = 60_000;
@@ -70,12 +71,13 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
         <LottieAnimation src="/animations/sandy-loading.lottie" loop className="h-full w-full" />
       </div>
       <p
-        className="text-base font-bold"
+        className="flex items-center justify-center gap-1.5 text-base font-bold"
         style={{
           color: "rgba(63, 34, 8, 0.95)",
           textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
         }}
       >
+        <CandyIcon name="coach" className="h-5 w-5" />
         {COACH_COPY.analyzing}{dots}
       </p>
       <p className="text-sm" style={{ color: "rgba(110, 65, 15, 0.75)" }}>

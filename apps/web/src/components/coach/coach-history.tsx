@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import type { CoachAnalysisRecord, GameRecord } from "@/lib/coach/types";
 
 type HistoryEntry = CoachAnalysisRecord & { game: GameRecord };
@@ -70,11 +71,20 @@ export function CoachHistory({ walletAddress, credits, onSelectEntry }: Props) {
             onClick={() => onSelectEntry(entry)}
             className="candy-tray w-full text-left transition-all active:scale-[0.99]"
           >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold" style={{ color: warmText, textShadow: cream }}>
-                {entry.game.result.charAt(0).toUpperCase() + entry.game.result.slice(1)} - {diffLabel} - {entry.game.totalMoves} moves
-              </p>
-              <span className="text-xs font-semibold" style={{ color: warmMuted }}>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <CandyIcon
+                  name={entry.game.result === "win" ? "trophy" : "close"}
+                  className="h-4 w-4 shrink-0"
+                />
+                <p
+                  className="truncate text-sm font-semibold"
+                  style={{ color: warmText, textShadow: cream }}
+                >
+                  {entry.game.result.charAt(0).toUpperCase() + entry.game.result.slice(1)} · {diffLabel} · {entry.game.totalMoves} moves
+                </p>
+              </div>
+              <span className="shrink-0 text-xs font-semibold" style={{ color: warmMuted }}>
                 {typeLabel}
               </span>
             </div>
@@ -92,12 +102,15 @@ export function CoachHistory({ walletAddress, credits, onSelectEntry }: Props) {
 
       {!loading && entries.length > 0 && (
         <div className="candy-tray">
-          <h3
-            className="mb-1 text-xs font-semibold uppercase tracking-widest"
-            style={{ color: warmMuted }}
-          >
-            {COACH_COPY.yourProgress}
-          </h3>
+          <div className="mb-1 flex items-center gap-1.5">
+            <CandyIcon name="star" className="h-3.5 w-3.5" />
+            <h3
+              className="text-xs font-semibold uppercase tracking-widest"
+              style={{ color: warmMuted }}
+            >
+              {COACH_COPY.yourProgress}
+            </h3>
+          </div>
           <p className="text-xs" style={{ color: warmMuted }}>
             {COACH_COPY.gamesAnalyzed(gamesAnalyzed)}
           </p>
@@ -105,7 +118,8 @@ export function CoachHistory({ walletAddress, credits, onSelectEntry }: Props) {
             {COACH_COPY.highestDifficulty(ARENA_COPY.difficulty[highestDiff as keyof typeof ARENA_COPY.difficulty] ?? highestDiff)}
           </p>
           {streak > 0 && (
-            <p className="text-xs" style={{ color: warmMuted }}>
+            <p className="flex items-center gap-1 text-xs" style={{ color: warmMuted }}>
+              <CandyIcon name="crown" className="h-3 w-3" />
               {COACH_COPY.currentStreak(streak)}
             </p>
           )}
