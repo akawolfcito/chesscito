@@ -2,6 +2,13 @@ export const victoryAbi = [
   {
     type: "function",
     stateMutability: "view",
+    name: "prizePool",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+  },
+  {
+    type: "function",
+    stateMutability: "view",
     name: "victories",
     inputs: [{ name: "tokenId", type: "uint256" }],
     outputs: [
