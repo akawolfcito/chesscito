@@ -52,7 +52,8 @@ import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
 import { classifyTxError, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
-import { BADGE_THRESHOLD, EXERCISES, LABYRINTHS } from "@/lib/game/exercises";
+import { BADGE_THRESHOLD, EXERCISES, LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
+import { LabyrinthCompleteOverlay } from "@/components/play-hub/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
 
@@ -186,7 +187,21 @@ export default function PlayHubPage() {
    *  labyrinth instead of the L1 exercise. Resets to false on piece
    *  switch — labyrinth state does not survive across pieces. */
   const [labyrinthMode, setLabyrinthMode] = useState(false);
-  useEffect(() => { setLabyrinthMode(false); }, [selectedPiece]);
+  useEffect(() => {
+    setLabyrinthMode(false);
+    setLabyrinthCompleted(null);
+  }, [selectedPiece]);
+
+  /** Completion snapshot for the L2 overlay. Set when the player
+   *  reaches the labyrinth target; cleared on retry or back. */
+  const [labyrinthCompleted, setLabyrinthCompleted] = useState<{
+    moves: number;
+    optimal: number;
+    stars: number;
+  } | null>(null);
+  /** Bumps the labyrinth board key on retry so internal Board state
+   *  (piece position, selection, internal move counter) resets. */
+  const [labyrinthKey, setLabyrinthKey] = useState(0);
 
   const {
     progress,
@@ -806,6 +821,33 @@ export default function PlayHubPage() {
   const activeLabyrinth = labyrinthMode && labyrinthList.length > 0 ? labyrinthList[0] : null;
   const activeExercise = activeLabyrinth ?? currentExercise;
 
+  /** Labyrinth move handler — fires the completion overlay when the
+   *  player reaches the target. The Board's internal counter is the
+   *  source of truth for move count. */
+  const handleLabyrinthMove = useCallback(
+    (position: BoardPosition, movesCount: number) => {
+      if (!activeLabyrinth) return;
+      const reached =
+        position.file === activeLabyrinth.targetPos.file &&
+        position.rank === activeLabyrinth.targetPos.rank;
+      if (!reached) return;
+      const stars = labyrinthStars(movesCount, activeLabyrinth.optimalMoves);
+      setLabyrinthCompleted({
+        moves: movesCount,
+        optimal: activeLabyrinth.optimalMoves,
+        stars,
+      });
+      track("labyrinth_complete", {
+        labyrinth_id: activeLabyrinth.id,
+        piece: selectedPiece,
+        moves: movesCount,
+        optimal: activeLabyrinth.optimalMoves,
+        stars,
+      });
+    },
+    [activeLabyrinth, selectedPiece],
+  );
+
   const targetLabel = activeExercise.isCapture
     ? CAPTURE_COPY.statsLabel
     : `${String.fromCharCode(97 + activeExercise.targetPos.file)}${activeExercise.targetPos.rank + 1}`;
@@ -936,14 +978,14 @@ export default function PlayHubPage() {
           }
           board={
             <Board
-              key={`${boardKey}-${labyrinthMode ? "lab" : "ex"}`}
+              key={`${boardKey}-${labyrinthMode ? `lab-${labyrinthKey}` : "ex"}`}
               pieceType={selectedPiece}
               startPosition={activeExercise.startPos}
               mode={activeLabyrinth ? "labyrinth" : "practice"}
               targetPosition={activeExercise.targetPos}
               obstacles={activeLabyrinth?.obstacles}
-              isLocked={!activeLabyrinth && (phase === "failure" || phase === "success")}
-              onMove={activeLabyrinth ? undefined : handleMove}
+              isLocked={!activeLabyrinth ? (phase === "failure" || phase === "success") : labyrinthCompleted !== null}
+              onMove={activeLabyrinth ? handleLabyrinthMove : handleMove}
               isCapture={!activeLabyrinth && activeExercise.isCapture}
               tutorialHints={activeLabyrinth ? undefined : tutorialHints}
             />
@@ -1020,6 +1062,22 @@ export default function PlayHubPage() {
                   }
                 : undefined
             }
+          />
+        ) : null}
+
+        {labyrinthCompleted ? (
+          <LabyrinthCompleteOverlay
+            moves={labyrinthCompleted.moves}
+            optimalMoves={labyrinthCompleted.optimal}
+            stars={labyrinthCompleted.stars}
+            onRetry={() => {
+              setLabyrinthCompleted(null);
+              setLabyrinthKey((k) => k + 1);
+            }}
+            onBack={() => {
+              setLabyrinthCompleted(null);
+              setLabyrinthMode(false);
+            }}
           />
         ) : null}
 
