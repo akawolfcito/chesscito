@@ -40,11 +40,9 @@ function DockItem({ id, label, control, activeDockTab }: ItemProps) {
       onClickCapture={() => track("dock_tap", { item: id })}
     >
       {control}
-      {isActive && (
-        <span className="chesscito-dock-item-label game-label text-nano font-bold uppercase tracking-[0.12em]">
-          {label}
-        </span>
-      )}
+      <span className="chesscito-dock-item-label game-label text-nano font-bold uppercase tracking-[0.12em]">
+        {label}
+      </span>
     </div>
   );
 }

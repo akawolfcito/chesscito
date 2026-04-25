@@ -1567,7 +1567,10 @@
   .chesscito-dock-item-label {
     /* Floats below the icon without pushing the flex column height —
        keeps the dock bg + siblings perfectly still when an item
-       activates / deactivates. */
+       activates / deactivates. Always rendered so all 5 dock items
+       stay legible (icons alone read as ambiguous on first run);
+       active state lifts opacity + brightness to keep the focus
+       cue intact. */
     position: absolute;
     left: 50%;
     bottom: -2px;
@@ -1578,6 +1581,12 @@
     pointer-events: none;
     font-family: var(--font-game-display);
     line-height: 1;
+    opacity: 0.65;
+    transition: opacity var(--duration-snap, 120ms) ease;
+  }
+
+  .chesscito-dock-item.is-active .chesscito-dock-item-label {
+    opacity: 1;
   }
 
   /* Same treatment for the center tab label (Arena "Free Play"). */
