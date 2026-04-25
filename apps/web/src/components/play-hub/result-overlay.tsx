@@ -228,14 +228,18 @@ export function ResultOverlay({
 
   return (
     <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
+      // pointer-events-auto explicitly defeats Radix's modal-mode body
+      // lock that lingers ~300ms during sheet exit animations. Without
+      // it, clicks on the scrim / X / CTA right after a transaction
+      // failure are silently swallowed and the user can't dismiss.
+      className={`pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={title}
       onClick={handleDismiss}
     >
       <div
-        className="relative w-full max-w-xs"
+        className="pointer-events-auto relative w-full max-w-xs"
         style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
         onClick={(e) => e.stopPropagation()}
       >

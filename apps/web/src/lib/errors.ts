@@ -29,11 +29,18 @@ export function classifyTxError(error: unknown): string {
   // signer envs (DRAGON / TORRE_PRINCESA), but also catches prod
   // signer outages. Distinct from user-cancellable errors so the
   // player understands the issue isn't on their side.
+  //
+  // The "unsupported state or unable to authenticate data" branch is
+  // the GCM auth-tag mismatch surfaced by Node's crypto when the
+  // TORRE_PRINCESA key doesn't decrypt the DRAGON ciphertext (rotated
+  // key, copied wrong env, mismatched envs from prod/dev).
   if (
     lower.includes("missing required env") ||
     lower.includes("sign-badge") ||
     lower.includes("sign-score") ||
     lower.includes("sign-victory") ||
+    lower.includes("unsupported state") ||
+    lower.includes("authenticate data") ||
     lower.includes("400") ||
     lower.includes("signing")
   ) {
