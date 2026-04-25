@@ -169,7 +169,7 @@ export default async function VictoryPage({ params }: { params: { id: string } }
         </Link>
 
         <Link
-          href="/"
+          href="/hub"
           className="relative z-10 mt-3 flex min-h-[44px] items-center px-3 text-sm font-semibold underline underline-offset-2 transition-colors hover:opacity-80"
           style={{ color: "rgba(110, 65, 15, 0.70)" }}
         >

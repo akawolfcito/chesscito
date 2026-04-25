@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 const ABOUT_LINKS = [
-  { href: "/why", label: ABOUT_COPY.links.why, icon: Compass },
+  { href: "/", label: ABOUT_COPY.links.why, icon: Compass },
   { href: "/support", label: ABOUT_COPY.links.support, icon: LifeBuoy },
   { href: "/privacy", label: ABOUT_COPY.links.privacy, icon: Shield },
   { href: "/terms", label: ABOUT_COPY.links.terms, icon: FileText },
@@ -18,7 +18,7 @@ const ABOUT_LINKS = [
 
 export default function AboutPage() {
   return (
-    <LegalPageShell title="About" backHref="/">
+    <LegalPageShell title="About" backHref="/hub">
       {/* Identity */}
       <div className="flex flex-col items-center gap-2 pb-2 text-center">
         <picture>

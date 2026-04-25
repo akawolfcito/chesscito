@@ -394,7 +394,7 @@ export default function ArenaPage() {
     }
   }
 
-  const handleBackToHub = () => router.push("/");
+  const handleBackToHub = () => router.push("/hub");
 
   async function handleClaimVictory() {
     if (!canClaim || !address || !victoryNFTAddress || !publicClient) return;
@@ -759,7 +759,7 @@ export default function ArenaPage() {
       sheetKey?: "badge" | "shop" | "leaderboard" | "trophies",
     ) => (
       <Link
-        href="/"
+        href="/hub"
         role="button"
         aria-label={label}
         className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
@@ -800,7 +800,7 @@ export default function ArenaPage() {
               softGate={
                 softGateOpen
                   ? {
-                      onLearn: () => router.push("/"),
+                      onLearn: () => router.push("/hub"),
                       onDismiss: () => setSoftGateOpen(false),
                     }
                   : undefined
@@ -836,7 +836,7 @@ export default function ArenaPage() {
             shopControl={navIcon("/art/shop-menu.png", "Shop", "shop")}
             trophiesControl={
               <Link
-                href="/"
+                href="/hub"
                 role="button"
                 aria-label={DOCK_LABELS.trophies}
                 className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
