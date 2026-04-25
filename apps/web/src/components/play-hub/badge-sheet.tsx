@@ -77,11 +77,10 @@ function BadgeCard({
           : "border-[rgba(255,255,255,0.45)] bg-white/15",
       ].join(" ")}
     >
-      {isClaimed && (
-        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white shadow-[0_0_8px_rgba(5,150,105,0.35)]">
-          &#10003;
-        </span>
-      )}
+      {/* Floating green check at -top-1/-right-1 was redundant with
+          the inline "✓ Owned" pill (rendered below) and got clipped
+          by the sheet's overflow-y-auto right edge. The inline pill
+          is the single source of truth for claimed status. */}
       <picture className={`h-12 w-12 shrink-0 ${isLocked ? "badge-treat-locked" : isClaimed ? "badge-treat-owned" : isClaimable ? "badge-treat-claimable" : ""}`}>
         {THEME_CONFIG.hasOptimizedFormats && (
           <>
