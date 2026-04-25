@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { SHARE_COPY } from "@/lib/content/editorial";
 import { ShareGrid } from "@/components/share/share-grid";
 import { track } from "@/lib/telemetry";
@@ -50,8 +51,13 @@ export function ShareModal({
   }, [open, title, cardUrl]);
 
   if (!open) return null;
+  // Render via portal so the modal escapes any ancestor containing
+  // block (parent CandyGlassShell modals use CSS animations that set
+  // transform on the panel, which would otherwise constrain our
+  // `fixed inset-0` to the panel rect instead of the viewport).
+  if (typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[70] flex flex-col items-center justify-end candy-modal-scrim animate-in fade-in duration-200"
       onClick={() => onOpenChange(false)}
@@ -153,6 +159,7 @@ export function ShareModal({
           <ShareGrid text={text} url={url ?? SHARE_COPY.url} cardUrl={cardUrl ?? undefined} />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
