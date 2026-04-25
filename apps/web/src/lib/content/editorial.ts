@@ -799,3 +799,104 @@ export const SHOP_ITEM_COPY = {
     subtitle: "Support Chesscito with an exclusive founder badge minted to your wallet.",
   },
 } as const;
+
+/** /why public landing page copy. Spanish-only in v1 by product
+ *  decision (English version is a follow-up sprint). All strings are
+ *  centralized here per the no-inline-copy rule of the codebase.
+ *
+ *  Strict editorial: never make medical / clinical claims. The
+ *  cognitive disclaimer must render at least twice on the page
+ *  (inline + footer) per the spec at
+ *  docs/superpowers/specs/2026-04-25-why-landing-page-design.md. */
+export const WHY_PAGE_COPY = {
+  meta: {
+    title: "Chesscito — Juega. Piensa. Entrena tu mente.",
+    description:
+      "Una aventura de retos inspirados en ajedrez para fortalecer atención, memoria y toma de decisiones mediante juego.",
+  },
+  back: "Volver",
+  hero: {
+    eyebrow: "BIENESTAR COGNITIVO LÚDICO",
+    headline: "Juega. Piensa. Entrena tu mente.",
+    subcopy:
+      "Una aventura de retos inspirados en ajedrez para fortalecer atención, memoria y toma de decisiones mediante juego.",
+    primaryCta: "Empezar a jugar",
+    secondaryCta: "Conocer el propósito",
+  },
+  preChess: {
+    title: "Ajedrez antes del ajedrez.",
+    body:
+      "En Chesscito convertimos piezas, movimientos y decisiones en retos cortos, visuales y fáciles de jugar. No necesitas saber jugar ajedrez para empezar — solo curiosidad.",
+    bullets: [
+      "Movimientos sencillos",
+      "Tableros guiados",
+      "Sin presión de tiempo",
+    ] as const,
+  },
+  cognitive: {
+    title: "Diseñado para estimular la mente.",
+    body:
+      "Cada reto está pensado para activar habilidades clave: atención sostenida, memoria visual, planificación, reconocimiento de patrones y toma de decisiones bajo restricciones simples.",
+    capabilities: [
+      { icon: "crosshair", label: "Atención" },
+      { icon: "star", label: "Memoria visual" },
+      { icon: "move", label: "Planificación" },
+      { icon: "refresh", label: "Patrones" },
+      { icon: "crown", label: "Decisiones" },
+    ] as const,
+    disclaimer:
+      "Chesscito no reemplaza tratamiento médico. Es una experiencia lúdica de acompañamiento cognitivo.",
+  },
+  progress: {
+    title: "Progreso que se siente como aventura.",
+    body:
+      "Avanzas por mundos, completas retos, ganas estrellas, desbloqueas piezas y coleccionas insignias que viven contigo. Cada paso suma — sin atajos, sin trampas.",
+    bullets: [
+      "Mundos por desbloquear",
+      "Estrellas por reto",
+      "Insignias coleccionables",
+    ] as const,
+  },
+  community: {
+    title: "Una herramienta simple para acompañar el bienestar cognitivo.",
+    body:
+      "Pensado para que cualquier persona — un niño en casa, una familia, un docente, una comunidad o una institución — pueda integrarlo a una rutina sana de ejercicio mental.",
+    cards: [
+      {
+        title: "Familias",
+        body:
+          "Una rutina ligera para compartir minutos de juego y conversación.",
+      },
+      {
+        title: "Educadores",
+        body:
+          "Material lúdico que complementa actividades de aula sin pedir instalación.",
+      },
+      {
+        title: "Comunidades",
+        body:
+          "Una experiencia abierta que cualquier programa puede ofrecer a sus participantes.",
+      },
+    ] as const,
+  },
+  sponsors: {
+    title: "Construido para impacto.",
+    body:
+      "Buscamos aliados que crean en el juego como vehículo de bienestar cognitivo y aprendizaje. Tu apoyo nos ayuda a llegar a más personas — más niños, más comunidades, más impacto.",
+    denLabs:
+      "Chesscito es el primer experimento de Den Labs, un laboratorio que combina tecnología web2/web3 e IA para crear experiencias con propósito.",
+    contactPrimary: "Escríbenos",
+    contactSecondary: "GitHub Issues",
+    githubUrl: "https://github.com/wolfcito/chesscito/issues",
+  },
+  finalCta: {
+    headline: "¿Listo para hacer tu primera jugada?",
+    cta: "Empezar a jugar",
+    note:
+      "Sin descargas. Sin registros largos. Solo el tablero, tú y tu próximo movimiento.",
+  },
+  footer: {
+    brand: "Chesscito · A Den Labs experiment",
+    year: "© 2026 Den Labs",
+  },
+} as const;
