@@ -49,12 +49,23 @@ type MissionPanelProps = {
   onToggleLabyrinth?: (next: boolean) => void;
 };
 
-type FlashConfig = { text: string; accent: string };
+type FlashConfig = { text: string; accent: string; stroke: string };
 
+/* Warm-amber on grass reads better than emerald or rose. The stroke
+   is the darkest paper-text brown so the glyph silhouette stays
+   crisp against any background (forest, paper, etc.). */
 const PHASE_FLASH: Record<MissionPanelProps["phase"], FlashConfig | null> = {
   ready: null,
-  success: { text: PHASE_FLASH_COPY.success, accent: "rgb(4, 120, 87)" },
-  failure: { text: PHASE_FLASH_COPY.failure, accent: "rgb(159, 18, 57)" },
+  success: {
+    text: PHASE_FLASH_COPY.success,
+    accent: "rgb(245, 158, 11)",        // amber-500
+    stroke: "rgba(63, 34, 8, 0.95)",    // darkest paper text
+  },
+  failure: {
+    text: PHASE_FLASH_COPY.failure,
+    accent: "rgb(244, 63, 94)",         // rose-500
+    stroke: "rgba(63, 34, 8, 0.95)",
+  },
 };
 
 function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
@@ -87,13 +98,22 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
     <div
       className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${fading ? "opacity-0" : "opacity-100"}`}
     >
-      <div className="flex flex-col items-center gap-4 animate-in zoom-in-90 duration-300">
-        <div className="relative flex items-center justify-center">
+      <div className="flex flex-col items-center gap-2 animate-in zoom-in-90 duration-300">
+        <div className="relative flex h-32 w-32 items-center justify-center">
           {phase === "success" && (
-            <div className="pointer-events-none absolute h-40 w-40">
+            <div className="pointer-events-none absolute inset-0">
               <LottieAnimation src="/animations/sparkle-burst.lottie" loop={false} className="h-full w-full" />
             </div>
           )}
+          {/* Soft warm halo behind the mascot — gives the figure mass
+              without competing with the sparkle burst on success. */}
+          <div
+            className="pointer-events-none absolute h-28 w-28 rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)",
+            }}
+          />
           <picture className="relative z-10">
             <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
             <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
@@ -101,15 +121,22 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
               src="/art/favicon-wolf.png"
               alt=""
               aria-hidden="true"
-              className="h-20 w-20 drop-shadow-[0_4px_12px_rgba(120,65,5,0.45)]"
+              className="h-24 w-24 drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
+              style={{ animation: "reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
             />
           </picture>
         </div>
         <span
-          className="fantasy-title victory-text-slam text-3xl font-extrabold"
+          /* Stroke (via -webkit-text-stroke) gives the glyphs a crisp
+             dark outline so the warm-amber fill pops against any
+             backdrop. text-shadow adds a soft cream halo for depth. */
+          className="fantasy-title victory-text-slam text-5xl font-extrabold leading-none"
           style={{
             color: flash.accent,
-            textShadow: "0 2px 0 rgba(255, 245, 215, 0.80)",
+            WebkitTextStroke: `2px ${flash.stroke}`,
+            textShadow:
+              "0 2px 0 rgba(255, 245, 215, 0.85), 0 4px 10px rgba(120, 65, 5, 0.40)",
+            paintOrder: "stroke fill",
           }}
         >
           {flash.text}
