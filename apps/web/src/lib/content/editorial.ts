@@ -122,6 +122,9 @@ export const PIECE_COMPLETE_COPY = {
   tryArena: "Try Arena",
   nextPiece: (piece: string) => `Start ${piece}`,
   practiceAgain: "Practice Again",
+  /** Re-surface of the Submit Score transactional moment from
+   *  BadgeEarnedPrompt. Same wording so the player recognizes it. */
+  submitScore: "Submit Score",
 } as const;
 
 export const BADGE_EARNED_COPY = {

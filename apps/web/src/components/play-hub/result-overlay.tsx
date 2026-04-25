@@ -447,6 +447,10 @@ type PieceCompletePromptProps = {
    *  into L2 directly from the L1 completion ceremony. Only meaningful
    *  for pieces that have at least one labyrinth defined. */
   onTryLabyrinth?: () => void;
+  /** Re-surfaces the Submit Score transactional moment that may have
+   *  been lost when the user dismissed BadgeEarnedPrompt with "Later".
+   *  Only wired when canSendOnChain && score is eligible. */
+  onSubmitScore?: () => void;
 };
 
 export function PieceCompletePrompt({
@@ -458,6 +462,7 @@ export function PieceCompletePrompt({
   onArena,
   onPracticeAgain,
   onTryLabyrinth,
+  onSubmitScore,
 }: PieceCompletePromptProps) {
   const [exiting, setExiting] = useState(false);
 
@@ -494,8 +499,16 @@ export function PieceCompletePrompt({
           onClose={() => handleAction(onPracticeAgain)}
           closeLabel={PIECE_COMPLETE_COPY.practiceAgain}
           cta={
+            /* CTA hierarchy after L1 completion:
+               1. Forward in pedagogy: next piece if available, else Arena.
+                  Decoupled from claim status — the ladder advances even
+                  if the badge mint failed (e.g., signing service down).
+               2. Submit Score — re-surfaces the transactional moment that
+                  may have been lost when the player dismissed BadgeEarned.
+               3. Try Labyrinth — optional L2 deepening before moving on.
+               4. Practice Again — quiet text fallback. */
             <div className="flex flex-col gap-1.5">
-              {nextPiece && hasClaimedBadge ? (
+              {nextPiece ? (
                 <Button
                   type="button"
                   variant="game-solid"
@@ -514,6 +527,17 @@ export function PieceCompletePrompt({
                   className="w-full"
                 >
                   {PIECE_COMPLETE_COPY.tryArena}
+                </Button>
+              )}
+              {onSubmitScore && (
+                <Button
+                  type="button"
+                  variant="game-ghost"
+                  size="game"
+                  onClick={() => handleAction(onSubmitScore)}
+                  className="w-full"
+                >
+                  {PIECE_COMPLETE_COPY.submitScore}
                 </Button>
               )}
               {onTryLabyrinth && (

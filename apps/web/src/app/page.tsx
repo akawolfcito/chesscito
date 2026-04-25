@@ -1078,6 +1078,14 @@ export default function PlayHubPage() {
                   }
                 : undefined
             }
+            onSubmitScore={
+              canSendOnChain
+                ? () => {
+                    setShowPieceComplete(false);
+                    void handleSubmitScore();
+                  }
+                : undefined
+            }
           />
         ) : null}
 
