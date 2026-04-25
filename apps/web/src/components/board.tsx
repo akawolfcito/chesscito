@@ -43,8 +43,11 @@ function parseLabel(label: string): BoardPosition {
 type BoardProps = {
   pieceType?: PieceId;
   startPosition?: BoardPosition;
-  mode?: "tutorial" | "practice";
+  mode?: "tutorial" | "practice" | "labyrinth";
   targetPosition?: BoardPosition | null;
+  /** L2 labyrinth obstacles — friendly blocker pieces. Cannot be moved
+   *  through or captured. Forwarded to the rules layer as blockers. */
+  obstacles?: BoardPosition[];
   isLocked?: boolean;
   isCapture?: boolean;
   onMove?: (position: BoardPosition, movesCount: number) => void;
@@ -56,6 +59,7 @@ export function Board({
   startPosition = { file: 0, rank: 0 },
   mode = "practice",
   targetPosition = null,
+  obstacles,
   isLocked = false,
   isCapture = false,
   onMove,
@@ -84,8 +88,8 @@ export function Board({
 
   const validTargets = useMemo(() => {
     if (!selectedPosition) return [];
-    return getValidTargets(pieceType, selectedPosition, [], isCapture);
-  }, [pieceType, selectedPosition, isCapture]);
+    return getValidTargets(pieceType, selectedPosition, obstacles ?? [], isCapture);
+  }, [pieceType, selectedPosition, obstacles, isCapture]);
 
   const squares = useMemo(
     () =>
