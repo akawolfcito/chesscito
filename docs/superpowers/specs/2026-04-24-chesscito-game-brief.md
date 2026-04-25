@@ -6,7 +6,7 @@
 |---|---|
 | Date | 2026-04-24 |
 | Author | Wolfcito — facilitated by Samus Shepard (BMAD Game Designer) |
-| Status | v0.2 — decisions locked (pending GDD) |
+| Status | v0.3 — locked (Coach's Pause + landing scope added) |
 | Parent brand | Den Labs (web2/web3/AI experience lab) |
 | Type | Cognitive exercise gamified. Chess as vehicle. |
 
@@ -84,6 +84,36 @@ Chesscito is the first vertical of Den Labs' cognitive platform thesis. Future v
 - No cross-session streak rewards that create compulsion (daily reset encouraged over infinite streaks).
 - No "just one more" denial-of-exit patterns.
 - Soft daily cap suggestion (≈ 20 min) with a friendly "take a break" nudge — not enforced.
+
+### The Coach's Pause (anti-addiction visual language)
+
+The break-time nudge is delivered by the **Coach character** — same agent that, in v2, delivers personalized cognitive-improvement guidance. In v1 the Coach's first public role is the *cognitive wellness companion that protects the player from over-use*.
+
+**Trigger**: continuous play of ~15–20 min (configurable, soft).
+
+**Surface**: a non-blocking ghost card (not modal) overlaid on the play hub. Reuses the candy-paper aesthetic — warm cream, amber halo, Wolf mascot.
+
+**Copy structure**:
+
+```
+🐺  Your mind just did a full workout.
+    {N} puzzles, {M} min of focused thinking.
+
+    [ Take a 5 min break ]    one more puzzle
+```
+
+**Design principles**:
+- ✅ **Reward-framing first**: celebrates what the player just achieved before suggesting the break. The break is presented as a logical next move, not a stop sign.
+- ✅ **Wolf mascot** as the messenger — brand consistency; Wolfcito is the friend, not the rule-enforcer.
+- ✅ **Candy-paper visual** — same warm cream + amber tones used everywhere else; reuses 100% of existing components.
+- ❌ **No red, no alarms, no "Game Over" energy.**
+- ❌ **No dark patterns** in "one more puzzle" — equally visible, no trick to dismiss.
+- ❌ **No sound by default** (optional in settings) — respects environment.
+
+**Why this works strategically**:
+1. Re-frames the anti-addiction moment as a positive engagement signal.
+2. Establishes the Coach character before its full v2 role lands — players already know him as their friend by the time analysis features ship.
+3. Gives a single anchor for all session-hygiene UX.
 
 ---
 
@@ -171,11 +201,12 @@ The goal for v1 is to *validate that sponsorship works without reinventing infra
 
 **In scope for v1**:
 - 6 pieces × 3 levels (minimum viable cut: all 6 at L1 + Rook through L3)
-- At least 2 cross-piece mini-games (Rook+Bishop minimum; ideally 4)
-- Full chess gate mechanic
+- Cross-piece progressive free-play (after Rook+Bishop, free-play with both; expands as more pieces are mastered, until full chess unlocks). See §7 for the gate-as-expansion model.
+- Full chess gate mechanic (= the moment the last piece, Pawn, is mastered)
 - "Support Chesscito" button + Supporters section (sponsor MVP minimum — see §8)
-- Den Labs co-branding on landing + about
-- Session hygiene UI (soft cap nudge, exit-any-time save)
+- **Public pitch / landing page** explaining the product to four audiences (kids, parents, sponsors, institutions). The game communicates value through play, but a dedicated marketing surface is needed for sponsor outreach and parent buy-in. Lives at a stable URL (e.g. `/why` or homepage when unauthenticated).
+- Den Labs co-branding on the **About page** (chosen surface, see resolved Q6)
+- Session hygiene UI: **The Coach's Pause** ghost card (see §6) + exit-any-time save
 
 **v1 access restrictions**:
 - **18+ adults only** via Terms of Service.
@@ -248,12 +279,16 @@ Qualitative signals:
 9. ~~**Kids without wallets**~~ — **RESOLVED for v1**: v1 requires a wallet (MiniPay or Metamask). Walletless / parent-delegated / guardian escrow patterns deferred to v2.
 10. ~~**Research partner**~~ — **RESOLVED**: chess master partner (15–20 yrs experience) validates pedagogy immediately; in-game signals validate learning empirically; formal neurodegeneration studies deferred multi-year; Coach (already built) becomes the per-player analysis layer in v2.
 
-### Still open (to resolve in GDD)
+### Resolved (v0.3)
 
-2. **Knight's Tour scaling** — 4×4 starter → 8×8 mastery? Or alternate L3 challenge entirely (e.g., "L-jump capture chain of 10")? Threshold calibration to be done with the chess master partner and beginner test data.
-3. **Cross-piece mini-game roster** — exact count and combinations (minimum 2, suggested 4). Which combinations beyond Rook + Bishop?
-6. **Den Labs branding surface** — where does Den Labs appear (footer, about, splash, separate landing)?
-7. **Anti-addiction visual language** — what does the "take a break" nudge look, feel, and sound like? Critical for the session-hygiene pillar.
+2. ~~**Knight's Tour scaling**~~ — **RESOLVED**: 4×4 starter → 8×8 mastery curve. Threshold calibration still done with chess master + beginner data, but the scaling shape is locked.
+3. ~~**Cross-piece mini-game roster**~~ — **RESOLVED**: simplified to **progressive free-play** rather than discrete scripted puzzles. As each new piece is mastered, the free-play board expands its piece roster, until Pawn unlocks full chess. The "gate" becomes an expansion, not a binary unlock.
+6. ~~**Den Labs branding surface**~~ — **RESOLVED**: Den Labs context lives on the **About page**. Other surfaces stay focused on player flow.
+7. ~~**Anti-addiction visual language**~~ — **RESOLVED**: **The Coach's Pause** ghost card delivered by the Wolf mascot, candy-paper aesthetic, reward-framed copy. Full design in §6.
+
+### Still open (to resolve in next sprint or GDD)
+
+11. **Public pitch / landing page** — structure, copy, and audience-specific tabs. Four target audiences (kids, parents, sponsors, institutions) likely need different messaging emphasis. Layout: single-page tabbed, dedicated routes per audience, or one page with audience selector at top? Owns its own sprint after the L2 Labyrinth POC.
 
 ---
 
