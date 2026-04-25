@@ -22,17 +22,29 @@ import { track } from "@/lib/telemetry";
  *     read the funnel later.
  */
 export default function WhyPage() {
-  const handlePrimaryCta = () => {
+  const handleHeroPrimary = () => {
     track("why_cta_click", { slot: "hero-primary" });
   };
 
-  const handleSecondaryCta = () => {
+  const handleHeroSecondary = () => {
     track("why_cta_click", { slot: "hero-secondary" });
     if (typeof document !== "undefined") {
       document
         .getElementById("purpose")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  };
+
+  const handleFinalCta = () => {
+    track("why_cta_click", { slot: "final-primary" });
+  };
+
+  const handleSponsorsEmail = () => {
+    track("why_cta_click", { slot: "sponsors-email" });
+  };
+
+  const handleSponsorsGithub = () => {
+    track("why_cta_click", { slot: "sponsors-github" });
   };
 
   return (
@@ -144,7 +156,7 @@ export default function WhyPage() {
 
           <div className="flex w-full max-w-[280px] flex-col gap-2.5">
             <Button asChild variant="game-primary" size="game">
-              <Link href="/" onClick={handlePrimaryCta}>
+              <Link href="/" onClick={handleHeroPrimary}>
                 {WHY_PAGE_COPY.hero.primaryCta}
               </Link>
             </Button>
@@ -152,7 +164,7 @@ export default function WhyPage() {
               type="button"
               variant="game-ghost"
               size="game"
-              onClick={handleSecondaryCta}
+              onClick={handleHeroSecondary}
             >
               {WHY_PAGE_COPY.hero.secondaryCta}
             </Button>
@@ -496,6 +508,7 @@ export default function WhyPage() {
             {process.env.NEXT_PUBLIC_SUPPORT_EMAIL ? (
               <a
                 href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`}
+                onClick={handleSponsorsEmail}
                 className="paper-tray flex min-h-[44px] items-center gap-3 transition active:scale-[0.99]"
                 style={{ color: "var(--paper-text)" }}
               >
@@ -509,6 +522,7 @@ export default function WhyPage() {
               href={WHY_PAGE_COPY.sponsors.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleSponsorsGithub}
               className="paper-tray flex min-h-[44px] items-center gap-3 transition active:scale-[0.99]"
               style={{ color: "var(--paper-text)" }}
             >
@@ -520,7 +534,104 @@ export default function WhyPage() {
           </div>
         </section>
 
-        {/* §7–§8 land in the next commit per the spec. */}
+        {/* §7 Final CTA — mirrors the hero primary so the player who
+            scrolled the entire page can convert without scrolling
+            back up. Single button, single line of warm copy below. */}
+        <section
+          className="flex flex-col items-center gap-4 border-t px-5 py-12 text-center"
+          style={{ borderColor: "var(--paper-divider)" }}
+        >
+          <h2
+            className="fantasy-title text-2xl font-extrabold leading-tight"
+            style={{
+              color: "rgba(63, 34, 8, 0.95)",
+              textShadow:
+                "0 1px 0 rgba(255, 245, 215, 0.85), 0 2px 6px rgba(245, 158, 11, 0.30)",
+            }}
+          >
+            {WHY_PAGE_COPY.finalCta.headline}
+          </h2>
+
+          <Button asChild variant="game-primary" size="game" className="w-full max-w-[280px]">
+            <Link href="/" onClick={handleFinalCta}>
+              {WHY_PAGE_COPY.finalCta.cta}
+            </Link>
+          </Button>
+
+          <p
+            className="max-w-[28ch] text-xs leading-relaxed"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {WHY_PAGE_COPY.finalCta.note}
+          </p>
+        </section>
+
+        {/* §8 Footer — repeats the cognitive disclaimer per spec
+            (must render at least twice on the page) and carries the
+            Den Labs signature plus shortcut links to legal pages. */}
+        <footer
+          className="flex flex-col gap-4 border-t px-5 py-8"
+          style={{ borderColor: "var(--paper-divider)" }}
+        >
+          <p
+            className="text-center text-[0.7rem] leading-relaxed"
+            style={{ color: "rgba(110, 65, 15, 0.65)" }}
+          >
+            {WHY_PAGE_COPY.cognitive.disclaimer}
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[0.7rem]">
+            <Link
+              href="/privacy"
+              className="font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
+              style={{ color: "rgba(110, 65, 15, 0.75)" }}
+            >
+              Privacy
+            </Link>
+            <span style={{ color: "rgba(110, 65, 15, 0.35)" }}>·</span>
+            <Link
+              href="/terms"
+              className="font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
+              style={{ color: "rgba(110, 65, 15, 0.75)" }}
+            >
+              Terms
+            </Link>
+            <span style={{ color: "rgba(110, 65, 15, 0.35)" }}>·</span>
+            <Link
+              href="/support"
+              className="font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
+              style={{ color: "rgba(110, 65, 15, 0.75)" }}
+            >
+              Support
+            </Link>
+            <span style={{ color: "rgba(110, 65, 15, 0.35)" }}>·</span>
+            <Link
+              href="/about"
+              className="font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
+              style={{ color: "rgba(110, 65, 15, 0.75)" }}
+            >
+              About
+            </Link>
+          </div>
+
+          <div className="flex flex-col items-center gap-1 pt-1">
+            <p
+              className="fantasy-title text-xs font-extrabold uppercase tracking-[0.18em]"
+              style={{
+                color: "rgba(110, 65, 15, 0.85)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
+            >
+              {WHY_PAGE_COPY.footer.brand}
+            </p>
+            <p
+              className="text-[0.65rem]"
+              style={{ color: "rgba(110, 65, 15, 0.55)" }}
+            >
+              {WHY_PAGE_COPY.footer.year}
+            </p>
+          </div>
+        </footer>
       </div>
     </main>
   );
