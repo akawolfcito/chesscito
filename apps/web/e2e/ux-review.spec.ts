@@ -2,8 +2,10 @@ import { test, expect } from "@playwright/test";
 
 // Routes that do async fetches (RPC/Redis) use domcontentloaded to avoid
 // waiting on background network calls that don't affect page rendering.
+// "/" is the public landing; "/hub" is the canonical play-hub URL.
 const ROUTES = [
-  { path: "/", name: "play-hub", wait: "networkidle" as const },
+  { path: "/", name: "landing", wait: "networkidle" as const },
+  { path: "/hub", name: "play-hub", wait: "networkidle" as const },
   { path: "/arena", name: "arena", wait: "networkidle" as const },
   { path: "/about", name: "about", wait: "networkidle" as const },
   { path: "/terms", name: "terms", wait: "networkidle" as const },
@@ -43,7 +45,7 @@ test("play-hub idle stability (10s)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (err) => errors.push(err.message));
 
-  await page.goto("/", { waitUntil: "networkidle", timeout: 15_000 });
+  await page.goto("/hub", { waitUntil: "networkidle", timeout: 15_000 });
 
   // Wait 10 seconds idle
   await page.waitForTimeout(10_000);
@@ -57,7 +59,7 @@ test("play-hub idle stability (10s)", async ({ page }) => {
 });
 
 test("navigation: play-hub dock links are reachable", async ({ page }) => {
-  await page.goto("/", { waitUntil: "networkidle", timeout: 15_000 });
+  await page.goto("/hub", { waitUntil: "networkidle", timeout: 15_000 });
 
   // Check persistent dock exists
   const dock = page.locator("nav, [class*='dock']");
@@ -79,7 +81,7 @@ test("navigation: about page links to legal routes", async ({ page }) => {
 });
 
 test("stars display: check star counter visibility", async ({ page }) => {
-  await page.goto("/", { waitUntil: "networkidle", timeout: 15_000 });
+  await page.goto("/hub", { waitUntil: "networkidle", timeout: 15_000 });
 
   // Look for star counter pattern (e.g., "0/15" or "15/15")
   const starCounter = page.locator("text=/\\d+\\/15/");
@@ -91,7 +93,7 @@ test("stars display: check star counter visibility", async ({ page }) => {
 });
 
 test("trophies sheet: opens from dock and loads without crash", async ({ page }) => {
-  await page.goto("/", { waitUntil: "networkidle", timeout: 15_000 });
+  await page.goto("/hub", { waitUntil: "networkidle", timeout: 15_000 });
 
   // Trophies is now a bottom sheet opened from the persistent dock —
   // not a standalone route. Open it via the dock tab label.
@@ -110,7 +112,7 @@ test("trophies sheet: opens from dock and loads without crash", async ({ page })
 });
 
 test("HUD: More button links to /about", async ({ page }) => {
-  await page.goto("/", { waitUntil: "networkidle", timeout: 15_000 });
+  await page.goto("/hub", { waitUntil: "networkidle", timeout: 15_000 });
 
   const moreLink = page.locator('a[href="/about"]');
   if (await moreLink.count() > 0) {

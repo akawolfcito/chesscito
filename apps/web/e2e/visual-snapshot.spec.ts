@@ -2,11 +2,14 @@ import { test, expect } from "@playwright/test";
 
 const SNAPSHOT_DIR = "e2e-results/snapshots";
 
-// Pages to capture
+// Pages to capture. After the URL split, "/" is the public landing
+// (snapshotted as `landing`) and "/hub" is the canonical play-hub
+// URL (snapshotted as `play-hub`). The legacy /why path now redirects
+// to / and is no longer captured.
 const PAGES = [
-  { path: "/", name: "play-hub" },
+  { path: "/", name: "landing" },
+  { path: "/hub", name: "play-hub" },
   { path: "/arena", name: "arena" },
-  { path: "/why", name: "why" },
   { path: "/about", name: "about" },
   // Victory #1 — first on-chain mint on Celo mainnet. If the contract
   // read fails locally (missing NEXT_PUBLIC_VICTORY_NFT_ADDRESS), the
@@ -23,14 +26,14 @@ const SHEETS = [
 ];
 
 async function waitForPlayHub(page: import("@playwright/test").Page) {
-  await page.goto("/", { waitUntil: "load", timeout: 30_000 });
+  await page.goto("/hub", { waitUntil: "load", timeout: 30_000 });
   // Wait for splash to disappear (assets loaded + wallet ready)
   await expect(page.locator(".playhub-intro-overlay")).toBeHidden({ timeout: 15_000 });
 }
 
 for (const pg of PAGES) {
   test(`snapshot: ${pg.name}`, async ({ page }) => {
-    if (pg.path === "/") {
+    if (pg.path === "/hub") {
       await waitForPlayHub(page);
     } else {
       await page.goto(pg.path, { waitUntil: "load", timeout: 30_000 });

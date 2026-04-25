@@ -52,8 +52,17 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${fredoka.variable}`} suppressHydrationWarning>
       <body>
+        {/* The previous wrapper hard-clamped every route to
+            --app-max-width (390 px), which made sense when every
+            page was a mobile MiniPay surface. Now that "/" is the
+            public web-responsive landing, the constraint moves to
+            the routes that actually need it (play-hub-root, arena,
+            victory, LegalPageShell — they each carry their own
+            max-w wrapper). The flex justify-center stays so any
+            page that opts back into the 390 px constraint still
+            centers cleanly on desktop. */}
         <div className="flex min-h-[100dvh] justify-center">
-          <div className="relative flex w-full max-w-[var(--app-max-width)] flex-col text-foreground">
+          <div className="relative flex w-full flex-col text-foreground">
             <WalletProvider>
               <main className="flex flex-1 flex-col">
                 {children}

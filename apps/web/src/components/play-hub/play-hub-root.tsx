@@ -929,7 +929,7 @@ export function PlayHubRoot() {
           <p className="text-xs text-white/70 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{SPLASH_COPY.subtitle}</p>
         </div>
       )}
-      <main className="mission-shell h-[100dvh] w-full max-w-none px-0 py-0 sm:px-0">
+      <main className="mission-shell mx-auto h-[100dvh] w-full max-w-[var(--app-max-width)] px-0 py-0 sm:px-0">
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onSelectPiece={(piece) => {
