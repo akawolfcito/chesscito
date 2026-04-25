@@ -316,7 +316,211 @@ export default function WhyPage() {
           </div>
         </section>
 
-        {/* §4–§8 land in subsequent commits per the spec. */}
+        {/* §4 Progress — adventure framing. The retention loop
+            (worlds, stars, badges) reads as exploration, not grind. */}
+        <section
+          className="flex flex-col gap-4 border-t px-5 py-10"
+          style={{ borderColor: "var(--paper-divider)" }}
+        >
+          <h2
+            className="fantasy-title text-2xl font-extrabold leading-tight"
+            style={{
+              color: "rgba(63, 34, 8, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+            }}
+          >
+            {WHY_PAGE_COPY.progress.title}
+          </h2>
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {WHY_PAGE_COPY.progress.body}
+          </p>
+
+          {/* Visual placeholder — third instance of the in-world art
+              frame; commit 5 swaps for a real trophies/badges shot. */}
+          <div
+            className="relative w-full overflow-hidden rounded-2xl border-2"
+            style={{
+              aspectRatio: "4 / 3",
+              borderColor: "rgba(245, 158, 11, 0.45)",
+              boxShadow:
+                "0 6px 18px rgba(120, 65, 5, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+              background: "rgba(255, 245, 215, 0.55)",
+            }}
+            aria-hidden="true"
+          >
+            <picture className="absolute inset-0 flex items-center justify-center">
+              {THEME_CONFIG.hasOptimizedFormats && (
+                <>
+                  <source
+                    srcSet="/art/redesign/board/board-ch.avif"
+                    type="image/avif"
+                  />
+                  <source
+                    srcSet="/art/redesign/board/board-ch.webp"
+                    type="image/webp"
+                  />
+                </>
+              )}
+              <img
+                src="/art/redesign/board/board-ch.png"
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            </picture>
+          </div>
+
+          {/* Bullets — exploration vocabulary. Star icon for the
+              middle one ties to the in-game star reward. */}
+          <ul className="grid grid-cols-1 gap-2" role="list">
+            {WHY_PAGE_COPY.progress.bullets.map((bullet, idx) => (
+              <li
+                key={bullet}
+                className="flex items-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-semibold"
+                style={{
+                  background: "rgba(255, 245, 215, 0.55)",
+                  borderColor: "rgba(110, 65, 15, 0.22)",
+                  color: "rgba(63, 34, 8, 0.95)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+                }}
+              >
+                <CandyIcon
+                  name={idx === 0 ? "crown" : idx === 1 ? "star" : "trophy"}
+                  className="h-4 w-4 shrink-0"
+                />
+                {bullet}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* §5 Community — three audience-specific cards (families,
+            educators, communities) packaged invitationally rather than
+            transactionally. Reads to parents and institution
+            stakeholders without aggressive selling. */}
+        <section
+          className="flex flex-col gap-4 border-t px-5 py-10"
+          style={{ borderColor: "var(--paper-divider)" }}
+        >
+          <h2
+            className="fantasy-title text-2xl font-extrabold leading-tight"
+            style={{
+              color: "rgba(63, 34, 8, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+            }}
+          >
+            {WHY_PAGE_COPY.community.title}
+          </h2>
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {WHY_PAGE_COPY.community.body}
+          </p>
+
+          <ul className="flex flex-col gap-2.5" role="list">
+            {WHY_PAGE_COPY.community.cards.map((card) => (
+              <li
+                key={card.title}
+                className="flex flex-col gap-1.5 rounded-2xl border px-4 py-3.5"
+                style={{
+                  background: "rgba(255, 245, 215, 0.55)",
+                  borderColor: "rgba(110, 65, 15, 0.22)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+                }}
+              >
+                <h3
+                  className="fantasy-title text-sm font-extrabold uppercase tracking-[0.10em]"
+                  style={{
+                    color: "rgba(63, 34, 8, 0.95)",
+                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                  }}
+                >
+                  {card.title}
+                </h3>
+                <p
+                  className="text-xs leading-relaxed"
+                  style={{ color: "var(--paper-text-muted)" }}
+                >
+                  {card.body}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* §6 Sponsors — built for impact. Carries the Den Labs
+            framing (parent brand, first vertical of a cognitive
+            platform thesis) and offers two contact paths (email +
+            GitHub) without asking for a form. */}
+        <section
+          className="flex flex-col gap-4 border-t px-5 py-10"
+          style={{ borderColor: "var(--paper-divider)" }}
+        >
+          <h2
+            className="fantasy-title text-2xl font-extrabold leading-tight"
+            style={{
+              color: "rgba(63, 34, 8, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+            }}
+          >
+            {WHY_PAGE_COPY.sponsors.title}
+          </h2>
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {WHY_PAGE_COPY.sponsors.body}
+          </p>
+
+          <div
+            className="rounded-2xl border px-4 py-3.5"
+            style={{
+              background: "rgba(255, 245, 215, 0.55)",
+              borderColor: "rgba(110, 65, 15, 0.22)",
+              boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+            }}
+          >
+            <p
+              className="text-xs leading-relaxed"
+              style={{ color: "var(--paper-text-muted)" }}
+            >
+              {WHY_PAGE_COPY.sponsors.denLabs}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2 pt-1">
+            {process.env.NEXT_PUBLIC_SUPPORT_EMAIL ? (
+              <a
+                href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}`}
+                className="paper-tray flex min-h-[44px] items-center gap-3 transition active:scale-[0.99]"
+                style={{ color: "var(--paper-text)" }}
+              >
+                <CandyIcon name="share" className="h-5 w-5 shrink-0" />
+                <span className="text-sm font-semibold">
+                  {WHY_PAGE_COPY.sponsors.contactPrimary}
+                </span>
+              </a>
+            ) : null}
+            <a
+              href={WHY_PAGE_COPY.sponsors.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="paper-tray flex min-h-[44px] items-center gap-3 transition active:scale-[0.99]"
+              style={{ color: "var(--paper-text)" }}
+            >
+              <CandyIcon name="copy" className="h-5 w-5 shrink-0" />
+              <span className="text-sm font-semibold">
+                {WHY_PAGE_COPY.sponsors.contactSecondary}
+              </span>
+            </a>
+          </div>
+        </section>
+
+        {/* §7–§8 land in the next commit per the spec. */}
       </div>
     </main>
   );
