@@ -29,6 +29,21 @@ export type Exercise = {
   targetPos: BoardPosition;  // casilla objetivo
   optimalMoves: number;      // mínimo teórico de movimientos
   isCapture?: boolean;
+  /** L2 labyrinth obstacles — friendly blocker pieces that the player's
+   *  piece cannot move through or capture. Sliding pieces (rook, bishop,
+   *  queen) stop one square before an obstacle in the line of attack.
+   *  When set, the exercise is treated as labyrinth mode. */
+  obstacles?: BoardPosition[];
+};
+
+export type LabyrinthProgress = {
+  piece: PieceId;
+  /** Best (minimum) move count achieved across attempts per labyrinth.
+   *  null until first completion. */
+  bestMoves: Record<string, number | null>;
+  /** Stars earned per labyrinth (0–3). Stars are recomputed when a new
+   *  best is recorded. */
+  stars: Record<string, number>;
 };
 
 export type PieceProgress = {

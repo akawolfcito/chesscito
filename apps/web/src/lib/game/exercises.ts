@@ -73,3 +73,63 @@ export const EXERCISES: Record<PieceId, Exercise[]> = {
 
 export const BADGE_THRESHOLD = 10; // de 15 estrellas posibles
 export const EXERCISES_PER_PIECE = 5;
+
+/* ── L2 Labyrinths (POC) ──────────────────────────────────────────
+ * Obstacles are friendly blocker pieces. The player's piece cannot
+ * move through them or capture them. The labyrinth forces a non-
+ * trivial path between startPos and targetPos. Stars are awarded by
+ * how close the player's move count approaches `optimalMoves`:
+ *   moves == optimal           → 3 stars
+ *   moves <= optimal + 2       → 2 stars
+ *   moves <= optimal + 4       → 1 star
+ *   else                       → 0 stars (allowed, no fail)
+ * --------------------------------------------------------------- */
+
+const ROOK_LABYRINTHS: Exercise[] = [
+  /**
+   * rook-lab-1 — "Cross-and-corner"
+   * Obstacles form an L-shape that forces the rook to navigate around.
+   * Start at a1 (0,0); target h8 (7,7). Direct path 0→0→7→7 (2 moves)
+   * is blocked: an obstacle at (3,0) blocks the file 0 horizontal first
+   * leg ends at (2,0); an obstacle at (3,7) and (7,3) keep the player
+   * from corner-jumping. Optimal: 4 moves.
+   *
+   *  8 . . . . . . . ★
+   *  7 . . . X . . . .
+   *  6 . . . . . . . .
+   *  5 . . . . . . . .
+   *  4 . . . . . . . X
+   *  3 . . . . . . . .
+   *  2 . . . . . . . .
+   *  1 ♜ . . X . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "rook-lab-1",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 7),
+    optimalMoves: 4,
+    obstacles: [
+      pos(3, 0), // d1
+      pos(3, 7), // d8
+      pos(7, 3), // h4
+    ],
+  },
+];
+
+export const LABYRINTHS: Record<PieceId, Exercise[]> = {
+  rook:   ROOK_LABYRINTHS,
+  bishop: [],
+  knight: [],
+  pawn:   [],
+  queen:  [],
+  king:   [],
+};
+
+/** Compute stars earned in a labyrinth. */
+export function labyrinthStars(moves: number, optimal: number): number {
+  if (moves <= optimal) return 3;
+  if (moves <= optimal + 2) return 2;
+  if (moves <= optimal + 4) return 1;
+  return 0;
+}
