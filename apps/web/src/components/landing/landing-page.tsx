@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PhoneFrame } from "@/components/landing/phone-frame";
 import { useMiniPay } from "@/hooks/use-minipay";
-import { WHY_PAGE_COPY } from "@/lib/content/editorial";
+import { LANDING_COPY, WHY_PAGE_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
 
 /**
@@ -118,7 +118,72 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* §2 Pre-chess — image LEFT, text RIGHT on desktop */}
+      {/* §2 Problem — anchor target for the hero "Conocer la
+          iniciativa" secondary CTA (wired in C9 when the hero copy
+          migrates to LANDING_COPY). Title + body centered, three
+          claim cards in a row on desktop, stacked on mobile. */}
+      <section
+        id="problem"
+        className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20"
+      >
+        <div className="mx-auto max-w-[700px] text-center">
+          <h2
+            className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
+            style={{
+              color: "rgba(63, 34, 8, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+            }}
+          >
+            {LANDING_COPY.problem.title}
+          </h2>
+          <p
+            className="mx-auto mt-3 max-w-[60ch] text-sm leading-relaxed md:text-base"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {LANDING_COPY.problem.body}
+          </p>
+        </div>
+
+        <ul
+          className="mt-8 grid grid-cols-1 gap-3 md:mt-12 md:grid-cols-3 md:gap-5"
+          role="list"
+        >
+          {LANDING_COPY.problem.claims.map((claim) => (
+            <li
+              key={claim.label}
+              className="flex items-start gap-3 rounded-2xl border px-4 py-3.5"
+              style={{
+                background: "rgba(255, 245, 215, 0.55)",
+                borderColor: "rgba(110, 65, 15, 0.22)",
+                boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
+            >
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                style={{
+                  background: "rgba(245, 158, 11, 0.18)",
+                  border: "1px solid rgba(245, 158, 11, 0.45)",
+                }}
+                aria-hidden="true"
+              >
+                <CandyIcon name={claim.icon} className="h-5 w-5" />
+              </span>
+              <p
+                className="text-sm font-semibold leading-snug md:text-base"
+                style={{
+                  color: "rgba(63, 34, 8, 0.95)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                }}
+              >
+                {claim.label}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* §3 (legacy preChess block — image LEFT, text RIGHT on
+          desktop). Will migrate to LANDING_COPY.solution in C9. */}
       <SectionRow
         eyebrow={null}
         title={WHY_PAGE_COPY.preChess.title}
