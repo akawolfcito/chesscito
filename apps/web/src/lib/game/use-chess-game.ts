@@ -7,6 +7,14 @@ import { aiMove } from "js-chess-engine";
 import type { ArenaDifficulty, ArenaStatus, ChessBoardPiece } from "./types";
 import { fenToPieces } from "./arena-utils";
 import { clearArenaGame, loadArenaGame, saveArenaGame } from "./arena-persistence";
+import { hapticTap, hapticReject, hapticSuccess, hapticImpact } from "@/lib/haptics";
+
+function dispatchMoveHaptic(flags: string | undefined, isCheck: boolean, isCheckmate: boolean) {
+  if (isCheckmate) { hapticImpact(); return; }
+  if (isCheck) { hapticSuccess(); return; }
+  if (flags && (flags.includes("c") || flags.includes("e"))) { hapticImpact(); return; }
+  hapticTap();
+}
 
 const DIFFICULTY_LEVEL: Record<ArenaDifficulty, number> = {
   easy: 1,
@@ -187,14 +195,17 @@ export function useChessGame(): ChessGameState {
           ((movingPiece.color === "w" && targetRank === 8) ||
            (movingPiece.color === "b" && targetRank === 1));
 
-        game.move({ from, to, promotion: isPromotion ? "q" : undefined });
+        const moveResult = game.move({ from, to, promotion: isPromotion ? "q" : undefined });
         setFen(game.fen());
         setLastMove({ from, to });
         setMoveCount(c => c + 1);
         setMoveHistory(game.history());
         setIsThinking(false);
 
-        if (game.isCheckmate()) endGameWith("checkmate");
+        const isMate = game.isCheckmate();
+        dispatchMoveHaptic(moveResult?.flags, game.isCheck(), isMate);
+
+        if (isMate) endGameWith("checkmate");
         else if (game.isStalemate()) endGameWith("stalemate");
         else if (game.isDraw()) endGameWith("draw");
       } catch (err) {
@@ -214,6 +225,7 @@ export function useChessGame(): ChessGameState {
 
       // Clicking own piece → select and show legal moves
       if (piece && piece.color === playerColor) {
+        hapticTap();
         setSelectedSquare(square);
         const moves = game.moves({ square: square as Square, verbose: true });
         setLegalMoves(moves.map((m) => m.to));
@@ -228,11 +240,12 @@ export function useChessGame(): ChessGameState {
           ((movingPiece.color === "w" && targetRank === 8) ||
            (movingPiece.color === "b" && targetRank === 1));
         if (isPromotion) {
+          hapticTap();
           setPendingPromotion({ from: selectedSquare, to: square });
           return;
         }
 
-        game.move({ from: selectedSquare, to: square });
+        const moveResult = game.move({ from: selectedSquare, to: square });
         setFen(game.fen());
         setLastMove({ from: selectedSquare, to: square });
         setMoveCount(c => c + 1);
@@ -240,14 +253,20 @@ export function useChessGame(): ChessGameState {
         setSelectedSquare(null);
         setLegalMoves([]);
 
-        if (game.isCheckmate()) endGameWith("checkmate");
+        const isMate = game.isCheckmate();
+        dispatchMoveHaptic(moveResult?.flags, game.isCheck(), isMate);
+
+        if (isMate) endGameWith("checkmate");
         else if (game.isStalemate()) endGameWith("stalemate");
         else if (game.isDraw()) endGameWith("draw");
         else triggerAiMove(difficulty, playerColor);
         return;
       }
 
-      // Deselect
+      // Click on empty / opponent square with no selection, or invalid target — reject feedback
+      if (status === "playing" && game.turn() === playerColor) {
+        hapticReject();
+      }
       setSelectedSquare(null);
       setLegalMoves([]);
     } catch (err) {
@@ -262,7 +281,7 @@ export function useChessGame(): ChessGameState {
     const game = gameRef.current;
 
     try {
-      game.move({ from: pendingPromotion.from, to: pendingPromotion.to, promotion: piece });
+      const moveResult = game.move({ from: pendingPromotion.from, to: pendingPromotion.to, promotion: piece });
       setFen(game.fen());
       setLastMove({ from: pendingPromotion.from, to: pendingPromotion.to });
       setMoveCount(c => c + 1);
@@ -271,7 +290,10 @@ export function useChessGame(): ChessGameState {
       setSelectedSquare(null);
       setLegalMoves([]);
 
-      if (game.isCheckmate()) endGameWith("checkmate");
+      const isMate = game.isCheckmate();
+      dispatchMoveHaptic(moveResult?.flags, game.isCheck(), isMate);
+
+      if (isMate) endGameWith("checkmate");
       else if (game.isStalemate()) endGameWith("stalemate");
       else if (game.isDraw()) endGameWith("draw");
       else triggerAiMove(difficulty, playerColor);

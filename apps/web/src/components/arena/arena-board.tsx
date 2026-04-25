@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 import { ARENA_PIECE_IMG, squareToFileRank } from "@/lib/game/arena-utils";
 import { ARENA_COPY } from "@/lib/content/editorial";
-import { hapticTap } from "@/lib/haptics";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { ChessBoardPiece } from "@/lib/game/types";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
@@ -129,7 +128,7 @@ export function ArenaBoard({
                     role="gridcell"
                     aria-label={`Square ${sq.label}`}
                     disabled={isLocked}
-                    onClick={() => { hapticTap(); onSquareClick(sq.label); }}
+                    onClick={() => onSquareClick(sq.label)}
                     style={{
                       left: `${geo.left}%`,
                       top: `${geo.top}%`,
