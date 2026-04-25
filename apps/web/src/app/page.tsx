@@ -39,7 +39,7 @@ import {
 import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
 import { ACCEPTED_TOKENS, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
-import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SHOP_ITEM_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
+import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SHOP_ITEM_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
@@ -52,7 +52,7 @@ import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
 import { classifyTxError, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
-import { BADGE_THRESHOLD, EXERCISES } from "@/lib/game/exercises";
+import { BADGE_THRESHOLD, EXERCISES, LABYRINTHS } from "@/lib/game/exercises";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
 
@@ -181,6 +181,12 @@ export default function PlayHubPage() {
     rook: false, bishop: false, knight: false, pawn: false, queen: false, king: false,
   });
   const [unlockedPiece, setUnlockedPiece] = useState<PieceKey | null>(null);
+
+  /** L2 layer toggle. When true, the board renders the active piece's
+   *  labyrinth instead of the L1 exercise. Resets to false on piece
+   *  switch — labyrinth state does not survive across pieces. */
+  const [labyrinthMode, setLabyrinthMode] = useState(false);
+  useEffect(() => { setLabyrinthMode(false); }, [selectedPiece]);
 
   const {
     progress,
@@ -792,13 +798,23 @@ export default function PlayHubPage() {
     }
   }
 
-  const targetLabel = currentExercise.isCapture
-    ? CAPTURE_COPY.statsLabel
-    : `${String.fromCharCode(97 + currentExercise.targetPos.file)}${currentExercise.targetPos.rank + 1}`;
+  /** Active exercise — switches to the labyrinth when L2 layer is on
+   *  and the piece has at least one labyrinth defined. Falls back to
+   *  the L1 currentExercise otherwise. */
+  const labyrinthList = LABYRINTHS[selectedPiece] ?? [];
+  const labyrinthAvailable = labyrinthList.length > 0 && (badgeEarned || totalStars >= BADGE_THRESHOLD);
+  const activeLabyrinth = labyrinthMode && labyrinthList.length > 0 ? labyrinthList[0] : null;
+  const activeExercise = activeLabyrinth ?? currentExercise;
 
-  const pieceHint = currentExercise.isCapture
-    ? MISSION_BRIEFING_COPY.captureHintCompact
-    : MISSION_BRIEFING_COPY.pieceHint[selectedPiece];
+  const targetLabel = activeExercise.isCapture
+    ? CAPTURE_COPY.statsLabel
+    : `${String.fromCharCode(97 + activeExercise.targetPos.file)}${activeExercise.targetPos.rank + 1}`;
+
+  const pieceHint = activeLabyrinth
+    ? `${LABYRINTH_COPY.missionTitle} · ${LABYRINTH_COPY.missionHint(activeLabyrinth.optimalMoves)}`
+    : currentExercise.isCapture
+      ? MISSION_BRIEFING_COPY.captureHintCompact
+      : MISSION_BRIEFING_COPY.pieceHint[selectedPiece];
 
   // Show movement lane hints on the first exercise of each piece (until the player earns stars)
   const tutorialHints = useMemo(() => {
@@ -842,6 +858,9 @@ export default function PlayHubPage() {
           pieceHint={pieceHint}
           isCapture={Boolean(currentExercise.isCapture)}
           isDockSheetOpen={activeDockTab !== null}
+          labyrinthAvailable={labyrinthAvailable}
+          labyrinthMode={labyrinthMode}
+          onToggleLabyrinth={setLabyrinthMode}
           score={score.toString()}
           timeMs={timeMs.toString()}
           currentStars={totalStars}
@@ -917,15 +936,16 @@ export default function PlayHubPage() {
           }
           board={
             <Board
-              key={boardKey}
+              key={`${boardKey}-${labyrinthMode ? "lab" : "ex"}`}
               pieceType={selectedPiece}
-              startPosition={currentExercise.startPos}
-              mode="practice"
-              targetPosition={currentExercise.targetPos}
-              isLocked={phase === "failure" || phase === "success"}
-              onMove={handleMove}
-              isCapture={currentExercise.isCapture}
-              tutorialHints={tutorialHints}
+              startPosition={activeExercise.startPos}
+              mode={activeLabyrinth ? "labyrinth" : "practice"}
+              targetPosition={activeExercise.targetPos}
+              obstacles={activeLabyrinth?.obstacles}
+              isLocked={!activeLabyrinth && (phase === "failure" || phase === "success")}
+              onMove={activeLabyrinth ? undefined : handleMove}
+              isCapture={!activeLabyrinth && activeExercise.isCapture}
+              tutorialHints={activeLabyrinth ? undefined : tutorialHints}
             />
           }
           exerciseDrawer={
@@ -991,6 +1011,15 @@ export default function PlayHubPage() {
               setShowPieceComplete(false);
               resetBoard();
             }}
+            onTryLabyrinth={
+              labyrinthList.length > 0
+                ? () => {
+                    setShowPieceComplete(false);
+                    setLabyrinthMode(true);
+                    resetBoard();
+                  }
+                : undefined
+            }
           />
         ) : null}
 

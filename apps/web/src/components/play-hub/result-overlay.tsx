@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BADGE_EARNED_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
+import { BADGE_EARNED_COPY, LABYRINTH_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -443,6 +443,10 @@ type PieceCompletePromptProps = {
   onNextPiece: () => void;
   onArena: () => void;
   onPracticeAgain: () => void;
+  /** When provided, shows a "Try Labyrinth" CTA so the player can step
+   *  into L2 directly from the L1 completion ceremony. Only meaningful
+   *  for pieces that have at least one labyrinth defined. */
+  onTryLabyrinth?: () => void;
 };
 
 export function PieceCompletePrompt({
@@ -453,6 +457,7 @@ export function PieceCompletePrompt({
   onNextPiece,
   onArena,
   onPracticeAgain,
+  onTryLabyrinth,
 }: PieceCompletePromptProps) {
   const [exiting, setExiting] = useState(false);
 
@@ -509,6 +514,17 @@ export function PieceCompletePrompt({
                   className="w-full"
                 >
                   {PIECE_COMPLETE_COPY.tryArena}
+                </Button>
+              )}
+              {onTryLabyrinth && (
+                <Button
+                  type="button"
+                  variant="game-ghost"
+                  size="game"
+                  onClick={() => handleAction(onTryLabyrinth)}
+                  className="w-full"
+                >
+                  {LABYRINTH_COPY.tryLabyrinth}
                 </Button>
               )}
               <button

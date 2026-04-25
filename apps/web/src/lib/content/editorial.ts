@@ -555,6 +555,26 @@ export const PRACTICE_COPY = {
   label: "Practice mode",
 } as const;
 
+/** L2 Labyrinth — second level of per-piece pedagogy ladder.
+ *  Unlocked after L1 mastery (badge claimable). Player navigates
+ *  obstacles to reach the star in minimum moves. */
+export const LABYRINTH_COPY = {
+  toggleExercises: "Exercises",
+  toggleLabyrinths: "Labyrinths",
+  tryLabyrinth: "Try Labyrinth",
+  missionTitle: "Labyrinth",
+  missionHint: (optimal: number) => `Reach the star · optimal ${optimal} moves`,
+  movesLabel: (n: number) => `${n} ${n === 1 ? "move" : "moves"}`,
+  completeTitle: "Labyrinth Solved!",
+  completeStars: (stars: number) => `${stars}/3 ★`,
+  completeMoves: (moves: number, optimal: number) =>
+    moves === optimal
+      ? `Optimal! ${moves} moves`
+      : `${moves} moves · optimal ${optimal}`,
+  retry: "Try Again",
+  back: "Back to Exercises",
+} as const;
+
 export const DOCK_LABELS = {
   /** Center tab — routes to /arena. Short name matches the route + the
    *  page's own title ("Arena"). Previous label "Free Play" was

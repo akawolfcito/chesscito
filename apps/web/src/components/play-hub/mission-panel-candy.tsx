@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS } from "@/lib/content/editorial";
+import { LABYRINTH_COPY, MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PiecePickerSheet } from "@/components/play-hub/piece-picker-sheet";
 import { MissionDetailSheet } from "@/components/play-hub/mission-detail-sheet";
@@ -42,6 +42,11 @@ type MissionPanelProps = {
    *  never sees a picker stacked behind a badge/shop/leaderboard
    *  sheet. */
   isDockSheetOpen: boolean;
+  /** L2 layer toggle. Visible only when labyrinthAvailable. Lets the
+   *  player switch between L1 exercises and L2 labyrinths inline. */
+  labyrinthAvailable?: boolean;
+  labyrinthMode?: boolean;
+  onToggleLabyrinth?: (next: boolean) => void;
 };
 
 type FlashConfig = { text: string; accent: string };
@@ -130,6 +135,9 @@ export function MissionPanelCandy({
   currentStars,
   claimedBadges,
   isDockSheetOpen,
+  labyrinthAvailable = false,
+  labyrinthMode = false,
+  onToggleLabyrinth,
 }: MissionPanelProps) {
   const activePiece = pieces.find((p) => p.key === selectedPiece);
   const activeSrc = PIECE_IMAGES[selectedPiece as keyof typeof PIECE_IMAGES];
@@ -225,6 +233,52 @@ export function MissionPanelCandy({
         />
         <span className="ml-auto">{exerciseDrawer}</span>
       </div>
+
+      {/* L2 Layer toggle — only visible after L1 mastery + labyrinths
+          exist for this piece. Segmented pill picks between Exercises
+          (L1) and Labyrinths (L2). */}
+      {labyrinthAvailable && onToggleLabyrinth && (
+        <div className="shrink-0 mx-2 mt-2 flex justify-center">
+          <div
+            className="grid grid-cols-2 gap-0.5 rounded-full p-0.5"
+            style={{
+              background: "rgba(255, 255, 255, 0.18)",
+              border: "1px solid rgba(255, 255, 255, 0.45)",
+            }}
+            role="tablist"
+            aria-label="Layer toggle"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!labyrinthMode}
+              onClick={() => onToggleLabyrinth(false)}
+              className={[
+                "rounded-full px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.10em] transition-all",
+                !labyrinthMode
+                  ? "bg-amber-500/95 text-[rgba(63,34,8,0.95)] shadow-[0_1px_0_rgba(110,65,15,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]"
+                  : "text-[rgba(110,65,15,0.75)] active:scale-[0.97]",
+              ].join(" ")}
+            >
+              {LABYRINTH_COPY.toggleExercises}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={labyrinthMode}
+              onClick={() => onToggleLabyrinth(true)}
+              className={[
+                "rounded-full px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.10em] transition-all",
+                labyrinthMode
+                  ? "bg-amber-500/95 text-[rgba(63,34,8,0.95)] shadow-[0_1px_0_rgba(110,65,15,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]"
+                  : "text-[rgba(110,65,15,0.75)] active:scale-[0.97]",
+              ].join(" ")}
+            >
+              {LABYRINTH_COPY.toggleLabyrinths}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Zone B: Board Stage — flex-1, maximum space. No panel frame so the
           board image floats directly on the grass field bg. */}
