@@ -14,6 +14,10 @@ type Props = {
   optimalMoves: number;
   /** Stars earned (0–3) — caller computes via labyrinthStars(). */
   stars: number;
+  /** Personal record before this attempt — null on first completion. */
+  previousBest?: number | null;
+  /** True when this attempt set a new personal record. */
+  isNewBest?: boolean;
   onRetry: () => void;
   onBack: () => void;
 };
@@ -31,6 +35,8 @@ export function LabyrinthCompleteOverlay({
   moves,
   optimalMoves,
   stars,
+  previousBest = null,
+  isNewBest = false,
   onRetry,
   onBack,
 }: Props) {
@@ -137,6 +143,32 @@ export function LabyrinthCompleteOverlay({
                 ★ Perfect path
               </p>
             )}
+
+            {/* Personal record badge — celebrates a new best, or shows
+                the historical record so the player has a target. */}
+            {isNewBest ? (
+              <p
+                className="mt-1 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-[0.10em] animate-in fade-in zoom-in-95 duration-300 fill-mode-both [animation-delay:550ms]"
+                style={{
+                  background: "rgba(245, 158, 11, 0.85)",
+                  color: "rgba(63, 34, 8, 0.95)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                  boxShadow:
+                    "0 0 12px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 245, 215, 0.45)",
+                }}
+              >
+                {previousBest != null
+                  ? `New best! Beat ${previousBest} → ${moves}`
+                  : `First completion · ${moves} moves`}
+              </p>
+            ) : previousBest != null ? (
+              <p
+                className="mt-1 text-xs"
+                style={{ color: "rgba(110, 65, 15, 0.65)" }}
+              >
+                Your best: {previousBest} moves
+              </p>
+            ) : null}
           </div>
         </CandyGlassShell>
       </div>

@@ -53,6 +53,7 @@ import { track } from "@/lib/telemetry";
 import { classifyTxError, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, EXERCISES, LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
+import { getLabyrinthBest, recordLabyrinthBest } from "@/lib/game/labyrinth-progress";
 import { LabyrinthCompleteOverlay } from "@/components/play-hub/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
@@ -215,6 +216,11 @@ export default function PlayHubPage() {
     moves: number;
     optimal: number;
     stars: number;
+    /** Previous best move count (if any) before this attempt — used
+     *  by the overlay to render "New best!" or the historical record. */
+    previousBest: number | null;
+    /** True when this attempt set a new personal record. */
+    isNewBest: boolean;
   } | null>(null);
   /** Bumps the labyrinth board key on retry so internal Board state
    *  (piece position, selection, internal move counter) resets. */
@@ -857,10 +863,20 @@ export default function PlayHubPage() {
         position.rank === activeLabyrinth.targetPos.rank;
       if (!reached) return;
       const stars = labyrinthStars(movesCount, activeLabyrinth.optimalMoves);
+      // Read previous best BEFORE recording so the overlay can
+      // contextualize the new score against the player's history.
+      const previousBest = getLabyrinthBest(selectedPiece, activeLabyrinth.id);
+      const isNewBest = recordLabyrinthBest(
+        selectedPiece,
+        activeLabyrinth.id,
+        movesCount,
+      );
       setLabyrinthCompleted({
         moves: movesCount,
         optimal: activeLabyrinth.optimalMoves,
         stars,
+        previousBest,
+        isNewBest,
       });
       track("labyrinth_complete", {
         labyrinth_id: activeLabyrinth.id,
@@ -868,6 +884,8 @@ export default function PlayHubPage() {
         moves: movesCount,
         optimal: activeLabyrinth.optimalMoves,
         stars,
+        is_new_best: isNewBest,
+        previous_best: previousBest ?? null,
       });
     },
     [activeLabyrinth, selectedPiece],
@@ -1111,6 +1129,8 @@ export default function PlayHubPage() {
             moves={labyrinthCompleted.moves}
             optimalMoves={labyrinthCompleted.optimal}
             stars={labyrinthCompleted.stars}
+            previousBest={labyrinthCompleted.previousBest}
+            isNewBest={labyrinthCompleted.isNewBest}
             onRetry={() => {
               setLabyrinthCompleted(null);
               setLabyrinthKey((k) => k + 1);
