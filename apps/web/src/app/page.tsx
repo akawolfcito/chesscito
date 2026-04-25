@@ -206,6 +206,7 @@ export default function PlayHubPage() {
   useEffect(() => {
     setLabyrinthMode(false);
     setLabyrinthCompleted(null);
+    setLabyrinthMoves(0);
   }, [selectedPiece]);
 
   /** Completion snapshot for the L2 overlay. Set when the player
@@ -218,6 +219,10 @@ export default function PlayHubPage() {
   /** Bumps the labyrinth board key on retry so internal Board state
    *  (piece position, selection, internal move counter) resets. */
   const [labyrinthKey, setLabyrinthKey] = useState(0);
+  /** Live move counter mirrored from the Board's onMove callback.
+   *  Drives the labyrinth HUD chip ("X / Y moves") so the player
+   *  can pace themselves against the optimal target in real time. */
+  const [labyrinthMoves, setLabyrinthMoves] = useState(0);
 
   const {
     progress,
@@ -843,6 +848,10 @@ export default function PlayHubPage() {
   const handleLabyrinthMove = useCallback(
     (position: BoardPosition, movesCount: number) => {
       if (!activeLabyrinth) return;
+      // Mirror the Board's internal counter to drive the live HUD
+      // chip. Fires on every move; the completion check below only
+      // runs when the player lands on the target square.
+      setLabyrinthMoves(movesCount);
       const reached =
         position.file === activeLabyrinth.targetPos.file &&
         position.rank === activeLabyrinth.targetPos.rank;
@@ -864,9 +873,14 @@ export default function PlayHubPage() {
     [activeLabyrinth, selectedPiece],
   );
 
-  const targetLabel = activeExercise.isCapture
-    ? CAPTURE_COPY.statsLabel
-    : `${String.fromCharCode(97 + activeExercise.targetPos.file)}${activeExercise.targetPos.rank + 1}`;
+  const targetLabel = activeLabyrinth
+    ? // Labyrinth chip becomes a live counter: "0 / 4 · optimal" (no
+      //  moves yet) → "3 / 4 · optimal" (live) → "5 / 4 · over" past
+      //  optimal so the player can pace themselves in real time.
+      `${labyrinthMoves} / ${activeLabyrinth.optimalMoves} moves`
+    : activeExercise.isCapture
+      ? CAPTURE_COPY.statsLabel
+      : `${String.fromCharCode(97 + activeExercise.targetPos.file)}${activeExercise.targetPos.rank + 1}`;
 
   const pieceHint = activeLabyrinth
     ? `${LABYRINTH_COPY.missionTitle} · ${LABYRINTH_COPY.missionHint(activeLabyrinth.optimalMoves)}`
@@ -918,7 +932,10 @@ export default function PlayHubPage() {
           isDockSheetOpen={activeDockTab !== null}
           labyrinthAvailable={labyrinthAvailable}
           labyrinthMode={labyrinthMode}
-          onToggleLabyrinth={setLabyrinthMode}
+          onToggleLabyrinth={(next) => {
+            setLabyrinthMode(next);
+            setLabyrinthMoves(0);
+          }}
           score={score.toString()}
           timeMs={timeMs.toString()}
           currentStars={totalStars}
@@ -1097,10 +1114,12 @@ export default function PlayHubPage() {
             onRetry={() => {
               setLabyrinthCompleted(null);
               setLabyrinthKey((k) => k + 1);
+              setLabyrinthMoves(0);
             }}
             onBack={() => {
               setLabyrinthCompleted(null);
               setLabyrinthMode(false);
+              setLabyrinthMoves(0);
             }}
           />
         ) : null}

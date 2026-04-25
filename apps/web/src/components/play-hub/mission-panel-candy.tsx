@@ -237,7 +237,7 @@ export function MissionPanelCandy({
       aria-label={`Open mission details${isCapture ? " — capture target" : ` — target ${targetLabel}`}`}
     >
       <CandyIcon
-        name="crosshair"
+        name={labyrinthMode ? "move" : "crosshair"}
         className="h-4 w-4 shrink-0"
       />
       <span
@@ -245,7 +245,11 @@ export function MissionPanelCandy({
         className="fantasy-title text-xs font-extrabold"
         style={candyChipTextStyle}
       >
-        {isCapture ? "Capture" : `${MISSION_BRIEFING_COPY.targetPrefix.replace(":", "")} ${targetLabel}`}
+        {labyrinthMode
+          ? targetLabel
+          : isCapture
+            ? "Capture"
+            : `${MISSION_BRIEFING_COPY.targetPrefix.replace(":", "")} ${targetLabel}`}
       </span>
     </button>
   );
