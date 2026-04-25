@@ -1,23 +1,19 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { PlayHubRoot } from "@/components/play-hub/play-hub-root";
+import { LandingPage } from "@/components/landing/landing-page";
 import { detectWalletFromUserAgent } from "@/lib/server/wallet-detection";
 
 /**
- * `/` — server component that decides between the public landing and
- * the play hub based on whether the visitor is inside a wallet
- * WebView (MiniPay / Valora / Coinbase / Trust).
+ * `/` — public web landing for Chesscito. Server-side decides
+ * between landing and direct redirect to the play hub.
  *
- * Wallet visitors are redirected to `/hub` (canonical play-hub URL)
- * so existing bookmarks keep dropping them inside the game without
- * a flash of marketing content. Web visitors fall through to the
- * landing.
+ * Wallet WebViews (MiniPay / Valora / Coinbase / Trust) get an
+ * immediate `redirect("/hub")` so existing bookmarks land inside
+ * the game without a flash of marketing content. Everyone else
+ * sees the responsive Duolingo-style landing.
  *
- * Transitional state for this commit: the non-wallet path still
- * renders <PlayHubRoot /> until the new responsive landing lands in
- * the next commit. The redirect path is wired and verified now so
- * the production switchover in the landing commit is a content swap,
- * not a routing change.
+ * The LandingPage component carries a client-side useMiniPay
+ * fallback for wallets that the UA fingerprint table missed.
  */
 export default function HomePage() {
   const ua = headers().get("user-agent");
@@ -25,5 +21,5 @@ export default function HomePage() {
   if (wallet) {
     redirect("/hub");
   }
-  return <PlayHubRoot />;
+  return <LandingPage />;
 }
