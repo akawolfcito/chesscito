@@ -103,7 +103,8 @@ export function Board({
   );
 
   const handleSquarePress = (label: string) => {
-    if (mode !== "practice" || isLocked || !mountedRef.current) {
+    const isInteractive = mode === "practice" || mode === "labyrinth";
+    if (!isInteractive || isLocked || !mountedRef.current) {
       return;
     }
 
@@ -228,6 +229,46 @@ export function Board({
                   </picture>
                 );
               })()}
+
+              {/* Labyrinth obstacles — friendly blocker pieces rendered at
+                  reduced opacity to visually distinguish them from the
+                  active piece. Non-interactive: hit-grid buttons remain
+                  the only click targets, and the rules layer already
+                  excludes obstacle squares from valid targets. */}
+              {mode === "labyrinth" && obstacles && obstacles.length > 0 && obstacles.map((ob) => {
+                const oc = cellCenter(ob.file, ob.rank);
+                const ow = pieceWidth();
+                const obstacleImg = PIECE_IMG[pieceType];
+                const key = `obstacle-${ob.file}-${ob.rank}`;
+                return (
+                  <picture
+                    key={key}
+                    aria-hidden="true"
+                    className="playhub-board-piece-float"
+                    style={{
+                      left: `${oc.x}%`,
+                      top: `${oc.y}%`,
+                      width: `${ow}%`,
+                      opacity: 0.55,
+                      filter: "saturate(0.6) brightness(0.92)",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    {THEME_CONFIG.hasOptimizedFormats && (
+                      <>
+                        <source srcSet={obstacleImg.replace(".png", ".avif")} type="image/avif" />
+                        <source srcSet={obstacleImg.replace(".png", ".webp")} type="image/webp" />
+                      </>
+                    )}
+                    <img
+                      src={obstacleImg}
+                      alt=""
+                      className={PIECE_IMG_CLASS}
+                      style={{ width: "100%" }}
+                    />
+                  </picture>
+                );
+              })}
 
               {/* Floating piece layer — same element moves with transition */}
               {(() => {
