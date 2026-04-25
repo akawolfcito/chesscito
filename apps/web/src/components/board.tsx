@@ -11,6 +11,7 @@ import {
 } from "@/lib/game/board";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { hapticTap, hapticReject, hapticSuccess } from "@/lib/haptics";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 
@@ -230,18 +231,20 @@ export function Board({
                 );
               })()}
 
-              {/* Labyrinth obstacles — friendly blocker pieces rendered at
-                  reduced opacity to visually distinguish them from the
-                  active piece. Non-interactive: hit-grid buttons remain
-                  the only click targets, and the rules layer already
-                  excludes obstacle squares from valid targets. */}
+              {/* Labyrinth obstacles — "chained" friendly pieces. Rendered
+                  at full opacity with a desaturated grey tint so they read
+                  as solid in-world objects (not ghosts), then a lock
+                  CandyIcon overlay communicates "intocable, no se mueve".
+                  Non-interactive: hit-grid buttons remain the only click
+                  targets, and the rules layer already excludes obstacle
+                  squares from valid targets. */}
               {mode === "labyrinth" && obstacles && obstacles.length > 0 && obstacles.map((ob) => {
                 const oc = cellCenter(ob.file, ob.rank);
                 const ow = pieceWidth();
                 const obstacleImg = PIECE_IMG[pieceType];
                 const key = `obstacle-${ob.file}-${ob.rank}`;
                 return (
-                  <picture
+                  <div
                     key={key}
                     aria-hidden="true"
                     className="playhub-board-piece-float"
@@ -249,24 +252,48 @@ export function Board({
                       left: `${oc.x}%`,
                       top: `${oc.y}%`,
                       width: `${ow}%`,
-                      opacity: 0.55,
-                      filter: "saturate(0.6) brightness(0.92)",
                       pointerEvents: "none",
                     }}
                   >
-                    {THEME_CONFIG.hasOptimizedFormats && (
-                      <>
-                        <source srcSet={obstacleImg.replace(".png", ".avif")} type="image/avif" />
-                        <source srcSet={obstacleImg.replace(".png", ".webp")} type="image/webp" />
-                      </>
-                    )}
-                    <img
-                      src={obstacleImg}
-                      alt=""
-                      className={PIECE_IMG_CLASS}
-                      style={{ width: "100%" }}
-                    />
-                  </picture>
+                    <picture
+                      style={{
+                        display: "block",
+                        filter: "saturate(0.35) brightness(0.85) drop-shadow(0 0 6px rgba(80, 50, 20, 0.35))",
+                      }}
+                    >
+                      {THEME_CONFIG.hasOptimizedFormats && (
+                        <>
+                          <source srcSet={obstacleImg.replace(".png", ".avif")} type="image/avif" />
+                          <source srcSet={obstacleImg.replace(".png", ".webp")} type="image/webp" />
+                        </>
+                      )}
+                      <img
+                        src={obstacleImg}
+                        alt=""
+                        className={PIECE_IMG_CLASS}
+                        style={{ width: "100%" }}
+                      />
+                    </picture>
+                    {/* Lock badge — bottom-right of the piece sprite.
+                        Communicates "chained / cannot pass". */}
+                    <span
+                      className="absolute"
+                      style={{
+                        right: "10%",
+                        bottom: "8%",
+                        width: "38%",
+                        height: "38%",
+                        background: "rgba(63, 34, 8, 0.92)",
+                        borderRadius: "9999px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255, 245, 215, 0.20)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <CandyIcon name="lock" className="h-[60%] w-[60%]" />
+                    </span>
+                  </div>
                 );
               })}
 

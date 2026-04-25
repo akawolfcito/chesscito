@@ -235,47 +235,39 @@ export function MissionPanelCandy({
       </div>
 
       {/* L2 Layer toggle — only visible after L1 mastery + labyrinths
-          exist for this piece. Segmented pill picks between Exercises
-          (L1) and Labyrinths (L2). */}
+          exist for this piece. Restyled to match the chip row above
+          (border-amber-300/25, surface-c-mid, fantasy-title cap text,
+          backdrop blur, glow on active) so it feels native to the
+          game rather than a generic form control. */}
       {labyrinthAvailable && onToggleLabyrinth && (
         <div className="shrink-0 mx-2 mt-2 flex justify-center">
           <div
-            className="grid grid-cols-2 gap-0.5 rounded-full p-0.5"
-            style={{
-              background: "rgba(255, 255, 255, 0.18)",
-              border: "1px solid rgba(255, 255, 255, 0.45)",
-            }}
+            className="inline-flex items-center gap-1 rounded-full border border-amber-300/25 bg-[var(--surface-c-mid)] p-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.35)] backdrop-blur-md"
             role="tablist"
             aria-label="Layer toggle"
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={!labyrinthMode}
-              onClick={() => onToggleLabyrinth(false)}
-              className={[
-                "rounded-full px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.10em] transition-all",
-                !labyrinthMode
-                  ? "bg-amber-500/95 text-[rgba(63,34,8,0.95)] shadow-[0_1px_0_rgba(110,65,15,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]"
-                  : "text-[rgba(110,65,15,0.75)] active:scale-[0.97]",
-              ].join(" ")}
-            >
-              {LABYRINTH_COPY.toggleExercises}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={labyrinthMode}
-              onClick={() => onToggleLabyrinth(true)}
-              className={[
-                "rounded-full px-3 py-1 text-[0.7rem] font-bold uppercase tracking-[0.10em] transition-all",
-                labyrinthMode
-                  ? "bg-amber-500/95 text-[rgba(63,34,8,0.95)] shadow-[0_1px_0_rgba(110,65,15,0.35),inset_0_1px_0_rgba(255,255,255,0.35)]"
-                  : "text-[rgba(110,65,15,0.75)] active:scale-[0.97]",
-              ].join(" ")}
-            >
-              {LABYRINTH_COPY.toggleLabyrinths}
-            </button>
+            {[
+              { active: !labyrinthMode, value: false, label: LABYRINTH_COPY.toggleExercises },
+              { active: labyrinthMode, value: true, label: LABYRINTH_COPY.toggleLabyrinths },
+            ].map(({ active, value, label }) => (
+              <button
+                key={label}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => onToggleLabyrinth(value)}
+                className={[
+                  "rounded-full px-3.5 py-1.5 transition-all active:scale-[0.97]",
+                  "fantasy-title text-[0.7rem] font-extrabold uppercase tracking-[0.12em]",
+                  active
+                    ? "bg-amber-500/85 text-[rgba(63,34,8,0.95)] shadow-[0_0_10px_rgba(245,158,11,0.45),inset_0_1px_0_rgba(255,245,215,0.55)]"
+                    : "text-[var(--warm-label-text)]",
+                ].join(" ")}
+                style={{ textShadow: active ? "0 1px 0 rgba(255, 245, 215, 0.55)" : "var(--text-shadow-label)" }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}
