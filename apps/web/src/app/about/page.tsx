@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { LegalPageShell } from "@/components/legal-page-shell";
 import { ABOUT_COPY } from "@/lib/content/editorial";
-import { LifeBuoy, Shield, FileText } from "lucide-react";
+import { Compass, FileText, LifeBuoy, Shield } from "lucide-react";
 import { InviteLink } from "./invite-link";
 
 export const metadata = {
@@ -10,6 +10,7 @@ export const metadata = {
 };
 
 const ABOUT_LINKS = [
+  { href: "/why", label: ABOUT_COPY.links.why, icon: Compass },
   { href: "/support", label: ABOUT_COPY.links.support, icon: LifeBuoy },
   { href: "/privacy", label: ABOUT_COPY.links.privacy, icon: Shield },
   { href: "/terms", label: ABOUT_COPY.links.terms, icon: FileText },

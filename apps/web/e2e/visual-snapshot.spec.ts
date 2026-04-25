@@ -6,6 +6,7 @@ const SNAPSHOT_DIR = "e2e-results/snapshots";
 const PAGES = [
   { path: "/", name: "play-hub" },
   { path: "/arena", name: "arena" },
+  { path: "/why", name: "why" },
   { path: "/about", name: "about" },
   // Victory #1 — first on-chain mint on Celo mainnet. If the contract
   // read fails locally (missing NEXT_PUBLIC_VICTORY_NFT_ADDRESS), the

@@ -776,6 +776,10 @@ export const ABOUT_COPY = {
   handle: "@akawolfcito",
   version: "v0.1.0",
   links: {
+    /** Public landing — opens the /why narrative for parents,
+     *  sponsors, and curious players. Lives at the top of the
+     *  About link list so it's the first discovery surface. */
+    why: "Por qué Chesscito",
     support: "Support",
     privacy: "Privacy Policy",
     terms: "Terms of Service",

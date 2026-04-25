@@ -5,7 +5,6 @@ import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import { WHY_PAGE_COPY } from "@/lib/content/editorial";
-import { THEME_CONFIG } from "@/lib/theme";
 import { track } from "@/lib/telemetry";
 
 /**
@@ -118,10 +117,10 @@ export default function WhyPage() {
             {WHY_PAGE_COPY.hero.subcopy}
           </p>
 
-          {/* Hero visual — temporary placeholder using the existing
-              candy board art so the section reads complete during the
-              multi-commit rollout. Commit 5 replaces with a real
-              play-hub screenshot from Playwright snapshots. */}
+          {/* Hero visual — real play-hub screenshot from Playwright,
+              cropped to portrait inside a candy frame. AVIF/WebP/PNG
+              triple via picture so the AVIF (~54 KB) is the default
+              payload while older browsers fall back gracefully. */}
           <div
             className="relative my-2 w-full max-w-[300px] overflow-hidden rounded-3xl border-2"
             style={{
@@ -131,24 +130,13 @@ export default function WhyPage() {
                 "0 10px 28px rgba(120, 65, 5, 0.28), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
               background: "rgba(255, 245, 215, 0.55)",
             }}
-            aria-hidden="true"
           >
             <picture className="absolute inset-0 flex items-center justify-center">
-              {THEME_CONFIG.hasOptimizedFormats && (
-                <>
-                  <source
-                    srcSet="/art/redesign/board/board-ch.avif"
-                    type="image/avif"
-                  />
-                  <source
-                    srcSet="/art/redesign/board/board-ch.webp"
-                    type="image/webp"
-                  />
-                </>
-              )}
+              <source srcSet="/art/landing/hero-play-hub.avif" type="image/avif" />
+              <source srcSet="/art/landing/hero-play-hub.webp" type="image/webp" />
               <img
-                src="/art/redesign/board/board-ch.png"
-                alt=""
+                src="/art/landing/hero-play-hub.png"
+                alt="Chesscito play hub — Rook on the board"
                 className="h-full w-full object-cover"
               />
             </picture>
@@ -194,8 +182,8 @@ export default function WhyPage() {
             {WHY_PAGE_COPY.preChess.body}
           </p>
 
-          {/* Visual placeholder — second instance of the in-world art
-              frame; commit 5 swaps for a real exercise screenshot. */}
+          {/* Pre-chess visual — same play-hub mid-game shot, cropped
+              landscape to read as "exercise in progress". */}
           <div
             className="relative w-full overflow-hidden rounded-2xl border-2"
             style={{
@@ -205,24 +193,13 @@ export default function WhyPage() {
                 "0 6px 18px rgba(120, 65, 5, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
               background: "rgba(255, 245, 215, 0.55)",
             }}
-            aria-hidden="true"
           >
             <picture className="absolute inset-0 flex items-center justify-center">
-              {THEME_CONFIG.hasOptimizedFormats && (
-                <>
-                  <source
-                    srcSet="/art/redesign/board/board-ch.avif"
-                    type="image/avif"
-                  />
-                  <source
-                    srcSet="/art/redesign/board/board-ch.webp"
-                    type="image/webp"
-                  />
-                </>
-              )}
+              <source srcSet="/art/landing/pre-chess-exercise.avif" type="image/avif" />
+              <source srcSet="/art/landing/pre-chess-exercise.webp" type="image/webp" />
               <img
-                src="/art/redesign/board/board-ch.png"
-                alt=""
+                src="/art/landing/pre-chess-exercise.png"
+                alt="Reto pre-ajedrez — pieza, tablero y objetivo"
                 className="h-full w-full object-cover"
               />
             </picture>
@@ -350,8 +327,8 @@ export default function WhyPage() {
             {WHY_PAGE_COPY.progress.body}
           </p>
 
-          {/* Visual placeholder — third instance of the in-world art
-              frame; commit 5 swaps for a real trophies/badges shot. */}
+          {/* Progress visual — Trophy Case sheet captures the
+              reward layer (badges + stars + collection). */}
           <div
             className="relative w-full overflow-hidden rounded-2xl border-2"
             style={{
@@ -361,24 +338,13 @@ export default function WhyPage() {
                 "0 6px 18px rgba(120, 65, 5, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
               background: "rgba(255, 245, 215, 0.55)",
             }}
-            aria-hidden="true"
           >
             <picture className="absolute inset-0 flex items-center justify-center">
-              {THEME_CONFIG.hasOptimizedFormats && (
-                <>
-                  <source
-                    srcSet="/art/redesign/board/board-ch.avif"
-                    type="image/avif"
-                  />
-                  <source
-                    srcSet="/art/redesign/board/board-ch.webp"
-                    type="image/webp"
-                  />
-                </>
-              )}
+              <source srcSet="/art/landing/progress-trophies.avif" type="image/avif" />
+              <source srcSet="/art/landing/progress-trophies.webp" type="image/webp" />
               <img
-                src="/art/redesign/board/board-ch.png"
-                alt=""
+                src="/art/landing/progress-trophies.png"
+                alt="Trofeos y badges — progreso del jugador"
                 className="h-full w-full object-cover"
               />
             </picture>
