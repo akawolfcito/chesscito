@@ -24,6 +24,21 @@ export function classifyTxError(error: unknown): string {
   if (lower.includes("badgealreadyclaimed") || lower.includes("already claimed")) {
     return "You already own this badge!";
   }
+  // Server signing endpoint missing config or unavailable. Most often
+  // surfaced in local dev when the operator forgot the encrypted
+  // signer envs (DRAGON / TORRE_PRINCESA), but also catches prod
+  // signer outages. Distinct from user-cancellable errors so the
+  // player understands the issue isn't on their side.
+  if (
+    lower.includes("missing required env") ||
+    lower.includes("sign-badge") ||
+    lower.includes("sign-score") ||
+    lower.includes("sign-victory") ||
+    lower.includes("400") ||
+    lower.includes("signing")
+  ) {
+    return "Signing service unavailable — try again in a moment.";
+  }
   if (lower.includes("revert") || lower.includes("execution reverted")) {
     return copy.revert;
   }
