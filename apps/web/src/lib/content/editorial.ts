@@ -904,3 +904,309 @@ export const WHY_PAGE_COPY = {
     year: "© 2026 Den Labs",
   },
 } as const;
+
+/* ════════════════════════════════════════════════════════════════
+ *  LANDING_COPY — v0.5 narrative (locked).
+ *
+ *  Source of truth:
+ *  docs/superpowers/specs/2026-04-25-landing-narrative-v0.5.md
+ *
+ *  Strategy: WHY_PAGE_COPY above stays untouched so the current
+ *  landing keeps rendering. The upcoming commits (C3–C8) build the
+ *  new sections against LANDING_COPY without breaking anything;
+ *  C9 swaps the hero / final CTA / footer render to LANDING_COPY
+ *  and removes the legacy WHY_PAGE_COPY block in a single
+ *  coordinated commit.
+ *
+ *  Never make medical / clinical / absolute claims here. The
+ *  disclaimer is the only place clinical vocabulary appears,
+ *  intentionally, to draw the line.
+ * ════════════════════════════════════════════════════════════════ */
+
+export const LANDING_COPY = {
+  meta: {
+    title: "Chesscito — Pequeñas jugadas. Grandes hábitos mentales.",
+    description:
+      "Chesscito convierte el ajedrez en retos visuales de pocos minutos para ejercitar atención, memoria, planificación y toma de decisiones desde edades tempranas.",
+  },
+
+  /** Disclaimer — required to render at least twice on the landing
+   *  (capabilities section + footer). Single source so any wording
+   *  edit propagates everywhere. */
+  disclaimer:
+    "Chesscito es una experiencia lúdica de acompañamiento cognitivo. No reemplaza diagnóstico, tratamiento médico ni terapia profesional.",
+
+  /** Header brand bar shared across the page. */
+  nav: {
+    brand: "Chesscito",
+    primaryCta: "Empezar gratis",
+  },
+
+  /** §1 Hero — locked replacement for WHY_PAGE_COPY.hero. */
+  hero: {
+    eyebrow: "BIENESTAR COGNITIVO LÚDICO",
+    headline: "Pequeñas jugadas. Grandes hábitos mentales.",
+    subcopy:
+      "Chesscito convierte el ajedrez en retos visuales de pocos minutos para ejercitar atención, memoria, planificación y toma de decisiones desde edades tempranas.",
+    primaryCta: "Empezar gratis",
+    secondaryCta: "Conocer la iniciativa",
+  },
+
+  /** §2 Problem — new section, no parallel in v0.1 copy. */
+  problem: {
+    title: "La mente también necesita rutina.",
+    body:
+      "Tienes rutina para tu cuerpo. Para tu sueño. Hasta para tu nutrición. Pero ¿una para tu mente? Atención, memoria, planificación y decisiones son habilidades. Como cualquier habilidad, se fortalecen con práctica constante.",
+    claims: [
+      {
+        icon: "coach" as const,
+        label:
+          "Se fortalecen con repetición consciente, no con esfuerzo bruto.",
+      },
+      {
+        icon: "star" as const,
+        label: "Mientras antes empieces, más fácil es crear el hábito.",
+      },
+      {
+        icon: "time" as const,
+        label: "10 minutos diarios pueden construir un hábito poderoso.",
+      },
+    ],
+  },
+
+  /** §3 Solution — body identical to v0.1 preChess; duplicated here
+   *  so LANDING_COPY is self-sufficient and C9 can drop WHY_PAGE_COPY
+   *  cleanly. */
+  solution: {
+    title: "Ajedrez antes del ajedrez.",
+    body:
+      "No necesitas saber jugar para empezar. En Chesscito conviertes cada pieza en retos cortos, visuales y guiados. Aprendes cómo se mueve, resuelves laberintos con ella, dominas su identidad. Cuando ya juntas todas las piezas, el ajedrez completo se desbloquea solo — sin acantilados, sin clases pesadas, sin frustración.",
+  },
+
+  /** §4 How it works — new five-step ladder. */
+  howItWorks: {
+    title: "Una escalera, no una pared.",
+    body:
+      "Cada pieza vive en tres niveles. Los dominas por etapas. El mapa avanza contigo, una pieza a la vez.",
+    steps: [
+      {
+        label: "APRENDE",
+        body: "La pieza se mueve así. Simple. Claro. Sin presión.",
+      },
+      {
+        label: "EXPLORA",
+        body: "Laberintos con obstáculos. Mínimos movimientos, máximo de estrellas.",
+      },
+      {
+        label: "DOMINA",
+        body: "Un reto único por pieza que exprime su identidad.",
+      },
+      {
+        label: "COMBINA",
+        body: "Torres y alfiles. Después la dama. Después el caballo. El tablero crece contigo.",
+      },
+      {
+        label: "JUEGA",
+        body: "El ajedrez completo se desbloquea solo. Lo lograste tú, paso a paso.",
+      },
+    ],
+  },
+
+  /** §5 Capabilities — softened title vs v0.1, plus a body line per
+   *  item. Pulls disclaimer from the top-level field above. */
+  capabilities: {
+    title: "Cinco habilidades que te acompañan a lo largo del tiempo.",
+    items: [
+      {
+        icon: "crosshair" as const,
+        label: "Atención sostenida",
+        body: "Foco que aguanta los distractores.",
+      },
+      {
+        icon: "star" as const,
+        label: "Memoria visual",
+        body: "Leer y recordar el tablero como patrón.",
+      },
+      {
+        icon: "move" as const,
+        label: "Planificación",
+        body: "Pensar varios pasos antes de mover.",
+      },
+      {
+        icon: "refresh" as const,
+        label: "Reconocimiento de patrones",
+        body: "Ver lo familiar en lo nuevo.",
+      },
+      {
+        icon: "crown" as const,
+        label: "Toma de decisiones",
+        body: "Elegir bajo restricciones simples.",
+      },
+    ],
+  },
+
+  /** §6 Audiences — softened from "ventana / toda la vida". */
+  audiences: {
+    title: "Hecho para empezar pronto. Útil a cualquier edad.",
+    cards: [
+      {
+        title: "Niños y adolescentes (8–16)",
+        body:
+          "Una etapa clave para cultivar hábitos cognitivos que pueden acompañar a lo largo del tiempo.",
+      },
+      {
+        title: "Familias",
+        body:
+          "Una rutina ligera para compartir minutos de juego, conversación y crecimiento personal — sin pantallazos infinitos.",
+      },
+      {
+        title: "Educadores y comunidades",
+        body:
+          "Material lúdico que complementa actividades de aula, clubes y programas sociales. Sin instalación pesada, sin curva técnica.",
+      },
+    ],
+  },
+
+  /** §7 Plans — four tiers. ctaKind drives the render in C6:
+   *  - "internal" routes to /hub (Gratuito).
+   *  - "mailto"   composes a mailto with the given subject line. */
+  plans: {
+    title: "Un modelo donde nadie se queda fuera.",
+    body:
+      "Chesscito puede empezar gratis. Las familias, educadores y aliados ayudan a sostener y ampliar el acceso. Web3 hace que cada aporte sea trazable y útil.",
+    tiers: [
+      {
+        name: "GRATUITO",
+        tagline: "Para empezar.",
+        bullets: [
+          "Acceso al ajedrez introductorio",
+          "3 primeras piezas con sus tres niveles",
+          "Insignias de progreso",
+          "Comunidad pública",
+        ],
+        ctaLabel: "Empezar gratis",
+        ctaKind: "internal" as const,
+      },
+      {
+        name: "FAMILIA",
+        tagline: "Para entrenar juntos en casa.",
+        bullets: [
+          "Hasta 4 cuentas vinculadas",
+          "Todas las piezas y niveles",
+          "Reportes mensuales de progreso",
+          "Recordatorios suaves de rutina",
+          "Sin publicidad, sin distractores",
+        ],
+        ctaLabel: "Activar Familia",
+        ctaKind: "mailto" as const,
+        ctaSubject: "Plan Familia",
+      },
+      {
+        name: "EDUCADORES",
+        tagline: "Para aulas, clubes y programas.",
+        bullets: [
+          "Licencias por estudiante o grupo",
+          "Panel docente con seguimiento individual",
+          "Plan de actividades sugerido",
+          "Soporte directo de un Maestro FIDE",
+          "Capacitación inicial",
+        ],
+        ctaLabel: "Solicitar licencia",
+        ctaKind: "mailto" as const,
+        ctaSubject: "Plan Educadores",
+      },
+      {
+        name: "ALIADOS / SPONSORS",
+        tagline: "Para multiplicar el alcance.",
+        bullets: [
+          "Sponsor-a-player: financia a un niño",
+          "Sponsor-a-school: lleva Chesscito a una escuela",
+          "Sponsor-a-community: respalda un programa",
+          "Reportes de impacto trimestrales",
+          "Reconocimiento on-chain + presencia en landing",
+        ],
+        ctaLabel: "Construir alianza",
+        ctaKind: "mailto" as const,
+        ctaSubject: "Aliado / Sponsor",
+      },
+    ],
+  },
+
+  /** §8 Impact + allies row. Replaces v0.1 sponsors block. */
+  impact: {
+    title: "Construido para impacto.",
+    body:
+      "Cada partida deja huella. Cada aliado abre una puerta. Trazabilidad clara, comunidad creciente, propósito explícito.",
+    pillars: [
+      {
+        icon: "share" as const,
+        title: "Trazabilidad",
+        body: "Cada badge y aporte vive on-chain. Pública. Verificable. Sin opacidad.",
+      },
+      {
+        icon: "trophy" as const,
+        title: "Escala",
+        body: "El motor pedagógico es reutilizable. Detrás de Chesscito vienen otros verticales cognitivos.",
+      },
+      {
+        icon: "crown" as const,
+        title: "Comunidad",
+        body: "DAOs, fundaciones, clubes, escuelas. El círculo crece con cada alianza.",
+      },
+    ],
+    alliesPlaceholder: "Próximamente.",
+  },
+
+  /** §9 Founders — Wolfcito + César Alarcón + Den Labs. New section. */
+  founders: {
+    title: "La gente detrás de Chesscito.",
+    lead:
+      "Una mezcla rara y necesaria: tecnología web3, IA y un Maestro FIDE. Construyendo, validando y enseñando — con la pedagogía de un profesor con décadas de experiencia en el aula.",
+    cards: [
+      {
+        name: "Wolfcito",
+        handle: "Luis Fernando Ushiña",
+        title: "Software Architect · web3 builder · Fundador de Den Labs",
+        body: "Lidera producto, tecnología y la visión de plataforma cognitiva escalable.",
+      },
+      {
+        name: "César Alarcón",
+        handle: null,
+        title: "Maestro FIDE · Entrenador de ajedrez",
+        body: "Trayectoria en escuelas e instituciones, incluyendo Concentración Deportiva de Pichincha en Ecuador. Aporta la pedagogía y la metodología de cada nivel.",
+      },
+      {
+        name: "Den Labs",
+        handle: null,
+        title: "Parent brand",
+        body: "Laboratorio que combina web2, web3 e IA para construir experiencias digitales con propósito. Chesscito es su primer experimento.",
+      },
+    ],
+  },
+
+  /** §10 Final CTA — locked v0.5 wording. Replaces WHY_PAGE_COPY.finalCta
+   *  in C9. */
+  finalCta: {
+    headline: "¿Listo para tu primera jugada?",
+    subcopy:
+      "Sin descargas. Sin registros largos. Solo el tablero, tú y tu próximo movimiento.",
+    primaryCta: "Empezar gratis",
+    secondaryCta: "Hablar con el equipo",
+  },
+
+  /** Footer brand line + year. Disclaimer is rendered separately
+   *  from the top-level `disclaimer` field above. */
+  footer: {
+    brand: "Chesscito · A Den Labs experiment",
+    year: "© 2026 Den Labs",
+  },
+
+  /** Microcopy shared across loading / error / confirm flows on the
+   *  landing CTAs. Surfaces them as reusable keys so every section
+   *  composer pulls the same wording. */
+  microcopy: {
+    loading: "Preparando…",
+    error: "Vuelve a intentarlo",
+    confirm: "Listo. Te escribiremos pronto.",
+  },
+} as const;
