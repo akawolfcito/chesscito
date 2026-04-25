@@ -103,29 +103,34 @@ export function CardShell({
         </div>
       )}
 
-      {/* Mascot — big peek bottom-right, overflows card edge */}
+      {/* Mascot — smaller peek bottom-right so the brand cluster
+          breathes and the silhouette is fully visible. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={mascotUrl}
         alt=""
-        width={460}
-        height={460}
+        width={300}
+        height={300}
         style={{
           position: "absolute",
-          right: -30,
-          bottom: -50,
+          right: 30,
+          bottom: 30,
           filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
         }}
       />
 
-      {/* Brand wordmark — bottom-left */}
+      {/* Brand wordmark — centered horizontally, sits above the chip
+          cluster. Centered-cluster reads as the "card signature"
+          rather than a left-aligned footer. */}
       <div
         style={{
           position: "absolute",
-          left: 90,
-          top: 990,
+          left: 0,
+          right: 0,
+          top: 1000,
           display: "flex",
-          fontSize: 46,
+          justifyContent: "center",
+          fontSize: 56,
           fontFamily,
           fontWeight: 700,
           letterSpacing: "0.22em",
@@ -136,42 +141,59 @@ export function CardShell({
         CHESSCITO
       </div>
 
-      {/* Context chip — single piece of descriptive text under the brand */}
+      {/* Context chip — candy-paper styled, centered. Cream fill +
+          warm-brown text + amber border so it reads as part of the
+          same family as the in-app candy chips, not a chocolate
+          sticker pasted on. */}
       {chip && (
         <div
           style={{
             position: "absolute",
-            left: 90,
-            top: 1070,
+            left: 0,
+            right: 0,
+            top: 1085,
             display: "flex",
-            alignSelf: "flex-start",
-            padding: "10px 22px",
-            borderRadius: 999,
-            background: "rgb(120, 65, 5)",
-            color: "rgb(255, 240, 180)",
-            fontSize: 26,
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
+            justifyContent: "center",
           }}
         >
-          {chip}
+          <div
+            style={{
+              display: "flex",
+              padding: "12px 28px",
+              borderRadius: 999,
+              background: "rgba(255, 245, 215, 0.85)",
+              color: "rgba(63, 34, 8, 0.95)",
+              border: "2px solid rgba(245, 158, 11, 0.55)",
+              fontSize: 30,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              boxShadow:
+                "0 3px 8px rgba(120, 65, 5, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.55)",
+              textShadow: CREAM_SHADOW,
+            }}
+          >
+            {chip}
+          </div>
         </div>
       )}
 
-      {/* Footer URL — tiny accent bottom-left under the chip */}
+      {/* Footer URL — subtle, centered, below the chip. Kept tiny so
+          it reads as ownership signature, not a placeholder. */}
       {footer && (
         <div
           style={{
             position: "absolute",
-            left: 90,
-            top: 1150,
+            left: 0,
+            right: 0,
+            top: 1180,
             display: "flex",
-            fontSize: 20,
+            justifyContent: "center",
+            fontSize: 22,
             fontWeight: 600,
             color: WARM_MUTED,
             textShadow: CREAM_SHADOW,
-            opacity: 0.6,
+            opacity: 0.55,
+            letterSpacing: "0.05em",
           }}
         >
           {footer}

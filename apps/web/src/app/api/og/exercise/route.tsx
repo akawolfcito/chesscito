@@ -54,18 +54,58 @@ export async function GET(req: Request) {
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
 
-  const footer = name
-    ? `chesscito.vercel.app \u2022 by ${name}`
-    : "chesscito.vercel.app";
+  const footer = name ? `by ${name}` : "";
 
-  const chip = `${TYPE_TITLE[type]} \u2022 ${PIECE_LABEL[piece]} \u2022 ${stars}/${maxStars}`;
+  /* Compact, punchy chip — the previous "PIECE COMPLETE · Rook · 15/15"
+     was busy. The stars row below makes the count redundant, and the
+     centered cluster reads cleaner with one strong phrase. */
+  const chipLabel =
+    type === "badge-earned"
+      ? `${PIECE_LABEL[piece]} Ascendant`
+      : `${PIECE_LABEL[piece]} Mastered`;
+
+  /* Visible stars row — was missing entirely. The card's whole reason
+     for existing is "I earned X/15 stars on this piece"; without
+     visible stars the player has no badge of pride to share. */
+  const starsRow = (
+    <div
+      style={{
+        display: "flex",
+        gap: 14,
+        marginTop: 24,
+      }}
+    >
+      {[0, 1, 2, 3, 4].map((i) => {
+        // 5 exercises × 3 stars max = 15 total. Each row star fills
+        // when the player earned at least one star on that exercise
+        // (ceil(stars / 3) approximation).
+        const filled = i < Math.ceil(stars / 3);
+        return (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              fontSize: 88,
+              lineHeight: 1,
+              color: filled ? "rgb(245, 158, 11)" : "rgba(110, 65, 15, 0.22)",
+              textShadow: filled
+                ? "0 4px 0 rgba(120, 65, 5, 0.55), 0 0 18px rgba(245, 158, 11, 0.55)"
+                : "0 1px 0 rgba(255, 245, 215, 0.55)",
+            }}
+          >
+            ★
+          </div>
+        );
+      })}
+    </div>
+  );
 
   const pngResponse = new ImageResponse(
     (
       <CardShell
         bgUrl={bgUrl}
         mascotUrl={mascotUrl}
-        chip={chip}
+        chip={chipLabel}
         footer={footer}
         useCinzel={useCinzel}
         heroSlot={
@@ -73,6 +113,7 @@ export async function GET(req: Request) {
             style={{
               position: "relative",
               display: "flex",
+              flexDirection: "column",
               width: 860,
               height: 860,
               alignItems: "center",
@@ -82,25 +123,27 @@ export async function GET(req: Request) {
             <div
               style={{
                 position: "absolute",
-                width: 860,
-                height: 860,
+                width: 720,
+                height: 720,
                 borderRadius: 9999,
                 background:
-                  "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 80%)",
+                  "radial-gradient(circle, rgba(245, 158, 11, 0.42) 0%, rgba(217, 180, 74, 0.18) 50%, transparent 78%)",
                 display: "flex",
+                top: 30,
               }}
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={pieceUrl}
               alt=""
-              width={640}
-              height={640}
+              width={560}
+              height={560}
               style={{
                 position: "relative",
                 filter: "drop-shadow(0 14px 28px rgba(120, 65, 5, 0.40))",
               }}
             />
+            {starsRow}
           </div>
         }
       />
