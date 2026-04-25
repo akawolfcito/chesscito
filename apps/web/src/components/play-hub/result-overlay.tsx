@@ -503,14 +503,12 @@ export function PieceCompletePrompt({
           onClose={() => handleAction(onPracticeAgain)}
           closeLabel={PIECE_COMPLETE_COPY.practiceAgain}
           cta={
-            /* CTA hierarchy after L1 completion:
-               1. Forward in pedagogy: next piece if available, else Arena.
-                  Decoupled from claim status — the ladder advances even
-                  if the badge mint failed (e.g., signing service down).
-               2. Submit Score — re-surfaces the transactional moment that
-                  may have been lost when the player dismissed BadgeEarned.
-               3. Try Labyrinth — optional L2 deepening before moving on.
-               4. Practice Again — quiet text fallback. */
+            /* Trimmed CTA hierarchy — was 4 visible actions, dropped to
+               2 buttons + 1 quiet text link. The X close handles
+               dismiss; "Practice Again" was redundant with it after
+               mastery. Try Labyrinth demotes from ghost button to
+               text link so it doesn't compete with the Submit Score
+               transactional moment. */
             <div className="flex flex-col gap-1.5">
               {nextPiece ? (
                 <Button
@@ -545,24 +543,15 @@ export function PieceCompletePrompt({
                 </Button>
               )}
               {onTryLabyrinth && (
-                <Button
+                <button
                   type="button"
-                  variant="game-ghost"
-                  size="game"
                   onClick={() => handleAction(onTryLabyrinth)}
-                  className="w-full"
+                  className="w-full py-1.5 text-xs font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
+                  style={{ color: "rgba(110, 65, 15, 0.70)" }}
                 >
-                  {LABYRINTH_COPY.tryLabyrinth}
-                </Button>
+                  {LABYRINTH_COPY.orTryLabyrinth}
+                </button>
               )}
-              <button
-                type="button"
-                onClick={() => handleAction(onPracticeAgain)}
-                className="w-full py-1 text-xs font-semibold underline underline-offset-2"
-                style={{ color: "rgba(110, 65, 15, 0.70)" }}
-              >
-                {PIECE_COMPLETE_COPY.practiceAgain}
-              </button>
             </div>
           }
           meta={

@@ -565,6 +565,10 @@ export const LABYRINTH_COPY = {
   toggleExercises: "Exercises",
   toggleLabyrinths: "Labyrinths",
   tryLabyrinth: "Try Labyrinth",
+  /** Demoted text-link variant of tryLabyrinth — used when the action
+   *  is offered alongside more important CTAs (e.g. PieceComplete) and
+   *  needs to read as an alternative branch, not a competing primary. */
+  orTryLabyrinth: "or try Labyrinth →",
   missionTitle: "Labyrinth",
   missionHint: (optimal: number) => `Reach the star · optimal ${optimal} moves`,
   movesLabel: (n: number) => `${n} ${n === 1 ? "move" : "moves"}`,
