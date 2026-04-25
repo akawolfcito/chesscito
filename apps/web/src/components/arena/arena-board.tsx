@@ -25,6 +25,7 @@ type ArenaBoardProps = {
   legalMoves: string[];
   lastMove: { from: string; to: string } | null;
   checkSquare: string | null;
+  rejectingSquare?: string | null;
   isLocked: boolean;
   isThinking?: boolean;
   onSquareClick: (square: string) => void;
@@ -70,6 +71,7 @@ export function ArenaBoard({
   legalMoves,
   lastMove,
   checkSquare,
+  rejectingSquare = null,
   isLocked,
   isThinking = false,
   onSquareClick,
@@ -162,10 +164,11 @@ export function ArenaBoard({
                 const src = ARENA_PIECE_IMG[p.color][p.type];
                 const isPieceSelected = p.square === selectedSquare;
                 const isPieceInCheck = p.square === checkSquare;
+                const isPieceRejecting = p.square === rejectingSquare;
                 return (
                   <picture
                     key={p.id}
-                    className={`arena-piece-float${isPieceSelected ? " is-selected" : ""}${isPieceInCheck ? " is-check" : ""}`}
+                    className={`arena-piece-float${isPieceSelected ? " is-selected" : ""}${isPieceInCheck ? " is-check" : ""}${isPieceRejecting ? " is-rejecting" : ""}`}
                     style={{
                       left: `${center.x}%`,
                       top: `${center.y}%`,

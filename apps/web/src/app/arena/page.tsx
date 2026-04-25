@@ -894,6 +894,7 @@ export default function ArenaPage() {
             legalMoves={game.legalMoves}
             lastMove={game.lastMove}
             checkSquare={game.checkSquare}
+            rejectingSquare={game.rejectingSquare}
             isLocked={game.isThinking || isEndState || !!game.pendingPromotion}
             isThinking={game.isThinking}
             onSquareClick={game.selectSquare}

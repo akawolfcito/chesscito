@@ -33,6 +33,7 @@ export type ChessGameState = {
   legalMoves: string[];
   lastMove: { from: string; to: string } | null;
   checkSquare: string | null;
+  rejectingSquare: string | null;
   pendingPromotion: { from: string; to: string } | null;
   difficulty: ArenaDifficulty;
   playerColor: PlayerColor;
@@ -63,8 +64,10 @@ export function useChessGame(): ChessGameState {
   const [moveCount, setMoveCount] = useState(0);
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [rejectingSquare, setRejectingSquare] = useState<string | null>(null);
   const gameStartRef = useRef<number>(0);
   const gameEndRef = useRef<number>(0);
+  const rejectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const gameRef = useRef(new Chess());
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -263,9 +266,17 @@ export function useChessGame(): ChessGameState {
         return;
       }
 
-      // Click on empty / opponent square with no selection, or invalid target — reject feedback
-      if (status === "playing" && game.turn() === playerColor) {
+      // Invalid move attempt — only fire reject when the user actually had a
+      // piece selected and tried an illegal target. Pure exploration clicks
+      // (no selection) are silent — pedagogy without nagging.
+      if (selectedSquare && status === "playing" && game.turn() === playerColor) {
         hapticReject();
+        if (rejectTimerRef.current) clearTimeout(rejectTimerRef.current);
+        setRejectingSquare(selectedSquare);
+        rejectTimerRef.current = setTimeout(() => {
+          setRejectingSquare(null);
+          rejectTimerRef.current = null;
+        }, 220);
       }
       setSelectedSquare(null);
       setLegalMoves([]);
@@ -316,6 +327,7 @@ export function useChessGame(): ChessGameState {
 
   const reset = useCallback(() => {
     if (aiTimeoutRef.current) { clearTimeout(aiTimeoutRef.current); aiTimeoutRef.current = null; }
+    if (rejectTimerRef.current) { clearTimeout(rejectTimerRef.current); rejectTimerRef.current = null; }
     gameRef.current = new Chess();
     setFen(gameRef.current.fen());
     setSelectedSquare(null);
@@ -327,6 +339,7 @@ export function useChessGame(): ChessGameState {
     setMoveCount(0);
     setMoveHistory([]);
     setElapsedMs(0);
+    setRejectingSquare(null);
     gameStartRef.current = 0;
     gameEndRef.current = 0;
     clearArenaGame();
@@ -428,6 +441,7 @@ export function useChessGame(): ChessGameState {
     legalMoves,
     lastMove,
     checkSquare,
+    rejectingSquare,
     pendingPromotion,
     difficulty,
     playerColor,
