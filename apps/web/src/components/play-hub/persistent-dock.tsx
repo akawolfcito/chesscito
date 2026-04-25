@@ -66,18 +66,20 @@ export function PersistentDock({
       <DockItem id="badge" label={DOCK_LABELS.badge} control={badgeControl} activeDockTab={activeDockTab} />
       <DockItem id="shop" label={DOCK_LABELS.shop} control={shopControl} activeDockTab={activeDockTab} />
 
-      {/* Center — Arena sheet trigger (preferred) or route Link fallback */}
+      {/* Center — Arena sheet trigger (preferred) or route Link fallback.
+          Label is always visible (not gated on is-active) because the
+          center button is the primary CTA — its meaning shouldn't
+          depend on the icon alone, which players reported as
+          ambiguous. */}
       {arenaControl ? (
         <div
           className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
           onClickCapture={() => track("dock_tap", { item: "arena" })}
         >
           {arenaControl}
-          {isArenaActive && (
-            <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
-              {DOCK_LABELS.arena}
-            </span>
-          )}
+          <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
+            {DOCK_LABELS.arena}
+          </span>
         </div>
       ) : (
         <Link
@@ -86,11 +88,9 @@ export function PersistentDock({
           onClick={() => track("dock_tap", { item: "arena" })}
         >
           <CandyBanner name="btn-battle" className="h-9 w-9" />
-          {isArenaActive && (
-            <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
-              {DOCK_LABELS.arena}
-            </span>
-          )}
+          <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
+            {DOCK_LABELS.arena}
+          </span>
         </Link>
       )}
 

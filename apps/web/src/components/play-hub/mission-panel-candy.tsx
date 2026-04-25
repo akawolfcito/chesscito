@@ -181,10 +181,31 @@ export function MissionPanelCandy({
     }
   }, [isDockSheetOpen]);
 
+  /* Candy-palette chip class — replaces the legacy var(--surface-c-mid)
+     dark navy background that was leftover from the pre-candy era.
+     Warm cream paper bg + warm-brown text + soft amber border so the
+     header reads as part of the same family as the candy modals,
+     dock sheets, and the toggle pill below. */
+  const candyChipClass =
+    "flex min-h-[40px] items-center gap-2 rounded-full border px-3 py-1.5 transition-all active:scale-[0.97]";
+  const candyChipStyle = {
+    background: "rgba(255, 245, 215, 0.55)",
+    borderColor: "rgba(110, 65, 15, 0.28)",
+    boxShadow:
+      "inset 0 1px 0 rgba(255, 245, 215, 0.65), 0 1px 3px rgba(120, 65, 5, 0.18)",
+  } as const;
+  const candyChipText =
+    "fantasy-title text-xs font-extrabold uppercase tracking-[0.12em]";
+  const candyChipTextStyle = {
+    color: "rgba(63, 34, 8, 0.95)",
+    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+  } as const;
+
   const pieceChip = (
     <button
       type="button"
-      className="flex items-center gap-2 rounded-full border border-amber-300/25 bg-[var(--surface-c-mid)] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.35)] backdrop-blur-md transition-all active:scale-[0.97]"
+      className={candyChipClass}
+      style={candyChipStyle}
       aria-label={`Switch piece (current: ${activePiece?.label ?? selectedPiece})`}
     >
       <picture className="h-7 w-7 shrink-0">
@@ -201,10 +222,7 @@ export function MissionPanelCandy({
           className="h-full w-full object-contain"
         />
       </picture>
-      <span
-        className="fantasy-title text-xs font-extrabold uppercase tracking-[0.12em] text-[var(--warm-label-text)]"
-        style={{ textShadow: "var(--text-shadow-label)" }}
-      >
+      <span className={candyChipText} style={candyChipTextStyle}>
         {activePiece?.label ?? PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]}
       </span>
       <CandyIcon name="chevron-down" className="h-3.5 w-3.5 opacity-70" />
@@ -214,18 +232,18 @@ export function MissionPanelCandy({
   const missionPeek = (
     <button
       type="button"
-      className="flex min-h-[44px] items-center gap-2 rounded-full border border-amber-300/25 bg-[var(--surface-c-mid)] px-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.35),0_0_10px_rgba(245,158,11,0.18)] backdrop-blur-md transition-all active:scale-[0.97]"
+      className={`${candyChipClass} min-h-[44px]`}
+      style={candyChipStyle}
       aria-label={`Open mission details${isCapture ? " — capture target" : ` — target ${targetLabel}`}`}
     >
       <CandyIcon
         name="crosshair"
         className="h-4 w-4 shrink-0"
-        style={{ filter: "drop-shadow(0 0 2px rgba(245,158,11,0.5))" }}
       />
       <span
         key={targetLabel}
-        className="fantasy-title text-xs font-extrabold text-[var(--warm-label-text)]"
-        style={{ textShadow: "var(--text-shadow-label)" }}
+        className="fantasy-title text-xs font-extrabold"
+        style={candyChipTextStyle}
       >
         {isCapture ? "Capture" : `${MISSION_BRIEFING_COPY.targetPrefix.replace(":", "")} ${targetLabel}`}
       </span>
@@ -269,7 +287,13 @@ export function MissionPanelCandy({
       {labyrinthAvailable && onToggleLabyrinth && (
         <div className="shrink-0 mx-2 mt-2 flex justify-center">
           <div
-            className="inline-flex items-center gap-1 rounded-full border border-amber-300/25 bg-[var(--surface-c-mid)] p-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.35)] backdrop-blur-md"
+            className="inline-flex items-center gap-1 rounded-full border p-0.5"
+            style={{
+              background: "rgba(255, 245, 215, 0.55)",
+              borderColor: "rgba(110, 65, 15, 0.28)",
+              boxShadow:
+                "inset 0 1px 0 rgba(255, 245, 215, 0.65), 0 1px 3px rgba(120, 65, 5, 0.18)",
+            }}
             role="tablist"
             aria-label="Layer toggle"
           >
@@ -287,10 +311,13 @@ export function MissionPanelCandy({
                   "rounded-full px-3.5 py-1.5 transition-all active:scale-[0.97]",
                   "fantasy-title text-[0.7rem] font-extrabold uppercase tracking-[0.12em]",
                   active
-                    ? "bg-amber-500/85 text-[rgba(63,34,8,0.95)] shadow-[0_0_10px_rgba(245,158,11,0.45),inset_0_1px_0_rgba(255,245,215,0.55)]"
-                    : "text-[var(--warm-label-text)]",
+                    ? "bg-amber-500/85 shadow-[0_0_10px_rgba(245,158,11,0.45),inset_0_1px_0_rgba(255,245,215,0.55)]"
+                    : "",
                 ].join(" ")}
-                style={{ textShadow: active ? "0 1px 0 rgba(255, 245, 215, 0.55)" : "var(--text-shadow-label)" }}
+                style={{
+                  color: active ? "rgba(63, 34, 8, 0.95)" : "rgba(110, 65, 15, 0.70)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                }}
               >
                 {label}
               </button>
