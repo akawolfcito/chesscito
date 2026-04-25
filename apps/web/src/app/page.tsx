@@ -149,6 +149,15 @@ export default function PlayHubPage() {
     errorMessage?: string;
     retryAction?: () => void;
   } | null>(null);
+
+  // Pointer-events lock release: as soon as a result overlay appears,
+  // any open dock sheet must be closed or its Radix modal portal
+  // continues to intercept clicks on our overlay's scrim/X/CTAs.
+  useEffect(() => {
+    if (resultOverlay !== null) {
+      setActiveDockTab(null);
+    }
+  }, [resultOverlay]);
   const [showBadgeEarned, setShowBadgeEarned] = useState(false);
   const [showPieceComplete, setShowPieceComplete] = useState(false);
   const badgeSheetOpen = activeDockTab === "badge";
@@ -187,6 +196,13 @@ export default function PlayHubPage() {
    *  labyrinth instead of the L1 exercise. Resets to false on piece
    *  switch — labyrinth state does not survive across pieces. */
   const [labyrinthMode, setLabyrinthMode] = useState(false);
+
+  /** Modal trap fix: when the global ResultOverlay opens (success OR
+   *  error) while a Radix dock sheet is still mounted, Radix's modal
+   *  mode sets pointer-events: none on its siblings, blocking every
+   *  click on the result overlay's scrim, X, and CTAs. We close the
+   *  active dock tab whenever a result overlay appears so the result
+   *  modal becomes the sole foreground and stays dismissable. */
   useEffect(() => {
     setLabyrinthMode(false);
     setLabyrinthCompleted(null);
