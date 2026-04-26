@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  COACH_PACK_ITEMS,
   FOUNDER_BADGE_ITEM_ID,
   SHIELDS_PER_PURCHASE,
   SHIELD_ITEM_ID,
@@ -28,5 +29,21 @@ describe("shop-catalog", () => {
 
   it("credits 3 shield uses per purchase to match the SHIELD_COPY.buyLabel '(3 uses)' promise", () => {
     expect(SHIELDS_PER_PURCHASE).toBe(3);
+  });
+
+  it("publishes the 5-credit coach pack as itemId 3n at $0.05 (50_000 USD6)", () => {
+    expect(COACH_PACK_ITEMS[5].itemId).toBe(3n);
+    expect(COACH_PACK_ITEMS[5].priceUsd6).toBe(50_000n);
+  });
+
+  it("publishes the 20-credit coach pack as itemId 4n at $0.10 (100_000 USD6)", () => {
+    expect(COACH_PACK_ITEMS[20].itemId).toBe(4n);
+    expect(COACH_PACK_ITEMS[20].priceUsd6).toBe(100_000n);
+  });
+
+  it("keeps the 20-credit pack at a better unit price than the 5-credit pack", () => {
+    const unit5 = Number(COACH_PACK_ITEMS[5].priceUsd6) / 5;
+    const unit20 = Number(COACH_PACK_ITEMS[20].priceUsd6) / 20;
+    expect(unit20).toBeLessThan(unit5);
   });
 });

@@ -41,6 +41,7 @@ import { hapticImpact, hapticSuccess } from "@/lib/haptics";
 import { victoryAbi } from "@/lib/contracts/victory";
 import { shopAbi } from "@/lib/contracts/shop";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
+import { COACH_PACK_ITEMS, type CoachPackSize } from "@/lib/contracts/shop-catalog";
 import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
 import {
   ACCEPTED_TOKENS,
@@ -321,13 +322,10 @@ export default function ArenaPage() {
     void startCoachAnalysis();
   }, [startCoachAnalysis]);
 
-  // Coach credit purchase: maps pack → itemId, then approve → buyItem → verify-purchase
-  const COACH_PACK_ITEMS: Record<5 | 20, { itemId: bigint; priceUsd6: bigint }> = {
-    5: { itemId: 3n, priceUsd6: 50_000n },   // $0.05
-    20: { itemId: 4n, priceUsd6: 100_000n },  // $0.10
-  };
-
-  async function handleBuyCredits(pack: 5 | 20) {
+  // Coach credit purchase: pack → itemId mapping lives in
+  // lib/contracts/shop-catalog.ts so it stays next to SHIELD_ITEM_ID
+  // and the founder badge id, and so it's testable in isolation.
+  async function handleBuyCredits(pack: CoachPackSize) {
     if (!address || !shopAddress || !publicClient || !isCorrectChain) return;
 
     const { itemId, priceUsd6 } = COACH_PACK_ITEMS[pack];

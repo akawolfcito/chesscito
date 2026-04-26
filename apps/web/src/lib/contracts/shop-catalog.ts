@@ -35,3 +35,15 @@ export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
  *  on-chain purchase of itemId=2. Mirrored in the receipt effect at
  *  play-hub-root.tsx and the SHIELD_COPY.buyLabel ("Buy (3 uses)"). */
 export const SHIELDS_PER_PURCHASE = 3;
+
+/** Coach credit packs sold via Shop.buyItem. Each entry maps the
+ *  user-facing pack size (5 or 20 credits) to the on-chain itemId and
+ *  USD6-denominated price. /api/coach/verify-purchase reads the
+ *  ItemPurchased event topic and credits the wallet's
+ *  coach:credits:<addr> Redis key with the matching pack size. */
+export type CoachPackSize = 5 | 20;
+
+export const COACH_PACK_ITEMS: Record<CoachPackSize, { itemId: bigint; priceUsd6: bigint }> = {
+  5: { itemId: 3n, priceUsd6: 50_000n },   // $0.05
+  20: { itemId: 4n, priceUsd6: 100_000n }, // $0.10
+} as const;
