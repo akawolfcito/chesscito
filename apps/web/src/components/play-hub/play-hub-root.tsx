@@ -255,6 +255,13 @@ export function PlayHubRoot() {
   } = useExerciseProgress(selectedPiece);
 
   const timerStart = useRef<number>(0);
+  /** Synchronous concurrency guard for handleSubmitScore. The async
+   *  signature fetch opens a window where wagmi's isPending is still
+   *  false; without this ref a rapid double-tap would fire two
+   *  parallel sign requests and two writeContractAsync calls before
+   *  React could flip the disabled state. Cleared in the finally
+   *  branch so retries after failure/timeout still work. */
+  const submittingScoreRef = useRef(false);
   // Single source of truth for the board's auto-reset timer. The hook
   // handles the pending-timer-replacement, generation-based stale
   // callback protection, and unmount cleanup that used to be spread
@@ -674,6 +681,12 @@ export function PlayHubRoot() {
     if (!canSendOnChain || !address || !scoreboardAddress || isSubmitBusy) {
       return;
     }
+    // Sync guard closes the await-the-signature-fetch race window the
+    // wagmi-derived isSubmitBusy flag can't cover.
+    if (submittingScoreRef.current) {
+      return;
+    }
+    submittingScoreRef.current = true;
 
     setLastError(null);
     track("score_submit_tx", { stage: "start", piece: selectedPiece });
@@ -745,6 +758,8 @@ export function PlayHubRoot() {
       });
       showToast(FOOTER_CTA_COPY.submitFailed, 3000);
       console.warn("[MiniPayTx] error", { label: "submit-score", levelId: Number(levelId), error: message });
+    } finally {
+      submittingScoreRef.current = false;
     }
   }
 
