@@ -286,6 +286,72 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* §4 How it works — 5-step ladder. Sits before the legacy progress
+          row so the reader gets the structure of the journey before
+          seeing the proof (badges + trophies). */}
+      <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
+        <div className="mx-auto max-w-[700px] text-center">
+          <h2
+            className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
+            style={{
+              color: "var(--landing-text)",
+              textShadow: "var(--landing-text-shadow-soft)",
+            }}
+          >
+            {LANDING_COPY.howItWorks.title}
+          </h2>
+          <p
+            className="mx-auto mt-3 max-w-[60ch] text-sm leading-relaxed md:text-base"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {LANDING_COPY.howItWorks.body}
+          </p>
+        </div>
+        <ol
+          className="mt-8 grid grid-cols-1 gap-3 md:mt-12 md:grid-cols-5 md:gap-4"
+          role="list"
+        >
+          {LANDING_COPY.howItWorks.steps.map((step, idx) => (
+            <li
+              key={step.label}
+              className="flex flex-col gap-2 rounded-2xl border px-4 py-4"
+              style={{
+                background: "var(--landing-card-bg)",
+                borderColor: "var(--landing-card-border)",
+                boxShadow: "inset 0 1px 0 var(--landing-card-shadow-inner)",
+              }}
+            >
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-extrabold"
+                style={{
+                  background: "var(--landing-accent-bg-strong)",
+                  border: "1px solid var(--landing-accent-border)",
+                  color: "var(--landing-text)",
+                }}
+                aria-hidden="true"
+              >
+                {idx + 1}
+              </span>
+              <h3
+                className="fantasy-title text-xs font-extrabold uppercase tracking-[0.14em]"
+                style={{
+                  color: "var(--landing-text)",
+                  textShadow: "var(--landing-text-shadow)",
+                }}
+              >
+                {step.label}
+              </h3>
+              <p
+                className="text-xs leading-relaxed md:text-sm"
+                style={{ color: "var(--paper-text-muted)" }}
+              >
+                {step.body}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
       {/* §4 Progress — image LEFT, text RIGHT */}
       <SectionRow
         eyebrow={null}
