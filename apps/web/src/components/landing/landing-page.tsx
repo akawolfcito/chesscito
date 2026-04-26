@@ -607,6 +607,77 @@ export function LandingPage() {
         </p>
       </section>
 
+      {/* §9 Founders — quiénes somos. Three cards: Wolfcito (founder
+          + tech), César Alarcón (Maestro FIDE, pedagogía), Den Labs
+          (parent brand). The lead paragraph explicitly names the
+          chess-master pedagogy so legitimacy is established before
+          the contact section below. */}
+      <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
+        <div className="mx-auto max-w-[700px] text-center">
+          <h2
+            className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
+            style={{
+              color: "var(--landing-text)",
+              textShadow: "var(--landing-text-shadow-soft)",
+            }}
+          >
+            {LANDING_COPY.founders.title}
+          </h2>
+          <p
+            className="mx-auto mt-3 max-w-[62ch] text-sm leading-relaxed md:text-base"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {LANDING_COPY.founders.lead}
+          </p>
+        </div>
+        <ul
+          className="mt-8 grid grid-cols-1 gap-3 md:mt-12 md:grid-cols-3 md:gap-5"
+          role="list"
+        >
+          {LANDING_COPY.founders.cards.map((card) => (
+            <li
+              key={card.name}
+              className="flex flex-col gap-2 rounded-2xl border px-5 py-5"
+              style={{
+                background: "var(--landing-card-bg)",
+                borderColor: "var(--landing-card-border)",
+                boxShadow: "inset 0 1px 0 var(--landing-card-shadow-inner)",
+              }}
+            >
+              <h3
+                className="fantasy-title text-base font-extrabold"
+                style={{
+                  color: "var(--landing-text)",
+                  textShadow: "var(--landing-text-shadow)",
+                }}
+              >
+                {card.name}
+              </h3>
+              {card.handle && (
+                <p
+                  className="text-xs font-semibold"
+                  style={{ color: "var(--paper-text-muted)" }}
+                >
+                  {card.handle}
+                </p>
+              )}
+              <p
+                className="text-xs font-extrabold uppercase tracking-[0.10em]"
+                style={{ color: "var(--landing-accent)" }}
+              >
+                {card.title}
+              </p>
+              <p
+                className="text-xs leading-relaxed md:text-sm"
+                style={{ color: "var(--paper-text-muted)" }}
+              >
+                {card.body}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       {/* §6 Sponsors — Den Labs framing + contact links */}
       <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
         <div className="mx-auto grid max-w-[800px] grid-cols-1 gap-6 text-center">
