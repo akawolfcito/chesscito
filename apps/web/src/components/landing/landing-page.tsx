@@ -51,11 +51,11 @@ export function LandingPage() {
             textShadow: "var(--landing-text-shadow)",
           }}
         >
-          Chesscito
+          {LANDING_COPY.nav.brand}
         </span>
         <Button asChild variant="game-primary" size="game-sm" className="!w-auto px-4 py-2">
           <Link href="/hub" onClick={onCta("nav-primary")}>
-            {WHY_PAGE_COPY.hero.primaryCta}
+            {LANDING_COPY.nav.primaryCta}
           </Link>
         </Button>
       </header>
@@ -72,7 +72,7 @@ export function LandingPage() {
               textShadow: "var(--landing-text-shadow)",
             }}
           >
-            {WHY_PAGE_COPY.hero.eyebrow}
+            {LANDING_COPY.hero.eyebrow}
           </span>
           <h1
             className="fantasy-title text-3xl font-extrabold leading-tight md:text-5xl md:leading-[1.05]"
@@ -81,23 +81,23 @@ export function LandingPage() {
               textShadow: "var(--landing-title-glow)",
             }}
           >
-            {WHY_PAGE_COPY.hero.headline}
+            {LANDING_COPY.hero.headline}
           </h1>
           <p
             className="max-w-[36ch] text-base leading-relaxed md:text-lg"
             style={{ color: "var(--paper-text-muted)" }}
           >
-            {WHY_PAGE_COPY.hero.subcopy}
+            {LANDING_COPY.hero.subcopy}
           </p>
           <div className="flex w-full max-w-[320px] flex-col gap-2.5 md:w-auto md:flex-row md:gap-3">
             <Button asChild variant="game-primary" size="game" className="md:!w-auto md:px-8">
               <Link href="/hub" onClick={onCta("hero-primary")}>
-                {WHY_PAGE_COPY.hero.primaryCta}
+                {LANDING_COPY.hero.primaryCta}
               </Link>
             </Button>
             <Button asChild variant="game-ghost" size="game" className="md:!w-auto md:px-8">
-              <a href="#purpose" onClick={onCta("hero-secondary")}>
-                {WHY_PAGE_COPY.hero.secondaryCta}
+              <a href="#problem" onClick={onCta("hero-secondary")}>
+                {LANDING_COPY.hero.secondaryCta}
               </a>
             </Button>
           </div>
@@ -266,7 +266,7 @@ export function LandingPage() {
                 className="text-[0.78rem] leading-relaxed"
                 style={{ textShadow: "var(--landing-text-shadow)" }}
               >
-                {WHY_PAGE_COPY.cognitive.disclaimer}
+                {LANDING_COPY.disclaimer}
               </p>
             </div>
           </div>
@@ -751,21 +751,31 @@ export function LandingPage() {
             textShadow: "var(--landing-title-glow)",
           }}
         >
-          {WHY_PAGE_COPY.finalCta.headline}
+          {LANDING_COPY.finalCta.headline}
         </h2>
-        <div className="mt-6 flex justify-center">
-          <Button asChild variant="game-primary" size="game" className="!w-auto px-10">
-            <Link href="/hub" onClick={onCta("final-primary")}>
-              {WHY_PAGE_COPY.finalCta.cta}
-            </Link>
-          </Button>
-        </div>
         <p
-          className="mx-auto mt-4 max-w-[40ch] text-xs leading-relaxed md:text-sm"
+          className="mx-auto mt-3 max-w-[44ch] text-sm leading-relaxed md:text-base"
           style={{ color: "var(--paper-text-muted)" }}
         >
-          {WHY_PAGE_COPY.finalCta.note}
+          {LANDING_COPY.finalCta.subcopy}
         </p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 md:flex-row">
+          <Button asChild variant="game-primary" size="game" className="!w-auto px-10">
+            <Link href="/hub" onClick={onCta("final-primary")}>
+              {LANDING_COPY.finalCta.primaryCta}
+            </Link>
+          </Button>
+          {process.env.NEXT_PUBLIC_SUPPORT_EMAIL && (
+            <Button asChild variant="game-ghost" size="game" className="!w-auto px-8">
+              <a
+                href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}?subject=${encodeURIComponent("Chesscito · Hablar con el equipo")}`}
+                onClick={onCta("final-secondary")}
+              >
+                {LANDING_COPY.finalCta.secondaryCta}
+              </a>
+            </Button>
+          )}
+        </div>
       </section>
 
       {/* §8 Footer */}
@@ -778,7 +788,7 @@ export function LandingPage() {
             className="text-[0.7rem] leading-relaxed md:text-xs"
             style={{ color: "rgba(110, 65, 15, 0.65)" }}
           >
-            {WHY_PAGE_COPY.cognitive.disclaimer}
+            {LANDING_COPY.disclaimer}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[0.7rem] md:text-xs">
             <Link
@@ -821,13 +831,13 @@ export function LandingPage() {
                 textShadow: "var(--landing-text-shadow)",
               }}
             >
-              {WHY_PAGE_COPY.footer.brand}
+              {LANDING_COPY.footer.brand}
             </p>
             <p
               className="text-[0.65rem]"
               style={{ color: "rgba(110, 65, 15, 0.55)" }}
             >
-              {WHY_PAGE_COPY.footer.year}
+              {LANDING_COPY.footer.year}
             </p>
           </div>
         </div>
