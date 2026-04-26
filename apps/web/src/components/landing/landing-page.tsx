@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PhoneFrame } from "@/components/landing/phone-frame";
+import { PhoneStack } from "@/components/landing/phone-stack";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { LANDING_COPY, WHY_PAGE_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
@@ -103,17 +104,32 @@ export function LandingPage() {
         </div>
 
         <div className="flex justify-center md:justify-end">
-          <PhoneFrame label="Chesscito play hub">
-            <picture>
-              <source srcSet="/art/landing/hero-play-hub.avif" type="image/avif" />
-              <source srcSet="/art/landing/hero-play-hub.webp" type="image/webp" />
-              <img
-                src="/art/landing/hero-play-hub.png"
-                alt="Chesscito play hub — Rook on the board"
-                className="h-full w-full object-cover"
-              />
-            </picture>
-          </PhoneFrame>
+          <PhoneStack
+            variant="right"
+            primary={{
+              src: "/art/landing/hero-play-hub",
+              alt: "Chesscito play hub — Rook on the board",
+              label: "Chesscito play hub",
+            }}
+            secondary={{
+              src: "/art/landing/pre-chess-exercise",
+              alt: "Tablero con dots de movimiento del Rook",
+              label: "Pre-chess exercise board",
+            }}
+            floatingNode={
+              <div
+                className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[0.65rem] font-extrabold uppercase tracking-[0.14em] shadow-[0_8px_20px_rgba(40,22,8,0.18)]"
+                style={{
+                  background: "rgba(255, 248, 230, 0.95)",
+                  borderColor: "var(--landing-accent-border-strong)",
+                  color: "var(--landing-text)",
+                }}
+              >
+                <CandyIcon name="star" className="h-4 w-4" />
+                7-day streak
+              </div>
+            }
+          />
         </div>
       </section>
 
