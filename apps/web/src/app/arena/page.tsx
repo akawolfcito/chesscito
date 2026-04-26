@@ -561,16 +561,25 @@ export default function ArenaPage() {
       } catch { /* storage unavailable */ }
     } catch (err) {
       console.error("Claim failed:", err);
+      // Stale "claiming" sessionStorage would otherwise re-strand the
+      // player on next mount; clear it on every non-success exit.
+      try { sessionStorage.removeItem("chesscito:claim"); } catch { /* ignore */ }
+
       if (isUserCancellation(err)) {
         track("victory_claim_tx", { stage: "cancelled" });
-        setClaimPhase("ready");
-        claimingRef.current = false;
+        setClaimError(null);
+        setClaimPhase("cancelled");
+        return;
+      }
+      if (isTransactionTimeout(err)) {
+        track("victory_claim_tx", { stage: "error", error_kind: "timeout" });
+        setClaimError(null);
+        setClaimPhase("timeout");
         return;
       }
       // Telemetry kind (separate from user copy so we keep granular insight).
       const raw = err instanceof Error ? err.message : "Claim failed";
-      const errorKind = isTransactionTimeout(err) ? "timeout"
-        : /expired/i.test(raw) ? "expired"
+      const errorKind = /expired/i.test(raw) ? "expired"
         : /insufficient/i.test(raw) ? "insufficient_balance"
         : /network/i.test(raw) ? "network"
         : /revert/i.test(raw) ? "revert"

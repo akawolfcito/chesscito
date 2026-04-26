@@ -17,7 +17,7 @@ import { VictoryClaiming } from "./victory-claiming";
 import { VictoryClaimSuccess } from "./victory-claim-success";
 import { VictoryClaimError } from "./victory-claim-error";
 
-export type ClaimPhase = "ready" | "claiming" | "success" | "error";
+export type ClaimPhase = "ready" | "claiming" | "success" | "error" | "cancelled" | "timeout";
 
 export type ShareStatus = "locked" | "generating" | "ready";
 
@@ -126,6 +126,23 @@ export function ArenaEndState({
             {...sharedProps}
             errorMessage={claimError}
             onRetry={onClaimVictory}
+            kind="error"
+          />
+        );
+      case "cancelled":
+        return (
+          <VictoryClaimError
+            {...sharedProps}
+            onRetry={onClaimVictory}
+            kind="cancelled"
+          />
+        );
+      case "timeout":
+        return (
+          <VictoryClaimError
+            {...sharedProps}
+            onRetry={onClaimVictory}
+            kind="timeout"
           />
         );
       default:

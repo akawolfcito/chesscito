@@ -10,6 +10,8 @@ import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
 import trophyData from "@/../public/animations/trophy.json";
 
+export type ClaimEndKind = "error" | "cancelled" | "timeout";
+
 type Props = {
   moves: number;
   elapsedMs: number;
@@ -19,6 +21,7 @@ type Props = {
   onBackToHub: () => void;
   errorMessage?: string | null;
   onRetry?: () => void;
+  kind?: ClaimEndKind;
 };
 
 export function VictoryClaimError({
@@ -30,11 +33,13 @@ export function VictoryClaimError({
   onBackToHub,
   errorMessage,
   onRetry,
+  kind = "error",
 }: Props) {
   const time = formatTime(elapsedMs);
   const performanceLine = isCheckmate
     ? VICTORY_CELEBRATION_COPY.performanceLineCheckmate(moves, time)
     : VICTORY_CELEBRATION_COPY.performanceLine(moves, time);
+  const kindCopy = VICTORY_CLAIM_COPY.errorKindCopy[kind];
 
   return (
     <div
@@ -50,7 +55,7 @@ export function VictoryClaimError({
       {/* Card */}
       <div className="relative z-10 mx-4 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
         <CandyGlassShell
-          title={VICTORY_CLAIM_COPY.errorTitle}
+          title={kindCopy.title}
           onClose={onBackToHub}
           closeLabel={ARENA_COPY.backToHub}
           cta={
@@ -92,7 +97,7 @@ export function VictoryClaimError({
               </div>
             </div>
 
-            {/* Error subtitle */}
+            {/* Subtitle keyed by kind (error / cancelled / timeout) */}
             <p
               className="text-sm"
               style={{
@@ -100,19 +105,19 @@ export function VictoryClaimError({
                 textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
               }}
             >
-              {VICTORY_CLAIM_COPY.errorSubtitle}
+              {kindCopy.subtitle}
             </p>
 
-            {/* Specific error detail */}
-            {errorMessage && (
+            {/* Specific error detail (only for real errors) */}
+            {kind === "error" && errorMessage && (
               <p className="text-xs" style={{ color: "rgba(159, 18, 57, 0.85)" }}>
                 {errorMessage}
               </p>
             )}
 
-            {/* Recovery reassurance */}
+            {/* Recovery reassurance, kind-specific */}
             <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.65)" }}>
-              {VICTORY_CLAIM_COPY.errorRecoveryHint}
+              {kindCopy.hint}
             </p>
 
             {/* Performance — still visible for context */}

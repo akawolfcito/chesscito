@@ -366,6 +366,27 @@ export const VICTORY_CLAIM_COPY = {
   progressTimeHint: "This usually takes a few seconds",
   claimedBadge: "Victory NFT Claimed",
   errorRecoveryHint: "Your game result is saved. You can try claiming again anytime.",
+  /** Per-kind copy for the recoverable end states the claim flow can
+   *  land in. The default "error" branch matches the historical
+   *  errorTitle/errorSubtitle/errorRecoveryHint values so existing
+   *  surfaces stay visually identical. */
+  errorKindCopy: {
+    error: {
+      title: "Couldn't record victory",
+      subtitle: "Something went wrong while saving your result onchain.",
+      hint: "Your game result is saved. You can try claiming again anytime.",
+    },
+    cancelled: {
+      title: "Claim cancelled",
+      subtitle: "You declined the wallet prompt. Your victory is still here when you are ready.",
+      hint: "Nothing was charged. Tap try again to resume.",
+    },
+    timeout: {
+      title: "Still confirming…",
+      subtitle: "The network is taking longer than usual. Your wallet may already have the transaction.",
+      hint: "Check your wallet first — if it's still pending, give it a moment before retrying.",
+    },
+  },
 } as const;
 
 export const VICTORY_CELEBRATION_COPY = {
