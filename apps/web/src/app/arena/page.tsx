@@ -336,6 +336,9 @@ export default function ArenaPage() {
     }
 
     const normalizedTotal = normalizePrice(priceUsd6, token.decimals);
+    const txSource = pack === 5 ? "coach_5" : "coach_20";
+    const itemIdNum = Number(itemId);
+    track("coach_buy_tx", { stage: "start", source: txSource, pack, item_id: itemIdNum });
 
     try {
       // 1. Check allowance and approve if needed
@@ -367,6 +370,7 @@ export default function ArenaPage() {
         chainId,
         account: address,
       });
+      track("coach_buy_tx", { stage: "success", source: txSource, pack, item_id: itemIdNum });
       await waitForReceiptWithTimeout(publicClient, buyHash);
 
       // 3. Verify purchase and credit wallet
@@ -389,7 +393,18 @@ export default function ArenaPage() {
     } catch (err) {
       const raw = err instanceof Error ? err.message : "";
       const isUserCancel = /user (rejected|denied|cancelled)|ACTION_REJECTED/i.test(raw);
-      if (!isUserCancel) console.warn("[CoachPurchase] error", raw);
+      if (isUserCancel) {
+        track("coach_buy_tx", { stage: "cancelled", source: txSource, pack, item_id: itemIdNum });
+      } else {
+        console.warn("[CoachPurchase] error", raw);
+        track("coach_buy_tx", {
+          stage: "error",
+          source: txSource,
+          pack,
+          item_id: itemIdNum,
+          error_kind: classifyTxError(err),
+        });
+      }
       // Stay on paywall so user can retry or use quick review
     }
   }

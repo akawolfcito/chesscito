@@ -784,8 +784,11 @@ export function PlayHubRoot() {
 
     const unitPrice = selectedItem.onChainPrice;
     const normalizedTotal = normalizePrice(unitPrice, paymentToken.decimals);
+    const txSource = selectedItem.itemId === SHIELD_ITEM_ID ? "shop_retry_shield" : "shop_founder_badge";
+    const itemIdNum = Number(selectedItem.itemId);
 
     setLastError(null);
+    track("shop_buy_tx", { stage: "start", source: txSource, item_id: itemIdNum });
     console.info("[MiniPayTx] request", {
       label: selectedItem.label,
       itemId: selectedItem.itemId.toString(),
@@ -838,6 +841,7 @@ export function PlayHubRoot() {
       });
 
       setShopTxHash(buyHash);
+      track("shop_buy_tx", { stage: "success", source: txSource, item_id: itemIdNum });
       // Arm the shield-credit effect: when this buy receipt confirms,
       // localStorage gains 3 uses. Other items don't grant shields.
       if (selectedItem.itemId === SHIELD_ITEM_ID) {
@@ -855,13 +859,22 @@ export function PlayHubRoot() {
         txHash: buyHash,
       });
     } catch (error) {
-      if (isUserCancellation(error)) return;
+      if (isUserCancellation(error)) {
+        track("shop_buy_tx", { stage: "cancelled", source: txSource, item_id: itemIdNum });
+        return;
+      }
       setConfirmOpen(false);
       const message = toErrorMessage(error);
       setLastError(message);
       setResultOverlay({
         variant: "error",
         errorMessage: classifyTxError(error),
+      });
+      track("shop_buy_tx", {
+        stage: "error",
+        source: txSource,
+        item_id: itemIdNum,
+        error_kind: classifyTxError(error),
       });
       console.warn("[MiniPayTx] error", {
         label: selectedItem.label,
