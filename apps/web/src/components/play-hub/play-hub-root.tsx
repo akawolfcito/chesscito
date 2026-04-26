@@ -18,6 +18,7 @@ import { ExerciseDrawer } from "@/components/play-hub/exercise-drawer";
 import { LeaderboardSheet } from "@/components/play-hub/leaderboard-sheet";
 import { MissionBriefing } from "@/components/play-hub/mission-briefing";
 import { MissionPanelCandy } from "@/components/play-hub/mission-panel-candy";
+import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { ContextualActionSlot } from "@/components/play-hub/contextual-action-slot";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
@@ -965,6 +966,7 @@ export function PlayHubRoot() {
           timeMs={timeMs.toString()}
           currentStars={totalStars}
           claimedBadges={badgesClaimed}
+          headerSlot={<DailyTacticSlot />}
           contextualAction={
             <ContextualActionSlot
               action={contextAction}

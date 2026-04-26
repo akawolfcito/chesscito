@@ -47,6 +47,11 @@ type MissionPanelProps = {
   labyrinthAvailable?: boolean;
   labyrinthMode?: boolean;
   onToggleLabyrinth?: (next: boolean) => void;
+  /** Optional slot rendered between the chip row and the board.
+   *  Used by the Hub to surface the Daily Tactic card without
+   *  pulling daily-feature concerns into this presentational
+   *  component. */
+  headerSlot?: ReactNode;
 };
 
 type FlashConfig = { text: string; accent: string; stroke: string };
@@ -165,6 +170,7 @@ export function MissionPanelCandy({
   labyrinthAvailable = false,
   labyrinthMode = false,
   onToggleLabyrinth,
+  headerSlot,
 }: MissionPanelProps) {
   const activePiece = pieces.find((p) => p.key === selectedPiece);
   const activeSrc = PIECE_IMAGES[selectedPiece as keyof typeof PIECE_IMAGES];
@@ -328,6 +334,13 @@ export function MissionPanelCandy({
             ))}
           </div>
         </div>
+      )}
+
+      {/* Optional header slot (e.g., Daily Tactic card). Rendered between
+          the chip row and the board so it's the first thing the player
+          sees on hub entry without competing with the mission CTA. */}
+      {headerSlot && (
+        <div className="shrink-0 mx-2 mt-2">{headerSlot}</div>
       )}
 
       {/* Zone B: Board Stage — flex-1, maximum space. No panel frame so the
