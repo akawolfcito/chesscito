@@ -127,6 +127,10 @@ export const PIECE_COMPLETE_COPY = {
   /** Re-surface of the Submit Score transactional moment from
    *  BadgeEarnedPrompt. Same wording so the player recognizes it. */
   submitScore: "Submit Score",
+  /** Tertiary discovery link for the Coach feature. Only rendered when
+   *  the primary CTA is "Start <next piece>" — when the primary is
+   *  already "Try Arena" we skip it to avoid a duplicate Arena hop. */
+  coachHint: "Try Coach review in Arena",
 } as const;
 
 export const BADGE_EARNED_COPY = {

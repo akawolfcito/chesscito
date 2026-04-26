@@ -552,6 +552,22 @@ export function PieceCompletePrompt({
                   {LABYRINTH_COPY.orTryLabyrinth}
                 </button>
               )}
+              {/* Tertiary Coach discovery — skip when the primary CTA
+                  is already "Try Arena" (no nextPiece) so we don't ship
+                  two Arena hops in the same overlay. */}
+              {nextPiece && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    track("coach_hint_click", { source: "piece-complete", piece: pieceType });
+                    handleAction(onArena);
+                  }}
+                  className="w-full py-1.5 text-xs font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
+                  style={{ color: "rgba(110, 65, 15, 0.70)" }}
+                >
+                  {PIECE_COMPLETE_COPY.coachHint}
+                </button>
+              )}
             </div>
           }
           meta={
