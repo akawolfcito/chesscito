@@ -535,6 +535,78 @@ export function LandingPage() {
         </ul>
       </section>
 
+      {/* §8 Impact — three pillars (trazabilidad / escala / comunidad)
+          plus an allies placeholder line. Replaces the v0.1 sponsors
+          framing. The actual sponsors contact card remains below for
+          backwards compatibility until C9 cleanup. */}
+      <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
+        <div className="mx-auto max-w-[700px] text-center">
+          <h2
+            className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
+            style={{
+              color: "var(--landing-text)",
+              textShadow: "var(--landing-text-shadow-soft)",
+            }}
+          >
+            {LANDING_COPY.impact.title}
+          </h2>
+          <p
+            className="mx-auto mt-3 max-w-[60ch] text-sm leading-relaxed md:text-base"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {LANDING_COPY.impact.body}
+          </p>
+        </div>
+        <ul
+          className="mt-8 grid grid-cols-1 gap-3 md:mt-12 md:grid-cols-3 md:gap-5"
+          role="list"
+        >
+          {LANDING_COPY.impact.pillars.map((pillar) => (
+            <li
+              key={pillar.title}
+              className="flex flex-col gap-2 rounded-2xl border px-5 py-4"
+              style={{
+                background: "var(--landing-card-bg)",
+                borderColor: "var(--landing-card-border)",
+                boxShadow: "inset 0 1px 0 var(--landing-card-shadow-inner)",
+              }}
+            >
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                style={{
+                  background: "var(--landing-accent-bg)",
+                  border: "1px solid var(--landing-accent-border)",
+                }}
+                aria-hidden="true"
+              >
+                <CandyIcon name={pillar.icon} className="h-5 w-5" />
+              </span>
+              <h3
+                className="fantasy-title text-sm font-extrabold uppercase tracking-[0.10em]"
+                style={{
+                  color: "var(--landing-text)",
+                  textShadow: "var(--landing-text-shadow)",
+                }}
+              >
+                {pillar.title}
+              </h3>
+              <p
+                className="text-xs leading-relaxed md:text-sm"
+                style={{ color: "var(--paper-text-muted)" }}
+              >
+                {pillar.body}
+              </p>
+            </li>
+          ))}
+        </ul>
+        <p
+          className="mx-auto mt-8 max-w-[40ch] text-center text-xs italic md:mt-10 md:text-sm"
+          style={{ color: "var(--paper-text-muted)" }}
+        >
+          {LANDING_COPY.impact.alliesPlaceholder}
+        </p>
+      </section>
+
       {/* §6 Sponsors — Den Labs framing + contact links */}
       <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
         <div className="mx-auto grid max-w-[800px] grid-cols-1 gap-6 text-center">
