@@ -8,12 +8,14 @@ import type { ArenaDifficulty, ArenaStatus, ChessBoardPiece } from "./types";
 import { fenToPieces } from "./arena-utils";
 import { clearArenaGame, loadArenaGame, saveArenaGame } from "./arena-persistence";
 import { hapticTap, hapticReject, hapticSuccess, hapticImpact } from "@/lib/haptics";
+import { sfxCapture, sfxCheck, sfxMove, sfxVictory } from "@/lib/sfx";
 
 function dispatchMoveHaptic(flags: string | undefined, isCheck: boolean, isCheckmate: boolean) {
-  if (isCheckmate) { hapticImpact(); return; }
-  if (isCheck) { hapticSuccess(); return; }
-  if (flags && (flags.includes("c") || flags.includes("e"))) { hapticImpact(); return; }
+  if (isCheckmate) { hapticImpact(); sfxVictory(); return; }
+  if (isCheck) { hapticSuccess(); sfxCheck(); return; }
+  if (flags && (flags.includes("c") || flags.includes("e"))) { hapticImpact(); sfxCapture(); return; }
   hapticTap();
+  sfxMove();
 }
 
 const DIFFICULTY_LEVEL: Record<ArenaDifficulty, number> = {
