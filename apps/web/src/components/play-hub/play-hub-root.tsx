@@ -21,6 +21,7 @@ import { MissionPanelCandy } from "@/components/play-hub/mission-panel-candy";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
+import { WelcomeOverlay } from "@/components/welcome/welcome-overlay";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { ContextualActionSlot } from "@/components/play-hub/contextual-action-slot";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
@@ -925,6 +926,7 @@ export function PlayHubRoot() {
 
   return (
     <div className="relative w-full overflow-x-hidden">
+      <WelcomeOverlay />
       {showSplash && (
         <div className="playhub-intro-overlay is-active" role="status" aria-live="polite" aria-busy="true">
           {/* Splash art carries the visual; copy below provides status. */}
