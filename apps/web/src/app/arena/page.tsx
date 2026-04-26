@@ -40,6 +40,8 @@ import { getConfiguredChainId, getVictoryNFTAddress, getShopAddress } from "@/li
 import { hapticImpact, hapticSuccess } from "@/lib/haptics";
 import { victoryAbi } from "@/lib/contracts/victory";
 import { shopAbi } from "@/lib/contracts/shop";
+import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
+import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
 import {
   ACCEPTED_TOKENS,
   DIFFICULTY_TO_CHAIN,
@@ -355,7 +357,7 @@ export default function ArenaPage() {
           chainId,
           account: address,
         });
-        await publicClient.waitForTransactionReceipt({ hash: approveHash });
+        await waitForReceiptWithTimeout(publicClient, approveHash);
       }
 
       // 2. Buy item from shop
@@ -367,7 +369,7 @@ export default function ArenaPage() {
         chainId,
         account: address,
       });
-      await publicClient.waitForTransactionReceipt({ hash: buyHash });
+      await waitForReceiptWithTimeout(publicClient, buyHash);
 
       // 3. Verify purchase and credit wallet
       const verifyRes = await fetch("/api/coach/verify-purchase", {
@@ -453,7 +455,7 @@ export default function ArenaPage() {
           chainId,
           account: address,
         });
-        await publicClient.waitForTransactionReceipt({ hash: approveHash });
+        await waitForReceiptWithTimeout(publicClient, approveHash);
       }
 
       // Approve done — move to confirming step
@@ -482,7 +484,7 @@ export default function ArenaPage() {
         chainId,
         account: address,
       });
-      const receipt = await publicClient.waitForTransactionReceipt({ hash: claimHash });
+      const receipt = await waitForReceiptWithTimeout(publicClient, claimHash);
 
       // 5. Extract tokenId from VictoryMinted event
       let extractedTokenId: bigint | null = null;
@@ -559,27 +561,26 @@ export default function ArenaPage() {
       } catch { /* storage unavailable */ }
     } catch (err) {
       console.error("Claim failed:", err);
-      const raw = err instanceof Error ? err.message : "Claim failed";
-      const isUserCancel = /user (rejected|denied|cancelled)|ACTION_REJECTED/i.test(raw);
-      if (isUserCancel) {
+      if (isUserCancellation(err)) {
         track("victory_claim_tx", { stage: "cancelled" });
         setClaimPhase("ready");
         claimingRef.current = false;
         return;
       }
-      // Sanitize error — map known patterns to user-friendly messages
-      const errorKind = /expired/i.test(raw) ? "expired"
+      // Telemetry kind (separate from user copy so we keep granular insight).
+      const raw = err instanceof Error ? err.message : "Claim failed";
+      const errorKind = isTransactionTimeout(err) ? "timeout"
+        : /expired/i.test(raw) ? "expired"
         : /insufficient/i.test(raw) ? "insufficient_balance"
         : /network/i.test(raw) ? "network"
-        : /timeout/i.test(raw) ? "timeout"
         : /revert/i.test(raw) ? "revert"
         : "unknown";
-      const friendly = errorKind === "expired" ? "Signature expired — tap to get a fresh one"
-        : errorKind === "insufficient_balance" ? "Insufficient balance"
-        : errorKind === "network" ? "Network error — check your connection"
-        : errorKind === "timeout" ? "Request timed out — try again"
-        : errorKind === "revert" ? "Transaction reverted"
-        : "Something went wrong — try again";
+      // Signature expiry has its own actionable copy; everything else
+      // routes through the shared classifier so we stop leaking raw
+      // contract/viem strings to the player.
+      const friendly = errorKind === "expired"
+        ? "Signature expired — tap to get a fresh one"
+        : classifyTxError(err);
       setClaimError(friendly);
       setClaimPhase("error");
       track("victory_claim_tx", { stage: "error", error_kind: errorKind });

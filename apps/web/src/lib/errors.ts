@@ -1,4 +1,5 @@
 import { RESULT_OVERLAY_COPY } from "@/lib/content/editorial";
+import { TransactionTimeoutError } from "@/lib/contracts/transaction-helpers";
 
 const copy = RESULT_OVERLAY_COPY.error;
 
@@ -8,6 +9,14 @@ export function isUserCancellation(error: unknown): boolean {
   return lower.includes("user rejected") || lower.includes("user denied") || lower.includes("cancelled");
 }
 
+export function isTransactionTimeout(error: unknown): boolean {
+  if (error instanceof TransactionTimeoutError) return true;
+  if (error instanceof Error && error.name === "TransactionTimeoutError") return true;
+  if (error instanceof Error && error.name === "WaitForTransactionReceiptTimeoutError") return true;
+  const msg = error instanceof Error ? error.message : String(error);
+  return /transaction timed out/i.test(msg);
+}
+
 export function classifyTxError(error: unknown): string {
   const msg = error instanceof Error ? error.message : String(error);
   const lower = msg.toLowerCase();
@@ -15,10 +24,16 @@ export function classifyTxError(error: unknown): string {
   if (isUserCancellation(error)) {
     return copy.cancelled;
   }
+  // Timeout takes priority over generic network so the player learns
+  // their tx may still be pending in the wallet rather than blaming
+  // their connection.
+  if (isTransactionTimeout(error)) {
+    return copy.timeout;
+  }
   if (lower.includes("insufficient funds") || lower.includes("exceeds balance")) {
     return copy.insufficientFunds;
   }
-  if (lower.includes("network") || lower.includes("timeout") || lower.includes("disconnected")) {
+  if (lower.includes("network") || lower.includes("disconnected")) {
     return copy.network;
   }
   if (lower.includes("badgealreadyclaimed") || lower.includes("already claimed")) {

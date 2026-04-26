@@ -99,6 +99,8 @@ export const RESULT_OVERLAY_COPY = {
     cancelled: "Transaction was cancelled",
     insufficientFunds: "Not enough funds to complete this transaction",
     network: "Network error — check your connection and try again",
+    timeout:
+      "This is taking longer than expected. Check your wallet or try again.",
     revert:
       "Transaction failed — this action may not be available right now",
     unknown: "Something went wrong. Please try again",

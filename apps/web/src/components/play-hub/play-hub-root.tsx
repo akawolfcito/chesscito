@@ -43,6 +43,7 @@ import {
 import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
 import { ACCEPTED_TOKENS, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
+import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SHOP_ITEM_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
@@ -806,9 +807,7 @@ export function PlayHubRoot() {
           throw new Error("Missing public client for approval confirmation");
         }
 
-        await publicClient.waitForTransactionReceipt({
-          hash: approveHash,
-        });
+        await waitForReceiptWithTimeout(publicClient, approveHash);
       }
 
       setPurchasePhase("buying");
