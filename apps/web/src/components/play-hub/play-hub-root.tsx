@@ -970,14 +970,13 @@ export function PlayHubRoot() {
           timeMs={timeMs.toString()}
           currentStars={totalStars}
           claimedBadges={badgesClaimed}
-          headerSlot={
-            <div className="flex flex-col gap-2">
-              <DailyTacticSlot />
-              <MiniArenaBridgeSlot
-                setup={MINI_ARENA_SETUPS[0]}
-                unlocked={selectedPiece === "rook" && totalStars >= 12}
-              />
-            </div>
+          actionRowLeft={<DailyTacticSlot compact />}
+          actionRowRight={
+            <MiniArenaBridgeSlot
+              setup={MINI_ARENA_SETUPS[0]}
+              unlocked={selectedPiece === "rook" && totalStars >= 12}
+              compact
+            />
           }
           contextualAction={
             <ContextualActionSlot

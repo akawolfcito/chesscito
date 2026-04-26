@@ -52,6 +52,11 @@ type MissionPanelProps = {
    *  pulling daily-feature concerns into this presentational
    *  component. */
   headerSlot?: ReactNode;
+  /** Optional flanking slots rendered next to the contextual action
+   *  pin. Used for compact entry points (Daily Tactic mini, Mini-Arena
+   *  bridge) that shouldn't push the board down. */
+  actionRowLeft?: ReactNode;
+  actionRowRight?: ReactNode;
 };
 
 type FlashConfig = { text: string; accent: string; stroke: string };
@@ -171,6 +176,8 @@ export function MissionPanelCandy({
   labyrinthMode = false,
   onToggleLabyrinth,
   headerSlot,
+  actionRowLeft,
+  actionRowRight,
 }: MissionPanelProps) {
   const activePiece = pieces.find((p) => p.key === selectedPiece);
   const activeSrc = PIECE_IMAGES[selectedPiece as keyof typeof PIECE_IMAGES];
@@ -349,13 +356,26 @@ export function MissionPanelCandy({
         {board}
       </div>
 
-      {/* Zone C: action pin — centered, now the sole inhabitant of this row
-          so the CTA is the visual anchor of the bottom half. */}
+      {/* Zone C: action row — contextual action pin in the center, with
+          optional flanking slots on each side for compact entry points
+          (Daily Tactic, Mini-Arena bridge). The pin stays visually
+          anchored because the flanks are absolutely positioned at the
+          edges, leaving the centerline untouched. */}
       <div
-        className="mx-2 flex shrink-0 items-center justify-center"
+        className="relative mx-2 flex shrink-0 items-center justify-center"
         style={{ marginTop: "var(--shell-gap-xs)" }}
       >
+        {actionRowLeft && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2">
+            {actionRowLeft}
+          </div>
+        )}
         {contextualAction}
+        {actionRowRight && (
+          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+            {actionRowRight}
+          </div>
+        )}
       </div>
 
       {/* Dock — persistent navigation.

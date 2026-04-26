@@ -14,6 +14,10 @@ export type DailyTacticCardProps = {
   /** Fired when the user taps the CTA. Card is interactive only when
    *  not yet completed today. */
   onPlay: () => void;
+  /** Compact rendering — icon-only pill with streak badge. Used in
+   *  the action row next to the contextual action pin so the card
+   *  doesn't push the board down. */
+  compact?: boolean;
 };
 
 function formatNextWindow(hours: number): string {
@@ -28,10 +32,45 @@ export function DailyTacticCard({
   isCompletedToday,
   hoursUntilNext,
   onPlay,
+  compact = false,
 }: DailyTacticCardProps) {
   const ariaLabel = isCompletedToday
     ? `Daily Tactic completed. ${formatNextWindow(hoursUntilNext)}.`
     : `Play today's Daily Tactic. ${puzzleName}.`;
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={isCompletedToday ? undefined : onPlay}
+        disabled={isCompletedToday}
+        data-testid="daily-tactic-card"
+        data-state={isCompletedToday ? "completed" : "pending"}
+        aria-label={ariaLabel}
+        className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full candy-frame candy-frame-amber disabled:opacity-90"
+      >
+        <CandyIcon
+          name={isCompletedToday ? "check" : "coach"}
+          className="h-6 w-6"
+        />
+        {streak > 0 && (
+          <span
+            className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-nano font-extrabold leading-none"
+            style={{
+              background: isCompletedToday
+                ? "rgba(34, 197, 94, 0.92)"
+                : "rgba(63, 34, 8, 0.92)",
+              color: "rgba(255, 245, 215, 0.98)",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.25)",
+            }}
+            aria-hidden="true"
+          >
+            {streak}
+          </span>
+        )}
+      </button>
+    );
+  }
 
   const Tag: "button" | "div" = isCompletedToday ? "div" : "button";
   const interactiveProps = isCompletedToday

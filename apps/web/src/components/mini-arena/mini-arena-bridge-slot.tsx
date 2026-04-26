@@ -13,6 +13,9 @@ type Props = {
    *  rook → K+R vs K is unlocked). When false the slot renders
    *  nothing — silent gating keeps the header clean. */
   unlocked: boolean;
+  /** Compact rendering — icon-only pill next to the contextual action
+   *  pin so the bridge entry point doesn't push the board down. */
+  compact?: boolean;
 };
 
 /**
@@ -22,9 +25,26 @@ type Props = {
  * mastering a piece, without giving up vertical space when the
  * prerequisite isn't yet met.
  */
-export function MiniArenaBridgeSlot({ setup, unlocked }: Props) {
+export function MiniArenaBridgeSlot({ setup, unlocked, compact = false }: Props) {
   const [open, setOpen] = useState(false);
   if (!unlocked) return null;
+
+  if (compact) {
+    return (
+      <>
+        <button
+          type="button"
+          data-testid="mini-arena-bridge"
+          onClick={() => setOpen(true)}
+          aria-label={`Reto avanzado: ${setup.name}`}
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full candy-frame candy-frame-amber"
+        >
+          <CandyIcon name="trophy" className="h-6 w-6" />
+        </button>
+        <MiniArenaSheet open={open} onOpenChange={setOpen} setup={setup} />
+      </>
+    );
+  }
 
   return (
     <>
