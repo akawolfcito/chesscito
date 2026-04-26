@@ -363,7 +363,10 @@ export function LandingPage() {
         imageOnLeft={true}
       />
 
-      {/* §5 Community — full-width row of 3 cards */}
+      {/* §6 Audiences — replaces the v0.1 community block. Same 3-card
+          layout but new copy: niños/adolescentes, familias,
+          educadores/comunidades. Title softened from
+          "ventana / toda la vida" to "empezar pronto". */}
       <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
         <div className="mx-auto max-w-[700px] text-center">
           <h2
@@ -373,20 +376,14 @@ export function LandingPage() {
               textShadow: "var(--landing-text-shadow-soft)",
             }}
           >
-            {WHY_PAGE_COPY.community.title}
+            {LANDING_COPY.audiences.title}
           </h2>
-          <p
-            className="mx-auto mt-3 max-w-[60ch] text-sm leading-relaxed md:text-base"
-            style={{ color: "var(--paper-text-muted)" }}
-          >
-            {WHY_PAGE_COPY.community.body}
-          </p>
         </div>
         <ul
           className="mt-8 grid grid-cols-1 gap-3 md:mt-12 md:grid-cols-3 md:gap-5"
           role="list"
         >
-          {WHY_PAGE_COPY.community.cards.map((card) => (
+          {LANDING_COPY.audiences.cards.map((card) => (
             <li
               key={card.title}
               className="flex flex-col gap-2 rounded-2xl border px-5 py-4"
