@@ -19,6 +19,8 @@ import { LeaderboardSheet } from "@/components/play-hub/leaderboard-sheet";
 import { MissionBriefing } from "@/components/play-hub/mission-briefing";
 import { MissionPanelCandy } from "@/components/play-hub/mission-panel-candy";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
+import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
+import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { ContextualActionSlot } from "@/components/play-hub/contextual-action-slot";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
@@ -966,7 +968,15 @@ export function PlayHubRoot() {
           timeMs={timeMs.toString()}
           currentStars={totalStars}
           claimedBadges={badgesClaimed}
-          headerSlot={<DailyTacticSlot />}
+          headerSlot={
+            <div className="flex flex-col gap-2">
+              <DailyTacticSlot />
+              <MiniArenaBridgeSlot
+                setup={MINI_ARENA_SETUPS[0]}
+                unlocked={selectedPiece === "rook" && totalStars >= 12}
+              />
+            </div>
+          }
           contextualAction={
             <ContextualActionSlot
               action={contextAction}
