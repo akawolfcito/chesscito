@@ -42,9 +42,10 @@ import {
 } from "@/lib/contracts/chains";
 import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
+import { SHIELDS_PER_PURCHASE, SHIELD_ITEM_ID, SHOP_ITEMS } from "@/lib/contracts/shop-catalog";
 import { ACCEPTED_TOKENS, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
-import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SHOP_ITEM_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
+import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
@@ -63,14 +64,9 @@ import { LabyrinthCompleteOverlay } from "@/components/play-hub/labyrinth-comple
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
 
-const SHOP_ITEMS = [
-  {
-    itemId: 1n,
-    label: SHOP_ITEM_COPY.founderBadge.label,
-    subtitle: SHOP_ITEM_COPY.founderBadge.subtitle,
-  },
-  // Shield disabled — no gameplay penalty justifies the cost yet
-] as const;
+// SHOP_ITEMS, SHIELD_ITEM_ID, SHIELDS_PER_PURCHASE now live in
+// lib/contracts/shop-catalog.ts so they're testable in isolation. The
+// import is below with the other contract helpers.
 
 
 type SignatureResponse =
@@ -451,7 +447,7 @@ export function PlayHubRoot() {
   useEffect(() => {
     if (isShopConfirmed && pendingShieldCredit) {
       setShieldCount((prev) => {
-        const next = Math.max(0, Math.min(prev + 3, MAX_SHIELDS));
+        const next = Math.max(0, Math.min(prev + SHIELDS_PER_PURCHASE, MAX_SHIELDS));
         localStorage.setItem("chesscito:shields", String(next));
         return next;
       });
@@ -842,6 +838,11 @@ export function PlayHubRoot() {
       });
 
       setShopTxHash(buyHash);
+      // Arm the shield-credit effect: when this buy receipt confirms,
+      // localStorage gains 3 uses. Other items don't grant shields.
+      if (selectedItem.itemId === SHIELD_ITEM_ID) {
+        setPendingShieldCredit(true);
+      }
       setConfirmOpen(false);
       setStoreOpen(false);
       setSelectedItemId(null);

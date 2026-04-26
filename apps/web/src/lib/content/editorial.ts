@@ -825,6 +825,10 @@ export const SHOP_ITEM_COPY = {
     label: "Founder Badge",
     subtitle: "Support Chesscito with an exclusive founder badge minted to your wallet.",
   },
+  retryShield: {
+    label: "Retry Shield",
+    subtitle: "Three retries for tough captures. Use one and the trial resets — no streak penalty.",
+  },
 } as const;
 
 /** /why public landing page copy. Spanish-only in v1 by product
