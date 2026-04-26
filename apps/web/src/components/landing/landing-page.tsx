@@ -46,8 +46,8 @@ export function LandingPage() {
         <span
           className="fantasy-title text-base font-extrabold uppercase tracking-[0.18em] md:text-lg"
           style={{
-            color: "rgba(63, 34, 8, 0.95)",
-            textShadow: "0 1px 0 rgba(255, 245, 215, 0.85)",
+            color: "var(--landing-text)",
+            textShadow: "var(--landing-text-shadow)",
           }}
         >
           Chesscito
@@ -65,10 +65,10 @@ export function LandingPage() {
           <span
             className="inline-flex items-center rounded-full border px-3 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.18em]"
             style={{
-              background: "rgba(255, 245, 215, 0.85)",
-              borderColor: "rgba(245, 158, 11, 0.55)",
-              color: "rgba(63, 34, 8, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              background: "rgba(255, 248, 230, 0.85)",
+              borderColor: "var(--landing-accent-border-strong)",
+              color: "var(--landing-text)",
+              textShadow: "var(--landing-text-shadow)",
             }}
           >
             {WHY_PAGE_COPY.hero.eyebrow}
@@ -76,9 +76,8 @@ export function LandingPage() {
           <h1
             className="fantasy-title text-3xl font-extrabold leading-tight md:text-5xl md:leading-[1.05]"
             style={{
-              color: "rgba(63, 34, 8, 0.95)",
-              textShadow:
-                "0 1px 0 rgba(255, 245, 215, 0.85), 0 2px 6px rgba(245, 158, 11, 0.30)",
+              color: "var(--landing-text)",
+              textShadow: "var(--landing-title-glow)",
             }}
           >
             {WHY_PAGE_COPY.hero.headline}
@@ -130,8 +129,8 @@ export function LandingPage() {
           <h2
             className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
             style={{
-              color: "rgba(63, 34, 8, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+              color: "var(--landing-text)",
+              textShadow: "var(--landing-text-shadow-soft)",
             }}
           >
             {LANDING_COPY.problem.title}
@@ -153,16 +152,16 @@ export function LandingPage() {
               key={claim.label}
               className="flex items-start gap-3 rounded-2xl border px-4 py-3.5"
               style={{
-                background: "rgba(255, 245, 215, 0.55)",
-                borderColor: "rgba(110, 65, 15, 0.22)",
-                boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+                background: "var(--landing-card-bg)",
+                borderColor: "var(--landing-card-border)",
+                boxShadow: "inset 0 1px 0 var(--landing-card-shadow-inner)",
               }}
             >
               <span
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                 style={{
-                  background: "rgba(245, 158, 11, 0.18)",
-                  border: "1px solid rgba(245, 158, 11, 0.45)",
+                  background: "var(--landing-accent-bg)",
+                  border: "1px solid var(--landing-accent-border)",
                 }}
                 aria-hidden="true"
               >
@@ -171,8 +170,8 @@ export function LandingPage() {
               <p
                 className="text-sm font-semibold leading-snug md:text-base"
                 style={{
-                  color: "rgba(63, 34, 8, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                  color: "var(--landing-text)",
+                  textShadow: "var(--landing-text-shadow)",
                 }}
               >
                 {claim.label}
@@ -204,8 +203,8 @@ export function LandingPage() {
             <h2
               className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
               style={{
-                color: "rgba(63, 34, 8, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                color: "var(--landing-text)",
+                textShadow: "var(--landing-text-shadow-soft)",
               }}
             >
               {WHY_PAGE_COPY.cognitive.title}
@@ -222,10 +221,10 @@ export function LandingPage() {
                   key={cap.label}
                   className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold uppercase tracking-[0.10em]"
                   style={{
-                    background: "rgba(255, 245, 215, 0.85)",
-                    borderColor: "rgba(245, 158, 11, 0.45)",
-                    color: "rgba(63, 34, 8, 0.95)",
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                    background: "rgba(255, 248, 230, 0.78)",
+                    borderColor: "var(--landing-accent-border)",
+                    color: "var(--landing-text)",
+                    textShadow: "var(--landing-text-shadow)",
                   }}
                 >
                   <CandyIcon name={cap.icon} className="h-3.5 w-3.5 shrink-0" />
@@ -236,20 +235,20 @@ export function LandingPage() {
             <div
               className="mt-2 flex items-start gap-3 rounded-2xl border px-4 py-3"
               style={{
-                background: "rgba(245, 158, 11, 0.12)",
-                borderColor: "rgba(245, 158, 11, 0.45)",
-                color: "rgba(63, 34, 8, 0.95)",
+                background: "var(--landing-accent-bg-strong)",
+                borderColor: "var(--landing-accent-border)",
+                color: "var(--landing-text)",
               }}
               role="note"
             >
               <CandyIcon
                 name="shield"
                 className="mt-0.5 h-4 w-4 shrink-0"
-                style={{ color: "rgba(120, 65, 5, 0.85)" }}
+                style={{ color: "var(--landing-accent)" }}
               />
               <p
                 className="text-[0.78rem] leading-relaxed"
-                style={{ textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)" }}
+                style={{ textShadow: "var(--landing-text-shadow)" }}
               >
                 {WHY_PAGE_COPY.cognitive.disclaimer}
               </p>
@@ -288,8 +287,8 @@ export function LandingPage() {
           <h2
             className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
             style={{
-              color: "rgba(63, 34, 8, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+              color: "var(--landing-text)",
+              textShadow: "var(--landing-text-shadow-soft)",
             }}
           >
             {WHY_PAGE_COPY.community.title}
@@ -310,16 +309,16 @@ export function LandingPage() {
               key={card.title}
               className="flex flex-col gap-2 rounded-2xl border px-5 py-4"
               style={{
-                background: "rgba(255, 245, 215, 0.55)",
-                borderColor: "rgba(110, 65, 15, 0.22)",
-                boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+                background: "var(--landing-card-bg)",
+                borderColor: "var(--landing-card-border)",
+                boxShadow: "inset 0 1px 0 var(--landing-card-shadow-inner)",
               }}
             >
               <h3
                 className="fantasy-title text-sm font-extrabold uppercase tracking-[0.10em]"
                 style={{
-                  color: "rgba(63, 34, 8, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                  color: "var(--landing-text)",
+                  textShadow: "var(--landing-text-shadow)",
                 }}
               >
                 {card.title}
@@ -341,8 +340,8 @@ export function LandingPage() {
           <h2
             className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
             style={{
-              color: "rgba(63, 34, 8, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+              color: "var(--landing-text)",
+              textShadow: "var(--landing-text-shadow-soft)",
             }}
           >
             {WHY_PAGE_COPY.sponsors.title}
@@ -356,9 +355,9 @@ export function LandingPage() {
           <div
             className="mx-auto max-w-[60ch] rounded-2xl border px-5 py-4"
             style={{
-              background: "rgba(255, 245, 215, 0.55)",
-              borderColor: "rgba(110, 65, 15, 0.22)",
-              boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+              background: "var(--landing-card-bg)",
+              borderColor: "var(--landing-card-border)",
+              boxShadow: "inset 0 1px 0 var(--landing-card-shadow-inner)",
             }}
           >
             <p
@@ -404,9 +403,8 @@ export function LandingPage() {
         <h2
           className="fantasy-title text-2xl font-extrabold leading-tight md:text-5xl md:leading-[1.05]"
           style={{
-            color: "rgba(63, 34, 8, 0.95)",
-            textShadow:
-              "0 1px 0 rgba(255, 245, 215, 0.85), 0 2px 6px rgba(245, 158, 11, 0.30)",
+            color: "var(--landing-text)",
+            textShadow: "var(--landing-title-glow)",
           }}
         >
           {WHY_PAGE_COPY.finalCta.headline}
@@ -475,8 +473,8 @@ export function LandingPage() {
             <p
               className="fantasy-title text-xs font-extrabold uppercase tracking-[0.18em]"
               style={{
-                color: "rgba(110, 65, 15, 0.85)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                color: "rgba(110, 65, 15, 0.78)",
+                textShadow: "var(--landing-text-shadow)",
               }}
             >
               {WHY_PAGE_COPY.footer.brand}
@@ -536,8 +534,8 @@ function SectionRow({
       <h2
         className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
         style={{
-          color: "rgba(63, 34, 8, 0.95)",
-          textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+          color: "var(--landing-text)",
+          textShadow: "var(--landing-text-shadow-soft)",
         }}
       >
         {title}
@@ -554,11 +552,11 @@ function SectionRow({
             key={bullet}
             className="flex items-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-semibold"
             style={{
-              background: "rgba(255, 245, 215, 0.55)",
-              borderColor: "rgba(110, 65, 15, 0.22)",
-              color: "rgba(63, 34, 8, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-              boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+              background: "var(--landing-card-bg)",
+              borderColor: "var(--landing-card-border)",
+              color: "var(--landing-text)",
+              textShadow: "var(--landing-text-shadow)",
+              boxShadow: "inset 0 1px 0 var(--landing-card-shadow-inner)",
             }}
           >
             <CandyIcon name="check" className="h-4 w-4 shrink-0" />

@@ -63,6 +63,26 @@
     --paper-divider: rgba(110, 65, 15, 0.20);
     --paper-accent: rgba(251, 191, 36, 0.95);
 
+    /* ── Landing — softened palette (Duolingo-inspired) ──
+       The candy-paper aesthetic is intentional inside the game (high
+       saturation reads as "playful"), but the public landing needs a
+       calmer surface so copy + screenshots breathe. Each token has the
+       previous saturated value documented next to it for reference. */
+    --landing-accent:           rgba(217, 130, 30, 0.85);  /* was amber-500 0.95 */
+    --landing-accent-bg:        rgba(245, 158, 11, 0.10);  /* was 0.18 (chip bg) */
+    --landing-accent-bg-strong: rgba(245, 158, 11, 0.16);  /* was 0.30 (note callout) */
+    --landing-accent-border:    rgba(217, 130, 30, 0.30);  /* was 0.45 (chip + card icon ring) */
+    --landing-accent-border-strong: rgba(217, 130, 30, 0.42); /* was 0.55 (eyebrow chip) */
+    --landing-card-bg:          rgba(255, 248, 230, 0.62); /* was rgba(255,245,215,0.55) — slightly warmer */
+    --landing-card-border:      rgba(110, 65, 15, 0.16);   /* was 0.22 */
+    --landing-card-shadow-inner: rgba(255, 245, 215, 0.45); /* was 0.55 */
+    --landing-text:             rgba(63, 34, 8, 0.92);     /* was 0.95 */
+    --landing-text-soft:        rgba(63, 34, 8, 0.72);
+    --landing-text-shadow:      0 1px 0 rgba(255, 245, 215, 0.55);
+    --landing-text-shadow-soft: 0 1px 0 rgba(255, 245, 215, 0.45);
+    --landing-title-glow:       0 1px 0 rgba(255, 245, 215, 0.85),
+                                0 2px 6px rgba(245, 158, 11, 0.12); /* was 0.30 */
+
     /* ── Shell Cohesion — layout tokens ── */
     --shell-radius: 16px;
     --shell-border: rgba(255, 255, 255, 0.06);
