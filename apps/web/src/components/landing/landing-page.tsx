@@ -413,6 +413,128 @@ export function LandingPage() {
         </ul>
       </section>
 
+      {/* §7 Plans — 4 tiers (Gratuito / Familia / Educadores / Aliados).
+          Internal tier routes to /hub; the rest open mailto: to the
+          support address with a pre-baked subject line. Falls back
+          to GitHub when SUPPORT_EMAIL is not configured. */}
+      <section
+        id="plans"
+        className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20"
+      >
+        <div className="mx-auto max-w-[700px] text-center">
+          <h2
+            className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
+            style={{
+              color: "var(--landing-text)",
+              textShadow: "var(--landing-text-shadow-soft)",
+            }}
+          >
+            {LANDING_COPY.plans.title}
+          </h2>
+          <p
+            className="mx-auto mt-3 max-w-[60ch] text-sm leading-relaxed md:text-base"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {LANDING_COPY.plans.body}
+          </p>
+        </div>
+        <ul
+          className="mt-8 grid grid-cols-1 gap-3 md:mt-12 md:grid-cols-2 md:gap-4 lg:grid-cols-4"
+          role="list"
+        >
+          {LANDING_COPY.plans.tiers.map((tier) => {
+            const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
+            let ctaHref: string;
+            if (tier.ctaKind === "internal") {
+              ctaHref = "/hub";
+            } else if (supportEmail) {
+              const subject = encodeURIComponent(
+                `Chesscito · ${tier.ctaSubject}`,
+              );
+              ctaHref = `mailto:${supportEmail}?subject=${subject}`;
+            } else {
+              ctaHref = WHY_PAGE_COPY.sponsors.githubUrl;
+            }
+            const isExternal = tier.ctaKind === "mailto";
+            return (
+              <li
+                key={tier.name}
+                className="flex flex-col gap-3 rounded-2xl border px-5 py-5"
+                style={{
+                  background: "var(--landing-card-bg)",
+                  borderColor: "var(--landing-card-border)",
+                  boxShadow: "inset 0 1px 0 var(--landing-card-shadow-inner)",
+                }}
+              >
+                <div className="flex flex-col gap-1.5">
+                  <span
+                    className="self-start rounded-full border px-3 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.14em]"
+                    style={{
+                      background: "var(--landing-accent-bg)",
+                      borderColor: "var(--landing-accent-border)",
+                      color: "var(--landing-text)",
+                    }}
+                  >
+                    {tier.name}
+                  </span>
+                  <p
+                    className="text-sm font-extrabold"
+                    style={{ color: "var(--landing-text)" }}
+                  >
+                    {tier.tagline}
+                  </p>
+                </div>
+                <ul className="flex flex-col gap-1.5" role="list">
+                  {tier.bullets.map((bullet) => (
+                    <li
+                      key={bullet}
+                      className="flex items-start gap-2 text-xs leading-relaxed md:text-sm"
+                      style={{ color: "var(--paper-text-muted)" }}
+                    >
+                      <CandyIcon
+                        name="check"
+                        className="mt-[0.15em] h-3.5 w-3.5 shrink-0"
+                      />
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-auto pt-1">
+                  {isExternal ? (
+                    <a
+                      href={ctaHref}
+                      target={supportEmail ? undefined : "_blank"}
+                      rel={supportEmail ? undefined : "noopener noreferrer"}
+                      onClick={onCta(`plan-${tier.name.toLowerCase()}`)}
+                      className="paper-tray flex min-h-[40px] items-center justify-center gap-2 transition active:scale-[0.99]"
+                      style={{ color: "var(--paper-text)" }}
+                    >
+                      <span className="text-xs font-extrabold uppercase tracking-[0.10em]">
+                        {tier.ctaLabel}
+                      </span>
+                    </a>
+                  ) : (
+                    <Button
+                      asChild
+                      variant="game-primary"
+                      size="game-sm"
+                      className="!w-full"
+                    >
+                      <Link
+                        href={ctaHref}
+                        onClick={onCta(`plan-${tier.name.toLowerCase()}`)}
+                      >
+                        {tier.ctaLabel}
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
       {/* §6 Sponsors — Den Labs framing + contact links */}
       <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
         <div className="mx-auto grid max-w-[800px] grid-cols-1 gap-6 text-center">
