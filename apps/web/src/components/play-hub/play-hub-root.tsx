@@ -603,6 +603,12 @@ export function PlayHubRoot() {
 
   function handleExerciseNavigate(index: number) {
     autoReset.invalidate();
+    // Mirror the piece-rail handler: dismiss end-of-piece overlays so a
+    // mid-overlay exercise jump can't leave them stuck on stale data.
+    // resultOverlay / tx hashes are intentionally left alone — those
+    // belong to the player to dismiss explicitly.
+    setShowBadgeEarned(false);
+    setShowPieceComplete(false);
     goToExercise(index);
     resetBoard();
   }
