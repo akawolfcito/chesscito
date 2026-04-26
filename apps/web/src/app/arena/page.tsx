@@ -425,15 +425,24 @@ export default function ArenaPage() {
       moves: game.moveCount,
       elapsed_ms: game.elapsedMs,
     });
+    // Server derives totalMoves from moveHistory.length; the on-chain
+    // mintSigned call must use the SAME value or the EIP-712 signature
+    // won't verify. Snapshot it once here so both stay aligned.
+    const verifiedMoves = game.moveHistory.length;
+
     try {
-      // 1. Get server signature
+      // 1. Get server signature — server replays the SAN transcript with
+      //    chess.js, asserts checkmate by playerColor, and signs only the
+      //    derived totalMoves. Client-supplied totalMoves is ignored on
+      //    the server side, so we no longer send it.
       const res = await fetch("/api/sign-victory", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           player: address,
           difficulty: chainDifficulty,
-          totalMoves: game.moveCount,
+          moveHistory: game.moveHistory,
+          playerColor: game.playerColor,
           timeMs: game.elapsedMs,
         }),
       });
@@ -487,7 +496,7 @@ export default function ArenaPage() {
         functionName: "mintSigned",
         args: [
           chainDifficulty,
-          game.moveCount,
+          verifiedMoves,
           game.elapsedMs,
           token.address,
           BigInt(payload.nonce),
@@ -552,7 +561,7 @@ export default function ArenaPage() {
           player: address,
           tokenId: extractedTokenId ? String(extractedTokenId) : "0",
           difficulty: chainDifficulty,
-          totalMoves: game.moveCount,
+          totalMoves: verifiedMoves,
           timeMs: game.elapsedMs,
           txHash: claimHash,
         }),
@@ -566,7 +575,7 @@ export default function ArenaPage() {
             tokenId: extractedTokenId ? String(extractedTokenId) : "0",
             player: address.toLowerCase(),
             difficulty: chainDifficulty,
-            totalMoves: game.moveCount,
+            totalMoves: verifiedMoves,
             timeMs: game.elapsedMs,
             ts: Date.now(),
           }),

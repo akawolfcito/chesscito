@@ -28,6 +28,12 @@ const mockedConfig = vi.mocked(getDemoConfig);
 
 const VALID_ADDRESS = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd" as const;
 
+/** Real chess transcripts used as test fixtures. We rely on the actual
+ *  chess.js engine — no mock — so the route's replay path is exercised
+ *  end-to-end. */
+const SCHOLARS_MATE_BY_WHITE = ["e4", "e5", "Bc4", "Nc6", "Qh5", "Nf6", "Qxf7#"];
+const FOOLS_MATE_BY_BLACK = ["f3", "e5", "g4", "Qh4#"];
+
 function goodConfig() {
   const signTypedData = vi.fn().mockResolvedValue("0xsig");
   mockedConfig.mockReturnValue({
@@ -48,6 +54,17 @@ function makeRequest(body: unknown) {
   });
 }
 
+function validBody(overrides: Record<string, unknown> = {}) {
+  return {
+    player: VALID_ADDRESS,
+    difficulty: 1,
+    moveHistory: SCHOLARS_MATE_BY_WHITE,
+    playerColor: "w",
+    timeMs: 11583,
+    ...overrides,
+  };
+}
+
 describe("POST /api/sign-victory", () => {
   beforeEach(() => {
     mockedOrigin.mockReset();
@@ -62,60 +79,169 @@ describe("POST /api/sign-victory", () => {
     mockedInteger.mockImplementation((v) => BigInt(v as number));
   });
 
-  it("returns 200 with a signature payload on a valid request", async () => {
-    const signFn = goodConfig();
-    const req = makeRequest({ player: VALID_ADDRESS, difficulty: 1, totalMoves: 13, timeMs: 11583 });
-    const res = await POST(req);
-    expect(res.status).toEqual(200);
-    const body = await res.json();
-    expect(body).toEqual({
-      nonce: "123",
-      deadline: "9999999999",
-      signature: "0xsig",
+  describe("happy path", () => {
+    it("returns 200 with signature when scholar's mate by white is verified", async () => {
+      const signFn = goodConfig();
+      const res = await POST(makeRequest(validBody()));
+      expect(res.status).toEqual(200);
+      const body = await res.json();
+      expect(body).toEqual({
+        nonce: "123",
+        deadline: "9999999999",
+        signature: "0xsig",
+        totalMoves: "7",
+      });
+      expect(signFn).toHaveBeenCalledOnce();
     });
-    expect(signFn).toHaveBeenCalledOnce();
-  });
 
-  it("returns 403 when enforceOrigin throws Forbidden", async () => {
-    mockedOrigin.mockImplementation(() => {
-      throw new Error("Forbidden");
+    it("derives totalMoves from moveHistory.length and signs that value (not a client-provided value)", async () => {
+      const signFn = goodConfig();
+      // Even if a client tries to smuggle a totalMoves field, the route
+      // ignores it — derived value comes from chess.js replay.
+      const body = validBody({ totalMoves: 999 });
+      const res = await POST(makeRequest(body));
+      expect(res.status).toEqual(200);
+      const signedPayload = signFn.mock.calls[0][2] as { totalMoves: bigint };
+      expect(signedPayload.totalMoves).toBe(BigInt(SCHOLARS_MATE_BY_WHITE.length));
     });
-    const res = await POST(makeRequest({ player: VALID_ADDRESS, difficulty: 1, totalMoves: 13, timeMs: 11583 }));
-    expect(res.status).toEqual(403);
-    expect((await res.json()).error).toEqual("Forbidden");
-  });
 
-  it("returns 429 when rate limit is exceeded", async () => {
-    goodConfig();
-    mockedRate.mockRejectedValue(new Error("Rate limit exceeded"));
-    const res = await POST(makeRequest({ player: VALID_ADDRESS, difficulty: 1, totalMoves: 13, timeMs: 11583 }));
-    expect(res.status).toEqual(429);
-    expect((await res.json()).error).toEqual("Rate limit exceeded");
-  });
-
-  it("returns 400 when parseAddress throws on an invalid player", async () => {
-    mockedAddress.mockImplementation(() => {
-      throw new Error("Invalid player address");
+    it("accepts fool's mate by black", async () => {
+      goodConfig();
+      const res = await POST(
+        makeRequest(validBody({ moveHistory: FOOLS_MATE_BY_BLACK, playerColor: "b" })),
+      );
+      expect(res.status).toEqual(200);
+      expect((await res.json()).totalMoves).toBe("4");
     });
-    const res = await POST(makeRequest({ player: "0xnot-an-address", difficulty: 1, totalMoves: 13, timeMs: 11583 }));
-    expect(res.status).toEqual(400);
-    expect((await res.json()).error).toEqual("Invalid player address");
   });
 
-  it("returns 400 when parseInteger rejects an out-of-range field", async () => {
-    goodConfig();
-    mockedInteger.mockImplementationOnce((v) => BigInt(v as number)) // difficulty ok
-      .mockImplementationOnce(() => { throw new Error("totalMoves must be between 1 and 10000"); });
-    const res = await POST(makeRequest({ player: VALID_ADDRESS, difficulty: 1, totalMoves: 99999, timeMs: 11583 }));
-    expect(res.status).toEqual(400);
-    expect((await res.json()).error).toEqual("totalMoves must be between 1 and 10000");
+  describe("transcript validation", () => {
+    it("returns 400 when moveHistory contains an illegal SAN", async () => {
+      goodConfig();
+      const res = await POST(
+        makeRequest(validBody({ moveHistory: ["e4", "ZZZ"] })),
+      );
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toEqual("Illegal move in transcript");
+    });
+
+    it("returns 400 when the transcript does not end in checkmate", async () => {
+      goodConfig();
+      const res = await POST(
+        makeRequest(validBody({ moveHistory: ["e4"] })),
+      );
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toEqual("Transcript does not end in checkmate");
+    });
+
+    it("returns 400 when the player did not deliver the mating move (wrong color claim)", async () => {
+      goodConfig();
+      // Scholar's mate is delivered by white, but client claims they were black.
+      const res = await POST(
+        makeRequest(validBody({ playerColor: "b" })),
+      );
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toEqual("Player did not deliver the mating move");
+    });
+
+    it("returns 400 when moveHistory exceeds the 300-move cap", async () => {
+      goodConfig();
+      const oversized = Array.from({ length: 301 }, () => "e4");
+      const res = await POST(makeRequest(validBody({ moveHistory: oversized })));
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toMatch(/exceeds 300/);
+    });
+
+    it("returns 400 when moveHistory is empty", async () => {
+      goodConfig();
+      const res = await POST(makeRequest(validBody({ moveHistory: [] })));
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toMatch(/at least one move/);
+    });
+
+    it("returns 400 when moveHistory is not an array", async () => {
+      goodConfig();
+      const res = await POST(makeRequest(validBody({ moveHistory: "e4 e5 Bc4" })));
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toMatch(/must be an array/);
+    });
+
+    it("returns 400 when a SAN entry is not a string", async () => {
+      goodConfig();
+      const res = await POST(
+        makeRequest(validBody({ moveHistory: ["e4", 42] })),
+      );
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toMatch(/Invalid SAN/);
+    });
+
+    it("returns 400 when a SAN entry exceeds the 12-char cap", async () => {
+      goodConfig();
+      const res = await POST(
+        makeRequest(validBody({ moveHistory: ["e4", "x".repeat(13)] })),
+      );
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toMatch(/Invalid SAN/);
+    });
+
+    it("returns 400 when playerColor is missing", async () => {
+      goodConfig();
+      const res = await POST(makeRequest(validBody({ playerColor: undefined })));
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toMatch(/playerColor/);
+    });
+
+    it("returns 400 when playerColor is invalid", async () => {
+      goodConfig();
+      const res = await POST(makeRequest(validBody({ playerColor: "x" })));
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toMatch(/playerColor/);
+    });
   });
 
-  it("returns 400 with a generic message on unexpected non-Error throws", async () => {
-    goodConfig();
-    mockedRate.mockRejectedValue("boom" as unknown as Error);
-    const res = await POST(makeRequest({ player: VALID_ADDRESS, difficulty: 1, totalMoves: 13, timeMs: 11583 }));
-    expect(res.status).toEqual(400);
-    expect((await res.json()).error).toEqual("Could not sign victory claim");
+  describe("preserved guards", () => {
+    it("returns 403 when enforceOrigin throws Forbidden", async () => {
+      mockedOrigin.mockImplementation(() => {
+        throw new Error("Forbidden");
+      });
+      const res = await POST(makeRequest(validBody()));
+      expect(res.status).toEqual(403);
+      expect((await res.json()).error).toEqual("Forbidden");
+    });
+
+    it("returns 429 when rate limit is exceeded", async () => {
+      goodConfig();
+      mockedRate.mockRejectedValue(new Error("Rate limit exceeded"));
+      const res = await POST(makeRequest(validBody()));
+      expect(res.status).toEqual(429);
+      expect((await res.json()).error).toEqual("Rate limit exceeded");
+    });
+
+    it("returns 400 when parseAddress throws on an invalid player", async () => {
+      mockedAddress.mockImplementation(() => {
+        throw new Error("Invalid player address");
+      });
+      const res = await POST(makeRequest(validBody({ player: "0xnot-an-address" })));
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toEqual("Invalid player address");
+    });
+
+    it("returns 400 when parseInteger rejects an out-of-range timeMs", async () => {
+      goodConfig();
+      mockedInteger
+        .mockImplementationOnce((v) => BigInt(v as number)) // difficulty ok
+        .mockImplementationOnce(() => { throw new Error("timeMs must be between 1 and 3600000"); });
+      const res = await POST(makeRequest(validBody({ timeMs: 99_999_999 })));
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toEqual("timeMs must be between 1 and 3600000");
+    });
+
+    it("returns 400 with a generic message on unexpected non-Error throws", async () => {
+      goodConfig();
+      mockedRate.mockRejectedValue("boom" as unknown as Error);
+      const res = await POST(makeRequest(validBody()));
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toEqual("Could not sign victory claim");
+    });
   });
 });
