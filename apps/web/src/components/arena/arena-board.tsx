@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 import { ARENA_PIECE_IMG, squareToFileRank } from "@/lib/game/arena-utils";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { ChessBoardPiece } from "@/lib/game/types";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
+
+const CAPTURE_FADE_MS = 200;
 
 type ArenaSquareState = {
   file: number;
@@ -88,6 +90,28 @@ export function ArenaBoard({
     const map = new Map<string, ChessBoardPiece>();
     for (const p of pieces) map.set(p.square, p);
     return map;
+  }, [pieces]);
+
+  /** Pieces that were on the board last render but are no longer present —
+   *  rendered for CAPTURE_FADE_MS so the player sees the capture instead
+   *  of the piece blinking out. Each "ghost" carries its last-known
+   *  square so positioning stays correct during the animation. */
+  const [dyingPieces, setDyingPieces] = useState<ChessBoardPiece[]>([]);
+  const prevPiecesRef = useRef<ChessBoardPiece[]>([]);
+
+  useEffect(() => {
+    const prev = prevPiecesRef.current;
+    const currentIds = new Set(pieces.map((p) => p.id));
+    const captured = prev.filter((p) => !currentIds.has(p.id));
+    prevPiecesRef.current = pieces;
+    if (captured.length === 0) return;
+    setDyingPieces((d) => [...d, ...captured]);
+    const timer = setTimeout(() => {
+      setDyingPieces((d) =>
+        d.filter((p) => !captured.some((c) => c.id === p.id)),
+      );
+    }, CAPTURE_FADE_MS);
+    return () => clearTimeout(timer);
   }, [pieces]);
 
   if (pieces.length === 0) {
@@ -190,6 +214,48 @@ export function ArenaBoard({
                     <img
                       src={src}
                       alt={`${p.color === "w" ? "White" : "Black"} ${p.type}`}
+                      className={`arena-piece-img ${THEME_CONFIG.pieceTintClass[p.color]}`}
+                      style={{ width: "100%" }}
+                    />
+                  </picture>
+                );
+              })}
+
+              {/* Captured pieces — rendered for CAPTURE_FADE_MS with the
+                  is-dying animation so the kill registers visually. */}
+              {dyingPieces.map((p) => {
+                const { file, rank } = squareToFileRank(p.square);
+                const vf = flipped ? 7 - file : file;
+                const vr = flipped ? 7 - rank : rank;
+                const center = cellCenter(vf, vr);
+                const pw = pieceWidth();
+                const src = ARENA_PIECE_IMG[p.color][p.type];
+                return (
+                  <picture
+                    key={`dying-${p.id}`}
+                    aria-hidden="true"
+                    className="arena-piece-float is-dying"
+                    style={{
+                      left: `${center.x}%`,
+                      top: `${center.y}%`,
+                      width: `${pw}%`,
+                    }}
+                  >
+                    {THEME_CONFIG.hasOptimizedFormats && (
+                      <>
+                        <source
+                          srcSet={src.replace(".png", ".avif")}
+                          type="image/avif"
+                        />
+                        <source
+                          srcSet={src.replace(".png", ".webp")}
+                          type="image/webp"
+                        />
+                      </>
+                    )}
+                    <img
+                      src={src}
+                      alt=""
                       className={`arena-piece-img ${THEME_CONFIG.pieceTintClass[p.color]}`}
                       style={{ width: "100%" }}
                     />

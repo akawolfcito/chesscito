@@ -1354,6 +1354,29 @@
     z-index: 13;
   }
 
+  /* Capture fade-out — rendered briefly after the piece leaves the
+     board state so the kill registers visually. Scale + rotate + fade
+     together read as "knocked off" without needing a sprite swap. */
+  @keyframes arena-piece-die {
+    0% {
+      transform: translate(-50%, -55%) scale(1);
+      opacity: 1;
+    }
+    60% {
+      transform: translate(-50%, -55%) scale(0.6) rotate(15deg);
+      opacity: 0.55;
+    }
+    100% {
+      transform: translate(-50%, -55%) scale(0.2) rotate(40deg);
+      opacity: 0;
+    }
+  }
+  .arena-piece-float.is-dying {
+    animation: arena-piece-die 200ms ease-out forwards;
+    pointer-events: none;
+    z-index: 9;
+  }
+
   .arena-piece-img {
     height: auto;
     object-fit: contain;
