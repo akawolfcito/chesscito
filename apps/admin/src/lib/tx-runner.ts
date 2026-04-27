@@ -10,6 +10,20 @@ import {
   type PublicClient,
 } from "viem";
 
+import { appendAuditEntry, type AuditEntry } from "@/lib/audit-log";
+import { confirm } from "@/lib/confirm";
+
+/** ABI for the standard Ownable.owner() read. Used to discover the
+ *  expected sender for simulating owner-restricted write calls
+ *  without asking the user to pass --from explicitly. */
+const OWNER_ABI: AbiFunction = {
+  type: "function",
+  name: "owner",
+  stateMutability: "view",
+  inputs: [],
+  outputs: [{ name: "", type: "address" }],
+};
+
 /** Lightweight wrapper around viem (read + encode) and foundry's cast
  *  (signing + send). The PK never enters this Node process — cast
  *  prompts for the keystore password in its own process and signs +
@@ -128,6 +142,148 @@ export function castSend(opts: {
     return { ok: false, reason: result.stderr || "cast exited with non-zero status" };
   }
   return parseCastSendOutput(result.stdout);
+}
+
+/** Read the contract `owner()` (Ownable / OwnableUpgradeable). Returns
+ *  null when the call reverts — useful for non-Ownable contracts or
+ *  when the explorer is mid-rotation. */
+export async function readOwner(
+  client: PublicClient,
+  contract: Address,
+): Promise<Address | null> {
+  try {
+    return await readContract<Address>(client, contract, OWNER_ABI, []);
+  } catch {
+    return null;
+  }
+}
+
+/** High-level orchestrator for write commands. Reads pre-state,
+ *  simulates the call as the owner, prints a preview, asks for
+ *  confirmation (skippable with --yes), spawns cast send (or short-
+ *  circuits in --dry-run mode), reads post-state, and appends one
+ *  entry to the audit log no matter what. Always returns a result
+ *  object; never throws. */
+export type WriteOpts = {
+  command: string;
+  chain: string;
+  contract: Address;
+  abiItem: AbiFunction;
+  args: readonly unknown[];
+  signature: string;
+  castArgs: readonly string[];
+  account: string;
+  rpcUrl: string;
+  chainId: number;
+  dryRun: boolean;
+  yes: boolean;
+  auditRoot: string;
+  preState?: () => Promise<string>;
+  postState?: () => Promise<string>;
+};
+
+export type WriteResult =
+  | { ok: true; txHash: Hex }
+  | { ok: true; dryRun: true }
+  | { ok: false; reason: string };
+
+export async function runWriteCommand(opts: WriteOpts): Promise<WriteResult> {
+  const client = getPublicClient(opts.rpcUrl);
+  const calldata = buildCalldata(opts);
+
+  const owner = await readOwner(client, opts.contract);
+  const before = opts.preState ? await opts.preState() : undefined;
+
+  console.log("");
+  console.log(`# ${opts.command}`);
+  console.log(`  chain      : ${opts.chain} (id ${opts.chainId})`);
+  console.log(`  contract   : ${opts.contract}`);
+  console.log(`  signature  : ${opts.signature}`);
+  console.log(`  args       : ${JSON.stringify(opts.args, replaceBigints)}`);
+  console.log(`  calldata   : ${calldata}`);
+  if (owner) console.log(`  owner      : ${owner} (used as simulation sender)`);
+  if (before !== undefined) console.log(`  pre-state  : ${before}`);
+
+  if (owner) {
+    const sim = await simulate(client, opts, owner);
+    if (!sim.ok) {
+      console.error(`  simulate   : reverted — ${sim.reason}`);
+      logEntry(opts, calldata, "simulation reverted: " + sim.reason, before, undefined, undefined);
+      return { ok: false, reason: sim.reason };
+    }
+    console.log(`  simulate   : ok`);
+  } else {
+    console.log(`  simulate   : skipped (owner() unavailable)`);
+  }
+
+  if (opts.dryRun) {
+    console.log(`  outcome    : dry-run (no tx broadcast)`);
+    logEntry(opts, calldata, "dry-run", before, undefined, undefined);
+    return { ok: true, dryRun: true };
+  }
+
+  if (!opts.yes) {
+    const proceed = await confirm("Send this transaction?");
+    if (!proceed) {
+      console.log(`  outcome    : cancelled by user`);
+      logEntry(opts, calldata, "cancelled by user", before, undefined, undefined);
+      return { ok: false, reason: "cancelled by user" };
+    }
+  }
+
+  const cast = castSend({
+    contract: opts.contract,
+    signature: opts.signature,
+    args: opts.castArgs,
+    rpcUrl: opts.rpcUrl,
+    account: opts.account,
+  });
+
+  if (!cast.ok) {
+    console.error(`  outcome    : cast send failed — ${cast.reason}`);
+    logEntry(opts, calldata, "cast send failed: " + cast.reason, before, undefined, undefined);
+    return { ok: false, reason: cast.reason };
+  }
+
+  const after = opts.postState ? await opts.postState() : undefined;
+  console.log(`  txHash     : ${cast.txHash}`);
+  if (cast.blockNumber !== undefined) console.log(`  block      : ${cast.blockNumber}`);
+  if (cast.gasUsed !== undefined) console.log(`  gas used   : ${cast.gasUsed}`);
+  if (after !== undefined) console.log(`  post-state : ${after}`);
+  console.log(`  outcome    : success`);
+
+  logEntry(opts, calldata, "success", before, after, cast);
+  return { ok: true, txHash: cast.txHash };
+}
+
+function logEntry(
+  opts: WriteOpts,
+  calldata: Hex,
+  outcome: string,
+  before: string | undefined,
+  after: string | undefined,
+  cast: Extract<CastResult, { ok: true }> | undefined,
+) {
+  const entry: AuditEntry = {
+    timestamp: new Date().toISOString(),
+    command: opts.command,
+    chain: opts.chain,
+    contract: opts.contract,
+    functionSignature: opts.signature,
+    args: opts.args,
+    calldata,
+    sender: cast?.sender,
+    txHash: cast?.txHash,
+    blockNumber: cast?.blockNumber,
+    gasUsed: cast?.gasUsed,
+    outcome,
+    state: before !== undefined || after !== undefined ? { before, after } : undefined,
+  };
+  appendAuditEntry(opts.auditRoot, entry);
+}
+
+function replaceBigints(_key: string, value: unknown): unknown {
+  return typeof value === "bigint" ? value.toString() : value;
 }
 
 /** Parse the key=value blob `cast send` prints on success. Tolerant of

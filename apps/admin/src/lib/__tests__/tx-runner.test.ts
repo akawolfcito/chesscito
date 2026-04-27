@@ -3,6 +3,22 @@ import type { AbiFunction } from "viem";
 
 import { buildCalldata, parseCastSendOutput } from "../tx-runner";
 
+const PAUSE_ABI: AbiFunction = {
+  type: "function",
+  name: "pause",
+  stateMutability: "nonpayable",
+  inputs: [],
+  outputs: [],
+};
+
+const UNPAUSE_ABI: AbiFunction = {
+  type: "function",
+  name: "unpause",
+  stateMutability: "nonpayable",
+  inputs: [],
+  outputs: [],
+};
+
 const SET_ITEM_ABI: AbiFunction = {
   type: "function",
   name: "setItem",
@@ -53,6 +69,28 @@ describe("buildCalldata", () => {
     expect(data).toBe(
       "0xc997dbca000000000000000000000000471ece3750da237f93b8e339c536989b8978a4380000000000000000000000000000000000000000000000000000000000000001",
     );
+  });
+
+  it("encodes pause() to its 4-byte selector with no args", () => {
+    const data = buildCalldata({
+      rpcUrl: "https://forno.celo.org",
+      chainId: 42220,
+      contract: SHOP,
+      abiItem: PAUSE_ABI,
+      args: [],
+    });
+    expect(data).toBe("0x8456cb59");
+  });
+
+  it("encodes unpause() to its 4-byte selector with no args", () => {
+    const data = buildCalldata({
+      rpcUrl: "https://forno.celo.org",
+      chainId: 42220,
+      contract: SHOP,
+      abiItem: UNPAUSE_ABI,
+      args: [],
+    });
+    expect(data).toBe("0x3f4ba83a");
   });
 });
 
