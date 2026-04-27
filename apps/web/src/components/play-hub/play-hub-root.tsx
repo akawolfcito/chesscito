@@ -42,8 +42,14 @@ import {
 } from "@/lib/contracts/chains";
 import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
-import { SHIELDS_PER_PURCHASE, SHIELD_ITEM_ID, SHOP_ITEMS } from "@/lib/contracts/shop-catalog";
-import { ACCEPTED_TOKENS, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
+import {
+  FOUNDER_BADGE_CELO_ITEM_ID,
+  FOUNDER_BADGE_ITEM_ID,
+  SHIELDS_PER_PURCHASE,
+  SHIELD_ITEM_ID,
+  SHOP_ITEMS,
+} from "@/lib/contracts/shop-catalog";
+import { ACCEPTED_TOKENS, CELO_TOKEN, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -78,6 +84,11 @@ type CatalogItem = (typeof SHOP_ITEMS)[number] & {
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
+  /** Set on the Founder Badge entry by displayShopCatalog when the
+   *  CELO route is available — drives the second "Buy with 1 CELO"
+   *  button on the shop card. Always undefined on the underlying
+   *  shopCatalog used for selection lookups. */
+  celoSibling?: { itemId: bigint } | null;
 };
 
 async function requestSignature(endpoint: "/api/sign-badge" | "/api/sign-score", body: object) {
@@ -316,7 +327,8 @@ export function PlayHubRoot() {
   const badgesAddress = useMemo(() => getBadgesAddress(chainId), [chainId]);
   const scoreboardAddress = useMemo(() => getScoreboardAddress(chainId), [chainId]);
   const shopAddress = useMemo(() => getShopAddress(chainId), [chainId]);
-  const [paymentToken, setPaymentToken] = useState<typeof ACCEPTED_TOKENS[number] | null>(null);
+  type PaymentToken = (typeof ACCEPTED_TOKENS)[number] | typeof CELO_TOKEN;
+  const [paymentToken, setPaymentToken] = useState<PaymentToken | null>(null);
   const feeCurrency = useMemo(() => getMiniPayFeeCurrency(chainId), [chainId]);
   const levelId = useMemo(() => getLevelId(selectedPiece), [selectedPiece]);
   const POINTS_PER_STAR = 100n;
@@ -372,13 +384,38 @@ export function PlayHubRoot() {
     [onChainItems]
   );
 
+  /** What the shop sheet actually renders. The CELO sibling itemId is
+   *  hidden from the card grid and surfaced as an extra "Buy with 1
+   *  CELO" button on the parent Founder Badge card, only when running
+   *  outside MiniPay (which never offers CELO) and only when the
+   *  sibling is configured + enabled on-chain. */
+  const displayShopCatalog = useMemo<CatalogItem[]>(() => {
+    const celoSibling = shopCatalog.find(
+      (item) => item.itemId === FOUNDER_BADGE_CELO_ITEM_ID && item.configured && item.enabled,
+    );
+    const showCeloOnFounder = !isMiniPay && celoSibling != null;
+    return shopCatalog
+      .filter((item) => item.itemId !== FOUNDER_BADGE_CELO_ITEM_ID)
+      .map((item) =>
+        item.itemId === FOUNDER_BADGE_ITEM_ID && showCeloOnFounder
+          ? { ...item, celoSibling: { itemId: FOUNDER_BADGE_CELO_ITEM_ID } }
+          : item,
+      );
+  }, [shopCatalog, isMiniPay]);
+
   const selectedItem = useMemo(
     () => shopCatalog.find((item) => item.itemId === selectedItemId) ?? null,
     [selectedItemId, shopCatalog]
   );
 
+  // Balances are read for both stablecoins (default payment for every
+  // shop item) and CELO (only routed to the Founder Badge sibling
+  // itemId 5 outside MiniPay). The CELO entry sits at the tail of the
+  // array so the index math against ACCEPTED_TOKENS stays untouched.
+  const BALANCE_READ_TOKENS = useMemo(() => [...ACCEPTED_TOKENS, CELO_TOKEN], []);
+  const CELO_BALANCE_INDEX = ACCEPTED_TOKENS.length;
   const { data: tokenBalances } = useReadContracts({
-    contracts: ACCEPTED_TOKENS.map((t) => ({
+    contracts: BALANCE_READ_TOKENS.map((t) => ({
       address: t.address,
       abi: erc20Abi,
       functionName: "balanceOf" as const,
@@ -399,8 +436,19 @@ export function PlayHubRoot() {
   });
 
   const selectPaymentToken = useCallback(
-    (priceUsd6: bigint) => {
+    (priceUsd6: bigint, itemId?: bigint) => {
       if (!tokenBalances) return null;
+      // The CELO sibling never auto-falls back to a stablecoin — if the
+      // user clicked "Buy with CELO" and they don't have CELO, we want
+      // the flow to surface that explicitly rather than silently route
+      // the purchase elsewhere.
+      if (itemId === FOUNDER_BADGE_CELO_ITEM_ID) {
+        const result = tokenBalances[CELO_BALANCE_INDEX];
+        if (result?.status !== "success") return null;
+        const balance = result.result as bigint;
+        const needed = normalizePrice(priceUsd6, CELO_TOKEN.decimals);
+        return balance >= needed ? CELO_TOKEN : null;
+      }
       for (let i = 0; i < ACCEPTED_TOKENS.length; i++) {
         const t = ACCEPTED_TOKENS[i];
         const result = tokenBalances[i];
@@ -411,7 +459,7 @@ export function PlayHubRoot() {
       }
       return null;
     },
-    [tokenBalances]
+    [tokenBalances, CELO_BALANCE_INDEX]
   );
 
   // Read hasClaimedBadge for all 6 pieces (batched)
@@ -1069,11 +1117,11 @@ export function PlayHubRoot() {
                 <ShopSheet
                   open={storeOpen}
                   onOpenChange={setStoreOpen}
-                  items={shopCatalog}
+                  items={displayShopCatalog}
                   onSelectItem={(itemId) => {
                     setSelectedItemId(itemId);
                     const item = shopCatalog.find((i) => i.itemId === itemId);
-                    if (item) setPaymentToken(selectPaymentToken(item.onChainPrice));
+                    if (item) setPaymentToken(selectPaymentToken(item.onChainPrice, itemId));
                     setStoreOpen(false);
                     setConfirmOpen(true);
                   }}

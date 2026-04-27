@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   COACH_PACK_ITEMS,
+  FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
   SHIELDS_PER_PURCHASE,
   SHIELD_ITEM_ID,
@@ -8,17 +9,24 @@ import {
 } from "../shop-catalog";
 
 describe("shop-catalog", () => {
-  it("publishes the founder badge as itemId 1n and the retry shield as itemId 2n", () => {
+  it("publishes the founder badge as itemId 1n, the retry shield as 2n, and the CELO sibling as 5n", () => {
     expect(FOUNDER_BADGE_ITEM_ID).toBe(1n);
     expect(SHIELD_ITEM_ID).toBe(2n);
+    expect(FOUNDER_BADGE_CELO_ITEM_ID).toBe(5n);
   });
 
-  it("exposes both items in the catalog with non-empty copy", () => {
-    expect(SHOP_ITEMS).toHaveLength(2);
+  it("exposes all three items in the catalog with non-empty copy", () => {
+    expect(SHOP_ITEMS).toHaveLength(3);
     for (const item of SHOP_ITEMS) {
       expect(item.label.length).toBeGreaterThan(0);
       expect(item.subtitle.length).toBeGreaterThan(0);
     }
+  });
+
+  it("the CELO sibling reuses the Founder Badge label so the UI can group both routes under one product card", () => {
+    const founder = SHOP_ITEMS.find((i) => i.itemId === FOUNDER_BADGE_ITEM_ID);
+    const celoFounder = SHOP_ITEMS.find((i) => i.itemId === FOUNDER_BADGE_CELO_ITEM_ID);
+    expect(founder?.label).toBe(celoFounder?.label);
   });
 
   it("ships the shield row with the documented item id so the admin tx setItem(2,...) wires it up", () => {

@@ -1,9 +1,32 @@
 import { NextResponse } from "next/server";
-import { createPublicClient, http, isAddress, keccak256, toBytes } from "viem";
+import { createPublicClient, decodeEventLog, http, isAddress, keccak256, toBytes } from "viem";
 import { celo } from "viem/chains";
 import { Redis } from "@upstash/redis";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { STABLECOIN_ADDRESSES_LOWER } from "@/lib/contracts/tokens";
+
+/** Minimal ABI just for decoding the ItemPurchased event. The shop
+ *  contract emits address indexed buyer, uint256 indexed itemId, then
+ *  the remaining five fields in data. We need the non-indexed `token`
+ *  field to refuse coach-credit grants for any payment that wasn't
+ *  made in a whitelisted stablecoin (defense-in-depth against a
+ *  direct contract call paying in CELO at the un-priced rate). */
+const ITEM_PURCHASED_ABI = [
+  {
+    type: "event",
+    name: "ItemPurchased",
+    inputs: [
+      { name: "buyer", type: "address", indexed: true },
+      { name: "itemId", type: "uint256", indexed: true },
+      { name: "quantity", type: "uint256", indexed: false },
+      { name: "unitPriceUsd6", type: "uint256", indexed: false },
+      { name: "totalAmount", type: "uint256", indexed: false },
+      { name: "token", type: "address", indexed: false },
+      { name: "treasury", type: "address", indexed: false },
+    ],
+  },
+] as const;
 
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
 const ITEM_PURCHASED_TOPIC = keccak256(
@@ -62,14 +85,23 @@ export async function POST(req: Request) {
     let creditsToAdd = 0;
     for (const log of logs) {
       try {
-        const rawBuyer = log.topics[1];
-        const rawItem = log.topics[2];
-        if (!rawBuyer || !rawItem) continue;
+        const decoded = decodeEventLog({
+          abi: ITEM_PURCHASED_ABI,
+          data: log.data,
+          topics: log.topics,
+        });
+        if (decoded.eventName !== "ItemPurchased") continue;
+        const { buyer, itemId, token } = decoded.args;
+        if (buyer.toLowerCase() !== wallet) continue;
 
-        const buyer = ("0x" + rawBuyer.slice(26)).toLowerCase();
-        if (buyer !== wallet) continue;
+        // Defense-in-depth: even if the Shop contract whitelists CELO
+        // for the Founder Badge sibling itemId, coach packs (3, 4)
+        // must only credit when paid in a whitelisted stablecoin. This
+        // closes a direct-contract-call bypass where an attacker would
+        // pay ~0.05 CELO (~$0.0045) instead of $0.05 in USDC for a
+        // 5-credit pack.
+        if (!STABLECOIN_ADDRESSES_LOWER.includes(token.toLowerCase())) continue;
 
-        const itemId = BigInt(rawItem);
         if (itemId === COACH_5_ITEM_ID) creditsToAdd += 5;
         else if (itemId === COACH_20_ITEM_ID) creditsToAdd += 20;
       } catch { continue; }

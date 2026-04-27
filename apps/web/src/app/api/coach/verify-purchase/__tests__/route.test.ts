@@ -59,6 +59,32 @@ function encodeUint256Topic(value: bigint) {
   return ("0x" + value.toString(16).padStart(64, "0")) as `0x${string}`;
 }
 
+/** ABI-encodes the non-indexed tail of an ItemPurchased event:
+ *  (quantity, unitPriceUsd6, totalAmount, token, treasury). The route
+ *  now decodes this via viem's decodeEventLog and reads the `token`
+ *  field for the stablecoin allowlist defense. */
+function encodeItemPurchasedData(args: {
+  quantity?: bigint;
+  unitPriceUsd6?: bigint;
+  totalAmount?: bigint;
+  token?: string;
+  treasury?: string;
+}) {
+  const enc = (n: bigint) => n.toString(16).padStart(64, "0");
+  const encAddr = (a: string) =>
+    "0".repeat(24) + a.toLowerCase().replace(/^0x/, "");
+  return ("0x" +
+    enc(args.quantity ?? 1n) +
+    enc(args.unitPriceUsd6 ?? 50_000n) +
+    enc(args.totalAmount ?? 50_000n) +
+    encAddr(args.token ?? USDC_ADDRESS) +
+    encAddr(args.treasury ?? TREASURY_ADDRESS)) as `0x${string}`;
+}
+
+const USDC_ADDRESS = "0xcebA9300f2b948710d2653dD7B07f33A8B32118C";
+const CELO_ADDRESS = "0x471EcE3750Da237f93B8E339c536989b8978a438";
+const TREASURY_ADDRESS = "0x917497FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+
 function makeRequest(body: unknown) {
   return new Request("http://localhost/api/coach/verify-purchase", {
     method: "POST",
@@ -98,6 +124,7 @@ describe("POST /api/coach/verify-purchase", () => {
             encodeAddressTopic(VALID_WALLET),
             encodeUint256Topic(3n), // COACH_5 item
           ],
+          data: encodeItemPurchasedData({}),
         },
       ],
     });
@@ -124,6 +151,7 @@ describe("POST /api/coach/verify-purchase", () => {
             encodeAddressTopic(VALID_WALLET),
             encodeUint256Topic(4n), // COACH_20 item
           ],
+          data: encodeItemPurchasedData({ unitPriceUsd6: 100_000n, totalAmount: 100_000n }),
         },
       ],
     });
@@ -132,6 +160,70 @@ describe("POST /api/coach/verify-purchase", () => {
     expect(res.status).toEqual(200);
     expect(await res.json()).toEqual({ ok: true, credits: 20 });
     expect(redisMock.incrby).toHaveBeenCalledWith(`coach:credits:${VALID_WALLET}`, 20);
+  });
+
+  it("refuses Coach credits when payment was made in CELO (defense-in-depth)", async () => {
+    redisMock.incrby.mockResolvedValue(0);
+    redisMock.get.mockImplementation((key: string) => {
+      if (key.startsWith("coach:processed-tx:")) return Promise.resolve(null);
+      if (key === `coach:credits:${VALID_WALLET}`) return Promise.resolve(0);
+      return Promise.resolve(null);
+    });
+    clientMock.getTransactionReceipt.mockResolvedValue({
+      status: "success",
+      logs: [
+        {
+          address: SHOP_ADDRESS,
+          topics: [
+            ITEM_PURCHASED_TOPIC,
+            encodeAddressTopic(VALID_WALLET),
+            encodeUint256Topic(3n), // COACH_5 item bought directly with CELO
+          ],
+          data: encodeItemPurchasedData({ token: CELO_ADDRESS }),
+        },
+      ],
+    });
+
+    const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(400);
+    expect(await res.json()).toEqual({ error: "No coach credit purchase found in transaction" });
+    expect(redisMock.incrby).not.toHaveBeenCalled();
+  });
+
+  it("CELO-paid purchase is also ignored when mixed with a stablecoin-paid coach pack in the same tx", async () => {
+    redisMock.get.mockImplementation((key: string) => {
+      if (key.startsWith("coach:processed-tx:")) return Promise.resolve(null);
+      if (key === `coach:credits:${VALID_WALLET}`) return Promise.resolve(5);
+      return Promise.resolve(null);
+    });
+    clientMock.getTransactionReceipt.mockResolvedValue({
+      status: "success",
+      logs: [
+        {
+          address: SHOP_ADDRESS,
+          topics: [
+            ITEM_PURCHASED_TOPIC,
+            encodeAddressTopic(VALID_WALLET),
+            encodeUint256Topic(3n),
+          ],
+          data: encodeItemPurchasedData({ token: USDC_ADDRESS }),
+        },
+        {
+          address: SHOP_ADDRESS,
+          topics: [
+            ITEM_PURCHASED_TOPIC,
+            encodeAddressTopic(VALID_WALLET),
+            encodeUint256Topic(4n),
+          ],
+          data: encodeItemPurchasedData({ token: CELO_ADDRESS }),
+        },
+      ],
+    });
+
+    const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(200);
+    // Only the USDC-paid Coach-5 contributes; the CELO-paid Coach-20 is dropped.
+    expect(redisMock.incrby).toHaveBeenCalledWith(`coach:credits:${VALID_WALLET}`, 5);
   });
 
   it("short-circuits when the tx was already processed", async () => {
@@ -167,6 +259,7 @@ describe("POST /api/coach/verify-purchase", () => {
             encodeAddressTopic(VALID_WALLET),
             encodeUint256Topic(1n), // non-Coach item (Founder Badge)
           ],
+          data: encodeItemPurchasedData({ unitPriceUsd6: 100_000n, totalAmount: 100_000n }),
         },
       ],
     });
@@ -188,6 +281,7 @@ describe("POST /api/coach/verify-purchase", () => {
             encodeAddressTopic(otherWallet),
             encodeUint256Topic(3n),
           ],
+          data: encodeItemPurchasedData({}),
         },
       ],
     });
@@ -208,6 +302,7 @@ describe("POST /api/coach/verify-purchase", () => {
             encodeAddressTopic(VALID_WALLET),
             encodeUint256Topic(3n),
           ],
+          data: encodeItemPurchasedData({}),
         },
       ],
     });

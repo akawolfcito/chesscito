@@ -18,6 +18,11 @@ type CatalogItem = {
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
+  /** Optional companion payment route. When present, the card renders
+   *  an extra button below the primary "Buy with USDC" so the user can
+   *  pay the same product with CELO instead. Today this only fires for
+   *  the Founder Badge (itemId 1 ↔ 5) when running outside MiniPay. */
+  celoSibling?: { itemId: bigint } | null;
 };
 
 type ShopSheetProps = {
@@ -158,6 +163,17 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
                     ? SHOP_SHEET_COPY.buyButtonUnavailable
                     : SHOP_SHEET_COPY.buyButton}
               </Button>
+              {item.celoSibling ? (
+                <Button
+                  type="button"
+                  variant="game-ghost"
+                  size="game"
+                  className="mt-2"
+                  onClick={() => onSelectItem(item.celoSibling!.itemId)}
+                >
+                  {SHOP_SHEET_COPY.buyWithCelo}
+                </Button>
+              ) : null}
             </div>
             );
           })}

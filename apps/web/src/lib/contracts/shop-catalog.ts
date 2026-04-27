@@ -12,6 +12,22 @@ export const SHIELD_ITEM_ID = 2n;
  *  the badge by id can do so without re-deriving it. */
 export const FOUNDER_BADGE_ITEM_ID = 1n;
 
+/** Sibling itemId for the Founder Badge purchased with native CELO.
+ *  The Shop contract has no per-token pricing — priceUsd6 is normalized
+ *  by token decimals assuming a stablecoin peg, which would otherwise
+ *  charge ~0.1 CELO (~$0.009) for a $0.10 badge. The helper itemId 5
+ *  uses priceUsd6=1_000_000 ($1.00 nominal) so the same normalization
+ *  rounds to ~1 CELO instead. UI groups itemId 5 under the same
+ *  Founder Badge card; the user sees one product with two payment
+ *  buttons (USDC / CELO).
+ *
+ *  Admin must call:
+ *    ShopUpgradeable.setItem(5, 1_000_000, true)
+ *    ShopUpgradeable.setAcceptedToken(CELO_TOKEN.address, true)
+ *  before this row goes live. Until then `configured=false` and the
+ *  CELO button stays hidden — same safe-default as itemId 2. */
+export const FOUNDER_BADGE_CELO_ITEM_ID = 5n;
+
 export type ShopCatalogEntry = {
   itemId: bigint;
   label: string;
@@ -28,6 +44,14 @@ export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
     itemId: SHIELD_ITEM_ID,
     label: SHOP_ITEM_COPY.retryShield.label,
     subtitle: SHOP_ITEM_COPY.retryShield.subtitle,
+  },
+  // Helper entry for the CELO route. Hidden from the shop card list —
+  // only its on-chain configured/enabled flags drive the visibility of
+  // the "Buy with CELO" button rendered next to itemId 1.
+  {
+    itemId: FOUNDER_BADGE_CELO_ITEM_ID,
+    label: SHOP_ITEM_COPY.founderBadge.label,
+    subtitle: SHOP_ITEM_COPY.founderBadge.subtitle,
   },
 ] as const;
 

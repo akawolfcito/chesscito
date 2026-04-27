@@ -227,6 +227,11 @@ export const SHOP_SHEET_COPY = {
   description: "Choose an item to purchase with USDC.",
   featured: "Featured",
   buyButton: "Buy with USDC",
+  /** Companion CTA shown next to the USDC button on the Founder Badge
+   *  card when running outside MiniPay. Routes to the helper itemId
+   *  whose priceUsd6 is calibrated so the contract charges 1 CELO
+   *  rather than the ~10 % CELO equivalent of $0.10. */
+  buyWithCelo: "Buy with 1 CELO",
   buyButtonComingSoon: "Coming soon",
   buyButtonUnavailable: "Unavailable",
   empty: "Shop items are not available right now.",
