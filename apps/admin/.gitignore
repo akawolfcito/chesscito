@@ -1,0 +1,11 @@
+# Append-only audit log of admin tx executions. Contains tx hashes,
+# calldata, gas usage, and the wallet that signed — sensitive operational
+# metadata that doesn't belong in the public repo. The directory itself
+# stays in git via the .gitkeep marker.
+audit-log/*.md
+audit-log/*.json
+!audit-log/.gitkeep
+
+node_modules
+dist
+.tsbuildinfo

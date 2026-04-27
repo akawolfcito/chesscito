@@ -18,7 +18,8 @@
     "contracts:deploy:celo": "turbo run deploy:celo --filter=hardhat",
     "contracts:verify:alfajores": "turbo run verify:alfajores --filter=hardhat",
     "contracts:verify:celo-sepolia": "turbo run verify:celo-sepolia --filter=hardhat",
-    "contracts:verify:celo": "turbo run verify:celo --filter=hardhat"
+    "contracts:verify:celo": "turbo run verify:celo --filter=hardhat",
+    "admin": "pnpm --filter admin run admin --"
   },
   "devDependencies": {
     "@types/node": "^20.8.0",
