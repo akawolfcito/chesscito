@@ -14,6 +14,13 @@ import { THEME_CONFIG } from "@/lib/theme";
 type PieceKey = "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
 type SuccessVariant = "badge" | "score" | "shop";
 type Variant = SuccessVariant | "error";
+/** Subtype of error overlay rendered for purchase flows (F4 Buy Item
+ *  Shop, F5 Buy Coach Credits). When provided, the overlay reads its
+ *  title / subtitle / hint from RESULT_OVERLAY_COPY.error.purchaseKindCopy
+ *  so cancellation, timeout and real errors each get distinct,
+ *  non-technical wording — matching the pattern Mint Victory already
+ *  uses via VICTORY_CLAIM_COPY.errorKindCopy. */
+export type ErrorKind = "error" | "cancelled" | "timeout";
 
 type ResultOverlayProps = {
   variant: Variant;
@@ -22,6 +29,7 @@ type ResultOverlayProps = {
   txHash?: string;
   celoscanHref?: string;
   errorMessage?: string;
+  errorKind?: ErrorKind;
   onDismiss: () => void;
   onRetry?: () => void;
   totalStars?: number;
@@ -46,12 +54,23 @@ function getBadgeImg(pieceType?: PieceKey): string {
   return map[pieceType ?? "rook"];
 }
 
-function getTitle(variant: Variant): string {
-  if (variant === "error") return RESULT_OVERLAY_COPY.error.title;
+function getTitle(variant: Variant, errorKind?: ErrorKind): string {
+  if (variant === "error") {
+    if (errorKind) {
+      return RESULT_OVERLAY_COPY.error.purchaseKindCopy[errorKind].title;
+    }
+    return RESULT_OVERLAY_COPY.error.title;
+  }
   return RESULT_OVERLAY_COPY[variant].title;
 }
 
-function getSubtitle(variant: Variant, pieceType?: PieceKey, itemLabel?: string, errorMessage?: string): string {
+function getSubtitle(
+  variant: Variant,
+  pieceType?: PieceKey,
+  itemLabel?: string,
+  errorMessage?: string,
+  errorKind?: ErrorKind,
+): string {
   switch (variant) {
     case "badge":
       return RESULT_OVERLAY_COPY.badge.subtitle(
@@ -62,8 +81,16 @@ function getSubtitle(variant: Variant, pieceType?: PieceKey, itemLabel?: string,
     case "shop":
       return RESULT_OVERLAY_COPY.shop.subtitle(itemLabel ?? "Item");
     case "error":
+      if (errorKind) {
+        return RESULT_OVERLAY_COPY.error.purchaseKindCopy[errorKind].subtitle;
+      }
       return errorMessage ?? RESULT_OVERLAY_COPY.error.unknown;
   }
+}
+
+function getHint(errorKind?: ErrorKind): string | null {
+  if (!errorKind) return null;
+  return RESULT_OVERLAY_COPY.error.purchaseKindCopy[errorKind].hint;
 }
 
 function SuccessImage({
@@ -212,14 +239,16 @@ export function ResultOverlay({
   txHash,
   celoscanHref,
   errorMessage,
+  errorKind,
   onDismiss,
   onRetry,
   totalStars,
 }: ResultOverlayProps) {
   const [exiting, setExiting] = useState(false);
   const isError = variant === "error";
-  const title = getTitle(variant);
-  const subtitle = getSubtitle(variant, pieceType, itemLabel, errorMessage);
+  const title = getTitle(variant, errorKind);
+  const subtitle = getSubtitle(variant, pieceType, itemLabel, errorMessage, errorKind);
+  const hint = isError ? getHint(errorKind) : null;
 
   function handleDismiss() {
     setExiting(true);
@@ -306,6 +335,15 @@ export function ResultOverlay({
             >
               {subtitle}
             </p>
+
+            {hint ? (
+              <p
+                className="text-xs leading-snug"
+                style={{ color: "rgba(110, 65, 15, 0.65)" }}
+              >
+                {hint}
+              </p>
+            ) : null}
 
             {!isError && txHash && celoscanHref ? (
               <Link

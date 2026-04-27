@@ -104,6 +104,30 @@ export const RESULT_OVERLAY_COPY = {
     revert:
       "Transaction failed — this action may not be available right now",
     unknown: "Something went wrong. Please try again",
+    /** Per-kind copy for purchase end states (Buy Item Shop, Buy Coach
+     *  Credits). Mirrors the cancelled/timeout/error split that
+     *  VictoryClaimError.errorKindCopy already uses for Mint Victory,
+     *  so a cancellation feels calm ("Nothing was charged") and a
+     *  timeout nudges the wallet ("check there before retrying")
+     *  instead of dropping users into the generic error string. */
+    purchaseKindCopy: {
+      error: {
+        title: "Purchase Failed",
+        subtitle: "Something went wrong while completing your purchase.",
+        hint: "No charge was applied. Try again or close and reopen the shop.",
+      },
+      cancelled: {
+        title: "Purchase Cancelled",
+        subtitle: "You declined the wallet prompt. Nothing was charged.",
+        hint: "Tap the item again any time you change your mind.",
+      },
+      timeout: {
+        title: "Still Confirming…",
+        subtitle:
+          "The network is taking longer than usual. Your wallet may already have the transaction.",
+        hint: "Check your wallet first — if it's still pending, give it a moment before retrying.",
+      },
+    },
   },
   cta: {
     continue: "Continue",

@@ -56,7 +56,7 @@ import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
-import { classifyTxError, isUserCancellation } from "@/lib/errors";
+import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, EXERCISES, LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
 import { getLabyrinthBest, recordLabyrinthBest } from "@/lib/game/labyrinth-progress";
@@ -156,6 +156,11 @@ export function PlayHubRoot() {
     variant: "badge" | "score" | "shop" | "error";
     txHash?: string;
     errorMessage?: string;
+    /** When variant === "error" and errorKind is set, the overlay reads
+     *  per-kind copy (cancelled / timeout / error) from
+     *  RESULT_OVERLAY_COPY.error.purchaseKindCopy. Used by the shop /
+     *  coach buy flows to mirror the F1 mint pattern. */
+    errorKind?: "error" | "cancelled" | "timeout";
     retryAction?: () => void;
   } | null>(null);
 
@@ -859,8 +864,26 @@ export function PlayHubRoot() {
         txHash: buyHash,
       });
     } catch (error) {
+      // Three discrete kinds with their own copy + telemetry — same
+      // pattern handleClaimVictory uses for F1 Mint Victory. The
+      // overlay reads RESULT_OVERLAY_COPY.error.purchaseKindCopy[kind]
+      // so each path lands on calm, non-technical wording instead of
+      // the generic error string.
       if (isUserCancellation(error)) {
         track("shop_buy_tx", { stage: "cancelled", source: txSource, item_id: itemIdNum });
+        setConfirmOpen(false);
+        setResultOverlay({ variant: "error", errorKind: "cancelled" });
+        return;
+      }
+      if (isTransactionTimeout(error)) {
+        track("shop_buy_tx", {
+          stage: "error",
+          source: txSource,
+          item_id: itemIdNum,
+          error_kind: "timeout",
+        });
+        setConfirmOpen(false);
+        setResultOverlay({ variant: "error", errorKind: "timeout" });
         return;
       }
       setConfirmOpen(false);
@@ -868,6 +891,7 @@ export function PlayHubRoot() {
       setLastError(message);
       setResultOverlay({
         variant: "error",
+        errorKind: "error",
         errorMessage: classifyTxError(error),
       });
       track("shop_buy_tx", {
@@ -1219,6 +1243,7 @@ export function PlayHubRoot() {
             txHash={resultOverlay.txHash}
             celoscanHref={resultOverlay.txHash ? txLink(chainId, resultOverlay.txHash) : undefined}
             errorMessage={resultOverlay.errorMessage}
+            errorKind={resultOverlay.errorKind}
             totalStars={totalStars}
             onDismiss={() => setResultOverlay(null)}
             onRetry={resultOverlay.retryAction}

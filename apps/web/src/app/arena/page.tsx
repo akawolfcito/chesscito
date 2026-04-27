@@ -391,12 +391,24 @@ export default function ArenaPage() {
         setCoachPhase("idle");
       }
     } catch (err) {
-      const raw = err instanceof Error ? err.message : "";
-      const isUserCancel = /user (rejected|denied|cancelled)|ACTION_REJECTED/i.test(raw);
-      if (isUserCancel) {
+      // Three discrete kinds for telemetry parity with shop_buy_tx and
+      // victory_claim_tx. The CoachPaywall surface stays in place so a
+      // visible kind-specific overlay would compete with the existing
+      // CoachFallback / Try Again CTAs — UI normalization for F5 lives
+      // in a follow-up commit when the new surface is designed.
+      if (isUserCancellation(err)) {
         track("coach_buy_tx", { stage: "cancelled", source: txSource, pack, item_id: itemIdNum });
+      } else if (isTransactionTimeout(err)) {
+        track("coach_buy_tx", {
+          stage: "error",
+          source: txSource,
+          pack,
+          item_id: itemIdNum,
+          error_kind: "timeout",
+        });
+        console.warn("[CoachPurchase] timeout", err instanceof Error ? err.message : "");
       } else {
-        console.warn("[CoachPurchase] error", raw);
+        console.warn("[CoachPurchase] error", err instanceof Error ? err.message : "");
         track("coach_buy_tx", {
           stage: "error",
           source: txSource,
