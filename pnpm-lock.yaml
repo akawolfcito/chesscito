@@ -9,16 +9,16 @@ importers:
   .:
     devDependencies:
       '@types/node':
-        specifier: ^20.8.0
+        specifier: 20.19.35
         version: 20.19.35
       playwright:
-        specifier: ^1.58.2
+        specifier: 1.58.2
         version: 1.58.2
       turbo:
-        specifier: ^1.10.16
+        specifier: 1.13.4
         version: 1.13.4
       typescript:
-        specifier: ^5.2.2
+        specifier: 5.9.3
         version: 5.9.3
 
   apps/admin:
@@ -31,7 +31,7 @@ importers:
         version: 16.6.1
       viem:
         specifier: 2.46.3
-        version: 2.46.3(typescript@5.9.3)
+        version: 2.46.3(typescript@5.9.3)(zod@3.22.4)
     devDependencies:
       '@types/node':
         specifier: 20.19.35
@@ -49,99 +49,99 @@ importers:
   apps/contracts:
     dependencies:
       '@openzeppelin/contracts':
-        specifier: ^5.0.0
+        specifier: 5.6.1
         version: 5.6.1
       '@openzeppelin/contracts-upgradeable':
-        specifier: ^5.0.0
+        specifier: 5.6.1
         version: 5.6.1(@openzeppelin/contracts@5.6.1)
     devDependencies:
       '@nomicfoundation/hardhat-chai-matchers':
-        specifier: ^2.0.0
+        specifier: 2.1.2
         version: 2.1.2(@nomicfoundation/hardhat-ethers@3.1.3)(chai@4.5.0)(ethers@6.16.0)(hardhat@2.28.6)
       '@nomicfoundation/hardhat-ethers':
-        specifier: ^3.0.0
+        specifier: 3.1.3
         version: 3.1.3(ethers@6.16.0)(hardhat@2.28.6)
       '@nomicfoundation/hardhat-network-helpers':
-        specifier: ^1.0.0
+        specifier: 1.1.2
         version: 1.1.2(hardhat@2.28.6)
       '@nomicfoundation/hardhat-toolbox':
-        specifier: ^5.0.0
+        specifier: 5.0.0
         version: 5.0.0(@nomicfoundation/hardhat-chai-matchers@2.1.2)(@nomicfoundation/hardhat-ethers@3.1.3)(@nomicfoundation/hardhat-ignition-ethers@0.15.17)(@nomicfoundation/hardhat-network-helpers@1.1.2)(@nomicfoundation/hardhat-verify@2.1.3)(@typechain/ethers-v6@0.5.1)(@typechain/hardhat@9.1.0)(@types/chai@4.3.20)(@types/mocha@10.0.10)(@types/node@20.19.35)(chai@4.5.0)(ethers@6.16.0)(hardhat-gas-reporter@1.0.10)(hardhat@2.28.6)(solidity-coverage@0.8.17)(ts-node@10.9.2)(typechain@8.3.2)(typescript@5.9.3)
       '@nomicfoundation/hardhat-toolbox-viem':
-        specifier: ^3.0.0
+        specifier: 3.0.0
         version: 3.0.0(@nomicfoundation/hardhat-ignition-viem@0.15.16)(@nomicfoundation/hardhat-network-helpers@1.1.2)(@nomicfoundation/hardhat-verify@2.1.3)(@nomicfoundation/hardhat-viem@2.1.3)(@types/chai-as-promised@7.1.8)(@types/chai@4.3.20)(@types/mocha@10.0.10)(@types/node@20.19.35)(chai@4.5.0)(hardhat-gas-reporter@1.0.10)(hardhat@2.28.6)(solidity-coverage@0.8.17)(ts-node@10.9.2)(typescript@5.9.3)(viem@2.46.3)
       '@nomicfoundation/hardhat-verify':
-        specifier: ^2.0.0
+        specifier: 2.1.3
         version: 2.1.3(hardhat@2.28.6)
       '@openzeppelin/hardhat-upgrades':
-        specifier: ^3.9.1
+        specifier: 3.9.1
         version: 3.9.1(@nomicfoundation/hardhat-ethers@3.1.3)(@nomicfoundation/hardhat-verify@2.1.3)(ethers@6.16.0)(hardhat@2.28.6)
       '@typechain/ethers-v6':
-        specifier: ^0.5.0
+        specifier: 0.5.1
         version: 0.5.1(ethers@6.16.0)(typechain@8.3.2)(typescript@5.9.3)
       '@typechain/hardhat':
-        specifier: ^9.0.0
+        specifier: 9.1.0
         version: 9.1.0(@typechain/ethers-v6@0.5.1)(ethers@6.16.0)(hardhat@2.28.6)(typechain@8.3.2)
       '@types/chai':
-        specifier: ^4.2.0
+        specifier: 4.3.20
         version: 4.3.20
       '@types/mocha':
-        specifier: '>=9.1.0'
+        specifier: 10.0.10
         version: 10.0.10
       chai:
-        specifier: ^4.2.0
+        specifier: 4.5.0
         version: 4.5.0
       dotenv:
-        specifier: ^16.6.1
+        specifier: 16.6.1
         version: 16.6.1
       ethers:
-        specifier: ^6.4.0
+        specifier: 6.16.0
         version: 6.16.0
       hardhat:
-        specifier: ^2.19.0
+        specifier: 2.28.6
         version: 2.28.6(ts-node@10.9.2)(typescript@5.9.3)
       hardhat-gas-reporter:
-        specifier: ^1.0.8
+        specifier: 1.0.10
         version: 1.0.10(hardhat@2.28.6)
       solidity-coverage:
-        specifier: ^0.8.1
+        specifier: 0.8.17
         version: 0.8.17(hardhat@2.28.6)
       ts-node:
-        specifier: '>=8.0.0'
+        specifier: 10.9.2
         version: 10.9.2(@types/node@20.19.35)(typescript@5.9.3)
       typechain:
-        specifier: ^8.3.0
+        specifier: 8.3.2
         version: 8.3.2(typescript@5.9.3)
       typescript:
-        specifier: '>=4.5.0'
+        specifier: 5.9.3
         version: 5.9.3
       viem:
-        specifier: ^2.0.0
-        version: 2.46.3(typescript@5.9.3)
+        specifier: 2.46.3
+        version: 2.46.3(typescript@5.9.3)(zod@3.22.4)
 
   apps/video:
     dependencies:
       '@remotion/cli':
-        specifier: ^4.0.0
+        specifier: 4.0.435
         version: 4.0.435(react-dom@18.3.1)(react@18.3.1)
       '@remotion/transitions':
-        specifier: ^4.0.0
+        specifier: 4.0.435
         version: 4.0.435(react-dom@18.3.1)(react@18.3.1)
       react:
-        specifier: ^18.2.0
+        specifier: 18.3.1
         version: 18.3.1
       react-dom:
-        specifier: ^18.2.0
+        specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       remotion:
-        specifier: ^4.0.0
+        specifier: 4.0.435
         version: 4.0.435(react-dom@18.3.1)(react@18.3.1)
     devDependencies:
       '@types/node':
         specifier: 20.11.30
         version: 20.11.30
       '@types/react':
-        specifier: ^18.2.0
+        specifier: 18.3.28
         version: 18.3.28
       playwright:
         specifier: 1.49.1
@@ -150,140 +150,140 @@ importers:
         specifier: 4.19.2
         version: 4.19.2
       typescript:
-        specifier: ^5.2.2
+        specifier: 5.9.3
         version: 5.9.3
 
   apps/web:
     dependencies:
       '@lottiefiles/dotlottie-react':
-        specifier: ^0.18.7
+        specifier: 0.18.7
         version: 0.18.7(react@18.3.1)
       '@radix-ui/react-dialog':
-        specifier: ^1.0.5
+        specifier: 1.1.15
         version: 1.1.15(@types/react-dom@18.3.7)(@types/react@18.3.28)(react-dom@18.3.1)(react@18.3.1)
       '@radix-ui/react-slot':
-        specifier: ^1.0.2
+        specifier: 1.2.4
         version: 1.2.4(@types/react@18.3.28)(react@18.3.1)
       '@rainbow-me/rainbowkit':
-        specifier: ^2.0.0
+        specifier: 2.2.10
         version: 2.2.10(@tanstack/react-query@5.90.21)(@types/react@18.3.28)(react-dom@18.3.1)(react@18.3.1)(typescript@5.9.3)(viem@2.46.3)(wagmi@2.19.5)
       '@supabase/supabase-js':
-        specifier: ^2.100.1
+        specifier: 2.100.1
         version: 2.100.1
       '@tanstack/react-query':
-        specifier: ^5.0.0
+        specifier: 5.90.21
         version: 5.90.21(react@18.3.1)
       '@upstash/ratelimit':
-        specifier: ^2.0.8
+        specifier: 2.0.8
         version: 2.0.8(@upstash/redis@1.37.0)
       '@upstash/redis':
-        specifier: ^1.37.0
+        specifier: 1.37.0
         version: 1.37.0
       '@vercel/analytics':
-        specifier: ^2.0.1
+        specifier: 2.0.1
         version: 2.0.1(next@14.2.35)(react@18.3.1)
       chess.js:
-        specifier: ^1.4.0
+        specifier: 1.4.0
         version: 1.4.0
       class-variance-authority:
-        specifier: ^0.7.0
+        specifier: 0.7.1
         version: 0.7.1
       clsx:
-        specifier: ^2.0.0
+        specifier: 2.1.1
         version: 2.1.1
       ethers:
-        specifier: ^6.16.0
+        specifier: 6.16.0
         version: 6.16.0
       js-chess-engine:
-        specifier: ^2.4.6
+        specifier: 2.4.6
         version: 2.4.6
       lottie-react:
-        specifier: ^2.4.1
+        specifier: 2.4.1
         version: 2.4.1(react-dom@18.3.1)(react@18.3.1)
       lucide-react:
-        specifier: ^0.292.0
+        specifier: 0.292.0
         version: 0.292.0(react@18.3.1)
       next:
-        specifier: ^14.0.0
+        specifier: 14.2.35
         version: 14.2.35(@playwright/test@1.58.2)(react-dom@18.3.1)(react@18.3.1)
       openai:
-        specifier: ^6.32.0
+        specifier: 6.32.0
         version: 6.32.0(ws@8.18.0)(zod@3.25.76)
       react:
-        specifier: ^18.2.0
+        specifier: 18.3.1
         version: 18.3.1
       react-dom:
-        specifier: ^18.2.0
+        specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       sharp:
-        specifier: ^0.34.5
+        specifier: 0.34.5
         version: 0.34.5
       tailwind-merge:
-        specifier: ^2.0.0
+        specifier: 2.6.1
         version: 2.6.1
       viem:
-        specifier: ^2.0.0
+        specifier: 2.46.3
         version: 2.46.3(typescript@5.9.3)(zod@3.25.76)
       wagmi:
-        specifier: ^2.0.0
+        specifier: 2.19.5
         version: 2.19.5(@tanstack/react-query@5.90.21)(@types/react@18.3.28)(@upstash/redis@1.37.0)(react@18.3.1)(typescript@5.9.3)(viem@2.46.3)(zod@3.25.76)
       zod:
-        specifier: '3'
+        specifier: 3.25.76
         version: 3.25.76
     devDependencies:
       '@playwright/test':
-        specifier: ^1.58.2
+        specifier: 1.58.2
         version: 1.58.2
       '@testing-library/jest-dom':
-        specifier: ^6.9.1
+        specifier: 6.9.1
         version: 6.9.1
       '@testing-library/react':
-        specifier: ^16.3.2
+        specifier: 16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7)(@types/react@18.3.28)(react-dom@18.3.1)(react@18.3.1)
       '@testing-library/user-event':
-        specifier: ^14.6.1
+        specifier: 14.6.1
         version: 14.6.1(@testing-library/dom@10.4.1)
       '@types/node':
-        specifier: ^20.8.0
+        specifier: 20.19.35
         version: 20.19.35
       '@types/react':
-        specifier: ^18.2.0
+        specifier: 18.3.28
         version: 18.3.28
       '@types/react-dom':
-        specifier: ^18.2.0
+        specifier: 18.3.7
         version: 18.3.7(@types/react@18.3.28)
       '@vitejs/plugin-react':
-        specifier: ^6.0.1
+        specifier: 6.0.1
         version: 6.0.1(vite@8.0.8)
       '@vitest/ui':
-        specifier: ^4.1.4
+        specifier: 4.1.4
         version: 4.1.4(vitest@4.1.4)
       autoprefixer:
-        specifier: ^10.4.17
+        specifier: 10.4.27
         version: 10.4.27(postcss@8.5.8)
       eslint:
-        specifier: ^8.50.0
+        specifier: 8.57.1
         version: 8.57.1
       eslint-config-next:
-        specifier: ^14.0.0
+        specifier: 14.2.35
         version: 14.2.35(eslint@8.57.1)(typescript@5.9.3)
       jsdom:
-        specifier: ^29.0.2
+        specifier: 29.0.2
         version: 29.0.2
       postcss:
-        specifier: ^8.4.35
+        specifier: 8.5.8
         version: 8.5.8
       tailwindcss:
-        specifier: ^3.4.4
+        specifier: 3.4.19
         version: 3.4.19
       tailwindcss-animate:
-        specifier: ^1.0.7
+        specifier: 1.0.7
         version: 1.0.7(tailwindcss@3.4.19)
       typescript:
-        specifier: ^5.2.2
+        specifier: 5.9.3
         version: 5.9.3
       vitest:
-        specifier: ^4.1.4
+        specifier: 4.1.4
         version: 4.1.4(@types/node@20.19.35)(@vitest/ui@4.1.4)(jsdom@29.0.2)(vite@8.0.8)
 
 packages:
@@ -7831,7 +7831,6 @@ packages:
     dependencies:
       typescript: 5.9.3
       zod: 3.22.4
-    dev: false
 
   /abitype@1.2.3(typescript@5.9.3)(zod@3.25.76):
     resolution: {integrity: sha512-Ofer5QUnuUdTFsBRwARMoWKOH1ND5ehwYhJ3OJ/BQO+StkwQjHw0XyVh4vDttzHB7QOFhPHa/o413PJ82gU/Tg==}
@@ -7861,6 +7860,7 @@ packages:
     dependencies:
       typescript: 5.9.3
       zod: 4.3.6
+    dev: false
 
   /acorn-import-phases@1.0.4(acorn@8.16.0):
     resolution: {integrity: sha512-wKmbr/DDiIXzEOiWrTTUcDm24kQ2vGfZQvM2fwg2vXqR5uW6aapr7ObPtj1th32b9u90/Pf4AItvdTh42fBmVQ==}
@@ -10377,7 +10377,7 @@ packages:
     resolution: {integrity: sha512-CYcENa+FtcUKLmhhqyctpclsq7QF38pKjZHsGNiSQF5r4FtoKDWabFDl3hzaEQMvT1LHEysw5twgLvpYYb4vbw==}
     engines: {node: ^10.12.0 || >=12.0.0}
     dependencies:
-      flatted: 3.3.4
+      flatted: 3.4.2
       keyv: 4.5.4
       rimraf: 3.0.2
     dev: true
@@ -10385,10 +10385,6 @@ packages:
   /flat@5.0.2:
     resolution: {integrity: sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==}
     hasBin: true
-    dev: true
-
-  /flatted@3.3.4:
-    resolution: {integrity: sha512-3+mMldrTAPdta5kjX2G2J7iX4zxtnwpdA8Tr2ZSjkyPSanvbZAcy6flmtnXbEybHrDcU9641lxrMfFuUxVz9vA==}
     dev: true
 
   /flatted@3.4.2:
@@ -11913,15 +11909,9 @@ packages:
   /lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
-  /lru-cache@11.2.6:
-    resolution: {integrity: sha512-ESL2CrkS/2wTPfuend7Zhkzo2u0daGJ/A2VucJOgQ/C48S/zB8MMeMHSGKYpXhIjbPxfuezITkaBH1wqv00DDQ==}
-    engines: {node: 20 || >=22}
-    dev: false
-
   /lru-cache@11.3.5:
     resolution: {integrity: sha512-NxVFwLAnrd9i7KUBxC4DrUhmgjzOs+1Qm50D3oF1/oL+r1NpZ4gA7xvG0/zJ8evR7zIKn4vLf7qTNduWFtCrRw==}
     engines: {node: 20 || >=22}
-    dev: true
 
   /lru-cache@6.0.0:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
@@ -12538,26 +12528,6 @@ packages:
       safe-push-apply: 1.0.0
     dev: true
 
-  /ox@0.12.4(typescript@5.9.3):
-    resolution: {integrity: sha512-+P+C7QzuwPV8lu79dOwjBKfB2CbnbEXe/hfyyrff1drrO1nOOj3Hc87svHfcW1yneRr3WXaKr6nz11nq+/DF9Q==}
-    peerDependencies:
-      typescript: '>=5.4.0'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      '@adraffy/ens-normalize': 1.11.1
-      '@noble/ciphers': 1.3.0
-      '@noble/curves': 1.9.1
-      '@noble/hashes': 1.8.0
-      '@scure/bip32': 1.7.0
-      '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.6)
-      eventemitter3: 5.0.1
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - zod
-
   /ox@0.12.4(typescript@5.9.3)(zod@3.22.4):
     resolution: {integrity: sha512-+P+C7QzuwPV8lu79dOwjBKfB2CbnbEXe/hfyyrff1drrO1nOOj3Hc87svHfcW1yneRr3WXaKr6nz11nq+/DF9Q==}
     peerDependencies:
@@ -12577,7 +12547,6 @@ packages:
       typescript: 5.9.3
     transitivePeerDependencies:
       - zod
-    dev: false
 
   /ox@0.12.4(typescript@5.9.3)(zod@3.25.76):
     resolution: {integrity: sha512-+P+C7QzuwPV8lu79dOwjBKfB2CbnbEXe/hfyyrff1drrO1nOOj3Hc87svHfcW1yneRr3WXaKr6nz11nq+/DF9Q==}
@@ -15087,7 +15056,7 @@ packages:
       destr: 2.0.5
       h3: 1.15.5
       idb-keyval: 6.2.2
-      lru-cache: 11.2.6
+      lru-cache: 11.3.5
       node-fetch-native: 1.6.7
       ofetch: 1.5.1
       ufo: 1.6.3
@@ -15260,15 +15229,16 @@ packages:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.3.6)
+      abitype: 1.2.3(typescript@5.9.3)(zod@3.22.4)
       isows: 1.0.7(ws@8.18.3)
-      ox: 0.12.4(typescript@5.9.3)
+      ox: 0.12.4(typescript@5.9.3)(zod@3.22.4)
       typescript: 5.9.3
       ws: 8.18.3
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
       - zod
+    dev: true
 
   /viem@2.46.3(typescript@5.9.3)(zod@3.22.4):
     resolution: {integrity: sha512-2LJS+Hyh2sYjHXQtzfv1kU9pZx9dxFzvoU/ZKIcn0FNtOU0HQuIICuYdWtUDFHaGXbAdVo8J1eCvmjkL9JVGwg==}
@@ -15291,7 +15261,6 @@ packages:
       - bufferutil
       - utf-8-validate
       - zod
-    dev: false
 
   /viem@2.46.3(typescript@5.9.3)(zod@3.25.76):
     resolution: {integrity: sha512-2LJS+Hyh2sYjHXQtzfv1kU9pZx9dxFzvoU/ZKIcn0FNtOU0HQuIICuYdWtUDFHaGXbAdVo8J1eCvmjkL9JVGwg==}
@@ -15918,7 +15887,6 @@ packages:
 
   /zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
-    dev: false
 
   /zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
@@ -15926,6 +15894,7 @@ packages:
 
   /zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
+    dev: false
 
   /zustand@5.0.0(@types/react@18.3.28)(react@18.3.1)(use-sync-external-store@1.4.0):
     resolution: {integrity: sha512-LE+VcmbartOPM+auOjCCLQOsQ05zUTp8RkgwRzefUk+2jISdMMFnxvyTjA4YNWr5ZGXYbVsEMZosttuxUBkojQ==}

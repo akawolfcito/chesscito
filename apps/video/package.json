@@ -5,17 +5,27 @@
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "render": "remotion render src/index.ts ChesscitPromo out/chesscito-promo.mp4",
+    "render:pitch": "remotion render src/index.ts ChesscitoPitch out/chesscito-pitch.mp4",
+    "render:caregiver": "remotion render src/index.ts ChesscitoPitchCaregiver out/chesscito-pitch-caregiver.mp4",
+    "capture": "tsx scripts/capture-screenshots.ts",
+    "frames:review": "bash scripts/render-review-frames.sh",
     "build": "echo 'No build step for video package'"
   },
+  "comments": {
+    "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."
+  },
   "dependencies": {
-    "@remotion/cli": "^4.0.0",
-    "@remotion/transitions": "^4.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "remotion": "^4.0.0"
+    "@remotion/cli": "4.0.435",
+    "@remotion/transitions": "4.0.435",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.435"
   },
   "devDependencies": {
-    "@types/react": "^18.2.0",
-    "typescript": "^5.2.2"
+    "@types/node": "20.11.30",
+    "@types/react": "18.3.28",
+    "playwright": "1.49.1",
+    "tsx": "4.19.2",
+    "typescript": "5.9.3"
   }
 }

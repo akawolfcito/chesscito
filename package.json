@@ -21,11 +21,14 @@
     "contracts:verify:celo": "turbo run verify:celo --filter=hardhat",
     "admin": "pnpm --filter admin run admin --"
   },
+  "comments": {
+    "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."
+  },
   "devDependencies": {
-    "@types/node": "^20.8.0",
-    "playwright": "^1.58.2",
-    "turbo": "^1.10.16",
-    "typescript": "^5.2.2"
+    "@types/node": "20.19.35",
+    "playwright": "1.58.2",
+    "turbo": "1.13.4",
+    "typescript": "5.9.3"
   },
   "packageManager": "pnpm@8.10.0",
   "engines": {
