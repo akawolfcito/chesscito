@@ -1217,22 +1217,27 @@ export const LANDING_COPY = {
     alliesPlaceholder: "Próximamente.",
   },
 
-  /** §9 Founders — Wolfcito + César Alarcón + Den Labs. New section. */
+  /** §9 Founders — Luis Fernando Ushiña (Wolfcito) + César Litvinov
+   *  Alarcón + Den Labs. Updated 2026-04-27: real names primary,
+   *  handles secondary; lead reframed away from "web3" jargon and
+   *  anchored on the real pedagogical metric (+100 students with
+   *  national/international tournament experience). See spec
+   *  docs/superpowers/specs/2026-04-27-pitch-video-script.md §6. */
   founders: {
     title: "La gente detrás de Chesscito.",
     lead:
-      "Una mezcla rara y necesaria: tecnología web3, IA y un Maestro FIDE. Construyendo, validando y enseñando — con la pedagogía de un profesor con décadas de experiencia en el aula.",
+      "Una combinación poco común: tecnología, IA y un Maestro FIDE con décadas de aula. La metodología detrás de Chesscito viene de más de 100 estudiantes acompañados — incluyendo alumnos que compitieron en torneos nacionales e internacionales.",
     cards: [
       {
-        name: "Wolfcito",
-        handle: "Luis Fernando Ushiña",
-        title: "Software Architect · web3 builder · Fundador de Den Labs",
+        name: "Luis Fernando Ushiña",
+        handle: "aka Wolfcito",
+        title: "Software Developer Architect · Co-Founder Chesscito",
         body: "Lidera producto, tecnología y la visión de plataforma cognitiva escalable.",
       },
       {
-        name: "César Alarcón",
+        name: "César Litvinov Alarcón",
         handle: null,
-        title: "Maestro FIDE · Entrenador de ajedrez",
+        title: "Maestro FIDE · Entrenador · Co-Founder Chesscito",
         body: "Trayectoria en escuelas e instituciones, incluyendo Concentración Deportiva de Pichincha en Ecuador. Aporta la pedagogía y la metodología de cada nivel.",
       },
       {
