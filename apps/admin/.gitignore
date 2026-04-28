@@ -5,6 +5,11 @@
 audit-log/*
 !audit-log/.gitkeep
 
+# Encrypted admin keystore lives here. Even though the contents are
+# AES-256-GCM encrypted, keeping the file out of the repo entirely
+# eliminates any risk of an accidental commit + brute-force attempt.
+.private/
+
 node_modules
 dist
 .tsbuildinfo

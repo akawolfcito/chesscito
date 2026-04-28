@@ -5,6 +5,7 @@ import { isAddress, type AbiFunction, type Address } from "viem";
 
 import { getChainConfig, resolveChain } from "@/config";
 import { getPublicClient, readContract, runWriteCommand } from "@/lib/tx-runner";
+import { loadAccount } from "@/lib/wallet";
 
 const SET_ACCEPTED_TOKEN_ABI: AbiFunction = {
   type: "function",
@@ -48,7 +49,6 @@ export default defineCommand({
     token: { type: "string", required: true, description: "ERC-20 address or alias (CELO)" },
     accepted: { type: "boolean", required: true, description: "true = whitelist, false = blacklist" },
     chain: { type: "string", default: "celo" },
-    account: { type: "string", default: "chesscito-admin" },
     "dry-run": { type: "boolean", default: false },
     yes: { type: "boolean", default: false },
   },
@@ -59,6 +59,7 @@ export default defineCommand({
     const accepted = Boolean(args.accepted);
 
     const client = getPublicClient(cfg.rpcUrl);
+    const account = await loadAccount();
 
     const result = await runWriteCommand({
       command: "shop set-accepted-token",
@@ -67,8 +68,7 @@ export default defineCommand({
       abiItem: SET_ACCEPTED_TOKEN_ABI,
       args: [token, accepted],
       signature: "setAcceptedToken(address,bool)",
-      castArgs: [token, accepted.toString()],
-      account: args.account,
+      account,
       rpcUrl: cfg.rpcUrl,
       chainId: cfg.chainId,
       dryRun: Boolean(args["dry-run"]),

@@ -7,6 +7,19 @@ import pause from "@/commands/shop/pause";
 import setAcceptedToken from "@/commands/shop/set-accepted-token";
 import setItem from "@/commands/shop/set-item";
 import unpause from "@/commands/shop/unpause";
+import walletAddress from "@/commands/wallet/address";
+import walletInit from "@/commands/wallet/init";
+
+const wallet = defineCommand({
+  meta: {
+    name: "wallet",
+    description: "Local admin keystore management.",
+  },
+  subCommands: {
+    init: walletInit,
+    address: walletAddress,
+  },
+});
 
 const shop = defineCommand({
   meta: {
@@ -28,9 +41,10 @@ const main = defineCommand({
     name: "chesscito-admin",
     version: "0.1.0",
     description:
-      "Admin operations CLI for Chesscito contracts. Encodes calldata, simulates, sends via foundry's cast keystore (PK never enters this Node process), and writes to an append-only audit log.",
+      "Admin operations CLI for Chesscito contracts. Encodes calldata, simulates, signs locally with viem (key encrypted at rest in apps/admin/.private/), and writes to an append-only audit log.",
   },
   subCommands: {
+    wallet,
     shop,
   },
 });

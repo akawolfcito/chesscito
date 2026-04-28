@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { AbiFunction } from "viem";
 
-import { buildCalldata, parseCastSendOutput } from "../tx-runner";
+import { buildCalldata } from "../tx-runner";
 
 const PAUSE_ABI: AbiFunction = {
   type: "function",
@@ -91,35 +91,5 @@ describe("buildCalldata", () => {
       args: [],
     });
     expect(data).toBe("0x3f4ba83a");
-  });
-});
-
-describe("parseCastSendOutput", () => {
-  it("extracts txHash, blockNumber and gasUsed from a successful cast send blob", () => {
-    const stdout = `
-blockHash               0xaaaa
-blockNumber             29123456
-contractAddress
-cumulativeGasUsed       28912
-effectiveGasPrice       5000000000
-from                    0x917497b64EEb85859edcF2E4ca64059EDFec1923
-gasUsed                 28012
-status                  1 (success)
-transactionHash         0x1234567890abcdef
-transactionIndex        0
-type                    2
-`;
-    const parsed = parseCastSendOutput(stdout);
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) return;
-    expect(parsed.txHash).toBe("0x1234567890abcdef");
-    expect(parsed.blockNumber).toBe(29123456);
-    expect(parsed.gasUsed).toBe(28012);
-    expect(parsed.sender).toBe("0x917497b64EEb85859edcF2E4ca64059EDFec1923");
-  });
-
-  it("reports failure when stdout has no transactionHash", () => {
-    const parsed = parseCastSendOutput("status 0 (reverted)\n");
-    expect(parsed.ok).toBe(false);
   });
 });

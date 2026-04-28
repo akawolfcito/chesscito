@@ -5,6 +5,7 @@ import { type AbiFunction } from "viem";
 
 import { getChainConfig, resolveChain } from "@/config";
 import { getPublicClient, readContract, runWriteCommand } from "@/lib/tx-runner";
+import { loadAccount } from "@/lib/wallet";
 
 const UNPAUSE_ABI: AbiFunction = {
   type: "function",
@@ -32,7 +33,6 @@ export default defineCommand({
   },
   args: {
     chain: { type: "string", default: "celo" },
-    account: { type: "string", default: "chesscito-admin" },
     "dry-run": { type: "boolean", default: false },
     yes: { type: "boolean", default: false },
   },
@@ -40,6 +40,7 @@ export default defineCommand({
     const chain = resolveChain(args.chain);
     const cfg = getChainConfig(chain);
     const client = getPublicClient(cfg.rpcUrl);
+    const account = await loadAccount();
 
     const result = await runWriteCommand({
       command: "shop unpause",
@@ -48,8 +49,7 @@ export default defineCommand({
       abiItem: UNPAUSE_ABI,
       args: [],
       signature: "unpause()",
-      castArgs: [],
-      account: args.account,
+      account,
       rpcUrl: cfg.rpcUrl,
       chainId: cfg.chainId,
       dryRun: Boolean(args["dry-run"]),

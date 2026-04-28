@@ -5,6 +5,7 @@ import { type AbiFunction } from "viem";
 
 import { getChainConfig, resolveChain } from "@/config";
 import { getPublicClient, readContract, runWriteCommand } from "@/lib/tx-runner";
+import { loadAccount } from "@/lib/wallet";
 
 const SET_ITEM_ABI: AbiFunction = {
   type: "function",
@@ -42,7 +43,6 @@ export default defineCommand({
     "price-usd6": { type: "string", required: true, description: "Price in USD6 micro-units (e.g. 100000 = $0.10)" },
     enabled: { type: "boolean", required: true, description: "Whether the item is purchasable" },
     chain: { type: "string", default: "celo", description: "celo | celo-sepolia" },
-    account: { type: "string", default: "chesscito-admin", description: "foundry keystore name" },
     "dry-run": { type: "boolean", default: false, description: "Simulate only; do not broadcast" },
     yes: { type: "boolean", default: false, description: "Skip the y/N confirmation prompt" },
   },
@@ -52,8 +52,10 @@ export default defineCommand({
     const itemId = BigInt(args["item-id"]);
     const priceUsd6 = BigInt(args["price-usd6"]);
     const enabled = Boolean(args.enabled);
+    const dryRun = Boolean(args["dry-run"]);
 
     const client = getPublicClient(cfg.rpcUrl);
+    const account = await loadAccount();
 
     const result = await runWriteCommand({
       command: "shop set-item",
@@ -62,11 +64,10 @@ export default defineCommand({
       abiItem: SET_ITEM_ABI,
       args: [itemId, priceUsd6, enabled],
       signature: "setItem(uint256,uint256,bool)",
-      castArgs: [itemId.toString(), priceUsd6.toString(), enabled.toString()],
-      account: args.account,
+      account,
       rpcUrl: cfg.rpcUrl,
       chainId: cfg.chainId,
-      dryRun: Boolean(args["dry-run"]),
+      dryRun,
       yes: Boolean(args.yes),
       auditRoot: AUDIT_ROOT,
       preState: async () => {

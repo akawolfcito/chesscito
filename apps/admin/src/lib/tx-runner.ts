@@ -1,17 +1,21 @@
-import { spawnSync } from "node:child_process";
 import {
   createPublicClient,
+  createWalletClient,
   decodeFunctionResult,
+  defineChain,
   encodeFunctionData,
   http,
   type AbiFunction,
+  type Account,
   type Address,
+  type Chain as ViemChain,
   type Hex,
   type PublicClient,
 } from "viem";
+import { celo } from "viem/chains";
 
 import { appendAuditEntry, type AuditEntry } from "@/lib/audit-log";
-import { confirm } from "@/lib/confirm";
+import { confirm } from "@/lib/prompt";
 
 /** ABI for the standard Ownable.owner() read. Used to discover the
  *  expected sender for simulating owner-restricted write calls
@@ -24,17 +28,28 @@ const OWNER_ABI: AbiFunction = {
   outputs: [{ name: "", type: "address" }],
 };
 
-/** Lightweight wrapper around viem (read + encode) and foundry's cast
- *  (signing + send). The PK never enters this Node process — cast
- *  prompts for the keystore password in its own process and signs +
- *  broadcasts. We just generate calldata, optionally simulate, and
- *  parse cast's stdout for the final tx hash + receipt details. */
+/** Manual definition for celo-sepolia — viem/chains doesn't export it
+ *  yet at the version we pin. Kept side-by-side with mainnet so admin
+ *  ops can flip between them with --chain. */
+const celoSepolia = defineChain({
+  id: 11142220,
+  name: "Celo Sepolia",
+  nativeCurrency: { name: "Celo", symbol: "CELO", decimals: 18 },
+  rpcUrls: { default: { http: ["https://forno.celo-sepolia.celo-testnet.org"] } },
+  blockExplorers: { default: { name: "Blockscout", url: "https://celo-sepolia.blockscout.com" } },
+  testnet: true,
+});
+
+function viemChainFor(chainId: number): ViemChain {
+  if (chainId === celo.id) return celo;
+  if (chainId === celoSepolia.id) return celoSepolia;
+  throw new Error(`Unsupported chainId for viem signing: ${chainId}`);
+}
 
 export type TxRunnerCtx = {
   rpcUrl: string;
   chainId: number;
   contract: Address;
-  /** AbiFunction-style item; see commands for typed examples. */
   abiItem: AbiFunction;
   args: readonly unknown[];
 };
@@ -76,8 +91,7 @@ export async function readContract<T>(
 }
 
 /** Simulate the call as if `from` had sent it. Returns the decoded
- *  result on success, or the revert reason on failure. Useful before
- *  spending gas on a real tx. */
+ *  result on success, or the revert reason on failure. */
 export async function simulate(
   client: PublicClient,
   ctx: TxRunnerCtx,
@@ -101,52 +115,8 @@ export async function simulate(
   }
 }
 
-export type CastResult =
-  | { ok: true; txHash: Hex; blockNumber?: number; gasUsed?: number; sender?: Address }
-  | { ok: false; reason: string };
-
-/** Spawn `cast send` to actually sign + broadcast. The Node process
- *  never sees the private key — cast handles signing in its own
- *  subprocess, prompting for the keystore password.
- *
- *  We pass `--account <name>` (foundry keystore) by default; callers
- *  can override via the `account` option. Set `dryRun: true` to skip
- *  sending entirely. */
-export function castSend(opts: {
-  contract: Address;
-  signature: string;
-  args: readonly string[];
-  rpcUrl: string;
-  account: string;
-  dryRun?: boolean;
-}): CastResult {
-  if (opts.dryRun) {
-    return { ok: true, txHash: ("0x" + "0".repeat(64)) as Hex };
-  }
-  const cli = "cast";
-  const cliArgs = [
-    "send",
-    opts.contract,
-    opts.signature,
-    ...opts.args,
-    "--rpc-url",
-    opts.rpcUrl,
-    "--account",
-    opts.account,
-  ];
-  const result = spawnSync(cli, cliArgs, { stdio: ["inherit", "pipe", "pipe"], encoding: "utf8" });
-  if (result.error) {
-    return { ok: false, reason: result.error.message };
-  }
-  if (result.status !== 0) {
-    return { ok: false, reason: result.stderr || "cast exited with non-zero status" };
-  }
-  return parseCastSendOutput(result.stdout);
-}
-
 /** Read the contract `owner()` (Ownable / OwnableUpgradeable). Returns
- *  null when the call reverts — useful for non-Ownable contracts or
- *  when the explorer is mid-rotation. */
+ *  null when the call reverts — useful for non-Ownable contracts. */
 export async function readOwner(
   client: PublicClient,
   contract: Address,
@@ -158,12 +128,49 @@ export async function readOwner(
   }
 }
 
-/** High-level orchestrator for write commands. Reads pre-state,
- *  simulates the call as the owner, prints a preview, asks for
- *  confirmation (skippable with --yes), spawns cast send (or short-
- *  circuits in --dry-run mode), reads post-state, and appends one
- *  entry to the audit log no matter what. Always returns a result
- *  object; never throws. */
+export type SendResult =
+  | { ok: true; txHash: Hex; blockNumber?: number; gasUsed?: number; sender?: Address }
+  | { ok: false; reason: string };
+
+/** Sign + broadcast via viem using the provided account. The account
+ *  carries its own signer (privateKeyToAccount) decrypted from the
+ *  on-disk keystore by `lib/wallet.ts`. The PK lives in this Node
+ *  process during the call and is scrubbed when the account is
+ *  garbage-collected.  */
+export async function viemSend(opts: {
+  account: Account;
+  contract: Address;
+  abiItem: AbiFunction;
+  args: readonly unknown[];
+  rpcUrl: string;
+  chainId: number;
+}): Promise<SendResult> {
+  const chain = viemChainFor(opts.chainId);
+  const transport = http(opts.rpcUrl);
+  const walletClient = createWalletClient({ account: opts.account, chain, transport });
+  const publicClient = createPublicClient({ chain, transport });
+  try {
+    const txHash = await walletClient.writeContract({
+      address: opts.contract,
+      abi: [opts.abiItem],
+      functionName: opts.abiItem.name,
+      args: opts.args as readonly never[],
+    });
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    return {
+      ok: receipt.status === "success",
+      txHash,
+      blockNumber: Number(receipt.blockNumber),
+      gasUsed: Number(receipt.gasUsed),
+      sender: opts.account.address,
+      ...(receipt.status !== "success" ? { reason: "tx mined but reverted" } : {}),
+    } as SendResult;
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/** High-level orchestrator for write commands. */
 export type WriteOpts = {
   command: string;
   chain: string;
@@ -171,8 +178,7 @@ export type WriteOpts = {
   abiItem: AbiFunction;
   args: readonly unknown[];
   signature: string;
-  castArgs: readonly string[];
-  account: string;
+  account: Account;
   rpcUrl: string;
   chainId: number;
   dryRun: boolean;
@@ -201,20 +207,18 @@ export async function runWriteCommand(opts: WriteOpts): Promise<WriteResult> {
   console.log(`  signature  : ${opts.signature}`);
   console.log(`  args       : ${JSON.stringify(opts.args, replaceBigints)}`);
   console.log(`  calldata   : ${calldata}`);
+  console.log(`  signer     : ${opts.account.address}`);
   if (owner) console.log(`  owner      : ${owner} (used as simulation sender)`);
   if (before !== undefined) console.log(`  pre-state  : ${before}`);
 
-  if (owner) {
-    const sim = await simulate(client, opts, owner);
-    if (!sim.ok) {
-      console.error(`  simulate   : reverted — ${sim.reason}`);
-      logEntry(opts, calldata, "simulation reverted: " + sim.reason, before, undefined, undefined);
-      return { ok: false, reason: sim.reason };
-    }
-    console.log(`  simulate   : ok`);
-  } else {
-    console.log(`  simulate   : skipped (owner() unavailable)`);
+  const simAs = owner ?? opts.account.address;
+  const sim = await simulate(client, opts, simAs);
+  if (!sim.ok) {
+    console.error(`  simulate   : reverted — ${sim.reason}`);
+    logEntry(opts, calldata, "simulation reverted: " + sim.reason, before, undefined, undefined);
+    return { ok: false, reason: sim.reason };
   }
+  console.log(`  simulate   : ok`);
 
   if (opts.dryRun) {
     console.log(`  outcome    : dry-run (no tx broadcast)`);
@@ -231,29 +235,30 @@ export async function runWriteCommand(opts: WriteOpts): Promise<WriteResult> {
     }
   }
 
-  const cast = castSend({
-    contract: opts.contract,
-    signature: opts.signature,
-    args: opts.castArgs,
-    rpcUrl: opts.rpcUrl,
+  const send = await viemSend({
     account: opts.account,
+    contract: opts.contract,
+    abiItem: opts.abiItem,
+    args: opts.args,
+    rpcUrl: opts.rpcUrl,
+    chainId: opts.chainId,
   });
 
-  if (!cast.ok) {
-    console.error(`  outcome    : cast send failed — ${cast.reason}`);
-    logEntry(opts, calldata, "cast send failed: " + cast.reason, before, undefined, undefined);
-    return { ok: false, reason: cast.reason };
+  if (!send.ok) {
+    console.error(`  outcome    : send failed — ${send.reason}`);
+    logEntry(opts, calldata, "send failed: " + send.reason, before, undefined, undefined);
+    return { ok: false, reason: send.reason };
   }
 
   const after = opts.postState ? await opts.postState() : undefined;
-  console.log(`  txHash     : ${cast.txHash}`);
-  if (cast.blockNumber !== undefined) console.log(`  block      : ${cast.blockNumber}`);
-  if (cast.gasUsed !== undefined) console.log(`  gas used   : ${cast.gasUsed}`);
+  console.log(`  txHash     : ${send.txHash}`);
+  if (send.blockNumber !== undefined) console.log(`  block      : ${send.blockNumber}`);
+  if (send.gasUsed !== undefined) console.log(`  gas used   : ${send.gasUsed}`);
   if (after !== undefined) console.log(`  post-state : ${after}`);
   console.log(`  outcome    : success`);
 
-  logEntry(opts, calldata, "success", before, after, cast);
-  return { ok: true, txHash: cast.txHash };
+  logEntry(opts, calldata, "success", before, after, send);
+  return { ok: true, txHash: send.txHash };
 }
 
 function logEntry(
@@ -262,7 +267,7 @@ function logEntry(
   outcome: string,
   before: string | undefined,
   after: string | undefined,
-  cast: Extract<CastResult, { ok: true }> | undefined,
+  send: Extract<SendResult, { ok: true }> | undefined,
 ) {
   const entry: AuditEntry = {
     timestamp: new Date().toISOString(),
@@ -272,10 +277,10 @@ function logEntry(
     functionSignature: opts.signature,
     args: opts.args,
     calldata,
-    sender: cast?.sender,
-    txHash: cast?.txHash,
-    blockNumber: cast?.blockNumber,
-    gasUsed: cast?.gasUsed,
+    sender: send?.sender ?? opts.account.address,
+    txHash: send?.txHash,
+    blockNumber: send?.blockNumber,
+    gasUsed: send?.gasUsed,
     outcome,
     state: before !== undefined || after !== undefined ? { before, after } : undefined,
   };
@@ -284,28 +289,4 @@ function logEntry(
 
 function replaceBigints(_key: string, value: unknown): unknown {
   return typeof value === "bigint" ? value.toString() : value;
-}
-
-/** Parse the key=value blob `cast send` prints on success. Tolerant of
- *  fields being absent or out of order. */
-export function parseCastSendOutput(stdout: string): CastResult {
-  const fields = new Map<string, string>();
-  for (const line of stdout.split("\n")) {
-    const match = line.match(/^([a-zA-Z][a-zA-Z0-9]*)\s+(.+)$/);
-    if (!match) continue;
-    const [, key, value] = match;
-    if (!key || !value) continue;
-    fields.set(key, value.trim());
-  }
-  const txHash = fields.get("transactionHash") as Hex | undefined;
-  if (!txHash) {
-    return { ok: false, reason: "cast send did not return a transactionHash" };
-  }
-  return {
-    ok: true,
-    txHash,
-    blockNumber: fields.has("blockNumber") ? Number(fields.get("blockNumber")) : undefined,
-    gasUsed: fields.has("gasUsed") ? Number(fields.get("gasUsed")) : undefined,
-    sender: fields.get("from") as Address | undefined,
-  };
 }
