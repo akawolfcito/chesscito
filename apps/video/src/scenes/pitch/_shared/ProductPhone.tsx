@@ -20,6 +20,13 @@ interface Props {
   halo?: "cyan" | "amber" | "warm" | "none";
   /** "dark" (default) or "light" — switches drop-shadow filter to the warm-paper friendly version. */
   tone?: "dark" | "light";
+  /**
+   * v3.2 — image fit inside the phone frame. "cover" (default) fills
+   * the frame and may crop edges (best for 9:19.5 sources). "contain"
+   * shows the full image with paper letterboxing (best for 1:1 or
+   * landscape sources to avoid distortion).
+   */
+  cropMode?: "cover" | "contain";
 }
 
 /**
@@ -38,6 +45,7 @@ export const ProductPhone: React.FC<Props> = ({
   rotateDeg = 0,
   halo = "cyan",
   tone = "dark",
+  cropMode = "cover",
 }) => {
   const haloBg = (() => {
     if (halo === "cyan") return PITCH_THEME.phone.haloCyan;
@@ -86,7 +94,12 @@ export const ProductPhone: React.FC<Props> = ({
           borderRadius: 56,
         }}
       >
-        <PhoneFrame screenshotKey={screenshotKey} width={width} />
+        <PhoneFrame
+          screenshotKey={screenshotKey}
+          width={width}
+          cropMode={cropMode}
+          tone={tone}
+        />
       </div>
     </div>
   );

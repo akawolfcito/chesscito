@@ -108,6 +108,7 @@ export const PitchCapabilityShow: React.FC = () => {
           rotateDeg={tiltDeg}
           halo="warm"
           tone="light"
+          cropMode="contain"
         />
 
         {/* ── Right: editorial copy + pills ── */}
