@@ -37,8 +37,17 @@ const SET_ACCEPTED_TOKEN_ABI: AbiFunction = {
   stateMutability: "nonpayable",
   inputs: [
     { name: "token", type: "address" },
-    { name: "accepted", type: "bool" },
+    // ShopUpgradeable stores decimals (uint8), not a boolean flag.
+    { name: "tokenDecimals", type: "uint8" },
   ],
+  outputs: [],
+};
+
+const REMOVE_ACCEPTED_TOKEN_ABI: AbiFunction = {
+  type: "function",
+  name: "removeAcceptedToken",
+  stateMutability: "nonpayable",
+  inputs: [{ name: "token", type: "address" }],
   outputs: [],
 };
 
@@ -58,17 +67,32 @@ describe("buildCalldata", () => {
     );
   });
 
-  it("encodes setAcceptedToken(CELO, true) deterministically", () => {
+  it("encodes setAcceptedToken(CELO, 18) — uint8 decimals, not bool", () => {
     const data = buildCalldata({
       rpcUrl: "https://forno.celo.org",
       chainId: 42220,
       contract: SHOP,
       abiItem: SET_ACCEPTED_TOKEN_ABI,
-      args: ["0x471EcE3750Da237f93B8E339c536989b8978a438", true],
+      args: ["0x471EcE3750Da237f93B8E339c536989b8978a438", 18],
     });
-    expect(data).toBe(
-      "0xc997dbca000000000000000000000000471ece3750da237f93b8e339c536989b8978a4380000000000000000000000000000000000000000000000000000000000000001",
-    );
+    // First 4 bytes are the keccak256 selector for setAcceptedToken(address,uint8).
+    expect(data.slice(0, 10)).toBe("0x731b44dc");
+    // Token address sits in slot 1 (right-aligned, 32-byte padded).
+    expect(data.slice(10, 74)).toBe("000000000000000000000000471ece3750da237f93b8e339c536989b8978a438");
+    // Decimals = 18 in slot 2.
+    expect(data.slice(74)).toBe("0000000000000000000000000000000000000000000000000000000000000012");
+  });
+
+  it("encodes removeAcceptedToken(CELO) to its 4-byte selector + the token slot", () => {
+    const data = buildCalldata({
+      rpcUrl: "https://forno.celo.org",
+      chainId: 42220,
+      contract: SHOP,
+      abiItem: REMOVE_ACCEPTED_TOKEN_ABI,
+      args: ["0x471EcE3750Da237f93B8E339c536989b8978a438"],
+    });
+    expect(data.slice(74)).toBe("");
+    expect(data.slice(10, 74)).toBe("000000000000000000000000471ece3750da237f93b8e339c536989b8978a438");
   });
 
   it("encodes pause() to its 4-byte selector with no args", () => {

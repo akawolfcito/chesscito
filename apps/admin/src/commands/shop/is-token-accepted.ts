@@ -9,7 +9,10 @@ const ACCEPTED_TOKENS_ABI: AbiFunction = {
   name: "acceptedTokens",
   stateMutability: "view",
   inputs: [{ name: "", type: "address" }],
-  outputs: [{ name: "", type: "bool" }],
+  // The mapping stores the token's decimals as uint8. A return of 0
+  // means "not whitelisted"; anything in [6, 18] means "whitelisted
+  // with that decimal count". See ShopUpgradeable.setAcceptedToken.
+  outputs: [{ name: "", type: "uint8" }],
 };
 
 function resolveTokenAlias(input: string, chainCelo: Address): Address {
@@ -23,7 +26,8 @@ function resolveTokenAlias(input: string, chainCelo: Address): Address {
 export default defineCommand({
   meta: {
     name: "is-token-accepted",
-    description: "Read whether a token is whitelisted in Shop.acceptedTokens.",
+    description:
+      "Read the Shop.acceptedTokens entry for a token. Returns the stored decimals (6-18) when whitelisted, or 0 when not.",
   },
   args: {
     token: { type: "string", required: true, description: "ERC-20 address or alias (CELO)" },
@@ -35,10 +39,11 @@ export default defineCommand({
     const token = resolveTokenAlias(args.token, cfg.celoToken);
 
     const client = getPublicClient(cfg.rpcUrl);
-    const accepted = await readContract<boolean>(client, cfg.contracts.shop, ACCEPTED_TOKENS_ABI, [token]);
+    const decimals = await readContract<number>(client, cfg.contracts.shop, ACCEPTED_TOKENS_ABI, [token]);
 
     console.log(`Shop ${cfg.contracts.shop} on ${chain}`);
-    console.log(`  token    : ${token}${args.token.toUpperCase() === "CELO" ? " (CELO)" : ""}`);
-    console.log(`  accepted : ${accepted}`);
+    console.log(`  token       : ${token}${args.token.toUpperCase() === "CELO" ? " (CELO)" : ""}`);
+    console.log(`  whitelisted : ${decimals !== 0}`);
+    console.log(`  decimals    : ${decimals === 0 ? "—" : decimals.toString()}`);
   },
 });

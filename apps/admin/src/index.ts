@@ -4,6 +4,7 @@ import { defineCommand, runMain } from "citty";
 import getItem from "@/commands/shop/get-item";
 import isTokenAccepted from "@/commands/shop/is-token-accepted";
 import pause from "@/commands/shop/pause";
+import removeAcceptedToken from "@/commands/shop/remove-accepted-token";
 import setAcceptedToken from "@/commands/shop/set-accepted-token";
 import setItem from "@/commands/shop/set-item";
 import unpause from "@/commands/shop/unpause";
@@ -31,6 +32,7 @@ const shop = defineCommand({
     "is-token-accepted": isTokenAccepted,
     "set-item": setItem,
     "set-accepted-token": setAcceptedToken,
+    "remove-accepted-token": removeAcceptedToken,
     pause,
     unpause,
   },
