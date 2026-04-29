@@ -51,11 +51,12 @@ export const SignatureBlock: React.FC<Props> = ({
       <div
         style={{
           fontFamily: PITCH_THEME.type.sans,
-          fontSize: 16,
+          fontSize: 32,
           fontWeight: 700,
-          letterSpacing: 2.4,
+          letterSpacing: 1.0,
           textTransform: "uppercase",
           color: primaryColor,
+          lineHeight: 1.1,
         }}
       >
         {primary}
@@ -64,7 +65,7 @@ export const SignatureBlock: React.FC<Props> = ({
         <div
           style={{
             fontFamily: PITCH_THEME.type.sans,
-            fontSize: 18,
+            fontSize: 22,
             color: secondaryColor,
             letterSpacing: 0.2,
           }}

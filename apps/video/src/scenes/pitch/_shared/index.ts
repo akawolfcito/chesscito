@@ -5,3 +5,8 @@ export { EditorialPaperBackground } from "./EditorialPaperBackground";
 export { ProductPhone } from "./ProductPhone";
 export { HighlightWord } from "./HighlightWord";
 export { SignatureBlock } from "./SignatureBlock";
+export { Portrait, type PortraitKey } from "./Portrait";
+export { BrandFooter } from "./BrandFooter";
+export { BrandMasthead } from "./BrandMasthead";
+export { ChessKingIcon } from "./ChessKingIcon";
+export { EcosystemRow } from "./EcosystemRow";
