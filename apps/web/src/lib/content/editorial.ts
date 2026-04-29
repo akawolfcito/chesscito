@@ -1127,9 +1127,16 @@ export const LANDING_COPY = {
     ],
   },
 
-  /** §7 Plans — four tiers. ctaKind drives the render in C6:
-   *  - "internal" routes to /hub (Gratuito).
-   *  - "mailto"   composes a mailto with the given subject line. */
+  /** §7 Plans — "Un modelo donde nadie se queda fuera."
+   *  Aligned with docs/business/business-model-2026-04-28.md.
+   *  Order: Gratuito → PRO (featured, primary commercial CTA) →
+   *  Familia (waitlist) → Educadores y Aliados (outbound).
+   *  Render rules in C6:
+   *    - tier.featured = true  → primary filled button (game-primary).
+   *    - tier.ctaKind === "internal" → routes to /hub.
+   *    - tier.ctaKind === "mailto"   → composes mailto with subject.
+   *    - tier.priceLabel             → small price tag under tagline.
+   *    - tier.badge                  → soft pill next to the name. */
   plans: {
     title: "Un modelo donde nadie se queda fuera.",
     body:
@@ -1140,56 +1147,61 @@ export const LANDING_COPY = {
         tagline: "Para empezar.",
         bullets: [
           "Acceso al ajedrez introductorio",
-          "3 primeras piezas con sus tres niveles",
-          "Insignias de progreso",
-          "Comunidad pública",
+          "Las primeras piezas con sus niveles",
+          "Insignias de progreso on-chain",
+          "Leaderboard y comunidad pública",
         ],
         ctaLabel: "Empezar gratis",
         ctaKind: "internal" as const,
       },
       {
+        name: "CHESSCITO PRO",
+        tagline: "Para sostener tu práctica.",
+        priceLabel: "Desde $1.99/mes en stablecoin",
+        featured: true,
+        bullets: [
+          "Coach con IA para analizar tus partidas",
+          "Retry Shield incluido — sin compras adicionales",
+          "Badge PRO visible en tu perfil",
+          "Mint de tus victorias sin costo del NFT",
+          "Tu aporte sostiene el acceso gratuito",
+        ],
+        ctaLabel: "Quiero acceso PRO",
+        ctaKind: "mailto" as const,
+        ctaSubject: "Chesscito PRO — Quiero acceso",
+      },
+      {
         name: "FAMILIA",
         tagline: "Para entrenar juntos en casa.",
+        badge: "Próximamente",
         bullets: [
-          "Hasta 4 cuentas vinculadas",
-          "Todas las piezas y niveles",
-          "Reportes mensuales de progreso",
-          "Recordatorios suaves de rutina",
+          "Pensado para compartir minutos de juego en casa",
           "Sin publicidad, sin distractores",
+          "Early access — tu interés nos ayuda a priorizar",
         ],
-        ctaLabel: "Activar Familia",
+        ctaLabel: "Avísame cuando esté listo",
         ctaKind: "mailto" as const,
-        ctaSubject: "Plan Familia",
+        ctaSubject: "Plan Familia — Lista de espera",
       },
       {
-        name: "EDUCADORES",
-        tagline: "Para aulas, clubes y programas.",
+        name: "EDUCADORES Y ALIADOS",
+        tagline: "Para ampliar el acceso.",
         bullets: [
-          "Licencias por estudiante o grupo",
-          "Panel docente con seguimiento individual",
-          "Plan de actividades sugerido",
-          "Soporte directo de un Maestro FIDE",
-          "Capacitación inicial",
+          "Licencias para aulas, clubes y programas",
+          "Sponsor-a-player o sponsor-a-school",
+          "Acompañamiento de un Maestro FIDE",
+          "Trazabilidad on-chain de cada aporte",
         ],
-        ctaLabel: "Solicitar licencia",
+        ctaLabel: "Conversemos",
         ctaKind: "mailto" as const,
-        ctaSubject: "Plan Educadores",
-      },
-      {
-        name: "ALIADOS / SPONSORS",
-        tagline: "Para multiplicar el alcance.",
-        bullets: [
-          "Sponsor-a-player: financia a un niño",
-          "Sponsor-a-school: lleva Chesscito a una escuela",
-          "Sponsor-a-community: respalda un programa",
-          "Reportes de impacto trimestrales",
-          "Reconocimiento on-chain + presencia en landing",
-        ],
-        ctaLabel: "Construir alianza",
-        ctaKind: "mailto" as const,
-        ctaSubject: "Aliado / Sponsor",
+        ctaSubject: "Educadores y Aliados",
       },
     ],
+    /** Footnote under the grid — small entry point to test the
+     *  Coach feature without committing to PRO. Keeps the four-tier
+     *  visual hierarchy clean while still surfacing the micro-SKU. */
+    complement:
+      "También puedes probar el coach con Coach Credits desde $0.05.",
   },
 
   /** §8 Impact + allies row. Replaces v0.1 sponsors block. */
