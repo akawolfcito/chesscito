@@ -99,8 +99,8 @@ export const PitchCoachVO: React.FC = () => {
           display: "flex",
           flexDirection: landscape ? "row" : "column",
           alignItems: "center",
-          justifyContent: "space-between",
-          gap: landscape ? 80 : 48,
+          justifyContent: landscape ? "space-between" : "center",
+          gap: landscape ? 80 : 32,
           maxWidth: landscape ? 1700 : undefined,
           margin: "0 auto",
         }}
@@ -149,8 +149,8 @@ export const PitchCoachVO: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Right rail: portrait card (real or placeholder) ── */}
-        {landscape && CESAR && (
+        {/* ── Right rail / vertical bottom: portrait card (real or placeholder) ── */}
+        {CESAR && (
           <div
             style={{
               opacity: portraitOpacity,
@@ -162,7 +162,7 @@ export const PitchCoachVO: React.FC = () => {
               role={CESAR.role}
               portraitKey={CESAR.portraitKey ?? undefined}
               hasAsset={CESAR.hasPortraitAsset}
-              size="md"
+              size={landscape ? "md" : "sm"}
               rotateDeg={0}
             />
           </div>

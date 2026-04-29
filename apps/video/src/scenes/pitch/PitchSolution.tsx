@@ -109,9 +109,8 @@ export const PitchSolution: React.FC = () => {
           display: "flex",
           flexDirection: landscape ? "row" : "column",
           alignItems: "center",
-          justifyContent: "space-between",
-          gap: landscape ? 80 : 48,
-          paddingBottom: landscape ? 0 : 80,
+          justifyContent: landscape ? "space-between" : "center",
+          gap: landscape ? 80 : 32,
         }}
       >
         {/* ── Left rail ── */}
@@ -183,7 +182,7 @@ export const PitchSolution: React.FC = () => {
         {/* ── Right rail: hero phone ── */}
         <ProductPhone
           screenshotKey={COPY.screenshotKey}
-          width={landscape ? 420 : 480}
+          width={landscape ? 420 : 420}
           opacity={phoneOpacity}
           translateX={phoneX}
           scale={breathScale}

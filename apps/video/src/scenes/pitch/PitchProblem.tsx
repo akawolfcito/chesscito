@@ -74,26 +74,28 @@ export const PitchProblem: React.FC = () => {
     <AbsoluteFill style={{ backgroundColor: LIGHT.bg.base }}>
       <EditorialPaperBackground opacity={bgOpacity} />
 
-      {/* ── Hair-line connector ── */}
-      <AbsoluteFill
-        style={{
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-        }}
-      >
-        <div
+      {/* ── Hair-line connector — landscape only (horizontal rule between rails) ── */}
+      {landscape && (
+        <AbsoluteFill
           style={{
-            width: "78%",
-            height: 1,
-            background: `linear-gradient(90deg, rgba(184,137,59,0) 0%, ${LIGHT.accent.hairlineRgba} 30%, ${LIGHT.accent.hairlineRgba} 70%, rgba(184,137,59,0) 100%)`,
-            opacity: threadOpacity,
-            transform: `scaleX(${threadScaleX})`,
-            transformOrigin: "center",
-            marginTop: 80,
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
           }}
-        />
-      </AbsoluteFill>
+        >
+          <div
+            style={{
+              width: "78%",
+              height: 1,
+              background: `linear-gradient(90deg, rgba(184,137,59,0) 0%, ${LIGHT.accent.hairlineRgba} 30%, ${LIGHT.accent.hairlineRgba} 70%, rgba(184,137,59,0) 100%)`,
+              opacity: threadOpacity,
+              transform: `scaleX(${threadScaleX})`,
+              transformOrigin: "center",
+              marginTop: 80,
+            }}
+          />
+        </AbsoluteFill>
+      )}
 
       <AbsoluteFill
         style={{
@@ -102,7 +104,7 @@ export const PitchProblem: React.FC = () => {
           flexDirection: landscape ? "row" : "column",
           alignItems: "center",
           justifyContent: landscape ? "space-between" : "center",
-          gap: landscape ? 64 : 48,
+          gap: landscape ? 64 : 32,
         }}
       >
         {/* ── Left rail: editorial title ── */}
