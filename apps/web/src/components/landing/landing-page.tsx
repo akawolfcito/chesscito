@@ -455,34 +455,63 @@ export function LandingPage() {
             } else {
               ctaHref = WHY_PAGE_COPY.sponsors.githubUrl;
             }
-            const isExternal = tier.ctaKind === "mailto";
+            const isInternal = tier.ctaKind === "internal";
+            const isFeatured = "featured" in tier && tier.featured === true;
+            const priceLabel =
+              "priceLabel" in tier ? tier.priceLabel : undefined;
+            const badge = "badge" in tier ? tier.badge : undefined;
             return (
               <li
                 key={tier.name}
                 className="flex flex-col gap-3 rounded-2xl border px-5 py-5"
                 style={{
                   background: "var(--landing-card-bg)",
-                  borderColor: "var(--landing-card-border)",
-                  boxShadow: "inset 0 1px 0 var(--landing-card-shadow-inner)",
+                  borderColor: isFeatured
+                    ? "var(--landing-accent-border)"
+                    : "var(--landing-card-border)",
+                  boxShadow: isFeatured
+                    ? "inset 0 1px 0 var(--landing-card-shadow-inner), 0 0 0 2px var(--landing-accent-border)"
+                    : "inset 0 1px 0 var(--landing-card-shadow-inner)",
                 }}
               >
                 <div className="flex flex-col gap-1.5">
-                  <span
-                    className="self-start rounded-full border px-3 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.14em]"
-                    style={{
-                      background: "var(--landing-accent-bg)",
-                      borderColor: "var(--landing-accent-border)",
-                      color: "var(--landing-text)",
-                    }}
-                  >
-                    {tier.name}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span
+                      className="rounded-full border px-3 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.14em]"
+                      style={{
+                        background: "var(--landing-accent-bg)",
+                        borderColor: "var(--landing-accent-border)",
+                        color: "var(--landing-text)",
+                      }}
+                    >
+                      {tier.name}
+                    </span>
+                    {badge ? (
+                      <span
+                        className="rounded-full border px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.10em]"
+                        style={{
+                          borderColor: "var(--landing-card-border)",
+                          color: "var(--paper-text-muted)",
+                        }}
+                      >
+                        {badge}
+                      </span>
+                    ) : null}
+                  </div>
                   <p
                     className="text-sm font-extrabold"
                     style={{ color: "var(--landing-text)" }}
                   >
                     {tier.tagline}
                   </p>
+                  {priceLabel ? (
+                    <p
+                      className="text-xs font-bold"
+                      style={{ color: "var(--paper-text-muted)" }}
+                    >
+                      {priceLabel}
+                    </p>
+                  ) : null}
                 </div>
                 <ul className="flex flex-col gap-1.5" role="list">
                   {tier.bullets.map((bullet) => (
@@ -500,7 +529,40 @@ export function LandingPage() {
                   ))}
                 </ul>
                 <div className="mt-auto pt-1">
-                  {isExternal ? (
+                  {isFeatured ? (
+                    <Button
+                      asChild
+                      variant="game-primary"
+                      size="game-sm"
+                      className="!w-full"
+                    >
+                      <a
+                        href={ctaHref}
+                        target={
+                          isInternal || supportEmail ? undefined : "_blank"
+                        }
+                        rel={
+                          isInternal || supportEmail
+                            ? undefined
+                            : "noopener noreferrer"
+                        }
+                        onClick={onCta(`plan-${tier.name.toLowerCase()}`)}
+                      >
+                        {tier.ctaLabel}
+                      </a>
+                    </Button>
+                  ) : isInternal ? (
+                    <Link
+                      href={ctaHref}
+                      onClick={onCta(`plan-${tier.name.toLowerCase()}`)}
+                      className="paper-tray flex min-h-[40px] items-center justify-center gap-2 transition active:scale-[0.99]"
+                      style={{ color: "var(--paper-text)" }}
+                    >
+                      <span className="text-xs font-extrabold uppercase tracking-[0.10em]">
+                        {tier.ctaLabel}
+                      </span>
+                    </Link>
+                  ) : (
                     <a
                       href={ctaHref}
                       target={supportEmail ? undefined : "_blank"}
@@ -513,26 +575,18 @@ export function LandingPage() {
                         {tier.ctaLabel}
                       </span>
                     </a>
-                  ) : (
-                    <Button
-                      asChild
-                      variant="game-primary"
-                      size="game-sm"
-                      className="!w-full"
-                    >
-                      <Link
-                        href={ctaHref}
-                        onClick={onCta(`plan-${tier.name.toLowerCase()}`)}
-                      >
-                        {tier.ctaLabel}
-                      </Link>
-                    </Button>
                   )}
                 </div>
               </li>
             );
           })}
         </ul>
+        <p
+          className="mx-auto mt-6 max-w-[60ch] text-center text-xs leading-relaxed md:text-sm"
+          style={{ color: "var(--paper-text-muted)" }}
+        >
+          {LANDING_COPY.plans.complement}
+        </p>
       </section>
 
       {/* §8 Impact — three pillars (trazabilidad / escala / comunidad)
