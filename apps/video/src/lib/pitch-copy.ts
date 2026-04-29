@@ -38,7 +38,18 @@ const seconds = (s: number): number => Math.round(s * FPS);
 export const PITCH_BRAND = {
   name: "Chesscito",
   tagline: "El ajedrez antes del ajedrez.",
-  url: "chesscito.app",
+  descriptor: "Juegos preajedrecísticos",
+  url: "chesscito.vercel.app",
+  /**
+   * v3.5 — brand consolidation. Den Labs acts as parent backing
+   * (no competition with Chesscito), MiniPay + Celo as platform /
+   * ecosystem, @AKAwolfcito as public contact handle.
+   */
+  parent: "Den Labs",
+  byline: "Construido por Den Labs",
+  poweredBy: "Powered by Celo",
+  miniPay: "Próximamente en MiniPay",
+  contact: "@AKAwolfcito",
   channels: {
     distribution: "MiniPay",
     chain: "Celo",
@@ -52,18 +63,34 @@ export const PITCH_TEAM = {
       handle: "aka Wolfcito",
       role: "Software Developer Architect",
       coFounder: "Co-Founder Chesscito",
+      /**
+       * Portrait integration (see docs/superpowers/specs/2026-04-28-portrait-canon.md).
+       * Drop apps/video/public/portraits/luis-ushina.jpg and flip
+       * `hasPortraitAsset` to `true` to swap the placeholder for the
+       * approved photo. No layout change required.
+       */
+      portraitKey: "luis-ushina" as const,
+      hasPortraitAsset: true,
+      /** v3.3 — short human/professional line for h08 founder cards. */
+      tagline: "Construye el producto desde el código y el diseño.",
     },
     {
       realName: "César Litvinov Alarcón",
       handle: null,
       role: "Maestro FIDE · Entrenador",
       coFounder: "Co-Founder Chesscito",
+      portraitKey: "cesar-litvinov" as const,
+      hasPortraitAsset: true,
+      tagline: "Diseña los retos pedagógicos inspirados en ajedrez.",
     },
     {
       realName: "Den Labs",
       handle: null,
       role: "Casa creadora",
       coFounder: null,
+      portraitKey: null,
+      hasPortraitAsset: false,
+      tagline: "Casa creadora detrás del proyecto.",
     },
   ],
   /**
@@ -147,7 +174,7 @@ export const PITCH_A_COPY = {
       /** v3.2 — cognac italic on the closing fragment */
       highlight: "antes del ajedrez.",
       subtitle: "Retos breves para entrenar atención, patrones y decisiones.",
-      badge: "PRE-AJEDREZ",
+      badge: "CHESSCITO · JUEGOS PREAJEDRECÍSTICOS",
     },
     /** 2 — Promesa de juego, no de pantalla */
     problem: {
@@ -185,7 +212,7 @@ export const PITCH_A_COPY = {
       valueCards: [
         "Sin descargas",
         "Sin registros",
-        "Gratis en MiniPay",
+        "Acceso instantáneo",
       ] as const,
       ctaLabel: "Empezar gratis",
     },
@@ -222,17 +249,40 @@ export const PITCH_A_COPY = {
       screenshotKey: "victory-state" as const,
       valueCards: ["Logros", "Victorias", "Rachas"] as const,
     },
-    /** 8 — Origen fundacional, no corporate */
+    /**
+     * 8 — Origen + presentación real del equipo (v3.3).
+     *
+     * Centered hierarchy: title → brief team intro → 2 founder cards
+     * (Luis, César) → "100+" closing impact metric. Replaces the
+     * earlier asymmetric layout where "100+" sat on the left rail.
+     *
+     * The "100+" reframes from "+100 estudiantes" (career-side, hard
+     * to validate as a public claim) to product-side "100+ retos
+     * diseñados para práctica mental activa" — safer copy that
+     * communicates impact without medical claims.
+     */
     teamMini: {
       durationFrames: seconds(5),
       title: "Nacido en el aula.\nConvertido en juego.",
       /** v3.2 — cognac italic on the transformation */
       highlight: "Convertido en juego.",
-      subtitle: "Una metodología aplicada con +100 estudiantes.",
-      /** v3.2 — visual numeral (decorative, not a metric of app traction) */
+      /** v3.3 — short narrative that introduces the founders below */
+      subtitle: "Las personas detrás de Chesscito.",
       foundingNumber: "100+",
-      foundingNumberCaption: "estudiantes",
-      signatureLine: PITCH_TEAM.founders.map((f) => f.realName).join(" · "),
+      /**
+       * v3.3 — product-side framing. NOT "+100 estudiantes". This is
+       * a copy-safe impact line that does not imply clinical efficacy
+       * or app-traction metrics.
+       */
+      foundingNumberCaption:
+        "Retos diseñados para práctica mental activa.",
+      /**
+       * Legacy field — no longer rendered after v3.3 layout shift.
+       * Kept for back-compat with any external consumer; can be
+       * removed once we confirm no other surface reads it.
+       */
+      signatureLine:
+        "César Litvinov Alarcón · Luis Fernando Ushiña · Den Labs",
     },
     /** 9 — Invitación final */
     cta: {
@@ -241,7 +291,7 @@ export const PITCH_A_COPY = {
       /** v3.2 — cognac italic on the action verb */
       highlight: "tu primer reto",
       subtitleInMiniPay: "Tócalo en Discover · MiniPay",
-      subtitleSocial: "Gratis en MiniPay · chesscito.app",
+      subtitleSocial: "Próximamente en MiniPay · chesscito.vercel.app",
       url: PITCH_BRAND.url,
       /** v3.2 — decorative luxury CTA */
       ctaLabel: "Jugar ahora",
@@ -313,3 +363,179 @@ export type ScreenshotKey =
   | "exercise-rook-pattern"
   | "arena"
   | "victory-state";
+
+/* ──────────────────────────── i18n (v3.9) ──────────────────────────── */
+
+export type PitchLocale = "es" | "en";
+
+/** Brand fields that NEVER change between languages. */
+export const PITCH_BRAND_STATIC = {
+  name: PITCH_BRAND.name,
+  url: PITCH_BRAND.url,
+  parent: PITCH_BRAND.parent,
+  contact: PITCH_BRAND.contact,
+  channels: PITCH_BRAND.channels,
+} as const;
+
+/** Brand fields that DO translate. */
+export const PITCH_BRAND_LOCALES = {
+  es: {
+    tagline: "El ajedrez antes del ajedrez.",
+    descriptor: "Juegos preajedrecísticos",
+    byline: "Construido por Den Labs",
+    poweredBy: "Powered by Celo",
+    miniPay: "Próximamente en MiniPay",
+  },
+  en: {
+    tagline: "The chess before chess.",
+    descriptor: "Pre-chess games",
+    byline: "Built by Den Labs",
+    poweredBy: "Powered by Celo",
+    miniPay: "Coming soon to MiniPay",
+  },
+} as const satisfies Record<PitchLocale, Record<string, string>>;
+
+/** Localized founder array. Names stay; role + tagline switch. */
+const PITCH_TEAM_EN = {
+  founders: [
+    {
+      realName: "Luis Fernando Ushiña",
+      handle: "aka Wolfcito",
+      role: "Software Developer Architect",
+      coFounder: "Co-Founder Chesscito",
+      portraitKey: "luis-ushina" as const,
+      hasPortraitAsset: true,
+      tagline: "Builds the product through code and design.",
+    },
+    {
+      realName: "César Litvinov Alarcón",
+      handle: null,
+      role: "FIDE Master · Coach",
+      coFounder: "Co-Founder Chesscito",
+      portraitKey: "cesar-litvinov" as const,
+      hasPortraitAsset: true,
+      tagline: "Designs the chess-inspired pedagogical challenges.",
+    },
+    {
+      realName: "Den Labs",
+      handle: null,
+      role: "Creative studio",
+      coFounder: null,
+      portraitKey: null,
+      hasPortraitAsset: false,
+      tagline: "Creative studio behind the project.",
+    },
+  ],
+  methodologyOrigin: {
+    short: "+100 students mentored.",
+    long: "Methodology applied with +100 students.",
+    framingNote: "Pedagogical origin, not clinical validation nor app traction metric.",
+  },
+} as const;
+
+export const PITCH_TEAM_LOCALES = {
+  es: PITCH_TEAM,
+  en: PITCH_TEAM_EN,
+} as const satisfies Record<PitchLocale, unknown>;
+
+/** Localized A-Cut copy. Identical structure, translated strings. */
+const PITCH_A_COPY_EN = {
+  variantId: "a-cut" as const,
+  variantLabel: "A-Cut · Mainstream premium",
+  totalDurationSeconds: 55,
+  scenes: {
+    hook: {
+      durationFrames: seconds(4),
+      title: "The chess before chess.",
+      highlight: "before chess.",
+      subtitle: "Short challenges to train attention, patterns and decisions.",
+      badge: "CHESSCITO · PRE-CHESS GAMES",
+    },
+    problem: {
+      durationFrames: seconds(6),
+      title: "You don't need more screen.\nYou need better play.",
+      highlight: "better play.",
+      subtitle: "10 minutes. One challenge. A small victory.",
+      valueCards: ["10 minutes", "One challenge", "A small victory"] as const,
+    },
+    capabilityShow: {
+      durationFrames: seconds(7),
+      title: "Attention. Patterns. Decisions.",
+      highlight: "without the pressure of chess.",
+      subtitle: "The best of chess, without the pressure of chess.",
+      screenshotKey: "exercise-rook-pattern" as const,
+      badge: "REAL METHOD",
+      valueCards: ["Attention", "Patterns", "Decisions"] as const,
+    },
+    solution: {
+      durationFrames: seconds(6),
+      title: "Open MiniPay.\nStart free.",
+      highlight: "Start free.",
+      subtitle: "No downloads. No complicated signups.",
+      screenshotKey: "play-hub" as const,
+      badge: "INSTANT ACCESS",
+      valueCards: ["No downloads", "No signups", "Instant access"] as const,
+      ctaLabel: "Start free",
+    },
+    coachVo: {
+      durationFrames: seconds(7),
+      statement: "Before competing, you must learn to think while playing.",
+      highlight: "think while playing.",
+      attribution: "César Litvinov · FIDE Master · +100 students mentored.",
+      signaturePrimary: "César Litvinov · FIDE Master",
+      signatureDetail: "+100 students mentored",
+    },
+    arena: {
+      durationFrames: seconds(6),
+      title: "When you're ready,\nraise the challenge.",
+      highlight: "raise the challenge.",
+      subtitle: "Practice, play against AI and improve at your own pace.",
+      screenshotKey: "arena" as const,
+      badge: "ARENA",
+      valueCards: ["AI", "Own pace", "Practice"] as const,
+    },
+    sovereignty: {
+      durationFrames: seconds(5),
+      title: "Celebrate your progress.",
+      highlight: "your progress.",
+      subtitle: "Win challenges, unlock achievements and save your victories.",
+      screenshotKey: "victory-state" as const,
+      valueCards: ["Achievements", "Victories", "Streaks"] as const,
+    },
+    teamMini: {
+      durationFrames: seconds(5),
+      title: "Born in the classroom.\nTurned into a game.",
+      highlight: "Turned into a game.",
+      subtitle: "The people behind Chesscito.",
+      foundingNumber: "100+",
+      foundingNumberCaption: "Challenges designed for active mental practice.",
+      signatureLine:
+        "César Litvinov Alarcón · Luis Fernando Ushiña · Den Labs",
+    },
+    cta: {
+      durationFrames: seconds(5),
+      title: "Play your first challenge today.",
+      highlight: "your first challenge",
+      subtitleInMiniPay: "Tap it in Discover · MiniPay",
+      subtitleSocial: "Coming soon to MiniPay · chesscito.vercel.app",
+      url: PITCH_BRAND.url,
+      ctaLabel: "Play now",
+    },
+  },
+} as const;
+
+export const PITCH_A_COPY_LOCALES = {
+  es: PITCH_A_COPY,
+  en: PITCH_A_COPY_EN,
+} as const satisfies Record<PitchLocale, unknown>;
+
+/**
+ * B-Cut copy is NOT translated yet. The Cibeira (2021) academic
+ * citation is bound to its original Spanish publication, so the
+ * B-Cut stays Spanish-only regardless of `locale`. Both keys
+ * resolve to the same content for API uniformity.
+ */
+export const PITCH_B_COPY_LOCALES = {
+  es: PITCH_B_COPY,
+  en: PITCH_B_COPY,
+} as const satisfies Record<PitchLocale, unknown>;
