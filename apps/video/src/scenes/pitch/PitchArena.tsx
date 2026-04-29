@@ -6,17 +6,17 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { PITCH_A_COPY } from "../../lib/pitch-copy";
+import { useACopy } from "../../lib/pitch-locale";
 import { PITCH_THEME, useIsLandscape } from "../../lib/pitch-theme";
 import {
   Badge,
+  BrandMasthead,
   EditorialPaperBackground,
   HighlightWord,
   ProductPhone,
   ValueCard,
 } from "./_shared";
 
-const COPY = PITCH_A_COPY.scenes.arena;
 const LIGHT = PITCH_THEME.light;
 
 /**
@@ -31,6 +31,7 @@ export const PitchArena: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const landscape = useIsLandscape();
+  const COPY = useACopy().scenes.arena;
 
   const phoneScale = spring({
     frame,
@@ -163,7 +164,7 @@ export const PitchArena: React.FC = () => {
         {/* ── Right: hero phone ── */}
         <ProductPhone
           screenshotKey={COPY.screenshotKey}
-          width={landscape ? 500 : 540}
+          width={landscape ? 420 : 480}
           opacity={phoneOpacity}
           translateX={phoneX}
           scale={breathScale}
@@ -172,6 +173,8 @@ export const PitchArena: React.FC = () => {
           tone="light"
         />
       </AbsoluteFill>
+
+      <BrandMasthead />
     </AbsoluteFill>
   );
 };

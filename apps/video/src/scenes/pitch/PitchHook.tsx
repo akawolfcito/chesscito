@@ -6,11 +6,16 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { PITCH_A_COPY } from "../../lib/pitch-copy";
+import { useACopy, useBrand } from "../../lib/pitch-locale";
 import { PITCH_THEME, useIsLandscape } from "../../lib/pitch-theme";
-import { Badge, EditorialPaperBackground, HighlightWord } from "./_shared";
+import {
+  Badge,
+  BrandFooter,
+  BrandMasthead,
+  EditorialPaperBackground,
+  HighlightWord,
+} from "./_shared";
 
-const COPY = PITCH_A_COPY.scenes.hook;
 const LIGHT = PITCH_THEME.light;
 
 /**
@@ -25,6 +30,8 @@ export const PitchHook: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const landscape = useIsLandscape();
+  const COPY = useACopy().scenes.hook;
+  const PITCH_BRAND = useBrand();
 
   const badgeOpacity = interpolate(frame, [0, 0.4 * fps], [0, 1], {
     extrapolateRight: "clamp",
@@ -79,6 +86,13 @@ export const PitchHook: React.FC = () => {
     extrapolateRight: "clamp",
   });
 
+  const brandFooterOpacity = interpolate(
+    frame,
+    [1.4 * fps, 1.9 * fps],
+    [0, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+
   return (
     <AbsoluteFill style={{ backgroundColor: LIGHT.bg.base }}>
       <EditorialPaperBackground opacity={bgOpacity} warmPool={{ x: 50, y: 14 }} />
@@ -95,15 +109,13 @@ export const PitchHook: React.FC = () => {
           gap: 28,
         }}
       >
-        <Badge label={COPY.badge} tone="lightCognac" opacity={badgeOpacity} />
-
         <div
           style={{
             opacity: titleOpacity,
             transform: `translateY(${titleY}px) scale(${titleScale})`,
             transformOrigin: "center center",
             fontFamily: PITCH_THEME.type.serif,
-            fontSize: landscape ? 124 : 84,
+            fontSize: landscape ? 96 : 72,
             fontWeight: 500,
             lineHeight: 1.02,
             color: LIGHT.text.primary,
@@ -149,6 +161,15 @@ export const PitchHook: React.FC = () => {
           {COPY.subtitle}
         </div>
       </AbsoluteFill>
+
+      <BrandMasthead
+        size="lg"
+        showDescriptor
+        showByline
+        opacity={brandFooterOpacity}
+        top={64}
+      />
+      <BrandFooter items={[PITCH_BRAND.byline]} opacity={brandFooterOpacity} />
     </AbsoluteFill>
   );
 };

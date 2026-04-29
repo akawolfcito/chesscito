@@ -6,11 +6,16 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { PITCH_A_COPY } from "../../lib/pitch-copy";
+import { useACopy, useBrand } from "../../lib/pitch-locale";
 import { PITCH_THEME, useIsLandscape } from "../../lib/pitch-theme";
-import { EditorialPaperBackground, HighlightWord } from "./_shared";
+import { Img, staticFile } from "remotion";
+import {
+  BrandFooter,
+  BrandMasthead,
+  EditorialPaperBackground,
+  HighlightWord,
+} from "./_shared";
 
-const COPY = PITCH_A_COPY.scenes.cta;
 const LIGHT = PITCH_THEME.light;
 
 export type CtaVariant = "in-minipay" | "social";
@@ -31,6 +36,8 @@ export const PitchCTA: React.FC<Props> = ({ variant = "social" }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
   const landscape = useIsLandscape();
+  const COPY = useACopy().scenes.cta;
+  const PITCH_BRAND = useBrand();
 
   const titleScale = spring({
     frame,
@@ -64,13 +71,6 @@ export const PitchCTA: React.FC<Props> = ({ variant = "social" }) => {
     extrapolateRight: "clamp",
   });
 
-  const ctaScale = spring({
-    frame: frame - 1.4 * fps,
-    fps,
-    from: 0.97,
-    to: 1,
-    config: PITCH_THEME.motion.spring.soft,
-  });
   const ctaOpacity = interpolate(
     frame,
     [1.3 * fps, 1.8 * fps],
@@ -81,6 +81,13 @@ export const PitchCTA: React.FC<Props> = ({ variant = "social" }) => {
   const urlOpacity = interpolate(
     frame,
     [1.6 * fps, 2.0 * fps],
+    [0, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+
+  const brandFooterOpacity = interpolate(
+    frame,
+    [1.9 * fps, 2.4 * fps],
     [0, 1],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
@@ -115,7 +122,7 @@ export const PitchCTA: React.FC<Props> = ({ variant = "social" }) => {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 22,
+          gap: 18,
         }}
       >
         <div
@@ -123,7 +130,7 @@ export const PitchCTA: React.FC<Props> = ({ variant = "social" }) => {
             opacity: titleOpacity,
             transform: `scale(${titleScale})`,
             fontFamily: PITCH_THEME.type.serif,
-            fontSize: landscape ? 116 : 76,
+            fontSize: landscape ? 96 : 64,
             fontWeight: 500,
             color: LIGHT.text.primary,
             textAlign: "center",
@@ -153,81 +160,96 @@ export const PitchCTA: React.FC<Props> = ({ variant = "social" }) => {
           }}
         />
 
-        <div
-          style={{
-            opacity: subtitleOpacity,
-            fontFamily: PITCH_THEME.type.sans,
-            fontSize: landscape ? 22 : 20,
-            color: LIGHT.text.secondary,
-            letterSpacing: 0.3,
-            fontWeight: 500,
-            textAlign: "center",
-          }}
-        >
-          {subtitle}
-        </div>
-
-        <CtaButton
-          label={COPY.ctaLabel}
-          opacity={ctaOpacity}
-          scale={ctaScale}
-        />
-
+        {/*
+          v3.8 — URL is now the dominant CTA (this is video, not
+          interactive). The decorative button is removed; the URL is
+          rendered very large alongside a QR code so the audience
+          can scan straight to chesscito.vercel.app.
+        */}
         <div
           style={{
             opacity: urlOpacity,
-            marginTop: 14,
-            fontFamily: PITCH_THEME.type.mono,
-            fontSize: 18,
-            color: LIGHT.text.muted,
-            letterSpacing: 1.4,
+            marginTop: 24,
+            display: "flex",
+            alignItems: "center",
+            gap: 36,
           }}
         >
-          {COPY.url}
+          <Img
+            src={staticFile("brands/qr.png")}
+            style={{
+              width: 200,
+              height: 200,
+              borderRadius: 16,
+              background: LIGHT.surface.base,
+              padding: 12,
+              boxShadow: LIGHT.shadow.card,
+              objectFit: "contain",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: 6,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: PITCH_THEME.type.sans,
+                fontSize: 12,
+                fontWeight: 700,
+                color: LIGHT.accent.primary,
+                letterSpacing: 2.4,
+                textTransform: "uppercase",
+              }}
+            >
+              Escanea o visita
+            </div>
+            <div
+              style={{
+                fontFamily: PITCH_THEME.type.mono,
+                fontSize: landscape ? 56 : 32,
+                fontWeight: 600,
+                color: LIGHT.text.primary,
+                letterSpacing: 0.4,
+                lineHeight: 1.1,
+              }}
+            >
+              {COPY.url}
+            </div>
+            <div
+              style={{
+                fontFamily: PITCH_THEME.type.serif,
+                fontStyle: "italic",
+                fontSize: 18,
+                color: LIGHT.text.secondary,
+                marginTop: 4,
+              }}
+            >
+              {subtitle}
+            </div>
+          </div>
         </div>
       </AbsoluteFill>
+
+      <BrandMasthead
+        size="lg"
+        showDescriptor
+        showByline={false}
+        opacity={brandFooterOpacity}
+        top={64}
+      />
+      <BrandFooter
+        items={[
+          PITCH_BRAND.byline,
+          PITCH_BRAND.poweredBy,
+          PITCH_BRAND.contact,
+        ]}
+        opacity={brandFooterOpacity}
+      />
     </AbsoluteFill>
   );
 };
 
-interface CtaProps {
-  label: string;
-  opacity: number;
-  scale: number;
-}
-
-const CtaButton: React.FC<CtaProps> = ({ label, opacity, scale }) => (
-  <div
-    style={{
-      opacity,
-      transform: `scale(${scale})`,
-      transformOrigin: "center center",
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 14,
-      padding: "20px 36px",
-      borderRadius: PITCH_THEME.radius.pill,
-      background: LIGHT.cta.bg,
-      boxShadow: LIGHT.cta.bgShadow,
-      color: LIGHT.cta.text,
-      fontFamily: PITCH_THEME.type.sans,
-      fontSize: 22,
-      fontWeight: 600,
-      letterSpacing: 0.4,
-      marginTop: 16,
-    }}
-  >
-    {label}
-    <span
-      aria-hidden
-      style={{
-        display: "inline-block",
-        width: 0,
-        height: 0,
-        borderTop: "7px solid transparent",
-        borderBottom: "7px solid transparent",
-        borderLeft: `9px solid ${LIGHT.cta.text}`,
-      }}
-    />
-  </div>
-);

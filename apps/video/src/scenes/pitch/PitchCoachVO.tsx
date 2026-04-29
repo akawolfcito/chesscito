@@ -6,29 +6,37 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { PITCH_A_COPY } from "../../lib/pitch-copy";
+import { useACopy, useTeam } from "../../lib/pitch-locale";
 import { PITCH_THEME, useIsLandscape } from "../../lib/pitch-theme";
 import {
+  BrandMasthead,
   EditorialPaperBackground,
   HighlightWord,
+  Portrait,
   SignatureBlock,
 } from "./_shared";
 
-const COPY = PITCH_A_COPY.scenes.coachVo;
 const LIGHT = PITCH_THEME.light;
 
 /**
- * v3.2 — Light editorial warm.
+ * v3.2 — Light editorial warm with portrait slot.
  *
- * Founder/method scene. Paper cream + a small CSS knight pictogram
- * (no external assets). Serif statement + cognac italic on
- * "pensar jugando." → cognac hairline → SignatureBlock with
- * primary line + +100 detail. Warm, not solemn.
+ * Founder/method scene. Paper cream + KnightMark CSS accent on left
+ * rail. Statement with cognac italic on "pensar jugando." → cognac
+ * hairline → SignatureBlock. Right rail holds a Portrait slot for
+ * César Litvinov — renders the approved photo when dropped at
+ * apps/video/public/portraits/cesar-litvinov.jpg, otherwise a paper
+ * placeholder card with serif italic initials. Layout stays fixed
+ * either way (drop-in upgrade).
  */
 export const PitchCoachVO: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const landscape = useIsLandscape();
+  const COPY = useACopy().scenes.coachVo;
+  const CESAR = useTeam().founders.find(
+    (f) => f.portraitKey === "cesar-litvinov",
+  );
 
   const knightOpacity = interpolate(frame, [0, 0.6 * fps], [0, 1], {
     extrapolateRight: "clamp",
@@ -65,6 +73,18 @@ export const PitchCoachVO: React.FC = () => {
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
 
+  /* Portrait card enters slightly after the statement, anchored entry */
+  const portraitOpacity = interpolate(
+    frame,
+    [0.5 * fps, 1.3 * fps],
+    [0, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+  const portraitY = interpolate(frame, [0.5 * fps, 1.3 * fps], [12, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
   const bgOpacity = interpolate(frame, [0, 1.0 * fps], [0, 1], {
     extrapolateRight: "clamp",
   });
@@ -77,55 +97,79 @@ export const PitchCoachVO: React.FC = () => {
         style={{
           padding: `0 ${PITCH_THEME.space.side}px`,
           display: "flex",
-          flexDirection: "column",
-          alignItems: landscape ? "flex-start" : "center",
-          justifyContent: "center",
-          gap: 28,
-          maxWidth: landscape ? 1500 : undefined,
+          flexDirection: landscape ? "row" : "column",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: landscape ? 80 : 48,
+          maxWidth: landscape ? 1700 : undefined,
           margin: "0 auto",
         }}
       >
-        <KnightMark
-          opacity={knightOpacity}
-          scale={knightScale}
-        />
-
+        {/* ── Left rail: KnightMark + statement + signature ── */}
         <div
           style={{
-            opacity: statementOpacity,
-            transform: `translateY(${statementY}px)`,
-            fontFamily: PITCH_THEME.type.serif,
-            fontSize: landscape ? 80 : 56,
-            fontWeight: 500,
-            lineHeight: 1.1,
-            color: LIGHT.text.primary,
-            letterSpacing: -0.4,
-            maxWidth: landscape ? 1200 : 880,
-            textAlign: landscape ? "left" : "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: landscape ? "flex-start" : "center",
+            gap: 26,
+            maxWidth: landscape ? 1000 : 880,
           }}
         >
-          <HighlightWord
-            text={COPY.statement}
-            highlight={COPY.highlight}
-            highlightOpacity={highlightOpacity}
-            color={LIGHT.accent.primary}
-            glow={false}
-          />
+          <KnightMark opacity={knightOpacity} scale={knightScale} />
+
+          <div
+            style={{
+              opacity: statementOpacity,
+              transform: `translateY(${statementY}px)`,
+              fontFamily: PITCH_THEME.type.serif,
+              fontSize: landscape ? 90 : 64,
+              fontWeight: 500,
+              lineHeight: 1.1,
+              color: LIGHT.text.primary,
+              letterSpacing: -0.4,
+              textAlign: landscape ? "left" : "center",
+            }}
+          >
+            <HighlightWord
+              text={COPY.statement}
+              highlight={COPY.highlight}
+              highlightOpacity={highlightOpacity}
+              color={LIGHT.accent.primary}
+              glow={false}
+            />
+          </div>
+
+          <div style={{ opacity: signatureOpacity }}>
+            <SignatureBlock
+              primary={COPY.signaturePrimary}
+              secondary={COPY.signatureDetail}
+              align={landscape ? "left" : "center"}
+              onPaper
+            />
+          </div>
         </div>
 
-        <div
-          style={{
-            opacity: signatureOpacity,
-          }}
-        >
-          <SignatureBlock
-            primary={COPY.signaturePrimary}
-            secondary={COPY.signatureDetail}
-            align={landscape ? "left" : "center"}
-            onPaper
-          />
-        </div>
+        {/* ── Right rail: portrait card (real or placeholder) ── */}
+        {landscape && CESAR && (
+          <div
+            style={{
+              opacity: portraitOpacity,
+              transform: `translateY(${portraitY}px)`,
+            }}
+          >
+            <Portrait
+              name={CESAR.realName}
+              role={CESAR.role}
+              portraitKey={CESAR.portraitKey ?? undefined}
+              hasAsset={CESAR.hasPortraitAsset}
+              size="md"
+              rotateDeg={0}
+            />
+          </div>
+        )}
       </AbsoluteFill>
+
+      <BrandMasthead />
     </AbsoluteFill>
   );
 };
@@ -135,11 +179,6 @@ interface KnightProps {
   scale: number;
 }
 
-/**
- * Minimal CSS knight (L-step pattern) — two stacked cells offset
- * to suggest the L-move. Cognac stroke at low alpha. Not literal
- * pictogram, not external asset.
- */
 const KnightMark: React.FC<KnightProps> = ({ opacity, scale }) => {
   const cell = 22;
   return (

@@ -6,16 +6,16 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { PITCH_A_COPY } from "../../lib/pitch-copy";
+import { useACopy } from "../../lib/pitch-locale";
 import { PITCH_THEME, useIsLandscape } from "../../lib/pitch-theme";
 import {
+  BrandMasthead,
   EditorialPaperBackground,
   HighlightWord,
   ProductPhone,
   ValueCard,
 } from "./_shared";
 
-const COPY = PITCH_A_COPY.scenes.sovereignty;
 const LIGHT = PITCH_THEME.light;
 
 /**
@@ -29,6 +29,7 @@ export const PitchSovereignty: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const landscape = useIsLandscape();
+  const COPY = useACopy().scenes.sovereignty;
 
   const phoneScale = spring({
     frame,
@@ -146,7 +147,7 @@ export const PitchSovereignty: React.FC = () => {
 
         <ProductPhone
           screenshotKey={COPY.screenshotKey}
-          width={landscape ? 500 : 540}
+          width={landscape ? 420 : 480}
           opacity={phoneOpacity}
           translateX={phoneX}
           scale={breathScale}
@@ -155,6 +156,8 @@ export const PitchSovereignty: React.FC = () => {
           tone="light"
         />
       </AbsoluteFill>
+
+      <BrandMasthead />
     </AbsoluteFill>
   );
 };
