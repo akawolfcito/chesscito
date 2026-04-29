@@ -2,7 +2,8 @@ import React from "react";
 import { AbsoluteFill } from "remotion";
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
-import { PITCH_B_COPY } from "./lib/pitch-copy";
+import { PITCH_B_COPY, type PitchLocale } from "./lib/pitch-copy";
+import { PitchLocaleProvider } from "./lib/pitch-locale";
 import { PITCH_THEME } from "./lib/pitch-theme";
 import { PitchHookCaregiver } from "./scenes/pitch/caregiver/PitchHookCaregiver";
 import { PitchProblemCaregiver } from "./scenes/pitch/caregiver/PitchProblemCaregiver";
@@ -32,7 +33,19 @@ export const B_DURATION =
   Object.values(S).reduce((sum, scene) => sum + scene.durationFrames, 0) -
   10 * B_TRANSITION_FRAMES;
 
-export const ChesscitoPitchCaregiver: React.FC = () => {
+interface CaregiverProps {
+  /**
+   * v3.9 — locale prop for parity with the A-Cut Composition. The
+   * B-Cut Spanish-only academic block (Cibeira citation) does not
+   * translate; A-Cut shared scenes consumed by B-Cut (CoachVO,
+   * Arena, Sovereignty, TeamMini, CapabilityShow) DO translate.
+   */
+  locale?: PitchLocale;
+}
+
+export const ChesscitoPitchCaregiver: React.FC<CaregiverProps> = ({
+  locale = "es",
+}) => {
   const trans = (
     <TransitionSeries.Transition
       presentation={fade()}
@@ -41,8 +54,9 @@ export const ChesscitoPitchCaregiver: React.FC = () => {
   );
 
   return (
-    <AbsoluteFill style={{ backgroundColor: PITCH_THEME.bg.base }}>
-      <TransitionSeries>
+    <PitchLocaleProvider locale={locale}>
+      <AbsoluteFill style={{ backgroundColor: PITCH_THEME.bg.base }}>
+        <TransitionSeries>
         <TransitionSeries.Sequence durationInFrames={S.hook.durationFrames}>
           <PitchHookCaregiver />
         </TransitionSeries.Sequence>
@@ -94,7 +108,8 @@ export const ChesscitoPitchCaregiver: React.FC = () => {
         <TransitionSeries.Sequence durationInFrames={S.cta.durationFrames}>
           <PitchCTACaregiver />
         </TransitionSeries.Sequence>
-      </TransitionSeries>
-    </AbsoluteFill>
+        </TransitionSeries>
+      </AbsoluteFill>
+    </PitchLocaleProvider>
   );
 };

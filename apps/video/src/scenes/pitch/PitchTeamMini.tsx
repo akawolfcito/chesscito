@@ -2,80 +2,101 @@ import React from "react";
 import {
   AbsoluteFill,
   interpolate,
-  spring,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { PITCH_A_COPY } from "../../lib/pitch-copy";
+import { useACopy, useBrand, useTeam } from "../../lib/pitch-locale";
 import { PITCH_THEME, useIsLandscape } from "../../lib/pitch-theme";
-import { EditorialPaperBackground, HighlightWord } from "./_shared";
+import {
+  BrandFooter,
+  BrandMasthead,
+  EditorialPaperBackground,
+  HighlightWord,
+  Portrait,
+  type PortraitKey,
+} from "./_shared";
 
-const COPY = PITCH_A_COPY.scenes.teamMini;
 const LIGHT = PITCH_THEME.light;
 
 /**
- * v3.2 — Light editorial warm.
+ * v3.4 — centered team-presentation hierarchy + "100+" as global
+ * editorial watermark.
  *
- * Foundational scene. Asymmetric paper layout: oversized outline
- * "100+" numeral on one side (decorative, NOT a metric), serif
- * title with cognac italic on "Convertido en juego." + caption +
- * cognac hairline + founders signature line.
+ * Layered composition:
+ *   1. paper gradient + warm pool (EditorialPaperBackground)
+ *   2. "100+" outline at very low alpha — sits behind everything as
+ *      ambient context (NOT a closing module)
+ *   3. content stack: title → subtitle → 2 founder cards → caption
  *
- * "100+" is methodological/pedagogical origin, not app traction —
- * caption "estudiantes" reinforces that.
+ * The watermark behaves as editorial depth: the eye reads the
+ * portraits first, then the giant "100+" feels like context the
+ * scene is drawing on, not a metric block competing for attention.
  */
+
+/** Display order on h08: César first, Luis second. */
+const PORTRAIT_DISPLAY_ORDER = ["cesar-litvinov", "luis-ushina"] as const;
+
 export const PitchTeamMini: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const landscape = useIsLandscape();
-
-  const numberScale = spring({
-    frame,
-    fps,
-    from: 0.9,
-    to: 1,
-    config: PITCH_THEME.motion.spring.soft,
-  });
-  const numberOpacity = interpolate(frame, [0, 0.7 * fps], [0, 0.18], {
-    extrapolateRight: "clamp",
+  const COPY = useACopy().scenes.teamMini;
+  const PITCH_BRAND = useBrand();
+  const team = useTeam();
+  const PORTRAIT_FOUNDERS = PORTRAIT_DISPLAY_ORDER.flatMap((key) => {
+    const found = team.founders.find((f) => f.portraitKey === key);
+    return found ? [found] : [];
   });
 
-  const titleY = interpolate(frame, [0.2 * fps, 0.9 * fps], [22, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const titleOpacity = interpolate(
+  /* Watermark fades in early and stays as ambient depth */
+  const watermarkOpacity = interpolate(
     frame,
-    [0.2 * fps, 0.9 * fps],
-    [0, 1],
+    [0.2 * fps, 1.4 * fps],
+    [0, 0.09],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
+
+  const titleY = interpolate(frame, [0, 0.7 * fps], [22, 0], {
+    extrapolateRight: "clamp",
+  });
+  const titleOpacity = interpolate(frame, [0, 0.7 * fps], [0, 1], {
+    extrapolateRight: "clamp",
+  });
   const highlightOpacity = interpolate(
     frame,
-    [0.7 * fps, 1.2 * fps],
+    [0.5 * fps, 1.0 * fps],
     [0, 1],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
 
   const subtitleOpacity = interpolate(
     frame,
-    [1.0 * fps, 1.5 * fps],
+    [0.8 * fps, 1.3 * fps],
     [0, 1],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
 
-  const ruleOpacity = interpolate(frame, [1.3 * fps, 1.8 * fps], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const ruleScaleX = interpolate(frame, [1.3 * fps, 1.8 * fps], [0.5, 1], {
+  const cardsOpacity = interpolate(
+    frame,
+    [1.1 * fps, 1.7 * fps],
+    [0, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+  const cardsY = interpolate(frame, [1.1 * fps, 1.7 * fps], [14, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  const signatureOpacity = interpolate(
+  const captionOpacity = interpolate(
     frame,
-    [1.5 * fps, 2.0 * fps],
+    [1.7 * fps, 2.2 * fps],
+    [0, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+
+  const brandFooterOpacity = interpolate(
+    frame,
+    [2.0 * fps, 2.5 * fps],
     [0, 1],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
@@ -85,45 +106,60 @@ export const PitchTeamMini: React.FC = () => {
   });
 
   return (
-    <AbsoluteFill
-      style={{
-        backgroundColor: LIGHT.bg.alt,
-      }}
-    >
-      <EditorialPaperBackground opacity={bgOpacity} warmPool={{ x: 28, y: 50 }} />
+    <AbsoluteFill style={{ backgroundColor: LIGHT.bg.alt }}>
+      <EditorialPaperBackground opacity={bgOpacity} warmPool={{ x: 50, y: 30 }} />
 
-      {/* ── Oversized "100+" outline numeral (decorative) ── */}
-      <BigNumber
-        opacity={numberOpacity}
-        scale={numberScale}
-        landscape={landscape}
-        label={COPY.foundingNumber}
-        caption={COPY.foundingNumberCaption}
-      />
+      {/* ── "100+" global editorial watermark ── */}
+      <AbsoluteFill
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+          opacity: watermarkOpacity,
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            fontFamily: PITCH_THEME.type.serif,
+            fontSize: landscape ? 720 : 360,
+            fontWeight: 300,
+            lineHeight: 0.85,
+            color: "transparent",
+            WebkitTextStroke: `2px ${LIGHT.accent.primary}`,
+            letterSpacing: landscape ? -10 : -6,
+          }}
+        >
+          {COPY.foundingNumber}
+        </div>
+      </AbsoluteFill>
 
+      {/* ── Content stack ── */}
       <AbsoluteFill
         style={{
           padding: `0 ${PITCH_THEME.space.side}px`,
           display: "flex",
           flexDirection: "column",
-          alignItems: landscape ? "flex-end" : "center",
+          alignItems: "center",
           justifyContent: "center",
-          gap: 22,
+          gap: 18,
         }}
       >
+        {/* Section title */}
         <div
           style={{
             opacity: titleOpacity,
             transform: `translateY(${titleY}px)`,
             fontFamily: PITCH_THEME.type.serif,
-            fontSize: landscape ? 88 : 60,
+            fontSize: landscape ? 60 : 44,
             fontWeight: 500,
-            lineHeight: 1.02,
+            lineHeight: 1.05,
             color: LIGHT.text.primary,
-            letterSpacing: -0.5,
+            letterSpacing: -0.4,
             whiteSpace: "pre-line",
-            textAlign: landscape ? "right" : "center",
-            maxWidth: landscape ? 980 : 880,
+            textAlign: "center",
+            maxWidth: 1100,
           }}
         >
           <HighlightWord
@@ -135,116 +171,144 @@ export const PitchTeamMini: React.FC = () => {
           />
         </div>
 
+        {/* Brief team intro subtitle */}
         <div
           style={{
             opacity: subtitleOpacity,
             fontFamily: PITCH_THEME.type.sans,
-            fontSize: landscape ? 22 : 20,
+            fontSize: landscape ? 22 : 18,
             color: LIGHT.text.secondary,
-            letterSpacing: 0.2,
+            letterSpacing: 0.3,
             fontWeight: 500,
-            lineHeight: 1.5,
+            textAlign: "center",
             maxWidth: 720,
-            textAlign: landscape ? "right" : "center",
           }}
         >
           {COPY.subtitle}
         </div>
 
-        <div
-          aria-hidden
-          style={{
-            width: 120,
-            height: 1,
-            background: `linear-gradient(90deg, rgba(184,137,59,0) 0%, ${LIGHT.accent.hairlineRgba} 50%, rgba(184,137,59,0) 100%)`,
-            opacity: ruleOpacity,
-            transform: `scaleX(${ruleScaleX})`,
-            transformOrigin: landscape ? "right" : "center",
-            alignSelf: landscape ? "flex-end" : "center",
-            marginTop: 6,
-          }}
-        />
-
+        {/* Founder cards row — Luis first, César second */}
         <div
           style={{
-            opacity: signatureOpacity,
-            fontFamily: PITCH_THEME.type.serif,
-            fontStyle: "italic",
-            fontSize: landscape ? 26 : 20,
-            color: LIGHT.text.secondary,
-            letterSpacing: 0.1,
-            textAlign: landscape ? "right" : "center",
-            alignSelf: landscape ? "flex-end" : "center",
+            display: "flex",
+            flexDirection: "row",
+            gap: landscape ? 56 : 28,
+            opacity: cardsOpacity,
+            transform: `translateY(${cardsY}px)`,
+            marginTop: landscape ? 24 : 18,
           }}
         >
-          {COPY.signatureLine}
+          {PORTRAIT_FOUNDERS.map((founder, i) => (
+            <FounderBlock
+              key={founder.realName}
+              founder={founder}
+              rotateDeg={0}
+            />
+          ))}
+        </div>
+
+        {/* Caption — closing line, paired with watermark via meaning */}
+        <div
+          style={{
+            opacity: captionOpacity,
+            fontFamily: PITCH_THEME.type.serif,
+            fontStyle: "italic",
+            fontSize: landscape ? 22 : 18,
+            color: LIGHT.text.secondary,
+            letterSpacing: 0.2,
+            textAlign: "center",
+            maxWidth: 720,
+            marginTop: landscape ? 28 : 22,
+          }}
+        >
+          {COPY.foundingNumberCaption}
         </div>
       </AbsoluteFill>
+
+      <BrandMasthead
+        size="md"
+        showDescriptor={false}
+        showByline
+        opacity={brandFooterOpacity}
+      />
+      <BrandFooter items={[PITCH_BRAND.byline]} opacity={brandFooterOpacity} />
     </AbsoluteFill>
   );
 };
 
-interface BigNumberProps {
-  opacity: number;
-  scale: number;
-  landscape: boolean;
-  label: string;
-  caption: string;
+interface FounderBlockProps {
+  founder: {
+    realName: string;
+    role: string;
+    tagline: string;
+    portraitKey: PortraitKey | null;
+    hasPortraitAsset: boolean;
+  };
+  rotateDeg: number;
 }
 
-/**
- * Oversized outline-only numeral. Cognac stroke at low alpha,
- * positioned on the left rail, slightly off-center. Reads as
- * editorial decoration, not as a chart number.
- */
-const BigNumber: React.FC<BigNumberProps> = ({
-  opacity,
-  scale,
-  landscape,
-  label,
-  caption,
-}) => {
+const FounderBlock: React.FC<FounderBlockProps> = ({ founder, rotateDeg }) => {
   return (
-    <AbsoluteFill style={{ pointerEvents: "none" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 10,
+        width: 380,
+      }}
+    >
+      <Portrait
+        name={founder.realName}
+        role={founder.role}
+        portraitKey={founder.portraitKey ?? undefined}
+        hasAsset={founder.hasPortraitAsset}
+        size="md"
+        rotateDeg={rotateDeg}
+      />
       <div
         style={{
-          position: "absolute",
-          left: landscape ? "6%" : "50%",
-          top: landscape ? "50%" : "18%",
-          transform: `translate(${landscape ? 0 : "-50%"}, -50%) scale(${scale})`,
-          transformOrigin: "left center",
-          opacity,
+          fontFamily: PITCH_THEME.type.serif,
+          fontSize: 38,
+          fontWeight: 500,
+          color: LIGHT.text.primary,
+          letterSpacing: -0.4,
+          textAlign: "center",
+          marginTop: 14,
+          lineHeight: 1.04,
         }}
       >
-        <div
-          style={{
-            fontFamily: PITCH_THEME.type.serif,
-            fontSize: landscape ? 460 : 240,
-            fontWeight: 300,
-            lineHeight: 0.85,
-            color: "transparent",
-            WebkitTextStroke: `2px ${PITCH_THEME.light.accent.primary}`,
-            letterSpacing: -8,
-          }}
-        >
-          {label}
-        </div>
-        <div
-          style={{
-            fontFamily: PITCH_THEME.type.sans,
-            fontSize: landscape ? 16 : 14,
-            fontWeight: 600,
-            color: PITCH_THEME.light.accent.primary,
-            letterSpacing: 3,
-            textTransform: "uppercase",
-            marginTop: 12,
-            marginLeft: 6,
-            opacity: 0.7,
-          }}
-        >
-          {caption}
-        </div>
+        {founder.realName}
       </div>
-    </AbsoluteFill>
+      <div
+        style={{
+          fontFamily: PITCH_THEME.type.sans,
+          fontSize: 15,
+          fontWeight: 700,
+          color: LIGHT.accent.primary,
+          letterSpacing: 1.8,
+          textTransform: "uppercase",
+          textAlign: "center",
+          marginTop: 4,
+        }}
+      >
+        {founder.role}
+      </div>
+      <div
+        style={{
+          fontFamily: PITCH_THEME.type.serif,
+          fontStyle: "italic",
+          fontSize: 19,
+          color: LIGHT.text.secondary,
+          letterSpacing: 0.1,
+          textAlign: "center",
+          lineHeight: 1.4,
+          maxWidth: 360,
+          marginTop: 6,
+        }}
+      >
+        {founder.tagline}
+      </div>
+    </div>
   );
 };

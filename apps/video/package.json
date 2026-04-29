@@ -19,7 +19,8 @@
     "@remotion/transitions": "4.0.435",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "remotion": "4.0.435"
+    "remotion": "4.0.435",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@types/node": "20.11.30",

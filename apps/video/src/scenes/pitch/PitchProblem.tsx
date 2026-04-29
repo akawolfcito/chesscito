@@ -6,15 +6,15 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { PITCH_A_COPY } from "../../lib/pitch-copy";
+import { useACopy } from "../../lib/pitch-locale";
 import { PITCH_THEME, useIsLandscape } from "../../lib/pitch-theme";
 import {
+  BrandMasthead,
   EditorialPaperBackground,
   HighlightWord,
   ValueCard,
 } from "./_shared";
 
-const COPY = PITCH_A_COPY.scenes.problem;
 const LIGHT = PITCH_THEME.light;
 
 /**
@@ -33,6 +33,7 @@ export const PitchProblem: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const landscape = useIsLandscape();
+  const COPY = useACopy().scenes.problem;
 
   const titleY = interpolate(frame, [0, 0.6 * fps], [22, 0], {
     extrapolateRight: "clamp",
@@ -107,7 +108,7 @@ export const PitchProblem: React.FC = () => {
         {/* ── Left rail: editorial title ── */}
         <div
           style={{
-            maxWidth: landscape ? 880 : 880,
+            maxWidth: landscape ? 1200 : 880,
             textAlign: landscape ? "left" : "center",
             display: "flex",
             flexDirection: "column",
@@ -121,7 +122,7 @@ export const PitchProblem: React.FC = () => {
               opacity: titleOpacity,
               transform: `translateY(${titleY}px)`,
               fontFamily: PITCH_THEME.type.serif,
-              fontSize: landscape ? 100 : 72,
+              fontSize: landscape ? 88 : 64,
               fontWeight: 500,
               lineHeight: 0.98,
               color: LIGHT.text.primary,
@@ -157,6 +158,8 @@ export const PitchProblem: React.FC = () => {
         {/* ── Right rail: value timeline ── */}
         <Timeline frame={frame} fps={fps} cards={COPY.valueCards} />
       </AbsoluteFill>
+
+      <BrandMasthead />
     </AbsoluteFill>
   );
 };

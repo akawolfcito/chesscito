@@ -6,17 +6,18 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { PITCH_A_COPY } from "../../lib/pitch-copy";
+import { useACopy } from "../../lib/pitch-locale";
 import { PITCH_THEME, useIsLandscape } from "../../lib/pitch-theme";
 import {
   Badge,
+  BrandMasthead,
+  EcosystemRow,
   EditorialPaperBackground,
   HighlightWord,
   ProductPhone,
   ValueCard,
 } from "./_shared";
 
-const COPY = PITCH_A_COPY.scenes.solution;
 const LIGHT = PITCH_THEME.light;
 
 /**
@@ -36,6 +37,7 @@ export const PitchSolution: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const landscape = useIsLandscape();
+  const COPY = useACopy().scenes.solution;
 
   /* Phone slide-in + scale settle */
   const phoneScale = spring({
@@ -86,13 +88,6 @@ export const PitchSolution: React.FC = () => {
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
 
-  const ctaScale = spring({
-    frame: frame - 1.8 * fps,
-    fps,
-    from: 0.97,
-    to: 1,
-    config: PITCH_THEME.motion.spring.soft,
-  });
   const ctaOpacity = interpolate(
     frame,
     [1.7 * fps, 2.1 * fps],
@@ -181,17 +176,14 @@ export const PitchSolution: React.FC = () => {
             align={landscape ? "flex-start" : "center"}
           />
 
-          <CtaButton
-            label={COPY.ctaLabel}
-            opacity={ctaOpacity}
-            scale={ctaScale}
-          />
+          {/* Ecosystem row replaces the CTA button per V3.8 brief */}
+          <EcosystemRow opacity={ctaOpacity} />
         </div>
 
         {/* ── Right rail: hero phone ── */}
         <ProductPhone
           screenshotKey={COPY.screenshotKey}
-          width={landscape ? 500 : 540}
+          width={landscape ? 420 : 480}
           opacity={phoneOpacity}
           translateX={phoneX}
           scale={breathScale}
@@ -200,6 +192,8 @@ export const PitchSolution: React.FC = () => {
           tone="light"
         />
       </AbsoluteFill>
+
+      <BrandMasthead />
     </AbsoluteFill>
   );
 };
@@ -252,48 +246,3 @@ const ValueCardsRow: React.FC<CardsProps> = ({ frame, fps, cards, align }) => {
   );
 };
 
-interface CtaProps {
-  label: string;
-  opacity: number;
-  scale: number;
-}
-
-/**
- * Decorative-only luxury CTA. Cognac solid, cream text, soft drop.
- * The video has no real click target; this is a visual affordance.
- */
-const CtaButton: React.FC<CtaProps> = ({ label, opacity, scale }) => (
-  <div
-    style={{
-      opacity,
-      transform: `scale(${scale})`,
-      transformOrigin: "left center",
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 14,
-      padding: "18px 32px",
-      borderRadius: PITCH_THEME.radius.pill,
-      background: LIGHT.cta.bg,
-      boxShadow: LIGHT.cta.bgShadow,
-      color: LIGHT.cta.text,
-      fontFamily: PITCH_THEME.type.sans,
-      fontSize: 20,
-      fontWeight: 600,
-      letterSpacing: 0.4,
-      marginTop: 8,
-    }}
-  >
-    {label}
-    <span
-      aria-hidden
-      style={{
-        display: "inline-block",
-        width: 0,
-        height: 0,
-        borderTop: "6px solid transparent",
-        borderBottom: "6px solid transparent",
-        borderLeft: `8px solid ${LIGHT.cta.text}`,
-      }}
-    />
-  </div>
-);

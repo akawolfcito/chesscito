@@ -2,7 +2,8 @@ import React from "react";
 import { AbsoluteFill } from "remotion";
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
-import { PITCH_A_COPY } from "./lib/pitch-copy";
+import { PITCH_A_COPY, type PitchLocale } from "./lib/pitch-copy";
+import { PitchLocaleProvider } from "./lib/pitch-locale";
 import { PITCH_THEME } from "./lib/pitch-theme";
 import { PitchHook } from "./scenes/pitch/PitchHook";
 import { PitchProblem } from "./scenes/pitch/PitchProblem";
@@ -18,10 +19,8 @@ export const A_TRANSITION_FRAMES = 15;
 const S = PITCH_A_COPY.scenes;
 
 /**
- * v2 — premium / startup-game tone (2026-04-27).
- * The persistent A-Cut disclaimer was removed: the A-Cut deliberately
- * avoids any clinical or defensive language. The medical disclaimer
- * lives only in the B-Cut (`ChesscitoPitchCaregiver`) as fine-print.
+ * Scene durations are locale-independent (same numbers for ES & EN),
+ * so we read them from the ES copy. Only the strings translate.
  */
 export const A_DURATION =
   Object.values(S).reduce((sum, scene) => sum + scene.durationFrames, 0) -
@@ -29,9 +28,14 @@ export const A_DURATION =
 
 interface Props {
   ctaVariant?: CtaVariant;
+  /** v3.9 — i18n locale for all on-screen text. Defaults to "es". */
+  locale?: PitchLocale;
 }
 
-export const ChesscitoPitch: React.FC<Props> = ({ ctaVariant = "social" }) => {
+export const ChesscitoPitch: React.FC<Props> = ({
+  ctaVariant = "social",
+  locale = "es",
+}) => {
   const trans = (
     <TransitionSeries.Transition
       presentation={fade()}
@@ -40,48 +44,50 @@ export const ChesscitoPitch: React.FC<Props> = ({ ctaVariant = "social" }) => {
   );
 
   return (
-    <AbsoluteFill style={{ backgroundColor: PITCH_THEME.bg.base }}>
-      <TransitionSeries>
-        <TransitionSeries.Sequence durationInFrames={S.hook.durationFrames}>
-          <PitchHook />
-        </TransitionSeries.Sequence>
-        {trans}
-        <TransitionSeries.Sequence durationInFrames={S.problem.durationFrames}>
-          <PitchProblem />
-        </TransitionSeries.Sequence>
-        {trans}
-        <TransitionSeries.Sequence
-          durationInFrames={S.capabilityShow.durationFrames}
-        >
-          <PitchCapabilityShow />
-        </TransitionSeries.Sequence>
-        {trans}
-        <TransitionSeries.Sequence durationInFrames={S.solution.durationFrames}>
-          <PitchSolution />
-        </TransitionSeries.Sequence>
-        {trans}
-        <TransitionSeries.Sequence durationInFrames={S.coachVo.durationFrames}>
-          <PitchCoachVO />
-        </TransitionSeries.Sequence>
-        {trans}
-        <TransitionSeries.Sequence durationInFrames={S.arena.durationFrames}>
-          <PitchArena />
-        </TransitionSeries.Sequence>
-        {trans}
-        <TransitionSeries.Sequence
-          durationInFrames={S.sovereignty.durationFrames}
-        >
-          <PitchSovereignty />
-        </TransitionSeries.Sequence>
-        {trans}
-        <TransitionSeries.Sequence durationInFrames={S.teamMini.durationFrames}>
-          <PitchTeamMini />
-        </TransitionSeries.Sequence>
-        {trans}
-        <TransitionSeries.Sequence durationInFrames={S.cta.durationFrames}>
-          <PitchCTA variant={ctaVariant} />
-        </TransitionSeries.Sequence>
-      </TransitionSeries>
-    </AbsoluteFill>
+    <PitchLocaleProvider locale={locale}>
+      <AbsoluteFill style={{ backgroundColor: PITCH_THEME.bg.base }}>
+        <TransitionSeries>
+          <TransitionSeries.Sequence durationInFrames={S.hook.durationFrames}>
+            <PitchHook />
+          </TransitionSeries.Sequence>
+          {trans}
+          <TransitionSeries.Sequence durationInFrames={S.problem.durationFrames}>
+            <PitchProblem />
+          </TransitionSeries.Sequence>
+          {trans}
+          <TransitionSeries.Sequence
+            durationInFrames={S.capabilityShow.durationFrames}
+          >
+            <PitchCapabilityShow />
+          </TransitionSeries.Sequence>
+          {trans}
+          <TransitionSeries.Sequence durationInFrames={S.solution.durationFrames}>
+            <PitchSolution />
+          </TransitionSeries.Sequence>
+          {trans}
+          <TransitionSeries.Sequence durationInFrames={S.coachVo.durationFrames}>
+            <PitchCoachVO />
+          </TransitionSeries.Sequence>
+          {trans}
+          <TransitionSeries.Sequence durationInFrames={S.arena.durationFrames}>
+            <PitchArena />
+          </TransitionSeries.Sequence>
+          {trans}
+          <TransitionSeries.Sequence
+            durationInFrames={S.sovereignty.durationFrames}
+          >
+            <PitchSovereignty />
+          </TransitionSeries.Sequence>
+          {trans}
+          <TransitionSeries.Sequence durationInFrames={S.teamMini.durationFrames}>
+            <PitchTeamMini />
+          </TransitionSeries.Sequence>
+          {trans}
+          <TransitionSeries.Sequence durationInFrames={S.cta.durationFrames}>
+            <PitchCTA variant={ctaVariant} />
+          </TransitionSeries.Sequence>
+        </TransitionSeries>
+      </AbsoluteFill>
+    </PitchLocaleProvider>
   );
 };
