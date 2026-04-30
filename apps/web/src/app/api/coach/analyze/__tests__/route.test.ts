@@ -232,4 +232,101 @@ describe("POST /api/coach/analyze", () => {
     const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
     expect(res.status).toEqual(500);
   });
+
+  describe("Chesscito PRO bypass", () => {
+    const PRO_KEY = `coach:pro:${VALID_WALLET}`;
+    const NOW = 1_700_000_000_000;
+    const FUTURE = NOW + 5 * 24 * 60 * 60 * 1000;
+
+    function setupProActiveRedis(opts: { credits?: number | null } = {}) {
+      const visited: string[] = [];
+      redisMock.get.mockImplementation((key: string) => {
+        visited.push(key);
+        if (key === `coach:analysis:${VALID_WALLET}:${VALID_GAME_ID}`) return Promise.resolve(null);
+        if (key === `coach:job-ref:${VALID_WALLET}:${VALID_GAME_ID}`) return Promise.resolve(null);
+        if (key === `coach:pending:${VALID_WALLET}`) return Promise.resolve(null);
+        if (key === PRO_KEY) return Promise.resolve(String(FUTURE));
+        if (key === `coach:credits:${VALID_WALLET}`) return Promise.resolve(opts.credits ?? null);
+        if (key === `coach:game:${VALID_WALLET}:${VALID_GAME_ID}`) {
+          return Promise.resolve({
+            gameId: VALID_GAME_ID,
+            moves: ["e4", "e5"],
+            result: "win",
+            difficulty: "easy",
+          });
+        }
+        if (key === `coach:summary:${VALID_WALLET}`) return Promise.resolve(null);
+        return Promise.resolve(null);
+      });
+      return visited;
+    }
+
+    beforeEach(() => {
+      vi.spyOn(Date, "now").mockReturnValue(NOW);
+      openaiCreate.mockResolvedValue({
+        choices: [{ message: { content: '{"summary":"nice play"}' } }],
+      });
+    });
+
+    it("PRO active + credits=0 still succeeds (real bypass)", async () => {
+      setupProActiveRedis({ credits: 0 });
+
+      const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+      expect(res.status).toEqual(200);
+      const body = await res.json();
+      expect(body.status).toEqual("ready");
+    });
+
+    it("PRO active never reads coach:credits and never decrements", async () => {
+      const visited = setupProActiveRedis({ credits: 0 });
+
+      const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+      expect(res.status).toEqual(200);
+      // Regression guard: the credit balance key must NEVER be queried
+      // when PRO is active — proves the bypass took the early branch.
+      expect(visited).not.toContain(`coach:credits:${VALID_WALLET}`);
+      expect(redisMock.decr).not.toHaveBeenCalled();
+    });
+
+    it("PRO active response includes proActive: true", async () => {
+      setupProActiveRedis();
+
+      const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+      expect(res.status).toEqual(200);
+      expect(await res.json()).toEqual({
+        status: "ready",
+        response: { summary: "nice play" },
+        proActive: true,
+      });
+    });
+
+    it("PRO expired falls back to free-tier behavior (reads credits, decrements, no proActive flag)", async () => {
+      const PAST = NOW - 1;
+      const visited: string[] = [];
+      redisMock.get.mockImplementation((key: string) => {
+        visited.push(key);
+        if (key === `coach:analysis:${VALID_WALLET}:${VALID_GAME_ID}`) return Promise.resolve(null);
+        if (key === `coach:job-ref:${VALID_WALLET}:${VALID_GAME_ID}`) return Promise.resolve(null);
+        if (key === `coach:pending:${VALID_WALLET}`) return Promise.resolve(null);
+        if (key === PRO_KEY) return Promise.resolve(String(PAST));
+        if (key === `coach:credits:${VALID_WALLET}`) return Promise.resolve(5);
+        if (key === `coach:game:${VALID_WALLET}:${VALID_GAME_ID}`) {
+          return Promise.resolve({
+            gameId: VALID_GAME_ID,
+            moves: ["e4", "e5"],
+            result: "win",
+            difficulty: "easy",
+          });
+        }
+        return Promise.resolve(null);
+      });
+
+      const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+      expect(res.status).toEqual(200);
+      const body = await res.json();
+      expect(body.proActive).toBeUndefined();
+      expect(visited).toContain(`coach:credits:${VALID_WALLET}`);
+      expect(redisMock.decr).toHaveBeenCalledWith(`coach:credits:${VALID_WALLET}`);
+    });
+  });
 });

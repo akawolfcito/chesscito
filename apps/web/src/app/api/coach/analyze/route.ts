@@ -6,6 +6,7 @@ import { validateGameRecord } from "@/lib/coach/validate-game";
 import { normalizeCoachResponse } from "@/lib/coach/normalize";
 import { buildCoachPrompt } from "@/lib/coach/prompt-template";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
+import { isProActive } from "@/lib/pro/is-active";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type { GameRecord, CoachAnalysisRecord, PlayerSummary } from "@/lib/coach/types";
 
@@ -72,10 +73,19 @@ export async function POST(req: Request) {
       [FREE_CREDITS],
     );
 
-    // --- Credit check ---
-    const credits = (await redis.get<number>(REDIS_KEYS.credits(wallet))) ?? 0;
-    if (credits <= 0) {
-      return NextResponse.json({ error: "No credits available" }, { status: 402 });
+    // --- Chesscito PRO bypass: capture-once at the top of the request.
+    // If PRO is active we skip the credit read and the credit decrement
+    // entirely. The decision is honored to the end of the request even
+    // if PRO expires mid-LLM-call — paying customers always finish the
+    // analysis they started. ---
+    const proStatus = await isProActive(wallet);
+
+    // --- Credit check (skipped for PRO) ---
+    if (!proStatus.active) {
+      const credits = (await redis.get<number>(REDIS_KEYS.credits(wallet))) ?? 0;
+      if (credits <= 0) {
+        return NextResponse.json({ error: "No credits available" }, { status: 402 });
+      }
     }
 
     // --- Fetch game record ---
@@ -156,12 +166,16 @@ export async function POST(req: Request) {
       await Promise.all([
         redis.set(REDIS_KEYS.analysis(wallet, gameId), analysisRecord, { ex: 30 * 24 * 60 * 60 }),
         redis.lpush(REDIS_KEYS.analysisList(wallet), gameId),
-        redis.decr(REDIS_KEYS.credits(wallet)),
+        ...(proStatus.active ? [] : [redis.decr(REDIS_KEYS.credits(wallet))]),
         redis.set(REDIS_KEYS.job(jobId), { status: "ready", response: normalized.data }, { ex: 30 * 24 * 60 * 60 }),
         redis.del(REDIS_KEYS.pendingJob(wallet)),
       ]);
 
-      return NextResponse.json({ status: "ready", response: normalized.data });
+      return NextResponse.json({
+        status: "ready",
+        response: normalized.data,
+        ...(proStatus.active ? { proActive: true } : {}),
+      });
     } catch (err) {
       const internal = err instanceof Error ? err.message : "Unknown error";
       const reason = "Analysis failed, please retry";
