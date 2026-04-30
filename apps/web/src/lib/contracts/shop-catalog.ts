@@ -71,3 +71,22 @@ export const COACH_PACK_ITEMS: Record<CoachPackSize, { itemId: bigint; priceUsd6
   5: { itemId: 3n, priceUsd6: 50_000n },   // $0.05
   20: { itemId: 4n, priceUsd6: 100_000n }, // $0.10
 } as const;
+
+/** Chesscito PRO — first commercial SKU. Phase 0 monthly pass at
+ *  $1.99 that unlocks unlimited Coach analyses (bypasses the
+ *  coach:credits ledger). Sold via Shop.buyItem like coach packs.
+ *  Verification at /api/verify-pro stores expiresAt at
+ *  coach:pro:<wallet> with a 30-day TTL.
+ *
+ *  Intentionally NOT included in `SHOP_ITEMS` — PRO renders as its
+ *  own stand-alone card in /play-hub instead of mixing into the
+ *  founder/shield row.
+ *
+ *  Admin must call:
+ *    ShopUpgradeable.setItem(6, 1_990_000, true)
+ *  in Celo Mainnet with the admin wallet before the buy CTA in the
+ *  PRO card becomes purchasable. Until then verify-pro will see no
+ *  matching ItemPurchased event and the buy attempt will fail. */
+export const PRO_ITEM_ID = 6n;
+export const PRO_PRICE_USD6 = 1_990_000n; // $1.99
+export const PRO_DURATION_DAYS = 30;

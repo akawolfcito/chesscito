@@ -3,6 +3,9 @@ import {
   COACH_PACK_ITEMS,
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
+  PRO_DURATION_DAYS,
+  PRO_ITEM_ID,
+  PRO_PRICE_USD6,
   SHIELDS_PER_PURCHASE,
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
@@ -53,5 +56,15 @@ describe("shop-catalog", () => {
     const unit5 = Number(COACH_PACK_ITEMS[5].priceUsd6) / 5;
     const unit20 = Number(COACH_PACK_ITEMS[20].priceUsd6) / 20;
     expect(unit20).toBeLessThan(unit5);
+  });
+
+  it("publishes Chesscito PRO as itemId 6n at $1.99 (1_990_000 USD6) for a 30-day pass", () => {
+    expect(PRO_ITEM_ID).toBe(6n);
+    expect(PRO_PRICE_USD6).toBe(1_990_000n);
+    expect(PRO_DURATION_DAYS).toBe(30);
+  });
+
+  it("does not include PRO in the SHOP_ITEMS row — PRO renders as its own stand-alone card", () => {
+    expect(SHOP_ITEMS.find((i) => i.itemId === PRO_ITEM_ID)).toBeUndefined();
   });
 });
