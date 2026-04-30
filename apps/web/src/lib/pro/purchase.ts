@@ -1,4 +1,4 @@
-import { erc20Abi, type PublicClient } from "viem";
+import { erc20Abi, type Abi, type PublicClient } from "viem";
 
 import { shopAbi } from "@/lib/contracts/shop";
 import { PRO_ITEM_ID, PRO_PRICE_USD6 } from "@/lib/contracts/shop-catalog";
@@ -11,16 +11,16 @@ function toErrorMessage(error: unknown): string {
   return String(error);
 }
 
-/** Subset of wagmi's writeContractAsync that the helper needs. The
- *  helper accepts the full wagmi callable so the play-hub root can
- *  pass `writeShopAsync` directly without an adapter. */
+/** Loose shape of wagmi's `writeContractAsync` good enough for the two
+ *  call sites (erc20.approve + shop.buyItem). wagmi's real signature is
+ *  generic over the ABI item, but for the helper we accept the call
+ *  with `Abi` + `unknown[]` args because every call site provides
+ *  concrete typed args at the use site (viem will still validate). */
 type WriteContractAsync = (args: {
   address: `0x${string}`;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  abi: any;
+  abi: Abi;
   functionName: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  args: readonly any[];
+  args: readonly unknown[];
   chainId: number;
   account: `0x${string}`;
 }) => Promise<`0x${string}`>;
