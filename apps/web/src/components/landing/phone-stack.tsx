@@ -42,16 +42,14 @@ export function PhoneStack({
       ? "md:right-[-22%] md:rotate-[8deg]"
       : "md:left-[-22%] md:-rotate-[8deg]";
 
-  const mobileOffset =
-    variant === "right" ? "translate-x-3 rotate-3" : "-translate-x-3 -rotate-3";
-
   return (
     <div className="relative mx-auto w-full max-w-[420px]">
-      {/* Secondary frame — sits behind the primary on desktop, tucked
-          slightly to the side on mobile so it's still legible. */}
+      {/* Secondary frame — desktop-only. On mobile we keep just the
+          primary so the hero stays compact (the secondary screenshot
+          re-appears later in the §3 cognitive section anyway). */}
       <div
-        aria-hidden={false}
-        className={`mx-auto w-[68%] opacity-90 md:absolute md:top-[10%] md:w-[58%] md:opacity-95 ${secondaryOffset} ${mobileOffset}`}
+        aria-hidden={true}
+        className={`hidden md:absolute md:top-[10%] md:block md:w-[58%] md:opacity-95 ${secondaryOffset}`}
         style={{
           filter: "drop-shadow(0 14px 24px rgba(40, 22, 8, 0.28))",
         }}
@@ -72,7 +70,7 @@ export function PhoneStack({
       {/* Primary frame — full opacity, anchors the composition. The
           relative wrapper keeps the floating node positioned over it
           rather than over the stack container. */}
-      <div className="relative z-10 mx-auto -mt-6 md:mt-0">
+      <div className="relative z-10 mx-auto md:mt-0">
         <PhoneFrame label={primary.label}>
           <picture>
             <source srcSet={`${primary.src}.avif`} type="image/avif" />

@@ -61,10 +61,10 @@ export function LandingPage() {
       </header>
 
       {/* §1 Hero — split on desktop, stacked on mobile */}
-      <section className="mx-auto grid w-full max-w-[1200px] grid-cols-1 items-center gap-10 px-5 py-12 md:grid-cols-2 md:gap-16 md:px-10 md:py-24">
+      <section className="mx-auto grid w-full max-w-[1200px] grid-cols-1 items-center gap-8 px-5 pb-10 pt-6 md:grid-cols-2 md:gap-16 md:px-10 md:py-24">
         <div className="flex flex-col items-start gap-5 text-left">
           <span
-            className="inline-flex items-center rounded-full border px-3 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.18em]"
+            className="inline-flex items-center rounded-full border px-3 py-1 text-[0.65rem] font-extrabold uppercase tracking-[0.12em] md:tracking-[0.18em]"
             style={{
               background: "rgba(255, 248, 230, 0.85)",
               borderColor: "var(--landing-accent-border-strong)",
@@ -75,7 +75,7 @@ export function LandingPage() {
             {LANDING_COPY.hero.eyebrow}
           </span>
           <h1
-            className="fantasy-title text-3xl font-extrabold leading-tight md:text-5xl md:leading-[1.05]"
+            className="fantasy-title text-[1.75rem] font-extrabold leading-[1.1] md:text-5xl md:leading-[1.05]"
             style={{
               color: "var(--landing-text)",
               textShadow: "var(--landing-title-glow)",
@@ -84,12 +84,12 @@ export function LandingPage() {
             {LANDING_COPY.hero.headline}
           </h1>
           <p
-            className="max-w-[36ch] text-base leading-relaxed md:text-lg"
+            className="max-w-[36ch] text-[0.95rem] leading-relaxed md:text-lg"
             style={{ color: "var(--paper-text-muted)" }}
           >
             {LANDING_COPY.hero.subcopy}
           </p>
-          <div className="flex w-full max-w-[320px] flex-col gap-2.5 md:w-auto md:flex-row md:gap-3">
+          <div className="flex w-full flex-col gap-2.5 md:w-auto md:flex-row md:gap-3">
             <Button asChild variant="game-primary" size="game" className="md:!w-auto md:px-8">
               <Link href="/hub" onClick={onCta("hero-primary")}>
                 {LANDING_COPY.hero.primaryCta}
@@ -139,7 +139,7 @@ export function LandingPage() {
           claim cards in a row on desktop, stacked on mobile. */}
       <section
         id="problem"
-        className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20"
+        className="mx-auto w-full max-w-[1200px] px-5 py-10 md:px-10 md:py-20"
       >
         <div className="mx-auto max-w-[700px] text-center">
           <h2
@@ -212,7 +212,7 @@ export function LandingPage() {
       {/* §3 Cognitive — text LEFT, image RIGHT. Anchor: #purpose */}
       <section
         id="purpose"
-        className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20"
+        className="mx-auto w-full max-w-[1200px] px-5 py-10 md:px-10 md:py-20"
       >
         <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-16">
           <div className="flex flex-col gap-4">
@@ -289,7 +289,7 @@ export function LandingPage() {
       {/* §4 How it works — 5-step ladder. Sits before the legacy progress
           row so the reader gets the structure of the journey before
           seeing the proof (badges + trophies). */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
+      <section className="mx-auto w-full max-w-[1200px] px-5 py-10 md:px-10 md:py-20">
         <div className="mx-auto max-w-[700px] text-center">
           <h2
             className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
@@ -367,7 +367,7 @@ export function LandingPage() {
           layout but new copy: niños/adolescentes, familias,
           educadores/comunidades. Title softened from
           "ventana / toda la vida" to "empezar pronto". */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
+      <section className="mx-auto w-full max-w-[1200px] px-5 py-10 md:px-10 md:py-20">
         <div className="mx-auto max-w-[700px] text-center">
           <h2
             className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
@@ -419,7 +419,7 @@ export function LandingPage() {
           to GitHub when SUPPORT_EMAIL is not configured. */}
       <section
         id="plans"
-        className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20"
+        className="mx-auto w-full max-w-[1200px] px-5 py-10 md:px-10 md:py-20"
       >
         <div className="mx-auto max-w-[700px] text-center">
           <h2
@@ -439,7 +439,7 @@ export function LandingPage() {
           </p>
         </div>
         <ul
-          className="mt-8 grid grid-cols-1 gap-3 md:mt-12 md:grid-cols-2 md:gap-4 lg:grid-cols-4"
+          className="-mx-5 mt-8 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 md:mx-0 md:mt-12 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-4"
           role="list"
         >
           {LANDING_COPY.plans.tiers.map((tier) => {
@@ -463,7 +463,7 @@ export function LandingPage() {
             return (
               <li
                 key={tier.name}
-                className="flex flex-col gap-3 rounded-2xl border px-5 py-5"
+                className="flex min-w-[72%] shrink-0 snap-center flex-col gap-3 rounded-2xl border px-5 py-5 md:min-w-0 md:shrink"
                 style={{
                   background: "var(--landing-card-bg)",
                   borderColor: isFeatured
@@ -593,7 +593,7 @@ export function LandingPage() {
           plus an allies placeholder line. Replaces the v0.1 sponsors
           framing. The actual sponsors contact card remains below for
           backwards compatibility until C9 cleanup. */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
+      <section className="mx-auto w-full max-w-[1200px] px-5 py-10 md:px-10 md:py-20">
         <div className="mx-auto max-w-[700px] text-center">
           <h2
             className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
@@ -666,7 +666,7 @@ export function LandingPage() {
           (parent brand). The lead paragraph explicitly names the
           chess-master pedagogy so legitimacy is established before
           the contact section below. */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
+      <section className="mx-auto w-full max-w-[1200px] px-5 py-10 md:px-10 md:py-20">
         <div className="mx-auto max-w-[700px] text-center">
           <h2
             className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
@@ -733,7 +733,7 @@ export function LandingPage() {
       </section>
 
       {/* §6 Sponsors — Den Labs framing + contact links */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
+      <section className="mx-auto w-full max-w-[1200px] px-5 py-10 md:px-10 md:py-20">
         <div className="mx-auto grid max-w-[800px] grid-cols-1 gap-6 text-center">
           <h2
             className="fantasy-title text-2xl font-extrabold leading-tight md:text-4xl md:leading-[1.1]"
@@ -797,7 +797,7 @@ export function LandingPage() {
       </section>
 
       {/* §7 Final CTA */}
-      <section className="mx-auto w-full max-w-[1200px] px-5 py-12 text-center md:px-10 md:py-20">
+      <section className="mx-auto w-full max-w-[1200px] px-5 py-10 text-center md:px-10 md:py-20">
         <h2
           className="fantasy-title text-2xl font-extrabold leading-tight md:text-5xl md:leading-[1.05]"
           style={{
@@ -813,14 +813,14 @@ export function LandingPage() {
         >
           {LANDING_COPY.finalCta.subcopy}
         </p>
-        <div className="mt-6 flex flex-col items-center justify-center gap-3 md:flex-row">
-          <Button asChild variant="game-primary" size="game" className="!w-auto px-10">
+        <div className="mx-auto mt-6 flex w-full max-w-[420px] flex-col items-center justify-center gap-3 md:max-w-none md:flex-row">
+          <Button asChild variant="game-primary" size="game" className="md:!w-auto md:px-10">
             <Link href="/hub" onClick={onCta("final-primary")}>
               {LANDING_COPY.finalCta.primaryCta}
             </Link>
           </Button>
           {process.env.NEXT_PUBLIC_SUPPORT_EMAIL && (
-            <Button asChild variant="game-ghost" size="game" className="!w-auto px-8">
+            <Button asChild variant="game-ghost" size="game" className="md:!w-auto md:px-8">
               <a
                 href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}?subject=${encodeURIComponent("Chesscito · Hablar con el equipo")}`}
                 onClick={onCta("final-secondary")}
@@ -976,12 +976,12 @@ function SectionRow({
   );
 
   return (
-    <section className="mx-auto w-full max-w-[1200px] px-5 py-12 md:px-10 md:py-20">
-      <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-16">
+    <section className="mx-auto w-full max-w-[1200px] px-5 py-10 md:px-10 md:py-20">
+      <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-16">
         {imageOnLeft ? (
           <>
-            {visual}
-            {text}
+            <div className="order-2 md:order-1">{visual}</div>
+            <div className="order-1 md:order-2">{text}</div>
           </>
         ) : (
           <>
