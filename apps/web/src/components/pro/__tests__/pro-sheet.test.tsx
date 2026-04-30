@@ -1,11 +1,15 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 
+const trackMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
+
 import { ProSheet, type ProSheetProps } from "../pro-sheet";
 import { PRO_COPY } from "@/lib/content/editorial";
 
 afterEach(() => {
   cleanup();
+  trackMock.mockReset();
 });
 
 function renderSheet(overrides: Partial<ProSheetProps> = {}) {
@@ -94,5 +98,69 @@ describe("ProSheet", () => {
   it("renders an error region when errorMessage is set", () => {
     renderSheet({ errorMessage: PRO_COPY.errors.purchaseFailed });
     expect(screen.getByTestId("pro-error")).toHaveTextContent(PRO_COPY.errors.purchaseFailed);
+  });
+
+  describe("telemetry", () => {
+    it("fires pro_card_viewed (surface=sheet) once per open", () => {
+      renderSheet({ open: true });
+      expect(trackMock).toHaveBeenCalledWith("pro_card_viewed", {
+        surface: "sheet",
+        active: false,
+      });
+      expect(trackMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not fire pro_card_viewed when open is false", () => {
+      renderSheet({ open: false });
+      expect(trackMock).not.toHaveBeenCalledWith(
+        "pro_card_viewed",
+        expect.anything(),
+      );
+    });
+
+    it("fires pro_cta_clicked with source=sheet_buy when tapping Get PRO", () => {
+      renderSheet();
+      trackMock.mockClear(); // drop the mount-time pro_card_viewed
+      fireEvent.click(screen.getByRole("button", { name: PRO_COPY.ctaBuy }));
+
+      expect(trackMock).toHaveBeenCalledWith("pro_cta_clicked", {
+        source: "sheet_buy",
+      });
+    });
+
+    it("fires pro_cta_clicked with source=sheet_renew when active and tapping Renew", () => {
+      const NOW = Date.now();
+      renderSheet({
+        status: { active: true, expiresAt: NOW + 5 * 24 * 60 * 60 * 1000 },
+      });
+      trackMock.mockClear();
+      fireEvent.click(screen.getByRole("button", { name: PRO_COPY.ctaRenew }));
+
+      expect(trackMock).toHaveBeenCalledWith("pro_cta_clicked", {
+        source: "sheet_renew",
+      });
+    });
+
+    it("does not fire pro_cta_clicked for Connect Wallet (not commercial intent)", () => {
+      renderSheet({ isConnected: false });
+      trackMock.mockClear();
+      fireEvent.click(screen.getByRole("button", { name: PRO_COPY.errors.walletRequired }));
+
+      expect(trackMock).not.toHaveBeenCalledWith(
+        "pro_cta_clicked",
+        expect.anything(),
+      );
+    });
+
+    it("does not fire pro_cta_clicked for Switch Network", () => {
+      renderSheet({ isCorrectChain: false });
+      trackMock.mockClear();
+      fireEvent.click(screen.getByRole("button", { name: /switch network/i }));
+
+      expect(trackMock).not.toHaveBeenCalledWith(
+        "pro_cta_clicked",
+        expect.anything(),
+      );
+    });
   });
 });

@@ -86,6 +86,16 @@ export async function POST(req: Request) {
       if (credits <= 0) {
         return NextResponse.json({ error: "No credits available" }, { status: 402 });
       }
+    } else {
+      // Server-side telemetry — Vercel logs only for now. No PII: we
+      // emit the expiresAt timestamp (already client-visible) and skip
+      // the wallet entirely. TODO: replace with a real
+      // lib/server/telemetry helper that batches into analytics_events
+      // once we have one (see commit 8 brief).
+      console.info("[pro-bypass] coach analyze short-circuited", {
+        event: "coach_pro_bypass_used",
+        pro_expires_at: proStatus.expiresAt,
+      });
     }
 
     // --- Fetch game record ---

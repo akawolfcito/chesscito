@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 
+const trackMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
+
 import { ProChip } from "../pro-chip";
 
 afterEach(() => {
   cleanup();
+  trackMock.mockReset();
 });
 
 describe("ProChip", () => {
@@ -47,5 +51,40 @@ describe("ProChip", () => {
     const stalePast = NOW - 1_000;
     render(<ProChip status={{ active: true, expiresAt: stalePast }} isLoading={false} onClick={vi.fn()} />);
     expect(screen.getByText("GET PRO")).toBeInTheDocument();
+  });
+
+  describe("telemetry", () => {
+    it("fires pro_card_viewed once when status resolves (chip surface)", () => {
+      const { rerender } = render(
+        <ProChip status={null} isLoading={true} onClick={vi.fn()} />,
+      );
+      expect(trackMock).not.toHaveBeenCalled();
+
+      rerender(
+        <ProChip status={{ active: false, expiresAt: null }} isLoading={false} onClick={vi.fn()} />,
+      );
+      expect(trackMock).toHaveBeenCalledWith("pro_card_viewed", {
+        surface: "chip",
+        active: false,
+      });
+
+      // Re-renders with the same resolved status must not re-fire.
+      rerender(
+        <ProChip status={{ active: false, expiresAt: null }} isLoading={false} onClick={vi.fn()} />,
+      );
+      expect(trackMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("fires pro_cta_clicked with source=chip on tap", () => {
+      const onClick = vi.fn();
+      render(
+        <ProChip status={{ active: false, expiresAt: null }} isLoading={false} onClick={onClick} />,
+      );
+      trackMock.mockClear(); // drop the mount-time pro_card_viewed
+      fireEvent.click(screen.getByRole("button"));
+
+      expect(trackMock).toHaveBeenCalledWith("pro_cta_clicked", { source: "chip" });
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
   });
 });

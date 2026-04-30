@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -10,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { PRO_COPY } from "@/lib/content/editorial";
 import type { ProStatus } from "@/lib/pro/use-pro-status";
+import { track } from "@/lib/telemetry";
 
 export type ProSheetProps = {
   open: boolean;
@@ -94,11 +97,23 @@ function resolveCta({
  *  passed in via `onPurchase` prop and is also the test injection
  *  point. */
 export function ProSheet(props: ProSheetProps) {
-  const { open, onOpenChange, status, errorMessage } = props;
+  const { open, onOpenChange, status, errorMessage, isConnected, isCorrectChain } = props;
   const cta = resolveCta(props);
 
-  // TODO(commit-8): on first render with `open === true` →
-  //   track("pro_card_viewed", { active: status?.active ?? false })
+  // Fire pro_card_viewed once per open. Reset the gate when the sheet
+  // closes so the next open in the same session ships another event —
+  // a user who opens the sheet, dismisses, and re-opens later is two
+  // distinct view intents.
+  const viewedRef = useRef(false);
+  useEffect(() => {
+    if (!open) {
+      viewedRef.current = false;
+      return;
+    }
+    if (viewedRef.current) return;
+    viewedRef.current = true;
+    track("pro_card_viewed", { surface: "sheet", active: status?.active ?? false });
+  }, [open, status]);
 
   const showActiveBanner = Boolean(
     status?.active && status.expiresAt && status.expiresAt > Date.now(),
@@ -107,7 +122,14 @@ export function ProSheet(props: ProSheetProps) {
 
   function handleCtaClick() {
     if (!cta.onClick) return;
-    // TODO(commit-8): track("pro_cta_clicked", { state: status?.active ? "renew" : "buy" })
+    // Only buy/renew CTAs are commercial intent. Connect Wallet and
+    // Switch Network are protocol prerequisites — not part of the PRO
+    // funnel, so they don't ship pro_cta_clicked.
+    if (isConnected && isCorrectChain && !props.isPurchasing && !props.isVerifying) {
+      track("pro_cta_clicked", {
+        source: status?.active ? "sheet_renew" : "sheet_buy",
+      });
+    }
     cta.onClick();
   }
 

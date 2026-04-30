@@ -45,6 +45,7 @@ import { shopAbi } from "@/lib/contracts/shop";
 import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
+  PRO_PRICE_USD6,
   SHIELDS_PER_PURCHASE,
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
@@ -833,7 +834,23 @@ export function PlayHubRoot() {
   async function handleProPurchase() {
     if (!address || !shopAddress || !publicClient || !isCorrectChain) return;
     setProPurchaseError(null);
-    // TODO(commit-8): track("pro_purchase_started", { walletHash: address.slice(0, 6) })
+
+    // Lookahead so pro_purchase_started fires only when the buy has a
+    // real chance of completing. selectPaymentToken reads from already-
+    // loaded balances; the helper re-checks on its own as the source
+    // of truth for the actual decision.
+    const previewToken = selectPaymentToken(PRO_PRICE_USD6);
+    if (!previewToken) {
+      track("pro_purchase_failed", { kind: "no-token" });
+      setProPurchaseError("Insufficient stablecoin balance.");
+      return;
+    }
+
+    track("pro_purchase_started", {
+      item_id: 6,
+      price_usd6: 1_990_000,
+    });
+
     const result = await executeProPurchase({
       address,
       shopAddress,
@@ -846,14 +863,26 @@ export function PlayHubRoot() {
     setProPurchaseState("idle");
 
     if (result.kind === "success") {
-      // TODO(commit-8): track("pro_purchase_confirmed", { walletHash, txHash: result.txHash })
+      track("pro_purchase_confirmed", {
+        item_id: 6,
+        price_usd6: 1_990_000,
+        days_granted: 30,
+        tx_hash_prefix: result.txHash.slice(0, 10),
+      });
       refetchProStatus();
       hapticSuccess();
       setProSheetOpen(false);
       return;
     }
     if (result.kind === "cancelled") return;
-    // TODO(commit-8): track("pro_purchase_failed", { kind: result.kind })
+    if (result.kind === "verify-failed") {
+      track("pro_purchase_failed", {
+        kind: "verify-failed",
+        tx_hash_prefix: result.txHash ? result.txHash.slice(0, 10) : null,
+      });
+    } else {
+      track("pro_purchase_failed", { kind: result.kind });
+    }
     setProPurchaseError(
       result.kind === "no-token"
         ? "Insufficient stablecoin balance."

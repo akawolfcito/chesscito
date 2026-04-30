@@ -288,6 +288,58 @@ describe("POST /api/coach/analyze", () => {
       expect(redisMock.decr).not.toHaveBeenCalled();
     });
 
+    it("PRO active emits a coach_pro_bypass_used console.info (server-side telemetry)", async () => {
+      setupProActiveRedis();
+      const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+
+      const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+      expect(res.status).toEqual(200);
+
+      expect(infoSpy).toHaveBeenCalledWith(
+        "[pro-bypass] coach analyze short-circuited",
+        expect.objectContaining({
+          event: "coach_pro_bypass_used",
+          pro_expires_at: FUTURE,
+        }),
+      );
+      // No PII smoke check: the call must not include the wallet.
+      const payload = infoSpy.mock.calls[0]?.[1] as Record<string, unknown> | undefined;
+      expect(payload).toBeDefined();
+      expect(JSON.stringify(payload)).not.toContain(VALID_WALLET);
+
+      infoSpy.mockRestore();
+    });
+
+    it("PRO inactive does not emit the coach_pro_bypass_used log", async () => {
+      const PAST = NOW - 1;
+      redisMock.get.mockImplementation((key: string) => {
+        if (key === `coach:analysis:${VALID_WALLET}:${VALID_GAME_ID}`) return Promise.resolve(null);
+        if (key === `coach:job-ref:${VALID_WALLET}:${VALID_GAME_ID}`) return Promise.resolve(null);
+        if (key === `coach:pending:${VALID_WALLET}`) return Promise.resolve(null);
+        if (key === PRO_KEY) return Promise.resolve(String(PAST));
+        if (key === `coach:credits:${VALID_WALLET}`) return Promise.resolve(5);
+        if (key === `coach:game:${VALID_WALLET}:${VALID_GAME_ID}`) {
+          return Promise.resolve({
+            gameId: VALID_GAME_ID,
+            moves: ["e4", "e5"],
+            result: "win",
+            difficulty: "easy",
+          });
+        }
+        return Promise.resolve(null);
+      });
+      const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+
+      const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+      expect(res.status).toEqual(200);
+      expect(infoSpy).not.toHaveBeenCalledWith(
+        "[pro-bypass] coach analyze short-circuited",
+        expect.anything(),
+      );
+
+      infoSpy.mockRestore();
+    });
+
     it("PRO active response includes proActive: true", async () => {
       setupProActiveRedis();
 
