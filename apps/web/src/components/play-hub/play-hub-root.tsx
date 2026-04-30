@@ -49,9 +49,13 @@ import {
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
 } from "@/lib/contracts/shop-catalog";
+import { ProChip } from "@/components/pro/pro-chip";
+import { ProSheet } from "@/components/pro/pro-sheet";
+import { useProStatus } from "@/lib/pro/use-pro-status";
+import { executeProPurchase } from "@/lib/pro/purchase";
 import { ACCEPTED_TOKENS, CELO_TOKEN, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
-import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
+import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, PRO_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
@@ -163,6 +167,14 @@ export function PlayHubRoot() {
   const [submitTxHash, setSubmitTxHash] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [purchasePhase, setPurchasePhase] = useState<"idle" | "approving" | "buying">("idle");
+  const {
+    status: proStatus,
+    isLoading: proLoading,
+    refetch: refetchProStatus,
+  } = useProStatus(address);
+  const [proSheetOpen, setProSheetOpen] = useState(false);
+  const [proPurchaseState, setProPurchaseState] = useState<"idle" | "purchasing" | "verifying">("idle");
+  const [proPurchaseError, setProPurchaseError] = useState<string | null>(null);
   const [resultOverlay, setResultOverlay] = useState<{
     variant: "badge" | "score" | "shop" | "error";
     txHash?: string;
@@ -818,6 +830,41 @@ export function PlayHubRoot() {
     }
   }
 
+  async function handleProPurchase() {
+    if (!address || !shopAddress || !publicClient || !isCorrectChain) return;
+    setProPurchaseError(null);
+    // TODO(commit-8): track("pro_purchase_started", { walletHash: address.slice(0, 6) })
+    const result = await executeProPurchase({
+      address,
+      shopAddress,
+      publicClient,
+      chainId,
+      writeContractAsync: writeShopAsync,
+      selectPaymentToken: (price) => selectPaymentToken(price),
+      onPhaseChange: (phase) => setProPurchaseState(phase),
+    });
+    setProPurchaseState("idle");
+
+    if (result.kind === "success") {
+      // TODO(commit-8): track("pro_purchase_confirmed", { walletHash, txHash: result.txHash })
+      refetchProStatus();
+      hapticSuccess();
+      setProSheetOpen(false);
+      return;
+    }
+    if (result.kind === "cancelled") return;
+    // TODO(commit-8): track("pro_purchase_failed", { kind: result.kind })
+    setProPurchaseError(
+      result.kind === "no-token"
+        ? "Insufficient stablecoin balance."
+        : result.kind === "timeout"
+          ? "Transaction timed out. Please try again."
+          : result.kind === "verify-failed"
+            ? "Payment confirmed but verification failed. Please refresh in a minute."
+            : PRO_COPY.errors.purchaseFailed,
+    );
+  }
+
   async function handleConfirmPurchase() {
     if (!selectedItem || !address || !shopAddress || !isCorrectChain) {
       return;
@@ -1040,7 +1087,14 @@ export function PlayHubRoot() {
           <p className="text-xs text-white/70 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{SPLASH_COPY.subtitle}</p>
         </div>
       )}
-      <main className="mission-shell mx-auto h-[100dvh] w-full max-w-[var(--app-max-width)] px-0 py-0 sm:px-0">
+      <main className="mission-shell relative mx-auto h-[100dvh] w-full max-w-[var(--app-max-width)] px-0 py-0 sm:px-0">
+        <div className="pointer-events-none absolute right-2 top-[calc(env(safe-area-inset-top)+0.5rem)] z-30">
+          <ProChip
+            status={proStatus}
+            isLoading={proLoading}
+            onClick={() => setProSheetOpen(true)}
+          />
+        </div>
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onSelectPiece={(piece) => {
@@ -1200,6 +1254,28 @@ export function PlayHubRoot() {
           isWriting={isShopWriting}
           purchasePhase={purchasePhase}
           onConfirm={() => void handleConfirmPurchase()}
+        />
+
+        <ProSheet
+          open={proSheetOpen}
+          onOpenChange={(open) => {
+            // Block close while a tx is in-flight to prevent the user
+            // from losing the in-progress state mid-purchase.
+            if (!open && proPurchaseState !== "idle") return;
+            setProSheetOpen(open);
+            if (!open) setProPurchaseError(null);
+          }}
+          status={proStatus}
+          isConnected={isConnected}
+          isCorrectChain={isCorrectChain}
+          isPurchasing={proPurchaseState === "purchasing"}
+          isVerifying={proPurchaseState === "verifying"}
+          errorMessage={proPurchaseError}
+          onConnectWallet={() => openConnectModal?.()}
+          onSwitchNetwork={() =>
+            configuredChainId != null && switchChain({ chainId: configuredChainId })
+          }
+          onPurchase={() => void handleProPurchase()}
         />
 
         {showBriefing ? (
