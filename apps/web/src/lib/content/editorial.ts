@@ -864,6 +864,42 @@ export const SHOP_ITEM_COPY = {
   },
 } as const;
 
+/** Chesscito PRO — first commercial SKU. Phase 0 scope: monthly pass
+ *  that bypasses Coach credit consumption only. Other premium perks
+ *  (Arena, achievements, VictoryNFT discounts) are roadmap-only copy
+ *  for now — do not wire them up server-side. See
+ *  docs/superpowers/plans/2026-04-29-pro-phase-0.md. */
+export const PRO_COPY = {
+  label: "Chesscito PRO",
+  tagline: "Unlimited AI coach for serious players.",
+  subtitle: "Monthly pass. Manual renewal. No auto-billing.",
+  priceLabel: "$1.99 / month",
+  durationLabel: "30 days",
+  ctaBuy: "Get PRO",
+  ctaActive: "PRO Active",
+  ctaRenew: "Renew PRO",
+  statusActiveSuffix: (daysLeft: number) =>
+    daysLeft === 1 ? "Expires tomorrow" : `${daysLeft} days left`,
+  perksActive: [
+    "Unlimited Coach analyses — no credit cap",
+  ] as const,
+  perksRoadmap: [
+    "Tournament priority access (coming soon)",
+    "Premium achievements (coming soon)",
+    "Discounted VictoryNFT mints (coming soon)",
+  ] as const,
+  errors: {
+    notConfigured: "PRO is not yet active. Check back shortly.",
+    purchaseFailed: "Purchase could not be verified. Please try again.",
+    walletRequired: "Connect your wallet to purchase PRO.",
+  },
+  receipt: {
+    success: "PRO activated. Coach is unlimited for 30 days.",
+    extended: (daysLeft: number) =>
+      `PRO renewed. ${daysLeft} days remaining.`,
+  },
+} as const;
+
 /** /why public landing page copy. Spanish-only in v1 by product
  *  decision (English version is a follow-up sprint). All strings are
  *  centralized here per the no-inline-copy rule of the codebase.
