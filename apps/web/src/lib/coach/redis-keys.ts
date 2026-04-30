@@ -7,4 +7,13 @@ export const REDIS_KEYS = {
   analysisList: (wallet: string) => `coach:analyses:${wallet}`,
   credits: (wallet: string) => `coach:credits:${wallet}`,
   pendingJob: (wallet: string) => `coach:pending:${wallet}`,
+  /** Chesscito PRO active pass — value is `expiresAt` in ms since
+   *  epoch. TTL is derived from `expiresAt - now` so the key auto-purges
+   *  the moment PRO lapses. Written by /api/verify-pro via an atomic
+   *  Lua script that extends from `max(now, currentExpiresAt)`. */
+  pro: (wallet: string) => `coach:pro:${wallet}`,
+  /** Per-tx dedupe for PRO purchases. Mirrors `coach:processed-tx:` for
+   *  Coach packs but lives in its own namespace so a Coach pack tx can
+   *  never short-circuit a PRO verify (and vice versa). */
+  proProcessedTx: (txHash: string) => `coach:pro:processed-tx:${txHash}`,
 } as const;
