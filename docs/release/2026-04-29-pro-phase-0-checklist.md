@@ -1,6 +1,7 @@
 # Chesscito PRO — Fase 0 Release Checklist
 
 **Date prepared**: 2026-04-29
+**Last updated**: 2026-04-29 (post-on-chain registration)
 **Target**: Celo Mainnet (chainId 42220)
 **Owners**: deployer + admin wallet (multisig if available)
 
@@ -8,6 +9,16 @@
 > Chesscito PRO. Local dev defaults remain disabled — nothing in this
 > doc changes runtime behavior on `pnpm dev` unless the operator
 > explicitly toggles the flags listed below.
+
+## Live status
+
+- ✅ All 10 PRO commits in `origin/main` (`47a9fbc..ddcacde`).
+- ✅ On-chain registration done — `ShopUpgradeable.setItem(6, 1_990_000, true)`
+  on Celo Mainnet. tx: `0x32c1adb4ebf6a10f13843bf51333e2c09753d797eab83a97ad566cefb074162c`
+  (block 65620849). `getItem(6)` confirms `(1990000, true)`.
+- ⏳ Vercel: `NEXT_PUBLIC_ENABLE_COACH=true` in Production — pending.
+- ⏳ Deploy ready — pending Vercel env.
+- ⏳ Smoke test — pending deploy.
 
 ---
 
@@ -33,15 +44,14 @@ match any purchase. Until this transaction lands, `verify-pro` will
 respond `400 "No PRO purchase found in transaction"` for every attempt
 and the buy CTA will appear available but verification will fail.
 
-- [ ] **`ShopUpgradeable.setItem(6, 1_990_000, true)`** executed by the
-      admin wallet on Celo Mainnet.
-  - `itemId`: `6`
-  - `priceUsd6`: `1_990_000` (= $1.99)
-  - `enabled`: `true`
-  - Source of truth: `apps/web/src/lib/contracts/shop-catalog.ts`
-    constants `PRO_ITEM_ID`, `PRO_PRICE_USD6`.
-- [ ] Verify the call landed by reading `Shop.getItem(6)` and
-      confirming `enabled === true` and `priceUsd6 === 1_990_000`.
+- [x] **`ShopUpgradeable.setItem(6, 1_990_000, true)`** executed by the
+      admin wallet on Celo Mainnet — done 2026-04-29.
+  - tx: `0x32c1adb4ebf6a10f13843bf51333e2c09753d797eab83a97ad566cefb074162c`
+  - block: 65620849
+  - signer: `0x917497b64eeB85859edcf2e4ca64059eDfeC1923`
+  - method: `pnpm admin shop set-item --item-id 6 --price-usd6 1990000 --enabled true --chain celo`
+- [x] Verified by `pnpm admin shop get-item --item-id 6 --chain celo` →
+      `(1990000, true)`.
 
 ## 2. Vercel environment variables
 

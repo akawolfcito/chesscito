@@ -1,6 +1,7 @@
 # Chesscito PRO — Fase 0 Handoff
 
 **Date**: 2026-04-29
+**Last updated**: 2026-04-29 (post-push, post-on-chain)
 **Owner**: deployer + admin wallet
 **Companion docs**:
 - Plan: `docs/superpowers/plans/2026-04-29-pro-phase-0.md`
@@ -8,16 +9,28 @@
 - UI shape: `docs/superpowers/plans/2026-04-29-pro-phase-0-ui-shape.md`
 - Release checklist: `docs/release/2026-04-29-pro-phase-0-checklist.md`
 
+## Live status (2026-04-29)
+
+| Item | Status |
+|------|--------|
+| Code shipped to `origin/main` | ✅ pushed (`47a9fbc..ddcacde`) |
+| On-chain `setItem(6, 1_990_000, true)` | ✅ tx `0x32c1adb4...` block 65620849 |
+| Vercel `NEXT_PUBLIC_ENABLE_COACH=true` | ⏳ pending |
+| Deploy ready | ⏳ pending |
+| Smoke test passed | ⏳ pending |
+| 7-day measurement window | ⏳ starts after smoke pass |
+
 ---
 
 ## 1. Estado final
 
-- ✅ Fase 0 PRO completa en `main`.
-- ✅ 9 commits implementados.
+- ✅ Fase 0 PRO completa en `main` y pusheada a `origin/main`.
+- ✅ 10 commits implementados (9 código + 1 handoff).
 - ✅ Suite completa passing (506/506).
 - ✅ Typecheck limpio.
 - ✅ Visual snapshots passing (18/18) — único cambio visible es el chip PRO top-right en `/hub`.
-- ⚠️  **PRO todavía NO está activo en producción.** Bloqueado por dos pasos manuales (ver §3).
+- ✅ **On-chain registration done** — itemId 6 publicado en Celo Mainnet.
+- ⚠️ **PRO todavía NO está user-visible** hasta que Vercel deploy + env flag estén ready. Sólo falta el paso operativo de Vercel + smoke (ver §3).
 
 ### Commits Fase 0
 
@@ -72,12 +85,14 @@ Eventos client-side vía `track()` → Supabase `analytics_events`. Sin wallet n
 - [ ] Confirmar `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` set.
 - [ ] Confirmar `NEXT_PUBLIC_SHOP_ADDRESS` apunta al Shop proxy de Celo Mainnet.
 
-### 3.2 Celo Mainnet
-- [ ] Admin wallet ejecuta:
+### 3.2 Celo Mainnet — ✅ DONE 2026-04-29
+- [x] Admin wallet ejecutó:
   ```
-  ShopUpgradeable.setItem(6, 1_990_000, true)
+  pnpm admin shop set-item --item-id 6 --price-usd6 1990000 --enabled true --chain celo
   ```
-- [ ] Verificar con `Shop.getItem(6)` que `enabled === true` y `priceUsd6 === 1_990_000`.
+- [x] tx: `0x32c1adb4ebf6a10f13843bf51333e2c09753d797eab83a97ad566cefb074162c`
+- [x] block: 65620849
+- [x] `pnpm admin shop get-item --item-id 6 --chain celo` confirmó `(1990000, true)`.
 
 ### 3.3 Smoke test
 Detalle en §4. Sin smoke test verde, no hacer announce público.
@@ -166,6 +181,7 @@ Disponibles en Supabase `analytics_events` table.
 | PRO depende de Redis TTL | Si Upstash pierde data → PRO records desaparecen | Upstash tiene durabilidad. Worst case: re-procesar `Shop` events on-chain para reconstruir |
 | In-memory rate limit de verify-pro | Cold-start reset, atacante puede burst en boundary | Mismo límite que verify-purchase preexistente. Aceptable Fase 0 |
 | Self-extension multi-tab race | Imposible vencer al Lua atómico (extiende desde max(now, current)) | Resuelto a nivel código |
+| `apps/admin shop set-item` post-state read race | Audit log a veces muestra post-state stale `(0, false)` justo después del send aunque la tx fue exitosa. Confirmado en el send de itemId 6 (2026-04-29). On-chain state correcto, solo el log es engañoso. | Bug menor del `tx-runner.ts` — agrega delay o re-read confirmado post-receipt antes de imprimir post-state. No urgente. |
 
 ---
 
