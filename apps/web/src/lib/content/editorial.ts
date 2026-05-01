@@ -74,7 +74,7 @@ export const BADGE_TITLES = {
 } as const;
 
 export const LEADERBOARD_COPY = {
-  description: "The best scores recorded on-chain.",
+  description: "The best scores publicly recorded.",
   empty: "No scores recorded yet.",
 } as const;
 
@@ -83,7 +83,7 @@ export const SCORE_UNIT = "pts";
 export const RESULT_OVERLAY_COPY = {
   badge: {
     title: "Badge Claimed!",
-    subtitle: (piece: string) => `${piece} Ascendant is now in your wallet`,
+    subtitle: (piece: string) => `${piece} Ascendant is now yours to keep`,
   },
   score: {
     title: "Score Recorded!",
@@ -279,10 +279,10 @@ export const STATUS_STRIP_COPY = {
   badgeClaimed2: "Badge claimed",
   processingPurchase: "Processing purchase",
   purchaseComplete: "Purchase complete",
-  waitingConfirmation: "Waiting for onchain confirmation.",
-  scoreOnchain: "Your score is now recorded onchain.",
-  badgeOnchain: "Your badge is now confirmed onchain.",
-  purchaseOnchain: "Your purchase is now confirmed onchain.",
+  waitingConfirmation: "Waiting for confirmation.",
+  scoreOnchain: "Your score is publicly recorded.",
+  badgeOnchain: "Your badge is now confirmed.",
+  purchaseOnchain: "Your purchase is now confirmed.",
 } as const;
 
 export const ERROR_PAGE_COPY = {
@@ -442,7 +442,7 @@ export const VICTORY_CELEBRATION_COPY = {
 
 export const TROPHY_VITRINE_COPY = {
   pageTitle: "Trophy Case",
-  pageDescription: "Your onchain victories, immortalized.",
+  pageDescription: "Your verifiable victories, immortalized.",
   myVictories: "My Victories",
   hallOfFame: "Hall of Fame",
   movesLabel: "moves",
@@ -458,7 +458,7 @@ export const TROPHY_VITRINE_COPY = {
   configError: "Trophies unavailable",
   roadmap: "More coming soon — Tournaments • VIP Passes • Seasonal Rewards",
   arenaLink: "Go to Arena",
-  nftIdPrefix: "NFT",
+  cardIdPrefix: "Card",
 } as const;
 
 /** Achievement surface copy (feature #23). Achievements are derived from
@@ -519,7 +519,7 @@ export const ROADMAP_COPY = {
     },
     {
       title: "Seasonal Rewards",
-      description: "Rotating challenges with unique on-chain collectibles.",
+      description: "Rotating challenges with unique verifiable collectibles.",
     },
   ],
 } as const;
@@ -572,7 +572,7 @@ export const ARENA_COPY = {
   prizePoolLabel: "Community prize pool",
   prizePoolLoading: "Loading pool…",
   prizePoolUnavailable: "Pool unavailable",
-  prizePoolSoonHint: "Distribution v2 coming — 20% of every Victory mint",
+  prizePoolSoonHint: "Distribution v2 coming — 20% of every saved Victory funds the community pool",
   aiError: "AI disconnected",
   aiTimeout: "AI timed out",
   engineError: "Engine error — please restart the match",
@@ -845,7 +845,7 @@ export const ABOUT_COPY = {
   clipboardFeedback: "Copied!",
   shareTitle: "Chesscito",
   shareText:
-    "Learn chess piece movements with gamified on-chain challenges on Celo.",
+    "Learn chess piece movements with gamified, verifiable challenges on Celo.",
   shareUrl: "https://chesscito.vercel.app",
 } as const;
 
@@ -1231,7 +1231,7 @@ export const LANDING_COPY = {
         bullets: [
           "Acceso al ajedrez introductorio",
           "Las primeras piezas con sus niveles",
-          "Insignias de progreso on-chain",
+          "Insignias de progreso verificables",
           "Leaderboard y comunidad pública",
         ],
         ctaLabel: "Empezar gratis",
@@ -1246,7 +1246,7 @@ export const LANDING_COPY = {
           "Coach con IA para analizar tus partidas",
           "Retry Shield incluido — sin compras adicionales",
           "Badge PRO visible en tu perfil",
-          "Mint de tus victorias sin costo del NFT",
+          "Guarda tus victorias sin costo extra",
           "Tu aporte sostiene el acceso gratuito",
         ],
         ctaLabel: "Quiero acceso PRO",
@@ -1273,7 +1273,7 @@ export const LANDING_COPY = {
           "Licencias para aulas, clubes y programas",
           "Sponsor-a-player o sponsor-a-school",
           "Acompañamiento de un Maestro FIDE",
-          "Trazabilidad on-chain de cada aporte",
+          "Trazabilidad pública de cada aporte",
         ],
         ctaLabel: "Conversemos",
         ctaKind: "mailto" as const,
@@ -1296,7 +1296,7 @@ export const LANDING_COPY = {
       {
         icon: "share" as const,
         title: "Trazabilidad",
-        body: "Cada badge y aporte vive on-chain. Pública. Verificable. Sin opacidad.",
+        body: "Cada badge y aporte queda registrado de forma transparente. Pública. Verificable. Sin opacidad.",
       },
       {
         icon: "trophy" as const,

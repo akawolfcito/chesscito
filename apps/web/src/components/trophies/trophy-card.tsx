@@ -101,7 +101,7 @@ export function TrophyCard({ entry, variant, rank }: Props) {
           className="text-xs"
           style={{ color: "rgba(110, 65, 15, 0.70)" }}
         >
-          {TROPHY_VITRINE_COPY.nftIdPrefix} #{String(entry.tokenId)}
+          {TROPHY_VITRINE_COPY.cardIdPrefix} #{String(entry.tokenId)}
         </span>
         <span
           className="ml-auto text-xs"
