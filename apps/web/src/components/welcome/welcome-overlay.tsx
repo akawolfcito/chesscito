@@ -31,6 +31,17 @@ const CARDS: Card[] = [
   },
 ];
 
+type WelcomeOverlayProps = {
+  /** When true, suppresses the overlay even if the user is on
+   *  first-run. Used by the play-hub to hide welcome cards when any
+   *  dock sheet (shop, badges, trophies, leaderboard, arena) or the
+   *  PRO sheet is open, so the onboarding never lands on top of
+   *  another overlay. The first-run flag is preserved either way —
+   *  once the suppressing sheet closes the welcome overlay re-renders
+   *  and the user sees it then. */
+  suppressed?: boolean;
+};
+
 /**
  * WelcomeOverlay — first-run 3-card onboarding shown once per
  * device. Auto-mounts only when the welcome flag is unset, so
@@ -38,7 +49,7 @@ const CARDS: Card[] = [
  * (Continuar / Empezar) so it reads on any input device — no swipe
  * gesture required.
  */
-export function WelcomeOverlay() {
+export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {}) {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
@@ -46,7 +57,7 @@ export function WelcomeOverlay() {
     if (!isWelcomeDismissed()) setOpen(true);
   }, []);
 
-  if (!open) return null;
+  if (!open || suppressed) return null;
   const card = CARDS[index];
   const isLast = index === CARDS.length - 1;
 

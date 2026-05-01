@@ -1108,7 +1108,7 @@ export function PlayHubRoot() {
 
   return (
     <div className="relative w-full overflow-x-hidden">
-      <WelcomeOverlay />
+      <WelcomeOverlay suppressed={activeDockTab !== null || proSheetOpen} />
       {showSplash && (
         <div className="playhub-intro-overlay is-active" role="status" aria-live="polite" aria-busy="true">
           {/* Splash art carries the visual; copy below provides status. */}
@@ -1307,7 +1307,15 @@ export function PlayHubRoot() {
           onPurchase={() => void handleProPurchase()}
         />
 
-        {showBriefing ? (
+        {/* First-visit briefing must never mount on top of a dock
+         *  sheet (shop, badges, trophies, leaderboard, arena) or the
+         *  PRO sheet. If a sheet is already open when the splash
+         *  finishes, defer the briefing until the user closes it —
+         *  showBriefing stays true until markOnboarded() fires, so
+         *  the dialog will appear naturally once the user is back at
+         *  the root view. Prevents the visual stack collapse flagged
+         *  by visual-qa-2026-04-30 (Issue #1). */}
+        {showBriefing && activeDockTab === null && !proSheetOpen ? (
           <MissionBriefing
             pieceType={selectedPiece}
             targetLabel={targetLabel}
