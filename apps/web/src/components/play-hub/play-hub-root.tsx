@@ -56,7 +56,7 @@ import { useProStatus } from "@/lib/pro/use-pro-status";
 import { executeProPurchase } from "@/lib/pro/purchase";
 import { ACCEPTED_TOKENS, CELO_TOKEN, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
-import { CAPTURE_COPY, CTA_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, PRO_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
+import { CAPTURE_COPY, CTA_LABELS, DOCK_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, PRO_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
@@ -1220,7 +1220,7 @@ export function PlayHubRoot() {
                   trigger={
                     <button
                       type="button"
-                      aria-label="Free Play"
+                      aria-label={DOCK_LABELS.arena}
                       className="flex h-full w-full items-center justify-center"
                     >
                       <CandyBanner name="btn-battle" className="h-9 w-9" />
