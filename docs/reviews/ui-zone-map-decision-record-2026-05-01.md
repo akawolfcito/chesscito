@@ -138,9 +138,11 @@ After removing cold-cut deletions from Phase 1, most original risks shrunk. The 
    - Default `selectedDifficulty = 'easy'` on first mount of `ArenaEntrySheet`.
    - Reduces decision blocks (visual-qa-2026-04-30 Issue 3 partial fix).
 
-5. **`fix(ui): verify mission-briefing guard covers proSheetOpen`** (was original #6)
-   - Verify the existing guard at `play-hub-root.tsx:1318` (`showBriefing && activeDockTab === null && !proSheetOpen`) is complete. Add E2E spec if not already covered.
-   - Likely no-op or one-line tweak; included for completeness.
+5. ~~**`fix(ui): verify mission-briefing guard covers proSheetOpen`** (was original #6)~~
+   **RESOLVED by `1de7df6 fix(ui): prevent first-run overlays from overlapping dock and PRO sheets`** (pre-Phase-1).
+   - The guard at `play-hub-root.tsx:1318` is already in place and explicitly covers `proSheetOpen`: `showBriefing && activeDockTab === null && !proSheetOpen`.
+   - Source-recon during Phase 0 confirmed the guard. No code or E2E change needed in current Phase 1.
+   - **Discipline note**: skipped to avoid a frail regression test that duplicates a working invariant. If the briefing-overlap pattern resurfaces, add the regression then.
 
 6. **`docs(ui): document z-index ladder at top of globals.css`** (was original #9)
    - Comment block listing the canonical ladder: 0, 1, 10, 11, 12, 30, 40, 50, 60, 70.
