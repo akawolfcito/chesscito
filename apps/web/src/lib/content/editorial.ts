@@ -937,6 +937,24 @@ export const PRO_COPY = {
  *  cognitive disclaimer must render at least twice on the page
  *  (inline + footer) per the spec at
  *  docs/superpowers/specs/2026-04-25-why-landing-page-design.md. */
+
+/** Cognitive disclaimer used inside the app shell (play-hub footer,
+ *  arena footer) and any other non-landing surface that mentions
+ *  cognitive practice/wellness. Lives separately from WHY_PAGE_COPY
+ *  / LANDING_COPY so it can be lifted into in-game contexts without
+ *  pulling in the whole landing block. The two variants exist so the
+ *  same string set serves both the tight in-game footer (short) and
+ *  the longer-form pages like /about (full).
+ *
+ *  HARD RULE — never weaken these strings to imply medical benefit.
+ *  Only "does not replace" framing. */
+export const COGNITIVE_DISCLAIMER_COPY = {
+  short:
+    "Chesscito is a playful cognitive companion. It does not replace medical diagnosis or treatment.",
+  full:
+    "Chesscito is a playful cognitive companion experience. It does not replace medical diagnosis, treatment, or professional therapy.",
+} as const;
+
 export const WHY_PAGE_COPY = {
   meta: {
     title: "Chesscito — Juega. Piensa. Entrena tu mente.",
