@@ -871,22 +871,29 @@ export const SHOP_ITEM_COPY = {
  *  docs/superpowers/plans/2026-04-29-pro-phase-0.md. */
 export const PRO_COPY = {
   label: "Chesscito PRO",
-  tagline: "Unlimited AI coach for serious players.",
-  subtitle: "Monthly pass. Manual renewal. No auto-billing.",
+  tagline: "Your training plan. Your way to keep Chesscito free for everyone.",
+  subtitle: "Monthly pass that supports open access. Renew when you want — no auto-billing.",
   priceLabel: "$1.99 / month",
   durationLabel: "30 days",
-  ctaBuy: "Get PRO",
+  ctaBuy: "Start training",
   ctaActive: "PRO Active",
-  ctaRenew: "Renew PRO",
+  ctaRenew: "Extend training",
   statusActiveSuffix: (daysLeft: number) =>
     daysLeft === 1 ? "Expires tomorrow" : `${daysLeft} days left`,
+  /** Mission framing rendered between the perks list and the CTA. PRO
+   *  is positioned as both a personal training plan and a way to
+   *  sustain free access for new players, families and schools. */
+  missionNote:
+    "Every PRO subscription helps us keep the free tier open for new players, families, and schools.",
   perksActive: [
-    "Unlimited Coach analyses — no credit cap",
+    "AI Coach with no daily limit",
+    "Your contribution keeps Chesscito free for new players",
   ] as const,
   perksRoadmap: [
-    "Tournament priority access (coming soon)",
+    "Early access to new challenges (coming soon)",
+    "Tournament priority (coming soon)",
     "Premium achievements (coming soon)",
-    "Discounted VictoryNFT mints (coming soon)",
+    "Discounts on victory cards (coming soon)",
   ] as const,
   errors: {
     notConfigured: "PRO is not yet active. Check back shortly.",
@@ -894,7 +901,7 @@ export const PRO_COPY = {
     walletRequired: "Connect your wallet to purchase PRO.",
   },
   receipt: {
-    success: "PRO activated. Coach is unlimited for 30 days.",
+    success: "PRO activated. Your training plan is live for 30 days.",
     extended: (daysLeft: number) =>
       `PRO renewed. ${daysLeft} days remaining.`,
   },

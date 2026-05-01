@@ -159,7 +159,7 @@ export function ProSheet(props: ProSheetProps) {
             {PRO_COPY.priceLabel}
           </span>
           <span className="text-xs" style={{ color: "rgba(110, 65, 15, 0.65)" }}>
-            ({PRO_COPY.durationLabel}, {PRO_COPY.subtitle.toLowerCase()})
+            ({PRO_COPY.durationLabel} · no auto-billing)
           </span>
         </div>
 
@@ -215,6 +215,14 @@ export function ProSheet(props: ProSheetProps) {
             {errorMessage}
           </div>
         )}
+
+        <p
+          data-testid="pro-mission-note"
+          className="mt-4 text-xs leading-relaxed"
+          style={{ color: "rgba(110, 65, 15, 0.75)" }}
+        >
+          {PRO_COPY.missionNote}
+        </p>
 
         <div className="mt-auto pt-4">
           <Button
