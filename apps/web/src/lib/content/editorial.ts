@@ -21,12 +21,12 @@ export const CTA_LABELS = {
 } as const;
 
 export const FOOTER_CTA_COPY = {
-  submitScore: { label: "Submit Score", loading: "Submitting..." },
-  useShield: { label: "Use Shield", loading: "Using Shield..." },
-  claimBadge: { label: "Claim Badge", loading: "Claiming..." },
-  retry: { label: "Retry", loading: null },
-  connectWallet: { label: "Connect Wallet", loading: null },
-  switchNetwork: { label: "Switch Network", loading: null },
+  submitScore: { label: "Submit Score", compactLabel: "Submit", loading: "Submitting..." },
+  useShield: { label: "Use Shield", compactLabel: "Shield", loading: "Using Shield..." },
+  claimBadge: { label: "Claim Badge", compactLabel: "Claim", loading: "Claiming..." },
+  retry: { label: "Retry", compactLabel: "Retry", loading: null },
+  connectWallet: { label: "Connect Wallet", compactLabel: "Connect", loading: null },
+  switchNetwork: { label: "Switch Network", compactLabel: "Network", loading: null },
   shieldsLeft: (n: number) => `${n} left`,
   submitCanceled: "Submission canceled",
   submitFailed: "Submission failed — try again",
