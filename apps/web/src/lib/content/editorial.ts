@@ -856,11 +856,26 @@ export const UNLOCK_COPY = {
 export const SHOP_ITEM_COPY = {
   founderBadge: {
     label: "Founder Badge",
-    subtitle: "Support Chesscito with an exclusive founder badge minted to your wallet.",
+    subtitle:
+      "Support the mission from its earliest days. An exclusive badge that's yours to keep.",
   },
   retryShield: {
     label: "Retry Shield",
-    subtitle: "Three retries for tough captures. Use one and the trial resets — no streak penalty.",
+    subtitle:
+      "Protect your practice rhythm. Three retries for tough captures — keep going without losing your streak.",
+  },
+  /** Coach Credits — editorial copy prepared ahead of the Coach UI
+   *  refactor (see Commit 4 of the narrative realignment plan). The
+   *  paywall today consumes COACH_COPY.creditPack5/20; once Coach is
+   *  unhidden behind the public flag this block becomes the canonical
+   *  copy for the pack tiles. Kept here (next to founderBadge and
+   *  retryShield) because the underlying SKUs are sold through the
+   *  same Shop contract and itemId namespace. */
+  coachPack: {
+    label: "Coach Credits",
+    subtitle: "Try AI analysis without committing to a subscription.",
+    pack5: "5 analyses",
+    pack20: "20 analyses",
   },
 } as const;
 
