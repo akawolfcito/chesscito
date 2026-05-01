@@ -5,6 +5,7 @@ const trackMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
 
 import { ProChip } from "../pro-chip";
+import { PRO_COPY } from "@/lib/content/editorial";
 
 afterEach(() => {
   cleanup();
@@ -18,9 +19,9 @@ describe("ProChip", () => {
     vi.spyOn(Date, "now").mockReturnValue(NOW);
   });
 
-  it("renders GET PRO when status is inactive", () => {
+  it("renders the inactive chip label when status is inactive", () => {
     render(<ProChip status={{ active: false, expiresAt: null }} isLoading={false} onClick={vi.fn()} />);
-    expect(screen.getByText("GET PRO")).toBeInTheDocument();
+    expect(screen.getByText(PRO_COPY.chip.inactive)).toBeInTheDocument();
   });
 
   it("renders the days-left label when PRO is active", () => {
@@ -47,10 +48,10 @@ describe("ProChip", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it("falls back to GET PRO when status reports active=true but expiresAt is in the past (defensive)", () => {
+  it("falls back to inactive chip label when status reports active=true but expiresAt is in the past (defensive)", () => {
     const stalePast = NOW - 1_000;
     render(<ProChip status={{ active: true, expiresAt: stalePast }} isLoading={false} onClick={vi.fn()} />);
-    expect(screen.getByText("GET PRO")).toBeInTheDocument();
+    expect(screen.getByText(PRO_COPY.chip.inactive)).toBeInTheDocument();
   });
 
   describe("telemetry", () => {

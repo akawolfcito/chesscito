@@ -885,6 +885,14 @@ export const PRO_COPY = {
    *  sustain free access for new players, families and schools. */
   missionNote:
     "Every PRO subscription helps us keep the free tier open for new players, families, and schools.",
+  /** Floating chip in play-hub. Kept tight (28px tall, max 120px wide)
+   *  so the inactive label has to be a single short token. We dropped
+   *  the old "GET PRO" because it read transactional; "PRO" alone with
+   *  the ✦ icon already signals the premium tier without selling. */
+  chip: {
+    inactive: "PRO",
+    activePrefix: "PRO",
+  },
   perksActive: [
     "AI Coach with no daily limit",
     "Your contribution keeps Chesscito free for new players",

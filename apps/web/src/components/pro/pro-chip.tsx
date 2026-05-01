@@ -26,7 +26,8 @@ function formatDaysLeft(expiresAt: number): string {
  *
  *  - 28px tall, 64–120px wide. Below the dock z-index, above the HUD.
  *  - Skeleton shimmer while loading so the slot footprint is stable.
- *  - Inactive: gold→amber gradient with "GET PRO" label.
+ *  - Inactive: gold→amber gradient with "PRO" label (intentionally not
+ *    "GET PRO" — the chip surfaces the tier, not the sale).
  *  - Active: purple→violet gradient with "PRO • Nd" or "Expires today".
  *
  *  Wired into the play-hub root in commit 6B.2. */
@@ -76,7 +77,7 @@ export function ProChip({ status, isLoading, onClick }: ProChipProps) {
         className={`${baseClasses} bg-gradient-to-r from-[rgb(120,80,200)] to-[rgb(160,80,220)] text-white`}
       >
         <span aria-hidden="true">★</span>
-        <span>PRO • {formatDaysLeft(status.expiresAt)}</span>
+        <span>{PRO_COPY.chip.activePrefix} • {formatDaysLeft(status.expiresAt)}</span>
       </button>
     );
   }
@@ -89,7 +90,7 @@ export function ProChip({ status, isLoading, onClick }: ProChipProps) {
       className={`${baseClasses} bg-gradient-to-r from-[rgb(255,200,80)] to-[rgb(255,160,40)] text-[rgb(80,40,5)]`}
     >
       <span aria-hidden="true">✦</span>
-      <span>GET PRO</span>
+      <span>{PRO_COPY.chip.inactive}</span>
     </button>
   );
 }
