@@ -238,3 +238,69 @@ Run `ux-review` skill:
 - Every ~2 weeks during active development
 
 The audit report goes to `docs/reviews/ux-review-{date}.md`.
+
+---
+
+## 10. Chesscito UI Operating System
+
+This section is **prescriptive, not suggestive**. New features, refactors, and PRs MUST fit the system below. If the system doesn't fit the work, the work is wrong, not the system. Update §10 only with explicit revision approval.
+
+Adopted: 2026-05-01. Source artifacts:
+
+- Systems audit: [`docs/reviews/ui-systems-audit-2026-05-01.md`](docs/reviews/ui-systems-audit-2026-05-01.md) — full diagnosis, severity list, zone map proposal.
+- Functional audit: [`docs/reviews/ui-floating-actions-functional-audit-2026-05-01.md`](docs/reviews/ui-floating-actions-functional-audit-2026-05-01.md) — every floating button traced to its component + handler.
+- Zone-map decision record: [`docs/reviews/ui-zone-map-decision-record-2026-05-01.md`](docs/reviews/ui-zone-map-decision-record-2026-05-01.md) — what gets moved, what gets reclassified, commit order.
+- Z-index ladder: comment block at the top of `apps/web/src/app/globals.css`.
+
+### 10.1 Zone map (canonical layout, 390px mobile)
+
+Every UI element on every screen lives in exactly one of these zones, or in a defined overlay type.
+
+| Zone | Name | Height | Always visible? | Purpose |
+|---|---|---|---|---|
+| **Z1** | Global Status Bar | 32–40px | Yes | Player identity (handle, level, streak, PRO state as passive ring). Read-only. |
+| **Z2** | Contextual Header | 52–64px | Per-screen | Screen title + ONE contextual control. Mode tabs (max 4) live here. |
+| **Z3** | Content / Board | flex-1 | Per-screen | The gameplay surface. Dominant. Nothing competes. |
+| **Z4** | Contextual Action Rail | 56px | Per-screen | ONE primary CTA + optional ONE secondary. Collapses to 0 when empty. |
+| **Z5** | Dock | 72px (z-60) | INVARIANT | 5 destinations, fixed forever. Defended by §8. |
+| Overlays | Type A/B/C/D | varies | Orthogonal | A=full page, B=destination sheet, C=quick picker, D=system modal. See §8. |
+
+### 10.2 The 12 invariants
+
+Every PR that adds or modifies UI must pass these. Code review enforces. No exceptions outside an explicit revision of §10.
+
+1. **One primary CTA per screen.** If a screen has two primaries, one is wrong. Demote, route, or delete.
+2. **No floating action without ownership.** Every interactive element belongs to a named zone (Z1–Z5) or a defined overlay type (A/B/C/D). If you can't name the zone, the element doesn't ship.
+3. **No duplicated destinations.** A persistent destination has exactly one entry point in persistent navigation. Contextual shortcuts (per-screen links) are fine because they're not persistent.
+4. **Monetization never lives in Z1 or Z3.** Z1 is identity. Z3 is gameplay. Monetization lives in Z4 (contextual offer), inside a destination sheet (Shop, PRO sub-section), or as a passive state indicator on an existing element.
+5. **Every feature category needs a reserved slot before launch.** New feature → which zone owns it? If the answer is "we'll figure it out," it's not ready to ship.
+6. **The dock is sacred.** 5 items, z-60, no exceptions outside the documented exception list (`/arena` match, `/victory`, splash, system modals — see §8).
+7. **Surfaces follow the A/B/C/D taxonomy literally.** Any new surface is exactly one of Type A (full page), B (destination sheet), C (quick picker), or D (system modal). The PR checklist in §8 is enforced.
+8. **First-visit / onboarding overlays defer to open sheets.** Briefing modals (Type D) check `anySheetOpen` before mounting. The play-hub guard at `play-hub-root.tsx` is the canonical pattern: `showBriefing && activeDockTab === null && !proSheetOpen`.
+9. **PRO benefits show up as state inside existing zones**, not as separate chips. Gold ring on existing element, gold tint, "no ads" by absence — never a banner that fights for attention.
+10. **Z-index ladder is documented at the top of `globals.css`.** New rules must fit the ladder. Never use `z-index > 60` outside system modals. Never `z-index: 999` "just in case."
+11. **Contextual-action slot collapses to 0px when empty.** No reserved vertical air for a CTA that isn't there. The component returns `null` rather than a placeholder div.
+12. **`editorial.ts` is the only place copy lives.** Including aria-labels, button labels, microcopy, error messages. No inline English strings in components — import from editorial constants. Compact / long variants live as separate fields on the same constant (e.g., `FOOTER_CTA_COPY[action].label` vs `.compactLabel`).
+
+### 10.3 Cross-references
+
+- Surface taxonomy + dock invariant: §8 above.
+- Z-index ladder + anti-patterns: top of `apps/web/src/app/globals.css`.
+- 6-zone analysis with ownership rules per zone: `ui-systems-audit-2026-05-01.md` §3 and §4.
+- Element-by-element classification (with code paths and handlers): `ui-floating-actions-functional-audit-2026-05-01.md`.
+- Decision history + commit log: `ui-zone-map-decision-record-2026-05-01.md`.
+- Regression spec locking the trophy-floating ≠ dock-trophies contract: `apps/web/e2e/floating-actions-vs-dock.spec.ts`.
+
+### 10.4 Lesson captured for the future
+
+> **Visual audits read screens; functional audits read source.**
+>
+> Before deleting any UI element, verify what it actually does. The original visual audit tagged three "floating buttons" for deletion based on screenshots; functional audit (source recon) revealed all three were first-class engagement features:
+>
+> - Trophy floating button → `MiniArenaBridgeSlot` (K+R vs K mastery challenge, gated unlock).
+> - "Whistle" → `DailyTacticSlot` (daily puzzle + streak mechanic).
+> - "Blue star" → `submitScore` action of `ContextualActionSlot` (critical on-chain CTA).
+>
+> Each was preserved by reading the wiring in `play-hub-root.tsx` before touching code. The Playwright spec at `apps/web/e2e/floating-actions-vs-dock.spec.ts` codifies this lesson — any future PR that conflates these elements with their visual look-alikes (dock Trophies, hint button, decorative star) will fail CI.
+>
+> When in doubt: `git grep` the testid, read the click handler, then decide.
