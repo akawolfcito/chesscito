@@ -224,9 +224,9 @@ export const PHASE_FLASH_COPY = {
 
 export const SHOP_SHEET_COPY = {
   title: "Arcane Store",
-  description: "Choose an item to purchase with USDC.",
+  description: "Choose an item to support your practice.",
   featured: "Featured",
-  buyButton: "Buy with USDC",
+  buyButton: "Buy with stablecoin",
   /** Companion CTA shown next to the USDC button on the Founder Badge
    *  card when running outside MiniPay. Routes to the helper itemId
    *  whose priceUsd6 is calibrated so the contract charges 1 CELO
@@ -684,11 +684,11 @@ export const COACH_COPY = {
   highestDifficulty: (d: string) => `Highest difficulty: ${d}`,
   currentStreak: (n: number) => `Current streak: ${n} wins`,
   creditTitle: "Coach Credits",
-  creditExplain: "1 credit = 1 full game analysis by AI coach",
-  creditPack5: "5 uses",
-  creditPack20: "20 uses",
+  creditExplain: "1 credit = 1 full game analysis",
+  creditPack5: "5 analyses",
+  creditPack20: "20 analyses",
   creditBest: "BEST",
-  buyWithUsdc: "Buy with USDC",
+  buyWithUsdc: "Buy with stablecoin",
   orQuickReview: "Or try Quick Review for free",
   getFullAnalysis: "Get Full Analysis",
   getFullAnalysisSub: "See your key moments and personalized tips",
@@ -707,11 +707,12 @@ export const COACH_COPY = {
   moveLabel: (n: number, move: string) => `Move ${n} · You played ${move}`,
   tryInstead: (move: string) => `→ Try ${move}`,
   welcomeTitle: "Meet Your Coach",
-  welcomeSub: "Get personalized analysis of your games — mistakes, lessons, and what you did well.",
+  welcomeSub:
+    "A learning companion that helps you understand your decisions and improve step by step.",
   welcomePack: "3 analyses",
   welcomePackDetail: "Key moments · Lessons · Praise",
   claimFree: "Claim Free Analyses",
-  welcomeNote: "After your free analyses, credit packs start at $0.05",
+  welcomeNote: "Free analyses to start. After that, credit packs from $0.05.",
   creditComingSoon: "Credit packs coming soon!",
   // --- Secondary Screen Cohesion (2026-03-28) ---
   loadingCanLeave: "You can leave — your result will be ready when you return.",
@@ -864,18 +865,16 @@ export const SHOP_ITEM_COPY = {
     subtitle:
       "Protect your practice rhythm. Three retries for tough captures — keep going without losing your streak.",
   },
-  /** Coach Credits — editorial copy prepared ahead of the Coach UI
-   *  refactor (see Commit 4 of the narrative realignment plan). The
-   *  paywall today consumes COACH_COPY.creditPack5/20; once Coach is
-   *  unhidden behind the public flag this block becomes the canonical
-   *  copy for the pack tiles. Kept here (next to founderBadge and
-   *  retryShield) because the underlying SKUs are sold through the
-   *  same Shop contract and itemId namespace. */
+  /** Coach Credits — value-prop copy for an eventual Coach Pack tile
+   *  in the shop sheet (parallel to Founder Badge / Retry Shield).
+   *  Pack size labels are intentionally NOT here — those live in
+   *  COACH_COPY.creditPack5/20 since the Coach paywall is the only
+   *  surface that renders pack tiles today. If a shop tile ever
+   *  surfaces Coach Packs, it should read pack labels from the same
+   *  COACH_COPY source to avoid drift. */
   coachPack: {
     label: "Coach Credits",
     subtitle: "Try AI analysis without committing to a subscription.",
-    pack5: "5 analyses",
-    pack20: "20 analyses",
   },
 } as const;
 

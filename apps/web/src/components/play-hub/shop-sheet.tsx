@@ -19,9 +19,10 @@ type CatalogItem = {
   enabled: boolean;
   onChainPrice: bigint;
   /** Optional companion payment route. When present, the card renders
-   *  an extra button below the primary "Buy with USDC" so the user can
-   *  pay the same product with CELO instead. Today this only fires for
-   *  the Founder Badge (itemId 1 ↔ 5) when running outside MiniPay. */
+   *  an extra button below the primary stablecoin buy CTA so the user
+   *  can pay the same product with CELO instead. Today this only
+   *  fires for the Founder Badge (itemId 1 ↔ 5) when running outside
+   *  MiniPay. */
   celoSibling?: { itemId: bigint } | null;
 };
 
