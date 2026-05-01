@@ -364,20 +364,20 @@ export const DIFFICULTY_LABELS: Record<number, string> = {
 } as const;
 
 export const VICTORY_CLAIM_COPY = {
-  claimButton: "Claim Victory",
-  claimHelper: "Claim your onchain victory and unlock your share card",
+  claimButton: "Save this Victory",
+  claimHelper: "Save this victory permanently and unlock your share card",
   claimValueHint: (price: string) => `Unlock your share card \u2022 ${price}`,
-  teaserLabel: "Unlock on claim",
+  teaserLabel: "Unlock when you save",
   teaserCheckmate: (moves: number) => `Checkmate in ${moves} moves`,
   teaserShare: "SHARE",
-  claimingInProgress: "Claiming in progress...",
-  claiming: "Claiming Victory...",
-  claimProgress1: "Recording your result onchain",
+  claimingInProgress: "Saving in progress...",
+  claiming: "Saving your victory...",
+  claimProgress1: "Recording your result",
   claimProgress2: "Preparing your victory card",
-  successTitle: "Victory Recorded",
-  successSubtitle: "Your onchain result is live. Your share card is ready.",
-  errorTitle: "Couldn't record victory",
-  errorSubtitle: "Something went wrong while saving your result onchain.",
+  successTitle: "Victory Saved",
+  successSubtitle: "Your victory is saved. Your share card is ready.",
+  errorTitle: "Couldn't save your victory",
+  errorSubtitle: "Something went wrong while saving your result.",
   tryAgain: "Try Again",
   shareCard: "Share Card",
   challengeFriend: "Challenge a Friend",
@@ -397,17 +397,17 @@ export const VICTORY_CLAIM_COPY = {
   // --- Secondary Screen Cohesion (2026-03-28) ---
   progressSteps: ["Signing", "Confirming", "Done"] as const,
   progressTimeHint: "This usually takes a few seconds",
-  claimedBadge: "Victory NFT Claimed",
-  errorRecoveryHint: "Your game result is saved. You can try claiming again anytime.",
+  claimedBadge: "Victory Saved",
+  errorRecoveryHint: "Your game result is saved. You can try saving again anytime.",
   /** Per-kind copy for the recoverable end states the claim flow can
    *  land in. The default "error" branch matches the historical
    *  errorTitle/errorSubtitle/errorRecoveryHint values so existing
    *  surfaces stay visually identical. */
   errorKindCopy: {
     error: {
-      title: "Couldn't record victory",
-      subtitle: "Something went wrong while saving your result onchain.",
-      hint: "Your game result is saved. You can try claiming again anytime.",
+      title: "Couldn't save your victory",
+      subtitle: "Something went wrong while saving your result.",
+      hint: "Your game result is saved. You can try saving again anytime.",
     },
     cancelled: {
       title: "Claim cancelled",
