@@ -333,13 +333,13 @@ export const MISSION_BRIEFING_COPY = {
 } as const;
 
 export const VICTORY_PAGE_COPY = {
-  tagline: "Learn chess moves, earn on-chain — a Celo MiniPay game",
+  tagline: "Train your mind with pre-chess challenges — a Celo MiniPay game",
   challengeLine: "Can you beat this?",
   acceptChallenge: "Accept Challenge",
   backToHub: "Back to Hub",
   metaCheckmate: (moves: number) => `Checkmate in ${moves} moves`,
   metaComplete: (moves: number) => `Complete in ${moves} moves`,
-  metaChallenge: (id: string) => `Can you beat that? Victory #${id} claimed onchain.`,
+  metaChallenge: (id: string) => `Can you beat that? Victory #${id} saved as a Chesscito victory card.`,
   metaFallback: "Can you beat this? Play Chesscito on Celo.",
 } as const;
 
@@ -436,7 +436,7 @@ export const VICTORY_CELEBRATION_COPY = {
   shareTextBasic: (moves: number, url: string) =>
     `♟ Checkmate in ${moves} moves. Can you beat that?\nPlay Chesscito on Celo 👉 ${url}`,
   shareTextClaimed: (moves: number, tokenId: bigint | number, url: string) =>
-    `♟ Checkmate in ${moves} moves. Can you beat that?\nVictory #${tokenId} claimed on-chain 👉 ${url}`,
+    `♟ Checkmate in ${moves} moves. Can you beat that?\nI saved my Chesscito victory card #${tokenId} 👉 ${url}`,
   stats: { difficulty: "level", moves: "moves", time: "time" },
 } as const;
 

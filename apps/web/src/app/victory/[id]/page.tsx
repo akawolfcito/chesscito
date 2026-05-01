@@ -17,7 +17,6 @@ type VictoryInfo = {
   timeMs: number;
   difficulty: string;
   difficultyRaw: number;
-  player: string;
 };
 
 async function fetchVictory(id: string): Promise<VictoryInfo | null> {
@@ -28,13 +27,14 @@ async function fetchVictory(id: string): Promise<VictoryInfo | null> {
     const client = createPublicClient({ chain: celo, transport: http() });
     const tokenId = BigInt(id);
 
-    const [victoryData, owner] = await Promise.all([
-      client.readContract({ address: contractAddress, abi: victoryAbi, functionName: "victories", args: [tokenId] }),
-      client.readContract({ address: contractAddress, abi: victoryAbi, functionName: "ownerOf", args: [tokenId] }),
-    ]);
+    const victoryData = await client.readContract({
+      address: contractAddress,
+      abi: victoryAbi,
+      functionName: "victories",
+      args: [tokenId],
+    });
 
     const [diff, totalMoves, timeMs] = victoryData as [number, number, number];
-    const ownerAddr = owner as string;
 
     return {
       id,
@@ -42,7 +42,6 @@ async function fetchVictory(id: string): Promise<VictoryInfo | null> {
       timeMs,
       difficulty: DIFFICULTY_LABELS[diff] ?? "Easy",
       difficultyRaw: diff,
-      player: `${ownerAddr.slice(0, 6)}...${ownerAddr.slice(-4)}`,
     };
   } catch {
     return null;
@@ -134,8 +133,6 @@ export default async function VictoryPage({ params }: { params: { id: string } }
           <span>{v.difficulty}</span>
           <span>•</span>
           <span>{formatTime(v.timeMs)}</span>
-          <span>•</span>
-          <span>{v.player}</span>
         </div>
 
         <p
