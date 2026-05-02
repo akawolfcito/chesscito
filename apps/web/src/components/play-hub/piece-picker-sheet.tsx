@@ -26,8 +26,11 @@ type Props = {
   selectedPiece: PieceOption["key"];
   pieces: readonly PieceOption[];
   onSelectPiece: (piece: PieceOption["key"]) => void;
-  /** The chip element that opens the sheet. */
-  trigger: React.ReactNode;
+  /** Optional chip element that opens the sheet. When omitted, the sheet
+   *  is purely controlled — the parent owns a separate trigger button and
+   *  flips `open` directly. This is the Phase-2 zone-map pattern: trigger
+   *  lives in Z2 (`<ContextualHeader>`), sheet renders as a sibling. */
+  trigger?: React.ReactNode;
 };
 
 export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, onSelectPiece, trigger }: Props) {
@@ -38,7 +41,7 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>{trigger}</SheetTrigger>
+      {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}
       <SheetContent
         side="bottom"
         className="mission-shell sheet-bg-hub rounded-t-3xl border-white/[0.10] pb-[5rem]"

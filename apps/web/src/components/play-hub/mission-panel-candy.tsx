@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CognitiveDisclaimer } from "@/components/legal/cognitive-disclaimer";
-import { LABYRINTH_COPY, MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_IMAGES, PIECE_LABELS } from "@/lib/content/editorial";
+import { LABYRINTH_COPY, MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PiecePickerSheet } from "@/components/play-hub/piece-picker-sheet";
+import { PiecePickerTrigger } from "@/components/play-hub/piece-picker-trigger";
 import { MissionDetailSheet } from "@/components/play-hub/mission-detail-sheet";
-import { THEME_CONFIG } from "@/lib/theme";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 
 type PieceOption = {
   key: "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
@@ -181,7 +182,18 @@ export function MissionPanelCandy({
   actionRowRight,
 }: MissionPanelProps) {
   const activePiece = pieces.find((p) => p.key === selectedPiece);
-  const activeSrc = PIECE_IMAGES[selectedPiece as keyof typeof PIECE_IMAGES];
+  const pieceTitle =
+    activePiece?.label ?? PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS];
+
+  // Subtitle for Z2 — mirrors the legacy mission chip's caption logic.
+  // L2 labyrinth mode: shows the labyrinth name. Capture exercises: just
+  // "Capture" (the target square is implied by the highlighted enemy).
+  // Default: "Target {square}" (matches MISSION_BRIEFING_COPY.targetPrefix).
+  const objectiveText = labyrinthMode
+    ? targetLabel
+    : isCapture
+      ? "Capture"
+      : `${MISSION_BRIEFING_COPY.targetPrefix.replace(":", "")} ${targetLabel}`;
 
   // Quick-picker (Type C) open state — owned here so we can auto-close
   // them when the parent signals a dock destination sheet is opening.
@@ -215,34 +227,6 @@ export function MissionPanelCandy({
     textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
   } as const;
 
-  const pieceChip = (
-    <button
-      type="button"
-      className={candyChipClass}
-      style={candyChipStyle}
-      aria-label={`Switch piece (current: ${activePiece?.label ?? selectedPiece})`}
-    >
-      <picture className="h-7 w-7 shrink-0">
-        {THEME_CONFIG.hasOptimizedFormats && (
-          <>
-            <source srcSet={`${activeSrc}.avif`} type="image/avif" />
-            <source srcSet={`${activeSrc}.webp`} type="image/webp" />
-          </>
-        )}
-        <img
-          src={`${activeSrc}.png`}
-          alt=""
-          aria-hidden="true"
-          className="h-full w-full object-contain"
-        />
-      </picture>
-      <span className={candyChipText} style={candyChipTextStyle}>
-        {activePiece?.label ?? PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS]}
-      </span>
-      <CandyIcon name="chevron-down" className="h-3.5 w-3.5 opacity-70" />
-    </button>
-  );
-
   const missionPeek = (
     <button
       type="button"
@@ -270,18 +254,47 @@ export function MissionPanelCandy({
 
   return (
     <section className="mission-shell mission-shell-candy atmosphere flex h-[100dvh] flex-col overflow-hidden">
-      {/* Zone A: context header — piece chip + mission chip + exercise drawer.
-          Piece identity and current mission target live here together so the
-          action row below can be dedicated to the CTA pin. */}
-      <div className="shrink-0 mx-2 mt-2 flex items-center gap-2">
-        <PiecePickerSheet
-          open={piecePickerOpen}
-          onOpenChange={setPiecePickerOpen}
-          selectedPiece={selectedPiece}
-          pieces={pieces}
-          onSelectPiece={onSelectPiece}
-          trigger={pieceChip}
+      {/* Z2 — Contextual Header. Piece label is the title, current
+          objective is the subtitle, picker trigger is the single trailing
+          control. Per spec docs/specs/ui/contextual-header-spec-2026-05-01.md
+          §8 (canary integration).
+          NOTE: right-padding reserves space for the absolute z-30 "Get PRO"
+          chip pinned to top-right. The chip is conceptually Z1 (identity);
+          this reservation prevents Z2's trailing slot from sitting under
+          it. Phase-2 destination = move PRO chip into <GlobalStatusBar />,
+          at which point this padding can drop. */}
+      <div className="shrink-0 ml-2 mt-2 mr-[140px]">
+        <ContextualHeader
+          variant="title-control"
+          title={pieceTitle}
+          subtitle={objectiveText}
+          trailingControl={
+            <PiecePickerTrigger
+              selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
+              onClick={() => setPiecePickerOpen(true)}
+            />
+          }
+          ariaLabel="Mission header"
         />
+      </div>
+
+      {/* PiecePickerSheet rendered as a sibling of the header. Open state
+          is owned here; trigger is now PiecePickerTrigger inside the
+          ContextualHeader's trailing slot. */}
+      <PiecePickerSheet
+        open={piecePickerOpen}
+        onOpenChange={setPiecePickerOpen}
+        selectedPiece={selectedPiece}
+        pieces={pieces}
+        onSelectPiece={onSelectPiece}
+      />
+
+      {/* TODO(zone-map-phase-2): fold MissionDetailSheet entry into the
+          piece-picker sheet as a sub-tab. Until then, the mission peek
+          chip stays rendered as a transitional sibling row so its
+          functional surface is preserved. Tracked in the Phase 2 backlog;
+          see contextual-header-spec-2026-05-01.md §8. */}
+      <div className="shrink-0 mx-2 mt-1 flex items-center gap-2">
         <MissionDetailSheet
           open={missionDetailOpen}
           onOpenChange={setMissionDetailOpen}
