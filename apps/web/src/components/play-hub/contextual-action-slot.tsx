@@ -94,29 +94,38 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
     const pinClass = isCandyClaim
       ? "candy-frame candy-frame-gold action-pin-attention"
       : `game-cta-depth rounded-full ${style.bg} ${style.glow} ${style.text}${action === "retry" ? " border border-[var(--cta-muted-border)]" : ""}`;
+    const compactLabel = FOOTER_CTA_COPY[action].compactLabel;
 
     return (
-      <button
-        type="button"
-        onClick={handler}
-        disabled={isBusy}
-        aria-label={label}
-        className={`relative flex h-11 w-11 shrink-0 items-center justify-center disabled:opacity-70 animate-in fade-in zoom-in-95 duration-200 ${pinClass}`}
-      >
-        {isBusy ? (
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        ) : (
-          <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
-        )}
-        {action === "useShield" && !isBusy ? (
-          <span
-            aria-hidden="true"
-            className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[0.6rem] font-bold text-white shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
-          >
-            {shieldsAvailable}
-          </span>
-        ) : null}
-      </button>
+      <div className="flex flex-col items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
+        <button
+          type="button"
+          onClick={handler}
+          disabled={isBusy}
+          aria-label={label}
+          className={`relative flex h-11 w-11 shrink-0 items-center justify-center disabled:opacity-70 ${pinClass}`}
+        >
+          {isBusy ? (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          ) : (
+            <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
+          )}
+          {action === "useShield" && !isBusy ? (
+            <span
+              aria-hidden="true"
+              className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[0.6rem] font-bold text-white shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
+            >
+              {shieldsAvailable}
+            </span>
+          ) : null}
+        </button>
+        <span
+          aria-hidden="true"
+          className="game-label text-nano font-bold uppercase tracking-[0.12em] text-[rgba(63,34,8,0.85)]"
+        >
+          {compactLabel}
+        </span>
+      </div>
     );
   }
 

@@ -1,3 +1,51 @@
+/* =====================================================================
+ * Z-INDEX LADDER — canonical reference for stacking decisions.
+ *
+ * Read this BEFORE adding `z-index` anywhere. New rules must fit the
+ * ladder; if they don't, the design is wrong, not the ladder.
+ * Reference: DESIGN_SYSTEM.md §8 (Surface taxonomy + dock invariant)
+ *            docs/reviews/ui-systems-audit-2026-05-01.md §3 (zones)
+ *
+ * Local stacking (within a component / local stacking context):
+ *   -1   isolation tricks for drop-shadow / behind-pseudo-element layers
+ *    0   default flow
+ *    1   element above siblings in the same stacking context
+ *    2   nested above (rarely needed)
+ *
+ * Board piece animation layers (within .playhub-board / .arena-board):
+ *    5   base piece float
+ *    9   selected piece lift
+ *   10   highlighted target dots above pieces
+ *   11   active piece (currently moving) above the rest
+ *   12   capture flash
+ *   13   promotion piece above
+ *
+ * Page-level absolute / floating UI:
+ *   30   PRO chip (absolute, top-right of play-hub <main>)
+ *   40   mission-briefing scrim
+ *   50   Radix Dialog/Sheet scrim (Type-B/C surfaces — DO NOT exceed)
+ *
+ * The DOCK INVARIANT — never let anything above z-60 unless it is a
+ * Type-D system modal that explicitly blocks the dock:
+ *   60   .chesscito-dock + Type-D system modals (welcome, unlocked
+ *        piece, victory ceremony). The dock floats on top of every
+ *        Radix Sheet (z-50) by design.
+ *   70   toast / coachmark — transient, passes pointer-events when
+ *        idle; survives the dock because it is a transient signal,
+ *        not a persistent surface.
+ *   80   .playhub-intro-overlay (splash-loader). Owns the screen on
+ *        first paint until assets + wallet are ready, then unmounts.
+ *
+ * Anti-patterns:
+ *   - Inventing a fresh layer above 60 for "just one more dialog".
+ *     If you need that, you need a Type-D system modal — promote, do
+ *     not stack.
+ *   - Using `z-index` to win against a sibling instead of fixing the
+ *     stacking context (`isolation: isolate` or `position: relative`).
+ *   - Adding `z-index: 999` "just in case". The ladder is enough; the
+ *     999 says you didn't read it.
+ * ===================================================================== */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
