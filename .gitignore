@@ -134,6 +134,7 @@ _bmad-output/
 test-results/
 e2e-results/
 playwright-report/
+.playwright-cli/
 
 # Generated non-code artifacts (presentations, exports)
 artifacts/
