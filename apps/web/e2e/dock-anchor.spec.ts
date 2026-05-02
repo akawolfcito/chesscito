@@ -4,10 +4,13 @@ import { test, expect } from "@playwright/test";
  * Verifies the persistent dock anchors flush with the viewport bottom on
  * the play-hub. Regression test for the gap-below-dock issue where parents
  * stretched past 100dvh and exposed body bg below the dock.
+ *
+ * Targets `/hub` (Play Hub). `/` is now the public landing page; the dock
+ * only mounts inside the hub.
  */
 test.describe("Play hub dock anchoring", () => {
   test("dock bottom equals viewport height (no gap below)", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/hub");
     await page.waitForLoadState("networkidle");
     // Wait for the dock to mount.
     const dock = page.locator(".chesscito-dock");
