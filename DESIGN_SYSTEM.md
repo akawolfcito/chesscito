@@ -304,3 +304,77 @@ Every PR that adds or modifies UI must pass these. Code review enforces. No exce
 > Each was preserved by reading the wiring in `play-hub-root.tsx` before touching code. The Playwright spec at `apps/web/e2e/floating-actions-vs-dock.spec.ts` codifies this lesson — any future PR that conflates these elements with their visual look-alikes (dock Trophies, hint button, decorative star) will fail CI.
 >
 > When in doubt: `git grep` the testid, read the click handler, then decide.
+
+### 10.5 Z2 primitive — `<ContextualHeader />`
+
+Adopted: 2026-05-01. Canary consumer: `apps/web/src/components/play-hub/mission-panel-candy.tsx` (Phase 2 commit #2). Source code: `apps/web/src/components/ui/contextual-header.tsx`.
+
+**`<ContextualHeader />` is the canonical Z2 component. Any new screen that needs a context strip uses this primitive — no inline `<header>` or ad-hoc `<div className="...header...">` patterns are accepted in code review.**
+
+#### Variants (4, capped)
+
+| Variant | Use case | Required slots | Optional slots |
+|---|---|---|---|
+| `title` | Static screen title (e.g. `/about`, `/privacy`). | `title` | `ariaLabel` |
+| `title-control` | Most common. Title + optional subtitle + ONE trailing trigger button. | `title`, `trailingControl` | `subtitle`, `ariaLabel` |
+| `mode-tabs` | Segmented filter, max 4 options. | `modeTabs` | `ariaLabel` |
+| `back-control` | Type-A overlays / deep nav. Back button + title + optional trailing trigger. | `title`, `back` | `trailingControl`, `ariaLabel` |
+
+**A 5th variant requires a written justification in the spec PR + sign-off from the design-system owner.** If 3+ screens want "almost variant X but slightly different," the missing primitive lives somewhere else (e.g. `<SheetHeader />`), not in Z2.
+
+#### Type-safety contracts (enforced at compile time)
+
+- Props are a **discriminated union** per variant. `back={...}` on `variant="title"` is a TS error. `modeTabs={...}` on `variant="title-control"` is a TS error. `back + modeTabs` together is impossible by construction.
+- `trailingControl` is `ReactElement`, **not** `ReactNode`. Arrays, iterables, `null`, and `undefined` are TS errors. (Multi-child fragments compile but trigger a dev-mode runtime warning — see §10.5 below.)
+- `modeTabs.options` is a tuple capped at 4: `readonly [TabOption, TabOption?, TabOption?, TabOption?]`. A 5th positional entry is a TS error.
+
+#### Runtime guards (dev-mode only, no production cost)
+
+All wrapped in `process.env.NODE_ENV !== "production"`:
+
+- `title.length > 22` → `console.warn` (truncation engages).
+- `subtitle.length > 32` → warn.
+- `TabOption.label.length > 16` → warn.
+- Duplicate `TabOption.key` → warn (last-wins).
+- `back.label.length > 16` → warn.
+- Trigger DOM width > 44px (measured via `getBoundingClientRect`) → warn.
+- Multi-child fragment in `trailingControl` (`React.Children.count > 1`) → warn.
+
+#### What `<ContextualHeader />` does NOT do
+
+- No `className` escape hatch. Surface tweaks must go through typed props in a future spec.
+- No `position: sticky`. v1 only supports `sticky="scroll"` (header scrolls with the page). Sticky support requires a shell refactor that is out of scope.
+- No mid-screen mount/unmount. The primitive reserves its full height for the lifetime of the screen render. Loading state uses skeleton chips, not collapse.
+- No nested headers. A screen has at most one Z2 strip. Sheet headers are a separate primitive (future spec).
+- No primary CTAs, no monetization, no live timers, no streak counters in Z2. Those live in Z1 / Z3 / Z4 per §10.2.
+
+#### Mandatory contract for callers
+
+- Wrap the primitive in a `<div>` that gives it horizontal context (margins, optional reserve for absolutely-positioned siblings like the legacy "Get PRO" chip).
+- Lift trigger open/close state to the parent. Render `Type-C` quick-pickers as **siblings** of `<ContextualHeader>`, not inside `trailingControl`. The trailing slot accepts only the trigger button.
+- Use the `data-component="contextual-header"` selector in E2E tests (the component sets it on every variant).
+
+#### Cross-references
+
+- Spec (full contract, all 14 sections): [`docs/specs/ui/contextual-header-spec-2026-05-01.md`](docs/specs/ui/contextual-header-spec-2026-05-01.md).
+- Red-team review of the spec: [`docs/reviews/contextual-header-spec-red-team-2026-05-01.md`](docs/reviews/contextual-header-spec-red-team-2026-05-01.md).
+- Re-review verifying P0 closure: [`docs/reviews/contextual-header-spec-red-team-followup-2026-05-01.md`](docs/reviews/contextual-header-spec-red-team-followup-2026-05-01.md).
+- Implementation review (commit `fda38a0`): [`docs/reviews/contextual-header-implementation-review-2026-05-01.md`](docs/reviews/contextual-header-implementation-review-2026-05-01.md).
+- Canary E2E spec locking the contract: `apps/web/e2e/contextual-header.spec.ts`.
+- Unit tests: `apps/web/src/components/ui/__tests__/contextual-header.test.tsx`.
+
+### 10.6 Phase 2 carry-forward
+
+These items are **explicitly deferred**, not forgotten. Each one ships in a future PR; this section makes them visible so they don't decay into "we'll get to it" debt.
+
+| Item | Source | Trigger to ship |
+|---|---|---|
+| **`mode-tabs` keyboard navigation** — roving `tabIndex`, ←/→ arrow keys, Home/End. | Implementation review §3.2 P1-IMPL-1 | First real `mode-tabs` consumer (Trophies recents/all/locked filter is the leading candidate). Bundle into the same PR. |
+| **`mode-tabs` semantic wrapper** — move `role="tablist"` from `<header>` to an inner `<div role="tablist">` so the wrapper keeps its implicit `banner` role. | Implementation review §3.2 P1-IMPL-2 | Same PR as above. |
+| **Focus management for variant transitions** — restore focus when a screen swaps `<ContextualHeader>` variants mid-flow. | Re-review §5 P1-5 | When the first screen actually swaps variants mid-flow. No v1 consumer does this. |
+| **CI lint anti-misuse** — ESLint rule (or grep CI check) that flags raw `<header>` or `<div className="...header...">` patterns inside `apps/web/src/app/**/page.tsx`. | Re-review §5 P2-6 / spec §11 risks | Bundle with the next system-level lint commit. Process discipline until then. |
+| **Z1 + Z2 combined budget** — codify "Z1 ≤ 40px and Z2 ≤ 64px; combined ≤ 104px" as a hard constraint in §10.1. | Re-review §5 P2-10 | Ships with `<GlobalStatusBar />` spec (Phase 2 follow-on). |
+| **`MissionDetailSheet` migration** — fold into the piece-picker sheet as a sub-tab so the canary's transitional sibling row disappears. | Spec §8 + canary commit `24ac2ef` TODO | Follow-on PR. Resolves the duplicate "objective text" visible during the canary. |
+| **PRO chip migration** — move the absolute z-30 "Get PRO" chip into `<GlobalStatusBar />` (Z1) so the Z2 wrapper's `mr-[140px]` reservation in `mission-panel-candy.tsx` can drop. | Canary commit `24ac2ef` inline TODO | Ships with `<GlobalStatusBar />` (Phase 2 follow-on). |
+| **`<ContextualActionRail />` (Z4 primitive)** + **`<GlobalStatusBar />` (Z1 primitive)** — the other two zone primitives the spec refers to. | UI zone-map decision record §5 | Each one needs its own spec → red-team → TDD cycle. Out of scope for the Z2 PR series. |
+| **Migration of remaining screens** to `<ContextualHeader>` — `/arena`, `/missions`, `/badges` sheet, secondary pages. | Spec §10 acceptance | One PR per screen after the canary lands. Never as a bulk drop-in.

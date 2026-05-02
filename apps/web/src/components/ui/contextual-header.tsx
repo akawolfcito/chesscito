@@ -5,7 +5,14 @@ import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types — discriminated union per variant.
-// Source spec: docs/specs/ui/contextual-header-spec-2026-05-01.md (v1).
+//
+// Full contract: docs/specs/ui/contextual-header-spec-2026-05-01.md (v1)
+// Design-system entry: DESIGN_SYSTEM.md §10.5
+//
+// Why discriminated union (and not a flat interface): impossible prop
+// combinations (`back + modeTabs`, `trailingControl` outside its allowed
+// variants) must fail at compile time, not at runtime. See spec §3
+// amendment for the rationale and the original red-team finding.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type Sticky = "scroll";
@@ -58,6 +65,17 @@ export type BackControlHeaderProps = {
   sticky?: Sticky;
 };
 
+/**
+ * Props for `<ContextualHeader />` — discriminated union by `variant`.
+ *
+ * The TS narrowing inside the component switch guarantees that each
+ * variant only sees the fields it owns. Callers cannot mix `back` +
+ * `modeTabs`, cannot pass arrays / iterables / `null` / `undefined` as
+ * `trailingControl`, and cannot exceed 4 entries in `modeTabs.options`.
+ *
+ * See DESIGN_SYSTEM.md §10.5 for the variant catalogue and the full
+ * compile-time / runtime contract list.
+ */
 export type ContextualHeaderProps =
   | TitleHeaderProps
   | TitleControlHeaderProps
@@ -142,6 +160,16 @@ function checkFragmentEscape(element: React.ReactElement | undefined): void {
   }
 }
 
+/**
+ * Dev-mode soft cap on the trailing trigger's rendered width. Z2's
+ * trailing slot is meant for one ≤44×44 trigger; anything wider is a
+ * code smell (a sheet, a multi-control row, a chip with a long label).
+ *
+ * Intentionally registered without a dependency array so it re-measures
+ * on every render — CSS drift on a previously-OK trigger should still
+ * fire the warning. jsdom returns 0 from getBoundingClientRect so this
+ * never asserts in unit tests; coverage relies on real-browser runs.
+ */
 function useTriggerWidthGuard(
   ref: React.RefObject<HTMLDivElement | null>,
 ): void {
@@ -190,6 +218,33 @@ const SUBTITLE_CLASS =
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Canonical Z2 (Contextual Header) primitive for Chesscito.
+ *
+ * Renders the screen-local context strip (52–64px height, 390px max
+ * width) per the zone map in `DESIGN_SYSTEM.md` §10.1. State (open
+ * pickers, active tab, back-nav target) is owned by the caller; this
+ * primitive only renders structure, applies the canonical envelope, and
+ * fires dev-mode warnings on contract drift.
+ *
+ * Accepts one of four variants — `title`, `title-control`, `mode-tabs`,
+ * `back-control` — discriminated by the `variant` prop.
+ *
+ * For the full contract, including forbidden cases, length caps,
+ * runtime guards, and the canary integration pattern, see
+ * `docs/specs/ui/contextual-header-spec-2026-05-01.md` and
+ * `DESIGN_SYSTEM.md` §10.5.
+ *
+ * @example title + chip
+ * ```tsx
+ * <ContextualHeader
+ *   variant="title-control"
+ *   title="Rook"
+ *   subtitle="Move to h1"
+ *   trailingControl={<PiecePickerTrigger onClick={openPicker} />}
+ * />
+ * ```
+ */
 export function ContextualHeader(props: ContextualHeaderProps): React.JSX.Element {
   emitLengthWarnings(props);
   const ariaLabel = deriveAriaLabel(props);
