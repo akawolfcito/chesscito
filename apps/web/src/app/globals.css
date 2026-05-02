@@ -218,6 +218,14 @@
     /* ── Arena action pill stone text color ── */
     --redesign-stone-text: rgba(63, 34, 8, 0.85);
 
+    /* ── Premium-state semantic gold ── */
+    /* Canonical token for PRO active indicators (rings, pills, ribbons).
+       Decoupled from --redesign-wood-gold by design — a candy-palette
+       reskin must NOT silently retint PRO ring across screens.
+       Spec: docs/specs/ui/global-status-bar-spec-2026-05-02.md §11 #3,
+       DESIGN_SYSTEM.md §1. */
+    --pro-ring-gold: #FDD257;
+
     /* ── Dock + label color tokens ── */
     --redesign-cyan-dim: rgba(160, 225, 220, 0.55);
     --color-label-gold: rgba(200, 180, 130, 0.55);

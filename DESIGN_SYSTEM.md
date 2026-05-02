@@ -258,12 +258,14 @@ Every UI element on every screen lives in exactly one of these zones, or in a de
 
 | Zone | Name | Height | Always visible? | Purpose |
 |---|---|---|---|---|
-| **Z1** | Global Status Bar | 32–40px | Yes | Player identity (handle, level, streak, PRO state as passive ring). Read-only. |
-| **Z2** | Contextual Header | 52–64px | Per-screen | Screen title + ONE contextual control. Mode tabs (max 4) live here. |
+| **Z1** | Global Status Bar | 32–40px content (excl. safe-area-top) | Target invariant — every primary screen; v1 canary on `/play-hub` only | Player identity (handle, wallet, PRO state as passive ring). Read-only. See §10.7. |
+| **Z2** | Contextual Header | 52–64px content | Per-screen | Screen title + ONE contextual control. Mode tabs (max 4) live here. |
 | **Z3** | Content / Board | flex-1 | Per-screen | The gameplay surface. Dominant. Nothing competes. |
 | **Z4** | Contextual Action Rail | 56px | Per-screen | ONE primary CTA + optional ONE secondary. Collapses to 0 when empty. |
-| **Z5** | Dock | 72px (z-60) | INVARIANT | 5 destinations, fixed forever. Defended by §8. |
+| **Z5** | Dock | 72px content (excl. safe-area-bottom, z-60) | INVARIANT | 5 destinations, fixed forever. Defended by §8. |
 | Overlays | Type A/B/C/D | varies | Orthogonal | A=full page, B=destination sheet, C=quick picker, D=system modal. See §8. |
+
+**Combined Z1 + Z2 content-height invariant**: **Z1 ≤ 40px content + Z2 ≤ 64px content; combined ≤ 104px content.** Layout cost (content + `env(safe-area-inset-top)` + `env(safe-area-inset-bottom)`) is device-specific and not part of the invariant. The invariant is enforced by E2E assertion in `apps/web/e2e/global-status-bar.spec.ts` (`clientHeight − paddingTop − paddingBottom` per strip). Per `docs/specs/ui/global-status-bar-spec-2026-05-02.md` §11 #11 + §13.
 
 ### 10.2 The 12 invariants
 
@@ -373,8 +375,91 @@ These items are **explicitly deferred**, not forgotten. Each one ships in a futu
 | **`mode-tabs` semantic wrapper** — move `role="tablist"` from `<header>` to an inner `<div role="tablist">` so the wrapper keeps its implicit `banner` role. | Implementation review §3.2 P1-IMPL-2 | Same PR as above. |
 | **Focus management for variant transitions** — restore focus when a screen swaps `<ContextualHeader>` variants mid-flow. | Re-review §5 P1-5 | When the first screen actually swaps variants mid-flow. No v1 consumer does this. |
 | **CI lint anti-misuse** — ESLint rule (or grep CI check) that flags raw `<header>` or `<div className="...header...">` patterns inside `apps/web/src/app/**/page.tsx`. | Re-review §5 P2-6 / spec §11 risks | Bundle with the next system-level lint commit. Process discipline until then. |
-| **Z1 + Z2 combined budget** — codify "Z1 ≤ 40px and Z2 ≤ 64px; combined ≤ 104px" as a hard constraint in §10.1. | Re-review §5 P2-10 | Ships with `<GlobalStatusBar />` spec (Phase 2 follow-on). |
+| ~~**Z1 + Z2 combined budget**~~ — ✅ **CLOSED 2026-05-02** with `<GlobalStatusBar />` spec; codified at §10.1 (Z1 ≤ 40px content + Z2 ≤ 64px content, combined ≤ 104px content). |
 | **`MissionDetailSheet` migration** — fold into the piece-picker sheet as a sub-tab so the canary's transitional sibling row disappears. | Spec §8 + canary commit `24ac2ef` TODO | Follow-on PR. Resolves the duplicate "objective text" visible during the canary. |
 | **PRO chip migration** — move the absolute z-30 "Get PRO" chip into `<GlobalStatusBar />` (Z1) so the Z2 wrapper's `mr-[140px]` reservation in `mission-panel-candy.tsx` can drop. | Canary commit `24ac2ef` inline TODO | Ships with `<GlobalStatusBar />` (Phase 2 follow-on). |
 | **`<ContextualActionRail />` (Z4 primitive)** + **`<GlobalStatusBar />` (Z1 primitive)** — the other two zone primitives the spec refers to. | UI zone-map decision record §5 | Each one needs its own spec → red-team → TDD cycle. Out of scope for the Z2 PR series. |
 | **Migration of remaining screens** to `<ContextualHeader>` — `/arena`, `/missions`, `/badges` sheet, secondary pages. | Spec §10 acceptance | One PR per screen after the canary lands. Never as a bulk drop-in.
+
+### 10.7 Z1 primitive — `<GlobalStatusBar />`
+
+Adopted: 2026-05-02. Source code: `apps/web/src/components/ui/global-status-bar.tsx`. Canary consumer: queued for Phase 2 commit #2 (`/play-hub`); v1 ships the primitive only.
+
+**`<GlobalStatusBar />` is the canonical Z1 component. Any new screen that needs a persistent identity strip uses this primitive — no inline `<header>` patterns or absolute-positioned chips are accepted in code review.**
+
+#### Variants (2, capped per the §5 growth rule)
+
+| Variant | Use case | Required slots | Optional slots |
+|---|---|---|---|
+| `anonymous` | No wallet connected. | — | `ariaLabel` |
+| `connected` | Wallet present. | `identity.walletShort`, `proStatus`, `isProLoading`, `onProTap` | `identity.handle`, `identity.avatarUrl`, `ariaLabel` |
+
+**A 3rd variant requires a written justification + design-system owner sign-off.** Per the spec's growth rule, future data slots (level, streak, currency, achievements) land as **typed props on `ConnectedProps`**, not as new variants. Variants are reserved for structural layout differences, not data-source differences.
+
+#### Type-safety contracts (compile-time enforced for inline-literal callers)
+
+- Props are a **discriminated union** per variant. `proStatus` / `isProLoading` / `onProTap` / `identity` on `variant: "anonymous"` are TS errors when supplied as inline-object literals.
+- Missing `identity.walletShort` on `variant: "connected"` is a TS error.
+- No `className` escape hatch — surface tweaks must propose a typed prop in a future amendment.
+
+**TypeScript does NOT block discriminated-union escapes via spread props.** A caller that builds the object first and spreads it bypasses excess-property checks. The spec does not claim type-system sufficiency; the runtime guard below catches the escape.
+
+#### Runtime guards (dev-mode only, no production cost)
+
+All wrapped in `process.env.NODE_ENV !== "production"`:
+
+- **Spread-prop escape** — `variant: "anonymous"` arriving with `identity` / `proStatus` / `isProLoading` / `onProTap` keys → warn + drop the keys.
+- `identity.handle.length > 14` → warn + ellipsis past cap.
+- `identity.walletShort` does not match `/^0x[a-fA-F0-9]{4}…[a-fA-F0-9]{4}$/` → warn (use `formatWalletShort`).
+- `proStatus.active && proStatus.expiresAt < Date.now()` → warn (stale status).
+- `dir="ltr"` is forced on the wrapper (RTL deferred per §17 of the spec).
+
+#### What `<GlobalStatusBar />` does NOT do
+
+- No PRO fetch (caller passes `proStatus` from `useProStatus`).
+- No router calls / nav.
+- No animations on variant flip (anonymous ↔ connected).
+- No mid-screen mount/unmount.
+- No nested status bars; Type-B destination sheets do **NOT** render Z1 inside themselves (per spec §2). Identity persistence inside sheets is out of scope for v1.
+- No primary CTAs, no monetization promos, no live timers, no streak counters in Z1. Per §10.2 invariant 4.
+
+#### Mandatory contract for callers
+
+- Mount as the first child of `<main>` (or equivalent screen root). Render in normal flow — no `absolute` positioning.
+- Pass `proStatus` / `isProLoading` from a single shared `useProStatus(address)` invocation. Process-only mitigation in v1; CI grep promotion (`scripts/check-pro-fetch.sh`) when the second screen migrates (per spec §12 risk row #3).
+- On wallet disconnect mid-session, the parent must **synchronously close any open `<ProSheet>`** before/while flipping `variant` from `connected` to `anonymous` (per spec §8 row 6 + dev warning in §6).
+- Use the `data-component="global-status-bar"` selector in E2E tests; `data-variant` distinguishes states; `data-pro-state="active|inactive"` marks the PRO indicator.
+
+#### Transitional debt (with hard 4-layer enforcement)
+
+`onProTap` exists in `ConnectedProps` only because Shop has no PRO sub-section yet. Per the spec's §6.1 row 1:
+
+- **Owner**: Wolfcito.
+- **Due date**: 60 days from canary deploy date OR Shop PRO sub-section ships, whichever first.
+- **Greppable trailer**: canary commit message includes `pro-tap-debt-due-by: <YYYY-MM-DD>`.
+- **Calendar reminder**: created on canary-deploy day in the project tracker.
+- **Day-61 hard-close**: `onProTap` is removed automatically + inactive PRO pill is removed; Z1 becomes strictly passive. Re-approval requires an Amendment-log entry signed by Wolfcito — not Slack escalation.
+
+This is **not** a soft deadline.
+
+#### Cross-references
+
+- Full spec: [`docs/specs/ui/global-status-bar-spec-2026-05-02.md`](docs/specs/ui/global-status-bar-spec-2026-05-02.md).
+- Red-team review: [`docs/reviews/global-status-bar-spec-red-team-2026-05-02.md`](docs/reviews/global-status-bar-spec-red-team-2026-05-02.md).
+- Re-review verifying P0 closure: [`docs/reviews/global-status-bar-spec-red-team-followup-2026-05-02.md`](docs/reviews/global-status-bar-spec-red-team-followup-2026-05-02.md).
+- Premium-state gold token (`--pro-ring-gold: #FDD257`): top of `globals.css` redesign palette block.
+- Wallet truncation helper: `apps/web/src/lib/wallet/format.ts` (`formatWalletShort`, `isWalletShortShape`).
+- Editorial copy: `GLOBAL_STATUS_BAR_COPY` in `apps/web/src/lib/content/editorial.ts`.
+- Unit tests: `apps/web/src/components/ui/__tests__/global-status-bar.test.tsx` + `apps/web/src/lib/wallet/__tests__/format.test.ts`.
+
+### 10.8 Phase 2 carry-forward (Z1)
+
+| Item | Source | Trigger to ship |
+|---|---|---|
+| **Canary integration on `/play-hub`** — mount Z1, drop `mr-[140px]` from Z2 wrapper, remove the absolute `<ProChip>` wrapper. | Spec §10 + §15 commit #2 | Phase 2 commit #2 of the Z1 series. |
+| **Per-screen migration** — `/arena`, `/trophies`, `/leaderboard`, secondary pages. | Spec §6.1 row 2 | One commit per screen after the canary lands. |
+| **`onProTap` removal + strict-passive Z1** | Spec §6.1 row 1 (4-layer enforcement) | Shop PRO sub-section ships OR canary-deploy + 60 days, whichever first. |
+| **`<ProChip>` legacy file deletion** | Spec §6.1 row 3 + §15 commit #3 | 7 days post-canary minimum to preserve revert window. |
+| **A11y carry-forward** — keyboard nav, focus-visible, screen-reader wallet pronunciation, RTL support, beyond-PRO-tap interactions. | Spec §17 | Triggers per §17 table (first interactive typed prop, first a11y QA pass, RTL i18n project). |
+| **`useProStatus` single-source CI promotion** — `scripts/check-pro-fetch.sh` blocking PRs that bypass the hook. | Spec §12 risk row #3 | When the second screen (after `/play-hub`) migrates. |
+| **Future typed props on `ConnectedProps`** — level, streak, currency, achievements (each behind its own product spec). | Spec §3 + §5 growth rule | Per typed prop: product spec defines the data system → spec amendment adds the prop. |

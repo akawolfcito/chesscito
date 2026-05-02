@@ -929,6 +929,28 @@ export const PRO_COPY = {
   },
 } as const;
 
+/** `<GlobalStatusBar />` Z1 primitive copy. Spec:
+ *  docs/specs/ui/global-status-bar-spec-2026-05-02.md §15 commit #1.
+ *
+ *  - `proManageLabel` is used while PRO is active (tap → manage / view
+ *    expiration via `<ProSheet>`).
+ *  - `proViewLabel` is used while PRO is inactive AND the transitional
+ *    `onProTap` debt still exists (§6.1). Once Shop ships its PRO
+ *    sub-section and the debt closes, this key is removed alongside the
+ *    inactive pill.
+ *  - `proInactiveLabel` is the visible label of the muted inactive pill.
+ *  - Days-suffix copy ("28 days left", "Expires tomorrow") is REUSED
+ *    from `PRO_COPY.statusActiveSuffix` — do not duplicate the key here. */
+export const GLOBAL_STATUS_BAR_COPY = {
+  guestLabel: "Guest",
+  ariaLabelConnected: "Player status",
+  ariaLabelAnonymous: "Anonymous status",
+  proManageLabel: "Manage Chesscito PRO",
+  proViewLabel: "View Chesscito PRO",
+  proInactiveLabel: "PRO",
+  proLoadingAriaLabel: "Loading PRO status",
+} as const;
+
 /** /why public landing page copy. Spanish-only in v1 by product
  *  decision (English version is a follow-up sprint). All strings are
  *  centralized here per the no-inline-copy rule of the codebase.
