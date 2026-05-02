@@ -59,8 +59,12 @@ The component is **framework-agnostic styling-wise** (Tailwind + design tokens, 
 > replaced with a **discriminated union** so impossible prop combinations
 > (e.g. `back + modeTabs`, `trailingControl` outside `title-control` /
 > `back-control`) fail to compile. v0 also accepted `ReactNode` as
-> `trailingControl`, which silently allowed arrays / fragments — v1 narrows
-> to `ReactElement` (single element only).
+> `trailingControl`, which silently allowed arrays. v1 narrows to
+> `ReactElement` — arrays, iterables, `null`, and `undefined` are now
+> compile errors. **Fragments** (`<></>`) still pass the type check (a
+> fragment is technically a single `ReactElement<typeof Fragment>`); they
+> are caught at runtime by the dev-mode width-drift warning and by visual
+> review during canary QA.
 
 ---
 
@@ -132,7 +136,7 @@ export type ModeTabsProp = {
 
 **Contracts that the type system actually enforces** (no longer prose-only):
 
-- `trailingControl` is `ReactElement`, not `ReactNode` — arrays, fragments, iterables, `null`, and `undefined` no longer compile in `title-control`. (`null`/`undefined` still compile in the *optional* `back-control` variant by virtue of `?`, but never as a fragment.)
+- `trailingControl` is `ReactElement`, not `ReactNode` — arrays, iterables, `null`, and `undefined` no longer compile in `title-control`. (`null`/`undefined` still compile in the *optional* `back-control` variant by virtue of `?`.) **Fragments are NOT rejected at compile time**: a JSX fragment desugars to `React.createElement(Fragment, null, ...)` which returns a single `ReactElement<typeof Fragment>`. Multi-child fragments are caught at runtime by the dev-mode width-drift warning (see runtime guards below) and by the §13 unit tests.
 - `back` exists **only** on `BackControlHeaderProps`. Passing `back={...}` on a `title` variant is a type error.
 - `modeTabs` exists **only** on `ModeTabsHeaderProps`. Same enforcement.
 - `back + modeTabs` together is impossible by construction — they live on different members of the union.
@@ -145,6 +149,7 @@ export type ModeTabsProp = {
 - Any `TabOption.label.length > 16` → warn.
 - Duplicate `TabOption.key` values → warn (last-wins is the documented behavior).
 - `trailingControl`'s rendered DOM width > 44px → warn.
+- `trailingControl.type === Fragment` AND `React.Children.count(props.children) > 1` → warn (multi-child fragment escape hatch).
 
 ---
 
@@ -447,16 +452,21 @@ Each commit is one logical change. Run full unit + e2e suite before each. Commit
 - **`back-control` block** asserts: back button is present, has 44×44 hit area, fires `onClick`; optional `trailingControl` is right-aligned.
 - **A11y test** per variant: `aria-label` on the wrapper element; back button has `aria-label`; chips have visible labels.
 
-### Compile-time tests (`tsd`)
+### Compile-time contracts (documented; verified manually until `tsd` is added)
 
-- **File**: `apps/web/src/components/ui/__tests__/contextual-header.test-d.ts`.
-- Asserts that the following caller patterns are **type errors** (not runtime warnings):
-  - `back={...}` on `variant="title"`.
-  - `modeTabs={...}` on `variant="title-control"`.
-  - `trailingControl={<></>}` (fragment) on `variant="title-control"`.
-  - `trailingControl={[<X />, <Y />]}` (array) on `variant="title-control"`.
-  - `modeTabs.options` with 5 entries.
+The discriminated union enforces these at type-check time. Until the project adopts a type-test library (`tsd` / `expect-type`), they are documented here and verified by attempting the patterns in a TS playground or by uncommenting them in the test file as commented-out fixtures:
+
+- **Compile errors** (TypeScript rejects):
+  - `back={...}` on `variant="title"`, `"title-control"`, or `"mode-tabs"`.
+  - `modeTabs={...}` on `variant="title"`, `"title-control"`, or `"back-control"`.
+  - `trailingControl={[<X />, <Y />]}` (array literal) on any variant — array is not a `ReactElement`.
+  - `trailingControl={null}` on `variant="title-control"` (required prop).
+  - `modeTabs.options` literal with 5 entries.
   - Missing `title` on `variant="title"` / `"title-control"` / `"back-control"`.
+- **NOT compile errors** (verified runtime warnings instead):
+  - `trailingControl={<></>}` (fragment, even multi-child) — passes type check; runtime warning fires when `React.Children.count(fragment.props.children) > 1`.
+  - `trailingControl={<button>Submit</button>}` with width > 44px — passes type check; runtime warning fires after layout measurement.
+  - Long `title` / `subtitle` / tab labels — pass type check; runtime warning fires.
 
 ### Integration / E2E (Playwright)
 
