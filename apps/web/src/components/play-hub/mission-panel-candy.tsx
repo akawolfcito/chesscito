@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { CognitiveDisclaimer } from "@/components/legal/cognitive-disclaimer";
 import { LABYRINTH_COPY, MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PiecePickerSheet } from "@/components/play-hub/piece-picker-sheet";
@@ -409,7 +408,6 @@ export function MissionPanelCandy({
         className="shrink-0 relative z-[60] pointer-events-auto"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", marginTop: "var(--shell-gap-sm)" }}
       >
-        <CognitiveDisclaimer variant="short" />
         {persistentDock}
       </div>
 

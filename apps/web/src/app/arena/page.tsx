@@ -15,7 +15,6 @@ import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
-import { CognitiveDisclaimer } from "@/components/legal/cognitive-disclaimer";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
@@ -875,7 +874,6 @@ export default function ArenaPage() {
           className="shrink-0 relative z-[60] pointer-events-auto"
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         >
-          <CognitiveDisclaimer variant="short" />
           <PersistentDock
             activeDockTab={null}
             badgeControl={navIcon("/art/badge-menu.png", "Badges", "badge")}
