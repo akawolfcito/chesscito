@@ -4,8 +4,9 @@
   "description": "Smart contracts for chesscito",
   "main": "index.js",
   "scripts": {
-    "build": "hardhat compile",
+    "build": "hardhat compile && node scripts/generate-event-abis.mjs",
     "compile": "hardhat compile",
+    "generate:event-abis": "node scripts/generate-event-abis.mjs",
     "test": "hardhat test",
     "deploy": "hardhat run scripts/deploy-proxies.ts",
     "deploy:alfajores": "hardhat run scripts/deploy-proxies.ts --network alfajores",
