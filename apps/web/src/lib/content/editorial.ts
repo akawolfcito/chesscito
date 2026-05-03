@@ -931,6 +931,11 @@ export const PRO_COPY = {
     notConfigured: "PRO is not yet active. Check back shortly.",
     purchaseFailed: "Purchase could not be verified. Please try again.",
     walletRequired: "Connect your wallet to purchase PRO.",
+    verifyFailedTitle: "Payment confirmed — verification pending.",
+    verifyFailedReassurance:
+      "Your transaction is preserved on-chain. Retry won't double-charge.",
+    retryVerifyCta: "Retry verification",
+    retryingVerify: "Verifying…",
   },
   receipt: {
     success: "PRO activated. Your training plan is live for 30 days.",

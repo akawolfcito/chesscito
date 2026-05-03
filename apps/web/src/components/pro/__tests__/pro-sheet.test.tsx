@@ -106,6 +106,43 @@ describe("ProSheet", () => {
     expect(screen.getByTestId("pro-error")).toHaveTextContent(PRO_COPY.errors.purchaseFailed);
   });
 
+  it("does NOT render the retry CTA on a generic (non-verify-failed) error", () => {
+    renderSheet({ errorMessage: PRO_COPY.errors.purchaseFailed });
+    expect(screen.queryByTestId("pro-error-retry")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("pro-error-reassurance")).not.toBeInTheDocument();
+  });
+
+  it("renders the retry CTA + reassurance copy when verifyFailedTxHash is set and onRetryVerify is provided", () => {
+    const onRetryVerify = vi.fn();
+    renderSheet({
+      errorMessage: PRO_COPY.errors.verifyFailedTitle,
+      verifyFailedTxHash: "0x" + "a".repeat(64),
+      onRetryVerify,
+    });
+    expect(screen.getByTestId("pro-error-reassurance")).toHaveTextContent(
+      PRO_COPY.errors.verifyFailedReassurance,
+    );
+    const retry = screen.getByTestId("pro-error-retry");
+    expect(retry).toHaveTextContent(PRO_COPY.errors.retryVerifyCta);
+    fireEvent.click(retry);
+    expect(onRetryVerify).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the retry button + swaps the label while isRetryingVerify is true", () => {
+    const onRetryVerify = vi.fn();
+    renderSheet({
+      errorMessage: PRO_COPY.errors.verifyFailedTitle,
+      verifyFailedTxHash: "0x" + "a".repeat(64),
+      isRetryingVerify: true,
+      onRetryVerify,
+    });
+    const retry = screen.getByTestId("pro-error-retry");
+    expect(retry).toBeDisabled();
+    expect(retry).toHaveTextContent(PRO_COPY.errors.retryingVerify);
+    fireEvent.click(retry);
+    expect(onRetryVerify).not.toHaveBeenCalled();
+  });
+
   describe("telemetry", () => {
     it("fires pro_card_viewed (surface=sheet) once per open", () => {
       renderSheet({ open: true });

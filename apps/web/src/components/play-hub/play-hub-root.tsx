@@ -177,6 +177,11 @@ export function PlayHubRoot() {
   const [proSheetOpen, setProSheetOpen] = useState(false);
   const [proPurchaseState, setProPurchaseState] = useState<"idle" | "purchasing" | "verifying">("idle");
   const [proPurchaseError, setProPurchaseError] = useState<string | null>(null);
+  /** Set iff the last failure was verify-failed. Carries the on-chain
+   *  txHash so the user can retry verification idempotently — no double
+   *  charge — instead of treating the receipt as "money lost". */
+  const [verifyFailedTxHash, setVerifyFailedTxHash] = useState<string | null>(null);
+  const [isRetryingVerify, setIsRetryingVerify] = useState(false);
   const [resultOverlay, setResultOverlay] = useState<{
     variant: "badge" | "score" | "shop" | "error";
     txHash?: string;
@@ -835,6 +840,7 @@ export function PlayHubRoot() {
   async function handleProPurchase() {
     if (!address || !shopAddress || !publicClient || !isCorrectChain) return;
     setProPurchaseError(null);
+    setVerifyFailedTxHash(null);
 
     // Lookahead so pro_purchase_started fires only when the buy has a
     // real chance of completing. selectPaymentToken reads from already-
@@ -881,6 +887,7 @@ export function PlayHubRoot() {
         kind: "verify-failed",
         tx_hash_prefix: result.txHash ? result.txHash.slice(0, 10) : null,
       });
+      setVerifyFailedTxHash(result.txHash ?? null);
     } else {
       track("pro_purchase_failed", { kind: result.kind });
     }
@@ -890,9 +897,49 @@ export function PlayHubRoot() {
         : result.kind === "timeout"
           ? "Transaction timed out. Please try again."
           : result.kind === "verify-failed"
-            ? "Payment confirmed but verification failed. Please refresh in a minute."
+            ? PRO_COPY.errors.verifyFailedTitle
             : PRO_COPY.errors.purchaseFailed,
     );
+  }
+
+  async function handleRetryVerify() {
+    if (!verifyFailedTxHash || !address || isRetryingVerify) return;
+    setIsRetryingVerify(true);
+    try {
+      const res = await fetch("/api/verify-pro", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ txHash: verifyFailedTxHash, walletAddress: address }),
+      });
+      const json = (await res.json().catch(() => null)) as { active?: boolean } | null;
+      if (res.ok && json?.active) {
+        track("pro_purchase_confirmed", {
+          item_id: 6,
+          price_usd6: 1_990_000,
+          days_granted: 30,
+          tx_hash_prefix: verifyFailedTxHash.slice(0, 10),
+        });
+        setProPurchaseError(null);
+        setVerifyFailedTxHash(null);
+        refetchProStatus();
+        hapticSuccess();
+        setProSheetOpen(false);
+        return;
+      }
+      // Same idempotent retry surface — keep the error visible and the
+      // hash intact so the user can try again later.
+      track("pro_verify_retry_failed", {
+        tx_hash_prefix: verifyFailedTxHash.slice(0, 10),
+        status: res.status,
+      });
+    } catch {
+      track("pro_verify_retry_failed", {
+        tx_hash_prefix: verifyFailedTxHash.slice(0, 10),
+        status: 0,
+      });
+    } finally {
+      setIsRetryingVerify(false);
+    }
   }
 
   async function handleConfirmPurchase() {
@@ -1300,10 +1347,14 @@ export function PlayHubRoot() {
           open={proSheetOpen}
           onOpenChange={(open) => {
             // Block close while a tx is in-flight to prevent the user
-            // from losing the in-progress state mid-purchase.
-            if (!open && proPurchaseState !== "idle") return;
+            // from losing the in-progress state mid-purchase. Also block
+            // close mid-retry so the spinner state stays coherent.
+            if (!open && (proPurchaseState !== "idle" || isRetryingVerify)) return;
             setProSheetOpen(open);
-            if (!open) setProPurchaseError(null);
+            if (!open) {
+              setProPurchaseError(null);
+              setVerifyFailedTxHash(null);
+            }
           }}
           status={proStatus}
           isConnected={isConnected}
@@ -1311,6 +1362,9 @@ export function PlayHubRoot() {
           isPurchasing={proPurchaseState === "purchasing"}
           isVerifying={proPurchaseState === "verifying"}
           errorMessage={proPurchaseError}
+          verifyFailedTxHash={verifyFailedTxHash}
+          isRetryingVerify={isRetryingVerify}
+          onRetryVerify={() => void handleRetryVerify()}
           onConnectWallet={() => openConnectModal?.()}
           onSwitchNetwork={() =>
             configuredChainId != null && switchChain({ chainId: configuredChainId })

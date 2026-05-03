@@ -24,6 +24,15 @@ export type ProSheetProps = {
   isPurchasing: boolean;
   isVerifying: boolean;
   errorMessage: string | null;
+  /** Non-null iff the last failure was a verify-failed (tx confirmed
+   *  on-chain but /api/verify-pro returned non-200 or active=false).
+   *  When set, the error region renders reassurance copy + a retry CTA
+   *  bound to `onRetryVerify`. The hash is what the retry POSTs back to
+   *  verify-pro — guarantees the same idempotent result the original
+   *  flow would have produced. */
+  verifyFailedTxHash?: string | null;
+  isRetryingVerify?: boolean;
+  onRetryVerify?: () => void;
   onConnectWallet: () => void;
   onSwitchNetwork: () => void;
   onPurchase: () => void;
@@ -111,9 +120,20 @@ function isCoachEnabled(): boolean {
  *  helper copy adapts to NEXT_PUBLIC_ENABLE_COACH so we never promise
  *  Coach access we cannot deliver. */
 export function ProSheet(props: ProSheetProps) {
-  const { open, onOpenChange, status, errorMessage, isConnected, isCorrectChain } = props;
+  const {
+    open,
+    onOpenChange,
+    status,
+    errorMessage,
+    isConnected,
+    isCorrectChain,
+    verifyFailedTxHash = null,
+    isRetryingVerify = false,
+    onRetryVerify,
+  } = props;
   const cta = resolveCta(props);
   const router = useRouter();
+  const showVerifyRetry = Boolean(errorMessage && verifyFailedTxHash && onRetryVerify);
 
   // Fire pro_card_viewed once per open. Reset the gate when the sheet
   // closes so the next open in the same session ships another event —
@@ -251,7 +271,28 @@ export function ProSheet(props: ProSheetProps) {
             role="alert"
             className="mt-3 rounded-xl bg-rose-100 px-3 py-2 text-sm font-semibold text-rose-900"
           >
-            {errorMessage}
+            <p>{errorMessage}</p>
+            {showVerifyRetry && (
+              <>
+                <p
+                  data-testid="pro-error-reassurance"
+                  className="mt-1 text-xs font-medium text-rose-900/80"
+                >
+                  {PRO_COPY.errors.verifyFailedReassurance}
+                </p>
+                <button
+                  type="button"
+                  data-testid="pro-error-retry"
+                  onClick={onRetryVerify}
+                  disabled={isRetryingVerify}
+                  className="mt-2 inline-flex items-center justify-center rounded-lg bg-rose-900 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-rose-50 transition disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isRetryingVerify
+                    ? PRO_COPY.errors.retryingVerify
+                    : PRO_COPY.errors.retryVerifyCta}
+                </button>
+              </>
+            )}
           </div>
         )}
 
