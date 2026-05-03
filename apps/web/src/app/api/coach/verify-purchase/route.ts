@@ -5,6 +5,9 @@ import { Redis } from "@upstash/redis";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { STABLECOIN_ADDRESSES_LOWER } from "@/lib/contracts/tokens";
+import { createLogger } from "@/lib/server/logger";
+
+const logger = createLogger({ route: "/api/coach/verify-purchase" });
 
 /** Mirrors the on-chain ShopUpgradeable.ItemPurchased event signature
  *  exactly. The contract emits `token` as INDEXED (3rd indexed param,
@@ -94,7 +97,11 @@ export async function POST(req: Request) {
     );
 
     let creditsToAdd = 0;
-    for (const log of logs) {
+    let decodeAttempts = 0;
+    let decodeFailures = 0;
+    for (let i = 0; i < logs.length; i++) {
+      const log = logs[i];
+      decodeAttempts += 1;
       try {
         const decoded = decodeEventLog({
           abi: ITEM_PURCHASED_ABI,
@@ -115,10 +122,26 @@ export async function POST(req: Request) {
 
         if (itemId === COACH_5_ITEM_ID) creditsToAdd += 5;
         else if (itemId === COACH_20_ITEM_ID) creditsToAdd += 20;
-      } catch { continue; }
+      } catch (err) {
+        decodeFailures += 1;
+        logger.warn("decode failed", {
+          logIndex: i,
+          dataSize: log.data.length,
+          topicsLen: log.topics.length,
+          errName: err instanceof Error ? err.name : "unknown",
+        });
+        continue;
+      }
     }
 
     if (creditsToAdd === 0) {
+      logger.warn("no coach purchase in tx", {
+        txHash,
+        wallet,
+        logsExamined: logs.length,
+        decodeAttempts,
+        decodeFailures,
+      });
       return NextResponse.json({ error: "No coach credit purchase found in transaction" }, { status: 400 });
     }
 
@@ -130,7 +153,12 @@ export async function POST(req: Request) {
 
     const newBalance = (await redis.get<number>(REDIS_KEYS.credits(wallet))) ?? 0;
     return NextResponse.json({ ok: true, credits: newBalance });
-  } catch {
+  } catch (err) {
+    logger.error("unhandled exception", {
+      errName: err instanceof Error ? err.name : "unknown",
+      errMessage: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
