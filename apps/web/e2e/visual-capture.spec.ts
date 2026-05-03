@@ -1,3 +1,11 @@
+// Artifact capture only. This file does NOT assert visual regressions.
+// Use `e2e/visual-regression.spec.ts` for CI-gated screenshot assertions
+// (`expect(page).toHaveScreenshot()`).
+//
+// This suite writes raw PNGs to e2e-results/snapshots/ for manual PR review.
+// CI runs the regression spec instead. See
+// docs/reviews/visual-regression-plan-2026-05-02.md for the rollout plan.
+
 import { test, expect } from "@playwright/test";
 
 const SNAPSHOT_DIR = "e2e-results/snapshots";

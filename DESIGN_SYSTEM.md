@@ -239,6 +239,24 @@ Run `ux-review` skill:
 
 The audit report goes to `docs/reviews/ux-review-{date}.md`.
 
+### 9.1 Visual regression baselines
+
+Two suites separated by intent:
+
+| Script | File | Purpose |
+|---|---|---|
+| `pnpm test:e2e:visual` | `apps/web/e2e/visual-regression.spec.ts` | **CI-gated.** `expect(page).toHaveScreenshot()` against committed baselines under the spec's `-snapshots/` directory. Fails the test on diff above the per-test threshold. Pinned to `--project=minipay` (390×844) — Chesscito is mobile-first per CLAUDE.md; desktop is not a regression target. |
+| `pnpm test:e2e:visual-capture` | `apps/web/e2e/visual-capture.spec.ts` | **Artifact only.** Writes raw PNGs to `e2e-results/snapshots/` for manual PR review. Always passes; never gates CI. |
+
+**Baseline update discipline (hard rule):**
+
+- Baselines change only via `pnpm test:e2e:visual --update-snapshots` AND the PR body MUST include a "visual change rationale" sentence explaining what changed and why.
+- PRs that bump baselines without a rationale are **rejected at review.**
+- CI never re-baselines automatically. Silent re-baselining is regression-laundering.
+- The capture-only suite is for inspecting screenshots manually; its output is never the source of truth for visuals.
+
+Step 1 coverage (this commit): 3 deterministic states — `hub-clean`, `hub-daily-tactic-open` (clock-frozen so the puzzle of the day is stable), `hub-shop-sheet-open`. Expansion to per-screen migration coverage tracked in [`docs/reviews/visual-regression-plan-2026-05-02.md`](docs/reviews/visual-regression-plan-2026-05-02.md).
+
 ---
 
 ## 10. Chesscito UI Operating System
