@@ -6,6 +6,9 @@ import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { STABLECOIN_ADDRESSES_LOWER } from "@/lib/contracts/tokens";
 import { PRO_DURATION_DAYS, PRO_ITEM_ID } from "@/lib/contracts/shop-catalog";
+import { createLogger } from "@/lib/server/logger";
+
+const logger = createLogger({ route: "/api/verify-pro" });
 
 /** Mirrors the on-chain ShopUpgradeable.ItemPurchased event signature
  *  exactly. The contract emits `token` as INDEXED (3rd indexed param,
@@ -113,7 +116,11 @@ export async function POST(req: Request) {
     );
 
     let foundProPurchase = false;
-    for (const log of logs) {
+    let decodeAttempts = 0;
+    let decodeFailures = 0;
+    for (let i = 0; i < logs.length; i++) {
+      const log = logs[i];
+      decodeAttempts += 1;
       try {
         const decoded = decodeEventLog({
           abi: ITEM_PURCHASED_ABI,
@@ -132,10 +139,29 @@ export async function POST(req: Request) {
 
         foundProPurchase = true;
         break;
-      } catch { continue; }
+      } catch (err) {
+        // Logged at warn (not error) so a malicious caller can't flood the
+        // error stream. The 2026-05-02 ABI bug surfaced here as silent
+        // continues — this line is the smoking gun for the next mismatch.
+        decodeFailures += 1;
+        logger.warn("decode failed", {
+          logIndex: i,
+          dataSize: log.data.length,
+          topicsLen: log.topics.length,
+          errName: err instanceof Error ? err.name : "unknown",
+        });
+        continue;
+      }
     }
 
     if (!foundProPurchase) {
+      logger.warn("no pro purchase in tx", {
+        txHash,
+        wallet,
+        logsExamined: logs.length,
+        decodeAttempts,
+        decodeFailures,
+      });
       return NextResponse.json({ error: "No PRO purchase found in transaction" }, { status: 400 });
     }
 
@@ -152,7 +178,12 @@ export async function POST(req: Request) {
     await redis.set(REDIS_KEYS.proProcessedTx(txHash), "1", { ex: PROCESSED_TX_TTL_SECONDS });
 
     return NextResponse.json({ active: true, expiresAt });
-  } catch {
+  } catch (err) {
+    logger.error("unhandled exception", {
+      errName: err instanceof Error ? err.name : "unknown",
+      errMessage: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

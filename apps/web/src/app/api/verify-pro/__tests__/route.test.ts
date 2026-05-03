@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { keccak256, toBytes } from "viem";
 
 // SHOP_ADDRESS is captured at module import. Set the env BEFORE any
@@ -40,9 +40,12 @@ vi.mock("@/lib/server/demo-signing", () => ({
 
 import { POST } from "../route";
 import { enforceOrigin, enforceRateLimit } from "@/lib/server/demo-signing";
+import { __setLoggerSink, __resetLoggerSink } from "@/lib/server/logger";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
 const mockedRate = vi.mocked(enforceRateLimit);
+
+let logLines: Array<{ level: string; record: Record<string, unknown> }>;
 
 const VALID_WALLET = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
 const VALID_TX = "0x" + "a".repeat(64);
@@ -120,6 +123,15 @@ describe("POST /api/verify-pro", () => {
     mockedOrigin.mockImplementation(() => {});
     mockedRate.mockResolvedValue(undefined);
     redisMock.set.mockResolvedValue("OK");
+
+    logLines = [];
+    __setLoggerSink((line, level) => {
+      logLines.push({ level, record: JSON.parse(line) });
+    });
+  });
+
+  afterEach(() => {
+    __resetLoggerSink();
   });
 
   it("activates PRO with expiresAt = now + 30d on a fresh purchase", async () => {
@@ -301,5 +313,68 @@ describe("POST /api/verify-pro", () => {
     mockedOrigin.mockImplementation(() => { throw new Error("forbidden"); });
     const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
     expect(res.status).toEqual(500);
+  });
+
+  // Regression guard for the 2026-05-02 ABI bug: decodeEventLog used to throw
+  // silently on a topic-shape mismatch. The route now logs a warn per failed
+  // decode so the next mismatch is grep-able in Vercel Runtime Logs in seconds.
+  it("logs a warn line when an inner decodeEventLog throws on a shape-mismatched log", async () => {
+    redisMock.get.mockResolvedValue(null);
+    clientMock.getTransactionReceipt.mockResolvedValue({
+      status: "success",
+      logs: [
+        {
+          address: SHOP_ADDRESS,
+          // Wrong topic count (only 2 → buyer + itemId; missing token topic)
+          // forces decodeEventLog to throw — same shape-class bug as 4c8748f.
+          topics: [ITEM_PURCHASED_TOPIC, encodeAddressTopic(VALID_WALLET)],
+          data: encodeItemPurchasedData({}),
+        },
+      ],
+    });
+
+    const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(400);
+
+    const decodeWarn = logLines.find(
+      (l) => l.level === "warn" && l.record.msg === "decode failed",
+    );
+    expect(decodeWarn).toBeDefined();
+    expect(decodeWarn?.record.route).toBe("/api/verify-pro");
+    expect(decodeWarn?.record.logIndex).toBe(0);
+    expect(decodeWarn?.record.topicsLen).toBe(2);
+    expect(decodeWarn?.record.errName).toBeDefined();
+  });
+
+  it("logs a warn line with decodeAttempts/decodeFailures counters when no PRO purchase is found", async () => {
+    redisMock.get.mockResolvedValue(null);
+    clientMock.getTransactionReceipt.mockResolvedValue({
+      status: "success",
+      logs: [makeProLog({ itemId: COACH_5_ITEM_ID })],
+    });
+
+    const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(400);
+
+    const noPro = logLines.find(
+      (l) => l.level === "warn" && l.record.msg === "no pro purchase in tx",
+    );
+    expect(noPro).toBeDefined();
+    expect(noPro?.record.decodeAttempts).toBe(1);
+    expect(noPro?.record.decodeFailures).toBe(0);
+    expect(noPro?.record.logsExamined).toBe(1);
+    expect(noPro?.record.txHash).toBe(VALID_TX);
+  });
+
+  it("logs an error line on top-level catch (server fault, not client mistake)", async () => {
+    mockedOrigin.mockImplementation(() => { throw new Error("kaboom"); });
+    const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(500);
+
+    const errLine = logLines.find((l) => l.level === "error");
+    expect(errLine).toBeDefined();
+    expect(errLine?.record.msg).toBe("unhandled exception");
+    expect(errLine?.record.errName).toBe("Error");
+    expect(errLine?.record.errMessage).toBe("kaboom");
   });
 });
