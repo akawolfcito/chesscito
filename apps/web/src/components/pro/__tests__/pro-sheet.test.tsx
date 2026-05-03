@@ -2,7 +2,11 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 
 const trackMock = vi.hoisted(() => vi.fn());
+const pushMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock }),
+}));
 
 import { ProSheet, type ProSheetProps } from "../pro-sheet";
 import { PRO_COPY } from "@/lib/content/editorial";
@@ -10,6 +14,8 @@ import { PRO_COPY } from "@/lib/content/editorial";
 afterEach(() => {
   cleanup();
   trackMock.mockReset();
+  pushMock.mockReset();
+  vi.unstubAllEnvs();
 });
 
 function renderSheet(overrides: Partial<ProSheetProps> = {}) {
@@ -161,6 +167,66 @@ describe("ProSheet", () => {
         "pro_cta_clicked",
         expect.anything(),
       );
+    });
+  });
+
+  describe("active-state post-purchase CTA", () => {
+    const NOW = Date.now();
+    const FIVE_DAYS = NOW + 5 * 24 * 60 * 60 * 1000;
+    const ACTIVE_STATUS = { active: true, expiresAt: FIVE_DAYS };
+
+    it("renders the Play Arena CTA with Coach-enabled helper copy when active and ENABLE_COACH not 'false'", () => {
+      renderSheet({ status: ACTIVE_STATUS });
+      // Button label is constant across both Coach states.
+      expect(
+        screen.getByRole("button", { name: PRO_COPY.activeStateCta }),
+      ).toBeInTheDocument();
+      // Helper copy mentions Coach analysis (enabled variant).
+      expect(
+        screen.getByText(PRO_COPY.activeStateCopyEnabled),
+      ).toBeInTheDocument();
+    });
+
+    it("routes to /arena when the Play Arena CTA is tapped", () => {
+      renderSheet({ status: ACTIVE_STATUS });
+      fireEvent.click(
+        screen.getByRole("button", { name: PRO_COPY.activeStateCta }),
+      );
+      expect(pushMock).toHaveBeenCalledWith("/arena");
+      expect(pushMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("uses the disabled-state helper copy when ENABLE_COACH is explicitly 'false'", () => {
+      vi.stubEnv("NEXT_PUBLIC_ENABLE_COACH", "false");
+      renderSheet({ status: ACTIVE_STATUS });
+      // Button label unchanged — still routes to /arena.
+      expect(
+        screen.getByRole("button", { name: PRO_COPY.activeStateCta }),
+      ).toBeInTheDocument();
+      // Helper copy adapts: no promise of direct Coach access.
+      expect(
+        screen.getByText(PRO_COPY.activeStateCopyDisabled),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(PRO_COPY.activeStateCopyEnabled),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does NOT render the Play Arena CTA when status is inactive", () => {
+      renderSheet({ status: { active: false, expiresAt: null } });
+      expect(
+        screen.queryByRole("button", { name: PRO_COPY.activeStateCta }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does NOT change the existing Renew CTA behavior", () => {
+      const handlers = renderSheet({ status: ACTIVE_STATUS });
+      // Renew button still present and still fires onPurchase.
+      const renew = screen.getByRole("button", { name: PRO_COPY.ctaRenew });
+      fireEvent.click(renew);
+      expect(handlers.onPurchase).toHaveBeenCalledTimes(1);
+      // Play Arena CTA should NOT route to /arena when Renew was clicked.
+      expect(pushMock).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -89,16 +90,30 @@ function resolveCta({
   };
 }
 
+/** Returns true unless the env var is explicitly "false". Mirrors the
+ *  arena/page.tsx pattern. Read at render time (not module load) so
+ *  vi.stubEnv can flip it per test. */
+function isCoachEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
+}
+
 /** Bottom sheet that surfaces Chesscito PRO copy + the single CTA.
  *  All copy is driven by PRO_COPY in editorial.ts so QA can iterate
  *  strings without touching this component.
  *
  *  Wired into play-hub-root in commit 6B.2. The purchase handler is
  *  passed in via `onPurchase` prop and is also the test injection
- *  point. */
+ *  point.
+ *
+ *  Active-state post-purchase CTA (commit 1 of stabilization sprint
+ *  2026-05-02): when PRO is currently active, surfaces a "Play Arena"
+ *  button + helper copy so the user has a concrete next action. The
+ *  helper copy adapts to NEXT_PUBLIC_ENABLE_COACH so we never promise
+ *  Coach access we cannot deliver. */
 export function ProSheet(props: ProSheetProps) {
   const { open, onOpenChange, status, errorMessage, isConnected, isCorrectChain } = props;
   const cta = resolveCta(props);
+  const router = useRouter();
 
   // Fire pro_card_viewed once per open. Reset the gate when the sheet
   // closes so the next open in the same session ships another event —
@@ -169,6 +184,30 @@ export function ProSheet(props: ProSheetProps) {
             className="mt-3 rounded-xl bg-emerald-100/80 px-3 py-2 text-sm font-semibold text-emerald-900"
           >
             {PRO_COPY.ctaActive} — {PRO_COPY.statusActiveSuffix(days)}
+          </div>
+        )}
+
+        {showActiveBanner && (
+          <div
+            data-testid="pro-active-cta"
+            className="mt-3 flex flex-col gap-2 rounded-xl bg-white/55 px-3 py-3"
+          >
+            <Button
+              type="button"
+              variant="game-primary"
+              size="game"
+              onClick={() => router.push("/arena")}
+            >
+              {PRO_COPY.activeStateCta}
+            </Button>
+            <p
+              className="text-xs leading-snug"
+              style={{ color: "rgba(110, 65, 15, 0.80)" }}
+            >
+              {isCoachEnabled()
+                ? PRO_COPY.activeStateCopyEnabled
+                : PRO_COPY.activeStateCopyDisabled}
+            </p>
           </div>
         )}
 

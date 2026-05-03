@@ -892,6 +892,16 @@ export const PRO_COPY = {
   ctaBuy: "Start training",
   ctaActive: "PRO Active",
   ctaRenew: "Extend training",
+  /** Active-state post-purchase CTA. PRO active users see this above
+   *  the Renew button; tapping routes to `/arena` so they can play a
+   *  match — Coach analysis surfaces in the post-game flow. Spec:
+   *  docs/superpowers/plans/2026-05-02-product-stabilization-sprint.md
+   *  Commit 1. */
+  activeStateCta: "Play Arena",
+  activeStateCopyEnabled:
+    "After your match, PRO unlocks Coach analysis so you can review your decisions.",
+  activeStateCopyDisabled:
+    "Coach analysis is included with PRO and will appear after your Arena match.",
   statusActiveSuffix: (daysLeft: number) =>
     daysLeft === 1 ? "Expires tomorrow" : `${daysLeft} days left`,
   /** Mission framing rendered between the perks list and the CTA. PRO
