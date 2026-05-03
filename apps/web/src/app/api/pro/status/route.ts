@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { isAddress } from "viem";
 import { isProActive } from "@/lib/pro/is-active";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { createLogger } from "@/lib/server/logger";
+
+const logger = createLogger({ route: "/api/pro/status" });
 
 /** Read-only PRO status for a wallet. Returns whatever
  *  isProActive() returns: `{ active, expiresAt }`. Never mutates Redis,
@@ -16,7 +19,11 @@ export async function GET(req: Request) {
   try {
     enforceOrigin(req);
     await enforceRateLimit(getRequestIp(req));
-  } catch {
+  } catch (err) {
+    logger.warn("auth rejected", {
+      errName: err instanceof Error ? err.name : "unknown",
+      errMessage: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -26,6 +33,16 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Invalid wallet" }, { status: 400 });
   }
 
-  const status = await isProActive(wallet);
-  return NextResponse.json(status);
+  try {
+    const status = await isProActive(wallet);
+    return NextResponse.json(status);
+  } catch (err) {
+    logger.error("isProActive threw", {
+      wallet,
+      errName: err instanceof Error ? err.name : "unknown",
+      errMessage: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

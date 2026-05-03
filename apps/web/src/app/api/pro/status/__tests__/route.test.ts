@@ -15,9 +15,12 @@ vi.mock("@/lib/server/demo-signing", () => ({
 
 import { GET } from "../route";
 import { enforceOrigin, enforceRateLimit } from "@/lib/server/demo-signing";
+import { __setLoggerSink, __resetLoggerSink } from "@/lib/server/logger";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
 const mockedRate = vi.mocked(enforceRateLimit);
+
+let logLines: Array<{ level: string; record: Record<string, unknown> }>;
 
 const VALID_WALLET = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
 
@@ -38,10 +41,16 @@ describe("GET /api/pro/status", () => {
     mockedOrigin.mockImplementation(() => {});
     mockedRate.mockResolvedValue(undefined);
     vi.spyOn(Date, "now").mockReturnValue(NOW);
+
+    logLines = [];
+    __setLoggerSink((line, level) => {
+      logLines.push({ level, record: JSON.parse(line) });
+    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    __resetLoggerSink();
   });
 
   it("returns active=true with expiresAt when PRO is in the future", async () => {
@@ -88,5 +97,29 @@ describe("GET /api/pro/status", () => {
     const res = await GET(makeRequest(`?wallet=${VALID_WALLET}`));
     expect(res.status).toEqual(403);
     expect(await res.json()).toEqual({ error: "Forbidden" });
+  });
+
+  it("logs a warn line with errName when auth is rejected (intended security control)", async () => {
+    mockedOrigin.mockImplementation(() => { throw new Error("origin-mismatch"); });
+
+    const res = await GET(makeRequest(`?wallet=${VALID_WALLET}`));
+    expect(res.status).toEqual(403);
+
+    const warn = logLines.find((l) => l.level === "warn" && l.record.msg === "auth rejected");
+    expect(warn).toBeDefined();
+    expect(warn?.record.errMessage).toBe("origin-mismatch");
+  });
+
+  it("returns 500 and logs an error line when isProActive (Redis) throws", async () => {
+    redisMock.get.mockRejectedValue(new Error("redis-down"));
+
+    const res = await GET(makeRequest(`?wallet=${VALID_WALLET}`));
+    expect(res.status).toEqual(500);
+    expect(await res.json()).toEqual({ error: "Internal server error" });
+
+    const err = logLines.find((l) => l.level === "error" && l.record.msg === "isProActive threw");
+    expect(err).toBeDefined();
+    expect(err?.record.errMessage).toBe("redis-down");
+    expect(err?.record.wallet).toBe(VALID_WALLET);
   });
 });
