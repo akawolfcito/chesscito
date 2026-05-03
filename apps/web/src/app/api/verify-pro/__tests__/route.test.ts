@@ -70,18 +70,19 @@ function encodeUint256Topic(value: bigint) {
 function encodeItemPurchasedData(args: {
   quantity?: bigint;
   unitPriceUsd6?: bigint;
-  totalAmount?: bigint;
-  token?: string;
+  totalTokenAmount?: bigint;
   treasury?: string;
 }) {
+  // Mirrors ShopUpgradeable.ItemPurchased non-indexed payload exactly:
+  // 4 fields × 32 bytes = 128 bytes. `token` is INDEXED on the real
+  // contract and lives in topics, not data — see makeProLog below.
   const enc = (n: bigint) => n.toString(16).padStart(64, "0");
   const encAddr = (a: string) =>
     "0".repeat(24) + a.toLowerCase().replace(/^0x/, "");
   return ("0x" +
     enc(args.quantity ?? 1n) +
     enc(args.unitPriceUsd6 ?? 1_990_000n) +
-    enc(args.totalAmount ?? 1_990_000n) +
-    encAddr(args.token ?? USDC_ADDRESS) +
+    enc(args.totalTokenAmount ?? 1_990_000_000_000_000_000n) +
     encAddr(args.treasury ?? TREASURY_ADDRESS)) as `0x${string}`;
 }
 
@@ -96,12 +97,14 @@ function makeRequest(body: unknown) {
 function makeProLog(opts: { wallet?: string; itemId?: bigint; token?: string } = {}) {
   return {
     address: SHOP_ADDRESS,
+    // Real contract has 3 indexed params (buyer, itemId, token) → 4 topics.
     topics: [
       ITEM_PURCHASED_TOPIC,
       encodeAddressTopic(opts.wallet ?? VALID_WALLET),
       encodeUint256Topic(opts.itemId ?? PRO_ITEM_ID),
+      encodeAddressTopic(opts.token ?? USDC_ADDRESS),
     ],
-    data: encodeItemPurchasedData({ token: opts.token ?? USDC_ADDRESS }),
+    data: encodeItemPurchasedData({}),
   };
 }
 

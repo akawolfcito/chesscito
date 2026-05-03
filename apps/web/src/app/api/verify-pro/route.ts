@@ -7,10 +7,16 @@ import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo
 import { STABLECOIN_ADDRESSES_LOWER } from "@/lib/contracts/tokens";
 import { PRO_DURATION_DAYS, PRO_ITEM_ID } from "@/lib/contracts/shop-catalog";
 
-/** Mirrors the ABI used by /api/coach/verify-purchase. We only decode
- *  ItemPurchased to read `buyer`, `itemId`, and `token`. The other
- *  fields are not consumed but must be present so viem can decode the
- *  data tail correctly. */
+/** Mirrors the on-chain ShopUpgradeable.ItemPurchased event signature
+ *  exactly. The contract emits `token` as INDEXED (3rd indexed param,
+ *  topics[3]); a previous version of this ABI declared it non-indexed,
+ *  which let viem's keccak256 of the function signature still match
+ *  topics[0] (signature ignores `indexed`) but caused the data decode
+ *  to fail with "Data size of 128 bytes is too small for non-indexed
+ *  event parameters" — the runtime symptom of a real mainnet PRO
+ *  purchase silently dropping in /api/verify-pro. Field names mirror
+ *  the contract too (totalTokenAmount, not totalAmount) for grep-ability;
+ *  viem decodes positionally so the names don't affect behavior. */
 const ITEM_PURCHASED_ABI = [
   {
     type: "event",
@@ -20,8 +26,8 @@ const ITEM_PURCHASED_ABI = [
       { name: "itemId", type: "uint256", indexed: true },
       { name: "quantity", type: "uint256", indexed: false },
       { name: "unitPriceUsd6", type: "uint256", indexed: false },
-      { name: "totalAmount", type: "uint256", indexed: false },
-      { name: "token", type: "address", indexed: false },
+      { name: "totalTokenAmount", type: "uint256", indexed: false },
+      { name: "token", type: "address", indexed: true },
       { name: "treasury", type: "address", indexed: false },
     ],
   },
