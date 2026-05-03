@@ -253,17 +253,20 @@ export function MissionPanelCandy({
   );
 
   return (
-    <section className="mission-shell mission-shell-candy atmosphere flex h-[100dvh] flex-col overflow-hidden">
+    // GlobalStatusBar (Z1) lives above this section in <main>'s flex
+    // column; this shell consumes the remaining height instead of
+    // owning 100dvh, otherwise Z1 + 100dvh would push the dock past
+    // the viewport. See spec docs/specs/ui/global-status-bar-spec-2026-05-02.md
+    // §10 canary plan.
+    <section className="mission-shell mission-shell-candy atmosphere flex min-h-0 flex-1 flex-col overflow-hidden">
       {/* Z2 — Contextual Header. Piece label is the title, current
           objective is the subtitle, picker trigger is the single trailing
           control. Per spec docs/specs/ui/contextual-header-spec-2026-05-01.md
-          §8 (canary integration).
-          NOTE: right-padding reserves space for the absolute z-30 "Get PRO"
-          chip pinned to top-right. The chip is conceptually Z1 (identity);
-          this reservation prevents Z2's trailing slot from sitting under
-          it. Phase-2 destination = move PRO chip into <GlobalStatusBar />,
-          at which point this padding can drop. */}
-      <div className="shrink-0 ml-2 mt-2 mr-[140px]">
+          §8 (canary integration). The legacy `mr-[140px]` reservation
+          dropped 2026-05-02 with the Z1 canary — Z2's trailing slot now
+          spans the full wrapper width since the absolute PRO chip is
+          gone (`<GlobalStatusBar />` owns identity in normal flow). */}
+      <div className="shrink-0 ml-2 mt-2">
         <ContextualHeader
           variant="title-control"
           title={pieceTitle}

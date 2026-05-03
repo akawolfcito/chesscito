@@ -50,9 +50,10 @@ import {
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
 } from "@/lib/contracts/shop-catalog";
-import { ProChip } from "@/components/pro/pro-chip";
+import { GlobalStatusBar } from "@/components/ui/global-status-bar";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useProStatus } from "@/lib/pro/use-pro-status";
+import { formatWalletShort } from "@/lib/wallet/format";
 import { executeProPurchase } from "@/lib/pro/purchase";
 import { ACCEPTED_TOKENS, CELO_TOKEN, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
@@ -1116,14 +1117,24 @@ export function PlayHubRoot() {
           <p className="text-xs text-white/70 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{SPLASH_COPY.subtitle}</p>
         </div>
       )}
-      <main className="mission-shell relative mx-auto h-[100dvh] w-full max-w-[var(--app-max-width)] px-0 py-0 sm:px-0">
-        <div className="pointer-events-none absolute right-2 top-[calc(env(safe-area-inset-top)+0.5rem)] z-30">
-          <ProChip
-            status={proStatus}
-            isLoading={proLoading}
-            onClick={() => setProSheetOpen(true)}
+      <main className="mission-shell relative mx-auto flex h-[100dvh] w-full max-w-[var(--app-max-width)] flex-col px-0 py-0 sm:px-0">
+        {/* Z1 — GlobalStatusBar canary. Replaces the legacy absolute z-30
+            ProChip wrapper. Renders in normal flow as the first child of
+            <main>; identity left, PRO indicator right. PRO management
+            still opens <ProSheet> as transitional debt — see spec §6.1
+            row 1 (4-layer enforcement) and the `pro-tap-debt-due-by`
+            trailer on this canary's commit. */}
+        {address ? (
+          <GlobalStatusBar
+            variant="connected"
+            identity={{ walletShort: formatWalletShort(address) }}
+            proStatus={proStatus}
+            isProLoading={proLoading}
+            onProTap={() => setProSheetOpen(true)}
           />
-        </div>
+        ) : (
+          <GlobalStatusBar variant="anonymous" />
+        )}
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onSelectPiece={(piece) => {
