@@ -6,12 +6,23 @@ import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { STABLECOIN_ADDRESSES_LOWER } from "@/lib/contracts/tokens";
 
-/** Minimal ABI just for decoding the ItemPurchased event. The shop
- *  contract emits address indexed buyer, uint256 indexed itemId, then
- *  the remaining five fields in data. We need the non-indexed `token`
- *  field to refuse coach-credit grants for any payment that wasn't
- *  made in a whitelisted stablecoin (defense-in-depth against a
- *  direct contract call paying in CELO at the un-priced rate). */
+/** Mirrors the on-chain ShopUpgradeable.ItemPurchased event signature
+ *  exactly. The contract emits `token` as INDEXED (3rd indexed param,
+ *  topics[3]); a previous version of this ABI declared it non-indexed,
+ *  which let viem's keccak256 of the function signature still match
+ *  topics[0] (signature ignores `indexed`) but caused the data decode
+ *  to fail with "Data size of 128 bytes is too small for non-indexed
+ *  event parameters" — the same silent-drop that caused the verify-pro
+ *  hot-fix in commit 4c8748f. Coach packs (itemId 3, 4) were silently
+ *  failing the same way: user pays in USDm, log emits, decode throws,
+ *  catch swallows, "no coach credit purchase found" 400 — credits
+ *  never granted. Field names mirror the contract too
+ *  (`totalTokenAmount`, not `totalAmount`) for grep-ability; viem
+ *  decodes positionally so the names don't affect runtime behavior.
+ *  We need the indexed `token` field to refuse coach-credit grants for
+ *  any payment that wasn't made in a whitelisted stablecoin
+ *  (defense-in-depth against a direct contract call paying in CELO at
+ *  the un-priced rate). */
 const ITEM_PURCHASED_ABI = [
   {
     type: "event",
@@ -21,8 +32,8 @@ const ITEM_PURCHASED_ABI = [
       { name: "itemId", type: "uint256", indexed: true },
       { name: "quantity", type: "uint256", indexed: false },
       { name: "unitPriceUsd6", type: "uint256", indexed: false },
-      { name: "totalAmount", type: "uint256", indexed: false },
-      { name: "token", type: "address", indexed: false },
+      { name: "totalTokenAmount", type: "uint256", indexed: false },
+      { name: "token", type: "address", indexed: true },
       { name: "treasury", type: "address", indexed: false },
     ],
   },

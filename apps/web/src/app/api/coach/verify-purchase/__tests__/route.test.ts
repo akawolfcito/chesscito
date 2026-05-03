@@ -59,15 +59,21 @@ function encodeUint256Topic(value: bigint) {
   return ("0x" + value.toString(16).padStart(64, "0")) as `0x${string}`;
 }
 
+const USDC_ADDRESS = "0xcebA9300f2b948710d2653dD7B07f33A8B32118C";
+const CELO_ADDRESS = "0x471EcE3750Da237f93B8E339c536989b8978a438";
+const TREASURY_ADDRESS = "0x917497FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+
 /** ABI-encodes the non-indexed tail of an ItemPurchased event:
- *  (quantity, unitPriceUsd6, totalAmount, token, treasury). The route
- *  now decodes this via viem's decodeEventLog and reads the `token`
- *  field for the stablecoin allowlist defense. */
+ *  (quantity, unitPriceUsd6, totalTokenAmount, treasury). On the real
+ *  ShopUpgradeable contract `token` is INDEXED (lives in topics[3], not
+ *  data) so non-indexed data is 4 fields × 32 bytes = 128 bytes. The
+ *  pre-fix shape (token in data → 5 fields × 32 = 160 bytes) was the
+ *  test mock that masked the same bug-class as the verify-pro hot-fix
+ *  in commit 4c8748f. */
 function encodeItemPurchasedData(args: {
   quantity?: bigint;
   unitPriceUsd6?: bigint;
-  totalAmount?: bigint;
-  token?: string;
+  totalTokenAmount?: bigint;
   treasury?: string;
 }) {
   const enc = (n: bigint) => n.toString(16).padStart(64, "0");
@@ -76,14 +82,23 @@ function encodeItemPurchasedData(args: {
   return ("0x" +
     enc(args.quantity ?? 1n) +
     enc(args.unitPriceUsd6 ?? 50_000n) +
-    enc(args.totalAmount ?? 50_000n) +
-    encAddr(args.token ?? USDC_ADDRESS) +
+    enc(args.totalTokenAmount ?? 50_000n) +
     encAddr(args.treasury ?? TREASURY_ADDRESS)) as `0x${string}`;
 }
 
-const USDC_ADDRESS = "0xcebA9300f2b948710d2653dD7B07f33A8B32118C";
-const CELO_ADDRESS = "0x471EcE3750Da237f93B8E339c536989b8978a438";
-const TREASURY_ADDRESS = "0x917497FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+function makeCoachLog(opts: { wallet?: string; itemId?: bigint; token?: string } = {}) {
+  return {
+    address: SHOP_ADDRESS,
+    // Real contract has 3 indexed params (buyer, itemId, token) → 4 topics.
+    topics: [
+      ITEM_PURCHASED_TOPIC,
+      encodeAddressTopic(opts.wallet ?? VALID_WALLET),
+      encodeUint256Topic(opts.itemId ?? 3n),
+      encodeAddressTopic(opts.token ?? USDC_ADDRESS),
+    ],
+    data: encodeItemPurchasedData({}),
+  };
+}
 
 function makeRequest(body: unknown) {
   return new Request("http://localhost/api/coach/verify-purchase", {
@@ -116,17 +131,7 @@ describe("POST /api/coach/verify-purchase", () => {
     });
     clientMock.getTransactionReceipt.mockResolvedValue({
       status: "success",
-      logs: [
-        {
-          address: SHOP_ADDRESS,
-          topics: [
-            ITEM_PURCHASED_TOPIC,
-            encodeAddressTopic(VALID_WALLET),
-            encodeUint256Topic(3n), // COACH_5 item
-          ],
-          data: encodeItemPurchasedData({}),
-        },
-      ],
+      logs: [makeCoachLog({ itemId: 3n })],
     });
 
     const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
@@ -143,17 +148,7 @@ describe("POST /api/coach/verify-purchase", () => {
     });
     clientMock.getTransactionReceipt.mockResolvedValue({
       status: "success",
-      logs: [
-        {
-          address: SHOP_ADDRESS,
-          topics: [
-            ITEM_PURCHASED_TOPIC,
-            encodeAddressTopic(VALID_WALLET),
-            encodeUint256Topic(4n), // COACH_20 item
-          ],
-          data: encodeItemPurchasedData({ unitPriceUsd6: 100_000n, totalAmount: 100_000n }),
-        },
-      ],
+      logs: [makeCoachLog({ itemId: 4n })],
     });
 
     const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
@@ -171,17 +166,7 @@ describe("POST /api/coach/verify-purchase", () => {
     });
     clientMock.getTransactionReceipt.mockResolvedValue({
       status: "success",
-      logs: [
-        {
-          address: SHOP_ADDRESS,
-          topics: [
-            ITEM_PURCHASED_TOPIC,
-            encodeAddressTopic(VALID_WALLET),
-            encodeUint256Topic(3n), // COACH_5 item bought directly with CELO
-          ],
-          data: encodeItemPurchasedData({ token: CELO_ADDRESS }),
-        },
-      ],
+      logs: [makeCoachLog({ itemId: 3n, token: CELO_ADDRESS })],
     });
 
     const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
@@ -199,24 +184,8 @@ describe("POST /api/coach/verify-purchase", () => {
     clientMock.getTransactionReceipt.mockResolvedValue({
       status: "success",
       logs: [
-        {
-          address: SHOP_ADDRESS,
-          topics: [
-            ITEM_PURCHASED_TOPIC,
-            encodeAddressTopic(VALID_WALLET),
-            encodeUint256Topic(3n),
-          ],
-          data: encodeItemPurchasedData({ token: USDC_ADDRESS }),
-        },
-        {
-          address: SHOP_ADDRESS,
-          topics: [
-            ITEM_PURCHASED_TOPIC,
-            encodeAddressTopic(VALID_WALLET),
-            encodeUint256Topic(4n),
-          ],
-          data: encodeItemPurchasedData({ token: CELO_ADDRESS }),
-        },
+        makeCoachLog({ itemId: 3n, token: USDC_ADDRESS }),
+        makeCoachLog({ itemId: 4n, token: CELO_ADDRESS }),
       ],
     });
 
@@ -251,17 +220,7 @@ describe("POST /api/coach/verify-purchase", () => {
     redisMock.get.mockResolvedValue(null);
     clientMock.getTransactionReceipt.mockResolvedValue({
       status: "success",
-      logs: [
-        {
-          address: SHOP_ADDRESS,
-          topics: [
-            ITEM_PURCHASED_TOPIC,
-            encodeAddressTopic(VALID_WALLET),
-            encodeUint256Topic(1n), // non-Coach item (Founder Badge)
-          ],
-          data: encodeItemPurchasedData({ unitPriceUsd6: 100_000n, totalAmount: 100_000n }),
-        },
-      ],
+      logs: [makeCoachLog({ itemId: 1n })],
     });
 
     const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
@@ -273,17 +232,7 @@ describe("POST /api/coach/verify-purchase", () => {
     redisMock.get.mockResolvedValue(null);
     clientMock.getTransactionReceipt.mockResolvedValue({
       status: "success",
-      logs: [
-        {
-          address: SHOP_ADDRESS,
-          topics: [
-            ITEM_PURCHASED_TOPIC,
-            encodeAddressTopic(otherWallet),
-            encodeUint256Topic(3n),
-          ],
-          data: encodeItemPurchasedData({}),
-        },
-      ],
+      logs: [makeCoachLog({ wallet: otherWallet, itemId: 3n })],
     });
 
     const res = await POST(makeRequest({ txHash: VALID_TX, walletAddress: VALID_WALLET }));
@@ -296,13 +245,8 @@ describe("POST /api/coach/verify-purchase", () => {
       status: "success",
       logs: [
         {
+          ...makeCoachLog({ itemId: 3n }),
           address: "0x0000000000000000000000000000000000000099",
-          topics: [
-            ITEM_PURCHASED_TOPIC,
-            encodeAddressTopic(VALID_WALLET),
-            encodeUint256Topic(3n),
-          ],
-          data: encodeItemPurchasedData({}),
         },
       ],
     });
