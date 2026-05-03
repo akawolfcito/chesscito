@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type Square } from "chess.js";
-import { aiMove } from "js-chess-engine";
 import {
   Sheet,
   SheetContent,
@@ -20,6 +19,7 @@ import {
   hapticTap,
 } from "@/lib/haptics";
 import type { MiniArenaSetup } from "@/lib/game/mini-arena";
+import { pickAiMoveOrFallback } from "@/lib/game/mini-arena-ai";
 import type { ChessBoardPiece } from "@/lib/game/types";
 
 type Status = "playing" | "won" | "drawn" | "thinking";
@@ -124,21 +124,18 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     aiTimerRef.current = setTimeout(() => {
       const game = gameRef.current;
       if (game.isGameOver()) { endIfTerminal(); return; }
-      try {
-        const result = aiMove(game.fen(), setup.aiLevel);
-        const entries = Object.entries(result);
-        if (entries.length === 0) { setStatus("drawn"); return; }
-        const [fromUpper, toUpper] = entries[0];
-        const from = fromUpper.toLowerCase();
-        const to = toUpper.toLowerCase();
-        const move = game.move({ from, to });
-        setFen(game.fen());
-        setLastMove({ from, to });
-        dispatchMoveHaptic(move?.flags, game.isCheck(), game.isCheckmate());
-        if (!endIfTerminal()) setStatus("playing");
-      } catch {
-        setStatus("playing");
-      }
+
+      // pickAiMoveOrFallback never returns an illegal move and never
+      // hangs on engine misbehavior — see lib/game/mini-arena-ai.ts.
+      // null = no legal moves left → resolve via endIfTerminal.
+      const suggestion = pickAiMoveOrFallback(game, setup.aiLevel);
+      if (!suggestion) { endIfTerminal(); return; }
+
+      const move = game.move(suggestion);
+      setFen(game.fen());
+      setLastMove(suggestion);
+      dispatchMoveHaptic(move?.flags, game.isCheck(), game.isCheckmate());
+      if (!endIfTerminal()) setStatus("playing");
     }, 250);
   }
 
