@@ -1,0 +1,111 @@
+/**
+ * Structured server-side logger for Vercel Functions.
+ *
+ * Emits one JSON line per call to stderr (errors) or stdout (info/warn) so the
+ * Vercel Runtime Logs panel can filter by `level=error route=/api/x`. Designed
+ * as a thin seam: when we add an external tracker (Sentry / Axiom / Better
+ * Stack), we swap the default sink without touching call sites.
+ *
+ * Hard rules:
+ *   - Never auto-spread request bodies / headers. Caller picks ctx fields.
+ *   - Redact ctx keys whose names match known secret patterns (defense in
+ *     depth, not the primary control — call sites must still avoid passing
+ *     secrets).
+ *   - Never throw. A logger that crashes the request handler is worse than
+ *     no logger.
+ *   - Noop in vitest by default so route tests don't pollute stderr.
+ */
+
+export type LogLevel = "info" | "warn" | "error";
+
+type CtxValue = string | number | boolean | bigint | null | undefined | object;
+export type LogContext = Record<string, CtxValue>;
+
+export interface Logger {
+  info(message: string, ctx?: LogContext): void;
+  warn(message: string, ctx?: LogContext): void;
+  error(message: string, ctx?: LogContext): void;
+}
+
+type Sink = (line: string, level: LogLevel) => void;
+
+const SECRET_KEY_RE = /key|secret|token|signer|dragon|torre|service[_-]?role|mnemonic|seed|passphrase|password/i;
+
+const defaultSink: Sink = (line, level) => {
+  if (process.env.VITEST || process.env.NODE_ENV === "test") return;
+  if (level === "error") {
+    console.error(line);
+  } else {
+    console.log(line);
+  }
+};
+
+let activeSink: Sink = defaultSink;
+
+/** Test hook: route lines into a custom sink. */
+export function __setLoggerSink(sink: Sink): void {
+  activeSink = sink;
+}
+
+/** Test hook: restore the default stderr/stdout sink. */
+export function __resetLoggerSink(): void {
+  activeSink = defaultSink;
+}
+
+function bigIntReplacer(_key: string, value: unknown): unknown {
+  if (typeof value === "bigint") return value.toString();
+  return value;
+}
+
+function redactCtx(ctx: LogContext): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(ctx)) {
+    out[key] = SECRET_KEY_RE.test(key) ? "[REDACTED]" : value;
+  }
+  return out;
+}
+
+function safeStringify(record: Record<string, unknown>): string {
+  try {
+    return JSON.stringify(record, bigIntReplacer);
+  } catch (err) {
+    const fallback = {
+      level: record.level,
+      route: record.route,
+      msg: record.msg,
+      timestamp: record.timestamp,
+      ctxError: err instanceof Error ? err.message : "stringify failed",
+    };
+    try {
+      return JSON.stringify(fallback);
+    } catch {
+      return `{"level":"error","msg":"logger-failed"}`;
+    }
+  }
+}
+
+function emit(scope: { route: string }, level: LogLevel, message: string, ctx?: LogContext): void {
+  const record: Record<string, unknown> = {
+    level,
+    msg: message,
+    route: scope.route,
+    timestamp: new Date().toISOString(),
+  };
+  if (ctx) {
+    Object.assign(record, redactCtx(ctx));
+  }
+  const line = safeStringify(record);
+  try {
+    activeSink(line, level);
+  } catch {
+    // Last-resort: never propagate sink errors to the request handler.
+  }
+}
+
+export function createLogger(scope: { route: string }): Logger {
+  return {
+    info: (message, ctx) => emit(scope, "info", message, ctx),
+    warn: (message, ctx) => emit(scope, "warn", message, ctx),
+    error: (message, ctx) => emit(scope, "error", message, ctx),
+  };
+}
