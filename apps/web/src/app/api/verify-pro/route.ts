@@ -6,35 +6,10 @@ import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { STABLECOIN_ADDRESSES_LOWER } from "@/lib/contracts/tokens";
 import { PRO_DURATION_DAYS, PRO_ITEM_ID } from "@/lib/contracts/shop-catalog";
+import { ITEM_PURCHASED_ABI } from "@/lib/contracts/generated/shop-events";
 import { createLogger } from "@/lib/server/logger";
 
 const logger = createLogger({ route: "/api/verify-pro" });
-
-/** Mirrors the on-chain ShopUpgradeable.ItemPurchased event signature
- *  exactly. The contract emits `token` as INDEXED (3rd indexed param,
- *  topics[3]); a previous version of this ABI declared it non-indexed,
- *  which let viem's keccak256 of the function signature still match
- *  topics[0] (signature ignores `indexed`) but caused the data decode
- *  to fail with "Data size of 128 bytes is too small for non-indexed
- *  event parameters" — the runtime symptom of a real mainnet PRO
- *  purchase silently dropping in /api/verify-pro. Field names mirror
- *  the contract too (totalTokenAmount, not totalAmount) for grep-ability;
- *  viem decodes positionally so the names don't affect behavior. */
-const ITEM_PURCHASED_ABI = [
-  {
-    type: "event",
-    name: "ItemPurchased",
-    inputs: [
-      { name: "buyer", type: "address", indexed: true },
-      { name: "itemId", type: "uint256", indexed: true },
-      { name: "quantity", type: "uint256", indexed: false },
-      { name: "unitPriceUsd6", type: "uint256", indexed: false },
-      { name: "totalTokenAmount", type: "uint256", indexed: false },
-      { name: "token", type: "address", indexed: true },
-      { name: "treasury", type: "address", indexed: false },
-    ],
-  },
-] as const;
 
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
 const ITEM_PURCHASED_TOPIC = keccak256(
