@@ -26,8 +26,13 @@ export const DAILY_PUZZLES: DailyPuzzle[] = [
   {
     id: "mt-002",
     name: "Queen's kiss",
-    fen: "7k/8/6KQ/8/8/8/8/8 w - - 0 1",
-    solution: { from: "h6", to: "h7" },
+    // Black king on g8 (was h8) — the original pre-checked position
+    // (Qh6 vs Kh8) was illegal at start. Solution Qh6→Qg7 is the
+    // unique mate-in-1 here: the queen lands defended by Kg6 so the
+    // king cannot capture, and the diagonal/file from g7 covers every
+    // escape square.
+    fen: "6k1/8/6KQ/8/8/8/8/8 w - - 0 1",
+    solution: { from: "h6", to: "g7" },
     hint: "Get the queen close. The king has nowhere to run.",
   },
   {
@@ -40,16 +45,29 @@ export const DAILY_PUZZLES: DailyPuzzle[] = [
   {
     id: "mt-004",
     name: "Queen sweep",
-    fen: "4k3/8/4K3/2Q5/8/8/8/8 w - - 0 1",
-    solution: { from: "c5", to: "e7" },
-    hint: "Slide the queen on the diagonal — your king covers the capture.",
+    // Replaced 2026-05-02. The original Q+K vs K position
+    // (Ke8/Ke6/Qc5) had two mates-in-1: the diagonal kiss Qe7 AND
+    // the back-rank Qc8 (whose c8–h3 diagonal covered the d7 escape
+    // square). Several attempts to repair via piece relocation
+    // either re-introduced uniqueness collapse or blocked the
+    // queen's path to e7. Replaced with a clean K+Q vs K mate where
+    // the queen slides down the long c-file from c8, and Kg3 boxes
+    // the kingside escape squares. Same lesson (queen + king
+    // coordination), structurally clean.
+    fen: "2Q5/8/8/8/8/6K1/8/7k w - - 0 1",
+    solution: { from: "c8", to: "c1" },
+    hint: "Slide the queen down the file. The 1st rank is sealed and your king covers the kingside.",
   },
   {
     id: "mt-005",
     name: "Long file finish",
-    fen: "7k/8/6K1/8/8/8/8/Q7 w - - 0 1",
-    solution: { from: "a1", to: "a8" },
-    hint: "Same idea, longer ride. The 8th rank is the kill zone.",
+    // Queen on a2 (was a1) — the original a1 placement put Kh8 in
+    // check via the a1–h8 diagonal at the start (illegal). Same
+    // pedagogical idea — long a-file ride to a8 — just one square
+    // shorter so the diagonal no longer threatens the king at rest.
+    fen: "7k/8/6K1/8/8/8/Q7/8 w - - 0 1",
+    solution: { from: "a2", to: "a8" },
+    hint: "Same idea, long file ride. The 8th rank is the kill zone.",
   },
   {
     id: "mt-006",
@@ -61,9 +79,14 @@ export const DAILY_PUZZLES: DailyPuzzle[] = [
   {
     id: "mt-007",
     name: "Back-rank queen drop",
-    fen: "8/8/8/8/8/3K1Q2/8/3k4 w - - 0 1",
-    solution: { from: "f3", to: "f1" },
-    hint: "Drop the queen on the king's rank. The white king covers d2 and c2.",
+    // Queen on g3 (was f3) — the original f3 placement put Kd1 in
+    // check via the f3–d1 diagonal at the start (illegal). Moving to
+    // g3 also kills the second mating option (Qf1 / Qh1 dual mates
+    // from f3) — Qg1 is now the unique mate-in-1, defended in spirit
+    // by Kd3's coverage of d2 / e2 / c2.
+    fen: "8/8/8/8/8/3K2Q1/8/3k4 w - - 0 1",
+    solution: { from: "g3", to: "g1" },
+    hint: "Drop the queen on the king's rank. The white king covers d2 / e2 / c2 so the king has nowhere to run.",
   },
 ];
 
