@@ -130,10 +130,17 @@ const PRO_PILL_ACTIVE = cn(
   "bg-gradient-to-r from-[rgb(255,200,80)] to-[rgb(255,160,40)] text-[rgb(80,40,5)] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]",
 );
 
-/** Spec §8 P1-2 inactive-state lock — these classes are exact, no tuning. */
+/** Spec §8 P1-2 inactive-state lock (Amendment 2026-05-03) — these
+ *  classes are exact, no tuning. The original amendment locked
+ *  `text-white/40 ring-white/15 bg-transparent`, which was confirmed
+ *  invisible against the candy-green hub backdrop in the 2026-05-02
+ *  PRO smoke. New treatment: light cream fill + defined brown border at
+ *  30% + brown text at 70% — visible on any candy palette tile, not a
+ *  CTA (no gradient, no shadow). Same height/padding/font as active so
+ *  the slot doesn't shift between states. */
 const PRO_PILL_INACTIVE = cn(
   PRO_PILL_BASE,
-  "text-white/40 ring-1 ring-inset ring-white/15 bg-transparent",
+  "text-[rgb(80,40,5)]/70 ring-1 ring-inset ring-[rgb(80,40,5)]/30 bg-white/85",
 );
 
 const PRO_SKELETON_CLASS = cn(

@@ -2,7 +2,7 @@
 
 > **Phase**: Phase 2 — second zone primitive (Z1).
 > **Owner**: Wolfcito. UX advisor: Sally (BMad).
-> **Status**: **v1 — amendment applied 2026-05-02; awaiting commit #1.** Red-team review (`docs/reviews/global-status-bar-spec-red-team-2026-05-02.md`) and follow-up re-review (`docs/reviews/global-status-bar-spec-red-team-followup-2026-05-02.md`) both passed; all 6 P0 closed strictly, P1-1..P1-6 closed, P1-7 deferred to §17 Accessibility carry-forward.
+> **Status**: **v1 — Amendments 2026-05-02 + 2026-05-03 applied; canary live.** Red-team review (`docs/reviews/global-status-bar-spec-red-team-2026-05-02.md`) and follow-up re-review (`docs/reviews/global-status-bar-spec-red-team-followup-2026-05-02.md`) both passed; all 6 P0 closed strictly, P1-1..P1-6 closed, P1-7 deferred to §17 Accessibility carry-forward. Amendment 2026-05-03 retunes the §8 P1-2 inactive lock after the 2026-05-02 PRO smoke confirmed the original treatment was invisible against candy-green.
 > **Source brief**: `docs/reviews/ui-zone-map-decision-record-2026-05-01.md` §1 + §2 (PRO chip row) + §5.1 (Z1 primitive carry-forward) + `DESIGN_SYSTEM.md` §10.1 + §10.6 (Z1 + Z2 combined budget).
 > **Related primitives**: `<ContextualHeader />` (Z2, shipped `fda38a0` + canary `24ac2ef`), `<ContextualActionRail />` (Z4, future).
 
@@ -217,7 +217,7 @@ The items below are **explicit, dated debts**. Each must close on or before its 
 | **Anonymous (no wallet)** | Silhouette + handle pill text "Guest". No PRO indicator slot. |
 | **Connected, PRO loading (`proStatus === null`)** | Identity pill normal. PRO slot = 28×28 skeleton circle (`animate-pulse bg-white/30`). |
 | **Connected, PRO resolved active** | Identity pill with **gold ring** (token reused or, if missing, new `--pro-ring-gold` — see §11 acceptance #3). PRO slot = compact "PRO • Nd" pill, gold treatment, mirrors current active visual. |
-| **Connected, PRO resolved inactive** | Identity pill, **no ring**. PRO slot is **intentionally quiet**: no ring, no gradient, no promotional copy, no "Get PRO" affordance. While the `onProTap` transitional debt exists (see §6.1), render a small muted-outline `PRO` affordance with the **exact treatment locked below** (no implementer-side tuning): `inline-flex items-center px-2 h-6 rounded-full text-[10px] font-bold uppercase tracking-wide text-white/40 ring-1 ring-inset ring-white/15 bg-transparent`. Label: `GLOBAL_STATUS_BAR_COPY.proInactiveLabel` (`"PRO"`). Visual QA **confirms** the resting hue against the canary background; it does not re-tune the values. Any future change requires a spec amendment. When strict-passive Z1 lands (debt closed), the inactive pill is removed entirely and the slot collapses to width 0. |
+| **Connected, PRO resolved inactive** | Identity pill, **no ring**. PRO slot is **intentionally quiet**: no gradient, no promotional copy, no "Get PRO" affordance. While the `onProTap` transitional debt exists (see §6.1), render a small outline-on-cream `PRO` affordance with the **exact treatment locked below** (Amendment 2026-05-03; no implementer-side tuning): `inline-flex items-center px-2 h-6 rounded-full text-[10px] font-bold uppercase tracking-wide text-[rgb(80,40,5)]/70 ring-1 ring-inset ring-[rgb(80,40,5)]/30 bg-white/85`. Label: `GLOBAL_STATUS_BAR_COPY.proInactiveLabel` (`"PRO"`). Visual QA **confirms** the resting hue against the canary background; it does not re-tune the values. Any future change requires a spec amendment. When strict-passive Z1 lands (debt closed), the inactive pill is removed entirely and the slot collapses to width 0. |
 | **Connected, PRO API error** | Same as inactive. `useProStatus` already coerces errors to `{ active: false, expiresAt: null }`. No error chip in Z1. |
 | **Wallet disconnect mid-session** | Parent flips to `variant="anonymous"`. Z1 re-renders with Guest. No animation v1. **Parent contract (mandatory)**: on wallet disconnect (`address` watcher in `play-hub-root.tsx` flips from set to `null`), the parent must **synchronously close any open `<ProSheet>`** before/while flipping the variant. Stale PRO state must NOT remain visible after disconnect. Z1's §6 dev-warning fires if the parent forgets. Commit #2 canary includes either an E2E test or a manual QA step asserting "open ProSheet → disconnect wallet → ProSheet is closed, Z1 shows Guest." |
 
@@ -518,6 +518,33 @@ Spec drafted (v0 → v1 amendment applied 2026-05-02). **All 6 P0 closed. P1-1..
 ---
 
 ## Amendment log
+
+### Amendment 2026-05-03 — §8 P1-2 inactive treatment retuned
+
+Source: 2026-05-02 PRO smoke + post-deploy `/hub` review (handoff `docs/handoffs/2026-05-02-stabilization-sprint-handoff.md` §6 #4). The original P1-2 lock (`text-white/40 ring-white/15 bg-transparent`) was confirmed invisible against the candy-green hub backdrop in production. Original lock was tuned for a darker neutral header that this codebase no longer uses post-candy redesign.
+
+**Change**: §8 row "Connected, PRO resolved inactive" replaces
+
+```
+text-white/40 ring-1 ring-inset ring-white/15 bg-transparent
+```
+
+with
+
+```
+text-[rgb(80,40,5)]/70 ring-1 ring-inset ring-[rgb(80,40,5)]/30 bg-white/85
+```
+
+**Rationale**: light cream fill (`bg-white/85`) lifts the pill off any candy palette tile without requiring a backdrop-aware token. Defined brown border at 30% gives a clear edge. Brown text at 70% (vs the active state's 100%) preserves the "not a CTA" hierarchy — readable, but quieter than the gold-gradient active pill. Same height/padding/font as active so the slot doesn't shift between states.
+
+**Constraints honoured**:
+- No gradient (handoff §6 #4 explicit constraint).
+- No "Get PRO" copy (DESIGN_SYSTEM.md §10.2 invariant 4 still in force).
+- Same dimensions as active state (no layout reflow when PRO flips).
+
+**Component + test**: classes locked in `apps/web/src/components/ui/global-status-bar.tsx` `PRO_PILL_INACTIVE` constant. Test `apps/web/src/components/ui/__tests__/global-status-bar.test.tsx` regex assertions updated in lockstep — implementer cannot tune without breaking the test, same enforcement model as P1-2 v1.
+
+**Future-proofing**: when strict-passive Z1 lands (i.e. Shop ships its PRO sub-section and the §6.1 debt closes), the entire inactive pill is removed per row 1 of §6.1. This amendment does not change that exit condition.
 
 ### Amendment 2026-05-02 — post red-team
 

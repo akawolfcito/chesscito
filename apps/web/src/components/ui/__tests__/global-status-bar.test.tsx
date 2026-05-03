@@ -221,12 +221,13 @@ describe("<GlobalStatusBar> variant: connected — PRO inactive (transitional)",
     const proButton = screen.getByLabelText(
       GLOBAL_STATUS_BAR_COPY.proViewLabel,
     );
-    // Spec §8 inactive row locks these. Implementer cannot tune.
-    expect(proButton.className).toMatch(/text-white\/40/);
+    // Spec §8 inactive row Amendment 2026-05-03 locks these.
+    // Implementer cannot tune.
+    expect(proButton.className).toMatch(/text-\[rgb\(80,40,5\)\]\/70/);
     expect(proButton.className).toMatch(/ring-1/);
     expect(proButton.className).toMatch(/ring-inset/);
-    expect(proButton.className).toMatch(/ring-white\/15/);
-    expect(proButton.className).toMatch(/bg-transparent/);
+    expect(proButton.className).toMatch(/ring-\[rgb\(80,40,5\)\]\/30/);
+    expect(proButton.className).toMatch(/bg-white\/85/);
   });
 
   it("calls onProTap when the inactive PRO pill is clicked (transitional)", () => {
