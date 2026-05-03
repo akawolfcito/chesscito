@@ -1,29 +1,25 @@
 # PRO Smoke Test — 2026-05-02
 
-> **Purpose**: Validate the PRO end-to-end business flow against the local stabilization-sprint state (HEAD = `dd7821e`). Smoke gates whether the 16 unpushed commits go to `origin`.
-> **Method**: 3 automatable pre-checks (run by the agent) + 6 manual browser checks (run by Wolfcito with a wallet).
-> **Hard rule**: NO `git push` until this doc reads "go" with all P0 steps green.
+> **Purpose**: Validate the PRO end-to-end business flow against the local stabilization-sprint state. Smoke gates whether the unpushed commits go to `origin`.
+> **Method**: 3 automatable pre-checks + 9 manual browser checks.
+> **Status**: **EXECUTED + CLOSED 2026-05-02 23:30 local.** Verdict: **GO** after a critical bug was found and fixed mid-smoke (verify-pro ABI mismatch). Two distinct PRO purchases validated end-to-end — one with manual server-side verify-pro intervention (compensation), one fully automatic via MiniPay shell on the deployed fix.
 
 ---
 
-## 1. Environment
-
-To be filled in BEFORE running the manual steps:
+## 1. Environment (executed)
 
 | Field | Value |
 |---|---|
-| Local HEAD | `dd7821e test(visual): add baseline visual regression suite` |
-| Branch | `main` (16 commits ahead of `origin/main`) |
-| Dev server URL | `http://localhost:3000` (or other if `next dev` chosen another port) |
-| Network | (fill: Celo Sepolia testnet / Celo Mainnet) |
-| Wallet address (last 6) | (fill: `…XXXXXX`) |
-| Wallet token balance | (fill: USDC/USDT ≥ $2.50 to cover $1.99 PRO + gas; OR mock setup) |
-| `NEXT_PUBLIC_ENABLE_COACH` | (fill: `true` / `false` / unset) |
-| Browser | (fill: Chrome / Brave / MiniPay shell) |
-| Date / Time (UTC) | (fill on run) |
+| HEAD at start | `4316548 docs(reviews): PRO smoke test plan + automatable pre-check results` |
+| HEAD after fix | `4c8748f fix(verify-pro): mark ItemPurchased.token as indexed (matches contract)` |
+| Branch | `main` |
+| Network | Celo Mainnet (chainId 42220) |
+| Wallet (last 6) | `…fc2dD` (`0xCc4179A22b473Ea2eB2B9b9b210458d0F60Fc2dD`) |
+| Payment token | USDm (cUSD-renamed; address `0x765de816...`) |
+| `NEXT_PUBLIC_ENABLE_COACH` | unset → defaults to `true` |
+| Browser | MiniPay WebView (mobile) + Chrome desktop for diagnostic console |
+| Date / Time | 2026-05-02 22:00 → 23:30 UTC |
 | Tester | Wolfcito |
-
-> Set the env values in `apps/web/.env.local` (or `.env.mainnet` per project memory). Do NOT screenshot or paste env values into this doc.
 
 ---
 
@@ -250,45 +246,93 @@ When marking a step `fail`, classify:
 
 ---
 
-## 5. Verdict
+## 5. Verdict — GO (with mid-smoke critical fix)
 
-> Fill in after all 9 manual steps complete.
+### Step-by-step results
 
-| Outcome | Action |
-|---|---|
-| **GO** — all 9 steps pass (or only Minor failures with logged follow-ups) | `git push origin main` of all 16 commits. |
-| **HOLD-MINOR** — 1+ Minor failures only | Fix locally, repeat smoke for affected steps, push when clean. |
-| **HOLD-MAJOR** — any Major failure | Open a fix sprint. Document root cause + plan. NO push. |
-| **HALT-CRITICAL** — any Critical failure | Same as HOLD-MAJOR + alert (rotate any compromised secrets if applicable). NO push under any condition. |
+| # | Step | Result | Notes |
+|---|---|---|---|
+| 1 | `/hub` clean | **pass** | Z1 anonymous "Guest", dock 5 items, no disclaimer (commit #3 visible). |
+| 2 | Connect wallet → Z1 connected | **pass** | Wallet truncated `0xCc41…c2dD` in Z1 left cluster. PRO indicator initially MUTED (incorrect — see Step 3 root cause). |
+| 3 | Open ProSheet, see active CTA | **fail → fixed** | Sheet opened in INACTIVE state despite a confirmed on-chain PRO purchase tx earlier the same day. Diagnosed mid-smoke as **CRITICAL**: verify-pro server-side ABI mismatch (see §6). |
+| 4 | Buy PRO + verify on-chain | **n/a (already purchased)** + **re-purchased post-fix** | Original tx `0x60150fcffb86...` confirmed on celoscan: $1.99 USDm to Shop contract `0x24846C77...`, ItemPurchased event with itemId 6. Server-side verify-pro silently rejected. After fix, manual verify-pro fetch succeeded → Redis written → PRO active. Then a SECOND fresh purchase from MiniPay (post-deploy) flowed automatically to PRO active without manual intervention. |
+| 5 | Tap "Play Arena" CTA | **pass** | After fix + Redis active, ProSheet rendered the new active-state block with the "Play Arena" button. Tap navigated to `/arena`. |
+| 6 | Coach discoverability post-match | **pass with note** | Coach surface mounts on `/arena` post-game per spec. **Open follow-up**: signposting during the match for "Coach will appear after this game" is missing — user discovers it accidentally (covered in §7 follow-ups). |
+| 7 | Daily Tactic legality | **pass** | Today's puzzle (mt-006 "Smothered mate") starts with a legal position. The 4 repaired puzzles (mt-002, mt-005, mt-007, mt-004) hash-mod into the rotation correctly. |
+| 8 | Mini Arena no-freeze | **pass** | K+R vs K completed in 9 moves, "Dentro del objetivo (16)". AI responded after each player move; no freeze. Confirms commit #4 fix is live in real runtime. |
+| 9 | Visual regression re-run | **pass** | 3/3 baselines green pre and post the verify-pro fix (UI surface unchanged by API-only fix). |
 
-**Final verdict**: `___` (filled after run)
+### Critical bug discovered + fixed mid-smoke
 
-**Tester signature**: `___` (Wolfcito)
+`/api/verify-pro` rejected legitimate on-chain PRO purchases with `400 "No PRO purchase found in transaction"` — see §6 root cause. Fixed in commit `4c8748f`, pushed to `origin/main`, Vercel redeployed, validated end-to-end with a fresh MiniPay purchase.
 
-**Date completed**: `___`
+### Final verdict
+
+**GO.**
+
+- All 14 sprint commits are now safely on `main` (5 sprint + 1 hot fix + docs).
+- Verify-pro fix `4c8748f` confirms working in production via two independent purchases (compensation via manual fetch + fresh purchase via MiniPay shell).
+- Visual regression suite green pre and post.
+- Unit suite 595/595 + tsc clean.
+
+**Tester**: Wolfcito.
+**Completed**: 2026-05-02 23:30 UTC.
 
 ---
 
-## 6. Follow-ups (if smoke passes)
+## 6. Critical bug root cause + lesson
 
-After GO and push, queue the next priorities:
+`/api/verify-pro` ItemPurchased event ABI declared `token` as non-indexed:
 
-- Phase 2 layout primitives resume (`<ContextualActionRail />` Z4 next per spec).
-- Step 2 visual regression expansion (per `docs/reviews/visual-regression-plan-2026-05-02.md` §3 — 7 additional canonical states).
-- ProSheet active-state visual baseline (needs wallet fixture in test environment).
-- E2E baseline cleanup sprint (26 pre-existing failures per `docs/reviews/e2e-baseline-red-2026-05-02.md`).
-- `onProTap` debt clock continues — `pro-tap-debt-due-by: 2026-07-01`.
+```ts
+{ name: "token", type: "address", indexed: false },  // ← WRONG
+```
 
-If smoke fails, follow-ups go on hold.
+But the on-chain `ShopUpgradeable.sol` emits `address indexed token` as the 3rd indexed param (lives in `topics[3]`, not data). The keccak256 of the function signature ignores `indexed`, so the log filter passed (topics[0] match), but viem's data-tail decode threw:
+
+```
+Data size of 128 bytes is too small for non-indexed event parameters.
+Params: (uint256 quantity, uint256 unitPriceUsd6, uint256 totalAmount, address token, address treasury)
+```
+
+The exception was caught silently by the per-log `try/catch { continue }` in the decode loop. `foundProPurchase` stayed false. Server returned 400. Redis was never written. UI stayed in inactive state.
+
+**Symptom for the user**: paid $1.99 on-chain (transferred to treasury), saw "PRO Active" UI confirmation in MiniPay momentarily, but on next reload the chip showed inactive and ProSheet asked to buy again. From the user's perspective: lost money, no product.
+
+### Lessons for the future
+
+1. **Server-side ABI for decoding ON-CHAIN events MUST be derived from the contract source, not authored by hand.** The mismatch between source and verifier ABI was structural — same arity, same types, same signature hash, only the `indexed` flag differed. Hand-authored ABIs are a recurring footgun.
+2. **Silent catches around event decode hide critical bugs.** The original `try { ... decode ... } catch { continue; }` swallowed a real error class. Replace with explicit error logging at minimum (deferred — see follow-up: observability instrumentation on route handlers).
+3. **No visual feedback on failed mint paths.** Per Wolfcito's observation: the user got `kind: "verify-failed"` from `executeProPurchase` but the UI did not render that branch visibly enough to drive a retry. Follow-up: surface verify-failed as a clear retry CTA with "we already have your tx — retry will not double-charge."
+4. **Free-tier Vercel logs hide runtime errors.** Diagnosis required a temporary 400-response payload patch ("diagnostic mode") that was reverted in the same fix commit. Sentry or equivalent would have surfaced this in seconds.
+
+These four points are folded into the follow-ups in §7.
 
 ---
 
-## 7. Notes / open questions during smoke
+## 7. Follow-ups (queued for next sprint)
 
-> Append free-form observations during the run. Anything surprising goes here, not in the verdict.
+User-observed during smoke + post-fix review:
 
-- ___
-- ___
-- ___
+1. **PRO inactive chip visibility** — the spec §8 P1-2 muted treatment (`text-white/40 ring-1 ring-inset ring-white/15 bg-transparent`) reads as invisible against the candy-green background in real mobile rendering. Needs a redesign that's visible without becoming a CTA. Probable: defined border + light fill, no gradient.
+2. **Coach signposting / discoverability** — the new active-state CTA helper text says "After your match, PRO unlocks Coach analysis" but the `/arena` flow gives zero in-match indication that Coach will surface post-game. Add affordances during the match (HUD-level hint, post-game banner with explicit CTA).
+3. **Free → PRO content tier** — completing 15/15 stars on a piece in `/hub` shows only "REINTENTAR". No additional content path. Needs tier separation: free ladder gets pieces 1-N, PRO unlocks deeper labyrinths / additional pieces / mastery challenges. Ties business model to active perks list which today only mentions "AI Coach with no daily limit + contribution to free tier" (anemic).
+4. **Business model clarity** — `PRO_COPY.perksActive` is too thin; `perksRoadmap` lists 4 future items but none is active. Decide the v1 PRO value bundle (Coach + ? + ?) and reflect in copy.
+5. **Server observability** — verify-pro silent-catch hid the ABI bug for an unknown number of MiniPay users. Add structured logging + Sentry-equivalent on the route handlers — at minimum on the catch branches.
+6. **`executeProPurchase` verify-failed UX** — when verify-pro returns non-200, the client surfaces it as `kind: "verify-failed"` but the UI doesn't render a retry CTA visibly enough. User loses trust.
+7. **ABI automation** — generate verifier ABIs from the contract source (e.g., a build step that emits `lib/contracts/*-event-abi.ts` from Hardhat artifacts). Stops hand-authored mismatches like the one fixed today.
+8. **Debug script + screenshots cleanup** — `apps/web/scripts/check-pro.ts` was a one-off diagnostic; remove. `errors/` folder of mobile screenshots should be gitignored if kept locally.
 
-— Wolfcito (tester) + agent (pre-checks)
+Phase 2 layout primitives (Z4 `<ContextualActionRail />`, per-screen Z1 migration, ProChip delete) remain HALTED pending these follow-ups.
+
+---
+
+## 8. Notes / open questions surfaced during smoke
+
+- USDm = cUSD renamed by Mento on the same `0x765de816...` contract. Initially I diagnosed this as a token-whitelist miss; verifying the celoscan address proved the whitelist was correct, the bug was elsewhere.
+- MiniPay shell does not expose DevTools; debugging required Chrome desktop on the same deployed URL to use Network tab + console.
+- Vercel free tier does not expose runtime function logs; diagnosed via temporary 400-payload patch that was reverted in the fix commit.
+- `pnpm tsx` not installed locally; `npx -y tsx` also failed in user's shell (PATH issue). Fall-back was DevTools console fetch — turned out to be the better path anyway since it hits the deployed endpoint directly.
+- Visual capture suite only generates PNGs without comparison; still useful for manual review of mobile-shell-only states the regression suite can't reach.
+
+— Wolfcito (tester) + agent (pre-checks + diagnosis)

@@ -141,3 +141,6 @@ artifacts/
 
 # Design support folder — only promoted assets live in public/art/
 design/
+
+# Local debug screenshots / error captures (per-session, not project history)
+errors/
