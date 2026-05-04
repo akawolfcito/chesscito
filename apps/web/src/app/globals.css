@@ -2161,6 +2161,60 @@
   --candy-frame-text: rgba(50, 25, 5, 0.95);
 }
 
+/* ── Kingdom Anchor — central diegetic visual (Adventure atmosphere) ──
+   Spec: docs/product/visual-language-minimum-2026-05-03.md §4.5 +
+   _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §1.
+   Tokens consumed: --gold-leaf-base, --gold-leaf-highlight,
+   --gold-leaf-shadow, --kingdom-warm-glow, --kingdom-deep-shadow. */
+.kingdom-anchor {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 2px solid var(--gold-leaf-base);
+  background-color: rgba(15, 23, 42, 0.40);
+  box-shadow:
+    0 0 0 1px var(--gold-leaf-highlight) inset,
+    0 0 0 3px var(--gold-leaf-shadow),
+    0 0 28px 4px var(--kingdom-warm-glow),
+    0 12px 32px var(--kingdom-deep-shadow);
+}
+
+.kingdom-anchor-picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.kingdom-anchor-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Ambient idle pulse — disabled when the user prefers reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+
+  .kingdom-anchor {
+    animation: kingdom-anchor-idle 4s ease-in-out infinite;
+  }
+}
+
+@keyframes kingdom-anchor-idle {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.012);
+  }
+}
+
 
 /* ── Mission shell candy variant ── */
 .mission-shell-candy .panel-base {
