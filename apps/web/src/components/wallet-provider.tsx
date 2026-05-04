@@ -1,14 +1,20 @@
 "use client";
 
-import { RainbowKitProvider, connectorsForWallets } from "@rainbow-me/rainbowkit";
+import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 import { injectedWallet } from "@rainbow-me/rainbowkit/wallets";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useRef, useState } from "react";
 import { WagmiProvider, createConfig, http, useConnect } from "wagmi";
 import { celo, celoSepolia } from "wagmi/chains";
 
 import { getInjectedProvider, isMiniPayEnv } from "@/lib/minipay";
+
+const RainbowKitProvider = dynamic(
+  () => import("@rainbow-me/rainbowkit").then((mod) => mod.RainbowKitProvider),
+  { ssr: false },
+);
 
 const connectors = connectorsForWallets(
   [
@@ -68,13 +74,27 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RainbowKitGate({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
+  return <RainbowKitProvider>{children}</RainbowKitProvider>;
+}
+
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+        <RainbowKitGate>
           <WalletProviderInner>{children}</WalletProviderInner>
-        </RainbowKitProvider>
+        </RainbowKitGate>
       </QueryClientProvider>
     </WagmiProvider>
   );
