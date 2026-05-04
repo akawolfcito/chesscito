@@ -5,6 +5,7 @@ import { hapticTap } from "@/lib/haptics";
 export type PrimaryPlayCtaSurface =
   | "playhub"
   | "arena"
+  | "arena-entry"
   | "landing-hero"
   | "landing-final-cta";
 
@@ -31,6 +32,7 @@ const BACKPLATE_BASE = "/art/redesign/banners/btn-stone-bg";
 const SURFACE_ICON_BASE: Record<PrimaryPlayCtaSurface, string> = {
   playhub: "/art/redesign/banners/btn-battle",
   arena: "/art/redesign/banners/btn-play",
+  "arena-entry": "/art/redesign/banners/btn-play",
   "landing-hero": "/art/redesign/banners/btn-play",
   "landing-final-cta": "/art/redesign/banners/btn-play",
 };

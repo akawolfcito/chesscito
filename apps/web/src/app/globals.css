@@ -2756,6 +2756,22 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 2px 0 var(--gold-leaf-shadow));
 }
 
+/* Compact size for the Arena entry surface — smaller dominant CTA that
+   coexists with the difficulty selector + kingdom anchor preview. Keeps
+   gold-leaf treatment, ambient pulse, and pressed state. */
+.primary-play-cta--arena-entry {
+  min-height: 52px;
+  padding: 10px 18px;
+  font-size: 1.2rem;
+  border-radius: 14px;
+}
+
+.primary-play-cta--arena-entry .primary-play-cta-icon {
+  left: 10px;
+  width: 28px;
+  height: 28px;
+}
+
 /* Ambient pulse — kicks in 4s after mount and loops. CSS-driven so the
    React component stays free of timers; `motion-safe` honored. */
 @media (prefers-reduced-motion: no-preference) {

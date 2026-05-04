@@ -107,6 +107,46 @@ describe("PrimaryPlayCta", () => {
     expect(srcsets).toContain("/art/redesign/banners/btn-play.avif");
   });
 
+  it("renders the btn-play icon for the arena-entry surface", () => {
+    const { container } = render(
+      <PrimaryPlayCta
+        surface="arena-entry"
+        label="START"
+        ariaLabel="Start arena match"
+      />,
+    );
+    const cta = screen.getByRole("button", { name: "Start arena match" });
+    expect(cta.className).toMatch(/primary-play-cta--arena-entry\b/);
+    expect(cta.textContent).toContain("START");
+    const srcsets = Array.from(container.querySelectorAll("source")).map((s) =>
+      s.getAttribute("srcset"),
+    );
+    expect(srcsets).toContain("/art/redesign/banners/btn-play.avif");
+    expect(srcsets).toContain("/art/redesign/banners/btn-stone-bg.avif");
+  });
+
+  it("treats arena and arena-entry as distinct surface modifiers", () => {
+    const { rerender } = render(
+      <PrimaryPlayCta
+        surface="arena-entry"
+        label="START"
+        ariaLabel="Start arena match"
+      />,
+    );
+    const ctaEntry = screen.getByRole("button", { name: "Start arena match" });
+    const entryClasses = ctaEntry.className.split(/\s+/);
+    expect(entryClasses).toContain("primary-play-cta--arena-entry");
+    expect(entryClasses).not.toContain("primary-play-cta--arena");
+
+    rerender(
+      <PrimaryPlayCta surface="arena" label="START" ariaLabel="Arena" />,
+    );
+    const ctaArena = screen.getByRole("button", { name: "Arena" });
+    const arenaClasses = ctaArena.className.split(/\s+/);
+    expect(arenaClasses).toContain("primary-play-cta--arena");
+    expect(arenaClasses).not.toContain("primary-play-cta--arena-entry");
+  });
+
   it("renders the btn-play icon for the landing-hero surface", () => {
     const { container } = render(
       <PrimaryPlayCta

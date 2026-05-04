@@ -651,4 +651,20 @@ Notes:
 - All variants share the gold-leaf border + warm halo + ambient idle pulse from §11.2; the variant only swaps inner content.
 - Atmosphere prop (§12) is independent of variant — Adventure is the default everywhere; Scholarly is unused on KingdomAnchor today.
 
+### 14.2 PrimaryPlayCta surface variants
+
+| Surface | Icon | Sizing | Surfaces | Story |
+|---|---|---|---|---|
+| `playhub` | `btn-battle` | dominant (`min-height: 64px`, font 1.5rem) | `/play-hub` Hub | 1.9 |
+| `arena` | `btn-play` | dominant | `/arena` (in-game CTAs, future) | 1.9 |
+| `arena-entry` | `btn-play` | **compact** (`min-height: 52px`, font 1.2rem, smaller icon) | `/arena` selecting state | 2.2 |
+| `landing-hero` | `btn-play` | dominant | Landing hero CTA | 1.9 |
+| `landing-final-cta` | `btn-play` | dominant | Landing bottom CTA | 1.9 |
+
+Notes:
+
+- All surfaces share the stone backplate (`btn-stone-bg`), gold-leaf treatment, ambient pulse (4s loop, motion-safe), pressed-translateY, and disabled/loading state.
+- `arena-entry` is intentionally compact because it co-renders with the `<DifficultySelector>` and `<KingdomAnchor variant="arena-preview">` in a vertically dense surface — a dominant-size CTA there would crowd the kingdom anchor.
+- Label is **prop-driven** (Path A canonized in Story 1.9). Editorial wiring (e.g. `CTA_LABELS.startArena = "START"`) lives on the consuming surface, not the primitive.
+
 
