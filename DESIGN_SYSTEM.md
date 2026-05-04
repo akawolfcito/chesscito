@@ -651,6 +651,14 @@ Notes:
 - All variants share the gold-leaf border + warm halo + ambient idle pulse from §11.2; the variant only swaps inner content.
 - Atmosphere prop (§12) is independent of variant — Adventure is the default everywhere; Scholarly is unused on KingdomAnchor today.
 
+### 14.1.x Migration scaffold — `<HubScaffold>` (Story 1.12, in progress)
+
+The Game Home redesign Hub composition lives in `apps/web/src/components/hub/hub-scaffold.tsx`. It composes the 11 redesign primitives in the canonical 3-zone layout (HUD top + Kingdom Anchor body with reward/premium sides + mission ribbon + primary CTA). Each primitive instance is wrapped in `<PrimitiveBoundary primitiveName="…" surface="play-hub" atmosphere="adventure" />` per §13.
+
+**Activation:** opt-in via `?hub=new` on `/hub`. The legacy `<PlayHubRoot>` remains the default. The flag flip to make the scaffold the canonical Hub lands once data wiring (trophies, PRO state, reward states, navigation) is complete in a follow-up commit (Story 1.12.1).
+
+**What's wired today:** layout, primitives composition, prop-driven copy + tap callbacks, error containment. **Not yet wired:** real on-chain trophy count, real PRO status, real reward tile states, real navigation on PLAY tap. Static placeholder values live in `app/hub/page.tsx` so the scaffold is visually verifiable.
+
 ### 14.2 PrimaryPlayCta surface variants
 
 | Surface | Icon | Sizing | Surfaces | Story |

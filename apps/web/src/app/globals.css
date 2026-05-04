@@ -2772,6 +2772,73 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 28px;
 }
 
+/* ── Hub Scaffold layout (Story 1.12 — Game Home redesign migration) ──
+   3-zone "floating HUD" composition gated behind `?hub=new`. The legacy
+   <PlayHubRoot> stays mounted at /hub when the flag is absent. Mobile-
+   first 390px viewport; no desktop-specific tuning yet. */
+.hub-scaffold {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 16px 12px 24px;
+  gap: 16px;
+  background-color: var(--adv-deep-blue);
+  color: rgba(255, 245, 215, 0.95);
+}
+
+.hub-scaffold-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hub-scaffold-hud-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hub-scaffold-body {
+  display: grid;
+  grid-template-columns: 64px 1fr 64px;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.hub-scaffold-side {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.hub-scaffold-side--left {
+  align-items: flex-start;
+}
+
+.hub-scaffold-side--right {
+  align-items: flex-end;
+}
+
+.hub-scaffold-anchor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hub-scaffold-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
 /* Ambient pulse — kicks in 4s after mount and loops. CSS-driven so the
    React component stays free of timers; `motion-safe` honored. */
 @media (prefers-reduced-motion: no-preference) {
