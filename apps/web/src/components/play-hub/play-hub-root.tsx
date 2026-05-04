@@ -131,14 +131,35 @@ function txLink(chainId: number | undefined, txHash: string) {
   return `https://${subdomain}celoscan.io/tx/${txHash}`;
 }
 
+/** Hub-action seed accepted from URL search params. The new Game Home
+ *  scaffold (`<HubScaffoldClient>`) routes monetization-touching taps to
+ *  `/hub?legacy=1&action=…` so the legacy player keeps owning the heavy
+ *  on-chain mutation flows during the migration. */
+export type PlayHubInitialAction = "shop" | "pro" | "badges";
+
+export type PlayHubRootProps = {
+  /** Pre-selected piece (e.g. when the scaffold reward tile is tapped).
+   *  Falls back to "rook" — same default as before. */
+  initialPiece?: PieceKey;
+  /** Pre-opened sheet on first render. The scaffold uses this to drive
+   *  the user straight into the shop / PRO / badge flow without an extra
+   *  tap inside legacy. */
+  initialAction?: PlayHubInitialAction;
+};
+
 /**
  * PlayHubRoot — the entire play-hub experience as a self-contained
- * client component. Both `/` (legacy) and `/hub` (canonical going
- * forward) render this. Lifting it out of app/page.tsx lets the
- * public landing live at `/` while MiniPay players keep their
- * bookmarked play-hub flow at `/hub`.
+ * client component. Both `/` (legacy) and `/hub?legacy=1` render this.
+ * Lifting it out of app/page.tsx lets the public landing live at `/`
+ * while MiniPay players keep their bookmarked play-hub flow at `/hub`.
+ *
+ * Accepts initialPiece + initialAction so the scaffold can deep-link
+ * users straight into the matching legacy flow.
  */
-export function PlayHubRoot() {
+export function PlayHubRoot({
+  initialPiece = "rook",
+  initialAction,
+}: PlayHubRootProps = {}) {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -148,7 +169,7 @@ export function PlayHubRoot() {
   const { writeContractAsync: writeScoreAsync, isPending: isScoreWriting } = useWriteContract();
   const { writeContractAsync: writeBadgeAsync, isPending: isBadgeWriting } = useWriteContract();
   const { writeContractAsync: writeShopAsync, isPending: isShopWriting } = useWriteContract();
-  const [selectedPiece, setSelectedPiece] = useState<PieceKey>("rook");
+  const [selectedPiece, setSelectedPiece] = useState<PieceKey>(initialPiece);
   const [phase, setPhase] = useState<"ready" | "success" | "failure">("ready");
   const [boardKey, setBoardKey] = useState(0);
   const [moves, setMoves] = useState(0);
@@ -157,7 +178,13 @@ export function PlayHubRoot() {
   // a different tab auto-closes the current one rather than stacking.
   // Per-sheet `open` + `onOpenChange` are derived below so the sheet
   // components don't need to know about this refactor.
-  const [activeDockTab, setActiveDockTab] = useState<"badge" | "shop" | "trophies" | "leaderboard" | "arena" | null>(null);
+  const [activeDockTab, setActiveDockTab] = useState<"badge" | "shop" | "trophies" | "leaderboard" | "arena" | null>(
+    initialAction === "shop"
+      ? "shop"
+      : initialAction === "badges"
+        ? "badge"
+        : null,
+  );
   const storeOpen = activeDockTab === "shop";
   const setStoreOpen = (v: boolean) => setActiveDockTab(v ? "shop" : null);
   const leaderboardOpen = activeDockTab === "leaderboard";
@@ -174,7 +201,7 @@ export function PlayHubRoot() {
     isLoading: proLoading,
     refetch: refetchProStatus,
   } = useProStatus(address);
-  const [proSheetOpen, setProSheetOpen] = useState(false);
+  const [proSheetOpen, setProSheetOpen] = useState(initialAction === "pro");
   const [proPurchaseState, setProPurchaseState] = useState<"idle" | "purchasing" | "verifying">("idle");
   const [proPurchaseError, setProPurchaseError] = useState<string | null>(null);
   /** Set iff the last failure was verify-failed. Carries the on-chain
