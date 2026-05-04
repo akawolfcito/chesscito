@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { LegalPageShell } from "@/components/legal-page-shell";
+import { AboutMethodology } from "@/components/about/about-methodology";
+import { CognitiveDisclaimer } from "@/components/legal/cognitive-disclaimer";
 import { ABOUT_COPY } from "@/lib/content/editorial";
 import { Compass, FileText, LifeBuoy, Shield } from "lucide-react";
 import { InviteLink } from "./invite-link";
@@ -44,6 +46,12 @@ export default function AboutPage() {
         <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>{ABOUT_COPY.version}</p>
       </div>
 
+      {/* Methodology mini-section (Phase 0.5 C2) — credits the human
+          team behind the curriculum. Sits between identity and links
+          so the differentiator (FIDE Master pedagogy + dev team) is
+          read right after "what is Chesscito". */}
+      <AboutMethodology />
+
       {/* Links */}
       <nav className="space-y-2">
         {ABOUT_LINKS.map(({ href, label, icon: Icon }) => (
@@ -61,6 +69,12 @@ export default function AboutPage() {
         {/* Invite / Share — primary surface after dock slot was reclaimed for Trophies. */}
         <InviteLink />
       </nav>
+
+      {/* Cognitive disclaimer (Phase 0.5 C2) — full variant lives here
+          and on landing only. Per the canon decision (2026-05-03),
+          in-app surfaces (play-hub, arena) do NOT carry the
+          disclaimer; readers who want context land on /about. */}
+      <CognitiveDisclaimer variant="full" className="pt-4" />
     </LegalPageShell>
   );
 }

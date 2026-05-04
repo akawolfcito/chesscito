@@ -849,6 +849,25 @@ export const ABOUT_COPY = {
   shareUrl: "https://chesscito.vercel.app",
 } as const;
 
+/** Phase 0.5 C2 — methodology mini-section copy for /about. The body
+ *  attributes the curriculum to the real human team behind Chesscito
+ *  and anchors the differentiator (FIDE Master pedagogy + +100
+ *  students with national/international tournament experience). The
+ *  attribution chips render as compact pill labels so the section
+ *  reads as a credit, not a marketing claim.
+ *
+ *  HARD RULE — never weaken these strings into medical or clinical
+ *  claims. The cognitive disclaimer (full variant) renders separately
+ *  at the page footer. See
+ *  docs/product/chesscito-pro-training-academy-strategy-2026-05-03.md §8. */
+export const ABOUT_METHODOLOGY_COPY = {
+  sectionTitle: "Methodology",
+  body:
+    "Chesscito's curriculum is designed by a real human team. Pedagogy by FIDE Master César Litvinov Alarcón — over 100 students supported, with alumni who have competed in national and international tournaments.",
+  cesar: "César Litvinov Alarcón · FIDE Master",
+  wolfcito: "Wolfcito · Co-Founder",
+} as const;
+
 export const UNLOCK_COPY = {
   title: (piece: string) => `${piece} Unlocked!`,
   cta: (piece: string) => `Start ${piece}`,
