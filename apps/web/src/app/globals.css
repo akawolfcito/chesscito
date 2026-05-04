@@ -2319,6 +2319,19 @@ button.hud-resource-chip:active:not(:disabled) {
   }
 }
 
+/* ── HUD Secondary Row — conditional power-user resource row ──
+   Spec: docs/product/visual-language-minimum-2026-05-03.md §4.7 +
+   _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §3.
+   Renders ONLY when ≥ 1 chip has content; the data-driven collapse keeps
+   new-player Hubs uncluttered. Layout is a horizontal flex of compact
+   <HudResourceChip> instances. */
+.hud-secondary-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 
 /* ── Mission shell candy variant ── */
 .mission-shell-candy .panel-base {
