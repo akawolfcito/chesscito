@@ -481,3 +481,61 @@ This is **not** a soft deadline.
 | **A11y carry-forward** — keyboard nav, focus-visible, screen-reader wallet pronunciation, RTL support, beyond-PRO-tap interactions. | Spec §17 | Triggers per §17 table (first interactive typed prop, first a11y QA pass, RTL i18n project). |
 | **`useProStatus` single-source CI promotion** — `scripts/check-pro-fetch.sh` blocking PRs that bypass the hook. | Spec §12 risk row #3 | When the second screen (after `/play-hub`) migrates. |
 | **Future typed props on `ConnectedProps`** — level, streak, currency, achievements (each behind its own product spec). | Spec §3 + §5 growth rule | Per typed prop: product spec defines the data system → spec amendment adds the prop. |
+
+---
+
+## 11. Game Home Redesign Tokens (2026-05-04, Story 1.1)
+
+Foundation tokens for the Game Home redesign. Live in `globals.css`. Spec: `docs/product/visual-language-minimum-2026-05-03.md` §3.3.b. UX spec: `_bmad-output/planning-artifacts/ux-design-specification.md` Step 8.
+
+### 11.1 Adventure atmosphere palette
+
+Derived from `art/redesign/` assets (Wolfcito-cat-wizard + kingdom hero). Distinct from the `--redesign-*` candy-game palette (different visual register).
+
+| Token | Value | Use |
+|---|---|---|
+| `--adv-deep-blue` | `#1f2c4a` | Adventure primary background |
+| `--adv-blue-highlight` | `#3a5a9c` | Adventure surface highlights |
+| `--adv-forest-emerald` | `#2d6b3f` | Adventure secondary surfaces |
+| `--adv-gold-warm` | `#e6b34d` | Shared gold accent (compatible with `--gold-leaf-base`) |
+| `--adv-purple-accent` | `#7c4dad` | Adventure piece tint (Arena black piece) |
+| `--adv-stone` | `#5a677d` | Adventure stone-wall texture (from `menu-wall.png`) |
+
+### 11.2 Frame-craft layer
+
+Borders, glows, and elevation for the Adventure atmosphere primitives. Used by `<KingdomAnchor>`, `<HudResourceChip>`, `<MissionRibbon>`, and others.
+
+| Token | Value | Use |
+|---|---|---|
+| `--gold-leaf-base` | `#c9962b` | Border principal frame-craft |
+| `--gold-leaf-highlight` | `#e8c160` | Highlight superior gold-leaf |
+| `--gold-leaf-shadow` | `#8a6818` | Inner shadow gold-leaf |
+| `--kingdom-warm-glow` | `rgba(232, 193, 96, 0.18)` | Halo bajo `<KingdomAnchor>` |
+| `--kingdom-deep-shadow` | `rgba(63, 34, 8, 0.42)` | Drop shadow del world render |
+| `--hud-chip-elevation` | `rgba(255, 245, 215, 0.78)` | Backplate `<HudResourceChip>` |
+| `--mission-ribbon-warm` | `rgba(232, 193, 96, 0.32)` | Background `<MissionRibbon>` |
+
+### 11.3 Motion extension
+
+Adds piece-slide, mission-ribbon-reveal, and Wolfcito-greeting durations on top of the existing `--duration-snap / --duration-enter / --duration-ceremony / --ease-spring` vocabulary.
+
+| Token | Value | Use |
+|---|---|---|
+| `--duration-piece-slide` | `320ms` | Board piece movement |
+| `--duration-mission-ribbon-reveal` | `400ms` | `<MissionRibbon>` entrance |
+| `--duration-coach-greeting` | `600ms` | Wolfcito greeting fade-in |
+| `--ease-piece-overshoot` | `var(--ease-spring)` | Alias of `--ease-spring` for piece-slide semantic clarity |
+
+### 11.4 Rules of use
+
+- Adventure tokens belong to **Adventure-atmosphere surfaces** (Hub, Arena, Landing hero, Victory celebration). The PRO sheet uses the Hybrid mix — Adventure shell + Scholarly mission ribbon — and is the only canonized hybrid surface.
+- Scholarly surfaces (`/about`, methodology, legal, settings) continue to use existing warm-paper tokens (`--paper-text-*`, `paper-tray`, etc.).
+- Mixing palettes within a single surface (other than the canonized PRO sheet) violates `visual-language-minimum-2026-05-03.md` §7 anti-patterns 11–12.
+- Motion extensions complement, never replace, the original 4-token vocabulary.
+
+### 11.5 Cross-references
+
+- Tokens live: `apps/web/src/app/globals.css` lines 199–203 (motion extension) + lines 218–233 (Adventure palette + frame-craft).
+- Spec: `docs/product/visual-language-minimum-2026-05-03.md` §3.3.b.
+- UX foundation: `_bmad-output/planning-artifacts/ux-design-specification.md` Step 8 §"Color System" + §"Motion & Sensory Foundation".
+- Story: `_bmad-output/planning-artifacts/epics.md` Epic 1 Story 1.1.

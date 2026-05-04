@@ -196,6 +196,12 @@
     --duration-ceremony: 500ms;
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
+    /* Motion extension — Game Home redesign (2026-05-04, Story 1.1) */
+    --duration-piece-slide: 320ms;
+    --duration-mission-ribbon-reveal: 400ms;
+    --duration-coach-greeting: 600ms;
+    --ease-piece-overshoot: var(--ease-spring); /* alias for piece-slide semantic clarity */
+
     /* ── Redesign palette (candy-game aesthetic) ── */
     --redesign-cream: #F6E6B4;
     --redesign-olive: #64AB53;
@@ -205,6 +211,26 @@
     --redesign-coral-red: #FC7C83;
     --redesign-candy-green: #82D51E;
     --redesign-rock-gray: #727690;
+
+    /* ── Adventure atmosphere palette — Game Home redesign (Story 1.1) ── */
+    /* Derived from art/redesign/ assets (Wolfcito-cat-wizard + kingdom hero).
+       Distinct from --redesign-* palette (candy-game aesthetic).
+       Spec: docs/product/visual-language-minimum-2026-05-03.md §3.3.b */
+    --adv-deep-blue: #1f2c4a;
+    --adv-blue-highlight: #3a5a9c;
+    --adv-forest-emerald: #2d6b3f;
+    --adv-gold-warm: #e6b34d;
+    --adv-purple-accent: #7c4dad;
+    --adv-stone: #5a677d;
+
+    /* ── Frame-craft layer — gold-leaf borders + kingdom anchor effects ── */
+    --gold-leaf-base: #c9962b;
+    --gold-leaf-highlight: #e8c160;
+    --gold-leaf-shadow: #8a6818;
+    --kingdom-warm-glow: rgba(232, 193, 96, 0.18);
+    --kingdom-deep-shadow: rgba(63, 34, 8, 0.42);
+    --hud-chip-elevation: rgba(255, 245, 215, 0.78);
+    --mission-ribbon-warm: rgba(232, 193, 96, 0.32);
 
     /* ── Board colors (aliased to redesign palette) ── */
     --board-light: var(--redesign-cream);
