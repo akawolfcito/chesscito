@@ -1426,3 +1426,170 @@ export const LANDING_COPY = {
     confirm: "Listo. Te escribiremos pronto.",
   },
 } as const;
+
+/** ============================================================================
+ *  Game Home Redesign — editorial categories (Story 1.2, 2026-05-04)
+ *
+ *  Editorial source of truth for the 8 new primitives shipping in the Game
+ *  Home redesign. Each category lives here so a single point of change rolls
+ *  out consistently across surfaces.
+ *
+ *  Spec: docs/product/visual-language-minimum-2026-05-03.md §3.4 + §4.5–4.12
+ *  Story: _bmad-output/planning-artifacts/epics.md Epic 1 Story 1.2
+ *  ============================================================================ */
+
+/** Aria-label and ambient hint copy for the central kingdom anchor.
+ *  Consumed by `<KingdomAnchor>` (Step 11 §1 of UX spec). */
+export const HOME_ANCHOR_COPY = {
+  alt: "Chesscito kingdom — Wolfcito the wizard with chess piece statues",
+  attractHint: "Your training awaits in the kingdom",
+} as const;
+
+/** Persistent HUD chip copy. Consumed by `<HudResourceChip>` (top row) and
+ *  `<HudSecondaryRow>` (conditional second row). Format functions stay
+ *  singular/plural-aware so screen readers announce naturally. */
+export const HUD_COPY = {
+  /** Trophies chip (top row, always visible). */
+  trophiesLabel: "Trophies",
+  trophiesAriaLabel: (count: number) => `Trophies: ${count}`,
+
+  /** PRO chip (top row, visible when PRO is active). */
+  proLabel: "PRO",
+  proRemainingFormat: (days: number) => `${days}d`,
+  proAriaLabel: (days: number) =>
+    days === 1
+      ? "PRO active, 1 day remaining"
+      : `PRO active, ${days} days remaining`,
+  proInactiveAriaLabel: "PRO inactive — tap to learn more",
+
+  /** Streak chip (secondary row, conditional). */
+  streakLabel: "Streak",
+  streakFormat: (days: number) =>
+    days === 1 ? "1-day streak" : `${days}-day streak`,
+  streakAriaLabel: (days: number) =>
+    days === 1 ? "Streak: 1 day" : `Streak: ${days} days`,
+
+  /** Stars chip (secondary row, conditional — mission stars). */
+  starsLabel: "Stars",
+  starsFormat: (current: number, total: number) => `${current}/${total}`,
+  starsAriaLabel: (current: number, total: number) =>
+    `Stars: ${current} of ${total}`,
+
+  /** Shields chip (secondary row, conditional — retry shields available). */
+  shieldsLabel: "Shields",
+  shieldsFormat: (count: number) => `Shield ×${count}`,
+  shieldsAriaLabel: (count: number) =>
+    count === 1
+      ? "1 retry shield available"
+      : `${count} retry shields available`,
+
+  /** Region container aria-label for the secondary row. */
+  secondaryRowAriaLabel: "Player resources",
+} as const;
+
+/** Per-surface mission ribbon copy. Consumed by `<MissionRibbon>` (Step 11 §6
+ *  of UX spec). Canon rule (strategy doc §11): mission rendered ABOVE the CTA
+ *  on every payment surface. The PRO sheet variant aliases the canonical
+ *  PRO_COPY.tagline so the line stays single-source. */
+export const MISSION_RIBBON_COPY = {
+  hub: "Small plays. Big mental habits.",
+  arena: "Your training continues, one move at a time.",
+  "pro-sheet": PRO_COPY.tagline,
+  /** Landing CTA bar stays in Spanish per LANDING_COPY v0.5 locked content. */
+  "landing-cta-bar": "Pequeñas jugadas. Grandes hábitos mentales.",
+  ariaLabel: "Mission statement",
+} as const;
+
+/** Per-tile reward column copy. Consumed by `<RewardColumn>` (Step 11 §4 of
+ *  UX spec). Tiles cover the 6 chess pieces (per game-brief §7 progression
+ *  order) plus a victory tile for Arena wins ready to mint. Aria-label is a
+ *  state-aware function so screen readers announce claimable / progress /
+ *  locked states distinctly. */
+export const REWARD_COPY = {
+  rook: {
+    label: "Rook mastery",
+    claimableHint: "Tap to claim your Rook badge",
+    lockedHint: "Complete all 3 Rook levels to unlock",
+    unlockRequirement: "Complete Rook L1 + L2 + L3",
+    ariaLabel: (state: "claimable" | "progress" | "locked") =>
+      state === "claimable"
+        ? "Claim Rook mastery badge — ready"
+        : state === "progress"
+          ? "Rook mastery — in progress"
+          : "Rook mastery — locked",
+  },
+  bishop: {
+    label: "Bishop mastery",
+    claimableHint: "Tap to claim your Bishop badge",
+    lockedHint: "Master Rook first, then complete all 3 Bishop levels",
+    unlockRequirement: "Complete Bishop L1 + L2 + L3",
+    ariaLabel: (state: "claimable" | "progress" | "locked") =>
+      state === "claimable"
+        ? "Claim Bishop mastery badge — ready"
+        : state === "progress"
+          ? "Bishop mastery — in progress"
+          : "Bishop mastery — locked",
+  },
+  queen: {
+    label: "Queen mastery",
+    claimableHint: "Tap to claim your Queen badge",
+    lockedHint: "Master Rook + Bishop to unlock",
+    unlockRequirement: "Master Rook + Bishop",
+    ariaLabel: (state: "claimable" | "progress" | "locked") =>
+      state === "claimable"
+        ? "Claim Queen mastery badge — ready"
+        : state === "progress"
+          ? "Queen mastery — in progress"
+          : "Queen mastery — locked",
+  },
+  knight: {
+    label: "Knight mastery",
+    claimableHint: "Tap to claim your Knight badge",
+    lockedHint: "Master Queen first, then complete all 3 Knight levels",
+    unlockRequirement: "Master Queen, then complete Knight L1 + L2 + L3",
+    ariaLabel: (state: "claimable" | "progress" | "locked") =>
+      state === "claimable"
+        ? "Claim Knight mastery badge — ready"
+        : state === "progress"
+          ? "Knight mastery — in progress"
+          : "Knight mastery — locked",
+  },
+  king: {
+    label: "King mastery",
+    claimableHint: "Tap to claim your King badge",
+    lockedHint: "Master Knight first",
+    unlockRequirement: "Master Knight, then complete King L1 + L2 + L3",
+    ariaLabel: (state: "claimable" | "progress" | "locked") =>
+      state === "claimable"
+        ? "Claim King mastery badge — ready"
+        : state === "progress"
+          ? "King mastery — in progress"
+          : "King mastery — locked",
+  },
+  pawn: {
+    label: "Pawn mastery",
+    claimableHint: "Tap to claim your Pawn badge",
+    lockedHint: "Master King first — Pawn is the boss final",
+    unlockRequirement: "Master King, then complete Pawn L1 + L2 + L3",
+    ariaLabel: (state: "claimable" | "progress" | "locked") =>
+      state === "claimable"
+        ? "Claim Pawn mastery badge — ready"
+        : state === "progress"
+          ? "Pawn mastery — in progress"
+          : "Pawn mastery — locked",
+  },
+  /** Victory tile — represents an Arena victory ready to mint. Distinct
+   *  from piece-mastery tiles; appears at top of column when claimable. */
+  victory: {
+    label: "Save your victory",
+    claimableHint: "Tap to save your latest Arena win",
+    lockedHint: "Win an Arena match to unlock",
+    unlockRequirement: "Win an Arena match",
+    ariaLabel: (state: "claimable" | "progress" | "locked") =>
+      state === "claimable"
+        ? "Save victory ready — tap to save"
+        : state === "progress"
+          ? "Victory in progress"
+          : "No victory ready — win an Arena match",
+  },
+} as const;
