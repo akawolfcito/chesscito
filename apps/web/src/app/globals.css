@@ -2633,6 +2633,139 @@ button.hud-resource-chip:active:not(:disabled) {
   }
 }
 
+/* ── Primary Play CTA — dominant action button (Adventure atmosphere) ──
+   Spec: docs/product/visual-language-minimum-2026-05-03.md §4.11 +
+   _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §7.
+   Anatomy: stone backplate (btn-stone-bg) + surface-specific icon overlay
+   + warm-amber label. Press translateY + ambient pulse handled here so
+   the React component stays presentational. */
+.primary-play-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 24px;
+  border: none;
+  background: transparent;
+  border-radius: 18px;
+  color: rgba(255, 245, 215, 0.98);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow:
+    0 2px 0 rgba(63, 34, 8, 0.65),
+    0 0 12px rgba(232, 193, 96, 0.55);
+  cursor: pointer;
+  filter: drop-shadow(0 6px 0 var(--gold-leaf-shadow));
+  transition: transform var(--duration-snap), filter var(--duration-snap);
+}
+
+.primary-play-cta-backplate,
+.primary-play-cta-icon {
+  position: absolute;
+  pointer-events: none;
+}
+
+.primary-play-cta-backplate {
+  inset: 0;
+}
+
+.primary-play-cta-backplate-img {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+}
+
+.primary-play-cta-icon {
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+}
+
+.primary-play-cta-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.primary-play-cta-label {
+  position: relative;
+  z-index: 1;
+}
+
+.primary-play-cta:active:not(:disabled) {
+  transform: translateY(4px);
+  filter: drop-shadow(0 2px 0 var(--gold-leaf-shadow));
+}
+
+/* Ambient pulse — kicks in 4s after mount and loops. CSS-driven so the
+   React component stays free of timers; `motion-safe` honored. */
+@media (prefers-reduced-motion: no-preference) {
+
+  .primary-play-cta {
+    animation: primary-play-cta-pulse 4s ease-in-out 4s infinite;
+  }
+}
+
+@keyframes primary-play-cta-pulse {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 6px 0 var(--gold-leaf-shadow));
+  }
+
+  50% {
+    filter:
+      drop-shadow(0 6px 0 var(--gold-leaf-shadow))
+      drop-shadow(0 0 14px var(--kingdom-warm-glow));
+  }
+}
+
+/* States: loading + disabled — read as "muted, non-interactive". */
+.primary-play-cta.is-loading,
+.primary-play-cta.is-disabled,
+.primary-play-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: drop-shadow(0 4px 0 var(--gold-leaf-shadow)) grayscale(0.3);
+  animation: none;
+}
+
+.primary-play-cta.is-loading::after {
+  content: "";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border: 2px solid rgba(255, 245, 215, 0.85);
+  border-top-color: transparent;
+  border-radius: 999px;
+  animation: primary-play-cta-spin 0.8s linear infinite;
+}
+
+@keyframes primary-play-cta-spin {
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .primary-play-cta.is-loading::after {
+    animation: none;
+  }
+}
+
 
 /* ── Mission shell candy variant ── */
 .mission-shell-candy .panel-base {
