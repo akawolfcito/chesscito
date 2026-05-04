@@ -426,6 +426,12 @@ El landing ya está locked en v0.5 (`LANDING_COPY`). Recomendaciones de **revisi
 
 - `<TrainingPlanCard />` — visual claro de "tu semana de entrenamiento" para PRO. No implementar hasta que retos diarios existan. Es el contenedor visual de "academia viva".
 
+### Lenguaje visual mínimo
+
+Para el spec ejecutable de las primitivas visuales que sostienen esta narrativa (CognitiveDisclaimer, AboutMethodology, ComingSoonChip futuro, kicker Training Pass, status badges, locked-state pattern, anti-patrones), ver:
+
+> **`docs/product/visual-language-minimum-2026-05-03.md`** (Phase 0.5 C5).
+
 ---
 
 ## 12. Implicaciones para copy
