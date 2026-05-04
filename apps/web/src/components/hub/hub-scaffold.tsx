@@ -43,6 +43,11 @@ type HubScaffoldProps = {
   onProTap?: () => void;
   onPremiumTap?: () => void;
   onPlayPress?: () => void;
+  /** Secondary-row chip taps. The shields chip is the home for shop
+   *  conversion (forwarded to `<HudSecondaryRow onShieldsTap>`). */
+  onStreakTap?: () => void;
+  onStarsTap?: () => void;
+  onShieldsTap?: () => void;
   onError?: (
     context: import("@/components/error/primitive-boundary").PrimitiveBoundaryErrorContext,
   ) => void;
@@ -79,6 +84,9 @@ export function HubScaffold({
   onProTap,
   onPremiumTap,
   onPlayPress,
+  onStreakTap,
+  onStarsTap,
+  onShieldsTap,
   onError,
 }: HubScaffoldProps) {
   const proValue = pro.active ? HUD_COPY.proRemainingFormat(pro.daysRemaining) : null;
@@ -125,7 +133,14 @@ export function HubScaffold({
         </div>
         {wrap(
           "HudSecondaryRow",
-          <HudSecondaryRow streak={streak} stars={stars} shields={shields} />,
+          <HudSecondaryRow
+            streak={streak}
+            stars={stars}
+            shields={shields}
+            onStreakTap={onStreakTap}
+            onStarsTap={onStarsTap}
+            onShieldsTap={onShieldsTap}
+          />,
         )}
       </header>
 

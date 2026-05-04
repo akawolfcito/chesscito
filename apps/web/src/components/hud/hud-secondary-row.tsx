@@ -10,6 +10,13 @@ type Props = {
   streak?: number | null;
   stars?: Stars | null;
   shields?: number | null;
+  /** Optional tap handlers per chip. When provided, the chip renders as
+   *  a button (per `<HudResourceChip>` contract) so the parent can wire
+   *  navigation/sheet flows. The shields chip is the primary monetization
+   *  surface in this row — connect it to the shop entry. */
+  onStreakTap?: () => void;
+  onStarsTap?: () => void;
+  onShieldsTap?: () => void;
   className?: string;
 };
 
@@ -24,6 +31,9 @@ export function HudSecondaryRow({
   streak = null,
   stars = null,
   shields = null,
+  onStreakTap,
+  onStarsTap,
+  onShieldsTap,
   className = "",
 }: Props) {
   const hasStreak = typeof streak === "number";
@@ -47,6 +57,7 @@ export function HudSecondaryRow({
           icon="time"
           value={HUD_COPY.streakFormat(streak as number)}
           ariaLabel={HUD_COPY.streakAriaLabel(streak as number)}
+          onClick={onStreakTap}
         />
       ) : null}
       {hasStars ? (
@@ -56,6 +67,7 @@ export function HudSecondaryRow({
           icon="star"
           value={HUD_COPY.starsFormat(stars!.current, stars!.total)}
           ariaLabel={HUD_COPY.starsAriaLabel(stars!.current, stars!.total)}
+          onClick={onStarsTap}
         />
       ) : null}
       {hasShields ? (
@@ -65,6 +77,7 @@ export function HudSecondaryRow({
           icon="shield"
           value={HUD_COPY.shieldsFormat(shields as number)}
           ariaLabel={HUD_COPY.shieldsAriaLabel(shields as number)}
+          onClick={onShieldsTap}
         />
       ) : null}
     </div>

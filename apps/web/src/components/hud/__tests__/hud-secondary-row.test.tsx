@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { HudSecondaryRow } from "../hud-secondary-row";
 import { HUD_COPY } from "@/lib/content/editorial";
@@ -86,5 +87,69 @@ describe("HudSecondaryRow", () => {
     const region = screen.getByRole("region");
     expect(region.className).toMatch(/hud-secondary-row\b/);
     expect(region.className).toMatch(/extra-test-class/);
+  });
+
+  describe("tap handlers", () => {
+    it("renders the shields chip as a button when onShieldsTap is provided", () => {
+      const onShieldsTap = vi.fn();
+      render(<HudSecondaryRow shields={3} onShieldsTap={onShieldsTap} />);
+
+      // HudResourceChip switches to <button> when onClick is set, which
+      // exposes role="button" and removes role="status".
+      const shieldsBtn = screen.getByRole("button", {
+        name: HUD_COPY.shieldsAriaLabel(3),
+      });
+      expect(shieldsBtn).toBeInTheDocument();
+    });
+
+    it("invokes onShieldsTap when the shields chip is clicked", async () => {
+      const user = userEvent.setup();
+      const onShieldsTap = vi.fn();
+      render(<HudSecondaryRow shields={2} onShieldsTap={onShieldsTap} />);
+
+      await user.click(
+        screen.getByRole("button", { name: HUD_COPY.shieldsAriaLabel(2) }),
+      );
+
+      expect(onShieldsTap).toHaveBeenCalledTimes(1);
+    });
+
+    it("invokes onStreakTap when the streak chip is clicked", async () => {
+      const user = userEvent.setup();
+      const onStreakTap = vi.fn();
+      render(<HudSecondaryRow streak={5} onStreakTap={onStreakTap} />);
+
+      await user.click(
+        screen.getByRole("button", { name: HUD_COPY.streakAriaLabel(5) }),
+      );
+
+      expect(onStreakTap).toHaveBeenCalledTimes(1);
+    });
+
+    it("invokes onStarsTap when the stars chip is clicked", async () => {
+      const user = userEvent.setup();
+      const onStarsTap = vi.fn();
+      render(
+        <HudSecondaryRow
+          stars={{ current: 1, total: 3 }}
+          onStarsTap={onStarsTap}
+        />,
+      );
+
+      await user.click(
+        screen.getByRole("button", { name: HUD_COPY.starsAriaLabel(1, 3) }),
+      );
+
+      expect(onStarsTap).toHaveBeenCalledTimes(1);
+    });
+
+    it("renders chips as role=status (non-clickable) when no tap handler is provided", () => {
+      render(<HudSecondaryRow shields={1} />);
+
+      expect(
+        screen.getByRole("status", { name: HUD_COPY.shieldsAriaLabel(1) }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    });
   });
 });
