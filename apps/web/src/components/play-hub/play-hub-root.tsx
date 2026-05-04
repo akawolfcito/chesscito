@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   useAccount,
   useChainId,
@@ -160,6 +161,7 @@ export function PlayHubRoot({
   initialPiece = "rook",
   initialAction,
 }: PlayHubRootProps = {}) {
+  const router = useRouter();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -202,6 +204,28 @@ export function PlayHubRoot({
     refetch: refetchProStatus,
   } = useProStatus(address);
   const [proSheetOpen, setProSheetOpen] = useState(initialAction === "pro");
+
+  // When the user landed on legacy via a scaffold deep link
+  // (`?legacy=1&action=…`), bouncing back to `/hub` (scaffold) on the
+  // first sheet close removes the otherwise-required two interactions
+  // (close sheet + browser back). Single-shot — guarded by a ref so we
+  // never auto-navigate on subsequent dock-driven sheet opens.
+  const deepLinkBounceConsumed = useRef(initialAction === undefined);
+  useEffect(() => {
+    if (deepLinkBounceConsumed.current) return;
+    const deepLinkSheetOpen =
+      initialAction === "shop"
+        ? activeDockTab === "shop"
+        : initialAction === "badges"
+          ? activeDockTab === "badge"
+          : initialAction === "pro"
+            ? proSheetOpen
+            : false;
+    if (!deepLinkSheetOpen) {
+      deepLinkBounceConsumed.current = true;
+      router.push("/hub");
+    }
+  }, [initialAction, activeDockTab, proSheetOpen, router]);
   const [proPurchaseState, setProPurchaseState] = useState<"idle" | "purchasing" | "verifying">("idle");
   const [proPurchaseError, setProPurchaseError] = useState<string | null>(null);
   /** Set iff the last failure was verify-failed. Carries the on-chain
