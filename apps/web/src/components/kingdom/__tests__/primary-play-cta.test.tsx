@@ -153,6 +153,29 @@ describe("PrimaryPlayCta", () => {
     expect(cta.className).toMatch(/extra-test-class/);
   });
 
+  it("applies the adventure atmosphere by default", () => {
+    render(
+      <PrimaryPlayCta surface="playhub" label="PLAY" ariaLabel="Play" />,
+    );
+    const cta = screen.getByRole("button", { name: "Play" });
+    expect(cta.className).toMatch(/is-atmosphere-adventure\b/);
+    expect(cta.className).not.toMatch(/is-atmosphere-scholarly\b/);
+  });
+
+  it("applies the scholarly atmosphere when atmosphere='scholarly'", () => {
+    render(
+      <PrimaryPlayCta
+        surface="playhub"
+        label="PLAY"
+        ariaLabel="Play"
+        atmosphere="scholarly"
+      />,
+    );
+    const cta = screen.getByRole("button", { name: "Play" });
+    expect(cta.className).toMatch(/is-atmosphere-scholarly\b/);
+    expect(cta.className).not.toMatch(/is-atmosphere-adventure\b/);
+  });
+
   it("hides the inner banner <img> elements from assistive tech (button name owns the label)", () => {
     const { container } = render(
       <PrimaryPlayCta surface="playhub" label="PLAY" ariaLabel="Play" />,

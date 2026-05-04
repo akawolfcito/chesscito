@@ -59,6 +59,20 @@ describe("MissionRibbon", () => {
     expect(node.className).toMatch(/extra-test-class/);
   });
 
+  it("applies the adventure atmosphere by default", () => {
+    render(<MissionRibbon surface="hub" />);
+    const node = screen.getByRole("note");
+    expect(node.className).toMatch(/is-atmosphere-adventure\b/);
+    expect(node.className).not.toMatch(/is-atmosphere-scholarly\b/);
+  });
+
+  it("applies the scholarly atmosphere when atmosphere='scholarly' (PRO sheet hybrid)", () => {
+    render(<MissionRibbon surface="pro-sheet" atmosphere="scholarly" />);
+    const node = screen.getByRole("note");
+    expect(node.className).toMatch(/is-atmosphere-scholarly\b/);
+    expect(node.className).not.toMatch(/is-atmosphere-adventure\b/);
+  });
+
   it("never weakens the canon framing — copy is sourced from MISSION_RIBBON_COPY (no inline strings)", () => {
     const surfaces = ["hub", "arena", "pro-sheet", "landing-cta-bar"] as const;
     for (const surface of surfaces) {

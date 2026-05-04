@@ -7,8 +7,13 @@ export type KingdomAnchorVariant =
   | "arena-preview"
   | "landing-hero";
 
+export type Atmosphere = "adventure" | "scholarly";
+
 type Props = {
   variant?: KingdomAnchorVariant;
+  /** Visual register. Adventure (default) = warm gold-leaf; Scholarly =
+   *  warm-paper / paper-craft for /about + legal surfaces. */
+  atmosphere?: Atmosphere;
   className?: string;
   style?: CSSProperties;
 };
@@ -28,14 +33,23 @@ const ASSET_BASE = "/art/redesign/bg/splash-loading";
  *  reduce`. Not interactive; tap is captured by the `<PrimaryPlayCta>` zone. */
 export function KingdomAnchor({
   variant = "playhub",
+  atmosphere = "adventure",
   className = "",
   style,
 }: Props) {
+  const classes = [
+    "kingdom-anchor",
+    `kingdom-anchor--${variant}`,
+    `is-atmosphere-${atmosphere}`,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <div
       role="img"
       aria-label={HOME_ANCHOR_COPY.alt}
-      className={`kingdom-anchor kingdom-anchor--${variant} ${className}`.trim()}
+      className={classes}
       style={{ aspectRatio: ASPECT_RATIO[variant], ...style }}
     >
       <picture className="kingdom-anchor-picture">

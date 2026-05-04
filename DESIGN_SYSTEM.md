@@ -539,3 +539,58 @@ Adds piece-slide, mission-ribbon-reveal, and Wolfcito-greeting durations on top 
 - Spec: `docs/product/visual-language-minimum-2026-05-03.md` §3.3.b.
 - UX foundation: `_bmad-output/planning-artifacts/ux-design-specification.md` Step 8 §"Color System" + §"Motion & Sensory Foundation".
 - Story: `_bmad-output/planning-artifacts/epics.md` Epic 1 Story 1.1.
+
+## 12. Atmosphere Prop Pattern
+
+Game Home redesign primitives expose an `atmosphere` prop so a single primitive can be rendered inside either the Adventure or Scholarly visual register. The Adventure register is **always the default** — opting into Scholarly is an explicit choice for `/about`, legal, settings, and the PRO sheet's mission ribbon.
+
+### 12.1 Primitives with the prop
+
+| Primitive | Default | Spec |
+|---|---|---|
+| `<KingdomAnchor>` | `"adventure"` | UX spec Step 11 §1, Story 1.3 |
+| `<HudResourceChip>` | `"adventure"` | UX spec Step 11 §2, Story 1.4 |
+| `<MissionRibbon>` | `"adventure"` | UX spec Step 11 §6, Story 1.8 |
+| `<PrimaryPlayCta>` | `"adventure"` | UX spec Step 11 §7, Story 1.9 |
+| `<FrameCraftCard>` | n/a — Scholarly-only by design | Story 3.1 (post-Phase 0.5) |
+
+### 12.2 Type contract
+
+```ts
+export type Atmosphere = "adventure" | "scholarly";
+
+type Props = {
+  atmosphere?: Atmosphere; // default: "adventure"
+  // ...other props
+};
+```
+
+The component emits a single CSS modifier class on the root: `is-atmosphere-adventure` or `is-atmosphere-scholarly`. Adventure styling lives on the base `.{primitive-class}` rule; Scholarly is layered on top via `.{primitive-class}.is-atmosphere-scholarly` using the existing `--paper-bg / --paper-divider / --paper-text` tokens.
+
+### 12.3 Per-surface defaults
+
+| Surface | Atmosphere |
+|---|---|
+| `/play-hub` | adventure |
+| `/arena` (selecting + playing) | adventure |
+| Landing hero / plans / capabilities | adventure |
+| Victory celebration overlay | adventure |
+| `/about` (incl. methodology) | scholarly |
+| Cognitive disclaimer | scholarly |
+| Settings | scholarly |
+| Legal pages (privacy, terms) | scholarly |
+| PRO sheet | adventure shell + scholarly mission ribbon (only canonized hybrid) |
+
+### 12.4 Rules of use
+
+- Always pass `atmosphere` explicitly when the surface is Scholarly. Relying on the default keeps Adventure surfaces clean.
+- The PRO sheet is the **only** mixed-atmosphere surface. Mixing Adventure + Scholarly anywhere else is anti-pattern §7-#11/12 of `visual-language-minimum-2026-05-03.md`.
+- `<MissionRibbon atmosphere="scholarly">` is the canonical bridge inside the PRO sheet's hybrid layout.
+- The prop **does not control behavior** — only visual treatment. Same DOM, same a11y, same callbacks.
+
+### 12.5 Cross-references
+
+- Implementation: `apps/web/src/components/{kingdom,hud,pro-mission}/*.tsx`.
+- CSS overrides: `apps/web/src/app/globals.css` "Atmosphere prop pattern — Scholarly overrides" block.
+- UX foundation: `_bmad-output/planning-artifacts/ux-design-specification.md` Step 11 §11 ("Atmosphere selection per surface").
+- Story: `_bmad-output/planning-artifacts/epics.md` Epic 1 Story 1.10.

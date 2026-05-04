@@ -65,4 +65,18 @@ describe("KingdomAnchor", () => {
     expect(node.className).toMatch(/kingdom-anchor\b/);
     expect(node.className).toMatch(/custom-extra-class/);
   });
+
+  it("applies the adventure atmosphere by default", () => {
+    render(<KingdomAnchor />);
+    const node = screen.getByRole("img", { name: HOME_ANCHOR_COPY.alt });
+    expect(node.className).toMatch(/is-atmosphere-adventure\b/);
+    expect(node.className).not.toMatch(/is-atmosphere-scholarly\b/);
+  });
+
+  it("applies the scholarly atmosphere when atmosphere='scholarly'", () => {
+    render(<KingdomAnchor atmosphere="scholarly" />);
+    const node = screen.getByRole("img", { name: HOME_ANCHOR_COPY.alt });
+    expect(node.className).toMatch(/is-atmosphere-scholarly\b/);
+    expect(node.className).not.toMatch(/is-atmosphere-adventure\b/);
+  });
 });

@@ -6,10 +6,14 @@ export type MissionRibbonSurface =
   | "pro-sheet"
   | "landing-cta-bar";
 export type MissionRibbonTone = "default" | "emphatic";
+export type Atmosphere = "adventure" | "scholarly";
 
 type Props = {
   surface: MissionRibbonSurface;
   tone?: MissionRibbonTone;
+  /** Visual register. Adventure (default) for Hub/Arena/landing-cta-bar;
+   *  Scholarly for the PRO sheet hybrid (canon §11). */
+  atmosphere?: Atmosphere;
   className?: string;
 };
 
@@ -20,12 +24,14 @@ type Props = {
 export function MissionRibbon({
   surface,
   tone = "default",
+  atmosphere = "adventure",
   className = "",
 }: Props) {
   const classes = [
     "mission-ribbon",
     `mission-ribbon--${surface}`,
     `mission-ribbon--tone-${tone}`,
+    `is-atmosphere-${atmosphere}`,
     className,
   ]
     .filter(Boolean)

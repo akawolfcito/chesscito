@@ -8,6 +8,8 @@ export type PrimaryPlayCtaSurface =
   | "landing-hero"
   | "landing-final-cta";
 
+export type Atmosphere = "adventure" | "scholarly";
+
 type Props = {
   surface: PrimaryPlayCtaSurface;
   /** Caller-supplied label (e.g. "PLAY", "START"). Lives in editorial when
@@ -15,6 +17,9 @@ type Props = {
    *  premature CTA_LABELS expansion. */
   label: string;
   ariaLabel: string;
+  /** Visual register. Adventure (default) — kingdom-anchored gold treatment.
+   *  Scholarly — paper-craft variant for Scholarly surfaces. */
+  atmosphere?: Atmosphere;
   onPress?: () => void;
   loading?: boolean;
   disabled?: boolean;
@@ -39,6 +44,7 @@ export function PrimaryPlayCta({
   surface,
   label,
   ariaLabel,
+  atmosphere = "adventure",
   onPress,
   loading = false,
   disabled = false,
@@ -58,6 +64,7 @@ export function PrimaryPlayCta({
   const classes = [
     "primary-play-cta",
     `primary-play-cta--${surface}`,
+    `is-atmosphere-${atmosphere}`,
     loading ? "is-loading" : "",
     disabled ? "is-disabled" : "",
     className,

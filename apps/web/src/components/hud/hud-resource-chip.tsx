@@ -6,6 +6,7 @@ import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon"
 
 export type HudResourceTone = "default" | "pro" | "trophy";
 export type HudResourceSize = "md" | "compact";
+export type Atmosphere = "adventure" | "scholarly";
 
 type Props = {
   /** Display value. Numbers and strings render as-is. `null` / `undefined`
@@ -17,6 +18,9 @@ type Props = {
   /** Visual + default-icon variant. `"default"` requires the `icon` prop. */
   tone?: HudResourceTone;
   size?: HudResourceSize;
+  /** Visual register. Adventure (default) = warm-cream Adventure pill;
+   *  Scholarly = warm-paper backplate for Scholarly surfaces. */
+  atmosphere?: Atmosphere;
   /** Override the chip icon. Required when `tone="default"`. */
   icon?: CandyIconName;
   /** Optional tap target. When present the chip renders as `<button>`;
@@ -42,6 +46,7 @@ export function HudResourceChip({
   ariaLabel,
   tone = "default",
   size = "md",
+  atmosphere = "adventure",
   icon,
   onClick,
   className = "",
@@ -68,6 +73,7 @@ export function HudResourceChip({
     "hud-resource-chip",
     `hud-resource-chip--${tone}`,
     `hud-resource-chip--${size}`,
+    `is-atmosphere-${atmosphere}`,
     pulsing ? "is-pulse" : "",
     className,
   ]

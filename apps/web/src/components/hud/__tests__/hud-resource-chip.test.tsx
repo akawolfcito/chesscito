@@ -118,6 +118,27 @@ describe("HudResourceChip", () => {
     );
   });
 
+  it("applies the adventure atmosphere by default", () => {
+    render(<HudResourceChip tone="trophy" value={15} ariaLabel="Trophies: 15" />);
+    const node = screen.getByRole("status", { name: "Trophies: 15" });
+    expect(node.className).toMatch(/is-atmosphere-adventure\b/);
+    expect(node.className).not.toMatch(/is-atmosphere-scholarly\b/);
+  });
+
+  it("applies the scholarly atmosphere when atmosphere='scholarly'", () => {
+    render(
+      <HudResourceChip
+        tone="trophy"
+        value={15}
+        ariaLabel="Trophies: 15"
+        atmosphere="scholarly"
+      />,
+    );
+    const node = screen.getByRole("status", { name: "Trophies: 15" });
+    expect(node.className).toMatch(/is-atmosphere-scholarly\b/);
+    expect(node.className).not.toMatch(/is-atmosphere-adventure\b/);
+  });
+
   it("applies the pulse class on value updates and clears it after 240ms", () => {
     vi.useFakeTimers();
     try {
