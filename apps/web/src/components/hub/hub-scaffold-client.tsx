@@ -41,7 +41,10 @@ const MS_PER_DAY = 86_400_000;
  *  `<PlayHubRoot>`. PlayHubRoot reads `?action` + `?piece` from the URL
  *  and seeds its initial state. */
 const LEGACY_HUB = "/hub?legacy=1";
-function legacyHubFor(action: "shop" | "pro" | "badges", piece?: PieceId) {
+function legacyHubFor(
+  action: "shop" | "pro" | "badges" | "trophies",
+  piece?: PieceId,
+) {
   // Defensive — only attach the piece query when the piece has at least
   // one shippable exercise. Pieces without exercises (queen/king today)
   // would crash the legacy board if it tried to read EXERCISES[piece][0].
@@ -219,7 +222,7 @@ export function HubScaffoldClient() {
       premiumTotal={0}
       playLabel={PLAY_LABEL}
       playAriaLabel={PLAY_ARIA_LABEL}
-      onTrophyTap={() => router.push("/trophies")}
+      onTrophyTap={() => router.push(legacyHubFor("trophies"))}
       onProTap={() => router.push(legacyHubFor("pro"))}
       onPremiumTap={() => router.push(legacyHubFor("pro"))}
       onShieldsTap={() => router.push(legacyHubFor("shop"))}

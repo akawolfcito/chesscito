@@ -136,7 +136,7 @@ function txLink(chainId: number | undefined, txHash: string) {
  *  scaffold (`<HubScaffoldClient>`) routes monetization-touching taps to
  *  `/hub?legacy=1&action=…` so the legacy player keeps owning the heavy
  *  on-chain mutation flows during the migration. */
-export type PlayHubInitialAction = "shop" | "pro" | "badges";
+export type PlayHubInitialAction = "shop" | "pro" | "badges" | "trophies";
 
 export type PlayHubRootProps = {
   /** Pre-selected piece (e.g. when the scaffold reward tile is tapped).
@@ -185,7 +185,9 @@ export function PlayHubRoot({
       ? "shop"
       : initialAction === "badges"
         ? "badge"
-        : null,
+        : initialAction === "trophies"
+          ? "trophies"
+          : null,
   );
   const storeOpen = activeDockTab === "shop";
   const setStoreOpen = (v: boolean) => setActiveDockTab(v ? "shop" : null);
@@ -218,9 +220,11 @@ export function PlayHubRoot({
         ? activeDockTab === "shop"
         : initialAction === "badges"
           ? activeDockTab === "badge"
-          : initialAction === "pro"
-            ? proSheetOpen
-            : false;
+          : initialAction === "trophies"
+            ? activeDockTab === "trophies"
+            : initialAction === "pro"
+              ? proSheetOpen
+              : false;
     if (!deepLinkSheetOpen) {
       deepLinkBounceConsumed.current = true;
       router.push("/hub");

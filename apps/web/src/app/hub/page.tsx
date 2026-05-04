@@ -30,7 +30,12 @@ function pieceHasExercises(piece: string): piece is PieceId {
   return Array.isArray(exercises) && exercises.length > 0;
 }
 
-const VALID_ACTIONS = new Set<PlayHubInitialAction>(["shop", "pro", "badges"]);
+const VALID_ACTIONS = new Set<PlayHubInitialAction>([
+  "shop",
+  "pro",
+  "badges",
+  "trophies",
+]);
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;

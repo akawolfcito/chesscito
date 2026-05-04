@@ -102,15 +102,15 @@ describe("/hub page (server)", () => {
       expect(el.props).toMatchObject({ initialAction: "shop" });
     });
 
-    it("accepts the three valid actions: shop, pro, badges", () => {
-      for (const action of ["shop", "pro", "badges"] as const) {
+    it("accepts the four valid actions: shop, pro, badges, trophies", () => {
+      for (const action of ["shop", "pro", "badges", "trophies"] as const) {
         const el = renderPage({ legacy: "1", action });
         expect(el.props).toMatchObject({ initialAction: action });
       }
     });
 
     it("ignores an unknown `?action=` (initialAction undefined)", () => {
-      const el = renderPage({ legacy: "1", action: "trophies" });
+      const el = renderPage({ legacy: "1", action: "leaderboard" });
       expect(el.props.initialAction).toBeUndefined();
     });
 
