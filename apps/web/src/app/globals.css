@@ -2821,6 +2821,26 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 2px 0 rgba(110, 65, 15, 0.35));
 }
 
+/* ── Primitive Boundary fallback — paper-tray "quiet error" surface ──
+   Spec: docs/superpowers/specs/(none — Story 1.11 minimal). Reads as a
+   small note, never as an alarm. Tokens consumed: --paper-bg,
+   --paper-text-muted, --paper-divider. */
+.primitive-boundary-fallback {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--paper-divider);
+  background: var(--paper-bg);
+  color: var(--paper-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.primitive-boundary-fallback-text {
+  display: block;
+}
+
 
 /* ── Mission shell candy variant ── */
 .mission-shell-candy .panel-base {

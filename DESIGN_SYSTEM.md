@@ -594,3 +594,41 @@ The component emits a single CSS modifier class on the root: `is-atmosphere-adve
 - CSS overrides: `apps/web/src/app/globals.css` "Atmosphere prop pattern — Scholarly overrides" block.
 - UX foundation: `_bmad-output/planning-artifacts/ux-design-specification.md` Step 11 §11 ("Atmosphere selection per surface").
 - Story: `_bmad-output/planning-artifacts/epics.md` Epic 1 Story 1.10.
+
+## 13. Primitive Error Boundary
+
+`<PrimitiveBoundary>` contains a primitive crash so the parent surface keeps rendering. It is the canonical wrapper for any new Game Home redesign primitive when composed in a surface — the migration story (Story 1.12) wraps each primitive instance.
+
+### 13.1 Type contract
+
+```ts
+import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
+
+<PrimitiveBoundary
+  primitiveName="KingdomAnchor"
+  surface="play-hub"
+  atmosphere="adventure"
+  onError={(ctx) => {/* wire to Sentry/Vercel here */}}
+>
+  <KingdomAnchor variant="playhub" />
+</PrimitiveBoundary>
+```
+
+### 13.2 Behavior
+
+- No-error path: children pass through with **zero DOM wrapping**, so primitives that return `null` (e.g. `<HudResourceChip value={null} />`) keep collapsing cleanly.
+- Error path: renders a paper-tray fallback with `role="alert" aria-live="polite"` and a quiet "couldn't load this piece" message. Reads as a small note, never as an alarm.
+- `onError` is invoked with a structured context: `{ primitiveName, surface, atmosphere, error, stack }`. The boundary intentionally exposes only those keys so PII can't ride the error channel via arbitrary child props.
+
+### 13.3 Rules of use
+
+- **Surfaces wrap, primitives don't auto-wrap.** This keeps the no-error DOM identical to a bare primitive and prevents double-wrap when boundaries are nested.
+- One boundary per primitive instance. Sibling boundaries isolate from each other (a single crash doesn't blank the whole surface).
+- The fallback copy stays neutral and non-alarming. Error reporting is the surface's responsibility, not the user's distraction.
+
+### 13.4 Cross-references
+
+- Implementation: `apps/web/src/components/error/primitive-boundary.tsx`.
+- Tests: `apps/web/src/components/error/__tests__/primitive-boundary.test.tsx` (5 tests covering no-error, error, structured onError, PII guard, sibling isolation).
+- CSS: `apps/web/src/app/globals.css` "Primitive Boundary fallback" block.
+- Story: `_bmad-output/planning-artifacts/epics.md` Epic 1 Story 1.11.
