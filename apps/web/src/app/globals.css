@@ -2215,6 +2215,110 @@
   }
 }
 
+/* ── HUD Resource Chip — persistent top-HUD pill (Adventure atmosphere) ──
+   Spec: docs/product/visual-language-minimum-2026-05-03.md §4.6 +
+   _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §2.
+   Tokens consumed: --hud-chip-elevation, --gold-leaf-base,
+   --gold-leaf-highlight, --gold-leaf-shadow, --kingdom-warm-glow. */
+.hud-resource-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  min-height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--gold-leaf-base);
+  background: var(--hud-chip-elevation);
+  color: rgba(63, 34, 8, 0.92);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.40);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 1px 2px rgba(63, 34, 8, 0.18);
+  transition: box-shadow var(--duration-snap), transform var(--duration-snap);
+}
+
+.hud-resource-chip-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.hud-resource-chip-value {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+button.hud-resource-chip {
+  cursor: pointer;
+}
+
+button.hud-resource-chip:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Tone modifier: trophy — default Adventure cream pill (no override). */
+
+/* Tone modifier: PRO — amber gradient + gold-shadow border. */
+.hud-resource-chip--pro {
+  background: linear-gradient(180deg, #ffe28c 0%, var(--gold-leaf-base) 100%);
+  border-color: var(--gold-leaf-shadow);
+  color: rgba(50, 25, 5, 0.95);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.50) inset,
+    0 0 0 1px var(--gold-leaf-highlight) inset,
+    0 2px 4px rgba(63, 34, 8, 0.30);
+}
+
+/* Size modifier: compact — secondary HUD row chips. */
+.hud-resource-chip--compact {
+  gap: 4px;
+  padding: 2px 8px;
+  min-height: 22px;
+  font-size: 0.6875rem;
+}
+
+.hud-resource-chip--compact .hud-resource-chip-icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Pulse — 240ms warm flash on value change. */
+.hud-resource-chip.is-pulse {
+  animation: hud-resource-chip-pulse 240ms ease-out;
+}
+
+@keyframes hud-resource-chip-pulse {
+
+  0% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.55) inset,
+      0 0 0 0 var(--kingdom-warm-glow);
+  }
+
+  60% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.55) inset,
+      0 0 0 6px var(--kingdom-warm-glow);
+  }
+
+  100% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.55) inset,
+      0 1px 2px rgba(63, 34, 8, 0.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .hud-resource-chip.is-pulse {
+    animation: none;
+  }
+}
+
 
 /* ── Mission shell candy variant ── */
 .mission-shell-candy .panel-base {
