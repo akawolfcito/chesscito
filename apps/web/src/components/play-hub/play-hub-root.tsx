@@ -51,6 +51,7 @@ import {
   SHOP_ITEMS,
 } from "@/lib/contracts/shop-catalog";
 import { GlobalStatusBar } from "@/components/ui/global-status-bar";
+import { CognitiveDisclaimer } from "@/components/legal/cognitive-disclaimer";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import { formatWalletShort } from "@/lib/wallet/format";
@@ -1294,6 +1295,7 @@ export function PlayHubRoot() {
               }
             />
           }
+          disclaimerSlot={<CognitiveDisclaimer variant="short" />}
           board={
             <Board
               key={`${boardKey}-${labyrinthMode ? `lab-${labyrinthKey}` : "ex"}`}

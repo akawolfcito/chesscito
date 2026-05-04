@@ -58,6 +58,12 @@ type MissionPanelProps = {
    *  bridge) that shouldn't push the board down. */
   actionRowLeft?: ReactNode;
   actionRowRight?: ReactNode;
+  /** Optional slot rendered between the action row and the persistent
+   *  dock. Reserved for the cognitive disclaimer footer (Phase 0.5
+   *  C1) so any surface mentioning cognition can carry the "does not
+   *  replace medical diagnosis" line. Should remain visually
+   *  secondary — never compete with the dock or the action pin. */
+  disclaimerSlot?: ReactNode;
 };
 
 type FlashConfig = { text: string; accent: string; stroke: string };
@@ -179,6 +185,7 @@ export function MissionPanelCandy({
   headerSlot,
   actionRowLeft,
   actionRowRight,
+  disclaimerSlot,
 }: MissionPanelProps) {
   const activePiece = pieces.find((p) => p.key === selectedPiece);
   const pieceTitle =
@@ -393,6 +400,15 @@ export function MissionPanelCandy({
           </div>
         )}
       </div>
+
+      {/* Cognitive disclaimer slot — sits between the action row and
+          the dock so it reads as a footnote, never as a banner. Phase
+          0.5 C1 wires <CognitiveDisclaimer variant="short" /> here. */}
+      {disclaimerSlot && (
+        <div className="shrink-0 relative z-[60] pointer-events-none">
+          {disclaimerSlot}
+        </div>
+      )}
 
       {/* Dock — persistent navigation.
           - z-[60] on the direct child of .atmosphere escapes the

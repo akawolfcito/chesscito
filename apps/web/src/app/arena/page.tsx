@@ -15,6 +15,7 @@ import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
+import { CognitiveDisclaimer } from "@/components/legal/cognitive-disclaimer";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
@@ -869,6 +870,13 @@ export default function ArenaPage() {
               {game.errorMessage}
             </div>
           )}
+        </div>
+        {/* Cognitive disclaimer (Phase 0.5 C1) — only on the arena
+            entry/selecting branch where the player is reading and
+            choosing. We intentionally skip rendering it during an
+            active match so it never competes with gameplay. */}
+        <div className="shrink-0 relative z-[60] pointer-events-none">
+          <CognitiveDisclaimer variant="short" />
         </div>
         <div
           className="shrink-0 relative z-[60] pointer-events-auto"
