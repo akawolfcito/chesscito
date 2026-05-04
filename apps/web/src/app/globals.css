@@ -2195,6 +2195,57 @@
   object-position: center;
 }
 
+/* Arena-preview variant — square chess board centered in the wider 1.3:1
+   frame, overlaid with the standard starting position. The frame stays
+   gold-leafed; only the inner picture is letterboxed (object-fit: contain). */
+.kingdom-anchor--arena-preview .kingdom-anchor-img {
+  object-fit: contain;
+}
+
+.kingdom-anchor-board-frame {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kingdom-anchor-board-inner {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.kingdom-anchor-board-inner > .kingdom-anchor-picture {
+  position: absolute;
+  inset: 0;
+}
+
+.kingdom-anchor-board-pieces {
+  position: absolute;
+  inset: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.kingdom-anchor-board-piece {
+  position: absolute;
+  width: 12.5%;
+  height: 12.5%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kingdom-anchor-board-piece img {
+  display: block;
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+
 /* Ambient idle pulse — disabled when the user prefers reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
 

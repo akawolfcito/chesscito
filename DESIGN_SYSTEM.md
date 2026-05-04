@@ -632,3 +632,23 @@ import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
 - Tests: `apps/web/src/components/error/__tests__/primitive-boundary.test.tsx` (5 tests covering no-error, error, structured onError, PII guard, sibling isolation).
 - CSS: `apps/web/src/app/globals.css` "Primitive Boundary fallback" block.
 - Story: `_bmad-output/planning-artifacts/epics.md` Epic 1 Story 1.11.
+
+## 14. Primitive Variants
+
+Catalog of variant axes already shipped on Game Home redesign primitives. New variants land here in the same PR that introduces them.
+
+### 14.1 KingdomAnchor variants
+
+| Variant | Aspect ratio | Asset source | Surfaces | Story |
+|---|---|---|---|---|
+| `playhub` (default) | `1 / 1` | `redesign/bg/splash-loading.{avif,webp,png}` | `/play-hub` Hub | 1.3 |
+| `arena-preview` | `1.3 / 1` | `redesign/board/board-ch.{avif,webp,png}` + 32-piece overlay from `redesign/pieces/` | `/arena` selecting state | 2.1 |
+| `landing-hero` | `1.5 / 1` | `redesign/bg/splash-loading.{avif,webp,png}` | Landing hero | 3.x (pending) |
+
+Notes:
+
+- The `arena-preview` variant centers a square chess board inside the wider 1.3:1 frame (letterboxed via `object-fit: contain`) and overlays a static starting position on a uniform 8×8 grid (`12.5%` per cell). The overlay is decorative — `aria-hidden="true"` — and does not affect the wrapper's `role="img"` + `aria-label` (single announcement).
+- All variants share the gold-leaf border + warm halo + ambient idle pulse from §11.2; the variant only swaps inner content.
+- Atmosphere prop (§12) is independent of variant — Adventure is the default everywhere; Scholarly is unused on KingdomAnchor today.
+
+
