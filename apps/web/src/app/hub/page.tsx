@@ -1,5 +1,7 @@
 import { PlayHubRoot, type PlayHubInitialAction } from "@/components/play-hub/play-hub-root";
 import { HubScaffoldClient } from "@/components/hub/hub-scaffold-client";
+import { EXERCISES } from "@/lib/game/exercises";
+import type { PieceId } from "@/lib/game/types";
 
 type SearchParams = {
   /** Transitional fallback to the legacy `<PlayHubRoot>`. Truthy → legacy. */
@@ -9,22 +11,24 @@ type SearchParams = {
    *  after the flip). */
   hub?: string | string[];
   /** Legacy seed: pre-select a piece in `<PlayHubRoot>`. Only honored on
-   *  the legacy branch — the scaffold has no piece-selection state. */
+   *  the legacy branch — the scaffold has no piece-selection state.
+   *  Pieces without exercises (queen/king at the time of writing — see
+   *  PR-6/PR-9) are silently dropped to avoid the board crashing on an
+   *  empty exercises array. */
   piece?: string | string[];
   /** Legacy seed: open a sheet on first render. Honored values:
    *  `shop`, `pro`, `badges`. Other values are ignored. */
   action?: string | string[];
 };
 
-const VALID_PIECES = new Set([
-  "rook",
-  "bishop",
-  "knight",
-  "pawn",
-  "queen",
-  "king",
-] as const);
-type PieceKey = "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
+/** A piece is shippable when it has at least one defined exercise.
+ *  Defensive — when queen/king finally land their exercises, this
+ *  predicate auto-promotes them to the deep-link whitelist with no
+ *  page-level edit required. */
+function pieceHasExercises(piece: string): piece is PieceId {
+  const exercises = (EXERCISES as Record<string, unknown[] | undefined>)[piece];
+  return Array.isArray(exercises) && exercises.length > 0;
+}
 
 const VALID_ACTIONS = new Set<PlayHubInitialAction>(["shop", "pro", "badges"]);
 
@@ -63,8 +67,7 @@ export default function HubPage({
   const piece = firstParam(searchParams.piece);
   const action = firstParam(searchParams.action);
 
-  const initialPiece =
-    piece && VALID_PIECES.has(piece as PieceKey) ? (piece as PieceKey) : undefined;
+  const initialPiece = piece && pieceHasExercises(piece) ? piece : undefined;
   const initialAction =
     action && VALID_ACTIONS.has(action as PlayHubInitialAction)
       ? (action as PlayHubInitialAction)

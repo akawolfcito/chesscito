@@ -77,6 +77,26 @@ describe("/hub page (server)", () => {
       expect(el.props.initialPiece).toBeUndefined();
     });
 
+    it("rejects pieces without exercises (queen, king at the time of writing)", () => {
+      // queen and king have empty `EXERCISES` arrays (PR-6/PR-9 are
+      // pending). Letting them through crashes the legacy board on
+      // mount with `Cannot read properties of undefined (reading
+      // 'isCapture')` because useExerciseProgress reads
+      // EXERCISES[piece][index] without guarding empty arrays.
+      const queen = renderPage({ legacy: "1", piece: "queen" });
+      expect(queen.props.initialPiece).toBeUndefined();
+
+      const king = renderPage({ legacy: "1", piece: "king" });
+      expect(king.props.initialPiece).toBeUndefined();
+    });
+
+    it("accepts pieces with exercises (rook, bishop, knight, pawn)", () => {
+      for (const piece of ["rook", "bishop", "knight", "pawn"] as const) {
+        const el = renderPage({ legacy: "1", piece });
+        expect(el.props).toMatchObject({ initialPiece: piece });
+      }
+    });
+
     it("forwards a valid `?action=` to initialAction", () => {
       const el = renderPage({ legacy: "1", action: "shop" });
       expect(el.props).toMatchObject({ initialAction: "shop" });

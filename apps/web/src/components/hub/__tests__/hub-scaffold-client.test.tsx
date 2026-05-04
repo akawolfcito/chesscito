@@ -203,6 +203,28 @@ describe("HubScaffoldClient — tap handlers", () => {
     expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=shop");
   });
 
+  it("drops the piece query for tiles whose piece has no shippable exercises (queen)", async () => {
+    const user = userEvent.setup();
+    // Make queen "claimable" — but queen has no exercises (EXERCISES.queen=[]),
+    // so the deep link must NOT carry &piece=queen lest the legacy board
+    // crash on mount.
+    localStorage.setItem(
+      "chesscito:progress:queen",
+      JSON.stringify({ piece: "queen", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
+    );
+    // Master rook + bishop on-chain so queen's prerequisite chain is
+    // satisfied (otherwise the queen tile would render as `locked`).
+    useAccountMock.mockReturnValue({ address: TEST_WALLET });
+    setBadges([true, true, false, false, false, false]);
+    render(<HubScaffoldClient />);
+
+    await user.click(
+      await screen.findByRole("button", { name: /claim queen mastery badge/i }),
+    );
+
+    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=badges");
+  });
+
   it("routes to /hub?legacy=1&piece={id}&action=badges when a reward tile is tapped", async () => {
     const user = userEvent.setup();
     // Bring rook to "claimable" state — full stars threshold met, badge

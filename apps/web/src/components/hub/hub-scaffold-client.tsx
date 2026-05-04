@@ -8,6 +8,7 @@ import { HubScaffold } from "@/components/hub/hub-scaffold";
 import { badgesAbi } from "@/lib/contracts/badges";
 import { getBadgesAddress } from "@/lib/contracts/chains";
 import { HUD_COPY } from "@/lib/content/editorial";
+import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import {
@@ -41,7 +42,16 @@ const MS_PER_DAY = 86_400_000;
  *  and seeds its initial state. */
 const LEGACY_HUB = "/hub?legacy=1";
 function legacyHubFor(action: "shop" | "pro" | "badges", piece?: PieceId) {
-  const pieceQuery = piece ? `&piece=${piece}` : "";
+  // Defensive — only attach the piece query when the piece has at least
+  // one shippable exercise. Pieces without exercises (queen/king today)
+  // would crash the legacy board if it tried to read EXERCISES[piece][0].
+  // The page.tsx validator filters again at the boundary, but dropping
+  // the query here makes the scaffold side correct on its own.
+  const includePiece =
+    piece !== undefined &&
+    Array.isArray((EXERCISES as Record<string, unknown[] | undefined>)[piece]) &&
+    ((EXERCISES as Record<string, unknown[] | undefined>)[piece]?.length ?? 0) > 0;
+  const pieceQuery = includePiece ? `&piece=${piece}` : "";
   return `${LEGACY_HUB}&action=${action}${pieceQuery}`;
 }
 
