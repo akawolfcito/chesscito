@@ -154,7 +154,7 @@ describe("HubScaffoldClient — tap handlers", () => {
     expect(pushMock).toHaveBeenCalledWith("/trophies");
   });
 
-  it("routes to /hub when the PRO chip (active) is tapped", async () => {
+  it("routes to /hub?legacy=1&action=pro when the PRO chip (active) is tapped", async () => {
     const user = userEvent.setup();
     useAccountMock.mockReturnValue({ address: TEST_WALLET });
     useProStatusMock.mockReturnValue({
@@ -169,24 +169,85 @@ describe("HubScaffoldClient — tap handlers", () => {
       screen.getByLabelText("PRO active, 8 days remaining");
     await user.click(chip);
 
-    expect(pushMock).toHaveBeenCalledWith("/hub");
+    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=pro");
   });
 
-  it("routes to /hub when the inactive PremiumSlot CTA is tapped", async () => {
+  it("routes to /hub?legacy=1&action=pro when the inactive PremiumSlot CTA is tapped", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
     await user.click(screen.getByText("Go PRO"));
 
-    expect(pushMock).toHaveBeenCalledWith("/hub");
+    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=pro");
   });
 
-  it("routes to /hub when the primary PLAY CTA fires", async () => {
+  it("routes to /hub?legacy=1 when the primary PLAY CTA fires", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
     await user.click(screen.getByLabelText("Start training"));
 
-    expect(pushMock).toHaveBeenCalledWith("/hub");
+    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1");
+  });
+
+  it("routes to /hub?legacy=1&action=shop when the shields chip is tapped", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("chesscito:shields", "2");
+    render(<HubScaffoldClient />);
+
+    // Shields chip is part of the secondary HUD row.
+    await user.click(
+      await screen.findByRole("button", { name: /retry shields available/i }),
+    );
+
+    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=shop");
+  });
+
+  it("routes to /hub?legacy=1&piece={id}&action=badges when a reward tile is tapped", async () => {
+    const user = userEvent.setup();
+    // Bring rook to "claimable" state — full stars threshold met, badge
+    // not yet claimed on-chain.
+    localStorage.setItem(
+      "chesscito:progress:rook",
+      JSON.stringify({ piece: "rook", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
+    );
+    render(<HubScaffoldClient />);
+
+    // RewardColumn renders tiles as buttons with REWARD_COPY aria.
+    await user.click(
+      await screen.findByRole("button", { name: /claim rook mastery badge/i }),
+    );
+
+    expect(pushMock).toHaveBeenCalledWith(
+      "/hub?legacy=1&action=badges&piece=rook",
+    );
+  });
+});
+
+describe("HubScaffoldClient — shields chip", () => {
+  it("renders shields=0 by default (depleted state is the strongest replenishment cue)", () => {
+    render(<HubScaffoldClient />);
+
+    expect(
+      screen.getByLabelText(/0 retry shields available/i),
+    ).toBeInTheDocument();
+  });
+
+  it("reads shield count from localStorage on mount", async () => {
+    localStorage.setItem("chesscito:shields", "5");
+    render(<HubScaffoldClient />);
+
+    expect(
+      await screen.findByLabelText(/5 retry shields available/i),
+    ).toBeInTheDocument();
+  });
+
+  it("falls back to 0 when localStorage value is corrupt", () => {
+    localStorage.setItem("chesscito:shields", "not-a-number");
+    render(<HubScaffoldClient />);
+
+    expect(
+      screen.getByLabelText(/0 retry shields available/i),
+    ).toBeInTheDocument();
   });
 });

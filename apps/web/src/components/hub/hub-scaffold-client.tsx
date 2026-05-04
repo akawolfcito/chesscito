@@ -31,7 +31,19 @@ const BADGE_PIECE_BY_INDEX: readonly PieceId[] = [
 const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
 
 const PROGRESS_STORAGE_PREFIX = "chesscito:progress:";
+const SHIELDS_STORAGE_KEY = "chesscito:shields";
 const MS_PER_DAY = 86_400_000;
+
+/** Routes for transition-period delegations to the legacy hub. The
+ *  scaffold owns the menu surface; the heavy on-chain mutation flows
+ *  (claim badge, mint, shop purchase, PRO sheet) still live on
+ *  `<PlayHubRoot>`. PlayHubRoot reads `?action` + `?piece` from the URL
+ *  and seeds its initial state. */
+const LEGACY_HUB = "/hub?legacy=1";
+function legacyHubFor(action: "shop" | "pro" | "badges", piece?: PieceId) {
+  const pieceQuery = piece ? `&piece=${piece}` : "";
+  return `${LEGACY_HUB}&action=${action}${pieceQuery}`;
+}
 
 const PREMIUM_KICKER = "Training Pass";
 const PREMIUM_INACTIVE_LABEL = "Go PRO";
@@ -47,6 +59,20 @@ function premiumAriaLabel(
     return "Training Pass — tap to unlock";
   }
   return `Training Pass — ${used} of ${total} sessions used, ${pro.daysRemaining} days remaining`;
+}
+
+function loadShieldCount(): number {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+  try {
+    const raw = window.localStorage.getItem(SHIELDS_STORAGE_KEY);
+    if (!raw) return 0;
+    const n = Number.parseInt(raw, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  } catch {
+    return 0;
+  }
 }
 
 function loadStarsPerPiece(): Partial<Record<PieceId, number>> {
@@ -141,8 +167,10 @@ export function HubScaffoldClient() {
   // localStorage is browser-only — defer to mount to keep SSR + first
   // paint identical (no hydration mismatch).
   const [starsPerPiece, setStarsPerPiece] = useState<Partial<Record<PieceId, number>>>({});
+  const [shieldCount, setShieldCount] = useState<number>(0);
   useEffect(() => {
     setStarsPerPiece(loadStarsPerPiece());
+    setShieldCount(loadShieldCount());
   }, []);
 
   const trophies = useMemo(
@@ -157,15 +185,21 @@ export function HubScaffoldClient() {
       deriveRewardTiles({
         badgesClaimed,
         starsPerPiece,
-        onTileTap: () => router.push("/hub"),
+        onTileTap: (piece) => router.push(legacyHubFor("badges", piece)),
       }),
     [badgesClaimed, starsPerPiece, router],
   );
+
+  // The shields chip is the home for shop conversion (the user's primary
+  // monetization surface). Always visible whether the count is 0 or N —
+  // a depleted "Shield ×0" is the strongest replenishment cue.
+  const shieldsValue = shieldCount;
 
   return (
     <HubScaffold
       trophies={trophies}
       pro={pro}
+      shields={shieldsValue}
       rewardTiles={rewardTiles}
       premiumKicker={PREMIUM_KICKER}
       premiumInactiveLabel={PREMIUM_INACTIVE_LABEL}
@@ -176,9 +210,10 @@ export function HubScaffoldClient() {
       playLabel={PLAY_LABEL}
       playAriaLabel={PLAY_ARIA_LABEL}
       onTrophyTap={() => router.push("/trophies")}
-      onProTap={() => router.push("/hub")}
-      onPremiumTap={() => router.push("/hub")}
-      onPlayPress={() => router.push("/hub")}
+      onProTap={() => router.push(legacyHubFor("pro"))}
+      onPremiumTap={() => router.push(legacyHubFor("pro"))}
+      onShieldsTap={() => router.push(legacyHubFor("shop"))}
+      onPlayPress={() => router.push(LEGACY_HUB)}
     />
   );
 }
