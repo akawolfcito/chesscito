@@ -14,14 +14,22 @@ vi.mock("@/components/hub/hub-scaffold-client", () => ({
 
 import HubPage from "../page";
 
-function renderPage(searchParams: Record<string, string | string[] | undefined>) {
+type SearchParamsLike = {
+  legacy?: string | string[];
+  hub?: string | string[];
+  piece?: string | string[];
+  action?: string | string[];
+};
+
+type RenderedElement = {
+  type: { name?: string };
+  props: Record<string, unknown>;
+};
+
+function renderPage(searchParams: SearchParamsLike): RenderedElement {
   // Server components are plain functions in Vitest — call directly and
   // inspect the returned ReactElement's type + props.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shape verified inline
-  return HubPage({ searchParams: searchParams as any }) as unknown as {
-    type: { name?: string };
-    props: Record<string, unknown>;
-  };
+  return HubPage({ searchParams }) as unknown as RenderedElement;
 }
 
 describe("/hub page (server)", () => {
