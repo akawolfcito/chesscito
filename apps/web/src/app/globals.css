@@ -2332,6 +2332,112 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 6px;
 }
 
+/* ── Reward Column — left-edge reward stack (Adventure atmosphere) ──
+   Spec: docs/product/visual-language-minimum-2026-05-03.md §4.8 +
+   _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §4.
+   Vertical stack of up to 3 tiles + overflow indicator. Tiles surface
+   claimable badges / Arena victories / future PRO daily challenges. */
+.reward-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 64px;
+}
+
+.reward-tile {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1.5px solid var(--gold-leaf-base);
+  background: linear-gradient(180deg, #ffe28c 0%, var(--gold-leaf-base) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.50) inset,
+    0 0 0 1px var(--gold-leaf-highlight) inset,
+    0 2px 4px rgba(63, 34, 8, 0.30);
+  color: rgba(50, 25, 5, 0.95);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.40);
+  cursor: pointer;
+  transition: transform var(--duration-snap), box-shadow var(--duration-snap);
+}
+
+.reward-tile:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.reward-tile-label {
+  display: block;
+  width: 100%;
+  word-break: break-word;
+}
+
+/* State: claimable — full opacity + pulsing notif badge. */
+.reward-tile.is-claimable .reward-tile-notif {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #f43f5e;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.75);
+  animation: reward-tile-notif-pulse 1.6s ease-out infinite;
+}
+
+@keyframes reward-tile-notif-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.55);
+  }
+
+  60% {
+    box-shadow: 0 0 0 6px rgba(244, 63, 94, 0);
+  }
+}
+
+/* State: progress — same gold backplate, no badge, no lock. */
+
+/* State: locked — 55% opacity + grayscale + lock icon top-right. */
+.reward-tile.is-locked {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.reward-tile-lock {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Overflow indicator — single ellipsis under the visible tiles. */
+.reward-column-overflow {
+  display: block;
+  text-align: center;
+  color: var(--color-label-gold);
+  font-size: 1rem;
+  line-height: 1;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .reward-tile.is-claimable .reward-tile-notif {
+    animation: none;
+  }
+}
+
 
 /* ── Mission shell candy variant ── */
 .mission-shell-candy .panel-base {
