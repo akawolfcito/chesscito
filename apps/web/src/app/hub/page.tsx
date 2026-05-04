@@ -1,7 +1,3 @@
-"use client";
-
-import { useSearchParams } from "next/navigation";
-
 import { PlayHubRoot } from "@/components/play-hub/play-hub-root";
 import { HubScaffold } from "@/components/hub/hub-scaffold";
 import { HUD_COPY } from "@/lib/content/editorial";
@@ -9,17 +5,28 @@ import { HUD_COPY } from "@/lib/content/editorial";
 const SCAFFOLD_PROGRESS_FORMAT = (used: number, total: number) =>
   HUD_COPY.starsFormat(used, total);
 
+type SearchParams = { hub?: string | string[] };
+
 /**
  * `/hub` — canonical play-hub URL. Renders the legacy `<PlayHubRoot>` by
  * default. When the URL carries `?hub=new` the redesigned Game Home
  * composition (`<HubScaffold>`, Story 1.12) renders instead — opt-in
  * preview while the migration lands incrementally.
+ *
+ * Server component on purpose: reading `searchParams` from props avoids
+ * `useSearchParams()` + Suspense overhead and keeps the legacy default
+ * path zero-overhead vs the prior implementation.
  */
-export default function HubPage() {
-  const searchParams = useSearchParams();
-  const useScaffold = searchParams?.get("hub") === "new";
+export default function HubPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const hubFlag = Array.isArray(searchParams.hub)
+    ? searchParams.hub[0]
+    : searchParams.hub;
 
-  if (useScaffold) {
+  if (hubFlag === "new") {
     return (
       <HubScaffold
         trophies={12}
