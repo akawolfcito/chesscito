@@ -295,10 +295,12 @@ COGNITIVE_DISCLAIMER_COPY = {
 }
 ```
 
-**Reglas de presencia**:
+**Reglas de presencia** (revisadas 2026-05-03):
 - `full` en `/` (landing) y en `/about`.
-- `short` en footer de `/play-hub` y `/arena`.
-- Cualquier surface que mencione "cognitivo", "atención", "memoria", "decisiones" debe poder llegar al disclaimer en máximo un scroll.
+- **NO** se renderiza in-app (play-hub, arena, etc.).
+  - **Por qué**: smoke a 390px mostró que el disclaimer en footer comprime el board (file labels a–h se cortan). Más relevante: el mensaje cognitivo no aporta dentro del juego activo, pierde fuerza, y satura una superficie pensada para acción.
+  - **Consecuencia**: el disclaimer vive donde sí aporta y donde el lector llega buscando contexto — landing y /about. El app permanece visualmente limpio.
+- Cualquier surface in-app que mencione "cognitivo", "atención", "memoria", "decisiones" debe enlazar a `/about` (donde vive el disclaimer `full`) en máximo un scroll desde su entrada.
 
 **Auditoría grep que debe pasar siempre**:
 ```bash
@@ -392,14 +394,14 @@ El landing ya está locked en v0.5 (`LANDING_COPY`). Recomendaciones de **revisi
 - **Mission panel** ya cuenta Pilar 1 + 2. Mantener.
 - **PRO chip** — ya entrega estado. Cuando Phase 1 arranque, considerar mostrar "X retos PRO disponibles" como badge dinámico.
 - **Shop sheet** — Founder Badge + Retry Shield. Mantener. Cuando Coach Packs salgan del flag, agregar Coach Pack tile como microcompra de prueba.
-- **Footer**: agregar `<CognitiveDisclaimer variant="short" />` (Phase 0.5).
+- **Footer**: **sin disclaimer cognitivo** (decisión revisada 2026-05-03 tras smoke a 390px — el board se cortaba y el mensaje no aporta en superficie de juego activo). El disclaimer vive en landing + /about.
 
 ### `/arena`
 
 - **Entry panel** + **DifficultySelector** — entregan Pilar 1 + 2. Cuando Phase 1 active IA avanzada, agregar nivel "Expert (PRO)" con candado visual.
 - **End state** — Victory celebration → claim → share. Mantener. El copy ya está limpio post-realineación.
 - **Coach Analysis (post-match)** — agregar línea atribución metodológica ("Coach guiado por la metodología de César Litvinov Alarcón") al desplegar el panel Coach.
-- **Footer**: agregar disclaimer (Phase 0.5).
+- **Footer**: **sin disclaimer cognitivo** (misma decisión que play-hub). Quien necesite contexto cognitivo llega vía /about.
 
 ### `/trophies`
 
