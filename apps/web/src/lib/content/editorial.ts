@@ -1462,6 +1462,13 @@ export const HUD_COPY = {
       : `PRO active, ${days} days remaining`,
   proInactiveAriaLabel: "PRO inactive — tap to learn more",
 
+  /** Connect-wallet chip (top row, conditional — visible only when no
+   *  wallet is connected and a connect handler is wired). Acts as a
+   *  desktop fallback when `<WalletProvider>`'s MiniPay auto-connect
+   *  cannot fire (no injected `window.ethereum.isMiniPay` provider). */
+  connectLabel: "Connect",
+  connectAriaLabel: "Connect wallet to see your stats",
+
   /** Streak chip (secondary row, conditional). */
   streakLabel: "Streak",
   streakFormat: (days: number) =>

@@ -5,8 +5,15 @@ import userEvent from "@testing-library/user-event";
 const pushMock = vi.hoisted(() => vi.fn());
 
 const useAccountMock = vi.hoisted(() =>
-  vi.fn(() => ({ address: undefined as string | undefined })),
+  vi.fn(
+    () =>
+      ({ address: undefined, isConnected: false }) as {
+        address: string | undefined;
+        isConnected: boolean;
+      },
+  ),
 );
+const openConnectModalMock = vi.hoisted(() => vi.fn());
 const useChainIdMock = vi.hoisted(() => vi.fn(() => 42220));
 const useReadContractsMock = vi.hoisted(() =>
   vi.fn(() => ({
@@ -33,6 +40,10 @@ vi.mock("wagmi", () => ({
   useAccount: () => useAccountMock(),
   useChainId: () => useChainIdMock(),
   useReadContracts: () => useReadContractsMock(),
+}));
+
+vi.mock("@rainbow-me/rainbowkit", () => ({
+  useConnectModal: () => ({ openConnectModal: openConnectModalMock }),
 }));
 
 vi.mock("@/lib/pro/use-pro-status", () => ({
@@ -66,7 +77,8 @@ beforeEach(() => {
   useReadContractsMock.mockReset();
   useProStatusMock.mockReset();
 
-  useAccountMock.mockReturnValue({ address: undefined });
+  useAccountMock.mockReturnValue({ address: undefined, isConnected: false });
+  openConnectModalMock.mockReset();
   useChainIdMock.mockReturnValue(42220);
   useReadContractsMock.mockReturnValue({ data: undefined });
   useProStatusMock.mockReturnValue({
@@ -90,7 +102,7 @@ describe("HubScaffoldClient — trophies", () => {
   });
 
   it("counts on-chain claimed badges as trophies", () => {
-    useAccountMock.mockReturnValue({ address: TEST_WALLET });
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     setBadges([true, true, false, false, true, false]);
 
     render(<HubScaffoldClient />);
@@ -111,7 +123,7 @@ describe("HubScaffoldClient — PRO chip", () => {
 
   it("renders PRO active with rounded-up days remaining when expiresAt is in the future", () => {
     const ms = 7 * 86_400_000 + 1; // ~7.0 days from now (just over)
-    useAccountMock.mockReturnValue({ address: TEST_WALLET });
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     useProStatusMock.mockReturnValue({
       status: { active: true, expiresAt: Date.now() + ms },
       isLoading: false,
@@ -130,7 +142,7 @@ describe("HubScaffoldClient — PRO chip", () => {
   });
 
   it("treats an expired PRO status as inactive (chip collapses)", () => {
-    useAccountMock.mockReturnValue({ address: TEST_WALLET });
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     useProStatusMock.mockReturnValue({
       status: { active: true, expiresAt: Date.now() - 1000 },
       isLoading: false,
@@ -158,7 +170,7 @@ describe("HubScaffoldClient — tap handlers", () => {
 
   it("routes to /hub?legacy=1&action=pro when the PRO chip (active) is tapped", async () => {
     const user = userEvent.setup();
-    useAccountMock.mockReturnValue({ address: TEST_WALLET });
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     useProStatusMock.mockReturnValue({
       status: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
       isLoading: false,
@@ -216,7 +228,7 @@ describe("HubScaffoldClient — tap handlers", () => {
     );
     // Master rook + bishop on-chain so queen's prerequisite chain is
     // satisfied (otherwise the queen tile would render as `locked`).
-    useAccountMock.mockReturnValue({ address: TEST_WALLET });
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     setBadges([true, true, false, false, false, false]);
     render(<HubScaffoldClient />);
 
@@ -245,6 +257,36 @@ describe("HubScaffoldClient — tap handlers", () => {
     expect(pushMock).toHaveBeenCalledWith(
       "/hub?legacy=1&action=badges&piece=rook",
     );
+  });
+});
+
+describe("HubScaffoldClient — connect affordance", () => {
+  it("renders the Connect chip when no wallet is connected", () => {
+    render(<HubScaffoldClient />);
+
+    expect(
+      screen.getByLabelText("Connect wallet to see your stats"),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the Connect chip when a wallet is connected", () => {
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
+    render(<HubScaffoldClient />);
+
+    expect(
+      screen.queryByLabelText("Connect wallet to see your stats"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the RainbowKit connect modal when the Connect chip is tapped", async () => {
+    const user = userEvent.setup();
+    render(<HubScaffoldClient />);
+
+    await user.click(
+      screen.getByLabelText("Connect wallet to see your stats"),
+    );
+
+    expect(openConnectModalMock).toHaveBeenCalledTimes(1);
   });
 });
 

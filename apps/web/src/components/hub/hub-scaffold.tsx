@@ -48,6 +48,13 @@ type HubScaffoldProps = {
   onStreakTap?: () => void;
   onStarsTap?: () => void;
   onShieldsTap?: () => void;
+  /** Wallet connect affordance (desktop fallback). When `false` and
+   *  `onConnectTap` is wired, a "Connect" chip renders next to the PRO
+   *  chip — gives desktop users an explicit path to populate the
+   *  trophy / PRO / shields state that depends on `useAccount().address`.
+   *  Defaults to `true` so legacy callers keep the original layout. */
+  isWalletConnected?: boolean;
+  onConnectTap?: () => void;
   onError?: (
     context: import("@/components/error/primitive-boundary").PrimitiveBoundaryErrorContext,
   ) => void;
@@ -87,6 +94,8 @@ export function HubScaffold({
   onStreakTap,
   onStarsTap,
   onShieldsTap,
+  isWalletConnected = true,
+  onConnectTap,
   onError,
 }: HubScaffoldProps) {
   const proValue = pro.active ? HUD_COPY.proRemainingFormat(pro.daysRemaining) : null;
@@ -130,6 +139,18 @@ export function HubScaffold({
               onClick={onProTap}
             />,
           )}
+          {!isWalletConnected && onConnectTap
+            ? wrap(
+                "HudResourceChip",
+                <HudResourceChip
+                  tone="default"
+                  icon="wallet"
+                  value={HUD_COPY.connectLabel}
+                  ariaLabel={HUD_COPY.connectAriaLabel}
+                  onClick={onConnectTap}
+                />,
+              )
+            : null}
         </div>
         {wrap(
           "HudSecondaryRow",

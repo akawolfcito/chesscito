@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useChainId, useReadContracts } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { HubScaffold } from "@/components/hub/hub-scaffold";
 import { badgesAbi } from "@/lib/contracts/badges";
@@ -146,9 +147,13 @@ function deriveProShape(
  *  Those stay on `<PlayHubRoot>` until the scaffold becomes the default. */
 export function HubScaffoldClient() {
   const router = useRouter();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const badgesAddress = useMemo(() => getBadgesAddress(chainId), [chainId]);
+  // RainbowKit's connect modal — `openConnectModal` is undefined until
+  // the provider mounts (RainbowKitProvider is dynamically imported in
+  // `<WalletProvider>`). Optional-chained call covers that race.
+  const { openConnectModal } = useConnectModal();
 
   const { status: proStatus } = useProStatus(address);
 
@@ -213,6 +218,8 @@ export function HubScaffoldClient() {
       trophies={trophies}
       pro={pro}
       shields={shieldsValue}
+      isWalletConnected={isConnected}
+      onConnectTap={() => openConnectModal?.()}
       rewardTiles={rewardTiles}
       premiumKicker={PREMIUM_KICKER}
       premiumInactiveLabel={PREMIUM_INACTIVE_LABEL}
