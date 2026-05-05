@@ -923,6 +923,11 @@ export const PRO_COPY = {
     "Coach analysis is included with PRO and will appear after your Arena match.",
   statusActiveSuffix: (daysLeft: number) =>
     daysLeft === 1 ? "Expires tomorrow" : `${daysLeft} days left`,
+  /** `<ProActiveBadge />` pill labels. ACTIVE for daysLeft > 3,
+   *  EXPIRING when ≤ 3 — flips pill color emerald → amber. Spec:
+   *  _bmad-output/planning-artifacts/ux-design-addendum-pro-discoverability-2026-05-05.md §3.3 */
+  statusBadgeActive: "ACTIVE",
+  statusBadgeExpiring: "EXPIRING",
   /** Mission framing rendered between the perks list and the CTA. PRO
    *  is positioned as both a personal training plan and a way to
    *  sustain free access for new players, families and schools. */
