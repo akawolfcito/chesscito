@@ -2786,6 +2786,11 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 16px 12px 24px;
   gap: 16px;
   background-color: var(--adv-deep-blue);
+  background-image: url("/art/redesign/bg/bg-app.png");
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   color: rgba(255, 245, 215, 0.95);
 }
 
