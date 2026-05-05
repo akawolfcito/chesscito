@@ -2844,6 +2844,298 @@ button.hud-resource-chip:active:not(:disabled) {
   padding-top: 4px;
 }
 
+/* Arena selecting-state scaffold — mirrors hub-scaffold rules but reuses
+   the `bg-app` texture and tightens the body for the picker UX (no
+   side rail, picker stacks under the kingdom anchor). */
+.arena-scaffold {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 16px 12px 24px;
+  gap: 12px;
+  background-color: var(--adv-deep-blue);
+  background-image: url("/art/redesign/bg/bg-app.png");
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: rgba(255, 245, 215, 0.95);
+}
+
+.arena-scaffold-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.arena-scaffold-hud-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.arena-scaffold-title {
+  font-family: var(--font-display, inherit);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: rgba(255, 245, 215, 0.95);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+  margin: 0;
+}
+
+.arena-scaffold-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 245, 215, 0.95);
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.arena-scaffold-back:active {
+  transform: scale(0.94);
+}
+
+.arena-scaffold-subtitle {
+  font-size: 0.75rem;
+  color: rgba(255, 245, 215, 0.75);
+  margin: 0;
+}
+
+.arena-scaffold-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.arena-scaffold-soft-gate {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.22);
+  padding: 10px 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.arena-scaffold-soft-gate-title {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: rgba(63, 34, 8, 0.95);
+  margin: 0;
+}
+
+.arena-scaffold-soft-gate-body {
+  font-size: 0.7rem;
+  color: rgba(110, 65, 15, 0.75);
+  margin: 2px 0 8px;
+  line-height: 1.3;
+}
+
+.arena-scaffold-soft-gate-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.arena-scaffold-soft-gate-primary,
+.arena-scaffold-soft-gate-secondary {
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.arena-scaffold-soft-gate-primary {
+  background: rgba(245, 158, 11, 0.95);
+  color: rgba(63, 34, 8, 0.95);
+  border: 1px solid rgba(245, 158, 11, 1);
+}
+
+.arena-scaffold-soft-gate-secondary {
+  background: rgba(255, 255, 255, 0.30);
+  color: rgba(63, 34, 8, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.arena-scaffold-soft-gate-primary:active,
+.arena-scaffold-soft-gate-secondary:active {
+  transform: scale(0.97);
+}
+
+.arena-scaffold-prize-pool {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9999px;
+  background: rgba(255, 245, 215, 0.45);
+  border: 1px solid rgba(110, 65, 15, 0.25);
+  padding: 6px 12px;
+}
+
+.arena-scaffold-prize-pool-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  line-height: 1.15;
+}
+
+.arena-scaffold-prize-pool-headline {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(63, 34, 8, 0.95);
+}
+
+.arena-scaffold-prize-pool-hint {
+  font-size: 0.6rem;
+  color: rgba(110, 65, 15, 0.70);
+}
+
+.arena-scaffold-color-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  padding: 4px;
+}
+
+.arena-scaffold-color-pill {
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  color: rgba(255, 245, 215, 0.85);
+  background: transparent;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.arena-scaffold-color-pill[aria-pressed="true"] {
+  background: rgba(245, 158, 11, 0.95);
+  color: rgba(63, 34, 8, 0.95);
+  box-shadow:
+    0 1px 0 rgba(110, 65, 15, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.arena-scaffold-color-pill:not([aria-pressed="true"]):active {
+  transform: scale(0.97);
+}
+
+.arena-scaffold-difficulty {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.arena-scaffold-difficulty-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.18);
+  padding: 8px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 120ms ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.arena-scaffold-difficulty-pill[aria-pressed="true"] {
+  border-color: rgba(245, 158, 11, 0.75);
+  background: rgba(245, 158, 11, 0.20);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.40);
+}
+
+.arena-scaffold-difficulty-pill:not([aria-pressed="true"]):active {
+  transform: scale(0.98);
+}
+
+.arena-scaffold-difficulty-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.arena-scaffold-difficulty-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.arena-scaffold-difficulty-label {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: rgba(255, 245, 215, 0.95);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.arena-scaffold-difficulty-desc {
+  font-size: 0.7rem;
+  color: rgba(255, 245, 215, 0.70);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arena-scaffold-difficulty-pill[aria-pressed="true"] .arena-scaffold-difficulty-label {
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+}
+
+.arena-scaffold-difficulty-pill[aria-pressed="true"] .arena-scaffold-difficulty-desc {
+  color: rgba(110, 65, 15, 0.75);
+}
+
+.arena-scaffold-error {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(190, 18, 60, 0.35);
+  color: rgba(159, 18, 57, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+}
+
+.arena-scaffold-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
 /* Ambient pulse — kicks in 4s after mount and loops. CSS-driven so the
    React component stays free of timers; `motion-safe` honored. */
 @media (prefers-reduced-motion: no-preference) {
