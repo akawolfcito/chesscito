@@ -14,6 +14,7 @@ const useAccountMock = vi.hoisted(() =>
   ),
 );
 const openConnectModalMock = vi.hoisted(() => vi.fn());
+const trackMock = vi.hoisted(() => vi.fn());
 const useChainIdMock = vi.hoisted(() => vi.fn(() => 42220));
 const useReadContractsMock = vi.hoisted(() =>
   vi.fn(() => ({
@@ -44,6 +45,10 @@ vi.mock("wagmi", () => ({
 
 vi.mock("@rainbow-me/rainbowkit", () => ({
   useConnectModal: () => ({ openConnectModal: openConnectModalMock }),
+}));
+
+vi.mock("@/lib/telemetry", () => ({
+  track: (...args: unknown[]) => trackMock(...args),
 }));
 
 vi.mock("@/lib/pro/use-pro-status", () => ({
@@ -79,6 +84,7 @@ beforeEach(() => {
 
   useAccountMock.mockReturnValue({ address: undefined, isConnected: false });
   openConnectModalMock.mockReset();
+  trackMock.mockReset();
   useChainIdMock.mockReturnValue(42220);
   useReadContractsMock.mockReturnValue({ data: undefined });
   useProStatusMock.mockReturnValue({
@@ -315,5 +321,112 @@ describe("HubScaffoldClient — shields chip", () => {
     expect(
       screen.getByLabelText(/0 retry shields available/i),
     ).toBeInTheDocument();
+  });
+});
+
+describe("HubScaffoldClient — telemetry", () => {
+  it("fires hub_view once on mount", () => {
+    render(<HubScaffoldClient />);
+    expect(trackMock).toHaveBeenCalledWith("hub_view");
+  });
+
+  it("fires hub_trophy_tap with the current trophy count on tap", async () => {
+    const user = userEvent.setup();
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
+    setBadges([true, true, false, false, false, false]);
+    render(<HubScaffoldClient />);
+
+    await user.click(screen.getByLabelText("Trophies: 2"));
+
+    expect(trackMock).toHaveBeenCalledWith("hub_trophy_tap", { count: 2 });
+  });
+
+  it("fires hub_pro_chip_tap with pro_active=true when active and chip is tapped", async () => {
+    const user = userEvent.setup();
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
+    useProStatusMock.mockReturnValue({
+      status: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    render(<HubScaffoldClient />);
+
+    const chip =
+      screen.queryByLabelText("PRO active, 7 days remaining") ??
+      screen.getByLabelText("PRO active, 8 days remaining");
+    await user.click(chip);
+
+    expect(trackMock).toHaveBeenCalledWith("hub_pro_chip_tap", {
+      pro_active: true,
+    });
+  });
+
+  it("fires hub_premium_slot_tap with pro_active=false when inactive slot is tapped", async () => {
+    const user = userEvent.setup();
+    render(<HubScaffoldClient />);
+
+    await user.click(screen.getByText("Go PRO"));
+
+    expect(trackMock).toHaveBeenCalledWith("hub_premium_slot_tap", {
+      pro_active: false,
+    });
+  });
+
+  it("fires hub_shields_chip_tap with the current shield_count (KEY conversion event)", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("chesscito:shields", "3");
+    render(<HubScaffoldClient />);
+
+    await user.click(
+      await screen.findByRole("button", { name: /3 retry shields available/i }),
+    );
+
+    expect(trackMock).toHaveBeenCalledWith("hub_shields_chip_tap", {
+      shield_count: 3,
+    });
+  });
+
+  it("fires hub_play_tap on PLAY CTA press", async () => {
+    const user = userEvent.setup();
+    render(<HubScaffoldClient />);
+
+    await user.click(screen.getByLabelText("Start training"));
+
+    expect(trackMock).toHaveBeenCalledWith("hub_play_tap");
+  });
+
+  it("fires hub_connect_chip_tap before opening the modal", async () => {
+    const user = userEvent.setup();
+    render(<HubScaffoldClient />);
+
+    await user.click(
+      screen.getByLabelText("Connect wallet to see your stats"),
+    );
+
+    expect(trackMock).toHaveBeenCalledWith("hub_connect_chip_tap");
+    // Order matters — telemetry must precede the side-effect.
+    const trackOrder = trackMock.mock.invocationCallOrder[
+      trackMock.mock.calls.findIndex((c) => c[0] === "hub_connect_chip_tap")
+    ];
+    const modalOrder = openConnectModalMock.mock.invocationCallOrder[0];
+    expect(trackOrder).toBeLessThan(modalOrder);
+  });
+
+  it("fires hub_reward_tile_tap with piece + state when a reward tile is tapped", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem(
+      "chesscito:progress:rook",
+      JSON.stringify({ piece: "rook", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
+    );
+    render(<HubScaffoldClient />);
+
+    await user.click(
+      await screen.findByRole("button", { name: /claim rook mastery badge/i }),
+    );
+
+    expect(trackMock).toHaveBeenCalledWith("hub_reward_tile_tap", {
+      piece: "rook",
+      state: "claimable",
+    });
   });
 });

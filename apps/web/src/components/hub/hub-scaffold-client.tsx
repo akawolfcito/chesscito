@@ -12,6 +12,7 @@ import { HUD_COPY } from "@/lib/content/editorial";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 import { useProStatus } from "@/lib/pro/use-pro-status";
+import { track } from "@/lib/telemetry";
 import {
   REWARD_TILE_ORDER,
   deriveRewardTiles,
@@ -198,15 +199,27 @@ export function HubScaffoldClient() {
 
   const pro = useMemo(() => deriveProShape(proStatus, Date.now()), [proStatus]);
 
-  const rewardTiles = useMemo(
-    () =>
-      deriveRewardTiles({
-        badgesClaimed,
-        starsPerPiece,
-        onTileTap: (piece) => router.push(legacyHubFor("badges", piece)),
-      }),
-    [badgesClaimed, starsPerPiece, router],
-  );
+  // Single page-view event per mount — anchors the funnel for every
+  // tap event below. Empty deps so we never double-fire on re-render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional once-per-mount
+  useEffect(() => {
+    track("hub_view");
+  }, []);
+
+  const rewardTiles = useMemo(() => {
+    const tiles = deriveRewardTiles({ badgesClaimed, starsPerPiece });
+    return tiles.map((tile) => ({
+      ...tile,
+      onTap: () => {
+        track("hub_reward_tile_tap", { piece: tile.id, state: tile.state });
+        // `RewardTile.id` is a union including "victory" for forward-compat
+        // (REWARD_COPY exposes it), but `deriveRewardTiles` only emits
+        // PieceId rows today — narrowed here so `legacyHubFor` keeps its
+        // tighter `PieceId` signature.
+        router.push(legacyHubFor("badges", tile.id as PieceId));
+      },
+    }));
+  }, [badgesClaimed, starsPerPiece, router]);
 
   // The shields chip is the home for shop conversion (the user's primary
   // monetization surface). Always visible whether the count is 0 or N —
@@ -219,7 +232,10 @@ export function HubScaffoldClient() {
       pro={pro}
       shields={shieldsValue}
       isWalletConnected={isConnected}
-      onConnectTap={() => openConnectModal?.()}
+      onConnectTap={() => {
+        track("hub_connect_chip_tap");
+        openConnectModal?.();
+      }}
       rewardTiles={rewardTiles}
       premiumKicker={PREMIUM_KICKER}
       premiumInactiveLabel={PREMIUM_INACTIVE_LABEL}
@@ -229,11 +245,29 @@ export function HubScaffoldClient() {
       premiumTotal={0}
       playLabel={PLAY_LABEL}
       playAriaLabel={PLAY_ARIA_LABEL}
-      onTrophyTap={() => router.push(legacyHubFor("trophies"))}
-      onProTap={() => router.push(legacyHubFor("pro"))}
-      onPremiumTap={() => router.push(legacyHubFor("pro"))}
-      onShieldsTap={() => router.push(legacyHubFor("shop"))}
-      onPlayPress={() => router.push(LEGACY_HUB)}
+      onTrophyTap={() => {
+        track("hub_trophy_tap", { count: trophies });
+        router.push(legacyHubFor("trophies"));
+      }}
+      onProTap={() => {
+        track("hub_pro_chip_tap", { pro_active: pro.active });
+        router.push(legacyHubFor("pro"));
+      }}
+      onPremiumTap={() => {
+        track("hub_premium_slot_tap", { pro_active: pro.active });
+        router.push(legacyHubFor("pro"));
+      }}
+      onShieldsTap={() => {
+        // KEY conversion event: validates the monetization-as-default
+        // hypothesis behind the scaffold redesign. Shield count carried
+        // as a dim so we can correlate tap rate with depletion state.
+        track("hub_shields_chip_tap", { shield_count: shieldCount });
+        router.push(legacyHubFor("shop"));
+      }}
+      onPlayPress={() => {
+        track("hub_play_tap");
+        router.push(LEGACY_HUB);
+      }}
     />
   );
 }
