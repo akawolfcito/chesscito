@@ -2786,7 +2786,11 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 16px 12px 24px;
   gap: 16px;
   background-color: var(--adv-deep-blue);
-  background-image: url("/art/redesign/bg/bg-app.png");
+  background-image: image-set(
+      url("/art/redesign/bg/bg-app.avif") type("image/avif"),
+      url("/art/redesign/bg/bg-app.webp") type("image/webp"),
+      url("/art/redesign/bg/bg-app.png") type("image/png")
+    );
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
@@ -2857,7 +2861,11 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 16px 12px 24px;
   gap: 12px;
   background-color: var(--adv-deep-blue);
-  background-image: url("/art/redesign/bg/bg-app.png");
+  background-image: image-set(
+      url("/art/redesign/bg/bg-app.avif") type("image/avif"),
+      url("/art/redesign/bg/bg-app.webp") type("image/webp"),
+      url("/art/redesign/bg/bg-app.png") type("image/png")
+    );
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
