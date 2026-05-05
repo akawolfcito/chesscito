@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useAccount,
   useChainId,
@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
+import { ArenaSelectScaffold } from "@/components/arena/arena-select-scaffold";
 import { PersistentDock } from "@/components/play-hub/persistent-dock";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
@@ -59,9 +60,32 @@ type SignatureResponse =
   | { error: string };
 
 export default function ArenaPage() {
+  // useSearchParams() requires a Suspense boundary for static prerender
+  // (Next 14 App Router). Wrap the entire client tree so the read inside
+  // ArenaPageInner is safe under both SSR and hydration.
+  return (
+    <Suspense fallback={null}>
+      <ArenaPageInner />
+    </Suspense>
+  );
+}
+
+function ArenaPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const arenaScaffoldEnabled = searchParams?.get("arena") === "new";
   const game = useChessGame();
   const { address, isConnected } = useAccount();
+
+  // Scaffold view event — fires once per (selecting + scaffold + not
+  // preparing) transition. Mount of the picker, not of the page; legacy
+  // panel views are excluded so the conversion ratio is comparable
+  // against /hub's hub_view baseline.
+  useEffect(() => {
+    if (!arenaScaffoldEnabled) return;
+    if (game.status !== "selecting") return;
+    track("arena_select_view");
+  }, [arenaScaffoldEnabled, game.status]);
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
   const { writeContractAsync } = useWriteContract();
@@ -822,6 +846,91 @@ export default function ArenaPage() {
         />
       </Link>
     );
+
+    // Scaffold variant — `?arena=new`. Mirrors the kingdom-anchored
+    // pattern shipped on /hub. Legacy block (ArenaEntryPanel) stays
+    // intact below as the default until the flag flips.
+    if (arenaScaffoldEnabled) {
+      return (
+        <main className="flex min-h-[100dvh] flex-col">
+          {isPreparing ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 animate-in fade-in duration-300 arena-scaffold">
+              <p className="text-sm font-semibold text-amber-400/80">
+                {ARENA_COPY.difficulty[game.difficulty as keyof typeof ARENA_COPY.difficulty]}
+              </p>
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-400" />
+              <p className="text-sm font-medium text-cyan-100/70">{ARENA_COPY.preparingAi}</p>
+            </div>
+          ) : (
+            <ArenaSelectScaffold
+              difficulty={game.difficulty}
+              playerColor={game.playerColor}
+              onSelectDifficulty={(level) => {
+                track("arena_difficulty_tap", { level });
+                game.setDifficulty(level);
+              }}
+              onSelectColor={(color) => {
+                track("arena_color_tap", { color });
+                game.setPlayerColor(color);
+              }}
+              onStart={() => {
+                track("arena_start_tap", {
+                  surface: "scaffold",
+                  level: game.difficulty,
+                  color: game.playerColor,
+                  wallet_connected: isConnected,
+                });
+                handleStartWithLoading();
+              }}
+              onBack={() => {
+                track("arena_back_tap");
+                handleBackToHub();
+              }}
+              softGate={
+                softGateOpen
+                  ? {
+                      onLearn: () => router.push("/hub"),
+                      onDismiss: () => setSoftGateOpen(false),
+                    }
+                  : undefined
+              }
+              prizePool={{
+                formatted: prizePool.formatted,
+                isLoading: prizePool.isLoading,
+              }}
+              errorMessage={game.errorMessage}
+            />
+          )}
+          <div
+            className="shrink-0 relative z-[60] pointer-events-auto"
+            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+          >
+            <PersistentDock
+              activeDockTab={null}
+              badgeControl={navIcon("/art/badge-menu.png", "Badges", "badge")}
+              shopControl={navIcon("/art/shop-menu.png", "Shop", "shop")}
+              trophiesControl={
+                <Link
+                  href="/hub"
+                  role="button"
+                  aria-label={DOCK_LABELS.trophies}
+                  className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
+                  onClick={() => {
+                    try {
+                      sessionStorage.setItem("chesscito:open-sheet", "trophies");
+                    } catch { /* storage unavailable */ }
+                  }}
+                >
+                  <CandyIcon name="trophy" className="h-full w-full" />
+                </Link>
+              }
+              leaderboardControl={navIcon("/art/leaderboard-menu.png", "Leaderboard", "leaderboard")}
+            />
+          </div>
+        </main>
+      );
+    }
+
     return (
       <main className="flex min-h-[100dvh] flex-col arena-bg">
         <div className="flex flex-1 flex-col items-center justify-center">
