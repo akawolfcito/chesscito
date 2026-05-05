@@ -5,6 +5,13 @@ import { decryptSignerKey } from "./crypto";
 
 const MAX_REQUESTS_PER_IP = 5;
 const MAX_REQUESTS_PER_ADDRESS = 3;
+/** Higher-volume limit for read-only endpoints. Status reads (PRO chip,
+ *  Coach credits) re-fire on every mount + wallet change, so the 5/min
+ *  budget designed for signing endpoints starves the UI within a few
+ *  scaffold↔legacy round-trips. 60/min/IP keeps abuse manageable while
+ *  letting normal navigation breathe. Sized roughly to "1/sec sustained
+ *  with bursts up to 5/sec" — comfortably above any UI-driven workload. */
+const MAX_READ_REQUESTS_PER_IP = 60;
 
 const redis = Redis.fromEnv();
 
@@ -18,6 +25,12 @@ const addrLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(MAX_REQUESTS_PER_ADDRESS, "60s"),
   prefix: "rl:addr",
+});
+
+const readIpLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(MAX_READ_REQUESTS_PER_IP, "60s"),
+  prefix: "rl:read:ip",
 });
 
 function requireEnv(name: string) {
@@ -56,6 +69,15 @@ export async function enforceRateLimit(ip: string, playerAddress?: string) {
     const { success: addrOk } = await addrLimiter.limit(playerAddress);
     if (!addrOk) throw new Error("Rate limit exceeded");
   }
+}
+
+/** Lenient IP-only rate limiter for read-only status endpoints
+ *  (PRO chip, Coach credits, etc.). Reuses the same Redis backend as
+ *  the strict limiter but with a separate prefix so the buckets don't
+ *  cross-contaminate. */
+export async function enforceReadRateLimit(ip: string) {
+  const { success: ok } = await readIpLimiter.limit(ip);
+  if (!ok) throw new Error("Rate limit exceeded");
 }
 
 export function enforceOrigin(request: Request) {

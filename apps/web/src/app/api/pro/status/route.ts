@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAddress } from "viem";
 import { isProActive } from "@/lib/pro/is-active";
-import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceOrigin, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { createLogger } from "@/lib/server/logger";
 
 const logger = createLogger({ route: "/api/pro/status" });
@@ -18,7 +18,10 @@ const logger = createLogger({ route: "/api/pro/status" });
 export async function GET(req: Request) {
   try {
     enforceOrigin(req);
-    await enforceRateLimit(getRequestIp(req));
+    // Read-only status endpoint — uses the lenient 60/min/IP limiter so
+    // a user navigating scaffold ↔ legacy several times per minute does
+    // not 403 the PRO chip into permanent inactive state.
+    await enforceReadRateLimit(getRequestIp(req));
   } catch (err) {
     logger.warn("auth rejected", {
       errName: err instanceof Error ? err.name : "unknown",

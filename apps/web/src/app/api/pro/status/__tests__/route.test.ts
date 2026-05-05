@@ -10,15 +10,16 @@ vi.mock("@upstash/redis", () => ({
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
   enforceRateLimit: vi.fn(),
+  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
 }));
 
 import { GET } from "../route";
-import { enforceOrigin, enforceRateLimit } from "@/lib/server/demo-signing";
+import { enforceOrigin, enforceReadRateLimit } from "@/lib/server/demo-signing";
 import { __setLoggerSink, __resetLoggerSink } from "@/lib/server/logger";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
-const mockedRate = vi.mocked(enforceRateLimit);
+const mockedRate = vi.mocked(enforceReadRateLimit);
 
 let logLines: Array<{ level: string; record: Record<string, unknown> }>;
 

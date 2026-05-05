@@ -14,14 +14,15 @@ vi.mock("@upstash/redis", () => ({
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
   enforceRateLimit: vi.fn(),
+  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
 }));
 
 import { GET } from "../route";
-import { enforceOrigin, enforceRateLimit } from "@/lib/server/demo-signing";
+import { enforceOrigin, enforceReadRateLimit } from "@/lib/server/demo-signing";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
-const mockedRate = vi.mocked(enforceRateLimit);
+const mockedRate = vi.mocked(enforceReadRateLimit);
 
 const VALID_WALLET = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
 

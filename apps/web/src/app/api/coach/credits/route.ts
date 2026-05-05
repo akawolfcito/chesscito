@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
-import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceOrigin, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 
 const redis = Redis.fromEnv();
 
@@ -11,7 +11,7 @@ const FREE_CREDITS = 3;
 export async function GET(req: Request) {
   try {
     enforceOrigin(req);
-    await enforceRateLimit(getRequestIp(req));
+    await enforceReadRateLimit(getRequestIp(req));
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
