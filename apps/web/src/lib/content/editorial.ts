@@ -928,6 +928,14 @@ export const PRO_COPY = {
    *  _bmad-output/planning-artifacts/ux-design-addendum-pro-discoverability-2026-05-05.md §3.3 */
   statusBadgeActive: "ACTIVE",
   statusBadgeExpiring: "EXPIRING",
+  /** `<ProActiveCTA />` surface-aware copy. Navigational variant fires
+   *  from /play-hub, /trophies, /leaderboard, /about, /why, / and any
+   *  unmatched path. Close-only variant fires from /arena to avoid
+   *  the mid-match nav footgun. Spec: §3.4 of the same addendum. */
+  activeCtaPlay: "Play in Arena",
+  activeCtaGotIt: "Got it",
+  activeSublineHub: "Coach reviews after the match",
+  activeSublineArena: "Coach activates after checkmate",
   /** Mission framing rendered between the perks list and the CTA. PRO
    *  is positioned as both a personal training plan and a way to
    *  sustain free access for new players, families and schools. */
