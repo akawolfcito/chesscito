@@ -953,18 +953,23 @@ export const PRO_COPY = {
     activePrefix: "PRO",
   },
   perksActive: [
-    "AI Coach with no daily limit",
+    "AI Coach: instant analysis, no daily limit",
     "Your contribution keeps Chesscito free for new players",
   ] as const,
   /** Roadmap labels rendered in `<ProSheet>` paired with `<ComingSoonChip />`
    *  (addendum §3.7 / §6.1 commit #6). The chip carries the "SOON" status,
    *  so labels here MUST stay suffix-free. Adding a new entry? Skip the
-   *  inline "(coming soon)" — the chip handles it. */
+   *  inline "(coming soon)" — the chip handles it.
+   *
+   *  Bundle v1 (2026-05-05): tightened to items with a realistic plan.
+   *  "Personalized coaching plan from match history" tracks the next
+   *  Coach milestone (session memory across matches, gated by PRO).
+   *  Dropped: "Tournament priority", "Discounts on victory cards" —
+   *  no concrete roadmap; will return when scoped. */
   perksRoadmap: [
+    "Personalized coaching plan from match history",
     "Early access to new challenges",
-    "Tournament priority",
     "Premium achievements",
-    "Discounts on victory cards",
     "Guided by FIDE Master + dev team",
   ] as const,
   errors: {
