@@ -60,3 +60,50 @@ describe("extractWeaknessTags — hanging-piece", () => {
     expect(tags).toEqual(["hanging-piece"]);
   });
 });
+
+describe("extractWeaknessTags — missed-tactic", () => {
+  it("matches 'missed a fork'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "You missed a fork on c7." })],
+      30,
+      "lose",
+    );
+    expect(tags).toEqual(["missed-tactic"]);
+  });
+
+  it("matches 'overlooked the pin'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "Overlooked the pin along the e-file." })],
+      24,
+      "lose",
+    );
+    expect(tags).toEqual(["missed-tactic"]);
+  });
+
+  it("matches 'missed … skewer'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "Missed the skewer winning the queen." })],
+      26,
+      "lose",
+    );
+    expect(tags).toEqual(["missed-tactic"]);
+  });
+
+  it("matches 'missed combination'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "You missed a winning combination starting with Rxe6." })],
+      30,
+      "lose",
+    );
+    expect(tags).toEqual(["missed-tactic"]);
+  });
+
+  it("does NOT match 'missed' alone (no tactic noun)", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "You missed the chance to develop your bishop." })],
+      18,
+      "lose",
+    );
+    expect(tags).toEqual([]);
+  });
+});

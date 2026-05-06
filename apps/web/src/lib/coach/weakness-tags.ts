@@ -5,6 +5,10 @@ const KEYWORD_RULES: ReadonlyArray<{ tag: WeaknessTag; pattern: RegExp }> = [
     tag: "hanging-piece",
     pattern: /\b(hung|undefended|free capture|left[^.]*unprotected)\b/i,
   },
+  {
+    tag: "missed-tactic",
+    pattern: /\b(missed|overlooked)[^.]*?\b(fork|pin|skewer|tactic|combination)\b/i,
+  },
 ] as const;
 
 const TAXONOMY_ORDER: readonly WeaknessTag[] = [
