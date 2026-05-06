@@ -44,19 +44,19 @@ describe("persistAnalysis", () => {
 
   it("returns early without writing when getSupabaseServer is null", async () => {
     vi.mocked(getSupabaseServer).mockReturnValue(null);
-    await expect(persistAnalysis("0xabc", VALID_PAYLOAD)).resolves.toBeUndefined();
+    await expect(persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD)).resolves.toBeUndefined();
   });
 
   it("upserts with onConflict='wallet,game_id' and ignoreDuplicates=true", async () => {
     const chain = buildUpsertChain();
     vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
-    await persistAnalysis("0xabc", VALID_PAYLOAD);
+    await persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD);
     expect(chain.from).toHaveBeenCalledWith("coach_analyses");
     expect(chain.upsert).toHaveBeenCalledTimes(1);
     const [rows, opts] = chain.upsert.mock.calls[0];
     expect(opts).toEqual({ onConflict: "wallet,game_id", ignoreDuplicates: true });
     expect(Array.isArray(rows) ? rows[0] : rows).toMatchObject({
-      wallet: "0xabc",
+      wallet: "0x1234567890abcdef1234567890abcdef12345678",
       game_id: VALID_PAYLOAD.gameId,
       kind: "full",
       difficulty: "medium",
@@ -69,7 +69,7 @@ describe("persistAnalysis", () => {
   it("computes weakness_tags via extractWeaknessTags before insert", async () => {
     const chain = buildUpsertChain();
     vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
-    await persistAnalysis("0xabc", VALID_PAYLOAD);
+    await persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD);
     const [rows] = chain.upsert.mock.calls[0];
     const row = Array.isArray(rows) ? rows[0] : rows;
     expect(row.weakness_tags).toEqual(["hanging-piece"]);
@@ -79,7 +79,7 @@ describe("persistAnalysis", () => {
     const chain = buildUpsertChain();
     vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
     await expect(
-      persistAnalysis("0xabc", { ...VALID_PAYLOAD, result: "loss" as never }),
+      persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", { ...VALID_PAYLOAD, result: "loss" as never }),
     ).rejects.toThrowError(/CoachGameResult/);
     expect(chain.upsert).not.toHaveBeenCalled();
   });
@@ -94,7 +94,7 @@ describe("persistAnalysis — soft cap (200 rows)", () => {
     const chain = buildUpsertChain();
     chain.eqAfterSelect.mockResolvedValue({ count: 150, error: null });
     vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
-    await persistAnalysis("0xabc", VALID_PAYLOAD);
+    await persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD);
     expect(chain.del).not.toHaveBeenCalled();
   });
 
@@ -102,9 +102,9 @@ describe("persistAnalysis — soft cap (200 rows)", () => {
     const chain = buildUpsertChain();
     chain.eqAfterSelect.mockResolvedValue({ count: 250, error: null });
     vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
-    await persistAnalysis("0xabc", VALID_PAYLOAD);
+    await persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD);
     expect(chain.del).toHaveBeenCalledTimes(1);
-    expect(chain.eqAfterDelete).toHaveBeenCalledWith("wallet", "0xabc");
+    expect(chain.eqAfterDelete).toHaveBeenCalledWith("wallet", "0x1234567890abcdef1234567890abcdef12345678");
     expect(chain.not).toHaveBeenCalledTimes(1);
     const [col, op, _subq] = chain.not.mock.calls[0];
     expect(col).toBe("game_id");
@@ -115,7 +115,34 @@ describe("persistAnalysis — soft cap (200 rows)", () => {
     const chain = buildUpsertChain();
     chain.eqAfterSelect.mockResolvedValue({ count: null, error: { message: "boom" } });
     vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
-    await persistAnalysis("0xabc", VALID_PAYLOAD);
+    await persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD);
     expect(chain.del).not.toHaveBeenCalled();
+  });
+
+  it("does not fire delete when count is exactly 200 (boundary)", async () => {
+    const chain = buildUpsertChain();
+    chain.eqAfterSelect.mockResolvedValue({ count: 200, error: null });
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    await persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD);
+    expect(chain.del).not.toHaveBeenCalled();
+  });
+
+  it("fires delete when count is 201 (boundary)", async () => {
+    const chain = buildUpsertChain();
+    chain.eqAfterSelect.mockResolvedValue({ count: 201, error: null });
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    await persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD);
+    expect(chain.del).toHaveBeenCalledTimes(1);
+  });
+
+  it("subquery contains 'select game_id', 'order by created_at desc', and 'limit 200'", async () => {
+    const chain = buildUpsertChain();
+    chain.eqAfterSelect.mockResolvedValue({ count: 250, error: null });
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    await persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD);
+    const [, , subquery] = chain.not.mock.calls[0];
+    expect(subquery).toContain("select game_id");
+    expect(subquery).toContain("order by created_at desc");
+    expect(subquery).toContain("limit 200");
   });
 });

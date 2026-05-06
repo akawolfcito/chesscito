@@ -61,6 +61,15 @@ export async function persistAnalysis(
   // Validate result up-front — throws on bad input (loud failure at the seam).
   const result = toCoachGameResult(payload.result);
 
+  // Defense-in-depth: assert wallet shape at the function seam. The soft-cap
+  // subquery below interpolates `wallet` verbatim into a SQL literal; an
+  // upstream caller forgetting to validate would let a malformed value reach
+  // the SQL string. Wallets are already lowercased upstream — keep this in
+  // sync with that contract.
+  if (!/^0x[0-9a-f]{40}$/.test(wallet)) {
+    throw new Error(`persistAnalysis: wallet must be 0x[0-9a-f]{40} (got ${JSON.stringify(wallet)})`);
+  }
+
   const supabase = getSupabaseServer();
   if (!supabase) return;
 
@@ -106,15 +115,24 @@ export async function persistAnalysis(
     .select("*", { count: "exact", head: true })
     .eq("wallet", wallet);
 
-  if (countError || (count ?? 0) <= ROW_SOFT_CAP) return;
+  if (countError) {
+    // Fail-soft: cap re-checks on next write.
+    return;
+  }
+  if ((count ?? 0) <= ROW_SOFT_CAP) return;
 
   // Delete rows where game_id is NOT in the most recent 200 for this wallet.
   // Uses Postgres-side subquery via `.not('game_id', 'in', '(...)')` —
   // supabase-js renders the third arg verbatim into the SQL.
   const subquery = `(select game_id from coach_analyses where wallet = '${wallet}' order by created_at desc limit ${ROW_SOFT_CAP})`;
-  await supabase
+  const { error: delError } = await supabase
     .from("coach_analyses")
     .delete()
     .eq("wallet", wallet)
     .not("game_id", "in", subquery);
+  if (delError) {
+    // Fail-soft: the cap re-checks on next write. PR 3 will add a
+    // `coach_soft_cap_delete_failed` log line at this seam.
+    return;
+  }
 }
