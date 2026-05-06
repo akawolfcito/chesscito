@@ -2786,10 +2786,13 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 16px 12px 24px;
   gap: 16px;
   background-color: var(--adv-deep-blue);
+  /* Forest-path adventure scene introduced 2026-05-05. AVIF/WebP triplet
+     mirrors bg-app pipeline (5f1a162). Source asset ships at 852x1846
+     in design/new-assets-chesscito/bg-new-hub.png. */
   background-image: image-set(
-      url("/art/redesign/bg/bg-app.avif") type("image/avif"),
-      url("/art/redesign/bg/bg-app.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-app.png") type("image/png")
+      url("/art/redesign/bg/bg-new-hub.avif") type("image/avif"),
+      url("/art/redesign/bg/bg-new-hub.webp") type("image/webp"),
+      url("/art/redesign/bg/bg-new-hub.png") type("image/png")
     );
   background-size: cover;
   background-position: center top;
