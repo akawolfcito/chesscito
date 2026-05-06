@@ -927,6 +927,10 @@ export const PRO_COPY = {
    *  _bmad-output/planning-artifacts/ux-design-addendum-pro-discoverability-2026-05-05.md §3.3 */
   statusBadgeActive: "ACTIVE",
   statusBadgeExpiring: "EXPIRING",
+  /** `<ComingSoonChip />` decorative pill rendered next to roadmap
+   *  perks. Single source so the label can flip ES/EN without touching
+   *  the primitive. Spec: addendum §3.7 (C3) / §6.1 commit #5. */
+  comingSoonLabel: "SOON",
   /** `<ProActiveCTA />` surface-aware copy. Navigational variant fires
    *  from /play-hub, /trophies, /leaderboard, /about, /why, / and any
    *  unmatched path. Close-only variant fires from /arena to avoid
