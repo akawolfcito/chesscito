@@ -55,10 +55,8 @@ describe("extractWeaknessTags — hanging-piece", () => {
       30,
       "win",
     );
-    // The regex uses \b boundaries so "hung-up" should not trigger "hung".
-    // Acceptable behavior: this matches because of \bhung\b; the test asserts
-    // CURRENT behavior, not aspirational. If it matches, change test to
-    // expect(tags).toEqual(["hanging-piece"]) and document.
+    // `\bhung\b` matches inside `hung-up` because `-` is a word boundary
+    // in JS regex. Pinning current behavior; v2 may add a manual blocklist.
     expect(tags).toEqual(["hanging-piece"]);
   });
 });

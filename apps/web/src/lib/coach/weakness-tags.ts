@@ -7,6 +7,15 @@ const KEYWORD_RULES: ReadonlyArray<{ tag: WeaknessTag; pattern: RegExp }> = [
   },
 ] as const;
 
+const TAXONOMY_ORDER: readonly WeaknessTag[] = [
+  "hanging-piece",
+  "missed-tactic",
+  "weak-king-safety",
+  "weak-pawn-structure",
+  "opening-blunder",
+  "endgame-conversion",
+] as const;
+
 /**
  * Deterministic 6-label v1 taxonomy. Returns the set of tags that match
  * across the supplied `mistakes`. Order: keyword tags in declaration order
@@ -35,13 +44,5 @@ export function extractWeaknessTags(
 
   // Preserve declaration order (Set iteration order = insertion order, but
   // we want canonical taxonomy order regardless of which rule fired first).
-  const TAXONOMY_ORDER: readonly WeaknessTag[] = [
-    "hanging-piece",
-    "missed-tactic",
-    "weak-king-safety",
-    "weak-pawn-structure",
-    "opening-blunder",
-    "endgame-conversion",
-  ];
   return TAXONOMY_ORDER.filter((t) => found.has(t));
 }
