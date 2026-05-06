@@ -1,4 +1,26 @@
-export type GameResult = "win" | "lose" | "draw" | "resigned";
+export type CoachGameResult = "win" | "lose" | "draw" | "resigned";
+
+// Back-compat alias — existing importers (game-result.ts, prompt-template.ts,
+// fallback-engine.ts) continue to use `GameResult`. New persist sites use
+// `CoachGameResult` per the spec §5/§10 to make the schema-check coupling
+// loud at the call site.
+export type GameResult = CoachGameResult;
+
+const COACH_GAME_RESULTS: readonly CoachGameResult[] = [
+  "win",
+  "lose",
+  "draw",
+  "resigned",
+] as const;
+
+export function toCoachGameResult(input: unknown): CoachGameResult {
+  if (typeof input === "string" && (COACH_GAME_RESULTS as readonly string[]).includes(input)) {
+    return input as CoachGameResult;
+  }
+  throw new Error(
+    `Invalid CoachGameResult: ${JSON.stringify(input)} (expected one of ${COACH_GAME_RESULTS.join(", ")})`,
+  );
+}
 
 export type GameRecord = {
   gameId: string;
