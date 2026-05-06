@@ -257,3 +257,85 @@ describe("extractWeaknessTags — opening-blunder (positional)", () => {
     expect(tags).toEqual(["opening-blunder"]);
   });
 });
+
+describe("extractWeaknessTags — endgame-conversion (positional)", () => {
+  it("fires for moveNumber ≥ 30 with result=lose", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ moveNumber: 35, explanation: "Routine endgame slip." })],
+      55,
+      "lose",
+    );
+    expect(tags).toEqual(["endgame-conversion"]);
+  });
+
+  it("fires for moveNumber ≥ 30 with result=draw", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ moveNumber: 42, explanation: "Routine endgame slip." })],
+      60,
+      "draw",
+    );
+    expect(tags).toEqual(["endgame-conversion"]);
+  });
+
+  it("does NOT fire when result=win even with late mistake", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ moveNumber: 38, explanation: "Cosmetic inaccuracy." })],
+      55,
+      "win",
+    );
+    expect(tags).toEqual([]);
+  });
+
+  it("does NOT fire when result=resigned (out of bucket)", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ moveNumber: 35, explanation: "Routine endgame slip." })],
+      40,
+      "resigned",
+    );
+    expect(tags).toEqual([]);
+  });
+
+  it("fires at the boundary moveNumber === 30", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ moveNumber: 30, explanation: "Routine endgame slip." })],
+      55,
+      "lose",
+    );
+    expect(tags).toEqual(["endgame-conversion"]);
+  });
+});
+
+describe("extractWeaknessTags — composition + dedup", () => {
+  it("returns multiple tags in canonical taxonomy order, deduplicated", () => {
+    const tags = extractWeaknessTags(
+      [
+        mistake({ moveNumber: 5, explanation: "You hung the bishop on g7." }),
+        mistake({ moveNumber: 8, explanation: "Missed a fork on f6." }),
+        mistake({ moveNumber: 35, explanation: "Backward pawn became weak." }),
+      ],
+      55,
+      "lose",
+    );
+    expect(tags).toEqual([
+      "hanging-piece",
+      "missed-tactic",
+      "weak-pawn-structure",
+      "opening-blunder",
+      "endgame-conversion",
+    ]);
+  });
+
+  it("returns [] when no rule matches", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ moveNumber: 18, explanation: "Routine developing move." })],
+      30,
+      "win",
+    );
+    expect(tags).toEqual([]);
+  });
+
+  it("returns [] for empty mistakes array regardless of game stats", () => {
+    const tags = extractWeaknessTags([], 60, "lose");
+    expect(tags).toEqual([]);
+  });
+});

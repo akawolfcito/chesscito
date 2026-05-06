@@ -42,7 +42,7 @@ const TAXONOMY_ORDER: readonly WeaknessTag[] = [
 export function extractWeaknessTags(
   mistakes: Mistake[],
   _totalMoves: number,
-  _result: CoachGameResult,
+  result: CoachGameResult,
 ): WeaknessTag[] {
   const found = new Set<WeaknessTag>();
 
@@ -58,6 +58,15 @@ export function extractWeaknessTags(
   // Fires when there are 2+ mistakes and at least one is at moveNumber ≤ 12.
   if (mistakes.length >= 2 && mistakes.some((m) => m.moveNumber <= 12)) {
     found.add("opening-blunder");
+  }
+
+  // Positional rule 2: endgame-conversion
+  // Fires when there's a mistake at moveNumber ≥ 30 and result ∈ {lose,draw}.
+  if (
+    (result === "lose" || result === "draw") &&
+    mistakes.some((m) => m.moveNumber >= 30)
+  ) {
+    found.add("endgame-conversion");
   }
 
   // Preserve declaration order (Set iteration order = insertion order, but
