@@ -49,8 +49,9 @@ export function extractWeaknessTagsSafe(
  *   for first-wins concurrent multi-device writes (red-team P1-9).
  * - Tag derivation is fail-soft; row inserts even if extraction throws
  *   (red-team P1-7).
- * - Soft cap of 200 rows per wallet enforced post-insert (Task 4 — added
- *   by the next commit; this commit's implementation is happy-path only).
+ * - Soft cap of 200 rows per wallet enforced post-insert (red-team P1-2).
+ *   On count error or delete error, fails soft and re-checks on the next
+ *   write — never blocks the user-visible insert.
  *
  * Spec §6.1 / §15 (P1-2, P1-7, P1-9).
  */
