@@ -98,5 +98,23 @@ export async function persistAnalysis(
     throw new Error(`persistAnalysis upsert failed: ${error.message}`);
   }
 
-  // Soft-cap cleanup is added in Task 4. This commit is happy-path only.
+  // Soft-cap cleanup (red-team P1-2): cap any single wallet at 200 rows.
+  // Rationale: 200 × ~5 KB ≈ 1 MB per wallet regardless of activity volume.
+  // Fail-soft — count errors don't block; the cap re-checks on next write.
+  const { count, error: countError } = await supabase
+    .from("coach_analyses")
+    .select("*", { count: "exact", head: true })
+    .eq("wallet", wallet);
+
+  if (countError || (count ?? 0) <= ROW_SOFT_CAP) return;
+
+  // Delete rows where game_id is NOT in the most recent 200 for this wallet.
+  // Uses Postgres-side subquery via `.not('game_id', 'in', '(...)')` —
+  // supabase-js renders the third arg verbatim into the SQL.
+  const subquery = `(select game_id from coach_analyses where wallet = '${wallet}' order by created_at desc limit ${ROW_SOFT_CAP})`;
+  await supabase
+    .from("coach_analyses")
+    .delete()
+    .eq("wallet", wallet)
+    .not("game_id", "in", subquery);
 }

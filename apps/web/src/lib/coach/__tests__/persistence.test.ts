@@ -84,3 +84,38 @@ describe("persistAnalysis", () => {
     expect(chain.upsert).not.toHaveBeenCalled();
   });
 });
+
+describe("persistAnalysis — soft cap (200 rows)", () => {
+  beforeEach(() => {
+    vi.mocked(getSupabaseServer).mockReset();
+  });
+
+  it("does not fire delete when count <= 200", async () => {
+    const chain = buildUpsertChain();
+    chain.eqAfterSelect.mockResolvedValue({ count: 150, error: null });
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    await persistAnalysis("0xabc", VALID_PAYLOAD);
+    expect(chain.del).not.toHaveBeenCalled();
+  });
+
+  it("fires bounded delete when count > 200", async () => {
+    const chain = buildUpsertChain();
+    chain.eqAfterSelect.mockResolvedValue({ count: 250, error: null });
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    await persistAnalysis("0xabc", VALID_PAYLOAD);
+    expect(chain.del).toHaveBeenCalledTimes(1);
+    expect(chain.eqAfterDelete).toHaveBeenCalledWith("wallet", "0xabc");
+    expect(chain.not).toHaveBeenCalledTimes(1);
+    const [col, op, _subq] = chain.not.mock.calls[0];
+    expect(col).toBe("game_id");
+    expect(op).toBe("in");
+  });
+
+  it("does not fire delete when count query errors (fail-soft)", async () => {
+    const chain = buildUpsertChain();
+    chain.eqAfterSelect.mockResolvedValue({ count: null, error: { message: "boom" } });
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    await persistAnalysis("0xabc", VALID_PAYLOAD);
+    expect(chain.del).not.toHaveBeenCalled();
+  });
+});
