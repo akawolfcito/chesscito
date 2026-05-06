@@ -210,3 +210,50 @@ describe("extractWeaknessTags — weak-pawn-structure", () => {
     expect(tags).toEqual([]);
   });
 });
+
+describe("extractWeaknessTags — opening-blunder (positional)", () => {
+  it("fires when ≥2 mistakes occur and at least one is at move ≤ 12", () => {
+    const tags = extractWeaknessTags(
+      [
+        mistake({ moveNumber: 6, explanation: "Routine inaccuracy." }),
+        mistake({ moveNumber: 18, explanation: "Routine inaccuracy." }),
+      ],
+      40,
+      "lose",
+    );
+    expect(tags).toEqual(["opening-blunder"]);
+  });
+
+  it("does NOT fire with only one mistake (regardless of move number)", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ moveNumber: 6, explanation: "Routine inaccuracy." })],
+      40,
+      "lose",
+    );
+    expect(tags).toEqual([]);
+  });
+
+  it("does NOT fire when all mistakes are after move 12", () => {
+    const tags = extractWeaknessTags(
+      [
+        mistake({ moveNumber: 14, explanation: "Routine inaccuracy." }),
+        mistake({ moveNumber: 22, explanation: "Routine inaccuracy." }),
+      ],
+      40,
+      "lose",
+    );
+    expect(tags).toEqual([]);
+  });
+
+  it("fires at the boundary moveNumber === 12", () => {
+    const tags = extractWeaknessTags(
+      [
+        mistake({ moveNumber: 12, explanation: "Routine inaccuracy." }),
+        mistake({ moveNumber: 25, explanation: "Routine inaccuracy." }),
+      ],
+      40,
+      "lose",
+    );
+    expect(tags).toEqual(["opening-blunder"]);
+  });
+});

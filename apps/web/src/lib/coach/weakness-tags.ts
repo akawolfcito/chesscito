@@ -54,6 +54,12 @@ export function extractWeaknessTags(
     }
   }
 
+  // Positional rule 1: opening-blunder
+  // Fires when there are 2+ mistakes and at least one is at moveNumber ≤ 12.
+  if (mistakes.length >= 2 && mistakes.some((m) => m.moveNumber <= 12)) {
+    found.add("opening-blunder");
+  }
+
   // Preserve declaration order (Set iteration order = insertion order, but
   // we want canonical taxonomy order regardless of which rule fired first).
   return TAXONOMY_ORDER.filter((t) => found.has(t));
