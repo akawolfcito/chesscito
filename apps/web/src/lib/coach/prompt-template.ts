@@ -7,6 +7,35 @@ const RESULT_HINTS: Record<GameResult, string> = {
   resigned: "The player resigned. Focus on: (1) the turning point, (2) the position that felt lost + a safer continuation, (3) pattern recognition for similar positions.",
 };
 
+const HISTORY_BLOCK_CHAR_CAP = 600;
+
+function buildHistoryAugmentation(history: HistoryDigest | null | undefined): string {
+  if (!history) return "";
+
+  const { gamesPlayed, recentResults, topWeaknessTags } = history;
+  const header =
+    `Player history (last 20 games): ${gamesPlayed} games.\n` +
+    `Recent results: W:${recentResults.win} L:${recentResults.lose} D:${recentResults.draw}.`;
+
+  if (topWeaknessTags.length === 0) {
+    // No-evidence hard-guard branch added in Task 8.
+    return "";
+  }
+
+  const tagsLine =
+    "Recurring weakness areas: " +
+    topWeaknessTags.map((t) => `${t.tag} (×${t.count})`).join(", ") +
+    ".";
+
+  const callout =
+    "When analyzing this game, if any of the above weakness areas appear,\n" +
+    'call them out by name — e.g., "you\'ve shown weak king safety in 4 of\n' +
+    'your last 8 games." Tie the call-out to the count above. ' +
+    "Do not fabricate a pattern that isn't in the data.";
+
+  return `\n${header}\n${tagsLine}\n\n${callout}`;
+}
+
 export function buildCoachPrompt(
   moves: string[],
   result: GameResult,
@@ -14,22 +43,19 @@ export function buildCoachPrompt(
   summary: PlayerSummary | null,
   history?: HistoryDigest | null,
 ): string {
-  // history is intentionally unused in this task; Tasks 7–9 introduce
-  // the augmentation block. Existing callers pass 4 args and behave
-  // bit-identically (locked by the Task 5 inline snapshot).
-  void history;
-
   const movesStr = moves.map((m, i) => `${Math.floor(i / 2) + 1}${i % 2 === 0 ? "." : "..."} ${m}`).join(" ");
 
   const summaryBlock = summary
     ? `\nPlayer context: ${summary.gamesPlayed} games played, avg ${Math.round(summary.avgGameLength)} moves per game. Recent weaknesses: ${summary.weaknessTags.slice(0, 5).join(", ") || "none identified yet"}.`
     : "";
 
+  const historyBlock = buildHistoryAugmentation(history);
+
   return `You are a chess coach analyzing a game played on Chesscito (a learning app for beginners and casual players).
 
 Game: ${movesStr}
 Result: ${result} (${difficulty} difficulty AI opponent)
-${summaryBlock}
+${summaryBlock}${historyBlock}
 
 ${RESULT_HINTS[result]}
 

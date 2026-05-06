@@ -67,3 +67,64 @@ describe("buildCoachPrompt — free path (regression guard)", () => {
     expect(out).toContain("The player lost. Be encouraging.");
   });
 });
+
+describe("buildCoachPrompt — PRO standard branch (populated tags)", () => {
+  it("includes 'Player history (last 20 games):' header with gamesPlayed", () => {
+    const out = buildCoachPrompt(
+      FREE_PATH_FIXTURE.moves,
+      "lose",
+      "medium",
+      null,
+      {
+        gamesPlayed: 14,
+        recentResults: { win: 5, lose: 7, draw: 1, resigned: 1 },
+        topWeaknessTags: [
+          { tag: "weak-king-safety", count: 4 },
+          { tag: "missed-tactic", count: 3 },
+        ],
+      },
+    );
+    expect(out).toContain("Player history (last 20 games): 14 games.");
+  });
+
+  it("renders Recent results line as W:L:D (no resigned in display)", () => {
+    const out = buildCoachPrompt(["e4"], "lose", "medium", null, {
+      gamesPlayed: 14,
+      recentResults: { win: 5, lose: 7, draw: 1, resigned: 1 },
+      topWeaknessTags: [{ tag: "weak-king-safety", count: 4 }],
+    });
+    expect(out).toContain("Recent results: W:5 L:7 D:1.");
+    expect(out).not.toContain("R:1");
+  });
+
+  it("renders 'Recurring weakness areas:' with tag (×count) joined by ', '", () => {
+    const out = buildCoachPrompt(["e4"], "lose", "medium", null, {
+      gamesPlayed: 14,
+      recentResults: { win: 5, lose: 7, draw: 1, resigned: 1 },
+      topWeaknessTags: [
+        { tag: "weak-king-safety", count: 4 },
+        { tag: "missed-tactic", count: 3 },
+      ],
+    });
+    expect(out).toContain("Recurring weakness areas: weak-king-safety (×4), missed-tactic (×3).");
+  });
+
+  it("includes the call-out instruction with 'Do not fabricate a pattern that isn't in the data.'", () => {
+    const out = buildCoachPrompt(["e4"], "lose", "medium", null, {
+      gamesPlayed: 14,
+      recentResults: { win: 5, lose: 7, draw: 1, resigned: 1 },
+      topWeaknessTags: [{ tag: "weak-king-safety", count: 4 }],
+    });
+    expect(out).toContain("call them out by name");
+    expect(out).toContain("Do not fabricate a pattern that isn't in the data.");
+  });
+
+  it("does NOT contain the no-evidence hard-guard text when tags are populated", () => {
+    const out = buildCoachPrompt(["e4"], "lose", "medium", null, {
+      gamesPlayed: 14,
+      recentResults: { win: 5, lose: 7, draw: 1, resigned: 1 },
+      topWeaknessTags: [{ tag: "weak-king-safety", count: 4 }],
+    });
+    expect(out).not.toContain("do NOT speculate");
+  });
+});
