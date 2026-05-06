@@ -128,3 +128,44 @@ describe("buildCoachPrompt — PRO standard branch (populated tags)", () => {
     expect(out).not.toContain("do NOT speculate");
   });
 });
+
+describe("buildCoachPrompt — PRO no-evidence branch (empty topWeaknessTags)", () => {
+  it("renders the hard-guard variant with 'do NOT speculate'", () => {
+    const out = buildCoachPrompt(["e4"], "lose", "medium", null, {
+      gamesPlayed: 6,
+      recentResults: { win: 2, lose: 3, draw: 1, resigned: 0 },
+      topWeaknessTags: [],
+    });
+    expect(out).toContain("Insufficient pattern data this session");
+    expect(out).toContain("do NOT speculate");
+    expect(out).toContain("Analyze\nONLY the current game.");
+  });
+
+  it("still includes the gamesPlayed + W:L:D header in the hard-guard variant", () => {
+    const out = buildCoachPrompt(["e4"], "lose", "medium", null, {
+      gamesPlayed: 6,
+      recentResults: { win: 2, lose: 3, draw: 1, resigned: 0 },
+      topWeaknessTags: [],
+    });
+    expect(out).toContain("Player history (last 20 games): 6 games.");
+    expect(out).toContain("Recent results: W:2 L:3 D:1.");
+  });
+
+  it("does NOT contain 'Recurring weakness areas:' line", () => {
+    const out = buildCoachPrompt(["e4"], "lose", "medium", null, {
+      gamesPlayed: 6,
+      recentResults: { win: 2, lose: 3, draw: 1, resigned: 0 },
+      topWeaknessTags: [],
+    });
+    expect(out).not.toContain("Recurring weakness areas:");
+  });
+
+  it("does NOT contain the standard 'Do not fabricate a pattern' call-out", () => {
+    const out = buildCoachPrompt(["e4"], "lose", "medium", null, {
+      gamesPlayed: 6,
+      recentResults: { win: 2, lose: 3, draw: 1, resigned: 0 },
+      topWeaknessTags: [],
+    });
+    expect(out).not.toContain("Do not fabricate a pattern");
+  });
+});

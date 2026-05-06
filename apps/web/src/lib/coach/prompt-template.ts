@@ -18,8 +18,11 @@ function buildHistoryAugmentation(history: HistoryDigest | null | undefined): st
     `Recent results: W:${recentResults.win} L:${recentResults.lose} D:${recentResults.draw}.`;
 
   if (topWeaknessTags.length === 0) {
-    // No-evidence hard-guard branch added in Task 8.
-    return "";
+    const guard =
+      "Insufficient pattern data this session — do NOT speculate about\n" +
+      "recurring weaknesses or strengths across past games. Analyze\n" +
+      "ONLY the current game.";
+    return `\n${header}\n\n${guard}`;
   }
 
   const tagsLine =
