@@ -578,6 +578,14 @@ export const ARENA_COPY = {
   engineError: "Engine error — please restart the match",
   restartMatch: "Restart Match",
   boardError: "Board error — please restart the game",
+  /** In-match HUD signpost shown beneath the matchup row while the game
+   *  is live (hidden on end-state). Surfaces Coach as a post-checkmate
+   *  feature so players notice it before the match ends. Mirrors the
+   *  tone of PRO_COPY.activeSublineArena ("Coach activates after
+   *  checkmate") — the two strings stay parallel by design. Gated at
+   *  the call site by NEXT_PUBLIC_ENABLE_COACH so disabling the flag
+   *  hides the hint alongside the rest of the Coach surface. */
+  coachHudHint: "Coach reviews after checkmate",
 } as const;
 
 export const EXERCISE_DRAWER_COPY = {

@@ -14,11 +14,21 @@ type Props = {
   onBack: () => void;
   isEndState?: boolean;
   elapsedMs: number;
+  /** When true (and the game is not yet in end-state), render the
+   *  in-match Coach signpost beneath the matchup row. Gated by
+   *  NEXT_PUBLIC_ENABLE_COACH at the call site (arena/page.tsx). */
+  showCoachHint?: boolean;
 };
 
 const CONFIRM_TIMEOUT_MS = 3000;
 
-export function ArenaHud({ isThinking, onBack, isEndState, elapsedMs }: Props) {
+export function ArenaHud({
+  isThinking,
+  onBack,
+  isEndState,
+  elapsedMs,
+  showCoachHint = false,
+}: Props) {
   const [confirmingBack, setConfirmingBack] = useState(false);
   const backTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -113,6 +123,18 @@ export function ArenaHud({ isThinking, onBack, isEndState, elapsedMs }: Props) {
           )}
         </div>
       </div>
+
+      {/* Row 3 (optional): in-match Coach signpost. Quiet treatment so it
+          never competes with the timer or matchup; pure discovery aid
+          telling the player Coach activates post-checkmate. */}
+      {showCoachHint && !isEndState && (
+        <p
+          data-testid="arena-coach-hint"
+          className="text-nano text-center font-medium italic tracking-wide text-white/55"
+        >
+          {ARENA_COPY.coachHudHint}
+        </p>
+      )}
     </div>
   );
 }

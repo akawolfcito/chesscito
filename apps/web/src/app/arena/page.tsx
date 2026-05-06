@@ -1018,6 +1018,7 @@ function ArenaPageInner() {
           onBack={handleBack}
           isEndState={isEndState}
           elapsedMs={game.elapsedMs}
+          showCoachHint={ENABLE_COACH}
         />
 
         {/* Difficulty pill — returning users auto-launch with last pick;
