@@ -155,6 +155,7 @@ create policy "service_role full access"
   - `opening-blunder` — positional: `mistake.moveNumber <= 12 && mistakes.length >= 2` for that game
   - `endgame-conversion` — positional: `mistake.moveNumber >= 30 && result in ('lose','draw')`
 - `mistakes` jsonb retains the full `Mistake[]` shape (`moveNumber`, `played`, `better`, `explanation`) for future v2 features and surface-level rendering. v1 prompt augmentation does NOT use exact `(moveNumber, played)` matching.
+- `result` column accepts only the four values in the centralized `CoachGameResult` union exported from `lib/coach/types.ts`. Every persist site (live `/analyze` write-through, backfill, manual repair scripts if any) MUST map its source result through `toCoachGameResult()` before inserting — this prevents drift between the schema check constraint and TS-side enums elsewhere in the app. The mapper rejects unknown inputs with a thrown error rather than coercing to a default; bad data fails loudly at the seam.
 - `expires_at` is set at insert and never refreshed. Backfill (§7) sets it explicitly to `analysis.createdAt + 1y` rather than the table default to honor the privacy notice "365 days from creation" (red-team P1-6).
 - Rows are inserted via `INSERT … ON CONFLICT DO NOTHING` (§6.1, red-team P1-9) so concurrent-device writes don't silently overwrite tag sets.
 
@@ -184,7 +185,7 @@ if (proStatus.active && normalized.data.kind === "full") {
 }
 ```
 
-`persistAnalysis` issues `INSERT … ON CONFLICT DO NOTHING` on the `(wallet, game_id)` PK (red-team P1-9). Concurrent multi-device writes for the same game pick the first-arrived tag set; subsequent writes are no-ops rather than overwrites. After insert, it fires a bounded cleanup query when the wallet's row count exceeds a soft cap of 200 (red-team P1-2):
+`persistAnalysis` issues `upsert(rows, { onConflict: "wallet,game_id", ignoreDuplicates: true })` (red-team P1-9). The `ignoreDuplicates: true` flag is the supabase-js v2 idiom for first-wins semantics — confirmed against existing repo usage in `apps/web/src/lib/supabase/queries.ts`. Concurrent multi-device writes for the same game pick the first-arrived tag set; subsequent writes are no-ops rather than overwrites. After insert, it fires a bounded cleanup query when the wallet's row count exceeds a soft cap of 200 (red-team P1-2):
 
 ```sql
 delete from coach_analyses
@@ -239,7 +240,18 @@ fabricate a pattern that isn't in the data.
 **Conditional rendering rules:**
 
 - If `digest === null` (PRO user, zero rows after backfill): augmentation block omitted entirely — no `0 games played` stub.
-- If `digest.topWeaknessTags` is empty (rows exist but no tag-extraction matched any explanation, e.g., 6-label taxonomy whiffed): the "Recurring weakness areas:" line is omitted but the gamesPlayed/results header stays. The "When analyzing…" callout is still rendered but framed as opportunistic ("if you spot a recurring pattern across this game and prior context, name it").
+- If `digest.topWeaknessTags` is empty (rows exist but no tag-extraction matched any explanation, e.g., 6-label taxonomy whiffed): the "Recurring weakness areas:" line is omitted AND the trailing call-out flips to a hard-guard variant that explicitly tells the LLM not to fabricate patterns. The block becomes:
+
+  ```
+  Player history (last 20 games): ${digest.gamesPlayed} games.
+  Recent results: W:${win} L:${lose} D:${draw}.
+
+  Insufficient pattern data this session — do NOT speculate about
+  recurring weaknesses or strengths across past games. Analyze
+  ONLY the current game.
+  ```
+
+  This prevents the LLM from inventing "patterns" out of the gamesPlayed/result counts when no canonical tag matched. The user's stated requirement: never suggest opportunistic patterns when evidence is absent.
 
 (Red-team P1-10 dropped concrete-move recurrence from v1; only tag-level recurrence ships.)
 
@@ -365,10 +377,15 @@ async function backfillRedisToSupabase(wallet: string): Promise<{ copied: number
   }
 
   if (rows.length > 0) {
-    // ON CONFLICT DO NOTHING — first wins (red-team P1-9). Even though
-    // Supabase was empty per the count gate above, two parallel
-    // backfills could both pass the gate before either inserts.
-    await supabase.from("coach_analyses").insert(rows, { defaultToNull: false }).onConflict("wallet,game_id").ignoreDuplicates();
+    // First-wins semantics (red-team P1-9). Even though Supabase was
+    // empty per the count gate above, two parallel backfills could
+    // both pass the gate before either inserts. Uses the same upsert
+    // shape already in use in apps/web/src/lib/supabase/queries.ts:
+    // `.upsert(rows, { onConflict: "...", ignoreDuplicates: true })`
+    // — chained `.onConflict()` is NOT in supabase-js v2.
+    await supabase
+      .from("coach_analyses")
+      .upsert(rows, { onConflict: "wallet,game_id", ignoreDuplicates: true });
   }
   return { copied: rows.length, waited };
 }
@@ -442,6 +459,19 @@ Reuses `CRON_SECRET` and the existing GitHub Actions cron worker. Schedule: dail
 
 `DELETE /api/coach/history` — server-side verified, replay-resistant, address-bound.
 
+**Nonce generation (client side):** `<CoachHistoryDeletePanel>` produces the nonce locally before each delete attempt:
+
+```ts
+// components/coach/coach-history-delete-panel.tsx (excerpt)
+function generateNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return [...bytes].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+```
+
+No `/api/coach/nonce` endpoint exists in v1. The server SETNX-claims whatever nonce arrives. This keeps the surface minimal: 32 hex chars (128 bits) makes collisions during the 5-min TTL effectively impossible (~2^-128 per request).
+
 ```ts
 // Message format (red-team P0-1: chain + domain binding to prevent
 // message-confusion across other Chesscito signed surfaces).
@@ -477,6 +507,11 @@ export async function DELETE(req: Request) {
   if (!Number.isFinite(issuedAtMs))                                    return new Response("Invalid issuedIso", { status: 400 });
   if (Math.abs(Date.now() - issuedAtMs) > ISO_AGE_LIMIT_MS)            return new Response("Message expired", { status: 410 });
 
+  // Nonce is CLIENT-GENERATED — `crypto.getRandomValues(new Uint8Array(16))`
+  // hex-encoded. v1 ships NO `/api/coach/nonce` endpoint; the server
+  // simply claims whatever nonce arrives, atomically. Format
+  // validated above (`/^[0-9a-f]{32}$/i`).
+  //
   // Replay defense (red-team P0-1) — claim the nonce atomically.
   // Replays within the 5-min window collide on this SETNX.
   const nonceKey = `coach:delete-nonce:${nonce}`;
@@ -554,7 +589,7 @@ export const PRIVACY_COACH_COPY = {
     "You can delete all stored Coach history at any time via your wallet from the Coach history page, regardless of PRO status. Deletion is permanent and immediate.",
   para3Title: "What's stored:",
   para3:
-    "Wallet address (lowercase), game ID, timestamps, your move list, and the AI-generated coaching response (summary, mistakes, lessons, praise). No personal identifiers beyond the wallet address.",
+    "Wallet address (lowercase), game ID, timestamps, game metadata (difficulty, result, total move count), and the AI-generated coaching response (summary, identified mistakes, lessons, praise). We do NOT store your full move list. No personal identifiers beyond the wallet address.",
   // Red-team P2-5 — disclose lost-key recourse path explicitly.
   para4Title: "Lost wallet access:",
   para4:
@@ -714,7 +749,7 @@ Issued: ${iso}`,
 | `apps/web/src/lib/coach/history-digest.ts` | NEW | `aggregateHistory(wallet)` — Supabase read + in-memory aggregation |
 | `apps/web/src/lib/coach/persistence.ts` | NEW | `persistAnalysis(wallet, payload)` — INSERT…ON CONFLICT DO NOTHING + row-cap delete |
 | `apps/web/src/lib/coach/backfill.ts` | NEW | `backfillRedisToSupabase(wallet)` — race-safe with poll-and-wait |
-| `apps/web/src/lib/coach/types.ts` | MODIFIED | Add `HistoryDigest`, `CoachAnalysisRow`, `WeaknessTag` union |
+| `apps/web/src/lib/coach/types.ts` | MODIFIED | Add `HistoryDigest`, `CoachAnalysisRow`, `WeaknessTag` union, **`CoachGameResult` centralized union** + `toCoachGameResult(result): CoachGameResult` mapper applied at every persist site so the schema check `result in ('win','lose','draw','resigned')` cannot drift |
 | `apps/web/src/lib/coach/prompt-template.ts` | MODIFIED | Accept `history?: HistoryDigest`, append capped PRO block |
 | `apps/web/src/lib/coach/redis-keys.ts` | MODIFIED | Add `backfillClaim(wallet)` + `deleteNonce(nonce)` keys |
 | `apps/web/src/lib/server/logger.ts` | MODIFIED | Add `hashWallet()` helper + `LOG_SALT` secrecy comment |
@@ -741,7 +776,7 @@ Issued: ${iso}`,
 
 - `lib/coach/__tests__/weakness-tags.test.ts` — `extractWeaknessTags()` cases per canonical label.
 - `lib/coach/__tests__/history-digest.test.ts` — pure function: rows → digest. Edge: empty rows → null, all-rows-with-`weakness_tags=[]` → digest with empty `topWeaknessTags`. Verifies the 600-char prompt-block truncation in `buildCoachPrompt` (red-team P1-3).
-- `lib/coach/__tests__/prompt-template.test.ts` — free path snapshot unchanged; PRO path with digest snapshot; PRO with `history=null` falls back to free path verbatim.
+- `lib/coach/__tests__/prompt-template.test.ts` — **Free path snapshot unchanged** (hard-locked regression guard; every PR in §13 must keep this test green). PRO path with non-empty digest: snapshot of augmentation block under 600-char cap. PRO path with `history=null`: falls back to free path verbatim. PRO path with `history.topWeaknessTags=[]` (no-evidence branch): produces the hard-guard text — assertion is the literal `"do NOT speculate"` substring so opportunistic re-wording in the future fails the test.
 
 ### Route handler tests (Supabase + Redis mocked)
 
@@ -784,13 +819,20 @@ No raw wallet addresses leave the server. `wallet_hash = sha256(wallet + LOG_SAL
 
 ## 13. Rollout & rollback
 
-### Rollout sequence
+### Rollout sequence — 5 separate PRs (per stakeholder direction)
 
-1. **DB migration** — apply `coach_analyses` table + indexes + RLS + check constraints to Supabase staging, then prod. Idempotent SQL via `create table if not exists`.
-2. **Library + route changes** — ship behind no flag; PRO is already a hard gate at the route level. Free behavior is bit-identical to today. Includes: weakness-tags taxonomy, persistence, backfill, history-digest, prompt augmentation, `analyze` route wiring, DELETE method on `/api/coach/history`, `hashWallet` helper.
-3. **Cron registration** — add `coach-purge` schedule + concurrency-group config to GH Actions workflow. First run: ~24h after merge.
-4. **UI** — `<CoachPanel>` props + footer + first-run banner; new `/coach/history` page route with `<CoachHistoryDeletePanel>` + `<ConfirmDeleteSheet>`; `arena/page.tsx` plumbing of `historyMeta`; `/privacy` page renders new `PRIVACY_COACH_COPY` block. Ship as a single PR.
-5. **`PRO_COPY` array swap + featureBanner enable** — move "Personalized coaching plan from match history" from `perksRoadmap` → `perksActive` AND set the `COACH_COPY.featureBanner` strings live (both as the final commit). The banner is shown until the user dismisses it (localStorage flag `chesscito:coach-history-callout-seen`), giving existing PRO users the "newly active" affordance the silent array swap would lack (red-team P2-3).
+Each PR ships independently and is mergeable on its own. Earlier PRs do not depend on later ones for runtime correctness — they introduce dormant capability that the later PRs activate. Free path stays bit-identical throughout the entire sequence (red-team-7 reaffirmation).
+
+1. **PR 1 — DB + tags taxonomy.** Supabase migration `coach_analyses_init.sql` (table + indexes + RLS + check constraints, including the `result` check that consumes the centralized `CoachGameResult` values). New `lib/coach/weakness-tags.ts` with the 6-label v1 set + the `extractWeaknessTags(...)` function and its tests. New `lib/coach/types.ts` additions: `HistoryDigest`, `CoachAnalysisRow`, `WeaknessTag`, `CoachGameResult`, `toCoachGameResult()`. **Zero behavior change at runtime** — table is dormant, no writer yet. No-op merge.
+2. **PR 2 — persistence + prompt template.** New `lib/coach/persistence.ts` (writer, soft-cap row delete, fail-soft semantics), new `lib/coach/history-digest.ts` (reader + aggregator), `lib/coach/prompt-template.ts` augmentation (capped at 600 chars; conditional rules including the no-tags hard-guard branch). Unit tests cover all branches including free-path snapshot unchanged. **No route is wired yet** — these modules exist but are not called.
+3. **PR 3 — `analyze` route wiring + backfill.** Wire PR 2's modules into `app/api/coach/analyze/route.ts`. Add `lib/coach/backfill.ts` (race-safe, polling, fail-soft). Update `lib/coach/redis-keys.ts` with `backfillClaim(wallet)` + `deleteNonce(nonce)` keys. Update `lib/server/logger.ts` with `hashWallet()` + `LOG_SALT` comment. Add `historyMeta` to the response payload. **PRO behavior changes.** Free path remains bit-identical (verified by snapshot test from PR 2).
+4. **PR 4 — Delete UI + DELETE endpoint.** Add DELETE handler to `app/api/coach/history/route.ts` with full nonce + signature flow. New `app/coach/history/page.tsx` route + `<CoachHistoryDeletePanel>` + `<ConfirmDeleteSheet>` + `useCoachHistoryCount`. Thread `proActive`/`historyMeta` through `<CoachPanel>` (via `arena/page.tsx`). `COACH_COPY.historyFooter` + `historyDelete` editorial entries.
+5. **PR 5 — Privacy + cron + copy unlock.**
+   - `app/privacy/page.tsx` renders `PRIVACY_COACH_COPY` (with the corrected "game metadata, not move list" wording).
+   - New `app/api/cron/coach-purge/route.ts` + GH Actions workflow update (concurrency group + schedule).
+   - New `docs/runbooks/log-salt-rotation.md`.
+   - `PRO_COPY` array swap: move "Personalized coaching plan from match history" from `perksRoadmap` → `perksActive`.
+   - `COACH_COPY.featureBanner` strings + first-run banner enabled (red-team P2-3 affordance for users who saw SOON for weeks). LocalStorage flag `chesscito:coach-history-callout-seen`.
 
 ### Rollback
 
