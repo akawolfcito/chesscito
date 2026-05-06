@@ -1,4 +1,4 @@
-import type { GameResult, PlayerSummary } from "./types";
+import type { GameResult, HistoryDigest, PlayerSummary } from "./types";
 
 const RESULT_HINTS: Record<GameResult, string> = {
   win: "The player won. Focus on: (1) strengths shown, (2) moments where a stronger opponent would have punished them, (3) how to win more efficiently.",
@@ -12,7 +12,13 @@ export function buildCoachPrompt(
   result: GameResult,
   difficulty: string,
   summary: PlayerSummary | null,
+  history?: HistoryDigest | null,
 ): string {
+  // history is intentionally unused in this task; Tasks 7–9 introduce
+  // the augmentation block. Existing callers pass 4 args and behave
+  // bit-identically (locked by the Task 5 inline snapshot).
+  void history;
+
   const movesStr = moves.map((m, i) => `${Math.floor(i / 2) + 1}${i % 2 === 0 ? "." : "..."} ${m}`).join(" ");
 
   const summaryBlock = summary
