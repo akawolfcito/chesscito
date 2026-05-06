@@ -1,6 +1,12 @@
-import { describe, it, expect } from "vitest";
-import { aggregateRows } from "../history-digest.js";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { aggregateRows, aggregateHistory } from "../history-digest.js";
 import type { CoachAnalysisRow } from "../types.js";
+
+vi.mock("../../supabase/server", () => ({
+  getSupabaseServer: vi.fn(),
+}));
+
+import { getSupabaseServer } from "../../supabase/server.js";
 
 function row(overrides: Partial<CoachAnalysisRow> = {}): CoachAnalysisRow {
   return {
@@ -87,5 +93,54 @@ describe("aggregateRows", () => {
     expect(digest).not.toBeNull();
     expect(digest!.gamesPlayed).toBe(2);
     expect(digest!.topWeaknessTags).toEqual([]);
+  });
+});
+
+function buildSelectChain(result: { data: CoachAnalysisRow[] | null; error: { message: string } | null }) {
+  // Chainable: from(...).select(...).eq(...).order(...).limit(N) → result
+  const limit = vi.fn().mockResolvedValue(result);
+  const order = vi.fn().mockReturnValue({ limit });
+  const eq = vi.fn().mockReturnValue({ order });
+  const select = vi.fn().mockReturnValue({ eq });
+  const from = vi.fn().mockReturnValue({ select });
+  return { from, select, eq, order, limit };
+}
+
+describe("aggregateHistory (Supabase wrapper)", () => {
+  beforeEach(() => {
+    vi.mocked(getSupabaseServer).mockReset();
+  });
+
+  it("returns null when getSupabaseServer returns null (missing env)", async () => {
+    vi.mocked(getSupabaseServer).mockReturnValue(null);
+    expect(await aggregateHistory("0xabc")).toBeNull();
+  });
+
+  it("returns null when SELECT errors (fail-soft per §6.5)", async () => {
+    const chain = buildSelectChain({ data: null, error: { message: "boom" } });
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    expect(await aggregateHistory("0xabc")).toBeNull();
+  });
+
+  it("issues SELECT with eq(wallet), order(created_at desc), limit(20)", async () => {
+    const chain = buildSelectChain({ data: [], error: null });
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    await aggregateHistory("0xabc");
+    expect(chain.from).toHaveBeenCalledWith("coach_analyses");
+    expect(chain.eq).toHaveBeenCalledWith("wallet", "0xabc");
+    expect(chain.order).toHaveBeenCalledWith("created_at", { ascending: false });
+    expect(chain.limit).toHaveBeenCalledWith(20);
+  });
+
+  it("forwards rows to aggregateRows and returns the digest", async () => {
+    const rows: CoachAnalysisRow[] = [
+      row({ result: "win", weakness_tags: ["hanging-piece"] }),
+      row({ result: "lose", weakness_tags: ["hanging-piece"] }),
+    ];
+    const chain = buildSelectChain({ data: rows, error: null });
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    const digest = await aggregateHistory("0xabc");
+    expect(digest!.gamesPlayed).toBe(2);
+    expect(digest!.topWeaknessTags).toEqual([{ tag: "hanging-piece", count: 2 }]);
   });
 });

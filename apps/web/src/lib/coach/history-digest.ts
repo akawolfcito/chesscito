@@ -1,4 +1,7 @@
 import type { CoachAnalysisRow, HistoryDigest, WeaknessTag } from "./types.js";
+import { getSupabaseServer } from "../supabase/server.js";
+
+const HISTORY_DIGEST_DEPTH = 20;
 
 /**
  * Pure aggregator over the rows returned by `aggregateHistory` — no I/O.
@@ -35,4 +38,32 @@ export function aggregateRows(rows: CoachAnalysisRow[]): HistoryDigest | null {
     recentResults,
     topWeaknessTags,
   };
+}
+
+/**
+ * Read the last 20 analyses for `wallet` and aggregate them into a digest.
+ *
+ * Fail-soft semantics (§6.5):
+ * - Missing env (`getSupabaseServer()` returns null) → null.
+ * - SELECT error → null.
+ * - Empty result set → null (via `aggregateRows`).
+ *
+ * Caller (PR 3 `analyze` route) treats `null` as "no augmentation block".
+ */
+export async function aggregateHistory(wallet: string): Promise<HistoryDigest | null> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("coach_analyses")
+    .select(
+      "wallet, game_id, created_at, expires_at, kind, difficulty, result, total_moves, summary_text, mistakes, lessons, praise, weakness_tags",
+    )
+    .eq("wallet", wallet)
+    .order("created_at", { ascending: false })
+    .limit(HISTORY_DIGEST_DEPTH);
+
+  if (error || !data) return null;
+
+  return aggregateRows(data as CoachAnalysisRow[]);
 }
