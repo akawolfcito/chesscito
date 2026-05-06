@@ -1,5 +1,18 @@
 import type { GameResult, HistoryDigest, PlayerSummary } from "./types";
 
+/**
+ * Truncate `text` to at most `max` Unicode code points. If exceeded, the
+ * last char is replaced with U+2026 (HORIZONTAL ELLIPSIS) so the result
+ * length is exactly `max`.
+ *
+ * Defense-in-depth for the augmentation block (red-team P1-3). v1
+ * taxonomy makes >600 unreachable; v2 work must re-evaluate.
+ */
+export function truncateAtLimit(text: string, max: number): string {
+  if (text.length <= max) return text;
+  return text.slice(0, max - 1) + "…";
+}
+
 const RESULT_HINTS: Record<GameResult, string> = {
   win: "The player won. Focus on: (1) strengths shown, (2) moments where a stronger opponent would have punished them, (3) how to win more efficiently.",
   lose: "The player lost. Be encouraging. Focus on: (1) what went wrong (kindly), (2) critical mistakes that turned the game, (3) concrete skills to practice.",
@@ -22,7 +35,7 @@ function buildHistoryAugmentation(history: HistoryDigest | null | undefined): st
       "Insufficient pattern data this session — do NOT speculate about\n" +
       "recurring weaknesses or strengths across past games. Analyze\n" +
       "ONLY the current game.";
-    return `\n${header}\n\n${guard}`;
+    return truncateAtLimit(`\n${header}\n\n${guard}`, HISTORY_BLOCK_CHAR_CAP);
   }
 
   const tagsLine =
@@ -36,7 +49,7 @@ function buildHistoryAugmentation(history: HistoryDigest | null | undefined): st
     'your last 8 games." Tie the call-out to the count above. ' +
     "Do not fabricate a pattern that isn't in the data.";
 
-  return `\n${header}\n${tagsLine}\n\n${callout}`;
+  return truncateAtLimit(`\n${header}\n${tagsLine}\n\n${callout}`, HISTORY_BLOCK_CHAR_CAP);
 }
 
 export function buildCoachPrompt(

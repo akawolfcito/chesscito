@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildCoachPrompt } from "../prompt-template.js";
+import { buildCoachPrompt, truncateAtLimit } from "../prompt-template.js";
 
 const FREE_PATH_FIXTURE = {
   moves: ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6"],
@@ -167,5 +167,43 @@ describe("buildCoachPrompt — PRO no-evidence branch (empty topWeaknessTags)", 
       topWeaknessTags: [],
     });
     expect(out).not.toContain("Do not fabricate a pattern");
+  });
+});
+
+describe("truncateAtLimit", () => {
+  it("returns text unchanged when within limit", () => {
+    expect(truncateAtLimit("hello", 10)).toBe("hello");
+    expect(truncateAtLimit("hello", 5)).toBe("hello");
+  });
+
+  it("truncates to exactly `max` characters with a trailing ellipsis", () => {
+    const out = truncateAtLimit("a".repeat(700), 600);
+    expect(out.length).toBe(600);
+    expect(out.endsWith("…")).toBe(true);
+    expect(out.slice(0, 599)).toBe("a".repeat(599));
+  });
+
+  it("handles empty input", () => {
+    expect(truncateAtLimit("", 10)).toBe("");
+  });
+});
+
+describe("buildCoachPrompt — 600-char augmentation cap", () => {
+  it("v1 realistic max stays well under 600 chars", () => {
+    // Worst case in v1: 3 fixed-label tags with high counts.
+    const block = buildCoachPrompt(["e4"], "lose", "medium", null, {
+      gamesPlayed: 20,
+      recentResults: { win: 0, lose: 20, draw: 0, resigned: 0 },
+      topWeaknessTags: [
+        { tag: "weak-pawn-structure", count: 999 },
+        { tag: "weak-king-safety", count: 888 },
+        { tag: "endgame-conversion", count: 777 },
+      ],
+    });
+    // Extract just the augmentation segment between "Player history" and the RESULT_HINTS line.
+    const start = block.indexOf("Player history");
+    const end = block.indexOf("\n\nThe player lost");
+    const segment = block.slice(start, end);
+    expect(segment.length).toBeLessThanOrEqual(600);
   });
 });
