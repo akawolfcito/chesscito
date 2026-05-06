@@ -107,3 +107,59 @@ describe("extractWeaknessTags — missed-tactic", () => {
     expect(tags).toEqual([]);
   });
 });
+
+describe("extractWeaknessTags — weak-king-safety", () => {
+  it("matches 'king exposed'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "Your king exposed on the kingside after castling." })],
+      24,
+      "lose",
+    );
+    expect(tags).toEqual(["weak-king-safety"]);
+  });
+
+  it("matches 'king unsafe'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "The king unsafe with the h-pawn pushed." })],
+      30,
+      "lose",
+    );
+    expect(tags).toEqual(["weak-king-safety"]);
+  });
+
+  it("matches 'king weak'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "The king weak with no defenders." })],
+      32,
+      "lose",
+    );
+    expect(tags).toEqual(["weak-king-safety"]);
+  });
+
+  it("matches 'open file near king'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "An open file near king let the rook invade." })],
+      28,
+      "lose",
+    );
+    expect(tags).toEqual(["weak-king-safety"]);
+  });
+
+  it("matches 'attack on the king'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "A direct attack on the king with sac on h7." })],
+      22,
+      "lose",
+    );
+    expect(tags).toEqual(["weak-king-safety"]);
+  });
+
+  it("does NOT match 'king' alone", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "Move the king to e8 first." })],
+      40,
+      "draw",
+    );
+    expect(tags).toEqual([]);
+  });
+});
