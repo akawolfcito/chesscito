@@ -163,3 +163,50 @@ describe("extractWeaknessTags — weak-king-safety", () => {
     expect(tags).toEqual([]);
   });
 });
+
+describe("extractWeaknessTags — weak-pawn-structure", () => {
+  it("matches 'doubled pawns'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "Doubled pawns on the c-file weakened your queenside." })],
+      35,
+      "lose",
+    );
+    expect(tags).toEqual(["weak-pawn-structure"]);
+  });
+
+  it("matches 'isolated pawn'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "The isolated pawn on d5 became a long-term liability." })],
+      40,
+      "lose",
+    );
+    expect(tags).toEqual(["weak-pawn-structure"]);
+  });
+
+  it("matches 'pawn weakness'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "A clear pawn weakness on b6." })],
+      38,
+      "lose",
+    );
+    expect(tags).toEqual(["weak-pawn-structure"]);
+  });
+
+  it("matches 'backward pawn'", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "The backward pawn on e6 was permanent." })],
+      42,
+      "draw",
+    );
+    expect(tags).toEqual(["weak-pawn-structure"]);
+  });
+
+  it("does NOT match 'pawn' alone", () => {
+    const tags = extractWeaknessTags(
+      [mistake({ explanation: "Push the pawn to d4 next." })],
+      18,
+      "win",
+    );
+    expect(tags).toEqual([]);
+  });
+});

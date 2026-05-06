@@ -13,6 +13,10 @@ const KEYWORD_RULES: ReadonlyArray<{ tag: WeaknessTag; pattern: RegExp }> = [
     tag: "weak-king-safety",
     pattern: /\b(king (exposed|unsafe|weak)|open file near king|attack on the king)\b/i,
   },
+  {
+    tag: "weak-pawn-structure",
+    pattern: /\b(doubled pawns?|isolated pawn|pawn weakness|backward pawn)\b/i,
+  },
 ] as const;
 
 const TAXONOMY_ORDER: readonly WeaknessTag[] = [
