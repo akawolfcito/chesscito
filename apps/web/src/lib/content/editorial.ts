@@ -904,6 +904,10 @@ export const SHOP_ITEM_COPY = {
  *  docs/superpowers/plans/2026-04-29-pro-phase-0.md. */
 export const PRO_COPY = {
   label: "Chesscito PRO",
+  /** Category marker rendered above the title inside `<ProSheet>`.
+   *  Frames PRO as a "training pass" rather than a feature gate, per
+   *  the §11 canon mission line. Spec: addendum §3.6 / §6.1 commit #4. */
+  kicker: "Training Pass",
   tagline: "Your training plan. Your way to keep Chesscito free for everyone.",
   subtitle: "Monthly pass that supports open access. Renew when you want — no auto-billing.",
   priceLabel: "$1.99 / month",
@@ -953,6 +957,10 @@ export const PRO_COPY = {
     "Tournament priority (coming soon)",
     "Premium achievements (coming soon)",
     "Discounts on victory cards (coming soon)",
+    // Addendum §3.6 / §6.1 commit #4. Suffix-free per spec literal;
+    // the "(coming soon)" suffixes are stripped from this list once
+    // <ComingSoonChip /> lands in commit #6.
+    "Guided by FIDE Master + dev team",
   ] as const,
   errors: {
     notConfigured: "PRO is not yet active. Check back shortly.",

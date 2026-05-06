@@ -179,6 +179,13 @@ export function ProSheet(props: ProSheetProps) {
         className="mission-shell sheet-bg-shop flex max-h-[90dvh] flex-col rounded-t-2xl border-0 pb-[5rem]"
       >
         <SheetHeader className="text-left">
+          <p
+            data-testid="pro-kicker"
+            className="text-nano font-bold uppercase tracking-wider"
+            style={{ color: "rgba(110, 65, 15, 0.55)" }}
+          >
+            {PRO_COPY.kicker}
+          </p>
           <SheetTitle
             className="fantasy-title flex items-center gap-2"
             style={{ color: "rgba(110, 65, 15, 0.95)" }}

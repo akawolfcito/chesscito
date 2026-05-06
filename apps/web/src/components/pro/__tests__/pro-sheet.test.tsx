@@ -57,6 +57,25 @@ describe("ProSheet", () => {
     expect(screen.getByText(PRO_COPY.perksRoadmap[0])).toBeInTheDocument();
   });
 
+  // AC-3.8 — addendum §3.6 / §6.1 commit #4
+  it("renders the kicker 'Training Pass' above the title", () => {
+    renderSheet();
+    const kicker = screen.getByText(PRO_COPY.kicker);
+    const title = screen.getByText(PRO_COPY.label);
+    expect(kicker).toBeInTheDocument();
+    expect(
+      kicker.compareDocumentPosition(title) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("includes the FIDE Master + dev team bullet in the roadmap", () => {
+    renderSheet();
+    expect(
+      screen.getByText("Guided by FIDE Master + dev team"),
+    ).toBeInTheDocument();
+  });
+
   it("shows the Connect Wallet CTA when wallet is not connected", () => {
     const handlers = renderSheet({ isConnected: false });
     const cta = screen.getByRole("button", { name: PRO_COPY.errors.walletRequired });
