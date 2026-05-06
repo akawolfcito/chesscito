@@ -76,6 +76,20 @@ describe("ProSheet", () => {
     ).toBeInTheDocument();
   });
 
+  // AC-3.7 — addendum §3.7 / §6.1 commit #6
+  it("renders one ComingSoonChip alongside each roadmap perk", () => {
+    renderSheet();
+    const chips = screen.getAllByTestId("coming-soon-chip");
+    expect(chips).toHaveLength(PRO_COPY.perksRoadmap.length);
+  });
+
+  it("strips the inline '(coming soon)' suffix from roadmap entries (chip replaces it)", () => {
+    renderSheet();
+    PRO_COPY.perksRoadmap.forEach((perk) => {
+      expect(perk).not.toMatch(/\(coming soon\)/i);
+    });
+  });
+
   it("shows the Connect Wallet CTA when wallet is not connected", () => {
     const handlers = renderSheet({ isConnected: false });
     const cta = screen.getByRole("button", { name: PRO_COPY.errors.walletRequired });

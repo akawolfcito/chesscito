@@ -956,14 +956,15 @@ export const PRO_COPY = {
     "AI Coach with no daily limit",
     "Your contribution keeps Chesscito free for new players",
   ] as const,
+  /** Roadmap labels rendered in `<ProSheet>` paired with `<ComingSoonChip />`
+   *  (addendum §3.7 / §6.1 commit #6). The chip carries the "SOON" status,
+   *  so labels here MUST stay suffix-free. Adding a new entry? Skip the
+   *  inline "(coming soon)" — the chip handles it. */
   perksRoadmap: [
-    "Early access to new challenges (coming soon)",
-    "Tournament priority (coming soon)",
-    "Premium achievements (coming soon)",
-    "Discounts on victory cards (coming soon)",
-    // Addendum §3.6 / §6.1 commit #4. Suffix-free per spec literal;
-    // the "(coming soon)" suffixes are stripped from this list once
-    // <ComingSoonChip /> lands in commit #6.
+    "Early access to new challenges",
+    "Tournament priority",
+    "Premium achievements",
+    "Discounts on victory cards",
     "Guided by FIDE Master + dev team",
   ] as const,
   errors: {

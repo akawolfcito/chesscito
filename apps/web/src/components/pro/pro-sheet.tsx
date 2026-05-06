@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { ComingSoonChip } from "@/components/ui/coming-soon-chip";
 import {
   Sheet,
   SheetContent,
@@ -273,11 +274,14 @@ export function ProSheet(props: ProSheetProps) {
           >
             Coming later
           </p>
-          <ul className="mt-1 space-y-1 text-sm opacity-60" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+          <ul className="mt-1 space-y-1 text-sm" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
             {PRO_COPY.perksRoadmap.map((perk) => (
-              <li key={perk} className="flex items-start gap-2">
-                <span aria-hidden="true">·</span>
+              <li
+                key={perk}
+                className="flex items-center justify-between gap-2"
+              >
                 <span>{perk}</span>
+                <ComingSoonChip />
               </li>
             ))}
           </ul>
