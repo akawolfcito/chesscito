@@ -1,0 +1,102 @@
+import { extractWeaknessTags } from "./weakness-tags.js";
+import { toCoachGameResult } from "./types.js";
+import type {
+  CoachAnalysisRow,
+  CoachGameResult,
+  CoachResponse,
+  Mistake,
+  WeaknessTag,
+} from "./types.js";
+import { getSupabaseServer } from "../supabase/server.js";
+
+const ROW_SOFT_CAP = 200;
+
+export type PersistAnalysisPayload = {
+  gameId: string;
+  difficulty: "easy" | "medium" | "hard";
+  result: CoachGameResult;
+  totalMoves: number;
+  response: CoachResponse;
+};
+
+/**
+ * Best-effort `extractWeaknessTags` — returns `[]` on any throw.
+ *
+ * Rationale: a tag-derivation throw must NOT silently drop a row that a
+ * paying user generated (red-team P1-7). The row gets preserved with an
+ * empty tag set; the caller is expected to log a `coach_tag_extraction_failed`
+ * warning for observability when it cares.
+ */
+export function extractWeaknessTagsSafe(
+  mistakes: Mistake[],
+  totalMoves: number,
+  result: CoachGameResult,
+): { tags: WeaknessTag[]; error: Error | null } {
+  try {
+    return { tags: extractWeaknessTags(mistakes, totalMoves, result), error: null };
+  } catch (err) {
+    return { tags: [], error: err instanceof Error ? err : new Error(String(err)) };
+  }
+}
+
+/**
+ * Insert a Coach analysis into Supabase with first-wins semantics.
+ *
+ * - Maps `payload.result` through `toCoachGameResult()` so the schema check
+ *   `result in ('win','lose','draw','resigned')` cannot drift (§5).
+ * - `upsert(rows, { onConflict: "wallet,game_id", ignoreDuplicates: true })`
+ *   matches the supabase-js v2 idiom already in `lib/supabase/queries.ts`
+ *   for first-wins concurrent multi-device writes (red-team P1-9).
+ * - Tag derivation is fail-soft; row inserts even if extraction throws
+ *   (red-team P1-7).
+ * - Soft cap of 200 rows per wallet enforced post-insert (Task 4 — added
+ *   by the next commit; this commit's implementation is happy-path only).
+ *
+ * Spec §6.1 / §15 (P1-2, P1-7, P1-9).
+ */
+export async function persistAnalysis(
+  wallet: string,
+  payload: PersistAnalysisPayload,
+): Promise<void> {
+  // Validate result up-front — throws on bad input (loud failure at the seam).
+  const result = toCoachGameResult(payload.result);
+
+  const supabase = getSupabaseServer();
+  if (!supabase) return;
+
+  const { tags } = extractWeaknessTagsSafe(payload.response.mistakes, payload.totalMoves, result);
+
+  const row: CoachAnalysisRow = {
+    wallet,
+    game_id: payload.gameId,
+    // created_at + expires_at are stripped before insert so the column
+    // defaults (now() / now() + 1y) apply. PR 3 backfill writes them
+    // explicitly per P1-6.
+    created_at: "",
+    expires_at: "",
+    kind: "full",
+    difficulty: payload.difficulty,
+    result,
+    total_moves: payload.totalMoves,
+    summary_text: payload.response.summary,
+    mistakes: payload.response.mistakes,
+    lessons: payload.response.lessons,
+    praise: payload.response.praise,
+    weakness_tags: tags,
+  };
+
+  const { created_at: _ca, expires_at: _ea, ...insertRow } = row;
+
+  const { error } = await supabase
+    .from("coach_analyses")
+    .upsert(insertRow as unknown as CoachAnalysisRow, {
+      onConflict: "wallet,game_id",
+      ignoreDuplicates: true,
+    });
+
+  if (error) {
+    throw new Error(`persistAnalysis upsert failed: ${error.message}`);
+  }
+
+  // Soft-cap cleanup is added in Task 4. This commit is happy-path only.
+}
