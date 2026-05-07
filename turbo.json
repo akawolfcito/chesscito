@@ -4,6 +4,12 @@
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
+      "env": [
+        "VERCEL_GIT_COMMIT_SHA",
+        "VERCEL_GIT_COMMIT_REF",
+        "VERCEL_ENV",
+        "NEXT_PUBLIC_BUILD_SHA"
+      ],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "dev": {
