@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import { createLogger, hashWallet, __setLoggerSink, __resetLoggerSink } from "../logger.js";
 
@@ -108,15 +108,8 @@ describe("createLogger", () => {
 });
 
 describe("hashWallet", () => {
-  const ORIG_SALT = process.env.LOG_SALT;
-
   beforeEach(() => {
-    process.env.LOG_SALT = "test-salt-do-not-ship";
-  });
-
-  afterAll(() => {
-    if (ORIG_SALT === undefined) delete process.env.LOG_SALT;
-    else process.env.LOG_SALT = ORIG_SALT;
+    vi.stubEnv("LOG_SALT", "test-salt-do-not-ship");
   });
 
   it("returns the same hash for the same wallet", () => {
@@ -136,7 +129,7 @@ describe("hashWallet", () => {
   });
 
   it("throws when LOG_SALT is missing — no silent unsalted fallback", () => {
-    delete process.env.LOG_SALT;
+    vi.stubEnv("LOG_SALT", "");
     expect(() => hashWallet("0xabc")).toThrowError(/LOG_SALT/);
   });
 });
