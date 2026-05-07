@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
@@ -15,6 +17,10 @@ type Props = {
   onPlayAgain: () => void;
   onBackToHub: () => void;
   onViewHistory?: () => void;
+  /** PR 4: surfaces PRO-only history footer when truthy alongside historyMeta. */
+  proActive?: boolean;
+  /** PR 4: drives the footer's "Building your history…" / "Reviewing N past games" wording. */
+  historyMeta?: { gamesPlayed: number };
 };
 
 export function CoachPanel({
@@ -26,6 +32,8 @@ export function CoachPanel({
   onPlayAgain,
   onBackToHub,
   onViewHistory,
+  proActive,
+  historyMeta,
 }: Props) {
   const time = formatTime(elapsedMs);
   const diffLabel = ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty;
@@ -131,6 +139,22 @@ export function CoachPanel({
           {ARENA_COPY.backToHub}
         </button>
       </div>
+
+      {proActive && historyMeta && (
+        <p
+          data-testid="coach-history-footer"
+          className="mt-3 text-nano text-center"
+          style={{ color: warmSubtle }}
+        >
+          {historyMeta.gamesPlayed === 0
+            ? COACH_COPY.historyFooter.building
+            : COACH_COPY.historyFooter.reviewing(historyMeta.gamesPlayed)}
+          {" · "}
+          <Link href="/coach/history" className="underline underline-offset-2">
+            {COACH_COPY.historyFooter.manageLabel}
+          </Link>
+        </p>
+      )}
     </div>
   );
 }
