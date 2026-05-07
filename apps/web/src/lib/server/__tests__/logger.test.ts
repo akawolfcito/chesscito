@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from "vitest";
 
-import { createLogger, __setLoggerSink, __resetLoggerSink } from "../logger.js";
+import { createLogger, hashWallet, __setLoggerSink, __resetLoggerSink } from "../logger.js";
 
 type Sink = (line: string) => void;
 
@@ -104,5 +104,39 @@ describe("createLogger", () => {
     log.error("should-not-emit");
     expect(errSpy).not.toHaveBeenCalled();
     errSpy.mockRestore();
+  });
+});
+
+describe("hashWallet", () => {
+  const ORIG_SALT = process.env.LOG_SALT;
+
+  beforeEach(() => {
+    process.env.LOG_SALT = "test-salt-do-not-ship";
+  });
+
+  afterAll(() => {
+    if (ORIG_SALT === undefined) delete process.env.LOG_SALT;
+    else process.env.LOG_SALT = ORIG_SALT;
+  });
+
+  it("returns the same hash for the same wallet", () => {
+    const a = hashWallet("0xabc");
+    const b = hashWallet("0xabc");
+    expect(a).toBe(b);
+  });
+
+  it("returns different hashes for different wallets", () => {
+    expect(hashWallet("0xabc")).not.toBe(hashWallet("0xdef"));
+  });
+
+  it("returns exactly 16 hex chars (red-team P1-8: 64-bit prefix)", () => {
+    const out = hashWallet("0x1234567890abcdef1234567890abcdef12345678");
+    expect(out).toMatch(/^[0-9a-f]{16}$/);
+    expect(out).toHaveLength(16);
+  });
+
+  it("throws when LOG_SALT is missing — no silent unsalted fallback", () => {
+    delete process.env.LOG_SALT;
+    expect(() => hashWallet("0xabc")).toThrowError(/LOG_SALT/);
   });
 });

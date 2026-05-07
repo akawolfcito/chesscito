@@ -16,6 +16,8 @@
  *   - Noop in vitest by default so route tests don't pollute stderr.
  */
 
+import { createHash } from "node:crypto";
+
 export type LogLevel = "info" | "warn" | "error";
 
 type CtxValue = string | number | boolean | bigint | null | undefined | object;
@@ -108,4 +110,33 @@ export function createLogger(scope: { route: string }): Logger {
     warn: (message, ctx) => emit(scope, "warn", message, ctx),
     error: (message, ctx) => emit(scope, "error", message, ctx),
   };
+}
+
+/**
+ * Stable, non-reversible 16-hex-char identifier for a wallet, suitable for
+ * log lines. Combines the lowercased wallet with the server-side `LOG_SALT`
+ * secret and returns the 64-bit prefix of the sha256 digest.
+ *
+ * Spec §8.4 / §12 / red-team P1-8.
+ *
+ * **Secrecy contract**: `LOG_SALT` is rotated quarterly per the runbook
+ * (PR 5 lands `docs/runbooks/log-salt-rotation.md`). It MUST NOT be
+ * `NEXT_PUBLIC_*`; without secrecy, an attacker with log read access can
+ * rainbow-table known wallet addresses. The "stable but non-reversible"
+ * guarantee is contractual — if the salt leaks, treat all in-flight log
+ * lines containing wallet hashes as deanonymizable until the salt rotates.
+ *
+ * Throws when `LOG_SALT` is missing rather than coercing to an empty
+ * string — silent fallback would degrade the privacy property without
+ * surfacing the misconfiguration.
+ */
+export function hashWallet(wallet: string): string {
+  const salt = process.env.LOG_SALT;
+  if (!salt) {
+    throw new Error("hashWallet: LOG_SALT env is required (server-side secret)");
+  }
+  return createHash("sha256")
+    .update(wallet.toLowerCase() + salt)
+    .digest("hex")
+    .slice(0, 16);
 }
