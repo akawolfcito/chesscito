@@ -3,7 +3,7 @@ import { Redis } from "@upstash/redis";
 import { isAddress, recoverMessageAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { buildDeleteMessage } from "@/lib/coach/delete-message";
-import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceOrigin, enforceRateLimit, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import type { CoachAnalysisRecord, GameRecord } from "@/lib/coach/types";
@@ -13,7 +13,11 @@ const redis = Redis.fromEnv();
 export async function GET(req: Request) {
   try {
     enforceOrigin(req);
-    await enforceRateLimit(getRequestIp(req));
+    // Read-only history endpoint — uses the lenient 60/min/IP limiter
+    // so navigating hub ↔ /coach/history rapidly (or React StrictMode's
+    // double-mount in dev) does not lock the user out of their own
+    // history with cascading 403s. Mirrors /api/pro/status.
+    await enforceReadRateLimit(getRequestIp(req));
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

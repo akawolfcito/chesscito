@@ -13,6 +13,7 @@ vi.mock("@upstash/redis", () => ({
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
   enforceRateLimit: vi.fn(),
+  enforceReadRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
 }));
 
@@ -21,10 +22,11 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 import { GET } from "../route";
-import { enforceOrigin, enforceRateLimit } from "@/lib/server/demo-signing";
+import { enforceOrigin, enforceRateLimit, enforceReadRateLimit } from "@/lib/server/demo-signing";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
 const mockedRate = vi.mocked(enforceRateLimit);
+const mockedReadRate = vi.mocked(enforceReadRateLimit);
 
 const VALID_WALLET = "0xcc4179a22b473ea2eb2b9b9b210458d0f60fc2dd";
 
@@ -59,6 +61,7 @@ describe("GET /api/coach/history", () => {
   beforeEach(() => {
     mockedOrigin.mockReset();
     mockedRate.mockReset();
+    mockedReadRate.mockReset();
     redisMock.lrange.mockReset();
     redisMock.get.mockReset();
 
@@ -115,8 +118,12 @@ describe("GET /api/coach/history", () => {
     expect(res.status).toEqual(403);
   });
 
-  it("returns 403 when rate limit is exceeded", async () => {
-    mockedRate.mockRejectedValue(new Error("Rate limit"));
+  it("returns 403 when read rate limit is exceeded", async () => {
+    // GET handler now uses the lenient enforceReadRateLimit (matches
+    // /api/pro/status). Strict enforceRateLimit was the old gate that
+    // tripped during hub ↔ /coach/history navigation in dev (real
+    // incident 2026-05-07).
+    mockedReadRate.mockRejectedValue(new Error("Rate limit"));
     const res = await GET(makeRequest(VALID_WALLET));
     expect(res.status).toEqual(403);
   });
@@ -168,6 +175,7 @@ describe("DELETE /api/coach/history", () => {
   beforeEach(() => {
     mockedOrigin.mockReset();
     mockedRate.mockReset();
+    mockedReadRate.mockReset();
     redisMock.set.mockReset();
     redisMock.get.mockReset();
     redisMock.del.mockReset();

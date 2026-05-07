@@ -20,7 +20,14 @@ export function CoachHistory({ walletAddress, credits, onSelectEntry }: Props) {
   useEffect(() => {
     fetch(`/api/coach/history?wallet=${walletAddress}`)
       .then((r) => r.json())
-      .then((data: HistoryEntry[]) => setEntries(data))
+      .then((data) => {
+        // Defensive: rate-limit / forbidden responses come back as
+        // `{ error: "..." }` objects, not arrays. Without this guard
+        // the next render would crash on `entries.reduce(...)` —
+        // user-visible "Board crashed" trap that needed a full page
+        // reload (real incident 2026-05-07).
+        setEntries(Array.isArray(data) ? data : []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [walletAddress]);
