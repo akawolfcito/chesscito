@@ -118,8 +118,8 @@ export const RESULT_OVERLAY_COPY = {
         hint: "No charge was applied. Try again or close and reopen the shop.",
       },
       cancelled: {
-        title: "Purchase Cancelled",
-        subtitle: "You declined the wallet prompt. Nothing was charged.",
+        title: "Saved for later",
+        subtitle: "No transaction was made. Nothing was charged.",
         hint: "Tap the item again any time you change your mind.",
       },
       timeout: {
@@ -411,9 +411,9 @@ export const VICTORY_CLAIM_COPY = {
       hint: "Your game result is saved. You can try saving again anytime.",
     },
     cancelled: {
-      title: "Claim cancelled",
-      subtitle: "You declined the wallet prompt. Your victory is still here when you are ready.",
-      hint: "Nothing was charged. Tap try again to resume.",
+      title: "Saved for later",
+      subtitle: "No transaction was made. Your victory is still here whenever you are ready to claim it.",
+      hint: "Nothing was charged. Tap try again any time.",
     },
     timeout: {
       title: "Still confirming…",

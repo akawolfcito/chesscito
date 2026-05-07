@@ -41,11 +41,22 @@ export function VictoryClaimError({
     : VICTORY_CELEBRATION_COPY.performanceLine(moves, time);
   const kindCopy = VICTORY_CLAIM_COPY.errorKindCopy[kind];
 
+  // Tonal split: a deliberate user gesture (cancelled) is a warning, not
+  // an error. Render in amber (per design system) with polite aria-live
+  // and the trophy at full chroma so the moment doesn't feel like a
+  // failure. Errors and timeouts stay rose with assertive aria-live.
+  const isCancelled = kind === "cancelled";
+  const haloColor = isCancelled ? "rgba(217, 119, 6, 0.18)" : "rgba(190, 18, 60, 0.15)";
+  const subtitleColor = isCancelled ? "rgba(110, 65, 15, 0.95)" : "rgba(159, 18, 57, 0.95)";
+  const trophyClass = isCancelled
+    ? "relative h-32 w-32"
+    : "relative h-32 w-32 opacity-55 grayscale-[30%]";
+
   return (
     <div
       className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300"
-      role="alert"
-      aria-live="assertive"
+      role={isCancelled ? "status" : "alert"}
+      aria-live={isCancelled ? "polite" : "assertive"}
     >
       {/* Sparkles background — dimmed */}
       <div className="pointer-events-none absolute inset-0 z-0">
@@ -89,19 +100,23 @@ export function VictoryClaimError({
           }
         >
           <div className="flex flex-col items-center gap-3 text-center">
-            {/* Hero — Trophy (dimmed for error context) with soft rose halo */}
+            {/* Hero — Trophy. Cancelled state keeps full chroma (still
+                your victory); error/timeout dim it to signal recovery. */}
             <div className="relative flex items-center justify-center">
-              <div className="absolute h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(190,18,60,0.15)_0%,transparent_70%)]" />
-              <div className="relative h-32 w-32 opacity-55 grayscale-[30%]">
+              <div
+                className="absolute h-36 w-36 rounded-full"
+                style={{ background: `radial-gradient(circle, ${haloColor} 0%, transparent 70%)` }}
+              />
+              <div className={trophyClass}>
                 <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
               </div>
             </div>
 
-            {/* Subtitle keyed by kind (error / cancelled / timeout) */}
+            {/* Subtitle keyed by kind — amber for user-cancelled (warning), rose for errors */}
             <p
               className="text-sm"
               style={{
-                color: "rgba(159, 18, 57, 0.95)",
+                color: subtitleColor,
                 textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
               }}
             >
