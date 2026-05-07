@@ -223,7 +223,7 @@ export async function POST(req: Request) {
             gameId,
             difficulty: gameRecord.difficulty,
             result: validation.computedResult,
-            totalMoves: gameRecord.totalMoves,
+            totalMoves: validation.totalMoves,
             response: normalized.data,
           });
           if (tagError) {

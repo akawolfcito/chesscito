@@ -127,7 +127,7 @@ describe("POST /api/coach/analyze", () => {
     redisMock.lpush.mockResolvedValue(1);
     redisMock.decr.mockResolvedValue(4);
     redisMock.del.mockResolvedValue(1);
-    validateMock.mockReturnValue({ valid: true, computedResult: "win" });
+    validateMock.mockReturnValue({ valid: true, computedResult: "win", totalMoves: 2 });
     normalizeMock.mockReturnValue({ success: true, data: { summary: "nice play" } });
 
     aggregateHistoryMock.mockReset();
@@ -453,7 +453,7 @@ function resetSiblingMocks() {
   redisMock.lpush.mockResolvedValue(1);
   redisMock.decr.mockResolvedValue(4);
   redisMock.del.mockResolvedValue(1);
-  validateMock.mockReturnValue({ valid: true, computedResult: "win" });
+  validateMock.mockReturnValue({ valid: true, computedResult: "win", totalMoves: 2 });
   normalizeMock.mockReturnValue({ success: true, data: { summary: "nice play" } });
   aggregateHistoryMock.mockResolvedValue(null);
   backfillMock.mockResolvedValue({ copied: 0, waited: false });
