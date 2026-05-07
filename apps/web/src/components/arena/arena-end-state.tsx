@@ -153,6 +153,7 @@ export function ArenaEndState({
             claimPrice={claimPrice}
             fen={fen}
             playerColor={playerColor}
+            onAskCoach={onAskCoach}
           />
         );
     }

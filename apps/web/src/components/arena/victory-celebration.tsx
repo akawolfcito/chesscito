@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { ShareModal } from "@/components/share/share-modal";
+import { AskCoachButton } from "@/components/coach/ask-coach-button";
 import { formatTime } from "@/lib/game/arena-utils";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
 import sparklesData from "@/../public/animations/sparkles.json";
@@ -28,6 +29,10 @@ type Props = {
   fen?: string;
   /** Player color — flips the board on the share card when playing black. */
   playerColor?: PlayerColor;
+  /** Optional handler for "Ask the Coach". When provided, surfaces the
+   *  CTA right after Save Victory so the player doesn't have to mint
+   *  before they can analyze (2026-05-07 user smoke). */
+  onAskCoach?: () => void;
 };
 
 
@@ -42,6 +47,7 @@ export function VictoryCelebration({
   claimPrice,
   fen,
   playerColor,
+  onAskCoach,
 }: Props) {
   const time = formatTime(elapsedMs);
   const [shareOpen, setShareOpen] = useState(false);
@@ -107,6 +113,7 @@ export function VictoryCelebration({
                   </span>
                 </Button>
               )}
+              {onAskCoach && <AskCoachButton onClick={onAskCoach} />}
               <Button type="button" variant="game-ghost" size="game" onClick={onPlayAgain}>
                 <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
               </Button>
