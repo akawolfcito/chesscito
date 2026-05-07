@@ -829,6 +829,30 @@ export const LEGAL_COPY = {
   },
 } as const;
 
+/**
+ * Coach session memory privacy disclosure (red-team P0-4 — corrected
+ * path; lives in editorial.ts per CLAUDE.md SSOT rule, not legal-copy.ts).
+ * Spec §8.3.
+ *
+ * Renders inside `app/privacy/page.tsx` as a separate <section> after
+ * the existing privacy sections, so PRO subscribers can find the data-
+ * handling story for their stored Coach analyses.
+ */
+export const PRIVACY_COACH_COPY = {
+  heading: "Coach Match History (Chesscito PRO)",
+  para1:
+    "Active PRO subscribers have their game analyses stored to provide personalized coaching across sessions. We retain match analyses for 365 days from creation, after which they are automatically deleted. Free tier users' analyses live only in our 30-day cache and are never persisted long-term.",
+  para2Title: "Your control:",
+  para2:
+    "You can delete all stored Coach history at any time via your wallet from the Coach history page, regardless of PRO status. Deletion is permanent and immediate.",
+  para3Title: "What's stored:",
+  para3:
+    "Wallet address (lowercase), game ID, timestamps, game metadata (difficulty, result, total move count), and the AI-generated coaching response (summary, identified mistakes, lessons, praise). We do NOT store your full move list. No personal identifiers beyond the wallet address.",
+  para4Title: "Lost wallet access:",
+  para4:
+    "Deletion requires control of the wallet that owns the analyses. If you lose access, contact support@chesscito.app for an out-of-band deletion request. We will require proof of original ownership.",
+} as const;
+
 export const SUPPORT_COPY = {
   title: "Support",
   primaryChannel: {
