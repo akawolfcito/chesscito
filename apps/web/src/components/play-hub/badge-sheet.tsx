@@ -178,6 +178,13 @@ type BadgeSheetProps = {
   /** Switch to the Trophies sheet. Parent closes this sheet and opens
    *  the trophy drawer in-place — no route navigation. */
   onNavigateToTrophies: () => void;
+  /** Render the built-in `<SheetTrigger>` dock button. Default `true`
+   *  for legacy callers (`<PlayHubRoot>` mounts this inside the dock).
+   *  Pass `false` from the scaffold, which controls open state via
+   *  `onOpenChange` and never wants the orphan trigger floating in the
+   *  layout tree. Without this gate, Radix renders the button as a real
+   *  DOM node sibling of the scaffold — invisible only by accident. */
+  showTrigger?: boolean;
 };
 
 export function BadgeSheet({
@@ -190,6 +197,7 @@ export function BadgeSheet({
   lastClaimedPiece = null,
   showNotification,
   onNavigateToTrophies,
+  showTrigger = true,
 }: BadgeSheetProps) {
   // Initialize synchronously from localStorage to avoid progress bar flashing from 0%
   const [starsByPiece, setStarsByPiece] = useState<Record<PieceId, number[]>>(() =>
@@ -224,27 +232,29 @@ export function BadgeSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>
-        {/* No explicit h/w classes needed: .chesscito-dock-item > button in globals.css enforces 2.75rem x 2.75rem via !important */}
-        <button
-          type="button"
-          aria-label="Badges"
-          className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
-        >
-          <img
-            src="/art/badge-menu.png"
-            alt=""
-            aria-hidden="true"
-            className="h-full w-full object-contain"
-          />
-          {showNotification ? (
-            <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400" />
-            </span>
-          ) : null}
-        </button>
-      </SheetTrigger>
+      {showTrigger ? (
+        <SheetTrigger asChild>
+          {/* No explicit h/w classes needed: .chesscito-dock-item > button in globals.css enforces 2.75rem x 2.75rem via !important */}
+          <button
+            type="button"
+            aria-label="Badges"
+            className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
+          >
+            <img
+              src="/art/badge-menu.png"
+              alt=""
+              aria-hidden="true"
+              className="h-full w-full object-contain"
+            />
+            {showNotification ? (
+              <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-400" />
+              </span>
+            ) : null}
+          </button>
+        </SheetTrigger>
+      ) : null}
       <SheetContent side="bottom" className="mission-shell sheet-bg-badges flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]">
         <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
           <SheetHeader>

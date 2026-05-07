@@ -31,26 +31,44 @@ type ShopSheetProps = {
   onOpenChange: (open: boolean) => void;
   items: CatalogItem[];
   onSelectItem: (itemId: bigint) => void;
+  /** Optional success banner — renders above the catalog when set. The
+   *  scaffold supplies this after `buyItem` confirms so the user gets a
+   *  celebration moment without a global ResultOverlay (legacy uses the
+   *  overlay for the same purpose, so it omits this prop). */
+  successBanner?: { itemLabel: string; txHashShort: string } | null;
+  /** Render the built-in dock-style `<SheetTrigger>`. Default `true`
+   *  for legacy compatibility — the scaffold passes `false` so Radix
+   *  doesn't leave an orphan `<button>` rendered in the layout tree. */
+  showTrigger?: boolean;
 };
 
-export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheetProps) {
+export function ShopSheet({
+  open,
+  onOpenChange,
+  items,
+  onSelectItem,
+  successBanner = null,
+  showTrigger = true,
+}: ShopSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          aria-label="Shop"
-          className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
-        >
-          <img
-            src="/art/shop-menu.png"
-            alt=""
-            aria-hidden="true"
-            className="h-full w-full object-contain"
-          />
-          <span className="sr-only">Shop</span>
-        </button>
-      </SheetTrigger>
+      {showTrigger ? (
+        <SheetTrigger asChild>
+          <button
+            type="button"
+            aria-label="Shop"
+            className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
+          >
+            <img
+              src="/art/shop-menu.png"
+              alt=""
+              aria-hidden="true"
+              className="h-full w-full object-contain"
+            />
+            <span className="sr-only">Shop</span>
+          </button>
+        </SheetTrigger>
+      ) : null}
       <SheetContent side="bottom" className="mission-shell sheet-bg-shop flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]">
         <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
           <SheetHeader>
@@ -75,6 +93,32 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
             dock at the bottom (~80px) clipped the last card and the
             user reported "content cut off below". The `pb-[5rem]` on
             the sheet shell still reserves the dock-clearance gutter. */}
+        {successBanner ? (
+          <div
+            className="mt-4 flex items-center gap-2 rounded-2xl px-4 py-3"
+            role="status"
+            style={{
+              background: "rgba(16, 185, 129, 0.18)",
+              boxShadow: "inset 0 0 0 1px rgba(16, 185, 129, 0.45)",
+            }}
+          >
+            <CandyIcon name="check" className="h-5 w-5 shrink-0" />
+            <div className="flex flex-col">
+              <p
+                className="text-sm font-extrabold"
+                style={{ color: "rgba(6, 78, 59, 0.95)" }}
+              >
+                {successBanner.itemLabel} secured!
+              </p>
+              <p
+                className="font-mono text-xs"
+                style={{ color: "rgba(6, 78, 59, 0.70)" }}
+              >
+                tx {successBanner.txHashShort}
+              </p>
+            </div>
+          </div>
+        ) : null}
         <div className="mt-4 flex-1 min-h-0 overflow-y-auto grid grid-cols-1 gap-3 sm:grid-cols-3">
           {items.length === 0 && (
             <p
