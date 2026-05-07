@@ -266,13 +266,26 @@ export async function POST(req: Request) {
       const internal = err instanceof Error ? err.message : "Unknown error";
       const reason = "Analysis failed, please retry";
 
+      // Structured log so the failure mode is visible in Vercel logs
+      // alongside the wallet hash. Useful for triage when a class of
+      // wallets stops getting analyses (key rotation, model change, etc.)
+      log.error("coach_llm_failed", {
+        wallet_hash: hashWallet(wallet),
+        internal,
+        model: MODEL,
+        base_url: BASE_URL,
+      });
+
       await Promise.all([
         redis.set(REDIS_KEYS.job(jobId), { status: "failed", reason, internal }, { ex: 24 * 60 * 60 }),
         redis.del(REDIS_KEYS.pendingJob(wallet)),
         redis.del(REDIS_KEYS.jobByGame(wallet, gameId)),
       ]);
 
-      return NextResponse.json({ status: "failed", reason }, { status: 502 });
+      // Surface the internal message to the client too — it's already
+      // stored in the Redis job key (publicly readable via /api/coach/job)
+      // and the diagnostic banner needs it to be actionable for QA.
+      return NextResponse.json({ status: "failed", reason, internal }, { status: 502 });
     }
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

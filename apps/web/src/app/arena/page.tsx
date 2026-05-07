@@ -322,11 +322,12 @@ function ArenaPageInner() {
         // when the client believed the user was PRO so a paying user
         // doesn't silently get dropped on a free quick-review.
         if (proActive) {
-          const reason = analyzeData?.error
-            ? `Server: ${analyzeData.error} (HTTP ${analyzeRes.status})`
-            : `Unexpected response from /api/coach/analyze (HTTP ${analyzeRes.status})`;
+          const detail = analyzeData?.error
+            ?? analyzeData?.internal
+            ?? analyzeData?.reason
+            ?? "no detail";
           setCoachServerError(
-            `${reason}. Client thinks PRO is active (chip on /hub agrees). If this is the first time, retry; if it persists, report this exact text to support.`,
+            `Server: ${detail} (HTTP ${analyzeRes.status}). Client thinks PRO is active (chip on /hub agrees). If this is the first time, retry; if it persists, report this exact text to support.`,
           );
         }
         const quick = generateQuickReview({
