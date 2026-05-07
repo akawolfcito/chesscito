@@ -7,8 +7,11 @@ import { normalizeCoachResponse } from "@/lib/coach/normalize";
 import { buildCoachPrompt } from "@/lib/coach/prompt-template";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { isProActive } from "@/lib/pro/is-active";
+import { aggregateHistory } from "@/lib/coach/history-digest";
+import { backfillRedisToSupabase } from "@/lib/coach/backfill";
+import { createLogger, hashWallet } from "@/lib/server/logger";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
-import type { GameRecord, CoachAnalysisRecord, PlayerSummary } from "@/lib/coach/types";
+import type { GameRecord, CoachAnalysisRecord, PlayerSummary, HistoryDigest } from "@/lib/coach/types";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -80,6 +83,34 @@ export async function POST(req: Request) {
     // analysis they started. ---
     const proStatus = await isProActive(wallet);
 
+    const log = createLogger({ route: "/api/coach/analyze" });
+
+    // PRO read path — backfill once, aggregate, augment prompt. Free
+    // path skips this entirely; locked by the prompt-template free-path
+    // inline snapshot.
+    let history: HistoryDigest | null = null;
+    if (proStatus.active) {
+      try {
+        await backfillRedisToSupabase(wallet, log);
+        history = await aggregateHistory(wallet);
+        log.info("coach_history_aggregated", {
+          wallet_hash: hashWallet(wallet),
+          pro_active: true,
+          depth: history?.gamesPlayed ?? 0,
+          top_tags_count: history?.topWeaknessTags.length ?? 0,
+        });
+      } catch (err) {
+        // Fail-soft per §6.5 — degraded analysis (no augmentation) is
+        // better than 500. The free-tier prompt is bit-identical to the
+        // path the LLM has been receiving since launch.
+        history = null;
+        log.warn("coach_history_read_failed", {
+          wallet_hash: hashWallet(wallet),
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
     // --- Credit check (skipped for PRO) ---
     if (!proStatus.active) {
       const credits = (await redis.get<number>(REDIS_KEYS.credits(wallet))) ?? 0;
@@ -132,6 +163,7 @@ export async function POST(req: Request) {
       validation.computedResult,
       gameRecord.difficulty,
       playerSummary,
+      history,
     );
 
     // --- Call LLM ---
@@ -184,7 +216,12 @@ export async function POST(req: Request) {
       return NextResponse.json({
         status: "ready",
         response: normalized.data,
-        ...(proStatus.active ? { proActive: true } : {}),
+        ...(proStatus.active
+          ? {
+              proActive: true,
+              historyMeta: { gamesPlayed: history?.gamesPlayed ?? 0 },
+            }
+          : {}),
       });
     } catch (err) {
       const internal = err instanceof Error ? err.message : "Unknown error";

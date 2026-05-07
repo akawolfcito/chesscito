@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // by constructing a second importer after un-setting the env.
 vi.hoisted(() => {
   process.env.COACH_LLM_API_KEY = "test-key";
+  process.env.LOG_SALT = "test-salt-route";
 });
 
 const redisMock = vi.hoisted(() => ({
@@ -46,6 +47,21 @@ vi.mock("@/lib/coach/normalize", () => ({
 
 vi.mock("@/lib/coach/prompt-template", () => ({
   buildCoachPrompt: () => "test prompt",
+}));
+
+const aggregateHistoryMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/coach/history-digest", () => ({
+  aggregateHistory: aggregateHistoryMock,
+}));
+
+const backfillMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/coach/backfill", () => ({
+  backfillRedisToSupabase: backfillMock,
+}));
+
+const isProActiveMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/pro/is-active", () => ({
+  isProActive: isProActiveMock,
 }));
 
 import { POST } from "../route";
@@ -107,6 +123,15 @@ describe("POST /api/coach/analyze", () => {
     redisMock.del.mockResolvedValue(1);
     validateMock.mockReturnValue({ valid: true, computedResult: "win" });
     normalizeMock.mockReturnValue({ success: true, data: { summary: "nice play" } });
+
+    aggregateHistoryMock.mockReset();
+    backfillMock.mockReset();
+    isProActiveMock.mockReset();
+
+    // Free-tier default — overridden per-test for PRO branches.
+    isProActiveMock.mockResolvedValue({ active: false });
+    aggregateHistoryMock.mockResolvedValue(null);
+    backfillMock.mockResolvedValue({ copied: 0, waited: false });
   });
 
   it("returns {status:ready,response} on the happy LLM path", async () => {
@@ -266,6 +291,10 @@ describe("POST /api/coach/analyze", () => {
       openaiCreate.mockResolvedValue({
         choices: [{ message: { content: '{"summary":"nice play"}' } }],
       });
+      // The route now consults `isProActive` (mocked at module scope) for
+      // its bypass decision rather than reading the PRO key directly via
+      // redis.get. Per-spec PRO branches set this resolved value.
+      isProActiveMock.mockResolvedValue({ active: true, expiresAt: FUTURE });
     });
 
     it("PRO active + credits=0 still succeeds (real bypass)", async () => {
@@ -312,6 +341,7 @@ describe("POST /api/coach/analyze", () => {
 
     it("PRO inactive does not emit the coach_pro_bypass_used log", async () => {
       const PAST = NOW - 1;
+      isProActiveMock.mockResolvedValue({ active: false, expiresAt: PAST });
       redisMock.get.mockImplementation((key: string) => {
         if (key === `coach:analysis:${VALID_WALLET}:${VALID_GAME_ID}`) return Promise.resolve(null);
         if (key === `coach:job-ref:${VALID_WALLET}:${VALID_GAME_ID}`) return Promise.resolve(null);
@@ -345,15 +375,19 @@ describe("POST /api/coach/analyze", () => {
 
       const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
       expect(res.status).toEqual(200);
+      // The PRO success payload also carries historyMeta from the read
+      // path (Task 6 §6.4); the proActive flag is the focus of this spec.
       expect(await res.json()).toEqual({
         status: "ready",
         response: { summary: "nice play" },
         proActive: true,
+        historyMeta: { gamesPlayed: 0 },
       });
     });
 
     it("PRO expired falls back to free-tier behavior (reads credits, decrements, no proActive flag)", async () => {
       const PAST = NOW - 1;
+      isProActiveMock.mockResolvedValue({ active: false, expiresAt: PAST });
       const visited: string[] = [];
       redisMock.get.mockImplementation((key: string) => {
         visited.push(key);
@@ -380,5 +414,136 @@ describe("POST /api/coach/analyze", () => {
       expect(visited).toContain(`coach:credits:${VALID_WALLET}`);
       expect(redisMock.decr).toHaveBeenCalledWith(`coach:credits:${VALID_WALLET}`);
     });
+  });
+});
+
+// Shared reset for the sibling describes below (the legacy outer
+// describe owns its own beforeEach; these blocks are top-level so we
+// re-stamp the per-test mock baseline here).
+function resetSiblingMocks() {
+  mockedOrigin.mockReset();
+  mockedRate.mockReset();
+  redisMock.get.mockReset();
+  redisMock.set.mockReset();
+  redisMock.eval.mockReset();
+  redisMock.lpush.mockReset();
+  redisMock.decr.mockReset();
+  redisMock.del.mockReset();
+  openaiCreate.mockReset();
+  validateMock.mockReset();
+  normalizeMock.mockReset();
+  aggregateHistoryMock.mockReset();
+  backfillMock.mockReset();
+  isProActiveMock.mockReset();
+
+  mockedOrigin.mockImplementation(() => {});
+  mockedRate.mockResolvedValue(undefined);
+  redisMock.set.mockResolvedValue("OK");
+  redisMock.eval.mockResolvedValue(1);
+  redisMock.lpush.mockResolvedValue(1);
+  redisMock.decr.mockResolvedValue(4);
+  redisMock.del.mockResolvedValue(1);
+  validateMock.mockReturnValue({ valid: true, computedResult: "win" });
+  normalizeMock.mockReturnValue({ success: true, data: { summary: "nice play" } });
+  aggregateHistoryMock.mockResolvedValue(null);
+  backfillMock.mockResolvedValue({ copied: 0, waited: false });
+}
+
+describe("POST /api/coach/analyze — PRO read path", () => {
+  beforeEach(() => {
+    resetSiblingMocks();
+    isProActiveMock.mockResolvedValue({ active: true, expiresAt: 9999999999999 });
+  });
+
+  it("calls backfill + aggregateHistory exactly once for PRO", async () => {
+    setupHappyPathRedis();
+    aggregateHistoryMock.mockResolvedValue({
+      gamesPlayed: 8,
+      recentResults: { win: 3, lose: 4, draw: 1, resigned: 0 },
+      topWeaknessTags: [{ tag: "weak-king-safety", count: 3 }],
+    });
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"nice play"}' } }],
+    });
+
+    const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(200);
+    expect(backfillMock).toHaveBeenCalledTimes(1);
+    expect(backfillMock).toHaveBeenCalledWith(VALID_WALLET, expect.anything());
+    expect(aggregateHistoryMock).toHaveBeenCalledTimes(1);
+    expect(aggregateHistoryMock).toHaveBeenCalledWith(VALID_WALLET);
+  });
+
+  it("includes historyMeta with gamesPlayed in the PRO response", async () => {
+    setupHappyPathRedis();
+    aggregateHistoryMock.mockResolvedValue({
+      gamesPlayed: 12,
+      recentResults: { win: 4, lose: 6, draw: 2, resigned: 0 },
+      topWeaknessTags: [],
+    });
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"nice play"}' } }],
+    });
+
+    const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+    const body = await res.json();
+    expect(body).toMatchObject({ status: "ready", proActive: true, historyMeta: { gamesPlayed: 12 } });
+  });
+
+  it("includes historyMeta with gamesPlayed=0 when aggregateHistory returns null", async () => {
+    setupHappyPathRedis();
+    aggregateHistoryMock.mockResolvedValue(null);
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"nice play"}' } }],
+    });
+
+    const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+    const body = await res.json();
+    expect(body.historyMeta).toEqual({ gamesPlayed: 0 });
+  });
+
+  it("falls back gracefully when backfill throws — analysis still returns 200", async () => {
+    setupHappyPathRedis();
+    backfillMock.mockRejectedValue(new Error("supabase blew up"));
+    aggregateHistoryMock.mockResolvedValue(null);
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"ok"}' } }],
+    });
+
+    const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(200);
+    const body = await res.json();
+    expect(body.historyMeta).toEqual({ gamesPlayed: 0 });
+  });
+});
+
+describe("POST /api/coach/analyze — Free read path (regression guard)", () => {
+  beforeEach(() => {
+    resetSiblingMocks();
+    isProActiveMock.mockResolvedValue({ active: false });
+  });
+
+  it("does NOT call backfill or aggregateHistory for free users", async () => {
+    setupHappyPathRedis();
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"nice play"}' } }],
+    });
+
+    const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(200);
+    expect(backfillMock).not.toHaveBeenCalled();
+    expect(aggregateHistoryMock).not.toHaveBeenCalled();
+  });
+
+  it("free response does NOT include historyMeta or proActive", async () => {
+    setupHappyPathRedis();
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"nice play"}' } }],
+    });
+
+    const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+    const body = await res.json();
+    expect(body.historyMeta).toBeUndefined();
+    expect(body.proActive).toBeUndefined();
   });
 });
