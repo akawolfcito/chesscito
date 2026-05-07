@@ -6,11 +6,12 @@ import { useAccount, useChainId, useReadContracts } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { HubScaffold } from "@/components/hub/hub-scaffold";
+import { BadgeSheet } from "@/components/play-hub/badge-sheet";
 import { ProSheet } from "@/components/pro/pro-sheet";
+import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { badgesAbi } from "@/lib/contracts/badges";
 import { getBadgesAddress } from "@/lib/contracts/chains";
 import { HUD_COPY } from "@/lib/content/editorial";
-import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { track } from "@/lib/telemetry";
@@ -38,28 +39,13 @@ const PROGRESS_STORAGE_PREFIX = "chesscito:progress:";
 const SHIELDS_STORAGE_KEY = "chesscito:shields";
 const MS_PER_DAY = 86_400_000;
 
-/** Routes for transition-period delegations to the legacy hub. The
- *  scaffold owns the menu surface; the remaining heavy on-chain
- *  mutation flows (claim badge, shop purchase) still live on
- *  `<PlayHubRoot>`. PlayHubRoot reads `?action` + `?piece` from the URL
- *  and seeds its initial state. PRO sheet was ported in-place 2026-05-07
- *  and no longer round-trips through legacy. */
+/** Routes for transition-period delegations to the legacy hub. Only
+ *  the shop flow remains on `<PlayHubRoot>`; PRO + Badges were ported
+ *  in-place 2026-05-07 and `/trophies` is a real route. PlayHubRoot
+ *  reads `?action` from the URL and seeds the matching sheet open. */
 const LEGACY_HUB = "/hub?legacy=1";
-function legacyHubFor(
-  action: "shop" | "badges" | "trophies",
-  piece?: PieceId,
-) {
-  // Defensive — only attach the piece query when the piece has at least
-  // one shippable exercise. Pieces without exercises (queen/king today)
-  // would crash the legacy board if it tried to read EXERCISES[piece][0].
-  // The page.tsx validator filters again at the boundary, but dropping
-  // the query here makes the scaffold side correct on its own.
-  const includePiece =
-    piece !== undefined &&
-    Array.isArray((EXERCISES as Record<string, unknown[] | undefined>)[piece]) &&
-    ((EXERCISES as Record<string, unknown[] | undefined>)[piece]?.length ?? 0) > 0;
-  const pieceQuery = includePiece ? `&piece=${piece}` : "";
-  return `${LEGACY_HUB}&action=${action}${pieceQuery}`;
+function legacyHubFor(action: "shop") {
+  return `${LEGACY_HUB}&action=${action}`;
 }
 
 const PREMIUM_KICKER = "Training Pass";
@@ -163,6 +149,15 @@ export function HubScaffoldClient() {
   const proSheet = useProSheetState();
   const proStatus = proSheet.proStatus;
 
+  // BadgeSheet orchestration — claim flow + on-chain reads. Reward tile
+  // taps open this sheet in-place (port 2026-05-07) instead of bouncing
+  // through `?legacy=1&action=badges`. Solves audit B7 by giving every
+  // piece tap a real destination (the sheet itself) rather than the
+  // collapsed legacy view that dropped the piece query for queen/king.
+  const badgeSheet = useBadgeSheetState({
+    onNavigateToTrophies: () => router.push("/trophies"),
+  });
+
   const { data: badgesData } = useReadContracts({
     contracts: BADGE_LEVEL_IDS.map((lid) => ({
       address: badgesAddress ?? undefined,
@@ -217,14 +212,15 @@ export function HubScaffoldClient() {
       ...tile,
       onTap: () => {
         track("hub_reward_tile_tap", { piece: tile.id, state: tile.state });
-        // `RewardTile.id` is a union including "victory" for forward-compat
-        // (REWARD_COPY exposes it), but `deriveRewardTiles` only emits
-        // PieceId rows today — narrowed here so `legacyHubFor` keeps its
-        // tighter `PieceId` signature.
-        router.push(legacyHubFor("badges", tile.id as PieceId));
+        // In-place BadgeSheet (port 2026-05-07). Sheet renders all six
+        // piece cards with per-piece state, so every tap lands on a
+        // meaningful surface — the legacy round-trip dropped the piece
+        // query for queen/king (no exercises) and bounced to a generic
+        // view that felt identical to the rook/bishop tap (audit B7).
+        badgeSheet.openSheet();
       },
     }));
-  }, [badgesClaimed, starsPerPiece, router]);
+  }, [badgesClaimed, starsPerPiece, badgeSheet]);
 
   // The shields chip is the home for shop conversion (the user's primary
   // monetization surface). Always visible whether the count is 0 or N —
@@ -292,6 +288,7 @@ export function HubScaffoldClient() {
         }}
       />
       <ProSheet {...proSheet.sheetProps} />
+      <BadgeSheet {...badgeSheet.sheetProps} />
     </>
   );
 }

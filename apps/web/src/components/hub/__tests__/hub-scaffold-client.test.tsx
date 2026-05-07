@@ -71,15 +71,22 @@ vi.mock("@/lib/pro/purchase", () => ({
 
 vi.mock("@/lib/contracts/chains", () => ({
   // Stable, non-null address keeps `useReadContracts` "enabled" branch
-  // exercised when a wallet is provided. PRO sheet hook also calls
-  // getShopAddress + getConfiguredChainId, so we stub them too.
+  // exercised when a wallet is provided. PRO + Badge sheet hooks pull
+  // additional helpers from this module, so all four are stubbed.
   getBadgesAddress: () => "0xBadgesContractAddress00000000000000000000",
   getShopAddress: () => "0xShopContractAddress00000000000000000000aa",
   getConfiguredChainId: () => 42220,
+  getMiniPayFeeCurrency: () => undefined,
 }));
 
 vi.mock("@/lib/contracts/badges", () => ({
   badgesAbi: [] as const,
+}));
+
+vi.mock("@/lib/contracts/scoreboard", () => ({
+  // Badge sheet hook reads getLevelId(piece) when claiming. The hub
+  // scaffold tests never trigger a claim, but the import must resolve.
+  getLevelId: () => 0n,
 }));
 
 import { HubScaffoldClient } from "../hub-scaffold-client";
@@ -253,17 +260,15 @@ describe("HubScaffoldClient — tap handlers", () => {
     expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=shop");
   });
 
-  it("drops the piece query for tiles whose piece has no shippable exercises (queen)", async () => {
+  it("opens BadgeSheet in-place for queen (port 2026-05-07)", async () => {
     const user = userEvent.setup();
-    // Make queen "claimable" — but queen has no exercises (EXERCISES.queen=[]),
-    // so the deep link must NOT carry &piece=queen lest the legacy board
-    // crash on mount.
+    // Make queen "claimable" — even though queen has no exercises, the
+    // BadgeSheet now renders all six piece cards so the tile lands on a
+    // meaningful surface (audit B7). No more piece-query collapse trap.
     localStorage.setItem(
       "chesscito:progress:queen",
       JSON.stringify({ piece: "queen", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
     );
-    // Master rook + bishop on-chain so queen's prerequisite chain is
-    // satisfied (otherwise the queen tile would render as `locked`).
     useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     setBadges([true, true, false, false, false, false]);
     render(<HubScaffoldClient />);
@@ -272,26 +277,26 @@ describe("HubScaffoldClient — tap handlers", () => {
       await screen.findByRole("button", { name: /claim queen mastery badge/i }),
     );
 
-    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=badges");
+    // Sheet opens in-place via Radix portal — no router.push to legacy.
+    expect(pushMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("legacy=1&action=badges"),
+    );
   });
 
-  it("routes to /hub?legacy=1&piece={id}&action=badges when a reward tile is tapped", async () => {
+  it("opens BadgeSheet in-place when a reward tile is tapped (no legacy bounce)", async () => {
     const user = userEvent.setup();
-    // Bring rook to "claimable" state — full stars threshold met, badge
-    // not yet claimed on-chain.
     localStorage.setItem(
       "chesscito:progress:rook",
       JSON.stringify({ piece: "rook", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
     );
     render(<HubScaffoldClient />);
 
-    // RewardColumn renders tiles as buttons with REWARD_COPY aria.
     await user.click(
       await screen.findByRole("button", { name: /claim rook mastery badge/i }),
     );
 
-    expect(pushMock).toHaveBeenCalledWith(
-      "/hub?legacy=1&action=badges&piece=rook",
+    expect(pushMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("legacy=1&action=badges"),
     );
   });
 });
