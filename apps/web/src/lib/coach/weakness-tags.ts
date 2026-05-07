@@ -1,4 +1,4 @@
-import type { CoachGameResult, Mistake, WeaknessTag } from "./types.js";
+import type { CoachGameResult, Mistake, WeaknessTag } from "./types";
 
 const KEYWORD_RULES: ReadonlyArray<{ tag: WeaknessTag; pattern: RegExp }> = [
   {

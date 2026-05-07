@@ -1,13 +1,13 @@
-import { extractWeaknessTags } from "./weakness-tags.js";
-import { toCoachGameResult } from "./types.js";
+import { extractWeaknessTags } from "./weakness-tags";
+import { toCoachGameResult } from "./types";
 import type {
   CoachAnalysisRow,
   CoachGameResult,
   CoachResponse,
   Mistake,
   WeaknessTag,
-} from "./types.js";
-import { getSupabaseServer } from "../supabase/server.js";
+} from "./types";
+import { getSupabaseServer } from "../supabase/server";
 
 const ROW_SOFT_CAP = 200;
 

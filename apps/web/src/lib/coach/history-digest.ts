@@ -1,5 +1,5 @@
-import type { CoachAnalysisRow, HistoryDigest, WeaknessTag } from "./types.js";
-import { getSupabaseServer } from "../supabase/server.js";
+import type { CoachAnalysisRow, HistoryDigest, WeaknessTag } from "./types";
+import { getSupabaseServer } from "../supabase/server";
 
 const HISTORY_DIGEST_DEPTH = 20;
 

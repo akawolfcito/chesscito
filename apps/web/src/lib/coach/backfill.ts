@@ -3,11 +3,11 @@ import type {
   CoachAnalysisRecord,
   CoachAnalysisRow,
   GameRecord,
-} from "./types.js";
-import { extractWeaknessTagsSafe } from "./persistence.js";
-import { REDIS_KEYS } from "./redis-keys.js";
-import { getSupabaseServer } from "../supabase/server.js";
-import { hashWallet, type Logger } from "../server/logger.js";
+} from "./types";
+import { extractWeaknessTagsSafe } from "./persistence";
+import { REDIS_KEYS } from "./redis-keys";
+import { getSupabaseServer } from "../supabase/server";
+import { hashWallet, type Logger } from "../server/logger";
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const BACKFILL_LOCK_TTL_S = 60;
