@@ -293,6 +293,11 @@
 
     /* ── E3 Display Font ── */
     --font-game-display: var(--font-fredoka), "Fredoka One", sans-serif;
+    /* Bold blocky face used for sheet titles + button actions across the
+     *  candy surface. Loaded via `next/font/google` (Rowdies) in
+     *  `app/layout.tsx`. Kept distinct from `--font-game-display` so we
+     *  can tune body-display vs. action separately if needed. */
+    --font-game-action: var(--font-rowdies), "Rowdies", system-ui, sans-serif;
     --intro-bg-mobile: image-set(url("/art/bg-splash-chesscito.avif") type("image/avif"),
         url("/art/bg-splash-chesscito.webp") type("image/webp"),
         url("/art/bg-splash-chesscito.png") type("image/png"));
@@ -406,7 +411,7 @@
   }
 
   .fantasy-title {
-    font-family: var(--font-game-display);
+    font-family: var(--font-game-action);
     letter-spacing: 0.01em;
     text-shadow: var(--text-shadow-display);
   }

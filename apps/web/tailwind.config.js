@@ -53,6 +53,13 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      fontFamily: {
+        // Bold display face for titles + button actions across the candy
+        // surface (sheets, CTAs). Loaded via `next/font/google` in
+        // `app/layout.tsx`; the CSS variable falls back to the bare
+        // family name if the next-font preload is bypassed.
+        action: ["var(--font-rowdies)", "Rowdies", "system-ui", "sans-serif"],
+      },
       fontSize: {
         nano: ['0.5rem', { lineHeight: '0.75rem' }],
       },

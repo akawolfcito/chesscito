@@ -20,19 +20,21 @@ const buttonVariants = cva(
         // Warm candy-solid brown with cream text — the single "primary
         // action" color across every candy-light modal (PLAY, Enter
         // Arena, Submit Score, Play Again, Accept Challenge…).
+        // `font-action` (Rowdies) lifts every CTA into the same display
+        // voice as the sheet titles.
         'game-primary':
-          'rounded-2xl bg-[rgb(120,65,5)] font-bold text-[rgb(255,240,180)] shadow-[0_4px_12px_rgba(120,65,5,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] hover:brightness-110 active:scale-[0.97]',
+          'rounded-2xl bg-[rgb(120,65,5)] font-action font-bold text-[rgb(255,240,180)] shadow-[0_4px_12px_rgba(120,65,5,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] hover:brightness-110 active:scale-[0.97]',
         // Shorter warm-solid used for tighter chips/CTA rows.
         'game-solid':
-          'rounded-xl bg-[rgb(120,65,5)] font-semibold text-[rgb(255,240,180)] shadow-[0_3px_8px_rgba(120,65,5,0.28),inset_0_1px_0_rgba(255,255,255,0.22)] hover:brightness-110 active:scale-[0.97]',
+          'rounded-xl bg-[rgb(120,65,5)] font-action font-bold text-[rgb(255,240,180)] shadow-[0_3px_8px_rgba(120,65,5,0.28),inset_0_1px_0_rgba(255,255,255,0.22)] hover:brightness-110 active:scale-[0.97]',
         // Translucent white glass with warm-brown text — secondary
         // actions that sit below the primary (Play Again when there is
         // also a Claim, Back to Hub ghost, etc.).
         'game-ghost':
-          'rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15 font-semibold text-[rgba(110,65,15,0.90)] [text-shadow:0_1px_0_rgba(255,245,215,0.55)] backdrop-blur-[6px] hover:bg-white/25 active:scale-[0.97]',
+          'rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15 font-action font-bold text-[rgba(110,65,15,0.90)] [text-shadow:0_1px_0_rgba(255,245,215,0.55)] backdrop-blur-[6px] hover:bg-white/25 active:scale-[0.97]',
         // Warm-brown subtle link-style text for tertiary actions.
         'game-text':
-          'rounded-xl font-medium text-[rgba(110,65,15,0.70)] hover:text-[rgba(110,65,15,0.95)] active:scale-[0.97]',
+          'rounded-xl font-action font-medium text-[rgba(110,65,15,0.70)] hover:text-[rgba(110,65,15,0.95)] active:scale-[0.97]',
       },
       size: {
         default: 'h-10 px-4 py-2',

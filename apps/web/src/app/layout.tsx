@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Fredoka } from 'next/font/google';
+import { Fredoka, Rowdies } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
@@ -9,6 +9,16 @@ const fredoka = Fredoka({
   subsets: ['latin'],
   weight: '700',
   variable: '--font-fredoka',
+  display: 'swap',
+});
+
+// Display face for titles + button actions. Self-hosted by Next so we
+// avoid the `<link>`-to-googleapis hop and the FOUT it incurs. Three
+// weights cover label hierarchy (300 light, 400 default, 700 bold).
+const rowdies = Rowdies({
+  subsets: ['latin'],
+  weight: ['300', '400', '700'],
+  variable: '--font-rowdies',
   display: 'swap',
 });
 
@@ -50,7 +60,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`dark ${fredoka.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`dark ${fredoka.variable} ${rowdies.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         {/* The previous wrapper hard-clamped every route to
             --app-max-width (390 px), which made sense when every
