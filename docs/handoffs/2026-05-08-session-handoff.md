@@ -9,6 +9,7 @@
 - `8c64935` `feat(hub)`: port BadgeSheet directly into scaffold — closes audit **B7** (queen/king tiles no longer collapse)
 - `54c6d28` `docs(handoff)`: 2026-05-08 session record under `docs/handoffs/`
 - `5a84df8` `feat(hub)`: swap Play CTA backplate to candy-style `principalbutton` — closes audit **B6**
+- `b31c067` `feat(badges)`: inline success banner after claim on scaffold (celebration moment that legacy gets via ResultOverlay)
 
 ## Current State
 - **Branch**: `main`
@@ -17,7 +18,7 @@
 
 ## Next Tasks
 1. **ShopSheet port to scaffold** — heavy (~3-4h). Extract `useShopSheetState()` covering catalog read, `<PurchaseConfirmSheet>`, approve+buyItem, pending shield credit, and `<ResultOverlay>` for shop variant. Last sheet still bouncing through `?legacy=1`.
-2. **BadgeSheet ResultOverlay polish** — post-claim celebration + next-piece unlock event. Currently the sheet refetches on success but no visual confirmation lands; PlayHubRoot's ResultOverlay covers it on legacy. ~1h.
+2. **Next-piece unlock celebration on claim** — `useBadgeSheetState` doesn't fire the legacy `unlockedPiece` modal yet. Lower priority; the inline banner already lands a celebration. ~30 min.
 3. **Delete `?legacy=1` branch + `<PlayHubRoot>` (1612 LOC)** — only after #1 lands. Cleanup pass.
 
 ## Blockers
