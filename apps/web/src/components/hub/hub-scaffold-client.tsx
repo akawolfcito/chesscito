@@ -247,7 +247,9 @@ export function HubScaffoldClient() {
       playAriaLabel={PLAY_ARIA_LABEL}
       onTrophyTap={() => {
         track("hub_trophy_tap", { count: trophies });
-        router.push(legacyHubFor("trophies"));
+        // Direct route to /trophies instead of legacy round-trip.
+        // Same TrophiesBody renders, no bounce loop, deep-linkable.
+        router.push("/trophies");
       }}
       onProTap={() => {
         track("hub_pro_chip_tap", { pro_active: pro.active });

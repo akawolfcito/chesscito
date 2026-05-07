@@ -163,15 +163,14 @@ describe("HubScaffoldClient — PRO chip", () => {
 });
 
 describe("HubScaffoldClient — tap handlers", () => {
-  it("routes to /hub?legacy=1&action=trophies when the trophy chip is tapped", async () => {
+  it("routes to /trophies directly when the trophy chip is tapped (port 2026-05-07)", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
     await user.click(screen.getByLabelText("Trophies: 0"));
 
-    // The standalone /trophies route was removed in commit 9c907f6 —
-    // <TrophiesSheet> is now the only path. Deep-link via legacy.
-    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=trophies");
+    // /trophies route restored 2026-05-07 — direct nav, no bounce.
+    expect(pushMock).toHaveBeenCalledWith("/trophies");
   });
 
   it("routes to /hub?legacy=1&action=pro when the PRO chip (active) is tapped", async () => {
