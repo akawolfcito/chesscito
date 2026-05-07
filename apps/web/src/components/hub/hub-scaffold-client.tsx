@@ -272,12 +272,14 @@ export function HubScaffoldClient() {
       }}
       onPlayPress={() => {
         track("hub_play_tap");
-        // Direct route to /arena (which now defaults to the scaffold
-        // selector via `af160bb`). Previously this pushed to the legacy
-        // hub which forced the user to tap a second control before
-        // reaching Arena — the round-trip is what the smoke test
-        // perceived as "Play button broken".
-        router.push("/arena");
+        // Direct route to /arena WITH `fresh=1` so the auto-launch
+        // skips the localStorage last-difficulty shortcut and renders
+        // the selector instead. User feedback 2026-05-07: tapping
+        // hub Play and immediately seeing a board "se siente raro" —
+        // they expected to pick difficulty/color first. The
+        // `chesscito:arena-last-difficulty` returning-user shortcut
+        // still applies on Play Again inside Arena.
+        router.push("/arena?fresh=1");
       }}
     />
   );

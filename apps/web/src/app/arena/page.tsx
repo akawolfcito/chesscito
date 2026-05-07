@@ -821,6 +821,8 @@ function ArenaPageInner() {
   }, [game.status, game.moveCount, game.elapsedMs, game.difficulty, game.playerColor, isPlayerWin]);
 
   // Auto-launch on mount. Priority order:
+  //   0. `?fresh=1` query param — caller (hub Play) explicitly wants
+  //      the selector; skip both shortcuts and render it.
   //   1. sessionStorage "chesscito:arena-intent" — just landed from
   //      the dock ArenaEntrySheet; honor its difficulty+color picks.
   //   2. localStorage LAST_DIFFICULTY_KEY — returning user, reuse
@@ -842,6 +844,12 @@ function ArenaPageInner() {
     if (hasSavedGame) return;
 
     autoStartAttemptedRef.current = true;
+
+    // Priority 0: fresh-entry intent from hub Play CTA. Render the
+    // selector even if a last-difficulty is cached.
+    if (searchParams?.get("fresh") === "1") {
+      return;
+    }
 
     // Priority 1: dock sheet handed us an explicit pick via sessionStorage.
     try {

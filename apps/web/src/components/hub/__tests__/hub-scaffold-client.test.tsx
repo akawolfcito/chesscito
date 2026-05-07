@@ -200,13 +200,17 @@ describe("HubScaffoldClient — tap handlers", () => {
     expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=pro");
   });
 
-  it("routes to /arena directly when the primary PLAY CTA fires (B5 fix 2026-05-07)", async () => {
+  it("routes to /arena?fresh=1 when the primary PLAY CTA fires (forces selector render)", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
     await user.click(screen.getByLabelText("Start training"));
 
-    expect(pushMock).toHaveBeenCalledWith("/arena");
+    // ?fresh=1 tells /arena to skip the localStorage last-difficulty
+    // auto-launch and render the selector, matching what the user
+    // expects when tapping a "PLAY" CTA from a hub (per smoke
+    // 2026-05-07).
+    expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
   });
 
   it("routes to /hub?legacy=1&action=shop when the shields chip is tapped", async () => {
