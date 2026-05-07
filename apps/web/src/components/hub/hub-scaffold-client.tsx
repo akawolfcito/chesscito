@@ -253,6 +253,10 @@ export function HubScaffoldClient() {
         track("hub_pro_chip_tap", { pro_active: pro.active });
         router.push(legacyHubFor("pro"));
       }}
+      onCoachTap={() => {
+        track("hub_coach_chip_tap", { pro_active: pro.active });
+        router.push("/coach/history");
+      }}
       onPremiumTap={() => {
         track("hub_premium_slot_tap", { pro_active: pro.active });
         router.push(legacyHubFor("pro"));

@@ -1565,6 +1565,14 @@ export const HUD_COPY = {
   connectLabel: "Connect",
   connectAriaLabel: "Connect wallet to see your stats",
 
+  /** Coach chip (top row, always visible). Surfaces the Coach session
+   *  history page so PRO subscribers (and free users with seeded
+   *  analyses) can jump to past insights without finishing another
+   *  match first. Closes the discoverability gap from the
+   *  2026-05-07 hub audit (D1). */
+  coachLabel: "Coach",
+  coachAriaLabel: "Open Coach session history",
+
   /** Streak chip (secondary row, conditional). */
   streakLabel: "Streak",
   streakFormat: (days: number) =>

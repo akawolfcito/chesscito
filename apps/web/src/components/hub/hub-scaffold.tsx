@@ -41,6 +41,8 @@ type HubScaffoldProps = {
   /** Tap handlers — caller wires navigation when the flag flips real. */
   onTrophyTap?: () => void;
   onProTap?: () => void;
+  /** Coach chip (top row, always visible) — opens session history. */
+  onCoachTap?: () => void;
   onPremiumTap?: () => void;
   onPlayPress?: () => void;
   /** Secondary-row chip taps. The shields chip is the home for shop
@@ -89,6 +91,7 @@ export function HubScaffold({
   playAriaLabel,
   onTrophyTap,
   onProTap,
+  onCoachTap,
   onPremiumTap,
   onPlayPress,
   onStreakTap,
@@ -137,6 +140,16 @@ export function HubScaffold({
               value={proValue}
               ariaLabel={proAriaLabel}
               onClick={onProTap}
+            />,
+          )}
+          {wrap(
+            "HudResourceChip",
+            <HudResourceChip
+              tone="default"
+              icon="coach"
+              value={HUD_COPY.coachLabel}
+              ariaLabel={HUD_COPY.coachAriaLabel}
+              onClick={onCoachTap}
             />,
           )}
           {!isWalletConnected && onConnectTap
