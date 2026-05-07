@@ -1,11 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CoachHistoryDeletePanel } from "@/components/coach/coach-history-delete-panel";
+import { CoachPanel } from "@/components/coach/coach-panel";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { COACH_COPY } from "@/lib/content/editorial";
+import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
+import type { CoachAnalysisRecord, CoachResponse, GameRecord } from "@/lib/coach/types";
+
+type HistoryEntry = CoachAnalysisRecord & { game: GameRecord };
+
+type SelectedFullEntry = {
+  response: Extract<CoachResponse, { kind: "full" }>;
+  game: GameRecord;
+};
 
 /**
  * Coach session history page. Mounts the existing <CoachHistory> list
@@ -48,6 +60,8 @@ function PageHeader() {
 
 export default function CoachHistoryPage() {
   const { address } = useAccount();
+  const router = useRouter();
+  const [selected, setSelected] = useState<SelectedFullEntry | null>(null);
 
   if (!address) {
     return (
@@ -60,21 +74,42 @@ export default function CoachHistoryPage() {
     );
   }
 
+  function handleSelect(entry: HistoryEntry) {
+    if (entry.response.kind !== "full") return;
+    setSelected({ response: entry.response, game: entry.game });
+  }
+
   return (
     <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width,390px)] flex-col px-4 py-6">
       <PageHeader />
       <CoachHistory
         walletAddress={address}
         credits={0}
-        onSelectEntry={() => {
-          /* Tap → no-op on this page for now. Re-rendering the analysis
-             requires the arena-page state machine (CoachPanel mounts
-             inside the post-game modal flow). Cleaner port lands in a
-             follow-up; until then the entries are read-only previews
-             and tapping doesn't trap the user. */
-        }}
+        onSelectEntry={handleSelect}
       />
       <CoachHistoryDeletePanel />
+
+      {selected && (
+        <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto candy-modal-scrim animate-in fade-in duration-300 px-4 py-8">
+          <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+            <CandyGlassShell
+              title={COACH_COPY.coachAnalysisTitle}
+              onClose={() => setSelected(null)}
+              closeLabel={ARENA_COPY.backToHub}
+            >
+              <CoachPanel
+                response={selected.response}
+                difficulty={selected.game.difficulty}
+                totalMoves={selected.game.totalMoves}
+                elapsedMs={selected.game.elapsedMs}
+                credits={0}
+                onPlayAgain={() => router.push("/arena?fresh=1")}
+                onBackToHub={() => setSelected(null)}
+              />
+            </CandyGlassShell>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
