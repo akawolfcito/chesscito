@@ -6,12 +6,13 @@ import { useAccount, useChainId, useReadContracts } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { HubScaffold } from "@/components/hub/hub-scaffold";
+import { ProSheet } from "@/components/pro/pro-sheet";
 import { badgesAbi } from "@/lib/contracts/badges";
 import { getBadgesAddress } from "@/lib/contracts/chains";
 import { HUD_COPY } from "@/lib/content/editorial";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
-import { useProStatus } from "@/lib/pro/use-pro-status";
+import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { track } from "@/lib/telemetry";
 import {
   REWARD_TILE_ORDER,
@@ -38,13 +39,14 @@ const SHIELDS_STORAGE_KEY = "chesscito:shields";
 const MS_PER_DAY = 86_400_000;
 
 /** Routes for transition-period delegations to the legacy hub. The
- *  scaffold owns the menu surface; the heavy on-chain mutation flows
- *  (claim badge, mint, shop purchase, PRO sheet) still live on
+ *  scaffold owns the menu surface; the remaining heavy on-chain
+ *  mutation flows (claim badge, shop purchase) still live on
  *  `<PlayHubRoot>`. PlayHubRoot reads `?action` + `?piece` from the URL
- *  and seeds its initial state. */
+ *  and seeds its initial state. PRO sheet was ported in-place 2026-05-07
+ *  and no longer round-trips through legacy. */
 const LEGACY_HUB = "/hub?legacy=1";
 function legacyHubFor(
-  action: "shop" | "pro" | "badges" | "trophies",
+  action: "shop" | "badges" | "trophies",
   piece?: PieceId,
 ) {
   // Defensive — only attach the piece query when the piece has at least
@@ -156,7 +158,10 @@ export function HubScaffoldClient() {
   // `<WalletProvider>`). Optional-chained call covers that race.
   const { openConnectModal } = useConnectModal();
 
-  const { status: proStatus } = useProStatus(address);
+  // PRO sheet orchestration. Owns its own status fetch internally so
+  // we don't double-fetch /api/pro/status from this surface.
+  const proSheet = useProSheetState();
+  const proStatus = proSheet.proStatus;
 
   const { data: badgesData } = useReadContracts({
     contracts: BADGE_LEVEL_IDS.map((lid) => ({
@@ -227,60 +232,66 @@ export function HubScaffoldClient() {
   const shieldsValue = shieldCount;
 
   return (
-    <HubScaffold
-      trophies={trophies}
-      pro={pro}
-      shields={shieldsValue}
-      isWalletConnected={isConnected}
-      onConnectTap={() => {
-        track("hub_connect_chip_tap");
-        openConnectModal?.();
-      }}
-      rewardTiles={rewardTiles}
-      premiumKicker={PREMIUM_KICKER}
-      premiumInactiveLabel={PREMIUM_INACTIVE_LABEL}
-      premiumProgressFormat={HUD_COPY.starsFormat}
-      premiumAriaLabel={premiumAriaLabel(pro, 0, 0)}
-      premiumUsed={0}
-      premiumTotal={0}
-      playLabel={PLAY_LABEL}
-      playAriaLabel={PLAY_ARIA_LABEL}
-      onTrophyTap={() => {
-        track("hub_trophy_tap", { count: trophies });
-        // Direct route to /trophies instead of legacy round-trip.
-        // Same TrophiesBody renders, no bounce loop, deep-linkable.
-        router.push("/trophies");
-      }}
-      onProTap={() => {
-        track("hub_pro_chip_tap", { pro_active: pro.active });
-        router.push(legacyHubFor("pro"));
-      }}
-      onCoachTap={() => {
-        track("hub_coach_chip_tap", { pro_active: pro.active });
-        router.push("/coach/history");
-      }}
-      onPremiumTap={() => {
-        track("hub_premium_slot_tap", { pro_active: pro.active });
-        router.push(legacyHubFor("pro"));
-      }}
-      onShieldsTap={() => {
-        // KEY conversion event: validates the monetization-as-default
-        // hypothesis behind the scaffold redesign. Shield count carried
-        // as a dim so we can correlate tap rate with depletion state.
-        track("hub_shields_chip_tap", { shield_count: shieldCount });
-        router.push(legacyHubFor("shop"));
-      }}
-      onPlayPress={() => {
-        track("hub_play_tap");
-        // Direct route to /arena WITH `fresh=1` so the auto-launch
-        // skips the localStorage last-difficulty shortcut and renders
-        // the selector instead. User feedback 2026-05-07: tapping
-        // hub Play and immediately seeing a board "se siente raro" —
-        // they expected to pick difficulty/color first. The
-        // `chesscito:arena-last-difficulty` returning-user shortcut
-        // still applies on Play Again inside Arena.
-        router.push("/arena?fresh=1");
-      }}
-    />
+    <>
+      <HubScaffold
+        trophies={trophies}
+        pro={pro}
+        shields={shieldsValue}
+        isWalletConnected={isConnected}
+        onConnectTap={() => {
+          track("hub_connect_chip_tap");
+          openConnectModal?.();
+        }}
+        rewardTiles={rewardTiles}
+        premiumKicker={PREMIUM_KICKER}
+        premiumInactiveLabel={PREMIUM_INACTIVE_LABEL}
+        premiumProgressFormat={HUD_COPY.starsFormat}
+        premiumAriaLabel={premiumAriaLabel(pro, 0, 0)}
+        premiumUsed={0}
+        premiumTotal={0}
+        playLabel={PLAY_LABEL}
+        playAriaLabel={PLAY_ARIA_LABEL}
+        onTrophyTap={() => {
+          track("hub_trophy_tap", { count: trophies });
+          // Direct route to /trophies instead of legacy round-trip.
+          // Same TrophiesBody renders, no bounce loop, deep-linkable.
+          router.push("/trophies");
+        }}
+        onProTap={() => {
+          track("hub_pro_chip_tap", { pro_active: pro.active });
+          // In-place ProSheet (port 2026-05-07). Kills the legacy
+          // ?legacy=1&action=pro round-trip + the B2 nav race that
+          // bounce caused; sheet renders directly above the scaffold.
+          proSheet.openSheet();
+        }}
+        onCoachTap={() => {
+          track("hub_coach_chip_tap", { pro_active: pro.active });
+          router.push("/coach/history");
+        }}
+        onPremiumTap={() => {
+          track("hub_premium_slot_tap", { pro_active: pro.active });
+          proSheet.openSheet();
+        }}
+        onShieldsTap={() => {
+          // KEY conversion event: validates the monetization-as-default
+          // hypothesis behind the scaffold redesign. Shield count carried
+          // as a dim so we can correlate tap rate with depletion state.
+          track("hub_shields_chip_tap", { shield_count: shieldCount });
+          router.push(legacyHubFor("shop"));
+        }}
+        onPlayPress={() => {
+          track("hub_play_tap");
+          // Direct route to /arena WITH `fresh=1` so the auto-launch
+          // skips the localStorage last-difficulty shortcut and renders
+          // the selector instead. User feedback 2026-05-07: tapping
+          // hub Play and immediately seeing a board "se siente raro" —
+          // they expected to pick difficulty/color first. The
+          // `chesscito:arena-last-difficulty` returning-user shortcut
+          // still applies on Play Again inside Arena.
+          router.push("/arena?fresh=1");
+        }}
+      />
+      <ProSheet {...proSheet.sheetProps} />
+    </>
   );
 }

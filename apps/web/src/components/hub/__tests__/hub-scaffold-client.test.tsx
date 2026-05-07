@@ -35,12 +35,19 @@ const useProStatusMock = vi.hoisted(() =>
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
+  usePathname: () => "/hub",
 }));
 
 vi.mock("wagmi", () => ({
   useAccount: () => useAccountMock(),
   useChainId: () => useChainIdMock(),
   useReadContracts: () => useReadContractsMock(),
+  // The PRO sheet hook fans out to several wagmi hooks; stub them here
+  // so the scaffold can mount without errors. The actual behavior is
+  // covered by `use-pro-sheet-state.test.tsx`.
+  usePublicClient: () => ({}),
+  useWriteContract: () => ({ writeContractAsync: vi.fn() }),
+  useSwitchChain: () => ({ switchChain: vi.fn() }),
 }));
 
 vi.mock("@rainbow-me/rainbowkit", () => ({
@@ -55,10 +62,20 @@ vi.mock("@/lib/pro/use-pro-status", () => ({
   useProStatus: () => useProStatusMock(),
 }));
 
+// `executeProPurchase` would otherwise pull viem + the shop ABI through
+// the live module graph. The hook orchestrates around it; tap-handler
+// tests never trigger a purchase, so a no-op stub is sufficient.
+vi.mock("@/lib/pro/purchase", () => ({
+  executeProPurchase: vi.fn(),
+}));
+
 vi.mock("@/lib/contracts/chains", () => ({
   // Stable, non-null address keeps `useReadContracts` "enabled" branch
-  // exercised when a wallet is provided.
+  // exercised when a wallet is provided. PRO sheet hook also calls
+  // getShopAddress + getConfiguredChainId, so we stub them too.
   getBadgesAddress: () => "0xBadgesContractAddress00000000000000000000",
+  getShopAddress: () => "0xShopContractAddress00000000000000000000aa",
+  getConfiguredChainId: () => 42220,
 }));
 
 vi.mock("@/lib/contracts/badges", () => ({
@@ -173,7 +190,7 @@ describe("HubScaffoldClient — tap handlers", () => {
     expect(pushMock).toHaveBeenCalledWith("/trophies");
   });
 
-  it("routes to /hub?legacy=1&action=pro when the PRO chip (active) is tapped", async () => {
+  it("opens ProSheet in-place (no navigation) when the PRO chip (active) is tapped", async () => {
     const user = userEvent.setup();
     useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     useProStatusMock.mockReturnValue({
@@ -188,16 +205,26 @@ describe("HubScaffoldClient — tap handlers", () => {
       screen.getByLabelText("PRO active, 8 days remaining");
     await user.click(chip);
 
-    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=pro");
+    // Port 2026-05-07: PRO sheet renders directly above the scaffold;
+    // the legacy `?legacy=1&action=pro` round-trip is gone — and with
+    // it the bounce that hid "Play in Arena" behind the legacy dock.
+    // Sheet content is rendered via Radix portal once open.
+    expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("legacy=1&action=pro"),
+    );
   });
 
-  it("routes to /hub?legacy=1&action=pro when the inactive PremiumSlot CTA is tapped", async () => {
+  it("opens ProSheet in-place when the inactive PremiumSlot CTA is tapped", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
     await user.click(screen.getByText("Go PRO"));
 
-    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=pro");
+    expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("legacy=1&action=pro"),
+    );
   });
 
   it("routes to /arena?fresh=1 when the primary PLAY CTA fires (forces selector render)", async () => {
