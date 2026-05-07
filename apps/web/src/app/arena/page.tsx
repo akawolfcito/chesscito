@@ -29,6 +29,7 @@ import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
 import { generateQuickReview } from "@/lib/coach/fallback-engine";
 import { shouldShowPaywall } from "@/lib/coach/paywall-gate";
+import { useProStatus } from "@/lib/pro/use-pro-status";
 import { CoachLoading } from "@/components/coach/coach-loading";
 import { CoachPanel } from "@/components/coach/coach-panel";
 import { CoachFallback } from "@/components/coach/coach-fallback";
@@ -77,6 +78,10 @@ function ArenaPageInner() {
   const arenaScaffoldEnabled = searchParams?.get("arena") === "new";
   const game = useChessGame();
   const { address, isConnected } = useAccount();
+  // Same hook the /hub PRO chip uses — single source of truth across
+  // the app so the chip and the Coach gate never disagree.
+  const { status: proStatusFromHook } = useProStatus(address?.toLowerCase());
+  const proActiveCached = proStatusFromHook?.active === true;
 
   // Scaffold view event — fires once per (selecting + scaffold + not
   // preparing) transition. Mount of the picker, not of the page; legacy
@@ -246,18 +251,25 @@ function ArenaPageInner() {
     const { signal } = controller;
 
     try {
-      // Re-fetch credits AND PRO status in parallel (B1 fix, 2026-05-07).
-      // The server-side /api/coach/analyze already bypasses the credit
-      // check for PRO; the client must mirror that or a paying user
-      // with 0 credits gets dropped onto the credit-purchase paywall.
-      const [creditsRes, proRes] = await Promise.all([
-        fetch(`/api/coach/credits?wallet=${address}`, { signal }),
-        fetch(`/api/pro/status?wallet=${address}`, { signal }),
-      ]);
+      // PRO status: trust the cached `useProStatus()` hook value first
+      // (already populated when the user landed on /arena from /hub).
+      // Fall back to a fresh fetch if the hook hasn't resolved yet —
+      // covers the corner case of a player who lands on /arena directly
+      // and finishes a game faster than the hook can settle.
+      let proActive = proActiveCached;
+      if (!proActive) {
+        try {
+          const proRes = await fetch(`/api/pro/status?wallet=${address}`, { signal });
+          if (proRes.ok) {
+            const proData = await proRes.json();
+            proActive = proData?.active === true;
+          }
+        } catch { /* keep proActive false */ }
+      }
+
+      const creditsRes = await fetch(`/api/coach/credits?wallet=${address}`, { signal });
       const creditsData = await creditsRes.json();
-      const proData = await proRes.json().catch(() => ({ active: false }));
       const credits = creditsData.credits ?? 0;
-      const proActive = proData?.active === true;
       setCoachCredits(credits);
       setCoachProActive(proActive);
 
@@ -323,7 +335,7 @@ function ArenaPageInner() {
       setCoachFallbackResponse(quick);
       setCoachPhase("fallback");
     }
-  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, address]);
+  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, address, proActiveCached]);
 
   const handleAskCoach = useCallback(() => {
     const gameResult = mapArenaResult(game.status, isPlayerWin);
