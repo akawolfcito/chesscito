@@ -726,6 +726,34 @@ export const COACH_COPY = {
   loadingCanLeave: "You can leave — your result will be ready when you return.",
   creditPackSubtitle: (n: number) => `${n} game analyses`,
   unlockFullAnalysis: "Unlock Full Analysis",
+  /* Coach session memory (PR 4 + PR 5). The footer renders inside
+   * <CoachPanel> when proActive && historyMeta are present. */
+  historyFooter: {
+    building: "Building your history…",
+    reviewing: (n: number) => `Reviewing ${n} past ${n === 1 ? "game" : "games"}`,
+    manageLabel: "manage history",
+  },
+  /* Delete-by-self surface in /coach/history. Spec §8.2 / red-team
+   * P0-1 (replay defense), P0-7 (honest UX), P0-8 (recovered-vs-body). */
+  historyDelete: {
+    title: "Delete all your Coach history",
+    body:
+      "Permanently removes every stored analysis from our records. This action cannot be undone. Your active PRO pass is unaffected.",
+    cta: "Delete history",
+    confirmTitle: "Delete all history?",
+    confirmBody:
+      "This will permanently remove all your past Coach analyses and weakness tracking. Your next analysis will start fresh.",
+    confirmAccept: "Yes, delete everything",
+    confirmCancel: "Keep my history",
+    /* Chain + domain bound message format. Keep in lockstep with the
+     * DELETE_MESSAGE template in app/api/coach/history/route.ts. */
+    signMessage: (nonce: string, iso: string) =>
+      `Delete my Coach history\nDomain: chesscito.app\nChain: 42220\nNonce: ${nonce}\nIssued: ${iso}`,
+    /* Neutral wording so we never imply a positive action that may
+     * not have happened (red-team P0-7). */
+    successToast: "All Coach data cleared from our records",
+    errorToast: "Could not delete — please retry",
+  },
 } as const;
 
 export const LEGAL_COPY = {
