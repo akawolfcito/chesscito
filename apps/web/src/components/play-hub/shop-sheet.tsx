@@ -69,7 +69,13 @@ export function ShopSheet({ open, onOpenChange, items, onSelectItem }: ShopSheet
             </SheetDescription>
           </SheetHeader>
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {/* `flex-1 min-h-0 overflow-y-auto` so the catalog grid scrolls
+            inside the sheet on mobile when items + "More soon" promo
+            exceed the visible 100dvh. Without it, the legacy persistent
+            dock at the bottom (~80px) clipped the last card and the
+            user reported "content cut off below". The `pb-[5rem]` on
+            the sheet shell still reserves the dock-clearance gutter. */}
+        <div className="mt-4 flex-1 min-h-0 overflow-y-auto grid grid-cols-1 gap-3 sm:grid-cols-3">
           {items.length === 0 && (
             <p
               className="col-span-full text-center text-sm"
