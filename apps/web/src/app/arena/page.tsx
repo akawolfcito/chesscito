@@ -132,6 +132,8 @@ function ArenaPageInner() {
   const [coachResponse, setCoachResponse] = useState<CoachResponse | null>(null);
   const [coachFallbackResponse, setCoachFallbackResponse] = useState<BasicCoachResponse | null>(null);
   const [coachCredits, setCoachCredits] = useState(0);
+  const [coachProActive, setCoachProActive] = useState<boolean>(false);
+  const [coachHistoryMeta, setCoachHistoryMeta] = useState<{ gamesPlayed: number } | undefined>(undefined);
   const coachAbortRef = useRef<AbortController | null>(null);
 
   // Persist claim success so returning from share keeps context
@@ -282,6 +284,8 @@ function ArenaPageInner() {
 
       if (analyzeData.status === "ready") {
         setCoachResponse(analyzeData.response);
+        setCoachProActive(analyzeData.proActive === true);
+        setCoachHistoryMeta(analyzeData.historyMeta);
         setCoachCredits((c) => Math.max(0, c - 1));
         setCoachPhase("result");
       } else if (analyzeData.jobId) {
@@ -1204,6 +1208,8 @@ function ArenaPageInner() {
                     onPlayAgain={handlePlayAgain}
                     onBackToHub={handleBackToHub}
                     onViewHistory={address ? () => setCoachPhase("history") : undefined}
+                    proActive={coachProActive}
+                    historyMeta={coachHistoryMeta}
                   />
                 </CandyGlassShell>
               </div>
