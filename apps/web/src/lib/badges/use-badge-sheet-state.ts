@@ -242,6 +242,11 @@ export function useBadgeSheetState({
     lastClaimedPiece,
     showNotification: false,
     onNavigateToTrophies,
+    // Scaffold owns the open state. The legacy dock-style trigger
+    // button is suppressed here; otherwise Radix renders an orphan
+    // `<button aria-label="Badges">` next to `<HubScaffold>` in the
+    // layout tree (red-team P0-1).
+    showTrigger: false,
   };
 
   return { open, openSheet, closeSheet, sheetProps };

@@ -7,8 +7,11 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { HubScaffold } from "@/components/hub/hub-scaffold";
 import { BadgeSheet } from "@/components/play-hub/badge-sheet";
+import { PurchaseConfirmSheet } from "@/components/play-hub/purchase-confirm-sheet";
+import { ShopSheet } from "@/components/play-hub/shop-sheet";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
+import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
 import { badgesAbi } from "@/lib/contracts/badges";
 import { getBadgesAddress } from "@/lib/contracts/chains";
 import { HUD_COPY } from "@/lib/content/editorial";
@@ -39,15 +42,6 @@ const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
 const PROGRESS_STORAGE_PREFIX = "chesscito:progress:";
 const SHIELDS_STORAGE_KEY = "chesscito:shields";
 const MS_PER_DAY = 86_400_000;
-
-/** Routes for transition-period delegations to the legacy hub. Only
- *  the shop flow remains on `<PlayHubRoot>`; PRO + Badges were ported
- *  in-place 2026-05-07 and `/trophies` is a real route. PlayHubRoot
- *  reads `?action` from the URL and seeds the matching sheet open. */
-const LEGACY_HUB = "/hub?legacy=1";
-function legacyHubFor(action: "shop") {
-  return `${LEGACY_HUB}&action=${action}`;
-}
 
 const PREMIUM_KICKER = "Training Pass";
 const PREMIUM_INACTIVE_LABEL = "Go PRO";
@@ -158,6 +152,12 @@ export function HubScaffoldClient() {
   const badgeSheet = useBadgeSheetState({
     onNavigateToTrophies: () => router.push("/trophies"),
   });
+
+  // Shop orchestration — same in-place pattern as PRO/Badges. Removes
+  // the last `?legacy=1&action=shop` round-trip. Hook owns catalog +
+  // balances + approve/buy + receipt watcher; scaffold just mounts the
+  // two sheets it returns.
+  const shopSheet = useShopSheetState();
 
   const { data: badgesData } = useReadContracts({
     contracts: BADGE_LEVEL_IDS.map((lid) => ({
@@ -285,7 +285,10 @@ export function HubScaffoldClient() {
           // hypothesis behind the scaffold redesign. Shield count carried
           // as a dim so we can correlate tap rate with depletion state.
           track("hub_shields_chip_tap", { shield_count: shieldCount });
-          router.push(legacyHubFor("shop"));
+          // In-place ShopSheet (port 2026-05-08). Closes the last
+          // `?legacy=1&action=shop` round-trip. PurchaseConfirmSheet
+          // and the success banner are owned by `useShopSheetState`.
+          shopSheet.openSheet();
         }}
         onPlayPress={() => {
           track("hub_play_tap");
@@ -301,6 +304,8 @@ export function HubScaffoldClient() {
       />
       <ProSheet {...proSheet.sheetProps} />
       <BadgeSheet {...badgeSheet.sheetProps} />
+      <ShopSheet {...shopSheet.sheetProps} />
+      <PurchaseConfirmSheet {...shopSheet.confirmProps} />
     </>
   );
 }

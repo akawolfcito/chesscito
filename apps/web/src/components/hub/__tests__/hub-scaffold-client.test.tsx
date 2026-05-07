@@ -42,12 +42,50 @@ vi.mock("wagmi", () => ({
   useAccount: () => useAccountMock(),
   useChainId: () => useChainIdMock(),
   useReadContracts: () => useReadContractsMock(),
-  // The PRO sheet hook fans out to several wagmi hooks; stub them here
-  // so the scaffold can mount without errors. The actual behavior is
-  // covered by `use-pro-sheet-state.test.tsx`.
+  // The PRO + Shop sheet hooks fan out to several wagmi hooks; stub
+  // them here so the scaffold can mount without errors. The actual
+  // behavior is covered by `use-pro-sheet-state.test.tsx` and
+  // `use-shop-sheet-state.test.tsx`.
+  useReadContract: () => ({ data: 0n }),
+  useWaitForTransactionReceipt: () => ({
+    isLoading: false,
+    isSuccess: false,
+  }),
   usePublicClient: () => ({}),
-  useWriteContract: () => ({ writeContractAsync: vi.fn() }),
+  useWriteContract: () => ({ writeContractAsync: vi.fn(), isPending: false }),
   useSwitchChain: () => ({ switchChain: vi.fn() }),
+}));
+
+// `useMiniPay` is consumed by `useShopSheetState` for the CELO sibling
+// branch. Default to "not in MiniPay" — covers ~99% of the test surface.
+vi.mock("@/hooks/use-minipay", () => ({
+  useMiniPay: () => ({ hasProvider: false, isMiniPay: false, isReady: true }),
+}));
+
+// Shop hook also imports `shopAbi` and `shop-catalog` constants; stub the
+// ABI to keep the import graph cheap. The catalog constants resolve from
+// the real module — they're plain bigints with no side effects.
+vi.mock("@/lib/contracts/shop", () => ({ shopAbi: [] as const }));
+
+// Transaction helpers + errors used inside the shop hook's purchase
+// path. Tap-handler tests never reach the purchase flow, so no-ops are
+// fine.
+vi.mock("@/lib/contracts/transaction-helpers", () => ({
+  waitForReceiptWithTimeout: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/errors", () => ({
+  classifyTxError: () => "error",
+  isTransactionTimeout: () => false,
+  isUserCancellation: () => false,
+}));
+
+// Shield-event bus used by the shop hook + scaffold. Both the dispatch
+// and subscribe sides are stubbed; the scaffold's listener never fires
+// in unit tests, so a no-op unsubscribe is sufficient.
+vi.mock("@/lib/shop/shield-events", () => ({
+  dispatchShieldChange: vi.fn(),
+  subscribeToShieldChanges: () => () => {},
 }));
 
 vi.mock("@rainbow-me/rainbowkit", () => ({
@@ -247,7 +285,7 @@ describe("HubScaffoldClient — tap handlers", () => {
     expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
   });
 
-  it("routes to /hub?legacy=1&action=shop when the shields chip is tapped", async () => {
+  it("opens ShopSheet in-place when the shields chip is tapped (port 2026-05-08)", async () => {
     const user = userEvent.setup();
     localStorage.setItem("chesscito:shields", "2");
     render(<HubScaffoldClient />);
@@ -257,7 +295,15 @@ describe("HubScaffoldClient — tap handlers", () => {
       await screen.findByRole("button", { name: /retry shields available/i }),
     );
 
-    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=shop");
+    // No legacy navigation — the sheet is mounted in-place via the
+    // useShopSheetState hook. Mirror the assertion shape the
+    // BadgeSheet/PROSheet ports use elsewhere in this file.
+    expect(pushMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("legacy=1"),
+    );
+    expect(pushMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("action=shop"),
+    );
   });
 
   it("opens BadgeSheet in-place for queen (port 2026-05-07)", async () => {
