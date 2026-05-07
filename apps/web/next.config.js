@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Surface the deploy identity to the client bundle so a small chip
+  // can confirm "the new code is loaded". Vercel auto-populates
+  // VERCEL_GIT_COMMIT_SHA at build time; locally it falls back to
+  // "dev" so the chip is still informative during development.
+  env: {
+    NEXT_PUBLIC_BUILD_SHA: (process.env.VERCEL_GIT_COMMIT_SHA || 'dev').slice(0, 7),
+  },
   async rewrites() {
     return [{ source: '/play-hub', destination: '/' }];
   },
