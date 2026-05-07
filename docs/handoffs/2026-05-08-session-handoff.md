@@ -7,6 +7,8 @@
 - `1871d2a` `fix(shop)`: catalog grid scrolls inside the bottom sheet (`flex-1 min-h-0 overflow-y-auto`)
 - `384ad7d` `feat(badges)`: extract `useBadgeSheetState` hook + 8 unit tests
 - `8c64935` `feat(hub)`: port BadgeSheet directly into scaffold — closes audit **B7** (queen/king tiles no longer collapse)
+- `54c6d28` `docs(handoff)`: 2026-05-08 session record under `docs/handoffs/`
+- `5a84df8` `feat(hub)`: swap Play CTA backplate to candy-style `principalbutton` — closes audit **B6**
 
 ## Current State
 - **Branch**: `main`
@@ -16,8 +18,7 @@
 ## Next Tasks
 1. **ShopSheet port to scaffold** — heavy (~3-4h). Extract `useShopSheetState()` covering catalog read, `<PurchaseConfirmSheet>`, approve+buyItem, pending shield credit, and `<ResultOverlay>` for shop variant. Last sheet still bouncing through `?legacy=1`.
 2. **BadgeSheet ResultOverlay polish** — post-claim celebration + next-piece unlock event. Currently the sheet refetches on success but no visual confirmation lands; PlayHubRoot's ResultOverlay covers it on legacy. ~1h.
-3. **`principalbutton.png` art swap (audit B6)** — replace generic Play CTA art on hub with the asset shipped in `design/new-assets-chesscito/`. ~30 min.
-4. **Delete `?legacy=1` branch + `<PlayHubRoot>` (1612 LOC)** — only after #1 lands. Cleanup pass.
+3. **Delete `?legacy=1` branch + `<PlayHubRoot>` (1612 LOC)** — only after #1 lands. Cleanup pass.
 
 ## Blockers
 - None functional. Note: pre-existing visual baseline diff on `hub-shop-sheet-open` (legacy hub) — unrelated to this session's work; owner needs to either rebaseline or accept the diff.
