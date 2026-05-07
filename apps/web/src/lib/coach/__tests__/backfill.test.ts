@@ -61,9 +61,9 @@ describe("buildBackfillRow", () => {
   });
 
   it("returns a fully-shaped CoachAnalysisRow on the happy path", () => {
-    const row = buildBackfillRow(VALID_WALLET, VALID_GAME_ID, analysis(), game());
-    expect(row).not.toBeNull();
-    expect(row).toMatchObject({
+    const result = buildBackfillRow(VALID_WALLET, VALID_GAME_ID, analysis(), game());
+    expect(result).not.toBeNull();
+    expect(result!.row).toMatchObject({
       wallet: VALID_WALLET,
       game_id: VALID_GAME_ID,
       kind: "full",
@@ -72,18 +72,20 @@ describe("buildBackfillRow", () => {
       total_moves: 30,
       summary_text: "You lost a tight middlegame.",
     });
-    expect(row!.weakness_tags).toEqual(["hanging-piece"]); // matches "hung the bishop"
+    expect(result!.row.weakness_tags).toEqual(["hanging-piece"]); // matches "hung the bishop"
+    expect(result!.tagError).toBeUndefined();
   });
 
   it("sets expires_at to createdAt + 365 days (red-team P1-6)", () => {
-    const row = buildBackfillRow(VALID_WALLET, VALID_GAME_ID, analysis(), game());
-    expect(row!.created_at).toBe(new Date(1714780800000).toISOString());
+    const result = buildBackfillRow(VALID_WALLET, VALID_GAME_ID, analysis(), game());
+    expect(result!.row.created_at).toBe(new Date(1714780800000).toISOString());
     const expectedExpiry = new Date(1714780800000 + 365 * 24 * 60 * 60 * 1000).toISOString();
-    expect(row!.expires_at).toBe(expectedExpiry);
+    expect(result!.row.expires_at).toBe(expectedExpiry);
+    expect(result!.tagError).toBeUndefined();
   });
 
   it("returns row with weakness_tags=[] when no rule matches (P1-7 fail-soft path is exercised by extractWeaknessTagsSafe's own tests)", () => {
-    const row = buildBackfillRow(
+    const result = buildBackfillRow(
       VALID_WALLET,
       VALID_GAME_ID,
       analysis({
@@ -97,7 +99,15 @@ describe("buildBackfillRow", () => {
       }),
       game({ totalMoves: 20, result: "win" }),
     );
-    expect(row!.weakness_tags).toEqual([]);
+    expect(result!.row.weakness_tags).toEqual([]);
+    expect(result!.tagError).toBeUndefined();
+  });
+
+  it("returns { row } without tagError when extraction succeeds (I-1 happy path)", () => {
+    const result = buildBackfillRow(VALID_WALLET, VALID_GAME_ID, analysis(), game());
+    expect(result).not.toBeNull();
+    expect(result!.row).toMatchObject({ kind: "full" });
+    expect(result!.tagError).toBeUndefined();
   });
 });
 
@@ -213,6 +223,46 @@ describe("backfillRedisToSupabase — happy paths", () => {
     expect(mockLogger.info).toHaveBeenCalledWith(
       "coach_backfill_completed",
       expect.objectContaining({ copied: 2, waited: false }),
+    );
+  });
+
+  it("logs coach_backfill_upsert_failed and returns copied=0 when supabase upsert errors (M-6)", async () => {
+    redisMock.set.mockResolvedValue("OK");
+    redisMock.lrange.mockResolvedValue(["g1"]);
+    redisMock.get.mockImplementation((key: string) => {
+      if (key.startsWith("coach:analysis:")) {
+        return Promise.resolve({
+          gameId: "g1",
+          provider: "server",
+          analysisVersion: "1.0.0",
+          createdAt: 1714780800000,
+          response: { kind: "full", summary: "x", mistakes: [], lessons: [], praise: [] },
+        });
+      }
+      if (key.startsWith("coach:game:")) {
+        return Promise.resolve({
+          gameId: "g1",
+          moves: [],
+          result: "win",
+          difficulty: "easy",
+          totalMoves: 20,
+          elapsedMs: 0,
+          timestamp: 1714780800000,
+        });
+      }
+      return Promise.resolve(null);
+    });
+    const chain = buildSupabaseChains({ count: 0, upsertError: { message: "RLS denied" } });
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    const out = await backfillRedisToSupabase(VALID_WALLET, mockLogger);
+    expect(out).toEqual({ copied: 0, waited: false });
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      "coach_backfill_upsert_failed",
+      expect.objectContaining({ message: "RLS denied", wallet_hash: expect.any(String) }),
+    );
+    expect(mockLogger.info).not.toHaveBeenCalledWith(
+      "coach_backfill_completed",
+      expect.anything(),
     );
   });
 

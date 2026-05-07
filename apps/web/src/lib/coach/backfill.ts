@@ -32,26 +32,26 @@ const redis = Redis.fromEnv();
  * "365 days from creation" stays accurate even though the orchestrator
  * is back-dating relative to `now()` (red-team P1-6).
  *
- * Tag derivation is fail-soft — the orchestrator (Task 4) decides whether
- * to log `coach_tag_extraction_failed` based on the discarded `tagError`.
- * The row inserts even on extraction failure (red-team P1-7).
+ * Tag derivation is fail-soft — surfaces `tagError` so the orchestrator
+ * (Task 4) can emit `coach_tag_extraction_failed` (phase: "backfill") per
+ * §7/§12. The row inserts even on extraction failure (red-team P1-7).
  */
 export function buildBackfillRow(
   wallet: string,
   gameId: string,
   analysis: CoachAnalysisRecord | null,
   game: GameRecord | null,
-): CoachAnalysisRow | null {
+): { row: CoachAnalysisRow; tagError?: Error } | null {
   if (!analysis || !game) return null;
   if (analysis.response.kind !== "full") return null;
 
-  const { tags } = extractWeaknessTagsSafe(
+  const { tags, error: tagError } = extractWeaknessTagsSafe(
     analysis.response.mistakes,
     game.totalMoves,
     game.result,
   );
 
-  return {
+  const row: CoachAnalysisRow = {
     wallet,
     game_id: gameId,
     created_at: new Date(analysis.createdAt).toISOString(),
@@ -66,6 +66,8 @@ export function buildBackfillRow(
     praise: analysis.response.praise,
     weakness_tags: tags,
   };
+
+  return tagError ? { row, tagError } : { row };
 }
 
 /**
@@ -139,22 +141,39 @@ export async function backfillRedisToSupabase(
     for (const gameId of gameIds) {
       const analysis = await redis.get(REDIS_KEYS.analysis(wallet, gameId));
       const game = await redis.get(REDIS_KEYS.game(wallet, gameId));
-      const row = buildBackfillRow(
+      const result = buildBackfillRow(
         wallet,
         gameId,
         analysis as CoachAnalysisRecord | null,
         game as GameRecord | null,
       );
-      if (row) rows.push(row);
+      if (!result) continue;
+      if (result.tagError) {
+        log?.warn("coach_tag_extraction_failed", {
+          wallet_hash: hashWallet(wallet),
+          phase: "backfill",
+          err: result.tagError.message,
+        });
+      }
+      rows.push(result.row);
     }
 
     if (rows.length === 0) {
       return { copied: 0, waited: false };
     }
 
-    await supabase
+    const { error: upsertError } = await supabase
       .from("coach_analyses")
       .upsert(rows, { onConflict: "wallet,game_id", ignoreDuplicates: true });
+
+    if (upsertError) {
+      log?.warn("coach_backfill_upsert_failed", {
+        wallet_hash: hashWallet(wallet),
+        code: (upsertError as { code?: string }).code,
+        message: upsertError.message,
+      });
+      return { copied: 0, waited: false };
+    }
 
     log?.info("coach_backfill_completed", {
       wallet_hash: hashWallet(wallet),
