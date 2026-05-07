@@ -2795,9 +2795,13 @@ button.hud-resource-chip:active:not(:disabled) {
       url("/art/redesign/bg/bg-new-hub.png") type("image/png")
     );
   background-size: cover;
-  background-position: center top;
+  background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
+  /* `background-attachment: fixed` was here but broke mobile viewport
+     sizing on iOS Safari: the bg is sized against the *document* (not the
+     visual viewport), which combined with `cover` left only the top strip
+     (sky) visible inside the 390px app container. Default scroll
+     attachment lets the bg fill the element correctly. */
   color: rgba(255, 245, 215, 0.95);
 }
 
