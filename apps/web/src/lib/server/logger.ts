@@ -126,14 +126,28 @@ export function createLogger(scope: { route: string }): Logger {
  * guarantee is contractual — if the salt leaks, treat all in-flight log
  * lines containing wallet hashes as deanonymizable until the salt rotates.
  *
- * Throws when `LOG_SALT` is missing rather than coercing to an empty
- * string — silent fallback would degrade the privacy property without
- * surfacing the misconfiguration.
+ * **Misconfig fallback** (2026-05-07): when `LOG_SALT` is missing the
+ * function used to throw, which propagated through structured-log
+ * helpers and crashed downstream routes (real incident on
+ * /api/coach/analyze when the env var was deployed under the wrong
+ * key). It now returns the literal `"unsalted"` and emits a one-shot
+ * console.warn so the misconfiguration is loud in stderr without
+ * taking down the request handler. The placeholder is intentionally
+ * not a hash so it can't be mistaken for a valid identifier during a
+ * log scan.
  */
+let unsaltedWarnedOnce = false;
+
 export function hashWallet(wallet: string): string {
   const salt = process.env.LOG_SALT;
   if (!salt) {
-    throw new Error("hashWallet: LOG_SALT env is required (server-side secret)");
+    if (!unsaltedWarnedOnce) {
+      unsaltedWarnedOnce = true;
+      console.warn(
+        "[hashWallet] LOG_SALT env is missing — emitting 'unsalted' placeholder for wallet_hash log lines. Set LOG_SALT in the deployment environment to restore the privacy property.",
+      );
+    }
+    return "unsalted";
   }
   return createHash("sha256")
     .update(wallet.toLowerCase() + salt)

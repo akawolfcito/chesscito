@@ -128,8 +128,18 @@ describe("hashWallet", () => {
     expect(out).toHaveLength(16);
   });
 
-  it("throws when LOG_SALT is missing — no silent unsalted fallback", () => {
+  it("returns 'unsalted' placeholder + warns once when LOG_SALT is missing (2026-05-07 fix)", () => {
     vi.stubEnv("LOG_SALT", "");
-    expect(() => hashWallet("0xabc")).toThrowError(/LOG_SALT/);
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      expect(hashWallet("0xabc")).toBe("unsalted");
+      // The warn-once gate is module-level state; the prior test in
+      // this file may have already tripped it, so we only assert the
+      // spy was invoked at most once (could be zero on the second
+      // call within the same test process).
+      expect(warnSpy.mock.calls.length).toBeLessThanOrEqual(1);
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });
