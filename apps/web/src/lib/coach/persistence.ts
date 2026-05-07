@@ -58,7 +58,7 @@ export function extractWeaknessTagsSafe(
 export async function persistAnalysis(
   wallet: string,
   payload: PersistAnalysisPayload,
-): Promise<void> {
+): Promise<{ tagError?: Error }> {
   // Validate result up-front — throws on bad input (loud failure at the seam).
   const result = toCoachGameResult(payload.result);
 
@@ -71,10 +71,17 @@ export async function persistAnalysis(
     throw new Error(`persistAnalysis: wallet must be 0x[0-9a-f]{40} (got ${JSON.stringify(wallet)})`);
   }
 
-  const supabase = getSupabaseServer();
-  if (!supabase) return;
+  // Pure tag derivation — does not depend on Supabase availability.
+  // Computing here means even the no-supabase short-circuit branch can
+  // surface tagError to the caller (the route still wants to log it).
+  const { tags, error: tagError } = extractWeaknessTagsSafe(
+    payload.response.mistakes,
+    payload.totalMoves,
+    result,
+  );
 
-  const { tags } = extractWeaknessTagsSafe(payload.response.mistakes, payload.totalMoves, result);
+  const supabase = getSupabaseServer();
+  if (!supabase) return { tagError: tagError ?? undefined };
 
   const row: CoachAnalysisRow = {
     wallet,
@@ -118,9 +125,9 @@ export async function persistAnalysis(
 
   if (countError) {
     // Fail-soft: cap re-checks on next write.
-    return;
+    return { tagError: tagError ?? undefined };
   }
-  if ((count ?? 0) <= ROW_SOFT_CAP) return;
+  if ((count ?? 0) <= ROW_SOFT_CAP) return { tagError: tagError ?? undefined };
 
   // Delete rows where game_id is NOT in the most recent 200 for this wallet.
   // Uses Postgres-side subquery via `.not('game_id', 'in', '(...)')` —
@@ -134,6 +141,8 @@ export async function persistAnalysis(
   if (delError) {
     // Fail-soft: the cap re-checks on next write. PR 3 will add a
     // `coach_soft_cap_delete_failed` log line at this seam.
-    return;
+    return { tagError: tagError ?? undefined };
   }
+
+  return { tagError: tagError ?? undefined };
 }

@@ -44,7 +44,7 @@ describe("persistAnalysis", () => {
 
   it("returns early without writing when getSupabaseServer is null", async () => {
     vi.mocked(getSupabaseServer).mockReturnValue(null);
-    await expect(persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD)).resolves.toBeUndefined();
+    await expect(persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", VALID_PAYLOAD)).resolves.toEqual({});
   });
 
   it("upserts with onConflict='wallet,game_id' and ignoreDuplicates=true", async () => {
@@ -144,5 +144,30 @@ describe("persistAnalysis — soft cap (200 rows)", () => {
     expect(subquery).toContain("select game_id");
     expect(subquery).toContain("order by created_at desc");
     expect(subquery).toContain("limit 200");
+  });
+});
+
+describe("persistAnalysis — tag extraction error surfacing", () => {
+  beforeEach(() => {
+    vi.mocked(getSupabaseServer).mockReset();
+  });
+
+  it("returns { tagError: undefined } and inserts row with weakness_tags=[] when no rule matches the explanation", async () => {
+    const chain = buildUpsertChain();
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: chain.from } as never);
+    const result = await persistAnalysis("0x1234567890abcdef1234567890abcdef12345678", {
+      ...VALID_PAYLOAD,
+      response: {
+        kind: "full",
+        summary: "Routine.",
+        mistakes: [{ moveNumber: 18, played: "Nf3", better: "Nd2", explanation: "Routine inaccuracy." }],
+        lessons: [],
+        praise: [],
+      },
+    });
+    expect(result).toEqual({}); // tagError absent on happy path
+    const [rows] = chain.upsert.mock.calls[0];
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    expect(row.weakness_tags).toEqual([]);
   });
 });
