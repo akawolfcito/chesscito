@@ -19,20 +19,30 @@ import { ABOUT_LINK_COPY, TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 export default function TrophiesPage() {
   return (
     <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width,390px)] flex-col px-4 py-6">
-      <header className="mb-4 border-b border-[rgba(110,65,15,0.30)] pb-4">
-        <h1
-          className="fantasy-title flex items-center gap-2 text-lg"
-          style={{
-            color: "rgba(110, 65, 15, 0.95)",
-            textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-          }}
+      <header className="mb-4 flex items-start gap-3 border-b border-[rgba(110,65,15,0.30)] pb-4">
+        <Link
+          href="/hub"
+          aria-label="Back to hub"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(110,65,15,0.30)] text-lg font-bold transition-colors hover:bg-[rgba(110,65,15,0.08)]"
+          style={{ color: "rgba(110, 65, 15, 0.85)" }}
         >
-          <CandyIcon name="trophy" className="h-5 w-5" />
-          {TROPHY_VITRINE_COPY.pageTitle}
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-          {TROPHY_VITRINE_COPY.pageDescription}
-        </p>
+          ←
+        </Link>
+        <div className="flex-1">
+          <h1
+            className="fantasy-title flex items-center gap-2 text-lg"
+            style={{
+              color: "rgba(110, 65, 15, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+            }}
+          >
+            <CandyIcon name="trophy" className="h-5 w-5" />
+            {TROPHY_VITRINE_COPY.pageTitle}
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+            {TROPHY_VITRINE_COPY.pageDescription}
+          </p>
+        </div>
       </header>
       <div className="flex-1 space-y-6 overflow-y-auto">
         <TrophiesBody />
