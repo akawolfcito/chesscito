@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import Link from "next/link";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -35,6 +37,23 @@ export function CoachPanel({
   proActive,
   historyMeta,
 }: Props) {
+  const [bannerSeen, setBannerSeen] = useState<boolean>(true);
+
+  useEffect(() => {
+    // SSR-safe: only read localStorage on the client. Default state is
+    // `true` (banner hidden) so SSR renders without flashing the banner
+    // and then hiding it after the localStorage read.
+    const seen = window.localStorage.getItem("chesscito:coach-history-callout-seen");
+    if (!seen) setBannerSeen(false);
+  }, []);
+
+  function dismissBanner() {
+    window.localStorage.setItem("chesscito:coach-history-callout-seen", "1");
+    setBannerSeen(true);
+  }
+
+  const showBanner = proActive && historyMeta && !bannerSeen;
+
   const time = formatTime(elapsedMs);
   const diffLabel = ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty;
   const warmText = "rgba(63, 34, 8, 0.95)";
@@ -44,6 +63,27 @@ export function CoachPanel({
 
   return (
     <div className="flex flex-col gap-4">
+      {showBanner && (
+        <div
+          data-testid="coach-history-banner"
+          className="rounded-2xl border border-amber-300/60 bg-amber-50/80 p-3"
+        >
+          <p className="text-xs font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+            {COACH_COPY.featureBanner.title}
+          </p>
+          <p className="mt-1 text-xs" style={{ color: "rgba(110, 65, 15, 0.85)" }}>
+            {COACH_COPY.featureBanner.body}
+          </p>
+          <button
+            type="button"
+            onClick={dismissBanner}
+            className="mt-2 text-xs font-semibold underline underline-offset-2"
+            style={{ color: "rgba(110, 65, 15, 0.95)" }}
+          >
+            {COACH_COPY.featureBanner.dismiss}
+          </button>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <p className="text-xs" style={{ color: warmMuted }}>
           {diffLabel} - {totalMoves} moves - {time}
