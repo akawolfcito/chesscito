@@ -16,4 +16,14 @@ export const REDIS_KEYS = {
    *  Coach packs but lives in its own namespace so a Coach pack tx can
    *  never short-circuit a PRO verify (and vice versa). */
   proProcessedTx: (txHash: string) => `coach:pro:processed-tx:${txHash}`,
+  /** PR 3 backfill claim lock — short-lived (60s). NX-set at the start
+   *  of the one-shot Redis→Supabase backfill so concurrent /analyze
+   *  requests for the same wallet don't double-write rows or both serve
+   *  augmentation-less prompts. Spec §7 / red-team P0-5. */
+  backfillClaim: (wallet: string) => `coach:backfill-claim:${wallet}`,
+  /** PR 4 delete-by-self nonce — 5-minute TTL (set with `nx, ex=300`).
+   *  Replays within the freshness window collide on this SETNX. The
+   *  client generates the 32-hex nonce; the server simply claims it.
+   *  Spec §8.2 / red-team P0-1. */
+  deleteNonce: (nonce: string) => `coach:delete-nonce:${nonce}`,
 } as const;
