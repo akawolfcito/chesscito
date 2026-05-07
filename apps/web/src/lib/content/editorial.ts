@@ -752,6 +752,20 @@ export const COACH_COPY = {
     successToast: "All Coach data cleared from our records",
     errorToast: "Could not delete — please retry",
   },
+  /**
+   * One-shot first-run callout shown inside <CoachPanel> for PRO users
+   * the first time they see the new history-aware analysis. Closes
+   * red-team P2-3: existing PRO subscribers who saw "SOON" for weeks
+   * deserve an explicit "this is now active" affordance rather than
+   * a silent array swap (Task 2).
+   *
+   * LocalStorage flag: chesscito:coach-history-callout-seen.
+   */
+  featureBanner: {
+    title: "Personalized coaching is live",
+    body: "Your Coach now references your past games to spot recurring patterns.",
+    dismiss: "Got it",
+  },
 } as const;
 
 export const LEGAL_COPY = {
