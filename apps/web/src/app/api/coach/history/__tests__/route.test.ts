@@ -289,4 +289,47 @@ describe("DELETE /api/coach/history", () => {
       `coach:analysis:${DELETE_WALLET}:g2`,
     );
   });
+
+  it("returns 200 with partial_failure='supabase' when only Supabase write errors", async () => {
+    mockedRecover.mockResolvedValue(DELETE_WALLET);
+    // Supabase delete returns an error (eq() resolves to PostgREST result)
+    const supabaseEq = vi.fn().mockResolvedValue({ count: null, error: { message: "rls denied" } });
+    const supabaseDeleteWrap = vi.fn().mockReturnValue({ eq: supabaseEq });
+    const supabaseFrom = vi.fn().mockReturnValue({ delete: supabaseDeleteWrap });
+    const { getSupabaseServer } = await import("@/lib/supabase/server");
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: supabaseFrom } as never);
+
+    redisMock.lrange.mockResolvedValue([]);
+    redisMock.del.mockResolvedValue(0);
+
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ deleted: true, supabase_rows: 0, partial_failure: "supabase" });
+  });
+
+  it("returns 500 when both Supabase and Redis fail", async () => {
+    mockedRecover.mockResolvedValue(DELETE_WALLET);
+    // Supabase rejects (network throw, not error field)
+    const supabaseEq = vi.fn().mockRejectedValue(new Error("supabase down"));
+    const supabaseDeleteWrap = vi.fn().mockReturnValue({ eq: supabaseEq });
+    const supabaseFrom = vi.fn().mockReturnValue({ delete: supabaseDeleteWrap });
+    const { getSupabaseServer } = await import("@/lib/supabase/server");
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: supabaseFrom } as never);
+
+    redisMock.lrange.mockRejectedValue(new Error("redis down"));
+
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: freshIso(),
+    }));
+    expect(res.status).toBe(500);
+  });
 });

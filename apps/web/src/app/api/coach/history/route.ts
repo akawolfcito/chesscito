@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
-import { isAddress } from "viem";
-import { recoverMessageAddress } from "viem";
+import { isAddress, recoverMessageAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { getSupabaseServer } from "@/lib/supabase/server";
@@ -93,6 +92,11 @@ export async function DELETE(req: Request) {
   }
 
   const nonceKey = REDIS_KEYS.deleteNonce(nonce);
+  // Atomic claim-before-verify ordering (red-team P0-1): SETNX first
+  // means a malformed signature consumes the nonce, but it prevents this
+  // endpoint from being used as a free signature-validity oracle. The
+  // user must regenerate a nonce + re-sign on bad input — a trivial UX
+  // cost in exchange for closing the side-channel. Do NOT reorder.
   const claimed = await redis.set(nonceKey, walletAddress.toLowerCase(), {
     nx: true,
     ex: NONCE_TTL_S,
@@ -124,7 +128,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   }
 
-  const [supaRes, redisKeysDeleted] = await Promise.all([
+  const [supaSettled, redisSettled] = await Promise.allSettled([
     supabase.from("coach_analyses").delete({ count: "exact" }).eq("wallet", wallet),
     (async () => {
       const ids = await redis.lrange<string>(REDIS_KEYS.analysisList(wallet), 0, -1);
@@ -136,11 +140,55 @@ export async function DELETE(req: Request) {
     })(),
   ]);
 
+  // Per-leg outcomes — preserves the privacy contract under partial failure.
+  let supabaseRows = 0;
+  let redisKeysDeleted = 0;
+  let supabaseFailed = false;
+  let redisFailed = false;
+
+  if (supaSettled.status === "fulfilled") {
+    if (supaSettled.value.error) {
+      supabaseFailed = true;
+      log.error("coach_history_delete_supabase_failed", {
+        wallet_hash: hashWallet(wallet),
+        message: supaSettled.value.error.message,
+      });
+    } else {
+      supabaseRows = supaSettled.value.count ?? 0;
+    }
+  } else {
+    supabaseFailed = true;
+    log.error("coach_history_delete_supabase_failed", {
+      wallet_hash: hashWallet(wallet),
+      message: supaSettled.reason instanceof Error ? supaSettled.reason.message : String(supaSettled.reason),
+    });
+  }
+
+  if (redisSettled.status === "fulfilled") {
+    redisKeysDeleted = redisSettled.value;
+  } else {
+    redisFailed = true;
+    log.error("coach_history_delete_redis_failed", {
+      wallet_hash: hashWallet(wallet),
+      message: redisSettled.reason instanceof Error ? redisSettled.reason.message : String(redisSettled.reason),
+    });
+  }
+
+  // Both failed → 500 (user must retry; nothing was guaranteed deleted).
+  if (supabaseFailed && redisFailed) {
+    return NextResponse.json({ error: "Delete failed on both stores" }, { status: 500 });
+  }
+
   log.info("coach_history_deleted", {
     wallet_hash: hashWallet(wallet),
-    supabase_rows: supaRes.count ?? 0,
+    supabase_rows: supabaseRows,
     redis_keys_deleted: redisKeysDeleted,
+    partial_failure: supabaseFailed ? "supabase" : redisFailed ? "redis" : undefined,
   });
 
-  return NextResponse.json({ deleted: true, supabase_rows: supaRes.count ?? 0 });
+  return NextResponse.json({
+    deleted: true,
+    supabase_rows: supabaseRows,
+    ...(supabaseFailed || redisFailed ? { partial_failure: supabaseFailed ? "supabase" : "redis" } : {}),
+  });
 }
