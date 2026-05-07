@@ -201,13 +201,13 @@ describe("HubScaffoldClient — tap handlers", () => {
     expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1&action=pro");
   });
 
-  it("routes to /hub?legacy=1 when the primary PLAY CTA fires", async () => {
+  it("routes to /arena directly when the primary PLAY CTA fires (B5 fix 2026-05-07)", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
     await user.click(screen.getByLabelText("Start training"));
 
-    expect(pushMock).toHaveBeenCalledWith("/hub?legacy=1");
+    expect(pushMock).toHaveBeenCalledWith("/arena");
   });
 
   it("routes to /hub?legacy=1&action=shop when the shields chip is tapped", async () => {

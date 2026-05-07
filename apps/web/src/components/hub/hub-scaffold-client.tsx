@@ -266,7 +266,12 @@ export function HubScaffoldClient() {
       }}
       onPlayPress={() => {
         track("hub_play_tap");
-        router.push(LEGACY_HUB);
+        // Direct route to /arena (which now defaults to the scaffold
+        // selector via `af160bb`). Previously this pushed to the legacy
+        // hub which forced the user to tap a second control before
+        // reaching Arena — the round-trip is what the smoke test
+        // perceived as "Play button broken".
+        router.push("/arena");
       }}
     />
   );
