@@ -75,7 +75,13 @@ export default function ArenaPage() {
 function ArenaPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const arenaScaffoldEnabled = searchParams?.get("arena") === "new";
+  // Arena scaffold is the new default (2026-05-07): the hub-anchored
+  // selector ships without the prize-pool placeholder card and matches
+  // what users see when they navigate from /hub → Play. Direct visits
+  // to /arena previously rendered the legacy ArenaEntryPanel which
+  // surfaced "Community prize pool · Loading pool…" copy that confused
+  // single-user dev smoke. Opt-out remains via `?arena=legacy`.
+  const arenaScaffoldEnabled = searchParams?.get("arena") !== "legacy";
   const game = useChessGame();
   const { address, isConnected } = useAccount();
   // Same hook the /hub PRO chip uses — single source of truth across
