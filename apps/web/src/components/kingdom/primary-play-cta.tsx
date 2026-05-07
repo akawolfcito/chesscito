@@ -27,7 +27,16 @@ type Props = {
   className?: string;
 };
 
-const BACKPLATE_BASE = "/art/redesign/banners/btn-stone-bg";
+/** Backplate art per surface. Hub uses the candy-style green
+ *  `principalbutton` introduced 2026-05-08 (audit B6); other surfaces
+ *  retain the stone backplate so the redesign rolls in incrementally. */
+const SURFACE_BACKPLATE_BASE: Record<PrimaryPlayCtaSurface, string> = {
+  playhub: "/art/redesign/banners/principalbutton",
+  arena: "/art/redesign/banners/btn-stone-bg",
+  "arena-entry": "/art/redesign/banners/btn-stone-bg",
+  "landing-hero": "/art/redesign/banners/btn-stone-bg",
+  "landing-final-cta": "/art/redesign/banners/btn-stone-bg",
+};
 
 const SURFACE_ICON_BASE: Record<PrimaryPlayCtaSurface, string> = {
   playhub: "/art/redesign/banners/btn-battle",
@@ -54,6 +63,7 @@ export function PrimaryPlayCta({
 }: Props) {
   const inert = loading || disabled;
   const iconBase = SURFACE_ICON_BASE[surface];
+  const backplateBase = SURFACE_BACKPLATE_BASE[surface];
 
   const handleClick = () => {
     if (inert) {
@@ -84,10 +94,10 @@ export function PrimaryPlayCta({
       className={classes}
     >
       <picture className="primary-play-cta-backplate">
-        <source srcSet={`${BACKPLATE_BASE}.avif`} type="image/avif" />
-        <source srcSet={`${BACKPLATE_BASE}.webp`} type="image/webp" />
+        <source srcSet={`${backplateBase}.avif`} type="image/avif" />
+        <source srcSet={`${backplateBase}.webp`} type="image/webp" />
         <img
-          src={`${BACKPLATE_BASE}.png`}
+          src={`${backplateBase}.png`}
           alt=""
           aria-hidden="true"
           className="primary-play-cta-backplate-img"

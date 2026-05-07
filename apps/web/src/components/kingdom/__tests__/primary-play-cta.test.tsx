@@ -15,7 +15,7 @@ beforeEach(() => {
 });
 
 describe("PrimaryPlayCta", () => {
-  it("renders the playhub surface with the stone backplate and the battle icon", () => {
+  it("renders the playhub surface with the principalbutton backplate and the battle icon", () => {
     const { container } = render(
       <PrimaryPlayCta surface="playhub" label="PLAY" ariaLabel="Play" />,
     );
@@ -26,7 +26,9 @@ describe("PrimaryPlayCta", () => {
 
     const sources = Array.from(container.querySelectorAll("source"));
     const srcsets = sources.map((s) => s.getAttribute("srcset"));
-    expect(srcsets).toContain("/art/redesign/banners/btn-stone-bg.avif");
+    // Hub backplate swapped to candy-style green button (audit B6, 2026-05-08).
+    // Stone backplate retained on arena/landing surfaces — see SURFACE_BACKPLATE_BASE.
+    expect(srcsets).toContain("/art/redesign/banners/principalbutton.avif");
     expect(srcsets).toContain("/art/redesign/banners/btn-battle.avif");
   });
 
