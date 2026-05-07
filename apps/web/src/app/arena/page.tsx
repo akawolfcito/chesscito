@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
 import { generateQuickReview } from "@/lib/coach/fallback-engine";
+import { shouldShowPaywall } from "@/lib/coach/paywall-gate";
 import { CoachLoading } from "@/components/coach/coach-loading";
 import { CoachPanel } from "@/components/coach/coach-panel";
 import { CoachFallback } from "@/components/coach/coach-fallback";
@@ -245,13 +246,22 @@ function ArenaPageInner() {
     const { signal } = controller;
 
     try {
-      // Re-fetch credits (may have been seeded by welcome)
-      const creditsRes = await fetch(`/api/coach/credits?wallet=${address}`, { signal });
+      // Re-fetch credits AND PRO status in parallel (B1 fix, 2026-05-07).
+      // The server-side /api/coach/analyze already bypasses the credit
+      // check for PRO; the client must mirror that or a paying user
+      // with 0 credits gets dropped onto the credit-purchase paywall.
+      const [creditsRes, proRes] = await Promise.all([
+        fetch(`/api/coach/credits?wallet=${address}`, { signal }),
+        fetch(`/api/pro/status?wallet=${address}`, { signal }),
+      ]);
       const creditsData = await creditsRes.json();
+      const proData = await proRes.json().catch(() => ({ active: false }));
       const credits = creditsData.credits ?? 0;
+      const proActive = proData?.active === true;
       setCoachCredits(credits);
+      setCoachProActive(proActive);
 
-      if (credits <= 0) {
+      if (shouldShowPaywall({ proActive, credits })) {
         setCoachPhase("paywall");
         return;
       }
