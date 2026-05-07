@@ -174,6 +174,12 @@ export const BADGE_SHEET_COPY = {
   locked: (needed: number) => `Need ${needed} more ★ to unlock`,
   notStarted: "Complete trials to start",
   viewTrophies: "View your Victories",
+  /** Inline success banner rendered above the badge grid for ~2.5s after
+   *  a successful claim on the scaffold surface. PlayHubRoot legacy uses
+   *  the global ResultOverlay for the same purpose; the scaffold has no
+   *  ResultOverlay yet, so this banner provides the celebration moment. */
+  claimSuccess: (piece: string) =>
+    `${piece.charAt(0).toUpperCase()}${piece.slice(1)} Badge claimed!`,
 } as const;
 
 export const TUTORIAL_COPY = {

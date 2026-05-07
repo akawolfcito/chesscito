@@ -260,6 +260,45 @@ describe("useBadgeSheetState — handleClaim", () => {
     expect(trackMock).not.toHaveBeenCalled();
   });
 
+  it("on success: lastClaimedPiece is set then auto-clears after 2.5s", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    useReadContractsMock.mockReturnValue({
+      data: Array.from({ length: 6 }, () => ({
+        result: false,
+        status: "success",
+      })),
+      refetch: vi.fn(),
+    });
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        nonce: "1",
+        deadline: "9999999999",
+        signature: "0xsig",
+      }),
+    });
+    writeContractAsyncMock.mockResolvedValueOnce("0xtx");
+
+    const { result } = renderHook(() =>
+      useBadgeSheetState({ onNavigateToTrophies: navigateToTrophiesMock }),
+    );
+
+    await act(async () => {
+      result.current.sheetProps.onClaim("pawn");
+    });
+
+    await waitFor(() => {
+      expect(result.current.sheetProps.lastClaimedPiece).toBe("pawn");
+    });
+
+    // Advance past the 2.5s celebration window — banner clears.
+    await act(async () => {
+      vi.advanceTimersByTime(2_600);
+    });
+    expect(result.current.sheetProps.lastClaimedPiece).toBeNull();
+    vi.useRealTimers();
+  });
+
   it("user cancellation: fires cancelled telemetry and clears claimingPiece", async () => {
     useReadContractsMock.mockReturnValue({
       data: Array.from({ length: 6 }, () => ({

@@ -168,6 +168,12 @@ type BadgeSheetProps = {
   onClaim: (piece: PieceId) => void;
   isClaimBusy: boolean;
   claimingPiece?: PieceId | null;
+  /** When set, renders an inline success banner above the badge grid
+   *  for the duration the host keeps it set. Used by the scaffold's
+   *  `useBadgeSheetState` hook to provide a celebration moment after a
+   *  successful claim — PlayHubRoot legacy uses the global ResultOverlay
+   *  for the same purpose, so it keeps this prop unset. */
+  lastClaimedPiece?: PieceId | null;
   showNotification: boolean;
   /** Switch to the Trophies sheet. Parent closes this sheet and opens
    *  the trophy drawer in-place — no route navigation. */
@@ -181,6 +187,7 @@ export function BadgeSheet({
   onClaim,
   isClaimBusy,
   claimingPiece = null,
+  lastClaimedPiece = null,
   showNotification,
   onNavigateToTrophies,
 }: BadgeSheetProps) {
@@ -273,6 +280,23 @@ export function BadgeSheet({
             </div>
           </SheetHeader>
         </div>
+        {lastClaimedPiece ? (
+          <div
+            data-testid="badge-claim-success"
+            role="status"
+            aria-live="polite"
+            className="mt-3 flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold transition"
+            style={{
+              background: "rgba(16, 185, 129, 0.22)",
+              color: "rgba(6, 78, 59, 0.95)",
+              boxShadow: "inset 0 0 0 1px rgba(16, 185, 129, 0.55)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+            }}
+          >
+            <CandyIcon name="check" className="h-5 w-5" />
+            {BADGE_SHEET_COPY.claimSuccess(lastClaimedPiece)}
+          </div>
+        ) : null}
         <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-2">
           {badges.map((badge) => (
             <BadgeCard

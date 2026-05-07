@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useAccount,
   useChainId,
@@ -122,6 +122,18 @@ export function useBadgeSheetState({
   const [open, setOpen] = useState(false);
   const [claimingPiece, setClaimingPiece] = useState<PieceId | null>(null);
   const isClaimBusy = isBadgeWriting || claimingPiece !== null;
+  /** Set on success for ~2.5s, then cleared. Drives the inline success
+   *  banner inside `<BadgeSheet>` — the scaffold has no global
+   *  ResultOverlay yet, so this is the celebration moment. */
+  const [lastClaimedPiece, setLastClaimedPiece] = useState<PieceId | null>(
+    null,
+  );
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>();
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    };
+  }, []);
 
   const openSheet = useCallback(() => setOpen(true), []);
   const closeSheet = useCallback(() => {
@@ -185,6 +197,14 @@ export function useBadgeSheetState({
         hapticSuccess();
         track("badge_claim_tx", { stage: "success", piece });
         void refetchBadges();
+        setLastClaimedPiece(piece);
+        // Replace any pending timer so a quick second claim resets the
+        // banner to the freshest success rather than letting the prior
+        // one clear it underneath.
+        if (successTimerRef.current) clearTimeout(successTimerRef.current);
+        successTimerRef.current = setTimeout(() => {
+          setLastClaimedPiece(null);
+        }, 2500);
       } catch (error) {
         if (isUserCancellation(error)) {
           track("badge_claim_tx", { stage: "cancelled", piece });
@@ -219,6 +239,7 @@ export function useBadgeSheetState({
     onClaim: (piece) => void handleClaim(piece),
     isClaimBusy,
     claimingPiece,
+    lastClaimedPiece,
     showNotification: false,
     onNavigateToTrophies,
   };
