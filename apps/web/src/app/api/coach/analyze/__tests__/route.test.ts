@@ -64,6 +64,11 @@ vi.mock("@/lib/pro/is-active", () => ({
   isProActive: isProActiveMock,
 }));
 
+const persistAnalysisMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/coach/persistence", () => ({
+  persistAnalysis: persistAnalysisMock,
+}));
+
 import { POST } from "../route";
 import { enforceOrigin, enforceRateLimit } from "@/lib/server/demo-signing";
 
@@ -93,6 +98,7 @@ function setupHappyPathRedis() {
         moves: ["e4", "e5"],
         result: "win",
         difficulty: "easy",
+        totalMoves: 2,
       });
     }
     if (key === `coach:summary:${VALID_WALLET}`) return Promise.resolve(null);
@@ -127,6 +133,8 @@ describe("POST /api/coach/analyze", () => {
     aggregateHistoryMock.mockReset();
     backfillMock.mockReset();
     isProActiveMock.mockReset();
+    persistAnalysisMock.mockReset();
+    persistAnalysisMock.mockResolvedValue({});
 
     // Free-tier default — overridden per-test for PRO branches.
     isProActiveMock.mockResolvedValue({ active: false });
@@ -435,6 +443,8 @@ function resetSiblingMocks() {
   aggregateHistoryMock.mockReset();
   backfillMock.mockReset();
   isProActiveMock.mockReset();
+  persistAnalysisMock.mockReset();
+  persistAnalysisMock.mockResolvedValue({});
 
   mockedOrigin.mockImplementation(() => {});
   mockedRate.mockResolvedValue(undefined);
@@ -545,5 +555,85 @@ describe("POST /api/coach/analyze — Free read path (regression guard)", () => 
     const body = await res.json();
     expect(body.historyMeta).toBeUndefined();
     expect(body.proActive).toBeUndefined();
+  });
+});
+
+describe("POST /api/coach/analyze — PRO write path", () => {
+  beforeEach(() => {
+    resetSiblingMocks();
+    isProActiveMock.mockResolvedValue({ active: true, expiresAt: 9999999999999 });
+    aggregateHistoryMock.mockResolvedValue(null);
+    backfillMock.mockResolvedValue({ copied: 0, waited: false });
+  });
+
+  it("calls persistAnalysis exactly once on PRO success with full response", async () => {
+    setupHappyPathRedis();
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"nice play"}' } }],
+    });
+    normalizeMock.mockReturnValue({
+      success: true,
+      data: { kind: "full", summary: "nice play", mistakes: [], lessons: [], praise: [] },
+    });
+
+    const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(200);
+    expect(persistAnalysisMock).toHaveBeenCalledTimes(1);
+    expect(persistAnalysisMock).toHaveBeenCalledWith(
+      VALID_WALLET,
+      expect.objectContaining({
+        gameId: VALID_GAME_ID,
+        difficulty: "easy",
+        result: "win",
+        totalMoves: expect.any(Number),
+        response: expect.objectContaining({ kind: "full" }),
+      }),
+    );
+  });
+
+  it("does NOT call persistAnalysis when proActive=false (free)", async () => {
+    isProActiveMock.mockResolvedValue({ active: false });
+    setupHappyPathRedis();
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"nice play"}' } }],
+    });
+    normalizeMock.mockReturnValue({
+      success: true,
+      data: { kind: "full", summary: "nice play", mistakes: [], lessons: [], praise: [] },
+    });
+
+    const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(200);
+    expect(persistAnalysisMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 200 even when persistAnalysis throws (fail-soft)", async () => {
+    setupHappyPathRedis();
+    persistAnalysisMock.mockRejectedValue(new Error("supabase write blew up"));
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"nice play"}' } }],
+    });
+    normalizeMock.mockReturnValue({
+      success: true,
+      data: { kind: "full", summary: "nice play", mistakes: [], lessons: [], praise: [] },
+    });
+
+    const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(200); // user got their analysis
+  });
+
+  it("does NOT call persistAnalysis when response.kind is 'quick' (BasicCoachResponse)", async () => {
+    setupHappyPathRedis();
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"x"}' } }],
+    });
+    normalizeMock.mockReturnValue({
+      success: true,
+      data: { kind: "quick", summary: "x", tips: [] },
+    });
+
+    const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
+    expect(res.status).toEqual(200);
+    expect(persistAnalysisMock).not.toHaveBeenCalled();
   });
 });

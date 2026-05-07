@@ -9,6 +9,7 @@ import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { isProActive } from "@/lib/pro/is-active";
 import { aggregateHistory } from "@/lib/coach/history-digest";
 import { backfillRedisToSupabase } from "@/lib/coach/backfill";
+import { persistAnalysis } from "@/lib/coach/persistence";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type { GameRecord, CoachAnalysisRecord, PlayerSummary, HistoryDigest } from "@/lib/coach/types";
@@ -212,6 +213,34 @@ export async function POST(req: Request) {
         redis.set(REDIS_KEYS.job(jobId), { status: "ready", response: normalized.data }, { ex: 30 * 24 * 60 * 60 }),
         redis.del(REDIS_KEYS.pendingJob(wallet)),
       ]);
+
+      // PRO write-through. Fail-soft per §6.1 — never block the user-
+      // visible analysis the user already paid for. Only triggers for
+      // kind='full' since v1 doesn't store BasicCoachResponse rows.
+      if (proStatus.active && normalized.data.kind === "full") {
+        try {
+          const { tagError } = await persistAnalysis(wallet, {
+            gameId,
+            difficulty: gameRecord.difficulty,
+            result: validation.computedResult,
+            totalMoves: gameRecord.totalMoves,
+            response: normalized.data,
+          });
+          if (tagError) {
+            log.warn("coach_tag_extraction_failed", {
+              wallet_hash: hashWallet(wallet),
+              phase: "live",
+              err: tagError.message,
+            });
+          }
+        } catch (err) {
+          log.warn("coach_persist_failed", {
+            wallet_hash: hashWallet(wallet),
+            game_id: gameId,
+            err: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
 
       return NextResponse.json({
         status: "ready",
