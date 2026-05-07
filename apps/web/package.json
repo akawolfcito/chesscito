@@ -21,7 +21,8 @@
     "test:e2e:headed": "playwright test --headed",
     "type-check": "rm -rf .next && next build >/dev/null && tsc --noEmit",
     "art:optimize": "bash scripts/optimize-art-assets.sh",
-    "encrypt-key": "npx tsx scripts/encrypt-key.ts"
+    "encrypt-key": "npx tsx scripts/encrypt-key.ts",
+    "grant-pro": "npx tsx scripts/grant-pro.ts"
   },
   "comments": {
     "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."
