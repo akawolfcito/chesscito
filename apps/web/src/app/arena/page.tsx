@@ -368,7 +368,18 @@ function ArenaPageInner() {
       return;
     }
 
-    // First time → show welcome
+    // PRO subscribers skip the "Meet Your Coach / claim 3 free analyses"
+    // welcome modal entirely — they already paid for unlimited analyses
+    // and showing them a free-tier upsell is at best confusing and at
+    // worst feels like a downgrade. Mark welcomed and go straight to
+    // analysis.
+    if (proActiveCached) {
+      try { localStorage.setItem("chesscito:coach-welcomed", "1"); } catch { /* ignore */ }
+      void startCoachAnalysis();
+      return;
+    }
+
+    // First time (free user) → show welcome
     try {
       const welcomed = localStorage.getItem("chesscito:coach-welcomed");
       if (!welcomed) {
@@ -379,7 +390,7 @@ function ArenaPageInner() {
 
     // Returning user → go straight to analysis
     void startCoachAnalysis();
-  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, isConnected, address, startCoachAnalysis]);
+  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, isConnected, address, startCoachAnalysis, proActiveCached]);
 
   const handleClaimWelcome = useCallback(() => {
     try { localStorage.setItem("chesscito:coach-welcomed", "1"); } catch { /* ignore */ }
