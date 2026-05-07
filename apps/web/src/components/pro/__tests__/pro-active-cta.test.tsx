@@ -35,12 +35,16 @@ describe("ProActiveCTA — navigational variant (non-/arena surfaces)", () => {
     );
   });
 
-  it("on tap, navigates to /arena, calls onClose, and emits telemetry", () => {
+  it("on tap, navigates to /arena and emits telemetry — does NOT call onClose (B2 fix 2026-05-07)", () => {
     const onClose = vi.fn();
     render(<ProActiveCTA source="/play-hub" onClose={onClose} />);
     fireEvent.click(screen.getByTestId("pro-active-cta-button"));
     expect(pushMock).toHaveBeenCalledWith("/arena");
-    expect(onClose).toHaveBeenCalledTimes(1);
+    // onClose intentionally NOT called: when the sheet was opened via
+    // /hub?legacy=1&action=pro deep link, calling onClose triggers
+    // PlayHubRoot's bounce-back useEffect which races with router.push
+    // and wins, dropping the user on /hub instead of /arena.
+    expect(onClose).not.toHaveBeenCalled();
     expect(trackMock).toHaveBeenCalledWith("pro_active_cta_tap", {
       source: "/play-hub",
     });
