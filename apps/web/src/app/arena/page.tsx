@@ -140,6 +140,10 @@ function ArenaPageInner() {
   const [coachCredits, setCoachCredits] = useState(0);
   const [coachProActive, setCoachProActive] = useState<boolean>(false);
   const [coachHistoryMeta, setCoachHistoryMeta] = useState<{ gamesPlayed: number } | undefined>(undefined);
+  // Diagnostic: when client-side PRO is true but server still rejects
+  // analyze with 402, surface the mismatch so the user can report it
+  // (rather than silently falling to the free quick-review fallback).
+  const [coachServerError, setCoachServerError] = useState<string | null>(null);
   const coachAbortRef = useRef<AbortController | null>(null);
 
   // Persist claim success so returning from share keeps context
@@ -314,7 +318,17 @@ function ArenaPageInner() {
         setCoachJobId(analyzeData.jobId);
         setCoachPhase("loading");
       } else {
-        // Fallback to quick review on error
+        // Server didn't return ready/jobId — surface the actual error
+        // when the client believed the user was PRO so a paying user
+        // doesn't silently get dropped on a free quick-review.
+        if (proActive) {
+          const reason = analyzeData?.error
+            ? `Server: ${analyzeData.error} (HTTP ${analyzeRes.status})`
+            : `Unexpected response from /api/coach/analyze (HTTP ${analyzeRes.status})`;
+          setCoachServerError(
+            `${reason}. Client thinks PRO is active (chip on /hub agrees). If this is the first time, retry; if it persists, report this exact text to support.`,
+          );
+        }
         const quick = generateQuickReview({
           result: gameResult,
           difficulty: game.difficulty,
@@ -697,6 +711,7 @@ function ArenaPageInner() {
     setCoachResponse(null);
     setCoachFallbackResponse(null);
     setCoachCredits(0);
+    setCoachServerError(null);
   }, []);
 
   const handlePlayAgain = () => {
@@ -1245,6 +1260,17 @@ function ArenaPageInner() {
                   onClose={handleBackToHub}
                   closeLabel={ARENA_COPY.backToHub}
                 >
+                  {coachServerError && (
+                    <div
+                      data-testid="coach-server-error"
+                      role="alert"
+                      className="mb-3 rounded-xl border border-amber-400/60 bg-amber-50 px-3 py-2 text-xs"
+                      style={{ color: "rgba(110, 65, 15, 0.95)" }}
+                    >
+                      <p className="font-bold">PRO check mismatch</p>
+                      <p className="mt-1">{coachServerError}</p>
+                    </div>
+                  )}
                   <CoachFallback
                     response={coachFallbackResponse}
                     difficulty={game.difficulty}

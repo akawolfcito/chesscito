@@ -116,6 +116,16 @@ export async function POST(req: Request) {
     if (!proStatus.active) {
       const credits = (await redis.get<number>(REDIS_KEYS.credits(wallet))) ?? 0;
       if (credits <= 0) {
+        // Diagnostic for the 2026-05-07 PRO mismatch report: log the
+        // exact decision so we can confirm via Vercel logs whether a
+        // wallet that the /hub chip thinks is PRO is actually being
+        // seen as inactive here.
+        log.warn("coach_analyze_no_credits", {
+          wallet_hash: hashWallet(wallet),
+          pro_active: false,
+          pro_expires_at: proStatus.expiresAt,
+          credits,
+        });
         return NextResponse.json({ error: "No credits available" }, { status: 402 });
       }
     } else {
