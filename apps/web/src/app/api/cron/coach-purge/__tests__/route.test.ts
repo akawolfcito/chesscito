@@ -62,6 +62,8 @@ describe("GET /api/cron/coach-purge", () => {
   });
 
   it("returns { skipped: true } when another run holds the lock", async () => {
+    // Supabase env present (cheap-check passes); lock collision is what we exercise.
+    vi.mocked(getSupabaseServer).mockReturnValue({ from: vi.fn() } as never);
     redisMock.set.mockResolvedValue(null); // SETNX collision
     const res = await GET(makeRequest("Bearer s3cret"));
     expect(res.status).toBe(200);

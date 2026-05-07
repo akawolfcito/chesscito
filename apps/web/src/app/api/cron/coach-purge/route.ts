@@ -17,7 +17,9 @@ const redis = Redis.fromEnv();
  * Daily cron: deletes `coach_analyses` rows where `expires_at < now()`.
  *
  * Race-safe (red-team P0-6):
- * - Bearer auth via CRON_SECRET (matches /api/cron/sync convention).
+ * - Bearer auth via CRON_SECRET. Fails CLOSED when env unset (deliberate
+ *   divergence from /api/cron/sync, which fails open — purge is destructive
+ *   so a misconfigured deploy must not silently allow anonymous calls).
  * - Redis SETNX advisory lock with 600s TTL prevents overlapping runs
  *   (scheduled run + manual workflow_dispatch + GH Actions retries).
  * - Batched LIMIT 5000 with up to 20 passes (≤ 100k rows/run cap)
@@ -27,11 +29,19 @@ const redis = Redis.fromEnv();
  * Spec §8.1 / §12.
  */
 export async function GET(req: Request) {
-  if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const log = createLogger({ route: "/api/cron/coach-purge" });
+
+  // Cheap-check first: bail before holding the advisory lock if env missing.
+  const supabase = getSupabaseServer();
+  if (!supabase) {
+    log.error("coach_purge_supabase_unavailable", {});
+    return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
+  }
 
   const acquired = await redis.set(PURGE_LOCK_KEY, Date.now(), {
     nx: true,
@@ -43,12 +53,6 @@ export async function GET(req: Request) {
 
   let totalDeleted = 0;
   try {
-    const supabase = getSupabaseServer();
-    if (!supabase) {
-      log.error("coach_purge_supabase_unavailable", {});
-      return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
-    }
-
     for (let pass = 0; pass < PURGE_MAX_PASSES; pass++) {
       const { data, error } = await supabase
         .from("coach_analyses")
