@@ -213,6 +213,17 @@ describe("DELETE /api/coach/history", () => {
     expect(res.status).toBe(410);
   });
 
+  it("410 — message issued more than 30s in the future (clock skew rejected)", async () => {
+    const future = new Date(Date.now() + 60 * 1000).toISOString(); // 60s ahead, beyond 30s skew
+    const res = await DELETE(makeDeleteRequest({
+      walletAddress: DELETE_WALLET,
+      signature: VALID_SIG,
+      nonce: VALID_NONCE,
+      issuedIso: future,
+    }));
+    expect(res.status).toBe(410);
+  });
+
   it("409 — nonce already claimed (replay)", async () => {
     redisMock.set.mockResolvedValue(null);
     const res = await DELETE(makeDeleteRequest({

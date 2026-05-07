@@ -1,4 +1,5 @@
 import { THEME_CONFIG } from "@/lib/theme";
+import { buildDeleteMessage } from "@/lib/coach/delete-message";
 
 export const GLOSSARY = {
   badge: "Badge",
@@ -745,10 +746,7 @@ export const COACH_COPY = {
       "This will permanently remove all your past Coach analyses and weakness tracking. Your next analysis will start fresh.",
     confirmAccept: "Yes, delete everything",
     confirmCancel: "Keep my history",
-    /* Chain + domain bound message format. Keep in lockstep with the
-     * DELETE_MESSAGE template in app/api/coach/history/route.ts. */
-    signMessage: (nonce: string, iso: string) =>
-      `Delete my Coach history\nDomain: chesscito.app\nChain: 42220\nNonce: ${nonce}\nIssued: ${iso}`,
+    signMessage: buildDeleteMessage,
     /* Neutral wording so we never imply a positive action that may
      * not have happened (red-team P0-7). */
     successToast: "All Coach data cleared from our records",

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { isAddress, recoverMessageAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
+import { buildDeleteMessage } from "@/lib/coach/delete-message";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { createLogger, hashWallet } from "@/lib/server/logger";
@@ -39,10 +40,7 @@ export async function GET(req: Request) {
 const NONCE_TTL_S = 300;
 const NONCE_RE = /^[0-9a-f]{32}$/i;
 const ISO_AGE_LIMIT_MS = 5 * 60 * 1000;
-
-/* Chain + domain bound. Keep in lockstep with COACH_COPY.historyDelete.signMessage. */
-const DELETE_MESSAGE = (nonce: string, issuedIso: string) =>
-  `Delete my Coach history\nDomain: chesscito.app\nChain: 42220\nNonce: ${nonce}\nIssued: ${issuedIso}`;
+const CLOCK_SKEW_MS = 30 * 1000;
 
 /* PR 4 introduces viem's recoverMessageAddress to this codebase.
  * lib/server/demo-signing.ts uses ethers for the demo-signer flow, but
@@ -87,8 +85,12 @@ export async function DELETE(req: Request) {
   if (!Number.isFinite(issuedAtMs)) {
     return NextResponse.json({ error: "Invalid issuedIso" }, { status: 400 });
   }
-  if (Math.abs(Date.now() - issuedAtMs) > ISO_AGE_LIMIT_MS) {
+  const ageMs = Date.now() - issuedAtMs;
+  if (ageMs > ISO_AGE_LIMIT_MS) {
     return NextResponse.json({ error: "Message expired" }, { status: 410 });
+  }
+  if (ageMs < -CLOCK_SKEW_MS) {
+    return NextResponse.json({ error: "Message issued in future" }, { status: 410 });
   }
 
   const nonceKey = REDIS_KEYS.deleteNonce(nonce);
@@ -105,7 +107,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Nonce already used" }, { status: 409 });
   }
 
-  const message = DELETE_MESSAGE(nonce, issuedIso);
+  const message = buildDeleteMessage(nonce, issuedIso);
   let recovered: `0x${string}`;
   try {
     recovered = await recoverMessageAddress({
