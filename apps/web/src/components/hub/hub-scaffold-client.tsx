@@ -14,6 +14,7 @@ import { getBadgesAddress } from "@/lib/contracts/chains";
 import { HUD_COPY } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
+import { subscribeToShieldChanges } from "@/lib/shop/shield-events";
 import { track } from "@/lib/telemetry";
 import {
   REWARD_TILE_ORDER,
@@ -190,6 +191,17 @@ export function HubScaffoldClient() {
   useEffect(() => {
     setStarsPerPiece(loadStarsPerPiece());
     setShieldCount(loadShieldCount());
+  }, []);
+
+  // Re-read shields from localStorage every time the shop hook bumps the
+  // count after `buyItem` confirms. Native `storage` events only fire
+  // cross-tab, so we use an in-tab CustomEvent bus. Without this the
+  // chip stayed stuck at the pre-purchase value until full reload — the
+  // exact P0-2 from the 2026-05-08 red team.
+  useEffect(() => {
+    return subscribeToShieldChanges(() => {
+      setShieldCount(loadShieldCount());
+    });
   }, []);
 
   const trophies = useMemo(
