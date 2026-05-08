@@ -52,7 +52,7 @@ export type UseProSheetStateReturn = {
   proStatus: ProStatus | null;
 };
 
-/** PRO sheet orchestration extracted from `<PlayHubRoot>` so the redesigned
+/** PRO sheet orchestration extracted from `<ExercisesScreen>` so the redesigned
  *  `<HubScaffoldClient>` can render `<ProSheet>` in-place instead of
  *  bouncing through `/hub?legacy=1&action=pro`. The bounce is what created
  *  the B2 "Play in Arena" race (audit 2026-05-07) and what hid the bottom
@@ -86,7 +86,7 @@ export function useProSheetState(): UseProSheetStateReturn {
   );
   const [isRetryingVerify, setIsRetryingVerify] = useState(false);
 
-  // Token balances drive `selectPaymentToken` — same shape PlayHubRoot
+  // Token balances drive `selectPaymentToken` — same shape ExercisesScreen
   // uses. CELO sits at the tail purely to share the read; PRO never
   // settles in CELO, only stablecoins.
   const BALANCE_READ_TOKENS = useMemo(() => [...ACCEPTED_TOKENS, CELO_TOKEN], []);

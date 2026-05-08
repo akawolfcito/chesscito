@@ -42,7 +42,7 @@ describe("ProActiveCTA — navigational variant (non-/arena surfaces)", () => {
     expect(pushMock).toHaveBeenCalledWith("/arena");
     // onClose intentionally NOT called: when the sheet was opened via
     // /hub?legacy=1&action=pro deep link, calling onClose triggers
-    // PlayHubRoot's bounce-back useEffect which races with router.push
+    // ExercisesScreen's bounce-back useEffect which races with router.push
     // and wins, dropping the user on /hub instead of /arena.
     expect(onClose).not.toHaveBeenCalled();
     expect(trackMock).toHaveBeenCalledWith("pro_active_cta_tap", {

@@ -15,7 +15,7 @@ import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
 import { ArenaSelectScaffold } from "@/components/arena/arena-select-scaffold";
-import { PersistentDock } from "@/components/play-hub/persistent-dock";
+import { PersistentDock } from "@/components/exercises/persistent-dock";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";

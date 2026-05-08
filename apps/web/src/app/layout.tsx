@@ -70,7 +70,7 @@ export default function RootLayout({
             --app-max-width (390 px), which made sense when every
             page was a mobile MiniPay surface. Now that "/" is the
             public web-responsive landing, the constraint moves to
-            the routes that actually need it (play-hub-root, arena,
+            the routes that actually need it (exercises-screen, arena,
             victory, LegalPageShell — they each carry their own
             max-w wrapper). The flex justify-center stays so any
             page that opts back into the 390 px constraint still

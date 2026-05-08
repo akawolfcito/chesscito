@@ -26,7 +26,7 @@
 //
 // Note (2026-05-04): after the Story 1.12 flag flip, `/hub` default
 // renders the Game Home scaffold. Legacy baselines still target
-// `<PlayHubRoot>` and therefore navigate to `/hub?legacy=1`. New
+// `<ExercisesScreen>` and therefore navigate to `/hub?legacy=1`. New
 // scaffold baselines are deferred until layout stabilizes (per
 // docs/release/2026-05-04-arena-primitives-and-hub-scaffold-handoff.md §5).
 

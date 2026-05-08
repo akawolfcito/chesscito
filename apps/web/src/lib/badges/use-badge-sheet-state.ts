@@ -20,7 +20,7 @@ import { isUserCancellation } from "@/lib/errors";
 import { track } from "@/lib/telemetry";
 import type { PieceId } from "@/lib/game/types";
 
-import type { BadgeSheet } from "@/components/play-hub/badge-sheet";
+import type { BadgeSheet } from "@/components/exercises/badge-sheet";
 
 const BADGE_PIECE_ORDER: readonly PieceId[] = [
   "rook",
@@ -70,7 +70,7 @@ export type UseBadgeSheetStateOptions = {
   onNavigateToTrophies: () => void;
 };
 
-/** BadgeSheet orchestration extracted from `<PlayHubRoot>` so the
+/** BadgeSheet orchestration extracted from `<ExercisesScreen>` so the
  *  redesigned `<HubScaffoldClient>` can render the badge claim flow
  *  in-place — same pattern used by `useProSheetState` (port 2026-05-07).
  *
@@ -78,7 +78,7 @@ export type UseBadgeSheetStateOptions = {
  *  Emits the same `badge_claim_tx` telemetry stages as the legacy host
  *  so funnel reporting stays continuous across the migration window.
  *  Skipped (deferred to follow-up): the post-claim ResultOverlay and
- *  the next-piece unlock celebration — both depend on PlayHubRoot
+ *  the next-piece unlock celebration — both depend on ExercisesScreen
  *  state machinery (boards, exercises) that doesn't exist on the
  *  scaffold surface yet. */
 export function useBadgeSheetState({
@@ -166,7 +166,7 @@ export function useBadgeSheetState({
         });
 
         // MiniPay path injects `feeCurrency` so the user can pay gas in
-        // a stablecoin. Mirror the PlayHubRoot helper: try fee-managed
+        // a stablecoin. Mirror the ExercisesScreen helper: try fee-managed
         // first; on failure fall back to native gas. Falls through any
         // non-fee-related error to the catch below.
         const baseRequest = {

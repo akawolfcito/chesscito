@@ -6,9 +6,9 @@ import { useAccount, useChainId, useReadContracts } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { HubScaffold } from "@/components/hub/hub-scaffold";
-import { BadgeSheet } from "@/components/play-hub/badge-sheet";
-import { PurchaseConfirmSheet } from "@/components/play-hub/purchase-confirm-sheet";
-import { ShopSheet } from "@/components/play-hub/shop-sheet";
+import { BadgeSheet } from "@/components/exercises/badge-sheet";
+import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
+import { ShopSheet } from "@/components/exercises/shop-sheet";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
@@ -24,7 +24,7 @@ import {
   deriveRewardTiles,
 } from "@/lib/hub/derive-reward-tiles";
 
-/** On-chain badge IDs in slot order — matches `play-hub-root.tsx`'s
+/** On-chain badge IDs in slot order — matches `exercises-screen.tsx`'s
  *  `BADGE_LEVEL_IDS` enumeration. Index 0 = id 1 = rook, index 1 = id 2
  *  = bishop, etc. Distinct from `REWARD_TILE_ORDER` (the *narrative*
  *  unlock order surfaced in the column). */
@@ -128,7 +128,7 @@ function deriveProShape(
  *    Story 1.12 final replaces them with in-scaffold sheets.
  *
  *  Pure presentational composition — no on-chain mutations belong here.
- *  Those stay on `<PlayHubRoot>` until the scaffold becomes the default. */
+ *  Those stay on `<ExercisesScreen>` until the scaffold becomes the default. */
 export function HubScaffoldClient() {
   const router = useRouter();
   const { address, isConnected } = useAccount();

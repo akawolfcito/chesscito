@@ -99,7 +99,7 @@ export type UseShopSheetStateReturn = {
   onSwitchNetwork: () => void;
 };
 
-/** Shop sheet orchestration extracted from `<PlayHubRoot>` so the
+/** Shop sheet orchestration extracted from `<ExercisesScreen>` so the
  *  `<HubScaffoldClient>` can render `<ShopSheet>` + `<PurchaseConfirmSheet>`
  *  in-place instead of bouncing through `/hub?legacy=1&action=shop`.
  *

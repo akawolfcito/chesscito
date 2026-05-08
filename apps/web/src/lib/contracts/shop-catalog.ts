@@ -57,7 +57,7 @@ export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
 
 /** Number of shield uses credited to localStorage per successful
  *  on-chain purchase of itemId=2. Mirrored in the receipt effect at
- *  play-hub-root.tsx and the SHIELD_COPY.buyLabel ("Buy (3 uses)"). */
+ *  exercises-screen.tsx and the SHIELD_COPY.buyLabel ("Buy (3 uses)"). */
 export const SHIELDS_PER_PURCHASE = 3;
 
 /** Coach credit packs sold via Shop.buyItem. Each entry maps the

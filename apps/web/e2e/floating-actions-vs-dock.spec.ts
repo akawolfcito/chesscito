@@ -20,8 +20,8 @@ import { test, expect, type Page } from "@playwright/test";
  *     the mini-arena sheet.
  *
  * Source-of-truth references:
- *   - apps/web/src/app/hub/page.tsx                     (route mounts PlayHubRoot)
- *   - apps/web/src/components/play-hub/play-hub-root.tsx:1162-1183
+ *   - apps/web/src/app/hub/page.tsx                     (route mounts ExercisesScreen)
+ *   - apps/web/src/components/exercises/exercises-screen.tsx:1162-1183
  *   - apps/web/src/components/mini-arena/mini-arena-bridge-slot.tsx
  *   - apps/web/src/components/daily/daily-tactic-slot.tsx
  *   - apps/web/src/lib/game/mini-arena.ts                (K+R vs K setup)

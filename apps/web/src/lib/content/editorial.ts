@@ -175,7 +175,7 @@ export const BADGE_SHEET_COPY = {
   notStarted: "Complete trials to start",
   viewTrophies: "View your Victories",
   /** Inline success banner rendered above the badge grid for ~2.5s after
-   *  a successful claim on the scaffold surface. PlayHubRoot legacy uses
+   *  a successful claim on the scaffold surface. ExercisesScreen legacy uses
    *  the global ResultOverlay for the same purpose; the scaffold has no
    *  ResultOverlay yet, so this banner provides the celebration moment. */
   claimSuccess: (piece: string) =>

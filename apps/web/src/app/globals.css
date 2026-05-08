@@ -2779,7 +2779,7 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* ── Hub Scaffold layout (Story 1.12 — Game Home redesign migration) ──
    3-zone "floating HUD" composition gated behind `?hub=new`. The legacy
-   <PlayHubRoot> stays mounted at /hub when the flag is absent. Mobile-
+   <ExercisesScreen> stays mounted at /hub when the flag is absent. Mobile-
    first 390px viewport; no desktop-specific tuning yet. */
 .hub-scaffold {
   display: flex;

@@ -5,9 +5,9 @@ import type { ReactNode } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LABYRINTH_COPY, MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
-import { PiecePickerSheet } from "@/components/play-hub/piece-picker-sheet";
-import { PiecePickerTrigger } from "@/components/play-hub/piece-picker-trigger";
-import { MissionDetailSheet } from "@/components/play-hub/mission-detail-sheet";
+import { PiecePickerSheet } from "@/components/exercises/piece-picker-sheet";
+import { PiecePickerTrigger } from "@/components/exercises/piece-picker-trigger";
+import { MissionDetailSheet } from "@/components/exercises/mission-detail-sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 
 type PieceOption = {

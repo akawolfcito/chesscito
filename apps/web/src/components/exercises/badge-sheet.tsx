@@ -171,7 +171,7 @@ type BadgeSheetProps = {
   /** When set, renders an inline success banner above the badge grid
    *  for the duration the host keeps it set. Used by the scaffold's
    *  `useBadgeSheetState` hook to provide a celebration moment after a
-   *  successful claim — PlayHubRoot legacy uses the global ResultOverlay
+   *  successful claim — ExercisesScreen legacy uses the global ResultOverlay
    *  for the same purpose, so it keeps this prop unset. */
   lastClaimedPiece?: PieceId | null;
   showNotification: boolean;
@@ -179,7 +179,7 @@ type BadgeSheetProps = {
    *  the trophy drawer in-place — no route navigation. */
   onNavigateToTrophies: () => void;
   /** Render the built-in `<SheetTrigger>` dock button. Default `true`
-   *  for legacy callers (`<PlayHubRoot>` mounts this inside the dock).
+   *  for legacy callers (`<ExercisesScreen>` mounts this inside the dock).
    *  Pass `false` from the scaffold, which controls open state via
    *  `onOpenChange` and never wants the orphan trigger floating in the
    *  layout tree. Without this gate, Radix renders the button as a real

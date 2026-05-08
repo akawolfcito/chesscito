@@ -2,9 +2,9 @@ import { describe, it, expect, vi } from "vitest";
 
 // Mock the heavy children — the page test only cares which one is
 // chosen and what props are forwarded.
-vi.mock("@/components/play-hub/play-hub-root", () => ({
-  PlayHubRoot: (props: unknown) => ({
-    type: "PlayHubRoot",
+vi.mock("@/components/exercises/exercises-screen", () => ({
+  ExercisesScreen: (props: unknown) => ({
+    type: "ExercisesScreen",
     props,
   }),
 }));
@@ -56,15 +56,15 @@ describe("/hub page (server)", () => {
     });
   });
 
-  describe("legacy fallback → PlayHubRoot", () => {
-    it("renders <PlayHubRoot /> when `?legacy=1`", () => {
+  describe("legacy fallback → ExercisesScreen", () => {
+    it("renders <ExercisesScreen /> when `?legacy=1`", () => {
       const el = renderPage({ legacy: "1" });
-      expect((el.type as unknown as { name: string }).name).toBe("PlayHubRoot");
+      expect((el.type as unknown as { name: string }).name).toBe("ExercisesScreen");
     });
 
-    it("renders <PlayHubRoot /> when `?legacy=true`", () => {
+    it("renders <ExercisesScreen /> when `?legacy=true`", () => {
       const el = renderPage({ legacy: "true" });
-      expect((el.type as unknown as { name: string }).name).toBe("PlayHubRoot");
+      expect((el.type as unknown as { name: string }).name).toBe("ExercisesScreen");
     });
 
     it("forwards a valid `?piece=` to initialPiece", () => {

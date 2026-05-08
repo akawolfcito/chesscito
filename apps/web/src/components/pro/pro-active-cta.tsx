@@ -32,7 +32,7 @@ export function ProActiveCTA({ source, onClose }: ProActiveCTAProps) {
     track("pro_active_cta_tap", { source });
     if (!arena) {
       // Navigate away → don't call onClose(). When the sheet was
-      // opened via /hub?legacy=1&action=pro, PlayHubRoot's bounce-
+      // opened via /hub?legacy=1&action=pro, ExercisesScreen's bounce-
       // back useEffect listens for proSheetOpen flipping false and
       // races us to /hub — winning that race meant "Play in Arena"
       // ended up on /hub instead of /arena (B2 from

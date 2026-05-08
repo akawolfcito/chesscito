@@ -15,20 +15,20 @@ import {
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { Board } from "@/components/board";
-import { ExerciseDrawer } from "@/components/play-hub/exercise-drawer";
-import { LeaderboardSheet } from "@/components/play-hub/leaderboard-sheet";
-import { MissionBriefing } from "@/components/play-hub/mission-briefing";
-import { MissionPanelCandy } from "@/components/play-hub/mission-panel-candy";
+import { ExerciseDrawer } from "@/components/exercises/exercise-drawer";
+import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
+import { MissionBriefing } from "@/components/exercises/mission-briefing";
+import { MissionPanelCandy } from "@/components/exercises/mission-panel-candy";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { WelcomeOverlay } from "@/components/welcome/welcome-overlay";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
-import { ContextualActionSlot } from "@/components/play-hub/contextual-action-slot";
-import { PersistentDock } from "@/components/play-hub/persistent-dock";
-import { TrophiesSheet } from "@/components/play-hub/trophies-sheet";
-import { PurchaseConfirmSheet } from "@/components/play-hub/purchase-confirm-sheet";
-import { ShopSheet } from "@/components/play-hub/shop-sheet";
+import { ContextualActionSlot } from "@/components/exercises/contextual-action-slot";
+import { PersistentDock } from "@/components/exercises/persistent-dock";
+import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
+import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
+import { ShopSheet } from "@/components/exercises/shop-sheet";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { useSplashLoader } from "@/hooks/use-splash-loader";
@@ -62,9 +62,9 @@ import { CAPTURE_COPY, CTA_LABELS, DOCK_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY,
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
-import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/components/play-hub/result-overlay";
-import { BadgeSheet } from "@/components/play-hub/badge-sheet";
-import { ArenaEntrySheet } from "@/components/play-hub/arena-entry-sheet";
+import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/components/exercises/result-overlay";
+import { BadgeSheet } from "@/components/exercises/badge-sheet";
+import { ArenaEntrySheet } from "@/components/exercises/arena-entry-sheet";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { Button } from "@/components/ui/button";
@@ -73,7 +73,7 @@ import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib
 import { getContextAction } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, EXERCISES, LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
 import { getLabyrinthBest, recordLabyrinthBest } from "@/lib/game/labyrinth-progress";
-import { LabyrinthCompleteOverlay } from "@/components/play-hub/labyrinth-complete-overlay";
+import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
 
@@ -136,20 +136,20 @@ function txLink(chainId: number | undefined, txHash: string) {
  *  scaffold (`<HubScaffoldClient>`) routes monetization-touching taps to
  *  `/hub?legacy=1&action=…` so the legacy player keeps owning the heavy
  *  on-chain mutation flows during the migration. */
-export type PlayHubInitialAction = "shop" | "pro" | "badges" | "trophies";
+export type ExercisesInitialAction = "shop" | "pro" | "badges" | "trophies";
 
-export type PlayHubRootProps = {
+export type ExercisesScreenProps = {
   /** Pre-selected piece (e.g. when the scaffold reward tile is tapped).
    *  Falls back to "rook" — same default as before. */
   initialPiece?: PieceKey;
   /** Pre-opened sheet on first render. The scaffold uses this to drive
    *  the user straight into the shop / PRO / badge flow without an extra
    *  tap inside legacy. */
-  initialAction?: PlayHubInitialAction;
+  initialAction?: ExercisesInitialAction;
 };
 
 /**
- * PlayHubRoot — the entire play-hub experience as a self-contained
+ * ExercisesScreen — the entire play-hub experience as a self-contained
  * client component. Both `/` (legacy) and `/hub?legacy=1` render this.
  * Lifting it out of app/page.tsx lets the public landing live at `/`
  * while MiniPay players keep their bookmarked play-hub flow at `/hub`.
@@ -157,10 +157,10 @@ export type PlayHubRootProps = {
  * Accepts initialPiece + initialAction so the scaffold can deep-link
  * users straight into the matching legacy flow.
  */
-export function PlayHubRoot({
+export function ExercisesScreen({
   initialPiece = "rook",
   initialAction,
-}: PlayHubRootProps = {}) {
+}: ExercisesScreenProps = {}) {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
