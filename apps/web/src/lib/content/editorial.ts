@@ -1622,6 +1622,10 @@ export const MISSION_RIBBON_COPY = {
   "pro-sheet": PRO_COPY.tagline,
   /** Landing CTA bar stays in Spanish per LANDING_COPY v0.5 locked content. */
   "landing-cta-bar": "Pequeñas jugadas. Grandes hábitos mentales.",
+  /** Exercises fallback. Live use passes runtime `pieceHint` via the
+   *  `<MissionRibbon text>` override; this is the safety net for
+   *  default rendering / tests. */
+  exercises: "Watch the piece. Move it.",
   ariaLabel: "Mission statement",
 } as const;
 
