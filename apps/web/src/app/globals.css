@@ -1255,7 +1255,7 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.15),
       inset 0 -2px 0 rgba(0, 0, 0, 0.25);
     transition: all var(--duration-snap) ease-out;
-    font-family: var(--font-game-display);
+    font-family: var(--font-game-action);
     text-shadow: var(--text-shadow-label);
   }
 
@@ -1267,9 +1267,15 @@
     transform: translateY(1px) scale(0.97);
   }
 
-  /* ── E3 Key game labels ── */
+  /* ── E3 Key game labels ──
+     Utility class shared across action buttons (.game-cta-depth,
+     .chesscito-dock-center) AND non-action labels (dock side items).
+     Font-family inherits from the parent so each context applies the
+     right token: Rowdies inside action buttons, Fredoka in label
+     contexts. This is the single rule of the design system —
+     "Rowdies = action, Fredoka = display" — without per-class coupling. */
   .game-label {
-    font-family: var(--font-game-display);
+    font-family: inherit;
     text-shadow: var(--text-shadow-label);
   }
 
@@ -1627,7 +1633,7 @@
     color: var(--redesign-cyan-dim);
     box-shadow: none;
     transition: transform var(--duration-snap, 120ms);
-    font-family: var(--font-game-display);
+    font-family: var(--font-game-action);
   }
 
   .chesscito-dock-center.is-active {
