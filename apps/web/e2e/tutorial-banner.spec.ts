@@ -14,22 +14,29 @@ import { test, expect } from "@playwright/test";
  */
 test.describe("Play hub — mission briefing first-visit", () => {
   test("first visit shows the briefing modal", async ({ page }) => {
-    // Ensure the onboarded flag is absent before navigating.
+    // Ensure the onboarded flag is absent before navigating, but
+    // pre-dismiss the unrelated <WelcomeOverlay> (z-70) so the
+    // dialog selector below resolves to the briefing only and not
+    // both modals.
     await page.addInitScript(() => {
       window.localStorage.removeItem("chesscito:onboarded");
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
     });
 
     await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
 
     // Briefing is a role="dialog" with aria-labelledby="mission-briefing-objective"
-    const dialog = page.getByRole("dialog", { name: /./ });
+    const dialog = page.getByRole("dialog", {
+      name: /Move your Rook/i,
+    });
     await expect(dialog).toBeVisible();
   });
 
   test("returning visit does not show the briefing", async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
     });
 
     await page.goto("/exercises");
@@ -42,12 +49,15 @@ test.describe("Play hub — mission briefing first-visit", () => {
   test("tapping Play dismisses the briefing and sets the onboarded flag", async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.removeItem("chesscito:onboarded");
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
     });
 
     await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
 
-    const dialog = page.getByRole("dialog", { name: /./ });
+    const dialog = page.getByRole("dialog", {
+      name: /Move your Rook/i,
+    });
     await expect(dialog).toBeVisible();
 
     // Play button is the autoFocus CTA inside the modal. Scope by the

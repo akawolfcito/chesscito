@@ -18,6 +18,7 @@ test.describe("Look-and-feel sweep captures", () => {
     // Seed a FEN mid-game + persistence so arena drops us into playing.
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
       window.localStorage.setItem("chesscito:arena-last-difficulty", "easy");
       window.localStorage.setItem(
         "chesscito:arena-game",
@@ -58,6 +59,7 @@ test.describe("Look-and-feel sweep captures", () => {
   test("piece picker sheet open", async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
     });
     await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
@@ -71,6 +73,7 @@ test.describe("Look-and-feel sweep captures", () => {
   test("badge sheet (mobile 390px — where bg edge matters)", async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
     });
     await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
@@ -83,6 +86,7 @@ test.describe("Look-and-feel sweep captures", () => {
   test("leaderboard sheet (mobile 390px)", async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
     });
     await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
@@ -94,6 +98,7 @@ test.describe("Look-and-feel sweep captures", () => {
   test("shop sheet (mobile 390px)", async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
     });
     await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
@@ -107,6 +112,7 @@ test.describe("Look-and-feel sweep captures", () => {
     // FEN where white pawn is on a7 and it's white's turn.
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
       window.localStorage.setItem(
         "chesscito:arena-game",
         JSON.stringify({

@@ -14,6 +14,12 @@ test.describe("Play hub — exercise flow", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
+      // Pre-migration this spec hit `/` (LandingPage); WelcomeOverlay
+      // never rendered on that surface. Post-migration we navigate
+      // directly to /exercises where WelcomeOverlay mounts at z-70 and
+      // intercepts every click. Pre-dismiss so the test can hit the
+      // board.
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
     });
   });
 
