@@ -26,56 +26,128 @@ export type PendingShieldTx = {
 };
 
 export type LegacyMigrationPayload = {
-  /** Pre-v2 single-number shield count read from
-   *  `chesscito:shields` exactly once. */
   legacy: number;
 };
 
-/** Derived display count clamped to [0, MAX_SHIELDS]. */
+function safeReadInt(key: string): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (raw == null) return 0;
+    const n = Number.parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return n;
+  } catch {
+    return 0;
+  }
+}
+
+function safeWriteInt(key: string, value: number): void {
+  if (typeof window === "undefined") return;
+  const clamped = Math.max(0, Math.floor(value));
+  try {
+    window.localStorage.setItem(key, String(clamped));
+  } catch {
+    // storage unavailable; the next read returns 0 and boot-sync
+    // re-hydrates from the server.
+  }
+}
+
 export function readDisplayedShields(): number {
-  throw new Error("not implemented");
+  const credited = readCreditedCache();
+  const consumed = readConsumedCount();
+  return Math.min(MAX_SHIELDS, Math.max(0, credited - consumed));
 }
 
 export function readCreditedCache(): number {
-  throw new Error("not implemented");
+  return safeReadInt(SHIELDS_CREDITED_CACHE_KEY);
 }
 
-export function writeCreditedCache(_n: number): void {
-  throw new Error("not implemented");
+export function writeCreditedCache(n: number): void {
+  safeWriteInt(SHIELDS_CREDITED_CACHE_KEY, n);
 }
 
 export function readConsumedCount(): number {
-  throw new Error("not implemented");
+  return safeReadInt(SHIELDS_CONSUMED_KEY);
 }
 
-/** Bump the local consumed counter by one. Never touches `credited`.
- *  Dispatches `shield-events` so footer chip + retry button refresh. */
 export function consumeOneShield(): void {
-  throw new Error("not implemented");
+  const next = readConsumedCount() + 1;
+  safeWriteInt(SHIELDS_CONSUMED_KEY, next);
+  dispatchShieldChange();
 }
 
-/** Idempotent push (no duplicates by txHash). Trims to
- *  PENDING_TX_QUEUE_MAX, oldest first. */
-export function enqueuePendingTx(_txHash: `0x${string}`): void {
-  throw new Error("not implemented");
+function readQueueRaw(): PendingShieldTx[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(SHIELDS_PENDING_TX_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (entry): entry is PendingShieldTx =>
+        entry != null &&
+        typeof entry === "object" &&
+        typeof entry.txHash === "string" &&
+        entry.txHash.startsWith("0x") &&
+        typeof entry.queuedAt === "number" &&
+        Number.isFinite(entry.queuedAt),
+    );
+  } catch {
+    return [];
+  }
 }
 
-export function dequeuePendingTx(_txHash: `0x${string}`): void {
-  throw new Error("not implemented");
+function writeQueue(queue: PendingShieldTx[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      SHIELDS_PENDING_TX_KEY,
+      JSON.stringify(queue),
+    );
+  } catch {
+    // ignore — queue rebuilt on next enqueue
+  }
 }
 
-/** TTL-prunes entries older than PENDING_TX_TTL_MS on read. */
+export function enqueuePendingTx(txHash: `0x${string}`): void {
+  const queue = readQueueRaw();
+  if (queue.some((entry) => entry.txHash === txHash)) return;
+  queue.push({ txHash, queuedAt: Date.now() });
+  while (queue.length > PENDING_TX_QUEUE_MAX) queue.shift();
+  writeQueue(queue);
+}
+
+export function dequeuePendingTx(txHash: `0x${string}`): void {
+  const queue = readQueueRaw();
+  const next = queue.filter((entry) => entry.txHash !== txHash);
+  if (next.length === queue.length) return;
+  writeQueue(next);
+}
+
 export function readPendingTxs(): PendingShieldTx[] {
-  throw new Error("not implemented");
+  const now = Date.now();
+  const queue = readQueueRaw();
+  const fresh = queue.filter(
+    (entry) => now - entry.queuedAt < PENDING_TX_TTL_MS,
+  );
+  // Persist the pruned queue so subsequent reads are fast and the TTL
+  // truly evicts (not just hides) stale entries.
+  if (fresh.length !== queue.length) writeQueue(fresh);
+  return fresh;
 }
 
-/** One-shot migration helper. Returns `{ legacy }` if a legacy
- *  number exists *and* no `consumed` key has been initialized yet.
- *  Subsequent calls return null. Caller is responsible for the
- *  atomic clear (only delete legacy after consumed + credited-cache
- *  writes succeed). */
 export function consumeLegacyShieldsForMigration(): LegacyMigrationPayload | null {
-  throw new Error("not implemented");
+  if (typeof window === "undefined") return null;
+  try {
+    // Already migrated? consumed key is the migration sentinel.
+    if (window.localStorage.getItem(SHIELDS_CONSUMED_KEY) != null) return null;
+    const raw = window.localStorage.getItem(SHIELDS_LEGACY_KEY);
+    if (raw == null) return null;
+    const n = Number.parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < 0) return null;
+    return { legacy: n };
+  } catch {
+    return null;
+  }
 }
-
-void dispatchShieldChange;
