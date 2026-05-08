@@ -9,7 +9,7 @@ const nextConfig = {
     NEXT_PUBLIC_BUILD_SHA: (process.env.VERCEL_GIT_COMMIT_SHA || 'dev').slice(0, 7),
   },
   async rewrites() {
-    return [{ source: '/play-hub', destination: '/' }];
+    return [{ source: '/play-hub', destination: '/exercises' }];
   },
   async headers() {
     return [

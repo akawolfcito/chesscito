@@ -956,7 +956,7 @@ function ArenaPageInner() {
               softGate={
                 softGateOpen
                   ? {
-                      onLearn: () => router.push("/hub"),
+                      onLearn: () => router.push("/exercises"),
                       onDismiss: () => setSoftGateOpen(false),
                     }
                   : undefined
@@ -1020,7 +1020,7 @@ function ArenaPageInner() {
               softGate={
                 softGateOpen
                   ? {
-                      onLearn: () => router.push("/hub"),
+                      onLearn: () => router.push("/exercises"),
                       onDismiss: () => setSoftGateOpen(false),
                     }
                   : undefined
