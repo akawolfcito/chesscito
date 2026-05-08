@@ -1602,6 +1602,13 @@ export const HUD_COPY = {
 
   /** Region container aria-label for the secondary row. */
   secondaryRowAriaLabel: "Player resources",
+
+  /** Secondary text-link rendered below `<PrimaryPlayCta>` so the
+   *  kingdom launcher exposes /exercises (canonical home for piece
+   *  exercises since 2026-05-09). Kept low-density so it does not
+   *  compete with the dominant PLAY CTA. */
+  practiceLinkLabel: "Practice pieces",
+  practiceLinkAriaLabel: "Practice individual chess pieces",
 } as const;
 
 /** Per-surface mission ribbon copy. Consumed by `<MissionRibbon>` (Step 11 §6

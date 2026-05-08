@@ -2860,6 +2860,32 @@ button.hud-resource-chip:active:not(:disabled) {
   padding-top: 4px;
 }
 
+/* Discreet text-link below <PrimaryPlayCta> linking the kingdom to the
+   /exercises route. Low-density on purpose — the dominant CTA is PLAY;
+   this is the alternate "I want to drill pieces" affordance. */
+.hub-scaffold-secondary-link {
+  align-self: center;
+  background: none;
+  border: 0;
+  padding: 6px 12px;
+  color: rgb(255 255 255 / 0.78);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.hub-scaffold-secondary-link:hover,
+.hub-scaffold-secondary-link:focus-visible {
+  color: rgb(255 255 255 / 1);
+  background: rgb(255 255 255 / 0.08);
+  outline: none;
+}
+
 /* Arena selecting-state scaffold — mirrors hub-scaffold rules but reuses
    the `bg-app` texture and tightens the body for the picker UX (no
    side rail, picker stacks under the kingdom anchor). */

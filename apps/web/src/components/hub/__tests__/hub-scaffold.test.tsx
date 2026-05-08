@@ -140,4 +140,52 @@ describe("HubScaffold", () => {
     render(<HubScaffold {...baseProps} />);
     expect(screen.getByRole("main", { name: "Chesscito Hub" })).toBeInTheDocument();
   });
+
+  describe("secondaryAction", () => {
+    it("does not render a secondary link when the prop is omitted", () => {
+      const { container } = render(<HubScaffold {...baseProps} />);
+      expect(
+        container.querySelector(".hub-scaffold-secondary-link"),
+      ).toBeNull();
+    });
+
+    it("renders the secondary link with the provided label + aria-label", () => {
+      render(
+        <HubScaffold
+          {...baseProps}
+          secondaryAction={{
+            label: "Practice pieces",
+            ariaLabel: "Practice individual chess pieces",
+            onPress: () => {},
+          }}
+        />,
+      );
+      const link = screen.getByRole("button", {
+        name: "Practice individual chess pieces",
+      });
+      expect(link.textContent).toBe("Practice pieces");
+      expect(link.className).toMatch(/hub-scaffold-secondary-link/);
+    });
+
+    it("forwards the tap to the onPress handler", async () => {
+      const onPress = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <HubScaffold
+          {...baseProps}
+          secondaryAction={{
+            label: "Practice pieces",
+            ariaLabel: "Practice individual chess pieces",
+            onPress,
+          }}
+        />,
+      );
+      await user.click(
+        screen.getByRole("button", {
+          name: "Practice individual chess pieces",
+        }),
+      );
+      expect(onPress).toHaveBeenCalledTimes(1);
+    });
+  });
 });

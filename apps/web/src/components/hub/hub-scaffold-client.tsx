@@ -301,6 +301,14 @@ export function HubScaffoldClient() {
           // still applies on Play Again inside Arena.
           router.push("/arena?fresh=1");
         }}
+        secondaryAction={{
+          label: HUD_COPY.practiceLinkLabel,
+          ariaLabel: HUD_COPY.practiceLinkAriaLabel,
+          onPress: () => {
+            track("hub_practice_link_tap");
+            router.push("/exercises");
+          },
+        }}
       />
       <ProSheet {...proSheet.sheetProps} />
       <BadgeSheet {...badgeSheet.sheetProps} />

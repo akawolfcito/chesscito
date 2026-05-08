@@ -38,6 +38,15 @@ type HubScaffoldProps = {
   /** Primary CTA prop-driven label + aria. */
   playLabel: string;
   playAriaLabel: string;
+  /** Optional secondary text-link rendered below `<PrimaryPlayCta>` for
+   *  the "alternate destination" affordance (currently: practice pieces
+   *  → /exercises). Both fields are required when present, omit the
+   *  prop entirely to skip the link. Caller owns navigation. */
+  secondaryAction?: {
+    label: string;
+    ariaLabel: string;
+    onPress: () => void;
+  };
   /** Tap handlers — caller wires navigation when the flag flips real. */
   onTrophyTap?: () => void;
   onProTap?: () => void;
@@ -89,6 +98,7 @@ export function HubScaffold({
   premiumTotal = 0,
   playLabel,
   playAriaLabel,
+  secondaryAction,
   onTrophyTap,
   onProTap,
   onCoachTap,
@@ -214,6 +224,16 @@ export function HubScaffold({
             onPress={onPlayPress}
           />,
         )}
+        {secondaryAction ? (
+          <button
+            type="button"
+            onClick={secondaryAction.onPress}
+            aria-label={secondaryAction.ariaLabel}
+            className="hub-scaffold-secondary-link"
+          >
+            {secondaryAction.label}
+          </button>
+        ) : null}
       </footer>
     </main>
   );
