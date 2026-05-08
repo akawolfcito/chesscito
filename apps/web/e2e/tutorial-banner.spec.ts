@@ -19,7 +19,7 @@ test.describe("Play hub — mission briefing first-visit", () => {
       window.localStorage.removeItem("chesscito:onboarded");
     });
 
-    await page.goto("/");
+    await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
 
     // Briefing is a role="dialog" with aria-labelledby="mission-briefing-objective"
@@ -32,7 +32,7 @@ test.describe("Play hub — mission briefing first-visit", () => {
       window.localStorage.setItem("chesscito:onboarded", "true");
     });
 
-    await page.goto("/");
+    await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
 
     // The mission-briefing dialog is labelled by #mission-briefing-objective
@@ -44,7 +44,7 @@ test.describe("Play hub — mission briefing first-visit", () => {
       window.localStorage.removeItem("chesscito:onboarded");
     });
 
-    await page.goto("/");
+    await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
 
     const dialog = page.getByRole("dialog", { name: /./ });

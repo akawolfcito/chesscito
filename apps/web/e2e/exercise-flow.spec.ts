@@ -18,7 +18,7 @@ test.describe("Play hub — exercise flow", () => {
   });
 
   test("selecting the piece surfaces is-highlighted cells for its legal moves", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
 
     // Find the square that currently owns the floating piece — use
@@ -40,7 +40,7 @@ test.describe("Play hub — exercise flow", () => {
   });
 
   test("tapping a non-legal square does not highlight it", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
 
     // Click a far square with no piece — should not surface move highlights

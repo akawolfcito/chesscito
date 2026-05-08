@@ -24,11 +24,15 @@
 //                       hub-pro-sheet-open is documented as a Step 2
 //                       carry-forward.
 //
-// Note (2026-05-04): after the Story 1.12 flag flip, `/hub` default
-// renders the Game Home scaffold. Legacy baselines still target
-// `<ExercisesScreen>` and therefore navigate to `/hub?legacy=1`. New
-// scaffold baselines are deferred until layout stabilizes (per
-// docs/release/2026-05-04-arena-primitives-and-hub-scaffold-handoff.md §5).
+// Note (2026-05-09): exercises moved from `/hub?legacy=1` to its own
+// canonical `/exercises` route. The 3 baselines below now navigate
+// to `/exercises` directly (DOM identical — same <ExercisesScreen>
+// component, just different URL). Pre-migration the
+// `hub-shop-sheet-open` baseline was failing (documented in
+// docs/handoffs/2026-05-09-session-handoff.md §3); rebaselining the
+// visual suite against the post-rename DOM is tracked as a separate
+// task. Run `pnpm test:e2e:visual --update-snapshots` once layout is
+// stable + the baseline drift is reviewed.
 
 import { test, expect, type Page } from "@playwright/test";
 
@@ -69,7 +73,7 @@ test.describe("visual regression — Step 1 baselines", () => {
   test("hub-clean — anonymous /hub, no overlays", async ({ page }) => {
     await bypassFirstVisit(page);
     await freezeDate(page, FROZEN_DATE);
-    await page.goto("/hub?legacy=1", { waitUntil: "load", timeout: 30_000 });
+    await page.goto("/exercises", { waitUntil: "load", timeout: 30_000 });
     // Wait for splash to clear so the screenshot captures the resting hub.
     await expect(page.locator(".playhub-intro-overlay")).toBeHidden({
       timeout: 15_000,
@@ -83,7 +87,7 @@ test.describe("visual regression — Step 1 baselines", () => {
   }) => {
     await bypassFirstVisit(page);
     await freezeDate(page, FROZEN_DATE);
-    await page.goto("/hub?legacy=1", { waitUntil: "load", timeout: 30_000 });
+    await page.goto("/exercises", { waitUntil: "load", timeout: 30_000 });
     await expect(page.locator(".playhub-intro-overlay")).toBeHidden({
       timeout: 15_000,
     });
@@ -110,7 +114,7 @@ test.describe("visual regression — Step 1 baselines", () => {
   }) => {
     await bypassFirstVisit(page);
     await freezeDate(page, FROZEN_DATE);
-    await page.goto("/hub?legacy=1", { waitUntil: "load", timeout: 30_000 });
+    await page.goto("/exercises", { waitUntil: "load", timeout: 30_000 });
     await expect(page.locator(".playhub-intro-overlay")).toBeHidden({
       timeout: 15_000,
     });

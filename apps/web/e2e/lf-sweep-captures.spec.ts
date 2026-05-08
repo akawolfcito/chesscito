@@ -47,7 +47,7 @@ test.describe("Look-and-feel sweep captures", () => {
     await page.addInitScript(() => {
       window.localStorage.clear();
     });
-    await page.goto("/");
+    await page.goto("/exercises");
     // Capture while the splash still shows (before assets finish loading).
     // Playwright's default is to wait for load; screenshot immediately.
     await page.screenshot({ path: path.join(OUT_DIR, "splash.png"), fullPage: false });
@@ -59,7 +59,7 @@ test.describe("Look-and-feel sweep captures", () => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
     });
-    await page.goto("/");
+    await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
     // Open piece picker — tap the piece chip in the header.
     const pieceChip = page.getByRole("button", { name: /switch piece/i });
@@ -72,7 +72,7 @@ test.describe("Look-and-feel sweep captures", () => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
     });
-    await page.goto("/");
+    await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
     // Open badge sheet — click the badges dock item.
     await page.getByRole("button", { name: /badges/i }).first().click();
@@ -84,7 +84,7 @@ test.describe("Look-and-feel sweep captures", () => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
     });
-    await page.goto("/");
+    await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
     await page.getByRole("button", { name: /leaderboard/i }).first().click();
     await page.waitForTimeout(500);
@@ -95,7 +95,7 @@ test.describe("Look-and-feel sweep captures", () => {
     await page.addInitScript(() => {
       window.localStorage.setItem("chesscito:onboarded", "true");
     });
-    await page.goto("/");
+    await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
     await page.getByRole("button", { name: /^shop$/i }).first().click();
     await page.waitForTimeout(500);
