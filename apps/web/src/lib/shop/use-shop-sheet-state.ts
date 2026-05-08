@@ -8,7 +8,6 @@ import {
   useReadContract,
   useReadContracts,
   useSwitchChain,
-  useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -24,7 +23,6 @@ import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
   SHIELD_ITEM_ID,
-  SHIELDS_PER_PURCHASE,
   SHOP_ITEMS,
 } from "@/lib/contracts/shop-catalog";
 import {
@@ -36,11 +34,14 @@ import {
 import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
 import { hapticSuccess } from "@/lib/haptics";
 import { dispatchShieldChange } from "@/lib/shop/shield-events";
+import {
+  dequeuePendingTx,
+  enqueuePendingTx,
+  writeCreditedCache,
+} from "@/lib/shop/shield-storage";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { track } from "@/lib/telemetry";
 
-const MAX_SHIELDS = 30;
-const SHIELDS_STORAGE_KEY = "chesscito:shields";
 const SUCCESS_BANNER_TTL_MS = 6_000;
 
 type PaymentToken = (typeof ACCEPTED_TOKENS)[number] | typeof CELO_TOKEN;
@@ -141,8 +142,6 @@ export function useShopSheetState(): UseShopSheetStateReturn {
   const [purchasePhase, setPurchasePhase] = useState<
     "idle" | "approving" | "buying"
   >("idle");
-  const [shopTxHash, setShopTxHash] = useState<string | null>(null);
-  const [pendingShieldCredit, setPendingShieldCredit] = useState(false);
   const [successBanner, setSuccessBanner] = useState<SuccessBanner>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -257,33 +256,38 @@ export function useShopSheetState(): UseShopSheetStateReturn {
     [tokenBalances, CELO_BALANCE_INDEX],
   );
 
-  // Receipt watcher — credits shields once the buy receipt confirms.
-  // Same gating as legacy: only fires when `pendingShieldCredit` was set
-  // by `handleConfirmPurchase` for SHIELD_ITEM_ID.
-  const { isSuccess: isShopConfirmed } = useWaitForTransactionReceipt({
-    chainId,
-    hash: shopTxHash as `0x${string}` | undefined,
-    query: { enabled: Boolean(shopTxHash) },
-  });
-
-  useEffect(() => {
-    if (!isShopConfirmed || !pendingShieldCredit) return;
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(SHIELDS_STORAGE_KEY);
-      const prev = raw ? Math.max(0, Number.parseInt(raw, 10) || 0) : 0;
-      const next = Math.max(
-        0,
-        Math.min(prev + SHIELDS_PER_PURCHASE, MAX_SHIELDS),
-      );
-      window.localStorage.setItem(SHIELDS_STORAGE_KEY, String(next));
-      dispatchShieldChange();
-    } catch {
-      // storage unavailable; fail silently — chain receipt is the
-      // source of truth, scaffold can re-derive on next load.
-    }
-    setPendingShieldCredit(false);
-  }, [isShopConfirmed, pendingShieldCredit]);
+  // Server-side credit fire-and-forget. Banner truthfulness is "tx
+  // submitted", not "credit written" — the fetch resolves async and
+  // the chip refreshes when (a) writeCreditedCache lands here, or (b)
+  // useShieldSync runs on next boot. See spec §"Behavior 1".
+  const creditShieldServerSide = useCallback(
+    (txHash: `0x${string}`, walletAddress: `0x${string}`) => {
+      enqueuePendingTx(txHash);
+      void (async () => {
+        try {
+          const res = await fetch("/api/credit-shield", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ txHash, walletAddress }),
+          });
+          if (!res.ok) return; // 4xx/5xx → leave queued, useShieldSync retries
+          const data = (await res.json()) as {
+            ok: true;
+            credited: number;
+            delta: number;
+            txHash: string;
+          };
+          if (!isMountedRef.current) return;
+          dequeuePendingTx(txHash);
+          writeCreditedCache(data.credited);
+          dispatchShieldChange();
+        } catch {
+          // Network failure → leave queued.
+        }
+      })();
+    },
+    [],
+  );
 
   const openSheet = useCallback(() => {
     setOpen(true);
@@ -388,10 +392,9 @@ export function useShopSheetState(): UseShopSheetStateReturn {
       });
 
       if (!isMountedRef.current) return;
-      setShopTxHash(buyHash);
       track("shop_buy_tx", { stage: "success", source: txSource, item_id: itemIdNum });
       if (selectedItem.itemId === SHIELD_ITEM_ID) {
-        setPendingShieldCredit(true);
+        creditShieldServerSide(buyHash as `0x${string}`, address);
       }
       setConfirmOpen(false);
       setSelectedItemId(null);
@@ -452,6 +455,7 @@ export function useShopSheetState(): UseShopSheetStateReturn {
     publicClient,
     chainId,
     writeWithOptionalFeeCurrency,
+    creditShieldServerSide,
   ]);
 
   // Suppress unused-var for `paymentAllowance`: read is kept to keep the

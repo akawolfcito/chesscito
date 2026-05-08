@@ -18,6 +18,8 @@ import { HUD_COPY } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { subscribeToShieldChanges } from "@/lib/shop/shield-events";
+import { readDisplayedShields } from "@/lib/shop/shield-storage";
+import { useShieldSync } from "@/lib/shop/use-shield-sync";
 import { track } from "@/lib/telemetry";
 import {
   REWARD_TILE_ORDER,
@@ -40,7 +42,6 @@ const BADGE_PIECE_BY_INDEX: readonly PieceId[] = [
 const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
 
 const PROGRESS_STORAGE_PREFIX = "chesscito:progress:";
-const SHIELDS_STORAGE_KEY = "chesscito:shields";
 const MS_PER_DAY = 86_400_000;
 
 const PREMIUM_KICKER = "Training Pass";
@@ -60,17 +61,7 @@ function premiumAriaLabel(
 }
 
 function loadShieldCount(): number {
-  if (typeof window === "undefined") {
-    return 0;
-  }
-  try {
-    const raw = window.localStorage.getItem(SHIELDS_STORAGE_KEY);
-    if (!raw) return 0;
-    const n = Number.parseInt(raw, 10);
-    return Number.isFinite(n) && n >= 0 ? n : 0;
-  } catch {
-    return 0;
-  }
+  return readDisplayedShields();
 }
 
 function loadStarsPerPiece(): Partial<Record<PieceId, number>> {
@@ -155,9 +146,15 @@ export function HubScaffoldClient() {
 
   // Shop orchestration — same in-place pattern as PRO/Badges. Removes
   // the last `?legacy=1&action=shop` round-trip. Hook owns catalog +
-  // balances + approve/buy + receipt watcher; scaffold just mounts the
-  // two sheets it returns.
+  // balances + approve/buy + post-submit server credit; scaffold just
+  // mounts the two sheets it returns.
   const shopSheet = useShopSheetState();
+
+  // Boot-time + post-purchase shield reconciliation. Drains the
+  // pending-tx queue, runs one-shot legacy migration, refreshes
+  // credited-cache via /api/shields/me. Mounted at the scaffold root
+  // so the chip sees server-confirmed state on every connect.
+  useShieldSync();
 
   const { data: badgesData } = useReadContracts({
     contracts: BADGE_LEVEL_IDS.map((lid) => ({

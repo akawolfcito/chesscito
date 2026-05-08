@@ -29,6 +29,17 @@ import { PersistentDock } from "@/components/exercises/persistent-dock";
 import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/exercises/shop-sheet";
+import {
+  consumeOneShield,
+  dequeuePendingTx,
+  enqueuePendingTx,
+  readDisplayedShields,
+  writeCreditedCache,
+} from "@/lib/shop/shield-storage";
+import {
+  dispatchShieldChange,
+  subscribeToShieldChanges,
+} from "@/lib/shop/shield-events";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { useSplashLoader } from "@/hooks/use-splash-loader";
@@ -47,7 +58,6 @@ import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
   PRO_PRICE_USD6,
-  SHIELDS_PER_PURCHASE,
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
 } from "@/lib/contracts/shop-catalog";
@@ -376,24 +386,15 @@ export function ExercisesScreen({
 
   // (Timer cleanup now lives inside useAutoResetTimer.)
 
-  const MAX_SHIELDS = 30; // reasonable cap: 10 purchases × 3 shields each
+  // Display is now derived from server-tracked credited - locally-
+  // tracked consumed (clamped to MAX_SHIELDS). Read on mount + on
+  // every shield-events dispatch (server credit landed, retry consumed
+  // a shield, useShieldSync resolved).
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("chesscito:shields");
-      if (raw) {
-        const parsed = Number.parseInt(raw, 10) || 0;
-        setShieldCount(Math.min(parsed, MAX_SHIELDS));
-      }
-    } catch {
-      // ignore
-    }
+    const sync = () => setShieldCount(readDisplayedShields());
+    sync();
+    return subscribeToShieldChanges(sync);
   }, []);
-
-  function updateShieldCount(next: number) {
-    const clamped = Math.max(0, Math.min(next, MAX_SHIELDS));
-    setShieldCount(clamped);
-    localStorage.setItem("chesscito:shields", String(clamped));
-  }
 
 
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
@@ -562,25 +563,13 @@ export function ExercisesScreen({
   };
   const hasClaimedBadge = badgesClaimed[selectedPiece];
 
-  const [pendingShieldCredit, setPendingShieldCredit] = useState(false);
-  const { isLoading: isShopConfirming, isSuccess: isShopConfirmed } = useWaitForTransactionReceipt({
+  const { isLoading: isShopConfirming } = useWaitForTransactionReceipt({
     chainId,
     hash: shopTxHash as `0x${string}` | undefined,
     query: {
       enabled: Boolean(shopTxHash),
     },
   });
-
-  useEffect(() => {
-    if (isShopConfirmed && pendingShieldCredit) {
-      setShieldCount((prev) => {
-        const next = Math.max(0, Math.min(prev + SHIELDS_PER_PURCHASE, MAX_SHIELDS));
-        localStorage.setItem("chesscito:shields", String(next));
-        return next;
-      });
-      setPendingShieldCredit(false);
-    }
-  }, [isShopConfirmed, pendingShieldCredit]);
   const { isLoading: isClaimConfirming } = useWaitForTransactionReceipt({
     chainId,
     hash: claimTxHash as `0x${string}` | undefined,
@@ -720,7 +709,7 @@ export function ExercisesScreen({
 
   function handleUseShield() {
     if (phase !== "failure" || shieldCount <= 0) return;
-    updateShieldCount(shieldCount - 1);
+    consumeOneShield();
     resetBoard();
   }
 
@@ -1074,10 +1063,35 @@ export function ExercisesScreen({
 
       setShopTxHash(buyHash);
       track("shop_buy_tx", { stage: "success", source: txSource, item_id: itemIdNum });
-      // Arm the shield-credit effect: when this buy receipt confirms,
-      // localStorage gains 3 uses. Other items don't grant shields.
-      if (selectedItem.itemId === SHIELD_ITEM_ID) {
-        setPendingShieldCredit(true);
+      // Server-side shield credit (fire-and-forget). Spec §"Behavior 1":
+      // banner truthfulness = "tx submitted", credit resolves async.
+      if (selectedItem.itemId === SHIELD_ITEM_ID && address) {
+        const buyerAddress = address;
+        enqueuePendingTx(buyHash as `0x${string}`);
+        void (async () => {
+          try {
+            const res = await fetch("/api/credit-shield", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                txHash: buyHash,
+                walletAddress: buyerAddress,
+              }),
+            });
+            if (!res.ok) return;
+            const data = (await res.json()) as {
+              ok: true;
+              credited: number;
+              delta: number;
+              txHash: string;
+            };
+            dequeuePendingTx(buyHash as `0x${string}`);
+            writeCreditedCache(data.credited);
+            dispatchShieldChange();
+          } catch {
+            // network failure → leave queued, useShieldSync retries
+          }
+        })();
       }
       setConfirmOpen(false);
       setStoreOpen(false);

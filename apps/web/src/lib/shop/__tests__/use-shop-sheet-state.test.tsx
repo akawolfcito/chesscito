@@ -273,7 +273,7 @@ describe("useShopSheetState — handleConfirmPurchase guards", () => {
 });
 
 describe("useShopSheetState — successful Shield purchase", () => {
-  it("skips approve when allowance is sufficient + sets pendingShieldCredit", async () => {
+  it("skips approve when allowance is sufficient + posts to /api/credit-shield", async () => {
     setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
 
     // Allowance large enough → approve path skipped.
@@ -282,6 +282,20 @@ describe("useShopSheetState — successful Shield purchase", () => {
     });
     writeContractAsyncMock.mockResolvedValueOnce("0xbuyhash");
 
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            credited: 3,
+            delta: 3,
+            txHash: "0xbuyhash",
+          }),
+          { status: 200 },
+        ),
+      );
+
     const { result } = renderHook(() => useShopSheetState());
     act(() => result.current.sheetProps.onSelectItem(2n));
     act(() => result.current.confirmProps.onConfirm());
@@ -289,7 +303,6 @@ describe("useShopSheetState — successful Shield purchase", () => {
     await waitFor(() => {
       expect(writeContractAsyncMock).toHaveBeenCalledTimes(1);
     });
-    // First (and only) call is buyItem — approve was skipped.
     const firstCall = writeContractAsyncMock.mock.calls[0]?.[0] as
       | { functionName?: string }
       | undefined;
@@ -303,16 +316,48 @@ describe("useShopSheetState — successful Shield purchase", () => {
       "shop_buy_tx",
       expect.objectContaining({ stage: "success", source: "shop_retry_shield" }),
     );
+
+    // AC15: server-side credit fired with correct body shape.
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+    const fetchCall = fetchSpy.mock.calls.find(([input]) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      return url.includes("/api/credit-shield");
+    });
+    expect(fetchCall).toBeDefined();
+    const init = fetchCall?.[1] as RequestInit | undefined;
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(init?.body as string)).toEqual({
+      txHash: "0xbuyhash",
+      walletAddress: TEST_WALLET,
+    });
+
+    fetchSpy.mockRestore();
   });
 
-  it("dispatches shield-changed event once receipt confirms", async () => {
+  it("dispatches shield-changed after a successful 2xx server credit", async () => {
     setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
     usePublicClientMock.mockReturnValue({
       readContract: vi.fn().mockResolvedValue(10n ** 30n),
     });
     writeContractAsyncMock.mockResolvedValueOnce("0xbuyhash");
 
-    const { result, rerender } = renderHook(() => useShopSheetState());
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            credited: 3,
+            delta: 3,
+            txHash: "0xbuyhash",
+          }),
+          { status: 200 },
+        ),
+      );
+
+    const { result } = renderHook(() => useShopSheetState());
     act(() => result.current.sheetProps.onSelectItem(2n));
     act(() => result.current.confirmProps.onConfirm());
 
@@ -320,13 +365,44 @@ describe("useShopSheetState — successful Shield purchase", () => {
       expect(result.current.sheetProps.successBanner).not.toBeNull();
     });
 
-    // Now flip the receipt to confirmed and re-render.
-    useWaitForReceiptMock.mockReturnValue({ isLoading: false, isSuccess: true });
-    rerender();
-
     await waitFor(() => {
       expect(dispatchShieldChangeMock).toHaveBeenCalled();
     });
+
+    fetchSpy.mockRestore();
+  });
+
+  it("4xx response from /api/credit-shield does NOT dispatch shield-changed (entry stays queued)", async () => {
+    setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
+    usePublicClientMock.mockReturnValue({
+      readContract: vi.fn().mockResolvedValue(10n ** 30n),
+    });
+    writeContractAsyncMock.mockResolvedValueOnce("0xbuyhash");
+
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ ok: false, error: "unprocessable" }),
+          { status: 400 },
+        ),
+      );
+
+    const { result } = renderHook(() => useShopSheetState());
+    act(() => result.current.sheetProps.onSelectItem(2n));
+    act(() => result.current.confirmProps.onConfirm());
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+    // Banner still fires (banner truthfulness = "tx submitted").
+    await waitFor(() => {
+      expect(result.current.sheetProps.successBanner).not.toBeNull();
+    });
+    // Local credit-cache write was skipped → no dispatch from this path.
+    expect(dispatchShieldChangeMock).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
   });
 });
 

@@ -287,7 +287,10 @@ describe("HubScaffoldClient — tap handlers", () => {
 
   it("opens ShopSheet in-place when the shields chip is tapped (port 2026-05-08)", async () => {
     const user = userEvent.setup();
-    localStorage.setItem("chesscito:shields", "2");
+    // v2 shape — server-tracked credit + local consumed; display
+    // derived as min(MAX, max(0, credited - consumed)).
+    localStorage.setItem("chesscito:shields:credited-cache", "2");
+    localStorage.setItem("chesscito:shields:consumed", "0");
     render(<HubScaffoldClient />);
 
     // Shields chip is part of the secondary HUD row.
@@ -386,8 +389,9 @@ describe("HubScaffoldClient — shields chip", () => {
     ).toBeInTheDocument();
   });
 
-  it("reads shield count from localStorage on mount", async () => {
-    localStorage.setItem("chesscito:shields", "5");
+  it("reads shield count from credited-cache on mount", async () => {
+    localStorage.setItem("chesscito:shields:credited-cache", "5");
+    localStorage.setItem("chesscito:shields:consumed", "0");
     render(<HubScaffoldClient />);
 
     expect(
@@ -395,12 +399,24 @@ describe("HubScaffoldClient — shields chip", () => {
     ).toBeInTheDocument();
   });
 
-  it("falls back to 0 when localStorage value is corrupt", () => {
-    localStorage.setItem("chesscito:shields", "not-a-number");
+  it("falls back to 0 when credited-cache value is corrupt", () => {
+    localStorage.setItem("chesscito:shields:credited-cache", "not-a-number");
+    localStorage.setItem("chesscito:shields:consumed", "0");
     render(<HubScaffoldClient />);
 
     expect(
       screen.getByLabelText(/0 retry shields available/i),
+    ).toBeInTheDocument();
+  });
+
+  it("derives display from credited - consumed (clamped to MAX_SHIELDS=30)", () => {
+    // 33 credited (server allows over-cap), 2 consumed → 31 → clamp 30.
+    localStorage.setItem("chesscito:shields:credited-cache", "33");
+    localStorage.setItem("chesscito:shields:consumed", "2");
+    render(<HubScaffoldClient />);
+
+    expect(
+      screen.getByLabelText(/30 retry shields available/i),
     ).toBeInTheDocument();
   });
 });
@@ -455,7 +471,8 @@ describe("HubScaffoldClient — telemetry", () => {
 
   it("fires hub_shields_chip_tap with the current shield_count (KEY conversion event)", async () => {
     const user = userEvent.setup();
-    localStorage.setItem("chesscito:shields", "3");
+    localStorage.setItem("chesscito:shields:credited-cache", "3");
+    localStorage.setItem("chesscito:shields:consumed", "0");
     render(<HubScaffoldClient />);
 
     await user.click(
