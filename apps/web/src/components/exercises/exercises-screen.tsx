@@ -1253,9 +1253,13 @@ export function ExercisesScreen({
             proStatus={proStatus}
             isProLoading={proLoading}
             onProTap={() => setProSheetOpen(true)}
+            onBack={() => router.push("/hub")}
           />
         ) : (
-          <GlobalStatusBar variant="anonymous" />
+          <GlobalStatusBar
+            variant="anonymous"
+            onBack={() => router.push("/hub")}
+          />
         )}
         <MissionPanelCandy
           selectedPiece={selectedPiece}

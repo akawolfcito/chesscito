@@ -1085,6 +1085,7 @@ export const GLOBAL_STATUS_BAR_COPY = {
   proViewLabel: "View Chesscito PRO",
   proInactiveLabel: "PRO",
   proLoadingAriaLabel: "Loading PRO status",
+  backLabel: "Back to hub",
 } as const;
 
 /** /why public landing page copy. Spanish-only in v1 by product

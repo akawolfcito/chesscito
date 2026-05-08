@@ -41,6 +41,11 @@ export type ConnectedIdentity = {
 export type AnonymousProps = {
   variant: "anonymous";
   ariaLabel?: string;
+  /** Optional frame-level back navigation (e.g. /exercises → /hub).
+   *  Renders a chevron-left chip on the far left of the bar when
+   *  defined. Omit on the surface that IS the hub. Structural, not a
+   *  feature tap — counterpart to `onProTap` on the right edge. */
+  onBack?: () => void;
 };
 
 export type ConnectedProps = {
@@ -56,6 +61,8 @@ export type ConnectedProps = {
    */
   onProTap: () => void;
   ariaLabel?: string;
+  /** See `AnonymousProps.onBack`. */
+  onBack?: () => void;
 };
 
 /**
@@ -120,6 +127,13 @@ const HANDLE_CLASS =
 const AVATAR_BASE = cn(
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
   "bg-white/10 text-[14px] leading-none text-white/70",
+);
+
+/** Frame-level back chip — same envelope as the avatar so the left
+ *  cluster stays visually balanced (back · avatar · handle). */
+const BACK_BUTTON_CLASS = cn(
+  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+  "bg-white/10 text-white/85 transition active:scale-[0.94] hover:bg-white/15",
 );
 
 const PRO_PILL_BASE =
@@ -218,12 +232,46 @@ export function GlobalStatusBar(
   detectSpreadEscape(props as GlobalStatusBarProps & Record<string, unknown>);
 
   if (props.variant === "anonymous") {
-    return <AnonymousBar ariaLabel={props.ariaLabel} />;
+    return (
+      <AnonymousBar ariaLabel={props.ariaLabel} onBack={props.onBack} />
+    );
   }
   return <ConnectedBar {...props} />;
 }
 
-function AnonymousBar({ ariaLabel }: { ariaLabel?: string }): React.JSX.Element {
+function BackChip({ onClick }: { onClick: () => void }): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={GLOBAL_STATUS_BAR_COPY.backLabel}
+      className={BACK_BUTTON_CLASS}
+      data-back-chip
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
+    </button>
+  );
+}
+
+function AnonymousBar({
+  ariaLabel,
+  onBack,
+}: {
+  ariaLabel?: string;
+  onBack?: () => void;
+}): React.JSX.Element {
   return (
     <header
       role="banner"
@@ -234,6 +282,7 @@ function AnonymousBar({ ariaLabel }: { ariaLabel?: string }): React.JSX.Element 
       className={WRAPPER_CLASS}
     >
       <div className="flex min-w-0 items-center gap-2">
+        {onBack ? <BackChip onClick={onBack} /> : null}
         <div className={AVATAR_BASE} aria-hidden="true">
           <span aria-hidden>♟</span>
         </div>
@@ -272,6 +321,7 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
       className={WRAPPER_CLASS}
     >
       <div className="flex min-w-0 items-center gap-2">
+        {props.onBack ? <BackChip onClick={props.onBack} /> : null}
         <div
           className={cn(
             AVATAR_BASE,

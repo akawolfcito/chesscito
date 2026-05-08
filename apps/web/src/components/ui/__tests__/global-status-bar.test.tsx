@@ -67,6 +67,21 @@ describe("<GlobalStatusBar> variant: anonymous", () => {
     render(<GlobalStatusBar variant="anonymous" />);
     expect(getStatusBar()).toHaveAttribute("dir", "ltr");
   });
+
+  it("does NOT render the back chip when onBack is omitted", () => {
+    render(<GlobalStatusBar variant="anonymous" />);
+    expect(
+      screen.queryByLabelText(GLOBAL_STATUS_BAR_COPY.backLabel),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders a back chip and fires the callback when onBack is defined", () => {
+    const onBack = vi.fn();
+    render(<GlobalStatusBar variant="anonymous" onBack={onBack} />);
+    const button = screen.getByLabelText(GLOBAL_STATUS_BAR_COPY.backLabel);
+    fireEvent.click(button);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
