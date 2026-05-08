@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { HudResourceChip } from "@/components/hud/hud-resource-chip";
+import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { HUD_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PiecePickerSheet } from "@/components/exercises/piece-picker-sheet";
@@ -188,6 +189,7 @@ export function MissionPanelCandy({
   actionRowLeft,
   actionRowRight,
   shieldCount,
+  pieceHint,
 }: MissionPanelProps) {
   const activePiece = pieces.find((p) => p.key === selectedPiece);
   const pieceTitle =
@@ -333,6 +335,16 @@ export function MissionPanelCandy({
           value={shieldCount}
           ariaLabel={HUD_COPY.shieldsAriaLabel(shieldCount)}
         />
+      </div>
+
+      {/* MissionRibbon row — surface="exercises" feeds the runtime
+          `pieceHint` (e.g. "The rook moves in straight lines.") so the
+          player always sees the current piece's instruction frame
+          without competing with the mission objective row above. The
+          previously dead `pieceHint` prop is now wired live. When
+          undefined, the ribbon falls back to MISSION_RIBBON_COPY.exercises. */}
+      <div className="shrink-0 mx-2 mt-1">
+        <MissionRibbon surface="exercises" text={pieceHint} />
       </div>
 
       {/* L2 Layer toggle — only visible after L1 mastery + labyrinths
