@@ -79,7 +79,7 @@ export const COACH_PACK_ITEMS: Record<CoachPackSize, { itemId: bigint; priceUsd6
  *  coach:pro:<wallet> with a 30-day TTL.
  *
  *  Intentionally NOT included in `SHOP_ITEMS` — PRO renders as its
- *  own stand-alone card in /play-hub instead of mixing into the
+ *  own stand-alone card in /hub instead of mixing into the
  *  founder/shield row.
  *
  *  Admin must call:

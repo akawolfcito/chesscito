@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 describe("ProActiveCTA — navigational variant (non-/arena surfaces)", () => {
-  const NAV_SOURCES = ["/play-hub", "/trophies", "/leaderboard", "/about", "/why", "/", "/unknown"];
+  const NAV_SOURCES = ["/exercises", "/trophies", "/leaderboard", "/about", "/why", "/", "/unknown"];
 
   it.each(NAV_SOURCES)("renders Play in Arena CTA for source=%s", (source) => {
     render(<ProActiveCTA source={source} onClose={vi.fn()} />);
@@ -29,7 +29,7 @@ describe("ProActiveCTA — navigational variant (non-/arena surfaces)", () => {
   });
 
   it("renders the hub sub-line copy on navigational surfaces", () => {
-    render(<ProActiveCTA source="/play-hub" onClose={vi.fn()} />);
+    render(<ProActiveCTA source="/exercises" onClose={vi.fn()} />);
     expect(screen.getByTestId("pro-active-cta-subline")).toHaveTextContent(
       PRO_COPY.activeSublineHub,
     );
@@ -37,16 +37,20 @@ describe("ProActiveCTA — navigational variant (non-/arena surfaces)", () => {
 
   it("on tap, navigates to /arena and emits telemetry — does NOT call onClose (B2 fix 2026-05-07)", () => {
     const onClose = vi.fn();
-    render(<ProActiveCTA source="/play-hub" onClose={onClose} />);
+    render(<ProActiveCTA source="/exercises" onClose={onClose} />);
     fireEvent.click(screen.getByTestId("pro-active-cta-button"));
     expect(pushMock).toHaveBeenCalledWith("/arena");
-    // onClose intentionally NOT called: when the sheet was opened via
-    // /hub?legacy=1&action=pro deep link, calling onClose triggers
-    // ExercisesScreen's bounce-back useEffect which races with router.push
-    // and wins, dropping the user on /hub instead of /arena.
+    // onClose intentionally NOT called: when the sheet was opened from
+    // a navigational surface, calling onClose can race with router.push
+    // and the close handler may win, dropping the user on the parent
+    // surface instead of /arena. The B2 fix keeps the sheet open
+    // through navigation and lets the route change unmount it
+    // naturally. (Original incident traced to the legacy
+    // /hub?legacy=1&action=pro deep-link bounce; mitigation kept after
+    // the surface moved.)
     expect(onClose).not.toHaveBeenCalled();
     expect(trackMock).toHaveBeenCalledWith("pro_active_cta_tap", {
-      source: "/play-hub",
+      source: "/exercises",
     });
   });
 });

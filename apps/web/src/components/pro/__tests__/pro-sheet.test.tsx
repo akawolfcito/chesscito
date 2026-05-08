@@ -4,7 +4,7 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 const trackMock = vi.hoisted(() => vi.fn());
 const pushMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
-const pathnameMock = vi.hoisted(() => vi.fn(() => "/play-hub"));
+const pathnameMock = vi.hoisted(() => vi.fn(() => "/hub"));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
   usePathname: pathnameMock,

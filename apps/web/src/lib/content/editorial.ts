@@ -1010,8 +1010,8 @@ export const PRO_COPY = {
    *  the primitive. Spec: addendum §3.7 (C3) / §6.1 commit #5. */
   comingSoonLabel: "SOON",
   /** `<ProActiveCTA />` surface-aware copy. Navigational variant fires
-   *  from /play-hub, /trophies, /leaderboard, /about, /why, / and any
-   *  unmatched path. Close-only variant fires from /arena to avoid
+   *  from /hub, /exercises, /trophies, /leaderboard, /about, /why, /
+   *  and any unmatched path. Close-only variant fires from /arena to avoid
    *  the mid-match nav footgun. Spec: §3.4 of the same addendum. */
   activeCtaPlay: "Play in Arena",
   activeCtaGotIt: "Got it",
