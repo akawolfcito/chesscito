@@ -26,4 +26,17 @@ export const REDIS_KEYS = {
    *  client generates the 32-hex nonce; the server simply claims it.
    *  Spec §8.2 / red-team P0-1. */
   deleteNonce: (nonce: string) => `coach:delete-nonce:${nonce}`,
+  /** Per-wallet monotonic shield-credit counter (0..∞). No TTL —
+   *  shields are durable. Crediting INCRs by `matches *
+   *  SHIELDS_PER_PURCHASE`; client tracks spends locally. Cap is
+   *  UI-only. Written by /api/credit-shield, read by
+   *  /api/shields/me. Spec 2026-05-08-credit-shield-server-side §
+   *  "Counter model". */
+  shieldsCredited: (wallet: string) => `coach:shields:credited:${wallet}`,
+  /** Per-tx dedupe for shield credits. SETNX inside Lua atomically
+   *  with the credit INCR. 90-day TTL — long enough to outlive any
+   *  reasonable client retry, short enough to keep the namespace
+   *  bounded. */
+  shieldProcessedTx: (txHash: string) =>
+    `coach:shields:processed-tx:${txHash}`,
 } as const;
