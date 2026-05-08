@@ -703,12 +703,18 @@ export function ExercisesScreen({
         moves: movesCount,
         is_capture: Boolean(currentExercise.isCapture),
       });
-      autoReset.schedule(() => resetBoard(), 1500);
+      // When shields are available, give the user a real window to
+      // decide. 1.5s is too short to read the chip + tap the button —
+      // the feature is paid ($0.025) so it must be reachable. 6s if
+      // shields, 1.5s otherwise (preserves prior fast-flow when there
+      // is nothing to decide).
+      autoReset.schedule(() => resetBoard(), shieldCount > 0 ? 6_000 : 1_500);
     }
   }
 
   function handleUseShield() {
     if (phase !== "failure" || shieldCount <= 0) return;
+    autoReset.invalidate();
     consumeOneShield();
     resetBoard();
   }
