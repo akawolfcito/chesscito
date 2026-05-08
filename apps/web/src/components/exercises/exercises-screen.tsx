@@ -1296,6 +1296,7 @@ export function ExercisesScreen({
           timeMs={timeMs.toString()}
           currentStars={totalStars}
           claimedBadges={badgesClaimed}
+          shieldCount={shieldCount}
           actionRowLeft={<DailyTacticSlot compact />}
           actionRowRight={
             <MiniArenaBridgeSlot

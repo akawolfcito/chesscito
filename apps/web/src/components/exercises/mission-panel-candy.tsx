@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { LABYRINTH_COPY, MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_LABELS } from "@/lib/content/editorial";
+import { HudResourceChip } from "@/components/hud/hud-resource-chip";
+import { HUD_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PiecePickerSheet } from "@/components/exercises/piece-picker-sheet";
 import { PiecePickerTrigger } from "@/components/exercises/piece-picker-trigger";
@@ -31,6 +32,13 @@ type MissionPanelProps = {
   persistentDock: ReactNode;
   pieceHint?: string;
   isCapture?: boolean;
+  /** Live retry-shield count from `readDisplayedShields()`. Rendered
+   *  by the persistent shield-chip row inserted between the
+   *  mission-detail row and the optional L2 toggle. Pass `0` when
+   *  the player has no shields — the chip stays mounted to mirror
+   *  /hub canon and avoid layout jumps when the count transitions
+   *  0↔1. */
+  shieldCount: number;
   /** Total stars earned on the current piece (0–15). Feeds the
    *  mission-detail journey rail so the user sees how close they are
    *  to claiming the badge. */
@@ -179,6 +187,7 @@ export function MissionPanelCandy({
   headerSlot,
   actionRowLeft,
   actionRowRight,
+  shieldCount,
 }: MissionPanelProps) {
   const activePiece = pieces.find((p) => p.key === selectedPiece);
   const pieceTitle =
@@ -310,6 +319,20 @@ export function MissionPanelCandy({
           trigger={missionPeek}
         />
         <span className="ml-auto">{exerciseDrawer}</span>
+      </div>
+
+      {/* Persistent shield-chip row (HUD canon). Right-aligned to mirror
+          /hub's HudSecondaryRow placement; rendered unconditionally so
+          the player always sees their retry-shield inventory and the
+          row keeps stable height when the count transitions 0↔1. */}
+      <div className="shrink-0 mx-2 mt-1 flex justify-end">
+        <HudResourceChip
+          tone="default"
+          size="compact"
+          icon="shield"
+          value={shieldCount}
+          ariaLabel={HUD_COPY.shieldsAriaLabel(shieldCount)}
+        />
       </div>
 
       {/* L2 Layer toggle — only visible after L1 mastery + labyrinths
