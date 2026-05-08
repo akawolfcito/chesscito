@@ -1,61 +1,49 @@
-import { ExercisesScreen, type ExercisesInitialAction } from "@/components/exercises/exercises-screen";
+import { redirect } from "next/navigation";
 import { HubScaffoldClient } from "@/components/hub/hub-scaffold-client";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 
 type SearchParams = {
-  /** Transitional fallback to the legacy `<ExercisesScreen>`. Truthy → legacy. */
+  /** Legacy bookmark redirect. `?legacy=1` used to render the
+   *  exercise-gameplay surface inline; that surface now lives at
+   *  `/exercises`. We honor the truthy flag for backward compat with
+   *  external bookmarks (Discord shares, share-card images, etc.). */
   legacy?: string | string[];
-  /** Canary flag (kept for backward compat with bookmarks from the
-   *  scaffold-as-preview era). Truthy "new" → scaffold (same as default
-   *  after the flip). */
-  hub?: string | string[];
-  /** Legacy seed: pre-select a piece in `<ExercisesScreen>`. Only honored on
-   *  the legacy branch — the scaffold has no piece-selection state.
-   *  Pieces without exercises (queen/king at the time of writing — see
-   *  PR-6/PR-9) are silently dropped to avoid the board crashing on an
-   *  empty exercises array. */
+  /** Legacy bookmark redirect: pre-select a piece. Only honored
+   *  alongside `?legacy=1`. Forwarded to `/exercises?piece=`. */
   piece?: string | string[];
-  /** Legacy seed: open a sheet on first render. Honored values:
-   *  `shop`, `pro`, `badges`. Other values are ignored. */
+  /** Legacy bookmark redirect: open a sheet on first render. Only
+   *  honored alongside `?legacy=1`. `trophies` redirects to its own
+   *  page; `shop`/`pro`/`badges` lose their sheet-open intent and
+   *  land on `/hub` (sheets remain reachable via dock + chips).
+   *  Documented as known regression in 2026-05-09 spec. */
   action?: string | string[];
 };
 
-/** A piece is shippable when it has at least one defined exercise.
- *  Defensive — when queen/king finally land their exercises, this
- *  predicate auto-promotes them to the deep-link whitelist with no
- *  page-level edit required. */
 function pieceHasExercises(piece: string): piece is PieceId {
   const exercises = (EXERCISES as Record<string, unknown[] | undefined>)[piece];
   return Array.isArray(exercises) && exercises.length > 0;
 }
-
-const VALID_ACTIONS = new Set<ExercisesInitialAction>([
-  "shop",
-  "pro",
-  "badges",
-  "trophies",
-]);
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
 /**
- * `/hub` — canonical play-hub URL.
+ * `/hub` — kingdom launcher (scaffold).
  *
- * **Default**: renders the redesigned Game Home `<HubScaffoldClient>`
- *   (Story 1.12 final — flag flipped 2026-05-04 after data wiring).
+ * Default: renders `<HubScaffoldClient>` (HUD + reward column + primary
+ * play CTA into `/arena`, plus a "Practice Pieces" tile into
+ * `/exercises`).
  *
- * **Legacy fallback** (`?legacy=1`): renders the original
- *   `<ExercisesScreen>` so deep links from the scaffold (`&piece=…&action=…`)
- *   land in the heavy on-chain mutation flows that still live there.
+ * Backward-compat redirects (server-side) for `?legacy=1` bookmarks:
+ *   - `?legacy=1&piece=<rook|bishop|knight|pawn>` → `/exercises?piece=…`
+ *   - `?legacy=1&action=trophies`                  → `/trophies`
+ *   - `?legacy=1&action=shop|pro|badges`           → `/hub` (intent dropped)
+ *   - `?legacy=1` (any other shape)                → `/exercises`
  *
- * **Canary alias** (`?hub=new`): kept for backward compat with bookmarks
- *   from the scaffold-as-preview era — same as default.
- *
- * Server component on purpose: reading `searchParams` from props avoids
- * `useSearchParams()` + Suspense overhead.
+ * The `redirect()` helper from `next/navigation` requires a literal
+ * URL string, so query params are constructed explicitly.
  */
 export default function HubPage({
   searchParams,
@@ -65,18 +53,28 @@ export default function HubPage({
   const legacyFlag = firstParam(searchParams.legacy);
   const isLegacy = legacyFlag === "1" || legacyFlag === "true";
 
-  if (!isLegacy) {
-    return <HubScaffoldClient />;
+  if (isLegacy) {
+    const action = firstParam(searchParams.action);
+
+    if (action === "trophies") {
+      redirect("/trophies");
+    }
+
+    if (action === "shop" || action === "pro" || action === "badges") {
+      // Sheet-open intent is dropped — sheets are reachable from the
+      // scaffold UI. Documented as a known regression (small audience,
+      // pre-prod).
+      redirect("/hub");
+    }
+
+    const piece = firstParam(searchParams.piece);
+    const params = new URLSearchParams();
+    if (piece && pieceHasExercises(piece)) {
+      params.set("piece", piece);
+    }
+    const qs = params.toString();
+    redirect(`/exercises${qs ? `?${qs}` : ""}`);
   }
 
-  const piece = firstParam(searchParams.piece);
-  const action = firstParam(searchParams.action);
-
-  const initialPiece = piece && pieceHasExercises(piece) ? piece : undefined;
-  const initialAction =
-    action && VALID_ACTIONS.has(action as ExercisesInitialAction)
-      ? (action as ExercisesInitialAction)
-      : undefined;
-
-  return <ExercisesScreen initialPiece={initialPiece} initialAction={initialAction} />;
+  return <HubScaffoldClient />;
 }

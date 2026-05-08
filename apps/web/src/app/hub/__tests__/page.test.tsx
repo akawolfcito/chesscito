@@ -1,13 +1,17 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock the heavy children — the page test only cares which one is
-// chosen and what props are forwarded.
-vi.mock("@/components/exercises/exercises-screen", () => ({
-  ExercisesScreen: (props: unknown) => ({
-    type: "ExercisesScreen",
-    props,
+const redirectMock = vi.hoisted(() =>
+  vi.fn((_url: string): never => {
+    // next/navigation's redirect() throws a NEXT_REDIRECT error to halt
+    // rendering. We mirror the throw so callers detect the redirect.
+    throw new Error("REDIRECT");
   }),
+);
+
+vi.mock("next/navigation", () => ({
+  redirect: redirectMock,
 }));
+
 vi.mock("@/components/hub/hub-scaffold-client", () => ({
   HubScaffoldClient: () => ({ type: "HubScaffoldClient", props: {} }),
 }));
@@ -26,104 +30,110 @@ type RenderedElement = {
   props: Record<string, unknown>;
 };
 
-function renderPage(searchParams: SearchParamsLike): RenderedElement {
-  // Server components are plain functions in Vitest — call directly and
-  // inspect the returned ReactElement's type + props.
-  return HubPage({ searchParams }) as unknown as RenderedElement;
+function renderPage(searchParams: SearchParamsLike): RenderedElement | undefined {
+  try {
+    return HubPage({ searchParams }) as unknown as RenderedElement;
+  } catch (err) {
+    if ((err as Error).message === "REDIRECT") return undefined;
+    throw err;
+  }
 }
 
 describe("/hub page (server)", () => {
+  beforeEach(() => {
+    redirectMock.mockClear();
+  });
+
   describe("default → scaffold", () => {
     it("renders <HubScaffoldClient /> when no flags are present", () => {
       const el = renderPage({});
-      expect((el.type as unknown as { name: string }).name).toBe(
+      expect((el?.type as unknown as { name: string }).name).toBe(
         "HubScaffoldClient",
       );
+      expect(redirectMock).not.toHaveBeenCalled();
     });
 
     it("renders <HubScaffoldClient /> for the canary alias `?hub=new`", () => {
       const el = renderPage({ hub: "new" });
-      expect((el.type as unknown as { name: string }).name).toBe(
+      expect((el?.type as unknown as { name: string }).name).toBe(
         "HubScaffoldClient",
       );
+      expect(redirectMock).not.toHaveBeenCalled();
     });
 
     it("renders <HubScaffoldClient /> when `legacy` is empty / missing", () => {
       const el = renderPage({ legacy: undefined });
-      expect((el.type as unknown as { name: string }).name).toBe(
+      expect((el?.type as unknown as { name: string }).name).toBe(
         "HubScaffoldClient",
       );
+      expect(redirectMock).not.toHaveBeenCalled();
     });
   });
 
-  describe("legacy fallback → ExercisesScreen", () => {
-    it("renders <ExercisesScreen /> when `?legacy=1`", () => {
-      const el = renderPage({ legacy: "1" });
-      expect((el.type as unknown as { name: string }).name).toBe("ExercisesScreen");
+  describe("legacy bookmark redirects", () => {
+    it("redirects `?legacy=1` to /exercises (no piece)", () => {
+      renderPage({ legacy: "1" });
+      expect(redirectMock).toHaveBeenCalledWith("/exercises");
     });
 
-    it("renders <ExercisesScreen /> when `?legacy=true`", () => {
-      const el = renderPage({ legacy: "true" });
-      expect((el.type as unknown as { name: string }).name).toBe("ExercisesScreen");
+    it("redirects `?legacy=true` to /exercises", () => {
+      renderPage({ legacy: "true" });
+      expect(redirectMock).toHaveBeenCalledWith("/exercises");
     });
 
-    it("forwards a valid `?piece=` to initialPiece", () => {
-      const el = renderPage({ legacy: "1", piece: "bishop" });
-      expect(el.props).toMatchObject({ initialPiece: "bishop" });
+    it("preserves a valid `?piece=` on the redirect to /exercises", () => {
+      renderPage({ legacy: "1", piece: "bishop" });
+      expect(redirectMock).toHaveBeenCalledWith("/exercises?piece=bishop");
     });
 
-    it("ignores an invalid `?piece=` (initialPiece undefined)", () => {
-      const el = renderPage({ legacy: "1", piece: "dragon" });
-      expect(el.props.initialPiece).toBeUndefined();
+    it("drops an invalid `?piece=` from the redirect", () => {
+      renderPage({ legacy: "1", piece: "dragon" });
+      expect(redirectMock).toHaveBeenCalledWith("/exercises");
     });
 
-    it("rejects pieces without exercises (queen, king at the time of writing)", () => {
-      // queen and king have empty `EXERCISES` arrays (PR-6/PR-9 are
-      // pending). Letting them through crashes the legacy board on
-      // mount with `Cannot read properties of undefined (reading
-      // 'isCapture')` because useExerciseProgress reads
-      // EXERCISES[piece][index] without guarding empty arrays.
-      const queen = renderPage({ legacy: "1", piece: "queen" });
-      expect(queen.props.initialPiece).toBeUndefined();
+    it("drops queen/king (empty EXERCISES) from the redirect", () => {
+      renderPage({ legacy: "1", piece: "queen" });
+      expect(redirectMock).toHaveBeenLastCalledWith("/exercises");
 
-      const king = renderPage({ legacy: "1", piece: "king" });
-      expect(king.props.initialPiece).toBeUndefined();
+      redirectMock.mockClear();
+      renderPage({ legacy: "1", piece: "king" });
+      expect(redirectMock).toHaveBeenLastCalledWith("/exercises");
     });
 
-    it("accepts pieces with exercises (rook, bishop, knight, pawn)", () => {
+    it("preserves rook/bishop/knight/pawn on the redirect", () => {
       for (const piece of ["rook", "bishop", "knight", "pawn"] as const) {
-        const el = renderPage({ legacy: "1", piece });
-        expect(el.props).toMatchObject({ initialPiece: piece });
+        redirectMock.mockClear();
+        renderPage({ legacy: "1", piece });
+        expect(redirectMock).toHaveBeenCalledWith(`/exercises?piece=${piece}`);
       }
     });
 
-    it("forwards a valid `?action=` to initialAction", () => {
-      const el = renderPage({ legacy: "1", action: "shop" });
-      expect(el.props).toMatchObject({ initialAction: "shop" });
+    it("redirects `?legacy=1&action=trophies` to /trophies", () => {
+      renderPage({ legacy: "1", action: "trophies" });
+      expect(redirectMock).toHaveBeenCalledWith("/trophies");
     });
 
-    it("accepts the four valid actions: shop, pro, badges, trophies", () => {
-      for (const action of ["shop", "pro", "badges", "trophies"] as const) {
-        const el = renderPage({ legacy: "1", action });
-        expect(el.props).toMatchObject({ initialAction: action });
-      }
+    it.each(["shop", "pro", "badges"] as const)(
+      "redirects `?legacy=1&action=%s` to /hub (sheet-intent dropped)",
+      (action) => {
+        redirectMock.mockClear();
+        renderPage({ legacy: "1", action });
+        expect(redirectMock).toHaveBeenCalledWith("/hub");
+      },
+    );
+
+    it("redirects unknown `?action=` to /exercises", () => {
+      renderPage({ legacy: "1", action: "leaderboard" });
+      expect(redirectMock).toHaveBeenCalledWith("/exercises");
     });
 
-    it("ignores an unknown `?action=` (initialAction undefined)", () => {
-      const el = renderPage({ legacy: "1", action: "leaderboard" });
-      expect(el.props.initialAction).toBeUndefined();
-    });
-
-    it("array-shaped searchParams are flattened to first entry", () => {
-      const el = renderPage({
+    it("array-shaped searchParams flatten to first entry", () => {
+      renderPage({
         legacy: ["1", "0"],
         piece: ["knight", "pawn"],
-        action: ["pro", "shop"],
+        action: ["xx"],
       });
-      expect(el.props).toMatchObject({
-        initialPiece: "knight",
-        initialAction: "pro",
-      });
+      expect(redirectMock).toHaveBeenCalledWith("/exercises?piece=knight");
     });
   });
 });
