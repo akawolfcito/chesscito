@@ -27,12 +27,12 @@
 // Note (2026-05-09): exercises moved from `/hub?legacy=1` to its own
 // canonical `/exercises` route. The 3 baselines below now navigate
 // to `/exercises` directly (DOM identical — same <ExercisesScreen>
-// component, just different URL). Pre-migration the
-// `hub-shop-sheet-open` baseline was failing (documented in
-// docs/handoffs/2026-05-09-session-handoff.md §3); rebaselining the
-// visual suite against the post-rename DOM is tracked as a separate
-// task. Run `pnpm test:e2e:visual --update-snapshots` once layout is
-// stable + the baseline drift is reviewed.
+// component, just different URL).
+//
+// Note (2026-05-10): `hub-shop-sheet-open` re-enabled. Original
+// failure was a race against RainbowKitGate's intentional Fragment→
+// Provider remount in `wallet-provider.tsx`. See the per-test comment
+// for details.
 
 import { test, expect, type Page } from "@playwright/test";
 
@@ -115,13 +115,15 @@ test.describe("visual regression — Step 1 baselines", () => {
     );
   });
 
-  // SKIP: pre-existing failure documented in 2026-05-08 / 2026-05-09 prior
-  // handoffs. The `button[aria-label="Shop"]` click does not surface a
-  // [role="dialog"][data-state="open"] within 5s on /exercises (same as it
-  // didn't on /hub?legacy=1 before the rename). Symptom is unchanged across
-  // the migration — selector or sheet wiring drifted out of band. Re-enable
-  // once the Shop sheet open path on /exercises is debugged.
-  test.skip("hub-shop-sheet-open — ShopSheet from dock (anonymous, no wallet)", async ({
+  // Re-enabled 2026-05-10. Prior failure was caused by a synchronous
+  // `page.evaluate(() => document.querySelector(...)?.click())` racing
+  // RainbowKitGate's intentional Fragment→Provider remount (see
+  // `wallet-provider.tsx`). The native click landed in the ~300ms gap
+  // when the dock subtree was briefly unmounted and silently no-op'd,
+  // leaving the dialog never opened. Fixed by switching to a
+  // Playwright locator with auto-wait — same pattern as
+  // `hub-daily-tactic-open` above.
+  test("hub-shop-sheet-open — ShopSheet from dock (anonymous, no wallet)", async ({
     page,
   }) => {
     await bypassFirstVisit(page);
@@ -134,12 +136,12 @@ test.describe("visual regression — Step 1 baselines", () => {
       timeout: 30_000,
     });
 
-    // Open Shop via its dock entry. Same selector pattern as the existing
-    // visual-capture suite uses for sheet captures.
-    await page.evaluate(() => {
-      const btn = document.querySelector('button[aria-label="Shop"]');
-      if (btn) (btn as HTMLElement).click();
-    });
+    // Open Shop via its dock entry. Auto-waiting locator survives the
+    // RainbowKitGate remount window that toggled the dock subtree at
+    // ~50–350ms post-splash-hide.
+    const trigger = page.locator('button[aria-label="Shop"]');
+    await expect(trigger).toBeVisible({ timeout: 10_000 });
+    await trigger.click();
 
     const sheet = page.locator('[role="dialog"][data-state="open"]');
     await expect(sheet).toBeVisible({ timeout: 5_000 });
