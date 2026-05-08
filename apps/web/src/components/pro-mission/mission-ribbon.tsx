@@ -4,12 +4,18 @@ export type MissionRibbonSurface =
   | "hub"
   | "arena"
   | "pro-sheet"
-  | "landing-cta-bar";
+  | "landing-cta-bar"
+  | "exercises";
 export type MissionRibbonTone = "default" | "emphatic";
 export type Atmosphere = "adventure" | "scholarly";
 
 type Props = {
   surface: MissionRibbonSurface;
+  /** Optional copy override. When provided, the primitive renders this
+   *  text instead of `MISSION_RIBBON_COPY[surface]`. Used by
+   *  `surface="exercises"` to feed runtime `pieceHint`. When omitted,
+   *  falls back to the editorial map — preserving existing callsites. */
+  text?: string;
   tone?: MissionRibbonTone;
   /** Visual register. Adventure (default) for Hub/Arena/landing-cta-bar;
    *  Scholarly for the PRO sheet hybrid (canon §11). */
@@ -18,11 +24,14 @@ type Props = {
 };
 
 /** Per-surface mission tagline rendered ABOVE every payment CTA (canon §11
- *  rule: mission before CTA). Pure presentational — copy is single-sourced
- *  from `editorial.ts.MISSION_RIBBON_COPY[surface]`. The reveal animation
- *  is owned by CSS via `--duration-mission-ribbon-reveal`. */
+ *  rule: mission before CTA). Pure presentational — default copy is
+ *  single-sourced from `editorial.ts.MISSION_RIBBON_COPY[surface]`; an
+ *  optional `text` prop overrides for runtime-computed strings (e.g.
+ *  exercise pieceHint). The reveal animation is owned by CSS via
+ *  `--duration-mission-ribbon-reveal`. */
 export function MissionRibbon({
   surface,
+  text,
   tone = "default",
   atmosphere = "adventure",
   className = "",
@@ -43,7 +52,7 @@ export function MissionRibbon({
       aria-label={MISSION_RIBBON_COPY.ariaLabel}
       className={classes}
     >
-      {MISSION_RIBBON_COPY[surface]}
+      {text ?? MISSION_RIBBON_COPY[surface]}
     </p>
   );
 }

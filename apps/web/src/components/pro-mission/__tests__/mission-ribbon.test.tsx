@@ -82,4 +82,28 @@ describe("MissionRibbon", () => {
       unmount();
     }
   });
+
+  it("renders the new exercises surface with fallback copy from MISSION_RIBBON_COPY.exercises", () => {
+    render(<MissionRibbon surface="exercises" />);
+    const node = screen.getByRole("note", {
+      name: MISSION_RIBBON_COPY.ariaLabel,
+    });
+    expect(node.textContent).toBe(MISSION_RIBBON_COPY.exercises);
+    expect(node.className).toMatch(/mission-ribbon--exercises\b/);
+  });
+
+  it("renders the text override when text prop is provided (instead of MISSION_RIBBON_COPY[surface])", () => {
+    const override = "The rook moves in straight lines.";
+    render(<MissionRibbon surface="exercises" text={override} />);
+    const node = screen.getByRole("note");
+    expect(node.textContent).toBe(override);
+    // Ensure the override actually replaces the fallback rather than appending.
+    expect(node.textContent).not.toBe(MISSION_RIBBON_COPY.exercises);
+  });
+
+  it("falls back to MISSION_RIBBON_COPY[surface] when text prop is omitted (existing callsites untouched)", () => {
+    render(<MissionRibbon surface="hub" />);
+    const node = screen.getByRole("note");
+    expect(node.textContent).toBe(MISSION_RIBBON_COPY.hub);
+  });
 });
