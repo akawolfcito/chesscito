@@ -165,7 +165,7 @@ Implementation requirements per type (no "creer" — follow these literally):
 ```
 - No explicit height; short content means the sheet naturally ends above the dock area.
 - `pb-[5rem]` IS needed so the bottom row of content clears the persistent dock (z-60 sits on top of the sheet at the viewport bottom). Without it, the bottom ~72px of picker content disappear under the dock.
-- Controlled `open` / `onOpenChange` props passed from the parent. Auto-close pickers when a dock destination sheet opens (effect on `isDockSheetOpen` — see `components/play-hub/mission-panel-candy.tsx`).
+- Controlled `open` / `onOpenChange` props passed from the parent. Auto-close pickers when a dock destination sheet opens (effect on `isDockSheetOpen` — see `components/exercises/mission-panel-candy.tsx`).
 - Always include a `<SheetDescription>` — Radix Dialog in v1.0+ logs a console warning without one. Use `className="sr-only"` if the description would be visually redundant with the title.
 
 **When to re-evaluate Type C → Type B** (promote to Destination)
@@ -276,7 +276,7 @@ Every UI element on every screen lives in exactly one of these zones, or in a de
 
 | Zone | Name | Height | Always visible? | Purpose |
 |---|---|---|---|---|
-| **Z1** | Global Status Bar | 32–40px content (excl. safe-area-top) | Target invariant — every primary screen; v1 canary on `/play-hub` only | Player identity (handle, wallet, PRO state as passive ring). Read-only. See §10.7. |
+| **Z1** | Global Status Bar | 32–40px content (excl. safe-area-top) | Target invariant — every primary screen; v1 canary on `/exercises` only | Player identity (handle, wallet, PRO state as passive ring). Read-only. See §10.7. |
 | **Z2** | Contextual Header | 52–64px content | Per-screen | Screen title + ONE contextual control. Mode tabs (max 4) live here. |
 | **Z3** | Content / Board | flex-1 | Per-screen | The gameplay surface. Dominant. Nothing competes. |
 | **Z4** | Contextual Action Rail | 56px | Per-screen | ONE primary CTA + optional ONE secondary. Collapses to 0 when empty. |
@@ -296,7 +296,7 @@ Every PR that adds or modifies UI must pass these. Code review enforces. No exce
 5. **Every feature category needs a reserved slot before launch.** New feature → which zone owns it? If the answer is "we'll figure it out," it's not ready to ship.
 6. **The dock is sacred.** 5 items, z-60, no exceptions outside the documented exception list (`/arena` match, `/victory`, splash, system modals — see §8).
 7. **Surfaces follow the A/B/C/D taxonomy literally.** Any new surface is exactly one of Type A (full page), B (destination sheet), C (quick picker), or D (system modal). The PR checklist in §8 is enforced.
-8. **First-visit / onboarding overlays defer to open sheets.** Briefing modals (Type D) check `anySheetOpen` before mounting. The play-hub guard at `play-hub-root.tsx` is the canonical pattern: `showBriefing && activeDockTab === null && !proSheetOpen`.
+8. **First-visit / onboarding overlays defer to open sheets.** Briefing modals (Type D) check `anySheetOpen` before mounting. The exercises guard at `exercises-screen.tsx` is the canonical pattern: `showBriefing && activeDockTab === null && !proSheetOpen`.
 9. **PRO benefits show up as state inside existing zones**, not as separate chips. Gold ring on existing element, gold tint, "no ads" by absence — never a banner that fights for attention.
 10. **Z-index ladder is documented at the top of `globals.css`.** New rules must fit the ladder. Never use `z-index > 60` outside system modals. Never `z-index: 999` "just in case."
 11. **Contextual-action slot collapses to 0px when empty.** No reserved vertical air for a CTA that isn't there. The component returns `null` rather than a placeholder div.
@@ -321,13 +321,13 @@ Every PR that adds or modifies UI must pass these. Code review enforces. No exce
 > - "Whistle" → `DailyTacticSlot` (daily puzzle + streak mechanic).
 > - "Blue star" → `submitScore` action of `ContextualActionSlot` (critical on-chain CTA).
 >
-> Each was preserved by reading the wiring in `play-hub-root.tsx` before touching code. The Playwright spec at `apps/web/e2e/floating-actions-vs-dock.spec.ts` codifies this lesson — any future PR that conflates these elements with their visual look-alikes (dock Trophies, hint button, decorative star) will fail CI.
+> Each was preserved by reading the wiring in `exercises-screen.tsx` before touching code. The Playwright spec at `apps/web/e2e/floating-actions-vs-dock.spec.ts` codifies this lesson — any future PR that conflates these elements with their visual look-alikes (dock Trophies, hint button, decorative star) will fail CI.
 >
 > When in doubt: `git grep` the testid, read the click handler, then decide.
 
 ### 10.5 Z2 primitive — `<ContextualHeader />`
 
-Adopted: 2026-05-01. Canary consumer: `apps/web/src/components/play-hub/mission-panel-candy.tsx` (Phase 2 commit #2). Source code: `apps/web/src/components/ui/contextual-header.tsx`.
+Adopted: 2026-05-01. Canary consumer: `apps/web/src/components/exercises/mission-panel-candy.tsx` (Phase 2 commit #2). Source code: `apps/web/src/components/ui/contextual-header.tsx`.
 
 **`<ContextualHeader />` is the canonical Z2 component. Any new screen that needs a context strip uses this primitive — no inline `<header>` or ad-hoc `<div className="...header...">` patterns are accepted in code review.**
 
@@ -401,7 +401,7 @@ These items are **explicitly deferred**, not forgotten. Each one ships in a futu
 
 ### 10.7 Z1 primitive — `<GlobalStatusBar />`
 
-Adopted: 2026-05-02. Source code: `apps/web/src/components/ui/global-status-bar.tsx`. Canary consumer: queued for Phase 2 commit #2 (`/play-hub`); v1 ships the primitive only.
+Adopted: 2026-05-02. Source code: `apps/web/src/components/ui/global-status-bar.tsx`. Canary consumer: queued for Phase 2 commit #2 (`/exercises`); v1 ships the primitive only.
 
 **`<GlobalStatusBar />` is the canonical Z1 component. Any new screen that needs a persistent identity strip uses this primitive — no inline `<header>` patterns or absolute-positioned chips are accepted in code review.**
 
@@ -474,12 +474,12 @@ This is **not** a soft deadline.
 
 | Item | Source | Trigger to ship |
 |---|---|---|
-| **Canary integration on `/play-hub`** — mount Z1, drop `mr-[140px]` from Z2 wrapper, remove the absolute `<ProChip>` wrapper. | Spec §10 + §15 commit #2 | Phase 2 commit #2 of the Z1 series. |
+| **Canary integration on `/exercises`** — mount Z1, drop `mr-[140px]` from Z2 wrapper, remove the absolute `<ProChip>` wrapper. | Spec §10 + §15 commit #2 | Phase 2 commit #2 of the Z1 series. |
 | **Per-screen migration** — `/arena`, `/trophies`, `/leaderboard`, secondary pages. | Spec §6.1 row 2 | One commit per screen after the canary lands. |
 | **`onProTap` removal + strict-passive Z1** | Spec §6.1 row 1 (4-layer enforcement) | Shop PRO sub-section ships OR canary-deploy + 60 days, whichever first. |
 | **`<ProChip>` legacy file deletion** | Spec §6.1 row 3 + §15 commit #3 | 7 days post-canary minimum to preserve revert window. |
 | **A11y carry-forward** — keyboard nav, focus-visible, screen-reader wallet pronunciation, RTL support, beyond-PRO-tap interactions. | Spec §17 | Triggers per §17 table (first interactive typed prop, first a11y QA pass, RTL i18n project). |
-| **`useProStatus` single-source CI promotion** — `scripts/check-pro-fetch.sh` blocking PRs that bypass the hook. | Spec §12 risk row #3 | When the second screen (after `/play-hub`) migrates. |
+| **`useProStatus` single-source CI promotion** — `scripts/check-pro-fetch.sh` blocking PRs that bypass the hook. | Spec §12 risk row #3 | When the second screen (after `/exercises`) migrates. |
 | **Future typed props on `ConnectedProps`** — level, streak, currency, achievements (each behind its own product spec). | Spec §3 + §5 growth rule | Per typed prop: product spec defines the data system → spec amendment adds the prop. |
 
 ---
@@ -571,7 +571,7 @@ The component emits a single CSS modifier class on the root: `is-atmosphere-adve
 
 | Surface | Atmosphere |
 |---|---|
-| `/play-hub` | adventure |
+| `/exercises` | adventure |
 | `/arena` (selecting + playing) | adventure |
 | Landing hero / plans / capabilities | adventure |
 | Victory celebration overlay | adventure |
@@ -641,7 +641,7 @@ Catalog of variant axes already shipped on Game Home redesign primitives. New va
 
 | Variant | Aspect ratio | Asset source | Surfaces | Story |
 |---|---|---|---|---|
-| `playhub` (default) | `1 / 1` | `redesign/bg/splash-loading.{avif,webp,png}` | `/play-hub` Hub | 1.3 |
+| `playhub` (default) | `1 / 1` | `redesign/bg/splash-loading.{avif,webp,png}` | `/exercises` Hub | 1.3 |
 | `arena-preview` | `1.3 / 1` | `redesign/board/board-ch.{avif,webp,png}` + 32-piece overlay from `redesign/pieces/` | `/arena` selecting state | 2.1 |
 | `landing-hero` | `1.5 / 1` | `redesign/bg/splash-loading.{avif,webp,png}` | Landing hero | 3.x (pending) |
 
@@ -655,7 +655,7 @@ Notes:
 
 The Game Home redesign Hub composition lives in `apps/web/src/components/hub/hub-scaffold.tsx`. It composes the 11 redesign primitives in the canonical 3-zone layout (HUD top + Kingdom Anchor body with reward/premium sides + mission ribbon + primary CTA). Each primitive instance is wrapped in `<PrimitiveBoundary primitiveName="…" surface="play-hub" atmosphere="adventure" />` per §13.
 
-**Activation:** opt-in via `?hub=new` on `/hub`. The legacy `<PlayHubRoot>` remains the default. The flag flip to make the scaffold the canonical Hub lands once data wiring (trophies, PRO state, reward states, navigation) is complete in a follow-up commit (Story 1.12.1).
+**Activation:** opt-in via `?hub=new` on `/hub`. The legacy `<ExercisesScreen>` remains the default. The flag flip to make the scaffold the canonical Hub lands once data wiring (trophies, PRO state, reward states, navigation) is complete in a follow-up commit (Story 1.12.1).
 
 **What's wired today:** layout, primitives composition, prop-driven copy + tap callbacks, error containment. **Not yet wired:** real on-chain trophy count, real PRO status, real reward tile states, real navigation on PLAY tap. Static placeholder values live in `app/hub/page.tsx` so the scaffold is visually verifiable.
 
@@ -663,7 +663,7 @@ The Game Home redesign Hub composition lives in `apps/web/src/components/hub/hub
 
 | Surface | Icon | Sizing | Surfaces | Story |
 |---|---|---|---|---|
-| `playhub` | `btn-battle` | dominant (`min-height: 64px`, font 1.5rem) | `/play-hub` Hub | 1.9 |
+| `playhub` | `btn-battle` | dominant (`min-height: 64px`, font 1.5rem) | `/exercises` Hub | 1.9 |
 | `arena` | `btn-play` | dominant | `/arena` (in-game CTAs, future) | 1.9 |
 | `arena-entry` | `btn-play` | **compact** (`min-height: 52px`, font 1.2rem, smaller icon) | `/arena` selecting state | 2.2 |
 | `landing-hero` | `btn-play` | dominant | Landing hero CTA | 1.9 |
