@@ -1,7 +1,7 @@
 "use client";
 
 import type { ContextAction } from "@/lib/game/context-action";
-import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
+import { ActionPin } from "@/components/redesign/action-pin";
 import { FOOTER_CTA_COPY } from "@/lib/content/editorial";
 
 type ContextualActionSlotProps = {
@@ -15,54 +15,8 @@ type ContextualActionSlotProps = {
   onConnectWallet: () => void;
   onSwitchNetwork: () => void;
   /** When true, progressive actions collapse to a 44×44 icon pin that
-   *  sits inline with the mission peek row. connectWallet keeps its
-   *  full-width gate look so wallet-not-connected is never discreet. */
+   *  sits inline with the mission peek row. */
   compact?: boolean;
-};
-
-const ACTION_STYLES: Record<
-  Exclude<ContextAction, null>,
-  { bg: string; glow: string; text: string }
-> = {
-  submitScore: {
-    bg: "bg-gradient-to-b from-[var(--cta-brand-from)] to-[var(--cta-brand-to)]",
-    glow: "shadow-[var(--cta-brand-glow)]",
-    text: "text-white",
-  },
-  useShield: {
-    bg: "bg-gradient-to-b from-[var(--cta-reward-from)] to-[var(--cta-reward-to)]",
-    glow: "shadow-[var(--cta-reward-glow)]",
-    text: "text-[var(--cta-reward-text)]",
-  },
-  claimBadge: {
-    bg: "bg-gradient-to-b from-[var(--cta-special-from)] to-[var(--cta-special-to)]",
-    glow: "shadow-[var(--cta-special-glow)]",
-    text: "text-white",
-  },
-  retry: {
-    bg: "bg-[var(--cta-muted-bg)]",
-    glow: "",
-    text: "text-[var(--cta-muted-text)]",
-  },
-  connectWallet: {
-    bg: "bg-gradient-to-b from-[var(--cta-brand-from)] to-[var(--cta-brand-to)]",
-    glow: "shadow-[var(--cta-brand-glow)]",
-    text: "text-white",
-  },
-  switchNetwork: {
-    bg: "bg-gradient-to-b from-[var(--cta-reward-from)] to-[var(--cta-reward-to)]",
-    glow: "shadow-[var(--cta-reward-glow)]",
-    text: "text-[var(--cta-reward-text)]",
-  },
-};
-
-const ACTION_ICON: Record<Exclude<ContextAction, null>, CandyIconName> = {
-  submitScore: "star",
-  useShield: "shield",
-  claimBadge: "trophy",
-  retry: "refresh",
-  connectWallet: "wallet",
-  switchNetwork: "refresh", // no dedicated swap-chain sprite yet
 };
 
 function getHandler(
@@ -85,78 +39,53 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
   if (!action) return null;
 
   const copy = FOOTER_CTA_COPY[action];
-  const style = ACTION_STYLES[action];
   const handler = getHandler(action, props);
-  const label = isBusy && copy.loading ? copy.loading : copy.label;
+  const fullLabel = isBusy && copy.loading ? copy.loading : copy.label;
+  const tone = action === "claimBadge" ? "claim" : "default";
 
+  // useShield surfaces the live shield count via ActionPin's badge slot.
+  // Pin mode renders the raw integer (matches /hub's HUD chip pattern);
+  // full mode renders the formatted "N left" pill inline.
+  const badge =
+    action === "useShield" && !isBusy
+      ? {
+          pin: shieldsAvailable,
+          full: FOOTER_CTA_COPY.shieldsLeft(shieldsAvailable),
+        }
+      : undefined;
+
+  // Slot keeps its entrance-animation wrapper (compact pin vs full
+  // bottom-slide). ActionPin owns visual atom + label rendering +
+  // state animations.
   if (compact) {
-    const isCandyClaim = action === "claimBadge";
-    const pinClass = isCandyClaim
-      ? "candy-frame candy-frame-gold action-pin-attention"
-      : `game-cta-depth rounded-full ${style.bg} ${style.glow} ${style.text}${action === "retry" ? " border border-[var(--cta-muted-border)]" : ""}`;
-    const compactLabel = FOOTER_CTA_COPY[action].compactLabel;
-
     return (
-      <div className="flex flex-col items-center gap-1 animate-in fade-in zoom-in-95 duration-200">
-        <button
-          type="button"
-          onClick={handler}
-          disabled={isBusy}
-          aria-label={label}
-          className={`relative flex h-11 w-11 shrink-0 items-center justify-center disabled:opacity-70 ${pinClass}`}
-        >
-          {isBusy ? (
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          ) : (
-            <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
-          )}
-          {action === "useShield" && !isBusy ? (
-            <span
-              aria-hidden="true"
-              className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[0.6rem] font-bold text-white shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
-            >
-              {shieldsAvailable}
-            </span>
-          ) : null}
-        </button>
-        <span
-          aria-hidden="true"
-          className="game-label text-nano font-bold uppercase tracking-[0.12em] text-[rgba(63,34,8,0.85)]"
-        >
-          {compactLabel}
-        </span>
+      <div className="animate-in fade-in zoom-in-95 duration-200">
+        <ActionPin
+          action={action}
+          size="pin"
+          tone={tone}
+          label={copy.compactLabel}
+          ariaLabel={fullLabel}
+          badge={badge}
+          isBusy={isBusy}
+          onPress={handler}
+        />
       </div>
     );
   }
 
-  // Full-width treatment — claimBadge gets candy-frame gold, others keep
-  // the standard CTA gradient + game-cta-depth chrome.
-  const isCandyClaim = action === "claimBadge";
-  const baseLayout = "flex h-[52px] w-full items-center justify-center gap-2 text-sm font-extrabold uppercase tracking-wide disabled:opacity-70";
-  const buttonClassName = isCandyClaim
-    ? `${baseLayout} candy-frame candy-frame-gold`
-    : `game-cta-depth rounded-2xl ${baseLayout} ${style.bg} ${style.glow} ${style.text}${action === "retry" ? " border border-[var(--cta-muted-border)]" : ""}`;
-
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-200">
-      <button
-        type="button"
-        onClick={handler}
-        disabled={isBusy}
-        className={buttonClassName}
-      >
-        {isBusy ? (
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        ) : (
-          <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
-        )}
-        <span>{label}</span>
-        {action === "useShield" && !isBusy ? (
-          <span className="ml-1 rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
-            {FOOTER_CTA_COPY.shieldsLeft(shieldsAvailable)}
-          </span>
-        ) : null}
-      </button>
+      <ActionPin
+        action={action}
+        size="full"
+        tone={tone}
+        label={fullLabel}
+        ariaLabel={fullLabel}
+        badge={badge}
+        isBusy={isBusy}
+        onPress={handler}
+      />
     </div>
   );
 }
