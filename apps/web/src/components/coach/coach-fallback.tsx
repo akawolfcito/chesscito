@@ -1,7 +1,7 @@
 "use client";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { Button } from "@/components/ui/button";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
 import type { BasicCoachResponse } from "@/lib/coach/types";
 import { formatTime } from "@/lib/game/arena-utils";
@@ -60,24 +60,32 @@ export function CoachFallback({
         </section>
       )}
 
-      {/* Primary: Play Again — retention first */}
-      <Button type="button" variant="game-primary" size="game" onClick={onPlayAgain}>
-        <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
-      </Button>
+      {/* Primary: Play Again — retention CTA. Large carved wood signals
+          the kingdom values the player's continued play above all. */}
+      <div className="flex w-full justify-center">
+        <PrincipalButton
+          size="large"
+          leadingIcon={<CandyIcon name="refresh" className="h-4 w-4" />}
+          onClick={onPlayAgain}
+          aria-label={ARENA_COPY.playAgain}
+        >
+          {ARENA_COPY.playAgain}
+        </PrincipalButton>
+      </div>
 
-      {/* Secondary: Unlock Full Analysis — subtle upsell */}
-      <Button
-        type="button"
-        variant="game-ghost"
-        size="game-sm"
-        onClick={onGetFullAnalysis}
-        style={{
-          borderColor: "rgba(110, 65, 15, 0.25)",
-          color: warmMuted,
-        }}
-      >
-        {COACH_COPY.unlockFullAnalysis}
-      </Button>
+      {/* Secondary: Unlock Full Analysis — commercial upsell. Medium
+          carved wood per Sally's call: ceremonial enough to deserve
+          the diegetic register (commercial intent), but smaller than
+          the retention primary so the hierarchy reads cleanly. */}
+      <div className="flex w-full justify-center">
+        <PrincipalButton
+          size="medium"
+          onClick={onGetFullAnalysis}
+          aria-label={COACH_COPY.unlockFullAnalysis}
+        >
+          {COACH_COPY.unlockFullAnalysis}
+        </PrincipalButton>
+      </div>
 
       {/* Tertiary: Back to Hub */}
       <button
