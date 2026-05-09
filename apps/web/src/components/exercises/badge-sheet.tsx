@@ -320,20 +320,16 @@ export function BadgeSheet({
           ))}
         </div>
         <div className="shrink-0">
-          <button
-            type="button"
-            onClick={onNavigateToTrophies}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold transition hover:bg-amber-500/30 active:scale-[0.98]"
-            style={{
-              background: "rgba(245, 158, 11, 0.22)",
-              color: "rgba(120, 65, 5, 0.95)",
-              boxShadow: "inset 0 0 0 1px rgba(245, 158, 11, 0.45)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-            }}
-          >
-            <CandyIcon name="trophy" className="h-5 w-5" />
-            {BADGE_SHEET_COPY.viewTrophies}
-          </button>
+          <div className="mt-4 flex w-full justify-center">
+            <PrincipalButton
+              size="large"
+              leadingIcon={<CandyIcon name="trophy" className="h-5 w-5" />}
+              onClick={onNavigateToTrophies}
+              aria-label={BADGE_SHEET_COPY.viewTrophies}
+            >
+              {BADGE_SHEET_COPY.viewTrophies}
+            </PrincipalButton>
+          </div>
           <Link
             href="/about"
             onClick={() => onOpenChange(false)}
