@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { PhoneFrame } from "@/components/landing/phone-frame";
 import { PhoneStack } from "@/components/landing/phone-stack";
 import { useMiniPay } from "@/hooks/use-minipay";
@@ -89,12 +90,17 @@ export function LandingPage() {
           >
             {LANDING_COPY.hero.subcopy}
           </p>
-          <div className="flex w-full flex-col gap-2.5 md:w-auto md:flex-row md:gap-3">
-            <Button asChild variant="game-primary" size="game" className="md:!w-auto md:px-8">
-              <Link href="/hub" onClick={onCta("hero-primary")}>
-                {LANDING_COPY.hero.primaryCta}
-              </Link>
-            </Button>
+          <div className="flex w-full flex-col items-start gap-2.5 md:w-auto md:flex-row md:items-center md:gap-3">
+            <PrincipalButton
+              size="large"
+              onClick={() => {
+                onCta("hero-primary")();
+                router.push("/hub");
+              }}
+              aria-label={LANDING_COPY.hero.primaryCta}
+            >
+              {LANDING_COPY.hero.primaryCta}
+            </PrincipalButton>
             <Button asChild variant="game-ghost" size="game" className="md:!w-auto md:px-8">
               <a href="#problem" onClick={onCta("hero-secondary")}>
                 {LANDING_COPY.hero.secondaryCta}
