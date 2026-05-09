@@ -54,11 +54,16 @@ export function LandingPage() {
         >
           {LANDING_COPY.nav.brand}
         </span>
-        <Button asChild variant="game-primary" size="game-sm" className="!w-auto px-4 py-2">
-          <Link href="/hub" onClick={onCta("nav-primary")}>
-            {LANDING_COPY.nav.primaryCta}
-          </Link>
-        </Button>
+        <PrincipalButton
+          size="medium"
+          onClick={() => {
+            onCta("nav-primary")();
+            router.push("/hub");
+          }}
+          aria-label={LANDING_COPY.nav.primaryCta}
+        >
+          {LANDING_COPY.nav.primaryCta}
+        </PrincipalButton>
       </header>
 
       {/* §1 Hero — split on desktop, stacked on mobile */}
