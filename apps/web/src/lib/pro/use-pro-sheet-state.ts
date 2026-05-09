@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useAccount,
   useChainId,
@@ -35,6 +35,27 @@ type SheetProps = Omit<ProSheetProps, "open" | "onOpenChange"> & {
   onOpenChange: (open: boolean) => void;
 };
 
+/** Receipt payload emitted by `useProSheetState` to its host on a confirmed
+ *  PRO purchase. The hub uses this to (a) trigger atmosphere shift,
+ *  (b) emit `hub_atmosphere_shift` telemetry with `trigger: "purchase"`.
+ *  Contract sourced from design-lock §6.4 (2026-05-09). */
+export type ProPurchaseReceipt = {
+  txHash: `0x${string}`;
+  daysGranted: number;
+  /** Wallet that paid for the subscription. The host validates this
+   *  against the active `useAccount().address` before mutating state
+   *  (defense against multi-tab session drift — design-lock §6.4 race 3). */
+  buyer: `0x${string}`;
+};
+
+export type UseProSheetStateOptions = {
+  /** Fires AFTER the wagmi receipt confirms — NOT on user-initiated close.
+   *  Deferred via `requestAnimationFrame` so the dispatch lands after the
+   *  sheet's exit transition starts (design-lock §6.4 race 1). The host
+   *  can synchronously trigger atmosphere shift / shields refresh / etc. */
+  onPurchaseSuccess?: (receipt: ProPurchaseReceipt) => void;
+};
+
 export type UseProSheetStateReturn = {
   /** Live sheet open state. Surfaced separately so the host component
    *  can branch on "is the sheet up?" without unpacking sheetProps. */
@@ -61,7 +82,9 @@ export type UseProSheetStateReturn = {
  *  Self-contained — pulls every wagmi/RainbowKit dependency it needs.
  *  Returns `sheetProps` already shaped for `<ProSheet>` so the host
  *  component is just `<ProSheet {...proSheet.sheetProps} />`. */
-export function useProSheetState(): UseProSheetStateReturn {
+export function useProSheetState(
+  options?: UseProSheetStateOptions,
+): UseProSheetStateReturn {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -75,6 +98,32 @@ export function useProSheetState(): UseProSheetStateReturn {
 
   const { writeContractAsync: writeShopAsync } = useWriteContract();
   const { status: proStatus, refetch: refetchProStatus } = useProStatus(address);
+
+  // Capture the success callback in a ref so handlePurchase's deps array
+  // stays stable across host renders (the host doesn't have to memoize
+  // the callback). The ref is refreshed on every render synchronously
+  // via the layout-style effect below.
+  const onPurchaseSuccessRef = useRef(options?.onPurchaseSuccess);
+  useEffect(() => {
+    onPurchaseSuccessRef.current = options?.onPurchaseSuccess;
+  });
+
+  const fireOnPurchaseSuccess = useCallback((txHash: string) => {
+    const cb = onPurchaseSuccessRef.current;
+    if (!cb) return;
+    const buyer = address;
+    if (!buyer) return;
+    // rAF defer — landing the dispatch after the sheet's exit transition
+    // starts so atmosphere shift / shields refresh feels sequenced rather
+    // than racing with the close animation (design-lock §6.4 race 1).
+    requestAnimationFrame(() => {
+      cb({
+        txHash: txHash as `0x${string}`,
+        daysGranted: 30,
+        buyer: buyer as `0x${string}`,
+      });
+    });
+  }, [address]);
 
   const [open, setOpen] = useState(false);
   const [purchaseState, setPurchaseState] = useState<
@@ -167,6 +216,7 @@ export function useProSheetState(): UseProSheetStateReturn {
       refetchProStatus();
       hapticSuccess();
       setOpen(false);
+      fireOnPurchaseSuccess(result.txHash);
       return;
     }
     if (result.kind === "cancelled") return;
@@ -197,6 +247,7 @@ export function useProSheetState(): UseProSheetStateReturn {
     writeShopAsync,
     selectPaymentToken,
     refetchProStatus,
+    fireOnPurchaseSuccess,
   ]);
 
   const handleRetryVerify = useCallback(async () => {
@@ -226,6 +277,7 @@ export function useProSheetState(): UseProSheetStateReturn {
         refetchProStatus();
         hapticSuccess();
         setOpen(false);
+        fireOnPurchaseSuccess(verifyFailedTxHash);
         return;
       }
       track("pro_verify_retry_failed", {
@@ -240,7 +292,13 @@ export function useProSheetState(): UseProSheetStateReturn {
     } finally {
       setIsRetryingVerify(false);
     }
-  }, [verifyFailedTxHash, address, isRetryingVerify, refetchProStatus]);
+  }, [
+    verifyFailedTxHash,
+    address,
+    isRetryingVerify,
+    refetchProStatus,
+    fireOnPurchaseSuccess,
+  ]);
 
   const sheetProps: SheetProps = {
     open,
