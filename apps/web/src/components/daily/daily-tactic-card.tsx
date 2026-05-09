@@ -63,7 +63,7 @@ export function DailyTacticCard({
         icon={
           <CandyIcon
             name={isCompletedToday ? "check" : "coach"}
-            className="h-8 w-8"
+            className="h-10 w-10"
           />
         }
         badge={badge}

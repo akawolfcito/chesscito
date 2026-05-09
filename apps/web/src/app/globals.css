@@ -3561,6 +3561,10 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  /* Shift the glyph up so it visually sits on the upper plate of the
+     stone rather than embedded in its center — reads as "trophy on
+     pedestal" instead of "icon framed by stone". */
+  transform: translateY(-12%);
 }
 
 .stone-pedestal-badge {

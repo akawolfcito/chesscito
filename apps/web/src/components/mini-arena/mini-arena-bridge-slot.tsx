@@ -31,7 +31,7 @@ export function MiniArenaBridgeSlot({ setup, unlocked }: Props) {
         <StonePedestal
           stone={4}
           size="large"
-          icon={<CandyIcon name="trophy" className="h-8 w-8" />}
+          icon={<CandyIcon name="trophy" className="h-10 w-10" />}
           onClick={() => setOpen(true)}
           aria-label={`Reto avanzado: ${setup.name}`}
         />
