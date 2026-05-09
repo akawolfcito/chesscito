@@ -59,11 +59,11 @@ export function DailyTacticCard({
     >
       <StonePedestal
         stone={2}
-        size="medium"
+        size="large"
         icon={
           <CandyIcon
             name={isCompletedToday ? "check" : "coach"}
-            className="h-6 w-6"
+            className="h-8 w-8"
           />
         }
         badge={badge}
