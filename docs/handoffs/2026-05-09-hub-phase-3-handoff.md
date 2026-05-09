@@ -113,6 +113,10 @@ Per design-lock §1.1 + §9.2 + nuevo asset `splash-knight-hero.webp` (≤6 KB):
 - **Asset budget exact-fit** (P2-10): 148 + 30 = 178 KB cap exacto. Cualquier overflow durante Phases 4-7 (ej: warm-wood texture llega a 24 KB en lugar de 22 KB) rompe el cap. Mejor reservar ~5 KB headroom.
 - **Visual snapshots deferidos**: `pnpm test:e2e:visual` no se corrió en Phase 3 (V2 no alcanzable). Correr en Phase 7 cuando `?hub=v2` cablee V2 en `/hub`.
 
+### Notas Phase 7 — optimizaciones registradas durante Phase 4
+
+- **`<HubV2Splash>` dynamic import** (registrada 2026-05-09 post Phase 4 commit `26fd0e8`, vía `react-best-practices` review): cuando el splash se monte en `<HubScaffoldV2Client>` durante Phase 7 V2 composition, importarlo via `next/dynamic(() => import("@/components/hub/hub-splash").then(m => m.HubV2Splash), { ssr: false })`. El componente rinde `null` en SSR (todo gateado por `useEffect` + `localStorage`) → es candidato perfecto para sacar del critical-path bundle. Beneficio: ~125 LOC + matchMedia detection se cargan sólo cuando el scaffold V2 monta, no en cada navegación SSR de `/hub`. Pattern aplica también a otros primitives V2-only que sean client-only (ej: training band si gana lógica client-side compleja).
+
 ## Cómo arrancar próxima sesión
 
 ### Checklist pre-sesión
