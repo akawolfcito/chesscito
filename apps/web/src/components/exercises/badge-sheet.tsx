@@ -12,7 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ABOUT_LINK_COPY, BADGE_SHEET_COPY, PIECE_LABELS } from "@/lib/content/editorial";
-import { Button } from "@/components/ui/button";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { PieceId } from "@/lib/game/types";
@@ -131,18 +131,16 @@ function BadgeCard({
             <CandyIcon name="check" className="h-3.5 w-3.5" /> {BADGE_SHEET_COPY.owned}
           </span>
         ) : isClaimable ? (
-          <Button
-            type="button"
-            variant="game-solid"
+          <PrincipalButton
+            size="medium"
+            leadingIcon={<CandyIcon name="trophy" className="h-5 w-5" />}
             onClick={onClaim}
-            disabled={isClaimBusy}
-            className="min-h-[44px] rounded-xl px-3 text-xs"
+            loading={isThisBusy}
+            disabled={isClaimBusy && !isThisBusy}
+            aria-label={BADGE_SHEET_COPY.claimBadge}
           >
-            {isThisBusy && (
-              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            )}
-            {isThisBusy ? BADGE_SHEET_COPY.claiming : BADGE_SHEET_COPY.claimBadge}
-          </Button>
+            {BADGE_SHEET_COPY.claimBadge}
+          </PrincipalButton>
         ) : (
           <span
             className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-nano font-extrabold uppercase"
