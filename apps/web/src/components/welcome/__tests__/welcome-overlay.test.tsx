@@ -27,6 +27,16 @@ describe("WelcomeOverlay", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders the panel through <CandyCard> with amber atmosphere", () => {
+    render(<WelcomeOverlay />);
+    const scrim = screen.getByTestId("welcome-overlay");
+    const card = scrim.querySelector(
+      '[data-component="candy-card"][data-atmosphere="amber"]',
+    );
+    expect(card).not.toBeNull();
+    expect(card).toHaveClass("candy-frame", "candy-frame-amber");
+  });
+
   it("advances through the 3 cards with the Continuar button", () => {
     render(<WelcomeOverlay />);
     fireEvent.click(screen.getByTestId("welcome-next"));
