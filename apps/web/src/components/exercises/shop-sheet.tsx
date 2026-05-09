@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/sheet";
 import { SHOP_SHEET_COPY } from "@/lib/content/editorial";
 import { formatUsd } from "@/lib/contracts/tokens";
-import { Button } from "@/components/ui/button";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
+import { GemButton } from "@/components/scene-rooted/gem";
 
 type CatalogItem = {
   itemId: bigint;
@@ -221,15 +221,14 @@ export function ShopSheet({
                     : SHOP_SHEET_COPY.buyButton}
               </PrincipalButton>
               {item.celoSibling ? (
-                <Button
-                  type="button"
-                  variant="game-ghost"
-                  size="game"
-                  className="mt-2"
-                  onClick={() => onSelectItem(item.celoSibling!.itemId)}
-                >
-                  {SHOP_SHEET_COPY.buyWithCelo}
-                </Button>
+                <div className="mt-2 flex justify-center">
+                  <GemButton
+                    icon={<CandyIcon name="wallet" className="h-3 w-3" />}
+                    value={SHOP_SHEET_COPY.buyWithCelo}
+                    onClick={() => onSelectItem(item.celoSibling!.itemId)}
+                    aria-label={SHOP_SHEET_COPY.buyWithCelo}
+                  />
+                </div>
               ) : null}
             </div>
             );
