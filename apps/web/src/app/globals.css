@@ -3861,7 +3861,11 @@ button.hud-resource-chip:active:not(:disabled) {
   background-color: transparent;
   background-repeat: no-repeat;
   background-position: center;
-  background-size: 100% 100%;
+  /* `contain` (not `100% 100%`) so the wood-carved asset displays at
+     its natural aspect ratio instead of stretching to fill the
+     button's bounding box — the previous mode visually "extended"
+     the artwork beyond its sweet-spot proportions. */
+  background-size: contain;
   color: #fff8ed;
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-weight: 800;
@@ -3870,10 +3874,14 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 2px 0 rgba(80, 40, 0, 0.35);
   transition:
     transform var(--duration-snap, 120ms) var(--ease-spring, ease-out),
-    box-shadow var(--duration-snap, 120ms) ease-out,
+    filter var(--duration-snap, 120ms) ease-out,
     border-color 200ms ease-out;
   outline: none;
   background-image: var(--principal-button-bg);
+  /* drop-shadow follows the asset's alpha channel so the cast shadow
+     hugs the wood-plank silhouette, not the rectangular button bounds.
+     Avoids the "square shadow around a rounded asset" tell. */
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.30));
 }
 
 .principal-button-medium {
@@ -3890,7 +3898,10 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .principal-button:active:not(:disabled) {
   transform: scale(0.96);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32);
+  /* press feedback: tighter drop-shadow (asset closer to the surface).
+     Stays drop-shadow (not box-shadow) so the silhouette tracks the
+     wood-plank shape under press. */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.40));
 }
 
 .principal-button:focus-visible {
@@ -3969,7 +3980,6 @@ button.hud-resource-chip:active:not(:disabled) {
   .principal-button:active:not(:disabled) {
     transform: none;
     border: 2px solid rgba(245, 200, 100, 0.95);
-    box-shadow: none;
   }
 
   .principal-button-spinner {
