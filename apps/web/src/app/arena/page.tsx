@@ -822,12 +822,10 @@ function ArenaPageInner() {
 
   // Auto-launch on mount. Priority order:
   //   0. `?fresh=1` query param — caller (hub Play) explicitly wants
-  //      the selector; skip both shortcuts and render it.
-  //   1. sessionStorage "chesscito:arena-intent" — just landed from
-  //      the dock ArenaEntrySheet; honor its difficulty+color picks.
-  //   2. localStorage LAST_DIFFICULTY_KEY — returning user, reuse
+  //      the selector; skip the shortcut and render it.
+  //   1. localStorage LAST_DIFFICULTY_KEY — returning user, reuse
   //      their last tier (Option B, reduces friction).
-  //   3. No auto-start — show inline ArenaEntryPanel.
+  //   2. No auto-start — show inline ArenaEntryPanel.
   // Guarded by a ref so it runs exactly once per mount.
   useEffect(() => {
     if (autoStartAttemptedRef.current) return;
@@ -851,24 +849,7 @@ function ArenaPageInner() {
       return;
     }
 
-    // Priority 1: dock sheet handed us an explicit pick via sessionStorage.
-    try {
-      const raw = sessionStorage.getItem("chesscito:arena-intent");
-      if (raw) {
-        sessionStorage.removeItem("chesscito:arena-intent");
-        const intent = JSON.parse(raw) as { difficulty?: string; color?: string };
-        if (intent.difficulty === "easy" || intent.difficulty === "medium" || intent.difficulty === "hard") {
-          game.setDifficulty(intent.difficulty);
-          if (intent.color === "w" || intent.color === "b") {
-            game.setPlayerColor(intent.color);
-          }
-          handleStartWithLoading();
-          return;
-        }
-      }
-    } catch { /* fall through to LS fallback */ }
-
-    // Priority 2: returning user's last-used difficulty.
+    // Priority 1: returning user's last-used difficulty.
     let last: string | null = null;
     try {
       last = localStorage.getItem(LAST_DIFFICULTY_KEY);

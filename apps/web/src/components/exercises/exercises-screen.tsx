@@ -74,8 +74,6 @@ import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
 import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/components/exercises/result-overlay";
 import { BadgeSheet } from "@/components/exercises/badge-sheet";
-import { ArenaEntrySheet } from "@/components/exercises/arena-entry-sheet";
-import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
@@ -271,8 +269,6 @@ export function ExercisesScreen({
   const [showPieceComplete, setShowPieceComplete] = useState(false);
   const badgeSheetOpen = activeDockTab === "badge";
   const setBadgeSheetOpen = (v: boolean) => setActiveDockTab(v ? "badge" : null);
-  const arenaSheetOpen = activeDockTab === "arena";
-  const setArenaSheetOpen = (v: boolean) => setActiveDockTab(v ? "arena" : null);
   const trophiesSheetOpen = activeDockTab === "trophies";
   const setTrophiesSheetOpen = (v: boolean) => setActiveDockTab(v ? "trophies" : null);
   const [shieldCount, setShieldCount] = useState(0);
@@ -1349,21 +1345,6 @@ export function ExercisesScreen({
               }
               leaderboardControl={
                 <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
-              }
-              arenaControl={
-                <ArenaEntrySheet
-                  open={arenaSheetOpen}
-                  onOpenChange={setArenaSheetOpen}
-                  trigger={
-                    <button
-                      type="button"
-                      aria-label={DOCK_LABELS.arena}
-                      className="flex h-full w-full items-center justify-center"
-                    >
-                      <CandyBanner name="btn-battle" className="h-9 w-9" />
-                    </button>
-                  }
-                />
               }
               trophiesControl={
                 <TrophiesSheet
