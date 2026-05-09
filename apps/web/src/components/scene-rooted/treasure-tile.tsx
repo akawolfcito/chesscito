@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export type TreasureTileSize = "small" | "large";
-export type TreasureTileRibbon = "BEST" | "NEW" | "SALE";
+/** Ribbon banner across the tile. BEST/NEW/SALE are commerce signals
+ *  (highlight a buyable item); EARNED is an achievement signal added in
+ *  sprint 3 of the vocabulary unification spec — surfaces a collected
+ *  trophy in AchievementsGrid. The CSS `[data-ribbon="EARNED"]` selector
+ *  paints the emerald gradient that pairs with GemBadge `tone="success"`. */
+export type TreasureTileRibbon = "BEST" | "NEW" | "SALE" | "EARNED";
 
 export type TreasureTileProps = {
   size: TreasureTileSize;

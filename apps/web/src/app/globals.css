@@ -3807,6 +3807,12 @@ button.hud-resource-chip:active:not(:disabled) {
   background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
 }
 
+/* Achievement signal — emerald gradient paired with GemBadge
+   tone="success". Sprint 3 (vocabulary unification spec §G3). */
+.treasure-tile-ribbon[data-ribbon="EARNED"] {
+  background: linear-gradient(180deg, #10b981 0%, #047857 100%);
+}
+
 .treasure-tile-spinner {
   position: absolute;
   top: 50%;

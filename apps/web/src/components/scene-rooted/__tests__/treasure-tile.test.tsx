@@ -75,7 +75,7 @@ describe("TreasureTile — markup contract", () => {
     ).toBeNull();
   });
 
-  it.each(["BEST", "NEW", "SALE"] as const)(
+  it.each(["BEST", "NEW", "SALE", "EARNED"] as const)(
     "ribbon='%s' renders .treasure-tile-ribbon[data-ribbon='%s'] with text",
     (ribbon) => {
       const { container } = render(
@@ -247,6 +247,16 @@ describe("TreasureTile — globals.css contract", () => {
     const css = fs.readFileSync(cssPath, "utf8");
     expect(css).toMatch(
       /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]{0,800}\.treasure-tile/,
+    );
+  });
+
+  it("globals.css defines the EARNED ribbon variant (sprint 3 / G3)", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const cssPath = path.resolve(__dirname, "../../../app/globals.css");
+    const css = fs.readFileSync(cssPath, "utf8");
+    expect(css).toMatch(
+      /\.treasure-tile-ribbon\[data-ribbon="EARNED"\][\s\S]{0,200}background:/,
     );
   });
 });
