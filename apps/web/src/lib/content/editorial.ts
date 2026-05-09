@@ -478,6 +478,17 @@ export const ACHIEVEMENTS_COPY = {
   lockedLabel: "Locked",
   earnedLabel: "Earned",
   progressLabel: (current: number, goal: number) => `${current}/${goal}`,
+  /** Section header label for the earned-trophies group. The count is
+   *  appended at the call site so editorial stays content-only. */
+  sectionEarned: "Earned",
+  /** Section header label for the locked group. */
+  sectionLocked: "Locked",
+  /** Detail-sheet copy — opened on tile tap from AchievementsGrid. */
+  detailEarnedSubtitle: "Achievement unlocked",
+  detailLockedSubtitle: "How to unlock",
+  /** Goal callout under the progress bar in the detail sheet. */
+  goalLabel: "Goal",
+  detailCloseLabel: "Close",
   items: {
     "first-victory": {
       title: "First Victory",
