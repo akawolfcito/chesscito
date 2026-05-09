@@ -7,6 +7,7 @@ import { victoryAbi } from "@/lib/contracts/victory";
 import { DIFFICULTY_LABELS, VICTORY_PAGE_COPY } from "@/lib/content/editorial";
 import { formatTime } from "@/lib/game/arena-utils";
 import { VictoryTrophy } from "./victory-trophy";
+import { AcceptChallengeButton } from "./accept-challenge-button";
 
 /** Arena difficulty values (1–3) represent checkmate victories */
 const ARENA_DIFFICULTIES = new Set([1, 2, 3]);
@@ -152,18 +153,9 @@ export default async function VictoryPage({ params }: { params: { id: string } }
           {VICTORY_PAGE_COPY.challengeLine}
         </p>
 
-        <Link
-          href="/arena"
-          className="relative z-10 w-full rounded-2xl py-3 text-center text-sm font-extrabold transition-all active:scale-[0.97]"
-          style={{
-            background: "rgb(120, 65, 5)",
-            color: "rgb(255, 240, 180)",
-            boxShadow:
-              "0 4px 12px rgba(120, 65, 5, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
-          }}
-        >
-          {VICTORY_PAGE_COPY.acceptChallenge}
-        </Link>
+        <div className="relative z-10 flex w-full justify-center">
+          <AcceptChallengeButton />
+        </div>
 
         <Link
           href="/hub"
