@@ -1,6 +1,7 @@
 "use client";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { GemBadge } from "@/components/scene-rooted/gem";
 import { JourneyRail } from "@/components/redesign/journey-rail";
 import {
   Sheet,
@@ -125,42 +126,23 @@ export function MissionDetailSheet({
             </div>
           </div>
 
-          {/* Stats row (pre-first-move or running stats) */}
+          {/* Stats row (pre-first-move or running stats). Single-line
+              gem-shaped indicators per scene-rooted vocabulary: icon
+              encodes the dimension (star = score, time = duration);
+              value carries number + unit. The previous label rows
+              ("SCORE", "TIME") are implicit via the icons. */}
           {hasStats ? (
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex flex-col rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15 px-2 py-1.5">
-                <span
-                  className="flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-[0.10em]"
-                  style={{ color: "rgba(110, 65, 15, 0.75)" }}
-                >
-                  <CandyIcon name="star" className="h-3 w-3" />
-                  {MISSION_DETAIL_COPY.scoreLabel}
-                </span>
-                <p
-                  className="mt-0.5 text-base font-extrabold tabular-nums"
-                  style={{ color: "rgba(63, 34, 8, 0.95)" }}
-                >
-                  {score}{" "}
-                  <span className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-                    {SCORE_UNIT}
-                  </span>
-                </p>
-              </div>
-              <div className="flex flex-col rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15 px-2 py-1.5">
-                <span
-                  className="flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-[0.10em]"
-                  style={{ color: "rgba(110, 65, 15, 0.75)" }}
-                >
-                  <CandyIcon name="time" className="h-3 w-3" />
-                  {MISSION_DETAIL_COPY.timeLabel}
-                </span>
-                <p
-                  className="mt-0.5 text-base font-extrabold tabular-nums"
-                  style={{ color: "rgba(63, 34, 8, 0.95)" }}
-                >
-                  {Number(timeMs) / 1000}s
-                </p>
-              </div>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <GemBadge
+                tone="default"
+                icon={<CandyIcon name="star" className="h-3 w-3" />}
+                value={`${score} ${SCORE_UNIT}`}
+              />
+              <GemBadge
+                tone="default"
+                icon={<CandyIcon name="time" className="h-3 w-3" />}
+                value={`${Number(timeMs) / 1000}s`}
+              />
             </div>
           ) : (
             <p
