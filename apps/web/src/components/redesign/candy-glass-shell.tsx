@@ -46,7 +46,7 @@ export function CandyGlassShell({
 }: CandyGlassShellProps) {
   return (
     <div
-      className={`sheet-bg-hub flex w-full flex-col gap-3 rounded-3xl px-5 py-5 ${className}`.trim()}
+      className={`sheet-bg-hub flex max-h-[90dvh] w-full flex-col gap-3 overflow-y-auto overscroll-contain rounded-3xl px-5 py-5 ${className}`.trim()}
       style={{
         border: "1px solid rgba(255, 255, 255, 0.45)",
         boxShadow:
