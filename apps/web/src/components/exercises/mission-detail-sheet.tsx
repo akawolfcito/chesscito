@@ -2,6 +2,7 @@
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { GemBadge } from "@/components/scene-rooted/gem";
+import { WoodBanner } from "@/components/scene-rooted/wood-banner";
 import { JourneyRail } from "@/components/redesign/journey-rail";
 import {
   Sheet,
@@ -153,19 +154,20 @@ export function MissionDetailSheet({
             </p>
           )}
 
-          {/* Journey — where am I, what's next. */}
-          <div className="rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15 p-3">
-            <p
-              className="mb-1 text-[0.62rem] font-bold uppercase tracking-[0.14em]"
-              style={{ color: "rgba(110, 65, 15, 0.75)" }}
-            >
+          {/* Journey — where am I, what's next. The wood-grain banner
+              frames the section title; the JourneyRail renders the
+              progression visually below it. */}
+          <div className="flex flex-col items-center gap-2">
+            <WoodBanner size="medium" asTitle>
               Your journey
-            </p>
-            <JourneyRail
-              currentPiece={selectedPiece}
-              currentStars={currentStars}
-              claimedBadges={claimedBadges}
-            />
+            </WoodBanner>
+            <div className="w-full">
+              <JourneyRail
+                currentPiece={selectedPiece}
+                currentStars={currentStars}
+                claimedBadges={claimedBadges}
+              />
+            </div>
           </div>
         </div>
       </SheetContent>
