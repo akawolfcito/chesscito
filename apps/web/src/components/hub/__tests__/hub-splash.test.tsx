@@ -10,20 +10,24 @@ import {
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-/** Phase 4 commit 1 — <HubV2Splash> primitive (design-lock §1.1 + §9.2,
- *  with P0-3 corrections: no auto-dismiss timer, tap-only dismiss, hint
- *  fade-in 600ms after the 1200ms entrance completes (~1800ms post-mount).
+/** <HubV2Splash> primitive (design-lock §1.1 + §2.1 + §9.2, with P0-3
+ *  corrections: no auto-dismiss timer, tap-only dismiss, hint fade-in
+ *  600ms after the 1200ms entrance completes (~1800ms post-mount).
  *
- *  6 asserts:
+ *  Phase 4 commit 1 (`26fd0e8`) shipped asserts 1–6.
+ *  Phase 4 commit 2 adds assert 7 (editorial integration with HUB_V2_SPLASH_COPY).
+ *
+ *  7 asserts:
  *    1. Mount gate (localStorage flag null → renders; flag set → null)
  *    2. Hint timing (hidden at mount; visible after advancing 1800ms)
  *    3. Tap-anywhere dismiss (unmount + flag persist + telemetry)
  *    4. Reduced-motion path (no timer; hint visible at mount; tap-only)
  *    5. ARIA + keyboard (role dialog, aria-modal, focus, Enter/Space dismiss)
  *    6. Telemetry (splash_view on mount; splash_dismiss on dismiss)
+ *    7. Editorial: title, tagline, dismissHint render from HUB_V2_SPLASH_COPY
  *
- *  Asset wiring + HUB_V2_SPLASH_COPY are deferred to Phase 4 commit 2 once
- *  `splash-knight-hero.webp` lands. This commit ships the primitive contract. */
+ *  Real `splash-knight-hero.webp` asset (≤6 KB, design-lock §3.2) lands
+ *  in commit 3 — current SVG hero is a decorative placeholder. */
 
 const trackMock = vi.hoisted(() => vi.fn());
 
@@ -63,6 +67,7 @@ afterEach(() => {
 });
 
 import { HubV2Splash } from "../hub-splash";
+import { HUB_V2_SPLASH_COPY } from "@/lib/content/editorial";
 
 describe("<HubV2Splash> — Phase 4 primitive", () => {
   it("(1) mount gate: renders when localStorage flag is null; returns null when flag is set", () => {
@@ -166,6 +171,25 @@ describe("<HubV2Splash> — Phase 4 primitive", () => {
       (call) => call[0] === "splash_dismiss",
     );
     expect(dismissCalls).toHaveLength(1);
+  });
+
+  it("(7) editorial: title, tagline, dismissHint render from HUB_V2_SPLASH_COPY; aria-labelledby uses ariaTitleId", () => {
+    render(<HubV2Splash />);
+
+    const title = document.getElementById(HUB_V2_SPLASH_COPY.ariaTitleId);
+    expect(title).toBeInTheDocument();
+    expect(title?.textContent).toBe(HUB_V2_SPLASH_COPY.title);
+
+    expect(
+      screen.getByText(HUB_V2_SPLASH_COPY.tagline),
+    ).toBeInTheDocument();
+
+    const hint = screen.getByTestId("splash-hint");
+    expect(hint.textContent).toBe(HUB_V2_SPLASH_COPY.dismissHint);
+
+    expect(
+      screen.getByTestId("hub-v2-splash").getAttribute("aria-labelledby"),
+    ).toBe(HUB_V2_SPLASH_COPY.ariaTitleId);
   });
 });
 

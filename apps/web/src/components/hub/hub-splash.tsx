@@ -8,20 +8,23 @@ import {
   type KeyboardEvent,
 } from "react";
 
+import { HUB_V2_SPLASH_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
 
-/** Phase 4 commit 1 — Hub V2 onboarding splash primitive (Splash A per
- *  design-lock §1.1). Renders once on first-ever-visit; never re-mounts
- *  after dismiss. Tap-anywhere or Enter/Space dismisses (P0-3 fix: no
- *  auto-dismiss timer, WCAG 2.2.1 compliance).
+/** Hub V2 onboarding splash primitive (Splash A per design-lock §1.1).
+ *  Renders once on first-ever-visit; never re-mounts after dismiss.
+ *  Tap-anywhere or Enter/Space dismisses (P0-3 fix: no auto-dismiss timer,
+ *  WCAG 2.2.1 compliance).
  *
- *  This commit ships the primitive contract only — `splash-knight-hero.webp`
- *  asset wiring + `HUB_V2_SPLASH_COPY` migration land in commit 2 once the
- *  hero crop is delivered. The dialog is also NOT yet mounted into
+ *  Phase 4 commit 1 (`26fd0e8`) shipped the primitive contract.
+ *  Phase 4 commit 2 wires `HUB_V2_SPLASH_COPY` (editorial.ts §2.1) and
+ *  introduces a decorative SVG placeholder for the hero — the real
+ *  `splash-knight-hero.webp` (≤6 KB, design-lock §3.2) lands in commit 3
+ *  once the hero crop is delivered. The dialog is NOT yet mounted into
  *  `<HubScaffoldV2Client>`; that integration arrives with the `?hub=v2`
  *  flag in Phase 7.
  *
- *  Design-lock spec: `docs/superpowers/specs/2026-05-09-hub-redesign-phase-1-design-lock.md` §1.1 + §9.2 */
+ *  Design-lock spec: `docs/superpowers/specs/2026-05-09-hub-redesign-phase-1-design-lock.md` §1.1 + §2.1 + §9.2 */
 
 const SPLASH_FLAG_KEY = "chesscito:hub-v2:splash:seen";
 /** 1200ms entrance pulse + 600ms breathing room before the dismiss hint
@@ -104,21 +107,55 @@ export function HubV2Splash() {
       data-reduced-motion={reducedMotion ? "true" : "false"}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="splash-title"
+      aria-labelledby={HUB_V2_SPLASH_COPY.ariaTitleId}
       tabIndex={-1}
       onClick={dismiss}
       onKeyDown={handleKeyDown}
     >
-      {/* Hero placeholder — splash-knight-hero.webp lands in Phase 4 commit 2. */}
-      <div data-testid="splash-hero" />
-      {/* TODO(phase-4-commit-2): move strings to HUB_V2_SPLASH_COPY in editorial.ts */}
-      <h2 id="splash-title">Welcome, friend</h2>
-      <p>Small plays. Big habits.</p>
+      {/* Decorative placeholder until splash-knight-hero.webp ships
+       *  (design-lock §3.2 — ≤6 KB WebP, gold-tinted hero crop). The
+       *  inline SVG keeps layout/aria stable so commit 3 swap is purely
+       *  asset-level. aria-hidden because the dialog is already labelled
+       *  by the title element. */}
+      <svg
+        data-testid="splash-hero"
+        data-component="hub-v2-splash-hero-placeholder"
+        className="hub-v2-splash-hero"
+        width="160"
+        height="160"
+        viewBox="0 0 160 160"
+        aria-hidden="true"
+        role="presentation"
+      >
+        <rect
+          x="2"
+          y="2"
+          width="156"
+          height="156"
+          rx="14"
+          fill="none"
+          stroke="currentColor"
+          strokeDasharray="6 4"
+          opacity="0.4"
+        />
+        <text
+          x="80"
+          y="104"
+          fontSize="80"
+          textAnchor="middle"
+          fill="currentColor"
+          opacity="0.55"
+        >
+          ♞
+        </text>
+      </svg>
+      <h2 id={HUB_V2_SPLASH_COPY.ariaTitleId}>{HUB_V2_SPLASH_COPY.title}</h2>
+      <p>{HUB_V2_SPLASH_COPY.tagline}</p>
       <p
         data-testid="splash-hint"
         data-visible={hintVisible ? "true" : "false"}
       >
-        (tap anywhere)
+        {HUB_V2_SPLASH_COPY.dismissHint}
       </p>
     </div>
   );

@@ -694,6 +694,17 @@ export const SPLASH_COPY = {
   subtitle: "Setting up the board",
 } as const;
 
+/** Hub V2 onboarding splash (Splash A per design-lock §2.1).
+ *  First-visit only; never re-shown after dismiss. WCAG 2.2.1 compliant
+ *  (no auto-dismiss timer; tap-anywhere or Enter/Space dismiss). */
+export const HUB_V2_SPLASH_COPY = {
+  title: "Welcome, friend",
+  tagline: "Small plays. Big mental habits.",
+  dismissHint: "Tap anywhere to begin",
+  ariaLabel: "Welcome screen",
+  ariaTitleId: "splash-title",
+} as const;
+
 export const COACH_COPY = {
   askCoach: "Ask Coach",
   loading: "Loading...",
