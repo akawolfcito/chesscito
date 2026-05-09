@@ -1297,7 +1297,7 @@ export function ExercisesScreen({
           currentStars={totalStars}
           claimedBadges={badgesClaimed}
           shieldCount={shieldCount}
-          actionRowLeft={<DailyTacticSlot compact />}
+          actionRowLeft={<DailyTacticSlot />}
           actionRowRight={
             <MiniArenaBridgeSlot
               setup={MINI_ARENA_SETUPS[0]}

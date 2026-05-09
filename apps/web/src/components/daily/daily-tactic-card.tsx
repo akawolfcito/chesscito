@@ -1,6 +1,7 @@
 "use client";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { StonePedestal } from "@/components/scene-rooted/stone-pedestal";
 
 export type DailyTacticCardProps = {
   /** Short label of the day's puzzle, e.g. "Smothered mate". */
@@ -9,15 +10,10 @@ export type DailyTacticCardProps = {
   streak: number;
   /** True when the player already solved today's tactic. */
   isCompletedToday: boolean;
-  /** Hours until the next puzzle drops. Used in the completed state. */
+  /** Hours until the next puzzle drops. Used in the completed-state label. */
   hoursUntilNext: number;
-  /** Fired when the user taps the CTA. Card is interactive only when
-   *  not yet completed today. */
+  /** Fired when the user taps the pedestal. Suppressed when completed. */
   onPlay: () => void;
-  /** Compact rendering — icon-only pill with streak badge. Used in
-   *  the action row next to the contextual action pin so the card
-   *  doesn't push the board down. */
-  compact?: boolean;
 };
 
 function formatNextWindow(hours: number): string {
@@ -32,122 +28,49 @@ export function DailyTacticCard({
   isCompletedToday,
   hoursUntilNext,
   onPlay,
-  compact = false,
 }: DailyTacticCardProps) {
   const ariaLabel = isCompletedToday
     ? `Daily Tactic completed. ${formatNextWindow(hoursUntilNext)}.`
     : `Play today's Daily Tactic. ${puzzleName}.`;
 
-  if (compact) {
-    return (
-      <button
-        type="button"
-        onClick={isCompletedToday ? undefined : onPlay}
-        disabled={isCompletedToday}
-        data-testid="daily-tactic-card"
-        data-state={isCompletedToday ? "completed" : "pending"}
-        aria-label={ariaLabel}
-        className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full candy-frame candy-frame-amber disabled:opacity-90"
-      >
-        <CandyIcon
-          name={isCompletedToday ? "check" : "coach"}
-          className="h-6 w-6"
-        />
-        {streak > 0 && (
-          <span
-            className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-nano font-extrabold leading-none"
-            style={{
-              background: isCompletedToday
-                ? "rgba(34, 197, 94, 0.92)"
-                : "rgba(63, 34, 8, 0.92)",
-              color: "rgba(255, 245, 215, 0.98)",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.25)",
-            }}
-            aria-hidden="true"
-          >
-            {streak}
-          </span>
-        )}
-      </button>
-    );
-  }
-
-  const Tag: "button" | "div" = isCompletedToday ? "div" : "button";
-  const interactiveProps = isCompletedToday
-    ? {}
-    : { onClick: onPlay, type: "button" as const, "aria-label": ariaLabel };
-
-  return (
-    <Tag
-      {...interactiveProps}
-      data-testid="daily-tactic-card"
-      data-state={isCompletedToday ? "completed" : "pending"}
-      className={`candy-frame candy-frame-amber daily-tactic-card flex w-full items-center gap-3 px-4 py-3 text-left ${
-        isCompletedToday ? "" : "cursor-pointer"
-      }`}
-    >
+  const badge =
+    streak > 0 ? (
       <span
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+        data-testid="daily-tactic-streak"
+        className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-nano font-extrabold leading-none"
         style={{
           background: isCompletedToday
-            ? "rgba(34, 197, 94, 0.22)"
-            : "rgba(245, 158, 11, 0.22)",
-          border: `1px solid ${
-            isCompletedToday ? "rgba(34, 197, 94, 0.55)" : "rgba(245, 158, 11, 0.55)"
-          }`,
+            ? "rgba(34, 197, 94, 0.92)"
+            : "rgba(63, 34, 8, 0.92)",
+          color: "rgba(255, 245, 215, 0.98)",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.25)",
         }}
         aria-hidden="true"
       >
-        <CandyIcon
-          name={isCompletedToday ? "check" : "coach"}
-          className="h-6 w-6"
-        />
+        {streak}
       </span>
+    ) : undefined;
 
-      <div className="flex flex-1 flex-col leading-tight">
-        <span className="text-nano font-bold uppercase tracking-[0.14em] opacity-80">
-          Daily Tactic
-        </span>
-        <span className="text-sm font-extrabold">
-          {isCompletedToday ? "Solved!" : puzzleName}
-        </span>
-        <span className="text-xs opacity-80">
-          {isCompletedToday
-            ? formatNextWindow(hoursUntilNext)
-            : streak > 0
-              ? `Streak: ${streak} day${streak === 1 ? "" : "s"}`
-              : "Start your streak — 30 seconds"}
-        </span>
-      </div>
-
-      {!isCompletedToday && (
-        <span
-          className="rounded-full px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide"
-          style={{
-            background: "rgba(63, 34, 8, 0.85)",
-            color: "rgba(255, 245, 215, 0.98)",
-            boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.18)",
-          }}
-        >
-          Play
-        </span>
-      )}
-
-      {isCompletedToday && streak > 0 && (
-        <span
-          className="flex flex-col items-center rounded-xl px-3 py-1.5 leading-none"
-          style={{
-            background: "rgba(34, 197, 94, 0.85)",
-            color: "rgba(8, 32, 16, 0.98)",
-            boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.20)",
-          }}
-        >
-          <span className="text-base font-extrabold">{streak}</span>
-          <span className="text-nano font-bold uppercase tracking-[0.12em]">
-            {streak === 1 ? "day" : "days"}
-          </span>
-        </span>
-      )}
-    </Tag>
+  return (
+    <span
+      data-testid="daily-tactic-card"
+      data-state={isCompletedToday ? "completed" : "pending"}
+      className="inline-flex"
+    >
+      <StonePedestal
+        stone={2}
+        size="medium"
+        icon={
+          <CandyIcon
+            name={isCompletedToday ? "check" : "coach"}
+            className="h-6 w-6"
+          />
+        }
+        badge={badge}
+        onClick={onPlay}
+        disabled={isCompletedToday}
+        aria-label={ariaLabel}
+      />
+    </span>
   );
 }

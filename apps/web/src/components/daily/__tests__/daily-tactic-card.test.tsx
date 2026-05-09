@@ -2,47 +2,63 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { DailyTacticCard } from "../daily-tactic-card";
 
-describe("DailyTacticCard — pending state", () => {
-  const baseProps = {
-    puzzleName: "Smothered mate",
-    streak: 0,
-    isCompletedToday: false,
-    hoursUntilNext: 12,
-  };
+const baseProps = {
+  puzzleName: "Smothered mate",
+  streak: 0,
+  isCompletedToday: false,
+  hoursUntilNext: 12,
+};
 
-  it("shows the puzzle name and a Play CTA when not yet completed today", () => {
-    render(<DailyTacticCard {...baseProps} onPlay={() => {}} />);
-    expect(screen.getByText("Smothered mate")).toBeInTheDocument();
-    expect(screen.getByText("Play")).toBeInTheDocument();
-  });
+function getStone(): HTMLButtonElement {
+  return screen
+    .getByTestId("daily-tactic-card")
+    .querySelector('[data-component="stone-pedestal"]') as HTMLButtonElement;
+}
 
-  it("renders an interactive button (not a div) when pending", () => {
+describe("DailyTacticCard — pending state (post-StonePedestal migration)", () => {
+  it("wraps the pedestal in <span data-testid='daily-tactic-card' data-state='pending'>", () => {
     render(<DailyTacticCard {...baseProps} onPlay={() => {}} />);
     const card = screen.getByTestId("daily-tactic-card");
-    expect(card.tagName).toBe("BUTTON");
-    expect(card).toHaveAttribute("data-state", "pending");
+    expect(card.tagName).toBe("SPAN");
+    expect(card.getAttribute("data-state")).toBe("pending");
+    expect(
+      card.querySelector('[data-component="stone-pedestal"]'),
+    ).not.toBeNull();
   });
 
-  it("calls onPlay when the card is clicked", () => {
+  it("inner StonePedestal is enabled <button> when pending", () => {
+    render(<DailyTacticCard {...baseProps} onPlay={() => {}} />);
+    const stone = getStone();
+    expect(stone.tagName).toBe("BUTTON");
+    expect(stone.disabled).toBe(false);
+  });
+
+  it("aria-label embeds the puzzle name when pending", () => {
+    render(
+      <DailyTacticCard
+        {...baseProps}
+        puzzleName="Fork the king"
+        onPlay={() => {}}
+      />,
+    );
+    expect(getStone().getAttribute("aria-label")).toMatch(/Fork the king/);
+  });
+
+  it("clicking the pedestal fires onPlay", () => {
     const onPlay = vi.fn();
     render(<DailyTacticCard {...baseProps} onPlay={onPlay} />);
-    fireEvent.click(screen.getByTestId("daily-tactic-card"));
-    expect(onPlay).toHaveBeenCalledOnce();
+    fireEvent.click(getStone());
+    expect(onPlay).toHaveBeenCalledTimes(1);
   });
 
-  it("uses an encouraging copy when streak is 0", () => {
+  it("hides the streak badge when streak=0", () => {
     render(<DailyTacticCard {...baseProps} streak={0} onPlay={() => {}} />);
-    expect(screen.getByText(/Start your streak/i)).toBeInTheDocument();
+    expect(screen.queryByTestId("daily-tactic-streak")).toBeNull();
   });
 
-  it("shows the current streak when > 0", () => {
+  it("renders the streak badge when streak>0", () => {
     render(<DailyTacticCard {...baseProps} streak={5} onPlay={() => {}} />);
-    expect(screen.getByText(/Streak: 5 days/i)).toBeInTheDocument();
-  });
-
-  it("uses singular 'day' for streak of 1", () => {
-    render(<DailyTacticCard {...baseProps} streak={1} onPlay={() => {}} />);
-    expect(screen.getByText(/Streak: 1 day$/)).toBeInTheDocument();
+    expect(screen.getByTestId("daily-tactic-streak").textContent).toBe("5");
   });
 });
 
@@ -54,37 +70,51 @@ describe("DailyTacticCard — completed state", () => {
     hoursUntilNext: 8,
   };
 
-  it("renders a non-interactive div when completed", () => {
+  it("wrapper data-state='completed', inner StonePedestal disabled", () => {
     render(<DailyTacticCard {...completedProps} onPlay={() => {}} />);
     const card = screen.getByTestId("daily-tactic-card");
-    expect(card.tagName).toBe("DIV");
-    expect(card).toHaveAttribute("data-state", "completed");
+    expect(card.getAttribute("data-state")).toBe("completed");
+    expect(getStone().disabled).toBe(true);
   });
 
-  it("shows 'Solved!' instead of the puzzle name", () => {
-    render(<DailyTacticCard {...completedProps} onPlay={() => {}} />);
-    expect(screen.getByText("Solved!")).toBeInTheDocument();
-    expect(screen.queryByText("Smothered mate")).not.toBeInTheDocument();
+  it("aria-label includes 'completed' + the next-window timer", () => {
+    render(
+      <DailyTacticCard
+        {...completedProps}
+        hoursUntilNext={8}
+        onPlay={() => {}}
+      />,
+    );
+    const label = getStone().getAttribute("aria-label") ?? "";
+    expect(label).toMatch(/completed/i);
+    expect(label).toMatch(/fresh in 8h/i);
   });
 
-  it("shows the next-window timer", () => {
-    render(<DailyTacticCard {...completedProps} hoursUntilNext={8} onPlay={() => {}} />);
-    expect(screen.getByText(/fresh in 8h/i)).toBeInTheDocument();
+  it("aria-label uses '<1h' for sub-hour windows", () => {
+    render(
+      <DailyTacticCard
+        {...completedProps}
+        hoursUntilNext={0.5}
+        onPlay={() => {}}
+      />,
+    );
+    expect(getStone().getAttribute("aria-label")).toMatch(/<1h/i);
   });
 
-  it("shows the streak badge with day count", () => {
+  it("click is suppressed when completed (disabled button)", () => {
+    const onPlay = vi.fn();
+    render(<DailyTacticCard {...completedProps} onPlay={onPlay} />);
+    fireEvent.click(getStone());
+    expect(onPlay).not.toHaveBeenCalled();
+  });
+
+  it("renders the streak badge when completed + streak>0", () => {
     render(<DailyTacticCard {...completedProps} streak={7} onPlay={() => {}} />);
-    expect(screen.getByText("7")).toBeInTheDocument();
-    expect(screen.getByText("days")).toBeInTheDocument();
+    expect(screen.getByTestId("daily-tactic-streak").textContent).toBe("7");
   });
 
-  it("hides the streak badge when streak is 0 (player just broke streak)", () => {
+  it("hides the streak badge when completed + streak=0", () => {
     render(<DailyTacticCard {...completedProps} streak={0} onPlay={() => {}} />);
-    expect(screen.queryByText(/days?$/i)).not.toBeInTheDocument();
-  });
-
-  it("formats sub-hour windows as <1h", () => {
-    render(<DailyTacticCard {...completedProps} hoursUntilNext={0.5} onPlay={() => {}} />);
-    expect(screen.getByText(/fresh in <1h/i)).toBeInTheDocument();
+    expect(screen.queryByTestId("daily-tactic-streak")).toBeNull();
   });
 });
