@@ -7,6 +7,7 @@ import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { track } from "@/lib/telemetry";
 import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { ShareModal } from "@/components/share/share-modal";
@@ -97,21 +98,23 @@ export function VictoryCelebration({
           cta={
             <div className="flex w-full flex-col gap-2.5 animate-in fade-in duration-300 fill-mode-both [animation-delay:600ms]">
               {onClaimVictory && (
-                <Button
-                  type="button"
-                  variant="game-solid"
-                  size="game"
-                  onClick={onClaimVictory}
-                  className="w-full flex-col gap-0.5 py-3.5"
-                >
-                  <span className="flex items-center gap-1.5 text-sm font-bold">
-                    <CandyBanner name="btn-claim" className="h-5 w-5" />
-                    {VICTORY_CLAIM_COPY.claimButton}
-                  </span>
-                  <span className="block text-xs opacity-70 font-normal">
-                    {VICTORY_CLAIM_COPY.claimValueHint(claimPrice ?? "")}
-                  </span>
-                </Button>
+                <div className="flex w-full justify-center">
+                  <PrincipalButton
+                    size="large"
+                    leadingIcon={
+                      <CandyBanner name="btn-claim" className="h-5 w-5" />
+                    }
+                    onClick={onClaimVictory}
+                    aria-label={VICTORY_CLAIM_COPY.claimButton}
+                  >
+                    <span className="flex flex-col items-start leading-tight">
+                      <span>{VICTORY_CLAIM_COPY.claimButton}</span>
+                      <span className="text-[0.65rem] font-normal opacity-70">
+                        {VICTORY_CLAIM_COPY.claimValueHint(claimPrice ?? "")}
+                      </span>
+                    </span>
+                  </PrincipalButton>
+                </div>
               )}
               {onAskCoach && <AskCoachButton onClick={onAskCoach} />}
               <Button type="button" variant="game-ghost" size="game" onClick={onPlayAgain}>
