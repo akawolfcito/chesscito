@@ -62,7 +62,7 @@ export function MissionDetailSheet({
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side="bottom"
-        className="mission-shell sheet-bg-hub rounded-t-3xl border-0 pb-[5rem]"
+        className="mission-shell sheet-bg-hub flex max-h-[90dvh] flex-col rounded-t-3xl border-0 pb-[5rem]"
       >
         <div className="border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
           <SheetHeader>
@@ -81,7 +81,7 @@ export function MissionDetailSheet({
           </SheetHeader>
         </div>
 
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 flex-1 space-y-3 overflow-y-auto overscroll-contain">
           {/* Hero: piece art + target */}
           <div className="flex items-center gap-3 rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15 p-3">
             <picture className="h-14 w-14 shrink-0 drop-shadow-[0_2px_6px_rgba(120,65,5,0.35)]">
