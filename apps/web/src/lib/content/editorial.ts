@@ -371,9 +371,9 @@ export const DIFFICULTY_LABELS: Record<number, string> = {
 } as const;
 
 export const VICTORY_CLAIM_COPY = {
-  claimButton: "Save this Victory",
+  claimButton: "Save Victory",
   claimHelper: "Save this victory permanently and unlock your share card",
-  claimValueHint: (price: string) => `Unlock your share card \u2022 ${price}`,
+  claimValueHint: (price: string) => price,
   teaserLabel: "Unlock when you save",
   teaserCheckmate: (moves: number) => `Checkmate in ${moves} moves`,
   teaserShare: "SHARE",
@@ -683,8 +683,7 @@ export const SPLASH_COPY = {
 } as const;
 
 export const COACH_COPY = {
-  askCoach: "Ask the Coach",
-  askCoachSub: "What can I improve?",
+  askCoach: "Ask Coach",
   loading: "Loading...",
   quickReviewTitle: "Quick Review",
   coachAnalysisTitle: "Coach Analysis",
