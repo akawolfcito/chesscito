@@ -1302,7 +1302,6 @@ export function ExercisesScreen({
             <MiniArenaBridgeSlot
               setup={MINI_ARENA_SETUPS[0]}
               unlocked={selectedPiece === "rook" && totalStars >= 12}
-              compact
             />
           }
           contextualAction={
