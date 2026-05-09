@@ -346,10 +346,17 @@ export function MissionPanelCandy({
           player always sees the current piece's instruction frame
           without competing with the mission objective row above. The
           previously dead `pieceHint` prop is now wired live. When
-          undefined, the ribbon falls back to MISSION_RIBBON_COPY.exercises. */}
-      <div className="shrink-0 mx-2 mt-1">
-        <MissionRibbon surface="exercises" text={pieceHint} />
-      </div>
+          undefined, the ribbon falls back to MISSION_RIBBON_COPY.exercises.
+          Hidden in capture mode: pieceHint there reads "Capture the
+          target", which fully duplicates the subtitle + peek chip
+          ("Capture") — three surfaces echoing the same word. The
+          ribbon is the heaviest of the three (~40px row) and the
+          least essential since the chip is interactive. */}
+      {!isCapture && (
+        <div className="shrink-0 mx-2 mt-1">
+          <MissionRibbon surface="exercises" text={pieceHint} />
+        </div>
+      )}
 
       {/* L2 Layer toggle — only visible after L1 mastery + labyrinths
           exist for this piece. Restyled to match the chip row above
