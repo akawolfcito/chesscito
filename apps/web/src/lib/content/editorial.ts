@@ -748,6 +748,34 @@ export const HUB_V2_MASTERY_COPY = {
   masteryDashboardAriaLabel: "Piece masteries",
 } as const;
 
+/** Hub V2 Training Pass band (design-lock §1.5 + §2.3).
+ *  Active state replaces V1's `<PremiumSlot>` strings; inactive state
+ *  surfaces the upgrade pitch. Atmosphere shift trigger lives in the
+ *  scaffold (see `HubScaffoldV2Client.handlePurchaseSuccess`); the band
+ *  only emits `hub_v2_training_band_tap` per design-lock §5. */
+export const HUB_V2_TRAINING_COPY = {
+  active: {
+    kicker: "Training Pass",
+    daysFormat: (d: number): string => `${d}d`,
+    sessionsFormat: (used: number, total: number): string =>
+      `Sessions: ${used}/${total}`,
+    renewsFormat: (mmdd: string): string => `Renews ${mmdd}`,
+    ariaLabel: (d: number, used: number, total: number): string =>
+      `Training Pass active, ${d} days remaining, ${used} of ${total} sessions used`,
+  },
+  inactive: {
+    title: "Unlock Coach + Premium",
+    priceLabel: "$1.99 / 30 days",
+    perks: [
+      "Daily Coach analyses",
+      "12 Arena sessions",
+      "Wax-seal HUD",
+    ] as const,
+    cta: "See plan",
+    ariaLabel: "Training Pass — $1.99 for 30 days, see plan",
+  },
+} as const;
+
 export const COACH_COPY = {
   askCoach: "Ask Coach",
   loading: "Loading...",
