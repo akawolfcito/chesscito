@@ -817,3 +817,80 @@ Total payload for the full vocabulary set: **148 KB**.
 - Manual screenshot baselines per primitive in `apps/web/e2e/screenshots/scene-rooted/`.
 - Surface audit for non-diegetic chrome (other `<button>` instances) — recommended follow-up per red-team P1.
 
+---
+
+## 17. Destructive Action Pattern — Tap-to-Confirm
+
+Reference: `components/arena/arena-action-bar.tsx` (Resign button).
+
+The vocabulary audit (2026-05-09) flagged the Resign confirmation as the
+**canonical exemplar** for destructive actions in Chesscito. Use this
+pattern for any action that ends a session, discards progress, or
+otherwise cannot be undone.
+
+### 17.1 The pattern
+
+A single button toggles between two states on the same hit target. No
+modal, no overlay, no confirmation dialog.
+
+| Tap | State | Visual | Behavior |
+|---|---|---|---|
+| 1st | armed | icon swaps (action → check), countdown ring, `is-confirming` class | wait up to 3s |
+| 2nd within 3s | confirmed | — | execute the destructive action |
+| auto after 3s | cancelled | revert to default | no-op |
+
+State machine implementation (simplified):
+
+```tsx
+const [confirming, setConfirming] = useState(false);
+const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+useEffect(() => () => {
+  if (timerRef.current) clearTimeout(timerRef.current);
+}, []);
+
+function handleClick() {
+  if (confirming) {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setConfirming(false);
+    onAction();
+  } else {
+    setConfirming(true);
+    timerRef.current = setTimeout(() => setConfirming(false), 3000);
+  }
+}
+```
+
+### 17.2 Why we prefer this over a modal
+
+- **Zero context loss** — board / game state stays visible during confirmation, so the user keeps full awareness of what they are about to lose.
+- **One-handed reachable** — the second tap lands in the same touch target the user just hit; no thumb migration to a modal CTA.
+- **Self-cancelling** — the 3s timeout means an accidental tap costs nothing; users learn the pattern is forgiving.
+- **No focus trap** — keyboard users do not need to escape a dialog or hunt for a primary button. Same focus, two presses.
+
+### 17.3 Required behavior
+
+A correct implementation must:
+
+1. **Visually distinguish the armed state.** Icon swap to `check` (CandyIcon) is the canonical signal. A 3s linear `confirm-countdown` keyframe animation on a ring/border communicates the time budget.
+2. **Auto-cancel after 3s.** Hard cap. Users should never be left with a permanently-armed destructive button.
+3. **Clear the timer on unmount.** Prevent stale state if the surface unmounts mid-arming.
+4. **Announce the state change to assistive tech.** Dynamic `aria-label` (`"Resign"` → `"Tap again to confirm resign"`) plus `aria-pressed={confirming}`. Editorial copy lives next to its sibling labels (e.g., `ARENA_COPY.resignConfirm`).
+5. **Not stack with other surfaces.** If the action ends the game and routes to an end-state modal, the modal renders **after** the second tap; the confirmation never happens inside another sheet.
+
+### 17.4 When NOT to use this pattern
+
+- **Multi-step destructive flows** (e.g., "delete account, type your email") — those need a real modal because the friction is intentional.
+- **Cross-cutting actions in chrome** (logout, switch network) — these live in dock/menu surfaces and use the rose-toned `<Button variant="destructive">` per §1.
+- **Actions that need extra inputs** (a reason, a confirmation token) — modal territory.
+
+### 17.5 Accessibility checklist
+
+When adopting the pattern, verify:
+
+- [ ] Dynamic `aria-label` swaps with the armed state.
+- [ ] `aria-pressed={armed}` for screen-reader state semantics.
+- [ ] Visible focus ring respected (do not override `:focus-visible`).
+- [ ] Touch target ≥ 44×44 (per §4).
+- [ ] Countdown animation respects `prefers-reduced-motion` (countdown ring may snap-collapse instead of animating).
+
