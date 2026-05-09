@@ -4,6 +4,7 @@ import { ARENA_COPY } from "@/lib/content/editorial";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import type { ArenaDifficulty } from "@/lib/game/types";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
 
@@ -289,17 +290,19 @@ export function ArenaEntryPanel({
         ))}
       </div>
 
-      {/* Primary CTA */}
-      <Button
-        type="button"
-        variant="game-primary"
-        size="game"
-        onClick={onStart}
-        className="mt-1 w-full"
-      >
-        <CandyBanner name="btn-play" className="inline h-5 w-5 -mt-0.5" />{" "}
-        {ARENA_COPY.startMatch}
-      </Button>
+      {/* Primary CTA — entry-gate ritual, gold-carved wood. */}
+      <div className="mt-1 flex w-full justify-center">
+        <PrincipalButton
+          size="large"
+          leadingIcon={
+            <CandyBanner name="btn-play" className="inline h-5 w-5" />
+          }
+          onClick={onStart}
+          aria-label={ARENA_COPY.startMatch}
+        >
+          {ARENA_COPY.startMatch}
+        </PrincipalButton>
+      </div>
 
       {/* Secondary: Back */}
       {onBack && (
