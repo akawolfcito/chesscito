@@ -3594,3 +3594,140 @@ button.hud-resource-chip:active:not(:disabled) {
     animation-duration: 1400ms;
   }
 }
+
+/* ── <TreasureTile> — chest with iconStack + value-chip + ribbon (M3.5) ── */
+.treasure-tile {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: contain;
+  cursor: pointer;
+  transition:
+    transform var(--duration-snap, 120ms) var(--ease-spring, ease-out),
+    box-shadow var(--duration-snap, 120ms) ease-out,
+    border-color 200ms ease-out;
+  outline: none;
+}
+
+.treasure-tile-small { width: 120px; height: 136px; }
+.treasure-tile-large { width: 160px; height: 174px; }
+
+.treasure-tile-small { background-image: var(--treasure-chest-bg-small); }
+.treasure-tile-large { background-image: var(--treasure-chest-bg-large); }
+
+.treasure-tile:active:not(:disabled) {
+  transform: scale(0.96);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+}
+
+.treasure-tile:focus-visible {
+  outline: 2px solid rgba(245, 200, 100, 0.85);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.treasure-tile:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.treasure-tile.is-loading {
+  opacity: 0.85;
+  cursor: progress;
+}
+
+.treasure-tile.is-loading .treasure-tile-icon-stack,
+.treasure-tile.is-loading .treasure-tile-value-chip {
+  opacity: 0.3;
+}
+
+.treasure-tile.is-placeholder {
+  background-image: linear-gradient(160deg,
+      rgba(220, 170, 80, 0.55) 0%,
+      rgba(140, 90, 40, 0.65) 100%);
+  border-radius: 12px;
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.28);
+}
+
+.treasure-tile-icon-stack {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18%;
+  pointer-events: none;
+}
+
+.treasure-tile-value-chip {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(20, 14, 5, 0.78);
+  color: rgba(255, 240, 200, 0.95);
+  font-size: 0.75rem;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.treasure-tile-ribbon {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 3;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.treasure-tile-ribbon[data-ribbon="NEW"]  { background: linear-gradient(180deg, #10b981 0%, #047857 100%); }
+.treasure-tile-ribbon[data-ribbon="SALE"] { background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%); }
+
+.treasure-tile-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  animation: treasure-tile-spin 700ms linear infinite;
+}
+
+@keyframes treasure-tile-spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .treasure-tile {
+    transition: border-color 200ms ease-out;
+  }
+  .treasure-tile:active:not(:disabled) {
+    transform: none;
+    border: 2px solid rgba(245, 200, 100, 0.95);
+    box-shadow: none;
+  }
+  .treasure-tile-spinner {
+    animation-duration: 1400ms;
+  }
+}
