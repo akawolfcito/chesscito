@@ -3555,16 +3555,21 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .stone-pedestal-icon {
-  position: relative;
+  /* Anchored to the upper third of the pedestal so the glyph reads as
+     "trophy resting on the plate" rather than embedded in the stone's
+     centre — flex centering left the icon visually sitting on the
+     base. Absolute positioning gives deterministic placement; the
+     stone asset takes the full button bounds, the icon overlays on
+     top, horizontally centered, vertically biased high. */
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  /* Shift the glyph up so it visually sits on the upper plate of the
-     stone rather than embedded in its center — reads as "trophy on
-     pedestal" instead of "icon framed by stone". */
-  transform: translateY(-12%);
 }
 
 .stone-pedestal-badge {
