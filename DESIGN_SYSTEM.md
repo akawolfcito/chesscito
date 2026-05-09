@@ -676,3 +676,75 @@ Notes:
 - Label is **prop-driven** (Path A canonized in Story 1.9). Editorial wiring (e.g. `CTA_LABELS.startArena = "START"`) lives on the consuming surface, not the primitive.
 
 
+## 15. CandyCard — Residential Content-Block Primitive (M2)
+
+`<CandyCard>` is the canonical residential content surface. It complements `<CandyGlassShell>` (modal, transient) by providing a chassis for content blocks that live *inside* pages and scrolls — mission tiles, achievement panels, daily highlights, summary stats, briefing blocks, coach cards.
+
+**Spec**: `docs/superpowers/specs/2026-05-08-m2-candy-card-design-v1.2.md`
+**Location**: `apps/web/src/components/redesign/candy-card.tsx`
+
+### 15.1 Type contract
+
+```ts
+type CandyCardSize = "compact" | "regular" | "feature";
+type CandyCardAtmosphere = "hub" | "amber" | "gold";
+
+type CandyCardProps = {
+  size?: CandyCardSize;             // default "regular"
+  atmosphere?: CandyCardAtmosphere; // default "hub"
+  titleAs?: "h2" | "h3" | "h4";     // default "h3"
+  eyebrow?: ReactNode;
+  title?: ReactNode;
+  media?: ReactNode;                // top slot
+  children: ReactNode;              // body
+  footer?: ReactNode;
+  corner?: ReactNode;               // absolute-positioned (top-right)
+  className?: string;
+  "aria-label"?: string;
+};
+```
+
+### 15.2 Size matrix
+
+| Size | Padding (y / x) | Gap | Title | Use case |
+|---|---|---|---|---|
+| `compact` | 0.75rem / 0.875rem | 0.5rem | 1rem | list items, mini-stats |
+| `regular` (default) | 1.25rem / 1.25rem | 0.75rem | 1.125rem | mission tiles, summaries |
+| `feature` | 1.75rem / 1.5rem | 1rem | 1.375rem | hero highlights, daily, victory recap |
+
+### 15.3 Atmosphere matrix
+
+| Atmosphere | CSS classes applied | Painting | Use case |
+|---|---|---|---|
+| `hub` (default) | `sheet-bg-hub` | forest bg-ch + cream wash + resting border/shadow | residential cousin of modals (mission, summary, briefing) |
+| `amber` | `candy-frame candy-frame-amber` | warm wooden-scroll | peek-cards, daily highlights |
+| `gold` | `candy-frame candy-frame-gold` | brighter saturated wooden-scroll | claim-CTA cards, victory ceremony |
+
+`atmosphere=amber|gold` composes `.candy-frame` — the wooden-scroll `:active` press animation is **neutralized** for `<CandyCard>` containers (cards are presentational, not pressable).
+
+### 15.4 Rules of use
+
+- **Presentational only** — no `onPress`. To make a card tappable, wrap children in `<CandyButton>`, `<button>`, or `<Link>` inside the body or footer slot.
+- **Heading hierarchy** — pass `titleAs="h2"` when the card is the first heading on a screen; pass `titleAs="h4"` when nested inside a section that already uses `<h3>`.
+- **A11y is automatic** — when `title` is set, `aria-labelledby` wires the section to the title id. When no title, pass `aria-label` for an accessible name.
+- **Never overlay** — for modals use `<CandyGlassShell>` (has scrim + close button + portal). `<CandyCard>` does not portal, scrim, or close.
+
+### 15.5 Naming policy (post-M2)
+
+`apps/web/src/components/redesign/` residential primitives:
+
+| Primitive | Role |
+|---|---|
+| `<CandyBanner>` | Sprite asset renderer (decorative `<picture>`) |
+| `<CandyButton>` | CSS-styled button atom |
+| **`<CandyCard>`** | Vertical content-block primitive (residential) — this section |
+| `<CandyChip>` | Inline status/tag pill |
+| `<CandyGlassShell>` | Modal shell (transient — scrim + close button) |
+| `<CandyIcon>` | Icon atom |
+| `<JourneyRail>` | Paper-tray list-row component |
+| `<PageSection>` | Vertical-block wrapper with optional `<h2>` |
+| **`<PlayerAvatar>`** | Sprite avatar `<picture>` (renamed from `<PlayerCard>` in M2). Renders historical CSS classes `.player-card`, `.player-card-img`, `.player-card-you`, `.player-card-bot` — class rename deferred to a follow-up ticket. Do **not** introduce new consumers of those class names. |
+| `<WoodenBanner>` | Decorative wooden banner asset |
+
+**`<CandyCard>` does NOT overlap with `apps/web/src/components/ui/card.tsx`** (shadcn `Card / CardHeader / CardTitle / CardDescription / CardContent / CardFooter`). The shadcn primitives are for tooling-bootstrapped surfaces only. **For product cards always use `<CandyCard>` from `@/components/redesign/candy-card`.**
+

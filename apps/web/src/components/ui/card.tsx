@@ -1,3 +1,7 @@
+// shadcn primitive — for tooling-bootstrapped surfaces only.
+// For product cards use <CandyCard> from @/components/redesign/candy-card.
+// See DESIGN_SYSTEM.md §15.5 Naming policy.
+
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
