@@ -6,6 +6,7 @@ import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { track } from "@/lib/telemetry";
 import { ARENA_COPY, SHARE_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { ShareModal } from "@/components/share/share-modal";
@@ -70,9 +71,16 @@ export function VictoryClaimSuccess({
           closeLabel={ARENA_COPY.backToHub}
           cta={
             <div className="flex w-full flex-col items-center gap-2.5">
-              <Button type="button" variant="game-primary" size="game" onClick={onPlayAgain}>
-                <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
-              </Button>
+              <PrincipalButton
+                size="medium"
+                leadingIcon={
+                  <CandyIcon name="refresh" className="h-4 w-4" />
+                }
+                onClick={onPlayAgain}
+                aria-label={ARENA_COPY.playAgain}
+              >
+                {ARENA_COPY.playAgain}
+              </PrincipalButton>
 
               {isShareReady && (
                 <Button
