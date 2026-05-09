@@ -107,16 +107,11 @@ export function VictoryCelebration({
                     onClick={onClaimVictory}
                     aria-label={VICTORY_CLAIM_COPY.claimButton}
                   >
-                    <span className="flex flex-col items-start leading-tight">
-                      <span>{VICTORY_CLAIM_COPY.claimButton}</span>
-                      <span className="text-[0.65rem] font-normal opacity-70">
-                        {VICTORY_CLAIM_COPY.claimValueHint(claimPrice ?? "")}
-                      </span>
-                    </span>
+                    {VICTORY_CLAIM_COPY.claimButton}
+                    {claimPrice ? ` · ${VICTORY_CLAIM_COPY.claimValueHint(claimPrice)}` : ""}
                   </PrincipalButton>
                 </div>
               )}
-              {onAskCoach && <AskCoachButton onClick={onAskCoach} />}
               <div className="flex w-full justify-center">
                 <PrincipalButton
                   size="medium"
@@ -129,23 +124,21 @@ export function VictoryCelebration({
                   {ARENA_COPY.playAgain}
                 </PrincipalButton>
               </div>
-              <Button
-                type="button"
-                variant="game-ghost"
-                size="game-sm"
-                onClick={() => setShareOpen(true)}
-                className="w-full"
-              >
-                {SHARE_COPY.button}
-              </Button>
-              <button
-                type="button"
-                onClick={onBackToHub}
-                className="w-full py-1 text-xs font-semibold underline underline-offset-2"
-                style={{ color: "rgba(110, 65, 15, 0.70)" }}
-              >
-                {ARENA_COPY.backToHub}
-              </button>
+              <div className="flex w-full gap-2">
+                {onAskCoach && (
+                  <AskCoachButton onClick={onAskCoach} className="flex-1" />
+                )}
+                <Button
+                  type="button"
+                  variant="game-ghost"
+                  size="game-sm"
+                  onClick={() => setShareOpen(true)}
+                  className="flex-1"
+                >
+                  <CandyIcon name="share" className="inline h-4 w-4" />
+                  {SHARE_COPY.button}
+                </Button>
+              </div>
             </div>
           }
         >
