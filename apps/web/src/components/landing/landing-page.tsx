@@ -541,27 +541,28 @@ export function LandingPage() {
                 </ul>
                 <div className="mt-auto pt-1">
                   {isFeatured ? (
-                    <Button
-                      asChild
-                      variant="game-primary"
-                      size="game-sm"
-                      className="!w-full"
-                    >
-                      <a
-                        href={ctaHref}
-                        target={
-                          isInternal || supportEmail ? undefined : "_blank"
-                        }
-                        rel={
-                          isInternal || supportEmail
-                            ? undefined
-                            : "noopener noreferrer"
-                        }
-                        onClick={onCta(`plan-${tier.name.toLowerCase()}`)}
+                    <div className="flex w-full justify-center">
+                      <PrincipalButton
+                        size="medium"
+                        onClick={() => {
+                          onCta(`plan-${tier.name.toLowerCase()}`)();
+                          if (isInternal) {
+                            router.push(ctaHref);
+                          } else if (supportEmail) {
+                            window.location.href = ctaHref;
+                          } else {
+                            window.open(
+                              ctaHref,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
+                          }
+                        }}
+                        aria-label={tier.ctaLabel}
                       >
                         {tier.ctaLabel}
-                      </a>
-                    </Button>
+                      </PrincipalButton>
+                    </div>
                   ) : isInternal ? (
                     <Link
                       href={ctaHref}
