@@ -3855,3 +3855,69 @@ button.hud-resource-chip:active:not(:disabled) {
     animation-duration: 1400ms;
   }
 }
+
+/* ── <WoodBanner> — presentational title/state ribbon (M3.5) ── */
+.wood-banner {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0 8%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  color: #fff7e2;
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-weight: 700;
+  text-shadow: 0 2px 0 rgba(70, 35, 0, 0.4);
+  margin: 0;
+}
+
+.wood-banner-short {
+  width: 200px;
+  height: 56px;
+  font-size: 0.95rem;
+  background-image: var(--wood-banner-bg-short);
+}
+
+.wood-banner-medium {
+  width: 280px;
+  height: 70px;
+  font-size: 1.05rem;
+  background-image: var(--wood-banner-bg-medium);
+}
+
+.wood-banner-large {
+  width: 360px;
+  height: 80px;
+  font-size: 1.2rem;
+  background-image: var(--wood-banner-bg-large);
+}
+
+.wood-banner.is-placeholder {
+  background-image: linear-gradient(180deg,
+      rgba(180, 130, 60, 0.85) 0%,
+      rgba(110, 70, 25, 0.95) 100%);
+  border-radius: 8px;
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.wood-banner-label {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wood-banner-accessory {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
