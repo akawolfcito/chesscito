@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { WoodBanner } from "@/components/scene-rooted/wood-banner";
 import { Button } from "@/components/ui/button";
 import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
 import type { CoachResponse } from "@/lib/coach/types";
@@ -66,18 +67,22 @@ export function CoachPanel({
       {showBanner && (
         <div
           data-testid="coach-history-banner"
-          className="rounded-2xl border border-amber-300/60 bg-amber-50/80 p-3"
+          data-state="visible"
+          className="flex flex-col items-center gap-2"
         >
-          <p className="text-xs font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+          <WoodBanner size="medium" asTitle>
             {COACH_COPY.featureBanner.title}
-          </p>
-          <p className="mt-1 text-xs" style={{ color: "rgba(110, 65, 15, 0.85)" }}>
+          </WoodBanner>
+          <p
+            className="px-3 text-center text-xs"
+            style={{ color: "rgba(110, 65, 15, 0.85)" }}
+          >
             {COACH_COPY.featureBanner.body}
           </p>
           <button
             type="button"
             onClick={dismissBanner}
-            className="mt-2 text-xs font-semibold underline underline-offset-2"
+            className="text-xs font-semibold underline underline-offset-2"
             style={{ color: "rgba(110, 65, 15, 0.95)" }}
           >
             {COACH_COPY.featureBanner.dismiss}
