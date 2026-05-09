@@ -117,9 +117,18 @@ export function VictoryCelebration({
                 </div>
               )}
               {onAskCoach && <AskCoachButton onClick={onAskCoach} />}
-              <Button type="button" variant="game-ghost" size="game" onClick={onPlayAgain}>
-                <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
-              </Button>
+              <div className="flex w-full justify-center">
+                <PrincipalButton
+                  size="medium"
+                  leadingIcon={
+                    <CandyIcon name="refresh" className="h-4 w-4" />
+                  }
+                  onClick={onPlayAgain}
+                  aria-label={ARENA_COPY.playAgain}
+                >
+                  {ARENA_COPY.playAgain}
+                </PrincipalButton>
+              </div>
               <Button
                 type="button"
                 variant="game-ghost"
