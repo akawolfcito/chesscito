@@ -1,13 +1,13 @@
 "use client";
 
-export type PlayerCardVariant = "you" | "bot";
+export type PlayerAvatarVariant = "you" | "bot";
 
 type Variant = {
   base: string;
   defaultAlt: string;
 };
 
-const VARIANTS: Record<PlayerCardVariant, Variant> = {
+const VARIANTS: Record<PlayerAvatarVariant, Variant> = {
   you: {
     base: "/art/redesign/avatars/player-you",
     defaultAlt: "You",
@@ -19,12 +19,12 @@ const VARIANTS: Record<PlayerCardVariant, Variant> = {
 };
 
 type Props = {
-  variant: PlayerCardVariant;
+  variant: PlayerAvatarVariant;
   alt?: string;
   className?: string;
 };
 
-export function PlayerCard({ variant, alt, className = "" }: Props) {
+export function PlayerAvatar({ variant, alt, className = "" }: Props) {
   const { base, defaultAlt } = VARIANTS[variant];
   return (
     <picture className={`player-card player-card-${variant} ${className}`.trim()}>

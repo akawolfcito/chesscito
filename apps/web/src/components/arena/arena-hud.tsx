@@ -5,7 +5,7 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
-import { PlayerCard } from "@/components/redesign/player-card";
+import { PlayerAvatar } from "@/components/redesign/player-avatar";
 import { WoodenBanner } from "@/components/redesign/wooden-banner";
 import { formatTime } from "@/lib/game/arena-utils";
 
@@ -112,10 +112,10 @@ export function ArenaHud({
 
       {/* Row 2: You | VS | Bot with thinking indicator overlay */}
       <div className="arena-hud-matchup flex items-center gap-2">
-        <PlayerCard variant="you" className="flex-1 min-w-0" />
+        <PlayerAvatar variant="you" className="flex-1 min-w-0" />
         <WoodenBanner variant="vs" className="shrink-0" />
         <div className="relative flex-1 min-w-0">
-          <PlayerCard variant="bot" />
+          <PlayerAvatar variant="bot" />
           {isThinking && (
             <span className="pointer-events-none absolute -top-1 right-1 flex h-5 w-8">
               <LottieAnimation src="/animations/sandy-loading.lottie" loop className="h-full w-full" />
