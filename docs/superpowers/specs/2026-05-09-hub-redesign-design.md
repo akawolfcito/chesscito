@@ -2,7 +2,7 @@
 
 **Author**: Claude (drafting agent)
 **Date**: 2026-05-09
-**Status**: 🟡 DISCOVERY — needs user input on open questions before design lock
+**Status**: 🟢 DECISIONS LOCKED 2026-05-09 — design lock pending (see §12)
 **Predecessors**:
 - `docs/audits/2026-05-07-hub-audit.md` (current hub scaffold + sheet round-trip audit)
 - `docs/handoffs/2026-05-09-vocabulary-unification-arc-handoff.md` §"P1 — feature work"
@@ -213,3 +213,24 @@ The user provides:
 - [ ] Asset budget cap (default: 148 KB +20%)
 
 Once received, I produce the locked spec with prescriptive layouts, copy, and TDD plan; queue red-team; start phase 3.
+
+## 12. Locked decisions (2026-05-09)
+
+User-confirmed direction, decision-by-decision in chat. This section is the source of truth for the design-lock spec to follow.
+
+| # | Decision | Lock | Rationale (chat) |
+|---|---|---|---|
+| 1 | Visual reference | **None** — work from textual brief only | "image #12" no longer applies; designing from "splash + masteries + training pass + PLAY" |
+| 2 | Direction | **Z-revised** (Mastery-first dashboard, PLAY ceremoniously docked) | User wants `/hub` to be the retention center; PLAY ceremony preserved at dock instead of canvas dominance |
+| 3 | Splash variant | **A — Onboarding-only** | First-ever-visit cinematic; zero ceremony for returning users |
+| 4 | Mastery prominence | **D — Full dashboard** | 6-tile dashboard dominates the canvas; locked Q/K visible with "coming soon" placeholders |
+| 5 | Training Pass | **C — Atmosphere shift** | Hub recolors when PRO active (warm-wood vs cool-stone palette tokens); slot becomes wax-seal badge |
+| 6 | Migration strategy | **B — Flag-driven `?hub=v2`** | Mirrors Story 1.12 precedent; cleaner palette scoping via `[data-hub-v2]` namespacing |
+| 7 | Heavy ports timing | **B — During (Phase 3)** | Heavy ports are dependencies of Z (mastery → BadgeSheet, PRO → ProSheet); folded into the unified arc |
+| 8 | Asset budget cap | **+20% (178 KB)** | Forces reuse of piece art for mastery tiles via tone/filter; 1 new asset slot (likely warm-wood texture) |
+
+**Implication of Z-revised on DESIGN_SYSTEM.md §16**: the "PLAY is the dominant action" rule needs an update during Phase 1. Proposed revision: "PLAY merits ceremony (carved-wood + size-large) wherever it appears — canvas, dock, or modal. Dock-anchored PLAY is acceptable when the canvas serves a higher-frequency surface (e.g., mastery dashboard)."
+
+**Total scope estimate (Z + heavy ports during)**: ~28-30 commits across phases 3-9. Multi-session arc.
+
+**Next deliverable**: the design-lock spec (§8 phase 1). Prescriptive layouts (CSS box-by-box), copy strings, asset manifest, motion timing, telemetry events. Goes through red-team before Phase 2 begins.
