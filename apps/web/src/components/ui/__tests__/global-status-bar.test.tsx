@@ -164,7 +164,7 @@ describe("<GlobalStatusBar> variant: connected — PRO active", () => {
     expect(onProTap).toHaveBeenCalledOnce();
   });
 
-  it("displays the days-left suffix from PRO_COPY.statusActiveSuffix", () => {
+  it("renders the active PRO label without a verbose days-left suffix", () => {
     render(
       <GlobalStatusBar
         variant="connected"
@@ -174,10 +174,9 @@ describe("<GlobalStatusBar> variant: connected — PRO active", () => {
         onProTap={() => undefined}
       />,
     );
-    // 28 days from now → "28 days left" (Math.ceil + tomorrow boundary
-    // means we accept either 28 or 29 days depending on rounding).
     const pill = screen.getByLabelText(GLOBAL_STATUS_BAR_COPY.proManageLabel);
-    expect(pill.textContent).toMatch(/28 days left|29 days left/);
+    expect(pill.textContent).toMatch(/PRO/);
+    expect(pill.textContent).not.toMatch(/days left/);
   });
 
   it("warns when proStatus is stale (active=true but expiresAt < now)", () => {

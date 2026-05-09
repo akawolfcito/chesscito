@@ -277,10 +277,14 @@ export function MissionPanelCandy({
           spans the full wrapper width since the absolute PRO chip is
           gone (`<GlobalStatusBar />` owns identity in normal flow). */}
       <div className="shrink-0 ml-2 mt-2">
+        {/* No subtitle — the mission peek chip below renders the same
+            objectiveText with interactive affordance (opens
+            MissionDetailSheet), so a header subtitle was a third echo
+            of identical text. Title-only header is cleaner and saves
+            a row of vertical chrome. */}
         <ContextualHeader
           variant="title-control"
           title={pieceTitle}
-          subtitle={objectiveText}
           trailingControl={
             <PiecePickerTrigger
               selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}

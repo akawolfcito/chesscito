@@ -2,10 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import {
-  GLOBAL_STATUS_BAR_COPY,
-  PRO_COPY,
-} from "@/lib/content/editorial";
+import { GLOBAL_STATUS_BAR_COPY } from "@/lib/content/editorial";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types — discriminated union per variant.
@@ -80,7 +77,6 @@ export type GlobalStatusBarProps = AnonymousProps | ConnectedProps;
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MAX_HANDLE = 14;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -124,13 +120,7 @@ const WRAPPER_CLASS = cn(
 const HANDLE_CLASS =
   "truncate text-xs font-semibold text-white/85";
 
-const AVATAR_BASE = cn(
-  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
-  "bg-white/10 text-[14px] leading-none text-white/70",
-);
-
-/** Frame-level back chip — same envelope as the avatar so the left
- *  cluster stays visually balanced (back · avatar · handle). */
+/** Frame-level back chip — visual cluster (back · handle). */
 const BACK_BUTTON_CLASS = cn(
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
   "bg-white/10 text-white/85 transition active:scale-[0.94] hover:bg-white/15",
@@ -171,12 +161,6 @@ function isProActive(status: GlobalStatusBarProStatus | null): boolean {
   if (!status.active) return false;
   if (!status.expiresAt) return false;
   return status.expiresAt > Date.now();
-}
-
-function formatDaysLeft(expiresAt: number): string {
-  const remainingMs = expiresAt - Date.now();
-  const days = Math.ceil(remainingMs / MS_PER_DAY);
-  return PRO_COPY.statusActiveSuffix(days);
 }
 
 function emitConnectedWarnings(props: ConnectedProps): void {
@@ -283,9 +267,6 @@ function AnonymousBar({
     >
       <div className="flex min-w-0 items-center gap-2">
         {onBack ? <BackChip onClick={onBack} /> : null}
-        <div className={AVATAR_BASE} aria-hidden="true">
-          <span aria-hidden>♟</span>
-        </div>
         <span className={HANDLE_CLASS}>
           {GLOBAL_STATUS_BAR_COPY.guestLabel}
         </span>
@@ -322,15 +303,6 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
     >
       <div className="flex min-w-0 items-center gap-2">
         {props.onBack ? <BackChip onClick={props.onBack} /> : null}
-        <div
-          className={cn(
-            AVATAR_BASE,
-            active && "ring-2 ring-[var(--pro-ring-gold)]",
-          )}
-          aria-hidden="true"
-        >
-          <span aria-hidden>♟</span>
-        </div>
         <span className={HANDLE_CLASS}>{visibleHandle}</span>
       </div>
       <div className="shrink-0">
@@ -352,8 +324,6 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
             <span aria-hidden="true">★</span>
             <span className="ml-1">
               {GLOBAL_STATUS_BAR_COPY.proInactiveLabel}
-              {" • "}
-              {formatDaysLeft(props.proStatus.expiresAt)}
             </span>
           </button>
         ) : (
