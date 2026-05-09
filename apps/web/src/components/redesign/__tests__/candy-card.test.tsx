@@ -170,3 +170,35 @@ describe("CandyCard — markup contract (T1–T20, AC1–AC9, AC11–AC12)", () 
     rerender(<CandyCard title="Y">body</CandyCard>);
   });
 });
+
+const SIZES = ["compact", "regular", "feature"] as const;
+const ATMOSPHERES = ["hub", "amber", "gold"] as const;
+
+describe.each(
+  SIZES.flatMap((size) =>
+    ATMOSPHERES.map((atmosphere) => [size, atmosphere] as const),
+  ),
+)("CandyCard variant — size=%s atmosphere=%s (T21–T29)", (size, atmosphere) => {
+  it("renders the correct chassis (data-attrs + atmosphere classes)", () => {
+    const { container } = render(
+      <CandyCard size={size} atmosphere={atmosphere} title="Title">
+        Body
+      </CandyCard>,
+    );
+    const root = container.querySelector(
+      '[data-component="candy-card"]',
+    ) as HTMLElement | null;
+    expect(root).not.toBeNull();
+    expect(root!.getAttribute("data-size")).toBe(size);
+    expect(root!.getAttribute("data-atmosphere")).toBe(atmosphere);
+    expect(root!.classList.contains(`candy-card-${size}`)).toBe(true);
+    if (atmosphere === "hub") {
+      expect(root!.classList.contains("sheet-bg-hub")).toBe(true);
+      expect(root!.classList.contains("candy-frame")).toBe(false);
+    } else {
+      expect(root!.classList.contains("candy-frame")).toBe(true);
+      expect(root!.classList.contains(`candy-frame-${atmosphere}`)).toBe(true);
+      expect(root!.classList.contains("sheet-bg-hub")).toBe(false);
+    }
+  });
+});
