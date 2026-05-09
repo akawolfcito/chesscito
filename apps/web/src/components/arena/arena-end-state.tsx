@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { ARENA_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
-import { Button } from "@/components/ui/button";
 import { CandyButton } from "@/components/redesign/candy-button";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import type { ArenaStatus } from "@/lib/game/types";
@@ -183,15 +182,6 @@ export function ArenaEndState({
                 className="w-full"
               />
               {onAskCoach && <AskCoachButton onClick={onAskCoach} />}
-              <Button
-                type="button"
-                variant="game-ghost"
-                size="game-sm"
-                onClick={onBackToHub}
-                className="w-full"
-              >
-                {ARENA_COPY.backToHub}
-              </Button>
             </div>
           }
         >
