@@ -166,22 +166,19 @@ export function ArenaEntryPanel({
           >
             {ARENA_COPY.softGateBody}
           </p>
-          <div className="mt-2 grid grid-cols-2 gap-1.5">
-            <Button
-              type="button"
-              variant="game-primary"
-              size="game"
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+            <PrincipalButton
+              size="medium"
               onClick={softGate.onLearn}
-              className="w-full"
+              aria-label={ARENA_COPY.softGateLearn}
             >
               {ARENA_COPY.softGateLearn}
-            </Button>
+            </PrincipalButton>
             <Button
               type="button"
               variant="game-ghost"
               size="game"
               onClick={softGate.onDismiss}
-              className="w-full"
             >
               {ARENA_COPY.softGateEnter}
             </Button>
