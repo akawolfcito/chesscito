@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { ComingSoonChip } from "@/components/ui/coming-soon-chip";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import {
   Sheet,
   SheetContent,
@@ -52,7 +53,7 @@ function daysLeft(expiresAt: number): number {
 
 type CtaConfig = {
   label: string;
-  variant: "game-primary" | "game-ghost";
+  loading: boolean;
   disabled: boolean;
   onClick: (() => void) | undefined;
 };
@@ -68,15 +69,15 @@ function resolveCta({
   onPurchase,
 }: Omit<ProSheetProps, "open" | "onOpenChange" | "errorMessage">): CtaConfig {
   if (isPurchasing) {
-    return { label: "Processing…", variant: "game-primary", disabled: true, onClick: undefined };
+    return { label: "Processing…", loading: true, disabled: false, onClick: undefined };
   }
   if (isVerifying) {
-    return { label: "Verifying…", variant: "game-primary", disabled: true, onClick: undefined };
+    return { label: "Verifying…", loading: true, disabled: false, onClick: undefined };
   }
   if (!isConnected) {
     return {
       label: PRO_COPY.errors.walletRequired,
-      variant: "game-ghost",
+      loading: false,
       disabled: false,
       onClick: onConnectWallet,
     };
@@ -84,7 +85,7 @@ function resolveCta({
   if (!isCorrectChain) {
     return {
       label: "Switch Network",
-      variant: "game-ghost",
+      loading: false,
       disabled: false,
       onClick: onSwitchNetwork,
     };
@@ -92,14 +93,14 @@ function resolveCta({
   if (status?.active) {
     return {
       label: PRO_COPY.ctaRenew,
-      variant: "game-ghost",
+      loading: false,
       disabled: false,
       onClick: onPurchase,
     };
   }
   return {
     label: PRO_COPY.ctaBuy,
-    variant: "game-primary",
+    loading: false,
     disabled: false,
     onClick: onPurchase,
   };
@@ -326,16 +327,16 @@ export function ProSheet(props: ProSheetProps) {
           {PRO_COPY.missionNote}
         </p>
 
-        <div className="mt-auto pt-4">
-          <Button
-            type="button"
-            variant={cta.variant}
-            size="game"
+        <div className="mt-auto flex justify-center pt-4">
+          <PrincipalButton
+            size="large"
+            loading={cta.loading}
             disabled={cta.disabled}
             onClick={handleCtaClick}
+            aria-label={cta.label}
           >
             {cta.label}
-          </Button>
+          </PrincipalButton>
         </div>
       </SheetContent>
     </Sheet>
