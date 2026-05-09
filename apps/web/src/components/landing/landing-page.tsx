@@ -825,11 +825,16 @@ export function LandingPage() {
           {LANDING_COPY.finalCta.subcopy}
         </p>
         <div className="mx-auto mt-6 flex w-full max-w-[420px] flex-col items-center justify-center gap-3 md:max-w-none md:flex-row">
-          <Button asChild variant="game-primary" size="game" className="md:!w-auto md:px-10">
-            <Link href="/hub" onClick={onCta("final-primary")}>
-              {LANDING_COPY.finalCta.primaryCta}
-            </Link>
-          </Button>
+          <PrincipalButton
+            size="large"
+            onClick={() => {
+              onCta("final-primary")();
+              router.push("/hub");
+            }}
+            aria-label={LANDING_COPY.finalCta.primaryCta}
+          >
+            {LANDING_COPY.finalCta.primaryCta}
+          </PrincipalButton>
           {process.env.NEXT_PUBLIC_SUPPORT_EMAIL && (
             <Button asChild variant="game-ghost" size="game" className="md:!w-auto md:px-8">
               <a
