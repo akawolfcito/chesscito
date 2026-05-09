@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CandyCard } from "@/components/redesign/candy-card";
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
 import {
   dismissWelcome,
@@ -83,30 +84,57 @@ export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {})
       aria-modal="true"
       aria-labelledby="welcome-card-title"
     >
-      <div
-        className="candy-frame candy-frame-amber flex w-full max-w-[340px] flex-col items-center gap-4 px-5 py-6 text-center"
+      <CandyCard
+        atmosphere="amber"
+        className="w-full max-w-[340px] items-center text-center"
+        media={
+          <span
+            className="flex h-14 w-14 items-center justify-center rounded-full"
+            style={{
+              background: "rgba(245, 158, 11, 0.22)",
+              border: "1px solid rgba(245, 158, 11, 0.55)",
+            }}
+            aria-hidden="true"
+          >
+            <CandyIcon name={card.icon} className="h-9 w-9" />
+          </span>
+        }
+        footer={
+          <div className="flex w-full flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleNext}
+              data-testid="welcome-next"
+              className="rounded-full px-4 py-2.5 text-sm font-extrabold uppercase tracking-wide"
+              style={{
+                background: "rgba(63, 34, 8, 0.92)",
+                color: "rgba(255, 245, 215, 0.98)",
+                boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.18)",
+              }}
+            >
+              {isLast ? "Empezar a jugar" : "Continuar"}
+            </button>
+            {!isLast && (
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="text-xs font-bold underline-offset-4 opacity-70 hover:underline"
+              >
+                Saltar
+              </button>
+            )}
+          </div>
+        }
       >
-        <span
-          className="flex h-14 w-14 items-center justify-center rounded-full"
-          style={{
-            background: "rgba(245, 158, 11, 0.22)",
-            border: "1px solid rgba(245, 158, 11, 0.55)",
-          }}
-          aria-hidden="true"
-        >
-          <CandyIcon name={card.icon} className="h-9 w-9" />
-        </span>
-
         <h2
           id="welcome-card-title"
-          className="fantasy-title text-lg font-extrabold leading-tight"
+          className="candy-card-title fantasy-title text-lg leading-tight"
         >
           {card.title}
         </h2>
         <p className="text-sm leading-relaxed opacity-85">{card.body}</p>
 
-        {/* Dots indicator */}
-        <div className="flex gap-1.5 pt-1" aria-hidden="true">
+        <div className="flex justify-center gap-1.5 pt-1" aria-hidden="true">
           {CARDS.map((_, i) => (
             <span
               key={i}
@@ -121,32 +149,7 @@ export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {})
             />
           ))}
         </div>
-
-        <div className="mt-1 flex w-full flex-col gap-2">
-          <button
-            type="button"
-            onClick={handleNext}
-            data-testid="welcome-next"
-            className="rounded-full px-4 py-2.5 text-sm font-extrabold uppercase tracking-wide"
-            style={{
-              background: "rgba(63, 34, 8, 0.92)",
-              color: "rgba(255, 245, 215, 0.98)",
-              boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.18)",
-            }}
-          >
-            {isLast ? "Empezar a jugar" : "Continuar"}
-          </button>
-          {!isLast && (
-            <button
-              type="button"
-              onClick={handleSkip}
-              className="text-xs font-bold underline-offset-4 opacity-70 hover:underline"
-            >
-              Saltar
-            </button>
-          )}
-        </div>
-      </div>
+      </CandyCard>
     </div>
   );
 }
