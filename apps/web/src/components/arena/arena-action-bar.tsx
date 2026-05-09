@@ -51,7 +51,8 @@ export function ArenaActionBar({
         type="button"
         onClick={handleResignClick}
         className={`arena-action-pill${confirmingResign ? " is-confirming" : ""}`}
-        aria-label={ARENA_COPY.resign}
+        aria-label={confirmingResign ? ARENA_COPY.resignConfirm : ARENA_COPY.resign}
+        aria-pressed={confirmingResign}
       >
         <span className="arena-action-pill-icon">
           {confirmingResign ? (

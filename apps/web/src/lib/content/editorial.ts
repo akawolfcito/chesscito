@@ -549,6 +549,7 @@ export const ARENA_COPY = {
   playAsWhite: "Play as White",
   playAsBlack: "Play as Black",
   resign: "Resign",
+  resignConfirm: "Tap again to confirm resign",
   undo: "Undo",
   yourTurn: "Your Turn",
   newGame: "New Game",
