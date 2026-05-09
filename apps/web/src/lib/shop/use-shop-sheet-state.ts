@@ -100,6 +100,31 @@ export type UseShopSheetStateReturn = {
   onSwitchNetwork: () => void;
 };
 
+/** Receipt payload emitted by `useShopSheetState` to its host on a confirmed
+ *  shop purchase. The hub uses this to (a) refresh the shields-count chip,
+ *  (b) emit any host-level analytics. Contract sourced from design-lock
+ *  §6.4 (2026-05-09). */
+export type ShopPurchaseReceipt = {
+  txHash: `0x${string}`;
+  itemId: bigint;
+  /** Units bought in the on-chain `buyItem(itemId, quantity, ...)` call.
+   *  v1 always passes 1; the field is present so downstream consumers
+   *  don't have to assume the contract semantics. */
+  quantity: number;
+  /** Wallet that paid for the item. The host validates this against the
+   *  active `useAccount().address` before mutating state (defense against
+   *  multi-tab session drift — design-lock §6.4 race 3). */
+  buyer: `0x${string}`;
+};
+
+export type UseShopSheetStateOptions = {
+  /** Fires AFTER the wagmi receipt confirms — NOT on user-initiated close.
+   *  Deferred via `requestAnimationFrame` so the dispatch lands after the
+   *  sheet's exit transition starts (design-lock §6.4 race 1). The host
+   *  can synchronously trigger shields-count refresh / atmosphere shift. */
+  onPurchaseSuccess?: (receipt: ShopPurchaseReceipt) => void;
+};
+
 /** Shop sheet orchestration extracted from `<ExercisesScreen>` so the
  *  `<HubScaffoldClient>` can render `<ShopSheet>` + `<PurchaseConfirmSheet>`
  *  in-place instead of bouncing through `/hub?legacy=1&action=shop`.
@@ -111,7 +136,9 @@ export type UseShopSheetStateReturn = {
  *  - P1-4: wrong-chain on confirm sets a clear error path (not silent).
  *  - P0-2: dispatches `shield-events` after localStorage write so the
  *    scaffold's chip refreshes without reload. */
-export function useShopSheetState(): UseShopSheetStateReturn {
+export function useShopSheetState(
+  options?: UseShopSheetStateOptions,
+): UseShopSheetStateReturn {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -134,6 +161,35 @@ export function useShopSheetState(): UseShopSheetStateReturn {
       isMountedRef.current = false;
     };
   }, []);
+
+  // Capture the success callback in a ref so handleConfirm's deps stay
+  // stable across host renders (the host doesn't have to memoize). The
+  // ref is refreshed every render via the synchronous effect below.
+  const onPurchaseSuccessRef = useRef(options?.onPurchaseSuccess);
+  useEffect(() => {
+    onPurchaseSuccessRef.current = options?.onPurchaseSuccess;
+  });
+
+  const fireOnPurchaseSuccess = useCallback(
+    (txHash: string, itemId: bigint, quantity: number) => {
+      const cb = onPurchaseSuccessRef.current;
+      if (!cb) return;
+      const buyer = address;
+      if (!buyer) return;
+      // rAF defer — landing after the sheet's exit transition starts so
+      // shields refresh feels sequenced rather than racing with close
+      // animation (design-lock §6.4 race 1).
+      requestAnimationFrame(() => {
+        cb({
+          txHash: txHash as `0x${string}`,
+          itemId,
+          quantity,
+          buyer: buyer as `0x${string}`,
+        });
+      });
+    },
+    [address],
+  );
 
   const [open, setOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<bigint | null>(null);
@@ -403,6 +459,7 @@ export function useShopSheetState(): UseShopSheetStateReturn {
         txHashShort: `${buyHash.slice(0, 6)}…${buyHash.slice(-4)}`,
       });
       hapticSuccess();
+      fireOnPurchaseSuccess(buyHash, selectedItem.itemId, 1);
       // Auto-dismiss banner so the catalog returns to its idle state
       // without forcing the user to tap. Keep sheet open for the same
       // window so they see the confirmation.
@@ -456,6 +513,7 @@ export function useShopSheetState(): UseShopSheetStateReturn {
     chainId,
     writeWithOptionalFeeCurrency,
     creditShieldServerSide,
+    fireOnPurchaseSuccess,
   ]);
 
   // Suppress unused-var for `paymentAllowance`: read is kept to keep the

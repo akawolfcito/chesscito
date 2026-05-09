@@ -6,13 +6,25 @@ import { useAccount } from "wagmi";
 
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
 import { BadgeSheet } from "@/components/exercises/badge-sheet";
+import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
+import { ShopSheet } from "@/components/exercises/shop-sheet";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
+import { SHIELD_ITEM_ID } from "@/lib/contracts/shop-catalog";
 import {
   useProSheetState,
   type ProPurchaseReceipt,
 } from "@/lib/pro/use-pro-sheet-state";
+import {
+  useShopSheetState,
+  type ShopPurchaseReceipt,
+} from "@/lib/shop/use-shop-sheet-state";
 import { track } from "@/lib/telemetry";
+
+/** Each shield purchase grants this many on-chain uses (Retry Shield
+ *  v1 spec). The on-chain `buyItem` quantity is always 1; the per-buy
+ *  3-use multiplier is the UX abstraction surfaced as the chip count. */
+const SHIELDS_PER_PURCHASE = 3;
 
 type Atmosphere = "cool-stone" | "warm-wood";
 
@@ -28,6 +40,7 @@ export function HubScaffoldV2Client() {
   const router = useRouter();
   const { address } = useAccount();
   const [atmosphere, setAtmosphere] = useState<Atmosphere>("cool-stone");
+  const [shields, setShields] = useState<number>(0);
 
   const handlePurchaseSuccess = useCallback(
     (receipt: ProPurchaseReceipt) => {
@@ -60,6 +73,26 @@ export function HubScaffoldV2Client() {
   });
   const rookClaimed = badgeSheet.badgesClaimed.rook === true;
 
+  const handleShopPurchaseSuccess = useCallback(
+    (receipt: ShopPurchaseReceipt) => {
+      // Cross-wallet receipt guard (design-lock §6.4 race 3): drop
+      // silently if the active wallet has changed since purchase init.
+      if (address && receipt.buyer.toLowerCase() !== address.toLowerCase()) {
+        return;
+      }
+      if (receipt.itemId === SHIELD_ITEM_ID) {
+        setShields(
+          (prev) => prev + receipt.quantity * SHIELDS_PER_PURCHASE,
+        );
+      }
+    },
+    [address],
+  );
+
+  const shopSheet = useShopSheetState({
+    onPurchaseSuccess: handleShopPurchaseSuccess,
+  });
+
   return (
     <PrimitiveBoundary primitiveName="HubScaffoldV2" surface="hub">
       <div data-hub-v2="" data-atmosphere={atmosphere}>
@@ -78,8 +111,18 @@ export function HubScaffoldV2Client() {
         >
           Rook
         </button>
+        <button
+          type="button"
+          data-testid="hub-v2-shield-ribbon"
+          data-shields={shields}
+          onClick={() => shopSheet.openSheet()}
+        >
+          Shield ×{shields}
+        </button>
         <ProSheet {...proSheet.sheetProps} />
         <BadgeSheet {...badgeSheet.sheetProps} />
+        <ShopSheet {...shopSheet.sheetProps} />
+        <PurchaseConfirmSheet {...shopSheet.confirmProps} />
       </div>
     </PrimitiveBoundary>
   );

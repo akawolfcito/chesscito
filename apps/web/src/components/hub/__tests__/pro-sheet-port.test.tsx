@@ -48,12 +48,17 @@ vi.mock("@/lib/telemetry", () => ({
   track: (...args: unknown[]) => trackMock(...args),
 }));
 
-// BadgeSheet path is out-of-scope for this test file — V2 imports
-// `useBadgeSheetState` + the sheet, both stubbed here so the import
-// graph stays cheap. The badge port has its own dedicated test
-// (`badge-sheet-port.test.tsx`).
+// BadgeSheet + ShopSheet paths are out-of-scope for this test file —
+// V2 imports them all but only ProSheet's open/close cycle drives this
+// file's assertions. Each sibling has its own dedicated test.
 vi.mock("@/components/exercises/badge-sheet", () => ({
   BadgeSheet: () => null,
+}));
+vi.mock("@/components/exercises/shop-sheet", () => ({
+  ShopSheet: () => null,
+}));
+vi.mock("@/components/exercises/purchase-confirm-sheet", () => ({
+  PurchaseConfirmSheet: () => null,
 }));
 
 vi.mock("@/lib/badges/use-badge-sheet-state", () => ({
@@ -74,6 +79,20 @@ vi.mock("@/lib/badges/use-badge-sheet-state", () => ({
       onNavigateToTrophies: () => {},
       showTrigger: false,
     },
+  }),
+}));
+
+vi.mock("@/lib/shop/use-shop-sheet-state", () => ({
+  useShopSheetState: () => ({
+    open: false,
+    openSheet: () => {},
+    closeSheet: () => {},
+    sheetProps: { open: false, onOpenChange: () => {} },
+    confirmProps: { open: false, onOpenChange: () => {} },
+    isCorrectChain: true,
+    isConnected: false,
+    onConnectWallet: () => {},
+    onSwitchNetwork: () => {},
   }),
 }));
 
