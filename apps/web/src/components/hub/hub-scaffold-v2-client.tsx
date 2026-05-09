@@ -1,10 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
+import { BadgeSheet } from "@/components/exercises/badge-sheet";
 import { ProSheet } from "@/components/pro/pro-sheet";
+import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import {
   useProSheetState,
   type ProPurchaseReceipt,
@@ -22,6 +25,7 @@ type Atmosphere = "cool-stone" | "warm-wood";
  *
  *  Design-lock spec: `docs/superpowers/specs/2026-05-09-hub-redesign-phase-1-design-lock.md` */
 export function HubScaffoldV2Client() {
+  const router = useRouter();
   const { address } = useAccount();
   const [atmosphere, setAtmosphere] = useState<Atmosphere>("cool-stone");
 
@@ -47,6 +51,15 @@ export function HubScaffoldV2Client() {
     onPurchaseSuccess: handlePurchaseSuccess,
   });
 
+  // BadgeSheet orchestration — owns claim flow + on-chain reads. Mastery
+  // tile taps open the sheet in-place; tile state reads `badgesClaimed`
+  // from the same hook so the post-claim refetch propagates without an
+  // extra `useReadContracts` call here (design-lock §6.1 row 2).
+  const badgeSheet = useBadgeSheetState({
+    onNavigateToTrophies: () => router.push("/trophies"),
+  });
+  const rookClaimed = badgeSheet.badgesClaimed.rook === true;
+
   return (
     <PrimitiveBoundary primitiveName="HubScaffoldV2" surface="hub">
       <div data-hub-v2="" data-atmosphere={atmosphere}>
@@ -57,7 +70,16 @@ export function HubScaffoldV2Client() {
         >
           PRO
         </button>
+        <button
+          type="button"
+          data-testid="hub-v2-mastery-tile-rook"
+          data-claimed={rookClaimed ? "true" : "false"}
+          onClick={() => badgeSheet.openSheet()}
+        >
+          Rook
+        </button>
         <ProSheet {...proSheet.sheetProps} />
+        <BadgeSheet {...badgeSheet.sheetProps} />
       </div>
     </PrimitiveBoundary>
   );

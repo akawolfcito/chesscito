@@ -48,6 +48,35 @@ vi.mock("@/lib/telemetry", () => ({
   track: (...args: unknown[]) => trackMock(...args),
 }));
 
+// BadgeSheet path is out-of-scope for this test file — V2 imports
+// `useBadgeSheetState` + the sheet, both stubbed here so the import
+// graph stays cheap. The badge port has its own dedicated test
+// (`badge-sheet-port.test.tsx`).
+vi.mock("@/components/exercises/badge-sheet", () => ({
+  BadgeSheet: () => null,
+}));
+
+vi.mock("@/lib/badges/use-badge-sheet-state", () => ({
+  useBadgeSheetState: () => ({
+    open: false,
+    openSheet: () => {},
+    closeSheet: () => {},
+    badgesClaimed: {} as Record<string, boolean | undefined>,
+    sheetProps: {
+      open: false,
+      onOpenChange: () => {},
+      badgesClaimed: {},
+      onClaim: () => {},
+      isClaimBusy: false,
+      claimingPiece: null,
+      lastClaimedPiece: null,
+      showNotification: false,
+      onNavigateToTrophies: () => {},
+      showTrigger: false,
+    },
+  }),
+}));
+
 // Stub ProSheet — we only care that V2 mounts it when open is true and
 // that closing it routes through onOpenChange(false). The real sheet's
 // internals (purchase flow, status branches) are tested separately.

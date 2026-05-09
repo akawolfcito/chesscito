@@ -58,6 +58,12 @@ export type UseBadgeSheetStateReturn = {
   open: boolean;
   openSheet: () => void;
   closeSheet: () => void;
+  /** Per-piece claimed state derived from on-chain `hasClaimedBadge`
+   *  reads. Surfaced separately from `sheetProps.badgesClaimed` so hosts
+   *  (e.g. the V2 mastery dashboard) can drive tile state without
+   *  destructuring sheet-only props. Updates flow through the same
+   *  `useReadContracts` cycle as the sheet — no second on-chain fetch. */
+  badgesClaimed: Record<PieceId, boolean | undefined>;
   /** Spread directly onto `<BadgeSheet />`. Caller still owns the
    *  navigation target for "View trophies" because that route lives
    *  outside the badges domain. */
@@ -249,5 +255,5 @@ export function useBadgeSheetState({
     showTrigger: false,
   };
 
-  return { open, openSheet, closeSheet, sheetProps };
+  return { open, openSheet, closeSheet, badgesClaimed, sheetProps };
 }
