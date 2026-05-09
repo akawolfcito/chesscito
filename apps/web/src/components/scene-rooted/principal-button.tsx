@@ -31,7 +31,7 @@ export const PrincipalButton = forwardRef<
   },
   forwardedRef,
 ) {
-  const localRef = useRef<HTMLButtonElement>(null);
+  const localRef = useRef<HTMLButtonElement | null>(null);
   const [isPlaceholder, setIsPlaceholder] = useState(false);
 
   // Merge the local ref (used by the placeholder probe) with the
