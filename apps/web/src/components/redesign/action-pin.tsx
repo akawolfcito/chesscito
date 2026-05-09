@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { hapticTap } from "@/lib/haptics";
 
 export type ActionPinAction =
@@ -176,6 +177,37 @@ export function ActionPin({
   ) : (
     <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
   );
+
+  // M3.5 — diegetic claim CTA via composition with <PrincipalButton>.
+  // Only the `full` size swaps; `pin` (44×44 round) keeps the existing
+  // candy-frame-gold treatment because PrincipalButton is 280×80 and
+  // does not fit the pin slot geometry.
+  if (tone === "claim" && size === "full") {
+    return (
+      <div
+        data-component="action-pin"
+        data-action={action}
+        data-size={size}
+        data-tone={tone}
+        className={rootClasses}
+      >
+        <PrincipalButton
+          size="large"
+          leadingIcon={
+            isBusy ? undefined : (
+              <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
+            )
+          }
+          onClick={handleClick}
+          disabled={disabled}
+          loading={isBusy}
+          aria-label={ariaLabel}
+        >
+          {label}
+        </PrincipalButton>
+      </div>
+    );
+  }
 
   return (
     <div

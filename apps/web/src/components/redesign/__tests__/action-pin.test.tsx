@@ -120,6 +120,105 @@ describe("ActionPin — tone", () => {
   });
 });
 
+describe("ActionPin — tone='claim' + size='full' composition (M3.5)", () => {
+  it("renders <PrincipalButton size='large'> inside the action-pin wrapper", () => {
+    render(
+      <ActionPin
+        action="claimBadge"
+        size="full"
+        tone="claim"
+        label="Claim badge"
+        ariaLabel="Claim badge"
+        onPress={() => {}}
+      />,
+    );
+    const root = getRoot();
+    const principal = root.querySelector(
+      '[data-component="principal-button"]',
+    ) as HTMLElement | null;
+    expect(principal).not.toBeNull();
+    expect(principal!.getAttribute("data-size")).toBe("large");
+  });
+
+  it("PrincipalButton receives the action label as children", () => {
+    render(
+      <ActionPin
+        action="claimBadge"
+        size="full"
+        tone="claim"
+        label="Claim badge"
+        ariaLabel="Claim badge"
+        onPress={() => {}}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Claim badge" });
+    expect(button.textContent).toContain("Claim badge");
+    // No candy-frame-gold on the new principal-button surface.
+    expect(button.className).not.toMatch(/\bcandy-frame-gold\b/);
+  });
+
+  it("isBusy → PrincipalButton sets aria-busy AND disables click", async () => {
+    const onPress = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <ActionPin
+        action="claimBadge"
+        size="full"
+        tone="claim"
+        label="Claim badge"
+        ariaLabel="Claim badge"
+        isBusy
+        onPress={onPress}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Claim badge" });
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button).toBeDisabled();
+    await user.click(button);
+    expect(onPress).not.toHaveBeenCalled();
+    expect(hapticTap).not.toHaveBeenCalled();
+  });
+
+  it("disabled → PrincipalButton is disabled, click suppressed", async () => {
+    const onPress = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <ActionPin
+        action="claimBadge"
+        size="full"
+        tone="claim"
+        label="Claim badge"
+        ariaLabel="Claim badge"
+        disabled
+        onPress={onPress}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Claim badge" });
+    expect(button).toBeDisabled();
+    await user.click(button);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
+  it("default state — onPress + haptics fire on click", async () => {
+    const onPress = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <ActionPin
+        action="claimBadge"
+        size="full"
+        tone="claim"
+        label="Claim badge"
+        ariaLabel="Claim badge"
+        onPress={onPress}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Claim badge" });
+    await user.click(button);
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(hapticTap).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("ActionPin — badge slot", () => {
   it('renders badge.pin at -right-1 -top-1 when size="pin"', () => {
     render(
