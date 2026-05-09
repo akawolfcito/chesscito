@@ -138,6 +138,26 @@
     --shell-gap-xs: 4px;
     --shell-gap-sm: 8px;
 
+    /* ── CandyCard — residential content-block primitive (M2) ──
+       Spec: docs/superpowers/specs/2026-05-08-m2-candy-card-design-v1.2.md */
+    --candy-card-radius: 1.5rem;
+    --candy-card-pad-compact-y: 0.75rem;
+    --candy-card-pad-compact-x: 0.875rem;
+    --candy-card-pad-regular-y: 1.25rem;
+    --candy-card-pad-regular-x: 1.25rem;
+    --candy-card-pad-feature-y: 1.75rem;
+    --candy-card-pad-feature-x: 1.5rem;
+    --candy-card-gap-compact: 0.5rem;
+    --candy-card-gap-regular: 0.75rem;
+    --candy-card-gap-feature: 1rem;
+    --candy-card-title-size-compact: 1rem;
+    --candy-card-title-size-regular: 1.125rem;
+    --candy-card-title-size-feature: 1.375rem;
+    --candy-card-shadow-resting:
+      0 10px 28px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 245, 215, 0.55);
+    --candy-card-border-resting: 1px solid rgba(255, 255, 255, 0.45);
+
     /* ── Asset Treatment System — materiality tokens ── */
     --treat-carved-hi: inset 0 1px 2px rgba(255, 255, 255, 0.05);
     --treat-carved-lo: inset 0 -1px 2px rgba(0, 0, 0, 0.25);
@@ -2170,6 +2190,95 @@
   --candy-frame-border: rgba(120, 65, 5, 0.65);
   --candy-frame-shadow: rgba(120, 65, 5, 0.55);
   --candy-frame-text: rgba(50, 25, 5, 0.95);
+}
+
+/* ── CandyCard — residential content-block primitive (M2) ──
+   Spec: docs/superpowers/specs/2026-05-08-m2-candy-card-design-v1.2.md
+   Tokens at :root §"Shell Cohesion". Atmosphere=hub uses sheet-bg-hub
+   painting (modal-shell sibling); atmosphere=amber/gold composes
+   .candy-frame-{tone} for wooden-scroll painting. */
+.candy-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--candy-card-radius);
+}
+.candy-card-compact {
+  padding: var(--candy-card-pad-compact-y) var(--candy-card-pad-compact-x);
+  gap: var(--candy-card-gap-compact);
+}
+.candy-card-regular {
+  padding: var(--candy-card-pad-regular-y) var(--candy-card-pad-regular-x);
+  gap: var(--candy-card-gap-regular);
+}
+.candy-card-feature {
+  padding: var(--candy-card-pad-feature-y) var(--candy-card-pad-feature-x);
+  gap: var(--candy-card-gap-feature);
+}
+
+/* atmosphere=hub paints border + shadow itself.
+   atmosphere=amber/gold inherits .candy-frame's painting. */
+.candy-card[data-atmosphere="hub"] {
+  border: var(--candy-card-border-resting);
+  box-shadow: var(--candy-card-shadow-resting);
+}
+
+/* Neutralize .candy-frame:active press animation when the frame is
+   composed into a presentational <CandyCard> container (no onPress).
+   Spec: M2 v1.2 AC10 + redteam-v2 P0-A. */
+.candy-card.candy-frame:active:not(:disabled) {
+  transform: none;
+  box-shadow:
+    0 4px 0 var(--candy-frame-shadow, rgba(110, 65, 15, 0.45)),
+    0 6px 14px rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.30),
+    inset 0 -2px 0 rgba(110, 65, 15, 0.20);
+}
+
+.candy-card-corner {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.625rem;
+  pointer-events: none;
+}
+.candy-card-corner > * { pointer-events: auto; }
+
+.candy-card-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.candy-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+.candy-card-eyebrow {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(110, 65, 15, 0.70);
+}
+.candy-card-title {
+  color: rgba(110, 65, 15, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.80);
+  font-weight: 800;
+}
+.candy-card-compact .candy-card-title { font-size: var(--candy-card-title-size-compact); }
+.candy-card-regular .candy-card-title { font-size: var(--candy-card-title-size-regular); }
+.candy-card-feature .candy-card-title { font-size: var(--candy-card-title-size-feature); }
+
+.candy-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.candy-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* ── Kingdom Anchor — central diegetic visual (Adventure atmosphere) ──

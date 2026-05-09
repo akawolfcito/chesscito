@@ -155,9 +155,13 @@ describe("CandyCard — markup contract (T1–T20, AC1–AC9, AC11–AC12)", () 
     expect(getRoot(container).querySelector("h3.candy-card-title")).not.toBeNull();
   });
 
-  // T19 — press-neutralizer CSS rule existence — moved to commit 2
-  // (lands alongside the CSS that the test verifies; TDD red→green
-  //  in same commit instead of straddling commits 1 and 2).
+  it("T19: press-neutralizer CSS rule exists in globals.css (specification check, AC10)", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const cssPath = path.resolve(__dirname, "../../../app/globals.css");
+    const css = fs.readFileSync(cssPath, "utf8");
+    expect(css).toMatch(/\.candy-card\.candy-frame:active:not\(:disabled\)/);
+  });
 
   it("T20: re-render with title toggling undefined → 'X' → undefined does not throw", () => {
     const { rerender } = render(<CandyCard>body</CandyCard>);
