@@ -323,19 +323,23 @@ export function MissionPanelCandy({
         <span className="ml-auto">{exerciseDrawer}</span>
       </div>
 
-      {/* Persistent shield-chip row (HUD canon). Right-aligned to mirror
-          /hub's HudSecondaryRow placement; rendered unconditionally so
-          the player always sees their retry-shield inventory and the
-          row keeps stable height when the count transitions 0↔1. */}
-      <div className="shrink-0 mx-2 mt-1 flex justify-end">
-        <HudResourceChip
-          tone="default"
-          size="compact"
-          icon="shield"
-          value={shieldCount}
-          ariaLabel={HUD_COPY.shieldsAriaLabel(shieldCount)}
-        />
-      </div>
+      {/* Shield-chip row — only rendered when the player has shields in
+          inventory. The earlier always-render policy (kept the row at
+          0 to avoid layout shift on first purchase) was costing ~40px
+          of vertical chrome above the board on every session, while a
+          0↔1 transition is rare. Trading the once-per-purchase shift
+          for a permanently more breathable board. */}
+      {shieldCount > 0 && (
+        <div className="shrink-0 mx-2 mt-1 flex justify-end">
+          <HudResourceChip
+            tone="default"
+            size="compact"
+            icon="shield"
+            value={shieldCount}
+            ariaLabel={HUD_COPY.shieldsAriaLabel(shieldCount)}
+          />
+        </div>
+      )}
 
       {/* MissionRibbon row — surface="exercises" feeds the runtime
           `pieceHint` (e.g. "The rook moves in straight lines.") so the
