@@ -199,6 +199,7 @@ export function ProSheet(props: ProSheetProps) {
           </SheetDescription>
         </SheetHeader>
 
+        <div className="flex flex-1 min-h-0 flex-col overflow-y-auto overscroll-contain">
         <div className="mt-3 flex items-baseline gap-2">
           <span
             className="text-2xl font-bold"
@@ -326,6 +327,7 @@ export function ProSheet(props: ProSheetProps) {
         >
           {PRO_COPY.missionNote}
         </p>
+        </div>
 
         <div className="mt-auto flex justify-center pt-4">
           <PrincipalButton
