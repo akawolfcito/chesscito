@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { forwardRef, useEffect, useRef, useState, type ReactNode } from "react";
 
 export type PrincipalButtonSize = "medium" | "large";
 
@@ -15,21 +15,36 @@ export type PrincipalButtonProps = {
   "aria-label"?: string;
 };
 
-export function PrincipalButton({
-  children,
-  size = "medium",
-  onClick,
-  disabled = false,
-  loading = false,
-  leadingIcon,
-  className = "",
-  "aria-label": ariaLabel,
-}: PrincipalButtonProps) {
-  const ref = useRef<HTMLButtonElement>(null);
+export const PrincipalButton = forwardRef<
+  HTMLButtonElement,
+  PrincipalButtonProps
+>(function PrincipalButton(
+  {
+    children,
+    size = "medium",
+    onClick,
+    disabled = false,
+    loading = false,
+    leadingIcon,
+    className = "",
+    "aria-label": ariaLabel,
+  },
+  forwardedRef,
+) {
+  const localRef = useRef<HTMLButtonElement>(null);
   const [isPlaceholder, setIsPlaceholder] = useState(false);
 
+  // Merge the local ref (used by the placeholder probe) with the
+  // optional forwarded ref so callers can imperatively focus or measure
+  // the button without losing the placeholder fallback.
+  const setRefs = (node: HTMLButtonElement | null) => {
+    localRef.current = node;
+    if (typeof forwardedRef === "function") forwardedRef(node);
+    else if (forwardedRef) forwardedRef.current = node;
+  };
+
   useEffect(() => {
-    const node = ref.current;
+    const node = localRef.current;
     if (!node) return;
     const computed = window.getComputedStyle(node).backgroundImage;
     setIsPlaceholder(!computed || computed === "none" || computed === "");
@@ -56,7 +71,7 @@ export function PrincipalButton({
 
   return (
     <button
-      ref={ref}
+      ref={setRefs}
       type="button"
       data-component="principal-button"
       data-size={size}
@@ -76,4 +91,4 @@ export function PrincipalButton({
       ) : null}
     </button>
   );
-}
+});

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { ARENA_COPY, MISSION_BRIEFING_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
-import { Button } from "@/components/ui/button";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { track } from "@/lib/telemetry";
 
 type MissionBriefingProps = {
@@ -22,10 +22,19 @@ export function MissionBriefing({
   onPlay,
 }: MissionBriefingProps) {
   const [exiting, setExiting] = useState(false);
+  const playButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     track("modal_open", { id: "mission-briefing", piece: pieceType });
   }, [pieceType]);
+
+  // Autofocus the play CTA on mount. The legacy Button used the React
+  // `autoFocus` prop; PrincipalButton intentionally keeps its API
+  // surface narrow, so we focus via ref instead. Same behavior, no
+  // primitive API pollution.
+  useEffect(() => {
+    playButtonRef.current?.focus();
+  }, []);
 
   const pieceName = PIECE_LABELS[pieceType] ?? pieceType;
   const objective = isCapture
@@ -57,17 +66,15 @@ export function MissionBriefing({
           onClose={handleDismiss}
           closeLabel="Close"
           cta={
-            <div className="flex w-full flex-col gap-2.5">
-              <Button
-                type="button"
-                variant="game-primary"
-                size="game"
-                autoFocus
+            <div className="flex w-full flex-col items-center gap-2.5">
+              <PrincipalButton
+                ref={playButtonRef}
+                size="large"
                 onClick={handleDismiss}
-                className="w-full"
+                aria-label={MISSION_BRIEFING_COPY.play}
               >
                 {MISSION_BRIEFING_COPY.play}
-              </Button>
+              </PrincipalButton>
               <Link
                 href="/arena"
                 className="block text-center text-xs font-semibold underline underline-offset-2"
