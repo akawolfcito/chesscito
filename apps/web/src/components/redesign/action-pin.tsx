@@ -102,6 +102,23 @@ const PIN_BADGE_CLASSES =
   "absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[0.6rem] font-bold text-white shadow-[0_1px_2px_rgba(0,0,0,0.35)]";
 const FULL_BADGE_CLASSES =
   "ml-1 rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold";
+const PRINCIPAL_BADGE_CLASSES =
+  "ml-2 rounded-full bg-[rgba(110,65,15,0.18)] px-2 py-0.5 text-xs font-semibold text-[rgba(63,34,8,0.85)]";
+
+/** Actions whose `size="full"` variant renders as a diegetic
+ *  `<PrincipalButton>` instead of the legacy candy-frame full button.
+ *  These are ceremonial actions — the player feels each tap as a small
+ *  ritual (claim, submit a score, spend a saved shield). Utility
+ *  actions (retry, connectWallet, switchNetwork) stay candy-frame
+ *  because they're recovery/setup, not kingdom progression. Pin size
+ *  (44×44 round) keeps candy-frame across all actions: the geometry
+ *  doesn't fit PrincipalButton (280×80) and the pin slot is a peer of
+ *  the action row, not a hero CTA. */
+const CEREMONIAL_FULL_ACTIONS: readonly ActionPinAction[] = [
+  "submitScore",
+  "useShield",
+  "claimBadge",
+];
 
 const PIN_BUTTON_LAYOUT =
   "relative flex h-11 w-11 shrink-0 items-center justify-center disabled:opacity-70";
@@ -178,11 +195,14 @@ export function ActionPin({
     <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
   );
 
-  // M3.5 — diegetic claim CTA via composition with <PrincipalButton>.
-  // Only the `full` size swaps; `pin` (44×44 round) keeps the existing
-  // candy-frame-gold treatment because PrincipalButton is 280×80 and
-  // does not fit the pin slot geometry.
-  if (tone === "claim" && size === "full") {
+  // Vocabulary unification (sprint 1A) — diegetic ceremonial CTAs via
+  // composition with <PrincipalButton>. Originally only the claim path
+  // was migrated in M3.5; this extends to submitScore + useShield (the
+  // other two ceremonial full-size actions). Utility actions (retry,
+  // connectWallet, switchNetwork) and ALL pin-size variants keep the
+  // candy-frame treatment — geometry and intent don't match the
+  // gold-carved primary CTA.
+  if (size === "full" && CEREMONIAL_FULL_ACTIONS.includes(action)) {
     return (
       <div
         data-component="action-pin"
@@ -203,7 +223,12 @@ export function ActionPin({
           loading={isBusy}
           aria-label={ariaLabel}
         >
-          {label}
+          <span>{label}</span>
+          {badge?.full != null ? (
+            <span aria-hidden="true" className={PRINCIPAL_BADGE_CLASSES}>
+              {badge.full}
+            </span>
+          ) : null}
         </PrincipalButton>
       </div>
     );

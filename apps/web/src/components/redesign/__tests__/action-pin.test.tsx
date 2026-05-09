@@ -101,19 +101,23 @@ describe("ActionPin — tone", () => {
     expect(button.className).toMatch(/\bcandy-frame-gold\b/);
   });
 
-  it('applies the per-action gradient class when tone="default" (parameterized: submitScore)', () => {
+  it('applies the per-action gradient class when tone="default" (parameterized: connectWallet — utility action stays candy-frame)', () => {
+    // connectWallet is a utility action (NOT in CEREMONIAL_FULL_ACTIONS),
+    // so size="full" stays on the candy-frame path with per-action
+    // gradient classes. Ceremonial full actions (submitScore, useShield,
+    // claimBadge) compose <PrincipalButton> instead — covered by the
+    // ceremonial composition describe block below.
     render(
       <ActionPin
-        action="submitScore"
+        action="connectWallet"
         size="full"
         tone="default"
-        label="Submit"
-        ariaLabel="Submit"
+        label="Connect"
+        ariaLabel="Connect"
         onPress={() => {}}
       />,
     );
-    const button = screen.getByRole("button", { name: "Submit" });
-    // `bg-gradient-to-b` + `from-[var(--cta-brand-from)]` for submitScore
+    const button = screen.getByRole("button", { name: "Connect" });
     expect(button.className).toMatch(/bg-gradient-to-b/);
     expect(button.className).toMatch(/var\(--cta-brand-from\)/);
     expect(button.className).not.toMatch(/\bcandy-frame-gold\b/);
@@ -219,6 +223,73 @@ describe("ActionPin — tone='claim' + size='full' composition (M3.5)", () => {
   });
 });
 
+describe("ActionPin — ceremonial full actions composition (sprint 1A)", () => {
+  // Sprint 1A extends the diegetic <PrincipalButton> compose path from
+  // claim-only to all ceremonial full-size actions (claim + submitScore
+  // + useShield). Utility actions (retry/connectWallet/switchNetwork)
+  // and ALL pin-size variants stay on the candy-frame path.
+
+  it("submitScore + size='full' renders <PrincipalButton size='large'>", () => {
+    render(
+      <ActionPin
+        action="submitScore"
+        size="full"
+        label="Submit score"
+        ariaLabel="Submit score"
+        onPress={() => {}}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Submit score" });
+    expect(button.getAttribute("data-component")).toBe("principal-button");
+    expect(button.getAttribute("data-size")).toBe("large");
+    expect(button.className).not.toMatch(/bg-gradient-to-b/);
+  });
+
+  it("useShield + size='full' renders <PrincipalButton size='large'>", () => {
+    render(
+      <ActionPin
+        action="useShield"
+        size="full"
+        label="Use shield"
+        ariaLabel="Use shield"
+        onPress={() => {}}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Use shield" });
+    expect(button.getAttribute("data-component")).toBe("principal-button");
+    expect(button.getAttribute("data-size")).toBe("large");
+  });
+
+  it("retry + size='full' STAYS candy-frame (utility action — regression guard)", () => {
+    render(
+      <ActionPin
+        action="retry"
+        size="full"
+        label="Retry"
+        ariaLabel="Retry"
+        onPress={() => {}}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Retry" });
+    expect(button.getAttribute("data-component")).not.toBe("principal-button");
+    expect(button.className).toMatch(/var\(--cta-muted-bg\)/);
+  });
+
+  it("submitScore + size='pin' STAYS candy-frame (pin geometry doesn't fit PrincipalButton)", () => {
+    render(
+      <ActionPin
+        action="submitScore"
+        size="pin"
+        label="Submit"
+        ariaLabel="Submit score"
+        onPress={() => {}}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Submit score" });
+    expect(button.getAttribute("data-component")).not.toBe("principal-button");
+  });
+});
+
 describe("ActionPin — badge slot", () => {
   it('renders badge.pin at -right-1 -top-1 when size="pin"', () => {
     render(
@@ -238,7 +309,12 @@ describe("ActionPin — badge slot", () => {
     expect(wrapper.className).toMatch(/-top-1/);
   });
 
-  it('renders badge.full inline (ml-1) when size="full"', () => {
+  it('renders badge.full inside the PrincipalButton (ml-2 + brown chip) when size="full" + ceremonial action', () => {
+    // useShield + size="full" composes <PrincipalButton> per
+    // CEREMONIAL_FULL_ACTIONS; the badge.full pill is rendered inside
+    // the principal button label area with the diegetic brown chip
+    // styling (PRINCIPAL_BADGE_CLASSES) instead of the legacy
+    // candy-frame `ml-1 bg-white/20` pill.
     render(
       <ActionPin
         action="useShield"
@@ -252,7 +328,9 @@ describe("ActionPin — badge slot", () => {
     const fullBadge = screen.queryByTestId("b-full");
     expect(fullBadge).not.toBeNull();
     const wrapper = fullBadge!.parentElement as HTMLElement;
-    expect(wrapper.className).toMatch(/\bml-1\b/);
+    expect(wrapper.className).toMatch(/\bml-2\b/);
+    // Both pin and full badges should NOT coexist — only `full` for size="full"
+    expect(screen.queryByTestId("b-pin")).toBeNull();
   });
 
   it("ignores badge.full on size='pin' and ignores badge.pin on size='full'", () => {
@@ -285,7 +363,7 @@ describe("ActionPin — badge slot", () => {
 });
 
 describe("ActionPin — isBusy state", () => {
-  it("shows the spinner, hides the icon, sets aria-busy='true', and blocks onPress when isBusy", async () => {
+  it("ceremonial full path (submitScore): PrincipalButton sets aria-busy, shows its spinner, hides leading icon, blocks click", async () => {
     const onPress = vi.fn();
     const user = userEvent.setup();
     const { container } = render(
@@ -302,9 +380,11 @@ describe("ActionPin — isBusy state", () => {
     expect(button).toHaveAttribute("aria-busy", "true");
     expect(button).toBeDisabled();
 
-    // Spinner present
-    expect(button.querySelector(".animate-spin")).not.toBeNull();
-    // Icon NOT rendered (no <picture> with the action icon srcset)
+    // PrincipalButton owns its own spinner class; legacy `.animate-spin`
+    // belonged to the candy-frame path (no longer used for ceremonial
+    // full actions).
+    expect(button.querySelector(".principal-button-spinner")).not.toBeNull();
+    // Leading icon (CandyIcon) NOT rendered when busy
     const srcsets = Array.from(container.querySelectorAll("source")).map(
       (s) => s.getAttribute("srcset"),
     );
@@ -313,6 +393,27 @@ describe("ActionPin — isBusy state", () => {
     await user.click(button);
     expect(onPress).not.toHaveBeenCalled();
     expect(hapticTap).not.toHaveBeenCalled();
+  });
+
+  it("utility full path (connectWallet): candy-frame spinner via .animate-spin", async () => {
+    const onPress = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <ActionPin
+        action="connectWallet"
+        size="full"
+        label="Connect"
+        ariaLabel="Connect"
+        isBusy
+        onPress={onPress}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Connect" });
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button).toBeDisabled();
+    expect(button.querySelector(".animate-spin")).not.toBeNull();
+    await user.click(button);
+    expect(onPress).not.toHaveBeenCalled();
   });
 });
 
