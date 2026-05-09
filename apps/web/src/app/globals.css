@@ -3478,3 +3478,119 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 2px 0 rgba(255, 255, 255, 0.22),
     inset 0 -2px 0 rgba(110, 65, 15, 0.28);
 }
+
+/* ── <StonePedestal> — round tap target rooted on a piedra asset (M3.5) ── */
+.stone-pedestal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  cursor: pointer;
+  transition:
+    transform var(--duration-snap, 120ms) var(--ease-spring, ease-out),
+    box-shadow var(--duration-snap, 120ms) ease-out,
+    border-color 200ms ease-out;
+  /* No outline ring; press lift creates the affordance. */
+  outline: none;
+}
+
+.stone-pedestal-small  { width: 40px; height: 40px; }
+.stone-pedestal-medium { width: 48px; height: 48px; }
+.stone-pedestal-large  { width: 64px; height: 64px; }
+
+.stone-pedestal-stone-1  { background-image: var(--stone-pedestal-bg-1); }
+.stone-pedestal-stone-2  { background-image: var(--stone-pedestal-bg-2); }
+.stone-pedestal-stone-3  { background-image: var(--stone-pedestal-bg-3); }
+.stone-pedestal-stone-4  { background-image: var(--stone-pedestal-bg-4); }
+.stone-pedestal-stone-5  { background-image: var(--stone-pedestal-bg-5); }
+.stone-pedestal-stone-6  { background-image: var(--stone-pedestal-bg-6); }
+.stone-pedestal-stone-7  { background-image: var(--stone-pedestal-bg-7); }
+.stone-pedestal-stone-8  { background-image: var(--stone-pedestal-bg-8); }
+.stone-pedestal-stone-9  { background-image: var(--stone-pedestal-bg-9); }
+.stone-pedestal-stone-10 { background-image: var(--stone-pedestal-bg-10); }
+
+.stone-pedestal:active:not(:disabled) {
+  transform: scale(0.96);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+}
+
+.stone-pedestal:focus-visible {
+  outline: 2px solid rgba(245, 200, 100, 0.85);
+  outline-offset: 3px;
+}
+
+.stone-pedestal:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.stone-pedestal.is-loading {
+  opacity: 0.85;
+  cursor: progress;
+}
+
+.stone-pedestal.is-loading .stone-pedestal-icon {
+  opacity: 0.3;
+}
+
+.stone-pedestal.is-placeholder {
+  background-image: linear-gradient(135deg,
+      rgba(245, 200, 100, 0.55) 0%,
+      rgba(180, 130, 60, 0.65) 100%);
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.stone-pedestal-icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.stone-pedestal-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 2;
+  max-width: 32px;
+  pointer-events: none;
+}
+
+.stone-pedestal-spinner {
+  position: absolute;
+  inset: 25%;
+  z-index: 3;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  animation: stone-pedestal-spin 700ms linear infinite;
+}
+
+@keyframes stone-pedestal-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Reduced-motion fallback: keep the affordance via border-color flash
+ * instead of scale. Spec Behavior #7 requires NEVER full silence. */
+@media (prefers-reduced-motion: reduce) {
+  .stone-pedestal {
+    transition: border-color 200ms ease-out;
+  }
+  .stone-pedestal:active:not(:disabled) {
+    transform: none;
+    border: 2px solid rgba(245, 200, 100, 0.95);
+    box-shadow: none;
+  }
+  .stone-pedestal-spinner {
+    animation-duration: 1400ms;
+  }
+}
