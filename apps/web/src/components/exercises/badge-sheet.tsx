@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { ABOUT_LINK_COPY, BADGE_SHEET_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
+import { GemBadge } from "@/components/scene-rooted/gem";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { PieceId } from "@/lib/game/types";
@@ -127,9 +128,11 @@ function BadgeCard({
 
       <div className="shrink-0">
         {isClaimed ? (
-          <span className="flex items-center gap-1 text-xs font-bold text-emerald-700">
-            <CandyIcon name="check" className="h-3.5 w-3.5" /> {BADGE_SHEET_COPY.owned}
-          </span>
+          <GemBadge
+            tone="success"
+            icon={<CandyIcon name="check" className="h-3.5 w-3.5" />}
+            value={BADGE_SHEET_COPY.owned}
+          />
         ) : isClaimable ? (
           <PrincipalButton
             size="medium"
