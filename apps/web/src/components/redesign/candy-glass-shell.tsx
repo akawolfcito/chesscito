@@ -30,6 +30,10 @@ type CandyGlassShellProps = {
  *
  * Compose inside a `fixed inset-0 candy-modal-scrim` scrim
  * wrapper for modal-over-game presentations.
+ *
+ * TODO(M3): refactor to compose <CandyCard atmosphere="hub"> as the
+ * content chassis once CandyCard is the canonical residential
+ * primitive. Tracked in M2 v1.2 spec §"Migration impact (downstream)".
  */
 export function CandyGlassShell({
   title,
