@@ -116,20 +116,30 @@
        saturation reads as "playful"), but the public landing needs a
        calmer surface so copy + screenshots breathe. Each token has the
        previous saturated value documented next to it for reference. */
-    --landing-accent:           rgba(217, 130, 30, 0.85);  /* was amber-500 0.95 */
-    --landing-accent-bg:        rgba(245, 158, 11, 0.10);  /* was 0.18 (chip bg) */
-    --landing-accent-bg-strong: rgba(245, 158, 11, 0.16);  /* was 0.30 (note callout) */
-    --landing-accent-border:    rgba(217, 130, 30, 0.30);  /* was 0.45 (chip + card icon ring) */
-    --landing-accent-border-strong: rgba(217, 130, 30, 0.42); /* was 0.55 (eyebrow chip) */
-    --landing-card-bg:          rgba(255, 248, 230, 0.62); /* was rgba(255,245,215,0.55) — slightly warmer */
-    --landing-card-border:      rgba(110, 65, 15, 0.16);   /* was 0.22 */
-    --landing-card-shadow-inner: rgba(255, 245, 215, 0.45); /* was 0.55 */
-    --landing-text:             rgba(63, 34, 8, 0.92);     /* was 0.95 */
-    --landing-text-soft:        rgba(63, 34, 8, 0.72);
-    --landing-text-shadow:      0 1px 0 rgba(255, 245, 215, 0.55);
+    --landing-accent: rgba(217, 130, 30, 0.85);
+    /* was amber-500 0.95 */
+    --landing-accent-bg: rgba(245, 158, 11, 0.10);
+    /* was 0.18 (chip bg) */
+    --landing-accent-bg-strong: rgba(245, 158, 11, 0.16);
+    /* was 0.30 (note callout) */
+    --landing-accent-border: rgba(217, 130, 30, 0.30);
+    /* was 0.45 (chip + card icon ring) */
+    --landing-accent-border-strong: rgba(217, 130, 30, 0.42);
+    /* was 0.55 (eyebrow chip) */
+    --landing-card-bg: rgba(255, 248, 230, 0.62);
+    /* was rgba(255,245,215,0.55) — slightly warmer */
+    --landing-card-border: rgba(110, 65, 15, 0.16);
+    /* was 0.22 */
+    --landing-card-shadow-inner: rgba(255, 245, 215, 0.45);
+    /* was 0.55 */
+    --landing-text: rgba(63, 34, 8, 0.92);
+    /* was 0.95 */
+    --landing-text-soft: rgba(63, 34, 8, 0.72);
+    --landing-text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
     --landing-text-shadow-soft: 0 1px 0 rgba(255, 245, 215, 0.45);
-    --landing-title-glow:       0 1px 0 rgba(255, 245, 215, 0.85),
-                                0 2px 6px rgba(245, 158, 11, 0.12); /* was 0.30 */
+    --landing-title-glow: 0 1px 0 rgba(255, 245, 215, 0.85),
+      0 2px 6px rgba(245, 158, 11, 0.12);
+    /* was 0.30 */
 
     /* ── Shell Cohesion — layout tokens ── */
     --shell-radius: 16px;
@@ -220,7 +230,8 @@
     --duration-piece-slide: 320ms;
     --duration-mission-ribbon-reveal: 400ms;
     --duration-coach-greeting: 600ms;
-    --ease-piece-overshoot: var(--ease-spring); /* alias for piece-slide semantic clarity */
+    --ease-piece-overshoot: var(--ease-spring);
+    /* alias for piece-slide semantic clarity */
 
     /* ── Redesign palette (candy-game aesthetic) ── */
     --redesign-cream: #F6E6B4;
@@ -349,11 +360,9 @@
     --playhub-slot-frame: image-set(url("/art/shop-slot-frame.avif") type("image/avif"),
         url("/art/shop-slot-frame.webp") type("image/webp"),
         url("/art/shop-slot-frame.png") type("image/png"));
-    --playhub-game-bg: image-set(
-        url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
+    --playhub-game-bg: image-set(url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
         url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
-        url("/art/redesign/bg/bg-ch.png") type("image/png")
-      );
+        url("/art/redesign/bg/bg-ch.png") type("image/png"));
     --playhub-board-bg: image-set(url("/art/chesscito-board.avif") type("image/avif"),
         url("/art/chesscito-board.webp") type("image/webp"),
         url("/art/chesscito-board.png") type("image/png"));
@@ -522,11 +531,9 @@
     background-size: cover;
     background-position: top center;
     background-repeat: no-repeat;
-    background-image: image-set(
-      url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
-      url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-ch.png") type("image/png")
-    );
+    background-image: image-set(url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
+        url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
+        url("/art/redesign/bg/bg-ch.png") type("image/png"));
     z-index: 0;
   }
 
@@ -540,18 +547,16 @@
     z-index: 0;
     /* Cream wash — subtle enough that trees stay visible, strong enough
        that warm-brown text + translucent cards read cleanly on top. */
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.15) 0%,
-      rgba(255, 245, 215, 0.30) 40%,
-      rgba(246, 230, 184, 0.45) 100%
-    );
+    background: linear-gradient(to bottom,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 245, 215, 0.30) 40%,
+        rgba(246, 230, 184, 0.45) 100%);
   }
 
-  .sheet-bg-hub > *,
-  .sheet-bg-badges > *,
-  .sheet-bg-shop > *,
-  .sheet-bg-leaderboard > * {
+  .sheet-bg-hub>*,
+  .sheet-bg-badges>*,
+  .sheet-bg-shop>*,
+  .sheet-bg-leaderboard>* {
     position: relative;
     z-index: 1;
   }
@@ -582,7 +587,8 @@
     color: var(--paper-text);
     font-size: 0.875rem;
   }
-  .paper-row + .paper-row {
+
+  .paper-row+.paper-row {
     border-top: 1px dashed var(--paper-divider);
   }
 
@@ -596,9 +602,11 @@
     background: rgba(251, 191, 36, 0.18);
     flex-shrink: 0;
   }
+
   .journey-row[data-status="done"] .journey-row-icon {
     background: rgba(34, 197, 94, 0.25);
   }
+
   .journey-row[data-status="locked"] .journey-row-icon {
     background: rgba(110, 65, 15, 0.10);
     opacity: 0.65;
@@ -612,6 +620,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
   .journey-row[data-status="locked"] .journey-row-label {
     color: var(--paper-text-muted);
   }
@@ -624,9 +633,11 @@
     color: var(--paper-text-muted);
     flex-shrink: 0;
   }
+
   .journey-row-progress[data-status="active"] {
     color: rgba(180, 83, 9, 0.95);
   }
+
   .journey-row-progress[data-status="done"] {
     color: rgba(21, 128, 61, 0.95);
   }
@@ -641,6 +652,7 @@
     position: relative;
     overflow: hidden;
   }
+
   .candy-page-panel::before {
     content: "";
     position: absolute;
@@ -655,7 +667,8 @@
         rgba(34, 197, 94, 0.00) 65%);
     z-index: 0;
   }
-  .candy-page-panel > * {
+
+  .candy-page-panel>* {
     position: relative;
     z-index: 1;
   }
@@ -751,8 +764,15 @@
   /* Scale-only bounce so the candy-frame-gold sculpt (box-shadow stack)
      survives intact. Finite iterations — a three-beat nudge, then rest. */
   @keyframes action-pin-pulse {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.06); }
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.06);
+    }
   }
 
   .action-pin-attention {
@@ -992,6 +1012,7 @@
     pointer-events: none;
     filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
   }
+
   .playhub-board-img img {
     width: 100%;
     height: 100%;
@@ -1337,15 +1358,13 @@
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.15) 0%,
-      rgba(255, 245, 215, 0.30) 40%,
-      rgba(246, 230, 184, 0.45) 100%
-    );
+    background: linear-gradient(to bottom,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 245, 215, 0.30) 40%,
+        rgba(246, 230, 184, 0.45) 100%);
   }
 
-  .arena-bg > * {
+  .arena-bg>* {
     position: relative;
     z-index: 1;
   }
@@ -1446,16 +1465,18 @@
     animation: arena-check-pulse 1.4s ease-in-out infinite;
     z-index: 12;
   }
+
   @keyframes arena-check-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
       filter:
-        drop-shadow(0 0 4px rgba(239, 68, 68, 0.85))
-        drop-shadow(0 0 10px rgba(239, 68, 68, 0.45));
+        drop-shadow(0 0 4px rgba(239, 68, 68, 0.85)) drop-shadow(0 0 10px rgba(239, 68, 68, 0.45));
     }
+
     50% {
       filter:
-        drop-shadow(0 0 8px rgba(239, 68, 68, 1))
-        drop-shadow(0 0 18px rgba(239, 68, 68, 0.7));
+        drop-shadow(0 0 8px rgba(239, 68, 68, 1)) drop-shadow(0 0 18px rgba(239, 68, 68, 0.7));
     }
   }
 
@@ -1463,27 +1484,34 @@
      selected piece. Composes with .arena-piece-float's existing translate.
      Glow uses rose-500 so it reads as "wrong" without being aggressive. */
   @keyframes arena-piece-reject {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translate(-50%, -55%) translateX(0);
       filter: drop-shadow(0 0 0 rgba(244, 63, 94, 0));
     }
+
     20% {
       transform: translate(-50%, -55%) translateX(-3px);
       filter: drop-shadow(0 0 6px rgba(244, 63, 94, 0.85));
     }
+
     40% {
       transform: translate(-50%, -55%) translateX(3px);
       filter: drop-shadow(0 0 6px rgba(244, 63, 94, 0.85));
     }
+
     60% {
       transform: translate(-50%, -55%) translateX(-2px);
       filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.6));
     }
+
     80% {
       transform: translate(-50%, -55%) translateX(1px);
       filter: drop-shadow(0 0 2px rgba(244, 63, 94, 0.3));
     }
   }
+
   .arena-piece-float.is-rejecting {
     animation: arena-piece-reject 200ms ease-out;
     z-index: 13;
@@ -1497,15 +1525,18 @@
       transform: translate(-50%, -55%) scale(1);
       opacity: 1;
     }
+
     60% {
       transform: translate(-50%, -55%) scale(0.6) rotate(15deg);
       opacity: 0.55;
     }
+
     100% {
       transform: translate(-50%, -55%) scale(0.2) rotate(40deg);
       opacity: 0;
     }
   }
+
   .arena-piece-float.is-dying {
     animation: arena-piece-die 200ms ease-out forwards;
     pointer-events: none;
@@ -1613,11 +1644,9 @@
        stripe under the dock. With the fallback, any alpha falls back
        to the dock's own palette. */
     background-color: rgb(43, 56, 84);
-    background-image: image-set(
-      url("/art/redesign/bg/menu-wall.avif") type("image/avif"),
-      url("/art/redesign/bg/menu-wall.webp") type("image/webp"),
-      url("/art/redesign/bg/menu-wall.png") type("image/png")
-    );
+    background-image: image-set(url("/art/redesign/bg/menu-wall.avif") type("image/avif"),
+        url("/art/redesign/bg/menu-wall.webp") type("image/webp"),
+        url("/art/redesign/bg/menu-wall.png") type("image/png"));
     /* `100% 100%` stretches the image to fully fill the dock edge-to-
        edge so any bottom-alpha region is covered by the image pixels
        themselves rather than relying on the fallback color. The 68px
@@ -1697,20 +1726,17 @@
     position: absolute;
     inset: -2px 4px 6px;
     border-radius: 50%;
-    background: radial-gradient(
-      ellipse at 50% 45%,
-      rgba(255, 220, 120, 0.40) 0%,
-      rgba(255, 200, 80, 0.18) 45%,
-      transparent 75%
-    );
+    background: radial-gradient(ellipse at 50% 45%,
+        rgba(255, 220, 120, 0.40) 0%,
+        rgba(255, 200, 80, 0.18) 45%,
+        transparent 75%);
     z-index: -1;
     pointer-events: none;
   }
 
   .chesscito-dock-center.is-active img {
     filter:
-      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))
-      drop-shadow(0 0 6px rgba(255, 200, 80, 0.45));
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 6px rgba(255, 200, 80, 0.45));
   }
 
   .chesscito-dock-center:active {
@@ -1733,20 +1759,17 @@
     position: absolute;
     inset: -2px 2px 6px;
     border-radius: 50%;
-    background: radial-gradient(
-      ellipse at 50% 45%,
-      rgba(255, 220, 120, 0.40) 0%,
-      rgba(255, 200, 80, 0.18) 45%,
-      transparent 75%
-    );
+    background: radial-gradient(ellipse at 50% 45%,
+        rgba(255, 220, 120, 0.40) 0%,
+        rgba(255, 200, 80, 0.18) 45%,
+        transparent 75%);
     z-index: -1;
     pointer-events: none;
   }
 
   .chesscito-dock-item.is-active img {
     filter:
-      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))
-      drop-shadow(0 0 6px rgba(255, 200, 80, 0.45));
+      drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 6px rgba(255, 200, 80, 0.45));
   }
 
   .chesscito-dock-item-label {
@@ -1793,11 +1816,9 @@
      paper instead of dark slate, so a slow connection never flashes
      dark between navigation and splash image (#103 sweep). */
   background-color: var(--paper-bg, #f6e6b8);
-  background-image: image-set(
-    url("/art/redesign/bg/splash-loading.avif") type("image/avif"),
-    url("/art/redesign/bg/splash-loading.webp") type("image/webp"),
-    url("/art/redesign/bg/splash-loading.png") type("image/png")
-  );
+  background-image: image-set(url("/art/redesign/bg/splash-loading.avif") type("image/avif"),
+      url("/art/redesign/bg/splash-loading.webp") type("image/webp"),
+      url("/art/redesign/bg/splash-loading.png") type("image/png"));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -2078,8 +2099,7 @@
    not symmetric with the enemy avatar. */
 .player-card-you {
   filter:
-    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))
-    drop-shadow(0 0 8px rgba(251, 191, 36, 0.35));
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) drop-shadow(0 0 8px rgba(251, 191, 36, 0.35));
 }
 
 .arena-hud-chess-banner {
@@ -2130,11 +2150,9 @@
   height: 3rem;
   aspect-ratio: 1 / 1;
   color: var(--redesign-stone-text);
-  background-image: image-set(
-    url("/art/redesign/banners/btn-stone-bg.avif") type("image/avif"),
-    url("/art/redesign/banners/btn-stone-bg.webp") type("image/webp"),
-    url("/art/redesign/banners/btn-stone-bg.png") type("image/png")
-  );
+  background-image: image-set(url("/art/redesign/banners/btn-stone-bg.avif") type("image/avif"),
+      url("/art/redesign/banners/btn-stone-bg.webp") type("image/webp"),
+      url("/art/redesign/banners/btn-stone-bg.png") type("image/png"));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -2232,14 +2250,17 @@
   flex-direction: column;
   border-radius: var(--candy-card-radius);
 }
+
 .candy-card-compact {
   padding: var(--candy-card-pad-compact-y) var(--candy-card-pad-compact-x);
   gap: var(--candy-card-gap-compact);
 }
+
 .candy-card-regular {
   padding: var(--candy-card-pad-regular-y) var(--candy-card-pad-regular-x);
   gap: var(--candy-card-gap-regular);
 }
+
 .candy-card-feature {
   padding: var(--candy-card-pad-feature-y) var(--candy-card-pad-feature-x);
   gap: var(--candy-card-gap-feature);
@@ -2270,7 +2291,10 @@
   right: 0.625rem;
   pointer-events: none;
 }
-.candy-card-corner > * { pointer-events: auto; }
+
+.candy-card-corner>* {
+  pointer-events: auto;
+}
 
 .candy-card-media {
   display: flex;
@@ -2283,20 +2307,31 @@
   flex-direction: column;
   gap: 0.125rem;
 }
+
 .candy-card-eyebrow {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: rgba(110, 65, 15, 0.70);
 }
+
 .candy-card-title {
   color: rgba(110, 65, 15, 0.95);
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.80);
   font-weight: 800;
 }
-.candy-card-compact .candy-card-title { font-size: var(--candy-card-title-size-compact); }
-.candy-card-regular .candy-card-title { font-size: var(--candy-card-title-size-regular); }
-.candy-card-feature .candy-card-title { font-size: var(--candy-card-title-size-feature); }
+
+.candy-card-compact .candy-card-title {
+  font-size: var(--candy-card-title-size-compact);
+}
+
+.candy-card-regular .candy-card-title {
+  font-size: var(--candy-card-title-size-regular);
+}
+
+.candy-card-feature .candy-card-title {
+  font-size: var(--candy-card-title-size-feature);
+}
 
 .candy-card-body {
   display: flex;
@@ -2365,7 +2400,7 @@
   aspect-ratio: 1 / 1;
 }
 
-.kingdom-anchor-board-inner > .kingdom-anchor-picture {
+.kingdom-anchor-board-inner>.kingdom-anchor-picture {
   position: absolute;
   inset: 0;
 }
@@ -2938,11 +2973,9 @@ button.hud-resource-chip:active:not(:disabled) {
   /* Forest-path adventure scene introduced 2026-05-05. AVIF/WebP triplet
      mirrors bg-app pipeline (5f1a162). Source asset ships at 852x1846
      in design/new-assets-chesscito/bg-new-hub.png. */
-  background-image: image-set(
-      url("/art/redesign/bg/bg-new-hub.avif") type("image/avif"),
+  background-image: image-set(url("/art/redesign/bg/bg-new-hub.avif") type("image/avif"),
       url("/art/redesign/bg/bg-new-hub.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-new-hub.png") type("image/png")
-    );
+      url("/art/redesign/bg/bg-new-hub.png") type("image/png"));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -3043,11 +3076,9 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 16px 12px 24px;
   gap: 12px;
   background-color: var(--adv-deep-blue);
-  background-image: image-set(
-      url("/art/redesign/bg/bg-app.avif") type("image/avif"),
+  background-image: image-set(url("/art/redesign/bg/bg-app.avif") type("image/avif"),
       url("/art/redesign/bg/bg-app.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-app.png") type("image/png")
-    );
+      url("/art/redesign/bg/bg-app.png") type("image/png"));
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
@@ -3344,8 +3375,7 @@ button.hud-resource-chip:active:not(:disabled) {
 
   50% {
     filter:
-      drop-shadow(0 6px 0 var(--gold-leaf-shadow))
-      drop-shadow(0 0 14px var(--kingdom-warm-glow));
+      drop-shadow(0 6px 0 var(--gold-leaf-shadow)) drop-shadow(0 0 14px var(--kingdom-warm-glow));
   }
 }
 
@@ -3507,20 +3537,60 @@ button.hud-resource-chip:active:not(:disabled) {
   outline: none;
 }
 
-.stone-pedestal-small  { width: 40px; height: 40px; }
-.stone-pedestal-medium { width: 48px; height: 48px; }
-.stone-pedestal-large  { width: 64px; height: 64px; }
+.stone-pedestal-small {
+  width: 40px;
+  height: 40px;
+}
 
-.stone-pedestal-stone-1  { background-image: var(--stone-pedestal-bg-1); }
-.stone-pedestal-stone-2  { background-image: var(--stone-pedestal-bg-2); }
-.stone-pedestal-stone-3  { background-image: var(--stone-pedestal-bg-3); }
-.stone-pedestal-stone-4  { background-image: var(--stone-pedestal-bg-4); }
-.stone-pedestal-stone-5  { background-image: var(--stone-pedestal-bg-5); }
-.stone-pedestal-stone-6  { background-image: var(--stone-pedestal-bg-6); }
-.stone-pedestal-stone-7  { background-image: var(--stone-pedestal-bg-7); }
-.stone-pedestal-stone-8  { background-image: var(--stone-pedestal-bg-8); }
-.stone-pedestal-stone-9  { background-image: var(--stone-pedestal-bg-9); }
-.stone-pedestal-stone-10 { background-image: var(--stone-pedestal-bg-10); }
+.stone-pedestal-medium {
+  width: 48px;
+  height: 48px;
+}
+
+.stone-pedestal-large {
+  width: 64px;
+  height: 64px;
+}
+
+.stone-pedestal-stone-1 {
+  background-image: var(--stone-pedestal-bg-1);
+}
+
+.stone-pedestal-stone-2 {
+  background-image: var(--stone-pedestal-bg-2);
+}
+
+.stone-pedestal-stone-3 {
+  background-image: var(--stone-pedestal-bg-3);
+}
+
+.stone-pedestal-stone-4 {
+  background-image: var(--stone-pedestal-bg-4);
+}
+
+.stone-pedestal-stone-5 {
+  background-image: var(--stone-pedestal-bg-5);
+}
+
+.stone-pedestal-stone-6 {
+  background-image: var(--stone-pedestal-bg-6);
+}
+
+.stone-pedestal-stone-7 {
+  background-image: var(--stone-pedestal-bg-7);
+}
+
+.stone-pedestal-stone-8 {
+  background-image: var(--stone-pedestal-bg-8);
+}
+
+.stone-pedestal-stone-9 {
+  background-image: var(--stone-pedestal-bg-9);
+}
+
+.stone-pedestal-stone-10 {
+  background-image: var(--stone-pedestal-bg-10);
+}
 
 .stone-pedestal:active:not(:disabled) {
   transform: scale(0.96);
@@ -3562,7 +3632,7 @@ button.hud-resource-chip:active:not(:disabled) {
      stone asset takes the full button bounds, the icon overlays on
      top, horizontally centered, vertically biased high. */
   position: absolute;
-  top: 6%;
+  top: -10%;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;
@@ -3592,7 +3662,9 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @keyframes stone-pedestal-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Reduced-motion fallback: keep the affordance via border-color flash
@@ -3601,11 +3673,13 @@ button.hud-resource-chip:active:not(:disabled) {
   .stone-pedestal {
     transition: border-color 200ms ease-out;
   }
+
   .stone-pedestal:active:not(:disabled) {
     transform: none;
     border: 2px solid rgba(245, 200, 100, 0.95);
     box-shadow: none;
   }
+
   .stone-pedestal-spinner {
     animation-duration: 1400ms;
   }
@@ -3631,11 +3705,23 @@ button.hud-resource-chip:active:not(:disabled) {
   outline: none;
 }
 
-.treasure-tile-small { width: 120px; height: 136px; }
-.treasure-tile-large { width: 160px; height: 174px; }
+.treasure-tile-small {
+  width: 120px;
+  height: 136px;
+}
 
-.treasure-tile-small { background-image: var(--treasure-chest-bg-small); }
-.treasure-tile-large { background-image: var(--treasure-chest-bg-large); }
+.treasure-tile-large {
+  width: 160px;
+  height: 174px;
+}
+
+.treasure-tile-small {
+  background-image: var(--treasure-chest-bg-small);
+}
+
+.treasure-tile-large {
+  background-image: var(--treasure-chest-bg-large);
+}
 
 .treasure-tile:active:not(:disabled) {
   transform: scale(0.96);
@@ -3713,8 +3799,13 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
 }
 
-.treasure-tile-ribbon[data-ribbon="NEW"]  { background: linear-gradient(180deg, #10b981 0%, #047857 100%); }
-.treasure-tile-ribbon[data-ribbon="SALE"] { background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%); }
+.treasure-tile-ribbon[data-ribbon="NEW"] {
+  background: linear-gradient(180deg, #10b981 0%, #047857 100%);
+}
+
+.treasure-tile-ribbon[data-ribbon="SALE"] {
+  background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+}
 
 .treasure-tile-spinner {
   position: absolute;
@@ -3731,18 +3822,22 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @keyframes treasure-tile-spin {
-  to { transform: translate(-50%, -50%) rotate(360deg); }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .treasure-tile {
     transition: border-color 200ms ease-out;
   }
+
   .treasure-tile:active:not(:disabled) {
     transform: none;
     border: 2px solid rgba(245, 200, 100, 0.95);
     box-shadow: none;
   }
+
   .treasure-tile-spinner {
     animation-duration: 1400ms;
   }
@@ -3855,18 +3950,22 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @keyframes principal-button-spin {
-  to { transform: translate(-50%, -50%) rotate(360deg); }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .principal-button {
     transition: border-color 200ms ease-out;
   }
+
   .principal-button:active:not(:disabled) {
     transform: none;
     border: 2px solid rgba(245, 200, 100, 0.95);
     box-shadow: none;
   }
+
   .principal-button-spinner {
     animation-duration: 1400ms;
   }
@@ -4021,6 +4120,7 @@ button.hud-resource-chip:active:not(:disabled) {
   .gem-button {
     transition: border-color 200ms ease-out;
   }
+
   .gem-button:active:not(:disabled) {
     transform: none;
     border: 2px solid rgba(245, 200, 100, 0.95);
