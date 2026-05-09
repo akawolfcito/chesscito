@@ -705,6 +705,49 @@ export const HUB_V2_SPLASH_COPY = {
   ariaTitleId: "splash-title",
 } as const;
 
+/** Hub V2 mastery dashboard (Dashboard D per design-lock §1.3 + §2.2).
+ *  Per-piece copy for the 6-tile 2x3 grid plus section header strings.
+ *  ariaLabel is state-aware; current/total only consulted for "in-progress". */
+type HubV2MasteryState =
+  | "mastered"
+  | "in-progress"
+  | "locked-buildable"
+  | "coming-soon";
+
+function buildHubV2MasteryPieceCopy(label: string) {
+  return {
+    label,
+    subLocked: "Master to unlock",
+    subInProgress: (current: number, total: number) => `${current}/${total}`,
+    subMastered: "★★★",
+    subComingSoon: "Coming soon",
+    ariaLabel: (
+      state: HubV2MasteryState,
+      current?: number,
+      total?: number,
+    ): string => {
+      if (state === "mastered") return `${label} mastered, three stars`;
+      if (state === "in-progress")
+        return `${label} in progress, ${current ?? 0} of ${total ?? 0} stars`;
+      if (state === "locked-buildable")
+        return `${label} — start practicing to earn stars`;
+      return `${label} — coming soon`;
+    },
+  } as const;
+}
+
+export const HUB_V2_MASTERY_COPY = {
+  rook: buildHubV2MasteryPieceCopy("Rook"),
+  bishop: buildHubV2MasteryPieceCopy("Bishop"),
+  knight: buildHubV2MasteryPieceCopy("Knight"),
+  pawn: buildHubV2MasteryPieceCopy("Pawn"),
+  queen: buildHubV2MasteryPieceCopy("Queen"),
+  king: buildHubV2MasteryPieceCopy("King"),
+  streakLabel: (days: number): string =>
+    days === 0 ? "" : days === 1 ? "1-day streak" : `${days}-day streak`,
+  masteryDashboardAriaLabel: "Piece masteries",
+} as const;
+
 export const COACH_COPY = {
   askCoach: "Ask Coach",
   loading: "Loading...",
