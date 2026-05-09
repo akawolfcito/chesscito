@@ -748,3 +748,72 @@ type CandyCardProps = {
 
 **`<CandyCard>` does NOT overlap with `apps/web/src/components/ui/card.tsx`** (shadcn `Card / CardHeader / CardTitle / CardDescription / CardContent / CardFooter`). The shadcn primitives are for tooling-bootstrapped surfaces only. **For product cards always use `<CandyCard>` from `@/components/redesign/candy-card`.**
 
+## 16. Scene-Rooted UI Vocabulary (M3.5)
+
+Five sibling primitives where each control is a **physical object in the scene** (stone, treasure, primary-action button, wood, gem). Complements `<CandyCard>` — CandyCard standardizes residential content blocks; the scene-rooted vocabulary covers pressable CTAs that live inside the bosque.
+
+**Spec**: `docs/superpowers/specs/2026-05-09-scene-rooted-ui-vocabulary-design.md`
+**Red-team**: `docs/superpowers/specs/2026-05-09-scene-rooted-ui-vocabulary-redteam.md`
+**Location**: `apps/web/src/components/scene-rooted/`
+
+### 16.1 Primitive matrix
+
+| Primitive | Role | Element | Asset |
+|---|---|---|---|
+| `<StonePedestal>` | Round tap target on a piedra (1–10 stones × 3 sizes) | `<button>` | `--stone-pedestal-bg-{1..10}` |
+| `<TreasureTile>` | Chest with iconStack + value chip + ribbon enum | `<button>` | `--treasure-chest-bg-{small,large}` |
+| `<PrincipalButton>` | Primary CTA backed by `principalbutton.webp` | `<button>` | `--principal-button-bg` |
+| `<WoodBanner>` | Presentational title/state ribbon, 3 sizes | `<div role="presentation">` or `<h2>` (when `asTitle`) | `--wood-banner-bg-{short,medium,large}` |
+| `<GemBadge>` | Presentational metric pill | `<span>` | `--gem-pill-bg` |
+| `<GemButton>` | Pressable metric pill (sibling of GemBadge) | `<button>` | `--gem-pill-bg` |
+
+### 16.2 Asset Versioning Policy
+
+Assets in `apps/web/public/art/scene-rooted/` are **working drafts**. Each primitive references its asset via a CSS variable (naming: `--{primitive-kebab}-bg-{variant}`). Swapping the asset = updating the CSS var; no primitive contract change required.
+
+Tests assert on `data-component`, `data-size`, `data-stone`, `data-state`, `data-ribbon` and slot composition — never on filenames. This unblocks shipping with non-final art.
+
+When the var resolves to empty/none/missing, the primitive applies `is-placeholder` to its root and renders a CSS gradient fallback (no flash-of-broken-image).
+
+### 16.3 Asset performance budget
+
+Verified on the working-draft set (commit `35c46cb`):
+
+| Primitive | Budget | Worst-case actual |
+|---|---|---|
+| `<StonePedestal>` | ≤ 12 KB | 4.8 KB (piedra1.webp) |
+| `<TreasureTile>` | ≤ 24 KB | 18.9 KB (treasure-chest-large.webp) |
+| `<PrincipalButton>` | ≤ 16 KB | 10.1 KB |
+| `<WoodBanner>` | ≤ 16 KB | 16.3 KB (medium) |
+| `<GemBadge>` / `<GemButton>` | ≤ 8 KB | 2.2 KB |
+
+Total payload for the full vocabulary set: **148 KB**.
+
+### 16.4 Behavior contract (shared across pressable primitives)
+
+1. **Press feedback** — `:active:not(:disabled)` applies `transform: scale(0.96)` + a brief `box-shadow` lift. The animation is intentionally NOT neutralized (these primitives ARE pressable, unlike `<CandyCard>`).
+2. **`prefers-reduced-motion`** — when the OS-level setting is reduced, scale is removed but a `border-color` flash (200ms) replaces it. Visual feedback NEVER fully disappears.
+3. **Disabled** — renders `<button disabled>` with 50% opacity + `cursor: not-allowed`. The DOM element stays a `<button>` (NOT polymorphic to `<div>`); a11y requirement so screen readers announce a disabled control.
+4. **Loading** — when `loading=true`, primitive shows a centered spinner; underlying icon/label dims to 30% opacity; click is suppressed. When BOTH `loading` AND `disabled`, `loading` takes visual precedence (spinner shown). `<GemButton>` and `<GemBadge>` intentionally lack a loading state per spec — metric pills update fast.
+5. **a11y** — `<StonePedestal>`, `<TreasureTile>`, `<GemButton>` require `aria-label` at the TypeScript type level. `<PrincipalButton>` may infer label from textual children; `<WoodBanner asTitle>` becomes `<h2>`.
+6. **Iconography decoupling** — primitives accept any `ReactNode` for icon slots. They do NOT type-check `icon.type` or constrain to a specific icon component.
+
+### 16.5 Migration mapping (pending — guarded by user approval)
+
+| Surface | Primitive | Notes |
+|---|---|---|
+| `daily-tactic-card.tsx` (compact) | `<StonePedestal size="medium" stone={2}>` with coach icon + streak `badge` | Canary, lowest blast radius |
+| `mini-arena-bridge-slot.tsx` (compact) | `<StonePedestal size="medium" stone={4}>` with trophy icon | Gated by 12-stars-rook |
+| `mini-arena-bridge-slot.tsx` (non-compact) | DELETE — confirmed dead code | — |
+| `daily-tactic-card.tsx` (non-compact) | DELETE — confirmed dead code | — |
+| `action-pin.tsx` (`tone="claim"`) | Composition — action-pin internally renders `<PrincipalButton>` when `tone="claim"` | Preserves all call sites |
+| `coach-paywall.tsx` 5-pack | `<TreasureTile size="small">` + `iconStack=5 coins` + `valueChip="$0.05"` | Paywall blocker |
+| `coach-paywall.tsx` 20-pack | `<TreasureTile size="large">` + `iconStack=20 coins` + `ribbon="BEST"` + `valueChip="$0.10"` | Last; revenue-critical |
+
+### 16.6 Future work (out-of-scope this milestone)
+
+- "Mint your Moment" — daily-tactic share/mint flow extending VictoryNFT pattern. Will reuse `<PrincipalButton>` for the "Save my Moment" CTA when shipped.
+- `<StonePedestal variant="trophy">` — completed daily-tactic state ("logrado-orgullo, no muerto"). Tracked in spec Open Questions; not blocking v1.
+- Manual screenshot baselines per primitive in `apps/web/e2e/screenshots/scene-rooted/`.
+- Surface audit for non-diegetic chrome (other `<button>` instances) — recommended follow-up per red-team P1.
+
