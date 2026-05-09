@@ -311,6 +311,28 @@
     --featured-subtitle-text: rgba(180, 160, 120, 0.60);
     --featured-cta-glow: 0 0 12px rgba(245, 158, 11, 0.15);
 
+    /* ── Scene-rooted UI vocabulary (M3.5) ──
+     * Diegetic primitives reference assets via these vars per Asset
+     * Versioning Policy (spec 2026-05-09). Swap = CSS-var change only;
+     * no primitive contract churn. */
+    --stone-pedestal-bg-1: url("/art/scene-rooted/piedra1.webp");
+    --stone-pedestal-bg-2: url("/art/scene-rooted/piedra2.webp");
+    --stone-pedestal-bg-3: url("/art/scene-rooted/piedra3.webp");
+    --stone-pedestal-bg-4: url("/art/scene-rooted/piedra4.webp");
+    --stone-pedestal-bg-5: url("/art/scene-rooted/piedra5.webp");
+    --stone-pedestal-bg-6: url("/art/scene-rooted/piedra6.webp");
+    --stone-pedestal-bg-7: url("/art/scene-rooted/piedra7.webp");
+    --stone-pedestal-bg-8: url("/art/scene-rooted/piedra8.webp");
+    --stone-pedestal-bg-9: url("/art/scene-rooted/piedra9.webp");
+    --stone-pedestal-bg-10: url("/art/scene-rooted/piedra10.webp");
+    --treasure-chest-bg-small: url("/art/scene-rooted/treasure-chest-small.webp");
+    --treasure-chest-bg-large: url("/art/scene-rooted/treasure-chest-large.webp");
+    --principal-button-bg: url("/art/scene-rooted/principalbutton.webp");
+    --wood-banner-bg-short: url("/art/scene-rooted/wood-banner-blank-short.webp");
+    --wood-banner-bg-medium: url("/art/scene-rooted/wood-banner-blank-medium.webp");
+    --wood-banner-bg-large: url("/art/scene-rooted/wood-banner-blank-large.webp");
+    --gem-pill-bg: url("/art/scene-rooted/gem-pill-base.webp");
+
     /* ── E3 Display Font ── */
     --font-game-display: var(--font-fredoka), "Fredoka One", sans-serif;
     /* Bold blocky face used for sheet titles + button actions across the
