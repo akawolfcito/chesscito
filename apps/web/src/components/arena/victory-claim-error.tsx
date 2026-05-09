@@ -4,6 +4,7 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { formatTime } from "@/lib/game/arena-utils";
@@ -72,9 +73,18 @@ export function VictoryClaimError({
           cta={
             <div className="flex w-full flex-col gap-2.5">
               {onRetry && (
-                <Button type="button" variant="game-primary" size="game" onClick={onRetry}>
-                  <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {VICTORY_CLAIM_COPY.tryAgain}
-                </Button>
+                <div className="flex w-full justify-center">
+                  <PrincipalButton
+                    size="medium"
+                    leadingIcon={
+                      <CandyIcon name="refresh" className="h-4 w-4" />
+                    }
+                    onClick={onRetry}
+                    aria-label={VICTORY_CLAIM_COPY.tryAgain}
+                  >
+                    {VICTORY_CLAIM_COPY.tryAgain}
+                  </PrincipalButton>
+                </div>
               )}
               <Button
                 type="button"
