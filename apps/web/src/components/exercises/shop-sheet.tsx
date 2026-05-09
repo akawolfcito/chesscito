@@ -10,6 +10,7 @@ import {
 import { SHOP_SHEET_COPY } from "@/lib/content/editorial";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { Button } from "@/components/ui/button";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 
 type CatalogItem = {
   itemId: bigint;
@@ -200,20 +201,25 @@ export function ShopSheet({
                   </>
                 )}
               </p>
-              <Button
-                type="button"
-                variant="game-solid"
-                size="game"
+              <PrincipalButton
+                size="medium"
                 className="mt-3"
                 disabled={!item.configured || !item.enabled}
                 onClick={() => onSelectItem(item.itemId)}
+                aria-label={
+                  !item.configured
+                    ? SHOP_SHEET_COPY.buyButtonComingSoon
+                    : !item.enabled
+                      ? SHOP_SHEET_COPY.buyButtonUnavailable
+                      : SHOP_SHEET_COPY.buyButton
+                }
               >
                 {!item.configured
                   ? SHOP_SHEET_COPY.buyButtonComingSoon
                   : !item.enabled
                     ? SHOP_SHEET_COPY.buyButtonUnavailable
                     : SHOP_SHEET_COPY.buyButton}
-              </Button>
+              </PrincipalButton>
               {item.celoSibling ? (
                 <Button
                   type="button"
