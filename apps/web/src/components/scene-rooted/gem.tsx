@@ -2,15 +2,29 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+/** Visual register for the gem.
+ *
+ * - `default` — base purple gem asset (kingdom canon)
+ * - `success` — emerald hue (ACTIVE entitlement, OWNED items)
+ * - `warning` — amber hue (EXPIRING entitlement, attention)
+ * - `locked` — grayscale (locked/unattainable state)
+ *
+ * Implementation: CSS filter on the [data-tone] selector. Single
+ * underlying asset, runtime hue rotation — no new assets required.
+ */
+export type GemTone = "default" | "success" | "warning" | "locked";
+
 export type GemBadgeProps = {
   icon: ReactNode;
   value: ReactNode;
+  tone?: GemTone;
   className?: string;
 };
 
 export type GemButtonProps = {
   icon: ReactNode;
   value: ReactNode;
+  tone?: GemTone;
   onClick: () => void;
   disabled?: boolean;
   className?: string;
@@ -29,7 +43,12 @@ function usePlaceholderProbe<T extends HTMLElement>() {
   return [ref, isPlaceholder] as const;
 }
 
-export function GemBadge({ icon, value, className = "" }: GemBadgeProps) {
+export function GemBadge({
+  icon,
+  value,
+  tone = "default",
+  className = "",
+}: GemBadgeProps) {
   const [ref, isPlaceholder] = usePlaceholderProbe<HTMLSpanElement>();
 
   const classes = [
@@ -42,7 +61,12 @@ export function GemBadge({ icon, value, className = "" }: GemBadgeProps) {
     .trim();
 
   return (
-    <span ref={ref} data-component="gem-badge" className={classes}>
+    <span
+      ref={ref}
+      data-component="gem-badge"
+      data-tone={tone}
+      className={classes}
+    >
       <span className="gem-badge-icon">{icon}</span>
       <span className="gem-badge-value">{value}</span>
     </span>
@@ -52,6 +76,7 @@ export function GemBadge({ icon, value, className = "" }: GemBadgeProps) {
 export function GemButton({
   icon,
   value,
+  tone = "default",
   onClick,
   disabled = false,
   className = "",
@@ -82,6 +107,7 @@ export function GemButton({
       type="button"
       data-component="gem-button"
       data-state={state}
+      data-tone={tone}
       className={classes}
       disabled={disabled}
       onClick={handleClick}

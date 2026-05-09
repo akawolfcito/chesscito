@@ -143,3 +143,57 @@ describe("Gem (Badge + Button) — globals.css contract", () => {
     );
   });
 });
+
+describe("Gem — tone prop (sprint 2 / G2)", () => {
+  it("GemBadge defaults tone to 'default' when omitted", () => {
+    const { container } = render(<GemBadge icon="x" value="1" />);
+    const root = getRootByComponent(container, "gem-badge");
+    expect(root.getAttribute("data-tone")).toBe("default");
+  });
+
+  it.each(["default", "success", "warning", "locked"] as const)(
+    "GemBadge applies data-tone='%s' when tone='%s'",
+    (tone) => {
+      const { container } = render(
+        <GemBadge icon="x" value="1" tone={tone} />,
+      );
+      const root = getRootByComponent(container, "gem-badge");
+      expect(root.getAttribute("data-tone")).toBe(tone);
+    },
+  );
+
+  it("GemButton defaults tone to 'default' when omitted", () => {
+    const { container } = render(
+      <GemButton icon="x" value="1" onClick={() => {}} aria-label="x" />,
+    );
+    const root = getRootByComponent(container, "gem-button");
+    expect(root.getAttribute("data-tone")).toBe("default");
+  });
+
+  it.each(["default", "success", "warning", "locked"] as const)(
+    "GemButton applies data-tone='%s' when tone='%s'",
+    (tone) => {
+      const { container } = render(
+        <GemButton
+          icon="x"
+          value="1"
+          tone={tone}
+          onClick={() => {}}
+          aria-label="x"
+        />,
+      );
+      const root = getRootByComponent(container, "gem-button");
+      expect(root.getAttribute("data-tone")).toBe(tone);
+    },
+  );
+
+  it("globals.css defines tone filter rules for success / warning / locked", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const cssPath = path.resolve(__dirname, "../../../app/globals.css");
+    const css = fs.readFileSync(cssPath, "utf8");
+    expect(css).toMatch(/\[data-tone="success"\][\s\S]{0,200}filter:/);
+    expect(css).toMatch(/\[data-tone="warning"\][\s\S]{0,200}filter:/);
+    expect(css).toMatch(/\[data-tone="locked"\][\s\S]{0,200}filter:/);
+  });
+});

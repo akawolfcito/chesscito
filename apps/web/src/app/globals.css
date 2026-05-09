@@ -4098,6 +4098,28 @@ button.hud-resource-chip:active:not(:disabled) {
   box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.3);
 }
 
+/* ── Gem tone variants — single asset, runtime hue rotation ───────────
+   Sprint 2 (vocabulary unification spec §G2). The base gem asset
+   ships in a violet hue (kingdom canon "default"). Tones rotate the
+   hue + tweak saturation/brightness so the gem reads as ACTIVE,
+   EXPIRING, or LOCKED without shipping new assets. The placeholder
+   fallback above uses the same color as `default` so a missing asset
+   still hue-rotates correctly under tone variants. */
+.gem-badge[data-tone="success"],
+.gem-button[data-tone="success"] {
+  filter: hue-rotate(120deg) saturate(0.95);
+}
+
+.gem-badge[data-tone="warning"],
+.gem-button[data-tone="warning"] {
+  filter: hue-rotate(-110deg) saturate(1.1);
+}
+
+.gem-badge[data-tone="locked"],
+.gem-button[data-tone="locked"] {
+  filter: grayscale(0.85) brightness(0.6);
+}
+
 .gem-badge-icon,
 .gem-button-icon {
   position: relative;
