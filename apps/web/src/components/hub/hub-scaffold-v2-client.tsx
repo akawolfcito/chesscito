@@ -168,22 +168,55 @@ export function HubScaffoldV2Client() {
       >
         <HubV2Splash />
 
-        <TrainingPassBand
-          active={proActive}
-          daysRemaining={proActive ? 30 : undefined}
-          sessionsUsed={proActive ? 0 : undefined}
-          sessionsTotal={proActive ? 12 : undefined}
-          renewsAt={proActive ? "" : undefined}
-          testId="hub-v2-pro-chip"
-          onTap={() => proSheet.openSheet()}
-        />
+        <header className="hub-v2-topbar" aria-label="Hub status">
+          <span className="hub-v2-status-pill hub-v2-status-pill-trophy">
+            <img
+              src="/art/redesign/icons/trophy.webp"
+              alt=""
+              aria-hidden="true"
+              className="hub-v2-status-icon"
+            />
+            <span>1</span>
+          </span>
+          <button
+            type="button"
+            className="hub-v2-status-pill hub-v2-status-pill-coach"
+            onClick={() => proSheet.openSheet()}
+          >
+            <img
+              src="/art/redesign/icons/coach.webp"
+              alt=""
+              aria-hidden="true"
+              className="hub-v2-status-icon"
+            />
+            <span>Coach</span>
+          </button>
+        </header>
 
-        <MasteryDashboard
-          tiles={PLACEHOLDER_TILES}
-          claimed={badgeSheet.badgesClaimed}
-          streakDays={0}
-          onTileTap={handleMasteryTileTap}
-        />
+        <main className="hub-v2-stage" aria-label="Chesscito hub">
+          <div className="hub-v2-title-banner" aria-hidden="true">
+            Chesscito
+          </div>
+
+          <div className="hub-v2-stage-grid">
+            <MasteryDashboard
+              tiles={PLACEHOLDER_TILES}
+              claimed={badgeSheet.badgesClaimed}
+              streakDays={0}
+              onTileTap={handleMasteryTileTap}
+            />
+
+            <TrainingPassBand
+              active={proActive}
+              daysRemaining={proActive ? 30 : undefined}
+              sessionsUsed={proActive ? 0 : undefined}
+              sessionsTotal={proActive ? 12 : undefined}
+              renewsAt={proActive ? "" : undefined}
+              testId="hub-v2-pro-chip"
+              onTap={() => proSheet.openSheet()}
+            />
+          </div>
+        </main>
 
         <footer
           data-component="hub-v2-dock"
