@@ -20,6 +20,9 @@ const SESSION_KEY = "chesscito:analytics-session";
 const THROTTLE_WINDOW_MS = 5 * 60 * 1000;
 const THROTTLE_MAX = 100;
 const throttleBucket = new Map<string, number[]>();
+const LOCAL_TELEMETRY_ENABLED =
+  process.env.NODE_ENV !== "development" ||
+  process.env.NEXT_PUBLIC_ENABLE_LOCAL_TELEMETRY === "1";
 
 function shouldThrottle(event: string): boolean {
   const now = Date.now();
@@ -51,6 +54,10 @@ function getSessionId(): string {
 
 export function track(event: string, props?: Record<string, unknown>): void {
   if (typeof window === "undefined") return;
+  // Local development renders can double-run effects under React StrictMode
+  // and dev tools can keep pages alive while profiling. Do not hit the
+  // local API/Supabase path unless explicitly opted in.
+  if (!LOCAL_TELEMETRY_ENABLED) return;
   if (shouldThrottle(event)) return;
   const session_id = getSessionId();
   if (!session_id) return;
