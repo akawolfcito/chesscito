@@ -1,27 +1,27 @@
-import { MISSION_RIBBON_COPY } from "@/lib/content/editorial";
+import { MISSION_RIBBON_COPY } from '@/lib/content/editorial'
 
 export type MissionRibbonSurface =
-  | "hub"
-  | "arena"
-  | "pro-sheet"
-  | "landing-cta-bar"
-  | "exercises";
-export type MissionRibbonTone = "default" | "emphatic";
-export type Atmosphere = "adventure" | "scholarly";
+  | 'hub'
+  | 'arena'
+  | 'pro-sheet'
+  | 'landing-cta-bar'
+  | 'exercises'
+export type MissionRibbonTone = 'default' | 'emphatic'
+export type Atmosphere = 'adventure' | 'scholarly'
 
 type Props = {
-  surface: MissionRibbonSurface;
+  surface: MissionRibbonSurface
   /** Optional copy override. When provided, the primitive renders this
    *  text instead of `MISSION_RIBBON_COPY[surface]`. Used by
    *  `surface="exercises"` to feed runtime `pieceHint`. When omitted,
    *  falls back to the editorial map — preserving existing callsites. */
-  text?: string;
-  tone?: MissionRibbonTone;
+  text?: string
+  tone?: MissionRibbonTone
   /** Visual register. Adventure (default) for Hub/Arena/landing-cta-bar;
    *  Scholarly for the PRO sheet hybrid (canon §11). */
-  atmosphere?: Atmosphere;
-  className?: string;
-};
+  atmosphere?: Atmosphere
+  className?: string
+}
 
 /** Per-surface mission tagline rendered ABOVE every payment CTA (canon §11
  *  rule: mission before CTA). Pure presentational — default copy is
@@ -32,19 +32,38 @@ type Props = {
 export function MissionRibbon({
   surface,
   text,
-  tone = "default",
-  atmosphere = "adventure",
-  className = "",
+  tone = 'default',
+  atmosphere = 'adventure',
+  className = '',
 }: Props) {
+  const content = text ?? MISSION_RIBBON_COPY[surface]
   const classes = [
-    "mission-ribbon",
+    'mission-ribbon',
     `mission-ribbon--${surface}`,
     `mission-ribbon--tone-${tone}`,
     `is-atmosphere-${atmosphere}`,
     className,
   ]
     .filter(Boolean)
-    .join(" ");
+    .join(' ')
+
+  if (surface === 'hub' && text == null) {
+    return (
+      <p
+        role="note"
+        aria-label={MISSION_RIBBON_COPY.ariaLabel}
+        className={classes}
+      >
+        <span className="sr-only">{content}</span>
+        {/* <img
+          src="/art/scene-rooted/sms-chesscito.png"
+          alt=""
+          aria-hidden="true"
+          className="mission-ribbon-img"
+        /> */}
+      </p>
+    )
+  }
 
   return (
     <p
@@ -52,7 +71,7 @@ export function MissionRibbon({
       aria-label={MISSION_RIBBON_COPY.ariaLabel}
       className={classes}
     >
-      {text ?? MISSION_RIBBON_COPY[surface]}
+      {content}
     </p>
-  );
+  )
 }

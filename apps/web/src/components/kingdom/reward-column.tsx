@@ -1,8 +1,8 @@
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { REWARD_COPY } from "@/lib/content/editorial";
+import { PIECE_LABELS, REWARD_COPY } from "@/lib/content/editorial";
 
 export type RewardTileId = keyof typeof REWARD_COPY;
-export type RewardTileState = "claimable" | "progress" | "locked";
+export type RewardTileState = "claimed" | "claimable" | "progress" | "locked";
 
 export type RewardTile = {
   id: RewardTileId;
@@ -17,40 +17,34 @@ type Props = {
   className?: string;
 };
 
-const VISIBLE_LIMIT = 3;
+const PIECE_TILE_IDS = ["rook", "bishop", "knight", "pawn", "queen", "king"] as const;
+
+function isPieceTile(id: RewardTileId): id is (typeof PIECE_TILE_IDS)[number] {
+  return (PIECE_TILE_IDS as readonly string[]).includes(id);
+}
 
 /** Vertical reward stack rendered on the Hub left edge. Adventure primitive
- *  showing up to 3 reward tiles (claimable / progress / locked) plus an
- *  overflow indicator when more exist. Tiles are presentational buttons —
+ *  showing reward tiles (claimable / progress / locked). Tiles are presentational buttons —
  *  copy + aria-labels live in `editorial.ts.REWARD_COPY` (single-source). */
 export function RewardColumn({ tiles, className = "" }: Props) {
   if (tiles.length === 0) {
     return null;
   }
 
-  const visible = tiles.slice(0, VISIBLE_LIMIT);
-  const hasOverflow = tiles.length > VISIBLE_LIMIT;
-
   return (
     <div className={`reward-column ${className}`.trim()}>
-      {visible.map((tile) => (
+      {tiles.map((tile) => (
         <RewardTileButton key={tile.id} tile={tile} />
       ))}
-      {hasOverflow ? (
-        <span
-          data-testid="reward-column-overflow"
-          aria-hidden="true"
-          className="reward-column-overflow"
-        >
-          …
-        </span>
-      ) : null}
     </div>
   );
 }
 
 function RewardTileButton({ tile }: { tile: RewardTile }) {
   const copy = REWARD_COPY[tile.id];
+  const label = isPieceTile(tile.id) ? PIECE_LABELS[tile.id] : copy.label;
+  const ariaState: Exclude<RewardTileState, "claimed"> =
+    tile.state === "claimed" ? "progress" : tile.state;
   const classes = [
     "reward-tile",
     `is-${tile.state}`,
@@ -60,14 +54,28 @@ function RewardTileButton({ tile }: { tile: RewardTile }) {
     <button
       type="button"
       onClick={tile.onTap}
-      aria-label={copy.ariaLabel(tile.state)}
+      aria-label={copy.ariaLabel(ariaState)}
       className={classes}
     >
-      <span className="reward-tile-label">{copy.label}</span>
+      <span className="reward-tile-label">{label}</span>
+      {isPieceTile(tile.id) ? (
+        <picture className="reward-tile-piece" aria-hidden="true">
+          <source srcSet={`/art/redesign/pieces/w-${tile.id}.avif`} type="image/avif" />
+          <source srcSet={`/art/redesign/pieces/w-${tile.id}.webp`} type="image/webp" />
+          <img src={`/art/redesign/pieces/w-${tile.id}.png`} alt="" />
+        </picture>
+      ) : (
+        <CandyIcon name="trophy" className="reward-tile-piece reward-tile-piece--icon" />
+      )}
+      {tile.state === "claimed" ? (
+        <CandyIcon name="check" className="reward-tile-status reward-tile-status--claimed" />
+      ) : null}
       {tile.state === "claimable" ? (
-        <span
-          data-testid="reward-tile-notif"
+        <img
+          src="/art/scene-rooted/punto-alerta-notificacion.png"
+          alt=""
           aria-hidden="true"
+          data-testid="reward-tile-notif"
           className="reward-tile-notif"
         />
       ) : null}

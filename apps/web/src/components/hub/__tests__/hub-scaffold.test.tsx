@@ -145,7 +145,7 @@ describe("HubScaffold", () => {
     it("does not render a secondary link when the prop is omitted", () => {
       const { container } = render(<HubScaffold {...baseProps} />);
       expect(
-        container.querySelector(".hub-scaffold-secondary-link"),
+        container.querySelector(".hub-scaffold-practice-cta"),
       ).toBeNull();
     });
 
@@ -164,7 +164,8 @@ describe("HubScaffold", () => {
         name: "Practice individual chess pieces",
       });
       expect(link.textContent).toBe("Practice pieces");
-      expect(link.className).toMatch(/hub-scaffold-secondary-link/);
+      expect(link.className).toMatch(/primary-play-cta--playhub/);
+      expect(link.className).toMatch(/hub-scaffold-practice-cta/);
     });
 
     it("forwards the tap to the onPress handler", async () => {

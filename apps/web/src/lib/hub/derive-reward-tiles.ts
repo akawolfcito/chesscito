@@ -35,15 +35,15 @@ const DEFAULT_THRESHOLD = 10;
  *  tiles that should be rendered in the Hub.
  *
  *  Rules:
- *  - A piece already claimed on-chain is dropped (no longer a goal).
+ *  - A piece already claimed on-chain remains visible as `claimed` so the
+ *    Hub keeps the full 6-piece visual sequence.
  *  - Otherwise the state follows the narrative chain:
  *      • `claimable` — stars meet threshold and prior tier is mastered.
  *      • `progress`  — prior tier mastered (or first tier) but threshold
  *        not yet met.
  *      • `locked`    — prior tier not mastered.
  *  - Tiles are returned in unlock order (no re-sort) so the player sees
- *    the same progression they read in `REWARD_COPY`. RewardColumn slices
- *    to 3 + overflow indicator on its own. */
+ *    the same progression they read in `REWARD_COPY`. */
 export function deriveRewardTiles(input: RewardDerivationInput): RewardTile[] {
   const {
     badgesClaimed,
@@ -62,6 +62,11 @@ export function deriveRewardTiles(input: RewardDerivationInput): RewardTile[] {
     const mastered = claimed || meetsThreshold;
 
     if (claimed) {
+      tiles.push({
+        id: piece,
+        state: "claimed",
+        onTap: onTileTap ? () => onTileTap(piece) : undefined,
+      });
       priorMastered = mastered;
       continue;
     }

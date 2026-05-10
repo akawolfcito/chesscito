@@ -19,7 +19,28 @@ describe("RewardColumn", () => {
     expect(tile.className).toMatch(/is-claimable\b/);
     const badge = within(tile).getByTestId("reward-tile-notif");
     expect(badge).toBeInTheDocument();
-    expect(tile.textContent).toContain(REWARD_COPY.rook.label);
+    expect(badge).toHaveAttribute(
+      "src",
+      "/art/scene-rooted/punto-alerta-notificacion.png",
+    );
+    expect(tile.textContent).toContain("Rook");
+    expect(tile.textContent).not.toContain("mastery");
+  });
+
+  it("renders a claimed tile with a check status marker", () => {
+    const { container } = render(
+      <RewardColumn
+        tiles={[{ id: "rook", state: "claimed" }]}
+      />,
+    );
+    const tile = screen.getByRole("button", {
+      name: REWARD_COPY.rook.ariaLabel("progress"),
+    });
+    expect(tile.className).toMatch(/is-claimed\b/);
+    const checkSources = container.querySelectorAll(
+      "source[srcset='/art/redesign/icons/check.avif']",
+    );
+    expect(checkSources.length).toBeGreaterThan(0);
   });
 
   it("renders a locked tile with the locked modifier and a lock icon", () => {
@@ -56,7 +77,7 @@ describe("RewardColumn", () => {
     expect(lockSources.length).toBe(0);
   });
 
-  it("renders only the first 3 tiles plus an overflow indicator when given more than 3", () => {
+  it("renders all piece tiles in the order it receives them", () => {
     render(
       <RewardColumn
         tiles={[
@@ -69,20 +90,14 @@ describe("RewardColumn", () => {
       />,
     );
     const buttons = screen.getAllByRole("button");
-    expect(buttons).toHaveLength(3);
-    expect(screen.getByTestId("reward-column-overflow")).toBeInTheDocument();
-  });
-
-  it("does not render the overflow indicator when given 3 or fewer tiles", () => {
-    render(
-      <RewardColumn
-        tiles={[
-          { id: "rook", state: "claimable" },
-          { id: "bishop", state: "progress" },
-          { id: "queen", state: "locked" },
-        ]}
-      />,
-    );
+    expect(buttons).toHaveLength(5);
+    expect(buttons.map((button) => button.textContent)).toEqual([
+      "Rook",
+      "Bishop",
+      "Queen",
+      "Knight",
+      "King",
+    ]);
     expect(screen.queryByTestId("reward-column-overflow")).toBeNull();
   });
 

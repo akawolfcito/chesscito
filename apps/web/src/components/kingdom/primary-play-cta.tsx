@@ -25,6 +25,7 @@ type Props = {
   loading?: boolean;
   disabled?: boolean;
   className?: string;
+  pieceIcon?: "pawn" | "king";
 };
 
 /** Backplate art per surface. Hub uses the candy-style green
@@ -60,6 +61,7 @@ export function PrimaryPlayCta({
   loading = false,
   disabled = false,
   className = "",
+  pieceIcon,
 }: Props) {
   const inert = loading || disabled;
   const iconBase = SURFACE_ICON_BASE[surface];
@@ -79,6 +81,7 @@ export function PrimaryPlayCta({
     `is-atmosphere-${atmosphere}`,
     loading ? "is-loading" : "",
     disabled ? "is-disabled" : "",
+    pieceIcon ? "primary-play-cta--with-piece" : "",
     className,
   ]
     .filter(Boolean)
@@ -113,6 +116,17 @@ export function PrimaryPlayCta({
           className="primary-play-cta-icon-img"
         />
       </picture>
+      {pieceIcon ? (
+        <picture className="primary-play-cta-piece-icon" aria-hidden="true">
+          <source srcSet={`/art/redesign/pieces/w-${pieceIcon}.avif`} type="image/avif" />
+          <source srcSet={`/art/redesign/pieces/w-${pieceIcon}.webp`} type="image/webp" />
+          <img
+            src={`/art/redesign/pieces/w-${pieceIcon}.png`}
+            alt=""
+            className="primary-play-cta-piece-icon-img"
+          />
+        </picture>
+      ) : null}
       <span className="primary-play-cta-label">{label}</span>
     </button>
   );

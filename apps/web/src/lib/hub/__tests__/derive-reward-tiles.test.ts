@@ -63,9 +63,8 @@ describe("deriveRewardTiles", () => {
         starsPerPiece: {},
       });
 
-      // rook drops out (already minted); bishop is now the gateway tier.
-      expect(tiles[0].id).toBe("bishop");
-      expect(tiles[0].state).toBe("progress");
+      expect(tiles[0]).toMatchObject({ id: "rook", state: "claimed" });
+      expect(tiles[1]).toMatchObject({ id: "bishop", state: "progress" });
     });
 
     it("unlocks next tier as `progress` once prior tier meets threshold (badge not yet claimed)", () => {
@@ -80,18 +79,19 @@ describe("deriveRewardTiles", () => {
   });
 
   describe("claimed pieces", () => {
-    it("drops claimed pieces from the column entirely", () => {
+    it("keeps claimed pieces visible so the Hub always shows the full sequence", () => {
       const tiles = deriveRewardTiles({
         badgesClaimed: { rook: true, bishop: true },
         starsPerPiece: {},
       });
 
       const ids = tiles.map((t) => t.id);
-      expect(ids).not.toContain("rook");
-      expect(ids).not.toContain("bishop");
+      expect(ids).toEqual([...REWARD_TILE_ORDER]);
+      expect(tiles[0]).toMatchObject({ id: "rook", state: "claimed" });
+      expect(tiles[1]).toMatchObject({ id: "bishop", state: "claimed" });
     });
 
-    it("returns empty array when every piece is mastered", () => {
+    it("returns the full visual sequence when every piece is mastered", () => {
       const tiles = deriveRewardTiles({
         badgesClaimed: {
           rook: true,
@@ -104,7 +104,8 @@ describe("deriveRewardTiles", () => {
         starsPerPiece: {},
       });
 
-      expect(tiles).toEqual([]);
+      expect(tiles.map((t) => t.id)).toEqual([...REWARD_TILE_ORDER]);
+      expect(tiles.every((t) => t.state === "claimed")).toBe(true);
     });
   });
 

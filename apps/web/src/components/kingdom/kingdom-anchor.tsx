@@ -19,7 +19,7 @@ type Props = {
 };
 
 const ASPECT_RATIO: Record<KingdomAnchorVariant, string> = {
-  playhub: "1 / 1",
+  playhub: "669 / 1040",
   "arena-preview": "1.3 / 1",
   "landing-hero": "1.5 / 1",
 };

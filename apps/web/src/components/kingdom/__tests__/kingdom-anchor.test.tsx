@@ -24,10 +24,10 @@ describe("KingdomAnchor", () => {
     expect(img).toHaveAttribute("src", "/art/redesign/bg/splash-loading.png");
   });
 
-  it("defaults to the playhub variant with aspect-ratio 1 / 1", () => {
+  it("defaults to the playhub variant with the portal-centered aspect-ratio", () => {
     render(<KingdomAnchor />);
     const node = screen.getByRole("img", { name: HOME_ANCHOR_COPY.alt });
-    expect(node).toHaveStyle({ aspectRatio: "1 / 1" });
+    expect(node).toHaveStyle({ aspectRatio: "669 / 1040" });
     expect(node.className).toMatch(/kingdom-anchor--playhub/);
   });
 

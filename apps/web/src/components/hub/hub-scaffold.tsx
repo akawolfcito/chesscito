@@ -111,7 +111,9 @@ export function HubScaffold({
   onConnectTap,
   onError,
 }: HubScaffoldProps) {
-  const proValue = pro.active ? HUD_COPY.proRemainingFormat(pro.daysRemaining) : null;
+  const proValue = pro.active
+    ? `PRO ${HUD_COPY.proRemainingFormat(pro.daysRemaining)}`
+    : null;
   const proAriaLabel = pro.active
     ? HUD_COPY.proAriaLabel(pro.daysRemaining)
     : HUD_COPY.proInactiveAriaLabel;
@@ -190,10 +192,60 @@ export function HubScaffold({
 
       <section className="hub-scaffold-body">
         <div className="hub-scaffold-side hub-scaffold-side--left">
+          <div className="hub-scaffold-mastery-title" aria-hidden="true">
+            <img src="/art/scene-rooted/pieces-title-mastery.png" alt="" />
+            <span>Practice<br />Pieces</span>
+            <small>Train &amp; Master</small>
+          </div>
           {wrap("RewardColumn", <RewardColumn tiles={rewardTiles} />)}
         </div>
-        <div className="hub-scaffold-anchor">
-          {wrap("KingdomAnchor", <KingdomAnchor variant="playhub" />)}
+        <div className="hub-scaffold-center">
+          <div className="hub-scaffold-anchor">
+            {wrap("KingdomAnchor", <KingdomAnchor variant="playhub" />)}
+          </div>
+          <footer className="hub-scaffold-footer">
+            {wrap("MissionRibbon", <MissionRibbon surface="hub" />)}
+            {secondaryAction ? (
+              wrap(
+                "PrimaryPlayCta",
+                <PrimaryPlayCta
+                  surface="playhub"
+                  label={secondaryAction.label}
+                  ariaLabel={secondaryAction.ariaLabel}
+                  onPress={secondaryAction.onPress}
+                  pieceIcon="pawn"
+                  className="hub-scaffold-practice-cta"
+                />,
+              )
+            ) : null}
+            <div className="hub-scaffold-guide" aria-hidden="true">
+              <picture className="hub-scaffold-guide-piece">
+                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                <img src="/art/redesign/pieces/w-pawn.png" alt="" />
+              </picture>
+              <img
+                src="/art/scene-rooted/guide-secuencia.png"
+                alt=""
+                className="hub-scaffold-guide-sequence"
+              />
+              <picture className="hub-scaffold-guide-piece">
+                <source srcSet="/art/redesign/pieces/w-king.avif" type="image/avif" />
+                <source srcSet="/art/redesign/pieces/w-king.webp" type="image/webp" />
+                <img src="/art/redesign/pieces/w-king.png" alt="" />
+              </picture>
+            </div>
+            {wrap(
+              "PrimaryPlayCta",
+              <PrimaryPlayCta
+                surface="playhub"
+                label={playLabel}
+                ariaLabel={playAriaLabel}
+                onPress={onPlayPress}
+                pieceIcon="king"
+              />,
+            )}
+          </footer>
         </div>
         <div className="hub-scaffold-side hub-scaffold-side--right">
           {wrap(
@@ -212,29 +264,6 @@ export function HubScaffold({
           )}
         </div>
       </section>
-
-      <footer className="hub-scaffold-footer">
-        {wrap("MissionRibbon", <MissionRibbon surface="hub" />)}
-        {wrap(
-          "PrimaryPlayCta",
-          <PrimaryPlayCta
-            surface="playhub"
-            label={playLabel}
-            ariaLabel={playAriaLabel}
-            onPress={onPlayPress}
-          />,
-        )}
-        {secondaryAction ? (
-          <button
-            type="button"
-            onClick={secondaryAction.onPress}
-            aria-label={secondaryAction.ariaLabel}
-            className="hub-scaffold-secondary-link"
-          >
-            {secondaryAction.label}
-          </button>
-        ) : null}
-      </footer>
     </main>
   );
 }
