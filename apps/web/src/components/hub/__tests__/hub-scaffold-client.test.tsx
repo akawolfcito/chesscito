@@ -272,6 +272,13 @@ describe("HubScaffoldClient — tap handlers", () => {
     );
   });
 
+  it("opens ProSheet from the `initialSheet=pro` deep link", async () => {
+    render(<HubScaffoldClient initialSheet="pro" />);
+
+    expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
   it("routes to /arena?fresh=1 when the primary PLAY CTA fires (forces selector render)", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
@@ -285,27 +292,19 @@ describe("HubScaffoldClient — tap handlers", () => {
     expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
   });
 
-  it("opens ShopSheet in-place when the shields chip is tapped (port 2026-05-08)", async () => {
-    const user = userEvent.setup();
-    // v2 shape — server-tracked credit + local consumed; display
-    // derived as min(MAX, max(0, credited - consumed)).
+  it("keeps the shields shop affordance hidden while the Hub visual pass is active", () => {
     localStorage.setItem("chesscito:shields:credited-cache", "2");
     localStorage.setItem("chesscito:shields:consumed", "0");
     render(<HubScaffoldClient />);
 
-    // Shields chip is part of the secondary HUD row.
-    await user.click(
-      await screen.findByRole("button", { name: /retry shields available/i }),
-    );
-
-    // No legacy navigation — the sheet is mounted in-place via the
-    // useShopSheetState hook. Mirror the assertion shape the
-    // BadgeSheet/PROSheet ports use elsewhere in this file.
+    expect(
+      screen.queryByRole("button", { name: /retry shields available/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/retry shields available/i),
+    ).not.toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalledWith(
       expect.stringContaining("legacy=1"),
-    );
-    expect(pushMock).not.toHaveBeenCalledWith(
-      expect.stringContaining("action=shop"),
     );
   });
 
@@ -381,43 +380,22 @@ describe("HubScaffoldClient — connect affordance", () => {
 });
 
 describe("HubScaffoldClient — shields chip", () => {
-  it("renders shields=0 by default (depleted state is the strongest replenishment cue)", () => {
+  it("does not render the shields chip by default", () => {
     render(<HubScaffoldClient />);
 
     expect(
-      screen.getByLabelText(/0 retry shields available/i),
-    ).toBeInTheDocument();
+      screen.queryByLabelText(/retry shields available/i),
+    ).not.toBeInTheDocument();
   });
 
-  it("reads shield count from credited-cache on mount", async () => {
+  it("stays hidden even when a credited-cache value exists", () => {
     localStorage.setItem("chesscito:shields:credited-cache", "5");
     localStorage.setItem("chesscito:shields:consumed", "0");
     render(<HubScaffoldClient />);
 
     expect(
-      await screen.findByLabelText(/5 retry shields available/i),
-    ).toBeInTheDocument();
-  });
-
-  it("falls back to 0 when credited-cache value is corrupt", () => {
-    localStorage.setItem("chesscito:shields:credited-cache", "not-a-number");
-    localStorage.setItem("chesscito:shields:consumed", "0");
-    render(<HubScaffoldClient />);
-
-    expect(
-      screen.getByLabelText(/0 retry shields available/i),
-    ).toBeInTheDocument();
-  });
-
-  it("derives display from credited - consumed (clamped to MAX_SHIELDS=30)", () => {
-    // 33 credited (server allows over-cap), 2 consumed → 31 → clamp 30.
-    localStorage.setItem("chesscito:shields:credited-cache", "33");
-    localStorage.setItem("chesscito:shields:consumed", "2");
-    render(<HubScaffoldClient />);
-
-    expect(
-      screen.getByLabelText(/30 retry shields available/i),
-    ).toBeInTheDocument();
+      screen.queryByLabelText(/retry shields available/i),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -469,19 +447,18 @@ describe("HubScaffoldClient — telemetry", () => {
     });
   });
 
-  it("fires hub_shields_chip_tap with the current shield_count (KEY conversion event)", async () => {
-    const user = userEvent.setup();
+  it("does not fire hub_shields_chip_tap while the shields chip is hidden", () => {
     localStorage.setItem("chesscito:shields:credited-cache", "3");
     localStorage.setItem("chesscito:shields:consumed", "0");
     render(<HubScaffoldClient />);
 
-    await user.click(
-      await screen.findByRole("button", { name: /3 retry shields available/i }),
+    expect(
+      screen.queryByRole("button", { name: /retry shields available/i }),
+    ).not.toBeInTheDocument();
+    expect(trackMock).not.toHaveBeenCalledWith(
+      "hub_shields_chip_tap",
+      expect.anything(),
     );
-
-    expect(trackMock).toHaveBeenCalledWith("hub_shields_chip_tap", {
-      shield_count: 3,
-    });
   });
 
   it("fires hub_play_tap on PLAY CTA press", async () => {

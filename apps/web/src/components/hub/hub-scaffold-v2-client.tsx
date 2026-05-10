@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 
@@ -44,6 +44,7 @@ const SHIELDS_PER_PURCHASE = 3;
 const MASTERY_STARS_TOTAL = 18;
 
 type Atmosphere = "cool-stone" | "warm-wood";
+export type HubV2InitialSheet = "shop" | "pro" | "badges";
 
 /** Splash is dynamic+ssr:false (Phase 7 nota in
  *  `2026-05-09-hub-phase-3-handoff.md` §"Notas Phase 7") to keep the
@@ -89,7 +90,11 @@ const PLACEHOLDER_TILES: Record<PieceId, MasteryTileData> = {
  *  primitives this scaffold composes (splash / mastery / training band /
  *  dock) each own their own test file — this client owns the
  *  composition + flag + atmosphere contract only. */
-export function HubScaffoldV2Client() {
+export function HubScaffoldV2Client({
+  initialSheet,
+}: {
+  initialSheet?: HubV2InitialSheet;
+}) {
   const router = useRouter();
   const { address } = useAccount();
   const [atmosphere, setAtmosphere] = useState<Atmosphere>("cool-stone");
@@ -136,6 +141,22 @@ export function HubScaffoldV2Client() {
   const shopSheet = useShopSheetState({
     onPurchaseSuccess: handleShopPurchaseSuccess,
   });
+  const openBadgeSheet = badgeSheet.openSheet;
+  const openProSheet = proSheet.openSheet;
+  const openShopSheet = shopSheet.openSheet;
+  const initialSheetOpenedRef = useRef(false);
+
+  useEffect(() => {
+    if (!initialSheet || initialSheetOpenedRef.current) return;
+    initialSheetOpenedRef.current = true;
+    if (initialSheet === "shop") {
+      openShopSheet();
+    } else if (initialSheet === "pro") {
+      openProSheet();
+    } else {
+      openBadgeSheet();
+    }
+  }, [initialSheet, openBadgeSheet, openProSheet, openShopSheet]);
 
   const handleMasteryTileTap = useCallback(
     (_piece: PieceId, _state: MasteryState) => {

@@ -16,14 +16,17 @@ type SearchParams = {
   piece?: string | string[];
   /** Legacy bookmark redirect: open a sheet on first render. Only
    *  honored alongside `?legacy=1`. `trophies` redirects to its own
-   *  page; `shop`/`pro`/`badges` lose their sheet-open intent and
-   *  land on `/hub` (sheets remain reachable via dock + chips).
-   *  Documented as known regression in 2026-05-09 spec. */
+   *  page; `shop`/`pro`/`badges` become `/hub?sheet=...`. */
   action?: string | string[];
+  /** Scaffold sheet deep link. `shop`, `pro`, and `badges` open
+   *  in-place after the client hydrates. Unknown values are ignored. */
+  sheet?: string | string[];
   /** Hub redesign canary flag. `?hub=v2` renders the V2 scaffold while
    *  the production default remains V1 until Phase 8 promotion. */
   hub?: string | string[];
 };
+
+type HubInitialSheet = "shop" | "pro" | "badges";
 
 function pieceHasExercises(piece: string): piece is PieceId {
   const exercises = (EXERCISES as Record<string, unknown[] | undefined>)[piece];
@@ -32,6 +35,12 @@ function pieceHasExercises(piece: string): piece is PieceId {
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function parseInitialSheet(value: string | undefined): HubInitialSheet | undefined {
+  return value === "shop" || value === "pro" || value === "badges"
+    ? value
+    : undefined;
 }
 
 /**
@@ -44,7 +53,7 @@ function firstParam(value: string | string[] | undefined): string | undefined {
  * Backward-compat redirects (server-side) for `?legacy=1` bookmarks:
  *   - `?legacy=1&piece=<rook|bishop|knight|pawn>` → `/exercises?piece=…`
  *   - `?legacy=1&action=trophies`                  → `/trophies`
- *   - `?legacy=1&action=shop|pro|badges`           → `/hub` (intent dropped)
+ *   - `?legacy=1&action=shop|pro|badges`           → `/hub?sheet=…`
  *   - `?legacy=1` (any other shape)                → `/exercises`
  *
  * Canary flag:
@@ -70,11 +79,9 @@ export default function HubPage({
       redirect("/trophies");
     }
 
-    if (action === "shop" || action === "pro" || action === "badges") {
-      // Sheet-open intent is dropped — sheets are reachable from the
-      // scaffold UI. Documented as a known regression (small audience,
-      // pre-prod).
-      redirect("/hub");
+    const actionSheet = parseInitialSheet(action);
+    if (actionSheet) {
+      redirect(`/hub?sheet=${actionSheet}`);
     }
 
     const piece = firstParam(searchParams.piece);
@@ -86,9 +93,11 @@ export default function HubPage({
     redirect(`/exercises${qs ? `?${qs}` : ""}`);
   }
 
+  const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
+
   return resolveHubVariant(searchParams, HUB_V2_DEFAULT) === "v2" ? (
-    <HubScaffoldV2Client />
+    <HubScaffoldV2Client initialSheet={initialSheet} />
   ) : (
-    <HubScaffoldClient />
+    <HubScaffoldClient initialSheet={initialSheet} />
   );
 }

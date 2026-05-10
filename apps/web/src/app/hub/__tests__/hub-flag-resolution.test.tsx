@@ -52,6 +52,13 @@ describe("hub flag resolution — default-off (HUB_V2_DEFAULT=false)", () => {
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
+  it("passes `?sheet=` through when rendering V2", async () => {
+    const HubPage = (await import("../page")).default;
+    const el = HubPage({ searchParams: { hub: "v2", sheet: "badges" } });
+    expect(nameOf(el)).toBe("HubScaffoldV2Client");
+    expect((el as RenderedElement).props.initialSheet).toBe("badges");
+  });
+
   it("no query + default-off → renders V1", async () => {
     const HubPage = (await import("../page")).default;
     const el = HubPage({ searchParams: {} });

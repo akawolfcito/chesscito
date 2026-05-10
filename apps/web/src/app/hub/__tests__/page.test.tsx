@@ -27,6 +27,7 @@ type SearchParamsLike = {
   hub?: string | string[];
   piece?: string | string[];
   action?: string | string[];
+  sheet?: string | string[];
 };
 
 type RenderedElement = {
@@ -70,6 +71,18 @@ describe("/hub page (server)", () => {
       expect((el?.type as unknown as { name: string }).name).toBe(
         "HubScaffoldClient",
       );
+      expect(redirectMock).not.toHaveBeenCalled();
+    });
+
+    it("passes a valid `?sheet=` deep link into the scaffold", () => {
+      const el = renderPage({ sheet: "shop" });
+      expect(el?.props.initialSheet).toBe("shop");
+      expect(redirectMock).not.toHaveBeenCalled();
+    });
+
+    it("ignores an unknown `?sheet=` value", () => {
+      const el = renderPage({ sheet: "leaderboard" });
+      expect(el?.props.initialSheet).toBeUndefined();
       expect(redirectMock).not.toHaveBeenCalled();
     });
   });
@@ -118,11 +131,11 @@ describe("/hub page (server)", () => {
     });
 
     it.each(["shop", "pro", "badges"] as const)(
-      "redirects `?legacy=1&action=%s` to /hub (sheet-intent dropped)",
+      "redirects `?legacy=1&action=%s` to a scaffold sheet deep link",
       (action) => {
         redirectMock.mockClear();
         renderPage({ legacy: "1", action });
-        expect(redirectMock).toHaveBeenCalledWith("/hub");
+        expect(redirectMock).toHaveBeenCalledWith(`/hub?sheet=${action}`);
       },
     );
 

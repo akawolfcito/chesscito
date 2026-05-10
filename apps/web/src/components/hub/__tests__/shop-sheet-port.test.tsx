@@ -168,6 +168,13 @@ describe("HubScaffoldV2Client — ShopSheet port", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
+  it("mounts <ShopSheet> from the `initialSheet=shop` deep link", () => {
+    render(<HubScaffoldV2Client initialSheet="shop" />);
+
+    expect(screen.getByTestId("shop-sheet-root")).toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
   it("refreshes the shields count from 0 to 3 after onPurchaseSuccess fires", () => {
     render(<HubScaffoldV2Client />);
 

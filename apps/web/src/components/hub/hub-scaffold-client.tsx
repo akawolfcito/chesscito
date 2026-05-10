@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useChainId, useReadContracts } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -48,6 +48,8 @@ const PREMIUM_KICKER = "Training Pass";
 const PREMIUM_INACTIVE_LABEL = "Go PRO";
 const PLAY_LABEL = "PLAY";
 const PLAY_ARIA_LABEL = "Start training";
+
+export type HubInitialSheet = "shop" | "pro" | "badges";
 
 function premiumAriaLabel(
   pro: { active: true; daysRemaining: number } | { active: false },
@@ -120,7 +122,11 @@ function deriveProShape(
  *
  *  Pure presentational composition — no on-chain mutations belong here.
  *  Those stay on `<ExercisesScreen>` until the scaffold becomes the default. */
-export function HubScaffoldClient() {
+export function HubScaffoldClient({
+  initialSheet,
+}: {
+  initialSheet?: HubInitialSheet;
+}) {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -149,6 +155,22 @@ export function HubScaffoldClient() {
   // balances + approve/buy + post-submit server credit; scaffold just
   // mounts the two sheets it returns.
   const shopSheet = useShopSheetState();
+  const openBadgeSheet = badgeSheet.openSheet;
+  const openProSheet = proSheet.openSheet;
+  const openShopSheet = shopSheet.openSheet;
+  const initialSheetOpenedRef = useRef(false);
+
+  useEffect(() => {
+    if (!initialSheet || initialSheetOpenedRef.current) return;
+    initialSheetOpenedRef.current = true;
+    if (initialSheet === "shop") {
+      openShopSheet();
+    } else if (initialSheet === "pro") {
+      openProSheet();
+    } else {
+      openBadgeSheet();
+    }
+  }, [initialSheet, openBadgeSheet, openProSheet, openShopSheet]);
 
   // Boot-time + post-purchase shield reconciliation. Drains the
   // pending-tx queue, runs one-shot legacy migration, refreshes
@@ -241,7 +263,7 @@ export function HubScaffoldClient() {
       <HubScaffold
         trophies={trophies}
         pro={pro}
-        shields={shieldsValue}
+        shields={null}
         isWalletConnected={isConnected}
         onConnectTap={() => {
           track("hub_connect_chip_tap");
