@@ -38,6 +38,8 @@ export type TrainingPassBandProps = {
   onTap: () => void;
   /** Fires once when `active` transitions false → true. NOT on mount. */
   onActivate?: () => void;
+  /** Optional legacy/integration test anchor for the owning scaffold. */
+  testId?: string;
 };
 
 export function TrainingPassBand({
@@ -48,6 +50,7 @@ export function TrainingPassBand({
   renewsAt,
   onTap,
   onActivate,
+  testId,
 }: TrainingPassBandProps) {
   const prevActiveRef = useRef<boolean>(active);
   const onActivateRef = useRef<typeof onActivate>(onActivate);
@@ -76,6 +79,7 @@ export function TrainingPassBand({
     return (
       <button
         type="button"
+        data-testid={testId}
         data-component="training-pass-band"
         data-state="active"
         className="training-pass-band is-active"
@@ -104,6 +108,7 @@ export function TrainingPassBand({
   return (
     <button
       type="button"
+      data-testid={testId}
       data-component="training-pass-band"
       data-state="inactive"
       className="training-pass-band is-inactive"

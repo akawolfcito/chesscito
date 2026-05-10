@@ -31,6 +31,8 @@ export type MasteryTileProps = {
   starsEarned: number;
   starsTotal: number;
   onTap: () => void;
+  testId?: string;
+  claimed?: boolean;
 };
 
 const STATE_CLASS: Record<MasteryState, string> = {
@@ -60,6 +62,8 @@ export function MasteryTile({
   starsEarned,
   starsTotal,
   onTap,
+  testId,
+  claimed,
 }: MasteryTileProps) {
   const copy = HUB_V2_MASTERY_COPY[piece];
   const ariaLabel = copy.ariaLabel(state, starsEarned, starsTotal);
@@ -67,9 +71,11 @@ export function MasteryTile({
   return (
     <button
       type="button"
+      data-testid={testId}
       data-component="mastery-tile"
       data-piece={piece}
       data-state={state}
+      data-claimed={claimed === undefined ? undefined : String(claimed)}
       className={`mastery-tile ${STATE_CLASS[state]}`}
       aria-label={ariaLabel}
       onClick={onTap}

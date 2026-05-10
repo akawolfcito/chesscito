@@ -16,6 +16,10 @@ vi.mock("@/components/hub/hub-scaffold-client", () => ({
   HubScaffoldClient: () => ({ type: "HubScaffoldClient", props: {} }),
 }));
 
+vi.mock("@/components/hub/hub-scaffold-v2-client", () => ({
+  HubScaffoldV2Client: () => ({ type: "HubScaffoldV2Client", props: {} }),
+}));
+
 import HubPage from "../page";
 
 type SearchParamsLike = {

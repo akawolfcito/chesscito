@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { HubScaffoldClient } from "@/components/hub/hub-scaffold-client";
+import { HubScaffoldV2Client } from "@/components/hub/hub-scaffold-v2-client";
+import { HUB_V2_DEFAULT, resolveHubVariant } from "@/lib/feature-flags";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 
@@ -18,6 +20,9 @@ type SearchParams = {
    *  land on `/hub` (sheets remain reachable via dock + chips).
    *  Documented as known regression in 2026-05-09 spec. */
   action?: string | string[];
+  /** Hub redesign canary flag. `?hub=v2` renders the V2 scaffold while
+   *  the production default remains V1 until Phase 8 promotion. */
+  hub?: string | string[];
 };
 
 function pieceHasExercises(piece: string): piece is PieceId {
@@ -41,6 +46,11 @@ function firstParam(value: string | string[] | undefined): string | undefined {
  *   - `?legacy=1&action=trophies`                  → `/trophies`
  *   - `?legacy=1&action=shop|pro|badges`           → `/hub` (intent dropped)
  *   - `?legacy=1` (any other shape)                → `/exercises`
+ *
+ * Canary flag:
+ *   - `?hub=v2` renders `<HubScaffoldV2Client />`
+ *   - `?hub=v1` forces `<HubScaffoldClient />` once the default flips
+ *   - no query follows `HUB_V2_DEFAULT`
  *
  * The `redirect()` helper from `next/navigation` requires a literal
  * URL string, so query params are constructed explicitly.
@@ -76,5 +86,9 @@ export default function HubPage({
     redirect(`/exercises${qs ? `?${qs}` : ""}`);
   }
 
-  return <HubScaffoldClient />;
+  return resolveHubVariant(searchParams, HUB_V2_DEFAULT) === "v2" ? (
+    <HubScaffoldV2Client />
+  ) : (
+    <HubScaffoldClient />
+  );
 }

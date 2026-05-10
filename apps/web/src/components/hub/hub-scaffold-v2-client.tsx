@@ -1,5 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
@@ -9,7 +11,9 @@ import { BadgeSheet } from "@/components/exercises/badge-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/exercises/shop-sheet";
 import { ProSheet } from "@/components/pro/pro-sheet";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
+import { HUB_V2_DOCK_COPY } from "@/lib/content/editorial";
 import { SHIELD_ITEM_ID } from "@/lib/contracts/shop-catalog";
 import {
   useProSheetState,
@@ -20,38 +24,84 @@ import {
   type ShopPurchaseReceipt,
 } from "@/lib/shop/use-shop-sheet-state";
 import { track } from "@/lib/telemetry";
+import type { PieceId } from "@/lib/game/types";
+
+import {
+  MasteryDashboard,
+  type MasteryTileData,
+} from "./mastery-dashboard";
+import { TrainingPassBand } from "./training-pass-band";
+import type { MasteryState } from "./mastery-tile";
 
 /** Each shield purchase grants this many on-chain uses (Retry Shield
  *  v1 spec). The on-chain `buyItem` quantity is always 1; the per-buy
  *  3-use multiplier is the UX abstraction surfaced as the chip count. */
 const SHIELDS_PER_PURCHASE = 3;
 
+/** Stars-per-piece ceiling (3 stars × 6 pieces = 18). Used to normalize
+ *  `masteryProgress` into a 0..1 ratio for the PLAY-tap telemetry payload
+ *  consumed by §7.4 promote criterion 1. */
+const MASTERY_STARS_TOTAL = 18;
+
 type Atmosphere = "cool-stone" | "warm-wood";
 
-/** Phase 3 commit 1 of the hub redesign — minimal V2 scaffold that ports
- *  `<ProSheet>` in-place. Lives parallel to V1 (`<HubScaffoldClient>`)
- *  and is NOT yet wired to `app/hub/page.tsx`; the `?hub=v2` flag arrives
- *  in Phase 7. The mastery dashboard, splash, and training band are
- *  scoped to phases 4–6 — this commit only validates the sheet port +
- *  atmosphere shift telemetry contract.
+/** Splash is dynamic+ssr:false (Phase 7 nota in
+ *  `2026-05-09-hub-phase-3-handoff.md` §"Notas Phase 7") to keep the
+ *  first-paint critical path free of localStorage / matchMedia work that
+ *  only matters once on first-ever-visit. */
+const HubV2Splash = dynamic(
+  () => import("./hub-splash").then((m) => m.HubV2Splash),
+  { ssr: false },
+);
+
+/** Placeholder mastery tile data. Real on-chain badges + exercise stars
+ *  wiring is intentionally NOT in this commit — the design-lock §6.1 row
+ *  2 wiring lands once the contract reads consolidate behind a single
+ *  hook. Until then, every buildable piece renders as `locked-buildable`
+ *  with 0/3 stars and Q/K stay `coming-soon`. The dashboard's tap +
+ *  telemetry contract is independent of the data source, so the V2
+ *  composition test exercises layout + payload shape without any
+ *  on-chain mocks here. */
+const PLACEHOLDER_TILES: Record<PieceId, MasteryTileData> = {
+  rook: { state: "locked-buildable", starsEarned: 0, starsTotal: 3 },
+  bishop: { state: "locked-buildable", starsEarned: 0, starsTotal: 3 },
+  knight: { state: "locked-buildable", starsEarned: 0, starsTotal: 3 },
+  pawn: { state: "locked-buildable", starsEarned: 0, starsTotal: 3 },
+  queen: { state: "coming-soon", starsEarned: 0, starsTotal: 3 },
+  king: { state: "coming-soon", starsEarned: 0, starsTotal: 3 },
+};
+
+/** Phase 7 commit a — V2 composition + flag mechanics.
  *
- *  Design-lock spec: `docs/superpowers/specs/2026-05-09-hub-redesign-phase-1-design-lock.md` */
+ *  Layout (design-lock §1 + §9.5):
+ *    1. HubV2Splash overlay (dynamic, first-visit only)
+ *    2. Atmosphere-aware Training Pass band
+ *    3. Mastery dashboard (2x3 piece tiles)
+ *    4. Sticky dock — PrincipalButton PLAY ARENA + secondary links + shield ribbon
+ *
+ *  Atmosphere is `cool-stone` on mount and shifts to `warm-wood` when a
+ *  PRO purchase succeeds. The `[data-pro-active]` data attribute on the
+ *  scaffold root is the hook for the §7.2 CSS palette swap that lands
+ *  in commit b alongside the contrast gate.
+ *
+ *  Mastery tile + sheet wiring stay placeholder/in-place; real on-chain
+ *  reads are scoped to a follow-up commit per §6.1 row 2. The four
+ *  primitives this scaffold composes (splash / mastery / training band /
+ *  dock) each own their own test file — this client owns the
+ *  composition + flag + atmosphere contract only. */
 export function HubScaffoldV2Client() {
   const router = useRouter();
   const { address } = useAccount();
   const [atmosphere, setAtmosphere] = useState<Atmosphere>("cool-stone");
   const [shields, setShields] = useState<number>(0);
 
-  const handlePurchaseSuccess = useCallback(
+  const handleProPurchaseSuccess = useCallback(
     (receipt: ProPurchaseReceipt) => {
-      // Cross-wallet receipt guard (design-lock §6.4 race 3): if the
-      // active wallet has changed between purchase initiation and receipt
-      // confirmation (multi-tab session drift), drop silently rather than
-      // leak atmosphere into another session's state.
+      // Cross-wallet receipt guard (design-lock §6.4 race 3): drop
+      // silently if the active wallet has changed since purchase init.
       if (address && receipt.buyer.toLowerCase() !== address.toLowerCase()) {
         return;
       }
-
       const from: Atmosphere = "cool-stone";
       const to: Atmosphere = "warm-wood";
       setAtmosphere(to);
@@ -61,22 +111,16 @@ export function HubScaffoldV2Client() {
   );
 
   const proSheet = useProSheetState({
-    onPurchaseSuccess: handlePurchaseSuccess,
+    onPurchaseSuccess: handleProPurchaseSuccess,
   });
 
-  // BadgeSheet orchestration — owns claim flow + on-chain reads. Mastery
-  // tile taps open the sheet in-place; tile state reads `badgesClaimed`
-  // from the same hook so the post-claim refetch propagates without an
-  // extra `useReadContracts` call here (design-lock §6.1 row 2).
+  // BadgeSheet orchestration — owns claim flow + on-chain reads.
   const badgeSheet = useBadgeSheetState({
     onNavigateToTrophies: () => router.push("/trophies"),
   });
-  const rookClaimed = badgeSheet.badgesClaimed.rook === true;
 
   const handleShopPurchaseSuccess = useCallback(
     (receipt: ShopPurchaseReceipt) => {
-      // Cross-wallet receipt guard (design-lock §6.4 race 3): drop
-      // silently if the active wallet has changed since purchase init.
       if (address && receipt.buyer.toLowerCase() !== address.toLowerCase()) {
         return;
       }
@@ -93,32 +137,101 @@ export function HubScaffoldV2Client() {
     onPurchaseSuccess: handleShopPurchaseSuccess,
   });
 
+  const handleMasteryTileTap = useCallback(
+    (_piece: PieceId, _state: MasteryState) => {
+      // Tile-level telemetry already fires inside `<MasteryDashboard>`.
+      // The scaffold's role is to open the BadgeSheet for buildable
+      // pieces; coming-soon pieces are intercepted by the dashboard.
+      badgeSheet.openSheet();
+    },
+    [badgeSheet],
+  );
+
+  const handlePlayTap = useCallback(() => {
+    const totalStars = (Object.values(PLACEHOLDER_TILES) as MasteryTileData[])
+      .reduce((sum, tile) => sum + tile.starsEarned, 0);
+    const masteryProgress = totalStars / MASTERY_STARS_TOTAL;
+    track("hub_v2_play_dock_tap", { masteryProgress });
+    router.push("/arena");
+  }, [router]);
+
+  const proActive = atmosphere === "warm-wood";
+
   return (
     <PrimitiveBoundary primitiveName="HubScaffoldV2" surface="hub">
-      <div data-hub-v2="" data-atmosphere={atmosphere}>
-        <button
-          type="button"
-          data-testid="hub-v2-pro-chip"
-          onClick={() => proSheet.openSheet()}
+      <div
+        data-testid="hub-v2-root"
+        data-hub-v2=""
+        data-atmosphere={atmosphere}
+        {...(proActive ? { "data-pro-active": "" } : {})}
+        className="hub-v2-root"
+      >
+        <HubV2Splash />
+
+        <TrainingPassBand
+          active={proActive}
+          daysRemaining={proActive ? 30 : undefined}
+          sessionsUsed={proActive ? 0 : undefined}
+          sessionsTotal={proActive ? 12 : undefined}
+          renewsAt={proActive ? "" : undefined}
+          testId="hub-v2-pro-chip"
+          onTap={() => proSheet.openSheet()}
+        />
+
+        <MasteryDashboard
+          tiles={PLACEHOLDER_TILES}
+          claimed={badgeSheet.badgesClaimed}
+          streakDays={0}
+          onTileTap={handleMasteryTileTap}
+        />
+
+        <footer
+          data-component="hub-v2-dock"
+          aria-label={HUB_V2_DOCK_COPY.primaryActionsAriaLabel}
+          className="hub-v2-dock"
         >
-          PRO
-        </button>
-        <button
-          type="button"
-          data-testid="hub-v2-mastery-tile-rook"
-          data-claimed={rookClaimed ? "true" : "false"}
-          onClick={() => badgeSheet.openSheet()}
-        >
-          Rook
-        </button>
-        <button
-          type="button"
-          data-testid="hub-v2-shield-ribbon"
-          data-shields={shields}
-          onClick={() => shopSheet.openSheet()}
-        >
-          Shield ×{shields}
-        </button>
+          <button
+            type="button"
+            data-testid="hub-v2-shield-ribbon"
+            data-shields={shields}
+            className="hub-v2-dock-shields"
+            aria-label={HUB_V2_DOCK_COPY.shieldsRibbonAriaLabel(shields)}
+            onClick={() => shopSheet.openSheet()}
+          >
+            {HUB_V2_DOCK_COPY.shieldsRibbonLabel(shields)}
+          </button>
+
+          <div className="hub-v2-dock-links">
+            <Link
+              href="/exercises"
+              data-testid="hub-v2-practice-link"
+              className="hub-v2-dock-link"
+              aria-label={HUB_V2_DOCK_COPY.practiceLinkAriaLabel}
+            >
+              {HUB_V2_DOCK_COPY.practiceLinkLabel}
+            </Link>
+            <Link
+              href="/trophies"
+              data-testid="hub-v2-trophies-link"
+              className="hub-v2-dock-link"
+              aria-label={HUB_V2_DOCK_COPY.trophiesLinkAriaLabel}
+            >
+              {HUB_V2_DOCK_COPY.trophiesLinkLabel}
+            </Link>
+          </div>
+
+          <PrincipalButton
+            size="large"
+            onClick={handlePlayTap}
+            aria-label={HUB_V2_DOCK_COPY.playAriaLabel}
+            className="hub-v2-dock-play"
+          >
+            <span data-testid="hub-v2-play-cta">
+              {HUB_V2_DOCK_COPY.playLabel}
+            </span>
+          </PrincipalButton>
+        </footer>
+
         <ProSheet {...proSheet.sheetProps} />
         <BadgeSheet {...badgeSheet.sheetProps} />
         <ShopSheet {...shopSheet.sheetProps} />

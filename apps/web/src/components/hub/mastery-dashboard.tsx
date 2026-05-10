@@ -34,6 +34,7 @@ export type MasteryTileData = {
 
 export type MasteryDashboardProps = {
   tiles: Record<PieceId, MasteryTileData>;
+  claimed?: Partial<Record<PieceId, boolean>>;
   streakDays: number;
   onTileTap: (
     piece: PieceId,
@@ -44,6 +45,7 @@ export type MasteryDashboardProps = {
 
 export function MasteryDashboard({
   tiles,
+  claimed,
   streakDays,
   onTileTap,
 }: MasteryDashboardProps) {
@@ -83,6 +85,8 @@ export function MasteryDashboard({
               state={data.state}
               starsEarned={data.starsEarned}
               starsTotal={data.starsTotal}
+              testId={`hub-v2-mastery-tile-${piece}`}
+              claimed={claimed?.[piece] === true}
               onTap={() => handleTap(piece, data.state, data.starsEarned)}
             />
           );

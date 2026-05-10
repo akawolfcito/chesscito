@@ -776,6 +776,27 @@ export const HUB_V2_TRAINING_COPY = {
   },
 } as const;
 
+/** Hub V2 dock — PLAY ceremony + secondary links (design-lock §1.4 + §2.4).
+ *  Sticky footer: PrincipalButton "PLAY ARENA" + low-density text-link
+ *  row above (Practice pieces / See all trophies) + Shield ribbon/shop
+ *  entry. Pinned over carved-wood plinth in the visual finish (Phase 7
+ *  commit c). */
+export const HUB_V2_DOCK_COPY = {
+  playLabel: "PLAY ARENA",
+  playAriaLabel: "Start the Arena and play a full chess match",
+  practiceLinkLabel: "Practice pieces",
+  practiceLinkAriaLabel: "Practice individual chess pieces",
+  trophiesLinkLabel: "See all trophies",
+  trophiesLinkAriaLabel: "See all collected trophies",
+  shieldsRibbonLabel: (count: number): string =>
+    count === 1 ? "Shield ×1" : `Shields ×${count}`,
+  shieldsRibbonAriaLabel: (count: number): string =>
+    count === 1
+      ? "1 retry shield available — open shop"
+      : `${count} retry shields available — open shop`,
+  primaryActionsAriaLabel: "Primary actions",
+} as const;
+
 export const COACH_COPY = {
   askCoach: "Ask Coach",
   loading: "Loading...",
