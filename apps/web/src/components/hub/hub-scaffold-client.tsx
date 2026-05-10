@@ -243,15 +243,13 @@ export function HubScaffoldClient({
       ...tile,
       onTap: () => {
         track("hub_reward_tile_tap", { piece: tile.id, state: tile.state });
-        // In-place BadgeSheet (port 2026-05-07). Sheet renders all six
-        // piece cards with per-piece state, so every tap lands on a
-        // meaningful surface — the legacy round-trip dropped the piece
-        // query for queen/king (no exercises) and bounced to a generic
-        // view that felt identical to the rook/bishop tap (audit B7).
-        badgeSheet.openSheet();
+        if (tile.state === "locked") {
+          return;
+        }
+        router.push(`/exercises?piece=${tile.id}`);
       },
     }));
-  }, [badgesClaimed, starsPerPiece, badgeSheet]);
+  }, [badgesClaimed, starsPerPiece, router]);
 
   // The shields chip is the home for shop conversion (the user's primary
   // monetization surface). Always visible whether the count is 0 or N —

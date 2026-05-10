@@ -308,11 +308,8 @@ describe("HubScaffoldClient — tap handlers", () => {
     );
   });
 
-  it("opens BadgeSheet in-place for queen (port 2026-05-07)", async () => {
+  it("routes queen reward tile directly to its exercises piece page", async () => {
     const user = userEvent.setup();
-    // Make queen "claimable" — even though queen has no exercises, the
-    // BadgeSheet now renders all six piece cards so the tile lands on a
-    // meaningful surface (audit B7). No more piece-query collapse trap.
     localStorage.setItem(
       "chesscito:progress:queen",
       JSON.stringify({ piece: "queen", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
@@ -325,13 +322,10 @@ describe("HubScaffoldClient — tap handlers", () => {
       await screen.findByRole("button", { name: /claim queen mastery badge/i }),
     );
 
-    // Sheet opens in-place via Radix portal — no router.push to legacy.
-    expect(pushMock).not.toHaveBeenCalledWith(
-      expect.stringContaining("legacy=1&action=badges"),
-    );
+    expect(pushMock).toHaveBeenCalledWith("/exercises?piece=queen");
   });
 
-  it("opens BadgeSheet in-place when a reward tile is tapped (no legacy bounce)", async () => {
+  it("routes unlocked reward tile taps directly to their exercises piece page", async () => {
     const user = userEvent.setup();
     localStorage.setItem(
       "chesscito:progress:rook",
@@ -343,8 +337,19 @@ describe("HubScaffoldClient — tap handlers", () => {
       await screen.findByRole("button", { name: /claim rook mastery badge/i }),
     );
 
+    expect(pushMock).toHaveBeenCalledWith("/exercises?piece=rook");
+  });
+
+  it("does not route locked reward tile taps until the piece is unlocked", async () => {
+    const user = userEvent.setup();
+    render(<HubScaffoldClient />);
+
+    await user.click(
+      await screen.findByRole("button", { name: /bishop mastery.*locked/i }),
+    );
+
     expect(pushMock).not.toHaveBeenCalledWith(
-      expect.stringContaining("legacy=1&action=badges"),
+      expect.stringContaining("/exercises?piece=bishop"),
     );
   });
 });
@@ -499,6 +504,7 @@ describe("HubScaffoldClient — telemetry", () => {
       await screen.findByRole("button", { name: /claim rook mastery badge/i }),
     );
 
+    expect(pushMock).toHaveBeenCalledWith("/exercises?piece=rook");
     expect(trackMock).toHaveBeenCalledWith("hub_reward_tile_tap", {
       piece: "rook",
       state: "claimable",
