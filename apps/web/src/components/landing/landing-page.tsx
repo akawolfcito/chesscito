@@ -129,8 +129,8 @@ export function LandingPage() {
           </p>
           <div className="flex w-full flex-col items-start gap-2.5 md:w-auto md:flex-row md:items-center md:gap-3">
             <LandingGreenCta
-              size="large"
-              className="landing-green-cta--primary"
+              size="medium"
+              className="w-full max-w-[300px]"
               onClick={() => {
                 onCta("hero-primary")();
                 router.push("/hub");
@@ -859,8 +859,8 @@ export function LandingPage() {
         </p>
         <div className="mx-auto mt-6 flex w-full max-w-[420px] flex-col items-center justify-center gap-3 md:max-w-none md:flex-row">
           <LandingGreenCta
-            size="large"
-            className="landing-green-cta--primary"
+            size="medium"
+            className="w-full max-w-[300px]"
             onClick={() => {
               onCta("final-primary")();
               router.push("/hub");

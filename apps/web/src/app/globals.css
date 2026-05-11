@@ -644,10 +644,6 @@
     font-size: 1.1rem;
   }
 
-  .landing-green-cta--primary {
-    width: min(100%, 300px);
-  }
-
   /* Candy-light equivalent of paper-tray — nested card inside CandyGlassShell. */
   .candy-tray {
     border-radius: 0.875rem;
