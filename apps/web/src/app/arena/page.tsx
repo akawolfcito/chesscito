@@ -901,7 +901,7 @@ function ArenaPageInner() {
     // intact below as the default until the flag flips.
     if (arenaScaffoldEnabled) {
       return (
-        <main className="flex min-h-[100dvh] flex-col">
+        <main className="arena-select-route flex h-[100dvh] min-h-0 flex-col items-center overflow-hidden arena-bg">
           {isPreparing ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 animate-in fade-in duration-300 arena-scaffold">
               <p className="text-sm font-semibold text-amber-400/80">
@@ -951,7 +951,7 @@ function ArenaPageInner() {
             />
           )}
           <div
-            className="shrink-0 relative z-[60] pointer-events-auto"
+            className="arena-select-dock-shell shrink-0 relative z-[60] pointer-events-auto"
             style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           >
             <PersistentDock

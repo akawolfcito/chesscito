@@ -2,7 +2,6 @@
 
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { CandyBanner } from "@/components/redesign/candy-banner";
-import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import type { ArenaDifficulty } from "@/lib/game/types";
@@ -129,7 +128,7 @@ export function ArenaEntryPanel({
       {/* Subtitle only rendered in standalone mode — when the panel is
           embedded in ArenaEntrySheet (bare=true), the Sheet header
           already carries the subtitle via SheetDescription, so we'd
-          otherwise duplicate "Challenge the AI". */}
+          otherwise duplicate the scaffold subtitle. */}
       {!bare && (
         <p
           className="text-center text-xs"
@@ -198,7 +197,12 @@ export function ArenaEntryPanel({
           }}
           aria-label={ARENA_COPY.prizePoolLabel}
         >
-          <CandyIcon name="trophy" className="h-4 w-4 shrink-0" />
+          <img
+            src="/design/new-assets-chesscito/arena/community-pool.png"
+            alt=""
+            aria-hidden="true"
+            className="h-8 w-8 shrink-0 object-contain"
+          />
           <div className="flex min-w-0 flex-1 flex-col leading-tight">
             <span
               className="text-[0.7rem] font-bold"

@@ -46,8 +46,8 @@ const MS_PER_DAY = 86_400_000;
 
 const PREMIUM_KICKER = "Training Pass";
 const PREMIUM_INACTIVE_LABEL = "Go PRO";
-const PLAY_LABEL = "PLAY";
-const PLAY_ARIA_LABEL = "Start training";
+const PLAY_LABEL = "ENTER ARENA";
+const PLAY_ARIA_LABEL = "Enter the Arena";
 
 export type HubInitialSheet = "shop" | "pro" | "badges";
 

@@ -26,9 +26,9 @@ describe("ArenaSelectScaffold", () => {
     expect(container.querySelector(".arena-scaffold-footer")).not.toBeNull();
   });
 
-  it("mounts the KingdomAnchor arena-preview variant", () => {
+  it("does not mount the KingdomAnchor arena-preview board", () => {
     const { container } = render(<ArenaSelectScaffold {...baseProps} />);
-    expect(container.querySelector(".kingdom-anchor--arena-preview")).not.toBeNull();
+    expect(container.querySelector(".kingdom-anchor--arena-preview")).toBeNull();
   });
 
   it("mounts the MissionRibbon for the arena surface", () => {
@@ -62,7 +62,7 @@ describe("ArenaSelectScaffold", () => {
   it("fires onStart when the primary CTA is pressed", async () => {
     const onStart = vi.fn();
     render(<ArenaSelectScaffold {...baseProps} onStart={onStart} />);
-    await userEvent.click(screen.getByRole("button", { name: /Enter Arena/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^PLAY$/i }));
     expect(onStart).toHaveBeenCalled();
   });
 

@@ -1,16 +1,48 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { PhoneFrame } from "@/components/landing/phone-frame";
 import { PhoneStack } from "@/components/landing/phone-stack";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { LANDING_COPY, WHY_PAGE_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
+
+type LandingGreenCtaProps = {
+  children: ReactNode;
+  onClick: () => void;
+  size?: "medium" | "large";
+  className?: string;
+  "aria-label"?: string;
+};
+
+function LandingGreenCta({
+  children,
+  onClick,
+  size = "medium",
+  className,
+  "aria-label": ariaLabel,
+}: LandingGreenCtaProps) {
+  return (
+    <button
+      type="button"
+      className={[
+        "landing-green-cta",
+        `landing-green-cta--${size}`,
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      onClick={onClick}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </button>
+  );
+}
 
 /**
  * LandingPage — public web-responsive landing rendered at `/` for
@@ -54,7 +86,7 @@ export function LandingPage() {
         >
           {LANDING_COPY.nav.brand}
         </span>
-        <PrincipalButton
+        <LandingGreenCta
           size="medium"
           onClick={() => {
             onCta("nav-primary")();
@@ -63,7 +95,7 @@ export function LandingPage() {
           aria-label={LANDING_COPY.nav.primaryCta}
         >
           {LANDING_COPY.nav.primaryCta}
-        </PrincipalButton>
+        </LandingGreenCta>
       </header>
 
       {/* §1 Hero — split on desktop, stacked on mobile */}
@@ -96,8 +128,9 @@ export function LandingPage() {
             {LANDING_COPY.hero.subcopy}
           </p>
           <div className="flex w-full flex-col items-start gap-2.5 md:w-auto md:flex-row md:items-center md:gap-3">
-            <PrincipalButton
+            <LandingGreenCta
               size="large"
+              className="landing-green-cta--primary"
               onClick={() => {
                 onCta("hero-primary")();
                 router.push("/hub");
@@ -105,7 +138,7 @@ export function LandingPage() {
               aria-label={LANDING_COPY.hero.primaryCta}
             >
               {LANDING_COPY.hero.primaryCta}
-            </PrincipalButton>
+            </LandingGreenCta>
             <Button asChild variant="game-ghost" size="game" className="md:!w-auto md:px-8">
               <a href="#problem" onClick={onCta("hero-secondary")}>
                 {LANDING_COPY.hero.secondaryCta}
@@ -542,8 +575,9 @@ export function LandingPage() {
                 <div className="mt-auto pt-1">
                   {isFeatured ? (
                     <div className="flex w-full justify-center">
-                      <PrincipalButton
+                      <LandingGreenCta
                         size="medium"
+                        className="w-full"
                         onClick={() => {
                           onCta(`plan-${tier.name.toLowerCase()}`)();
                           if (isInternal) {
@@ -561,18 +595,16 @@ export function LandingPage() {
                         aria-label={tier.ctaLabel}
                       >
                         {tier.ctaLabel}
-                      </PrincipalButton>
+                      </LandingGreenCta>
                     </div>
                   ) : isInternal ? (
                     <Link
                       href={ctaHref}
                       onClick={onCta(`plan-${tier.name.toLowerCase()}`)}
-                      className="paper-tray flex min-h-[40px] items-center justify-center gap-2 transition active:scale-[0.99]"
-                      style={{ color: "var(--paper-text)" }}
+                      className="landing-green-cta landing-green-cta--medium w-full"
+                      aria-label={tier.ctaLabel}
                     >
-                      <span className="text-xs font-extrabold uppercase tracking-[0.10em]">
-                        {tier.ctaLabel}
-                      </span>
+                      {tier.ctaLabel}
                     </Link>
                   ) : (
                     <a
@@ -826,8 +858,9 @@ export function LandingPage() {
           {LANDING_COPY.finalCta.subcopy}
         </p>
         <div className="mx-auto mt-6 flex w-full max-w-[420px] flex-col items-center justify-center gap-3 md:max-w-none md:flex-row">
-          <PrincipalButton
+          <LandingGreenCta
             size="large"
+            className="landing-green-cta--primary"
             onClick={() => {
               onCta("final-primary")();
               router.push("/hub");
@@ -835,7 +868,7 @@ export function LandingPage() {
             aria-label={LANDING_COPY.finalCta.primaryCta}
           >
             {LANDING_COPY.finalCta.primaryCta}
-          </PrincipalButton>
+          </LandingGreenCta>
           {process.env.NEXT_PUBLIC_SUPPORT_EMAIL && (
             <Button asChild variant="game-ghost" size="game" className="md:!w-auto md:px-8">
               <a

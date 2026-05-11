@@ -28,8 +28,8 @@ const baseProps = {
   premiumAriaLabel: "Training Pass progress",
   premiumUsed: 3,
   premiumTotal: 12,
-  playLabel: "PLAY",
-  playAriaLabel: "Start training",
+  playLabel: "ENTER ARENA",
+  playAriaLabel: "Enter the Arena",
 };
 
 describe("HubScaffold", () => {
@@ -115,16 +115,16 @@ describe("HubScaffold", () => {
 
   it("mounts the dominant PrimaryPlayCta playhub variant in the footer", () => {
     render(<HubScaffold {...baseProps} />);
-    const cta = screen.getByRole("button", { name: "Start training" });
+    const cta = screen.getByRole("button", { name: "Enter the Arena" });
     expect(cta.className).toMatch(/primary-play-cta--playhub\b/);
-    expect(cta.textContent).toContain("PLAY");
+    expect(cta.textContent).toContain("ENTER ARENA");
   });
 
   it("forwards the play press to the onPlayPress handler", async () => {
     const onPlayPress = vi.fn();
     const user = userEvent.setup();
     render(<HubScaffold {...baseProps} onPlayPress={onPlayPress} />);
-    await user.click(screen.getByRole("button", { name: "Start training" }));
+    await user.click(screen.getByRole("button", { name: "Enter the Arena" }));
     expect(onPlayPress).toHaveBeenCalledTimes(1);
   });
 

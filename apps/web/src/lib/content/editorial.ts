@@ -544,7 +544,7 @@ export const ROADMAP_COPY = {
 
 export const ARENA_COPY = {
   title: "Arena",
-  subtitle: "Challenge the AI",
+  subtitle: "Choose your rank. Rule the board.",
   difficulty: {
     easy: "Easy",
     medium: "Medium",
@@ -555,7 +555,7 @@ export const ARENA_COPY = {
     medium: "Solid player — a fair challenge",
     hard: "Expert — plays to win",
   },
-  startMatch: "Enter Arena",
+  startMatch: "PLAY",
   backToHub: "Back to Hub",
   playAsWhite: "Play as White",
   playAsBlack: "Play as Black",
@@ -776,14 +776,14 @@ export const HUB_V2_TRAINING_COPY = {
   },
 } as const;
 
-/** Hub V2 dock — PLAY ceremony + secondary links (design-lock §1.4 + §2.4).
- *  Sticky footer: PrincipalButton "PLAY ARENA" + low-density text-link
+/** Hub V2 dock — Arena ceremony + secondary links (design-lock §1.4 + §2.4).
+ *  Sticky footer: PrincipalButton "ENTER ARENA" + low-density text-link
  *  row above (Practice pieces / See all trophies) + Shield ribbon/shop
  *  entry. Pinned over carved-wood plinth in the visual finish (Phase 7
  *  commit c). */
 export const HUB_V2_DOCK_COPY = {
-  playLabel: "PLAY ARENA",
-  playAriaLabel: "Start the Arena and play a full chess match",
+  playLabel: "ENTER ARENA",
+  playAriaLabel: "Enter the Arena and play a full chess match",
   practiceLinkLabel: "Practice pieces",
   practiceLinkAriaLabel: "Practice individual chess pieces",
   trophiesLinkLabel: "See all trophies",

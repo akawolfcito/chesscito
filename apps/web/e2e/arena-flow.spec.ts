@@ -5,14 +5,12 @@ import { test, expect } from "@playwright/test";
  * start the match, confirm the 32-piece board renders.
  */
 test.describe("Arena — setup flow", () => {
-  test("difficulty selector opens, Enter Arena starts a game with 32 pieces", async ({ page }) => {
+  test("difficulty selector opens, PLAY starts a game with 32 pieces", async ({ page }) => {
     await page.goto("/arena");
     await page.waitForLoadState("networkidle");
 
     // Difficulty selector heading
     await expect(page.getByRole("heading", { name: "Arena" })).toBeVisible();
-    await expect(page.getByText("Challenge the AI")).toBeVisible();
-
     // The three difficulty options
     await expect(page.getByRole("button", { name: /Easy/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /Medium/ })).toBeVisible();
@@ -20,7 +18,7 @@ test.describe("Arena — setup flow", () => {
 
     // Pick Easy (also the default) then start
     await page.getByRole("button", { name: /Easy/ }).click();
-    await page.getByRole("button", { name: /Enter Arena/ }).click();
+    await page.getByRole("button", { name: /^PLAY$/ }).click();
 
     // Board renders with 32 pieces (16 white + 16 black) after the 400ms
     // "preparing AI" delay inside the arena page.
@@ -41,7 +39,7 @@ test.describe("Arena — setup flow", () => {
     // Use the header × which is explicitly aria-labelled, picked via
     // getByLabel to avoid strict-mode collisions.
     await page.getByLabel("Back to Hub").click();
-    await page.waitForURL("**/");
-    await expect(page.locator(".chesscito-dock")).toBeVisible();
+    await page.waitForURL("**/hub");
+    await expect(page.locator(".hub-scaffold, .hub-v2-root")).toBeVisible();
   });
 });

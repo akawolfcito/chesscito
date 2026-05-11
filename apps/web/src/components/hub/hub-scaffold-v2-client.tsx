@@ -78,7 +78,7 @@ const PLACEHOLDER_TILES: Record<PieceId, MasteryTileData> = {
  *    1. HubV2Splash overlay (dynamic, first-visit only)
  *    2. Atmosphere-aware Training Pass band
  *    3. Mastery dashboard (2x3 piece tiles)
- *    4. Sticky dock — PrincipalButton PLAY ARENA + secondary links + shield ribbon
+ *    4. Sticky dock — PrincipalButton ENTER ARENA + secondary links + shield ribbon
  *
  *  Atmosphere is `cool-stone` on mount and shifts to `warm-wood` when a
  *  PRO purchase succeeds. The `[data-pro-active]` data attribute on the
@@ -173,7 +173,7 @@ export function HubScaffoldV2Client({
       .reduce((sum, tile) => sum + tile.starsEarned, 0);
     const masteryProgress = totalStars / MASTERY_STARS_TOTAL;
     track("hub_v2_play_dock_tap", { masteryProgress });
-    router.push("/arena");
+    router.push("/arena?fresh=1");
   }, [router]);
 
   const proActive = atmosphere === "warm-wood";

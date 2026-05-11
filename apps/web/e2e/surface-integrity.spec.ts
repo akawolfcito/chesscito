@@ -63,10 +63,10 @@ test.describe("Surface integrity — board canvas is never 0x0", () => {
     expect(Math.abs(img!.w - canvas!.w)).toBeLessThan(2);
   });
 
-  test("arena board canvas has non-zero dimensions after Enter Arena", async ({ page }) => {
+  test("arena board canvas has non-zero dimensions after PLAY", async ({ page }) => {
     await page.goto("/arena");
     await page.waitForLoadState("networkidle");
-    await page.getByRole("button", { name: /Enter Arena/ }).click();
+    await page.getByRole("button", { name: /^PLAY$/ }).click();
 
     await page.waitForSelector(".arena-piece-float", { timeout: 5000 });
     const canvas = await getRect(page, ".playhub-board-canvas.arena-board-canvas");

@@ -48,6 +48,9 @@ function RewardTileButton({ tile }: { tile: RewardTile }) {
   const classes = [
     "reward-tile",
     `is-${tile.state}`,
+    tile.state === "progress" || tile.state === "claimable"
+      ? "is-active-piece"
+      : "",
   ].join(" ");
 
   return (

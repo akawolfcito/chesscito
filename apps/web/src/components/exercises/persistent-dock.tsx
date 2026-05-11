@@ -81,7 +81,7 @@ export function PersistentDock({
         </div>
       ) : (
         <Link
-          href="/arena"
+          href="/arena?fresh=1"
           className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
           onClick={() => track("dock_tap", { item: "arena" })}
         >

@@ -283,11 +283,11 @@ describe("HubScaffoldClient — tap handlers", () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
-    await user.click(screen.getByLabelText("Start training"));
+    await user.click(screen.getByLabelText("Enter the Arena"));
 
     // ?fresh=1 tells /arena to skip the localStorage last-difficulty
     // auto-launch and render the selector, matching what the user
-    // expects when tapping a "PLAY" CTA from a hub (per smoke
+    // expects when tapping an "ENTER ARENA" CTA from a hub (per smoke
     // 2026-05-07).
     expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
   });
@@ -470,7 +470,7 @@ describe("HubScaffoldClient — telemetry", () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
-    await user.click(screen.getByLabelText("Start training"));
+    await user.click(screen.getByLabelText("Enter the Arena"));
 
     expect(trackMock).toHaveBeenCalledWith("hub_play_tap");
   });

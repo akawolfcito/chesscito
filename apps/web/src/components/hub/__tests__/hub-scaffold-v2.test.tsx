@@ -212,7 +212,7 @@ describe("HubScaffoldV2Client — composition contract (Phase 7 commit a)", () =
 
     await user.click(screen.getByTestId("hub-v2-play-cta"));
 
-    expect(pushMock).toHaveBeenCalledWith("/arena");
+    expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
     const tapCall = trackMock.mock.calls.find(
       (call) => call[0] === "hub_v2_play_dock_tap",
     );
