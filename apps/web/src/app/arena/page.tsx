@@ -10,19 +10,21 @@ import {
   useWriteContract,
 } from "wagmi";
 import { decodeEventLog } from "viem";
-import Link from "next/link";
 import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
 import { ArenaSelectScaffold } from "@/components/arena/arena-select-scaffold";
 import { PersistentDock, type DockTab } from "@/components/exercises/persistent-dock";
+import { BadgeSheet } from "@/components/exercises/badge-sheet";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
+import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
+import { ShopSheet } from "@/components/exercises/shop-sheet";
 import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData } from "@/components/arena/arena-end-state";
-import { ARENA_COPY, COACH_COPY, DOCK_LABELS } from "@/lib/content/editorial";
+import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { GemButton } from "@/components/scene-rooted/gem";
 import { hasAnyPieceProgress } from "@/lib/game/has-progress";
@@ -46,6 +48,8 @@ import { getConfiguredChainId, getVictoryNFTAddress, getShopAddress } from "@/li
 import { hapticImpact, hapticSuccess } from "@/lib/haptics";
 import { victoryAbi } from "@/lib/contracts/victory";
 import { shopAbi } from "@/lib/contracts/shop";
+import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
+import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { COACH_PACK_ITEMS, type CoachPackSize } from "@/lib/contracts/shop-catalog";
 import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
@@ -79,6 +83,40 @@ function ArenaPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeDockTab, setActiveDockTab] = useState<DockTab>(null);
+  const openTrophiesFromBadgeSheet = useCallback(
+    () => setActiveDockTab("trophies"),
+    [],
+  );
+  const badgeSheet = useBadgeSheetState({
+    onNavigateToTrophies: openTrophiesFromBadgeSheet,
+  });
+  const shopSheet = useShopSheetState();
+  const handleOpenBadgeSheet = useCallback(() => {
+    setActiveDockTab("badge");
+    badgeSheet.openSheet();
+  }, [badgeSheet]);
+  const handleBadgeSheetOpenChange = useCallback(
+    (open: boolean) => {
+      badgeSheet.sheetProps.onOpenChange(open);
+      setActiveDockTab(open ? "badge" : null);
+    },
+    [badgeSheet],
+  );
+  const handleBadgeNavigateToTrophies = useCallback(() => {
+    badgeSheet.closeSheet();
+    setActiveDockTab("trophies");
+  }, [badgeSheet]);
+  const handleOpenShopSheet = useCallback(() => {
+    setActiveDockTab("shop");
+    shopSheet.openSheet();
+  }, [shopSheet]);
+  const handleShopSheetOpenChange = useCallback(
+    (open: boolean) => {
+      shopSheet.sheetProps.onOpenChange(open);
+      setActiveDockTab(open ? "shop" : null);
+    },
+    [shopSheet],
+  );
   // Arena scaffold is the new default (2026-05-07): the hub-anchored
   // selector ships without the prize-pool placeholder card and matches
   // what users see when they navigate from /hub → Play. Direct visits
@@ -887,19 +925,13 @@ function ArenaPageInner() {
     const navIcon = (
       src: string,
       label: string,
-      sheetKey?: "badge" | "shop" | "leaderboard" | "trophies",
+      onClick: () => void,
     ) => (
-      <Link
-        href="/hub"
-        role="button"
+      <button
+        type="button"
         aria-label={label}
         className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
-        onClick={() => {
-          if (!sheetKey) return;
-          try {
-            sessionStorage.setItem("chesscito:open-sheet", sheetKey);
-          } catch { /* storage unavailable */ }
-        }}
+        onClick={onClick}
       >
         <img
           src={src}
@@ -907,7 +939,7 @@ function ArenaPageInner() {
           aria-hidden="true"
           className="h-full w-full object-contain"
         />
-      </Link>
+      </button>
     );
 
     // Scaffold variant — `?arena=new`. Mirrors the kingdom-anchored
@@ -970,8 +1002,8 @@ function ArenaPageInner() {
           >
             <PersistentDock
               activeDockTab={activeDockTab}
-              badgeControl={navIcon("/art/badge-menu.png", "Badges", "badge")}
-              shopControl={navIcon("/art/shop-menu.png", "Shop", "shop")}
+              badgeControl={navIcon("/art/badge-menu.png", "Badges", handleOpenBadgeSheet)}
+              shopControl={navIcon("/art/shop-menu.png", "Shop", handleOpenShopSheet)}
               trophiesControl={
                 <TrophiesSheet open={trophiesOpen} onOpenChange={setTrophiesOpen} />
               }
@@ -979,6 +1011,16 @@ function ArenaPageInner() {
                 <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
               }
             />
+            <BadgeSheet
+              {...badgeSheet.sheetProps}
+              onOpenChange={handleBadgeSheetOpenChange}
+              onNavigateToTrophies={handleBadgeNavigateToTrophies}
+            />
+            <ShopSheet
+              {...shopSheet.sheetProps}
+              onOpenChange={handleShopSheetOpenChange}
+            />
+            <PurchaseConfirmSheet {...shopSheet.confirmProps} />
           </div>
         </main>
       );
@@ -1038,8 +1080,8 @@ function ArenaPageInner() {
         >
           <PersistentDock
             activeDockTab={activeDockTab}
-            badgeControl={navIcon("/art/badge-menu.png", "Badges", "badge")}
-            shopControl={navIcon("/art/shop-menu.png", "Shop", "shop")}
+            badgeControl={navIcon("/art/badge-menu.png", "Badges", handleOpenBadgeSheet)}
+            shopControl={navIcon("/art/shop-menu.png", "Shop", handleOpenShopSheet)}
             trophiesControl={
               <TrophiesSheet open={trophiesOpen} onOpenChange={setTrophiesOpen} />
             }
@@ -1047,6 +1089,16 @@ function ArenaPageInner() {
               <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
             }
           />
+          <BadgeSheet
+            {...badgeSheet.sheetProps}
+            onOpenChange={handleBadgeSheetOpenChange}
+            onNavigateToTrophies={handleBadgeNavigateToTrophies}
+          />
+          <ShopSheet
+            {...shopSheet.sheetProps}
+            onOpenChange={handleShopSheetOpenChange}
+          />
+          <PurchaseConfirmSheet {...shopSheet.confirmProps} />
         </div>
       </main>
     );
