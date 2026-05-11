@@ -15,7 +15,9 @@ import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
 import { ArenaSelectScaffold } from "@/components/arena/arena-select-scaffold";
-import { PersistentDock } from "@/components/exercises/persistent-dock";
+import { PersistentDock, type DockTab } from "@/components/exercises/persistent-dock";
+import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
+import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
@@ -76,6 +78,7 @@ export default function ArenaPage() {
 function ArenaPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [activeDockTab, setActiveDockTab] = useState<DockTab>(null);
   // Arena scaffold is the new default (2026-05-07): the hub-anchored
   // selector ships without the prize-pool placeholder card and matches
   // what users see when they navigate from /hub → Play. Direct visits
@@ -868,6 +871,17 @@ function ArenaPageInner() {
     game.reset();
   }, [game]);
 
+  const leaderboardOpen = activeDockTab === "leaderboard";
+  const setLeaderboardOpen = useCallback(
+    (open: boolean) => setActiveDockTab(open ? "leaderboard" : null),
+    [],
+  );
+  const trophiesOpen = activeDockTab === "trophies";
+  const setTrophiesOpen = useCallback(
+    (open: boolean) => setActiveDockTab(open ? "trophies" : null),
+    [],
+  );
+
   // Difficulty selection
   if (game.status === "selecting") {
     const navIcon = (
@@ -955,25 +969,15 @@ function ArenaPageInner() {
             style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           >
             <PersistentDock
-              activeDockTab={null}
+              activeDockTab={activeDockTab}
               badgeControl={navIcon("/art/badge-menu.png", "Badges", "badge")}
               shopControl={navIcon("/art/shop-menu.png", "Shop", "shop")}
               trophiesControl={
-                <Link
-                  href="/hub"
-                  role="button"
-                  aria-label={DOCK_LABELS.trophies}
-                  className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
-                  onClick={() => {
-                    try {
-                      sessionStorage.setItem("chesscito:open-sheet", "trophies");
-                    } catch { /* storage unavailable */ }
-                  }}
-                >
-                  <CandyIcon name="trophy" className="h-full w-full" />
-                </Link>
+                <TrophiesSheet open={trophiesOpen} onOpenChange={setTrophiesOpen} />
               }
-              leaderboardControl={navIcon("/art/leaderboard-menu.png", "Leaderboard", "leaderboard")}
+              leaderboardControl={
+                <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
+              }
             />
           </div>
         </main>
@@ -1033,25 +1037,15 @@ function ArenaPageInner() {
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         >
           <PersistentDock
-            activeDockTab={null}
+            activeDockTab={activeDockTab}
             badgeControl={navIcon("/art/badge-menu.png", "Badges", "badge")}
             shopControl={navIcon("/art/shop-menu.png", "Shop", "shop")}
             trophiesControl={
-              <Link
-                href="/hub"
-                role="button"
-                aria-label={DOCK_LABELS.trophies}
-                className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
-                onClick={() => {
-                  try {
-                    sessionStorage.setItem("chesscito:open-sheet", "trophies");
-                  } catch { /* storage unavailable */ }
-                }}
-              >
-                <CandyIcon name="trophy" className="h-full w-full" />
-              </Link>
+              <TrophiesSheet open={trophiesOpen} onOpenChange={setTrophiesOpen} />
             }
-            leaderboardControl={navIcon("/art/leaderboard-menu.png", "Leaderboard", "leaderboard")}
+            leaderboardControl={
+              <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
+            }
           />
         </div>
       </main>
