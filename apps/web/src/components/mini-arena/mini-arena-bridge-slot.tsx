@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ActionRowIcon } from "@/components/action-row/action-row-icon";
 import { StonePedestal } from "@/components/scene-rooted/stone-pedestal";
 import { MiniArenaSheet } from "./mini-arena-sheet";
 import type { MiniArenaSetup } from "@/lib/game/mini-arena";
@@ -31,7 +31,8 @@ export function MiniArenaBridgeSlot({ setup, unlocked }: Props) {
         <StonePedestal
           stone={4}
           size="large"
-          icon={<CandyIcon name="trophy" className="h-10 w-10" />}
+          className="action-row-pedestal action-row-pedestal-arena"
+          icon={<ActionRowIcon name="battle-espadas" className="h-14 w-14 object-contain" />}
           onClick={() => setOpen(true)}
           aria-label={`Reto avanzado: ${setup.name}`}
         />

@@ -1,6 +1,6 @@
 "use client";
 
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ActionRowIcon } from "@/components/action-row/action-row-icon";
 import { StonePedestal } from "@/components/scene-rooted/stone-pedestal";
 
 export type DailyTacticCardProps = {
@@ -60,10 +60,11 @@ export function DailyTacticCard({
       <StonePedestal
         stone={2}
         size="large"
+        className="action-row-pedestal action-row-pedestal-daily"
         icon={
-          <CandyIcon
-            name={isCompletedToday ? "check" : "coach"}
-            className="h-10 w-10"
+          <ActionRowIcon
+            name={isCompletedToday ? "estrella" : "pergamino-tactico"}
+            className={isCompletedToday ? "h-12 w-12 object-contain" : "h-14 w-14 object-contain"}
           />
         }
         badge={badge}

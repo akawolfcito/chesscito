@@ -32,6 +32,15 @@ const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
   switchNetwork: "refresh",
 };
 
+const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
+  submitScore: "estrella",
+  useShield: "shield-king",
+  claimBadge: "trofeo-epico",
+  retry: "refresh",
+  connectWallet: "wallet",
+  switchNetwork: "refresh",
+};
+
 function getRoot(): HTMLElement {
   const root = document.querySelector('[data-component="action-pin"]');
   if (!root) throw new Error("ActionPin root not found");
@@ -61,13 +70,12 @@ describe("ActionPin — render matrix (6 actions × 2 sizes)", () => {
         expect(button.tagName.toLowerCase()).toBe("button");
         expect(button).toHaveAttribute("type", "button");
 
-        const srcsets = Array.from(container.querySelectorAll("source")).map(
-          (s) => s.getAttribute("srcset"),
-        );
-        const expectedIcon = ACTION_ICON_FILE[action];
-        expect(srcsets).toContain(`/art/redesign/icons/${expectedIcon}.avif`);
-
         if (size === "pin") {
+          const icon = button.querySelector("img");
+          expect(icon).toHaveAttribute(
+            "src",
+            `/art/action-row/${ACTION_ROW_ICON_FILE[action]}.png`,
+          );
           // External label rendered BELOW the button by the primitive
           // (slot does not own the label).
           const externalLabel = root.querySelector(".action-pin-label");
@@ -76,6 +84,11 @@ describe("ActionPin — render matrix (6 actions × 2 sizes)", () => {
           // The external label must NOT be inside the <button>.
           expect(button.contains(externalLabel as Node)).toBe(false);
         } else {
+          const srcsets = Array.from(container.querySelectorAll("source")).map(
+            (s) => s.getAttribute("srcset"),
+          );
+          const expectedIcon = ACTION_ICON_FILE[action];
+          expect(srcsets).toContain(`/art/redesign/icons/${expectedIcon}.avif`);
           // size="full" — label is INLINE inside the button.
           expect(button.textContent).toContain("Label");
         }

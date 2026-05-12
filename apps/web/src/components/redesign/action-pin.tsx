@@ -3,6 +3,10 @@
 import type { ReactNode } from "react";
 
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
+import {
+  ActionRowIcon,
+  type ActionRowIconName,
+} from "@/components/action-row/action-row-icon";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { hapticTap } from "@/lib/haptics";
 
@@ -98,6 +102,15 @@ const ACTION_ICON: Record<ActionPinAction, CandyIconName> = {
   switchNetwork: "refresh",
 };
 
+const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
+  submitScore: "estrella",
+  useShield: "shield-king",
+  claimBadge: "trofeo-epico",
+  retry: "refresh",
+  connectWallet: "wallet",
+  switchNetwork: "refresh",
+};
+
 const PIN_BADGE_CLASSES =
   "absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[0.6rem] font-bold text-white shadow-[0_1px_2px_rgba(0,0,0,0.35)]";
 const FULL_BADGE_CLASSES =
@@ -163,20 +176,23 @@ export function ActionPin({
     .filter(Boolean)
     .join(" ");
 
+  const isSubmitPedestalPin = size === "pin" && action === "submitScore";
   const baseLayout = size === "pin" ? PIN_BUTTON_LAYOUT : FULL_BUTTON_LAYOUT;
   const shape = size === "pin" ? "rounded-full" : "rounded-2xl";
 
   const toneClasses =
-    tone === "claim"
-      ? "candy-frame candy-frame-gold action-pin-attention"
-      : (() => {
-          const s = ACTION_STYLES[action];
-          const border =
-            action === "retry"
-              ? " border border-[var(--cta-muted-border)]"
-              : "";
-          return `game-cta-depth ${shape} ${s.bg} ${s.glow} ${s.text}${border}`.trim();
-        })();
+    isSubmitPedestalPin
+      ? "action-pin-submit-pedestal"
+      : tone === "claim"
+        ? "candy-frame candy-frame-gold action-pin-attention"
+        : (() => {
+            const s = ACTION_STYLES[action];
+            const border =
+              action === "retry"
+                ? " border border-[var(--cta-muted-border)]"
+                : "";
+            return `game-cta-depth ${shape} ${s.bg} ${s.glow} ${s.text}${border}`.trim();
+          })();
 
   const buttonClasses = [
     baseLayout,
@@ -190,6 +206,11 @@ export function ActionPin({
     <span
       aria-hidden="true"
       className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+    />
+  ) : size === "pin" ? (
+    <ActionRowIcon
+      name={ACTION_ROW_ICON[action]}
+      className="h-8 w-8 object-contain"
     />
   ) : (
     <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />

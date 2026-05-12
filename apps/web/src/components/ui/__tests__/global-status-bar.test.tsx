@@ -130,7 +130,7 @@ describe("<GlobalStatusBar> variant: connected — PRO loading", () => {
 describe("<GlobalStatusBar> variant: connected — PRO active", () => {
   const futureExpiry = Date.now() + 28 * 24 * 60 * 60 * 1000;
 
-  it("renders gold-ring identity + active PRO pill with manage aria-label", () => {
+  it("renders the Hub PRO resource chip with manage aria-label", () => {
     render(
       <GlobalStatusBar
         variant="connected"
@@ -144,7 +144,10 @@ describe("<GlobalStatusBar> variant: connected — PRO active", () => {
       GLOBAL_STATUS_BAR_COPY.proManageLabel,
     );
     expect(proButton).toBeInTheDocument();
-    expect(proButton).toHaveAttribute("data-pro-state", "active");
+    expect(proButton.className).toMatch(/\bhud-resource-chip\b/);
+    expect(proButton.className).toMatch(/\bhud-resource-chip--pro\b/);
+    expect(proButton.className).toMatch(/\bhud-resource-chip--md\b/);
+    expect(proButton.className).toMatch(/\bis-atmosphere-adventure\b/);
   });
 
   it("calls onProTap when the active PRO pill is clicked", () => {
@@ -198,11 +201,11 @@ describe("<GlobalStatusBar> variant: connected — PRO active", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Variant: connected (PRO inactive — transitional muted treatment)
+// Variant: connected (PRO inactive)
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("<GlobalStatusBar> variant: connected — PRO inactive (transitional)", () => {
-  it("renders the muted PRO pill with view aria-label and no ring", () => {
+describe("<GlobalStatusBar> variant: connected — PRO inactive", () => {
+  it("renders the same Hub PRO resource chip with view aria-label", () => {
     render(
       <GlobalStatusBar
         variant="connected"
@@ -216,35 +219,14 @@ describe("<GlobalStatusBar> variant: connected — PRO inactive (transitional)",
       GLOBAL_STATUS_BAR_COPY.proViewLabel,
     );
     expect(proButton).toBeInTheDocument();
-    expect(proButton).toHaveAttribute("data-pro-state", "inactive");
-    expect(proButton.textContent).toContain(
-      GLOBAL_STATUS_BAR_COPY.proInactiveLabel,
-    );
+    expect(proButton.textContent).toContain("PRO");
+    expect(proButton.className).toMatch(/\bhud-resource-chip\b/);
+    expect(proButton.className).toMatch(/\bhud-resource-chip--pro\b/);
+    expect(proButton.className).toMatch(/\bhud-resource-chip--md\b/);
+    expect(proButton.className).toMatch(/\bis-atmosphere-adventure\b/);
   });
 
-  it("locks the muted treatment classes per spec §8 P1-2 (exact values)", () => {
-    render(
-      <GlobalStatusBar
-        variant="connected"
-        identity={{ walletShort: sampleWalletShort }}
-        proStatus={{ active: false, expiresAt: null }}
-        isProLoading={false}
-        onProTap={() => undefined}
-      />,
-    );
-    const proButton = screen.getByLabelText(
-      GLOBAL_STATUS_BAR_COPY.proViewLabel,
-    );
-    // Spec §8 inactive row Amendment 2026-05-03 locks these.
-    // Implementer cannot tune.
-    expect(proButton.className).toMatch(/text-\[rgb\(80,40,5\)\]\/70/);
-    expect(proButton.className).toMatch(/ring-1/);
-    expect(proButton.className).toMatch(/ring-inset/);
-    expect(proButton.className).toMatch(/ring-\[rgb\(80,40,5\)\]\/30/);
-    expect(proButton.className).toMatch(/bg-white\/85/);
-  });
-
-  it("calls onProTap when the inactive PRO pill is clicked (transitional)", () => {
+  it("calls onProTap when the inactive PRO chip is clicked", () => {
     const onProTap = vi.fn();
     render(
       <GlobalStatusBar

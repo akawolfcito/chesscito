@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { GLOBAL_STATUS_BAR_COPY } from "@/lib/content/editorial";
 import { CandyBanner } from "@/components/redesign/candy-banner";
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { HudResourceChip } from "@/components/hud/hud-resource-chip";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types — discriminated union per variant.
@@ -125,27 +125,6 @@ const HANDLE_CLASS =
 /** Frame-level back chip — visual cluster (back · handle). */
 const BACK_BUTTON_CLASS = cn(
   "flex h-9 w-9 shrink-0 items-center justify-center transition active:scale-[0.94]",
-);
-
-const PRO_PILL_BASE =
-  "inline-flex items-center px-2 h-6 rounded-full text-[10px] font-bold uppercase tracking-wide transition active:scale-[0.97]";
-
-const PRO_PILL_ACTIVE = cn(
-  PRO_PILL_BASE,
-  "bg-gradient-to-r from-[rgb(255,200,80)] to-[rgb(255,160,40)] text-[rgb(80,40,5)] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]",
-);
-
-/** Spec §8 P1-2 inactive-state lock (Amendment 2026-05-03) — these
- *  classes are exact, no tuning. The original amendment locked
- *  `text-white/40 ring-white/15 bg-transparent`, which was confirmed
- *  invisible against the candy-green hub backdrop in the 2026-05-02
- *  PRO smoke. New treatment: light cream fill + defined brown border at
- *  30% + brown text at 70% — visible on any candy palette tile, not a
- *  CTA (no gradient, no shadow). Same height/padding/font as active so
- *  the slot doesn't shift between states. */
-const PRO_PILL_INACTIVE = cn(
-  PRO_PILL_BASE,
-  "text-[rgb(80,40,5)]/70 ring-1 ring-inset ring-[rgb(80,40,5)]/30 bg-white/85",
 );
 
 const PRO_SKELETON_CLASS = cn(
@@ -321,7 +300,6 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
 }
 
 function AccountClusterButton({
-  active,
   onClick,
   label,
 }: {
@@ -330,30 +308,15 @@ function AccountClusterButton({
   label: string;
 }): React.JSX.Element {
   return (
-    <button
-      type="button"
+    <HudResourceChip
+      tone="pro"
+      size="md"
+      atmosphere="adventure"
+      icon="wallet"
+      value="PRO"
+      ariaLabel={label}
       onClick={onClick}
-      aria-label={label}
-      data-pro-state={active ? "active" : "inactive"}
-      className={cn(
-        "inline-flex h-9 items-center gap-1.5 rounded-full border px-2.5 transition active:scale-[0.97]",
-        active
-          ? "border-amber-200/70 bg-[rgba(255,214,95,0.92)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_2px_6px_rgba(120,65,5,0.20)]"
-          : "border-[rgba(110,65,15,0.22)] bg-white/85 text-[rgb(80,40,5)]/70 ring-1 ring-inset ring-[rgb(80,40,5)]/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]",
-      )}
-    >
-      <CandyIcon name="wallet" className="h-5 w-5" />
-      <span
-        aria-hidden="true"
-        className="fantasy-title text-[0.78rem] font-extrabold leading-none"
-        style={{
-          color: active ? "rgba(80, 40, 5, 0.96)" : "rgba(80, 40, 5, 0.62)",
-          textShadow: "0 1px 0 rgba(255, 245, 215, 0.70)",
-        }}
-      >
-        ★
-      </span>
-      <span className="sr-only">{GLOBAL_STATUS_BAR_COPY.proInactiveLabel}</span>
-    </button>
+      className="global-status-account-chip"
+    />
   );
 }
