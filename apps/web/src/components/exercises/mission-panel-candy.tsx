@@ -1,128 +1,139 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
-import { CandyIcon } from "@/components/redesign/candy-icon";
-import { HudResourceChip } from "@/components/hud/hud-resource-chip";
-import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
-import { HUD_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PHASE_FLASH_COPY, PIECE_LABELS } from "@/lib/content/editorial";
-import { LottieAnimation } from "@/components/ui/lottie-animation";
-import { PiecePickerSheet } from "@/components/exercises/piece-picker-sheet";
-import { PiecePickerTrigger } from "@/components/exercises/piece-picker-trigger";
-import { MissionDetailSheet } from "@/components/exercises/mission-detail-sheet";
-import { ContextualHeader } from "@/components/ui/contextual-header";
+import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+import { CandyIcon } from '@/components/redesign/candy-icon'
+import { HudResourceChip } from '@/components/hud/hud-resource-chip'
+import {
+  HUD_COPY,
+  LABYRINTH_COPY,
+  MISSION_BRIEFING_COPY,
+  PHASE_FLASH_COPY,
+  PIECE_LABELS,
+} from '@/lib/content/editorial'
+import { LottieAnimation } from '@/components/ui/lottie-animation'
+import { PiecePickerSheet } from '@/components/exercises/piece-picker-sheet'
+import { PiecePickerTrigger } from '@/components/exercises/piece-picker-trigger'
+import { MissionDetailSheet } from '@/components/exercises/mission-detail-sheet'
 
 type PieceOption = {
-  key: "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
-  label: string;
-  enabled: boolean;
-};
+  key: 'rook' | 'bishop' | 'knight' | 'pawn' | 'queen' | 'king'
+  label: string
+  enabled: boolean
+}
 
 type MissionPanelProps = {
-  selectedPiece: PieceOption["key"];
-  onSelectPiece: (piece: PieceOption["key"]) => void;
-  pieces: readonly PieceOption[];
-  phase: "ready" | "success" | "failure";
-  targetLabel: string;
-  score: string;
-  timeMs: string;
-  board: ReactNode;
-  exerciseDrawer: ReactNode;
-  isReplay: boolean;
-  contextualAction: ReactNode;
-  persistentDock: ReactNode;
-  pieceHint?: string;
-  isCapture?: boolean;
+  selectedPiece: PieceOption['key']
+  onSelectPiece: (piece: PieceOption['key']) => void
+  pieces: readonly PieceOption[]
+  phase: 'ready' | 'success' | 'failure'
+  targetLabel: string
+  score: string
+  timeMs: string
+  board: ReactNode
+  exerciseDrawer: ReactNode
+  isReplay: boolean
+  contextualAction: ReactNode
+  persistentDock: ReactNode
+  pieceHint?: string
+  isCapture?: boolean
   /** Live retry-shield count from `readDisplayedShields()`. Rendered
    *  by the persistent shield-chip row inserted between the
    *  mission-detail row and the optional L2 toggle. Pass `0` when
    *  the player has no shields — the chip stays mounted to mirror
    *  /hub canon and avoid layout jumps when the count transitions
    *  0↔1. */
-  shieldCount: number;
+  shieldCount: number
   /** Total stars earned on the current piece (0–15). Feeds the
    *  mission-detail journey rail so the user sees how close they are
    *  to claiming the badge. */
-  currentStars: number;
+  currentStars: number
   /** On-chain badge claim status per piece. Feeds the journey rail
    *  unlock/locked tiers. */
-  claimedBadges: Partial<Record<PieceOption["key"], boolean>>;
+  claimedBadges: Partial<Record<PieceOption['key'], boolean>>
   /** Signal from the parent that a dock destination sheet is open.
    *  When true, we close piece-picker and mission-detail so the user
    *  never sees a picker stacked behind a badge/shop/leaderboard
    *  sheet. */
-  isDockSheetOpen: boolean;
+  isDockSheetOpen: boolean
   /** L2 layer toggle. Visible only when labyrinthAvailable. Lets the
    *  player switch between L1 exercises and L2 labyrinths inline. */
-  labyrinthAvailable?: boolean;
-  labyrinthMode?: boolean;
-  onToggleLabyrinth?: (next: boolean) => void;
+  labyrinthAvailable?: boolean
+  labyrinthMode?: boolean
+  labyrinthOptimalMoves?: number
+  onToggleLabyrinth?: (next: boolean) => void
   /** Optional slot rendered between the chip row and the board.
    *  Used by the Hub to surface the Daily Tactic card without
    *  pulling daily-feature concerns into this presentational
    *  component. */
-  headerSlot?: ReactNode;
+  headerSlot?: ReactNode
   /** Optional flanking slots rendered next to the contextual action
    *  pin. Used for compact entry points (Daily Tactic mini, Mini-Arena
    *  bridge) that shouldn't push the board down. */
-  actionRowLeft?: ReactNode;
-  actionRowRight?: ReactNode;
-};
+  actionRowLeft?: ReactNode
+  actionRowRight?: ReactNode
+}
 
-type FlashConfig = { text: string; accent: string; stroke: string };
+type FlashConfig = { text: string; accent: string; stroke: string }
 
 /* Warm-amber on grass reads better than emerald or rose. The stroke
    is the darkest paper-text brown so the glyph silhouette stays
    crisp against any background (forest, paper, etc.). */
-const PHASE_FLASH: Record<MissionPanelProps["phase"], FlashConfig | null> = {
+const PHASE_FLASH: Record<MissionPanelProps['phase'], FlashConfig | null> = {
   ready: null,
   success: {
     text: PHASE_FLASH_COPY.success,
-    accent: "rgb(245, 158, 11)",        // amber-500
-    stroke: "rgba(63, 34, 8, 0.95)",    // darkest paper text
+    accent: 'rgb(245, 158, 11)', // amber-500
+    stroke: 'rgba(63, 34, 8, 0.95)', // darkest paper text
   },
   failure: {
     text: PHASE_FLASH_COPY.failure,
-    accent: "rgb(244, 63, 94)",         // rose-500
-    stroke: "rgba(63, 34, 8, 0.95)",
+    accent: 'rgb(244, 63, 94)', // rose-500
+    stroke: 'rgba(63, 34, 8, 0.95)',
   },
-};
+}
 
-function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
-  const [visible, setVisible] = useState(false);
-  const [fading, setFading] = useState(false);
-  const flash = PHASE_FLASH[phase];
+function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
+  const [visible, setVisible] = useState(false)
+  const [fading, setFading] = useState(false)
+  const flash = PHASE_FLASH[phase]
 
   useEffect(() => {
     if (!flash) {
-      setVisible(false);
-      setFading(false);
-      return;
+      setVisible(false)
+      setFading(false)
+      return
     }
 
-    setVisible(true);
-    setFading(false);
+    setVisible(true)
+    setFading(false)
 
-    const fadeTimer = setTimeout(() => setFading(true), 600);
-    const hideTimer = setTimeout(() => setVisible(false), 950);
+    const fadeTimer = setTimeout(() => setFading(true), 600)
+    const hideTimer = setTimeout(() => setVisible(false), 950)
 
     return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(hideTimer);
-    };
-  }, [phase, flash]);
+      clearTimeout(fadeTimer)
+      clearTimeout(hideTimer)
+    }
+  }, [phase, flash])
 
-  if (!visible || !flash) return null;
+  if (!visible || !flash) return null
 
   return (
     <div
-      className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${fading ? "opacity-0" : "opacity-100"}`}
+      className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${
+        fading ? 'opacity-0' : 'opacity-100'
+      }`}
     >
       <div className="flex flex-col items-center gap-2 animate-in zoom-in-90 duration-300">
         <div className="relative flex h-32 w-32 items-center justify-center">
-          {phase === "success" && (
+          {phase === 'success' && (
             <div className="pointer-events-none absolute inset-0">
-              <LottieAnimation src="/animations/sparkle-burst.lottie" loop={false} className="h-full w-full" />
+              <LottieAnimation
+                src="/animations/sparkle-burst.lottie"
+                loop={false}
+                className="h-full w-full"
+              />
             </div>
           )}
           {/* Soft warm halo behind the mascot — gives the figure mass
@@ -131,7 +142,7 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
             className="pointer-events-none absolute h-28 w-28 rounded-full"
             style={{
               background:
-                "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)",
+                'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
             }}
           />
           <picture className="relative z-10">
@@ -142,7 +153,10 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
               alt=""
               aria-hidden="true"
               className="h-24 w-24 drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
-              style={{ animation: "reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
+              style={{
+                animation:
+                  'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+              }}
             />
           </picture>
         </div>
@@ -155,15 +169,15 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps["phase"] }) {
             color: flash.accent,
             WebkitTextStroke: `2px ${flash.stroke}`,
             textShadow:
-              "0 2px 0 rgba(255, 245, 215, 0.85), 0 4px 10px rgba(120, 65, 5, 0.40)",
-            paintOrder: "stroke fill",
+              '0 2px 0 rgba(255, 245, 215, 0.85), 0 4px 10px rgba(120, 65, 5, 0.40)',
+            paintOrder: 'stroke fill',
           }}
         >
           {flash.text}
         </span>
       </div>
     </div>
-  );
+  )
 }
 
 export function MissionPanelCandy({
@@ -184,6 +198,7 @@ export function MissionPanelCandy({
   isDockSheetOpen,
   labyrinthAvailable = false,
   labyrinthMode = false,
+  labyrinthOptimalMoves,
   onToggleLabyrinth,
   headerSlot,
   actionRowLeft,
@@ -191,76 +206,58 @@ export function MissionPanelCandy({
   shieldCount,
   pieceHint,
 }: MissionPanelProps) {
-  const activePiece = pieces.find((p) => p.key === selectedPiece);
-  const pieceTitle =
-    activePiece?.label ?? PIECE_LABELS[selectedPiece as keyof typeof PIECE_LABELS];
-
-  // Subtitle for Z2 — mirrors the legacy mission chip's caption logic.
-  // L2 labyrinth mode: shows the labyrinth name. Capture exercises: just
-  // "Capture" (the target square is implied by the highlighted enemy).
-  // Default: "Target {square}" (matches MISSION_BRIEFING_COPY.targetPrefix).
-  const objectiveText = labyrinthMode
-    ? targetLabel
-    : isCapture
-      ? "Capture"
-      : `${MISSION_BRIEFING_COPY.targetPrefix.replace(":", "")} ${targetLabel}`;
-
   // Quick-picker (Type C) open state — owned here so we can auto-close
   // them when the parent signals a dock destination sheet is opening.
-  const [piecePickerOpen, setPiecePickerOpen] = useState(false);
-  const [missionDetailOpen, setMissionDetailOpen] = useState(false);
+  const [piecePickerOpen, setPiecePickerOpen] = useState(false)
+  const [missionDetailOpen, setMissionDetailOpen] = useState(false)
 
   useEffect(() => {
     if (isDockSheetOpen) {
-      setPiecePickerOpen(false);
-      setMissionDetailOpen(false);
+      setPiecePickerOpen(false)
+      setMissionDetailOpen(false)
     }
-  }, [isDockSheetOpen]);
+  }, [isDockSheetOpen])
 
   /* Candy-palette chip class — replaces the legacy var(--surface-c-mid)
      dark navy background that was leftover from the pre-candy era.
      Warm cream paper bg + warm-brown text + soft amber border so the
      header reads as part of the same family as the candy modals,
      dock sheets, and the toggle pill below. */
-  const candyChipClass =
-    "flex min-h-[40px] items-center gap-2 rounded-full border px-3 py-1.5 transition-all active:scale-[0.97]";
-  const candyChipStyle = {
-    background: "rgba(255, 245, 215, 0.55)",
-    borderColor: "rgba(110, 65, 15, 0.28)",
-    boxShadow:
-      "inset 0 1px 0 rgba(255, 245, 215, 0.65), 0 1px 3px rgba(120, 65, 5, 0.18)",
-  } as const;
-  const candyChipText =
-    "fantasy-title text-xs font-extrabold uppercase tracking-[0.12em]";
   const candyChipTextStyle = {
-    color: "rgba(63, 34, 8, 0.95)",
-    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-  } as const;
+    color: 'rgba(63, 34, 8, 0.95)',
+    textShadow: '0 1px 0 rgba(255, 245, 215, 0.65)',
+  } as const
+
+  const visibleMissionLabel =
+    labyrinthMode && labyrinthOptimalMoves
+      ? String(labyrinthOptimalMoves)
+      : isCapture
+      ? 'Capture'
+      : `${MISSION_BRIEFING_COPY.targetPrefix.replace(':', '')} ${targetLabel}`
+  const missionAriaLabel =
+    labyrinthMode && labyrinthOptimalMoves
+      ? `Open mission details — optimal path ${labyrinthOptimalMoves} moves`
+      : `Open mission details${
+          isCapture ? ' — capture target' : ` — target ${targetLabel}`
+        }`
+  const showLayerTabs = Boolean(onToggleLabyrinth)
 
   const missionPeek = (
     <button
       type="button"
-      className={`${candyChipClass} min-h-[44px]`}
-      style={candyChipStyle}
-      aria-label={`Open mission details${isCapture ? " — capture target" : ` — target ${targetLabel}`}`}
+      className="quest-tray-slot flex min-h-[44px] w-full min-w-0 items-center justify-center gap-2 rounded-xl border px-2 py-1.5 text-center transition-all active:scale-[0.97]"
+      aria-label={missionAriaLabel}
     >
-      <CandyIcon
-        name={labyrinthMode ? "move" : "crosshair"}
-        className="h-4 w-4 shrink-0"
-      />
+      <CandyIcon name="crosshair" className="h-3.5 w-3.5 shrink-0" />
       <span
         key={targetLabel}
-        className="fantasy-title text-xs font-extrabold"
+        className="truncate text-sm font-extrabold"
         style={candyChipTextStyle}
       >
-        {labyrinthMode
-          ? targetLabel
-          : isCapture
-            ? "Capture"
-            : `${MISSION_BRIEFING_COPY.targetPrefix.replace(":", "")} ${targetLabel}`}
+        {visibleMissionLabel}
       </span>
     </button>
-  );
+  )
 
   return (
     // GlobalStatusBar (Z1) lives above this section in <main>'s flex
@@ -269,35 +266,105 @@ export function MissionPanelCandy({
     // the viewport. See spec docs/specs/ui/global-status-bar-spec-2026-05-02.md
     // §10 canary plan.
     <section className="mission-shell mission-shell-candy atmosphere flex min-h-0 flex-1 flex-col overflow-hidden">
-      {/* Z2 — Contextual Header. Piece label is the title, current
-          objective is the subtitle, picker trigger is the single trailing
-          control. Per spec docs/specs/ui/contextual-header-spec-2026-05-01.md
-          §8 (canary integration). The legacy `mr-[140px]` reservation
-          dropped 2026-05-02 with the Z1 canary — Z2's trailing slot now
-          spans the full wrapper width since the absolute PRO chip is
-          gone (`<GlobalStatusBar />` owns identity in normal flow). */}
-      <div className="shrink-0 ml-2 mt-2">
-        {/* No subtitle — the mission peek chip below renders the same
-            objectiveText with interactive affordance (opens
-            MissionDetailSheet), so a header subtitle was a third echo
-            of identical text. Title-only header is cleaner and saves
-            a row of vertical chrome. */}
-        <ContextualHeader
-          variant="title-control"
-          title={pieceTitle}
-          trailingControl={
-            <PiecePickerTrigger
-              selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
-              onClick={() => setPiecePickerOpen(true)}
+      {/* Paper/wood quest tray. Sally read: a single diegetic control
+          tray, not four unrelated floating chips. Built with CSS and
+          existing chess sprites. */}
+      <div className="mt-1 px-3 py-2.5">
+        <div className="grid grid-cols-[minmax(0,1.06fr)_minmax(0,0.96fr)_minmax(0,0.5fr)] gap-1">
+          <PiecePickerTrigger
+            selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
+            onClick={() => setPiecePickerOpen(true)}
+            showLabel
+          />
+          <MissionDetailSheet
+            open={missionDetailOpen}
+            onOpenChange={setMissionDetailOpen}
+            selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
+            targetLabel={targetLabel}
+            isCapture={isCapture}
+            score={score}
+            timeMs={timeMs}
+            currentStars={currentStars}
+            claimedBadges={claimedBadges}
+            trigger={missionPeek}
+          />
+          <div className="min-w-0">{exerciseDrawer}</div>
+        </div>
+
+        {showLayerTabs && onToggleLabyrinth && (
+          <div className="mt-2 flex justify-center">
+            <div
+              className="quest-tray-tabs grid w-full grid-cols-2 overflow-hidden rounded-2xl border p-0.5"
+              role="tablist"
+              aria-label="Layer toggle"
+            >
+              {[
+                {
+                  active: !labyrinthMode,
+                  value: false,
+                  label: LABYRINTH_COPY.toggleExercises,
+                  disabled: false,
+                },
+                {
+                  active: labyrinthMode,
+                  value: true,
+                  label: LABYRINTH_COPY.toggleLabyrinths,
+                  disabled: !labyrinthAvailable,
+                },
+              ].map(({ active, value, label, disabled }) => (
+                <button
+                  key={label}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  aria-disabled={disabled}
+                  disabled={disabled}
+                  onClick={() => onToggleLabyrinth(value)}
+                  className={[
+                    'rounded-[0.9rem] px-2 py-2 transition-all active:scale-[0.97]',
+                    'fantasy-title text-[0.72rem] font-extrabold uppercase tracking-[0.08em]',
+                    active
+                      ? 'shadow-[inset_0_1px_0_rgba(255,248,216,0.72),0_1px_3px_rgba(126,76,20,0.22)]'
+                      : '',
+                    disabled ? 'cursor-not-allowed opacity-55' : '',
+                  ].join(' ')}
+                  style={{
+                    background: active
+                      ? 'linear-gradient(180deg, #ffbf32 0%, #f49a08 100%)'
+                      : 'transparent',
+                    color: active
+                      ? 'rgba(255, 250, 229, 0.98)'
+                      : 'rgba(110, 65, 15, 0.78)',
+                    WebkitTextStroke: active
+                      ? '0.35px rgba(95, 49, 9, 0.80)'
+                      : undefined,
+                    textShadow: active
+                      ? '0 1px 0 rgba(95, 49, 9, 0.65)'
+                      : '0 1px 0 rgba(255, 245, 215, 0.65)',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {shieldCount > 0 && (
+          <div className="mt-2 flex justify-end">
+            <HudResourceChip
+              tone="default"
+              size="compact"
+              icon="shield"
+              value={shieldCount}
+              ariaLabel={HUD_COPY.shieldsAriaLabel(shieldCount)}
             />
-          }
-          ariaLabel="Mission header"
-        />
+          </div>
+        )}
       </div>
 
-      {/* PiecePickerSheet rendered as a sibling of the header. Open state
-          is owned here; trigger is now PiecePickerTrigger inside the
-          ContextualHeader's trailing slot. */}
+      {/* PiecePickerSheet rendered as a sibling of the canopy. Open state
+          is owned here; trigger is inside the canopy's piece cluster. */}
       <PiecePickerSheet
         open={piecePickerOpen}
         onOpenChange={setPiecePickerOpen}
@@ -306,119 +373,14 @@ export function MissionPanelCandy({
         onSelectPiece={onSelectPiece}
       />
 
-      {/* TODO(zone-map-phase-2): fold MissionDetailSheet entry into the
-          piece-picker sheet as a sub-tab. Until then, the mission peek
-          chip stays rendered as a transitional sibling row so its
-          functional surface is preserved. Tracked in the Phase 2 backlog;
-          see contextual-header-spec-2026-05-01.md §8. */}
-      <div className="shrink-0 mx-2 mt-1 flex items-center gap-2">
-        <MissionDetailSheet
-          open={missionDetailOpen}
-          onOpenChange={setMissionDetailOpen}
-          selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
-          targetLabel={targetLabel}
-          isCapture={isCapture}
-          score={score}
-          timeMs={timeMs}
-          currentStars={currentStars}
-          claimedBadges={claimedBadges}
-          trigger={missionPeek}
-        />
-        <span className="ml-auto">{exerciseDrawer}</span>
-      </div>
-
-      {/* Shield-chip row — only rendered when the player has shields in
-          inventory. The earlier always-render policy (kept the row at
-          0 to avoid layout shift on first purchase) was costing ~40px
-          of vertical chrome above the board on every session, while a
-          0↔1 transition is rare. Trading the once-per-purchase shift
-          for a permanently more breathable board. */}
-      {shieldCount > 0 && (
-        <div className="shrink-0 mx-2 mt-1 flex justify-end">
-          <HudResourceChip
-            tone="default"
-            size="compact"
-            icon="shield"
-            value={shieldCount}
-            ariaLabel={HUD_COPY.shieldsAriaLabel(shieldCount)}
-          />
-        </div>
-      )}
-
-      {/* MissionRibbon row — surface="exercises" feeds the runtime
-          `pieceHint` (e.g. "The rook moves in straight lines.") so the
-          player always sees the current piece's instruction frame
-          without competing with the mission objective row above. The
-          previously dead `pieceHint` prop is now wired live. When
-          undefined, the ribbon falls back to MISSION_RIBBON_COPY.exercises.
-          Hidden in capture mode: pieceHint there reads "Capture the
-          target", which fully duplicates the subtitle + peek chip
-          ("Capture") — three surfaces echoing the same word. The
-          ribbon is the heaviest of the three (~40px row) and the
-          least essential since the chip is interactive. */}
-      {!isCapture && (
-        <div className="shrink-0 mx-2 mt-1">
-          <MissionRibbon surface="exercises" text={pieceHint} />
-        </div>
-      )}
-
-      {/* L2 Layer toggle — only visible after L1 mastery + labyrinths
-          exist for this piece. Restyled to match the chip row above
-          (border-amber-300/25, surface-c-mid, fantasy-title cap text,
-          backdrop blur, glow on active) so it feels native to the
-          game rather than a generic form control. */}
-      {labyrinthAvailable && onToggleLabyrinth && (
-        <div className="shrink-0 mx-2 mt-2 flex justify-center">
-          <div
-            className="inline-flex items-center gap-1 rounded-full border p-0.5"
-            style={{
-              background: "rgba(255, 245, 215, 0.55)",
-              borderColor: "rgba(110, 65, 15, 0.28)",
-              boxShadow:
-                "inset 0 1px 0 rgba(255, 245, 215, 0.65), 0 1px 3px rgba(120, 65, 5, 0.18)",
-            }}
-            role="tablist"
-            aria-label="Layer toggle"
-          >
-            {[
-              { active: !labyrinthMode, value: false, label: LABYRINTH_COPY.toggleExercises },
-              { active: labyrinthMode, value: true, label: LABYRINTH_COPY.toggleLabyrinths },
-            ].map(({ active, value, label }) => (
-              <button
-                key={label}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => onToggleLabyrinth(value)}
-                className={[
-                  "rounded-full px-3.5 py-1.5 transition-all active:scale-[0.97]",
-                  "fantasy-title text-[0.7rem] font-extrabold uppercase tracking-[0.12em]",
-                  active
-                    ? "bg-amber-500/85 shadow-[0_0_10px_rgba(245,158,11,0.45),inset_0_1px_0_rgba(255,245,215,0.55)]"
-                    : "",
-                ].join(" ")}
-                style={{
-                  color: active ? "rgba(63, 34, 8, 0.95)" : "rgba(110, 65, 15, 0.70)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Optional header slot (e.g., Daily Tactic card). Rendered between
           the chip row and the board so it's the first thing the player
           sees on hub entry without competing with the mission CTA. */}
-      {headerSlot && (
-        <div className="shrink-0 mx-2 mt-2">{headerSlot}</div>
-      )}
+      {headerSlot && <div className="shrink-0 mx-2 mt-2">{headerSlot}</div>}
 
       {/* Zone B: Board Stage — flex-1, maximum space. No panel frame so the
           board image floats directly on the grass field bg. */}
-      <div className="board-stage-focus min-h-0 flex-1 mx-2 mt-2">
+      <div className="board-stage-focus min-h-0 flex-1 mx-2 mt-1.5">
         {board}
       </div>
 
@@ -428,8 +390,8 @@ export function MissionPanelCandy({
           anchored because the flanks are absolutely positioned at the
           edges, leaving the centerline untouched. */}
       <div
-        className="relative mx-2 flex shrink-0 items-center justify-center"
-        style={{ marginTop: "var(--shell-gap-xs)" }}
+        className="relative mx-2 flex min-h-[4.75rem] shrink-0 items-center justify-center"
+        style={{ marginTop: 'var(--shell-gap-xs)' }}
       >
         {actionRowLeft && (
           <div className="absolute left-0 top-1/2 -translate-y-1/2">
@@ -456,7 +418,10 @@ export function MissionPanelCandy({
             without touching Radix's modal semantics elsewhere. */}
       <div
         className="shrink-0 relative z-[60] pointer-events-auto"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)", marginTop: "var(--shell-gap-sm)" }}
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          marginTop: 'var(--shell-gap-sm)',
+        }}
       >
         {persistentDock}
       </div>
@@ -464,5 +429,5 @@ export function MissionPanelCandy({
       {/* Fullscreen phase flash — auto-fades */}
       <PhaseFlash phase={phase} />
     </section>
-  );
+  )
 }

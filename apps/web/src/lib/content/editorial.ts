@@ -555,7 +555,7 @@ export const ARENA_COPY = {
     medium: "Solid player — a fair challenge",
     hard: "Expert — plays to win",
   },
-  startMatch: "PLAY",
+  startMatch: "PLAY CHESS",
   backToHub: "Back to Hub",
   playAsWhite: "Play as White",
   playAsBlack: "Play as Black",
@@ -1200,6 +1200,24 @@ export const GLOBAL_STATUS_BAR_COPY = {
   proInactiveLabel: "PRO",
   proLoadingAriaLabel: "Loading PRO status",
   backLabel: "Back to hub",
+  accountLabel: "Open account",
+} as const;
+
+export const ACCOUNT_SHEET_COPY = {
+  title: "Account",
+  description: "Wallet, network and PRO status",
+  walletLabel: "Wallet",
+  networkLabel: "Network",
+  proLabel: "PRO",
+  copyAddress: "Copy address",
+  copiedAddress: "Copied",
+  disconnect: "Disconnect",
+  minipayDisconnectHint: "If MiniPay keeps the session active, disconnect from MiniPay wallet settings.",
+  managePro: "Manage PRO",
+  viewPro: "View PRO",
+  activePro: "Active",
+  inactivePro: "Not active",
+  unknownNetwork: "Unknown network",
 } as const;
 
 /** /why public landing page copy. Spanish-only in v1 by product

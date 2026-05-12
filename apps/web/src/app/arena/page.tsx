@@ -901,7 +901,7 @@ function ArenaPageInner() {
       game.setDifficulty(last);
       handleStartWithLoading();
     }
-  }, [game, handleStartWithLoading]);
+  }, [game, handleStartWithLoading, searchParams]);
 
   // "Change difficulty" pill — returns to the Difficulty Selector without
   // touching LS (the new pick overwrites it on next Enter Arena).
@@ -1104,6 +1104,97 @@ function ArenaPageInner() {
     );
   }
 
+  if (ENABLE_COACH && coachPhase === "result" && coachResponse) {
+    return (
+      <main className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
+        <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">
+          <CandyGlassShell
+            title={COACH_COPY.coachAnalysisTitle}
+            onClose={handleBackToHub}
+            closeLabel={ARENA_COPY.backToHub}
+            className="max-h-none min-h-[calc(100dvh-2rem)] rounded-[1.75rem]"
+          >
+            <CoachPanel
+              response={coachResponse}
+              difficulty={game.difficulty}
+              totalMoves={game.moveCount}
+              elapsedMs={game.elapsedMs}
+              credits={coachCredits}
+              onPlayAgain={handlePlayAgain}
+              onBackToHub={handleBackToHub}
+              onViewHistory={address ? () => setCoachPhase("history") : undefined}
+              proActive={coachProActive}
+              historyMeta={coachHistoryMeta}
+            />
+          </CandyGlassShell>
+        </div>
+      </main>
+    );
+  }
+
+  if (ENABLE_COACH && coachPhase === "fallback" && coachFallbackResponse) {
+    return (
+      <main className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
+        <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">
+          <CandyGlassShell
+            title={COACH_COPY.quickReviewTitle}
+            onClose={handleBackToHub}
+            closeLabel={ARENA_COPY.backToHub}
+            className="max-h-none min-h-[calc(100dvh-2rem)] rounded-[1.75rem]"
+          >
+            {coachServerError && (
+              <div
+                data-testid="coach-server-error"
+                role="alert"
+                className="mb-3 rounded-xl border border-amber-400/60 bg-amber-50 px-3 py-2 text-xs"
+                style={{ color: "rgba(110, 65, 15, 0.95)" }}
+              >
+                <p className="font-bold">PRO check mismatch</p>
+                <p className="mt-1">{coachServerError}</p>
+              </div>
+            )}
+            <CoachFallback
+              response={coachFallbackResponse}
+              difficulty={game.difficulty}
+              totalMoves={game.moveCount}
+              elapsedMs={game.elapsedMs}
+              result={mapArenaResult(game.status, isPlayerWin)}
+              onGetFullAnalysis={() => setCoachPhase(isConnected ? "paywall" : "idle")}
+              onPlayAgain={handlePlayAgain}
+              onBackToHub={handleBackToHub}
+            />
+          </CandyGlassShell>
+        </div>
+      </main>
+    );
+  }
+
+  if (ENABLE_COACH && coachPhase === "history" && address) {
+    return (
+      <main className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
+        <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">
+          <CandyGlassShell
+            title={COACH_COPY.yourSessions}
+            onClose={() => setCoachPhase(coachResponse ? "result" : "idle")}
+            closeLabel={ARENA_COPY.backToHub}
+            className="max-h-none min-h-[calc(100dvh-2rem)] rounded-[1.75rem]"
+          >
+            <CoachHistory
+              walletAddress={address.toLowerCase()}
+              credits={coachCredits}
+              onSelectEntry={(entry) => {
+                if (entry.response.kind === "full") {
+                  setCoachResponse(entry.response);
+                  setCoachPhase("result");
+                }
+              }}
+            />
+          </CandyGlassShell>
+        </div>
+      </main>
+    );
+  }
+
   // Playing + end states
   return (
     <main className="flex h-[100dvh] flex-col items-center arena-bg">
@@ -1281,63 +1372,6 @@ function ArenaPageInner() {
               </div>
             </div>
           )}
-          {coachPhase === "result" && coachResponse && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto candy-modal-scrim animate-in fade-in duration-300 px-4 py-8">
-              <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-                <CandyGlassShell
-                  title={COACH_COPY.coachAnalysisTitle}
-                  onClose={handleBackToHub}
-                  closeLabel={ARENA_COPY.backToHub}
-                >
-                  <CoachPanel
-                    response={coachResponse}
-                    difficulty={game.difficulty}
-                    totalMoves={game.moveCount}
-                    elapsedMs={game.elapsedMs}
-                    credits={coachCredits}
-                    onPlayAgain={handlePlayAgain}
-                    onBackToHub={handleBackToHub}
-                    onViewHistory={address ? () => setCoachPhase("history") : undefined}
-                    proActive={coachProActive}
-                    historyMeta={coachHistoryMeta}
-                  />
-                </CandyGlassShell>
-              </div>
-            </div>
-          )}
-          {coachPhase === "fallback" && coachFallbackResponse && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto candy-modal-scrim animate-in fade-in duration-300 px-4 py-8">
-              <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-                <CandyGlassShell
-                  title={COACH_COPY.quickReviewTitle}
-                  onClose={handleBackToHub}
-                  closeLabel={ARENA_COPY.backToHub}
-                >
-                  {coachServerError && (
-                    <div
-                      data-testid="coach-server-error"
-                      role="alert"
-                      className="mb-3 rounded-xl border border-amber-400/60 bg-amber-50 px-3 py-2 text-xs"
-                      style={{ color: "rgba(110, 65, 15, 0.95)" }}
-                    >
-                      <p className="font-bold">PRO check mismatch</p>
-                      <p className="mt-1">{coachServerError}</p>
-                    </div>
-                  )}
-                  <CoachFallback
-                    response={coachFallbackResponse}
-                    difficulty={game.difficulty}
-                    totalMoves={game.moveCount}
-                    elapsedMs={game.elapsedMs}
-                    result={mapArenaResult(game.status, isPlayerWin)}
-                    onGetFullAnalysis={() => setCoachPhase(isConnected ? "paywall" : "idle")}
-                    onPlayAgain={handlePlayAgain}
-                    onBackToHub={handleBackToHub}
-                  />
-                </CandyGlassShell>
-              </div>
-            </div>
-          )}
           {coachPhase === "paywall" && (
             <CoachPaywall
               open
@@ -1349,28 +1383,6 @@ function ArenaPageInner() {
                 setCoachPhase("fallback");
               }}
             />
-          )}
-          {coachPhase === "history" && address && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto candy-modal-scrim animate-in fade-in duration-300 px-4 py-8">
-              <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-                <CandyGlassShell
-                  title={COACH_COPY.yourSessions}
-                  onClose={() => setCoachPhase(coachResponse ? "result" : "idle")}
-                  closeLabel="Go back"
-                >
-                  <CoachHistory
-                    walletAddress={address.toLowerCase()}
-                    credits={coachCredits}
-                    onSelectEntry={(entry) => {
-                      if (entry.response.kind === "full") {
-                        setCoachResponse(entry.response);
-                        setCoachPhase("result");
-                      }
-                    }}
-                  />
-                </CandyGlassShell>
-              </div>
-            </div>
           )}
         </>
       )}

@@ -3,6 +3,8 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { GLOBAL_STATUS_BAR_COPY } from "@/lib/content/editorial";
+import { CandyBanner } from "@/components/redesign/candy-banner";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types — discriminated union per variant.
@@ -122,8 +124,7 @@ const HANDLE_CLASS =
 
 /** Frame-level back chip — visual cluster (back · handle). */
 const BACK_BUTTON_CLASS = cn(
-  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
-  "bg-white/10 text-white/85 transition active:scale-[0.94] hover:bg-white/15",
+  "flex h-9 w-9 shrink-0 items-center justify-center transition active:scale-[0.94]",
 );
 
 const PRO_PILL_BASE =
@@ -232,19 +233,7 @@ function BackChip({ onClick }: { onClick: () => void }): React.JSX.Element {
       className={BACK_BUTTON_CLASS}
       data-back-chip
     >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <polyline points="15 18 9 12 15 6" />
-      </svg>
+      <CandyBanner name="btn-back" className="h-8 w-8" />
     </button>
   );
 }
@@ -284,7 +273,7 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
   const active = isProActive(props.proStatus);
   const showSkeleton = props.isProLoading && props.proStatus === null;
 
-  // Visible identity text: prefer handle (capped) → fallback to walletShort.
+  // Screen-reader identity text: prefer handle (capped) → fallback to walletShort.
   const handle = props.identity.handle;
   const visibleHandle = handle
     ? handle.length > MAX_HANDLE
@@ -301,9 +290,9 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
       data-variant="connected"
       className={WRAPPER_CLASS}
     >
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center gap-1">
         {props.onBack ? <BackChip onClick={props.onBack} /> : null}
-        <span className={HANDLE_CLASS}>{visibleHandle}</span>
+        <span className="sr-only">{visibleHandle}</span>
       </div>
       <div className="shrink-0">
         {showSkeleton ? (
@@ -314,30 +303,57 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
             className={PRO_SKELETON_CLASS}
           />
         ) : active && props.proStatus?.expiresAt ? (
-          <button
-            type="button"
+          <AccountClusterButton
+            active
             onClick={props.onProTap}
-            aria-label={GLOBAL_STATUS_BAR_COPY.proManageLabel}
-            data-pro-state="active"
-            className={PRO_PILL_ACTIVE}
-          >
-            <span aria-hidden="true">★</span>
-            <span className="ml-1">
-              {GLOBAL_STATUS_BAR_COPY.proInactiveLabel}
-            </span>
-          </button>
+            label={GLOBAL_STATUS_BAR_COPY.proManageLabel}
+          />
         ) : (
-          <button
-            type="button"
+          <AccountClusterButton
+            active={false}
             onClick={props.onProTap}
-            aria-label={GLOBAL_STATUS_BAR_COPY.proViewLabel}
-            data-pro-state="inactive"
-            className={PRO_PILL_INACTIVE}
-          >
-            {GLOBAL_STATUS_BAR_COPY.proInactiveLabel}
-          </button>
+            label={GLOBAL_STATUS_BAR_COPY.proViewLabel}
+          />
         )}
       </div>
     </header>
+  );
+}
+
+function AccountClusterButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      data-pro-state={active ? "active" : "inactive"}
+      className={cn(
+        "inline-flex h-9 items-center gap-1.5 rounded-full border px-2.5 transition active:scale-[0.97]",
+        active
+          ? "border-amber-200/70 bg-[rgba(255,214,95,0.92)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_2px_6px_rgba(120,65,5,0.20)]"
+          : "border-[rgba(110,65,15,0.22)] bg-white/85 text-[rgb(80,40,5)]/70 ring-1 ring-inset ring-[rgb(80,40,5)]/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]",
+      )}
+    >
+      <CandyIcon name="wallet" className="h-5 w-5" />
+      <span
+        aria-hidden="true"
+        className="fantasy-title text-[0.78rem] font-extrabold leading-none"
+        style={{
+          color: active ? "rgba(80, 40, 5, 0.96)" : "rgba(80, 40, 5, 0.62)",
+          textShadow: "0 1px 0 rgba(255, 245, 215, 0.70)",
+        }}
+      >
+        ★
+      </span>
+      <span className="sr-only">{GLOBAL_STATUS_BAR_COPY.proInactiveLabel}</span>
+    </button>
   );
 }

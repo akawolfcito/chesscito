@@ -62,7 +62,7 @@ function RewardTileButton({ tile }: { tile: RewardTile }) {
     >
       <span className="reward-tile-label">{label}</span>
       {isPieceTile(tile.id) ? (
-        <picture className="reward-tile-piece" aria-hidden="true">
+        <picture className="reward-tile-piece">
           <source srcSet={`/art/redesign/pieces/w-${tile.id}.avif`} type="image/avif" />
           <source srcSet={`/art/redesign/pieces/w-${tile.id}.webp`} type="image/webp" />
           <img src={`/art/redesign/pieces/w-${tile.id}.png`} alt="" />

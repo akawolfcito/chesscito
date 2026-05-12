@@ -84,7 +84,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     }));
   }, [fen]);
 
-  const checkSquare = useMemo(() => {
+  const checkSquare = (() => {
     const game = gameRef.current;
     if (!game.isCheck()) return null;
     const board = game.board();
@@ -98,7 +98,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
       }
     }
     return null;
-  }, [fen]);
+  })();
 
   function endIfTerminal(): boolean {
     const game = gameRef.current;

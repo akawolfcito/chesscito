@@ -2734,7 +2734,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .reward-tile.is-active-piece {
-  border: 3px solid #ffd84a;
+  /* border: 3px solid #ffd84a; */
   box-shadow:
     0 0 0 2px rgba(119, 73, 6, 0.52),
     0 0 16px rgba(255, 216, 74, 0.58),
@@ -3167,7 +3167,7 @@ button.hud-resource-chip:active:not(:disabled) {
   position: relative;
   z-index: 1;
   font-family: inherit;
-  top: -7px;
+  /* top: -7px; */
 }
 
 .primary-play-cta:active:not(:disabled) {
@@ -3217,7 +3217,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .primary-play-cta--arena-entry {
   min-height: 52px;
   /* padding: 10px 18px; */
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   border-radius: 14px;
   background: url("/art/scene-rooted/pedestal-play.png") center / auto 100% no-repeat;
 }
@@ -3389,6 +3389,33 @@ button.hud-resource-chip:active:not(:disabled) {
     0 5px 0 rgba(83, 45, 5, 0.25),
     0 10px 14px rgba(12, 40, 28, 0.20);
   filter: drop-shadow(0 4px 7px rgba(28, 55, 23, 0.18));
+}
+
+.quest-tray-slot,
+.quest-tray-tabs {
+  background:
+    radial-gradient(ellipse at 50% 88%, rgba(121, 79, 10, 0.16) 0 42%, transparent 43%),
+    linear-gradient(180deg, #fff3bd 0%, #f3d886 58%, #c49235 100%);
+  border-color: rgba(126, 76, 20, 0.30);
+  box-shadow:
+    0 2px 0 rgba(255, 255, 225, 0.72) inset,
+    0 -6px 0 rgba(92, 63, 14, 0.18) inset,
+    0 3px 0 rgba(83, 45, 5, 0.18),
+    0 7px 11px rgba(12, 40, 28, 0.15);
+  filter: drop-shadow(0 3px 5px rgba(28, 55, 23, 0.14));
+}
+
+.quest-tray-slot {
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.72);
+}
+
+.quest-tray-tabs {
+  box-shadow:
+    0 2px 0 rgba(255, 255, 225, 0.72) inset,
+    0 -7px 0 rgba(92, 63, 14, 0.20) inset,
+    0 4px 0 rgba(83, 45, 5, 0.20),
+    0 9px 13px rgba(12, 40, 28, 0.17);
 }
 
 .hub-scaffold-guide-piece {

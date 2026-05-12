@@ -198,7 +198,7 @@ export function ArenaEntryPanel({
           aria-label={ARENA_COPY.prizePoolLabel}
         >
           <img
-            src="/design/new-assets-chesscito/arena/community-pool.png"
+            src="/art/arena/community-pool.png"
             alt=""
             aria-hidden="true"
             className="h-8 w-8 shrink-0 object-contain"

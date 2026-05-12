@@ -150,7 +150,7 @@ export function ArenaSelectScaffold({
             aria-label={ARENA_COPY.prizePoolLabel}
           >
             <img
-              src="/design/new-assets-chesscito/arena/community-pool.png"
+              src="/art/arena/community-pool.png"
               alt=""
               aria-hidden="true"
               className="arena-scaffold-prize-pool-icon"

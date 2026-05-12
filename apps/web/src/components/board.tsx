@@ -158,7 +158,7 @@ export function Board({
                 which was hiding the entire board on iPhone Safari/Chrome/
                 Brave since the candy redesign. <img> paints reliably
                 everywhere and supports drop-shadow via filter. */}
-            <picture aria-hidden="true" className="playhub-board-img">
+            <picture className="playhub-board-img">
               <source srcSet="/art/redesign/board/board-ch.avif" type="image/avif" />
               <source srcSet="/art/redesign/board/board-ch.webp" type="image/webp" />
               <img src="/art/redesign/board/board-ch.png" alt="" />

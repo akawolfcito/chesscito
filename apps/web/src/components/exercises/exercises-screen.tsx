@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   useAccount,
   useChainId,
+  useDisconnect,
   usePublicClient,
   useReadContract,
   useReadContracts,
@@ -62,19 +63,27 @@ import {
   SHOP_ITEMS,
 } from "@/lib/contracts/shop-catalog";
 import { GlobalStatusBar } from "@/components/ui/global-status-bar";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import { formatWalletShort } from "@/lib/wallet/format";
 import { executeProPurchase } from "@/lib/pro/purchase";
 import { ACCEPTED_TOKENS, CELO_TOKEN, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
-import { CAPTURE_COPY, CTA_LABELS, DOCK_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, PRO_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
+import { ACCOUNT_SHEET_COPY, CAPTURE_COPY, CTA_LABELS, DOCK_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, PRO_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
 import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/components/exercises/result-overlay";
 import { BadgeSheet } from "@/components/exercises/badge-sheet";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
 import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
@@ -95,6 +104,7 @@ type SignatureResponse =
   | { error: string };
 
 type PieceKey = "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
+const POINTS_PER_STAR = 100n;
 type CatalogItem = (typeof SHOP_ITEMS)[number] & {
   configured: boolean;
   enabled: boolean;
@@ -105,6 +115,129 @@ type CatalogItem = (typeof SHOP_ITEMS)[number] & {
    *  shopCatalog used for selection lookups. */
   celoSibling?: { itemId: bigint } | null;
 };
+
+function networkName(chainId: number | undefined) {
+  if (chainId === 42220) return "Celo";
+  if (chainId === 44787) return "Alfajores";
+  if (chainId === 11142220) return "Celo Sepolia";
+  return ACCOUNT_SHEET_COPY.unknownNetwork;
+}
+
+function AccountSheet({
+  open,
+  onOpenChange,
+  walletAddress,
+  walletShort,
+  chainId,
+  proActive,
+  onManagePro,
+  onDisconnect,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  walletAddress: string;
+  walletShort: string;
+  chainId: number | undefined;
+  proActive: boolean;
+  onManagePro: () => void;
+  onDisconnect: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyAddress() {
+    try {
+      await navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="sheet-bg-hub rounded-t-3xl border-0 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)]"
+      >
+        <div className="border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
+          <SheetHeader>
+            <SheetTitle
+              className="fantasy-title flex items-center gap-2"
+              style={{
+                color: "rgba(110, 65, 15, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+              }}
+            >
+              <CandyIcon name="wallet" className="h-5 w-5" />
+              {ACCOUNT_SHEET_COPY.title}
+            </SheetTitle>
+            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.75)" }}>
+              {ACCOUNT_SHEET_COPY.description}
+            </SheetDescription>
+          </SheetHeader>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          <div className="candy-tray">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+              {ACCOUNT_SHEET_COPY.walletLabel}
+            </p>
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <span className="font-semibold tabular-nums" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+                {walletShort}
+              </span>
+              <Button type="button" variant="game-ghost" size="game-sm" onClick={() => void copyAddress()}>
+                {copied ? ACCOUNT_SHEET_COPY.copiedAddress : ACCOUNT_SHEET_COPY.copyAddress}
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="candy-tray">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+                {ACCOUNT_SHEET_COPY.networkLabel}
+              </p>
+              <p className="mt-1 font-semibold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+                {networkName(chainId)}
+              </p>
+            </div>
+            <div className="candy-tray">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+                {ACCOUNT_SHEET_COPY.proLabel}
+              </p>
+              <p className="mt-1 font-semibold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+                {proActive ? ACCOUNT_SHEET_COPY.activePro : ACCOUNT_SHEET_COPY.inactivePro}
+              </p>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="game-primary"
+            size="game"
+            className="w-full"
+            onClick={onManagePro}
+          >
+            {proActive ? ACCOUNT_SHEET_COPY.managePro : ACCOUNT_SHEET_COPY.viewPro}
+          </Button>
+          <Button
+            type="button"
+            variant="game-ghost"
+            size="game-sm"
+            className="w-full"
+            onClick={onDisconnect}
+          >
+            {ACCOUNT_SHEET_COPY.disconnect}
+          </Button>
+          <p className="text-center text-xs" style={{ color: "rgba(110, 65, 15, 0.62)" }}>
+            {ACCOUNT_SHEET_COPY.minipayDisconnectHint}
+          </p>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
 
 async function requestSignature(endpoint: "/api/sign-badge" | "/api/sign-score", body: object) {
   const response = await fetch(endpoint, {
@@ -174,6 +307,7 @@ export function ExercisesScreen({
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
   const { openConnectModal } = useConnectModal();
+  const { disconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
   const { isMiniPay } = useMiniPay();
   const { writeContractAsync: writeScoreAsync, isPending: isScoreWriting } = useWriteContract();
@@ -214,6 +348,7 @@ export function ExercisesScreen({
     refetch: refetchProStatus,
   } = useProStatus(address);
   const [proSheetOpen, setProSheetOpen] = useState(initialAction === "pro");
+  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
 
   // When the user landed on legacy via a scaffold deep link
   // (`?legacy=1&action=…`), bouncing back to `/hub` (scaffold) on the
@@ -402,7 +537,6 @@ export function ExercisesScreen({
   const [paymentToken, setPaymentToken] = useState<PaymentToken | null>(null);
   const feeCurrency = useMemo(() => getMiniPayFeeCurrency(chainId), [chainId]);
   const levelId = useMemo(() => getLevelId(selectedPiece), [selectedPiece]);
-  const POINTS_PER_STAR = 100n;
   const score = useMemo(() => BigInt(Math.max(1, totalStars)) * POINTS_PER_STAR, [totalStars]);
 
   // v1: tracks last-exercise time only. 1000n fallback after board reset
@@ -1157,7 +1291,8 @@ export function ExercisesScreen({
    *  the L1 currentExercise otherwise. */
   const labyrinthList = LABYRINTHS[selectedPiece] ?? [];
   const labyrinthAvailable = labyrinthList.length > 0 && (badgeEarned || totalStars >= BADGE_THRESHOLD);
-  const activeLabyrinth = labyrinthMode && labyrinthList.length > 0 ? labyrinthList[0] : null;
+  const effectiveLabyrinthMode = labyrinthMode && labyrinthAvailable;
+  const activeLabyrinth = effectiveLabyrinthMode ? labyrinthList[0] : null;
   const activeExercise = activeLabyrinth ?? currentExercise;
 
   /** Labyrinth move handler — fires the completion overlay when the
@@ -1227,7 +1362,7 @@ export function ExercisesScreen({
 
   return (
     <div className="relative w-full overflow-x-hidden">
-      <WelcomeOverlay suppressed={activeDockTab !== null || proSheetOpen} />
+      <WelcomeOverlay suppressed={activeDockTab !== null || proSheetOpen || accountSheetOpen} />
       {showSplash && (
         <div className="playhub-intro-overlay is-active" role="status" aria-live="polite" aria-busy="true">
           {/* Splash art carries the visual; copy below provides status. */}
@@ -1248,7 +1383,7 @@ export function ExercisesScreen({
             identity={{ walletShort: formatWalletShort(address) }}
             proStatus={proStatus}
             isProLoading={proLoading}
-            onProTap={() => setProSheetOpen(true)}
+            onProTap={() => setAccountSheetOpen(true)}
             onBack={() => router.push("/hub")}
           />
         ) : (
@@ -1283,8 +1418,10 @@ export function ExercisesScreen({
           isCapture={Boolean(currentExercise.isCapture)}
           isDockSheetOpen={activeDockTab !== null}
           labyrinthAvailable={labyrinthAvailable}
-          labyrinthMode={labyrinthMode}
+          labyrinthMode={effectiveLabyrinthMode}
+          labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
           onToggleLabyrinth={(next) => {
+            if (next && !labyrinthAvailable) return;
             setLabyrinthMode(next);
             setLabyrinthMoves(0);
           }}
@@ -1431,6 +1568,24 @@ export function ExercisesScreen({
           }
           onPurchase={() => void handleProPurchase()}
         />
+        {address ? (
+          <AccountSheet
+            open={accountSheetOpen}
+            onOpenChange={setAccountSheetOpen}
+            walletAddress={address}
+            walletShort={formatWalletShort(address)}
+            chainId={chainId}
+            proActive={proStatus?.active === true}
+            onManagePro={() => {
+              setAccountSheetOpen(false);
+              setProSheetOpen(true);
+            }}
+            onDisconnect={() => {
+              setAccountSheetOpen(false);
+              disconnect();
+            }}
+          />
+        ) : null}
 
         {/* First-visit briefing must never mount on top of a dock
          *  sheet (shop, badges, trophies, leaderboard, arena) or the
@@ -1440,7 +1595,7 @@ export function ExercisesScreen({
          *  the dialog will appear naturally once the user is back at
          *  the root view. Prevents the visual stack collapse flagged
          *  by visual-qa-2026-04-30 (Issue #1). */}
-        {showBriefing && activeDockTab === null && !proSheetOpen ? (
+        {showBriefing && activeDockTab === null && !proSheetOpen && !accountSheetOpen ? (
           <MissionBriefing
             pieceType={selectedPiece}
             targetLabel={targetLabel}

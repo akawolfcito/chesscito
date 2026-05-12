@@ -66,18 +66,12 @@ export function ExerciseDrawer({
         <button
           type="button"
           aria-label="Exercises"
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-full px-2.5 text-xs font-bold transition active:scale-[0.97]"
-          style={{
-            background: "rgba(255, 255, 255, 0.18)",
-            border: "1px solid rgba(255, 255, 255, 0.45)",
-            color: "rgba(110, 65, 15, 0.95)",
-            textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
-          }}
+          className="quest-tray-slot flex min-h-[44px] w-full min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 text-sm font-extrabold transition active:scale-[0.97]"
         >
-          <CandyIcon name="star" className="h-2.5 w-2.5" />
-          <span className="tabular-nums">{totalStars}/{maxStars}</span>
+          <CandyIcon name="star" className="h-5 w-5 shrink-0" />
+          <span className="tabular-nums" aria-label={`${totalStars} of ${maxStars} stars earned`}>
+            {totalStars}
+          </span>
         </button>
       </SheetTrigger>
       <SheetContent

@@ -134,7 +134,7 @@ export function ArenaBoard({
             {/* Same <picture>/<img> pattern as the exercise board to avoid
                 the iOS WebKit rendering bug around CSS ::before + filter
                 + negative z-index. */}
-            <picture aria-hidden="true" className="playhub-board-img">
+            <picture className="playhub-board-img">
               <source srcSet="/art/redesign/board/board-ch.avif" type="image/avif" />
               <source srcSet="/art/redesign/board/board-ch.webp" type="image/webp" />
               <img src="/art/redesign/board/board-ch.png" alt="" />
@@ -233,7 +233,6 @@ export function ArenaBoard({
                 return (
                   <picture
                     key={`dying-${p.id}`}
-                    aria-hidden="true"
                     className="arena-piece-float is-dying"
                     style={{
                       left: `${center.x}%`,

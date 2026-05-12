@@ -6,6 +6,8 @@ import { createLogger } from "@/lib/server/logger";
 
 const logger = createLogger({ route: "/api/pro/status" });
 
+export const dynamic = "force-dynamic";
+
 /** Read-only PRO status for a wallet. Returns whatever
  *  isProActive() returns: `{ active, expiresAt }`. Never mutates Redis,
  *  never seeds, never side-effects. UI hooks poll this endpoint to

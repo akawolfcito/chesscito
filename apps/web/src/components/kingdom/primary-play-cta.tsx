@@ -117,7 +117,7 @@ export function PrimaryPlayCta({
         />
       </picture>
       {pieceIcon ? (
-        <picture className="primary-play-cta-piece-icon" aria-hidden="true">
+        <picture className="primary-play-cta-piece-icon">
           <source srcSet={`/art/redesign/pieces/w-${pieceIcon}.avif`} type="image/avif" />
           <source srcSet={`/art/redesign/pieces/w-${pieceIcon}.webp`} type="image/webp" />
           <img
