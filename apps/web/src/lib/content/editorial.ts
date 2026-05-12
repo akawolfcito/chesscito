@@ -1144,6 +1144,19 @@ export const PRO_COPY = {
     inactive: "PRO",
     activePrefix: "PRO",
   },
+  hubCoachCard: {
+    inactive: {
+      title: "Coach PRO",
+      body: "Get feedback after games and practice.",
+      chips: ["Mistakes", "Tips", "History"] as const,
+      cta: "Start PRO Training",
+    },
+    active: {
+      title: (remainingDays: number) => `PRO Active · ${remainingDays}d`,
+      body: "Next training",
+      cta: "Continue Training",
+    },
+  },
   perksActive: [
     "AI Coach: instant analysis, no daily limit",
     "Personalized coaching plan from match history",

@@ -65,6 +65,48 @@ describe("HubScaffold", () => {
     expect(container.querySelector(".hud-secondary-row")).toBeNull();
   });
 
+  it("renders the active Coach PRO card from PRO status", () => {
+    render(<HubScaffold {...baseProps} />);
+
+    expect(screen.getByText("PRO Active · 14d")).toBeInTheDocument();
+    expect(screen.getByText("Next training")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue Training" }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the inactive Coach PRO card with preview chips", () => {
+    render(<HubScaffold {...baseProps} pro={{ active: false }} />);
+
+    expect(screen.getByText("Coach PRO")).toBeInTheDocument();
+    expect(screen.getByText("Get feedback after games and practice.")).toBeInTheDocument();
+    expect(screen.getByText("Mistakes")).toBeInTheDocument();
+    expect(screen.getByText("Tips")).toBeInTheDocument();
+    expect(screen.getByText("History")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Start PRO Training" }),
+    ).toBeInTheDocument();
+  });
+
+  it("forwards the Coach PRO card CTA to onCoachProCardCta", async () => {
+    const onCoachProCardCta = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <HubScaffold
+        {...baseProps}
+        pro={{ active: false }}
+        onCoachProCardCta={onCoachProCardCta}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Start PRO Training" }),
+    );
+
+    expect(onCoachProCardCta).toHaveBeenCalledTimes(1);
+  });
+
   it("mounts the KingdomAnchor playhub variant in the body anchor zone", () => {
     const { container } = render(<HubScaffold {...baseProps} />);
     const anchor = container.querySelector(

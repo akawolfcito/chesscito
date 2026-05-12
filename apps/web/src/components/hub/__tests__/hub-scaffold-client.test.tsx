@@ -272,6 +272,20 @@ describe("HubScaffoldClient — tap handlers", () => {
     );
   });
 
+  it("opens ProSheet in-place when the Coach PRO card CTA is tapped", async () => {
+    const user = userEvent.setup();
+    render(<HubScaffoldClient />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Start PRO Training" }),
+    );
+
+    expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("legacy=1&action=pro"),
+    );
+  });
+
   it("opens ProSheet from the `initialSheet=pro` deep link", async () => {
     render(<HubScaffoldClient initialSheet="pro" />);
 
@@ -408,6 +422,30 @@ describe("HubScaffoldClient — telemetry", () => {
   it("fires hub_view once on mount", () => {
     render(<HubScaffoldClient />);
     expect(trackMock).toHaveBeenCalledWith("hub_view");
+  });
+
+  it("fires pro_card_viewed for the Hub Coach card", () => {
+    render(<HubScaffoldClient />);
+
+    expect(trackMock).toHaveBeenCalledWith("pro_card_viewed", {
+      surface: "hub_coach_card",
+      active: false,
+    });
+  });
+
+  it("fires pro_card_cta_clicked before opening the Hub Coach card sheet", async () => {
+    const user = userEvent.setup();
+    render(<HubScaffoldClient />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Start PRO Training" }),
+    );
+
+    expect(trackMock).toHaveBeenCalledWith("pro_card_cta_clicked", {
+      surface: "hub_coach_card",
+      active: false,
+    });
+    expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
   });
 
   it("fires hub_trophy_tap with the current trophy count on tap", async () => {

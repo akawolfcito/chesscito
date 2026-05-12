@@ -159,6 +159,7 @@ export function HubScaffoldClient({
   const openProSheet = proSheet.openSheet;
   const openShopSheet = shopSheet.openSheet;
   const initialSheetOpenedRef = useRef(false);
+  const proCardViewedRef = useRef(false);
 
   useEffect(() => {
     if (!initialSheet || initialSheetOpenedRef.current) return;
@@ -237,6 +238,16 @@ export function HubScaffoldClient({
     track("hub_view");
   }, []);
 
+  useEffect(() => {
+    if (proCardViewedRef.current) return;
+    if (isConnected && proStatus === null) return;
+    proCardViewedRef.current = true;
+    track("pro_card_viewed", {
+      surface: "hub_coach_card",
+      active: pro.active,
+    });
+  }, [isConnected, pro.active, proStatus]);
+
   const rewardTiles = useMemo(() => {
     const tiles = deriveRewardTiles({ badgesClaimed, starsPerPiece });
     return tiles.map((tile) => ({
@@ -292,6 +303,13 @@ export function HubScaffoldClient({
         onCoachTap={() => {
           track("hub_coach_chip_tap", { pro_active: pro.active });
           router.push("/coach/history");
+        }}
+        onCoachProCardCta={() => {
+          track("pro_card_cta_clicked", {
+            surface: "hub_coach_card",
+            active: pro.active,
+          });
+          proSheet.openSheet();
         }}
         onPremiumTap={() => {
           track("hub_premium_slot_tap", { pro_active: pro.active });

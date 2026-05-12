@@ -7,6 +7,7 @@ import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
 import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-column";
 import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { PremiumSlot } from "@/components/pro-mission/premium-slot";
+import { CoachProCard } from "@/components/pro/coach-pro-card";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
 import { HUD_COPY } from "@/lib/content/editorial";
 
@@ -52,6 +53,7 @@ type HubScaffoldProps = {
   onProTap?: () => void;
   /** Coach chip (top row, always visible) — opens session history. */
   onCoachTap?: () => void;
+  onCoachProCardCta?: () => void;
   onPremiumTap?: () => void;
   onPlayPress?: () => void;
   /** Secondary-row chip taps. The shields chip is the home for shop
@@ -102,6 +104,7 @@ export function HubScaffold({
   onTrophyTap,
   onProTap,
   onCoachTap,
+  onCoachProCardCta,
   onPremiumTap,
   onPlayPress,
   onStreakTap,
@@ -186,6 +189,14 @@ export function HubScaffold({
             onStreakTap={onStreakTap}
             onStarsTap={onStarsTap}
             onShieldsTap={onShieldsTap}
+          />,
+        )}
+        {wrap(
+          "CoachProCard",
+          <CoachProCard
+            active={pro.active}
+            remainingDays={pro.active ? pro.daysRemaining : undefined}
+            onCtaClick={onCoachProCardCta}
           />,
         )}
       </header>

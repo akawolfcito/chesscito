@@ -1106,13 +1106,14 @@ function ArenaPageInner() {
 
   if (ENABLE_COACH && coachPhase === "result" && coachResponse) {
     return (
-      <main className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
-        <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">
+      <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
+        <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
             title={COACH_COPY.coachAnalysisTitle}
             onClose={handleBackToHub}
             closeLabel={ARENA_COPY.backToHub}
-            className="max-h-none min-h-[calc(100dvh-2rem)] rounded-[1.75rem]"
+            presentation="screen"
+            className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
             <CoachPanel
               response={coachResponse}
@@ -1171,13 +1172,14 @@ function ArenaPageInner() {
 
   if (ENABLE_COACH && coachPhase === "history" && address) {
     return (
-      <main className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
-        <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">
+      <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
+        <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
             title={COACH_COPY.yourSessions}
             onClose={() => setCoachPhase(coachResponse ? "result" : "idle")}
             closeLabel={ARENA_COPY.backToHub}
-            className="max-h-none min-h-[calc(100dvh-2rem)] rounded-[1.75rem]"
+            presentation="screen"
+            className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
             <CoachHistory
               walletAddress={address.toLowerCase()}

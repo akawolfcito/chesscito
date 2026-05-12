@@ -9,7 +9,7 @@ import { CoachHistoryDeletePanel } from "@/components/coach/coach-history-delete
 import { CoachPanel } from "@/components/coach/coach-panel";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
-import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
+import { COACH_COPY } from "@/lib/content/editorial";
 import type { CoachAnalysisRecord, CoachResponse, GameRecord } from "@/lib/coach/types";
 
 type HistoryEntry = CoachAnalysisRecord & { game: GameRecord };
@@ -30,8 +30,8 @@ type SelectedFullEntry = {
  * 2026-05-07: added back-to-hub affordance (user got trapped on the
  * page with no escape) and a clickable entry handler stub —
  * <CoachHistory>'s onSelectEntry signature already supports navigation,
- * so we route the user to /arena where they can review the analysis
- * surfaced by the existing CoachPanel flow.
+ * so we render the selected analysis through the existing full-screen
+ * CoachPanel flow.
  */
 function PageHeader() {
   return (
@@ -79,6 +79,32 @@ export default function CoachHistoryPage() {
     setSelected({ response: entry.response, game: entry.game });
   }
 
+  if (selected) {
+    return (
+      <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
+        <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
+          <CandyGlassShell
+            title={COACH_COPY.coachAnalysisTitle}
+            onClose={() => setSelected(null)}
+            closeLabel={COACH_COPY.yourSessions}
+            presentation="screen"
+            className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
+          >
+            <CoachPanel
+              response={selected.response}
+              difficulty={selected.game.difficulty}
+              totalMoves={selected.game.totalMoves}
+              elapsedMs={selected.game.elapsedMs}
+              credits={0}
+              onPlayAgain={() => router.push("/arena?fresh=1")}
+              onBackToHub={() => setSelected(null)}
+            />
+          </CandyGlassShell>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width,390px)] flex-col px-4 py-6">
       <PageHeader />
@@ -88,28 +114,6 @@ export default function CoachHistoryPage() {
         onSelectEntry={handleSelect}
       />
       <CoachHistoryDeletePanel />
-
-      {selected && (
-        <div className="pointer-events-auto fixed inset-0 z-[60] overflow-y-auto candy-modal-scrim animate-in fade-in duration-300 px-4 py-8">
-          <div className="mx-auto w-full max-w-[var(--app-max-width,390px)] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-            <CandyGlassShell
-              title={COACH_COPY.coachAnalysisTitle}
-              onClose={() => setSelected(null)}
-              closeLabel={ARENA_COPY.backToHub}
-            >
-              <CoachPanel
-                response={selected.response}
-                difficulty={selected.game.difficulty}
-                totalMoves={selected.game.totalMoves}
-                elapsedMs={selected.game.elapsedMs}
-                credits={0}
-                onPlayAgain={() => router.push("/arena?fresh=1")}
-                onBackToHub={() => setSelected(null)}
-              />
-            </CandyGlassShell>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

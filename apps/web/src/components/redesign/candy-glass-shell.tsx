@@ -15,6 +15,8 @@ type CandyGlassShellProps = {
   cta?: ReactNode;
   /** Optional meta row under the CTA (timers, brand tagline). */
   meta?: ReactNode;
+  /** Visual treatment: modal card by default, or edge-to-edge screen content. */
+  presentation?: "modal" | "screen";
   /** Extra class on the outer panel (width overrides, etc.). */
   className?: string;
 };
@@ -42,15 +44,23 @@ export function CandyGlassShell({
   children,
   cta,
   meta,
+  presentation = "modal",
   className = "",
 }: CandyGlassShellProps) {
+  const isScreen = presentation === "screen";
+
   return (
     <div
-      className={`sheet-bg-hub flex max-h-[90dvh] w-full flex-col gap-3 overflow-y-auto overscroll-contain rounded-3xl px-5 py-5 ${className}`.trim()}
+      className={`${isScreen ? "" : "sheet-bg-hub"} flex w-full flex-col gap-3 overscroll-contain px-5 py-5 ${
+        isScreen
+          ? "min-h-full overflow-visible rounded-none"
+          : "max-h-[90dvh] overflow-y-auto rounded-3xl"
+      } ${className}`.trim()}
       style={{
-        border: "1px solid rgba(255, 255, 255, 0.45)",
-        boxShadow:
-          "0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+        border: isScreen ? "0" : "1px solid rgba(255, 255, 255, 0.45)",
+        boxShadow: isScreen
+          ? "none"
+          : "0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
       }}
     >
       <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] pb-3 -mx-2">

@@ -1446,6 +1446,15 @@
     overflow: hidden;
   }
 
+  .arena-bg.arena-scroll-screen {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .arena-bg.arena-scroll-screen::before {
+    position: fixed;
+  }
+
   /* Cream wash over the body's forest bg-ch so Arena shares the same
      "inside the hub" feeling as every sheet — the ArenaEntryPanel
      glass panel sits on a washed forest, not on bare green canvas. */
@@ -2969,6 +2978,97 @@ button.hud-resource-chip:active:not(:disabled) {
     url("/art/scene-rooted/panel-pro.png") center / 100% 100% no-repeat,
     linear-gradient(180deg, #7d47b5 0%, #4f268a 100%);
   color: #ffe66e;
+}
+
+/* ── Coach PRO Card — compact Hub training entrypoint ── */
+.coach-pro-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 72px;
+  padding: 8px 8px 8px 10px;
+  border: 1px solid rgba(255, 245, 190, 0.58);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 240, 161, 0.90), rgba(182, 234, 102, 0.78)),
+    rgba(64, 115, 27, 0.36);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 230, 0.56) inset,
+    0 7px 14px rgba(21, 58, 22, 0.20);
+  color: #4c2a10;
+  text-shadow: 0 1px 0 rgba(255, 246, 200, 0.50);
+}
+
+.coach-pro-card-copy {
+  min-width: 0;
+}
+
+.coach-pro-card-title {
+  margin: 0;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.93rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.coach-pro-card-body {
+  margin: 3px 0 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.13;
+  overflow-wrap: anywhere;
+}
+
+.coach-pro-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.coach-pro-card-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 16px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(64, 120, 35, 0.22);
+  color: #355c1b;
+  font-size: 0.56rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.coach-pro-card-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 92px;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #965918 0%, #764207 100%);
+  color: #fff2bf;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.66rem;
+  font-weight: 900;
+  line-height: 1.06;
+  text-align: center;
+  text-shadow: 0 2px 0 rgba(68, 37, 5, 0.70);
+  box-shadow:
+    0 1px 0 rgba(255, 244, 186, 0.35) inset,
+    0 4px 0 rgba(72, 41, 5, 0.25);
+  cursor: pointer;
+}
+
+.coach-pro-card-cta:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 1px 0 rgba(255, 244, 186, 0.35) inset,
+    0 2px 0 rgba(72, 41, 5, 0.25);
 }
 
 /* State: expiring — subtle amber pulse, NO FOMO copy added. */

@@ -63,7 +63,7 @@ export function CoachPanel({
   const cream = "0 1px 0 rgba(255, 245, 215, 0.55)";
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       {showBanner && (
         <div
           data-testid="coach-history-banner"
@@ -89,7 +89,7 @@ export function CoachPanel({
           </button>
         </div>
       )}
-      <div className="flex items-center justify-between">
+      <div className="flex min-w-0 items-center justify-between gap-2">
         <p className="text-xs" style={{ color: warmMuted }}>
           {diffLabel} - {totalMoves} moves - {time}
         </p>
@@ -100,7 +100,7 @@ export function CoachPanel({
 
       {/* Summary */}
       <div className="candy-tray">
-        <p className="text-sm italic" style={{ color: warmText, textShadow: cream }}>
+        <p className="[overflow-wrap:anywhere] text-sm italic" style={{ color: warmText, textShadow: cream }}>
           {`"${response.summary}"`}
         </p>
       </div>
@@ -117,13 +117,13 @@ export function CoachPanel({
           <div className="flex flex-col gap-3">
             {response.mistakes.map((m) => (
               <div key={m.moveNumber} className="candy-tray">
-                <p className="text-xs font-semibold" style={{ color: warmText, textShadow: cream }}>
+                <p className="[overflow-wrap:anywhere] text-xs font-semibold" style={{ color: warmText, textShadow: cream }}>
                   {COACH_COPY.moveLabel(m.moveNumber, m.played)}
                 </p>
-                <p className="text-xs font-semibold text-emerald-700">
+                <p className="[overflow-wrap:anywhere] text-xs font-semibold text-emerald-700">
                   {COACH_COPY.tryInstead(m.better)}
                 </p>
-                <p className="mt-1 text-xs" style={{ color: warmMuted }}>
+                <p className="[overflow-wrap:anywhere] mt-1 text-xs" style={{ color: warmMuted }}>
                   {`"${m.explanation}"`}
                 </p>
               </div>
@@ -143,12 +143,12 @@ export function CoachPanel({
           </h3>
           <ul className="flex flex-col gap-1">
             {response.praise.map((p, i) => (
-              <li key={`p-${i}`} className="text-sm" style={{ color: warmText, textShadow: cream }}>
+              <li key={`p-${i}`} className="[overflow-wrap:anywhere] text-sm" style={{ color: warmText, textShadow: cream }}>
                 {"\u2713"} {p}
               </li>
             ))}
             {response.lessons.map((l, i) => (
-              <li key={`l-${i}`} className="text-sm" style={{ color: warmText, textShadow: cream }}>
+              <li key={`l-${i}`} className="[overflow-wrap:anywhere] text-sm" style={{ color: warmText, textShadow: cream }}>
                 {"\u2192"} {l}
               </li>
             ))}
