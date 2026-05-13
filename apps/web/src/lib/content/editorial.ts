@@ -265,12 +265,13 @@ export const SHOP_SHEET_COPY = {
 
 export const LEADERBOARD_SHEET_COPY = {
   title: "Hall of Rooks",
-  description: "Check the leaderboard without leaving the board.",
+  description: "Climb the board. Rule the board.",
   columnPlayer: "Player",
-  columnScore: "★",
-  loading: "Loading...",
-  empty: "No scores recorded yet.",
-  error: "Could not load the leaderboard.",
+  columnScore: "Score",
+  loading: "Loading board...",
+  empty: "No champions yet.",
+  emptyArenaLink: "Play Arena",
+  error: "Could not load rankings",
   retry: "Retry",
 } as const;
 
@@ -320,8 +321,8 @@ export const CONNECT_BUTTON_COPY = {
 
 export const PASSPORT_COPY = {
   verifiedLabel: "Verified",
-  infoBanner: "Verify with Gitcoin Passport to earn a ✓",
-  ctaLabel: "Get verified",
+  infoBanner: "Verify to mark your score",
+  ctaLabel: "Verify",
   passportUrl: "https://passport.gitcoin.co",
 } as const;
 

@@ -6433,5 +6433,84 @@ button.hud-resource-chip:active:not(:disabled) {
   border: 1px solid rgba(255, 255, 255, 0.40);
 }
 
+/* ── Leaderboard (leaderboard-sheet.tsx) ──────────────────────────────────
+   Competitive ranking cards and rows for the Hall of Rooks. */
+
+.leaderboard-champion-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.35) 0%, rgba(245, 158, 11, 0.25) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  padding: 24px;
+  box-shadow: 
+    inset 0 1px 2px rgba(255, 255, 255, 0.40),
+    0 12px 24px -8px rgba(180, 83, 9, 0.25);
+  text-align: center;
+}
+
+.leaderboard-champion-glow {
+  position: absolute;
+  top: -50%;
+  left: -20%;
+  width: 140%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.30) 0%, transparent 70%);
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+
+.leaderboard-row-compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  transition: transform 0.2s ease-out, background 0.2s ease-out;
+}
+
+.leaderboard-row-compact:active {
+  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.leaderboard-rank-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 24px;
+  border-radius: 99px;
+  background: rgba(63, 34, 8, 0.08);
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: rgba(63, 34, 8, 0.65);
+}
+
+.leaderboard-row-compact--top2 .leaderboard-rank-pill {
+  background: rgba(71, 85, 105, 0.15);
+  color: #334155;
+}
+
+.leaderboard-row-compact--top3 .leaderboard-rank-pill {
+  background: rgba(146, 64, 14, 0.15);
+  color: #92400e;
+}
+
+.leaderboard-verify-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+
 
 

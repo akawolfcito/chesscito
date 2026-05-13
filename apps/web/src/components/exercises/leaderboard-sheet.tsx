@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-
 import {
   Sheet,
   SheetContent,
@@ -12,9 +12,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import type { LeaderboardRow } from "@/lib/server/leaderboard";
-import { LEADERBOARD_SHEET_COPY, PASSPORT_COPY } from "@/lib/content/editorial";
+import { LEADERBOARD_SHEET_COPY, PASSPORT_COPY, DOCK_LABELS } from "@/lib/content/editorial";
 
-const OPTIMISTIC_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const OPTIMISTIC_TTL_MS = 2 * 60 * 1000;
 
 function getOptimisticScore(): { player: string; score: number } | null {
   try {
@@ -35,8 +35,6 @@ function clearOptimisticScore() {
   try { sessionStorage.removeItem("chesscito:optimistic-score"); } catch { /* ignore */ }
 }
 
-// Module-level prefetch: warms the serverless function during page load
-// (fires before React mounts any component — cold start happens during splash)
 let prefetchedRows: LeaderboardRow[] | null = null;
 if (typeof window !== "undefined") {
   fetch("/api/leaderboard")
@@ -91,24 +89,25 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
       .finally(() => setLoading(false));
   }, [applyRows]);
 
-  // Prefetch on mount — data ready before user opens the sheet
   useEffect(() => {
     fetchLeaderboard();
     hasFetched.current = true;
   }, [fetchLeaderboard]);
 
-  // On open: show cached data immediately, refresh in background
   useEffect(() => {
     if (!open || !hasFetched.current) return;
-    fetchLeaderboard(false); // silent refresh, no loading flash
+    fetchLeaderboard(false);
   }, [open, fetchLeaderboard]);
+
+  const champion = rows.find(r => r.rank === 1);
+  const competitors = rows.filter(r => r.rank > 1);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
         <button
           type="button"
-          aria-label="Leaderboard"
+          aria-label={DOCK_LABELS.leaderboard}
           className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
         >
           <img
@@ -117,7 +116,6 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
             aria-hidden="true"
             className="h-full w-full object-contain"
           />
-          <span className="sr-only">Leaderboard</span>
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="mission-shell sheet-bg-leaderboard flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]">
@@ -138,120 +136,131 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
             </SheetDescription>
           </SheetHeader>
         </div>
-        <div className="shrink-0 mt-3 flex flex-col items-center gap-2">
-          <p
-            className="text-center text-xs"
-            style={{ color: "rgba(110, 65, 15, 0.70)" }}
-          >
-            {PASSPORT_COPY.infoBanner}
-          </p>
-          <a
-            href={PASSPORT_COPY.passportUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold transition-all active:scale-[0.97]"
-            style={{
-              background: "rgba(139, 92, 246, 0.28)",
-              boxShadow: "inset 0 0 0 1px rgba(139, 92, 246, 0.55)",
-              color: "rgba(55, 16, 120, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-            }}
-          >
-            <CandyIcon name="shield" className="h-3 w-3" />
-            {PASSPORT_COPY.ctaLabel}
-          </a>
-        </div>
-        <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-2">
-          {!loading && !error && rows.length > 0 && (
-            <div
-              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-3 pb-1 text-xs font-bold uppercase tracking-widest"
-              style={{ color: "rgba(110, 65, 15, 0.70)" }}
-            >
-              <p>#</p>
-              <p>{LEADERBOARD_SHEET_COPY.columnPlayer}</p>
-              <p>{LEADERBOARD_SHEET_COPY.columnScore}</p>
+
+        <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-6">
+          {/* Verification Banner — Demoted but clear */}
+          <div className="leaderboard-verify-banner">
+            <div className="flex items-center gap-2">
+              <CandyIcon name="shield" className="h-4 w-4 text-violet-600" />
+              <p className="text-[11px] font-bold text-violet-900/70">
+                {PASSPORT_COPY.infoBanner}
+              </p>
             </div>
-          )}
-          {loading && (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15 px-3 py-2.5"
-                >
-                  <div className="h-4 w-6 animate-pulse rounded" style={{ background: "rgba(110, 65, 15, 0.15)" }} />
-                  <div className="h-4 w-32 animate-pulse rounded" style={{ background: "rgba(110, 65, 15, 0.15)" }} />
-                  <div className="h-4 w-10 animate-pulse rounded" style={{ background: "rgba(110, 65, 15, 0.15)" }} />
-                </div>
+            <a
+              href={PASSPORT_COPY.passportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-7 items-center justify-center rounded-lg bg-violet-600 px-3 text-[10px] font-black uppercase tracking-wider text-white transition active:scale-95"
+            >
+              {PASSPORT_COPY.ctaLabel}
+            </a>
+          </div>
+
+          {loading && rows.length === 0 && (
+            <div className="space-y-3">
+              <div className="h-40 animate-pulse rounded-[28px] bg-white/20" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-14 animate-pulse rounded-2xl bg-white/20" />
               ))}
             </div>
           )}
+
           {error && (
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-center text-sm" style={{ color: "rgba(159, 18, 57, 0.95)" }}>
+            <div className="flex flex-col items-center gap-4 py-10">
+              <p className="text-sm font-bold text-rose-800">
                 {error}
               </p>
               <button
                 type="button"
                 onClick={() => fetchLeaderboard()}
-                className="min-h-[44px] text-xs underline transition-colors hover:opacity-80"
-                style={{ color: "rgba(110, 65, 15, 0.85)" }}
+                className="flex h-11 items-center justify-center px-6 rounded-xl bg-rose-600/10 text-xs font-black uppercase tracking-wider transition active:scale-95 text-rose-800"
               >
                 {LEADERBOARD_SHEET_COPY.retry}
               </button>
             </div>
           )}
+
           {!loading && !error && rows.length === 0 && (
-            <p
-              className="text-center text-sm"
-              style={{ color: "rgba(110, 65, 15, 0.70)" }}
-            >
-              {LEADERBOARD_SHEET_COPY.empty}
-            </p>
-          )}
-          {rows.map((row) => (
-            <div
-              key={`${row.rank}-${row.player}`}
-              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15 px-3 py-2.5"
-            >
-              <p
-                className="text-sm font-extrabold"
-                style={{
-                  color:
-                    row.rank === 1 ? "#b45309"
-                    : row.rank === 2 ? "rgba(71, 85, 105, 0.95)"
-                    : row.rank === 3 ? "#92400e"
-                    : "rgba(63, 34, 8, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                }}
-              >
-                {row.rank <= 3 ? ["🥇","🥈","🥉"][row.rank - 1] : `#${row.rank}`}
+            <div className="flex flex-col items-center gap-4 py-16 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 opacity-30">
+                <CandyIcon name="crown" className="h-8 w-8" />
+              </div>
+              <p className="text-sm font-medium opacity-60 leading-relaxed px-8">
+                {LEADERBOARD_SHEET_COPY.empty}
               </p>
-              <p
-                className="truncate text-sm font-semibold"
-                style={{
-                  color: "rgba(63, 34, 8, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                }}
-              >
-                {row.player}
-                {row.isVerified && (
-                  <span title={PASSPORT_COPY.verifiedLabel}>
-                    <CandyIcon name="check" className="ml-1.5 inline-block h-3.5 w-3.5" />
-                  </span>
-                )}
-              </p>
-              <p
-                className="text-sm font-extrabold tabular-nums"
-                style={{
-                  color: "rgba(63, 34, 8, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                }}
-              >
-                {row.score}
-              </p>
+              <Link href="/arena" onClick={() => onOpenChange(false)}>
+                <button type="button" className="flex h-11 items-center justify-center px-8 rounded-xl bg-amber-500 font-black text-white uppercase text-xs tracking-widest transition active:scale-95 shadow-lg shadow-amber-500/20">
+                  {LEADERBOARD_SHEET_COPY.emptyArenaLink}
+                </button>
+              </Link>
             </div>
-          ))}
+          )}
+
+          {champion && (
+            <div className="leaderboard-champion-card">
+              <div className="leaderboard-champion-glow" />
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/20 shadow-inner">
+                  <CandyIcon name="crown" className="h-8 w-8 text-amber-600 drop-shadow-[0_2px_4px_rgba(180,83,9,0.3)]" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/40">
+                  Champion
+                </span>
+                <p className="mt-1 font-mono text-xs font-black text-amber-950">
+                  {champion.player}
+                  {champion.isVerified && (
+                    <CandyIcon name="check" className="ml-1 inline-block h-3.5 w-3.5 text-amber-600" />
+                  )}
+                </p>
+                <div className="mt-4 flex flex-col items-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">
+                    {LEADERBOARD_SHEET_COPY.columnScore}
+                  </span>
+                  <span className="text-3xl font-black tabular-nums text-amber-950">
+                    {champion.score}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {competitors.length > 0 && (
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center justify-between px-2 mb-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30">
+                  Top Competitors
+                </span>
+                <span className="text-[10px] font-black opacity-30">
+                  {LEADERBOARD_SHEET_COPY.columnScore}
+                </span>
+              </div>
+              {competitors.map((row) => (
+                <div
+                  key={`${row.rank}-${row.player}`}
+                  className={`leaderboard-row-compact ${
+                    row.rank === 2 ? "leaderboard-row-compact--top2"
+                    : row.rank === 3 ? "leaderboard-row-compact--top3"
+                    : ""
+                  }`}
+                >
+                  <div className="leaderboard-rank-pill">
+                    {row.rank}
+                  </div>
+                  <div className="flex-1 min-width-0">
+                    <p className="truncate text-xs font-black text-[rgba(63,34,8,0.90)]">
+                      {row.player}
+                      {row.isVerified && (
+                        <CandyIcon name="check" className="ml-1.5 inline-block h-3 w-3 text-emerald-600" />
+                      )}
+                    </p>
+                  </div>
+                  <p className="text-sm font-black tabular-nums text-[rgba(63,34,8,0.95)]">
+                    {row.score}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
