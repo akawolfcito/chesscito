@@ -21,39 +21,32 @@ type SelectedFullEntry = {
 };
 
 /**
- * Coach session history page. Mounts the existing <CoachHistory> list
- * plus the new <CoachHistoryDeletePanel>. Page exists so the
- * "manage history" link in the <CoachPanel> footer (Task 7) has a target
- * (red-team P0-2 — verified the route did not exist before PR 4).
+ * Coach session history page — Training Journal.
+ *
+ * Visual refactor 2026-05-13: upgraded to game-native header + layout
+ * so the Training Journal feels like a premium training log inside the
+ * game, not a generic account/history page. Business logic, routing,
+ * delete behavior, and API calls are completely unchanged.
  *
  * Spec §9.2.
- *
- * 2026-05-07: added back-to-hub affordance (user got trapped on the
- * page with no escape) and a clickable entry handler stub —
- * <CoachHistory>'s onSelectEntry signature already supports navigation,
- * so we render the selected analysis through the existing full-screen
- * CoachPanel flow.
  */
 function PageHeader() {
   return (
-    <header className="mb-4 flex items-start gap-3 border-b border-[rgba(110,65,15,0.30)] pb-4">
+    <header className="tj-page-header">
       <Link
         href="/hub"
         aria-label="Back to hub"
-        className="flex h-11 w-11 shrink-0 items-center justify-center transition-transform active:scale-[0.94]"
+        className="tj-page-header-back"
       >
         <CandyBanner name="btn-back" className="h-9 w-9" />
       </Link>
-      <h1
-        className="fantasy-title flex items-center gap-2 text-lg"
-        style={{
-          color: "rgba(110, 65, 15, 0.95)",
-          textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-        }}
-      >
-        <CandyIcon name="coach" className="h-5 w-5" />
-        {COACH_COPY.yourSessions}
-      </h1>
+      <div className="tj-page-header-title-group">
+        <div className="flex items-center gap-2">
+          <CandyIcon name="coach" className="h-5 w-5 shrink-0" />
+          <h1 className="tj-page-header-title">{COACH_COPY.yourSessions}</h1>
+        </div>
+        <p className="tj-page-header-subtitle">Your training progress</p>
+      </div>
     </header>
   );
 }
@@ -65,9 +58,9 @@ export default function CoachHistoryPage() {
 
   if (!address) {
     return (
-      <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width,390px)] flex-col px-4 py-6">
+      <main className="tj-root">
         <PageHeader />
-        <p className="text-sm" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
+        <p className="tj-no-wallet-text">
           Connect your wallet to view your Coach history.
         </p>
       </main>
@@ -106,14 +99,16 @@ export default function CoachHistoryPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width,390px)] flex-col px-4 py-6">
+    <main className="tj-root">
       <PageHeader />
-      <CoachHistory
-        walletAddress={address}
-        credits={0}
-        onSelectEntry={handleSelect}
-      />
-      <CoachHistoryDeletePanel />
+      <div className="tj-content">
+        <CoachHistory
+          walletAddress={address}
+          credits={0}
+          onSelectEntry={handleSelect}
+        />
+        <CoachHistoryDeletePanel />
+      </div>
     </main>
   );
 }

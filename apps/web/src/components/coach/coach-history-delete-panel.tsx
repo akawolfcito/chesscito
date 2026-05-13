@@ -18,9 +18,9 @@ function generateNonce(): string {
 }
 
 /**
- * Delete-by-self surface for Coach history. Renders a button + confirm
- * sheet; on confirm, generates a nonce, signs the chain/domain-bound
- * message, and POSTs to DELETE /api/coach/history.
+ * Delete-by-self surface for Coach history. Renders a collapsed "Manage
+ * history" toggle; on expand, shows the existing delete button + confirm
+ * sheet flow — unchanged from the original implementation.
  *
  * Red-team:
  * - P0-7 — button is disabled when rowCount === 0; success text is
@@ -28,6 +28,11 @@ function generateNonce(): string {
  *   imply a positive action that may not have happened.
  * - P0-1 / P0-8 — nonce + signature flow handled server-side; this
  *   component just generates the nonce and forwards the signature.
+ *
+ * Visual change: the destructive section is collapsed by default so it
+ * does not visually compete with the main Training Journal content.
+ * The delete behavior itself (nonce, signMessageAsync, DELETE
+ * /api/coach/history, refetch) is completely unchanged.
  *
  * Spec §9.2.
  */
@@ -37,6 +42,7 @@ export function CoachHistoryDeletePanel() {
   const { signMessageAsync } = useSignMessage();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
+  const [manageOpen, setManageOpen] = useState(false);
 
   if (!address) return null;
 
@@ -74,29 +80,58 @@ export function CoachHistoryDeletePanel() {
   }
 
   return (
-    <section className="mt-8 border-t border-white/10 pt-4">
-      <h3 className="text-sm font-bold text-rose-200">{COACH_COPY.historyDelete.title}</h3>
-      <p className="mt-1 text-xs text-white/65">{COACH_COPY.historyDelete.body}</p>
-      <Button
+    <section className="tj-manage-history-section">
+      {/* Toggle trigger — muted text-link style */}
+      <button
         type="button"
-        variant="destructive"
-        size="game-sm"
-        onClick={() => setConfirmOpen(true)}
-        disabled={isLoading || !hasHistory || status === "working"}
-        className="mt-3"
+        onClick={() => setManageOpen((o) => !o)}
+        className="tj-manage-history-toggle"
+        aria-expanded={manageOpen}
       >
-        {COACH_COPY.historyDelete.cta}
-      </Button>
-      {status === "success" && (
-        <p data-testid="coach-history-delete-status-success" className="mt-2 text-xs text-emerald-400">
-          {COACH_COPY.historyDelete.successToast}
-        </p>
+        <span>{manageOpen ? "Close" : "Manage history"}</span>
+        <span className="tj-manage-history-toggle-chevron" aria-hidden="true">
+          {manageOpen ? "▲" : "▼"}
+        </span>
+      </button>
+
+      {/* Collapsible delete surface — behavior completely unchanged */}
+      {manageOpen && (
+        <div className="tj-manage-history-body">
+          <h3 className="tj-manage-history-title">
+            {COACH_COPY.historyDelete.title}
+          </h3>
+          <p className="tj-manage-history-body-text">
+            {COACH_COPY.historyDelete.body}
+          </p>
+          <Button
+            type="button"
+            variant="destructive"
+            size="game-sm"
+            onClick={() => setConfirmOpen(true)}
+            disabled={isLoading || !hasHistory || status === "working"}
+            className="mt-3"
+          >
+            {COACH_COPY.historyDelete.cta}
+          </Button>
+          {status === "success" && (
+            <p
+              data-testid="coach-history-delete-status-success"
+              className="mt-2 text-xs text-emerald-400"
+            >
+              {COACH_COPY.historyDelete.successToast}
+            </p>
+          )}
+          {status === "error" && (
+            <p
+              data-testid="coach-history-delete-status-error"
+              className="mt-2 text-xs text-rose-400"
+            >
+              {COACH_COPY.historyDelete.errorToast}
+            </p>
+          )}
+        </div>
       )}
-      {status === "error" && (
-        <p data-testid="coach-history-delete-status-error" className="mt-2 text-xs text-rose-400">
-          {COACH_COPY.historyDelete.errorToast}
-        </p>
-      )}
+
       <ConfirmDeleteSheet
         open={confirmOpen}
         onOpenChange={(o) => {
