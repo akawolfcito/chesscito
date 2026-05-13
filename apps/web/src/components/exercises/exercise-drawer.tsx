@@ -66,10 +66,10 @@ export function ExerciseDrawer({
         <button
           type="button"
           aria-label="Exercises"
-          className="quest-tray-slot flex min-h-[44px] w-full min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 text-sm font-extrabold transition active:scale-[0.97]"
+          className="quest-tray-slot transition active:scale-[0.97]"
         >
           <CandyIcon name="star" className="h-5 w-5 shrink-0" />
-          <span className="tabular-nums" aria-label={`${totalStars} of ${maxStars} stars earned`}>
+          <span className="tabular-nums text-sm font-extrabold uppercase tracking-tight" aria-label={`${totalStars} of ${maxStars} stars earned`}>
             {totalStars}
           </span>
         </button>

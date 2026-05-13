@@ -35,10 +35,10 @@ export function PiecePickerTrigger({
       aria-label={`Switch piece (current: ${PIECE_LABELS[selectedPiece]})`}
       aria-haspopup="dialog"
       className={[
-        'flex min-h-[44px] items-center gap-2 border transition-all active:scale-[0.97]',
+        'transition-all active:scale-[0.97]',
         showLabel
-          ? 'quest-tray-slot w-full min-w-0 rounded-xl px-2 py-1.5 text-left'
-          : 'rounded-full px-2 py-1',
+          ? 'quest-tray-slot w-full min-w-0'
+          : 'flex h-9 w-9 items-center justify-center rounded-full border',
       ].join(' ')}
       style={
         showLabel
@@ -67,7 +67,7 @@ export function PiecePickerTrigger({
       </picture>
       {showLabel && (
         <span
-          className="min-w-0 flex-1 truncate text-sm font-extrabold"
+          className="min-w-0 flex-1 truncate text-sm font-extrabold uppercase tracking-tight"
           style={{
             color: 'rgba(63, 34, 8, 0.92)',
             textShadow: '0 1px 0 rgba(255, 245, 215, 0.75)',

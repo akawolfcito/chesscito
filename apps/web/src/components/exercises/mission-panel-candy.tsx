@@ -245,13 +245,13 @@ export function MissionPanelCandy({
   const missionPeek = (
     <button
       type="button"
-      className="quest-tray-slot flex min-h-[44px] w-full min-w-0 items-center justify-center gap-2 rounded-xl border px-2 py-1.5 text-center transition-all active:scale-[0.97]"
+      className="quest-tray-slot transition-all active:scale-[0.97]"
       aria-label={missionAriaLabel}
     >
-      <CandyIcon name="crosshair" className="h-3.5 w-3.5 shrink-0" />
+      <CandyIcon name="crosshair" className="h-3.5 w-3.5 shrink-0 opacity-70" />
       <span
         key={targetLabel}
-        className="truncate text-sm font-extrabold"
+        className="truncate text-sm font-extrabold uppercase tracking-tight"
         style={candyChipTextStyle}
       >
         {visibleMissionLabel}
@@ -270,7 +270,7 @@ export function MissionPanelCandy({
           tray, not four unrelated floating chips. Built with CSS and
           existing chess sprites. */}
       <div className="mt-1 px-3 py-2.5">
-        <div className="grid grid-cols-[minmax(0,1.06fr)_minmax(0,0.96fr)_minmax(0,0.5fr)] gap-1">
+        <div className="grid grid-cols-3 gap-1.5">
           <PiecePickerTrigger
             selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
             onClick={() => setPiecePickerOpen(true)}
@@ -321,27 +321,11 @@ export function MissionPanelCandy({
                   disabled={disabled}
                   onClick={() => onToggleLabyrinth(value)}
                   className={[
-                    'rounded-[0.9rem] px-2 py-2 transition-all active:scale-[0.97]',
-                    'fantasy-title text-[0.72rem] font-extrabold uppercase tracking-[0.08em]',
-                    active
-                      ? 'shadow-[inset_0_1px_0_rgba(255,248,216,0.72),0_1px_3px_rgba(126,76,20,0.22)]'
-                      : '',
-                    disabled ? 'cursor-not-allowed opacity-55' : '',
+                    'rounded-2xl px-2 py-2 transition-all active:scale-[0.97]',
+                    'fantasy-title text-[0.68rem] font-black uppercase tracking-[0.08em]',
+                    active ? 'quest-tray-tab-active' : '',
+                    disabled ? 'cursor-not-allowed opacity-40' : '',
                   ].join(' ')}
-                  style={{
-                    background: active
-                      ? 'linear-gradient(180deg, #ffbf32 0%, #f49a08 100%)'
-                      : 'transparent',
-                    color: active
-                      ? 'rgba(255, 250, 229, 0.98)'
-                      : 'rgba(110, 65, 15, 0.78)',
-                    WebkitTextStroke: active
-                      ? '0.35px rgba(95, 49, 9, 0.80)'
-                      : undefined,
-                    textShadow: active
-                      ? '0 1px 0 rgba(95, 49, 9, 0.65)'
-                      : '0 1px 0 rgba(255, 245, 215, 0.65)',
-                  }}
                 >
                   {label}
                 </button>
