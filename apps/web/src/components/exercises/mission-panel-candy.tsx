@@ -245,7 +245,7 @@ export function MissionPanelCandy({
   const missionPeek = (
     <button
       type="button"
-      className="quest-tray-slot transition-all active:scale-[0.97]"
+      className="quest-tray-slot w-full transition-all active:scale-[0.97]"
       aria-label={missionAriaLabel}
     >
       <CandyIcon name="crosshair" className="h-3.5 w-3.5 shrink-0 opacity-70" />
@@ -270,25 +270,31 @@ export function MissionPanelCandy({
           tray, not four unrelated floating chips. Built with CSS and
           existing chess sprites. */}
       <div className="mt-0.5 px-3 py-1.5">
-        <div className="grid grid-cols-3 gap-1">
-          <PiecePickerTrigger
-            selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
-            onClick={() => setPiecePickerOpen(true)}
-            showLabel
-          />
-          <MissionDetailSheet
-            open={missionDetailOpen}
-            onOpenChange={setMissionDetailOpen}
-            selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
-            targetLabel={targetLabel}
-            isCapture={isCapture}
-            score={score}
-            timeMs={timeMs}
-            currentStars={currentStars}
-            claimedBadges={claimedBadges}
-            trigger={missionPeek}
-          />
-          <div className="min-w-0">{exerciseDrawer}</div>
+        <div className="flex items-center gap-1">
+          <div className="flex-1 min-w-0">
+            <PiecePickerTrigger
+              selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
+              onClick={() => setPiecePickerOpen(true)}
+              showLabel
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <MissionDetailSheet
+              open={missionDetailOpen}
+              onOpenChange={setMissionDetailOpen}
+              selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
+              targetLabel={targetLabel}
+              isCapture={isCapture}
+              score={score}
+              timeMs={timeMs}
+              currentStars={currentStars}
+              claimedBadges={claimedBadges}
+              trigger={missionPeek}
+            />
+          </div>
+          <div className="shrink-0">
+            {exerciseDrawer}
+          </div>
         </div>
 
         {showLayerTabs && onToggleLabyrinth && (

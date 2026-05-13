@@ -67,7 +67,7 @@ export function PiecePickerTrigger({
       </picture>
       {showLabel && (
         <span
-          className="min-w-0 flex-1 truncate text-sm font-extrabold uppercase tracking-tight"
+          className="min-w-0 truncate text-sm font-extrabold uppercase tracking-tight"
           style={{
             color: 'rgba(63, 34, 8, 0.92)',
             textShadow: '0 1px 0 rgba(255, 245, 215, 0.75)',
