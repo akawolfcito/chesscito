@@ -108,7 +108,7 @@ describe("HudResourceChip", () => {
         tone="default"
         value={3}
         icon="shield"
-        ariaLabel="3 retry shields available"
+        ariaLabel="3 streak shields available"
       />,
     );
     const sources = container.querySelectorAll("source");

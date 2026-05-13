@@ -1,4 +1,5 @@
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CandyChip } from "@/components/redesign/candy-chip";
 import {
   Sheet,
   SheetContent,
@@ -43,6 +44,131 @@ type ShopSheetProps = {
   showTrigger?: boolean;
 };
 
+/** Derives the kicker label for an item based on its label content.
+ *  Badge = support item, Shield = training utility. */
+function getKicker(label: string): string {
+  if (label.toLowerCase().includes("badge")) return SHOP_SHEET_COPY.kicker.support;
+  return SHOP_SHEET_COPY.kicker.training;
+}
+
+/** Derives the icon name for an item. */
+function getIcon(label: string): "trophy" | "shield" {
+  return label.toLowerCase().includes("badge") ? "trophy" : "shield";
+}
+
+/** Availability chip for an item. */
+function AvailabilityChip({ configured, enabled }: { configured: boolean; enabled: boolean }) {
+  if (configured && enabled) {
+    return (
+      <CandyChip variant="success" tone="subtle">
+        <CandyIcon name="check" className="mr-0.5 inline h-2.5 w-2.5" />
+        {SHOP_SHEET_COPY.status.available}
+      </CandyChip>
+    );
+  }
+  if (configured) {
+    return (
+      <CandyChip variant="danger" tone="subtle">
+        {SHOP_SHEET_COPY.status.unavailable}
+      </CandyChip>
+    );
+  }
+  return (
+    <CandyChip variant="warm" tone="subtle">
+      {SHOP_SHEET_COPY.status.notConfigured}
+    </CandyChip>
+  );
+}
+
+/** Individual shop item card — game-native visual first layout. */
+function ShopItemCard({
+  item,
+  isFeatured,
+  onSelectItem,
+}: {
+  item: CatalogItem;
+  isFeatured: boolean;
+  onSelectItem: (itemId: bigint) => void;
+}) {
+  const kicker = getKicker(item.label);
+  const icon = getIcon(item.label);
+  const priceLabel = item.configured
+    ? formatUsd(item.onChainPrice)
+    : SHOP_SHEET_COPY.status.notConfigured;
+
+  const buyLabel = !item.configured
+    ? SHOP_SHEET_COPY.buyButtonComingSoon
+    : !item.enabled
+      ? SHOP_SHEET_COPY.buyButtonUnavailable
+      : SHOP_SHEET_COPY.buyButton;
+
+  return (
+    <div
+      className={[
+        "shop-item-card",
+        isFeatured ? "shop-item-card--featured" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {/* Featured badge */}
+      {isFeatured && (
+        <span className="shop-item-card-featured-badge">
+          {SHOP_SHEET_COPY.featured}
+        </span>
+      )}
+
+      {/* Card top: icon + identity */}
+      <div className="shop-item-card-top">
+        {/* Large item icon */}
+        <div className="shop-item-card-icon-wrap">
+          <CandyIcon name={icon} className="shop-item-card-icon" />
+        </div>
+
+        {/* Name + kicker + availability + price row */}
+        <div className="shop-item-card-identity">
+          <p className="shop-item-card-kicker">{kicker}</p>
+          <p className="shop-item-card-name">{item.label}</p>
+          <div className="shop-item-card-meta-row">
+            <span className="shop-item-card-price">{priceLabel}</span>
+            <AvailabilityChip configured={item.configured} enabled={item.enabled} />
+          </div>
+        </div>
+      </div>
+
+      {/* Short value line */}
+      <p className="shop-item-card-subtitle">{item.subtitle}</p>
+
+      {/* Primary buy CTA */}
+      <PrincipalButton
+        size="medium"
+        className="mt-3 w-full"
+        disabled={!item.configured || !item.enabled}
+        onClick={() => onSelectItem(item.itemId)}
+        aria-label={!item.configured
+          ? SHOP_SHEET_COPY.buyButtonComingSoon
+          : !item.enabled
+            ? SHOP_SHEET_COPY.buyButtonUnavailable
+            : SHOP_SHEET_COPY.buyButton}
+      >
+        {buyLabel}
+      </PrincipalButton>
+
+      {/* CELO alternative — visually secondary, only if available */}
+      {item.celoSibling ? (
+        <div className="shop-item-card-celo-row">
+          <GemButton
+            icon={<CandyIcon name="wallet" className="h-3 w-3" />}
+            value={SHOP_SHEET_COPY.buyWithCelo}
+            onClick={() => onSelectItem(item.celoSibling!.itemId)}
+            aria-label={SHOP_SHEET_COPY.buyWithCelo}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function ShopSheet({
   open,
   onOpenChange,
@@ -71,6 +197,7 @@ export function ShopSheet({
         </SheetTrigger>
       ) : null}
       <SheetContent side="bottom" className="mission-shell sheet-bg-shop flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]">
+        {/* Sheet header */}
         <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
           <SheetHeader>
             <SheetTitle
@@ -88,12 +215,12 @@ export function ShopSheet({
             </SheetDescription>
           </SheetHeader>
         </div>
-        {/* `flex-1 min-h-0 overflow-y-auto` so the catalog grid scrolls
-            inside the sheet on mobile when items + "More soon" promo
-            exceed the visible 100dvh. Without it, the legacy persistent
-            dock at the bottom (~80px) clipped the last card and the
-            user reported "content cut off below". The `pb-[5rem]` on
-            the sheet shell still reserves the dock-clearance gutter. */}
+
+        {/* `flex-1 min-h-0 overflow-y-auto` so the catalog scrolls
+            inside the sheet on mobile. `pb-[5rem]` on the shell
+            reserves the dock-clearance gutter. */}
+
+        {/* Success banner */}
         {successBanner ? (
           <div
             className="mt-4 flex items-center gap-2 rounded-2xl px-4 py-3"
@@ -120,122 +247,34 @@ export function ShopSheet({
             </div>
           </div>
         ) : null}
-        <div className="mt-4 flex-1 min-h-0 overflow-y-auto grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+        {/* Catalog */}
+        <div className="mt-4 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3">
           {items.length === 0 && (
             <p
-              className="col-span-full text-center text-sm"
+              className="text-center text-sm"
               style={{ color: "rgba(110, 65, 15, 0.70)" }}
             >
               {SHOP_SHEET_COPY.empty}
             </p>
           )}
+
           {items.map((item, index) => {
             const isFeatured = index === 0 && item.configured && item.enabled;
             return (
-            <div
-              key={item.itemId.toString()}
-              className={[
-                "relative rounded-2xl border p-3",
-                isFeatured
-                  ? "border-amber-400/70 bg-white/20 shadow-[0_0_0_2px_rgba(251,191,36,0.28)]"
-                  : "border-[rgba(255,255,255,0.45)] bg-white/15",
-              ].join(" ")}
-            >
-              {isFeatured && (
-                <span
-                  className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-xs font-extrabold uppercase tracking-widest"
-                  style={{
-                    background: "rgba(120, 65, 5, 0.90)",
-                    color: "rgba(255, 240, 180, 0.98)",
-                    border: "1px solid rgba(255, 240, 180, 0.70)",
-                  }}
-                >
-                  {SHOP_SHEET_COPY.featured}
-                </span>
-              )}
-              <p
-                className="flex items-center gap-1.5 text-sm font-extrabold"
-                style={{
-                  color: "rgba(63, 34, 8, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                }}
-              >
-                {item.label.toLowerCase().includes("badge") ? (
-                  <CandyIcon name="trophy" className="h-4 w-4 shrink-0 opacity-90" />
-                ) : (
-                  <CandyIcon name="shield" className="h-4 w-4 shrink-0 opacity-90" />
-                )}
-                {item.label}
-              </p>
-              <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-                {item.subtitle}
-              </p>
-              <p
-                className="mt-2 text-sm font-extrabold"
-                style={{
-                  color: "rgba(63, 34, 8, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                }}
-              >
-                {item.configured ? formatUsd(item.onChainPrice) : SHOP_SHEET_COPY.status.notConfigured}
-              </p>
-              <p className="flex items-center gap-1 text-xs font-semibold">
-                {item.configured && item.enabled ? (
-                  <>
-                    <CandyIcon name="check" className="h-3 w-3" />
-                    <span className="text-emerald-700">{SHOP_SHEET_COPY.status.available}</span>
-                  </>
-                ) : item.configured ? (
-                  <>
-                    <CandyIcon name="close" className="h-3 w-3" />
-                    <span style={{ color: "rgba(159, 18, 57, 0.95)" }}>
-                      {SHOP_SHEET_COPY.status.unavailable}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <CandyIcon name="loading" className="h-3 w-3 opacity-70" />
-                    <span style={{ color: "rgba(110, 65, 15, 0.65)" }}>
-                      {SHOP_SHEET_COPY.status.unavailable}
-                    </span>
-                  </>
-                )}
-              </p>
-              <PrincipalButton
-                size="medium"
-                className="mt-3"
-                disabled={!item.configured || !item.enabled}
-                onClick={() => onSelectItem(item.itemId)}
-                aria-label={
-                  !item.configured
-                    ? SHOP_SHEET_COPY.buyButtonComingSoon
-                    : !item.enabled
-                      ? SHOP_SHEET_COPY.buyButtonUnavailable
-                      : SHOP_SHEET_COPY.buyButton
-                }
-              >
-                {!item.configured
-                  ? SHOP_SHEET_COPY.buyButtonComingSoon
-                  : !item.enabled
-                    ? SHOP_SHEET_COPY.buyButtonUnavailable
-                    : SHOP_SHEET_COPY.buyButton}
-              </PrincipalButton>
-              {item.celoSibling ? (
-                <div className="mt-2 flex justify-center">
-                  <GemButton
-                    icon={<CandyIcon name="wallet" className="h-3 w-3" />}
-                    value={SHOP_SHEET_COPY.buyWithCelo}
-                    onClick={() => onSelectItem(item.celoSibling!.itemId)}
-                    aria-label={SHOP_SHEET_COPY.buyWithCelo}
-                  />
-                </div>
-              ) : null}
-            </div>
+              <ShopItemCard
+                key={item.itemId.toString()}
+                item={item}
+                isFeatured={isFeatured}
+                onSelectItem={onSelectItem}
+              />
             );
           })}
+
+          {/* "More soon" ambient hint — only when catalog has fewer than 3 items */}
           {items.length > 0 && items.length < 3 && (
             <div
-              className="col-span-full mt-1 flex items-center gap-3 rounded-2xl px-4 py-3"
+              className="flex items-center gap-3 rounded-2xl px-4 py-3"
               style={{
                 background: "rgba(245, 158, 11, 0.22)",
                 boxShadow: "inset 0 0 0 1px rgba(245, 158, 11, 0.45)",

@@ -321,10 +321,10 @@ describe("HubScaffoldClient — tap handlers", () => {
     render(<HubScaffoldClient />);
 
     expect(
-      screen.queryByRole("button", { name: /retry shields available/i }),
+      screen.queryByRole("button", { name: /streak shields available/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByLabelText(/retry shields available/i),
+      screen.queryByLabelText(/streak shields available/i),
     ).not.toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalledWith(
       expect.stringContaining("legacy=1"),
@@ -412,7 +412,7 @@ describe("HubScaffoldClient — shields chip", () => {
     render(<HubScaffoldClient />);
 
     expect(
-      screen.queryByLabelText(/retry shields available/i),
+      screen.queryByLabelText(/streak shields available/i),
     ).not.toBeInTheDocument();
   });
 
@@ -422,7 +422,7 @@ describe("HubScaffoldClient — shields chip", () => {
     render(<HubScaffoldClient />);
 
     expect(
-      screen.queryByLabelText(/retry shields available/i),
+      screen.queryByLabelText(/streak shields available/i),
     ).not.toBeInTheDocument();
   });
 });
@@ -531,7 +531,7 @@ describe("HubScaffoldClient — telemetry", () => {
     render(<HubScaffoldClient />);
 
     expect(
-      screen.queryByRole("button", { name: /retry shields available/i }),
+      screen.queryByRole("button", { name: /streak shields available/i }),
     ).not.toBeInTheDocument();
     expect(trackMock).not.toHaveBeenCalledWith(
       "hub_shields_chip_tap",

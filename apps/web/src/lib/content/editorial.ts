@@ -197,7 +197,7 @@ export const CAPTURE_COPY = {
 } as const;
 
 export const SHIELD_COPY = {
-  label: "Retry Shield",
+  label: "Streak Shield",
   subtitle: "Failed a trial? Use a shield to try again without penalty.",
   useShield: "Use Shield",
   shieldsLeft: (n: number) => `${n} left`,
@@ -231,7 +231,7 @@ export const PHASE_FLASH_COPY = {
 
 export const SHOP_SHEET_COPY = {
   title: "Arcane Store",
-  description: "Choose an item to support your practice.",
+  description: "Items to support and enhance your training.",
   featured: "Featured",
   buyButton: "Buy with stablecoin",
   /** Companion CTA shown next to the USDC button on the Founder Badge
@@ -249,7 +249,14 @@ export const SHOP_SHEET_COPY = {
     unavailable: "Unavailable",
     notConfigured: "Coming soon",
   },
+  /** Item-level kicker labels rendered above the item name on each card.
+   *  Communicates purpose at a glance without changing purchase logic. */
+  kicker: {
+    support: "Support Chesscito",
+    training: "Training Item",
+  },
 } as const;
+
 
 export const LEADERBOARD_SHEET_COPY = {
   title: "Hall of Rooks",
@@ -817,8 +824,8 @@ export const HUB_V2_DOCK_COPY = {
     count === 1 ? "Shield ×1" : `Shields ×${count}`,
   shieldsRibbonAriaLabel: (count: number): string =>
     count === 1
-      ? "1 retry shield available — open shop"
-      : `${count} retry shields available — open shop`,
+      ? "1 streak shield available — open shop"
+      : `${count} streak shields available — open shop`,
   primaryActionsAriaLabel: "Primary actions",
 } as const;
 
@@ -966,7 +973,7 @@ export const LEGAL_COPY = {
       },
       {
         heading: "Local Storage",
-        body: "Tutorial state, gameplay preferences, retry shields, and UX settings are stored on your device for UX purposes. On-chain actions and related blockchain data are public by nature and may be transmitted through wallet and network infrastructure required to operate the app.",
+        body: "Tutorial state, gameplay preferences, streak shields, and UX settings are stored on your device for UX purposes. On-chain actions and related blockchain data are public by nature and may be transmitted through wallet and network infrastructure required to operate the app.",
       },
       {
         heading: "Third-Party Infrastructure",
@@ -1093,16 +1100,17 @@ export const UNLOCK_COPY = {
 export const SHOP_ITEM_COPY = {
   founderBadge: {
     label: "Founder Badge",
-    subtitle:
-      "Support the mission from its earliest days. An exclusive badge that's yours to keep.",
+    subtitle: "Support Chesscito from the beginning. A founder badge that's yours to keep.",
   },
   retryShield: {
-    label: "Retry Shield",
-    subtitle:
-      "Protect your practice rhythm. Three retries for tough captures — keep going without losing your streak.",
+    /** User-facing label updated to "Streak Shield" — clearer value prop.
+     *  Internal constants (SHIELD_ITEM_ID, storage keys, contract calls)
+     *  are NOT changed. Only this display string changes. */
+    label: "Streak Shield",
+    subtitle: "Protect your training streak. Three retries for tough captures.",
   },
   /** Coach Credits — value-prop copy for an eventual Coach Pack tile
-   *  in the shop sheet (parallel to Founder Badge / Retry Shield).
+   *  in the shop sheet (parallel to Founder Badge / Streak Shield).
    *  Pack size labels are intentionally NOT here — those live in
    *  COACH_COPY.creditPack5/20 since the Coach paywall is the only
    *  surface that renders pack tiles today. If a shop tile ever
@@ -1113,6 +1121,7 @@ export const SHOP_ITEM_COPY = {
     subtitle: "Try AI analysis without committing to a subscription.",
   },
 } as const;
+
 
 /** Chesscito PRO — first commercial SKU. Phase 0 scope: monthly pass
  *  that bypasses Coach credit consumption only. Other premium perks
@@ -1579,7 +1588,7 @@ export const LANDING_COPY = {
         featured: true,
         bullets: [
           "Coach con IA para analizar tus partidas",
-          "Retry Shield incluido — sin compras adicionales",
+          "Streak Shield incluido — sin compras adicionales",
           "Badge PRO visible en tu perfil",
           "Guarda tus victorias sin costo extra",
           "Tu aporte sostiene el acceso gratuito",
@@ -1774,8 +1783,8 @@ export const HUD_COPY = {
   shieldsFormat: (count: number) => `Shield ×${count}`,
   shieldsAriaLabel: (count: number) =>
     count === 1
-      ? "1 retry shield available"
-      : `${count} retry shields available`,
+      ? "1 streak shield available"
+      : `${count} streak shields available`,
 
   /** Region container aria-label for the secondary row. */
   secondaryRowAriaLabel: "Player resources",

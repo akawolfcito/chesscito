@@ -50,7 +50,7 @@ describe("HubScaffold", () => {
     render(<HubScaffold {...baseProps} />);
     expect(screen.getByLabelText("Streak: 3 days")).toBeInTheDocument();
     expect(screen.getByLabelText("Stars: 8 of 12")).toBeInTheDocument();
-    expect(screen.getByLabelText("2 retry shields available")).toBeInTheDocument();
+    expect(screen.getByLabelText("2 streak shields available")).toBeInTheDocument();
   });
 
   it("collapses the secondary HUD row when all conditional resources are null", () => {
