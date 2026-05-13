@@ -3841,6 +3841,7 @@ button.hud-resource-chip:active:not(:disabled) {
   justify-content: center;
   gap: 4px;
   min-height: 38px;
+  padding: 0 12px;
   border-radius: 10px;
 }
 

@@ -292,7 +292,7 @@ export function MissionPanelCandy({
               trigger={missionPeek}
             />
           </div>
-          <div className="shrink-0">
+          <div className="shrink-0 min-w-[4.5rem]">
             {exerciseDrawer}
           </div>
         </div>
