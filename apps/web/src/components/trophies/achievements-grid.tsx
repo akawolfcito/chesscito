@@ -61,10 +61,10 @@ function Section({
   return (
     <section>
       <div className="mb-4 flex items-center justify-between px-1">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[rgba(63,34,8,0.40)]">
           {label}
         </h3>
-        <span className="text-[10px] font-black opacity-30">
+        <span className="text-[10px] font-black text-[rgba(63,34,8,0.30)]">
           {achievements.length} ITEMS
         </span>
       </div>
@@ -99,7 +99,7 @@ function AchievementTile({
       <div className="achievement-tile-icon-wrap">
         <CandyIcon
           name={earned ? "trophy" : "lock"}
-          className={`h-8 w-8 ${earned ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.40)]" : "opacity-30 grayscale"}`}
+          className={`h-8 w-8 ${earned ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.40)]" : "text-[rgba(63,34,8,0.35)] grayscale"}`}
         />
         {earned && (
           <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 border-2 border-white/20">
@@ -113,13 +113,13 @@ function AchievementTile({
       
       {!earned && progress ? (
         <div className="mt-3 w-full">
-          <div className="flex items-center justify-between px-1 mb-1 text-[9px] font-black opacity-40">
+          <div className="flex items-center justify-between px-1 mb-1 text-[9px] font-black text-[rgba(63,34,8,0.50)]">
             <span>PROGRESS</span>
             <span>{progress.current}/{progress.goal}</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-black/5 overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-[rgba(63,34,8,0.06)] overflow-hidden">
             <div 
-              className="h-full bg-amber-500/60 rounded-full transition-all duration-500"
+              className="h-full bg-amber-500 rounded-full transition-all duration-500"
               style={{ width: `${(progress.current / progress.goal) * 100}%` }}
             />
           </div>

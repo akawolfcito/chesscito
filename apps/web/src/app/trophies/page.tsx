@@ -47,13 +47,6 @@ export default function TrophiesPage() {
       <div className="flex-1 space-y-6 overflow-y-auto">
         <TrophiesBody />
       </div>
-      <Link
-        href="/about"
-        className="mt-3 block text-center text-xs transition-colors hover:opacity-80"
-        style={{ color: "rgba(110, 65, 15, 0.65)" }}
-      >
-        {ABOUT_LINK_COPY.label}
-      </Link>
     </main>
   );
 }

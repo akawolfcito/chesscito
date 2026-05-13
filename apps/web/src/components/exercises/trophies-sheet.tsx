@@ -61,16 +61,6 @@ export function TrophiesSheet({ open, onOpenChange }: TrophiesSheetProps) {
         <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-6">
           <TrophiesBody />
         </div>
-        <div className="shrink-0">
-          <Link
-            href="/about"
-            onClick={() => onOpenChange(false)}
-            className="mt-3 block text-center text-xs transition-colors hover:opacity-80"
-            style={{ color: "rgba(110, 65, 15, 0.65)" }}
-          >
-            {ABOUT_LINK_COPY.label}
-          </Link>
-        </div>
       </SheetContent>
     </Sheet>
   );
