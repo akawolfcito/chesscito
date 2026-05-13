@@ -279,15 +279,6 @@ export function ArenaSelectScaffold({
       </section>
 
       <footer className="arena-scaffold-footer">
-        {coachSignal
-          ? wrap(
-              'CoachReviewSignal',
-              <CoachReviewSignal
-                proActive={coachSignal.proActive}
-                onCta={coachSignal.onCta}
-              />,
-            )
-          : null}
         {wrap('MissionRibbon', <MissionRibbon surface="arena" />)}
         {wrap(
           'PrimaryPlayCta',
@@ -298,6 +289,17 @@ export function ArenaSelectScaffold({
             onPress={onStart}
           />,
         )}
+        {coachSignal
+          ? wrap(
+              'CoachReviewSignal',
+              <div className="pt-2">
+                <CoachReviewSignal
+                  proActive={coachSignal.proActive}
+                  onCta={coachSignal.onCta}
+                />
+              </div>,
+            )
+          : null}
       </footer>
     </main>
   )
