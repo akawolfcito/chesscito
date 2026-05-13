@@ -174,6 +174,17 @@ export function ProSheet(props: ProSheetProps) {
     cta.onClick();
   }
 
+  function openTrainingJournal() {
+    track("pro_training_card_cta_tap", {
+      surface: "pro_sheet",
+      pro_active: Boolean(status?.active),
+      wallet_connected: isConnected,
+      cta: "training_journal",
+    });
+    onOpenChange(false);
+    router.push("/coach/history");
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -200,17 +211,19 @@ export function ProSheet(props: ProSheetProps) {
         </SheetHeader>
 
         <div className="flex flex-1 min-h-0 flex-col overflow-y-auto overscroll-contain">
-        <div className="mt-3 flex items-baseline gap-2">
-          <span
-            className="text-2xl font-bold"
-            style={{ color: "rgba(110, 65, 15, 0.95)" }}
-          >
-            {PRO_COPY.priceLabel}
-          </span>
-          <span className="text-xs" style={{ color: "rgba(110, 65, 15, 0.65)" }}>
-            ({PRO_COPY.durationLabel} · no auto-billing)
-          </span>
-        </div>
+        {!showActiveBanner && (
+          <div className="mt-3 flex items-baseline gap-2">
+            <span
+              className="text-2xl font-bold"
+              style={{ color: "rgba(110, 65, 15, 0.95)" }}
+            >
+              {PRO_COPY.priceLabel}
+            </span>
+            <span className="text-xs" style={{ color: "rgba(110, 65, 15, 0.65)" }}>
+              ({PRO_COPY.durationLabel} · no auto-billing)
+            </span>
+          </div>
+        )}
 
         {showActiveBanner && days !== null && status?.expiresAt && (
           <div data-testid="pro-active-banner" className="mt-3">
@@ -244,50 +257,61 @@ export function ProSheet(props: ProSheetProps) {
         )}
 
         {showActiveBanner && (
-          <div data-testid="pro-active-cta" className="mt-3">
-            <ProActiveCTA
-              source={source}
-              onClose={() => onOpenChange(false)}
-            />
+          <div data-testid="pro-active-actions" className="mt-3 space-y-2">
+            <div
+              className="rounded-xl border px-3 py-3"
+              style={{
+                borderColor: "rgba(110, 65, 15, 0.18)",
+                background: "rgba(255, 245, 205, 0.42)",
+              }}
+            >
+              <button
+                type="button"
+                data-testid="pro-open-journal"
+                onClick={openTrainingJournal}
+                className="w-full rounded-xl px-3 py-3 text-sm font-black uppercase tracking-wide"
+                style={{
+                  color: "#fff2bf",
+                  background: "linear-gradient(180deg, #965918 0%, #764207 100%)",
+                  textShadow: "0 2px 0 rgba(68, 37, 5, 0.70)",
+                }}
+              >
+                {PRO_COPY.activeActions.journal}
+              </button>
+              <p
+                className="mt-2 text-xs leading-snug"
+                style={{ color: "rgba(110, 65, 15, 0.76)" }}
+              >
+                {PRO_COPY.activeActions.journalSubline}
+              </p>
+            </div>
+            <div data-testid="pro-active-cta">
+              <ProActiveCTA
+                source={source}
+                onClose={() => onOpenChange(false)}
+              />
+            </div>
           </div>
         )}
 
-        <div className="mt-4">
-          <p
-            className="text-xs font-bold uppercase tracking-wide"
-            style={{ color: "rgba(110, 65, 15, 0.85)" }}
-          >
-            Active perks
-          </p>
-          <ul className="mt-1 space-y-1 text-sm" style={{ color: "rgba(110, 65, 15, 0.90)" }}>
-            {PRO_COPY.perksActive.map((perk) => (
-              <li key={perk} className="flex items-start gap-2">
-                <span aria-hidden="true">✓</span>
-                <span>{perk}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="mt-3" data-testid="pro-roadmap">
-          <p
-            className="text-xs font-bold uppercase tracking-wide"
-            style={{ color: "rgba(110, 65, 15, 0.55)" }}
-          >
-            Coming later
-          </p>
-          <ul className="mt-1 space-y-1 text-sm" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-            {PRO_COPY.perksRoadmap.map((perk) => (
-              <li
-                key={perk}
-                className="flex items-center justify-between gap-2"
-              >
-                <span>{perk}</span>
-                <ComingSoonChip />
-              </li>
-            ))}
-          </ul>
-        </div>
+        {!showActiveBanner && (
+          <div className="mt-4">
+            <p
+              className="text-xs font-bold uppercase tracking-wide"
+              style={{ color: "rgba(110, 65, 15, 0.85)" }}
+            >
+              Active perks
+            </p>
+            <ul className="mt-1 space-y-1 text-sm" style={{ color: "rgba(110, 65, 15, 0.90)" }}>
+              {PRO_COPY.perksActive.map((perk) => (
+                <li key={perk} className="flex items-start gap-2">
+                  <span aria-hidden="true">✓</span>
+                  <span>{perk}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {errorMessage && (
           <div
@@ -319,27 +343,21 @@ export function ProSheet(props: ProSheetProps) {
             )}
           </div>
         )}
-
-        <p
-          data-testid="pro-mission-note"
-          className="mt-4 text-xs leading-relaxed"
-          style={{ color: "rgba(110, 65, 15, 0.75)" }}
-        >
-          {PRO_COPY.missionNote}
-        </p>
         </div>
 
-        <div className="mt-auto flex justify-center pt-4">
-          <PrincipalButton
-            size="large"
-            loading={cta.loading}
-            disabled={cta.disabled}
-            onClick={handleCtaClick}
-            aria-label={cta.label}
-          >
-            {cta.label}
-          </PrincipalButton>
-        </div>
+        {!showActiveBanner && (
+          <div className="mt-auto flex justify-center pt-4">
+            <PrincipalButton
+              size="large"
+              loading={cta.loading}
+              disabled={cta.disabled}
+              onClick={handleCtaClick}
+              aria-label={cta.label}
+            >
+              {cta.label}
+            </PrincipalButton>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );

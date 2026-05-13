@@ -264,9 +264,43 @@ describe("ProSheet", () => {
       expect(pushMock).toHaveBeenCalledWith("/arena");
     });
 
+    it("prioritizes Training Journal as the first active PRO action", () => {
+      const handlers = renderSheet({ status: ACTIVE_STATUS });
+      const journal = screen.getByTestId("pro-open-journal");
+      const play = screen.getByTestId("pro-active-cta-button");
+      const renew = screen.getByRole("button", { name: PRO_COPY.ctaRenew });
+
+      expect(journal).toHaveTextContent(PRO_COPY.activeActions.journal);
+      expect(
+        journal.compareDocumentPosition(play) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        play.compareDocumentPosition(renew) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+
+      fireEvent.click(journal);
+      expect(handlers.onOpenChange).toHaveBeenCalledWith(false);
+      expect(pushMock).toHaveBeenCalledWith("/coach/history");
+    });
+
+    it("tracks Training Journal taps from the active PRO sheet", () => {
+      renderSheet({ status: ACTIVE_STATUS });
+      trackMock.mockClear();
+
+      fireEvent.click(screen.getByTestId("pro-open-journal"));
+
+      expect(trackMock).toHaveBeenCalledWith("pro_training_card_cta_tap", {
+        surface: "pro_sheet",
+        pro_active: true,
+        wallet_connected: true,
+        cta: "training_journal",
+      });
+    });
+
     it("does NOT render the active-state surfaces when status is inactive", () => {
       renderSheet({ status: { active: false, expiresAt: null } });
       expect(screen.queryByTestId("pro-active-banner")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("pro-active-actions")).not.toBeInTheDocument();
       expect(screen.queryByTestId("pro-active-cta")).not.toBeInTheDocument();
     });
 

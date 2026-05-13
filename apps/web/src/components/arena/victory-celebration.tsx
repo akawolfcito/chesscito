@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
@@ -34,6 +34,7 @@ type Props = {
    *  CTA right after Save Victory so the player doesn't have to mint
    *  before they can analyze (2026-05-07 user smoke). */
   onAskCoach?: () => void;
+  coachPreview?: ReactNode;
 };
 
 
@@ -49,6 +50,7 @@ export function VictoryCelebration({
   fen,
   playerColor,
   onAskCoach,
+  coachPreview,
 }: Props) {
   const time = formatTime(elapsedMs);
   const [shareOpen, setShareOpen] = useState(false);
@@ -97,6 +99,7 @@ export function VictoryCelebration({
           closeLabel={ARENA_COPY.backToHub}
           cta={
             <div className="flex w-full flex-col gap-2.5 animate-in fade-in duration-300 fill-mode-both [animation-delay:600ms]">
+              {coachPreview}
               {onClaimVictory && (
                 <div className="flex w-full justify-center">
                   <PrincipalButton
@@ -113,16 +116,28 @@ export function VictoryCelebration({
                 </div>
               )}
               <div className="flex w-full justify-center">
-                <PrincipalButton
-                  size="medium"
-                  leadingIcon={
-                    <CandyIcon name="refresh" className="h-4 w-4" />
-                  }
-                  onClick={onPlayAgain}
-                  aria-label={ARENA_COPY.playAgain}
-                >
-                  {ARENA_COPY.playAgain}
-                </PrincipalButton>
+                {onClaimVictory ? (
+                  <Button
+                    type="button"
+                    variant="game-ghost"
+                    size="game-sm"
+                    onClick={onPlayAgain}
+                    className="w-full"
+                  >
+                    <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
+                  </Button>
+                ) : (
+                  <PrincipalButton
+                    size="medium"
+                    leadingIcon={
+                      <CandyIcon name="refresh" className="h-4 w-4" />
+                    }
+                    onClick={onPlayAgain}
+                    aria-label={ARENA_COPY.playAgain}
+                  >
+                    {ARENA_COPY.playAgain}
+                  </PrincipalButton>
+                )}
               </div>
               <div className="flex w-full gap-2">
                 {onAskCoach && (

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { CandyBanner } from "@/components/redesign/candy-banner";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -360,7 +361,7 @@ function BackControlHeader(
           "text-[rgba(110,65,15,0.85)] hover:bg-white/10 active:scale-[0.97]",
         )}
       >
-        <span aria-hidden>←</span>
+        <CandyBanner name="btn-back" className="h-8 w-8" />
       </button>
       <h1 className={cn(TITLE_CLASS, "min-w-0 flex-1")}>{props.title}</h1>
       {props.trailingControl ? (

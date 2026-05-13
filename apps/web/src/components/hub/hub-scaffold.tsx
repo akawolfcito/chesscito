@@ -7,7 +7,6 @@ import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
 import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-column";
 import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { PremiumSlot } from "@/components/pro-mission/premium-slot";
-import { CoachProCard } from "@/components/pro/coach-pro-card";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
 import { HUD_COPY } from "@/lib/content/editorial";
 
@@ -68,6 +67,7 @@ type HubScaffoldProps = {
    *  Defaults to `true` so legacy callers keep the original layout. */
   isWalletConnected?: boolean;
   onConnectTap?: () => void;
+  showPremiumSlot?: boolean;
   onError?: (
     context: import("@/components/error/primitive-boundary").PrimitiveBoundaryErrorContext,
   ) => void;
@@ -104,7 +104,6 @@ export function HubScaffold({
   onTrophyTap,
   onProTap,
   onCoachTap,
-  onCoachProCardCta,
   onPremiumTap,
   onPlayPress,
   onStreakTap,
@@ -112,6 +111,7 @@ export function HubScaffold({
   onShieldsTap,
   isWalletConnected = true,
   onConnectTap,
+  showPremiumSlot = false,
   onError,
 }: HubScaffoldProps) {
   const proValue = pro.active
@@ -191,14 +191,6 @@ export function HubScaffold({
             onShieldsTap={onShieldsTap}
           />,
         )}
-        {wrap(
-          "CoachProCard",
-          <CoachProCard
-            active={pro.active}
-            remainingDays={pro.active ? pro.daysRemaining : undefined}
-            onCtaClick={onCoachProCardCta}
-          />,
-        )}
       </header>
 
       <section className="hub-scaffold-body">
@@ -259,20 +251,22 @@ export function HubScaffold({
           </footer>
         </div>
         <div className="hub-scaffold-side hub-scaffold-side--right">
-          {wrap(
-            "PremiumSlot",
-            <PremiumSlot
-              active={pro.active}
-              daysRemaining={pro.active ? pro.daysRemaining : undefined}
-              usedSessions={premiumUsed}
-              totalSessions={premiumTotal}
-              kicker={premiumKicker}
-              inactiveCtaLabel={premiumInactiveLabel}
-              progressFormat={premiumProgressFormat}
-              ariaLabel={premiumAriaLabel}
-              onTap={onPremiumTap}
-            />,
-          )}
+          {showPremiumSlot
+            ? wrap(
+                "PremiumSlot",
+                <PremiumSlot
+                  active={pro.active}
+                  daysRemaining={pro.active ? pro.daysRemaining : undefined}
+                  usedSessions={premiumUsed}
+                  totalSessions={premiumTotal}
+                  kicker={premiumKicker}
+                  inactiveCtaLabel={premiumInactiveLabel}
+                  progressFormat={premiumProgressFormat}
+                  ariaLabel={premiumAriaLabel}
+                  onTap={onPremiumTap}
+                />,
+              )
+            : null}
         </div>
       </section>
     </main>

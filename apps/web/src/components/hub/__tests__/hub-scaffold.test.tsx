@@ -69,9 +69,10 @@ describe("HubScaffold", () => {
     render(<HubScaffold {...baseProps} />);
 
     expect(screen.getByText("PRO Active · 14d")).toBeInTheDocument();
-    expect(screen.getByText("Next training")).toBeInTheDocument();
+    expect(screen.getByText("Your Coach is ready.")).toBeInTheDocument();
+    expect(screen.getByText("Reviews · History · Next training")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Continue Training" }),
+      screen.getByRole("button", { name: "Open Journal" }),
     ).toBeInTheDocument();
   });
 
@@ -80,11 +81,12 @@ describe("HubScaffold", () => {
 
     expect(screen.getByText("Coach PRO")).toBeInTheDocument();
     expect(screen.getByText("Get feedback after games and practice.")).toBeInTheDocument();
+    expect(screen.queryByText("Mistakes · Tips · History")).not.toBeInTheDocument();
     expect(screen.getByText("Mistakes")).toBeInTheDocument();
     expect(screen.getByText("Tips")).toBeInTheDocument();
     expect(screen.getByText("History")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Start PRO Training" }),
+      screen.getByRole("button", { name: "Train with Coach" }),
     ).toBeInTheDocument();
   });
 
@@ -101,7 +103,7 @@ describe("HubScaffold", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: "Start PRO Training" }),
+      screen.getByRole("button", { name: "Train with Coach" }),
     );
 
     expect(onCoachProCardCta).toHaveBeenCalledTimes(1);
@@ -122,21 +124,28 @@ describe("HubScaffold", () => {
     ).not.toBeNull();
   });
 
-  it("mounts the PremiumSlot on the body right side and reflects the active state", () => {
+  it("does not mount the PremiumSlot by default so the Coach PRO card is the primary PRO surface", () => {
     const { container } = render(<HubScaffold {...baseProps} />);
+    const slot = container.querySelector(
+      ".hub-scaffold-side--right .premium-slot",
+    );
+    expect(slot).toBeNull();
+  });
+
+  it("can still mount the PremiumSlot when explicitly requested", () => {
+    const { container } = render(<HubScaffold {...baseProps} showPremiumSlot />);
     const slot = container.querySelector(
       ".hub-scaffold-side--right .premium-slot",
     );
     expect(slot).not.toBeNull();
     expect(slot!.className).toMatch(/is-active\b/);
-    expect(slot!.className).not.toMatch(/is-inactive\b/);
   });
 
-  it("renders the inactive PremiumSlot CTA when PRO is inactive", () => {
+  it("keeps the inactive PremiumSlot hidden by default to avoid competing PRO CTAs", () => {
     render(
       <HubScaffold {...baseProps} pro={{ active: false }} />,
     );
-    expect(screen.getByText("Go PRO")).toBeInTheDocument();
+    expect(screen.queryByText("Go PRO")).not.toBeInTheDocument();
   });
 
   it("collapses the PRO HUD chip when PRO is inactive (value === null)", () => {

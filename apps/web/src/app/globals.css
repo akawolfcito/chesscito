@@ -2982,42 +2982,88 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* ── Coach PRO Card — compact Hub training entrypoint ── */
 .coach-pro-card {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  min-height: 72px;
-  padding: 8px 8px 8px 10px;
-  border: 1px solid rgba(255, 245, 190, 0.58);
+  min-height: 118px;
+  padding: 12px 10px 12px 12px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 246, 185, 0.72);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(255, 240, 161, 0.90), rgba(182, 234, 102, 0.78)),
-    rgba(64, 115, 27, 0.36);
+    radial-gradient(circle at 10% 0%, rgba(255, 255, 221, 0.95), transparent 34%),
+    linear-gradient(135deg, rgba(255, 232, 116, 0.96) 0%, rgba(160, 226, 79, 0.92) 58%, rgba(55, 150, 78, 0.90) 100%);
   box-shadow:
-    0 1px 0 rgba(255, 255, 230, 0.56) inset,
-    0 7px 14px rgba(21, 58, 22, 0.20);
+    0 2px 0 rgba(255, 255, 230, 0.72) inset,
+    0 10px 0 rgba(87, 56, 12, 0.16),
+    0 16px 26px rgba(21, 58, 22, 0.26);
   color: #4c2a10;
   text-shadow: 0 1px 0 rgba(255, 246, 200, 0.50);
+}
+
+.coach-pro-card::after {
+  content: "COACH";
+  position: absolute;
+  right: -15px;
+  bottom: 9px;
+  z-index: -1;
+  color: rgba(255, 255, 230, 0.24);
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 2.45rem;
+  font-weight: 900;
+  line-height: 1;
+  transform: rotate(-7deg);
+}
+
+.coach-pro-card.is-active {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255, 255, 221, 0.96), transparent 34%),
+    linear-gradient(135deg, rgba(209, 255, 142, 0.97) 0%, rgba(70, 181, 100, 0.94) 60%, rgba(30, 112, 80, 0.92) 100%);
 }
 
 .coach-pro-card-copy {
   min-width: 0;
 }
 
+.coach-pro-card-kicker {
+  display: inline-flex;
+  margin-bottom: 4px;
+  color: rgba(72, 45, 10, 0.68);
+  font-size: 0.6rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .coach-pro-card-title {
   margin: 0;
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
-  font-size: 0.93rem;
+  font-size: 1.26rem;
   font-weight: 900;
-  line-height: 1;
+  line-height: 0.95;
 }
 
 .coach-pro-card-body {
-  margin: 3px 0 0;
+  margin: 5px 0 0;
+  max-width: 185px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.14;
+  overflow-wrap: anywhere;
+}
+
+.coach-pro-card-features {
+  margin: 4px 0 0;
+  max-width: 190px;
+  color: #315f1d;
   font-size: 0.68rem;
-  font-weight: 700;
-  line-height: 1.13;
+  font-weight: 900;
+  line-height: 1.1;
   overflow-wrap: anywhere;
 }
 
@@ -3025,7 +3071,7 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  margin-top: 5px;
+  margin-top: 7px;
 }
 
 .coach-pro-card-chip {
@@ -3034,8 +3080,8 @@ button.hud-resource-chip:active:not(:disabled) {
   min-height: 16px;
   padding: 2px 5px;
   border-radius: 999px;
-  background: rgba(64, 120, 35, 0.22);
-  color: #355c1b;
+  background: rgba(255, 248, 194, 0.48);
+  color: #315f1d;
   font-size: 0.56rem;
   font-weight: 900;
   line-height: 1;
@@ -3045,22 +3091,23 @@ button.hud-resource-chip:active:not(:disabled) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 92px;
-  min-height: 40px;
-  padding: 6px 8px;
+  width: 108px;
+  min-height: 68px;
+  padding: 8px 9px;
   border: 0;
   border-radius: 8px;
   background: linear-gradient(180deg, #965918 0%, #764207 100%);
   color: #fff2bf;
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
-  font-size: 0.66rem;
+  font-size: 0.82rem;
   font-weight: 900;
-  line-height: 1.06;
+  line-height: 1.02;
   text-align: center;
   text-shadow: 0 2px 0 rgba(68, 37, 5, 0.70);
   box-shadow:
     0 1px 0 rgba(255, 244, 186, 0.35) inset,
-    0 4px 0 rgba(72, 41, 5, 0.25);
+    0 6px 0 rgba(72, 41, 5, 0.25),
+    0 11px 17px rgba(55, 88, 18, 0.20);
   cursor: pointer;
 }
 
@@ -3069,6 +3116,261 @@ button.hud-resource-chip:active:not(:disabled) {
   box-shadow:
     0 1px 0 rgba(255, 244, 186, 0.35) inset,
     0 2px 0 rgba(72, 41, 5, 0.25);
+}
+
+/* ── Arena Coach Monetization Loop ── */
+.coach-review-signal {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 44px;
+  overflow: hidden;
+  padding: 6px 7px;
+  border: 1.5px solid rgba(255, 239, 152, 0.74);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 247, 187, 0.98) 0%, rgba(206, 236, 101, 0.94) 50%, rgba(78, 162, 80, 0.94) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 220, 0.68) inset,
+    0 3px 0 rgba(87, 56, 12, 0.14),
+    0 8px 15px rgba(25, 69, 22, 0.18);
+  color: #4c2a10;
+  text-shadow: 0 1px 0 rgba(255, 246, 200, 0.48);
+}
+
+.coach-review-signal::after {
+  content: "";
+  position: absolute;
+  inset: 2px 8px auto;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 232, 0.42), transparent);
+  pointer-events: none;
+}
+
+.coach-review-signal.is-active {
+  background:
+    linear-gradient(180deg, rgba(238, 255, 180, 0.98) 0%, rgba(112, 214, 96, 0.94) 52%, rgba(41, 142, 92, 0.94) 100%);
+}
+
+.coach-review-signal-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  min-height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 18%, rgba(255, 247, 190, 0.95), transparent 45%),
+    linear-gradient(180deg, #986019 0%, #633506 100%);
+  color: #fff3bf;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(52, 28, 3, 0.72);
+  box-shadow:
+    0 1px 0 rgba(255, 244, 184, 0.38) inset,
+    0 3px 0 rgba(73, 38, 4, 0.22);
+}
+
+.coach-review-signal-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.coach-review-signal-copy strong {
+  overflow: hidden;
+  color: #4c2a10;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.02;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coach-review-signal-copy span {
+  overflow: hidden;
+  color: rgba(84, 49, 10, 0.76);
+  font-size: 0.58rem;
+  font-weight: 900;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coach-review-signal-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  max-width: 92px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #8f5414 0%, #704006 100%);
+  color: #fff2bf;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 900;
+  line-height: 1.02;
+  text-align: center;
+  text-shadow: 0 2px 0 rgba(58, 31, 4, 0.66);
+  box-shadow:
+    0 1px 0 rgba(255, 244, 186, 0.35) inset,
+    0 3px 0 rgba(72, 41, 5, 0.22);
+  cursor: pointer;
+}
+
+.coach-review-signal-cta:active {
+  transform: translateY(1px);
+}
+
+.coach-preview-card {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  overflow: hidden;
+  border: 2px solid rgba(255, 246, 185, 0.72);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 255, 221, 0.95), transparent 36%),
+    linear-gradient(135deg, rgba(255, 232, 116, 0.97) 0%, rgba(157, 225, 80, 0.93) 56%, rgba(44, 139, 91, 0.91) 100%);
+  box-shadow:
+    0 2px 0 rgba(255, 255, 230, 0.72) inset,
+    0 8px 0 rgba(87, 56, 12, 0.14),
+    0 14px 23px rgba(21, 58, 22, 0.24);
+  color: #4c2a10;
+  text-shadow: 0 1px 0 rgba(255, 246, 200, 0.52);
+}
+
+.coach-preview-card {
+  min-height: 122px;
+  padding: 11px 10px 11px 12px;
+  text-align: left;
+}
+
+.coach-preview-card::after {
+  content: "COACH";
+  position: absolute;
+  right: -15px;
+  bottom: 7px;
+  z-index: -1;
+  color: rgba(255, 255, 230, 0.22);
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 2.15rem;
+  font-weight: 900;
+  line-height: 1;
+  transform: rotate(-7deg);
+}
+
+.coach-preview-card.is-active {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 255, 221, 0.96), transparent 36%),
+    linear-gradient(135deg, rgba(209, 255, 142, 0.98) 0%, rgba(69, 181, 100, 0.94) 58%, rgba(28, 112, 80, 0.92) 100%);
+}
+
+.coach-preview-card-copy {
+  min-width: 0;
+}
+
+.coach-preview-card-kicker {
+  display: inline-flex;
+  margin-bottom: 3px;
+  color: rgba(72, 45, 10, 0.68);
+  font-size: 0.56rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.coach-preview-card-title {
+  margin: 0;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-weight: 900;
+  line-height: 0.98;
+}
+
+.coach-preview-card-title {
+  font-size: 1.18rem;
+}
+
+.coach-preview-card-body {
+  margin: 4px 0 0;
+  max-width: 190px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.coach-preview-card-body {
+  max-width: 200px;
+  font-size: 0.74rem;
+}
+
+.coach-preview-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.coach-preview-card-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 16px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(255, 248, 194, 0.50);
+  color: #315f1d;
+  font-size: 0.56rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.coach-preview-card-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #965918 0%, #764207 100%);
+  color: #fff2bf;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-weight: 900;
+  line-height: 1.02;
+  text-align: center;
+  text-shadow: 0 2px 0 rgba(68, 37, 5, 0.70);
+  box-shadow:
+    0 1px 0 rgba(255, 244, 186, 0.35) inset,
+    0 5px 0 rgba(72, 41, 5, 0.25),
+    0 10px 16px rgba(55, 88, 18, 0.18);
+  cursor: pointer;
+}
+
+.coach-preview-card-cta {
+  width: 104px;
+  min-height: 64px;
+  padding: 8px 9px;
+  font-size: 0.76rem;
+}
+
+.coach-preview-card-cta:active {
+  transform: translateY(1px);
 }
 
 /* State: expiring — subtle amber pulse, NO FOMO copy added. */
@@ -4196,8 +4498,8 @@ button.hud-resource-chip:active:not(:disabled) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.45);

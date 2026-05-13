@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import { ARENA_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { CandyButton } from "@/components/redesign/candy-button";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
@@ -45,6 +45,7 @@ type Props = {
   fen?: string;
   playerColor?: PlayerColor;
   onAskCoach?: () => void;
+  coachPreview?: ReactNode;
 };
 
 function getLoseText(status: ArenaStatus): string {
@@ -80,6 +81,7 @@ export function ArenaEndState({
   fen,
   playerColor,
   onAskCoach,
+  coachPreview,
 }: Props) {
   /* Hooks must run unconditionally on every render (React rules-of-hooks).
      Compute `text` here so the effect — and the early-return path below —
@@ -117,6 +119,7 @@ export function ArenaEndState({
             claimData={claimData}
             shareStatus={shareStatus}
             onAskCoach={onAskCoach}
+            coachPreview={coachPreview}
           />
         );
       case "error":
@@ -153,6 +156,7 @@ export function ArenaEndState({
             fen={fen}
             playerColor={playerColor}
             onAskCoach={onAskCoach}
+            coachPreview={coachPreview}
           />
         );
     }
@@ -175,6 +179,7 @@ export function ArenaEndState({
           closeLabel={ARENA_COPY.backToHub}
           cta={
             <div className="flex w-full flex-col items-center gap-2.5">
+              {coachPreview}
               <CandyButton
                 variant="play"
                 onClick={onPlayAgain}

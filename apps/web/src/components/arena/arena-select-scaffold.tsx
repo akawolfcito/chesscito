@@ -8,6 +8,7 @@ import { PrimitiveBoundary } from '@/components/error/primitive-boundary'
 import { PrimaryPlayCta } from '@/components/kingdom/primary-play-cta'
 import { MissionRibbon } from '@/components/pro-mission/mission-ribbon'
 import { ARENA_COPY } from '@/lib/content/editorial'
+import { CoachReviewSignal } from '@/components/arena/coach-review-signal'
 import type { ArenaDifficulty } from '@/lib/game/types'
 import type { PlayerColor } from '@/lib/game/use-chess-game'
 
@@ -46,6 +47,11 @@ type PrizePool = {
   isLoading: boolean
 }
 
+type CoachSignal = {
+  proActive: boolean
+  onCta?: () => void
+}
+
 type Props = {
   difficulty: ArenaDifficulty
   playerColor: PlayerColor
@@ -55,6 +61,7 @@ type Props = {
   onBack?: () => void
   softGate?: SoftGate
   prizePool?: PrizePool
+  coachSignal?: CoachSignal
   errorMessage?: string | null
   onError?: (
     context: import('@/components/error/primitive-boundary').PrimitiveBoundaryErrorContext,
@@ -76,6 +83,7 @@ export function ArenaSelectScaffold({
   onBack,
   softGate,
   prizePool,
+  coachSignal,
   errorMessage,
   onError,
 }: Props) {
@@ -105,7 +113,7 @@ export function ArenaSelectScaffold({
               aria-label={ARENA_COPY.backToHub}
               className="arena-scaffold-back"
             >
-              <CandyBanner name="btn-back" className="h-4 w-4" />
+              <CandyBanner name="btn-back" className="h-9 w-9" />
             </button>
           ) : null}
         </div>
@@ -146,29 +154,28 @@ export function ArenaSelectScaffold({
 
         {prizePool ? (
           <div
-            className="arena-scaffold-prize-pool"
+            className="mx-auto mb-4 mt-2 flex w-max items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium shadow-sm border border-amber-900/10"
+            style={{
+              background: "rgba(255, 245, 205, 0.42)",
+              color: "rgba(110, 65, 15, 0.85)",
+            }}
             aria-label={ARENA_COPY.prizePoolLabel}
           >
             <img
               src="/art/arena/community-pool.png"
               alt=""
               aria-hidden="true"
-              className="arena-scaffold-prize-pool-icon"
+              className="h-4 w-4"
             />
-            <div className="arena-scaffold-prize-pool-text">
-              <span className="arena-scaffold-prize-pool-headline">
-                {ARENA_COPY.prizePoolLabel}
-                {' · '}
-                <span className="tabular-nums">
-                  {prizePool.isLoading
-                    ? ARENA_COPY.prizePoolLoading
-                    : prizePool.formatted ?? ARENA_COPY.prizePoolUnavailable}
-                </span>
+            <span>
+              {ARENA_COPY.prizePoolLabel}
+              {' · '}
+              <span className="tabular-nums font-bold text-amber-700">
+                {prizePool.isLoading
+                  ? ARENA_COPY.prizePoolLoading
+                  : prizePool.formatted ?? ARENA_COPY.prizePoolUnavailable}
               </span>
-              <span className="arena-scaffold-prize-pool-hint">
-                {ARENA_COPY.prizePoolSoonHint}
-              </span>
-            </div>
+            </span>
           </div>
         ) : null}
 
@@ -272,6 +279,15 @@ export function ArenaSelectScaffold({
       </section>
 
       <footer className="arena-scaffold-footer">
+        {coachSignal
+          ? wrap(
+              'CoachReviewSignal',
+              <CoachReviewSignal
+                proActive={coachSignal.proActive}
+                onCta={coachSignal.onCta}
+              />,
+            )
+          : null}
         {wrap('MissionRibbon', <MissionRibbon surface="arena" />)}
         {wrap(
           'PrimaryPlayCta',

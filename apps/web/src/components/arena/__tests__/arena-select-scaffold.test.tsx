@@ -62,7 +62,7 @@ describe("ArenaSelectScaffold", () => {
   it("fires onStart when the primary CTA is pressed", async () => {
     const onStart = vi.fn();
     render(<ArenaSelectScaffold {...baseProps} onStart={onStart} />);
-    await userEvent.click(screen.getByRole("button", { name: /^PLAY$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^PLAY CHESS$/i }));
     expect(onStart).toHaveBeenCalled();
   });
 
@@ -114,6 +114,45 @@ describe("ArenaSelectScaffold", () => {
       />,
     );
     expect(screen.getByText(/Loading pool/i)).toBeInTheDocument();
+  });
+
+  it("renders the non-PRO Coach hint without blocking Play", async () => {
+    const onCta = vi.fn();
+    const onStart = vi.fn();
+    render(
+      <ArenaSelectScaffold
+        {...baseProps}
+        onStart={onStart}
+        coachSignal={{ proActive: false, onCta }}
+      />,
+    );
+
+    expect(screen.getByTestId("coach-review-signal")).toHaveTextContent(
+      "Coach can review this match",
+    );
+    expect(screen.getByTestId("coach-review-signal")).toHaveTextContent(
+      "Unlock full review after playing",
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Train with Coach/i }));
+    expect(onCta).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole("button", { name: /^PLAY CHESS$/i }));
+    expect(onStart).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the active PRO Coach hint without sales copy", () => {
+    render(
+      <ArenaSelectScaffold
+        {...baseProps}
+        coachSignal={{ proActive: true, onCta: vi.fn() }}
+      />,
+    );
+
+    expect(screen.getByTestId("coach-review-signal")).toHaveTextContent(
+      "Review after checkmate",
+    );
+    expect(screen.queryByRole("button", { name: /Open Journal/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Train with Coach/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/PRO unlocks/i)).not.toBeInTheDocument();
   });
 
   it("renders an error message banner when errorMessage is provided", () => {

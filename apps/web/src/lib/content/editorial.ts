@@ -605,6 +605,31 @@ export const ARENA_COPY = {
    *  the call site by NEXT_PUBLIC_ENABLE_COACH so disabling the flag
    *  hides the hint alongside the rest of the Coach surface. */
   coachHudHint: "Coach reviews after checkmate",
+  coachSignal: {
+    inactiveTitle: "Coach can review this match",
+    inactiveBody: "Unlock full review after playing",
+    inactiveCta: "Train with Coach",
+    activeTitle: "Coach ready",
+    activeBody: "Review after checkmate",
+  },
+  coachPreview: {
+    inactiveTitle: "Coach Preview",
+    insight: (difficulty: string, result: string, moves: number) => {
+      const outcome = result === "win"
+        ? "your win"
+        : result === "draw"
+          ? "the draw"
+          : result === "resigned"
+            ? "the resignation"
+            : "the loss";
+      return `You finished a ${difficulty} match in ${moves} moves. Coach found key moments behind ${outcome}.`;
+    },
+    lockedBenefits: ["Key moments", "Better moves", "Next training"] as const,
+    inactiveCta: "Unlock Full Review",
+    activeTitle: "Coach Review Ready",
+    activeBody: "Review your key moments and next training step.",
+    activeCta: "Review Match",
+  },
 } as const;
 
 export const EXERCISE_DRAWER_COPY = {
@@ -806,7 +831,7 @@ export const COACH_COPY = {
   whatYouDidWell: "WHAT YOU DID WELL",
   takeaways: "TAKEAWAYS",
   tips: "TIPS",
-  yourSessions: "Your Sessions",
+  yourSessions: "Training Journal",
   pastSessions: "Past Sessions",
   yourProgress: "YOUR PROGRESS",
   gamesAnalyzed: (n: number) => `Games analyzed: ${n}`,
@@ -1149,13 +1174,19 @@ export const PRO_COPY = {
       title: "Coach PRO",
       body: "Get feedback after games and practice.",
       chips: ["Mistakes", "Tips", "History"] as const,
-      cta: "Start PRO Training",
+      cta: "Train with Coach",
     },
     active: {
       title: (remainingDays: number) => `PRO Active · ${remainingDays}d`,
-      body: "Next training",
-      cta: "Continue Training",
+      body: "Your Coach is ready.",
+      features: "Reviews · History · Next training",
+      chips: ["Reviews", "History", "Next training"] as const,
+      cta: "Open Journal",
     },
+  },
+  activeActions: {
+    journal: "Open Training Journal",
+    journalSubline: "Review your coach history and pick the next lesson.",
   },
   perksActive: [
     "AI Coach: instant analysis, no daily limit",

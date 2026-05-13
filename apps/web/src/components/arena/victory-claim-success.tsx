@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { track } from "@/lib/telemetry";
@@ -25,6 +25,7 @@ type Props = {
   claimData: ClaimData;
   shareStatus: ShareStatus;
   onAskCoach?: () => void;
+  coachPreview?: ReactNode;
 };
 
 export function VictoryClaimSuccess({
@@ -36,6 +37,7 @@ export function VictoryClaimSuccess({
   claimData,
   shareStatus,
   onAskCoach,
+  coachPreview,
 }: Props) {
   const time = formatTime(elapsedMs);
   const [shareOpen, setShareOpen] = useState(false);
@@ -71,6 +73,7 @@ export function VictoryClaimSuccess({
           closeLabel={ARENA_COPY.backToHub}
           cta={
             <div className="flex w-full flex-col items-center gap-2.5">
+              {coachPreview}
               <PrincipalButton
                 size="medium"
                 leadingIcon={
@@ -82,19 +85,22 @@ export function VictoryClaimSuccess({
                 {ARENA_COPY.playAgain}
               </PrincipalButton>
 
-              {isShareReady && (
-                <Button
-                  type="button"
-                  variant="game-ghost"
-                  size="game"
-                  onClick={() => setShareOpen(true)}
-                  className="w-full"
-                >
-                  <CandyIcon name="copy" className="inline h-4 w-4 -mt-0.5" /> {SHARE_COPY.button}
-                </Button>
-              )}
-
-              {onAskCoach && <AskCoachButton onClick={onAskCoach} />}
+              <div className="flex w-full gap-2">
+                {onAskCoach && (
+                  <AskCoachButton onClick={onAskCoach} className="flex-1" />
+                )}
+                {isShareReady && (
+                  <Button
+                    type="button"
+                    variant="game-ghost"
+                    size="game-sm"
+                    onClick={() => setShareOpen(true)}
+                    className="flex-1"
+                  >
+                    <CandyIcon name="share" className="inline h-4 w-4" /> {SHARE_COPY.button}
+                  </Button>
+                )}
+              </div>
 
               <button
                 type="button"

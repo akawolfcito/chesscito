@@ -7,6 +7,7 @@ import { useAccount } from "wagmi";
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CoachHistoryDeletePanel } from "@/components/coach/coach-history-delete-panel";
 import { CoachPanel } from "@/components/coach/coach-panel";
+import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { COACH_COPY } from "@/lib/content/editorial";
@@ -39,10 +40,9 @@ function PageHeader() {
       <Link
         href="/hub"
         aria-label="Back to hub"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(110,65,15,0.30)] text-lg font-bold transition-colors hover:bg-[rgba(110,65,15,0.08)]"
-        style={{ color: "rgba(110, 65, 15, 0.85)" }}
+        className="flex h-11 w-11 shrink-0 items-center justify-center transition-transform active:scale-[0.94]"
       >
-        ←
+        <CandyBanner name="btn-back" className="h-9 w-9" />
       </Link>
       <h1
         className="fantasy-title flex items-center gap-2 text-lg"

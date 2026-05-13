@@ -14,6 +14,7 @@ import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
 import { ArenaSelectScaffold } from "@/components/arena/arena-select-scaffold";
+import { CoachPreviewCard } from "@/components/arena/coach-preview-card";
 import { PersistentDock, type DockTab } from "@/components/exercises/persistent-dock";
 import { BadgeSheet } from "@/components/exercises/badge-sheet";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
@@ -35,6 +36,8 @@ import { mapArenaResult } from "@/lib/coach/game-result";
 import { generateQuickReview } from "@/lib/coach/fallback-engine";
 import { shouldShowPaywall } from "@/lib/coach/paywall-gate";
 import { useProStatus } from "@/lib/pro/use-pro-status";
+import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
+import { ProSheet } from "@/components/pro/pro-sheet";
 import { CoachLoading } from "@/components/coach/coach-loading";
 import { CoachPanel } from "@/components/coach/coach-panel";
 import { CoachFallback } from "@/components/coach/coach-fallback";
@@ -130,6 +133,9 @@ function ArenaPageInner() {
   // the app so the chip and the Coach gate never disagree.
   const { status: proStatusFromHook } = useProStatus(address?.toLowerCase());
   const proActiveCached = proStatusFromHook?.active === true;
+  const proSheet = useProSheetState();
+  const arenaCoachSignalViewedRef = useRef(false);
+  const coachPreviewViewedRef = useRef<string | null>(null);
 
   // Scaffold view event — fires once per (selecting + scaffold + not
   // preparing) transition. Mount of the picker, not of the page; legacy
@@ -140,6 +146,7 @@ function ArenaPageInner() {
     if (game.status !== "selecting") return;
     track("arena_select_view");
   }, [arenaScaffoldEnabled, game.status]);
+
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
   const { writeContractAsync } = useWriteContract();
@@ -240,6 +247,49 @@ function ArenaPageInner() {
   // (i.e. the opponent is the one who got mated).
   const opponentColor = game.playerColor === "w" ? "b" : "w";
   const isPlayerWin = game.status === "checkmate" && game.fen.includes(` ${opponentColor} `);
+
+  const moveCountBucket = useCallback((moves: number) => {
+    if (moves <= 10) return "0-10";
+    if (moves <= 20) return "11-20";
+    if (moves <= 40) return "21-40";
+    return "41+";
+  }, []);
+
+  const currentArenaResult = useCallback(
+    () => mapArenaResult(game.status, isPlayerWin),
+    [game.status, isPlayerWin],
+  );
+
+  const arenaCoachTelemetry = useCallback(
+    (cta?: "open_pro_sheet" | "training_journal" | "review_match" | "use_credit") => ({
+      surface: game.status === "selecting" ? "arena_setup" : "arena_endgame",
+      pro_active: proActiveCached,
+      wallet_connected: isConnected,
+      difficulty: game.difficulty,
+      result: game.status === "selecting" ? undefined : currentArenaResult(),
+      move_count: game.status === "selecting" ? undefined : moveCountBucket(game.moveHistory.length),
+      cta,
+    }),
+    [
+      currentArenaResult,
+      game.difficulty,
+      game.moveHistory.length,
+      game.status,
+      isConnected,
+      moveCountBucket,
+      proActiveCached,
+    ],
+  );
+
+  useEffect(() => {
+    if (!arenaScaffoldEnabled || game.status !== "selecting") {
+      arenaCoachSignalViewedRef.current = false;
+      return;
+    }
+    if (arenaCoachSignalViewedRef.current) return;
+    arenaCoachSignalViewedRef.current = true;
+    track("arena_coach_signal_viewed", arenaCoachTelemetry());
+  }, [arenaCoachTelemetry, arenaScaffoldEnabled, game.status]);
 
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain = configuredChainId != null && chainId === configuredChainId;
@@ -439,6 +489,52 @@ function ArenaPageInner() {
     // Returning user → go straight to analysis
     void startCoachAnalysis();
   }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, isConnected, address, startCoachAnalysis, proActiveCached]);
+
+  const handleArenaCoachSignalCta = useCallback(() => {
+    track("arena_coach_signal_cta_tap", arenaCoachTelemetry("open_pro_sheet"));
+    proSheet.openSheet();
+  }, [arenaCoachTelemetry, proSheet]);
+
+  const handleCoachPreviewCta = useCallback(() => {
+    const cta = proActiveCached ? "review_match" : "open_pro_sheet";
+    track("coach_preview_cta_tap", arenaCoachTelemetry(cta));
+    if (proActiveCached) {
+      track("coach_review_opened", arenaCoachTelemetry("review_match"));
+      handleAskCoach();
+    } else {
+      proSheet.openSheet();
+    }
+  }, [arenaCoachTelemetry, handleAskCoach, proActiveCached, proSheet]);
+
+  useEffect(() => {
+    if (!isEndState || !showEndOverlay || coachPhase !== "idle") {
+      coachPreviewViewedRef.current = null;
+      return;
+    }
+    const key = `${game.status}:${game.moveHistory.length}:${game.elapsedMs}:${proActiveCached}`;
+    if (coachPreviewViewedRef.current === key) return;
+    coachPreviewViewedRef.current = key;
+    track("coach_preview_viewed", arenaCoachTelemetry());
+  }, [
+    arenaCoachTelemetry,
+    coachPhase,
+    game.elapsedMs,
+    game.moveHistory.length,
+    game.status,
+    isEndState,
+    proActiveCached,
+    showEndOverlay,
+  ]);
+
+  const coachPreview = ENABLE_COACH ? (
+    <CoachPreviewCard
+      proActive={proActiveCached}
+      difficultyLabel={ARENA_COPY.difficulty[game.difficulty]}
+      resultLabel={currentArenaResult()}
+      moveCount={game.moveHistory.length}
+      onPrimaryCta={handleCoachPreviewCta}
+    />
+  ) : null;
 
   const handleClaimWelcome = useCallback(() => {
     try { localStorage.setItem("chesscito:coach-welcomed", "1"); } catch { /* ignore */ }
@@ -993,6 +1089,10 @@ function ArenaPageInner() {
                 formatted: prizePool.formatted,
                 isLoading: prizePool.isLoading,
               }}
+              coachSignal={{
+                proActive: proActiveCached,
+                onCta: proActiveCached ? undefined : handleArenaCoachSignalCta,
+              }}
               errorMessage={game.errorMessage}
             />
           )}
@@ -1021,6 +1121,7 @@ function ArenaPageInner() {
               onOpenChange={handleShopSheetOpenChange}
             />
             <PurchaseConfirmSheet {...shopSheet.confirmProps} />
+            <ProSheet {...proSheet.sheetProps} />
           </div>
         </main>
       );
@@ -1099,6 +1200,7 @@ function ArenaPageInner() {
             onOpenChange={handleShopSheetOpenChange}
           />
           <PurchaseConfirmSheet {...shopSheet.confirmProps} />
+          <ProSheet {...proSheet.sheetProps} />
         </div>
       </main>
     );
@@ -1319,7 +1421,7 @@ function ArenaPageInner() {
             difficulty={game.difficulty}
             fen={game.fen}
             playerColor={game.playerColor}
-            onAskCoach={ENABLE_COACH && coachPhase === "idle" ? handleAskCoach : undefined}
+            coachPreview={coachPhase === "idle" ? coachPreview : null}
           />
         </div>
       )}
@@ -1386,6 +1488,7 @@ function ArenaPageInner() {
               }}
             />
           )}
+          <ProSheet {...proSheet.sheetProps} />
         </>
       )}
     </main>

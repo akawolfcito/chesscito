@@ -185,8 +185,10 @@ describe("HubScaffoldClient — PRO chip", () => {
 
     // HudResourceChip(tone="pro", value=null) returns null by contract.
     expect(screen.queryByText("PRO")).not.toBeInTheDocument();
-    // PremiumSlot inactive CTA carries the upgrade path instead.
-    expect(screen.getByText("Go PRO")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Train with Coach" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Go PRO")).not.toBeInTheDocument();
   });
 
   it("renders PRO active with rounded-up days remaining when expiresAt is in the future", () => {
@@ -220,7 +222,9 @@ describe("HubScaffoldClient — PRO chip", () => {
     render(<HubScaffoldClient />);
 
     expect(screen.queryByText("PRO")).not.toBeInTheDocument();
-    expect(screen.getByText("Go PRO")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Train with Coach" }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -260,11 +264,13 @@ describe("HubScaffoldClient — tap handlers", () => {
     );
   });
 
-  it("opens ProSheet in-place when the inactive PremiumSlot CTA is tapped", async () => {
+  it("opens ProSheet in-place when the inactive Coach PRO card CTA is tapped", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
-    await user.click(screen.getByText("Go PRO"));
+    await user.click(
+      screen.getByRole("button", { name: "Train with Coach" }),
+    );
 
     expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
     expect(pushMock).not.toHaveBeenCalledWith(
@@ -272,18 +278,21 @@ describe("HubScaffoldClient — tap handlers", () => {
     );
   });
 
-  it("opens ProSheet in-place when the Coach PRO card CTA is tapped", async () => {
+  it("routes active PRO users to Coach history from the Coach PRO card CTA", async () => {
     const user = userEvent.setup();
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
+    useProStatusMock.mockReturnValue({
+      status: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
     render(<HubScaffoldClient />);
 
     await user.click(
-      screen.getByRole("button", { name: "Start PRO Training" }),
+      screen.getByRole("button", { name: "Open Journal" }),
     );
 
-    expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
-    expect(pushMock).not.toHaveBeenCalledWith(
-      expect.stringContaining("legacy=1&action=pro"),
-    );
+    expect(pushMock).toHaveBeenCalledWith("/coach/history");
   });
 
   it("opens ProSheet from the `initialSheet=pro` deep link", async () => {
@@ -424,28 +433,55 @@ describe("HubScaffoldClient — telemetry", () => {
     expect(trackMock).toHaveBeenCalledWith("hub_view");
   });
 
-  it("fires pro_card_viewed for the Hub Coach card", () => {
+  it("fires pro_training_card_viewed for the Hub Coach card", () => {
     render(<HubScaffoldClient />);
 
-    expect(trackMock).toHaveBeenCalledWith("pro_card_viewed", {
-      surface: "hub_coach_card",
-      active: false,
+    expect(trackMock).toHaveBeenCalledWith("pro_training_card_viewed", {
+      surface: "hub",
+      pro_active: false,
+      wallet_connected: false,
+      cta: "open_pro_sheet",
     });
   });
 
-  it("fires pro_card_cta_clicked before opening the Hub Coach card sheet", async () => {
+  it("fires pro_training_card_cta_tap before opening the Hub Coach card sheet", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
     await user.click(
-      screen.getByRole("button", { name: "Start PRO Training" }),
+      screen.getByRole("button", { name: "Train with Coach" }),
     );
 
-    expect(trackMock).toHaveBeenCalledWith("pro_card_cta_clicked", {
-      surface: "hub_coach_card",
-      active: false,
+    expect(trackMock).toHaveBeenCalledWith("pro_training_card_cta_tap", {
+      surface: "hub",
+      pro_active: false,
+      wallet_connected: false,
+      cta: "open_pro_sheet",
     });
     expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
+  });
+
+  it("fires pro_training_card_cta_tap with training_journal for active PRO", async () => {
+    const user = userEvent.setup();
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
+    useProStatusMock.mockReturnValue({
+      status: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    render(<HubScaffoldClient />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Open Journal" }),
+    );
+
+    expect(trackMock).toHaveBeenCalledWith("pro_training_card_cta_tap", {
+      surface: "hub",
+      pro_active: true,
+      wallet_connected: true,
+      cta: "training_journal",
+    });
+    expect(pushMock).toHaveBeenCalledWith("/coach/history");
   });
 
   it("fires hub_trophy_tap with the current trophy count on tap", async () => {
@@ -479,15 +515,14 @@ describe("HubScaffoldClient — telemetry", () => {
     });
   });
 
-  it("fires hub_premium_slot_tap with pro_active=false when inactive slot is tapped", async () => {
-    const user = userEvent.setup();
+  it("does not render the inactive PremiumSlot conversion CTA while the training card is active", () => {
     render(<HubScaffoldClient />);
 
-    await user.click(screen.getByText("Go PRO"));
-
-    expect(trackMock).toHaveBeenCalledWith("hub_premium_slot_tap", {
-      pro_active: false,
-    });
+    expect(screen.queryByText("Go PRO")).not.toBeInTheDocument();
+    expect(trackMock).not.toHaveBeenCalledWith(
+      "hub_premium_slot_tap",
+      expect.anything(),
+    );
   });
 
   it("does not fire hub_shields_chip_tap while the shields chip is hidden", () => {

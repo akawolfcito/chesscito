@@ -64,7 +64,7 @@ const SheetContent = React.forwardRef<
     >
       {children}
       <SheetPrimitive.Close
-        className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex h-10 w-10 items-center justify-center rounded-full border transition-all hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 active:scale-[0.94] disabled:pointer-events-none"
+        className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex h-11 w-11 items-center justify-center rounded-full border transition-all hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 active:scale-[0.94] disabled:pointer-events-none"
         style={{
           background: "rgba(255, 255, 255, 0.15)",
           borderColor: "rgba(255, 255, 255, 0.45)",
@@ -72,17 +72,7 @@ const SheetContent = React.forwardRef<
           backdropFilter: "blur(6px)",
         }}
       >
-        <svg
-          viewBox="0 0 24 24"
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M6 6l12 12M18 6L6 18" />
-        </svg>
+        <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>
     </SheetPrimitive.Content>

@@ -5,7 +5,7 @@ import { test, expect } from "@playwright/test";
  * start the match, confirm the 32-piece board renders.
  */
 test.describe("Arena — setup flow", () => {
-  test("difficulty selector opens, PLAY starts a game with 32 pieces", async ({ page }) => {
+  test("difficulty selector opens, PLAY CHESS starts a game with 32 pieces", async ({ page }) => {
     await page.goto("/arena");
     await page.waitForLoadState("networkidle");
 
@@ -18,7 +18,7 @@ test.describe("Arena — setup flow", () => {
 
     // Pick Easy (also the default) then start
     await page.getByRole("button", { name: /Easy/ }).click();
-    await page.getByRole("button", { name: /^PLAY$/ }).click();
+    await page.getByRole("button", { name: /^PLAY CHESS$/ }).click();
 
     // Board renders with 32 pieces (16 white + 16 black) after the 400ms
     // "preparing AI" delay inside the arena page.

@@ -51,13 +51,13 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
           type="button"
           onClick={onCancel}
           aria-label="Cancel promotion"
-          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full transition-all active:scale-95"
+          className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full transition-all active:scale-95"
           style={{
             background: "rgba(255, 255, 255, 0.30)",
             border: "1px solid rgba(110, 65, 15, 0.25)",
           }}
         >
-          <CandyIcon name="close" className="h-4 w-4" />
+          <CandyIcon name="close" className="h-5 w-5" />
         </button>
         <p
           className="fantasy-title text-sm font-extrabold uppercase tracking-[0.10em]"

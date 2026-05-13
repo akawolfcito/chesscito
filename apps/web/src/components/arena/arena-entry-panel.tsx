@@ -13,8 +13,9 @@ type Props = {
   onSelectDifficulty: (d: ArenaDifficulty) => void
   onSelectColor: (c: PlayerColor) => void
   onStart: () => void
-  /** Optional back/close button. When provided renders a red × in the
-   *  header and a "Back to Hub" secondary action under the CTA. */
+  /** Optional route-back button. When provided renders the Adventure
+   *  back asset in the header and a "Back to Hub" secondary action
+   *  under the CTA. */
   onBack?: () => void
   /** Hide the outer candy-glass shell when the panel is embedded inside
    *  a Sheet that already paints its own background (e.g. ArenaEntrySheet
@@ -101,25 +102,9 @@ export function ArenaEntryPanel({
               type="button"
               onClick={onBack}
               aria-label={ARENA_COPY.backToHub}
-              className="mr-2 flex h-10 w-10 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
-              style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                borderColor: 'rgba(255, 255, 255, 0.45)',
-                color: '#dc2626',
-                backdropFilter: 'blur(6px)',
-              }}
+              className="mr-2 flex h-11 w-11 items-center justify-center transition-all active:scale-[0.94]"
             >
-              <svg
-                viewBox="0 0 24 24"
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
+              <CandyBanner name="btn-back" className="h-9 w-9" />
             </button>
           )}
         </div>

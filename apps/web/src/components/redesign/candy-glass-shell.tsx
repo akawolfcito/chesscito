@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 
 type CandyGlassShellProps = {
   /** Title rendered at the top-left of the panel header. */
@@ -77,7 +78,7 @@ export function CandyGlassShell({
           type="button"
           onClick={onClose}
           aria-label={closeLabel}
-          className="mr-2 flex h-10 w-10 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
+          className="mr-2 flex h-11 w-11 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
           style={{
             background: "rgba(255, 255, 255, 0.15)",
             borderColor: "rgba(255, 255, 255, 0.45)",
@@ -85,17 +86,7 @@ export function CandyGlassShell({
             backdropFilter: "blur(6px)",
           }}
         >
-          <svg
-            viewBox="0 0 24 24"
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
+          <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
       <div className="flex flex-col gap-2">{children}</div>

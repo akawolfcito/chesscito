@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { TrophiesBody } from "@/components/trophies/trophies-body";
 import { ABOUT_LINK_COPY, TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
@@ -23,10 +24,9 @@ export default function TrophiesPage() {
         <Link
           href="/hub"
           aria-label="Back to hub"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(110,65,15,0.30)] text-lg font-bold transition-colors hover:bg-[rgba(110,65,15,0.08)]"
-          style={{ color: "rgba(110, 65, 15, 0.85)" }}
+          className="flex h-11 w-11 shrink-0 items-center justify-center transition-transform active:scale-[0.94]"
         >
-          ←
+          <CandyBanner name="btn-back" className="h-9 w-9" />
         </Link>
         <div className="flex-1">
           <h1

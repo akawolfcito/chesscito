@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { SHARE_COPY } from "@/lib/content/editorial";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ShareGrid } from "@/components/share/share-grid";
 import { track } from "@/lib/telemetry";
 
@@ -133,7 +134,7 @@ export function ShareModal({
             type="button"
             onClick={() => onOpenChange(false)}
             aria-label="Close"
-            className="flex h-10 w-10 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
+            className="flex h-11 w-11 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
             style={{
               background: "rgba(255, 255, 255, 0.15)",
               borderColor: "rgba(255, 255, 255, 0.45)",
@@ -142,17 +143,7 @@ export function ShareModal({
               WebkitBackdropFilter: "blur(6px)",
             }}
           >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
+            <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
         <div className="px-5 pt-5">
