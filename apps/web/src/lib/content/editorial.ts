@@ -461,23 +461,23 @@ export const VICTORY_CELEBRATION_COPY = {
 
 export const TROPHY_VITRINE_COPY = {
   pageTitle: "Trophy Case",
-  pageDescription: "Your verifiable victories, immortalized.",
+  pageDescription: "Your saved victories.",
   myVictories: "My Victories",
   hallOfFame: "Hall of Fame",
   movesLabel: "moves",
   shareLabel: "Share",
-  loadingText: "Loading victories...",
+  loadingText: "Polishing trophies...",
   copiedToast: "Link copied!",
-  connectWallet: "Connect wallet to see your victories",
+  connectWallet: "Connect to view your trophies",
   connectWalletButton: "Connect Wallet",
-  noVictories: "No victories yet — win in the Arena to earn your first trophy",
-  noGlobalVictories: "No victories recorded yet — be the first!",
-  loadError: "Could not load victories — tap to retry",
+  noVictories: "No victories yet",
+  noGlobalVictories: "No victories recorded yet",
+  loadError: "Could not load victories",
   tapToRetry: "Tap to retry",
-  configError: "Trophies unavailable",
-  roadmap: "More coming soon — Tournaments • VIP Passes • Seasonal Rewards",
-  arenaLink: "Go to Arena",
-  cardIdPrefix: "Card",
+  configError: "Trophy Case is offline",
+  roadmap: "Coming later: Tournaments • VIP Passes • Seasonal Rewards",
+  arenaLink: "Win in Arena",
+  cardIdPrefix: "Victory",
 } as const;
 
 /** Achievement surface copy (feature #23). Achievements are derived from
@@ -486,7 +486,7 @@ export const TROPHY_VITRINE_COPY = {
 export const ACHIEVEMENTS_COPY = {
   sectionTitle: "Achievements",
   sectionDescription: (earned: number, total: number) => `${earned} of ${total} unlocked`,
-  emptyHint: "Win in the Arena to start unlocking achievements.",
+  emptyHint: "Win in Arena to unlock achievements",
   lockedLabel: "Locked",
   earnedLabel: "Earned",
   progressLabel: (current: number, goal: number) => `${current}/${goal}`,
@@ -535,7 +535,7 @@ export const ACHIEVEMENTS_COPY = {
 
 /** Roadmap surface (feature #23). Non-speculative — explicitly "soon". */
 export const ROADMAP_COPY = {
-  sectionTitle: "On the roadmap",
+  sectionTitle: "Coming later",
   sectionDescription: "What's coming to Chesscito.",
   soonTag: "Soon",
   items: [

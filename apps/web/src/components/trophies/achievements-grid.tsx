@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { TreasureTile } from "@/components/scene-rooted/treasure-tile";
+import { CandyChip } from "@/components/redesign/candy-chip";
 import { ACHIEVEMENTS_COPY } from "@/lib/content/editorial";
 import type { Achievement } from "@/lib/achievements/compute";
 import { AchievementDetailSheet } from "./achievement-detail-sheet";
@@ -14,29 +14,30 @@ type Props = {
 export function AchievementsGrid({ achievements }: Props) {
   const [selected, setSelected] = useState<Achievement | null>(null);
 
+  // Group by earned status but display in a single grid or logical sections
   const earned = achievements.filter((a) => a.earned);
   const locked = achievements.filter((a) => !a.earned);
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        {earned.length > 0 ? (
+      <div className="flex flex-col gap-8">
+        {earned.length > 0 && (
           <Section
             label={ACHIEVEMENTS_COPY.sectionEarned}
-            count={earned.length}
             achievements={earned}
             onSelect={setSelected}
           />
-        ) : null}
-        {locked.length > 0 ? (
+        )}
+        
+        {locked.length > 0 && (
           <Section
             label={ACHIEVEMENTS_COPY.sectionLocked}
-            count={locked.length}
             achievements={locked}
             onSelect={setSelected}
           />
-        ) : null}
+        )}
       </div>
+
       <AchievementDetailSheet
         open={selected !== null}
         onOpenChange={(open) => {
@@ -48,97 +49,94 @@ export function AchievementsGrid({ achievements }: Props) {
   );
 }
 
-type SectionProps = {
+function Section({
+  label,
+  achievements,
+  onSelect,
+}: {
   label: string;
-  count: number;
   achievements: Achievement[];
   onSelect: (a: Achievement) => void;
-};
-
-function Section({ label, count, achievements, onSelect }: SectionProps) {
+}) {
   return (
     <section>
-      <h3
-        className="mb-3 text-xs font-bold uppercase tracking-wider"
-        style={{ color: "rgba(110, 65, 15, 0.85)" }}
-      >
-        {label} ({count})
-      </h3>
-      <ul
-        className="grid grid-cols-2 gap-x-3 gap-y-5"
-        role="list"
-        aria-label={label}
-      >
+      <div className="mb-4 flex items-center justify-between px-1">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+          {label}
+        </h3>
+        <span className="text-[10px] font-black opacity-30">
+          {achievements.length} ITEMS
+        </span>
+      </div>
+      
+      <div className="achievement-tile-grid">
         {achievements.map((a) => (
-          <AchievementCard key={a.id} achievement={a} onSelect={onSelect} />
+          <AchievementTile key={a.id} achievement={a} onSelect={onSelect} />
         ))}
-      </ul>
+      </div>
     </section>
   );
 }
 
-function AchievementCard({
+function AchievementTile({
   achievement,
   onSelect,
 }: {
   achievement: Achievement;
   onSelect: (a: Achievement) => void;
 }) {
-  const copy =
-    ACHIEVEMENTS_COPY.items[achievement.id as keyof typeof ACHIEVEMENTS_COPY.items];
+  const copy = ACHIEVEMENTS_COPY.items[achievement.id as keyof typeof ACHIEVEMENTS_COPY.items];
   if (!copy) return null;
 
   const { earned, progress } = achievement;
-  const stateLabel = earned
-    ? ACHIEVEMENTS_COPY.earnedLabel
-    : ACHIEVEMENTS_COPY.lockedLabel;
 
   return (
-    <li className="flex flex-col items-center gap-2">
-      <TreasureTile
-        size="small"
-        ribbon={earned ? "EARNED" : undefined}
-        iconStack={
-          <CandyIcon
-            name={earned ? "trophy" : "lock"}
-            className={[
-              "h-9 w-9",
-              earned
-                ? "drop-shadow-[0_0_6px_rgba(245,158,11,0.55)]"
-                : "opacity-55",
-            ].join(" ")}
-          />
-        }
-        onClick={() => onSelect(achievement)}
-        aria-label={`${copy.title} — ${stateLabel}`}
-      />
-      <div className="w-full px-1 text-center">
-        <p
-          className="text-xs font-extrabold uppercase tracking-wider"
-          style={{
-            color: earned ? "rgba(120, 65, 5, 0.95)" : "rgba(110, 65, 15, 0.65)",
-            textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-          }}
-        >
-          {copy.title}
-        </p>
-        <p
-          className="mt-1 text-[11px] leading-tight"
-          style={{
-            color: earned ? "rgba(110, 65, 15, 0.85)" : "rgba(110, 65, 15, 0.55)",
-          }}
-        >
-          {copy.description}
-        </p>
-        {!earned && progress ? (
-          <p
-            className="mt-1.5 text-[10px] font-bold"
-            style={{ color: "rgba(110, 65, 15, 0.75)" }}
-          >
-            {ACHIEVEMENTS_COPY.progressLabel(progress.current, progress.goal)}
-          </p>
-        ) : null}
+    <button
+      type="button"
+      onClick={() => onSelect(achievement)}
+      className={`achievement-tile ${!earned ? "achievement-tile--locked" : ""} active:scale-95`}
+    >
+      <div className="achievement-tile-icon-wrap">
+        <CandyIcon
+          name={earned ? "trophy" : "lock"}
+          className={`h-8 w-8 ${earned ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.40)]" : "opacity-30 grayscale"}`}
+        />
+        {earned && (
+          <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 border-2 border-white/20">
+            <CandyIcon name="check" className="h-3 w-3 text-white" />
+          </div>
+        )}
       </div>
-    </li>
+
+      <h4 className="achievement-tile-title">{copy.title}</h4>
+      <p className="achievement-tile-objective">{copy.description}</p>
+      
+      {!earned && progress ? (
+        <div className="mt-3 w-full">
+          <div className="flex items-center justify-between px-1 mb-1 text-[9px] font-black opacity-40">
+            <span>PROGRESS</span>
+            <span>{progress.current}/{progress.goal}</span>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-black/5 overflow-hidden">
+            <div 
+              className="h-full bg-amber-500/60 rounded-full transition-all duration-500"
+              style={{ width: `${(progress.current / progress.goal) * 100}%` }}
+            />
+          </div>
+        </div>
+      ) : earned ? (
+        <div className="mt-3">
+          <CandyChip variant="success" tone="subtle">
+            {ACHIEVEMENTS_COPY.earnedLabel}
+          </CandyChip>
+        </div>
+      ) : (
+        <div className="mt-3">
+          <CandyChip variant="warm" tone="subtle">
+            {ACHIEVEMENTS_COPY.lockedLabel}
+          </CandyChip>
+        </div>
+      )}
+    </button>
   );
 }

@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { PageSection } from "@/components/redesign/page-section";
 import { CandyChip } from "@/components/redesign/candy-chip";
-import { Button } from "@/components/ui/button";
+import { PageSection } from "@/components/redesign/page-section";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { TrophyList } from "@/components/trophies/trophy-list";
 import { AchievementsGrid } from "@/components/trophies/achievements-grid";
 import { getVictoryAddress } from "@/lib/game/victory-events";
@@ -65,14 +65,6 @@ function clearOptimisticVictory() {
   try { sessionStorage.removeItem("chesscito:optimistic-victory"); } catch { /* ignore */ }
 }
 
-/**
- * TrophiesBody — pure content (no shell, no header). Renders three
- * sections (My Victories / Achievements / Hall of Fame) in rookie-
- * friendly order + a demoted roadmap footer. Consumed by the
- * standalone /trophies route AND by the dock TrophiesSheet so both
- * surfaces share behavior and data-fetching. No props: reads wallet
- * via wagmi and fetches /api routes directly.
- */
 export function TrophiesBody() {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -151,177 +143,145 @@ export function TrophiesBody() {
     }
   }, [isConnected, address, loadMyVictories]);
 
-  return (
-    <>
-      {!configured && (
-        <p className="py-6 text-center text-sm" style={{ color: "var(--paper-text-muted)" }}>
-          {TROPHY_VITRINE_COPY.configError}
+  if (!configured) {
+    return (
+      <p className="py-6 text-center text-sm" style={{ color: "rgba(110, 65, 15, 0.60)" }}>
+        {TROPHY_VITRINE_COPY.configError}
+      </p>
+    );
+  }
+
+  const hasVictories = (myVictories?.length ?? 0) > 0;
+  const isChampion = isConnected && hasVictories;
+  const isEmptyConnected = isConnected && myVictories?.length === 0 && !myLoading && !myError;
+  const summary = computeAchievements(myVictories);
+
+  const myVictoriesSection = (
+    <PageSection
+      key="my-victories"
+      icon={<CandyIcon name="crown" className="h-4 w-4" />}
+      title={TROPHY_VITRINE_COPY.myVictories}
+    >
+      {!isConnected ? (
+        <div className="flex flex-col items-center gap-4 rounded-[24px] bg-white/10 border border-white/20 p-6 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
+            <CandyIcon name="wallet" className="h-7 w-7 opacity-50" />
+          </div>
+          <p className="text-sm font-medium opacity-60 leading-relaxed px-4">
+            {TROPHY_VITRINE_COPY.connectWallet}
+          </p>
+          <PrincipalButton
+            size="medium"
+            onClick={() => openConnectModal?.()}
+          >
+            {TROPHY_VITRINE_COPY.connectWalletButton}
+          </PrincipalButton>
+        </div>
+      ) : isEmptyConnected ? (
+        <div className="flex flex-col items-center gap-5 rounded-[24px] bg-white/10 border border-white/20 p-8 text-center">
+          <div className="relative flex h-16 w-16 items-center justify-center">
+            <div className="absolute inset-0 rounded-full animate-pulse bg-amber-400/20" />
+            <CandyIcon name="trophy" className="relative h-10 w-10 text-amber-500 opacity-60" />
+          </div>
+          <p className="text-sm font-medium opacity-60 leading-relaxed px-2">
+            {TROPHY_VITRINE_COPY.noVictories}
+          </p>
+          <Link href="/arena" className="w-full">
+            <PrincipalButton size="medium" className="w-full">
+              {TROPHY_VITRINE_COPY.arenaLink}
+            </PrincipalButton>
+          </Link>
+        </div>
+      ) : (
+        <TrophyList
+          victories={myVictories}
+          loading={myLoading}
+          error={myError}
+          emptyMessage={TROPHY_VITRINE_COPY.noVictories}
+          variant="victory"
+          onRetry={loadMyVictories}
+        />
+      )}
+    </PageSection>
+  );
+
+  const achievementsSection = (
+    <PageSection
+      key="achievements"
+      icon={<CandyIcon name="star" className="h-4 w-4" />}
+      title={ACHIEVEMENTS_COPY.sectionTitle}
+      action={
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black opacity-30">PROGRESS</span>
+          <CandyChip variant="warm" tone="subtle">
+            {ACHIEVEMENTS_COPY.sectionDescription(summary.earnedCount, summary.total)}
+          </CandyChip>
+        </div>
+      }
+    >
+      <AchievementsGrid achievements={summary.list} />
+      {summary.earnedCount === 0 && (
+        <p className="mt-6 text-center text-[11px] font-bold opacity-40 uppercase tracking-widest">
+          {ACHIEVEMENTS_COPY.emptyHint}
         </p>
       )}
+    </PageSection>
+  );
 
-      {configured && (() => {
-        /* Rookie = not connected yet, OR connected but no wins recorded.
-           Champions = at least one recorded victory. Rookies lead with
-           Hall of Fame (social proof / inspiration); champions lead
-           with their own trophies (identity). Achievements sits after
-           the hero in both cases — it's the bridge, not the anchor. */
-        const hasVictories = (myVictories?.length ?? 0) > 0;
-        const isChampion = isConnected && hasVictories;
-        const isEmptyConnected =
-          isConnected && myVictories?.length === 0 && !myLoading && !myError;
-        const summary = computeAchievements(myVictories);
+  const hallOfFameSection = (
+    <PageSection
+      key="hall-of-fame"
+      icon={<CandyIcon name="trophy" className="h-4 w-4" />}
+      title={TROPHY_VITRINE_COPY.hallOfFame}
+    >
+      <TrophyList
+        victories={hallOfFame}
+        loading={hofLoading}
+        error={hofError}
+        emptyMessage={TROPHY_VITRINE_COPY.noGlobalVictories}
+        variant="hall-of-fame"
+        onRetry={loadHallOfFame}
+      />
+    </PageSection>
+  );
 
-        const myVictoriesSection = (
-          <PageSection
-            key="my-victories"
-            icon={<CandyIcon name="crown" className="h-4 w-4" />}
-            title={TROPHY_VITRINE_COPY.myVictories}
-          >
-            {!isConnected ? (
-              <div
-                className="flex flex-col items-center gap-3 rounded-2xl px-4 py-5 text-center"
-                style={{
-                  background: "rgba(255, 245, 215, 0.55)",
-                  border: "1px solid rgba(110, 65, 15, 0.22)",
-                  boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.65)",
-                }}
-              >
-                <CandyIcon name="wallet" className="h-8 w-8" />
-                <p className="text-sm" style={{ color: "var(--paper-text-muted)" }}>
-                  {TROPHY_VITRINE_COPY.connectWallet}
-                </p>
-                <Button
-                  type="button"
-                  variant="game-primary"
-                  size="game-sm"
-                  onClick={() => openConnectModal?.()}
-                >
-                  {TROPHY_VITRINE_COPY.connectWalletButton}
-                </Button>
-              </div>
-            ) : isEmptyConnected ? (
-              /* Rookie CTA card — trophy hero + invitation + primary
-                 Button wrapping a Link to /arena (asChild). */
-              <div
-                className="flex flex-col items-center gap-3 rounded-2xl px-4 py-5 text-center"
-                style={{
-                  background: "rgba(255, 245, 215, 0.55)",
-                  border: "1px solid rgba(110, 65, 15, 0.22)",
-                  boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.65)",
-                }}
-              >
-                <div className="relative flex h-14 w-14 items-center justify-center">
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background:
-                        "radial-gradient(circle, rgba(245, 158, 11, 0.28) 0%, rgba(217, 180, 74, 0.12) 55%, transparent 80%)",
-                    }}
-                  />
-                  <CandyIcon name="trophy" className="relative h-10 w-10" />
-                </div>
-                <p
-                  className="text-sm font-semibold"
-                  style={{ color: "var(--paper-text)" }}
-                >
-                  {TROPHY_VITRINE_COPY.noVictories}
-                </p>
-                <Button asChild variant="game-primary" size="game-sm">
-                  <Link href="/arena">{TROPHY_VITRINE_COPY.arenaLink}</Link>
-                </Button>
-              </div>
-            ) : (
-              <TrophyList
-                victories={myVictories}
-                loading={myLoading}
-                error={myError}
-                emptyMessage={TROPHY_VITRINE_COPY.noVictories}
-                variant="victory"
-                onRetry={loadMyVictories}
-              />
-            )}
-          </PageSection>
-        );
+  const ordered = isChampion
+    ? [myVictoriesSection, achievementsSection, hallOfFameSection]
+    : [hallOfFameSection, myVictoriesSection, achievementsSection];
 
-        const achievementsSection = (
-          <PageSection
-            key="achievements"
-            icon={<CandyIcon name="star" className="h-4 w-4" />}
-            title={ACHIEVEMENTS_COPY.sectionTitle}
-            description={ACHIEVEMENTS_COPY.sectionDescription(summary.earnedCount, summary.total)}
-          >
-            <AchievementsGrid achievements={summary.list} />
-            {summary.earnedCount === 0 && (
-              <p
-                className="mt-3 text-center text-[11px]"
-                style={{ color: "rgba(110, 65, 15, 0.60)" }}
-              >
-                {ACHIEVEMENTS_COPY.emptyHint}
-              </p>
-            )}
-          </PageSection>
-        );
+  return (
+    <div className="flex flex-col gap-10 pb-10">
+      {ordered}
 
-        const hallOfFameSection = (
-          <PageSection
-            key="hall-of-fame"
-            icon={<CandyIcon name="trophy" className="h-4 w-4" />}
-            title={TROPHY_VITRINE_COPY.hallOfFame}
-          >
-            <TrophyList
-              victories={hallOfFame}
-              loading={hofLoading}
-              error={hofError}
-              emptyMessage={TROPHY_VITRINE_COPY.noGlobalVictories}
-              variant="hall-of-fame"
-              onRetry={loadHallOfFame}
-            />
-          </PageSection>
-        );
-
-        const ordered = isChampion
-          ? [myVictoriesSection, achievementsSection, hallOfFameSection]
-          : [hallOfFameSection, myVictoriesSection, achievementsSection];
-
-        return <>{ordered}</>;
-      })()}
-
-      {/* Roadmap — footer register. Demoted from full PageSection so
-          it reads as transparency, not a competing surface. */}
-      <footer
-        className="mt-2 border-t pt-4"
-        style={{ borderColor: "var(--paper-divider)" }}
-      >
-        <p
-          className="mb-2 text-[11px] font-semibold uppercase tracking-widest"
-          style={{ color: "rgba(110, 65, 15, 0.60)" }}
-        >
-          {ROADMAP_COPY.sectionTitle}
-        </p>
-        <ul className="flex flex-col gap-1.5" role="list">
+      {/* Roadmap — Footer */}
+      <footer className="mt-4 border-t border-[rgba(110,65,15,0.15)] pt-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[rgba(110,65,15,0.15)]" />
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30">
+            {ROADMAP_COPY.sectionTitle}
+          </h3>
+          <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[rgba(110,65,15,0.15)]" />
+        </div>
+        
+        <ul className="flex flex-col gap-3" role="list">
           {ROADMAP_COPY.items.map((item) => (
-            <li
-              key={item.title}
-              className="flex items-baseline gap-2 text-[11px] leading-tight"
-            >
-              <span
-                className="font-bold"
-                style={{ color: "rgba(110, 65, 15, 0.80)" }}
-              >
-                {item.title}
-              </span>
-              <span style={{ color: "rgba(110, 65, 15, 0.55)" }}>
-                · {item.description}
-              </span>
-              <span className="ml-auto shrink-0">
-                <CandyChip variant="warm" tone="subtle">
-                  {ROADMAP_COPY.soonTag}
-                </CandyChip>
-              </span>
+            <li key={item.title} className="roadmap-item">
+              <div className="h-2 w-2 rounded-full bg-amber-500/40" />
+              <div className="flex-1">
+                <p className="text-[11px] font-bold text-[rgba(63,34,8,0.95)] leading-none">
+                  {item.title}
+                </p>
+                <p className="text-[10px] text-[rgba(110,65,15,0.60)] mt-1">
+                  {item.description}
+                </p>
+              </div>
+              <CandyChip variant="warm" tone="subtle">
+                {ROADMAP_COPY.soonTag}
+              </CandyChip>
             </li>
           ))}
         </ul>
       </footer>
-    </>
+    </div>
   );
 }
