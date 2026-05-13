@@ -6301,17 +6301,4 @@ button.hud-resource-chip:active:not(:disabled) {
   background: linear-gradient(90deg, #10B981 0%, #059669 100%);
 }
 
-.badge-header-progress-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 12px;
-  background: rgba(120, 65, 5, 0.10);
-  border: 1px solid rgba(120, 65, 5, 0.15);
-  font-size: 0.7rem;
-  font-weight: 900;
-  color: rgba(110, 65, 15, 0.90);
-  letter-spacing: 0.05em;
-}
-
 

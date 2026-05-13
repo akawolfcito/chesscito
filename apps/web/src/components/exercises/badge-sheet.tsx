@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CandyChip } from "@/components/redesign/candy-chip";
 import {
   Sheet,
   SheetContent,
@@ -13,7 +14,6 @@ import {
 } from "@/components/ui/sheet";
 import { ABOUT_LINK_COPY, BADGE_SHEET_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
-import { GemBadge } from "@/components/scene-rooted/gem";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { PieceId } from "@/lib/game/types";
@@ -112,11 +112,10 @@ function BadgeCard({
       {/* Action area */}
       <div className="shrink-0">
         {isClaimed ? (
-          <GemBadge
-            tone="success"
-            icon={<CandyIcon name="check" className="h-3 w-3" />}
-            value={BADGE_SHEET_COPY.owned}
-          />
+          <CandyChip variant="success" tone="subtle">
+            <CandyIcon name="check" className="mr-0.5 h-2.5 w-2.5" />
+            {BADGE_SHEET_COPY.owned}
+          </CandyChip>
         ) : isClaimable ? (
           <PrincipalButton
             size="medium"
@@ -128,9 +127,10 @@ function BadgeCard({
             Claim
           </PrincipalButton>
         ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 opacity-40">
-            <CandyIcon name="lock" className="h-4 w-4" />
-          </div>
+          <CandyChip variant="warm" tone="subtle">
+            <CandyIcon name="lock" className="mr-0.5 h-2.5 w-2.5" />
+            Locked
+          </CandyChip>
         )}
       </div>
     </div>
@@ -249,13 +249,13 @@ export function BadgeSheet({
               {BADGE_SHEET_COPY.title}
             </SheetTitle>
             
-            <div className="flex items-center justify-between gap-4 mt-2">
+            <div className="mt-2 flex items-center justify-between gap-4">
               <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
                 {BADGE_SHEET_COPY.subtitle}
               </SheetDescription>
-              <div className="badge-header-progress-chip">
+              <CandyChip variant="warm" tone="subtle">
                 {totalCollectedStars} of {totalAvailableStars} stars
-              </div>
+              </CandyChip>
             </div>
             
             <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full" style={{ background: "rgba(110, 65, 15, 0.12)" }}>
