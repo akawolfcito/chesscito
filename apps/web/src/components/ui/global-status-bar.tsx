@@ -45,6 +45,9 @@ export type AnonymousProps = {
    *  defined. Omit on the surface that IS the hub. Structural, not a
    *  feature tap — counterpart to `onProTap` on the right edge. */
   onBack?: () => void;
+  /** Optional signal to render a more passive/compact Z1 for core
+   *  gameplay screens where the board is the hero. */
+  compact?: boolean;
 };
 
 export type ConnectedProps = {
@@ -62,6 +65,8 @@ export type ConnectedProps = {
   ariaLabel?: string;
   /** See `AnonymousProps.onBack`. */
   onBack?: () => void;
+  /** See `AnonymousProps.compact`. */
+  compact?: boolean;
 };
 
 /**
@@ -197,7 +202,10 @@ export function GlobalStatusBar(
 
   if (props.variant === "anonymous") {
     return (
-      <AnonymousBar ariaLabel={props.ariaLabel} onBack={props.onBack} />
+      <AnonymousBar 
+        ariaLabel={props.ariaLabel} 
+        onBack={props.onBack} 
+      />
     );
   }
   return <ConnectedBar {...props} />;
@@ -284,12 +292,14 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
         ) : active && props.proStatus?.expiresAt ? (
           <AccountClusterButton
             active
+            compact={props.compact}
             onClick={props.onProTap}
             label={GLOBAL_STATUS_BAR_COPY.proManageLabel}
           />
         ) : (
           <AccountClusterButton
             active={false}
+            compact={props.compact}
             onClick={props.onProTap}
             label={GLOBAL_STATUS_BAR_COPY.proViewLabel}
           />
@@ -302,21 +312,26 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
 function AccountClusterButton({
   onClick,
   label,
+  compact = false,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
+  compact?: boolean;
 }): React.JSX.Element {
   return (
     <HudResourceChip
       tone="pro"
-      size="md"
+      size={compact ? "compact" : "md"}
       atmosphere="adventure"
       icon="wallet"
       value="PRO"
       ariaLabel={label}
       onClick={onClick}
-      className="global-status-account-chip"
+      className={cn(
+        "global-status-account-chip",
+        compact && "opacity-80 shadow-none"
+      )}
     />
   );
 }

@@ -269,8 +269,8 @@ export function MissionPanelCandy({
       {/* Paper/wood quest tray. Sally read: a single diegetic control
           tray, not four unrelated floating chips. Built with CSS and
           existing chess sprites. */}
-      <div className="mt-1 px-3 py-2.5">
-        <div className="grid grid-cols-3 gap-1.5">
+      <div className="mt-0.5 px-3 py-1.5">
+        <div className="grid grid-cols-3 gap-1">
           <PiecePickerTrigger
             selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
             onClick={() => setPiecePickerOpen(true)}
@@ -292,7 +292,7 @@ export function MissionPanelCandy({
         </div>
 
         {showLayerTabs && onToggleLabyrinth && (
-          <div className="mt-2 flex justify-center">
+          <div className="mt-1 flex justify-center">
             <div
               className="quest-tray-tabs grid w-full grid-cols-2 overflow-hidden rounded-2xl border p-0.5"
               role="tablist"
@@ -321,10 +321,10 @@ export function MissionPanelCandy({
                   disabled={disabled}
                   onClick={() => onToggleLabyrinth(value)}
                   className={[
-                    'rounded-2xl px-2 py-2 transition-all active:scale-[0.97]',
-                    'fantasy-title text-[0.68rem] font-black uppercase tracking-[0.08em]',
+                    'rounded-xl px-2 py-1.5 transition-all active:scale-[0.98]',
+                    'fantasy-title text-[0.65rem] font-black uppercase tracking-[0.08em]',
                     active ? 'quest-tray-tab-active' : '',
-                    disabled ? 'cursor-not-allowed opacity-40' : '',
+                    disabled ? 'cursor-not-allowed opacity-30' : '',
                   ].join(' ')}
                 >
                   {label}
@@ -364,7 +364,7 @@ export function MissionPanelCandy({
 
       {/* Zone B: Board Stage — flex-1, maximum space. No panel frame so the
           board image floats directly on the grass field bg. */}
-      <div className="board-stage-focus min-h-0 flex-1 mx-2 mt-1.5">
+      <div className="board-stage-focus min-h-0 flex-1 mx-2 mt-1">
         {board}
       </div>
 

@@ -51,7 +51,7 @@ export function PiecePickerTrigger({
             }
       }
     >
-      <picture className="h-6 w-6 shrink-0">
+      <picture className="h-5 w-5 shrink-0">
         {THEME_CONFIG.hasOptimizedFormats && (
           <>
             <source srcSet={`${src}.avif`} type="image/avif" />

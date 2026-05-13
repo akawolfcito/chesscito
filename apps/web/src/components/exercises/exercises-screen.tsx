@@ -1385,11 +1385,13 @@ export function ExercisesScreen({
             isProLoading={proLoading}
             onProTap={() => setAccountSheetOpen(true)}
             onBack={() => router.push("/hub")}
+            compact
           />
         ) : (
           <GlobalStatusBar
             variant="anonymous"
             onBack={() => router.push("/hub")}
+            compact
           />
         )}
         <MissionPanelCandy

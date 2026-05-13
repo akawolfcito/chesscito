@@ -68,7 +68,7 @@ export function ExerciseDrawer({
           aria-label="Exercises"
           className="quest-tray-slot transition active:scale-[0.97]"
         >
-          <CandyIcon name="star" className="h-5 w-5 shrink-0" />
+          <CandyIcon name="star" className="h-4 w-4 shrink-0" />
           <span className="tabular-nums text-sm font-extrabold uppercase tracking-tight" aria-label={`${totalStars} of ${maxStars} stars earned`}>
             {totalStars}
           </span>
