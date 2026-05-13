@@ -33,7 +33,7 @@ export const MINI_ARENA_SETUPS: MiniArenaSetup[] = [
     id: "kr-vs-k",
     name: "K+R vs K",
     description:
-      "El final clásico que aparece después de dominar la torre. Lleva el rey enemigo al borde y dale mate.",
+      "The classic endgame. Drive the enemy king to the edge and deliver checkmate.",
     fen: "4k3/8/8/8/8/8/8/R3K3 w - - 0 1",
     parMoves: 16,
     aiLevel: 0,

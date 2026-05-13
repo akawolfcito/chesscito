@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { MissionHeaderCandy } from "@/components/exercises/mission-header-candy";
 import { fenToPieces } from "@/lib/game/arena-utils";
 import {
   hapticImpact,
@@ -194,16 +195,16 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
   }
 
   const isWithinPar = moveCount <= setup.parMoves;
-  const footerCopy =
+  const footerStatus =
     status === "won"
       ? isWithinPar
-        ? `Mate en ${moveCount} jugadas. Dentro del objetivo (${setup.parMoves}).`
-        : `Mate en ${moveCount} jugadas. Vuelve a intentarlo bajo ${setup.parMoves}.`
+        ? `Mate in ${moveCount}. Target reached!`
+        : `Mate in ${moveCount}. Try again under ${setup.parMoves}.`
       : status === "drawn"
-        ? "Tablas. La técnica del rey al borde es la clave — vuelve a intentarlo."
+        ? "Draw. Keep the king at the edge!"
         : status === "thinking"
-          ? "Pensando…"
-          : `Movimientos: ${moveCount} / ${setup.parMoves}`;
+          ? "Thinking…"
+          : `Moves: ${moveCount} / ${setup.parMoves}`;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -212,28 +213,14 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
         data-testid="mini-arena-sheet"
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
-        <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-4 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
-          <SheetHeader>
-            <SheetTitle
-              className="fantasy-title flex items-center gap-2"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              <CandyIcon name="trophy" className="h-5 w-5" />
-              {setup.name}
-            </SheetTitle>
-            <SheetDescription
-              className="text-sm font-bold"
-              style={{ color: "rgba(63, 34, 8, 0.85)" }}
-            >
-              {setup.description}
-            </SheetDescription>
-          </SheetHeader>
-        </div>
+        <MissionHeaderCandy
+          title={setup.name}
+          subtitle="Special Training"
+          icon="trophy"
+          objective={setup.description}
+        />
 
-        <div className="flex flex-1 flex-col items-center justify-center px-2 py-3">
+        <div className="flex flex-1 flex-col items-center justify-center px-2 py-4">
           <div className="w-full max-w-[360px]">
             <ArenaBoard
               pieces={pieces}
@@ -251,24 +238,27 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
         </div>
 
         <div
-          className="flex shrink-0 items-center justify-between gap-3 px-5 pb-3 pt-2 text-sm"
+          className="flex shrink-0 items-center justify-between gap-3 px-5 pb-4 pt-2"
           style={{ color: "rgba(63, 34, 8, 0.95)" }}
         >
-          <p data-testid="mini-arena-status" className="flex-1">
-            {footerCopy}
-          </p>
+          <div className="flex-1 flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-1.5 px-3 shadow-sm min-w-0">
+            <CandyIcon name={status === "won" ? "star" : "move"} className="h-3.5 w-3.5 shrink-0 opacity-70" />
+            <p data-testid="mini-arena-status" className="text-[0.8rem] font-extrabold uppercase tracking-tight truncate">
+              {footerStatus}
+            </p>
+          </div>
           {status !== "playing" && (
             <button
               type="button"
               onClick={reset}
-              className="rounded-full px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide"
+              className="rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
               style={{
-                background: "rgba(63, 34, 8, 0.85)",
+                background: "rgba(63, 34, 8, 0.92)",
                 color: "rgba(255, 245, 215, 0.98)",
-                boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.18)",
+                boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
               }}
             >
-              Reintentar
+              Retry
             </button>
           )}
         </div>

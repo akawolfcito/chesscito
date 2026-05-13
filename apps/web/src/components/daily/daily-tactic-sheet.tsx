@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { MissionHeaderCandy } from "@/components/exercises/mission-header-candy";
 import { fenToPieces } from "@/lib/game/arena-utils";
 import {
   hapticImpact,
@@ -168,28 +169,14 @@ export function DailyTacticSheet({ open, onOpenChange, puzzle, onSolve }: Props)
         data-testid="daily-tactic-sheet"
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
-        <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-4 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
-          <SheetHeader>
-            <SheetTitle
-              className="fantasy-title flex items-center gap-2"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              <CandyIcon name="coach" className="h-5 w-5" />
-              Daily Tactic
-            </SheetTitle>
-            <SheetDescription
-              className="text-sm font-bold"
-              style={{ color: "rgba(63, 34, 8, 0.85)" }}
-            >
-              {puzzle.name} — White to move, mate in one.
-            </SheetDescription>
-          </SheetHeader>
-        </div>
+        <MissionHeaderCandy
+          title="Daily Tactic"
+          subtitle={puzzle.name}
+          icon="coach"
+          objective="White to move · Mate in one"
+        />
 
-        <div className="flex flex-1 flex-col items-center justify-center px-2 py-3">
+        <div className="flex flex-1 flex-col items-center justify-center px-2 py-4">
           <div className="w-full max-w-[360px]">
             <ArenaBoard
               pieces={pieces}
@@ -206,20 +193,26 @@ export function DailyTacticSheet({ open, onOpenChange, puzzle, onSolve }: Props)
         </div>
 
         <div
-          className="shrink-0 px-5 pb-3 pt-2 text-center text-sm"
+          className="shrink-0 px-5 pb-4 pt-2 text-center"
           style={{ color: "rgba(63, 34, 8, 0.95)" }}
         >
           {status === "solved" ? (
-            <p className="font-extrabold" data-testid="daily-status-solved">
-              Solved! Streak banked.
-            </p>
+            <div className="flex items-center justify-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-2 px-4 shadow-sm">
+              <CandyIcon name="star" className="h-4 w-4" />
+              <p className="text-sm font-extrabold uppercase tracking-tight" data-testid="daily-status-solved">
+                Solved! Streak banked
+              </p>
+            </div>
           ) : showHint ? (
-            <p data-testid="daily-hint">
-              <span className="font-extrabold">Hint:</span> {puzzle.hint}
+            <div className="rounded-xl border border-[rgba(110,65,15,0.20)] bg-[rgba(110,65,15,0.05)] p-3 text-xs leading-tight shadow-inner">
+              <span className="font-extrabold uppercase opacity-60 block mb-1">Hint</span>
+              {puzzle.hint}
+            </div>
+          ) : (
+            <p className="text-xs font-bold opacity-60 uppercase tracking-widest">
+              Find the move
             </p>
-          ) : attempts === 0 ? (
-            <p className="opacity-80">Find the move that delivers checkmate.</p>
-          ) : null}
+          )}
         </div>
       </SheetContent>
     </Sheet>
