@@ -255,6 +255,11 @@ export const SHOP_SHEET_COPY = {
     support: "Support Chesscito",
     training: "Training Item",
   },
+  /** Section headers for the catalog grid. */
+  sections: {
+    support: "Support",
+    training: "Training",
+  },
 } as const;
 
 
@@ -1100,14 +1105,14 @@ export const UNLOCK_COPY = {
 export const SHOP_ITEM_COPY = {
   founderBadge: {
     label: "Founder Badge",
-    subtitle: "Support Chesscito from the beginning. A founder badge that's yours to keep.",
+    subtitle: "Support from day one. Yours to keep.",
   },
   retryShield: {
     /** User-facing label updated to "Streak Shield" — clearer value prop.
      *  Internal constants (SHIELD_ITEM_ID, storage keys, contract calls)
      *  are NOT changed. Only this display string changes. */
     label: "Streak Shield",
-    subtitle: "Protect your training streak. Three retries for tough captures.",
+    subtitle: "Retry without losing your streak.",
   },
   /** Coach Credits — value-prop copy for an eventual Coach Pack tile
    *  in the shop sheet (parallel to Founder Badge / Streak Shield).

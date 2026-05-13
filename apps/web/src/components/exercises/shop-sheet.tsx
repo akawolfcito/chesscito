@@ -11,7 +11,6 @@ import {
 import { SHOP_SHEET_COPY } from "@/lib/content/editorial";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
-import { GemButton } from "@/components/scene-rooted/gem";
 
 type CatalogItem = {
   itemId: bigint;
@@ -80,7 +79,17 @@ function AvailabilityChip({ configured, enabled }: { configured: boolean; enable
   );
 }
 
-/** Individual shop item card — game-native visual first layout. */
+/** Section header component for visual grouping. */
+function ShopSectionHeader({ title }: { title: string }) {
+  return (
+    <div className="shop-section-header">
+      <span className="shop-section-title">{title}</span>
+      <div className="shop-section-line" />
+    </div>
+  );
+}
+
+/** Compact shop item card — premium game-shop tile. */
 function ShopItemCard({
   item,
   isFeatured,
@@ -100,71 +109,61 @@ function ShopItemCard({
     ? SHOP_SHEET_COPY.buyButtonComingSoon
     : !item.enabled
       ? SHOP_SHEET_COPY.buyButtonUnavailable
-      : SHOP_SHEET_COPY.buyButton;
+      : priceLabel; // Show price on the button for better conversion feel
 
   return (
     <div
       className={[
-        "shop-item-card",
-        isFeatured ? "shop-item-card--featured" : "",
+        "shop-item-tile",
+        isFeatured ? "shop-item-tile--featured" : "",
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {/* Featured badge */}
-      {isFeatured && (
-        <span className="shop-item-card-featured-badge">
-          {SHOP_SHEET_COPY.featured}
-        </span>
-      )}
-
-      {/* Card top: icon + identity */}
-      <div className="shop-item-card-top">
+      {/* Tile top: icon + identity column */}
+      <div className="shop-item-tile-content">
         {/* Large item icon */}
-        <div className="shop-item-card-icon-wrap">
-          <CandyIcon name={icon} className="shop-item-card-icon" />
+        <div className="shop-item-tile-icon-wrap">
+          <CandyIcon name={icon} className="shop-item-tile-icon" />
         </div>
 
-        {/* Name + kicker + availability + price row */}
-        <div className="shop-item-card-identity">
-          <p className="shop-item-card-kicker">{kicker}</p>
-          <p className="shop-item-card-name">{item.label}</p>
-          <div className="shop-item-card-meta-row">
-            <span className="shop-item-card-price">{priceLabel}</span>
-            <AvailabilityChip configured={item.configured} enabled={item.enabled} />
+        {/* Name + kicker + short copy */}
+        <div className="shop-item-tile-identity">
+          <div className="flex items-center justify-between">
+            <p className="shop-item-tile-kicker">{kicker}</p>
+            {isFeatured && <span className="shop-item-tile-featured-label">{SHOP_SHEET_COPY.featured}</span>}
           </div>
+          <p className="shop-item-tile-name">{item.label}</p>
+          <p className="shop-item-tile-subtitle">{item.subtitle}</p>
         </div>
       </div>
 
-      {/* Short value line */}
-      <p className="shop-item-card-subtitle">{item.subtitle}</p>
-
-      {/* Primary buy CTA */}
-      <PrincipalButton
-        size="medium"
-        className="mt-3 w-full"
-        disabled={!item.configured || !item.enabled}
-        onClick={() => onSelectItem(item.itemId)}
-        aria-label={!item.configured
-          ? SHOP_SHEET_COPY.buyButtonComingSoon
-          : !item.enabled
-            ? SHOP_SHEET_COPY.buyButtonUnavailable
-            : SHOP_SHEET_COPY.buyButton}
-      >
-        {buyLabel}
-      </PrincipalButton>
-
-      {/* CELO alternative — visually secondary, only if available */}
-      {item.celoSibling ? (
-        <div className="shop-item-card-celo-row">
-          <GemButton
-            icon={<CandyIcon name="wallet" className="h-3 w-3" />}
-            value={SHOP_SHEET_COPY.buyWithCelo}
-            onClick={() => onSelectItem(item.celoSibling!.itemId)}
-            aria-label={SHOP_SHEET_COPY.buyWithCelo}
-          />
+      {/* Footer: Meta + Buy button */}
+      <div className="shop-item-tile-footer">
+        <div className="flex items-center gap-2">
+          <AvailabilityChip configured={item.configured} enabled={item.enabled} />
+          {item.celoSibling && (
+            <button
+              type="button"
+              onClick={() => onSelectItem(item.celoSibling!.itemId)}
+              className="shop-item-tile-celo-link"
+              aria-label={SHOP_SHEET_COPY.buyWithCelo}
+            >
+              Pay with CELO
+            </button>
+          )}
         </div>
-      ) : null}
+
+        <PrincipalButton
+          size="medium"
+          className="shop-item-tile-buy-btn"
+          disabled={!item.configured || !item.enabled}
+          onClick={() => onSelectItem(item.itemId)}
+          aria-label={`${SHOP_SHEET_COPY.buyButton}: ${item.label} for ${priceLabel}`}
+        >
+          {buyLabel}
+        </PrincipalButton>
+      </div>
     </div>
   );
 }
@@ -177,6 +176,10 @@ export function ShopSheet({
   successBanner = null,
   showTrigger = true,
 }: ShopSheetProps) {
+  // Grouping items by category (rough logic based on name)
+  const supportItems = items.filter(i => i.label.toLowerCase().includes("badge"));
+  const trainingItems = items.filter(i => !i.label.toLowerCase().includes("badge"));
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       {showTrigger ? (
@@ -216,10 +219,6 @@ export function ShopSheet({
           </SheetHeader>
         </div>
 
-        {/* `flex-1 min-h-0 overflow-y-auto` so the catalog scrolls
-            inside the sheet on mobile. `pb-[5rem]` on the shell
-            reserves the dock-clearance gutter. */}
-
         {/* Success banner */}
         {successBanner ? (
           <div
@@ -249,7 +248,7 @@ export function ShopSheet({
         ) : null}
 
         {/* Catalog */}
-        <div className="mt-4 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3">
+        <div className="mt-4 flex-1 min-h-0 overflow-y-auto flex flex-col gap-5 pb-6">
           {items.length === 0 && (
             <p
               className="text-center text-sm"
@@ -259,39 +258,51 @@ export function ShopSheet({
             </p>
           )}
 
-          {items.map((item, index) => {
-            const isFeatured = index === 0 && item.configured && item.enabled;
-            return (
-              <ShopItemCard
-                key={item.itemId.toString()}
-                item={item}
-                isFeatured={isFeatured}
-                onSelectItem={onSelectItem}
-              />
-            );
-          })}
+          {/* Support Section */}
+          {supportItems.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <ShopSectionHeader title={SHOP_SHEET_COPY.sections.support} />
+              {supportItems.map((item, index) => (
+                <ShopItemCard
+                  key={item.itemId.toString()}
+                  item={item}
+                  isFeatured={index === 0 && item.configured && item.enabled}
+                  onSelectItem={onSelectItem}
+                />
+              ))}
+            </div>
+          )}
 
-          {/* "More soon" ambient hint — only when catalog has fewer than 3 items */}
+          {/* Training Section */}
+          {trainingItems.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <ShopSectionHeader title={SHOP_SHEET_COPY.sections.training} />
+              {trainingItems.map((item, index) => (
+                <ShopItemCard
+                  key={item.itemId.toString()}
+                  item={item}
+                  isFeatured={index === 0 && item.configured && item.enabled && supportItems.length === 0}
+                  onSelectItem={onSelectItem}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* "More soon" ambient hint */}
           {items.length > 0 && items.length < 3 && (
             <div
-              className="flex items-center gap-3 rounded-2xl px-4 py-3"
+              className="flex items-center gap-3 rounded-2xl px-4 py-3 opacity-80"
               style={{
-                background: "rgba(245, 158, 11, 0.22)",
-                boxShadow: "inset 0 0 0 1px rgba(245, 158, 11, 0.45)",
+                background: "rgba(255, 255, 255, 0.15)",
+                border: "1px solid rgba(255, 255, 255, 0.30)",
               }}
             >
-              <CandyIcon name="shop" className="h-6 w-6 shrink-0 opacity-85" />
+              <CandyIcon name="shop" className="h-5 w-5 shrink-0 opacity-70" />
               <div className="flex flex-col">
-                <p
-                  className="text-sm font-extrabold"
-                  style={{
-                    color: "rgba(120, 65, 5, 0.95)",
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                  }}
-                >
+                <p className="text-xs font-bold" style={{ color: "rgba(110, 65, 15, 0.85)" }}>
                   {SHOP_SHEET_COPY.moreSoonTitle}
                 </p>
-                <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
+                <p className="text-[10px]" style={{ color: "rgba(110, 65, 15, 0.60)" }}>
                   {SHOP_SHEET_COPY.moreSoonHint}
                 </p>
               </div>

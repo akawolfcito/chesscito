@@ -6058,133 +6058,155 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 
-/* ── Shop item cards (shop-sheet.tsx) ──────────────────────────────────────
-   Game-native card layout for the Arcane Store. Each card is visual-first:
-   large icon, kicker label, name, price + availability chips, dominant CTA.
-   shop-item-card-* namespace is scoped to ShopSheet only. */
+/* ── Shop item tiles (shop-sheet.tsx) ──────────────────────────────────────
+   Compact premium game-shop layout. Horizontal tiles for scannability.
+   shop-item-tile-* namespace is scoped to ShopSheet only. */
 
-.shop-item-card {
+.shop-item-tile {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 14px 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.18);
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: inset 0 1px 0 rgba(255, 245, 215, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform 0.1s ease-out;
 }
 
-.shop-item-card--featured {
-  background: linear-gradient(180deg, rgba(255, 250, 225, 0.96) 0%, rgba(248, 225, 166, 0.94) 100%);
-  border: 2px solid rgba(222, 159, 42, 0.72);
-  box-shadow:
-    0 4px 0 rgba(135, 82, 13, 0.18),
-    inset 0 2px 0 rgba(255, 255, 255, 0.68);
+.shop-item-tile:active {
+  transform: scale(0.985);
 }
 
-/* Featured badge pill */
-.shop-item-card-featured-badge {
-  position: absolute;
-  top: -11px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  font-size: 0.6rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  background: rgba(120, 65, 5, 0.90);
-  color: rgba(255, 240, 180, 0.98);
-  border: 1px solid rgba(255, 240, 180, 0.70);
-  white-space: nowrap;
+.shop-item-tile--featured {
+  background: linear-gradient(135deg, rgba(255, 250, 230, 0.98) 0%, rgba(250, 235, 195, 0.96) 100%);
+  border: 1.5px solid rgba(222, 159, 42, 0.50);
+  box-shadow: 
+    0 4px 12px rgba(135, 82, 13, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* Top layout: icon + identity column */
-.shop-item-card-top {
+.shop-item-tile-content {
   display: flex;
-  align-items: flex-start;
   gap: 12px;
+  align-items: center;
 }
 
-/* Icon container */
-.shop-item-card-icon-wrap {
+/* Horizontal icon wrap */
+.shop-item-tile-icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 14px;
-  background: rgba(255, 245, 200, 0.65);
-  border: 1px solid rgba(222, 159, 42, 0.35);
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(110, 65, 15, 0.12);
   flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
-.shop-item-card-icon {
-  width: 26px;
-  height: 26px;
-  opacity: 0.88;
+.shop-item-tile-icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.9;
 }
 
-/* Identity: kicker, name, meta */
-.shop-item-card-identity {
+/* Identity column */
+.shop-item-tile-identity {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  gap: 1px;
   flex: 1;
+  min-width: 0;
 }
 
-.shop-item-card-kicker {
-  font-size: 0.6rem;
+.shop-item-tile-kicker {
+  font-size: 0.55rem;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(110, 65, 15, 0.60);
-  margin: 0;
+  letter-spacing: 0.06em;
+  color: rgba(110, 65, 15, 0.55);
 }
 
-.shop-item-card-name {
+.shop-item-tile-featured-label {
+  font-size: 0.55rem;
+  font-weight: 900;
+  color: #DE9F2A;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.shop-item-tile-name {
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-size: 0.95rem;
   font-weight: 900;
-  color: rgba(63, 34, 8, 0.95);
-  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.60);
-  margin: 0;
+  color: rgba(63, 34, 8, 0.98);
   line-height: 1.1;
 }
 
-/* Price + availability chip row */
-.shop-item-card-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+.shop-item-tile-subtitle {
+  font-size: 0.72rem;
+  color: rgba(110, 65, 15, 0.75);
+  line-height: 1.3;
   margin-top: 2px;
 }
 
-.shop-item-card-price {
-  font-size: 0.8rem;
-  font-weight: 900;
-  color: rgba(63, 34, 8, 0.88);
-  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.50);
-}
-
-/* Short value description line */
-.shop-item-card-subtitle {
-  margin-top: 10px;
-  font-size: 0.78rem;
-  color: rgba(110, 65, 15, 0.72);
-  line-height: 1.4;
-}
-
-/* CELO secondary route — smaller, centered, clearly subordinate */
-.shop-item-card-celo-row {
+/* Footer row: Meta + CTA */
+.shop-item-tile-footer {
   display: flex;
-  justify-content: center;
-  margin-top: 8px;
-  opacity: 0.80;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(110, 65, 15, 0.08);
 }
+
+.shop-item-tile-buy-btn {
+  min-width: 90px !important;
+  height: 34px !important;
+  padding: 0 12px !important;
+  font-size: 0.85rem !important;
+}
+
+.shop-item-tile-celo-link {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: rgba(110, 65, 15, 0.65);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.shop-item-tile-celo-link:hover {
+  color: rgba(110, 65, 15, 0.95);
+}
+
+/* ── Section Headers ──────────────────────────────────────────────────────── */
+
+.shop-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.shop-section-title {
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(110, 65, 15, 0.50);
+  white-space: nowrap;
+}
+
+.shop-section-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(110, 65, 15, 0.12) 0%, rgba(110, 65, 15, 0) 100%);
+}
+
