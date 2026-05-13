@@ -118,7 +118,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
           />
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="mission-shell sheet-bg-leaderboard flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]">
+      <SheetContent side="bottom" className="mission-shell sheet-bg-leaderboard flex h-[100dvh] flex-col rounded-none border-0 pb-0">
         <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
           <SheetHeader>
             <SheetTitle
@@ -137,7 +137,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
           </SheetHeader>
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-6">
+        <div className="flex-1 overflow-y-auto mt-4 space-y-6 pb-[8rem]">
           {/* Verification Banner — Demoted but clear */}
           <div className="leaderboard-verify-banner">
             <div className="flex items-center gap-2">
