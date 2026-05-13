@@ -167,12 +167,12 @@ export const BADGE_EARNED_COPY = {
 
 export const BADGE_SHEET_COPY = {
   title: "Your Badges",
-  subtitle: "Collect all three to master the board",
+  subtitle: "Collection progress",
   owned: "Owned",
   claimBadge: "Claim Badge",
   claiming: "Claiming...",
-  locked: (needed: number) => `Need ${needed} more ★ to unlock`,
-  notStarted: "Complete trials to start",
+  locked: "Complete trials to unlock",
+  notStarted: "Complete trials to unlock",
   viewTrophies: "View your Victories",
   /** Inline success banner rendered above the badge grid for ~2.5s after
    *  a successful claim on the scaffold surface. ExercisesScreen legacy uses

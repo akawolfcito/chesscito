@@ -66,96 +66,71 @@ function BadgeCard({
   const isClaimed = badge.state === "claimed";
   const isClaimable = badge.state === "claimable";
   const isLocked = badge.state === "locked";
-  const needed = Math.max(0, BADGE_THRESHOLD - badge.totalStars);
   const isThisBusy = claimingPiece === badge.piece;
 
   return (
     <div
       className={[
-        "relative flex items-center gap-3 rounded-2xl border px-3 py-3 transition-all",
-        isLocked
-          ? "border-[rgba(255,255,255,0.35)] bg-white/10 opacity-85"
-          : "border-[rgba(255,255,255,0.45)] bg-white/15",
+        "badge-card",
+        isLocked ? "badge-card--locked" : "",
+        isClaimed ? "badge-card--owned" : "",
       ].join(" ")}
     >
-      {/* Floating green check at -top-1/-right-1 was redundant with
-          the inline "✓ Owned" pill (rendered below) and got clipped
-          by the sheet's overflow-y-auto right edge. The inline pill
-          is the single source of truth for claimed status. */}
-      <picture className={`h-12 w-12 shrink-0 ${isLocked ? "badge-treat-locked" : isClaimed ? "badge-treat-owned" : isClaimable ? "badge-treat-claimable" : ""}`}>
-        {THEME_CONFIG.hasOptimizedFormats && (
-          <>
-            <source srcSet={BADGE_ART[badge.piece].replace(".png", ".avif")} type="image/avif" />
-            <source srcSet={BADGE_ART[badge.piece].replace(".png", ".webp")} type="image/webp" />
-          </>
-        )}
-        <img
-          src={BADGE_ART[badge.piece]}
-          alt={title}
-          className="h-full w-full object-contain"
-        />
-      </picture>
-
-      <div className="flex-1 min-w-0">
-        <p
-          className="text-sm font-extrabold"
-          style={{
-            color: "rgba(63, 34, 8, 0.95)",
-            textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-          }}
-        >
-          {title}
-        </p>
-        <div className="mt-0.5 flex items-center gap-1.5">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(110, 65, 15, 0.18)" }}>
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isClaimed ? "bg-gradient-to-r from-emerald-500 to-emerald-400" : "bg-amber-500"
-              }`}
-              style={{ width: `${(badge.totalStars / badge.maxStars) * 100}%` }}
-            />
-          </div>
-          <span className="text-xs font-bold tabular-nums" style={{ color: "rgba(110, 65, 15, 0.85)" }}>
-            {badge.totalStars}/{badge.maxStars}
-          </span>
-        </div>
-        {isLocked ? (
-          <p className="mt-0.5 text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-            {badge.totalStars === 0 ? BADGE_SHEET_COPY.notStarted : BADGE_SHEET_COPY.locked(needed)}
-          </p>
-        ) : null}
+      {/* Horizontal icon wrap */}
+      <div className="badge-card-icon-wrap">
+        <picture className="h-8 w-8">
+          {THEME_CONFIG.hasOptimizedFormats && (
+            <>
+              <source srcSet={BADGE_ART[badge.piece].replace(".png", ".avif")} type="image/avif" />
+              <source srcSet={BADGE_ART[badge.piece].replace(".png", ".webp")} type="image/webp" />
+            </>
+          )}
+          <img
+            src={BADGE_ART[badge.piece]}
+            alt={title}
+            className="badge-card-icon-img"
+          />
+        </picture>
       </div>
 
+      {/* Identity column */}
+      <div className="badge-card-identity">
+        <p className="badge-card-name">{title}</p>
+        <p className="badge-card-status-text">
+          {isClaimed ? BADGE_SHEET_COPY.owned : isLocked ? BADGE_SHEET_COPY.locked : "Claimable"}
+        </p>
+        
+        {/* Progress bar */}
+        <div className="badge-card-progress-bar-wrap">
+          <div
+            className="badge-card-progress-fill"
+            style={{ width: `${(badge.totalStars / badge.maxStars) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Action area */}
       <div className="shrink-0">
         {isClaimed ? (
           <GemBadge
             tone="success"
-            icon={<CandyIcon name="check" className="h-3.5 w-3.5" />}
+            icon={<CandyIcon name="check" className="h-3 w-3" />}
             value={BADGE_SHEET_COPY.owned}
           />
         ) : isClaimable ? (
           <PrincipalButton
             size="medium"
-            leadingIcon={<CandyIcon name="trophy" className="h-5 w-5" />}
             onClick={onClaim}
             loading={isThisBusy}
             disabled={isClaimBusy && !isThisBusy}
             aria-label={BADGE_SHEET_COPY.claimBadge}
           >
-            {BADGE_SHEET_COPY.claimBadge}
+            Claim
           </PrincipalButton>
         ) : (
-          <span
-            className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-nano font-extrabold uppercase"
-            style={{
-              background: "rgba(120, 65, 5, 0.85)",
-              color: "rgba(255, 240, 180, 0.98)",
-              letterSpacing: "0.10em",
-            }}
-          >
-            <CandyIcon name="lock" className="h-2.5 w-2.5" />
-            Locked
-          </span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 opacity-40">
+            <CandyIcon name="lock" className="h-4 w-4" />
+          </div>
         )}
       </div>
     </div>
@@ -231,6 +206,9 @@ export function BadgeSheet({
     };
   });
 
+  const totalCollectedStars = badges.reduce((s, b) => s + b.totalStars, 0);
+  const totalAvailableStars = badges.reduce((s, b) => s + b.maxStars, 0);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       {showTrigger ? (
@@ -257,6 +235,7 @@ export function BadgeSheet({
         </SheetTrigger>
       ) : null}
       <SheetContent side="bottom" className="mission-shell sheet-bg-badges flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]">
+        {/* Sheet header */}
         <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
           <SheetHeader>
             <SheetTitle
@@ -269,28 +248,25 @@ export function BadgeSheet({
               <CandyIcon name="trophy" className="h-5 w-5" />
               {BADGE_SHEET_COPY.title}
             </SheetTitle>
-            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {BADGE_SHEET_COPY.subtitle}
-            </SheetDescription>
-            <div className="mt-2 flex items-center gap-2">
-              <div className="h-2 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(110, 65, 15, 0.18)" }}>
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-700"
-                  style={{ width: `${(badges.reduce((s, b) => s + b.totalStars, 0) / badges.reduce((s, b) => s + b.maxStars, 0)) * 100}%` }}
-                />
+            
+            <div className="flex items-center justify-between gap-4 mt-2">
+              <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+                {BADGE_SHEET_COPY.subtitle}
+              </SheetDescription>
+              <div className="badge-header-progress-chip">
+                {totalCollectedStars} of {totalAvailableStars} stars
               </div>
-              <span
-                className="text-xs font-extrabold tabular-nums"
-                style={{
-                  color: "rgba(110, 65, 15, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                }}
-              >
-                {badges.reduce((s, b) => s + b.totalStars, 0)}/{badges.reduce((s, b) => s + b.maxStars, 0)}
-              </span>
+            </div>
+            
+            <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full" style={{ background: "rgba(110, 65, 15, 0.12)" }}>
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-1000"
+                style={{ width: `${(totalCollectedStars / totalAvailableStars) * 100}%` }}
+              />
             </div>
           </SheetHeader>
         </div>
+
         {lastClaimedPiece ? (
           <div
             data-testid="badge-claim-success"
@@ -308,7 +284,9 @@ export function BadgeSheet({
             {BADGE_SHEET_COPY.claimSuccess(lastClaimedPiece)}
           </div>
         ) : null}
-        <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-2">
+
+        {/* Badge Grid */}
+        <div className="flex-1 overflow-y-auto mt-4 space-y-3 pb-6">
           {badges.map((badge) => (
             <BadgeCard
               key={badge.piece}
@@ -319,25 +297,28 @@ export function BadgeSheet({
             />
           ))}
         </div>
-        <div className="shrink-0">
-          <div className="mt-4 flex w-full justify-center">
-            <PrincipalButton
-              size="large"
-              leadingIcon={<CandyIcon name="trophy" className="h-5 w-5" />}
+
+        {/* Footer: Demoted Trophies CTA + Link */}
+        <div className="shrink-0 pt-2">
+          <div className="flex flex-col items-center gap-4">
+            <button
               onClick={onNavigateToTrophies}
+              className="text-xs font-bold underline underline-offset-4 transition-colors hover:opacity-80"
+              style={{ color: "rgba(110, 65, 15, 0.75)" }}
               aria-label={BADGE_SHEET_COPY.viewTrophies}
             >
               {BADGE_SHEET_COPY.viewTrophies}
-            </PrincipalButton>
+            </button>
+
+            <Link
+              href="/about"
+              onClick={() => onOpenChange(false)}
+              className="text-nano opacity-60 transition-colors hover:opacity-100"
+              style={{ color: "rgba(110, 65, 15, 0.65)" }}
+            >
+              {ABOUT_LINK_COPY.label}
+            </Link>
           </div>
-          <Link
-            href="/about"
-            onClick={() => onOpenChange(false)}
-            className="mt-3 block text-center text-xs transition-colors hover:opacity-80"
-            style={{ color: "rgba(110, 65, 15, 0.65)" }}
-          >
-            {ABOUT_LINK_COPY.label}
-          </Link>
         </div>
       </SheetContent>
     </Sheet>
