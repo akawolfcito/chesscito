@@ -2297,12 +2297,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  height: 2.25rem;
+  gap: 0.65rem;
+  height: 2rem;
+  min-width: 8rem;
   padding: 0 1rem;
   border-radius: 999px;
   background: linear-gradient(180deg, #74a129 0%, #4b781a 100%);
-  border: 3px solid #f6cc43;
+  border: 2.5px solid #f6cc43;
   box-shadow: 
     0 4px 10px rgba(0, 0, 0, 0.4),
     inset 0 2px 4px rgba(255, 255, 255, 0.3),
@@ -2310,6 +2311,7 @@
   cursor: pointer;
   transition: all var(--duration-snap, 120ms) ease-out;
   outline: none;
+  white-space: nowrap;
 }
 
 .arena-difficulty-pill:active {
@@ -2321,7 +2323,7 @@
   color: #ffffff;
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-weight: 900;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   text-transform: capitalize;
   letter-spacing: 0.02em;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
@@ -2332,6 +2334,16 @@
   align-items: center;
   justify-content: center;
   color: #fff;
+  flex-shrink: 0;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.arena-difficulty-pill-icon svg,
+.arena-difficulty-pill-icon img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 
