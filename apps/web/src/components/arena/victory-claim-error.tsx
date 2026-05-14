@@ -55,7 +55,7 @@ export function VictoryClaimError({
 
   return (
     <div
-      className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300"
+      className="pointer-events-auto fixed inset-0 z-50 flex flex-col items-center justify-center result-screen-overlay animate-in fade-in duration-300"
       role={isCancelled ? "status" : "alert"}
       aria-live={isCancelled ? "polite" : "assertive"}
     >
@@ -64,12 +64,30 @@ export function VictoryClaimError({
         <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-[0.10]" />
       </div>
 
-      {/* Card */}
-      <div className="relative z-10 mx-4 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+      {/* Main content container */}
+      <div className="relative z-10 flex w-full max-w-[390px] flex-col gap-6 px-5 py-8 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h2
+            className="fantasy-title text-4xl font-extrabold tracking-tight"
+            style={{
+              color: isCancelled ? "#fff8e1" : "#fee2e2",
+              textShadow: isCancelled
+                ? "0 2px 8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.3)"
+                : "0 2px 8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(220, 38, 38, 0.2)",
+            }}
+          >
+            {isCancelled ? "Paused" : "Error"}
+          </h2>
+          <p className="text-sm font-medium tracking-wide text-amber-100/80">
+            {kindCopy.title}
+          </p>
+        </div>
+
         <CandyGlassShell
-          title={kindCopy.title}
+          title=""
           onClose={onBackToHub}
           closeLabel={ARENA_COPY.backToHub}
+          className="!max-h-none !gap-4 shadow-2xl"
           cta={
             <div className="flex w-full flex-col gap-2.5">
               {onRetry && (
@@ -98,11 +116,11 @@ export function VictoryClaimError({
               >
                 <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
               </Button>
+              {/* Back to Hub shortcut */}
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="w-full py-1 text-xs font-semibold underline underline-offset-2"
-                style={{ color: "rgba(110, 65, 15, 0.70)" }}
+                className="mt-1 w-full py-2 text-xs font-bold uppercase tracking-widest text-amber-900/60 transition-opacity hover:opacity-100"
               >
                 {ARENA_COPY.backToHub}
               </button>

@@ -63,20 +63,20 @@ export function ArenaHud({
           type="button"
           onClick={handleBackClick}
           className={[
-            "arena-hud-btn group active:scale-60",
-            confirmingBack ? "w-auto gap-2 px-4 rounded-full" : "",
+            "arena-hud-btn group active:scale-60 transition-all duration-300",
+            confirmingBack ? "px-4" : "w-[2.75rem]",
           ].join(" ")}
           aria-label={ARENA_COPY.backToHub}
         >
           {confirmingBack ? (
-            <>
-              <CandyIcon name="check" className="h-5 w-5 animate-in zoom-in duration-200" />
-              <span className="text-[0.7rem] font-bold uppercase tracking-wider text-white">{ARENA_COPY.backToHub}</span>
+            <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
+              <CandyIcon name="close" className="h-4 w-4 text-white" />
+              <span className="text-[0.75rem] font-black uppercase tracking-[0.15em] text-white">QUIT?</span>
               <span
-                className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-amber-400/60"
+                className="absolute bottom-0 left-0 h-1 w-full origin-left bg-white/20"
                 style={{ animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards` }}
               />
-            </>
+            </div>
           ) : (
             <div className="arena-hud-icon">
               <CandyBanner name="btn-back" className="opacity-90 group-hover:opacity-100" />

@@ -80,80 +80,98 @@ export function VictoryCelebration({
 
   return (
     <div
-      className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300"
+      className="pointer-events-auto fixed inset-0 z-50 flex flex-col items-center justify-center result-screen-overlay animate-in fade-in duration-300"
       role="alert"
       aria-live="assertive"
     >
       {/* Sparkles background — warm-tuned opacity so they read on paper */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-[0.18]" />
+        <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-[0.25]" />
       </div>
       {/* Confetti burst — warm amber radial outside the card */}
-      <div className="reward-confetti-burst pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_40%,rgba(245,158,11,0.18)_0%,rgba(217,180,74,0.10)_35%,transparent_65%)]" />
+      <div className="reward-confetti-burst pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_40%,rgba(245,158,11,0.22)_0%,rgba(217,180,74,0.12)_35%,transparent_65%)]" />
 
-      {/* Card */}
-      <div className="relative z-10 mx-4 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+      {/* Main content container */}
+      <div className="relative z-10 flex w-full max-w-[390px] flex-col gap-6 px-5 py-8 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h2
+            className="fantasy-title victory-text-slam text-4xl font-extrabold tracking-tight"
+            style={{
+              color: "#fff8e1",
+              textShadow: "0 2px 8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.3)",
+            }}
+          >
+            {isCheckmate ? VICTORY_CELEBRATION_COPY.headlineCheckmate : VICTORY_CELEBRATION_COPY.headlineWin}
+          </h2>
+          <p className="text-sm font-medium tracking-wide text-amber-100/80">
+            {VICTORY_CELEBRATION_COPY.title}
+          </p>
+        </div>
+
         <CandyGlassShell
-          title={VICTORY_CELEBRATION_COPY.title}
+          title=""
           onClose={onBackToHub}
           closeLabel={ARENA_COPY.backToHub}
+          className="!max-h-none !gap-4 shadow-2xl"
           cta={
-            <div className="flex w-full flex-col gap-2.5 animate-in fade-in duration-300 fill-mode-both [animation-delay:600ms]">
-              {coachPreview}
+            <div className="flex w-full flex-col gap-3 animate-in fade-in duration-300 fill-mode-both [animation-delay:600ms]">
+              {/* Primary Action: Save Victory (Mint) */}
               {onClaimVictory && (
-                <div className="flex w-full justify-center">
+                <div className="flex w-full flex-col gap-1.5">
                   <PrincipalButton
                     size="large"
-                    leadingIcon={
-                      <CandyBanner name="btn-claim" className="h-5 w-5" />
-                    }
+                    leadingIcon={<CandyBanner name="btn-claim" className="h-6 w-6" />}
                     onClick={onClaimVictory}
                     aria-label={VICTORY_CLAIM_COPY.claimButton}
                   >
                     {VICTORY_CLAIM_COPY.claimButton}
                     {claimPrice ? ` · ${VICTORY_CLAIM_COPY.claimValueHint(claimPrice)}` : ""}
                   </PrincipalButton>
+                  <p className="text-center text-[10px] font-bold uppercase tracking-wider text-amber-800/60">
+                    {VICTORY_CLAIM_COPY.claimButtonHint}
+                  </p>
                 </div>
               )}
-              <div className="flex w-full justify-center">
-                {onClaimVictory ? (
-                  <Button
-                    type="button"
-                    variant="game-ghost"
-                    size="game-sm"
-                    onClick={onPlayAgain}
-                    className="w-full"
-                  >
-                    <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
-                  </Button>
-                ) : (
-                  <PrincipalButton
-                    size="medium"
-                    leadingIcon={
-                      <CandyIcon name="refresh" className="h-4 w-4" />
-                    }
-                    onClick={onPlayAgain}
-                    aria-label={ARENA_COPY.playAgain}
-                  >
-                    {ARENA_COPY.playAgain}
-                  </PrincipalButton>
-                )}
-              </div>
-              <div className="flex w-full gap-2">
-                {onAskCoach && (
-                  <AskCoachButton onClick={onAskCoach} className="flex-1" />
-                )}
+
+              {/* Secondary: Coach Review (Ready for PRO) */}
+              {coachPreview && (
+                <div className="w-full">
+                  {coachPreview}
+                </div>
+              )}
+
+              {/* Tertiary: Play Again & Share */}
+              <div className="mt-1 flex w-full gap-2">
                 <Button
                   type="button"
                   variant="game-ghost"
-                  size="game-sm"
+                  size="game-md"
+                  onClick={onPlayAgain}
+                  className="flex-1 !h-12 border-amber-900/10 bg-amber-900/5"
+                >
+                  <CandyIcon name="refresh" className="inline h-4 w-4" />
+                  <span className="ml-1.5">{ARENA_COPY.playAgain}</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="game-ghost"
+                  size="game-md"
                   onClick={() => setShareOpen(true)}
-                  className="flex-1"
+                  className="flex-1 !h-12 border-amber-900/10 bg-amber-900/5"
                 >
                   <CandyIcon name="share" className="inline h-4 w-4" />
-                  {SHARE_COPY.button}
+                  <span className="ml-1.5">{SHARE_COPY.button}</span>
                 </Button>
               </div>
+
+              {/* Back to Hub shortcut */}
+              <button
+                type="button"
+                onClick={onBackToHub}
+                className="mt-1 w-full py-2 text-xs font-bold uppercase tracking-widest text-amber-900/60 transition-opacity hover:opacity-100"
+              >
+                {ARENA_COPY.backToHub}
+              </button>
             </div>
           }
         >
@@ -167,21 +185,7 @@ export function VictoryCelebration({
               </div>
             </div>
 
-            {/* Emotion headline — big, first, emotional. Spring-slams
-                in via the shared .victory-text-slam animation (400ms
-                --ease-spring). The stats line below carries context;
-                this line carries the feeling. */}
-            <h3
-              className="fantasy-title victory-text-slam text-3xl font-extrabold leading-tight"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 6px rgba(245, 158, 11, 0.35)",
-              }}
-            >
-              {isCheckmate
-                ? VICTORY_CELEBRATION_COPY.headlineCheckmate
-                : VICTORY_CELEBRATION_COPY.headlineWin}
-            </h3>
+
 
             {/* Performance summary — secondary after the headline,
                 fades in on --duration-enter after the headline lands. */}

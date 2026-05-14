@@ -56,57 +56,81 @@ export function VictoryClaimSuccess({
 
   return (
     <div
-      className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300"
+      className="pointer-events-auto fixed inset-0 z-50 flex flex-col items-center justify-center result-screen-overlay animate-in fade-in duration-300"
       role="alert"
       aria-live="assertive"
     >
-      {/* Sparkles — intensified */}
+      {/* Sparkles background — intensified for success */}
       <div className="pointer-events-none absolute inset-0 z-0">
         <LottieAnimation animationData={sparklesData} speed={1.5} className="h-full w-full opacity-60" />
       </div>
 
-      {/* Card */}
-      <div className="relative z-10 mx-4 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+      {/* Main content container */}
+      <div className="relative z-10 flex w-full max-w-[390px] flex-col gap-6 px-5 py-8 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h2
+            className="fantasy-title victory-text-slam text-4xl font-extrabold tracking-tight"
+            style={{
+              color: "#fff8e1",
+              textShadow: "0 2px 8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.3)",
+            }}
+          >
+            {VICTORY_CLAIM_COPY.claimedBadge}
+          </h2>
+          <p className="text-sm font-medium tracking-wide text-amber-100/80">
+            {VICTORY_CLAIM_COPY.successTitle}
+          </p>
+        </div>
+
         <CandyGlassShell
-          title={VICTORY_CLAIM_COPY.successTitle}
+          title=""
           onClose={onBackToHub}
           closeLabel={ARENA_COPY.backToHub}
+          className="!max-h-none !gap-4 shadow-2xl"
           cta={
-            <div className="flex w-full flex-col items-center gap-2.5">
-              {coachPreview}
-              <PrincipalButton
-                size="medium"
-                leadingIcon={
-                  <CandyIcon name="refresh" className="h-4 w-4" />
-                }
-                onClick={onPlayAgain}
-                aria-label={ARENA_COPY.playAgain}
-              >
-                {ARENA_COPY.playAgain}
-              </PrincipalButton>
+            <div className="flex w-full flex-col gap-3">
+              {/* Secondary: Coach Review (Ready for PRO) */}
+              {coachPreview && (
+                <div className="w-full">
+                  {coachPreview}
+                </div>
+              )}
 
-              <div className="flex w-full gap-2">
-                {onAskCoach && (
-                  <AskCoachButton onClick={onAskCoach} className="flex-1" />
-                )}
-                {isShareReady && (
-                  <Button
-                    type="button"
-                    variant="game-ghost"
-                    size="game-sm"
-                    onClick={() => setShareOpen(true)}
-                    className="flex-1"
-                  >
-                    <CandyIcon name="share" className="inline h-4 w-4" /> {SHARE_COPY.button}
-                  </Button>
-                )}
+              {/* Primary: Play Again or Share */}
+              <div className="flex w-full flex-col gap-2.5">
+                <PrincipalButton
+                  size="medium"
+                  leadingIcon={<CandyIcon name="refresh" className="h-4 w-4" />}
+                  onClick={onPlayAgain}
+                  aria-label={ARENA_COPY.playAgain}
+                >
+                  {ARENA_COPY.playAgain}
+                </PrincipalButton>
+
+                <div className="flex w-full gap-2">
+                  {onAskCoach && (
+                    <AskCoachButton onClick={onAskCoach} className="flex-1" />
+                  )}
+                  {isShareReady && (
+                    <Button
+                      type="button"
+                      variant="game-ghost"
+                      size="game-md"
+                      onClick={() => setShareOpen(true)}
+                      className="flex-1 border-amber-900/10 bg-amber-900/5"
+                    >
+                      <CandyIcon name="share" className="inline h-4 w-4" />
+                      <span className="ml-1.5">{SHARE_COPY.button}</span>
+                    </Button>
+                  )}
+                </div>
               </div>
 
+              {/* Back to Hub shortcut */}
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="w-full py-1 text-xs font-semibold underline underline-offset-2"
-                style={{ color: "rgba(110, 65, 15, 0.70)" }}
+                className="mt-1 w-full py-2 text-xs font-bold uppercase tracking-widest text-amber-900/60 transition-opacity hover:opacity-100"
               >
                 {ARENA_COPY.backToHub}
               </button>
@@ -122,28 +146,7 @@ export function VictoryClaimSuccess({
               </div>
             </div>
 
-            {/* Subtitle */}
-            <p
-              className="text-sm"
-              style={{
-                color: "rgba(110, 65, 15, 0.85)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-              }}
-            >
-              {VICTORY_CLAIM_COPY.successSubtitle}
-            </p>
 
-            {/* Claimed badge */}
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-extrabold"
-              style={{
-                background: "rgba(120, 65, 5, 0.85)",
-                color: "rgba(255, 240, 180, 0.98)",
-                letterSpacing: "0.03em",
-              }}
-            >
-              {VICTORY_CLAIM_COPY.claimedBadge}
-            </span>
 
             {/* Stats */}
             <div className="flex w-full gap-2">
