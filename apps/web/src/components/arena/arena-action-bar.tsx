@@ -46,53 +46,53 @@ export function ArenaActionBar({
   if (isEndState) return null;
 
   return (
-    <div className="arena-action-bar flex items-center justify-between gap-6 px-8 pb-4 pt-2">
-      <button
-        type="button"
-        onClick={handleResignClick}
-        className={[
-          "arena-action-pill group flex flex-col items-center gap-2 transition-all active:scale-95",
-          confirmingResign ? "is-confirming scale-105" : "",
-        ].join(" ")}
-        aria-label={confirmingResign ? ARENA_COPY.resignConfirm : ARENA_COPY.resign}
-        aria-pressed={confirmingResign}
-      >
-        <div className="arena-action-pill-icon relative overflow-hidden rounded-full border border-white/20 shadow-md">
-          {confirmingResign ? (
-            <CandyIcon name="check" className="h-6 w-6 text-white animate-in zoom-in duration-200" />
-          ) : (
-            <CandyBanner name="btn-resign" className="h-8 w-8 opacity-90 group-hover:opacity-100 transition-opacity" />
-          )}
-          {confirmingResign && (
-            <span
-              className="absolute bottom-0 left-0 h-1 w-full origin-left bg-white/40"
-              style={{
-                animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards`,
-              }}
-            />
-          )}
-        </div>
-        <span className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white/50 group-active:text-white/80 transition-colors">
+    <div className="arena-action-bar flex items-center justify-around px-4 pb-8 pt-2">
+      <div className="flex flex-col items-center gap-2">
+        <button
+          type="button"
+          onClick={handleResignClick}
+          className={[
+            "arena-action-circle group relative flex h-14 w-14 items-center justify-center rounded-full border-2 border-white/20 shadow-lg transition-all active:scale-90",
+            confirmingResign ? "is-confirming border-amber-400" : "bg-black/10",
+          ].join(" ")}
+          aria-label={confirmingResign ? ARENA_COPY.resignConfirm : ARENA_COPY.resign}
+          aria-pressed={confirmingResign}
+        >
+          <div className="absolute inset-0 rounded-full overflow-hidden">
+            <CandyBanner name="btn-stone-bg" className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+          </div>
+          <div className="relative z-10">
+            {confirmingResign ? (
+              <CandyIcon name="check" className="h-7 w-7 text-white animate-in zoom-in duration-200" />
+            ) : (
+              <CandyBanner name="btn-resign" className="h-8 w-8 opacity-90 group-hover:opacity-100 transition-opacity" />
+            )}
+          </div>
+        </button>
+        <span className="text-[0.7rem] font-black uppercase tracking-[0.1em] text-white/80 drop-shadow-md">
           {confirmingResign ? "Confirm?" : ARENA_COPY.resign}
         </span>
-      </button>
+      </div>
 
-      <div className="arena-action-banner-slot flex-1" />
-
-      <button
-        type="button"
-        onClick={onUndo}
-        disabled={!canUndo || !onUndo}
-        className="arena-action-pill group flex flex-col items-center gap-2 transition-all active:scale-95 disabled:pointer-events-none"
-        aria-label={ARENA_COPY.undo}
-      >
-        <div className="arena-action-pill-icon rounded-full border border-white/20 shadow-md">
-          <CandyBanner name="btn-undo" className="h-8 w-8 opacity-90 group-hover:opacity-100 transition-opacity" />
-        </div>
-        <span className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white/50">
+      <div className="flex flex-col items-center gap-2">
+        <button
+          type="button"
+          onClick={onUndo}
+          disabled={!canUndo || !onUndo}
+          className="arena-action-circle group relative flex h-14 w-14 items-center justify-center rounded-full border-2 border-white/20 bg-black/10 shadow-lg transition-all active:scale-90 disabled:opacity-40 disabled:grayscale"
+          aria-label={ARENA_COPY.undo}
+        >
+          <div className="absolute inset-0 rounded-full overflow-hidden">
+            <CandyBanner name="btn-stone-bg" className="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+          </div>
+          <div className="relative z-10">
+            <CandyBanner name="btn-undo" className="h-8 w-8 opacity-90 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </button>
+        <span className="text-[0.7rem] font-black uppercase tracking-[0.1em] text-white/80 drop-shadow-md">
           {ARENA_COPY.undo}
         </span>
-      </button>
+      </div>
     </div>
   );
 }

@@ -1314,12 +1314,12 @@ function ArenaPageInner() {
         {!isEndState && (
           <div className="mx-3 mt-1 flex justify-center">
             <GemButton
-              tone="default"
-              icon={<CandyIcon name="chevron-down" className="h-3 w-3 opacity-60" />}
-              iconPosition="right"
+              tone="warning"
+              leftIcon={<CandyIcon name="shield" className="h-4 w-4" />}
+              rightIcon={<CandyIcon name="chevron-down" className="h-3 w-3 opacity-60" />}
               value={ARENA_COPY.difficulty[game.difficulty]}
               onClick={handleChangeDifficulty}
-              className="!w-auto !min-w-0 !h-7 !px-3 scale-90"
+              className="!w-auto !min-w-0 !h-8 !px-3 shadow-md"
               aria-label={`Difficulty: ${ARENA_COPY.difficulty[game.difficulty]}. Tap to change.`}
             />
           </div>

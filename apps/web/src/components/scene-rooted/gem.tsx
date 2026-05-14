@@ -22,14 +22,14 @@ export type GemBadgeProps = {
 };
 
 export type GemButtonProps = {
-  icon: ReactNode;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
   value: ReactNode;
   tone?: GemTone;
   onClick: () => void;
   disabled?: boolean;
   className?: string;
   "aria-label": string;
-  iconPosition?: "left" | "right";
 };
 
 function usePlaceholderProbe<T extends HTMLElement>() {
@@ -75,14 +75,14 @@ export function GemBadge({
 }
 
 export function GemButton({
-  icon,
+  leftIcon,
+  rightIcon,
   value,
   tone = "default",
   onClick,
   disabled = false,
   className = "",
   "aria-label": ariaLabel,
-  iconPosition = "left",
 }: GemButtonProps) {
   const [ref, isPlaceholder] = usePlaceholderProbe<HTMLButtonElement>();
 
@@ -110,15 +110,14 @@ export function GemButton({
       data-component="gem-button"
       data-state={state}
       data-tone={tone}
-      data-icon-pos={iconPosition}
       className={classes}
       disabled={disabled}
       onClick={handleClick}
       aria-label={ariaLabel}
     >
-      {iconPosition === "left" && <span className="gem-button-icon">{icon}</span>}
+      {leftIcon && <span className="gem-button-icon">{leftIcon}</span>}
       <span className="gem-button-value">{value}</span>
-      {iconPosition === "right" && <span className="gem-button-icon">{icon}</span>}
+      {rightIcon && <span className="gem-button-icon">{rightIcon}</span>}
     </button>
   );
 }
