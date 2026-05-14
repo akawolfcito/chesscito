@@ -39,10 +39,12 @@ export function ShareModal({
   title = "Share",
 }: Props) {
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setImgLoaded(false);
+      setImgError(false);
       return;
     }
     track("share_modal_open", {
@@ -60,7 +62,7 @@ export function ShareModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex flex-col items-center justify-end candy-modal-scrim animate-in fade-in duration-200"
+      className="fixed inset-0 z-[70] flex flex-col items-center justify-end candy-modal-scrim animate-in fade-in duration-200 overflow-hidden"
       onClick={() => onOpenChange(false)}
       onKeyDown={(e) => {
         if (e.key === "Escape") onOpenChange(false);
@@ -72,15 +74,14 @@ export function ShareModal({
     >
       {/* Preview card */}
       <div
-        className="flex flex-1 items-center justify-center px-6 py-8"
+        className="flex flex-1 items-center justify-center px-4 py-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div
-          className="relative w-full max-w-[320px] overflow-hidden rounded-2xl animate-in zoom-in-95 fade-in duration-300"
+          className="relative w-full max-w-[300px] max-h-full overflow-hidden rounded-xl animate-in zoom-in-95 fade-in duration-300"
           style={{
             aspectRatio: "1080 / 1350",
-            background: "rgba(255, 255, 255, 0.18)",
-            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.35)",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
           }}
         >
           {cardUrl ? (
@@ -88,13 +89,14 @@ export function ShareModal({
             <img
               src={cardUrl}
               alt="Share preview"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
               onLoad={() => setImgLoaded(true)}
+              onError={() => { setImgLoaded(true); setImgError(true); }}
             />
           ) : null}
           {!imgLoaded && (
             <div
-              className="absolute inset-0 flex items-center justify-center"
+              className="absolute inset-0 flex flex-col items-center justify-center gap-3"
               style={{ color: "rgba(110, 65, 15, 0.55)" }}
             >
               <div
@@ -104,6 +106,22 @@ export function ShareModal({
                   borderTopColor: "rgba(110, 65, 15, 0.85)",
                 }}
               />
+              <span
+                className="text-xs font-semibold"
+                style={{ color: "rgba(110, 65, 15, 0.60)" }}
+              >
+                Generating your card…
+              </span>
+            </div>
+          )}
+          {imgError && (
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ color: "rgba(110, 65, 15, 0.45)" }}
+            >
+              <span className="text-center text-xs leading-snug px-4">
+                Card preview unavailable
+              </span>
             </div>
           )}
         </div>
@@ -111,7 +129,7 @@ export function ShareModal({
 
       {/* Share sheet — sheet-bg-hub for parity with dock sheets */}
       <div
-        className="sheet-bg-hub w-full animate-in slide-in-from-bottom-8 duration-300"
+        className="sheet-bg-hub w-full flex-shrink-0 animate-in slide-in-from-bottom-8 duration-300"
         onClick={(e) => e.stopPropagation()}
         style={{
           borderTopLeftRadius: 24,

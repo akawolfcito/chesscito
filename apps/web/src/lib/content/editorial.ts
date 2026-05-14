@@ -88,7 +88,7 @@ export const RESULT_OVERLAY_COPY = {
   },
   score: {
     title: "Score Recorded!",
-    subtitle: "Sealed on Celo — this record is yours forever.",
+    subtitle: "Sealed on Celo. This score is yours — permanently, provably, forever.",
   },
   shop: {
     title: "Purchase Complete!",
@@ -215,9 +215,9 @@ export const INVITE_COPY = {
 export const SHARE_COPY = {
   button: "Share",
   badge: (piece: string, stars: number) =>
-    `I just earned the ${piece} Ascendant badge on Chesscito! ${stars}/15 stars`,
+    `I earned the ${piece} Ascendant badge on Chesscito! ${stars}/15 stars — permanently on-chain.`,
   score: (stars: number) =>
-    `I just submitted my score on Chesscito! ${stars}/15 stars`,
+    `I just locked my Chesscito score on-chain! ${stars}/15 stars — permanently recorded.`,
   shop: (item: string) =>
     `I just got ${item} on Chesscito!`,
   fallbackCopied: "Copied to clipboard!",

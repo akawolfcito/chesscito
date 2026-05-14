@@ -5,7 +5,6 @@ import { loadCinzelFont } from "@/lib/og/font-loader";
 import {
   parseIntParam,
   parseEnumParam,
-  sanitizeName,
   readSearchParams,
 } from "@/lib/og/validators";
 import { THEME_CONFIG } from "@/lib/theme";
@@ -44,9 +43,7 @@ export async function GET(req: Request) {
     qs.get("type"),
     ["piece-complete", "badge-earned"] as const,
   );
-  const name = sanitizeName(qs.get("name"), 20);
 
-  const bgUrl = new URL("/art/redesign/bg/bg-ch.png", req.url).toString();
   const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
   const pieceFile = "w-" + piece + ".png";
   const pieceUrl = new URL(THEME_CONFIG.piecesBase + "/" + pieceFile, req.url).toString();
@@ -54,64 +51,53 @@ export async function GET(req: Request) {
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
 
-  const footer = name ? `by ${name}` : "";
-
-  /* Compact, punchy chip — the previous "PIECE COMPLETE · Rook · 15/15"
-     was busy. The stars row below makes the count redundant, and the
-     centered cluster reads cleaner with one strong phrase. */
+  /* Main title — centered, uses the chip-label pattern from before but
+     moved into the hero area where it reads as a proper card title
+     rather than a small pill. */
   const chipLabel =
     type === "badge-earned"
       ? `${PIECE_LABEL[piece]} Ascendant`
       : `${PIECE_LABEL[piece]} Mastered`;
 
-  /* Visible stars row — was missing entirely. The card's whole reason
-     for existing is "I earned X/15 stars on this piece"; without
-     visible stars the player has no badge of pride to share. */
-  const starsRow = (
+  /* Score badge — text-based, avoids star glyphs which rendered as
+     empty boxes. Clean "X / 15 STARS" with a golden pill treatment
+     that feels like a collectible card rarity marker. */
+  const scoreBadge = (
     <div
       style={{
         display: "flex",
-        gap: 14,
-        marginTop: 24,
+        alignItems: "center",
+        padding: "10px 28px",
+        borderRadius: 999,
+        background: "rgba(255, 245, 215, 0.88)",
+        border: "2px solid rgba(245, 158, 11, 0.40)",
+        boxShadow: "0 3px 10px rgba(120, 65, 5, 0.15)",
       }}
     >
-      {[0, 1, 2, 3, 4].map((i) => {
-        // 5 exercises × 3 stars max = 15 total. Each row star fills
-        // when the player earned at least one star on that exercise
-        // (ceil(stars / 3) approximation).
-        const filled = i < Math.ceil(stars / 3);
-        return (
-          <div
-            key={i}
-            style={{
-              display: "flex",
-              fontSize: 88,
-              lineHeight: 1,
-              color: filled ? "rgb(245, 158, 11)" : "rgba(110, 65, 15, 0.22)",
-              textShadow: filled
-                ? "0 4px 0 rgba(120, 65, 5, 0.55), 0 0 18px rgba(245, 158, 11, 0.55)"
-                : "0 1px 0 rgba(255, 245, 215, 0.55)",
-            }}
-          >
-            ★
-          </div>
-        );
-      })}
+      <span
+        style={{
+          fontSize: 30,
+          fontWeight: 800,
+          fontFamily: useCinzel ? "Cinzel" : "serif",
+          letterSpacing: "0.04em",
+          color: "rgba(63, 34, 8, 0.95)",
+        }}
+      >
+        {stars} / {maxStars} STARS
+      </span>
     </div>
   );
 
   const pngResponse = new ImageResponse(
     (
       <CardShell
-        bgUrl={bgUrl}
+        bgUrl={null}
         mascotUrl={mascotUrl}
-        chip={chipLabel}
-        footer={footer}
+        footer="Chesscito · saved on Celo"
         useCinzel={useCinzel}
         heroSlot={
           <div
             style={{
-              position: "relative",
               display: "flex",
               flexDirection: "column",
               width: 860,
@@ -120,30 +106,74 @@ export async function GET(req: Request) {
               justifyContent: "center",
             }}
           >
+            {/* Type badge — structured achievement label */}
             <div
               style={{
-                position: "absolute",
-                width: 720,
-                height: 720,
-                borderRadius: 9999,
-                background:
-                  "radial-gradient(circle, rgba(245, 158, 11, 0.42) 0%, rgba(217, 180, 74, 0.18) 50%, transparent 78%)",
                 display: "flex",
-                top: 30,
+                fontSize: 26,
+                fontFamily: useCinzel ? "Cinzel" : "serif",
+                fontWeight: 700,
+                letterSpacing: "0.18em",
+                color: "rgba(110, 65, 15, 0.50)",
+                textShadow: "0 2px 0 rgba(255, 245, 215, 0.85)",
+                marginBottom: 14,
               }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={pieceUrl}
-              alt=""
-              width={560}
-              height={560}
+            >
+              {TYPE_TITLE[type]}
+            </div>
+
+            {/* Main title — piece name + mastery level */}
+            <div
+              style={{
+                display: "flex",
+                fontSize: 50,
+                fontFamily: useCinzel ? "Cinzel" : "serif",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                color: "rgba(63, 34, 8, 0.95)",
+                textShadow: "0 3px 0 rgba(255, 245, 215, 0.90)",
+                marginBottom: 30,
+              }}
+            >
+              {chipLabel}
+            </div>
+
+            {/* Piece with contained glow — reduced from 420px */}
+            <div
               style={{
                 position: "relative",
-                filter: "drop-shadow(0 14px 28px rgba(120, 65, 5, 0.40))",
+                width: 340,
+                height: 340,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 30,
               }}
-            />
-            {starsRow}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  width: 400,
+                  height: 400,
+                  borderRadius: 9999,
+                  background:
+                    "radial-gradient(circle, rgba(245, 158, 11, 0.42) 0%, rgba(217, 180, 74, 0.18) 50%, transparent 78%)",
+                }}
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={pieceUrl}
+                alt=""
+                width={280}
+                height={280}
+                style={{
+                  position: "relative",
+                  filter: "drop-shadow(0 12px 24px rgba(120, 65, 5, 0.38))",
+                }}
+              />
+            </div>
+
+            {scoreBadge}
           </div>
         }
       />

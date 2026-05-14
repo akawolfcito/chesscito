@@ -104,7 +104,7 @@ function SuccessImage({
   glowClass?: string;
   size?: "sm" | "lg";
 }) {
-  const src = variant === "badge" ? getBadgeImg(pieceType) : VARIANT_IMG[variant];
+  const src = variant === "badge" || variant === "score" ? getBadgeImg(pieceType) : VARIANT_IMG[variant];
   const hasOptimized = variant === "badge" ? THEME_CONFIG.hasOptimizedFormats : true;
   const sizeClass = size === "sm" ? "h-20 w-20" : "h-32 w-32";
   return (
@@ -245,10 +245,13 @@ export function ResultOverlay({
   totalStars,
 }: ResultOverlayProps) {
   const [exiting, setExiting] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const isError = variant === "error";
   const title = getTitle(variant, errorKind);
   const subtitle = getSubtitle(variant, pieceType, itemLabel, errorMessage, errorKind);
   const hint = isError ? getHint(errorKind) : null;
+  const shareText = !isError ? getShareText(variant, pieceType, itemLabel, totalStars) : "";
+  const shareCardUrl = !isError ? getCardUrl(variant, pieceType, totalStars) : null;
 
   function handleDismiss() {
     setExiting(true);
@@ -291,10 +294,19 @@ export function ResultOverlay({
                   {RESULT_OVERLAY_COPY.cta.dismiss}
                 </button>
               </div>
-            ) : (
+            ) : isError ? (
               <Button type="button" variant="game-primary" size="game" onClick={handleDismiss} className="w-full">
-                {RESULT_OVERLAY_COPY.cta.continue}
+                {RESULT_OVERLAY_COPY.cta.dismiss}
               </Button>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <Button type="button" variant="game-primary" size="game" onClick={() => setShareOpen(true)} className="w-full">
+                  {SHARE_COPY.button}
+                </Button>
+                <Button type="button" variant="game-ghost" size="game" onClick={handleDismiss} className="w-full">
+                  {RESULT_OVERLAY_COPY.cta.continue}
+                </Button>
+              </div>
             )
           }
           meta={
@@ -357,12 +369,18 @@ export function ResultOverlay({
               </Link>
             ) : null}
 
-            {!isError ? (
-              <ShareRow variant={variant} pieceType={pieceType} itemLabel={itemLabel} totalStars={totalStars} />
-            ) : null}
           </div>
         </CandyGlassShell>
       </div>
+
+      {!isError && (
+        <ShareModal
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          cardUrl={shareCardUrl}
+          text={shareText}
+        />
+      )}
     </div>
   );
 }
