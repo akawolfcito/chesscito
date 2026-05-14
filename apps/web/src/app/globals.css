@@ -2291,54 +2291,95 @@
   transform-origin: left;
 }
 
-/* ── Arena difficulty pill (pure CSS) ── */
+/* ── Arena HUD controls (pure CSS) ── */
+.arena-hud-btn,
+.arena-hud-chip,
 .arena-difficulty-pill {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.65rem;
-  height: 2rem;
-  min-width: 8rem;
-  padding: 0 1rem;
-  border-radius: 999px;
   background: linear-gradient(180deg, #74a129 0%, #4b781a 100%);
   border: 2.5px solid #f6cc43;
   box-shadow: 
-    0 4px 10px rgba(0, 0, 0, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.4),
     inset 0 2px 4px rgba(255, 255, 255, 0.3),
     inset 0 -2px 6px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
   transition: all var(--duration-snap, 120ms) ease-out;
   outline: none;
   white-space: nowrap;
 }
 
+.arena-hud-btn:active,
+.arena-hud-chip:active,
 .arena-difficulty-pill:active {
-  transform: scale(0.96) translateY(1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  transform: scale(0.95);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
+.arena-hud-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.arena-hud-chip {
+  height: 2.25rem;
+  padding: 0 1.25rem;
+  border-radius: 999px;
+  gap: 0.75rem;
+}
+
+.arena-difficulty-pill {
+  height: 2rem;
+  min-width: 8.5rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  gap: 0.65rem;
+  cursor: pointer;
+}
+
+.arena-hud-chip-label,
 .arena-difficulty-pill-label {
   color: #ffffff;
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-weight: 900;
-  font-size: 0.85rem;
-  text-transform: capitalize;
-  letter-spacing: 0.02em;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
+.arena-hud-chip-label {
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+}
+
+.arena-difficulty-pill-label {
+  font-size: 0.85rem;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
+.arena-hud-icon,
 .arena-difficulty-pill-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   flex-shrink: 0;
+}
+
+.arena-hud-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.arena-difficulty-pill-icon {
   width: 1.15rem;
   height: 1.15rem;
 }
 
+.arena-hud-icon svg,
+.arena-hud-icon img,
 .arena-difficulty-pill-icon svg,
 .arena-difficulty-pill-icon img {
   width: 100% !important;

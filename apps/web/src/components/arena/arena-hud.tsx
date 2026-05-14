@@ -63,41 +63,37 @@ export function ArenaHud({
           type="button"
           onClick={handleBackClick}
           className={[
-            "group relative flex h-10 shrink-0 items-center justify-center transition-all active:scale-95",
-            confirmingBack
-              ? "w-auto gap-2 rounded-full border border-amber-400/40 bg-amber-500/20 backdrop-blur-md px-3 text-amber-50 shadow-lg"
-              : "w-10 rounded-full border border-amber-400/30 bg-amber-500/10 backdrop-blur-sm shadow-sm hover:bg-amber-500/20",
+            "arena-hud-btn group active:scale-95",
+            confirmingBack ? "w-auto gap-2 px-4 rounded-full" : "",
           ].join(" ")}
           aria-label={ARENA_COPY.backToHub}
         >
           {confirmingBack ? (
             <>
-              <CandyIcon name="check" className="h-3.5 w-3.5 animate-in zoom-in duration-200" />
-              <span className="text-[0.7rem] font-bold uppercase tracking-wider">{ARENA_COPY.backToHub}</span>
+              <CandyIcon name="check" className="h-5 w-5 animate-in zoom-in duration-200" />
+              <span className="text-[0.7rem] font-bold uppercase tracking-wider text-white">{ARENA_COPY.backToHub}</span>
               <span 
                 className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-amber-400/60" 
                 style={{ animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards` }} 
               />
             </>
           ) : (
-            <CandyBanner name="btn-back" className="h-6 w-6 opacity-90 group-hover:opacity-100" />
+            <div className="arena-hud-icon">
+              <CandyBanner name="btn-back" className="opacity-90 group-hover:opacity-100" />
+            </div>
           )}
         </button>
 
-        {/* Live game timer chip (Amber) */}
+        {/* Live game timer chip (Pure CSS) */}
         <div
-          className="flex h-9 items-center gap-2 rounded-full border border-amber-400/40 bg-amber-600/20 px-4 shadow-sm backdrop-blur-sm"
+          className="arena-hud-chip"
           aria-label="Elapsed time"
           role="timer"
         >
-          <CandyIcon
-            name="time"
-            className="h-4 w-4 shrink-0"
-          />
-          <span
-            className="fantasy-title text-[0.85rem] font-black tabular-nums tracking-widest text-amber-50"
-            style={{ textShadow: "0 1px 2px rgba(120, 60, 0, 0.6)" }}
-          >
+          <div className="arena-hud-icon">
+            <CandyIcon name="time" />
+          </div>
+          <span className="arena-hud-chip-label">
             {formatTime(elapsedMs)}
           </span>
         </div>
