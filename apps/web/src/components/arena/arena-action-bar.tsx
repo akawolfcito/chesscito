@@ -46,12 +46,12 @@ export function ArenaActionBar({
   if (isEndState) return null;
 
   return (
-    <div className="arena-action-bar mx-3 mt-3 flex items-center justify-between gap-6 px-4 pb-4">
+    <div className="arena-action-bar flex items-center justify-between gap-6 px-8 pb-4 pt-2">
       <button
         type="button"
         onClick={handleResignClick}
         className={[
-          "arena-action-pill group flex flex-col items-center gap-1.5 transition-all active:scale-95",
+          "arena-action-pill group flex flex-col items-center gap-2 transition-all active:scale-95",
           confirmingResign ? "is-confirming scale-105" : "",
         ].join(" ")}
         aria-label={confirmingResign ? ARENA_COPY.resignConfirm : ARENA_COPY.resign}
@@ -61,7 +61,7 @@ export function ArenaActionBar({
           {confirmingResign ? (
             <CandyIcon name="check" className="h-6 w-6 text-white animate-in zoom-in duration-200" />
           ) : (
-            <CandyBanner name="btn-resign" className="h-8 w-8 opacity-90 group-hover:opacity-100" />
+            <CandyBanner name="btn-resign" className="h-8 w-8 opacity-90 group-hover:opacity-100 transition-opacity" />
           )}
           {confirmingResign && (
             <span
@@ -72,7 +72,7 @@ export function ArenaActionBar({
             />
           )}
         </div>
-        <span className="text-[0.65rem] font-black uppercase tracking-widest text-white/60 group-active:text-white/80">
+        <span className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white/50 group-active:text-white/80 transition-colors">
           {confirmingResign ? "Confirm?" : ARENA_COPY.resign}
         </span>
       </button>
@@ -83,13 +83,13 @@ export function ArenaActionBar({
         type="button"
         onClick={onUndo}
         disabled={!canUndo || !onUndo}
-        className="arena-action-pill group flex flex-col items-center gap-1.5 transition-all active:scale-95 disabled:pointer-events-none"
+        className="arena-action-pill group flex flex-col items-center gap-2 transition-all active:scale-95 disabled:pointer-events-none"
         aria-label={ARENA_COPY.undo}
       >
         <div className="arena-action-pill-icon rounded-full border border-white/20 shadow-md">
-          <CandyBanner name="btn-undo" className="h-8 w-8 opacity-90 group-hover:opacity-100" />
+          <CandyBanner name="btn-undo" className="h-8 w-8 opacity-90 group-hover:opacity-100 transition-opacity" />
         </div>
-        <span className="text-[0.65rem] font-black uppercase tracking-widest text-white/60">
+        <span className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white/50">
           {ARENA_COPY.undo}
         </span>
       </button>

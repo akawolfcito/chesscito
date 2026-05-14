@@ -1311,39 +1311,36 @@ function ArenaPageInner() {
           showCoachHint={ENABLE_COACH}
         />
 
-        {/* Difficulty pill — returning users auto-launch with last pick;
-            this is their non-intrusive escape hatch to change tier without
-            losing any match since reset is safe while the game is fresh.
-            Migrated to <GemButton> for diegetic consistency: difficulty
-            is a kingdom resource the player tunes mid-quest; chevron
-            icon signals the picker affordance (replaces the verbose
-            "tap to change" subtext, now in aria-label only). */}
         {!isEndState && (
           <div className="mx-3 mt-1 flex justify-center">
             <GemButton
               tone="default"
-              icon={<CandyIcon name="chevron-down" className="h-3 w-3" />}
+              icon={<CandyIcon name="chevron-down" className="h-3 w-3 opacity-60" />}
+              iconPosition="right"
               value={ARENA_COPY.difficulty[game.difficulty]}
               onClick={handleChangeDifficulty}
+              className="!w-auto !min-w-0 !h-7 !px-3 scale-90"
               aria-label={`Difficulty: ${ARENA_COPY.difficulty[game.difficulty]}. Tap to change.`}
             />
           </div>
         )}
 
-        <div className="relative w-full flex-1 min-h-0">
-          <ArenaBoard
-            pieces={game.pieces}
-            selectedSquare={game.selectedSquare}
-            legalMoves={game.legalMoves}
-            lastMove={game.lastMove}
-            checkSquare={game.checkSquare}
-            rejectingSquare={game.rejectingSquare}
-            isLocked={game.isThinking || isEndState || !!game.pendingPromotion}
-            isThinking={game.isThinking}
-            onSquareClick={game.selectSquare}
-            isCheckmatePause={isEndState && !showEndOverlay}
-            playerColor={game.playerColor}
-          />
+        <div className="relative w-full flex-1 min-h-0 flex flex-col justify-center">
+          <div className="w-full px-2">
+            <ArenaBoard
+              pieces={game.pieces}
+              selectedSquare={game.selectedSquare}
+              legalMoves={game.legalMoves}
+              lastMove={game.lastMove}
+              checkSquare={game.checkSquare}
+              rejectingSquare={game.rejectingSquare}
+              isLocked={game.isThinking || isEndState || !!game.pendingPromotion}
+              isThinking={game.isThinking}
+              onSquareClick={game.selectSquare}
+              isCheckmatePause={isEndState && !showEndOverlay}
+              playerColor={game.playerColor}
+            />
+          </div>
           {game.pendingPromotion && (
             <PromotionOverlay onSelect={game.promoteWith} onCancel={game.cancelPromotion} />
           )}
@@ -1351,7 +1348,8 @@ function ArenaPageInner() {
 
         <ArenaActionBar
           onResign={game.resign}
-          canUndo={false}
+          onUndo={game.undo}
+          canUndo={game.canUndo}
           isEndState={isEndState}
         />
 

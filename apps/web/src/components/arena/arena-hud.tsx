@@ -56,9 +56,9 @@ export function ArenaHud({
   }
 
   return (
-    <div className="arena-hud mx-3 mt-3 flex flex-col gap-3">
+    <div className="arena-hud mx-3 flex flex-col gap-4">
       {/* Row 1: Back + live timer */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pt-1">
         <button
           type="button"
           onClick={handleBackClick}
@@ -66,7 +66,7 @@ export function ArenaHud({
             "group relative flex h-10 shrink-0 items-center justify-center transition-all active:scale-95",
             confirmingBack
               ? "w-auto gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-md px-3 text-white shadow-lg"
-              : "w-10 rounded-full border border-white/20 bg-black/10 backdrop-blur-sm",
+              : "w-10 rounded-full border border-white/20 bg-black/10 backdrop-blur-sm shadow-sm hover:bg-black/20",
           ].join(" ")}
           aria-label={ARENA_COPY.backToHub}
         >
@@ -84,9 +84,9 @@ export function ArenaHud({
           )}
         </button>
 
-        {/* Live game timer */}
+        {/* Live game timer chip */}
         <div
-          className="flex h-10 items-center gap-2 rounded-full border border-amber-300/20 bg-black/10 px-4 shadow-sm backdrop-blur-sm"
+          className="flex h-9 items-center gap-2 rounded-full border border-amber-300/20 bg-black/10 px-4 shadow-sm backdrop-blur-sm"
           aria-label="Elapsed time"
           role="timer"
         >
@@ -95,7 +95,7 @@ export function ArenaHud({
             className="h-3.5 w-3.5 shrink-0 opacity-70"
           />
           <span
-            className="fantasy-title text-[0.8rem] font-extrabold tabular-nums tracking-wider text-amber-50/90"
+            className="fantasy-title text-[0.8rem] font-extrabold tabular-nums tracking-widest text-amber-50/95"
             style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
           >
             {formatTime(elapsedMs)}
@@ -103,20 +103,19 @@ export function ArenaHud({
         </div>
       </div>
 
-      {/* Row 2: Matchup art */}
-      <div className="arena-hud-matchup flex items-center gap-2">
-        <PlayerAvatar variant="you" className="flex-1 min-w-0" />
-        <WoodenBanner variant="vs" className="shrink-0" />
-        <div className="relative flex-1 min-w-0">
-          <PlayerAvatar variant="bot" />
+      {/* Row 2: Matchup art (Heads) */}
+      <div className="arena-hud-matchup relative flex items-center justify-between px-4">
+        <PlayerAvatar variant="you" className="h-14 w-14 shrink-0" />
+        <WoodenBanner variant="vs" className="shrink-0 scale-75" />
+        <div className="relative h-14 w-14 shrink-0">
+          <PlayerAvatar variant="bot" className="h-full w-full" />
           {isThinking && (
-            <span className="pointer-events-none absolute -top-1 right-1 flex h-5 w-8">
+            <span className="pointer-events-none absolute -top-1 -right-1 flex h-5 w-8">
               <LottieAnimation src="/animations/sandy-loading.lottie" loop className="h-full w-full" />
             </span>
           )}
         </div>
       </div>
-
     </div>
   );
 }
