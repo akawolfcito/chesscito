@@ -511,9 +511,32 @@
   }
 
   .result-screen-overlay {
-    background-color: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background-color: #f7f3e8; /* Solid cream base */
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    overflow: hidden;
+  }
+  
+  .result-screen-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/art/redesign/bg/bg-ch.png");
+    background-size: cover;
+    background-position: top center;
+    background-repeat: no-repeat;
+    opacity: 0.15; /* Very subtle trees to ground the screen */
+    filter: sepia(0.2) saturate(0.8);
+    z-index: 0;
+  }
+
+  .result-screen-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(247, 243, 232, 0.4) 0%, rgba(247, 243, 232, 0.9) 100%);
+    z-index: 0;
   }
 
   /* ── Candy-light sheet backgrounds ──
@@ -3338,16 +3361,11 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 12px;
   width: 100%;
   overflow: hidden;
-  border: 1px solid rgba(255, 246, 185, 0.45);
+  border: 1px solid rgba(139, 92, 24, 0.12);
   border-radius: 12px;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(255, 255, 221, 0.85), transparent 45%),
-    linear-gradient(135deg, rgba(255, 242, 176, 0.95) 0%, rgba(187, 235, 130, 0.90) 56%, rgba(84, 169, 121, 0.88) 100%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 230, 0.52) inset,
-    0 4px 12px rgba(21, 58, 22, 0.12);
+  background: rgba(139, 92, 24, 0.04);
+  box-shadow: none;
   color: #4c2a10;
-  text-shadow: 0 1px 0 rgba(255, 246, 200, 0.42);
 }
 
 .coach-preview-card {
@@ -3359,21 +3377,20 @@ button.hud-resource-chip:active:not(:disabled) {
 .coach-preview-card::after {
   content: "COACH";
   position: absolute;
-  right: -10px;
-  bottom: 2px;
+  right: -5px;
+  bottom: -2px;
   z-index: -1;
-  color: rgba(255, 255, 230, 0.08);
+  color: rgba(139, 92, 24, 0.04);
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 900;
   line-height: 1;
-  transform: rotate(-5deg);
+  transform: rotate(-3deg);
 }
 
 .coach-preview-card.is-active {
-  background:
-    radial-gradient(circle at 12% 0%, rgba(255, 255, 221, 0.96), transparent 36%),
-    linear-gradient(135deg, rgba(209, 255, 142, 0.98) 0%, rgba(69, 181, 100, 0.94) 58%, rgba(28, 112, 80, 0.92) 100%);
+  background: rgba(139, 92, 24, 0.06);
+  border-color: rgba(139, 92, 24, 0.18);
 }
 
 .coach-preview-card-copy {
@@ -3440,18 +3457,15 @@ button.hud-resource-chip:active:not(:disabled) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 0;
+  border: 1px solid rgba(139, 92, 24, 0.2);
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(150, 89, 24, 0.95) 0%, rgba(118, 66, 7, 0.95) 100%);
-  color: #fff2bf;
+  background: rgba(139, 92, 24, 0.08);
+  color: #764207;
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
   font-weight: 900;
   line-height: 1.02;
   text-align: center;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
-  box-shadow:
-    0 1px 0 rgba(255, 244, 186, 0.25) inset,
-    0 3px 6px rgba(72, 41, 5, 0.15);
+  box-shadow: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }

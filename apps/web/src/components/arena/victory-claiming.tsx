@@ -99,7 +99,7 @@ export function VictoryClaiming({
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="mt-1 w-full py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/60 transition-opacity hover:opacity-100"
+                className="mt-1 w-full py-2 text-[11px] font-black uppercase tracking-[0.22em] text-amber-900/80 transition-opacity hover:opacity-100"
               >
                 {ARENA_COPY.backToHub}
               </button>

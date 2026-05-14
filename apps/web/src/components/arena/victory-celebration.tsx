@@ -130,9 +130,9 @@ export function VictoryCelebration({
                   variant="game-ghost"
                   size="game-md"
                   onClick={onPlayAgain}
-                  className="flex-1 !h-12 border-amber-900/15 bg-amber-900/5 text-sm font-bold"
+                  className="flex-1 !h-12 border-amber-900/25 bg-amber-900/10 text-sm font-black shadow-sm"
                 >
-                  <CandyIcon name="refresh" className="mr-1.5 h-4 w-4" />
+                  <CandyIcon name="refresh" className="mr-1.5 h-3.5 w-3.5" />
                   {ARENA_COPY.playAgain}
                 </Button>
                 <Button
@@ -140,7 +140,7 @@ export function VictoryCelebration({
                   variant="game-ghost"
                   size="game-md"
                   onClick={() => setShareOpen(true)}
-                  className="flex-1 !h-12 border-amber-900/15 bg-amber-900/5 text-sm font-bold"
+                  className="flex-1 !h-12 border-amber-900/25 bg-amber-900/10 text-sm font-black shadow-sm"
                 >
                   <CandyIcon name="share" className="mr-1.5 h-3.5 w-3.5" />
                   {SHARE_COPY.button}
@@ -151,7 +151,7 @@ export function VictoryCelebration({
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="mt-1 w-full py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/60 transition-opacity hover:opacity-100"
+                className="mt-1 w-full py-2 text-[11px] font-black uppercase tracking-[0.22em] text-amber-900/80 transition-opacity hover:opacity-100"
               >
                 {ARENA_COPY.backToHub}
               </button>

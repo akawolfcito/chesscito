@@ -75,48 +75,50 @@ export function VictoryClaimSuccess({
           className="!gap-4 shadow-none"
           cta={
             <div className="flex w-full flex-col gap-3 animate-in fade-in duration-300 fill-mode-both [animation-delay:400ms]">
-              {/* 1. Secondary Value: Coach Review Card */}
+              {/* Secondary Value: Coach Review Card */}
               {coachPreview && (
                 <div className="w-full">
                   {coachPreview}
                 </div>
               )}
 
-              {/* 2. Primary Action: Play Again or Share */}
-              <div className="flex w-full flex-col gap-2.5">
+              {/* Primary / secondary actions */}
+              <div className="flex w-full gap-2">
                 <PrincipalButton
                   size="medium"
                   leadingIcon={<CandyIcon name="refresh" className="h-4 w-4" />}
                   onClick={onPlayAgain}
+                  className="flex-1"
                   aria-label={ARENA_COPY.playAgain}
                 >
                   {ARENA_COPY.playAgain}
                 </PrincipalButton>
+              </div>
 
-                <div className="flex w-full gap-2">
-                  {onAskCoach && (
-                    <AskCoachButton onClick={onAskCoach} className="flex-1" />
-                  )}
-                  {isShareReady && (
-                    <Button
-                      type="button"
-                      variant="game-ghost"
-                      size="game-md"
-                      onClick={() => setShareOpen(true)}
-                      className="flex-1 !h-12 border-amber-900/15 bg-amber-900/5 text-sm font-bold"
-                    >
-                      <CandyIcon name="share" className="mr-1.5 h-3.5 w-3.5" />
-                      {SHARE_COPY.button}
-                    </Button>
-                  )}
-                </div>
+              <div className="flex w-full gap-2">
+                {onAskCoach && (
+                  <AskCoachButton onClick={onAskCoach} className="flex-1" />
+                )}
+
+                {isShareReady && (
+                  <Button
+                    type="button"
+                    variant="game-ghost"
+                    size="game-md"
+                    onClick={() => setShareOpen(true)}
+                    className="flex-1 !h-12 border-amber-900/25 bg-amber-900/10 text-sm font-black shadow-sm"
+                  >
+                    <CandyIcon name="share" className="mr-1.5 h-3.5 w-3.5" />
+                    {SHARE_COPY.button}
+                  </Button>
+                )}
               </div>
 
               {/* Exit shortcut */}
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="mt-1 w-full py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/60 transition-opacity hover:opacity-100"
+                className="mt-1 w-full py-2 text-[11px] font-black uppercase tracking-[0.22em] text-amber-900/80 transition-opacity hover:opacity-100"
               >
                 {ARENA_COPY.backToHub}
               </button>
@@ -130,7 +132,7 @@ export function VictoryClaimSuccess({
                 <div className="absolute h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.30)_0%,rgba(217,180,74,0.15)_50%,transparent_70%)]" />
                 <LottieAnimation animationData={trophyData} loop={false} className="relative h-full w-full" />
               </div>
-              
+
               <div className="mt-1.5 flex flex-col items-center gap-0.5">
                 <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-900/60">
                   {VICTORY_CLAIM_COPY.successTitle}
