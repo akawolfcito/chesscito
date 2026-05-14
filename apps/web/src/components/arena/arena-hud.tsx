@@ -117,15 +117,6 @@ export function ArenaHud({
         </div>
       </div>
 
-      {/* Row 3 (optional): Coach hint — very subtle post-match signpost */}
-      {showCoachHint && !isEndState && (
-        <p
-          data-testid="arena-coach-hint"
-          className="text-[0.65rem] text-center font-bold uppercase tracking-[0.05em] text-white/30"
-        >
-          {ARENA_COPY.coachHudHint}
-        </p>
-      )}
     </div>
   );
 }

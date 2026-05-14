@@ -619,10 +619,10 @@ export const ARENA_COPY = {
    *  hides the hint alongside the rest of the Coach surface. */
   coachHudHint: "Coach reviews after checkmate",
   coachSignal: {
-    inactiveTitle: "Coach can review this match",
+    inactiveTitle: "Review after match",
     inactiveBody: "Unlock full review after playing",
     inactiveCta: "Train with Coach",
-    activeTitle: "Coach ready",
+    activeTitle: "Review after match",
     activeBody: "Review after checkmate",
   },
   coachPreview: {

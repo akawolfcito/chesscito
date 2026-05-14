@@ -14,25 +14,23 @@ export function CoachReviewSignal({ proActive, onCta }: CoachReviewSignalProps) 
     <button
       type="button"
       onClick={!proActive && onCta ? onCta : undefined}
-      className={`mx-auto mb-2 flex w-max items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+      className={`mx-auto mb-2 flex w-max items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[0.7rem] font-bold uppercase tracking-wider transition-colors ${
         proActive
-          ? "bg-amber-100/50 text-amber-900 border border-amber-900/10 shadow-sm"
-          : "bg-white/40 text-amber-900/80 hover:bg-white/60"
+          ? "bg-amber-100/40 text-amber-950 border border-amber-900/10 shadow-sm"
+          : "bg-white/30 text-amber-900/60 hover:bg-white/50"
       }`}
       aria-label="Coach Review"
       data-testid="coach-review-signal"
     >
-      <span className="font-bold opacity-60" aria-hidden="true">
-        {proActive ? "PRO" : "COACH"}
+      <span className="opacity-80" aria-hidden="true">
+        {proActive ? "PRO" : "Coach"}
       </span>
-      <span>
-        {proActive ? copy.activeTitle : copy.inactiveTitle}
+      <span className="opacity-40" aria-hidden="true">
+        ·
       </span>
-      {!proActive && onCta && (
-        <span className="font-semibold underline underline-offset-2 opacity-80 ml-1">
-          {copy.inactiveCta}
-        </span>
-      )}
+      <span className="opacity-90">
+        {copy.inactiveTitle}
+      </span>
     </button>
   );
 }
