@@ -2243,7 +2243,8 @@
 }
 
 .arena-action-pill:disabled {
-  opacity: 0.45;
+  opacity: 0.35;
+  filter: grayscale(1) contrast(0.8);
   cursor: not-allowed;
 }
 

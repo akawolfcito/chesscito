@@ -46,30 +46,35 @@ export function ArenaActionBar({
   if (isEndState) return null;
 
   return (
-    <div className="arena-action-bar mx-2 mt-2 flex items-end justify-between gap-3">
+    <div className="arena-action-bar mx-3 mt-3 flex items-center justify-between gap-6 px-4 pb-4">
       <button
         type="button"
         onClick={handleResignClick}
-        className={`arena-action-pill${confirmingResign ? " is-confirming" : ""}`}
+        className={[
+          "arena-action-pill group flex flex-col items-center gap-1.5 transition-all active:scale-95",
+          confirmingResign ? "is-confirming scale-105" : "",
+        ].join(" ")}
         aria-label={confirmingResign ? ARENA_COPY.resignConfirm : ARENA_COPY.resign}
         aria-pressed={confirmingResign}
       >
-        <span className="arena-action-pill-icon">
+        <div className="arena-action-pill-icon relative overflow-hidden rounded-full border border-white/20 shadow-md">
           {confirmingResign ? (
-            <CandyIcon name="check" className="h-7 w-7" />
+            <CandyIcon name="check" className="h-6 w-6 text-white animate-in zoom-in duration-200" />
           ) : (
-            <CandyBanner name="btn-resign" className="h-9 w-9" />
+            <CandyBanner name="btn-resign" className="h-8 w-8 opacity-90 group-hover:opacity-100" />
           )}
+          {confirmingResign && (
+            <span
+              className="absolute bottom-0 left-0 h-1 w-full origin-left bg-white/40"
+              style={{
+                animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards`,
+              }}
+            />
+          )}
+        </div>
+        <span className="text-[0.65rem] font-black uppercase tracking-widest text-white/60 group-active:text-white/80">
+          {confirmingResign ? "Confirm?" : ARENA_COPY.resign}
         </span>
-        <span className="arena-action-pill-label">{ARENA_COPY.resign}</span>
-        {confirmingResign ? (
-          <span
-            className="arena-action-pill-countdown"
-            style={{
-              animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards`,
-            }}
-          />
-        ) : null}
       </button>
 
       <div className="arena-action-banner-slot flex-1" />
@@ -78,13 +83,15 @@ export function ArenaActionBar({
         type="button"
         onClick={onUndo}
         disabled={!canUndo || !onUndo}
-        className="arena-action-pill"
+        className="arena-action-pill group flex flex-col items-center gap-1.5 transition-all active:scale-95 disabled:pointer-events-none"
         aria-label={ARENA_COPY.undo}
       >
-        <span className="arena-action-pill-icon">
-          <CandyBanner name="btn-undo" className="h-9 w-9" />
+        <div className="arena-action-pill-icon rounded-full border border-white/20 shadow-md">
+          <CandyBanner name="btn-undo" className="h-8 w-8 opacity-90 group-hover:opacity-100" />
+        </div>
+        <span className="text-[0.65rem] font-black uppercase tracking-widest text-white/60">
+          {ARENA_COPY.undo}
         </span>
-        <span className="arena-action-pill-label">{ARENA_COPY.undo}</span>
       </button>
     </div>
   );
