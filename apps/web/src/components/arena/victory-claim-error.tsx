@@ -91,7 +91,7 @@ export function VictoryClaimError({
               <Button
                 type="button"
                 variant="game-ghost"
-                size="game-md"
+                size="game-sm"
                 onClick={onPlayAgain}
                 className="w-full !h-12 border-amber-900/10 bg-amber-900/5 text-sm font-bold text-amber-900/80"
               >
@@ -120,7 +120,7 @@ export function VictoryClaimError({
                   <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
                 </div>
               </div>
-              
+
               <div className="mt-1.5 flex flex-col items-center gap-0.5">
                 <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-900/60">
                   {kindCopy.title}

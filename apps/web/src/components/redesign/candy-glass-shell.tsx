@@ -5,11 +5,11 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 
 type CandyGlassShellProps = {
   /** Title rendered at the top-left of the panel header. */
-  title: string;
+  title?: string;
   /** Called when the user taps the translucent red × close button. */
-  onClose: () => void;
+  onClose?: () => void;
   /** Aria label for the close button. */
-  closeLabel: string;
+  closeLabel?: string;
   /** Main body content. */
   children: ReactNode;
   /** Optional CTA row pinned below the body (buttons, links). */
@@ -39,9 +39,9 @@ type CandyGlassShellProps = {
  * primitive. Tracked in M2 v1.2 spec §"Migration impact (downstream)".
  */
 export function CandyGlassShell({
-  title,
+  title = "",
   onClose,
-  closeLabel,
+  closeLabel = "Close",
   children,
   cta,
   meta,
@@ -52,11 +52,10 @@ export function CandyGlassShell({
 
   return (
     <div
-      className={`${isScreen ? "" : "sheet-bg-hub"} flex w-full flex-col gap-3 overscroll-contain px-5 py-5 ${
-        isScreen
-          ? "min-h-full overflow-visible rounded-none"
-          : "max-h-[90dvh] overflow-y-auto rounded-3xl"
-      } ${className}`.trim()}
+      className={`${isScreen ? "" : "sheet-bg-hub"} flex w-full flex-col gap-3 overscroll-contain px-5 py-5 ${isScreen
+        ? "min-h-full overflow-visible rounded-none"
+        : "max-h-[90dvh] overflow-y-auto rounded-3xl"
+        } ${className}`.trim()}
       style={{
         border: isScreen ? "0" : "1px solid rgba(255, 255, 255, 0.45)",
         boxShadow: isScreen

@@ -384,6 +384,7 @@ export const DIFFICULTY_LABELS: Record<number, string> = {
 } as const;
 
 export const VICTORY_CLAIM_COPY = {
+  progressTitle: "Saving...",
   claimButton: "Save Victory",
   claimHelper: "Save this victory permanently and unlock your share card",
   claimValueHint: (price: string) => price,

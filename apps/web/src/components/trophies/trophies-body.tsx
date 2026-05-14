@@ -186,10 +186,13 @@ export function TrophiesBody() {
           <p className="text-sm font-medium opacity-60 leading-relaxed px-2">
             {TROPHY_VITRINE_COPY.noVictories}
           </p>
-          <Link href="/arena" className="w-full">
-            <PrincipalButton size="medium" className="w-full">
+          <Link
+            href="/arena"
+            className="principal-button principal-button-medium inline-flex w-full items-center justify-center text-center"
+          >
+            <span className="principal-button-label">
               {TROPHY_VITRINE_COPY.arenaLink}
-            </PrincipalButton>
+            </span>
           </Link>
         </div>
       ) : (
@@ -210,18 +213,23 @@ export function TrophiesBody() {
       key="achievements"
       icon={<CandyIcon name="star" className="h-4 w-4" />}
       title={ACHIEVEMENTS_COPY.sectionTitle}
-      action={
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black opacity-30">PROGRESS</span>
-          <CandyChip variant="warm" tone="subtle">
-            {ACHIEVEMENTS_COPY.sectionDescription(summary.earnedCount, summary.total)}
-          </CandyChip>
-        </div>
-      }
     >
+      <div className="mb-4 flex items-center justify-center gap-2">
+        <span className="text-[10px] font-black uppercase tracking-[0.18em] opacity-30">
+          PROGRESS
+        </span>
+        <CandyChip variant="warm" tone="subtle">
+          {ACHIEVEMENTS_COPY.sectionDescription(
+            summary.earnedCount,
+            summary.total,
+          )}
+        </CandyChip>
+      </div>
+
       <AchievementsGrid achievements={summary.list} />
+
       {summary.earnedCount === 0 && (
-        <p className="mt-6 text-center text-[11px] font-bold opacity-40 uppercase tracking-widest">
+        <p className="mt-6 text-center text-[11px] font-bold uppercase tracking-widest opacity-40">
           {ACHIEVEMENTS_COPY.emptyHint}
         </p>
       )}
@@ -262,7 +270,7 @@ export function TrophiesBody() {
           </h3>
           <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[rgba(110,65,15,0.15)]" />
         </div>
-        
+
         <ul className="flex flex-col gap-3" role="list">
           {ROADMAP_COPY.items.map((item) => (
             <li key={item.title} className="roadmap-item">

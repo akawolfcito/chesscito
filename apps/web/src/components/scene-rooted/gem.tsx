@@ -22,6 +22,11 @@ export type GemBadgeProps = {
 };
 
 export type GemButtonProps = {
+  /**
+   * Backward-compatible icon slot.
+   * Prefer leftIcon for new usage.
+   */
+  icon?: ReactNode;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   value: ReactNode;
@@ -75,6 +80,7 @@ export function GemBadge({
 }
 
 export function GemButton({
+  icon,
   leftIcon,
   rightIcon,
   value,
@@ -103,6 +109,7 @@ export function GemButton({
     onClick();
   };
 
+  const leadingIcon = leftIcon ?? icon;
   return (
     <button
       ref={ref}
@@ -115,7 +122,7 @@ export function GemButton({
       onClick={handleClick}
       aria-label={ariaLabel}
     >
-      {leftIcon && <span className="gem-button-icon">{leftIcon}</span>}
+      {leadingIcon && <span className="gem-button-icon">{leadingIcon}</span>}
       <span className="gem-button-value">{value}</span>
       {rightIcon && <span className="gem-button-icon">{rightIcon}</span>}
     </button>

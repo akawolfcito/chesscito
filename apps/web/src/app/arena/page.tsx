@@ -798,7 +798,7 @@ function ArenaPageInner() {
           timeMs: game.elapsedMs,
           txHash: claimHash,
         }),
-      }).catch(() => {});
+      }).catch(() => { });
 
       // Optimistic entry for trophies page
       try {
@@ -836,9 +836,9 @@ function ArenaPageInner() {
       const raw = err instanceof Error ? err.message : "Claim failed";
       const errorKind = /expired/i.test(raw) ? "expired"
         : /insufficient/i.test(raw) ? "insufficient_balance"
-        : /network/i.test(raw) ? "network"
-        : /revert/i.test(raw) ? "revert"
-        : "unknown";
+          : /network/i.test(raw) ? "network"
+            : /revert/i.test(raw) ? "revert"
+              : "unknown";
       // Signature expiry has its own actionable copy; everything else
       // routes through the shared classifier so we stop leaking raw
       // contract/viem strings to the player.
@@ -1081,9 +1081,9 @@ function ArenaPageInner() {
               softGate={
                 softGateOpen
                   ? {
-                      onLearn: () => router.push("/exercises"),
-                      onDismiss: () => setSoftGateOpen(false),
-                    }
+                    onLearn: () => router.push("/exercises"),
+                    onDismiss: () => setSoftGateOpen(false),
+                  }
                   : undefined
               }
               prizePool={{
@@ -1150,9 +1150,9 @@ function ArenaPageInner() {
               softGate={
                 softGateOpen
                   ? {
-                      onLearn: () => router.push("/exercises"),
-                      onDismiss: () => setSoftGateOpen(false),
-                    }
+                    onLearn: () => router.push("/exercises"),
+                    onDismiss: () => setSoftGateOpen(false),
+                  }
                   : undefined
               }
               prizePool={{
@@ -1356,8 +1356,8 @@ function ArenaPageInner() {
 
         <ArenaActionBar
           onResign={game.resign}
-          onUndo={game.undo}
-          canUndo={game.canUndo}
+          onUndo={undefined}
+          canUndo={false}
           isEndState={isEndState}
         />
 
@@ -1400,11 +1400,10 @@ function ArenaPageInner() {
 
       {isEndState && showEndOverlay && (
         <div
-          className={`transition-opacity duration-300 ${
-            coachPhase !== "idle"
+          className={`transition-opacity duration-300 ${coachPhase !== "idle"
               ? "opacity-0 pointer-events-none"
               : "opacity-100 pointer-events-auto"
-          }`}
+            }`}
         >
           <ArenaEndState
             status={game.status}
