@@ -64,31 +64,35 @@ export function CandyGlassShell({
           : "0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
       }}
     >
-      <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] pb-3 -mx-2">
-        <h2
-          className="fantasy-title px-2 text-lg font-extrabold"
-          style={{
-            color: "rgba(110, 65, 15, 0.95)",
-            textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-          }}
-        >
-          {title}
-        </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={closeLabel}
-          className="mr-2 flex h-11 w-11 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
-          style={{
-            background: "rgba(255, 255, 255, 0.15)",
-            borderColor: "rgba(255, 255, 255, 0.45)",
-            color: "#dc2626",
-            backdropFilter: "blur(6px)",
-          }}
-        >
-          <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
-        </button>
-      </div>
+      {(title || onClose) && (
+        <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] pb-3 -mx-2">
+          <h2
+            className="fantasy-title px-2 text-lg font-extrabold"
+            style={{
+              color: "rgba(110, 65, 15, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+            }}
+          >
+            {title}
+          </h2>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={closeLabel}
+              className="mr-2 flex h-11 w-11 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
+              style={{
+                background: "rgba(255, 255, 255, 0.15)",
+                borderColor: "rgba(255, 255, 255, 0.45)",
+                color: "#dc2626",
+                backdropFilter: "blur(6px)",
+              }}
+            >
+              <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      )}
       <div className="flex flex-col gap-2">{children}</div>
       {cta}
       {meta ? (

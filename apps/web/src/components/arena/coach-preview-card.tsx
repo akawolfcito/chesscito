@@ -8,6 +8,7 @@ type CoachPreviewCardProps = {
   resultLabel: string;
   moveCount: number;
   onPrimaryCta: () => void;
+  isCompact?: boolean;
 };
 
 export function CoachPreviewCard({
@@ -16,12 +17,13 @@ export function CoachPreviewCard({
   resultLabel,
   moveCount,
   onPrimaryCta,
+  isCompact,
 }: CoachPreviewCardProps) {
   const copy = ARENA_COPY.coachPreview;
 
   return (
     <section
-      className={`coach-preview-card${proActive ? " is-active" : " is-inactive"}`}
+      className={`coach-preview-card${proActive ? " is-active" : " is-inactive"}${isCompact ? " is-compact" : ""}`}
       aria-label={proActive ? copy.activeTitle : copy.inactiveTitle}
       data-testid="coach-preview-card"
     >

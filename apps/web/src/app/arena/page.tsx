@@ -533,6 +533,7 @@ function ArenaPageInner() {
       resultLabel={currentArenaResult()}
       moveCount={game.moveHistory.length}
       onPrimaryCta={handleCoachPreviewCta}
+      isCompact
     />
   ) : null;
 

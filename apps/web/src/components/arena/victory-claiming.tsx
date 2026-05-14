@@ -38,29 +38,14 @@ export function VictoryClaiming({
       </div>
 
       {/* Main content container */}
-      <div className="relative z-10 flex w-full max-w-[390px] flex-col gap-6 px-5 py-8 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <h2
-            className="fantasy-title animate-pulse text-4xl font-extrabold tracking-tight"
-            style={{
-              color: "#fff8e1",
-              textShadow: "0 2px 8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.3)",
-            }}
-          >
-            {VICTORY_CLAIM_COPY.progressTitle || "Saving..."}
-          </h2>
-          <p className="text-sm font-medium tracking-wide text-amber-100/80">
-            {VICTORY_CELEBRATION_COPY.title}
-          </p>
-        </div>
-
+      <div className="relative z-10 flex w-full max-w-[390px] flex-col px-5 py-6 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
         <CandyGlassShell
           title=""
-          onClose={onBackToHub}
-          closeLabel={ARENA_COPY.backToHub}
-          className="!max-h-none !gap-4 shadow-2xl"
+          onClose={undefined as any}
+          closeLabel=""
+          className="!max-h-[92vh] !gap-4 shadow-2xl"
           cta={
-            <div className="flex w-full flex-col items-center gap-3">
+            <div className="flex w-full flex-col items-center gap-4">
               <div className="flex items-center gap-3">
                 {VICTORY_CLAIM_COPY.progressSteps.map((label, i) => {
                   const stepKeys = ["signing", "confirming", "done"] as const;
@@ -106,36 +91,50 @@ export function VictoryClaiming({
                   );
                 })}
               </div>
-              <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
+              <p className="text-[10px] font-bold text-amber-900/60">
                 {VICTORY_CLAIM_COPY.progressTimeHint}
               </p>
-              {/* Back to Hub shortcut */}
+              {/* Exit shortcut */}
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="mt-1 w-full py-2 text-xs font-bold uppercase tracking-widest text-amber-900/60 transition-opacity hover:opacity-100"
+                className="mt-1 w-full py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/40 transition-opacity hover:opacity-100"
               >
                 {ARENA_COPY.backToHub}
               </button>
             </div>
           }
         >
-          <div className="flex flex-col items-center gap-3 text-center">
-            {/* Hero — Trophy with amber halo */}
-            <div className="relative flex items-center justify-center">
-              <div className="absolute h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.22)_0%,rgba(217,180,74,0.10)_50%,transparent_70%)]" />
-              <div className="relative h-32 w-32">
-                <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
+          <div className="flex flex-col items-center gap-4 text-center">
+            {/* Header: Trophy + Status + Saving... */}
+            <div className="flex flex-col items-center pt-1">
+              <div className="relative flex h-24 w-24 items-center justify-center">
+                <div className="absolute h-28 w-28 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.22)_0%,rgba(217,180,74,0.10)_50%,transparent_70%)]" />
+                <LottieAnimation animationData={trophyData} loop={false} className="relative h-full w-full" />
+              </div>
+              
+              <div className="mt-1.5 flex flex-col items-center gap-0.5">
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-900/60">
+                  {VICTORY_CELEBRATION_COPY.title}
+                </span>
+                <h2
+                  className="fantasy-title animate-pulse text-[32px] font-extrabold leading-tight tracking-tight text-amber-900/90"
+                  style={{
+                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 8px rgba(245, 158, 11, 0.30)",
+                  }}
+                >
+                  {VICTORY_CLAIM_COPY.progressTitle || "Saving..."}
+                </h2>
               </div>
             </div>
 
-            {/* Performance summary */}
-            <p className="text-sm" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
+            {/* Performance line */}
+            <p className="max-w-[260px] text-[12px] font-bold leading-relaxed text-amber-900/80">
               {VICTORY_CELEBRATION_COPY.performanceLineCheckmate(moves, time)}
             </p>
 
-            {/* Stats — 3 mini-cards */}
-            <div className="flex w-full gap-2">
+            {/* Stats Row */}
+            <div className="flex w-full gap-1.5 px-0.5">
               <PaperStatCard
                 icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
                 value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty}

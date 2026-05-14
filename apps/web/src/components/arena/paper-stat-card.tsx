@@ -14,12 +14,12 @@ export function PaperStatCard({
   label: string;
 }) {
   return (
-    <div className="paper-tray flex flex-1 flex-col items-center gap-1 !px-2 !py-2">
-      <span className="flex h-5 items-center justify-center opacity-80">{icon}</span>
-      <span className="text-base font-extrabold leading-none" style={{ color: "var(--paper-text)" }}>
+    <div className="paper-tray flex flex-1 flex-col items-center gap-0.5 !px-1.5 !py-1.5">
+      <span className="flex h-4 items-center justify-center opacity-80 scale-90">{icon}</span>
+      <span className="text-[15px] font-extrabold leading-none" style={{ color: "var(--paper-text)" }}>
         {value}
       </span>
-      <span className="text-xs uppercase tracking-widest" style={{ color: "var(--paper-text-muted)" }}>
+      <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--paper-text-muted)" }}>
         {label}
       </span>
     </div>

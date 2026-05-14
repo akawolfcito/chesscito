@@ -50,8 +50,8 @@ export function VictoryClaimError({
   const haloColor = isCancelled ? "rgba(217, 119, 6, 0.18)" : "rgba(190, 18, 60, 0.15)";
   const subtitleColor = isCancelled ? "rgba(110, 65, 15, 0.95)" : "rgba(159, 18, 57, 0.95)";
   const trophyClass = isCancelled
-    ? "relative h-32 w-32"
-    : "relative h-32 w-32 opacity-55 grayscale-[30%]";
+    ? "relative h-24 w-24"
+    : "relative h-24 w-24 opacity-55 grayscale-[30%]";
 
   return (
     <div
@@ -65,31 +65,15 @@ export function VictoryClaimError({
       </div>
 
       {/* Main content container */}
-      <div className="relative z-10 flex w-full max-w-[390px] flex-col gap-6 px-5 py-8 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <h2
-            className="fantasy-title text-4xl font-extrabold tracking-tight"
-            style={{
-              color: isCancelled ? "#fff8e1" : "#fee2e2",
-              textShadow: isCancelled
-                ? "0 2px 8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.3)"
-                : "0 2px 8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(220, 38, 38, 0.2)",
-            }}
-          >
-            {isCancelled ? "Paused" : "Error"}
-          </h2>
-          <p className="text-sm font-medium tracking-wide text-amber-100/80">
-            {kindCopy.title}
-          </p>
-        </div>
+      <div className="relative z-10 flex w-full max-w-[390px] flex-col px-5 py-6 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
 
         <CandyGlassShell
           title=""
-          onClose={onBackToHub}
-          closeLabel={ARENA_COPY.backToHub}
-          className="!max-h-none !gap-4 shadow-2xl"
+          onClose={undefined as any}
+          closeLabel=""
+          className="!max-h-[92vh] !gap-4 shadow-2xl"
           cta={
-            <div className="flex w-full flex-col gap-2.5">
+            <div className="flex w-full flex-col gap-3">
               {onRetry && (
                 <div className="flex w-full justify-center">
                   <PrincipalButton
@@ -107,69 +91,69 @@ export function VictoryClaimError({
               <Button
                 type="button"
                 variant="game-ghost"
-                size="game-sm"
+                size="game-md"
                 onClick={onPlayAgain}
-                style={{
-                  borderColor: "rgba(110, 65, 15, 0.25)",
-                  color: "rgba(110, 65, 15, 0.85)",
-                }}
+                className="w-full !h-12 border-amber-900/10 bg-amber-900/5 text-sm font-bold text-amber-900/80"
               >
-                <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
+                <CandyIcon name="refresh" className="mr-1.5 h-3.5 w-3.5" /> {ARENA_COPY.playAgain}
               </Button>
-              {/* Back to Hub shortcut */}
+              {/* Exit shortcut - bottom aligned */}
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="mt-1 w-full py-2 text-xs font-bold uppercase tracking-widest text-amber-900/60 transition-opacity hover:opacity-100"
+                className="mt-1 w-full py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/40 transition-opacity hover:opacity-100"
               >
                 {ARENA_COPY.backToHub}
               </button>
             </div>
           }
         >
-          <div className="flex flex-col items-center gap-3 text-center">
-            {/* Hero — Trophy. Cancelled state keeps full chroma (still
-                your victory); error/timeout dim it to signal recovery. */}
-            <div className="relative flex items-center justify-center">
-              <div
-                className="absolute h-36 w-36 rounded-full"
-                style={{ background: `radial-gradient(circle, ${haloColor} 0%, transparent 70%)` }}
-              />
-              <div className={trophyClass}>
-                <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
+          <div className="flex flex-col items-center gap-4 text-center">
+            {/* Header: Trophy + Status + Error/Paused */}
+            <div className="flex flex-col items-center pt-1">
+              <div className="relative flex h-24 w-24 items-center justify-center">
+                <div
+                  className="absolute h-28 w-28 rounded-full"
+                  style={{ background: `radial-gradient(circle, ${haloColor} 0%, transparent 70%)` }}
+                />
+                <div className={trophyClass}>
+                  <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
+                </div>
+              </div>
+              
+              <div className="mt-1.5 flex flex-col items-center gap-0.5">
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-900/60">
+                  {kindCopy.title}
+                </span>
+                <h2
+                  className="fantasy-title text-[32px] font-extrabold leading-tight tracking-tight"
+                  style={{
+                    color: isCancelled ? "rgba(110, 65, 15, 0.95)" : "rgba(159, 18, 57, 0.95)",
+                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 8px rgba(0,0,0,0.12)",
+                  }}
+                >
+                  {isCancelled ? "Paused" : "Error"}
+                </h2>
               </div>
             </div>
 
-            {/* Subtitle keyed by kind — amber for user-cancelled (warning), rose for errors */}
-            <p
-              className="text-sm"
-              style={{
-                color: subtitleColor,
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-              }}
-            >
-              {kindCopy.subtitle}
-            </p>
-
-            {/* Specific error detail (only for real errors) */}
-            {kind === "error" && errorMessage && (
-              <p className="text-xs" style={{ color: "rgba(159, 18, 57, 0.85)" }}>
-                {errorMessage}
+            {/* Error Detail & Hint */}
+            <div className="flex flex-col gap-1.5">
+              <p className="text-[12px] font-bold text-amber-900/90">
+                {kindCopy.subtitle}
               </p>
-            )}
+              {kind === "error" && errorMessage && (
+                <p className="px-4 text-[10px] leading-relaxed text-rose-800/80">
+                  {errorMessage}
+                </p>
+              )}
+              <p className="text-[10px] font-bold text-amber-900/60">
+                {kindCopy.hint}
+              </p>
+            </div>
 
-            {/* Recovery reassurance, kind-specific */}
-            <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.65)" }}>
-              {kindCopy.hint}
-            </p>
-
-            {/* Performance — still visible for context */}
-            <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.65)" }}>
-              {performanceLine}
-            </p>
-
-            {/* Stats */}
-            <div className="flex w-full gap-2">
+            {/* Stats Row */}
+            <div className="flex w-full gap-1.5 px-0.5">
               <PaperStatCard
                 icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
                 value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty}

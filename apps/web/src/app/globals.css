@@ -3457,11 +3457,25 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
 }
 
-.coach-preview-card-cta {
-  width: 104px;
-  min-height: 64px;
-  padding: 8px 9px;
-  font-size: 0.76rem;
+.coach-preview-card.is-compact {
+  min-height: 94px;
+  padding: 8px 10px 8px 12px;
+}
+
+.coach-preview-card.is-compact .coach-preview-card-title {
+  font-size: 1.05rem;
+}
+
+.coach-preview-card.is-compact .coach-preview-card-body {
+  margin: 2px 0 0;
+  font-size: 0.68rem;
+}
+
+.coach-preview-card.is-compact .coach-preview-card-cta {
+  width: 90px;
+  min-height: 48px;
+  padding: 6px 8px;
+  font-size: 0.7rem;
 }
 
 .coach-preview-card-cta:active {
