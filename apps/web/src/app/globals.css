@@ -2291,13 +2291,48 @@
   transform-origin: left;
 }
 
-.arena-action-banner-slot {
+/* ── Arena difficulty pill (pure CSS) ── */
+.arena-difficulty-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.25rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #74a129 0%, #4b781a 100%);
+  border: 3px solid #f6cc43;
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all var(--duration-snap, 120ms) ease-out;
+  outline: none;
+}
+
+.arena-difficulty-pill:active {
+  transform: scale(0.96) translateY(1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.arena-difficulty-pill-label {
+  color: #ffffff;
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-weight: 900;
+  font-size: 0.9rem;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.arena-difficulty-pill-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 0;
-  /* Reserve vertical space so Resign/Undo don't shift when banner toggles */
-  min-height: 3.5rem;
+  color: #fff;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 
 .arena-action-banner {
