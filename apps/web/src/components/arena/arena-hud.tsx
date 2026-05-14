@@ -63,7 +63,7 @@ export function ArenaHud({
           type="button"
           onClick={handleBackClick}
           className={[
-            "arena-hud-btn group active:scale-95",
+            "arena-hud-btn group active:scale-60",
             confirmingBack ? "w-auto gap-2 px-4 rounded-full" : "",
           ].join(" ")}
           aria-label={ARENA_COPY.backToHub}
@@ -72,9 +72,9 @@ export function ArenaHud({
             <>
               <CandyIcon name="check" className="h-5 w-5 animate-in zoom-in duration-200" />
               <span className="text-[0.7rem] font-bold uppercase tracking-wider text-white">{ARENA_COPY.backToHub}</span>
-              <span 
-                className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-amber-400/60" 
-                style={{ animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards` }} 
+              <span
+                className="absolute bottom-0 left-0 h-0.5 w-full origin-left bg-amber-400/60"
+                style={{ animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards` }}
               />
             </>
           ) : (
@@ -104,7 +104,7 @@ export function ArenaHud({
         <div className="flex flex-1 justify-center">
           <PlayerAvatar variant="you" className="h-24 w-24 drop-shadow-xl" />
         </div>
-        
+
         <div className="flex shrink-0 items-center justify-center">
           <WoodenBanner variant="vs" className="scale-90 drop-shadow-lg" />
         </div>

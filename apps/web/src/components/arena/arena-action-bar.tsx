@@ -46,7 +46,7 @@ export function ArenaActionBar({
   if (isEndState) return null;
 
   return (
-    <div className="arena-action-bar flex items-center justify-around px-4 pb-8 pt-2">
+    <div className="arena-action-bar flex items-center justify-between px-4 pb-2 pt-2">
       <div className="flex flex-col items-center gap-2">
         <button
           type="button"
