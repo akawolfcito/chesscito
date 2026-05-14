@@ -38,12 +38,13 @@ export function VictoryClaiming({
       </div>
 
       {/* Main content container */}
-      <div className="relative z-10 flex w-full max-w-[390px] flex-col px-5 py-6 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
+      <div className="relative z-10 flex h-full w-full flex-col px-5 py-2 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
         <CandyGlassShell
           title=""
           onClose={undefined as any}
           closeLabel=""
-          className="!max-h-[92vh] !gap-4 shadow-2xl"
+          presentation="screen"
+          className="!gap-4 shadow-none"
           cta={
             <div className="flex w-full flex-col items-center gap-4">
               <div className="flex items-center gap-3">
@@ -98,14 +99,14 @@ export function VictoryClaiming({
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="mt-1 w-full py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/40 transition-opacity hover:opacity-100"
+                className="mt-1 w-full py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/60 transition-opacity hover:opacity-100"
               >
                 {ARENA_COPY.backToHub}
               </button>
             </div>
           }
         >
-          <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex flex-col items-center gap-3 text-center">
             {/* Header: Trophy + Status + Saving... */}
             <div className="flex flex-col items-center pt-1">
               <div className="relative flex h-24 w-24 items-center justify-center">
