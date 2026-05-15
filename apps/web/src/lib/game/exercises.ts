@@ -99,51 +99,17 @@ export const EXERCISES_PER_PIECE = 5;
  * --------------------------------------------------------------- */
 
 const ROOK_LABYRINTHS: Exercise[] = [
-  /**
-   * rook-lab-1 — "Cross-and-corner"
-   * Obstacles form an L-shape that forces the rook to navigate around.
-   * Start at a1 (0,0); target h8 (7,7). Direct path 0→0→7→7 (2 moves)
-   * is blocked: an obstacle at (3,0) blocks the file 0 horizontal first
-   * leg ends at (2,0); an obstacle at (3,7) and (7,3) keep the player
-   * from corner-jumping. Optimal: 4 moves.
-   *
-   *  8 . . . . . . . ★
-   *  7 . . . X . . . .
-   *  6 . . . . . . . .
-   *  5 . . . . . . . .
-   *  4 . . . . . . . X
-   *  3 . . . . . . . .
-   *  2 . . . . . . . .
-   *  1 ♜ . . X . . . .
-   *    a b c d e f g h
-   */
   {
     id: "rook-lab-1",
     startPos: pos(0, 0),
     targetPos: pos(7, 7),
-    optimalMoves: 4,
+    optimalMoves: 3,
     obstacles: [
       pos(3, 0), // d1
       pos(3, 7), // d8
       pos(7, 3), // h4
     ],
   },
-  /**
-   * rook-lab-2 — "Upper Deck"
-   * Blockers on rank 0 (c1, f1) prevent any horizontal from a1. An
-   * obstacle at a4 caps the a-file at rank 3. The rook must go up via
-   * the a-file, then across a higher rank, then back down to h1.
-   *
-   *  8 . . . . . . . .
-   *  7 . . . . . . . .
-   *  6 . . . . . . . .
-   *  5 . . . . . . . .
-   *  4 X . . . . . . .
-   *  3 . . . . . . . .
-   *  2 . . . . . . . .
-   *  1 ♜ . X . . X . ★
-   *    a b c d e f g h
-   */
   {
     id: "rook-lab-2",
     startPos: pos(0, 0),
@@ -155,89 +121,112 @@ const ROOK_LABYRINTHS: Exercise[] = [
       pos(0, 3), // a4
     ],
   },
+  /**
+   * rook-lab-3 — "The Detour"
+   * From a1 to h8. d1 blocks the rank-0 horizontal east; a4 caps the
+   * a-file north; h5 caps the h-file. The rook must find an indirect
+   * route via the upper ranks.
+   *
+   *  8 . . . . . . . ★
+   *  7 . . . . . . . .
+   *  6 . . . . . . . .
+   *  5 . . . . . . . X
+   *  4 X . . . . . . .
+   *  3 . . . . . . . .
+   *  2 . . . . . . . .
+   *  1 ♜ . . X . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "rook-lab-3",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 7),
+    optimalMoves: 3,
+    obstacles: [
+      pos(3, 0), // d1
+      pos(0, 3), // a4
+      pos(7, 4), // h5
+    ],
+  },
 ];
 
 const BISHOP_LABYRINTHS: Exercise[] = [
   /**
-   * bishop-lab-1 — "The Switch"
-   * Both on dark squares. The main diagonal a1→h8 is blocked at d4.
-   * The bishop must zigzag through parallel dark diagonals to reach b8.
+   * bishop-lab-3 — "The Dead End"
+   * Both on dark squares. From c1 to h6. The direct diagonal passes
+   * through e3 which is blocked. The bishop must detour via a3 and f8
+   * to reach h6 from the opposite side.
    *
-   *  8 . ★ . . . . . .
+   *  8 . . . . . . . .
    *  7 . . . . . . . .
-   *  6 . . . . . . . .
-   *  5 . . . . . . . .
+   *  6 . . . . . . ★ .
+   *  5 . . . . . X . .
    *  4 . . . . . . . .
-   *  3 . . X . . . . .
+   *  3 . . . X . . . .
    *  2 . . . . . . . .
-   *  1 ♗ . . . . . . .
+   *  1 . . ♝ . . . . .
    *    a b c d e f g h
    */
   {
-    id: "bishop-lab-1",
-    startPos: pos(0, 0),
-    targetPos: pos(1, 7),
-    optimalMoves: 4,
+    id: "bishop-lab-3",
+    startPos: pos(2, 0),
+    targetPos: pos(7, 5),
+    optimalMoves: 3,
     obstacles: [
-      pos(3, 3), // d4
+      pos(4, 2), // e3
+      pos(6, 4), // g5
     ],
   },
   /**
-   * bishop-lab-2 — "The Long Way"
-   * Both on light squares. No direct diagonal connects d1→e8.
-   * The natural intermediate diagonal is blocked by e6, forcing a
-   * detour through c6.
+   * bishop-lab-4 — "The Long Diagonal"
+   * Both on dark squares. c3 and e5 block the main a1→h8 diagonal.
+   * The bishop must navigate around via the NW-rank 2 diagonal and
+   * then descend from g7.
    *
-   *  8 . . . . ★ . . .
+   *  8 . . . . . . . ★
    *  7 . . . . . . . .
    *  6 . . . . . . . .
    *  5 . . . . X . . .
    *  4 . . . . . . . .
-   *  3 . . . . . . . .
+   *  3 . . X . . . . .
    *  2 . . . . . . . .
-   *  1 . . . ♝ . . . .
+   *  1 ♝ . . . . . . .
    *    a b c d e f g h
    */
   {
-    id: "bishop-lab-2",
-    startPos: pos(3, 0),
-    targetPos: pos(4, 7),
-    optimalMoves: 4,
+    id: "bishop-lab-4",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 7),
+    optimalMoves: 5,
     obstacles: [
-      pos(4, 5), // e6
+      pos(2, 2), // c3
+      pos(4, 4), // e5
     ],
   },
 ];
 
 const KNIGHT_LABYRINTHS: Exercise[] = [
-  /**
-   * knight-lab-1 — "The Triangle"
-   * 3-jump from a1 to e4. Verified by BFS that no 2-jump path exists.
-   *
-   *  8 . . . . . . . .
-   *  7 . . . . . . . .
-   *  6 . . . . . . . .
-   *  5 . . . . . . . .
-   *  4 . . . . ★ . . .
-   *  3 . . . . . . . .
-   *  2 . . . . . . . .
-   *  1 ♘ . . . . . . .
-   *    a b c d e f g h
-   */
   {
     id: "knight-lab-1",
     startPos: pos(0, 0),
     targetPos: pos(4, 3),
     optimalMoves: 3,
   },
+  {
+    id: "knight-lab-2",
+    startPos: pos(0, 0),
+    targetPos: pos(4, 4),
+    optimalMoves: 4,
+  },
   /**
-   * knight-lab-2 — "The Cross"
-   * 4-jump from a1 to e5. Verified by BFS that no 3-jump path exists.
+   * knight-lab-3 — "The Long Diagonal"
+   * Opposing corners (a1 → h8). The knight must traverse the entire
+   * board. Knight's-graph distance between a1 and h8 is exactly 6.
    *
-   *  8 . . . . . . . .
+   *  8 . . . . . . . ★
    *  7 . . . . . . . .
    *  6 . . . . . . . .
-   *  5 . . . . ★ . . .
+   *  5 . . . . . . . .
    *  4 . . . . . . . .
    *  3 . . . . . . . .
    *  2 . . . . . . . .
@@ -245,86 +234,139 @@ const KNIGHT_LABYRINTHS: Exercise[] = [
    *    a b c d e f g h
    */
   {
-    id: "knight-lab-2",
+    id: "knight-lab-3",
     startPos: pos(0, 0),
-    targetPos: pos(4, 4),
+    targetPos: pos(7, 7),
+    optimalMoves: 6,
+  },
+  /**
+   * knight-lab-4 — "The Diagonal Dash"
+   * From a1 to f6. A medium-range cross-board knight path that
+   * requires careful sequencing.
+   *
+   *  8 . . . . . . . .
+   *  7 . . . . . . . .
+   *  6 . . . . . ★ . .
+   *  5 . . . . . . . .
+   *  4 . . . . . . . .
+   *  3 . . . . . . . .
+   *  2 . . . . . . . .
+   *  1 ♘ . . . . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "knight-lab-4",
+    startPos: pos(0, 0),
+    targetPos: pos(5, 5),
     optimalMoves: 4,
+  },
+  /**
+   * knight-lab-5 — "The Hook"
+   * From b1 to g7. A compact but non-obvious 5-jump across the
+   * board: b1→a3→c4→d6→e4→g7.
+   *
+   *  8 . . . . . . . .
+   *  7 . . . . . . ★ .
+   *  6 . . . . . . . .
+   *  5 . . . . . . . .
+   *  4 . . . . . . . .
+   *  3 . . . . . . . .
+   *  2 . . . . . . . .
+   *  1 . ♘ . . . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "knight-lab-5",
+    startPos: pos(1, 0),
+    targetPos: pos(6, 6),
+    optimalMoves: 5,
   },
 ];
 
 const PAWN_LABYRINTHS: Exercise[] = [
   /**
-   * pawn-lab-1 — "Zigzag"
-   * Forward blocked at e4 (rank 4). The pawn must alternate forward
-   * and diagonal captures to reach e6.
+   * pawn-lab-3 — "The Corridor"
+   * a3 blocks forward from a2; a4 blocks cap-left from b3. The pawn
+   * must capture right at every diagonal opportunity, climbing the
+   * board from a2 to d7 in a pure rightward staircase.
    *
    *  8 . . . . . . . .
-   *  7 . . . . . . . .
-   *  6 . . . . ★ . . .
+   *  7 . . . ★ . . . .
+   *  6 . . . . . . . .
    *  5 . . . . . . . .
-   *  4 . . . . X . . .
-   *  3 . . . . . . . .
-   *  2 . . . . ♟ . . .
+   *  4 X . . . . . . .
+   *  3 X . . . . . . .
+   *  2 ♟ . . . . . . .
    *  1 . . . . . . . .
    *    a b c d e f g h
    */
   {
-    id: "pawn-lab-1",
-    startPos: pos(4, 1),
-    targetPos: pos(4, 5),
-    optimalMoves: 4,
+    id: "pawn-lab-3",
+    startPos: pos(0, 1),
+    targetPos: pos(3, 6),
+    optimalMoves: 5,
     isCapture: true,
     obstacles: [
-      pos(4, 3), // e4
+      pos(0, 2), // a3
+      pos(0, 3), // a4
     ],
   },
   /**
-   * pawn-lab-2 — "The Detour"
-   * Forward blocked at d4 and c5. The pawn must weave through
-   * diagonal captures to reach d6.
+   * pawn-lab-4 — "The Ladder"
+   * a3 blocks forward from a2. The pawn alternates capture-right /
+   * forward to climb from a2 to c6 in a compact 4-move ladder.
    *
    *  8 . . . . . . . .
    *  7 . . . . . . . .
-   *  6 . . . ★ . . . .
-   *  5 . . X . . . . .
-   *  4 . . . X . . . .
-   *  3 . . . . . . . .
-   *  2 . . . ♟ . . . .
+   *  6 . . ★ . . . . .
+   *  5 . X . . . . . .
+   *  4 . . . . . . . .
+   *  3 X . . . . . . .
+   *  2 ♟ . . . . . . .
    *  1 . . . . . . . .
    *    a b c d e f g h
    */
   {
-    id: "pawn-lab-2",
-    startPos: pos(3, 1),
-    targetPos: pos(3, 5),
+    id: "pawn-lab-4",
+    startPos: pos(0, 1),
+    targetPos: pos(2, 5),
     optimalMoves: 4,
     isCapture: true,
     obstacles: [
+      pos(0, 2), // a3
+      pos(1, 4), // b5
+    ],
+  },
+  /**
+   * pawn-lab-5 — "The Gauntlet"
+   * g3 blocks forward from g2. The pawn must capture left across the
+   * full board width from g2 to c7, weaving around d4 and e6.
+   *
+   *  8 . . . . . . . .
+   *  7 . . ★ . . . . .
+   *  6 . . . . X . . .
+   *  5 . . . . . . . .
+   *  4 . . X . . . . .
+   *  3 . . . . . . . X
+   *  2 . . . . . . ♟ .
+   *  1 . . . . . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "pawn-lab-5",
+    startPos: pos(6, 1),
+    targetPos: pos(2, 6),
+    optimalMoves: 5,
+    isCapture: true,
+    obstacles: [
+      pos(6, 2), // g3
       pos(3, 3), // d4
-      pos(2, 4), // c5
+      pos(4, 5), // e6
     ],
   },
 ];
 
 const QUEEN_LABYRINTHS: Exercise[] = [
-  /**
-   * queen-lab-1 — "The Long Way"
-   * Three obstacles block every direct route from a1 to h8:
-   *   b2 — blocks the main diagonal entirely
-   *   a5 — blocks the vertical a-file
-   *   h4 — blocks the h-file, preventing a1→h1→h8
-   * Optimal: go horizontal to g1, vertical to g8, then east to h8.
-   *
-   *  8 . . . . . . . ★
-   *  7 . . . . . . . .
-   *  6 . . . . . . . .
-   *  5 X . . . . . . .
-   *  4 . . . . . . . X
-   *  3 . . . . . . . .
-   *  2 . X . . . . . .
-   *  1 ♛ . . . . . . .
-   *    a b c d e f g h
-   */
   {
     id: "queen-lab-1",
     startPos: pos(0, 0),
@@ -334,6 +376,62 @@ const QUEEN_LABYRINTHS: Exercise[] = [
       pos(1, 1), // b2
       pos(0, 4), // a5
       pos(7, 3), // h4
+    ],
+  },
+  /**
+   * queen-lab-2 — "The Trapdoor"
+   * From a1 to h1. d1 blocks rank-0 horizontal; e2 blocks rank-1
+   * horizontal; d3 blocks rank-2 horizontal; a4 caps the a-file;
+   * h4 blocks the h-file above rank 3.
+   * The queen must climb diagonally and drop back down.
+   *
+   *  8 . . . . . . . .
+   *  7 . . . . . . . .
+   *  6 . . . . . . . .
+   *  5 . . . . . . . .
+   *  4 X . . . . . . X
+   *  3 . . X . . . . .
+   *  2 . . . X . . . .
+   *  1 ♛ . X . . . . ★
+   *    a b c d e f g h
+   */
+  {
+    id: "queen-lab-2",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 0),
+    optimalMoves: 3,
+    obstacles: [
+      pos(3, 0), // d1
+      pos(4, 1), // e2
+      pos(3, 2), // d3
+      pos(0, 3), // a4
+      pos(7, 3), // h4
+    ],
+  },
+  /**
+   * queen-lab-3 — "The Sieve"
+   * From d1 to d8. Three obstacles punch holes in the d-file so the
+   * queen cannot climb straight up. She must weave sideways first.
+   *
+   *  8 . . . ★ . . . .
+   *  7 . . . . . . . .
+   *  6 . . . X . . . .
+   *  5 . . . . . . . .
+   *  4 . . . X . . . .
+   *  3 . . . . . . . .
+   *  2 . . . X . . . .
+   *  1 . . . ♛ . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "queen-lab-3",
+    startPos: pos(3, 0),
+    targetPos: pos(3, 7),
+    optimalMoves: 3,
+    obstacles: [
+      pos(3, 2), // d3
+      pos(3, 4), // d5
+      pos(3, 6), // d7
     ],
   },
 ];
