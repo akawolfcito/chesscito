@@ -2,8 +2,7 @@
 
 import { type ReactNode, useEffect } from "react";
 import { ARENA_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
-import { CandyButton } from "@/components/redesign/candy-button";
-import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+
 import type { ArenaStatus } from "@/lib/game/types";
 import { AskCoachButton } from "@/components/coach/ask-coach-button";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
@@ -168,83 +167,79 @@ export function ArenaEndState({
 
   return (
     <div
-      className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300"
+      className="result-screen-overlay pointer-events-auto fixed inset-0 z-50 animate-in fade-in duration-300"
       role="dialog"
       aria-modal="true"
       aria-label={text}
     >
-      <div className="relative z-10 mx-4 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-        <CandyGlassShell
-          title="Match Ended"
-          onClose={onBackToHub}
-          closeLabel={ARENA_COPY.backToHub}
-          cta={
-            <div className="flex w-full flex-col items-center gap-2.5">
-              {coachPreview}
-              <CandyButton
-                variant="play"
-                onClick={onPlayAgain}
-                ariaLabel={ARENA_COPY.playAgain}
-                className="w-full"
+      <main className="arena-result-screen">
+        <section className="arena-result-header">
+          <div className="arena-result-trophy">
+            <div className="arena-result-trophy-glow" />
+            <picture className="relative flex h-3/5 w-3/5 items-center justify-center">
+              <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
+              <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
+              <img
+                src="/art/favicon-wolf.png"
+                alt=""
+                aria-hidden="true"
+                className="h-9 w-9 opacity-50 drop-shadow-[0_4px_12px_rgba(120,65,5,0.30)]"
               />
-              {onAskCoach && <AskCoachButton onClick={onAskCoach} />}
-              <button
-                type="button"
-                onClick={onBackToHub}
-                className="w-full py-1 text-xs font-semibold transition-opacity hover:opacity-70"
-                style={{ color: "rgba(110, 65, 15, 0.65)" }}
-              >
-                {ARENA_COPY.backToHub}
-              </button>
-            </div>
-          }
-        >
-          <div className="flex flex-col items-center gap-3 text-center">
-
-            <h2
-              className="fantasy-title text-2xl font-extrabold leading-tight"
-              style={{
-                color: "rgba(63, 34, 8, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-              }}
-            >
-              {text}
-            </h2>
-
-            <div className="relative flex items-center justify-center">
-              <div className="absolute h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(190,18,60,0.10)_0%,transparent_70%)]" />
-              <picture className="relative">
-                <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
-                <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
-                <img
-                  src="/art/favicon-wolf.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-12 w-12 opacity-60 drop-shadow-[0_4px_12px_rgba(120,65,5,0.30)]"
-                />
-              </picture>
-            </div>
-
-            <div className="flex w-full gap-2">
-              <PaperStatCard
-                icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
-                value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty}
-                label={VICTORY_CELEBRATION_COPY.stats.difficulty}
-              />
-              <PaperStatCard
-                icon={<CandyIcon name="move" className="h-4 w-4" />}
-                value={String(moves)}
-                label={VICTORY_CELEBRATION_COPY.stats.moves}
-              />
-              <PaperStatCard
-                icon={<CandyIcon name="time" className="h-4 w-4" />}
-                value={time}
-                label={VICTORY_CELEBRATION_COPY.stats.time}
-              />
-            </div>
+            </picture>
           </div>
-        </CandyGlassShell>
-      </div>
+
+          <span className="arena-result-kicker">Match Ended</span>
+
+          <h1 className="arena-result-title">{text}</h1>
+
+          <p className="arena-result-subtitle">Try again when ready.</p>
+        </section>
+
+        <div className="arena-result-stats">
+          <PaperStatCard
+            icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
+            value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty}
+            label={VICTORY_CELEBRATION_COPY.stats.difficulty}
+          />
+          <PaperStatCard
+            icon={<CandyIcon name="move" className="h-4 w-4" />}
+            value={String(moves)}
+            label={VICTORY_CELEBRATION_COPY.stats.moves}
+          />
+          <PaperStatCard
+            icon={<CandyIcon name="time" className="h-4 w-4" />}
+            value={time}
+            label={VICTORY_CELEBRATION_COPY.stats.time}
+          />
+        </div>
+
+        {coachPreview && (
+          <div className="arena-result-coach-wrap">{coachPreview}</div>
+        )}
+
+        <button
+          type="button"
+          onClick={onPlayAgain}
+          className="arena-result-primary-cta arena-result-primary-cta--amber"
+        >
+          <CandyIcon name="refresh" className="h-5 w-5 shrink-0" />
+          <span className="arena-result-primary-cta-label">{ARENA_COPY.playAgain}</span>
+        </button>
+
+        {!coachPreview && onAskCoach && (
+          <div className="arena-result-coach-wrap">
+            <AskCoachButton onClick={onAskCoach} />
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={onBackToHub}
+          className="arena-result-back-link"
+        >
+          {ARENA_COPY.backToHub}
+        </button>
+      </main>
     </div>
   );
 }
