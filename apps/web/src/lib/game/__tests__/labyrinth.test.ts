@@ -3,12 +3,13 @@ import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { getRookMoves } from "@/lib/game/rules/rook";
 import { getKnightMoves } from "@/lib/game/rules/knight";
 import { getPawnMoves } from "@/lib/game/rules/pawn";
+import { getQueenMoves } from "@/lib/game/rules/queen";
 import { LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
 import { getValidTargets } from "@/lib/game/board";
 
 const pos = (file: number, rank: number) => ({ file, rank });
 
-const PIECES_WITH_LABYRINTHS: PieceId[] = ["rook", "bishop", "knight", "pawn"];
+const PIECES_WITH_LABYRINTHS: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen"];
 
 function posKey(p: BoardPosition): string {
   return `${p.file},${p.rank}`;
@@ -59,6 +60,34 @@ function bfsPawnDepth(
       const candidates = getPawnMoves(sq, blockers, isCapture);
       for (const move of candidates) {
         if (blockerSet.has(posKey(move))) continue;
+        if (move.file === target.file && move.rank === target.rank) return depth;
+        const k = posKey(move);
+        if (!visited.has(k)) {
+          visited.add(k);
+          next.push(move);
+        }
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}
+
+/** BFS over queen moves (with blockers), returns min depth or null if
+ *  unreachable ≤ maxDepth. */
+function bfsQueenDepth(
+  start: BoardPosition,
+  target: BoardPosition,
+  blockers: BoardPosition[],
+  maxDepth: number,
+): number | null {
+  if (start.file === target.file && start.rank === target.rank) return 0;
+  let frontier = [start];
+  const visited = new Set<string>([posKey(start)]);
+  for (let depth = 1; depth <= maxDepth; depth++) {
+    const next: BoardPosition[] = [];
+    for (const sq of frontier) {
+      for (const move of getQueenMoves(sq, blockers)) {
         if (move.file === target.file && move.rank === target.rank) return depth;
         const k = posKey(move);
         if (!visited.has(k)) {
@@ -286,6 +315,42 @@ describe("L2 labyrinth — pawn path existence", () => {
       }
     },
   );
+});
+
+describe("L2 labyrinth — queen path existence", () => {
+  const setup = { piece: "queen" as PieceId, id: "queen-lab-1", optimal: 3 };
+
+  it("$id: maximum depth to reach target is $optimal", () => {
+    const lab = LABYRINTHS.queen.find((l) => l.id === setup.id);
+    expect(lab).toBeDefined();
+    if (!lab) return;
+
+    const minDepth = bfsQueenDepth(
+      lab.startPos,
+      lab.targetPos,
+      lab.obstacles ?? [],
+      setup.optimal,
+    );
+    expect(minDepth).toBe(setup.optimal);
+  });
+
+  it("target is NOT reachable in 1 move", () => {
+    const lab = LABYRINTHS.queen.find((l) => l.id === setup.id);
+    expect(lab).toBeDefined();
+    if (!lab) return;
+
+    const depth = bfsQueenDepth(lab.startPos, lab.targetPos, lab.obstacles ?? [], 1);
+    expect(depth).toBeNull();
+  });
+
+  it("target is NOT reachable in 2 moves", () => {
+    const lab = LABYRINTHS.queen.find((l) => l.id === setup.id);
+    expect(lab).toBeDefined();
+    if (!lab) return;
+
+    const depth = bfsQueenDepth(lab.startPos, lab.targetPos, lab.obstacles ?? [], 2);
+    expect(depth).toBeNull();
+  });
 });
 
 describe("L2 labyrinth — rook-lab-1 legacy data integrity", () => {

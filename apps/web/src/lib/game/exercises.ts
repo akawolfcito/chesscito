@@ -306,12 +306,44 @@ const PAWN_LABYRINTHS: Exercise[] = [
   },
 ];
 
+const QUEEN_LABYRINTHS: Exercise[] = [
+  /**
+   * queen-lab-1 — "The Long Way"
+   * Three obstacles block every direct route from a1 to h8:
+   *   b2 — blocks the main diagonal entirely
+   *   a5 — blocks the vertical a-file
+   *   h4 — blocks the h-file, preventing a1→h1→h8
+   * Optimal: go horizontal to g1, vertical to g8, then east to h8.
+   *
+   *  8 . . . . . . . ★
+   *  7 . . . . . . . .
+   *  6 . . . . . . . .
+   *  5 X . . . . . . .
+   *  4 . . . . . . . X
+   *  3 . . . . . . . .
+   *  2 . X . . . . . .
+   *  1 ♛ . . . . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "queen-lab-1",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 7),
+    optimalMoves: 3,
+    obstacles: [
+      pos(1, 1), // b2
+      pos(0, 4), // a5
+      pos(7, 3), // h4
+    ],
+  },
+];
+
 export const LABYRINTHS: Record<PieceId, Exercise[]> = {
   rook:   ROOK_LABYRINTHS,
   bishop: BISHOP_LABYRINTHS,
   knight: KNIGHT_LABYRINTHS,
   pawn:   PAWN_LABYRINTHS,
-  queen:  [],
+  queen:  QUEEN_LABYRINTHS,
   king:   [],
 };
 
