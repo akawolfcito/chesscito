@@ -1246,10 +1246,11 @@ function ArenaPageInner() {
       <main className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
         <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
-            title={COACH_COPY.quickReviewTitle}
+            title={coachServerError ? COACH_COPY.reviewRetryTitle : COACH_COPY.quickReviewTitle}
             onClose={handleBackToHub}
             closeLabel={ARENA_COPY.backToHub}
-            className="max-h-none min-h-[calc(100dvh-2rem)] rounded-[1.75rem]"
+            presentation="screen"
+            className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
             <CoachFallback
               response={coachFallbackResponse}
@@ -1462,9 +1463,7 @@ function ArenaPageInner() {
               <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
                   title="Coach"
-                  onClose={() => setCoachPhase("idle")}
-                  closeLabel="Cancel"
-                >
+                  >
                     <CoachLoading
                       jobId={coachJobId ?? undefined}
                       wallet={address?.toLowerCase()}

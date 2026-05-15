@@ -76,13 +76,13 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
     };
   }, [jobId, wallet, hasJob]);
 
-  const mainMessage = hasJob
-    ? COACH_COPY.analyzing
-    : messageTick < 5
-      ? COACH_COPY.connecting
-      : messageTick < 12
-        ? COACH_COPY.analyzing
-        : COACH_COPY.slowThinking;
+  const mainMessage = messageTick < 5
+    ? COACH_COPY.coachThinking
+    : messageTick < 12
+      ? COACH_COPY.analyzing
+      : COACH_COPY.slowThinking;
+
+  const isSlowState = messageTick >= 12;
 
   return (
     <div className="flex flex-col items-center gap-3 py-2 text-center">
@@ -99,9 +99,9 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
         <CandyIcon name="coach" className="h-5 w-5" />
         {mainMessage}{dots}
       </p>
-      {hasJob && (
+      {!isSlowState && (
         <p className="text-sm" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
-          {COACH_COPY.reviewingMoves}
+          {COACH_COPY.keepScreenOpen}
         </p>
       )}
 
@@ -122,10 +122,6 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
               />
             ))}
           </div>
-
-          <p className="mt-1 text-xs" style={{ color: "rgba(110, 65, 15, 0.55)" }}>
-            {COACH_COPY.loadingCanLeave}
-          </p>
         </>
       )}
     </div>

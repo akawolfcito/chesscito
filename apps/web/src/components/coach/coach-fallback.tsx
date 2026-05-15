@@ -1,7 +1,7 @@
 "use client";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { PrincipalButton } from "@/components/scene-rooted/principal-button";
+import { Button } from "@/components/ui/button";
 import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
 import type { BasicCoachResponse } from "@/lib/coach/types";
 import { formatTime } from "@/lib/game/arena-utils";
@@ -84,52 +84,58 @@ export function CoachFallback({
       {showRetry ? (
         <>
           {/* Primary: Retry Review — recoverable error state */}
-          <div className="flex w-full justify-center">
-            <PrincipalButton
-              size="large"
-              leadingIcon={<CandyIcon name="refresh" className="h-4 w-4" />}
-              onClick={onRetry!}
-              aria-label={retryLabel ?? COACH_COPY.retryReview}
-            >
-              {retryLabel ?? COACH_COPY.retryReview}
-            </PrincipalButton>
-          </div>
+          <Button
+            type="button"
+            variant="game-primary"
+            size="game"
+            onClick={onRetry!}
+            aria-label={retryLabel ?? COACH_COPY.retryReview}
+          >
+            <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {retryLabel ?? COACH_COPY.retryReview}
+          </Button>
 
           {/* Secondary: Play Again */}
-          <div className="flex w-full justify-center">
-            <PrincipalButton
-              size="medium"
-              onClick={onPlayAgain}
-              aria-label={ARENA_COPY.playAgain}
-            >
-              {ARENA_COPY.playAgain}
-            </PrincipalButton>
-          </div>
+          <Button
+            type="button"
+            variant="game-ghost"
+            size="game-sm"
+            onClick={onPlayAgain}
+            aria-label={ARENA_COPY.playAgain}
+            style={{
+              borderColor: "rgba(110, 65, 15, 0.25)",
+              color: warmMuted,
+            }}
+          >
+            {ARENA_COPY.playAgain}
+          </Button>
         </>
       ) : (
         <>
           {/* Primary: Play Again — retention CTA */}
-          <div className="flex w-full justify-center">
-            <PrincipalButton
-              size="large"
-              leadingIcon={<CandyIcon name="refresh" className="h-4 w-4" />}
-              onClick={onPlayAgain}
-              aria-label={ARENA_COPY.playAgain}
-            >
-              {ARENA_COPY.playAgain}
-            </PrincipalButton>
-          </div>
+          <Button
+            type="button"
+            variant="game-primary"
+            size="game"
+            onClick={onPlayAgain}
+            aria-label={ARENA_COPY.playAgain}
+          >
+            <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
+          </Button>
 
           {/* Secondary: Unlock Full Analysis — commercial upsell */}
-          <div className="flex w-full justify-center">
-            <PrincipalButton
-              size="medium"
-              onClick={onGetFullAnalysis!}
-              aria-label={COACH_COPY.unlockFullAnalysis}
-            >
-              {COACH_COPY.unlockFullAnalysis}
-            </PrincipalButton>
-          </div>
+          <Button
+            type="button"
+            variant="game-ghost"
+            size="game-sm"
+            onClick={onGetFullAnalysis!}
+            aria-label={COACH_COPY.unlockFullAnalysis}
+            style={{
+              borderColor: "rgba(110, 65, 15, 0.25)",
+              color: warmMuted,
+            }}
+          >
+            {COACH_COPY.unlockFullAnalysis}
+          </Button>
         </>
       )}
 

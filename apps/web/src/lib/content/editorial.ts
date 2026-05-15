@@ -883,6 +883,9 @@ export const COACH_COPY = {
   welcomeNote: "Free analyses to start. After that, credit packs from $0.05.",
   creditComingSoon: "Credit packs coming soon!",
   connecting: "Connecting to Coach\u2026",
+  coachThinking: "Coach is thinking\u2026",
+  keepScreenOpen: "Keep this screen open.",
+  reviewRetryTitle: "Review needs another try",
   slowThinking: "Coach is still thinking. Keep this screen open.",
   retryReview: "Retry Review",
   analysisIncomplete: "Your review didn\u2019t complete.",
@@ -930,6 +933,7 @@ export const COACH_COPY = {
     body: "Your Coach now references your past games to spot recurring patterns.",
     dismiss: "Got it",
   },
+  historyBannerSubtitle: "Personalized coaching from your game history.",
 } as const;
 
 export const LEGAL_COPY = {

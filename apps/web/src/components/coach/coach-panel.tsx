@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import Link from "next/link";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { WoodBanner } from "@/components/scene-rooted/wood-banner";
 import { Button } from "@/components/ui/button";
 import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
 import type { CoachResponse } from "@/lib/coach/types";
@@ -38,22 +35,6 @@ export function CoachPanel({
   proActive,
   historyMeta,
 }: Props) {
-  const [bannerSeen, setBannerSeen] = useState<boolean>(true);
-
-  useEffect(() => {
-    // SSR-safe: only read localStorage on the client. Default state is
-    // `true` (banner hidden) so SSR renders without flashing the banner
-    // and then hiding it after the localStorage read.
-    const seen = window.localStorage.getItem("chesscito:coach-history-callout-seen");
-    if (!seen) setBannerSeen(false);
-  }, []);
-
-  function dismissBanner() {
-    window.localStorage.setItem("chesscito:coach-history-callout-seen", "1");
-    setBannerSeen(true);
-  }
-
-  const showBanner = proActive && historyMeta && !bannerSeen;
 
   const time = formatTime(elapsedMs);
   const diffLabel = ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty;
@@ -64,31 +45,15 @@ export function CoachPanel({
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      {showBanner && (
-        <div
-          data-testid="coach-history-banner"
-          data-state="visible"
-          className="flex flex-col items-center gap-2"
+      {proActive && historyMeta && (
+        <p
+          className="text-xs text-center"
+          style={{ color: warmSubtle }}
         >
-          <WoodBanner size="medium" asTitle>
-            {COACH_COPY.featureBanner.title}
-          </WoodBanner>
-          <p
-            className="px-3 text-center text-xs"
-            style={{ color: "rgba(110, 65, 15, 0.85)" }}
-          >
-            {COACH_COPY.featureBanner.body}
-          </p>
-          <button
-            type="button"
-            onClick={dismissBanner}
-            className="text-xs font-semibold underline underline-offset-2"
-            style={{ color: "rgba(110, 65, 15, 0.95)" }}
-          >
-            {COACH_COPY.featureBanner.dismiss}
-          </button>
-        </div>
+          {COACH_COPY.historyBannerSubtitle}
+        </p>
       )}
+
       <div className="flex min-w-0 items-center justify-between gap-2">
         <p className="text-xs" style={{ color: warmMuted }}>
           {diffLabel} - {totalMoves} moves - {time}
