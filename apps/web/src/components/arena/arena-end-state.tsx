@@ -169,12 +169,13 @@ export function ArenaEndState({
   return (
     <div
       className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300"
-      role="alert"
-      aria-live="assertive"
+      role="dialog"
+      aria-modal="true"
+      aria-label={text}
     >
       <div className="relative z-10 mx-4 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
         <CandyGlassShell
-          title={text}
+          title="Match Ended"
           onClose={onBackToHub}
           closeLabel={ARENA_COPY.backToHub}
           cta={
@@ -187,12 +188,31 @@ export function ArenaEndState({
                 className="w-full"
               />
               {onAskCoach && <AskCoachButton onClick={onAskCoach} />}
+              <button
+                type="button"
+                onClick={onBackToHub}
+                className="w-full py-1 text-xs font-semibold transition-opacity hover:opacity-70"
+                style={{ color: "rgba(110, 65, 15, 0.65)" }}
+              >
+                {ARENA_COPY.backToHub}
+              </button>
             </div>
           }
         >
           <div className="flex flex-col items-center gap-3 text-center">
+
+            <h2
+              className="fantasy-title text-2xl font-extrabold leading-tight"
+              style={{
+                color: "rgba(63, 34, 8, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
+            >
+              {text}
+            </h2>
+
             <div className="relative flex items-center justify-center">
-              <div className="absolute h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(190,18,60,0.12)_0%,transparent_70%)]" />
+              <div className="absolute h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(190,18,60,0.10)_0%,transparent_70%)]" />
               <picture className="relative">
                 <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
                 <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
@@ -200,10 +220,11 @@ export function ArenaEndState({
                   src="/art/favicon-wolf.png"
                   alt=""
                   aria-hidden="true"
-                  className="h-20 w-20 opacity-75 drop-shadow-[0_4px_12px_rgba(120,65,5,0.35)]"
+                  className="h-12 w-12 opacity-60 drop-shadow-[0_4px_12px_rgba(120,65,5,0.30)]"
                 />
               </picture>
             </div>
+
             <div className="flex w-full gap-2">
               <PaperStatCard
                 icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
