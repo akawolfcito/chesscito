@@ -108,17 +108,13 @@ describe("/hub page (server)", () => {
       expect(redirectMock).toHaveBeenCalledWith("/exercises");
     });
 
-    it("drops queen/king (empty EXERCISES) from the redirect", () => {
-      renderPage({ legacy: "1", piece: "queen" });
-      expect(redirectMock).toHaveBeenLastCalledWith("/exercises");
-
-      redirectMock.mockClear();
+    it("drops king (empty EXERCISES) from the redirect", () => {
       renderPage({ legacy: "1", piece: "king" });
       expect(redirectMock).toHaveBeenLastCalledWith("/exercises");
     });
 
-    it("preserves rook/bishop/knight/pawn on the redirect", () => {
-      for (const piece of ["rook", "bishop", "knight", "pawn"] as const) {
+    it("preserves rook/bishop/knight/pawn/queen on the redirect", () => {
+      for (const piece of ["rook", "bishop", "knight", "pawn", "queen"] as const) {
         redirectMock.mockClear();
         renderPage({ legacy: "1", piece });
         expect(redirectMock).toHaveBeenCalledWith(`/exercises?piece=${piece}`);

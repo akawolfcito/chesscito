@@ -1411,7 +1411,7 @@ export function ExercisesScreen({
             { key: "bishop", label: PIECE_LABELS.bishop, enabled: true },
             { key: "knight", label: PIECE_LABELS.knight, enabled: true },
             { key: "pawn", label: PIECE_LABELS.pawn, enabled: true },
-            { key: "queen", label: PIECE_LABELS.queen, enabled: false },
+            { key: "queen", label: PIECE_LABELS.queen, enabled: true },
             { key: "king", label: PIECE_LABELS.king, enabled: false },
           ]}
           phase={phase}

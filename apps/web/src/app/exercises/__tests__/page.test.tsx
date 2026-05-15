@@ -39,19 +39,16 @@ describe("/exercises page (server)", () => {
     expect(el.props.initialPiece).toBeUndefined();
   });
 
-  it("rejects pieces with empty EXERCISES arrays (queen, king)", () => {
-    // queen and king have empty `EXERCISES` arrays at the time of
-    // writing — letting them through crashes the board on mount with
+  it("rejects pieces with empty EXERCISES arrays (king)", () => {
+    // king has an empty `EXERCISES` array — letting it through would
+    // crash the board on mount with
     // `Cannot read properties of undefined (reading 'isCapture')`.
-    const queen = renderPage({ piece: "queen" });
-    expect(queen.props.initialPiece).toBeUndefined();
-
     const king = renderPage({ piece: "king" });
     expect(king.props.initialPiece).toBeUndefined();
   });
 
-  it("accepts pieces with defined exercises (rook, bishop, knight, pawn)", () => {
-    for (const piece of ["rook", "bishop", "knight", "pawn"] as const) {
+  it("accepts pieces with defined exercises (rook, bishop, knight, pawn, queen)", () => {
+    for (const piece of ["rook", "bishop", "knight", "pawn", "queen"] as const) {
       const el = renderPage({ piece });
       expect(el.props).toMatchObject({ initialPiece: piece });
     }

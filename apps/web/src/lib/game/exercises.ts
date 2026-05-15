@@ -59,15 +59,28 @@ const PAWN_EXERCISES: Exercise[] = [
   { id: "pawn-5", startPos: pos(3, 1), targetPos: pos(4, 5), optimalMoves: 3, isCapture: true },
 ];
 
+const QUEEN_EXERCISES: Exercise[] = [
+  // 1. Long diagonal (a1→h8)
+  { id: "queen-1", startPos: pos(0, 0), targetPos: pos(7, 7), optimalMoves: 1 },
+  // 2. Vertical file (a1→a8)
+  { id: "queen-2", startPos: pos(0, 0), targetPos: pos(0, 7), optimalMoves: 1 },
+  // 3. Short diagonal (d4→e5)
+  { id: "queen-3", startPos: pos(3, 3), targetPos: pos(4, 4), optimalMoves: 1 },
+  // 4. Horizontal rank (a1→h1)
+  { id: "queen-4", startPos: pos(0, 0), targetPos: pos(7, 0), optimalMoves: 1 },
+  // 5. Two-move path: e4(4,3) → b8(1,7) — not reachable in 1 (no shared rank/file/diagonal)
+  { id: "queen-5", startPos: pos(4, 3), targetPos: pos(1, 7), optimalMoves: 2 },
+];
+
 /** Pieces with exercises defined and playable */
-export const PLAYABLE_PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn"];
+export const PLAYABLE_PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen"];
 
 export const EXERCISES: Record<PieceId, Exercise[]> = {
   rook:   ROOK_EXERCISES,
   bishop: BISHOP_EXERCISES,
   knight: KNIGHT_EXERCISES,
   pawn:   PAWN_EXERCISES,
-  queen:  [], // PR-6
+  queen:  QUEEN_EXERCISES,
   king:   [], // PR-9
 };
 
@@ -115,13 +128,189 @@ const ROOK_LABYRINTHS: Exercise[] = [
       pos(7, 3), // h4
     ],
   },
+  /**
+   * rook-lab-2 — "Upper Deck"
+   * Blockers on rank 0 (c1, f1) prevent any horizontal from a1. An
+   * obstacle at a4 caps the a-file at rank 3. The rook must go up via
+   * the a-file, then across a higher rank, then back down to h1.
+   *
+   *  8 . . . . . . . .
+   *  7 . . . . . . . .
+   *  6 . . . . . . . .
+   *  5 . . . . . . . .
+   *  4 X . . . . . . .
+   *  3 . . . . . . . .
+   *  2 . . . . . . . .
+   *  1 ♜ . X . . X . ★
+   *    a b c d e f g h
+   */
+  {
+    id: "rook-lab-2",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 0),
+    optimalMoves: 3,
+    obstacles: [
+      pos(2, 0), // c1
+      pos(5, 0), // f1
+      pos(0, 3), // a4
+    ],
+  },
+];
+
+const BISHOP_LABYRINTHS: Exercise[] = [
+  /**
+   * bishop-lab-1 — "The Switch"
+   * Both on dark squares. The main diagonal a1→h8 is blocked at d4.
+   * The bishop must zigzag through parallel dark diagonals to reach b8.
+   *
+   *  8 . ★ . . . . . .
+   *  7 . . . . . . . .
+   *  6 . . . . . . . .
+   *  5 . . . . . . . .
+   *  4 . . . . . . . .
+   *  3 . . X . . . . .
+   *  2 . . . . . . . .
+   *  1 ♗ . . . . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "bishop-lab-1",
+    startPos: pos(0, 0),
+    targetPos: pos(1, 7),
+    optimalMoves: 4,
+    obstacles: [
+      pos(3, 3), // d4
+    ],
+  },
+  /**
+   * bishop-lab-2 — "The Long Way"
+   * Both on light squares. No direct diagonal connects d1→e8.
+   * The natural intermediate diagonal is blocked by e6, forcing a
+   * detour through c6.
+   *
+   *  8 . . . . ★ . . .
+   *  7 . . . . . . . .
+   *  6 . . . . . . . .
+   *  5 . . . . X . . .
+   *  4 . . . . . . . .
+   *  3 . . . . . . . .
+   *  2 . . . . . . . .
+   *  1 . . . ♝ . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "bishop-lab-2",
+    startPos: pos(3, 0),
+    targetPos: pos(4, 7),
+    optimalMoves: 4,
+    obstacles: [
+      pos(4, 5), // e6
+    ],
+  },
+];
+
+const KNIGHT_LABYRINTHS: Exercise[] = [
+  /**
+   * knight-lab-1 — "The Triangle"
+   * 3-jump from a1 to e4. Verified by BFS that no 2-jump path exists.
+   *
+   *  8 . . . . . . . .
+   *  7 . . . . . . . .
+   *  6 . . . . . . . .
+   *  5 . . . . . . . .
+   *  4 . . . . ★ . . .
+   *  3 . . . . . . . .
+   *  2 . . . . . . . .
+   *  1 ♘ . . . . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "knight-lab-1",
+    startPos: pos(0, 0),
+    targetPos: pos(4, 3),
+    optimalMoves: 3,
+  },
+  /**
+   * knight-lab-2 — "The Cross"
+   * 4-jump from a1 to e5. Verified by BFS that no 3-jump path exists.
+   *
+   *  8 . . . . . . . .
+   *  7 . . . . . . . .
+   *  6 . . . . . . . .
+   *  5 . . . . ★ . . .
+   *  4 . . . . . . . .
+   *  3 . . . . . . . .
+   *  2 . . . . . . . .
+   *  1 ♘ . . . . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "knight-lab-2",
+    startPos: pos(0, 0),
+    targetPos: pos(4, 4),
+    optimalMoves: 4,
+  },
+];
+
+const PAWN_LABYRINTHS: Exercise[] = [
+  /**
+   * pawn-lab-1 — "Zigzag"
+   * Forward blocked at e4 (rank 4). The pawn must alternate forward
+   * and diagonal captures to reach e6.
+   *
+   *  8 . . . . . . . .
+   *  7 . . . . . . . .
+   *  6 . . . . ★ . . .
+   *  5 . . . . . . . .
+   *  4 . . . . X . . .
+   *  3 . . . . . . . .
+   *  2 . . . . ♟ . . .
+   *  1 . . . . . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "pawn-lab-1",
+    startPos: pos(4, 1),
+    targetPos: pos(4, 5),
+    optimalMoves: 4,
+    isCapture: true,
+    obstacles: [
+      pos(4, 3), // e4
+    ],
+  },
+  /**
+   * pawn-lab-2 — "The Detour"
+   * Forward blocked at d4 and c5. The pawn must weave through
+   * diagonal captures to reach d6.
+   *
+   *  8 . . . . . . . .
+   *  7 . . . . . . . .
+   *  6 . . . ★ . . . .
+   *  5 . . X . . . . .
+   *  4 . . . X . . . .
+   *  3 . . . . . . . .
+   *  2 . . . ♟ . . . .
+   *  1 . . . . . . . .
+   *    a b c d e f g h
+   */
+  {
+    id: "pawn-lab-2",
+    startPos: pos(3, 1),
+    targetPos: pos(3, 5),
+    optimalMoves: 4,
+    isCapture: true,
+    obstacles: [
+      pos(3, 3), // d4
+      pos(2, 4), // c5
+    ],
+  },
 ];
 
 export const LABYRINTHS: Record<PieceId, Exercise[]> = {
   rook:   ROOK_LABYRINTHS,
-  bishop: [],
-  knight: [],
-  pawn:   [],
+  bishop: BISHOP_LABYRINTHS,
+  knight: KNIGHT_LABYRINTHS,
+  pawn:   PAWN_LABYRINTHS,
   queen:  [],
   king:   [],
 };

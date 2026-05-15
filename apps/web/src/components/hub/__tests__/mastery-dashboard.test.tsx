@@ -10,9 +10,9 @@ import type { PieceId } from "@/lib/game/types";
  *
  *  6 asserts (5 per spec + 1 streak header per session decision):
  *    1. Grid renders 6 tiles in canonical order R B N P Q K
- *    2. Q + K tiles render with data-state=coming-soon
+ *    2. Q tile renders with data-state=locked-buildable; K with data-state=coming-soon
  *    3. Tap on buildable tile fires hub_v2_mastery_tap with payload
- *    4. Tap on Q/K tile fires hub_v2_mastery_locked_tap (and NOT hub_v2_mastery_tap)
+ *    4. Tap on Q tile fires hub_v2_mastery_tap; K tile fires hub_v2_mastery_locked_tap
  *    5. Each tile has aria-label per HUB_V2_MASTERY_COPY[piece].ariaLabel(state, ...)
  *    6. Streak header renders streakLabel(days); absent when days=0 */
 
@@ -39,7 +39,7 @@ function buildTiles(): Parameters<typeof MasteryDashboard>[0]["tiles"] {
     bishop: { state: "in-progress", starsEarned: 2, starsTotal: 3 },
     knight: { state: "in-progress", starsEarned: 1, starsTotal: 3 },
     pawn: { state: "locked-buildable", starsEarned: 0, starsTotal: 3 },
-    queen: { state: "coming-soon", starsEarned: 0, starsTotal: 3 },
+    queen: { state: "locked-buildable", starsEarned: 0, starsTotal: 3 },
     king: { state: "coming-soon", starsEarned: 0, starsTotal: 3 },
   };
 }
@@ -69,7 +69,7 @@ describe("<MasteryDashboard> — grid + telemetry + ARIA + streak", () => {
     expect(order).toEqual(CANONICAL_ORDER);
   });
 
-  it("(2) Q + K tiles render with data-state=coming-soon", () => {
+  it("(2) Q tile renders with data-state=locked-buildable; K with data-state=coming-soon", () => {
     const { container } = render(
       <MasteryDashboard
         tiles={buildTiles()}
@@ -85,7 +85,7 @@ describe("<MasteryDashboard> — grid + telemetry + ARIA + streak", () => {
       '[data-component="mastery-tile"][data-piece="king"]',
     );
 
-    expect(queen?.getAttribute("data-state")).toBe("coming-soon");
+    expect(queen?.getAttribute("data-state")).toBe("locked-buildable");
     expect(king?.getAttribute("data-state")).toBe("coming-soon");
   });
 
@@ -118,7 +118,7 @@ describe("<MasteryDashboard> — grid + telemetry + ARIA + streak", () => {
     expect(onTileTap).toHaveBeenCalledWith("bishop", "in-progress", 2);
   });
 
-  it("(4) tap on Q/K tile fires hub_v2_mastery_locked_tap (and NOT hub_v2_mastery_tap)", async () => {
+  it("(4) tap on Q tile fires hub_v2_mastery_tap; K tile fires hub_v2_mastery_locked_tap", async () => {
     const onTileTap = vi.fn();
     const user = userEvent.setup();
     const { container } = render(
@@ -134,18 +134,38 @@ describe("<MasteryDashboard> — grid + telemetry + ARIA + streak", () => {
     ) as HTMLElement;
     await user.click(queen);
 
+    const tapCall = trackMock.mock.calls.find(
+      (call) => call[0] === "hub_v2_mastery_tap",
+    );
+    expect(tapCall).toBeDefined();
+    expect(tapCall?.[1]).toMatchObject({
+      piece: "queen",
+      state: "locked-buildable",
+      starsEarned: 0,
+    });
+
+    expect(onTileTap).toHaveBeenCalledWith("queen", "locked-buildable", 0);
+
+    trackMock.mockClear();
+    onTileTap.mockClear();
+
+    const king = container.querySelector(
+      '[data-component="mastery-tile"][data-piece="king"]',
+    ) as HTMLElement;
+    await user.click(king);
+
     const lockedCall = trackMock.mock.calls.find(
       (call) => call[0] === "hub_v2_mastery_locked_tap",
     );
     expect(lockedCall).toBeDefined();
-    expect(lockedCall?.[1]).toMatchObject({ piece: "queen" });
+    expect(lockedCall?.[1]).toMatchObject({ piece: "king" });
 
-    const tapCall = trackMock.mock.calls.find(
+    const tapCall2 = trackMock.mock.calls.find(
       (call) => call[0] === "hub_v2_mastery_tap",
     );
-    expect(tapCall).toBeUndefined();
+    expect(tapCall2).toBeUndefined();
 
-    expect(onTileTap).toHaveBeenCalledWith("queen", "coming-soon", 0);
+    expect(onTileTap).toHaveBeenCalledWith("king", "coming-soon", 0);
   });
 
   it("(5) each tile has aria-label per HUB_V2_MASTERY_COPY[piece].ariaLabel(state, ...)", () => {

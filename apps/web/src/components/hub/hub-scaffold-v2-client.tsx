@@ -68,7 +68,7 @@ const PLACEHOLDER_TILES: Record<PieceId, MasteryTileData> = {
   bishop: { state: "locked-buildable", starsEarned: 0, starsTotal: 3 },
   knight: { state: "locked-buildable", starsEarned: 0, starsTotal: 3 },
   pawn: { state: "locked-buildable", starsEarned: 0, starsTotal: 3 },
-  queen: { state: "coming-soon", starsEarned: 0, starsTotal: 3 },
+  queen: { state: "locked-buildable", starsEarned: 0, starsTotal: 3 },
   king: { state: "coming-soon", starsEarned: 0, starsTotal: 3 },
 };
 

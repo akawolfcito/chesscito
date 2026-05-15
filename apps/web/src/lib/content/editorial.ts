@@ -676,6 +676,11 @@ export const EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "pawn-3": "Diagonal capture",
   "pawn-4": "Capture decision",
   "pawn-5": "Mixed path",
+  "queen-1": "Long diagonal",
+  "queen-2": "Vertical file",
+  "queen-3": "Short diagonal",
+  "queen-4": "Horizontal rank",
+  "queen-5": "Two-move path",
 };
 
 export const PRACTICE_COPY = {

@@ -3,6 +3,7 @@ import { getBishopMoves } from "@/lib/game/rules/bishop";
 import { getKnightMoves } from "@/lib/game/rules/knight";
 import { getPawnMoves } from "@/lib/game/rules/pawn";
 import { getRookMoves } from "@/lib/game/rules/rook";
+import { getQueenMoves } from "@/lib/game/rules/queen";
 
 const BOARD_SIZE = 8;
 const FILE_LABELS = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -39,6 +40,7 @@ export function getValidTargets(
     case "bishop": return getBishopMoves(position, blockers);
     case "knight": return getKnightMoves(position);
     case "pawn":   return getPawnMoves(position, blockers, isCapture);
+    case "queen":  return getQueenMoves(position, blockers);
     default:       return [];
   }
 }
