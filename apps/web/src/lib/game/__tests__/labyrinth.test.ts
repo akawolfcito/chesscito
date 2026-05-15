@@ -16,19 +16,24 @@ function posKey(p: BoardPosition): string {
   return `${p.file},${p.rank}`;
 }
 
-/** BFS over knight moves, returns min depth or null if unreachable ≤ maxDepth. */
+/** BFS over knight moves, returns min depth or null if unreachable ≤ maxDepth.
+ *  When blockers are provided, those squares are excluded from valid landing
+ *  positions (labyrinth obstacles that the knight must avoid). */
 function bfsKnightDepth(
   start: BoardPosition,
   target: BoardPosition,
   maxDepth: number,
+  blockers: BoardPosition[] = [],
 ): number | null {
   if (start.file === target.file && start.rank === target.rank) return 0;
+  const blockerSet = new Set(blockers.map(posKey));
   let frontier = [start];
   const visited = new Set<string>([posKey(start)]);
   for (let depth = 1; depth <= maxDepth; depth++) {
     const next: BoardPosition[] = [];
     for (const sq of frontier) {
       for (const move of getKnightMoves(sq)) {
+        if (blockerSet.has(posKey(move))) continue;
         if (move.file === target.file && move.rank === target.rank) return depth;
         const k = posKey(move);
         if (!visited.has(k)) {
@@ -261,7 +266,7 @@ describe("L2 labyrinth — knight path existence", () => {
     expect(lab).toBeDefined();
     if (!lab) return;
 
-    const minDepth = bfsKnightDepth(lab.startPos, lab.targetPos, optimal);
+    const minDepth = bfsKnightDepth(lab.startPos, lab.targetPos, optimal, lab.obstacles);
     expect(minDepth).toBe(optimal);
   });
 
@@ -273,7 +278,7 @@ describe("L2 labyrinth — knight path existence", () => {
       if (!lab) return;
 
       if (optimal > 1) {
-        const tooSoon = bfsKnightDepth(lab.startPos, lab.targetPos, optimal - 1);
+        const tooSoon = bfsKnightDepth(lab.startPos, lab.targetPos, optimal - 1, lab.obstacles);
         expect(tooSoon).toBeNull();
       }
     },
@@ -321,6 +326,42 @@ describe("L2 labyrinth — pawn path existence", () => {
       }
     },
   );
+});
+
+describe("L2 labyrinth — pawn isCapture verification", () => {
+  it("pawn-lab-3: isCapture=true exposes diagonal capture target b3", () => {
+    const lab = LABYRINTHS.pawn.find((l) => l.id === "pawn-lab-3");
+    expect(lab).toBeDefined();
+    if (!lab) return;
+    const targetsWithCapture = getValidTargets("pawn", lab.startPos, lab.obstacles ?? [], true);
+    const hasDiagonal = targetsWithCapture.some((t) => t.file === 1 && t.rank === 2);
+    expect(hasDiagonal).toBe(true);
+  });
+
+  it("pawn-lab-3: isCapture=false hides diagonal capture target b3", () => {
+    const lab = LABYRINTHS.pawn.find((l) => l.id === "pawn-lab-3");
+    expect(lab).toBeDefined();
+    if (!lab) return;
+    const targetsWithoutCapture = getValidTargets("pawn", lab.startPos, lab.obstacles ?? [], false);
+    const hasDiagonal = targetsWithoutCapture.some((t) => t.file === 1 && t.rank === 2);
+    expect(hasDiagonal).toBe(false);
+  });
+
+  it("pawn-lab-3: no valid moves at all when isCapture=false (forward blocked by a3)", () => {
+    const lab = LABYRINTHS.pawn.find((l) => l.id === "pawn-lab-3");
+    expect(lab).toBeDefined();
+    if (!lab) return;
+    const targets = getValidTargets("pawn", lab.startPos, lab.obstacles ?? [], false);
+    expect(targets.length).toBe(0);
+  });
+
+  it("pawn-lab-3: has at least one valid move when isCapture=true", () => {
+    const lab = LABYRINTHS.pawn.find((l) => l.id === "pawn-lab-3");
+    expect(lab).toBeDefined();
+    if (!lab) return;
+    const targets = getValidTargets("pawn", lab.startPos, lab.obstacles ?? [], true);
+    expect(targets.length).toBeGreaterThan(0);
+  });
 });
 
 describe("L2 labyrinth — queen path existence", () => {

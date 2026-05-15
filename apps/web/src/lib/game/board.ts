@@ -35,14 +35,21 @@ export function getValidTargets(
   blockers: BoardPosition[] = [],
   isCapture: boolean = false,
 ): BoardPosition[] {
+  const blockerSet = new Set(blockers.map((b) => `${b.file},${b.rank}`));
+  const withoutBlockers = (moves: BoardPosition[]) =>
+    moves.filter((m) => !blockerSet.has(`${m.file},${m.rank}`));
+
+  let moves: BoardPosition[];
   switch (pieceType) {
-    case "rook":   return getRookMoves(position, blockers);
-    case "bishop": return getBishopMoves(position, blockers);
-    case "knight": return getKnightMoves(position);
-    case "pawn":   return getPawnMoves(position, blockers, isCapture);
-    case "queen":  return getQueenMoves(position, blockers);
-    default:       return [];
+    case "rook":   moves = getRookMoves(position, blockers); break;
+    case "bishop": moves = getBishopMoves(position, blockers); break;
+    case "knight": moves = getKnightMoves(position); break;
+    case "pawn":   moves = getPawnMoves(position, blockers, isCapture); break;
+    case "queen":  moves = getQueenMoves(position, blockers); break;
+    default:       moves = []; break;
   }
+  // Prevent landing on obstacle squares (labyrinth rule)
+  return withoutBlockers(moves);
 }
 
 export function movePiece(piece: BoardPiece, nextPosition: BoardPosition): BoardPiece {

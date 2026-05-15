@@ -1503,7 +1503,7 @@ export function ExercisesScreen({
               obstacles={activeLabyrinth?.obstacles}
               isLocked={!activeLabyrinth ? (phase === "failure" || phase === "success") : labyrinthCompleted !== null}
               onMove={activeLabyrinth ? handleLabyrinthMove : handleMove}
-              isCapture={!activeLabyrinth && activeExercise.isCapture}
+              isCapture={activeExercise.isCapture ?? false}
               tutorialHints={activeLabyrinth ? undefined : tutorialHints}
             />
           }

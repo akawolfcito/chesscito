@@ -1,4 +1,5 @@
 import type { Exercise, PieceId } from "@/lib/game/types";
+import { defineLabyrinth } from "@/lib/game/notation";
 
 function pos(file: number, rank: number) {
   return { file, rank };
@@ -121,249 +122,134 @@ const ROOK_LABYRINTHS: Exercise[] = [
       pos(0, 3), // a4
     ],
   },
-  /**
-   * rook-lab-3 — "The Detour"
-   * From a1 to h8. d1 blocks the rank-0 horizontal east; a4 caps the
-   * a-file north; h5 caps the h-file. The rook must find an indirect
-   * route via the upper ranks.
-   *
-   *  8 . . . . . . . ★
-   *  7 . . . . . . . .
-   *  6 . . . . . . . .
-   *  5 . . . . . . . X
-   *  4 X . . . . . . .
-   *  3 . . . . . . . .
-   *  2 . . . . . . . .
-   *  1 ♜ . . X . . . .
-   *    a b c d e f g h
-   */
-  {
+  defineLabyrinth({
     id: "rook-lab-3",
-    startPos: pos(0, 0),
-    targetPos: pos(7, 7),
+    start: "a1",
+    target: "h8",
+    obstacles: ["d1", "a4", "h5"],
     optimalMoves: 3,
-    obstacles: [
-      pos(3, 0), // d1
-      pos(0, 3), // a4
-      pos(7, 4), // h5
-    ],
-  },
+  }),
 ];
 
 const BISHOP_LABYRINTHS: Exercise[] = [
-  /**
-   * bishop-lab-3 — "The Dead End"
-   * Both on dark squares. From c1 to h6. The direct diagonal passes
-   * through e3 which is blocked. The bishop must detour via a3 and f8
-   * to reach h6 from the opposite side.
-   *
-   *  8 . . . . . . . .
-   *  7 . . . . . . . .
-   *  6 . . . . . . ★ .
-   *  5 . . . . . X . .
-   *  4 . . . . . . . .
-   *  3 . . . X . . . .
-   *  2 . . . . . . . .
-   *  1 . . ♝ . . . . .
-   *    a b c d e f g h
-   */
-  {
+  defineLabyrinth({
     id: "bishop-lab-3",
-    startPos: pos(2, 0),
-    targetPos: pos(7, 5),
+    start: "c1",
+    target: "h6",
+    obstacles: ["e3", "g5"],
     optimalMoves: 3,
-    obstacles: [
-      pos(4, 2), // e3
-      pos(6, 4), // g5
-    ],
-  },
-  /**
-   * bishop-lab-4 — "The Long Diagonal"
-   * Both on dark squares. c3 and e5 block the main a1→h8 diagonal.
-   * The bishop must navigate around via the NW-rank 2 diagonal and
-   * then descend from g7.
-   *
-   *  8 . . . . . . . ★
-   *  7 . . . . . . . .
-   *  6 . . . . . . . .
-   *  5 . . . . X . . .
-   *  4 . . . . . . . .
-   *  3 . . X . . . . .
-   *  2 . . . . . . . .
-   *  1 ♝ . . . . . . .
-   *    a b c d e f g h
-   */
-  {
+  }),
+  defineLabyrinth({
     id: "bishop-lab-4",
-    startPos: pos(0, 0),
-    targetPos: pos(7, 7),
+    start: "a1",
+    target: "h8",
+    obstacles: ["c3", "e5"],
     optimalMoves: 5,
-    obstacles: [
-      pos(2, 2), // c3
-      pos(4, 4), // e5
-    ],
-  },
+  }),
 ];
 
 const KNIGHT_LABYRINTHS: Exercise[] = [
+  /**
+   * knight-lab-1 — "The Clipped Jump"
+   * From a1 to e4. c2 blocks the natural first move, forcing the
+   * knight out through b3. d4 pinches the centre so the knight
+   * must hook around via d2 or c5.
+   *
+   *  8 . . . . . . . .
+   *  7 . . . . . . . .
+   *  6 . . . . . . . .
+   *  5 . . . . . . . .
+   *  4 . . . . X ★ . .
+   *  3 . . . . . . . .
+   *  2 . . X . . . . .
+   *  1 ♘ . . . . . . .
+   *    a b c d e f g h
+   */
   {
     id: "knight-lab-1",
     startPos: pos(0, 0),
     targetPos: pos(4, 3),
     optimalMoves: 3,
+    obstacles: [
+      pos(2, 1), // c2
+      pos(3, 3), // d4
+    ],
   },
+  /**
+   * knight-lab-2 — "The Zigzag"
+   * From a1 to e5. b3 and d3 choke two early squares; c6 blocks
+   * the far side. The knight must weave a 4-jump through narrow
+   * gaps.
+   *
+   *  8 . . . . . . . .
+   *  7 . . . . . . . .
+   *  6 . . X . . . . .
+   *  5 . . . . ★ . . .
+   *  4 . . . . . . . .
+   *  3 . . X . . . . .
+   *  2 . . . . . . . .
+   *  1 ♘ . . . . . . .
+   *    a b c d e f g h
+   */
   {
     id: "knight-lab-2",
     startPos: pos(0, 0),
     targetPos: pos(4, 4),
     optimalMoves: 4,
+    obstacles: [
+      pos(1, 2), // b3
+      pos(3, 2), // d3
+      pos(2, 5), // c6
+    ],
   },
-  /**
-   * knight-lab-3 — "The Long Diagonal"
-   * Opposing corners (a1 → h8). The knight must traverse the entire
-   * board. Knight's-graph distance between a1 and h8 is exactly 6.
-   *
-   *  8 . . . . . . . ★
-   *  7 . . . . . . . .
-   *  6 . . . . . . . .
-   *  5 . . . . . . . .
-   *  4 . . . . . . . .
-   *  3 . . . . . . . .
-   *  2 . . . . . . . .
-   *  1 ♘ . . . . . . .
-   *    a b c d e f g h
-   */
-  {
+  defineLabyrinth({
     id: "knight-lab-3",
-    startPos: pos(0, 0),
-    targetPos: pos(7, 7),
+    start: "a1",
+    target: "h8",
+    obstacles: ["d1", "c5", "g6"],
     optimalMoves: 6,
-  },
-  /**
-   * knight-lab-4 — "The Diagonal Dash"
-   * From a1 to f6. A medium-range cross-board knight path that
-   * requires careful sequencing.
-   *
-   *  8 . . . . . . . .
-   *  7 . . . . . . . .
-   *  6 . . . . . ★ . .
-   *  5 . . . . . . . .
-   *  4 . . . . . . . .
-   *  3 . . . . . . . .
-   *  2 . . . . . . . .
-   *  1 ♘ . . . . . . .
-   *    a b c d e f g h
-   */
-  {
+  }),
+  defineLabyrinth({
     id: "knight-lab-4",
-    startPos: pos(0, 0),
-    targetPos: pos(5, 5),
+    start: "a1",
+    target: "f6",
+    obstacles: ["c2", "d4", "e3"],
     optimalMoves: 4,
-  },
-  /**
-   * knight-lab-5 — "The Hook"
-   * From b1 to g7. A compact but non-obvious 5-jump across the
-   * board: b1→a3→c4→d6→e4→g7.
-   *
-   *  8 . . . . . . . .
-   *  7 . . . . . . ★ .
-   *  6 . . . . . . . .
-   *  5 . . . . . . . .
-   *  4 . . . . . . . .
-   *  3 . . . . . . . .
-   *  2 . . . . . . . .
-   *  1 . ♘ . . . . . .
-   *    a b c d e f g h
-   */
-  {
+  }),
+  defineLabyrinth({
     id: "knight-lab-5",
-    startPos: pos(1, 0),
-    targetPos: pos(6, 6),
+    start: "b1",
+    target: "g7",
+    obstacles: ["c4", "e6", "g5"],
     optimalMoves: 5,
-  },
+  }),
 ];
 
 const PAWN_LABYRINTHS: Exercise[] = [
-  /**
-   * pawn-lab-3 — "The Corridor"
-   * a3 blocks forward from a2; a4 blocks cap-left from b3. The pawn
-   * must capture right at every diagonal opportunity, climbing the
-   * board from a2 to d7 in a pure rightward staircase.
-   *
-   *  8 . . . . . . . .
-   *  7 . . . ★ . . . .
-   *  6 . . . . . . . .
-   *  5 . . . . . . . .
-   *  4 X . . . . . . .
-   *  3 X . . . . . . .
-   *  2 ♟ . . . . . . .
-   *  1 . . . . . . . .
-   *    a b c d e f g h
-   */
-  {
+  defineLabyrinth({
     id: "pawn-lab-3",
-    startPos: pos(0, 1),
-    targetPos: pos(3, 6),
-    optimalMoves: 5,
+    start: "a2",
+    target: "d7",
+    obstacles: ["a3", "a4"],
     isCapture: true,
-    obstacles: [
-      pos(0, 2), // a3
-      pos(0, 3), // a4
-    ],
-  },
-  /**
-   * pawn-lab-4 — "The Ladder"
-   * a3 blocks forward from a2. The pawn alternates capture-right /
-   * forward to climb from a2 to c6 in a compact 4-move ladder.
-   *
-   *  8 . . . . . . . .
-   *  7 . . . . . . . .
-   *  6 . . ★ . . . . .
-   *  5 . X . . . . . .
-   *  4 . . . . . . . .
-   *  3 X . . . . . . .
-   *  2 ♟ . . . . . . .
-   *  1 . . . . . . . .
-   *    a b c d e f g h
-   */
-  {
+    optimalMoves: 5,
+  }),
+  defineLabyrinth({
     id: "pawn-lab-4",
-    startPos: pos(0, 1),
-    targetPos: pos(2, 5),
+    start: "a2",
+    target: "c6",
+    obstacles: ["a3", "b5"],
+    isCapture: true,
     optimalMoves: 4,
-    isCapture: true,
-    obstacles: [
-      pos(0, 2), // a3
-      pos(1, 4), // b5
-    ],
-  },
-  /**
-   * pawn-lab-5 — "The Gauntlet"
-   * g3 blocks forward from g2. The pawn must capture left across the
-   * full board width from g2 to c7, weaving around d4 and e6.
-   *
-   *  8 . . . . . . . .
-   *  7 . . ★ . . . . .
-   *  6 . . . . X . . .
-   *  5 . . . . . . . .
-   *  4 . . X . . . . .
-   *  3 . . . . . . . X
-   *  2 . . . . . . ♟ .
-   *  1 . . . . . . . .
-   *    a b c d e f g h
-   */
-  {
+  }),
+  defineLabyrinth({
     id: "pawn-lab-5",
-    startPos: pos(6, 1),
-    targetPos: pos(2, 6),
-    optimalMoves: 5,
+    start: "g2",
+    target: "c7",
+    obstacles: ["g3", "d4", "e6"],
     isCapture: true,
-    obstacles: [
-      pos(6, 2), // g3
-      pos(3, 3), // d4
-      pos(4, 5), // e6
-    ],
-  },
+    optimalMoves: 5,
+  }),
 ];
 
 const QUEEN_LABYRINTHS: Exercise[] = [
@@ -378,62 +264,20 @@ const QUEEN_LABYRINTHS: Exercise[] = [
       pos(7, 3), // h4
     ],
   },
-  /**
-   * queen-lab-2 — "The Trapdoor"
-   * From a1 to h1. d1 blocks rank-0 horizontal; e2 blocks rank-1
-   * horizontal; d3 blocks rank-2 horizontal; a4 caps the a-file;
-   * h4 blocks the h-file above rank 3.
-   * The queen must climb diagonally and drop back down.
-   *
-   *  8 . . . . . . . .
-   *  7 . . . . . . . .
-   *  6 . . . . . . . .
-   *  5 . . . . . . . .
-   *  4 X . . . . . . X
-   *  3 . . X . . . . .
-   *  2 . . . X . . . .
-   *  1 ♛ . X . . . . ★
-   *    a b c d e f g h
-   */
-  {
+  defineLabyrinth({
     id: "queen-lab-2",
-    startPos: pos(0, 0),
-    targetPos: pos(7, 0),
+    start: "a1",
+    target: "h1",
+    obstacles: ["d1", "e2", "d3", "a4", "h4"],
     optimalMoves: 3,
-    obstacles: [
-      pos(3, 0), // d1
-      pos(4, 1), // e2
-      pos(3, 2), // d3
-      pos(0, 3), // a4
-      pos(7, 3), // h4
-    ],
-  },
-  /**
-   * queen-lab-3 — "The Sieve"
-   * From d1 to d8. Three obstacles punch holes in the d-file so the
-   * queen cannot climb straight up. She must weave sideways first.
-   *
-   *  8 . . . ★ . . . .
-   *  7 . . . . . . . .
-   *  6 . . . X . . . .
-   *  5 . . . . . . . .
-   *  4 . . . X . . . .
-   *  3 . . . . . . . .
-   *  2 . . . X . . . .
-   *  1 . . . ♛ . . . .
-   *    a b c d e f g h
-   */
-  {
+  }),
+  defineLabyrinth({
     id: "queen-lab-3",
-    startPos: pos(3, 0),
-    targetPos: pos(3, 7),
+    start: "d1",
+    target: "d8",
+    obstacles: ["d3", "d5", "d7"],
     optimalMoves: 3,
-    obstacles: [
-      pos(3, 2), // d3
-      pos(3, 4), // d5
-      pos(3, 6), // d7
-    ],
-  },
+  }),
 ];
 
 export const LABYRINTHS: Record<PieceId, Exercise[]> = {
