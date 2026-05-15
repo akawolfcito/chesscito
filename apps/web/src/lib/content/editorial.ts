@@ -88,7 +88,7 @@ export const RESULT_OVERLAY_COPY = {
   },
   score: {
     title: "Score Recorded!",
-    subtitle: "Sealed on Celo. This score is yours — permanently, provably, forever.",
+    subtitle: "Saved on Celo. Ready to share.",
   },
   shop: {
     title: "Purchase Complete!",

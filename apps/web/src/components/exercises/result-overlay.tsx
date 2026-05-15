@@ -314,6 +314,19 @@ export function ResultOverlay({
               <>
                 <span className="fantasy-title">chesscito</span>
                 <span className="opacity-70"> · on Celo</span>
+                {txHash && celoscanHref ? (
+                  <>
+                    <span className="opacity-40"> · </span>
+                    <Link
+                      href={celoscanHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 opacity-70"
+                    >
+                      {RESULT_OVERLAY_COPY.cta.viewOnCeloscan}
+                    </Link>
+                  </>
+                ) : null}
               </>
             ) : null
           }
@@ -328,7 +341,7 @@ export function ResultOverlay({
                 variant={variant}
                 pieceType={pieceType}
                 glowClass={variant === "badge" ? "reward-glow-achievement reward-glow-pulse" : "reward-glow-progress"}
-                size="sm"
+                size={variant === "score" ? "lg" : "sm"}
               />
             )}
 
@@ -357,17 +370,7 @@ export function ResultOverlay({
               </p>
             ) : null}
 
-            {!isError && txHash && celoscanHref ? (
-              <Link
-                href={celoscanHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold underline underline-offset-2"
-                style={{ color: "rgba(120, 65, 5, 0.95)" }}
-              >
-                {RESULT_OVERLAY_COPY.cta.viewOnCeloscan}
-              </Link>
-            ) : null}
+
 
           </div>
         </CandyGlassShell>
