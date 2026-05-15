@@ -344,6 +344,7 @@ function ArenaPageInner() {
 
   const startCoachAnalysis = useCallback(async () => {
     if (!address) return;
+    if (game.moveHistory.length === 0) return;
     const gameResult = mapArenaResult(game.status, isPlayerWin);
 
     // Abort any previous in-flight analysis, show loading immediately
@@ -456,6 +457,7 @@ function ArenaPageInner() {
   }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, address, proActiveCached]);
 
   const handleAskCoach = useCallback(() => {
+    if (game.moveHistory.length === 0) return;
     const gameResult = mapArenaResult(game.status, isPlayerWin);
 
     // No wallet → free quick review
@@ -532,14 +534,27 @@ function ArenaPageInner() {
   ]);
 
   const coachPreview = ENABLE_COACH ? (
-    <CoachPreviewCard
-      proActive={proActiveCached}
-      difficultyLabel={ARENA_COPY.difficulty[game.difficulty]}
-      resultLabel={currentArenaResult()}
-      moveCount={game.moveHistory.length}
-      onPrimaryCta={handleCoachPreviewCta}
-      isCompact
-    />
+    game.moveHistory.length === 0 ? (
+      <section
+        className="coach-preview-card is-compact"
+        aria-label={ARENA_COPY.coachPreview.emptyTitle}
+      >
+        <div className="coach-preview-card-copy">
+          <span className="coach-preview-card-kicker">Coach Review</span>
+          <h3 className="coach-preview-card-title">{ARENA_COPY.coachPreview.emptyTitle}</h3>
+          <p className="coach-preview-card-body">{ARENA_COPY.coachPreview.emptyBody}</p>
+        </div>
+      </section>
+    ) : (
+      <CoachPreviewCard
+        proActive={proActiveCached}
+        difficultyLabel={ARENA_COPY.difficulty[game.difficulty]}
+        resultLabel={currentArenaResult()}
+        moveCount={game.moveHistory.length}
+        onPrimaryCta={handleCoachPreviewCta}
+        isCompact
+      />
+    )
   ) : null;
 
   const handleClaimWelcome = useCallback(() => {

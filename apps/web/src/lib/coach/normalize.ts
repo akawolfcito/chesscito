@@ -4,7 +4,10 @@ import type { CoachResponse } from "./types";
 const MistakeSchema = z.object({
   moveNumber: z.number().int().positive(),
   played: z.string().max(20),
-  better: z.string().max(20),
+  better: z.preprocess(
+    (val) => (typeof val === "string" ? val.trim().slice(0, 48) : val),
+    z.string().max(48),
+  ),
   explanation: z.string().max(300),
 });
 

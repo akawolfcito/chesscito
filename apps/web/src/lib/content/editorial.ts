@@ -627,6 +627,8 @@ export const ARENA_COPY = {
     activeBody: "Review after checkmate",
   },
   coachPreview: {
+    emptyTitle: "No moves to review",
+    emptyBody: "Make at least one move before asking Coach.",
     inactiveTitle: "Coach Preview",
     insight: (difficulty: string, result: string, moves: number) => {
       const outcome = result === "win"
