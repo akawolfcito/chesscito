@@ -34,6 +34,8 @@ export function getValidTargets(
   position: BoardPosition,
   blockers: BoardPosition[] = [],
   isCapture: boolean = false,
+  captureTargets?: BoardPosition[],
+  targetPos?: BoardPosition,
 ): BoardPosition[] {
   const blockerSet = new Set(blockers.map((b) => `${b.file},${b.rank}`));
   const withoutBlockers = (moves: BoardPosition[]) =>
@@ -44,7 +46,13 @@ export function getValidTargets(
     case "rook":   moves = getRookMoves(position, blockers); break;
     case "bishop": moves = getBishopMoves(position, blockers); break;
     case "knight": moves = getKnightMoves(position); break;
-    case "pawn":   moves = getPawnMoves(position, blockers, isCapture); break;
+    case "pawn": {
+      const pawnCaptureSquares = captureTargets !== undefined
+        ? targetPos ? [...captureTargets, targetPos] : captureTargets
+        : undefined;
+      moves = getPawnMoves(position, blockers, isCapture, pawnCaptureSquares);
+      break;
+    }
     case "queen":  moves = getQueenMoves(position, blockers); break;
     default:       moves = []; break;
   }

@@ -34,6 +34,11 @@ export type Exercise = {
    *  queen) stop one square before an obstacle in the line of attack.
    *  When set, the exercise is treated as labyrinth mode. */
   obstacles?: BoardPosition[];
+  /** Squares with capturable enemy pickups. In pawn labyrinths with
+   *  isCapture=true, the pawn may only move diagonally to squares in
+   *  captureTargets or targetPos. Rendered as capturable markers
+   *  without a lock icon, visually distinct from obstacles. */
+  captureTargets?: BoardPosition[];
 };
 
 export type LabyrinthProgress = {

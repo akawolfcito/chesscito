@@ -15,6 +15,7 @@ export function getPawnMoves(
   origin: BoardPosition,
   blockers: BoardPosition[] = [],
   isCapture: boolean = false,
+  captureSquares?: BoardPosition[],
 ): BoardPosition[] {
   const moves: BoardPosition[] = [];
   const isBlocked = (f: number, r: number) =>
@@ -36,10 +37,16 @@ export function getPawnMoves(
 
   // Diagonal captures — only in capture exercises
   if (isCapture) {
+    const canCapture = (f: number, r: number) =>
+      captureSquares === undefined
+        || captureSquares.some((s) => s.file === f && s.rank === r);
+
     for (const df of [-1, 1]) {
       const diag = { file: origin.file + df, rank: origin.rank + 1 };
       if (diag.file >= 0 && diag.file < 8 && diag.rank < 8) {
-        moves.push(diag);
+        if (canCapture(diag.file, diag.rank)) {
+          moves.push(diag);
+        }
       }
     }
   }

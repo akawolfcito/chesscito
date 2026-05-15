@@ -38,6 +38,7 @@ export type LabyrinthDef = {
   start: string;
   target: string;
   obstacles?: string[];
+  captureTargets?: string[];
   isCapture?: boolean;
   optimalMoves: number;
 };
@@ -91,6 +92,20 @@ export function defineLabyrinth(def: LabyrinthDef): Exercise {
   const obstacles = (def.obstacles ?? []).map(sq);
   validateObstacles(obstacles, startPos, targetPos);
 
+  const captureTargets = (def.captureTargets ?? []).map(sq);
+  if (captureTargets.length > 0) {
+    const allOccupied = [posToString(startPos), posToString(targetPos), ...obstacles.map(posToString)];
+    const seen = new Set<string>();
+    for (const ct of captureTargets) {
+      const key = posToString(ct);
+      if (allOccupied.includes(key)) {
+        throw new Error(`Capture target at "${key}" overlaps start, target, or obstacle`);
+      }
+      if (seen.has(key)) throw new Error(`Duplicate capture target at "${key}"`);
+      seen.add(key);
+    }
+  }
+
   return {
     id: def.id,
     startPos,
@@ -98,5 +113,6 @@ export function defineLabyrinth(def: LabyrinthDef): Exercise {
     optimalMoves: def.optimalMoves,
     ...(def.isCapture !== undefined && { isCapture: def.isCapture }),
     ...(obstacles.length > 0 && { obstacles }),
+    ...(captureTargets.length > 0 && { captureTargets }),
   };
 }

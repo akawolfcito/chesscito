@@ -184,4 +184,79 @@ describe("defineLabyrinth", () => {
       }),
     ).toThrow(RangeError);
   });
+
+  it("accepts captureTargets and includes them in output", () => {
+    const lab = defineLabyrinth({
+      id: "pawn-lab-6",
+      start: "a2",
+      target: "d7",
+      obstacles: ["a3", "a4"],
+      captureTargets: ["b3", "c4"],
+      isCapture: true,
+      optimalMoves: 5,
+    });
+    expect(lab.captureTargets).toEqual([
+      { file: 1, rank: 2 },
+      { file: 2, rank: 3 },
+    ]);
+  });
+
+  it("omits captureTargets when not provided", () => {
+    const lab = defineLabyrinth({
+      id: "pawn-lab-7",
+      start: "a2",
+      target: "d7",
+      optimalMoves: 5,
+    });
+    expect(lab.captureTargets).toBeUndefined();
+  });
+
+  it("throws when captureTarget overlaps start", () => {
+    expect(() =>
+      defineLabyrinth({
+        id: "bad",
+        start: "a2",
+        target: "d7",
+        captureTargets: ["a2"],
+        optimalMoves: 3,
+      }),
+    ).toThrow("overlaps start");
+  });
+
+  it("throws when captureTarget overlaps target", () => {
+    expect(() =>
+      defineLabyrinth({
+        id: "bad",
+        start: "a2",
+        target: "d7",
+        captureTargets: ["d7"],
+        optimalMoves: 3,
+      }),
+    ).toThrow("overlaps start, target, or obstacle");
+  });
+
+  it("throws when captureTarget overlaps obstacle", () => {
+    expect(() =>
+      defineLabyrinth({
+        id: "bad",
+        start: "a2",
+        target: "d7",
+        obstacles: ["a3"],
+        captureTargets: ["a3"],
+        optimalMoves: 3,
+      }),
+    ).toThrow("overlaps start, target, or obstacle");
+  });
+
+  it("throws on duplicate captureTargets", () => {
+    expect(() =>
+      defineLabyrinth({
+        id: "bad",
+        start: "a2",
+        target: "d7",
+        captureTargets: ["b3", "b3"],
+        optimalMoves: 3,
+      }),
+    ).toThrow("Duplicate capture target");
+  });
 });

@@ -49,6 +49,10 @@ type BoardProps = {
   /** L2 labyrinth obstacles — friendly blocker pieces. Cannot be moved
    *  through or captured. Forwarded to the rules layer as blockers. */
   obstacles?: BoardPosition[];
+  /** L2 labyrinth capture targets — capturable enemy pickup squares.
+   *  Pawns may move diagonally only to these squares (or targetPos)
+   *  when isCapture=true. Rendered as capturable markers. */
+  captureTargets?: BoardPosition[];
   isLocked?: boolean;
   isCapture?: boolean;
   onMove?: (position: BoardPosition, movesCount: number) => void;
@@ -61,6 +65,7 @@ export function Board({
   mode = "practice",
   targetPosition = null,
   obstacles,
+  captureTargets,
   isLocked = false,
   isCapture = false,
   onMove,
@@ -89,8 +94,8 @@ export function Board({
 
   const validTargets = useMemo(() => {
     if (!selectedPosition) return [];
-    return getValidTargets(pieceType, selectedPosition, obstacles ?? [], isCapture);
-  }, [pieceType, selectedPosition, obstacles, isCapture]);
+    return getValidTargets(pieceType, selectedPosition, obstacles ?? [], isCapture, captureTargets, targetPosition ?? undefined);
+  }, [pieceType, selectedPosition, obstacles, isCapture, captureTargets, targetPosition]);
 
   const squares = useMemo(
     () =>
@@ -293,6 +298,39 @@ export function Board({
                     >
                       <CandyIcon name="lock" className="h-[60%] w-[60%]" />
                     </span>
+                  </div>
+                );
+              })}
+
+              {/* Capture targets — capturable pickup markers. Rendered as
+                  small glowing amber circles to indicate "land here to
+                  capture". No lock icon; visually distinct from obstacles
+                  which are desaturated pieces with a lock badge. */}
+              {mode === "labyrinth" && captureTargets && captureTargets.length > 0 && captureTargets.map((ct) => {
+                const cc = cellCenter(ct.file, ct.rank);
+                const cw = pieceWidth();
+                const key = `capture-${ct.file}-${ct.rank}`;
+                return (
+                  <div
+                    key={key}
+                    aria-hidden="true"
+                    className="playhub-board-piece-float"
+                    style={{
+                      left: `${cc.x}%`,
+                      top: `${cc.y}%`,
+                      width: `${cw}%`,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <span
+                      className="block rounded-full"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        background: "radial-gradient(circle, rgba(255, 200, 50, 0.35) 0%, rgba(255, 160, 20, 0.15) 70%, transparent 100%)",
+                        boxShadow: "0 0 14px 4px rgba(255, 180, 40, 0.45), inset 0 0 8px 2px rgba(255, 200, 80, 0.25)",
+                      }}
+                    />
                   </div>
                 );
               })}

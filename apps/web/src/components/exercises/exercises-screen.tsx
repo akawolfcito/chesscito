@@ -1501,6 +1501,7 @@ export function ExercisesScreen({
               mode={activeLabyrinth ? "labyrinth" : "practice"}
               targetPosition={activeExercise.targetPos}
               obstacles={activeLabyrinth?.obstacles}
+              captureTargets={activeExercise.captureTargets}
               isLocked={!activeLabyrinth ? (phase === "failure" || phase === "success") : labyrinthCompleted !== null}
               onMove={activeLabyrinth ? handleLabyrinthMove : handleMove}
               isCapture={activeExercise.isCapture ?? false}

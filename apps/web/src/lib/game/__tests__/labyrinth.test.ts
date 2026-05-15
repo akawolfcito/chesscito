@@ -55,6 +55,7 @@ function bfsPawnDepth(
   blockers: BoardPosition[],
   isCapture: boolean,
   maxDepth: number,
+  captureSquares?: BoardPosition[],
 ): number | null {
   if (start.file === target.file && start.rank === target.rank) return 0;
   const blockerSet = new Set(blockers.map(posKey));
@@ -63,7 +64,7 @@ function bfsPawnDepth(
   for (let depth = 1; depth <= maxDepth; depth++) {
     const next: BoardPosition[] = [];
     for (const sq of frontier) {
-      const candidates = getPawnMoves(sq, blockers, isCapture);
+      const candidates = getPawnMoves(sq, blockers, isCapture, captureSquares);
       for (const move of candidates) {
         if (blockerSet.has(posKey(move))) continue;
         if (move.file === target.file && move.rank === target.rank) return depth;
@@ -297,12 +298,17 @@ describe("L2 labyrinth — pawn path existence", () => {
     expect(lab).toBeDefined();
     if (!lab) return;
 
+    const captureSquares = lab.captureTargets
+      ? [...lab.captureTargets, lab.targetPos]
+      : undefined;
+
     const minDepth = bfsPawnDepth(
       lab.startPos,
       lab.targetPos,
       lab.obstacles ?? [],
       lab.isCapture ?? false,
       optimal,
+      captureSquares,
     );
     expect(minDepth).toBe(optimal);
   });
@@ -315,12 +321,17 @@ describe("L2 labyrinth — pawn path existence", () => {
       if (!lab) return;
 
       if (optimal > 1) {
+        const captureSquares = lab.captureTargets
+          ? [...lab.captureTargets, lab.targetPos]
+          : undefined;
+
         const tooSoon = bfsPawnDepth(
           lab.startPos,
           lab.targetPos,
           lab.obstacles ?? [],
           lab.isCapture ?? false,
           optimal - 1,
+          captureSquares,
         );
         expect(tooSoon).toBeNull();
       }
@@ -328,39 +339,39 @@ describe("L2 labyrinth — pawn path existence", () => {
   );
 });
 
-describe("L2 labyrinth — pawn isCapture verification", () => {
-  it("pawn-lab-3: isCapture=true exposes diagonal capture target b3", () => {
+describe("L2 labyrinth — pawn isCapture + captureTargets verification", () => {
+  it("pawn-lab-3: isCapture=true + captureTargets exposes diagonal capture target b3", () => {
     const lab = LABYRINTHS.pawn.find((l) => l.id === "pawn-lab-3");
     expect(lab).toBeDefined();
     if (!lab) return;
-    const targetsWithCapture = getValidTargets("pawn", lab.startPos, lab.obstacles ?? [], true);
-    const hasDiagonal = targetsWithCapture.some((t) => t.file === 1 && t.rank === 2);
+    const targets = getValidTargets("pawn", lab.startPos, lab.obstacles ?? [], true, lab.captureTargets, lab.targetPos);
+    const hasDiagonal = targets.some((t) => t.file === 1 && t.rank === 2);
     expect(hasDiagonal).toBe(true);
   });
 
-  it("pawn-lab-3: isCapture=false hides diagonal capture target b3", () => {
+  it("pawn-lab-3: isCapture=false hides diagonal (forward blocked by a3)", () => {
     const lab = LABYRINTHS.pawn.find((l) => l.id === "pawn-lab-3");
     expect(lab).toBeDefined();
     if (!lab) return;
-    const targetsWithoutCapture = getValidTargets("pawn", lab.startPos, lab.obstacles ?? [], false);
-    const hasDiagonal = targetsWithoutCapture.some((t) => t.file === 1 && t.rank === 2);
-    expect(hasDiagonal).toBe(false);
-  });
-
-  it("pawn-lab-3: no valid moves at all when isCapture=false (forward blocked by a3)", () => {
-    const lab = LABYRINTHS.pawn.find((l) => l.id === "pawn-lab-3");
-    expect(lab).toBeDefined();
-    if (!lab) return;
-    const targets = getValidTargets("pawn", lab.startPos, lab.obstacles ?? [], false);
+    const targets = getValidTargets("pawn", lab.startPos, lab.obstacles ?? [], false, lab.captureTargets, lab.targetPos);
     expect(targets.length).toBe(0);
   });
 
-  it("pawn-lab-3: has at least one valid move when isCapture=true", () => {
+  it("pawn-lab-3: diagonal to non-captureTarget empty square is blocked", () => {
     const lab = LABYRINTHS.pawn.find((l) => l.id === "pawn-lab-3");
     expect(lab).toBeDefined();
     if (!lab) return;
-    const targets = getValidTargets("pawn", lab.startPos, lab.obstacles ?? [], true);
-    expect(targets.length).toBeGreaterThan(0);
+    // From a2, b3 is a captureTarget, so allowed. From b3, c4 is a captureTarget, allowed.
+    // But from b4 (after b3→b4 forward), c5 is NOT a captureTarget → blocked.
+    const targets = getValidTargets("pawn", { file: 1, rank: 2 }, lab.obstacles ?? [], true, lab.captureTargets, lab.targetPos);
+    const hasForward = targets.some((t) => t.file === 1 && t.rank === 3);
+    expect(hasForward).toBe(true);
+    // c4 is diagonal-right from b3 and IS a captureTarget
+    const hasCaptureDiag = targets.some((t) => t.file === 2 && t.rank === 3);
+    expect(hasCaptureDiag).toBe(true);
+    // a4 is diagonal-left from b3 and NOT a captureTarget → blocked
+    const hasEmptyDiag = targets.some((t) => t.file === 0 && t.rank === 3);
+    expect(hasEmptyDiag).toBe(false);
   });
 });
 
@@ -516,5 +527,74 @@ describe("L2 labyrinth — rook-lab-1 legacy data integrity", () => {
       first.obstacles?.some((o) => o.file === p.file && o.rank === p.rank) ?? false;
     expect(onObstacle(first.startPos)).toBe(false);
     expect(onObstacle(first.targetPos)).toBe(false);
+  });
+});
+
+describe("captureTargets — pawn diagonal restriction mechanics", () => {
+  it("pawn cannot diagonal-step to empty square when captureSquares is empty array", () => {
+    const moves = getPawnMoves(pos(0, 1), [], true, []);
+    const diagonals = moves.filter((m) => m.file !== 0);
+    expect(diagonals).toHaveLength(0);
+  });
+
+  it("pawn can diagonal-step to captureTarget", () => {
+    const captureSquares = [pos(1, 2)];
+    const moves = getPawnMoves(pos(0, 1), [], true, captureSquares);
+    const hasDiagonal = moves.some((m) => m.file === 1 && m.rank === 2);
+    expect(hasDiagonal).toBe(true);
+  });
+
+  it("pawn cannot diagonal-step to empty square when captureSquares only has a different square", () => {
+    const captureSquares = [pos(1, 4)];
+    const moves = getPawnMoves(pos(0, 1), [], true, captureSquares);
+    const emptyDiagonal = moves.filter((m) => m.file !== 0 && m.rank === 2);
+    expect(emptyDiagonal).toHaveLength(0);
+  });
+
+  it("pawn CAN diagonal-step to targetPos when captureTargets is empty but targetPos is in captureSquares", () => {
+    const captureSquares = [pos(1, 2)];
+    const moves = getPawnMoves(pos(0, 1), [], true, captureSquares);
+    const hasTargetDiagonal = moves.some((m) => m.file === 1 && m.rank === 2);
+    expect(hasTargetDiagonal).toBe(true);
+  });
+
+  it("pawn forward moves unaffected by captureSquares", () => {
+    const moves = getPawnMoves(pos(0, 1), [], true, [pos(1, 2)]);
+    const forwards = moves.filter((m) => m.file === 0);
+    expect(forwards.length).toBeGreaterThan(0);
+    const hasFwd1 = forwards.some((m) => m.rank === 2);
+    expect(hasFwd1).toBe(true);
+  });
+
+  it("pawn double-forward still works when both forward squares are free", () => {
+    const moves = getPawnMoves(pos(0, 1), [], true, [pos(1, 2)]);
+    const hasDouble = moves.some((m) => m.file === 0 && m.rank === 3);
+    expect(hasDouble).toBe(true);
+  });
+
+  it("pawn double-forward blocked when forward-1 is blocked", () => {
+    const moves = getPawnMoves(pos(0, 1), [pos(0, 2)], true, [pos(1, 2)]);
+    const hasDouble = moves.some((m) => m.file === 0 && m.rank === 3);
+    expect(hasDouble).toBe(false);
+  });
+
+  it("getValidTargets passes captureTargets through for pawn", () => {
+    const targets = getValidTargets("pawn", pos(0, 1), [], true, [pos(1, 2)]);
+    const hasCapture = targets.some((t) => t.file === 1 && t.rank === 2);
+    expect(hasCapture).toBe(true);
+    const emptyDiagonal = targets.filter((t) => t.file !== 0 && t.file !== 1);
+    expect(emptyDiagonal).toHaveLength(0);
+  });
+
+  it("getValidTargets: captureTargets undefined = all diagonals allowed (backward compat)", () => {
+    const targets = getValidTargets("pawn", pos(0, 1), [], true);
+    const diagonals = targets.filter((t) => t.file !== 0);
+    expect(diagonals.length).toBeGreaterThan(0);
+  });
+
+  it("getValidTargets: non-pawn pieces ignore captureTargets", () => {
+    const targets = getValidTargets("rook", pos(0, 0), [pos(1, 0)], false);
+    const onCapture = targets.some((t) => t.file === 1 && t.rank === 0);
+    expect(onCapture).toBe(false); // obstacle blocked
   });
 });
