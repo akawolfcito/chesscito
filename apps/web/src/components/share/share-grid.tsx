@@ -27,6 +27,8 @@ type Service = {
   onClick?: () => void | Promise<void>;
 };
 
+type SaveState = "idle" | "saved" | "link-copied" | "failed";
+
 /**
  * ShareGrid — colorful per-service share icons + native "More" + copy.
  *
@@ -41,7 +43,7 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
   const shareUrl = url ?? SHARE_COPY.url;
   const payload = `${text}\n${shareUrl}`;
   const [copied, setCopied] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
 
   async function handleCopy() {
     try {
@@ -71,19 +73,58 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
     const file = await fetchCardFile();
     if (!file) {
       track("share_tile_tap", { tile: "save", success: false });
+      setSaveState("failed");
+      setTimeout(() => setSaveState("idle"), 1800);
       return;
     }
-    const objectUrl = URL.createObjectURL(file);
-    const a = document.createElement("a");
-    a.href = objectUrl;
-    a.download = file.name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(objectUrl);
-    track("share_tile_tap", { tile: "save", success: true });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1800);
+
+    // 1. Native share with file — works reliably in MiniPay / mobile WebView
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text });
+        track("share_tile_tap", { tile: "save", path: "native_files" });
+        // Native share sheet opened — do NOT claim "Saved".
+        // User either completed or cancelled; reset silently.
+        return;
+      } catch {
+        // User cancelled share sheet — fall through to download fallback
+      }
+    }
+
+    // 2. <a download> fallback — works on desktop
+    try {
+      const objectUrl = URL.createObjectURL(file);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+      track("share_tile_tap", { tile: "save", path: "download", success: true });
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 1800);
+      return;
+    } catch {
+      // fall through to clipboard
+    }
+
+    // 3. Clipboard fallback — copy image URL so user can paste elsewhere
+    if (cardUrl) {
+      try {
+        await navigator.clipboard.writeText(cardUrl);
+        track("share_tile_tap", { tile: "save", path: "clipboard", success: true });
+        setSaveState("link-copied");
+        setTimeout(() => setSaveState("idle"), 1800);
+        return;
+      } catch {
+        // fall through to failure
+      }
+    }
+
+    track("share_tile_tap", { tile: "save", success: false });
+    setSaveState("failed");
+    setTimeout(() => setSaveState("idle"), 1800);
   }
 
   async function handleNativeShare() {
@@ -112,6 +153,15 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
       track("share_tile_tap", { tile: "more", path: "native_text_cancelled" });
     }
   }
+
+  const saveLabel = (() => {
+    switch (saveState) {
+      case "saved": return "Saved";
+      case "link-copied": return "Link copied";
+      case "failed": return "Try Share";
+      default: return "Save";
+    }
+  })();
 
   const services: Service[] = [
     {
@@ -161,7 +211,7 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
     cardUrl
       ? {
           key: "save",
-          label: saved ? "Saved" : "Save",
+          label: saveLabel,
           background: "rgba(110, 65, 15, 0.18)",
           onClick: handleSave,
           icon: (
