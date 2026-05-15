@@ -12,9 +12,13 @@ type Props = {
   totalMoves: number;
   elapsedMs: number;
   result: string;
-  onGetFullAnalysis: () => void;
+  onGetFullAnalysis?: () => void;
   onPlayAgain: () => void;
   onBackToHub: () => void;
+  onRetry?: () => void;
+  retryLabel?: string;
+  errorTitle?: string;
+  errorBody?: string;
 };
 
 export function CoachFallback({
@@ -26,6 +30,10 @@ export function CoachFallback({
   onGetFullAnalysis,
   onPlayAgain,
   onBackToHub,
+  onRetry,
+  retryLabel,
+  errorTitle,
+  errorBody,
 }: Props) {
   const time = formatTime(elapsedMs);
   const diffLabel = ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty;
@@ -34,8 +42,21 @@ export function CoachFallback({
   const warmMuted = "rgba(110, 65, 15, 0.75)";
   const cream = "0 1px 0 rgba(255, 245, 215, 0.55)";
 
+  const showRetry = Boolean(onRetry);
+
   return (
     <div className="flex flex-col gap-4">
+      {errorTitle && errorBody && (
+        <div
+          data-testid="coach-fallback-error"
+          role="alert"
+          className="rounded-xl border border-amber-400/60 bg-amber-50 px-3 py-2 text-xs"
+          style={{ color: "rgba(110, 65, 15, 0.95)" }}
+        >
+          <p className="font-bold">{errorTitle}</p>
+          <p className="mt-1">{errorBody}</p>
+        </div>
+      )}
       <p className="text-xs" style={{ color: warmMuted }}>
         {diffLabel} - {totalMoves} moves - {result}
       </p>
@@ -60,32 +81,57 @@ export function CoachFallback({
         </section>
       )}
 
-      {/* Primary: Play Again — retention CTA. Large carved wood signals
-          the kingdom values the player's continued play above all. */}
-      <div className="flex w-full justify-center">
-        <PrincipalButton
-          size="large"
-          leadingIcon={<CandyIcon name="refresh" className="h-4 w-4" />}
-          onClick={onPlayAgain}
-          aria-label={ARENA_COPY.playAgain}
-        >
-          {ARENA_COPY.playAgain}
-        </PrincipalButton>
-      </div>
+      {showRetry ? (
+        <>
+          {/* Primary: Retry Review — recoverable error state */}
+          <div className="flex w-full justify-center">
+            <PrincipalButton
+              size="large"
+              leadingIcon={<CandyIcon name="refresh" className="h-4 w-4" />}
+              onClick={onRetry!}
+              aria-label={retryLabel ?? COACH_COPY.retryReview}
+            >
+              {retryLabel ?? COACH_COPY.retryReview}
+            </PrincipalButton>
+          </div>
 
-      {/* Secondary: Unlock Full Analysis — commercial upsell. Medium
-          carved wood per Sally's call: ceremonial enough to deserve
-          the diegetic register (commercial intent), but smaller than
-          the retention primary so the hierarchy reads cleanly. */}
-      <div className="flex w-full justify-center">
-        <PrincipalButton
-          size="medium"
-          onClick={onGetFullAnalysis}
-          aria-label={COACH_COPY.unlockFullAnalysis}
-        >
-          {COACH_COPY.unlockFullAnalysis}
-        </PrincipalButton>
-      </div>
+          {/* Secondary: Play Again */}
+          <div className="flex w-full justify-center">
+            <PrincipalButton
+              size="medium"
+              onClick={onPlayAgain}
+              aria-label={ARENA_COPY.playAgain}
+            >
+              {ARENA_COPY.playAgain}
+            </PrincipalButton>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Primary: Play Again — retention CTA */}
+          <div className="flex w-full justify-center">
+            <PrincipalButton
+              size="large"
+              leadingIcon={<CandyIcon name="refresh" className="h-4 w-4" />}
+              onClick={onPlayAgain}
+              aria-label={ARENA_COPY.playAgain}
+            >
+              {ARENA_COPY.playAgain}
+            </PrincipalButton>
+          </div>
+
+          {/* Secondary: Unlock Full Analysis — commercial upsell */}
+          <div className="flex w-full justify-center">
+            <PrincipalButton
+              size="medium"
+              onClick={onGetFullAnalysis!}
+              aria-label={COACH_COPY.unlockFullAnalysis}
+            >
+              {COACH_COPY.unlockFullAnalysis}
+            </PrincipalButton>
+          </div>
+        </>
+      )}
 
       {/* Tertiary: Back to Hub */}
       <button

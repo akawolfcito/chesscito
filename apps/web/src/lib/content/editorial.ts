@@ -882,6 +882,11 @@ export const COACH_COPY = {
   claimFree: "Claim Free Analyses",
   welcomeNote: "Free analyses to start. After that, credit packs from $0.05.",
   creditComingSoon: "Credit packs coming soon!",
+  connecting: "Connecting to Coach\u2026",
+  slowThinking: "Coach is still thinking. Keep this screen open.",
+  retryReview: "Retry Review",
+  analysisIncomplete: "Your review didn\u2019t complete.",
+  analysisIncompleteBody: "Please try again. If it keeps happening, come back later.",
   // --- Secondary Screen Cohesion (2026-03-28) ---
   loadingCanLeave: "You can leave — your result will be ready when you return.",
   creditPackSubtitle: (n: number) => `${n} game analyses`,

@@ -9,7 +9,7 @@ import type { CoachResponse } from "@/lib/coach/types";
 const TIMEOUT_MS = 60_000;
 
 type Props = {
-  jobId: string;
+  jobId?: string;
   wallet?: string;
   onReady: (response: CoachResponse) => void;
   onFailed: (reason: string) => void;
@@ -24,18 +24,29 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
   onFailedRef.current = onFailed;
 
   const [elapsed, setElapsed] = useState(0);
+  const [messageTick, setMessageTick] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => setElapsed((e) => e + 1), 3000);
     return () => clearInterval(timer);
   }, []);
 
-  const filledDots = Math.min(5, elapsed + 1);
+  useEffect(() => {
+    const timer = setInterval(() => setMessageTick((t) => t + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const hasJob = Boolean(jobId);
+  const filledDots = hasJob ? Math.min(5, elapsed + 1) : 0;
 
   useEffect(() => {
     const dotInterval = setInterval(() => {
       setDots((d) => (d.length >= 3 ? "." : d + "."));
     }, 500);
+
+    if (!hasJob) {
+      return () => clearInterval(dotInterval);
+    }
 
     const pollInterval = setInterval(async () => {
       try {
@@ -63,7 +74,15 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
       clearInterval(pollInterval);
       clearTimeout(timeoutId);
     };
-  }, [jobId, wallet]);
+  }, [jobId, wallet, hasJob]);
+
+  const mainMessage = hasJob
+    ? COACH_COPY.analyzing
+    : messageTick < 5
+      ? COACH_COPY.connecting
+      : messageTick < 12
+        ? COACH_COPY.analyzing
+        : COACH_COPY.slowThinking;
 
   return (
     <div className="flex flex-col items-center gap-3 py-2 text-center">
@@ -78,32 +97,37 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
         }}
       >
         <CandyIcon name="coach" className="h-5 w-5" />
-        {COACH_COPY.analyzing}{dots}
+        {mainMessage}{dots}
       </p>
-      <p className="text-sm" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
-        {COACH_COPY.reviewingMoves}
-      </p>
+      {hasJob && (
+        <p className="text-sm" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
+          {COACH_COPY.reviewingMoves}
+        </p>
+      )}
 
-      {/* Progress dots */}
-      <div className="flex items-center gap-2">
-        {Array.from({ length: 5 }, (_, i) => (
-          <div
-            key={i}
-            className={`h-2 w-2 rounded-full ${
-              i < filledDots
-                ? i === filledDots - 1
-                  ? "bg-emerald-500 animate-pulse"
-                  : "bg-emerald-500"
-                : ""
-            }`}
-            style={i >= filledDots ? { background: "rgba(110, 65, 15, 0.25)" } : undefined}
-          />
-        ))}
-      </div>
+      {hasJob && (
+        <>
+          <div className="flex items-center gap-2">
+            {Array.from({ length: 5 }, (_, i) => (
+              <div
+                key={i}
+                className={`h-2 w-2 rounded-full ${
+                  i < filledDots
+                    ? i === filledDots - 1
+                      ? "bg-emerald-500 animate-pulse"
+                      : "bg-emerald-500"
+                    : ""
+                }`}
+                style={i >= filledDots ? { background: "rgba(110, 65, 15, 0.25)" } : undefined}
+              />
+            ))}
+          </div>
 
-      <p className="mt-1 text-xs" style={{ color: "rgba(110, 65, 15, 0.55)" }}>
-        {COACH_COPY.loadingCanLeave}
-      </p>
+          <p className="mt-1 text-xs" style={{ color: "rgba(110, 65, 15, 0.55)" }}>
+            {COACH_COPY.loadingCanLeave}
+          </p>
+        </>
+      )}
     </div>
   );
 }

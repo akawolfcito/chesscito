@@ -346,8 +346,11 @@ function ArenaPageInner() {
     if (!address) return;
     const gameResult = mapArenaResult(game.status, isPlayerWin);
 
-    // Abort any previous in-flight analysis
+    // Abort any previous in-flight analysis, show loading immediately
     coachAbortRef.current?.abort();
+    setCoachJobId(null);
+    setCoachPhase("loading");
+
     const controller = new AbortController();
     coachAbortRef.current = controller;
     const { signal } = controller;
@@ -416,17 +419,19 @@ function ArenaPageInner() {
         setCoachJobId(analyzeData.jobId);
         setCoachPhase("loading");
       } else {
-        // Server didn't return ready/jobId — surface the actual error
-        // when the client believed the user was PRO so a paying user
-        // doesn't silently get dropped on a free quick-review.
+        // Server didn't return ready/jobId — log the error for diagnostics
+        // and flag a user-safe error banner.
         if (proActive) {
           const detail = analyzeData?.error
             ?? analyzeData?.internal
             ?? analyzeData?.reason
             ?? "no detail";
-          setCoachServerError(
-            `Server: ${detail} (HTTP ${analyzeRes.status}). Client thinks PRO is active (chip on /hub agrees). If this is the first time, retry; if it persists, report this exact text to support.`,
+          console.error(
+            "[coach] PRO mismatch — server returned non-ready for PRO user:",
+            detail,
+            `HTTP ${analyzeRes.status}`,
           );
+          setCoachServerError("error");
         }
         const quick = generateQuickReview({
           result: gameResult,
@@ -1246,17 +1251,6 @@ function ArenaPageInner() {
             closeLabel={ARENA_COPY.backToHub}
             className="max-h-none min-h-[calc(100dvh-2rem)] rounded-[1.75rem]"
           >
-            {coachServerError && (
-              <div
-                data-testid="coach-server-error"
-                role="alert"
-                className="mb-3 rounded-xl border border-amber-400/60 bg-amber-50 px-3 py-2 text-xs"
-                style={{ color: "rgba(110, 65, 15, 0.95)" }}
-              >
-                <p className="font-bold">PRO check mismatch</p>
-                <p className="mt-1">{coachServerError}</p>
-              </div>
-            )}
             <CoachFallback
               response={coachFallbackResponse}
               difficulty={game.difficulty}
@@ -1266,6 +1260,10 @@ function ArenaPageInner() {
               onGetFullAnalysis={() => setCoachPhase(isConnected ? "paywall" : "idle")}
               onPlayAgain={handlePlayAgain}
               onBackToHub={handleBackToHub}
+              onRetry={address ? () => { setCoachServerError(null); void startCoachAnalysis(); } : undefined}
+              retryLabel={coachProActive ? COACH_COPY.retryReview : COACH_COPY.retry}
+              errorTitle={coachServerError ? COACH_COPY.analysisIncomplete : undefined}
+              errorBody={coachServerError ? COACH_COPY.analysisIncompleteBody : undefined}
             />
           </CandyGlassShell>
         </div>
@@ -1459,7 +1457,7 @@ function ArenaPageInner() {
               </div>
             </div>
           )}
-          {coachPhase === "loading" && coachJobId && (
+          {coachPhase === "loading" && (
             <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300 px-4">
               <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
@@ -1467,10 +1465,10 @@ function ArenaPageInner() {
                   onClose={() => setCoachPhase("idle")}
                   closeLabel="Cancel"
                 >
-                  <CoachLoading
-                    jobId={coachJobId}
-                    wallet={address?.toLowerCase()}
-                    onReady={(response) => { setCoachResponse(response); setCoachCredits((c) => Math.max(0, c - 1)); setCoachPhase("result"); }}
+                    <CoachLoading
+                      jobId={coachJobId ?? undefined}
+                      wallet={address?.toLowerCase()}
+                      onReady={(response) => { setCoachResponse(response); setCoachCredits((c) => Math.max(0, c - 1)); setCoachPhase("result"); }}
                     onFailed={() => {
                       const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
                       setCoachFallbackResponse(quick);
