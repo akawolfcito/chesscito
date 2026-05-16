@@ -24,6 +24,11 @@ import { ENDGAME_SHARE_COPY } from "@/lib/content/editorial";
 import type { MiniArenaSetup } from "@/lib/game/mini-arena";
 import { pickAiMoveOrFallback } from "@/lib/game/mini-arena-ai";
 import type { ChessBoardPiece } from "@/lib/game/types";
+import { endgameStars } from "@/lib/game/scoring";
+import {
+  getMiniArenaBest,
+  recordMiniArenaBest,
+} from "@/lib/game/mini-arena-progress";
 
 type Status = "playing" | "won" | "drawn" | "thinking";
 
@@ -81,6 +86,10 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
   const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rejectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const winFiredRef = useRef(false);
+  const [showResultOverlay, setShowResultOverlay] = useState(false);
+  const [completionStars, setCompletionStars] = useState(0);
+  const [isNewBest, setIsNewBest] = useState(false);
+  const [previousBest, setPreviousBest] = useState<number | null>(null);
 
   // Re-init on open with a fresh FEN. Keeps the sheet self-contained.
   useEffect(() => {
@@ -94,6 +103,10 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     setMoveCount(0);
     setLastMove(null);
     winFiredRef.current = false;
+    setShowResultOverlay(false);
+    setCompletionStars(0);
+    setIsNewBest(false);
+    setPreviousBest(null);
   }, [open, setup.fen]);
 
   useEffect(() => {
@@ -138,12 +151,22 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
       setStatus(playerWon ? "won" : "drawn");
       if (playerWon && !winFiredRef.current) {
         winFiredRef.current = true;
-        onWin?.(moveCount + 1);
+        const totalMoves = moveCount + 1;
+        onWin?.(totalMoves);
+
+        const stars = endgameStars(totalMoves, setup.parMoves);
+        const prev = getMiniArenaBest(setup.id);
+        const newBest = recordMiniArenaBest(setup.id, totalMoves);
+        setCompletionStars(stars);
+        setIsNewBest(newBest);
+        setPreviousBest(prev);
       }
+      setShowResultOverlay(true);
       return true;
     }
     if (game.isStalemate() || game.isDraw() || game.isInsufficientMaterial()) {
       setStatus("drawn");
+      setShowResultOverlay(true);
       return true;
     }
     return false;
@@ -226,6 +249,10 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     setMoveCount(0);
     setLastMove(null);
     winFiredRef.current = false;
+    setShowResultOverlay(false);
+    setCompletionStars(0);
+    setIsNewBest(false);
+    setPreviousBest(null);
     setShareOpen(false);
   }
 
@@ -326,6 +353,184 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
           )}
         </div>
       </SheetContent>
+
+      {showResultOverlay && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-250"
+          style={{ background: "rgba(0,0,0,0.3)" }}
+          onClick={() => setShowResultOverlay(false)}
+        >
+          <div
+            className="relative w-full max-w-xs rounded-2xl p-6 animate-in zoom-in-95 slide-in-from-bottom-4 duration-400"
+            style={{
+              background: "linear-gradient(180deg, #FEF7E6 0%, #F8E8C8 100%)",
+              boxShadow:
+                "0 8px 32px rgba(63, 34, 8, 0.25), inset 0 1px 0 rgba(255, 245, 215, 0.9)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowResultOverlay(false)}
+              className="absolute top-3 right-3 h-6 w-6 flex items-center justify-center rounded-full text-sm"
+              style={{ color: "rgba(110, 65, 15, 0.5)" }}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+
+            {status === "won" ? (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="relative flex items-center justify-center">
+                  <div
+                    className="absolute h-20 w-20 rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 75%)",
+                    }}
+                  />
+                  <CandyIcon name="trophy" className="relative h-12 w-12" />
+                </div>
+
+                <div className="flex items-center gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <CandyIcon
+                      key={i}
+                      name="star"
+                      className="h-6 w-6"
+                      style={{
+                        opacity: i < completionStars ? 1 : 0.25,
+                        filter:
+                          i < completionStars
+                            ? "drop-shadow(0 0 4px rgba(245, 158, 11, 0.55))"
+                            : "none",
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <p
+                  className="text-sm font-extrabold"
+                  style={{
+                    color: "rgba(63, 34, 8, 0.95)",
+                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                  }}
+                >
+                  Checkmate in {moveCount} moves
+                </p>
+
+                {completionStars === 3 && (
+                  <p
+                    className="text-xs"
+                    style={{ color: "rgba(110, 65, 15, 0.75)" }}
+                  >
+                    ★ Perfect path
+                  </p>
+                )}
+
+                {isNewBest ? (
+                  <p
+                    className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-[0.10em]"
+                    style={{
+                      background: "rgba(245, 158, 11, 0.85)",
+                      color: "rgba(63, 34, 8, 0.95)",
+                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                      boxShadow:
+                        "0 0 12px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 245, 215, 0.45)",
+                    }}
+                  >
+                    {previousBest != null
+                      ? `New best! Beat ${previousBest} → ${moveCount}`
+                      : `First completion · ${moveCount} moves`}
+                  </p>
+                ) : previousBest != null ? (
+                  <p
+                    className="text-xs"
+                    style={{ color: "rgba(110, 65, 15, 0.65)" }}
+                  >
+                    Your best: {previousBest} moves
+                  </p>
+                ) : null}
+
+                <div className="flex w-full gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShareOpen(true)}
+                    className="flex-1 rounded-full px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
+                    style={{
+                      background: "rgba(110, 65, 15, 0.15)",
+                      color: "rgba(63, 34, 8, 0.95)",
+                      boxShadow:
+                        "inset 0 1px 0 rgba(255, 255, 255, 0.35)",
+                    }}
+                  >
+                    {ENDGAME_SHARE_COPY.shareResult}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="flex-1 rounded-full px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
+                    style={{
+                      background: "rgba(63, 34, 8, 0.92)",
+                      color: "rgba(255, 245, 215, 0.98)",
+                      boxShadow:
+                        "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
+                    }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="relative flex items-center justify-center">
+                  <div
+                    className="absolute h-20 w-20 rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(110, 65, 15, 0.12) 0%, transparent 70%)",
+                    }}
+                  />
+                  <CandyIcon
+                    name="move"
+                    className="relative h-12 w-12 opacity-60"
+                  />
+                </div>
+
+                <p
+                  className="text-sm font-extrabold"
+                  style={{
+                    color: "rgba(63, 34, 8, 0.95)",
+                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                  }}
+                >
+                  Draw
+                </p>
+                <p
+                  className="text-xs"
+                  style={{ color: "rgba(110, 65, 15, 0.65)" }}
+                >
+                  Keep the king at the edge!
+                </p>
+
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="w-full rounded-full px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
+                  style={{
+                    background: "rgba(63, 34, 8, 0.92)",
+                    color: "rgba(255, 245, 215, 0.98)",
+                    boxShadow:
+                      "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
+                  }}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {shareOpen && (
         <ShareModal
