@@ -1,31 +1,58 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
 import { DailyTacticSheet } from "../daily-tactic-sheet";
-import type { DailyPuzzle } from "@/lib/daily/puzzles";
+import type { DailyTacticData } from "@/lib/daily/daily-puzzles";
 
-// Use the canonical back-rank rook mate from the seed so the chess.js
-// move validation runs the same path as production.
-const PUZZLE: DailyPuzzle = {
-  id: "test-mt-001",
-  name: "Back rank — rook lift",
-  fen: "6k1/5ppp/8/8/8/8/8/3R3K w - - 0 1",
-  solution: { from: "d1", to: "d8" },
-  hint: "Reach the eighth rank.",
+const PUZZLE: DailyTacticData = {
+  id: "test-dt-rook-1",
+  name: "Rook — horizontal slide",
+  piece: "rook",
+  exercise: {
+    id: "test-dt-rook-1",
+    startPos: { file: 0, rank: 0 },
+    targetPos: { file: 7, rank: 0 },
+    optimalMoves: 1,
+  },
+  hint: "Slide the rook along the rank.",
+};
+
+const PUZZLE_TWO_MOVE: DailyTacticData = {
+  id: "test-dt-rook-2",
+  name: "Rook — two corners",
+  piece: "rook",
+  exercise: {
+    id: "test-dt-rook-2",
+    startPos: { file: 0, rank: 0 },
+    targetPos: { file: 7, rank: 7 },
+    optimalMoves: 2,
+  },
+  hint: "No single rank or file connects these corners.",
 };
 
 afterEach(() => {
   cleanup();
 });
 
-function renderSheet(overrides: { open?: boolean; onSolve?: () => void; onOpenChange?: (open: boolean) => void } = {}) {
+function renderSheet(
+  overrides: {
+    open?: boolean;
+    onSolve?: () => void;
+    onOpenChange?: (open: boolean) => void;
+    puzzleData?: DailyTacticData;
+    streakAfterSolve?: number;
+    streakType?: "first" | "extended" | "reset";
+  } = {},
+) {
   const onSolve = overrides.onSolve ?? vi.fn();
   const onOpenChange = overrides.onOpenChange ?? vi.fn();
   render(
     <DailyTacticSheet
       open={overrides.open ?? true}
       onOpenChange={onOpenChange}
-      puzzle={PUZZLE}
+      puzzleData={overrides.puzzleData ?? PUZZLE}
       onSolve={onSolve}
+      streakAfterSolve={overrides.streakAfterSolve}
+      streakType={overrides.streakType}
     />,
   );
   return { onSolve, onOpenChange };
@@ -36,9 +63,9 @@ describe("DailyTacticSheet — open state", () => {
     renderSheet();
     expect(screen.getByText(/Daily Tactic/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Back rank — rook lift — White to move, mate in one\./i),
+      screen.getByText(/Rook — horizontal slide/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Find the move that delivers checkmate\./i)).toBeInTheDocument();
+    expect(screen.getByText(/Move the rook to the target square\./i)).toBeInTheDocument();
   });
 
   it("does not render any sheet content when closed", () => {
@@ -47,26 +74,116 @@ describe("DailyTacticSheet — open state", () => {
   });
 });
 
-describe("DailyTacticSheet — solve flow", () => {
-  it("fires onSolve when the player plays the solution move", () => {
-    const { onSolve } = renderSheet();
-    // Click source square (d1 = white rook), then target (d8) — both
-    // exposed by ArenaBoard as buttons with role gridcell + accessible
-    // label "Square X".
-    fireEvent.click(screen.getByRole("gridcell", { name: "Square d1" }));
-    fireEvent.click(screen.getByRole("gridcell", { name: "Square d8" }));
+describe("DailyTacticSheet — solve flow (rook a1→h1)", () => {
+  function solve(): void {
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
+  }
+
+  it("fires onSolve when the rook reaches h1 and shows solved text", () => {
+    const { onSolve } = renderSheet({ streakAfterSolve: 3, streakType: "extended" });
+    solve();
     expect(onSolve).toHaveBeenCalledOnce();
-    expect(screen.getByTestId("daily-status-solved")).toBeInTheDocument();
+    expect(screen.getByTestId("daily-status-solved")).toHaveTextContent("Solved!");
+  });
+
+  it("does NOT show the old 'Streak banked' text", () => {
+    const { onSolve } = renderSheet({ streakAfterSolve: 3, streakType: "extended" });
+    solve();
+    expect(onSolve).toHaveBeenCalledOnce();
+    expect(screen.queryByText(/Streak banked/i)).not.toBeInTheDocument();
+  });
+
+  it("renders streak number and extended label when streakType='extended'", () => {
+    renderSheet({ streakAfterSolve: 5, streakType: "extended" });
+    solve();
+    expect(screen.getByText("Streak: 5")).toBeInTheDocument();
+    expect(screen.getByText("+1 day")).toBeInTheDocument();
+  });
+
+  it("renders 'First streak!' when streakType='first'", () => {
+    renderSheet({ streakAfterSolve: 1, streakType: "first" });
+    solve();
+    expect(screen.getByText("Streak: 1")).toBeInTheDocument();
+    expect(screen.getByText("First streak!")).toBeInTheDocument();
+  });
+
+  it("renders 'New streak!' when streakType='reset'", () => {
+    renderSheet({ streakAfterSolve: 1, streakType: "reset" });
+    solve();
+    expect(screen.getByText("Streak: 1")).toBeInTheDocument();
+    expect(screen.getByText("New streak!")).toBeInTheDocument();
+  });
+
+  it("does not render streak info when props are omitted", () => {
+    const { onSolve } = renderSheet();
+    solve();
+    expect(screen.getByTestId("daily-status-solved")).toHaveTextContent("Solved!");
+    expect(screen.queryByText(/Streak/)).not.toBeInTheDocument();
   });
 });
 
 describe("DailyTacticSheet — wrong move flow", () => {
-  it("does NOT fire onSolve and surfaces the hint when the player plays a wrong legal move", () => {
+  it("shows hint after a wrong move on a 1-move puzzle", () => {
     const { onSolve } = renderSheet();
-    // Pick the rook, then move to a wrong-but-legal square (d2).
-    fireEvent.click(screen.getByRole("gridcell", { name: "Square d1" }));
-    fireEvent.click(screen.getByRole("gridcell", { name: "Square d2" }));
+    // Click a1 to select rook, then b1 (wrong target for a1→h1)
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square b1" }));
     expect(onSolve).not.toHaveBeenCalled();
     expect(screen.queryByTestId("daily-status-solved")).not.toBeInTheDocument();
+  });
+});
+
+describe("DailyTacticSheet — auto-close after solve", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("calls onOpenChange(false) after 3200ms when solved", () => {
+    const { onOpenChange } = renderSheet();
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
+    expect(onOpenChange).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(3200);
+    });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("does NOT auto-close before 3200ms", () => {
+    const { onOpenChange } = renderSheet();
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
+    act(() => {
+      vi.advanceTimersByTime(3199);
+    });
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("DailyTacticSheet — 2-move puzzle", () => {
+  it("does NOT fire onSolve after the first (non-target) move", () => {
+    const { onSolve } = renderSheet({ puzzleData: PUZZLE_TWO_MOVE });
+    // Two-move: a1→h1 (first move), then h1→h8 (target). After first move,
+    // onSolve should NOT fire yet.
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
+    expect(onSolve).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("daily-status-solved")).not.toBeInTheDocument();
+  });
+
+  it("fires onSolve after reaching the target on the second move", () => {
+    const { onSolve } = renderSheet({ puzzleData: PUZZLE_TWO_MOVE });
+    // Two-move: a1→h1 (first), then h1→h8 (target)
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h8" }));
+    expect(onSolve).toHaveBeenCalledOnce();
+    expect(screen.getByTestId("daily-status-solved")).toBeInTheDocument();
   });
 });

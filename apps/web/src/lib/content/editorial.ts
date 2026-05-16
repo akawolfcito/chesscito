@@ -224,6 +224,24 @@ export const SHARE_COPY = {
   url: "https://chesscito.vercel.app",
 } as const;
 
+export const DAILY_SOLVE_COPY = {
+  solved: "Solved!",
+  firstStreak: "First streak!",
+  extendedStreak: "+1 day",
+  newStreak: "New streak!",
+  streakLabel: (n: number) => `Streak: ${n}`,
+} as const;
+
+export const DAILY_SHARE_COPY = {
+  shareChallenge: "Share Challenge",
+  shareResult: "Share Result",
+  ctaChallenge: "Can you solve today\u2019s puzzle?",
+  ctaSolved: (streak?: number) =>
+    streak != null && streak > 0
+      ? `I solved today\u2019s puzzle. Streak: ${streak}. Can you?`
+      : "I solved today\u2019s puzzle. Can you?",
+} as const;
+
 export const PHASE_FLASH_COPY = {
   success: "Well done!",
   failure: "Try again",

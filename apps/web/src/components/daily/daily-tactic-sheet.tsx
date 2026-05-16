@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Chess, type Square } from "chess.js";
+import { useEffect, useRef, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -9,157 +8,99 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { ArenaBoard } from "@/components/arena/arena-board";
+import { Board } from "@/components/board";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { MissionHeaderCandy } from "@/components/exercises/mission-header-candy";
-import { fenToPieces } from "@/lib/game/arena-utils";
+import { ShareModal } from "@/components/share/share-modal";
 import {
   hapticImpact,
   hapticReject,
   hapticSuccess,
   hapticTap,
 } from "@/lib/haptics";
-import { isPuzzleSolution, type DailyPuzzle } from "@/lib/daily/puzzles";
-import type { ChessBoardPiece } from "@/lib/game/types";
+import { DAILY_SOLVE_COPY, DAILY_SHARE_COPY } from "@/lib/content/editorial";
+import type { DailyTacticData } from "@/lib/daily/daily-puzzles";
+import type { BoardPosition } from "@/lib/game/types";
 
 type Status = "solving" | "solved" | "resetting";
+
+type StreakType = "first" | "extended" | "reset";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  puzzle: DailyPuzzle;
-  /** Fired the first time the player produces the correct move. The
-   *  parent should record completion + bump the streak; the sheet
-   *  auto-closes ~1.8s later so the celebration is visible. */
+  puzzleData: DailyTacticData;
   onSolve: () => void;
+  streakAfterSolve?: number;
+  streakType?: StreakType;
+  shareUrl?: string;
+  shareSolvedUrl?: string;
 };
 
-const SOLVE_AUTO_CLOSE_MS = 1800;
-const REJECT_SHAKE_MS = 220;
+const SOLVE_AUTO_CLOSE_MS = 3200;
 const RESET_AFTER_MS = 360;
 
-export function DailyTacticSheet({ open, onOpenChange, puzzle, onSolve }: Props) {
-  const gameRef = useRef(new Chess(puzzle.fen));
-  const [fen, setFen] = useState(puzzle.fen);
-  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
-  const [legalMoves, setLegalMoves] = useState<string[]>([]);
-  const [rejectingSquare, setRejectingSquare] = useState<string | null>(null);
+export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, streakAfterSolve, streakType, shareUrl, shareSolvedUrl }: Props) {
   const [status, setStatus] = useState<Status>("solving");
   const [showHint, setShowHint] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const rejectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [boardKey, setBoardKey] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // (Re)load the puzzle every time the sheet opens. Keeps the board fresh
-  // even if the parent kept the component mounted between sessions.
   useEffect(() => {
     if (!open) return;
-    gameRef.current = new Chess(puzzle.fen);
-    setFen(puzzle.fen);
-    setSelectedSquare(null);
-    setLegalMoves([]);
-    setRejectingSquare(null);
     setStatus("solving");
     setShowHint(false);
-    setAttempts(0);
-  }, [open, puzzle.fen]);
+    setBoardKey((k) => k + 1);
+  }, [open, puzzleData.id]);
 
-  // Cancel pending timers on unmount so a late reset never bleeds into a
-  // freshly opened sheet.
   useEffect(() => {
     return () => {
-      if (rejectTimerRef.current) clearTimeout(rejectTimerRef.current);
-      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     };
   }, []);
 
-  const pieces = useMemo<ChessBoardPiece[]>(() => {
-    return fenToPieces(fen).map((p, i) => ({
-      ...p,
-      id: `${p.color}-${p.type}-${p.square}-${i}`,
-    }));
-  }, [fen]);
+  const isLabyrinth =
+    (puzzleData.exercise.obstacles && puzzleData.exercise.obstacles.length > 0) ||
+    (puzzleData.exercise.captureTargets && puzzleData.exercise.captureTargets.length > 0);
 
-  function selectSquare(square: string) {
+  function handleShareOpen() {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setShareOpen(true);
+  }
+
+  function isShareUrlValid(url: string | undefined): url is string {
+    return typeof url === "string" && url.length > 0;
+  }
+
+  function handleMove(position: BoardPosition, movesCount: number) {
     if (status !== "solving") return;
-    const game = gameRef.current;
-    const piece = game.get(square as Square);
-
-    if (piece && piece.color === "w") {
-      hapticTap();
-      setSelectedSquare(square);
-      const moves = game.moves({ square: square as Square, verbose: true });
-      setLegalMoves(moves.map((m) => m.to));
-      return;
-    }
-
-    if (selectedSquare && legalMoves.includes(square)) {
-      const isCorrect = isPuzzleSolution(
-        puzzle,
-        selectedSquare,
-        square,
-        puzzle.solution.promotion,
-      );
-
-      if (isCorrect) {
-        game.move({
-          from: selectedSquare,
-          to: square,
-          promotion: puzzle.solution.promotion,
-        });
-        setFen(game.fen());
-        setSelectedSquare(null);
-        setLegalMoves([]);
-        setStatus("solved");
-        hapticSuccess();
-        hapticImpact();
-        onSolve();
+    const reached =
+      position.file === puzzleData.exercise.targetPos.file &&
+      position.rank === puzzleData.exercise.targetPos.rank;
+    if (!reached) {
+      if (puzzleData.exercise.optimalMoves === 1) {
+        hapticReject();
+        setStatus("resetting");
+        if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
         closeTimerRef.current = setTimeout(() => {
-          onOpenChange(false);
-        }, SOLVE_AUTO_CLOSE_MS);
-        return;
+          setBoardKey((k) => k + 1);
+          setShowHint(true);
+          setStatus("solving");
+        }, RESET_AFTER_MS);
       }
-
-      // Wrong move — shake the source piece, lock the board briefly,
-      // then reset to the starting position so the player can retry
-      // with the hint visible.
-      hapticReject();
-      setAttempts((n) => n + 1);
-      setRejectingSquare(selectedSquare);
-      setStatus("resetting");
-      setSelectedSquare(null);
-      setLegalMoves([]);
-
-      if (rejectTimerRef.current) clearTimeout(rejectTimerRef.current);
-      rejectTimerRef.current = setTimeout(() => {
-        setRejectingSquare(null);
-        rejectTimerRef.current = null;
-      }, REJECT_SHAKE_MS);
-
-      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
-      resetTimerRef.current = setTimeout(() => {
-        gameRef.current = new Chess(puzzle.fen);
-        setFen(puzzle.fen);
-        setShowHint(true);
-        setStatus("solving");
-        resetTimerRef.current = null;
-      }, RESET_AFTER_MS);
       return;
     }
-
-    if (selectedSquare) {
-      hapticReject();
-      if (rejectTimerRef.current) clearTimeout(rejectTimerRef.current);
-      setRejectingSquare(selectedSquare);
-      rejectTimerRef.current = setTimeout(() => {
-        setRejectingSquare(null);
-        rejectTimerRef.current = null;
-      }, REJECT_SHAKE_MS);
-    }
-    setSelectedSquare(null);
-    setLegalMoves([]);
+    hapticSuccess();
+    hapticImpact();
+    setStatus("solved");
+    onSolve();
+    closeTimerRef.current = setTimeout(() => {
+      onOpenChange(false);
+    }, SOLVE_AUTO_CLOSE_MS);
   }
 
   return (
@@ -171,23 +112,24 @@ export function DailyTacticSheet({ open, onOpenChange, puzzle, onSolve }: Props)
       >
         <MissionHeaderCandy
           title="Daily Tactic"
-          subtitle={puzzle.name}
+          subtitle={puzzleData.name}
           icon="coach"
-          objective="White to move · Mate in one"
+          objective={`Move the ${puzzleData.piece} to the target square.`}
         />
 
         <div className="flex flex-1 flex-col items-center justify-center px-2 py-4">
           <div className="w-full max-w-[360px]">
-            <ArenaBoard
-              pieces={pieces}
-              selectedSquare={selectedSquare}
-              legalMoves={legalMoves}
-              lastMove={null}
-              checkSquare={null}
-              rejectingSquare={rejectingSquare}
+            <Board
+              key={boardKey}
+              pieceType={puzzleData.piece}
+              startPosition={puzzleData.exercise.startPos}
+              mode={isLabyrinth ? "labyrinth" : "practice"}
+              targetPosition={puzzleData.exercise.targetPos}
+              obstacles={puzzleData.exercise.obstacles}
+              captureTargets={puzzleData.exercise.captureTargets}
+              isCapture={puzzleData.exercise.isCapture ?? false}
               isLocked={status !== "solving"}
-              onSquareClick={selectSquare}
-              playerColor="w"
+              onMove={handleMove}
             />
           </div>
         </div>
@@ -197,24 +139,78 @@ export function DailyTacticSheet({ open, onOpenChange, puzzle, onSolve }: Props)
           style={{ color: "rgba(63, 34, 8, 0.95)" }}
         >
           {status === "solved" ? (
-            <div className="flex items-center justify-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-2 px-4 shadow-sm">
-              <CandyIcon name="star" className="h-4 w-4" />
-              <p className="text-sm font-extrabold uppercase tracking-tight" data-testid="daily-status-solved">
-                Solved! Streak banked
-              </p>
+            <div
+              className="flex flex-col items-center gap-1.5 py-1"
+              style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
+            >
+              <div className="flex items-center gap-2">
+                <CandyIcon name="star" className="h-5 w-5" />
+                <span className="text-base font-extrabold uppercase tracking-tight" data-testid="daily-status-solved">
+                  {DAILY_SOLVE_COPY.solved}
+                </span>
+              </div>
+              <span className="text-xs font-bold opacity-60">{puzzleData.name}</span>
+              {streakAfterSolve != null && streakAfterSolve > 0 && (
+                <span className="text-sm font-extrabold">{DAILY_SOLVE_COPY.streakLabel(streakAfterSolve)}</span>
+              )}
+              {streakType === "first" && (
+                <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.firstStreak}</span>
+              )}
+              {streakType === "extended" && (
+                <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.extendedStreak}</span>
+              )}
+              {streakType === "reset" && (
+                <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.newStreak}</span>
+              )}
+              {isShareUrlValid(shareSolvedUrl) && (
+                <button
+                  type="button"
+                  onClick={handleShareOpen}
+                  className="mt-1 text-xs font-bold underline underline-offset-2"
+                  style={{ color: "rgba(110, 65, 15, 0.70)" }}
+                >
+                  {DAILY_SHARE_COPY.shareResult}
+                </button>
+              )}
             </div>
           ) : showHint ? (
             <div className="rounded-xl border border-[rgba(110,65,15,0.20)] bg-[rgba(110,65,15,0.05)] p-3 text-xs leading-tight shadow-inner">
               <span className="font-extrabold uppercase opacity-60 block mb-1">Hint</span>
-              {puzzle.hint}
+              {puzzleData.hint}
             </div>
           ) : (
-            <p className="text-xs font-bold opacity-60 uppercase tracking-widest">
-              Find the move
-            </p>
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-xs font-bold opacity-60 uppercase tracking-widest">
+                Find the move
+              </p>
+              {isShareUrlValid(shareUrl) && (
+                <button
+                  type="button"
+                  onClick={handleShareOpen}
+                  className="text-xs font-semibold underline underline-offset-2"
+                  style={{ color: "rgba(110, 65, 15, 0.50)" }}
+                >
+                  {DAILY_SHARE_COPY.shareChallenge}
+                </button>
+              )}
+            </div>
           )}
         </div>
       </SheetContent>
+
+      {shareOpen && (
+        <ShareModal
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          cardUrl={status === "solved" && isShareUrlValid(shareSolvedUrl) ? shareSolvedUrl : (shareUrl ?? null)}
+          text={
+            status === "solved"
+              ? DAILY_SHARE_COPY.ctaSolved(streakAfterSolve)
+              : DAILY_SHARE_COPY.ctaChallenge
+          }
+          title={DAILY_SHARE_COPY.shareChallenge}
+        />
+      )}
     </Sheet>
   );
 }
