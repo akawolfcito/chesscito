@@ -29,6 +29,7 @@ import {
   getMiniArenaBest,
   recordMiniArenaBest,
 } from "@/lib/game/mini-arena-progress";
+import { MiniArenaResultCeremony } from "./mini-arena-result-ceremony";
 
 type Status = "playing" | "won" | "drawn" | "thinking";
 
@@ -283,154 +284,32 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
         data-testid="mini-arena-sheet"
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
-        <MissionHeaderCandy
-          title={setup.name}
-          subtitle="Special Training"
-          icon="trophy"
-          objective={setup.description}
-        />
+        <div className="relative flex h-full flex-col">
+          <MissionHeaderCandy
+            title={setup.name}
+            subtitle="Special Training"
+            icon="trophy"
+            objective={setup.description}
+          />
 
-        <div className="relative flex flex-1 flex-col items-center justify-center px-2 py-4">
-          <div className="w-full max-w-[360px]">
-            <ArenaBoard
-              pieces={pieces}
-              selectedSquare={selectedSquare}
-              legalMoves={legalMoves}
-              lastMove={lastMove}
-              checkSquare={checkSquare}
-              rejectingSquare={rejectingSquare}
-              isLocked={status !== "playing"}
-              isThinking={status === "thinking"}
-              onSquareClick={selectSquare}
-              playerColor="w"
-            />
+          <div className="flex flex-1 flex-col items-center justify-center px-2 py-4">
+            <div className="w-full max-w-[360px]">
+              <ArenaBoard
+                pieces={pieces}
+                selectedSquare={selectedSquare}
+                legalMoves={legalMoves}
+                lastMove={lastMove}
+                checkSquare={checkSquare}
+                rejectingSquare={rejectingSquare}
+                isLocked={status !== "playing"}
+                isThinking={status === "thinking"}
+                onSquareClick={selectSquare}
+                playerColor="w"
+              />
+            </div>
           </div>
 
-          {open && resultOverlayOpen && (status === "won" || status === "drawn") && (
-            <div
-              className="absolute inset-0 z-40 flex items-center justify-center p-4 animate-in fade-in duration-250"
-              style={{ background: "rgba(0,0,0,0.3)" }}
-              onClick={() => setResultOverlayOpen(false)}
-            >
-              <div
-                className="relative w-full max-w-[280px] rounded-2xl p-5 animate-in zoom-in-95 slide-in-from-bottom-4 duration-400"
-                style={{
-                  background: "linear-gradient(180deg, #FEF7E6 0%, #F8E8C8 100%)",
-                  boxShadow:
-                    "0 8px 32px rgba(63, 34, 8, 0.25), inset 0 1px 0 rgba(255, 245, 215, 0.9)",
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  onClick={() => setResultOverlayOpen(false)}
-                  className="absolute top-2 right-2 h-5 w-5 flex items-center justify-center rounded-full text-xs"
-                  style={{ color: "rgba(110, 65, 15, 0.5)" }}
-                  aria-label="Close"
-                >
-                  ✕
-                </button>
-
-                {status === "won" ? (
-                  <div className="flex flex-col items-center gap-2.5 text-center">
-                    <div className="relative flex items-center justify-center">
-                      <div
-                        className="absolute h-16 w-16 rounded-full"
-                        style={{
-                          background:
-                            "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 75%)",
-                        }}
-                      />
-                      <CandyIcon name="trophy" className="relative h-10 w-10" />
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      {[0, 1, 2].map((i) => (
-                        <CandyIcon
-                          key={i}
-                          name="star"
-                          className="h-5 w-5"
-                          style={{
-                            opacity: i < completionStars ? 1 : 0.25,
-                            filter:
-                              i < completionStars
-                                ? "drop-shadow(0 0 4px rgba(245, 158, 11, 0.55))"
-                                : "none",
-                          }}
-                        />
-                      ))}
-                    </div>
-
-                    <p
-                      className="text-sm font-extrabold"
-                      style={{
-                        color: "rgba(63, 34, 8, 0.95)",
-                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                      }}
-                    >
-                      Checkmate in {moveCount} moves
-                    </p>
-
-                    {completionStars === 3 && (
-                      <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
-                        ★ Perfect path
-                      </p>
-                    )}
-
-                    {isNewBest ? (
-                      <p
-                        className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-[0.10em]"
-                        style={{
-                          background: "rgba(245, 158, 11, 0.85)",
-                          color: "rgba(63, 34, 8, 0.95)",
-                          textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                          boxShadow:
-                            "0 0 12px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 245, 215, 0.45)",
-                        }}
-                      >
-                        {previousBest != null
-                          ? `New best! Beat ${previousBest} → ${moveCount}`
-                          : `First completion · ${moveCount} moves`}
-                      </p>
-                    ) : previousBest != null ? (
-                      <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.65)" }}>
-                        Your best: {previousBest} moves
-                      </p>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2.5 text-center">
-                    <div className="relative flex items-center justify-center">
-                      <div
-                        className="absolute h-16 w-16 rounded-full"
-                        style={{
-                          background:
-                            "radial-gradient(circle, rgba(110, 65, 15, 0.12) 0%, transparent 70%)",
-                        }}
-                      />
-                      <CandyIcon name="move" className="relative h-10 w-10 opacity-60" />
-                    </div>
-
-                    <p
-                      className="text-sm font-extrabold"
-                      style={{
-                        color: "rgba(63, 34, 8, 0.95)",
-                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                      }}
-                    >
-                      Draw
-                    </p>
-                    <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.65)" }}>
-                      Keep the king at the edge!
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col shrink-0 px-5 pb-4 pt-2 gap-2">
+          <div className="flex flex-col shrink-0 px-5 pb-4 pt-2 gap-2">
           {status === "playing" ? (
             <>
               <div
@@ -465,7 +344,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
                 </p>
               </div>
             </div>
-          ) : (
+          ) : !resultOverlayOpen && (
             <div className="flex items-center justify-end gap-2 w-full">
               {status === "won" && (
                 <button
@@ -494,6 +373,21 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
                 Retry
               </button>
             </div>
+          )}
+        </div>
+
+          {open && resultOverlayOpen && (status === "won" || status === "drawn") && (
+            <MiniArenaResultCeremony
+              status={status}
+              moveCount={moveCount}
+              parMoves={setup.parMoves}
+              completionStars={completionStars}
+              isNewBest={isNewBest}
+              previousBest={previousBest}
+              onShare={handleShareOpen}
+              onRetry={reset}
+              onClose={() => setResultOverlayOpen(false)}
+            />
           )}
         </div>
       </SheetContent>
