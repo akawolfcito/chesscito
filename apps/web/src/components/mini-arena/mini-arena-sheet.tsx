@@ -86,7 +86,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
   const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rejectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const winFiredRef = useRef(false);
-  const [showResultOverlay, setShowResultOverlay] = useState(false);
+  const [resultOverlayOpen, setResultOverlayOpen] = useState(false);
   const [completionStars, setCompletionStars] = useState(0);
   const [isNewBest, setIsNewBest] = useState(false);
   const [previousBest, setPreviousBest] = useState<number | null>(null);
@@ -103,7 +103,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     setMoveCount(0);
     setLastMove(null);
     winFiredRef.current = false;
-    setShowResultOverlay(false);
+    setResultOverlayOpen(false);
     setCompletionStars(0);
     setIsNewBest(false);
     setPreviousBest(null);
@@ -161,12 +161,12 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
         setIsNewBest(newBest);
         setPreviousBest(prev);
       }
-      setShowResultOverlay(true);
+      setResultOverlayOpen(true);
       return true;
     }
     if (game.isStalemate() || game.isDraw() || game.isInsufficientMaterial()) {
       setStatus("drawn");
-      setShowResultOverlay(true);
+      setResultOverlayOpen(true);
       return true;
     }
     return false;
@@ -234,6 +234,14 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     setLegalMoves([]);
   }
 
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setShareOpen(false);
+      setResultOverlayOpen(false);
+    }
+    onOpenChange(nextOpen);
+  }
+
   function handleShareOpen() {
     setShareOpen(true);
   }
@@ -249,7 +257,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     setMoveCount(0);
     setLastMove(null);
     winFiredRef.current = false;
-    setShowResultOverlay(false);
+    setResultOverlayOpen(false);
     setCompletionStars(0);
     setIsNewBest(false);
     setPreviousBest(null);
@@ -269,7 +277,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
           : `Moves: ${moveCount} / ${setup.parMoves}`;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent
         side="bottom"
         data-testid="mini-arena-sheet"
@@ -282,7 +290,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
           objective={setup.description}
         />
 
-        <div className="flex flex-1 flex-col items-center justify-center px-2 py-4">
+        <div className="relative flex flex-1 flex-col items-center justify-center px-2 py-4">
           <div className="w-full max-w-[360px]">
             <ArenaBoard
               pieces={pieces}
@@ -297,240 +305,198 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
               playerColor="w"
             />
           </div>
+
+          {open && resultOverlayOpen && (status === "won" || status === "drawn") && (
+            <div
+              className="absolute inset-0 z-40 flex items-center justify-center p-4 animate-in fade-in duration-250"
+              style={{ background: "rgba(0,0,0,0.3)" }}
+              onClick={() => setResultOverlayOpen(false)}
+            >
+              <div
+                className="relative w-full max-w-[280px] rounded-2xl p-5 animate-in zoom-in-95 slide-in-from-bottom-4 duration-400"
+                style={{
+                  background: "linear-gradient(180deg, #FEF7E6 0%, #F8E8C8 100%)",
+                  boxShadow:
+                    "0 8px 32px rgba(63, 34, 8, 0.25), inset 0 1px 0 rgba(255, 245, 215, 0.9)",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => setResultOverlayOpen(false)}
+                  className="absolute top-2 right-2 h-5 w-5 flex items-center justify-center rounded-full text-xs"
+                  style={{ color: "rgba(110, 65, 15, 0.5)" }}
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+
+                {status === "won" ? (
+                  <div className="flex flex-col items-center gap-2.5 text-center">
+                    <div className="relative flex items-center justify-center">
+                      <div
+                        className="absolute h-16 w-16 rounded-full"
+                        style={{
+                          background:
+                            "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 75%)",
+                        }}
+                      />
+                      <CandyIcon name="trophy" className="relative h-10 w-10" />
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {[0, 1, 2].map((i) => (
+                        <CandyIcon
+                          key={i}
+                          name="star"
+                          className="h-5 w-5"
+                          style={{
+                            opacity: i < completionStars ? 1 : 0.25,
+                            filter:
+                              i < completionStars
+                                ? "drop-shadow(0 0 4px rgba(245, 158, 11, 0.55))"
+                                : "none",
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <p
+                      className="text-sm font-extrabold"
+                      style={{
+                        color: "rgba(63, 34, 8, 0.95)",
+                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                      }}
+                    >
+                      Checkmate in {moveCount} moves
+                    </p>
+
+                    {completionStars === 3 && (
+                      <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
+                        ★ Perfect path
+                      </p>
+                    )}
+
+                    {isNewBest ? (
+                      <p
+                        className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-[0.10em]"
+                        style={{
+                          background: "rgba(245, 158, 11, 0.85)",
+                          color: "rgba(63, 34, 8, 0.95)",
+                          textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                          boxShadow:
+                            "0 0 12px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 245, 215, 0.45)",
+                        }}
+                      >
+                        {previousBest != null
+                          ? `New best! Beat ${previousBest} → ${moveCount}`
+                          : `First completion · ${moveCount} moves`}
+                      </p>
+                    ) : previousBest != null ? (
+                      <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.65)" }}>
+                        Your best: {previousBest} moves
+                      </p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2.5 text-center">
+                    <div className="relative flex items-center justify-center">
+                      <div
+                        className="absolute h-16 w-16 rounded-full"
+                        style={{
+                          background:
+                            "radial-gradient(circle, rgba(110, 65, 15, 0.12) 0%, transparent 70%)",
+                        }}
+                      />
+                      <CandyIcon name="move" className="relative h-10 w-10 opacity-60" />
+                    </div>
+
+                    <p
+                      className="text-sm font-extrabold"
+                      style={{
+                        color: "rgba(63, 34, 8, 0.95)",
+                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                      }}
+                    >
+                      Draw
+                    </p>
+                    <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.65)" }}>
+                      Keep the king at the edge!
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col shrink-0 px-5 pb-4 pt-2 gap-2">
-          <div
-            className="flex items-center justify-between gap-3 w-full"
-            style={{ color: "rgba(63, 34, 8, 0.95)" }}
-          >
-            <div className="flex-1 flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-1.5 px-3 shadow-sm min-w-0">
-              <CandyIcon name={status === "won" ? "star" : "move"} className="h-3.5 w-3.5 shrink-0 opacity-70" />
-              <p data-testid="mini-arena-status" className="text-[0.8rem] font-extrabold uppercase tracking-tight truncate">
-                {footerStatus}
-              </p>
+          {status === "playing" ? (
+            <>
+              <div
+                className="flex items-center justify-between gap-3 w-full"
+                style={{ color: "rgba(63, 34, 8, 0.95)" }}
+              >
+                <div className="flex-1 flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-1.5 px-3 shadow-sm min-w-0">
+                  <CandyIcon name="move" className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                  <p data-testid="mini-arena-status" className="text-[0.8rem] font-extrabold uppercase tracking-tight truncate">
+                    {footerStatus}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleShareOpen}
+                className="text-xs font-semibold underline underline-offset-2 self-center"
+                style={{ color: "rgba(110, 65, 15, 0.50)" }}
+              >
+                {ENDGAME_SHARE_COPY.shareChallenge}
+              </button>
+            </>
+          ) : status === "thinking" ? (
+            <div
+              className="flex items-center gap-3 w-full"
+              style={{ color: "rgba(63, 34, 8, 0.95)" }}
+            >
+              <div className="flex-1 flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-1.5 px-3 shadow-sm min-w-0">
+                <CandyIcon name="move" className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                <p data-testid="mini-arena-status" className="text-[0.8rem] font-extrabold uppercase tracking-tight truncate">
+                  {footerStatus}
+                </p>
+              </div>
             </div>
-            {status !== "playing" && (
-              <div className="flex items-center gap-2 shrink-0">
-                {status === "won" && (
-                  <button
-                    type="button"
-                    onClick={handleShareOpen}
-                    className="rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
-                    style={{
-                      background: "rgba(110, 65, 15, 0.15)",
-                      color: "rgba(63, 34, 8, 0.95)",
-                      boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.35)",
-                    }}
-                  >
-                    {ENDGAME_SHARE_COPY.shareResult}
-                  </button>
-                )}
+          ) : (
+            <div className="flex items-center justify-end gap-2 w-full">
+              {status === "won" && (
                 <button
                   type="button"
-                  onClick={reset}
+                  onClick={handleShareOpen}
                   className="rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
                   style={{
-                    background: "rgba(63, 34, 8, 0.92)",
-                    color: "rgba(255, 245, 215, 0.98)",
-                    boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
+                    background: "rgba(110, 65, 15, 0.15)",
+                    color: "rgba(63, 34, 8, 0.95)",
+                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.35)",
                   }}
                 >
-                  Retry
+                  {ENDGAME_SHARE_COPY.shareResult}
                 </button>
-              </div>
-            )}
-          </div>
-          {status === "playing" && (
-            <button
-              type="button"
-              onClick={handleShareOpen}
-              className="text-xs font-semibold underline underline-offset-2 self-center"
-              style={{ color: "rgba(110, 65, 15, 0.50)" }}
-            >
-              {ENDGAME_SHARE_COPY.shareChallenge}
-            </button>
+              )}
+              <button
+                type="button"
+                onClick={reset}
+                className="rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
+                style={{
+                  background: "rgba(63, 34, 8, 0.92)",
+                  color: "rgba(255, 245, 215, 0.98)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
+                }}
+              >
+                Retry
+              </button>
+            </div>
           )}
         </div>
       </SheetContent>
-
-      {showResultOverlay && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-250"
-          style={{ background: "rgba(0,0,0,0.3)" }}
-          onClick={() => setShowResultOverlay(false)}
-        >
-          <div
-            className="relative w-full max-w-xs rounded-2xl p-6 animate-in zoom-in-95 slide-in-from-bottom-4 duration-400"
-            style={{
-              background: "linear-gradient(180deg, #FEF7E6 0%, #F8E8C8 100%)",
-              boxShadow:
-                "0 8px 32px rgba(63, 34, 8, 0.25), inset 0 1px 0 rgba(255, 245, 215, 0.9)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setShowResultOverlay(false)}
-              className="absolute top-3 right-3 h-6 w-6 flex items-center justify-center rounded-full text-sm"
-              style={{ color: "rgba(110, 65, 15, 0.5)" }}
-              aria-label="Close"
-            >
-              ✕
-            </button>
-
-            {status === "won" ? (
-              <div className="flex flex-col items-center gap-3 text-center">
-                <div className="relative flex items-center justify-center">
-                  <div
-                    className="absolute h-20 w-20 rounded-full"
-                    style={{
-                      background:
-                        "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 75%)",
-                    }}
-                  />
-                  <CandyIcon name="trophy" className="relative h-12 w-12" />
-                </div>
-
-                <div className="flex items-center gap-1">
-                  {[0, 1, 2].map((i) => (
-                    <CandyIcon
-                      key={i}
-                      name="star"
-                      className="h-6 w-6"
-                      style={{
-                        opacity: i < completionStars ? 1 : 0.25,
-                        filter:
-                          i < completionStars
-                            ? "drop-shadow(0 0 4px rgba(245, 158, 11, 0.55))"
-                            : "none",
-                      }}
-                    />
-                  ))}
-                </div>
-
-                <p
-                  className="text-sm font-extrabold"
-                  style={{
-                    color: "rgba(63, 34, 8, 0.95)",
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                  }}
-                >
-                  Checkmate in {moveCount} moves
-                </p>
-
-                {completionStars === 3 && (
-                  <p
-                    className="text-xs"
-                    style={{ color: "rgba(110, 65, 15, 0.75)" }}
-                  >
-                    ★ Perfect path
-                  </p>
-                )}
-
-                {isNewBest ? (
-                  <p
-                    className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-[0.10em]"
-                    style={{
-                      background: "rgba(245, 158, 11, 0.85)",
-                      color: "rgba(63, 34, 8, 0.95)",
-                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                      boxShadow:
-                        "0 0 12px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 245, 215, 0.45)",
-                    }}
-                  >
-                    {previousBest != null
-                      ? `New best! Beat ${previousBest} → ${moveCount}`
-                      : `First completion · ${moveCount} moves`}
-                  </p>
-                ) : previousBest != null ? (
-                  <p
-                    className="text-xs"
-                    style={{ color: "rgba(110, 65, 15, 0.65)" }}
-                  >
-                    Your best: {previousBest} moves
-                  </p>
-                ) : null}
-
-                <div className="flex w-full gap-2 mt-1">
-                  <button
-                    type="button"
-                    onClick={() => setShareOpen(true)}
-                    className="flex-1 rounded-full px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
-                    style={{
-                      background: "rgba(110, 65, 15, 0.15)",
-                      color: "rgba(63, 34, 8, 0.95)",
-                      boxShadow:
-                        "inset 0 1px 0 rgba(255, 255, 255, 0.35)",
-                    }}
-                  >
-                    {ENDGAME_SHARE_COPY.shareResult}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={reset}
-                    className="flex-1 rounded-full px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
-                    style={{
-                      background: "rgba(63, 34, 8, 0.92)",
-                      color: "rgba(255, 245, 215, 0.98)",
-                      boxShadow:
-                        "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
-                    }}
-                  >
-                    Retry
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-3 text-center">
-                <div className="relative flex items-center justify-center">
-                  <div
-                    className="absolute h-20 w-20 rounded-full"
-                    style={{
-                      background:
-                        "radial-gradient(circle, rgba(110, 65, 15, 0.12) 0%, transparent 70%)",
-                    }}
-                  />
-                  <CandyIcon
-                    name="move"
-                    className="relative h-12 w-12 opacity-60"
-                  />
-                </div>
-
-                <p
-                  className="text-sm font-extrabold"
-                  style={{
-                    color: "rgba(63, 34, 8, 0.95)",
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                  }}
-                >
-                  Draw
-                </p>
-                <p
-                  className="text-xs"
-                  style={{ color: "rgba(110, 65, 15, 0.65)" }}
-                >
-                  Keep the king at the edge!
-                </p>
-
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="w-full rounded-full px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
-                  style={{
-                    background: "rgba(63, 34, 8, 0.92)",
-                    color: "rgba(255, 245, 215, 0.98)",
-                    boxShadow:
-                      "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
-                  }}
-                >
-                  Retry
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {shareOpen && (
         <ShareModal
