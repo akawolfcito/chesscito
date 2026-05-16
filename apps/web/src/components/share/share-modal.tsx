@@ -63,6 +63,7 @@ export function ShareModal({
   return createPortal(
     <div
       className="fixed inset-0 z-[70] flex flex-col items-center justify-end candy-modal-scrim animate-in fade-in duration-200 overflow-hidden"
+      style={{ pointerEvents: "auto" }}
       onClick={() => onOpenChange(false)}
       onKeyDown={(e) => {
         if (e.key === "Escape") onOpenChange(false);
