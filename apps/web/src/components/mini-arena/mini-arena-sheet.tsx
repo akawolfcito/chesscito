@@ -12,6 +12,7 @@ import {
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { MissionHeaderCandy } from "@/components/exercises/mission-header-candy";
+import { ShareModal } from "@/components/share/share-modal";
 import { fenToPieces } from "@/lib/game/arena-utils";
 import {
   hapticImpact,
@@ -19,6 +20,7 @@ import {
   hapticSuccess,
   hapticTap,
 } from "@/lib/haptics";
+import { ENDGAME_SHARE_COPY } from "@/lib/content/editorial";
 import type { MiniArenaSetup } from "@/lib/game/mini-arena";
 import { pickAiMoveOrFallback } from "@/lib/game/mini-arena-ai";
 import type { ChessBoardPiece } from "@/lib/game/types";
@@ -44,6 +46,28 @@ function dispatchMoveHaptic(flags: string | undefined, isCheck: boolean, isMate:
   hapticTap();
 }
 
+function parseFenSquares(fen: string): { wk: string; wr: string; bk: string } {
+  const board = fen.split(" ")[0];
+  const ranks = board.split("/");
+  let wk = "", wr = "", bk = "";
+  for (let r = 0; r < 8; r++) {
+    let f = 0;
+    for (const ch of ranks[r]) {
+      if (/[1-8]/.test(ch)) {
+        f += Number(ch);
+      } else {
+        const file = "abcdefgh"[f];
+        const rank = String(8 - r);
+        if (ch === "K") wk = file + rank;
+        else if (ch === "R") wr = file + rank;
+        else if (ch === "k") bk = file + rank;
+        f++;
+      }
+    }
+  }
+  return { wk, wr, bk };
+}
+
 export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
   const gameRef = useRef(new Chess(setup.fen));
   const [fen, setFen] = useState(setup.fen);
@@ -53,6 +77,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
   const [status, setStatus] = useState<Status>("playing");
   const [moveCount, setMoveCount] = useState(0);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rejectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const winFiredRef = useRef(false);
@@ -77,6 +102,11 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
       if (rejectTimerRef.current) clearTimeout(rejectTimerRef.current);
     };
   }, []);
+
+  const shareBaseUrl = useMemo(() => {
+    const squares = parseFenSquares(setup.fen);
+    return `/api/og/endgame?mode=krk&name=${encodeURIComponent(setup.name)}&wk=${squares.wk}&wr=${squares.wr}&bk=${squares.bk}`;
+  }, [setup.fen, setup.name]);
 
   const pieces = useMemo<ChessBoardPiece[]>(() => {
     return fenToPieces(fen).map((p, i) => ({
@@ -181,6 +211,10 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     setLegalMoves([]);
   }
 
+  function handleShareOpen() {
+    setShareOpen(true);
+  }
+
   function reset() {
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
     gameRef.current = new Chess(setup.fen);
@@ -192,6 +226,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     setMoveCount(0);
     setLastMove(null);
     winFiredRef.current = false;
+    setShareOpen(false);
   }
 
   const isWithinPar = moveCount <= setup.parMoves;
@@ -237,32 +272,78 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
           </div>
         </div>
 
-        <div
-          className="flex shrink-0 items-center justify-between gap-3 px-5 pb-4 pt-2"
-          style={{ color: "rgba(63, 34, 8, 0.95)" }}
-        >
-          <div className="flex-1 flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-1.5 px-3 shadow-sm min-w-0">
-            <CandyIcon name={status === "won" ? "star" : "move"} className="h-3.5 w-3.5 shrink-0 opacity-70" />
-            <p data-testid="mini-arena-status" className="text-[0.8rem] font-extrabold uppercase tracking-tight truncate">
-              {footerStatus}
-            </p>
+        <div className="flex flex-col shrink-0 px-5 pb-4 pt-2 gap-2">
+          <div
+            className="flex items-center justify-between gap-3 w-full"
+            style={{ color: "rgba(63, 34, 8, 0.95)" }}
+          >
+            <div className="flex-1 flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-1.5 px-3 shadow-sm min-w-0">
+              <CandyIcon name={status === "won" ? "star" : "move"} className="h-3.5 w-3.5 shrink-0 opacity-70" />
+              <p data-testid="mini-arena-status" className="text-[0.8rem] font-extrabold uppercase tracking-tight truncate">
+                {footerStatus}
+              </p>
+            </div>
+            {status !== "playing" && (
+              <div className="flex items-center gap-2 shrink-0">
+                {status === "won" && (
+                  <button
+                    type="button"
+                    onClick={handleShareOpen}
+                    className="rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
+                    style={{
+                      background: "rgba(110, 65, 15, 0.15)",
+                      color: "rgba(63, 34, 8, 0.95)",
+                      boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.35)",
+                    }}
+                  >
+                    {ENDGAME_SHARE_COPY.shareResult}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
+                  style={{
+                    background: "rgba(63, 34, 8, 0.92)",
+                    color: "rgba(255, 245, 215, 0.98)",
+                    boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
+                  }}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
           </div>
-          {status !== "playing" && (
+          {status === "playing" && (
             <button
               type="button"
-              onClick={reset}
-              className="rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
-              style={{
-                background: "rgba(63, 34, 8, 0.92)",
-                color: "rgba(255, 245, 215, 0.98)",
-                boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
-              }}
+              onClick={handleShareOpen}
+              className="text-xs font-semibold underline underline-offset-2 self-center"
+              style={{ color: "rgba(110, 65, 15, 0.50)" }}
             >
-              Retry
+              {ENDGAME_SHARE_COPY.shareChallenge}
             </button>
           )}
         </div>
       </SheetContent>
+
+      {shareOpen && (
+        <ShareModal
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          cardUrl={
+            status === "won"
+              ? `${shareBaseUrl}&solved=true&moves=${moveCount}&limit=${setup.parMoves}`
+              : shareBaseUrl
+          }
+          text={
+            status === "won"
+              ? ENDGAME_SHARE_COPY.ctaSolved(moveCount, setup.parMoves)
+              : ENDGAME_SHARE_COPY.ctaChallenge
+          }
+          title={status === "won" ? ENDGAME_SHARE_COPY.shareResult : ENDGAME_SHARE_COPY.shareChallenge}
+        />
+      )}
     </Sheet>
   );
 }

@@ -242,6 +242,16 @@ export const DAILY_SHARE_COPY = {
       : "I solved today\u2019s puzzle. Can you?",
 } as const;
 
+export const ENDGAME_SHARE_COPY = {
+  shareChallenge: "Share Challenge",
+  shareResult: "Share Result",
+  ctaChallenge: "Can you force checkmate from this position?",
+  ctaSolved: (moves?: number, limit?: number) =>
+    moves != null && limit != null
+      ? `I solved this K+R vs K training in ${moves}/${limit} moves. Can you?`
+      : "I solved this endgame. Can you?",
+} as const;
+
 export const PHASE_FLASH_COPY = {
   success: "Well done!",
   failure: "Try again",
