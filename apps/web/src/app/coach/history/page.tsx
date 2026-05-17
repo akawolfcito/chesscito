@@ -36,7 +36,7 @@ function PageHeader() {
       <Link
         href="/hub"
         aria-label="Back to hub"
-        className="tj-page-header-back"
+        className="tj-page-header-back candy-nav-button"
       >
         <CandyBanner name="btn-back" className="h-9 w-9" />
       </Link>

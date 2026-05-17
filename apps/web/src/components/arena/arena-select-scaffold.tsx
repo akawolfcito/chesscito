@@ -111,7 +111,7 @@ export function ArenaSelectScaffold({
               type="button"
               onClick={onBack}
               aria-label={ARENA_COPY.backToHub}
-              className="arena-scaffold-back"
+              className="arena-scaffold-back candy-nav-button"
             >
               <CandyBanner name="btn-back" className="h-9 w-9" />
             </button>

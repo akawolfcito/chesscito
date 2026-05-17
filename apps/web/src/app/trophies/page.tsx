@@ -19,33 +19,38 @@ import { ABOUT_LINK_COPY, TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
  */
 export default function TrophiesPage() {
   return (
-    <main className="mx-auto flex min-h-[100dvh] max-w-[var(--app-max-width,390px)] flex-col px-4 py-6">
-      <header className="mb-4 flex items-start gap-3 border-b border-[rgba(110,65,15,0.30)] pb-4">
-        <Link
-          href="/hub"
-          aria-label="Back to hub"
-          className="flex h-11 w-11 shrink-0 items-center justify-center transition-transform active:scale-[0.94]"
-        >
-          <CandyBanner name="btn-back" className="h-9 w-9" />
-        </Link>
-        <div className="flex-1">
-          <h1
-            className="fantasy-title flex items-center gap-2 text-lg"
-            style={{
-              color: "rgba(110, 65, 15, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-            }}
+    <main className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center">
+      <div
+        className="candy-page-panel flex w-full max-w-[var(--app-max-width,390px)] flex-col px-4 py-6"
+        style={{ background: "var(--paper-bg)" }}
+      >
+        <header className="mb-4 flex items-start gap-3 border-b border-[rgba(110,65,15,0.30)] pb-4">
+          <Link
+            href="/hub"
+            aria-label="Back to hub"
+            className="candy-nav-button"
           >
-            <CandyIcon name="trophy" className="h-5 w-5" />
-            {TROPHY_VITRINE_COPY.pageTitle}
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-            {TROPHY_VITRINE_COPY.pageDescription}
-          </p>
+            <CandyBanner name="btn-back" className="h-9 w-9" />
+          </Link>
+          <div className="flex-1">
+            <h1
+              className="fantasy-title flex items-center gap-2 text-lg"
+              style={{
+                color: "rgba(110, 65, 15, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
+              }}
+            >
+              <CandyIcon name="trophy" className="h-5 w-5" />
+              {TROPHY_VITRINE_COPY.pageTitle}
+            </h1>
+            <p className="mt-1 text-sm" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+              {TROPHY_VITRINE_COPY.pageDescription}
+            </p>
+          </div>
+        </header>
+        <div className="flex-1 space-y-6 overflow-y-auto">
+          <TrophiesBody />
         </div>
-      </header>
-      <div className="flex-1 space-y-6 overflow-y-auto">
-        <TrophiesBody />
       </div>
     </main>
   );

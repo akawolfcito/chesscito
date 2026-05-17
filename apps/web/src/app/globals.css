@@ -510,6 +510,53 @@
     background-color: rgba(0, 0, 0, 0.60);
   }
 
+  .candy-nav-button,
+  .candy-close-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.16);
+    box-shadow:
+      0 8px 18px rgba(64, 36, 8, 0.16),
+      inset 0 1px 0 rgba(255, 245, 215, 0.62);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition:
+      transform 120ms ease,
+      background 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .candy-nav-button:hover,
+  .candy-close-button:hover {
+    background: rgba(255, 255, 255, 0.24);
+  }
+
+  .candy-nav-button:active,
+  .candy-close-button:active {
+    transform: scale(0.94);
+    box-shadow:
+      0 4px 10px rgba(64, 36, 8, 0.18),
+      inset 0 1px 0 rgba(255, 245, 215, 0.50);
+  }
+
+  .candy-nav-button:focus-visible,
+  .candy-close-button:focus-visible {
+    outline: 3px solid rgba(251, 191, 36, 0.50);
+    outline-offset: 2px;
+  }
+
+  .candy-close-button {
+    color: #dc2626;
+  }
+
   .result-screen-overlay {
     position: fixed;
     inset: 0;
@@ -788,7 +835,8 @@
   .sheet-bg-hub,
   .sheet-bg-badges,
   .sheet-bg-shop,
-  .sheet-bg-leaderboard {
+  .sheet-bg-leaderboard,
+  .sheet-bg-danger {
     position: relative;
     overflow: hidden;
   }
@@ -796,7 +844,8 @@
   .sheet-bg-hub::before,
   .sheet-bg-badges::before,
   .sheet-bg-shop::before,
-  .sheet-bg-leaderboard::before {
+  .sheet-bg-leaderboard::before,
+  .sheet-bg-danger::before {
     content: "";
     position: absolute;
     inset: -12px;
@@ -814,7 +863,8 @@
   .sheet-bg-hub::after,
   .sheet-bg-badges::after,
   .sheet-bg-shop::after,
-  .sheet-bg-leaderboard::after {
+  .sheet-bg-leaderboard::after,
+  .sheet-bg-danger::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -830,9 +880,21 @@
   .sheet-bg-hub>*,
   .sheet-bg-badges>*,
   .sheet-bg-shop>*,
-  .sheet-bg-leaderboard>* {
+  .sheet-bg-leaderboard>*,
+  .sheet-bg-danger>* {
     position: relative;
     z-index: 1;
+  }
+
+  .sheet-bg-danger::after {
+    background:
+      linear-gradient(to bottom,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 245, 215, 0.36) 46%,
+        rgba(255, 230, 220, 0.54) 100%),
+      radial-gradient(ellipse 100% 50% at 50% 100%,
+        rgba(244, 63, 94, 0.10) 0%,
+        rgba(244, 63, 94, 0.00) 70%);
   }
 
   /* Inner tray: a slightly darker cream rectangle for rows/lists. */
@@ -4834,12 +4896,13 @@ button.hud-resource-chip:active:not(:disabled) {
   min-height: 0;
   padding: 14px 14px 24px;
   gap: 10px;
-  background-color: #f7df9a;
+  background-color: #f7f1de;
   background-image:
-    linear-gradient(180deg, rgba(255, 250, 221, 0.92), rgba(244, 207, 123, 0.88)),
-    image-set(url("/art/redesign/bg/bg-app.avif") type("image/avif"),
-      url("/art/redesign/bg/bg-app.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-app.png") type("image/png"));
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 245, 215, 0.32) 42%,
+      rgba(246, 230, 184, 0.50) 100%),
+    var(--playhub-game-bg);
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
@@ -4878,23 +4941,8 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .arena-scaffold-back {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   color: rgba(255, 245, 215, 0.95);
   cursor: pointer;
-  transition: transform 120ms ease;
-}
-
-.arena-scaffold-back:active {
-  transform: scale(0.94);
 }
 
 .arena-scaffold-subtitle {
@@ -6068,12 +6116,13 @@ button.hud-resource-chip:active:not(:disabled) {
   min-height: 100dvh;
   max-width: var(--app-max-width, 390px);
   margin: 0 auto;
-  background-color: #f7df9a;
+  background-color: #f7f1de;
   background-image:
-    linear-gradient(180deg, rgba(255, 250, 221, 0.92), rgba(244, 207, 123, 0.88)),
-    image-set(url("/art/redesign/bg/bg-app.avif") type("image/avif"),
-      url("/art/redesign/bg/bg-app.webp") type("image/webp"),
-      url("/art/redesign/bg/bg-app.png") type("image/png"));
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 245, 215, 0.32) 42%,
+      rgba(246, 230, 184, 0.50) 100%),
+    var(--playhub-game-bg);
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
@@ -6089,24 +6138,12 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   gap: 12px;
   padding: 16px 16px 14px;
-  background: linear-gradient(180deg, rgba(255, 245, 200, 0.96) 0%, rgba(248, 218, 140, 0.90) 100%);
+  background: linear-gradient(180deg, rgba(255, 250, 226, 0.86) 0%, rgba(248, 225, 166, 0.70) 100%);
   border-bottom: 1.5px solid rgba(180, 115, 20, 0.22);
   box-shadow: 0 2px 8px rgba(88, 54, 8, 0.10);
 }
 
 .tj-page-header-back {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: 9999px;
-  transition: transform 120ms ease;
-}
-
-.tj-page-header-back:active {
-  transform: scale(0.94);
 }
 
 .tj-page-header-title-group {

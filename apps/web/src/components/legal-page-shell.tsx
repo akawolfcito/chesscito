@@ -23,7 +23,7 @@ export function LegalPageShell({ title, subtitle, backHref = "/about", children 
         >
           <Link
             href={backHref}
-            className="flex h-11 w-11 items-center justify-center"
+            className="candy-nav-button"
             aria-label="Go back"
           >
             <CandyBanner name="btn-back" className="h-8 w-8" />

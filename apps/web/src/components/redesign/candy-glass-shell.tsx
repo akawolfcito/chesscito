@@ -79,13 +79,7 @@ export function CandyGlassShell({
               type="button"
               onClick={onClose}
               aria-label={closeLabel}
-              className="mr-2 flex h-11 w-11 items-center justify-center rounded-full border transition-all active:scale-[0.94]"
-              style={{
-                background: "rgba(255, 255, 255, 0.15)",
-                borderColor: "rgba(255, 255, 255, 0.45)",
-                color: "#dc2626",
-                backdropFilter: "blur(6px)",
-              }}
+              className="candy-close-button mr-2"
             >
               <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
             </button>

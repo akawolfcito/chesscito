@@ -64,13 +64,7 @@ const SheetContent = React.forwardRef<
     >
       {children}
       <SheetPrimitive.Close
-        className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex h-11 w-11 items-center justify-center rounded-full border transition-all hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 active:scale-[0.94] disabled:pointer-events-none"
-        style={{
-          background: "rgba(255, 255, 255, 0.15)",
-          borderColor: "rgba(255, 255, 255, 0.45)",
-          color: "#dc2626",
-          backdropFilter: "blur(6px)",
-        }}
+        className="candy-close-button absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 disabled:pointer-events-none disabled:opacity-60"
       >
         <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
         <span className="sr-only">Close</span>

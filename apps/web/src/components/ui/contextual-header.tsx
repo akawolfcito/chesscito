@@ -356,10 +356,7 @@ function BackControlHeader(
         type="button"
         onClick={props.back.onClick}
         aria-label={props.back.label}
-        className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
-          "text-[rgba(110,65,15,0.85)] hover:bg-white/10 active:scale-[0.97]",
-        )}
+        className="candy-nav-button"
       >
         <CandyBanner name="btn-back" className="h-8 w-8" />
       </button>

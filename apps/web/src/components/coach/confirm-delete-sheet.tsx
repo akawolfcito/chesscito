@@ -35,7 +35,7 @@ export function ConfirmDeleteSheet({
 }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="border-rose-300 bg-white">
+      <SheetContent side="bottom" className="mission-shell sheet-bg-danger rounded-t-3xl border-0">
         <SheetTitle className="text-rose-600">{title}</SheetTitle>
         <SheetDescription className="text-sm text-rose-800/80">{body}</SheetDescription>
         <div className="mt-6 flex flex-col gap-2">

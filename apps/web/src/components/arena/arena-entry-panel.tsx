@@ -102,7 +102,7 @@ export function ArenaEntryPanel({
               type="button"
               onClick={onBack}
               aria-label={ARENA_COPY.backToHub}
-              className="mr-2 flex h-11 w-11 items-center justify-center transition-all active:scale-[0.94]"
+              className="candy-nav-button mr-2"
             >
               <CandyBanner name="btn-back" className="h-9 w-9" />
             </button>

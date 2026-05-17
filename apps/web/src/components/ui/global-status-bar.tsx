@@ -129,7 +129,7 @@ const HANDLE_CLASS =
 
 /** Frame-level back chip — visual cluster (back · handle). */
 const BACK_BUTTON_CLASS = cn(
-  "flex h-9 w-9 shrink-0 items-center justify-center transition active:scale-[0.94]",
+  "candy-nav-button scale-[0.82]",
 );
 
 const PRO_SKELETON_CLASS = cn(
