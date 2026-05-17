@@ -3,17 +3,17 @@
 export type PlayerAvatarVariant = "you" | "bot";
 
 type Variant = {
-  base: string;
+  src: string;
   defaultAlt: string;
 };
 
 const VARIANTS: Record<PlayerAvatarVariant, Variant> = {
   you: {
-    base: "/art/new-icons-chesscito/avatar-blue 1",
+    src: "/art/new-icons-chesscito/avatar-blue 1.png",
     defaultAlt: "You",
   },
   bot: {
-    base: "/art/new-icons-chesscito/avatar-red",
+    src: "/art/new-icons-chesscito/avatar-red.png",
     defaultAlt: "Bot",
   },
 };
@@ -25,12 +25,15 @@ type Props = {
 };
 
 export function PlayerAvatar({ variant, alt, className = "" }: Props) {
-  const { base, defaultAlt } = VARIANTS[variant];
+  const { src, defaultAlt } = VARIANTS[variant];
   return (
-    <picture className={`player-card player-card-${variant} ${className}`.trim()}>
-      <source srcSet={`${base}.avif`} type="image/avif" />
-      <source srcSet={`${base}.webp`} type="image/webp" />
-      <img src={`${base}.png`} alt={alt ?? defaultAlt} className="player-card-img" />
-    </picture>
+    <span className={`player-card player-card--new-icon player-card-${variant} ${className}`.trim()}>
+      <img
+        src={src}
+        alt={alt ?? defaultAlt}
+        className="player-card-img"
+        draggable={false}
+      />
+    </span>
   );
 }
