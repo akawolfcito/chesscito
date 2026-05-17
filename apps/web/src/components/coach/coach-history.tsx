@@ -177,7 +177,7 @@ function EmptyState() {
         className="tj-empty-state-cta"
         aria-label="Go to Arena and play a match"
       >
-        Play Arena
+        ARENA
       </Link>
     </div>
   );

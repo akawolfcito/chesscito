@@ -94,7 +94,7 @@ const ACTION_STYLES: Record<
 };
 
 const ACTION_ICON: Record<ActionPinAction, CandyIconName> = {
-  submitScore: "star",
+  submitScore: "check",
   useShield: "shield",
   claimBadge: "trophy",
   retry: "refresh",
@@ -103,7 +103,7 @@ const ACTION_ICON: Record<ActionPinAction, CandyIconName> = {
 };
 
 const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
-  submitScore: "estrella",
+  submitScore: "pergamino-tactico",
   useShield: "shield-king",
   claimBadge: "trofeo-epico",
   retry: "refresh",

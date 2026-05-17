@@ -3,12 +3,12 @@ import { buildDeleteMessage } from "@/lib/coach/delete-message";
 
 export const GLOSSARY = {
   badge: "Badge",
-  claimBadge: "Claim Badge",
-  submitScore: "Submit Score",
+  claimBadge: "CLAIM",
+  submitScore: "SAVE",
   piecePath: "Piece Path",
   trial: "Trial",
   progress: "Progress",
-  leaderboard: "Leaderboard",
+  leaderboard: "LEADERS",
 } as const;
 
 export const CTA_LABELS = {
@@ -17,20 +17,20 @@ export const CTA_LABELS = {
   claimBadge: GLOSSARY.claimBadge,
   submitScore: GLOSSARY.submitScore,
   retry: "Retry",
-  viewLeaderboard: "View Leaderboard",
+  viewLeaderboard: "LEADERS",
   backToPlay: "Back to Play",
 } as const;
 
 export const FOOTER_CTA_COPY = {
-  submitScore: { label: "Submit Score", compactLabel: "Submit", loading: "Submitting..." },
+  submitScore: { label: "SAVE", compactLabel: "SAVE", loading: "Saving..." },
   useShield: { label: "Use Shield", compactLabel: "Shield", loading: "Using Shield..." },
-  claimBadge: { label: "Claim Badge", compactLabel: "Claim", loading: "Claiming..." },
+  claimBadge: { label: "CLAIM", compactLabel: "CLAIM", loading: "Claiming..." },
   retry: { label: "Retry", compactLabel: "Retry", loading: null },
   connectWallet: { label: "Connect Wallet", compactLabel: "Connect", loading: null },
   switchNetwork: { label: "Switch Network", compactLabel: "Network", loading: null },
   shieldsLeft: (n: number) => `${n} left`,
-  submitCanceled: "Submission canceled",
-  submitFailed: "Submission failed — try again",
+  submitCanceled: "Save canceled",
+  submitFailed: "Save failed — try again",
 } as const;
 
 export const PIECE_LABELS = {
@@ -146,12 +146,12 @@ export const PIECE_COMPLETE_COPY = {
     "You've conquered every piece. Now prove it in the Arena!",
   subtitleKeepPracticing:
     "Keep pushing — more stars unlock your badge!",
-  tryArena: "Try Arena",
+  tryArena: "ARENA",
   nextPiece: (piece: string) => `Start ${piece}`,
   practiceAgain: "Practice Again",
-  /** Re-surface of the Submit Score transactional moment from
+  /** Re-surface of the save-score transactional moment from
    *  BadgeEarnedPrompt. Same wording so the player recognizes it. */
-  submitScore: "Submit Score",
+  submitScore: "SAVE",
   /** Tertiary discovery link for the Coach feature. Only rendered when
    *  the primary CTA is "Start <next piece>" — when the primary is
    *  already "Try Arena" we skip it to avoid a duplicate Arena hop. */
@@ -160,8 +160,8 @@ export const PIECE_COMPLETE_COPY = {
 
 export const BADGE_EARNED_COPY = {
   title: (piece: string) => `${piece} Ascendant Earned`,
-  claimBadge: "Claim Badge",
-  submitScore: "Submit Score",
+  claimBadge: "CLAIM",
+  submitScore: "SAVE",
   later: "Later",
 } as const;
 
@@ -258,8 +258,8 @@ export const PHASE_FLASH_COPY = {
 } as const;
 
 export const SHOP_SHEET_COPY = {
-  title: "Arcane Store",
-  description: "Items to support and enhance your training.",
+  title: "SHOP",
+  description: "Arcane gear for training.",
   featured: "Featured",
   buyButton: "Buy with stablecoin",
   /** Companion CTA shown next to the USDC button on the Founder Badge
@@ -292,13 +292,13 @@ export const SHOP_SHEET_COPY = {
 
 
 export const LEADERBOARD_SHEET_COPY = {
-  title: "Hall of Rooks",
+  title: "LEADERS",
   description: "Climb the board. Rule the board.",
   columnPlayer: "Player",
   columnScore: "Score",
   loading: "Loading board...",
   empty: "No champions yet.",
-  emptyArenaLink: "Play Arena",
+  emptyArenaLink: "ARENA",
   error: "Could not load rankings",
   retry: "Retry",
 } as const;
@@ -321,8 +321,8 @@ export const STATUS_STRIP_COPY = {
   piecePathInProgress: "Piece Path in progress",
   badgeClaimed: "Claimed",
   badgeReady: "Ready to claim",
-  submittingScore: "Submitting score",
-  scoreSubmitted: "Score submitted",
+  submittingScore: "Saving score",
+  scoreSubmitted: "Score saved",
   claimingBadge: "Claiming badge",
   badgeClaimed2: "Badge claimed",
   processingPurchase: "Processing purchase",
@@ -384,7 +384,7 @@ export const VICTORY_PAGE_COPY = {
   tagline: "Train your mind with pre-chess challenges — a Celo MiniPay game",
   challengeLine: "Can you beat this?",
   acceptChallenge: "Accept Challenge",
-  backToHub: "Back to Hub",
+  backToHub: "HUB",
   metaCheckmate: (moves: number) => `Checkmate in ${moves} moves`,
   metaComplete: (moves: number) => `Complete in ${moves} moves`,
   metaChallenge: (id: string) => `Can you beat that? Victory #${id} saved as a Chesscito victory card.`,
@@ -413,7 +413,7 @@ export const DIFFICULTY_LABELS: Record<number, string> = {
 
 export const VICTORY_CLAIM_COPY = {
   progressTitle: "Saving...",
-  claimButton: "Save Victory",
+  claimButton: "SAVE WIN",
   claimHelper: "Save this victory permanently and unlock your share card",
   claimValueHint: (price: string) => price,
   teaserLabel: "Unlock when you save",
@@ -435,7 +435,7 @@ export const VICTORY_CLAIM_COPY = {
   copyLink: "Copy Link",
   copiedToast: "Copied!",
   sharedToast: "Shared!",
-  viewTrophies: "View your Victories",
+  viewTrophies: "TROPHIES",
   card: {
     headline: "CHECKMATE",
     challengeLine: "Can you beat this?",
@@ -490,13 +490,13 @@ export const VICTORY_CELEBRATION_COPY = {
 } as const;
 
 export const TROPHY_VITRINE_COPY = {
-  pageTitle: "Trophy Case",
+  pageTitle: "TROPHIES",
   pageDescription: "Your saved victories.",
   myVictories: "My Victories",
   hallOfFame: "Hall of Fame",
   movesLabel: "moves",
   shareLabel: "Share",
-  loadingText: "Polishing trophies...",
+  loadingText: "Loading trophies...",
   copiedToast: "Link copied!",
   connectWallet: "Connect to view your trophies",
   connectWalletButton: "Connect Wallet",
@@ -504,9 +504,9 @@ export const TROPHY_VITRINE_COPY = {
   noGlobalVictories: "No victories recorded yet",
   loadError: "Could not load victories",
   tapToRetry: "Tap to retry",
-  configError: "Trophy Case is offline",
+  configError: "Trophies are offline",
   roadmap: "Coming later: Tournaments • VIP Passes • Seasonal Rewards",
-  arenaLink: "Win in Arena",
+  arenaLink: "ARENA",
   cardIdPrefix: "Victory",
 } as const;
 
@@ -597,8 +597,9 @@ export const ARENA_COPY = {
     medium: "Solid player — a fair challenge",
     hard: "Expert — plays to win",
   },
-  startMatch: "PLAY CHESS",
-  backToHub: "Back to Hub",
+  startMatch: "PLAY",
+  backToHub: "HUB",
+  backToHubAria: "Back to Hub",
   playAsWhite: "Play as White",
   playAsBlack: "Play as Black",
   resign: "Resign",
@@ -618,15 +619,15 @@ export const ARENA_COPY = {
     draw: "Draw",
     resigned: "You Resigned",
   },
-  playAgain: "Play Again",
+  playAgain: "PLAY",
   /** Soft-gate banner shown only on direct /arena entry when the player
    *  has no recorded piece-path progress. Intent: guide rookies into the
    *  tutorial without gatekeeping. Two decisive CTAs replace the old
    *  question + Skip pattern: games don't ask permission to exist. */
   softGateTitle: "Want a warm-up first?",
   softGateBody: "Learn a piece in under 2 minutes, then challenge the AI.",
-  softGateLearn: "Learn a piece",
-  softGateEnter: "Jump into Arena",
+  softGateLearn: "PIECES",
+  softGateEnter: "ARENA",
   /** Prize pool surface — shown above the difficulty picker on direct
    *  /arena entry. Communicates what the 20% mint-fee cut becomes,
    *  transparently acknowledging distribution is not yet live. */
@@ -648,10 +649,10 @@ export const ARENA_COPY = {
    *  hides the hint alongside the rest of the Coach surface. */
   coachHudHint: "Coach reviews after checkmate",
   coachSignal: {
-    inactiveTitle: "Review after match",
+    inactiveTitle: "REVIEW",
     inactiveBody: "Unlock full review after playing",
-    inactiveCta: "Train with Coach",
-    activeTitle: "Review after match",
+    inactiveCta: "COACH",
+    activeTitle: "REVIEW",
     activeBody: "Review after checkmate",
   },
   coachPreview: {
@@ -669,10 +670,10 @@ export const ARENA_COPY = {
       return `You finished a ${difficulty} match in ${moves} moves. Coach found key moments behind ${outcome}.`;
     },
     lockedBenefits: ["Key moments", "Better moves", "Next training"] as const,
-    inactiveCta: "Unlock Full Review",
-    activeTitle: "Coach Review Ready",
+    inactiveCta: "PRO REVIEW",
+    activeTitle: "REVIEW",
     activeBody: "Review your key moments and next training step.",
-    activeCta: "Review Match",
+    activeCta: "REVIEW",
   },
 } as const;
 
@@ -758,7 +759,7 @@ export const DOCK_LABELS = {
 } as const;
 
 export const ARENA_CTA_COPY = {
-  label: "Enter Arena",
+  label: "ARENA",
 } as const;
 
 export const ABOUT_LINK_COPY = {
@@ -858,11 +859,11 @@ export const HUB_V2_TRAINING_COPY = {
  *  entry. Pinned over carved-wood plinth in the visual finish (Phase 7
  *  commit c). */
 export const HUB_V2_DOCK_COPY = {
-  playLabel: "ENTER ARENA",
+  playLabel: "ARENA",
   playAriaLabel: "Enter the Arena and play a full chess match",
-  practiceLinkLabel: "Practice pieces",
+  practiceLinkLabel: "PIECES",
   practiceLinkAriaLabel: "Practice individual chess pieces",
-  trophiesLinkLabel: "See all trophies",
+  trophiesLinkLabel: "TROPHIES",
   trophiesLinkAriaLabel: "See all collected trophies",
   shieldsRibbonLabel: (count: number): string =>
     count === 1 ? "Shield ×1" : `Shields ×${count}`,
@@ -874,15 +875,15 @@ export const HUB_V2_DOCK_COPY = {
 } as const;
 
 export const COACH_COPY = {
-  askCoach: "Ask Coach",
+  askCoach: "ASK",
   loading: "Loading...",
-  quickReviewTitle: "Quick Review",
-  coachAnalysisTitle: "Coach Analysis",
+  quickReviewTitle: "REVIEW",
+  coachAnalysisTitle: "REVIEW",
   keyMoments: "KEY MOMENTS",
   whatYouDidWell: "WHAT YOU DID WELL",
   takeaways: "TAKEAWAYS",
   tips: "TIPS",
-  yourSessions: "Training Journal",
+  yourSessions: "JOURNAL",
   pastSessions: "Past Sessions",
   yourProgress: "YOUR PROGRESS",
   gamesAnalyzed: (n: number) => `Games analyzed: ${n}`,
@@ -894,8 +895,8 @@ export const COACH_COPY = {
   creditPack20: "20 analyses",
   creditBest: "BEST",
   buyWithUsdc: "Buy with stablecoin",
-  orQuickReview: "Or try Quick Review for free",
-  getFullAnalysis: "Get Full Analysis",
+  orQuickReview: "REVIEW",
+  getFullAnalysis: "PRO REVIEW",
   getFullAnalysisSub: "See your key moments and personalized tips",
   analyzing: "Analyzing your game",
   reviewingMoves: "Reviewing your moves",
@@ -916,21 +917,21 @@ export const COACH_COPY = {
     "A learning companion that helps you understand your decisions and improve step by step.",
   welcomePack: "3 analyses",
   welcomePackDetail: "Key moments · Lessons · Praise",
-  claimFree: "Claim Free Analyses",
+  claimFree: "CLAIM",
   welcomeNote: "Free analyses to start. After that, credit packs from $0.05.",
   creditComingSoon: "Credit packs coming soon!",
   connecting: "Connecting to Coach\u2026",
   coachThinking: "Coach is thinking\u2026",
   keepScreenOpen: "Keep this screen open.",
-  reviewRetryTitle: "Review needs another try",
+  reviewRetryTitle: "RETRY",
   slowThinking: "Coach is still thinking. Keep this screen open.",
-  retryReview: "Retry Review",
+  retryReview: "RETRY",
   analysisIncomplete: "Your review didn\u2019t complete.",
   analysisIncompleteBody: "Please try again. If it keeps happening, come back later.",
   // --- Secondary Screen Cohesion (2026-03-28) ---
   loadingCanLeave: "You can leave — your result will be ready when you return.",
   creditPackSubtitle: (n: number) => `${n} game analyses`,
-  unlockFullAnalysis: "Unlock Full Analysis",
+  unlockFullAnalysis: "PRO REVIEW",
   /* Coach session memory (PR 4 + PR 5). The footer renders inside
    * <CoachPanel> when proActive && historyMeta are present. */
   historyFooter: {
@@ -1236,18 +1237,18 @@ export const PRO_COPY = {
       title: "Coach PRO",
       body: "Get feedback after games and practice.",
       chips: ["Mistakes", "Tips", "History"] as const,
-      cta: "Train with Coach",
+      cta: "COACH",
     },
     active: {
       title: (remainingDays: number) => `PRO Active · ${remainingDays}d`,
       body: "Your Coach is ready.",
       features: "Reviews · History · Next training",
       chips: ["Reviews", "History", "Next training"] as const,
-      cta: "Open Journal",
+      cta: "JOURNAL",
     },
   },
   activeActions: {
-    journal: "Open Training Journal",
+    journal: "JOURNAL",
     journalSubline: "Review your coach history and pick the next lesson.",
   },
   perksActive: [

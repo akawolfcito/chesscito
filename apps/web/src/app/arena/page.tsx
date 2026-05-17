@@ -1235,7 +1235,7 @@ function ArenaPageInner() {
           <CandyGlassShell
             title={COACH_COPY.coachAnalysisTitle}
             onClose={handleBackToHub}
-            closeLabel={ARENA_COPY.backToHub}
+            closeLabel={ARENA_COPY.backToHubAria}
             presentation="screen"
             className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
@@ -1264,7 +1264,7 @@ function ArenaPageInner() {
           <CandyGlassShell
             title={coachServerError ? COACH_COPY.reviewRetryTitle : COACH_COPY.quickReviewTitle}
             onClose={handleBackToHub}
-            closeLabel={ARENA_COPY.backToHub}
+            closeLabel={ARENA_COPY.backToHubAria}
             presentation="screen"
             className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
@@ -1295,7 +1295,7 @@ function ArenaPageInner() {
           <CandyGlassShell
             title={COACH_COPY.yourSessions}
             onClose={() => setCoachPhase(coachResponse ? "result" : "idle")}
-            closeLabel={ARENA_COPY.backToHub}
+            closeLabel={ARENA_COPY.backToHubAria}
             presentation="screen"
             className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >

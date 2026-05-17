@@ -66,7 +66,7 @@ export function ArenaHud({
             "arena-hud-btn group active:scale-60 transition-all duration-300",
             confirmingBack ? "px-4" : "w-[2.75rem]",
           ].join(" ")}
-          aria-label={ARENA_COPY.backToHub}
+          aria-label={ARENA_COPY.backToHubAria}
         >
           {confirmingBack ? (
             <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
