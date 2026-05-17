@@ -63,7 +63,7 @@ export function DailyTacticCard({
         className="action-row-pedestal action-row-pedestal-daily"
         icon={
           <ActionRowIcon
-            name={isCompletedToday ? "estrella" : "pergamino-tactico"}
+            name="ejercicio-diario-chess"
             className={isCompletedToday ? "h-12 w-12 object-contain" : "h-14 w-14 object-contain"}
           />
         }

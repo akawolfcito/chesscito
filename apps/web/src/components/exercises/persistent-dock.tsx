@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { DOCK_LABELS } from "@/lib/content/editorial";
-import { CandyBanner } from "@/components/redesign/candy-banner";
 import { track } from "@/lib/telemetry";
 
 export type DockTab = "badge" | "shop" | "trophies" | "leaderboard" | "arena" | null;
@@ -48,18 +47,30 @@ function DockItem({ id, label, control, activeDockTab }: ItemProps) {
 }
 
 function PiecesDockIcon() {
-  const base = "/art/redesign/pieces/w-rook";
   return (
-    <picture className="inline-block h-9 w-9">
-      <source srcSet={`${base}.avif`} type="image/avif" />
-      <source srcSet={`${base}.webp`} type="image/webp" />
+    <span className="inline-block h-9 w-9">
       <img
-        src={`${base}.png`}
+        src="/art/new-icons-chesscito/practice-pieces.png"
         alt=""
         aria-hidden="true"
         className="block h-full w-full object-contain"
+        draggable={false}
       />
-    </picture>
+    </span>
+  );
+}
+
+function ArenaDockIcon() {
+  return (
+    <span className="inline-block h-9 w-9">
+      <img
+        src="/art/new-icons-chesscito/play-chess.png"
+        alt=""
+        aria-hidden="true"
+        className="block h-full w-full object-contain"
+        draggable={false}
+      />
+    </span>
   );
 }
 
@@ -84,7 +95,7 @@ export function PersistentDock({
     : {
       href: "/arena?fresh=1",
       label: DOCK_LABELS.arena,
-      icon: <CandyBanner name="btn-battle" className="h-9 w-9" />,
+      icon: <ArenaDockIcon />,
       trackItem: "arena",
     };
   const isCenterActive = activeDockTab === "arena";

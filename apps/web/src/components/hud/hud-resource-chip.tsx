@@ -23,6 +23,7 @@ type Props = {
   atmosphere?: Atmosphere;
   /** Override the chip icon. Required when `tone="default"`. */
   icon?: CandyIconName;
+  imageIconSrc?: string;
   /** Optional tap target. When present the chip renders as `<button>`;
    *  otherwise as `<span>`. */
   onClick?: () => void;
@@ -48,6 +49,7 @@ export function HudResourceChip({
   size = "md",
   atmosphere = "adventure",
   icon,
+  imageIconSrc,
   onClick,
   className = "",
 }: Props) {
@@ -82,7 +84,15 @@ export function HudResourceChip({
 
   const content = (
     <>
-      {resolvedIcon ? (
+      {imageIconSrc ? (
+        <img
+          src={imageIconSrc}
+          alt=""
+          aria-hidden="true"
+          className="hud-resource-chip-icon"
+          draggable={false}
+        />
+      ) : resolvedIcon ? (
         <CandyIcon name={resolvedIcon} className="hud-resource-chip-icon" />
       ) : null}
       <span className="hud-resource-chip-value">{value}</span>

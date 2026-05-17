@@ -161,7 +161,7 @@ export function HubScaffold({
             "HudResourceChip",
             <HudResourceChip
               tone="default"
-              icon="coach"
+              imageIconSrc="/art/new-icons-chesscito/training.png"
               value={HUD_COPY.coachLabel}
               ariaLabel={HUD_COPY.coachAriaLabel}
               onClick={onCoachTap}
@@ -216,7 +216,7 @@ export function HubScaffold({
                   label={secondaryAction.label}
                   ariaLabel={secondaryAction.ariaLabel}
                   onPress={secondaryAction.onPress}
-                  pieceIcon="pawn"
+                  pieceIconSrc="/art/new-icons-chesscito/practice-pieces.png"
                   className="hub-scaffold-practice-cta"
                 />,
               )
@@ -245,7 +245,7 @@ export function HubScaffold({
                 label={playLabel}
                 ariaLabel={playAriaLabel}
                 onPress={onPlayPress}
-                pieceIcon="king"
+                pieceIconSrc="/art/new-icons-chesscito/play-chess.png"
               />,
             )}
           </footer>

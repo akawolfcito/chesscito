@@ -24,7 +24,7 @@ const ACTIONS: readonly ActionPinAction[] = [
 ] as const;
 
 const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
-  submitScore: "star",
+  submitScore: "save",
   useShield: "shield",
   claimBadge: "trophy",
   retry: "refresh",
@@ -33,7 +33,7 @@ const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
 };
 
 const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
-  submitScore: "estrella",
+  submitScore: "save",
   useShield: "shield-king",
   claimBadge: "trofeo-epico",
   retry: "refresh",
@@ -72,9 +72,13 @@ describe("ActionPin — render matrix (6 actions × 2 sizes)", () => {
 
         if (size === "pin") {
           const icon = button.querySelector("img");
+          const expectedBase =
+            action === "submitScore"
+              ? "/art/new-icons-chesscito"
+              : "/art/action-row";
           expect(icon).toHaveAttribute(
             "src",
-            `/art/action-row/${ACTION_ROW_ICON_FILE[action]}.png`,
+            `${expectedBase}/${ACTION_ROW_ICON_FILE[action]}.png`,
           );
           // External label rendered BELOW the button by the primitive
           // (slot does not own the label).
@@ -84,11 +88,19 @@ describe("ActionPin — render matrix (6 actions × 2 sizes)", () => {
           // The external label must NOT be inside the <button>.
           expect(button.contains(externalLabel as Node)).toBe(false);
         } else {
-          const srcsets = Array.from(container.querySelectorAll("source")).map(
-            (s) => s.getAttribute("srcset"),
-          );
           const expectedIcon = ACTION_ICON_FILE[action];
-          expect(srcsets).toContain(`/art/redesign/icons/${expectedIcon}.avif`);
+          if (action === "submitScore") {
+            const icon = button.querySelector("img");
+            expect(icon).toHaveAttribute(
+              "src",
+              `/art/new-icons-chesscito/${expectedIcon}.png`,
+            );
+          } else {
+            const srcsets = Array.from(container.querySelectorAll("source")).map(
+              (s) => s.getAttribute("srcset"),
+            );
+            expect(srcsets).toContain(`/art/redesign/icons/${expectedIcon}.avif`);
+          }
           // size="full" — label is INLINE inside the button.
           expect(button.textContent).toContain("Label");
         }

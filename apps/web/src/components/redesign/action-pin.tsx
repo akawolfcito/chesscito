@@ -103,12 +103,16 @@ const ACTION_ICON: Record<ActionPinAction, CandyIconName> = {
 };
 
 const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
-  submitScore: "pergamino-tactico",
+  submitScore: "save",
   useShield: "shield-king",
   claimBadge: "trofeo-epico",
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
+};
+
+const ACTION_CUSTOM_ICON_SRC: Partial<Record<ActionPinAction, string>> = {
+  submitScore: "/art/new-icons-chesscito/save.png",
 };
 
 const PIN_BADGE_CLASSES =
@@ -202,10 +206,19 @@ export function ActionPin({
     .filter(Boolean)
     .join(" ");
 
+  const customIconSrc = ACTION_CUSTOM_ICON_SRC[action];
   const iconNode = isBusy ? (
     <span
       aria-hidden="true"
       className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+    />
+  ) : customIconSrc ? (
+    <img
+      src={customIconSrc}
+      alt=""
+      aria-hidden="true"
+      className={size === "pin" ? "h-8 w-8 object-contain" : "h-5 w-5 object-contain"}
+      draggable={false}
     />
   ) : size === "pin" ? (
     <ActionRowIcon
@@ -236,7 +249,17 @@ export function ActionPin({
           size="large"
           leadingIcon={
             isBusy ? undefined : (
-              <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
+              customIconSrc ? (
+                <img
+                  src={customIconSrc}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-5 w-5 object-contain"
+                  draggable={false}
+                />
+              ) : (
+                <CandyIcon name={ACTION_ICON[action]} className="h-5 w-5" />
+              )
             )
           }
           onClick={handleClick}
