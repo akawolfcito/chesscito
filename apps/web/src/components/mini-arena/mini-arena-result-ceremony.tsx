@@ -4,13 +4,17 @@ import { THEME_CONFIG } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 
-type Props = {
+type TerminalResult = {
   status: "won" | "drawn";
   moveCount: number;
-  parMoves: number;
   completionStars: number;
   isNewBest: boolean;
   previousBest: number | null;
+};
+
+type Props = {
+  terminalResult: TerminalResult;
+  parMoves: number;
   onShare: () => void;
   onRetry: () => void;
   onClose: () => void;
@@ -25,22 +29,18 @@ function starLabel(stars: number): string {
 const ROOK_SRC = `${THEME_CONFIG.piecesBase}/w-rook.png`;
 
 export function MiniArenaResultCeremony({
-  status,
-  moveCount,
+  terminalResult,
   parMoves,
-  completionStars,
-  isNewBest,
-  previousBest,
   onShare,
   onRetry,
   onClose,
 }: Props) {
+  const { status, moveCount, completionStars, isNewBest, previousBest } = terminalResult;
   const title = status === "won" ? "Checkmate!" : "Try Again";
 
   return (
     <div
-      className="absolute inset-0 z-40 flex items-center justify-center p-4 animate-in fade-in duration-250"
-      style={{ background: "rgba(0,0,0,0.30)" }}
+      className="flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div

@@ -33,6 +33,14 @@ import { MiniArenaResultCeremony } from "./mini-arena-result-ceremony";
 
 type Status = "playing" | "won" | "drawn" | "thinking";
 
+type TerminalResult = {
+  status: "won" | "drawn";
+  moveCount: number;
+  completionStars: number;
+  isNewBest: boolean;
+  previousBest: number | null;
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -44,6 +52,11 @@ type Props = {
 };
 
 const REJECT_SHAKE_MS = 220;
+const DEBUG_MINI_ARENA = process.env.NODE_ENV === "development";
+
+function debugMiniArena(...args: unknown[]) {
+  if (DEBUG_MINI_ARENA) console.debug("[MiniArena]", ...args);
+}
 
 function dispatchMoveHaptic(flags: string | undefined, isCheck: boolean, isMate: boolean) {
   if (isMate) { hapticImpact(); return; }
@@ -87,14 +100,18 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
   const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rejectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const winFiredRef = useRef(false);
-  const [resultOverlayOpen, setResultOverlayOpen] = useState(false);
-  const [completionStars, setCompletionStars] = useState(0);
-  const [isNewBest, setIsNewBest] = useState(false);
-  const [previousBest, setPreviousBest] = useState<number | null>(null);
+  const wasOpenRef = useRef(false);
+  const terminalResultRef = useRef<TerminalResult | null>(null);
+  const dismissedTerminalRef = useRef(false);
+  const [terminalResult, setTerminalResult] = useState<TerminalResult | null>(null);
 
-  // Re-init on open with a fresh FEN. Keeps the sheet self-contained.
+  // Keep a ref in sync with state for closure-safe access in timers.
   useEffect(() => {
-    if (!open) return;
+    terminalResultRef.current = terminalResult;
+  }, [terminalResult]);
+
+  function initializeGame(source: string) {
+    debugMiniArena("initializeGame", { source });
     gameRef.current = new Chess(setup.fen);
     setFen(setup.fen);
     setSelectedSquare(null);
@@ -103,12 +120,22 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     setStatus("playing");
     setMoveCount(0);
     setLastMove(null);
+    setShareOpen(false);
+    dismissedTerminalRef.current = false;
     winFiredRef.current = false;
-    setResultOverlayOpen(false);
-    setCompletionStars(0);
-    setIsNewBest(false);
-    setPreviousBest(null);
-  }, [open, setup.fen]);
+    debugMiniArena("clear terminalResult", { source });
+    setTerminalResult(null);
+  }
+
+  // Only re-init when sheet transitions closed→open.  The wasOpenRef
+  // guard prevents stale dependency updates (e.g. setup.id/fen) from
+  // silently wiping terminalResult mid-game.
+  useEffect(() => {
+    const justOpened = open && !wasOpenRef.current;
+    wasOpenRef.current = open;
+    if (!justOpened) return;
+    initializeGame("fresh open");
+  }, [open, setup.id]);
 
   useEffect(() => {
     return () => {
@@ -116,6 +143,48 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
       if (rejectTimerRef.current) clearTimeout(rejectTimerRef.current);
     };
   }, []);
+
+  // Defensive recovery: if status is terminal but terminalResult is
+  // null (e.g. from stale closure or strict-mode double-render), fill
+  // it in so the ceremony always appears.  Skips when the user has
+  // explicitly dismissed (dismissedTerminalRef).
+  useEffect(() => {
+    if (terminalResult) return;
+    if (dismissedTerminalRef.current) return;
+    if (status !== "won" && status !== "drawn") return;
+
+    debugMiniArena("terminal recovery effect", { status, moveCount, fen });
+
+    if (status === "won") {
+      const safeMoveCount = Math.max(moveCount, 1);
+      const stars = endgameStars(safeMoveCount, setup.parMoves);
+      const previousBest = getMiniArenaBest(setup.id);
+      const isNewBest = recordMiniArenaBest(setup.id, safeMoveCount);
+
+      const recovered: TerminalResult = {
+        status: "won",
+        moveCount: safeMoveCount,
+        completionStars: stars,
+        isNewBest,
+        previousBest,
+      };
+
+      debugMiniArena("setTerminalResult from recovery", recovered);
+      setTerminalResult(recovered);
+      return;
+    }
+
+    const recovered: TerminalResult = {
+      status: "drawn",
+      moveCount,
+      completionStars: 0,
+      isNewBest: false,
+      previousBest: getMiniArenaBest(setup.id),
+    };
+
+    debugMiniArena("setTerminalResult from recovery", recovered);
+    setTerminalResult(recovered);
+  }, [status, terminalResult, moveCount, fen, setup.id, setup.parMoves]);
 
   const shareBaseUrl = useMemo(() => {
     const squares = parseFenSquares(setup.fen);
@@ -145,52 +214,122 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     return null;
   })();
 
-  function endIfTerminal(): boolean {
+  function endIfTerminal(source: "player" | "ai", nextMoveCount = moveCount): boolean {
     const game = gameRef.current;
-    if (game.isCheckmate()) {
-      const playerWon = game.turn() === "b"; // black to move = white delivered mate
-      setStatus(playerWon ? "won" : "drawn");
-      if (playerWon && !winFiredRef.current) {
-        winFiredRef.current = true;
-        const totalMoves = moveCount + 1;
-        onWin?.(totalMoves);
 
+    debugMiniArena("endIfTerminal", {
+      source,
+      fen: game.fen(),
+      turn: game.turn(),
+      isCheckmate: game.isCheckmate(),
+      isStalemate: game.isStalemate(),
+      isDraw: game.isDraw(),
+      isInsufficientMaterial: game.isInsufficientMaterial(),
+      moveCount,
+      nextMoveCount,
+    });
+
+    if (game.isCheckmate()) {
+      const playerWon = game.turn() === "b";
+      debugMiniArena("checkmate detected, playerWon:", playerWon);
+
+      if (playerWon) {
+        const totalMoves = nextMoveCount;
+        if (!winFiredRef.current) {
+          winFiredRef.current = true;
+          onWin?.(totalMoves);
+        }
         const stars = endgameStars(totalMoves, setup.parMoves);
-        const prev = getMiniArenaBest(setup.id);
-        const newBest = recordMiniArenaBest(setup.id, totalMoves);
-        setCompletionStars(stars);
-        setIsNewBest(newBest);
-        setPreviousBest(prev);
+        const previousBest = getMiniArenaBest(setup.id);
+        const isNewBest = recordMiniArenaBest(setup.id, totalMoves);
+
+        const result: TerminalResult = {
+          status: "won",
+          moveCount: totalMoves,
+          completionStars: stars,
+          isNewBest,
+          previousBest,
+        };
+
+        debugMiniArena("setTerminalResult", result);
+        dismissedTerminalRef.current = false;
+        setStatus("won");
+        setTerminalResult(result);
+        return true;
       }
-      setResultOverlayOpen(true);
-      return true;
-    }
-    if (game.isStalemate() || game.isDraw() || game.isInsufficientMaterial()) {
+
+      const result: TerminalResult = {
+        status: "drawn",
+        moveCount: nextMoveCount,
+        completionStars: 0,
+        isNewBest: false,
+        previousBest: getMiniArenaBest(setup.id),
+      };
+
+      debugMiniArena("setTerminalResult", result);
+      dismissedTerminalRef.current = false;
       setStatus("drawn");
-      setResultOverlayOpen(true);
+      setTerminalResult(result);
       return true;
     }
+
+    if (game.isStalemate() || game.isDraw() || game.isInsufficientMaterial()) {
+      const result: TerminalResult = {
+        status: "drawn",
+        moveCount: nextMoveCount,
+        completionStars: 0,
+        isNewBest: false,
+        previousBest: getMiniArenaBest(setup.id),
+      };
+
+      debugMiniArena("setTerminalResult", result);
+      dismissedTerminalRef.current = false;
+      setStatus("drawn");
+      setTerminalResult(result);
+      return true;
+    }
+
     return false;
   }
 
   function triggerAi() {
+    // Guard against scheduling AI after a terminal result.
+    if (terminalResultRef.current) {
+      debugMiniArena("triggerAi skipped — terminalResult already set");
+      return;
+    }
+
+    const game = gameRef.current;
+    if (game.isCheckmate() || game.isDraw() || game.isStalemate() || game.isGameOver()) {
+      debugMiniArena("triggerAi skipped — game already over");
+      endIfTerminal("ai", moveCount);
+      return;
+    }
+
     setStatus("thinking");
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
     aiTimerRef.current = setTimeout(() => {
       const game = gameRef.current;
-      if (game.isGameOver()) { endIfTerminal(); return; }
+
+      if (game.isCheckmate() || game.isDraw() || game.isStalemate() || game.isGameOver()) {
+        endIfTerminal("ai", moveCount);
+        return;
+      }
 
       // pickAiMoveOrFallback never returns an illegal move and never
       // hangs on engine misbehavior — see lib/game/mini-arena-ai.ts.
       // null = no legal moves left → resolve via endIfTerminal.
       const suggestion = pickAiMoveOrFallback(game, setup.aiLevel);
-      if (!suggestion) { endIfTerminal(); return; }
+      if (!suggestion) { endIfTerminal("ai", moveCount); return; }
 
-      const move = game.move(suggestion);
-      setFen(game.fen());
+      const aiMove = game.move(suggestion);
+      const aiFen = game.fen();
+      setFen(aiFen);
       setLastMove(suggestion);
-      dispatchMoveHaptic(move?.flags, game.isCheck(), game.isCheckmate());
-      if (!endIfTerminal()) setStatus("playing");
+      dispatchMoveHaptic(aiMove?.flags, game.isCheck(), game.isCheckmate());
+      const aiTerminal = endIfTerminal("ai", moveCount);
+      debugMiniArena("AI move", { from: suggestion.from, to: suggestion.to, fen: aiFen, terminal: aiTerminal });
+      if (!aiTerminal) setStatus("playing");
     }, 250);
   }
 
@@ -212,13 +351,42 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
       const promo =
         movingPiece?.type === "p" && Number(square[1]) === 8 ? "q" : undefined;
       const move = game.move({ from: selectedSquare, to: square, promotion: promo });
-      setFen(game.fen());
+      const san = move?.san;
+      const afterFen = game.fen();
+      const nextMoveCount = moveCount + 1;
+
+      debugMiniArena("player move committed", {
+        from: selectedSquare,
+        to: square,
+        san,
+        fen: afterFen,
+        moveCount,
+        nextMoveCount,
+      });
+
+      setFen(afterFen);
       setLastMove({ from: selectedSquare, to: square });
-      setMoveCount((n) => n + 1);
+      setMoveCount(nextMoveCount);
       setSelectedSquare(null);
       setLegalMoves([]);
       dispatchMoveHaptic(move?.flags, game.isCheck(), game.isCheckmate());
-      if (!endIfTerminal()) triggerAi();
+
+      debugMiniArena("after player move, before terminal check", {
+        fen: game.fen(),
+        turn: game.turn(),
+        isCheckmate: game.isCheckmate(),
+        isStalemate: game.isStalemate(),
+        isDraw: game.isDraw(),
+        isInsufficientMaterial: game.isInsufficientMaterial(),
+        moveCount,
+        nextMoveCount,
+      });
+
+      if (endIfTerminal("player", nextMoveCount)) {
+        return;
+      }
+
+      triggerAi();
       return;
     }
 
@@ -236,9 +404,12 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
   }
 
   function handleOpenChange(nextOpen: boolean) {
+    debugMiniArena("handleOpenChange", { nextOpen, currentOpen: open, stack: new Error().stack });
     if (!nextOpen) {
       setShareOpen(false);
-      setResultOverlayOpen(false);
+      debugMiniArena("clear terminalResult", { source: "handleOpenChange(close)" });
+      dismissedTerminalRef.current = true;
+      setTerminalResult(null);
     }
     onOpenChange(nextOpen);
   }
@@ -248,21 +419,9 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
   }
 
   function reset() {
+    debugMiniArena("reset");
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
-    gameRef.current = new Chess(setup.fen);
-    setFen(setup.fen);
-    setSelectedSquare(null);
-    setLegalMoves([]);
-    setRejectingSquare(null);
-    setStatus("playing");
-    setMoveCount(0);
-    setLastMove(null);
-    winFiredRef.current = false;
-    setResultOverlayOpen(false);
-    setCompletionStars(0);
-    setIsNewBest(false);
-    setPreviousBest(null);
-    setShareOpen(false);
+    initializeGame("retry/reset");
   }
 
   const isWithinPar = moveCount <= setup.parMoves;
@@ -278,42 +437,63 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
           : `Moves: ${moveCount} / ${setup.parMoves}`;
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent
-        side="bottom"
-        data-testid="mini-arena-sheet"
-        className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
-      >
-        <div className="relative flex h-full flex-col">
+    <>
+      <Sheet open={open} onOpenChange={handleOpenChange}>
+        <SheetContent
+          side="bottom"
+          data-testid="mini-arena-sheet"
+          className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
+        >
           <MissionHeaderCandy
-            title={setup.name}
-            subtitle="Special Training"
-            icon="trophy"
-            objective={setup.description}
-          />
+              title={setup.name}
+              subtitle="Special Training"
+              icon="trophy"
+              objective={setup.description}
+            />
 
-          <div className="flex flex-1 flex-col items-center justify-center px-2 py-4">
-            <div className="w-full max-w-[360px]">
-              <ArenaBoard
-                pieces={pieces}
-                selectedSquare={selectedSquare}
-                legalMoves={legalMoves}
-                lastMove={lastMove}
-                checkSquare={checkSquare}
-                rejectingSquare={rejectingSquare}
-                isLocked={status !== "playing"}
-                isThinking={status === "thinking"}
-                onSquareClick={selectSquare}
-                playerColor="w"
-              />
+            <div className="flex flex-1 flex-col items-center justify-center px-2 py-4">
+              <div className="w-full max-w-[360px]">
+                <ArenaBoard
+                  pieces={pieces}
+                  selectedSquare={selectedSquare}
+                  legalMoves={legalMoves}
+                  lastMove={lastMove}
+                  checkSquare={checkSquare}
+                  rejectingSquare={rejectingSquare}
+                  isLocked={status !== "playing"}
+                  isThinking={status === "thinking"}
+                  onSquareClick={selectSquare}
+                  playerColor="w"
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="flex flex-col shrink-0 px-5 pb-4 pt-2 gap-2">
-          {status === "playing" ? (
-            <>
+            <div className="flex flex-col shrink-0 px-5 pb-4 pt-2 gap-2">
+            {status === "playing" ? (
+              <>
+                <div
+                  className="flex items-center justify-between gap-3 w-full"
+                  style={{ color: "rgba(63, 34, 8, 0.95)" }}
+                >
+                  <div className="flex-1 flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-1.5 px-3 shadow-sm min-w-0">
+                    <CandyIcon name="move" className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                    <p data-testid="mini-arena-status" className="text-[0.8rem] font-extrabold uppercase tracking-tight truncate">
+                      {footerStatus}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleShareOpen}
+                  className="text-xs font-semibold underline underline-offset-2 self-center"
+                  style={{ color: "rgba(110, 65, 15, 0.50)" }}
+                >
+                  {ENDGAME_SHARE_COPY.shareChallenge}
+                </button>
+              </>
+            ) : status === "thinking" ? (
               <div
-                className="flex items-center justify-between gap-3 w-full"
+                className="flex items-center gap-3 w-full"
                 style={{ color: "rgba(63, 34, 8, 0.95)" }}
               >
                 <div className="flex-1 flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-1.5 px-3 shadow-sm min-w-0">
@@ -323,74 +503,59 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={handleShareOpen}
-                className="text-xs font-semibold underline underline-offset-2 self-center"
-                style={{ color: "rgba(110, 65, 15, 0.50)" }}
-              >
-                {ENDGAME_SHARE_COPY.shareChallenge}
-              </button>
-            </>
-          ) : status === "thinking" ? (
-            <div
-              className="flex items-center gap-3 w-full"
-              style={{ color: "rgba(63, 34, 8, 0.95)" }}
-            >
-              <div className="flex-1 flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.45)] bg-white/20 py-1.5 px-3 shadow-sm min-w-0">
-                <CandyIcon name="move" className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                <p data-testid="mini-arena-status" className="text-[0.8rem] font-extrabold uppercase tracking-tight truncate">
-                  {footerStatus}
-                </p>
-              </div>
-            </div>
-          ) : !resultOverlayOpen && (
-            <div className="flex items-center justify-end gap-2 w-full">
-              {status === "won" && (
+            ) : !terminalResult && (
+              <div className="flex items-center justify-end gap-2 w-full">
+                {status === "won" && (
+                  <button
+                    type="button"
+                    onClick={handleShareOpen}
+                    className="rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
+                    style={{
+                      background: "rgba(110, 65, 15, 0.15)",
+                      color: "rgba(63, 34, 8, 0.95)",
+                      boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.35)",
+                    }}
+                  >
+                    {ENDGAME_SHARE_COPY.shareResult}
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={handleShareOpen}
+                  onClick={reset}
                   className="rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
                   style={{
-                    background: "rgba(110, 65, 15, 0.15)",
-                    color: "rgba(63, 34, 8, 0.95)",
-                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.35)",
+                    background: "rgba(63, 34, 8, 0.92)",
+                    color: "rgba(255, 245, 215, 0.98)",
+                    boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
                   }}
                 >
-                  {ENDGAME_SHARE_COPY.shareResult}
+                  Retry
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={reset}
-                className="rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-wide shadow-md active:scale-95 transition-transform"
-                style={{
-                  background: "rgba(63, 34, 8, 0.92)",
-                  color: "rgba(255, 245, 215, 0.98)",
-                  boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.2)",
-                }}
-              >
-                Retry
-              </button>
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
-          {open && resultOverlayOpen && (status === "won" || status === "drawn") && (
-            <MiniArenaResultCeremony
-              status={status}
-              moveCount={moveCount}
-              parMoves={setup.parMoves}
-              completionStars={completionStars}
-              isNewBest={isNewBest}
-              previousBest={previousBest}
-              onShare={handleShareOpen}
-              onRetry={reset}
-              onClose={() => setResultOverlayOpen(false)}
-            />
-          )}
-        </div>
-      </SheetContent>
+      {terminalResult ? (
+        (debugMiniArena("render result overlay", { hasTerminalResult: true, terminalResult, status, open }),
+        <div
+          data-testid="mini-arena-result-overlay"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 px-5"
+        >
+          <MiniArenaResultCeremony
+            terminalResult={terminalResult}
+            parMoves={setup.parMoves}
+            onShare={handleShareOpen}
+            onRetry={reset}
+            onClose={() => {
+              debugMiniArena("clear terminalResult", { source: "ceremony onClose" });
+              dismissedTerminalRef.current = true;
+              setTerminalResult(null);
+            }}
+          />
+        </div>)
+      ) : null}
 
       {shareOpen && (
         <ShareModal
@@ -409,6 +574,33 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
           title={status === "won" ? ENDGAME_SHARE_COPY.shareResult : ENDGAME_SHARE_COPY.shareChallenge}
         />
       )}
-    </Sheet>
+
+      {DEBUG_MINI_ARENA ? (
+        <div
+          data-testid="mini-arena-debug-state"
+          style={{
+            position: "fixed",
+            bottom: 72,
+            right: 8,
+            zIndex: 99999,
+            maxWidth: 320,
+            fontSize: 10,
+            background: "rgba(0,0,0,.75)",
+            color: "white",
+            padding: 6,
+            borderRadius: 6,
+            pointerEvents: "none",
+          }}
+        >
+          {JSON.stringify({
+            open,
+            status,
+            hasTerminalResult: terminalResult !== null,
+            moveCount,
+            fen,
+          })}
+        </div>
+      ) : null}
+    </>
   );
 }
