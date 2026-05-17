@@ -47,6 +47,22 @@ function DockItem({ id, label, control, activeDockTab }: ItemProps) {
   );
 }
 
+function PiecesDockIcon() {
+  const base = "/art/redesign/pieces/w-rook";
+  return (
+    <picture className="inline-block h-9 w-9">
+      <source srcSet={`${base}.avif`} type="image/avif" />
+      <source srcSet={`${base}.webp`} type="image/webp" />
+      <img
+        src={`${base}.png`}
+        alt=""
+        aria-hidden="true"
+        className="block h-full w-full object-contain"
+      />
+    </picture>
+  );
+}
+
 export function PersistentDock({
   badgeControl,
   shopControl,
@@ -56,22 +72,36 @@ export function PersistentDock({
   activeDockTab,
 }: PersistentDockProps) {
   const pathname = usePathname();
-  const isArenaRoute = pathname === "/arena";
-  const isArenaActive = isArenaRoute || activeDockTab === "arena";
+  const isArenaRoute = pathname?.startsWith("/arena") ?? false;
+  const isPracticeRoute = pathname?.startsWith("/exercises") ?? false;
+  const centerTarget = isArenaRoute
+    ? {
+      href: "/exercises",
+      label: DOCK_LABELS.pieces,
+      icon: <PiecesDockIcon />,
+      trackItem: "pieces",
+    }
+    : {
+      href: "/arena?fresh=1",
+      label: DOCK_LABELS.arena,
+      icon: <CandyBanner name="btn-battle" className="h-9 w-9" />,
+      trackItem: "arena",
+    };
+  const isCenterActive = activeDockTab === "arena";
 
   return (
     <nav className="chesscito-dock" aria-label="Game navigation">
       <DockItem id="badge" label={DOCK_LABELS.badge} control={badgeControl} activeDockTab={activeDockTab} />
       <DockItem id="shop" label={DOCK_LABELS.shop} control={shopControl} activeDockTab={activeDockTab} />
 
-      {/* Center — Arena sheet trigger (preferred) or route Link fallback.
+      {/* Center — contextual mode switch between Practice Pieces and Arena.
           Label is always visible (not gated on is-active) because the
           center button is the primary CTA — its meaning shouldn't
           depend on the icon alone, which players reported as
           ambiguous. */}
-      {arenaControl ? (
+      {arenaControl && isPracticeRoute ? (
         <div
-          className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
+          className={`chesscito-dock-center${isCenterActive ? " is-active" : ""}`}
           onClickCapture={() => track("dock_tap", { item: "arena" })}
         >
           {arenaControl}
@@ -81,13 +111,13 @@ export function PersistentDock({
         </div>
       ) : (
         <Link
-          href="/arena?fresh=1"
-          className={`chesscito-dock-center${isArenaActive ? " is-active" : ""}`}
-          onClick={() => track("dock_tap", { item: "arena" })}
+          href={centerTarget.href}
+          className={`chesscito-dock-center${isCenterActive ? " is-active" : ""}`}
+          onClick={() => track("dock_tap", { item: centerTarget.trackItem })}
         >
-          <CandyBanner name="btn-battle" className="h-9 w-9" />
+          {centerTarget.icon}
           <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
-            {DOCK_LABELS.arena}
+            {centerTarget.label}
           </span>
         </Link>
       )}

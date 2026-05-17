@@ -89,7 +89,7 @@ vi.mock("@/components/share/share-modal", () => ({
 vi.mock("@/components/redesign/candy-icon", () => ({
   CandyIcon: (props: Record<string, unknown>) => (
     <span data-testid="candy-icon" data-name={props.name}>
-      {props.name}
+      {String(props.name)}
     </span>
   ),
 }));
@@ -98,7 +98,7 @@ vi.mock("@/components/redesign/candy-icon", () => ({
 vi.mock("@/components/exercises/mission-header-candy", () => ({
   MissionHeaderCandy: (props: Record<string, unknown>) => (
     <div data-testid="mission-header" data-title={props.title}>
-      {props.title}
+      {String(props.title)}
     </div>
   ),
 }));

@@ -899,6 +899,7 @@ function ArenaPageInner() {
   const handleBack = () => {
     resetArenaState();
     game.reset();
+    handleBackToHub();
   };
 
   // Preparing timer — scheduled inside a useEffect tied to isPreparing so

@@ -744,6 +744,8 @@ export const DOCK_LABELS = {
    *  page's own title ("Arena"). Previous label "Free Play" was
    *  ambiguous ("is there Paid Play?"). */
   arena: "Arena",
+  /** Center tab on /arena — routes back to the piece-practice surface. */
+  pieces: "Pieces",
   /** Item labels — only rendered when the tab is active so the dock
    *  stays compact + the active state feels like a lift out of the
    *  bar. Trophies replaced Invite in the primary dock: Invite is a
