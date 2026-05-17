@@ -6648,6 +6648,7 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  padding-right: 2px;
 }
 
 .badge-card-name {
@@ -6682,6 +6683,29 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .badge-card--owned .badge-card-progress-fill {
   background: linear-gradient(90deg, #10B981 0%, #059669 100%);
+}
+
+.badge-card-action {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 72px;
+}
+
+.badge-card-claim-btn {
+  min-width: 72px !important;
+  width: auto !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 13px !important;
+  border-radius: 13px !important;
+  font-size: 0.82rem !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  box-shadow:
+    0 3px 8px rgba(5, 150, 105, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40) !important;
 }
 
 /* ── Trophy Case (trophies-body.tsx) ──────────────────────────────────────

@@ -110,7 +110,7 @@ function BadgeCard({
       </div>
 
       {/* Action area */}
-      <div className="shrink-0">
+      <div className="badge-card-action">
         {isClaimed ? (
           <CandyChip variant="success" tone="subtle">
             <CandyIcon name="check" className="mr-0.5 h-2.5 w-2.5" />
@@ -119,6 +119,7 @@ function BadgeCard({
         ) : isClaimable ? (
           <PrincipalButton
             size="medium"
+            className="badge-card-claim-btn"
             onClick={onClaim}
             loading={isThisBusy}
             disabled={isClaimBusy && !isThisBusy}
