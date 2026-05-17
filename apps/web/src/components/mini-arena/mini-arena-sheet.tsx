@@ -564,33 +564,6 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
           title={status === "won" ? ENDGAME_SHARE_COPY.shareResult : ENDGAME_SHARE_COPY.shareChallenge}
         />
       )}
-
-      {DEBUG_MINI_ARENA ? (
-        <div
-          data-testid="mini-arena-debug-state"
-          style={{
-            position: "fixed",
-            bottom: 72,
-            right: 8,
-            zIndex: 99999,
-            maxWidth: 320,
-            fontSize: 10,
-            background: "rgba(0,0,0,.75)",
-            color: "white",
-            padding: 6,
-            borderRadius: 6,
-            pointerEvents: "none",
-          }}
-        >
-          {JSON.stringify({
-            open,
-            status,
-            hasTerminalResult: terminalResult !== null,
-            moveCount,
-            fen,
-          })}
-        </div>
-      ) : null}
     </>
   );
 }
