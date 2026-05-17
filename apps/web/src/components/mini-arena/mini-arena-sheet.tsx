@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type Square } from "chess.js";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -110,7 +107,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     terminalResultRef.current = terminalResult;
   }, [terminalResult]);
 
-  function initializeGame(source: string) {
+  const initializeGame = useCallback((source: string) => {
     debugMiniArena("initializeGame", { source });
     gameRef.current = new Chess(setup.fen);
     setFen(setup.fen);
@@ -125,7 +122,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     winFiredRef.current = false;
     debugMiniArena("clear terminalResult", { source });
     setTerminalResult(null);
-  }
+  }, [setup.fen]);
 
   // Only re-init when sheet transitions closed→open.  The wasOpenRef
   // guard prevents stale dependency updates (e.g. setup.id/fen) from
@@ -135,7 +132,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     wasOpenRef.current = open;
     if (!justOpened) return;
     initializeGame("fresh open");
-  }, [open, setup.id]);
+  }, [initializeGame, open, setup.id]);
 
   useEffect(() => {
     return () => {
@@ -534,28 +531,21 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
               </div>
             )}
           </div>
+          {terminalResult ? (
+            <MiniArenaResultCeremony
+              terminalResult={terminalResult}
+              parMoves={setup.parMoves}
+              onShare={handleShareOpen}
+              onRetry={reset}
+              onClose={() => {
+                debugMiniArena("clear terminalResult", { source: "ceremony onClose" });
+                dismissedTerminalRef.current = true;
+                setTerminalResult(null);
+              }}
+            />
+          ) : null}
         </SheetContent>
       </Sheet>
-
-      {terminalResult ? (
-        (debugMiniArena("render result overlay", { hasTerminalResult: true, terminalResult, status, open }),
-        <div
-          data-testid="mini-arena-result-overlay"
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 px-5"
-        >
-          <MiniArenaResultCeremony
-            terminalResult={terminalResult}
-            parMoves={setup.parMoves}
-            onShare={handleShareOpen}
-            onRetry={reset}
-            onClose={() => {
-              debugMiniArena("clear terminalResult", { source: "ceremony onClose" });
-              dismissedTerminalRef.current = true;
-              setTerminalResult(null);
-            }}
-          />
-        </div>)
-      ) : null}
 
       {shareOpen && (
         <ShareModal

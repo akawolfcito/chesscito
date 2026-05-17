@@ -310,6 +310,23 @@ describe("MiniArenaSheet — result ceremony lifecycle", () => {
     ).toBeInTheDocument();
   });
 
+  it("mounts the result overlay as a top-level modal, outside the sheet", () => {
+    render(
+      <MiniArenaSheet
+        open
+        onOpenChange={vi.fn()}
+        setup={ROOK_MATE_IN_1_SETUP}
+      />,
+    );
+
+    act(() => boardOnSquareClick("a1"));
+    act(() => boardOnSquareClick("a8"));
+
+    expect(screen.getByTestId("mini-arena-sheet")).not.toContainElement(
+      screen.getByTestId("mini-arena-result-overlay"),
+    );
+  });
+
   it("does not restore overlay after ceremony close (dismissedTerminalRef)", () => {
     render(
       <MiniArenaSheet
