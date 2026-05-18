@@ -61,10 +61,10 @@ function Section({
   return (
     <section>
       <div className="mb-4 flex items-center justify-between px-1">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[rgba(63,34,8,0.40)]">
+        <h3 className="text-nano font-black uppercase tracking-[0.2em] text-[rgba(63,34,8,0.40)]">
           {label}
         </h3>
-        <span className="text-[10px] font-black text-[rgba(63,34,8,0.30)]">
+        <span className="text-nano font-black text-[rgba(63,34,8,0.30)]">
           {achievements.length} ITEMS
         </span>
       </div>
@@ -113,7 +113,7 @@ function AchievementTile({
       
       {!earned && progress ? (
         <div className="mt-3 w-full">
-          <div className="flex items-center justify-between px-1 mb-1 text-[9px] font-black text-[rgba(63,34,8,0.50)]">
+          <div className="flex items-center justify-between px-1 mb-1 text-nano font-black text-[rgba(63,34,8,0.50)]">
             <span>PROGRESS</span>
             <span>{progress.current}/{progress.goal}</span>
           </div>

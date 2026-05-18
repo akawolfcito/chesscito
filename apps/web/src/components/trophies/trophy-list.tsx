@@ -13,7 +13,7 @@ function SkeletonCards() {
           className="h-[60px] animate-pulse rounded-2xl border border-[rgba(255,255,255,0.45)] bg-white/15"
         />
       ))}
-      <p className="pt-2 text-center text-[11px] font-bold uppercase tracking-widest opacity-40">
+      <p className="pt-2 text-center text-xs font-bold uppercase tracking-widest opacity-40">
         {TROPHY_VITRINE_COPY.loadingText}
       </p>
     </div>
@@ -98,7 +98,7 @@ export function TrophyList({
       {history.length > 0 && (
         <div className="flex flex-col gap-2">
           {isPersonal && featured && (
-            <h4 className="px-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-1">
+            <h4 className="px-2 text-nano font-black uppercase tracking-[0.2em] opacity-40 mb-1">
               History
             </h4>
           )}

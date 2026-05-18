@@ -215,7 +215,7 @@ export function TrophiesBody() {
       title={ACHIEVEMENTS_COPY.sectionTitle}
     >
       <div className="mb-4 flex items-center justify-center gap-2">
-        <span className="text-[10px] font-black uppercase tracking-[0.18em] opacity-30">
+        <span className="text-nano font-black uppercase tracking-[0.18em] opacity-30">
           PROGRESS
         </span>
         <CandyChip variant="warm" tone="subtle">
@@ -229,7 +229,7 @@ export function TrophiesBody() {
       <AchievementsGrid achievements={summary.list} />
 
       {summary.earnedCount === 0 && (
-        <p className="mt-6 text-center text-[11px] font-bold uppercase tracking-widest opacity-40">
+        <p className="mt-6 text-center text-xs font-bold uppercase tracking-widest opacity-40">
           {ACHIEVEMENTS_COPY.emptyHint}
         </p>
       )}
@@ -265,7 +265,7 @@ export function TrophiesBody() {
       <footer className="mt-4 border-t border-[rgba(110,65,15,0.15)] pt-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[rgba(110,65,15,0.15)]" />
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[rgba(63,34,8,0.45)]">
+          <h3 className="text-nano font-black uppercase tracking-[0.2em] text-[rgba(63,34,8,0.45)]">
             {ROADMAP_COPY.sectionTitle}
           </h3>
           <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[rgba(110,65,15,0.15)]" />
@@ -276,10 +276,10 @@ export function TrophiesBody() {
             <li key={item.title} className="roadmap-item">
               <div className="h-2 w-2 rounded-full bg-amber-500/60" />
               <div className="flex-1">
-                <p className="text-[11px] font-bold text-[rgba(63,34,8,0.95)] leading-none">
+                <p className="text-xs font-bold text-[rgba(63,34,8,0.95)] leading-none">
                   {item.title}
                 </p>
-                <p className="text-[10px] text-[rgba(63,34,8,0.70)] mt-1">
+                <p className="text-xs text-[rgba(63,34,8,0.70)] mt-1">
                   {item.description}
                 </p>
               </div>
