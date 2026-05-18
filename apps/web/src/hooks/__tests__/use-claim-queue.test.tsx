@@ -43,4 +43,20 @@ describe("useClaimQueue", () => {
 
     expect(result.current.claims).toHaveLength(1);
   });
+
+  it("uses opts.performClaim over the default when provided", async () => {
+    const injected = vi.fn(async () => ({ ok: true as const, txHash: "0xdef" as const }));
+    const { result } = renderHook(() =>
+      useClaimQueue("0x0924abcdef1234567890abcdef1234567890eba4", { performClaim: injected }),
+    );
+    await waitFor(() => expect(result.current.claims.length).toBe(2));
+
+    await act(async () => {
+      await result.current.claimOne(result.current.claims[0]);
+    });
+
+    expect(injected).toHaveBeenCalledTimes(1);
+    expect(injected).toHaveBeenCalledWith(expect.objectContaining({ kind: "badge" }));
+    expect(result.current.claims).toHaveLength(1);
+  });
 });

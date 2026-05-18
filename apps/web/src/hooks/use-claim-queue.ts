@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { computePendingClaims, type Claim, type ClaimQueueState } from "@/lib/claims/queue";
 import { readClaimSources } from "@/lib/claims/sources";
-import { performClaim } from "@/lib/claims/actions";
+import { performClaim as defaultPerformClaim, type PerformClaimResult } from "@/lib/claims/actions";
+
+export type PerformClaimFn = (claim: Claim) => Promise<PerformClaimResult>;
 
 type HookState = {
   claims: Claim[];
@@ -19,7 +21,15 @@ const INITIAL: HookState = {
   error: null,
 };
 
-export function useClaimQueue(address: `0x${string}` | undefined) {
+type UseClaimQueueOptions = {
+  performClaim?: PerformClaimFn;
+};
+
+export function useClaimQueue(
+  address: `0x${string}` | undefined,
+  opts?: UseClaimQueueOptions,
+) {
+  const performClaim = opts?.performClaim ?? defaultPerformClaim;
   const [optimisticRemoved, setOptimisticRemoved] = useState<Set<string>>(new Set());
   const [state, setState] = useState<HookState>(INITIAL);
   const [tick, setTick] = useState(0);
@@ -78,7 +88,7 @@ export function useClaimQueue(address: `0x${string}` | undefined) {
       });
       return { ok: false as const, error: error as Error };
     }
-  }, []);
+  }, [performClaim]);
 
   const refresh = useCallback(() => setTick((n) => n + 1), []);
 
