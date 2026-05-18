@@ -342,4 +342,56 @@ describe("HubScaffold", () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  describe("HubOnboardingCard mount (SPEC 1 D14)", () => {
+    it("mounts the onboarding card when showOnboarding is true", () => {
+      render(<HubScaffold {...baseProps} showOnboarding onOnboardingDismiss={vi.fn()} />);
+      expect(
+        screen.getByRole("region", { name: "Welcome to Chesscito" }),
+      ).toBeInTheDocument();
+    });
+
+    it("does not mount the onboarding card when showOnboarding is false", () => {
+      render(<HubScaffold {...baseProps} showOnboarding={false} />);
+      expect(
+        screen.queryByRole("region", { name: "Welcome to Chesscito" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not mount the onboarding card when showOnboarding is omitted", () => {
+      render(<HubScaffold {...baseProps} />);
+      expect(
+        screen.queryByRole("region", { name: "Welcome to Chesscito" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("forwards the dismiss tap to onOnboardingDismiss", async () => {
+      const onOnboardingDismiss = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <HubScaffold
+          {...baseProps}
+          showOnboarding
+          onOnboardingDismiss={onOnboardingDismiss}
+        />,
+      );
+      await user.click(screen.getByRole("button", { name: "Got it" }));
+      expect(onOnboardingDismiss).toHaveBeenCalledTimes(1);
+    });
+
+    it("renders the onboarding card between the HUD header and the body", () => {
+      const { container } = render(
+        <HubScaffold {...baseProps} showOnboarding onOnboardingDismiss={vi.fn()} />,
+      );
+      const card = container.querySelector(".hub-onboarding-card");
+      const hud = container.querySelector(".hub-scaffold-hud");
+      const body = container.querySelector(".hub-scaffold-body");
+      expect(card).not.toBeNull();
+      expect(hud).not.toBeNull();
+      expect(body).not.toBeNull();
+      // DOCUMENT_POSITION_FOLLOWING = 4 → card follows HUD, body follows card.
+      expect(hud!.compareDocumentPosition(card!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(card!.compareDocumentPosition(body!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+  });
 });

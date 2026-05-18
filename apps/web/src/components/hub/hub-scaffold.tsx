@@ -8,6 +8,7 @@ import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-colum
 import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { PremiumSlot } from "@/components/pro-mission/premium-slot";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
+import { HubOnboardingCard } from "@/components/hub/onboarding-card";
 import { SecondaryCta } from "@/components/hub/secondary-cta";
 import { HUD_COPY } from "@/lib/content/editorial";
 
@@ -141,6 +142,8 @@ export function HubScaffold({
   showPremiumSlot = false,
   heroCta,
   onArenaPress,
+  showOnboarding = false,
+  onOnboardingDismiss,
   onError,
 }: HubScaffoldProps) {
   const proValue = pro.active
@@ -221,6 +224,15 @@ export function HubScaffold({
           />,
         )}
       </header>
+
+      {showOnboarding
+        ? wrap(
+            "HubOnboardingCard",
+            <HubOnboardingCard
+              onDismiss={onOnboardingDismiss ?? (() => {})}
+            />,
+          )
+        : null}
 
       <section className="hub-scaffold-body">
         <div className="hub-scaffold-side hub-scaffold-side--left">
