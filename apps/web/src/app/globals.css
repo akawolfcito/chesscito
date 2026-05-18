@@ -2255,6 +2255,45 @@
   .profile-tier-badge-title { font-size: 9px; font-weight: 800; }
   .profile-tier-badge-xp { font-size: 14px; font-weight: 800; }
 
+  /* === profile banner === */
+  .profile-banner {
+    display: grid; grid-template-columns: auto 1fr auto;
+    gap: .75rem; align-items: center;
+    padding: 1rem; background: linear-gradient(180deg, #2a2245, #1b1530);
+    border-bottom: 2px solid rgba(244,217,122,.35);
+    color: #f5edd8; font-family: var(--font-game-display);
+  }
+  .profile-banner-avatar-wrap {
+    width: 56px; height: 56px; border-radius: 12px;
+    border: 2px solid #f4d97a;
+    background: rgba(0,0,0,.35);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .profile-banner-avatar { font-size: 1.75rem; line-height: 1; }
+  .profile-banner-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .profile-banner-name-row {
+    display: flex; align-items: center; gap: .35rem; min-width: 0;
+  }
+  .profile-banner-name {
+    font-size: 1rem; font-weight: 800; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+  .profile-banner-edit-pen {
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px; border: 1px solid rgba(244,217,122,.35);
+    background: rgba(0,0,0,.25); color: #f5edd8;
+    font-size: .8rem;
+  }
+  .profile-banner-tier-row { font-size: .8rem; color: #d8cdb8; }
+  .profile-banner-tier-title { font-weight: 700; }
+  .profile-banner-wallet {
+    font-size: .7rem; color: #b8a888; letter-spacing: .03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .profile-banner-badge-slot { align-self: flex-start; }
+
   /* === profile display-name dialog === */
   .profile-name-dialog {
     position: fixed; inset: 0; z-index: 80;
