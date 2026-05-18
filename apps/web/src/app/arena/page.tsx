@@ -1048,7 +1048,7 @@ function ArenaPageInner() {
       <button
         type="button"
         aria-label={label}
-        className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
+        className="relative flex shrink-0 items-center justify-center"
         onClick={onClick}
       >
         <img

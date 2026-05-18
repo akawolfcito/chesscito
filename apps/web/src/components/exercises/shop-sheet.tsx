@@ -187,7 +187,7 @@ export function ShopSheet({
           <button
             type="button"
             aria-label="Shop"
-            className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
+            className="relative flex shrink-0 items-center justify-center"
           >
             <img
               src="/art/shop-menu.png"

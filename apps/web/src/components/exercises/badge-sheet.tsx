@@ -218,7 +218,7 @@ export function BadgeSheet({
           <button
             type="button"
             aria-label="Badges"
-            className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
+            className="relative flex shrink-0 items-center justify-center"
           >
             <img
               src="/art/badge-menu.png"

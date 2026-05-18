@@ -108,7 +108,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
         <button
           type="button"
           aria-label={DOCK_LABELS.leaderboard}
-          className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
+          className="relative flex shrink-0 items-center justify-center"
         >
           <img
             src="/art/leaderboard-menu.png"
