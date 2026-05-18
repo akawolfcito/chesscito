@@ -145,9 +145,20 @@ export function TrophiesBody() {
 
   if (!configured) {
     return (
-      <p className="py-6 text-center text-sm" style={{ color: "rgba(110, 65, 15, 0.60)" }}>
-        {TROPHY_VITRINE_COPY.configError}
-      </p>
+      <div className="candy-frame candy-frame-amber flex flex-col items-center gap-3 p-6 text-center">
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-full"
+          style={{ background: "rgba(110, 65, 15, 0.18)" }}
+        >
+          <CandyIcon name="trophy" className="h-6 w-6" />
+        </div>
+        <p
+          className="text-sm font-semibold leading-relaxed"
+          style={{ color: "rgba(63, 34, 8, 0.85)" }}
+        >
+          {TROPHY_VITRINE_COPY.configError}
+        </p>
+      </div>
     );
   }
 
