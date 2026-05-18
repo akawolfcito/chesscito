@@ -1,140 +1,61 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
 import { DOCK_LABELS } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
 
-export type DockTab = "badge" | "shop" | "trophies" | "leaderboard" | "arena" | null;
+export type DockSlot = "home" | "pieces" | "shop" | "board" | "settings";
 
-type PersistentDockProps = {
-  badgeControl: ReactNode;
-  shopControl: ReactNode;
-  trophiesControl: ReactNode;
-  leaderboardControl: ReactNode;
-  /** Optional arena sheet trigger. When provided, the center button
-   *  opens the arena entry sheet instead of navigating. When omitted
-   *  (e.g., from /arena itself) the center falls back to a Link. */
-  arenaControl?: ReactNode;
-  /** Which destination tab is currently active. Drives the lift +
-   *  label treatment on that item so the user always knows where
-   *  they are. Null = no destination active. */
-  activeDockTab: DockTab;
-};
-
-type ItemProps = {
-  id: "badge" | "shop" | "trophies" | "leaderboard";
+type Item = {
+  id: DockSlot;
   label: string;
-  control: ReactNode;
-  activeDockTab: DockTab;
+  icon: CandyIconName;
+  href: string;
+  /** Pathname prefix that activates this slot. Sheet-only destinations
+   *  (Shop / Settings open via query params) leave this undefined so
+   *  they never light up by URL alone. */
+  activeWhen?: string;
 };
 
-function DockItem({ id, label, control, activeDockTab }: ItemProps) {
-  const isActive = activeDockTab === id;
-  return (
-    <div
-      className={`chesscito-dock-item${isActive ? " is-active" : ""}`}
-      data-dock-id={id}
-      onClickCapture={() => track("dock_tap", { item: id })}
-    >
-      {control}
-      <span className="chesscito-dock-item-label game-label text-nano font-bold uppercase tracking-[0.12em]">
-        {label}
-      </span>
-    </div>
-  );
-}
+const ITEMS: ReadonlyArray<Item> = [
+  { id: "home", label: DOCK_LABELS.home, icon: "crown", href: "/hub", activeWhen: "/hub" },
+  { id: "pieces", label: DOCK_LABELS.pieces, icon: "move", href: "/exercises", activeWhen: "/exercises" },
+  { id: "shop", label: DOCK_LABELS.shop, icon: "shop", href: "/hub?sheet=shop" },
+  { id: "board", label: DOCK_LABELS.board, icon: "crosshair", href: "/leaderboard", activeWhen: "/leaderboard" },
+  { id: "settings", label: DOCK_LABELS.settings, icon: "shield", href: "/hub?sheet=settings" },
+];
 
-function PiecesDockIcon() {
-  return (
-    <span className="inline-block h-9 w-9">
-      <img
-        src="/art/new-icons-chesscito/practice-pieces.png"
-        alt=""
-        aria-hidden="true"
-        className="block h-full w-full object-contain"
-        draggable={false}
-      />
-    </span>
-  );
-}
-
-function ArenaDockIcon() {
-  return (
-    <span className="inline-block h-9 w-9">
-      <img
-        src="/art/new-icons-chesscito/play-chess.png"
-        alt=""
-        aria-hidden="true"
-        className="block h-full w-full object-contain"
-        draggable={false}
-      />
-    </span>
-  );
-}
-
-export function PersistentDock({
-  badgeControl,
-  shopControl,
-  trophiesControl,
-  leaderboardControl,
-  arenaControl,
-  activeDockTab,
-}: PersistentDockProps) {
-  const pathname = usePathname();
-  const isArenaRoute = pathname?.startsWith("/arena") ?? false;
-  const isPracticeRoute = pathname?.startsWith("/exercises") ?? false;
-  const centerTarget = isArenaRoute
-    ? {
-      href: "/exercises",
-      label: DOCK_LABELS.pieces,
-      icon: <PiecesDockIcon />,
-      trackItem: "pieces",
-    }
-    : {
-      href: "/arena?fresh=1",
-      label: DOCK_LABELS.arena,
-      icon: <ArenaDockIcon />,
-      trackItem: "arena",
-    };
-  const isCenterActive = activeDockTab === "arena";
-
+export function PersistentDock() {
+  const pathname = usePathname() ?? "";
+  const router = useRouter();
   return (
     <nav className="chesscito-dock" aria-label="Game navigation">
-      <DockItem id="badge" label={DOCK_LABELS.badge} control={badgeControl} activeDockTab={activeDockTab} />
-      <DockItem id="shop" label={DOCK_LABELS.shop} control={shopControl} activeDockTab={activeDockTab} />
-
-      {/* Center — contextual mode switch between Practice Pieces and Arena.
-          Label is always visible (not gated on is-active) because the
-          center button is the primary CTA — its meaning shouldn't
-          depend on the icon alone, which players reported as
-          ambiguous. */}
-      {arenaControl && isPracticeRoute ? (
-        <div
-          className={`chesscito-dock-center${isCenterActive ? " is-active" : ""}`}
-          onClickCapture={() => track("dock_tap", { item: "arena" })}
-        >
-          {arenaControl}
-          <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
-            {DOCK_LABELS.arena}
-          </span>
-        </div>
-      ) : (
-        <Link
-          href={centerTarget.href}
-          className={`chesscito-dock-center${isCenterActive ? " is-active" : ""}`}
-          onClick={() => track("dock_tap", { item: centerTarget.trackItem })}
-        >
-          {centerTarget.icon}
-          <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
-            {centerTarget.label}
-          </span>
-        </Link>
-      )}
-
-      <DockItem id="trophies" label={DOCK_LABELS.trophies} control={trophiesControl} activeDockTab={activeDockTab} />
-      <DockItem id="leaderboard" label={DOCK_LABELS.leaderboard} control={leaderboardControl} activeDockTab={activeDockTab} />
+      {ITEMS.map((item) => {
+        const isActive = Boolean(item.activeWhen && pathname.startsWith(item.activeWhen));
+        return (
+          <div
+            key={item.id}
+            className={`chesscito-dock-item${isActive ? " is-active" : ""}`}
+            data-dock-id={item.id}
+          >
+            <button
+              type="button"
+              aria-label={item.label}
+              aria-current={isActive ? "page" : undefined}
+              onClick={() => {
+                track("dock_tap", { item: item.id });
+                router.push(item.href);
+              }}
+            >
+              <CandyIcon name={item.icon} className="h-full w-full p-1" />
+            </button>
+            <span className="chesscito-dock-item-label game-label text-nano font-bold uppercase tracking-[0.12em]">
+              {item.label}
+            </span>
+          </div>
+        );
+      })}
     </nav>
   );
 }

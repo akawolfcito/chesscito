@@ -741,19 +741,18 @@ export const LABYRINTH_COPY = {
 } as const;
 
 export const DOCK_LABELS = {
-  /** Center tab — routes to /arena. Short name matches the route + the
-   *  page's own title ("Arena"). Previous label "Free Play" was
-   *  ambiguous ("is there Paid Play?"). */
-  arena: "Arena",
-  /** Center tab on /arena — routes back to the piece-practice surface. */
+  /** v1 5-slot taxonomy (SPEC 1 D7). The dock is destination-shaped
+   *  not action-shaped: each slot is a route or hub sheet. */
+  home: "Home",
   pieces: "Pieces",
-  /** Item labels — only rendered when the tab is active so the dock
-   *  stays compact + the active state feels like a lift out of the
-   *  bar. Trophies replaced Invite in the primary dock: Invite is a
-   *  transient share action (lives in About + Victory share), while
-   *  Trophies is a retention destination that earns a persistent slot. */
-  badge: "Badges",
   shop: "Shop",
+  board: "Board",
+  settings: "Settings",
+  /** Legacy labels still referenced by destination sheets (leaderboard-
+   *  sheet, trophies-sheet) for their own aria-labels. Kept as exports
+   *  rather than inlined to preserve editorial as the single source. */
+  arena: "Arena",
+  badge: "Badges",
   trophies: "Trophies",
   leaderboard: "Leaders",
 } as const;

@@ -1453,46 +1453,7 @@ export function ExercisesScreen({
               compact
             />
           }
-          persistentDock={
-            <PersistentDock
-              activeDockTab={activeDockTab}
-              badgeControl={
-                <BadgeSheet
-                  open={badgeSheetOpen}
-                  onOpenChange={(v) => { if (!v && isClaimBusy) return; setBadgeSheetOpen(v); }}
-                  badgesClaimed={badgesClaimed}
-                  onClaim={(piece) => void handleClaimBadge(piece)}
-                  isClaimBusy={isClaimBusy}
-                  claimingPiece={claimingPiece}
-                  showNotification={canSendOnChain && !Boolean(hasClaimedBadge)}
-                  onNavigateToTrophies={() => setActiveDockTab("trophies")}
-                />
-              }
-              shopControl={
-                <ShopSheet
-                  open={storeOpen}
-                  onOpenChange={setStoreOpen}
-                  items={displayShopCatalog}
-                  onSelectItem={(itemId) => {
-                    setSelectedItemId(itemId);
-                    const item = shopCatalog.find((i) => i.itemId === itemId);
-                    if (item) setPaymentToken(selectPaymentToken(item.onChainPrice, itemId));
-                    setStoreOpen(false);
-                    setConfirmOpen(true);
-                  }}
-                />
-              }
-              leaderboardControl={
-                <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
-              }
-              trophiesControl={
-                <TrophiesSheet
-                  open={trophiesSheetOpen}
-                  onOpenChange={setTrophiesSheetOpen}
-                />
-              }
-            />
-          }
+          persistentDock={<PersistentDock />}
           board={
             <Board
               key={`${boardKey}-${labyrinthMode ? `lab-${labyrinthKey}` : "ex"}`}
