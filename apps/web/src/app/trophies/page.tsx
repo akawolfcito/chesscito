@@ -5,25 +5,22 @@ import Link from "next/link";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { TrophiesBody } from "@/components/trophies/trophies-body";
-import { ABOUT_LINK_COPY, TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
+import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 
 /**
- * Standalone /trophies route. Mirrors the dock TrophiesSheet so the
- * hub Trophy chip can navigate here directly instead of round-
- * tripping through /hub?legacy=1&action=trophies (B-port from
- * docs/audits/2026-05-07-hub-audit.md).
+ * Standalone /trophies route. Mirrors the in-hub TrophiesSheet so the
+ * page and the dock sheet share the same body + visual treatment
+ * (SPEC 1 D8 — two surfaces, one body, both candy-aligned).
  *
- * Shares <TrophiesBody> with the legacy sheet so any future change
- * to Hall of Fame / Achievements / My Victories renders both surfaces
- * identically.
+ * Visual: `.trophies-candy-page` opts into the shared sheet-bg-hub
+ * tree band + cream wash so the page no longer reads as off-line
+ * graphically. Inner content stays transparent on top of the
+ * decorative band; `<TrophiesBody>` renders its own cards.
  */
 export default function TrophiesPage() {
   return (
-    <main className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center">
-      <div
-        className="candy-page-panel flex w-full max-w-[var(--app-max-width,390px)] flex-col px-4 py-6"
-        style={{ background: "var(--paper-bg)" }}
-      >
+    <main className="trophies-candy-page mission-shell flex min-h-[100dvh] justify-center">
+      <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-col px-4 py-6">
         <header className="mb-4 flex items-start gap-3 border-b border-[rgba(110,65,15,0.30)] pb-4">
           <Link
             href="/hub"

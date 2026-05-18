@@ -836,7 +836,8 @@
   .sheet-bg-badges,
   .sheet-bg-shop,
   .sheet-bg-leaderboard,
-  .sheet-bg-danger {
+  .sheet-bg-danger,
+  .trophies-candy-page {
     position: relative;
     overflow: hidden;
   }
@@ -845,7 +846,8 @@
   .sheet-bg-badges::before,
   .sheet-bg-shop::before,
   .sheet-bg-leaderboard::before,
-  .sheet-bg-danger::before {
+  .sheet-bg-danger::before,
+  .trophies-candy-page::before {
     content: "";
     position: absolute;
     inset: -12px;
@@ -864,7 +866,8 @@
   .sheet-bg-badges::after,
   .sheet-bg-shop::after,
   .sheet-bg-leaderboard::after,
-  .sheet-bg-danger::after {
+  .sheet-bg-danger::after,
+  .trophies-candy-page::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -881,7 +884,8 @@
   .sheet-bg-badges>*,
   .sheet-bg-shop>*,
   .sheet-bg-leaderboard>*,
-  .sheet-bg-danger>* {
+  .sheet-bg-danger>*,
+  .trophies-candy-page>* {
     position: relative;
     z-index: 1;
   }
