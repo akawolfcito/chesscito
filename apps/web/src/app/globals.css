@@ -2255,6 +2255,53 @@
   .profile-tier-badge-title { font-size: 9px; font-weight: 800; }
   .profile-tier-badge-xp { font-size: 14px; font-weight: 800; }
 
+  /* === profile display-name dialog === */
+  .profile-name-dialog {
+    position: fixed; inset: 0; z-index: 80;
+    background: rgba(0,0,0,.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .profile-name-dialog-card {
+    width: 100%; max-width: 320px;
+    background: linear-gradient(180deg, #1b1530, #0f0b22);
+    border: 2px solid #f4d97a; border-radius: 14px;
+    padding: 1rem; box-shadow: 0 10px 24px rgba(0,0,0,.5);
+    display: flex; flex-direction: column; gap: .75rem;
+    color: #f5edd8; font-family: var(--font-game-display);
+  }
+  .profile-name-dialog-title {
+    margin: 0; font-size: 1rem; font-weight: 800;
+    text-shadow: 0 1px 0 rgba(0,0,0,.4); text-align: center;
+  }
+  .profile-name-dialog-input {
+    width: 100%; padding: .6rem .75rem;
+    background: rgba(0,0,0,.35); color: #fff;
+    border: 1.5px solid rgba(244,217,122,.5); border-radius: 10px;
+    font-family: inherit; font-size: .95rem;
+  }
+  .profile-name-dialog-input:focus {
+    outline: none; border-color: #f4d97a;
+    box-shadow: 0 0 0 2px rgba(244,217,122,.3);
+  }
+  .profile-name-dialog-actions {
+    display: flex; gap: .5rem; justify-content: flex-end;
+  }
+  .profile-name-dialog-cancel,
+  .profile-name-dialog-save {
+    min-height: 44px; padding: 0 1rem; border-radius: 10px;
+    font-family: inherit; font-weight: 700; font-size: .9rem;
+    border: 1.5px solid rgba(0,0,0,.4);
+  }
+  .profile-name-dialog-cancel {
+    background: rgba(40,30,55,.85); color: #d8cdb8;
+  }
+  .profile-name-dialog-save {
+    background: linear-gradient(180deg, #cf2d2d, #7a1818);
+    color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    border-color: #f4d97a;
+  }
+
 }
 
 .playhub-intro-overlay {
