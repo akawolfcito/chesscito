@@ -8,6 +8,11 @@ vi.mock("wagmi", () => ({
     isConnected: true,
   }),
   useDisconnect: () => ({ disconnect: vi.fn() }),
+  useChainId: () => 42220,
+  useWriteContract: () => ({
+    writeContractAsync: vi.fn(async () => "0xfeed"),
+    isPending: false,
+  }),
 }));
 vi.mock("@/hooks/use-profile-stats", () => ({
   useProfileStats: () => ({
