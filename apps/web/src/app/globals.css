@@ -2302,6 +2302,16 @@
     border-color: #f4d97a;
   }
 
+  /* === hub secondary cta (D5 — calm Arena link below Hero) === */
+  .hub-secondary-cta {
+    display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+    width: 92%; padding: .35rem .5rem;
+    background: rgba(50,90,150,.85); color: #dceeff;
+    border: 1.5px solid rgba(20,40,80,.7); border-radius: 12px;
+    font-size: .8125rem; font-weight: 700;
+    text-shadow: 0 1px 0 rgba(0,0,0,.3);
+  }
+
 }
 
 .playhub-intro-overlay {
