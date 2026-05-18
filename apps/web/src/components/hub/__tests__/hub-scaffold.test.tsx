@@ -240,4 +240,106 @@ describe("HubScaffold", () => {
       expect(onPress).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("rail headers (SPEC 1 D1)", () => {
+    it("renders 'LEARN' as the left-rail header", () => {
+      render(<HubScaffold {...baseProps} />);
+      expect(screen.getByText("LEARN")).toBeInTheDocument();
+    });
+
+    it("renders 'UNLOCK' as the right-rail header", () => {
+      render(<HubScaffold {...baseProps} />);
+      expect(screen.getByText("UNLOCK")).toBeInTheDocument();
+    });
+  });
+
+  describe("contextual heroCta", () => {
+    const heroAmber = {
+      label: "CONTINUE TRAINING",
+      sub: "tap a tile to pick",
+      color: "amber" as const,
+      ariaLabel: "CONTINUE TRAINING",
+      onPress: vi.fn(),
+    };
+
+    it("renders the hero button with label/sub and amber color by default", () => {
+      render(<HubScaffold {...baseProps} heroCta={heroAmber} />);
+      const btn = screen.getByRole("button", { name: "CONTINUE TRAINING" });
+      expect(btn.className).toMatch(/hub-scaffold-hero--amber/);
+      expect(screen.getByText("tap a tile to pick")).toBeInTheDocument();
+    });
+
+    it("renders the hero button in blue when daily-pending", () => {
+      render(
+        <HubScaffold
+          {...baseProps}
+          heroCta={{
+            ...heroAmber,
+            label: "PLAY TODAY'S TACTIC",
+            ariaLabel: "PLAY TODAY'S TACTIC",
+            color: "blue",
+          }}
+        />,
+      );
+      const btn = screen.getByRole("button", { name: "PLAY TODAY'S TACTIC" });
+      expect(btn.className).toMatch(/hub-scaffold-hero--blue/);
+    });
+
+    it("forwards heroCta.onPress to the hero button click", async () => {
+      const onPress = vi.fn();
+      const user = userEvent.setup();
+      render(<HubScaffold {...baseProps} heroCta={{ ...heroAmber, onPress }} />);
+      await user.click(screen.getByRole("button", { name: "CONTINUE TRAINING" }));
+      expect(onPress).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides the legacy PrimaryPlayCta when heroCta is provided", () => {
+      render(<HubScaffold {...baseProps} heroCta={heroAmber} />);
+      // Legacy playAriaLabel from baseProps would have rendered an "Enter the Arena"
+      // button via <PrimaryPlayCta>. The new heroCta path supersedes it.
+      expect(
+        screen.queryByRole("button", { name: "Enter the Arena" }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("SecondaryCta (Enter Arena) under Hero", () => {
+    const heroAmber = {
+      label: "CONTINUE TRAINING",
+      sub: "tap a tile to pick",
+      color: "amber" as const,
+      ariaLabel: "CONTINUE TRAINING",
+      onPress: vi.fn(),
+    };
+
+    it("renders the SecondaryCta below Hero when onArenaPress is wired", () => {
+      render(
+        <HubScaffold {...baseProps} heroCta={heroAmber} onArenaPress={vi.fn()} />,
+      );
+      expect(
+        screen.getByLabelText("Enter Arena — full chess vs AI"),
+      ).toBeInTheDocument();
+    });
+
+    it("forwards SecondaryCta taps to onArenaPress", async () => {
+      const onArenaPress = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <HubScaffold
+          {...baseProps}
+          heroCta={heroAmber}
+          onArenaPress={onArenaPress}
+        />,
+      );
+      await user.click(screen.getByLabelText("Enter Arena — full chess vs AI"));
+      expect(onArenaPress).toHaveBeenCalledTimes(1);
+    });
+
+    it("omits the SecondaryCta when onArenaPress is not provided", () => {
+      render(<HubScaffold {...baseProps} heroCta={heroAmber} />);
+      expect(
+        screen.queryByLabelText("Enter Arena — full chess vs AI"),
+      ).not.toBeInTheDocument();
+    });
+  });
 });
