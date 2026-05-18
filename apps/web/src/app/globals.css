@@ -2312,6 +2312,37 @@
     text-shadow: 0 1px 0 rgba(0,0,0,.3);
   }
 
+  /* === settings sheet stub (v1 placeholder) === */
+  .settings-stub {
+    display: flex; flex-direction: column; gap: .75rem;
+    padding: 1rem;
+    color: #f5edd8; font-family: var(--font-game-display);
+  }
+  .settings-stub-title {
+    margin: 0; font-size: 1.1rem; font-weight: 800;
+    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+  .settings-stub-version {
+    font-size: .75rem; padding: 2px 8px;
+    background: rgba(0,0,0,.35); border: 1px solid rgba(244,217,122,.4);
+    border-radius: 999px; align-self: flex-start;
+    color: #d8cdb8;
+  }
+  .settings-stub-toggles {
+    display: flex; flex-direction: column; gap: .5rem;
+    margin-top: .25rem;
+  }
+  .settings-toggle {
+    min-height: 44px; padding: 0 1rem;
+    border-radius: 10px; border: 1.5px solid rgba(244,217,122,.4);
+    background: rgba(40,30,55,.85); color: #d8cdb8;
+    font-family: inherit; font-weight: 700; font-size: .9rem;
+    text-align: left;
+  }
+  .settings-toggle--disabled {
+    opacity: .55; cursor: not-allowed;
+  }
+
 }
 
 .playhub-intro-overlay {
