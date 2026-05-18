@@ -2482,6 +2482,35 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* === profile sheet utility row + disconnect === */
+  .profile-utility-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: .5rem;
+    padding: .75rem 1rem;
+  }
+  .profile-utility-card {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: .5rem .75rem;
+    background: rgba(0,0,0,.3); border: 1px solid rgba(244,217,122,.25);
+    border-radius: 10px;
+    color: #f5edd8; font-family: var(--font-game-display);
+  }
+  .profile-utility-card > span:first-child {
+    font-size: .6rem; color: #d8cdb8; letter-spacing: .02em;
+  }
+  .profile-utility-card > span:last-child {
+    font-size: .85rem; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .profile-disconnect-link {
+    align-self: center;
+    margin-top: .5rem;
+    min-height: 44px; padding: 0 1rem;
+    background: transparent; color: rgba(244,217,122,.85);
+    border: 1.5px solid rgba(244,217,122,.45); border-radius: 10px;
+    font-family: var(--font-game-display);
+    font-size: .85rem; font-weight: 700;
+  }
+
 }
 
 .playhub-intro-overlay {
