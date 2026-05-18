@@ -2408,6 +2408,49 @@
     text-shadow: 0 1px 0 rgba(0,0,0,.4);
   }
 
+  /* === profile pending claims === */
+  .profile-pending-claims {
+    display: flex; flex-direction: column; gap: .5rem;
+    padding: .75rem 1rem;
+    color: #f5edd8; font-family: var(--font-game-display);
+  }
+  .profile-pending-claims-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .profile-pending-claims-header h3 {
+    margin: 0; font-size: .9rem; font-weight: 800;
+    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+  .profile-pending-claims-refresh {
+    width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px; border: 1px solid rgba(244,217,122,.35);
+    background: rgba(0,0,0,.25); color: #f5edd8;
+    font-size: 1rem;
+  }
+  .profile-pending-claims-list {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-direction: column; gap: .35rem;
+  }
+  .profile-claim-row {
+    display: grid; grid-template-columns: 1fr auto auto;
+    gap: .5rem; align-items: center;
+    padding: .5rem .75rem; border-radius: 10px;
+    background: rgba(0,0,0,.3); border: 1px solid rgba(244,217,122,.25);
+  }
+  .profile-claim-label { font-size: .85rem; font-weight: 700; }
+  .profile-claim-cost { font-size: .7rem; color: #d8cdb8; }
+  .profile-claim-inflight {
+    font-size: .7rem; color: #f4d97a; font-style: italic;
+  }
+  .profile-claim-cta {
+    min-height: 36px; padding: 0 .75rem;
+    border-radius: 8px; border: 1.5px solid #f4d97a;
+    background: linear-gradient(180deg, #cf2d2d, #7a1818);
+    color: #fff; font-family: inherit; font-weight: 700; font-size: .8rem;
+    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+
 }
 
 .playhub-intro-overlay {
