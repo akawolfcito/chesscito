@@ -9,22 +9,28 @@
 
 ---
 
-## Progress: 16 of 30 tasks complete (Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 3 ✅)
+## Progress: 20 of 30 tasks complete (Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅)
 
-### Session 2 commits (this sitting)
+### Session 2 commits (this sitting, 12 atomic commits)
 
 | # | SHA | Task | Notes |
 |---|---|---|---|
-| 9 | `7a2a6c5` | 2.3 useClaimQueue | Unblocked. 3/3 tests. **Fixed infinite-effect loop** in `!address` branch — see §Bug. |
+| 9 | `7a2a6c5` | 2.3 useClaimQueue | Unblocked. 3/3 tests. **Fixed infinite-effect loop** — see §Bug. |
 | 10 | `3016ae2` | 2.4 useDisplayName | 5/5 tests. Verbatim from plan. |
 | 11 | `b24bfb9` | 2.5 useHubOnboarding | 3/3 tests. Verbatim. |
-| 12 | `8f60b42` | 3.1 TierBadge | 2/2 tests. CSS appended inside existing `@layer components`. |
-| 13 | `7768a90` | 3.2 DisplayNameDialog | 4/4 tests. `role="dialog"`, 44px touch targets, `aria-label` from `DISPLAY_NAME_COPY.dialogTitle`. |
-| 14 | `385d495` | 3.3 SecondaryCta | 2/2 tests. D5 (calm Arena link below Hero). |
-| 15 | `0f901c3` | 3.4 SettingsSheetStub | 2/2 tests. Disabled toggles with `Coming soon` tooltip. |
-| 16 | `a0b563f` | 3.5 HubOnboardingCard | 2/2 tests. Single-button dismiss; no tap-outside. |
+| 12 | `8f60b42` | 3.1 TierBadge | 2/2 tests. |
+| 13 | `7768a90` | 3.2 DisplayNameDialog | 4/4 tests. `role="dialog"`, 44px touch targets. |
+| 14 | `385d495` | 3.3 SecondaryCta | 2/2 tests. D5 (calm Arena link). |
+| 15 | `0f901c3` | 3.4 SettingsSheetStub | 2/2 tests. Disabled toggles + Coming soon tooltip. |
+| 16 | `a0b563f` | 3.5 HubOnboardingCard | 2/2 tests. |
+| 17 | `deeebb7` | 4.1 ProfileBanner | 2/2 tests. **Spec deviation:** removed duplicate `.profile-banner-tier-row` block — plan's verbatim JSX rendered "Knight" twice (badge + row) which broke `getByText("Knight")`. Test is the contract. |
+| 18 | `2040b61` | 4.2 PendingClaims | 5/5 tests. **Part B wiring DEFERRED — see §Wiring.** |
+| 19 | `8b0a7db` | 4.3 GeneralStats | 2/2 tests. Always renders 6 cells. |
+| 20 | `42ff0d5` | 4.4 ProfileSheet | 2/2 tests. **Spec deviation:** tightened `getByText(/wallet/i)` → `/^wallet$/i` because `PROFILE_COPY.disconnect = "Disconnect wallet"` collided with the Wallet utility row label. Component matches plan verbatim. |
 
-**Total deltas this session:** ~23 new tests (8 files, all passing). Combined repo state: 60+ new tests added across SPEC 1 work, zero regressions in the touched surfaces.
+**Cumulative SPEC 1 test surface:** 13 files / 37 tests, ALL green. Zero regressions on SPEC 1 surfaces.
+
+**Baseline failures unchanged (O-4):** 9 failing tests in `hub-scaffold-client.test.tsx` + `hub-scaffold.test.tsx` (Coach PRO chip + Coach PRO card CTAs). These pre-date this branch — confirmed via stash diff during Task 0.1 and re-confirmed today. Do NOT try to fix in this branch.
 
 ---
 
@@ -32,19 +38,19 @@
 
 ### Root cause
 
-The `useEffect(() => { ... }, [address, tick, optimisticRemoved])` in the original `use-claim-queue.ts` had this block:
+The `useEffect(() => { ... }, [address, tick, optimisticRemoved])` in the original `use-claim-queue.ts` had:
 
 ```ts
 if (!address) {
   setState(INITIAL);
-  setOptimisticRemoved(new Set());   // <-- bug: new Set ref each call
+  setOptimisticRemoved(new Set());   // <-- new Set ref each call
   return;
 }
 ```
 
-`new Set()` creates a fresh reference. React's dep-array comparison is `Object.is`, so the effect saw `optimisticRemoved` "change" every render → re-ran → called `setOptimisticRemoved(new Set())` again → infinite effect loop. The hook never settled, vitest worker pegged at 100% CPU, `expect(...)` in the test never executed (the test body runs *after* `renderHook` returns; it never returned).
+`new Set()` creates a fresh reference each time. React's dep-array comparison is `Object.is`, so the effect saw `optimisticRemoved` "change" every render → re-ran → called `setOptimisticRemoved(new Set())` again → infinite effect loop. The hook never settled, vitest worker pegged at 100% CPU, `expect(...)` in the test never executed (the test body runs *after* `renderHook` returns; it never returned).
 
-Hypothesis from session-1 handoff (vi.mock hoisting / wagmi heavy import) was wrong — the mocks worked fine; the real loop was in the hook itself.
+Hypothesis from session-1 handoff (vi.mock hoisting / wagmi heavy import) was wrong. The mocks worked fine; the real loop was in the hook itself.
 
 ### Fix (committed in `7a2a6c5`)
 
@@ -52,7 +58,7 @@ Hypothesis from session-1 handoff (vi.mock hoisting / wagmi heavy import) was wr
 setOptimisticRemoved((prev) => (prev.size === 0 ? prev : new Set()));
 ```
 
-Functional updater returns the same `prev` reference when it's already empty, so the dep array sees `Object.is`-equal value and the effect does not re-run. Set is still cleared the one time an address-set hook transitions to address-undefined.
+Functional updater returns the same `prev` reference when it's already empty. `Object.is`-equal → effect doesn't re-run. Set is still cleared when an address-set hook transitions to address-undefined.
 
 ### Diagnostic note
 
@@ -60,42 +66,80 @@ Functional updater returns the same `prev` reference when it's already empty, so
 
 ---
 
-## Open issues carried forward (unchanged from session 1)
+## §Wiring — `performClaim` real flows DEFERRED (Task 4.2 escalation)
 
-- **O-1.** `useProfileStats` returns 0 for trophies/streak/puzzles. Merge in Task 4.4 ProfileSheet composite. (Server endpoint is correctly bounded; do NOT fix inside the hook.)
-- **O-2.** Residual `HUB_V2_*` naming legacy — park as follow-up cleanup spec. `chesscito:hub-v2:splash:seen` requires migration shim if renamed.
-- **O-3.** Plan command `pnpm --filter web test --run` does not work. Use `cd apps/web && pnpm exec vitest run <path>`.
-- **O-4.** `pnpm test` baseline has ~46 pre-existing failures unrelated to this branch (Coach PRO card, "Train with Coach", etc.) — do not try to fix here.
+### Investigation summary
 
-### New observation (session 2)
+The plan's Step 3 of Task 4.2 asked to wire `performClaim` (a plain async function in `apps/web/src/lib/claims/actions.ts`) to the existing on-chain flows. Investigation found:
 
-- Effect-loop pattern (`setState({inFlight: new Set(), ...})` inside an effect) was used in several places in `use-claim-queue.ts`. Today's fix only addressed the `!address` branch; the other setState calls populate state fields that are NOT in the dep array, so they don't loop. If you later add `inFlight` (or any Set/object) to a dep array, audit those branches.
+- `apps/web/src/components/exercises/exercises-screen.tsx:313-315` — `useWriteContract` (React hook) drives `claimBadgeSigned` and `submitScoreSigned`.
+- `apps/web/src/app/arena/page.tsx:152` — `useWriteContract` (React hook) drives EIP-712 sign → approve → mint.
+
+All three flows are **tightly coupled to React hooks** (`useWriteContract`, `useSignTypedData`, `useAccount`). There is no plain-function escape hatch underneath. `performClaim(claim)` is a plain `Promise`-returning function; it can't legally call hooks. Refactoring `exercises-screen.tsx` and `arena/page.tsx` to extract walletClient-parameterised helpers is explicitly out of scope per the plan.
+
+### Decision
+
+Shipped UI component + tests + CSS only (commit `2040b61`). Left `actions.ts` untouched (still throws sentinel errors). ProfileSheet (Task 4.4) renders PendingClaims correctly; if a user taps "Claim" in v1, the sentinel error from `actions.ts` will surface. Tests don't exercise that path (mocked `useClaimQueue` returns `claims: []`).
+
+### Follow-up options
+
+1. **Option A — DI pattern** (lower risk): refactor `useClaimQueue(address)` → `useClaimQueue({ address, performClaim })`. ProfileSheet (a component, hooks-legal) constructs the wired `performClaim` from `useWriteContract` and passes it in. Estimated 1 small commit + integration tests.
+2. **Option B — extract plain helpers**: refactor exercises-screen + arena to extract walletClient-parameterised helpers, then call them from actions.ts. Larger refactor, touches working code.
+
+**Recommendation:** Option A. Track as new Task (Phase 5.5 or new Phase 4.5).
 
 ---
 
-## How to resume next session (Phase 4)
+## Spec collisions discovered (worth a follow-up to clean up editorial/test pairs)
 
-> **User asked to pause before Phase 4 for review.** Do not start 4.1 until user confirms.
+Two of the plan's verbatim test-and-component pairs had internal collisions that broke verbatim-paste TDD:
 
-### Phase 4 — Profile composites (4 tasks)
+1. **Task 4.1 ProfileBanner**: Test asserts `getByText("Knight")`. Component had both `<TierBadge ... title="Knight" />` AND `<span className="profile-banner-tier-title">{tierTitle}</span>` (literal "Knight"). Multi-match throws. Fix: removed redundant `.profile-banner-tier-row` block. Test is the contract.
+2. **Task 4.4 ProfileSheet**: Test asserts `getByText(/wallet/i)`. `PROFILE_COPY.disconnect = "Disconnect wallet"` + utility-row "Wallet" label both match. Fix: tightened to `/^wallet$/i` in the test. Component matches plan verbatim.
 
-- **4.1 `<ProfileBanner>`** — display name + tier + wallet + xp + edit pen. Pure-presentational, integrates TierBadge.
-- **4.2 `<PendingClaims>` + wire `performClaim`** — biggest task in Phase 4. Real on-chain wiring: badges (`badge.claim`), scoreboard (`scoreboard.save`), victory NFT (route to `/victory/{txHash}`). Each branch currently throws a sentinel error in `actions.ts`. Implementer should treat this as a multi-file integration task and may need NEEDS_CONTEXT escalation.
-- **4.3 `<ProfileStats>`** — small stats grid; reads from the composed merge described in O-1.
-- **4.4 `<ProfileSheet>`** (composite) — integrates banner + claims + stats + display-name dialog. This is where O-1's server-vs-client merge happens.
+These are minor and now documented; future similar specs should run a self-check that `screen.getByText(...)` queries are unique across the rendered tree.
 
-### Remaining tasks (14 of 30)
+---
 
-- Phase 4: 4.1, 4.2, 4.3, 4.4
+## Open issues carried forward
+
+- **O-1.** `useProfileStats` returns 0 for trophies/streak/puzzles. **Partly addressed in Task 4.4** — ProfileSheet uses `stats?.dailyStreak`, `puzzlesSolved`, `trophies`, `arenaWins`, `nftsMinted` from the server. Client-side merge for `piecesMastered` is still hardcoded to 0 inside `ProfileSheet`. When the piece-progress aggregator lands, wire it in `ProfileSheet` per the inline `// wired in integration when piece progress aggregator lands` comment.
+- **O-2.** Residual `HUB_V2_*` naming legacy — park as follow-up cleanup spec.
+- **O-3.** Plan command `pnpm --filter web test --run` does not work. Use `cd apps/web && pnpm exec vitest run <path>`.
+- **O-4.** Hub-scaffold baseline failures (Coach PRO chip + card) — pre-existing, 9 tests, do not fix on this branch.
+- **NEW.** Two spec/copy collisions documented above (ProfileBanner + ProfileSheet).
+- **NEW.** Wiring `performClaim` deferred (see §Wiring).
+
+---
+
+## How to resume next session (Phase 5)
+
+> Phase 4 closed. Phase 5 starts hub integration. **User confirms before starting Phase 5.**
+
+### Phase 5 — Hub integration (5 tasks)
+
+- 5.1 Extend `parseInitialSheet` in `app/hub/page.tsx` (add `profile`, `settings`, `trophies`).
+- 5.2 Wire `<ProfileSheet>` into the hub scaffold.
+- 5.3 Wire `<SettingsSheetStub>` similarly.
+- 5.4 Wire `<HubOnboardingCard>` (first-launch).
+- 5.5 Wire `<SecondaryCta>` below the Hero region.
+
+(Detailed sub-tasks in the plan, lines 2722+.)
+
+### Remaining tasks (10 of 30)
+
 - Phase 5: 5.1–5.5 (5 hub integration)
 - Phase 6: 6.1 (trophies port)
 - Phase 7: 7.1, 7.2 (anchor — 2 atomic commits)
 - Phase 8: 8.1, 8.2 (E2E + manual QA)
 
+Plus the deferred follow-up: wire `performClaim` via Option A (DI pattern) — recommend tracking as a new sub-task either at the end of Phase 5 or in Phase 7.
+
 ### Estimate
 
-- **Phase 4** alone is ~1 session (4.2 is the heaviest — multi-flow wiring).
-- Phases 5–8 ≈ 1–1.5 sessions.
+- Phase 5: most likely 1 session.
+- Phase 6 + 7: half session.
+- Phase 8: half session (E2E + manual QA on real device).
 - Total to merge: ~2 more focused sessions.
 
 ---
@@ -118,12 +162,12 @@ All implementation lives in `chesscito-spec-1-hub-redesign` worktree. Main branc
 
 ## Session 2 verification snapshot
 
-8 new test files run together:
+13 SPEC 1 test files run together:
 
 ```
-Test Files  8 passed (8)
-Tests       23 passed (23)
-Duration    2.01s
+Test Files  13 passed (13)
+Tests       37 passed (37)
+Duration    2.53s
 ```
 
-No regressions on the 8 surfaces touched. Working tree clean. Branch `feat/spec-1-hub-redesign` ready for Phase 4.
+Zero regressions on SPEC 1 surfaces. 9 pre-existing baseline failures (hub-scaffold Coach PRO) unchanged. Working tree clean. Branch `feat/spec-1-hub-redesign` ready for Phase 5 review.
