@@ -92,6 +92,27 @@ vi.mock("@rainbow-me/rainbowkit", () => ({
   useConnectModal: () => ({ openConnectModal: openConnectModalMock }),
 }));
 
+// SPEC 1 Task 5.5 wired `<ProfileSheet>` and `useClaimQueue` into the
+// scaffold. ProfileSheet pulls in wagmi.useDisconnect + the wallet
+// provider's wagmiConfig (via claims/sources). The unit tests below
+// never assert on Profile UI or claim queue internals — stub both so
+// the import graph stays cheap. Behavior is covered by
+// `profile-sheet.test.tsx` and `use-claim-queue.test.tsx`.
+vi.mock("@/components/profile/profile-sheet", () => ({
+  ProfileSheet: () => null,
+}));
+
+vi.mock("@/hooks/use-claim-queue", () => ({
+  useClaimQueue: () => ({
+    claims: [],
+    isLoading: false,
+    isClaiming: false,
+    inFlight: new Set<string>(),
+    error: null,
+    claim: vi.fn(),
+  }),
+}));
+
 vi.mock("@/lib/telemetry", () => ({
   track: (...args: unknown[]) => trackMock(...args),
 }));
@@ -302,17 +323,18 @@ describe("HubScaffoldClient — tap handlers", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it("routes to /arena?fresh=1 when the primary PLAY CTA fires (forces selector render)", async () => {
+  it("routes to /arena when the SecondaryCta (Enter Arena) fires (SPEC 1 D5)", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
-    await user.click(screen.getByLabelText("Enter the Arena"));
+    await user.click(screen.getByLabelText("Enter Arena — full chess vs AI"));
 
-    // ?fresh=1 tells /arena to skip the localStorage last-difficulty
-    // auto-launch and render the selector, matching what the user
-    // expects when tapping an "ENTER ARENA" CTA from a hub (per smoke
-    // 2026-05-07).
-    expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
+    // Spec D5: Arena is the *calm* secondary action under the
+    // contextual Hero CTA. No more `?fresh=1` — /arena now defaults to
+    // the selector on direct visits (the auto-launch shortcut moved
+    // under `?arena=legacy`). Hero CTA owns the contextual routing
+    // (e.g. `/exercises?slot=daily` when daily is pending).
+    expect(pushMock).toHaveBeenCalledWith("/arena");
   });
 
   it("keeps the shields shop affordance hidden while the Hub visual pass is active", () => {
@@ -539,13 +561,16 @@ describe("HubScaffoldClient — telemetry", () => {
     );
   });
 
-  it("fires hub_play_tap on PLAY CTA press", async () => {
+  it("fires secondary_arena_clicked on SecondaryCta press", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
-    await user.click(screen.getByLabelText("Enter the Arena"));
+    await user.click(screen.getByLabelText("Enter Arena — full chess vs AI"));
 
-    expect(trackMock).toHaveBeenCalledWith("hub_play_tap");
+    // Replaces the legacy `hub_play_tap` event — the primary play CTA
+    // is now the contextual Hero (fires `hero_cta_clicked`), and the
+    // secondary Arena link has its own dedicated event.
+    expect(trackMock).toHaveBeenCalledWith("secondary_arena_clicked");
   });
 
   it("fires hub_connect_chip_tap before opening the modal", async () => {

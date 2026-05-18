@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useChainId, useReadContracts } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -10,8 +10,19 @@ import { BadgeSheet } from "@/components/exercises/badge-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
 import { ShopSheet } from "@/components/exercises/shop-sheet";
 import { ProSheet } from "@/components/pro/pro-sheet";
+import { ProfileSheet } from "@/components/profile/profile-sheet";
+import { SettingsSheetStub } from "@/components/hub/settings-sheet-stub";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
+import { useClaimQueue } from "@/hooks/use-claim-queue";
+import { useHubOnboarding } from "@/hooks/use-hub-onboarding";
+import {
+  getHeroContextAction,
+  type HeroContextState,
+} from "@/lib/hub/hero-cta";
+import { getExercisesCompletedCount } from "@/lib/game/exercise-progress";
+import { getDailyHistoryCount, isCompletedToday } from "@/lib/daily/progress";
 import { badgesAbi } from "@/lib/contracts/badges";
 import { getBadgesAddress } from "@/lib/contracts/chains";
 import { HUD_COPY } from "@/lib/content/editorial";
@@ -49,7 +60,13 @@ const PREMIUM_INACTIVE_LABEL = "Go PRO";
 const PLAY_LABEL = "ENTER ARENA";
 const PLAY_ARIA_LABEL = "Enter the Arena";
 
-export type HubInitialSheet = "shop" | "pro" | "badges";
+export type HubInitialSheet =
+  | "shop"
+  | "pro"
+  | "badges"
+  | "trophies"
+  | "profile"
+  | "settings";
 
 function premiumAriaLabel(
   pro: { active: true; daysRemaining: number } | { active: false },
@@ -161,6 +178,15 @@ export function HubScaffoldClient({
   const initialSheetOpenedRef = useRef(false);
   const proTrainingCardViewedRef = useRef(false);
 
+  // SPEC 1 D9/D10/D14 wiring — Profile sheet, Settings stub, onboarding.
+  const [profileOpen, setProfileOpen] = useState(initialSheet === "profile");
+  const [settingsOpen, setSettingsOpen] = useState(initialSheet === "settings");
+  const { hasSeenOnboarding, dismiss: dismissOnboarding } = useHubOnboarding();
+  // `useClaimQueue` reads pending claims out of localStorage on mount;
+  // the unread count drives the avatar notif-dot once the HUD slot
+  // exists (deferred — see project note).
+  useClaimQueue(address);
+
   useEffect(() => {
     if (!initialSheet || initialSheetOpenedRef.current) return;
     initialSheetOpenedRef.current = true;
@@ -168,10 +194,14 @@ export function HubScaffoldClient({
       openShopSheet();
     } else if (initialSheet === "pro") {
       openProSheet();
-    } else {
+    } else if (initialSheet === "badges") {
       openBadgeSheet();
+    } else if (initialSheet === "trophies") {
+      // External deep-link → the standalone /trophies page (SPEC 1 D8).
+      router.push("/trophies");
     }
-  }, [initialSheet, openBadgeSheet, openProSheet, openShopSheet]);
+    // profile + settings open synchronously via the useState init above.
+  }, [initialSheet, openBadgeSheet, openProSheet, openShopSheet, router]);
 
   // Boot-time + post-purchase shield reconciliation. Drains the
   // pending-tx queue, runs one-shot legacy migration, refreshes
@@ -230,6 +260,39 @@ export function HubScaffoldClient({
   );
 
   const pro = useMemo(() => deriveProShape(proStatus, Date.now()), [proStatus]);
+
+  // Hero CTA signals are read from localStorage, so defer the read to
+  // client-mount to avoid SSR/CSR hydration mismatch. While null, the
+  // hero falls back to the safe default ("CONTINUE TRAINING" amber).
+  const [heroSignals, setHeroSignals] = useState<
+    Omit<HeroContextState, "isLoading"> | null
+  >(null);
+  useEffect(() => {
+    setHeroSignals({
+      exercisesCompletedCount: getExercisesCompletedCount(),
+      dailyHistoryCount: getDailyHistoryCount(),
+      isDailyCompletedToday: isCompletedToday(),
+    });
+  }, []);
+  const hero = useMemo(
+    () =>
+      getHeroContextAction({
+        isLoading: heroSignals === null,
+        exercisesCompletedCount: heroSignals?.exercisesCompletedCount ?? 0,
+        dailyHistoryCount: heroSignals?.dailyHistoryCount ?? 0,
+        isDailyCompletedToday: heroSignals?.isDailyCompletedToday ?? false,
+      }),
+    [heroSignals],
+  );
+
+  const handleHeroPress = useCallback(() => {
+    track("hero_cta_clicked", { variant: hero.variant });
+    if (hero.destination) router.push(hero.destination);
+  }, [hero, router]);
+  const handleArenaPress = useCallback(() => {
+    track("secondary_arena_clicked");
+    router.push("/arena");
+  }, [router]);
 
   // Single page-view event per mount — anchors the funnel for every
   // tap event below. Empty deps so we never double-fire on re-render.
@@ -343,11 +406,30 @@ export function HubScaffoldClient({
             router.push("/exercises");
           },
         }}
+        heroCta={{
+          label: hero.label,
+          sub: hero.sub,
+          color: hero.color,
+          ariaLabel: hero.label,
+          onPress: handleHeroPress,
+        }}
+        onArenaPress={handleArenaPress}
+        showOnboarding={!hasSeenOnboarding}
+        onOnboardingDismiss={() => {
+          dismissOnboarding();
+          track("hub_onboarding_dismissed");
+        }}
       />
       <ProSheet {...proSheet.sheetProps} />
       <BadgeSheet {...badgeSheet.sheetProps} />
       <ShopSheet {...shopSheet.sheetProps} />
       <PurchaseConfirmSheet {...shopSheet.confirmProps} />
+      <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
+      <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <SheetContent side="bottom" className="settings-sheet">
+          <SettingsSheetStub buildSha={process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev"} />
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
