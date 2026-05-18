@@ -2345,14 +2345,29 @@
     border-color: #f4d97a;
   }
 
-  /* === hub secondary cta (D5 — calm Arena link below Hero) === */
+  /* === hub secondary cta (D5 — calm Arena link below Hero) ===
+     Polished to a candy text-link with warm-brown copy + subtle gold
+     underline (Phase 9). Spec D5 calls this the *calm* secondary —
+     it must read as a link, not a button, so it never competes with
+     the Hero CTA for attention. Background stays transparent;
+     visual weight comes from the underline + arrow glyph only. */
   .hub-secondary-cta {
-    display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
-    width: 92%; padding: .35rem .5rem;
-    background: rgba(50,90,150,.85); color: #dceeff;
-    border: 1.5px solid rgba(20,40,80,.7); border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+    padding: .35rem .75rem;
+    background: transparent; color: rgba(110, 65, 15, 0.85);
+    border: 0;
+    font-family: var(--font-game-display), system-ui, sans-serif;
     font-size: .8125rem; font-weight: 700;
-    text-shadow: 0 1px 0 rgba(0,0,0,.3);
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 0 rgba(255, 245, 215, 0.50);
+    border-bottom: 1.5px solid rgba(212, 168, 54, 0.55);
+    border-radius: 0;
+    transition: color var(--duration-snap), border-color var(--duration-snap);
+  }
+  .hub-secondary-cta:hover,
+  .hub-secondary-cta:active {
+    color: rgba(63, 34, 8, 0.95);
+    border-bottom-color: rgba(212, 168, 54, 0.95);
   }
 
   /* === settings sheet stub (v1 placeholder) === */
@@ -2386,30 +2401,53 @@
     opacity: .55; cursor: not-allowed;
   }
 
-  /* === hub onboarding card (first launch, single dismiss) === */
+  /* === hub onboarding card (first launch, single dismiss) ===
+     Phase 9 candy polish — wooden-scroll surface (candy-frame amber)
+     with warm-brown copy and a candy-frame-gold dismiss button. The
+     "first kindly welcome" lives inside the hub atmosphere instead
+     of contrasting against it with a dark plaque. */
   .hub-onboarding-card {
     display: flex; flex-direction: column; gap: .5rem;
     padding: 1rem;
-    background: linear-gradient(180deg, #2a2245, #1b1530);
-    border: 2px solid #f4d97a; border-radius: 14px;
-    color: #f5edd8; font-family: var(--font-game-display);
-    box-shadow: 0 6px 18px rgba(0,0,0,.4);
+    background: linear-gradient(180deg, #f6cf63 0%, #d4a836 100%);
+    border: 2px solid rgba(110, 65, 15, 0.55);
+    border-radius: 14px;
+    color: rgba(63, 34, 8, 0.95);
+    font-family: var(--font-game-display);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.30);
+    box-shadow:
+      0 4px 0 rgba(110, 65, 15, 0.45),
+      0 6px 14px rgba(0, 0, 0, 0.35),
+      inset 0 2px 0 rgba(255, 255, 255, 0.30),
+      inset 0 -2px 0 rgba(110, 65, 15, 0.20);
   }
   .hub-onboarding-card-title {
     margin: 0; font-size: 1rem; font-weight: 800;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    color: rgba(50, 25, 5, 0.95);
   }
   .hub-onboarding-card-body {
     margin: 0; font-size: .85rem; line-height: 1.35;
-    color: #d8cdb8;
+    color: rgba(63, 34, 8, 0.85);
   }
   .hub-onboarding-card-dismiss {
     align-self: flex-end; min-height: 44px;
-    padding: 0 1rem; border-radius: 10px;
-    background: linear-gradient(180deg, #cf2d2d, #7a1818);
-    color: #fff; border: 1.5px solid #f4d97a;
-    font-family: inherit; font-weight: 700; font-size: .9rem;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    padding: 0 1.25rem; border-radius: 12px;
+    background: linear-gradient(180deg, #ffe066 0%, #f6a400 100%);
+    color: rgba(50, 25, 5, 0.95);
+    border: 2px solid rgba(120, 65, 5, 0.65);
+    font-family: inherit; font-weight: 800; font-size: .9rem;
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.30);
+    box-shadow:
+      0 3px 0 rgba(120, 65, 5, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    transition: transform var(--duration-snap), box-shadow var(--duration-snap);
+  }
+  .hub-onboarding-card-dismiss:active {
+    transform: translateY(2px);
+    box-shadow:
+      0 1px 0 rgba(120, 65, 5, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
   }
 
   /* === profile pending claims === */
@@ -4460,29 +4498,38 @@ button.hud-resource-chip:active:not(:disabled) {
   white-space: nowrap;
 }
 
-/* SPEC 1 D1 — Rail headers (LEARN / UNLOCK). Replaces the legacy
-   mastery-title decorative block. Mirrors the candy-card label tone
-   so it reads as a section header without competing with the Hero. */
+/* SPEC 1 D1 — Rail headers (LEARN / UNLOCK). Polished to the candy-
+   frame amber palette (Phase 9 candy polish) so the rails read as
+   wooden-scroll labels matching the rest of the hub chrome rather
+   than as dark badges floating on the forest. Stays a pill (smaller
+   than .candy-frame proper) because the rails are decorative
+   markers, not interactive CTAs. */
 .hub-scaffold-rail-header {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.22);
-  color: #fff5b6;
+  background: linear-gradient(180deg, #f6cf63 0%, #d4a836 100%);
+  border: 1.5px solid rgba(110, 65, 15, 0.55);
+  color: rgba(63, 34, 8, 0.95);
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
   font-size: 0.55rem;
   font-weight: 900;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  text-shadow: 0 1px 0 rgba(34, 92, 7, 0.76);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.30);
+  box-shadow:
+    0 2px 0 rgba(110, 65, 15, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
 }
 
-/* SPEC 1 D2 — Contextual Hero CTA. Replaces the legacy PrimaryPlayCta
-   when the integration layer (Task 5.5) wires `heroCta`. Two-line
-   composition: bold label + secondary sub-copy. Color flips amber
-   (default / onboarding) ↔ blue (daily-pending). */
+/* SPEC 1 D2 — Contextual Hero CTA. Polished to the candy-frame
+   sculpt (Phase 9): wooden border + warm-brown text + depressed
+   press feel. Two variants — amber (default/onboarding) and blue
+   (daily-pending). Same shape as the legacy peek-card CTAs so the
+   Hero reads as the top of a single material vocabulary rather
+   than a separate "button system". */
 .hub-scaffold-hero {
   display: flex;
   flex-direction: column;
@@ -4492,34 +4539,58 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
   min-height: 56px;
   padding: 10px 18px;
-  border: 0;
+  border: 2px solid rgba(110, 65, 15, 0.55);
   border-radius: 18px;
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
-  color: #1a1207;
+  color: rgba(63, 34, 8, 0.95);
   text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.30);
   box-shadow:
-    0 6px 0 rgba(0, 0, 0, 0.18),
-    0 2px 8px rgba(0, 0, 0, 0.22);
-  transition: transform var(--duration-snap, 120ms);
+    0 4px 0 rgba(110, 65, 15, 0.45),
+    0 6px 14px rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.30),
+    inset 0 -2px 0 rgba(110, 65, 15, 0.20);
+  transition: transform var(--duration-snap, 120ms), box-shadow var(--duration-snap, 120ms);
 }
 
 .hub-scaffold-hero:active {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+  box-shadow:
+    0 2px 0 rgba(110, 65, 15, 0.45),
+    0 3px 8px rgba(0, 0, 0, 0.30),
+    inset 0 2px 0 rgba(255, 255, 255, 0.20),
+    inset 0 -1px 0 rgba(110, 65, 15, 0.18);
 }
 
 .hub-scaffold-hero--amber {
-  background: linear-gradient(180deg, #ffd66b 0%, #ffae3a 60%, #f08a16 100%);
+  background: linear-gradient(180deg, #ffe066 0%, #f6a400 100%);
 }
 
+/* Blue variant overrides the wooden brown with a cool sky→deep-blue
+   ramp + lighter cream copy. Border + shadow stay warm so the
+   "wooden frame around the screen" feel survives the palette flip. */
 .hub-scaffold-hero--blue {
-  background: linear-gradient(180deg, #82c8ff 0%, #4f9be0 60%, #2c6db5 100%);
+  background: linear-gradient(180deg, #9fd0ff 0%, #5b9be0 50%, #2c6db5 100%);
   color: #f4f8ff;
-  text-shadow: 0 1px 0 rgba(8, 30, 60, 0.4);
+  text-shadow: 0 1px 0 rgba(8, 30, 60, 0.45);
+  border-color: rgba(15, 55, 100, 0.65);
+  box-shadow:
+    0 4px 0 rgba(15, 55, 100, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.30),
+    inset 0 -2px 0 rgba(15, 55, 100, 0.25);
+}
+
+.hub-scaffold-hero--blue:active {
+  box-shadow:
+    0 2px 0 rgba(15, 55, 100, 0.55),
+    0 3px 8px rgba(0, 0, 0, 0.30),
+    inset 0 2px 0 rgba(255, 255, 255, 0.20),
+    inset 0 -1px 0 rgba(15, 55, 100, 0.20);
 }
 
 .hub-scaffold-hero-label {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
