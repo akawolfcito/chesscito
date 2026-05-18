@@ -1961,3 +1961,124 @@ export const REWARD_COPY = {
           : "No victory ready — win an Arena match",
   },
 } as const;
+
+// =============================================================================
+// SPEC 1 — Hub Redesign copy blocks
+// =============================================================================
+
+export const PROFILE_COPY = {
+  pageTitle: "Profile",
+  pendingClaimsHeader: "Pending claims",
+  generalStatsHeader: "General stats",
+  walletLabel: "Wallet",
+  networkLabel: "Network",
+  disconnect: "Disconnect wallet",
+  manage: "Manage",
+  refreshAria: "Refresh pending claims",
+} as const;
+
+export const DISPLAY_NAME_COPY = {
+  dialogTitle: "Choose your name",
+  placeholder: "Up to 20 characters",
+  save: "Save",
+  cancel: "Cancel",
+  visitor: "Visitor",
+} as const;
+
+export const TIER_LABELS = {
+  visitor: "Visitor",
+  apprentice: "Apprentice",
+  trainee: "Trainee",
+  knight: "Knight",
+  wizard: "Wizard",
+  grandmaster: "Grandmaster",
+} as const;
+
+export const TIER_THRESHOLDS = {
+  trainee: 25,
+  knight: 75,
+  wizard: 200,
+  grandmaster: 500,
+} as const;
+
+export const CLAIM_COPY = {
+  kinds: {
+    badge: "{name} badge",
+    score: "Save score · {points} pts",
+    victoryNft: "Mint your victory · {difficulty}",
+  },
+  claimVerb: "Claim",
+  costGasOnly: "gas only",
+  costEstimateUsd: "~${amount}",
+  inFlightLabel: "In flight — reconnect to verify",
+  refreshAria: "Refresh",
+  emptyAria: "No pending claims",
+} as const;
+
+export const HERO_CTA_COPY = {
+  newPlayer: {
+    label: "START WITH PIECES",
+    sub: "learn the rook first",
+    variant: "amber" as const,
+  },
+  dailyPending: {
+    label: "PLAY TODAY'S TACTIC",
+    sub: "today's tactic awaits",
+    variant: "blue" as const,
+  },
+  defaultCaughtUp: {
+    label: "CONTINUE TRAINING",
+    sub: "tap a tile to pick",
+    variant: "amber" as const,
+  },
+} as const;
+
+export const SECONDARY_CTA_COPY = {
+  arena: {
+    label: "Enter Arena",
+    ariaLabel: "Enter Arena — full chess vs AI",
+  },
+} as const;
+
+export const HUB_ONBOARDING_COPY = {
+  title: "Welcome to Chesscito",
+  body: "Train your brain with chess puzzles. Master one piece at a time. Graduate to Arena when ready.",
+  dismissLabel: "Got it",
+} as const;
+
+export const LEADERBOARD_TABS_COPY = {
+  tabs: {
+    puzzlesWeek: "Puzzles this week",
+    arenaWins: "Arena wins",
+  },
+} as const;
+
+export const PRO_DROP_COPY = {
+  /** OPERATIONAL: update this constant in the same commit as the on-chain
+   *  shop catalog item update. See SPEC 1 §D12 P1-11. */
+  current: "Knight's Tour",
+  activeLabel: "PRO · {puzzle} — solve the board",
+  inactiveLabel: "Unlock {puzzle} + monthly puzzles",
+} as const;
+
+export const SETTINGS_STUB_COPY = {
+  title: "Settings",
+  comingSoonTooltip: "Coming soon",
+  versionChipLabel: "Build {sha}",
+  themeToggleLabel: "Theme",
+  hapticsToggleLabel: "Haptics",
+  languageToggleLabel: "Language",
+} as const;
+
+export const HUB_RAIL_COPY = {
+  learnLabel: "LEARN",
+  unlockLabel: "UNLOCK",
+  tiles: {
+    daily: "Daily",
+    mate: "Mate K+R",
+    labyrinth: "Labyrinth",
+    proDrop: "PRO",
+    shop: "Shop",
+    badges: "Badges",
+  },
+} as const;
