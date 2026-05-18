@@ -2243,6 +2243,18 @@
     transform: translateX(-50%);
   }
 
+  /* === profile tier badge === */
+  .profile-tier-badge {
+    display: inline-flex; flex-direction: column; align-items: center;
+    background: linear-gradient(180deg, #cf2d2d, #7a1818);
+    color: #fff; padding: 4px 8px 6px; border: 2px solid #f4d97a;
+    border-radius: 0 0 10px 10px; line-height: 1.1;
+    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    font-family: var(--font-game-display);
+  }
+  .profile-tier-badge-title { font-size: 9px; font-weight: 800; }
+  .profile-tier-badge-xp { font-size: 14px; font-weight: 800; }
+
 }
 
 .playhub-intro-overlay {
