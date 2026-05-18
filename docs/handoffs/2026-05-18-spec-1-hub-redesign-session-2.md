@@ -9,7 +9,7 @@
 
 ---
 
-## Progress: 20 of 30 tasks complete (Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅)
+## Progress: 21 of 30 tasks complete (Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Task 4.5 ✅)
 
 ### Session 2 commits (this sitting, 12 atomic commits)
 
@@ -27,8 +27,10 @@
 | 18 | `2040b61` | 4.2 PendingClaims | 5/5 tests. **Part B wiring DEFERRED — see §Wiring.** |
 | 19 | `8b0a7db` | 4.3 GeneralStats | 2/2 tests. Always renders 6 cells. |
 | 20 | `42ff0d5` | 4.4 ProfileSheet | 2/2 tests. **Spec deviation:** tightened `getByText(/wallet/i)` → `/^wallet$/i` because `PROFILE_COPY.disconnect = "Disconnect wallet"` collided with the Wallet utility row label. Component matches plan verbatim. |
+| 21a | `917ec8c` | 4.5a useClaimQueue DI | 4/4 tests (+ new DI test). Optional `opts.performClaim` overrides default import. Default sentinel-throwing kept as defensive fallback. |
+| 21b | `da52351` | 4.5b ProfileSheet wiring | 2/2 ProfileSheet tests (mock extended with `useChainId` + `useWriteContract`). Badge + Score wired w/ MiniPay fee-currency fallback. Victory-nft routes to `/arena`. |
 
-**Cumulative SPEC 1 test surface:** 13 files / 37 tests, ALL green. Zero regressions on SPEC 1 surfaces.
+**Cumulative SPEC 1 test surface:** 13 files / 38 tests, ALL green. Zero regressions on SPEC 1 surfaces.
 
 **Baseline failures unchanged (O-4):** 9 failing tests in `hub-scaffold-client.test.tsx` + `hub-scaffold.test.tsx` (Coach PRO chip + Coach PRO card CTAs). These pre-date this branch — confirmed via stash diff during Task 0.1 and re-confirmed today. Do NOT try to fix in this branch.
 
@@ -66,7 +68,7 @@ Functional updater returns the same `prev` reference when it's already empty. `O
 
 ---
 
-## §Wiring — `performClaim` real flows DEFERRED (Task 4.2 escalation)
+## §Wiring — `performClaim` real flows (DEFERRED at Task 4.2 → RESOLVED via Task 4.5)
 
 ### Investigation summary
 
@@ -87,6 +89,17 @@ Shipped UI component + tests + CSS only (commit `2040b61`). Left `actions.ts` un
 2. **Option B — extract plain helpers**: refactor exercises-screen + arena to extract walletClient-parameterised helpers, then call them from actions.ts. Larger refactor, touches working code.
 
 **Recommendation:** Option A. Track as new Task (Phase 5.5 or new Phase 4.5).
+
+### Resolution (Task 4.5a + 4.5b, commits `917ec8c` + `da52351`)
+
+Shipped both sub-tasks before Phase 5:
+
+- **4.5a:** Added optional `opts.performClaim` to `useClaimQueue`. Default still imports the sentinel-throwing fallback. Added a 4th unit test confirming the injected fn takes precedence.
+- **4.5b:** Built `performClaim` inside `ProfileSheet` using `useChainId` + `useWriteContract` + inline `fetch`-based `requestSignature`. Badge + Score wired 1:1 with the badge sheet's MiniPay fee-currency fallback pattern (matches `apps/web/src/lib/badges/use-badge-sheet-state.ts:194-201`). Victory-nft routes to `/arena` — the existing arena retry flow handles in-flight mints via its `chesscito:claim` sessionStorage marker; profile can't replay the mint because `verifiedMoves`/`elapsedMs`/`chainDifficulty` aren't persisted in the `victory-pending` localStorage payload.
+
+The sentinel default in `lib/claims/actions.ts` was kept as defensive fallback (currently no caller forgets to inject; the stub trips loudly if someone does).
+
+Score wiring note: the existing exercise score flow includes `timeMs`, but profile-side claims only persist `points` in localStorage. The implementation infers `levelId` from `scoreKey` suffix `-l(\d+)$` and submits `timeMs=0`. If the score signing endpoint enforces a stricter `timeMs > 0` invariant in the future, this needs an extra field in the `score-pending` localStorage payload.
 
 ---
 
