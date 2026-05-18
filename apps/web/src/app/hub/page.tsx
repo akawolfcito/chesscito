@@ -21,7 +21,7 @@ type SearchParams = {
   sheet?: string | string[];
 };
 
-type HubInitialSheet = "shop" | "pro" | "badges";
+type HubInitialSheet = "shop" | "pro" | "badges" | "trophies" | "profile" | "settings";
 
 function pieceHasExercises(piece: string): piece is PieceId {
   const exercises = (EXERCISES as Record<string, unknown[] | undefined>)[piece];
@@ -33,7 +33,12 @@ function firstParam(value: string | string[] | undefined): string | undefined {
 }
 
 function parseInitialSheet(value: string | undefined): HubInitialSheet | undefined {
-  return value === "shop" || value === "pro" || value === "badges"
+  return value === "shop" ||
+    value === "pro" ||
+    value === "badges" ||
+    value === "trophies" ||
+    value === "profile" ||
+    value === "settings"
     ? value
     : undefined;
 }
