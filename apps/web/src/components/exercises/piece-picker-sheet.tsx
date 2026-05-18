@@ -77,7 +77,7 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
                 className={[
                   "flex flex-col items-center gap-1.5 rounded-2xl border px-2 py-3 transition-all min-h-[88px]",
                   isActive
-                    ? "border-cyan-400/75 bg-cyan-400/15 ring-2 ring-cyan-400/40"
+                    ? "border-amber-400/75 bg-amber-400/15 ring-2 ring-amber-400/40"
                     : isLocked
                       ? "border-[rgba(255,255,255,0.25)] bg-white/10 opacity-55 cursor-not-allowed"
                       : "border-[rgba(255,255,255,0.45)] bg-white/15 hover:bg-white/25 active:scale-[0.97]",
