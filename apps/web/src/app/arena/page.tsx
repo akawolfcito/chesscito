@@ -1071,8 +1071,8 @@ function ArenaPageInner() {
               <p className="text-sm font-semibold text-amber-400/80">
                 {ARENA_COPY.difficulty[game.difficulty as keyof typeof ARENA_COPY.difficulty]}
               </p>
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-400" />
-              <p className="text-sm font-medium text-cyan-100/70">{ARENA_COPY.preparingAi}</p>
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400/30 border-t-amber-400" />
+              <p className="text-sm font-medium text-amber-100/80">{ARENA_COPY.preparingAi}</p>
             </div>
           ) : (
             <ArenaSelectScaffold
@@ -1157,8 +1157,8 @@ function ArenaPageInner() {
               <p className="text-sm font-semibold text-amber-400/80">
                 {ARENA_COPY.difficulty[game.difficulty as keyof typeof ARENA_COPY.difficulty]}
               </p>
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-400" />
-              <p className="text-sm font-medium text-cyan-100/70">{ARENA_COPY.preparingAi}</p>
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400/30 border-t-amber-400" />
+              <p className="text-sm font-medium text-amber-100/80">{ARENA_COPY.preparingAi}</p>
             </div>
           ) : (
             <ArenaEntryPanel
