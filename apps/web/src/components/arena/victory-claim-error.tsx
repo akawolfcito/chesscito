@@ -101,7 +101,7 @@ export function VictoryClaimError({
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="mt-1 w-full py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-amber-900/60 transition-opacity hover:opacity-100"
+                className="mt-1 w-full py-1.5 text-xs font-black uppercase tracking-[0.2em] text-amber-900/60 transition-opacity hover:opacity-100"
               >
                 {ARENA_COPY.backToHub}
               </button>
@@ -122,11 +122,11 @@ export function VictoryClaimError({
               </div>
 
               <div className="mt-1.5 flex flex-col items-center gap-0.5">
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-900/60">
+                <span className="text-nano font-black uppercase tracking-[0.25em] text-amber-900/60">
                   {kindCopy.title}
                 </span>
                 <h2
-                  className="fantasy-title text-[32px] font-extrabold leading-tight tracking-tight"
+                  className="fantasy-title text-3xl font-extrabold leading-tight tracking-tight"
                   style={{
                     color: isCancelled ? "rgba(110, 65, 15, 0.95)" : "rgba(159, 18, 57, 0.95)",
                     textShadow: "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 8px rgba(0,0,0,0.12)",
@@ -139,15 +139,15 @@ export function VictoryClaimError({
 
             {/* Error Detail & Hint */}
             <div className="flex flex-col gap-1.5">
-              <p className="text-[12px] font-bold text-amber-900/90">
+              <p className="text-xs font-bold text-amber-900/90">
                 {kindCopy.subtitle}
               </p>
               {kind === "error" && errorMessage && (
-                <p className="px-4 text-[10px] leading-relaxed text-rose-800/80">
+                <p className="px-4 text-xs leading-relaxed text-rose-800/80">
                   {errorMessage}
                 </p>
               )}
-              <p className="text-[10px] font-bold text-amber-900/60">
+              <p className="text-xs font-bold text-amber-900/60">
                 {kindCopy.hint}
               </p>
             </div>
