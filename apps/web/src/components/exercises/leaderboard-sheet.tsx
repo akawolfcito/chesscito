@@ -142,7 +142,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
           <div className="leaderboard-verify-banner">
             <div className="flex items-center gap-2">
               <CandyIcon name="shield" className="h-4 w-4 text-violet-600" />
-              <p className="text-[11px] font-bold text-violet-900/70">
+              <p className="text-xs font-bold text-violet-900/70">
                 {PASSPORT_COPY.infoBanner}
               </p>
             </div>
@@ -150,7 +150,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
               href={PASSPORT_COPY.passportUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-7 items-center justify-center rounded-lg bg-violet-600 px-3 text-[10px] font-black uppercase tracking-wider text-white transition active:scale-95"
+              className="flex h-7 items-center justify-center rounded-lg bg-violet-600 px-3 text-xs font-black uppercase tracking-wider text-white transition active:scale-95"
             >
               {PASSPORT_COPY.ctaLabel}
             </a>
@@ -203,7 +203,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
                 <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/20 shadow-inner">
                   <CandyIcon name="crown" className="h-8 w-8 text-amber-600 drop-shadow-[0_2px_4px_rgba(180,83,9,0.3)]" />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-900/40">
+                <span className="text-nano font-black uppercase tracking-[0.3em] text-amber-900/40">
                   Champion
                 </span>
                 <p className="mt-1 font-mono text-xs font-black text-amber-950">
@@ -213,7 +213,7 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
                   )}
                 </p>
                 <div className="mt-4 flex flex-col items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-900/40">
+                  <span className="text-nano font-black uppercase tracking-widest text-amber-900/40">
                     {LEADERBOARD_SHEET_COPY.columnScore}
                   </span>
                   <span className="text-3xl font-black tabular-nums text-amber-950">
@@ -227,10 +227,10 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
           {competitors.length > 0 && (
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between px-2 mb-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30">
+                <span className="text-nano font-black uppercase tracking-[0.2em] opacity-30">
                   Top Competitors
                 </span>
-                <span className="text-[10px] font-black opacity-30">
+                <span className="text-nano font-black opacity-30">
                   {LEADERBOARD_SHEET_COPY.columnScore}
                 </span>
               </div>

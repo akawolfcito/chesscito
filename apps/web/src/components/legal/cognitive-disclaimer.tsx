@@ -27,7 +27,7 @@ export function CognitiveDisclaimer({
     <p
       role="note"
       aria-label="Cognitive disclaimer"
-      className={`px-4 pt-2 pb-1 text-center text-[11px] leading-snug ${className}`}
+      className={`px-4 pt-2 pb-1 text-center text-xs leading-snug ${className}`}
       style={{
         color: "rgba(255, 245, 215, 0.65)",
         textShadow: "0 1px 2px rgba(0, 0, 0, 0.45)",

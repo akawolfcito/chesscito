@@ -21,7 +21,7 @@ export function BuildVersion() {
     <span
       data-testid="build-version"
       aria-label={`Build ${sha}`}
-      className="rounded-full px-2 py-0.5 text-[10px] font-mono font-bold"
+      className="rounded-full px-2 py-0.5 text-nano font-mono font-bold"
       style={{
         background: "rgba(0, 0, 0, 0.55)",
         color: "rgba(255, 215, 0, 0.95)",

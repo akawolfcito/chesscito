@@ -302,7 +302,7 @@ export function ShopSheet({
                 <p className="text-xs font-bold" style={{ color: "rgba(110, 65, 15, 0.85)" }}>
                   {SHOP_SHEET_COPY.moreSoonTitle}
                 </p>
-                <p className="text-[10px]" style={{ color: "rgba(110, 65, 15, 0.60)" }}>
+                <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.60)" }}>
                   {SHOP_SHEET_COPY.moreSoonHint}
                 </p>
               </div>

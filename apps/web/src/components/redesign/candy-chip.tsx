@@ -61,7 +61,7 @@ export function CandyChip({ variant = "warm", tone = "subtle", className = "", c
   const s = STYLES[variant][tone];
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${className}`.trim()}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-nano font-extrabold uppercase tracking-wider ${className}`.trim()}
       style={{
         background: s.background,
         color: s.color,

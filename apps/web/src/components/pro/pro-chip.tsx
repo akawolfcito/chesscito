@@ -52,7 +52,7 @@ export function ProChip({ status, isLoading, onClick }: ProChipProps) {
   const showLoading = isLoading && status === null;
 
   const baseClasses =
-    "pointer-events-auto flex h-7 min-w-[64px] max-w-[120px] items-center justify-center gap-1 rounded-full px-2.5 text-[11px] font-bold uppercase tracking-wide shadow-[0_2px_6px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.35)] transition active:scale-[0.97]";
+    "pointer-events-auto flex h-7 min-w-[64px] max-w-[120px] items-center justify-center gap-1 rounded-full px-2.5 text-xs font-bold uppercase tracking-wide shadow-[0_2px_6px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.35)] transition active:scale-[0.97]";
 
   if (showLoading) {
     return (

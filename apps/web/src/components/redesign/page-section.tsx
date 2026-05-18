@@ -33,7 +33,7 @@ export function PageSection({ icon, title, description, className = "", children
       </h2>
       {description ? (
         <p
-          className="mb-3 text-[11px]"
+          className="mb-3 text-xs"
           style={{ color: "rgba(110, 65, 15, 0.65)" }}
         >
           {description}
