@@ -10,8 +10,8 @@ import { MasteryTile, type MasteryState } from "./mastery-tile";
  *  canonical order R B N P Q K (design-lock §1.3 + §9.3).
  *
  *  This commit ships the container + telemetry + ARIA contract. Wiring to
- *  the real on-chain badges/exercise progress data source happens in
- *  Phase 7 when the dashboard mounts inside `<HubScaffoldV2Client>`.
+ *  the real on-chain badges/exercise progress data source happens when
+ *  the dashboard mounts inside the hub scaffold (Phase 5 rails reframe).
  *
  *  Telemetry per design-lock §5:
  *    - hub_v2_mastery_tap        { piece, state, starsEarned } — buildable

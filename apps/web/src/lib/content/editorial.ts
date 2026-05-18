@@ -828,8 +828,8 @@ export const HUB_V2_MASTERY_COPY = {
 /** Hub V2 Training Pass band (design-lock §1.5 + §2.3).
  *  Active state replaces V1's `<PremiumSlot>` strings; inactive state
  *  surfaces the upgrade pitch. Atmosphere shift trigger lives in the
- *  scaffold (see `HubScaffoldV2Client.handlePurchaseSuccess`); the band
- *  only emits `hub_v2_training_band_tap` per design-lock §5. */
+ *  hub scaffold's purchase-success handler; the band only emits
+ *  `hub_v2_training_band_tap` per design-lock §5. */
 export const HUB_V2_TRAINING_COPY = {
   active: {
     kicker: "Training Pass",

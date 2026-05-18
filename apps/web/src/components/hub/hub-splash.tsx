@@ -20,9 +20,8 @@ import { track } from "@/lib/telemetry";
  *  Phase 4 commit 2 wires `HUB_V2_SPLASH_COPY` (editorial.ts §2.1) and
  *  introduces a decorative SVG placeholder for the hero — the real
  *  `splash-knight-hero.webp` (≤6 KB, design-lock §3.2) lands in commit 3
- *  once the hero crop is delivered. The dialog is NOT yet mounted into
- *  `<HubScaffoldV2Client>`; that integration arrives with the `?hub=v2`
- *  flag in Phase 7.
+ *  once the hero crop is delivered. Hub scaffold integration is wired
+ *  separately in the rails reframe (Phase 5).
  *
  *  Design-lock spec: `docs/superpowers/specs/2026-05-09-hub-redesign-phase-1-design-lock.md` §1.1 + §2.1 + §9.2 */
 
