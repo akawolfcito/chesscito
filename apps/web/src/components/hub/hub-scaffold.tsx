@@ -242,7 +242,6 @@ export function HubScaffold({
                   label={secondaryAction.label}
                   ariaLabel={secondaryAction.ariaLabel}
                   onPress={secondaryAction.onPress}
-                  pieceIconSrc="/art/new-icons-chesscito/practice-pieces.png"
                   className="hub-scaffold-practice-cta"
                 />,
               )
