@@ -394,10 +394,17 @@ export function ExercisesScreen({
   // `?sheet=<key>` searchParam forwarded from the persistent dock.
   // Distinct from `initialAction` — does NOT enable the bounce-to-hub
   // ref, so closing the sheet leaves the user on /exercises.
-  const initialSheetAppliedRef = useRef(false);
+  //
+  // Per-value lock (mirrors /arena/page.tsx): tracks the last applied
+  // sheet rather than a single-shot boolean. After closing one sheet,
+  // tapping a different dock entry pushes a new `?sheet=…` value and
+  // re-opens the matching sheet. Tapping the same dock entry again is
+  // a no-op (URL unchanged → prop unchanged), which is the desired
+  // idempotent behavior.
+  const lastAppliedSheetRef = useRef<ExercisesInitialSheet | null>(null);
   useEffect(() => {
-    if (initialSheetAppliedRef.current || !initialSheet) return;
-    initialSheetAppliedRef.current = true;
+    if (!initialSheet || lastAppliedSheetRef.current === initialSheet) return;
+    lastAppliedSheetRef.current = initialSheet;
     switch (initialSheet) {
       case "shop":
         setActiveDockTab("shop");
