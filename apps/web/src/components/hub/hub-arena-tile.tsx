@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { MiniArenaSheet } from "@/components/mini-arena/mini-arena-sheet";
+import { HUB_ACTION_RAIL_COPY } from "@/lib/content/editorial";
 import type { MiniArenaSetup } from "@/lib/game/mini-arena";
 
 type Props = {
@@ -25,7 +26,7 @@ export function HubArenaTile({ setup, unlocked }: Props) {
     <>
       <HubActionTile
         iconSrc="/art/new-icons-chesscito/learning.png"
-        label="Arena"
+        label={HUB_ACTION_RAIL_COPY.mateLabel}
         ariaLabel={ariaLabel}
         onClick={() => unlocked && setOpen(true)}
         disabled={!unlocked}

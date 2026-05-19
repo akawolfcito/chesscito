@@ -2046,7 +2046,7 @@ export const DAILY_BADGE_COPY = {
  *  LEARN rail tile labels ("Rook", "Bishop", …). */
 export const HUB_ACTION_RAIL_COPY = {
   dailyLabel: "Daily",
-  arenaLabel: "Arena",
+  mateLabel: "Mate",
   coachLabel: "Coach",
 } as const;
 

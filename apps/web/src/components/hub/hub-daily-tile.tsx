@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { DailyTacticSheet } from "@/components/daily/daily-tactic-sheet";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
+import { HUB_ACTION_RAIL_COPY } from "@/lib/content/editorial";
 import { getDailyTactic } from "@/lib/daily/daily-puzzles";
 import {
   getDailyProgress,
@@ -105,7 +106,7 @@ export function HubDailyTile() {
     <>
       <HubActionTile
         iconSrc="/art/new-icons-chesscito/ejercicio-diario-chess.png"
-        label="Daily"
+        label={HUB_ACTION_RAIL_COPY.dailyLabel}
         ariaLabel={ariaLabel}
         onClick={() => setOpen(true)}
         disabled={completed}
