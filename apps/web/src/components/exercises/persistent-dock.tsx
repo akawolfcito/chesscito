@@ -137,7 +137,12 @@ export function PersistentDock() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const center = resolveCenter(pathname);
-  const isCenterActive = pathname.startsWith("/arena");
+  // Center is a contextual "go to the other side" quick-action — it
+  // always shows the route you're NOT on, so a route-based active
+  // glow would mislead ("looks like you're in Pieces while standing
+  // in Arena"). Visual prominence already comes from being larger +
+  // warmer than the sides. Lift only on hover/press (CSS handles it).
+  const isCenterActive = false;
 
   return (
     <nav className="chesscito-dock" aria-label="Game navigation">
