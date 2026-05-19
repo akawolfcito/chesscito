@@ -3851,7 +3851,7 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 14px 4px 10px;
 }
 
-.reward-column.is-compact > .reward-tile + .reward-tile::before {
+.reward-column.is-compact>.reward-tile+.reward-tile::before {
   top: -7px;
   width: 5px;
   height: 5px;
@@ -4665,13 +4665,11 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
 }
 
-/* Side-by-side pills at the root footer — each pill ~181px wide on a
-   390px viewport (root padding 8px each side, gap 12px). Squat "candy
-   chunky" proportions: icon ~28% of pill width, 2-line label fills the
-   right column. */
+/* Side-by-side pills at the root footer. `flex: 0 0 auto` shrinks
+   each pill to its content width so the PNG background hugs the
+   icon+label group instead of leaving empty padding-edge area. */
 .hub-scaffold-practice-cta {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 0 0 auto;
   width: auto;
   max-width: none;
   min-height: 78px;
@@ -4681,8 +4679,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .hub-scaffold-arena-cta {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 0 0 auto;
   width: auto;
   max-width: none;
   min-height: 78px;
@@ -4693,19 +4690,19 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #f4f8ff;
 }
 
-/* Real 2-column flex layout inside each pill — icon left, label right.
-   The default primitive uses absolute positioning for the piece icon,
-   which collides with text when the icon grows. Forcing flex flow
-   prevents overlap and lets the label wrap into two centered lines.
-   Asymmetric vertical padding compensates for the PNG's bottom lip
-   (the darker rim isn't part of the pill's usable face). */
+/* Shrink-to-content layout inside each pill — icon + label form a tight
+   group centered horizontally. `width: min-content` on the label makes
+   it collapse to the widest word ("PIECES" / "ARENA"), so the second
+   word wraps naturally below without leaving empty space around the
+   centered text. Asymmetric vertical padding compensates for the PNG's
+   bottom lip (the darker rim isn't part of the pill's usable face). */
 .hub-scaffold-cta-row .primary-play-cta {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: flex-start;
-  gap: 6px;
-  padding: 6px 10px 14px 8px;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px 14px;
 }
 
 .hub-scaffold-cta-row .primary-play-cta-piece-icon {
@@ -4718,21 +4715,15 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 52px;
 }
 
-/* `word-spacing: 100vw` forces each word onto its own row so
-   "TRAIN PIECES" / "ENTER ARENA" read as two stacked lines.
-   `padding-right` narrows the label's column so its centered text
-   shifts slightly left toward the pill's optical center.
-   Overrides the `translateY(-5px)` from `.primary-play-cta--playhub`. */
+/* Overrides the `translateY(-5px)` from `.primary-play-cta--playhub`. */
 .hub-scaffold-cta-row .primary-play-cta-label {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: min-content;
   display: block;
-  padding-right: 8px;
   text-align: center;
   font-weight: 900;
   letter-spacing: 0;
   line-height: 1.05;
-  word-spacing: 100vw;
   white-space: normal;
   transform: none;
   z-index: 1;
