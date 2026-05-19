@@ -9,6 +9,7 @@ import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { PremiumSlot } from "@/components/pro-mission/premium-slot";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
 import { DailyBadge } from "@/components/hub/daily-badge";
+import { MateDrillsTile } from "@/components/hub/mate-drills-tile";
 import { SecondaryCta } from "@/components/hub/secondary-cta";
 import { HUD_COPY } from "@/lib/content/editorial";
 
@@ -237,6 +238,7 @@ export function HubScaffold({
             LEARN
           </div>
           {wrap("RewardColumn", <RewardColumn tiles={rewardTiles} />)}
+          {wrap("MateDrillsTile", <MateDrillsTile />)}
         </div>
         <div className="hub-scaffold-center">
           <div className="hub-scaffold-anchor">

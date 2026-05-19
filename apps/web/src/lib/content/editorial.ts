@@ -2041,6 +2041,16 @@ export const DAILY_BADGE_COPY = {
   ariaLabel: "Today's daily tactic is ready — tap to play",
 } as const;
 
+/** Mate Drills tile (Sally R3) — placeholder tile inside the LEARN rail
+ *  signalling that checkmate exercises are coming. The content
+ *  surface itself is roadmap; the tile exists to reserve the slot
+ *  diegetically so players see where mate-training will live. */
+export const MATE_DRILLS_TILE_COPY = {
+  label: "Mate",
+  ariaLabel: "Mate drills — coming soon",
+  soonLabel: "Soon",
+} as const;
+
 export const SECONDARY_CTA_COPY = {
   arena: {
     label: "Enter Arena",
