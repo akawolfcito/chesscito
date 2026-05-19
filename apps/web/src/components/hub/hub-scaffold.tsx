@@ -290,11 +290,12 @@ export function HubScaffold({
           </footer>
         </div>
         <div className="hub-scaffold-side hub-scaffold-side--right">
-          <div className="hub-scaffold-rail-header" data-rail="right">
-            UNLOCK
-          </div>
-          {showPremiumSlot
-            ? wrap(
+          {showPremiumSlot ? (
+            <>
+              <div className="hub-scaffold-rail-header" data-rail="right">
+                UNLOCK
+              </div>
+              {wrap(
                 "PremiumSlot",
                 <PremiumSlot
                   active={pro.active}
@@ -307,8 +308,9 @@ export function HubScaffold({
                   ariaLabel={premiumAriaLabel}
                   onTap={onPremiumTap}
                 />,
-              )
-            : null}
+              )}
+            </>
+          ) : null}
         </div>
       </section>
     </main>
