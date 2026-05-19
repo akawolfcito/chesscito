@@ -2346,28 +2346,41 @@
   }
 
   /* === hub secondary cta (D5 — calm Arena link below Hero) ===
-     Polished to a candy text-link with warm-brown copy + subtle gold
-     underline (Phase 9). Spec D5 calls this the *calm* secondary —
-     it must read as a link, not a button, so it never competes with
-     the Hero CTA for attention. Background stays transparent;
-     visual weight comes from the underline + arrow glyph only. */
+     Calibrated as a *confident link* — same spirit as Phase 9
+     (stays a link, not a button, so it never competes with the Hero)
+     but bumped enough that returning players notice it on a busy
+     hub backdrop. Sally F3: font-size text-sm, 2px underline, arrow
+     chip with hover slide. */
   .hub-secondary-cta {
-    display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
-    padding: .35rem .75rem;
-    background: transparent; color: rgba(110, 65, 15, 0.85);
+    display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+    padding: .4rem .85rem;
+    background: transparent; color: rgba(63, 34, 8, 0.95);
     border: 0;
     font-family: var(--font-game-display), system-ui, sans-serif;
-    font-size: .8125rem; font-weight: 700;
-    letter-spacing: 0.04em;
-    text-shadow: 0 1px 0 rgba(255, 245, 215, 0.50);
-    border-bottom: 1.5px solid rgba(212, 168, 54, 0.55);
+    font-size: .875rem; font-weight: 800;
+    letter-spacing: 0.06em;
+    text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+    border-bottom: 2px solid rgba(212, 168, 54, 0.85);
     border-radius: 0;
     transition: color var(--duration-snap), border-color var(--duration-snap);
   }
+  .hub-secondary-cta > span[aria-hidden="true"] {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.1rem; height: 1.1rem; border-radius: 999px;
+    background: rgba(212, 168, 54, 0.25);
+    color: rgba(63, 34, 8, 0.95);
+    font-size: .75rem; font-weight: 900;
+    transition: transform var(--duration-snap), background var(--duration-snap);
+  }
   .hub-secondary-cta:hover,
   .hub-secondary-cta:active {
-    color: rgba(63, 34, 8, 0.95);
-    border-bottom-color: rgba(212, 168, 54, 0.95);
+    color: rgba(40, 20, 0, 1);
+    border-bottom-color: rgba(212, 168, 54, 1);
+  }
+  .hub-secondary-cta:hover > span[aria-hidden="true"],
+  .hub-secondary-cta:active > span[aria-hidden="true"] {
+    transform: translateX(2px);
+    background: rgba(212, 168, 54, 0.55);
   }
 
   /* === settings sheet stub (v1 placeholder) === */
