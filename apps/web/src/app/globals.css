@@ -2346,27 +2346,29 @@
   }
 
   /* === hub secondary cta (D5 — Arena destination below Hero) ===
-     Sally P0.3 — promoted from "calm link" to confident secondary
-     button. Phase 9's hairline-underline calibration overshot into
-     ghost territory on the busy hub backdrop; the player needed a
-     real touch target. Stays visually subordinate to the Hero (no
-     wooden frame, smaller stature, softer cream pill) but reads as
-     a destination from across the screen. */
+     Sally R5 — palette-bonded to TRAIN PIECES so the two action-stack
+     pieces feel cut from the same kingdom wood. Same dark-brown
+     border, same 4px carved depth, same white inset highlight, but
+     the interior paint stays cream-to-pale-gold instead of jumping to
+     full amber — the asymmetry (primary candy-card vs secondary pill)
+     survives. The pill still reads as subordinate by silhouette and
+     stature, not by feeling like a different material. */
   .hub-secondary-cta {
     display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
     padding: .55rem 1.1rem;
-    background: linear-gradient(180deg, rgba(255, 248, 220, 0.92) 0%, rgba(245, 220, 160, 0.88) 100%);
+    background: linear-gradient(180deg, rgba(255, 244, 210, 0.95) 0%, rgba(240, 205, 130, 0.92) 100%);
     color: rgba(63, 34, 8, 0.95);
-    border: 2px solid rgba(180, 130, 50, 0.65);
+    border: 2px solid rgba(110, 65, 15, 0.65);
     border-radius: 999px;
     font-family: var(--font-game-display), system-ui, sans-serif;
     font-size: 1rem; font-weight: 800;
     letter-spacing: 0.05em;
     text-shadow: 0 1px 0 rgba(255, 250, 230, 0.85);
     box-shadow:
-      0 3px 0 rgba(120, 80, 20, 0.45),
-      0 4px 10px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+      0 4px 0 rgba(110, 65, 15, 0.45),
+      0 6px 14px rgba(0, 0, 0, 0.22),
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -2px 0 rgba(110, 65, 15, 0.18);
     transition: transform var(--duration-snap), box-shadow var(--duration-snap), background var(--duration-snap);
   }
   .hub-secondary-cta > span[aria-hidden="true"] {
@@ -2374,7 +2376,7 @@
     width: 1.35rem; height: 1.35rem; border-radius: 999px;
     background: linear-gradient(180deg, #ffd66b 0%, #e69a1a 100%);
     color: rgba(40, 20, 0, 1);
-    border: 1.5px solid rgba(120, 80, 20, 0.75);
+    border: 1.5px solid rgba(110, 65, 15, 0.75);
     font-size: .85rem; font-weight: 900;
     line-height: 1;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
@@ -2382,14 +2384,15 @@
   }
   .hub-secondary-cta:hover,
   .hub-secondary-cta:active {
-    background: linear-gradient(180deg, rgba(255, 250, 230, 0.96) 0%, rgba(250, 225, 165, 0.94) 100%);
+    background: linear-gradient(180deg, rgba(255, 248, 220, 0.97) 0%, rgba(245, 215, 145, 0.94) 100%);
   }
   .hub-secondary-cta:active {
     transform: translateY(2px);
     box-shadow:
-      0 1px 0 rgba(120, 80, 20, 0.45),
-      0 2px 6px rgba(0, 0, 0, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.40);
+      0 2px 0 rgba(110, 65, 15, 0.45),
+      0 3px 8px rgba(0, 0, 0, 0.22),
+      inset 0 2px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0 rgba(110, 65, 15, 0.18);
   }
   .hub-secondary-cta:hover > span[aria-hidden="true"],
   .hub-secondary-cta:active > span[aria-hidden="true"] {
