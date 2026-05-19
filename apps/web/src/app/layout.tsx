@@ -22,7 +22,7 @@ const rowdies = Rowdies({
   display: 'swap',
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://chesscito.vercel.app";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://chesscito.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

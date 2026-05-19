@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     process.env.NEXT_PUBLIC_APP_URL
     ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "https://chesscito.vercel.app");
+      : "https://chesscito.com");
 
   const ogImage = `${baseUrl}/api/og/victory/${params.id}`;
   const url = `${baseUrl}/victory/${params.id}`;

@@ -16,7 +16,7 @@ import { enforceOrigin } from "@/lib/server/demo-signing";
 const mockedVictories = vi.mocked(getPlayerVictories);
 const mockedOrigin = vi.mocked(enforceOrigin);
 
-function makeRequest(url: string, origin = "https://chesscito.vercel.app") {
+function makeRequest(url: string, origin = "https://chesscito.com") {
   return new NextRequest(new URL(url), {
     headers: { origin },
   });

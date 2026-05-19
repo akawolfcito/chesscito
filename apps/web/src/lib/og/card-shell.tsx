@@ -23,7 +23,7 @@ export type CardShellProps = {
    *  "Piece Complete"). Rendered as a warm-brown pill under the brand
    *  wordmark — the single piece of content text the card carries. */
   chip?: string;
-  /** Footer URL. Defaults to "chesscito.vercel.app". Set empty string
+  /** Footer URL. Defaults to "chesscito.com". Set empty string
    *  to hide. */
   footer?: string;
   /** True when the Cinzel font was loaded; otherwise we fall back to serif. */
@@ -46,7 +46,7 @@ export function CardShell({
   mascotUrl,
   heroSlot,
   chip,
-  footer = "chesscito.vercel.app",
+  footer = "chesscito.com",
   useCinzel,
 }: CardShellProps) {
   const fontFamily = useCinzel ? "Cinzel" : "serif";

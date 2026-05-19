@@ -53,7 +53,7 @@ describe("enforceOrigin", () => {
   });
 
   it("allows requests with no origin/referer (MiniPay WebView)", () => {
-    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
+    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.com" }, () => {
       expect(() => enforceOrigin(fakeRequest())).not.toThrow();
     });
   });
@@ -64,16 +64,16 @@ describe("enforceOrigin", () => {
   });
 
   it("allows matching origin with VERCEL_PROJECT_PRODUCTION_URL", () => {
-    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
+    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.com" }, () => {
       expect(() =>
-        enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app" }))).not.toThrow();
+        enforceOrigin(fakeRequest({ origin: "https://chesscito.com" }))).not.toThrow();
     });
   });
 
   it("allows matching origin with NEXT_PUBLIC_APP_URL (with protocol)", () => {
-    withEnv({ NEXT_PUBLIC_APP_URL: "https://chesscito.vercel.app" }, () => {
+    withEnv({ NEXT_PUBLIC_APP_URL: "https://chesscito.com" }, () => {
       expect(() =>
-        enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app" }))).not.toThrow();
+        enforceOrigin(fakeRequest({ origin: "https://chesscito.com" }))).not.toThrow();
     });
   });
 
@@ -85,26 +85,26 @@ describe("enforceOrigin", () => {
   });
 
   it("rejects mismatched origin", () => {
-    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
+    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.com" }, () => {
       expect(() => enforceOrigin(fakeRequest({ origin: "https://evil.com" }))).toThrow("Forbidden");
     });
   });
 
-  it("rejects subdomain spoofing (e.g. chesscito.vercel.app.evil.com)", () => {
-    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
-      expect(() => enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app.evil.com" }))).toThrow("Forbidden");
+  it("rejects subdomain spoofing (e.g. chesscito.com.evil.com)", () => {
+    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.com" }, () => {
+      expect(() => enforceOrigin(fakeRequest({ origin: "https://chesscito.com.evil.com" }))).toThrow("Forbidden");
     });
   });
 
   it("falls back to referer when origin is absent", () => {
-    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
+    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.com" }, () => {
       expect(() =>
-        enforceOrigin(fakeRequest({ referer: "https://chesscito.vercel.app/" }))).not.toThrow();
+        enforceOrigin(fakeRequest({ referer: "https://chesscito.com/" }))).not.toThrow();
     });
   });
 
   it("rejects malformed URLs", () => {
-    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app" }, () => {
+    withEnv({ VERCEL_PROJECT_PRODUCTION_URL: "chesscito.com" }, () => {
       expect(() => enforceOrigin(fakeRequest({ origin: "not-a-url" }))).toThrow("Forbidden");
     });
   });
@@ -112,11 +112,11 @@ describe("enforceOrigin", () => {
   it("allows when any of multiple env vars match", () => {
     withEnv({
       VERCEL_URL: "chesscito-deploy123.vercel.app",
-      VERCEL_PROJECT_PRODUCTION_URL: "chesscito.vercel.app",
+      VERCEL_PROJECT_PRODUCTION_URL: "chesscito.com",
     }, () => {
       // Production alias
       expect(() =>
-        enforceOrigin(fakeRequest({ origin: "https://chesscito.vercel.app" }))).not.toThrow();
+        enforceOrigin(fakeRequest({ origin: "https://chesscito.com" }))).not.toThrow();
       // Deployment URL
       expect(() =>
         enforceOrigin(fakeRequest({ origin: "https://chesscito-deploy123.vercel.app" }))).not.toThrow();

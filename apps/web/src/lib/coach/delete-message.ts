@@ -8,5 +8,5 @@
  * signature reuse (red-team P0-1).
  */
 export function buildDeleteMessage(nonce: string, issuedIso: string): string {
-  return `Delete my Coach history\nDomain: chesscito.app\nChain: 42220\nNonce: ${nonce}\nIssued: ${issuedIso}`;
+  return `Delete my Coach history\nDomain: chesscito.com\nChain: 42220\nNonce: ${nonce}\nIssued: ${issuedIso}`;
 }

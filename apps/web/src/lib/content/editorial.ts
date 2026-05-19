@@ -208,7 +208,7 @@ export const SHIELD_COPY = {
 export const INVITE_COPY = {
   button: "Invite",
   text: "Come learn chess with me on Chesscito!",
-  url: "https://chesscito.vercel.app",
+  url: "https://chesscito.com",
   copied: "Link copied!",
 } as const;
 
@@ -221,7 +221,7 @@ export const SHARE_COPY = {
   shop: (item: string) =>
     `I just got ${item} on Chesscito!`,
   fallbackCopied: "Copied to clipboard!",
-  url: "https://chesscito.vercel.app",
+  url: "https://chesscito.com",
 } as const;
 
 export const DAILY_SOLVE_COPY = {
@@ -1069,7 +1069,7 @@ export const PRIVACY_COACH_COPY = {
     "Wallet address (lowercase), game ID, timestamps, game metadata (difficulty, result, total move count), and the AI-generated coaching response (summary, identified mistakes, lessons, praise). We do NOT store your full move list. No personal identifiers beyond the wallet address.",
   para4Title: "Lost wallet access:",
   para4:
-    "Deletion requires control of the wallet that owns the analyses. If you lose access, contact support@chesscito.app for an out-of-band deletion request. We will require proof of original ownership.",
+    "Deletion requires control of the wallet that owns the analyses. If you lose access, contact support@chesscito.com for an out-of-band deletion request. We will require proof of original ownership.",
 } as const;
 
 export const SUPPORT_COPY = {
@@ -1123,7 +1123,7 @@ export const ABOUT_COPY = {
   shareTitle: "Chesscito",
   shareText:
     "Learn chess piece movements with gamified, verifiable challenges on Celo.",
-  shareUrl: "https://chesscito.vercel.app",
+  shareUrl: "https://chesscito.com",
 } as const;
 
 /** Phase 0.5 C2 — methodology mini-section copy for /about. The body

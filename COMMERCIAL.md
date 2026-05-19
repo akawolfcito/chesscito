@@ -20,5 +20,5 @@ Apache-2.0 and are not granted by default for commercial or white-label use.
 For commercial, partnership, or branding inquiries, contact:
 
 - Contact: `Chesscito team`
-- Email: `wolfcito.learn+chesscito@gmail.com`
+- Email: `business@chesscito.com`
 - Organization: `Chesscito`

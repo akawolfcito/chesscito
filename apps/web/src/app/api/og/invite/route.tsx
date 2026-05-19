@@ -54,8 +54,8 @@ export async function GET(req: Request) {
     ? `${PIECE_LABEL[piece]} puzzle`
     : "Play with me";
   const footer = from
-    ? `chesscito.vercel.app \u2022 by ${from}`
-    : "chesscito.vercel.app";
+    ? `chesscito.com \u2022 by ${from}`
+    : "chesscito.com";
 
   // Hero: board render when FEN provided, piece art when only piece,
   // badge art as the generic fallback.

@@ -28,6 +28,6 @@ describe("Privacy page — Coach session memory section", () => {
   it("renders the 'Lost wallet access' subheading + body — out-of-band recourse", () => {
     render(<PrivacyPage />);
     expect(screen.getByText(/Lost wallet access:/i)).toBeInTheDocument();
-    expect(screen.getByText(/support@chesscito\.app/i)).toBeInTheDocument();
+    expect(screen.getByText(/support@chesscito\.com/i)).toBeInTheDocument();
   });
 });
