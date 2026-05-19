@@ -279,6 +279,17 @@ function txLink(chainId: number | undefined, txHash: string) {
  *  on-chain mutation flows during the migration. */
 export type ExercisesInitialAction = "shop" | "pro" | "badges" | "trophies";
 
+/** In-place sheet keys forwarded by the persistent dock via
+ *  `/exercises?sheet=<key>`. Distinct from `initialAction` because the
+ *  dock-driven flow must NOT bounce back to /hub on close — the user
+ *  came from the dock to stay on /exercises. */
+export type ExercisesInitialSheet =
+  | "shop"
+  | "badges"
+  | "trophies"
+  | "leaderboard"
+  | "pro";
+
 export type ExercisesScreenProps = {
   /** Pre-selected piece (e.g. when the scaffold reward tile is tapped).
    *  Falls back to "rook" — same default as before. */
@@ -287,6 +298,10 @@ export type ExercisesScreenProps = {
    *  the user straight into the shop / PRO / badge flow without an extra
    *  tap inside legacy. */
   initialAction?: ExercisesInitialAction;
+  /** Dock-driven in-place sheet open. Single-shot — applied via useEffect
+   *  on mount so it does not trigger the `initialAction` bounce-to-hub
+   *  behavior. */
+  initialSheet?: ExercisesInitialSheet;
 };
 
 /**
@@ -301,6 +316,7 @@ export type ExercisesScreenProps = {
 export function ExercisesScreen({
   initialPiece = "rook",
   initialAction,
+  initialSheet,
 }: ExercisesScreenProps = {}) {
   const router = useRouter();
   const { address, isConnected } = useAccount();
@@ -373,6 +389,33 @@ export function ExercisesScreen({
       router.push("/hub");
     }
   }, [initialAction, activeDockTab, proSheetOpen, router]);
+
+  // Dock-driven in-place sheet open. Runs once on mount based on the
+  // `?sheet=<key>` searchParam forwarded from the persistent dock.
+  // Distinct from `initialAction` — does NOT enable the bounce-to-hub
+  // ref, so closing the sheet leaves the user on /exercises.
+  const initialSheetAppliedRef = useRef(false);
+  useEffect(() => {
+    if (initialSheetAppliedRef.current || !initialSheet) return;
+    initialSheetAppliedRef.current = true;
+    switch (initialSheet) {
+      case "shop":
+        setActiveDockTab("shop");
+        break;
+      case "badges":
+        setActiveDockTab("badge");
+        break;
+      case "trophies":
+        setActiveDockTab("trophies");
+        break;
+      case "leaderboard":
+        setActiveDockTab("leaderboard");
+        break;
+      case "pro":
+        setProSheetOpen(true);
+        break;
+    }
+  }, [initialSheet]);
   const [proPurchaseState, setProPurchaseState] = useState<"idle" | "purchasing" | "verifying">("idle");
   const [proPurchaseError, setProPurchaseError] = useState<string | null>(null);
   /** Set iff the last failure was verify-failed. Carries the on-chain

@@ -11,22 +11,26 @@ type Item = {
   id: DockSlot;
   label: string;
   icon: CandyIconName;
-  href: string;
-  /** Pathname prefix that activates this slot. Sheet-only destinations
-   *  (Badge / Shop open via query params on /hub) leave this undefined
-   *  so they never light up by URL alone. */
+  /** Sheet key forwarded as `?sheet=<slug>` when the destination is an
+   *  in-place sheet on /arena or /exercises. */
+  sheet: string;
+  /** Fallback route used when the user is on neither /arena nor
+   *  /exercises (e.g., /hub, /trophies, /coach). */
+  fallback: string;
+  /** Pathname prefix that activates this slot purely by URL. Sheet-only
+   *  destinations leave this undefined so they never light up just from
+   *  the route (the host page owns the active-tab state for sheets). */
   activeWhen?: string;
 };
 
-/** Shop stays on /arena when tapped from there — the arena page mounts
- *  its own ShopSheet and reads `?sheet=shop` to open it in place. */
-const SHEET_AWARE_SHOP_ROUTES = new Set(["/arena"]);
-
-function resolveShopHref(pathname: string): string {
-  if (SHEET_AWARE_SHOP_ROUTES.has(pathname)) {
-    return `${pathname}?sheet=shop`;
-  }
-  return "/hub?sheet=shop";
+/** Resolve the destination for an in-place sheet. /arena and /exercises
+ *  mount BadgeSheet / ShopSheet / TrophiesSheet / LeaderboardSheet and
+ *  read `?sheet=…` to open them locally. From any other route, fall
+ *  back to the slot's canonical destination. */
+function resolveSheetHref(pathname: string, sheet: string, fallback: string): string {
+  if (pathname.startsWith("/exercises")) return `/exercises?sheet=${sheet}`;
+  if (pathname.startsWith("/arena")) return `/arena?sheet=${sheet}`;
+  return fallback;
 }
 
 /** Contextual center slot. From /arena → routes to /exercises (Pieces).
@@ -46,13 +50,13 @@ function resolveCenter(pathname: string): {
 }
 
 const SIDE_LEFT: ReadonlyArray<Item> = [
-  { id: "badge", label: DOCK_LABELS.badge, icon: "shield", href: "/hub?sheet=badges" },
-  { id: "shop", label: DOCK_LABELS.shop, icon: "shop", href: "/hub?sheet=shop" },
+  { id: "badge", label: DOCK_LABELS.badge, icon: "shield", sheet: "badges", fallback: "/hub?sheet=badges" },
+  { id: "shop", label: DOCK_LABELS.shop, icon: "shop", sheet: "shop", fallback: "/hub?sheet=shop" },
 ];
 
 const SIDE_RIGHT: ReadonlyArray<Item> = [
-  { id: "trophies", label: DOCK_LABELS.trophies, icon: "trophy", href: "/trophies", activeWhen: "/trophies" },
-  { id: "leaderboard", label: DOCK_LABELS.leaderboard, icon: "star", href: "/leaderboard", activeWhen: "/leaderboard" },
+  { id: "trophies", label: DOCK_LABELS.trophies, icon: "trophy", sheet: "trophies", fallback: "/trophies" },
+  { id: "leaderboard", label: DOCK_LABELS.leaderboard, icon: "star", sheet: "leaderboard", fallback: "/exercises?sheet=leaderboard" },
 ];
 
 function SideItem({
@@ -65,7 +69,7 @@ function SideItem({
   router: ReturnType<typeof useRouter>;
 }) {
   const isActive = Boolean(item.activeWhen && pathname.startsWith(item.activeWhen));
-  const href = item.id === "shop" ? resolveShopHref(pathname) : item.href;
+  const href = resolveSheetHref(pathname, item.sheet, item.fallback);
   return (
     <div
       className={`chesscito-dock-item${isActive ? " is-active" : ""}`}

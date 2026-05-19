@@ -154,22 +154,33 @@ function ArenaPageInner() {
     track("arena_select_view");
   }, [arenaScaffoldEnabled, game.status]);
 
-  // Dock sheet deep-link (Sally F6) — when the dock pushes
-  // `/arena?sheet=shop|pro` from another route the param fires the
-  // matching mounted sheet here instead of bouncing the user back to
-  // /hub. Single-shot via ref to avoid reopening after the user closes.
+  // Dock sheet deep-link — when the dock pushes `/arena?sheet=<slug>`
+  // from any route the param fires the matching mounted sheet here
+  // instead of bouncing the user back to /hub. Single-shot via ref to
+  // avoid reopening after the user closes.
   const arenaSheetDeepLinkRef = useRef<string | null>(null);
   useEffect(() => {
     const sheet = searchParams?.get("sheet");
     if (!sheet || arenaSheetDeepLinkRef.current === sheet) return;
     if (sheet === "shop") {
       arenaSheetDeepLinkRef.current = sheet;
+      setActiveDockTab("shop");
       shopSheet.openSheet();
     } else if (sheet === "pro") {
       arenaSheetDeepLinkRef.current = sheet;
       proSheet.openSheet();
+    } else if (sheet === "badges") {
+      arenaSheetDeepLinkRef.current = sheet;
+      setActiveDockTab("badge");
+      badgeSheet.openSheet();
+    } else if (sheet === "trophies") {
+      arenaSheetDeepLinkRef.current = sheet;
+      setActiveDockTab("trophies");
+    } else if (sheet === "leaderboard") {
+      arenaSheetDeepLinkRef.current = sheet;
+      setActiveDockTab("leaderboard");
     }
-  }, [searchParams, shopSheet, proSheet]);
+  }, [searchParams, shopSheet, proSheet, badgeSheet]);
 
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -1003,6 +1014,21 @@ function ArenaPageInner() {
       elapsed_ms: game.elapsedMs,
     });
   }, [game.status, game.moveCount, game.elapsedMs, game.difficulty, game.playerColor, isPlayerWin]);
+
+  // Fresh-entry override — when the dock or hub Play pushes
+  // `/arena?fresh=1` the user's intent is "show me the selector".
+  // useChessGame may rehydrate a saved FEN on the same mount, leaving
+  // game.status === "active" and the selector unreachable. Reset the
+  // game here so the selector renders. Single-shot via ref.
+  const freshResetRef = useRef(false);
+  useEffect(() => {
+    if (freshResetRef.current) return;
+    if (searchParams?.get("fresh") !== "1") return;
+    freshResetRef.current = true;
+    if (game.status !== "selecting") {
+      game.reset();
+    }
+  }, [searchParams, game]);
 
   // Auto-launch on mount. Priority order:
   //   0. `?fresh=1` query param — caller (hub Play) explicitly wants

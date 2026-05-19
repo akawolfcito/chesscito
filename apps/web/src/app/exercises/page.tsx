@@ -1,4 +1,7 @@
-import { ExercisesScreen } from "@/components/exercises/exercises-screen";
+import {
+  ExercisesScreen,
+  type ExercisesInitialSheet,
+} from "@/components/exercises/exercises-screen";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 
@@ -7,7 +10,19 @@ type SearchParams = {
    *  exercises (queen/king while their decks are pending) are silently
    *  dropped so the board can't mount on an empty exercises array. */
   piece?: string | string[];
+  /** Dock-driven in-place sheet. Forwarded by the persistent dock
+   *  (`/exercises?sheet=shop|badges|trophies|leaderboard|pro`). Unknown
+   *  values are silently dropped — the screen renders without a sheet. */
+  sheet?: string | string[];
 };
+
+const SUPPORTED_SHEETS = new Set<ExercisesInitialSheet>([
+  "shop",
+  "badges",
+  "trophies",
+  "leaderboard",
+  "pro",
+]);
 
 function pieceHasExercises(piece: string): piece is PieceId {
   const exercises = (EXERCISES as Record<string, unknown[] | undefined>)[piece];
@@ -16,6 +31,13 @@ function pieceHasExercises(piece: string): piece is PieceId {
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function parseInitialSheet(raw: string | undefined): ExercisesInitialSheet | undefined {
+  if (!raw) return undefined;
+  return SUPPORTED_SHEETS.has(raw as ExercisesInitialSheet)
+    ? (raw as ExercisesInitialSheet)
+    : undefined;
 }
 
 /**
@@ -37,6 +59,7 @@ export default function ExercisesPage({
 }) {
   const piece = firstParam(searchParams.piece);
   const initialPiece = piece && pieceHasExercises(piece) ? piece : undefined;
+  const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
 
-  return <ExercisesScreen initialPiece={initialPiece} />;
+  return <ExercisesScreen initialPiece={initialPiece} initialSheet={initialSheet} />;
 }
