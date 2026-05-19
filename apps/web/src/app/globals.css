@@ -4810,13 +4810,33 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 60px;
 }
 
-/* Match the LEARN piece-icon width (38px on `.reward-tile-piece`) so
- * both rails carry the same icon mass. Overrides the Tailwind h-14/w-14
- * (56px) baked into ActionRowIcon callers. */
-.hub-action-rail .stone-pedestal-icon img,
-.hub-action-rail .stone-pedestal-icon picture {
-  width: 38px;
-  height: 38px;
+/* Use the same stone backplate that the LEARN rail uses for locked
+ * pieces — keeps both rails visually unified. Overrides the
+ * action-row-pedestal stone PNGs and `stone-pedestal-stone-N` vars. */
+.hub-action-rail .stone-pedestal {
+  background-image: url("/art/scene-rooted/piece-locked.png");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Re-center the icon. Default `.stone-pedestal-icon` sits at
+ * `top: -10%` (stone-resting feel); `.action-row-pedestal .stone-
+ * pedestal-icon` overrides to `top: -14%`. On the locked-piece tile
+ * we want the icon centered like the LEARN tiles, so we use a 3-class
+ * selector to outrank the action-row-pedestal rule. */
+.hub-action-rail .stone-pedestal.action-row-pedestal .stone-pedestal-icon,
+.hub-action-rail .stone-pedestal .stone-pedestal-icon {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Match LEARN reward-tile-piece visual mass (~42px). Overrides the
+ * Tailwind h-14/w-14 (56px) baked into ActionRowIcon callers. */
+.hub-action-rail .stone-pedestal .stone-pedestal-icon img,
+.hub-action-rail .stone-pedestal .stone-pedestal-icon picture {
+  width: 42px;
+  height: 42px;
 }
 
 /* SPEC 1 D1 — Rail headers (LEARN / UNLOCK). Promoted to a carved
