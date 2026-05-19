@@ -1,17 +1,18 @@
 import type { RewardTile } from "@/components/kingdom/reward-column";
+import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 
 /** Narrative unlock order surfaced in the Hub reward column. Mirrors the
- *  `REWARD_COPY` story (rook ➜ bishop ➜ queen ➜ knight ➜ king ➜ pawn).
- *  Distinct from on-chain `BADGE_LEVEL_IDS` (1n–6n) which use a different
- *  enumeration. */
+ *  `REWARD_COPY` story. King sits last because its exercise set ships
+ *  later (PR-9) — until then it's the "soon" tile. Distinct from
+ *  on-chain `BADGE_LEVEL_IDS` (1n–6n) which use a different enumeration. */
 export const REWARD_TILE_ORDER: readonly PieceId[] = [
   "rook",
   "bishop",
   "queen",
   "knight",
-  "king",
   "pawn",
+  "king",
 ] as const;
 
 export type RewardDerivationInput = {
@@ -71,8 +72,12 @@ export function deriveRewardTiles(input: RewardDerivationInput): RewardTile[] {
       continue;
     }
 
+    const hasExercises = EXERCISES[piece].length > 0;
+
     let state: RewardTile["state"];
-    if (priorMastered && meetsThreshold) {
+    if (!hasExercises) {
+      state = "locked";
+    } else if (priorMastered && meetsThreshold) {
       state = "claimable";
     } else if (priorMastered) {
       state = "progress";
