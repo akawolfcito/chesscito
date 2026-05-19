@@ -1773,6 +1773,42 @@ export function ExercisesScreen({
         >
           {toast ?? displayedToast.current}
         </div>
+
+        {/* Dock-driven in-place sheets. Mounted at the root so the
+         *  PersistentDock can open them via `setActiveDockTab(...)`
+         *  regardless of where the dock itself lives in the tree. */}
+        <BadgeSheet
+          open={badgeSheetOpen}
+          onOpenChange={(v) => { if (!v && isClaimBusy) return; setBadgeSheetOpen(v); }}
+          badgesClaimed={badgesClaimed}
+          onClaim={(piece) => void handleClaimBadge(piece)}
+          isClaimBusy={isClaimBusy}
+          claimingPiece={claimingPiece}
+          showNotification={canSendOnChain && !Boolean(hasClaimedBadge)}
+          onNavigateToTrophies={() => setActiveDockTab("trophies")}
+          showTrigger={false}
+        />
+        <ShopSheet
+          open={storeOpen}
+          onOpenChange={setStoreOpen}
+          items={displayShopCatalog}
+          onSelectItem={(itemId) => {
+            setSelectedItemId(itemId);
+            const item = shopCatalog.find((i) => i.itemId === itemId);
+            if (item) setPaymentToken(selectPaymentToken(item.onChainPrice, itemId));
+            setStoreOpen(false);
+            setConfirmOpen(true);
+          }}
+          showTrigger={false}
+        />
+        <TrophiesSheet
+          open={trophiesSheetOpen}
+          onOpenChange={setTrophiesSheetOpen}
+        />
+        <LeaderboardSheet
+          open={leaderboardOpen}
+          onOpenChange={setLeaderboardOpen}
+        />
       </main>
     </div>
   );

@@ -1182,6 +1182,14 @@ function ArenaPageInner() {
               {...shopSheet.sheetProps}
               onOpenChange={handleShopSheetOpenChange}
             />
+            <TrophiesSheet
+              open={activeDockTab === "trophies"}
+              onOpenChange={(v) => setActiveDockTab(v ? "trophies" : null)}
+            />
+            <LeaderboardSheet
+              open={activeDockTab === "leaderboard"}
+              onOpenChange={(v) => setActiveDockTab(v ? "leaderboard" : null)}
+            />
             <PurchaseConfirmSheet {...shopSheet.confirmProps} />
             <ProSheet {...proSheet.sheetProps} />
           </div>
@@ -1250,6 +1258,14 @@ function ArenaPageInner() {
           <ShopSheet
             {...shopSheet.sheetProps}
             onOpenChange={handleShopSheetOpenChange}
+          />
+          <TrophiesSheet
+            open={activeDockTab === "trophies"}
+            onOpenChange={(v) => setActiveDockTab(v ? "trophies" : null)}
+          />
+          <LeaderboardSheet
+            open={activeDockTab === "leaderboard"}
+            onOpenChange={(v) => setActiveDockTab(v ? "leaderboard" : null)}
           />
           <PurchaseConfirmSheet {...shopSheet.confirmProps} />
           <ProSheet {...proSheet.sheetProps} />
