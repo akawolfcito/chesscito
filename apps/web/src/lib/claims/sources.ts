@@ -8,7 +8,7 @@ import { wagmiConfig } from "@/components/wallet-provider";
  *  Server/client agnostic — caller decides where to invoke. */
 export async function readClaimSources(address: `0x${string}`) {
   const chainId = getConfiguredChainId();
-  const badgesAddress = getBadgesAddress(chainId);
+  const badgesAddress = getBadgesAddress(chainId ?? undefined);
 
   // Local badges earned: persisted by the exercises flow when a piece arc
   // crosses the badge threshold; key shape is `chesscito:badge-earned:{id}`.
