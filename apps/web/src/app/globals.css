@@ -4703,16 +4703,23 @@ button.hud-resource-chip:active:not(:disabled) {
   justify-content: center;
   gap: 8px;
   padding: 6px 12px 14px;
+  overflow: visible;
 }
 
 .hub-scaffold-cta-row .primary-play-cta-piece-icon {
   position: static;
-  transform: none;
   top: auto;
   left: auto;
   flex: 0 0 52px;
   width: 52px;
   height: 52px;
+  /* Floating-sticker effect — layout slot stays 52px so the pill
+     dimensions don't change, but the icon visually scales up and
+     casts a softer shadow to read as a 3D piece sitting on top. */
+  transform: scale(1.25);
+  transform-origin: center;
+  filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.35));
+  overflow: visible;
 }
 
 /* Overrides the `translateY(-5px)` from `.primary-play-cta--playhub`. */
