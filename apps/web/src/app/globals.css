@@ -4785,60 +4785,6 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 
-/* Sally R2 — Daily badge slot. Sits between the HUD header and the
- * body grid, centered, so it floats with the chips without crowding
- * them. Only renders when the contextual hero state is daily-pending. */
-.hub-daily-badge-slot {
-  display: flex;
-  justify-content: center;
-  margin: 6px 0 8px;
-  padding: 0 16px;
-}
-
-/* Sally R2 — Daily badge pill. Small, blue-tinted (echoes the legacy
- * Hero daily-pending color signal) but discreet — it announces a
- * pending tactic without competing with the TRAIN PIECES primary
- * below. Tap routes to /exercises?slot=daily. */
-.hub-daily-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #cfe6ff 0%, #92c1ec 100%);
-  border: 1.5px solid rgba(15, 55, 100, 0.55);
-  color: rgba(15, 35, 70, 0.95);
-  font-family: var(--font-game-display), system-ui, sans-serif;
-  font-size: 0.8125rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
-  box-shadow:
-    0 2px 0 rgba(15, 55, 100, 0.45),
-    0 3px 8px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  transition: transform var(--duration-snap), box-shadow var(--duration-snap);
-  cursor: pointer;
-}
-
-.hub-daily-badge:active {
-  transform: translateY(1px);
-  box-shadow:
-    0 1px 0 rgba(15, 55, 100, 0.45),
-    0 2px 6px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-
-.hub-daily-badge-spark {
-  font-size: 0.95rem;
-  line-height: 1;
-  filter: drop-shadow(0 0 4px rgba(255, 215, 64, 0.85));
-}
-
-.hub-daily-badge-label {
-  text-transform: uppercase;
-}
-
 /* SPEC 1 D1 — Rail headers (LEARN / UNLOCK). Promoted to a carved
    forest-green stamp (Sally F5) so the rails carry the same
    personality as the legacy 'Practice Pieces · Train & Master'
