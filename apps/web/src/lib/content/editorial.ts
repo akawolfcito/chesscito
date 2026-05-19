@@ -2016,17 +2016,17 @@ export const CLAIM_COPY = {
 
 export const HERO_CTA_COPY = {
   newPlayer: {
-    label: "START WITH PIECES",
+    label: "TRAIN ROOK",
     sub: "learn the rook first",
     variant: "amber" as const,
   },
   dailyPending: {
-    label: "PLAY TODAY'S TACTIC",
+    label: "TODAY'S TACTIC",
     sub: "today's tactic awaits",
     variant: "blue" as const,
   },
   defaultCaughtUp: {
-    label: "CONTINUE TRAINING",
+    label: "TRAIN PIECES",
     sub: "tap a tile to pick",
     variant: "amber" as const,
   },

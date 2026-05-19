@@ -4581,6 +4581,10 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .hub-scaffold-hero-label {
+  /* Sally P0.2 — Hero CTA is a single word-of-power, never wraps.
+   * Editorial keeps copy to two short words; if a longer variant
+   * lands later we'll bump the container width instead of breaking. */
+  white-space: nowrap;
   font-size: 1rem;
   font-weight: 900;
   letter-spacing: 0.06em;
