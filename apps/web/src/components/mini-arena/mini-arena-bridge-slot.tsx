@@ -14,6 +14,11 @@ type Props = {
    *  rook → K+R vs K is unlocked). When false the slot renders
    *  nothing — silent gating keeps the header clean. */
   unlocked: boolean;
+  /** When true, the slot still renders while locked, as a disabled
+   *  pedestal so the player sees the upcoming reward and what to
+   *  earn. Surfaces like the Hub right rail use this so the
+   *  vertical stack stays visually stable across unlock thresholds. */
+  renderLocked?: boolean;
 };
 
 /**
@@ -21,9 +26,9 @@ type Props = {
  * bridge setup. Lives in the action row next to the contextual action
  * pin so the bridge entry point doesn't push the board down.
  */
-export function MiniArenaBridgeSlot({ setup, unlocked }: Props) {
+export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: Props) {
   const [open, setOpen] = useState(false);
-  if (!unlocked) return null;
+  if (!unlocked && !renderLocked) return null;
 
   return (
     <>
@@ -34,10 +39,13 @@ export function MiniArenaBridgeSlot({ setup, unlocked }: Props) {
           className="action-row-pedestal action-row-pedestal-arena"
           icon={<ActionRowIcon name="learning" className="h-14 w-14 object-contain" />}
           onClick={() => setOpen(true)}
-          aria-label={`Reto avanzado: ${setup.name}`}
+          disabled={!unlocked}
+          aria-label={unlocked ? `Reto avanzado: ${setup.name}` : `${setup.name} — locked`}
         />
       </span>
-      <MiniArenaSheet open={open} onOpenChange={setOpen} setup={setup} />
+      {unlocked ? (
+        <MiniArenaSheet open={open} onOpenChange={setOpen} setup={setup} />
+      ) : null}
     </>
   );
 }

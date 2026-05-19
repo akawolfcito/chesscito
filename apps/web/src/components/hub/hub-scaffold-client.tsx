@@ -390,6 +390,7 @@ export function HubScaffoldClient({
           },
         }}
         onArenaPress={handleArenaPress}
+        miniArenaUnlocked={(starsPerPiece.rook ?? 0) >= 12}
       />
       <ProSheet {...proSheet.sheetProps} />
       <BadgeSheet {...badgeSheet.sheetProps} />

@@ -8,8 +8,11 @@ import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-colum
 import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { PremiumSlot } from "@/components/pro-mission/premium-slot";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
-import { MateDrillsTile } from "@/components/hub/mate-drills-tile";
 import { SecondaryCta } from "@/components/hub/secondary-cta";
+import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
+import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
+import { StonePedestal } from "@/components/scene-rooted/stone-pedestal";
+import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { HUD_COPY } from "@/lib/content/editorial";
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
@@ -91,6 +94,10 @@ type HubScaffoldProps = {
   /** Secondary CTA "Enter Arena" — calm link below the Hero (SPEC 1 D5).
    *  Renders only when wired so legacy surfaces opt in explicitly. */
   onArenaPress?: () => void;
+  /** When true, the Hub right-rail "Special Training" tile becomes
+   *  active (K+R vs K mini-arena). Caller derives from rook stars ≥12
+   *  so the threshold lives at the source of truth, not the scaffold. */
+  miniArenaUnlocked?: boolean;
   onError?: (
     context: import("@/components/error/primitive-boundary").PrimitiveBoundaryErrorContext,
   ) => void;
@@ -137,6 +144,7 @@ export function HubScaffold({
   showPremiumSlot = false,
   heroCta,
   onArenaPress,
+  miniArenaUnlocked = false,
   onError,
 }: HubScaffoldProps) {
   const proValue = pro.active
@@ -180,16 +188,6 @@ export function HubScaffold({
               value={proValue}
               ariaLabel={proAriaLabel}
               onClick={onProTap}
-            />,
-          )}
-          {wrap(
-            "HudResourceChip",
-            <HudResourceChip
-              tone="default"
-              imageIconSrc="/art/new-icons-chesscito/training.png"
-              value={HUD_COPY.coachLabel}
-              ariaLabel={HUD_COPY.coachAriaLabel}
-              onClick={onCoachTap}
             />,
           )}
           {!isWalletConnected && onConnectTap
@@ -318,7 +316,35 @@ export function HubScaffold({
               )}
             </>
           ) : null}
-          {wrap("MateDrillsTile", <MateDrillsTile />)}
+          {wrap(
+            "HubActionRail",
+            <div className="hub-action-rail">
+              <DailyTacticSlot />
+              <MiniArenaBridgeSlot
+                setup={MINI_ARENA_SETUPS[0]}
+                unlocked={miniArenaUnlocked}
+                renderLocked
+              />
+              {onCoachTap ? (
+                <StonePedestal
+                  stone={2}
+                  size="large"
+                  className="action-row-pedestal hub-action-rail-coach"
+                  icon={
+                    <img
+                      src="/art/new-icons-chesscito/training.png"
+                      alt=""
+                      aria-hidden="true"
+                      className="h-14 w-14 object-contain"
+                      draggable={false}
+                    />
+                  }
+                  onClick={onCoachTap}
+                  aria-label={HUD_COPY.coachAriaLabel}
+                />
+              ) : null}
+            </div>,
+          )}
         </div>
       </section>
     </main>
