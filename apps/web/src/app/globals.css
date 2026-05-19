@@ -3690,12 +3690,6 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
 }
 
-/* Dim variant — when the successor tile is still locked, the dot
- * goes dark to signal "path not lit yet". */
-.reward-column>.reward-tile+.reward-tile.is-locked::before {
-  background: radial-gradient(circle at center, rgba(70, 55, 30, 0.55) 0 40%, rgba(30, 22, 10, 0.55) 75%, transparent 100%);
-  box-shadow: none;
-}
 
 .reward-tile {
   position: relative;
