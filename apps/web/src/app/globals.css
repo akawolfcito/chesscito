@@ -3414,12 +3414,18 @@
   border: 0;
   border-radius: 0;
   background-color: transparent;
-  /* Halo kept as a soft rectangular box-shadow rather than a
-   * filter:drop-shadow on the inner img. The PNG is ~669×1040 and
-   * the parent runs a 4s scale animation; drop-shadow forced a paint
-   * storm every animation frame. Rectangular cast is barely visible
-   * thanks to the radial fade. */
-  box-shadow: 0 0 32px 6px var(--kingdom-warm-glow);
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* Halo follows the carved-wood scroll silhouette via alpha channel.
+ * Safe to apply now that the parent's idle scale animation is gone
+ * — without per-frame transforms the filter is rasterised once and
+ * cached, no paint storm. */
+.kingdom-anchor--playhub .kingdom-anchor-img {
+  filter:
+    drop-shadow(0 0 18px var(--kingdom-warm-glow))
+    drop-shadow(0 12px 22px var(--kingdom-deep-shadow));
 }
 
 .kingdom-anchor-picture {
@@ -3487,25 +3493,10 @@
   object-fit: contain;
 }
 
-/* Ambient idle pulse — disabled when the user prefers reduced motion. */
-@media (prefers-reduced-motion: no-preference) {
-
-  .kingdom-anchor {
-    animation: kingdom-anchor-idle 4s ease-in-out infinite;
-  }
-}
-
-@keyframes kingdom-anchor-idle {
-
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.012);
-  }
-}
+/* Ambient idle scale animation removed — combined with the
+ * filter:drop-shadow on the inner <img> below it caused a per-frame
+ * re-rasterisation paint storm on a 669×1040 PNG. Static anchor
+ * keeps the silhouette-following halo without burning CPU/GPU. */
 
 /* ── HUD Resource Chip — persistent top-HUD pill (Adventure atmosphere) ──
    Spec: docs/product/visual-language-minimum-2026-05-03.md §4.6 +
