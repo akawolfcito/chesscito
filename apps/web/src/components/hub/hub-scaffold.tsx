@@ -234,18 +234,6 @@ export function HubScaffold({
           </div>
           <footer className="hub-scaffold-footer">
             {wrap("MissionRibbon", <MissionRibbon surface="hub" />)}
-            {secondaryAction ? (
-              wrap(
-                "PrimaryPlayCta",
-                <PrimaryPlayCta
-                  surface="playhub"
-                  label={secondaryAction.label}
-                  ariaLabel={secondaryAction.ariaLabel}
-                  onPress={secondaryAction.onPress}
-                  className="hub-scaffold-practice-cta"
-                />,
-              )
-            ) : null}
             <div className="hub-scaffold-guide" aria-hidden="true">
               <picture className="hub-scaffold-guide-piece">
                 <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
@@ -276,10 +264,6 @@ export function HubScaffold({
                 </button>,
               )
             ) : onPlayPress ? (
-              // Legacy Play CTA — only renders when the caller still
-              // wires an onPlayPress handler. The redesigned hub-
-              // scaffold-client omits it on purpose so the action stack
-              // stays single-primary (TRAIN PIECES via `secondaryAction`).
               wrap(
                 "PrimaryPlayCta",
                 <PrimaryPlayCta
@@ -291,17 +275,35 @@ export function HubScaffold({
                 />,
               )
             ) : null}
-            {onArenaPress ? (
-              wrap(
-                "ArenaCta",
-                <PrimaryPlayCta
-                  surface="playhub"
-                  label={SECONDARY_CTA_COPY.arena.label}
-                  ariaLabel={SECONDARY_CTA_COPY.arena.ariaLabel}
-                  onPress={onArenaPress}
-                  className="hub-scaffold-arena-cta"
-                />,
-              )
+            {secondaryAction || onArenaPress ? (
+              <div className="hub-scaffold-cta-row">
+                {secondaryAction
+                  ? wrap(
+                      "PrimaryPlayCta",
+                      <PrimaryPlayCta
+                        surface="playhub"
+                        label={secondaryAction.label}
+                        ariaLabel={secondaryAction.ariaLabel}
+                        onPress={secondaryAction.onPress}
+                        className="hub-scaffold-practice-cta"
+                        pieceIconSrc="/art/new-icons-chesscito/practice-pieces.png"
+                      />,
+                    )
+                  : null}
+                {onArenaPress
+                  ? wrap(
+                      "ArenaCta",
+                      <PrimaryPlayCta
+                        surface="playhub"
+                        label={SECONDARY_CTA_COPY.arena.label}
+                        ariaLabel={SECONDARY_CTA_COPY.arena.ariaLabel}
+                        onPress={onArenaPress}
+                        className="hub-scaffold-arena-cta"
+                        pieceIconSrc="/art/new-icons-chesscito/play-chess.png"
+                      />,
+                    )
+                  : null}
+              </div>
             ) : null}
           </footer>
         </div>

@@ -3424,8 +3424,7 @@
  * cached, no paint storm. */
 .kingdom-anchor--playhub .kingdom-anchor-img {
   filter:
-    drop-shadow(0 0 18px var(--kingdom-warm-glow))
-    drop-shadow(0 12px 22px var(--kingdom-deep-shadow));
+    drop-shadow(0 0 18px var(--kingdom-warm-glow)) drop-shadow(0 12px 22px var(--kingdom-deep-shadow));
 }
 
 .kingdom-anchor-picture {
@@ -4596,48 +4595,58 @@ button.hud-resource-chip:active:not(:disabled) {
   padding-left: 54px;
 }
 
-.hub-scaffold-practice-cta {
-  min-height: 58px;
-  padding-top: 10px;
-  padding-bottom: 15px;
-  font-size: 0.9rem;
+/* HUB CTAs use dedicated glossy pill plates (orange/blue) shipped in
+ * /art/hub/. Both share the playhub primitive but swap the background
+ * image so the action stack reads as a sibling pair. They render side
+ * by side inside `.hub-scaffold-cta-row` so `flex: 1 1 0` and the
+ * overflow guard override the legacy `width: min(100%, 236px)` from
+ * `.primary-play-cta--playhub`. */
+.hub-scaffold-cta-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
 }
 
-/* Blue twin of the green TRAIN PIECES button. Same shape + sculpt so
- * both stacked CTAs read as siblings; a ::before pseudo renders the
- * same pedestal-play PNG with hue-rotate, isolating the recolor to
- * the background plate (icon + label remain unfiltered). */
+.hub-scaffold-practice-cta {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  max-width: none;
+  min-height: 58px;
+  padding: 10px 12px 15px 48px;
+  font-size: 0.85rem;
+  background: url("/art/hub/cta-principal.png") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 6px 10px rgba(120, 60, 0, 0.28));
+}
+
 .hub-scaffold-arena-cta {
   position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  max-width: none;
   min-height: 58px;
-  padding-top: 10px;
-  padding-bottom: 15px;
-  font-size: 0.9rem;
-  background: none;
-  /* No outer glow — the reference reads as a candy plate, not a neon
-   * sign. Only the dark inset stays for label legibility. */
+  padding: 10px 12px 15px 48px;
+  font-size: 0.85rem;
+  background: url("/art/hub/cta-secondary.png") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 6px 10px rgba(8, 40, 90, 0.32));
   text-shadow: 0 2px 0 rgba(8, 30, 60, 0.65);
+  color: #f4f8ff;
 }
 
-.hub-scaffold-arena-cta::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: url("/art/scene-rooted/pedestal-play.png") center / 100% 100% no-repeat;
-  /* Reach a candy-blue close to the #3775E8 / #2648B8 reference. The
-   * source plate is green-primary (~hue 120deg); rotating +115deg
-   * lands on hue ~235deg (deep mid-blue, past cyan). Higher saturation
-   * deepens the body; brightness drop kills the neon glare and brings
-   * the plate closer to the matte reference. */
-  filter: hue-rotate(135deg) saturate(1.7) brightness(0.82);
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.hub-scaffold-arena-cta .primary-play-cta-icon,
 .hub-scaffold-arena-cta .primary-play-cta-label {
   z-index: 1;
+}
+
+/* Piece icon sits flush-left inside the pill; tighten from the
+   default 22px so a two-up row reads as a sibling pair. */
+.hub-scaffold-cta-row .primary-play-cta-piece-icon {
+  left: 10px;
+  width: 32px;
+  height: 32px;
 }
 
 /* Compact size for the Arena entry surface — smaller dominant CTA that
@@ -4673,7 +4682,7 @@ button.hud-resource-chip:active:not(:disabled) {
   max-width: var(--app-max-width);
   margin: 0 auto;
   min-height: 100dvh;
-  padding: 14px 5px 18px;
+  padding: 14px 0px 18px;
   gap: 10px;
   background-color: var(--adv-deep-blue);
   /* Forest-path adventure scene introduced 2026-05-05. AVIF/WebP triplet
@@ -4710,10 +4719,10 @@ button.hud-resource-chip:active:not(:disabled) {
   display: grid;
   grid-template-columns: 78px minmax(0, 1fr) 78px;
   align-items: center;
-  gap: 8px;
+  /* gap: 8px; */
   flex: 1;
   min-height: 0;
-  padding-top: 8px;
+  /* padding-top: 8px; */
 }
 
 .hub-scaffold-side {
@@ -5025,7 +5034,7 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   justify-content: center;
   gap: 5px;
-  width: min(100%, 212px);
+  /* width: min(100%, 212px); */
   min-height: 46px;
   padding: 6px 10px;
   border-radius: 15px;
