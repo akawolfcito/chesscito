@@ -15,6 +15,10 @@ export type RewardTile = {
 type Props = {
   tiles: RewardTile[];
   className?: string;
+  /** Compact variant — smaller tiles (48px) and mini-labels (0.55rem)
+   *  with a tighter gap. Same DOM, opt-in via class modifier so the
+   *  default rail keeps its current spacing. */
+  compact?: boolean;
 };
 
 const PIECE_TILE_IDS = ["rook", "bishop", "knight", "pawn", "queen", "king"] as const;
@@ -26,21 +30,35 @@ function isPieceTile(id: RewardTileId): id is (typeof PIECE_TILE_IDS)[number] {
 /** Vertical reward stack rendered on the Hub left edge. Adventure primitive
  *  showing reward tiles (claimable / progress / locked). Tiles are presentational buttons —
  *  copy + aria-labels live in `editorial.ts.REWARD_COPY` (single-source). */
-export function RewardColumn({ tiles, className = "" }: Props) {
+export function RewardColumn({ tiles, className = "", compact = false }: Props) {
   if (tiles.length === 0) {
     return null;
   }
 
+  const wrapperClass = [
+    "reward-column",
+    compact ? "is-compact" : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={`reward-column ${className}`.trim()}>
+    <div className={wrapperClass}>
       {tiles.map((tile) => (
-        <RewardTileButton key={tile.id} tile={tile} />
+        <RewardTileButton key={tile.id} tile={tile} compact={compact} />
       ))}
     </div>
   );
 }
 
-function RewardTileButton({ tile }: { tile: RewardTile }) {
+function RewardTileButton({
+  tile,
+  compact,
+}: {
+  tile: RewardTile;
+  compact: boolean;
+}) {
   const copy = REWARD_COPY[tile.id];
   const label = isPieceTile(tile.id) ? PIECE_LABELS[tile.id] : copy.label;
   const ariaState: Exclude<RewardTileState, "claimed"> =
@@ -51,7 +69,10 @@ function RewardTileButton({ tile }: { tile: RewardTile }) {
     tile.state === "progress" || tile.state === "claimable"
       ? "is-active-piece"
       : "",
-  ].join(" ");
+    compact ? "is-compact" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <button

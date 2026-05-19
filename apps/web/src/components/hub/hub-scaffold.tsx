@@ -225,7 +225,7 @@ export function HubScaffold({
             <div className="hub-scaffold-rail-header" data-rail="left">
               LEARN
             </div>
-            {wrap("RewardColumn", <RewardColumn tiles={rewardTiles} />)}
+            {wrap("RewardColumn", <RewardColumn tiles={rewardTiles} compact />)}
           </div>
         </div>
         <div className="hub-scaffold-center">
