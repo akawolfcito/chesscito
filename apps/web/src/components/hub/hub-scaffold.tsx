@@ -8,7 +8,21 @@ import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-colum
 import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { PremiumSlot } from "@/components/pro-mission/premium-slot";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
+import { HubOnboardingCard } from "@/components/hub/onboarding-card";
+import { SecondaryCta } from "@/components/hub/secondary-cta";
 import { HUD_COPY } from "@/lib/content/editorial";
+
+/** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
+ *  `color` drives the visual tint (amber = default/onboarding, blue =
+ *  daily-pending). See `lib/hub/hero-cta.ts` for the derivation rules
+ *  the integration layer (Task 5.5) uses to compute this value. */
+export type HeroCtaProps = {
+  label: string;
+  sub: string;
+  color: "amber" | "blue";
+  ariaLabel: string;
+  onPress: () => void;
+};
 
 type HubScaffoldProps = {
   /** Trophies count rendered on the primary HUD chip. */
@@ -68,6 +82,20 @@ type HubScaffoldProps = {
   isWalletConnected?: boolean;
   onConnectTap?: () => void;
   showPremiumSlot?: boolean;
+  /** Contextual Hero CTA (SPEC 1 D2). When provided, supersedes the
+   *  legacy `<PrimaryPlayCta>` hero with a label/sub two-line button
+   *  tinted amber (default) or blue (daily-pending). Legacy
+   *  `playLabel`/`playAriaLabel`/`onPlayPress` stay supported for
+   *  callers that haven't migrated yet. */
+  heroCta?: HeroCtaProps;
+  /** Secondary CTA "Enter Arena" — calm link below the Hero (SPEC 1 D5).
+   *  Renders only when wired so legacy surfaces opt in explicitly. */
+  onArenaPress?: () => void;
+  /** First-launch onboarding card mount (SPEC 1 D14). Props ship in
+   *  Task 5.3 but the JSX mount lands in Task 5.4 to keep this commit
+   *  focused on rails + Hero. */
+  showOnboarding?: boolean;
+  onOnboardingDismiss?: () => void;
   onError?: (
     context: import("@/components/error/primitive-boundary").PrimitiveBoundaryErrorContext,
   ) => void;
@@ -112,6 +140,10 @@ export function HubScaffold({
   isWalletConnected = true,
   onConnectTap,
   showPremiumSlot = false,
+  heroCta,
+  onArenaPress,
+  showOnboarding = false,
+  onOnboardingDismiss,
   onError,
 }: HubScaffoldProps) {
   const proValue = pro.active
@@ -193,12 +225,19 @@ export function HubScaffold({
         )}
       </header>
 
+      {showOnboarding
+        ? wrap(
+            "HubOnboardingCard",
+            <HubOnboardingCard
+              onDismiss={onOnboardingDismiss ?? (() => {})}
+            />,
+          )
+        : null}
+
       <section className="hub-scaffold-body">
         <div className="hub-scaffold-side hub-scaffold-side--left">
-          <div className="hub-scaffold-mastery-title" aria-hidden="true">
-            <img src="/art/scene-rooted/pieces-title-mastery.png" alt="" />
-            <span>Practice<br />Pieces</span>
-            <small>Train &amp; Master</small>
+          <div className="hub-scaffold-rail-header" data-rail="left">
+            LEARN
           </div>
           {wrap("RewardColumn", <RewardColumn tiles={rewardTiles} />)}
         </div>
@@ -238,19 +277,40 @@ export function HubScaffold({
                 <img src="/art/redesign/pieces/w-king.png" alt="" />
               </picture>
             </div>
-            {wrap(
-              "PrimaryPlayCta",
-              <PrimaryPlayCta
-                surface="playhub"
-                label={playLabel}
-                ariaLabel={playAriaLabel}
-                onPress={onPlayPress}
-                pieceIconSrc="/art/new-icons-chesscito/play-chess.png"
-              />,
+            {heroCta ? (
+              wrap(
+                "HubHeroCta",
+                <button
+                  type="button"
+                  aria-label={heroCta.ariaLabel}
+                  onClick={heroCta.onPress}
+                  className={`hub-scaffold-hero hub-scaffold-hero--${heroCta.color}`}
+                >
+                  <span className="hub-scaffold-hero-label">{heroCta.label}</span>
+                  <span className="hub-scaffold-hero-sub">{heroCta.sub}</span>
+                </button>,
+              )
+            ) : (
+              wrap(
+                "PrimaryPlayCta",
+                <PrimaryPlayCta
+                  surface="playhub"
+                  label={playLabel}
+                  ariaLabel={playAriaLabel}
+                  onPress={onPlayPress}
+                  pieceIconSrc="/art/new-icons-chesscito/play-chess.png"
+                />,
+              )
             )}
+            {onArenaPress ? (
+              wrap("SecondaryCta", <SecondaryCta onPress={onArenaPress} />)
+            ) : null}
           </footer>
         </div>
         <div className="hub-scaffold-side hub-scaffold-side--right">
+          <div className="hub-scaffold-rail-header" data-rail="right">
+            UNLOCK
+          </div>
           {showPremiumSlot
             ? wrap(
                 "PremiumSlot",

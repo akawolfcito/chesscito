@@ -741,19 +741,18 @@ export const LABYRINTH_COPY = {
 } as const;
 
 export const DOCK_LABELS = {
-  /** Center tab — routes to /arena. Short name matches the route + the
-   *  page's own title ("Arena"). Previous label "Free Play" was
-   *  ambiguous ("is there Paid Play?"). */
-  arena: "Arena",
-  /** Center tab on /arena — routes back to the piece-practice surface. */
+  /** v1 5-slot taxonomy (SPEC 1 D7). The dock is destination-shaped
+   *  not action-shaped: each slot is a route or hub sheet. */
+  home: "Home",
   pieces: "Pieces",
-  /** Item labels — only rendered when the tab is active so the dock
-   *  stays compact + the active state feels like a lift out of the
-   *  bar. Trophies replaced Invite in the primary dock: Invite is a
-   *  transient share action (lives in About + Victory share), while
-   *  Trophies is a retention destination that earns a persistent slot. */
-  badge: "Badges",
   shop: "Shop",
+  board: "Board",
+  settings: "Settings",
+  /** Legacy labels still referenced by destination sheets (leaderboard-
+   *  sheet, trophies-sheet) for their own aria-labels. Kept as exports
+   *  rather than inlined to preserve editorial as the single source. */
+  arena: "Arena",
+  badge: "Badges",
   trophies: "Trophies",
   leaderboard: "Leaders",
 } as const;
@@ -828,8 +827,8 @@ export const HUB_V2_MASTERY_COPY = {
 /** Hub V2 Training Pass band (design-lock §1.5 + §2.3).
  *  Active state replaces V1's `<PremiumSlot>` strings; inactive state
  *  surfaces the upgrade pitch. Atmosphere shift trigger lives in the
- *  scaffold (see `HubScaffoldV2Client.handlePurchaseSuccess`); the band
- *  only emits `hub_v2_training_band_tap` per design-lock §5. */
+ *  hub scaffold's purchase-success handler; the band only emits
+ *  `hub_v2_training_band_tap` per design-lock §5. */
 export const HUB_V2_TRAINING_COPY = {
   active: {
     kicker: "Training Pass",
@@ -1959,5 +1958,126 @@ export const REWARD_COPY = {
         : state === "progress"
           ? "Victory in progress"
           : "No victory ready — win an Arena match",
+  },
+} as const;
+
+// =============================================================================
+// SPEC 1 — Hub Redesign copy blocks
+// =============================================================================
+
+export const PROFILE_COPY = {
+  pageTitle: "Profile",
+  pendingClaimsHeader: "Pending claims",
+  generalStatsHeader: "General stats",
+  walletLabel: "Wallet",
+  networkLabel: "Network",
+  disconnect: "Disconnect wallet",
+  manage: "Manage",
+  refreshAria: "Refresh pending claims",
+} as const;
+
+export const DISPLAY_NAME_COPY = {
+  dialogTitle: "Choose your name",
+  placeholder: "Up to 20 characters",
+  save: "Save",
+  cancel: "Cancel",
+  visitor: "Visitor",
+} as const;
+
+export const TIER_LABELS = {
+  visitor: "Visitor",
+  apprentice: "Apprentice",
+  trainee: "Trainee",
+  knight: "Knight",
+  wizard: "Wizard",
+  grandmaster: "Grandmaster",
+} as const;
+
+export const TIER_THRESHOLDS = {
+  trainee: 25,
+  knight: 75,
+  wizard: 200,
+  grandmaster: 500,
+} as const;
+
+export const CLAIM_COPY = {
+  kinds: {
+    badge: "{name} badge",
+    score: "Save score · {points} pts",
+    victoryNft: "Mint your victory · {difficulty}",
+  },
+  claimVerb: "Claim",
+  costGasOnly: "gas only",
+  costEstimateUsd: "~${amount}",
+  inFlightLabel: "In flight — reconnect to verify",
+  refreshAria: "Refresh",
+  emptyAria: "No pending claims",
+} as const;
+
+export const HERO_CTA_COPY = {
+  newPlayer: {
+    label: "START WITH PIECES",
+    sub: "learn the rook first",
+    variant: "amber" as const,
+  },
+  dailyPending: {
+    label: "PLAY TODAY'S TACTIC",
+    sub: "today's tactic awaits",
+    variant: "blue" as const,
+  },
+  defaultCaughtUp: {
+    label: "CONTINUE TRAINING",
+    sub: "tap a tile to pick",
+    variant: "amber" as const,
+  },
+} as const;
+
+export const SECONDARY_CTA_COPY = {
+  arena: {
+    label: "Enter Arena",
+    ariaLabel: "Enter Arena — full chess vs AI",
+  },
+} as const;
+
+export const HUB_ONBOARDING_COPY = {
+  title: "Welcome to Chesscito",
+  body: "Train your brain with chess puzzles. Master one piece at a time. Graduate to Arena when ready.",
+  dismissLabel: "Got it",
+} as const;
+
+export const LEADERBOARD_TABS_COPY = {
+  tabs: {
+    puzzlesWeek: "Puzzles this week",
+    arenaWins: "Arena wins",
+  },
+} as const;
+
+export const PRO_DROP_COPY = {
+  /** OPERATIONAL: update this constant in the same commit as the on-chain
+   *  shop catalog item update. See SPEC 1 §D12 P1-11. */
+  current: "Knight's Tour",
+  activeLabel: "PRO · {puzzle} — solve the board",
+  inactiveLabel: "Unlock {puzzle} + monthly puzzles",
+} as const;
+
+export const SETTINGS_STUB_COPY = {
+  title: "Settings",
+  comingSoonTooltip: "Coming soon",
+  versionChipLabel: "Build {sha}",
+  themeToggleLabel: "Theme",
+  hapticsToggleLabel: "Haptics",
+  languageToggleLabel: "Language",
+} as const;
+
+export const HUB_RAIL_COPY = {
+  learnLabel: "LEARN",
+  unlockLabel: "UNLOCK",
+  tiles: {
+    daily: "Daily",
+    mate: "Mate K+R",
+    labyrinth: "Labyrinth",
+    proDrop: "PRO",
+    shop: "Shop",
+    badges: "Badges",
   },
 } as const;

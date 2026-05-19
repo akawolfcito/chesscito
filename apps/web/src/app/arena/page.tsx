@@ -15,7 +15,7 @@ import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
 import { ArenaSelectScaffold } from "@/components/arena/arena-select-scaffold";
 import { CoachPreviewCard } from "@/components/arena/coach-preview-card";
-import { PersistentDock, type DockTab } from "@/components/exercises/persistent-dock";
+import { PersistentDock } from "@/components/exercises/persistent-dock";
 import { BadgeSheet } from "@/components/exercises/badge-sheet";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
@@ -85,7 +85,14 @@ export default function ArenaPage() {
 function ArenaPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeDockTab, setActiveDockTab] = useState<DockTab>(null);
+  // Legacy state — kept alive for the sheets (badge/shop/trophies/
+  // leaderboard) that still mount as siblings to the dock. SPEC 1 D7
+  // removes those entries from the dock itself (no user-facing trigger
+  // remains on /arena), but the state setters are referenced by hooks
+  // below until those sheets are torn out in a follow-up.
+  const [activeDockTab, setActiveDockTab] = useState<
+    "badge" | "shop" | "trophies" | "leaderboard" | null
+  >(null);
   const openTrophiesFromBadgeSheet = useCallback(
     () => setActiveDockTab("trophies"),
     [],
@@ -1122,17 +1129,7 @@ function ArenaPageInner() {
             className="arena-select-dock-shell shrink-0 relative z-[60] pointer-events-auto"
             style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           >
-            <PersistentDock
-              activeDockTab={activeDockTab}
-              badgeControl={navIcon("/art/badge-menu.png", "Badges", handleOpenBadgeSheet)}
-              shopControl={navIcon("/art/shop-menu.png", "Shop", handleOpenShopSheet)}
-              trophiesControl={
-                <TrophiesSheet open={trophiesOpen} onOpenChange={setTrophiesOpen} />
-              }
-              leaderboardControl={
-                <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
-              }
-            />
+            <PersistentDock />
             <BadgeSheet
               {...badgeSheet.sheetProps}
               onOpenChange={handleBadgeSheetOpenChange}
@@ -1201,17 +1198,7 @@ function ArenaPageInner() {
           className="shrink-0 relative z-[60] pointer-events-auto"
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         >
-          <PersistentDock
-            activeDockTab={activeDockTab}
-            badgeControl={navIcon("/art/badge-menu.png", "Badges", handleOpenBadgeSheet)}
-            shopControl={navIcon("/art/shop-menu.png", "Shop", handleOpenShopSheet)}
-            trophiesControl={
-              <TrophiesSheet open={trophiesOpen} onOpenChange={setTrophiesOpen} />
-            }
-            leaderboardControl={
-              <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} />
-            }
-          />
+          <PersistentDock />
           <BadgeSheet
             {...badgeSheet.sheetProps}
             onOpenChange={handleBadgeSheetOpenChange}

@@ -29,7 +29,7 @@ const connectors = connectorsForWallets(
   }
 );
 
-const wagmiConfig = createConfig({
+export const wagmiConfig = createConfig({
   chains: [celo, celoSepolia],
   connectors,
   transports: {

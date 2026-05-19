@@ -16,15 +16,10 @@ vi.mock("@/components/hub/hub-scaffold-client", () => ({
   HubScaffoldClient: () => ({ type: "HubScaffoldClient", props: {} }),
 }));
 
-vi.mock("@/components/hub/hub-scaffold-v2-client", () => ({
-  HubScaffoldV2Client: () => ({ type: "HubScaffoldV2Client", props: {} }),
-}));
-
 import HubPage from "../page";
 
 type SearchParamsLike = {
   legacy?: string | string[];
-  hub?: string | string[];
   piece?: string | string[];
   action?: string | string[];
   sheet?: string | string[];
@@ -52,14 +47,6 @@ describe("/hub page (server)", () => {
   describe("default → scaffold", () => {
     it("renders <HubScaffoldClient /> when no flags are present", () => {
       const el = renderPage({});
-      expect((el?.type as unknown as { name: string }).name).toBe(
-        "HubScaffoldClient",
-      );
-      expect(redirectMock).not.toHaveBeenCalled();
-    });
-
-    it("renders <HubScaffoldClient /> for the canary alias `?hub=new`", () => {
-      const el = renderPage({ hub: "new" });
       expect((el?.type as unknown as { name: string }).name).toBe(
         "HubScaffoldClient",
       );

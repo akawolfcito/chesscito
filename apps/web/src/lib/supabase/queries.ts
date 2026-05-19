@@ -207,3 +207,53 @@ export async function upsertPassportCache(
     .from("passport_cache")
     .upsert(normalized, { onConflict: "player" });
 }
+
+// ---------------------------------------------------------------------------
+// Profile stats aggregate
+// ---------------------------------------------------------------------------
+
+export type ProfileStats = {
+  trophies: number;
+  arenaWins: number;
+  nftsMinted: number;
+  dailyStreak: number;
+  puzzlesSolved: number;
+};
+
+/**
+ * Aggregate stats for the Profile modal. Each field defaults to 0 on a
+ * per-source failure so a single bad query never blanks the profile.
+ *
+ * Composition:
+ * - `arenaWins`, `nftsMinted` — derived from `fetchPlayerVictories` (one
+ *   row per victory mint; counts coincide for v1).
+ * - `trophies`, `dailyStreak`, `puzzlesSolved` — client-side surfaces
+ *   (badges read on-chain, daily streak + puzzle counters live in
+ *   localStorage); defaulted server-side to 0 and overridden client-side
+ *   by the consuming hook when those sources are available.
+ */
+export async function getProfileStats(
+  address: `0x${string}` | string
+): Promise<ProfileStats> {
+  const player = address.toLowerCase();
+
+  let arenaWins = 0;
+  let nftsMinted = 0;
+  try {
+    const rows = await fetchPlayerVictories(player);
+    arenaWins = rows.length;
+    nftsMinted = rows.length;
+  } catch {
+    arenaWins = 0;
+    nftsMinted = 0;
+  }
+
+  // client-side, defaulted server-side to 0 (on-chain badges)
+  const trophies = 0;
+  // client-side, defaulted server-side to 0 (localStorage streak)
+  const dailyStreak = 0;
+  // client-side, defaulted server-side to 0 (localStorage puzzle counters)
+  const puzzlesSolved = 0;
+
+  return { trophies, arenaWins, nftsMinted, dailyStreak, puzzlesSolved };
+}

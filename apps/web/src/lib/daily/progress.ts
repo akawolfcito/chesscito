@@ -93,6 +93,13 @@ export function recordDailyCompletion(today: string = todayUtc()): DailyProgress
   return next;
 }
 
+/** Lifetime count of solved daily tactics — drives the Hero CTA's
+ *  "new player" branch (0 exercises AND 0 daily history). Cheap
+ *  localStorage read; safe to call from render. */
+export function getDailyHistoryCount(): number {
+  return getDailyProgress().totalCompleted;
+}
+
 /** True when today's tactic is already done. Cheap UI guard. */
 export function isCompletedToday(
   today: string = todayUtc(),

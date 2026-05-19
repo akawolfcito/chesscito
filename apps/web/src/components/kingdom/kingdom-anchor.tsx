@@ -24,7 +24,7 @@ const ASPECT_RATIO: Record<KingdomAnchorVariant, string> = {
   "landing-hero": "1.5 / 1",
 };
 
-const HERO_ASSET_BASE = "/art/redesign/bg/splash-loading";
+const HERO_ASSET_BASE = "/art/scene-rooted/portal-centered";
 const BOARD_ASSET_BASE = "/art/redesign/board/board-ch";
 const PIECES_ASSET_BASE = "/art/redesign/pieces";
 

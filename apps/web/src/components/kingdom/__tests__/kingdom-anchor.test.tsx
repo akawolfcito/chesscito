@@ -11,17 +11,17 @@ describe("KingdomAnchor", () => {
     expect(sources).toHaveLength(2);
     expect(sources[0]).toHaveAttribute(
       "srcset",
-      "/art/redesign/bg/splash-loading.avif",
+      "/art/scene-rooted/portal-centered.avif",
     );
     expect(sources[0]).toHaveAttribute("type", "image/avif");
     expect(sources[1]).toHaveAttribute(
       "srcset",
-      "/art/redesign/bg/splash-loading.webp",
+      "/art/scene-rooted/portal-centered.webp",
     );
     expect(sources[1]).toHaveAttribute("type", "image/webp");
 
     const img = container.querySelector("img");
-    expect(img).toHaveAttribute("src", "/art/redesign/bg/splash-loading.png");
+    expect(img).toHaveAttribute("src", "/art/scene-rooted/portal-centered.png");
   });
 
   it("defaults to the playhub variant with the portal-centered aspect-ratio", () => {
@@ -60,11 +60,11 @@ describe("KingdomAnchor", () => {
     expect(boardImg).toHaveAttribute("src", "/art/redesign/board/board-ch.png");
   });
 
-  it("does NOT render the splash-loading hero asset in the arena-preview variant", () => {
+  it("does NOT render the portal-centered hero asset in the arena-preview variant", () => {
     const { container } = render(<KingdomAnchor variant="arena-preview" />);
     const sources = container.querySelectorAll("source");
     sources.forEach((s) => {
-      expect(s.getAttribute("srcset")).not.toContain("splash-loading");
+      expect(s.getAttribute("srcset")).not.toContain("portal-centered");
     });
   });
 

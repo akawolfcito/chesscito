@@ -21,9 +21,10 @@ import { track } from "@/lib/telemetry";
  *  Atmosphere shift orchestration: the band exposes an `onActivate`
  *  callback that fires once on the `active: false → true` transition
  *  (NOT on initial mount). The actual `hub_atmosphere_shift` telemetry
- *  + state change live in `<HubScaffoldV2Client>` (Phase 3 commit 1) —
- *  Phase 7 wires `band.onActivate` into the scaffold if a band-driven
- *  trigger is needed beyond the existing ProSheet receipt path. */
+ *  + state change live in the hub scaffold's purchase-success handler;
+ *  the rails reframe (Phase 5) wires `band.onActivate` into the
+ *  scaffold if a band-driven trigger is needed beyond the existing
+ *  ProSheet receipt path. */
 
 export type TrainingPassBandProps = {
   active: boolean;
