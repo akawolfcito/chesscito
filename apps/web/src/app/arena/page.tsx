@@ -1177,18 +1177,22 @@ function ArenaPageInner() {
               {...badgeSheet.sheetProps}
               onOpenChange={handleBadgeSheetOpenChange}
               onNavigateToTrophies={handleBadgeNavigateToTrophies}
+              showTrigger={false}
             />
             <ShopSheet
               {...shopSheet.sheetProps}
               onOpenChange={handleShopSheetOpenChange}
+              showTrigger={false}
             />
             <TrophiesSheet
               open={activeDockTab === "trophies"}
               onOpenChange={(v) => setActiveDockTab(v ? "trophies" : null)}
+              showTrigger={false}
             />
             <LeaderboardSheet
               open={activeDockTab === "leaderboard"}
               onOpenChange={(v) => setActiveDockTab(v ? "leaderboard" : null)}
+              showTrigger={false}
             />
             <PurchaseConfirmSheet {...shopSheet.confirmProps} />
             <ProSheet {...proSheet.sheetProps} />
@@ -1254,18 +1258,22 @@ function ArenaPageInner() {
             {...badgeSheet.sheetProps}
             onOpenChange={handleBadgeSheetOpenChange}
             onNavigateToTrophies={handleBadgeNavigateToTrophies}
+            showTrigger={false}
           />
           <ShopSheet
             {...shopSheet.sheetProps}
             onOpenChange={handleShopSheetOpenChange}
+            showTrigger={false}
           />
           <TrophiesSheet
             open={activeDockTab === "trophies"}
             onOpenChange={(v) => setActiveDockTab(v ? "trophies" : null)}
+            showTrigger={false}
           />
           <LeaderboardSheet
             open={activeDockTab === "leaderboard"}
             onOpenChange={(v) => setActiveDockTab(v ? "leaderboard" : null)}
+            showTrigger={false}
           />
           <PurchaseConfirmSheet {...shopSheet.confirmProps} />
           <ProSheet {...proSheet.sheetProps} />

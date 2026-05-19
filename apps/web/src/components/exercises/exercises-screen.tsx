@@ -1804,10 +1804,12 @@ export function ExercisesScreen({
         <TrophiesSheet
           open={trophiesSheetOpen}
           onOpenChange={setTrophiesSheetOpen}
+          showTrigger={false}
         />
         <LeaderboardSheet
           open={leaderboardOpen}
           onOpenChange={setLeaderboardOpen}
+          showTrigger={false}
         />
       </main>
     </div>
