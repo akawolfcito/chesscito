@@ -4665,16 +4665,17 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
 }
 
-/* Compact side-by-side variant: at 390px viewport each pill is ~139px
-   wide, so icon + label are tuned to fit a 2-line stacked label
-   ("TRAIN" / "PIECES", "ENTER" / "ARENA") without horizontal clipping. */
+/* Side-by-side pills at the root footer — each pill ~181px wide on a
+   390px viewport (root padding 8px each side, gap 12px). Squat "candy
+   chunky" proportions: icon ~28% of pill width, 2-line label fills the
+   right column. */
 .hub-scaffold-practice-cta {
   flex: 1 1 0;
   min-width: 0;
   width: auto;
   max-width: none;
-  min-height: 62px;
-  font-size: 0.72rem;
+  min-height: 78px;
+  font-size: 0.85rem;
   background: url("/art/hub/cta-principal.png") center / 100% 100% no-repeat;
   filter: drop-shadow(0 6px 10px rgba(120, 60, 0, 0.28));
 }
@@ -4684,8 +4685,8 @@ button.hud-resource-chip:active:not(:disabled) {
   min-width: 0;
   width: auto;
   max-width: none;
-  min-height: 62px;
-  font-size: 0.72rem;
+  min-height: 78px;
+  font-size: 0.85rem;
   background: url("/art/hub/cta-secondary.png") center / 100% 100% no-repeat;
   filter: drop-shadow(0 6px 10px rgba(8, 40, 90, 0.32));
   text-shadow: 0 2px 0 rgba(8, 30, 60, 0.65);
@@ -4703,8 +4704,8 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px;
-  padding: 4px 6px 12px 6px;
+  gap: 6px;
+  padding: 6px 10px 14px 8px;
 }
 
 .hub-scaffold-cta-row .primary-play-cta-piece-icon {
@@ -4712,9 +4713,9 @@ button.hud-resource-chip:active:not(:disabled) {
   transform: none;
   top: auto;
   left: auto;
-  flex: 0 0 40px;
-  width: 40px;
-  height: 40px;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
 }
 
 /* `word-spacing: 100vw` forces each word onto its own row so
@@ -4771,7 +4772,7 @@ button.hud-resource-chip:active:not(:disabled) {
   margin: 0 auto;
   min-height: 100dvh;
   padding: 14px 0px 18px;
-  gap: 10px;
+  gap: 6px;
   background-color: var(--adv-deep-blue);
   /* Forest-path adventure scene introduced 2026-05-05. AVIF/WebP triplet
      mirrors bg-app pipeline (5f1a162). Source asset ships at 852x1846
@@ -4808,7 +4809,7 @@ button.hud-resource-chip:active:not(:disabled) {
   grid-template-columns: 78px minmax(0, 1fr) 78px;
   align-items: center;
   /* gap: 8px; */
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   /* padding-top: 8px; */
 }
@@ -5108,13 +5109,29 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 8px;
 }
 
-.hub-scaffold-footer {
+/* Inner stack inside `.hub-scaffold-center`. Holds MissionRibbon,
+   guide sequence, and (optional) heroCta. Previously named
+   `.hub-scaffold-footer` — renamed to free that class for the new
+   root-level footer that hosts the CTA row. */
+.hub-scaffold-center-stack {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 15px;
   width: 100%;
   padding-top: 0;
+}
+
+/* Root-level CTA footer — sibling of `.hub-scaffold-body`. Sits at
+   the bottom of the viewport (body has `flex: 1`, so the footer
+   stays anchored at the bottom of the 100dvh column). Horizontal
+   padding gives the CTA pills breathing room from the viewport edge. */
+.hub-scaffold-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: 0 8px;
 }
 
 .hub-scaffold-guide {

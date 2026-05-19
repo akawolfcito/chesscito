@@ -157,10 +157,10 @@ describe("HubScaffold", () => {
     ).toBeNull();
   });
 
-  it("mounts the MissionRibbon hub variant in the footer", () => {
+  it("mounts the MissionRibbon hub variant in the center stack", () => {
     const { container } = render(<HubScaffold {...baseProps} />);
     expect(
-      container.querySelector(".hub-scaffold-footer .mission-ribbon--hub"),
+      container.querySelector(".hub-scaffold-center-stack .mission-ribbon--hub"),
     ).not.toBeNull();
   });
 

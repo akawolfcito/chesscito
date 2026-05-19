@@ -232,7 +232,7 @@ export function HubScaffold({
           <div className="hub-scaffold-anchor">
             {wrap("KingdomAnchor", <KingdomAnchor variant="playhub" />)}
           </div>
-          <footer className="hub-scaffold-footer">
+          <div className="hub-scaffold-center-stack">
             {wrap("MissionRibbon", <MissionRibbon surface="hub" />)}
             <div className="hub-scaffold-guide" aria-hidden="true">
               <picture className="hub-scaffold-guide-piece">
@@ -275,37 +275,7 @@ export function HubScaffold({
                 />,
               )
             ) : null}
-            {secondaryAction || onArenaPress ? (
-              <div className="hub-scaffold-cta-row">
-                {secondaryAction
-                  ? wrap(
-                      "PrimaryPlayCta",
-                      <PrimaryPlayCta
-                        surface="playhub"
-                        label={secondaryAction.label}
-                        ariaLabel={secondaryAction.ariaLabel}
-                        onPress={secondaryAction.onPress}
-                        className="hub-scaffold-practice-cta"
-                        pieceIconSrc="/art/hub/train-pieces.png"
-                      />,
-                    )
-                  : null}
-                {onArenaPress
-                  ? wrap(
-                      "ArenaCta",
-                      <PrimaryPlayCta
-                        surface="playhub"
-                        label={SECONDARY_CTA_COPY.arena.label}
-                        ariaLabel={SECONDARY_CTA_COPY.arena.ariaLabel}
-                        onPress={onArenaPress}
-                        className="hub-scaffold-arena-cta"
-                        pieceIconSrc="/art/hub/enter-arena.png"
-                      />,
-                    )
-                  : null}
-              </div>
-            ) : null}
-          </footer>
+          </div>
         </div>
         <div className="hub-scaffold-side hub-scaffold-side--right">
           {showPremiumSlot ? (
@@ -349,6 +319,39 @@ export function HubScaffold({
           )}
         </div>
       </section>
+
+      <footer className="hub-scaffold-footer">
+        {secondaryAction || onArenaPress ? (
+          <div className="hub-scaffold-cta-row">
+            {secondaryAction
+              ? wrap(
+                  "PrimaryPlayCta",
+                  <PrimaryPlayCta
+                    surface="playhub"
+                    label={secondaryAction.label}
+                    ariaLabel={secondaryAction.ariaLabel}
+                    onPress={secondaryAction.onPress}
+                    className="hub-scaffold-practice-cta"
+                    pieceIconSrc="/art/hub/new-train-pieces1.png"
+                  />,
+                )
+              : null}
+            {onArenaPress
+              ? wrap(
+                  "ArenaCta",
+                  <PrimaryPlayCta
+                    surface="playhub"
+                    label={SECONDARY_CTA_COPY.arena.label}
+                    ariaLabel={SECONDARY_CTA_COPY.arena.ariaLabel}
+                    onPress={onArenaPress}
+                    className="hub-scaffold-arena-cta"
+                    pieceIconSrc="/art/hub/new-enter-arena1.png"
+                  />,
+                )
+              : null}
+          </div>
+        ) : null}
+      </footer>
     </main>
   );
 }
