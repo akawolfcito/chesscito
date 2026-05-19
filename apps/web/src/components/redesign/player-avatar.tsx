@@ -9,7 +9,7 @@ type Variant = {
 
 const VARIANTS: Record<PlayerAvatarVariant, Variant> = {
   you: {
-    src: "/art/new-icons-chesscito/avatar-blue 1.png",
+    src: "/art/new-icons-chesscito/avatar-blue.png",
     defaultAlt: "You",
   },
   bot: {

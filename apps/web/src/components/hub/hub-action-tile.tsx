@@ -37,6 +37,8 @@ export function HubActionTile({
     >
       <span className="reward-tile-label">{label}</span>
       <picture className="reward-tile-piece">
+        <source srcSet={iconSrc.replace(/\.png$/, ".avif")} type="image/avif" />
+        <source srcSet={iconSrc.replace(/\.png$/, ".webp")} type="image/webp" />
         <img src={iconSrc} alt="" aria-hidden="true" />
       </picture>
       {badge}

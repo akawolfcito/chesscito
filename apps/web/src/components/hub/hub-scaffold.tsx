@@ -240,11 +240,11 @@ export function HubScaffold({
                 <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
                 <img src="/art/redesign/pieces/w-pawn.png" alt="" />
               </picture>
-              <img
-                src="/art/scene-rooted/guide-secuencia.png"
-                alt=""
-                className="hub-scaffold-guide-sequence"
-              />
+              <picture className="hub-scaffold-guide-sequence">
+                <source srcSet="/art/scene-rooted/guide-secuencia.avif" type="image/avif" />
+                <source srcSet="/art/scene-rooted/guide-secuencia.webp" type="image/webp" />
+                <img src="/art/scene-rooted/guide-secuencia.png" alt="" />
+              </picture>
               <picture className="hub-scaffold-guide-piece">
                 <source srcSet="/art/redesign/pieces/w-king.avif" type="image/avif" />
                 <source srcSet="/art/redesign/pieces/w-king.webp" type="image/webp" />
@@ -332,7 +332,7 @@ export function HubScaffold({
                     ariaLabel={secondaryAction.ariaLabel}
                     onPress={secondaryAction.onPress}
                     className="hub-scaffold-practice-cta"
-                    pieceIconSrc="/art/hub/new-train-pieces1.png"
+                    pieceIconSrc="/art/hub/train-pieces.png"
                   />,
                 )
               : null}
@@ -345,7 +345,7 @@ export function HubScaffold({
                     ariaLabel={SECONDARY_CTA_COPY.arena.ariaLabel}
                     onPress={onArenaPress}
                     className="hub-scaffold-arena-cta"
-                    pieceIconSrc="/art/hub/new-enter-arena1.png"
+                    pieceIconSrc="/art/hub/enter-arena.png"
                   />,
                 )
               : null}

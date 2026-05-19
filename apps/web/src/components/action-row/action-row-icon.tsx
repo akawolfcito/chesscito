@@ -24,14 +24,18 @@ export function ActionRowIcon({ name, className = "", alt = "" }: Props) {
   const iconBase = ["ejercicio-diario-chess", "learning", "play-chess", "practice-pieces", "save"].includes(name)
     ? "/art/new-icons-chesscito"
     : "/art/action-row";
+  const base = `${iconBase}/${name}`;
 
   return (
-    <img
-      src={`${iconBase}/${name}.png`}
-      alt={alt}
-      aria-hidden={alt ? undefined : "true"}
-      className={className}
-      draggable={false}
-    />
+    <picture className={className}>
+      <source srcSet={`${base}.avif`} type="image/avif" />
+      <source srcSet={`${base}.webp`} type="image/webp" />
+      <img
+        src={`${base}.png`}
+        alt={alt}
+        aria-hidden={alt ? undefined : "true"}
+        draggable={false}
+      />
+    </picture>
   );
 }

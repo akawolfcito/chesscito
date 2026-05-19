@@ -95,13 +95,16 @@ function RewardTileButton({
         <CandyIcon name="check" className="reward-tile-status reward-tile-status--claimed" />
       ) : null}
       {tile.state === "claimable" ? (
-        <img
-          src="/art/scene-rooted/punto-alerta-notificacion.png"
-          alt=""
-          aria-hidden="true"
-          data-testid="reward-tile-notif"
-          className="reward-tile-notif"
-        />
+        <picture className="reward-tile-notif">
+          <source srcSet="/art/scene-rooted/punto-alerta-notificacion.avif" type="image/avif" />
+          <source srcSet="/art/scene-rooted/punto-alerta-notificacion.webp" type="image/webp" />
+          <img
+            src="/art/scene-rooted/punto-alerta-notificacion.png"
+            alt=""
+            aria-hidden="true"
+            data-testid="reward-tile-notif"
+          />
+        </picture>
       ) : null}
       {tile.state === "locked" ? (
         <CandyIcon name="lock" className="reward-tile-lock" />
