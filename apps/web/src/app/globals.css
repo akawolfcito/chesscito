@@ -2386,31 +2386,6 @@
     opacity: .55; cursor: not-allowed;
   }
 
-  /* === hub onboarding card (first launch, single dismiss) === */
-  .hub-onboarding-card {
-    display: flex; flex-direction: column; gap: .5rem;
-    padding: 1rem;
-    background: linear-gradient(180deg, #2a2245, #1b1530);
-    border: 2px solid #f4d97a; border-radius: 14px;
-    color: #f5edd8; font-family: var(--font-game-display);
-    box-shadow: 0 6px 18px rgba(0,0,0,.4);
-  }
-  .hub-onboarding-card-title {
-    margin: 0; font-size: 1rem; font-weight: 800;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
-  }
-  .hub-onboarding-card-body {
-    margin: 0; font-size: .85rem; line-height: 1.35;
-    color: #d8cdb8;
-  }
-  .hub-onboarding-card-dismiss {
-    align-self: flex-end; min-height: 44px;
-    padding: 0 1rem; border-radius: 10px;
-    background: linear-gradient(180deg, #cf2d2d, #7a1818);
-    color: #fff; border: 1.5px solid #f4d97a;
-    font-family: inherit; font-weight: 700; font-size: .9rem;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
-  }
 
   /* === profile pending claims === */
   .profile-pending-claims {

@@ -2039,12 +2039,6 @@ export const SECONDARY_CTA_COPY = {
   },
 } as const;
 
-export const HUB_ONBOARDING_COPY = {
-  title: "Welcome to Chesscito",
-  body: "Train your brain with chess puzzles. Master one piece at a time. Graduate to Arena when ready.",
-  dismissLabel: "Got it",
-} as const;
-
 export const LEADERBOARD_TABS_COPY = {
   tabs: {
     puzzlesWeek: "Puzzles this week",
