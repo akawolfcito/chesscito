@@ -2401,54 +2401,6 @@
     opacity: .55; cursor: not-allowed;
   }
 
-  /* === hub onboarding card (first launch, single dismiss) ===
-     Phase 9 candy polish — wooden-scroll surface (candy-frame amber)
-     with warm-brown copy and a candy-frame-gold dismiss button. The
-     "first kindly welcome" lives inside the hub atmosphere instead
-     of contrasting against it with a dark plaque. */
-  .hub-onboarding-card {
-    display: flex; flex-direction: column; gap: .5rem;
-    padding: 1rem;
-    background: linear-gradient(180deg, #f6cf63 0%, #d4a836 100%);
-    border: 2px solid rgba(110, 65, 15, 0.55);
-    border-radius: 14px;
-    color: rgba(63, 34, 8, 0.95);
-    font-family: var(--font-game-display);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.30);
-    box-shadow:
-      0 4px 0 rgba(110, 65, 15, 0.45),
-      0 6px 14px rgba(0, 0, 0, 0.35),
-      inset 0 2px 0 rgba(255, 255, 255, 0.30),
-      inset 0 -2px 0 rgba(110, 65, 15, 0.20);
-  }
-  .hub-onboarding-card-title {
-    margin: 0; font-size: 1rem; font-weight: 800;
-    color: rgba(50, 25, 5, 0.95);
-  }
-  .hub-onboarding-card-body {
-    margin: 0; font-size: .85rem; line-height: 1.35;
-    color: rgba(63, 34, 8, 0.85);
-  }
-  .hub-onboarding-card-dismiss {
-    align-self: flex-end; min-height: 44px;
-    padding: 0 1.25rem; border-radius: 12px;
-    background: linear-gradient(180deg, #ffe066 0%, #f6a400 100%);
-    color: rgba(50, 25, 5, 0.95);
-    border: 2px solid rgba(120, 65, 5, 0.65);
-    font-family: inherit; font-weight: 800; font-size: .9rem;
-    letter-spacing: 0.04em;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.30);
-    box-shadow:
-      0 3px 0 rgba(120, 65, 5, 0.55),
-      inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    transition: transform var(--duration-snap), box-shadow var(--duration-snap);
-  }
-  .hub-onboarding-card-dismiss:active {
-    transform: translateY(2px);
-    box-shadow:
-      0 1px 0 rgba(120, 65, 5, 0.55),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  }
 
   /* === profile pending claims === */
   .profile-pending-claims {

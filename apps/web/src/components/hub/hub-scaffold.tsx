@@ -8,7 +8,6 @@ import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-colum
 import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { PremiumSlot } from "@/components/pro-mission/premium-slot";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
-import { HubOnboardingCard } from "@/components/hub/onboarding-card";
 import { SecondaryCta } from "@/components/hub/secondary-cta";
 import { HUD_COPY } from "@/lib/content/editorial";
 
@@ -91,11 +90,6 @@ type HubScaffoldProps = {
   /** Secondary CTA "Enter Arena" — calm link below the Hero (SPEC 1 D5).
    *  Renders only when wired so legacy surfaces opt in explicitly. */
   onArenaPress?: () => void;
-  /** First-launch onboarding card mount (SPEC 1 D14). Props ship in
-   *  Task 5.3 but the JSX mount lands in Task 5.4 to keep this commit
-   *  focused on rails + Hero. */
-  showOnboarding?: boolean;
-  onOnboardingDismiss?: () => void;
   onError?: (
     context: import("@/components/error/primitive-boundary").PrimitiveBoundaryErrorContext,
   ) => void;
@@ -142,8 +136,6 @@ export function HubScaffold({
   showPremiumSlot = false,
   heroCta,
   onArenaPress,
-  showOnboarding = false,
-  onOnboardingDismiss,
   onError,
 }: HubScaffoldProps) {
   const proValue = pro.active
@@ -224,15 +216,6 @@ export function HubScaffold({
           />,
         )}
       </header>
-
-      {showOnboarding
-        ? wrap(
-            "HubOnboardingCard",
-            <HubOnboardingCard
-              onDismiss={onOnboardingDismiss ?? (() => {})}
-            />,
-          )
-        : null}
 
       <section className="hub-scaffold-body">
         <div className="hub-scaffold-side hub-scaffold-side--left">

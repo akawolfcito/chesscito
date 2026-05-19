@@ -38,7 +38,7 @@ export function AboutMethodology() {
       >
         <li>
           <span
-            className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold"
+            className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
             style={{
               background: "rgba(255, 245, 215, 0.55)",
               borderColor: "rgba(110, 65, 15, 0.28)",
@@ -51,7 +51,7 @@ export function AboutMethodology() {
         </li>
         <li>
           <span
-            className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold"
+            className="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
             style={{
               background: "rgba(255, 245, 215, 0.55)",
               borderColor: "rgba(110, 65, 15, 0.28)",

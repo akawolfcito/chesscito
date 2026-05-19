@@ -71,7 +71,7 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
             <span className="victory-card-id">
               {TROPHY_VITRINE_COPY.cardIdPrefix} #{String(entry.tokenId)}
             </span>
-            <span className="text-[10px] font-bold text-[rgba(63,34,8,0.50)] uppercase tracking-widest">
+            <span className="text-nano font-bold text-[rgba(63,34,8,0.50)] uppercase tracking-widest">
               {formatDate(entry.timestamp)}
             </span>
           </div>
@@ -96,14 +96,14 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
             <div className="flex flex-1 items-center gap-2 rounded-xl bg-[rgba(63,34,8,0.06)] p-2 border border-[rgba(63,34,8,0.10)]">
               <CandyIcon name="move" className="h-4 w-4 text-[rgba(63,34,8,0.60)]" />
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase text-[rgba(63,34,8,0.40)] leading-none">Moves</span>
+                <span className="text-nano font-bold uppercase text-[rgba(63,34,8,0.40)] leading-none">Moves</span>
                 <span className="text-sm font-black tabular-nums leading-none mt-1 text-[rgba(63,34,8,0.90)]">{entry.totalMoves}</span>
               </div>
             </div>
             <div className="flex flex-1 items-center gap-2 rounded-xl bg-[rgba(63,34,8,0.06)] p-2 border border-[rgba(63,34,8,0.10)]">
               <CandyIcon name="time" className="h-4 w-4 text-[rgba(63,34,8,0.60)]" />
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase text-[rgba(63,34,8,0.40)] leading-none">Time</span>
+                <span className="text-nano font-bold uppercase text-[rgba(63,34,8,0.40)] leading-none">Time</span>
                 <span className="text-sm font-black tabular-nums leading-none mt-1 text-[rgba(63,34,8,0.90)]">{formatTimeMs(entry.timeMs)}</span>
               </div>
             </div>
@@ -111,8 +111,8 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
 
           <div className="mt-6 flex items-center justify-between gap-4">
             <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] font-bold uppercase text-[rgba(63,34,8,0.40)] tracking-wider">Player</span>
-              <span className="text-[10px] font-mono text-[rgba(63,34,8,0.70)]">{truncateAddress(entry.player)}</span>
+              <span className="text-nano font-bold uppercase text-[rgba(63,34,8,0.40)] tracking-wider">Player</span>
+              <span className="text-xs font-mono text-[rgba(63,34,8,0.70)]">{truncateAddress(entry.player)}</span>
             </div>
             <button
               type="button"
@@ -125,7 +125,7 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
           </div>
           
           {toast && (
-            <p className="absolute -bottom-6 left-0 right-0 text-center text-[10px] font-bold text-emerald-700 animate-in fade-in">
+            <p className="absolute -bottom-6 left-0 right-0 text-center text-xs font-bold text-emerald-700 animate-in fade-in">
               {toast}
             </p>
           )}
@@ -143,17 +143,17 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
             {difficultyLabel}
           </CandyChip>
           {isHoF && (
-            <span className="text-[10px] text-[rgba(63,34,8,0.60)] font-mono">
+            <span className="text-xs text-[rgba(63,34,8,0.60)] font-mono">
               {truncateAddress(entry.player)}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-[10px] font-bold uppercase text-[rgba(63,34,8,0.75)]">
+          <span className="flex items-center gap-1 text-nano font-bold uppercase text-[rgba(63,34,8,0.75)]">
             <CandyIcon name="move" className="h-3 w-3 text-amber-600" />
             {entry.totalMoves}
           </span>
-          <span className="flex items-center gap-1 text-[10px] font-bold uppercase text-[rgba(63,34,8,0.75)]">
+          <span className="flex items-center gap-1 text-nano font-bold uppercase text-[rgba(63,34,8,0.75)]">
             <CandyIcon name="time" className="h-3 w-3 text-amber-600" />
             {formatTimeMs(entry.timeMs)}
           </span>
@@ -161,7 +161,7 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
       </div>
       
       <div className="flex flex-col items-end gap-1">
-        <span className="text-[10px] font-bold text-[rgba(63,34,8,0.40)] uppercase tracking-widest">
+        <span className="text-nano font-bold text-[rgba(63,34,8,0.40)] uppercase tracking-widest">
           {formatDate(entry.timestamp)}
         </span>
         {!isHoF && (
@@ -179,7 +179,7 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
       </div>
 
       {toast && (
-        <p className="absolute right-14 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-700 animate-in fade-in">
+        <p className="absolute right-14 top-1/2 -translate-y-1/2 text-xs font-bold text-emerald-700 animate-in fade-in">
           {toast}
         </p>
       )}

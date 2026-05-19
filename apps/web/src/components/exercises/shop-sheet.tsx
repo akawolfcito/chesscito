@@ -187,7 +187,7 @@ export function ShopSheet({
           <button
             type="button"
             aria-label="Shop"
-            className="relative flex shrink-0 items-center justify-center text-cyan-100/70"
+            className="relative flex shrink-0 items-center justify-center"
           >
             <img
               src="/art/shop-menu.png"
@@ -302,7 +302,7 @@ export function ShopSheet({
                 <p className="text-xs font-bold" style={{ color: "rgba(110, 65, 15, 0.85)" }}>
                   {SHOP_SHEET_COPY.moreSoonTitle}
                 </p>
-                <p className="text-[10px]" style={{ color: "rgba(110, 65, 15, 0.60)" }}>
+                <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.60)" }}>
                   {SHOP_SHEET_COPY.moreSoonHint}
                 </p>
               </div>

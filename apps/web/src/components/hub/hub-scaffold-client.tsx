@@ -16,7 +16,6 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
 import { useClaimQueue } from "@/hooks/use-claim-queue";
-import { useHubOnboarding } from "@/hooks/use-hub-onboarding";
 import {
   getHeroContextAction,
   type HeroContextState,
@@ -178,10 +177,9 @@ export function HubScaffoldClient({
   const initialSheetOpenedRef = useRef(false);
   const proTrainingCardViewedRef = useRef(false);
 
-  // SPEC 1 D9/D10/D14 wiring — Profile sheet, Settings stub, onboarding.
+  // SPEC 1 D9/D10 wiring — Profile sheet, Settings stub.
   const [profileOpen, setProfileOpen] = useState(initialSheet === "profile");
   const [settingsOpen, setSettingsOpen] = useState(initialSheet === "settings");
-  const { hasSeenOnboarding, dismiss: dismissOnboarding } = useHubOnboarding();
   // `useClaimQueue` reads pending claims out of localStorage on mount;
   // the unread count drives the avatar notif-dot once the HUD slot
   // exists (deferred — see project note).
@@ -414,11 +412,6 @@ export function HubScaffoldClient({
           onPress: handleHeroPress,
         }}
         onArenaPress={handleArenaPress}
-        showOnboarding={!hasSeenOnboarding}
-        onOnboardingDismiss={() => {
-          dismissOnboarding();
-          track("hub_onboarding_dismissed");
-        }}
       />
       <ProSheet {...proSheet.sheetProps} />
       <BadgeSheet {...badgeSheet.sheetProps} />

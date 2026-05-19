@@ -92,14 +92,14 @@ export function VictoryClaiming({
                   );
                 })}
               </div>
-              <p className="text-[10px] font-bold text-amber-900/60">
+              <p className="text-xs font-bold text-amber-900/60">
                 {VICTORY_CLAIM_COPY.progressTimeHint}
               </p>
               {/* Exit shortcut */}
               <button
                 type="button"
                 onClick={onBackToHub}
-                className="mt-1 w-full py-2 text-[11px] font-black uppercase tracking-[0.22em] text-amber-900/80 transition-opacity hover:opacity-100"
+                className="mt-1 w-full py-2 text-xs font-black uppercase tracking-[0.22em] text-amber-900/80 transition-opacity hover:opacity-100"
               >
                 {ARENA_COPY.backToHub}
               </button>
@@ -115,11 +115,11 @@ export function VictoryClaiming({
               </div>
               
               <div className="mt-1.5 flex flex-col items-center gap-0.5">
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-900/60">
+                <span className="text-nano font-black uppercase tracking-[0.25em] text-amber-900/60">
                   {VICTORY_CELEBRATION_COPY.title}
                 </span>
                 <h2
-                  className="fantasy-title animate-pulse text-[32px] font-extrabold leading-tight tracking-tight text-amber-900/90"
+                  className="fantasy-title animate-pulse text-3xl font-extrabold leading-tight tracking-tight text-amber-900/90"
                   style={{
                     textShadow: "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 8px rgba(245, 158, 11, 0.30)",
                   }}
@@ -130,7 +130,7 @@ export function VictoryClaiming({
             </div>
 
             {/* Performance line */}
-            <p className="max-w-[260px] text-[12px] font-bold leading-relaxed text-amber-900/80">
+            <p className="max-w-[260px] text-xs font-bold leading-relaxed text-amber-900/80">
               {VICTORY_CELEBRATION_COPY.performanceLineCheckmate(moves, time)}
             </p>
 

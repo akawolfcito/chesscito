@@ -27,7 +27,7 @@ export function ConnectButton() {
         href="https://docs.celo.org/build/build-on-minipay/quickstart"
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition-colors hover:border-primary/30 hover:text-primary"
+        className="inline-flex items-center rounded-full border border-amber-700/40 bg-amber-50/90 px-3 py-2 text-xs font-medium text-amber-900/85 transition-colors hover:border-amber-700/70 hover:bg-amber-100 hover:text-amber-900"
       >
         {CONNECT_BUTTON_COPY.openInMiniPay}
       </Link>
