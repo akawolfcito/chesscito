@@ -286,7 +286,7 @@ export function HubScaffold({
                         ariaLabel={secondaryAction.ariaLabel}
                         onPress={secondaryAction.onPress}
                         className="hub-scaffold-practice-cta"
-                        pieceIconSrc="/art/new-icons-chesscito/practice-pieces.png"
+                        pieceIconSrc="/art/hub/train-pieces.png"
                       />,
                     )
                   : null}
@@ -299,7 +299,7 @@ export function HubScaffold({
                         ariaLabel={SECONDARY_CTA_COPY.arena.ariaLabel}
                         onPress={onArenaPress}
                         className="hub-scaffold-arena-cta"
-                        pieceIconSrc="/art/new-icons-chesscito/play-chess.png"
+                        pieceIconSrc="/art/hub/enter-arena.png"
                       />,
                     )
                   : null}

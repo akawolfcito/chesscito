@@ -4610,43 +4610,76 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
 }
 
+/* Compact side-by-side variant: at 390px viewport each pill is ~139px
+   wide, so icon + label are tuned to fit a 2-line stacked label
+   ("TRAIN" / "PIECES", "ENTER" / "ARENA") without horizontal clipping. */
 .hub-scaffold-practice-cta {
   flex: 1 1 0;
   min-width: 0;
   width: auto;
   max-width: none;
-  min-height: 58px;
-  padding: 10px 12px 15px 48px;
-  font-size: 0.85rem;
+  min-height: 62px;
+  font-size: 0.72rem;
   background: url("/art/hub/cta-principal.png") center / 100% 100% no-repeat;
   filter: drop-shadow(0 6px 10px rgba(120, 60, 0, 0.28));
 }
 
 .hub-scaffold-arena-cta {
-  position: relative;
   flex: 1 1 0;
   min-width: 0;
   width: auto;
   max-width: none;
-  min-height: 58px;
-  padding: 10px 12px 15px 48px;
-  font-size: 0.85rem;
+  min-height: 62px;
+  font-size: 0.72rem;
   background: url("/art/hub/cta-secondary.png") center / 100% 100% no-repeat;
   filter: drop-shadow(0 6px 10px rgba(8, 40, 90, 0.32));
   text-shadow: 0 2px 0 rgba(8, 30, 60, 0.65);
   color: #f4f8ff;
 }
 
-.hub-scaffold-arena-cta .primary-play-cta-label {
-  z-index: 1;
+/* Real 2-column flex layout inside each pill — icon left, label right.
+   The default primitive uses absolute positioning for the piece icon,
+   which collides with text when the icon grows. Forcing flex flow
+   prevents overlap and lets the label wrap into two centered lines.
+   Asymmetric vertical padding compensates for the PNG's bottom lip
+   (the darker rim isn't part of the pill's usable face). */
+.hub-scaffold-cta-row .primary-play-cta {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 4px 6px 12px 6px;
 }
 
-/* Piece icon sits flush-left inside the pill; tighten from the
-   default 22px so a two-up row reads as a sibling pair. */
 .hub-scaffold-cta-row .primary-play-cta-piece-icon {
-  left: 10px;
-  width: 32px;
-  height: 32px;
+  position: static;
+  transform: none;
+  top: auto;
+  left: auto;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+}
+
+/* `word-spacing: 100vw` forces each word onto its own row so
+   "TRAIN PIECES" / "ENTER ARENA" read as two stacked lines.
+   `padding-right` narrows the label's column so its centered text
+   shifts slightly left toward the pill's optical center.
+   Overrides the `translateY(-5px)` from `.primary-play-cta--playhub`. */
+.hub-scaffold-cta-row .primary-play-cta-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block;
+  padding-right: 8px;
+  text-align: center;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.05;
+  word-spacing: 100vw;
+  white-space: normal;
+  transform: none;
+  z-index: 1;
 }
 
 /* Compact size for the Arena entry surface — smaller dominant CTA that
