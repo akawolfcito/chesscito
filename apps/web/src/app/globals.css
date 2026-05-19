@@ -4765,6 +4765,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .hub-scaffold {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   width: 100%;
   max-width: var(--app-max-width);
   margin: 0 auto;
@@ -5129,7 +5130,7 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-direction: column;
   align-items: stretch;
   width: 100%;
-  padding: 0 8px;
+  padding: 0px 0px 50px;
 }
 
 .hub-scaffold-guide {
