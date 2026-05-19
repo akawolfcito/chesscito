@@ -2041,6 +2041,15 @@ export const DAILY_BADGE_COPY = {
   ariaLabel: "Today's daily tactic is ready — tap to play",
 } as const;
 
+/** Hub right-rail action tile labels. Short titles (≤6 chars) that
+ *  sit inside the locked-piece tile below the icon, mirroring the
+ *  LEARN rail tile labels ("Rook", "Bishop", …). */
+export const HUB_ACTION_RAIL_COPY = {
+  dailyLabel: "Daily",
+  arenaLabel: "Arena",
+  coachLabel: "Coach",
+} as const;
+
 export const SECONDARY_CTA_COPY = {
   arena: {
     label: "Enter Arena",

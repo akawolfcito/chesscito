@@ -13,7 +13,7 @@ import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { StonePedestal } from "@/components/scene-rooted/stone-pedestal";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
-import { HUD_COPY } from "@/lib/content/editorial";
+import { HUB_ACTION_RAIL_COPY, HUD_COPY } from "@/lib/content/editorial";
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
  *  `color` drives the visual tint (amber = default/onboarding, blue =
@@ -319,29 +319,44 @@ export function HubScaffold({
           {wrap(
             "HubActionRail",
             <div className="hub-action-rail">
-              <DailyTacticSlot />
-              <MiniArenaBridgeSlot
-                setup={MINI_ARENA_SETUPS[0]}
-                unlocked={miniArenaUnlocked}
-                renderLocked
-              />
-              {onCoachTap ? (
-                <StonePedestal
-                  stone={2}
-                  size="large"
-                  className="action-row-pedestal hub-action-rail-coach"
-                  icon={
-                    <img
-                      src="/art/new-icons-chesscito/training.png"
-                      alt=""
-                      aria-hidden="true"
-                      className="h-14 w-14 object-contain"
-                      draggable={false}
-                    />
-                  }
-                  onClick={onCoachTap}
-                  aria-label={HUD_COPY.coachAriaLabel}
+              <div className="hub-action-tile">
+                <DailyTacticSlot />
+                <span className="hub-action-tile-label">
+                  {HUB_ACTION_RAIL_COPY.dailyLabel}
+                </span>
+              </div>
+              <div className="hub-action-tile">
+                <MiniArenaBridgeSlot
+                  setup={MINI_ARENA_SETUPS[0]}
+                  unlocked={miniArenaUnlocked}
+                  renderLocked
                 />
+                <span className="hub-action-tile-label">
+                  {HUB_ACTION_RAIL_COPY.arenaLabel}
+                </span>
+              </div>
+              {onCoachTap ? (
+                <div className="hub-action-tile">
+                  <StonePedestal
+                    stone={2}
+                    size="large"
+                    className="action-row-pedestal hub-action-rail-coach"
+                    icon={
+                      <img
+                        src="/art/new-icons-chesscito/training.png"
+                        alt=""
+                        aria-hidden="true"
+                        className="h-14 w-14 object-contain"
+                        draggable={false}
+                      />
+                    }
+                    onClick={onCoachTap}
+                    aria-label={HUD_COPY.coachAriaLabel}
+                  />
+                  <span className="hub-action-tile-label">
+                    {HUB_ACTION_RAIL_COPY.coachLabel}
+                  </span>
+                </div>
               ) : null}
             </div>,
           )}

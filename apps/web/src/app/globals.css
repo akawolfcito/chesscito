@@ -4820,23 +4820,53 @@ button.hud-resource-chip:active:not(:disabled) {
   background-repeat: no-repeat;
 }
 
-/* Re-center the icon. Default `.stone-pedestal-icon` sits at
- * `top: -10%` (stone-resting feel); `.action-row-pedestal .stone-
- * pedestal-icon` overrides to `top: -14%`. On the locked-piece tile
- * we want the icon centered like the LEARN tiles, so we use a 3-class
- * selector to outrank the action-row-pedestal rule. */
+/* Position the icon in the upper portion of the locked-piece tile so
+ * the bottom area is free for the label, mirroring the LEARN tile
+ * layout (icon top, label bottom). The 3-class selector outranks
+ * `.action-row-pedestal .stone-pedestal-icon { top: -14% }`. */
 .hub-action-rail .stone-pedestal.action-row-pedestal .stone-pedestal-icon,
 .hub-action-rail .stone-pedestal .stone-pedestal-icon {
-  top: 50%;
-  transform: translate(-50%, -50%);
+  top: 4px;
+  transform: translateX(-50%);
 }
 
-/* Match LEARN reward-tile-piece visual mass (~42px). Overrides the
+/* Match LEARN reward-tile-piece visual mass (~38px). Overrides the
  * Tailwind h-14/w-14 (56px) baked into ActionRowIcon callers. */
 .hub-action-rail .stone-pedestal .stone-pedestal-icon img,
 .hub-action-rail .stone-pedestal .stone-pedestal-icon picture {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
+}
+
+/* Wrapper that hosts a pedestal + an absolute-positioned label.
+ * Width matches the pedestal so labels line up with the icon column
+ * inside the 60×60 locked-piece tile. */
+.hub-action-tile {
+  position: relative;
+  display: inline-flex;
+  width: 60px;
+}
+
+/* Label sits at the base of the locked-piece tile, mirroring the
+ * LEARN `.reward-tile-label` (white text on the dark gray plate). */
+.hub-action-tile-label {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fff8e9;
+  text-transform: capitalize;
+  text-shadow:
+    0 2px 0 rgba(35, 42, 45, 0.72),
+    0 0 5px rgba(20, 24, 27, 0.32);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  z-index: 2;
+  pointer-events: none;
 }
 
 /* SPEC 1 D1 — Rail headers (LEARN / UNLOCK). Promoted to a carved
