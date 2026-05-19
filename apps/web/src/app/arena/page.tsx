@@ -154,6 +154,23 @@ function ArenaPageInner() {
     track("arena_select_view");
   }, [arenaScaffoldEnabled, game.status]);
 
+  // Dock sheet deep-link (Sally F6) — when the dock pushes
+  // `/arena?sheet=shop|pro` from another route the param fires the
+  // matching mounted sheet here instead of bouncing the user back to
+  // /hub. Single-shot via ref to avoid reopening after the user closes.
+  const arenaSheetDeepLinkRef = useRef<string | null>(null);
+  useEffect(() => {
+    const sheet = searchParams?.get("sheet");
+    if (!sheet || arenaSheetDeepLinkRef.current === sheet) return;
+    if (sheet === "shop") {
+      arenaSheetDeepLinkRef.current = sheet;
+      shopSheet.openSheet();
+    } else if (sheet === "pro") {
+      arenaSheetDeepLinkRef.current = sheet;
+      proSheet.openSheet();
+    }
+  }, [searchParams, shopSheet, proSheet]);
+
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
   const { writeContractAsync } = useWriteContract();

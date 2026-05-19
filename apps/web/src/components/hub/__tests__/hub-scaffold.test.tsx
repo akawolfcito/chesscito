@@ -247,9 +247,17 @@ describe("HubScaffold", () => {
       expect(screen.getByText("LEARN")).toBeInTheDocument();
     });
 
-    it("renders 'UNLOCK' as the right-rail header", () => {
-      render(<HubScaffold {...baseProps} />);
+    it("renders 'UNLOCK' as the right-rail header when the rail body is mounted", () => {
+      // Sally F4 — the UNLOCK pill is dead weight without the PremiumSlot
+      // beneath it, so the header only mounts alongside the body. The
+      // showPremiumSlot prop is the canonical gate.
+      render(<HubScaffold {...baseProps} showPremiumSlot />);
       expect(screen.getByText("UNLOCK")).toBeInTheDocument();
+    });
+
+    it("does not render 'UNLOCK' when the right rail has no body", () => {
+      render(<HubScaffold {...baseProps} />);
+      expect(screen.queryByText("UNLOCK")).not.toBeInTheDocument();
     });
   });
 
@@ -262,11 +270,15 @@ describe("HubScaffold", () => {
       onPress: vi.fn(),
     };
 
-    it("renders the hero button with label/sub and amber color by default", () => {
+    it("renders the hero button as a single line with amber color by default", () => {
+      // Sally F2 — the Hero CTA collapsed to a single line (label only).
+      // The sub field stays in the prop contract so future variants can
+      // opt back in, but the default render no longer surfaces it.
       render(<HubScaffold {...baseProps} heroCta={heroAmber} />);
       const btn = screen.getByRole("button", { name: "CONTINUE TRAINING" });
       expect(btn.className).toMatch(/hub-scaffold-hero--amber/);
-      expect(screen.getByText("tap a tile to pick")).toBeInTheDocument();
+      expect(btn.className).toMatch(/hub-scaffold-hero--single/);
+      expect(screen.queryByText("tap a tile to pick")).not.toBeInTheDocument();
     });
 
     it("renders the hero button in blue when daily-pending", () => {

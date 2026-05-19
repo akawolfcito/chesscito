@@ -26,6 +26,21 @@ const ITEMS: ReadonlyArray<Item> = [
   { id: "settings", label: DOCK_LABELS.settings, icon: "shield", href: "/hub?sheet=settings" },
 ];
 
+/** Sally F6 — Shop is mounted both on /hub and /arena. When the player
+ *  taps the dock from /arena, deep-link to the *current* route instead of
+ *  bouncing them home; the arena page picks up `?sheet=shop` and opens
+ *  the mounted sheet in place. Settings stays anchored to /hub because
+ *  the stub only mounts there for v1.  */
+const SHEET_AWARE_ROUTES = new Set(["/arena"]);
+
+function resolveDockHref(item: Item, pathname: string): string {
+  if (item.id !== "shop") return item.href;
+  if (SHEET_AWARE_ROUTES.has(pathname)) {
+    return `${pathname}?sheet=shop`;
+  }
+  return item.href;
+}
+
 export function PersistentDock() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
@@ -33,6 +48,7 @@ export function PersistentDock() {
     <nav className="chesscito-dock" aria-label="Game navigation">
       {ITEMS.map((item) => {
         const isActive = Boolean(item.activeWhen && pathname.startsWith(item.activeWhen));
+        const href = resolveDockHref(item, pathname);
         return (
           <div
             key={item.id}
@@ -45,7 +61,7 @@ export function PersistentDock() {
               aria-current={isActive ? "page" : undefined}
               onClick={() => {
                 track("dock_tap", { item: item.id });
-                router.push(item.href);
+                router.push(href);
               }}
             >
               <CandyIcon name={item.icon} className="h-full w-full p-1" />
