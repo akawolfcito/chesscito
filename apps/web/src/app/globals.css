@@ -3654,7 +3654,7 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   gap: 14px;
   width: 100%;
-  padding: 14px 5px;
+  padding: 22px 5px 14px;
   border-radius: 16px;
   background:
     linear-gradient(180deg, rgba(33, 18, 6, 0.62) 0%, rgba(20, 11, 4, 0.55) 100%);
