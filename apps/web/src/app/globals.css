@@ -4553,6 +4553,15 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 -1px 0 rgba(15, 55, 100, 0.20);
 }
 
+/* Single-line modifier (Sally F2) — when the Hero card renders only
+ * the label (no sub), tighten the box so it stops looking like a
+ * banner. Color/sculpt variants stay the same. */
+.hub-scaffold-hero--single {
+  gap: 0;
+  min-height: 48px;
+  padding: 12px 18px;
+}
+
 .hub-scaffold-hero-label {
   font-size: 1rem;
   font-weight: 900;

@@ -267,10 +267,9 @@ export function HubScaffold({
                   type="button"
                   aria-label={heroCta.ariaLabel}
                   onClick={heroCta.onPress}
-                  className={`hub-scaffold-hero hub-scaffold-hero--${heroCta.color}`}
+                  className={`hub-scaffold-hero hub-scaffold-hero--single hub-scaffold-hero--${heroCta.color}`}
                 >
                   <span className="hub-scaffold-hero-label">{heroCta.label}</span>
-                  <span className="hub-scaffold-hero-sub">{heroCta.sub}</span>
                 </button>,
               )
             ) : (
