@@ -3414,13 +3414,12 @@
   border: 0;
   border-radius: 0;
   background-color: transparent;
-  box-shadow: none;
-  overflow: visible;
-}
-
-.kingdom-anchor--playhub .kingdom-anchor-img {
-  filter:
-    drop-shadow(0 0 18px var(--kingdom-warm-glow)) drop-shadow(0 12px 22px var(--kingdom-deep-shadow));
+  /* Halo kept as a soft rectangular box-shadow rather than a
+   * filter:drop-shadow on the inner img. The PNG is ~669×1040 and
+   * the parent runs a 4s scale animation; drop-shadow forced a paint
+   * storm every animation frame. Rectangular cast is barely visible
+   * thanks to the radial fade. */
+  box-shadow: 0 0 32px 6px var(--kingdom-warm-glow);
 }
 
 .kingdom-anchor-picture {
@@ -3813,11 +3812,13 @@ button.hud-resource-chip:active:not(:disabled) {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.55);
+    transform: scale(1);
+    opacity: 1;
   }
 
   60% {
-    box-shadow: 0 0 0 6px rgba(244, 63, 94, 0);
+    transform: scale(1.18);
+    opacity: 0.85;
   }
 }
 
@@ -4803,70 +4804,35 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
 }
 
-/* Match left-rail reward-tile width (60×60) so both rails read as
- * a balanced pair. Default `.stone-pedestal-large` is 64×64. */
-.hub-action-rail .stone-pedestal-large {
-  width: 60px;
-  height: 60px;
-}
-
-/* Use the same stone backplate that the LEARN rail uses for locked
- * pieces — keeps both rails visually unified. Overrides the
- * action-row-pedestal stone PNGs and `stone-pedestal-stone-N` vars. */
-.hub-action-rail .stone-pedestal {
-  background-image: url("/art/scene-rooted/piece-locked.png");
-  background-size: 100% 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-/* Position the icon in the upper portion of the locked-piece tile so
- * the bottom area is free for the label, mirroring the LEARN tile
- * layout (icon top, label bottom). The 3-class selector outranks
- * `.action-row-pedestal .stone-pedestal-icon { top: -14% }`. */
-.hub-action-rail .stone-pedestal.action-row-pedestal .stone-pedestal-icon,
-.hub-action-rail .stone-pedestal .stone-pedestal-icon {
-  top: 4px;
-  transform: translateX(-50%);
-}
-
-/* Match LEARN reward-tile-piece visual mass (~38px). Overrides the
- * Tailwind h-14/w-14 (56px) baked into ActionRowIcon callers. */
-.hub-action-rail .stone-pedestal .stone-pedestal-icon img,
-.hub-action-rail .stone-pedestal .stone-pedestal-icon picture {
-  width: 38px;
-  height: 38px;
-}
-
-/* Wrapper that hosts a pedestal + an absolute-positioned label.
- * Width matches the pedestal so labels line up with the icon column
- * inside the 60×60 locked-piece tile. */
-.hub-action-tile {
-  position: relative;
-  display: inline-flex;
-  width: 60px;
-}
-
-/* Label sits at the base of the locked-piece tile, mirroring the
- * LEARN `.reward-tile-label` (white text on the dark gray plate). */
-.hub-action-tile-label {
+/* Streak badge for the Daily Tactic tile — small rounded pill in the
+ * top-right corner, mirroring how the LEARN tile renders its notif/
+ * lock badges. Color tracks completion state (green = solved today,
+ * brown = streak pending). */
+.reward-tile-notif-streak {
   position: absolute;
-  bottom: 5px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  top: -3px;
+  right: -3px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(63, 34, 8, 0.92);
+  color: #fff5d7;
+  font-family: var(--font-game-display), system-ui, sans-serif;
   font-size: 0.65rem;
   font-weight: 800;
-  color: #fff8e9;
-  text-transform: capitalize;
-  text-shadow:
-    0 2px 0 rgba(35, 42, 45, 0.72),
-    0 0 5px rgba(20, 24, 27, 0.32);
-  letter-spacing: 0.02em;
   line-height: 1;
-  z-index: 2;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   pointer-events: none;
+}
+
+.reward-tile-notif-streak[data-state="completed"] {
+  background: rgba(34, 197, 94, 0.92);
+  color: #fff;
 }
 
 /* SPEC 1 D1 — Rail headers (LEARN / UNLOCK). Promoted to a carved
@@ -6100,12 +6066,11 @@ button.hud-resource-chip:active:not(:disabled) {
 
   0%,
   100% {
-    filter: drop-shadow(0 6px 0 var(--gold-leaf-shadow));
+    transform: scale(1);
   }
 
   50% {
-    filter:
-      drop-shadow(0 6px 0 var(--gold-leaf-shadow)) drop-shadow(0 0 14px var(--kingdom-warm-glow));
+    transform: scale(1.025);
   }
 }
 
