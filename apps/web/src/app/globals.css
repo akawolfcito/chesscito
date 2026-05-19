@@ -2124,18 +2124,11 @@
     transition: opacity 0.15s, transform var(--duration-snap);
   }
 
-  .chesscito-dock-item>button:active,
-  .chesscito-dock-item>[role="button"]:active {
-    transform: scale(0.92) translateY(1px);
-    transition: transform var(--duration-snap);
-  }
-
-  /* dock-treat-pressed on dock item images (no scale — button container handles it) */
-  .chesscito-dock-item>button:active img,
-  .chesscito-dock-item>[role="button"]:active img {
-    filter: brightness(0.65) saturate(0.6);
-    transition: filter var(--duration-snap);
-  }
+  /* Press feedback used to shrink + dim the icon — superseded by the
+     "float up + reveal label" interaction below. Kept here as comment
+     so the change is discoverable in blame:
+     .chesscito-dock-item>button:active { transform: scale(0.92) translateY(1px); }
+     .chesscito-dock-item>button:active img { filter: brightness(0.65) saturate(0.6); } */
 
   /* Asset-backed dock icon — <picture> wrapper fills the button hit area
      so the artwork scales like a sprite (BADGES / SHOP / LEADERS / center
@@ -2172,14 +2165,23 @@
     font-family: var(--font-game-action);
   }
 
-  .chesscito-dock-center.is-active {
+  /* All "looks active" states (route-match, hover, press, keyboard
+     focus) collapse to the same visual: lift + halo + drop-shadow +
+     reveal label. `:has()` lets the press state on the inner button
+     bubble its visual effect up to the container so the halo/scale
+     wrap the icon properly. */
+  .chesscito-dock-center.is-active,
+  .chesscito-dock-center:hover,
+  .chesscito-dock-center:focus-within,
+  .chesscito-dock-center:has(> button:active) {
     color: rgba(255, 240, 180, 0.95);
     transform: scale(1.18);
   }
 
-  /* Active-route halo behind the sprite — three redundant signals (halo +
-     scale + drop-shadow) so the active dock tab is unambiguous. */
-  .chesscito-dock-center.is-active::before {
+  .chesscito-dock-center.is-active::before,
+  .chesscito-dock-center:hover::before,
+  .chesscito-dock-center:focus-within::before,
+  .chesscito-dock-center:has(> button:active)::before {
     content: "";
     position: absolute;
     inset: -2px 4px 6px;
@@ -2192,27 +2194,35 @@
     pointer-events: none;
   }
 
-  .chesscito-dock-center.is-active img {
+  .chesscito-dock-center.is-active img,
+  .chesscito-dock-center:hover img,
+  .chesscito-dock-center:focus-within img,
+  .chesscito-dock-center:has(> button:active) img {
     filter:
       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 6px rgba(255, 200, 80, 0.45));
   }
 
-  .chesscito-dock-center:active {
-    transform: scale(0.92) translateY(1px);
-  }
-
-  /* Destination dock items — active state mirrors the center tab: scale up,
-     warm glow halo behind the sprite, label appears below. Keeps the user
-     oriented ("you are here") while matching the game-convention language
-     of the center button. */
-  .chesscito-dock-item.is-active {
+  /* Destination dock items — same "looks active" collapse. Route-match
+     (.is-active), hover, press (via :has), and keyboard focus all lift
+     the icon, paint the halo, and reveal the label. Defaults to icon-
+     only so the dock reads as a tidy sprite shelf at rest. */
+  .chesscito-dock-item {
     position: relative;
     isolation: isolate;
-    transform: scale(1.18);
     transition: transform var(--duration-snap, 120ms);
   }
 
-  .chesscito-dock-item.is-active::before {
+  .chesscito-dock-item.is-active,
+  .chesscito-dock-item:hover,
+  .chesscito-dock-item:focus-within,
+  .chesscito-dock-item:has(> button:active) {
+    transform: scale(1.18);
+  }
+
+  .chesscito-dock-item.is-active::before,
+  .chesscito-dock-item:hover::before,
+  .chesscito-dock-item:focus-within::before,
+  .chesscito-dock-item:has(> button:active)::before {
     content: "";
     position: absolute;
     inset: -2px 2px 6px;
@@ -2225,7 +2235,10 @@
     pointer-events: none;
   }
 
-  .chesscito-dock-item.is-active img {
+  .chesscito-dock-item.is-active img,
+  .chesscito-dock-item:hover img,
+  .chesscito-dock-item:focus-within img,
+  .chesscito-dock-item:has(> button:active) img {
     filter:
       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 6px rgba(255, 200, 80, 0.45));
   }
@@ -2233,10 +2246,9 @@
   .chesscito-dock-item-label {
     /* Floats below the icon without pushing the flex column height —
        keeps the dock bg + siblings perfectly still when an item
-       activates / deactivates. Always rendered so all 5 dock items
-       stay legible (icons alone read as ambiguous on first run);
-       active state lifts opacity + brightness to keep the focus
-       cue intact. */
+       activates / deactivates. Hidden by default (opacity 0) so the
+       dock reads as icon-only at rest; revealed on active/hover/press
+       via the shared selector group below. */
     position: absolute;
     left: 50%;
     bottom: -2px;
@@ -2247,11 +2259,14 @@
     pointer-events: none;
     font-family: var(--font-game-display);
     line-height: 1;
-    opacity: 0.65;
+    opacity: 0;
     transition: opacity var(--duration-snap, 120ms) ease;
   }
 
-  .chesscito-dock-item.is-active .chesscito-dock-item-label {
+  .chesscito-dock-item.is-active .chesscito-dock-item-label,
+  .chesscito-dock-item:hover .chesscito-dock-item-label,
+  .chesscito-dock-item:focus-within .chesscito-dock-item-label,
+  .chesscito-dock-item:has(> button:active) .chesscito-dock-item-label {
     opacity: 1;
   }
 
@@ -2261,6 +2276,15 @@
     left: 50%;
     bottom: -2px;
     transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity var(--duration-snap, 120ms) ease;
+  }
+
+  .chesscito-dock-center.is-active .game-label,
+  .chesscito-dock-center:hover .game-label,
+  .chesscito-dock-center:focus-within .game-label,
+  .chesscito-dock-center:has(> button:active) .game-label {
+    opacity: 1;
   }
 
   /* === profile tier badge === */
@@ -2914,11 +2938,17 @@
    ═══════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
 
-  .chesscito-dock-item>button:active,
-  .chesscito-dock-item>[role="button"]:active,
-  .chesscito-dock-item>button:active img,
-  .chesscito-dock-item>[role="button"]:active img,
-  .chesscito-dock-center:active img {
+  /* Disable the "float up" lift for users who opted out of motion.
+     Targets the new selector group that drives the active visual
+     (route-match + hover + press-via-:has + keyboard focus). */
+  .chesscito-dock-item.is-active,
+  .chesscito-dock-item:hover,
+  .chesscito-dock-item:focus-within,
+  .chesscito-dock-item:has(> button:active),
+  .chesscito-dock-center.is-active,
+  .chesscito-dock-center:hover,
+  .chesscito-dock-center:focus-within,
+  .chesscito-dock-center:has(> button:active) {
     transform: none !important;
     transition: none !important;
   }
