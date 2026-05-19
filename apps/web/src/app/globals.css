@@ -2249,99 +2249,192 @@
 
   /* === profile tier badge === */
   .profile-tier-badge {
-    display: inline-flex; flex-direction: column; align-items: center;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
     background: linear-gradient(180deg, #cf2d2d, #7a1818);
-    color: #fff; padding: 4px 8px 6px; border: 2px solid #f4d97a;
-    border-radius: 0 0 10px 10px; line-height: 1.1;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    color: #fff;
+    padding: 4px 8px 6px;
+    border: 2px solid #f4d97a;
+    border-radius: 0 0 10px 10px;
+    line-height: 1.1;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
     font-family: var(--font-game-display);
   }
-  .profile-tier-badge-title { font-size: 9px; font-weight: 800; }
-  .profile-tier-badge-xp { font-size: 14px; font-weight: 800; }
+
+  .profile-tier-badge-title {
+    font-size: 9px;
+    font-weight: 800;
+  }
+
+  .profile-tier-badge-xp {
+    font-size: 14px;
+    font-weight: 800;
+  }
 
   /* === profile banner === */
   .profile-banner {
-    display: grid; grid-template-columns: auto 1fr auto;
-    gap: .75rem; align-items: center;
-    padding: 1rem; background: linear-gradient(180deg, #2a2245, #1b1530);
-    border-bottom: 2px solid rgba(244,217,122,.35);
-    color: #f5edd8; font-family: var(--font-game-display);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: .75rem;
+    align-items: center;
+    padding: 1rem;
+    background: linear-gradient(180deg, #2a2245, #1b1530);
+    border-bottom: 2px solid rgba(244, 217, 122, .35);
+    color: #f5edd8;
+    font-family: var(--font-game-display);
   }
+
   .profile-banner-avatar-wrap {
-    width: 56px; height: 56px; border-radius: 12px;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
     border: 2px solid #f4d97a;
-    background: rgba(0,0,0,.35);
-    display: flex; align-items: center; justify-content: center;
+    background: rgba(0, 0, 0, .35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .profile-banner-avatar { font-size: 1.75rem; line-height: 1; }
-  .profile-banner-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+  .profile-banner-avatar {
+    font-size: 1.75rem;
+    line-height: 1;
+  }
+
+  .profile-banner-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
   .profile-banner-name-row {
-    display: flex; align-items: center; gap: .35rem; min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    min-width: 0;
   }
+
   .profile-banner-name {
-    font-size: 1rem; font-weight: 800; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    font-size: 1rem;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
   }
+
   .profile-banner-edit-pen {
-    width: 28px; height: 28px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 8px; border: 1px solid rgba(244,217,122,.35);
-    background: rgba(0,0,0,.25); color: #f5edd8;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid rgba(244, 217, 122, .35);
+    background: rgba(0, 0, 0, .25);
+    color: #f5edd8;
     font-size: .8rem;
   }
-  .profile-banner-tier-row { font-size: .8rem; color: #d8cdb8; }
-  .profile-banner-tier-title { font-weight: 700; }
+
+  .profile-banner-tier-row {
+    font-size: .8rem;
+    color: #d8cdb8;
+  }
+
+  .profile-banner-tier-title {
+    font-weight: 700;
+  }
+
   .profile-banner-wallet {
-    font-size: .7rem; color: #b8a888; letter-spacing: .03em;
+    font-size: .7rem;
+    color: #b8a888;
+    letter-spacing: .03em;
     font-variant-numeric: tabular-nums;
   }
-  .profile-banner-badge-slot { align-self: flex-start; }
+
+  .profile-banner-badge-slot {
+    align-self: flex-start;
+  }
 
   /* === profile display-name dialog === */
   .profile-name-dialog {
-    position: fixed; inset: 0; z-index: 80;
-    background: rgba(0,0,0,.55);
-    display: flex; align-items: center; justify-content: center;
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(0, 0, 0, .55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 1rem;
   }
+
   .profile-name-dialog-card {
-    width: 100%; max-width: 320px;
+    width: 100%;
+    max-width: 320px;
     background: linear-gradient(180deg, #1b1530, #0f0b22);
-    border: 2px solid #f4d97a; border-radius: 14px;
-    padding: 1rem; box-shadow: 0 10px 24px rgba(0,0,0,.5);
-    display: flex; flex-direction: column; gap: .75rem;
-    color: #f5edd8; font-family: var(--font-game-display);
+    border: 2px solid #f4d97a;
+    border-radius: 14px;
+    padding: 1rem;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .5);
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    color: #f5edd8;
+    font-family: var(--font-game-display);
   }
+
   .profile-name-dialog-title {
-    margin: 0; font-size: 1rem; font-weight: 800;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4); text-align: center;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
+    text-align: center;
   }
+
   .profile-name-dialog-input {
-    width: 100%; padding: .6rem .75rem;
-    background: rgba(0,0,0,.35); color: #fff;
-    border: 1.5px solid rgba(244,217,122,.5); border-radius: 10px;
-    font-family: inherit; font-size: .95rem;
+    width: 100%;
+    padding: .6rem .75rem;
+    background: rgba(0, 0, 0, .35);
+    color: #fff;
+    border: 1.5px solid rgba(244, 217, 122, .5);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: .95rem;
   }
+
   .profile-name-dialog-input:focus {
-    outline: none; border-color: #f4d97a;
-    box-shadow: 0 0 0 2px rgba(244,217,122,.3);
+    outline: none;
+    border-color: #f4d97a;
+    box-shadow: 0 0 0 2px rgba(244, 217, 122, .3);
   }
+
   .profile-name-dialog-actions {
-    display: flex; gap: .5rem; justify-content: flex-end;
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
   }
+
   .profile-name-dialog-cancel,
   .profile-name-dialog-save {
-    min-height: 44px; padding: 0 1rem; border-radius: 10px;
-    font-family: inherit; font-weight: 700; font-size: .9rem;
-    border: 1.5px solid rgba(0,0,0,.4);
+    min-height: 44px;
+    padding: 0 1rem;
+    border-radius: 10px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: .9rem;
+    border: 1.5px solid rgba(0, 0, 0, .4);
   }
+
   .profile-name-dialog-cancel {
-    background: rgba(40,30,55,.85); color: #d8cdb8;
+    background: rgba(40, 30, 55, .85);
+    color: #d8cdb8;
   }
+
   .profile-name-dialog-save {
     background: linear-gradient(180deg, #cf2d2d, #7a1818);
-    color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
     border-color: #f4d97a;
   }
 
@@ -2354,14 +2447,18 @@
      survives. The pill still reads as subordinate by silhouette and
      stature, not by feeling like a different material. */
   .hub-secondary-cta {
-    display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
     padding: .55rem 1.1rem;
     background: linear-gradient(180deg, rgba(255, 244, 210, 0.95) 0%, rgba(240, 205, 130, 0.92) 100%);
     color: rgba(63, 34, 8, 0.95);
     border: 2px solid rgba(110, 65, 15, 0.65);
     border-radius: 999px;
     font-family: var(--font-game-display), system-ui, sans-serif;
-    font-size: 1rem; font-weight: 800;
+    font-size: 1rem;
+    font-weight: 800;
     letter-spacing: 0.05em;
     text-shadow: 0 1px 0 rgba(255, 250, 230, 0.85);
     box-shadow:
@@ -2371,21 +2468,29 @@
       inset 0 -2px 0 rgba(110, 65, 15, 0.18);
     transition: transform var(--duration-snap), box-shadow var(--duration-snap), background var(--duration-snap);
   }
-  .hub-secondary-cta > span[aria-hidden="true"] {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 1.35rem; height: 1.35rem; border-radius: 999px;
+
+  .hub-secondary-cta>span[aria-hidden="true"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
     background: linear-gradient(180deg, #ffd66b 0%, #e69a1a 100%);
     color: rgba(40, 20, 0, 1);
     border: 1.5px solid rgba(110, 65, 15, 0.75);
-    font-size: .85rem; font-weight: 900;
+    font-size: .85rem;
+    font-weight: 900;
     line-height: 1;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
     transition: transform var(--duration-snap);
   }
+
   .hub-secondary-cta:hover,
   .hub-secondary-cta:active {
     background: linear-gradient(180deg, rgba(255, 248, 220, 0.97) 0%, rgba(245, 215, 145, 0.94) 100%);
   }
+
   .hub-secondary-cta:active {
     transform: translateY(2px);
     box-shadow:
@@ -2394,144 +2499,245 @@
       inset 0 2px 0 rgba(255, 255, 255, 0.45),
       inset 0 -1px 0 rgba(110, 65, 15, 0.18);
   }
-  .hub-secondary-cta:hover > span[aria-hidden="true"],
-  .hub-secondary-cta:active > span[aria-hidden="true"] {
+
+  .hub-secondary-cta:hover>span[aria-hidden="true"],
+  .hub-secondary-cta:active>span[aria-hidden="true"] {
     transform: translateX(3px);
   }
 
   /* === settings sheet stub (v1 placeholder) === */
   .settings-stub {
-    display: flex; flex-direction: column; gap: .75rem;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
     padding: 1rem;
-    color: #f5edd8; font-family: var(--font-game-display);
+    color: #f5edd8;
+    font-family: var(--font-game-display);
   }
+
   .settings-stub-title {
-    margin: 0; font-size: 1.1rem; font-weight: 800;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
   }
+
   .settings-stub-version {
-    font-size: .75rem; padding: 2px 8px;
-    background: rgba(0,0,0,.35); border: 1px solid rgba(244,217,122,.4);
-    border-radius: 999px; align-self: flex-start;
+    font-size: .75rem;
+    padding: 2px 8px;
+    background: rgba(0, 0, 0, .35);
+    border: 1px solid rgba(244, 217, 122, .4);
+    border-radius: 999px;
+    align-self: flex-start;
     color: #d8cdb8;
   }
+
   .settings-stub-toggles {
-    display: flex; flex-direction: column; gap: .5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
     margin-top: .25rem;
   }
+
   .settings-toggle {
-    min-height: 44px; padding: 0 1rem;
-    border-radius: 10px; border: 1.5px solid rgba(244,217,122,.4);
-    background: rgba(40,30,55,.85); color: #d8cdb8;
-    font-family: inherit; font-weight: 700; font-size: .9rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    border-radius: 10px;
+    border: 1.5px solid rgba(244, 217, 122, .4);
+    background: rgba(40, 30, 55, .85);
+    color: #d8cdb8;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: .9rem;
     text-align: left;
   }
+
   .settings-toggle--disabled {
-    opacity: .55; cursor: not-allowed;
+    opacity: .55;
+    cursor: not-allowed;
   }
 
 
   /* === profile pending claims === */
   .profile-pending-claims {
-    display: flex; flex-direction: column; gap: .5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
     padding: .75rem 1rem;
-    color: #f5edd8; font-family: var(--font-game-display);
+    color: #f5edd8;
+    font-family: var(--font-game-display);
   }
+
   .profile-pending-claims-header {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
+
   .profile-pending-claims-header h3 {
-    margin: 0; font-size: .9rem; font-weight: 800;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    margin: 0;
+    font-size: .9rem;
+    font-weight: 800;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
   }
+
   .profile-pending-claims-refresh {
-    width: 32px; height: 32px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 8px; border: 1px solid rgba(244,217,122,.35);
-    background: rgba(0,0,0,.25); color: #f5edd8;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid rgba(244, 217, 122, .35);
+    background: rgba(0, 0, 0, .25);
+    color: #f5edd8;
     font-size: 1rem;
   }
+
   .profile-pending-claims-list {
-    list-style: none; margin: 0; padding: 0;
-    display: flex; flex-direction: column; gap: .35rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
   }
+
   .profile-claim-row {
-    display: grid; grid-template-columns: 1fr auto auto;
-    gap: .5rem; align-items: center;
-    padding: .5rem .75rem; border-radius: 10px;
-    background: rgba(0,0,0,.3); border: 1px solid rgba(244,217,122,.25);
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: .5rem;
+    align-items: center;
+    padding: .5rem .75rem;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, .3);
+    border: 1px solid rgba(244, 217, 122, .25);
   }
-  .profile-claim-label { font-size: .85rem; font-weight: 700; }
-  .profile-claim-cost { font-size: .7rem; color: #d8cdb8; }
+
+  .profile-claim-label {
+    font-size: .85rem;
+    font-weight: 700;
+  }
+
+  .profile-claim-cost {
+    font-size: .7rem;
+    color: #d8cdb8;
+  }
+
   .profile-claim-inflight {
-    font-size: .7rem; color: #f4d97a; font-style: italic;
+    font-size: .7rem;
+    color: #f4d97a;
+    font-style: italic;
   }
+
   .profile-claim-cta {
-    min-height: 36px; padding: 0 .75rem;
-    border-radius: 8px; border: 1.5px solid #f4d97a;
+    min-height: 36px;
+    padding: 0 .75rem;
+    border-radius: 8px;
+    border: 1.5px solid #f4d97a;
     background: linear-gradient(180deg, #cf2d2d, #7a1818);
-    color: #fff; font-family: inherit; font-weight: 700; font-size: .8rem;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: .8rem;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
   }
 
   /* === profile general stats grid === */
   .profile-stats {
-    display: flex; flex-direction: column; gap: .5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
     padding: .75rem 1rem;
-    color: #f5edd8; font-family: var(--font-game-display);
+    color: #f5edd8;
+    font-family: var(--font-game-display);
   }
+
   .profile-stats-header {
-    margin: 0; font-size: .9rem; font-weight: 800;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    margin: 0;
+    font-size: .9rem;
+    font-weight: 800;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
   }
+
   .profile-stats-grid {
-    list-style: none; margin: 0; padding: 0;
-    display: grid; grid-template-columns: repeat(3, 1fr);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: .5rem;
   }
+
   .profile-stat-cell {
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
     padding: .5rem;
-    background: rgba(0,0,0,.3); border: 1px solid rgba(244,217,122,.25);
+    background: rgba(0, 0, 0, .3);
+    border: 1px solid rgba(244, 217, 122, .25);
     border-radius: 10px;
   }
+
   .profile-stat-cell-label {
-    font-size: .6rem; color: #d8cdb8; text-align: center;
+    font-size: .6rem;
+    color: #d8cdb8;
+    text-align: center;
     letter-spacing: .02em;
   }
+
   .profile-stat-cell-value {
-    font-size: 1rem; font-weight: 800;
-    text-shadow: 0 1px 0 rgba(0,0,0,.4);
+    font-size: 1rem;
+    font-weight: 800;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
     font-variant-numeric: tabular-nums;
   }
 
   /* === profile sheet utility row + disconnect === */
   .profile-utility-row {
-    display: grid; grid-template-columns: 1fr 1fr; gap: .5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
     padding: .75rem 1rem;
   }
+
   .profile-utility-card {
-    display: flex; flex-direction: column; gap: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     padding: .5rem .75rem;
-    background: rgba(0,0,0,.3); border: 1px solid rgba(244,217,122,.25);
+    background: rgba(0, 0, 0, .3);
+    border: 1px solid rgba(244, 217, 122, .25);
     border-radius: 10px;
-    color: #f5edd8; font-family: var(--font-game-display);
+    color: #f5edd8;
+    font-family: var(--font-game-display);
   }
-  .profile-utility-card > span:first-child {
-    font-size: .6rem; color: #d8cdb8; letter-spacing: .02em;
+
+  .profile-utility-card>span:first-child {
+    font-size: .6rem;
+    color: #d8cdb8;
+    letter-spacing: .02em;
   }
-  .profile-utility-card > span:last-child {
-    font-size: .85rem; font-weight: 700;
+
+  .profile-utility-card>span:last-child {
+    font-size: .85rem;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
+
   .profile-disconnect-link {
     align-self: center;
     margin-top: .5rem;
-    min-height: 44px; padding: 0 1rem;
-    background: transparent; color: rgba(244,217,122,.85);
-    border: 1.5px solid rgba(244,217,122,.45); border-radius: 10px;
+    min-height: 44px;
+    padding: 0 1rem;
+    background: transparent;
+    color: rgba(244, 217, 122, .85);
+    border: 1.5px solid rgba(244, 217, 122, .45);
+    border-radius: 10px;
     font-family: var(--font-game-display);
-    font-size: .85rem; font-weight: 700;
+    font-size: .85rem;
+    font-weight: 700;
   }
 
 }
@@ -3442,10 +3648,53 @@ button.hud-resource-chip:active:not(:disabled) {
    Vertical stack of up to 3 tiles + overflow indicator. Tiles surface
    claimable badges / Arena victories / future PRO daily challenges. */
 .reward-column {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  /* width: 76px; */
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 5px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(33, 18, 6, 0.62) 0%, rgba(20, 11, 4, 0.55) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 240, 200, 0.08),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.45),
+    0 4px 10px rgba(0, 0, 0, 0.28);
+}
+
+/* Connector dot between consecutive piece tiles. Sits inside the gap
+ * (gap = 14px, dot = 6px → top: -10px centers it). The last tile
+ * never gets a dot below it because the dot is owned by its
+ * successor — no successor, no dot. */
+.reward-column>.reward-tile {
+  position: relative;
+  z-index: 1;
+}
+
+.reward-column>.reward-tile+.reward-tile::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #fff6c2 0 30%, #f0c447 60%, #a47410 100%);
+  box-shadow:
+    0 0 6px rgba(255, 216, 120, 0.7),
+    inset 0 0 2px rgba(80, 50, 10, 0.35);
+  transform: translateX(-50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Dim variant — when the successor tile is still locked, the dot
+ * goes dark to signal "path not lit yet". */
+.reward-column>.reward-tile+.reward-tile.is-locked::before {
+  background: radial-gradient(circle at center, rgba(70, 55, 30, 0.55) 0 40%, rgba(30, 22, 10, 0.55) 75%, transparent 100%);
+  box-shadow: none;
 }
 
 .reward-tile {
@@ -4390,7 +4639,7 @@ button.hud-resource-chip:active:not(:disabled) {
   max-width: var(--app-max-width);
   margin: 0 auto;
   min-height: 100dvh;
-  padding: 14px 12px 18px;
+  padding: 14px 5px 18px;
   gap: 10px;
   background-color: var(--adv-deep-blue);
   /* Forest-path adventure scene introduced 2026-05-05. AVIF/WebP triplet
@@ -4441,12 +4690,28 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .hub-scaffold-side--left {
-  align-items: flex-start;
+  position: relative;
+  align-items: stretch;
   gap: 6px;
+  padding: 12px 5px 5px;
 }
 
 .hub-scaffold-side--right {
-  align-items: flex-end;
+  position: relative;
+  align-items: center;
+  padding-top: 20px;
+  gap: 10px;
+}
+
+/* Wraps the LEARN pill + RewardColumn so the pill can be centered on
+ * the column's top edge (not the rail's), and the column gets the
+ * same outer inset as its inner padding. */
+.hub-scaffold-rail-stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
 }
 
 .hub-scaffold-mastery-title {
@@ -4499,9 +4764,11 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: default;
   opacity: 0.78;
 }
+
 .mate-drills-tile-glyph {
   color: rgba(63, 34, 8, 0.55);
 }
+
 .mate-drills-tile-soon {
   position: absolute;
   bottom: 4px;
@@ -4553,6 +4820,7 @@ button.hud-resource-chip:active:not(:disabled) {
   transition: transform var(--duration-snap), box-shadow var(--duration-snap);
   cursor: pointer;
 }
+
 .hub-daily-badge:active {
   transform: translateY(1px);
   box-shadow:
@@ -4560,11 +4828,13 @@ button.hud-resource-chip:active:not(:disabled) {
     0 2px 6px rgba(0, 0, 0, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
+
 .hub-daily-badge-spark {
   font-size: 0.95rem;
   line-height: 1;
   filter: drop-shadow(0 0 4px rgba(255, 215, 64, 0.85));
 }
+
 .hub-daily-badge-label {
   text-transform: uppercase;
 }
@@ -4577,25 +4847,31 @@ button.hud-resource-chip:active:not(:disabled) {
    commands more visual real estate to match the wizard portal's
    presence. */
 .hub-scaffold-rail-header {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 14px;
-  border-radius: 14px;
+  padding: 3px 10px;
+  border-radius: 999px;
   background: linear-gradient(180deg, #7fc94a 0%, #4e9a23 55%, #3a7a18 100%);
   border: 2px solid rgba(34, 92, 7, 0.85);
   color: #fff8d4;
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
-  font-size: 0.7rem;
+  font-size: 0.58rem;
   font-weight: 900;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  white-space: nowrap;
   text-shadow:
     0 1px 0 rgba(34, 92, 7, 0.95),
     0 2px 4px rgba(0, 0, 0, 0.35);
   box-shadow:
-    0 3px 0 rgba(34, 92, 7, 0.65),
-    0 4px 10px rgba(0, 0, 0, 0.28),
+    0 2px 0 rgba(34, 92, 7, 0.65),
+    0 3px 8px rgba(0, 0, 0, 0.32),
     inset 0 2px 0 rgba(255, 255, 255, 0.35),
     inset 0 -2px 0 rgba(34, 92, 7, 0.45);
 }
@@ -6642,8 +6918,7 @@ button.hud-resource-chip:active:not(:disabled) {
   box-shadow: 0 2px 8px rgba(88, 54, 8, 0.10);
 }
 
-.tj-page-header-back {
-}
+.tj-page-header-back {}
 
 .tj-page-header-title-group {
   display: flex;

@@ -234,11 +234,12 @@ export function HubScaffold({
 
       <section className="hub-scaffold-body">
         <div className="hub-scaffold-side hub-scaffold-side--left">
-          <div className="hub-scaffold-rail-header" data-rail="left">
-            LEARN
+          <div className="hub-scaffold-rail-stack">
+            <div className="hub-scaffold-rail-header" data-rail="left">
+              LEARN
+            </div>
+            {wrap("RewardColumn", <RewardColumn tiles={rewardTiles} />)}
           </div>
-          {wrap("RewardColumn", <RewardColumn tiles={rewardTiles} />)}
-          {wrap("MateDrillsTile", <MateDrillsTile />)}
         </div>
         <div className="hub-scaffold-center">
           <div className="hub-scaffold-anchor">
@@ -331,6 +332,7 @@ export function HubScaffold({
               )}
             </>
           ) : null}
+          {wrap("MateDrillsTile", <MateDrillsTile />)}
         </div>
       </section>
     </main>
