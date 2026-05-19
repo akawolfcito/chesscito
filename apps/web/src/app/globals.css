@@ -3169,6 +3169,18 @@
   content: none;
 }
 
+/* Playhub variant — the portal asset already carries its own carved-wood
+ * scroll frame inside the PNG. Stripping the CSS gold-leaf frame avoids
+ * the double-frame "poster taped on a wall" effect and lets the artwork
+ * sit cleanly on the kingdom backdrop. The warm-glow halo is preserved
+ * as a soft radial light, not as a rectangle. */
+.kingdom-anchor--playhub {
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: 0 0 32px 6px var(--kingdom-warm-glow);
+}
+
 .kingdom-anchor-picture {
   display: block;
   width: 100%;
