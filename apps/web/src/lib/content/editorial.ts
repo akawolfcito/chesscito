@@ -2032,6 +2032,15 @@ export const HERO_CTA_COPY = {
   },
 } as const;
 
+/** Daily-tactic surface (Sally R2). Shown as a small pill near the HUD
+ *  when the player has a pending daily challenge. Tapping routes to the
+ *  daily slot inside /exercises. Copy stays short — the chip is a
+ *  signal, not an explanation. */
+export const DAILY_BADGE_COPY = {
+  label: "Daily ready",
+  ariaLabel: "Today's daily tactic is ready — tap to play",
+} as const;
+
 export const SECONDARY_CTA_COPY = {
   arena: {
     label: "Enter Arena",

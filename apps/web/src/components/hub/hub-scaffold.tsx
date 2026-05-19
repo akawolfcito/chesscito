@@ -8,6 +8,7 @@ import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-colum
 import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { PremiumSlot } from "@/components/pro-mission/premium-slot";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
+import { DailyBadge } from "@/components/hub/daily-badge";
 import { SecondaryCta } from "@/components/hub/secondary-cta";
 import { HUD_COPY } from "@/lib/content/editorial";
 
@@ -90,6 +91,9 @@ type HubScaffoldProps = {
   /** Secondary CTA "Enter Arena" — calm link below the Hero (SPEC 1 D5).
    *  Renders only when wired so legacy surfaces opt in explicitly. */
   onArenaPress?: () => void;
+  /** Daily-tactic badge (Sally R2). Shown just below the HUD when the
+   *  player has a daily challenge pending. Caller wires the route. */
+  dailyBadge?: { onPress: () => void };
   onError?: (
     context: import("@/components/error/primitive-boundary").PrimitiveBoundaryErrorContext,
   ) => void;
@@ -136,6 +140,7 @@ export function HubScaffold({
   showPremiumSlot = false,
   heroCta,
   onArenaPress,
+  dailyBadge,
   onError,
 }: HubScaffoldProps) {
   const proValue = pro.active
@@ -216,6 +221,15 @@ export function HubScaffold({
           />,
         )}
       </header>
+
+      {dailyBadge
+        ? wrap(
+            "DailyBadge",
+            <div className="hub-daily-badge-slot">
+              <DailyBadge onPress={dailyBadge.onPress} />
+            </div>,
+          )
+        : null}
 
       <section className="hub-scaffold-body">
         <div className="hub-scaffold-side hub-scaffold-side--left">

@@ -390,6 +390,16 @@ export function HubScaffoldClient({
           },
         }}
         onArenaPress={handleArenaPress}
+        dailyBadge={
+          hero.variant === "daily-pending"
+            ? {
+                onPress: () => {
+                  track("hub_daily_badge_tap");
+                  router.push(hero.destination ?? "/exercises?slot=daily");
+                },
+              }
+            : undefined
+        }
       />
       <ProSheet {...proSheet.sheetProps} />
       <BadgeSheet {...badgeSheet.sheetProps} />
