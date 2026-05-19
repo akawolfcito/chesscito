@@ -2137,6 +2137,22 @@
     transition: filter var(--duration-snap);
   }
 
+  /* Asset-backed dock icon — <picture> wrapper fills the button hit area
+     so the artwork scales like a sprite (BADGES / SHOP / LEADERS / center
+     ARENA / PIECES use this; TROPHIES still uses <CandyIcon>). */
+  .chesscito-dock-item-art {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .chesscito-dock-item-art img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
   /* Center tab — route-aware glow pill */
   .chesscito-dock-center {
     position: relative;

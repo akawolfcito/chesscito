@@ -11,6 +11,11 @@ type Item = {
   id: DockSlot;
   label: string;
   icon: CandyIconName;
+  /** Optional asset-backed icon base path (no extension). When set the
+   *  dock renders a `<picture>` triplet (AVIF/WebP/PNG) instead of the
+   *  abstract `<CandyIcon>` — gives the dock its rich game-art look
+   *  for the slots that have dedicated artwork. */
+  iconSrc?: string;
   /** Sheet key forwarded as `?sheet=<slug>` when the destination is an
    *  in-place sheet on /arena or /exercises. */
   sheet: string;
@@ -22,6 +27,28 @@ type Item = {
    *  the route (the host page owns the active-tab state for sheets). */
   activeWhen?: string;
 };
+
+/** Render either an asset-backed `<picture>` triplet or fall back to the
+ *  abstract `<CandyIcon>`. Centralized so every dock slot uses the same
+ *  sizing class without duplicating the conditional. */
+function DockIcon({
+  iconSrc,
+  icon,
+}: {
+  iconSrc?: string;
+  icon: CandyIconName;
+}) {
+  if (iconSrc) {
+    return (
+      <picture className="chesscito-dock-item-art">
+        <source srcSet={`${iconSrc}.avif`} type="image/avif" />
+        <source srcSet={`${iconSrc}.webp`} type="image/webp" />
+        <img src={`${iconSrc}.png`} alt="" aria-hidden="true" />
+      </picture>
+    );
+  }
+  return <CandyIcon name={icon} className="h-full w-full p-1" />;
+}
 
 /** Resolve the destination for an in-place sheet. /arena and /exercises
  *  mount BadgeSheet / ShopSheet / TrophiesSheet / LeaderboardSheet and
@@ -40,23 +67,36 @@ function resolveCenter(pathname: string): {
   href: string;
   label: string;
   icon: CandyIconName;
+  iconSrc: string;
   trackItem: string;
 } {
   const isArena = pathname.startsWith("/arena");
   if (isArena) {
-    return { href: "/exercises", label: DOCK_LABELS.pieces, icon: "move", trackItem: "pieces" };
+    return {
+      href: "/exercises",
+      label: DOCK_LABELS.pieces,
+      icon: "move",
+      iconSrc: "/art/hub/train-pieces",
+      trackItem: "pieces",
+    };
   }
-  return { href: "/arena?fresh=1", label: DOCK_LABELS.arena, icon: "crosshair", trackItem: "arena" };
+  return {
+    href: "/arena?fresh=1",
+    label: DOCK_LABELS.arena,
+    icon: "crosshair",
+    iconSrc: "/art/hub/enter-arena",
+    trackItem: "arena",
+  };
 }
 
 const SIDE_LEFT: ReadonlyArray<Item> = [
-  { id: "badge", label: DOCK_LABELS.badge, icon: "shield", sheet: "badges", fallback: "/hub?sheet=badges" },
-  { id: "shop", label: DOCK_LABELS.shop, icon: "shop", sheet: "shop", fallback: "/hub?sheet=shop" },
+  { id: "badge", label: DOCK_LABELS.badge, icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/hub?sheet=badges" },
+  { id: "shop", label: DOCK_LABELS.shop, icon: "shop", iconSrc: "/art/shop-menu", sheet: "shop", fallback: "/hub?sheet=shop" },
 ];
 
 const SIDE_RIGHT: ReadonlyArray<Item> = [
   { id: "trophies", label: DOCK_LABELS.trophies, icon: "trophy", sheet: "trophies", fallback: "/trophies" },
-  { id: "leaderboard", label: DOCK_LABELS.leaderboard, icon: "star", sheet: "leaderboard", fallback: "/exercises?sheet=leaderboard" },
+  { id: "leaderboard", label: DOCK_LABELS.leaderboard, icon: "star", iconSrc: "/art/leaderboard-menu", sheet: "leaderboard", fallback: "/exercises?sheet=leaderboard" },
 ];
 
 function SideItem({
@@ -84,7 +124,7 @@ function SideItem({
           router.push(href);
         }}
       >
-        <CandyIcon name={item.icon} className="h-full w-full p-1" />
+        <DockIcon iconSrc={item.iconSrc} icon={item.icon} />
       </button>
       <span className="chesscito-dock-item-label game-label text-nano font-bold uppercase tracking-[0.12em]">
         {item.label}
@@ -118,7 +158,7 @@ export function PersistentDock() {
             router.push(center.href);
           }}
         >
-          <CandyIcon name={center.icon} className="h-full w-full p-1" />
+          <DockIcon iconSrc={center.iconSrc} icon={center.icon} />
         </button>
         <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
           {center.label}
