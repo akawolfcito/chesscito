@@ -4612,6 +4612,38 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 0.9rem;
 }
 
+/* Blue twin of the green TRAIN PIECES button. Same shape + sculpt so
+ * both stacked CTAs read as siblings; a ::before pseudo renders the
+ * same pedestal-play PNG with hue-rotate, isolating the recolor to
+ * the background plate (icon + label remain unfiltered). */
+.hub-scaffold-arena-cta {
+  position: relative;
+  min-height: 58px;
+  padding-top: 10px;
+  padding-bottom: 15px;
+  font-size: 0.9rem;
+  background: none;
+  text-shadow:
+    0 2px 0 rgba(8, 30, 60, 0.65),
+    0 0 12px rgba(120, 180, 240, 0.55);
+}
+
+.hub-scaffold-arena-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("/art/scene-rooted/pedestal-play.png") center / 100% 100% no-repeat;
+  filter: hue-rotate(120deg) saturate(1.1);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hub-scaffold-arena-cta .primary-play-cta-icon,
+.hub-scaffold-arena-cta .primary-play-cta-label {
+  z-index: 1;
+}
+
 /* Compact size for the Arena entry surface — smaller dominant CTA that
    coexists with the difficulty selector + kingdom anchor preview. Keeps
    gold-leaf treatment, ambient pulse, and pressed state. */

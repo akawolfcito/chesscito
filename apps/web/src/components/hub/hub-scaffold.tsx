@@ -8,12 +8,15 @@ import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-colum
 import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { PremiumSlot } from "@/components/pro-mission/premium-slot";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
-import { SecondaryCta } from "@/components/hub/secondary-cta";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubArenaTile } from "@/components/hub/hub-arena-tile";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
-import { HUB_ACTION_RAIL_COPY, HUD_COPY } from "@/lib/content/editorial";
+import {
+  HUB_ACTION_RAIL_COPY,
+  HUD_COPY,
+  SECONDARY_CTA_COPY,
+} from "@/lib/content/editorial";
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
  *  `color` drives the visual tint (amber = default/onboarding, blue =
@@ -290,7 +293,16 @@ export function HubScaffold({
               )
             ) : null}
             {onArenaPress ? (
-              wrap("SecondaryCta", <SecondaryCta onPress={onArenaPress} />)
+              wrap(
+                "ArenaCta",
+                <PrimaryPlayCta
+                  surface="playhub"
+                  label={SECONDARY_CTA_COPY.arena.label}
+                  ariaLabel={SECONDARY_CTA_COPY.arena.ariaLabel}
+                  onPress={onArenaPress}
+                  className="hub-scaffold-arena-cta"
+                />,
+              )
             ) : null}
           </footer>
         </div>
