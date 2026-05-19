@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
@@ -11,11 +10,18 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { TrophiesBody } from "@/components/trophies/trophies-body";
-import { ABOUT_LINK_COPY, DOCK_LABELS, TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
+import { DOCK_LABELS, TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 
 type TrophiesSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Render the built-in `<SheetTrigger>` dock button. Default `true`
+   *  for legacy callers. Pass `false` from surfaces that control open
+   *  state externally (e.g. /arena via `?sheet=trophies`) and never
+   *  want the orphan trigger floating in the layout tree — without
+   *  this gate, Radix renders the button as a real DOM node sibling
+   *  of the host and its `h-full w-full` image invades the layout. */
+  showTrigger?: boolean;
 };
 
 /**
@@ -25,18 +31,20 @@ type TrophiesSheetProps = {
  * cream wash with the other sheets. Content is the shared TrophiesBody
  * so this sheet and any remaining standalone consumer stay in sync.
  */
-export function TrophiesSheet({ open, onOpenChange }: TrophiesSheetProps) {
+export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: TrophiesSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          aria-label={DOCK_LABELS.trophies}
-          className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
-        >
-          <CandyIcon name="trophy" className="h-full w-full" />
-        </button>
-      </SheetTrigger>
+      {showTrigger ? (
+        <SheetTrigger asChild>
+          <button
+            type="button"
+            aria-label={DOCK_LABELS.trophies}
+            className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
+          >
+            <CandyIcon name="trophy" className="h-full w-full" />
+          </button>
+        </SheetTrigger>
+      ) : null}
       <SheetContent
         side="bottom"
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"

@@ -46,9 +46,16 @@ if (typeof window !== "undefined") {
 type LeaderboardSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Render the built-in `<SheetTrigger>` dock button. Default `true`
+   *  for legacy callers. Pass `false` from surfaces that control open
+   *  state externally (e.g. /arena via `?sheet=leaderboard`) and never
+   *  want the orphan trigger floating in the layout tree — without
+   *  this gate, Radix renders the button as a real DOM node sibling
+   *  of the host and its `h-full w-full` image invades the layout. */
+  showTrigger?: boolean;
 };
 
-export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) {
+export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: LeaderboardSheetProps) {
   const [rows, setRows] = useState<LeaderboardRow[]>(prefetchedRows ?? []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,20 +111,22 @@ export function LeaderboardSheet({ open, onOpenChange }: LeaderboardSheetProps) 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          aria-label={DOCK_LABELS.leaderboard}
-          className="relative flex shrink-0 items-center justify-center"
-        >
-          <img
-            src="/art/leaderboard-menu.png"
-            alt=""
-            aria-hidden="true"
-            className="h-full w-full object-contain"
-          />
-        </button>
-      </SheetTrigger>
+      {showTrigger ? (
+        <SheetTrigger asChild>
+          <button
+            type="button"
+            aria-label={DOCK_LABELS.leaderboard}
+            className="relative flex shrink-0 items-center justify-center"
+          >
+            <img
+              src="/art/leaderboard-menu.png"
+              alt=""
+              aria-hidden="true"
+              className="h-full w-full object-contain"
+            />
+          </button>
+        </SheetTrigger>
+      ) : null}
       <SheetContent side="bottom" className="mission-shell sheet-bg-leaderboard flex h-[100dvh] flex-col rounded-none border-0 pb-0">
         <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
           <SheetHeader>
