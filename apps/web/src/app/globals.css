@@ -4614,9 +4614,9 @@ button.hud-resource-chip:active:not(:disabled) {
   padding-bottom: 15px;
   font-size: 0.9rem;
   background: none;
-  text-shadow:
-    0 2px 0 rgba(8, 30, 60, 0.65),
-    0 0 12px rgba(120, 180, 240, 0.55);
+  /* No outer glow — the reference reads as a candy plate, not a neon
+   * sign. Only the dark inset stays for label legibility. */
+  text-shadow: 0 2px 0 rgba(8, 30, 60, 0.65);
 }
 
 .hub-scaffold-arena-cta::before {
@@ -4624,7 +4624,12 @@ button.hud-resource-chip:active:not(:disabled) {
   position: absolute;
   inset: 0;
   background: url("/art/scene-rooted/pedestal-play.png") center / 100% 100% no-repeat;
-  filter: hue-rotate(120deg) saturate(1.1);
+  /* Reach a candy-blue close to the #3775E8 / #2648B8 reference. The
+   * source plate is green-primary (~hue 120deg); rotating +115deg
+   * lands on hue ~235deg (deep mid-blue, past cyan). Higher saturation
+   * deepens the body; brightness drop kills the neon glare and brings
+   * the plate closer to the matte reference. */
+  filter: hue-rotate(135deg) saturate(1.7) brightness(0.82);
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
