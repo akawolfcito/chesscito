@@ -3790,6 +3790,10 @@ button.hud-resource-chip:active:not(:disabled) {
 .reward-tile.is-claimable .reward-tile-notif {
   display: block;
   object-fit: contain;
+  /* PNG is circular; clipping the box to a circle makes the
+   * pulse box-shadow follow the silhouette instead of the
+   * default rectangular bounding box. */
+  border-radius: 999px;
   filter: drop-shadow(0 2px 2px rgba(78, 44, 5, 0.25));
   animation: reward-tile-notif-pulse 1.6s ease-out infinite;
 }
