@@ -145,9 +145,20 @@ export function TrophiesBody() {
 
   if (!configured) {
     return (
-      <p className="py-6 text-center text-sm" style={{ color: "rgba(110, 65, 15, 0.60)" }}>
-        {TROPHY_VITRINE_COPY.configError}
-      </p>
+      <div className="candy-frame candy-frame-amber flex flex-col items-center gap-3 p-6 text-center">
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-full"
+          style={{ background: "rgba(110, 65, 15, 0.18)" }}
+        >
+          <CandyIcon name="trophy" className="h-6 w-6" />
+        </div>
+        <p
+          className="text-sm font-semibold leading-relaxed"
+          style={{ color: "rgba(63, 34, 8, 0.85)" }}
+        >
+          {TROPHY_VITRINE_COPY.configError}
+        </p>
+      </div>
     );
   }
 
@@ -163,11 +174,17 @@ export function TrophiesBody() {
       title={TROPHY_VITRINE_COPY.myVictories}
     >
       {!isConnected ? (
-        <div className="flex flex-col items-center gap-4 rounded-[24px] bg-white/10 border border-white/20 p-6 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
-            <CandyIcon name="wallet" className="h-7 w-7 opacity-50" />
+        <div className="candy-frame candy-frame-amber flex flex-col items-center gap-4 p-6 text-center">
+          <div
+            className="flex h-14 w-14 items-center justify-center rounded-full"
+            style={{ background: "rgba(110, 65, 15, 0.18)" }}
+          >
+            <CandyIcon name="wallet" className="h-7 w-7" />
           </div>
-          <p className="text-sm font-medium opacity-60 leading-relaxed px-4">
+          <p
+            className="text-sm font-semibold leading-relaxed px-4"
+            style={{ color: "rgba(63, 34, 8, 0.85)" }}
+          >
             {TROPHY_VITRINE_COPY.connectWallet}
           </p>
           <PrincipalButton
@@ -178,12 +195,18 @@ export function TrophiesBody() {
           </PrincipalButton>
         </div>
       ) : isEmptyConnected ? (
-        <div className="flex flex-col items-center gap-5 rounded-[24px] bg-white/10 border border-white/20 p-8 text-center">
+        <div className="candy-frame candy-frame-amber flex flex-col items-center gap-5 p-8 text-center">
           <div className="relative flex h-16 w-16 items-center justify-center">
-            <div className="absolute inset-0 rounded-full animate-pulse bg-amber-400/20" />
-            <CandyIcon name="trophy" className="relative h-10 w-10 text-amber-500 opacity-60" />
+            <div
+              className="absolute inset-0 rounded-full animate-pulse"
+              style={{ background: "rgba(255, 224, 102, 0.55)" }}
+            />
+            <CandyIcon name="trophy" className="relative h-10 w-10" />
           </div>
-          <p className="text-sm font-medium opacity-60 leading-relaxed px-2">
+          <p
+            className="text-sm font-semibold leading-relaxed px-2"
+            style={{ color: "rgba(63, 34, 8, 0.85)" }}
+          >
             {TROPHY_VITRINE_COPY.noVictories}
           </p>
           <Link
