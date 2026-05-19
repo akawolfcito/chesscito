@@ -164,8 +164,11 @@ describe("HubScaffold", () => {
     ).not.toBeNull();
   });
 
-  it("mounts the dominant PrimaryPlayCta playhub variant in the footer", () => {
-    render(<HubScaffold {...baseProps} />);
+  it("mounts the dominant PrimaryPlayCta playhub variant when onPlayPress is wired", () => {
+    // R1 (Sally) — fallback PrimaryPlayCta is now opt-in via onPlayPress
+    // so the new hub-scaffold-client can omit it and let TRAIN PIECES
+    // (secondaryAction) be the single primary in the action stack.
+    render(<HubScaffold {...baseProps} onPlayPress={vi.fn()} />);
     const cta = screen.getByRole("button", { name: "Enter the Arena" });
     expect(cta.className).toMatch(/primary-play-cta--playhub\b/);
     expect(cta.textContent).toContain("ENTER ARENA");

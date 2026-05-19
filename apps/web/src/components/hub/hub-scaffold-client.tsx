@@ -283,10 +283,6 @@ export function HubScaffoldClient({
     [heroSignals],
   );
 
-  const handleHeroPress = useCallback(() => {
-    track("hero_cta_clicked", { variant: hero.variant });
-    if (hero.destination) router.push(hero.destination);
-  }, [hero, router]);
   const handleArenaPress = useCallback(() => {
     track("secondary_arena_clicked");
     router.push("/arena");
@@ -385,23 +381,13 @@ export function HubScaffoldClient({
           // and the success banner are owned by `useShopSheetState`.
           shopSheet.openSheet();
         }}
-        onPlayPress={() => {
-          track("hub_play_tap");
-          // Direct route to /arena WITH `fresh=1` so the auto-launch
-          // skips the localStorage last-difficulty shortcut and renders
-          // the selector instead. User feedback 2026-05-07: tapping
-          // hub Play and immediately seeing a board "se siente raro" —
-          // they expected to pick difficulty/color first. The
-          // `chesscito:arena-last-difficulty` returning-user shortcut
-          // still applies on Play Again inside Arena.
-          router.push("/arena?fresh=1");
-        }}
-        heroCta={{
-          label: hero.label,
-          sub: hero.sub,
-          color: hero.color,
-          ariaLabel: hero.label,
-          onPress: handleHeroPress,
+        secondaryAction={{
+          label: HUD_COPY.practiceLinkLabel,
+          ariaLabel: HUD_COPY.practiceLinkAriaLabel,
+          onPress: () => {
+            track("hub_practice_link_tap");
+            router.push("/exercises");
+          },
         }}
         onArenaPress={handleArenaPress}
       />

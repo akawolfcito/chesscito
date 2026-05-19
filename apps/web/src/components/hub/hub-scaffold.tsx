@@ -272,7 +272,11 @@ export function HubScaffold({
                   <span className="hub-scaffold-hero-label">{heroCta.label}</span>
                 </button>,
               )
-            ) : (
+            ) : onPlayPress ? (
+              // Legacy Play CTA — only renders when the caller still
+              // wires an onPlayPress handler. The redesigned hub-
+              // scaffold-client omits it on purpose so the action stack
+              // stays single-primary (TRAIN PIECES via `secondaryAction`).
               wrap(
                 "PrimaryPlayCta",
                 <PrimaryPlayCta
@@ -283,7 +287,7 @@ export function HubScaffold({
                   pieceIconSrc="/art/new-icons-chesscito/play-chess.png"
                 />,
               )
-            )}
+            ) : null}
             {onArenaPress ? (
               wrap("SecondaryCta", <SecondaryCta onPress={onArenaPress} />)
             ) : null}

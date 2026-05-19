@@ -1846,7 +1846,7 @@ export const HUD_COPY = {
    *  kingdom launcher exposes /exercises (canonical home for piece
    *  exercises since 2026-05-09). Kept low-density so it does not
    *  compete with the dominant PLAY CTA. */
-  practiceLinkLabel: "Practice pieces",
+  practiceLinkLabel: "TRAIN PIECES",
   practiceLinkAriaLabel: "Practice individual chess pieces",
 } as const;
 
