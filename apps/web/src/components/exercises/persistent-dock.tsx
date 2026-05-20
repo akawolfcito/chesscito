@@ -4,7 +4,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
 import { DOCK_LABELS } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
-import { requestCloseDockSheet, useDockSheet } from "@/lib/ui/dock-sheet-store";
+import {
+  requestCloseDockSheet,
+  requestOpenDockSheet,
+  useDockSheet,
+} from "@/lib/ui/dock-sheet-store";
 
 export type DockSlot = "badge" | "shop" | "arena" | "trophies" | "leaderboard";
 
@@ -136,6 +140,8 @@ function SideItem({
   const isActive =
     openSheet === item.id ||
     Boolean(item.activeWhen && pathname.startsWith(item.activeWhen));
+  const hostsOpener =
+    pathname.startsWith("/exercises") || pathname.startsWith("/arena");
   const href = resolveSheetHref(pathname, item.sheet, item.fallback);
   return (
     <div
@@ -148,6 +154,12 @@ function SideItem({
         aria-current={isActive ? "page" : undefined}
         onClick={() => {
           track("dock_tap", { item: item.id });
+          // Same-route taps on pages that mount the auxiliary sheets
+          // dispatch through the store — no URL involvement, no race
+          // with Radix's pointerdown-outside or with router.replace.
+          // Cross-route taps (e.g. from /hub) still need the URL push
+          // so the target page mounts with the right deep-link.
+          if (hostsOpener && requestOpenDockSheet(item.id)) return;
           router.push(href);
         }}
       >
