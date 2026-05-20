@@ -93,6 +93,7 @@ import { getLabyrinthBest, recordLabyrinthBest } from "@/lib/game/labyrinth-prog
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
+import { registerDockSheetCloser, setDockSheet } from "@/lib/ui/dock-sheet-store";
 
 // SHOP_ITEMS, SHIELD_ITEM_ID, SHIELDS_PER_PURCHASE now live in
 // lib/contracts/shop-catalog.ts so they're testable in isolation. The
@@ -456,6 +457,23 @@ export function ExercisesScreen({
   const setBadgeSheetOpen = (v: boolean) => setActiveDockTab(v ? "badge" : null);
   const trophiesSheetOpen = activeDockTab === "trophies";
   const setTrophiesSheetOpen = (v: boolean) => setActiveDockTab(v ? "trophies" : null);
+
+  // Publish the dock-driven sheet state to the shared store so the
+  // <PersistentDock>'s center button can swap into "close overlay"
+  // mode when any of badge/shop/trophies/leaderboard is open. Cleared
+  // on unmount so other routes that mount the dock start fresh.
+  useEffect(() => {
+    setDockSheet(activeDockTab);
+    return () => setDockSheet(null);
+  }, [activeDockTab]);
+
+  // Register the closer so the dock's center button can return the
+  // user to /exercises without leaving the route. Re-registered when
+  // activeDockTab changes so the closure captures the current value
+  // (cheap — the closer is invoked at most once per tap).
+  useEffect(() => {
+    return registerDockSheetCloser(() => setActiveDockTab(null));
+  }, []);
   const [shieldCount, setShieldCount] = useState(0);
   const [claimingPiece, setClaimingPiece] = useState<PieceKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
