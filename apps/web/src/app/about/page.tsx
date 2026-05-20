@@ -44,6 +44,12 @@ export default function AboutPage() {
         <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>{ABOUT_COPY.operatedBy}</p>
         <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>{ABOUT_COPY.handle}</p>
         <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>{ABOUT_COPY.version}</p>
+        <p
+          className="mt-2 max-w-xs text-[0.6875rem] leading-snug"
+          style={{ color: "var(--paper-text-subtle)" }}
+        >
+          {ABOUT_COPY.operatorDisclaimer}
+        </p>
       </div>
 
       {/* Methodology mini-section (Phase 0.5 C2) — credits the human

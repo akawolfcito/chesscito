@@ -1043,6 +1043,10 @@ export const LEGAL_COPY = {
     lastUpdated: "March 15, 2026",
     sections: [
       {
+        heading: "Independent Operator",
+        body: "Chesscito is an independent product built and operated by Wolfcito (@akawolfcito). It is not operated by, affiliated with, or endorsed by Opera or MiniPay. References to MiniPay throughout the service identify it only as a wallet and distribution channel.",
+      },
+      {
         heading: "Service Description",
         body: "Chesscito is an educational pre-chess game experience on the Celo blockchain, accessible via MiniPay. The service provides interactive chess piece movement puzzles with on-chain collectibles.",
       },
@@ -1179,6 +1183,8 @@ export const ABOUT_COPY = {
   operatedBy: "Operated by Wolfcito",
   handle: "@akawolfcito",
   version: "v0.1.0",
+  operatorDisclaimer:
+    "Chesscito is an independent product built and operated by Wolfcito. It is not operated by, affiliated with, or endorsed by Opera or MiniPay. MiniPay is referenced solely as a wallet and distribution channel.",
   links: {
     /** Public landing — opens the /why narrative for parents,
      *  sponsors, and curious players. Lives at the top of the
