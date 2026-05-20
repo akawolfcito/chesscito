@@ -6,11 +6,9 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import type { LeaderboardRow } from "@/lib/server/leaderboard";
 import { LEADERBOARD_SHEET_COPY, PASSPORT_COPY, DOCK_LABELS } from "@/lib/content/editorial";
 
@@ -127,23 +125,19 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
           </button>
         </SheetTrigger>
       ) : null}
-      <SheetContent side="bottom" className="mission-shell sheet-bg-leaderboard flex h-[100dvh] flex-col rounded-none border-0 pb-0">
-        <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
-          <SheetHeader>
-            <SheetTitle
-              className="fantasy-title flex items-center gap-2"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              <CandyIcon name="crown" className="h-5 w-5" />
-              {LEADERBOARD_SHEET_COPY.title}
-            </SheetTitle>
-            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {LEADERBOARD_SHEET_COPY.description}
-            </SheetDescription>
-          </SheetHeader>
+      <SheetContent
+        side="bottom"
+        hideClose
+        className="mission-shell sheet-bg-leaderboard flex h-[100dvh] flex-col rounded-none border-0 pb-0"
+      >
+        <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
+          <ContextualHeader
+            variant="close-control"
+            icon="crown"
+            title={LEADERBOARD_SHEET_COPY.title}
+            subtitle={LEADERBOARD_SHEET_COPY.description}
+            close={{ onClick: () => onOpenChange(false), label: "Close leaders" }}
+          />
         </div>
 
         <div className="flex-1 overflow-y-auto mt-4 space-y-6 pb-[8rem]">

@@ -22,3 +22,19 @@ describe("LeaderboardSheet — showTrigger gate", () => {
     expect(screen.queryByRole("button", { name: /leaders/i })).not.toBeInTheDocument();
   });
 });
+
+describe("LeaderboardSheet — ContextualHeader canary", () => {
+  it("mounts the close-control ContextualHeader (not the legacy ad-hoc header)", () => {
+    render(<LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} />);
+    const header = screen.getByRole("banner");
+    expect(header).toHaveAttribute("data-component", "contextual-header");
+    expect(header).toHaveAttribute("data-variant", "close-control");
+  });
+
+  it("renders exactly one close affordance (inline, not the floating absolute X)", () => {
+    render(<LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} />);
+    const closeButtons = screen.getAllByRole("button", { name: /close leaders/i });
+    expect(closeButtons).toHaveLength(1);
+    expect(closeButtons[0].getAttribute("data-slot")).toBe("close-control");
+  });
+});
