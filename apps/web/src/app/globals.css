@@ -557,18 +557,27 @@
     color: #dc2626;
   }
 
+  /* Result screen overlay (Sally pass 10, 2026-05-20) — aligned with
+     the canonical `.sheet-bg-hub` treatment so the post-match screens
+     share the same forest band + cream wash vocabulary as /trophies,
+     /coach/history, daily tactic, etc. The legacy treatment used a
+     near-opaque cream gradient (82–90 %) that buried the bg-ch tree
+     band; the canonical wash is 15–45 % so the band stays visible and
+     the screen reads as "in the same world" as the rest of the app.
+     The warm spotlight radial-gradient at top is preserved as part of
+     the hero drama for victory / loss moments — sheets don't have it
+     because they don't have a single hero. */
   .result-screen-overlay {
     position: fixed;
     inset: 0;
     z-index: 50;
     overflow: hidden;
-    background: #f7f1de;
   }
 
   .result-screen-overlay::before {
     content: "";
     position: absolute;
-    inset: -16px;
+    inset: -12px;
     z-index: 0;
     background-image: image-set(url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
         url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
@@ -576,8 +585,6 @@
     background-size: cover;
     background-position: top center;
     background-repeat: no-repeat;
-    opacity: 0.18;
-    filter: saturate(0.9) sepia(0.12);
   }
 
   .result-screen-overlay::after {
@@ -590,10 +597,10 @@
         rgba(255, 245, 190, 0.42) 0%,
         rgba(255, 245, 190, 0.18) 48%,
         rgba(255, 245, 190, 0) 78%),
-      linear-gradient(180deg,
-        rgba(255, 252, 238, 0.82) 0%,
-        rgba(247, 241, 222, 0.86) 48%,
-        rgba(235, 221, 177, 0.90) 100%);
+      linear-gradient(to bottom,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 245, 215, 0.30) 40%,
+        rgba(246, 230, 184, 0.45) 100%);
   }
 
   .arena-result-screen {
