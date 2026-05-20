@@ -58,6 +58,8 @@ export function CoachPaywall({
       <SheetContent
         side="bottom"
         hideClose
+        title={COACH_COPY.creditTitle}
+        description={COACH_COPY.creditExplain}
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         <div className="-mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">

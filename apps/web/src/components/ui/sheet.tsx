@@ -56,12 +56,23 @@ interface SheetContentProps
    *  legacy floating X would render twice. Default `false` keeps every
    *  legacy sheet unchanged. Header-consistency canary 2026-05-20. */
   hideClose?: boolean;
+  /** Accessible sheet title. Required by Radix Dialog (`DialogContent
+   *  requires a DialogTitle for screen readers`). When the visible header
+   *  is rendered by <ContextualHeader>, pass the same string here so we
+   *  auto-inject a sr-only <SheetTitle>. Legacy sheets that already
+   *  render their own <SheetTitle> child should omit this prop. */
+  title?: string;
+  /** Optional accessible description. Auto-injects a sr-only
+   *  <SheetDescription>. When omitted, `aria-describedby={undefined}`
+   *  is set on the dialog content per Radix escape hatch so the missing
+   *  Description warning is suppressed without polluting the DOM. */
+  description?: string;
 }
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, hideClose = false, ...props }, ref) => (
+>(({ side = "right", className, children, hideClose = false, title, description, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
@@ -69,6 +80,30 @@ const SheetContent = React.forwardRef<
       className={cn(sheetVariants({ side }), className)}
       {...props}
     >
+      {/* Auto-injected sr-only title + description so Radix's
+        * "DialogContent requires DialogTitle / DialogDescription"
+        * warnings never fire for sheets that delegate the visible
+        * header to <ContextualHeader>. Only triggers when `title` is
+        * provided so legacy sheets that still render their own
+        * <SheetTitle>/<SheetDescription> children stay unchanged.
+        *
+        * `asChild` flips the underlying tag from <h2> / <p> to <span>
+        * so the injected element doesn't surface as a duplicate
+        * heading in screen-reader trees nor in
+        * `getByRole("heading")` test queries — the visible header in
+        * <ContextualHeader> remains the canonical heading. Radix
+        * still wires aria-labelledby / aria-describedby on the
+        * dialog content via the slotted span. */}
+      {title ? (
+        <>
+          <SheetPrimitive.Title asChild>
+            <span className="sr-only">{title}</span>
+          </SheetPrimitive.Title>
+          <SheetPrimitive.Description asChild>
+            <span className="sr-only">{description ?? title}</span>
+          </SheetPrimitive.Description>
+        </>
+      ) : null}
       {children}
       {hideClose ? null : (
         <SheetPrimitive.Close

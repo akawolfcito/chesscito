@@ -61,7 +61,11 @@ describe("ProSheet", () => {
   it("renders the kicker 'Training Pass' above the title", () => {
     renderSheet();
     const kicker = screen.getByText(PRO_COPY.kicker);
-    const title = screen.getByText(PRO_COPY.label);
+    // Title now appears twice — visible <ContextualHeader> <h1> +
+    // sr-only <SheetTitle> span auto-injected by <SheetContent> for
+    // Radix Dialog a11y. Anchor the DOM-order assertion against the
+    // visible heading (the canonical one users see).
+    const title = screen.getByRole("heading", { name: PRO_COPY.label });
     expect(kicker).toBeInTheDocument();
     expect(
       kicker.compareDocumentPosition(title) &

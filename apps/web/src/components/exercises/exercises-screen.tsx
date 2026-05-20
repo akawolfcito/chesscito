@@ -162,6 +162,8 @@ function AccountSheet({
       <SheetContent
         side="bottom"
         hideClose
+        title={ACCOUNT_SHEET_COPY.title}
+        description={ACCOUNT_SHEET_COPY.description}
         className="sheet-bg-hub rounded-t-3xl border-0 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)]"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">

@@ -206,6 +206,8 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
       <SheetContent
         side="bottom"
         hideClose
+        title={PROFILE_COPY.pageTitle}
+        description="Profile, claims, stats and wallet"
         className="profile-sheet mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         {/* Canonical header strip. Was Pattern C (sr-only header, banner

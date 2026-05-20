@@ -46,6 +46,8 @@ export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: Trophi
       <SheetContent
         side="bottom"
         hideClose
+        title={TROPHY_VITRINE_COPY.pageTitle}
+        description={TROPHY_VITRINE_COPY.pageDescription}
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">

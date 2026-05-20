@@ -439,6 +439,8 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
         <SheetContent
           side="bottom"
           hideClose
+          title={setup.name}
+          description={setup.description}
           data-testid="mini-arena-sheet"
           className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
         >

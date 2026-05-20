@@ -43,6 +43,8 @@ export function PurchaseConfirmSheet({
       <SheetContent
         side="bottom"
         hideClose
+        title={PURCHASE_CONFIRM_COPY.title}
+        description={PURCHASE_CONFIRM_COPY.description}
         className="mission-shell sheet-bg-shop rounded-t-3xl border-0"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">

@@ -200,6 +200,8 @@ export function ShopSheet({
       <SheetContent
         side="bottom"
         hideClose
+        title={SHOP_SHEET_COPY.title}
+        description={SHOP_SHEET_COPY.description}
         className="mission-shell sheet-bg-shop flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         {/* Sheet header — canary adopter of <ContextualHeader close-control>.

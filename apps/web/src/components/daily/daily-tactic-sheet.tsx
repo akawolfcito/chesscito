@@ -108,6 +108,8 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
       <SheetContent
         side="bottom"
         hideClose
+        title="Daily Tactic"
+        description={puzzleData.name}
         data-testid="daily-tactic-sheet"
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >

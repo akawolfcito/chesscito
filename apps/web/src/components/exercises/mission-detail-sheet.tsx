@@ -61,6 +61,7 @@ export function MissionDetailSheet({
       <SheetContent
         side="bottom"
         hideClose
+        title={MISSION_DETAIL_COPY.title}
         className="mission-shell sheet-bg-hub flex max-h-[90dvh] flex-col rounded-t-3xl border-0 pb-[5rem]"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">

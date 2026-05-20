@@ -188,6 +188,8 @@ export function ProSheet(props: ProSheetProps) {
       <SheetContent
         side="bottom"
         hideClose
+        title={PRO_COPY.label}
+        description={PRO_COPY.tagline}
         className="mission-shell sheet-bg-shop flex max-h-[90dvh] flex-col rounded-t-2xl border-0 pb-[5rem]"
       >
         {/* Header strip — kicker "Training Pass" eyebrow above the

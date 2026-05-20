@@ -128,6 +128,8 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
       <SheetContent
         side="bottom"
         hideClose
+        title={LEADERBOARD_SHEET_COPY.title}
+        description={LEADERBOARD_SHEET_COPY.description}
         className="mission-shell sheet-bg-leaderboard flex h-[100dvh] flex-col rounded-none border-0 pb-0"
       >
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">

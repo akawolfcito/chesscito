@@ -36,6 +36,8 @@ export function AchievementDetailSheet({ open, onOpenChange, achievement }: Prop
       <SheetContent
         side="bottom"
         hideClose
+        title={copy.title}
+        description={copy.description}
         className="mission-shell sheet-bg-hub flex max-h-[85dvh] flex-col rounded-t-3xl border-0 pb-[5rem]"
       >
         {/* Canonical header strip. The earned/locked eyebrow now sits

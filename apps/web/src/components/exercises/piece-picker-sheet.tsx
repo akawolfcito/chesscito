@@ -43,6 +43,7 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
       <SheetContent
         side="bottom"
         hideClose
+        title={PIECE_RAIL_COPY.title}
         className="mission-shell sheet-bg-hub rounded-t-3xl border-white/[0.10] pb-[5rem]"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">

@@ -61,10 +61,13 @@ function renderSheet(
 describe("DailyTacticSheet — open state", () => {
   it("renders the puzzle title and prompt copy when open", () => {
     renderSheet();
-    expect(screen.getByText(/Daily Tactic/i)).toBeInTheDocument();
+    // Title and subtitle each appear twice — visible <ContextualHeader>
+    // + sr-only <SheetTitle>/<SheetDescription> auto-injected by
+    // <SheetContent> for Radix Dialog a11y wiring. Both are correct.
+    expect(screen.getAllByText(/Daily Tactic/i).length).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByText(/Rook — horizontal slide/i),
-    ).toBeInTheDocument();
+      screen.getAllByText(/Rook — horizontal slide/i).length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Move the rook to the target square\./i)).toBeInTheDocument();
   });
 

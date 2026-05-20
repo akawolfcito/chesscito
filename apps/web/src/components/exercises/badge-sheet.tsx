@@ -236,6 +236,8 @@ export function BadgeSheet({
       <SheetContent
         side="bottom"
         hideClose
+        title={BADGE_SHEET_COPY.title}
+        description={BADGE_SHEET_COPY.subtitle}
         className="mission-shell sheet-bg-badges flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         {/* Sheet header — canonical Z2 envelope. The star-count chip +

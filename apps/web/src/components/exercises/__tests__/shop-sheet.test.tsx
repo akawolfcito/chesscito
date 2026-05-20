@@ -46,10 +46,18 @@ describe("ShopSheet — ContextualHeader canary", () => {
 
   it("renders the SHOP_SHEET_COPY title and description in the header", () => {
     renderShopSheet();
+    // The visible header renders an <h1>; Radix's auto-injected sr-only
+    // SheetTitle uses asChild + <span> so it doesn't surface as a heading.
     expect(
       screen.getByRole("heading", { name: SHOP_SHEET_COPY.title }),
     ).toBeInTheDocument();
-    expect(screen.getByText(SHOP_SHEET_COPY.description)).toBeInTheDocument();
+    // Description appears twice on purpose — once in the visible
+    // subtitle <p> from <ContextualHeader>, once in the sr-only
+    // <SheetDescription> auto-injected by <SheetContent> for Radix
+    // Dialog a11y wiring. Both are correct.
+    expect(
+      screen.getAllByText(SHOP_SHEET_COPY.description).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("renders ONLY one close affordance (inline close, not the floating absolute X)", () => {

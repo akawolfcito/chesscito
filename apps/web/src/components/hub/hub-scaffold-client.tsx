@@ -400,7 +400,12 @@ export function HubScaffoldClient({
       <PurchaseConfirmSheet {...shopSheet.confirmProps} />
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <SheetContent side="bottom" hideClose className="settings-sheet">
+        <SheetContent
+          side="bottom"
+          hideClose
+          title={SETTINGS_STUB_COPY.title}
+          className="settings-sheet"
+        >
           <div className="-mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
             <ContextualHeader
               variant="close-control"
