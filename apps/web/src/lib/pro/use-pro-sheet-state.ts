@@ -21,8 +21,8 @@ import {
   ACCEPTED_TOKENS,
   CELO_TOKEN,
   erc20Abi,
-  normalizePrice,
 } from "@/lib/contracts/tokens";
+import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
 import { hapticSuccess } from "@/lib/haptics";
 import { executeProPurchase } from "@/lib/pro/purchase";
 import { useProStatus, type ProStatus } from "@/lib/pro/use-pro-status";
@@ -152,18 +152,12 @@ export function useProSheetState(
   });
 
   const selectPaymentToken = useCallback(
-    (priceUsd6: bigint) => {
-      if (!tokenBalances) return null;
-      for (let i = 0; i < ACCEPTED_TOKENS.length; i++) {
-        const t = ACCEPTED_TOKENS[i];
-        const result = tokenBalances[i];
-        if (result?.status !== "success") continue;
-        const balance = result.result as bigint;
-        const needed = normalizePrice(priceUsd6, t.decimals);
-        if (balance >= needed) return t;
-      }
-      return null;
-    },
+    (priceUsd6: bigint) =>
+      selectMaxBalanceToken(
+        ACCEPTED_TOKENS,
+        tokenBalances?.slice(0, ACCEPTED_TOKENS.length),
+        priceUsd6,
+      ),
     [tokenBalances],
   );
 
