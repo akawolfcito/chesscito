@@ -166,23 +166,33 @@ function ArenaPageInner() {
   // without prop-drilling through the route tree. Cleared on unmount
   // so a different route that mounts the dock starts fresh.
   //
-  // Also strips any leftover `?sheet=…` from the URL when the sheet
-  // closes (X tap or center close) so the URL reflects the visible
-  // state and a refresh / back-nav doesn't silently reopen it. The
-  // ref guards the initial mount so the deep-link param survives long
-  // enough for `arenaSheetDeepLinkRef` to open the sheet.
+  // Also strips any leftover `?sheet=…` from the URL on close. See
+  // matching note in /exercises — Radix's onPointerDownOutside fires
+  // before the dock button's onClick, so sibling swaps would lose the
+  // pending push if we stripped unconditionally. Only strip when the
+  // URL's sheet still matches the slug we were closing.
   const dockSheetMountedRef = useRef(false);
+  const prevDockTabRef = useRef<typeof activeDockTab>(null);
   useEffect(() => {
     setDockSheet(activeDockTab);
     if (dockSheetMountedRef.current && activeDockTab === null && typeof window !== "undefined") {
       const sp = new URLSearchParams(window.location.search);
-      if (sp.has("sheet")) {
+      const urlSheet = sp.get("sheet");
+      const prevSlug = prevDockTabRef.current;
+      const prevUrlSheet =
+        prevSlug === "badge" ? "badges"
+          : prevSlug === "shop" ? "shop"
+            : prevSlug === "trophies" ? "trophies"
+              : prevSlug === "leaderboard" ? "leaderboard"
+                : null;
+      if (urlSheet && urlSheet === prevUrlSheet) {
         sp.delete("sheet");
         const qs = sp.toString();
         const path = window.location.pathname;
         router.replace(qs ? `${path}?${qs}` : path, { scroll: false });
       }
     }
+    prevDockTabRef.current = activeDockTab;
     dockSheetMountedRef.current = true;
     return () => setDockSheet(null);
   }, [activeDockTab, router]);

@@ -505,21 +505,38 @@ export function ExercisesScreen({
   // Also: when activeDockTab transitions from open -> null (X tap or
   // center close), strip any leftover `?sheet=…` from the URL so it
   // reflects the visible state and a refresh / back-nav doesn't
-  // silently reopen the sheet the user just closed. Guarded by a ref
-  // so the initial mount doesn't strip the deep-link param BEFORE the
-  // `lastAppliedSheetRef` effect can read it and open the sheet.
+  // silently reopen the sheet the user just closed.
+  //
+  // Race trap: Radix Dialog's onPointerDownOutside fires BEFORE the
+  // dock button's onClick, so a sibling-swap tap (BADGES open -> tap
+  // SHOP) triggers BadgeSheet.onOpenChange(false) first, briefly
+  // flipping activeDockTab to null while router.push('?sheet=shop')
+  // is still pending. To avoid stripping THAT new push, only strip
+  // when the URL's `sheet` param matches the slug we were closing.
   const dockSheetMountedRef = useRef(false);
+  const prevDockTabRef = useRef<typeof activeDockTab>(null);
   useEffect(() => {
     setDockSheet(activeDockTab);
     if (dockSheetMountedRef.current && activeDockTab === null && typeof window !== "undefined") {
       const sp = new URLSearchParams(window.location.search);
-      if (sp.has("sheet")) {
+      const urlSheet = sp.get("sheet");
+      const prevSlug = prevDockTabRef.current;
+      // Map internal activeDockTab slug to URL `sheet` vocabulary
+      // (mirror of parseInitialSheet in /exercises/page.tsx).
+      const prevUrlSheet =
+        prevSlug === "badge" ? "badges"
+          : prevSlug === "shop" ? "shop"
+            : prevSlug === "trophies" ? "trophies"
+              : prevSlug === "leaderboard" ? "leaderboard"
+                : null;
+      if (urlSheet && urlSheet === prevUrlSheet) {
         sp.delete("sheet");
         const qs = sp.toString();
         const path = window.location.pathname;
         router.replace(qs ? `${path}?${qs}` : path, { scroll: false });
       }
     }
+    prevDockTabRef.current = activeDockTab;
     dockSheetMountedRef.current = true;
     return () => setDockSheet(null);
   }, [activeDockTab, router]);
