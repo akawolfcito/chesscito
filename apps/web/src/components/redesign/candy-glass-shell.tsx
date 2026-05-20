@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 
 type CandyGlassShellProps = {
   /** Title rendered at the top-left of the panel header. */
@@ -64,25 +64,15 @@ export function CandyGlassShell({
       }}
     >
       {(title || onClose) && (
-        <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] pb-3 -mx-2">
-          <h2
-            className="fantasy-title px-2 text-lg font-extrabold"
-            style={{
-              color: "rgba(110, 65, 15, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-            }}
-          >
-            {title}
-          </h2>
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={closeLabel}
-              className="candy-close-button mr-2"
-            >
-              <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
-            </button>
+        <div className="-mx-5 -mt-5 border-b border-[rgba(110,65,15,0.30)]">
+          {onClose ? (
+            <ContextualHeader
+              variant="close-control"
+              title={title}
+              close={{ onClick: onClose, label: closeLabel }}
+            />
+          ) : (
+            <ContextualHeader variant="title" title={title} />
           )}
         </div>
       )}
