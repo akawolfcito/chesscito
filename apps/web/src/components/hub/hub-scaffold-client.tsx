@@ -13,6 +13,8 @@ import { ProSheet } from "@/components/pro/pro-sheet";
 import { ProfileSheet } from "@/components/profile/profile-sheet";
 import { SettingsSheetStub } from "@/components/hub/settings-sheet-stub";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
+import { SETTINGS_STUB_COPY } from "@/lib/content/editorial";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
 import { useClaimQueue } from "@/hooks/use-claim-queue";
@@ -398,7 +400,14 @@ export function HubScaffoldClient({
       <PurchaseConfirmSheet {...shopSheet.confirmProps} />
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <SheetContent side="bottom" className="settings-sheet">
+        <SheetContent side="bottom" hideClose className="settings-sheet">
+          <div className="-mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
+            <ContextualHeader
+              variant="close-control"
+              title={SETTINGS_STUB_COPY.title}
+              close={{ onClick: () => setSettingsOpen(false), label: "Close settings" }}
+            />
+          </div>
           <SettingsSheetStub buildSha={process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev"} />
         </SheetContent>
       </Sheet>
