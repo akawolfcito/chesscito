@@ -2170,8 +2170,12 @@
      reveal label. `:has()` lets the press state on the inner button
      bubble its visual effect up to the container so the halo/scale
      wrap the icon properly. */
+  /* :hover intentionally omitted — sticky-hover on iOS WebView (MiniPay)
+     locks the centre in the lit state after a tap, which is exactly the
+     bug we're avoiding for the center-close affordance. Press feedback
+     still comes from :has(> button:active); steady-state lighting comes
+     from .is-active (route/sheet match) and keyboard focus. */
   .chesscito-dock-center.is-active,
-  .chesscito-dock-center:hover,
   .chesscito-dock-center:has(:focus-visible),
   .chesscito-dock-center:has(> button:active) {
     color: rgba(255, 240, 180, 0.95);
@@ -2179,7 +2183,6 @@
   }
 
   .chesscito-dock-center.is-active::before,
-  .chesscito-dock-center:hover::before,
   .chesscito-dock-center:has(:focus-visible)::before,
   .chesscito-dock-center:has(> button:active)::before {
     content: "";
@@ -2195,7 +2198,6 @@
   }
 
   .chesscito-dock-center.is-active img,
-  .chesscito-dock-center:hover img,
   .chesscito-dock-center:has(:focus-visible) img,
   .chesscito-dock-center:has(> button:active) img {
     filter:
@@ -2213,14 +2215,12 @@
   }
 
   .chesscito-dock-item.is-active,
-  .chesscito-dock-item:hover,
   .chesscito-dock-item:has(:focus-visible),
   .chesscito-dock-item:has(> button:active) {
     transform: scale(1.18);
   }
 
   .chesscito-dock-item.is-active::before,
-  .chesscito-dock-item:hover::before,
   .chesscito-dock-item:has(:focus-visible)::before,
   .chesscito-dock-item:has(> button:active)::before {
     content: "";
@@ -2236,7 +2236,6 @@
   }
 
   .chesscito-dock-item.is-active img,
-  .chesscito-dock-item:hover img,
   .chesscito-dock-item:has(:focus-visible) img,
   .chesscito-dock-item:has(> button:active) img {
     filter:
@@ -2264,7 +2263,6 @@
   }
 
   .chesscito-dock-item.is-active .chesscito-dock-item-label,
-  .chesscito-dock-item:hover .chesscito-dock-item-label,
   .chesscito-dock-item:has(:focus-visible) .chesscito-dock-item-label,
   .chesscito-dock-item:has(> button:active) .chesscito-dock-item-label {
     opacity: 1;
@@ -2281,7 +2279,6 @@
   }
 
   .chesscito-dock-center.is-active .game-label,
-  .chesscito-dock-center:hover .game-label,
   .chesscito-dock-center:has(:focus-visible) .game-label,
   .chesscito-dock-center:has(> button:active) .game-label {
     opacity: 1;
@@ -2942,11 +2939,9 @@
      Targets the new selector group that drives the active visual
      (route-match + hover + press-via-:has + keyboard focus). */
   .chesscito-dock-item.is-active,
-  .chesscito-dock-item:hover,
   .chesscito-dock-item:has(:focus-visible),
   .chesscito-dock-item:has(> button:active),
   .chesscito-dock-center.is-active,
-  .chesscito-dock-center:hover,
   .chesscito-dock-center:has(:focus-visible),
   .chesscito-dock-center:has(> button:active) {
     transform: none !important;
