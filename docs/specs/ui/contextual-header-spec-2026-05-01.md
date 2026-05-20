@@ -549,3 +549,29 @@ Source: `docs/reviews/contextual-header-spec-red-team-2026-05-01.md` (verdict: a
 - Z1 + Z2 combined budget (P2-10) — added implicitly: Z1 ≤ 40px and Z2 ≤ 64px; combined ceiling 104px noted in `<GlobalStatusBar />` future spec.
 
 **Re-review checkpoint**: this amendment is ready for a 15-minute re-review pass before commit #1 of the implementation plan. Reviewer should verify the discriminated union compiles as claimed (paste the type into a TS playground), the canary example matches the lifted-state pattern, and the visual QA criteria are achievable with current tooling.
+
+---
+
+## Amendment v1.1 — Header consistency canary (2026-05-20)
+
+**Trigger**: Header consistency audit `docs/reviews/2026-05-20-header-consistency-audit.md` found 6 distinct header patterns across 18 surfaces (3 page shells + 12 sheets + 1 modal shell + 1 exercises strip + 1 arena strip + this primitive). The primitive was correct but unused by sheets; sheets shipped a copy-pasted `border-b -mx-6 -mt-6 px-6 pb-5 pt-…` recipe instead, plus a floating absolute `<SheetPrimitive.Close>` from `sheet.tsx` that overlapped titles and kickers.
+
+**Changes**:
+
+1. **New variant `close-control`** — title (+ optional subtitle, + optional icon) on the left, inline close button on the right. Required slots: `title`, `close: { onClick, label? }`. Optional slots: `subtitle`, `icon`, `ariaLabel`, `sticky`. Aria label defaults to `Close` when `close.label` is omitted.
+2. **Optional `icon?: CandyIconName`** added to `title`, `title-control`, `back-control`, and the new `close-control` variant. Renders inline LEFT of the title at `h-5 w-5` with `gap-2`. The icon is the contextual cue when a sheet has no other left-side affordance — mandatory by convention in `close-control` sheet consumers, optional in `title` / `title-control` / `back-control` callers that already carry a back chip.
+3. **`hideClose` prop on `SheetContent`** (`components/ui/sheet.tsx`) — when `true`, suppresses Radix's built-in absolute X. Default `false` keeps every legacy sheet unchanged. Mandatory for any sheet that mounts `<ContextualHeader variant="close-control">` inside its body, otherwise the user sees two close affordances.
+
+**Length caps**: `close-control` reuses the existing `MAX_TITLE = 22` and `MAX_SUBTITLE = 32`. Dev-mode warnings extended in `emitLengthWarnings()` to cover the new variant.
+
+**Canary consumer**: `apps/web/src/components/exercises/shop-sheet.tsx`. Unit smoke contract in `apps/web/src/components/exercises/__tests__/shop-sheet.test.tsx`:
+- header mounts with `data-component="contextual-header"` + `data-variant="close-control"`;
+- title + subtitle come from `SHOP_SHEET_COPY`;
+- exactly one close affordance (no duplicate from `sheet.tsx`);
+- inline close fires `onOpenChange(false)`.
+
+**Net test delta**: +4 new passing (shop-sheet smoke) + 11 new passing (close-control + icon coverage in `contextual-header.test.tsx`); −1 pre-existing failing (`back-control` `/h-11/` assertion fixed to match the canonical `.candy-nav-button` CSS class). Suite baseline: 1624 → 1628 passing, 46 → 45 failing (all 45 are pre-existing baseline orthogonal to this amendment).
+
+**Migration carry-forward**: 17 remaining surfaces (other sheets, page shells, exercises Z1 back chip below 44 px) adopt the unified header in follow-on PRs, one consumer per PR until the canary holds for a week. See `docs/reviews/2026-05-20-header-consistency-audit.md` §3 for the per-surface mapping.
+
+**Variant cap update**: the §5 growth rule moves from "4 variants capped" to "5 variants capped". A 6th variant still requires a written justification + design-system owner sign-off.

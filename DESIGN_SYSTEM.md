@@ -331,16 +331,25 @@ Adopted: 2026-05-01. Canary consumer: `apps/web/src/components/exercises/mission
 
 **`<ContextualHeader />` is the canonical Z2 component. Any new screen that needs a context strip uses this primitive — no inline `<header>` or ad-hoc `<div className="...header...">` patterns are accepted in code review.**
 
-#### Variants (4, capped)
+#### Variants (5, capped)
 
 | Variant | Use case | Required slots | Optional slots |
 |---|---|---|---|
-| `title` | Static screen title (e.g. `/about`, `/privacy`). | `title` | `ariaLabel` |
-| `title-control` | Most common. Title + optional subtitle + ONE trailing trigger button. | `title`, `trailingControl` | `subtitle`, `ariaLabel` |
+| `title` | Static screen title (e.g. `/about`, `/privacy`). | `title` | `icon`, `ariaLabel` |
+| `title-control` | Most common. Title + optional subtitle + ONE trailing trigger button. | `title`, `trailingControl` | `subtitle`, `icon`, `ariaLabel` |
 | `mode-tabs` | Segmented filter, max 4 options. | `modeTabs` | `ariaLabel` |
-| `back-control` | Type-A overlays / deep nav. Back button + title + optional trailing trigger. | `title`, `back` | `trailingControl`, `ariaLabel` |
+| `back-control` | Type-A overlays / deep nav. Back button + title + optional trailing trigger. | `title`, `back` | `icon`, `trailingControl`, `ariaLabel` |
+| `close-control` | Type-B dock sheets / bottom-sheet modals. Title + optional subtitle + inline close button. **Replaces** the legacy `border-b -mx-6 -mt-6 px-6 pb-5 pt-…` recipe and the floating absolute `<SheetPrimitive.Close>` from `sheet.tsx`. | `title`, `close` | `subtitle`, `icon`, `ariaLabel` |
 
-**A 5th variant requires a written justification in the spec PR + sign-off from the design-system owner.** If 3+ screens want "almost variant X but slightly different," the missing primitive lives somewhere else (e.g. `<SheetHeader />`), not in Z2.
+**A 6th variant requires a written justification in the spec PR + sign-off from the design-system owner.** If 3+ screens want "almost variant X but slightly different," the missing primitive lives somewhere else (e.g. `<SheetHeader />`), not in Z2.
+
+##### Optional title icon (`icon?: CandyIconName`)
+
+Renders inline LEFT of the title at `h-5 w-5` with `gap-2`. Available on every variant except `mode-tabs`. The icon is the contextual cue when a sheet has no other left-side affordance — **mandatory in sheets** that use the `close-control` variant (Shop → `shop`, Badges → `trophy`, Leaderboard → `crown`, Trophies → `trophy`, Daily/Coach → `coach`), **optional in pages** that already carry a back chip on the left. Single source of truth for the icon catalog lives in `CandyIconName` (`components/redesign/candy-icon.tsx`).
+
+##### Close-control + `hideClose` on `SheetContent`
+
+When a sheet adopts `variant="close-control"`, **pass `hideClose` to `<SheetContent>`** so Radix's built-in absolute X is suppressed and the user sees exactly one close affordance. The inline close fires `close.onClick` (consumer wires `() => onOpenChange(false)`); the optional `close.label` overrides the default `"Close"` aria-label.
 
 #### Type-safety contracts (enforced at compile time)
 
