@@ -31,6 +31,7 @@ import {
   erc20Abi,
   normalizePrice,
 } from "@/lib/contracts/tokens";
+import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
 import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
 import { hapticSuccess } from "@/lib/haptics";
 import { dispatchShieldChange } from "@/lib/shop/shield-events";
@@ -293,21 +294,17 @@ export function useShopSheetState(
     (priceUsd6: bigint, itemId?: bigint): PaymentToken | null => {
       if (!tokenBalances) return null;
       if (itemId === FOUNDER_BADGE_CELO_ITEM_ID) {
-        const result = tokenBalances[CELO_BALANCE_INDEX];
-        if (result?.status !== "success") return null;
-        const balance = result.result as bigint;
-        const needed = normalizePrice(priceUsd6, CELO_TOKEN.decimals);
-        return balance >= needed ? CELO_TOKEN : null;
+        return selectMaxBalanceToken(
+          [CELO_TOKEN],
+          [tokenBalances[CELO_BALANCE_INDEX]],
+          priceUsd6,
+        );
       }
-      for (let i = 0; i < ACCEPTED_TOKENS.length; i++) {
-        const t = ACCEPTED_TOKENS[i];
-        const result = tokenBalances[i];
-        if (result?.status !== "success") continue;
-        const balance = result.result as bigint;
-        const needed = normalizePrice(priceUsd6, t.decimals);
-        if (balance >= needed) return t;
-      }
-      return null;
+      return selectMaxBalanceToken(
+        ACCEPTED_TOKENS,
+        tokenBalances.slice(0, ACCEPTED_TOKENS.length),
+        priceUsd6,
+      );
     },
     [tokenBalances, CELO_BALANCE_INDEX],
   );
