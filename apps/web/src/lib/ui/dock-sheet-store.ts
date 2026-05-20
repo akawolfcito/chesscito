@@ -16,6 +16,7 @@ export type DockSheetSlug =
 let currentSheet: DockSheetSlug | null = null;
 const listeners = new Set<() => void>();
 let closer: (() => void) | null = null;
+let opener: ((slug: DockSheetSlug) => void) | null = null;
 
 function emit() {
   for (const listener of listeners) listener();
@@ -63,4 +64,27 @@ export function registerDockSheetCloser(close: () => void): () => void {
  *  on a route that doesn't host auxiliary sheets). */
 export function requestCloseDockSheet(): void {
   closer?.();
+}
+
+/** Pages that host auxiliary sheets register an opener; the dock's
+ *  side items invoke it on same-route taps to open the matching sheet
+ *  WITHOUT touching the URL. Cross-route taps (e.g. from /hub) keep
+ *  the legacy URL-push fallback because the target page isn't mounted
+ *  yet — no opener to dispatch to. */
+export function registerDockSheetOpener(
+  open: (slug: DockSheetSlug) => void,
+): () => void {
+  opener = open;
+  return () => {
+    if (opener === open) opener = null;
+  };
+}
+
+/** Called by the dock's side items on same-route taps. Returns true
+ *  if an opener was registered and dispatched, false otherwise so the
+ *  caller can fall back to URL navigation. */
+export function requestOpenDockSheet(slug: DockSheetSlug): boolean {
+  if (!opener) return false;
+  opener(slug);
+  return true;
 }
