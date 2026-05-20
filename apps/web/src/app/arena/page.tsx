@@ -205,7 +205,15 @@ function ArenaPageInner() {
   const arenaSheetDeepLinkRef = useRef<string | null>(null);
   useEffect(() => {
     const sheet = searchParams?.get("sheet");
-    if (!sheet || arenaSheetDeepLinkRef.current === sheet) return;
+    // Close stripped the param — clear the guard so a fresh re-tap on
+    // the same dock entry can re-open the sheet. Without this, the
+    // per-value lock holds the last-opened key forever and silently
+    // swallows every subsequent re-open.
+    if (!sheet) {
+      arenaSheetDeepLinkRef.current = null;
+      return;
+    }
+    if (arenaSheetDeepLinkRef.current === sheet) return;
     if (sheet === "shop") {
       arenaSheetDeepLinkRef.current = sheet;
       setActiveDockTab("shop");

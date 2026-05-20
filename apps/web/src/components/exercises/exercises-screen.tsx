@@ -404,7 +404,15 @@ export function ExercisesScreen({
   // idempotent behavior.
   const lastAppliedSheetRef = useRef<ExercisesInitialSheet | null>(null);
   useEffect(() => {
-    if (!initialSheet || lastAppliedSheetRef.current === initialSheet) return;
+    // Close stripped the `?sheet=` param — clear the guard so a fresh
+    // re-tap on the same dock entry can re-open the sheet. Without
+    // this reset, the per-value lock keeps the guard pointing at the
+    // last-opened key forever and silently swallows every re-tap.
+    if (!initialSheet) {
+      lastAppliedSheetRef.current = null;
+      return;
+    }
+    if (lastAppliedSheetRef.current === initialSheet) return;
     lastAppliedSheetRef.current = initialSheet;
     switch (initialSheet) {
       case "shop":
