@@ -82,7 +82,17 @@ export type BackControlHeaderProps = {
   title: string;
   subtitle?: string;
   icon?: CandyIconName;
-  back: BackProp;
+  /** Default back chip wiring. Renders `candy-nav-button` with the
+   *  canonical CandyBanner btn-back image. Use this for the 95% case.
+   *  Either this OR `backSlot` must be set. */
+  back?: BackProp;
+  /** Bespoke back element — e.g. arena's tap-to-confirm QUIT? state.
+   *  When provided, REPLACES the default back chip. Caller owns the
+   *  entire element including its own onClick + aria-label. Use this
+   *  ONLY when the back interaction needs state the primitive can't
+   *  express. Either this OR `back` must be set; dev-mode warns if
+   *  both or neither are provided. */
+  backSlot?: React.ReactElement;
   trailingControl?: React.ReactElement;
   ariaLabel?: string;
   sticky?: Sticky;
@@ -174,13 +184,23 @@ function emitLengthWarnings(props: ContextualHeaderProps): void {
       seen.add(option.key);
     }
   }
-  if (
-    props.variant === "back-control" &&
-    props.back.label.length > MAX_BACK_LABEL
-  ) {
-    devWarn(
-      `back.label is ${props.back.label.length} chars (cap ${MAX_BACK_LABEL}). Truncating.`,
-    );
+  if (props.variant === "back-control") {
+    const hasBack = Boolean(props.back);
+    const hasBackSlot = Boolean(props.backSlot);
+    if (hasBack && hasBackSlot) {
+      devWarn(
+        "back-control received BOTH `back` and `backSlot`. `backSlot` wins; drop `back` to silence this warning.",
+      );
+    } else if (!hasBack && !hasBackSlot) {
+      devWarn(
+        "back-control received NEITHER `back` nor `backSlot`. The header renders without a back affordance.",
+      );
+    }
+    if (props.back && props.back.label.length > MAX_BACK_LABEL) {
+      devWarn(
+        `back.label is ${props.back.label.length} chars (cap ${MAX_BACK_LABEL}). Truncating.`,
+      );
+    }
   }
 }
 
@@ -393,7 +413,9 @@ function BackControlHeader(
   props: BackControlHeaderProps & { ariaLabel: string },
 ): React.JSX.Element {
   const trailingRef = React.useRef<HTMLDivElement | null>(null);
+  const backSlotRef = React.useRef<HTMLDivElement | null>(null);
   checkFragmentEscape(props.trailingControl);
+  checkFragmentEscape(props.backSlot);
   useTriggerWidthGuard(trailingRef);
 
   return (
@@ -403,14 +425,20 @@ function BackControlHeader(
       data-variant="back-control"
       className={HEADER_CLASS}
     >
-      <button
-        type="button"
-        onClick={props.back.onClick}
-        aria-label={props.back.label}
-        className="candy-nav-button"
-      >
-        <CandyBanner name="btn-back" className="h-8 w-8" />
-      </button>
+      {props.backSlot ? (
+        <div ref={backSlotRef} className="shrink-0" data-slot="back-control">
+          {props.backSlot}
+        </div>
+      ) : props.back ? (
+        <button
+          type="button"
+          onClick={props.back.onClick}
+          aria-label={props.back.label}
+          className="candy-nav-button"
+        >
+          <CandyBanner name="btn-back" className="h-8 w-8" />
+        </button>
+      ) : null}
       <div className="flex min-w-0 flex-1 items-center gap-2">
         {props.icon ? <TitleIcon name={props.icon} /> : null}
         <div className="min-w-0 flex-1">
