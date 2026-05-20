@@ -269,12 +269,16 @@ export function MissionPanelCandy({
       {/* Paper/wood quest tray. Sally read: a single diegetic control
           tray, not four unrelated floating chips. Built with CSS and
           existing chess sprites.
-          The subtle `border-b border-[rgba(110,65,15,0.20)]` closes the
-          chrome zone: Z1 above (identity strip) + this tray (contextual
-          chips) read as a single header band; everything below is board
-          + dock. Lighter than the canonical 0.30 sheet divider because
-          this is in-game (diegetic) chrome — present but not loud. */}
-      <div className="mt-0.5 border-b border-[rgba(110,65,15,0.20)] px-3 pt-1.5 pb-2">
+          IMPORTANT: NO unifying border with Z1. Per Sally's pass 6
+          guidance: Z1 (identity chrome) and this quest tray (game
+          context — piece selector, mission peek, exercise drawer, layer
+          toggle, shield count) are PHILOSOPHICALLY DIFFERENT zones.
+          Binding them with a shared divider grouped them visually into
+          a single "header" band that violated the user's mental model
+          (back+PRO belong in chrome; chips belong in game context).
+          Keep them visually separated — Z1 floats above, quest tray
+          floats below with negative space between. */}
+      <div className="mt-0.5 px-3 py-1.5">
         <div className="flex items-center gap-1">
           <div className="flex-1 min-w-0">
             <PiecePickerTrigger
