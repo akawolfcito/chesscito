@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-import { CandyBanner } from "@/components/redesign/candy-banner";
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TrophiesBody } from "@/components/trophies/trophies-body";
 import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 
@@ -18,34 +17,20 @@ import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
  * decorative band; `<TrophiesBody>` renders its own cards.
  */
 export default function TrophiesPage() {
+  const router = useRouter();
   return (
     <main className="trophies-candy-page mission-shell flex min-h-[100dvh] justify-center">
-      <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-col px-4 py-6">
-        <header className="mb-4 flex items-start gap-3 border-b border-[rgba(110,65,15,0.30)] pb-4">
-          <Link
-            href="/hub"
-            aria-label="Back to hub"
-            className="candy-nav-button"
-          >
-            <CandyBanner name="btn-back" className="h-9 w-9" />
-          </Link>
-          <div className="flex-1">
-            <h1
-              className="fantasy-title flex items-center gap-2 text-lg"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              <CandyIcon name="trophy" className="h-5 w-5" />
-              {TROPHY_VITRINE_COPY.pageTitle}
-            </h1>
-            <p className="mt-1 text-sm" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {TROPHY_VITRINE_COPY.pageDescription}
-            </p>
-          </div>
+      <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-col">
+        <header className="border-b border-[rgba(110,65,15,0.30)]">
+          <ContextualHeader
+            variant="back-control"
+            icon="trophy"
+            title={TROPHY_VITRINE_COPY.pageTitle}
+            subtitle={TROPHY_VITRINE_COPY.pageDescription}
+            back={{ onClick: () => router.push("/hub"), label: "Back" }}
+          />
         </header>
-        <div className="flex-1 space-y-6 overflow-y-auto">
+        <div className="flex-1 space-y-6 overflow-y-auto px-4 pb-8 pt-4">
           <TrophiesBody />
         </div>
       </div>
