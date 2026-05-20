@@ -121,12 +121,21 @@ function SideItem({
   item,
   pathname,
   router,
+  openSheet,
 }: {
   item: Item;
   pathname: string;
   router: ReturnType<typeof useRouter>;
+  openSheet: ReturnType<typeof useDockSheet>;
 }) {
-  const isActive = Boolean(item.activeWhen && pathname.startsWith(item.activeWhen));
+  // Active in two situations: (a) the route matches activeWhen (e.g.
+  // the standalone /trophies page), or (b) the matching auxiliary
+  // sheet is currently mounted on /exercises or /arena. Without (b)
+  // the slot that just opened a sheet went dark, so the user lost the
+  // visual anchor for what they had just tapped.
+  const isActive =
+    openSheet === item.id ||
+    Boolean(item.activeWhen && pathname.startsWith(item.activeWhen));
   const href = resolveSheetHref(pathname, item.sheet, item.fallback);
   return (
     <div
@@ -177,7 +186,7 @@ export function PersistentDock() {
   return (
     <nav className="chesscito-dock" aria-label="Game navigation">
       {SIDE_LEFT.map((item) => (
-        <SideItem key={item.id} item={item} pathname={pathname} router={router} />
+        <SideItem key={item.id} item={item} pathname={pathname} router={router} openSheet={openSheet} />
       ))}
 
       <div
@@ -206,7 +215,7 @@ export function PersistentDock() {
       </div>
 
       {SIDE_RIGHT.map((item) => (
-        <SideItem key={item.id} item={item} pathname={pathname} router={router} />
+        <SideItem key={item.id} item={item} pathname={pathname} router={router} openSheet={openSheet} />
       ))}
     </nav>
   );

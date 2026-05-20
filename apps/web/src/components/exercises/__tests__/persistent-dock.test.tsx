@@ -183,4 +183,16 @@ describe("PersistentDock — overlay-aware center action", () => {
     await user.click(screen.getByRole("button", { name: /arena/i }));
     expect(pushMock).toHaveBeenLastCalledWith("/arena?fresh=1");
   });
+
+  it("side item lights up while its sheet is open so the user keeps the visual anchor", () => {
+    pathnameMock.mockReturnValue("/exercises");
+    setDockSheet("badge");
+
+    const { container } = render(<PersistentDock />);
+
+    const badge = container.querySelector('[data-dock-id="badge"]');
+    const shop = container.querySelector('[data-dock-id="shop"]');
+    expect(badge?.className).toContain("is-active");
+    expect(shop?.className).not.toContain("is-active");
+  });
 });
