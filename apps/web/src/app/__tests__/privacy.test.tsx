@@ -1,5 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+
+// LegalPageShell switched to a client component using useRouter for the
+// back chip (header-consistency audit 2026-05-20). Mock the navigation
+// hook so the standalone page can render outside an AppRouter context.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 import PrivacyPage from "../privacy/page";
 
 describe("Privacy page — Coach session memory section", () => {

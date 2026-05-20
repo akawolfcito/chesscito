@@ -1,5 +1,7 @@
-import Link from "next/link";
-import { CandyBanner } from "@/components/redesign/candy-banner";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 
 type LegalPageShellProps = {
   title: string;
@@ -10,7 +12,14 @@ type LegalPageShellProps = {
   children: React.ReactNode;
 };
 
-export function LegalPageShell({ title, subtitle, backHref = "/about", children }: LegalPageShellProps) {
+export function LegalPageShell({
+  title,
+  subtitle,
+  backHref = "/about",
+  children,
+}: LegalPageShellProps) {
+  const router = useRouter();
+
   return (
     <div className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center">
       <div
@@ -18,26 +27,15 @@ export function LegalPageShell({ title, subtitle, backHref = "/about", children 
         style={{ background: "var(--paper-bg)" }}
       >
         <header
-          className="flex items-center gap-3 border-b px-5 py-5 rounded-t-3xl"
+          className="rounded-t-3xl border-b"
           style={{ borderColor: "var(--paper-divider)" }}
         >
-          <Link
-            href={backHref}
-            className="candy-nav-button"
-            aria-label="Go back"
-          >
-            <CandyBanner name="btn-back" className="h-8 w-8" />
-          </Link>
-          <div>
-            <h1 className="fantasy-title text-xl font-bold" style={{ color: "var(--paper-text)" }}>
-              {title}
-            </h1>
-            {subtitle ? (
-              <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
-                {subtitle}
-              </p>
-            ) : null}
-          </div>
+          <ContextualHeader
+            variant="back-control"
+            title={title}
+            subtitle={subtitle}
+            back={{ onClick: () => router.push(backHref), label: "Back" }}
+          />
         </header>
         <div
           className="flex-1 space-y-6 px-5 pb-8 pt-6 text-sm leading-relaxed"
