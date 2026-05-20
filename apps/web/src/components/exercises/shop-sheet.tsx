@@ -3,11 +3,9 @@ import { CandyChip } from "@/components/redesign/candy-chip";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { SHOP_SHEET_COPY } from "@/lib/content/editorial";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
@@ -199,24 +197,25 @@ export function ShopSheet({
           </button>
         </SheetTrigger>
       ) : null}
-      <SheetContent side="bottom" className="mission-shell sheet-bg-shop flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]">
-        {/* Sheet header */}
-        <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
-          <SheetHeader>
-            <SheetTitle
-              className="fantasy-title flex items-center gap-2"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              <CandyIcon name="shop" className="h-5 w-5" />
-              {SHOP_SHEET_COPY.title}
-            </SheetTitle>
-            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {SHOP_SHEET_COPY.description}
-            </SheetDescription>
-          </SheetHeader>
+      <SheetContent
+        side="bottom"
+        hideClose
+        className="mission-shell sheet-bg-shop flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
+      >
+        {/* Sheet header — canary adopter of <ContextualHeader close-control>.
+         *  Replaces the legacy `-mx-6 -mt-6 px-6 pb-5 pt-…` recipe + the
+         *  floating absolute close from sheet.tsx. See
+         *  docs/reviews/2026-05-20-header-consistency-audit.md §3. */}
+        <div
+          className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]"
+        >
+          <ContextualHeader
+            variant="close-control"
+            icon="shop"
+            title={SHOP_SHEET_COPY.title}
+            subtitle={SHOP_SHEET_COPY.description}
+            close={{ onClick: () => onOpenChange(false), label: "Close shop" }}
+          />
         </div>
 
         {/* Success banner */}
