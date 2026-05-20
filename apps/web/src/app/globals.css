@@ -7084,43 +7084,13 @@ button.hud-resource-chip:active:not(:disabled) {
   overscroll-behavior: contain;
 }
 
-/* Page header — game destination feel with amber strip */
-.tj-page-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 16px 14px;
-  background: linear-gradient(180deg, rgba(255, 250, 226, 0.86) 0%, rgba(248, 225, 166, 0.70) 100%);
-  border-bottom: 1.5px solid rgba(180, 115, 20, 0.22);
-  box-shadow: 0 2px 8px rgba(88, 54, 8, 0.10);
-}
-
-.tj-page-header-back {}
-
-.tj-page-header-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.tj-page-header-title {
-  font-family: var(--font-game-action, system-ui, sans-serif);
-  font-size: 1.1rem;
-  font-weight: 900;
-  color: rgba(110, 65, 15, 0.95);
-  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.80);
-  margin: 0;
-  line-height: 1.1;
-}
-
-.tj-page-header-subtitle {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: rgba(110, 65, 15, 0.62);
-  margin: 0;
-  line-height: 1;
-}
+/* `.tj-page-header*` removed (Sally pass 9, 2026-05-20) — the
+   /coach/history page now composes <ContextualHeader> for its header
+   strip, and the bespoke yellow-cream gradient + 1.5px golden divider
+   + drop shadow that lived in `.tj-page-header` no longer match the
+   rest of the app's chrome. The page-header title-group + title +
+   subtitle classes were carrier styling for the legacy markup;
+   ContextualHeader owns those rules now. */
 
 /* Content area */
 .tj-content {

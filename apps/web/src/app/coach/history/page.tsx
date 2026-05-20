@@ -29,8 +29,14 @@ type SelectedFullEntry = {
  * Spec §9.2.
  */
 function PageHeader({ onBack }: { onBack: () => void }) {
+  // Stripped the legacy `.tj-page-header` className — its yellow-cream
+  // gradient + custom 1.5px golden divider + drop shadow no longer match
+  // the rest of the app (Sally pass 9, 2026-05-20). The canonical
+  // ContextualHeader envelope renders on the page's natural background;
+  // the `border-b` here is the canonical 0.30 divider matching every
+  // other meta page (legal, /trophies, etc.).
   return (
-    <header className="tj-page-header border-b border-[rgba(110,65,15,0.30)]">
+    <header className="border-b border-[rgba(110,65,15,0.30)]">
       <ContextualHeader
         variant="back-control"
         icon="coach"
