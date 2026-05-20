@@ -309,7 +309,6 @@ export const PURCHASE_CONFIRM_COPY = {
   confirmButton: "Confirm purchase",
   approving: (token: string) => `Approving ${token}...`,
   buying: "Buying...",
-  miniPayWarning: "MiniPay may show \"Unknown transaction\". This screen describes the expected action before signing.",
   cancel: "Cancel",
 } as const;
 

@@ -106,16 +106,6 @@ export function PurchaseConfirmSheet({
                 {chainId ? (CHAIN_NAMES[chainId] ?? "Unknown network") : "—"}
               </span>
             </p>
-            <p
-              className="rounded-xl px-3 py-2 text-xs font-semibold"
-              style={{
-                background: "rgba(245, 158, 11, 0.22)",
-                boxShadow: "inset 0 0 0 1px rgba(245, 158, 11, 0.55)",
-                color: "rgba(120, 65, 5, 0.95)",
-              }}
-            >
-              {PURCHASE_CONFIRM_COPY.miniPayWarning}
-            </p>
             <Button
               type="button"
               variant="game-solid"
