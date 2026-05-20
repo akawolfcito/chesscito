@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PersistentDock } from "../persistent-dock";
 import {
   registerDockSheetCloser,
+  registerDockSheetOpener,
   setDockSheet,
 } from "@/lib/ui/dock-sheet-store";
 
@@ -21,6 +22,11 @@ vi.mock("@/lib/telemetry", () => ({
 
 afterEach(() => {
   setDockSheet(null);
+  // Clear any opener/closer registered during the test. The store
+  // uses module-level singletons; register-and-immediately-unregister
+  // with a noop drops whatever the previous test installed.
+  registerDockSheetOpener(() => {})();
+  registerDockSheetCloser(() => {})();
 });
 
 describe("PersistentDock — restored 5-slot taxonomy (badge/shop/arena/trophies/leaderboard)", () => {
@@ -49,47 +55,11 @@ describe("PersistentDock — restored 5-slot taxonomy (badge/shop/arena/trophies
   });
 });
 
-describe("PersistentDock — sheet-aware routing", () => {
-  it("from /exercises, sheet items route in-place via ?sheet=…", async () => {
-    pathnameMock.mockReturnValue("/exercises");
-    pushMock.mockReset();
-    const user = userEvent.setup();
-
-    render(<PersistentDock />);
-
-    await user.click(screen.getByRole("button", { name: /badges/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/exercises?sheet=badges");
-
-    await user.click(screen.getByRole("button", { name: /shop/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/exercises?sheet=shop");
-
-    await user.click(screen.getByRole("button", { name: /trophies/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/exercises?sheet=trophies");
-
-    await user.click(screen.getByRole("button", { name: /leaders/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/exercises?sheet=leaderboard");
-  });
-
-  it("from /arena, sheet items route in-place via ?sheet=…", async () => {
-    pathnameMock.mockReturnValue("/arena");
-    pushMock.mockReset();
-    const user = userEvent.setup();
-
-    render(<PersistentDock />);
-
-    await user.click(screen.getByRole("button", { name: /badges/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/arena?sheet=badges");
-
-    await user.click(screen.getByRole("button", { name: /shop/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/arena?sheet=shop");
-
-    await user.click(screen.getByRole("button", { name: /trophies/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/arena?sheet=trophies");
-
-    await user.click(screen.getByRole("button", { name: /leaders/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/arena?sheet=leaderboard");
-  });
-
+describe("PersistentDock — cross-route URL fallback", () => {
+  // Same-route dock taps on /exercises and /arena now go through the
+  // dock-sheet-store (see "store-based open action" below). The URL
+  // fallback only fires on routes that don't host the auxiliary
+  // sheets (e.g. /hub) — the target page must mount via real navigation.
   it("from /hub, sheet items route to their fallback destinations", async () => {
     pathnameMock.mockReturnValue("/hub");
     pushMock.mockReset();
@@ -194,5 +164,48 @@ describe("PersistentDock — overlay-aware center action", () => {
     const shop = container.querySelector('[data-dock-id="shop"]');
     expect(badge?.className).toContain("is-active");
     expect(shop?.className).not.toContain("is-active");
+  });
+});
+
+describe("PersistentDock — store-based open action (no URL)", () => {
+  it("on /exercises with a registered opener, side tap dispatches via the store and does NOT push the URL", async () => {
+    pathnameMock.mockReturnValue("/exercises");
+    pushMock.mockReset();
+    const opener = vi.fn();
+    const user = userEvent.setup();
+
+    registerDockSheetOpener(opener);
+
+    render(<PersistentDock />);
+
+    await user.click(screen.getByRole("button", { name: /badges/i }));
+    expect(opener).toHaveBeenCalledWith("badge");
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("on /arena with a registered opener, side tap dispatches via the store and does NOT push the URL", async () => {
+    pathnameMock.mockReturnValue("/arena");
+    pushMock.mockReset();
+    const opener = vi.fn();
+    const user = userEvent.setup();
+
+    registerDockSheetOpener(opener);
+
+    render(<PersistentDock />);
+
+    await user.click(screen.getByRole("button", { name: /shop/i }));
+    expect(opener).toHaveBeenCalledWith("shop");
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("on /hub (cross-route, no opener registered), side tap falls back to URL push", async () => {
+    pathnameMock.mockReturnValue("/hub");
+    pushMock.mockReset();
+    const user = userEvent.setup();
+
+    render(<PersistentDock />);
+
+    await user.click(screen.getByRole("button", { name: /badges/i }));
+    expect(pushMock).toHaveBeenLastCalledWith("/hub?sheet=badges");
   });
 });
