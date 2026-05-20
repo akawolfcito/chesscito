@@ -106,15 +106,16 @@ describe("useSaveScoreState — recordSave", () => {
 
   it("recordSaveFor writes to the ORIGINAL piece even after user switches (piece-switch fix)", () => {
     // Surface starts on rook
-    const hook = renderHook(({ piece }) => useSaveScoreState(piece), {
-      initialProps: { piece: "rook" as const },
+    type PieceId = "rook" | "bishop";
+    const hook = renderHook(({ piece }: { piece: PieceId }) => useSaveScoreState(piece), {
+      initialProps: { piece: "rook" } as { piece: PieceId },
     });
 
     // Capture the save submission for rook
     const pendingRook = { piece: "rook" as const, score: 800, txHash: "0xrook" };
 
     // User switches to bishop BEFORE the receipt arrives
-    hook.rerender({ piece: "bishop" as const });
+    hook.rerender({ piece: "bishop" });
 
     // Receipt arrives — surface calls recordSaveFor with the captured piece
     act(() => {

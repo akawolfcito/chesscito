@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 import { CandyCard } from "@/components/redesign/candy-card";
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
+import { WELCOME_COPY } from "@/lib/content/editorial";
+import { useOnboardingSignal } from "@/hooks/use-onboarding-signal";
 import {
   dismissWelcome,
   isWelcomeDismissed,
@@ -16,19 +19,19 @@ type Card = {
 
 const CARDS: Card[] = [
   {
-    icon: "coach",
-    title: "Aprendes piezas con retos cortos",
-    body: "Cada pieza vive en niveles. Aprende, explora, domina — minutos al día, sin presión.",
+    icon: "trophy",
+    title: WELCOME_COPY.slide1Title,
+    body: WELCOME_COPY.slide1Body,
   },
   {
-    icon: "trophy",
-    title: "Subes a Arena con la IA",
-    body: "Cuando dominas piezas, el ajedrez completo se desbloquea solo. Tres niveles de dificultad.",
+    icon: "coach",
+    title: WELCOME_COPY.slide2Title,
+    body: WELCOME_COPY.slide2Body,
   },
   {
     icon: "crown",
-    title: "Ganas trofeos on-chain",
-    body: "Tus victorias quedan registradas en Celo. Tu progreso es tuyo, verificable, para siempre.",
+    title: WELCOME_COPY.slide3Title,
+    body: WELCOME_COPY.slide3Body,
   },
 ];
 
@@ -45,12 +48,21 @@ type WelcomeOverlayProps = {
 
 /**
  * WelcomeOverlay — first-run 3-card onboarding shown once per
- * device. Auto-mounts only when the welcome flag is unset, so
- * existing players never see it. Card progression is button-based
- * (Continuar / Empezar) so it reads on any input device — no swipe
- * gesture required.
+ * device AND only to wallets with no detectable on-chain progress.
+ *
+ * Cluster D (addendum §2.1 + §0.2/§0.3):
+ *  - `useOnboardingSignal` runs PRO + badge + shield + founder reads
+ *    in parallel; first positive commits "returning" and the overlay
+ *    self-dismisses (no carousel friction for returning users).
+ *  - Fresh wallets see the gold candy frame, English copy, persistent
+ *    `[Skip]` link on every slide.
+ *  - The `chesscito:welcome-dismissed` flag persists across reloads;
+ *    `useOnboardingSignal`'s separate `chesscito:onboarding-signal:*`
+ *    cache (7-day TTL) skips the network reads on repeat visits.
  */
 export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {}) {
+  const { address } = useAccount();
+  const signal = useOnboardingSignal(address);
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
@@ -58,7 +70,22 @@ export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {})
     if (!isWelcomeDismissed()) setOpen(true);
   }, []);
 
+  // When the signal commits "returning", auto-dismiss without showing
+  // the carousel — the user has prior progress on this wallet.
+  useEffect(() => {
+    if (signal.status === "returning" && open) {
+      dismissWelcome();
+      setOpen(false);
+    }
+  }, [signal.status, open]);
+
   if (!open || suppressed) return null;
+  // Suppress the flash of carousel while the signal is still resolving
+  // (cold MiniPay-Vercel cold start). Without this, returning users on
+  // a cache miss would see 1-2 frames of the carousel before signal
+  // resolves and dismisses it.
+  if (signal.status === "resolving") return null;
+
   const card = CARDS[index];
   const isLast = index === CARDS.length - 1;
 
@@ -83,9 +110,20 @@ export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {})
       role="dialog"
       aria-modal="true"
       aria-labelledby="welcome-card-title"
+      aria-roledescription="carousel"
     >
+      {/* Slide content container — WAI-ARIA APG carousel pattern places
+       *  `aria-roledescription="slide"` + the slide counter label on
+       *  the CONTENT element, not on the action region. Patched per
+       *  Cluster D review (Edge case hunter #7). */}
+      <div
+        data-slide-index={index}
+        aria-roledescription="slide"
+        aria-label={`Slide ${index + 1} of ${CARDS.length}`}
+        className="contents"
+      >
       <CandyCard
-        atmosphere="amber"
+        atmosphere="gold"
         className="w-full max-w-[340px] items-center text-center"
         media={
           <span
@@ -112,17 +150,19 @@ export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {})
                 boxShadow: "inset 0 1px 0 rgba(255, 245, 215, 0.18)",
               }}
             >
-              {isLast ? "Empezar a jugar" : "Continuar"}
+              {isLast ? WELCOME_COPY.ctaPlay : WELCOME_COPY.ctaContinue}
             </button>
-            {!isLast && (
-              <button
-                type="button"
-                onClick={handleSkip}
-                className="text-xs font-bold underline-offset-4 opacity-70 hover:underline"
-              >
-                Saltar
-              </button>
-            )}
+            {/* Persistent Skip — visible on EVERY slide per §0.2 escape
+             *  hatch, including the terminal slide. Same destination as
+             *  the Play CTA (dismiss + stay on /exercises). */}
+            <button
+              type="button"
+              onClick={handleSkip}
+              data-testid="welcome-skip"
+              className="text-xs font-bold underline-offset-4 opacity-70 hover:underline"
+            >
+              {WELCOME_COPY.ctaSkip}
+            </button>
           </div>
         }
       >
@@ -150,6 +190,7 @@ export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {})
           ))}
         </div>
       </CandyCard>
+      </div>
     </div>
   );
 }
