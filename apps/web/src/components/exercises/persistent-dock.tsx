@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
 import { DOCK_LABELS } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
+import { requestCloseDockSheet, useDockSheet } from "@/lib/ui/dock-sheet-store";
 
 export type DockSlot = "badge" | "shop" | "arena" | "trophies" | "leaderboard";
 
@@ -136,7 +137,19 @@ function SideItem({
 export function PersistentDock() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
+  const openSheet = useDockSheet();
   const center = resolveCenter(pathname);
+  // When an auxiliary sheet is open on top of /exercises or /arena, the
+  // center button stops being a route swap and becomes "close the
+  // overlay and stay on the current base route" — matches the user's
+  // muscle-memory expectation that the big center action returns them
+  // to the visible mode under the overlay (not to the OTHER mode).
+  const isOverlayOpen = openSheet !== null;
+  const centerLabel = isOverlayOpen ? DOCK_LABELS.close : center.label;
+  const centerIcon: CandyIconName = isOverlayOpen ? "close" : center.icon;
+  // Asset-backed art only renders when no overlay is open — close uses
+  // the abstract <CandyIcon> so the visual swap is unmistakable.
+  const centerIconSrc = isOverlayOpen ? undefined : center.iconSrc;
   // Center is a contextual "go to the other side" quick-action — it
   // always shows the route you're NOT on, so a route-based active
   // glow would mislead ("looks like you're in Pieces while standing
@@ -151,22 +164,27 @@ export function PersistentDock() {
       ))}
 
       <div
-        className={`chesscito-dock-center${isCenterActive ? " is-active" : ""}`}
-        data-dock-id="arena"
+        className={`chesscito-dock-center${isCenterActive ? " is-active" : ""}${isOverlayOpen ? " is-close" : ""}`}
+        data-dock-id={isOverlayOpen ? "close" : "arena"}
       >
         <button
           type="button"
-          aria-label={center.label}
+          aria-label={centerLabel}
           aria-current={isCenterActive ? "page" : undefined}
           onClick={() => {
+            if (isOverlayOpen) {
+              track("dock_center_close", { sheet: openSheet });
+              requestCloseDockSheet();
+              return;
+            }
             track("dock_tap", { item: center.trackItem });
             router.push(center.href);
           }}
         >
-          <DockIcon iconSrc={center.iconSrc} icon={center.icon} />
+          <DockIcon iconSrc={centerIconSrc} icon={centerIcon} />
         </button>
         <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
-          {center.label}
+          {centerLabel}
         </span>
       </div>
 
