@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TX_PROGRESS_COPY } from "@/lib/content/editorial";
+import { track } from "@/lib/telemetry";
 
 /** Canonical step taxonomy. Every tx surface picks a subset of these.
  *  Surface controls the order via the `steps[]` array (this primitive
@@ -85,9 +86,46 @@ const DONE_UNMOUNT_MS = 1500;
  * indefinitely so the surface can render its retry UI alongside.
  */
 export function TxProgressSteps(props: TxProgressStepsProps) {
-  const { variant, current } = props;
+  const { variant, current, flow, steps } = props;
   const [unmount, setUnmount] = useState(false);
 
+  // B1 defensive guards lifted out of the JSX so telemetry effects can
+  // consume the same `isInvalid` signal (avoids phantom `view` events for
+  // primitives that would have returned null at render time).
+  const isTerminal = current === "done" || current === "failed";
+  const isInvalid =
+    steps.length === 0 ||
+    (!isTerminal && !steps.some((s) => s.code === current));
+
+  // ─── Telemetry timing anchors (B2) ──────────────────────────────────
+  // `performance.now()` is monotonic ms — survives system-clock drift.
+  // Refs are stable across renders; the `initialValue` is only used on
+  // first render so subsequent re-evaluations are harmless.
+  const mountedAtRef = useRef<number>(performance.now());
+  const prevStepRef = useRef<TxStepCode | null>(null);
+  const prevStepStartedAtRef = useRef<number>(performance.now());
+  const doneFiredRef = useRef<boolean>(false);
+
+  // Lock flow + variant at mount so a parent that accidentally mutates
+  // them mid-lifecycle (surface bug) cannot produce a mixed-stream of
+  // telemetry events. The primitive is per-tx; flow is invariant per
+  // primitive instance. B2 review patch (Blind hunter + Edge case
+  // hunter overlap).
+  const lockedFlowRef = useRef<TxFlowName>(flow);
+  const lockedVariantRef = useRef<"pills" | "toast">(variant);
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    if (flow !== lockedFlowRef.current) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[TxProgressSteps] flow prop changed from "${lockedFlowRef.current}" to "${flow}" ` +
+          `mid-lifecycle. Telemetry stays on the original flow. Remount the primitive (key change) ` +
+          `to start a new flow cleanly.`,
+      );
+    }
+  }, [flow]);
+
+  // Done auto-unmount (B1)
   useEffect(() => {
     if (current !== "done") {
       setUnmount(false);
@@ -97,17 +135,69 @@ export function TxProgressSteps(props: TxProgressStepsProps) {
     return () => window.clearTimeout(timer);
   }, [current]);
 
-  if (unmount) return null;
+  // Telemetry: view event — fires once at mount per primitive lifecycle.
+  // Gated by `isInvalid` so guarded-out primitives never emit phantom views.
+  useEffect(() => {
+    if (isInvalid) return;
+    track("tx_progress_view", {
+      flow: lockedFlowRef.current,
+      variant: lockedVariantRef.current,
+    });
+    // Intentionally empty deps — mount-only. Locked refs guarantee
+    // stability even if parent mutates `flow`/`variant` mid-life.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Patches from B1 review (Edge case hunter #1 + #2):
-  //  - Empty steps[] would crash the toast counter ("Step 1 of 0") and
-  //    render nothing useful for pills. Treat as no-op surface bug.
-  //  - `current` as a step code MUST exist in steps[]. If absent (surface
-  //    bug — passed a step it didn't include), bail silently rather than
-  //    misrepresent which step is active.
-  if (props.steps.length === 0) return null;
-  const isTerminal = current === "done" || current === "failed";
-  if (!isTerminal && !props.steps.some((s) => s.code === current)) return null;
+  // Telemetry: step + step_duration + done. Runs on every `current` change.
+  // The `doneFiredRef` latch protects against double-firing done if the
+  // parent re-renders at the terminal state.
+  useEffect(() => {
+    if (isInvalid) return;
+    if (doneFiredRef.current) return;
+
+    const now = performance.now();
+    const prev = prevStepRef.current;
+    const lockedFlow = lockedFlowRef.current;
+
+    if (isTerminal) {
+      // Drain duration for the step we're leaving (if any), then fire done.
+      if (prev !== null) {
+        const duration_ms = Math.round(now - prevStepStartedAtRef.current);
+        track("tx_progress_step_duration", {
+          flow: lockedFlow,
+          step: prev,
+          duration_ms,
+        });
+      }
+      const total_duration_ms = Math.round(now - mountedAtRef.current);
+      const outcome = current === "done" ? "success" : "failed";
+      track("tx_progress_done", {
+        flow: lockedFlow,
+        outcome,
+        total_duration_ms,
+      });
+      doneFiredRef.current = true;
+      return;
+    }
+
+    if (prev !== current) {
+      // Real transition (including initial null → first step on mount).
+      if (prev !== null) {
+        const duration_ms = Math.round(now - prevStepStartedAtRef.current);
+        track("tx_progress_step_duration", {
+          flow: lockedFlow,
+          step: prev,
+          duration_ms,
+        });
+      }
+      track("tx_progress_step", { flow: lockedFlow, step: current });
+      prevStepRef.current = current;
+      prevStepStartedAtRef.current = now;
+    }
+  }, [current, isInvalid, isTerminal]);
+
+  if (unmount) return null;
+  if (isInvalid) return null;
 
   return variant === "pills" ? (
     <PillsVariant {...props} />

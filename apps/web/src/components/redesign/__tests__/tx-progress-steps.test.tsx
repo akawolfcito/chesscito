@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 
+// B2 telemetry mock — hoisted so the primitive's track() calls land here
+// instead of the real /api/telemetry fetch. Per established codebase
+// pattern (see pro-sheet.test.tsx, hub-scaffold-client.test.tsx, etc).
+const trackMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
+
 import { TxProgressSteps } from "../tx-progress-steps";
 import type {
   TxStepDescriptor,
@@ -261,6 +267,212 @@ describe("TxProgressSteps — flow telemetry context (B2 surface)", () => {
     expect(
       container.querySelector('[data-component="tx-progress-steps"]'),
     ).not.toBeNull();
+  });
+});
+
+describe("TxProgressSteps — telemetry (AC-2.3.6)", () => {
+  beforeEach(() => {
+    trackMock.mockClear();
+  });
+
+  it("view event fires once on mount with {flow, variant}", () => {
+    render(<TxProgressSteps {...defaults({ flow: "save-score" })} />);
+    const viewCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "tx_progress_view",
+    );
+    expect(viewCalls.length).toBe(1);
+    expect(viewCalls[0]?.[1]).toEqual({ flow: "save-score", variant: "pills" });
+  });
+
+  it("initial step event fires on mount for the starting step", () => {
+    render(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "sign", flow: "save-score" })}
+      />,
+    );
+    const stepCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "tx_progress_step",
+    );
+    expect(stepCalls.length).toBe(1);
+    expect(stepCalls[0]?.[1]).toEqual({ flow: "save-score", step: "sign" });
+    // No step_duration on initial mount (prev was null)
+    const durationCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "tx_progress_step_duration",
+    );
+    expect(durationCalls.length).toBe(0);
+  });
+
+  it("step transition fires step_duration for prior step + step for new step", () => {
+    const { rerender } = render(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "sign" })}
+      />,
+    );
+    trackMock.mockClear();
+
+    rerender(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "send" })}
+      />,
+    );
+
+    const calls = trackMock.mock.calls;
+    const durationCall = calls.find(
+      (c) => c[0] === "tx_progress_step_duration",
+    );
+    const stepCall = calls.find((c) => c[0] === "tx_progress_step");
+
+    expect(durationCall?.[1]).toMatchObject({
+      flow: "save-score",
+      step: "sign",
+    });
+    expect(durationCall?.[1].duration_ms).toBeGreaterThanOrEqual(0);
+    expect(stepCall?.[1]).toEqual({ flow: "save-score", step: "send" });
+  });
+
+  it("transition to done fires step_duration + done with outcome:success + positive total_duration_ms", () => {
+    const { rerender } = render(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "wait" })}
+      />,
+    );
+    trackMock.mockClear();
+
+    rerender(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "done" })}
+      />,
+    );
+
+    const durationCall = trackMock.mock.calls.find(
+      (c) => c[0] === "tx_progress_step_duration",
+    );
+    const doneCall = trackMock.mock.calls.find(
+      (c) => c[0] === "tx_progress_done",
+    );
+
+    expect(durationCall?.[1]).toMatchObject({ step: "wait" });
+    expect(doneCall?.[1]).toMatchObject({
+      flow: "save-score",
+      outcome: "success",
+    });
+    expect(doneCall?.[1].total_duration_ms).toBeGreaterThanOrEqual(0);
+  });
+
+  it("transition to failed fires done with outcome:failed", () => {
+    const { rerender } = render(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "send" })}
+      />,
+    );
+    trackMock.mockClear();
+
+    rerender(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "failed" })}
+      />,
+    );
+
+    const doneCall = trackMock.mock.calls.find(
+      (c) => c[0] === "tx_progress_done",
+    );
+    expect(doneCall?.[1]).toMatchObject({
+      flow: "save-score",
+      outcome: "failed",
+    });
+  });
+
+  it("re-render with same current does NOT fire step or step_duration", () => {
+    const { rerender } = render(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "sign" })}
+      />,
+    );
+    trackMock.mockClear();
+
+    rerender(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "sign" })}
+      />,
+    );
+
+    const stepCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "tx_progress_step",
+    );
+    const durationCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "tx_progress_step_duration",
+    );
+    expect(stepCalls.length).toBe(0);
+    expect(durationCalls.length).toBe(0);
+  });
+
+  it("defensive guard (current not in steps[]) suppresses ALL telemetry events", () => {
+    render(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "verify" })}
+      />,
+    );
+    expect(trackMock.mock.calls.length).toBe(0);
+  });
+
+  it("flow prop drift mid-lifecycle: telemetry stays locked to the original flow (B2 review patch)", () => {
+    // Surface bug simulation: parent mutates `flow` prop without remount.
+    // Telemetry must NOT split into a mixed-flow event stream.
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { rerender } = render(
+      <TxProgressSteps
+        {...defaults({ flow: "save-score", current: "sign" })}
+      />,
+    );
+    trackMock.mockClear();
+
+    rerender(
+      <TxProgressSteps
+        {...defaults({ flow: "shop-buy", current: "send" })}
+      />,
+    );
+
+    // Step event uses the ORIGINAL flow, not the new one
+    const stepCall = trackMock.mock.calls.find(
+      (c) => c[0] === "tx_progress_step",
+    );
+    expect(stepCall?.[1]).toEqual({ flow: "save-score", step: "send" });
+
+    // Dev-mode warn fires so the surface bug is noisy in dev (silent in prod)
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        '[TxProgressSteps] flow prop changed from "save-score" to "shop-buy"',
+      ),
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  it("done event fires at most once even on terminal re-render", () => {
+    const { rerender } = render(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "wait" })}
+      />,
+    );
+    rerender(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "done" })}
+      />,
+    );
+    trackMock.mockClear();
+
+    // Parent re-renders again with same terminal state (e.g., props
+    // identity changed but `current` value same)
+    rerender(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "done" })}
+      />,
+    );
+
+    const doneCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "tx_progress_done",
+    );
+    expect(doneCalls.length).toBe(0);
   });
 });
 
