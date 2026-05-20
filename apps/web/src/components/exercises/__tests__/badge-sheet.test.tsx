@@ -67,3 +67,31 @@ describe("BadgeSheet — claim action presentation", () => {
     expect(screen.getAllByText("Locked").length).toBeGreaterThan(0);
   });
 });
+
+describe("BadgeSheet — ContextualHeader canary", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    pieces.forEach((piece) => setStars(piece, [0, 0, 0, 0, 0]));
+  });
+
+  it("mounts the close-control ContextualHeader (not the legacy ad-hoc header)", () => {
+    renderBadgeSheet();
+    const header = screen.getByRole("banner");
+    expect(header).toHaveAttribute("data-component", "contextual-header");
+    expect(header).toHaveAttribute("data-variant", "close-control");
+  });
+
+  it("renders exactly one close affordance (inline, not the floating absolute X)", () => {
+    renderBadgeSheet();
+    const closeButtons = screen.getAllByRole("button", { name: /close badges/i });
+    expect(closeButtons).toHaveLength(1);
+    expect(closeButtons[0].getAttribute("data-slot")).toBe("close-control");
+  });
+
+  it("keeps the star-count chip and progress bar accessible below the header", () => {
+    setStars("rook", [3, 3, 3, 3, 3]);
+    renderBadgeSheet();
+    // 15 of 90 = 15/90 stars chip (rook full = 15 stars).
+    expect(screen.getByText(/of 90 stars/i)).toBeInTheDocument();
+  });
+});

@@ -7,11 +7,9 @@ import { CandyChip } from "@/components/redesign/candy-chip";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { ABOUT_LINK_COPY, BADGE_SHEET_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
@@ -235,37 +233,37 @@ export function BadgeSheet({
           </button>
         </SheetTrigger>
       ) : null}
-      <SheetContent side="bottom" className="mission-shell sheet-bg-badges flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]">
-        {/* Sheet header */}
-        <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
-          <SheetHeader>
-            <SheetTitle
-              className="fantasy-title flex items-center gap-2"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              <CandyIcon name="trophy" className="h-5 w-5" />
-              {BADGE_SHEET_COPY.title}
-            </SheetTitle>
-            
-            <div className="mt-2 flex items-center justify-between gap-4">
-              <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-                {BADGE_SHEET_COPY.subtitle}
-              </SheetDescription>
-              <CandyChip variant="warm" tone="subtle">
-                {totalCollectedStars} of {totalAvailableStars} stars
-              </CandyChip>
-            </div>
-            
-            <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full" style={{ background: "rgba(110, 65, 15, 0.12)" }}>
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-1000"
-                style={{ width: `${(totalCollectedStars / totalAvailableStars) * 100}%` }}
-              />
-            </div>
-          </SheetHeader>
+      <SheetContent
+        side="bottom"
+        hideClose
+        className="mission-shell sheet-bg-badges flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
+      >
+        {/* Sheet header — canonical Z2 envelope. The star-count chip +
+         *  progress bar that used to live inside the header now sit
+         *  below it as a "stats banner" so the header stays 56–64 px. */}
+        <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
+          <ContextualHeader
+            variant="close-control"
+            icon="trophy"
+            title={BADGE_SHEET_COPY.title}
+            subtitle={BADGE_SHEET_COPY.subtitle}
+            close={{ onClick: () => onOpenChange(false), label: "Close badges" }}
+          />
+        </div>
+
+        {/* Stats banner — star count + progress bar */}
+        <div className="shrink-0 mt-3 flex flex-col gap-2">
+          <div className="flex items-center justify-end">
+            <CandyChip variant="warm" tone="subtle">
+              {totalCollectedStars} of {totalAvailableStars} stars
+            </CandyChip>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full" style={{ background: "rgba(110, 65, 15, 0.12)" }}>
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-1000"
+              style={{ width: `${(totalCollectedStars / totalAvailableStars) * 100}%` }}
+            />
+          </div>
         </div>
 
         {lastClaimedPiece ? (
