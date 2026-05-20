@@ -755,6 +755,10 @@ export const DOCK_LABELS = {
   badge: "Badges",
   trophies: "Trophies",
   leaderboard: "Leaders",
+  /** Center-slot label when an auxiliary sheet is open. The center
+   *  button stops being a route swap and acts as "close overlay,
+   *  return to current base mode" instead. */
+  close: "Close",
 } as const;
 
 export const ARENA_CTA_COPY = {
