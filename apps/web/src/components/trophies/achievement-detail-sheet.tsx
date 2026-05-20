@@ -5,10 +5,8 @@ import { TreasureTile } from "@/components/scene-rooted/treasure-tile";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { ACHIEVEMENTS_COPY } from "@/lib/content/editorial";
 import type { Achievement } from "@/lib/achievements/compute";
 
@@ -37,26 +35,26 @@ export function AchievementDetailSheet({ open, onOpenChange, achievement }: Prop
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
+        hideClose
         className="mission-shell sheet-bg-hub flex max-h-[85dvh] flex-col rounded-t-3xl border-0 pb-[5rem]"
       >
-        <SheetHeader className="text-left">
+        {/* Canonical header strip. The earned/locked eyebrow now sits
+         *  above the close-control header preserving the original
+         *  visual stacking and DOM order. */}
+        <div className="shrink-0 -mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <p
-            className="text-nano font-bold uppercase tracking-wider"
+            className="text-nano font-bold uppercase tracking-wider px-4 pt-1"
             style={{ color: "rgba(110, 65, 15, 0.55)" }}
           >
             {subtitle}
           </p>
-          <SheetTitle
-            className="fantasy-title"
-            style={{
-              color: "rgba(110, 65, 15, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-            }}
-          >
-            {copy.title}
-          </SheetTitle>
-          <SheetDescription className="sr-only">{copy.description}</SheetDescription>
-        </SheetHeader>
+          <ContextualHeader
+            variant="close-control"
+            icon={earned ? "trophy" : "lock"}
+            title={copy.title}
+            close={{ onClick: () => onOpenChange(false), label: "Close achievement" }}
+          />
+        </div>
 
         <div className="mt-4 flex-1 space-y-4 overflow-y-auto overscroll-contain">
           <div className="flex flex-col items-center gap-3">
