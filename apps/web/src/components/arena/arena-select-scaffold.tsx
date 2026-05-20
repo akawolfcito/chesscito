@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 
-import { CandyBanner } from '@/components/redesign/candy-banner'
+import { ContextualHeader } from '@/components/ui/contextual-header'
 import { CandyIcon } from '@/components/redesign/candy-icon'
 import { PrimitiveBoundary } from '@/components/error/primitive-boundary'
 import { PrimaryPlayCta } from '@/components/kingdom/primary-play-cta'
@@ -103,21 +103,16 @@ export function ArenaSelectScaffold({
       className="arena-scaffold"
       aria-label={`Chesscito ${ARENA_COPY.title}`}
     >
-      <header className="arena-scaffold-hud">
-        <div className="arena-scaffold-hud-top">
-          <h2 className="arena-scaffold-title">{ARENA_COPY.title}</h2>
-          {onBack ? (
-            <button
-              type="button"
-              onClick={onBack}
-              aria-label={ARENA_COPY.backToHubAria}
-              className="arena-scaffold-back candy-nav-button"
-            >
-              <CandyBanner name="btn-back" className="h-9 w-9" />
-            </button>
-          ) : null}
-        </div>
-        {/* <p className="arena-scaffold-subtitle">{ARENA_COPY.subtitle}</p> */}
+      <header className="arena-scaffold-hud border-b border-[rgba(110,65,15,0.30)]">
+        {onBack ? (
+          <ContextualHeader
+            variant="back-control"
+            title={ARENA_COPY.title}
+            back={{ onClick: onBack, label: ARENA_COPY.backToHubAria }}
+          />
+        ) : (
+          <ContextualHeader variant="title" title={ARENA_COPY.title} />
+        )}
       </header>
 
       <section className="arena-scaffold-body">

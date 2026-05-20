@@ -2,6 +2,7 @@
 
 import { ARENA_COPY } from '@/lib/content/editorial'
 import { CandyBanner } from '@/components/redesign/candy-banner'
+import { ContextualHeader } from '@/components/ui/contextual-header'
 import { Button } from '@/components/ui/button'
 import { PrincipalButton } from '@/components/scene-rooted/principal-button'
 import type { ArenaDifficulty } from '@/lib/game/types'
@@ -87,25 +88,15 @@ export function ArenaEntryPanel({
       style={shellStyle}
     >
       {!bare && (
-        <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] pb-3 -mx-2">
-          <h2
-            className="fantasy-title px-2 text-lg font-extrabold"
-            style={{
-              color: 'rgba(110, 65, 15, 0.95)',
-              textShadow: '0 1px 0 rgba(255, 245, 215, 0.80)',
-            }}
-          >
-            {ARENA_COPY.title}
-          </h2>
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              aria-label={ARENA_COPY.backToHubAria}
-              className="candy-nav-button mr-2"
-            >
-              <CandyBanner name="btn-back" className="h-9 w-9" />
-            </button>
+        <div className="-mx-2 border-b border-[rgba(110,65,15,0.30)]">
+          {onBack ? (
+            <ContextualHeader
+              variant="back-control"
+              title={ARENA_COPY.title}
+              back={{ onClick: onBack, label: ARENA_COPY.backToHubAria }}
+            />
+          ) : (
+            <ContextualHeader variant="title" title={ARENA_COPY.title} />
           )}
         </div>
       )}
