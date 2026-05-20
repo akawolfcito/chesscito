@@ -1,7 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { PersistentDock } from "../persistent-dock";
+import {
+  registerDockSheetCloser,
+  setDockSheet,
+} from "@/lib/ui/dock-sheet-store";
 
 const pathnameMock = vi.hoisted(() => vi.fn(() => "/exercises"));
 const pushMock = vi.hoisted(() => vi.fn());
@@ -14,6 +18,10 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/telemetry", () => ({
   track: vi.fn(),
 }));
+
+afterEach(() => {
+  setDockSheet(null);
+});
 
 describe("PersistentDock — restored 5-slot taxonomy (badge/shop/arena/trophies/leaderboard)", () => {
   it("renders the legacy 5-slot dock on /exercises with Arena as center", () => {
@@ -118,5 +126,58 @@ describe("PersistentDock — sheet-aware routing", () => {
     render(<PersistentDock />);
     await user.click(screen.getByRole("button", { name: /pieces/i }));
     expect(pushMock).toHaveBeenLastCalledWith("/exercises");
+  });
+});
+
+describe("PersistentDock — overlay-aware center action", () => {
+  it("from /exercises with an open sheet, center closes the overlay and does NOT switch routes", async () => {
+    pathnameMock.mockReturnValue("/exercises");
+    pushMock.mockReset();
+    const close = vi.fn();
+    const user = userEvent.setup();
+
+    registerDockSheetCloser(close);
+    setDockSheet("shop");
+
+    render(<PersistentDock />);
+
+    // Center label/aria swaps to "Close" while an overlay is open.
+    const center = screen.getByRole("button", { name: /close/i });
+    expect(screen.queryByRole("button", { name: /^arena$/i })).not.toBeInTheDocument();
+
+    await user.click(center);
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("from /arena with an open sheet, center closes the overlay and does NOT switch routes", async () => {
+    pathnameMock.mockReturnValue("/arena");
+    pushMock.mockReset();
+    const close = vi.fn();
+    const user = userEvent.setup();
+
+    registerDockSheetCloser(close);
+    setDockSheet("trophies");
+
+    render(<PersistentDock />);
+
+    const center = screen.getByRole("button", { name: /close/i });
+    expect(screen.queryByRole("button", { name: /^pieces$/i })).not.toBeInTheDocument();
+
+    await user.click(center);
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("when the store reports no open sheet, center reverts to the route-swap behavior", async () => {
+    pathnameMock.mockReturnValue("/exercises");
+    pushMock.mockReset();
+    const user = userEvent.setup();
+
+    setDockSheet(null);
+    render(<PersistentDock />);
+
+    await user.click(screen.getByRole("button", { name: /arena/i }));
+    expect(pushMock).toHaveBeenLastCalledWith("/arena?fresh=1");
   });
 });
