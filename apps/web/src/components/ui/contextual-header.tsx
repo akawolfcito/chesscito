@@ -2,18 +2,30 @@
 
 import * as React from "react";
 import { CandyBanner } from "@/components/redesign/candy-banner";
+import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types — discriminated union per variant.
 //
-// Full contract: docs/specs/ui/contextual-header-spec-2026-05-01.md (v1)
+// Full contract: docs/specs/ui/contextual-header-spec-2026-05-01.md (v1.1)
 // Design-system entry: DESIGN_SYSTEM.md §10.5
 //
 // Why discriminated union (and not a flat interface): impossible prop
 // combinations (`back + modeTabs`, `trailingControl` outside its allowed
 // variants) must fail at compile time, not at runtime. See spec §3
 // amendment for the rationale and the original red-team finding.
+//
+// v1.1 additions (header-consistency canary 2026-05-20):
+//   - Optional `icon?: CandyIconName` on title / title-control /
+//     back-control / close-control. Renders h-5 w-5 inline LEFT of the
+//     title text with `gap-2`. Mandatory rule lives in the consumer
+//     surface, not the primitive.
+//   - New variant `close-control` — title (+ optional subtitle, + optional
+//     icon) on the left, inline close button on the right. Replaces the
+//     ad-hoc `border-b -mx-6 -mt-6 px-6 pb-5 pt-…` recipe copy-pasted
+//     across every dock sheet, and the floating absolute close in
+//     `sheet.tsx`.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type Sticky = "scroll";
@@ -34,9 +46,16 @@ export type BackProp = {
   label: string;
 };
 
+export type CloseProp = {
+  onClick: () => void;
+  /** Accessible label. Defaults to "Close" when omitted. */
+  label?: string;
+};
+
 export type TitleHeaderProps = {
   variant: "title";
   title: string;
+  icon?: CandyIconName;
   ariaLabel?: string;
   sticky?: Sticky;
 };
@@ -45,6 +64,7 @@ export type TitleControlHeaderProps = {
   variant: "title-control";
   title: string;
   subtitle?: string;
+  icon?: CandyIconName;
   trailingControl: React.ReactElement;
   ariaLabel?: string;
   sticky?: Sticky;
@@ -60,8 +80,19 @@ export type ModeTabsHeaderProps = {
 export type BackControlHeaderProps = {
   variant: "back-control";
   title: string;
+  icon?: CandyIconName;
   back: BackProp;
   trailingControl?: React.ReactElement;
+  ariaLabel?: string;
+  sticky?: Sticky;
+};
+
+export type CloseControlHeaderProps = {
+  variant: "close-control";
+  title: string;
+  subtitle?: string;
+  icon?: CandyIconName;
+  close: CloseProp;
   ariaLabel?: string;
   sticky?: Sticky;
 };
@@ -81,7 +112,8 @@ export type ContextualHeaderProps =
   | TitleHeaderProps
   | TitleControlHeaderProps
   | ModeTabsHeaderProps
-  | BackControlHeaderProps;
+  | BackControlHeaderProps
+  | CloseControlHeaderProps;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Visual length caps (spec §6.1).
@@ -107,7 +139,8 @@ function emitLengthWarnings(props: ContextualHeaderProps): void {
   if (
     (props.variant === "title" ||
       props.variant === "title-control" ||
-      props.variant === "back-control") &&
+      props.variant === "back-control" ||
+      props.variant === "close-control") &&
     props.title.length > MAX_TITLE
   ) {
     devWarn(
@@ -115,7 +148,7 @@ function emitLengthWarnings(props: ContextualHeaderProps): void {
     );
   }
   if (
-    props.variant === "title-control" &&
+    (props.variant === "title-control" || props.variant === "close-control") &&
     props.subtitle &&
     props.subtitle.length > MAX_SUBTITLE
   ) {
@@ -194,7 +227,8 @@ function deriveAriaLabel(props: ContextualHeaderProps): string {
   if (
     props.variant === "title" ||
     props.variant === "title-control" ||
-    props.variant === "back-control"
+    props.variant === "back-control" ||
+    props.variant === "close-control"
   ) {
     return `${props.title} header`;
   }
@@ -214,6 +248,13 @@ const TITLE_CLASS =
   "truncate text-base font-semibold text-[rgba(110,65,15,0.95)]";
 const SUBTITLE_CLASS =
   "truncate text-xs font-medium text-[rgba(110,65,15,0.65)]";
+
+/** Inline title icon — sits LEFT of the title text at h-5 w-5 with
+ *  `gap-2`. Rule lives in the consumer surface (sheets mandate it, pages
+ *  with a back chip make it optional). */
+function TitleIcon({ name }: { name: CandyIconName }): React.JSX.Element {
+  return <CandyIcon name={name} className="h-5 w-5 shrink-0" />;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Component
@@ -259,6 +300,7 @@ export function ContextualHeader(props: ContextualHeaderProps): React.JSX.Elemen
           data-variant="title"
           className={HEADER_CLASS}
         >
+          {props.icon ? <TitleIcon name={props.icon} /> : null}
           <h1 className={TITLE_CLASS}>{props.title}</h1>
         </header>
       );
@@ -271,6 +313,9 @@ export function ContextualHeader(props: ContextualHeaderProps): React.JSX.Elemen
 
     case "back-control":
       return <BackControlHeader {...props} ariaLabel={ariaLabel} />;
+
+    case "close-control":
+      return <CloseControlHeader {...props} ariaLabel={ariaLabel} />;
   }
 }
 
@@ -288,9 +333,12 @@ function TitleControlHeader(
       data-variant="title-control"
       className={HEADER_CLASS}
     >
-      <div className="min-w-0 flex-1">
-        <h1 className={TITLE_CLASS}>{props.title}</h1>
-        {props.subtitle ? <p className={SUBTITLE_CLASS}>{props.subtitle}</p> : null}
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        {props.icon ? <TitleIcon name={props.icon} /> : null}
+        <div className="min-w-0 flex-1">
+          <h1 className={TITLE_CLASS}>{props.title}</h1>
+          {props.subtitle ? <p className={SUBTITLE_CLASS}>{props.subtitle}</p> : null}
+        </div>
       </div>
       <div ref={trailingRef} className="shrink-0" data-slot="trailing-control">
         {props.trailingControl}
@@ -360,12 +408,46 @@ function BackControlHeader(
       >
         <CandyBanner name="btn-back" className="h-8 w-8" />
       </button>
-      <h1 className={cn(TITLE_CLASS, "min-w-0 flex-1")}>{props.title}</h1>
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        {props.icon ? <TitleIcon name={props.icon} /> : null}
+        <h1 className={cn(TITLE_CLASS, "min-w-0 flex-1")}>{props.title}</h1>
+      </div>
       {props.trailingControl ? (
         <div ref={trailingRef} className="shrink-0" data-slot="trailing-control">
           {props.trailingControl}
         </div>
       ) : null}
+    </header>
+  );
+}
+
+function CloseControlHeader(
+  props: CloseControlHeaderProps & { ariaLabel: string },
+): React.JSX.Element {
+  const closeLabel = props.close.label ?? "Close";
+  return (
+    <header
+      aria-label={props.ariaLabel}
+      data-component="contextual-header"
+      data-variant="close-control"
+      className={HEADER_CLASS}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        {props.icon ? <TitleIcon name={props.icon} /> : null}
+        <div className="min-w-0 flex-1">
+          <h1 className={TITLE_CLASS}>{props.title}</h1>
+          {props.subtitle ? <p className={SUBTITLE_CLASS}>{props.subtitle}</p> : null}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={props.close.onClick}
+        aria-label={closeLabel}
+        className="candy-close-button"
+        data-slot="close-control"
+      >
+        <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
+      </button>
     </header>
   );
 }

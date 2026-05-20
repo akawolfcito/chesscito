@@ -278,8 +278,9 @@ describe("<ContextualHeader> variant: back-control", () => {
     );
     const back = screen.getByRole("button", { name: "Back" });
     expect(back).toBeInTheDocument();
-    expect(back.className).toMatch(/h-11/);
-    expect(back.className).toMatch(/w-11/);
+    // `.candy-nav-button` is the canonical 44×44 CSS class (globals.css)
+    // — the touch-target rule lives in CSS, not in inline utilities.
+    expect(back.className).toMatch(/candy-nav-button/);
     expect(
       screen.getByRole("heading", { name: "Game Review" }),
     ).toBeInTheDocument();
@@ -325,6 +326,177 @@ describe("<ContextualHeader> variant: back-control", () => {
       expect.stringContaining("back.label is 22 chars (cap 16)"),
     );
     warn.mockRestore();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Variant: "close-control"
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("<ContextualHeader> variant: close-control", () => {
+  it("renders title, optional subtitle, and the inline close button", () => {
+    render(
+      <ContextualHeader
+        variant="close-control"
+        title="Shop"
+        subtitle="Buy boosters and badges"
+        close={{ onClick: () => undefined }}
+      />,
+    );
+    expect(getHeader()).toHaveAttribute("data-variant", "close-control");
+    expect(screen.getByRole("heading", { name: "Shop" })).toBeInTheDocument();
+    expect(screen.getByText("Buy boosters and badges")).toBeInTheDocument();
+    // The close button must be a real inline <button> — not the floating
+    // absolute one rendered by sheet.tsx. The header marks it with
+    // `data-slot="close-control"`.
+    const closeBtn = screen.getByRole("button", { name: "Close" });
+    expect(closeBtn).toBeInTheDocument();
+    expect(closeBtn.getAttribute("data-slot")).toBe("close-control");
+    expect(closeBtn.className).toMatch(/candy-close-button/);
+  });
+
+  it("calls close.onClick when the close button is tapped", () => {
+    const onClick = vi.fn();
+    render(
+      <ContextualHeader
+        variant="close-control"
+        title="Shop"
+        close={{ onClick }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it("respects an explicit close.label", () => {
+    render(
+      <ContextualHeader
+        variant="close-control"
+        title="Shop"
+        close={{ onClick: () => undefined, label: "Dismiss shop" }}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Dismiss shop" }),
+    ).toBeInTheDocument();
+  });
+
+  it("omits subtitle when not provided", () => {
+    render(
+      <ContextualHeader
+        variant="close-control"
+        title="Shop"
+        close={{ onClick: () => undefined }}
+      />,
+    );
+    expect(screen.queryByText("Buy boosters and badges")).not.toBeInTheDocument();
+  });
+
+  it("warns when title exceeds the 22-char visual cap", () => {
+    const warn = silenceWarn();
+    render(
+      <ContextualHeader
+        variant="close-control"
+        title="A very long sheet title overflowing"
+        close={{ onClick: () => undefined }}
+      />,
+    );
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("title is 35 chars (cap 22)"),
+    );
+    warn.mockRestore();
+  });
+
+  it("warns when subtitle exceeds the 32-char visual cap", () => {
+    const warn = silenceWarn();
+    render(
+      <ContextualHeader
+        variant="close-control"
+        title="Shop"
+        subtitle="An overlong subtitle string that surely overflows"
+        close={{ onClick: () => undefined }}
+      />,
+    );
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("subtitle is 49 chars (cap 32)"),
+    );
+    warn.mockRestore();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Optional `icon` slot (header-consistency canary — see
+// docs/reviews/2026-05-20-header-consistency-audit.md §3).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("<ContextualHeader> optional title icon", () => {
+  it("renders the icon inline LEFT of the title on `title` variant", () => {
+    const { container } = render(
+      <ContextualHeader variant="title" title="Trophies" icon="trophy" />,
+    );
+    const heading = screen.getByRole("heading", { name: "Trophies" });
+    const icon = container.querySelector("picture.candy-icon");
+    expect(icon).not.toBeNull();
+    // The icon must precede the heading in DOM order so screen readers
+    // and visual scanners land on it first.
+    const headerEl = getHeader();
+    const children = Array.from(headerEl.children);
+    const iconIndex = children.findIndex((el) =>
+      el.contains(icon as Element),
+    );
+    const headingIndex = children.findIndex((el) => el.contains(heading));
+    expect(iconIndex).toBeGreaterThanOrEqual(0);
+    expect(iconIndex).toBeLessThanOrEqual(headingIndex);
+  });
+
+  it("renders the icon inside the title cluster on `title-control`", () => {
+    const { container } = render(
+      <ContextualHeader
+        variant="title-control"
+        title="Rook"
+        icon="coach"
+        trailingControl={
+          <button type="button" aria-label="Open picker">
+            ▾
+          </button>
+        }
+      />,
+    );
+    expect(container.querySelector("picture.candy-icon")).not.toBeNull();
+  });
+
+  it("renders the icon next to the title on `back-control`", () => {
+    const { container } = render(
+      <ContextualHeader
+        variant="back-control"
+        title="Training Journal"
+        icon="coach"
+        back={{ onClick: () => undefined, label: "Back" }}
+      />,
+    );
+    expect(container.querySelector("picture.candy-icon")).not.toBeNull();
+  });
+
+  it("renders the icon on `close-control`", () => {
+    const { container } = render(
+      <ContextualHeader
+        variant="close-control"
+        title="Shop"
+        icon="shop"
+        close={{ onClick: () => undefined }}
+      />,
+    );
+    // The icon sits inline; the close button still renders its own
+    // CandyIcon `close` glyph — so we expect at least 2 candy-icons.
+    const icons = container.querySelectorAll("picture.candy-icon");
+    expect(icons.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("omits the icon when the prop is not provided", () => {
+    const { container } = render(
+      <ContextualHeader variant="title" title="About" />,
+    );
+    expect(container.querySelector("picture.candy-icon")).toBeNull();
   });
 });
 
