@@ -323,7 +323,7 @@ export function ResultOverlay({
                       rel="noopener noreferrer"
                       className="underline underline-offset-2 opacity-70"
                     >
-                      {RESULT_OVERLAY_COPY.cta.viewOnCeloscan}
+                      {RESULT_OVERLAY_COPY.cta.receiptOnCeloscan}
                     </Link>
                   </>
                 ) : null}

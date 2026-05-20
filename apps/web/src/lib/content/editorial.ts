@@ -134,7 +134,7 @@ export const RESULT_OVERLAY_COPY = {
     continue: "Continue",
     tryAgain: "Try Again",
     dismiss: "Dismiss",
-    viewOnCeloscan: "View on CeloScan",
+    receiptOnCeloscan: "Receipt on CeloScan",
   },
 } as const;
 
