@@ -4,10 +4,8 @@ import { useAccount, useChainId, useDisconnect, useWriteContract } from "wagmi";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { ProfileBanner } from "@/components/profile/profile-banner";
 import { PendingClaims } from "@/components/profile/pending-claims";
 import { GeneralStats } from "@/components/profile/general-stats";
@@ -207,12 +205,20 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
     >
       <SheetContent
         side="bottom"
+        hideClose
         className="profile-sheet mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
-        <SheetHeader className="sr-only">
-          <SheetTitle>{PROFILE_COPY.pageTitle}</SheetTitle>
-          <SheetDescription>Profile and claims</SheetDescription>
-        </SheetHeader>
+        {/* Canonical header strip. Was Pattern C (sr-only header, banner
+         *  served as visual title) — now a real Z2 strip sits above the
+         *  banner so the close affordance lives where the user expects
+         *  it across every sheet. */}
+        <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
+          <ContextualHeader
+            variant="close-control"
+            title={PROFILE_COPY.pageTitle}
+            close={{ onClick: () => onOpenChange(false), label: "Close profile" }}
+          />
+        </div>
 
         <ProfileBanner
           displayName={name}
