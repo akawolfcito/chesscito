@@ -127,10 +127,11 @@ const WRAPPER_CLASS = cn(
 const HANDLE_CLASS =
   "truncate text-xs font-semibold text-white/85";
 
-/** Frame-level back chip — visual cluster (back · handle). */
-const BACK_BUTTON_CLASS = cn(
-  "candy-nav-button scale-[0.82]",
-);
+/** Frame-level back chip — visual cluster (back · handle). The
+ *  44×44 hit area lives in `.candy-nav-button` (globals.css), so no
+ *  scale transform that would shrink the touch target below the
+ *  WCAG-mandated 44 px minimum. Header-consistency audit 2026-05-20. */
+const BACK_BUTTON_CLASS = "candy-nav-button";
 
 const PRO_SKELETON_CLASS = cn(
   "inline-flex items-center justify-center h-6 w-12 rounded-full",
