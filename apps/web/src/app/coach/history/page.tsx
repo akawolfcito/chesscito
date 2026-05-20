@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CoachHistoryDeletePanel } from "@/components/coach/coach-history-delete-panel";
 import { CoachPanel } from "@/components/coach/coach-panel";
-import { CandyBanner } from "@/components/redesign/candy-banner";
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { COACH_COPY } from "@/lib/content/editorial";
 import type { CoachAnalysisRecord, CoachResponse, GameRecord } from "@/lib/coach/types";
@@ -30,23 +28,16 @@ type SelectedFullEntry = {
  *
  * Spec §9.2.
  */
-function PageHeader() {
+function PageHeader({ onBack }: { onBack: () => void }) {
   return (
-    <header className="tj-page-header">
-      <Link
-        href="/hub"
-        aria-label="Back to hub"
-        className="tj-page-header-back candy-nav-button"
-      >
-        <CandyBanner name="btn-back" className="h-9 w-9" />
-      </Link>
-      <div className="tj-page-header-title-group">
-        <div className="flex items-center gap-2">
-          <CandyIcon name="coach" className="h-5 w-5 shrink-0" />
-          <h1 className="tj-page-header-title">{COACH_COPY.yourSessions}</h1>
-        </div>
-        <p className="tj-page-header-subtitle">Your training progress</p>
-      </div>
+    <header className="tj-page-header border-b border-[rgba(110,65,15,0.30)]">
+      <ContextualHeader
+        variant="back-control"
+        icon="coach"
+        title={COACH_COPY.yourSessions}
+        subtitle="Your training progress"
+        back={{ onClick: onBack, label: "Back" }}
+      />
     </header>
   );
 }
@@ -59,7 +50,7 @@ export default function CoachHistoryPage() {
   if (!address) {
     return (
       <main className="tj-root">
-        <PageHeader />
+        <PageHeader onBack={() => router.push("/hub")} />
         <p className="tj-no-wallet-text">
           Connect your wallet to view your Coach history.
         </p>
@@ -100,7 +91,7 @@ export default function CoachHistoryPage() {
 
   return (
     <main className="tj-root">
-      <PageHeader />
+      <PageHeader onBack={() => router.push("/hub")} />
       <div className="tj-content">
         <CoachHistory
           walletAddress={address}
