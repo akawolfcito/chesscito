@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { SHARE_COPY } from "@/lib/content/editorial";
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { ShareGrid } from "@/components/share/share-grid";
 import { track } from "@/lib/telemetry";
 
@@ -139,24 +139,13 @@ export function ShareModal({
           boxShadow: "0 -8px 24px rgba(0, 0, 0, 0.18)",
         }}
       >
-        <div className="flex items-center justify-between border-b border-[rgba(110,65,15,0.30)] px-5 py-4">
-          <h3
-            className="fantasy-title text-sm font-extrabold uppercase tracking-[0.18em]"
-            style={{
-              color: "rgba(110, 65, 15, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-            }}
-          >
-            {title}
-          </h3>
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            aria-label="Close"
-            className="candy-close-button"
-          >
-            <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
-          </button>
+        <div className="border-b border-[rgba(110,65,15,0.30)]">
+          <ContextualHeader
+            variant="close-control"
+            icon="share"
+            title={title}
+            close={{ onClick: () => onOpenChange(false), label: "Close share" }}
+          />
         </div>
         <div className="px-5 pt-5">
           <ShareGrid text={text} url={url ?? SHARE_COPY.url} cardUrl={cardUrl ?? undefined} />
