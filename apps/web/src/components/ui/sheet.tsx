@@ -49,12 +49,19 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  /** When true, suppress the built-in absolute-positioned close button.
+   *  Use this when the sheet renders `<ContextualHeader variant="close-control">`
+   *  inside its body — the header owns the inline close affordance and the
+   *  legacy floating X would render twice. Default `false` keeps every
+   *  legacy sheet unchanged. Header-consistency canary 2026-05-20. */
+  hideClose?: boolean;
+}
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
+>(({ side = "right", className, children, hideClose = false, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
@@ -63,12 +70,14 @@ const SheetContent = React.forwardRef<
       {...props}
     >
       {children}
-      <SheetPrimitive.Close
-        className="candy-close-button absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 disabled:pointer-events-none disabled:opacity-60"
-      >
-        <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
+      {hideClose ? null : (
+        <SheetPrimitive.Close
+          className="candy-close-button absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 disabled:pointer-events-none disabled:opacity-60"
+        >
+          <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
+          <span className="sr-only">Close</span>
+        </SheetPrimitive.Close>
+      )}
     </SheetPrimitive.Content>
   </SheetPortal>
 ))
