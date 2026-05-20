@@ -268,8 +268,13 @@ export function MissionPanelCandy({
     <section className="mission-shell mission-shell-candy atmosphere flex min-h-0 flex-1 flex-col overflow-hidden">
       {/* Paper/wood quest tray. Sally read: a single diegetic control
           tray, not four unrelated floating chips. Built with CSS and
-          existing chess sprites. */}
-      <div className="mt-0.5 px-3 py-1.5">
+          existing chess sprites.
+          The subtle `border-b border-[rgba(110,65,15,0.20)]` closes the
+          chrome zone: Z1 above (identity strip) + this tray (contextual
+          chips) read as a single header band; everything below is board
+          + dock. Lighter than the canonical 0.30 sheet divider because
+          this is in-game (diegetic) chrome — present but not loud. */}
+      <div className="mt-0.5 border-b border-[rgba(110,65,15,0.20)] px-3 pt-1.5 pb-2">
         <div className="flex items-center gap-1">
           <div className="flex-1 min-w-0">
             <PiecePickerTrigger
