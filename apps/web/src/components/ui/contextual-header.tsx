@@ -80,6 +80,7 @@ export type ModeTabsHeaderProps = {
 export type BackControlHeaderProps = {
   variant: "back-control";
   title: string;
+  subtitle?: string;
   icon?: CandyIconName;
   back: BackProp;
   trailingControl?: React.ReactElement;
@@ -148,7 +149,9 @@ function emitLengthWarnings(props: ContextualHeaderProps): void {
     );
   }
   if (
-    (props.variant === "title-control" || props.variant === "close-control") &&
+    (props.variant === "title-control" ||
+      props.variant === "close-control" ||
+      props.variant === "back-control") &&
     props.subtitle &&
     props.subtitle.length > MAX_SUBTITLE
   ) {
@@ -410,7 +413,10 @@ function BackControlHeader(
       </button>
       <div className="flex min-w-0 flex-1 items-center gap-2">
         {props.icon ? <TitleIcon name={props.icon} /> : null}
-        <h1 className={cn(TITLE_CLASS, "min-w-0 flex-1")}>{props.title}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className={TITLE_CLASS}>{props.title}</h1>
+          {props.subtitle ? <p className={SUBTITLE_CLASS}>{props.subtitle}</p> : null}
+        </div>
       </div>
       {props.trailingControl ? (
         <div ref={trailingRef} className="shrink-0" data-slot="trailing-control">
