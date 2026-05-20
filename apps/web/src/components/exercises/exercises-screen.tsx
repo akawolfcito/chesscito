@@ -62,12 +62,13 @@ import {
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
 } from "@/lib/contracts/shop-catalog";
-import { GlobalStatusBar } from "@/components/ui/global-status-bar";
+import { HudResourceChip } from "@/components/hud/hud-resource-chip";
 import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { EXERCISE_DRAWER_COPY, GLOBAL_STATUS_BAR_COPY } from "@/lib/content/editorial";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import { formatWalletShort } from "@/lib/wallet/format";
@@ -1468,29 +1469,41 @@ export function ExercisesScreen({
         </div>
       )}
       <main className="mission-shell relative mx-auto flex h-[100dvh] w-full max-w-[var(--app-max-width)] flex-col px-0 py-0 sm:px-0">
-        {/* Z1 — GlobalStatusBar canary. Replaces the legacy absolute z-30
-            ProChip wrapper. Renders in normal flow as the first child of
-            <main>; identity left, PRO indicator right. PRO management
-            still opens <ProSheet> as transitional debt — see spec §6.1
-            row 1 (4-layer enforcement) and the `pro-tap-debt-due-by`
-            trailer on this canary's commit. */}
-        {address ? (
-          <GlobalStatusBar
-            variant="connected"
-            identity={{ walletShort: formatWalletShort(address) }}
-            proStatus={proStatus}
-            isProLoading={proLoading}
-            onProTap={() => setAccountSheetOpen(true)}
-            onBack={() => router.push("/hub")}
-            compact
+        {/* Header — canonical <ContextualHeader back-control> envelope
+         *  (52–64 px). Replaces the Z1 GlobalStatusBar compact strip
+         *  (36 px) that read as "too compact" on a surface where the
+         *  header is the only chrome (no HUD chip row below, unlike
+         *  /hub). Title = "Exercises"; PRO chip moves into the trailing
+         *  slot. User feedback (Sally pass 7 — 2026-05-20). */}
+        <div className="border-b border-[rgba(110,65,15,0.30)]">
+          <ContextualHeader
+            variant="back-control"
+            title={EXERCISE_DRAWER_COPY.title}
+            back={{
+              onClick: () => router.push("/hub"),
+              label: GLOBAL_STATUS_BAR_COPY.backLabel,
+            }}
+            trailingControl={
+              address && !proLoading ? (
+                <HudResourceChip
+                  tone="pro"
+                  size="compact"
+                  atmosphere="adventure"
+                  icon="wallet"
+                  value="PRO"
+                  ariaLabel={
+                    proStatus?.active
+                      ? GLOBAL_STATUS_BAR_COPY.proManageLabel
+                      : GLOBAL_STATUS_BAR_COPY.proViewLabel
+                  }
+                  onClick={() => setAccountSheetOpen(true)}
+                />
+              ) : (
+                <span aria-hidden="true" className="block h-6 w-6" />
+              )
+            }
           />
-        ) : (
-          <GlobalStatusBar
-            variant="anonymous"
-            onBack={() => router.push("/hub")}
-            compact
-          />
-        )}
+        </div>
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onSelectPiece={(piece) => {
