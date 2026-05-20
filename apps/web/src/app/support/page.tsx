@@ -1,6 +1,6 @@
 import { LegalPageShell } from "@/components/legal-page-shell";
 import { SUPPORT_COPY } from "@/lib/content/editorial";
-import { Mail, Github } from "lucide-react";
+import { Mail, Github, Send } from "lucide-react";
 
 export const metadata = {
   title: "Support — Chesscito",
@@ -38,6 +38,28 @@ export default function SupportPage() {
             <p className="text-sm font-semibold">{SUPPORT_COPY.primaryChannel.unavailable}</p>
           </div>
         )}
+      </section>
+
+      {/* Tertiary channel — Telegram community / DM */}
+      <section>
+        <h2 className="mb-3 text-sm font-bold" style={{ color: "var(--paper-text)" }}>
+          {SUPPORT_COPY.sections.community}
+        </h2>
+        <a
+          href={SUPPORT_COPY.tertiaryChannel.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="paper-tray flex min-h-[44px] items-center gap-3 transition active:scale-[0.99]"
+          style={{ color: "var(--paper-text)" }}
+        >
+          <Send size={18} className="shrink-0" style={{ color: "rgba(180, 110, 20, 0.95)" }} />
+          <div>
+            <p className="text-sm font-semibold">{SUPPORT_COPY.tertiaryChannel.label}</p>
+            <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>
+              {SUPPORT_COPY.tertiaryChannel.value}
+            </p>
+          </div>
+        </a>
       </section>
 
       {/* Secondary channel */}

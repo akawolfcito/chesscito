@@ -1152,6 +1152,11 @@ export const SUPPORT_COPY = {
     value: "Report a bug or request a feature",
     href: "https://github.com/wolfcito/chesscito/issues",
   },
+  tertiaryChannel: {
+    label: "Telegram",
+    value: "@chesscito_app",
+    href: "https://t.me/chesscito_app",
+  },
   howToReport: "Describe the issue, include screenshots if possible, and mention your device and browser.",
   reportableIssues: [
     "Loading problems",
@@ -1163,6 +1168,7 @@ export const SUPPORT_COPY = {
   responseTime: "We aim to respond within 48 hours.",
   sections: {
     contactUs: "Contact Us",
+    community: "Community",
     technicalIssues: "Technical Issues",
     howToReport: "How to Report an Issue",
   },
