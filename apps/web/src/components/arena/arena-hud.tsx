@@ -135,9 +135,12 @@ export function ArenaHud({
       {/* Header — canonical <ContextualHeader back-control> envelope
        *  (52–64 px). The bespoke QUIT?-state back chip lives in the
        *  `backSlot` override; the live timer occupies the trailing
-       *  slot. Strip matches every other back-bearing surface in the
-       *  app. User feedback (Sally pass 7, 2026-05-20). */}
-      <div className="border-b border-[rgba(110,65,15,0.30)]">
+       *  slot.
+       *  Divider DROPPED on purpose (Sally pass 8, 2026-05-20):
+       *  /arena match is a diegetic gameplay surface. The matchup
+       *  avatars + board are the screen; the divider would compete
+       *  visually with the You-vs-Bot row immediately below. */}
+      <div>
         <ContextualHeader
           variant="back-control"
           title={ARENA_COPY.title}

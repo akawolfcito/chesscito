@@ -103,7 +103,11 @@ export function ArenaSelectScaffold({
       className="arena-scaffold"
       aria-label={`Chesscito ${ARENA_COPY.title}`}
     >
-      <header className="arena-scaffold-hud border-b border-[rgba(110,65,15,0.30)]">
+      {/* Divider DROPPED on purpose (Sally pass 8, 2026-05-20):
+       *  /arena selection is the entrance ramp to gameplay — diegetic,
+       *  not navigation. Per the canonical rule, divider presence
+       *  signals "meta" and absence signals "you're playing". */}
+      <header className="arena-scaffold-hud">
         {onBack ? (
           <ContextualHeader
             variant="back-control"

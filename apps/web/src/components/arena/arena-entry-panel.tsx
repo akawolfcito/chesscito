@@ -88,7 +88,9 @@ export function ArenaEntryPanel({
       style={shellStyle}
     >
       {!bare && (
-        <div className="-mx-2 border-b border-[rgba(110,65,15,0.30)]">
+        // Divider DROPPED (Sally pass 8, 2026-05-20) — diegetic
+        // gameplay surface, see arena-select-scaffold for the rule.
+        <div className="-mx-2">
           {onBack ? (
             <ContextualHeader
               variant="back-control"

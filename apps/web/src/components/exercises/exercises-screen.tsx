@@ -1470,12 +1470,15 @@ export function ExercisesScreen({
       )}
       <main className="mission-shell relative mx-auto flex h-[100dvh] w-full max-w-[var(--app-max-width)] flex-col px-0 py-0 sm:px-0">
         {/* Header — canonical <ContextualHeader back-control> envelope
-         *  (52–64 px). Replaces the Z1 GlobalStatusBar compact strip
-         *  (36 px) that read as "too compact" on a surface where the
-         *  header is the only chrome (no HUD chip row below, unlike
-         *  /hub). Title = "Exercises"; PRO chip moves into the trailing
-         *  slot. User feedback (Sally pass 7 — 2026-05-20). */}
-        <div className="border-b border-[rgba(110,65,15,0.30)]">
+         *  (52–64 px). Title = "Exercises"; PRO chip in the trailing
+         *  slot.
+         *  Divider DROPPED on purpose (Sally pass 8, 2026-05-20):
+         *  /exercises is a diegetic gameplay surface. Per the canonical
+         *  rule, divider presence signals "meta navigation" and absence
+         *  signals "you're playing". The quest tray + board below speak
+         *  for themselves; the divider would over-articulate chrome
+         *  during gameplay. */}
+        <div>
           <ContextualHeader
             variant="back-control"
             title={EXERCISE_DRAWER_COPY.title}
