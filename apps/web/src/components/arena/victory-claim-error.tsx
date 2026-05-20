@@ -67,9 +67,9 @@ export function VictoryClaimError({
       {/* Main content container */}
       <div className="relative z-10 flex h-full w-full flex-col px-5 py-2 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
         <CandyGlassShell
-          title=""
-          onClose={undefined as any}
-          closeLabel=""
+          title={ARENA_COPY.title}
+          onClose={onBackToHub}
+          closeLabel={ARENA_COPY.backToHubAria}
           presentation="screen"
           className="!gap-4 shadow-none"
           cta={
@@ -97,14 +97,6 @@ export function VictoryClaimError({
               >
                 <CandyIcon name="refresh" className="mr-1.5 h-3.5 w-3.5" /> {ARENA_COPY.playAgain}
               </Button>
-              {/* Exit shortcut - bottom aligned */}
-              <button
-                type="button"
-                onClick={onBackToHub}
-                className="mt-1 w-full py-1.5 text-xs font-black uppercase tracking-[0.2em] text-amber-900/60 transition-opacity hover:opacity-100"
-              >
-                {ARENA_COPY.backToHub}
-              </button>
             </div>
           }
         >

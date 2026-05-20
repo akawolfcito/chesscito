@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { track } from "@/lib/telemetry";
 import {
   ARENA_COPY,
@@ -70,6 +71,14 @@ export function VictoryClaimSuccess({
       </div>
 
       <main className="arena-result-screen relative z-10">
+        <header className="arena-result-nav border-b border-[rgba(110,65,15,0.30)]">
+          <ContextualHeader
+            variant="back-control"
+            title={ARENA_COPY.title}
+            back={{ onClick: onBackToHub, label: ARENA_COPY.backToHubAria }}
+          />
+        </header>
+
         <section className="arena-result-header">
           <div className="arena-result-trophy">
             <div className="arena-result-trophy-glow" />
@@ -154,14 +163,6 @@ export function VictoryClaimSuccess({
             </button>
           )}
         </div>
-
-        <button
-          type="button"
-          onClick={onBackToHub}
-          className="arena-result-back-link"
-        >
-          {ARENA_COPY.backToHub}
-        </button>
       </main>
 
       <ShareModal

@@ -7,6 +7,7 @@ import type { ArenaStatus } from "@/lib/game/types";
 import { AskCoachButton } from "@/components/coach/ask-coach-button";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { formatTime } from "@/lib/game/arena-utils";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
 import { track } from "@/lib/telemetry";
@@ -173,6 +174,14 @@ export function ArenaEndState({
       aria-label={text}
     >
       <main className="arena-result-screen">
+        <header className="arena-result-nav border-b border-[rgba(110,65,15,0.30)]">
+          <ContextualHeader
+            variant="back-control"
+            title={ARENA_COPY.title}
+            back={{ onClick: onBackToHub, label: ARENA_COPY.backToHubAria }}
+          />
+        </header>
+
         <section className="arena-result-header">
           <div className="arena-result-trophy">
             <div className="arena-result-trophy-glow" />
@@ -231,14 +240,6 @@ export function ArenaEndState({
             <AskCoachButton onClick={onAskCoach} />
           </div>
         )}
-
-        <button
-          type="button"
-          onClick={onBackToHub}
-          className="arena-result-back-link"
-        >
-          {ARENA_COPY.backToHub}
-        </button>
       </main>
     </div>
   );
