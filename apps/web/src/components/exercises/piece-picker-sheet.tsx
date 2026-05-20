@@ -4,11 +4,9 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { PIECE_IMAGES, PIECE_LABELS, PIECE_RAIL_COPY } from "@/lib/content/editorial";
 import { THEME_CONFIG } from "@/lib/theme";
 
@@ -44,23 +42,15 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
       {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}
       <SheetContent
         side="bottom"
+        hideClose
         className="mission-shell sheet-bg-hub rounded-t-3xl border-white/[0.10] pb-[5rem]"
       >
-        <div className="border-b border-[rgba(110,65,15,0.35)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
-          <SheetHeader>
-            <SheetTitle
-              className="fantasy-title"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              {PIECE_RAIL_COPY.title}
-            </SheetTitle>
-            <SheetDescription className="sr-only">
-              {PIECE_RAIL_COPY.title}
-            </SheetDescription>
-          </SheetHeader>
+        <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
+          <ContextualHeader
+            variant="close-control"
+            title={PIECE_RAIL_COPY.title}
+            close={{ onClick: () => onOpenChange(false), label: "Close piece picker" }}
+          />
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
