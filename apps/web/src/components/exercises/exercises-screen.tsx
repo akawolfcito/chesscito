@@ -66,10 +66,8 @@ import { GlobalStatusBar } from "@/components/ui/global-status-bar";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import { formatWalletShort } from "@/lib/wallet/format";
@@ -163,24 +161,17 @@ function AccountSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
+        hideClose
         className="sheet-bg-hub rounded-t-3xl border-0 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)]"
       >
-        <div className="border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
-          <SheetHeader>
-            <SheetTitle
-              className="fantasy-title flex items-center gap-2"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              <CandyIcon name="wallet" className="h-5 w-5" />
-              {ACCOUNT_SHEET_COPY.title}
-            </SheetTitle>
-            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.75)" }}>
-              {ACCOUNT_SHEET_COPY.description}
-            </SheetDescription>
-          </SheetHeader>
+        <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
+          <ContextualHeader
+            variant="close-control"
+            icon="wallet"
+            title={ACCOUNT_SHEET_COPY.title}
+            subtitle={ACCOUNT_SHEET_COPY.description}
+            close={{ onClick: () => onOpenChange(false), label: "Close account" }}
+          />
         </div>
 
         <div className="mt-4 space-y-3">
