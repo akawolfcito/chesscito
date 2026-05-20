@@ -109,7 +109,12 @@ function ArenaPageInner() {
   const handleBadgeSheetOpenChange = useCallback(
     (open: boolean) => {
       badgeSheet.sheetProps.onOpenChange(open);
-      setActiveDockTab(open ? "badge" : null);
+      // Guarded — Radix fires onOpenChange(false) when the user taps
+      // outside (e.g. on the dock to swap to a sibling sheet). Without
+      // this guard, that "false" would clobber the new sheet's slug
+      // set milliseconds earlier by the dock's deep-link push.
+      if (open) setActiveDockTab("badge");
+      else setActiveDockTab((prev) => (prev === "badge" ? null : prev));
     },
     [badgeSheet],
   );
@@ -124,7 +129,8 @@ function ArenaPageInner() {
   const handleShopSheetOpenChange = useCallback(
     (open: boolean) => {
       shopSheet.sheetProps.onOpenChange(open);
-      setActiveDockTab(open ? "shop" : null);
+      if (open) setActiveDockTab("shop");
+      else setActiveDockTab((prev) => (prev === "shop" ? null : prev));
     },
     [shopSheet],
   );
@@ -1131,12 +1137,19 @@ function ArenaPageInner() {
 
   const leaderboardOpen = activeDockTab === "leaderboard";
   const setLeaderboardOpen = useCallback(
-    (open: boolean) => setActiveDockTab(open ? "leaderboard" : null),
+    (open: boolean) => {
+      // Guarded — see note on handleBadgeSheetOpenChange.
+      if (open) setActiveDockTab("leaderboard");
+      else setActiveDockTab((prev) => (prev === "leaderboard" ? null : prev));
+    },
     [],
   );
   const trophiesOpen = activeDockTab === "trophies";
   const setTrophiesOpen = useCallback(
-    (open: boolean) => setActiveDockTab(open ? "trophies" : null),
+    (open: boolean) => {
+      if (open) setActiveDockTab("trophies");
+      else setActiveDockTab((prev) => (prev === "trophies" ? null : prev));
+    },
     [],
   );
 
@@ -1238,12 +1251,12 @@ function ArenaPageInner() {
             />
             <TrophiesSheet
               open={activeDockTab === "trophies"}
-              onOpenChange={(v) => setActiveDockTab(v ? "trophies" : null)}
+              onOpenChange={setTrophiesOpen}
               showTrigger={false}
             />
             <LeaderboardSheet
               open={activeDockTab === "leaderboard"}
-              onOpenChange={(v) => setActiveDockTab(v ? "leaderboard" : null)}
+              onOpenChange={setLeaderboardOpen}
               showTrigger={false}
             />
             <PurchaseConfirmSheet {...shopSheet.confirmProps} />

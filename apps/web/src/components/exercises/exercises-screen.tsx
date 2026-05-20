@@ -349,9 +349,20 @@ export function ExercisesScreen({
           : null,
   );
   const storeOpen = activeDockTab === "shop";
-  const setStoreOpen = (v: boolean) => setActiveDockTab(v ? "shop" : null);
+  // Guarded setter — Radix Sheet emits onOpenChange(false) when the
+  // user taps outside (e.g. on the dock to switch to a sibling sheet).
+  // Without the functional guard, that "false" would clobber the new
+  // sheet's "shop" / "trophies" / etc. set milliseconds earlier by the
+  // dock's deep-link push, leaving the user with no sheet at all.
+  const setStoreOpen = (v: boolean) => {
+    if (v) setActiveDockTab("shop");
+    else setActiveDockTab((prev) => (prev === "shop" ? null : prev));
+  };
   const leaderboardOpen = activeDockTab === "leaderboard";
-  const setLeaderboardOpen = (v: boolean) => setActiveDockTab(v ? "leaderboard" : null);
+  const setLeaderboardOpen = (v: boolean) => {
+    if (v) setActiveDockTab("leaderboard");
+    else setActiveDockTab((prev) => (prev === "leaderboard" ? null : prev));
+  };
   const [selectedItemId, setSelectedItemId] = useState<bigint | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [shopTxHash, setShopTxHash] = useState<string | null>(null);
@@ -462,9 +473,15 @@ export function ExercisesScreen({
   const [showBadgeEarned, setShowBadgeEarned] = useState(false);
   const [showPieceComplete, setShowPieceComplete] = useState(false);
   const badgeSheetOpen = activeDockTab === "badge";
-  const setBadgeSheetOpen = (v: boolean) => setActiveDockTab(v ? "badge" : null);
+  const setBadgeSheetOpen = (v: boolean) => {
+    if (v) setActiveDockTab("badge");
+    else setActiveDockTab((prev) => (prev === "badge" ? null : prev));
+  };
   const trophiesSheetOpen = activeDockTab === "trophies";
-  const setTrophiesSheetOpen = (v: boolean) => setActiveDockTab(v ? "trophies" : null);
+  const setTrophiesSheetOpen = (v: boolean) => {
+    if (v) setActiveDockTab("trophies");
+    else setActiveDockTab((prev) => (prev === "trophies" ? null : prev));
+  };
 
   // Publish the dock-driven sheet state to the shared store so the
   // <PersistentDock>'s center button can swap into "close overlay"
