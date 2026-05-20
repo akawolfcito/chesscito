@@ -53,6 +53,7 @@ import { victoryAbi } from "@/lib/contracts/victory";
 import { shopAbi } from "@/lib/contracts/shop";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
+import { registerDockSheetCloser, setDockSheet } from "@/lib/ui/dock-sheet-store";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { COACH_PACK_ITEMS, type CoachPackSize } from "@/lib/contracts/shop-catalog";
 import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
@@ -153,6 +154,32 @@ function ArenaPageInner() {
     if (game.status !== "selecting") return;
     track("arena_select_view");
   }, [arenaScaffoldEnabled, game.status]);
+
+  // Publish the dock-driven sheet state to the shared store so
+  // <PersistentDock>'s center button can detect "overlay is open"
+  // without prop-drilling through the route tree. Cleared on unmount
+  // so a different route that mounts the dock starts fresh.
+  useEffect(() => {
+    setDockSheet(activeDockTab);
+    return () => setDockSheet(null);
+  }, [activeDockTab]);
+
+  // Register the closer so the dock's center button can return the
+  // user to the visible base route under the overlay. Routes via the
+  // sheet-specific handlers when present (shop/badge own additional
+  // hook state) and falls back to the bare setter for sheets that
+  // only track their open flag here.
+  useEffect(() => {
+    return registerDockSheetCloser(() => {
+      if (activeDockTab === "shop") {
+        handleShopSheetOpenChange(false);
+      } else if (activeDockTab === "badge") {
+        handleBadgeSheetOpenChange(false);
+      } else {
+        setActiveDockTab(null);
+      }
+    });
+  }, [activeDockTab, handleShopSheetOpenChange, handleBadgeSheetOpenChange]);
 
   // Dock sheet deep-link — when the dock pushes `/arena?sheet=<slug>`
   // from any route the param fires the matching mounted sheet here
