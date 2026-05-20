@@ -462,10 +462,28 @@ export function ExercisesScreen({
   // <PersistentDock>'s center button can swap into "close overlay"
   // mode when any of badge/shop/trophies/leaderboard is open. Cleared
   // on unmount so other routes that mount the dock start fresh.
+  //
+  // Also: when activeDockTab transitions from open -> null (X tap or
+  // center close), strip any leftover `?sheet=…` from the URL so it
+  // reflects the visible state and a refresh / back-nav doesn't
+  // silently reopen the sheet the user just closed. Guarded by a ref
+  // so the initial mount doesn't strip the deep-link param BEFORE the
+  // `lastAppliedSheetRef` effect can read it and open the sheet.
+  const dockSheetMountedRef = useRef(false);
   useEffect(() => {
     setDockSheet(activeDockTab);
+    if (dockSheetMountedRef.current && activeDockTab === null && typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.has("sheet")) {
+        sp.delete("sheet");
+        const qs = sp.toString();
+        const path = window.location.pathname;
+        router.replace(qs ? `${path}?${qs}` : path, { scroll: false });
+      }
+    }
+    dockSheetMountedRef.current = true;
     return () => setDockSheet(null);
-  }, [activeDockTab]);
+  }, [activeDockTab, router]);
 
   // Register the closer so the dock's center button can return the
   // user to /exercises without leaving the route. Re-registered when

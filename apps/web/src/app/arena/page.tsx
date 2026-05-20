@@ -159,10 +159,27 @@ function ArenaPageInner() {
   // <PersistentDock>'s center button can detect "overlay is open"
   // without prop-drilling through the route tree. Cleared on unmount
   // so a different route that mounts the dock starts fresh.
+  //
+  // Also strips any leftover `?sheet=…` from the URL when the sheet
+  // closes (X tap or center close) so the URL reflects the visible
+  // state and a refresh / back-nav doesn't silently reopen it. The
+  // ref guards the initial mount so the deep-link param survives long
+  // enough for `arenaSheetDeepLinkRef` to open the sheet.
+  const dockSheetMountedRef = useRef(false);
   useEffect(() => {
     setDockSheet(activeDockTab);
+    if (dockSheetMountedRef.current && activeDockTab === null && typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.has("sheet")) {
+        sp.delete("sheet");
+        const qs = sp.toString();
+        const path = window.location.pathname;
+        router.replace(qs ? `${path}?${qs}` : path, { scroll: false });
+      }
+    }
+    dockSheetMountedRef.current = true;
     return () => setDockSheet(null);
-  }, [activeDockTab]);
+  }, [activeDockTab, router]);
 
   // Register the closer so the dock's center button can return the
   // user to the visible base route under the overlay. Routes via the
