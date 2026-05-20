@@ -1,4 +1,5 @@
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { PURCHASE_CONFIRM_COPY, PURCHASE_FIELD_LABELS, CHAIN_NAMES, SHOP_SHEET_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
@@ -39,22 +40,18 @@ export function PurchaseConfirmSheet({
 }: PurchaseConfirmSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="mission-shell sheet-bg-shop rounded-t-3xl border-0">
-        <div className="border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
-          <SheetHeader>
-            <SheetTitle
-              className="fantasy-title"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              {PURCHASE_CONFIRM_COPY.title}
-            </SheetTitle>
-            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {PURCHASE_CONFIRM_COPY.description}
-            </SheetDescription>
-          </SheetHeader>
+      <SheetContent
+        side="bottom"
+        hideClose
+        className="mission-shell sheet-bg-shop rounded-t-3xl border-0"
+      >
+        <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
+          <ContextualHeader
+            variant="close-control"
+            icon="shop"
+            title={PURCHASE_CONFIRM_COPY.title}
+            close={{ onClick: () => onOpenChange(false), label: "Cancel purchase" }}
+          />
         </div>
         {selectedItem ? (
           <div
