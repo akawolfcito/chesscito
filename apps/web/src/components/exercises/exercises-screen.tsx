@@ -42,6 +42,9 @@ import {
   subscribeToShieldChanges,
 } from "@/lib/shop/shield-events";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
+import { useSaveScoreState } from "@/hooks/use-save-score-state";
+import { SavedChip } from "@/components/exercises/saved-chip";
+import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { useSplashLoader } from "@/hooks/use-splash-loader";
 import { useAutoResetTimer } from "@/hooks/use-auto-reset-timer";
@@ -805,34 +808,110 @@ export function ExercisesScreen({
       enabled: Boolean(claimTxHash),
     },
   });
-  const { isLoading: isSubmitConfirming } = useWaitForTransactionReceipt({
-    chainId,
-    hash: submitTxHash as `0x${string}` | undefined,
-    query: {
-      enabled: Boolean(submitTxHash),
-    },
-  });
+  const { isLoading: isSubmitConfirming, isSuccess: isSubmitSuccess } =
+    useWaitForTransactionReceipt({
+      chainId,
+      hash: submitTxHash as `0x${string}` | undefined,
+      query: {
+        enabled: Boolean(submitTxHash),
+      },
+    });
 
+  // `canSendOnChain` keeps its old shape for the claim-badge path (which
+  // still requires the badge to have been earned). For the score-save
+  // path Cluster C introduces `canSaveScore` — same wallet preconditions
+  // WITHOUT the `badgeEarned` requirement, so SAVE activates from the
+  // first star (addendum §2.2).
   const canSendOnChain =
     Boolean(address) &&
     isConnected &&
     isCorrectChain &&
     levelId > 0n &&
     badgeEarned;
+  const canSaveScore =
+    Boolean(address) && isConnected && isCorrectChain && levelId > 0n;
   const isClaimBusy = isBadgeWriting || isClaimConfirming;
   const isSubmitBusy = isScoreWriting || isSubmitConfirming;
   const isShopBusy = isShopWriting || isShopConfirming;
+
+  // Cluster C — local-first save state. `lastSavedScore` is the last
+  // score this device has confirmed on chain (read from localStorage).
+  // The score-pending gate is now `localScore > lastSavedScore` instead
+  // of the old `allExercisesAttempted` heuristic.
+  const { lastSavedScore, recordSaveFor } = useSaveScoreState(selectedPiece);
+  const localScoreNum = Number(score);
+  const scorePendingNew =
+    canSaveScore && totalStars >= 1 && localScoreNum > lastSavedScore;
+  const isSavedAtParity =
+    lastSavedScore > 0 && localScoreNum === lastSavedScore;
+
+  // Tx phase tracking for the TxProgressSteps toast. The toast remains
+  // mounted while the tx is in flight AND for a 1500ms hold after
+  // confirmation (matches the B1 primitive's own done-hold). The
+  // surface owns the unmount boundary so the primitive's internal
+  // timer doesn't conflict with React's re-render cycle.
+  //
+  // The two effects below split cleanly so the done-hold timer is NOT
+  // cleaned up by React's effect-rerun semantics (Cluster C review
+  // patch — premature clear bug fix). One latch ref guarantees the
+  // hold fires once per (txHash, success) pair.
+  const [txDoneAt, setTxDoneAt] = useState<number | null>(null);
+  const pendingSubmitRef = useRef<{
+    piece: typeof selectedPiece;
+    score: number;
+    txHash: string;
+  } | null>(null);
+  const doneHoldStartedForTxRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isSubmitSuccess || !submitTxHash) return;
+    if (doneHoldStartedForTxRef.current === submitTxHash) return;
+    doneHoldStartedForTxRef.current = submitTxHash;
+
+    // Persist the save to the ORIGINAL piece (piece-switch corruption
+    // fix). recordSaveFor writes localStorage under pending.piece even
+    // if the user has since switched to a different piece selector.
+    const pending = pendingSubmitRef.current;
+    if (pending && pending.txHash === submitTxHash) {
+      recordSaveFor(pending.piece, pending.score, pending.txHash);
+      pendingSubmitRef.current = null;
+    }
+
+    // Start the 1500ms done-hold. txDoneAt is intentionally NOT in this
+    // effect's deps — setting it inside would re-trigger the effect and
+    // React would clear the timer prematurely.
+    setTxDoneAt(Date.now());
+    const timer = window.setTimeout(() => setTxDoneAt(null), 1500);
+    return () => window.clearTimeout(timer);
+  }, [isSubmitSuccess, submitTxHash, recordSaveFor]);
+
+  // Reset the done-hold + tx-success latch the moment a NEW submit
+  // starts so subsequent submissions get their own hold window.
+  useEffect(() => {
+    if (isScoreWriting && !submitTxHash) {
+      setTxDoneAt(null);
+      doneHoldStartedForTxRef.current = null;
+    }
+  }, [isScoreWriting, submitTxHash]);
+
+  const showTxToast = isSubmitBusy || txDoneAt !== null;
+  const txCurrent: "sign" | "wait" | "done" =
+    txDoneAt !== null ? "done" : submitTxHash ? "wait" : "sign";
 
   const allExercisesAttempted = progress.stars.every(s => s > 0);
 
   const contextAction = getContextAction({
     phase,
     shieldsAvailable: shieldCount,
-    scorePending: canSendOnChain && allExercisesAttempted,
+    scorePending: scorePendingNew,
     badgeClaimable: badgeEarned && !hasClaimedBadge && !justClaimed[selectedPiece],
     isConnected,
     isCorrectChain,
   });
+
+  // Suppress unused-var lint for the legacy heuristic — preserved so
+  // any downstream consumer that still references it doesn't break.
+  void allExercisesAttempted;
 
   async function writeWithOptionalFeeCurrency(
     writer: typeof writeScoreAsync,
@@ -1030,7 +1109,10 @@ export function ExercisesScreen({
   }
 
   async function handleSubmitScore() {
-    if (!canSendOnChain || !address || !scoreboardAddress || isSubmitBusy) {
+    // Cluster C patch (post-review): score path uses `canSaveScore` (no
+    // badgeEarned requirement), per addendum AC-2.2.1. The legacy
+    // `canSendOnChain` guard still applies to the claim-badge path.
+    if (!canSaveScore || !address || !scoreboardAddress || isSubmitBusy) {
       return;
     }
     // Sync guard closes the await-the-signature-fetch race window the
@@ -1062,6 +1144,16 @@ export function ExercisesScreen({
 
       hapticSuccess();
       setSubmitTxHash(txHash);
+      // Cluster C — capture (piece, score, txHash) at broadcast time so
+      // the receipt-success effect persists the SUBMITTED score under
+      // the CORRECT piece (the user may switch pieces before the
+      // receipt arrives — the saved score still belongs to the original
+      // piece, not the new selection).
+      pendingSubmitRef.current = {
+        piece: selectedPiece,
+        score: Number(score),
+        txHash,
+      };
       track("score_submit_tx", { stage: "success", piece: selectedPiece });
       setResultOverlay({
         variant: "score",
@@ -1553,18 +1645,38 @@ export function ExercisesScreen({
             />
           }
           contextualAction={
-            <ContextualActionSlot
-              action={contextAction}
-              shieldsAvailable={shieldCount}
-              isBusy={isScoreWriting || isBadgeWriting || isSubmitConfirming || isClaimConfirming}
-              onSubmitScore={() => void handleSubmitScore()}
-              onUseShield={handleUseShield}
-              onClaimBadge={() => void handleClaimBadge()}
-              onRetry={() => resetBoard()}
-              onConnectWallet={() => openConnectModal?.()}
-              onSwitchNetwork={() => configuredChainId != null && switchChain({ chainId: configuredChainId })}
-              compact
-            />
+            // Cluster C — three-way render in the contextual slot:
+            //   (1) Tx in flight (or held post-confirm)  → TxProgressSteps toast
+            //   (2) Local matches last-saved on chain    → SavedChip
+            //   (3) Otherwise (incl. claimBadge etc.)    → ContextualActionSlot
+            // The slot only ever renders one of these per frame so the
+            // mission-panel-candy centering stays predictable.
+            showTxToast ? (
+              <TxProgressSteps
+                variant="toast"
+                flow="save-score"
+                steps={[{ code: "sign" }, { code: "wait" }]}
+                current={txCurrent}
+              />
+            ) : isSavedAtParity && contextAction === null ? (
+              <SavedChip
+                stars={Math.floor(lastSavedScore / Number(POINTS_PER_STAR))}
+                total={BADGE_THRESHOLD}
+              />
+            ) : (
+              <ContextualActionSlot
+                action={contextAction}
+                shieldsAvailable={shieldCount}
+                isBusy={isScoreWriting || isBadgeWriting || isSubmitConfirming || isClaimConfirming}
+                onSubmitScore={() => void handleSubmitScore()}
+                onUseShield={handleUseShield}
+                onClaimBadge={() => void handleClaimBadge()}
+                onRetry={() => resetBoard()}
+                onConnectWallet={() => openConnectModal?.()}
+                onSwitchNetwork={() => configuredChainId != null && switchChain({ chainId: configuredChainId })}
+                compact
+              />
+            )
           }
           persistentDock={<PersistentDock />}
           board={
@@ -1710,7 +1822,7 @@ export function ExercisesScreen({
                 : undefined
             }
             onSubmitScore={
-              canSendOnChain
+              canSaveScore
                 ? () => {
                     setShowPieceComplete(false);
                     void handleSubmitScore();

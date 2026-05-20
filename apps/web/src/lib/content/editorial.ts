@@ -312,6 +312,19 @@ export const PURCHASE_CONFIRM_COPY = {
   cancel: "Cancel",
 } as const;
 
+/** Copy for the passive "Saved" chip rendered on /exercises action row
+ *  when the player's local progress matches the last-saved on-chain
+ *  score for the active piece (Cluster C addendum §2.2.4). The chip
+ *  is read-only — no tap handler. */
+export const SAVED_CHIP_COPY = {
+  /** Renders e.g. "Saved · 12/15★ on chain". */
+  label: (stars: number, total: number) =>
+    `Saved · ${stars}/${total}★ on chain`,
+  /** Screen-reader full label — same text since the chip is concise. */
+  ariaLabel: (stars: number, total: number) =>
+    `Saved ${stars} of ${total} stars on chain`,
+} as const;
+
 /** Copy keys for <TxProgressSteps> primitive. Pills variant uses
  *  text-nano uppercase labels (single word per node). Toast variant
  *  uses sentence-case sub-copy for the active step + a step counter
