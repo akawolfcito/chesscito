@@ -7,11 +7,9 @@ import { JourneyRail } from "@/components/redesign/journey-rail";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import {
   MISSION_BRIEFING_COPY,
   MISSION_DETAIL_COPY,
@@ -62,23 +60,16 @@ export function MissionDetailSheet({
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side="bottom"
+        hideClose
         className="mission-shell sheet-bg-hub flex max-h-[90dvh] flex-col rounded-t-3xl border-0 pb-[5rem]"
       >
-        <div className="border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-t-3xl px-6 py-5">
-          <SheetHeader>
-            <SheetTitle
-              className="fantasy-title"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              {MISSION_DETAIL_COPY.title}
-            </SheetTitle>
-            <SheetDescription className="sr-only">
-              {MISSION_DETAIL_COPY.title}
-            </SheetDescription>
-          </SheetHeader>
+        <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
+          <ContextualHeader
+            variant="close-control"
+            icon="crosshair"
+            title={MISSION_DETAIL_COPY.title}
+            close={{ onClick: () => onOpenChange(false), label: "Close mission" }}
+          />
         </div>
 
         <div className="mt-4 flex-1 space-y-3 overflow-y-auto overscroll-contain">
