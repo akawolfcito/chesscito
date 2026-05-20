@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import {
   ExercisesScreen,
   type ExercisesInitialSheet,
@@ -61,5 +62,11 @@ export default function ExercisesPage({
   const initialPiece = piece && pieceHasExercises(piece) ? piece : undefined;
   const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
 
-  return <ExercisesScreen initialPiece={initialPiece} initialSheet={initialSheet} />;
+  // Suspense required because ExercisesScreen now uses useSearchParams()
+  // to react to client-side dock pushes (`router.push('?sheet=…')`).
+  return (
+    <Suspense fallback={null}>
+      <ExercisesScreen initialPiece={initialPiece} initialSheet={initialSheet} />
+    </Suspense>
+  );
 }

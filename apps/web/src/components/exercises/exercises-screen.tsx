@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useAccount,
   useChainId,
@@ -320,6 +320,20 @@ export function ExercisesScreen({
   initialSheet,
 }: ExercisesScreenProps = {}) {
   const router = useRouter();
+  // Client-side read of the `?sheet=` param. The /exercises page is a
+  // server component, so `initialSheet` (its prop) is captured at
+  // request-time and does NOT update on subsequent client-side
+  // router.push() calls. Without this hook the dock could push a new
+  // ?sheet=… but the deep-link effect below never noticed — siblings
+  // never swapped and the URL silently drifted out of sync with state.
+  const searchParams = useSearchParams();
+  const liveInitialSheet = ((): ExercisesInitialSheet | undefined => {
+    const raw = searchParams?.get("sheet");
+    if (raw === "shop" || raw === "badges" || raw === "trophies" || raw === "leaderboard" || raw === "pro") {
+      return raw;
+    }
+    return undefined;
+  })();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -415,17 +429,17 @@ export function ExercisesScreen({
   // idempotent behavior.
   const lastAppliedSheetRef = useRef<ExercisesInitialSheet | null>(null);
   useEffect(() => {
-    // Close stripped the `?sheet=` param — clear the guard so a fresh
-    // re-tap on the same dock entry can re-open the sheet. Without
-    // this reset, the per-value lock keeps the guard pointing at the
-    // last-opened key forever and silently swallows every re-tap.
-    if (!initialSheet) {
+    // Reads liveInitialSheet (useSearchParams), NOT the initialSheet
+    // prop — that prop is server-captured and never updates after
+    // mount, so SPA navigations like the dock's `router.push(?sheet=…)`
+    // never reach this branch through it.
+    if (!liveInitialSheet) {
       lastAppliedSheetRef.current = null;
       return;
     }
-    if (lastAppliedSheetRef.current === initialSheet) return;
-    lastAppliedSheetRef.current = initialSheet;
-    switch (initialSheet) {
+    if (lastAppliedSheetRef.current === liveInitialSheet) return;
+    lastAppliedSheetRef.current = liveInitialSheet;
+    switch (liveInitialSheet) {
       case "shop":
         setActiveDockTab("shop");
         break;
@@ -442,7 +456,7 @@ export function ExercisesScreen({
         setProSheetOpen(true);
         break;
     }
-  }, [initialSheet]);
+  }, [liveInitialSheet]);
   const [proPurchaseState, setProPurchaseState] = useState<"idle" | "purchasing" | "verifying">("idle");
   const [proPurchaseError, setProPurchaseError] = useState<string | null>(null);
   /** Set iff the last failure was verify-failed. Carries the on-chain
