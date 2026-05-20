@@ -64,7 +64,7 @@ export function DailyTacticCard({
         icon={
           <ActionRowIcon
             name="ejercicio-diario-chess"
-            className={isCompletedToday ? "h-12 w-12 object-contain" : "h-14 w-14 object-contain"}
+            className="h-14 w-14 object-contain"
           />
         }
         badge={badge}

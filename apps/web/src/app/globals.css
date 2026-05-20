@@ -6526,17 +6526,30 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
 }
 
-.action-row-pedestal-daily {
-  background-image: url("/art/action-row/piedra-daily.png");
+.action-row-pedestal-daily,
+.action-row-pedestal-arena {
+  background-image: none;
+  border: 1px solid rgba(245, 200, 100, 0.45);
+  border-radius: 50%;
+  filter: drop-shadow(0 3px 6px rgba(63, 34, 8, 0.25));
 }
 
-.action-row-pedestal-arena {
-  background-image: url("/art/action-row/piedra-arena.png");
+/* Neutralize the StonePedestal is-placeholder fallback in action-row
+   context — we own a candy-light look here, not the gradient fallback
+   painted by .stone-pedestal.is-placeholder (2-class specificity 0,2,0).
+   Compound 3-class selector (0,3,0) guarantees the override without
+   relying on source order — survives external stylesheet reordering. */
+.stone-pedestal.action-row-pedestal.is-placeholder {
+  background-image: none;
+  border-radius: 50%;
+  box-shadow: none;
 }
 
 .action-row-pedestal .stone-pedestal-icon {
-  top: -14%;
-  filter: drop-shadow(0 4px 4px rgba(50, 30, 8, 0.22));
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 3px rgba(50, 30, 8, 0.20));
 }
 
 .stone-pedestal-badge {
