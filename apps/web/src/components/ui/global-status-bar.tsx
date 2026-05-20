@@ -70,6 +70,35 @@ export type ConnectedProps = {
 };
 
 /**
+ * In-game / live diegetic Z1 layout.
+ *
+ * Used by surfaces where identity and PRO chips would compete for the
+ * player's attention with the gameplay (active arena match). The
+ * primitive owns the strip envelope (36 px height, max-width, safe-area
+ * top padding) and the canonical two-slot grid. Caller owns the slot
+ * content — typically a back-chip variant on the left (e.g. arena's
+ * tap-to-confirm QUIT? button) and a live data chip on the right
+ * (timer, move counter).
+ *
+ * Justified per the §5 growth rule (header-consistency canary pass 3):
+ * neither `anonymous` nor `connected` can express this layout without
+ * dramatic prop additions (custom back + drop PRO chip + drop identity)
+ * that defeat the discriminated union. Variants are reserved for
+ * structural layout differences — this is one.
+ */
+export type LiveProps = {
+  variant: "live";
+  /** Left-slot element. Caller owns the entire chip — useful when the
+   *  back chip has bespoke interaction (e.g. arena's tap-to-confirm
+   *  QUIT? state). The primitive only positions it. */
+  leftSlot: React.ReactNode;
+  /** Right-slot element. Live data (timer, mid-game counter, etc.).
+   *  Caller owns animation + content; primitive owns position + envelope. */
+  rightSlot: React.ReactNode;
+  ariaLabel?: string;
+};
+
+/**
  * Props for `<GlobalStatusBar />` — discriminated union by `variant`.
  *
  * Spread escapes (`<GlobalStatusBar variant="anonymous" {...wider} />`)
@@ -77,7 +106,7 @@ export type ConnectedProps = {
  * destructuring only valid fields and warns in dev if extras are present.
  * See spec §5 + §6 for the full safety net.
  */
-export type GlobalStatusBarProps = AnonymousProps | ConnectedProps;
+export type GlobalStatusBarProps = AnonymousProps | ConnectedProps | LiveProps;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -203,13 +232,32 @@ export function GlobalStatusBar(
 
   if (props.variant === "anonymous") {
     return (
-      <AnonymousBar 
-        ariaLabel={props.ariaLabel} 
-        onBack={props.onBack} 
+      <AnonymousBar
+        ariaLabel={props.ariaLabel}
+        onBack={props.onBack}
       />
     );
   }
+  if (props.variant === "live") {
+    return <LiveBar {...props} />;
+  }
   return <ConnectedBar {...props} />;
+}
+
+function LiveBar(props: LiveProps): React.JSX.Element {
+  return (
+    <header
+      role="banner"
+      dir="ltr"
+      aria-label={props.ariaLabel ?? GLOBAL_STATUS_BAR_COPY.ariaLabelLive}
+      data-component="global-status-bar"
+      data-variant="live"
+      className={WRAPPER_CLASS}
+    >
+      <div className="flex min-w-0 items-center">{props.leftSlot}</div>
+      <div className="shrink-0">{props.rightSlot}</div>
+    </header>
+  );
 }
 
 function BackChip({ onClick }: { onClick: () => void }): React.JSX.Element {

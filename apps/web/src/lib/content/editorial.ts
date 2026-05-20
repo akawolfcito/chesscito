@@ -1301,6 +1301,7 @@ export const GLOBAL_STATUS_BAR_COPY = {
   guestLabel: "Guest",
   ariaLabelConnected: "Player status",
   ariaLabelAnonymous: "Anonymous status",
+  ariaLabelLive: "Live match status",
   proManageLabel: "Manage Chesscito PRO",
   proViewLabel: "View Chesscito PRO",
   proInactiveLabel: "PRO",
