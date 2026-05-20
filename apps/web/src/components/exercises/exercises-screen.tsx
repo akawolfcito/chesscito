@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   useAccount,
   useChainId,
@@ -93,7 +93,11 @@ import { getLabyrinthBest, recordLabyrinthBest } from "@/lib/game/labyrinth-prog
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
-import { registerDockSheetCloser, setDockSheet } from "@/lib/ui/dock-sheet-store";
+import {
+  registerDockSheetCloser,
+  registerDockSheetOpener,
+  setDockSheet,
+} from "@/lib/ui/dock-sheet-store";
 
 // SHOP_ITEMS, SHIELD_ITEM_ID, SHIELDS_PER_PURCHASE now live in
 // lib/contracts/shop-catalog.ts so they're testable in isolation. The
@@ -320,20 +324,6 @@ export function ExercisesScreen({
   initialSheet,
 }: ExercisesScreenProps = {}) {
   const router = useRouter();
-  // Client-side read of the `?sheet=` param. The /exercises page is a
-  // server component, so `initialSheet` (its prop) is captured at
-  // request-time and does NOT update on subsequent client-side
-  // router.push() calls. Without this hook the dock could push a new
-  // ?sheet=… but the deep-link effect below never noticed — siblings
-  // never swapped and the URL silently drifted out of sync with state.
-  const searchParams = useSearchParams();
-  const liveInitialSheet = ((): ExercisesInitialSheet | undefined => {
-    const raw = searchParams?.get("sheet");
-    if (raw === "shop" || raw === "badges" || raw === "trophies" || raw === "leaderboard" || raw === "pro") {
-      return raw;
-    }
-    return undefined;
-  })();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -427,36 +417,33 @@ export function ExercisesScreen({
   // re-opens the matching sheet. Tapping the same dock entry again is
   // a no-op (URL unchanged → prop unchanged), which is the desired
   // idempotent behavior.
-  const lastAppliedSheetRef = useRef<ExercisesInitialSheet | null>(null);
+  // One-shot deep-link consumption from the URL `?sheet=` param.
+  // Runs once on mount, then history.replaceState's the param away
+  // so the URL matches the visible state. Subsequent dock taps go
+  // through the store action — they never touch the URL.
+  //
+  // Reads window.location.search directly instead of useSearchParams
+  // so the surrounding tree doesn't need a <Suspense> boundary and
+  // SPA navigations cannot re-trigger this effect mid-session.
+  const deepLinkConsumedRef = useRef(false);
   useEffect(() => {
-    // Reads liveInitialSheet (useSearchParams), NOT the initialSheet
-    // prop — that prop is server-captured and never updates after
-    // mount, so SPA navigations like the dock's `router.push(?sheet=…)`
-    // never reach this branch through it.
-    if (!liveInitialSheet) {
-      lastAppliedSheetRef.current = null;
-      return;
+    if (deepLinkConsumedRef.current) return;
+    deepLinkConsumedRef.current = true;
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const slug = sp.get("sheet");
+    if (slug === "shop") setActiveDockTab("shop");
+    else if (slug === "badges") setActiveDockTab("badge");
+    else if (slug === "trophies") setActiveDockTab("trophies");
+    else if (slug === "leaderboard") setActiveDockTab("leaderboard");
+    else if (slug === "pro") setProSheetOpen(true);
+    if (slug) {
+      sp.delete("sheet");
+      const qs = sp.toString();
+      const path = window.location.pathname;
+      window.history.replaceState(window.history.state, "", qs ? `${path}?${qs}` : path);
     }
-    if (lastAppliedSheetRef.current === liveInitialSheet) return;
-    lastAppliedSheetRef.current = liveInitialSheet;
-    switch (liveInitialSheet) {
-      case "shop":
-        setActiveDockTab("shop");
-        break;
-      case "badges":
-        setActiveDockTab("badge");
-        break;
-      case "trophies":
-        setActiveDockTab("trophies");
-        break;
-      case "leaderboard":
-        setActiveDockTab("leaderboard");
-        break;
-      case "pro":
-        setProSheetOpen(true);
-        break;
-    }
-  }, [liveInitialSheet]);
+  }, []);
   const [proPurchaseState, setProPurchaseState] = useState<"idle" | "purchasing" | "verifying">("idle");
   const [proPurchaseError, setProPurchaseError] = useState<string | null>(null);
   /** Set iff the last failure was verify-failed. Carries the on-chain
@@ -499,54 +486,29 @@ export function ExercisesScreen({
 
   // Publish the dock-driven sheet state to the shared store so the
   // <PersistentDock>'s center button can swap into "close overlay"
-  // mode when any of badge/shop/trophies/leaderboard is open. Cleared
-  // on unmount so other routes that mount the dock start fresh.
-  //
-  // Also: when activeDockTab transitions from open -> null (X tap or
-  // center close), strip any leftover `?sheet=…` from the URL so it
-  // reflects the visible state and a refresh / back-nav doesn't
-  // silently reopen the sheet the user just closed.
-  //
-  // Race trap: Radix Dialog's onPointerDownOutside fires BEFORE the
-  // dock button's onClick, so a sibling-swap tap (BADGES open -> tap
-  // SHOP) triggers BadgeSheet.onOpenChange(false) first, briefly
-  // flipping activeDockTab to null while router.push('?sheet=shop')
-  // is still pending. To avoid stripping THAT new push, only strip
-  // when the URL's `sheet` param matches the slug we were closing.
-  const dockSheetMountedRef = useRef(false);
-  const prevDockTabRef = useRef<typeof activeDockTab>(null);
+  // mode when any of badge/shop/trophies/leaderboard is open.
   useEffect(() => {
     setDockSheet(activeDockTab);
-    if (dockSheetMountedRef.current && activeDockTab === null && typeof window !== "undefined") {
-      const sp = new URLSearchParams(window.location.search);
-      const urlSheet = sp.get("sheet");
-      const prevSlug = prevDockTabRef.current;
-      // Map internal activeDockTab slug to URL `sheet` vocabulary
-      // (mirror of parseInitialSheet in /exercises/page.tsx).
-      const prevUrlSheet =
-        prevSlug === "badge" ? "badges"
-          : prevSlug === "shop" ? "shop"
-            : prevSlug === "trophies" ? "trophies"
-              : prevSlug === "leaderboard" ? "leaderboard"
-                : null;
-      if (urlSheet && urlSheet === prevUrlSheet) {
-        sp.delete("sheet");
-        const qs = sp.toString();
-        const path = window.location.pathname;
-        router.replace(qs ? `${path}?${qs}` : path, { scroll: false });
-      }
-    }
-    prevDockTabRef.current = activeDockTab;
-    dockSheetMountedRef.current = true;
     return () => setDockSheet(null);
-  }, [activeDockTab, router]);
+  }, [activeDockTab]);
 
-  // Register the closer so the dock's center button can return the
-  // user to /exercises without leaving the route. Re-registered when
-  // activeDockTab changes so the closure captures the current value
-  // (cheap — the closer is invoked at most once per tap).
+  // Register the dock store's open + close handlers. Same-route dock
+  // taps now dispatch through the store (no URL push), so we open
+  // the matching sheet here directly. The closer returns the user to
+  // the visible base route via the center button.
   useEffect(() => {
-    return registerDockSheetCloser(() => setActiveDockTab(null));
+    const unregisterOpener = registerDockSheetOpener((slug) => {
+      if (slug === "badge" || slug === "shop" || slug === "trophies" || slug === "leaderboard") {
+        setActiveDockTab(slug);
+      }
+      // "arena" slug isn't a sheet here — center button handles the
+      // route swap directly.
+    });
+    const unregisterCloser = registerDockSheetCloser(() => setActiveDockTab(null));
+    return () => {
+      unregisterOpener();
+      unregisterCloser();
+    };
   }, []);
   const [shieldCount, setShieldCount] = useState(0);
   const [claimingPiece, setClaimingPiece] = useState<PieceKey | null>(null);
