@@ -130,7 +130,7 @@ describe("PersistentDock — sheet-aware routing", () => {
 });
 
 describe("PersistentDock — overlay-aware center action", () => {
-  it("from /exercises with an open sheet, center closes the overlay and does NOT switch routes", async () => {
+  it("from /exercises with an open sheet, center shows the BASE mode (Pieces) and closes the overlay", async () => {
     pathnameMock.mockReturnValue("/exercises");
     pushMock.mockReset();
     const close = vi.fn();
@@ -141,16 +141,18 @@ describe("PersistentDock — overlay-aware center action", () => {
 
     render(<PersistentDock />);
 
-    // Center label/aria swaps to "Close" while an overlay is open.
-    const center = screen.getByRole("button", { name: /close/i });
+    // With overlay open, the center mirrors the visible base route —
+    // /exercises → "Pieces" artwork — instead of the swap destination.
     expect(screen.queryByRole("button", { name: /^arena$/i })).not.toBeInTheDocument();
+    const center = screen.getByRole("button", { name: /pieces/i });
+    expect(center.querySelector("img")?.getAttribute("src")).toContain("train-pieces");
 
     await user.click(center);
     expect(close).toHaveBeenCalledTimes(1);
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it("from /arena with an open sheet, center closes the overlay and does NOT switch routes", async () => {
+  it("from /arena with an open sheet, center shows the BASE mode (Arena) and closes the overlay", async () => {
     pathnameMock.mockReturnValue("/arena");
     pushMock.mockReset();
     const close = vi.fn();
@@ -161,8 +163,9 @@ describe("PersistentDock — overlay-aware center action", () => {
 
     render(<PersistentDock />);
 
-    const center = screen.getByRole("button", { name: /close/i });
     expect(screen.queryByRole("button", { name: /^pieces$/i })).not.toBeInTheDocument();
+    const center = screen.getByRole("button", { name: /^arena$/i });
+    expect(center.querySelector("img")?.getAttribute("src")).toContain("enter-arena");
 
     await user.click(center);
     expect(close).toHaveBeenCalledTimes(1);

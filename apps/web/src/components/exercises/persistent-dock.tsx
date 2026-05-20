@@ -61,33 +61,50 @@ function resolveSheetHref(pathname: string, sheet: string, fallback: string): st
   return fallback;
 }
 
-/** Contextual center slot. From /arena → routes to /exercises (Pieces).
- *  From anywhere else → routes to /arena (Arena). Mirrors the pre-SPEC-1
- *  dock's center contextual swap. */
-function resolveCenter(pathname: string): {
+type ModeDescriptor = {
   href: string;
   label: string;
   icon: CandyIconName;
   iconSrc: string;
   trackItem: string;
-} {
-  const isArena = pathname.startsWith("/arena");
-  if (isArena) {
-    return {
-      href: "/exercises",
-      label: DOCK_LABELS.pieces,
-      icon: "move",
-      iconSrc: "/art/hub/train-pieces",
-      trackItem: "pieces",
-    };
-  }
-  return {
+};
+
+/** Per-route artwork + label + destination for the center slot. Keyed
+ *  by base mode so the dock can either show the OTHER mode (route
+ *  swap) or the CURRENT mode (overlay-close affordance) from the same
+ *  source of truth. */
+const MODE_DESCRIPTORS: Record<"exercises" | "arena", ModeDescriptor> = {
+  exercises: {
+    href: "/exercises",
+    label: DOCK_LABELS.pieces,
+    icon: "move",
+    iconSrc: "/art/hub/train-pieces",
+    trackItem: "pieces",
+  },
+  arena: {
     href: "/arena?fresh=1",
     label: DOCK_LABELS.arena,
     icon: "crosshair",
     iconSrc: "/art/hub/enter-arena",
     trackItem: "arena",
-  };
+  },
+};
+
+/** Contextual center slot. From /arena → routes to /exercises (Pieces).
+ *  From anywhere else → routes to /arena (Arena). Mirrors the pre-SPEC-1
+ *  dock's center contextual swap. */
+function resolveCenter(pathname: string): ModeDescriptor {
+  const isArena = pathname.startsWith("/arena");
+  return isArena ? MODE_DESCRIPTORS.exercises : MODE_DESCRIPTORS.arena;
+}
+
+/** Base-mode descriptor — the visible route under any open auxiliary
+ *  sheet. Used when an overlay is open so the center button signals
+ *  "return to the mode beneath this overlay" with the artwork of the
+ *  current route, not the OTHER route's artwork. */
+function resolveBase(pathname: string): ModeDescriptor {
+  const isArena = pathname.startsWith("/arena");
+  return isArena ? MODE_DESCRIPTORS.arena : MODE_DESCRIPTORS.exercises;
 }
 
 const SIDE_LEFT: ReadonlyArray<Item> = [
@@ -139,17 +156,17 @@ export function PersistentDock() {
   const router = useRouter();
   const openSheet = useDockSheet();
   const center = resolveCenter(pathname);
+  const base = resolveBase(pathname);
   // When an auxiliary sheet is open on top of /exercises or /arena, the
   // center button stops being a route swap and becomes "close the
   // overlay and stay on the current base route" — matches the user's
   // muscle-memory expectation that the big center action returns them
-  // to the visible mode under the overlay (not to the OTHER mode).
+  // to the visible mode under the overlay (not to the OTHER mode). The
+  // artwork mirrors the BASE route (the one the user is returning to)
+  // so the affordance reads as "back to TRAIN" / "back to ARENA"
+  // instead of an abstract close glyph.
   const isOverlayOpen = openSheet !== null;
-  const centerLabel = isOverlayOpen ? DOCK_LABELS.close : center.label;
-  const centerIcon: CandyIconName = isOverlayOpen ? "close" : center.icon;
-  // Asset-backed art only renders when no overlay is open — close uses
-  // the abstract <CandyIcon> so the visual swap is unmistakable.
-  const centerIconSrc = isOverlayOpen ? undefined : center.iconSrc;
+  const display = isOverlayOpen ? base : center;
   // Center is a contextual "go to the other side" quick-action — it
   // always shows the route you're NOT on, so a route-based active
   // glow would mislead ("looks like you're in Pieces while standing
@@ -164,12 +181,12 @@ export function PersistentDock() {
       ))}
 
       <div
-        className={`chesscito-dock-center${isCenterActive ? " is-active" : ""}${isOverlayOpen ? " is-close" : ""}`}
-        data-dock-id={isOverlayOpen ? "close" : "arena"}
+        className={`chesscito-dock-center${isCenterActive ? " is-active" : ""}`}
+        data-dock-id="arena"
       >
         <button
           type="button"
-          aria-label={centerLabel}
+          aria-label={display.label}
           aria-current={isCenterActive ? "page" : undefined}
           onClick={() => {
             if (isOverlayOpen) {
@@ -181,10 +198,10 @@ export function PersistentDock() {
             router.push(center.href);
           }}
         >
-          <DockIcon iconSrc={centerIconSrc} icon={centerIcon} />
+          <DockIcon iconSrc={display.iconSrc} icon={display.icon} />
         </button>
         <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
-          {centerLabel}
+          {display.label}
         </span>
       </div>
 
