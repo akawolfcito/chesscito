@@ -9,10 +9,8 @@ import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { PRO_COPY } from "@/lib/content/editorial";
 import type { ProStatus } from "@/lib/pro/use-pro-status";
 import { track } from "@/lib/telemetry";
@@ -189,28 +187,38 @@ export function ProSheet(props: ProSheetProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
+        hideClose
         className="mission-shell sheet-bg-shop flex max-h-[90dvh] flex-col rounded-t-2xl border-0 pb-[5rem]"
       >
-        <SheetHeader className="text-left">
+        {/* Header strip — kicker "Training Pass" eyebrow above the
+         *  canonical close-control header. The kicker keeps its
+         *  data-testid="pro-kicker" and DOM order before the title
+         *  (asserted by pro-sheet.test.tsx AC-3.8). The tagline (long,
+         *  exceeds the 32-char subtitle cap) moves below the strip as
+         *  the first body element. */}
+        <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <p
             data-testid="pro-kicker"
-            className="text-nano font-bold uppercase tracking-wider"
+            className="text-nano font-bold uppercase tracking-wider px-4 pt-1"
             style={{ color: "rgba(110, 65, 15, 0.55)" }}
           >
             {PRO_COPY.kicker}
           </p>
-          <SheetTitle
-            className="fantasy-title flex items-center gap-2"
-            style={{ color: "rgba(110, 65, 15, 0.95)" }}
-          >
-            {PRO_COPY.label}
-          </SheetTitle>
-          <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-            {PRO_COPY.tagline}
-          </SheetDescription>
-        </SheetHeader>
+          <ContextualHeader
+            variant="close-control"
+            title={PRO_COPY.label}
+            close={{ onClick: () => onOpenChange(false), label: "Close PRO" }}
+          />
+        </div>
 
-        <div className="flex flex-1 min-h-0 flex-col overflow-y-auto overscroll-contain">
+        <div className="flex flex-1 min-h-0 flex-col overflow-y-auto overscroll-contain pt-3">
+        <p
+          className="text-sm"
+          style={{ color: "rgba(110, 65, 15, 0.70)" }}
+        >
+          {PRO_COPY.tagline}
+        </p>
+
         {!showActiveBanner && (
           <div className="mt-3 flex items-baseline gap-2">
             <span
