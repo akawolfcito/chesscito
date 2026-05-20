@@ -70,15 +70,19 @@ export function VictoryClaimSuccess({
         />
       </div>
 
-      <main className="arena-result-screen relative z-10">
-        <header className="arena-result-nav border-b border-[rgba(110,65,15,0.30)]">
+      <header
+        className="absolute inset-x-0 top-0 z-20 border-b border-[rgba(110,65,15,0.30)] pt-[env(safe-area-inset-top)]"
+      >
+        <div className="mx-auto w-full max-w-[var(--app-max-width)] px-2">
           <ContextualHeader
             variant="back-control"
             title={ARENA_COPY.title}
             back={{ onClick: onBackToHub, label: ARENA_COPY.backToHubAria }}
           />
-        </header>
+        </div>
+      </header>
 
+      <main className="arena-result-screen relative z-10">
         <section className="arena-result-header">
           <div className="arena-result-trophy">
             <div className="arena-result-trophy-glow" />
