@@ -312,6 +312,37 @@ export const PURCHASE_CONFIRM_COPY = {
   cancel: "Cancel",
 } as const;
 
+/** Copy keys for <TxProgressSteps> primitive. Pills variant uses
+ *  text-nano uppercase labels (single word per node). Toast variant
+ *  uses sentence-case sub-copy for the active step + a step counter
+ *  function. Telemetry events live separately in B2 (post-launch
+ *  observability sprint). */
+export const TX_PROGRESS_COPY = {
+  // Pills labels — uppercase, text-nano (8px)
+  pillsPrepare: "PREPARE",
+  pillsSign: "SIGN",
+  pillsSend: "SEND",
+  pillsWait: "WAIT",
+  pillsVerify: "VERIFY",
+  pillsDone: "DONE",
+  pillsFailed: "FAILED",
+
+  // Toast / sub-copy labels — sentence case, what the current step is doing
+  toastPrepare: "Preparing…",
+  toastSign: "Sign in your wallet…",
+  toastSend: "Sending transaction…",
+  toastWait: "Confirming on-chain…",
+  toastVerify: "Verifying with server…",
+  toastDoneSuccess: "Done",
+  toastDoneFailed: "Failed",
+
+  // Toast counter — current of total
+  stepCounter: (current: number, total: number) => `Step ${current} of ${total}`,
+
+  // Generic error sub-copy when the surface didn't supply errorMessage
+  toastErrorFallback: "Transaction failed — see details",
+} as const;
+
 export const STATUS_STRIP_COPY = {
   walletNotConnected: "Connect your wallet to play",
   networkReady: "Network ready",
