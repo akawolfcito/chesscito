@@ -2172,7 +2172,7 @@
      wrap the icon properly. */
   .chesscito-dock-center.is-active,
   .chesscito-dock-center:hover,
-  .chesscito-dock-center:focus-within,
+  .chesscito-dock-center:has(:focus-visible),
   .chesscito-dock-center:has(> button:active) {
     color: rgba(255, 240, 180, 0.95);
     transform: scale(1.18);
@@ -2180,7 +2180,7 @@
 
   .chesscito-dock-center.is-active::before,
   .chesscito-dock-center:hover::before,
-  .chesscito-dock-center:focus-within::before,
+  .chesscito-dock-center:has(:focus-visible)::before,
   .chesscito-dock-center:has(> button:active)::before {
     content: "";
     position: absolute;
@@ -2196,7 +2196,7 @@
 
   .chesscito-dock-center.is-active img,
   .chesscito-dock-center:hover img,
-  .chesscito-dock-center:focus-within img,
+  .chesscito-dock-center:has(:focus-visible) img,
   .chesscito-dock-center:has(> button:active) img {
     filter:
       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 6px rgba(255, 200, 80, 0.45));
@@ -2214,14 +2214,14 @@
 
   .chesscito-dock-item.is-active,
   .chesscito-dock-item:hover,
-  .chesscito-dock-item:focus-within,
+  .chesscito-dock-item:has(:focus-visible),
   .chesscito-dock-item:has(> button:active) {
     transform: scale(1.18);
   }
 
   .chesscito-dock-item.is-active::before,
   .chesscito-dock-item:hover::before,
-  .chesscito-dock-item:focus-within::before,
+  .chesscito-dock-item:has(:focus-visible)::before,
   .chesscito-dock-item:has(> button:active)::before {
     content: "";
     position: absolute;
@@ -2237,7 +2237,7 @@
 
   .chesscito-dock-item.is-active img,
   .chesscito-dock-item:hover img,
-  .chesscito-dock-item:focus-within img,
+  .chesscito-dock-item:has(:focus-visible) img,
   .chesscito-dock-item:has(> button:active) img {
     filter:
       drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 6px rgba(255, 200, 80, 0.45));
@@ -2265,7 +2265,7 @@
 
   .chesscito-dock-item.is-active .chesscito-dock-item-label,
   .chesscito-dock-item:hover .chesscito-dock-item-label,
-  .chesscito-dock-item:focus-within .chesscito-dock-item-label,
+  .chesscito-dock-item:has(:focus-visible) .chesscito-dock-item-label,
   .chesscito-dock-item:has(> button:active) .chesscito-dock-item-label {
     opacity: 1;
   }
@@ -2282,7 +2282,7 @@
 
   .chesscito-dock-center.is-active .game-label,
   .chesscito-dock-center:hover .game-label,
-  .chesscito-dock-center:focus-within .game-label,
+  .chesscito-dock-center:has(:focus-visible) .game-label,
   .chesscito-dock-center:has(> button:active) .game-label {
     opacity: 1;
   }
@@ -2943,11 +2943,11 @@
      (route-match + hover + press-via-:has + keyboard focus). */
   .chesscito-dock-item.is-active,
   .chesscito-dock-item:hover,
-  .chesscito-dock-item:focus-within,
+  .chesscito-dock-item:has(:focus-visible),
   .chesscito-dock-item:has(> button:active),
   .chesscito-dock-center.is-active,
   .chesscito-dock-center:hover,
-  .chesscito-dock-center:focus-within,
+  .chesscito-dock-center:has(:focus-visible),
   .chesscito-dock-center:has(> button:active) {
     transform: none !important;
     transition: none !important;
