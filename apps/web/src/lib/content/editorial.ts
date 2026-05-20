@@ -2072,7 +2072,7 @@ export const CLAIM_COPY = {
     victoryNft: "Mint your victory · {difficulty}",
   },
   claimVerb: "Claim",
-  costGasOnly: "gas only",
+  costGasOnly: "Network fee only",
   costEstimateUsd: "~${amount}",
   inFlightLabel: "In flight — reconnect to verify",
   refreshAria: "Refresh",
