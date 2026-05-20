@@ -53,7 +53,11 @@ import { victoryAbi } from "@/lib/contracts/victory";
 import { shopAbi } from "@/lib/contracts/shop";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
-import { registerDockSheetCloser, setDockSheet } from "@/lib/ui/dock-sheet-store";
+import {
+  registerDockSheetCloser,
+  registerDockSheetOpener,
+  setDockSheet,
+} from "@/lib/ui/dock-sheet-store";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { COACH_PACK_ITEMS, type CoachPackSize } from "@/lib/contracts/shop-catalog";
 import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
@@ -161,99 +165,73 @@ function ArenaPageInner() {
     track("arena_select_view");
   }, [arenaScaffoldEnabled, game.status]);
 
-  // Publish the dock-driven sheet state to the shared store so
-  // <PersistentDock>'s center button can detect "overlay is open"
-  // without prop-drilling through the route tree. Cleared on unmount
-  // so a different route that mounts the dock starts fresh.
-  //
-  // Also strips any leftover `?sheet=…` from the URL on close. See
-  // matching note in /exercises — Radix's onPointerDownOutside fires
-  // before the dock button's onClick, so sibling swaps would lose the
-  // pending push if we stripped unconditionally. Only strip when the
-  // URL's sheet still matches the slug we were closing.
-  const dockSheetMountedRef = useRef(false);
-  const prevDockTabRef = useRef<typeof activeDockTab>(null);
+  // Publish the dock-driven sheet state to the shared store so the
+  // <PersistentDock>'s center button can detect "overlay is open".
   useEffect(() => {
     setDockSheet(activeDockTab);
-    if (dockSheetMountedRef.current && activeDockTab === null && typeof window !== "undefined") {
-      const sp = new URLSearchParams(window.location.search);
-      const urlSheet = sp.get("sheet");
-      const prevSlug = prevDockTabRef.current;
-      const prevUrlSheet =
-        prevSlug === "badge" ? "badges"
-          : prevSlug === "shop" ? "shop"
-            : prevSlug === "trophies" ? "trophies"
-              : prevSlug === "leaderboard" ? "leaderboard"
-                : null;
-      if (urlSheet && urlSheet === prevUrlSheet) {
-        sp.delete("sheet");
-        const qs = sp.toString();
-        const path = window.location.pathname;
-        router.replace(qs ? `${path}?${qs}` : path, { scroll: false });
-      }
-    }
-    prevDockTabRef.current = activeDockTab;
-    dockSheetMountedRef.current = true;
     return () => setDockSheet(null);
-  }, [activeDockTab, router]);
+  }, [activeDockTab]);
 
-  // Register the closer so the dock's center button can return the
-  // user to the visible base route under the overlay. Routes via the
-  // sheet-specific handlers when present (shop/badge own additional
-  // hook state) and falls back to the bare setter for sheets that
-  // only track their open flag here.
+  // Register dock store handlers — opener for same-route dock taps,
+  // closer for the center button. badgeSheet/shopSheet own internal
+  // open state, so the opener must close the previous sibling before
+  // opening the new one (activeDockTab alone doesn't drive them).
   useEffect(() => {
-    return registerDockSheetCloser(() => {
-      if (activeDockTab === "shop") {
-        handleShopSheetOpenChange(false);
-      } else if (activeDockTab === "badge") {
-        handleBadgeSheetOpenChange(false);
-      } else {
-        setActiveDockTab(null);
+    const unregisterOpener = registerDockSheetOpener((slug) => {
+      // Close any sibling sheet first so two Radix Dialogs never stack.
+      badgeSheet.closeSheet();
+      shopSheet.closeSheet();
+      if (slug === "shop") {
+        setActiveDockTab("shop");
+        shopSheet.openSheet();
+      } else if (slug === "badge") {
+        setActiveDockTab("badge");
+        badgeSheet.openSheet();
+      } else if (slug === "trophies" || slug === "leaderboard") {
+        setActiveDockTab(slug);
       }
     });
-  }, [activeDockTab, handleShopSheetOpenChange, handleBadgeSheetOpenChange]);
+    const unregisterCloser = registerDockSheetCloser(() => {
+      if (activeDockTab === "shop") handleShopSheetOpenChange(false);
+      else if (activeDockTab === "badge") handleBadgeSheetOpenChange(false);
+      else setActiveDockTab(null);
+    });
+    return () => {
+      unregisterOpener();
+      unregisterCloser();
+    };
+  }, [activeDockTab, badgeSheet, shopSheet, handleShopSheetOpenChange, handleBadgeSheetOpenChange]);
 
-  // Dock sheet deep-link — when the dock pushes `/arena?sheet=<slug>`
-  // from any route the param fires the matching mounted sheet here
-  // instead of bouncing the user back to /hub. Single-shot via ref to
-  // avoid reopening after the user closes.
-  const arenaSheetDeepLinkRef = useRef<string | null>(null);
+  // One-shot deep-link consumption: applies the URL `?sheet=` param
+  // exactly once on mount, then history.replaceState's it away so the
+  // URL reflects the visible state. Subsequent dock taps go through
+  // the store action and never touch the URL — no race with Radix's
+  // onPointerDownOutside, no router.replace fighting router.push.
+  const arenaSheetDeepLinkRef = useRef(false);
   useEffect(() => {
+    if (arenaSheetDeepLinkRef.current) return;
+    arenaSheetDeepLinkRef.current = true;
     const sheet = searchParams?.get("sheet");
-    // Close stripped the param — clear the guard so a fresh re-tap on
-    // the same dock entry can re-open the sheet. Without this, the
-    // per-value lock holds the last-opened key forever and silently
-    // swallows every subsequent re-open.
-    if (!sheet) {
-      arenaSheetDeepLinkRef.current = null;
-      return;
-    }
-    if (arenaSheetDeepLinkRef.current === sheet) return;
-    // badge + shop carry their own hook state (open flag inside
-    // useBadgeSheetState / useShopSheetState) — when the user swaps
-    // siblings via the dock, we must close the previously-open one or
-    // both Radix Dialogs stack and the new one never reaches the top
-    // of the focus / portal pile. activeDockTab alone is not enough.
-    badgeSheet.closeSheet();
-    shopSheet.closeSheet();
+    if (!sheet) return;
     if (sheet === "shop") {
-      arenaSheetDeepLinkRef.current = sheet;
       setActiveDockTab("shop");
       shopSheet.openSheet();
     } else if (sheet === "pro") {
-      arenaSheetDeepLinkRef.current = sheet;
       proSheet.openSheet();
     } else if (sheet === "badges") {
-      arenaSheetDeepLinkRef.current = sheet;
       setActiveDockTab("badge");
       badgeSheet.openSheet();
     } else if (sheet === "trophies") {
-      arenaSheetDeepLinkRef.current = sheet;
       setActiveDockTab("trophies");
     } else if (sheet === "leaderboard") {
-      arenaSheetDeepLinkRef.current = sheet;
       setActiveDockTab("leaderboard");
+    }
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      sp.delete("sheet");
+      const qs = sp.toString();
+      const path = window.location.pathname;
+      window.history.replaceState(window.history.state, "", qs ? `${path}?${qs}` : path);
     }
   }, [searchParams, shopSheet, proSheet, badgeSheet]);
 
