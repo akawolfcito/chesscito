@@ -4,11 +4,9 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TrophiesBody } from "@/components/trophies/trophies-body";
 import { DOCK_LABELS, TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 
@@ -47,24 +45,17 @@ export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: Trophi
       ) : null}
       <SheetContent
         side="bottom"
+        hideClose
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
-        <div className="shrink-0 border-b border-[rgba(110,65,15,0.30)] -mx-6 -mt-6 rounded-none px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
-          <SheetHeader>
-            <SheetTitle
-              className="fantasy-title flex items-center gap-2"
-              style={{
-                color: "rgba(110, 65, 15, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-              }}
-            >
-              <CandyIcon name="trophy" className="h-5 w-5" />
-              {TROPHY_VITRINE_COPY.pageTitle}
-            </SheetTitle>
-            <SheetDescription style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {TROPHY_VITRINE_COPY.pageDescription}
-            </SheetDescription>
-          </SheetHeader>
+        <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
+          <ContextualHeader
+            variant="close-control"
+            icon="trophy"
+            title={TROPHY_VITRINE_COPY.pageTitle}
+            subtitle={TROPHY_VITRINE_COPY.pageDescription}
+            close={{ onClick: () => onOpenChange(false), label: "Close trophies" }}
+          />
         </div>
         <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-6">
           <TrophiesBody />

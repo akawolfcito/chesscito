@@ -19,3 +19,19 @@ describe("TrophiesSheet — showTrigger gate", () => {
     expect(screen.queryByRole("button", { name: /trophies/i })).not.toBeInTheDocument();
   });
 });
+
+describe("TrophiesSheet — ContextualHeader canary", () => {
+  it("mounts the close-control ContextualHeader (not the legacy ad-hoc header)", () => {
+    render(<TrophiesSheet open onOpenChange={() => {}} showTrigger={false} />);
+    const header = screen.getByRole("banner");
+    expect(header).toHaveAttribute("data-component", "contextual-header");
+    expect(header).toHaveAttribute("data-variant", "close-control");
+  });
+
+  it("renders exactly one close affordance (inline, not the floating absolute X)", () => {
+    render(<TrophiesSheet open onOpenChange={() => {}} showTrigger={false} />);
+    const closeButtons = screen.getAllByRole("button", { name: /close trophies/i });
+    expect(closeButtons).toHaveLength(1);
+    expect(closeButtons[0].getAttribute("data-slot")).toBe("close-control");
+  });
+});
