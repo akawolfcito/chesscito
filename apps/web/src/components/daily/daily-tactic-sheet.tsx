@@ -107,6 +107,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
+        hideClose
         data-testid="daily-tactic-sheet"
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
@@ -115,6 +116,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
           subtitle={puzzleData.name}
           icon="coach"
           objective={`Move the ${puzzleData.piece} to the target square.`}
+          onClose={() => onOpenChange(false)}
         />
 
         <div className="flex flex-1 flex-col items-center justify-center px-2 py-4">

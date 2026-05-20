@@ -438,6 +438,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent
           side="bottom"
+          hideClose
           data-testid="mini-arena-sheet"
           className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
         >
@@ -446,6 +447,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
               subtitle="Special Training"
               icon="trophy"
               objective={setup.description}
+              onClose={() => handleOpenChange(false)}
             />
 
             <div className="flex flex-1 flex-col items-center justify-center px-2 py-4">
