@@ -220,6 +220,13 @@ function ArenaPageInner() {
       return;
     }
     if (arenaSheetDeepLinkRef.current === sheet) return;
+    // badge + shop carry their own hook state (open flag inside
+    // useBadgeSheetState / useShopSheetState) — when the user swaps
+    // siblings via the dock, we must close the previously-open one or
+    // both Radix Dialogs stack and the new one never reaches the top
+    // of the focus / portal pile. activeDockTab alone is not enough.
+    badgeSheet.closeSheet();
+    shopSheet.closeSheet();
     if (sheet === "shop") {
       arenaSheetDeepLinkRef.current = sheet;
       setActiveDockTab("shop");
