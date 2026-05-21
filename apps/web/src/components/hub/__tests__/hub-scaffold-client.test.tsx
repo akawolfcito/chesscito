@@ -206,9 +206,9 @@ describe("HubScaffoldClient — PRO chip", () => {
 
     // HudResourceChip(tone="pro", value=null) returns null by contract.
     expect(screen.queryByText("PRO")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Train with Coach" }),
-    ).toBeInTheDocument();
+    // The legacy inactive Coach PRO card ("Train with Coach" CTA) was
+    // removed in the PRO-discoverability refactor; the PRO chip
+    // collapse + Go PRO absence remain the canonical guards.
     expect(screen.queryByText("Go PRO")).not.toBeInTheDocument();
   });
 
@@ -242,10 +242,10 @@ describe("HubScaffoldClient — PRO chip", () => {
 
     render(<HubScaffoldClient />);
 
+    // Chip collapses to null; the removed "Train with Coach" CTA is no
+    // longer the inactive surface — the new flow is the PRO HUD chip
+    // tap + dock pathway, covered below.
     expect(screen.queryByText("PRO")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Train with Coach" }),
-    ).toBeInTheDocument();
   });
 });
 
@@ -285,36 +285,11 @@ describe("HubScaffoldClient — tap handlers", () => {
     );
   });
 
-  it("opens ProSheet in-place when the inactive Coach PRO card CTA is tapped", async () => {
-    const user = userEvent.setup();
-    render(<HubScaffoldClient />);
-
-    await user.click(
-      screen.getByRole("button", { name: "Train with Coach" }),
-    );
-
-    expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
-    expect(pushMock).not.toHaveBeenCalledWith(
-      expect.stringContaining("legacy=1&action=pro"),
-    );
-  });
-
-  it("routes active PRO users to Coach history from the Coach PRO card CTA", async () => {
-    const user = userEvent.setup();
-    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
-    useProStatusMock.mockReturnValue({
-      status: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
-      isLoading: false,
-      refetch: vi.fn(),
-    });
-    render(<HubScaffoldClient />);
-
-    await user.click(
-      screen.getByRole("button", { name: "Open Journal" }),
-    );
-
-    expect(pushMock).toHaveBeenCalledWith("/coach/history");
-  });
+  // The legacy "Train with Coach" / "Open Journal" CTAs on the Coach
+  // PRO card were removed in the PRO-discoverability refactor. The
+  // ProSheet open path is now exercised by the PRO HUD chip tap test
+  // above, and the active-PRO route to /coach/history is exercised via
+  // the dock pathway (see hub-scaffold-client telemetry block).
 
   it("opens ProSheet from the `initialSheet=pro` deep link", async () => {
     render(<HubScaffoldClient initialSheet="pro" />);
@@ -466,45 +441,11 @@ describe("HubScaffoldClient — telemetry", () => {
     });
   });
 
-  it("fires pro_training_card_cta_tap before opening the Hub Coach card sheet", async () => {
-    const user = userEvent.setup();
-    render(<HubScaffoldClient />);
-
-    await user.click(
-      screen.getByRole("button", { name: "Train with Coach" }),
-    );
-
-    expect(trackMock).toHaveBeenCalledWith("pro_training_card_cta_tap", {
-      surface: "hub",
-      pro_active: false,
-      wallet_connected: false,
-      cta: "open_pro_sheet",
-    });
-    expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
-  });
-
-  it("fires pro_training_card_cta_tap with training_journal for active PRO", async () => {
-    const user = userEvent.setup();
-    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
-    useProStatusMock.mockReturnValue({
-      status: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
-      isLoading: false,
-      refetch: vi.fn(),
-    });
-    render(<HubScaffoldClient />);
-
-    await user.click(
-      screen.getByRole("button", { name: "Open Journal" }),
-    );
-
-    expect(trackMock).toHaveBeenCalledWith("pro_training_card_cta_tap", {
-      surface: "hub",
-      pro_active: true,
-      wallet_connected: true,
-      cta: "training_journal",
-    });
-    expect(pushMock).toHaveBeenCalledWith("/coach/history");
-  });
+  // pro_training_card_cta_tap was wired to the "Train with Coach" /
+  // "Open Journal" buttons on the Coach PRO card. The card was removed
+  // in the PRO-discoverability refactor; the CTA tap event no longer
+  // has a source surface. The pro_training_card_viewed view event
+  // continues to fire (covered above).
 
   it("fires hub_trophy_tap with the current trophy count on tap", async () => {
     const user = userEvent.setup();
