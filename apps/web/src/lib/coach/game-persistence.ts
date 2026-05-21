@@ -114,7 +114,7 @@ export type EnforceGameCapOptions = {
   onOverflow?: (info: EnforceGameCapOverflowInfo) => void;
 };
 
-type GameCapRedis = Pick<Redis, "llen" | "lrange" | "eval">;
+type GameCapRedis = Pick<Redis, "llen" | "lrange" | "pipeline">;
 
 /**
  * Enforces the per-wallet game-list cap by evicting the oldest unanalyzed
@@ -123,8 +123,15 @@ type GameCapRedis = Pick<Redis, "llen" | "lrange" | "eval">;
  *
  * The Redis list is push-newest-to-head (via `lpush` upstream), so the
  * overflow window is `[cap, length-1]` and the array returned by
- * `lrange(cap, -1)` is ordered newest→oldest. The function iterates the
- * array in reverse so the OLDEST gameId is evicted first.
+ * `lrange(cap, -1)` is ordered newest→oldest. The function queues evals in
+ * reverse iteration order so the OLDEST gameId is evicted first.
+ *
+ * Cluster E defer #18: every per-entry `EVICT_IF_UNANALYZED_LUA` invocation
+ * is queued onto a single `redis.pipeline()` and flushed with one `.exec()`
+ * — collapsing N HTTP round-trips to Upstash into one, regardless of the
+ * overflow size. Each script invocation remains atomic per the Lua
+ * docstring (Race B closure preserved); the pipeline is purely a wire-level
+ * batch, not a Redis MULTI/EXEC transaction.
  *
  * Called after the route handler's `redis.lpush(...)`. Safe to call when
  * `length <= cap` — the function is a no-op in that case.
@@ -144,24 +151,40 @@ export async function enforceGameCap(
 
   const tail = await redis.lrange<string>(listKey, cap, -1);
   const overflowCount = length - cap;
-  const evicted: string[] = [];
-  let analyzedInTail = 0;
 
-  for (let i = tail.length - 1; i >= 0 && evicted.length < overflowCount; i -= 1) {
+  // First pass — collect candidate gameIds in eviction order (oldest first)
+  // and queue one EVICT_IF_UNANALYZED_LUA call per candidate on a single
+  // pipeline. Falsy entries (Redis-level corruption) are skipped to avoid
+  // dispatching invalid analysis keys; the missed slot still counts toward
+  // softOverflow via the final `evicted.length < overflowCount` check.
+  const candidates: string[] = [];
+  const pipeline = redis.pipeline();
+  for (let i = tail.length - 1; i >= 0; i -= 1) {
     const gameId = tail[i];
     if (!gameId) continue;
-    // Atomic EXISTS-then-LREM via Lua. See EVICT_IF_UNANALYZED_LUA
-    // docstring for the race this closes.
-    const result = await redis.eval(
+    candidates.push(gameId);
+    pipeline.eval(
       EVICT_IF_UNANALYZED_LUA,
       [listKey, REDIS_KEYS.analysis(wallet, gameId)],
       [gameId],
     );
-    if (result === 0) {
+  }
+
+  // Single round-trip — skip the network call entirely when the overflow
+  // window yielded no usable candidates (all falsy).
+  const results =
+    candidates.length > 0 ? await pipeline.exec<number[]>() : [];
+
+  // Second pass — fold pipeline results into evicted[] / analyzedInTail.
+  // Order is preserved: results[i] corresponds to candidates[i].
+  const evicted: string[] = [];
+  let analyzedInTail = 0;
+  for (let i = 0; i < candidates.length; i += 1) {
+    if (results[i] === 0) {
       analyzedInTail += 1;
       continue;
     }
-    evicted.push(gameId);
+    evicted.push(candidates[i]!);
   }
 
   if (evicted.length < overflowCount) {
