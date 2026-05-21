@@ -53,3 +53,21 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
 - No hay tests automatizados por ahora
 - Idioma de UI: English (ver `lib/content/editorial.ts`)
+
+## Cluster Closure Protocol
+
+Cuando un cluster / feature / spec termine y haga merge a `main`, ejecutar este checklist antes de pasar al siguiente:
+
+1. **GitHub housekeeping**
+   - Cerrar issues asociados al cluster
+   - Cerrar milestone si todos sus issues están `closed`
+   - Reasignar issues que sobreviven al milestone correcto
+2. **README sync** — si la sección "What's live" cambió:
+   - Actualizar tabla de contracts (mainnet addresses)
+   - Actualizar tagline + bullets de features
+   - Actualizar Tech Stack si hay layer nuevo
+3. **MEMORY.md sync** — actualizar índice con estado final del cluster
+4. **Branch hygiene** — borrar branches mergeadas en origin (verificar `git log origin/main..origin/<branch>` antes)
+5. **Handoff doc** — escribir `docs/handoffs/YYYY-MM-DD-<topic>-handoff.md` con estado, próximos pasos y open questions
+
+Sin este protocolo, la documentación deriva del estado real y el repo acumula ruido visible (branches stale, issues abiertos, README desactualizado).
