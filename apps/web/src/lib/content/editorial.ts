@@ -1037,6 +1037,31 @@ export const COACH_COPY = {
   historyBannerSubtitle: "Personalized coaching from your game history.",
 } as const;
 
+/**
+ * Cluster E — Coach re-entry + unconditional GameRecord persistence.
+ * Spec: _bmad-output/implementation-artifacts/spec-cluster-e-coach-re-entry-game-persistence.md
+ *
+ * Single source of truth for the new persistence toast, Coach re-entry
+ * surfaces (Arena end-state CTA + /coach/history Analyze chip), and a11y
+ * descriptions per §0.4. All copy is English.
+ */
+export const COACH_ENTRY_COPY = {
+  getCoachAnalysis: "Get Coach Analysis",
+  savingMatch: "Saving match…",
+  matchSaved: "Match saved",
+  matchNotSaved: "Match not saved · play continues",
+  matchNotSavedRetry: "Retry",
+  matchTooShort: "Match too short to analyze",
+  historyMatchLabel: "Match",
+  analyzeChipLabel: "Analyze",
+  historyAnalyzeAriaLabel: (timestamp: string, difficulty: string, result: string): string =>
+    `Analyze match from ${timestamp}, ${difficulty}, ${result}`,
+  victorySecondaryDescribedById: "victory-coach-cta-desc",
+  victorySecondaryDescription:
+    "Secondary action — Mint Victory above is the primary action.",
+  offlineToAnalyze: "You need to be online to analyze",
+} as const;
+
 export const LEGAL_COPY = {
   terms: {
     title: "Terms of Service",
