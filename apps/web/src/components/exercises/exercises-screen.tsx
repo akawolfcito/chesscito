@@ -113,6 +113,15 @@ type SignatureResponse =
 
 type PieceKey = "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
 const POINTS_PER_STAR = 100n;
+
+/**
+ * Hold the `<TxProgressSteps current="done">` toast for this many ms after
+ * `useWaitForTransactionReceipt` resolves with success. Aligned with the
+ * motion scale: `--duration-ceremony = 500ms` × 3, so the celebratory
+ * confirmation reads at the same cadence as other success affordances
+ * (Victory NFT mint, badge claim, etc.).
+ */
+const SAVE_DONE_HOLD_MS = 1500;
 type CatalogItem = (typeof SHOP_ITEMS)[number] & {
   configured: boolean;
   enabled: boolean;
@@ -850,10 +859,11 @@ export function ExercisesScreen({
     lastSavedScore > 0 && localScoreNum === lastSavedScore;
 
   // Tx phase tracking for the TxProgressSteps toast. The toast remains
-  // mounted while the tx is in flight AND for a 1500ms hold after
-  // confirmation (matches the B1 primitive's own done-hold). The
-  // surface owns the unmount boundary so the primitive's internal
-  // timer doesn't conflict with React's re-render cycle.
+  // mounted while the tx is in flight AND for `SAVE_DONE_HOLD_MS` after
+  // confirmation (matches the B1 primitive's own done-hold; tokenized as
+  // 3 × `--duration-ceremony` for motion-scale alignment). The surface
+  // owns the unmount boundary so the primitive's internal timer doesn't
+  // conflict with React's re-render cycle.
   //
   // The two effects below split cleanly so the done-hold timer is NOT
   // cleaned up by React's effect-rerun semantics (Cluster C review
@@ -885,7 +895,7 @@ export function ExercisesScreen({
     // effect's deps — setting it inside would re-trigger the effect and
     // React would clear the timer prematurely.
     setTxDoneAt(Date.now());
-    const timer = window.setTimeout(() => setTxDoneAt(null), 1500);
+    const timer = window.setTimeout(() => setTxDoneAt(null), SAVE_DONE_HOLD_MS);
     return () => window.clearTimeout(timer);
   }, [isSubmitSuccess, submitTxHash, recordSaveFor]);
 
