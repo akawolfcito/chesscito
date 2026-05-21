@@ -51,11 +51,15 @@ describe("ProSheet", () => {
     expect(screen.getByText(PRO_COPY.perksActive[0])).toBeInTheDocument();
   });
 
-  it("renders the roadmap perks under a 'Coming later' heading", () => {
-    renderSheet();
-    expect(screen.getByTestId("pro-roadmap")).toBeInTheDocument();
-    expect(screen.getByText(PRO_COPY.perksRoadmap[0])).toBeInTheDocument();
-  });
+  // The "Coming later" roadmap section + per-perk ComingSoonChip +
+  // FIDE Master bullet were removed from <ProSheet> in the PRO sheet
+  // simplification (only the inactive purchase path renders perks now).
+  // PRO_COPY.perksRoadmap remains in editorial.ts as dead copy; cleanup
+  // tracked separately. The 3 stale tests asserting against
+  // pro-roadmap testid / ComingSoonChip / FIDE Master bullet were
+  // removed here. The "strips inline '(coming soon)' suffix" editorial
+  // assertion below is preserved — it validates the constant shape
+  // even though the constant is now unrendered.
 
   // AC-3.8 — addendum §3.6 / §6.1 commit #4
   it("renders the kicker 'Training Pass' above the title", () => {
@@ -71,20 +75,6 @@ describe("ProSheet", () => {
       kicker.compareDocumentPosition(title) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-  });
-
-  it("includes the FIDE Master + dev team bullet in the roadmap", () => {
-    renderSheet();
-    expect(
-      screen.getByText("Guided by FIDE Master + dev team"),
-    ).toBeInTheDocument();
-  });
-
-  // AC-3.7 — addendum §3.7 / §6.1 commit #6
-  it("renders one ComingSoonChip alongside each roadmap perk", () => {
-    renderSheet();
-    const chips = screen.getAllByTestId("coming-soon-chip");
-    expect(chips).toHaveLength(PRO_COPY.perksRoadmap.length);
   });
 
   it("strips the inline '(coming soon)' suffix from roadmap entries (chip replaces it)", () => {
@@ -117,16 +107,13 @@ describe("ProSheet", () => {
     expect(handlers.onPurchase).toHaveBeenCalledTimes(1);
   });
 
-  it("shows the Renew CTA when PRO is currently active", () => {
-    const NOW = Date.now();
-    const handlers = renderSheet({
-      status: { active: true, expiresAt: NOW + 5 * 24 * 60 * 60 * 1000 },
-    });
-    const cta = screen.getByRole("button", { name: PRO_COPY.ctaRenew });
-    fireEvent.click(cta);
-    expect(handlers.onPurchase).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId("pro-active-banner")).toBeInTheDocument();
-  });
+  // The bottom Renew CTA was removed when PRO is active (the principal
+  // button is gated on !showActiveBanner). The active state now renders
+  // 3 contextual actions: pro-open-journal (primary), pro-active-cta
+  // (secondary "Play in Arena"), and pro-extend-link (only when
+  // expiring ≤ 3 days). The legacy "Renew CTA when active" test was
+  // removed; the active-state behavior is covered by the dedicated
+  // describe block below.
 
   it("disables the CTA while purchasing", () => {
     renderSheet({ isPurchasing: true });
@@ -210,18 +197,11 @@ describe("ProSheet", () => {
       });
     });
 
-    it("fires pro_cta_clicked with source=sheet_renew when active and tapping Renew", () => {
-      const NOW = Date.now();
-      renderSheet({
-        status: { active: true, expiresAt: NOW + 5 * 24 * 60 * 60 * 1000 },
-      });
-      trackMock.mockClear();
-      fireEvent.click(screen.getByRole("button", { name: PRO_COPY.ctaRenew }));
-
-      expect(trackMock).toHaveBeenCalledWith("pro_cta_clicked", {
-        source: "sheet_renew",
-      });
-    });
+    // pro_cta_clicked source=sheet_renew was emitted by the bottom
+    // Renew button when PRO was active. That CTA no longer renders;
+    // the renew flow now goes through pro-extend-link (only when
+    // expiring) which emits pro_extend_tap instead. The dedicated
+    // expiring-sub-line block below covers pro_extend_tap.
 
     it("does not fire pro_cta_clicked for Connect Wallet (not commercial intent)", () => {
       renderSheet({ isConnected: false });
@@ -269,17 +249,17 @@ describe("ProSheet", () => {
     });
 
     it("prioritizes Training Journal as the first active PRO action", () => {
+      // Post-redesign: the active sheet renders 2 ordered actions —
+      // pro-open-journal (primary) then pro-active-cta (secondary
+      // "Play in Arena"). The bottom Renew CTA was retired; renew now
+      // goes through pro-extend-link, only when expiring ≤ 3 days.
       const handlers = renderSheet({ status: ACTIVE_STATUS });
       const journal = screen.getByTestId("pro-open-journal");
       const play = screen.getByTestId("pro-active-cta-button");
-      const renew = screen.getByRole("button", { name: PRO_COPY.ctaRenew });
 
       expect(journal).toHaveTextContent(PRO_COPY.activeActions.journal);
       expect(
         journal.compareDocumentPosition(play) & Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
-      expect(
-        play.compareDocumentPosition(renew) & Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
 
       fireEvent.click(journal);
@@ -308,15 +288,10 @@ describe("ProSheet", () => {
       expect(screen.queryByTestId("pro-active-cta")).not.toBeInTheDocument();
     });
 
-    it("does NOT change the existing Renew CTA behavior", () => {
-      const handlers = renderSheet({ status: ACTIVE_STATUS });
-      // Renew is the bottom CTA from resolveCta(); still fires onPurchase.
-      const renew = screen.getByRole("button", { name: PRO_COPY.ctaRenew });
-      fireEvent.click(renew);
-      expect(handlers.onPurchase).toHaveBeenCalledTimes(1);
-      // The new Play in Arena CTA should NOT route to /arena when Renew was clicked.
-      expect(pushMock).not.toHaveBeenCalled();
-    });
+    // The "Renew CTA behavior" guard is obsolete — the bottom Renew
+    // button was removed when PRO is active (see comment in
+    // resolveCta() at pro-sheet.tsx). Renew flow now goes through
+    // pro-extend-link, covered by the expiring-sub-line block.
 
     describe("expiring sub-line (daysLeft ≤ 3)", () => {
       const EXPIRING_STATUS = { active: true, expiresAt: TWO_DAYS };
