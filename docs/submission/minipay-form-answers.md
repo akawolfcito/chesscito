@@ -267,3 +267,50 @@ MiniPay is referenced solely as a wallet and distribution channel.
 Operator surface:   https://chesscito.com/about
 Legal disclaimer:   https://chesscito.com/terms  (Section 1 — "Independent Operator")
 ```
+
+---
+
+## Q: Brief Description of App — purpose and key features
+
+Three length variants are provided. Pick the one that fits the form field's character / word budget at submission time.
+
+### Short (one sentence, ~140 chars)
+
+```text
+Chesscito is a mobile pre-chess education mini-app on Celo, distributed via MiniPay.
+Learn how each chess piece moves through gamified, on-chain challenges.
+```
+
+### Medium (one paragraph, ~80 words)
+
+```text
+Chesscito is an educational pre-chess game built for the Celo MiniPay wallet. Players
+learn how each chess piece moves (rook, bishop, knight, and beyond) through bite-sized
+puzzles that reward stars, soulbound badges, and verifiable on-chain scores. A free-play
+Arena mode lets users practice full games against an AI opponent at three difficulty
+levels and mint a Victory NFT when they win. Curriculum designed by FIDE Master
+César Litvinov Alarcón.
+```
+
+### Long (three paragraphs, ~180 words — recommended for the form)
+
+```text
+Chesscito is a mobile-first pre-chess education mini-app on the Celo blockchain,
+distributed through the MiniPay wallet. Its mission is to make the foundational skill
+of "how each chess piece moves" accessible to anyone with a smartphone, using
+gamified, verifiable on-chain progress as the motivation layer.
+
+Key features:
+- Piece-by-piece training — interactive level-based exercises for rook, bishop, knight
+  (and more), with three challenge modes: move, capture, and multi-move puzzles.
+- Arena free play — full chess matches against an AI opponent at Easy, Medium, and
+  Hard difficulty (powered by js-chess-engine, ~30 KB pure JS, MiniPay-compatible).
+- On-chain collectibles — soulbound chess-piece badges, exercise scores, Founder
+  Badge, Streak Shield, and Victory NFTs (minted after Arena wins).
+- Chesscito Coach (PRO, $1.99/30d) — AI review of completed Arena games with
+  move-by-move feedback.
+- Stablecoin micro-pricing — items cost $0.005–$1.99 in USDC, USDT, or cUSD; the
+  app auto-selects the user's highest-balance stablecoin.
+- Pedagogy — curriculum designed by FIDE Master César Litvinov Alarcón
+  (100+ students, alumni in national/international tournaments).
+```
