@@ -32,12 +32,13 @@ type SaveState = "idle" | "saved" | "link-copied" | "failed";
 /**
  * ShareGrid — colorful per-service share icons + native "More" + copy.
  *
- * Replaces the monochrome warm-brown share strip with the Duolingo-style
- * grid: WhatsApp / Messages / Facebook / X / Copy / More. Direct-link
- * services (WhatsApp/Messages/FB/X) open a share URL in a new tab.
- * "More" calls navigator.share() to trigger the OS native picker
- * (covers Messenger, Instagram, Telegram, etc.). "Copy" puts the text
- * on the clipboard with a toast.
+ * Renders the Duolingo-style grid: WhatsApp / Telegram / Facebook / X /
+ * Save (or Copy) / More. Direct-link services open a share URL in a new
+ * tab — all four render OG previews when the share URL points at a
+ * canonical /share/* page. "More" calls navigator.share() to trigger the
+ * OS native picker (covers Discord, LinkedIn, Slack, etc.). Instagram
+ * and TikTok strip OG previews and have no share-via-URL API, so they
+ * are reached via Save → manual upload to Story/Reel/Post.
  */
 export function ShareGrid({ text, url, cardUrl }: Props) {
   const shareUrl = url ?? SHARE_COPY.url;
@@ -176,13 +177,16 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
       ),
     },
     {
-      key: "sms",
-      label: "Messages",
-      background: "linear-gradient(135deg, #5BD575 0%, #34C759 100%)",
-      href: `sms:?&body=${encodeURIComponent(payload)}`,
+      // Telegram renders OG previews and is the preferred social channel
+      // in the Celo / MiniPay community. SMS was dropped: paid medium with
+      // negligible share-tile telemetry usage in production.
+      key: "telegram",
+      label: "Telegram",
+      background: "linear-gradient(135deg, #37AEE2 0%, #1E96C8 100%)",
+      href: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`,
       icon: (
         <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white" aria-hidden="true">
-          <path d="M12 2C6.48 2 2 6.04 2 11c0 2.52 1.16 4.8 3 6.43V22l3.75-2.06c1 .27 2.07.43 3.25.43 5.52 0 10-4.04 10-9s-4.48-9-10-9" />
+          <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z" />
         </svg>
       ),
     },
