@@ -16,6 +16,31 @@ import { REDIS_KEYS } from "./redis-keys";
  */
 export const GAME_LIST_CAP = 200;
 
+/**
+ * Atomic LPOS-then-LPUSH for the per-wallet game list. Closes the
+ * TOCTOU race where two concurrent POSTs with the same gameId both
+ * observe `LPOS = nil` and both `LPUSH`, producing duplicate head
+ * entries. Redis Lua scripts execute single-threaded — no other
+ * command interleaves during execution.
+ *
+ * - `KEYS[1]` = game list key (`coach:games:<wallet>`).
+ * - `ARGV[1]` = candidate `gameId`.
+ * - Returns `1` when the entry was pushed, `0` when it was already
+ *   present and the call was a no-op. Cluster E defer #1; red-team
+ *   at `docs/reviews/2026-05-21-cluster-e1-lua-atomicity-redteam.md`.
+ *
+ * Note on Lua semantics: `LPOS` returns `nil` when absent, an integer
+ * index when present (including `0` for the head). In Lua only `nil`
+ * and `false` are falsy — integer `0` is truthy — so the conditional
+ * `if redis.call('LPOS', …) then` correctly treats "found at head"
+ * as a duplicate.
+ */
+export const GAME_LIST_LPUSH_LUA = `
+  if redis.call('LPOS', KEYS[1], ARGV[1]) then return 0 end
+  redis.call('LPUSH', KEYS[1], ARGV[1])
+  return 1
+`;
+
 export type EnforceGameCapResult = {
   /** GameIds removed from the list, in eviction order (oldest first). */
   evicted: string[];

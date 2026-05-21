@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
-import { enforceGameCap } from "@/lib/coach/game-persistence";
+import { enforceGameCap, GAME_LIST_LPUSH_LUA } from "@/lib/coach/game-persistence";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type { GameRecord } from "@/lib/coach/types";
@@ -47,13 +47,15 @@ export async function POST(req: Request) {
     // analyzed entries during FIFO eviction so a player's coached games
     // are never silently dropped to make room for a fresh match.
     await redis.set(REDIS_KEYS.game(wallet, game.gameId), record, { ex: 90 * 24 * 60 * 60 });
-    // Idempotency guard: a retried POST with the same gameId must not duplicate the
-    // list entry. Without this, eviction `lrem(list, 1, gameId)` would remove the
-    // newer occurrence head-first and leave the stale one behind.
-    const existingIndex = await redis.lpos<number | null>(REDIS_KEYS.gameList(wallet), game.gameId);
-    if (existingIndex === null) {
-      await redis.lpush(REDIS_KEYS.gameList(wallet), game.gameId);
-    }
+    // Cluster E defer #1: atomic LPOS+LPUSH via Lua eval closes the TOCTOU
+    // race where two concurrent POSTs with the same gameId both observe
+    // LPOS=nil and both LPUSH, producing duplicate head entries. Redis Lua
+    // scripts run single-threaded; no other command interleaves.
+    await redis.eval(
+      GAME_LIST_LPUSH_LUA,
+      [REDIS_KEYS.gameList(wallet)],
+      [game.gameId],
+    );
     await enforceGameCap(redis, wallet, {
       onOverflow: (info) => {
         log.warn("game_persist_cap_overflow", {

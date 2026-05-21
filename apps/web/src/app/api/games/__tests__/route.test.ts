@@ -3,6 +3,7 @@ import { __setLoggerSink, __resetLoggerSink, type LogLevel } from "@/lib/server/
 
 const redisMock = vi.hoisted(() => ({
   set: vi.fn(),
+  eval: vi.fn(),
   lpush: vi.fn(),
   lpos: vi.fn(),
   ltrim: vi.fn(),
@@ -23,12 +24,17 @@ vi.mock("@/lib/server/demo-signing", () => ({
 }));
 
 const enforceGameCapMock = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/coach/game-persistence", () => ({
-  enforceGameCap: enforceGameCapMock,
-}));
+vi.mock("@/lib/coach/game-persistence", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/coach/game-persistence")>();
+  return {
+    ...actual,
+    enforceGameCap: enforceGameCapMock,
+  };
+});
 
 import { GET, POST } from "../route";
 import { enforceOrigin, enforceRateLimit } from "@/lib/server/demo-signing";
+import { GAME_LIST_LPUSH_LUA } from "@/lib/coach/game-persistence";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
 const mockedRate = vi.mocked(enforceRateLimit);
@@ -64,6 +70,7 @@ describe("POST /api/games", () => {
     mockedOrigin.mockReset();
     mockedRate.mockReset();
     redisMock.set.mockReset();
+    redisMock.eval.mockReset();
     redisMock.lpush.mockReset();
     redisMock.lpos.mockReset();
     redisMock.ltrim.mockReset();
@@ -72,8 +79,7 @@ describe("POST /api/games", () => {
     mockedOrigin.mockImplementation(() => {});
     mockedRate.mockResolvedValue(undefined);
     redisMock.set.mockResolvedValue("OK");
-    redisMock.lpush.mockResolvedValue(1);
-    redisMock.lpos.mockResolvedValue(null); // default: gameId not in list
+    redisMock.eval.mockResolvedValue(1); // default: Lua reports "pushed"
     redisMock.ltrim.mockResolvedValue("OK");
     enforceGameCapMock.mockResolvedValue({ evicted: [], softOverflow: false });
   });
@@ -141,41 +147,61 @@ describe("POST /api/games", () => {
     expect(res.status).toEqual(500);
   });
 
-  describe("idempotent lpush dedupe (Cluster E defer — Edge hunter #5)", () => {
-    it("skips lpush when gameId already exists in the list (retried POST)", async () => {
-      redisMock.lpos.mockResolvedValue(0); // gameId already at head
+  describe("atomic LPOS+LPUSH via Lua eval (Cluster E defer #1)", () => {
+    it("delegates list-dedupe to redis.eval with the Lua script, listKey, and gameId", async () => {
+      const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+
+      expect(res.status).toEqual(200);
+      expect(redisMock.eval).toHaveBeenCalledTimes(1);
+      expect(redisMock.eval).toHaveBeenCalledWith(
+        GAME_LIST_LPUSH_LUA,
+        [`coach:games:${VALID_WALLET}`],
+        [VALID_GAME_ID],
+      );
+    });
+
+    it("returns 200 when eval reports pushed (1)", async () => {
+      redisMock.eval.mockResolvedValue(1);
 
       const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
 
       expect(res.status).toEqual(200);
-      expect(redisMock.lpos).toHaveBeenCalledWith(
-        `coach:games:${VALID_WALLET}`,
-        VALID_GAME_ID,
-      );
-      expect(redisMock.lpush).not.toHaveBeenCalled();
-      // record upsert still happens (recordedAt refreshes)
+    });
+
+    it("returns 200 when eval reports skipped (0) — retried POST refreshes record", async () => {
+      redisMock.eval.mockResolvedValue(0);
+
+      const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+
+      expect(res.status).toEqual(200);
+      // record upsert still happens — recordedAt refreshes via SET
       expect(redisMock.set).toHaveBeenCalledTimes(1);
     });
 
-    it("calls lpush when gameId is NOT in the list yet (first POST)", async () => {
-      redisMock.lpos.mockResolvedValue(null);
+    it("never calls redis.lpos or redis.lpush directly (atomicity guard)", async () => {
+      await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
 
-      const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
-
-      expect(res.status).toEqual(200);
-      expect(redisMock.lpush).toHaveBeenCalledTimes(1);
-      expect(redisMock.lpush).toHaveBeenCalledWith(
-        `coach:games:${VALID_WALLET}`,
-        VALID_GAME_ID,
-      );
+      expect(redisMock.lpos).not.toHaveBeenCalled();
+      expect(redisMock.lpush).not.toHaveBeenCalled();
     });
 
-    it("treats any non-null lpos index as duplicate (mid-list match)", async () => {
-      redisMock.lpos.mockResolvedValue(42); // gameId already deep in list
+    it("dispatches one eval per POST under concurrent same-gameId load (regression net)", async () => {
+      // Mock cannot prove atomicity — Redis Lua's single-threaded
+      // execution does. This test only asserts the route delegates to
+      // eval N times without crashing under parallel dispatch.
+      redisMock.eval.mockImplementation(async () =>
+        redisMock.eval.mock.calls.length === 1 ? 1 : 0,
+      );
 
-      const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+      const results = await Promise.all(
+        Array.from({ length: 5 }, () =>
+          POST(makePost({ walletAddress: VALID_WALLET, game: validGame() })),
+        ),
+      );
 
-      expect(res.status).toEqual(200);
+      expect(results.every((r) => r.status === 200)).toBe(true);
+      expect(redisMock.eval).toHaveBeenCalledTimes(5);
+      expect(redisMock.lpos).not.toHaveBeenCalled();
       expect(redisMock.lpush).not.toHaveBeenCalled();
     });
   });
