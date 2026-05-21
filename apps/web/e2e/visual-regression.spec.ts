@@ -184,3 +184,199 @@ test.describe("visual regression — Step 2 baselines", () => {
     await expect(page).toHaveScreenshot("about-page.png", STATIC_PAGE_OPTS);
   });
 });
+
+// Step 3 baselines — fixture-driven component isolation. Backed by the
+// /dev/* routes added 2026-05-21 (see apps/web/src/app/dev/). Each
+// fixture mounts a single primitive with controlled props so we can
+// lock the visual contract of states that require either a real wallet
+// (VR-8) or in-flight async work (VR-5, VR-7) to reach via the natural
+// flow. The /dev/* routes 404 in production (NODE_ENV gate).
+//
+// VR coverage notes:
+//  - VR-5 (TxProgressSteps pills × 4 step states) — mint-victory flow.
+//    Locks the visual contract of the pills variant that the Victory
+//    mint surface will adopt. Captures sign / send / wait / done. The
+//    "failed" terminal is captured separately for the error chrome.
+//  - VR-7 (PersistOverlay × 2 states) — persisting (toast) + failed
+//    (warning + Retry/Dismiss). idle/dismissed render null, no baseline.
+//  - VR-8 (/coach/history mixed-chronological with Analyze chip) —
+//    1 analyzed entry + 2 unanalyzed entries; /api/coach/history and
+//    /api/games are mocked via page.route() with deterministic seed.
+//
+// First-pass coverage is minipay viewport only. Desktop deferred until
+// the harness proves stable.
+const FIXTURE_OPTS = { maxDiffPixelRatio: 0.01 } as const;
+
+// Mocks for VR-8. The page fetches both endpoints in parallel; the
+// seed shape mirrors CoachAnalysisRecord + GameRecord from
+// apps/web/src/lib/coach/types.ts. The wallet param comes from the
+// fixture (/dev/coach-history); these mocks accept any wallet value
+// since the page.route() glob matches by path only.
+const FROZEN_NOW_MS = new Date("2026-05-02T12:00:00.000Z").getTime();
+
+const SEED_GAMES = [
+  {
+    gameId: "11111111-1111-4111-8111-111111111111",
+    moves: ["e4", "e5", "Nf3", "Nc6", "Bb5"],
+    result: "win" as const,
+    difficulty: "medium" as const,
+    totalMoves: 38,
+    elapsedMs: 4 * 60_000,
+    timestamp: FROZEN_NOW_MS - 2 * 60 * 60_000, // 2h ago
+  },
+  {
+    gameId: "22222222-2222-4222-8222-222222222222",
+    moves: ["d4", "d5"],
+    result: "lose" as const,
+    difficulty: "hard" as const,
+    totalMoves: 22,
+    elapsedMs: 3 * 60_000,
+    timestamp: FROZEN_NOW_MS - 24 * 60 * 60_000, // 1d ago
+  },
+  {
+    gameId: "33333333-3333-4333-8333-333333333333",
+    moves: ["e4"],
+    result: "draw" as const,
+    difficulty: "easy" as const,
+    totalMoves: 65,
+    elapsedMs: 7 * 60_000,
+    timestamp: FROZEN_NOW_MS - 3 * 24 * 60 * 60_000, // 3d ago
+  },
+];
+
+const SEED_ANALYSES = [
+  {
+    gameId: SEED_GAMES[0].gameId,
+    provider: "server" as const,
+    model: "deepseek-chat",
+    analysisVersion: "v1",
+    createdAt: FROZEN_NOW_MS - 2 * 60 * 60_000,
+    response: {
+      kind: "full" as const,
+      summary: "Solid Italian opening; lost the thread in the middlegame.",
+      mistakes: [
+        {
+          moveNumber: 14,
+          played: "Nxe5",
+          better: "Bxc6",
+          explanation: "Forfeits the bishop pair without compensation.",
+        },
+      ],
+      lessons: ["Trade pieces only when you gain structure or tempo."],
+      praise: ["Confident opening principles."],
+    },
+    game: SEED_GAMES[0],
+  },
+];
+
+test.describe("visual regression — Step 3 fixture-driven baselines", () => {
+  test.skip(({ browserName }) => browserName !== "chromium", "darwin-only baselines");
+
+  test("vr5-mint-pills-sign — pills variant, current=sign", async ({ page }) => {
+    await page.goto(
+      "/dev/tx-progress?variant=pills&flow=mint-victory&steps=sign,send,wait&current=sign",
+      { waitUntil: "load", timeout: 45_000 },
+    );
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot("vr5-mint-pills-sign.png", FIXTURE_OPTS);
+  });
+
+  test("vr5-mint-pills-send — pills variant, current=send", async ({ page }) => {
+    await page.goto(
+      "/dev/tx-progress?variant=pills&flow=mint-victory&steps=sign,send,wait&current=send",
+      { waitUntil: "load", timeout: 45_000 },
+    );
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot("vr5-mint-pills-send.png", FIXTURE_OPTS);
+  });
+
+  test("vr5-mint-pills-wait — pills variant, current=wait", async ({ page }) => {
+    await page.goto(
+      "/dev/tx-progress?variant=pills&flow=mint-victory&steps=sign,send,wait&current=wait",
+      { waitUntil: "load", timeout: 45_000 },
+    );
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot("vr5-mint-pills-wait.png", FIXTURE_OPTS);
+  });
+
+  test("vr5-mint-pills-done — pills variant, current=done (pre-unmount)", async ({
+    page,
+  }) => {
+    // The primitive holds the "done" terminal for 1500ms before
+    // self-unmounting. Settling at 300ms captures the held state.
+    await page.goto(
+      "/dev/tx-progress?variant=pills&flow=mint-victory&steps=sign,send,wait&current=done",
+      { waitUntil: "load", timeout: 45_000 },
+    );
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 300);
+    await expect(page).toHaveScreenshot("vr5-mint-pills-done.png", FIXTURE_OPTS);
+  });
+
+  test("vr7-persist-overlay-persisting — saving-match toast", async ({ page }) => {
+    await page.goto("/dev/persist-overlay?state=persisting", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot(
+      "vr7-persist-overlay-persisting.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr7-persist-overlay-failed — warning row with Retry/Dismiss", async ({
+    page,
+  }) => {
+    await page.goto("/dev/persist-overlay?state=failed", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot(
+      "vr7-persist-overlay-failed.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr8-coach-history-mixed — 1 analyzed + 2 unanalyzed entries", async ({
+    page,
+  }) => {
+    // Freeze Date.now() so relative timestamps ("2h ago" / "1d ago" / "3d ago")
+    // stay deterministic regardless of run date.
+    await page.clock.install({ time: new Date(FROZEN_NOW_MS) });
+
+    await page.route("**/api/coach/history**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(SEED_ANALYSES),
+      });
+    });
+    await page.route("**/api/games**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(SEED_GAMES),
+      });
+    });
+
+    await page.goto("/dev/coach-history?credits=3", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    // Allow the parallel fetch + state update + telemetry latch effect
+    // to settle. The component flips loading false on Promise.all resolve.
+    await settle(page, 600);
+    await expect(page).toHaveScreenshot(
+      "vr8-coach-history-mixed.png",
+      FIXTURE_OPTS,
+    );
+  });
+});
