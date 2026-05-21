@@ -36,6 +36,7 @@ import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
 import { generateQuickReview } from "@/lib/coach/fallback-engine";
 import { shouldShowPaywall } from "@/lib/coach/paywall-gate";
+import { requestCoachAnalyze } from "@/lib/coach/request-coach-analyze";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { ProSheet } from "@/components/pro/pro-sheet";
@@ -1215,38 +1216,46 @@ function ArenaPageInner() {
       if (!address) return;
       analyzeSourceRef.current = "history";
       setCoachPhase("loading");
-      try {
-        const res = await fetch("/api/coach/analyze", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ gameId, walletAddress: address }),
-        });
-        const data = res.ok ? await res.json() : {};
-        if (data?.idempotent === true) {
+      const outcome = await requestCoachAnalyze(gameId, address);
+
+      // Preserve existing request/idempotent telemetry: any server response counts
+      // as an attempt — only the network-error branch (no round-trip) skips it.
+      const isNetworkError = outcome.kind === "error" && outcome.reason === "network_error";
+      if (!isNetworkError) {
+        const idempotent =
+          (outcome.kind === "ready" || outcome.kind === "queued") && outcome.idempotent;
+        if (idempotent) {
           track("coach_analyze_idempotent_hit", { source: "history" });
         } else {
           track("coach_analyze_request", { source: "history", game_id: gameId });
         }
-        if (data.status === "ready") {
-          setCoachResponse(data.response);
-          setCoachProActive(data.proActive === true);
-          setCoachHistoryMeta(data.historyMeta);
-          setCoachPhase("result");
-        } else if (data.jobId) {
-          setCoachJobId(data.jobId);
-          setCoachPhase("loading");
-        } else {
-          // Error or paywall — surface paywall when payment is the blocker,
-          // otherwise return the user to the history view.
-          if (res.status === 402) {
-            setCoachPhase("paywall");
-          } else {
-            setCoachPhase("history");
-          }
-        }
-      } catch {
-        setCoachPhase("history");
       }
+
+      if (outcome.kind === "ready") {
+        setCoachResponse(outcome.response);
+        setCoachProActive(outcome.proActive);
+        setCoachHistoryMeta(outcome.historyMeta);
+        setCoachPhase("result");
+        return;
+      }
+      if (outcome.kind === "queued") {
+        setCoachJobId(outcome.jobId);
+        setCoachPhase("loading");
+        return;
+      }
+      if (outcome.kind === "paywall") {
+        setCoachPhase("paywall");
+        return;
+      }
+      // outcome.kind === "error" — surface failure for triage. UX behavior
+      // unchanged (return to history); telemetry now distinguishes the
+      // failure reason instead of silently swallowing it (Cluster E defer).
+      track("coach_analyze_failed", {
+        source: "history",
+        reason: outcome.reason,
+        status: outcome.status ?? null,
+      });
+      setCoachPhase("history");
     },
     [address],
   );
