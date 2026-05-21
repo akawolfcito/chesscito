@@ -1,7 +1,7 @@
 <div align="center">
   <img src="apps/web/public/art/favicon-wolf.png" alt="Chesscito" width="180" />
 
-  <h3>Pre-chess puzzles on Celo — playable inside MiniPay</h3>
+  <h3>Pre-chess puzzles, full chess vs AI, and AI Coach — on Celo, inside MiniPay</h3>
 
   <p>
     <a href="https://celo.org"><img src="https://img.shields.io/badge/Celo-Mainnet-FCFF52?style=flat-square&labelColor=1A1A2E" alt="Celo Mainnet" /></a>
@@ -21,6 +21,8 @@ Chesscito is an educational MiniApp distributed via **MiniPay on Celo**. Players
 - **Learn** how chess pieces move through interactive puzzles
 - **Earn** on-chain badges and leaderboard scores on Celo Mainnet
 - **Play** directly inside MiniPay — no wallet setup required
+- **Battle** full chess vs AI in Arena and mint your Victory as an on-chain NFT
+- **Improve** with the AI Coach analyzing your games (LLM-powered)
 
 ## Gameplay
 
@@ -39,13 +41,26 @@ Stars are awarded based on move efficiency:
 
 Earn ≥ 10/15 stars per piece to unlock your on-chain badge.
 
+### Arena — Full Chess vs AI
+
+Beat the AI in a complete chess game and mint your Victory as an on-chain NFT.
+
+- Three difficulty levels: **Easy**, **Medium**, **Hard**
+- Powered by `js-chess-engine` (pure JS, runs natively in the MiniPay WebView)
+- Victory NFT mint price scales with difficulty (Easy $0.005 / Medium $0.01 / Hard $0.02)
+
+### Chesscito Coach
+
+Post-game analysis powered by an LLM that identifies tactical and positional patterns in your play so you know what to train next.
+
 ## On-chain Contracts (Celo Mainnet)
 
 | Contract | Address |
 |----------|---------|
 | Badges (ERC-1155) | [`0xf92759E5...`](https://celoscan.io/address/0xf92759E5525763554515DD25E7650f72204a6739) |
 | Scoreboard | [`0x1681aAA1...`](https://celoscan.io/address/0x1681aAA176d5f46e45789A8b18C8E990f663959a) |
-| Shop | [`0xc66773A9...`](https://celoscan.io/address/0xc66773A9e897641951DAACa8Bae90dA15d90588B) |
+| Shop (proxy) | [`0x24846C77...`](https://celoscan.io/address/0x24846C772af7233ADfD98b9A96273120f3a1f74b) |
+| Victory NFT (proxy) | [`0x0eE22F83...`](https://celoscan.io/address/0x0eE22F830a99e7a67079018670711C0F94Abeeb0) |
 
 ## Tech Stack
 
@@ -57,6 +72,9 @@ Earn ≥ 10/15 stars per piece to unlock your on-chain badge.
 | Wallet | MiniPay via wagmi + viem |
 | Monorepo | Turborepo + pnpm |
 | Contracts | Solidity + Hardhat + OpenZeppelin v5 |
+| AI Engine | `js-chess-engine` (pure JS, no WASM) |
+| Cache layer | Supabase (read layer + cron sync) |
+| AI Coach | OpenAI-compatible LLM provider |
 
 ## Project Structure
 
@@ -64,7 +82,8 @@ Earn ≥ 10/15 stars per piece to unlock your on-chain badge.
 chesscito/
 ├── apps/
 │   ├── web/          # Next.js 14 MiniApp frontend
-│   └── contracts/    # Hardhat contracts and deploy scripts
+│   ├── contracts/    # Hardhat contracts and deploy scripts
+│   └── video/        # Remotion promo video
 └── docs/             # Planning and submission assets
 ```
 
@@ -85,7 +104,7 @@ pnpm build                        # build all workspaces
 pnpm lint                         # lint all workspaces
 pnpm type-check                   # type-check all workspaces
 pnpm contracts:compile            # compile contracts
-pnpm contracts:deploy:alfajores   # deploy to Alfajores testnet
+pnpm contracts:deploy:celo-sepolia # deploy to Celo Sepolia testnet
 pnpm contracts:deploy:celo        # deploy to Celo Mainnet
 ```
 
@@ -103,7 +122,7 @@ pnpm contracts:deploy:celo        # deploy to Celo Mainnet
 
 | | |
 |-|-----|
-| Live demo | [chesscito.vercel.app](https://chesscito.vercel.app/) |
+| Live demo | [chesscito.com](https://chesscito.com/) |
 | Demo video | [youtube.com/watch?v=h-DGIxbEoms](https://www.youtube.com/watch?v=h-DGIxbEoms) |
 | Presentation deck | [Google Slides](https://docs.google.com/presentation/d/e/2PACX-1vQpOSWoGHS1hKB5H9uHAHmWVVKfuOUADdVL0NV2jHzr3ZeQxelNS8tNjNKlxHRdm0ae5VYBWSpI3gLF/pub?start=false&loop=false&delayms=3000) |
 | Karma GAP project | [karmahq.xyz/project/chesscito](https://www.karmahq.xyz/project/chesscito) |
