@@ -24,8 +24,9 @@ import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
-import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData } from "@/components/arena/arena-end-state";
-import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
+import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData, type PersistState } from "@/components/arena/arena-end-state";
+import { ARENA_COPY, COACH_COPY, COACH_ENTRY_COPY } from "@/lib/content/editorial";
+import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { GemButton } from "@/components/scene-rooted/gem";
 import { hasAnyPieceProgress } from "@/lib/game/has-progress";
@@ -275,6 +276,21 @@ function ArenaPageInner() {
   const [showEndOverlay, setShowEndOverlay] = useState(false);
   const endOverlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Cluster E — unconditional GameRecord persistence (§0.1).
+  // Foreground-await /api/games POST on every terminal transition,
+  // independent of Coach intent. CTA gating + retry toast live in
+  // <ArenaEndState> via the persistState prop.
+  const [persistState, setPersistState] = useState<PersistState>("idle");
+  const [persistedGameId, setPersistedGameId] = useState<string | null>(null);
+  const persistAttemptedRef = useRef<string | null>(null);
+  const pendingGameIdRef = useRef<string | null>(null);
+  const persistTelemetryRef = useRef<Record<string, unknown>>({});
+  const gameRecordPersisted = persistState === "persisted" && persistedGameId !== null;
+  // Source dim for coach_analyze_request (§2.4.10). Set just before
+  // each call site fires; defaults to "immediate" for the end-state CTA.
+  type AnalyzeSource = "immediate" | "history" | "victory-mint";
+  const analyzeSourceRef = useRef<AnalyzeSource>("immediate");
+
   // Coach state
   type CoachPhase = "idle" | "welcome" | "loading" | "result" | "fallback" | "paywall" | "history";
   const [coachPhase, setCoachPhase] = useState<CoachPhase>("idle");
@@ -463,31 +479,61 @@ function ArenaPageInner() {
         return;
       }
 
-      // Save game record then request analysis
-      const gameRecord: GameRecord = {
-        gameId: crypto.randomUUID(),
-        moves: game.moveHistory,
-        result: gameResult,
-        difficulty: game.difficulty,
-        totalMoves: game.moveHistory.length,
-        elapsedMs: game.elapsedMs,
-        timestamp: Date.now(),
-      };
+      // Cluster E §0.1 — persistence is the sole writer. The persistence
+      // effect MUST have populated `persistedGameId` before this code
+      // path runs; CTA gating in <ArenaEndState> guarantees it. If
+      // we somehow arrive without an id, surface a soft error and bail
+      // rather than racing in a second POST with a fresh UUID (which
+      // would create a duplicate /api/games row).
+      const analyzeGameId = persistedGameId;
+      if (!analyzeGameId) {
+        setCoachServerError("not_persisted");
+        const quick = generateQuickReview({
+          result: gameResult,
+          difficulty: game.difficulty,
+          totalMoves: game.moveHistory.length,
+          elapsedMs: game.elapsedMs,
+        });
+        setCoachFallbackResponse(quick);
+        setCoachPhase("fallback");
+        return;
+      }
 
-      await fetch("/api/games", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ walletAddress: address, game: gameRecord }),
-        signal,
-      });
+      // Offline guard — spec I/O Matrix "Offline analyze attempt".
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        setCoachServerError(COACH_ENTRY_COPY.offlineToAnalyze);
+        const quick = generateQuickReview({
+          result: gameResult,
+          difficulty: game.difficulty,
+          totalMoves: game.moveHistory.length,
+          elapsedMs: game.elapsedMs,
+        });
+        setCoachFallbackResponse(quick);
+        setCoachPhase("fallback");
+        return;
+      }
 
+      const analyzeSource = analyzeSourceRef.current;
       const analyzeRes = await fetch("/api/coach/analyze", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ gameId: gameRecord.gameId, walletAddress: address }),
+        body: JSON.stringify({ gameId: analyzeGameId, walletAddress: address }),
         signal,
       });
-      const analyzeData = await analyzeRes.json();
+      const analyzeData = analyzeRes.ok ? await analyzeRes.json() : {};
+      // Spec §2.4.7: idempotent re-tap fires the hit event INSTEAD of
+      // `coach_analyze_request`. Branching keeps the "no credit consumed"
+      // signal honest in the analytics stream.
+      if (analyzeData?.idempotent === true) {
+        track("coach_analyze_idempotent_hit", { source: analyzeSource });
+      } else {
+        track("coach_analyze_request", {
+          source: analyzeSource,
+          difficulty: game.difficulty,
+          moves: game.moveHistory.length,
+          result: gameResult,
+        });
+      }
 
       if (analyzeData.status === "ready") {
         setCoachResponse(analyzeData.response);
@@ -533,11 +579,12 @@ function ArenaPageInner() {
       setCoachFallbackResponse(quick);
       setCoachPhase("fallback");
     }
-  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, address, proActiveCached]);
+  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, address, persistedGameId, proActiveCached]);
 
-  const handleAskCoach = useCallback(() => {
+  const handleAskCoach = useCallback((source: AnalyzeSource = "immediate") => {
     if (game.moveHistory.length === 0) return;
     const gameResult = mapArenaResult(game.status, isPlayerWin);
+    analyzeSourceRef.current = source;
 
     // No wallet → free quick review
     if (!isConnected || !address) {
@@ -1038,6 +1085,172 @@ function ArenaPageInner() {
     setIsPreparing(true);
   }, [game]);
 
+  // Cluster E — runPersist owns the foreground await against /api/games.
+  // The toast (rendered inside <ArenaEndState>) masks the wait so the
+  // delay reads as an intentional "Saving match…" step instead of a hang.
+  // AbortController guards against unmount / status-reset races so a
+  // stale resolve cannot overwrite the state of a fresh session.
+  const persistAbortRef = useRef<AbortController | null>(null);
+  const runPersist = useCallback(
+    async (gameId: string) => {
+      if (!address) return;
+      const gameResult = mapArenaResult(game.status, isPlayerWin);
+      const telemetryProps = {
+        game_id: gameId,
+        result: gameResult,
+        difficulty: game.difficulty,
+        moves: game.moveCount,
+        elapsed_ms: game.elapsedMs,
+      };
+      persistTelemetryRef.current = telemetryProps;
+      persistAbortRef.current?.abort();
+      const controller = new AbortController();
+      persistAbortRef.current = controller;
+      setPersistState("persisting");
+      track("game_persist_attempt", telemetryProps);
+      try {
+        const res = await fetch("/api/games", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            walletAddress: address,
+            game: {
+              gameId,
+              moves: game.moveHistory,
+              result: gameResult,
+              difficulty: game.difficulty,
+              totalMoves: game.moveHistory.length,
+              elapsedMs: game.elapsedMs,
+              timestamp: Date.now(),
+            } satisfies GameRecord,
+          }),
+        });
+        if (controller.signal.aborted) return;
+        if (!res.ok) throw new Error(`persist_status_${res.status}`);
+        setPersistedGameId(gameId);
+        setPersistState("persisted");
+        track("game_persist_outcome", { ...telemetryProps, result: "success" });
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setPersistState("failed");
+        track("game_persist_outcome", {
+          ...telemetryProps,
+          result: "failed",
+          error: err instanceof Error ? err.message : "unknown",
+        });
+      }
+    },
+    [
+      address,
+      game.difficulty,
+      game.elapsedMs,
+      game.moveCount,
+      game.moveHistory,
+      game.status,
+      isPlayerWin,
+    ],
+  );
+
+  // Unconditional persistence — fires once per terminal transition,
+  // independent of Coach intent. Spec I/O Matrix line 64: 0-move games
+  // STILL post (only the CTA tooltip changes). Non-wallet players skip
+  // the persist; their CTA pathway is the existing guest free-quick-
+  // review branch in handleAskCoach.
+  //
+  // The wasTerminalRef gate stops the reset branch from churning every
+  // non-terminal render — it only fires when we leave a terminal state
+  // we had previously entered.
+  const wasTerminalRef = useRef(false);
+  useEffect(() => {
+    const terminal = ["checkmate", "stalemate", "draw", "resigned"];
+    const isTerminal = terminal.includes(game.status);
+    if (!isTerminal) {
+      if (wasTerminalRef.current) {
+        persistAbortRef.current?.abort();
+        persistAttemptedRef.current = null;
+        pendingGameIdRef.current = null;
+        setPersistState("idle");
+        setPersistedGameId(null);
+        wasTerminalRef.current = false;
+      }
+      return;
+    }
+    wasTerminalRef.current = true;
+    const key = `${game.status}:${game.moveCount}:${game.elapsedMs}`;
+    if (persistAttemptedRef.current === key) return;
+    persistAttemptedRef.current = key;
+    if (!address) return;
+    const gameId = crypto.randomUUID();
+    pendingGameIdRef.current = gameId;
+    void runPersist(gameId);
+  }, [
+    address,
+    game.status,
+    game.moveCount,
+    game.elapsedMs,
+    runPersist,
+  ]);
+
+  const handleRetryPersist = useCallback(() => {
+    const gameId = pendingGameIdRef.current;
+    if (!gameId) return;
+    void runPersist(gameId);
+  }, [runPersist]);
+
+  const handleDismissPersistError = useCallback(() => {
+    setPersistState("dismissed");
+    track("game_persist_outcome", {
+      ...persistTelemetryRef.current,
+      result: "user-dismissed",
+    });
+  }, []);
+
+  // Cluster E — history Analyze chip. Source dim is "history"; the
+  // gameId is already persisted (it came from /api/games), so we skip
+  // the inline POST and go straight to /api/coach/analyze. Idempotent
+  // hits short-circuit on the server (existingAnalysis path).
+  const handleAnalyzeFromHistory = useCallback(
+    async (gameId: string) => {
+      if (!address) return;
+      analyzeSourceRef.current = "history";
+      setCoachPhase("loading");
+      try {
+        const res = await fetch("/api/coach/analyze", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ gameId, walletAddress: address }),
+        });
+        const data = res.ok ? await res.json() : {};
+        if (data?.idempotent === true) {
+          track("coach_analyze_idempotent_hit", { source: "history" });
+        } else {
+          track("coach_analyze_request", { source: "history", game_id: gameId });
+        }
+        if (data.status === "ready") {
+          setCoachResponse(data.response);
+          setCoachProActive(data.proActive === true);
+          setCoachHistoryMeta(data.historyMeta);
+          setCoachPhase("result");
+        } else if (data.jobId) {
+          setCoachJobId(data.jobId);
+          setCoachPhase("loading");
+        } else {
+          // Error or paywall — surface paywall when payment is the blocker,
+          // otherwise return the user to the history view.
+          if (res.status === 402) {
+            setCoachPhase("paywall");
+          } else {
+            setCoachPhase("history");
+          }
+        }
+      } catch {
+        setCoachPhase("history");
+      }
+    },
+    [address],
+  );
+
   // arena_game_end — fires once per transition into a terminal state.
   const endTrackedRef = useRef<string | null>(null);
   useEffect(() => {
@@ -1413,6 +1626,7 @@ function ArenaPageInner() {
                   setCoachPhase("result");
                 }
               }}
+              onAnalyzeUnanalyzed={(gameId) => void handleAnalyzeFromHistory(gameId)}
             />
           </CandyGlassShell>
         </div>
@@ -1547,6 +1761,18 @@ function ArenaPageInner() {
             fen={game.fen}
             playerColor={game.playerColor}
             coachPreview={coachPhase === "idle" ? coachPreview : null}
+            onAskCoach={ENABLE_COACH ? () => handleAskCoach("immediate") : undefined}
+            onAskCoachFromVictory={
+              ENABLE_COACH ? () => handleAskCoach("victory-mint") : undefined
+            }
+            persistState={persistState}
+            // Guests (no wallet) skip persistence entirely; their Coach
+            // CTA pathway is the free quick-review branch in
+            // `handleAskCoach`. Treat them as "ready" so the CTA mounts
+            // tappable rather than permanently aria-busy.
+            gameRecordPersisted={isConnected ? gameRecordPersisted : true}
+            onRetryPersist={handleRetryPersist}
+            onDismissPersistError={handleDismissPersistError}
           />
         </div>
       )}
