@@ -4,6 +4,7 @@ import { __setLoggerSink, __resetLoggerSink, type LogLevel } from "@/lib/server/
 const redisMock = vi.hoisted(() => ({
   set: vi.fn(),
   lpush: vi.fn(),
+  lpos: vi.fn(),
   ltrim: vi.fn(),
   lrange: vi.fn(),
   llen: vi.fn(),
@@ -64,6 +65,7 @@ describe("POST /api/games", () => {
     mockedRate.mockReset();
     redisMock.set.mockReset();
     redisMock.lpush.mockReset();
+    redisMock.lpos.mockReset();
     redisMock.ltrim.mockReset();
     enforceGameCapMock.mockReset();
 
@@ -71,6 +73,7 @@ describe("POST /api/games", () => {
     mockedRate.mockResolvedValue(undefined);
     redisMock.set.mockResolvedValue("OK");
     redisMock.lpush.mockResolvedValue(1);
+    redisMock.lpos.mockResolvedValue(null); // default: gameId not in list
     redisMock.ltrim.mockResolvedValue("OK");
     enforceGameCapMock.mockResolvedValue({ evicted: [], softOverflow: false });
   });
@@ -136,6 +139,45 @@ describe("POST /api/games", () => {
     mockedOrigin.mockImplementation(() => { throw new Error("forbidden"); });
     const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
     expect(res.status).toEqual(500);
+  });
+
+  describe("idempotent lpush dedupe (Cluster E defer — Edge hunter #5)", () => {
+    it("skips lpush when gameId already exists in the list (retried POST)", async () => {
+      redisMock.lpos.mockResolvedValue(0); // gameId already at head
+
+      const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+
+      expect(res.status).toEqual(200);
+      expect(redisMock.lpos).toHaveBeenCalledWith(
+        `coach:games:${VALID_WALLET}`,
+        VALID_GAME_ID,
+      );
+      expect(redisMock.lpush).not.toHaveBeenCalled();
+      // record upsert still happens (recordedAt refreshes)
+      expect(redisMock.set).toHaveBeenCalledTimes(1);
+    });
+
+    it("calls lpush when gameId is NOT in the list yet (first POST)", async () => {
+      redisMock.lpos.mockResolvedValue(null);
+
+      const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+
+      expect(res.status).toEqual(200);
+      expect(redisMock.lpush).toHaveBeenCalledTimes(1);
+      expect(redisMock.lpush).toHaveBeenCalledWith(
+        `coach:games:${VALID_WALLET}`,
+        VALID_GAME_ID,
+      );
+    });
+
+    it("treats any non-null lpos index as duplicate (mid-list match)", async () => {
+      redisMock.lpos.mockResolvedValue(42); // gameId already deep in list
+
+      const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+
+      expect(res.status).toEqual(200);
+      expect(redisMock.lpush).not.toHaveBeenCalled();
+    });
   });
 
   describe("error logging (Cluster E defer — Blind hunter #12)", () => {

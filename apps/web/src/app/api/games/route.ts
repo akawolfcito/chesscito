@@ -47,7 +47,13 @@ export async function POST(req: Request) {
     // analyzed entries during FIFO eviction so a player's coached games
     // are never silently dropped to make room for a fresh match.
     await redis.set(REDIS_KEYS.game(wallet, game.gameId), record, { ex: 90 * 24 * 60 * 60 });
-    await redis.lpush(REDIS_KEYS.gameList(wallet), game.gameId);
+    // Idempotency guard: a retried POST with the same gameId must not duplicate the
+    // list entry. Without this, eviction `lrem(list, 1, gameId)` would remove the
+    // newer occurrence head-first and leave the stale one behind.
+    const existingIndex = await redis.lpos<number | null>(REDIS_KEYS.gameList(wallet), game.gameId);
+    if (existingIndex === null) {
+      await redis.lpush(REDIS_KEYS.gameList(wallet), game.gameId);
+    }
     await enforceGameCap(redis, wallet, {
       onOverflow: (info) => {
         log.warn("game_persist_cap_overflow", {
