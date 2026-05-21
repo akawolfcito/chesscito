@@ -49,7 +49,10 @@ function walkAllFiles(dir: string, exts: string[]): string[] {
   return results;
 }
 
-/** Extract all /art/... asset paths referenced in source files. */
+/** Extract all /art/... asset paths referenced in source files.
+ *  Skips template-literal interpolations (`${...}`) — those paths
+ *  cannot be statically resolved and would yield false-negative
+ *  existsSync() failures (e.g. `/art/foo/${piece}.png`). */
 function extractAssetPaths(srcDir: string): Set<string> {
   const files = walkFiles(srcDir, [".ts", ".tsx", ".css"]);
   const paths = new Set<string>();
@@ -59,7 +62,9 @@ function extractAssetPaths(srcDir: string): Set<string> {
     const content = readFileSync(file, "utf-8");
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(content)) !== null) {
-      paths.add(match[1]);
+      const candidate = match[1];
+      if (candidate.includes("${")) continue;
+      paths.add(candidate);
     }
   }
 
