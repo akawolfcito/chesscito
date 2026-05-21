@@ -10,11 +10,10 @@ import { isProActive } from "@/lib/pro/is-active";
 import { aggregateHistory } from "@/lib/coach/history-digest";
 import { backfillRedisToSupabase } from "@/lib/coach/backfill";
 import { persistAnalysis } from "@/lib/coach/persistence";
+import { UUID_RE } from "@/lib/coach/game-persistence";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type { GameRecord, CoachAnalysisRecord, PlayerSummary, HistoryDigest } from "@/lib/coach/types";
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const redis = Redis.fromEnv();
 

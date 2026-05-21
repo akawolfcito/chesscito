@@ -17,6 +17,21 @@ import { REDIS_KEYS } from "./redis-keys";
 export const GAME_LIST_CAP = 200;
 
 /**
+ * Canonical RFC4122 v4 UUID shape for `gameId`. Single source of truth
+ * for every persistence boundary that touches the per-wallet game list:
+ *
+ * - `/api/games` POST input validation,
+ * - `/api/games` GET response filter (defense-in-depth against legacy
+ *   or corrupt entries that bypassed input validation),
+ * - `/api/coach/analyze` input validation,
+ * - `coach-history.tsx` client-side parse guard.
+ *
+ * Case-insensitive — Redis stores whatever case the client sent. Cluster
+ * E defer #4 (edge-case hunter #11): defense-in-depth UUID validation.
+ */
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
  * Atomic LPOS-then-LPUSH for the per-wallet game list. Closes the
  * TOCTOU race where two concurrent POSTs with the same gameId both
  * observe `LPOS = nil` and both `LPUSH`, producing duplicate head

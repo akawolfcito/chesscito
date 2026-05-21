@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
-import { enforceGameCap, GAME_LIST_LPUSH_LUA } from "@/lib/coach/game-persistence";
+import { enforceGameCap, GAME_LIST_LPUSH_LUA, UUID_RE } from "@/lib/coach/game-persistence";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type { GameRecord } from "@/lib/coach/types";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_MOVES = 500;
 
 const redis = Redis.fromEnv();

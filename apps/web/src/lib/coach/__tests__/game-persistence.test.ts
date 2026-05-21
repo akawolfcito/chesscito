@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { enforceGameCap, GAME_LIST_CAP } from "../game-persistence.js";
+import { enforceGameCap, GAME_LIST_CAP, UUID_RE } from "../game-persistence.js";
 
 type RedisLike = {
   llen: ReturnType<typeof vi.fn>;
@@ -22,6 +22,25 @@ function makeRedis(): RedisLike {
 describe("enforceGameCap — cap policy", () => {
   it("exports GAME_LIST_CAP = 200 (raised from legacy 100)", () => {
     expect(GAME_LIST_CAP).toBe(200);
+  });
+});
+
+describe("UUID_RE — canonical gameId shape guard", () => {
+  it("matches lowercase RFC4122 v4 UUID", () => {
+    expect(UUID_RE.test("550e8400-e29b-41d4-a716-446655440000")).toBe(true);
+  });
+
+  it("matches uppercase RFC4122 v4 UUID (case-insensitive)", () => {
+    expect(UUID_RE.test("550E8400-E29B-41D4-A716-446655440000")).toBe(true);
+  });
+
+  it("rejects non-UUID strings (corrupt entries, legacy ids, injection)", () => {
+    expect(UUID_RE.test("")).toBe(false);
+    expect(UUID_RE.test("not-a-uuid")).toBe(false);
+    expect(UUID_RE.test("550e8400-e29b-41d4-a716-44665544000")).toBe(false);
+    expect(UUID_RE.test("550e8400-e29b-41d4-a716-4466554400000")).toBe(false);
+    expect(UUID_RE.test("550e8400e29b41d4a716446655440000")).toBe(false);
+    expect(UUID_RE.test("__proto__")).toBe(false);
   });
 });
 
