@@ -17,6 +17,14 @@ vi.mock("@/lib/coach/use-coach-history-count", () => ({
 
 const VALID_WALLET = "0x1234567890abcdef1234567890abcdef12345678";
 
+// Post-refactor (2026-05-1X): the destructive surface is collapsed by
+// default behind a "Manage history" toggle so it does not visually
+// compete with the main Training Journal content. Tests that assert
+// against the delete UI must expand the toggle first.
+function expandManageToggle() {
+  fireEvent.click(screen.getByRole("button", { name: /Manage history/i }));
+}
+
 describe("<CoachHistoryDeletePanel>", () => {
   beforeEach(() => {
     useAccountMock.mockReset();
@@ -33,6 +41,7 @@ describe("<CoachHistoryDeletePanel>", () => {
 
   it("renders the panel title from COACH_COPY", () => {
     render(<CoachHistoryDeletePanel />);
+    expandManageToggle();
     expect(screen.getByText(/Delete all your Coach history/i)).toBeInTheDocument();
   });
 
@@ -43,16 +52,19 @@ describe("<CoachHistoryDeletePanel>", () => {
       refetch: vi.fn(),
     });
     render(<CoachHistoryDeletePanel />);
+    expandManageToggle();
     expect(screen.getByRole("button", { name: /Delete history/i })).toBeDisabled();
   });
 
   it("enables the delete button when rowCount>0", () => {
     render(<CoachHistoryDeletePanel />);
+    expandManageToggle();
     expect(screen.getByRole("button", { name: /Delete history/i })).toBeEnabled();
   });
 
   it("opens the confirm sheet when delete button clicked", () => {
     render(<CoachHistoryDeletePanel />);
+    expandManageToggle();
     fireEvent.click(screen.getByRole("button", { name: /Delete history/i }));
     expect(screen.getByText(/Delete all history\?/i)).toBeInTheDocument();
   });
@@ -71,6 +83,7 @@ describe("<CoachHistoryDeletePanel>", () => {
     useCoachHistoryCountMock.mockReturnValue({ rowCount: 5, isLoading: false, refetch });
 
     render(<CoachHistoryDeletePanel />);
+    expandManageToggle();
     fireEvent.click(screen.getByRole("button", { name: /Delete history/i }));
     fireEvent.click(screen.getByRole("button", { name: /Yes, delete everything/i }));
 
@@ -93,6 +106,7 @@ describe("<CoachHistoryDeletePanel>", () => {
     );
 
     render(<CoachHistoryDeletePanel />);
+    expandManageToggle();
     fireEvent.click(screen.getByRole("button", { name: /Delete history/i }));
     fireEvent.click(screen.getByRole("button", { name: /Yes, delete everything/i }));
 
