@@ -11,6 +11,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const MAX_MOVES = 500;
 
 const redis = Redis.fromEnv();
+const log = createLogger({ route: "/api/games" });
 
 export async function POST(req: Request) {
   try {
@@ -45,7 +46,6 @@ export async function POST(req: Request) {
     // `enforceGameCap`, which raises the per-wallet cap to 200 and skips
     // analyzed entries during FIFO eviction so a player's coached games
     // are never silently dropped to make room for a fresh match.
-    const log = createLogger({ route: "/api/games" });
     await redis.set(REDIS_KEYS.game(wallet, game.gameId), record, { ex: 90 * 24 * 60 * 60 });
     await redis.lpush(REDIS_KEYS.gameList(wallet), game.gameId);
     await enforceGameCap(redis, wallet, {
@@ -59,7 +59,10 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    log.error("game_persist_error", {
+      error: err instanceof Error ? err.message : "unknown",
+    });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

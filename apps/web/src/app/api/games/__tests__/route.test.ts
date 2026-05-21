@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { __setLoggerSink, __resetLoggerSink, type LogLevel } from "@/lib/server/logger";
 
 const redisMock = vi.hoisted(() => ({
   set: vi.fn(),
@@ -135,6 +136,52 @@ describe("POST /api/games", () => {
     mockedOrigin.mockImplementation(() => { throw new Error("forbidden"); });
     const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
     expect(res.status).toEqual(500);
+  });
+
+  describe("error logging (Cluster E defer — Blind hunter #12)", () => {
+    const captured: Array<{ level: LogLevel; line: string }> = [];
+
+    beforeEach(() => {
+      captured.length = 0;
+      __setLoggerSink((line, level) => { captured.push({ level, line }); });
+    });
+
+    afterEach(() => {
+      __resetLoggerSink();
+    });
+
+    it("emits structured error log when redis.set throws (replaces silent catch {})", async () => {
+      redisMock.set.mockRejectedValue(new Error("redis connection refused"));
+
+      const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+      expect(res.status).toEqual(500);
+
+      const errLine = captured.find(c => c.level === "error" && c.line.includes("game_persist_error"));
+      expect(errLine, "expected an error log line with msg=game_persist_error").toBeDefined();
+      const parsed = JSON.parse(errLine!.line);
+      expect(parsed.level).toBe("error");
+      expect(parsed.route).toBe("/api/games");
+      expect(parsed.error).toContain("redis connection refused");
+    });
+
+    it("emits error log when enforceGameCap throws", async () => {
+      enforceGameCapMock.mockRejectedValue(new Error("cap enforcement failed"));
+
+      const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+      expect(res.status).toEqual(500);
+
+      const errLine = captured.find(c => c.level === "error" && c.line.includes("game_persist_error"));
+      expect(errLine).toBeDefined();
+      const parsed = JSON.parse(errLine!.line);
+      expect(parsed.error).toContain("cap enforcement failed");
+    });
+
+    it("does NOT emit error log on happy path", async () => {
+      const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+      expect(res.status).toEqual(200);
+      const errLines = captured.filter(c => c.level === "error");
+      expect(errLines).toHaveLength(0);
+    });
   });
 });
 
