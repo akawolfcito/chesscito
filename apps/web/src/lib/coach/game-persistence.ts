@@ -56,6 +56,34 @@ export const GAME_LIST_LPUSH_LUA = `
   return 1
 `;
 
+/**
+ * Atomic EXISTS-then-LREM for a single candidate eviction. Closes the
+ * TOCTOU race inside the `enforceGameCap` loop where a `/api/coach/analyze`
+ * write of `coach:analysis:<wallet>:<gameId>` could land between the JS
+ * `redis.exists(...)` check and the `redis.lrem(...)` removal — causing
+ * a freshly-analyzed game record to be evicted while its analysis row
+ * survives, leaving an orphaned analysis with no replayable game.
+ *
+ * - `KEYS[1]` = game list key (`coach:games:<wallet>`).
+ * - `KEYS[2]` = analysis key (`coach:analysis:<wallet>:<gameId>`).
+ * - `ARGV[1]` = candidate `gameId`.
+ * - Returns `1` when the entry was unanalyzed and got removed, `0` when
+ *   the entry is analyzed and was protected.
+ *
+ * Note on race scope: this script only closes the inner EXISTS+LREM
+ * window (Race B in the defer notes — the only one with corruption
+ * potential). The outer LLEN→LRANGE window (Race A) is left non-atomic
+ * by design: its worst case is an over-evict-by-1 that self-corrects on
+ * the next POST. Closing it would require either a single all-up Lua
+ * script (much more complex control flow) or a per-wallet lock — both
+ * disproportionate to the symptom.
+ */
+export const EVICT_IF_UNANALYZED_LUA = `
+  if redis.call('EXISTS', KEYS[2]) == 1 then return 0 end
+  redis.call('LREM', KEYS[1], 1, ARGV[1])
+  return 1
+`;
+
 export type EnforceGameCapResult = {
   /** GameIds removed from the list, in eviction order (oldest first). */
   evicted: string[];
@@ -86,7 +114,7 @@ export type EnforceGameCapOptions = {
   onOverflow?: (info: EnforceGameCapOverflowInfo) => void;
 };
 
-type GameCapRedis = Pick<Redis, "llen" | "lrange" | "exists" | "lrem">;
+type GameCapRedis = Pick<Redis, "llen" | "lrange" | "eval">;
 
 /**
  * Enforces the per-wallet game-list cap by evicting the oldest unanalyzed
@@ -122,12 +150,17 @@ export async function enforceGameCap(
   for (let i = tail.length - 1; i >= 0 && evicted.length < overflowCount; i -= 1) {
     const gameId = tail[i];
     if (!gameId) continue;
-    const analyzed = await redis.exists(REDIS_KEYS.analysis(wallet, gameId));
-    if (analyzed) {
+    // Atomic EXISTS-then-LREM via Lua. See EVICT_IF_UNANALYZED_LUA
+    // docstring for the race this closes.
+    const result = await redis.eval(
+      EVICT_IF_UNANALYZED_LUA,
+      [listKey, REDIS_KEYS.analysis(wallet, gameId)],
+      [gameId],
+    );
+    if (result === 0) {
       analyzedInTail += 1;
       continue;
     }
-    await redis.lrem(listKey, 1, gameId);
     evicted.push(gameId);
   }
 

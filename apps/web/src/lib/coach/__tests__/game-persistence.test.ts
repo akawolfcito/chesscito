@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { enforceGameCap, GAME_LIST_CAP, UUID_RE } from "../game-persistence.js";
+import {
+  enforceGameCap,
+  GAME_LIST_CAP,
+  UUID_RE,
+  EVICT_IF_UNANALYZED_LUA,
+} from "../game-persistence.js";
 
 type RedisLike = {
   llen: ReturnType<typeof vi.fn>;
   lrange: ReturnType<typeof vi.fn>;
+  eval: ReturnType<typeof vi.fn>;
+  // kept on the mock so atomicity-guard tests can assert they're never called
   exists: ReturnType<typeof vi.fn>;
   lrem: ReturnType<typeof vi.fn>;
 };
@@ -14,6 +21,7 @@ function makeRedis(): RedisLike {
   return {
     llen: vi.fn(),
     lrange: vi.fn(),
+    eval: vi.fn(),
     exists: vi.fn(),
     lrem: vi.fn(),
   };
@@ -55,7 +63,7 @@ describe("enforceGameCap — no-op branches", () => {
     const out = await enforceGameCap(redis as never, WALLET);
     expect(out).toEqual({ evicted: [], softOverflow: false });
     expect(redis.lrange).not.toHaveBeenCalled();
-    expect(redis.lrem).not.toHaveBeenCalled();
+    expect(redis.eval).not.toHaveBeenCalled();
   });
 
   it("no-op when llen is well under the cap (150)", async () => {
@@ -73,6 +81,23 @@ describe("enforceGameCap — no-op branches", () => {
   });
 });
 
+describe("EVICT_IF_UNANALYZED_LUA — canonical script", () => {
+  it("exports a non-empty Lua string", () => {
+    expect(typeof EVICT_IF_UNANALYZED_LUA).toBe("string");
+    expect(EVICT_IF_UNANALYZED_LUA.trim().length).toBeGreaterThan(0);
+  });
+
+  it("uses EXISTS on the analysis key (KEYS[2]) and LREM on the list key (KEYS[1])", () => {
+    expect(EVICT_IF_UNANALYZED_LUA).toMatch(/EXISTS.*KEYS\[2\]/);
+    expect(EVICT_IF_UNANALYZED_LUA).toMatch(/LREM.*KEYS\[1\].*ARGV\[1\]/);
+  });
+
+  it("short-circuits with return 0 when the analysis key exists (analyzed → protected)", () => {
+    expect(EVICT_IF_UNANALYZED_LUA).toMatch(/return 0/);
+    expect(EVICT_IF_UNANALYZED_LUA).toMatch(/return 1/);
+  });
+});
+
 describe("enforceGameCap — single-overflow eviction", () => {
   let redis: RedisLike;
   beforeEach(() => {
@@ -82,26 +107,27 @@ describe("enforceGameCap — single-overflow eviction", () => {
   it("evicts exactly one entry when llen = 201 and the overflow is unanalyzed", async () => {
     redis.llen.mockResolvedValue(201);
     redis.lrange.mockResolvedValue(["oldest-uuid"]); // overflow window
-    redis.exists.mockResolvedValue(0);
-    redis.lrem.mockResolvedValue(1);
+    redis.eval.mockResolvedValue(1); // 1 = evicted
 
     const out = await enforceGameCap(redis as never, WALLET);
 
     expect(redis.lrange).toHaveBeenCalledWith(`coach:games:${WALLET}`, 200, -1);
-    expect(redis.exists).toHaveBeenCalledWith(`coach:analysis:${WALLET}:oldest-uuid`);
-    expect(redis.lrem).toHaveBeenCalledWith(`coach:games:${WALLET}`, 1, "oldest-uuid");
+    expect(redis.eval).toHaveBeenCalledWith(
+      EVICT_IF_UNANALYZED_LUA,
+      [`coach:games:${WALLET}`, `coach:analysis:${WALLET}:oldest-uuid`],
+      ["oldest-uuid"],
+    );
     expect(out).toEqual({ evicted: ["oldest-uuid"], softOverflow: false });
   });
 
   it("does NOT evict when the lone overflow entry is analyzed (soft overflow)", async () => {
     redis.llen.mockResolvedValue(201);
     redis.lrange.mockResolvedValue(["analyzed-uuid"]);
-    redis.exists.mockResolvedValue(1); // analyzed
+    redis.eval.mockResolvedValue(0); // 0 = analyzed, protected
     const onOverflow = vi.fn();
 
     const out = await enforceGameCap(redis as never, WALLET, { onOverflow });
 
-    expect(redis.lrem).not.toHaveBeenCalled();
     expect(out).toEqual({ evicted: [], softOverflow: true });
     expect(onOverflow).toHaveBeenCalledTimes(1);
     expect(onOverflow).toHaveBeenCalledWith({
@@ -130,8 +156,7 @@ describe("enforceGameCap — multi-overflow eviction (oldest-first)", () => {
       "overflow-older-1",
       "overflow-oldest", // tail of the array = oldest entry
     ]);
-    redis.exists.mockResolvedValue(0);
-    redis.lrem.mockResolvedValue(1);
+    redis.eval.mockResolvedValue(1);
 
     const out = await enforceGameCap(redis as never, WALLET);
 
@@ -143,9 +168,14 @@ describe("enforceGameCap — multi-overflow eviction (oldest-first)", () => {
       "overflow-newer-2",
       "overflow-newer-1",
     ]);
-    expect(redis.lrem).toHaveBeenCalledTimes(5);
-    // First eviction must target the oldest entry.
-    expect(redis.lrem).toHaveBeenNthCalledWith(1, `coach:games:${WALLET}`, 1, "overflow-oldest");
+    expect(redis.eval).toHaveBeenCalledTimes(5);
+    // First eval call targets the oldest entry.
+    expect(redis.eval).toHaveBeenNthCalledWith(
+      1,
+      EVICT_IF_UNANALYZED_LUA,
+      [`coach:games:${WALLET}`, `coach:analysis:${WALLET}:overflow-oldest`],
+      ["overflow-oldest"],
+    );
   });
 
   it("skips analyzed entries while still draining unanalyzed ones (mixed overflow)", async () => {
@@ -161,14 +191,14 @@ describe("enforceGameCap — multi-overflow eviction (oldest-first)", () => {
       "unanalyzed-older",
       "unanalyzed-oldest",
     ]);
-    redis.exists.mockImplementation((key: string) => {
-      // Return 1 (analyzed) for the two newer entries, 0 for the rest.
-      if (key.endsWith("analyzed-newer-1") || key.endsWith("analyzed-newer-2")) {
-        return Promise.resolve(1);
+    redis.eval.mockImplementation(async (_script: string, keys: string[]) => {
+      const analysisKey = keys[1];
+      // Return 0 (analyzed → protected) for the two newer entries, 1 (evicted) for the rest.
+      if (analysisKey.endsWith("analyzed-newer-1") || analysisKey.endsWith("analyzed-newer-2")) {
+        return 0;
       }
-      return Promise.resolve(0);
+      return 1;
     });
-    redis.lrem.mockResolvedValue(1);
     const onOverflow = vi.fn();
 
     const out = await enforceGameCap(redis as never, WALLET, { onOverflow });
@@ -179,7 +209,7 @@ describe("enforceGameCap — multi-overflow eviction (oldest-first)", () => {
       "unanalyzed-mid",
     ]);
     expect(out.softOverflow).toBe(true);
-    expect(redis.lrem).toHaveBeenCalledTimes(3);
+    expect(redis.eval).toHaveBeenCalledTimes(5);
     expect(onOverflow).toHaveBeenCalledWith({
       wallet: WALLET,
       listLength: 205,
@@ -190,7 +220,7 @@ describe("enforceGameCap — multi-overflow eviction (oldest-first)", () => {
   it("emits onOverflow exactly once when every overflow entry is analyzed", async () => {
     redis.llen.mockResolvedValue(203);
     redis.lrange.mockResolvedValue(["a1", "a2", "a3"]);
-    redis.exists.mockResolvedValue(1);
+    redis.eval.mockResolvedValue(0); // all protected
     const onOverflow = vi.fn();
 
     const out = await enforceGameCap(redis as never, WALLET, { onOverflow });
@@ -203,6 +233,16 @@ describe("enforceGameCap — multi-overflow eviction (oldest-first)", () => {
       listLength: 203,
       analyzedInTail: 3,
     });
+  });
+
+  it("never calls redis.exists or redis.lrem directly (atomicity guard — defer 'enforceGameCap race')", async () => {
+    redis.llen.mockResolvedValue(202);
+    redis.lrange.mockResolvedValue(["g1", "g2"]);
+    redis.eval.mockResolvedValue(1);
+
+    await enforceGameCap(redis as never, WALLET);
+
+    expect(redis.exists).not.toHaveBeenCalled();
     expect(redis.lrem).not.toHaveBeenCalled();
   });
 });
@@ -216,8 +256,7 @@ describe("enforceGameCap — option overrides", () => {
   it("respects a custom cap for tests / future tuning", async () => {
     redis.llen.mockResolvedValue(5);
     redis.lrange.mockResolvedValue(["tail-uuid"]);
-    redis.exists.mockResolvedValue(0);
-    redis.lrem.mockResolvedValue(1);
+    redis.eval.mockResolvedValue(1);
 
     const out = await enforceGameCap(redis as never, WALLET, { cap: 4 });
 
@@ -228,7 +267,7 @@ describe("enforceGameCap — option overrides", () => {
   it("is safe to call without onOverflow when soft overflow occurs", async () => {
     redis.llen.mockResolvedValue(201);
     redis.lrange.mockResolvedValue(["only-analyzed"]);
-    redis.exists.mockResolvedValue(1);
+    redis.eval.mockResolvedValue(0);
 
     await expect(enforceGameCap(redis as never, WALLET)).resolves.toEqual({
       evicted: [],
