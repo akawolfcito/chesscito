@@ -166,8 +166,21 @@ describe("POST /api/coach/analyze", () => {
 
     const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
     expect(res.status).toEqual(200);
-    expect(await res.json()).toEqual({ status: "ready", response: { summary: "cached" } });
+    // Cluster E §2.4.7 — short-circuit must include `idempotent: true`
+    // so the client can fire coach_analyze_idempotent_hit{source}
+    // instead of coach_analyze_request{source} and skip credit accounting.
+    expect(await res.json()).toEqual({
+      status: "ready",
+      response: { summary: "cached" },
+      idempotent: true,
+    });
     expect(openaiCreate).not.toHaveBeenCalled();
+    // Spec §2.4.7 Boundaries: re-tap on already-analyzed game MUST NOT
+    // consume credit. The early return precedes the credit-check branch
+    // entirely; this assertion locks that behavior at the test level so
+    // a future refactor cannot silently re-introduce credit decrement
+    // on the idempotent path.
+    expect(redisMock.decr).not.toHaveBeenCalled();
   });
 
   it("returns the existing jobId when a job for this game is already pending", async () => {

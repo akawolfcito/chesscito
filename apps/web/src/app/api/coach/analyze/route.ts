@@ -50,9 +50,17 @@ export async function POST(req: Request) {
     const wallet = walletAddress.toLowerCase();
 
     // --- Idempotency: existing result? ---
+    // Cluster E §2.4.7 — flag the short-circuit so the client emits
+    // `coach_analyze_idempotent_hit{source}` instead of charging a
+    // credit. Server-side behavior is unchanged: same `ready` payload,
+    // same response shape; only the `idempotent` discriminator is new.
     const existingAnalysis = await redis.get<CoachAnalysisRecord>(REDIS_KEYS.analysis(wallet, gameId));
     if (existingAnalysis) {
-      return NextResponse.json({ status: "ready", response: existingAnalysis.response });
+      return NextResponse.json({
+        status: "ready",
+        response: existingAnalysis.response,
+        idempotent: true,
+      });
     }
 
     // --- Idempotency: pending job? ---
