@@ -45,6 +45,7 @@ import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { useSaveScoreState } from "@/hooks/use-save-score-state";
 import { SavedChip } from "@/components/exercises/saved-chip";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
+import { deriveTxToastState } from "@/lib/exercises/tx-toast-state";
 import { useMiniPay } from "@/hooks/use-minipay";
 import { useSplashLoader } from "@/hooks/use-splash-loader";
 import { useAutoResetTimer } from "@/hooks/use-auto-reset-timer";
@@ -808,14 +809,17 @@ export function ExercisesScreen({
       enabled: Boolean(claimTxHash),
     },
   });
-  const { isLoading: isSubmitConfirming, isSuccess: isSubmitSuccess } =
-    useWaitForTransactionReceipt({
-      chainId,
-      hash: submitTxHash as `0x${string}` | undefined,
-      query: {
-        enabled: Boolean(submitTxHash),
-      },
-    });
+  const {
+    isLoading: isSubmitConfirming,
+    isSuccess: isSubmitSuccess,
+    isError: isSubmitError,
+  } = useWaitForTransactionReceipt({
+    chainId,
+    hash: submitTxHash as `0x${string}` | undefined,
+    query: {
+      enabled: Boolean(submitTxHash),
+    },
+  });
 
   // `canSendOnChain` keeps its old shape for the claim-badge path (which
   // still requires the badge to have been earned). For the score-save
@@ -894,9 +898,20 @@ export function ExercisesScreen({
     }
   }, [isScoreWriting, submitTxHash]);
 
-  const showTxToast = isSubmitBusy || txDoneAt !== null;
-  const txCurrent: "sign" | "wait" | "done" =
-    txDoneAt !== null ? "done" : submitTxHash ? "wait" : "sign";
+  // 4-phase precedence (failed > done > wait > sign) extracted to
+  // `lib/exercises/tx-toast-state` for unit-test coverage. The `failed`
+  // branch closes Cluster C SAVE residue defer #1 — chain revert now
+  // surfaces as a sticky failed toast instead of stranding the user on
+  // a stale "Waiting…" state until the next submit clears it.
+  const txToast = deriveTxToastState({
+    isWriting: isScoreWriting,
+    isConfirming: isSubmitConfirming,
+    isError: isSubmitError,
+    txHash: submitTxHash,
+    doneAt: txDoneAt,
+  });
+  const showTxToast = txToast.show;
+  const txCurrent = txToast.show ? txToast.current : "sign";
 
   const allExercisesAttempted = progress.stars.every(s => s > 0);
 
@@ -1123,6 +1138,11 @@ export function ExercisesScreen({
     submittingScoreRef.current = true;
 
     setLastError(null);
+    // Cluster C SAVE residue defer #1 — clear the previous tx's hash so a
+    // retry after revert shows "Signing…" immediately instead of lingering
+    // on "Failed" until the new hash lands. Safe because the receipt
+    // watcher is gated on `enabled: Boolean(submitTxHash)`.
+    setSubmitTxHash(null);
     track("score_submit_tx", { stage: "start", piece: selectedPiece });
 
     try {
