@@ -51,7 +51,7 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 ## Convenciones
 - Commits: Conventional Commits (`feat:`, `fix:`, `style:`, `refactor:`)
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
-- No hay tests automatizados por ahora
+- Tests: Vitest + RTL (unit) + Playwright (E2E + VR); 1727 passing baseline (2026-05-21)
 - Idioma de UI: English (ver `lib/content/editorial.ts`)
 
 ## Cluster Closure Protocol
