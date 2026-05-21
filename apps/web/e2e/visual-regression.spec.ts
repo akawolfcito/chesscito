@@ -316,6 +316,21 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     await expect(page).toHaveScreenshot("vr5-mint-pills-done.png", FIXTURE_OPTS);
   });
 
+  test("vr6-save-toast-wait — toast variant, save-score flow, current=wait", async ({
+    page,
+  }) => {
+    // Toast variant is what the SAVE button adopts on click (Cluster C).
+    // Single-line banner, ~40-50px tall. Locks the chrome that the Save
+    // flow expects to render alongside the existing CTA row.
+    await page.goto(
+      "/dev/tx-progress?variant=toast&flow=save-score&steps=wait&current=wait",
+      { waitUntil: "load", timeout: 45_000 },
+    );
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot("vr6-save-toast-wait.png", FIXTURE_OPTS);
+  });
+
   test("vr7-persist-overlay-persisting — saving-match toast", async ({ page }) => {
     await page.goto("/dev/persist-overlay?state=persisting", {
       waitUntil: "load",
