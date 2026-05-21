@@ -65,49 +65,13 @@ describe("HubScaffold", () => {
     expect(container.querySelector(".hud-secondary-row")).toBeNull();
   });
 
-  it("renders the active Coach PRO card from PRO status", () => {
-    render(<HubScaffold {...baseProps} />);
-
-    expect(screen.getByText("PRO Active · 14d")).toBeInTheDocument();
-    expect(screen.getByText("Your Coach is ready.")).toBeInTheDocument();
-    expect(screen.getByText("Reviews · History · Next training")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Open Journal" }),
-    ).toBeInTheDocument();
-  });
-
-  it("renders the inactive Coach PRO card with preview chips", () => {
-    render(<HubScaffold {...baseProps} pro={{ active: false }} />);
-
-    expect(screen.getByText("Coach PRO")).toBeInTheDocument();
-    expect(screen.getByText("Get feedback after games and practice.")).toBeInTheDocument();
-    expect(screen.queryByText("Mistakes · Tips · History")).not.toBeInTheDocument();
-    expect(screen.getByText("Mistakes")).toBeInTheDocument();
-    expect(screen.getByText("Tips")).toBeInTheDocument();
-    expect(screen.getByText("History")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Train with Coach" }),
-    ).toBeInTheDocument();
-  });
-
-  it("forwards the Coach PRO card CTA to onCoachProCardCta", async () => {
-    const onCoachProCardCta = vi.fn();
-    const user = userEvent.setup();
-
-    render(
-      <HubScaffold
-        {...baseProps}
-        pro={{ active: false }}
-        onCoachProCardCta={onCoachProCardCta}
-      />,
-    );
-
-    await user.click(
-      screen.getByRole("button", { name: "Train with Coach" }),
-    );
-
-    expect(onCoachProCardCta).toHaveBeenCalledTimes(1);
-  });
+  // Coach PRO card (active/inactive variants + onCoachProCardCta
+  // forwarding) was removed from <HubScaffold>'s rendered output in the
+  // post-PRO-discoverability refactor. The `onCoachProCardCta` prop is
+  // retained in the type contract for downstream consumers but no
+  // longer drives any visible UI — see the PRO chip + dock pathway in
+  // <HubScaffoldClient>. The 3 stale tests asserting against the card
+  // were removed here; resurrect them if the card returns.
 
   it("mounts the KingdomAnchor playhub variant in the body anchor zone", () => {
     const { container } = render(<HubScaffold {...baseProps} />);
