@@ -37,6 +37,12 @@ import { mapArenaResult } from "@/lib/coach/game-result";
 import { generateQuickReview } from "@/lib/coach/fallback-engine";
 import { shouldShowPaywall } from "@/lib/coach/paywall-gate";
 import { requestCoachAnalyze } from "@/lib/coach/request-coach-analyze";
+import {
+  trackAnalyzeRequest,
+  trackAnalyzeIdempotentHit,
+  trackAnalyzeFailed,
+  type AnalyzeSource,
+} from "@/lib/coach/analyze-telemetry";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { ProSheet } from "@/components/pro/pro-sheet";
@@ -289,7 +295,8 @@ function ArenaPageInner() {
   const gameRecordPersisted = persistState === "persisted" && persistedGameId !== null;
   // Source dim for coach_analyze_request (§2.4.10). Set just before
   // each call site fires; defaults to "immediate" for the end-state CTA.
-  type AnalyzeSource = "immediate" | "history" | "victory-mint";
+  // `AnalyzeSource` lifted to `lib/coach/analyze-telemetry.ts` so both this
+  // flow and the history flow share one canonical union (Acceptance #12).
   const analyzeSourceRef = useRef<AnalyzeSource>("immediate");
 
   // Coach state
@@ -524,12 +531,15 @@ function ArenaPageInner() {
       const analyzeData = analyzeRes.ok ? await analyzeRes.json() : {};
       // Spec §2.4.7: idempotent re-tap fires the hit event INSTEAD of
       // `coach_analyze_request`. Branching keeps the "no credit consumed"
-      // signal honest in the analytics stream.
+      // signal honest in the analytics stream. Both branches route through
+      // `analyze-telemetry` so the payload shape stays in sync with the
+      // history-flow emitter (Acceptance #12).
       if (analyzeData?.idempotent === true) {
-        track("coach_analyze_idempotent_hit", { source: analyzeSource });
+        trackAnalyzeIdempotentHit(analyzeSource);
       } else {
-        track("coach_analyze_request", {
+        trackAnalyzeRequest({
           source: analyzeSource,
+          gameId: analyzeGameId,
           difficulty: game.difficulty,
           moves: game.moveHistory.length,
           result: gameResult,
@@ -1220,14 +1230,16 @@ function ArenaPageInner() {
 
       // Preserve existing request/idempotent telemetry: any server response counts
       // as an attempt — only the network-error branch (no round-trip) skips it.
+      // Routes through `analyze-telemetry` so the payload shape stays in sync
+      // with the end-state emitter (Acceptance #12).
       const isNetworkError = outcome.kind === "error" && outcome.reason === "network_error";
       if (!isNetworkError) {
         const idempotent =
           (outcome.kind === "ready" || outcome.kind === "queued") && outcome.idempotent;
         if (idempotent) {
-          track("coach_analyze_idempotent_hit", { source: "history" });
+          trackAnalyzeIdempotentHit("history");
         } else {
-          track("coach_analyze_request", { source: "history", game_id: gameId });
+          trackAnalyzeRequest({ source: "history", gameId });
         }
       }
 
@@ -1250,10 +1262,10 @@ function ArenaPageInner() {
       // outcome.kind === "error" — surface failure for triage. UX behavior
       // unchanged (return to history); telemetry now distinguishes the
       // failure reason instead of silently swallowing it (Cluster E defer).
-      track("coach_analyze_failed", {
+      trackAnalyzeFailed({
         source: "history",
         reason: outcome.reason,
-        status: outcome.status ?? null,
+        status: outcome.status,
       });
       setCoachPhase("history");
     },
