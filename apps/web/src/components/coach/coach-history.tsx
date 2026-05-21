@@ -337,21 +337,32 @@ export function CoachHistory({
     onAnalyzeUnanalyzed?.(gameId);
   };
 
+  // Cluster E defer #5: wrap every render branch (loading, empty, content)
+  // in a labeled <section> so AT users get a stable landmark for the
+  // panel. The `<section aria-label="…">` becomes role="region" per HTML
+  // spec, scoping LatestReviewCard + the older role="list" under one
+  // navigable group. Previously the head-analyzed branch rendered
+  // LatestReviewCard ABOVE the role="list" and excluded it from the
+  // list's count announcement.
   if (loading) {
     return (
-      <div className="tj-loading">
+      <section aria-label="Coach review history" className="tj-loading">
         <CandyIcon name="loading" className="h-5 w-5 animate-spin opacity-60" />
         <p className="tj-loading-text">{COACH_COPY.loading}</p>
-      </div>
+      </section>
     );
   }
 
   if (mergedSorted.length === 0) {
-    return <EmptyState />;
+    return (
+      <section aria-label="Coach review history">
+        <EmptyState />
+      </section>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <section aria-label="Coach review history" className="flex flex-col gap-4">
       {credits > 0 && (
         <div className="flex justify-end">
           <CandyChip variant="warm" tone="subtle">
@@ -398,6 +409,6 @@ export function CoachHistory({
           streak={streak}
         />
       )}
-    </div>
+    </section>
   );
 }
