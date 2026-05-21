@@ -9,6 +9,7 @@ import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { ShareModal } from "@/components/share/share-modal";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
+import { shareUrlForBadge, shareUrlForScore } from "@/lib/og/share-urls";
 import { THEME_CONFIG } from "@/lib/theme";
 
 type PieceKey = "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
@@ -202,6 +203,18 @@ function getCardUrl(variant: SuccessVariant, pieceType?: PieceKey, totalStars?: 
   return "/api/og/invite";
 }
 
+/** Canonical page URL the share targets — its OG tags point at the
+ *  /api/og/* PNG so WhatsApp/X/Telegram render the rich preview. */
+function getShareUrl(variant: SuccessVariant, pieceType?: PieceKey, totalStars?: number): string | undefined {
+  if (variant === "badge") {
+    return shareUrlForBadge({ piece: pieceType ?? "rook", stars: totalStars ?? 0 });
+  }
+  if (variant === "score") {
+    return shareUrlForScore({ piece: pieceType ?? "rook", stars: totalStars ?? 0 });
+  }
+  return undefined;
+}
+
 function ShareRow({ variant, pieceType, itemLabel, totalStars }: {
   variant: SuccessVariant;
   pieceType?: PieceKey;
@@ -211,6 +224,7 @@ function ShareRow({ variant, pieceType, itemLabel, totalStars }: {
   const [open, setOpen] = useState(false);
   const text = getShareText(variant, pieceType, itemLabel, totalStars);
   const cardUrl = getCardUrl(variant, pieceType, totalStars);
+  const shareUrl = getShareUrl(variant, pieceType, totalStars);
   return (
     <>
       <Button
@@ -227,6 +241,7 @@ function ShareRow({ variant, pieceType, itemLabel, totalStars }: {
         onOpenChange={setOpen}
         cardUrl={cardUrl}
         text={text}
+        url={shareUrl}
       />
     </>
   );
@@ -252,6 +267,7 @@ export function ResultOverlay({
   const hint = isError ? getHint(errorKind) : null;
   const shareText = !isError ? getShareText(variant, pieceType, itemLabel, totalStars) : "";
   const shareCardUrl = !isError ? getCardUrl(variant, pieceType, totalStars) : null;
+  const shareCanonicalUrl = !isError ? getShareUrl(variant, pieceType, totalStars) : undefined;
 
   function handleDismiss() {
     setExiting(true);
@@ -382,6 +398,7 @@ export function ResultOverlay({
           onOpenChange={setShareOpen}
           cardUrl={shareCardUrl}
           text={shareText}
+          url={shareCanonicalUrl}
         />
       )}
     </div>
