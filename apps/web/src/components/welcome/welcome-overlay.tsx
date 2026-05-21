@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { CandyCard } from "@/components/redesign/candy-card";
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
 import { WELCOME_COPY } from "@/lib/content/editorial";
 import { useOnboardingSignal } from "@/hooks/use-onboarding-signal";
+import { track } from "@/lib/telemetry";
 import {
   dismissWelcome,
   isWelcomeDismissed,
@@ -66,6 +67,11 @@ export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {})
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
+  // Cluster D Blind hunter defer #4 (2026-05-20): funnel telemetry —
+  // dedupes `welcome_view` so re-renders on the same slide don't double-fire
+  // (StrictMode mount/unmount/mount or signal-cache resolution flickers).
+  const viewFiredRef = useRef<Set<number>>(new Set());
+
   useEffect(() => {
     if (!isWelcomeDismissed()) setOpen(true);
   }, []);
@@ -74,10 +80,31 @@ export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {})
   // the carousel — the user has prior progress on this wallet.
   useEffect(() => {
     if (signal.status === "returning" && open) {
+      // Funnel telemetry: distinguish "user finished" vs "system auto-skipped"
+      // by source. Fired BEFORE dismissWelcome so the at_slide reflects the
+      // last slide actually shown (or 0 if signal beat the first paint).
+      track("welcome_auto_dismissed", {
+        signal: signal.signal,
+        at_slide: index,
+      });
       dismissWelcome();
       setOpen(false);
     }
-  }, [signal.status, open]);
+  }, [signal.status, signal.signal, open, index]);
+
+  // Funnel telemetry: fire `welcome_view` once per slide_index the user
+  // actually sees. Gated by the same rendering conditions as the early
+  // returns below so suppressed / resolving / dismissed states stay silent.
+  useEffect(() => {
+    if (!open || suppressed) return;
+    if (signal.status === "resolving") return;
+    if (viewFiredRef.current.has(index)) return;
+    viewFiredRef.current.add(index);
+    track("welcome_view", {
+      slide_index: index,
+      slide_count: CARDS.length,
+    });
+  }, [open, suppressed, signal.status, index]);
 
   if (!open || suppressed) return null;
   // Suppress the flash of carousel while the signal is still resolving
@@ -91,6 +118,7 @@ export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {})
 
   function handleNext() {
     if (isLast) {
+      track("welcome_complete", { via: "play_cta", final_slide: index });
       dismissWelcome();
       setOpen(false);
       return;
@@ -99,6 +127,10 @@ export function WelcomeOverlay({ suppressed = false }: WelcomeOverlayProps = {})
   }
 
   function handleSkip() {
+    track("welcome_skip", {
+      at_slide: index,
+      slide_count: CARDS.length,
+    });
     dismissWelcome();
     setOpen(false);
   }

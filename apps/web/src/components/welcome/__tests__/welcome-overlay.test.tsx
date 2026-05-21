@@ -25,6 +25,12 @@ vi.mock("@/hooks/use-onboarding-signal", () => ({
   useOnboardingSignal: signalMock,
 }));
 
+// Telemetry mock — hoisted so the overlay's track() calls land here
+// instead of the real /api/telemetry fetch. Pattern mirrors
+// tx-progress-steps.test.tsx + pro-sheet.test.tsx.
+const trackMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
+
 import { WelcomeOverlay } from "../welcome-overlay";
 
 const STORAGE_KEY = "chesscito:welcome-dismissed";
@@ -34,6 +40,7 @@ describe("WelcomeOverlay", () => {
     localStorage.clear();
     useAccountMock.mockReturnValue({ address: undefined });
     signalMock.mockReturnValue({ status: "fresh", signal: null });
+    trackMock.mockClear();
   });
   afterEach(() => {
     cleanup();
@@ -124,5 +131,83 @@ describe("WelcomeOverlay", () => {
     );
     expect(slideContainer).not.toBeNull();
     expect(slideContainer?.getAttribute("aria-label")).toBe("Slide 1 of 3");
+  });
+
+  // ─── Cluster D funnel telemetry (Blind hunter defer #4, 2026-05-20) ──
+
+  it("emits welcome_view with slide_index=0 on initial render of a fresh device", () => {
+    render(<WelcomeOverlay />);
+    const viewCalls = trackMock.mock.calls.filter(
+      ([event]) => event === "welcome_view",
+    );
+    expect(viewCalls.length).toBe(1);
+    expect(viewCalls[0][1]).toEqual({ slide_index: 0, slide_count: 3 });
+  });
+
+  it("emits welcome_view per slide entry (and dedupes re-renders of the same slide)", () => {
+    const { rerender } = render(<WelcomeOverlay />);
+    // Re-render same slide — dedupe must hold
+    rerender(<WelcomeOverlay />);
+    fireEvent.click(screen.getByTestId("welcome-next")); // slide 2
+    fireEvent.click(screen.getByTestId("welcome-next")); // slide 3
+    const viewCalls = trackMock.mock.calls.filter(
+      ([event]) => event === "welcome_view",
+    );
+    expect(viewCalls.length).toBe(3);
+    expect(viewCalls.map(([, props]) => props)).toEqual([
+      { slide_index: 0, slide_count: 3 },
+      { slide_index: 1, slide_count: 3 },
+      { slide_index: 2, slide_count: 3 },
+    ]);
+  });
+
+  it("does NOT emit welcome_view while the signal is resolving (no flash → no phantom view)", () => {
+    signalMock.mockReturnValue({ status: "resolving", signal: null });
+    render(<WelcomeOverlay />);
+    const viewCalls = trackMock.mock.calls.filter(
+      ([event]) => event === "welcome_view",
+    );
+    expect(viewCalls.length).toBe(0);
+  });
+
+  it("does NOT emit welcome_view when suppressed (dock sheet open over the overlay)", () => {
+    render(<WelcomeOverlay suppressed />);
+    const viewCalls = trackMock.mock.calls.filter(
+      ([event]) => event === "welcome_view",
+    );
+    expect(viewCalls.length).toBe(0);
+  });
+
+  it("emits welcome_skip with at_slide=index on Skip", () => {
+    render(<WelcomeOverlay />);
+    fireEvent.click(screen.getByTestId("welcome-next")); // → slide 2
+    fireEvent.click(screen.getByTestId("welcome-skip"));
+    const skipCalls = trackMock.mock.calls.filter(
+      ([event]) => event === "welcome_skip",
+    );
+    expect(skipCalls.length).toBe(1);
+    expect(skipCalls[0][1]).toEqual({ at_slide: 1, slide_count: 3 });
+  });
+
+  it("emits welcome_complete with via=play_cta on the terminal Play tap", () => {
+    render(<WelcomeOverlay />);
+    fireEvent.click(screen.getByTestId("welcome-next")); // → slide 2
+    fireEvent.click(screen.getByTestId("welcome-next")); // → slide 3
+    fireEvent.click(screen.getByTestId("welcome-next")); // → dismiss via Play
+    const completeCalls = trackMock.mock.calls.filter(
+      ([event]) => event === "welcome_complete",
+    );
+    expect(completeCalls.length).toBe(1);
+    expect(completeCalls[0][1]).toEqual({ via: "play_cta", final_slide: 2 });
+  });
+
+  it("emits welcome_auto_dismissed with signal source when the signal commits returning", () => {
+    signalMock.mockReturnValue({ status: "returning", signal: "pro" });
+    render(<WelcomeOverlay />);
+    const autoCalls = trackMock.mock.calls.filter(
+      ([event]) => event === "welcome_auto_dismissed",
+    );
+    expect(autoCalls.length).toBe(1);
+    expect(autoCalls[0][1]).toEqual({ signal: "pro", at_slide: 0 });
   });
 });
