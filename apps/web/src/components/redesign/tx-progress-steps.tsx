@@ -84,6 +84,45 @@ const DONE_UNMOUNT_MS = 1500;
  * → broadcast → receipt). On `current="done"` the primitive holds
  * 1500ms then self-unmounts; on `current="failed"` it stays mounted
  * indefinitely so the surface can render its retry UI alongside.
+ *
+ * ─── Adopter contract (B2 review residue, closed 2026-05-21) ─────────
+ *
+ * 1. **One instance per tx.** The primitive treats its mount as the tx
+ *    boundary: `view`, `step`, `step_duration`, and `done` events are
+ *    bookkept per-instance, and `doneFiredRef` latches the terminal
+ *    event so a parent re-render at the terminal state can't double-
+ *    fire `done`. To start a NEW tx in the same surface, remount via a
+ *    `key=` change. Re-using the same instance across flows is an anti-
+ *    pattern: the second `done` will be suppressed.
+ *
+ * 2. **`current` must stay valid mid-flow.** Once mounted, `current`
+ *    must remain either a step code present in `steps[]` or one of the
+ *    two terminals (`done`, `failed`). If the surface flips `current`
+ *    to an invalid value mid-life (e.g., a code not in `steps[]`, non-
+ *    terminal), the primitive returns null and drops all subsequent
+ *    telemetry — the in-progress step's `step_duration` will NOT be
+ *    drained. This is intentional bail-silent behavior; the contract
+ *    violation is the surface's bug.
+ *
+ * 3. **Mount-at-terminal is supported.** A surface may mount the
+ *    primitive directly at `current="done"` or `current="failed"` for
+ *    crash recovery from a saved-state restore. The impl fires `view` +
+ *    `done` and skips `step_duration` (because `prevStepRef === null`).
+ *    `total_duration_ms` will be near-zero (mount-to-effect interval).
+ *
+ * 4. **StrictMode double-invoke is expected in dev.** React 18
+ *    StrictMode mounts components, immediately unmounts them, and
+ *    mounts them again to surface effect-cleanup bugs. This means
+ *    `view` + the initial `step` event fire twice in dev — the server-
+ *    side throttle (`/api/telemetry`, 100 events / 5min / event-name)
+ *    absorbs the duplicate at scale, and production cold mounts run
+ *    StrictMode-free. Behavior is treated as observed-but-acceptable.
+ *
+ * 5. **Throttle overflow is dropped silently.** Rapid wagmi retry
+ *    oscillation could theoretically exceed the 100-events / 5min /
+ *    event-name budget on `step` + `step_duration` for a single flow.
+ *    Excess events are dropped client-side without instrumentation;
+ *    server-side dropped-signal telemetry is a separate future item.
  */
 export function TxProgressSteps(props: TxProgressStepsProps) {
   const { variant, current, flow, steps } = props;

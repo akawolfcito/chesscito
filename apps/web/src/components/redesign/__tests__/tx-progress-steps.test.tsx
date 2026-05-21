@@ -552,6 +552,68 @@ describe("TxProgressSteps — telemetry (AC-2.3.6)", () => {
     );
     expect(doneCalls.length).toBe(0);
   });
+
+  // ─── B2 review residue (closed 2026-05-21) ──────────────────────────
+
+  it("mount-at-terminal: current='done' on initial render fires view + done, skips step_duration (B2 edge #3)", () => {
+    // Crash-recovery shape: surface restores a finished tx from saved
+    // state and mounts the primitive directly at the terminal. Impl
+    // contract: view + done fire (no `step`, no `step_duration` because
+    // `prevStepRef` is null at first effect tick).
+    render(
+      <TxProgressSteps {...defaults({ steps: SAVE_STEPS, current: "done" })} />,
+    );
+
+    const viewCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "tx_progress_view",
+    );
+    expect(viewCalls.length).toBe(1);
+
+    const stepCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "tx_progress_step",
+    );
+    expect(stepCalls.length).toBe(0);
+
+    const durationCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "tx_progress_step_duration",
+    );
+    expect(durationCalls.length).toBe(0);
+
+    const doneCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "tx_progress_done",
+    );
+    expect(doneCalls.length).toBe(1);
+    expect(doneCalls[0][1]).toMatchObject({
+      flow: "save-score",
+      outcome: "success",
+    });
+    expect(doneCalls[0][1].total_duration_ms).toBeGreaterThanOrEqual(0);
+  });
+
+  it("isInvalid flips true mid-flow: primitive bails silently, no step_duration drain (B2 edge #4)", () => {
+    // Surface contract violation: starts valid, re-renders with a
+    // `current` code that isn't in `steps[]` (non-terminal). The
+    // primitive returns null and stops emitting; the in-flight step's
+    // `step_duration` is intentionally NOT drained — closing it would
+    // need an `abandoned-flow` telemetry signal which is out of scope.
+    const { container, rerender } = render(
+      <TxProgressSteps {...defaults({ steps: SAVE_STEPS, current: "sign" })} />,
+    );
+    // Sanity: visible on first render
+    expect(container.querySelector('[data-variant="pills"]')).not.toBeNull();
+    trackMock.mockClear();
+
+    rerender(
+      <TxProgressSteps
+        {...defaults({ steps: SAVE_STEPS, current: "verify" })}
+      />,
+    );
+
+    // Component returns null — no visible variant root
+    expect(container.querySelector('[data-variant="pills"]')).toBeNull();
+    // And no telemetry leaks (no phantom step, no abandoned step_duration)
+    expect(trackMock.mock.calls.length).toBe(0);
+  });
 });
 
 describe("TxProgressSteps — defensive guards (B1 review patches)", () => {
