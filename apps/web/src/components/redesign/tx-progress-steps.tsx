@@ -385,7 +385,7 @@ function ToastVariant({
       data-component="tx-progress-steps"
       data-flow={flow}
       data-variant="toast"
-      className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold"
+      className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full px-3 py-2 text-xs font-semibold"
       style={{
         background: isFailed
           ? "rgba(255, 228, 230, 0.85)"
@@ -407,7 +407,7 @@ function ToastVariant({
           {counterText}
         </span>
       ) : null}
-      <span>{subCopy}</span>
+      <span className="min-w-0 truncate">{subCopy}</span>
     </div>
   );
 }

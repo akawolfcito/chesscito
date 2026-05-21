@@ -128,6 +128,36 @@ describe("TxProgressSteps — toast variant (AC-2.3.2)", () => {
     expect(root?.getAttribute("role")).toBe("status");
     expect(root?.getAttribute("aria-live")).toBe("polite");
   });
+
+  it("toast container caps width + clips overflow so long sub-copy never blows the 390px viewport", () => {
+    // Cluster C SAVE-residue defer #3 (2026-05-20): single-line sub-copy in
+    // Spanish / i18n fallbacks could push the toast past ~358px (content
+    // area at 390px viewport). The container needs `max-w-full overflow-
+    // hidden` so the sub-copy span's `truncate` can kick in.
+    const { container } = render(
+      <TxProgressSteps {...defaults({ variant: "toast" })} />,
+    );
+    const root = container.querySelector('[data-variant="toast"]');
+    const classes = root?.className.split(/\s+/) ?? [];
+    expect(classes).toContain("max-w-full");
+    expect(classes).toContain("overflow-hidden");
+  });
+
+  it("toast sub-copy span truncates instead of wrapping (min-w-0 + truncate)", () => {
+    // The sub-copy is the last `<span>` inside the toast root and holds
+    // either the active step label or the success / failure message.
+    // `truncate` (overflow-hidden + text-overflow-ellipsis + nowrap) keeps
+    // it on one line; `min-w-0` lets it shrink inside the flex container.
+    const { container } = render(
+      <TxProgressSteps {...defaults({ variant: "toast" })} />,
+    );
+    const root = container.querySelector('[data-variant="toast"]');
+    const spans = Array.from(root?.querySelectorAll(":scope > span") ?? []);
+    const subCopySpan = spans[spans.length - 1] as HTMLElement | undefined;
+    const classes = subCopySpan?.className.split(/\s+/) ?? [];
+    expect(classes).toContain("truncate");
+    expect(classes).toContain("min-w-0");
+  });
 });
 
 describe("TxProgressSteps — failed state (AC-2.3.4, AC-2.3.5 failed branch)", () => {
