@@ -6,18 +6,12 @@ import { ARENA_COPY, COACH_COPY, COACH_ENTRY_COPY } from "@/lib/content/editoria
 import { CandyChip } from "@/components/redesign/candy-chip";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { track } from "@/lib/telemetry";
-import type { CoachAnalysisRecord, GameRecord } from "@/lib/coach/types";
-
-type AnalyzedEntry = CoachAnalysisRecord & {
-  kind: "analyzed";
-  game: GameRecord;
-};
-
-type UnanalyzedEntry = {
-  kind: "unanalyzed";
-  gameId: string;
-  game: GameRecord;
-};
+import {
+  parseAnalyzedHistory,
+  parseUnanalyzedGames,
+  type AnalyzedEntry,
+  type UnanalyzedEntry,
+} from "@/lib/coach/coach-history-parse";
 
 type HistoryEntry = AnalyzedEntry | UnanalyzedEntry;
 
@@ -280,22 +274,13 @@ export function CoachHistory({
       .then(([historyData, gamesData]) => {
         if (cancelled) return;
         // Defensive parsing — rate-limit / forbidden responses come back
-        // as `{ error: "..." }` objects, not arrays. Mirrors the original
-        // 2026-05-07 incident guard.
-        const historyArr: AnalyzedEntry[] = (Array.isArray(historyData) ? historyData : [])
-          .filter((e: unknown): e is CoachAnalysisRecord & { game: GameRecord } =>
-            Boolean(e && typeof e === "object" && "gameId" in (e as object) && "game" in (e as object)),
-          )
-          .map((e) => ({ ...e, kind: "analyzed" as const }));
-
+        // as `{ error: "..." }` objects, not arrays. Cluster E defer #4
+        // also enforces UUID shape so corrupt ids never reach the
+        // Analyze endpoint (where they 400 silently). See
+        // `lib/coach/coach-history-parse.ts`.
+        const historyArr = parseAnalyzedHistory(historyData);
         const analyzedIds = new Set(historyArr.map((e) => e.gameId));
-        const unanalyzedArr: UnanalyzedEntry[] = (Array.isArray(gamesData) ? gamesData : [])
-          .filter((g: unknown): g is GameRecord =>
-            Boolean(g && typeof g === "object" && "gameId" in (g as object)),
-          )
-          .filter((g) => !analyzedIds.has(g.gameId))
-          .map((g) => ({ kind: "unanalyzed" as const, gameId: g.gameId, game: g }));
-
+        const unanalyzedArr = parseUnanalyzedGames(gamesData, analyzedIds);
         setAnalyzed(historyArr);
         setUnanalyzed(unanalyzedArr);
       })
