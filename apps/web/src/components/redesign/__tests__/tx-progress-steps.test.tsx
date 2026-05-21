@@ -129,6 +129,19 @@ describe("TxProgressSteps — toast variant (AC-2.3.2)", () => {
     expect(root?.getAttribute("aria-live")).toBe("polite");
   });
 
+  it("toast variant ships a sibling role='alert' region that is empty on the non-failed path (live-region split)", () => {
+    // Defer #4 closure (Blind hunter B1 review, 2026-05-20): toggling aria-live
+    // on a single node is per-ARIA undefined. Split is two always-mounted
+    // regions — polite root + sr-only alert sibling; content gates the alert.
+    const { container } = render(
+      <TxProgressSteps {...defaults({ variant: "toast" })} />,
+    );
+    const alertRegion = container.querySelector('[data-region="alert-toast"]');
+    expect(alertRegion).not.toBeNull();
+    expect(alertRegion?.getAttribute("role")).toBe("alert");
+    expect(alertRegion?.textContent).toBe("");
+  });
+
   it("toast container caps width + clips overflow so long sub-copy never blows the 390px viewport", () => {
     // Cluster C SAVE-residue defer #3 (2026-05-20): single-line sub-copy in
     // Spanish / i18n fallbacks could push the toast past ~358px (content
@@ -195,27 +208,62 @@ describe("TxProgressSteps — failed state (AC-2.3.4, AC-2.3.5 failed branch)", 
     expect(container.querySelector('[data-variant="pills"]')).not.toBeNull();
   });
 
-  it("failed state escalates aria-live to assertive on both variants", () => {
+  it("failed state surfaces a sibling role='alert' region with failure copy on both variants (live-region split)", () => {
+    // Defer #4 closure (Blind hunter B1 review, 2026-05-20): instead of
+    // toggling aria-live on the visible root (per ARIA spec undefined and
+    // dropped by some screen readers), the primitive mounts a permanent
+    // sr-only role="alert" sibling per variant. Polite root stays polite on
+    // all paths; the alert region holds failure copy only when failed.
     const pills = render(
-      <TxProgressSteps {...defaults({ current: "failed" })} />,
+      <TxProgressSteps
+        {...defaults({ current: "failed", errorMessage: "User rejected" })}
+      />,
     );
+    // Visible polite root never escalates
     expect(
       pills.container
         .querySelector('[data-variant="pills"]')
         ?.getAttribute("aria-live"),
-    ).toBe("assertive");
+    ).toBe("polite");
+    const pillsAlert = pills.container.querySelector(
+      '[data-region="alert-pills"]',
+    );
+    expect(pillsAlert?.getAttribute("role")).toBe("alert");
+    expect(pillsAlert?.textContent).toContain("User rejected");
     pills.unmount();
 
     const toast = render(
       <TxProgressSteps
-        {...defaults({ variant: "toast", current: "failed" })}
+        {...defaults({
+          variant: "toast",
+          current: "failed",
+          errorMessage: "User rejected",
+        })}
       />,
     );
     expect(
       toast.container
         .querySelector('[data-variant="toast"]')
         ?.getAttribute("aria-live"),
-    ).toBe("assertive");
+    ).toBe("polite");
+    const toastAlert = toast.container.querySelector(
+      '[data-region="alert-toast"]',
+    );
+    expect(toastAlert?.getAttribute("role")).toBe("alert");
+    expect(toastAlert?.textContent).toContain("User rejected");
+  });
+
+  it("pills variant ships a sibling role='alert' region that is empty on the non-failed path (live-region split)", () => {
+    // Sibling test to the toast equivalent — both variants must mount an
+    // always-present sr-only alert region; non-failed states keep it empty so
+    // screen readers stay silent until a real failure announcement lands.
+    const { container } = render(
+      <TxProgressSteps {...defaults({ current: "send" })} />,
+    );
+    const alertRegion = container.querySelector('[data-region="alert-pills"]');
+    expect(alertRegion).not.toBeNull();
+    expect(alertRegion?.getAttribute("role")).toBe("alert");
+    expect(alertRegion?.textContent).toBe("");
   });
 });
 

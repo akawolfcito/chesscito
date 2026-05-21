@@ -235,55 +235,65 @@ function PillsVariant({
       ? TX_PROGRESS_COPY.toastDoneSuccess
       : TOAST_LABEL[current];
 
+  // a11y live-region split: polite root announces step transitions; sibling
+  // role="alert" (implicit aria-live=assertive + aria-atomic=true) holds
+  // failure copy only when isFailed. Both regions always mounted so screen
+  // readers don't drop announcements on aria-live attribute mutation
+  // (undefined behavior per ARIA spec — some readers ignore the change).
   return (
-    <div
-      role="status"
-      aria-live={isFailed ? "assertive" : "polite"}
-      data-component="tx-progress-steps"
-      data-flow={flow}
-      data-variant="pills"
-      className="flex flex-col items-center gap-2 px-4 py-3"
-    >
-      {title ? (
-        <p
-          className="text-sm font-bold"
-          style={{ color: "rgba(63, 34, 8, 0.95)" }}
-        >
-          {title}
-        </p>
-      ) : null}
-      <div className="flex items-center gap-1.5" role="list">
-        {steps.map((step, idx) => {
-          const state: PillState = isDone
-            ? "complete"
-            : idx < activeIndex
-              ? "complete"
-              : idx === activeIndex
-                ? isFailed
-                  ? "failed"
-                  : "active"
-                : "future";
-          return (
-            <PillNode
-              key={step.code}
-              step={step}
-              state={state}
-              isLast={idx === steps.length - 1}
-            />
-          );
-        })}
-      </div>
-      <p
-        className="text-xs"
-        style={{
-          color: isFailed
-            ? "rgba(159, 18, 57, 0.95)"
-            : "rgba(110, 65, 15, 0.85)",
-        }}
+    <>
+      <div
+        role="status"
+        aria-live="polite"
+        data-component="tx-progress-steps"
+        data-flow={flow}
+        data-variant="pills"
+        className="flex flex-col items-center gap-2 px-4 py-3"
       >
-        {subCopy}
-      </p>
-    </div>
+        {title ? (
+          <p
+            className="text-sm font-bold"
+            style={{ color: "rgba(63, 34, 8, 0.95)" }}
+          >
+            {title}
+          </p>
+        ) : null}
+        <div className="flex items-center gap-1.5" role="list">
+          {steps.map((step, idx) => {
+            const state: PillState = isDone
+              ? "complete"
+              : idx < activeIndex
+                ? "complete"
+                : idx === activeIndex
+                  ? isFailed
+                    ? "failed"
+                    : "active"
+                  : "future";
+            return (
+              <PillNode
+                key={step.code}
+                step={step}
+                state={state}
+                isLast={idx === steps.length - 1}
+              />
+            );
+          })}
+        </div>
+        <p
+          className="text-xs"
+          style={{
+            color: isFailed
+              ? "rgba(159, 18, 57, 0.95)"
+              : "rgba(110, 65, 15, 0.85)",
+          }}
+        >
+          {subCopy}
+        </p>
+      </div>
+      <div role="alert" data-region="alert-pills" className="sr-only">
+        {isFailed ? subCopy : ""}
+      </div>
+    </>
   );
 }
 
@@ -377,37 +387,49 @@ function ToastVariant({
 
   const iconGlyph = isFailed ? "!" : isDone ? "✓" : "⏳";
 
+  // a11y live-region split (parity with PillsVariant): polite root announces
+  // normal step transitions; sibling role="alert" carries failure copy only
+  // on failed state. See PillsVariant comment for rationale.
+  const alertAnnouncement = isFailed
+    ? `${TX_PROGRESS_COPY.toastDoneFailed}: ${subCopy}`
+    : "";
+
   return (
-    <div
-      role="status"
-      aria-live={isFailed ? "assertive" : "polite"}
-      aria-label={ariaLabel}
-      data-component="tx-progress-steps"
-      data-flow={flow}
-      data-variant="toast"
-      className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full px-3 py-2 text-xs font-semibold"
-      style={{
-        background: isFailed
-          ? "rgba(255, 228, 230, 0.85)"
-          : "rgba(255, 245, 215, 0.85)",
-        color: isFailed
-          ? "rgba(159, 18, 57, 0.95)"
-          : "rgba(110, 65, 15, 0.95)",
-        border: `1px solid ${
-          isFailed ? "rgba(159, 18, 57, 0.4)" : "rgba(245, 158, 11, 0.45)"
-        }`,
-        boxShadow: "0 2px 4px rgba(63, 34, 8, 0.15)",
-      }}
-    >
-      <span aria-hidden="true" className="text-base leading-none">
-        {iconGlyph}
-      </span>
-      {!isDone && !isFailed ? (
-        <span className="text-nano font-extrabold uppercase tracking-wider opacity-70">
-          {counterText}
+    <>
+      <div
+        role="status"
+        aria-live="polite"
+        aria-label={ariaLabel}
+        data-component="tx-progress-steps"
+        data-flow={flow}
+        data-variant="toast"
+        className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full px-3 py-2 text-xs font-semibold"
+        style={{
+          background: isFailed
+            ? "rgba(255, 228, 230, 0.85)"
+            : "rgba(255, 245, 215, 0.85)",
+          color: isFailed
+            ? "rgba(159, 18, 57, 0.95)"
+            : "rgba(110, 65, 15, 0.95)",
+          border: `1px solid ${
+            isFailed ? "rgba(159, 18, 57, 0.4)" : "rgba(245, 158, 11, 0.45)"
+          }`,
+          boxShadow: "0 2px 4px rgba(63, 34, 8, 0.15)",
+        }}
+      >
+        <span aria-hidden="true" className="text-base leading-none">
+          {iconGlyph}
         </span>
-      ) : null}
-      <span className="min-w-0 truncate">{subCopy}</span>
-    </div>
+        {!isDone && !isFailed ? (
+          <span className="text-nano font-extrabold uppercase tracking-wider opacity-70">
+            {counterText}
+          </span>
+        ) : null}
+        <span className="min-w-0 truncate">{subCopy}</span>
+      </div>
+      <div role="alert" data-region="alert-toast" className="sr-only">
+        {alertAnnouncement}
+      </div>
+    </>
   );
 }
