@@ -3,6 +3,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { ArenaSelectScaffold } from "../arena-select-scaffold";
+import { ARENA_COPY } from "@/lib/content/editorial";
+
+// Anchor against the editorial single-source so the tests track future
+// renames (PLAY CHESS → PLAY, Learn a piece → PIECES, etc.).
+const START = ARENA_COPY.startMatch;
+const SOFT_LEARN = ARENA_COPY.softGateLearn;
+const SOFT_ENTER = ARENA_COPY.softGateEnter;
 
 vi.mock("@/lib/haptics", () => ({
   hapticTap: () => {},
@@ -62,7 +69,7 @@ describe("ArenaSelectScaffold", () => {
   it("fires onStart when the primary CTA is pressed", async () => {
     const onStart = vi.fn();
     render(<ArenaSelectScaffold {...baseProps} onStart={onStart} />);
-    await userEvent.click(screen.getByRole("button", { name: /^PLAY CHESS$/i }));
+    await userEvent.click(screen.getByRole("button", { name: START }));
     expect(onStart).toHaveBeenCalled();
   });
 
@@ -86,8 +93,8 @@ describe("ArenaSelectScaffold", () => {
       />,
     );
     expect(screen.getByText(/Want a warm-up first/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Learn a piece/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Jump into Arena/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: SOFT_LEARN })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: SOFT_ENTER })).toBeInTheDocument();
   });
 
   it("collapses the soft-gate banner when softGate prop is omitted", () => {
@@ -117,6 +124,10 @@ describe("ArenaSelectScaffold", () => {
   });
 
   it("renders the non-PRO Coach hint without blocking Play", async () => {
+    // Post-refactor: CoachReviewSignal collapsed from a sales-y banner
+    // into a single candy pill labeled "Coach · REVIEW" (non-PRO) /
+    // "PRO · REVIEW" (active). The whole pill is the CTA; we click it
+    // directly via the testid for the non-PRO onCta path.
     const onCta = vi.fn();
     const onStart = vi.fn();
     render(
@@ -127,15 +138,12 @@ describe("ArenaSelectScaffold", () => {
       />,
     );
 
-    expect(screen.getByTestId("coach-review-signal")).toHaveTextContent(
-      "Coach can review this match",
-    );
-    expect(screen.getByTestId("coach-review-signal")).toHaveTextContent(
-      "Unlock full review after playing",
-    );
-    await userEvent.click(screen.getByRole("button", { name: /Train with Coach/i }));
+    const signal = screen.getByTestId("coach-review-signal");
+    expect(signal).toHaveTextContent("Coach");
+    expect(signal).toHaveTextContent("REVIEW");
+    await userEvent.click(signal);
     expect(onCta).toHaveBeenCalledTimes(1);
-    await userEvent.click(screen.getByRole("button", { name: /^PLAY CHESS$/i }));
+    await userEvent.click(screen.getByRole("button", { name: START }));
     expect(onStart).toHaveBeenCalledTimes(1);
   });
 
@@ -147,9 +155,11 @@ describe("ArenaSelectScaffold", () => {
       />,
     );
 
-    expect(screen.getByTestId("coach-review-signal")).toHaveTextContent(
-      "Review after checkmate",
-    );
+    const signal = screen.getByTestId("coach-review-signal");
+    expect(signal).toHaveTextContent("PRO");
+    expect(signal).toHaveTextContent("REVIEW");
+    // The PRO pill is informational (no onClick), so the legacy sales
+    // CTAs must NOT render in either variant.
     expect(screen.queryByRole("button", { name: /Open Journal/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Train with Coach/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/PRO unlocks/i)).not.toBeInTheDocument();
