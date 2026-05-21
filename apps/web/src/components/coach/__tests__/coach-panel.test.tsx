@@ -65,12 +65,8 @@ describe("<CoachPanel> footer (PR 4)", () => {
 });
 
 describe("<CoachPanel> personalized-coaching subtitle", () => {
-  // The PR 5 first-run banner (with "Got it" dismiss + localStorage
-  // flag) was simplified post-launch to a single always-on subtitle.
-  // featureBanner copy + chesscito:coach-history-callout-seen flag
-  // remain in editorial.ts as dead code; this suite tracks the
-  // CURRENT subtitle behavior. Cleanup of the dead constants is
-  // tracked separately in deferred-work.md.
+  // Simplified post-launch to a single always-on subtitle; this suite
+  // tracks the CURRENT subtitle behavior.
   beforeEach(() => {
     window.localStorage.clear();
   });

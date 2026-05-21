@@ -51,16 +51,6 @@ describe("ProSheet", () => {
     expect(screen.getByText(PRO_COPY.perksActive[0])).toBeInTheDocument();
   });
 
-  // The "Coming later" roadmap section + per-perk ComingSoonChip +
-  // FIDE Master bullet were removed from <ProSheet> in the PRO sheet
-  // simplification (only the inactive purchase path renders perks now).
-  // PRO_COPY.perksRoadmap remains in editorial.ts as dead copy; cleanup
-  // tracked separately. The 3 stale tests asserting against
-  // pro-roadmap testid / ComingSoonChip / FIDE Master bullet were
-  // removed here. The "strips inline '(coming soon)' suffix" editorial
-  // assertion below is preserved — it validates the constant shape
-  // even though the constant is now unrendered.
-
   // AC-3.8 — addendum §3.6 / §6.1 commit #4
   it("renders the kicker 'Training Pass' above the title", () => {
     renderSheet();
@@ -75,13 +65,6 @@ describe("ProSheet", () => {
       kicker.compareDocumentPosition(title) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-  });
-
-  it("strips the inline '(coming soon)' suffix from roadmap entries (chip replaces it)", () => {
-    renderSheet();
-    PRO_COPY.perksRoadmap.forEach((perk) => {
-      expect(perk).not.toMatch(/\(coming soon\)/i);
-    });
   });
 
   it("shows the Connect Wallet CTA when wallet is not connected", () => {

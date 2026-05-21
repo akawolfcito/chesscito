@@ -704,14 +704,6 @@ export const ARENA_COPY = {
   engineError: "Engine error — please restart the match",
   restartMatch: "Restart Match",
   boardError: "Board error — please restart the game",
-  /** In-match HUD signpost shown beneath the matchup row while the game
-   *  is live (hidden on end-state). Surfaces Coach as a post-checkmate
-   *  feature so players notice it before the match ends. Mirrors the
-   *  tone of PRO_COPY.activeSublineArena ("Coach activates after
-   *  checkmate") — the two strings stay parallel by design. Gated at
-   *  the call site by NEXT_PUBLIC_ENABLE_COACH so disabling the flag
-   *  hides the hint alongside the rest of the Coach surface. */
-  coachHudHint: "Coach reviews after checkmate",
   coachSignal: {
     inactiveTitle: "REVIEW",
     inactiveBody: "Unlock full review after playing",
@@ -1019,20 +1011,6 @@ export const COACH_COPY = {
      * not have happened (red-team P0-7). */
     successToast: "All Coach data cleared from our records",
     errorToast: "Could not delete — please retry",
-  },
-  /**
-   * One-shot first-run callout shown inside <CoachPanel> for PRO users
-   * the first time they see the new history-aware analysis. Closes
-   * red-team P2-3: existing PRO subscribers who saw "SOON" for weeks
-   * deserve an explicit "this is now active" affordance rather than
-   * a silent array swap (Task 2).
-   *
-   * LocalStorage flag: chesscito:coach-history-callout-seen.
-   */
-  featureBanner: {
-    title: "Personalized coaching is live",
-    body: "Your Coach now references your past games to spot recurring patterns.",
-    dismiss: "Got it",
   },
   historyBannerSubtitle: "Personalized coaching from your game history.",
 } as const;
@@ -1355,19 +1333,6 @@ export const PRO_COPY = {
     "AI Coach: instant analysis, no daily limit",
     "Personalized coaching plan from match history",
     "Your contribution keeps Chesscito free for new players",
-  ] as const,
-  /** Roadmap labels rendered in `<ProSheet>` paired with `<ComingSoonChip />`
-   *  (addendum §3.7 / §6.1 commit #6). The chip carries the "SOON" status,
-   *  so labels here MUST stay suffix-free. Adding a new entry? Skip the
-   *  inline "(coming soon)" — the chip handles it.
-   *
-   *  Bundle v1 (2026-05-05): tightened to items with a realistic plan.
-   *  PR 5 (2026-05-06): "Personalized coaching plan from match history"
-   *  graduated from roadmap → perksActive (Coach session memory shipped). */
-  perksRoadmap: [
-    "Early access to new challenges",
-    "Premium achievements",
-    "Guided by FIDE Master + dev team",
   ] as const,
   errors: {
     notConfigured: "PRO is not yet active. Check back shortly.",
