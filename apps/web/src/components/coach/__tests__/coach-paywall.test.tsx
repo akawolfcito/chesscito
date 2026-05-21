@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { CoachPaywall } from "../coach-paywall";
+import { COACH_COPY } from "@/lib/content/editorial";
 
 function getTiles() {
   return screen
@@ -132,8 +133,11 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
       />,
     );
     fireEvent.click(getTiles()[0]);
+    // Source the label from editorial.ts so the test stays aligned with
+    // the COACH_COPY.orQuickReview canonical copy (renamed to "REVIEW"
+    // in the M3.5 copy purge; previous string was "Quick Review").
     const quickReview = screen.getByRole("button", {
-      name: /Quick Review/i,
+      name: COACH_COPY.orQuickReview,
     }) as HTMLButtonElement;
     expect(quickReview.disabled).toBe(true);
   });
