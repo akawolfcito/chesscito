@@ -153,3 +153,34 @@ test.describe("visual regression — Step 1 baselines", () => {
     );
   });
 });
+
+// Step 2 baselines — static legal/info pages. No wallet, no clock,
+// no overlay gating. The risk profile is editorial drift: a copy edit
+// in SUPPORT_COPY / ABOUT_COPY that accidentally breaks the layout
+// (wrap, overflow, icon misalign) would slip through without these.
+//
+// Both pages use <LegalPageShell> which mounts on the natural background.
+// We wait for `document.fonts.ready` (the fantasy-title font on /about
+// drives meaningful pixel shifts if it streams in late) and a short
+// settle for paper-tray hover transitions to land at rest.
+const STATIC_PAGE_OPTS = { maxDiffPixelRatio: 0.005 } as const;
+
+test.describe("visual regression — Step 2 baselines", () => {
+  test("support-page — Telegram + Email + GitHub channels", async ({ page }) => {
+    await bypassFirstVisit(page);
+    await page.goto("/support", { waitUntil: "networkidle", timeout: 30_000 });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot("support-page.png", STATIC_PAGE_OPTS);
+  });
+
+  test("about-page — identity + methodology + cognitive disclaimer", async ({
+    page,
+  }) => {
+    await bypassFirstVisit(page);
+    await page.goto("/about", { waitUntil: "networkidle", timeout: 30_000 });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot("about-page.png", STATIC_PAGE_OPTS);
+  });
+});
