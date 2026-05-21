@@ -82,7 +82,7 @@ Cada flujo sigue este patrón ideal. Ajustes por flujo:
 ### F4 — Buy Item Shop (PlayHub bottom sheet)
 
 - **Pre-wallet** (1–2s): ShopSheet → item card (ej. Retry Shield, Coach 5-pack) → "Buy with USDC" button. User ve precio + CTA claro.
-- **Sheet open confirm** (1–2s): PurchaseConfirmSheet muestra item name + price + network warning ("MiniPay may show 'Unknown transaction'") + "Confirm Purchase" CTA.
+- **Sheet open confirm** (1–2s): PurchaseConfirmSheet muestra item name + price + network warning ("MiniPay may show 'Unknown transaction'") `[removed 2026-05-20 — addendum §4.1]` + "Confirm Purchase" CTA.
 - **Wallet open approve** (3–5s): MiniPay approval request. PurchaseConfirmSheet muestra "Approving USDC…" state (phase=approving).
 - **Wallet open buy** (2–5s después): MiniPay buyItem request. PurchaseConfirmSheet muestra "Buying…" state (phase=buying). Sheet no dismissable durante esto (H5, M9).
 - **Post-confirm pending** (0–120s): Mismo sheet, "Processing on-chain…" con elapsed timer.
@@ -229,7 +229,7 @@ Reglas duras de recuperación para cada scenario. Sin excepciones.
 
 - **Guard**: En `PurchaseConfirmSheet`, prop `onOpenChange` debe verificar: `canDismiss = phase === "idle" && !isWriting`.
 - **Behavior**: Si user intenta tap backdrop / swipe durante `phase="approving"` o `phase="buying"`, sheet no cierra (visual feedback opcional, ej. slight vibration o opacity flicker).
-- **Copy hint**: PURCHASE_CONFIRM_COPY.miniPayWarning ya advierte "MiniPay may show Unknown transaction…"
+- **Copy hint**: PURCHASE_CONFIRM_COPY.miniPayWarning `[removed 2026-05-20 — addendum §4.1]` ya advierte "MiniPay may show Unknown transaction…"
 - **Telemetría**: track("sheet_dismiss_blocked", { phase, isWriting }).
 
 ### F. Piece rail switch durante awaiting-receipt (M5, H6)

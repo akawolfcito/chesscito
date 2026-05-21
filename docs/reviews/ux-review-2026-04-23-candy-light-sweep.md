@@ -80,8 +80,8 @@ badge-sheet.tsx, trophies/page.tsx, trophy-card.tsx
 The "candy chip" style (`background: "rgba(120, 65, 5, 0.85)", color:
 "rgba(255, 240, 180, 0.98)", letterSpacing: "0.10em"`) is literally
 copy-pasted in 7 places: piece-picker SOON, badge-sheet LOCKED, shop-sheet
-FEATURED, trophy-card rank 1-3 chips, purchase-confirm miniPayWarning,
-etc.
+FEATURED, trophy-card rank 1-3 chips, purchase-confirm miniPayWarning
+`[removed 2026-05-20 — addendum §4.1]`, etc.
 
 **Issue:** If the user later adjusts the chip tone, 7 sites must be updated.
 **Risk:** MEDIUM for maintenance.
