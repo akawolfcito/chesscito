@@ -3,6 +3,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { CoachPreviewCard } from "../coach-preview-card";
+import { ARENA_COPY } from "@/lib/content/editorial";
+
+// Pull canonical copy from editorial so the assertions track future
+// renames automatically (the post-PRO-discoverability refactor renamed
+// "Unlock Full Review" → "PRO REVIEW" and "Coach Review Ready" →
+// "REVIEW"; the test had not been updated).
+const COPY = ARENA_COPY.coachPreview;
 
 describe("CoachPreviewCard", () => {
   it("renders the locked full review benefits for non-PRO users", async () => {
@@ -17,14 +24,14 @@ describe("CoachPreviewCard", () => {
       />,
     );
 
-    expect(screen.getByText("Coach Preview")).toBeInTheDocument();
+    expect(screen.getByText(COPY.inactiveTitle)).toBeInTheDocument();
     expect(screen.getByText(/You finished a Easy match in 12 moves/i)).toBeInTheDocument();
     expect(screen.getByText(/behind your win/i)).toBeInTheDocument();
-    expect(screen.getByText("Key moments")).toBeInTheDocument();
-    expect(screen.getByText("Better moves")).toBeInTheDocument();
-    expect(screen.getByText("Next training")).toBeInTheDocument();
+    for (const benefit of COPY.lockedBenefits) {
+      expect(screen.getByText(benefit)).toBeInTheDocument();
+    }
 
-    await userEvent.click(screen.getByRole("button", { name: "Unlock Full Review" }));
+    await userEvent.click(screen.getByRole("button", { name: COPY.inactiveCta }));
     expect(onPrimaryCta).toHaveBeenCalledTimes(1);
   });
 
@@ -40,11 +47,14 @@ describe("CoachPreviewCard", () => {
       />,
     );
 
-    expect(screen.getByText("Coach Review Ready")).toBeInTheDocument();
-    expect(screen.getByText("Review your key moments and next training step.")).toBeInTheDocument();
-    expect(screen.queryByText("Better moves")).not.toBeInTheDocument();
+    expect(screen.getAllByText(COPY.activeTitle).length).toBeGreaterThan(0);
+    expect(screen.getByText(COPY.activeBody)).toBeInTheDocument();
+    // Locked benefits chips should not render in active mode.
+    for (const benefit of COPY.lockedBenefits) {
+      expect(screen.queryByText(benefit)).not.toBeInTheDocument();
+    }
 
-    await userEvent.click(screen.getByRole("button", { name: "Review Match" }));
+    await userEvent.click(screen.getByRole("button", { name: COPY.activeCta }));
     expect(onPrimaryCta).toHaveBeenCalledTimes(1);
   });
 });
