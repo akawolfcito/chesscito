@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
+import { enforceGameCap } from "@/lib/coach/game-persistence";
+import { createLogger, hashWallet } from "@/lib/server/logger";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type { GameRecord } from "@/lib/coach/types";
 
@@ -39,11 +41,22 @@ export async function POST(req: Request) {
       receivedAt: Date.now(),
     };
 
-    await Promise.all([
-      redis.set(REDIS_KEYS.game(wallet, game.gameId), record, { ex: 90 * 24 * 60 * 60 }),
-      redis.lpush(REDIS_KEYS.gameList(wallet), game.gameId),
-      redis.ltrim(REDIS_KEYS.gameList(wallet), 0, 99),
-    ]);
+    // Cluster E (§0.1): replaced the legacy `ltrim(0, 99)` with
+    // `enforceGameCap`, which raises the per-wallet cap to 200 and skips
+    // analyzed entries during FIFO eviction so a player's coached games
+    // are never silently dropped to make room for a fresh match.
+    const log = createLogger({ route: "/api/games" });
+    await redis.set(REDIS_KEYS.game(wallet, game.gameId), record, { ex: 90 * 24 * 60 * 60 });
+    await redis.lpush(REDIS_KEYS.gameList(wallet), game.gameId);
+    await enforceGameCap(redis, wallet, {
+      onOverflow: (info) => {
+        log.warn("game_persist_cap_overflow", {
+          wallet_hash: hashWallet(info.wallet),
+          list_length: info.listLength,
+          analyzed_in_tail: info.analyzedInTail,
+        });
+      },
+    });
 
     return NextResponse.json({ ok: true });
   } catch {

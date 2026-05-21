@@ -5,6 +5,9 @@ const redisMock = vi.hoisted(() => ({
   lpush: vi.fn(),
   ltrim: vi.fn(),
   lrange: vi.fn(),
+  llen: vi.fn(),
+  exists: vi.fn(),
+  lrem: vi.fn(),
   get: vi.fn(),
 }));
 vi.mock("@upstash/redis", () => ({
@@ -15,6 +18,11 @@ vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
   enforceRateLimit: vi.fn(),
   getRequestIp: vi.fn(() => "127.0.0.1"),
+}));
+
+const enforceGameCapMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/coach/game-persistence", () => ({
+  enforceGameCap: enforceGameCapMock,
 }));
 
 import { GET, POST } from "../route";
@@ -56,12 +64,14 @@ describe("POST /api/games", () => {
     redisMock.set.mockReset();
     redisMock.lpush.mockReset();
     redisMock.ltrim.mockReset();
+    enforceGameCapMock.mockReset();
 
     mockedOrigin.mockImplementation(() => {});
     mockedRate.mockResolvedValue(undefined);
     redisMock.set.mockResolvedValue("OK");
     redisMock.lpush.mockResolvedValue(1);
     redisMock.ltrim.mockResolvedValue("OK");
+    enforceGameCapMock.mockResolvedValue({ evicted: [], softOverflow: false });
   });
 
   it("stores the game and returns 200 on valid input", async () => {
@@ -73,7 +83,16 @@ describe("POST /api/games", () => {
       expect.objectContaining({ gameId: VALID_GAME_ID, totalMoves: 3 }),
       expect.objectContaining({ ex: expect.any(Number) }),
     );
-    expect(redisMock.ltrim).toHaveBeenCalledWith(`coach:games:${VALID_WALLET}`, 0, 99);
+  });
+
+  it("delegates list-cap enforcement to enforceGameCap (replaces ltrim)", async () => {
+    await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+    expect(redisMock.ltrim).not.toHaveBeenCalled();
+    expect(enforceGameCapMock).toHaveBeenCalledTimes(1);
+    const [redisArg, walletArg, options] = enforceGameCapMock.mock.calls[0];
+    expect(redisArg).toBe(redisMock);
+    expect(walletArg).toBe(VALID_WALLET);
+    expect(typeof options?.onOverflow).toBe("function");
   });
 
   it("returns 400 when walletAddress is missing", async () => {
