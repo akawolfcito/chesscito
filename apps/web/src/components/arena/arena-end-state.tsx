@@ -420,7 +420,7 @@ function CoachAnalysisCta({
  * the bottom of the viewport while `/api/games` POST is in-flight, and
  * morphs into a warning row + Retry/Dismiss when the POST fails.
  */
-function PersistOverlay({
+export function PersistOverlay({
   state,
   onRetry,
   onDismiss,
