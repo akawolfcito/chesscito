@@ -30,12 +30,11 @@ function renderHud(overrides: Partial<Parameters<typeof ArenaHud>[0]> = {}) {
 }
 
 describe("ArenaHud — coach hint signpost", () => {
-  it("renders the in-match coach hint when showCoachHint is true and game is live", () => {
-    renderHud({ showCoachHint: true });
-    const hint = screen.getByTestId("arena-coach-hint");
-    expect(hint).toBeInTheDocument();
-    expect(hint).toHaveTextContent(ARENA_COPY.coachHudHint);
-  });
+  // The presence test was removed when the in-match Coach signpost was
+  // intentionally dropped in commit b3a13c63 (2026-05-13 refactor:
+  // simplify coach review UI). The remaining absence assertions stay
+  // as regression guards — if a future change reintroduces the pill,
+  // these will fail and force a re-evaluation of the design decision.
 
   it("does NOT render the coach hint when showCoachHint is false (flag disabled)", () => {
     renderHud({ showCoachHint: false });

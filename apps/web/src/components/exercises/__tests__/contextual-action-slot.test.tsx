@@ -38,7 +38,10 @@ describe("ContextualActionSlot — compact label", () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it("uses the short compactLabel ('Submit'), not the long 'Submit Score'", () => {
+  it("uses the compactLabel ('SAVE') for the submitScore action", () => {
+    // Post-SAVE-local-first (Cluster C) the long "Submit Score" copy was
+    // collapsed into the canonical "SAVE" label across all action-slot
+    // variants. This assertion locks the editorial alignment.
     render(
       <ContextualActionSlot
         action="submitScore"
@@ -49,10 +52,10 @@ describe("ContextualActionSlot — compact label", () => {
       />,
     );
     const label = screen
-      .getAllByText(/Submit/)
+      .getAllByText("SAVE")
       .find((el) => el.tagName === "SPAN");
     expect(label).toBeDefined();
-    expect(label!.textContent).toBe("Submit");
+    expect(label!.textContent).toBe("SAVE");
     expect(screen.queryByText("Submit Score")).not.toBeInTheDocument();
   });
 });
