@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type {
+  OnboardingSignalResult,
+} from "@/hooks/use-onboarding-signal";
 
 // Hoisted mocks — wagmi + onboarding signal injected before the component imports.
 const useAccountMock = vi.hoisted(() =>
@@ -9,8 +12,14 @@ vi.mock("wagmi", () => ({
   useAccount: useAccountMock,
 }));
 
+// Default the mock to a "fresh" state but widen the return type so each
+// test can mock any of the 3 discriminated-union status values
+// (resolving / fresh / returning) with any of the 5 signal sources.
 const signalMock = vi.hoisted(() =>
-  vi.fn(() => ({ status: "fresh" as const, signal: null as null })),
+  vi.fn<() => { status: string; signal: string | null }>(() => ({
+    status: "fresh",
+    signal: null,
+  })),
 );
 vi.mock("@/hooks/use-onboarding-signal", () => ({
   useOnboardingSignal: signalMock,
