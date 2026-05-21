@@ -254,6 +254,9 @@ describe("POST /api/games", () => {
 });
 
 describe("GET /api/games", () => {
+  const UUID_A = "11111111-2222-3333-4444-555555555555";
+  const UUID_B = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+
   beforeEach(() => {
     mockedOrigin.mockReset();
     mockedRate.mockReset();
@@ -265,7 +268,7 @@ describe("GET /api/games", () => {
   });
 
   it("returns games list on valid wallet query", async () => {
-    redisMock.lrange.mockResolvedValue(["g1", "g2"]);
+    redisMock.lrange.mockResolvedValue([UUID_A, UUID_B]);
     redisMock.get.mockImplementation((key: string) =>
       Promise.resolve({ gameId: key.split(":").pop(), moves: [] }),
     );
@@ -274,13 +277,13 @@ describe("GET /api/games", () => {
     expect(res.status).toEqual(200);
     const body = (await res.json()) as Array<{ gameId: string }>;
     expect(body).toHaveLength(2);
-    expect(body.map((g) => g.gameId)).toEqual(["g1", "g2"]);
+    expect(body.map((g) => g.gameId)).toEqual([UUID_A, UUID_B]);
   });
 
   it("drops missing entries (null values filtered)", async () => {
-    redisMock.lrange.mockResolvedValue(["g1", "g2"]);
+    redisMock.lrange.mockResolvedValue([UUID_A, UUID_B]);
     redisMock.get.mockImplementation((key: string) =>
-      key.endsWith("g1") ? Promise.resolve({ gameId: "g1", moves: [] }) : Promise.resolve(null),
+      key.endsWith(UUID_A) ? Promise.resolve({ gameId: UUID_A, moves: [] }) : Promise.resolve(null),
     );
 
     const res = await GET(makeGet(VALID_WALLET));
@@ -302,5 +305,59 @@ describe("GET /api/games", () => {
   it("returns 400 when wallet is malformed", async () => {
     const res = await GET(makeGet("0xnope"));
     expect(res.status).toEqual(400);
+  });
+
+  describe("UUID filter (Cluster E defer #4 — defense-in-depth)", () => {
+    const captured: Array<{ level: LogLevel; line: string }> = [];
+
+    beforeEach(() => {
+      captured.length = 0;
+      __setLoggerSink((line, level) => { captured.push({ level, line }); });
+    });
+
+    afterEach(() => {
+      __resetLoggerSink();
+    });
+
+    it("filters non-UUID gameIds from list and skips their redis.get", async () => {
+      redisMock.lrange.mockResolvedValue([UUID_A, "not-a-uuid", UUID_B, ""]);
+      redisMock.get.mockImplementation((key: string) =>
+        Promise.resolve({ gameId: key.split(":").pop(), moves: [] }),
+      );
+
+      const res = await GET(makeGet(VALID_WALLET));
+      expect(res.status).toEqual(200);
+      const body = (await res.json()) as Array<{ gameId: string }>;
+      expect(body).toHaveLength(2);
+      expect(body.map((g) => g.gameId)).toEqual([UUID_A, UUID_B]);
+      // skipped corrupted entries — only 2 redis.get calls, not 4
+      expect(redisMock.get).toHaveBeenCalledTimes(2);
+    });
+
+    it("emits warn log when corrupt entries are dropped (signal for corruption monitoring)", async () => {
+      redisMock.lrange.mockResolvedValue([UUID_A, "legacy-non-uuid"]);
+      redisMock.get.mockResolvedValue({ gameId: UUID_A, moves: [] });
+
+      await GET(makeGet(VALID_WALLET));
+
+      const warnLine = captured.find(c => c.level === "warn" && c.line.includes("game_list_invalid_id_filtered"));
+      expect(warnLine, "expected warn log for filtered non-UUID entries").toBeDefined();
+      const parsed = JSON.parse(warnLine!.line);
+      expect(parsed.route).toBe("/api/games");
+      expect(parsed.dropped).toBe(1);
+      expect(parsed.total).toBe(2);
+    });
+
+    it("does NOT emit warn log on clean list (no false positives)", async () => {
+      redisMock.lrange.mockResolvedValue([UUID_A, UUID_B]);
+      redisMock.get.mockImplementation((key: string) =>
+        Promise.resolve({ gameId: key.split(":").pop(), moves: [] }),
+      );
+
+      await GET(makeGet(VALID_WALLET));
+
+      const warnLines = captured.filter(c => c.level === "warn" && c.line.includes("game_list_invalid_id_filtered"));
+      expect(warnLines).toHaveLength(0);
+    });
   });
 });

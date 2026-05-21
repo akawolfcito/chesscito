@@ -86,9 +86,24 @@ export async function GET(req: Request) {
   const wallet = url.searchParams.get("wallet")?.toLowerCase();
   if (!wallet || !isAddress(wallet)) return NextResponse.json({ error: "Invalid wallet" }, { status: 400 });
 
-  const gameIds = await redis.lrange<string>(REDIS_KEYS.gameList(wallet), 0, 19);
+  // Cluster E defer #4: defense-in-depth UUID filter. POST already
+  // rejects non-UUID gameIds at write time, but legacy entries or
+  // Redis-level corruption could leak into the list. Filtering here
+  // (a) keeps `coach-history.tsx` from propagating bad ids to the
+  // Analyze endpoint, and (b) skips an unnecessary `redis.get`
+  // round-trip per corrupt entry. A `warn` log fires on any drop so
+  // corruption is observable, not silent.
+  const rawIds = await redis.lrange<string>(REDIS_KEYS.gameList(wallet), 0, 19);
+  const validIds = rawIds.filter((id) => typeof id === "string" && UUID_RE.test(id));
+  if (validIds.length < rawIds.length) {
+    log.warn("game_list_invalid_id_filtered", {
+      wallet_hash: hashWallet(wallet),
+      dropped: rawIds.length - validIds.length,
+      total: rawIds.length,
+    });
+  }
   const games = await Promise.all(
-    gameIds.map((id) => redis.get<GameRecord>(REDIS_KEYS.game(wallet, id))),
+    validIds.map((id) => redis.get<GameRecord>(REDIS_KEYS.game(wallet, id))),
   );
 
   return NextResponse.json(games.filter(Boolean));
