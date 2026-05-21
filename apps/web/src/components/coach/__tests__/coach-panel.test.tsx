@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { CoachPanel } from "../coach-panel";
+import { COACH_COPY } from "@/lib/content/editorial";
 import type { CoachResponse } from "@/lib/coach/types";
 
 const RESPONSE: CoachResponse = {
@@ -63,39 +64,31 @@ describe("<CoachPanel> footer (PR 4)", () => {
   });
 });
 
-describe("<CoachPanel> first-run banner (PR 5)", () => {
+describe("<CoachPanel> personalized-coaching subtitle", () => {
+  // The PR 5 first-run banner (with "Got it" dismiss + localStorage
+  // flag) was simplified post-launch to a single always-on subtitle.
+  // featureBanner copy + chesscito:coach-history-callout-seen flag
+  // remain in editorial.ts as dead code; this suite tracks the
+  // CURRENT subtitle behavior. Cleanup of the dead constants is
+  // tracked separately in deferred-work.md.
   beforeEach(() => {
     window.localStorage.clear();
   });
 
-  it("renders the banner when proActive && historyMeta && flag unset", () => {
+  it("renders the subtitle when proActive && historyMeta is present", () => {
     render(
       <CoachPanel {...baseProps} proActive historyMeta={{ gamesPlayed: 5 }} />,
     );
-    expect(screen.getByText(/Personalized coaching is live/i)).toBeInTheDocument();
-    expect(screen.getByText(/references your past games/i)).toBeInTheDocument();
+    expect(screen.getByText(COACH_COPY.historyBannerSubtitle)).toBeInTheDocument();
   });
 
-  it("does NOT render the banner when proActive=false", () => {
+  it("does NOT render the subtitle when proActive=false", () => {
     render(<CoachPanel {...baseProps} historyMeta={{ gamesPlayed: 5 }} />);
-    expect(screen.queryByText(/Personalized coaching is live/i)).toBeNull();
+    expect(screen.queryByText(COACH_COPY.historyBannerSubtitle)).toBeNull();
   });
 
-  it("does NOT render the banner when localStorage flag is already set", () => {
-    window.localStorage.setItem("chesscito:coach-history-callout-seen", "1");
-    render(
-      <CoachPanel {...baseProps} proActive historyMeta={{ gamesPlayed: 5 }} />,
-    );
-    expect(screen.queryByText(/Personalized coaching is live/i)).toBeNull();
-  });
-
-  it("dismiss button writes the flag and hides the banner", async () => {
-    render(
-      <CoachPanel {...baseProps} proActive historyMeta={{ gamesPlayed: 5 }} />,
-    );
-    const dismiss = screen.getByRole("button", { name: /Got it/i });
-    fireEvent.click(dismiss);
-    expect(window.localStorage.getItem("chesscito:coach-history-callout-seen")).toBe("1");
-    expect(screen.queryByText(/Personalized coaching is live/i)).toBeNull();
+  it("does NOT render the subtitle when historyMeta is undefined", () => {
+    render(<CoachPanel {...baseProps} proActive />);
+    expect(screen.queryByText(COACH_COPY.historyBannerSubtitle)).toBeNull();
   });
 });
