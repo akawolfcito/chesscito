@@ -3,6 +3,7 @@ import {
   getShareOrigin,
   shareUrlForBadge,
   shareUrlForDaily,
+  shareUrlForEndgame,
   shareUrlForScore,
 } from "@/lib/og/share-urls";
 
@@ -162,5 +163,98 @@ describe("shareUrlForDaily", () => {
       target: "h8",
     });
     expect(url).toContain("piece=rook");
+  });
+});
+
+describe("shareUrlForEndgame", () => {
+  it("builds canonical URL with mode + name + wk + wr + bk for the unsolved branch", () => {
+    expect(
+      shareUrlForEndgame({
+        name: "K+R vs K — corner mate",
+        wk: "e1",
+        wr: "a1",
+        bk: "e8",
+      }),
+    ).toBe(
+      "https://www.chesscito.com/share/endgame?mode=krk&name=K%2BR+vs+K+%E2%80%94+corner+mate&wk=e1&wr=a1&bk=e8",
+    );
+  });
+
+  it("defaults mode to krk when omitted", () => {
+    const url = shareUrlForEndgame({
+      name: "x",
+      wk: "a1",
+      wr: "h1",
+      bk: "e8",
+    });
+    expect(url).toContain("mode=krk");
+  });
+
+  it("appends solved=true with moves + limit only when solved, drops them otherwise", () => {
+    const solved = shareUrlForEndgame({
+      name: "x",
+      wk: "a1",
+      wr: "h1",
+      bk: "e8",
+      solved: true,
+      moves: 7,
+      limit: 12,
+    });
+    expect(solved).toContain("solved=true");
+    expect(solved).toContain("moves=7");
+    expect(solved).toContain("limit=12");
+
+    const unsolved = shareUrlForEndgame({
+      name: "x",
+      wk: "a1",
+      wr: "h1",
+      bk: "e8",
+      moves: 99,
+      limit: 99,
+    });
+    expect(unsolved).not.toContain("solved=");
+    expect(unsolved).not.toContain("moves=");
+    expect(unsolved).not.toContain("limit=");
+  });
+
+  it("normalizes squares to lowercase and falls back to a1 on invalid input", () => {
+    const url = shareUrlForEndgame({
+      name: "x",
+      wk: "A1",
+      wr: "Z9",
+      bk: "??",
+    });
+    expect(url).toContain("wk=a1");
+    expect(url).toContain("wr=a1");
+    expect(url).toContain("bk=a1");
+  });
+
+  it("truncates name beyond 40 chars and clamps moves to [0, 999], limit to [1, 999]", () => {
+    const longName = "y".repeat(80);
+    const url = shareUrlForEndgame({
+      name: longName,
+      wk: "a1",
+      wr: "h1",
+      bk: "e8",
+      solved: true,
+      moves: 5000,
+      limit: 5000,
+    });
+    expect(url).toContain(`name=${"y".repeat(40)}&`);
+    expect(url).not.toContain("y".repeat(41));
+    expect(url).toContain("moves=999");
+    expect(url).toContain("limit=999");
+
+    const lowLimit = shareUrlForEndgame({
+      name: "z",
+      wk: "a1",
+      wr: "h1",
+      bk: "e8",
+      solved: true,
+      moves: -5,
+      limit: -5,
+    });
+    expect(lowLimit).toContain("moves=0");
+    expect(lowLimit).toContain("limit=1");
   });
 });

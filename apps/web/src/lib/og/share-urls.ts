@@ -65,10 +65,26 @@ type DailyArgs = {
   solved?: boolean;
   streak?: number;
 };
+type EndgameArgs = {
+  /** Only krk (King+Rook vs King) ships today; reserved for future modes. */
+  mode?: "krk";
+  name: string;
+  /** Algebraic squares for the white king, white rook, and black king. */
+  wk: string;
+  wr: string;
+  bk: string;
+  solved?: boolean;
+  /** Moves played to reach the terminal state. */
+  moves?: number;
+  /** Par target (e.g. setup.parMoves). */
+  limit?: number;
+};
 
 const SQUARE_RE = /^[a-h][1-8]$/;
 const DAILY_NAME_MAX = 40;
 const DAILY_STREAK_MAX = 999;
+const ENDGAME_NAME_MAX = 40;
+const ENDGAME_MOVES_MAX = 999;
 
 function normalizeSquare(raw: string): string {
   const lc = raw.toLowerCase();
@@ -96,6 +112,20 @@ export function shareUrlForBadge({ piece, stars }: BadgeArgs): string {
   const p = normalizePiece(piece);
   const s = clampStars(stars);
   return `${getShareOrigin()}/share/badge?piece=${p}&stars=${s}`;
+}
+
+function clampEndgameMoves(raw: number): number {
+  if (!Number.isFinite(raw)) return 0;
+  return Math.min(Math.max(Math.trunc(raw), 0), ENDGAME_MOVES_MAX);
+}
+
+function clampEndgameLimit(raw: number): number {
+  if (!Number.isFinite(raw)) return 1;
+  return Math.min(Math.max(Math.trunc(raw), 1), ENDGAME_MOVES_MAX);
+}
+
+function normalizeEndgameName(raw: string): string {
+  return raw.slice(0, ENDGAME_NAME_MAX);
 }
 
 /**
@@ -130,4 +160,40 @@ export function shareUrlForDaily({
     if (k > 0) params.set("streak", String(k));
   }
   return `${getShareOrigin()}/share/daily?${params.toString()}`;
+}
+
+/**
+ * Mini-arena endgame share URL
+ * (`/share/endgame?mode=krk&name=...&wk=...&wr=...&bk=...`).
+ * Optionally appends `solved=true`, `moves=N`, and `limit=N` when the
+ * puzzle has been solved.
+ *
+ * Crawlers fetch this canonical page; its `generateMetadata` exposes
+ * `og:image` pointing back at `/api/og/endgame?mode=krk&...` so each
+ * shared mini-arena renders its own rich preview tied to the starting
+ * position and outcome.
+ */
+export function shareUrlForEndgame({
+  mode,
+  name,
+  wk,
+  wr,
+  bk,
+  solved,
+  moves,
+  limit,
+}: EndgameArgs): string {
+  const params = new URLSearchParams({
+    mode: mode ?? "krk",
+    name: normalizeEndgameName(name),
+    wk: normalizeSquare(wk),
+    wr: normalizeSquare(wr),
+    bk: normalizeSquare(bk),
+  });
+  if (solved) {
+    params.set("solved", "true");
+    if (moves !== undefined) params.set("moves", String(clampEndgameMoves(moves)));
+    if (limit !== undefined) params.set("limit", String(clampEndgameLimit(limit)));
+  }
+  return `${getShareOrigin()}/share/endgame?${params.toString()}`;
 }
