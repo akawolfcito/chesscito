@@ -184,132 +184,166 @@ export function ProSheet(props: ProSheetProps) {
     router.push("/coach/history");
   }
 
-  if (!showActiveBanner) {
-    return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent
-          side="bottom"
-          hideClose
-          title={PRO_COPY.label}
-          description={PRO_COPY.tagline}
-          className="flex max-h-[95dvh] flex-col overflow-visible rounded-none border-0 bg-transparent p-0 pb-0 shadow-none"
-        >
-          {/* Candy hero panel — bottom-sheet container becomes a
-           *  transparent shell so the panel-suscription-pro.png asset
-           *  paints the entire visual. Banner overflows above the panel's
-           *  top edge via absolute positioning + overflow-visible on the
-           *  sheet content. */}
-          <div className="relative mx-auto flex w-full max-w-[var(--app-max-width)] flex-col overflow-y-auto overflow-x-visible overscroll-contain pt-[18%]">
-            {/* Floating banner — sits inside the wrapper's `pt-[18%]`
-             *  reserve. The wrapper provides ~70px of transparent
-             *  headroom above the panel so the banner floats over the
-             *  panel's top edge without being clipped by SheetContent's
-             *  bottom-anchored top boundary (negative top would crop
-             *  the crown). */}
-            <picture className="pointer-events-none absolute left-1/2 top-0 z-20 w-[78%] -translate-x-1/2">
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        hideClose
+        title={PRO_COPY.label}
+        description={PRO_COPY.tagline}
+        className="flex max-h-[95dvh] flex-col overflow-visible rounded-none border-0 bg-transparent p-0 pb-0 shadow-none"
+      >
+        {/* Candy hero panel — bottom-sheet container becomes a
+         *  transparent shell so the panel-suscription-pro.png asset
+         *  paints the entire visual. Banner overflows above the panel's
+         *  top edge via absolute positioning + overflow-visible on the
+         *  sheet content. Shell is shared between active and non-active
+         *  states — only the central card + CTA block branch on
+         *  `showActiveBanner`. */}
+        <div className="relative mx-auto flex w-full max-w-[var(--app-max-width)] flex-col overflow-y-auto overflow-x-visible overscroll-contain pt-[18%]">
+          {/* Floating banner */}
+          <picture className="pointer-events-none absolute left-1/2 top-0 z-20 w-[78%] -translate-x-1/2">
+            <source
+              srcSet="/art/chesscito-pro/chesscito-header-pro-icon.avif"
+              type="image/avif"
+            />
+            <source
+              srcSet="/art/chesscito-pro/chesscito-header-pro-icon.webp"
+              type="image/webp"
+            />
+            <img
+              src="/art/chesscito-pro/chesscito-header-pro-icon.png"
+              alt=""
+              aria-hidden="true"
+              className="w-full"
+              draggable={false}
+            />
+          </picture>
+
+          {/* Close button */}
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            aria-label="Close PRO"
+            className="candy-close-asset-button absolute right-4 z-30"
+            style={{ top: "8%" }}
+            data-testid="pro-close"
+          >
+            <picture>
               <source
-                srcSet="/art/chesscito-pro/chesscito-header-pro-icon.avif"
+                srcSet="/art/screen-mission/close-icon.avif"
                 type="image/avif"
               />
               <source
-                srcSet="/art/chesscito-pro/chesscito-header-pro-icon.webp"
+                srcSet="/art/screen-mission/close-icon.webp"
                 type="image/webp"
               />
               <img
-                src="/art/chesscito-pro/chesscito-header-pro-icon.png"
+                src="/art/screen-mission/close-icon.png"
                 alt=""
                 aria-hidden="true"
-                className="w-full"
+                className="h-10 w-10 object-contain"
                 draggable={false}
               />
             </picture>
+          </button>
 
-            {/* Close button — absolute over the panel's top-right
-             *  corner; tracks the floating banner's vertical center. */}
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              aria-label="Close PRO"
-              className="candy-close-asset-button absolute right-4 z-30"
-              style={{ top: "8%" }}
-              data-testid="pro-close"
-            >
-              <picture>
-                <source
-                  srcSet="/art/screen-mission/close-icon.avif"
-                  type="image/avif"
-                />
-                <source
-                  srcSet="/art/screen-mission/close-icon.webp"
-                  type="image/webp"
-                />
-                <img
-                  src="/art/screen-mission/close-icon.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-10 w-10 object-contain"
-                  draggable={false}
-                />
-              </picture>
-            </button>
+          {/* Panel asset */}
+          <div
+            className="relative w-full"
+            style={{
+              backgroundImage:
+                'image-set(url("/art/chesscito-pro/panel-suscription-pro.avif") type("image/avif"), url("/art/chesscito-pro/panel-suscription-pro.webp") type("image/webp"), url("/art/chesscito-pro/panel-suscription-pro.png") type("image/png"))',
+              backgroundSize: "100% 100%",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <div className="flex flex-col items-stretch px-[8%] pt-[22%] pb-[6%]">
+              {/* TRAINING PASS pill */}
+              <span
+                data-testid="pro-kicker"
+                className="self-start rounded-full px-3 py-1 text-nano font-extrabold uppercase tracking-wider"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)",
+                  color: "#fef3c7",
+                  boxShadow: "0 2px 4px rgba(63, 34, 8, 0.25)",
+                }}
+              >
+                {PRO_COPY.trainingPassLabel}
+              </span>
 
-            {/* Panel asset — stretched to content height via 100% 100%
-             *  background. Banner sits ABOVE this block; everything
-             *  else sits INSIDE. */}
-            <div
-              className="relative w-full"
-              style={{
-                backgroundImage:
-                  'image-set(url("/art/chesscito-pro/panel-suscription-pro.avif") type("image/avif"), url("/art/chesscito-pro/panel-suscription-pro.webp") type("image/webp"), url("/art/chesscito-pro/panel-suscription-pro.png") type("image/png"))',
-                backgroundSize: "100% 100%",
-                backgroundRepeat: "no-repeat",
-              }}
-            >
-              <div className="flex flex-col items-stretch px-[8%] pt-[22%] pb-[6%]">
-                {/* TRAINING PASS pill */}
-                <span
-                  data-testid="pro-kicker"
-                  className="self-start rounded-full px-3 py-1 text-nano font-extrabold uppercase tracking-wider"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)",
-                    color: "#fef3c7",
-                    boxShadow: "0 2px 4px rgba(63, 34, 8, 0.25)",
-                  }}
-                >
-                  {PRO_COPY.trainingPassLabel}
-                </span>
+              {/* Title */}
+              <h2
+                className="mt-3 text-3xl font-extrabold leading-tight"
+                style={{
+                  color: "rgba(63, 34, 8, 0.95)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
+                }}
+              >
+                {PRO_COPY.label}
+              </h2>
 
-                {/* Title */}
-                <h2
-                  className="mt-3 text-3xl font-extrabold leading-tight"
-                  style={{
-                    color: "rgba(63, 34, 8, 0.95)",
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
-                  }}
-                >
-                  {PRO_COPY.label}
-                </h2>
+              {/* Thin gold divider */}
+              <div
+                aria-hidden="true"
+                className="mt-2 h-px w-full"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent 0%, rgba(217, 180, 74, 0.7) 20%, rgba(217, 180, 74, 0.7) 80%, transparent 100%)",
+                }}
+              />
 
-                {/* Thin gold divider */}
+              {/* Tagline */}
+              <p
+                className="mt-3 text-sm leading-snug"
+                style={{ color: "rgba(110, 65, 15, 0.78)" }}
+              >
+                {PRO_COPY.tagline}
+              </p>
+
+              {/* Center card — branches by subscription state.
+               *  Non-active: price card.
+               *  Active: ProActiveBadge + optional expiring sub-line. */}
+              {showActiveBanner && days !== null && status?.expiresAt ? (
                 <div
-                  aria-hidden="true"
-                  className="mt-2 h-px w-full"
+                  data-testid="pro-active-banner"
+                  className="mt-4 rounded-2xl border px-4 py-3"
                   style={{
-                    background:
-                      "linear-gradient(90deg, transparent 0%, rgba(217, 180, 74, 0.7) 20%, rgba(217, 180, 74, 0.7) 80%, transparent 100%)",
+                    background: "rgba(255, 245, 205, 0.55)",
+                    borderColor: "rgba(110, 65, 15, 0.18)",
                   }}
-                />
-
-                {/* Tagline */}
-                <p
-                  className="mt-3 text-sm leading-snug"
-                  style={{ color: "rgba(110, 65, 15, 0.78)" }}
                 >
-                  {PRO_COPY.tagline}
-                </p>
-
-                {/* Price card */}
+                  <div className="flex justify-center">
+                    <ProActiveBadge expiresAtMs={status.expiresAt} />
+                  </div>
+                  {days <= EXPIRING_THRESHOLD_DAYS && (
+                    <div
+                      data-testid="pro-expiring-subline"
+                      className="mt-2 flex items-baseline justify-between gap-2"
+                    >
+                      <span
+                        className="text-xs leading-snug"
+                        style={{ color: "rgba(110, 65, 15, 0.80)" }}
+                      >
+                        {PRO_COPY.expiringMicroCopy}
+                      </span>
+                      <button
+                        type="button"
+                        data-testid="pro-extend-link"
+                        onClick={() => {
+                          track("pro_extend_tap", { source });
+                          props.onPurchase();
+                        }}
+                        className="text-xs font-semibold underline underline-offset-2"
+                        style={{ color: "rgba(110, 65, 15, 0.95)" }}
+                      >
+                        {PRO_COPY.ctaRenew}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <div
                   className="mt-4 rounded-2xl border px-4 py-3 text-center"
                   style={{
@@ -330,76 +364,144 @@ export function ProSheet(props: ProSheetProps) {
                     ({PRO_COPY.durationLabel} · no auto-billing)
                   </p>
                 </div>
+              )}
 
-                {/* ACTIVE PERKS pill */}
-                <span
-                  className="mt-5 self-start rounded-full px-3 py-1 text-nano font-extrabold uppercase tracking-wider"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)",
-                    color: "#fef3c7",
-                    boxShadow: "0 2px 4px rgba(63, 34, 8, 0.25)",
-                  }}
-                >
-                  {PRO_COPY.activePerksLabel}
-                </span>
+              {/* ACTIVE PERKS pill */}
+              <span
+                className="mt-5 self-start rounded-full px-3 py-1 text-nano font-extrabold uppercase tracking-wider"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)",
+                  color: "#fef3c7",
+                  boxShadow: "0 2px 4px rgba(63, 34, 8, 0.25)",
+                }}
+              >
+                {PRO_COPY.activePerksLabel}
+              </span>
 
-                {/* Perks list */}
-                <ul
-                  className="mt-3 space-y-2 text-sm"
-                  style={{ color: "rgba(63, 34, 8, 0.90)" }}
+              {/* Perks list */}
+              <ul
+                className="mt-3 space-y-2 text-sm"
+                style={{ color: "rgba(63, 34, 8, 0.90)" }}
+              >
+                {PRO_COPY.perksActive.map((perk) => (
+                  <li key={perk} className="flex items-start gap-2.5">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, #22c55e 0%, #15803d 100%)",
+                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.20)",
+                      }}
+                    >
+                      ✓
+                    </span>
+                    <span className="leading-snug">{perk}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Error region (purchase / verify failures) */}
+              {errorMessage && (
+                <div
+                  data-testid="pro-error"
+                  role="alert"
+                  className="mt-4 rounded-xl bg-rose-100 px-3 py-2 text-sm font-semibold text-rose-900"
                 >
-                  {PRO_COPY.perksActive.map((perk) => (
-                    <li key={perk} className="flex items-start gap-2.5">
-                      <span
-                        aria-hidden="true"
-                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                        style={{
-                          background:
-                            "linear-gradient(180deg, #22c55e 0%, #15803d 100%)",
-                          boxShadow: "0 1px 2px rgba(0, 0, 0, 0.20)",
-                        }}
+                  <p>{errorMessage}</p>
+                  {showVerifyRetry && (
+                    <>
+                      <p
+                        data-testid="pro-error-reassurance"
+                        className="mt-1 text-xs font-medium text-rose-900/80"
                       >
-                        ✓
-                      </span>
-                      <span className="leading-snug">{perk}</span>
-                    </li>
-                  ))}
-                </ul>
+                        {PRO_COPY.errors.verifyFailedReassurance}
+                      </p>
+                      <button
+                        type="button"
+                        data-testid="pro-error-retry"
+                        onClick={onRetryVerify}
+                        disabled={isRetryingVerify}
+                        className="mt-2 inline-flex items-center justify-center rounded-lg bg-rose-900 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-rose-50 transition disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isRetryingVerify
+                          ? PRO_COPY.errors.retryingVerify
+                          : PRO_COPY.errors.retryVerifyCta}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
 
-                {/* Error region (purchase / verify failures) */}
-                {errorMessage && (
-                  <div
-                    data-testid="pro-error"
-                    role="alert"
-                    className="mt-4 rounded-xl bg-rose-100 px-3 py-2 text-sm font-semibold text-rose-900"
+              {/* CTA block — branches by state.
+               *  Active: Journal card row (cream tile with book asset +
+               *  title + subline + chevron) as the lesson re-entry,
+               *  then ProActiveCTA (green PrincipalButton: Play in
+               *  Arena / Got it) as the dominant green action.
+               *  Non-active: single PrincipalButton "Unlock PRO" /
+               *  "Connect wallet". */}
+              {showActiveBanner ? (
+                <div data-testid="pro-active-actions" className="mt-5 flex flex-col items-stretch gap-3">
+                  <button
+                    type="button"
+                    onClick={openTrainingJournal}
+                    aria-label={`${PRO_COPY.activeActions.journal} — ${PRO_COPY.activeActions.journalSubline}`}
+                    data-testid="pro-open-journal"
+                    className="flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition active:scale-[0.98]"
+                    style={{
+                      background: "rgba(255, 245, 205, 0.85)",
+                      borderColor: "rgba(110, 65, 15, 0.18)",
+                      boxShadow: "0 2px 6px rgba(63, 34, 8, 0.10)",
+                    }}
                   >
-                    <p>{errorMessage}</p>
-                    {showVerifyRetry && (
-                      <>
-                        <p
-                          data-testid="pro-error-reassurance"
-                          className="mt-1 text-xs font-medium text-rose-900/80"
-                        >
-                          {PRO_COPY.errors.verifyFailedReassurance}
-                        </p>
-                        <button
-                          type="button"
-                          data-testid="pro-error-retry"
-                          onClick={onRetryVerify}
-                          disabled={isRetryingVerify}
-                          className="mt-2 inline-flex items-center justify-center rounded-lg bg-rose-900 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-rose-50 transition disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {isRetryingVerify
-                            ? PRO_COPY.errors.retryingVerify
-                            : PRO_COPY.errors.retryVerifyCta}
-                        </button>
-                      </>
-                    )}
+                    <picture className="shrink-0">
+                      <source
+                        srcSet="/art/chesscito-pro/journal-chesscito-pro.avif"
+                        type="image/avif"
+                      />
+                      <source
+                        srcSet="/art/chesscito-pro/journal-chesscito-pro.webp"
+                        type="image/webp"
+                      />
+                      <img
+                        src="/art/chesscito-pro/journal-chesscito-pro.png"
+                        alt=""
+                        aria-hidden="true"
+                        className="h-14 w-14 object-contain"
+                        draggable={false}
+                      />
+                    </picture>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="text-base font-extrabold leading-tight"
+                        style={{ color: "rgba(63, 34, 8, 0.95)" }}
+                      >
+                        {PRO_COPY.activeActions.journal}
+                      </p>
+                      <p
+                        className="mt-0.5 text-xs leading-snug"
+                        style={{ color: "rgba(110, 65, 15, 0.78)" }}
+                      >
+                        {PRO_COPY.activeActions.journalSubline}
+                      </p>
+                    </div>
+                    <span
+                      aria-hidden="true"
+                      className="shrink-0 text-xl font-bold leading-none"
+                      style={{ color: "rgba(110, 65, 15, 0.55)" }}
+                    >
+                      ›
+                    </span>
+                  </button>
+                  <div data-testid="pro-active-cta">
+                    <ProActiveCTA
+                      source={source}
+                      onClose={() => onOpenChange(false)}
+                    />
                   </div>
-                )}
-
-                {/* CTA */}
+                </div>
+              ) : (
                 <div className="mt-5 flex justify-center">
                   <PrincipalButton
                     size="large"
@@ -411,155 +513,12 @@ export function ProSheet(props: ProSheetProps) {
                     {cta.label}
                   </PrincipalButton>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        hideClose
-        title={PRO_COPY.label}
-        description={PRO_COPY.tagline}
-        className="mission-shell sheet-bg-shop flex max-h-[90dvh] flex-col rounded-t-2xl border-0 pb-[5rem]"
-      >
-        {/* Header strip — kicker "Training Pass" eyebrow above the
-         *  canonical close-control header. The kicker keeps its
-         *  data-testid="pro-kicker" and DOM order before the title
-         *  (asserted by pro-sheet.test.tsx AC-3.8). The tagline (long,
-         *  exceeds the 32-char subtitle cap) moves below the strip as
-         *  the first body element. */}
-        <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
-          <p
-            data-testid="pro-kicker"
-            className="text-nano font-bold uppercase tracking-wider px-4 pt-1"
-            style={{ color: "rgba(110, 65, 15, 0.55)" }}
-          >
-            {PRO_COPY.kicker}
-          </p>
-          <ContextualHeader
-            variant="close-control"
-            iconSlot={<TileIconSlot src="/art/action-row/estrella" />}
-            title={PRO_COPY.label}
-            close={{ onClick: () => onOpenChange(false), label: "Close PRO" }}
-          />
         </div>
-
-        <div className="flex flex-1 min-h-0 flex-col overflow-y-auto overscroll-contain pt-3">
-        <p
-          className="text-sm"
-          style={{ color: "rgba(110, 65, 15, 0.70)" }}
-        >
-          {PRO_COPY.tagline}
-        </p>
-
-        {showActiveBanner && days !== null && status?.expiresAt && (
-          <div data-testid="pro-active-banner" className="mt-3">
-            <ProActiveBadge expiresAtMs={status.expiresAt} />
-            {days <= EXPIRING_THRESHOLD_DAYS && (
-              <div
-                data-testid="pro-expiring-subline"
-                className="mt-2 flex items-baseline justify-between gap-2"
-              >
-                <span
-                  className="text-xs leading-snug"
-                  style={{ color: "rgba(110, 65, 15, 0.80)" }}
-                >
-                  {PRO_COPY.expiringMicroCopy}
-                </span>
-                <button
-                  type="button"
-                  data-testid="pro-extend-link"
-                  onClick={() => {
-                    track("pro_extend_tap", { source });
-                    props.onPurchase();
-                  }}
-                  className="text-xs font-semibold underline underline-offset-2"
-                  style={{ color: "rgba(110, 65, 15, 0.95)" }}
-                >
-                  {PRO_COPY.ctaRenew}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {showActiveBanner && (
-          <div data-testid="pro-active-actions" className="mt-3 space-y-2">
-            <div
-              className="rounded-xl border px-3 py-3"
-              style={{
-                borderColor: "rgba(110, 65, 15, 0.18)",
-                background: "rgba(255, 245, 205, 0.42)",
-              }}
-            >
-              <button
-                type="button"
-                data-testid="pro-open-journal"
-                onClick={openTrainingJournal}
-                className="w-full rounded-xl px-3 py-3 text-sm font-black uppercase tracking-wide"
-                style={{
-                  color: "#fff2bf",
-                  background: "linear-gradient(180deg, #965918 0%, #764207 100%)",
-                  textShadow: "0 2px 0 rgba(68, 37, 5, 0.70)",
-                }}
-              >
-                {PRO_COPY.activeActions.journal}
-              </button>
-              <p
-                className="mt-2 text-xs leading-snug"
-                style={{ color: "rgba(110, 65, 15, 0.76)" }}
-              >
-                {PRO_COPY.activeActions.journalSubline}
-              </p>
-            </div>
-            <div data-testid="pro-active-cta">
-              <ProActiveCTA
-                source={source}
-                onClose={() => onOpenChange(false)}
-              />
-            </div>
-          </div>
-        )}
-
-        {errorMessage && (
-          <div
-            data-testid="pro-error"
-            role="alert"
-            className="mt-3 rounded-xl bg-rose-100 px-3 py-2 text-sm font-semibold text-rose-900"
-          >
-            <p>{errorMessage}</p>
-            {showVerifyRetry && (
-              <>
-                <p
-                  data-testid="pro-error-reassurance"
-                  className="mt-1 text-xs font-medium text-rose-900/80"
-                >
-                  {PRO_COPY.errors.verifyFailedReassurance}
-                </p>
-                <button
-                  type="button"
-                  data-testid="pro-error-retry"
-                  onClick={onRetryVerify}
-                  disabled={isRetryingVerify}
-                  className="mt-2 inline-flex items-center justify-center rounded-lg bg-rose-900 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-rose-50 transition disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isRetryingVerify
-                    ? PRO_COPY.errors.retryingVerify
-                    : PRO_COPY.errors.retryVerifyCta}
-                </button>
-              </>
-            )}
-          </div>
-        )}
-        </div>
-
       </SheetContent>
     </Sheet>
   );
 }
+

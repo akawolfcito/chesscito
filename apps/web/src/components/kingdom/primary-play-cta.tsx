@@ -27,6 +27,7 @@ type Props = {
   className?: string;
   pieceIcon?: "pawn" | "king";
   pieceIconSrc?: string;
+  "data-testid"?: string;
 };
 
 /** Backplate art per surface. Hub uses the candy-style green
@@ -64,6 +65,7 @@ export function PrimaryPlayCta({
   className = "",
   pieceIcon,
   pieceIconSrc,
+  "data-testid": dataTestId,
 }: Props) {
   const inert = loading || disabled;
   const iconBase = SURFACE_ICON_BASE[surface];
@@ -97,6 +99,7 @@ export function PrimaryPlayCta({
       aria-busy={loading || undefined}
       disabled={inert}
       className={classes}
+      data-testid={dataTestId}
     >
       <picture className="primary-play-cta-backplate">
         <source srcSet={`${backplateBase}.avif`} type="image/avif" />

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { PRO_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
 
@@ -20,13 +20,18 @@ function isArenaSurface(source: string): boolean {
   return source === "/arena";
 }
 
+/**
+ * Active-state primary CTA inside the candy panel. Renders the green
+ * `PrincipalButton` so the candy-game treatment now anchors PLAY ARENA
+ * (the JOURNAL row sits above as a cream card row). Subline is the
+ * surface-aware pill chip below.
+ */
 export function ProActiveCTA({ source, onClose }: ProActiveCTAProps) {
   const router = useRouter();
   const arena = isArenaSurface(source);
 
   const label = arena ? PRO_COPY.activeCtaGotIt : PRO_COPY.activeCtaPlay;
   const subline = arena ? PRO_COPY.activeSublineArena : PRO_COPY.activeSublineHub;
-  const variant = arena ? "game-ghost" : "game-primary";
 
   function handleClick() {
     track("pro_active_cta_tap", { source });
@@ -46,23 +51,26 @@ export function ProActiveCTA({ source, onClose }: ProActiveCTAProps) {
   }
 
   return (
-    <div className="mt-3 flex flex-col gap-2 rounded-xl bg-white/55 px-3 py-3">
-      <Button
-        type="button"
-        data-testid="pro-active-cta-button"
-        variant={variant}
-        size="game"
+    <div className="flex flex-col items-center gap-2">
+      <PrincipalButton
+        size="medium"
         onClick={handleClick}
+        aria-label={label}
+        data-testid="pro-active-cta-button"
       >
         {label}
-      </Button>
-      <p
+      </PrincipalButton>
+      <span
         data-testid="pro-active-cta-subline"
-        className="text-xs leading-snug"
-        style={{ color: "rgba(110, 65, 15, 0.80)" }}
+        className="rounded-full px-3 py-1 text-nano font-bold uppercase tracking-wider"
+        style={{
+          background: "rgba(255, 245, 205, 0.55)",
+          color: "rgba(110, 65, 15, 0.85)",
+          border: "1px solid rgba(110, 65, 15, 0.18)",
+        }}
       >
         {subline}
-      </p>
+      </span>
     </div>
   );
 }

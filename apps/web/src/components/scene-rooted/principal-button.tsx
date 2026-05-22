@@ -13,6 +13,7 @@ export type PrincipalButtonProps = {
   leadingIcon?: ReactNode;
   className?: string;
   "aria-label"?: string;
+  "data-testid"?: string;
 };
 
 export const PrincipalButton = forwardRef<
@@ -28,6 +29,7 @@ export const PrincipalButton = forwardRef<
     leadingIcon,
     className = "",
     "aria-label": ariaLabel,
+    "data-testid": dataTestId,
   },
   forwardedRef,
 ) {
@@ -76,6 +78,7 @@ export const PrincipalButton = forwardRef<
       data-component="principal-button"
       data-size={size}
       data-state={state}
+      data-testid={dataTestId}
       className={classes}
       disabled={disabled || loading}
       onClick={handleClick}
