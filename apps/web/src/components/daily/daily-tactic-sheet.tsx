@@ -35,12 +35,20 @@ type Props = {
   streakType?: StreakType;
   shareUrl?: string;
   shareSolvedUrl?: string;
+  /**
+   * Canonical `/share/daily?...` URL handed to social-platform share
+   * intents. The crawler fetches this HTML page and reads its OG meta
+   * to render the rich preview. Without it, crawlers fall back to the
+   * generic site card.
+   */
+  shareLinkUrl?: string;
+  shareSolvedLinkUrl?: string;
 };
 
 const SOLVE_AUTO_CLOSE_MS = 3200;
 const RESET_AFTER_MS = 360;
 
-export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, streakAfterSolve, streakType, shareUrl, shareSolvedUrl }: Props) {
+export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, streakAfterSolve, streakType, shareUrl, shareSolvedUrl, shareLinkUrl, shareSolvedLinkUrl }: Props) {
   const [status, setStatus] = useState<Status>("solving");
   const [showHint, setShowHint] = useState(false);
   const [boardKey, setBoardKey] = useState(0);
@@ -207,6 +215,11 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
           open={shareOpen}
           onOpenChange={setShareOpen}
           cardUrl={status === "solved" && isShareUrlValid(shareSolvedUrl) ? shareSolvedUrl : (shareUrl ?? null)}
+          url={
+            status === "solved" && isShareUrlValid(shareSolvedLinkUrl)
+              ? shareSolvedLinkUrl
+              : shareLinkUrl
+          }
           text={
             status === "solved"
               ? DAILY_SHARE_COPY.ctaSolved(streakAfterSolve)

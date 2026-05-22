@@ -12,6 +12,7 @@ import {
   type DailyProgress,
 } from "@/lib/daily/progress";
 import { getDailyTactic } from "@/lib/daily/daily-puzzles";
+import { shareUrlForDaily } from "@/lib/og/share-urls";
 
 const DEFAULT_PROGRESS: DailyProgress = {
   streak: 0,
@@ -69,10 +70,26 @@ export function DailyTacticSlot() {
     setSolveResult({ streak: next.streak, streakType });
   }
 
-  const shareUrl = `/api/og/exercise?type=daily&piece=${puzzleData.piece}&name=${encodeURIComponent(puzzleData.name)}&start=${posToAlgebraic(puzzleData.exercise.startPos)}&target=${posToAlgebraic(puzzleData.exercise.targetPos)}`;
+  const startAlg = posToAlgebraic(puzzleData.exercise.startPos);
+  const targetAlg = posToAlgebraic(puzzleData.exercise.targetPos);
+  const shareUrl = `/api/og/exercise?type=daily&piece=${puzzleData.piece}&name=${encodeURIComponent(puzzleData.name)}&start=${startAlg}&target=${targetAlg}`;
   const shareSolvedUrl = progress.streak > 0
     ? `${shareUrl}&solved=true&streak=${progress.streak}`
     : `${shareUrl}&solved=true`;
+  const shareLinkUrl = shareUrlForDaily({
+    piece: puzzleData.piece,
+    name: puzzleData.name,
+    start: startAlg,
+    target: targetAlg,
+  });
+  const shareSolvedLinkUrl = shareUrlForDaily({
+    piece: puzzleData.piece,
+    name: puzzleData.name,
+    start: startAlg,
+    target: targetAlg,
+    solved: true,
+    streak: progress.streak,
+  });
 
   if (!hydrated) {
     return (
@@ -104,6 +121,8 @@ export function DailyTacticSlot() {
         streakType={solveResult?.streakType}
         shareUrl={shareUrl}
         shareSolvedUrl={shareSolvedUrl}
+        shareLinkUrl={shareLinkUrl}
+        shareSolvedLinkUrl={shareSolvedLinkUrl}
       />
     </>
   );
