@@ -2115,11 +2115,16 @@ export const HUB_ACTION_RAIL_COPY = {
   dailyLabel: "Daily",
   mateLabel: "Mate",
   coachLabel: "Coach",
-  proLabel: "PRO",
-  proTileAriaLabel: (active: boolean, daysRemaining?: number): string =>
-    active
-      ? `PRO active — ${daysRemaining ?? 0} days remaining. Tap to manage subscription.`
-      : "Unlock PRO subscription — tap to learn more.",
+  /** PRO discovery panel — sits above the right rail when the user does
+   *  NOT have an active subscription. The asset `panel-pro.png` is just
+   *  the purple frame + crown; title + subtitle are rendered as text
+   *  layered on top so we can re-style or localize without re-exporting
+   *  the asset. When PRO is active the panel unmounts and the HUD chip
+   *  ("PRO 7d") becomes the only recognition surface. */
+  proDiscoveryTitle: "PRO",
+  proDiscoverySubtitle: "Unlock the full experience",
+  proDiscoveryAriaLabel:
+    "Unlock PRO subscription — unlock the full experience.",
 } as const;
 
 export const SECONDARY_CTA_COPY = {

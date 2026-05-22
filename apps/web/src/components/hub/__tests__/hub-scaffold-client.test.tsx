@@ -254,24 +254,24 @@ describe("HubScaffoldClient — PRO chip", () => {
   });
 });
 
-describe("HubScaffoldClient — PRO right-rail tile (discovery)", () => {
-  it("renders an inactive PRO tile on first paint so the subscription is discoverable from moment 0", () => {
+describe("HubScaffoldClient — PRO discovery panel", () => {
+  it("renders the PRO discovery panel on first paint when the subscription is inactive", () => {
     render(<HubScaffoldClient />);
 
-    const tile = screen.getByLabelText(
-      /Unlock PRO subscription — tap to learn more\./,
+    const panel = screen.getByLabelText(
+      /Unlock PRO subscription — unlock the full experience\./,
     );
-    expect(tile).toBeInTheDocument();
+    expect(panel).toBeInTheDocument();
   });
 
-  it("opens ProSheet when the inactive PRO tile is tapped", async () => {
+  it("opens ProSheet when the discovery panel is tapped (inactive)", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
-    const tile = screen.getByLabelText(
-      /Unlock PRO subscription — tap to learn more\./,
+    const panel = screen.getByLabelText(
+      /Unlock PRO subscription — unlock the full experience\./,
     );
-    await user.click(tile);
+    await user.click(panel);
 
     expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
     expect(trackMock).toHaveBeenCalledWith("hub_pro_tile_tap", {
@@ -279,7 +279,7 @@ describe("HubScaffoldClient — PRO right-rail tile (discovery)", () => {
     });
   });
 
-  it("renders the PRO tile in active state when the subscription is live", () => {
+  it("unmounts the discovery panel when PRO is active (HUD chip is the only recognition surface)", () => {
     useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     useProStatusMock.mockReturnValue({
       status: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
@@ -289,10 +289,17 @@ describe("HubScaffoldClient — PRO right-rail tile (discovery)", () => {
 
     render(<HubScaffoldClient />);
 
-    // ariaLabel pattern: "PRO active — 7 days remaining. Tap to manage…"
+    // Panel hides when active — avoids duplicating recognition with the
+    // HUD chip ("PRO 7d"), which stays as the canonical active-state cue.
     expect(
-      screen.queryByLabelText(/PRO active — 7 days remaining/) ??
-        screen.queryByLabelText(/PRO active — 8 days remaining/),
+      screen.queryByLabelText(
+        /Unlock PRO subscription — unlock the full experience\./,
+      ),
+    ).not.toBeInTheDocument();
+    // HUD chip continues to surface the active days remaining.
+    expect(
+      screen.queryByLabelText(/PRO active, 7 days remaining/) ??
+        screen.queryByLabelText(/PRO active, 8 days remaining/),
     ).not.toBeNull();
   });
 });

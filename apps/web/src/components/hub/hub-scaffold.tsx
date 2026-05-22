@@ -304,6 +304,31 @@ export function HubScaffold({
               )}
             </>
           ) : null}
+          {onProTilePress && !pro.active
+            ? wrap(
+                "HubProDiscoveryPanel",
+                <button
+                  type="button"
+                  onClick={onProTilePress}
+                  aria-label={HUB_ACTION_RAIL_COPY.proDiscoveryAriaLabel}
+                  className="hub-pro-discovery"
+                >
+                  <picture className="hub-pro-discovery-bg">
+                    <source srcSet="/art/hub/panel-pro.avif" type="image/avif" />
+                    <source srcSet="/art/hub/panel-pro.webp" type="image/webp" />
+                    <img src="/art/hub/panel-pro.png" alt="" aria-hidden="true" />
+                  </picture>
+                  <span className="hub-pro-discovery-content" aria-hidden="true">
+                    <span className="hub-pro-discovery-title">
+                      {HUB_ACTION_RAIL_COPY.proDiscoveryTitle}
+                    </span>
+                    <span className="hub-pro-discovery-sub">
+                      {HUB_ACTION_RAIL_COPY.proDiscoverySubtitle}
+                    </span>
+                  </span>
+                </button>,
+              )
+            : null}
           {wrap(
             "HubActionRail",
             <div className="hub-action-rail">
@@ -318,28 +343,6 @@ export function HubScaffold({
                   label={HUB_ACTION_RAIL_COPY.coachLabel}
                   ariaLabel={HUD_COPY.coachAriaLabel}
                   onClick={onCoachTap}
-                />
-              ) : null}
-              {onProTilePress ? (
-                <HubActionTile
-                  iconSrc="/art/hub/panel-pro.png"
-                  label={HUB_ACTION_RAIL_COPY.proLabel}
-                  ariaLabel={HUB_ACTION_RAIL_COPY.proTileAriaLabel(
-                    pro.active,
-                    pro.active ? pro.daysRemaining : undefined,
-                  )}
-                  onClick={onProTilePress}
-                  badge={
-                    pro.active ? (
-                      <span
-                        className="reward-tile-notif-streak"
-                        data-state="completed"
-                        aria-hidden="true"
-                      >
-                        ✓
-                      </span>
-                    ) : null
-                  }
                 />
               ) : null}
             </div>,
