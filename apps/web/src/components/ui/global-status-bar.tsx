@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { GLOBAL_STATUS_BAR_COPY } from "@/lib/content/editorial";
+import { GLOBAL_STATUS_BAR_COPY, HUD_COPY } from "@/lib/content/editorial";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { HudResourceChip } from "@/components/hud/hud-resource-chip";
 
@@ -344,6 +344,14 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
             compact={props.compact}
             onClick={props.onProTap}
             label={GLOBAL_STATUS_BAR_COPY.proManageLabel}
+            value={`PRO ${HUD_COPY.proRemainingFormat(
+              Math.max(
+                0,
+                Math.ceil(
+                  (props.proStatus.expiresAt - Date.now()) / 86_400_000,
+                ),
+              ),
+            )}`}
           />
         ) : (
           <AccountClusterButton
@@ -351,6 +359,7 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
             compact={props.compact}
             onClick={props.onProTap}
             label={GLOBAL_STATUS_BAR_COPY.proViewLabel}
+            value="PRO"
           />
         )}
       </div>
@@ -361,11 +370,16 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
 function AccountClusterButton({
   onClick,
   label,
+  value,
   compact = false,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
+  /** Visible chip text. Pass `"PRO Nd"` when active to surface days
+   *  remaining as cross-app recognition (mirrors the /hub HUD chip).
+   *  Inactive callers pass `"PRO"` so the chip stays a CTA. */
+  value: string;
   compact?: boolean;
 }): React.JSX.Element {
   return (
@@ -374,7 +388,7 @@ function AccountClusterButton({
       size={compact ? "compact" : "md"}
       atmosphere="adventure"
       icon="wallet"
-      value="PRO"
+      value={value}
       ariaLabel={label}
       onClick={onClick}
       className={cn(

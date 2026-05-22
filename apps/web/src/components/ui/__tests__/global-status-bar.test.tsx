@@ -167,7 +167,7 @@ describe("<GlobalStatusBar> variant: connected — PRO active", () => {
     expect(onProTap).toHaveBeenCalledOnce();
   });
 
-  it("renders the active PRO label without a verbose days-left suffix", () => {
+  it("renders the active PRO chip with the compact days-remaining suffix (PRO Nd)", () => {
     render(
       <GlobalStatusBar
         variant="connected"
@@ -178,8 +178,26 @@ describe("<GlobalStatusBar> variant: connected — PRO active", () => {
       />,
     );
     const pill = screen.getByLabelText(GLOBAL_STATUS_BAR_COPY.proManageLabel);
-    expect(pill.textContent).toMatch(/PRO/);
+    // Active chip now surfaces "PRO Nd" so the cross-app status bar
+    // matches the /hub HUD chip pattern — gives the user a recognizable
+    // cue that the subscription is live and how long is left. The
+    // verbose "days left" copy stays forbidden (chip is tight).
+    expect(pill.textContent).toMatch(/^PRO \d+d$/);
     expect(pill.textContent).not.toMatch(/days left/);
+  });
+
+  it("renders the inactive PRO chip as a bare 'PRO' CTA (no days suffix)", () => {
+    render(
+      <GlobalStatusBar
+        variant="connected"
+        identity={{ walletShort: sampleWalletShort }}
+        proStatus={{ active: false, expiresAt: null }}
+        isProLoading={false}
+        onProTap={() => undefined}
+      />,
+    );
+    const pill = screen.getByLabelText(GLOBAL_STATUS_BAR_COPY.proViewLabel);
+    expect(pill.textContent?.trim()).toBe("PRO");
   });
 
   it("warns when proStatus is stale (active=true but expiresAt < now)", () => {
