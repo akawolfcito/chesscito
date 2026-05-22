@@ -7901,12 +7901,19 @@ button.hud-resource-chip:active:not(:disabled) {
  *
  * Below 768px (MiniPay + every mobile WebView) the frame collapses
  * to a pass-through wrapper — no visual change. From 768px and up
- * the app gets centered inside a graphite phone bezel so the desktop
- * canvas no longer bleeds full-bleed art across the viewport.
+ * the app sits inside a graphite phone bezel so the desktop canvas
+ * no longer bleeds full-bleed art across the viewport.
  *
- * The shell sits in the document flow; the frame applies the bezel
- * styling; the inner wrapper masks children to a rounded rectangle
- * so any `min-h-[100dvh]` or full-bleed background is contained.
+ * Implementation notes:
+ *  - Frame is exactly 100dvh tall so `min-h-[100dvh]` children fit
+ *    without overflow.
+ *  - `transform: translateZ(0)` establishes a containing block for
+ *    `position: fixed` descendants (persistent dock, modal overlays)
+ *    so they anchor to the frame bottom instead of escaping to the
+ *    viewport.
+ *  - Bezel is drawn entirely via outer box-shadow rings (no padding
+ *    or border eating into content space). The page renders inside
+ *    exactly as it would on mobile — same bg, same dock placement.
  */
 .desktop-app-frame-shell,
 .desktop-app-frame,
@@ -7928,59 +7935,33 @@ button.hud-resource-chip:active:not(:disabled) {
     justify-content: center;
     width: 100%;
     min-height: 100dvh;
-    padding: 32px 16px;
+    padding: 0;
     box-sizing: border-box;
   }
 
   .desktop-app-frame {
+    transform: translateZ(0);
     position: relative;
     width: 414px;
-    height: min(880px, calc(100dvh - 64px));
-    padding: 12px;
-    border-radius: 56px;
-    background: #0a0a0c;
+    height: 100dvh;
+    border-radius: 36px;
+    overflow: hidden;
     box-shadow:
+      0 0 0 4px rgba(255, 255, 255, 0.03),
+      0 0 0 14px #0a0a0c,
+      0 0 0 15px rgba(255, 255, 255, 0.04),
       0 28px 64px rgba(0, 0, 0, 0.55),
-      0 6px 14px rgba(0, 0, 0, 0.35),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-      inset 0 0 0 2px rgba(0, 0, 0, 0.6);
+      0 6px 14px rgba(0, 0, 0, 0.35);
+    isolation: isolate;
     box-sizing: border-box;
     flex: 0 0 auto;
-  }
-
-  .desktop-app-frame::before {
-    content: "";
-    position: absolute;
-    top: 22px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 116px;
-    height: 32px;
-    background: #050507;
-    border-radius: 18px;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-    z-index: 20;
-    pointer-events: none;
   }
 
   .desktop-app-frame-inner {
     position: relative;
     width: 100%;
     height: 100%;
-    border-radius: 44px;
     overflow: hidden;
-    background: var(--paper-bg, #fff5d7);
     isolation: isolate;
-  }
-
-  /*
-   * Children inside the frame keep their own `min-h-[100dvh]`. Cap it
-   * to the inner panel height so flexed columns fit without spilling.
-   * The host element is the `<main>` that follows DesktopAppFrame.
-   */
-  .desktop-app-frame-inner > * {
-    min-height: 100% !important;
-    max-height: 100%;
-    overflow-y: auto;
   }
 }
