@@ -442,6 +442,7 @@ export const MISSION_BRIEFING_COPY = {
     king: "♚ One square, any direction",
   },
   captureHintCompact: "♜ Capture the target",
+  helpButtonAriaLabel: "Open mission briefing",
 } as const;
 
 export const VICTORY_PAGE_COPY = {
