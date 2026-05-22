@@ -22,7 +22,15 @@ export const SHARE_PIECES = [
 
 export type SharePiece = (typeof SHARE_PIECES)[number];
 
-const PRODUCTION_FALLBACK = "https://chesscito.com";
+/**
+ * Production canonical is the `www` subdomain — Vercel project routing
+ * 307-redirects the apex (`chesscito.com`) to `www.chesscito.com`. Crawlers
+ * follow the hop but emit "redirect detected" warnings (Twitter Card
+ * Validator + Facebook Sharing Debugger both flag it) and pay an extra
+ * roundtrip. Canonicalizing here keeps og:url and og:image one hop shorter.
+ */
+const PRODUCTION_FALLBACK = "https://www.chesscito.com";
+const APEX_HOST_RE = /^https?:\/\/chesscito\.com(?=\/|$)/i;
 const MAX_STARS = 15;
 const MIN_STARS = 0;
 
@@ -37,11 +45,14 @@ function normalizePiece(raw: string): SharePiece {
     : "rook";
 }
 
-/** Production origin (no trailing slash). Prefers NEXT_PUBLIC_APP_URL. */
+/**
+ * Production origin (no trailing slash, canonicalized to www for the
+ * apex prod host). Prefers NEXT_PUBLIC_APP_URL.
+ */
 export function getShareOrigin(): string {
   const raw = process.env.NEXT_PUBLIC_APP_URL;
-  if (!raw) return PRODUCTION_FALLBACK;
-  return raw.replace(/\/+$/, "");
+  const trimmed = (raw ?? PRODUCTION_FALLBACK).replace(/\/+$/, "");
+  return trimmed.replace(APEX_HOST_RE, "https://www.chesscito.com");
 }
 
 type ScoreArgs = { piece: SharePiece; stars: number };

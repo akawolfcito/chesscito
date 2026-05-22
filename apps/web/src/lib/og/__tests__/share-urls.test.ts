@@ -16,25 +16,30 @@ afterEach(() => {
 });
 
 describe("getShareOrigin", () => {
-  it("returns the production fallback when no env is set", () => {
-    expect(getShareOrigin()).toBe("https://chesscito.com");
+  it("returns the production fallback (www) when no env is set", () => {
+    expect(getShareOrigin()).toBe("https://www.chesscito.com");
   });
 
-  it("prefers NEXT_PUBLIC_APP_URL when present", () => {
+  it("canonicalizes the apex env value to www to avoid the 307 hop", () => {
+    process.env.NEXT_PUBLIC_APP_URL = "https://chesscito.com";
+    expect(getShareOrigin()).toBe("https://www.chesscito.com");
+  });
+
+  it("leaves non-apex env values untouched (staging, preview, custom)", () => {
     process.env.NEXT_PUBLIC_APP_URL = "https://staging.chesscito.com";
     expect(getShareOrigin()).toBe("https://staging.chesscito.com");
   });
 
   it("strips a trailing slash from the env value", () => {
     process.env.NEXT_PUBLIC_APP_URL = "https://chesscito.com/";
-    expect(getShareOrigin()).toBe("https://chesscito.com");
+    expect(getShareOrigin()).toBe("https://www.chesscito.com");
   });
 });
 
 describe("shareUrlForScore", () => {
   it("builds canonical URL with piece + stars params", () => {
     expect(shareUrlForScore({ piece: "rook", stars: 9 })).toBe(
-      "https://chesscito.com/share/score?piece=rook&stars=9",
+      "https://www.chesscito.com/share/score?piece=rook&stars=9",
     );
   });
 
@@ -52,7 +57,7 @@ describe("shareUrlForScore", () => {
 describe("shareUrlForBadge", () => {
   it("builds canonical URL with piece + stars params", () => {
     expect(shareUrlForBadge({ piece: "rook", stars: 15 })).toBe(
-      "https://chesscito.com/share/badge?piece=rook&stars=15",
+      "https://www.chesscito.com/share/badge?piece=rook&stars=15",
     );
   });
 
