@@ -7944,7 +7944,7 @@ button.hud-resource-chip:active:not(:disabled) {
     position: relative;
     width: 414px;
     height: 100dvh;
-    border-radius: 36px;
+    border-radius: 28px;
     overflow: hidden;
     box-shadow:
       0 0 0 4px rgba(255, 255, 255, 0.03),
@@ -7963,5 +7963,42 @@ button.hud-resource-chip:active:not(:disabled) {
     height: 100%;
     overflow: hidden;
     isolation: isolate;
+  }
+
+  /*
+   * Soft safe-area gradients that fade content into the rounded screen
+   * corners, mimicking the way real device bezels dim the screen edges.
+   * Pure visual overlay — no layout impact, so content underneath stays
+   * fully rendered and `min-h-[100dvh]` keeps fitting the frame.
+   */
+  .desktop-app-frame-inner::before,
+  .desktop-app-frame-inner::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 28px;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  .desktop-app-frame-inner::before {
+    top: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.18) 55%,
+      transparent 100%
+    );
+  }
+
+  .desktop-app-frame-inner::after {
+    bottom: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.18) 55%,
+      transparent 100%
+    );
   }
 }
