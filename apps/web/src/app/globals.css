@@ -8050,7 +8050,17 @@ button.hud-resource-chip:active:not(:disabled) {
     position: relative;
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    /*
+     * Horizontal clip (same as before — keeps the bezel chrome clean).
+     * Vertical scroll fires only when the page's content exceeds 100dvh
+     * AND the page lacks its own internal scroll container. App
+     * surfaces (/hub, /exercises, /arena, /coach, /trophies, /victory)
+     * have their own scroll containers, so this rule never activates
+     * for them. Informational pages (/about, /support, /why, /terms,
+     * /privacy) delegate to the body scroll, and this fallback prevents
+     * their content from being clipped inside the desktop frame.
+     */
+    overflow: hidden auto;
     isolation: isolate;
     background-color: #0b1220;
     background-image: var(--playhub-game-bg);

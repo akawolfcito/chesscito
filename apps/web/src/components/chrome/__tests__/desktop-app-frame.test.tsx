@@ -29,12 +29,12 @@ describe("isAppRoute", () => {
     expect(isAppRoute("/share/endgame")).toBe(false);
   });
 
-  it("does NOT match informational pages", () => {
-    expect(isAppRoute("/about")).toBe(false);
-    expect(isAppRoute("/support")).toBe(false);
-    expect(isAppRoute("/terms")).toBe(false);
-    expect(isAppRoute("/privacy")).toBe(false);
-    expect(isAppRoute("/why")).toBe(false);
+  it("matches informational pages (framed for landing → hub continuity)", () => {
+    expect(isAppRoute("/about")).toBe(true);
+    expect(isAppRoute("/support")).toBe(true);
+    expect(isAppRoute("/terms")).toBe(true);
+    expect(isAppRoute("/privacy")).toBe(true);
+    expect(isAppRoute("/why")).toBe(true);
   });
 
   it("does NOT match dev fixture routes", () => {
@@ -48,5 +48,11 @@ describe("isAppRoute", () => {
     expect(isAppRoute("/arenas-extended")).toBe(false);
     expect(isAppRoute("/exercise")).toBe(false);
     expect(isAppRoute("/victorious")).toBe(false);
+    // Informational route prefix-collisions
+    expect(isAppRoute("/aboutme")).toBe(false);
+    expect(isAppRoute("/supporter")).toBe(false);
+    expect(isAppRoute("/whymyword")).toBe(false);
+    expect(isAppRoute("/termsheet")).toBe(false);
+    expect(isAppRoute("/privacypolicy")).toBe(false);
   });
 });

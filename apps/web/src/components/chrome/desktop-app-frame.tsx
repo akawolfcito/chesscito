@@ -4,10 +4,15 @@ import { usePathname } from "next/navigation";
 
 /**
  * Pathname prefixes that opt into the desktop phone-bezel chrome. The
- * landing (`/`), share landing pages (`/share/*`), informational pages
- * (`/about`, `/support`, `/terms`, `/privacy`, `/why`), and `/dev/*`
- * fixture routes render without the frame — they are responsive
+ * landing (`/`), share landing pages (`/share/*`), and `/dev/*` fixture
+ * routes render without the frame — they are full-width responsive
  * surfaces, not the mobile-first app shell.
+ *
+ * Informational pages (`/about`, `/support`, `/why`, `/terms`,
+ * `/privacy`) are framed too: they already render at 390 px via
+ * `<LegalPageShell>`, so the frame reuses their natural width and
+ * preserves the "you're inside the game world" continuity from the
+ * landing → hub journey.
  */
 const APP_ROUTE_PREFIXES = [
   "/hub",
@@ -16,6 +21,11 @@ const APP_ROUTE_PREFIXES = [
   "/coach",
   "/trophies",
   "/victory",
+  "/about",
+  "/support",
+  "/why",
+  "/terms",
+  "/privacy",
 ] as const;
 
 export function isAppRoute(pathname: string): boolean {
