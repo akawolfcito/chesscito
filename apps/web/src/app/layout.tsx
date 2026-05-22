@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 import { WalletProvider } from "@/components/wallet-provider"
+import { DesktopAppFrame } from "@/components/chrome/desktop-app-frame"
 
 const fredoka = Fredoka({
   subsets: ['latin'],
@@ -79,7 +80,7 @@ export default function RootLayout({
           <div className="relative flex w-full flex-col text-foreground">
             <WalletProvider>
               <main className="flex flex-1 flex-col">
-                {children}
+                <DesktopAppFrame>{children}</DesktopAppFrame>
               </main>
             </WalletProvider>
           </div>
