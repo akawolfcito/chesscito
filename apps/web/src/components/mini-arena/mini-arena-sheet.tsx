@@ -27,6 +27,7 @@ import {
   recordMiniArenaBest,
 } from "@/lib/game/mini-arena-progress";
 import { MiniArenaResultCeremony } from "./mini-arena-result-ceremony";
+import { shareUrlForEndgame } from "@/lib/og/share-urls";
 
 type Status = "playing" | "won" | "drawn" | "thinking";
 
@@ -183,10 +184,35 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
     setTerminalResult(recovered);
   }, [status, terminalResult, moveCount, fen, setup.id, setup.parMoves]);
 
-  const shareBaseUrl = useMemo(() => {
-    const squares = parseFenSquares(setup.fen);
-    return `/api/og/endgame?mode=krk&name=${encodeURIComponent(setup.name)}&wk=${squares.wk}&wr=${squares.wr}&bk=${squares.bk}`;
-  }, [setup.fen, setup.name]);
+  const shareSquares = useMemo(() => parseFenSquares(setup.fen), [setup.fen]);
+  const shareBaseUrl = useMemo(
+    () =>
+      `/api/og/endgame?mode=krk&name=${encodeURIComponent(setup.name)}&wk=${shareSquares.wk}&wr=${shareSquares.wr}&bk=${shareSquares.bk}`,
+    [shareSquares, setup.name],
+  );
+  const shareLinkBaseUrl = useMemo(
+    () =>
+      shareUrlForEndgame({
+        name: setup.name,
+        wk: shareSquares.wk,
+        wr: shareSquares.wr,
+        bk: shareSquares.bk,
+      }),
+    [shareSquares, setup.name],
+  );
+  const shareLinkSolvedUrl = useMemo(
+    () =>
+      shareUrlForEndgame({
+        name: setup.name,
+        wk: shareSquares.wk,
+        wr: shareSquares.wr,
+        bk: shareSquares.bk,
+        solved: true,
+        moves: moveCount,
+        limit: setup.parMoves,
+      }),
+    [shareSquares, setup.name, moveCount, setup.parMoves],
+  );
 
   const pieces = useMemo<ChessBoardPiece[]>(() => {
     return fenToPieces(fen).map((p, i) => ({
@@ -560,6 +586,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
               ? `${shareBaseUrl}&solved=true&moves=${moveCount}&limit=${setup.parMoves}`
               : shareBaseUrl
           }
+          url={status === "won" ? shareLinkSolvedUrl : shareLinkBaseUrl}
           text={
             status === "won"
               ? ENDGAME_SHARE_COPY.ctaSolved(moveCount, setup.parMoves)
