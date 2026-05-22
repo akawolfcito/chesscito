@@ -56,6 +56,11 @@ export type TitleHeaderProps = {
   variant: "title";
   title: string;
   icon?: CandyIconName;
+  /** Custom inline icon (e.g. raster PNG). Renders in the same left
+   *  slot as `icon` and takes precedence when both are provided. Use
+   *  this to anchor a sheet/page to its tile asset (Daily, Mate, etc.)
+   *  so the entry point and the destination share identity. */
+  iconSlot?: React.ReactNode;
   ariaLabel?: string;
   sticky?: Sticky;
 };
@@ -65,6 +70,7 @@ export type TitleControlHeaderProps = {
   title: string;
   subtitle?: string;
   icon?: CandyIconName;
+  iconSlot?: React.ReactNode;
   trailingControl: React.ReactElement;
   ariaLabel?: string;
   sticky?: Sticky;
@@ -82,6 +88,7 @@ export type BackControlHeaderProps = {
   title: string;
   subtitle?: string;
   icon?: CandyIconName;
+  iconSlot?: React.ReactNode;
   /** Default back chip wiring. Renders `candy-nav-button` with the
    *  canonical CandyBanner btn-back image. Use this for the 95% case.
    *  Either this OR `backSlot` must be set. */
@@ -103,6 +110,7 @@ export type CloseControlHeaderProps = {
   title: string;
   subtitle?: string;
   icon?: CandyIconName;
+  iconSlot?: React.ReactNode;
   close: CloseProp;
   ariaLabel?: string;
   sticky?: Sticky;
@@ -274,9 +282,34 @@ const SUBTITLE_CLASS =
 
 /** Inline title icon — sits LEFT of the title text at h-5 w-5 with
  *  `gap-2`. Rule lives in the consumer surface (sheets mandate it, pages
- *  with a back chip make it optional). */
-function TitleIcon({ name }: { name: CandyIconName }): React.JSX.Element {
-  return <CandyIcon name={name} className="h-5 w-5 shrink-0" />;
+ *  with a back chip make it optional). When `slot` is provided it wins
+ *  over `name`, so consumers can anchor a screen to its tile asset
+ *  (raster PNG) instead of the line-art CandyIcon set. */
+function TitleIcon({
+  name,
+  slot,
+}: {
+  name?: CandyIconName;
+  slot?: React.ReactNode;
+}): React.JSX.Element | null {
+  if (slot) {
+    // Slot wrapper does NOT clamp size — the consumer's element owns
+    // its own h-*/w-* so it can match the title+subtitle stack (raster
+    // tile icons typically render at h-10 ≈ title line + subtitle line).
+    // The line-art CandyIcon path below stays at the canonical h-5 w-5.
+    return (
+      <span
+        aria-hidden="true"
+        className="inline-flex shrink-0 items-center justify-center"
+      >
+        {slot}
+      </span>
+    );
+  }
+  if (name) {
+    return <CandyIcon name={name} className="h-5 w-5 shrink-0" />;
+  }
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -323,7 +356,9 @@ export function ContextualHeader(props: ContextualHeaderProps): React.JSX.Elemen
           data-variant="title"
           className={HEADER_CLASS}
         >
-          {props.icon ? <TitleIcon name={props.icon} /> : null}
+          {props.icon || props.iconSlot ? (
+            <TitleIcon name={props.icon} slot={props.iconSlot} />
+          ) : null}
           <h1 className={TITLE_CLASS}>{props.title}</h1>
         </header>
       );
@@ -357,7 +392,9 @@ function TitleControlHeader(
       className={HEADER_CLASS}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        {props.icon ? <TitleIcon name={props.icon} /> : null}
+        {props.icon || props.iconSlot ? (
+          <TitleIcon name={props.icon} slot={props.iconSlot} />
+        ) : null}
         <div className="min-w-0 flex-1">
           <h1 className={TITLE_CLASS}>{props.title}</h1>
           {props.subtitle ? <p className={SUBTITLE_CLASS}>{props.subtitle}</p> : null}
@@ -440,7 +477,9 @@ function BackControlHeader(
         </button>
       ) : null}
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        {props.icon ? <TitleIcon name={props.icon} /> : null}
+        {props.icon || props.iconSlot ? (
+          <TitleIcon name={props.icon} slot={props.iconSlot} />
+        ) : null}
         <div className="min-w-0 flex-1">
           <h1 className={TITLE_CLASS}>{props.title}</h1>
           {props.subtitle ? <p className={SUBTITLE_CLASS}>{props.subtitle}</p> : null}
@@ -467,7 +506,9 @@ function CloseControlHeader(
       className={HEADER_CLASS}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        {props.icon ? <TitleIcon name={props.icon} /> : null}
+        {props.icon || props.iconSlot ? (
+          <TitleIcon name={props.icon} slot={props.iconSlot} />
+        ) : null}
         <div className="min-w-0 flex-1">
           <h1 className={TITLE_CLASS}>{props.title}</h1>
           {props.subtitle ? <p className={SUBTITLE_CLASS}>{props.subtitle}</p> : null}
@@ -477,10 +518,16 @@ function CloseControlHeader(
         type="button"
         onClick={props.close.onClick}
         aria-label={closeLabel}
-        className="candy-close-button"
+        className="candy-close-asset-button"
         data-slot="close-control"
       >
-        <CandyIcon name="close" className="h-5 w-5" aria-hidden="true" />
+        <img
+          src="/art/screen-mission/close-icon.png"
+          alt=""
+          aria-hidden="true"
+          className="h-10 w-10 object-contain"
+          draggable={false}
+        />
       </button>
     </header>
   );

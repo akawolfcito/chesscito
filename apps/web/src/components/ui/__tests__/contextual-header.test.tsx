@@ -352,7 +352,7 @@ describe("<ContextualHeader> variant: close-control", () => {
     const closeBtn = screen.getByRole("button", { name: "Close" });
     expect(closeBtn).toBeInTheDocument();
     expect(closeBtn.getAttribute("data-slot")).toBe("close-control");
-    expect(closeBtn.className).toMatch(/candy-close-button/);
+    expect(closeBtn.className).toMatch(/candy-close-asset-button/);
   });
 
   it("calls close.onClick when the close button is tapped", () => {
@@ -486,10 +486,19 @@ describe("<ContextualHeader> optional title icon", () => {
         close={{ onClick: () => undefined }}
       />,
     );
-    // The icon sits inline; the close button still renders its own
-    // CandyIcon `close` glyph — so we expect at least 2 candy-icons.
+    // Inline title icon is a CandyIcon. The close button now renders a
+    // raster <img> from /art/screen-mission/close-icon.png instead of
+    // a CandyIcon `close` glyph — so we expect exactly 1 candy-icon
+    // (the title icon) and the close <img> separately.
     const icons = container.querySelectorAll("picture.candy-icon");
-    expect(icons.length).toBeGreaterThanOrEqual(2);
+    expect(icons.length).toBe(1);
+    const closeImg = container.querySelector(
+      'button[data-slot="close-control"] img',
+    );
+    expect(closeImg).not.toBeNull();
+    expect(closeImg?.getAttribute("src")).toBe(
+      "/art/screen-mission/close-icon.png",
+    );
   });
 
   it("omits the icon when the prop is not provided", () => {

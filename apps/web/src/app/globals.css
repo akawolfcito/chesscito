@@ -557,6 +557,43 @@
     color: #dc2626;
   }
 
+  /* Asset-backed close — used by sheets that adopt the new
+     screen-mission/close-icon.png (red circle + white X). The asset
+     IS the visual, so no glassy backdrop / border / shadow. Keeps
+     the 44×44 touch target, hover lift, and active scale from its
+     sibling .candy-close-button. */
+  .candy-close-asset-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 9999px;
+    transition:
+      transform 120ms ease,
+      filter 120ms ease;
+  }
+
+  .candy-close-asset-button:hover {
+    filter: brightness(1.08);
+  }
+
+  .candy-close-asset-button:active {
+    transform: scale(0.92);
+  }
+
+  .candy-close-asset-button:focus-visible {
+    outline: 3px solid rgba(251, 191, 36, 0.5);
+    outline-offset: 2px;
+  }
+
   /* Result screen overlay (Sally pass 10, 2026-05-20) — aligned with
      the canonical `.sheet-bg-hub` treatment so the post-match screens
      share the same forest band + cream wash vocabulary as /trophies,
