@@ -1,10 +1,12 @@
 # Rich Share Previews — Handoff (2026-05-21)
 
-## Estado
+## Estado — CLOSED 2026-05-21
 
-Phase 1+2+3 del spec `docs/superpowers/specs/2026-05-21-rich-share-previews-design.md` shipped a `main`. Tests: **1813 passing** (baseline 1765 → +48; 14 directos de este trabajo).
+Phase 1+2+3 del spec `docs/superpowers/specs/2026-05-21-rich-share-previews-design.md` shipped a `main` + smoke validado en X y Facebook con preview rico per-variante. Tests: **1814 passing** (baseline 1765 → +49; 15 directos de este trabajo).
 
-### Commits
+**Deploy prod final:** `chesscito-3ivv8qob3-goodwolf.vercel.app` (Ready).
+
+### Commits (`067ba394..78076e10`)
 
 | SHA | Mensaje |
 |---|---|
@@ -13,6 +15,21 @@ Phase 1+2+3 del spec `docs/superpowers/specs/2026-05-21-rich-share-previews-desi
 | `f6d9701c` | feat(share): add /share/score and /share/badge canonical pages |
 | `ecea5fd6` | feat(share): wire canonical share URL through result-overlay |
 | `9be01002` | feat(share): replace Messages (SMS) with Telegram tile |
+| `dc976fb4` | docs(handoff): initial handoff (this file, pre-canonicalization) |
+| `378d58f5` | fix(share): canonicalize apex chesscito.com to www in share URLs |
+| `78076e10` | chore: ignore root .vercel directory |
+
+### Smoke validation — PASS (2026-05-21)
+
+| Surface | Resultado |
+|---|---|
+| `curl /share/score?piece=rook&stars=9` | ✅ HTML con `og:url`, `og:image`, `og:title`, `twitter:card=summary_large_image`, `robots=noindex` |
+| `curl /api/og/exercise?...` desde `www` | ✅ 200 `image/jpeg`, cache `s-maxage=3600 swr=86400` |
+| X Card Validator (Tweet Composer) | ✅ Preview rendereado con Torre + 9/15 STARS + "9/15 stars on Chesscito" |
+| Facebook Sharing Debugger | ✅ Link Preview correcto; `og:url` + `og:image` → www directo |
+| Variantes únicas (rook/9 vs bishop/12 vs knight-badge/15) | ✅ Cada una con PNG dinámico distinto |
+
+**Warning residual aceptado:** FB Debugger sigue mostrando "307 HTTP Redirect" en `Redirect Path` cuando el URL pegado al validator es apex (`chesscito.com`). Los shares reales de la app van directo a `www.chesscito.com` (gracias a `getShareOrigin()` canonicalizado), por lo que end-users nunca disparan el hop. Solo aparece si alguien manualmente paga apex en el debugger.
 
 ### Lo que cambia para el usuario
 
@@ -127,6 +144,7 @@ A docs/superpowers/specs/2026-05-21-rich-share-previews-design.md
 
 ## Próximo paso recomendado
 
-1. Deploy a preview → ejecutar smoke checklist.
-2. Si OK, promote a `chesscito.com` y validar en MiniPay Android real.
-3. Decidir si abordar daily-tactic + mini-arena share en sprint actual o backlog.
+1. ~~Deploy a preview → ejecutar smoke checklist.~~ ✅ DONE (apuntamos directo a prod via push main; smoke automático + X/FB validators OK).
+2. ~~Si OK, promote a `chesscito.com`~~ ✅ DONE — ya está en producción.
+3. **Pendiente:** validar en MiniPay Android real (smoke human-eye con device).
+4. **Pendiente:** decidir si abordar daily-tactic + mini-arena share en sprint actual o backlog. Recomendación: backlog — el bug del screenshot original (score share) está resuelto.
