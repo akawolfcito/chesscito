@@ -1748,11 +1748,11 @@
   }
 
   .action-pin-submit-pedestal {
-    width: 74px;
-    height: 48px;
+    width: 64px;
+    height: 64px;
     border: 0;
     border-radius: 0;
-    background: url("/art/scene-rooted/pedestal-new.png") center bottom / contain no-repeat;
+    background: transparent;
     color: rgba(63, 34, 8, 0.95);
     box-shadow: none;
     text-shadow: none;
@@ -1764,10 +1764,32 @@
   }
 
   .action-pin-submit-pedestal img {
-    width: 34px;
-    height: 34px;
-    transform: translateY(-8px);
+    width: 56px;
+    height: 56px;
+    transform: none;
     filter: drop-shadow(0 3px 3px rgba(99, 47, 5, 0.24));
+    animation: save-pulse-cycle 300s linear infinite;
+  }
+
+  /* Sutil destello cada 5 min (~1.5s de halo ámbar sobre 300s).
+     Fuera del pulso el filtro queda fijo en la sombra base, así el
+     navegador no repinta el resto del ciclo. */
+  @keyframes save-pulse-cycle {
+    0%,
+    0.5%,
+    100% {
+      filter: drop-shadow(0 3px 3px rgba(99, 47, 5, 0.24));
+    }
+    0.25% {
+      filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.85))
+        drop-shadow(0 3px 3px rgba(99, 47, 5, 0.24));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .action-pin-submit-pedestal img {
+      animation: none;
+    }
   }
 
   /* ── E3 Key game labels ──
@@ -6606,8 +6628,8 @@ button.hud-resource-chip:active:not(:disabled) {
 .action-row-pedestal-daily,
 .action-row-pedestal-arena {
   background-image: none;
-  border: 1px solid rgba(245, 200, 100, 0.45);
-  border-radius: 50%;
+  border: 0;
+  border-radius: 0;
   filter: drop-shadow(0 3px 6px rgba(63, 34, 8, 0.25));
 }
 
@@ -6618,7 +6640,7 @@ button.hud-resource-chip:active:not(:disabled) {
    relying on source order — survives external stylesheet reordering. */
 .stone-pedestal.action-row-pedestal.is-placeholder {
   background-image: none;
-  border-radius: 50%;
+  border-radius: 0;
   box-shadow: none;
 }
 
