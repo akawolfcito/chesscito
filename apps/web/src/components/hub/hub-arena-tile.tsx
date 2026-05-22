@@ -25,7 +25,7 @@ export function HubArenaTile({ setup, unlocked }: Props) {
   return (
     <>
       <HubActionTile
-        iconSrc="/art/new-icons-chesscito/learning.png"
+        iconSrc="/art/new-icons-chesscito/play-chess.png"
         label={HUB_ACTION_RAIL_COPY.mateLabel}
         ariaLabel={ariaLabel}
         onClick={() => unlocked && setOpen(true)}

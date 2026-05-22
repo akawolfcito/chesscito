@@ -37,7 +37,7 @@ export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: P
           stone={4}
           size="large"
           className="action-row-pedestal action-row-pedestal-arena"
-          icon={<ActionRowIcon name="learning" className="h-14 w-14 object-contain" />}
+          icon={<ActionRowIcon name="play-chess" className="h-14 w-14 object-contain" />}
           onClick={() => setOpen(true)}
           disabled={!unlocked}
           aria-label={unlocked ? `Reto avanzado: ${setup.name}` : `${setup.name} — locked`}
