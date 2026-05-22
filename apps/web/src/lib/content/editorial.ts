@@ -2115,6 +2115,11 @@ export const HUB_ACTION_RAIL_COPY = {
   dailyLabel: "Daily",
   mateLabel: "Mate",
   coachLabel: "Coach",
+  proLabel: "PRO",
+  proTileAriaLabel: (active: boolean, daysRemaining?: number): string =>
+    active
+      ? `PRO active — ${daysRemaining ?? 0} days remaining. Tap to manage subscription.`
+      : "Unlock PRO subscription — tap to learn more.",
 } as const;
 
 export const SECONDARY_CTA_COPY = {

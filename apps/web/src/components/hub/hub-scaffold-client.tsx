@@ -369,6 +369,10 @@ export function HubScaffoldClient({
             proSheet.openSheet();
           }
         }}
+        onProTilePress={() => {
+          track("hub_pro_tile_tap", { pro_active: pro.active });
+          proSheet.openSheet();
+        }}
         onPremiumTap={() => {
           track("hub_premium_slot_tap", { pro_active: pro.active });
           proSheet.openSheet();

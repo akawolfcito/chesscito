@@ -205,7 +205,10 @@ describe("HubScaffoldClient — PRO chip", () => {
     render(<HubScaffoldClient />);
 
     // HudResourceChip(tone="pro", value=null) returns null by contract.
-    expect(screen.queryByText("PRO")).not.toBeInTheDocument();
+    // Assert by the chip's active-state text pattern ("PRO 7d") instead
+    // of bare "PRO" so the new right-rail PRO discovery tile (which
+    // always renders the "PRO" label) doesn't collide with this guard.
+    expect(screen.queryByText(/^PRO \d+d$/)).not.toBeInTheDocument();
     // The legacy inactive Coach PRO card ("Train with Coach" CTA) was
     // removed in the PRO-discoverability refactor; the PRO chip
     // collapse + Go PRO absence remain the canonical guards.
@@ -244,8 +247,53 @@ describe("HubScaffoldClient — PRO chip", () => {
 
     // Chip collapses to null; the removed "Train with Coach" CTA is no
     // longer the inactive surface — the new flow is the PRO HUD chip
-    // tap + dock pathway, covered below.
-    expect(screen.queryByText("PRO")).not.toBeInTheDocument();
+    // tap + dock pathway, covered below. Match on the active chip's
+    // text pattern so the new right-rail PRO tile (label "PRO") does
+    // not interfere with this collapse check.
+    expect(screen.queryByText(/^PRO \d+d$/)).not.toBeInTheDocument();
+  });
+});
+
+describe("HubScaffoldClient — PRO right-rail tile (discovery)", () => {
+  it("renders an inactive PRO tile on first paint so the subscription is discoverable from moment 0", () => {
+    render(<HubScaffoldClient />);
+
+    const tile = screen.getByLabelText(
+      /Unlock PRO subscription — tap to learn more\./,
+    );
+    expect(tile).toBeInTheDocument();
+  });
+
+  it("opens ProSheet when the inactive PRO tile is tapped", async () => {
+    const user = userEvent.setup();
+    render(<HubScaffoldClient />);
+
+    const tile = screen.getByLabelText(
+      /Unlock PRO subscription — tap to learn more\./,
+    );
+    await user.click(tile);
+
+    expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
+    expect(trackMock).toHaveBeenCalledWith("hub_pro_tile_tap", {
+      pro_active: false,
+    });
+  });
+
+  it("renders the PRO tile in active state when the subscription is live", () => {
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
+    useProStatusMock.mockReturnValue({
+      status: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+
+    render(<HubScaffoldClient />);
+
+    // ariaLabel pattern: "PRO active — 7 days remaining. Tap to manage…"
+    expect(
+      screen.queryByLabelText(/PRO active — 7 days remaining/) ??
+        screen.queryByLabelText(/PRO active — 8 days remaining/),
+    ).not.toBeNull();
   });
 });
 

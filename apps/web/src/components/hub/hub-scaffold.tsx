@@ -73,6 +73,10 @@ type HubScaffoldProps = {
   /** Coach chip (top row, always visible) — opens session history. */
   onCoachTap?: () => void;
   onCoachProCardCta?: () => void;
+  /** PRO right-rail tile — opens the PRO sheet (same canonical surface
+   *  as the HUD chip and `?initialSheet=pro` deep-link). Surfaces the
+   *  subscription affordance from "moment 0" without a banner. */
+  onProTilePress?: () => void;
   onPremiumTap?: () => void;
   onPlayPress?: () => void;
   /** Secondary-row chip taps. The shields chip is the home for shop
@@ -137,6 +141,7 @@ export function HubScaffold({
   onTrophyTap,
   onProTap,
   onCoachTap,
+  onProTilePress,
   onPremiumTap,
   onPlayPress,
   onStreakTap,
@@ -313,6 +318,28 @@ export function HubScaffold({
                   label={HUB_ACTION_RAIL_COPY.coachLabel}
                   ariaLabel={HUD_COPY.coachAriaLabel}
                   onClick={onCoachTap}
+                />
+              ) : null}
+              {onProTilePress ? (
+                <HubActionTile
+                  iconSrc="/art/hub/panel-pro.png"
+                  label={HUB_ACTION_RAIL_COPY.proLabel}
+                  ariaLabel={HUB_ACTION_RAIL_COPY.proTileAriaLabel(
+                    pro.active,
+                    pro.active ? pro.daysRemaining : undefined,
+                  )}
+                  onClick={onProTilePress}
+                  badge={
+                    pro.active ? (
+                      <span
+                        className="reward-tile-notif-streak"
+                        data-state="completed"
+                        aria-hidden="true"
+                      >
+                        ✓
+                      </span>
+                    ) : null
+                  }
                 />
               ) : null}
             </div>,
