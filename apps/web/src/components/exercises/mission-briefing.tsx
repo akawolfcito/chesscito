@@ -68,7 +68,7 @@ export function MissionBriefing({
           className="relative w-full"
           style={{
             backgroundImage:
-              "url('/art/screen-mission/panel-mision-icon.png')",
+              'image-set(url("/art/screen-mission/panel-mision-icon.avif") type("image/avif"), url("/art/screen-mission/panel-mision-icon.webp") type("image/webp"), url("/art/screen-mission/panel-mision-icon.png") type("image/png"))',
             backgroundSize: "100% 100%",
             backgroundRepeat: "no-repeat",
           }}
@@ -96,25 +96,45 @@ export function MissionBriefing({
                 aria-label="Close"
                 className="candy-close-asset-button"
               >
-                <img
-                  src="/art/screen-mission/close-icon.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-10 w-10 object-contain"
-                  draggable={false}
-                />
+                <picture>
+                  <source
+                    srcSet="/art/screen-mission/close-icon.avif"
+                    type="image/avif"
+                  />
+                  <source
+                    srcSet="/art/screen-mission/close-icon.webp"
+                    type="image/webp"
+                  />
+                  <img
+                    src="/art/screen-mission/close-icon.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="h-10 w-10 object-contain"
+                    draggable={false}
+                  />
+                </picture>
               </button>
             </div>
 
             {/* Avatar — the gold ring is baked into the asset. */}
             <div className="mt-4 flex items-center justify-center">
-              <img
-                src="/art/screen-mission/avatar-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="h-32 w-32 object-contain drop-shadow-[0_3px_10px_rgba(120,65,5,0.45)]"
-                draggable={false}
-              />
+              <picture>
+                <source
+                  srcSet="/art/screen-mission/avatar-icon.avif"
+                  type="image/avif"
+                />
+                <source
+                  srcSet="/art/screen-mission/avatar-icon.webp"
+                  type="image/webp"
+                />
+                <img
+                  src="/art/screen-mission/avatar-icon.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-32 w-32 object-contain drop-shadow-[0_3px_10px_rgba(120,65,5,0.45)]"
+                  draggable={false}
+                />
+              </picture>
             </div>
 
             {/* Objective — large bold, anchors the eye. */}
@@ -158,13 +178,23 @@ export function MissionBriefing({
 
             {/* Decorative crown divider — separates the primary CTA
                 from the secondary Arena escape link. */}
-            <img
-              src="/art/screen-mission/adorno-icon.png"
-              alt=""
-              aria-hidden="true"
-              className="mt-3 h-4 w-44 object-contain"
-              draggable={false}
-            />
+            <picture>
+              <source
+                srcSet="/art/screen-mission/adorno-icon.avif"
+                type="image/avif"
+              />
+              <source
+                srcSet="/art/screen-mission/adorno-icon.webp"
+                type="image/webp"
+              />
+              <img
+                src="/art/screen-mission/adorno-icon.png"
+                alt=""
+                aria-hidden="true"
+                className="mt-3 h-4 w-44 object-contain"
+                draggable={false}
+              />
+            </picture>
 
             <Link
               href="/arena"

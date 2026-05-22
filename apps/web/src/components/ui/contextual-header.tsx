@@ -521,13 +521,23 @@ function CloseControlHeader(
         className="candy-close-asset-button"
         data-slot="close-control"
       >
-        <img
-          src="/art/screen-mission/close-icon.png"
-          alt=""
-          aria-hidden="true"
-          className="h-10 w-10 object-contain"
-          draggable={false}
-        />
+        <picture>
+          <source
+            srcSet="/art/screen-mission/close-icon.avif"
+            type="image/avif"
+          />
+          <source
+            srcSet="/art/screen-mission/close-icon.webp"
+            type="image/webp"
+          />
+          <img
+            src="/art/screen-mission/close-icon.png"
+            alt=""
+            aria-hidden="true"
+            className="h-10 w-10 object-contain"
+            draggable={false}
+          />
+        </picture>
       </button>
     </header>
   );
