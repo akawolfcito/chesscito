@@ -16,11 +16,58 @@ Assets shipped with the redesign live in `apps/web/public/art/screen-mission/`:
 
 This document maps the screens that follow a similar "hero ceremony" shape — modals/overlays where the player meets a character, reads a bold result/intent message, taps a single primary CTA, and may take a secondary escape — and would benefit from the same visual treatment.
 
-## Visual capture
+## Visual capture — existing VR baselines
 
-> **Note:** Screenshots are not embedded in this doc because each candidate requires specific app state (first-visit, piece-complete, victory, etc.) and a running dev server. The trigger conditions below let you reproduce each state manually, or — if we adopt the pattern — wire dev fixture routes under `/dev/*` (matches the existing `/dev/tx-progress`, `/dev/persist-overlay`, `/dev/coach-history` fixtures used for VR baselines per MEMORY.md).
->
-> **Suggested follow-up:** add `/dev/welcome`, `/dev/piece-complete`, `/dev/result-overlay`, `/dev/victory-celebration` fixtures so each candidate can be captured into a baseline before redesign and after — gives a clean visual diff per propagation step.
+The repo already ships VR baseline PNGs at `apps/web/e2e-results/snapshots/`
+(local-only, no CI gate). Open each PNG directly to see the **current** state
+of every candidate. Use these as the "before" reference when designing the
+candy-panel redesign.
+
+| Candidate | Current baseline (opens in any image viewer) | Status |
+|---|---|---|
+| MissionBriefing (reference, already redesigned) | — | post-redesign capture pending |
+| PieceCompletePrompt | `apps/web/e2e-results/snapshots/candy-shell-piece-complete.png` | ✅ baseline exists |
+| BadgeEarnedPrompt (sibling of PieceComplete) | `apps/web/e2e-results/snapshots/candy-shell-badge-earned.png` | ✅ baseline exists |
+| Mission detail sheet (visual reference for piece-aware iconSlot) | `apps/web/e2e-results/snapshots/candy-shell-mission-detail.png` | ✅ baseline exists |
+| WelcomeOverlay (first-visit onboarding) | — | ❌ needs capture |
+| ResultOverlay (success variants) | `apps/web/e2e-results/snapshots/share-modal-badge.png` (related) | ⚠️ partial — direct ResultOverlay capture missing |
+| VictoryCelebration (full arena win) | `apps/web/e2e-results/snapshots/victory-page.png` (related share page) | ⚠️ no in-game modal capture |
+| VictoryClaim — error | `apps/web/e2e-results/snapshots/error-boundary-victory.png` | ✅ baseline exists |
+| VictoryClaim — success / claiming | — | ❌ needs capture |
+| MiniArenaResultCeremony — loss | `apps/web/e2e-results/snapshots/arena-loss-modal.png` | ✅ baseline exists |
+| MiniArenaResultCeremony — won | `apps/web/e2e-results/snapshots/arena-loss-or-state.png` | ⚠️ verify variant |
+| LabyrinthCompleteOverlay | — | ❌ needs capture |
+
+**Other useful baselines on disk** (for context — sheets that already got the `iconSlot` treatment in commit `a5a0f399`, so these are pre-`iconSlot` references):
+
+- `sheet-badges.png` — BadgeSheet pre-iconSlot
+- `sheet-shop.png` — ShopSheet pre-iconSlot
+- `sheet-trophies.png` — TrophiesSheet pre-iconSlot
+- `sheet-leaderboard.png` — LeaderboardSheet pre-iconSlot
+- `pro-sheet.png` — PRO sheet pre-iconSlot
+- `play-hub.png`, `landing.png`, `arena.png`, `about.png`, `trophies.png` — page-level baselines
+- `arena-selector-with-dock.png`, `share-modal-invite.png`, `why.png` — misc surfaces
+
+### Capturing the missing baselines
+
+For the surfaces marked ❌, run from `apps/web/`:
+
+```bash
+pnpm test:e2e:visual
+```
+
+The Playwright config picks up `e2e/visual-regression.spec.ts` and
+`e2e/candy-shell-previews.spec.ts` which orchestrate the captures. New surfaces
+need a fresh spec or a new case inside `candy-shell-previews.spec.ts`. Per
+MEMORY.md, the existing fixture pattern lives under `apps/web/src/app/dev/`
+(currently: `tx-progress`, `persist-overlay`, `coach-history`); add `/dev/welcome`,
+`/dev/piece-complete`, `/dev/result-overlay`, `/dev/labyrinth-complete`,
+`/dev/victory-celebration` fixtures so each modal can be captured without
+needing actual gameplay/wallet/contract state.
+
+> **Note for the next session:** the post-redesign MissionBriefing baseline
+> doesn't exist yet — capture it next so the visual contract is locked
+> before any propagation begins.
 
 ## Candidates
 
