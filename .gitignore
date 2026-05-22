@@ -144,3 +144,4 @@ design/
 
 # Local debug screenshots / error captures (per-session, not project history)
 errors/
+.vercel
