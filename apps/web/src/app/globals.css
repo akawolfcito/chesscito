@@ -7922,13 +7922,11 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @media (min-width: 768px) {
-  body:has(.desktop-app-frame-shell) {
-    background:
-      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 60%),
-      linear-gradient(135deg, #2a2a2e 0%, #141416 100%);
-    min-height: 100dvh;
-  }
-
+  /*
+   * Shell paints the graphite gradient AROUND the frame. Body bg stays
+   * untouched (var(--playhub-game-bg)), so the inside of the frame can
+   * still rely on the same ambient bg image that mobile renders.
+   */
   .desktop-app-frame-shell {
     display: flex;
     align-items: center;
@@ -7937,12 +7935,19 @@ button.hud-resource-chip:active:not(:disabled) {
     min-height: 100dvh;
     padding: 0;
     box-sizing: border-box;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 60%),
+      linear-gradient(135deg, #2a2a2e 0%, #141416 100%);
   }
 
   .desktop-app-frame {
     transform: translateZ(0);
     position: relative;
-    width: 414px;
+    /* Match --app-max-width so the page's 390px content column fills
+       the frame edge-to-edge — no gap, no "double bg" visible at the
+       sides. The frame stays phone-shaped because it is narrow + tall
+       + rounded, not because of a fixed device-spec width. */
+    width: var(--app-max-width, 390px);
     height: 100dvh;
     border-radius: 28px;
     overflow: hidden;
@@ -7957,48 +7962,23 @@ button.hud-resource-chip:active:not(:disabled) {
     flex: 0 0 auto;
   }
 
+  /*
+   * Inner panel replicates the body bg (game art) so the page's
+   * transparent areas show the same ambient bg as mobile. Without
+   * this, the shell's graphite would leak through the page's
+   * non-opaque regions (mission-shell wrappers do not paint a bg
+   * of their own).
+   */
   .desktop-app-frame-inner {
     position: relative;
     width: 100%;
     height: 100%;
     overflow: hidden;
     isolation: isolate;
-  }
-
-  /*
-   * Soft safe-area gradients that fade content into the rounded screen
-   * corners, mimicking the way real device bezels dim the screen edges.
-   * Pure visual overlay — no layout impact, so content underneath stays
-   * fully rendered and `min-h-[100dvh]` keeps fitting the frame.
-   */
-  .desktop-app-frame-inner::before,
-  .desktop-app-frame-inner::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 28px;
-    z-index: 50;
-    pointer-events: none;
-  }
-
-  .desktop-app-frame-inner::before {
-    top: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.55) 0%,
-      rgba(0, 0, 0, 0.18) 55%,
-      transparent 100%
-    );
-  }
-
-  .desktop-app-frame-inner::after {
-    bottom: 0;
-    background: linear-gradient(
-      to top,
-      rgba(0, 0, 0, 0.55) 0%,
-      rgba(0, 0, 0, 0.18) 55%,
-      transparent 100%
-    );
+    background-color: #0b1220;
+    background-image: var(--playhub-game-bg);
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
   }
 }
