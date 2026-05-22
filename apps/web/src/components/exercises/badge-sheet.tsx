@@ -10,6 +10,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { ABOUT_LINK_COPY, BADGE_SHEET_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
@@ -246,7 +247,7 @@ export function BadgeSheet({
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
-            icon="trophy"
+            iconSlot={<TileIconSlot src="/art/badge-menu" />}
             title={BADGE_SHEET_COPY.title}
             subtitle={BADGE_SHEET_COPY.subtitle}
             close={{ onClick: () => onOpenChange(false), label: "Close badges" }}

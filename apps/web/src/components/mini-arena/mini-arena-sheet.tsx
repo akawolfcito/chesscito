@@ -9,6 +9,7 @@ import {
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { MissionHeaderCandy } from "@/components/exercises/mission-header-candy";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { ShareModal } from "@/components/share/share-modal";
 import { fenToPieces } from "@/lib/game/arena-utils";
 import {
@@ -473,7 +474,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
           <MissionHeaderCandy
               title={setup.name}
               subtitle="Special Training"
-              icon="trophy"
+              iconSlot={<TileIconSlot src="/art/new-icons-chesscito/play-chess" />}
               objective={setup.description}
               onClose={() => handleOpenChange(false)}
             />

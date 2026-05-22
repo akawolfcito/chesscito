@@ -1,5 +1,6 @@
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { PURCHASE_CONFIRM_COPY, PURCHASE_FIELD_LABELS, CHAIN_NAMES, SHOP_SHEET_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ export function PurchaseConfirmSheet({
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
-            icon="shop"
+            iconSlot={<TileIconSlot src="/art/shop-menu" />}
             title={PURCHASE_CONFIRM_COPY.title}
             close={{ onClick: () => onOpenChange(false), label: "Cancel purchase" }}
           />

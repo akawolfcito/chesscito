@@ -6,6 +6,7 @@ import {
   SheetContent,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { TreasureTile } from "@/components/scene-rooted/treasure-tile";
 import { COACH_COPY } from "@/lib/content/editorial";
 
@@ -65,7 +66,7 @@ export function CoachPaywall({
         <div className="-mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
-            icon="coach"
+            iconSlot={<TileIconSlot src="/art/new-icons-chesscito/learning" />}
             title={COACH_COPY.creditTitle}
             subtitle={COACH_COPY.creditExplain}
             close={{

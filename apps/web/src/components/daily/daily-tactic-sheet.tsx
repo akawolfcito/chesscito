@@ -11,6 +11,7 @@ import {
 import { Board } from "@/components/board";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { MissionHeaderCandy } from "@/components/exercises/mission-header-candy";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { ShareModal } from "@/components/share/share-modal";
 import {
   hapticImpact,
@@ -124,7 +125,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
         <MissionHeaderCandy
           title="Daily Tactic"
           subtitle={puzzleData.name}
-          icon="coach"
+          iconSlot={<TileIconSlot src="/art/new-icons-chesscito/ejercicio-diario-chess" />}
           objective={`Move the ${puzzleData.piece} to the target square.`}
           onClose={() => onOpenChange(false)}
         />

@@ -6,6 +6,7 @@ import {
   SheetContent,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { ProfileBanner } from "@/components/profile/profile-banner";
 import { PendingClaims } from "@/components/profile/pending-claims";
 import { GeneralStats } from "@/components/profile/general-stats";
@@ -217,6 +218,7 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
+            iconSlot={<TileIconSlot src="/art/new-icons-chesscito/avatar-blue" />}
             title={PROFILE_COPY.pageTitle}
             close={{ onClick: () => onOpenChange(false), label: "Close profile" }}
           />

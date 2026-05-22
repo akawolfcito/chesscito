@@ -10,6 +10,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import {
   MISSION_BRIEFING_COPY,
   MISSION_DETAIL_COPY,
@@ -67,7 +68,7 @@ export function MissionDetailSheet({
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
-            icon="crosshair"
+            iconSlot={<TileIconSlot src={PIECE_IMAGES[selectedPiece]} />}
             title={MISSION_DETAIL_COPY.title}
             close={{ onClick: () => onOpenChange(false), label: "Close mission" }}
           />

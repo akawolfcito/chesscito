@@ -7,6 +7,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { PIECE_IMAGES, PIECE_LABELS, PIECE_RAIL_COPY } from "@/lib/content/editorial";
 import { THEME_CONFIG } from "@/lib/theme";
 
@@ -49,6 +50,7 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
+            iconSlot={<TileIconSlot src={PIECE_IMAGES[selectedPiece]} />}
             title={PIECE_RAIL_COPY.title}
             close={{ onClick: () => onOpenChange(false), label: "Close piece picker" }}
           />

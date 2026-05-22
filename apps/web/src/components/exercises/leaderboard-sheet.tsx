@@ -9,6 +9,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import type { LeaderboardRow } from "@/lib/server/leaderboard";
 import { LEADERBOARD_SHEET_COPY, PASSPORT_COPY, DOCK_LABELS } from "@/lib/content/editorial";
 
@@ -135,7 +136,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
-            icon="crown"
+            iconSlot={<TileIconSlot src="/art/leaderboard-menu" />}
             title={LEADERBOARD_SHEET_COPY.title}
             subtitle={LEADERBOARD_SHEET_COPY.description}
             close={{ onClick: () => onOpenChange(false), label: "Close leaders" }}

@@ -72,6 +72,7 @@ import {
   SheetContent,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { EXERCISE_DRAWER_COPY, GLOBAL_STATUS_BAR_COPY } from "@/lib/content/editorial";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useProStatus } from "@/lib/pro/use-pro-status";
@@ -183,7 +184,7 @@ function AccountSheet({
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
-            icon="wallet"
+            iconSlot={<TileIconSlot src="/art/action-row/wallet" />}
             title={ACCOUNT_SHEET_COPY.title}
             subtitle={ACCOUNT_SHEET_COPY.description}
             close={{ onClick: () => onOpenChange(false), label: "Close account" }}

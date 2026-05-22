@@ -11,6 +11,7 @@ import {
   SheetContent,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { PRO_COPY } from "@/lib/content/editorial";
 import type { ProStatus } from "@/lib/pro/use-pro-status";
 import { track } from "@/lib/telemetry";
@@ -208,6 +209,7 @@ export function ProSheet(props: ProSheetProps) {
           </p>
           <ContextualHeader
             variant="close-control"
+            iconSlot={<TileIconSlot src="/art/action-row/estrella" />}
             title={PRO_COPY.label}
             close={{ onClick: () => onOpenChange(false), label: "Close PRO" }}
           />

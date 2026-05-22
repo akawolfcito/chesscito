@@ -6,6 +6,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { SHOP_SHEET_COPY } from "@/lib/content/editorial";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
@@ -213,7 +214,7 @@ export function ShopSheet({
         >
           <ContextualHeader
             variant="close-control"
-            icon="shop"
+            iconSlot={<TileIconSlot src="/art/shop-menu" />}
             title={SHOP_SHEET_COPY.title}
             subtitle={SHOP_SHEET_COPY.description}
             close={{ onClick: () => onOpenChange(false), label: "Close shop" }}

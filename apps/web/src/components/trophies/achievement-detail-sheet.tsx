@@ -7,6 +7,7 @@ import {
   SheetContent,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { ACHIEVEMENTS_COPY } from "@/lib/content/editorial";
 import type { Achievement } from "@/lib/achievements/compute";
 
@@ -52,7 +53,7 @@ export function AchievementDetailSheet({ open, onOpenChange, achievement }: Prop
           </p>
           <ContextualHeader
             variant="close-control"
-            icon={earned ? "trophy" : "lock"}
+            iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
             title={copy.title}
             close={{ onClick: () => onOpenChange(false), label: "Close achievement" }}
           />

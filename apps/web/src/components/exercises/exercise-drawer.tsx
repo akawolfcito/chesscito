@@ -5,11 +5,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
 import { BADGE_THRESHOLD, EXERCISES_PER_PIECE } from "@/lib/game/exercises";
 import {
   EXERCISE_DRAWER_COPY,
   EXERCISE_DESCRIPTIONS,
+  PIECE_IMAGES,
   PIECE_LABELS,
 } from "@/lib/content/editorial";
 
@@ -82,7 +84,7 @@ export function ExerciseDrawer({
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
-            icon="crosshair"
+            iconSlot={<TileIconSlot src={PIECE_IMAGES[piece]} />}
             title={EXERCISE_DRAWER_COPY.title}
             subtitle={PIECE_LABELS[piece]}
             close={{ onClick: () => onOpenChange(false), label: "Close exercises" }}

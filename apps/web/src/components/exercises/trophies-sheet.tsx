@@ -7,6 +7,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { TrophiesBody } from "@/components/trophies/trophies-body";
 import { DOCK_LABELS, TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 
@@ -53,7 +54,7 @@ export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: Trophi
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
-            icon="trophy"
+            iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
             title={TROPHY_VITRINE_COPY.pageTitle}
             subtitle={TROPHY_VITRINE_COPY.pageDescription}
             close={{ onClick: () => onOpenChange(false), label: "Close trophies" }}
