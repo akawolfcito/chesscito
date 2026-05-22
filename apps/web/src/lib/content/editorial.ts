@@ -333,17 +333,28 @@ export const WELCOME_COPY = {
   ctaPlay: "Play ▶",
 } as const;
 
-/** Copy for the passive "Saved" chip rendered on /exercises action row
- *  when the player's local progress matches the last-saved on-chain
- *  score for the active piece (Cluster C addendum §2.2.4). The chip
- *  is read-only — no tap handler. */
+/** Copy for the "Saved" chip rendered on /exercises action row when
+ *  the player's local progress matches the last-saved on-chain score
+ *  for the active piece (Cluster C addendum §2.2.4). When a receipt
+ *  URL is available the chip becomes a tappable link to Celoscan.
+ *  The SAVE pin automatically reappears once the player earns more
+ *  stars, so the chip communicates "synced — improve to save again". */
 export const SAVED_CHIP_COPY = {
-  /** Renders e.g. "Saved · 12/15★ on chain". */
-  label: (stars: number, total: number) =>
-    `Saved · ${stars}/${total}★ on chain`,
-  /** Screen-reader full label — same text since the chip is concise. */
+  /** Compact label, e.g. "✓ Saved · 12★". Stars-only (no denominator)
+   *  to keep the chip short and avoid the misread "I scored 10/15 and
+   *  lost 5". */
+  label: (stars: number) => `Saved · ${stars}★`,
+  /** Secondary hint shown below or as tooltip — clarifies that the
+   *  save action is not gone forever, just gated on a better score. */
+  hint: "Beat your score to save again",
+  /** Affordance copy when the chip links to a receipt. */
+  receiptHint: "Tap to view receipt",
+  /** Screen-reader full label. */
   ariaLabel: (stars: number, total: number) =>
-    `Saved ${stars} of ${total} stars on chain`,
+    `Score saved on chain: ${stars} of ${total} stars. Beat your score to save again.`,
+  /** Aria label when the chip is a link to the on-chain receipt. */
+  ariaLabelWithReceipt: (stars: number, total: number) =>
+    `Score saved on chain: ${stars} of ${total} stars. Tap to view receipt on Celoscan.`,
 } as const;
 
 /** Copy keys for <TxProgressSteps> primitive. Pills variant uses

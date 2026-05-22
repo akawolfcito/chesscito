@@ -4,24 +4,35 @@ import { render } from "@testing-library/react";
 import { SavedChip } from "../saved-chip";
 
 describe("SavedChip", () => {
-  it("renders the documented copy with stars + total", () => {
+  it("renders the compact label without denominator", () => {
     const { container } = render(<SavedChip stars={12} total={15} />);
     const root = container.querySelector('[data-component="saved-chip"]');
     expect(root).not.toBeNull();
-    expect(root?.textContent).toContain("Saved · 12/15★ on chain");
+    expect(root?.textContent).toContain("Saved · 12★");
+    expect(root?.textContent).toContain("Beat your score to save again");
   });
 
-  it("exposes the full aria-label for screen readers", () => {
+  it("renders a passive status span when no receipt URL is provided", () => {
     const { container } = render(<SavedChip stars={5} total={15} />);
-    const root = container.querySelector('[data-component="saved-chip"]');
-    expect(root?.getAttribute("aria-label")).toBe(
-      "Saved 5 of 15 stars on chain",
+    const status = container.querySelector('[role="status"]');
+    expect(status).not.toBeNull();
+    expect(status?.getAttribute("aria-label")).toBe(
+      "Score saved on chain: 5 of 15 stars. Beat your score to save again.",
     );
   });
 
-  it("declares role='status' so the chip is announced as a passive update", () => {
-    const { container } = render(<SavedChip stars={15} total={15} />);
-    const root = container.querySelector('[data-component="saved-chip"]');
-    expect(root?.getAttribute("role")).toBe("status");
+  it("renders as a tappable link to the receipt when receiptUrl is provided", () => {
+    const url = "https://celoscan.io/tx/0xabc";
+    const { container } = render(
+      <SavedChip stars={10} total={15} receiptUrl={url} />,
+    );
+    const link = container.querySelector("a");
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute("href")).toBe(url);
+    expect(link?.getAttribute("target")).toBe("_blank");
+    expect(link?.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(link?.getAttribute("aria-label")).toBe(
+      "Score saved on chain: 10 of 15 stars. Tap to view receipt on Celoscan.",
+    );
   });
 });

@@ -855,7 +855,10 @@ export function ExercisesScreen({
   // score this device has confirmed on chain (read from localStorage).
   // The score-pending gate is now `localScore > lastSavedScore` instead
   // of the old `allExercisesAttempted` heuristic.
-  const { lastSavedScore, recordSaveFor } = useSaveScoreState(selectedPiece);
+  const { lastSavedScore, lastSavedTxHash, recordSaveFor } =
+    useSaveScoreState(selectedPiece);
+  const savedReceiptUrl =
+    lastSavedTxHash && chainId ? txLink(chainId, lastSavedTxHash) : undefined;
   const localScoreNum = Number(score);
   const scorePendingNew =
     canSaveScore && totalStars >= 1 && localScoreNum > lastSavedScore;
@@ -1697,6 +1700,7 @@ export function ExercisesScreen({
               <SavedChip
                 stars={Math.floor(lastSavedScore / Number(POINTS_PER_STAR))}
                 total={BADGE_THRESHOLD}
+                receiptUrl={savedReceiptUrl}
               />
             ) : (
               <ContextualActionSlot

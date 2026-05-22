@@ -9,38 +9,74 @@ type SavedChipProps = {
   stars: number;
   /** Maximum possible stars for the piece (5 exercises × 3 stars). */
   total: number;
+  /** Optional Celoscan URL of the last successful save. When present the
+   *  chip becomes a link the player can tap to open the on-chain receipt
+   *  in a new tab — gives the saved-state agency instead of feeling
+   *  terminal. Omit when no tx hash is known (legacy local state). */
+  receiptUrl?: string;
 };
 
 /**
- * Passive read-only chip rendered on `/exercises` when the player's
- * local progress matches the last-confirmed on-chain score for the
- * active piece. Non-interactive — communicates "you're synced; nothing
- * to do" with a sober wood-tone candy treatment that contrasts with
- * the active candy-gold submitScore pin.
+ * Saved chip rendered on `/exercises` when the player's local progress
+ * matches the last-confirmed on-chain score for the active piece.
  *
- * Per Cluster C spec §2.2.4 — Saved is the passive read of the four-
- * state machine (Locked / Save / Saving / Saved). The chip is the
- * post-tx receipt that lives on the page after the toast fades.
+ * Tappable when a receipt URL is available (opens Celoscan in a new
+ * tab); otherwise renders as a passive status badge. A small hint sits
+ * below the chip explaining that beating the saved score reopens the
+ * SAVE action — addresses the perception that the chip "removes" the
+ * ability to save.
  */
-export function SavedChip({ stars, total }: SavedChipProps) {
-  const label = SAVED_CHIP_COPY.label(stars, total);
-  const ariaLabel = SAVED_CHIP_COPY.ariaLabel(stars, total);
+export function SavedChip({ stars, total, receiptUrl }: SavedChipProps) {
+  const label = SAVED_CHIP_COPY.label(stars);
+  const ariaLabel = receiptUrl
+    ? SAVED_CHIP_COPY.ariaLabelWithReceipt(stars, total)
+    : SAVED_CHIP_COPY.ariaLabel(stars, total);
+
+  const chipStyle = {
+    background: "rgba(220, 252, 231, 0.85)",
+    color: "rgba(6, 95, 70, 0.95)",
+    border: "1px solid rgba(6, 95, 70, 0.28)",
+    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.10)",
+  } as const;
+  const chipClass =
+    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-nano font-extrabold uppercase tracking-wider transition-transform active:scale-[0.97]";
 
   return (
-    <span
+    <div
       data-component="saved-chip"
-      role="status"
-      aria-label={ariaLabel}
-      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-nano font-extrabold uppercase tracking-wider"
-      style={{
-        background: "rgba(220, 252, 231, 0.75)",
-        color: "rgba(6, 95, 70, 0.95)",
-        border: "1px solid rgba(6, 95, 70, 0.28)",
-        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.10)",
-      }}
+      className="flex flex-col items-center gap-1"
     >
-      <CandyIcon name="check" className="h-3 w-3" />
-      <span aria-hidden="true">{label}</span>
-    </span>
+      {receiptUrl ? (
+        <a
+          href={receiptUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={ariaLabel}
+          className={chipClass}
+          style={chipStyle}
+        >
+          <CandyIcon name="check" className="h-3 w-3" />
+          <span aria-hidden="true">{label}</span>
+          <CandyIcon name="chevron-down" className="h-3 w-3 -rotate-90" />
+        </a>
+      ) : (
+        <span
+          role="status"
+          aria-label={ariaLabel}
+          className={chipClass}
+          style={chipStyle}
+        >
+          <CandyIcon name="check" className="h-3 w-3" />
+          <span aria-hidden="true">{label}</span>
+        </span>
+      )}
+      <span
+        aria-hidden="true"
+        className="text-nano font-semibold uppercase tracking-wider"
+        style={{ color: "rgba(63, 34, 8, 0.65)" }}
+      >
+        {SAVED_CHIP_COPY.hint}
+      </span>
+    </div>
   );
 }
