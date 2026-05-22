@@ -1,5 +1,6 @@
 "use client";
 
+import { createContext, useContext, useState } from "react";
 import { usePathname } from "next/navigation";
 
 /**
@@ -37,19 +38,50 @@ export function isAppRoute(pathname: string): boolean {
 }
 
 /**
+ * Exposes the frame inner DOM node to descendants that render via
+ * portal (sheets, dialogs). Consumers pass the node to Radix's
+ * `Portal container` prop so portaled content stays inside the bezel
+ * on desktop instead of escaping to `document.body`. Returns `null`
+ * when no frame is mounted (landing, `/share/*`, `/dev/*`) — Radix
+ * falls back to body portal naturally.
+ */
+const DesktopAppFrameContext = createContext<HTMLDivElement | null>(null);
+
+export function useDesktopAppFrameContainer(): HTMLDivElement | null {
+  return useContext(DesktopAppFrameContext);
+}
+
+/**
  * Wraps app routes in a phone-bezel chrome on desktop (≥ 768px). Mobile
  * viewports pass through untouched so MiniPay and any other WebView
  * keeps the existing layout. The bezel itself is CSS-only — see
  * `.desktop-app-frame` rules in globals.css.
+ *
+ * Captures the `.desktop-app-frame-inner` element into state via a
+ * callback ref so the context value updates on mount (a plain ref
+ * would never trigger a re-render and consumers would always see
+ * `null`). The desktop frame ancestor has `transform: translateZ(0)`
+ * at ≥768px, which makes `position: fixed` descendants contained by
+ * the frame — sheets portaled here render inside the bezel without
+ * any extra CSS work.
  */
 export function DesktopAppFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+
   if (!isAppRoute(pathname)) return <>{children}</>;
   return (
-    <div className="desktop-app-frame-shell">
-      <div className="desktop-app-frame" aria-hidden={false}>
-        <div className="desktop-app-frame-inner">{children}</div>
+    <DesktopAppFrameContext.Provider value={container}>
+      <div className="desktop-app-frame-shell">
+        <div className="desktop-app-frame" aria-hidden={false}>
+          <div
+            ref={setContainer}
+            className="desktop-app-frame-inner"
+          >
+            {children}
+          </div>
+        </div>
       </div>
-    </div>
+    </DesktopAppFrameContext.Provider>
   );
 }

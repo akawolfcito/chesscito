@@ -1,5 +1,18 @@
-import { describe, expect, it } from "vitest";
-import { isAppRoute } from "../desktop-app-frame";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render } from "@testing-library/react";
+import { useEffect } from "react";
+
+import {
+  DesktopAppFrame,
+  isAppRoute,
+  useDesktopAppFrameContainer,
+} from "../desktop-app-frame";
+
+const usePathnameMock = vi.hoisted(() => vi.fn(() => "/hub"));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => usePathnameMock(),
+}));
 
 describe("isAppRoute", () => {
   it("matches the six app-route prefixes exactly", () => {
@@ -54,5 +67,56 @@ describe("isAppRoute", () => {
     expect(isAppRoute("/whymyword")).toBe(false);
     expect(isAppRoute("/termsheet")).toBe(false);
     expect(isAppRoute("/privacypolicy")).toBe(false);
+  });
+});
+
+describe("DesktopAppFrame — portal container context", () => {
+  afterEach(() => cleanup());
+
+  function ContainerProbe({
+    onValue,
+  }: {
+    onValue: (el: HTMLDivElement | null) => void;
+  }) {
+    const container = useDesktopAppFrameContainer();
+    useEffect(() => {
+      onValue(container);
+    }, [container, onValue]);
+    return null;
+  }
+
+  it("exposes the frame inner element to descendants on an app route", () => {
+    usePathnameMock.mockReturnValueOnce("/hub");
+    const seen: Array<HTMLDivElement | null> = [];
+
+    const { container } = render(
+      <DesktopAppFrame>
+        <ContainerProbe onValue={(el) => seen.push(el)} />
+      </DesktopAppFrame>,
+    );
+
+    const inner = container.querySelector(
+      ".desktop-app-frame-inner",
+    ) as HTMLDivElement;
+    expect(inner).not.toBeNull();
+    // After the ref callback fires, the context should resolve to the
+    // .desktop-app-frame-inner DOM node so sheets/dialogs can portal
+    // their content inside the bezel on desktop.
+    expect(seen.at(-1)).toBe(inner);
+  });
+
+  it("returns null on non-app routes (sheets fall back to body portal)", () => {
+    usePathnameMock.mockReturnValueOnce("/");
+    const seen: Array<HTMLDivElement | null> = [];
+
+    render(
+      <DesktopAppFrame>
+        <ContainerProbe onValue={(el) => seen.push(el)} />
+      </DesktopAppFrame>,
+    );
+
+    // No frame mounted → no provider → context default value (null).
+    // Radix sees `container={undefined}` and portals to document.body.
+    expect(seen.at(-1)).toBeNull();
   });
 });

@@ -3,6 +3,7 @@ import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { CandyIcon } from "@/components/redesign/candy-icon"
+import { useDesktopAppFrameContainer } from "@/components/chrome/desktop-app-frame"
 import { cn } from "@/lib/utils"
 
 const Sheet = SheetPrimitive.Root
@@ -11,7 +12,27 @@ const SheetTrigger = SheetPrimitive.Trigger
 
 const SheetClose = SheetPrimitive.Close
 
-const SheetPortal = SheetPrimitive.Portal
+/**
+ * Portal target swap: when a sheet is opened inside the desktop phone-
+ * bezel chrome, portal into `.desktop-app-frame-inner` so the sheet
+ * (overlay + content) stays bounded by the bezel instead of stretching
+ * across the full desktop viewport. On non-framed surfaces (landing,
+ * `/share/*`, `/dev/*`), the context returns `null` and Radix falls
+ * back to its default `document.body` portal. Mobile is unaffected:
+ * the frame ancestor exists in the DOM but the `transform` rule that
+ * scopes `position: fixed` only applies at ≥768px.
+ */
+const SheetPortal = ({
+  children,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Portal>) => {
+  const container = useDesktopAppFrameContainer()
+  return (
+    <SheetPrimitive.Portal container={container ?? undefined} {...props}>
+      {children}
+    </SheetPrimitive.Portal>
+  )
+}
 
 const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Overlay>,
