@@ -1282,7 +1282,18 @@ export const PRO_COPY = {
   subtitle: "Monthly pass that supports open access. Renew when you want — no auto-billing.",
   priceLabel: "$1.99 / month",
   durationLabel: "30 days",
-  ctaBuy: "Start training",
+  ctaBuy: "Unlock PRO",
+  /** Short CTA label used when the wallet is not connected — fits a
+   *  PrincipalButton (≤16 char target). The longer
+   *  `errors.walletRequired` copy stays as the inline error message
+   *  for assistive flows but is NOT a button label. */
+  ctaConnectWallet: "Connect wallet",
+  /** Uppercase variant of `kicker` for the candy-panel "TRAINING PASS"
+   *  purple pill rendered above the title. */
+  trainingPassLabel: "TRAINING PASS",
+  /** Uppercase label for the candy-panel "ACTIVE PERKS" purple pill
+   *  rendered above the perks bullet list. */
+  activePerksLabel: "ACTIVE PERKS",
   ctaActive: "PRO Active",
   ctaRenew: "Extend training",
   statusActiveSuffix: (daysLeft: number) =>

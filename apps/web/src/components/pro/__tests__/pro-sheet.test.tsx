@@ -51,14 +51,12 @@ describe("ProSheet", () => {
     expect(screen.getByText(PRO_COPY.perksActive[0])).toBeInTheDocument();
   });
 
-  // AC-3.8 — addendum §3.6 / §6.1 commit #4
-  it("renders the kicker 'Training Pass' above the title", () => {
+  // AC-3.8 — addendum §3.6 / §6.1 commit #4 — kicker now renders as
+  // the uppercase "TRAINING PASS" pill in the candy-panel redesign,
+  // sourced from PRO_COPY.trainingPassLabel.
+  it("renders the kicker pill above the title", () => {
     renderSheet();
-    const kicker = screen.getByText(PRO_COPY.kicker);
-    // Title now appears twice — visible <ContextualHeader> <h1> +
-    // sr-only <SheetTitle> span auto-injected by <SheetContent> for
-    // Radix Dialog a11y. Anchor the DOM-order assertion against the
-    // visible heading (the canonical one users see).
+    const kicker = screen.getByText(PRO_COPY.trainingPassLabel);
     const title = screen.getByRole("heading", { name: PRO_COPY.label });
     expect(kicker).toBeInTheDocument();
     expect(
@@ -69,7 +67,7 @@ describe("ProSheet", () => {
 
   it("shows the Connect Wallet CTA when wallet is not connected", () => {
     const handlers = renderSheet({ isConnected: false });
-    const cta = screen.getByRole("button", { name: PRO_COPY.errors.walletRequired });
+    const cta = screen.getByRole("button", { name: PRO_COPY.ctaConnectWallet });
     fireEvent.click(cta);
     expect(handlers.onConnectWallet).toHaveBeenCalledTimes(1);
     expect(handlers.onPurchase).not.toHaveBeenCalled();
@@ -189,7 +187,7 @@ describe("ProSheet", () => {
     it("does not fire pro_cta_clicked for Connect Wallet (not commercial intent)", () => {
       renderSheet({ isConnected: false });
       trackMock.mockClear();
-      fireEvent.click(screen.getByRole("button", { name: PRO_COPY.errors.walletRequired }));
+      fireEvent.click(screen.getByRole("button", { name: PRO_COPY.ctaConnectWallet }));
 
       expect(trackMock).not.toHaveBeenCalledWith(
         "pro_cta_clicked",
