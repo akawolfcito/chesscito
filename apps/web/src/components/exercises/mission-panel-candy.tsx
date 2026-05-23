@@ -228,17 +228,15 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
       }`}
     >
       <div className="relative flex flex-col items-center gap-3 animate-in zoom-in-90 duration-300">
-        {isSuccess ? (
-          <img
-            src="/art/welldone-sms.png"
-            alt={flash.text}
-            className="h-auto w-[78%] max-w-[300px] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
-            style={{
-              animation:
-                'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
-            }}
-          />
-        ) : null}
+        <img
+          src={isSuccess ? '/art/welldone-sms.png' : '/art/try-again.png'}
+          alt={flash.text}
+          className="h-auto w-[78%] max-w-[300px] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
+          style={{
+            animation:
+              'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+          }}
+        />
         <div className="relative flex h-44 w-44 items-center justify-center">
           {/* Confetti lives inside the avatar container so the radial
               burst emanates from the avatar's center. Container must
@@ -262,51 +260,17 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
                 'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
             }}
           />
-          {isSuccess ? (
-            <img
-              src="/art/avatar-fun.png"
-              alt=""
-              aria-hidden="true"
-              className="relative z-10 h-40 w-40 object-contain drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
-              style={{
-                animation:
-                  'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
-              }}
-            />
-          ) : (
-            <picture className="relative z-10">
-              <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
-              <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
-              <img
-                src="/art/favicon-wolf.png"
-                alt=""
-                aria-hidden="true"
-                className="h-24 w-24 drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
-                style={{
-                  animation:
-                    'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
-                }}
-              />
-            </picture>
-          )}
-        </div>
-        {!isSuccess ? (
-          <span
-            /* Stroke (via -webkit-text-stroke) gives the glyphs a crisp
-               dark outline so the warm-amber fill pops against any
-               backdrop. text-shadow adds a soft cream halo for depth. */
-            className="fantasy-title victory-text-slam text-5xl font-extrabold leading-none"
+          <img
+            src={isSuccess ? '/art/avatar-fun.png' : '/art/avatar-try-again.png'}
+            alt=""
+            aria-hidden="true"
+            className="relative z-10 h-40 w-40 object-contain drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
             style={{
-              color: flash.accent,
-              WebkitTextStroke: `2px ${flash.stroke}`,
-              textShadow:
-                '0 2px 0 rgba(255, 245, 215, 0.85), 0 4px 10px rgba(120, 65, 5, 0.40)',
-              paintOrder: 'stroke fill',
+              animation:
+                'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
             }}
-          >
-            {flash.text}
-          </span>
-        ) : null}
+          />
+        </div>
       </div>
     </div>
   )
