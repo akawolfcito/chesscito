@@ -431,7 +431,7 @@ export const PASSPORT_COPY = {
 
 export const MISSION_BRIEFING_COPY = {
   label: "MISSION",
-  play: "PLAY",
+  play: "LET'S GO",
   targetPrefix: "Move to:",
   moveHint: {
     rook: "The Rook moves in straight lines",

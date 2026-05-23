@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ARENA_COPY, MISSION_BRIEFING_COPY, PIECE_LABELS } from "@/lib/content/editorial";
+import { MISSION_BRIEFING_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { track } from "@/lib/telemetry";
@@ -179,34 +178,6 @@ export function MissionBriefing({
                 {MISSION_BRIEFING_COPY.play}
               </PrincipalButton>
             </div>
-
-            {/* Decorative crown divider — separates the primary CTA
-                from the secondary Arena escape link. */}
-            <picture>
-              <source
-                srcSet="/art/screen-mission/adorno-icon.avif"
-                type="image/avif"
-              />
-              <source
-                srcSet="/art/screen-mission/adorno-icon.webp"
-                type="image/webp"
-              />
-              <img
-                src="/art/screen-mission/adorno-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="mt-3 h-4 w-44 object-contain"
-                draggable={false}
-              />
-            </picture>
-
-            <Link
-              href="/arena?fresh=1"
-              className="mt-1 block text-center text-xs font-semibold underline underline-offset-2"
-              style={{ color: "rgba(110, 65, 15, 0.70)" }}
-            >
-              or try {ARENA_COPY.title} vs AI
-            </Link>
           </div>
         </div>
       </div>
