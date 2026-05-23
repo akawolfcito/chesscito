@@ -41,6 +41,7 @@ export async function GET(req: Request) {
   const star = parseSquare(qs.get("star"));
 
   const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
   const badgeUrl = new URL("/art/badge-chesscito.png", req.url).toString();
   const starUrl = new URL("/art/redesign/icons/star.png", req.url).toString();
   const origin = new URL(req.url).origin;
@@ -152,6 +153,7 @@ export async function GET(req: Request) {
     (
       <CardShell
         bgUrl={null}
+        panelBgUrl={panelBgUrl}
         mascotUrl={mascotUrl}
         chip={chip}
         footer={footer}

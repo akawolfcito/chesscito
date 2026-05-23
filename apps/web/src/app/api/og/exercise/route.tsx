@@ -49,6 +49,7 @@ export async function GET(req: Request) {
   );
 
   const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
   const pieceFile = "w-" + piece + ".png";
   const pieceUrl = new URL(THEME_CONFIG.piecesBase + "/" + pieceFile, req.url).toString();
 
@@ -117,6 +118,7 @@ export async function GET(req: Request) {
     (
       <CardShell
         bgUrl={null}
+        panelBgUrl={panelBgUrl}
         mascotUrl={mascotUrl}
         footer={type === "daily" ? "Chesscito \u2022 Daily Tactic" : "Chesscito \u2022 saved on Celo"}
         useCinzel={useCinzel}

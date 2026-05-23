@@ -41,6 +41,7 @@ export async function GET(req: Request) {
   const fen = sanitizeFen(params.get("fen"));
 
   const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
   const origin = new URL(req.url).origin;
 
   const cinzelData = await loadCinzelFont(req.url);
@@ -52,6 +53,7 @@ export async function GET(req: Request) {
     (
       <CardShell
         bgUrl={null}
+        panelBgUrl={panelBgUrl}
         mascotUrl={mascotUrl}
         footer="Chesscito \u2022 Arena match"
         useCinzel={useCinzel}

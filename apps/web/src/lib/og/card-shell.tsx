@@ -14,6 +14,12 @@ export type CardShellProps = {
    *  image and render only the cream gradient (cleaner look for invite
    *  / lobby cards that don't need the hub context). */
   bgUrl: string | null;
+  /** Optional absolute URL to a panel asset (e.g. panel-mision-icon.png)
+   *  that REPLACES the cream gradient as the card surface. When provided,
+   *  the cream wash is skipped and the asset is stretched to fill the
+   *  full 1080×1350 card. Used by share cards that want the cream wood +
+   *  grass border baked into the asset instead of the flat gradient. */
+  panelBgUrl?: string;
   /** Absolute URL to the wolf mascot. */
   mascotUrl: string;
   /** Hero content occupying the 860×860 slot at the top — board render,
@@ -43,6 +49,7 @@ export type CardShellProps = {
  */
 export function CardShell({
   bgUrl,
+  panelBgUrl,
   mascotUrl,
   heroSlot,
   chip,
@@ -61,6 +68,20 @@ export function CardShell({
         background: "#f6e6b8",
       }}
     >
+      {/* Panel bg — when provided, replaces the cream gradient entirely
+          with a baked-in cream-wood + grass-border asset. Stretched to
+          fill the full 1080×1350 card. */}
+      {panelBgUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={panelBgUrl}
+          alt=""
+          width={CARD_WIDTH}
+          height={CARD_HEIGHT}
+          style={{ position: "absolute", top: 0, left: 0 }}
+        />
+      )}
+
       {/* Forest bg — optional, omitted on invite/lobby cards */}
       {bgUrl && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -73,17 +94,21 @@ export function CardShell({
         />
       )}
 
-      {/* Cream wash — over forest when present, stands alone otherwise */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          background: bgUrl
-            ? "linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,245,215,0.45) 40%, rgba(246,230,184,0.62) 100%)"
-            : "linear-gradient(180deg, rgba(255,250,235,1) 0%, rgba(250,240,210,1) 55%, rgba(240,225,185,1) 100%)",
-        }}
-      />
+      {/* Cream wash — overlay applied ONLY over the forest bgUrl to soften
+          the trees enough for warm-brown text to read on top. Skipped when
+          panelBgUrl is provided (the asset already carries its own cream
+          surface) or when no bg is provided at all. */}
+      {bgUrl && !panelBgUrl && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,245,215,0.45) 40%, rgba(246,230,184,0.62) 100%)",
+          }}
+        />
+      )}
 
       {/* Hero slot — top-center, 860×860, the board fills the upper two-thirds */}
       {heroSlot && (
