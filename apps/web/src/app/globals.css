@@ -6507,6 +6507,11 @@ button.hud-resource-chip:active:not(:disabled) {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Selection check badges on color + difficulty pills overhang by 7px
+     (top/right: -7px). overflow-y:auto promotes overflow-x to auto in
+     spec, which would clip those badges. Inline padding gives them
+     clearance without restructuring the markup. */
+  padding-inline: 8px;
 }
 
 .arena-scaffold-soft-gate {
