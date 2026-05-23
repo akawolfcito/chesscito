@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { TrophiesBody } from "@/components/trophies/trophies-body";
 import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 
@@ -24,7 +25,7 @@ export default function TrophiesPage() {
         <header className="border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="back-control"
-            icon="trophy"
+            iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
             title={TROPHY_VITRINE_COPY.pageTitle}
             subtitle={TROPHY_VITRINE_COPY.pageDescription}
             back={{ onClick: () => router.push("/hub"), label: "Back" }}

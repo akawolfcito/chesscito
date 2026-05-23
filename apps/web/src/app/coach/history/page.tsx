@@ -7,6 +7,7 @@ import { CoachHistory } from "@/components/coach/coach-history";
 import { CoachHistoryDeletePanel } from "@/components/coach/coach-history-delete-panel";
 import { CoachPanel } from "@/components/coach/coach-panel";
 import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { COACH_COPY } from "@/lib/content/editorial";
 import type { CoachAnalysisRecord, CoachResponse, GameRecord } from "@/lib/coach/types";
@@ -39,7 +40,7 @@ function PageHeader({ onBack }: { onBack: () => void }) {
     <header className="border-b border-[rgba(110,65,15,0.30)]">
       <ContextualHeader
         variant="back-control"
-        icon="coach"
+        iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
         title={COACH_COPY.yourSessions}
         subtitle="Your training progress"
         back={{ onClick: onBack, label: "Back" }}
