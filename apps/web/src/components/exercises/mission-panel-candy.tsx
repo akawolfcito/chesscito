@@ -98,10 +98,99 @@ const PHASE_FLASH: Record<MissionPanelProps['phase'], FlashConfig | null> = {
   },
 }
 
+const CONFETTI_COLORS = [
+  '#ef4444', // red
+  '#f97316', // orange
+  '#facc15', // yellow
+  '#84cc16', // lime
+  '#22c55e', // green
+  '#06b6d4', // cyan
+  '#3b82f6', // blue
+  '#a855f7', // purple
+  '#ec4899', // pink
+] as const
+
+/* Deterministic radial-burst confetti specs — 24 chips with angles
+   spaced every 15° around a full circle so the explosion reads as a
+   true radial burst. Each piece has a precomputed (burstX, burstY)
+   target on a ring of radius 90–140px (six varied radii for organic
+   feel). Hardcoded so the spread is designed, not random — and avoids
+   hydration mismatches. Y positive = down (CSS convention), so chips
+   with positive burstY shoot below the avatar; negative ones shoot up
+   then are pulled back by gravity in the fall phase. */
+const CONFETTI: Array<{
+  burstX: string
+  burstY: string
+  driftX: string // extra horizontal drift during fall
+  spin: string // total rotation across the animation
+  size: string
+  color: number
+  delay: string
+  duration: string
+}> = [
+  { burstX: '90px',   burstY: '0px',    driftX: '20px',  spin: '720deg',  size: '10px', color: 0, delay: '0ms',   duration: '2400ms' },
+  { burstX: '116px',  burstY: '-31px',  driftX: '24px',  spin: '-660deg', size: '8px',  color: 2, delay: '20ms',  duration: '2350ms' },
+  { burstX: '87px',   burstY: '-50px',  driftX: '18px',  spin: '600deg',  size: '12px', color: 4, delay: '0ms',   duration: '2450ms' },
+  { burstX: '92px',   burstY: '-92px',  driftX: '14px',  spin: '-540deg', size: '9px',  color: 7, delay: '40ms',  duration: '2400ms' },
+  { burstX: '55px',   burstY: '-95px',  driftX: '10px',  spin: '720deg',  size: '11px', color: 1, delay: '10ms',  duration: '2350ms' },
+  { burstX: '36px',   burstY: '-135px', driftX: '12px',  spin: '-720deg', size: '8px',  color: 3, delay: '30ms',  duration: '2500ms' },
+  { burstX: '0px',    burstY: '-90px',  driftX: '0px',   spin: '540deg',  size: '12px', color: 5, delay: '0ms',   duration: '2400ms' },
+  { burstX: '-31px',  burstY: '-116px', driftX: '-10px', spin: '-600deg', size: '10px', color: 8, delay: '20ms',  duration: '2350ms' },
+  { burstX: '-50px',  burstY: '-87px',  driftX: '-14px', spin: '660deg',  size: '9px',  color: 0, delay: '40ms',  duration: '2450ms' },
+  { burstX: '-92px',  burstY: '-92px',  driftX: '-12px', spin: '-720deg', size: '11px', color: 2, delay: '10ms',  duration: '2500ms' },
+  { burstX: '-95px',  burstY: '-55px',  driftX: '-18px', spin: '540deg',  size: '8px',  color: 6, delay: '30ms',  duration: '2400ms' },
+  { burstX: '-135px', burstY: '-36px',  driftX: '-22px', spin: '-540deg', size: '12px', color: 1, delay: '0ms',   duration: '2350ms' },
+  { burstX: '-90px',  burstY: '0px',    driftX: '-26px', spin: '720deg',  size: '10px', color: 4, delay: '20ms',  duration: '2400ms' },
+  { burstX: '-116px', burstY: '31px',   driftX: '-20px', spin: '-660deg', size: '9px',  color: 7, delay: '40ms',  duration: '2450ms' },
+  { burstX: '-87px',  burstY: '50px',   driftX: '-12px', spin: '600deg',  size: '11px', color: 3, delay: '10ms',  duration: '2400ms' },
+  { burstX: '-92px',  burstY: '92px',   driftX: '-16px', spin: '-540deg', size: '8px',  color: 5, delay: '30ms',  duration: '2350ms' },
+  { burstX: '-55px',  burstY: '95px',   driftX: '-10px', spin: '720deg',  size: '10px', color: 8, delay: '0ms',   duration: '2400ms' },
+  { burstX: '-36px',  burstY: '135px',  driftX: '-6px',  spin: '-720deg', size: '12px', color: 6, delay: '20ms',  duration: '2500ms' },
+  { burstX: '0px',    burstY: '90px',   driftX: '0px',   spin: '540deg',  size: '9px',  color: 0, delay: '40ms',  duration: '2400ms' },
+  { burstX: '31px',   burstY: '116px',  driftX: '10px',  spin: '-600deg', size: '11px', color: 2, delay: '10ms',  duration: '2350ms' },
+  { burstX: '50px',   burstY: '87px',   driftX: '14px',  spin: '660deg',  size: '8px',  color: 4, delay: '30ms',  duration: '2450ms' },
+  { burstX: '92px',   burstY: '92px',   driftX: '18px',  spin: '-540deg', size: '12px', color: 7, delay: '0ms',   duration: '2400ms' },
+  { burstX: '95px',   burstY: '55px',   driftX: '22px',  spin: '720deg',  size: '10px', color: 1, delay: '20ms',  duration: '2350ms' },
+  { burstX: '135px',  burstY: '36px',   driftX: '28px',  spin: '-540deg', size: '9px',  color: 3, delay: '40ms',  duration: '2500ms' },
+]
+
+/* Renders inside the avatar container so the radial burst emanates
+   from the avatar's center. Each chip lives at top:50%/left:50% of the
+   container and is translated by transform — `translate(-50%, -50%)`
+   keeps the chip's geometric center at that anchor. The container
+   must NOT set `overflow: hidden` or chips will be clipped mid-flight. */
+function Confetti() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0"
+    >
+      {CONFETTI.map((c, i) => (
+        <span
+          key={i}
+          className="absolute left-1/2 top-1/2 rounded-[2px]"
+          style={{
+            width: c.size,
+            height: c.size,
+            background: CONFETTI_COLORS[c.color],
+            ['--burst-x' as string]: c.burstX,
+            ['--burst-y' as string]: c.burstY,
+            ['--drift-x' as string]: c.driftX,
+            ['--spin' as string]: c.spin,
+            animation: `confetti-burst-fall ${c.duration} cubic-bezier(0.22, 0.61, 0.36, 1) ${c.delay} both`,
+            boxShadow: '0 1px 2px rgba(63, 34, 8, 0.35)',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
 function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
   const [visible, setVisible] = useState(false)
   const [fading, setFading] = useState(false)
   const flash = PHASE_FLASH[phase]
+  const isSuccess = phase === 'success'
 
   useEffect(() => {
     if (!flash) {
@@ -113,14 +202,22 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
     setVisible(true)
     setFading(false)
 
-    const fadeTimer = setTimeout(() => setFading(true), 600)
-    const hideTimer = setTimeout(() => setVisible(false), 950)
+    /* Success holds longer so the radial burst + gentle gravity fall
+       (~2.5s + delays) can play through. The confetti opacity reaches
+       0 inside the keyframe (100%) before the scrim fade kicks in, so
+       fadeAt lines up with the last chips dissolving naturally.
+       Failure keeps the snappy original timing. */
+    const fadeAt = isSuccess ? 2200 : 600
+    const hideAt = isSuccess ? 2600 : 950
+
+    const fadeTimer = setTimeout(() => setFading(true), fadeAt)
+    const hideTimer = setTimeout(() => setVisible(false), hideAt)
 
     return () => {
       clearTimeout(fadeTimer)
       clearTimeout(hideTimer)
     }
-  }, [phase, flash])
+  }, [phase, flash, isSuccess])
 
   if (!visible || !flash) return null
 
@@ -130,9 +227,24 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
         fading ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      <div className="flex flex-col items-center gap-2 animate-in zoom-in-90 duration-300">
-        <div className="relative flex h-32 w-32 items-center justify-center">
-          {phase === 'success' && (
+      <div className="relative flex flex-col items-center gap-3 animate-in zoom-in-90 duration-300">
+        {isSuccess ? (
+          <img
+            src="/art/welldone-sms.png"
+            alt={flash.text}
+            className="h-auto w-[78%] max-w-[300px] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
+            style={{
+              animation:
+                'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+            }}
+          />
+        ) : null}
+        <div className="relative flex h-44 w-44 items-center justify-center">
+          {/* Confetti lives inside the avatar container so the radial
+              burst emanates from the avatar's center. Container must
+              NOT clip overflow — chips travel far beyond. */}
+          {isSuccess && <Confetti />}
+          {isSuccess && (
             <div className="pointer-events-none absolute inset-0">
               <LottieAnimation
                 src="/animations/sparkle-burst.lottie"
@@ -144,42 +256,57 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
           {/* Soft warm halo behind the mascot — gives the figure mass
               without competing with the sparkle burst on success. */}
           <div
-            className="pointer-events-none absolute h-28 w-28 rounded-full"
+            className="pointer-events-none absolute h-40 w-40 rounded-full"
             style={{
               background:
                 'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
             }}
           />
-          <picture className="relative z-10">
-            <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
-            <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
+          {isSuccess ? (
             <img
-              src="/art/favicon-wolf.png"
+              src="/art/avatar-fun.png"
               alt=""
               aria-hidden="true"
-              className="h-24 w-24 drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
+              className="relative z-10 h-40 w-40 object-contain drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
               style={{
                 animation:
-                  'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+                  'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
               }}
             />
-          </picture>
+          ) : (
+            <picture className="relative z-10">
+              <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
+              <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
+              <img
+                src="/art/favicon-wolf.png"
+                alt=""
+                aria-hidden="true"
+                className="h-24 w-24 drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
+                style={{
+                  animation:
+                    'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+                }}
+              />
+            </picture>
+          )}
         </div>
-        <span
-          /* Stroke (via -webkit-text-stroke) gives the glyphs a crisp
-             dark outline so the warm-amber fill pops against any
-             backdrop. text-shadow adds a soft cream halo for depth. */
-          className="fantasy-title victory-text-slam text-5xl font-extrabold leading-none"
-          style={{
-            color: flash.accent,
-            WebkitTextStroke: `2px ${flash.stroke}`,
-            textShadow:
-              '0 2px 0 rgba(255, 245, 215, 0.85), 0 4px 10px rgba(120, 65, 5, 0.40)',
-            paintOrder: 'stroke fill',
-          }}
-        >
-          {flash.text}
-        </span>
+        {!isSuccess ? (
+          <span
+            /* Stroke (via -webkit-text-stroke) gives the glyphs a crisp
+               dark outline so the warm-amber fill pops against any
+               backdrop. text-shadow adds a soft cream halo for depth. */
+            className="fantasy-title victory-text-slam text-5xl font-extrabold leading-none"
+            style={{
+              color: flash.accent,
+              WebkitTextStroke: `2px ${flash.stroke}`,
+              textShadow:
+                '0 2px 0 rgba(255, 245, 215, 0.85), 0 4px 10px rgba(120, 65, 5, 0.40)',
+              paintOrder: 'stroke fill',
+            }}
+          >
+            {flash.text}
+          </span>
+        ) : null}
       </div>
     </div>
   )

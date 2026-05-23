@@ -1280,6 +1280,68 @@
     }
   }
 
+  /* Confetti chip that bursts radially from the avatar's center, then
+     falls under "gravity" past the viewport bottom. Each chip is
+     anchored at top:50%/left:50% of the avatar container; the
+     translate(-50%, -50%) keeps its geometric center on that anchor
+     across every keyframe. Custom properties:
+       --burst-x / --burst-y : radial peak offset (px, signed)
+       --drift-x             : extra horizontal drift during the fall
+       --spin                : total rotation across the animation
+     Timing: 0-8% spawn (scale 0.4→1), 8-32% radial burst out, 32-100%
+     gravity fall + tail fade. Fade-in is fast so chips appear at the
+     burst origin, not blank. */
+  @keyframes confetti-burst-fall {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(0deg) scale(0.4);
+    }
+
+    6% {
+      opacity: 1;
+      transform: translate(
+          calc(-50% + var(--burst-x, 0px) * 0.25),
+          calc(-50% + var(--burst-y, 0px) * 0.25)
+        )
+        rotate(calc(var(--spin, 720deg) * 0.06))
+        scale(1);
+    }
+
+    /* Radial burst peak — sharp, fast outward push */
+    25% {
+      opacity: 1;
+      transform: translate(
+          calc(-50% + var(--burst-x, 0px)),
+          calc(-50% + var(--burst-y, 0px))
+        )
+        rotate(calc(var(--spin, 720deg) * 0.25))
+        scale(1);
+    }
+
+    /* Mid-fall — gentle gravity descent (only ~18vh past peak) */
+    65% {
+      opacity: 1;
+      transform: translate(
+          calc(-50% + var(--burst-x, 0px) + var(--drift-x, 0px) * 0.55),
+          calc(-50% + var(--burst-y, 0px) + 18vh)
+        )
+        rotate(calc(var(--spin, 720deg) * 0.65))
+        scale(1);
+    }
+
+    /* Fade tail starts here — chip dissolves while still drifting,
+       so we never need to render a full bottom-of-screen fall. */
+    100% {
+      opacity: 0;
+      transform: translate(
+          calc(-50% + var(--burst-x, 0px) + var(--drift-x, 0px)),
+          calc(-50% + var(--burst-y, 0px) + 40vh)
+        )
+        rotate(var(--spin, 720deg))
+        scale(1);
+    }
+  }
+
   @keyframes reward-buttons-enter {
     from {
       opacity: 0;
