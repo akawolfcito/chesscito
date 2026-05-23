@@ -1,13 +1,53 @@
 import createMiddleware from "next-intl/middleware";
+import { defineRouting } from "next-intl/routing";
+import { NextRequest, NextResponse } from "next/server";
 import { routing } from "@/i18n/routing";
 
 /**
- * Locale-detection middleware. Reads `Accept-Language` (and the
- * `NEXT_LOCALE` cookie on return visits) and 307-redirects to the
- * matching `/{locale}/...` URL. Skips API routes, Next internals,
- * and static assets.
+ * `/es` is gated behind a server-side env flag during the migration:
+ *
+ *   NEXT_PUBLIC_I18N_ES_READY=1
+ *
+ * Until ES translations land (Stage 4 of the i18n cluster), exposing
+ * `/es/*` to production users would render Spanglish — components
+ * already migrated to `useTranslations` return ES copy, the rest
+ * still import EN strings from editorial.ts.
+ *
+ * When the flag is OFF (production default today):
+ *   1. The intl middleware is constructed with locales=['en'] so
+ *      Accept-Language detection on naked `/` resolves directly to
+ *      `/en` without an `/es` round-trip. One redirect hop.
+ *   2. Any direct hit to `/es/*` (typed URL, stale bookmark, social
+ *      share) is 307-redirected to its `/en` counterpart so testers
+ *      land on a coherent EN page instead of mixed-locale content.
+ *
+ * Flip the flag (env var) when the LATAM testing cohort is ready.
  */
-export default createMiddleware(routing);
+const ES_READY = process.env.NEXT_PUBLIC_I18N_ES_READY === "1";
+
+const activeRouting = ES_READY
+  ? routing
+  : defineRouting({
+      locales: ["en"],
+      defaultLocale: "en",
+      localePrefix: "always",
+      localeDetection: true,
+    });
+
+const intlMiddleware = createMiddleware(activeRouting);
+
+export default function middleware(request: NextRequest) {
+  if (!ES_READY) {
+    const { pathname } = request.nextUrl;
+    if (pathname === "/es" || pathname.startsWith("/es/")) {
+      const target = pathname.replace(/^\/es/, "/en") || "/en";
+      const redirectUrl = new URL(target, request.url);
+      redirectUrl.search = request.nextUrl.search;
+      return NextResponse.redirect(redirectUrl, 307);
+    }
+  }
+  return intlMiddleware(request);
+}
 
 export const config = {
   matcher: [
