@@ -4909,7 +4909,9 @@ button.hud-resource-chip:active:not(:disabled) {
    coexists with the difficulty selector + kingdom anchor preview. Keeps
    gold-leaf treatment, ambient pulse, and pressed state. */
 .primary-play-cta--arena-entry {
+  width: auto;
   min-height: 52px;
+  padding: 12px 42px;
   font-size: 1.1rem;
   border-radius: 14px;
   background:
@@ -6432,8 +6434,9 @@ button.hud-resource-chip:active:not(:disabled) {
 .arena-scaffold-footer {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 12px;
-  padding-top: 4px;
+  padding-top: 12px;
 }
 
 .arena-scaffold-footer .mission-ribbon--arena {
