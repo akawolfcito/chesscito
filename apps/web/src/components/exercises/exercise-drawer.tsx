@@ -28,12 +28,12 @@ type ExerciseDrawerProps = {
 
 function StarDisplay({ count }: { count: number }) {
   return (
-    <span className="flex gap-0.5">
+    <span className="flex gap-1">
       {[1, 2, 3].map((i) => (
         <CandyIcon
           key={i}
           name="star"
-          className={`h-3 w-3 ${i <= count ? "opacity-100" : "opacity-25"}`}
+          className={`h-4 w-4 ${i <= count ? "opacity-100" : "opacity-25"}`}
         />
       ))}
     </span>
