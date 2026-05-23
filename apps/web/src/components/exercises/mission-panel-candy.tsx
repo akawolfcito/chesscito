@@ -72,11 +72,6 @@ type MissionPanelProps = {
    *  bridge) that shouldn't push the board down. */
   actionRowLeft?: ReactNode
   actionRowRight?: ReactNode
-  /** Optional handler for the floating help (`?`) badge layered on the
-   *  piece selector. When provided the badge is rendered and tapping it
-   *  re-opens the MissionBriefing on demand — no localStorage state is
-   *  altered. */
-  onHelpClick?: () => void
 }
 
 type FlashConfig = { text: string; accent: string; stroke: string }
@@ -331,7 +326,6 @@ export function MissionPanelCandy({
   actionRowRight,
   shieldCount,
   pieceHint,
-  onHelpClick,
 }: MissionPanelProps) {
   // Quick-picker (Type C) open state — owned here so we can auto-close
   // them when the parent signals a dock destination sheet is opening.
@@ -407,30 +401,12 @@ export function MissionPanelCandy({
           floats below with negative space between. */}
       <div className="mt-0.5 px-3 py-1.5">
         <div className="flex items-center gap-1">
-          <div className="relative flex-1 min-w-0">
+          <div className="flex-1 min-w-0">
             <PiecePickerTrigger
               selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
               onClick={() => setPiecePickerOpen(true)}
               showLabel
             />
-            {onHelpClick ? (
-              <button
-                type="button"
-                onClick={onHelpClick}
-                aria-label={MISSION_BRIEFING_COPY.helpButtonAriaLabel}
-                className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full text-xs font-extrabold text-white transition-all active:scale-90"
-                style={{
-                  background:
-                    'radial-gradient(circle at 30% 30%, #60a5fa 0%, #2563eb 80%)',
-                  boxShadow:
-                    '0 2px 5px rgba(37, 99, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.55)',
-                  border: '1px solid rgba(255, 255, 255, 0.65)',
-                  lineHeight: 1,
-                }}
-              >
-                ?
-              </button>
-            ) : null}
           </div>
           <div className="flex-1 min-w-0">
             <MissionDetailSheet

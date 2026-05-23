@@ -538,10 +538,6 @@ export function ExercisesScreen({
     }, durationMs);
   }
   const { showSplash, showBriefing, markOnboarded } = useSplashLoader();
-  // Manual re-open of MissionBriefing via the help (?) badge on the
-  // piece selector. Decoupled from `showBriefing` so the user can
-  // recall the briefing without rewriting `chesscito:onboarded`.
-  const [manualBriefingOpen, setManualBriefingOpen] = useState(false);
   const [exerciseDrawerOpen, setExerciseDrawerOpen] = useState(false);
   const [justClaimed, setJustClaimed] = useState<Record<PieceKey, boolean>>({
     rook: false, bishop: false, knight: false, pawn: false, queen: false, king: false,
@@ -1682,7 +1678,6 @@ export function ExercisesScreen({
               unlocked={selectedPiece === "rook" && totalStars >= 12}
             />
           }
-          onHelpClick={() => setManualBriefingOpen(true)}
           contextualAction={
             // Cluster C — three-way render in the contextual slot:
             //   (1) Tx in flight (or held post-confirm)  → TxProgressSteps toast
@@ -1824,18 +1819,12 @@ export function ExercisesScreen({
          *  the dialog will appear naturally once the user is back at
          *  the root view. Prevents the visual stack collapse flagged
          *  by visual-qa-2026-04-30 (Issue #1). */}
-        {(showBriefing || manualBriefingOpen) && activeDockTab === null && !proSheetOpen && !accountSheetOpen ? (
+        {showBriefing && activeDockTab === null && !proSheetOpen && !accountSheetOpen ? (
           <MissionBriefing
             pieceType={selectedPiece}
             targetLabel={targetLabel}
             isCapture={Boolean(currentExercise.isCapture)}
-            onPlay={() => {
-              if (manualBriefingOpen) {
-                setManualBriefingOpen(false);
-                return;
-              }
-              markOnboarded();
-            }}
+            onPlay={markOnboarded}
           />
         ) : null}
 
