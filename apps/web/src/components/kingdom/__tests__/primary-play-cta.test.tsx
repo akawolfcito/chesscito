@@ -124,7 +124,7 @@ describe("PrimaryPlayCta", () => {
       s.getAttribute("srcset"),
     );
     expect(srcsets).toContain("/art/redesign/banners/btn-play.avif");
-    expect(srcsets).toContain("/art/redesign/banners/btn-stone-bg.avif");
+    expect(srcsets).toContain("/art/scene-rooted/principalbutton.avif");
   });
 
   it("treats arena and arena-entry as distinct surface modifiers", () => {

@@ -510,7 +510,42 @@
     background-color: rgba(0, 0, 0, 0.60);
   }
 
-  .candy-nav-button,
+  /* Back affordance — icon-only chip. The asset (CandyBanner btn-back)
+     IS the visual, so no glassy ring / border / shadow / backdrop
+     compete with it. Keeps the 44×44 touch target, active scale and
+     focus ring shared with .candy-close-button. */
+  .candy-nav-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 120ms ease, filter 120ms ease;
+  }
+
+  .candy-nav-button:hover {
+    filter: brightness(1.08);
+  }
+
+  .candy-nav-button:active {
+    transform: scale(0.94);
+  }
+
+  .candy-nav-button:focus-visible {
+    outline: 3px solid rgba(251, 191, 36, 0.50);
+    outline-offset: 2px;
+    border-radius: 9999px;
+  }
+
+  /* Close affordance — keeps the glassy circular chip envelope so the
+     × glyph reads as a button (no asset behind it; the icon is just a
+     glyph). */
   .candy-close-button {
     display: inline-flex;
     align-items: center;
@@ -534,12 +569,10 @@
       box-shadow 120ms ease;
   }
 
-  .candy-nav-button:hover,
   .candy-close-button:hover {
     background: rgba(255, 255, 255, 0.24);
   }
 
-  .candy-nav-button:active,
   .candy-close-button:active {
     transform: scale(0.94);
     box-shadow:
@@ -547,7 +580,6 @@
       inset 0 1px 0 rgba(255, 245, 215, 0.50);
   }
 
-  .candy-nav-button:focus-visible,
   .candy-close-button:focus-visible {
     outline: 3px solid rgba(251, 191, 36, 0.50);
     outline-offset: 2px;
