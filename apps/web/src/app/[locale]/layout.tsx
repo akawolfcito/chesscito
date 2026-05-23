@@ -1,10 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import { Fredoka, Rowdies } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
-import './globals.css';
+import { notFound } from 'next/navigation';
+import { hasLocale, NextIntlClientProvider } from 'next-intl';
+import { getMessages, setRequestLocale } from 'next-intl/server';
+import '../globals.css';
 
 import { WalletProvider } from "@/components/wallet-provider"
 import { DesktopAppFrame } from "@/components/chrome/desktop-app-frame"
+import { routing } from "@/i18n/routing"
 
 const fredoka = Fredoka({
   subsets: ['latin'],
@@ -55,14 +59,27 @@ export const viewport: Viewport = {
   themeColor: '#0b1220',
 };
 
-export default function RootLayout({
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function LocaleLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: { locale: string };
 }) {
+  const { locale } = params;
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+  setRequestLocale(locale);
+  const messages = await getMessages();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`dark ${fredoka.variable} ${rowdies.variable}`}
       suppressHydrationWarning
     >
@@ -76,16 +93,18 @@ export default function RootLayout({
             max-w wrapper). The flex justify-center stays so any
             page that opts back into the 390 px constraint still
             centers cleanly on desktop. */}
-        <div className="flex min-h-[100dvh] justify-center">
-          <div className="relative flex w-full flex-col text-foreground">
-            <WalletProvider>
-              <main className="flex flex-1 flex-col">
-                <DesktopAppFrame>{children}</DesktopAppFrame>
-              </main>
-            </WalletProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <div className="flex min-h-[100dvh] justify-center">
+            <div className="relative flex w-full flex-col text-foreground">
+              <WalletProvider>
+                <main className="flex flex-1 flex-col">
+                  <DesktopAppFrame>{children}</DesktopAppFrame>
+                </main>
+              </WalletProvider>
+            </div>
           </div>
-        </div>
-        <Analytics />
+          <Analytics />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

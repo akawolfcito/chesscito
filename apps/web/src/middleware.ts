@@ -11,8 +11,10 @@ export default createMiddleware(routing);
 
 export const config = {
   matcher: [
-    // Exclude API routes, Next internals, and any path with a file
-    // extension (static assets). Anything else gets locale routing.
-    "/((?!api|_next|_vercel|.*\\..*).*)",
+    // Exclude API routes, Next internals, dev/VR fixtures (kept
+    // locale-agnostic so VR baseline paths stay stable), and any path
+    // with a file extension (static assets). Anything else gets
+    // locale routing.
+    "/((?!api|_next|_vercel|dev|.*\\..*).*)",
   ],
 };
