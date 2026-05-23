@@ -4910,10 +4910,15 @@ button.hud-resource-chip:active:not(:disabled) {
    gold-leaf treatment, ambient pulse, and pressed state. */
 .primary-play-cta--arena-entry {
   min-height: 52px;
-  /* padding: 10px 18px; */
   font-size: 1.1rem;
   border-radius: 14px;
-  background: url("/art/scene-rooted/pedestal-play.png") center / auto 100% no-repeat;
+  background:
+    image-set(
+      url("/art/scene-rooted/principalbutton.avif") type("image/avif"),
+      url("/art/scene-rooted/principalbutton.webp") type("image/webp"),
+      url("/art/scene-rooted/principalbutton.png") type("image/png")
+    )
+    center / 100% 100% no-repeat;
 }
 
 .primary-play-cta--arena-entry .primary-play-cta-icon {
