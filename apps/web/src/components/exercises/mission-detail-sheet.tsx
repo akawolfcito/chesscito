@@ -167,7 +167,7 @@ export function MissionDetailSheet({
                 </picture>
               </button>
 
-              <div className="flex flex-col items-center px-[10%] pt-[8%] pb-[7%]">
+              <div className="flex flex-col items-center px-[10%] pt-[6%] pb-[5%]">
                 <div className="flex w-full items-center">
                   <h2
                     className="fantasy-title text-2xl font-extrabold tracking-wide"
@@ -180,8 +180,8 @@ export function MissionDetailSheet({
                   </h2>
                 </div>
 
-                <div className="mt-4 flex items-center justify-center">
-                  <picture>
+                <div className="mt-3 flex w-full items-center gap-3">
+                  <picture className="shrink-0">
                     <source
                       srcSet="/art/screen-mission/avatar-icon.avif"
                       type="image/avif"
@@ -194,34 +194,35 @@ export function MissionDetailSheet({
                       src="/art/screen-mission/avatar-icon.png"
                       alt=""
                       aria-hidden="true"
-                      className="h-32 w-32 object-contain drop-shadow-[0_3px_10px_rgba(120,65,5,0.45)]"
+                      className="h-20 w-20 object-contain drop-shadow-[0_3px_10px_rgba(120,65,5,0.45)]"
                       draggable={false}
                     />
                   </picture>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      id="mission-detail-objective"
+                      className="text-left text-base font-extrabold leading-tight"
+                      style={{
+                        color: "rgba(63, 34, 8, 0.95)",
+                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
+                      }}
+                    >
+                      {objective}
+                    </p>
+                    <p
+                      className="mt-1 text-left text-xs font-medium leading-snug"
+                      style={{
+                        color: "rgba(110, 65, 15, 0.75)",
+                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                      }}
+                    >
+                      {hint}
+                    </p>
+                  </div>
                 </div>
 
-                <p
-                  id="mission-detail-objective"
-                  className="mt-4 text-center text-xl font-extrabold leading-snug"
-                  style={{
-                    color: "rgba(63, 34, 8, 0.95)",
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
-                  }}
-                >
-                  {objective}
-                </p>
-                <p
-                  className="mt-2 text-center text-sm font-medium"
-                  style={{
-                    color: "rgba(110, 65, 15, 0.75)",
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                  }}
-                >
-                  {hint}
-                </p>
-
                 {hasStats ? (
-                  <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
                     <span className="candy-stat-pill">
                       <span className="candy-stat-pill-icon">
                         <CandyIcon name="star" className="h-4 w-4" />
@@ -237,7 +238,7 @@ export function MissionDetailSheet({
                   </div>
                 ) : (
                   <p
-                    className="mt-4 text-center text-xs"
+                    className="mt-3 text-center text-xs"
                     style={{ color: "rgba(110, 65, 15, 0.65)" }}
                   >
                     {MISSION_DETAIL_COPY.preFirstMoveHint}
@@ -257,13 +258,13 @@ export function MissionDetailSheet({
                     src="/art/screen-mission/adorno-icon.png"
                     alt=""
                     aria-hidden="true"
-                    className="mt-5 h-4 w-44 object-contain"
+                    className="mt-3 h-4 w-44 object-contain"
                     draggable={false}
                   />
                 </picture>
 
                 <h3
-                  className="mt-3 text-center text-lg font-extrabold tracking-tight"
+                  className="mt-2 text-center text-base font-extrabold tracking-tight"
                   style={{
                     color: "rgba(63, 34, 8, 0.95)",
                     textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
@@ -272,7 +273,7 @@ export function MissionDetailSheet({
                   {MISSION_DETAIL_COPY.journeyTitle}
                 </h3>
 
-                <div className="mt-3 w-full">
+                <div className="mt-2 w-full">
                   <JourneyRail
                     currentPiece={selectedPiece}
                     currentStars={currentStars}

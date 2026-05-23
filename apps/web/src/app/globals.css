@@ -1078,12 +1078,18 @@
     border-top: 1px dashed var(--paper-divider);
   }
 
+  .journey-row {
+    /* Tighter than the base .paper-row so the candy mission sheet
+       lists three tiers without bloating the panel height. */
+    padding-block: 0.3rem;
+  }
+
   .journey-row-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
     border-radius: 9999px;
     background: rgba(251, 191, 36, 0.18);
     flex-shrink: 0;
