@@ -210,7 +210,7 @@ export function TrophiesBody() {
             {TROPHY_VITRINE_COPY.noVictories}
           </p>
           <Link
-            href="/arena"
+            href="/arena?fresh=1"
             className="principal-button principal-button-medium inline-flex w-full items-center justify-center text-center"
           >
             <span className="principal-button-label">

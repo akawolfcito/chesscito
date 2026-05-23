@@ -201,7 +201,7 @@ export function MissionBriefing({
             </picture>
 
             <Link
-              href="/arena"
+              href="/arena?fresh=1"
               className="mt-1 block text-center text-xs font-semibold underline underline-offset-2"
               style={{ color: "rgba(110, 65, 15, 0.70)" }}
             >

@@ -17,7 +17,7 @@ export function AcceptChallengeButton() {
   return (
     <PrincipalButton
       size="large"
-      onClick={() => router.push("/arena")}
+      onClick={() => router.push("/arena?fresh=1")}
       aria-label={VICTORY_PAGE_COPY.acceptChallenge}
     >
       {VICTORY_PAGE_COPY.acceptChallenge}
