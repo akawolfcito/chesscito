@@ -250,6 +250,71 @@ const messages = {
     stepCounter: "Paso {current} de {total}",
     toastErrorFallback: "Transacción fallida — ver detalles",
   },
+  SHARE_COPY: {
+    ...en.SHARE_COPY,
+    button: "Compartir",
+    badge:
+      "¡Gané la insignia Ascendente de {piece} en Chesscito! {stars}/15 estrellas — permanente en cadena.",
+    score:
+      "¡Acabo de fijar mi puntaje de Chesscito en cadena! {stars}/15 estrellas — registrado para siempre.",
+    shop: "¡Acabo de obtener {item} en Chesscito!",
+    fallbackCopied: "¡Copiado!",
+    playCta: "Jugar Chesscito",
+  },
+  DAILY_SHARE_COPY: {
+    ...en.DAILY_SHARE_COPY,
+    shareChallenge: "Compartir reto",
+    shareResult: "Compartir resultado",
+    ctaChallenge: "¿Puedes resolver el puzzle de hoy?",
+    ctaSolvedNoStreak: "Resolví el puzzle de hoy. ¿Y tú?",
+    ctaSolvedWithStreak: "Resolví el puzzle de hoy. Racha: {streak}. ¿Y tú?",
+    metaTitleChallenge: "Táctica diaria — Chesscito",
+    metaTitleSolved: "Táctica diaria resuelta — Chesscito",
+    headlineChallenge: "Táctica diaria",
+    headlineSolved: "Táctica diaria resuelta",
+    defaultName: "Táctica diaria",
+  },
+  ENDGAME_SHARE_COPY: {
+    ...en.ENDGAME_SHARE_COPY,
+    shareChallenge: "Compartir reto",
+    shareResult: "Compartir resultado",
+    ctaChallenge: "¿Puedes forzar mate desde esta posición?",
+    ctaSolvedNoMoves: "Resolví este final. ¿Y tú?",
+    ctaSolvedWithMoves:
+      "Resolví este entrenamiento R+T vs R en {moves}/{limit} movimientos. ¿Y tú?",
+    metaTitleChallenge: "Reto de final — Chesscito",
+    metaTitleSolved: "Final resuelto — Chesscito",
+    headlineChallenge: "Reto de final",
+    headlineSolved: "Final resuelto",
+    defaultName: "R+T vs R",
+    kicker: "Mini Arena",
+  },
+  BADGE_SHARE_COPY: {
+    kicker: "Insignia desbloqueada",
+    metaTitleFormat: "Insignia Ascendente de {piece}",
+    headlineFormat: "{piece} Ascendente",
+  },
+  SCORE_SHARE_COPY: {
+    metaTitleFormat: "{stars}/15 estrellas en Chesscito",
+    kickerFormat: "{piece} dominada",
+    headlineFormat: "{stars} / 15 estrellas",
+  },
+  SHARE_GRID_COPY: {
+    more: "Más",
+    copy: "Copiar",
+    save: "Guardar",
+    saveSaved: "Guardado",
+    saveLinkCopied: "Link copiado",
+    saveFailed: "Reintentar",
+    shareOnLabel: "Compartir en {service}",
+  },
+  SHARE_MODAL_COPY: {
+    defaultTitle: "Compartir",
+    closeLabel: "Cerrar compartir",
+    previewAlt: "Vista previa",
+    generatingCard: "Generando tu card…",
+    previewUnavailable: "Vista previa no disponible",
+  },
 };
 
 export default messages;

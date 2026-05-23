@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { SHARE_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
 
 type Props = {
@@ -41,7 +41,9 @@ type SaveState = "idle" | "saved" | "link-copied" | "failed";
  * are reached via Save → manual upload to Story/Reel/Post.
  */
 export function ShareGrid({ text, url, cardUrl }: Props) {
-  const shareUrl = url ?? SHARE_COPY.url;
+  const tGrid = useTranslations("SHARE_GRID_COPY");
+  const tShare = useTranslations("SHARE_COPY");
+  const shareUrl = url ?? tShare("url");
   const payload = `${text}\n${shareUrl}`;
   const [copied, setCopied] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -157,10 +159,10 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
 
   const saveLabel = (() => {
     switch (saveState) {
-      case "saved": return "Saved";
-      case "link-copied": return "Link copied";
-      case "failed": return "Try Share";
-      default: return "Save";
+      case "saved": return tGrid("saveSaved");
+      case "link-copied": return tGrid("saveLinkCopied");
+      case "failed": return tGrid("saveFailed");
+      default: return tGrid("save");
     }
   })();
 
@@ -228,14 +230,14 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
         }
       : {
           key: "copy",
-          label: copied ? SHARE_COPY.fallbackCopied : "Copy",
+          label: copied ? tShare("fallbackCopied") : tGrid("copy"),
           background: "rgba(110, 65, 15, 0.18)",
           onClick: handleCopy,
           icon: <CandyIcon name="copy" className="h-5 w-5" />,
         },
     {
       key: "more",
-      label: "More",
+      label: tGrid("more"),
       background: "rgba(110, 65, 15, 0.18)",
       onClick: handleNativeShare,
       icon: (
@@ -281,7 +283,7 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
               href={s.href}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`Share on ${s.label}`}
+              aria-label={tGrid("shareOnLabel", { service: s.label })}
               className="flex flex-col items-center gap-1.5"
               onClick={() => track("share_tile_tap", { tile: s.key })}
             >

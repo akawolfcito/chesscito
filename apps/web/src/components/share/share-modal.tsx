@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { SHARE_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { ShareGrid } from "@/components/share/share-grid";
 import { track } from "@/lib/telemetry";
@@ -36,8 +36,11 @@ export function ShareModal({
   cardUrl,
   text,
   url,
-  title = "Share",
+  title: titleProp,
 }: Props) {
+  const t = useTranslations("SHARE_MODAL_COPY");
+  const tShare = useTranslations("SHARE_COPY");
+  const title = titleProp ?? t("defaultTitle");
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
@@ -94,7 +97,7 @@ export function ShareModal({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={cardUrl}
-                alt="Share preview"
+                alt={t("previewAlt")}
                 className="h-full w-full object-contain"
                 onLoad={() => setImgLoaded(true)}
                 onError={() => { setImgLoaded(true); setImgError(true); }}
@@ -116,7 +119,7 @@ export function ShareModal({
                   className="text-xs font-semibold"
                   style={{ color: "rgba(110, 65, 15, 0.60)" }}
                 >
-                  Generating your card…
+                  {t("generatingCard")}
                 </span>
               </div>
             )}
@@ -126,7 +129,7 @@ export function ShareModal({
                 style={{ color: "rgba(110, 65, 15, 0.45)" }}
               >
                 <span className="text-center text-xs leading-snug px-4">
-                  Card preview unavailable
+                  {t("previewUnavailable")}
                 </span>
               </div>
             )}
@@ -149,11 +152,11 @@ export function ShareModal({
               variant="close-control"
               icon="share"
               title={title}
-              close={{ onClick: () => onOpenChange(false), label: "Close share" }}
+              close={{ onClick: () => onOpenChange(false), label: t("closeLabel") }}
             />
           </div>
           <div className="px-5 pt-5">
-            <ShareGrid text={text} url={url ?? SHARE_COPY.url} cardUrl={cardUrl ?? undefined} />
+            <ShareGrid text={text} url={url ?? tShare("url")} cardUrl={cardUrl ?? undefined} />
           </div>
         </div>
       </div>

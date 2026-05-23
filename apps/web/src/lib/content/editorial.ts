@@ -240,6 +240,8 @@ export const SHARE_COPY = {
     `I just got ${item} on Chesscito!`,
   fallbackCopied: "Copied to clipboard!",
   url: "https://chesscito.com",
+  /** Footer CTA shared by every /share/[type] page. */
+  playCta: "Play Chesscito",
 } as const;
 
 export const DAILY_SOLVE_COPY = {
@@ -254,20 +256,77 @@ export const DAILY_SHARE_COPY = {
   shareChallenge: "Share Challenge",
   shareResult: "Share Result",
   ctaChallenge: "Can you solve today\u2019s puzzle?",
+  /** Legacy helper retained for non-i18n callers. New surfaces should
+   *  pick `ctaSolvedNoStreak` / `ctaSolvedWithStreak` via `useTranslations`. */
   ctaSolved: (streak?: number) =>
     streak != null && streak > 0
       ? `I solved today\u2019s puzzle. Streak: ${streak}. Can you?`
       : "I solved today\u2019s puzzle. Can you?",
+  ctaSolvedNoStreak: "I solved today\u2019s puzzle. Can you?",
+  ctaSolvedWithStreak: "I solved today\u2019s puzzle. Streak: {streak}. Can you?",
+  /** Page chrome for `/share/daily`. */
+  metaTitleChallenge: "Daily Tactic — Chesscito",
+  metaTitleSolved: "Daily Tactic solved — Chesscito",
+  headlineChallenge: "Daily Tactic",
+  headlineSolved: "Daily Tactic solved",
+  defaultName: "Daily Tactic",
 } as const;
 
 export const ENDGAME_SHARE_COPY = {
   shareChallenge: "Share Challenge",
   shareResult: "Share Result",
   ctaChallenge: "Can you force checkmate from this position?",
+  /** Legacy helper retained for non-i18n callers. New surfaces should
+   *  pick `ctaSolvedNoMoves` / `ctaSolvedWithMoves` via `useTranslations`. */
   ctaSolved: (moves?: number, limit?: number) =>
     moves != null && limit != null
       ? `I solved this K+R vs K training in ${moves}/${limit} moves. Can you?`
       : "I solved this endgame. Can you?",
+  ctaSolvedNoMoves: "I solved this endgame. Can you?",
+  ctaSolvedWithMoves: "I solved this K+R vs K training in {moves}/{limit} moves. Can you?",
+  /** Page chrome for `/share/endgame`. */
+  metaTitleChallenge: "Endgame challenge — Chesscito",
+  metaTitleSolved: "Endgame solved — Chesscito",
+  headlineChallenge: "Endgame challenge",
+  headlineSolved: "Endgame solved",
+  defaultName: "K+R vs K",
+  kicker: "Mini Arena",
+} as const;
+
+/** `/share/badge` page chrome. */
+export const BADGE_SHARE_COPY = {
+  kicker: "Badge unlocked",
+  metaTitleFormat: "{piece} Ascendant Badge",
+  headlineFormat: "{piece} Ascendant",
+} as const;
+
+/** `/share/score` page chrome. */
+export const SCORE_SHARE_COPY = {
+  metaTitleFormat: "{stars}/15 stars on Chesscito",
+  kickerFormat: "{piece} mastered",
+  headlineFormat: "{stars} / 15 stars",
+} as const;
+
+/** `<ShareGrid />` state labels + service aria-label format. Brand
+ *  names (WhatsApp, Telegram, Facebook, X) intentionally stay
+ *  hardcoded as proper nouns. */
+export const SHARE_GRID_COPY = {
+  more: "More",
+  copy: "Copy",
+  save: "Save",
+  saveSaved: "Saved",
+  saveLinkCopied: "Link copied",
+  saveFailed: "Try Share",
+  shareOnLabel: "Share on {service}",
+} as const;
+
+/** `<ShareModal />` chrome (preview states + close affordance). */
+export const SHARE_MODAL_COPY = {
+  defaultTitle: "Share",
+  closeLabel: "Close share",
+  previewAlt: "Share preview",
+  generatingCard: "Generating your card\u2026",
+  previewUnavailable: "Card preview unavailable",
 } as const;
 
 export const PHASE_FLASH_COPY = {

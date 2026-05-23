@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
-import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 import { ShareGrid } from "@/components/share/share-grid";
 
 const TEXT = "I just locked my score!";

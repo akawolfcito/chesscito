@@ -56,5 +56,10 @@ const messages = stripFunctions({ ...editorial }) as Record<string, unknown>;
 const m = messages as any;
 m.HUD_COPY.proRemainingFormat = "{days}d";
 m.TX_PROGRESS_COPY.stepCounter = "Step {current} of {total}";
+m.SHARE_COPY.badge =
+  "I earned the {piece} Ascendant badge on Chesscito! {stars}/15 stars — permanently on-chain.";
+m.SHARE_COPY.score =
+  "I just locked my Chesscito score on-chain! {stars}/15 stars — permanently recorded.";
+m.SHARE_COPY.shop = "I just got {item} on Chesscito!";
 
 export default messages;

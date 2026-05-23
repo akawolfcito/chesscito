@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PIECE_LABELS, SHARE_COPY } from "@/lib/content/editorial";
+import { getTranslations } from "next-intl/server";
 import {
   SHARE_PIECES,
   getShareOrigin,
@@ -27,10 +27,13 @@ export async function generateMetadata({
   searchParams: SearchParams;
 }): Promise<Metadata> {
   const { piece, stars } = normalize(searchParams);
-  const pieceLabel = PIECE_LABELS[piece];
+  const tPiece = await getTranslations("PIECE_LABELS");
+  const tBadge = await getTranslations("BADGE_SHARE_COPY");
+  const tShare = await getTranslations("SHARE_COPY");
+  const pieceLabel = tPiece(piece);
   const origin = getShareOrigin();
-  const title = `${pieceLabel} Ascendant Badge`;
-  const description = SHARE_COPY.badge(pieceLabel, stars);
+  const title = tBadge("metaTitleFormat", { piece: pieceLabel });
+  const description = tShare("badge", { piece: pieceLabel, stars });
   const ogImage = `${origin}/api/og/exercise?piece=${piece}&stars=${stars}&type=badge-earned`;
   const canonical = `${origin}/share/badge?piece=${piece}&stars=${stars}`;
 
@@ -55,13 +58,16 @@ export async function generateMetadata({
   };
 }
 
-export default function ShareBadgePage({
+export default async function ShareBadgePage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
   const { piece, stars } = normalize(searchParams);
-  const pieceLabel = PIECE_LABELS[piece];
+  const tPiece = await getTranslations("PIECE_LABELS");
+  const tBadge = await getTranslations("BADGE_SHARE_COPY");
+  const tShare = await getTranslations("SHARE_COPY");
+  const pieceLabel = tPiece(piece);
 
   return (
     <main className="mission-shell secondary-page-scrim flex min-h-[100dvh] items-center justify-center px-6">
@@ -73,19 +79,19 @@ export default function ShareBadgePage({
           className="text-xs font-bold uppercase tracking-widest"
           style={{ color: "rgba(110, 65, 15, 0.55)" }}
         >
-          Badge unlocked
+          {tBadge("kicker")}
         </p>
         <p
           className="fantasy-title text-3xl font-bold"
           style={{ color: "rgba(110, 65, 15, 0.98)" }}
         >
-          {pieceLabel} Ascendant
+          {tBadge("headlineFormat", { piece: pieceLabel })}
         </p>
         <p
           className="text-sm leading-snug"
           style={{ color: "rgba(110, 65, 15, 0.75)" }}
         >
-          {SHARE_COPY.badge(pieceLabel, stars)}
+          {tShare("badge", { piece: pieceLabel, stars })}
         </p>
         <Link
           href="/play-hub"
@@ -96,7 +102,7 @@ export default function ShareBadgePage({
             boxShadow: "0 4px 12px rgba(120, 65, 5, 0.32)",
           }}
         >
-          Play Chesscito
+          {tShare("playCta")}
         </Link>
       </div>
     </main>

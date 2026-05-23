@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PIECE_LABELS, SHARE_COPY } from "@/lib/content/editorial";
+import { getTranslations } from "next-intl/server";
 import {
   SHARE_PIECES,
   getShareOrigin,
@@ -27,9 +27,11 @@ export async function generateMetadata({
   searchParams: SearchParams;
 }): Promise<Metadata> {
   const { piece, stars } = normalize(searchParams);
+  const tScore = await getTranslations("SCORE_SHARE_COPY");
+  const tShare = await getTranslations("SHARE_COPY");
   const origin = getShareOrigin();
-  const title = `${stars}/15 stars on Chesscito`;
-  const description = SHARE_COPY.score(stars);
+  const title = tScore("metaTitleFormat", { stars });
+  const description = tShare("score", { stars });
   const ogImage = `${origin}/api/og/exercise?piece=${piece}&stars=${stars}&type=piece-complete`;
   const canonical = `${origin}/share/score?piece=${piece}&stars=${stars}`;
 
@@ -54,13 +56,16 @@ export async function generateMetadata({
   };
 }
 
-export default function ShareScorePage({
+export default async function ShareScorePage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
   const { piece, stars } = normalize(searchParams);
-  const pieceLabel = PIECE_LABELS[piece];
+  const tPiece = await getTranslations("PIECE_LABELS");
+  const tScore = await getTranslations("SCORE_SHARE_COPY");
+  const tShare = await getTranslations("SHARE_COPY");
+  const pieceLabel = tPiece(piece);
 
   return (
     <main className="mission-shell secondary-page-scrim flex min-h-[100dvh] items-center justify-center px-6">
@@ -72,19 +77,19 @@ export default function ShareScorePage({
           className="text-xs font-bold uppercase tracking-widest"
           style={{ color: "rgba(110, 65, 15, 0.55)" }}
         >
-          {pieceLabel} mastered
+          {tScore("kickerFormat", { piece: pieceLabel })}
         </p>
         <p
           className="fantasy-title text-3xl font-bold"
           style={{ color: "rgba(110, 65, 15, 0.98)" }}
         >
-          {stars} / 15 stars
+          {tScore("headlineFormat", { stars })}
         </p>
         <p
           className="text-sm leading-snug"
           style={{ color: "rgba(110, 65, 15, 0.75)" }}
         >
-          {SHARE_COPY.score(stars)}
+          {tShare("score", { stars })}
         </p>
         <Link
           href="/play-hub"
@@ -95,7 +100,7 @@ export default function ShareScorePage({
             boxShadow: "0 4px 12px rgba(120, 65, 5, 0.32)",
           }}
         >
-          Play Chesscito
+          {tShare("playCta")}
         </Link>
       </div>
     </main>

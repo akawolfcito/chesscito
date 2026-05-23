@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ENDGAME_SHARE_COPY } from "@/lib/content/editorial";
+import { getTranslations } from "next-intl/server";
 import { getShareOrigin } from "@/lib/og/share-urls";
 
 type SearchParams = {
@@ -40,10 +40,10 @@ function parseClampedInt(raw: string | undefined, min: number, max: number, fall
   return Math.min(Math.max(n, min), max);
 }
 
-function normalize(searchParams: SearchParams): EndgameParams {
+function normalize(searchParams: SearchParams, defaultName: string): EndgameParams {
   return {
     mode: "krk",
-    name: (searchParams.name ?? "K+R vs K").slice(0, NAME_MAX),
+    name: (searchParams.name ?? defaultName).slice(0, NAME_MAX),
     wk: normalizeSquare(searchParams.wk),
     wr: normalizeSquare(searchParams.wr),
     bk: normalizeSquare(searchParams.bk),
@@ -90,14 +90,15 @@ export async function generateMetadata({
 }: {
   searchParams: SearchParams;
 }): Promise<Metadata> {
-  const params = normalize(searchParams);
+  const t = await getTranslations("ENDGAME_SHARE_COPY");
+  const params = normalize(searchParams, t("defaultName"));
   const origin = getShareOrigin();
   const title = params.solved
-    ? "Endgame solved — Chesscito"
-    : "Endgame challenge — Chesscito";
+    ? t("metaTitleSolved")
+    : t("metaTitleChallenge");
   const description = params.solved
-    ? ENDGAME_SHARE_COPY.ctaSolved(params.moves, params.limit)
-    : ENDGAME_SHARE_COPY.ctaChallenge;
+    ? t("ctaSolvedWithMoves", { moves: params.moves, limit: params.limit })
+    : t("ctaChallenge");
   const ogImage = buildOgImage(origin, params);
   const canonical = buildCanonical(origin, params);
 
@@ -122,16 +123,18 @@ export async function generateMetadata({
   };
 }
 
-export default function ShareEndgamePage({
+export default async function ShareEndgamePage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const params = normalize(searchParams);
-  const headline = params.solved ? "Endgame solved" : "Endgame challenge";
+  const t = await getTranslations("ENDGAME_SHARE_COPY");
+  const tShare = await getTranslations("SHARE_COPY");
+  const params = normalize(searchParams, t("defaultName"));
+  const headline = params.solved ? t("headlineSolved") : t("headlineChallenge");
   const subhead = params.solved
-    ? ENDGAME_SHARE_COPY.ctaSolved(params.moves, params.limit)
-    : ENDGAME_SHARE_COPY.ctaChallenge;
+    ? t("ctaSolvedWithMoves", { moves: params.moves, limit: params.limit })
+    : t("ctaChallenge");
 
   return (
     <main className="mission-shell secondary-page-scrim flex min-h-[100dvh] items-center justify-center px-6">
@@ -143,7 +146,7 @@ export default function ShareEndgamePage({
           className="text-xs font-bold uppercase tracking-widest"
           style={{ color: "rgba(110, 65, 15, 0.55)" }}
         >
-          Mini Arena · {params.name}
+          {t("kicker")} · {params.name}
         </p>
         <p
           className="fantasy-title text-3xl font-bold"
@@ -166,7 +169,7 @@ export default function ShareEndgamePage({
             boxShadow: "0 4px 12px rgba(120, 65, 5, 0.32)",
           }}
         >
-          Play Chesscito
+          {tShare("playCta")}
         </Link>
       </div>
     </main>

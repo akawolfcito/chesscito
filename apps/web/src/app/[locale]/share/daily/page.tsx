@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DAILY_SHARE_COPY, PIECE_LABELS } from "@/lib/content/editorial";
+import { getTranslations } from "next-intl/server";
 import {
   SHARE_PIECES,
   getShareOrigin,
@@ -29,12 +29,12 @@ const SQUARE_RE = /^[a-h][1-8]$/;
 const NAME_MAX = 40;
 const STREAK_MAX = 999;
 
-function normalize(searchParams: SearchParams): DailyParams {
+function normalize(searchParams: SearchParams, defaultName: string): DailyParams {
   const rawPiece = (searchParams.piece ?? "").toLowerCase();
   const piece = (SHARE_PIECES as readonly string[]).includes(rawPiece)
     ? (rawPiece as SharePiece)
     : "rook";
-  const name = (searchParams.name ?? "Daily Tactic").slice(0, NAME_MAX);
+  const name = (searchParams.name ?? defaultName).slice(0, NAME_MAX);
   const rawStart = (searchParams.start ?? "").toLowerCase();
   const start = SQUARE_RE.test(rawStart) ? rawStart : "a1";
   const rawTarget = (searchParams.target ?? "").toLowerCase();
@@ -81,14 +81,17 @@ export async function generateMetadata({
 }: {
   searchParams: SearchParams;
 }): Promise<Metadata> {
-  const params = normalize(searchParams);
+  const t = await getTranslations("DAILY_SHARE_COPY");
+  const params = normalize(searchParams, t("defaultName"));
   const origin = getShareOrigin();
   const title = params.solved
-    ? "Daily Tactic solved — Chesscito"
-    : "Daily Tactic — Chesscito";
+    ? t("metaTitleSolved")
+    : t("metaTitleChallenge");
   const description = params.solved
-    ? DAILY_SHARE_COPY.ctaSolved(params.streak > 0 ? params.streak : undefined)
-    : DAILY_SHARE_COPY.ctaChallenge;
+    ? params.streak > 0
+      ? t("ctaSolvedWithStreak", { streak: params.streak })
+      : t("ctaSolvedNoStreak")
+    : t("ctaChallenge");
   const ogImage = buildOgImage(origin, params);
   const canonical = buildCanonical(origin, params);
 
@@ -113,17 +116,22 @@ export async function generateMetadata({
   };
 }
 
-export default function ShareDailyPage({
+export default async function ShareDailyPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const params = normalize(searchParams);
-  const pieceLabel = PIECE_LABELS[params.piece];
-  const headline = params.solved ? "Daily Tactic solved" : "Daily Tactic";
+  const t = await getTranslations("DAILY_SHARE_COPY");
+  const tPiece = await getTranslations("PIECE_LABELS");
+  const tShare = await getTranslations("SHARE_COPY");
+  const params = normalize(searchParams, t("defaultName"));
+  const pieceLabel = tPiece(params.piece);
+  const headline = params.solved ? t("headlineSolved") : t("headlineChallenge");
   const subhead = params.solved
-    ? DAILY_SHARE_COPY.ctaSolved(params.streak > 0 ? params.streak : undefined)
-    : DAILY_SHARE_COPY.ctaChallenge;
+    ? params.streak > 0
+      ? t("ctaSolvedWithStreak", { streak: params.streak })
+      : t("ctaSolvedNoStreak")
+    : t("ctaChallenge");
 
   return (
     <main className="mission-shell secondary-page-scrim flex min-h-[100dvh] items-center justify-center px-6">
@@ -158,7 +166,7 @@ export default function ShareDailyPage({
             boxShadow: "0 4px 12px rgba(120, 65, 5, 0.32)",
           }}
         >
-          Play Chesscito
+          {tShare("playCta")}
         </Link>
       </div>
     </main>
