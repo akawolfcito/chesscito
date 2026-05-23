@@ -65,10 +65,11 @@ export function CardShell({
         height: CARD_HEIGHT,
         display: "flex",
         position: "relative",
-        /* No flat cream fallback — the panel asset (panelBgUrl) or the
-           forest bg (bgUrl) carry the full surface. Leaving the
-           container transparent prevents the legacy cream from peeking
-           through the panel's curved/transparent corners. */
+        /* Grass green fallback — fills the panel asset's curved,
+           transparent corners with a colour that blends into its baked
+           grass border instead of the legacy cream or a bare/black
+           alpha-flattened result. */
+        background: "#5fa329",
       }}
     >
       {/* Panel bg — when provided, replaces the cream gradient entirely
@@ -132,7 +133,9 @@ export function CardShell({
       )}
 
       {/* Mascot — smaller peek bottom-right so the brand cluster
-          breathes and the silhouette is fully visible. */}
+          breathes and the silhouette is fully visible. Explicit
+          borderRadius clips any square corners on the mascot asset
+          so it always reads as a circular avatar. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={mascotUrl}
@@ -143,6 +146,7 @@ export function CardShell({
           position: "absolute",
           right: 30,
           bottom: 30,
+          borderRadius: 999,
           filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
         }}
       />
