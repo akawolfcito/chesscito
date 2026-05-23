@@ -228,49 +228,79 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
       }`}
     >
       <div className="relative flex flex-col items-center gap-3 animate-in zoom-in-90 duration-300">
-        <img
-          src={isSuccess ? '/art/welldone-sms.png' : '/art/try-again.png'}
-          alt={flash.text}
-          className="h-auto w-[78%] max-w-[300px] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
-          style={{
-            animation:
-              'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
-          }}
-        />
-        <div className="relative flex h-44 w-44 items-center justify-center">
-          {/* Confetti lives inside the avatar container so the radial
-              burst emanates from the avatar's center. Container must
-              NOT clip overflow — chips travel far beyond. */}
-          {isSuccess && <Confetti />}
-          {isSuccess && (
-            <div className="pointer-events-none absolute inset-0">
-              <LottieAnimation
-                src="/animations/sparkle-burst.lottie"
-                loop={false}
-                className="h-full w-full"
-              />
-            </div>
-          )}
-          {/* Soft warm halo behind the mascot — gives the figure mass
-              without competing with the sparkle burst on success. */}
-          <div
-            className="pointer-events-none absolute h-40 w-40 rounded-full"
-            style={{
-              background:
-                'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
-            }}
-          />
-          <img
-            src={isSuccess ? '/art/avatar-fun.png' : '/art/avatar-try-again.png'}
-            alt=""
-            aria-hidden="true"
-            className="relative z-10 h-40 w-40 object-contain drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
-            style={{
-              animation:
-                'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
-            }}
-          />
-        </div>
+        {(() => {
+          const bannerBase = isSuccess ? 'welldone-sms' : 'try-again'
+          const avatarBase = isSuccess ? 'avatar-fun' : 'avatar-try-again'
+          return (
+            <>
+              <picture>
+                <source
+                  srcSet={`/art/${bannerBase}.avif`}
+                  type="image/avif"
+                />
+                <source
+                  srcSet={`/art/${bannerBase}.webp`}
+                  type="image/webp"
+                />
+                <img
+                  src={`/art/${bannerBase}.png`}
+                  alt={flash.text}
+                  className="h-auto w-[78%] max-w-[300px] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
+                  style={{
+                    animation:
+                      'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+                  }}
+                />
+              </picture>
+              <div className="relative flex h-44 w-44 items-center justify-center">
+                {/* Confetti lives inside the avatar container so the
+                    radial burst emanates from the avatar's center.
+                    Container must NOT clip overflow — chips travel far
+                    beyond. */}
+                {isSuccess && <Confetti />}
+                {isSuccess && (
+                  <div className="pointer-events-none absolute inset-0">
+                    <LottieAnimation
+                      src="/animations/sparkle-burst.lottie"
+                      loop={false}
+                      className="h-full w-full"
+                    />
+                  </div>
+                )}
+                {/* Soft warm halo behind the mascot — gives the figure
+                    mass without competing with the sparkle burst on
+                    success. */}
+                <div
+                  className="pointer-events-none absolute h-40 w-40 rounded-full"
+                  style={{
+                    background:
+                      'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
+                  }}
+                />
+                <picture className="relative z-10">
+                  <source
+                    srcSet={`/art/${avatarBase}.avif`}
+                    type="image/avif"
+                  />
+                  <source
+                    srcSet={`/art/${avatarBase}.webp`}
+                    type="image/webp"
+                  />
+                  <img
+                    src={`/art/${avatarBase}.png`}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-40 w-40 object-contain drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
+                    style={{
+                      animation:
+                        'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
+                    }}
+                  />
+                </picture>
+              </div>
+            </>
+          )
+        })()}
       </div>
     </div>
   )
