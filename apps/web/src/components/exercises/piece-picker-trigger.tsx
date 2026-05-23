@@ -1,6 +1,5 @@
 'use client'
 
-import { CandyIcon } from '@/components/redesign/candy-icon'
 import { PIECE_IMAGES, PIECE_LABELS } from '@/lib/content/editorial'
 import { THEME_CONFIG } from '@/lib/theme'
 
@@ -34,12 +33,11 @@ export function PiecePickerTrigger({
       onClick={onClick}
       aria-label={`Switch piece (current: ${PIECE_LABELS[selectedPiece]})`}
       aria-haspopup="dialog"
-      className={[
-        'transition-all active:scale-[0.97]',
+      className={
         showLabel
-          ? 'quest-tray-slot w-full min-w-0'
-          : 'flex h-9 w-9 items-center justify-center rounded-full border',
-      ].join(' ')}
+          ? 'candy-tray-pill'
+          : 'flex h-9 w-9 items-center justify-center rounded-full border transition-all active:scale-[0.97]'
+      }
       style={
         showLabel
           ? undefined
@@ -51,7 +49,13 @@ export function PiecePickerTrigger({
             }
       }
     >
-      <picture className="h-5 w-5 shrink-0">
+      <picture
+        className={
+          showLabel
+            ? 'candy-tray-pill-icon candy-tray-pill-icon--floating'
+            : 'h-5 w-5 shrink-0'
+        }
+      >
         {THEME_CONFIG.hasOptimizedFormats && (
           <>
             <source srcSet={`${src}.avif`} type="image/avif" />
@@ -67,7 +71,7 @@ export function PiecePickerTrigger({
       </picture>
       {showLabel && (
         <span
-          className="min-w-0 truncate text-sm font-extrabold uppercase tracking-tight"
+          className="min-w-0 truncate text-sm font-extrabold"
           style={{
             color: 'rgba(63, 34, 8, 0.92)',
             textShadow: '0 1px 0 rgba(255, 245, 215, 0.75)',
@@ -76,11 +80,11 @@ export function PiecePickerTrigger({
           {PIECE_LABELS[selectedPiece]}
         </span>
       )}
-      <CandyIcon
-        name="chevron-down"
-        className="h-3.5 w-3.5"
-        style={{ color: 'rgba(63, 34, 8, 0.95)' }}
-      />
+      {showLabel && (
+        <span aria-hidden="true" className="candy-tray-pill-caret">
+          ▾
+        </span>
+      )}
     </button>
   )
 }

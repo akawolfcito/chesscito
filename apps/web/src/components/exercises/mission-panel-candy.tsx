@@ -366,13 +366,16 @@ export function MissionPanelCandy({
   const missionPeek = (
     <button
       type="button"
-      className="quest-tray-slot w-full transition-all active:scale-[0.97]"
+      className="candy-tray-pill"
       aria-label={missionAriaLabel}
     >
-      <CandyIcon name="crosshair" className="h-3.5 w-3.5 shrink-0 opacity-70" />
+      <CandyIcon
+        name="crosshair"
+        className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+      />
       <span
         key={targetLabel}
-        className="truncate text-sm font-extrabold uppercase tracking-tight"
+        className="truncate text-sm font-extrabold"
         style={candyChipTextStyle}
       >
         {visibleMissionLabel}
