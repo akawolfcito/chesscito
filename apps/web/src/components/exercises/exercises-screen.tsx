@@ -179,7 +179,7 @@ function AccountSheet({
         hideClose
         title={ACCOUNT_SHEET_COPY.title}
         description={ACCOUNT_SHEET_COPY.description}
-        className="sheet-bg-hub rounded-t-3xl border-0 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)]"
+        className="sheet-bg-hub rounded-t-3xl border-0 pb-[calc(env(safe-area-inset-bottom,0px)+2rem)]"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
@@ -200,9 +200,15 @@ function AccountSheet({
               <span className="font-semibold tabular-nums" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
                 {walletShort}
               </span>
-              <Button type="button" variant="game-ghost" size="game-sm" onClick={() => void copyAddress()}>
-                {copied ? ACCOUNT_SHEET_COPY.copiedAddress : ACCOUNT_SHEET_COPY.copyAddress}
-              </Button>
+              <button
+                type="button"
+                onClick={() => void copyAddress()}
+                aria-label={copied ? ACCOUNT_SHEET_COPY.copiedAddress : ACCOUNT_SHEET_COPY.copyAddress}
+                className="inline-flex items-center justify-center bg-transparent border-0 p-0 transition active:scale-90"
+                style={{ color: "rgba(63, 34, 8, 0.95)" }}
+              >
+                <CandyIcon name={copied ? "check" : "copy"} className="h-5 w-5" />
+              </button>
             </div>
           </div>
 
@@ -211,34 +217,44 @@ function AccountSheet({
               <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
                 {ACCOUNT_SHEET_COPY.networkLabel}
               </p>
-              <p className="mt-1 font-semibold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+              <span className="account-status-pill mt-1" data-tone="celo">
+                <CandyIcon name="check" className="h-3 w-3" />
                 {networkName(chainId)}
-              </p>
+              </span>
             </div>
             <div className="candy-tray">
               <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
                 {ACCOUNT_SHEET_COPY.proLabel}
               </p>
-              <p className="mt-1 font-semibold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+              <span
+                className="account-status-pill mt-1"
+                data-tone={proActive ? "active" : "inactive"}
+              >
+                <span aria-hidden="true">★</span>
                 {proActive ? ACCOUNT_SHEET_COPY.activePro : ACCOUNT_SHEET_COPY.inactivePro}
-              </p>
+              </span>
             </div>
           </div>
 
-          <Button
+          <button
             type="button"
-            variant="game-primary"
-            size="game"
-            className="w-full"
             onClick={onManagePro}
+            className="account-manage-pro-cta w-full"
           >
-            {proActive ? ACCOUNT_SHEET_COPY.managePro : ACCOUNT_SHEET_COPY.viewPro}
-          </Button>
+            <img
+              src="/art/screen-mission/corona-pro.png"
+              alt=""
+              aria-hidden="true"
+              className="account-manage-pro-cta-icon"
+              draggable={false}
+            />
+            <span>{proActive ? ACCOUNT_SHEET_COPY.managePro : ACCOUNT_SHEET_COPY.viewPro}</span>
+          </button>
           <Button
             type="button"
             variant="game-ghost"
             size="game-sm"
-            className="w-full"
+            className="mt-3 w-full"
             onClick={onDisconnect}
           >
             {ACCOUNT_SHEET_COPY.disconnect}
@@ -1618,7 +1634,7 @@ export function ExercisesScreen({
                   tone="pro"
                   size="compact"
                   atmosphere="adventure"
-                  icon="wallet"
+                  imageIconSrc="/art/screen-mission/corona-pro.png"
                   value="PRO"
                   ariaLabel={
                     proStatus?.active

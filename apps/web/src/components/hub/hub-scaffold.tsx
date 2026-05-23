@@ -193,6 +193,7 @@ export function HubScaffold({
             "HudResourceChip",
             <HudResourceChip
               tone="pro"
+              imageIconSrc="/art/screen-mission/corona-pro.png"
               value={proValue}
               ariaLabel={proAriaLabel}
               onClick={onProTap}

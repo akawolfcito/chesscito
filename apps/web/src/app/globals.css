@@ -3917,7 +3917,7 @@ button.hud-resource-chip:active:not(:disabled) {
   min-width: 118px;
   justify-content: center;
   padding: 5px 12px 6px 8px;
-  border: 3px solid #d58b16;
+  border: none;
   background:
     linear-gradient(180deg, rgba(255, 229, 114, 0.26) 0%, transparent 28%),
     linear-gradient(180deg, #7c4ab5 0%, #5d3197 52%, #3f1e73 100%);
@@ -3935,6 +3935,127 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 28px;
   height: 28px;
   padding: 3px;
+}
+
+/* Floating PRO icon — adopts the .candy-tray-pill-icon--floating
+   vocabulary so the PRO chip on /exercises + /hub reads as part of
+   the same top-row pill family. Oversized + drop-shadow + negative
+   vertical margin let the wallet sprite spill above and below the
+   pill band on purpose; the chip's outer height stays locked. The
+   override is more specific than the legacy .hud-resource-chip--compact
+   rule so the 15px squashed-icon size never wins. */
+.hud-resource-chip--pro .hud-resource-chip-icon,
+.hud-resource-chip--pro.hud-resource-chip--compact .hud-resource-chip-icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  margin: -0.55rem 0;
+  padding: 0;
+  filter: drop-shadow(0 2px 4px rgba(40, 15, 80, 0.55));
+}
+
+/* Compact PRO chip — purpose-built tighter rhythm than the cream
+   .candy-tray-pill so the /exercises trailing slot reads as a punchy
+   accent (not a peer). The purple palette + warm-gold text stay as
+   PRO-specific identity. */
+.hud-resource-chip--pro.hud-resource-chip--compact {
+  min-height: 28px;
+  padding: 2px 10px 2px 4px;
+  font-size: 0.75rem;
+  gap: 3px;
+  min-width: 60px;
+}
+
+/* ── Account sheet status pills ──
+   Compact uppercase pills used inside the Account sheet's NETWORK
+   and PRO trays. Same shape vocabulary as ProActiveBadge so the two
+   surfaces stay visually consistent; data-tone swaps the gradient
+   to differentiate connected-chain vs membership state. */
+.account-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.18rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+}
+
+.account-status-pill[data-tone="active"] {
+  background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+}
+
+.account-status-pill[data-tone="celo"] {
+  background: linear-gradient(180deg, #fcd34d 0%, #b45309 100%);
+}
+
+.account-status-pill[data-tone="inactive"] {
+  background: linear-gradient(180deg,
+      rgba(110, 65, 15, 0.45) 0%,
+      rgba(63, 34, 8, 0.55) 100%);
+  color: rgba(255, 245, 215, 0.85);
+}
+
+/* ── Account sheet Manage PRO CTA ──
+   Purple "PRO" identity carried into the primary CTA inside the
+   Account sheet. Mirrors the .hud-resource-chip--pro palette + the
+   corona-pro icon used by the top-row PRO chip, so the user reads a
+   continuous PRO surface from chip to sheet to CTA. */
+.account-manage-pro-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 52px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 229, 114, 0.22) 0%, transparent 28%),
+    linear-gradient(180deg, #7c4ab5 0%, #5d3197 52%, #3f1e73 100%);
+  color: #ffe66e;
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow:
+    0 2px 0 rgba(61, 27, 102, 0.82),
+    0 0 8px rgba(255, 224, 89, 0.38);
+  box-shadow:
+    0 4px 0 rgba(40, 15, 80, 0.55),
+    0 6px 14px rgba(40, 15, 80, 0.32),
+    inset 0 1px 0 rgba(255, 224, 89, 0.40);
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.account-manage-pro-cta:hover {
+  filter: brightness(1.06);
+}
+
+.account-manage-pro-cta:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 rgba(40, 15, 80, 0.55),
+    0 3px 6px rgba(40, 15, 80, 0.32),
+    inset 0 1px 0 rgba(255, 224, 89, 0.40);
+}
+
+.account-manage-pro-cta-icon {
+  width: 2rem;
+  height: 2rem;
+  margin: -0.45rem 0 -0.45rem -0.25rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(40, 15, 80, 0.55));
 }
 
 /* Size modifier: compact — secondary HUD row chips. */
