@@ -16,7 +16,13 @@ const nextConfig = {
     NEXT_PUBLIC_BUILD_SHA: (process.env.VERCEL_GIT_COMMIT_SHA || 'dev').slice(0, 7),
   },
   async rewrites() {
-    return [{ source: '/play-hub', destination: '/exercises' }];
+    return [
+      // Legacy alias: /play-hub still points at /exercises. With the
+      // [locale] segment, the rewrite has to be locale-aware OR else
+      // /en/play-hub returns 404. Two sources cover naked + prefixed.
+      { source: '/play-hub', destination: '/exercises' },
+      { source: '/:locale/play-hub', destination: '/:locale/exercises' },
+    ];
   },
   async headers() {
     return [
