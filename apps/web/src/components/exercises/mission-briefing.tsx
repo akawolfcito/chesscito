@@ -73,14 +73,42 @@ export function MissionBriefing({
             backgroundRepeat: "no-repeat",
           }}
         >
+          {/* Close button is positioned absolutely against the panel
+              frame so it lives in the actual top-right corner (outside
+              the inner safe-area inset). Touch target stays 44×44 via
+              .candy-close-asset-button. */}
+          <button
+            type="button"
+            onClick={handleDismiss}
+            aria-label="Close"
+            className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
+          >
+            <picture>
+              <source
+                srcSet="/art/screen-mission/close-icon.avif"
+                type="image/avif"
+              />
+              <source
+                srcSet="/art/screen-mission/close-icon.webp"
+                type="image/webp"
+              />
+              <img
+                src="/art/screen-mission/close-icon.png"
+                alt=""
+                aria-hidden="true"
+                className="h-10 w-10 object-contain"
+                draggable={false}
+              />
+            </picture>
+          </button>
           {/* Inner safe-area inset so content doesn't crash into the
               decorative grass border. Vertical % padding resolves
               against parent inline size (CSS rule) so it stays
               proportional. */}
           <div className="flex flex-col items-center px-[10%] pt-[8%] pb-[7%]">
-            {/* Header row — title + close. The title stays as text per
-                product call (no MISSION ribbon asset available). */}
-            <div className="flex w-full items-center justify-between">
+            {/* Header row — title only. The close button lives above
+                as an absolute sibling so it can hug the panel corner. */}
+            <div className="flex w-full items-center">
               <h2
                 className="fantasy-title text-2xl font-extrabold tracking-wide"
                 style={{
@@ -90,30 +118,6 @@ export function MissionBriefing({
               >
                 {MISSION_BRIEFING_COPY.label}
               </h2>
-              <button
-                type="button"
-                onClick={handleDismiss}
-                aria-label="Close"
-                className="candy-close-asset-button"
-              >
-                <picture>
-                  <source
-                    srcSet="/art/screen-mission/close-icon.avif"
-                    type="image/avif"
-                  />
-                  <source
-                    srcSet="/art/screen-mission/close-icon.webp"
-                    type="image/webp"
-                  />
-                  <img
-                    src="/art/screen-mission/close-icon.png"
-                    alt=""
-                    aria-hidden="true"
-                    className="h-10 w-10 object-contain"
-                    draggable={false}
-                  />
-                </picture>
-              </button>
             </div>
 
             {/* Avatar — the gold ring is baked into the asset. */}
