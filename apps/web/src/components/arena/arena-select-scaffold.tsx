@@ -164,28 +164,49 @@ export function ArenaSelectScaffold({
 
         {prizePool ? (
           <div
-            className="mx-auto mb-4 mt-2 flex w-max items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium shadow-sm border border-amber-900/10"
+            className="mt-1 mb-3 flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 shadow-sm"
             style={{
-              background: "rgba(255, 245, 205, 0.42)",
-              color: "rgba(110, 65, 15, 0.85)",
+              background: 'rgba(255, 245, 205, 0.78)',
+              borderColor: 'rgba(222, 159, 42, 0.38)',
             }}
             aria-label={ARENA_COPY.prizePoolLabel}
           >
-            <img
-              src="/art/arena/community-pool.png"
-              alt=""
-              aria-hidden="true"
-              className="h-4 w-4"
-            />
-            <span>
-              {ARENA_COPY.prizePoolLabel}
-              {' · '}
-              <span className="tabular-nums font-bold text-amber-700">
-                {prizePool.isLoading
-                  ? ARENA_COPY.prizePoolLoading
-                  : prizePool.formatted ?? ARENA_COPY.prizePoolUnavailable}
-              </span>
-            </span>
+            <picture className="shrink-0">
+              <source
+                srcSet="/art/arena/community-pool.avif"
+                type="image/avif"
+              />
+              <source
+                srcSet="/art/arena/community-pool.webp"
+                type="image/webp"
+              />
+              <img
+                src="/art/arena/community-pool.png"
+                alt=""
+                aria-hidden="true"
+                className="h-16 w-16 object-contain drop-shadow-[0_2px_4px_rgba(120,65,5,0.25)]"
+              />
+            </picture>
+            <div className="min-w-0 flex-1 leading-tight">
+              <p
+                className="text-sm font-extrabold"
+                style={{ color: 'rgba(63, 34, 8, 0.95)' }}
+              >
+                {ARENA_COPY.prizePoolLabel}
+                {' · '}
+                <span className="tabular-nums" style={{ color: '#15803d' }}>
+                  {prizePool.isLoading
+                    ? ARENA_COPY.prizePoolLoading
+                    : prizePool.formatted ?? ARENA_COPY.prizePoolUnavailable}
+                </span>
+              </p>
+              <p
+                className="mt-1 text-[0.7rem] font-medium"
+                style={{ color: 'rgba(110, 65, 15, 0.82)' }}
+              >
+                {ARENA_COPY.prizePoolSoonHint}
+              </p>
+            </div>
           </div>
         ) : null}
 
