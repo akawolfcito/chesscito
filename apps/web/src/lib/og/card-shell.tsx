@@ -65,7 +65,10 @@ export function CardShell({
         height: CARD_HEIGHT,
         display: "flex",
         position: "relative",
-        background: "#f6e6b8",
+        /* No flat cream fallback — the panel asset (panelBgUrl) or the
+           forest bg (bgUrl) carry the full surface. Leaving the
+           container transparent prevents the legacy cream from peeking
+           through the panel's curved/transparent corners. */
       }}
     >
       {/* Panel bg — when provided, replaces the cream gradient entirely
