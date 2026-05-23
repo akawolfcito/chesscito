@@ -6322,7 +6322,13 @@ button.hud-resource-chip:active:not(:disabled) {
   background-repeat: no-repeat;
   background-attachment: scroll;
   color: #4a2b11;
-  overflow-y: auto;
+  /* The scrollable region moved down to .arena-scaffold-body so the
+     hud + footer stay pinned. On older Android (Brave-tested) the
+     scaffold-level scroll combined with the play CTA's transform-based
+     pulse animation produced rendering glitches where the CTA appeared
+     mid-list. Pinning the footer with body-owned overflow keeps the
+     PLAY button anchored above the dock at all times. */
+  overflow: hidden;
   overscroll-behavior: contain;
 }
 
@@ -6371,8 +6377,15 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  /* flex: 1; */
+  /* Body now owns the vertical scroll so the footer (PLAY CTA +
+     mission ribbon) can stay pinned at the scaffold's bottom edge.
+     flex:1 1 0 + min-height:0 lets it shrink below natural content
+     height and reveal an internal scrollbar when difficulty cards
+     overflow on short viewports. */
+  flex: 1 1 0;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .arena-scaffold-soft-gate {
@@ -6686,6 +6699,12 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   gap: 12px;
   padding-top: 12px;
+  /* Footer is pinned to the scaffold's bottom (body owns the scroll).
+     flex-shrink:0 + position:relative keep the PLAY CTA in flow and
+     out of the body's overflow window, avoiding the older-Android
+     glitch where transform/filter on the CTA pulled it mid-list. */
+  flex-shrink: 0;
+  position: relative;
 }
 
 .arena-scaffold-footer .mission-ribbon--arena {
