@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 
 type LegalPageShellProps = {
@@ -19,6 +20,7 @@ export function LegalPageShell({
   children,
 }: LegalPageShellProps) {
   const router = useRouter();
+  const t = useTranslations("LEGAL_SHELL_COPY");
 
   return (
     <div className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center">
@@ -34,7 +36,7 @@ export function LegalPageShell({
             variant="back-control"
             title={title}
             subtitle={subtitle}
-            back={{ onClick: () => router.push(backHref), label: "Back" }}
+            back={{ onClick: () => router.push(backHref), label: t("back") }}
           />
         </header>
         <div

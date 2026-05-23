@@ -25,16 +25,16 @@ import { routing } from "@/i18n/routing";
  */
 const ES_READY = process.env.NEXT_PUBLIC_I18N_ES_READY === "1";
 
-const activeRouting = ES_READY
-  ? routing
-  : defineRouting({
-      locales: ["en"],
-      defaultLocale: "en",
-      localePrefix: "always",
-      localeDetection: true,
-    });
-
-const intlMiddleware = createMiddleware(activeRouting);
+const intlMiddleware = ES_READY
+  ? createMiddleware(routing)
+  : createMiddleware(
+      defineRouting({
+        locales: ["en"],
+        defaultLocale: "en",
+        localePrefix: "always",
+        localeDetection: true,
+      }),
+    );
 
 export default function middleware(request: NextRequest) {
   if (!ES_READY) {

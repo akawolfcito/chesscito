@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { LegalPageShell } from "@/components/legal-page-shell";
 import { AboutMethodology } from "@/components/about/about-methodology";
 import { CognitiveDisclaimer } from "@/components/legal/cognitive-disclaimer";
-import { ABOUT_COPY } from "@/lib/content/editorial";
 import { Compass, FileText, LifeBuoy, Shield } from "lucide-react";
 import { InviteLink } from "./invite-link";
 
@@ -11,16 +11,19 @@ export const metadata = {
   description: "About Chesscito — operator, support, and legal information.",
 };
 
-const ABOUT_LINKS = [
-  { href: "/", label: ABOUT_COPY.links.why, icon: Compass },
-  { href: "/support", label: ABOUT_COPY.links.support, icon: LifeBuoy },
-  { href: "/privacy", label: ABOUT_COPY.links.privacy, icon: Shield },
-  { href: "/terms", label: ABOUT_COPY.links.terms, icon: FileText },
-] as const;
+export default async function AboutPage() {
+  const t = await getTranslations("ABOUT_COPY");
+  const tShell = await getTranslations("LEGAL_SHELL_COPY");
 
-export default function AboutPage() {
+  const links = [
+    { href: "/", label: t("links.why"), icon: Compass },
+    { href: "/support", label: t("links.support"), icon: LifeBuoy },
+    { href: "/privacy", label: t("links.privacy"), icon: Shield },
+    { href: "/terms", label: t("links.terms"), icon: FileText },
+  ];
+
   return (
-    <LegalPageShell title="About" backHref="/hub">
+    <LegalPageShell title={tShell("aboutTitle")} backHref="/hub">
       {/* Identity */}
       <div className="flex flex-col items-center gap-2 pb-2 text-center">
         <picture>
@@ -39,16 +42,16 @@ export default function AboutPage() {
             textShadow: "0 1px 0 rgba(255, 235, 180, 0.7)",
           }}
         >
-          {ABOUT_COPY.title}
+          {t("title")}
         </h2>
-        <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>{ABOUT_COPY.operatedBy}</p>
-        <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>{ABOUT_COPY.handle}</p>
-        <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>{ABOUT_COPY.version}</p>
+        <p className="text-xs" style={{ color: "var(--paper-text-muted)" }}>{t("operatedBy")}</p>
+        <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>{t("handle")}</p>
+        <p className="text-xs" style={{ color: "var(--paper-text-subtle)" }}>{t("version")}</p>
         <p
           className="mt-2 max-w-xs text-[0.6875rem] leading-snug"
           style={{ color: "var(--paper-text-subtle)" }}
         >
-          {ABOUT_COPY.operatorDisclaimer}
+          {t("operatorDisclaimer")}
         </p>
       </div>
 
@@ -60,7 +63,7 @@ export default function AboutPage() {
 
       {/* Links */}
       <nav className="space-y-2">
-        {ABOUT_LINKS.map(({ href, label, icon: Icon }) => (
+        {links.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}

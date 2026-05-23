@@ -1,18 +1,19 @@
-import { ABOUT_METHODOLOGY_COPY } from "@/lib/content/editorial";
+import { getTranslations } from "next-intl/server";
 
 /** Phase 0.5 C2 — methodology mini-section for /about. Sits between
  *  the identity block and the navigation list to anchor the
  *  "real human team" differentiator (FIDE Master pedagogy + dev
  *  team) right after the user reads what Chesscito is.
  *
- *  Presentational only: no client hooks, no state, no fetching.
- *  Reads everything from ABOUT_METHODOLOGY_COPY in editorial.ts so
- *  copy iteration never requires touching this file. */
-export function AboutMethodology() {
+ *  Async server component since Stage C migration: copy resolves
+ *  through next-intl so /es renders Spanish.
+ */
+export async function AboutMethodology() {
+  const t = await getTranslations("ABOUT_METHODOLOGY_COPY");
   return (
     <section
       role="region"
-      aria-label={ABOUT_METHODOLOGY_COPY.sectionTitle}
+      aria-label={t("sectionTitle")}
       className="paper-tray flex flex-col gap-2 py-3"
     >
       <h3
@@ -22,14 +23,14 @@ export function AboutMethodology() {
           textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
         }}
       >
-        {ABOUT_METHODOLOGY_COPY.sectionTitle}
+        {t("sectionTitle")}
       </h3>
 
       <p
         className="text-xs leading-relaxed"
         style={{ color: "var(--paper-text)" }}
       >
-        {ABOUT_METHODOLOGY_COPY.body}
+        {t("body")}
       </p>
 
       <ul
@@ -46,7 +47,7 @@ export function AboutMethodology() {
               textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
             }}
           >
-            {ABOUT_METHODOLOGY_COPY.cesar}
+            {t("cesar")}
           </span>
         </li>
         <li>
@@ -59,7 +60,7 @@ export function AboutMethodology() {
               textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
             }}
           >
-            {ABOUT_METHODOLOGY_COPY.wolfcito}
+            {t("wolfcito")}
           </span>
         </li>
       </ul>

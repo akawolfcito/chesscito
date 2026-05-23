@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { ABOUT_COPY } from "@/lib/content/editorial";
 import { hapticSuccess } from "@/lib/haptics";
 
 export function InviteLink() {
   const [copied, setCopied] = useState(false);
+  const t = useTranslations("ABOUT_COPY");
 
   return (
     <button
@@ -14,12 +15,12 @@ export function InviteLink() {
       onClick={() => {
         if (navigator.share) {
           void navigator.share({
-            title: ABOUT_COPY.shareTitle,
-            text: ABOUT_COPY.shareText,
-            url: ABOUT_COPY.shareUrl,
+            title: t("shareTitle"),
+            text: t("shareText"),
+            url: t("shareUrl"),
           });
         } else {
-          void navigator.clipboard.writeText(ABOUT_COPY.shareUrl).then(() => {
+          void navigator.clipboard.writeText(t("shareUrl")).then(() => {
             hapticSuccess();
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
@@ -35,7 +36,7 @@ export function InviteLink() {
         <CandyIcon name="share" className="h-5 w-5 shrink-0" />
       )}
       <span className="text-sm font-medium">
-        {copied ? ABOUT_COPY.clipboardFeedback : ABOUT_COPY.links.invite}
+        {copied ? t("clipboardFeedback") : t("links.invite")}
       </span>
     </button>
   );

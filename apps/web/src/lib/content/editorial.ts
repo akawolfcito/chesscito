@@ -1052,6 +1052,15 @@ export const COACH_ENTRY_COPY = {
   offlineToAnalyze: "You need to be online to analyze",
 } as const;
 
+/** Shared chrome for /about, /support, /privacy, /terms — anything
+ *  rendered through <LegalPageShell>. Centralizes labels that aren't
+ *  page-specific so locale bundles only need to override this once. */
+export const LEGAL_SHELL_COPY = {
+  back: "Back",
+  aboutTitle: "About",
+  lastUpdatedLabel: "Last updated",
+} as const;
+
 export const LEGAL_COPY = {
   terms: {
     title: "Terms of Service",

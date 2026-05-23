@@ -1,4 +1,4 @@
-import { COGNITIVE_DISCLAIMER_COPY } from "@/lib/content/editorial";
+import { getTranslations } from "next-intl/server";
 
 type CognitiveDisclaimerProps = {
   variant?: "short" | "full";
@@ -13,15 +13,17 @@ type CognitiveDisclaimerProps = {
  *
  *  Style intent: visually secondary (cream text on whatever bg the
  *  parent provides), centered, low contrast, no border, no icon.
- *  Should read as a footnote, never as a warning banner. */
-export function CognitiveDisclaimer({
+ *  Should read as a footnote, never as a warning banner.
+ *
+ *  Async server component since Stage C migration: copy resolves
+ *  through next-intl so /es renders Spanish.
+ */
+export async function CognitiveDisclaimer({
   variant = "short",
   className = "",
 }: CognitiveDisclaimerProps) {
-  const text =
-    variant === "full"
-      ? COGNITIVE_DISCLAIMER_COPY.full
-      : COGNITIVE_DISCLAIMER_COPY.short;
+  const t = await getTranslations("COGNITIVE_DISCLAIMER_COPY");
+  const text = variant === "full" ? t("full") : t("short");
 
   return (
     <p
