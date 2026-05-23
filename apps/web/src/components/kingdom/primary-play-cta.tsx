@@ -36,7 +36,7 @@ type Props = {
 const SURFACE_BACKPLATE_BASE: Record<PrimaryPlayCtaSurface, string> = {
   playhub: "/art/redesign/banners/principalbutton",
   arena: "/art/redesign/banners/btn-stone-bg",
-  "arena-entry": "/art/redesign/banners/btn-stone-bg",
+  "arena-entry": "/art/scene-rooted/principalbutton",
   "landing-hero": "/art/redesign/banners/btn-stone-bg",
   "landing-final-cta": "/art/redesign/banners/btn-stone-bg",
 };
