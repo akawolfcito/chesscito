@@ -634,11 +634,6 @@ function ArenaPageInner() {
     void startCoachAnalysis();
   }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, isConnected, address, startCoachAnalysis, proActiveCached]);
 
-  const handleArenaCoachSignalCta = useCallback(() => {
-    track("arena_coach_signal_cta_tap", arenaCoachTelemetry("open_pro_sheet"));
-    proSheet.openSheet();
-  }, [arenaCoachTelemetry, proSheet]);
-
   const handleCoachPreviewCta = useCallback(() => {
     const cta = proActiveCached ? "review_match" : "open_pro_sheet";
     track("coach_preview_cta_tap", arenaCoachTelemetry(cta));
@@ -1445,10 +1440,6 @@ function ArenaPageInner() {
               prizePool={{
                 formatted: prizePool.formatted,
                 isLoading: prizePool.isLoading,
-              }}
-              coachSignal={{
-                proActive: proActiveCached,
-                onCta: proActiveCached ? undefined : handleArenaCoachSignalCta,
               }}
               errorMessage={game.errorMessage}
             />

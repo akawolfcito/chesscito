@@ -8,7 +8,6 @@ import { PrimitiveBoundary } from '@/components/error/primitive-boundary'
 import { PrimaryPlayCta } from '@/components/kingdom/primary-play-cta'
 import { MissionRibbon } from '@/components/pro-mission/mission-ribbon'
 import { ARENA_COPY } from '@/lib/content/editorial'
-import { CoachReviewSignal } from '@/components/arena/coach-review-signal'
 import type { ArenaDifficulty } from '@/lib/game/types'
 import type { PlayerColor } from '@/lib/game/use-chess-game'
 
@@ -47,11 +46,6 @@ type PrizePool = {
   isLoading: boolean
 }
 
-type CoachSignal = {
-  proActive: boolean
-  onCta?: () => void
-}
-
 type Props = {
   difficulty: ArenaDifficulty
   playerColor: PlayerColor
@@ -61,7 +55,6 @@ type Props = {
   onBack?: () => void
   softGate?: SoftGate
   prizePool?: PrizePool
-  coachSignal?: CoachSignal
   errorMessage?: string | null
   onError?: (
     context: import('@/components/error/primitive-boundary').PrimitiveBoundaryErrorContext,
@@ -83,7 +76,6 @@ export function ArenaSelectScaffold({
   onBack,
   softGate,
   prizePool,
-  coachSignal,
   errorMessage,
   onError,
 }: Props) {
@@ -278,7 +270,6 @@ export function ArenaSelectScaffold({
       </section>
 
       <footer className="arena-scaffold-footer">
-        {wrap('MissionRibbon', <MissionRibbon surface="arena" />)}
         {wrap(
           'PrimaryPlayCta',
           <PrimaryPlayCta
@@ -288,17 +279,12 @@ export function ArenaSelectScaffold({
             onPress={onStart}
           />,
         )}
-        {coachSignal
-          ? wrap(
-              'CoachReviewSignal',
-              <div className="pt-2">
-                <CoachReviewSignal
-                  proActive={coachSignal.proActive}
-                  onCta={coachSignal.onCta}
-                />
-              </div>,
-            )
-          : null}
+        {wrap(
+          'MissionRibbon',
+          <div className="pt-2 flex justify-center">
+            <MissionRibbon surface="arena" />
+          </div>,
+        )}
       </footer>
     </main>
   )

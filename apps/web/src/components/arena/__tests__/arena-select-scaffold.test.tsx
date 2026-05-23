@@ -123,46 +123,10 @@ describe("ArenaSelectScaffold", () => {
     expect(screen.getByText(/Loading pool/i)).toBeInTheDocument();
   });
 
-  it("renders the non-PRO Coach hint without blocking Play", async () => {
-    // Post-refactor: CoachReviewSignal collapsed from a sales-y banner
-    // into a single candy pill labeled "Coach · REVIEW" (non-PRO) /
-    // "PRO · REVIEW" (active). The whole pill is the CTA; we click it
-    // directly via the testid for the non-PRO onCta path.
-    const onCta = vi.fn();
-    const onStart = vi.fn();
-    render(
-      <ArenaSelectScaffold
-        {...baseProps}
-        onStart={onStart}
-        coachSignal={{ proActive: false, onCta }}
-      />,
-    );
-
-    const signal = screen.getByTestId("coach-review-signal");
-    expect(signal).toHaveTextContent("Coach");
-    expect(signal).toHaveTextContent("REVIEW");
-    await userEvent.click(signal);
-    expect(onCta).toHaveBeenCalledTimes(1);
-    await userEvent.click(screen.getByRole("button", { name: START }));
-    expect(onStart).toHaveBeenCalledTimes(1);
-  });
-
-  it("renders the active PRO Coach hint without sales copy", () => {
-    render(
-      <ArenaSelectScaffold
-        {...baseProps}
-        coachSignal={{ proActive: true, onCta: vi.fn() }}
-      />,
-    );
-
-    const signal = screen.getByTestId("coach-review-signal");
-    expect(signal).toHaveTextContent("PRO");
-    expect(signal).toHaveTextContent("REVIEW");
-    // The PRO pill is informational (no onClick), so the legacy sales
-    // CTAs must NOT render in either variant.
-    expect(screen.queryByRole("button", { name: /Open Journal/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Train with Coach/i })).not.toBeInTheDocument();
-    expect(screen.queryByText(/PRO unlocks/i)).not.toBeInTheDocument();
+  it("does NOT render the Coach review chip — removed 2026-05-22 to declutter the selector", () => {
+    render(<ArenaSelectScaffold {...baseProps} />);
+    expect(screen.queryByTestId("coach-review-signal")).not.toBeInTheDocument();
+    expect(screen.queryByText(/PRO/)).not.toBeInTheDocument();
   });
 
   it("renders an error message banner when errorMessage is provided", () => {
