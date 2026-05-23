@@ -1,3 +1,10 @@
+const createNextIntlPlugin = require('next-intl/plugin');
+
+// next-intl plugin wires the request-time config at
+// `src/i18n/request.ts` so server components can call
+// `getTranslations()` without per-route boilerplate.
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -37,4 +44,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);
