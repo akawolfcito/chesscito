@@ -6265,10 +6265,10 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .arena-scaffold-color-piece {
-  width: 46px;
-  height: 52px;
+  width: 36px;
+  height: 40px;
   flex: 0 0 auto;
-  filter: drop-shadow(0 4px 3px rgba(61, 37, 7, 0.28));
+  filter: drop-shadow(0 3px 2px rgba(61, 37, 7, 0.28));
 }
 
 .arena-scaffold-color-piece img {
@@ -6287,15 +6287,15 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .arena-scaffold-color-copy strong {
-  font-size: .9rem;
-  line-height: .85;
+  font-size: 0.82rem;
+  line-height: 0.85;
   font-weight: 600;
 }
 
 .arena-scaffold-difficulty {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -6305,21 +6305,19 @@ button.hud-resource-chip:active:not(:disabled) {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   width: 100%;
-  /* min-height: 112px; */
-  border-radius: 24px;
-  /* border: 2px solid rgba(255, 255, 255, 0.62); */
+  border-radius: 20px;
   background: linear-gradient(180deg, #87db28 0%, #4aaa16 100%);
-  padding: 0px 14px;
+  padding: 4px 12px;
   text-align: left;
   cursor: pointer;
   transition: all 120ms ease;
   box-shadow:
-    0 5px 0 rgba(70, 83, 10, 0.50),
-    0 10px 16px rgba(68, 45, 8, 0.20),
+    0 4px 0 rgba(70, 83, 10, 0.50),
+    0 8px 12px rgba(68, 45, 8, 0.18),
     inset 0 2px 0 rgba(255, 255, 255, 0.56),
-    inset 0 -4px 0 rgba(80, 49, 8, 0.18);
+    inset 0 -3px 0 rgba(80, 49, 8, 0.18);
 }
 
 .arena-scaffold-difficulty li:nth-child(2) .arena-scaffold-difficulty-pill {
@@ -6363,45 +6361,45 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .arena-scaffold-difficulty-label {
   font-family: var(--font-game-action, system-ui, sans-serif);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 950;
   color: #fff8e9;
   line-height: 1;
   text-shadow:
-    0 3px 0 rgba(82, 43, 8, 0.52),
-    0 0 8px rgba(47, 26, 7, 0.28);
+    0 2px 0 rgba(82, 43, 8, 0.52),
+    0 0 6px rgba(47, 26, 7, 0.28);
 }
 
 .arena-scaffold-difficulty-desc {
-  margin-top: 6px;
-  font-size: 0.7rem;
+  margin-top: 4px;
+  font-size: 0.65rem;
   font-weight: 600;
   color: rgba(63, 34, 8, 0.88);
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .arena-scaffold-difficulty-score {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  /* margin-top: 8px; */
+  gap: 4px;
+  margin-top: 2px;
   font-family: var(--font-game-action, system-ui, sans-serif);
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 300;
   color: #3f2208;
 }
 
 .arena-scaffold-difficulty-trophy {
-  width: 22px;
-  height: 22px;
+  width: 16px;
+  height: 16px;
   filter: drop-shadow(0 2px 1px rgba(72, 42, 8, 0.32));
 }
 
 .arena-scaffold-difficulty-piece {
   flex: 0 0 auto;
-  width: 40px;
-  height: 80px;
-  filter: drop-shadow(0 6px 4px rgba(61, 37, 7, 0.32));
+  width: 36px;
+  height: 56px;
+  filter: drop-shadow(0 4px 3px rgba(61, 37, 7, 0.32));
 }
 
 .arena-scaffold-difficulty-piece img {
