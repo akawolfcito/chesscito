@@ -9,6 +9,8 @@ import { PIECE_LABELS } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
 
 export type TierStatus = "done" | "active" | "locked";
+type ProgressVariant = "pill" | "text";
+type ProgressTone = "done" | "ready" | "neutral";
 
 type Tier = {
   id: string;
@@ -16,6 +18,12 @@ type Tier = {
   label: string;
   progress: string;
   status: TierStatus;
+  /** "pill" renders progress as a colored status badge; "text" keeps
+   *  the legacy uppercase progress label. Numeric counts always use
+   *  "text" so they read as quantitative data, not a status. */
+  progressVariant: ProgressVariant;
+  /** Pill color when `progressVariant === "pill"`. Ignored for text. */
+  progressTone: ProgressTone;
 };
 
 type Props = {
@@ -53,6 +61,12 @@ function buildTiers(
         ? "Ready to claim"
         : `${Math.min(currentStars, BADGE_THRESHOLD)} / ${BADGE_THRESHOLD} ★`,
     status: currentBadgeDone ? "done" : "active",
+    progressVariant: currentBadgeDone || currentBadgeReached ? "pill" : "text",
+    progressTone: currentBadgeDone
+      ? "done"
+      : currentBadgeReached
+        ? "ready"
+        : "neutral",
   };
 
   const tier2: Tier = {
@@ -69,6 +83,8 @@ function buildTiers(
         ? "active"
         : "locked"
       : "done",
+    progressVariant: nextPiece && currentBadgeDone ? "pill" : "text",
+    progressTone: nextPiece && currentBadgeDone ? "ready" : "neutral",
   };
 
   const total = PLAYABLE_PIECES.length;
@@ -78,6 +94,8 @@ function buildTiers(
     label: "All pieces mastered",
     progress: `${masteredCount} / ${total}`,
     status: masteredCount >= total ? "done" : "locked",
+    progressVariant: "text",
+    progressTone: "neutral",
   };
 
   return [tier1, tier2, tier3];
@@ -99,9 +117,15 @@ export function JourneyRail({ currentPiece, currentStars, claimedBadges = {} }: 
           <div className="flex-1 min-w-0">
             <p className="journey-row-label">{tier.label}</p>
           </div>
-          <span className="journey-row-progress" data-status={tier.status}>
-            {tier.progress}
-          </span>
+          {tier.progressVariant === "pill" ? (
+            <span className="journey-status-pill" data-tone={tier.progressTone}>
+              {tier.progress}
+            </span>
+          ) : (
+            <span className="journey-row-progress" data-status={tier.status}>
+              {tier.progress}
+            </span>
+          )}
         </div>
       ))}
     </div>

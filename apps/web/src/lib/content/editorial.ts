@@ -52,6 +52,7 @@ export const MISSION_DETAIL_COPY = {
   scoreLabel: "Score",
   timeLabel: "Time",
   preFirstMoveHint: "Make your first move to start tracking",
+  journeyTitle: "Your journey",
 } as const;
 
 const PIECE_BASE = THEME_CONFIG.piecesBase;
