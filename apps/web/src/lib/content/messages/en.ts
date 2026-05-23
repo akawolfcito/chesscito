@@ -61,5 +61,10 @@ m.SHARE_COPY.badge =
 m.SHARE_COPY.score =
   "I just locked my Chesscito score on-chain! {stars}/15 stars — permanently recorded.";
 m.SHARE_COPY.shop = "I just got {item} on Chesscito!";
+m.VICTORY_PAGE_COPY.metaCheckmate = "Checkmate in {moves} moves";
+m.VICTORY_PAGE_COPY.metaComplete = "Complete in {moves} moves";
+m.VICTORY_PAGE_COPY.metaChallenge =
+  "Can you beat that? Victory #{id} saved as a Chesscito victory card.";
+m.VICTORY_PAGE_COPY.metaFallbackTitle = "Victory #{id}";
 
 export default messages;

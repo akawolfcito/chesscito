@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { track } from "@/lib/telemetry";
 
 export default function VictoryError({
@@ -10,6 +11,7 @@ export default function VictoryError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("VICTORY_PAGE_COPY");
   useEffect(() => {
     track("error_boundary_shown", { scope: "victory", digest: error.digest ?? null });
   }, [error.digest]);
@@ -39,7 +41,7 @@ export default function VictoryError({
           textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
         }}
       >
-        Could not load victory
+        {t("errorTitle")}
       </h2>
       <p
         className="text-sm"
@@ -48,7 +50,7 @@ export default function VictoryError({
           textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
         }}
       >
-        {error.message || "Something went wrong loading this victory."}
+        {error.message || t("errorFallback")}
       </p>
       <button
         type="button"
@@ -60,7 +62,7 @@ export default function VictoryError({
           boxShadow: "0 3px 8px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.25)",
         }}
       >
-        Try again
+        {t("tryAgain")}
       </button>
     </div>
   );

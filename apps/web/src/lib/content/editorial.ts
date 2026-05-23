@@ -537,10 +537,15 @@ export const VICTORY_PAGE_COPY = {
   challengeLine: "Can you beat this?",
   acceptChallenge: "Accept Challenge",
   backToHub: "HUB",
+  loading: "Loading victory...",
+  errorTitle: "Could not load victory",
+  errorFallback: "Something went wrong loading this victory.",
+  tryAgain: "Try again",
   metaCheckmate: (moves: number) => `Checkmate in ${moves} moves`,
   metaComplete: (moves: number) => `Complete in ${moves} moves`,
   metaChallenge: (id: string) => `Can you beat that? Victory #${id} saved as a Chesscito victory card.`,
   metaFallback: "Can you beat this? Play Chesscito on Celo.",
+  metaFallbackTitle: (id: string) => `Victory #${id}`,
 } as const;
 
 export const CHAIN_NAMES: Record<number, string> = {

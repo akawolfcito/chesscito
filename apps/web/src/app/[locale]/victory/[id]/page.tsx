@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { createPublicClient, http } from "viem";
 import { celo } from "viem/chains";
 import { victoryAbi } from "@/lib/contracts/victory";
-import { DIFFICULTY_LABELS, VICTORY_PAGE_COPY } from "@/lib/content/editorial";
+import { DIFFICULTY_LABELS } from "@/lib/content/editorial";
 import { formatTime } from "@/lib/game/arena-utils";
 import { VictoryTrophy } from "./victory-trophy";
 import { AcceptChallengeButton } from "./accept-challenge-button";
@@ -51,14 +52,17 @@ async function fetchVictory(id: string): Promise<VictoryInfo | null> {
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const v = await fetchVictory(params.id);
+  const t = await getTranslations("VICTORY_PAGE_COPY");
 
   const isCheckmate = v ? ARENA_DIFFICULTIES.has(v.difficultyRaw) : false;
   const title = v
-    ? (isCheckmate ? VICTORY_PAGE_COPY.metaCheckmate(v.moves) : VICTORY_PAGE_COPY.metaComplete(v.moves))
-    : `Victory #${params.id}`;
+    ? (isCheckmate
+        ? t("metaCheckmate", { moves: v.moves })
+        : t("metaComplete", { moves: v.moves }))
+    : t("metaFallbackTitle", { id: params.id });
   const description = v
-    ? `${VICTORY_PAGE_COPY.metaChallenge(params.id)} ${v.difficulty} • ${formatTime(v.timeMs)}`
-    : VICTORY_PAGE_COPY.metaFallback;
+    ? `${t("metaChallenge", { id: params.id })} ${v.difficulty} • ${formatTime(v.timeMs)}`
+    : t("metaFallback");
 
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL
@@ -91,6 +95,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 export default async function VictoryPage({ params }: { params: { id: string } }) {
   const v = await fetchVictory(params.id);
   if (!v) notFound();
+  const t = await getTranslations("VICTORY_PAGE_COPY");
 
   return (
     <main
@@ -123,8 +128,8 @@ export default async function VictoryPage({ params }: { params: { id: string } }
           }}
         >
           {ARENA_DIFFICULTIES.has(v.difficultyRaw)
-            ? VICTORY_PAGE_COPY.metaCheckmate(v.moves)
-            : VICTORY_PAGE_COPY.metaComplete(v.moves)}
+            ? t("metaCheckmate", { moves: v.moves })
+            : t("metaComplete", { moves: v.moves })}
         </h1>
 
         <div
@@ -140,7 +145,7 @@ export default async function VictoryPage({ params }: { params: { id: string } }
           className="relative z-10 mb-4 text-center text-xs"
           style={{ color: "rgba(110, 65, 15, 0.65)" }}
         >
-          {VICTORY_PAGE_COPY.tagline}
+          {t("tagline")}
         </p>
 
         <p
@@ -150,7 +155,7 @@ export default async function VictoryPage({ params }: { params: { id: string } }
             textShadow: "0 1px 0 rgba(255, 245, 215, 0.70)",
           }}
         >
-          {VICTORY_PAGE_COPY.challengeLine}
+          {t("challengeLine")}
         </p>
 
         <div className="relative z-10 flex w-full justify-center">
@@ -162,7 +167,7 @@ export default async function VictoryPage({ params }: { params: { id: string } }
           className="relative z-10 mt-3 flex min-h-[44px] items-center px-3 text-sm font-semibold underline underline-offset-2 transition-colors hover:opacity-80"
           style={{ color: "rgba(110, 65, 15, 0.70)" }}
         >
-          {VICTORY_PAGE_COPY.backToHub}
+          {t("backToHub")}
         </Link>
       </div>
     </main>

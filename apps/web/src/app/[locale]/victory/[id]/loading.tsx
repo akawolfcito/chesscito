@@ -1,4 +1,7 @@
-export default function VictoryLoading() {
+import { getTranslations } from "next-intl/server";
+
+export default async function VictoryLoading() {
+  const t = await getTranslations("VICTORY_PAGE_COPY");
   return (
     <div
       className="flex min-h-[100dvh] items-center justify-center"
@@ -22,7 +25,7 @@ export default function VictoryLoading() {
             textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
           }}
         >
-          Loading victory...
+          {t("loading")}
         </p>
       </div>
     </div>

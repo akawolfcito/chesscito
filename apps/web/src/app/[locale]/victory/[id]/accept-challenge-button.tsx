@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
-import { VICTORY_PAGE_COPY } from "@/lib/content/editorial";
 
 /**
  * Client wrapper for the /victory/[id] accept-challenge CTA.
@@ -14,13 +14,15 @@ import { VICTORY_PAGE_COPY } from "@/lib/content/editorial";
  */
 export function AcceptChallengeButton() {
   const router = useRouter();
+  const t = useTranslations("VICTORY_PAGE_COPY");
+  const label = t("acceptChallenge");
   return (
     <PrincipalButton
       size="large"
       onClick={() => router.push("/arena?fresh=1")}
-      aria-label={VICTORY_PAGE_COPY.acceptChallenge}
+      aria-label={label}
     >
-      {VICTORY_PAGE_COPY.acceptChallenge}
+      {label}
     </PrincipalButton>
   );
 }

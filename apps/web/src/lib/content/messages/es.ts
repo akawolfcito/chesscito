@@ -315,6 +315,22 @@ const messages = {
     generatingCard: "Generando tu card…",
     previewUnavailable: "Vista previa no disponible",
   },
+  VICTORY_PAGE_COPY: {
+    tagline: "Entrena tu mente con retos pre-ajedrecísticos — un juego de Celo MiniPay",
+    challengeLine: "¿Puedes superarlo?",
+    acceptChallenge: "Aceptar reto",
+    backToHub: "HUB",
+    loading: "Cargando victoria...",
+    errorTitle: "No se pudo cargar la victoria",
+    errorFallback: "Algo salió mal al cargar esta victoria.",
+    tryAgain: "Reintentar",
+    metaCheckmate: "Jaque mate en {moves} movimientos",
+    metaComplete: "Completado en {moves} movimientos",
+    metaChallenge:
+      "¿Puedes superarlo? Victoria #{id} guardada como una carta de victoria de Chesscito.",
+    metaFallback: "¿Puedes superarlo? Juega Chesscito en Celo.",
+    metaFallbackTitle: "Victoria #{id}",
+  },
 };
 
 export default messages;
