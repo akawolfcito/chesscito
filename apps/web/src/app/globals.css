@@ -3799,6 +3799,59 @@ button.hud-resource-chip:active:not(:disabled) {
   animation: hud-resource-chip-pulse 240ms ease-out;
 }
 
+/* Arena timer chip — purpose-built variant for the per-second elapsed
+   timer in arena-hud. Mirrors the amber HudResourceChip aesthetic but
+   never pulses (would flicker every tick) and reserves a fixed-width
+   slot for the value via tabular-nums so the chip doesn't jitter as
+   digits change. The clock icon is bumped up (36px) and positioned
+   absolutely on the left edge so it reads as a floating badge attached
+   to the pill instead of an inline glyph competing with the digits. */
+.arena-timer-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  min-height: 34px;
+  padding: 5px 16px 6px 38px;
+  border-radius: 999px;
+  border: 2px solid #b86d0a;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 190, 0.72) 0%, transparent 34%),
+    linear-gradient(180deg, #ffce43 0%, #ef9f17 58%, #b86609 100%);
+  color: rgba(63, 34, 8, 0.92);
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 246, 186, 0.72);
+  box-shadow:
+    0 1px 0 rgba(255, 247, 179, 0.72) inset,
+    0 -3px 0 rgba(118, 61, 5, 0.26) inset,
+    0 4px 0 rgba(105, 54, 5, 0.28),
+    0 8px 12px rgba(29, 61, 37, 0.18);
+}
+
+.arena-timer-chip-icon {
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  transform: translateY(-50%);
+  color: #b86609;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 246, 186, 0.70))
+    drop-shadow(0 3px 4px rgba(99, 47, 5, 0.42));
+}
+
+.arena-timer-chip-value {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
 @keyframes hud-resource-chip-pulse {
 
   0% {

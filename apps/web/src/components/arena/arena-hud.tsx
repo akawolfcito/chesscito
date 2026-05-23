@@ -8,7 +8,6 @@ import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PlayerAvatar } from "@/components/redesign/player-avatar";
 import { WoodenBanner } from "@/components/redesign/wooden-banner";
 import { ContextualHeader } from "@/components/ui/contextual-header";
-import { HudResourceChip } from "@/components/hud/hud-resource-chip";
 import { formatTime } from "@/lib/game/arena-utils";
 
 type Props = {
@@ -109,16 +108,24 @@ function ArenaBackChip({
   );
 }
 
+/* Custom timer chip — purpose-built to escape HudResourceChip's
+ * 240ms is-pulse flash that triggered on every per-second tick
+ * (constant shadow flicker + width jitter). Uses tabular-nums so the
+ * value can grow from "0:00" → "99:59" without layout shifts, and
+ * floats an oversized clock icon off the chip's left edge so the
+ * glyph reads as the badge and the time reads as the label. */
 function ArenaTimerChip({ elapsedMs }: { elapsedMs: number }) {
+  const value = formatTime(elapsedMs);
   return (
-    <HudResourceChip
-      tone="default"
-      size="compact"
-      atmosphere="adventure"
-      icon="time"
-      value={formatTime(elapsedMs)}
-      ariaLabel="Elapsed time"
-    />
+    <span
+      className="arena-timer-chip"
+      role="status"
+      aria-live="polite"
+      aria-label={`Elapsed time: ${value}`}
+    >
+      <CandyIcon name="time" className="arena-timer-chip-icon" />
+      <span className="arena-timer-chip-value">{value}</span>
+    </span>
   );
 }
 
