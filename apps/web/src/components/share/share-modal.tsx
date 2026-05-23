@@ -73,82 +73,88 @@ export function ShareModal({
       aria-label={title}
       tabIndex={-1}
     >
-      {/* Preview card */}
-      <div
-        className="flex flex-1 items-center justify-center px-4 py-4"
-        onClick={(e) => e.stopPropagation()}
-      >
+      {/* Mobile-sim viewport guard — caps both the preview area and
+          the bottom sheet at --app-max-width so on desktop the share
+          UI stays inside the simulated 390px frame instead of spanning
+          the full viewport. Scrim still dims the entire screen. */}
+      <div className="flex flex-1 w-full max-w-[var(--app-max-width)] flex-col items-center overflow-hidden">
+        {/* Preview card */}
         <div
-          className="relative w-full max-w-[300px] max-h-full overflow-hidden rounded-xl animate-in zoom-in-95 fade-in duration-300"
+          className="flex flex-1 items-center justify-center px-4 py-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            className="relative w-full max-w-[300px] max-h-full overflow-hidden rounded-xl animate-in zoom-in-95 fade-in duration-300"
+            style={{
+              aspectRatio: "1080 / 1350",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
+            }}
+          >
+            {cardUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={cardUrl}
+                alt="Share preview"
+                className="h-full w-full object-contain"
+                onLoad={() => setImgLoaded(true)}
+                onError={() => { setImgLoaded(true); setImgError(true); }}
+              />
+            ) : null}
+            {!imgLoaded && (
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center gap-3"
+                style={{ color: "rgba(110, 65, 15, 0.55)" }}
+              >
+                <div
+                  className="h-6 w-6 animate-spin rounded-full border-2"
+                  style={{
+                    borderColor: "rgba(110, 65, 15, 0.25)",
+                    borderTopColor: "rgba(110, 65, 15, 0.85)",
+                  }}
+                />
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: "rgba(110, 65, 15, 0.60)" }}
+                >
+                  Generating your card…
+                </span>
+              </div>
+            )}
+            {imgError && (
+              <div
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ color: "rgba(110, 65, 15, 0.45)" }}
+              >
+                <span className="text-center text-xs leading-snug px-4">
+                  Card preview unavailable
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Share sheet — sheet-bg-hub for parity with dock sheets */}
+        <div
+          className="sheet-bg-hub w-full flex-shrink-0 animate-in slide-in-from-bottom-8 duration-300"
+          onClick={(e) => e.stopPropagation()}
           style={{
-            aspectRatio: "1080 / 1350",
-            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)",
+            boxShadow: "0 -8px 24px rgba(0, 0, 0, 0.18)",
           }}
         >
-          {cardUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={cardUrl}
-              alt="Share preview"
-              className="h-full w-full object-contain"
-              onLoad={() => setImgLoaded(true)}
-              onError={() => { setImgLoaded(true); setImgError(true); }}
+          <div className="border-b border-[rgba(110,65,15,0.30)]">
+            <ContextualHeader
+              variant="close-control"
+              icon="share"
+              title={title}
+              close={{ onClick: () => onOpenChange(false), label: "Close share" }}
             />
-          ) : null}
-          {!imgLoaded && (
-            <div
-              className="absolute inset-0 flex flex-col items-center justify-center gap-3"
-              style={{ color: "rgba(110, 65, 15, 0.55)" }}
-            >
-              <div
-                className="h-6 w-6 animate-spin rounded-full border-2"
-                style={{
-                  borderColor: "rgba(110, 65, 15, 0.25)",
-                  borderTopColor: "rgba(110, 65, 15, 0.85)",
-                }}
-              />
-              <span
-                className="text-xs font-semibold"
-                style={{ color: "rgba(110, 65, 15, 0.60)" }}
-              >
-                Generating your card…
-              </span>
-            </div>
-          )}
-          {imgError && (
-            <div
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ color: "rgba(110, 65, 15, 0.45)" }}
-            >
-              <span className="text-center text-xs leading-snug px-4">
-                Card preview unavailable
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Share sheet — sheet-bg-hub for parity with dock sheets */}
-      <div
-        className="sheet-bg-hub w-full flex-shrink-0 animate-in slide-in-from-bottom-8 duration-300"
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)",
-          boxShadow: "0 -8px 24px rgba(0, 0, 0, 0.18)",
-        }}
-      >
-        <div className="border-b border-[rgba(110,65,15,0.30)]">
-          <ContextualHeader
-            variant="close-control"
-            icon="share"
-            title={title}
-            close={{ onClick: () => onOpenChange(false), label: "Close share" }}
-          />
-        </div>
-        <div className="px-5 pt-5">
-          <ShareGrid text={text} url={url ?? SHARE_COPY.url} cardUrl={cardUrl ?? undefined} />
+          </div>
+          <div className="px-5 pt-5">
+            <ShareGrid text={text} url={url ?? SHARE_COPY.url} cardUrl={cardUrl ?? undefined} />
+          </div>
         </div>
       </div>
     </div>,
