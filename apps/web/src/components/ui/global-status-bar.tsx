@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { GLOBAL_STATUS_BAR_COPY, HUD_COPY } from "@/lib/content/editorial";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { HudResourceChip } from "@/components/hud/hud-resource-chip";
 
@@ -245,11 +245,12 @@ export function GlobalStatusBar(
 }
 
 function LiveBar(props: LiveProps): React.JSX.Element {
+  const t = useTranslations("GLOBAL_STATUS_BAR_COPY");
   return (
     <header
       role="banner"
       dir="ltr"
-      aria-label={props.ariaLabel ?? GLOBAL_STATUS_BAR_COPY.ariaLabelLive}
+      aria-label={props.ariaLabel ?? t("ariaLabelLive")}
       data-component="global-status-bar"
       data-variant="live"
       className={WRAPPER_CLASS}
@@ -261,11 +262,12 @@ function LiveBar(props: LiveProps): React.JSX.Element {
 }
 
 function BackChip({ onClick }: { onClick: () => void }): React.JSX.Element {
+  const t = useTranslations("GLOBAL_STATUS_BAR_COPY");
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={GLOBAL_STATUS_BAR_COPY.backLabel}
+      aria-label={t("backLabel")}
       className={BACK_BUTTON_CLASS}
       data-back-chip
     >
@@ -281,20 +283,19 @@ function AnonymousBar({
   ariaLabel?: string;
   onBack?: () => void;
 }): React.JSX.Element {
+  const t = useTranslations("GLOBAL_STATUS_BAR_COPY");
   return (
     <header
       role="banner"
       dir="ltr"
-      aria-label={ariaLabel ?? GLOBAL_STATUS_BAR_COPY.ariaLabelAnonymous}
+      aria-label={ariaLabel ?? t("ariaLabelAnonymous")}
       data-component="global-status-bar"
       data-variant="anonymous"
       className={WRAPPER_CLASS}
     >
       <div className="flex min-w-0 items-center gap-2">
         {onBack ? <BackChip onClick={onBack} /> : null}
-        <span className={HANDLE_CLASS}>
-          {GLOBAL_STATUS_BAR_COPY.guestLabel}
-        </span>
+        <span className={HANDLE_CLASS}>{t("guestLabel")}</span>
       </div>
       <div className="shrink-0" />
     </header>
@@ -304,8 +305,10 @@ function AnonymousBar({
 function ConnectedBar(props: ConnectedProps): React.JSX.Element {
   emitConnectedWarnings(props);
 
-  const ariaLabel =
-    props.ariaLabel ?? GLOBAL_STATUS_BAR_COPY.ariaLabelConnected;
+  const t = useTranslations("GLOBAL_STATUS_BAR_COPY");
+  const tHud = useTranslations("HUD_COPY");
+
+  const ariaLabel = props.ariaLabel ?? t("ariaLabelConnected");
   const active = isProActive(props.proStatus);
   const showSkeleton = props.isProLoading && props.proStatus === null;
 
@@ -335,7 +338,7 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
           <span
             role="status"
             aria-busy="true"
-            aria-label={GLOBAL_STATUS_BAR_COPY.proLoadingAriaLabel}
+            aria-label={t("proLoadingAriaLabel")}
             className={PRO_SKELETON_CLASS}
           />
         ) : active && props.proStatus?.expiresAt ? (
@@ -343,22 +346,22 @@ function ConnectedBar(props: ConnectedProps): React.JSX.Element {
             active
             compact={props.compact}
             onClick={props.onProTap}
-            label={GLOBAL_STATUS_BAR_COPY.proManageLabel}
-            value={`PRO ${HUD_COPY.proRemainingFormat(
-              Math.max(
+            label={t("proManageLabel")}
+            value={`PRO ${tHud("proRemainingFormat", {
+              days: Math.max(
                 0,
                 Math.ceil(
                   (props.proStatus.expiresAt - Date.now()) / 86_400_000,
                 ),
               ),
-            )}`}
+            })}`}
           />
         ) : (
           <AccountClusterButton
             active={false}
             compact={props.compact}
             onClick={props.onProTap}
-            label={GLOBAL_STATUS_BAR_COPY.proViewLabel}
+            label={t("proViewLabel")}
             value="PRO"
           />
         )}

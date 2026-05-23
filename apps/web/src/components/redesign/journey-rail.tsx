@@ -1,11 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   BADGE_THRESHOLD,
   PLAYABLE_PIECES,
 } from "@/lib/game/exercises";
-import { PIECE_LABELS } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
 
 export type TierStatus = "done" | "active" | "locked";
@@ -41,25 +41,28 @@ function pickNextPiece(currentPiece: PieceId): PieceId | null {
     : null;
 }
 
-function buildTiers(
-  currentPiece: PieceId,
-  currentStars: number,
-  claimedBadges: Partial<Record<PieceId, boolean>>,
-): Tier[] {
+export function JourneyRail({ currentPiece, currentStars, claimedBadges = {} }: Props) {
+  const t = useTranslations("JOURNEY_RAIL_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
+
   const currentBadgeDone = claimedBadges[currentPiece] === true;
   const currentBadgeReached = currentStars >= BADGE_THRESHOLD;
   const nextPiece = pickNextPiece(currentPiece);
   const masteredCount = PLAYABLE_PIECES.filter((p) => claimedBadges[p]).length;
+  const total = PLAYABLE_PIECES.length;
 
   const tier1: Tier = {
     id: "tier-piece-badge",
     icon: "trophy",
-    label: `${PIECE_LABELS[currentPiece]} Badge`,
+    label: t("pieceBadgeFormat", { piece: tPiece(currentPiece) }),
     progress: currentBadgeDone
-      ? "Claimed"
+      ? t("claimed")
       : currentBadgeReached
-        ? "Ready to claim"
-        : `${Math.min(currentStars, BADGE_THRESHOLD)} / ${BADGE_THRESHOLD} ★`,
+        ? t("readyToClaim")
+        : t("starProgressFormat", {
+            current: Math.min(currentStars, BADGE_THRESHOLD),
+            total: BADGE_THRESHOLD,
+          }),
     status: currentBadgeDone ? "done" : "active",
     progressVariant: currentBadgeDone || currentBadgeReached ? "pill" : "text",
     progressTone: currentBadgeDone
@@ -72,11 +75,13 @@ function buildTiers(
   const tier2: Tier = {
     id: "tier-next-piece",
     icon: "crown",
-    label: nextPiece ? `Unlock ${PIECE_LABELS[nextPiece]}` : "No more pieces",
+    label: nextPiece
+      ? t("unlockPieceFormat", { piece: tPiece(nextPiece) })
+      : t("noMorePieces"),
     progress: nextPiece
       ? currentBadgeDone
-        ? "Ready"
-        : "Claim badge first"
+        ? t("ready")
+        : t("claimBadgeFirst")
       : "—",
     status: nextPiece
       ? currentBadgeDone
@@ -87,25 +92,20 @@ function buildTiers(
     progressTone: nextPiece && currentBadgeDone ? "ready" : "neutral",
   };
 
-  const total = PLAYABLE_PIECES.length;
   const tier3: Tier = {
     id: "tier-all-mastered",
     icon: "star",
-    label: "All pieces mastered",
-    progress: `${masteredCount} / ${total}`,
+    label: t("allPiecesMastered"),
+    progress: t("masteredCountFormat", { count: masteredCount, total }),
     status: masteredCount >= total ? "done" : "locked",
     progressVariant: "text",
     progressTone: "neutral",
   };
 
-  return [tier1, tier2, tier3];
-}
-
-export function JourneyRail({ currentPiece, currentStars, claimedBadges = {} }: Props) {
-  const tiers = buildTiers(currentPiece, currentStars, claimedBadges);
+  const tiers = [tier1, tier2, tier3];
 
   return (
-    <div className="paper-tray" aria-label="Your journey">
+    <div className="paper-tray" aria-label={t("ariaLabel")}>
       {tiers.map((tier) => (
         <div key={tier.id} className="paper-row journey-row" data-status={tier.status}>
           <span className="journey-row-icon">

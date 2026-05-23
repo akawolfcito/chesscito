@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { cleanup } from "@testing-library/react";
+import { renderWithIntl, screen } from "@/test-utils/render-with-intl";
 
 import { ComingSoonChip } from "../coming-soon-chip";
 import { PRO_COPY } from "@/lib/content/editorial";
@@ -8,18 +9,18 @@ afterEach(cleanup);
 
 describe("ComingSoonChip", () => {
   it("renders the SOON label sourced from PRO_COPY", () => {
-    render(<ComingSoonChip />);
+    renderWithIntl(<ComingSoonChip />);
     expect(screen.getByText(PRO_COPY.comingSoonLabel)).toBeInTheDocument();
   });
 
   it("renders as an inline <span> (decorative, non-interactive)", () => {
-    const { container } = render(<ComingSoonChip />);
+    const { container } = renderWithIntl(<ComingSoonChip />);
     const root = container.firstElementChild;
     expect(root?.tagName).toBe("SPAN");
   });
 
   it("appends caller-provided className without clobbering internals", () => {
-    const { container } = render(<ComingSoonChip className="ml-2 custom-x" />);
+    const { container } = renderWithIntl(<ComingSoonChip className="ml-2 custom-x" />);
     const root = container.firstElementChild as HTMLElement;
     expect(root.className).toContain("ml-2");
     expect(root.className).toContain("custom-x");

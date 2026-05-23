@@ -1,6 +1,6 @@
 import * as React from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
 import { GlobalStatusBar } from "../global-status-bar";
 import { GLOBAL_STATUS_BAR_COPY } from "@/lib/content/editorial";
 

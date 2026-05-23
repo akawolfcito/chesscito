@@ -1,4 +1,6 @@
-import { PRO_COPY } from "@/lib/content/editorial";
+"use client";
+
+import { useTranslations } from "next-intl";
 
 type Props = {
   className?: string;
@@ -10,6 +12,7 @@ type Props = {
  * copy stays single-source. Spec: addendum §3.7 (C3) / §6.1 commit #5.
  */
 export function ComingSoonChip({ className }: Props) {
+  const t = useTranslations("PRO_COPY");
   return (
     <span
       data-testid="coming-soon-chip"
@@ -21,7 +24,7 @@ export function ComingSoonChip({ className }: Props) {
         color: "rgba(110, 65, 15, 0.65)",
       }}
     >
-      {PRO_COPY.comingSoonLabel}
+      {t("comingSoonLabel")}
     </span>
   );
 }

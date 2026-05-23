@@ -18,7 +18,11 @@ import enBundle from "./en";
 // are typed `unknown`. Cast to a permissive record so this file can
 // spread sub-objects (e.g. preserve env-derived href fields) without
 // fighting the type system. Stage 6 will tighten the bundle shape.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+//
+// The `@typescript-eslint/no-explicit-any` rule is not configured in
+// this project's ESLint setup, so `any` here does not trigger a lint
+// error. A prior eslint-disable directive referencing that rule broke
+// the production build (unknown-rule error) — leave the cast bare.
 const en = enBundle as any;
 
 const messages = {
@@ -186,6 +190,65 @@ const messages = {
         },
       ],
     },
+  },
+  GLOBAL_STATUS_BAR_COPY: {
+    guestLabel: "Invitado",
+    ariaLabelConnected: "Estado del jugador",
+    ariaLabelAnonymous: "Estado anónimo",
+    ariaLabelLive: "Estado de partida en vivo",
+    proManageLabel: "Administrar Chesscito PRO",
+    proViewLabel: "Ver Chesscito PRO",
+    proInactiveLabel: "PRO",
+    proLoadingAriaLabel: "Cargando estado PRO",
+    backLabel: "Volver al hub",
+    accountLabel: "Abrir cuenta",
+  },
+  HUD_COPY: {
+    ...en.HUD_COPY,
+    proRemainingFormat: "{days}d",
+  },
+  PRO_COPY: {
+    ...en.PRO_COPY,
+    comingSoonLabel: "PRONTO",
+  },
+  PIECE_LABELS: {
+    rook: "Torre",
+    bishop: "Alfil",
+    knight: "Caballo",
+    pawn: "Peón",
+    queen: "Reina",
+    king: "Rey",
+  },
+  JOURNEY_RAIL_COPY: {
+    ariaLabel: "Tu camino",
+    pieceBadgeFormat: "Insignia de {piece}",
+    unlockPieceFormat: "Desbloquea {piece}",
+    noMorePieces: "Sin más piezas",
+    allPiecesMastered: "Todas las piezas dominadas",
+    claimed: "Reclamada",
+    readyToClaim: "Lista para reclamar",
+    ready: "Listo",
+    claimBadgeFirst: "Reclama la insignia primero",
+    starProgressFormat: "{current} / {total} ★",
+    masteredCountFormat: "{count} / {total}",
+  },
+  TX_PROGRESS_COPY: {
+    pillsPrepare: "PREPARAR",
+    pillsSign: "FIRMAR",
+    pillsSend: "ENVIAR",
+    pillsWait: "ESPERA",
+    pillsVerify: "VERIFICAR",
+    pillsDone: "LISTO",
+    pillsFailed: "FALLÓ",
+    toastPrepare: "Preparando…",
+    toastSign: "Firma en tu billetera…",
+    toastSend: "Enviando transacción…",
+    toastWait: "Confirmando on-chain…",
+    toastVerify: "Verificando con el servidor…",
+    toastDoneSuccess: "Listo",
+    toastDoneFailed: "Falló",
+    stepCounter: "Paso {current} de {total}",
+    toastErrorFallback: "Transacción fallida — ver detalles",
   },
 };
 

@@ -2,7 +2,14 @@
 // paths stay stable. This layout is now their de-facto root — after
 // Stage 1 of the i18n migration there is no app/layout.tsx, so any
 // global styling (Tailwind, design tokens) has to be loaded here too.
+//
+// As Stage C client components adopt `useTranslations`, the fixtures
+// need a NextIntlClientProvider too — otherwise primitives like
+// <TxProgressSteps>, <GlobalStatusBar>, etc. throw at mount. EN bundle
+// only; fixtures are locale-agnostic by design.
 import '../globals.css'
+import { NextIntlClientProvider } from 'next-intl'
+import enMessages from '@/lib/content/messages/en'
 
 export const metadata = {
   title: 'Chesscito — Dev Fixtures',
@@ -17,7 +24,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <NextIntlClientProvider locale="en" messages={enMessages}>
+          {children}
+        </NextIntlClientProvider>
+      </body>
     </html>
   )
 }

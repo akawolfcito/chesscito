@@ -47,6 +47,23 @@ export const PIECE_RAIL_COPY = {
   title: "Choose a piece",
 } as const;
 
+/** `<JourneyRail />` copy. ICU formats interpolate piece names from
+ *  `PIECE_LABELS` so ES translations can re-order ("Insignia de Torre"
+ *  vs "Torre Badge") without code changes. */
+export const JOURNEY_RAIL_COPY = {
+  ariaLabel: "Your journey",
+  pieceBadgeFormat: "{piece} Badge",
+  unlockPieceFormat: "Unlock {piece}",
+  noMorePieces: "No more pieces",
+  allPiecesMastered: "All pieces mastered",
+  claimed: "Claimed",
+  readyToClaim: "Ready to claim",
+  ready: "Ready",
+  claimBadgeFirst: "Claim badge first",
+  starProgressFormat: "{current} / {total} ★",
+  masteredCountFormat: "{count} / {total}",
+} as const;
+
 export const MISSION_DETAIL_COPY = {
   title: "Mission",
   scoreLabel: "Score",

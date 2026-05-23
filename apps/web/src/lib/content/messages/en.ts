@@ -44,4 +44,17 @@ function stripFunctions(value: unknown): unknown {
 
 const messages = stripFunctions({ ...editorial }) as Record<string, unknown>;
 
+// ICU MessageFormat overrides for helpers stripped by stripFunctions.
+// These editorial.ts exports are still functions for legacy callers
+// (e.g. `HUD_COPY.proRemainingFormat(5)`), but next-intl needs ICU
+// template strings inside the bundle. As each consumer surface migrates
+// to `useTranslations`, its helpers get an ICU mirror added here.
+// See red-team M-3 (per-surface migration of helper-style copy).
+// `any` is intentional: bundle keys are typed `unknown` after stripFunctions.
+// `@typescript-eslint/no-explicit-any` is not configured in this project so
+// the cast does not trigger a lint warning.
+const m = messages as any;
+m.HUD_COPY.proRemainingFormat = "{days}d";
+m.TX_PROGRESS_COPY.stepCounter = "Step {current} of {total}";
+
 export default messages;

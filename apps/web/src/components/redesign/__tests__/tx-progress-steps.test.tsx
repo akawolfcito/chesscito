@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { renderWithIntl as render, screen, act } from "@/test-utils/render-with-intl";
 
 // B2 telemetry mock — hoisted so the primitive's track() calls land here
 // instead of the real /api/telemetry fetch. Per established codebase

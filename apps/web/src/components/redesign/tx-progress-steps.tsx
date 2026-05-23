@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { TX_PROGRESS_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 import { track } from "@/lib/telemetry";
 
 /** Canonical step taxonomy. Every tx surface picks a subset of these.
@@ -46,24 +46,26 @@ export type TxProgressStepsProps = {
   flow: TxFlowName;
 };
 
-const PILLS_LABEL: Record<TxStepCode | "done" | "failed", string> = {
-  prepare: TX_PROGRESS_COPY.pillsPrepare,
-  sign: TX_PROGRESS_COPY.pillsSign,
-  send: TX_PROGRESS_COPY.pillsSend,
-  wait: TX_PROGRESS_COPY.pillsWait,
-  verify: TX_PROGRESS_COPY.pillsVerify,
-  done: TX_PROGRESS_COPY.pillsDone,
-  failed: TX_PROGRESS_COPY.pillsFailed,
+/** step code → ICU key in TX_PROGRESS_COPY namespace. Module-scope so
+ *  the maps are stable across renders; `t()` is invoked at the call site. */
+const PILLS_KEY: Record<TxStepCode | "done" | "failed", string> = {
+  prepare: "pillsPrepare",
+  sign: "pillsSign",
+  send: "pillsSend",
+  wait: "pillsWait",
+  verify: "pillsVerify",
+  done: "pillsDone",
+  failed: "pillsFailed",
 };
 
-const TOAST_LABEL: Record<TxStepCode | "done" | "failed", string> = {
-  prepare: TX_PROGRESS_COPY.toastPrepare,
-  sign: TX_PROGRESS_COPY.toastSign,
-  send: TX_PROGRESS_COPY.toastSend,
-  wait: TX_PROGRESS_COPY.toastWait,
-  verify: TX_PROGRESS_COPY.toastVerify,
-  done: TX_PROGRESS_COPY.toastDoneSuccess,
-  failed: TX_PROGRESS_COPY.toastDoneFailed,
+const TOAST_KEY: Record<TxStepCode | "done" | "failed", string> = {
+  prepare: "toastPrepare",
+  sign: "toastSign",
+  send: "toastSend",
+  wait: "toastWait",
+  verify: "toastVerify",
+  done: "toastDoneSuccess",
+  failed: "toastDoneFailed",
 };
 
 /** Hold the done-success terminal for this long before unmounting, so the
@@ -254,6 +256,7 @@ function PillsVariant({
   title,
   flow,
 }: TxProgressStepsProps) {
+  const t = useTranslations("TX_PROGRESS_COPY");
   const isFailed = current === "failed";
   const isDone = current === "done";
 
@@ -269,10 +272,10 @@ function PillsVariant({
         );
 
   const subCopy = isFailed
-    ? errorMessage ?? TX_PROGRESS_COPY.toastErrorFallback
+    ? errorMessage ?? t("toastErrorFallback")
     : isDone
-      ? TX_PROGRESS_COPY.toastDoneSuccess
-      : TOAST_LABEL[current];
+      ? t("toastDoneSuccess")
+      : t(TOAST_KEY[current]);
 
   // a11y live-region split: polite root announces step transitions; sibling
   // role="alert" (implicit aria-live=assertive + aria-atomic=true) holds
@@ -345,7 +348,8 @@ function PillNode({
   state: PillState;
   isLast: boolean;
 }) {
-  const label = step.label ?? PILLS_LABEL[step.code];
+  const t = useTranslations("TX_PROGRESS_COPY");
+  const label = step.label ?? t(PILLS_KEY[step.code]);
 
   const nodeClass = {
     complete:
@@ -402,6 +406,7 @@ function ToastVariant({
   errorMessage,
   flow,
 }: TxProgressStepsProps) {
+  const t = useTranslations("TX_PROGRESS_COPY");
   const isFailed = current === "failed";
   const isDone = current === "done";
 
@@ -410,16 +415,19 @@ function ToastVariant({
       ? steps.length
       : Math.max(1, steps.findIndex((s) => s.code === current) + 1);
 
-  const counterText = TX_PROGRESS_COPY.stepCounter(counterIdx, steps.length);
+  const counterText = t("stepCounter", {
+    current: counterIdx,
+    total: steps.length,
+  });
 
   const subCopy = isFailed
-    ? errorMessage ?? TX_PROGRESS_COPY.toastErrorFallback
+    ? errorMessage ?? t("toastErrorFallback")
     : isDone
-      ? TX_PROGRESS_COPY.toastDoneSuccess
-      : TOAST_LABEL[current];
+      ? t("toastDoneSuccess")
+      : t(TOAST_KEY[current]);
 
   const ariaLabel = isFailed
-    ? `${TX_PROGRESS_COPY.toastDoneFailed}: ${subCopy}`
+    ? `${t("toastDoneFailed")}: ${subCopy}`
     : isDone
       ? subCopy
       : `${subCopy}, ${counterText.toLowerCase()}`;
@@ -430,7 +438,7 @@ function ToastVariant({
   // normal step transitions; sibling role="alert" carries failure copy only
   // on failed state. See PillsVariant comment for rationale.
   const alertAnnouncement = isFailed
-    ? `${TX_PROGRESS_COPY.toastDoneFailed}: ${subCopy}`
+    ? `${t("toastDoneFailed")}: ${subCopy}`
     : "";
 
   return (
