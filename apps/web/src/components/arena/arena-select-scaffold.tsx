@@ -11,6 +11,25 @@ import { ARENA_COPY } from '@/lib/content/editorial'
 import type { ArenaDifficulty } from '@/lib/game/types'
 import type { PlayerColor } from '@/lib/game/use-chess-game'
 
+/* Green check pill — clones the PRO sheet perk badge styling
+   (pro-sheet.tsx:389-399) so selection feedback across PRO and the
+   arena selector reads as the same visual vocabulary. */
+function SelectedCheck() {
+  return (
+    <span
+      aria-hidden="true"
+      className="arena-scaffold-selected-badge flex items-center justify-center rounded-full text-sm font-bold text-white"
+      style={{
+        background: 'linear-gradient(180deg, #22c55e 0%, #15803d 100%)',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.22)',
+        border: '2px solid rgba(255, 255, 255, 0.9)',
+      }}
+    >
+      ✓
+    </span>
+  )
+}
+
 const DIFFICULTY_CARD: Record<
   ArenaDifficulty,
   {
@@ -184,12 +203,7 @@ export function ArenaSelectScaffold({
               onClick={() => onSelectColor(c)}
               className="arena-scaffold-color-pill"
             >
-              {playerColor === c ? (
-                <CandyIcon
-                  name="check"
-                  className="arena-scaffold-selected-badge reward-tile-status--claimed"
-                />
-              ) : null}
+              {playerColor === c ? <SelectedCheck /> : null}
               <picture className="arena-scaffold-color-piece">
                 <source
                   srcSet={`/art/redesign/pieces/${COLOR_CARD[c].piece}.avif`}
@@ -221,12 +235,7 @@ export function ArenaSelectScaffold({
                 onClick={() => onSelectDifficulty(key)}
                 className="arena-scaffold-difficulty-pill"
               >
-                {difficulty === key ? (
-                  <CandyIcon
-                    name="check"
-                    className="arena-scaffold-selected-badge reward-tile-status--claimed"
-                  />
-                ) : null}
+                {difficulty === key ? <SelectedCheck /> : null}
                 <picture className="arena-scaffold-difficulty-piece">
                   <source
                     srcSet={`/art/redesign/pieces/w-${DIFFICULTY_CARD[key].piece}.avif`}
