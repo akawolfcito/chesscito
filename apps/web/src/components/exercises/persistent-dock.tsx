@@ -117,7 +117,7 @@ const SIDE_LEFT: ReadonlyArray<Item> = [
 ];
 
 const SIDE_RIGHT: ReadonlyArray<Item> = [
-  { id: "trophies", label: DOCK_LABELS.trophies, icon: "trophy", sheet: "trophies", fallback: "/trophies", activeWhen: "/trophies" },
+  { id: "trophies", label: DOCK_LABELS.trophies, icon: "trophy", iconSrc: "/art/action-row/trofeo-epico", sheet: "trophies", fallback: "/trophies", activeWhen: "/trophies" },
   { id: "leaderboard", label: DOCK_LABELS.leaderboard, icon: "star", iconSrc: "/art/leaderboard-menu", sheet: "leaderboard", fallback: "/exercises?sheet=leaderboard" },
 ];
 
