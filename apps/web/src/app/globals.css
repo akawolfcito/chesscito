@@ -1685,8 +1685,18 @@
        `overflow: hidden` on .playhub-game-stage clips EVERYTHING
        including the board sprite and piece floats. An absolute pixel
        cap matching the width cap keeps the square sized regardless of
-       the parent chain. */
-    max-height: 23.5rem;
+       the parent chain.
+
+       The min() clamp adds a viewport-height-aware ceiling: on shorter
+       phones (≤~728px usable), the canvas shrinks proportionally so
+       the bottom of the sprite (file labels a–h baked into the asset)
+       stays inside the .playhub-game-stage's overflow:hidden window.
+       100dvh is a concrete viewport unit so it sidesteps the iOS
+       percentage-of-zero-parent trap the absolute cap was added to
+       fix. 22rem is an empirical estimate of the surrounding chrome
+       height (z1 + chip row + layer tabs + action row + dock + safe
+       area). */
+    max-height: min(23.5rem, calc(100dvh - 22rem));
     background-color: transparent;
     background-image: none;
     border-radius: 0;
