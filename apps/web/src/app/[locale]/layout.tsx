@@ -37,6 +37,20 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
     apple: '/apple-icon.png',
   },
+  alternates: {
+    /**
+     * Default-locale canonical at the locale root. Per-page surfaces
+     * (`/[locale]/hub`, `/[locale]/arena`, etc.) inherit this layout
+     * metadata, so EN / ES / x-default get emitted on every page via
+     * a single declaration. Google + Bing read `x-default` as the
+     * fallback when no locale matches the user.
+     */
+    languages: {
+      en: '/en',
+      es: '/es',
+      'x-default': '/en',
+    },
+  },
   openGraph: {
     title: 'chesscito',
     description: 'Learn chess piece movements with gamified on-chain challenges on Celo.',

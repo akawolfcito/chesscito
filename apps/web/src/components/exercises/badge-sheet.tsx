@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";

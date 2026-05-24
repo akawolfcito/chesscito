@@ -1,8 +1,8 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 
 /** Persist the user's choice for one year so subsequent visits skip
@@ -15,27 +15,21 @@ const LOCALE_NATIVE_NAMES: Record<Locale, string> = {
   es: "Español",
 };
 
-/** Swap the leading locale segment in `pathname`. `/en/hub` → `/es/hub`,
- *  `/es/exercises?sheet=shop` keeps its query (caller passes only the
- *  pathname; query is preserved by router.replace via window.location). */
-function swapLocaleSegment(pathname: string, next: Locale): string {
-  const localePattern = new RegExp(`^/(?:${routing.locales.join("|")})(?=/|$)`);
-  if (localePattern.test(pathname)) {
-    return pathname.replace(localePattern, `/${next}`);
-  }
-  // No locale segment yet (edge case — e.g. landing). Prepend.
-  return `/${next}${pathname === "/" ? "" : pathname}`;
-}
-
 /** Segmented locale switcher rendered inside `<AccountSheet>` (above
  *  the disconnect button). Both options stay visible at once so the
  *  user reads the destination language in its native form. Persisting
  *  the cookie keeps the choice across visits while the middleware's
- *  Accept-Language detection still handles first-time anonymous hits. */
+ *  Accept-Language detection still handles first-time anonymous hits.
+ *
+ *  Uses `@/i18n/navigation` so next-intl owns the locale-segment swap
+ *  (replaces the previous in-house regex). `pathname` from this module
+ *  returns the locale-stripped path (`/hub` rather than `/en/hub`), so
+ *  passing it back into `router.replace(path, { locale })` paints the
+ *  destination locale cleanly without manual string surgery. */
 export function LocaleSwitcher() {
   const t = useTranslations("ACCOUNT_SHEET_COPY");
   const locale = useLocale() as Locale;
-  const pathname = usePathname() ?? "/";
+  const pathname = usePathname();
   const router = useRouter();
 
   const optionLabels: Record<Locale, string> = {
@@ -46,7 +40,7 @@ export function LocaleSwitcher() {
   function selectLocale(next: Locale) {
     if (next === locale) return;
     document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; samesite=lax`;
-    router.replace(swapLocaleSegment(pathname, next));
+    router.replace(pathname, { locale: next });
   }
 
   return (

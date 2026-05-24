@@ -1,5 +1,36 @@
 import "@testing-library/jest-dom/vitest";
+import { createElement, type AnchorHTMLAttributes, type ReactNode } from "react";
 import { vi } from "vitest";
+
+// `@/i18n/navigation` wraps next-intl's `createNavigation()` so internal
+// `<Link>` calls are locale-aware in the live app. In the unit suite
+// next-intl's deep import of `next/navigation` fails to resolve under
+// pnpm's strict layout (createNavigation.js → next/navigation → ENOENT),
+// so we provide a minimal stub here. The stub renders Link as a plain
+// `<a>` and forwards usePathname/useRouter to the next/navigation
+// mocks the individual test files already install. Behavior is good
+// enough for every assertion the suite makes (text content, click
+// handlers, role queries) without dragging the next-intl bundle into
+// the test resolver graph.
+vi.mock("@/i18n/navigation", async () => {
+  const nextNav = await import("next/navigation");
+  const Link = ({
+    href,
+    children,
+    ...rest
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    href: string;
+    children?: ReactNode;
+  }) => createElement("a", { href, ...rest }, children);
+  Link.displayName = "MockedI18nLink";
+  return {
+    Link,
+    redirect: (path: string) => path,
+    usePathname: nextNav.usePathname,
+    useRouter: nextNav.useRouter,
+    getPathname: ({ href }: { href: string }) => href,
+  };
+});
 
 // Async server components migrated to Stage C call
 // `getTranslations(namespace)` from `next-intl/server`. In the unit
