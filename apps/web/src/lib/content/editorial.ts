@@ -1723,6 +1723,15 @@ export const ACCOUNT_SHEET_COPY = {
   inactivePro: "Not active",
   unknownNetwork: "Unknown network",
   closeAriaLabel: "Close account",
+  /** Locale switcher block — sits above the disconnect button. The two
+   *  language names stay rendered as proper nouns ("English" / "Español")
+   *  so the user reads the destination, not the source. */
+  languageLabel: "Language",
+  languageOptionEnglish: "English",
+  languageOptionSpanish: "Español",
+  /** Aria label for the segmented button. ICU `{name}` interpolates the
+   *  destination language name in its native form. */
+  languageSwitchAriaFormat: "Switch language to {name}",
 } as const;
 
 /** /why public landing page copy. Spanish-only in v1 by product

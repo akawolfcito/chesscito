@@ -192,5 +192,6 @@ m.HUD_COPY.streakAriaLabel =
 // Hub scaffold premium slot active aria.
 m.HUB_SCAFFOLD_COPY.premiumActiveAriaFormat =
   "Training Pass — {used} of {total} sessions used, {days} days remaining";
+m.ACCOUNT_SHEET_COPY.languageSwitchAriaFormat = "Switch language to {name}";
 
 export default messages;

@@ -74,6 +74,7 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import { formatWalletShort } from "@/lib/wallet/format";
@@ -258,6 +259,7 @@ function AccountSheet({
             />
             <span>{proActive ? t("managePro") : t("viewPro")}</span>
           </button>
+          <LocaleSwitcher />
           <Button
             type="button"
             variant="game-ghost"
