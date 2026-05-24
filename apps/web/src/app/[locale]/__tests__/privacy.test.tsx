@@ -1,11 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderWithIntl, screen } from "@/test-utils/render-with-intl";
 
-// LegalPageShell is a client component using useRouter. Mock the
-// navigation hook so the standalone page can render outside an
-// AppRouter context.
-vi.mock("next/navigation", () => ({
+// LegalPageShell is a client component using useRouter from
+// @/i18n/navigation. Mock the navigation hook so the standalone page
+// can render outside an AppRouter context.
+vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => "/",
 }));
 
 // Privacy page is now an async server component (Stage C migration).

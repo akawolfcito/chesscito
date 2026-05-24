@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";

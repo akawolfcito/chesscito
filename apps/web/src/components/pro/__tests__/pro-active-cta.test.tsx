@@ -3,8 +3,9 @@ import { cleanup } from "@testing-library/react";
 import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
 
 const pushMock = vi.hoisted(() => vi.fn());
-vi.mock("next/navigation", () => ({
+vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
+  usePathname: () => "/",
 }));
 
 const trackMock = vi.hoisted(() => vi.fn());
