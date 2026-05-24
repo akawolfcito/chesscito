@@ -375,6 +375,43 @@ const messages = {
     },
     historyBannerSubtitle:
       "Coaching personalizado desde tu historial de partidas.",
+    backLabel: "Atrás",
+    connectWalletForHistory:
+      "Conecta tu wallet para ver tu historial del Coach.",
+    historyAriaLabel: "Historial de análisis del Coach",
+    resultLabels: {
+      win: "Victoria",
+      lose: "Derrota",
+      draw: "Tablas",
+      resigned: "Rendición",
+    },
+    relativeTime: {
+      justNow: "ahora mismo",
+      minutes: "hace {count}m",
+      hours: "hace {count}h",
+      days: "hace {count}d",
+      months: "hace {count}mes",
+    },
+    latestReviewCard: {
+      title: "Último análisis",
+      openLabel: "Abrir →",
+      ariaLabel:
+        "Abrir análisis {typeLabel} del Coach — {result}, {difficulty}, {moves} jugadas",
+    },
+    progressStats: {
+      reviewed: "Revisadas",
+      highest: "Máxima",
+      winStreak: "Racha",
+    },
+    emptyState: {
+      title: "Aún sin análisis",
+      body:
+        "Juega una partida en Arena y pide análisis al Coach al terminar.",
+      cta: "ARENA",
+      ctaAriaLabel: "Ir a Arena y jugar una partida",
+    },
+    manageHistoryOpen: "Gestionar historial",
+    manageHistoryClose: "Cerrar",
   },
   COACH_ENTRY_COPY: {
     ...en.COACH_ENTRY_COPY,

@@ -49,7 +49,7 @@ export function CoachHistoryDeletePanel() {
   if (!address) return null;
 
   const hasHistory = (rowCount ?? 0) > 0;
-  const manageLabel = manageOpen ? "Close" : "Manage history";
+  const manageLabel = manageOpen ? t("manageHistoryClose") : t("manageHistoryOpen");
 
   async function signAndDelete() {
     if (!address) return;

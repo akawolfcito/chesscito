@@ -1115,6 +1115,64 @@ export const COACH_COPY = {
     errorToast: "Could not delete — please retry",
   },
   historyBannerSubtitle: "Personalized coaching from your game history.",
+  /** /coach/history page header — back navigation + no-wallet gate. */
+  backLabel: "Back",
+  connectWalletForHistory: "Connect your wallet to view your Coach history.",
+  /** ARIA region label shared by all three render branches of
+   *  <CoachHistory /> (loading, empty, content). Stable label keeps the
+   *  landmark name consistent so AT users land on the same region as
+   *  the panel transitions states. */
+  historyAriaLabel: "Coach review history",
+  /** Result chip labels. Used by <CoachHistory />'s `resultLabel()`
+   *  switch. The capitalize fallback in the component stays English; if
+   *  we ever extend `GameResult` beyond win/lose/draw/resigned, add the
+   *  variant here instead of relying on the fallback. */
+  resultLabels: {
+    win: "Win",
+    lose: "Loss",
+    draw: "Draw",
+    resigned: "Resigned",
+  },
+  /** Relative timestamp chips ("just now", "5m ago", "3h ago",
+   *  "2d ago", "4mo ago"). ICU placeholders filled by the bundle
+   *  mirrors in messages/en.ts and messages/es.ts. */
+  relativeTime: {
+    justNow: "just now",
+    minutes: "{count}m ago",
+    hours: "{count}h ago",
+    days: "{count}d ago",
+    months: "{count}mo ago",
+  },
+  /** <LatestReviewCard /> — the prominent tappable card at the top of
+   *  the journal. Aria-label is ICU since it composes the type label,
+   *  result, difficulty, and move count. */
+  latestReviewCard: {
+    title: "Latest Review",
+    openLabel: "Review →",
+    ariaLabel:
+      "Open {typeLabel} Coach Review — {result}, {difficulty}, {moves} moves",
+  },
+  /** <ProgressCard /> stats — three short labels rendered under each
+   *  stat number. "Reviewed" pairs with `analyzed.length`,
+   *  "Highest" pairs with `highestDiffLabel`, "Win streak" pairs with
+   *  `streak` (only shown when streak > 0). */
+  progressStats: {
+    reviewed: "Reviewed",
+    highest: "Highest",
+    winStreak: "Win streak",
+  },
+  /** <EmptyState /> — no-reviews-yet branch. CTA is uppercase "ARENA"
+   *  matching the candy-game treatment used elsewhere. */
+  emptyState: {
+    title: "No reviews yet",
+    body: "Play an Arena match and ask Coach after the game.",
+    cta: "ARENA",
+    ctaAriaLabel: "Go to Arena and play a match",
+  },
+  /** <CoachHistoryDeletePanel /> collapsible toggle. Flips between
+   *  Manage / Close depending on `manageOpen` state. */
+  manageHistoryOpen: "Manage history",
+  manageHistoryClose: "Close",
 } as const;
 
 /**

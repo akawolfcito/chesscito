@@ -36,26 +36,28 @@ function resultVariant(result: string): "success" | "danger" | "warm" {
   return "warm";
 }
 
-function resultLabel(result: string): string {
-  if (result === "win") return "Win";
-  if (result === "loss" || result === "lose") return "Loss";
-  if (result === "resigned") return "Resigned";
-  if (result === "draw") return "Draw";
+type CoachTranslator = ReturnType<typeof useTranslations>;
+
+function resultLabel(result: string, t: CoachTranslator): string {
+  if (result === "win") return t("resultLabels.win");
+  if (result === "loss" || result === "lose") return t("resultLabels.lose");
+  if (result === "resigned") return t("resultLabels.resigned");
+  if (result === "draw") return t("resultLabels.draw");
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-function formatRelativeTimestamp(ts: number): string {
+function formatRelativeTimestamp(ts: number, t: CoachTranslator): string {
   const diff = Date.now() - ts;
-  if (!Number.isFinite(diff) || diff < 0) return "just now";
+  if (!Number.isFinite(diff) || diff < 0) return t("relativeTime.justNow");
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return t("relativeTime.justNow");
+  if (minutes < 60) return t("relativeTime.minutes", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t("relativeTime.hours", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return t("relativeTime.days", { count: days });
   const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  return t("relativeTime.months", { count: months });
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -77,13 +79,19 @@ function LatestReviewCard({
       ? entry.response.lessons[0] ?? entry.response.summary
       : entry.response.tips[0] ?? entry.response.summary;
   const typeLabel = entry.response.kind === "full" ? t("full") : t("quick");
+  const result = resultLabel(entry.game.result, t);
 
   return (
     <button
       type="button"
       onClick={onSelect}
       className="tj-latest-card w-full text-left"
-      aria-label={`Open ${typeLabel} Coach Review — ${resultLabel(entry.game.result)}, ${diffLabel}, ${entry.game.totalMoves} moves`}
+      aria-label={t("latestReviewCard.ariaLabel", {
+        typeLabel,
+        result,
+        difficulty: diffLabel,
+        moves: entry.game.totalMoves,
+      })}
     >
       <div className="tj-latest-card-header">
         <div className="flex min-w-0 items-center gap-2">
@@ -91,14 +99,14 @@ function LatestReviewCard({
             name={entry.game.result === "win" ? "trophy" : entry.game.result === "draw" ? "star" : "close"}
             className="h-5 w-5 shrink-0"
           />
-          <span className="tj-latest-card-title">Latest Review</span>
+          <span className="tj-latest-card-title">{t("latestReviewCard.title")}</span>
         </div>
-        <span className="tj-latest-card-open-label">Review →</span>
+        <span className="tj-latest-card-open-label">{t("latestReviewCard.openLabel")}</span>
       </div>
 
       <div className="mt-2 flex flex-wrap gap-1.5">
         <CandyChip variant={resultVariant(entry.game.result)} tone="subtle">
-          {resultLabel(entry.game.result)}
+          {result}
         </CandyChip>
         <CandyChip variant="warm" tone="subtle">{diffLabel}</CandyChip>
         <CandyChip variant="warm" tone="subtle">{entry.game.totalMoves} moves</CandyChip>
@@ -123,6 +131,7 @@ function OlderReviewRow({
     ARENA_COPY.difficulty[entry.game.difficulty as keyof typeof ARENA_COPY.difficulty] ??
     entry.game.difficulty;
   const typeLabel = entry.response.kind === "full" ? t("full") : t("quick");
+  const result = resultLabel(entry.game.result, t);
 
   return (
     <button
@@ -130,7 +139,12 @@ function OlderReviewRow({
       onClick={onSelect}
       role="listitem"
       className="tj-older-row w-full text-left"
-      aria-label={`Open ${typeLabel} Coach Review — ${resultLabel(entry.game.result)}, ${diffLabel}, ${entry.game.totalMoves} moves`}
+      aria-label={t("latestReviewCard.ariaLabel", {
+        typeLabel,
+        result,
+        difficulty: diffLabel,
+        moves: entry.game.totalMoves,
+      })}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <CandyIcon
@@ -138,7 +152,7 @@ function OlderReviewRow({
           className="h-3.5 w-3.5 shrink-0 opacity-75"
         />
         <span className="tj-older-row-label truncate">
-          {resultLabel(entry.game.result)} · {diffLabel} · {entry.game.totalMoves} moves
+          {result} · {diffLabel} · {entry.game.totalMoves} moves
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
@@ -158,15 +172,17 @@ function UnanalyzedReviewRow({
   entry: UnanalyzedEntry;
   onAnalyze: () => void;
 }) {
+  const tCoach = useTranslations("COACH_COPY");
   const tEntry = useTranslations("COACH_ENTRY_COPY");
   const diffLabel =
     ARENA_COPY.difficulty[entry.game.difficulty as keyof typeof ARENA_COPY.difficulty] ??
     entry.game.difficulty;
-  const relative = formatRelativeTimestamp(entry.game.timestamp);
+  const relative = formatRelativeTimestamp(entry.game.timestamp, tCoach);
+  const result = resultLabel(entry.game.result, tCoach);
   const ariaLabel = tEntry("historyAnalyzeAriaLabel", {
     timestamp: relative,
     difficulty: diffLabel,
-    result: resultLabel(entry.game.result),
+    result,
   });
 
   return (
@@ -180,7 +196,7 @@ function UnanalyzedReviewRow({
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <CandyIcon name="time" className="h-3.5 w-3.5 shrink-0 opacity-75" />
         <span className="tj-older-row-label truncate">
-          {tEntry("historyMatchLabel")} · {diffLabel} · {resultLabel(entry.game.result)} · {relative}
+          {tEntry("historyMatchLabel")} · {diffLabel} · {result} · {relative}
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
@@ -215,16 +231,16 @@ function ProgressCard({
       <div className="mt-2 flex flex-wrap gap-2">
         <div className="tj-stat-block">
           <span className="tj-stat-value">{gamesAnalyzed}</span>
-          <span className="tj-stat-label">Reviewed</span>
+          <span className="tj-stat-label">{t("progressStats.reviewed")}</span>
         </div>
         <div className="tj-stat-block">
           <span className="tj-stat-value">{highestDiffLabel}</span>
-          <span className="tj-stat-label">Highest</span>
+          <span className="tj-stat-label">{t("progressStats.highest")}</span>
         </div>
         {streak > 0 && (
           <div className="tj-stat-block">
             <span className="tj-stat-value">{streak}</span>
-            <span className="tj-stat-label">Win streak</span>
+            <span className="tj-stat-label">{t("progressStats.winStreak")}</span>
           </div>
         )}
       </div>
@@ -234,19 +250,18 @@ function ProgressCard({
 
 /** Game-native empty state. */
 function EmptyState() {
+  const t = useTranslations("COACH_COPY");
   return (
     <div className="tj-empty-state">
       <CandyIcon name="coach" className="tj-empty-state-icon" />
-      <h2 className="tj-empty-state-title">No reviews yet</h2>
-      <p className="tj-empty-state-body">
-        Play an Arena match and ask Coach after the game.
-      </p>
+      <h2 className="tj-empty-state-title">{t("emptyState.title")}</h2>
+      <p className="tj-empty-state-body">{t("emptyState.body")}</p>
       <Link
         href="/arena?fresh=1"
         className="tj-empty-state-cta"
-        aria-label="Go to Arena and play a match"
+        aria-label={t("emptyState.ctaAriaLabel")}
       >
-        ARENA
+        {t("emptyState.cta")}
       </Link>
     </div>
   );
@@ -351,7 +366,7 @@ export function CoachHistory({
   // list's count announcement.
   if (loading) {
     return (
-      <section aria-label="Coach review history" className="tj-loading">
+      <section aria-label={tCoach("historyAriaLabel")} className="tj-loading">
         <CandyIcon name="loading" className="h-5 w-5 animate-spin opacity-60" />
         <p className="tj-loading-text">{tCoach("loading")}</p>
       </section>
@@ -360,14 +375,14 @@ export function CoachHistory({
 
   if (mergedSorted.length === 0) {
     return (
-      <section aria-label="Coach review history">
+      <section aria-label={tCoach("historyAriaLabel")}>
         <EmptyState />
       </section>
     );
   }
 
   return (
-    <section aria-label="Coach review history" className="flex flex-col gap-4">
+    <section aria-label={tCoach("historyAriaLabel")} className="flex flex-col gap-4">
       {credits > 0 && (
         <div className="flex justify-end">
           <CandyChip variant="warm" tone="subtle">

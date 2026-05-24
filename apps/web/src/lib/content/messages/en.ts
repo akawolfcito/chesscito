@@ -96,6 +96,12 @@ m.COACH_COPY.tryInstead = "→ Try {move}";
 m.COACH_COPY.creditPackSubtitle = "{count} game analyses";
 m.COACH_COPY.historyFooter.reviewing =
   "{count, plural, =1 {Reviewing # past game} other {Reviewing # past games}}";
+m.COACH_COPY.relativeTime.minutes = "{count}m ago";
+m.COACH_COPY.relativeTime.hours = "{count}h ago";
+m.COACH_COPY.relativeTime.days = "{count}d ago";
+m.COACH_COPY.relativeTime.months = "{count}mo ago";
+m.COACH_COPY.latestReviewCard.ariaLabel =
+  "Open {typeLabel} Coach Review — {result}, {difficulty}, {moves} moves";
 m.COACH_ENTRY_COPY.historyAnalyzeAriaLabel =
   "Analyze match from {timestamp}, {difficulty}, {result}";
 

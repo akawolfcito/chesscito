@@ -45,7 +45,7 @@ function PageHeader({ onBack }: { onBack: () => void }) {
         iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
         title={t("yourSessions")}
         subtitle={t("historyBannerSubtitle")}
-        back={{ onClick: onBack, label: "Back" }}
+        back={{ onClick: onBack, label: t("backLabel") }}
       />
     </header>
   );
@@ -61,9 +61,7 @@ export default function CoachHistoryPage() {
     return (
       <main className="tj-root">
         <PageHeader onBack={() => router.push("/hub")} />
-        <p className="tj-no-wallet-text">
-          Connect your wallet to view your Coach history.
-        </p>
+        <p className="tj-no-wallet-text">{t("connectWalletForHistory")}</p>
       </main>
     );
   }
