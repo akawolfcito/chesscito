@@ -1,4 +1,5 @@
 import type { CoachResponse } from "@/lib/coach/types";
+import type { CoachLocale } from "@/lib/coach/prompt-template";
 
 export type AnalyzeOutcome =
   | {
@@ -25,13 +26,22 @@ export async function requestCoachAnalyze(
   gameId: string,
   walletAddress: string,
   fetchImpl: typeof fetch = fetch,
+  locale?: CoachLocale,
 ): Promise<AnalyzeOutcome> {
+  // H-4: locale is optional + omitted from the body when undefined so
+  // pre-locale callers (legacy MiniPay clients in production) keep their
+  // bit-identical request signature. The server defaults to "en" when
+  // the field is absent.
+  const body =
+    locale !== undefined
+      ? { gameId, walletAddress, locale }
+      : { gameId, walletAddress };
   let res: Response;
   try {
     res = await fetchImpl("/api/coach/analyze", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ gameId, walletAddress }),
+      body: JSON.stringify(body),
     });
   } catch {
     return { kind: "error", reason: "network_error" };

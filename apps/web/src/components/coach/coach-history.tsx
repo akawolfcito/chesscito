@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ARENA_COPY, COACH_COPY, COACH_ENTRY_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
+
+import { ARENA_COPY } from "@/lib/content/editorial";
 import { CandyChip } from "@/components/redesign/candy-chip";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { track } from "@/lib/telemetry";
@@ -66,6 +68,7 @@ function LatestReviewCard({
   entry: AnalyzedEntry;
   onSelect: () => void;
 }) {
+  const t = useTranslations("COACH_COPY");
   const diffLabel =
     ARENA_COPY.difficulty[entry.game.difficulty as keyof typeof ARENA_COPY.difficulty] ??
     entry.game.difficulty;
@@ -73,8 +76,7 @@ function LatestReviewCard({
     entry.response.kind === "full"
       ? entry.response.lessons[0] ?? entry.response.summary
       : entry.response.tips[0] ?? entry.response.summary;
-  const typeLabel =
-    entry.response.kind === "full" ? COACH_COPY.full : COACH_COPY.quick;
+  const typeLabel = entry.response.kind === "full" ? t("full") : t("quick");
 
   return (
     <button
@@ -116,11 +118,11 @@ function OlderReviewRow({
   entry: AnalyzedEntry;
   onSelect: () => void;
 }) {
+  const t = useTranslations("COACH_COPY");
   const diffLabel =
     ARENA_COPY.difficulty[entry.game.difficulty as keyof typeof ARENA_COPY.difficulty] ??
     entry.game.difficulty;
-  const typeLabel =
-    entry.response.kind === "full" ? COACH_COPY.full : COACH_COPY.quick;
+  const typeLabel = entry.response.kind === "full" ? t("full") : t("quick");
 
   return (
     <button
@@ -156,15 +158,16 @@ function UnanalyzedReviewRow({
   entry: UnanalyzedEntry;
   onAnalyze: () => void;
 }) {
+  const tEntry = useTranslations("COACH_ENTRY_COPY");
   const diffLabel =
     ARENA_COPY.difficulty[entry.game.difficulty as keyof typeof ARENA_COPY.difficulty] ??
     entry.game.difficulty;
   const relative = formatRelativeTimestamp(entry.game.timestamp);
-  const ariaLabel = COACH_ENTRY_COPY.historyAnalyzeAriaLabel(
-    relative,
-    diffLabel,
-    resultLabel(entry.game.result),
-  );
+  const ariaLabel = tEntry("historyAnalyzeAriaLabel", {
+    timestamp: relative,
+    difficulty: diffLabel,
+    result: resultLabel(entry.game.result),
+  });
 
   return (
     <button
@@ -177,12 +180,12 @@ function UnanalyzedReviewRow({
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <CandyIcon name="time" className="h-3.5 w-3.5 shrink-0 opacity-75" />
         <span className="tj-older-row-label truncate">
-          {COACH_ENTRY_COPY.historyMatchLabel} · {diffLabel} · {resultLabel(entry.game.result)} · {relative}
+          {tEntry("historyMatchLabel")} · {diffLabel} · {resultLabel(entry.game.result)} · {relative}
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
         <CandyChip variant="success" tone="solid">
-          {COACH_ENTRY_COPY.analyzeChipLabel} ▶
+          {tEntry("analyzeChipLabel")} ▶
         </CandyChip>
       </div>
     </button>
@@ -199,6 +202,7 @@ function ProgressCard({
   highestDiff: string;
   streak: number;
 }) {
+  const t = useTranslations("COACH_COPY");
   const highestDiffLabel =
     ARENA_COPY.difficulty[highestDiff as keyof typeof ARENA_COPY.difficulty] ?? highestDiff;
 
@@ -206,7 +210,7 @@ function ProgressCard({
     <div className="tj-progress-card">
       <div className="tj-progress-card-header">
         <CandyIcon name="star" className="h-3.5 w-3.5" />
-        <span className="tj-progress-card-title">{COACH_COPY.yourProgress}</span>
+        <span className="tj-progress-card-title">{t("yourProgress")}</span>
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
         <div className="tj-stat-block">
@@ -256,6 +260,7 @@ export function CoachHistory({
   onSelectEntry,
   onAnalyzeUnanalyzed,
 }: Props) {
+  const tCoach = useTranslations("COACH_COPY");
   const [analyzed, setAnalyzed] = useState<AnalyzedEntry[]>([]);
   const [unanalyzed, setUnanalyzed] = useState<UnanalyzedEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -348,7 +353,7 @@ export function CoachHistory({
     return (
       <section aria-label="Coach review history" className="tj-loading">
         <CandyIcon name="loading" className="h-5 w-5 animate-spin opacity-60" />
-        <p className="tj-loading-text">{COACH_COPY.loading}</p>
+        <p className="tj-loading-text">{tCoach("loading")}</p>
       </section>
     );
   }

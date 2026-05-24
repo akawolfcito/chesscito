@@ -25,8 +25,10 @@ describe("renderWithIntl", () => {
     ).toBeInTheDocument();
   });
 
-  it("accepts a locale override (ES bundle mirrors EN until Stage 4)", () => {
+  it("accepts a locale override (ES bundle resolves the translated COACH_COPY key)", () => {
+    // COACH_COPY migrated to ES in commit afb12a87+ — ES bundle now
+    // returns the real Spanish copy ("DIARIO") instead of mirroring EN.
     renderWithIntl(<CoachTitleProbe />, { locale: "es" });
-    expect(screen.getByText("JOURNAL")).toBeInTheDocument();
+    expect(screen.getByText("DIARIO")).toBeInTheDocument();
   });
 });

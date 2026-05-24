@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
-import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
+import { ARENA_COPY } from "@/lib/content/editorial";
 import type { CoachResponse } from "@/lib/coach/types";
 import { formatTime } from "@/lib/game/arena-utils";
 
@@ -35,7 +36,7 @@ export function CoachPanel({
   proActive,
   historyMeta,
 }: Props) {
-
+  const t = useTranslations("COACH_COPY");
   const time = formatTime(elapsedMs);
   const diffLabel = ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty;
   const warmText = "rgba(63, 34, 8, 0.95)";
@@ -50,7 +51,7 @@ export function CoachPanel({
           className="text-xs text-center"
           style={{ color: warmSubtle }}
         >
-          {COACH_COPY.historyBannerSubtitle}
+          {t("historyBannerSubtitle")}
         </p>
       )}
 
@@ -77,16 +78,16 @@ export function CoachPanel({
             className="mb-2 text-xs font-semibold uppercase tracking-widest"
             style={{ color: warmMuted }}
           >
-            {COACH_COPY.keyMoments}
+            {t("keyMoments")}
           </h3>
           <div className="flex flex-col gap-3">
             {response.mistakes.map((m) => (
               <div key={m.moveNumber} className="candy-tray">
                 <p className="[overflow-wrap:anywhere] text-xs font-semibold" style={{ color: warmText, textShadow: cream }}>
-                  {COACH_COPY.moveLabel(m.moveNumber, m.played)}
+                  {t("moveLabel", { moveNumber: m.moveNumber, move: m.played })}
                 </p>
                 <p className="[overflow-wrap:anywhere] text-xs font-semibold text-emerald-700">
-                  {COACH_COPY.tryInstead(m.better)}
+                  {t("tryInstead", { move: m.better })}
                 </p>
                 <p className="[overflow-wrap:anywhere] mt-1 text-xs" style={{ color: warmMuted }}>
                   {`"${m.explanation}"`}
@@ -104,7 +105,7 @@ export function CoachPanel({
             className="mb-2 text-xs font-semibold uppercase tracking-widest"
             style={{ color: warmMuted }}
           >
-            {COACH_COPY.takeaways}
+            {t("takeaways")}
           </h3>
           <ul className="flex flex-col gap-1">
             {response.praise.map((p, i) => (
@@ -137,7 +138,7 @@ export function CoachPanel({
               color: warmMuted,
             }}
           >
-            {COACH_COPY.pastSessions}
+            {t("pastSessions")}
           </Button>
         )}
         <button
@@ -157,11 +158,11 @@ export function CoachPanel({
           style={{ color: warmSubtle }}
         >
           {historyMeta.gamesPlayed === 0
-            ? COACH_COPY.historyFooter.building
-            : COACH_COPY.historyFooter.reviewing(historyMeta.gamesPlayed)}
+            ? t("historyFooter.building")
+            : t("historyFooter.reviewing", { count: historyMeta.gamesPlayed })}
           {" · "}
           <Link href="/coach/history" className="underline underline-offset-2">
-            {COACH_COPY.historyFooter.manageLabel}
+            {t("historyFooter.manageLabel")}
           </Link>
         </p>
       )}

@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
+import { useTranslations } from "next-intl";
+
 import { Button } from "@/components/ui/button";
-import { COACH_COPY } from "@/lib/content/editorial";
+import { buildDeleteMessage } from "@/lib/coach/delete-message";
 import { useCoachHistoryCount } from "@/lib/coach/use-coach-history-count";
 import { ConfirmDeleteSheet } from "./confirm-delete-sheet";
 
@@ -24,19 +26,19 @@ function generateNonce(): string {
  *
  * Red-team:
  * - P0-7 — button is disabled when rowCount === 0; success text is
- *   neutral ("All Coach data cleared from our records") so we never
- *   imply a positive action that may not have happened.
+ *   neutral so we never imply a positive action that may not have
+ *   happened.
  * - P0-1 / P0-8 — nonce + signature flow handled server-side; this
  *   component just generates the nonce and forwards the signature.
  *
- * Visual change: the destructive section is collapsed by default so it
- * does not visually compete with the main Training Journal content.
- * The delete behavior itself (nonce, signMessageAsync, DELETE
- * /api/coach/history, refetch) is completely unchanged.
+ * The signed message comes straight from `lib/coach/delete-message.ts`
+ * (locale-agnostic, shared with the server) so a locale switch never
+ * desyncs the client signature from the server verifier.
  *
  * Spec §9.2.
  */
 export function CoachHistoryDeletePanel() {
+  const t = useTranslations("COACH_COPY");
   const { address } = useAccount();
   const { rowCount, isLoading, refetch } = useCoachHistoryCount(address);
   const { signMessageAsync } = useSignMessage();
@@ -47,6 +49,7 @@ export function CoachHistoryDeletePanel() {
   if (!address) return null;
 
   const hasHistory = (rowCount ?? 0) > 0;
+  const manageLabel = manageOpen ? "Close" : "Manage history";
 
   async function signAndDelete() {
     if (!address) return;
@@ -54,7 +57,7 @@ export function CoachHistoryDeletePanel() {
     try {
       const nonce = generateNonce();
       const issuedIso = new Date().toISOString();
-      const message = COACH_COPY.historyDelete.signMessage(nonce, issuedIso);
+      const message = buildDeleteMessage(nonce, issuedIso);
       const signature = await signMessageAsync({ message });
       const res = await fetch("/api/coach/history", {
         method: "DELETE",
@@ -88,7 +91,7 @@ export function CoachHistoryDeletePanel() {
         className="tj-manage-history-toggle"
         aria-expanded={manageOpen}
       >
-        <span>{manageOpen ? "Close" : "Manage history"}</span>
+        <span>{manageLabel}</span>
         <span className="tj-manage-history-toggle-chevron" aria-hidden="true">
           {manageOpen ? "▲" : "▼"}
         </span>
@@ -98,10 +101,10 @@ export function CoachHistoryDeletePanel() {
       {manageOpen && (
         <div className="tj-manage-history-body">
           <h3 className="tj-manage-history-title">
-            {COACH_COPY.historyDelete.title}
+            {t("historyDelete.title")}
           </h3>
           <p className="tj-manage-history-body-text">
-            {COACH_COPY.historyDelete.body}
+            {t("historyDelete.body")}
           </p>
           <Button
             type="button"
@@ -111,14 +114,14 @@ export function CoachHistoryDeletePanel() {
             disabled={isLoading || !hasHistory || status === "working"}
             className="mt-3"
           >
-            {COACH_COPY.historyDelete.cta}
+            {t("historyDelete.cta")}
           </Button>
           {status === "success" && (
             <p
               data-testid="coach-history-delete-status-success"
               className="mt-2 text-xs text-emerald-400"
             >
-              {COACH_COPY.historyDelete.successToast}
+              {t("historyDelete.successToast")}
             </p>
           )}
           {status === "error" && (
@@ -126,7 +129,7 @@ export function CoachHistoryDeletePanel() {
               data-testid="coach-history-delete-status-error"
               className="mt-2 text-xs text-rose-400"
             >
-              {COACH_COPY.historyDelete.errorToast}
+              {t("historyDelete.errorToast")}
             </p>
           )}
         </div>
@@ -138,10 +141,10 @@ export function CoachHistoryDeletePanel() {
           setConfirmOpen(o);
           if (!o && status === "working") setStatus("idle");
         }}
-        title={COACH_COPY.historyDelete.confirmTitle}
-        body={COACH_COPY.historyDelete.confirmBody}
-        confirmLabel={COACH_COPY.historyDelete.confirmAccept}
-        cancelLabel={COACH_COPY.historyDelete.confirmCancel}
+        title={t("historyDelete.confirmTitle")}
+        body={t("historyDelete.confirmBody")}
+        confirmLabel={t("historyDelete.confirmAccept")}
+        cancelLabel={t("historyDelete.confirmCancel")}
         onConfirm={signAndDelete}
         isWorking={status === "working"}
       />

@@ -1,8 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
-import { COACH_COPY } from "@/lib/content/editorial";
 
 type Props = {
   onClick: () => void;
@@ -17,6 +18,7 @@ type Props = {
  * `className` (e.g., flex-1 inline, w-full standalone).
  */
 export function AskCoachButton({ onClick, className = "w-full" }: Props) {
+  const t = useTranslations("COACH_COPY");
   return (
     <Button
       type="button"
@@ -27,7 +29,7 @@ export function AskCoachButton({ onClick, className = "w-full" }: Props) {
     >
       <CandyIcon name="coach" className="inline h-4 w-4" />
       <span className="font-bold tracking-wide drop-shadow-[0_1px_0_rgba(0,0,0,0.35)]">
-        {COACH_COPY.askCoach}
+        {t("askCoach")}
       </span>
     </Button>
   );

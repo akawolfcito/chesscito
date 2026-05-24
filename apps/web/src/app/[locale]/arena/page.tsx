@@ -37,6 +37,8 @@ import { mapArenaResult } from "@/lib/coach/game-result";
 import { generateQuickReview } from "@/lib/coach/fallback-engine";
 import { shouldShowPaywall } from "@/lib/coach/paywall-gate";
 import { requestCoachAnalyze } from "@/lib/coach/request-coach-analyze";
+import type { CoachLocale } from "@/lib/coach/prompt-template";
+import { useLocale } from "next-intl";
 import {
   trackAnalyzeRequest,
   trackAnalyzeIdempotentHit,
@@ -99,6 +101,10 @@ export default function ArenaPage() {
 function ArenaPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // H-4: snapshot the current locale so /api/coach/analyze can prompt the
+  // LLM in the matching language. Re-asks for the same gameId stay in
+  // their original locale per the route handler's idempotency contract.
+  const activeLocale = useLocale() as CoachLocale;
   // Legacy state — kept alive for the sheets (badge/shop/trophies/
   // leaderboard) that still mount as siblings to the dock. SPEC 1 D7
   // removes those entries from the dock itself (no user-facing trigger
@@ -525,7 +531,11 @@ function ArenaPageInner() {
       const analyzeRes = await fetch("/api/coach/analyze", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ gameId: analyzeGameId, walletAddress: address }),
+        body: JSON.stringify({
+          gameId: analyzeGameId,
+          walletAddress: address,
+          locale: activeLocale,
+        }),
         signal,
       });
       const analyzeData = analyzeRes.ok ? await analyzeRes.json() : {};
@@ -590,7 +600,7 @@ function ArenaPageInner() {
       setCoachFallbackResponse(quick);
       setCoachPhase("fallback");
     }
-  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, address, persistedGameId, proActiveCached]);
+  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, address, persistedGameId, proActiveCached, activeLocale]);
 
   const handleAskCoach = useCallback((source: AnalyzeSource = "immediate") => {
     if (game.moveHistory.length === 0) return;
@@ -1221,7 +1231,7 @@ function ArenaPageInner() {
       if (!address) return;
       analyzeSourceRef.current = "history";
       setCoachPhase("loading");
-      const outcome = await requestCoachAnalyze(gameId, address);
+      const outcome = await requestCoachAnalyze(gameId, address, fetch, activeLocale);
 
       // Preserve existing request/idempotent telemetry: any server response counts
       // as an attempt — only the network-error branch (no round-trip) skips it.
@@ -1264,7 +1274,7 @@ function ArenaPageInner() {
       });
       setCoachPhase("history");
     },
-    [address],
+    [address, activeLocale],
   );
 
   // arena_game_end — fires once per transition into a terminal state.

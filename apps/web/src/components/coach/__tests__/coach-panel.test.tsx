@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 import { CoachPanel } from "../coach-panel";
 import { COACH_COPY } from "@/lib/content/editorial";
 import type { CoachResponse } from "@/lib/coach/types";

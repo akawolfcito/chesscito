@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { COACH_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
+
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import type { CoachResponse } from "@/lib/coach/types";
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
+  const t = useTranslations("COACH_COPY");
   const [dots, setDots] = useState(".");
   const onReadyRef = useRef(onReady);
   const onFailedRef = useRef(onFailed);
@@ -32,7 +34,7 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => setMessageTick((t) => t + 1), 1000);
+    const timer = setInterval(() => setMessageTick((tick) => tick + 1), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -77,10 +79,10 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
   }, [jobId, wallet, hasJob]);
 
   const mainMessage = messageTick < 5
-    ? COACH_COPY.coachThinking
+    ? t("coachThinking")
     : messageTick < 12
-      ? COACH_COPY.analyzing
-      : COACH_COPY.slowThinking;
+      ? t("analyzing")
+      : t("slowThinking");
 
   const isSlowState = messageTick >= 12;
 
@@ -101,7 +103,7 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
       </p>
       {!isSlowState && (
         <p className="text-sm" style={{ color: "rgba(110, 65, 15, 0.75)" }}>
-          {COACH_COPY.keepScreenOpen}
+          {t("keepScreenOpen")}
         </p>
       )}
 

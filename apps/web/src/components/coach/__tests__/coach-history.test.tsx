@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { renderWithIntl as render, screen, waitFor } from "@/test-utils/render-with-intl";
 import { CoachHistory } from "../coach-history";
 
 const VALID_WALLET = "0x1234567890abcdef1234567890abcdef12345678";

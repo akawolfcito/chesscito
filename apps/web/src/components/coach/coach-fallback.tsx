@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
-import { ARENA_COPY, COACH_COPY } from "@/lib/content/editorial";
+import { ARENA_COPY } from "@/lib/content/editorial";
 import type { BasicCoachResponse } from "@/lib/coach/types";
 import { formatTime } from "@/lib/game/arena-utils";
 
@@ -35,6 +37,7 @@ export function CoachFallback({
   errorTitle,
   errorBody,
 }: Props) {
+  const t = useTranslations("COACH_COPY");
   const time = formatTime(elapsedMs);
   const diffLabel = ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty;
 
@@ -43,6 +46,8 @@ export function CoachFallback({
   const cream = "0 1px 0 rgba(255, 245, 215, 0.55)";
 
   const showRetry = Boolean(onRetry);
+  const retryReview = t("retryReview");
+  const unlockFullAnalysis = t("unlockFullAnalysis");
 
   return (
     <div className="flex flex-col gap-4">
@@ -71,11 +76,11 @@ export function CoachFallback({
             className="mb-2 text-xs font-semibold uppercase tracking-widest"
             style={{ color: warmMuted }}
           >
-            {COACH_COPY.tips}
+            {t("tips")}
           </h3>
           <ul className="flex flex-col gap-1">
-            {response.tips.map((t, i) => (
-              <li key={i} className="text-sm" style={{ color: warmText, textShadow: cream }}>- {t}</li>
+            {response.tips.map((tip, i) => (
+              <li key={i} className="text-sm" style={{ color: warmText, textShadow: cream }}>- {tip}</li>
             ))}
           </ul>
         </section>
@@ -89,9 +94,9 @@ export function CoachFallback({
             variant="game-primary"
             size="game"
             onClick={onRetry!}
-            aria-label={retryLabel ?? COACH_COPY.retryReview}
+            aria-label={retryLabel ?? retryReview}
           >
-            <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {retryLabel ?? COACH_COPY.retryReview}
+            <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {retryLabel ?? retryReview}
           </Button>
 
           {/* Secondary: Play Again */}
@@ -128,13 +133,13 @@ export function CoachFallback({
             variant="game-ghost"
             size="game-sm"
             onClick={onGetFullAnalysis!}
-            aria-label={COACH_COPY.unlockFullAnalysis}
+            aria-label={unlockFullAnalysis}
             style={{
               borderColor: "rgba(110, 65, 15, 0.25)",
               color: warmMuted,
             }}
           >
-            {COACH_COPY.unlockFullAnalysis}
+            {unlockFullAnalysis}
           </Button>
         </>
       )}

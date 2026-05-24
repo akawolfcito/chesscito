@@ -4,7 +4,7 @@ import OpenAI from "openai";
 import { isAddress } from "viem";
 import { validateGameRecord } from "@/lib/coach/validate-game";
 import { normalizeCoachResponse } from "@/lib/coach/normalize";
-import { buildCoachPrompt } from "@/lib/coach/prompt-template";
+import { buildCoachPrompt, type CoachLocale } from "@/lib/coach/prompt-template";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { isProActive } from "@/lib/pro/is-active";
 import { aggregateHistory } from "@/lib/coach/history-digest";
@@ -34,7 +34,17 @@ export async function POST(req: Request) {
     await enforceRateLimit(ip);
 
     const body = await req.json();
-    const { gameId, walletAddress } = body as { gameId?: string; walletAddress?: string };
+    const { gameId, walletAddress, locale: rawLocale } = body as {
+      gameId?: string;
+      walletAddress?: string;
+      locale?: string;
+    };
+    // H-4: locale param drives the LLM prompt language. Optional + defaults
+    // to "en" so legacy MiniPay clients (deployed before this change) keep
+    // working with bit-identical EN behavior. Whitelist guards against
+    // arbitrary strings being injected into the prompt template.
+    const locale: CoachLocale =
+      rawLocale === "es" ? "es" : "en";
 
     if (!gameId || !walletAddress) {
       return NextResponse.json({ error: "Missing gameId or walletAddress" }, { status: 400 });
@@ -182,6 +192,7 @@ export async function POST(req: Request) {
       gameRecord.difficulty,
       playerSummary,
       history,
+      locale,
     );
 
     // --- Call LLM ---
@@ -221,6 +232,12 @@ export async function POST(req: Request) {
         analysisVersion: ANALYSIS_VERSION,
         createdAt: Date.now(),
         response: normalized.data,
+        // H-4: stored for telemetry / debugging only. Cache key stays
+        // (wallet, gameId) so a re-ask in a different locale returns
+        // the originally-generated analysis (idempotency, no double
+        // credit charge). Historical messages keep their generation
+        // language by design.
+        locale,
       };
 
       await Promise.all([

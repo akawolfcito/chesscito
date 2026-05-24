@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+
 import {
   Sheet,
   SheetContent,
@@ -8,7 +10,6 @@ import {
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { TreasureTile } from "@/components/scene-rooted/treasure-tile";
-import { COACH_COPY } from "@/lib/content/editorial";
 
 type Props = {
   open: boolean;
@@ -42,12 +43,18 @@ export function CoachPaywall({
   onBuy,
   onQuickReview,
 }: Props) {
+  const t = useTranslations("COACH_COPY");
   const [buying, setBuying] = useState<5 | 20 | null>(null);
 
   function handleBuy(pack: 5 | 20) {
     setBuying(pack);
     onBuy(pack);
   }
+
+  const creditTitle = t("creditTitle");
+  const creditExplain = t("creditExplain");
+  const creditPack5 = t("creditPack5");
+  const creditPack20 = t("creditPack20");
 
   return (
     <Sheet
@@ -59,16 +66,16 @@ export function CoachPaywall({
       <SheetContent
         side="bottom"
         hideClose
-        title={COACH_COPY.creditTitle}
-        description={COACH_COPY.creditExplain}
+        title={creditTitle}
+        description={creditExplain}
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         <div className="-mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/new-icons-chesscito/learning" />}
-            title={COACH_COPY.creditTitle}
-            subtitle={COACH_COPY.creditExplain}
+            title={creditTitle}
+            subtitle={creditExplain}
             close={{
               onClick: () => !buying && onOpenChange(false),
               label: "Close paywall",
@@ -85,13 +92,13 @@ export function CoachPaywall({
               onClick={() => handleBuy(5)}
               loading={buying === 5}
               disabled={buying !== null && buying !== 5}
-              aria-label={`Buy ${COACH_COPY.creditPack5} for ${PACK_PRICE[5]}`}
+              aria-label={`${creditPack5} · ${PACK_PRICE[5]}`}
             />
             <p
               className="text-xs font-semibold opacity-75"
               style={{ color: "rgba(110, 65, 15, 0.85)" }}
             >
-              {COACH_COPY.creditPackSubtitle(5)}
+              {t("creditPackSubtitle", { count: 5 })}
             </p>
           </div>
           <div className="flex flex-col items-center gap-2">
@@ -103,13 +110,13 @@ export function CoachPaywall({
               onClick={() => handleBuy(20)}
               loading={buying === 20}
               disabled={buying !== null && buying !== 20}
-              aria-label={`Buy ${COACH_COPY.creditPack20} for ${PACK_PRICE[20]}`}
+              aria-label={`${creditPack20} · ${PACK_PRICE[20]}`}
             />
             <p
               className="text-xs font-semibold opacity-80"
               style={{ color: "rgba(110, 65, 15, 0.85)" }}
             >
-              {COACH_COPY.creditPackSubtitle(20)}
+              {t("creditPackSubtitle", { count: 20 })}
             </p>
           </div>
         </div>
@@ -119,7 +126,7 @@ export function CoachPaywall({
             className="mt-3 text-center text-sm font-semibold animate-in fade-in duration-200"
             style={{ color: "rgba(110, 65, 15, 0.75)" }}
           >
-            {COACH_COPY.buyWithUsdc}
+            {t("buyWithUsdc")}
           </p>
         )}
 
@@ -133,7 +140,7 @@ export function CoachPaywall({
             disabled={buying !== null}
             className="underline hover:opacity-80 disabled:opacity-50"
           >
-            {COACH_COPY.orQuickReview}
+            {t("orQuickReview")}
           </button>
         </p>
       </SheetContent>

@@ -87,5 +87,16 @@ m.REWARD_COPY.victory.ariaLabel =
 m.PRO_COPY.statusActiveSuffix =
   "{daysLeft, plural, =1 {Expires tomorrow} other {# days left}}";
 m.PRO_COPY.hubCoachCard.active.title = "PRO Active · {remainingDays}d";
+m.COACH_COPY.gamesAnalyzed = "Games analyzed: {count}";
+m.COACH_COPY.highestDifficulty = "Highest difficulty: {difficulty}";
+m.COACH_COPY.currentStreak = "Current streak: {wins} wins";
+m.COACH_COPY.keyMomentsCount = "{count} key moments";
+m.COACH_COPY.moveLabel = "Move {moveNumber} · You played {move}";
+m.COACH_COPY.tryInstead = "→ Try {move}";
+m.COACH_COPY.creditPackSubtitle = "{count} game analyses";
+m.COACH_COPY.historyFooter.reviewing =
+  "{count, plural, =1 {Reviewing # past game} other {Reviewing # past games}}";
+m.COACH_ENTRY_COPY.historyAnalyzeAriaLabel =
+  "Analyze match from {timestamp}, {difficulty}, {result}";
 
 export default messages;

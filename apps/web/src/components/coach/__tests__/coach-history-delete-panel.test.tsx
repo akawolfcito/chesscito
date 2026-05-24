@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { renderWithIntl as render, screen, fireEvent, waitFor } from "@/test-utils/render-with-intl";
 import { CoachHistoryDeletePanel } from "../coach-history-delete-panel";
 
 const useAccountMock = vi.hoisted(() => vi.fn());

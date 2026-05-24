@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
+import { useTranslations } from "next-intl";
+
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CoachHistoryDeletePanel } from "@/components/coach/coach-history-delete-panel";
 import { CoachPanel } from "@/components/coach/coach-panel";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
-import { COACH_COPY } from "@/lib/content/editorial";
 import type { CoachAnalysisRecord, CoachResponse, GameRecord } from "@/lib/coach/types";
 
 type HistoryEntry = CoachAnalysisRecord & { game: GameRecord };
@@ -36,13 +37,14 @@ function PageHeader({ onBack }: { onBack: () => void }) {
   // ContextualHeader envelope renders on the page's natural background;
   // the `border-b` here is the canonical 0.30 divider matching every
   // other meta page (legal, /trophies, etc.).
+  const t = useTranslations("COACH_COPY");
   return (
     <header className="border-b border-[rgba(110,65,15,0.30)]">
       <ContextualHeader
         variant="back-control"
         iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
-        title={COACH_COPY.yourSessions}
-        subtitle="Your training progress"
+        title={t("yourSessions")}
+        subtitle={t("historyBannerSubtitle")}
         back={{ onClick: onBack, label: "Back" }}
       />
     </header>
@@ -50,6 +52,7 @@ function PageHeader({ onBack }: { onBack: () => void }) {
 }
 
 export default function CoachHistoryPage() {
+  const t = useTranslations("COACH_COPY");
   const { address } = useAccount();
   const router = useRouter();
   const [selected, setSelected] = useState<SelectedFullEntry | null>(null);
@@ -75,9 +78,9 @@ export default function CoachHistoryPage() {
       <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
-            title={COACH_COPY.coachAnalysisTitle}
+            title={t("coachAnalysisTitle")}
             onClose={() => setSelected(null)}
-            closeLabel={COACH_COPY.yourSessions}
+            closeLabel={t("yourSessions")}
             presentation="screen"
             className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
