@@ -1,3 +1,23 @@
+/**
+ * Chesscito Editorial Source — canonical EN copy.
+ *
+ * This file is the SINGLE SOURCE OF TRUTH for English copy. Contains
+ * literal strings, ICU placeholder templates ("Hello {name}"), and
+ * legacy function helpers (the bundler in messages/en.ts strips
+ * functions; pair each consumed-via-useTranslations helper with an
+ * ICU mirror in en.ts).
+ *
+ * Do NOT add Spanish copy here — ES overrides live in messages/es.ts.
+ *
+ * Editorial rules (voice, length, Web3-light, no medical claims):
+ *   docs/content/chesscito-language-brief.md
+ *
+ * Architecture (editorial.ts ↔ messages/en.ts ↔ messages/es.ts):
+ *   apps/web/src/lib/content/README.md
+ *
+ * Audit (orphans, missing translations, jargon, claims, mirrors):
+ *   pnpm content:audit
+ */
 import { THEME_CONFIG } from "@/lib/theme";
 import { buildDeleteMessage } from "@/lib/coach/delete-message";
 

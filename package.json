@@ -10,6 +10,7 @@
     "lint": "turbo lint",
     "clean": "turbo clean",
     "type-check": "turbo type-check",
+    "content:audit": "pnpm --filter web exec tsx ../../scripts/audit-content-messages.ts",
     "contracts:compile": "turbo run compile --filter=hardhat",
     "contracts:test": "turbo run test --filter=hardhat",
     "contracts:deploy": "turbo run deploy --filter=hardhat",

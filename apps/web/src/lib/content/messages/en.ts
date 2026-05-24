@@ -1,4 +1,24 @@
 /**
+ * ╔═══════════════════════════════════════════════════════════════════╗
+ * ║  messages/en.ts — runtime EN bundle for next-intl                 ║
+ * ╠═══════════════════════════════════════════════════════════════════╣
+ * ║  • DERIVED from editorial.ts via `import * as editorial`.         ║
+ * ║    Edit copy in editorial.ts, not here.                           ║
+ * ║  • The ONLY things you write directly in this file are ICU       ║
+ * ║    mirrors for function helpers that stripFunctions removed:      ║
+ * ║      // editorial.ts:  greet: (n: string) => `Hi, ${n}!`          ║
+ * ║      // en.ts mirror:  m.FOO.greet = "Hi, {name}!"                ║
+ * ║    Only add a mirror when a useTranslations caller needs it.      ║
+ * ║  • Do NOT add manual EN copy here — it would diverge silently     ║
+ * ║    from the authoring source.                                     ║
+ * ║                                                                   ║
+ * ║  See:                                                             ║
+ * ║    apps/web/src/lib/content/README.md                             ║
+ * ║    docs/content/chesscito-language-brief.md                       ║
+ * ║                                                                   ║
+ * ║  Original spec: docs/superpowers/specs/2026-05-23-i18n-es-en-design.md
+ * ╚═══════════════════════════════════════════════════════════════════╝
+ *
  * EN message bundle for next-intl.
  *
  * Stage 2 of the i18n migration: bundles the existing editorial.ts
@@ -18,8 +38,6 @@
  * citizens. Stage 3 / Stage 4 will convert them to ICU
  * MessageFormat (`{count, plural, …}`) where they need to live
  * in the bundle.
- *
- * See: docs/superpowers/specs/2026-05-23-i18n-es-en-design.md §4.2
  */
 import * as editorial from "../editorial";
 

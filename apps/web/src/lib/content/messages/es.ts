@@ -1,4 +1,22 @@
 /**
+ * ╔═══════════════════════════════════════════════════════════════════╗
+ * ║  messages/es.ts — Spanish overrides for next-intl                 ║
+ * ╠═══════════════════════════════════════════════════════════════════╣
+ * ║  • Spread `...en` at the top is the EN fallback. NEVER remove it. ║
+ * ║    Without it, missing ES keys return raw fallback paths instead  ║
+ * ║    of degrading gracefully to English.                            ║
+ * ║  • Override by full namespace, not single keys, to keep each      ║
+ * ║    namespace coherent for the reviewer.                           ║
+ * ║  • Translate by INTENT, not literally — preserve visual length    ║
+ * ║    where it matters (buttons, chips). See brief §4.               ║
+ * ║  • There is NO automatic sync from editorial.ts. When the EN      ║
+ * ║    source changes, manually update the matching override here.    ║
+ * ║                                                                   ║
+ * ║  Brief:        docs/content/chesscito-language-brief.md           ║
+ * ║  Architecture: apps/web/src/lib/content/README.md                 ║
+ * ║  Audit:        pnpm content:audit                                 ║
+ * ╚═══════════════════════════════════════════════════════════════════╝
+ *
  * ES message bundle for next-intl.
  *
  * Stage 4 (in flight): namespaces below are translated into Spanish.
@@ -9,8 +27,6 @@
  *
  * `/es/*` is gated behind NEXT_PUBLIC_I18N_ES_READY=1 (middleware)
  * so visitors do not see Spanglish during the migration.
- *
- * See: docs/superpowers/specs/2026-05-23-i18n-es-en-design.md
  */
 import enBundle from "./en";
 
