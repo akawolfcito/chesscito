@@ -35,7 +35,8 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { writeContractAsync } = useWriteContract();
-  const { name, setName } = useDisplayName(address);
+  const { name, setName, isVisitor } = useDisplayName(address);
+  const tTier = useTranslations("TIER_LABELS");
   const { stats, refetch } = useProfileStats(address);
 
   const performClaim = useCallback<PerformClaimFn>(
@@ -227,7 +228,7 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
 
         <ProfileBanner
           displayName={name}
-          tierTitle={tier.title}
+          tierTitle={tTier(tier.tier)}
           tierKey={tier.tier}
           xp={tier.xp}
           truncatedWallet={truncateWallet(address)}
@@ -236,7 +237,7 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
 
         <DisplayNameDialog
           open={editing}
-          initialValue={name === "Visitor" ? "" : name}
+          initialValue={isVisitor ? "" : name}
           onSave={(v) => {
             setName(v);
             setEditing(false);

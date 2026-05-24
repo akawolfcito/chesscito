@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { resolveDisplayName, truncateWallet } from "@/lib/profile/display-name";
+import {
+  isVisitor,
+  resolveDisplayName,
+  truncateWallet,
+} from "@/lib/profile/display-name";
 
 describe("truncateWallet", () => {
   it("returns short form with ellipsis", () => {
@@ -37,11 +41,30 @@ describe("resolveDisplayName", () => {
     expect(resolveDisplayName({ address: wallet })).toBe("0x0924…eba4");
   });
 
-  it("returns Visitor when address is undefined", () => {
+  it("returns default Visitor label when address is undefined", () => {
     expect(resolveDisplayName({ address: undefined })).toBe("Visitor");
+  });
+
+  it("respects an injected visitorLabel (locale-aware override)", () => {
+    expect(resolveDisplayName({ address: undefined }, "Visitante")).toBe(
+      "Visitante",
+    );
   });
 
   it("trims custom name and rejects empty string", () => {
     expect(resolveDisplayName({ address: wallet, customName: "  " })).toBe("0x0924…eba4");
+  });
+});
+
+describe("isVisitor", () => {
+  const wallet = "0x0924abcdef1234567890abcdef1234567890eba4" as const;
+
+  it("returns true when address is undefined", () => {
+    expect(isVisitor({ address: undefined })).toBe(true);
+  });
+
+  it("returns false when address is present, regardless of custom name", () => {
+    expect(isVisitor({ address: wallet })).toBe(false);
+    expect(isVisitor({ address: wallet, customName: "Akawolf" })).toBe(false);
   });
 });

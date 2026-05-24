@@ -1,5 +1,4 @@
 // apps/web/src/lib/hub/hero-cta.ts
-import { HERO_CTA_COPY } from "@/lib/content/editorial";
 
 export type HeroVariant = "new-player" | "daily-pending" | "default";
 
@@ -10,18 +9,20 @@ export type HeroContextState = {
   isDailyCompletedToday: boolean;
 };
 
+/**
+ * Pure routing decision: returns the variant + destination + color
+ * for the hub hero CTA. Labels are NOT baked in — callers resolve
+ * `t(\`heroCta.${variant}.label\`)` and
+ * `t(\`heroCta.${variant}.sub\`)` so the chip localizes per request.
+ */
 export type HeroCTA = {
   variant: HeroVariant;
-  label: string;
-  sub: string;
   destination: string | null; // null = no nav (default state highlights LEARN rail)
   color: "amber" | "blue";
 };
 
 const FALLBACK_DEFAULT: HeroCTA = {
   variant: "default",
-  label: HERO_CTA_COPY.defaultCaughtUp.label,
-  sub: HERO_CTA_COPY.defaultCaughtUp.sub,
   destination: null,
   color: "amber",
 };
@@ -34,8 +35,6 @@ export function getHeroContextAction(state: HeroContextState): HeroCTA {
   if (state.exercisesCompletedCount === 0 && state.dailyHistoryCount === 0) {
     return {
       variant: "new-player",
-      label: HERO_CTA_COPY.newPlayer.label,
-      sub: HERO_CTA_COPY.newPlayer.sub,
       destination: "/exercises?piece=rook",
       color: "amber",
     };
@@ -45,8 +44,6 @@ export function getHeroContextAction(state: HeroContextState): HeroCTA {
   if (!state.isDailyCompletedToday) {
     return {
       variant: "daily-pending",
-      label: HERO_CTA_COPY.dailyPending.label,
-      sub: HERO_CTA_COPY.dailyPending.sub,
       destination: "/exercises?slot=daily",
       color: "blue",
     };

@@ -10,9 +10,14 @@ export type TierStats = {
   daysStreak: number;
 };
 
+/**
+ * Returns the tier key + computed XP. The tier *title* is no longer
+ * baked in — callers resolve it themselves via
+ * `t(\`tierLabels.${result.tier}\`)` so the label localizes per
+ * request without forking this helper.
+ */
 export type TierResult = {
   tier: TierKey;
-  title: string;
   xp: number;
 };
 
@@ -20,7 +25,7 @@ const safe = (n: number): number => (Number.isFinite(n) && n > 0 ? n : 0);
 
 export function computeTier(stats: TierStats): TierResult {
   if (!stats.address) {
-    return { tier: "visitor", title: TIER_LABELS.visitor, xp: 0 };
+    return { tier: "visitor", xp: 0 };
   }
 
   const xp =
@@ -37,5 +42,5 @@ export function computeTier(stats: TierStats): TierResult {
   else if (puzzles >= TIER_THRESHOLDS.knight) tier = "knight";
   else if (puzzles >= TIER_THRESHOLDS.trainee) tier = "trainee";
 
-  return { tier, title: TIER_LABELS[tier], xp };
+  return { tier, xp };
 }

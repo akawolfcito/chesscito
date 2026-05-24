@@ -656,6 +656,31 @@ const messages = {
     cancel: "Cancelar",
     visitor: "Visitante",
   },
+  TIER_LABELS: {
+    visitor: "Visitante",
+    apprentice: "Aprendiz",
+    trainee: "En entrenamiento",
+    knight: "Caballero",
+    wizard: "Mago",
+    grandmaster: "Gran maestro",
+  },
+  HERO_CTA_COPY: {
+    newPlayer: {
+      label: "ENTRENA TORRE",
+      sub: "aprende primero la torre",
+      variant: "amber",
+    },
+    dailyPending: {
+      label: "TÁCTICA DEL DÍA",
+      sub: "la táctica del día te espera",
+      variant: "blue",
+    },
+    defaultCaughtUp: {
+      label: "ENTRENA PIEZAS",
+      sub: "toca una pieza para empezar",
+      variant: "amber",
+    },
+  },
   CLAIM_COPY: {
     kinds: {
       badge: "Insignia {name}",

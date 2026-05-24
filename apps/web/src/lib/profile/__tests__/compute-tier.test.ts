@@ -10,17 +10,19 @@ describe("computeTier", () => {
     address: "0x1234" as `0x${string}`,
   };
 
-  it("returns Visitor when address is undefined", () => {
+  it("returns visitor key when address is undefined", () => {
     const result = computeTier({ ...baseStats, address: undefined });
     expect(result.tier).toBe("visitor");
-    expect(result.title).toBe("Visitor");
     expect(result.xp).toBe(0);
+    // `title` was dropped from the return shape — callers now resolve
+    // `t(\`tierLabels.${tier}\`)` themselves so the helper stays
+    // locale-agnostic.
+    expect((result as { title?: string }).title).toBeUndefined();
   });
 
-  it("returns Apprentice at 0 puzzles solved with address present", () => {
+  it("returns apprentice at 0 puzzles solved with address present", () => {
     const result = computeTier(baseStats);
     expect(result.tier).toBe("apprentice");
-    expect(result.title).toBe("Apprentice");
   });
 
   it("returns Trainee at 25 puzzles solved", () => {

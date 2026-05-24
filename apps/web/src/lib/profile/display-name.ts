@@ -12,11 +12,33 @@ export type ResolveDisplayNameArgs = {
   talentProtocolName?: string;
 };
 
-export function resolveDisplayName(args: ResolveDisplayNameArgs): string {
-  if (!args.address) return DISPLAY_NAME_COPY.visitor;
+/**
+ * Resolves a display name from (in order of precedence): custom name >
+ * Talent Protocol name > truncated wallet > localized visitor fallback.
+ *
+ * `visitorLabel` is parameterized so callers can pass the locale-aware
+ * value from the i18n bundle (next-intl `t("visitor")`). Default keeps
+ * the EN literal "Visitor" so legacy callers + unit tests stay green
+ * without changes.
+ */
+export function resolveDisplayName(
+  args: ResolveDisplayNameArgs,
+  visitorLabel: string = DISPLAY_NAME_COPY.visitor,
+): string {
+  if (!args.address) return visitorLabel;
   const trimmedCustom = args.customName?.trim();
   if (trimmedCustom) return trimmedCustom;
   const trimmedTalent = args.talentProtocolName?.trim();
   if (trimmedTalent) return trimmedTalent;
   return truncateWallet(args.address);
+}
+
+/**
+ * Locale-agnostic boolean for "is this user effectively anonymous?".
+ * Use this instead of comparing the resolved display name to the
+ * literal "Visitor" — the latter breaks the moment ES (or any other
+ * locale) returns a translated visitor label.
+ */
+export function isVisitor(args: ResolveDisplayNameArgs): boolean {
+  return !args.address;
 }
