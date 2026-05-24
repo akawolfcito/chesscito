@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { DISPLAY_NAME_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 
 type Props = {
   open: boolean;
@@ -10,6 +10,7 @@ type Props = {
 };
 
 export function DisplayNameDialog({ open, initialValue, onSave, onCancel }: Props) {
+  const t = useTranslations("DISPLAY_NAME_COPY");
   const [value, setValue] = useState(initialValue);
 
   useEffect(() => {
@@ -19,28 +20,28 @@ export function DisplayNameDialog({ open, initialValue, onSave, onCancel }: Prop
   if (!open) return null;
 
   return (
-    <div role="dialog" aria-label={DISPLAY_NAME_COPY.dialogTitle} className="profile-name-dialog">
+    <div role="dialog" aria-label={t("dialogTitle")} className="profile-name-dialog">
       <div className="profile-name-dialog-card">
-        <h3 className="profile-name-dialog-title">{DISPLAY_NAME_COPY.dialogTitle}</h3>
+        <h3 className="profile-name-dialog-title">{t("dialogTitle")}</h3>
         <input
           type="text"
           value={value}
           maxLength={20}
-          placeholder={DISPLAY_NAME_COPY.placeholder}
+          placeholder={t("placeholder")}
           onChange={(e) => setValue(e.target.value)}
           autoFocus
           className="profile-name-dialog-input"
         />
         <div className="profile-name-dialog-actions">
           <button type="button" onClick={onCancel} className="profile-name-dialog-cancel">
-            {DISPLAY_NAME_COPY.cancel}
+            {t("cancel")}
           </button>
           <button
             type="button"
             onClick={() => onSave(value.trim())}
             className="profile-name-dialog-save"
           >
-            {DISPLAY_NAME_COPY.save}
+            {t("save")}
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
 import type { Claim } from "@/lib/claims/queue";
-import { CLAIM_COPY, PROFILE_COPY } from "@/lib/content/editorial";
 
 type Props = {
   claims: Claim[];
@@ -9,33 +9,37 @@ type Props = {
   onRefresh: () => void;
 };
 
-function labelFor(claim: Claim): string {
-  switch (claim.kind) {
-    case "badge":
-      return CLAIM_COPY.kinds.badge.replace("{name}", `#${claim.badgeId.toString()}`);
-    case "score":
-      return CLAIM_COPY.kinds.score
-        .replace("{points}", String(claim.points));
-    case "victory-nft":
-      return CLAIM_COPY.kinds.victoryNft.replace("{difficulty}", String(claim.difficulty));
-  }
-}
-
-function costFor(claim: Claim): string {
-  return claim.costGasOnly ? CLAIM_COPY.costGasOnly : CLAIM_COPY.costEstimateUsd.replace("{amount}", "0.02");
-}
-
 export function PendingClaims({ claims, inFlight, onClaim, onRefresh }: Props) {
+  const t = useTranslations("PROFILE_COPY");
+  const tClaim = useTranslations("CLAIM_COPY");
+
+  function labelFor(claim: Claim): string {
+    switch (claim.kind) {
+      case "badge":
+        return tClaim("kinds.badge", { name: `#${claim.badgeId.toString()}` });
+      case "score":
+        return tClaim("kinds.score", { points: claim.points });
+      case "victory-nft":
+        return tClaim("kinds.victoryNft", { difficulty: String(claim.difficulty) });
+    }
+  }
+
+  function costFor(claim: Claim): string {
+    return claim.costGasOnly
+      ? tClaim("costGasOnly")
+      : tClaim("costEstimateUsd", { amount: "0.02" });
+  }
+
   if (claims.length === 0) return null;
 
   return (
-    <section className="profile-pending-claims" aria-label={PROFILE_COPY.pendingClaimsHeader}>
+    <section className="profile-pending-claims" aria-label={t("pendingClaimsHeader")}>
       <div className="profile-pending-claims-header">
-        <h3>{PROFILE_COPY.pendingClaimsHeader} ({claims.length})</h3>
+        <h3>{t("pendingClaimsHeader")} ({claims.length})</h3>
         <button
           type="button"
           onClick={onRefresh}
-          aria-label={PROFILE_COPY.refreshAria}
+          aria-label={t("refreshAria")}
           className="profile-pending-claims-refresh"
         >
           ↻
@@ -49,14 +53,14 @@ export function PendingClaims({ claims, inFlight, onClaim, onRefresh }: Props) {
               <span className="profile-claim-label">{labelFor(claim)}</span>
               <span className="profile-claim-cost">{costFor(claim)}</span>
               {isInFlight ? (
-                <span className="profile-claim-inflight">{CLAIM_COPY.inFlightLabel}</span>
+                <span className="profile-claim-inflight">{tClaim("inFlightLabel")}</span>
               ) : (
                 <button
                   type="button"
                   onClick={() => onClaim(claim)}
                   className="profile-claim-cta"
                 >
-                  {CLAIM_COPY.claimVerb}
+                  {tClaim("claimVerb")}
                 </button>
               )}
             </li>

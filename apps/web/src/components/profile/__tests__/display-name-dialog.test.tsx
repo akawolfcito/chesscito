@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { renderWithIntl as render } from "@/test-utils/render-with-intl";
+import { screen, fireEvent } from "@testing-library/react";
 import { DisplayNameDialog } from "@/components/profile/display-name-dialog";
 
 describe("<DisplayNameDialog>", () => {

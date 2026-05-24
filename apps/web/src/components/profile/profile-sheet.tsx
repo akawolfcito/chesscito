@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useAccount, useChainId, useDisconnect, useWriteContract } from "wagmi";
 import {
   Sheet,
@@ -16,7 +17,6 @@ import { useClaimQueue, type PerformClaimFn } from "@/hooks/use-claim-queue";
 import { useDisplayName } from "@/hooks/use-display-name";
 import { computeTier } from "@/lib/profile/compute-tier";
 import { truncateWallet } from "@/lib/profile/display-name";
-import { PROFILE_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
 import { badgesAbi } from "@/lib/contracts/badges";
 import { scoreboardAbi } from "@/lib/contracts/scoreboard";
@@ -30,6 +30,7 @@ import type { Claim } from "@/lib/claims/queue";
 type Props = { open: boolean; onOpenChange: (open: boolean) => void };
 
 export function ProfileSheet({ open, onOpenChange }: Props) {
+  const t = useTranslations("PROFILE_COPY");
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
@@ -207,8 +208,8 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
       <SheetContent
         side="bottom"
         hideClose
-        title={PROFILE_COPY.pageTitle}
-        description="Profile, claims, stats and wallet"
+        title={t("pageTitle")}
+        description={t("sheetDescription")}
         className="profile-sheet mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         {/* Canonical header strip. Was Pattern C (sr-only header, banner
@@ -219,8 +220,8 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/new-icons-chesscito/avatar-blue" />}
-            title={PROFILE_COPY.pageTitle}
-            close={{ onClick: () => onOpenChange(false), label: "Close profile" }}
+            title={t("pageTitle")}
+            close={{ onClick: () => onOpenChange(false), label: t("closeLabel") }}
           />
         </div>
 
@@ -269,11 +270,11 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
 
         <div className="profile-utility-row">
           <div className="profile-utility-card">
-            <span>{PROFILE_COPY.walletLabel}</span>
+            <span>{t("walletLabel")}</span>
             <span>{truncateWallet(address)}</span>
           </div>
           <div className="profile-utility-card">
-            <span>{PROFILE_COPY.networkLabel}</span>
+            <span>{t("networkLabel")}</span>
             <span>Celo</span>
           </div>
         </div>
@@ -284,7 +285,7 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
             onClick={() => disconnect()}
             className="profile-disconnect-link"
           >
-            {PROFILE_COPY.disconnect}
+            {t("disconnect")}
           </button>
         ) : null}
       </SheetContent>

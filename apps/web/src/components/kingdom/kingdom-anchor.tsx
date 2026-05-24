@@ -1,6 +1,7 @@
-import type { CSSProperties } from "react";
+"use client";
 
-import { HOME_ANCHOR_COPY } from "@/lib/content/editorial";
+import type { CSSProperties } from "react";
+import { useTranslations } from "next-intl";
 
 export type KingdomAnchorVariant =
   | "playhub"
@@ -61,6 +62,7 @@ export function KingdomAnchor({
   className = "",
   style,
 }: Props) {
+  const t = useTranslations("HOME_ANCHOR_COPY");
   const classes = [
     "kingdom-anchor",
     `kingdom-anchor--${variant}`,
@@ -72,7 +74,7 @@ export function KingdomAnchor({
   return (
     <div
       role="img"
-      aria-label={HOME_ANCHOR_COPY.alt}
+      aria-label={t("alt")}
       className={classes}
       style={{ aspectRatio: ASPECT_RATIO[variant], ...style }}
     >

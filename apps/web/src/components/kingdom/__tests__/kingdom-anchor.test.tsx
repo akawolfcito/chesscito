@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { renderWithIntl as render } from "@/test-utils/render-with-intl";
+import { screen } from "@testing-library/react";
 
 import { KingdomAnchor } from "../kingdom-anchor";
 import { HOME_ANCHOR_COPY } from "@/lib/content/editorial";

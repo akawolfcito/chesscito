@@ -409,6 +409,110 @@ const messages = {
       },
     },
   },
+  PROFILE_COPY: {
+    pageTitle: "Perfil",
+    sheetDescription: "Perfil, reclamos, estadísticas y billetera",
+    closeLabel: "Cerrar perfil",
+    editNameAria: "Editar nombre",
+    tierAriaFormat: "Rango {title}, {xp} XP",
+    pendingClaimsHeader: "Reclamos pendientes",
+    generalStatsHeader: "Estadísticas generales",
+    walletLabel: "Billetera",
+    networkLabel: "Red",
+    disconnect: "Desconectar billetera",
+    manage: "Administrar",
+    refreshAria: "Actualizar reclamos pendientes",
+    statLabels: {
+      piecesMastered: "Piezas dominadas",
+      dailyStreak: "Racha diaria",
+      puzzlesSolved: "Puzzles resueltos",
+      arenaWins: "Victorias en Arena",
+      trophies: "Trofeos",
+      nftsMinted: "NFTs minteados",
+    },
+  },
+  DISPLAY_NAME_COPY: {
+    dialogTitle: "Elige tu nombre",
+    placeholder: "Hasta 20 caracteres",
+    save: "Guardar",
+    cancel: "Cancelar",
+    visitor: "Visitante",
+  },
+  CLAIM_COPY: {
+    kinds: {
+      badge: "Insignia {name}",
+      score: "Guardar puntaje · {points} pts",
+      victoryNft: "Mintea tu victoria · {difficulty}",
+    },
+    claimVerb: "Reclamar",
+    costGasOnly: "Solo tarifa de red",
+    costEstimateUsd: "~${amount}",
+    inFlightLabel: "En curso — reconecta para verificar",
+    refreshAria: "Actualizar",
+    emptyAria: "Sin reclamos pendientes",
+  },
+  HOME_ANCHOR_COPY: {
+    alt: "Reino de Chesscito — Wolfcito el mago con estatuas de piezas de ajedrez",
+    attractHint: "Tu entrenamiento te espera en el reino",
+  },
+  REWARD_COPY: {
+    rook: {
+      label: "Maestría de Torre",
+      claimableHint: "Toca para reclamar tu insignia de Torre",
+      lockedHint: "Completa los 3 niveles de Torre para desbloquear",
+      unlockRequirement: "Completa Torre L1 + L2 + L3",
+      ariaLabel:
+        "{state, select, claimable {Reclama la insignia de maestría de Torre — lista} progress {Maestría de Torre — en progreso} other {Maestría de Torre — bloqueada}}",
+    },
+    bishop: {
+      label: "Maestría de Alfil",
+      claimableHint: "Toca para reclamar tu insignia de Alfil",
+      lockedHint: "Domina la Torre primero, luego completa los 3 niveles de Alfil",
+      unlockRequirement: "Completa Alfil L1 + L2 + L3",
+      ariaLabel:
+        "{state, select, claimable {Reclama la insignia de maestría de Alfil — lista} progress {Maestría de Alfil — en progreso} other {Maestría de Alfil — bloqueada}}",
+    },
+    queen: {
+      label: "Maestría de Reina",
+      claimableHint: "Toca para reclamar tu insignia de Reina",
+      lockedHint: "Domina Torre + Alfil para desbloquear",
+      unlockRequirement: "Domina Torre + Alfil",
+      ariaLabel:
+        "{state, select, claimable {Reclama la insignia de maestría de Reina — lista} progress {Maestría de Reina — en progreso} other {Maestría de Reina — bloqueada}}",
+    },
+    knight: {
+      label: "Maestría de Caballo",
+      claimableHint: "Toca para reclamar tu insignia de Caballo",
+      lockedHint: "Domina la Reina primero, luego completa los 3 niveles de Caballo",
+      unlockRequirement: "Domina la Reina, luego completa Caballo L1 + L2 + L3",
+      ariaLabel:
+        "{state, select, claimable {Reclama la insignia de maestría de Caballo — lista} progress {Maestría de Caballo — en progreso} other {Maestría de Caballo — bloqueada}}",
+    },
+    king: {
+      label: "Maestría de Rey",
+      claimableHint: "Toca para reclamar tu insignia de Rey",
+      lockedHint: "Domina el Caballo primero",
+      unlockRequirement: "Domina el Caballo, luego completa Rey L1 + L2 + L3",
+      ariaLabel:
+        "{state, select, claimable {Reclama la insignia de maestría de Rey — lista} progress {Maestría de Rey — en progreso} other {Maestría de Rey — bloqueada}}",
+    },
+    pawn: {
+      label: "Maestría de Peón",
+      claimableHint: "Toca para reclamar tu insignia de Peón",
+      lockedHint: "Domina el Rey primero — el Peón es el jefe final",
+      unlockRequirement: "Domina el Rey, luego completa Peón L1 + L2 + L3",
+      ariaLabel:
+        "{state, select, claimable {Reclama la insignia de maestría de Peón — lista} progress {Maestría de Peón — en progreso} other {Maestría de Peón — bloqueada}}",
+    },
+    victory: {
+      label: "Guarda tu victoria",
+      claimableHint: "Toca para guardar tu última victoria en Arena",
+      lockedHint: "Gana una partida en Arena para desbloquear",
+      unlockRequirement: "Gana una partida en Arena",
+      ariaLabel:
+        "{state, select, claimable {Victoria lista — toca para guardar} progress {Victoria en progreso} other {Sin victoria lista — gana una partida en Arena}}",
+    },
+  },
   ROADMAP_COPY: {
     sectionTitle: "Próximamente",
     sectionDescription: "Lo que viene a Chesscito.",

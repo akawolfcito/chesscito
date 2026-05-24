@@ -2156,6 +2156,10 @@ export const REWARD_COPY = {
 
 export const PROFILE_COPY = {
   pageTitle: "Profile",
+  sheetDescription: "Profile, claims, stats and wallet",
+  closeLabel: "Close profile",
+  editNameAria: "Edit display name",
+  tierAriaFormat: "Tier {title}, {xp} XP",
   pendingClaimsHeader: "Pending claims",
   generalStatsHeader: "General stats",
   walletLabel: "Wallet",
@@ -2163,6 +2167,14 @@ export const PROFILE_COPY = {
   disconnect: "Disconnect wallet",
   manage: "Manage",
   refreshAria: "Refresh pending claims",
+  statLabels: {
+    piecesMastered: "Pieces Mastered",
+    dailyStreak: "Daily Streak",
+    puzzlesSolved: "Puzzles Solved",
+    arenaWins: "Arena Wins",
+    trophies: "Trophies",
+    nftsMinted: "NFTs Minted",
+  },
 } as const;
 
 export const DISPLAY_NAME_COPY = {

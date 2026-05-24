@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { TierBadge } from "@/components/profile/tier-badge";
 import type { TierKey } from "@/lib/profile/compute-tier";
 
@@ -19,6 +20,7 @@ export function ProfileBanner({
   truncatedWallet,
   onEditName,
 }: Props) {
+  const t = useTranslations("PROFILE_COPY");
   return (
     <header className="profile-banner">
       <div className="profile-banner-avatar-wrap">
@@ -32,7 +34,7 @@ export function ProfileBanner({
           <button
             type="button"
             onClick={onEditName}
-            aria-label="Edit display name"
+            aria-label={t("editNameAria")}
             className="profile-banner-edit-pen"
           >
             ✏️
@@ -41,7 +43,12 @@ export function ProfileBanner({
         <div className="profile-banner-wallet">{truncatedWallet}</div>
       </div>
       <div className="profile-banner-badge-slot">
-        <TierBadge tier={tierKey} title={tierTitle} xp={xp} />
+        <TierBadge
+          tier={tierKey}
+          title={tierTitle}
+          xp={xp}
+          ariaLabel={t("tierAriaFormat", { title: tierTitle, xp })}
+        />
       </div>
     </header>
   );

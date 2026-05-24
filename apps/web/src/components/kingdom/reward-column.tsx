@@ -1,5 +1,8 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { PIECE_LABELS, REWARD_COPY } from "@/lib/content/editorial";
+import { REWARD_COPY } from "@/lib/content/editorial";
 
 export type RewardTileId = keyof typeof REWARD_COPY;
 export type RewardTileState = "claimed" | "claimable" | "progress" | "locked";
@@ -59,8 +62,11 @@ function RewardTileButton({
   tile: RewardTile;
   compact: boolean;
 }) {
-  const copy = REWARD_COPY[tile.id];
-  const label = isPieceTile(tile.id) ? PIECE_LABELS[tile.id] : copy.label;
+  const tReward = useTranslations("REWARD_COPY");
+  const tPieces = useTranslations("PIECE_LABELS");
+  const label = isPieceTile(tile.id)
+    ? tPieces(tile.id)
+    : tReward(`${tile.id}.label`);
   const ariaState: Exclude<RewardTileState, "claimed"> =
     tile.state === "claimed" ? "progress" : tile.state;
   const classes = [
@@ -78,7 +84,7 @@ function RewardTileButton({
     <button
       type="button"
       onClick={tile.onTap}
-      aria-label={copy.ariaLabel(ariaState)}
+      aria-label={tReward(`${tile.id}.ariaLabel`, { state: ariaState })}
       className={classes}
     >
       <span className="reward-tile-label">{label}</span>

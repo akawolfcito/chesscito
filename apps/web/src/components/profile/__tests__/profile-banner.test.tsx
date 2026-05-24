@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { renderWithIntl as render } from "@/test-utils/render-with-intl";
+import { screen, fireEvent } from "@testing-library/react";
 import { ProfileBanner } from "@/components/profile/profile-banner";
 
 describe("<ProfileBanner>", () => {
