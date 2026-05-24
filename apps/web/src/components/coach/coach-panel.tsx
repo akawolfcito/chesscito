@@ -1,10 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import type { CoachResponse } from "@/lib/coach/types";
 import { formatTime } from "@/lib/game/arena-utils";
 
@@ -26,6 +33,19 @@ type Props = {
   proActive?: boolean;
   /** PR 4: drives the footer's "Building your history…" / "Reviewing N past games" wording. */
   historyMeta?: { gamesPlayed: number };
+  /** 2026-05-24: locale of the cached analysis (drives the EN/ES badge).
+   *  Falls back to the active UI locale when the server didn't echo it
+   *  back — only relevant for legacy records that pre-date the
+   *  per-locale cache key. */
+  analysisLocale?: "en" | "es";
+  /** 2026-05-24: parent-owned reanalyze handler. When provided, the
+   *  panel shows a "Reanalyze" text-link CTA next to the secondary
+   *  history button; tapping it opens an inline confirm sheet. The
+   *  handler is responsible for the credit-check + fresh fetch. */
+  onReanalyze?: () => Promise<void>;
+  /** Parent-driven "Generating new analysis…" state — drives the
+   *  CTA's disabled state and the confirm sheet's working flag. */
+  isReanalyzing?: boolean;
 };
 
 export function CoachPanel({
@@ -39,9 +59,14 @@ export function CoachPanel({
   onViewHistory,
   proActive,
   historyMeta,
+  analysisLocale,
+  onReanalyze,
+  isReanalyzing,
 }: Props) {
   const t = useTranslations("COACH_COPY");
   const tArena = useTranslations("ARENA_COPY");
+  const activeLocale = useLocale() as "en" | "es";
+  const [confirmReanalyzeOpen, setConfirmReanalyzeOpen] = useState(false);
   // Prop kept on the interface for caller compatibility but no longer
   // rendered (shell exposes the close control). Reference it so the
   // unused-vars linter stays quiet.
@@ -55,6 +80,22 @@ export function CoachPanel({
   const warmSubtle = "rgba(110, 65, 15, 0.55)";
   const cream = "0 1px 0 rgba(255, 245, 215, 0.55)";
 
+  // Locale badge: prefer the server-echoed locale (matches the actual
+  // record on cache), fall back to the active UI locale (legacy records
+  // never carried this field — see CoachAnalysisRecord.locale docstring).
+  const badgeLocale: "en" | "es" = analysisLocale ?? activeLocale;
+  const badgeLabel = (t.raw("analysisLocaleBadge") as Record<string, string>)[badgeLocale];
+  const badgeAria = t("analysisLocaleBadge.ariaLabel", { locale: badgeLabel });
+
+  async function handleReanalyzeConfirm() {
+    if (!onReanalyze) return;
+    try {
+      await onReanalyze();
+    } finally {
+      setConfirmReanalyzeOpen(false);
+    }
+  }
+
   return (
     <div className="flex min-w-0 flex-col gap-4">
       {proActive && historyMeta && (
@@ -67,9 +108,23 @@ export function CoachPanel({
       )}
 
       <div className="flex min-w-0 items-center justify-between gap-2">
-        <p className="text-xs" style={{ color: warmMuted }}>
-          {diffLabel} - {totalMoves} moves - {time}
-        </p>
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            data-testid="coach-analysis-locale-badge"
+            aria-label={badgeAria}
+            className="rounded-full border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            style={{
+              borderColor: "rgba(110, 65, 15, 0.3)",
+              color: warmMuted,
+              backgroundColor: "rgba(255, 245, 215, 0.5)",
+            }}
+          >
+            {badgeLabel}
+          </span>
+          <p className="text-xs" style={{ color: warmMuted }}>
+            {diffLabel} - {totalMoves} moves - {time}
+          </p>
+        </div>
         <span className="text-xs font-semibold" style={{ color: warmSubtle }}>
           {credits} credits
         </span>
@@ -156,6 +211,19 @@ export function CoachPanel({
             {t("pastSessions")}
           </Button>
         )}
+        {onReanalyze && (
+          <button
+            type="button"
+            data-testid="coach-reanalyze-cta"
+            onClick={() => setConfirmReanalyzeOpen(true)}
+            disabled={isReanalyzing}
+            aria-label={t("reanalyze.ariaLabel")}
+            className="self-center text-xs underline underline-offset-2 disabled:opacity-50"
+            style={{ color: warmSubtle }}
+          >
+            {isReanalyzing ? t("reanalyze.inFlightLabel") : t("reanalyze.cta")}
+          </button>
+        )}
       </div>
 
       {proActive && historyMeta && (
@@ -172,6 +240,49 @@ export function CoachPanel({
             {t("historyFooter.manageLabel")}
           </Link>
         </p>
+      )}
+
+      {/* Reanalyze confirm sheet — non-destructive variant of the
+       *  ConfirmDeleteSheet pattern. We render inline (instead of
+       *  reusing that component) because its rose-tinted styling is
+       *  reserved for destructive actions; reanalyze just spends a
+       *  credit and regenerates. */}
+      {onReanalyze && (
+        <Sheet
+          open={confirmReanalyzeOpen}
+          onOpenChange={(o) => {
+            if (!isReanalyzing) setConfirmReanalyzeOpen(o);
+          }}
+        >
+          <SheetContent side="bottom" className="mission-shell rounded-t-3xl border-0">
+            <SheetTitle style={{ color: warmText }}>
+              {t("reanalyze.confirmTitle")}
+            </SheetTitle>
+            <SheetDescription className="text-sm" style={{ color: warmMuted }}>
+              {t("reanalyze.confirmBody")}
+            </SheetDescription>
+            <div className="mt-6 flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="game-primary"
+                size="game"
+                onClick={handleReanalyzeConfirm}
+                disabled={isReanalyzing}
+              >
+                {t("reanalyze.confirmAccept")}
+              </Button>
+              <Button
+                type="button"
+                variant="game-ghost"
+                size="game-sm"
+                onClick={() => setConfirmReanalyzeOpen(false)}
+                disabled={isReanalyzing}
+              >
+                {t("reanalyze.confirmCancel")}
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
       )}
     </div>
   );
