@@ -43,7 +43,7 @@ describe("<PendingClaims>", () => {
         onRefresh={vi.fn()}
       />,
     );
-    expect(screen.getByText(/in flight/i)).toBeInTheDocument();
+    expect(screen.getByText(/in progress/i)).toBeInTheDocument();
   });
 
   it("fires onRefresh when refresh button tapped", () => {

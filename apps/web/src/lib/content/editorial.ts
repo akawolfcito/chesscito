@@ -2412,7 +2412,7 @@ export const PROFILE_COPY = {
     puzzlesSolved: "Puzzles Solved",
     arenaWins: "Arena Wins",
     trophies: "Trophies",
-    nftsMinted: "NFTs Minted",
+    nftsMinted: "Saved Victories",
   },
 } as const;
 
@@ -2449,7 +2449,7 @@ export const CLAIM_COPY = {
   claimVerb: "Claim",
   costGasOnly: "Network fee only",
   costEstimateUsd: "~${amount}",
-  inFlightLabel: "In flight — reconnect to verify",
+  inFlightLabel: "In progress — reconnect to verify",
   refreshAria: "Refresh",
   emptyAria: "No pending claims",
 } as const;
