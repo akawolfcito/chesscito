@@ -10,8 +10,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-
-import { PRO_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 import {
   getConfiguredChainId,
   getShopAddress,
@@ -85,6 +84,7 @@ export type UseProSheetStateReturn = {
 export function useProSheetState(
   options?: UseProSheetStateOptions,
 ): UseProSheetStateReturn {
+  const t = useTranslations("PRO_COPY");
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -180,7 +180,7 @@ export function useProSheetState(
     const previewToken = selectPaymentToken(PRO_PRICE_USD6);
     if (!previewToken) {
       track("pro_purchase_failed", { kind: "no-token" });
-      setErrorMessage("Insufficient stablecoin balance.");
+      setErrorMessage(t("insufficientBalance"));
       return;
     }
 
@@ -225,12 +225,12 @@ export function useProSheetState(
     }
     setErrorMessage(
       result.kind === "no-token"
-        ? "Insufficient stablecoin balance."
+        ? t("insufficientBalance")
         : result.kind === "timeout"
-          ? "Transaction timed out. Please try again."
+          ? t("txTimeout")
           : result.kind === "verify-failed"
-            ? PRO_COPY.errors.verifyFailedTitle
-            : PRO_COPY.errors.purchaseFailed,
+            ? t("errors.verifyFailedTitle")
+            : t("errors.purchaseFailed"),
     );
   }, [
     address,
@@ -242,6 +242,7 @@ export function useProSheetState(
     selectPaymentToken,
     refetchProStatus,
     fireOnPurchaseSuccess,
+    t,
   ]);
 
   const handleRetryVerify = useCallback(async () => {

@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import type { ReactNode } from "react";
+import enMessages from "@/lib/content/messages/en";
 
 const TEST_WALLET = "0x000000000000000000000000000000000000abcd";
 const SHOP_ADDRESS = "0x0000000000000000000000000000000000005a4e";
@@ -73,6 +76,27 @@ vi.mock("@/lib/haptics", () => ({
 
 import { useProSheetState } from "../use-pro-sheet-state";
 
+/** Wraps `renderHook` with the next-intl provider so the hook's
+ *  internal `useTranslations("PRO_COPY")` call resolves successfully.
+ *  EN bundle is sufficient — these tests assert behavior, not copy. */
+const IntlWrapper = ({ children }: { children: ReactNode }) => (
+  <NextIntlClientProvider
+    locale="en"
+    messages={enMessages as Record<string, unknown>}
+    onError={() => {}}
+    getMessageFallback={({ key, namespace }) =>
+      namespace ? `${namespace}.${key}` : key
+    }
+  >
+    {children}
+  </NextIntlClientProvider>
+);
+IntlWrapper.displayName = "IntlWrapper";
+
+function renderProSheetHook() {
+  return renderHook(() => useProSheetState(), { wrapper: IntlWrapper });
+}
+
 /** Token balances large enough to clear the cheapest stablecoin tier so
  *  `selectPaymentToken(PRO_PRICE_USD6)` resolves to a non-null token in
  *  the success / verify-failed tests. */
@@ -128,7 +152,7 @@ afterEach(() => {
 
 describe("useProSheetState — open/close lifecycle", () => {
   it("starts closed; openSheet flips open=true on sheetProps", () => {
-    const { result } = renderHook(() => useProSheetState());
+    const { result } = renderProSheetHook();
     expect(result.current.open).toBe(false);
     expect(result.current.sheetProps.open).toBe(false);
 
@@ -147,7 +171,7 @@ describe("useProSheetState — open/close lifecycle", () => {
       txHash: "0xfeedface",
     });
 
-    const { result } = renderHook(() => useProSheetState());
+    const { result } = renderProSheetHook();
 
     act(() => {
       result.current.openSheet();
@@ -172,7 +196,7 @@ describe("useProSheetState — open/close lifecycle", () => {
 describe("useProSheetState — handlePurchase", () => {
   it("returns early without firing pro_purchase_started when balances are insufficient (no-token)", async () => {
     // tokenBalances=undefined → selectPaymentToken returns null → no-token.
-    const { result } = renderHook(() => useProSheetState());
+    const { result } = renderProSheetHook();
 
     await act(async () => {
       await result.current.sheetProps.onPurchase();
@@ -200,7 +224,7 @@ describe("useProSheetState — handlePurchase", () => {
       expiresAt: Date.now() + 30 * 86_400_000,
     });
 
-    const { result } = renderHook(() => useProSheetState());
+    const { result } = renderProSheetHook();
 
     act(() => {
       result.current.openSheet();
@@ -225,7 +249,7 @@ describe("useProSheetState — handlePurchase", () => {
       txHash: "0xverifyhash",
     });
 
-    const { result } = renderHook(() => useProSheetState());
+    const { result } = renderProSheetHook();
 
     act(() => {
       result.current.openSheet();
@@ -257,7 +281,7 @@ describe("useProSheetState — handleRetryVerify", () => {
       json: async () => ({ active: true }),
     });
 
-    const { result } = renderHook(() => useProSheetState());
+    const { result } = renderProSheetHook();
 
     act(() => {
       result.current.openSheet();
@@ -291,7 +315,7 @@ describe("useProSheetState — handleRetryVerify", () => {
       json: async () => ({ active: false }),
     });
 
-    const { result } = renderHook(() => useProSheetState());
+    const { result } = renderProSheetHook();
 
     act(() => {
       result.current.openSheet();

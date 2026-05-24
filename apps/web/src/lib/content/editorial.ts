@@ -123,6 +123,18 @@ export const RESULT_OVERLAY_COPY = {
     revert:
       "Transaction failed — this action may not be available right now",
     unknown: "Something went wrong. Please try again",
+    /** Surfaced by classifyTxError when the on-chain revert reason
+     *  matches BadgeAlreadyClaimed (badge contract guard). Distinct
+     *  from `revert` so the user understands they ALREADY have the
+     *  badge — not that the claim failed for some other reason. */
+    badgeAlreadyClaimed: "You already own this badge!",
+    /** Surfaced when the signing endpoint (/api/sign-*) is unreachable
+     *  or returns 4xx/5xx (most often missing operator envs in local
+     *  dev, but also catches prod signer outages + GCM auth-tag
+     *  mismatches from rotated keys). Distinct from `network` so the
+     *  user understands the issue is server-side, not their wallet
+     *  connection. */
+    signingUnavailable: "Signing service unavailable — try again in a moment.",
     /** Per-kind copy for purchase end states (Buy Item Shop, Buy Coach
      *  Credits). Mirrors the cancelled/timeout/error split that
      *  VictoryClaimError.errorKindCopy already uses for Mint Victory,
@@ -1465,6 +1477,14 @@ export const PRO_COPY = {
   /** Sub-line shown under the price label on the candy panel. ICU
    *  placeholder `{duration}` is filled from PRO_COPY.durationLabel. */
   noAutoBillingLine: "({duration} · no auto-billing)",
+  /** Surfaced by use-pro-sheet-state when no accepted stablecoin
+   *  balance covers the price. Same string twice in the hook (preview
+   *  + post-purchase) — single source so they can never desync. */
+  insufficientBalance: "Insufficient stablecoin balance.",
+  /** Surfaced by use-pro-sheet-state when wagmi's wait-for-receipt
+   *  exceeds the timeout. Distinct from a generic failure so the user
+   *  knows their tx may still confirm on-chain. */
+  txTimeout: "Transaction timed out. Please try again.",
   statusActiveSuffix: (daysLeft: number) =>
     daysLeft === 1 ? "Expires tomorrow" : `${daysLeft} days left`,
   /** Inline sub-line shown when daysLeft ≤ 3 (badge in EXPIRING variant).

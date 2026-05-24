@@ -228,6 +228,8 @@ const messages = {
     switchNetworkLabel: "Cambiar red",
     closeLabel: "Cerrar PRO",
     noAutoBillingLine: "({duration} · sin cobros automáticos)",
+    insufficientBalance: "Saldo insuficiente de stablecoin.",
+    txTimeout: "La transacción tardó demasiado. Intenta de nuevo.",
     statusActiveSuffix:
       "{daysLeft, plural, =1 {Vence mañana} other {# días restantes}}",
     expiringMicroCopy: "Renueva cuando quieras para seguir entrenando",

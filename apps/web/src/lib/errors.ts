@@ -37,7 +37,7 @@ export function classifyTxError(error: unknown): string {
     return copy.network;
   }
   if (lower.includes("badgealreadyclaimed") || lower.includes("already claimed")) {
-    return "You already own this badge!";
+    return copy.badgeAlreadyClaimed;
   }
   // Server signing endpoint missing config or unavailable. Most often
   // surfaced in local dev when the operator forgot the encrypted
@@ -59,7 +59,7 @@ export function classifyTxError(error: unknown): string {
     lower.includes("400") ||
     lower.includes("signing")
   ) {
-    return "Signing service unavailable — try again in a moment.";
+    return copy.signingUnavailable;
   }
   if (lower.includes("revert") || lower.includes("execution reverted")) {
     return copy.revert;
