@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAccount, useChainId, useReadContracts } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
@@ -14,7 +15,6 @@ import { ProfileSheet } from "@/components/profile/profile-sheet";
 import { SettingsSheetStub } from "@/components/hub/settings-sheet-stub";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
-import { SETTINGS_STUB_COPY } from "@/lib/content/editorial";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
 import { useClaimQueue } from "@/hooks/use-claim-queue";
@@ -26,7 +26,6 @@ import { getExercisesCompletedCount } from "@/lib/game/exercise-progress";
 import { getDailyHistoryCount, isCompletedToday } from "@/lib/daily/progress";
 import { badgesAbi } from "@/lib/contracts/badges";
 import { getBadgesAddress } from "@/lib/contracts/chains";
-import { HUD_COPY } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { subscribeToShieldChanges } from "@/lib/shop/shield-events";
@@ -56,11 +55,6 @@ const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
 const PROGRESS_STORAGE_PREFIX = "chesscito:progress:";
 const MS_PER_DAY = 86_400_000;
 
-const PREMIUM_KICKER = "Training Pass";
-const PREMIUM_INACTIVE_LABEL = "Go PRO";
-const PLAY_LABEL = "ENTER ARENA";
-const PLAY_ARIA_LABEL = "Enter the Arena";
-
 export type HubInitialSheet =
   | "shop"
   | "pro"
@@ -73,11 +67,16 @@ function premiumAriaLabel(
   pro: { active: true; daysRemaining: number } | { active: false },
   used: number,
   total: number,
+  t: ReturnType<typeof useTranslations<"HUB_SCAFFOLD_COPY">>,
 ) {
   if (!pro.active) {
-    return "Training Pass — tap to unlock";
+    return t("premiumInactiveAriaLabel");
   }
-  return `Training Pass — ${used} of ${total} sessions used, ${pro.daysRemaining} days remaining`;
+  return t("premiumActiveAriaFormat", {
+    used,
+    total,
+    days: pro.daysRemaining,
+  });
 }
 
 function loadShieldCount(): number {
@@ -145,6 +144,9 @@ export function HubScaffoldClient({
 }: {
   initialSheet?: HubInitialSheet;
 }) {
+  const tHud = useTranslations("HUD_COPY");
+  const tScaffold = useTranslations("HUB_SCAFFOLD_COPY");
+  const tSettings = useTranslations("SETTINGS_STUB_COPY");
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -340,14 +342,16 @@ export function HubScaffoldClient({
           openConnectModal?.();
         }}
         rewardTiles={rewardTiles}
-        premiumKicker={PREMIUM_KICKER}
-        premiumInactiveLabel={PREMIUM_INACTIVE_LABEL}
-        premiumProgressFormat={HUD_COPY.starsFormat}
-        premiumAriaLabel={premiumAriaLabel(pro, 0, 0)}
+        premiumKicker={tScaffold("premiumKicker")}
+        premiumInactiveLabel={tScaffold("premiumInactiveLabel")}
+        premiumProgressFormat={(current: number, total: number) =>
+          tHud("starsFormat", { current, total })
+        }
+        premiumAriaLabel={premiumAriaLabel(pro, 0, 0, tScaffold)}
         premiumUsed={0}
         premiumTotal={0}
-        playLabel={PLAY_LABEL}
-        playAriaLabel={PLAY_ARIA_LABEL}
+        playLabel={tScaffold("playLabel")}
+        playAriaLabel={tScaffold("playAriaLabel")}
         onTrophyTap={() => {
           track("hub_trophy_tap", { count: trophies });
           // Direct route to /trophies instead of legacy round-trip.
@@ -388,8 +392,8 @@ export function HubScaffoldClient({
           shopSheet.openSheet();
         }}
         secondaryAction={{
-          label: HUD_COPY.practiceLinkLabel,
-          ariaLabel: HUD_COPY.practiceLinkAriaLabel,
+          label: tHud("practiceLinkLabel"),
+          ariaLabel: tHud("practiceLinkAriaLabel"),
           onPress: () => {
             track("hub_practice_link_tap");
             router.push("/exercises");
@@ -407,14 +411,14 @@ export function HubScaffoldClient({
         <SheetContent
           side="bottom"
           hideClose
-          title={SETTINGS_STUB_COPY.title}
+          title={tSettings("title")}
           className="settings-sheet"
         >
           <div className="-mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
             <ContextualHeader
               variant="close-control"
-              title={SETTINGS_STUB_COPY.title}
-              close={{ onClick: () => setSettingsOpen(false), label: "Close settings" }}
+              title={tSettings("title")}
+              close={{ onClick: () => setSettingsOpen(false), label: tSettings("closeAriaLabel") }}
             />
           </div>
           <SettingsSheetStub buildSha={process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev"} />

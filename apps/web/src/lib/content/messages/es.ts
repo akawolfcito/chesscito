@@ -203,10 +203,6 @@ const messages = {
     backLabel: "Volver al hub",
     accountLabel: "Abrir cuenta",
   },
-  HUD_COPY: {
-    ...en.HUD_COPY,
-    proRemainingFormat: "{days}d",
-  },
   PRO_COPY: {
     ...en.PRO_COPY,
     label: "Chesscito PRO",
@@ -1261,6 +1257,164 @@ const messages = {
       label: "Créditos de Coach",
       subtitle: "Prueba el análisis IA sin comprometerte a una suscripción.",
     },
+  },
+  HUB_V2_SPLASH_COPY: {
+    title: "Bienvenido, amigo",
+    tagline: "Pequeñas jugadas. Grandes hábitos mentales.",
+    dismissHint: "Toca en cualquier lugar para comenzar",
+    ariaLabel: "Pantalla de bienvenida",
+    ariaTitleId: "splash-title",
+  },
+  HUB_V2_MASTERY_COPY: {
+    rook: {
+      label: "Torre",
+      subLocked: "Domina para desbloquear",
+      subInProgress: "{current}/{total}",
+      subMastered: "★★★",
+      subComingSoon: "Próximamente",
+      ariaLabel:
+        "{state, select, mastered {Torre dominada, tres estrellas} inProgress {Torre en progreso, {current} de {total} estrellas} lockedBuildable {Torre — empieza a practicar para ganar estrellas} other {Torre — próximamente}}",
+    },
+    bishop: {
+      label: "Alfil",
+      subLocked: "Domina para desbloquear",
+      subInProgress: "{current}/{total}",
+      subMastered: "★★★",
+      subComingSoon: "Próximamente",
+      ariaLabel:
+        "{state, select, mastered {Alfil dominado, tres estrellas} inProgress {Alfil en progreso, {current} de {total} estrellas} lockedBuildable {Alfil — empieza a practicar para ganar estrellas} other {Alfil — próximamente}}",
+    },
+    knight: {
+      label: "Caballo",
+      subLocked: "Domina para desbloquear",
+      subInProgress: "{current}/{total}",
+      subMastered: "★★★",
+      subComingSoon: "Próximamente",
+      ariaLabel:
+        "{state, select, mastered {Caballo dominado, tres estrellas} inProgress {Caballo en progreso, {current} de {total} estrellas} lockedBuildable {Caballo — empieza a practicar para ganar estrellas} other {Caballo — próximamente}}",
+    },
+    pawn: {
+      label: "Peón",
+      subLocked: "Domina para desbloquear",
+      subInProgress: "{current}/{total}",
+      subMastered: "★★★",
+      subComingSoon: "Próximamente",
+      ariaLabel:
+        "{state, select, mastered {Peón dominado, tres estrellas} inProgress {Peón en progreso, {current} de {total} estrellas} lockedBuildable {Peón — empieza a practicar para ganar estrellas} other {Peón — próximamente}}",
+    },
+    queen: {
+      label: "Reina",
+      subLocked: "Domina para desbloquear",
+      subInProgress: "{current}/{total}",
+      subMastered: "★★★",
+      subComingSoon: "Próximamente",
+      ariaLabel:
+        "{state, select, mastered {Reina dominada, tres estrellas} inProgress {Reina en progreso, {current} de {total} estrellas} lockedBuildable {Reina — empieza a practicar para ganar estrellas} other {Reina — próximamente}}",
+    },
+    king: {
+      label: "Rey",
+      subLocked: "Domina para desbloquear",
+      subInProgress: "{current}/{total}",
+      subMastered: "★★★",
+      subComingSoon: "Próximamente",
+      ariaLabel:
+        "{state, select, mastered {Rey dominado, tres estrellas} inProgress {Rey en progreso, {current} de {total} estrellas} lockedBuildable {Rey — empieza a practicar para ganar estrellas} other {Rey — próximamente}}",
+    },
+    streakLabel:
+      "{days, plural, =0 {} =1 {Racha de 1 día} other {Racha de # días}}",
+    masteryDashboardAriaLabel: "Maestrías de piezas",
+  },
+  HUB_V2_TRAINING_COPY: {
+    active: {
+      kicker: "Pase de Entrenamiento",
+      daysFormat: "{d}d",
+      sessionsFormat: "Sesiones: {used}/{total}",
+      renewsFormat: "Renueva {mmdd}",
+      ariaLabel:
+        "Pase de Entrenamiento activo, {d} días restantes, {used} de {total} sesiones usadas",
+    },
+    inactive: {
+      title: "Desbloquea Coach + Premium",
+      priceLabel: "$1.99 / 30 días",
+      perks: [
+        "Análisis de Coach diarios",
+        "12 sesiones de Arena",
+        "HUD de sello de cera",
+      ],
+      cta: "Ver plan",
+      ariaLabel: "Pase de Entrenamiento — $1.99 por 30 días, ver plan",
+    },
+  },
+  HUB_ACTION_RAIL_COPY: {
+    dailyLabel: "Diario",
+    mateLabel: "Mate",
+    coachLabel: "Coach",
+    proDiscoveryTitle: "PRO",
+    proDiscoverySubtitle: "Desbloquea la experiencia completa",
+    proDiscoveryAriaLabel:
+      "Desbloquea la suscripción PRO — desbloquea la experiencia completa.",
+    arenaUnlockedAriaFormat: "Entrenamiento especial: {name}",
+    arenaLockedAriaFormat: "{name} — bloqueado",
+    dailyCompletedAriaFormat: "Táctica Diaria completada. Nueva en {hours}h.",
+    dailyPlayAriaFormat: "Juega la Táctica Diaria de hoy. {name}.",
+  },
+  SECONDARY_CTA_COPY: {
+    arena: {
+      label: "Entrar a Arena",
+      ariaLabel: "Entrar a Arena — ajedrez completo vs IA",
+    },
+  },
+  SETTINGS_STUB_COPY: {
+    title: "Ajustes",
+    comingSoonTooltip: "Próximamente",
+    versionChipLabel: "Build {sha}",
+    themeToggleLabel: "Tema",
+    hapticsToggleLabel: "Hápticas",
+    languageToggleLabel: "Idioma",
+    closeAriaLabel: "Cerrar ajustes",
+  },
+  HUB_SCAFFOLD_COPY: {
+    rootAriaLabel: "Hub de Chesscito",
+    premiumKicker: "Pase de Entrenamiento",
+    premiumInactiveLabel: "Hazte PRO",
+    playLabel: "ENTRAR A ARENA",
+    playAriaLabel: "Entrar a la Arena",
+    premiumInactiveAriaLabel: "Pase de Entrenamiento — toca para desbloquear",
+    premiumActiveAriaFormat:
+      "Pase de Entrenamiento — {used} de {total} sesiones usadas, {days} días restantes",
+  },
+  HUB_RAIL_COPY: {
+    ...en.HUB_RAIL_COPY,
+    learnLabel: "APRENDE",
+    unlockLabel: "DESBLOQUEA",
+  },
+  HUD_COPY: {
+    ...en.HUD_COPY,
+    trophiesLabel: "Trofeos",
+    trophiesAriaLabel: "Trofeos: {count}",
+    proLabel: "PRO",
+    proRemainingFormat: "{days}d",
+    proAriaLabel:
+      "{days, plural, =1 {PRO activo, 1 día restante} other {PRO activo, # días restantes}}",
+    proInactiveAriaLabel: "PRO inactivo — toca para saber más",
+    connectLabel: "Conectar",
+    connectAriaLabel: "Conecta tu wallet para ver tus stats",
+    coachLabel: "Coach",
+    coachAriaLabel: "Abrir historial de sesiones del Coach",
+    streakLabel: "Racha",
+    streakFormat: "{days, plural, =1 {Racha de 1 día} other {Racha de # días}}",
+    streakAriaLabel:
+      "{days, plural, =1 {Racha: 1 día} other {Racha: # días}}",
+    starsLabel: "Estrellas",
+    starsFormat: "{current}/{total}",
+    starsAriaLabel: "Estrellas: {current} de {total}",
+    shieldsLabel: "Escudos",
+    shieldsFormat: "Escudo ×{count}",
+    shieldsAriaLabel:
+      "{count, plural, =1 {1 escudo de racha disponible} other {# escudos de racha disponibles}}",
+    secondaryRowAriaLabel: "Recursos del jugador",
+    practiceLinkLabel: "ENTRENAR PIEZAS",
+    practiceLinkAriaLabel: "Practica piezas de ajedrez individualmente",
   },
 };
 

@@ -7,8 +7,9 @@ import {
   vi,
   type Mock,
 } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
 /** <HubV2Splash> primitive (design-lock §1.1 + §2.1 + §9.2, with P0-3
  *  corrections: no auto-dismiss timer, tap-only dismiss, hint fade-in

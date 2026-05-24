@@ -2469,6 +2469,12 @@ export const HUB_ACTION_RAIL_COPY = {
   proDiscoverySubtitle: "Unlock the full experience",
   proDiscoveryAriaLabel:
     "Unlock PRO subscription — unlock the full experience.",
+  /** Arena tile aria labels — composed from MiniArenaSetup.name. */
+  arenaUnlockedAriaFormat: "Special training: {name}",
+  arenaLockedAriaFormat: "{name} — locked",
+  /** Daily tile aria labels — composed from puzzle name + completion state. */
+  dailyCompletedAriaFormat: "Daily Tactic completed. Fresh in {hours}h.",
+  dailyPlayAriaFormat: "Play today's Daily Tactic. {name}.",
 } as const;
 
 export const SECONDARY_CTA_COPY = {
@@ -2500,6 +2506,24 @@ export const SETTINGS_STUB_COPY = {
   themeToggleLabel: "Theme",
   hapticsToggleLabel: "Haptics",
   languageToggleLabel: "Language",
+  closeAriaLabel: "Close settings",
+} as const;
+
+export const HUB_SCAFFOLD_COPY = {
+  /** Aria label for the hub <main> landmark. */
+  rootAriaLabel: "Chesscito Hub",
+  /** Premium slot Training Pass kicker shown above the price/days bar. */
+  premiumKicker: "Training Pass",
+  /** CTA shown on the inactive PremiumSlot variant. */
+  premiumInactiveLabel: "Go PRO",
+  /** Dominant PLAY CTA on the hub footer. */
+  playLabel: "ENTER ARENA",
+  playAriaLabel: "Enter the Arena",
+  /** Aria templates rendered on the PremiumSlot, composed inline by
+   *  hub-scaffold-client based on PRO state. */
+  premiumInactiveAriaLabel: "Training Pass — tap to unlock",
+  premiumActiveAriaFormat:
+    "Training Pass — {used} of {total} sessions used, {days} days remaining",
 } as const;
 
 export const HUB_RAIL_COPY = {

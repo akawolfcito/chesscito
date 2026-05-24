@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup } from "@testing-library/react";
+import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
 import { MasteryTile } from "../mastery-tile";
 

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { useTranslations } from "next-intl";
 import { DailyTacticSheet } from "@/components/daily/daily-tactic-sheet";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
-import { HUB_ACTION_RAIL_COPY } from "@/lib/content/editorial";
 import { getDailyTactic } from "@/lib/daily/daily-puzzles";
 import {
   getDailyProgress,
@@ -40,6 +40,7 @@ type SolveStreakType = "first" | "extended" | "reset";
  *  the LEARN rail's tile structure. Suppresses replay when already
  *  completed today, mirrors streak count as the floating badge. */
 export function HubDailyTile() {
+  const t = useTranslations("HUB_ACTION_RAIL_COPY");
   const [hydrated, setHydrated] = useState(false);
   const [progress, setProgress] = useState<DailyProgress>(DEFAULT_PROGRESS);
   const [open, setOpen] = useState(false);
@@ -88,8 +89,8 @@ export function HubDailyTile() {
   }
 
   const ariaLabel = completed
-    ? `Daily Tactic completed. Fresh in ${Math.floor(hoursUntilNextUtcDay())}h.`
-    : `Play today's Daily Tactic. ${puzzleData.name}.`;
+    ? t("dailyCompletedAriaFormat", { hours: Math.floor(hoursUntilNextUtcDay()) })
+    : t("dailyPlayAriaFormat", { name: puzzleData.name });
 
   const badge =
     progress.streak > 0 ? (
@@ -106,7 +107,7 @@ export function HubDailyTile() {
     <>
       <HubActionTile
         iconSrc="/art/new-icons-chesscito/ejercicio-diario-chess.png"
-        label={HUB_ACTION_RAIL_COPY.dailyLabel}
+        label={t("dailyLabel")}
         ariaLabel={ariaLabel}
         onClick={() => setOpen(true)}
         disabled={completed}

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-import { HUB_V2_TRAINING_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
+
 import { track } from "@/lib/telemetry";
 
 /** Hub V2 Training Pass band primitive (design-lock §1.5 + §9.4).
@@ -53,6 +54,7 @@ export function TrainingPassBand({
   onActivate,
   testId,
 }: TrainingPassBandProps) {
+  const t = useTranslations("HUB_V2_TRAINING_COPY");
   const prevActiveRef = useRef<boolean>(active);
   const onActivateRef = useRef<typeof onActivate>(onActivate);
 
@@ -84,27 +86,29 @@ export function TrainingPassBand({
         data-component="training-pass-band"
         data-state="active"
         className="training-pass-band is-active"
-        aria-label={HUB_V2_TRAINING_COPY.active.ariaLabel(days, used, total)}
+        aria-label={t("active.ariaLabel", { d: days, used, total })}
         onClick={handleTap}
       >
         <span data-testid="band-kicker" className="training-pass-band-kicker">
-          {HUB_V2_TRAINING_COPY.active.kicker}
+          {t("active.kicker")}
         </span>
         <span data-testid="band-days" className="training-pass-band-days">
-          {HUB_V2_TRAINING_COPY.active.daysFormat(days)}
+          {t("active.daysFormat", { d: days })}
         </span>
         <span
           data-testid="band-sessions"
           className="training-pass-band-sessions"
         >
-          {HUB_V2_TRAINING_COPY.active.sessionsFormat(used, total)}
+          {t("active.sessionsFormat", { used, total })}
         </span>
         <span data-testid="band-renews" className="training-pass-band-renews">
-          {HUB_V2_TRAINING_COPY.active.renewsFormat(renews)}
+          {t("active.renewsFormat", { mmdd: renews })}
         </span>
       </button>
     );
   }
+
+  const perks = t.raw("inactive.perks") as readonly string[];
 
   return (
     <button
@@ -113,17 +117,17 @@ export function TrainingPassBand({
       data-component="training-pass-band"
       data-state="inactive"
       className="training-pass-band is-inactive"
-      aria-label={HUB_V2_TRAINING_COPY.inactive.ariaLabel}
+      aria-label={t("inactive.ariaLabel")}
       onClick={handleTap}
     >
       <span data-testid="band-title" className="training-pass-band-title">
-        {HUB_V2_TRAINING_COPY.inactive.title}
+        {t("inactive.title")}
       </span>
       <span data-testid="band-price" className="training-pass-band-price">
-        {HUB_V2_TRAINING_COPY.inactive.priceLabel}
+        {t("inactive.priceLabel")}
       </span>
       <ul className="training-pass-band-perks">
-        {HUB_V2_TRAINING_COPY.inactive.perks.map((perk) => (
+        {perks.map((perk) => (
           <li
             key={perk}
             data-testid="band-perk"

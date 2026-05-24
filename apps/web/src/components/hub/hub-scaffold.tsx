@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { HudResourceChip } from "@/components/hud/hud-resource-chip";
 import { HudSecondaryRow } from "@/components/hud/hud-secondary-row";
 import { KingdomAnchor } from "@/components/kingdom/kingdom-anchor";
@@ -12,11 +13,6 @@ import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubArenaTile } from "@/components/hub/hub-arena-tile";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
-import {
-  HUB_ACTION_RAIL_COPY,
-  HUD_COPY,
-  SECONDARY_CTA_COPY,
-} from "@/lib/content/editorial";
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
  *  `color` drives the visual tint (amber = default/onboarding, blue =
@@ -155,12 +151,17 @@ export function HubScaffold({
   miniArenaUnlocked = false,
   onError,
 }: HubScaffoldProps) {
+  const tHud = useTranslations("HUD_COPY");
+  const tRail = useTranslations("HUB_ACTION_RAIL_COPY");
+  const tSecondary = useTranslations("SECONDARY_CTA_COPY");
+  const tScaffold = useTranslations("HUB_SCAFFOLD_COPY");
+  const tRailLabels = useTranslations("HUB_RAIL_COPY");
   const proValue = pro.active
-    ? `PRO ${HUD_COPY.proRemainingFormat(pro.daysRemaining)}`
+    ? `PRO ${tHud("proRemainingFormat", { days: pro.daysRemaining })}`
     : null;
   const proAriaLabel = pro.active
-    ? HUD_COPY.proAriaLabel(pro.daysRemaining)
-    : HUD_COPY.proInactiveAriaLabel;
+    ? tHud("proAriaLabel", { days: pro.daysRemaining })
+    : tHud("proInactiveAriaLabel");
 
   const wrap = (primitiveName: string, children: React.ReactNode) => (
     <PrimitiveBoundary
@@ -176,7 +177,7 @@ export function HubScaffold({
   return (
     <main
       className="hub-scaffold"
-      aria-label="Chesscito Hub"
+      aria-label={tScaffold("rootAriaLabel")}
     >
       <header className="hub-scaffold-hud">
         <div className="hub-scaffold-hud-top">
@@ -185,7 +186,7 @@ export function HubScaffold({
             <HudResourceChip
               tone="trophy"
               value={trophies}
-              ariaLabel={HUD_COPY.trophiesAriaLabel(trophies)}
+              ariaLabel={tHud("trophiesAriaLabel", { count: trophies })}
               onClick={onTrophyTap}
             />,
           )}
@@ -205,8 +206,8 @@ export function HubScaffold({
                 <HudResourceChip
                   tone="default"
                   icon="wallet"
-                  value={HUD_COPY.connectLabel}
-                  ariaLabel={HUD_COPY.connectAriaLabel}
+                  value={tHud("connectLabel")}
+                  ariaLabel={tHud("connectAriaLabel")}
                   onClick={onConnectTap}
                 />,
               )
@@ -229,7 +230,7 @@ export function HubScaffold({
         <div className="hub-scaffold-side hub-scaffold-side--left">
           <div className="hub-scaffold-rail-stack">
             <div className="hub-scaffold-rail-header" data-rail="left">
-              LEARN
+              {tRailLabels("learnLabel")}
             </div>
             {wrap("RewardColumn", <RewardColumn tiles={rewardTiles} compact />)}
           </div>
@@ -287,7 +288,7 @@ export function HubScaffold({
           {showPremiumSlot ? (
             <>
               <div className="hub-scaffold-rail-header" data-rail="right">
-                UNLOCK
+                {tRailLabels("unlockLabel")}
               </div>
               {wrap(
                 "PremiumSlot",
@@ -311,7 +312,7 @@ export function HubScaffold({
                 <button
                   type="button"
                   onClick={onProTilePress}
-                  aria-label={HUB_ACTION_RAIL_COPY.proDiscoveryAriaLabel}
+                  aria-label={tRail("proDiscoveryAriaLabel")}
                   className="hub-pro-discovery"
                 >
                   <picture className="hub-pro-discovery-bg">
@@ -321,10 +322,10 @@ export function HubScaffold({
                   </picture>
                   <span className="hub-pro-discovery-content" aria-hidden="true">
                     <span className="hub-pro-discovery-title">
-                      {HUB_ACTION_RAIL_COPY.proDiscoveryTitle}
+                      {tRail("proDiscoveryTitle")}
                     </span>
                     <span className="hub-pro-discovery-sub">
-                      {HUB_ACTION_RAIL_COPY.proDiscoverySubtitle}
+                      {tRail("proDiscoverySubtitle")}
                     </span>
                   </span>
                 </button>,
@@ -341,8 +342,8 @@ export function HubScaffold({
               {onCoachTap ? (
                 <HubActionTile
                   iconSrc="/art/new-icons-chesscito/training.png"
-                  label={HUB_ACTION_RAIL_COPY.coachLabel}
-                  ariaLabel={HUD_COPY.coachAriaLabel}
+                  label={tRail("coachLabel")}
+                  ariaLabel={tHud("coachAriaLabel")}
                   onClick={onCoachTap}
                 />
               ) : null}
@@ -372,8 +373,8 @@ export function HubScaffold({
                   "ArenaCta",
                   <PrimaryPlayCta
                     surface="playhub"
-                    label={SECONDARY_CTA_COPY.arena.label}
-                    ariaLabel={SECONDARY_CTA_COPY.arena.ariaLabel}
+                    label={tSecondary("arena.label")}
+                    ariaLabel={tSecondary("arena.ariaLabel")}
                     onPress={onArenaPress}
                     className="hub-scaffold-arena-cta"
                     pieceIconSrc="/art/hub/enter-arena.png"

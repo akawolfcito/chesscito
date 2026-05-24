@@ -1,6 +1,6 @@
 "use client";
 
-import { HUB_V2_MASTERY_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 import type { PieceId } from "@/lib/game/types";
 import { track } from "@/lib/telemetry";
 
@@ -49,7 +49,11 @@ export function MasteryDashboard({
   streakDays,
   onTileTap,
 }: MasteryDashboardProps) {
-  const streakText = HUB_V2_MASTERY_COPY.streakLabel(streakDays);
+  const t = useTranslations("HUB_V2_MASTERY_COPY");
+  // ICU plural with `=0 {}` resolves to empty when streakDays === 0;
+  // we still render the streak row conditionally to keep the previous
+  // "absent when days=0" contract (mastery-dashboard.test.tsx §6).
+  const streakText = streakDays === 0 ? "" : t("streakLabel", { days: streakDays });
 
   const handleTap = (
     piece: PieceId,
@@ -67,7 +71,7 @@ export function MasteryDashboard({
   return (
     <section
       data-component="mastery-dashboard"
-      aria-label={HUB_V2_MASTERY_COPY.masteryDashboardAriaLabel}
+      aria-label={t("masteryDashboardAriaLabel")}
       className="mastery-dashboard"
     >
       {streakText ? (

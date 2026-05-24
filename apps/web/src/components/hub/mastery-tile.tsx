@@ -1,6 +1,6 @@
 "use client";
 
-import { HUB_V2_MASTERY_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 import type { PieceId } from "@/lib/game/types";
 
 /** Hub V2 mastery dashboard tile primitive (design-lock §1.3 + §9.3).
@@ -65,8 +65,21 @@ export function MasteryTile({
   testId,
   claimed,
 }: MasteryTileProps) {
-  const copy = HUB_V2_MASTERY_COPY[piece];
-  const ariaLabel = copy.ariaLabel(state, starsEarned, starsTotal);
+  const t = useTranslations("HUB_V2_MASTERY_COPY");
+  // ICU `select` keywords cannot contain hyphens, so we collapse the
+  // dash-style internal `MasteryState` values to camelCase before passing
+  // them to the translator. Component-facing API stays unchanged.
+  const stateForSelect =
+    state === "in-progress"
+      ? "inProgress"
+      : state === "locked-buildable"
+        ? "lockedBuildable"
+        : state;
+  const ariaLabel = t(`${piece}.ariaLabel` as const, {
+    state: stateForSelect,
+    current: starsEarned,
+    total: starsTotal,
+  });
 
   return (
     <button
@@ -88,7 +101,7 @@ export function MasteryTile({
         width={48}
         height={48}
       />
-      <span className="mastery-tile-label">{copy.label}</span>
+      <span className="mastery-tile-label">{t(`${piece}.label` as const)}</span>
       {state === "mastered" ? (
         <span
           data-testid="mastery-stars"
@@ -96,7 +109,7 @@ export function MasteryTile({
           data-stars-total={starsTotal}
           className="mastery-tile-stars"
         >
-          {copy.subMastered}
+          {t(`${piece}.subMastered` as const)}
         </span>
       ) : null}
       {state === "in-progress" ? (
@@ -112,19 +125,19 @@ export function MasteryTile({
             {"·".repeat(Math.max(0, starsTotal - starsEarned))}
           </span>
           <span data-testid="mastery-sub" className="mastery-tile-sub">
-            {copy.subInProgress(starsEarned, starsTotal)}
+            {t(`${piece}.subInProgress` as const, { current: starsEarned, total: starsTotal })}
           </span>
         </>
       ) : null}
       {state === "locked-buildable" ? (
         <span data-testid="mastery-sub" className="mastery-tile-sub">
-          {copy.subLocked}
+          {t(`${piece}.subLocked` as const)}
         </span>
       ) : null}
       {state === "coming-soon" ? (
         <>
           <span data-testid="mastery-sub" className="mastery-tile-sub">
-            {copy.subComingSoon}
+            {t(`${piece}.subComingSoon` as const)}
           </span>
           {/* Wax-seal stamp placeholder — final SVG art lands in Phase 7
            *  (design-lock §3.2 wax-seal-pro.svg, ≤2 KB). */}

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
 import { HUB_V2_MASTERY_COPY } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";

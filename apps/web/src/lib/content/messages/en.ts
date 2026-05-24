@@ -143,4 +143,54 @@ m.PIECE_COMPLETE_COPY.nextPiece = "Start {piece}";
 m.UNLOCK_COPY.title = "{piece} Unlocked!";
 m.UNLOCK_COPY.cta = "Start {piece}";
 
+// Hub V2 — Training Pass band format helpers.
+m.HUB_V2_TRAINING_COPY.active.daysFormat = "{d}d";
+m.HUB_V2_TRAINING_COPY.active.sessionsFormat = "Sessions: {used}/{total}";
+m.HUB_V2_TRAINING_COPY.active.renewsFormat = "Renews {mmdd}";
+m.HUB_V2_TRAINING_COPY.active.ariaLabel =
+  "Training Pass active, {d} days remaining, {used} of {total} sessions used";
+
+// Hub V2 — Mastery dashboard per-piece + streak.
+const MASTERY_PIECES = ["rook", "bishop", "knight", "pawn", "queen", "king"] as const;
+const MASTERY_LABEL_EN: Record<(typeof MASTERY_PIECES)[number], string> = {
+  rook: "Rook",
+  bishop: "Bishop",
+  knight: "Knight",
+  pawn: "Pawn",
+  queen: "Queen",
+  king: "King",
+};
+for (const piece of MASTERY_PIECES) {
+  const label = MASTERY_LABEL_EN[piece];
+  m.HUB_V2_MASTERY_COPY[piece].subInProgress = "{current}/{total}";
+  // ICU `select` keywords must be valid identifiers — hyphenated states
+  // (`in-progress`, `locked-buildable`) are converted to camelCase
+  // (`inProgress`, `lockedBuildable`) at the call site.
+  m.HUB_V2_MASTERY_COPY[piece].ariaLabel =
+    `{state, select, mastered {${label} mastered, three stars} inProgress {${label} in progress, {current} of {total} stars} lockedBuildable {${label} — start practicing to earn stars} other {${label} — coming soon}}`;
+}
+m.HUB_V2_MASTERY_COPY.streakLabel =
+  "{days, plural, =0 {} =1 {1-day streak} other {#-day streak}}";
+
+// HUB action rail + scaffold format helpers.
+m.HUB_ACTION_RAIL_COPY.arenaUnlockedAriaFormat = "Special training: {name}";
+m.HUB_ACTION_RAIL_COPY.arenaLockedAriaFormat = "{name} — locked";
+m.HUB_ACTION_RAIL_COPY.dailyCompletedAriaFormat =
+  "Daily Tactic completed. Fresh in {hours}h.";
+m.HUB_ACTION_RAIL_COPY.dailyPlayAriaFormat = "Play today's Daily Tactic. {name}.";
+
+// HUD ARIA + format helpers consumed by hub-scaffold.
+m.HUD_COPY.trophiesAriaLabel = "Trophies: {count}";
+m.HUD_COPY.proAriaLabel =
+  "{days, plural, =1 {PRO active, 1 day remaining} other {PRO active, # days remaining}}";
+m.HUD_COPY.starsFormat = "{current}/{total}";
+m.HUD_COPY.starsAriaLabel = "Stars: {current} of {total}";
+m.HUD_COPY.streakFormat = "{days, plural, =1 {1-day streak} other {#-day streak}}";
+m.HUD_COPY.streakAriaLabel =
+  "{days, plural, =1 {Streak: 1 day} other {Streak: # days}}";
+
+// Hub scaffold premium slot active aria.
+m.HUB_SCAFFOLD_COPY.premiumActiveAriaFormat =
+  "Training Pass — {used} of {total} sessions used, {days} days remaining";
+
 export default messages;

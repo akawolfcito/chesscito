@@ -8,8 +8,11 @@ import {
   type KeyboardEvent,
 } from "react";
 
-import { HUB_V2_SPLASH_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
+
 import { track } from "@/lib/telemetry";
+
+const ARIA_TITLE_ID = "splash-title";
 
 /** Hub V2 onboarding splash primitive (Splash A per design-lock §1.1).
  *  Renders once on first-ever-visit; never re-mounts after dismiss.
@@ -39,6 +42,7 @@ function detectReducedMotion(): boolean {
 }
 
 export function HubV2Splash() {
+  const t = useTranslations("HUB_V2_SPLASH_COPY");
   // Three-state flag: `null` = not yet read (prevents first-paint flash on
   // returning visitors), `true` = already seen (don't render), `false` =
   // first-visit (render).
@@ -106,7 +110,7 @@ export function HubV2Splash() {
       data-reduced-motion={reducedMotion ? "true" : "false"}
       role="dialog"
       aria-modal="true"
-      aria-labelledby={HUB_V2_SPLASH_COPY.ariaTitleId}
+      aria-labelledby={ARIA_TITLE_ID}
       tabIndex={-1}
       onClick={dismiss}
       onKeyDown={handleKeyDown}
@@ -148,13 +152,13 @@ export function HubV2Splash() {
           ♞
         </text>
       </svg>
-      <h2 id={HUB_V2_SPLASH_COPY.ariaTitleId}>{HUB_V2_SPLASH_COPY.title}</h2>
-      <p>{HUB_V2_SPLASH_COPY.tagline}</p>
+      <h2 id={ARIA_TITLE_ID}>{t("title")}</h2>
+      <p>{t("tagline")}</p>
       <p
         data-testid="splash-hint"
         data-visible={hintVisible ? "true" : "false"}
       >
-        {HUB_V2_SPLASH_COPY.dismissHint}
+        {t("dismissHint")}
       </p>
     </div>
   );

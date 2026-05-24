@@ -1,17 +1,18 @@
 "use client";
-import { SECONDARY_CTA_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 
 type Props = { onPress: () => void };
 
 export function SecondaryCta({ onPress }: Props) {
+  const t = useTranslations("SECONDARY_CTA_COPY");
   return (
     <button
       type="button"
       onClick={onPress}
-      aria-label={SECONDARY_CTA_COPY.arena.ariaLabel}
+      aria-label={t("arena.ariaLabel")}
       className="hub-secondary-cta"
     >
-      {SECONDARY_CTA_COPY.arena.label} <span aria-hidden="true">→</span>
+      {t("arena.label")} <span aria-hidden="true">→</span>
     </button>
   );
 }
