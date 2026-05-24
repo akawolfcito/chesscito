@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
-import { PRO_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
 
 export interface ProActiveCTAProps {
@@ -27,11 +27,12 @@ function isArenaSurface(source: string): boolean {
  * surface-aware pill chip below.
  */
 export function ProActiveCTA({ source, onClose }: ProActiveCTAProps) {
+  const t = useTranslations("PRO_COPY");
   const router = useRouter();
   const arena = isArenaSurface(source);
 
-  const label = arena ? PRO_COPY.activeCtaGotIt : PRO_COPY.activeCtaPlay;
-  const subline = arena ? PRO_COPY.activeSublineArena : PRO_COPY.activeSublineHub;
+  const label = arena ? t("activeCtaGotIt") : t("activeCtaPlay");
+  const subline = arena ? t("activeSublineArena") : t("activeSublineHub");
 
   function handleClick() {
     track("pro_active_cta_tap", { source });

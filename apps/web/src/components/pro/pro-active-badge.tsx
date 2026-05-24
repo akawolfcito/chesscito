@@ -1,4 +1,6 @@
-import { PRO_COPY } from "@/lib/content/editorial";
+"use client";
+
+import { useTranslations } from "next-intl";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const EXPIRING_THRESHOLD_DAYS = 3;
@@ -24,12 +26,13 @@ export function ProActiveBadge({
   expiresAtMs,
   nowMs = Date.now(),
 }: ProActiveBadgeProps) {
+  const t = useTranslations("PRO_COPY");
   const daysLeft = computeDaysLeft(expiresAtMs, nowMs);
   const isExpiring = daysLeft <= EXPIRING_THRESHOLD_DAYS;
 
   const pillLabel = isExpiring
-    ? PRO_COPY.statusBadgeExpiring
-    : PRO_COPY.statusBadgeActive;
+    ? t("statusBadgeExpiring")
+    : t("statusBadgeActive");
 
   const pillGradient = isExpiring
     ? "linear-gradient(180deg, #fbbf24 0%, #d97706 100%)"
@@ -57,7 +60,7 @@ export function ProActiveBadge({
         className={`text-sm ${isExpiring ? "font-bold" : "font-semibold"}`}
         style={{ color: "rgba(110, 65, 15, 0.95)" }}
       >
-        {PRO_COPY.statusActiveSuffix(daysLeft)}
+        {t("statusActiveSuffix", { daysLeft })}
       </span>
     </div>
   );

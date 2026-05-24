@@ -2,17 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/button";
-import { ComingSoonChip } from "@/components/ui/coming-soon-chip";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet";
-import { ContextualHeader } from "@/components/ui/contextual-header";
-import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { PRO_COPY } from "@/lib/content/editorial";
 import type { ProStatus } from "@/lib/pro/use-pro-status";
 import { track } from "@/lib/telemetry";
 
@@ -57,6 +53,10 @@ type CtaConfig = {
   onClick: (() => void) | undefined;
 };
 
+type ResolveCtaInput = Omit<ProSheetProps, "open" | "onOpenChange" | "errorMessage"> & {
+  t: ReturnType<typeof useTranslations>;
+};
+
 function resolveCta({
   status,
   isConnected,
@@ -66,16 +66,17 @@ function resolveCta({
   onConnectWallet,
   onSwitchNetwork,
   onPurchase,
-}: Omit<ProSheetProps, "open" | "onOpenChange" | "errorMessage">): CtaConfig {
+  t,
+}: ResolveCtaInput): CtaConfig {
   if (isPurchasing) {
-    return { label: "Processing…", loading: true, disabled: false, onClick: undefined };
+    return { label: t("processingLabel"), loading: true, disabled: false, onClick: undefined };
   }
   if (isVerifying) {
-    return { label: "Verifying…", loading: true, disabled: false, onClick: undefined };
+    return { label: t("verifyingLabel"), loading: true, disabled: false, onClick: undefined };
   }
   if (!isConnected) {
     return {
-      label: PRO_COPY.ctaConnectWallet,
+      label: t("ctaConnectWallet"),
       loading: false,
       disabled: false,
       onClick: onConnectWallet,
@@ -83,7 +84,7 @@ function resolveCta({
   }
   if (!isCorrectChain) {
     return {
-      label: "Switch Network",
+      label: t("switchNetworkLabel"),
       loading: false,
       disabled: false,
       onClick: onSwitchNetwork,
@@ -91,14 +92,14 @@ function resolveCta({
   }
   if (status?.active) {
     return {
-      label: PRO_COPY.ctaRenew,
+      label: t("ctaRenew"),
       loading: false,
       disabled: false,
       onClick: onPurchase,
     };
   }
   return {
-    label: PRO_COPY.ctaBuy,
+    label: t("ctaBuy"),
     loading: false,
     disabled: false,
     onClick: onPurchase,
@@ -106,8 +107,8 @@ function resolveCta({
 }
 
 /** Bottom sheet that surfaces Chesscito PRO copy + the single CTA.
- *  All copy is driven by PRO_COPY in editorial.ts so QA can iterate
- *  strings without touching this component.
+ *  All copy is driven by the PRO_COPY namespace via next-intl so QA
+ *  can iterate strings without touching this component.
  *
  *  Active-state composition (addendum spec
  *  _bmad-output/planning-artifacts/ux-design-addendum-pro-discoverability-2026-05-05.md
@@ -129,7 +130,8 @@ export function ProSheet(props: ProSheetProps) {
     isRetryingVerify = false,
     onRetryVerify,
   } = props;
-  const cta = resolveCta(props);
+  const t = useTranslations("PRO_COPY");
+  const cta = resolveCta({ ...props, t });
   const router = useRouter();
   const showVerifyRetry = Boolean(errorMessage && verifyFailedTxHash && onRetryVerify);
 
@@ -184,13 +186,18 @@ export function ProSheet(props: ProSheetProps) {
     router.push("/coach/history");
   }
 
+  const label = t("label");
+  const journalLabel = t("activeActions.journal");
+  const journalSubline = t("activeActions.journalSubline");
+  const perks = t.raw("perksActive") as readonly string[];
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
         hideClose
-        title={PRO_COPY.label}
-        description={PRO_COPY.tagline}
+        title={label}
+        description={t("tagline")}
         className="flex max-h-[95dvh] flex-col overflow-visible rounded-none border-0 bg-transparent p-0 pb-0 shadow-none"
       >
         {/* Candy hero panel — bottom-sheet container becomes a
@@ -224,7 +231,7 @@ export function ProSheet(props: ProSheetProps) {
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            aria-label="Close PRO"
+            aria-label={t("closeLabel")}
             className="candy-close-asset-button absolute right-4 z-30"
             style={{ top: "8%" }}
             data-testid="pro-close"
@@ -270,7 +277,7 @@ export function ProSheet(props: ProSheetProps) {
                   boxShadow: "0 2px 4px rgba(63, 34, 8, 0.25)",
                 }}
               >
-                {PRO_COPY.trainingPassLabel}
+                {t("trainingPassLabel")}
               </span>
 
               {/* Title */}
@@ -281,7 +288,7 @@ export function ProSheet(props: ProSheetProps) {
                   textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
                 }}
               >
-                {PRO_COPY.label}
+                {label}
               </h2>
 
               {/* Thin gold divider */}
@@ -299,7 +306,7 @@ export function ProSheet(props: ProSheetProps) {
                 className="mt-3 text-sm leading-snug"
                 style={{ color: "rgba(110, 65, 15, 0.78)" }}
               >
-                {PRO_COPY.tagline}
+                {t("tagline")}
               </p>
 
               {/* Center card — branches by subscription state.
@@ -326,7 +333,7 @@ export function ProSheet(props: ProSheetProps) {
                         className="text-xs leading-snug"
                         style={{ color: "rgba(110, 65, 15, 0.80)" }}
                       >
-                        {PRO_COPY.expiringMicroCopy}
+                        {t("expiringMicroCopy")}
                       </span>
                       <button
                         type="button"
@@ -338,7 +345,7 @@ export function ProSheet(props: ProSheetProps) {
                         className="text-xs font-semibold underline underline-offset-2"
                         style={{ color: "rgba(110, 65, 15, 0.95)" }}
                       >
-                        {PRO_COPY.ctaRenew}
+                        {t("ctaRenew")}
                       </button>
                     </div>
                   )}
@@ -355,13 +362,13 @@ export function ProSheet(props: ProSheetProps) {
                     className="text-2xl font-extrabold"
                     style={{ color: "rgb(91, 33, 182)" }}
                   >
-                    {PRO_COPY.priceLabel}
+                    {t("priceLabel")}
                   </p>
                   <p
                     className="mt-1 text-xs"
                     style={{ color: "rgba(110, 65, 15, 0.65)" }}
                   >
-                    ({PRO_COPY.durationLabel} · no auto-billing)
+                    {t("noAutoBillingLine", { duration: t("durationLabel") })}
                   </p>
                 </div>
               )}
@@ -376,7 +383,7 @@ export function ProSheet(props: ProSheetProps) {
                   boxShadow: "0 2px 4px rgba(63, 34, 8, 0.25)",
                 }}
               >
-                {PRO_COPY.activePerksLabel}
+                {t("activePerksLabel")}
               </span>
 
               {/* Perks list */}
@@ -384,7 +391,7 @@ export function ProSheet(props: ProSheetProps) {
                 className="mt-3 space-y-2 text-sm"
                 style={{ color: "rgba(63, 34, 8, 0.90)" }}
               >
-                {PRO_COPY.perksActive.map((perk) => (
+                {perks.map((perk) => (
                   <li key={perk} className="flex items-start gap-2.5">
                     <span
                       aria-hidden="true"
@@ -416,7 +423,7 @@ export function ProSheet(props: ProSheetProps) {
                         data-testid="pro-error-reassurance"
                         className="mt-1 text-xs font-medium text-rose-900/80"
                       >
-                        {PRO_COPY.errors.verifyFailedReassurance}
+                        {t("errors.verifyFailedReassurance")}
                       </p>
                       <button
                         type="button"
@@ -426,8 +433,8 @@ export function ProSheet(props: ProSheetProps) {
                         className="mt-2 inline-flex items-center justify-center rounded-lg bg-rose-900 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-rose-50 transition disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isRetryingVerify
-                          ? PRO_COPY.errors.retryingVerify
-                          : PRO_COPY.errors.retryVerifyCta}
+                          ? t("errors.retryingVerify")
+                          : t("errors.retryVerifyCta")}
                       </button>
                     </>
                   )}
@@ -446,7 +453,7 @@ export function ProSheet(props: ProSheetProps) {
                   <button
                     type="button"
                     onClick={openTrainingJournal}
-                    aria-label={`${PRO_COPY.activeActions.journal} — ${PRO_COPY.activeActions.journalSubline}`}
+                    aria-label={`${journalLabel} — ${journalSubline}`}
                     data-testid="pro-open-journal"
                     className="flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition active:scale-[0.98]"
                     style={{
@@ -477,13 +484,13 @@ export function ProSheet(props: ProSheetProps) {
                         className="text-base font-extrabold leading-tight"
                         style={{ color: "rgba(63, 34, 8, 0.95)" }}
                       >
-                        {PRO_COPY.activeActions.journal}
+                        {journalLabel}
                       </p>
                       <p
                         className="mt-0.5 text-xs leading-snug"
                         style={{ color: "rgba(110, 65, 15, 0.78)" }}
                       >
-                        {PRO_COPY.activeActions.journalSubline}
+                        {journalSubline}
                       </p>
                     </div>
                     <span
@@ -521,4 +528,3 @@ export function ProSheet(props: ProSheetProps) {
     </Sheet>
   );
 }
-

@@ -209,7 +209,87 @@ const messages = {
   },
   PRO_COPY: {
     ...en.PRO_COPY,
+    label: "Chesscito PRO",
+    kicker: "Pase de entrenamiento",
+    tagline:
+      "Tu plan de entrenamiento. Tu forma de mantener Chesscito libre para todos.",
+    subtitle:
+      "Pase mensual que sostiene el acceso abierto. Renueva cuando quieras — sin cobros automáticos.",
+    priceLabel: "$1.99 / mes",
+    durationLabel: "30 días",
+    ctaBuy: "Activar PRO",
+    ctaConnectWallet: "Conectar wallet",
+    trainingPassLabel: "PASE DE ENTRENAMIENTO",
+    activePerksLabel: "VENTAJAS ACTIVAS",
+    ctaActive: "PRO activo",
+    ctaRenew: "Extender entrenamiento",
+    processingLabel: "Procesando…",
+    verifyingLabel: "Verificando…",
+    switchNetworkLabel: "Cambiar red",
+    closeLabel: "Cerrar PRO",
+    noAutoBillingLine: "({duration} · sin cobros automáticos)",
+    statusActiveSuffix:
+      "{daysLeft, plural, =1 {Vence mañana} other {# días restantes}}",
+    expiringMicroCopy: "Renueva cuando quieras para seguir entrenando",
+    statusBadgeActive: "ACTIVO",
+    statusBadgeExpiring: "POR VENCER",
     comingSoonLabel: "PRONTO",
+    activeCtaPlay: "Jugar en Arena",
+    activeCtaGotIt: "Entendido",
+    activeSublineHub: "El Coach analiza después de la partida",
+    activeSublineArena: "El Coach se activa tras el jaque mate",
+    missionNote:
+      "Cada suscripción PRO ayuda a mantener la versión gratuita abierta para nuevos jugadores, familias y escuelas.",
+    chip: {
+      inactive: "PRO",
+      activePrefix: "PRO",
+    },
+    chipActiveAriaLabel: "{label} activo",
+    chipGetAriaLabel: "Activar {label}",
+    coachCardAriaLabel: "Entrenamiento Coach PRO",
+    coachChipsAriaLabel: "Coach PRO incluye",
+    coachKickerActive: "Pase de entrenamiento",
+    coachKickerInactive: "Coach personal",
+    hubCoachCard: {
+      inactive: {
+        title: "Coach PRO",
+        body: "Recibe feedback después de partidas y prácticas.",
+        chips: ["Errores", "Tips", "Historial"],
+        cta: "COACH",
+      },
+      active: {
+        title: "PRO Activo · {remainingDays}d",
+        body: "Tu Coach está listo.",
+        features: "Análisis · Historial · Próximo entrenamiento",
+        chips: ["Análisis", "Historial", "Próximo entrenamiento"],
+        cta: "DIARIO",
+      },
+    },
+    activeActions: {
+      journal: "DIARIO",
+      journalSubline:
+        "Revisa tu historial con el Coach y elige la próxima lección.",
+    },
+    perksActive: [
+      "Coach AI: análisis instantáneo, sin límite diario",
+      "Plan de entrenamiento personalizado según tu historial",
+      "Tu aporte mantiene a Chesscito libre para nuevos jugadores",
+    ],
+    errors: {
+      notConfigured: "PRO aún no está activo. Vuelve a intentarlo pronto.",
+      purchaseFailed:
+        "No se pudo verificar la compra. Intenta de nuevo.",
+      walletRequired: "Conecta tu wallet para comprar PRO.",
+      verifyFailedTitle: "Pago confirmado — verificación pendiente.",
+      verifyFailedReassurance:
+        "Tu transacción quedó registrada en la cadena. Reintentar no genera doble cobro.",
+      retryVerifyCta: "Reintentar verificación",
+      retryingVerify: "Verificando…",
+    },
+    receipt: {
+      success:
+        "PRO activado. Tu plan de entrenamiento está activo por 30 días.",
+    },
   },
   PIECE_LABELS: {
     rook: "Torre",

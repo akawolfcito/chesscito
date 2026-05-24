@@ -1395,6 +1395,18 @@ export const PRO_COPY = {
   activePerksLabel: "ACTIVE PERKS",
   ctaActive: "PRO Active",
   ctaRenew: "Extend training",
+  /** Inline CTA labels surfaced inside <ProSheet> when the purchase /
+   *  verification flow is mid-flight. Migrated to next-intl in the pro/*
+   *  batch so the strings ship per-locale via PRO_COPY. */
+  processingLabel: "Processing…",
+  verifyingLabel: "Verifying…",
+  /** CTA label shown when the wallet is on the wrong chain (Celo). */
+  switchNetworkLabel: "Switch Network",
+  /** ARIA label for the close button inside <ProSheet>. */
+  closeLabel: "Close PRO",
+  /** Sub-line shown under the price label on the candy panel. ICU
+   *  placeholder `{duration}` is filled from PRO_COPY.durationLabel. */
+  noAutoBillingLine: "({duration} · no auto-billing)",
   statusActiveSuffix: (daysLeft: number) =>
     daysLeft === 1 ? "Expires tomorrow" : `${daysLeft} days left`,
   /** Inline sub-line shown when daysLeft ≤ 3 (badge in EXPIRING variant).
@@ -1432,6 +1444,17 @@ export const PRO_COPY = {
     inactive: "PRO",
     activePrefix: "PRO",
   },
+  /** ARIA labels rendered on the chip — the visible label is just the
+   *  PRO tier mark, so screen readers need the longer state-aware
+   *  context. `{label}` ICU placeholder is filled from PRO_COPY.label. */
+  chipActiveAriaLabel: "{label} active",
+  chipGetAriaLabel: "Get {label}",
+  /** <CoachProCard /> ARIA + kicker copy. Kicker flips between
+   *  active/inactive subscription states. */
+  coachCardAriaLabel: "Coach PRO training",
+  coachChipsAriaLabel: "Coach PRO includes",
+  coachKickerActive: "Training Pass",
+  coachKickerInactive: "Personal Coach",
   hubCoachCard: {
     inactive: {
       title: "Coach PRO",

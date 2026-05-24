@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 
-import { PRO_COPY } from "@/lib/content/editorial";
 import type { ProStatus } from "@/lib/pro/use-pro-status";
 import { track } from "@/lib/telemetry";
 
@@ -13,13 +13,6 @@ export type ProChipProps = {
 };
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function formatDaysLeft(expiresAt: number): string {
-  const remainingMs = expiresAt - Date.now();
-  const days = Math.ceil(remainingMs / MS_PER_DAY);
-  if (days <= 1) return PRO_COPY.statusActiveSuffix(1);
-  return `${days}d`;
-}
 
 /** Floating chip rendered absolute top-right inside the play-hub
  *  `<main>` shell. Always visible — single tap opens <ProSheet>.
@@ -32,6 +25,16 @@ function formatDaysLeft(expiresAt: number): string {
  *
  *  Wired into the play-hub root in commit 6B.2. */
 export function ProChip({ status, isLoading, onClick }: ProChipProps) {
+  const t = useTranslations("PRO_COPY");
+  const label = t("label");
+
+  function formatDaysLeft(expiresAt: number): string {
+    const remainingMs = expiresAt - Date.now();
+    const days = Math.ceil(remainingMs / MS_PER_DAY);
+    if (days <= 1) return t("statusActiveSuffix", { daysLeft: 1 });
+    return `${days}d`;
+  }
+
   // Fire pro_card_viewed once per mount, after status has resolved.
   // The ref prevents the throttle from being load-bearing — even if the
   // chip re-renders 50× during a session, the event ships exactly once.
@@ -60,7 +63,7 @@ export function ProChip({ status, isLoading, onClick }: ProChipProps) {
         type="button"
         disabled
         aria-busy="true"
-        aria-label={PRO_COPY.label}
+        aria-label={label}
         className={`${baseClasses} animate-pulse bg-white/30 text-transparent`}
       >
         <span className="opacity-0">PRO</span>
@@ -73,11 +76,11 @@ export function ProChip({ status, isLoading, onClick }: ProChipProps) {
       <button
         type="button"
         onClick={handleClick}
-        aria-label={`${PRO_COPY.label} active`}
+        aria-label={t("chipActiveAriaLabel", { label })}
         className={`${baseClasses} bg-gradient-to-r from-[rgb(120,80,200)] to-[rgb(160,80,220)] text-white`}
       >
         <span aria-hidden="true">★</span>
-        <span>{PRO_COPY.chip.activePrefix} • {formatDaysLeft(status.expiresAt)}</span>
+        <span>{t("chip.activePrefix")} • {formatDaysLeft(status.expiresAt)}</span>
       </button>
     );
   }
@@ -86,11 +89,11 @@ export function ProChip({ status, isLoading, onClick }: ProChipProps) {
     <button
       type="button"
       onClick={handleClick}
-      aria-label={`Get ${PRO_COPY.label}`}
+      aria-label={t("chipGetAriaLabel", { label })}
       className={`${baseClasses} bg-gradient-to-r from-[rgb(255,200,80)] to-[rgb(255,160,40)] text-[rgb(80,40,5)]`}
     >
       <span aria-hidden="true">✦</span>
-      <span>{PRO_COPY.chip.inactive}</span>
+      <span>{t("chip.inactive")}</span>
     </button>
   );
 }

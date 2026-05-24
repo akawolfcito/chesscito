@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { cleanup } from "@testing-library/react";
+import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
 
 const trackMock = vi.hoisted(() => vi.fn());
 const pushMock = vi.hoisted(() => vi.fn());

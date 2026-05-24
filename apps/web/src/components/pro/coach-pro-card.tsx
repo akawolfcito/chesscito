@@ -1,4 +1,6 @@
-import { PRO_COPY } from "@/lib/content/editorial";
+"use client";
+
+import { useTranslations } from "next-intl";
 
 type CoachProCardProps = {
   active: boolean;
@@ -11,29 +13,33 @@ export function CoachProCard({
   remainingDays = 0,
   onCtaClick,
 }: CoachProCardProps) {
-  const activeCopy = PRO_COPY.hubCoachCard.active;
-  const inactiveCopy = PRO_COPY.hubCoachCard.inactive;
-  const title = active ? activeCopy.title(remainingDays) : inactiveCopy.title;
-  const body = active ? activeCopy.body : inactiveCopy.body;
-  const features = active ? activeCopy.features : null;
-  const chips = active ? activeCopy.chips : inactiveCopy.chips;
-  const cta = active ? activeCopy.cta : inactiveCopy.cta;
+  const t = useTranslations("PRO_COPY");
+  const stateKey = active ? "active" : "inactive";
+  const title = active
+    ? t("hubCoachCard.active.title", { remainingDays })
+    : t("hubCoachCard.inactive.title");
+  const body = t(`hubCoachCard.${stateKey}.body`);
+  const features = active ? t("hubCoachCard.active.features") : null;
+  const chips = t.raw(`hubCoachCard.${stateKey}.chips`) as readonly string[];
+  const cta = t(`hubCoachCard.${stateKey}.cta`);
+  const kicker = active ? t("coachKickerActive") : t("coachKickerInactive");
 
   return (
     <section
       className={`coach-pro-card${active ? " is-active" : " is-inactive"}`}
-      aria-label="Coach PRO training"
+      aria-label={t("coachCardAriaLabel")}
     >
       <div className="coach-pro-card-copy">
-        <span className="coach-pro-card-kicker">
-          {active ? "Training Pass" : "Personal Coach"}
-        </span>
+        <span className="coach-pro-card-kicker">{kicker}</span>
         <h2 className="coach-pro-card-title">{title}</h2>
         <p className="coach-pro-card-body">{body}</p>
         {features ? (
           <p className="coach-pro-card-features">{features}</p>
         ) : null}
-        <div className="coach-pro-card-chips" aria-label="Coach PRO includes">
+        <div
+          className="coach-pro-card-chips"
+          aria-label={t("coachChipsAriaLabel")}
+        >
           {chips.map((chip) => (
             <span className="coach-pro-card-chip" key={chip}>
               {chip}

@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { cleanup } from "@testing-library/react";
+import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
 import { ProActiveBadge } from "../pro-active-badge";
 import { PRO_COPY } from "@/lib/content/editorial";

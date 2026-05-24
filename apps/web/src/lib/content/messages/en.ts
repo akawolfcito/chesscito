@@ -84,5 +84,8 @@ m.REWARD_COPY.pawn.ariaLabel =
   "{state, select, claimable {Claim Pawn mastery badge — ready} progress {Pawn mastery — in progress} other {Pawn mastery — locked}}";
 m.REWARD_COPY.victory.ariaLabel =
   "{state, select, claimable {Save victory ready — tap to save} progress {Victory in progress} other {No victory ready — win an Arena match}}";
+m.PRO_COPY.statusActiveSuffix =
+  "{daysLeft, plural, =1 {Expires tomorrow} other {# days left}}";
+m.PRO_COPY.hubCoachCard.active.title = "PRO Active · {remainingDays}d";
 
 export default messages;
