@@ -34,7 +34,15 @@ export async function GET(req: Request) {
   // both exist for the same `(wallet, gameId)`.
   const requestedLocale = url.searchParams.get("locale") === "es" ? "es" : "en";
 
-  const gameIds = await redis.lrange<string>(REDIS_KEYS.analysisList(wallet), 0, 19);
+  // Per-locale migration (2026-05-24): `analysisList` LPUSHes on every
+  // successful /api/coach/analyze write, so a game analyzed in both EN
+  // and ES surfaces its gameId twice. Dedup at the consumer side
+  // (preserves newest-first order — the first occurrence wins) so the
+  // 20-slot window isn't half-eaten by duplicates. The legacy LPUSH path
+  // is intentionally left non-atomic; closing it would mirror the
+  // GAME_LIST_LPUSH_LUA pattern but is out of scope for this migration.
+  const rawIds = await redis.lrange<string>(REDIS_KEYS.analysisList(wallet), 0, 49);
+  const gameIds = Array.from(new Set(rawIds)).slice(0, 20);
 
   const entries = await Promise.all(
     gameIds.map(async (gameId) => {

@@ -52,6 +52,22 @@ describe("parseAnalyzedHistory", () => {
     expect(out).toHaveLength(1);
     expect(out[0].gameId).toBe(UUID_A);
   });
+
+  it("dedups same gameId across locales — first occurrence wins (2026-05-24)", () => {
+    // Per-locale cache key migration: a game analyzed in both EN and ES
+    // could surface twice in the server payload if the LPUSH'd analysisList
+    // isn't deduped upstream. Parser is the defense-in-depth backstop.
+    const input = [
+      { gameId: UUID_A, locale: "es", game: { gameId: UUID_A } },
+      { gameId: UUID_A, locale: "en", game: { gameId: UUID_A } },
+      { gameId: UUID_B, locale: "en", game: { gameId: UUID_B } },
+    ];
+    const out = parseAnalyzedHistory(input);
+    expect(out).toHaveLength(2);
+    expect(out.map((e) => e.gameId)).toEqual([UUID_A, UUID_B]);
+    // First-wins: the ES record came first in the input array, so it survives.
+    expect((out[0] as unknown as { locale: string }).locale).toBe("es");
+  });
 });
 
 describe("parseUnanalyzedGames", () => {

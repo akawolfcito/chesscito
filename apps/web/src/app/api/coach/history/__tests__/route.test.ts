@@ -112,10 +112,31 @@ describe("GET /api/coach/history", () => {
     expect(await res.json()).toEqual([]);
   });
 
-  it("caps results at 20 entries (lrange 0..19)", async () => {
+  it("reads 50 from analysisList then dedups to 20 (per-locale migration)", async () => {
+    // Per-locale migration (2026-05-24): the list LPUSHes on every
+    // analyze write, so EN+ES for the same game both land in the list.
+    // Read a wider window then dedup to 20 unique gameIds so duplicates
+    // don't eat the visible history.
     redisMock.lrange.mockResolvedValue([]);
     await GET(makeRequest(VALID_WALLET));
-    expect(redisMock.lrange).toHaveBeenCalledWith(`coach:analyses:${VALID_WALLET}`, 0, 19);
+    expect(redisMock.lrange).toHaveBeenCalledWith(`coach:analyses:${VALID_WALLET}`, 0, 49);
+  });
+
+  it("dedups duplicate gameIds when EN+ES analyses both LPUSH'd the same id", async () => {
+    // Simulate: g1 analyzed in both locales (2 LPUSHes), g2 once.
+    redisMock.lrange.mockResolvedValue(["g1", "g2", "g1"]);
+    const extractGameId = (key: string): string => key.split(":")[3] ?? "";
+    redisMock.get.mockImplementation((key: string) => {
+      if (key.startsWith("coach:analysis:"))
+        return Promise.resolve({ gameId: extractGameId(key), summary: "x" });
+      if (key.startsWith("coach:game:"))
+        return Promise.resolve({ gameId: extractGameId(key), moves: [] });
+      return Promise.resolve(null);
+    });
+
+    const res = await GET(makeRequest(VALID_WALLET));
+    const body = (await res.json()) as Array<{ gameId: string }>;
+    expect(body.map((e) => e.gameId)).toEqual(["g1", "g2"]);
   });
 
   it("returns 403 when enforceOrigin rejects", async () => {

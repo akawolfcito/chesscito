@@ -32,11 +32,23 @@ function hasValidGameId(record: object): boolean {
 
 export function parseAnalyzedHistory(input: unknown): AnalyzedEntry[] {
   if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
   return input
     .filter((e: unknown): e is CoachAnalysisRecord & { game: GameRecord } => {
       if (!e || typeof e !== "object") return false;
       if (!("game" in e)) return false;
       return hasValidGameId(e);
+    })
+    .filter((e) => {
+      // Per-locale migration (2026-05-24): if the server (or a future
+      // backend) ever emits two entries for the same gameId — one per
+      // locale — the parser collapses them to a single AnalyzedEntry.
+      // First-wins preserves the server's ordering signal (newest first
+      // by LPUSH semantics, or the caller's chosen sort order).
+      const id = (e as { gameId: string }).gameId;
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
     })
     .map((e) => ({ ...e, kind: "analyzed" as const }));
 }
