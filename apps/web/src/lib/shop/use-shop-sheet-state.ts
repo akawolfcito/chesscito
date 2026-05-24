@@ -33,7 +33,7 @@ import {
   normalizePrice,
 } from "@/lib/contracts/tokens";
 import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
-import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
+import { classifyTxErrorKind, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
 import { hapticSuccess } from "@/lib/haptics";
 import { dispatchShieldChange } from "@/lib/shop/shield-events";
 import {
@@ -500,7 +500,7 @@ export function useShopSheetState(
         stage: "error",
         source: txSource,
         item_id: itemIdNum,
-        error_kind: classifyTxError(error),
+        error_kind: classifyTxErrorKind(error),
       });
       setConfirmOpen(false);
       setErrorMessage(

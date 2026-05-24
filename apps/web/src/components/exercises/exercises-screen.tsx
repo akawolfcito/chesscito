@@ -90,7 +90,7 @@ import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
-import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
+import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, EXERCISES, LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
 import { getLabyrinthBest, recordLabyrinthBest } from "@/lib/game/labyrinth-progress";
@@ -367,6 +367,7 @@ export function ExercisesScreen({
   const tDrawer = useTranslations("EXERCISE_DRAWER_COPY");
   const tStatus = useTranslations("GLOBAL_STATUS_BAR_COPY");
   const tFooter = useTranslations("FOOTER_CTA_COPY");
+  const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -1167,10 +1168,10 @@ export function ExercisesScreen({
       }
       const message = toErrorMessage(error);
       setLastError(message);
-      track("badge_claim_tx", { stage: "error", piece: targetPiece, error_kind: classifyTxError(error) });
+      track("badge_claim_tx", { stage: "error", piece: targetPiece, error_kind: classifyTxErrorKind(error) });
       setResultOverlay({
         variant: "error",
-        errorMessage: classifyTxError(error),
+        errorMessage: classifyTxError(error, tResult),
         retryAction: () => void handleClaimBadge(piece),
       });
       console.warn("[MiniPayTx] error", { label: "claim-badge", levelId: Number(claimLevelId), error: message });
@@ -1270,10 +1271,10 @@ export function ExercisesScreen({
       }
       const message = toErrorMessage(error);
       setLastError(message);
-      track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: classifyTxError(error) });
+      track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: classifyTxErrorKind(error) });
       setResultOverlay({
         variant: "error",
-        errorMessage: classifyTxError(error),
+        errorMessage: classifyTxError(error, tResult),
         retryAction: () => void handleSubmitScore(),
       });
       showToast(tFooter("submitFailed"), 3000);
@@ -1535,13 +1536,13 @@ export function ExercisesScreen({
       setResultOverlay({
         variant: "error",
         errorKind: "error",
-        errorMessage: classifyTxError(error),
+        errorMessage: classifyTxError(error, tResult),
       });
       track("shop_buy_tx", {
         stage: "error",
         source: txSource,
         item_id: itemIdNum,
-        error_kind: classifyTxError(error),
+        error_kind: classifyTxErrorKind(error),
       });
       console.warn("[MiniPayTx] error", {
         label: selectedItem.label,

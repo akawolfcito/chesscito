@@ -77,6 +77,7 @@ vi.mock("@/lib/contracts/transaction-helpers", () => ({
 
 vi.mock("@/lib/errors", () => ({
   classifyTxError: () => "error",
+  classifyTxErrorKind: () => "unknown",
   isTransactionTimeout: () => false,
   isUserCancellation: () => false,
 }));

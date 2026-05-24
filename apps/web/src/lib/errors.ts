@@ -1,7 +1,4 @@
-import { RESULT_OVERLAY_COPY } from "@/lib/content/editorial";
 import { TransactionTimeoutError } from "@/lib/contracts/transaction-helpers";
-
-const copy = RESULT_OVERLAY_COPY.error;
 
 export function isUserCancellation(error: unknown): boolean {
   const msg = error instanceof Error ? error.message : String(error);
@@ -17,27 +14,35 @@ export function isTransactionTimeout(error: unknown): boolean {
   return /transaction timed out/i.test(msg);
 }
 
-export function classifyTxError(error: unknown): string {
+/** Locale-agnostic identifier for the kind of tx error. Stable across
+ *  locales so telemetry stays comparable (en/es users emit the same
+ *  `error_kind` value). Pair with `classifyTxError(error, t)` when the
+ *  caller needs the user-facing message instead. */
+export type TxErrorKind =
+  | "cancelled"
+  | "timeout"
+  | "insufficientFunds"
+  | "network"
+  | "badgeAlreadyClaimed"
+  | "signingUnavailable"
+  | "revert"
+  | "unknown";
+
+export function classifyTxErrorKind(error: unknown): TxErrorKind {
   const msg = error instanceof Error ? error.message : String(error);
   const lower = msg.toLowerCase();
 
-  if (isUserCancellation(error)) {
-    return copy.cancelled;
-  }
+  if (isUserCancellation(error)) return "cancelled";
   // Timeout takes priority over generic network so the player learns
   // their tx may still be pending in the wallet rather than blaming
   // their connection.
-  if (isTransactionTimeout(error)) {
-    return copy.timeout;
-  }
+  if (isTransactionTimeout(error)) return "timeout";
   if (lower.includes("insufficient funds") || lower.includes("exceeds balance")) {
-    return copy.insufficientFunds;
+    return "insufficientFunds";
   }
-  if (lower.includes("network") || lower.includes("disconnected")) {
-    return copy.network;
-  }
+  if (lower.includes("network") || lower.includes("disconnected")) return "network";
   if (lower.includes("badgealreadyclaimed") || lower.includes("already claimed")) {
-    return copy.badgeAlreadyClaimed;
+    return "badgeAlreadyClaimed";
   }
   // Server signing endpoint missing config or unavailable. Most often
   // surfaced in local dev when the operator forgot the encrypted
@@ -59,10 +64,18 @@ export function classifyTxError(error: unknown): string {
     lower.includes("400") ||
     lower.includes("signing")
   ) {
-    return copy.signingUnavailable;
+    return "signingUnavailable";
   }
-  if (lower.includes("revert") || lower.includes("execution reverted")) {
-    return copy.revert;
-  }
-  return copy.unknown;
+  if (lower.includes("revert") || lower.includes("execution reverted")) return "revert";
+  return "unknown";
+}
+
+/** Map a TxErrorKind to its localized message via the active
+ *  `RESULT_OVERLAY_COPY.error` translator. Callers pass the `t`
+ *  returned from `useTranslations("RESULT_OVERLAY_COPY")` so the same
+ *  classifier renders in EN or ES without per-locale duplication. */
+type ErrorTranslator = (key: string) => string;
+
+export function classifyTxError(error: unknown, t: ErrorTranslator): string {
+  return t(`error.${classifyTxErrorKind(error)}`);
 }

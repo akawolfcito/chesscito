@@ -70,7 +70,7 @@ import {
 } from "@/lib/ui/dock-sheet-store";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { COACH_PACK_ITEMS, type CoachPackSize } from "@/lib/contracts/shop-catalog";
-import { classifyTxError, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
+import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
 import {
   ACCEPTED_TOKENS,
   DIFFICULTY_TO_CHAIN,
@@ -108,6 +108,7 @@ function ArenaPageInner() {
   const tArena = useTranslations("ARENA_COPY");
   const tCoach = useTranslations("COACH_COPY");
   const tEntry = useTranslations("COACH_ENTRY_COPY");
+  const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const difficultyLabel = (key: string): string => {
     const k = key as "easy" | "medium" | "hard";
     return ["easy", "medium", "hard"].includes(k) ? tArena(`difficulty.${k}`) : key;
@@ -804,7 +805,7 @@ function ArenaPageInner() {
           source: txSource,
           pack,
           item_id: itemIdNum,
-          error_kind: classifyTxError(err),
+          error_kind: classifyTxErrorKind(err),
         });
       }
       // Stay on paywall so user can retry or use quick review
@@ -1013,7 +1014,7 @@ function ArenaPageInner() {
       // contract/viem strings to the player.
       const friendly = errorKind === "expired"
         ? "Signature expired — tap to get a fresh one"
-        : classifyTxError(err);
+        : classifyTxError(err, tResult);
       setClaimError(friendly);
       setClaimPhase("error");
       track("victory_claim_tx", { stage: "error", error_kind: errorKind });
