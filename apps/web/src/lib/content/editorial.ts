@@ -854,12 +854,12 @@ export const ARENA_COPY = {
   playAsWhite: "Play as White",
   playAsBlack: "Play as Black",
   resign: "Resign",
-  resignConfirm: "Tap again to confirm resign",
+  resignConfirm: "Tap again to confirm",
   undo: "Undo",
   yourTurn: "Your Turn",
   newGame: "New Game",
-  aiThinking: "AI is thinking...",
-  preparingAi: "Preparing AI...",
+  aiThinking: "AI is thinking…",
+  preparingAi: "Preparing AI…",
   promotionTitle: "Promote pawn to:",
   endState: {
     checkmate: {
@@ -868,7 +868,7 @@ export const ARENA_COPY = {
     },
     stalemate: "Stalemate — Draw",
     draw: "Draw",
-    resigned: "You Resigned",
+    resigned: "You resigned",
   },
   playAgain: "PLAY",
   /** Soft-gate banner shown only on direct /arena entry when the player
@@ -889,7 +889,7 @@ export const ARENA_COPY = {
   aiError: "AI disconnected",
   aiTimeout: "AI timed out",
   engineError: "Engine error — please restart the match",
-  restartMatch: "Restart Match",
+  restartMatch: "Restart",
   boardError: "Board error — please restart the game",
   coachSignal: {
     inactiveTitle: "REVIEW",
