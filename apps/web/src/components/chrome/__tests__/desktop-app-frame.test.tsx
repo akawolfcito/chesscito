@@ -68,6 +68,40 @@ describe("isAppRoute", () => {
     expect(isAppRoute("/termsheet")).toBe(false);
     expect(isAppRoute("/privacypolicy")).toBe(false);
   });
+
+  /**
+   * Regression guard for the i18n `[locale]` migration — every app
+   * surface now lives under `/en` or `/es`, so the matcher must strip
+   * the locale segment before checking against the prefix table.
+   * Without the strip, the desktop phone-bezel chrome silently
+   * disappeared on every URL because nothing matched.
+   */
+  it("matches /en/<route> and /es/<route> (post-i18n live shape)", () => {
+    expect(isAppRoute("/en/hub")).toBe(true);
+    expect(isAppRoute("/es/hub")).toBe(true);
+    expect(isAppRoute("/en/exercises")).toBe(true);
+    expect(isAppRoute("/es/exercises")).toBe(true);
+    expect(isAppRoute("/en/arena")).toBe(true);
+    expect(isAppRoute("/es/coach/history")).toBe(true);
+    expect(isAppRoute("/en/trophies")).toBe(true);
+    expect(isAppRoute("/es/victory/0xabc")).toBe(true);
+    expect(isAppRoute("/en/about")).toBe(true);
+    expect(isAppRoute("/es/support")).toBe(true);
+    expect(isAppRoute("/en/why")).toBe(true);
+  });
+
+  it("does NOT match locale-prefixed non-app routes", () => {
+    expect(isAppRoute("/en")).toBe(false);
+    expect(isAppRoute("/es")).toBe(false);
+    expect(isAppRoute("/en/share/daily")).toBe(false);
+    expect(isAppRoute("/es/share/badge")).toBe(false);
+  });
+
+  it("does NOT mistake an unknown locale segment for a known one", () => {
+    // /fr is not in routing.locales — strip must leave it alone so the
+    // prefix table doesn't accidentally match the second segment.
+    expect(isAppRoute("/fr/hub")).toBe(false);
+  });
 });
 
 describe("DesktopAppFrame — portal container context", () => {

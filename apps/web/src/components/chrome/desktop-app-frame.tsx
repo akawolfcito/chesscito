@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState } from "react";
 import { usePathname } from "next/navigation";
+import { routing } from "@/i18n/routing";
 
 /**
  * Pathname prefixes that opt into the desktop phone-bezel chrome. The
@@ -29,10 +30,26 @@ const APP_ROUTE_PREFIXES = [
   "/privacy",
 ] as const;
 
+const LOCALE_SET = new Set<string>(routing.locales);
+
+/** Strip the `/en` or `/es` segment so the prefix table stays
+ *  locale-agnostic. Pre-i18n (Stage 1) routes lived at `/hub`,
+ *  `/exercises`, etc; after the `[locale]` move they all carry a
+ *  locale prefix. Without this strip, `isAppRoute("/en/hub")` would
+ *  return false and the desktop phone-bezel chrome disappeared. */
+function stripLocale(pathname: string): string {
+  const parts = pathname.split("/");
+  if (parts.length >= 2 && LOCALE_SET.has(parts[1])) {
+    return "/" + parts.slice(2).join("/");
+  }
+  return pathname;
+}
+
 export function isAppRoute(pathname: string): boolean {
+  const stripped = stripLocale(pathname);
   for (const prefix of APP_ROUTE_PREFIXES) {
-    if (pathname === prefix) return true;
-    if (pathname.startsWith(prefix + "/")) return true;
+    if (stripped === prefix) return true;
+    if (stripped.startsWith(prefix + "/")) return true;
   }
   return false;
 }
