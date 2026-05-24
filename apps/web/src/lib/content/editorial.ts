@@ -1311,6 +1311,30 @@ export const COACH_COPY = {
    *  Manage / Close depending on `manageOpen` state. */
   manageHistoryOpen: "Manage history",
   manageHistoryClose: "Close",
+  /** Locale badge rendered alongside the analysis title. Language codes
+   *  ("EN"/"ES") stay identical in both bundles by convention; we keep
+   *  them in editorial so the badge can be styled and aria-labeled
+   *  consistently across surfaces. */
+  analysisLocaleBadge: {
+    en: "EN",
+    es: "ES",
+    /** Screen-reader-friendly long form, ICU-keyed by locale code. */
+    ariaLabel: "Analysis language: {locale}",
+  },
+  /** Reanalyze flow (2026-05-24). User regenerates the cached analysis
+   *  in their active locale — costs 1 credit, fires a fresh LLM call,
+   *  overwrites the per-locale cache key for the active locale only. */
+  reanalyze: {
+    cta: "Reanalyze",
+    ariaLabel: "Reanalyze this game in your current language",
+    confirmTitle: "Reanalyze this game?",
+    confirmBody:
+      "This generates a fresh analysis in your current language and uses 1 credit.",
+    confirmAccept: "Yes, reanalyze",
+    confirmCancel: "Cancel",
+    /* Pending overlay reused while the LLM is regenerating. */
+    inFlightLabel: "Generating new analysis…",
+  },
 } as const;
 
 /**

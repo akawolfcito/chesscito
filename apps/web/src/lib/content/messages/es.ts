@@ -409,6 +409,21 @@ const messages = {
       successToast: "Datos del Coach eliminados de nuestros registros",
       errorToast: "No se pudo eliminar — intenta de nuevo",
     },
+    analysisLocaleBadge: {
+      en: "EN",
+      es: "ES",
+      ariaLabel: "Idioma del análisis: {locale}",
+    },
+    reanalyze: {
+      cta: "Reanalizar",
+      ariaLabel: "Reanalizar esta partida en tu idioma actual",
+      confirmTitle: "¿Reanalizar esta partida?",
+      confirmBody:
+        "Esto genera un análisis nuevo en tu idioma actual y usa 1 crédito.",
+      confirmAccept: "Sí, reanalizar",
+      confirmCancel: "Cancelar",
+      inFlightLabel: "Generando nuevo análisis…",
+    },
     historyBannerSubtitle:
       "Coaching personalizado desde tu historial de partidas.",
     backLabel: "Atrás",
