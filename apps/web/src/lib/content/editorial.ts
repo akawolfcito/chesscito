@@ -389,7 +389,7 @@ export const SHOP_SHEET_COPY = {
   title: "SHOP",
   description: "Arcane gear for training.",
   featured: "Featured",
-  buyButton: "Buy with stablecoin",
+  buyButton: "Buy",
   /** Companion CTA shown next to the USDC button on the Founder Badge
    *  card when running outside MiniPay. Routes to the helper itemId
    *  whose priceUsd6 is calibrated so the contract charges 1 CELO
@@ -405,7 +405,7 @@ export const SHOP_SHEET_COPY = {
   moreSoonHint: "Skins, cosmetics and boosters are brewing in the workshop.",
   ariaLabel: "Shop",
   closeAriaLabel: "Close shop",
-  successBannerFormat: "{item} secured!",
+  successBannerFormat: "{item} unlocked!",
   successBannerTxFormat: "tx {hash}",
   buyButtonAriaFormat: "{action}: {item} for {price}",
   status: {
@@ -444,7 +444,7 @@ export const LEADERBOARD_SHEET_COPY = {
 
 export const PURCHASE_CONFIRM_COPY = {
   title: "Confirm purchase",
-  description: "Review the details before signing.",
+  description: "Review the details before you confirm.",
   confirmButton: "Confirm purchase",
   approving: (token: string) => `Approving ${token}...`,
   buying: "Buying...",
@@ -1559,7 +1559,7 @@ export const SHOP_ITEM_COPY = {
    *  COACH_COPY source to avoid drift. */
   coachPack: {
     label: "Coach Credits",
-    subtitle: "Try AI analysis without committing to a subscription.",
+    subtitle: "Try AI analysis — no subscription needed.",
   },
 } as const;
 
@@ -1576,7 +1576,7 @@ export const PRO_COPY = {
    *  the §11 canon mission line. Spec: addendum §3.6 / §6.1 commit #4. */
   kicker: "Training Pass",
   tagline: "Your training plan. Your way to keep Chesscito free for everyone.",
-  subtitle: "Monthly pass that supports open access. Renew when you want — no auto-billing.",
+  subtitle: "Monthly pass that keeps Chesscito open. Renew when you want.",
   priceLabel: "$1.99 / month",
   durationLabel: "30 days",
   ctaBuy: "Unlock PRO",
@@ -1612,7 +1612,7 @@ export const PRO_COPY = {
   /** Surfaced by use-pro-sheet-state when wagmi's wait-for-receipt
    *  exceeds the timeout. Distinct from a generic failure so the user
    *  knows their tx may still confirm on-chain. */
-  txTimeout: "Transaction timed out. Please try again.",
+  txTimeout: "This is taking longer than expected. Please try again.",
   statusActiveSuffix: (daysLeft: number) =>
     daysLeft === 1 ? "Expires tomorrow" : `${daysLeft} days left`,
   /** Inline sub-line shown when daysLeft ≤ 3 (badge in EXPIRING variant).
@@ -1691,7 +1691,7 @@ export const PRO_COPY = {
     walletRequired: "Connect your wallet to purchase PRO.",
     verifyFailedTitle: "Payment confirmed — verification pending.",
     verifyFailedReassurance:
-      "Your transaction is preserved on-chain. Retry won't double-charge.",
+      "Your payment is saved on Celo. Retrying won't double-charge.",
     retryVerifyCta: "Retry verification",
     retryingVerify: "Verifying…",
   },

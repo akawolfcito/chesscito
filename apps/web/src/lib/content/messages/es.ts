@@ -248,7 +248,7 @@ const messages = {
     tagline:
       "Tu plan de entrenamiento. Tu forma de mantener Chesscito libre para todos.",
     subtitle:
-      "Pase mensual que sostiene el acceso abierto. Renueva cuando quieras — sin cobros automáticos.",
+      "Pase mensual que mantiene a Chesscito abierto. Renueva cuando quieras.",
     priceLabel: "$1.99 / mes",
     durationLabel: "30 días",
     ctaBuy: "Activar PRO",
@@ -263,7 +263,7 @@ const messages = {
     closeLabel: "Cerrar PRO",
     noAutoBillingLine: "({duration} · sin cobros automáticos)",
     insufficientBalance: "Saldo insuficiente de stablecoin.",
-    txTimeout: "La transacción tardó demasiado. Intenta de nuevo.",
+    txTimeout: "Esto tardó más de lo esperado. Intenta de nuevo.",
     statusActiveSuffix:
       "{daysLeft, plural, =1 {Vence mañana} other {# días restantes}}",
     expiringMicroCopy: "Renueva cuando quieras para seguir entrenando",
@@ -290,7 +290,7 @@ const messages = {
       inactive: {
         title: "Coach PRO",
         body: "Recibe feedback después de partidas y prácticas.",
-        chips: ["Errores", "Tips", "Historial"],
+        chips: ["Errores", "Consejos", "Historial"],
         cta: "COACH",
       },
       active: {
@@ -309,7 +309,7 @@ const messages = {
     perksActive: [
       "Coach AI: análisis instantáneo, sin límite diario",
       "Plan de entrenamiento personalizado según tu historial",
-      "Tu aporte mantiene a Chesscito libre para nuevos jugadores",
+      "Tu aporte mantiene a Chesscito abierto para nuevos jugadores",
     ],
     errors: {
       notConfigured: "PRO aún no está activo. Vuelve a intentarlo pronto.",
@@ -318,8 +318,8 @@ const messages = {
       walletRequired: "Conecta tu wallet para comprar PRO.",
       verifyFailedTitle: "Pago confirmado — verificación pendiente.",
       verifyFailedReassurance:
-        "Tu transacción quedó registrada en la cadena. Reintentar no genera doble cobro.",
-      retryVerifyCta: "Reintentar verificación",
+        "Tu pago quedó guardado en Celo. Reintentar no genera doble cobro.",
+      retryVerifyCta: "Reintentar",
       retryingVerify: "Verificando…",
     },
     receipt: {
@@ -1160,7 +1160,7 @@ const messages = {
     title: "TIENDA",
     description: "Equipo arcano para entrenar.",
     featured: "Destacado",
-    buyButton: "Comprar con stablecoin",
+    buyButton: "Comprar",
     buyWithCelo: "Comprar con 1 CELO",
     payWithCeloShort: "Pagar con CELO",
     buyButtonComingSoon: "Próximamente",
@@ -1170,7 +1170,7 @@ const messages = {
     moreSoonHint: "Skins, cosméticos y boosters se preparan en el taller.",
     ariaLabel: "Tienda",
     closeAriaLabel: "Cerrar tienda",
-    successBannerFormat: "¡{item} asegurado!",
+    successBannerFormat: "¡{item} desbloqueado!",
     successBannerTxFormat: "tx {hash}",
     buyButtonAriaFormat: "{action}: {item} por {price}",
     status: {
@@ -1203,10 +1203,10 @@ const messages = {
   },
   PURCHASE_CONFIRM_COPY: {
     title: "Confirmar compra",
-    description: "Revisa los detalles antes de firmar.",
+    description: "Revisa los detalles antes de confirmar.",
     confirmButton: "Confirmar compra",
-    approving: "Aprobando {token}...",
-    buying: "Comprando...",
+    approving: "Aprobando {token}…",
+    buying: "Comprando…",
     cancel: "Cancelar",
     closeAriaLabel: "Cancelar compra",
     unknownNetwork: "Red desconocida",
@@ -1294,7 +1294,7 @@ const messages = {
     },
     coachPack: {
       label: "Créditos de Coach",
-      subtitle: "Prueba el análisis IA sin comprometerte a una suscripción.",
+      subtitle: "Prueba el análisis IA — sin suscripción.",
     },
   },
   HUB_V2_SPLASH_COPY: {
