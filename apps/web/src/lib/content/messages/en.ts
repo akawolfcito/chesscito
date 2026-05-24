@@ -75,9 +75,9 @@ const m = messages as any;
 m.HUD_COPY.proRemainingFormat = "{days}d";
 m.TX_PROGRESS_COPY.stepCounter = "Step {current} of {total}";
 m.SHARE_COPY.badge =
-  "I earned the {piece} Ascendant badge on Chesscito! {stars}/15 stars — permanently on-chain.";
+  "I earned the {piece} Ascendant badge on Chesscito! {stars}/15 stars — saved on Celo forever.";
 m.SHARE_COPY.score =
-  "I just locked my Chesscito score on-chain! {stars}/15 stars — permanently recorded.";
+  "I just saved my Chesscito score on Celo! {stars}/15 stars — kept forever.";
 m.SHARE_COPY.shop = "I just got {item} on Chesscito!";
 m.VICTORY_PAGE_COPY.metaCheckmate = "Checkmate in {moves} moves";
 m.VICTORY_PAGE_COPY.metaComplete = "Complete in {moves} moves";

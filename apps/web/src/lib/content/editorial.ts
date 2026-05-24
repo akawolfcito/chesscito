@@ -132,21 +132,21 @@ export const SCORE_UNIT = "pts";
 
 export const RESULT_OVERLAY_COPY = {
   badge: {
-    title: "Badge Claimed!",
+    title: "Badge Earned!",
     subtitle: (piece: string) => `${piece} Ascendant is now yours to keep`,
   },
   score: {
-    title: "Score Recorded!",
+    title: "Score Saved!",
     subtitle: "Saved on Celo. Ready to share.",
   },
   shop: {
     title: "Purchase Complete!",
     subtitle: (item: string) =>
-      `${item} acquired — thank you for supporting Chesscito`,
+      `${item} unlocked — thanks for supporting Chesscito`,
   },
   error: {
-    title: "Transaction Failed",
-    cancelled: "Transaction was cancelled",
+    title: "Couldn't save",
+    cancelled: "Save was cancelled",
     insufficientFunds: "Not enough funds to complete this transaction",
     network: "Network error — check your connection and try again",
     timeout:
@@ -174,7 +174,7 @@ export const RESULT_OVERLAY_COPY = {
      *  instead of dropping users into the generic error string. */
     purchaseKindCopy: {
       error: {
-        title: "Purchase Failed",
+        title: "Couldn't buy",
         subtitle: "Something went wrong while completing your purchase.",
         hint: "No charge was applied. Try again or close and reopen the shop.",
       },
@@ -235,7 +235,7 @@ export const BADGE_SHEET_COPY = {
   claiming: "Claiming...",
   locked: "Complete trials to unlock",
   notStarted: "Complete trials to unlock",
-  viewTrophies: "View your Victories",
+  viewTrophies: "See Trophies",
   /** Inline success banner rendered above the badge grid for ~2.5s after
    *  a successful claim on the scaffold surface. ExercisesScreen legacy uses
    *  the global ResultOverlay for the same purpose; the scaffold has no
@@ -284,9 +284,9 @@ export const INVITE_COPY = {
 export const SHARE_COPY = {
   button: "Share",
   badge: (piece: string, stars: number) =>
-    `I earned the ${piece} Ascendant badge on Chesscito! ${stars}/15 stars — permanently on-chain.`,
+    `I earned the ${piece} Ascendant badge on Chesscito! ${stars}/15 stars — saved on Celo forever.`,
   score: (stars: number) =>
-    `I just locked my Chesscito score on-chain! ${stars}/15 stars — permanently recorded.`,
+    `I just saved my Chesscito score on Celo! ${stars}/15 stars — kept forever.`,
   shop: (item: string) =>
     `I just got ${item} on Chesscito!`,
   fallbackCopied: "Copied to clipboard!",
@@ -647,8 +647,8 @@ export const DIFFICULTY_LABELS: Record<number, string> = {
 
 export const VICTORY_CLAIM_COPY = {
   progressTitle: "Saving...",
-  claimButton: "SAVE WIN",
-  claimHelper: "Save this victory permanently and unlock your share card",
+  claimButton: "SAVE VICTORY",
+  claimHelper: "Save this victory forever and unlock your share card",
   claimValueHint: (price: string) => price,
   teaserLabel: "Unlock when you save",
   teaserCheckmate: (moves: number) => `Checkmate in ${moves} moves`,
@@ -1334,7 +1334,7 @@ export const COACH_ENTRY_COPY = {
     `Analyze match from ${timestamp}, ${difficulty}, ${result}`,
   victorySecondaryDescribedById: "victory-coach-cta-desc",
   victorySecondaryDescription:
-    "Secondary action — Mint Victory above is the primary action.",
+    "Secondary action — Save Victory above is the primary action.",
   offlineToAnalyze: "You need to be online to analyze",
   /** Dismiss control on the persist-error toast. */
   persistDismissLabel: "Dismiss",
@@ -2444,7 +2444,7 @@ export const CLAIM_COPY = {
   kinds: {
     badge: "{name} badge",
     score: "Save score · {points} pts",
-    victoryNft: "Mint your victory · {difficulty}",
+    victoryNft: "Save your victory · {difficulty}",
   },
   claimVerb: "Claim",
   costGasOnly: "Network fee only",
