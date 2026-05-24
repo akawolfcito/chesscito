@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
-import { ARENA_COPY } from "@/lib/content/editorial";
 import type { CoachResponse } from "@/lib/coach/types";
 import { formatTime } from "@/lib/game/arena-utils";
 
@@ -16,6 +15,11 @@ type Props = {
   elapsedMs: number;
   credits: number;
   onPlayAgain: () => void;
+  /** Hub back affordance — kept on the prop interface so callers
+   *  needn't be updated, but no longer rendered as a footer link.
+   *  The host shell (CandyGlassShell) already exposes a top-right
+   *  close control that fires this handler, so the duplicate link
+   *  read as visual clutter without adding any new exit path. */
   onBackToHub: () => void;
   onViewHistory?: () => void;
   /** PR 4: surfaces PRO-only history footer when truthy alongside historyMeta. */
@@ -31,14 +35,21 @@ export function CoachPanel({
   elapsedMs,
   credits,
   onPlayAgain,
-  onBackToHub,
+  onBackToHub: _onBackToHub,
   onViewHistory,
   proActive,
   historyMeta,
 }: Props) {
   const t = useTranslations("COACH_COPY");
+  const tArena = useTranslations("ARENA_COPY");
+  // Prop kept on the interface for caller compatibility but no longer
+  // rendered (shell exposes the close control). Reference it so the
+  // unused-vars linter stays quiet.
+  void _onBackToHub;
   const time = formatTime(elapsedMs);
-  const diffLabel = ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty;
+  const diffLabel =
+    (tArena.raw("difficulty") as Record<string, string>)[difficulty] ??
+    difficulty;
   const warmText = "rgba(63, 34, 8, 0.95)";
   const warmMuted = "rgba(110, 65, 15, 0.75)";
   const warmSubtle = "rgba(110, 65, 15, 0.55)";
@@ -122,10 +133,14 @@ export function CoachPanel({
         </section>
       )}
 
-      {/* CTAs — Play Again primary, History secondary, Back to Hub tertiary */}
+      {/* CTAs — Play Again primary, History secondary. The host shell
+       *  (CandyGlassShell) already owns the back-to-hub affordance via
+       *  its top-right close control, so the previous footer link was
+       *  removed (2026-05-24 — duplicated exit affordance feedback). */}
       <div className="mt-2 flex flex-col gap-2">
         <Button type="button" variant="game-primary" size="game" onClick={onPlayAgain}>
-          <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
+          <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" />{" "}
+          {tArena("playAgain")}
         </Button>
         {onViewHistory && (
           <Button
@@ -141,14 +156,6 @@ export function CoachPanel({
             {t("pastSessions")}
           </Button>
         )}
-        <button
-          type="button"
-          onClick={onBackToHub}
-          className="w-full py-1 text-xs font-semibold underline underline-offset-2"
-          style={{ color: "rgba(110, 65, 15, 0.70)" }}
-        >
-          {ARENA_COPY.backToHub}
-        </button>
       </div>
 
       {proActive && historyMeta && (
