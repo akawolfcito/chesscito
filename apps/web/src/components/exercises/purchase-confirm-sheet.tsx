@@ -1,8 +1,11 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { formatUsd } from "@/lib/contracts/tokens";
-import { PURCHASE_CONFIRM_COPY, PURCHASE_FIELD_LABELS, CHAIN_NAMES, SHOP_SHEET_COPY } from "@/lib/content/editorial";
+import { CHAIN_NAMES } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 
 type SelectedItem = {
@@ -39,21 +42,24 @@ export function PurchaseConfirmSheet({
   purchasePhase,
   onConfirm,
 }: PurchaseConfirmSheetProps) {
+  const t = useTranslations("PURCHASE_CONFIRM_COPY");
+  const tField = useTranslations("PURCHASE_FIELD_LABELS");
+  const tShop = useTranslations("SHOP_SHEET_COPY");
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
         hideClose
-        title={PURCHASE_CONFIRM_COPY.title}
-        description={PURCHASE_CONFIRM_COPY.description}
+        title={t("title")}
+        description={t("description")}
         className="mission-shell sheet-bg-shop rounded-t-3xl border-0"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/shop-menu" />}
-            title={PURCHASE_CONFIRM_COPY.title}
-            close={{ onClick: () => onOpenChange(false), label: "Cancel purchase" }}
+            title={t("title")}
+            close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
           />
         </div>
         {selectedItem ? (
@@ -89,22 +95,26 @@ export function PurchaseConfirmSheet({
             {/* Secondary details */}
             {paymentTokenSymbol ? (
               <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-                {PURCHASE_FIELD_LABELS.payingWith}:{" "}
+                {tField("payingWith")}:{" "}
                 <span className="font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
                   {paymentTokenSymbol}
                 </span>
               </p>
             ) : null}
             <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {PURCHASE_FIELD_LABELS.status}:{" "}
+              {tField("status")}:{" "}
               <span className="font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-                {selectedItem.configured ? (selectedItem.enabled ? SHOP_SHEET_COPY.status.available : SHOP_SHEET_COPY.status.unavailable) : SHOP_SHEET_COPY.status.notConfigured}
+                {selectedItem.configured
+                  ? selectedItem.enabled
+                    ? tShop("status.available")
+                    : tShop("status.unavailable")
+                  : tShop("status.notConfigured")}
               </span>
             </p>
             <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {PURCHASE_FIELD_LABELS.network}:{" "}
+              {tField("network")}:{" "}
               <span className="font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-                {chainId ? (CHAIN_NAMES[chainId] ?? "Unknown network") : "—"}
+                {chainId ? (CHAIN_NAMES[chainId] ?? t("unknownNetwork")) : "—"}
               </span>
             </p>
             <Button
@@ -128,10 +138,10 @@ export function PurchaseConfirmSheet({
                 <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               )}
               {purchasePhase === "approving"
-                ? PURCHASE_CONFIRM_COPY.approving(paymentTokenSymbol ?? "")
+                ? t("approving", { token: paymentTokenSymbol ?? "" })
                 : purchasePhase === "buying"
-                  ? PURCHASE_CONFIRM_COPY.buying
-                  : PURCHASE_CONFIRM_COPY.confirmButton}
+                  ? t("buying")
+                  : t("confirmButton")}
             </Button>
             <button
               type="button"
@@ -140,7 +150,7 @@ export function PurchaseConfirmSheet({
               onClick={() => onOpenChange(false)}
               disabled={isWriting || purchasePhase !== "idle"}
             >
-              {PURCHASE_CONFIRM_COPY.cancel}
+              {t("cancel")}
             </button>
           </div>
         ) : null}

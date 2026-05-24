@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BADGE_EARNED_COPY, LABYRINTH_COPY, PIECE_COMPLETE_COPY, PIECE_LABELS, RESULT_OVERLAY_COPY, SHARE_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 import { track } from "@/lib/telemetry";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -53,45 +53,6 @@ function getBadgeImg(pieceType?: PieceKey): string {
     king: `${base}/w-king.png`,
   };
   return map[pieceType ?? "rook"];
-}
-
-function getTitle(variant: Variant, errorKind?: ErrorKind): string {
-  if (variant === "error") {
-    if (errorKind) {
-      return RESULT_OVERLAY_COPY.error.purchaseKindCopy[errorKind].title;
-    }
-    return RESULT_OVERLAY_COPY.error.title;
-  }
-  return RESULT_OVERLAY_COPY[variant].title;
-}
-
-function getSubtitle(
-  variant: Variant,
-  pieceType?: PieceKey,
-  itemLabel?: string,
-  errorMessage?: string,
-  errorKind?: ErrorKind,
-): string {
-  switch (variant) {
-    case "badge":
-      return RESULT_OVERLAY_COPY.badge.subtitle(
-        PIECE_LABELS[pieceType ?? "rook"]
-      );
-    case "score":
-      return RESULT_OVERLAY_COPY.score.subtitle;
-    case "shop":
-      return RESULT_OVERLAY_COPY.shop.subtitle(itemLabel ?? "Item");
-    case "error":
-      if (errorKind) {
-        return RESULT_OVERLAY_COPY.error.purchaseKindCopy[errorKind].subtitle;
-      }
-      return errorMessage ?? RESULT_OVERLAY_COPY.error.unknown;
-  }
-}
-
-function getHint(errorKind?: ErrorKind): string | null {
-  if (!errorKind) return null;
-  return RESULT_OVERLAY_COPY.error.purchaseKindCopy[errorKind].hint;
 }
 
 function SuccessImage({
@@ -178,14 +139,16 @@ function StarsRow({
   );
 }
 
-function getShareText(variant: SuccessVariant, pieceType?: PieceKey, itemLabel?: string, totalStars?: number): string {
+function useShareText(variant: SuccessVariant, pieceType?: PieceKey, itemLabel?: string, totalStars?: number): string {
+  const tShare = useTranslations("SHARE_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
   switch (variant) {
     case "badge":
-      return SHARE_COPY.badge(PIECE_LABELS[pieceType ?? "rook"], totalStars ?? 0);
+      return tShare("badge", { piece: tPiece(pieceType ?? "rook"), stars: totalStars ?? 0 });
     case "score":
-      return SHARE_COPY.score(totalStars ?? 0);
+      return tShare("score", { stars: totalStars ?? 0 });
     case "shop":
-      return SHARE_COPY.shop(itemLabel ?? "an item");
+      return tShare("shop", { item: itemLabel ?? "an item" });
   }
 }
 
@@ -221,8 +184,9 @@ function ShareRow({ variant, pieceType, itemLabel, totalStars }: {
   itemLabel?: string;
   totalStars?: number;
 }) {
+  const tShare = useTranslations("SHARE_COPY");
   const [open, setOpen] = useState(false);
-  const text = getShareText(variant, pieceType, itemLabel, totalStars);
+  const text = useShareText(variant, pieceType, itemLabel, totalStars);
   const cardUrl = getCardUrl(variant, pieceType, totalStars);
   const shareUrl = getShareUrl(variant, pieceType, totalStars);
   return (
@@ -234,7 +198,7 @@ function ShareRow({ variant, pieceType, itemLabel, totalStars }: {
         onClick={() => setOpen(true)}
         className="w-full"
       >
-        {SHARE_COPY.button}
+        {tShare("button")}
       </Button>
       <ShareModal
         open={open}
@@ -259,13 +223,45 @@ export function ResultOverlay({
   onRetry,
   totalStars,
 }: ResultOverlayProps) {
+  const tResult = useTranslations("RESULT_OVERLAY_COPY");
+  const tShare = useTranslations("SHARE_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
   const [exiting, setExiting] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const isError = variant === "error";
-  const title = getTitle(variant, errorKind);
-  const subtitle = getSubtitle(variant, pieceType, itemLabel, errorMessage, errorKind);
-  const hint = isError ? getHint(errorKind) : null;
-  const shareText = !isError ? getShareText(variant, pieceType, itemLabel, totalStars) : "";
+
+  const title = (() => {
+    if (variant === "error") {
+      if (errorKind) return tResult(`error.purchaseKindCopy.${errorKind}.title` as const);
+      return tResult("error.title");
+    }
+    return tResult(`${variant}.title` as const);
+  })();
+
+  const subtitle = (() => {
+    switch (variant) {
+      case "badge":
+        return tResult("badge.subtitle", { piece: tPiece(pieceType ?? "rook") });
+      case "score":
+        return tResult("score.subtitle");
+      case "shop":
+        return tResult("shop.subtitle", { item: itemLabel ?? "Item" });
+      case "error":
+        if (errorKind) return tResult(`error.purchaseKindCopy.${errorKind}.subtitle` as const);
+        return errorMessage ?? tResult("error.unknown");
+    }
+  })();
+
+  const hint = isError && errorKind
+    ? tResult(`error.purchaseKindCopy.${errorKind}.hint` as const)
+    : null;
+
+  const shareText = useShareText(
+    isError ? "badge" : variant,
+    pieceType,
+    itemLabel,
+    totalStars,
+  );
   const shareCardUrl = !isError ? getCardUrl(variant, pieceType, totalStars) : null;
   const shareCanonicalUrl = !isError ? getShareUrl(variant, pieceType, totalStars) : undefined;
 
@@ -294,12 +290,12 @@ export function ResultOverlay({
         <CandyGlassShell
           title={title}
           onClose={handleDismiss}
-          closeLabel={RESULT_OVERLAY_COPY.cta.dismiss}
+          closeLabel={tResult("cta.dismiss")}
           cta={
             isError && onRetry ? (
               <div className="flex flex-col gap-1.5">
                 <Button type="button" variant="game-solid" size="game" onClick={onRetry} className="w-full">
-                  {RESULT_OVERLAY_COPY.cta.tryAgain}
+                  {tResult("cta.tryAgain")}
                 </Button>
                 <button
                   type="button"
@@ -307,20 +303,20 @@ export function ResultOverlay({
                   className="w-full py-1 text-xs font-semibold underline underline-offset-2"
                   style={{ color: "rgba(110, 65, 15, 0.70)" }}
                 >
-                  {RESULT_OVERLAY_COPY.cta.dismiss}
+                  {tResult("cta.dismiss")}
                 </button>
               </div>
             ) : isError ? (
               <Button type="button" variant="game-primary" size="game" onClick={handleDismiss} className="w-full">
-                {RESULT_OVERLAY_COPY.cta.dismiss}
+                {tResult("cta.dismiss")}
               </Button>
             ) : (
               <div className="flex flex-col gap-1.5">
                 <Button type="button" variant="game-primary" size="game" onClick={() => setShareOpen(true)} className="w-full">
-                  {SHARE_COPY.button}
+                  {tShare("button")}
                 </Button>
                 <Button type="button" variant="game-ghost" size="game" onClick={handleDismiss} className="w-full">
-                  {RESULT_OVERLAY_COPY.cta.continue}
+                  {tResult("cta.continue")}
                 </Button>
               </div>
             )
@@ -339,7 +335,7 @@ export function ResultOverlay({
                       rel="noopener noreferrer"
                       className="underline underline-offset-2 opacity-70"
                     >
-                      {RESULT_OVERLAY_COPY.cta.receiptOnCeloscan}
+                      {tResult("cta.receiptOnCeloscan")}
                     </Link>
                   </>
                 ) : null}
@@ -420,8 +416,10 @@ export function BadgeEarnedPrompt({
   onSubmitScore,
   onLater,
 }: BadgeEarnedPromptProps) {
+  const tBadge = useTranslations("BADGE_EARNED_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
   const [exiting, setExiting] = useState(false);
-  const title = BADGE_EARNED_COPY.title(PIECE_LABELS[pieceType]);
+  const title = tBadge("title", { piece: tPiece(pieceType) });
 
   useEffect(() => {
     track("modal_open", { id: "badge-earned", piece: pieceType, stars: totalStars });
@@ -455,9 +453,9 @@ export function BadgeEarnedPrompt({
         </div>
 
         <CandyGlassShell
-          title="Badge Earned"
+          title={tBadge("headerLabel")}
           onClose={handleLater}
-          closeLabel={BADGE_EARNED_COPY.later}
+          closeLabel={tBadge("later")}
           cta={
             <div className="flex flex-col gap-1.5">
               <Button
@@ -467,7 +465,7 @@ export function BadgeEarnedPrompt({
                 onClick={onSubmitScore}
                 className="w-full"
               >
-                {BADGE_EARNED_COPY.submitScore}
+                {tBadge("submitScore")}
               </Button>
               <button
                 type="button"
@@ -475,7 +473,7 @@ export function BadgeEarnedPrompt({
                 className="w-full py-1 text-xs font-semibold underline underline-offset-2"
                 style={{ color: "rgba(110, 65, 15, 0.70)" }}
               >
-                {BADGE_EARNED_COPY.later}
+                {tBadge("later")}
               </button>
             </div>
           }
@@ -544,6 +542,9 @@ export function PieceCompletePrompt({
   onTryLabyrinth,
   onSubmitScore,
 }: PieceCompletePromptProps) {
+  const tComplete = useTranslations("PIECE_COMPLETE_COPY");
+  const tLab = useTranslations("LABYRINTH_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
@@ -551,10 +552,10 @@ export function PieceCompletePrompt({
   }, [pieceType, totalStars, nextPiece]);
 
   const subtitle = nextPiece && hasClaimedBadge
-    ? PIECE_COMPLETE_COPY.subtitleWithNext(PIECE_LABELS[nextPiece])
+    ? tComplete("subtitleWithNext", { next: tPiece(nextPiece) })
     : !hasClaimedBadge
-      ? PIECE_COMPLETE_COPY.subtitleKeepPracticing
-      : PIECE_COMPLETE_COPY.subtitleFinal;
+      ? tComplete("subtitleKeepPracticing")
+      : tComplete("subtitleFinal");
 
   function handleAction(cb: () => void) {
     setExiting(true);
@@ -566,7 +567,7 @@ export function PieceCompletePrompt({
       className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
-      aria-label={PIECE_COMPLETE_COPY.title}
+      aria-label={tComplete("title")}
       onClick={() => handleAction(onPracticeAgain)}
     >
       <div
@@ -575,9 +576,9 @@ export function PieceCompletePrompt({
         onClick={(e) => e.stopPropagation()}
       >
         <CandyGlassShell
-          title={PIECE_COMPLETE_COPY.title}
+          title={tComplete("title")}
           onClose={() => handleAction(onPracticeAgain)}
-          closeLabel={PIECE_COMPLETE_COPY.practiceAgain}
+          closeLabel={tComplete("practiceAgain")}
           cta={
             /* Trimmed CTA hierarchy — was 4 visible actions, dropped to
                2 buttons + 1 quiet text link. The X close handles
@@ -594,7 +595,7 @@ export function PieceCompletePrompt({
                   onClick={() => handleAction(onNextPiece)}
                   className="w-full"
                 >
-                  {PIECE_COMPLETE_COPY.nextPiece(PIECE_LABELS[nextPiece])}
+                  {tComplete("nextPiece", { piece: tPiece(nextPiece) })}
                 </Button>
               ) : (
                 <Button
@@ -604,7 +605,7 @@ export function PieceCompletePrompt({
                   onClick={() => handleAction(onArena)}
                   className="w-full"
                 >
-                  {PIECE_COMPLETE_COPY.tryArena}
+                  {tComplete("tryArena")}
                 </Button>
               )}
               {onSubmitScore && (
@@ -615,7 +616,7 @@ export function PieceCompletePrompt({
                   onClick={() => handleAction(onSubmitScore)}
                   className="w-full"
                 >
-                  {PIECE_COMPLETE_COPY.submitScore}
+                  {tComplete("submitScore")}
                 </Button>
               )}
               {onTryLabyrinth && (
@@ -625,7 +626,7 @@ export function PieceCompletePrompt({
                   className="w-full py-1.5 text-xs font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
                   style={{ color: "rgba(110, 65, 15, 0.70)" }}
                 >
-                  {LABYRINTH_COPY.orTryLabyrinth}
+                  {tLab("orTryLabyrinth")}
                 </button>
               )}
               {/* Tertiary Coach discovery — skip when the primary CTA
@@ -641,7 +642,7 @@ export function PieceCompletePrompt({
                   className="w-full py-1.5 text-xs font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
                   style={{ color: "rgba(110, 65, 15, 0.70)" }}
                 >
-                  {PIECE_COMPLETE_COPY.coachHint}
+                  {tComplete("coachHint")}
                 </button>
               )}
             </div>

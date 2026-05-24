@@ -119,5 +119,28 @@ m.SAVED_CHIP_COPY.ariaLabelWithReceipt =
   "Score saved on chain: {stars} of {total} stars. Tap to view receipt on Celoscan.";
 m.MISSION_DETAIL_COPY.closeLabelFormat = "Close {title}";
 m.MISSION_BRIEFING_COPY.moveObjective = "Move your {piece} to {target}";
+m.LABYRINTH_COPY.missionHint = "Reach the star · optimal {optimal} moves";
+m.LABYRINTH_COPY.movesLabel = "{n, plural, =1 {# move} other {# moves}}";
+m.LABYRINTH_COPY.completeStars = "{stars}/3 ★";
+m.PURCHASE_CONFIRM_COPY.approving = "Approving {token}...";
+m.EXERCISE_DRAWER_COPY.progressLabel = "{earned}/{max}";
+m.EXERCISE_DRAWER_COPY.badgeThresholdHint = "Badge at {threshold} stars";
+m.BADGE_SHEET_COPY.claimSuccess = "{piece} Badge claimed!";
+m.SHOP_SHEET_COPY.successBannerFormat = "{item} secured!";
+m.SHOP_SHEET_COPY.successBannerTxFormat = "tx {hash}";
+m.SHOP_SHEET_COPY.buyButtonAriaFormat = "{action}: {item} for {price}";
+m.MISSION_BRIEFING_COPY.visibleMissionTargetFormat = "Move to {target}";
+m.MISSION_BRIEFING_COPY.openDetailsLabyrinthAriaFormat = "Open mission details — optimal path {moves} moves";
+m.MISSION_BRIEFING_COPY.openDetailsTargetAriaFormat = "Open mission details — target {target}";
+m.HUD_COPY.shieldsAriaLabel =
+  "{count, plural, =1 {1 streak shield available} other {# streak shields available}}";
+m.HUD_COPY.shieldsFormat = "Shield ×{count}";
+m.RESULT_OVERLAY_COPY.badge.subtitle = "{piece} Ascendant is now yours to keep";
+m.RESULT_OVERLAY_COPY.shop.subtitle = "{item} acquired — thank you for supporting Chesscito";
+m.BADGE_EARNED_COPY.title = "{piece} Ascendant Earned";
+m.PIECE_COMPLETE_COPY.subtitleWithNext = "You've mastered this piece! The {next} awaits.";
+m.PIECE_COMPLETE_COPY.nextPiece = "Start {piece}";
+m.UNLOCK_COPY.title = "{piece} Unlocked!";
+m.UNLOCK_COPY.cta = "Start {piece}";
 
 export default messages;

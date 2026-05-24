@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
 import {
@@ -7,7 +10,6 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { SHOP_SHEET_COPY } from "@/lib/content/editorial";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 
@@ -44,9 +46,9 @@ type ShopSheetProps = {
 
 /** Derives the kicker label for an item based on its label content.
  *  Badge = support item, Shield = training utility. */
-function getKicker(label: string): string {
-  if (label.toLowerCase().includes("badge")) return SHOP_SHEET_COPY.kicker.support;
-  return SHOP_SHEET_COPY.kicker.training;
+function getKickerKey(label: string): "support" | "training" {
+  if (label.toLowerCase().includes("badge")) return "support";
+  return "training";
 }
 
 /** Derives the icon name for an item. */
@@ -56,24 +58,25 @@ function getIcon(label: string): "trophy" | "shield" {
 
 /** Availability chip for an item. */
 function AvailabilityChip({ configured, enabled }: { configured: boolean; enabled: boolean }) {
+  const t = useTranslations("SHOP_SHEET_COPY");
   if (configured && enabled) {
     return (
       <CandyChip variant="success" tone="subtle">
         <CandyIcon name="check" className="mr-0.5 inline h-2.5 w-2.5" />
-        {SHOP_SHEET_COPY.status.available}
+        {t("status.available")}
       </CandyChip>
     );
   }
   if (configured) {
     return (
       <CandyChip variant="danger" tone="subtle">
-        {SHOP_SHEET_COPY.status.unavailable}
+        {t("status.unavailable")}
       </CandyChip>
     );
   }
   return (
     <CandyChip variant="warm" tone="subtle">
-      {SHOP_SHEET_COPY.status.notConfigured}
+      {t("status.notConfigured")}
     </CandyChip>
   );
 }
@@ -98,16 +101,17 @@ function ShopItemCard({
   isFeatured: boolean;
   onSelectItem: (itemId: bigint) => void;
 }) {
-  const kicker = getKicker(item.label);
+  const t = useTranslations("SHOP_SHEET_COPY");
+  const kicker = t(`kicker.${getKickerKey(item.label)}` as const);
   const icon = getIcon(item.label);
   const priceLabel = item.configured
     ? formatUsd(item.onChainPrice)
-    : SHOP_SHEET_COPY.status.notConfigured;
+    : t("status.notConfigured");
 
   const buyLabel = !item.configured
-    ? SHOP_SHEET_COPY.buyButtonComingSoon
+    ? t("buyButtonComingSoon")
     : !item.enabled
-      ? SHOP_SHEET_COPY.buyButtonUnavailable
+      ? t("buyButtonUnavailable")
       : priceLabel; // Show price on the button for better conversion feel
 
   return (
@@ -130,7 +134,7 @@ function ShopItemCard({
         <div className="shop-item-tile-identity">
           <div className="flex items-center justify-between">
             <p className="shop-item-tile-kicker">{kicker}</p>
-            {isFeatured && <span className="shop-item-tile-featured-label">{SHOP_SHEET_COPY.featured}</span>}
+            {isFeatured && <span className="shop-item-tile-featured-label">{t("featured")}</span>}
           </div>
           <p className="shop-item-tile-name">{item.label}</p>
           <p className="shop-item-tile-subtitle">{item.subtitle}</p>
@@ -146,9 +150,9 @@ function ShopItemCard({
               type="button"
               onClick={() => onSelectItem(item.celoSibling!.itemId)}
               className="shop-item-tile-celo-link"
-              aria-label={SHOP_SHEET_COPY.buyWithCelo}
+              aria-label={t("buyWithCelo")}
             >
-              Pay with CELO
+              {t("payWithCeloShort")}
             </button>
           )}
         </div>
@@ -158,7 +162,7 @@ function ShopItemCard({
           className="shop-item-tile-buy-btn"
           disabled={!item.configured || !item.enabled}
           onClick={() => onSelectItem(item.itemId)}
-          aria-label={`${SHOP_SHEET_COPY.buyButton}: ${item.label} for ${priceLabel}`}
+          aria-label={t("buyButtonAriaFormat", { action: t("buyButton"), item: item.label, price: priceLabel })}
         >
           {buyLabel}
         </PrincipalButton>
@@ -175,6 +179,7 @@ export function ShopSheet({
   successBanner = null,
   showTrigger = true,
 }: ShopSheetProps) {
+  const t = useTranslations("SHOP_SHEET_COPY");
   // Grouping items by category (rough logic based on name)
   const supportItems = items.filter(i => i.label.toLowerCase().includes("badge"));
   const trainingItems = items.filter(i => !i.label.toLowerCase().includes("badge"));
@@ -185,7 +190,7 @@ export function ShopSheet({
         <SheetTrigger asChild>
           <button
             type="button"
-            aria-label="Shop"
+            aria-label={t("ariaLabel")}
             className="relative flex shrink-0 items-center justify-center"
           >
             <img
@@ -194,15 +199,15 @@ export function ShopSheet({
               aria-hidden="true"
               className="h-full w-full object-contain"
             />
-            <span className="sr-only">Shop</span>
+            <span className="sr-only">{t("ariaLabel")}</span>
           </button>
         </SheetTrigger>
       ) : null}
       <SheetContent
         side="bottom"
         hideClose
-        title={SHOP_SHEET_COPY.title}
-        description={SHOP_SHEET_COPY.description}
+        title={t("title")}
+        description={t("description")}
         className="mission-shell sheet-bg-shop flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         {/* Sheet header — canary adopter of <ContextualHeader close-control>.
@@ -215,9 +220,9 @@ export function ShopSheet({
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/shop-menu" />}
-            title={SHOP_SHEET_COPY.title}
-            subtitle={SHOP_SHEET_COPY.description}
-            close={{ onClick: () => onOpenChange(false), label: "Close shop" }}
+            title={t("title")}
+            subtitle={t("description")}
+            close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
           />
         </div>
 
@@ -237,13 +242,13 @@ export function ShopSheet({
                 className="text-sm font-extrabold"
                 style={{ color: "rgba(6, 78, 59, 0.95)" }}
               >
-                {successBanner.itemLabel} secured!
+                {t("successBannerFormat", { item: successBanner.itemLabel })}
               </p>
               <p
                 className="font-mono text-xs"
                 style={{ color: "rgba(6, 78, 59, 0.70)" }}
               >
-                tx {successBanner.txHashShort}
+                {t("successBannerTxFormat", { hash: successBanner.txHashShort })}
               </p>
             </div>
           </div>
@@ -256,14 +261,14 @@ export function ShopSheet({
               className="text-center text-sm"
               style={{ color: "rgba(110, 65, 15, 0.70)" }}
             >
-              {SHOP_SHEET_COPY.empty}
+              {t("empty")}
             </p>
           )}
 
           {/* Support Section */}
           {supportItems.length > 0 && (
             <div className="flex flex-col gap-3">
-              <ShopSectionHeader title={SHOP_SHEET_COPY.sections.support} />
+              <ShopSectionHeader title={t("sections.support")} />
               {supportItems.map((item, index) => (
                 <ShopItemCard
                   key={item.itemId.toString()}
@@ -278,7 +283,7 @@ export function ShopSheet({
           {/* Training Section */}
           {trainingItems.length > 0 && (
             <div className="flex flex-col gap-3">
-              <ShopSectionHeader title={SHOP_SHEET_COPY.sections.training} />
+              <ShopSectionHeader title={t("sections.training")} />
               {trainingItems.map((item, index) => (
                 <ShopItemCard
                   key={item.itemId.toString()}
@@ -302,10 +307,10 @@ export function ShopSheet({
               <CandyIcon name="shop" className="h-5 w-5 shrink-0 opacity-70" />
               <div className="flex flex-col">
                 <p className="text-xs font-bold" style={{ color: "rgba(110, 65, 15, 0.85)" }}>
-                  {SHOP_SHEET_COPY.moreSoonTitle}
+                  {t("moreSoonTitle")}
                 </p>
                 <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.60)" }}>
-                  {SHOP_SHEET_COPY.moreSoonHint}
+                  {t("moreSoonHint")}
                 </p>
               </div>
             </div>

@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
-import { DOCK_LABELS } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
 import {
   requestCloseDockSheet,
@@ -12,9 +12,11 @@ import {
 
 export type DockSlot = "badge" | "shop" | "arena" | "trophies" | "leaderboard";
 
+type DockLabelKey = "pieces" | "arena" | "badge" | "shop" | "trophies" | "leaderboard";
+
 type Item = {
   id: DockSlot;
-  label: string;
+  labelKey: DockLabelKey;
   icon: CandyIconName;
   /** Optional asset-backed icon base path (no extension). When set the
    *  dock renders a `<picture>` triplet (AVIF/WebP/PNG) instead of the
@@ -67,7 +69,7 @@ function resolveSheetHref(pathname: string, sheet: string, fallback: string): st
 
 type ModeDescriptor = {
   href: string;
-  label: string;
+  labelKey: DockLabelKey;
   icon: CandyIconName;
   iconSrc: string;
   trackItem: string;
@@ -80,14 +82,14 @@ type ModeDescriptor = {
 const MODE_DESCRIPTORS: Record<"exercises" | "arena", ModeDescriptor> = {
   exercises: {
     href: "/exercises",
-    label: DOCK_LABELS.pieces,
+    labelKey: "pieces",
     icon: "move",
     iconSrc: "/art/hub/train-pieces",
     trackItem: "pieces",
   },
   arena: {
     href: "/arena?fresh=1",
-    label: DOCK_LABELS.arena,
+    labelKey: "arena",
     icon: "crosshair",
     iconSrc: "/art/hub/enter-arena",
     trackItem: "arena",
@@ -112,13 +114,13 @@ function resolveBase(pathname: string): ModeDescriptor {
 }
 
 const SIDE_LEFT: ReadonlyArray<Item> = [
-  { id: "badge", label: DOCK_LABELS.badge, icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/hub?sheet=badges" },
-  { id: "shop", label: DOCK_LABELS.shop, icon: "shop", iconSrc: "/art/shop-menu", sheet: "shop", fallback: "/hub?sheet=shop" },
+  { id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/hub?sheet=badges" },
+  { id: "shop", labelKey: "shop", icon: "shop", iconSrc: "/art/shop-menu", sheet: "shop", fallback: "/hub?sheet=shop" },
 ];
 
 const SIDE_RIGHT: ReadonlyArray<Item> = [
-  { id: "trophies", label: DOCK_LABELS.trophies, icon: "trophy", iconSrc: "/art/action-row/trofeo-epico", sheet: "trophies", fallback: "/trophies", activeWhen: "/trophies" },
-  { id: "leaderboard", label: DOCK_LABELS.leaderboard, icon: "star", iconSrc: "/art/leaderboard-menu", sheet: "leaderboard", fallback: "/exercises?sheet=leaderboard" },
+  { id: "trophies", labelKey: "trophies", icon: "trophy", iconSrc: "/art/action-row/trofeo-epico", sheet: "trophies", fallback: "/trophies", activeWhen: "/trophies" },
+  { id: "leaderboard", labelKey: "leaderboard", icon: "star", iconSrc: "/art/leaderboard-menu", sheet: "leaderboard", fallback: "/exercises?sheet=leaderboard" },
 ];
 
 function SideItem({
@@ -126,11 +128,13 @@ function SideItem({
   pathname,
   router,
   openSheet,
+  label,
 }: {
   item: Item;
   pathname: string;
   router: ReturnType<typeof useRouter>;
   openSheet: ReturnType<typeof useDockSheet>;
+  label: string;
 }) {
   // Active in two situations: (a) the route matches activeWhen (e.g.
   // the standalone /trophies page), or (b) the matching auxiliary
@@ -150,7 +154,7 @@ function SideItem({
     >
       <button
         type="button"
-        aria-label={item.label}
+        aria-label={label}
         aria-current={isActive ? "page" : undefined}
         onClick={() => {
           track("dock_tap", { item: item.id });
@@ -166,13 +170,14 @@ function SideItem({
         <DockIcon iconSrc={item.iconSrc} icon={item.icon} />
       </button>
       <span className="chesscito-dock-item-label game-label text-nano font-bold uppercase tracking-[0.12em]">
-        {item.label}
+        {label}
       </span>
     </div>
   );
 }
 
 export function PersistentDock() {
+  const t = useTranslations("DOCK_LABELS");
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const openSheet = useDockSheet();
@@ -194,11 +199,12 @@ export function PersistentDock() {
   // in Arena"). Visual prominence already comes from being larger +
   // warmer than the sides. Lift only on hover/press (CSS handles it).
   const isCenterActive = false;
+  const displayLabel = t(display.labelKey);
 
   return (
-    <nav className="chesscito-dock" aria-label="Game navigation">
+    <nav className="chesscito-dock" aria-label={t("navAriaLabel")}>
       {SIDE_LEFT.map((item) => (
-        <SideItem key={item.id} item={item} pathname={pathname} router={router} openSheet={openSheet} />
+        <SideItem key={item.id} item={item} pathname={pathname} router={router} openSheet={openSheet} label={t(item.labelKey)} />
       ))}
 
       <div
@@ -207,7 +213,7 @@ export function PersistentDock() {
       >
         <button
           type="button"
-          aria-label={display.label}
+          aria-label={displayLabel}
           aria-current={isCenterActive ? "page" : undefined}
           onClick={() => {
             if (isOverlayOpen) {
@@ -222,12 +228,12 @@ export function PersistentDock() {
           <DockIcon iconSrc={display.iconSrc} icon={display.icon} />
         </button>
         <span className="game-label text-nano font-bold uppercase tracking-[0.12em]">
-          {display.label}
+          {displayLabel}
         </span>
       </div>
 
       {SIDE_RIGHT.map((item) => (
-        <SideItem key={item.id} item={item} pathname={pathname} router={router} openSheet={openSheet} />
+        <SideItem key={item.id} item={item} pathname={pathname} router={router} openSheet={openSheet} label={t(item.labelKey)} />
       ))}
     </nav>
   );

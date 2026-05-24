@@ -2,15 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import { CandyIcon } from '@/components/redesign/candy-icon'
 import { HudResourceChip } from '@/components/hud/hud-resource-chip'
-import {
-  HUD_COPY,
-  LABYRINTH_COPY,
-  MISSION_BRIEFING_COPY,
-  PHASE_FLASH_COPY,
-  PIECE_LABELS,
-} from '@/lib/content/editorial'
+import type { PIECE_LABELS } from '@/lib/content/editorial'
 import { LottieAnimation } from '@/components/ui/lottie-animation'
 import { PiecePickerSheet } from '@/components/exercises/piece-picker-sheet'
 import { PiecePickerTrigger } from '@/components/exercises/piece-picker-trigger'
@@ -74,7 +69,7 @@ type MissionPanelProps = {
   actionRowRight?: ReactNode
 }
 
-type FlashConfig = { text: string; accent: string; stroke: string }
+type FlashConfig = { textKey: 'success' | 'failure'; accent: string; stroke: string }
 
 /* Warm-amber on grass reads better than emerald or rose. The stroke
    is the darkest paper-text brown so the glyph silhouette stays
@@ -82,12 +77,12 @@ type FlashConfig = { text: string; accent: string; stroke: string }
 const PHASE_FLASH: Record<MissionPanelProps['phase'], FlashConfig | null> = {
   ready: null,
   success: {
-    text: PHASE_FLASH_COPY.success,
+    textKey: 'success',
     accent: 'rgb(245, 158, 11)', // amber-500
     stroke: 'rgba(63, 34, 8, 0.95)', // darkest paper text
   },
   failure: {
-    text: PHASE_FLASH_COPY.failure,
+    textKey: 'failure',
     accent: 'rgb(244, 63, 94)', // rose-500
     stroke: 'rgba(63, 34, 8, 0.95)',
   },
@@ -182,10 +177,12 @@ function Confetti() {
 }
 
 function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
+  const tFlash = useTranslations('PHASE_FLASH_COPY')
   const [visible, setVisible] = useState(false)
   const [fading, setFading] = useState(false)
   const flash = PHASE_FLASH[phase]
   const isSuccess = phase === 'success'
+  const flashText = flash ? tFlash(flash.textKey) : ''
 
   useEffect(() => {
     if (!flash) {
@@ -239,7 +236,7 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
                 />
                 <img
                   src={`/art/${bannerBase}.png`}
-                  alt={flash.text}
+                  alt={flashText}
                   className="h-auto w-[78%] max-w-[300px] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
                   style={{
                     animation:
@@ -327,6 +324,9 @@ export function MissionPanelCandy({
   shieldCount,
   pieceHint,
 }: MissionPanelProps) {
+  const tMission = useTranslations('MISSION_BRIEFING_COPY')
+  const tLab = useTranslations('LABYRINTH_COPY')
+  const tHud = useTranslations('HUD_COPY')
   // Quick-picker (Type C) open state — owned here so we can auto-close
   // them when the parent signals a dock destination sheet is opening.
   const [piecePickerOpen, setPiecePickerOpen] = useState(false)
@@ -353,14 +353,14 @@ export function MissionPanelCandy({
     labyrinthMode && labyrinthOptimalMoves
       ? String(labyrinthOptimalMoves)
       : isCapture
-      ? 'Capture'
-      : `${MISSION_BRIEFING_COPY.targetPrefix.replace(':', '')} ${targetLabel}`
+      ? tMission('captureLabel')
+      : tMission('visibleMissionTargetFormat', { target: targetLabel })
   const missionAriaLabel =
     labyrinthMode && labyrinthOptimalMoves
-      ? `Open mission details — optimal path ${labyrinthOptimalMoves} moves`
-      : `Open mission details${
-          isCapture ? ' — capture target' : ` — target ${targetLabel}`
-        }`
+      ? tMission('openDetailsLabyrinthAriaFormat', { moves: labyrinthOptimalMoves })
+      : isCapture
+        ? tMission('openDetailsCaptureAriaLabel')
+        : tMission('openDetailsTargetAriaFormat', { target: targetLabel })
   const showLayerTabs = Boolean(onToggleLabyrinth)
 
   const missionPeek = (
@@ -435,19 +435,19 @@ export function MissionPanelCandy({
             <div
               className="quest-tray-tabs grid w-full grid-cols-2 overflow-hidden rounded-2xl border p-0.5"
               role="tablist"
-              aria-label="Layer toggle"
+              aria-label={tLab('layerToggleAriaLabel')}
             >
               {[
                 {
                   active: !labyrinthMode,
                   value: false,
-                  label: LABYRINTH_COPY.toggleExercises,
+                  label: tLab('toggleExercises'),
                   disabled: false,
                 },
                 {
                   active: labyrinthMode,
                   value: true,
-                  label: LABYRINTH_COPY.toggleLabyrinths,
+                  label: tLab('toggleLabyrinths'),
                   disabled: !labyrinthAvailable,
                 },
               ].map(({ active, value, label, disabled }) => (
@@ -480,7 +480,7 @@ export function MissionPanelCandy({
               size="compact"
               icon="shield"
               value={shieldCount}
-              ariaLabel={HUD_COPY.shieldsAriaLabel(shieldCount)}
+              ariaLabel={tHud('shieldsAriaLabel', { count: shieldCount })}
             />
           </div>
         )}

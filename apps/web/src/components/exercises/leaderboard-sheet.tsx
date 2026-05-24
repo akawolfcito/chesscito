@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
@@ -11,7 +12,6 @@ import {
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import type { LeaderboardRow } from "@/lib/server/leaderboard";
-import { LEADERBOARD_SHEET_COPY, PASSPORT_COPY, DOCK_LABELS } from "@/lib/content/editorial";
 
 const OPTIMISTIC_TTL_MS = 2 * 60 * 1000;
 
@@ -55,6 +55,9 @@ type LeaderboardSheetProps = {
 };
 
 export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: LeaderboardSheetProps) {
+  const t = useTranslations("LEADERBOARD_SHEET_COPY");
+  const tPassport = useTranslations("PASSPORT_COPY");
+  const tDock = useTranslations("DOCK_LABELS");
   const [rows, setRows] = useState<LeaderboardRow[]>(prefetchedRows ?? []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,9 +94,9 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
         return r.json();
       })
       .then(applyRows)
-      .catch(() => setError(LEADERBOARD_SHEET_COPY.error))
+      .catch(() => setError(t("error")))
       .finally(() => setLoading(false));
-  }, [applyRows]);
+  }, [applyRows, t]);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -114,7 +117,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
         <SheetTrigger asChild>
           <button
             type="button"
-            aria-label={DOCK_LABELS.leaderboard}
+            aria-label={tDock("leaderboard")}
             className="relative flex shrink-0 items-center justify-center"
           >
             <img
@@ -129,17 +132,17 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
       <SheetContent
         side="bottom"
         hideClose
-        title={LEADERBOARD_SHEET_COPY.title}
-        description={LEADERBOARD_SHEET_COPY.description}
+        title={t("title")}
+        description={t("description")}
         className="mission-shell sheet-bg-leaderboard flex h-[100dvh] flex-col rounded-none border-0 pb-0"
       >
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/leaderboard-menu" />}
-            title={LEADERBOARD_SHEET_COPY.title}
-            subtitle={LEADERBOARD_SHEET_COPY.description}
-            close={{ onClick: () => onOpenChange(false), label: "Close leaders" }}
+            title={t("title")}
+            subtitle={t("description")}
+            close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
           />
         </div>
 
@@ -149,16 +152,16 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
             <div className="flex items-center gap-2">
               <CandyIcon name="shield" className="h-4 w-4 text-violet-600" />
               <p className="text-xs font-bold text-violet-900/70">
-                {PASSPORT_COPY.infoBanner}
+                {tPassport("infoBanner")}
               </p>
             </div>
             <a
-              href={PASSPORT_COPY.passportUrl}
+              href={tPassport("passportUrl")}
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-7 items-center justify-center rounded-lg bg-violet-600 px-3 text-xs font-black uppercase tracking-wider text-white transition active:scale-95"
             >
-              {PASSPORT_COPY.ctaLabel}
+              {tPassport("ctaLabel")}
             </a>
           </div>
 
@@ -181,7 +184,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
                 onClick={() => fetchLeaderboard()}
                 className="flex h-11 items-center justify-center px-6 rounded-xl bg-rose-600/10 text-xs font-black uppercase tracking-wider transition active:scale-95 text-rose-800"
               >
-                {LEADERBOARD_SHEET_COPY.retry}
+                {t("retry")}
               </button>
             </div>
           )}
@@ -192,11 +195,11 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
                 <CandyIcon name="crown" className="h-8 w-8" />
               </div>
               <p className="text-sm font-medium opacity-60 leading-relaxed px-8">
-                {LEADERBOARD_SHEET_COPY.empty}
+                {t("empty")}
               </p>
               <Link href="/arena" onClick={() => onOpenChange(false)}>
                 <button type="button" className="flex h-11 items-center justify-center px-8 rounded-xl bg-amber-500 font-black text-white uppercase text-xs tracking-widest transition active:scale-95 shadow-lg shadow-amber-500/20">
-                  {LEADERBOARD_SHEET_COPY.emptyArenaLink}
+                  {t("emptyArenaLink")}
                 </button>
               </Link>
             </div>
@@ -210,7 +213,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
                   <CandyIcon name="crown" className="h-8 w-8 text-amber-600 drop-shadow-[0_2px_4px_rgba(180,83,9,0.3)]" />
                 </div>
                 <span className="text-nano font-black uppercase tracking-[0.3em] text-amber-900/40">
-                  Champion
+                  {t("champion")}
                 </span>
                 <p className="mt-1 font-mono text-xs font-black text-amber-950">
                   {champion.player}
@@ -220,7 +223,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
                 </p>
                 <div className="mt-4 flex flex-col items-center">
                   <span className="text-nano font-black uppercase tracking-widest text-amber-900/40">
-                    {LEADERBOARD_SHEET_COPY.columnScore}
+                    {t("columnScore")}
                   </span>
                   <span className="text-3xl font-black tabular-nums text-amber-950">
                     {champion.score}
@@ -234,10 +237,10 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between px-2 mb-1">
                 <span className="text-nano font-black uppercase tracking-[0.2em] opacity-30">
-                  Top Competitors
+                  {t("topCompetitors")}
                 </span>
                 <span className="text-nano font-black opacity-30">
-                  {LEADERBOARD_SHEET_COPY.columnScore}
+                  {t("columnScore")}
                 </span>
               </div>
               {competitors.map((row) => (

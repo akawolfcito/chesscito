@@ -1,5 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook as renderHookRaw, waitFor } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import type { ReactNode } from "react";
+import enMessages from "@/lib/content/messages/en";
+
+const IntlWrapper = ({ children }: { children: ReactNode }) => (
+  <NextIntlClientProvider
+    locale="en"
+    messages={enMessages as Record<string, unknown>}
+    onError={() => {}}
+    getMessageFallback={({ key, namespace }) =>
+      namespace ? `${namespace}.${key}` : key
+    }
+  >
+    {children}
+  </NextIntlClientProvider>
+);
+IntlWrapper.displayName = "IntlWrapper";
+
+const renderHook = <T,>(callback: () => T) =>
+  renderHookRaw(callback, { wrapper: IntlWrapper });
 
 const TEST_WALLET = "0x000000000000000000000000000000000000abcd";
 const SHOP_ADDRESS = "0x0000000000000000000000000000000000005099";

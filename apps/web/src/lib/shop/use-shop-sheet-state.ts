@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   useAccount,
   useChainId,
@@ -202,6 +203,8 @@ export function useShopSheetState(
   const [successBanner, setSuccessBanner] = useState<SuccessBanner>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const tShopItem = useTranslations("SHOP_ITEM_COPY");
+
   // Catalog read — same shape as legacy.
   const { data: onChainItems } = useReadContracts({
     contracts: SHOP_ITEMS.map((item) => ({
@@ -221,25 +224,31 @@ export function useShopSheetState(
   const shopCatalog = useMemo<CatalogItem[]>(
     () =>
       SHOP_ITEMS.map((item, index) => {
+        const label = tShopItem(`${item.copyKey}.label` as const);
+        const subtitle = tShopItem(`${item.copyKey}.subtitle` as const);
         const onChain = onChainItems?.[index];
         if (onChain?.status === "success" && Array.isArray(onChain.result)) {
           const price = onChain.result[0] as bigint;
           const enabled = onChain.result[1] as boolean;
           return {
-            ...item,
+            itemId: item.itemId,
+            label,
+            subtitle,
             configured: price > 0n,
             enabled: price > 0n && enabled,
             onChainPrice: price,
           };
         }
         return {
-          ...item,
+          itemId: item.itemId,
+          label,
+          subtitle,
           configured: false,
           enabled: false,
           onChainPrice: 0n,
         };
       }),
-    [onChainItems],
+    [onChainItems, tShopItem],
   );
 
   const displayShopCatalog = useMemo<CatalogItem[]>(() => {

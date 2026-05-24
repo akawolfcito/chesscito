@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
@@ -8,12 +11,7 @@ import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
 import { BADGE_THRESHOLD, EXERCISES_PER_PIECE } from "@/lib/game/exercises";
-import {
-  EXERCISE_DRAWER_COPY,
-  EXERCISE_DESCRIPTIONS,
-  PIECE_IMAGES,
-  PIECE_LABELS,
-} from "@/lib/content/editorial";
+import { PIECE_IMAGES } from "@/lib/content/editorial";
 
 type ExerciseDrawerProps = {
   open: boolean;
@@ -50,6 +48,9 @@ export function ExerciseDrawer({
   totalStars,
   onNavigate,
 }: ExerciseDrawerProps) {
+  const t = useTranslations("EXERCISE_DRAWER_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
+  const descriptions = useTranslations("EXERCISE_DESCRIPTIONS");
   const maxStars = exercises.length * 3;
   const lastCompleted = stars.reduce((acc, s, i) => (s > 0 ? i : acc), -1);
   const maxAllowed = Math.min(lastCompleted + 1, EXERCISES_PER_PIECE - 1);
@@ -65,14 +66,17 @@ export function ExerciseDrawer({
       <SheetTrigger asChild>
         <button
           type="button"
-          aria-label="Exercises"
+          aria-label={t("ariaLabel")}
           className="candy-tray-pill"
         >
           <CandyIcon
             name="star"
             className="candy-tray-pill-icon candy-tray-pill-icon--floating"
           />
-          <span className="tabular-nums text-sm font-extrabold" aria-label={`${totalStars} of ${maxStars} stars earned`}>
+          <span
+            className="tabular-nums text-sm font-extrabold"
+            aria-label={t("starsEarnedAriaFormat", { total: totalStars, max: maxStars })}
+          >
             {totalStars}
           </span>
         </button>
@@ -80,17 +84,17 @@ export function ExerciseDrawer({
       <SheetContent
         side="bottom"
         hideClose
-        title={EXERCISE_DRAWER_COPY.title}
-        description={PIECE_LABELS[piece]}
+        title={t("title")}
+        description={tPiece(piece)}
         className="mission-shell sheet-bg-hub rounded-t-3xl border-0 pb-[5rem]"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src={PIECE_IMAGES[piece]} />}
-            title={EXERCISE_DRAWER_COPY.title}
-            subtitle={PIECE_LABELS[piece]}
-            close={{ onClick: () => onOpenChange(false), label: "Close exercises" }}
+            title={t("title")}
+            subtitle={tPiece(piece)}
+            close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
           />
         </div>
 
@@ -99,7 +103,14 @@ export function ExerciseDrawer({
             const isActive = index === activeIndex;
             const isDone = stars[index] > 0;
             const isLocked = index > maxAllowed;
-            const description = EXERCISE_DESCRIPTIONS[exercise.id] ?? `Exercise ${index + 1}`;
+            // EXERCISE_DESCRIPTIONS keys are not statically known to the
+            // translator; fall back to `Exercise N` when the key is missing.
+            let description: string;
+            try {
+              description = descriptions(exercise.id);
+            } catch {
+              description = t("exerciseFallbackFormat", { n: index + 1 });
+            }
 
             return (
               <button
@@ -157,9 +168,9 @@ export function ExerciseDrawer({
                     style={{ color: "rgba(110, 65, 15, 0.70)" }}
                   >
                     {exercise.isCapture ? (
-                      <><CandyIcon name="crosshair" className="h-2.5 w-2.5" /> Capture</>
+                      <><CandyIcon name="crosshair" className="h-2.5 w-2.5" /> {t("captureLabel")}</>
                     ) : (
-                      <><CandyIcon name="move" className="h-2.5 w-2.5" /> Movement</>
+                      <><CandyIcon name="move" className="h-2.5 w-2.5" /> {t("movementLabel")}</>
                     )}
                   </p>
                 </div>
@@ -169,7 +180,7 @@ export function ExerciseDrawer({
                   <StarDisplay count={stars[index]} />
                 ) : isLocked ? (
                   <span className="text-xs" style={{ color: "rgba(110, 65, 15, 0.55)" }}>
-                    {EXERCISE_DRAWER_COPY.locked}
+                    {t("locked")}
                   </span>
                 ) : null}
               </button>
@@ -202,7 +213,7 @@ export function ExerciseDrawer({
             className="text-center text-xs"
             style={{ color: "rgba(110, 65, 15, 0.65)" }}
           >
-            {EXERCISE_DRAWER_COPY.badgeThresholdHint(BADGE_THRESHOLD)}
+            {t("badgeThresholdHint", { threshold: BADGE_THRESHOLD })}
           </p>
         </div>
       </SheetContent>

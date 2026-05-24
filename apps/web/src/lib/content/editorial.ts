@@ -204,6 +204,7 @@ export const BADGE_EARNED_COPY = {
   claimBadge: "CLAIM",
   submitScore: "SAVE",
   later: "Later",
+  headerLabel: "Badge Earned",
 } as const;
 
 export const BADGE_SHEET_COPY = {
@@ -221,6 +222,13 @@ export const BADGE_SHEET_COPY = {
    *  ResultOverlay yet, so this banner provides the celebration moment. */
   claimSuccess: (piece: string) =>
     `${piece.charAt(0).toUpperCase()}${piece.slice(1)} Badge claimed!`,
+  ariaLabel: "Badges",
+  closeAriaLabel: "Close badges",
+  ascendantFormat: "{piece} Ascendant",
+  claimable: "Claimable",
+  lockedShort: "Locked",
+  claim: "Claim",
+  starsProgressFormat: "{collected} of {total} stars",
 } as const;
 
 export const TUTORIAL_COPY = {
@@ -367,11 +375,19 @@ export const SHOP_SHEET_COPY = {
    *  whose priceUsd6 is calibrated so the contract charges 1 CELO
    *  rather than the ~10 % CELO equivalent of $0.10. */
   buyWithCelo: "Buy with 1 CELO",
+  /** Short ghost-style label rendered inside the secondary celo button
+   *  alongside the primary stablecoin buy. */
+  payWithCeloShort: "Pay with CELO",
   buyButtonComingSoon: "Coming soon",
   buyButtonUnavailable: "Unavailable",
   empty: "Shop items are not available right now.",
   moreSoonTitle: "More treasures coming",
   moreSoonHint: "Skins, cosmetics and boosters are brewing in the workshop.",
+  ariaLabel: "Shop",
+  closeAriaLabel: "Close shop",
+  successBannerFormat: "{item} secured!",
+  successBannerTxFormat: "tx {hash}",
+  buyButtonAriaFormat: "{action}: {item} for {price}",
   status: {
     available: "Available",
     unavailable: "Unavailable",
@@ -401,6 +417,9 @@ export const LEADERBOARD_SHEET_COPY = {
   emptyArenaLink: "ARENA",
   error: "Could not load rankings",
   retry: "Retry",
+  champion: "Champion",
+  topCompetitors: "Top Competitors",
+  closeAriaLabel: "Close leaders",
 } as const;
 
 export const PURCHASE_CONFIRM_COPY = {
@@ -410,6 +429,8 @@ export const PURCHASE_CONFIRM_COPY = {
   approving: (token: string) => `Approving ${token}...`,
   buying: "Buying...",
   cancel: "Cancel",
+  closeAriaLabel: "Cancel purchase",
+  unknownNetwork: "Unknown network",
 } as const;
 
 /** Welcome carousel copy — English-only per parent spec lock. The
@@ -555,6 +576,17 @@ export const MISSION_BRIEFING_COPY = {
   captureHintCompact: "♜ Capture the target",
   /** Close affordance ARIA on the mission-briefing modal. */
   closeLabel: "Close",
+  /** Mission-panel quick peek pill — short variant of the target prefix
+   *  without trailing punctuation so it can interpolate cleanly. */
+  visibleMissionTargetFormat: "Move to {target}",
+  /** Short label rendered on the mission peek pill when the active
+   *  exercise is a capture (vs a position move). */
+  captureLabel: "Capture",
+  /** ARIA labels for the mission peek pill — three variants for the
+   *  active mode (labyrinth / capture / standard move). */
+  openDetailsLabyrinthAriaFormat: "Open mission details — optimal path {moves} moves",
+  openDetailsCaptureAriaLabel: "Open mission details — capture target",
+  openDetailsTargetAriaFormat: "Open mission details — target {target}",
 } as const;
 
 export const VICTORY_PAGE_COPY = {
@@ -910,6 +942,12 @@ export const EXERCISE_DRAWER_COPY = {
   progressLabel: (earned: number, max: number) => `${earned}/${max}`,
   badgeThresholdHint: (threshold: number) => `Badge at ${threshold} stars`,
   locked: "Locked",
+  ariaLabel: "Exercises",
+  closeAriaLabel: "Close exercises",
+  exerciseFallbackFormat: "Exercise {n}",
+  captureLabel: "Capture",
+  movementLabel: "Movement",
+  starsEarnedAriaFormat: "{total} of {max} stars earned",
 } as const;
 
 export const EXERCISE_DESCRIPTIONS: Record<string, string> = {
@@ -964,8 +1002,16 @@ export const LABYRINTH_COPY = {
     moves === optimal
       ? `Optimal! ${moves} moves`
       : `${moves} moves · optimal ${optimal}`,
+  completeMovesOptimalFormat: "Optimal! {moves} moves",
+  completeMovesFormat: "{moves} moves · optimal {optimal}",
+  perfectPath: "★ Perfect path",
+  newBestFormat: "New best! Beat {previous} → {current}",
+  firstCompletionFormat: "First completion · {moves} moves",
+  yourBestFormat: "Your best: {previous} moves",
   retry: "Try Again",
   back: "Back to Exercises",
+  /** ARIA label for the L1/L2 layer toggle tablist on mission panel. */
+  layerToggleAriaLabel: "Layer toggle",
 } as const;
 
 export const DOCK_LABELS = {
@@ -983,6 +1029,8 @@ export const DOCK_LABELS = {
   badge: "Badges",
   trophies: "Trophies",
   leaderboard: "Leaders",
+  /** ARIA label for the persistent dock <nav> landmark. */
+  navAriaLabel: "Game navigation",
 } as const;
 
 export const ARENA_CTA_COPY = {
@@ -1674,6 +1722,7 @@ export const ACCOUNT_SHEET_COPY = {
   activePro: "Active",
   inactivePro: "Not active",
   unknownNetwork: "Unknown network",
+  closeAriaLabel: "Close account",
 } as const;
 
 /** /why public landing page copy. Spanish-only in v1 by product

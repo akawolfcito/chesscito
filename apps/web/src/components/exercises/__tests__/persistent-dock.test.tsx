@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PersistentDock } from "../persistent-dock";
+import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 import {
   registerDockSheetCloser,
   registerDockSheetOpener,

@@ -1,7 +1,7 @@
-import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ShopSheet } from "../shop-sheet";
 import { SHOP_SHEET_COPY } from "@/lib/content/editorial";
+import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
 
 vi.mock("@/lib/telemetry", () => ({ track: vi.fn() }));
 

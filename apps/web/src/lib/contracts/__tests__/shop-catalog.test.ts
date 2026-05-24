@@ -18,24 +18,23 @@ describe("shop-catalog", () => {
     expect(FOUNDER_BADGE_CELO_ITEM_ID).toBe(5n);
   });
 
-  it("exposes all three items in the catalog with non-empty copy", () => {
+  it("exposes all three items in the catalog with a copy key for locale-aware copy resolution", () => {
     expect(SHOP_ITEMS).toHaveLength(3);
     for (const item of SHOP_ITEMS) {
-      expect(item.label.length).toBeGreaterThan(0);
-      expect(item.subtitle.length).toBeGreaterThan(0);
+      expect(item.copyKey.length).toBeGreaterThan(0);
     }
   });
 
-  it("the CELO sibling reuses the Founder Badge label so the UI can group both routes under one product card", () => {
+  it("the CELO sibling reuses the Founder Badge copy key so the UI can group both routes under one product card", () => {
     const founder = SHOP_ITEMS.find((i) => i.itemId === FOUNDER_BADGE_ITEM_ID);
     const celoFounder = SHOP_ITEMS.find((i) => i.itemId === FOUNDER_BADGE_CELO_ITEM_ID);
-    expect(founder?.label).toBe(celoFounder?.label);
+    expect(founder?.copyKey).toBe(celoFounder?.copyKey);
   });
 
   it("ships the shield row with the documented item id so the admin tx setItem(2,...) wires it up", () => {
     const shield = SHOP_ITEMS.find((item) => item.itemId === SHIELD_ITEM_ID);
     expect(shield).toBeDefined();
-    expect(shield?.label).toMatch(/shield/i);
+    expect(shield?.copyKey).toBe("retryShield");
   });
 
   it("credits 3 shield uses per purchase to match the SHIELD_COPY.buyLabel '(3 uses)' promise", () => {

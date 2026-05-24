@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   useAccount,
   useChainId,
@@ -73,14 +74,13 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { EXERCISE_DRAWER_COPY, GLOBAL_STATUS_BAR_COPY } from "@/lib/content/editorial";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import { formatWalletShort } from "@/lib/wallet/format";
 import { executeProPurchase } from "@/lib/pro/purchase";
 import { ACCEPTED_TOKENS, CELO_TOKEN, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
-import { ACCOUNT_SHEET_COPY, CAPTURE_COPY, CTA_LABELS, DOCK_LABELS, FOOTER_CTA_COPY, LABYRINTH_COPY, MISSION_BRIEFING_COPY, PIECE_IMAGES, PIECE_LABELS, PRO_COPY, SPLASH_COPY, TUTORIAL_COPY, UNLOCK_COPY } from "@/lib/content/editorial";
+import { PIECE_IMAGES } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
@@ -123,7 +123,14 @@ const POINTS_PER_STAR = 100n;
  * (Victory NFT mint, badge claim, etc.).
  */
 const SAVE_DONE_HOLD_MS = 1500;
-type CatalogItem = (typeof SHOP_ITEMS)[number] & {
+type CatalogItem = {
+  itemId: bigint;
+  /** Translator-resolved at memo time from SHOP_ITEM_COPY via the
+   *  catalog entry's `copyKey`. Kept on the item so downstream
+   *  consumers (ShopSheet, PurchaseConfirmSheet, success banners,
+   *  telemetry logs) don't each need to thread the translator. */
+  label: string;
+  subtitle: string;
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
@@ -134,11 +141,11 @@ type CatalogItem = (typeof SHOP_ITEMS)[number] & {
   celoSibling?: { itemId: bigint } | null;
 };
 
-function networkName(chainId: number | undefined) {
+function networkName(chainId: number | undefined, unknownLabel: string) {
   if (chainId === 42220) return "Celo";
   if (chainId === 44787) return "Alfajores";
   if (chainId === 11142220) return "Celo Sepolia";
-  return ACCOUNT_SHEET_COPY.unknownNetwork;
+  return unknownLabel;
 }
 
 function AccountSheet({
@@ -160,6 +167,7 @@ function AccountSheet({
   onManagePro: () => void;
   onDisconnect: () => void;
 }) {
+  const t = useTranslations("ACCOUNT_SHEET_COPY");
   const [copied, setCopied] = useState(false);
 
   async function copyAddress() {
@@ -177,24 +185,24 @@ function AccountSheet({
       <SheetContent
         side="bottom"
         hideClose
-        title={ACCOUNT_SHEET_COPY.title}
-        description={ACCOUNT_SHEET_COPY.description}
+        title={t("title")}
+        description={t("description")}
         className="sheet-bg-hub rounded-t-3xl border-0 pb-[calc(env(safe-area-inset-bottom,0px)+2rem)]"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/action-row/wallet" />}
-            title={ACCOUNT_SHEET_COPY.title}
-            subtitle={ACCOUNT_SHEET_COPY.description}
-            close={{ onClick: () => onOpenChange(false), label: "Close account" }}
+            title={t("title")}
+            subtitle={t("description")}
+            close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
           />
         </div>
 
         <div className="mt-4 space-y-3">
           <div className="candy-tray">
             <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {ACCOUNT_SHEET_COPY.walletLabel}
+              {t("walletLabel")}
             </p>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="font-semibold tabular-nums" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
@@ -203,7 +211,7 @@ function AccountSheet({
               <button
                 type="button"
                 onClick={() => void copyAddress()}
-                aria-label={copied ? ACCOUNT_SHEET_COPY.copiedAddress : ACCOUNT_SHEET_COPY.copyAddress}
+                aria-label={copied ? t("copiedAddress") : t("copyAddress")}
                 className="inline-flex items-center justify-center bg-transparent border-0 p-0 transition active:scale-90"
                 style={{ color: "rgba(63, 34, 8, 0.95)" }}
               >
@@ -215,23 +223,23 @@ function AccountSheet({
           <div className="grid grid-cols-2 gap-2">
             <div className="candy-tray">
               <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-                {ACCOUNT_SHEET_COPY.networkLabel}
+                {t("networkLabel")}
               </p>
               <span className="account-status-pill mt-1" data-tone="celo">
                 <CandyIcon name="check" className="h-3 w-3" />
-                {networkName(chainId)}
+                {networkName(chainId, t("unknownNetwork"))}
               </span>
             </div>
             <div className="candy-tray">
               <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-                {ACCOUNT_SHEET_COPY.proLabel}
+                {t("proLabel")}
               </p>
               <span
                 className="account-status-pill mt-1"
                 data-tone={proActive ? "active" : "inactive"}
               >
                 <span aria-hidden="true">★</span>
-                {proActive ? ACCOUNT_SHEET_COPY.activePro : ACCOUNT_SHEET_COPY.inactivePro}
+                {proActive ? t("activePro") : t("inactivePro")}
               </span>
             </div>
           </div>
@@ -248,7 +256,7 @@ function AccountSheet({
               className="account-manage-pro-cta-icon"
               draggable={false}
             />
-            <span>{proActive ? ACCOUNT_SHEET_COPY.managePro : ACCOUNT_SHEET_COPY.viewPro}</span>
+            <span>{proActive ? t("managePro") : t("viewPro")}</span>
           </button>
           <Button
             type="button"
@@ -257,10 +265,10 @@ function AccountSheet({
             className="mt-3 w-full"
             onClick={onDisconnect}
           >
-            {ACCOUNT_SHEET_COPY.disconnect}
+            {t("disconnect")}
           </Button>
           <p className="text-center text-xs" style={{ color: "rgba(110, 65, 15, 0.62)" }}>
-            {ACCOUNT_SHEET_COPY.minipayDisconnectHint}
+            {t("minipayDisconnectHint")}
           </p>
         </div>
       </SheetContent>
@@ -347,6 +355,18 @@ export function ExercisesScreen({
   initialAction,
   initialSheet,
 }: ExercisesScreenProps = {}) {
+  const tShopItem = useTranslations("SHOP_ITEM_COPY");
+  const tCapture = useTranslations("CAPTURE_COPY");
+  const tLab = useTranslations("LABYRINTH_COPY");
+  const tMission = useTranslations("MISSION_BRIEFING_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
+  const tPro = useTranslations("PRO_COPY");
+  const tSplash = useTranslations("SPLASH_COPY");
+  const tTutorial = useTranslations("TUTORIAL_COPY");
+  const tUnlock = useTranslations("UNLOCK_COPY");
+  const tDrawer = useTranslations("EXERCISE_DRAWER_COPY");
+  const tStatus = useTranslations("GLOBAL_STATUS_BAR_COPY");
+  const tFooter = useTranslations("FOOTER_CTA_COPY");
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
@@ -695,12 +715,16 @@ export function ExercisesScreen({
   const shopCatalog = useMemo<CatalogItem[]>(
     () =>
       SHOP_ITEMS.map((item, index) => {
+        const label = tShopItem(`${item.copyKey}.label` as const);
+        const subtitle = tShopItem(`${item.copyKey}.subtitle` as const);
         const onChain = onChainItems?.[index];
         if (onChain?.status === "success" && Array.isArray(onChain.result)) {
           const price = onChain.result[0] as bigint;
           const enabled = onChain.result[1] as boolean;
           return {
-            ...item,
+            itemId: item.itemId,
+            label,
+            subtitle,
             configured: price > 0n,
             enabled: price > 0n && enabled,
             onChainPrice: price,
@@ -708,13 +732,15 @@ export function ExercisesScreen({
         }
 
         return {
-          ...item,
+          itemId: item.itemId,
+          label,
+          subtitle,
           configured: false,
           enabled: false,
           onChainPrice: 0n,
         };
       }),
-    [onChainItems]
+    [onChainItems, tShopItem]
   );
 
   /** What the shop sheet actually renders. The CELO sibling itemId is
@@ -1239,7 +1265,7 @@ export function ExercisesScreen({
     } catch (error) {
       if (isUserCancellation(error)) {
         track("score_submit_tx", { stage: "cancelled", piece: selectedPiece });
-        showToast(FOOTER_CTA_COPY.submitCanceled, 2000);
+        showToast(tFooter("submitCanceled"), 2000);
         return;
       }
       const message = toErrorMessage(error);
@@ -1250,7 +1276,7 @@ export function ExercisesScreen({
         errorMessage: classifyTxError(error),
         retryAction: () => void handleSubmitScore(),
       });
-      showToast(FOOTER_CTA_COPY.submitFailed, 3000);
+      showToast(tFooter("submitFailed"), 3000);
       console.warn("[MiniPayTx] error", { label: "submit-score", levelId: Number(levelId), error: message });
     } finally {
       submittingScoreRef.current = false;
@@ -1317,8 +1343,8 @@ export function ExercisesScreen({
         : result.kind === "timeout"
           ? "Transaction timed out. Please try again."
           : result.kind === "verify-failed"
-            ? PRO_COPY.errors.verifyFailedTitle
-            : PRO_COPY.errors.purchaseFailed,
+            ? tPro("errors.verifyFailedTitle")
+            : tPro("errors.purchaseFailed"),
     );
   }
 
@@ -1584,14 +1610,14 @@ export function ExercisesScreen({
       //  optimal so the player can pace themselves in real time.
       `${labyrinthMoves} / ${activeLabyrinth.optimalMoves} moves`
     : activeExercise.isCapture
-      ? CAPTURE_COPY.statsLabel
+      ? tCapture("statsLabel")
       : `${String.fromCharCode(97 + activeExercise.targetPos.file)}${activeExercise.targetPos.rank + 1}`;
 
   const pieceHint = activeLabyrinth
-    ? `${LABYRINTH_COPY.missionTitle} · ${LABYRINTH_COPY.missionHint(activeLabyrinth.optimalMoves)}`
+    ? `${tLab("missionTitle")} · ${tLab("missionHint", { optimal: activeLabyrinth.optimalMoves })}`
     : currentExercise.isCapture
-      ? MISSION_BRIEFING_COPY.captureHintCompact
-      : MISSION_BRIEFING_COPY.pieceHint[selectedPiece];
+      ? tMission("captureHintCompact")
+      : tMission(`pieceHint.${selectedPiece}` as const);
 
   // Show movement lane hints on the first exercise of each piece (until the player earns stars)
   const tutorialHints = useMemo(() => {
@@ -1606,8 +1632,8 @@ export function ExercisesScreen({
       {showSplash && (
         <div className="playhub-intro-overlay is-active" role="status" aria-live="polite" aria-busy="true">
           {/* Splash art carries the visual; copy below provides status. */}
-          <p className="text-sm font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] animate-pulse">{SPLASH_COPY.loading}</p>
-          <p className="text-xs text-white/70 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{SPLASH_COPY.subtitle}</p>
+          <p className="text-sm font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] animate-pulse">{tSplash("loading")}</p>
+          <p className="text-xs text-white/70 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{tSplash("subtitle")}</p>
         </div>
       )}
       <main className="mission-shell relative mx-auto flex h-[100dvh] w-full max-w-[var(--app-max-width)] flex-col px-0 py-0 sm:px-0">
@@ -1623,10 +1649,10 @@ export function ExercisesScreen({
         <div>
           <ContextualHeader
             variant="back-control"
-            title={EXERCISE_DRAWER_COPY.title}
+            title={tDrawer("title")}
             back={{
               onClick: () => router.push("/hub"),
-              label: GLOBAL_STATUS_BAR_COPY.backLabel,
+              label: tStatus("backLabel"),
             }}
             trailingControl={
               address && !proLoading ? (
@@ -1638,8 +1664,8 @@ export function ExercisesScreen({
                   value="PRO"
                   ariaLabel={
                     proStatus?.active
-                      ? GLOBAL_STATUS_BAR_COPY.proManageLabel
-                      : GLOBAL_STATUS_BAR_COPY.proViewLabel
+                      ? tStatus("proManageLabel")
+                      : tStatus("proViewLabel")
                   }
                   onClick={() => setAccountSheetOpen(true)}
                 />
@@ -1662,12 +1688,12 @@ export function ExercisesScreen({
             resetBoard();
           }}
           pieces={[
-            { key: "rook", label: PIECE_LABELS.rook, enabled: true },
-            { key: "bishop", label: PIECE_LABELS.bishop, enabled: true },
-            { key: "knight", label: PIECE_LABELS.knight, enabled: true },
-            { key: "pawn", label: PIECE_LABELS.pawn, enabled: true },
-            { key: "queen", label: PIECE_LABELS.queen, enabled: true },
-            { key: "king", label: PIECE_LABELS.king, enabled: false },
+            { key: "rook", label: tPiece("rook"), enabled: true },
+            { key: "bishop", label: tPiece("bishop"), enabled: true },
+            { key: "knight", label: tPiece("knight"), enabled: true },
+            { key: "pawn", label: tPiece("pawn"), enabled: true },
+            { key: "queen", label: tPiece("queen"), enabled: true },
+            { key: "king", label: tPiece("king"), enabled: false },
           ]}
           phase={phase}
           targetLabel={targetLabel}
@@ -1939,9 +1965,9 @@ export function ExercisesScreen({
           >
             <div className="relative z-10 mx-4 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
               <CandyGlassShell
-                title={UNLOCK_COPY.title(PIECE_LABELS[unlockedPiece])}
+                title={tUnlock("title", { piece: tPiece(unlockedPiece) })}
                 onClose={() => setUnlockedPiece(null)}
-                closeLabel="Close"
+                closeLabel={tMission("closeLabel")}
                 cta={
                   <Button
                     type="button"
@@ -1955,7 +1981,7 @@ export function ExercisesScreen({
                     }}
                     className="w-full"
                   >
-                    {UNLOCK_COPY.cta(PIECE_LABELS[unlockedPiece])}
+                    {tUnlock("cta", { piece: tPiece(unlockedPiece) })}
                   </Button>
                 }
               >
@@ -1972,7 +1998,7 @@ export function ExercisesScreen({
                           <source srcSet={`${PIECE_IMAGES[unlockedPiece]}.webp`} type="image/webp" />
                         </>
                       )}
-                      <img src={`${PIECE_IMAGES[unlockedPiece]}.png`} alt={PIECE_LABELS[unlockedPiece]} className="h-full w-full object-contain drop-shadow-[0_4px_12px_rgba(120,65,5,0.35)]" />
+                      <img src={`${PIECE_IMAGES[unlockedPiece]}.png`} alt={tPiece(unlockedPiece)} className="h-full w-full object-contain drop-shadow-[0_4px_12px_rgba(120,65,5,0.35)]" />
                     </picture>
                   </div>
                   <p
@@ -1982,7 +2008,7 @@ export function ExercisesScreen({
                       textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
                     }}
                   >
-                    {TUTORIAL_COPY[unlockedPiece]}
+                    {tTutorial(unlockedPiece)}
                   </p>
                 </div>
               </CandyGlassShell>

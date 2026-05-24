@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
 import {
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { ABOUT_LINK_COPY, BADGE_SHEET_COPY, PIECE_LABELS } from "@/lib/content/editorial";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
@@ -60,8 +60,10 @@ function BadgeCard({
   isClaimBusy: boolean;
   claimingPiece: PieceId | null;
 }) {
-  const label = PIECE_LABELS[badge.piece];
-  const title = `${label} Ascendant`;
+  const t = useTranslations("BADGE_SHEET_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
+  const label = tPiece(badge.piece);
+  const title = t("ascendantFormat", { piece: label });
   const isClaimed = badge.state === "claimed";
   const isClaimable = badge.state === "claimable";
   const isLocked = badge.state === "locked";
@@ -96,9 +98,9 @@ function BadgeCard({
       <div className="badge-card-identity">
         <p className="badge-card-name">{title}</p>
         <p className="badge-card-status-text">
-          {isClaimed ? BADGE_SHEET_COPY.owned : isLocked ? BADGE_SHEET_COPY.locked : "Claimable"}
+          {isClaimed ? t("owned") : isLocked ? t("locked") : t("claimable")}
         </p>
-        
+
         {/* Progress bar */}
         <div className="badge-card-progress-bar-wrap">
           <div
@@ -113,7 +115,7 @@ function BadgeCard({
         {isClaimed ? (
           <CandyChip variant="success" tone="subtle">
             <CandyIcon name="check" className="mr-0.5 h-2.5 w-2.5" />
-            {BADGE_SHEET_COPY.owned}
+            {t("owned")}
           </CandyChip>
         ) : isClaimable ? (
           <PrincipalButton
@@ -122,14 +124,14 @@ function BadgeCard({
             onClick={onClaim}
             loading={isThisBusy}
             disabled={isClaimBusy && !isThisBusy}
-            aria-label={BADGE_SHEET_COPY.claimBadge}
+            aria-label={t("claimBadge")}
           >
-            Claim
+            {t("claim")}
           </PrincipalButton>
         ) : (
           <CandyChip variant="warm" tone="subtle">
             <CandyIcon name="lock" className="mr-0.5 h-2.5 w-2.5" />
-            Locked
+            {t("lockedShort")}
           </CandyChip>
         )}
       </div>
@@ -175,6 +177,9 @@ export function BadgeSheet({
   onNavigateToTrophies,
   showTrigger = true,
 }: BadgeSheetProps) {
+  const t = useTranslations("BADGE_SHEET_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
+  const tAbout = useTranslations("ABOUT_LINK_COPY");
   // Initialize synchronously from localStorage to avoid progress bar flashing from 0%
   const [starsByPiece, setStarsByPiece] = useState<Record<PieceId, number[]>>(() =>
     Object.fromEntries(
@@ -216,7 +221,7 @@ export function BadgeSheet({
           {/* No explicit h/w classes needed: .chesscito-dock-item > button in globals.css enforces 2.75rem x 2.75rem via !important */}
           <button
             type="button"
-            aria-label="Badges"
+            aria-label={t("ariaLabel")}
             className="relative flex shrink-0 items-center justify-center"
           >
             <img
@@ -237,8 +242,8 @@ export function BadgeSheet({
       <SheetContent
         side="bottom"
         hideClose
-        title={BADGE_SHEET_COPY.title}
-        description={BADGE_SHEET_COPY.subtitle}
+        title={t("title")}
+        description={t("subtitle")}
         className="mission-shell sheet-bg-badges flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         {/* Sheet header — canonical Z2 envelope. The star-count chip +
@@ -248,9 +253,9 @@ export function BadgeSheet({
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/badge-menu" />}
-            title={BADGE_SHEET_COPY.title}
-            subtitle={BADGE_SHEET_COPY.subtitle}
-            close={{ onClick: () => onOpenChange(false), label: "Close badges" }}
+            title={t("title")}
+            subtitle={t("subtitle")}
+            close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
           />
         </div>
 
@@ -258,7 +263,7 @@ export function BadgeSheet({
         <div className="shrink-0 mt-3 flex flex-col gap-2">
           <div className="flex items-center justify-end">
             <CandyChip variant="warm" tone="subtle">
-              {totalCollectedStars} of {totalAvailableStars} stars
+              {t("starsProgressFormat", { collected: totalCollectedStars, total: totalAvailableStars })}
             </CandyChip>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full" style={{ background: "rgba(110, 65, 15, 0.12)" }}>
@@ -283,7 +288,7 @@ export function BadgeSheet({
             }}
           >
             <CandyIcon name="check" className="h-5 w-5" />
-            {BADGE_SHEET_COPY.claimSuccess(lastClaimedPiece)}
+            {t("claimSuccess", { piece: tPiece(lastClaimedPiece) })}
           </div>
         ) : null}
 
@@ -307,9 +312,9 @@ export function BadgeSheet({
               onClick={onNavigateToTrophies}
               className="text-xs font-bold underline underline-offset-4 transition-colors hover:opacity-80"
               style={{ color: "rgba(110, 65, 15, 0.75)" }}
-              aria-label={BADGE_SHEET_COPY.viewTrophies}
+              aria-label={t("viewTrophies")}
             >
-              {BADGE_SHEET_COPY.viewTrophies}
+              {t("viewTrophies")}
             </button>
 
             <Link
@@ -318,7 +323,7 @@ export function BadgeSheet({
               className="text-nano opacity-60 transition-colors hover:opacity-100"
               style={{ color: "rgba(110, 65, 15, 0.65)" }}
             >
-              {ABOUT_LINK_COPY.label}
+              {tAbout("label")}
             </Link>
           </div>
         </div>

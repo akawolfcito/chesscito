@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
-import { LABYRINTH_COPY } from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
 
 type Props = {
@@ -40,6 +40,7 @@ export function LabyrinthCompleteOverlay({
   onRetry,
   onBack,
 }: Props) {
+  const t = useTranslations("LABYRINTH_COPY");
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
@@ -63,16 +64,16 @@ export function LabyrinthCompleteOverlay({
       className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
-      aria-label={LABYRINTH_COPY.completeTitle}
+      aria-label={t("completeTitle")}
     >
       <div
         className="relative w-full max-w-xs animate-in zoom-in-95 slide-in-from-bottom-4 duration-400"
         onClick={(e) => e.stopPropagation()}
       >
         <CandyGlassShell
-          title={LABYRINTH_COPY.completeTitle}
+          title={t("completeTitle")}
           onClose={() => handleAction(onBack)}
-          closeLabel={LABYRINTH_COPY.back}
+          closeLabel={t("back")}
           cta={
             <div className="flex w-full flex-col gap-2.5 animate-in fade-in duration-300 fill-mode-both [animation-delay:600ms]">
               <Button
@@ -83,7 +84,7 @@ export function LabyrinthCompleteOverlay({
                 className="w-full"
               >
                 <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" />{" "}
-                {LABYRINTH_COPY.retry}
+                {t("retry")}
               </Button>
               <Button
                 type="button"
@@ -92,7 +93,7 @@ export function LabyrinthCompleteOverlay({
                 onClick={() => handleAction(onBack)}
                 className="w-full"
               >
-                {LABYRINTH_COPY.back}
+                {t("back")}
               </Button>
             </div>
           }
@@ -133,14 +134,16 @@ export function LabyrinthCompleteOverlay({
                 textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
               }}
             >
-              {LABYRINTH_COPY.completeMoves(moves, optimalMoves)}
+              {isOptimal
+                ? t("completeMovesOptimalFormat", { moves })
+                : t("completeMovesFormat", { moves, optimal: optimalMoves })}
             </p>
             {isOptimal && (
               <p
                 className="text-xs"
                 style={{ color: "rgba(110, 65, 15, 0.75)" }}
               >
-                ★ Perfect path
+                {t("perfectPath")}
               </p>
             )}
 
@@ -158,15 +161,15 @@ export function LabyrinthCompleteOverlay({
                 }}
               >
                 {previousBest != null
-                  ? `New best! Beat ${previousBest} → ${moves}`
-                  : `First completion · ${moves} moves`}
+                  ? t("newBestFormat", { previous: previousBest, current: moves })
+                  : t("firstCompletionFormat", { moves })}
               </p>
             ) : previousBest != null ? (
               <p
                 className="mt-1 text-xs"
                 style={{ color: "rgba(110, 65, 15, 0.65)" }}
               >
-                Your best: {previousBest} moves
+                {t("yourBestFormat", { previous: previousBest })}
               </p>
             ) : null}
           </div>

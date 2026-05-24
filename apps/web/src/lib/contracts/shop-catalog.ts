@@ -1,5 +1,3 @@
-import { SHOP_ITEM_COPY } from "@/lib/content/editorial";
-
 /** Shop item id reserved on-chain for the Retry Shield. Each purchase
  *  credits 3 uses to localStorage via the pendingShieldCredit effect.
  *  Admin must call ShopUpgradeable.setItem(2, 25000, true) before the
@@ -28,31 +26,24 @@ export const FOUNDER_BADGE_ITEM_ID = 1n;
  *  CELO button stays hidden — same safe-default as itemId 2. */
 export const FOUNDER_BADGE_CELO_ITEM_ID = 5n;
 
+/** Locale-agnostic key into `SHOP_ITEM_COPY` for resolving a row's
+ *  label / subtitle copy at render time. Callers thread the active
+ *  `useTranslations("SHOP_ITEM_COPY")` translator and resolve
+ *  `${copyKey}.label` / `${copyKey}.subtitle` locally. */
+export type ShopCopyKey = "founderBadge" | "retryShield";
+
 export type ShopCatalogEntry = {
   itemId: bigint;
-  label: string;
-  subtitle: string;
+  copyKey: ShopCopyKey;
 };
 
 export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
-  {
-    itemId: FOUNDER_BADGE_ITEM_ID,
-    label: SHOP_ITEM_COPY.founderBadge.label,
-    subtitle: SHOP_ITEM_COPY.founderBadge.subtitle,
-  },
-  {
-    itemId: SHIELD_ITEM_ID,
-    label: SHOP_ITEM_COPY.retryShield.label,
-    subtitle: SHOP_ITEM_COPY.retryShield.subtitle,
-  },
+  { itemId: FOUNDER_BADGE_ITEM_ID, copyKey: "founderBadge" },
+  { itemId: SHIELD_ITEM_ID, copyKey: "retryShield" },
   // Helper entry for the CELO route. Hidden from the shop card list —
   // only its on-chain configured/enabled flags drive the visibility of
   // the "Buy with CELO" button rendered next to itemId 1.
-  {
-    itemId: FOUNDER_BADGE_CELO_ITEM_ID,
-    label: SHOP_ITEM_COPY.founderBadge.label,
-    subtitle: SHOP_ITEM_COPY.founderBadge.subtitle,
-  },
+  { itemId: FOUNDER_BADGE_CELO_ITEM_ID, copyKey: "founderBadge" },
 ] as const;
 
 /** Number of shield uses credited to localStorage per successful
