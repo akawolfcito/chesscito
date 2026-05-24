@@ -1,14 +1,26 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { track } from "@/lib/telemetry";
 import {
   requestCloseDockSheet,
   requestOpenDockSheet,
   useDockSheet,
 } from "@/lib/ui/dock-sheet-store";
+
+/**
+ * Locale-aware navigation primitives. Critical for the i18n migration:
+ *   - `usePathname()` from `@/i18n/navigation` returns the path WITHOUT
+ *     the locale segment (`/exercises` rather than `/es/exercises`),
+ *     so the `startsWith("/exercises")` host-route checks keep working
+ *     post Stage 1.
+ *   - `useRouter().push(href)` from this module preserves the active
+ *     locale when navigating, so a user on `/es/*` who taps a dock
+ *     item that falls back to `/hub` lands on `/es/hub`, never
+ *     accidentally bouncing through `/en/hub`.
+ */
 
 export type DockSlot = "badge" | "shop" | "arena" | "trophies" | "leaderboard";
 
