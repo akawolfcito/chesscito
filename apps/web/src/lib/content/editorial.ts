@@ -33,6 +33,9 @@ export const FOOTER_CTA_COPY = {
   submitFailed: "Save failed — try again",
 } as const;
 
+/** ICU placeholders mirrored in messages/en.ts for the function helpers
+ *  above (shieldsLeft). */
+
 export const PIECE_LABELS = {
   rook: "Rook",
   bishop: "Bishop",
@@ -45,6 +48,10 @@ export const PIECE_LABELS = {
 export const PIECE_RAIL_COPY = {
   comingSoon: "Soon",
   title: "Choose a piece",
+  /** ICU placeholder for the trigger button's screen-reader label. */
+  triggerAriaFormat: "Switch piece (current: {piece})",
+  /** Close affordance inside the sheet's contextual header. */
+  closeLabel: "Close piece picker",
 } as const;
 
 /** `<JourneyRail />` copy. ICU formats interpolate piece names from
@@ -70,6 +77,10 @@ export const MISSION_DETAIL_COPY = {
   timeLabel: "Time",
   preFirstMoveHint: "Make your first move to start tracking",
   journeyTitle: "Your journey",
+  /** Generic close-affordance ARIA label used by `<MissionHeaderCandy />`
+   *  for every sheet that adopts it (mission detail, daily picker, mate
+   *  picker, …). `{title}` is the surface's own sheet title. */
+  closeLabelFormat: "Close {title}",
 } as const;
 
 const PIECE_BASE = THEME_CONFIG.piecesBase;
@@ -542,6 +553,8 @@ export const MISSION_BRIEFING_COPY = {
     king: "♚ One square, any direction",
   },
   captureHintCompact: "♜ Capture the target",
+  /** Close affordance ARIA on the mission-briefing modal. */
+  closeLabel: "Close",
 } as const;
 
 export const VICTORY_PAGE_COPY = {
@@ -689,6 +702,8 @@ export const TROPHY_VITRINE_COPY = {
   timeStatLabel: "Time",
   playerStatLabel: "Player",
   historyHeading: "History",
+  /** Close affordance for the trophies bottom-sheet variant. */
+  closeSheetLabel: "Close trophies",
 } as const;
 
 /** Achievement surface copy (feature #23). Achievements are derived from

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MISSION_BRIEFING_COPY, PIECE_LABELS } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
+
 import type { PieceId } from "@/lib/game/types";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { track } from "@/lib/telemetry";
@@ -19,6 +20,8 @@ export function MissionBriefing({
   isCapture,
   onPlay,
 }: MissionBriefingProps) {
+  const t = useTranslations("MISSION_BRIEFING_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
   const [exiting, setExiting] = useState(false);
   const playButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -32,11 +35,17 @@ export function MissionBriefing({
     playButtonRef.current?.focus();
   }, []);
 
-  const pieceName = PIECE_LABELS[pieceType] ?? pieceType;
+  const pieceName = (() => {
+    try {
+      return tPiece(pieceType);
+    } catch {
+      return pieceType;
+    }
+  })();
   const objective = isCapture
-    ? MISSION_BRIEFING_COPY.captureHint
-    : MISSION_BRIEFING_COPY.moveObjective(pieceName, targetLabel);
-  const hint = MISSION_BRIEFING_COPY.moveHint[pieceType];
+    ? t("captureHint")
+    : t("moveObjective", { piece: pieceName, target: targetLabel });
+  const hint = t(`moveHint.${pieceType}`);
 
   function handleDismiss() {
     setExiting(true);
@@ -79,7 +88,7 @@ export function MissionBriefing({
           <button
             type="button"
             onClick={handleDismiss}
-            aria-label="Close"
+            aria-label={t("closeLabel")}
             className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
           >
             <picture>
@@ -115,7 +124,7 @@ export function MissionBriefing({
                   textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
                 }}
               >
-                {MISSION_BRIEFING_COPY.label}
+                {t("label")}
               </h2>
             </div>
 
@@ -172,10 +181,10 @@ export function MissionBriefing({
                 ref={playButtonRef}
                 size="medium"
                 onClick={handleDismiss}
-                aria-label={MISSION_BRIEFING_COPY.play}
+                aria-label={t("play")}
                 className="!h-[52px] !w-[180px] !text-base"
               >
-                {MISSION_BRIEFING_COPY.play}
+                {t("play")}
               </PrincipalButton>
             </div>
           </div>

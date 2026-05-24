@@ -1,6 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
+
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import type { CandyIconName } from "@/components/redesign/candy-icon";
 
@@ -37,6 +39,7 @@ export function MissionHeaderCandy({
   const resolvedIcon: CandyIconName | undefined = iconSlot
     ? undefined
     : icon ?? "coach";
+  const t = useTranslations("MISSION_DETAIL_COPY");
   return (
     <>
       <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
@@ -46,7 +49,7 @@ export function MissionHeaderCandy({
           iconSlot={iconSlot}
           title={title}
           subtitle={subtitle}
-          close={{ onClick: onClose, label: `Close ${title}` }}
+          close={{ onClick: onClose, label: t("closeLabelFormat", { title }) }}
         />
       </div>
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
@@ -9,7 +11,6 @@ import {
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { TrophiesBody } from "@/components/trophies/trophies-body";
-import { DOCK_LABELS, TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 
 type TrophiesSheetProps = {
   open: boolean;
@@ -31,13 +32,15 @@ type TrophiesSheetProps = {
  * so this sheet and any remaining standalone consumer stay in sync.
  */
 export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: TrophiesSheetProps) {
+  const tDock = useTranslations("DOCK_LABELS");
+  const t = useTranslations("TROPHY_VITRINE_COPY");
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       {showTrigger ? (
         <SheetTrigger asChild>
           <button
             type="button"
-            aria-label={DOCK_LABELS.trophies}
+            aria-label={tDock("trophies")}
             className="relative flex h-full w-full shrink-0 items-center justify-center text-amber-200/80"
           >
             <CandyIcon name="trophy" className="h-full w-full" />
@@ -47,17 +50,17 @@ export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: Trophi
       <SheetContent
         side="bottom"
         hideClose
-        title={TROPHY_VITRINE_COPY.pageTitle}
-        description={TROPHY_VITRINE_COPY.pageDescription}
+        title={t("pageTitle")}
+        description={t("pageDescription")}
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
-            title={TROPHY_VITRINE_COPY.pageTitle}
-            subtitle={TROPHY_VITRINE_COPY.pageDescription}
-            close={{ onClick: () => onOpenChange(false), label: "Close trophies" }}
+            title={t("pageTitle")}
+            subtitle={t("pageDescription")}
+            close={{ onClick: () => onOpenChange(false), label: t("closeSheetLabel") }}
           />
         </div>
         <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-6">

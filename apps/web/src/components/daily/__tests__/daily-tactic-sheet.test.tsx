@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
+import { cleanup, act } from "@testing-library/react";
+import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
 import { DailyTacticSheet } from "../daily-tactic-sheet";
 import type { DailyTacticData } from "@/lib/daily/daily-puzzles";
 

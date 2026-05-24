@@ -111,5 +111,13 @@ m.VICTORY_CELEBRATION_COPY.performanceLineCheckmate = "Checkmate in {moves} move
 m.VICTORY_CLAIM_COPY.teaserCheckmate = "Checkmate in {moves} moves";
 m.VICTORY_CLAIM_COPY.card.performanceLine = "{moves} MOVES • {time}";
 m.VICTORY_CLAIM_COPY.card.byLine = "by {player}";
+m.PIECE_RAIL_COPY.triggerAriaFormat = "Switch piece (current: {piece})";
+m.SAVED_CHIP_COPY.label = "Saved · {stars}★";
+m.SAVED_CHIP_COPY.ariaLabel =
+  "Score saved on chain: {stars} of {total} stars. Beat your score to save again.";
+m.SAVED_CHIP_COPY.ariaLabelWithReceipt =
+  "Score saved on chain: {stars} of {total} stars. Tap to view receipt on Celoscan.";
+m.MISSION_DETAIL_COPY.closeLabelFormat = "Close {title}";
+m.MISSION_BRIEFING_COPY.moveObjective = "Move your {piece} to {target}";
 
 export default messages;

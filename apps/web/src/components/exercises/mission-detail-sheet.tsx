@@ -9,14 +9,10 @@ import {
   type ReactElement,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { JourneyRail } from "@/components/redesign/journey-rail";
-import {
-  MISSION_BRIEFING_COPY,
-  MISSION_DETAIL_COPY,
-  PIECE_LABELS,
-  SCORE_UNIT,
-} from "@/lib/content/editorial";
+import { SCORE_UNIT } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
 
 type Props = {
@@ -55,6 +51,9 @@ export function MissionDetailSheet({
   claimedBadges,
   trigger,
 }: Props) {
+  const tBriefing = useTranslations("MISSION_BRIEFING_COPY");
+  const tDetail = useTranslations("MISSION_DETAIL_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
   // Two-stage open/close so the fade-out animation completes before
   // unmounting. `mounted` controls DOM presence; `exiting` flips the
   // panel opacity for the closing transition.
@@ -87,11 +86,17 @@ export function MissionDetailSheet({
   }, [mounted, onOpenChange]);
 
   const hasStats = Number(score) > 0 || Number(timeMs) > 0;
-  const pieceName = PIECE_LABELS[selectedPiece] ?? selectedPiece;
+  const pieceName = (() => {
+    try {
+      return tPiece(selectedPiece);
+    } catch {
+      return selectedPiece;
+    }
+  })();
   const objective = isCapture
-    ? MISSION_BRIEFING_COPY.captureHint
-    : MISSION_BRIEFING_COPY.moveObjective(pieceName, targetLabel);
-  const hint = MISSION_BRIEFING_COPY.moveHint[selectedPiece];
+    ? tBriefing("captureHint")
+    : tBriefing("moveObjective", { piece: pieceName, target: targetLabel });
+  const hint = tBriefing(`moveHint.${selectedPiece}`);
 
   const triggerEl = isValidElement(trigger)
     ? cloneElement(trigger as ReactElement<{ onClick?: (e: ReactMouseEvent) => void }>, {
@@ -145,7 +150,7 @@ export function MissionDetailSheet({
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                aria-label="Close mission"
+                aria-label={tDetail("closeLabelFormat", { title: tDetail("title") })}
                 className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
               >
                 <picture>
@@ -176,7 +181,7 @@ export function MissionDetailSheet({
                       textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
                     }}
                   >
-                    {MISSION_DETAIL_COPY.title.toUpperCase()}
+                    {tDetail("title").toUpperCase()}
                   </h2>
                 </div>
 
@@ -241,7 +246,7 @@ export function MissionDetailSheet({
                     className="mt-3 text-center text-xs"
                     style={{ color: "rgba(110, 65, 15, 0.65)" }}
                   >
-                    {MISSION_DETAIL_COPY.preFirstMoveHint}
+                    {tDetail("preFirstMoveHint")}
                   </p>
                 )}
 
@@ -270,7 +275,7 @@ export function MissionDetailSheet({
                     textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
                   }}
                 >
-                  {MISSION_DETAIL_COPY.journeyTitle}
+                  {tDetail("journeyTitle")}
                 </h3>
 
                 <div className="mt-2 w-full">

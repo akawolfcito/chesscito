@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render } from "@testing-library/react";
+import { renderWithIntl as render } from "@/test-utils/render-with-intl";
 
 import { SavedChip } from "../saved-chip";
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
   Sheet,
@@ -8,7 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { PIECE_IMAGES, PIECE_LABELS, PIECE_RAIL_COPY } from "@/lib/content/editorial";
+import { PIECE_IMAGES, type PIECE_LABELS } from "@/lib/content/editorial";
 import { THEME_CONFIG } from "@/lib/theme";
 
 type PieceOption = {
@@ -33,6 +35,8 @@ type Props = {
 };
 
 export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, onSelectPiece, trigger }: Props) {
+  const t = useTranslations("PIECE_RAIL_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
   function handleSelect(piece: PieceOption["key"]) {
     onSelectPiece(piece);
     onOpenChange(false);
@@ -44,15 +48,15 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
       <SheetContent
         side="bottom"
         hideClose
-        title={PIECE_RAIL_COPY.title}
+        title={t("title")}
         className="mission-shell sheet-bg-hub rounded-t-3xl border-white/[0.10] pb-[5rem]"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src={PIECE_IMAGES[selectedPiece]} />}
-            title={PIECE_RAIL_COPY.title}
-            close={{ onClick: () => onOpenChange(false), label: "Close piece picker" }}
+            title={t("title")}
+            close={{ onClick: () => onOpenChange(false), label: t("closeLabel") }}
           />
         </div>
 
@@ -99,7 +103,7 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
                     textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
                   }}
                 >
-                  {PIECE_LABELS[piece.key as keyof typeof PIECE_LABELS]}
+                  {tPiece(piece.key as keyof typeof PIECE_LABELS)}
                 </span>
                 {isLocked ? (
                   <span
@@ -111,7 +115,7 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
                     }}
                   >
                     <CandyIcon name="lock" className="h-2.5 w-2.5" />
-                    {PIECE_RAIL_COPY.comingSoon}
+                    {t("comingSoon")}
                   </span>
                 ) : null}
               </button>

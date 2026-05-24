@@ -1,7 +1,8 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { SAVED_CHIP_COPY } from "@/lib/content/editorial";
 
 type SavedChipProps = {
   /** Stars currently saved on chain (denominator is total exercises per
@@ -27,10 +28,11 @@ type SavedChipProps = {
  * ability to save.
  */
 export function SavedChip({ stars, total, receiptUrl }: SavedChipProps) {
-  const label = SAVED_CHIP_COPY.label(stars);
+  const t = useTranslations("SAVED_CHIP_COPY");
+  const label = t("label", { stars });
   const ariaLabel = receiptUrl
-    ? SAVED_CHIP_COPY.ariaLabelWithReceipt(stars, total)
-    : SAVED_CHIP_COPY.ariaLabel(stars, total);
+    ? t("ariaLabelWithReceipt", { stars, total })
+    : t("ariaLabel", { stars, total });
 
   const chipStyle = {
     background: "rgba(220, 252, 231, 0.85)",
@@ -75,7 +77,7 @@ export function SavedChip({ stars, total, receiptUrl }: SavedChipProps) {
         className="text-nano font-semibold uppercase tracking-wider"
         style={{ color: "rgba(63, 34, 8, 0.65)" }}
       >
-        {SAVED_CHIP_COPY.hint}
+        {t("hint")}
       </span>
     </div>
   );

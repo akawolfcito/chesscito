@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { PIECE_IMAGES, PIECE_LABELS } from '@/lib/content/editorial'
 import { THEME_CONFIG } from '@/lib/theme'
 
@@ -26,12 +28,15 @@ export function PiecePickerTrigger({
   onClick,
   showLabel = false,
 }: Props) {
+  const tPiece = useTranslations('PIECE_LABELS')
+  const tRail = useTranslations('PIECE_RAIL_COPY')
   const src = PIECE_IMAGES[selectedPiece]
+  const pieceLabel = tPiece(selectedPiece)
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={`Switch piece (current: ${PIECE_LABELS[selectedPiece]})`}
+      aria-label={tRail('triggerAriaFormat', { piece: pieceLabel })}
       aria-haspopup="dialog"
       className={
         showLabel
@@ -77,7 +82,7 @@ export function PiecePickerTrigger({
             textShadow: '0 1px 0 rgba(255, 245, 215, 0.75)',
           }}
         >
-          {PIECE_LABELS[selectedPiece]}
+          {pieceLabel}
         </span>
       )}
       {showLabel && (

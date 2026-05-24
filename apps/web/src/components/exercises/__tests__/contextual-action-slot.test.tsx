@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render-with-intl";
 import { ContextualActionSlot } from "../contextual-action-slot";
 
 const noop = () => {};

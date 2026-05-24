@@ -1,8 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import type { ContextAction } from "@/lib/game/context-action";
 import { ActionPin } from "@/components/redesign/action-pin";
-import { FOOTER_CTA_COPY } from "@/lib/content/editorial";
 
 type ContextualActionSlotProps = {
   action: ContextAction;
@@ -34,13 +35,20 @@ function getHandler(
 }
 
 export function ContextualActionSlot(props: ContextualActionSlotProps) {
+  const t = useTranslations("FOOTER_CTA_COPY");
   const { action, shieldsAvailable, isBusy, compact = false } = props;
 
   if (!action) return null;
 
-  const copy = FOOTER_CTA_COPY[action];
+  const label = t(`${action}.label`);
+  const compactLabel = t(`${action}.compactLabel`);
+  const loadingKey = `${action}.loading`;
+  // Loading copy is only defined for the in-flight actions; the others
+  // (retry / connectWallet / switchNetwork) have `loading: null` in the
+  // editorial source so we fall back to the regular label.
+  const loadingLabel = isBusy && hasLoading(action) ? t(loadingKey) : null;
   const handler = getHandler(action, props);
-  const fullLabel = isBusy && copy.loading ? copy.loading : copy.label;
+  const fullLabel = loadingLabel ?? label;
   const tone = action === "claimBadge" ? "claim" : "default";
 
   // useShield surfaces the live shield count via ActionPin's badge slot.
@@ -50,7 +58,7 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
     action === "useShield" && !isBusy
       ? {
           pin: shieldsAvailable,
-          full: FOOTER_CTA_COPY.shieldsLeft(shieldsAvailable),
+          full: t("shieldsLeft", { count: shieldsAvailable }),
         }
       : undefined;
 
@@ -64,7 +72,7 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
           action={action}
           size="pin"
           tone={tone}
-          label={copy.compactLabel}
+          label={compactLabel}
           ariaLabel={fullLabel}
           badge={badge}
           isBusy={isBusy}
@@ -88,4 +96,8 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
       />
     </div>
   );
+}
+
+function hasLoading(action: Exclude<ContextAction, null>): boolean {
+  return action === "submitScore" || action === "useShield" || action === "claimBadge";
 }
