@@ -641,10 +641,10 @@ const messages = {
     unlockPieceFormat: "Desbloquea {piece}",
     noMorePieces: "Sin más piezas",
     allPiecesMastered: "Todas las piezas dominadas",
-    claimed: "Reclamada",
-    readyToClaim: "Lista para reclamar",
+    claimed: "Conseguida",
+    readyToClaim: "Lista para obtener",
     ready: "Listo",
-    claimBadgeFirst: "Reclama la insignia primero",
+    claimBadgeFirst: "Obtén la insignia primero",
     starProgressFormat: "{current} / {total} ★",
     masteredCountFormat: "{count} / {total}",
   },
@@ -1008,7 +1008,7 @@ const messages = {
     title: "Misión",
     scoreLabel: "Puntaje",
     timeLabel: "Tiempo",
-    preFirstMoveHint: "Haz tu primer movimiento para empezar a rastrear",
+    preFirstMoveHint: "Haz tu primer movimiento para empezar",
     journeyTitle: "Tu viaje",
     closeLabelFormat: "Cerrar {title}",
   },
@@ -1298,7 +1298,7 @@ const messages = {
     },
   },
   HUB_V2_SPLASH_COPY: {
-    title: "Bienvenido, amigo",
+    title: "Bienvenido",
     tagline: "Pequeñas jugadas. Grandes hábitos mentales.",
     dismissHint: "Toca en cualquier lugar para comenzar",
     ariaLabel: "Pantalla de bienvenida",
@@ -1365,12 +1365,12 @@ const messages = {
   },
   HUB_V2_TRAINING_COPY: {
     active: {
-      kicker: "Pase de Entrenamiento",
+      kicker: "Pase de entrenamiento",
       daysFormat: "{d}d",
       sessionsFormat: "Sesiones: {used}/{total}",
       renewsFormat: "Renueva {mmdd}",
       ariaLabel:
-        "Pase de Entrenamiento activo, {d} días restantes, {used} de {total} sesiones usadas",
+        "Pase de entrenamiento activo, {d} días restantes, {used} de {total} sesiones usadas",
     },
     inactive: {
       title: "Desbloquea Coach + Premium",
@@ -1378,10 +1378,10 @@ const messages = {
       perks: [
         "Análisis de Coach diarios",
         "12 sesiones de Arena",
-        "HUD de sello de cera",
+        "HUD premium",
       ],
       cta: "Ver plan",
-      ariaLabel: "Pase de Entrenamiento — $1.99 por 30 días, ver plan",
+      ariaLabel: "Pase de entrenamiento — $1.99 por 30 días, ver plan",
     },
   },
   HUB_ACTION_RAIL_COPY: {
@@ -1391,7 +1391,7 @@ const messages = {
     proDiscoveryTitle: "PRO",
     proDiscoverySubtitle: "Desbloquea la experiencia completa",
     proDiscoveryAriaLabel:
-      "Desbloquea la suscripción PRO — desbloquea la experiencia completa.",
+      "Desbloquea PRO — experiencia completa.",
     arenaUnlockedAriaFormat: "Entrenamiento especial: {name}",
     arenaLockedAriaFormat: "{name} — bloqueado",
     dailyCompletedAriaFormat: "Táctica Diaria completada. Nueva en {hours}h.",
@@ -1414,13 +1414,13 @@ const messages = {
   },
   HUB_SCAFFOLD_COPY: {
     rootAriaLabel: "Hub de Chesscito",
-    premiumKicker: "Pase de Entrenamiento",
+    premiumKicker: "Pase de entrenamiento",
     premiumInactiveLabel: "Hazte PRO",
     playLabel: "ENTRAR A ARENA",
     playAriaLabel: "Entrar a la Arena",
-    premiumInactiveAriaLabel: "Pase de Entrenamiento — toca para desbloquear",
+    premiumInactiveAriaLabel: "Pase de entrenamiento — toca para desbloquear",
     premiumActiveAriaFormat:
-      "Pase de Entrenamiento — {used} de {total} sesiones usadas, {days} días restantes",
+      "Pase de entrenamiento — {used} de {total} sesiones usadas, {days} días restantes",
   },
   HUB_RAIL_COPY: {
     ...en.HUB_RAIL_COPY,

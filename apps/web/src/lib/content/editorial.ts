@@ -83,10 +83,10 @@ export const JOURNEY_RAIL_COPY = {
   unlockPieceFormat: "Unlock {piece}",
   noMorePieces: "No more pieces",
   allPiecesMastered: "All pieces mastered",
-  claimed: "Claimed",
-  readyToClaim: "Ready to claim",
+  claimed: "Earned",
+  readyToClaim: "Ready to earn",
   ready: "Ready",
-  claimBadgeFirst: "Claim badge first",
+  claimBadgeFirst: "Earn badge first",
   starProgressFormat: "{current} / {total} ★",
   masteredCountFormat: "{count} / {total}",
 } as const;
@@ -1141,7 +1141,7 @@ export const HUB_V2_TRAINING_COPY = {
     perks: [
       "Daily Coach analyses",
       "12 Arena sessions",
-      "Wax-seal HUD",
+      "Premium HUD",
     ] as const,
     cta: "See plan",
     ariaLabel: "Training Pass — $1.99 for 30 days, see plan",
@@ -2497,7 +2497,7 @@ export const HUB_ACTION_RAIL_COPY = {
   proDiscoveryTitle: "PRO",
   proDiscoverySubtitle: "Unlock the full experience",
   proDiscoveryAriaLabel:
-    "Unlock PRO subscription — unlock the full experience.",
+    "Unlock PRO — full experience.",
   /** Arena tile aria labels — composed from MiniArenaSetup.name. */
   arenaUnlockedAriaFormat: "Special training: {name}",
   arenaLockedAriaFormat: "{name} — locked",

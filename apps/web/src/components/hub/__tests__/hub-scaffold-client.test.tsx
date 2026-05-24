@@ -261,7 +261,7 @@ describe("HubScaffoldClient — PRO discovery panel", () => {
     render(<HubScaffoldClient />);
 
     const panel = screen.getByLabelText(
-      /Unlock PRO subscription — unlock the full experience\./,
+      /Unlock PRO — full experience\./,
     );
     expect(panel).toBeInTheDocument();
   });
@@ -271,7 +271,7 @@ describe("HubScaffoldClient — PRO discovery panel", () => {
     render(<HubScaffoldClient />);
 
     const panel = screen.getByLabelText(
-      /Unlock PRO subscription — unlock the full experience\./,
+      /Unlock PRO — full experience\./,
     );
     await user.click(panel);
 
@@ -295,7 +295,7 @@ describe("HubScaffoldClient — PRO discovery panel", () => {
     // HUD chip ("PRO 7d"), which stays as the canonical active-state cue.
     expect(
       screen.queryByLabelText(
-        /Unlock PRO subscription — unlock the full experience\./,
+        /Unlock PRO — full experience\./,
       ),
     ).not.toBeInTheDocument();
     // HUD chip continues to surface the active days remaining.
