@@ -169,10 +169,15 @@ describe("POST /api/coach/analyze", () => {
     // Cluster E §2.4.7 — short-circuit must include `idempotent: true`
     // so the client can fire coach_analyze_idempotent_hit{source}
     // instead of coach_analyze_request{source} and skip credit accounting.
+    // Per-locale migration (2026-05-24): the idempotent short-circuit
+    // now echoes the locale of the cached record so clients can render
+    // the EN/ES badge without an extra lookup. Legacy records (no
+    // `locale` field) are normalized to `"en"` by the read-fallback chain.
     expect(await res.json()).toEqual({
       status: "ready",
       response: { summary: "cached" },
       idempotent: true,
+      locale: "en",
     });
     expect(openaiCreate).not.toHaveBeenCalled();
     // Spec §2.4.7 Boundaries: re-tap on already-analyzed game MUST NOT

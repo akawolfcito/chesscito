@@ -6,6 +6,7 @@ import { validateGameRecord } from "@/lib/coach/validate-game";
 import { normalizeCoachResponse } from "@/lib/coach/normalize";
 import { buildCoachPrompt, type CoachLocale } from "@/lib/coach/prompt-template";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
+import { getCachedAnalysisWithFallback } from "@/lib/coach/cache-fallback";
 import { isProActive } from "@/lib/pro/is-active";
 import { aggregateHistory } from "@/lib/coach/history-digest";
 import { backfillRedisToSupabase } from "@/lib/coach/backfill";
@@ -34,10 +35,16 @@ export async function POST(req: Request) {
     await enforceRateLimit(ip);
 
     const body = await req.json();
-    const { gameId, walletAddress, locale: rawLocale } = body as {
+    const {
+      gameId,
+      walletAddress,
+      locale: rawLocale,
+      forceLocale: rawForceLocale,
+    } = body as {
       gameId?: string;
       walletAddress?: string;
       locale?: string;
+      forceLocale?: unknown;
     };
     // H-4: locale param drives the LLM prompt language. Optional + defaults
     // to "en" so legacy MiniPay clients (deployed before this change) keep
@@ -45,6 +52,11 @@ export async function POST(req: Request) {
     // arbitrary strings being injected into the prompt template.
     const locale: CoachLocale =
       rawLocale === "es" ? "es" : "en";
+    // Reanalyze opt-in (2026-05-24). When true, skip the cache lookup so
+    // the user can regenerate an analysis in the current locale even if a
+    // cached version exists. Strict boolean coercion — anything other
+    // than literal `true` falls back to the normal idempotent read.
+    const forceLocale = rawForceLocale === true;
 
     if (!gameId || !walletAddress) {
       return NextResponse.json({ error: "Missing gameId or walletAddress" }, { status: 400 });
@@ -63,11 +75,19 @@ export async function POST(req: Request) {
     // `coach_analyze_idempotent_hit{source}` instead of charging a
     // credit. Server-side behavior is unchanged: same `ready` payload,
     // same response shape; only the `idempotent` discriminator is new.
-    const existingAnalysis = await redis.get<CoachAnalysisRecord>(REDIS_KEYS.analysis(wallet, gameId));
+    //
+    // `forceLocale=true` (reanalyze flow) bypasses this read so the
+    // user can intentionally regenerate the analysis in the active
+    // locale even when a cached version exists — at the cost of 1
+    // credit per regeneration (same as a first analysis).
+    const existingAnalysis = forceLocale
+      ? null
+      : await getCachedAnalysisWithFallback(redis, wallet, gameId, locale);
     if (existingAnalysis) {
       return NextResponse.json({
         status: "ready",
         response: existingAnalysis.response,
+        locale: existingAnalysis.locale ?? locale,
         idempotent: true,
       });
     }
@@ -239,9 +259,20 @@ export async function POST(req: Request) {
         // language by design.
         locale,
       };
+      // Best-effort cleanup of the legacy locale-agnostic key so the
+      // read-fallback chain doesn't surface it any more. Only relevant
+      // when we just generated an EN analysis on top of a legacy record;
+      // safe to attempt on every write (DEL is a noop if absent).
+      if (locale === "en") {
+        await redis.del(REDIS_KEYS.analysisLegacy(wallet, gameId)).catch(() => {});
+      }
 
       await Promise.all([
-        redis.set(REDIS_KEYS.analysis(wallet, gameId), analysisRecord, { ex: 30 * 24 * 60 * 60 }),
+        redis.set(
+          REDIS_KEYS.analysis(wallet, gameId, locale),
+          analysisRecord,
+          { ex: 30 * 24 * 60 * 60 },
+        ),
         redis.lpush(REDIS_KEYS.analysisList(wallet), gameId),
         ...(proStatus.active ? [] : [redis.decr(REDIS_KEYS.credits(wallet))]),
         redis.set(REDIS_KEYS.job(jobId), { status: "ready", response: normalized.data }, { ex: 30 * 24 * 60 * 60 }),

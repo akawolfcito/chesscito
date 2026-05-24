@@ -107,12 +107,15 @@ describe("EVICT_IF_UNANALYZED_LUA — canonical script", () => {
     expect(EVICT_IF_UNANALYZED_LUA.trim().length).toBeGreaterThan(0);
   });
 
-  it("uses EXISTS on the analysis key (KEYS[2]) and LREM on the list key (KEYS[1])", () => {
-    expect(EVICT_IF_UNANALYZED_LUA).toMatch(/EXISTS.*KEYS\[2\]/);
+  it("uses EXISTS on the analysis keys (KEYS[2..4]) and LREM on the list key (KEYS[1])", () => {
+    // Per-locale migration (2026-05-24): KEYS[2] = legacy, KEYS[3] = EN, KEYS[4] = ES.
+    // EXISTS with multiple keys returns the count — `> 0` means at least one
+    // analysis record survives across locales, so the entry is protected.
+    expect(EVICT_IF_UNANALYZED_LUA).toMatch(/EXISTS.*KEYS\[2\].*KEYS\[3\].*KEYS\[4\]/);
     expect(EVICT_IF_UNANALYZED_LUA).toMatch(/LREM.*KEYS\[1\].*ARGV\[1\]/);
   });
 
-  it("short-circuits with return 0 when the analysis key exists (analyzed → protected)", () => {
+  it("short-circuits with return 0 when any analysis key exists (analyzed → protected)", () => {
     expect(EVICT_IF_UNANALYZED_LUA).toMatch(/return 0/);
     expect(EVICT_IF_UNANALYZED_LUA).toMatch(/return 1/);
   });
@@ -137,7 +140,12 @@ describe("enforceGameCap — single-overflow eviction", () => {
     expect(redis.pipeline).toHaveBeenCalledTimes(1);
     expect(pipeline.eval).toHaveBeenCalledWith(
       EVICT_IF_UNANALYZED_LUA,
-      [`coach:games:${WALLET}`, `coach:analysis:${WALLET}:oldest-uuid`],
+      [
+        `coach:games:${WALLET}`,
+        `coach:analysis:${WALLET}:oldest-uuid`,
+        `coach:analysis:${WALLET}:oldest-uuid:en`,
+        `coach:analysis:${WALLET}:oldest-uuid:es`,
+      ],
       ["oldest-uuid"],
     );
     expect(pipeline.exec).toHaveBeenCalledTimes(1);
@@ -202,7 +210,12 @@ describe("enforceGameCap — multi-overflow eviction (oldest-first)", () => {
     expect(pipeline.eval).toHaveBeenNthCalledWith(
       1,
       EVICT_IF_UNANALYZED_LUA,
-      [`coach:games:${WALLET}`, `coach:analysis:${WALLET}:overflow-oldest`],
+      [
+        `coach:games:${WALLET}`,
+        `coach:analysis:${WALLET}:overflow-oldest`,
+        `coach:analysis:${WALLET}:overflow-oldest:en`,
+        `coach:analysis:${WALLET}:overflow-oldest:es`,
+      ],
       ["overflow-oldest"],
     );
   });

@@ -61,10 +61,11 @@ export type CoachAnalysisRecord = {
   analysisVersion: string;
   createdAt: number;
   response: CoachResponse | BasicCoachResponse;
-  /** H-4: locale the LLM was prompted in. Recorded for telemetry /
-   *  debugging only; the cache key (wallet, gameId) is locale-agnostic
-   *  so a re-ask in a different locale returns this same record. Older
-   *  records (pre-2026-05-24) won't have this field. */
+  /** Locale the LLM was prompted in. As of 2026-05-24 the cache key
+   *  also includes the locale (`coach:analysis:<wallet>:<gameId>:<locale>`)
+   *  so EN + ES analyses coexist per game. Records written before that
+   *  change live at the legacy key without this field and are treated
+   *  as `"en"` at read time — see `getCachedAnalysisWithFallback()`. */
   locale?: "en" | "es";
 };
 

@@ -59,16 +59,22 @@ export const GAME_LIST_LPUSH_LUA = `
 /**
  * Atomic EXISTS-then-LREM for a single candidate eviction. Closes the
  * TOCTOU race inside the `enforceGameCap` loop where a `/api/coach/analyze`
- * write of `coach:analysis:<wallet>:<gameId>` could land between the JS
- * `redis.exists(...)` check and the `redis.lrem(...)` removal — causing
- * a freshly-analyzed game record to be evicted while its analysis row
- * survives, leaving an orphaned analysis with no replayable game.
+ * write of any `coach:analysis:<wallet>:<gameId>[:<locale>]` could land
+ * between the JS `redis.exists(...)` check and the `redis.lrem(...)`
+ * removal — causing a freshly-analyzed game record to be evicted while
+ * its analysis row survives, leaving an orphaned analysis with no
+ * replayable game.
  *
  * - `KEYS[1]` = game list key (`coach:games:<wallet>`).
- * - `KEYS[2]` = analysis key (`coach:analysis:<wallet>:<gameId>`).
+ * - `KEYS[2]` = legacy analysis key (`coach:analysis:<wallet>:<gameId>`).
+ * - `KEYS[3]` = per-locale EN key (`coach:analysis:<wallet>:<gameId>:en`).
+ * - `KEYS[4]` = per-locale ES key (`coach:analysis:<wallet>:<gameId>:es`).
  * - `ARGV[1]` = candidate `gameId`.
  * - Returns `1` when the entry was unanalyzed and got removed, `0` when
- *   the entry is analyzed and was protected.
+ *   the entry is analyzed (in ANY locale) and was protected.
+ *
+ * `EXISTS` accepts multiple keys and returns the count of existing keys —
+ * `> 0` means "at least one analysis record survives, do not evict."
  *
  * Note on race scope: this script only closes the inner EXISTS+LREM
  * window (Race B in the defer notes — the only one with corruption
@@ -79,7 +85,7 @@ export const GAME_LIST_LPUSH_LUA = `
  * disproportionate to the symptom.
  */
 export const EVICT_IF_UNANALYZED_LUA = `
-  if redis.call('EXISTS', KEYS[2]) == 1 then return 0 end
+  if redis.call('EXISTS', KEYS[2], KEYS[3], KEYS[4]) > 0 then return 0 end
   redis.call('LREM', KEYS[1], 1, ARGV[1])
   return 1
 `;
@@ -165,7 +171,12 @@ export async function enforceGameCap(
     candidates.push(gameId);
     pipeline.eval(
       EVICT_IF_UNANALYZED_LUA,
-      [listKey, REDIS_KEYS.analysis(wallet, gameId)],
+      [
+        listKey,
+        REDIS_KEYS.analysisLegacy(wallet, gameId),
+        REDIS_KEYS.analysis(wallet, gameId, "en"),
+        REDIS_KEYS.analysis(wallet, gameId, "es"),
+      ],
       [gameId],
     );
   }

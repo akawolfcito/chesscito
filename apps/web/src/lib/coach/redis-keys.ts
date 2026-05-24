@@ -3,7 +3,22 @@ export const REDIS_KEYS = {
   gameList: (wallet: string) => `coach:games:${wallet}`,
   job: (jobId: string) => `coach:job:${jobId}`,
   jobByGame: (wallet: string, gameId: string) => `coach:job-ref:${wallet}:${gameId}`,
-  analysis: (wallet: string, gameId: string) => `coach:analysis:${wallet}:${gameId}`,
+  /** Per-locale analysis cache. As of 2026-05-24, the cache key includes
+   *  the locale segment so EN and ES analyses for the same `(wallet,
+   *  gameId)` coexist instead of overwriting. Records written before
+   *  that change live at the legacy key below — readers consult both
+   *  in order via `getCachedAnalysisWithFallback()`. */
+  analysis: (
+    wallet: string,
+    gameId: string,
+    locale: "en" | "es",
+  ) => `coach:analysis:${wallet}:${gameId}:${locale}`,
+  /** Legacy locale-agnostic cache key. Still served on read for any
+   *  record that predates the per-locale migration; writes always go
+   *  to the new keyed form. Treat as "EN-by-convention" because the
+   *  pre-migration default prompt was English. */
+  analysisLegacy: (wallet: string, gameId: string) =>
+    `coach:analysis:${wallet}:${gameId}`,
   analysisList: (wallet: string) => `coach:analyses:${wallet}`,
   credits: (wallet: string) => `coach:credits:${wallet}`,
   pendingJob: (wallet: string) => `coach:pending:${wallet}`,

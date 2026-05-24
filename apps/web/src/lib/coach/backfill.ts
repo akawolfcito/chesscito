@@ -5,6 +5,7 @@ import type {
   GameRecord,
 } from "./types";
 import { extractWeaknessTagsSafe } from "./persistence";
+import { getCachedAnalysisWithFallback } from "./cache-fallback";
 import { REDIS_KEYS } from "./redis-keys";
 import { getSupabaseServer } from "../supabase/server";
 import { hashWallet, type Logger } from "../server/logger";
@@ -137,14 +138,21 @@ export async function backfillRedisToSupabase(
     }
 
     // Build rows. Skip ids whose analysis or game is missing, or kind != full.
+    // Locale-fallback chain: prefer EN (legacy default), then ES — ensures the
+    // one-shot backfill picks up records written in either prompt language
+    // and rows already-EN records that pre-date the per-locale key migration.
     const rows: CoachAnalysisRow[] = [];
     for (const gameId of gameIds) {
-      const analysis = await redis.get(REDIS_KEYS.analysis(wallet, gameId));
-      const game = await redis.get(REDIS_KEYS.game(wallet, gameId));
+      const [enAnalysis, esAnalysis, game] = await Promise.all([
+        getCachedAnalysisWithFallback(redis, wallet, gameId, "en"),
+        redis.get<CoachAnalysisRecord>(REDIS_KEYS.analysis(wallet, gameId, "es")),
+        redis.get(REDIS_KEYS.game(wallet, gameId)),
+      ]);
+      const analysis = enAnalysis ?? esAnalysis;
       const result = buildBackfillRow(
         wallet,
         gameId,
-        analysis as CoachAnalysisRecord | null,
+        analysis,
         game as GameRecord | null,
       );
       if (!result) continue;

@@ -71,9 +71,15 @@ describe("GET /api/coach/history", () => {
 
   it("returns paired analysis+game records (status 200)", async () => {
     redisMock.lrange.mockResolvedValue(["g1", "g2"]);
+    // Per-locale migration (2026-05-24): analysis keys now include a
+    // trailing `:en` / `:es` segment, so the gameId is the segment at
+    // index 3 (`coach:analysis:<wallet>:<gameId>[:<locale>]`).
+    const extractGameId = (key: string): string => key.split(":")[3] ?? "";
     redisMock.get.mockImplementation((key: string) => {
-      if (key.includes("analysis:")) return Promise.resolve(makeAnalysis(key.split(":").pop()!));
-      if (key.includes("game:")) return Promise.resolve(makeGame(key.split(":").pop()!));
+      if (key.startsWith("coach:analysis:"))
+        return Promise.resolve(makeAnalysis(extractGameId(key)));
+      if (key.startsWith("coach:game:"))
+        return Promise.resolve(makeGame(extractGameId(key)));
       return Promise.resolve(null);
     });
 
@@ -305,7 +311,11 @@ describe("DELETE /api/coach/history", () => {
     expect(redisMock.del).toHaveBeenCalledWith(
       `coach:analyses:${DELETE_WALLET}`,
       `coach:analysis:${DELETE_WALLET}:g1`,
+      `coach:analysis:${DELETE_WALLET}:g1:en`,
+      `coach:analysis:${DELETE_WALLET}:g1:es`,
       `coach:analysis:${DELETE_WALLET}:g2`,
+      `coach:analysis:${DELETE_WALLET}:g2:en`,
+      `coach:analysis:${DELETE_WALLET}:g2:es`,
     );
   });
 

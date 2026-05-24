@@ -3,10 +3,11 @@ import { Redis } from "@upstash/redis";
 import { isAddress, recoverMessageAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { buildDeleteMessage } from "@/lib/coach/delete-message";
+import { getCachedAnalysisWithFallback } from "@/lib/coach/cache-fallback";
 import { enforceOrigin, enforceRateLimit, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { createLogger, hashWallet } from "@/lib/server/logger";
-import type { CoachAnalysisRecord, GameRecord } from "@/lib/coach/types";
+import type { GameRecord } from "@/lib/coach/types";
 
 const redis = Redis.fromEnv();
 
@@ -26,12 +27,19 @@ export async function GET(req: Request) {
   const wallet = url.searchParams.get("wallet")?.toLowerCase();
   if (!wallet || !isAddress(wallet)) return NextResponse.json({ error: "Invalid wallet" }, { status: 400 });
 
+  // Locale preference for the per-game read. Defaults to "en" so callers
+  // that don't pass it (legacy clients) keep their previous behavior of
+  // surfacing the EN/legacy record via the fallback chain. ES clients
+  // explicitly pass `?locale=es` to prefer the Spanish analysis when
+  // both exist for the same `(wallet, gameId)`.
+  const requestedLocale = url.searchParams.get("locale") === "es" ? "es" : "en";
+
   const gameIds = await redis.lrange<string>(REDIS_KEYS.analysisList(wallet), 0, 19);
 
   const entries = await Promise.all(
     gameIds.map(async (gameId) => {
       const [analysis, game] = await Promise.all([
-        redis.get<CoachAnalysisRecord>(REDIS_KEYS.analysis(wallet, gameId)),
+        getCachedAnalysisWithFallback(redis, wallet, gameId, requestedLocale),
         redis.get<GameRecord>(REDIS_KEYS.game(wallet, gameId)),
       ]);
       return analysis && game ? { ...analysis, game } : null;
@@ -138,9 +146,17 @@ export async function DELETE(req: Request) {
     supabase.from("coach_analyses").delete({ count: "exact" }).eq("wallet", wallet),
     (async () => {
       const ids = await redis.lrange<string>(REDIS_KEYS.analysisList(wallet), 0, -1);
+      // Per-locale migration (2026-05-24): each gameId may have up to three
+      // analysis keys at any given time — the pre-migration legacy key,
+      // plus the EN and ES per-locale keys. Delete-by-self must purge all
+      // three so a re-login can't surface a stale record under any locale.
       const keys = [
         REDIS_KEYS.analysisList(wallet),
-        ...ids.map((id) => REDIS_KEYS.analysis(wallet, id)),
+        ...ids.flatMap((id) => [
+          REDIS_KEYS.analysisLegacy(wallet, id),
+          REDIS_KEYS.analysis(wallet, id, "en"),
+          REDIS_KEYS.analysis(wallet, id, "es"),
+        ]),
       ];
       return keys.length > 0 ? redis.del(...keys) : 0;
     })(),
