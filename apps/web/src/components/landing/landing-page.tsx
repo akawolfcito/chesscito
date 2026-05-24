@@ -3,13 +3,35 @@
 import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMessages } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PhoneFrame } from "@/components/landing/phone-frame";
 import { PhoneStack } from "@/components/landing/phone-stack";
 import { useMiniPay } from "@/hooks/use-minipay";
-import { LANDING_COPY, WHY_PAGE_COPY } from "@/lib/content/editorial";
+import {
+  LANDING_COPY as LANDING_COPY_EN,
+  WHY_PAGE_COPY,
+} from "@/lib/content/editorial";
 import { track } from "@/lib/telemetry";
+
+/**
+ * Pull LANDING_COPY out of the active locale bundle so the landing
+ * page renders EN on /en/* and ES on /es/* without changing the
+ * downstream 37 references. We type-assert against the EN authoring
+ * shape because both bundles share the same object structure (the
+ * ES override in `messages/es.ts` mirrors the EN editorial.ts shape).
+ *
+ * `useMessages` returns the namespace map mounted on the nearest
+ * `<NextIntlClientProvider>` (set by `app/[locale]/layout.tsx`). On
+ * the rare root-level surface that mounts without a provider, the
+ * fallback to the static EN constant keeps the page renderable.
+ */
+type LandingCopyShape = typeof LANDING_COPY_EN;
+function useLandingCopy(): LandingCopyShape {
+  const messages = useMessages() as { LANDING_COPY?: LandingCopyShape } | null;
+  return (messages?.LANDING_COPY ?? LANDING_COPY_EN) as LandingCopyShape;
+}
 
 type LandingGreenCtaProps = {
   children: ReactNode;
@@ -59,6 +81,7 @@ function LandingGreenCta({
 export function LandingPage() {
   const router = useRouter();
   const minipay = useMiniPay();
+  const LANDING_COPY = useLandingCopy();
 
   // Client-side wallet fallback — fires when the server-side UA sniff
   // missed a wallet (custom build, spoofed UA, etc.).

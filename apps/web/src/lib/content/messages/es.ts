@@ -1581,6 +1581,256 @@ const messages = {
     title: "¡Has desbloqueado {piece}!",
     cta: "Comenzar {piece}",
   },
+  LANDING_COPY: {
+    meta: {
+      title: "Chesscito — Pequeñas jugadas. Grandes hábitos mentales.",
+      description:
+        "Chesscito convierte el ajedrez en retos visuales de pocos minutos para ejercitar atención, memoria, planificación y toma de decisiones desde edades tempranas.",
+    },
+    disclaimer:
+      "Chesscito es una experiencia lúdica de acompañamiento cognitivo. No reemplaza diagnóstico, tratamiento médico ni terapia profesional.",
+    nav: {
+      brand: "Chesscito",
+      primaryCta: "Empezar gratis",
+    },
+    hero: {
+      eyebrow: "BIENESTAR COGNITIVO LÚDICO",
+      headline: "Pequeñas jugadas. Grandes hábitos mentales.",
+      subcopy:
+        "Chesscito convierte el ajedrez en retos visuales de pocos minutos para ejercitar atención, memoria, planificación y toma de decisiones desde edades tempranas.",
+      primaryCta: "Empezar gratis",
+      secondaryCta: "Conocer la iniciativa",
+    },
+    problem: {
+      title: "La mente también necesita rutina.",
+      body:
+        "Tienes rutina para tu cuerpo. Para tu sueño. Hasta para tu nutrición. Pero ¿una para tu mente? Atención, memoria, planificación y decisiones son habilidades. Como cualquier habilidad, se fortalecen con práctica constante.",
+      claims: [
+        {
+          icon: "coach",
+          label:
+            "Se fortalecen con repetición consciente, no con esfuerzo bruto.",
+        },
+        {
+          icon: "star",
+          label: "Mientras antes empieces, más fácil es crear el hábito.",
+        },
+        {
+          icon: "time",
+          label: "10 minutos diarios pueden construir un hábito poderoso.",
+        },
+      ],
+    },
+    solution: {
+      title: "Ajedrez antes del ajedrez.",
+      body:
+        "No necesitas saber jugar para empezar. En Chesscito conviertes cada pieza en retos cortos, visuales y guiados. Aprendes cómo se mueve, resuelves laberintos con ella, dominas su identidad. Cuando ya juntas todas las piezas, el ajedrez completo se desbloquea solo — sin acantilados, sin clases pesadas, sin frustración.",
+    },
+    howItWorks: {
+      title: "Una escalera, no una pared.",
+      body:
+        "Cada pieza vive en tres niveles. Los dominas por etapas. El mapa avanza contigo, una pieza a la vez.",
+      steps: [
+        {
+          label: "APRENDE",
+          body: "La pieza se mueve así. Simple. Claro. Sin presión.",
+        },
+        {
+          label: "EXPLORA",
+          body: "Laberintos con obstáculos. Mínimos movimientos, máximo de estrellas.",
+        },
+        {
+          label: "DOMINA",
+          body: "Un reto único por pieza que exprime su identidad.",
+        },
+        {
+          label: "COMBINA",
+          body: "Torres y alfiles. Después la dama. Después el caballo. El tablero crece contigo.",
+        },
+        {
+          label: "JUEGA",
+          body: "El ajedrez completo se desbloquea solo. Lo lograste tú, paso a paso.",
+        },
+      ],
+    },
+    capabilities: {
+      title: "Cinco habilidades que te acompañan a lo largo del tiempo.",
+      items: [
+        {
+          icon: "crosshair",
+          label: "Atención sostenida",
+          body: "Foco que aguanta los distractores.",
+        },
+        {
+          icon: "star",
+          label: "Memoria visual",
+          body: "Leer y recordar el tablero como patrón.",
+        },
+        {
+          icon: "move",
+          label: "Planificación",
+          body: "Pensar varios pasos antes de mover.",
+        },
+        {
+          icon: "refresh",
+          label: "Reconocimiento de patrones",
+          body: "Ver lo familiar en lo nuevo.",
+        },
+        {
+          icon: "crown",
+          label: "Toma de decisiones",
+          body: "Elegir bajo restricciones simples.",
+        },
+      ],
+    },
+    audiences: {
+      title: "Hecho para empezar pronto. Útil a cualquier edad.",
+      cards: [
+        {
+          title: "Niños y adolescentes (8–16)",
+          body:
+            "Una etapa clave para cultivar hábitos cognitivos que pueden acompañar a lo largo del tiempo.",
+        },
+        {
+          title: "Familias",
+          body:
+            "Una rutina ligera para compartir minutos de juego, conversación y crecimiento personal — sin pantallazos infinitos.",
+        },
+        {
+          title: "Educadores y comunidades",
+          body:
+            "Material lúdico que complementa actividades de aula, clubes y programas sociales. Sin instalación pesada, sin curva técnica.",
+        },
+      ],
+    },
+    plans: {
+      title: "Un modelo donde nadie se queda fuera.",
+      body:
+        "Chesscito puede empezar gratis. Las familias, educadores y aliados ayudan a sostener y ampliar el acceso. Web3 hace que cada aporte sea trazable y útil.",
+      tiers: [
+        {
+          name: "GRATUITO",
+          tagline: "Para empezar.",
+          bullets: [
+            "Acceso al ajedrez introductorio",
+            "Las primeras piezas con sus niveles",
+            "Insignias de progreso verificables",
+            "Leaderboard y comunidad pública",
+          ],
+          ctaLabel: "Empezar gratis",
+          ctaKind: "internal",
+        },
+        {
+          name: "CHESSCITO PRO",
+          tagline: "Para sostener tu práctica.",
+          priceLabel: "Desde $1.99/mes en stablecoin",
+          featured: true,
+          bullets: [
+            "Coach con IA para analizar tus partidas",
+            "Streak Shield incluido — sin compras adicionales",
+            "Badge PRO visible en tu perfil",
+            "Guarda tus victorias sin costo extra",
+            "Tu aporte sostiene el acceso gratuito",
+          ],
+          ctaLabel: "Quiero acceso PRO",
+          ctaKind: "mailto",
+          ctaSubject: "Chesscito PRO — Quiero acceso",
+        },
+        {
+          name: "FAMILIA",
+          tagline: "Para entrenar juntos en casa.",
+          badge: "Próximamente",
+          bullets: [
+            "Pensado para compartir minutos de juego en casa",
+            "Sin publicidad, sin distractores",
+            "Early access — tu interés nos ayuda a priorizar",
+          ],
+          ctaLabel: "Avísame cuando esté listo",
+          ctaKind: "mailto",
+          ctaSubject: "Plan Familia — Lista de espera",
+        },
+        {
+          name: "EDUCADORES Y ALIADOS",
+          tagline: "Para ampliar el acceso.",
+          bullets: [
+            "Licencias para aulas, clubes y programas",
+            "Sponsor-a-player o sponsor-a-school",
+            "Acompañamiento de un Maestro FIDE",
+            "Trazabilidad pública de cada aporte",
+          ],
+          ctaLabel: "Conversemos",
+          ctaKind: "mailto",
+          ctaSubject: "Educadores y Aliados",
+        },
+      ],
+      complement:
+        "También puedes probar el coach con Coach Credits desde $0.05.",
+    },
+    impact: {
+      title: "Construido para impacto.",
+      body:
+        "Cada partida deja huella. Cada aliado abre una puerta. Trazabilidad clara, comunidad creciente, propósito explícito.",
+      pillars: [
+        {
+          icon: "share",
+          title: "Trazabilidad",
+          body: "Cada badge y aporte queda registrado de forma transparente. Pública. Verificable. Sin opacidad.",
+        },
+        {
+          icon: "trophy",
+          title: "Escala",
+          body: "El motor pedagógico es reutilizable. Detrás de Chesscito vienen otros verticales cognitivos.",
+        },
+        {
+          icon: "crown",
+          title: "Comunidad",
+          body: "DAOs, fundaciones, clubes, escuelas. El círculo crece con cada alianza.",
+        },
+      ],
+      alliesPlaceholder: "Próximamente.",
+    },
+    founders: {
+      title: "La gente detrás de Chesscito.",
+      lead:
+        "Una combinación poco común: tecnología, IA y un Maestro FIDE con décadas de aula. La metodología detrás de Chesscito viene de más de 100 estudiantes acompañados — incluyendo alumnos que compitieron en torneos nacionales e internacionales.",
+      cards: [
+        {
+          name: "Luis Fernando Ushiña",
+          handle: "aka Wolfcito",
+          title: "Software Developer Architect · Co-Founder Chesscito",
+          body: "Lidera producto, tecnología y la visión de plataforma cognitiva escalable.",
+        },
+        {
+          name: "César Litvinov Alarcón",
+          handle: null,
+          title: "Maestro FIDE · Entrenador · Co-Founder Chesscito",
+          body: "Trayectoria en escuelas e instituciones, incluyendo Concentración Deportiva de Pichincha en Ecuador. Aporta la pedagogía y la metodología de cada nivel.",
+        },
+        {
+          name: "Den Labs",
+          handle: null,
+          title: "Parent brand",
+          body: "Laboratorio que combina web2, web3 e IA para construir experiencias digitales con propósito. Chesscito es su primer experimento.",
+        },
+      ],
+    },
+    finalCta: {
+      headline: "¿Listo para tu primera jugada?",
+      subcopy:
+        "Sin descargas. Sin registros largos. Solo el tablero, tú y tu próximo movimiento.",
+      primaryCta: "Empezar gratis",
+      secondaryCta: "Hablar con el equipo",
+    },
+    footer: {
+      brand: "Chesscito · A Den Labs experiment",
+      year: "© 2026 Den Labs",
+    },
+    microcopy: {
+      loading: "Preparando…",
+      error: "Vuelve a intentarlo",
+      confirm: "Listo. Te escribiremos pronto.",
+    },
+  },
 };
 
 export default messages;
