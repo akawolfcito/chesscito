@@ -1,6 +1,7 @@
 'use client'
 
-import { ARENA_COPY } from '@/lib/content/editorial'
+import { useTranslations } from 'next-intl'
+
 import { CandyBanner } from '@/components/redesign/candy-banner'
 import { ContextualHeader } from '@/components/ui/contextual-header'
 import { Button } from '@/components/ui/button'
@@ -43,11 +44,6 @@ const LEVELS: { key: ArenaDifficulty; dot: string }[] = [
   { key: 'hard', dot: 'bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.45)]' },
 ]
 
-const COLOR_OPTIONS: { key: PlayerColor; label: string }[] = [
-  { key: 'w', label: ARENA_COPY.playAsWhite },
-  { key: 'b', label: ARENA_COPY.playAsBlack },
-]
-
 /**
  * ArenaEntryPanel — difficulty + color picker body.
  *
@@ -67,6 +63,11 @@ export function ArenaEntryPanel({
   softGate,
   prizePool,
 }: Props) {
+  const t = useTranslations('ARENA_COPY')
+  const colorOptions: { key: PlayerColor; label: string }[] = [
+    { key: 'w', label: t('playAsWhite') },
+    { key: 'b', label: t('playAsBlack') },
+  ]
   const shellStyle = bare
     ? undefined
     : {
@@ -94,11 +95,11 @@ export function ArenaEntryPanel({
           {onBack ? (
             <ContextualHeader
               variant="back-control"
-              title={ARENA_COPY.title}
-              back={{ onClick: onBack, label: ARENA_COPY.backToHubAria }}
+              title={t('title')}
+              back={{ onClick: onBack, label: t('backToHubAria') }}
             />
           ) : (
-            <ContextualHeader variant="title" title={ARENA_COPY.title} />
+            <ContextualHeader variant="title" title={t('title')} />
           )}
         </div>
       )}
@@ -112,7 +113,7 @@ export function ArenaEntryPanel({
           className="text-center text-xs"
           style={{ color: 'rgba(110, 65, 15, 0.70)' }}
         >
-          {ARENA_COPY.subtitle}
+          {t('subtitle')}
         </p>
       )}
 
@@ -135,21 +136,21 @@ export function ArenaEntryPanel({
               textShadow: '0 1px 0 rgba(255, 245, 215, 0.65)',
             }}
           >
-            {ARENA_COPY.softGateTitle}
+            {t('softGateTitle')}
           </p>
           <p
             className="mt-0.5 text-[0.7rem] leading-snug"
             style={{ color: 'rgba(110, 65, 15, 0.75)' }}
           >
-            {ARENA_COPY.softGateBody}
+            {t('softGateBody')}
           </p>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
             <PrincipalButton
               size="medium"
               onClick={softGate.onLearn}
-              aria-label={ARENA_COPY.softGateLearn}
+              aria-label={t('softGateLearn')}
             >
-              {ARENA_COPY.softGateLearn}
+              {t('softGateLearn')}
             </PrincipalButton>
             <Button
               type="button"
@@ -157,7 +158,7 @@ export function ArenaEntryPanel({
               size="game"
               onClick={softGate.onDismiss}
             >
-              {ARENA_COPY.softGateEnter}
+              {t('softGateEnter')}
             </Button>
           </div>
         </div>
@@ -173,7 +174,7 @@ export function ArenaEntryPanel({
             background: 'rgba(255, 245, 215, 0.45)',
             border: '1px solid rgba(110, 65, 15, 0.25)',
           }}
-          aria-label={ARENA_COPY.prizePoolLabel}
+          aria-label={t('prizePoolLabel')}
         >
           <img
             src="/art/arena/community-pool.png"
@@ -186,19 +187,19 @@ export function ArenaEntryPanel({
               className="text-[0.7rem] font-bold"
               style={{ color: 'rgba(63, 34, 8, 0.95)' }}
             >
-              {ARENA_COPY.prizePoolLabel}
+              {t('prizePoolLabel')}
               {' · '}
               <span className="tabular-nums">
                 {prizePool.isLoading
-                  ? ARENA_COPY.prizePoolLoading
-                  : prizePool.formatted ?? ARENA_COPY.prizePoolUnavailable}
+                  ? t('prizePoolLoading')
+                  : prizePool.formatted ?? t('prizePoolUnavailable')}
               </span>
             </span>
             <span
               className="text-[0.6rem]"
               style={{ color: 'rgba(110, 65, 15, 0.70)' }}
             >
-              {ARENA_COPY.prizePoolSoonHint}
+              {t('prizePoolSoonHint')}
             </span>
           </div>
         </div>
@@ -212,9 +213,9 @@ export function ArenaEntryPanel({
           border: '1px solid rgba(255, 255, 255, 0.45)',
         }}
         role="group"
-        aria-label="Choose your color"
+        aria-label={t('colorPickerAriaLabel')}
       >
-        {COLOR_OPTIONS.map(({ key, label }) => (
+        {colorOptions.map(({ key, label }) => (
           <button
             key={key}
             type="button"
@@ -256,13 +257,13 @@ export function ArenaEntryPanel({
                   textShadow: '0 1px 0 rgba(255, 245, 215, 0.65)',
                 }}
               >
-                {ARENA_COPY.difficulty[key]}
+                {t(`difficulty.${key}`)}
               </span>
               <p
                 className="truncate text-[0.7rem] leading-snug"
                 style={{ color: 'rgba(110, 65, 15, 0.70)' }}
               >
-                {ARENA_COPY.difficultyDesc[key]}
+                {t(`difficultyDesc.${key}`)}
               </p>
             </div>
           </button>
@@ -277,9 +278,9 @@ export function ArenaEntryPanel({
             <CandyBanner name="btn-play" className="inline h-5 w-5" />
           }
           onClick={onStart}
-          aria-label={ARENA_COPY.startMatch}
+          aria-label={t('startMatch')}
         >
-          {ARENA_COPY.startMatch}
+          {t('startMatch')}
         </PrincipalButton>
       </div>
 
@@ -292,7 +293,7 @@ export function ArenaEntryPanel({
           style={{ color: 'rgba(110, 65, 15, 0.75)' }}
         >
           <CandyBanner name="btn-back" className="h-4 w-4" />
-          {ARENA_COPY.backToHub}
+          {t('backToHub')}
         </button>
       )}
     </div>

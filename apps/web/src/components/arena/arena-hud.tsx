@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { ARENA_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PlayerAvatar } from "@/components/redesign/player-avatar";
 import { WoodenBanner } from "@/components/redesign/wooden-banner";
@@ -36,6 +37,7 @@ function ArenaBackChip({
   onBack: () => void;
   needsConfirm: boolean;
 }) {
+  const t = useTranslations("ARENA_COPY");
   const [confirmingBack, setConfirmingBack] = useState(false);
   const backTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -68,7 +70,7 @@ function ArenaBackChip({
       <button
         type="button"
         onClick={handleClick}
-        aria-label="Confirm quit"
+        aria-label={t("confirmQuitAriaLabel")}
         className="candy-nav-button relative w-auto px-3 overflow-hidden"
       >
         <span className="flex items-center gap-1.5 whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
@@ -81,7 +83,7 @@ function ArenaBackChip({
             className="text-[0.7rem] font-black uppercase tracking-[0.15em]"
             style={{ color: "rgba(159, 18, 57, 0.95)" }}
           >
-            QUIT?
+            {t("confirmQuitLabel")}
           </span>
         </span>
         <span
@@ -100,7 +102,7 @@ function ArenaBackChip({
     <button
       type="button"
       onClick={handleClick}
-      aria-label={ARENA_COPY.backToHubAria}
+      aria-label={t("backToHubAria")}
       className="candy-nav-button"
     >
       <CandyBanner name="btn-back" className="h-8 w-8" />
@@ -115,13 +117,14 @@ function ArenaBackChip({
  * floats an oversized clock icon off the chip's left edge so the
  * glyph reads as the badge and the time reads as the label. */
 function ArenaTimerChip({ elapsedMs }: { elapsedMs: number }) {
+  const t = useTranslations("ARENA_COPY");
   const value = formatTime(elapsedMs);
   return (
     <span
       className="arena-timer-chip"
       role="status"
       aria-live="polite"
-      aria-label={`Elapsed time: ${value}`}
+      aria-label={t("timerAriaLabel", { time: value })}
     >
       <CandyIcon name="time" className="arena-timer-chip-icon" />
       <span className="arena-timer-chip-value">{value}</span>
@@ -135,6 +138,7 @@ export function ArenaHud({
   isEndState,
   elapsedMs,
 }: Props) {
+  const t = useTranslations("ARENA_COPY");
   const needsBackConfirm = !isEndState;
 
   return (
@@ -150,7 +154,7 @@ export function ArenaHud({
       <div>
         <ContextualHeader
           variant="back-control"
-          title={ARENA_COPY.title}
+          title={t("title")}
           backSlot={
             <ArenaBackChip onBack={onBack} needsConfirm={needsBackConfirm} />
           }

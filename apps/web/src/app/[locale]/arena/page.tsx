@@ -25,7 +25,7 @@ import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
 import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData, type PersistState } from "@/components/arena/arena-end-state";
-import { ARENA_COPY, COACH_COPY, COACH_ENTRY_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { GemButton } from "@/components/scene-rooted/gem";
@@ -105,6 +105,13 @@ function ArenaPageInner() {
   // LLM in the matching language. Re-asks for the same gameId stay in
   // their original locale per the route handler's idempotency contract.
   const activeLocale = useLocale() as CoachLocale;
+  const tArena = useTranslations("ARENA_COPY");
+  const tCoach = useTranslations("COACH_COPY");
+  const tEntry = useTranslations("COACH_ENTRY_COPY");
+  const difficultyLabel = (key: string): string => {
+    const k = key as "easy" | "medium" | "hard";
+    return ["easy", "medium", "hard"].includes(k) ? tArena(`difficulty.${k}`) : key;
+  };
   // Legacy state — kept alive for the sheets (badge/shop/trophies/
   // leaderboard) that still mount as siblings to the dock. SPEC 1 D7
   // removes those entries from the dock itself (no user-facing trigger
@@ -515,7 +522,7 @@ function ArenaPageInner() {
 
       // Offline guard — spec I/O Matrix "Offline analyze attempt".
       if (typeof navigator !== "undefined" && navigator.onLine === false) {
-        setCoachServerError(COACH_ENTRY_COPY.offlineToAnalyze);
+        setCoachServerError(tEntry("offlineToAnalyze"));
         const quick = generateQuickReview({
           result: gameResult,
           difficulty: game.difficulty,
@@ -600,7 +607,7 @@ function ArenaPageInner() {
       setCoachFallbackResponse(quick);
       setCoachPhase("fallback");
     }
-  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, address, persistedGameId, proActiveCached, activeLocale]);
+  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, address, persistedGameId, proActiveCached, activeLocale, tEntry]);
 
   const handleAskCoach = useCallback((source: AnalyzeSource = "immediate") => {
     if (game.moveHistory.length === 0) return;
@@ -679,18 +686,18 @@ function ArenaPageInner() {
     game.moveHistory.length === 0 ? (
       <section
         className="coach-preview-card is-compact"
-        aria-label={ARENA_COPY.coachPreview.emptyTitle}
+        aria-label={tArena("coachPreview.emptyTitle")}
       >
         <div className="coach-preview-card-copy">
           <span className="coach-preview-card-kicker">Coach Review</span>
-          <h3 className="coach-preview-card-title">{ARENA_COPY.coachPreview.emptyTitle}</h3>
-          <p className="coach-preview-card-body">{ARENA_COPY.coachPreview.emptyBody}</p>
+          <h3 className="coach-preview-card-title">{tArena("coachPreview.emptyTitle")}</h3>
+          <p className="coach-preview-card-body">{tArena("coachPreview.emptyBody")}</p>
         </div>
       </section>
     ) : (
       <CoachPreviewCard
         proActive={proActiveCached}
-        difficultyLabel={ARENA_COPY.difficulty[game.difficulty]}
+        difficultyLabel={difficultyLabel(game.difficulty)}
         resultLabel={currentArenaResult()}
         moveCount={game.moveHistory.length}
         onPrimaryCta={handleCoachPreviewCta}
@@ -1409,10 +1416,10 @@ function ArenaPageInner() {
           {isPreparing ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 animate-in fade-in duration-300 arena-scaffold">
               <p className="text-sm font-semibold text-amber-400/80">
-                {ARENA_COPY.difficulty[game.difficulty as keyof typeof ARENA_COPY.difficulty]}
+                {difficultyLabel(game.difficulty)}
               </p>
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400/30 border-t-amber-400" />
-              <p className="text-sm font-medium text-amber-100/80">{ARENA_COPY.preparingAi}</p>
+              <p className="text-sm font-medium text-amber-100/80">{tArena("preparingAi")}</p>
             </div>
           ) : (
             <ArenaSelectScaffold
@@ -1493,10 +1500,10 @@ function ArenaPageInner() {
           {isPreparing ? (
             <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
               <p className="text-sm font-semibold text-amber-400/80">
-                {ARENA_COPY.difficulty[game.difficulty as keyof typeof ARENA_COPY.difficulty]}
+                {difficultyLabel(game.difficulty)}
               </p>
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400/30 border-t-amber-400" />
-              <p className="text-sm font-medium text-amber-100/80">{ARENA_COPY.preparingAi}</p>
+              <p className="text-sm font-medium text-amber-100/80">{tArena("preparingAi")}</p>
             </div>
           ) : (
             <ArenaEntryPanel
@@ -1573,9 +1580,9 @@ function ArenaPageInner() {
       <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
-            title={COACH_COPY.coachAnalysisTitle}
+            title={tCoach("coachAnalysisTitle")}
             onClose={handleBackToHub}
-            closeLabel={ARENA_COPY.backToHubAria}
+            closeLabel={tArena("backToHubAria")}
             presentation="screen"
             className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
@@ -1602,9 +1609,9 @@ function ArenaPageInner() {
       <main className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
         <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
-            title={coachServerError ? COACH_COPY.reviewRetryTitle : COACH_COPY.quickReviewTitle}
+            title={coachServerError ? tCoach("reviewRetryTitle") : tCoach("quickReviewTitle")}
             onClose={handleBackToHub}
-            closeLabel={ARENA_COPY.backToHubAria}
+            closeLabel={tArena("backToHubAria")}
             presentation="screen"
             className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
@@ -1618,9 +1625,9 @@ function ArenaPageInner() {
               onPlayAgain={handlePlayAgain}
               onBackToHub={handleBackToHub}
               onRetry={address ? () => { setCoachServerError(null); void startCoachAnalysis(); } : undefined}
-              retryLabel={coachProActive ? COACH_COPY.retryReview : COACH_COPY.retry}
-              errorTitle={coachServerError ? COACH_COPY.analysisIncomplete : undefined}
-              errorBody={coachServerError ? COACH_COPY.analysisIncompleteBody : undefined}
+              retryLabel={coachProActive ? tCoach("retryReview") : tCoach("retry")}
+              errorTitle={coachServerError ? tCoach("analysisIncomplete") : undefined}
+              errorBody={coachServerError ? tCoach("analysisIncompleteBody") : undefined}
             />
           </CandyGlassShell>
         </div>
@@ -1633,9 +1640,9 @@ function ArenaPageInner() {
       <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
-            title={COACH_COPY.yourSessions}
+            title={tCoach("yourSessions")}
             onClose={() => setCoachPhase(coachResponse ? "result" : "idle")}
-            closeLabel={ARENA_COPY.backToHubAria}
+            closeLabel={tArena("backToHubAria")}
             presentation="screen"
             className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
@@ -1674,13 +1681,13 @@ function ArenaPageInner() {
               type="button"
               onClick={handleChangeDifficulty}
               className="arena-difficulty-pill group scale-95"
-              aria-label={`Difficulty: ${ARENA_COPY.difficulty[game.difficulty]}. Tap to change.`}
+              aria-label={`Difficulty: ${difficultyLabel(game.difficulty)}. Tap to change.`}
             >
               <span className="arena-difficulty-pill-icon">
                 <CandyIcon name="shield" className="h-full w-full" />
               </span>
               <span className="arena-difficulty-pill-label">
-                {ARENA_COPY.difficulty[game.difficulty]}
+                {difficultyLabel(game.difficulty)}
               </span>
               <span className="arena-difficulty-pill-icon opacity-80 group-active:opacity-100 transition-opacity">
                 <CandyIcon name="check" className="h-2.5 w-2.5" />
@@ -1747,7 +1754,7 @@ function ArenaPageInner() {
                 textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
               }}
             >
-              {ARENA_COPY.restartMatch}
+              {tArena("restartMatch")}
             </button>
           </div>
         )}
@@ -1806,7 +1813,7 @@ function ArenaPageInner() {
             <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300 px-4">
               <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
-                  title={COACH_COPY.welcomeTitle}
+                  title={tCoach("welcomeTitle")}
                   onClose={() => setCoachPhase("idle")}
                   closeLabel="Close"
                   cta={
@@ -1817,10 +1824,10 @@ function ArenaPageInner() {
                       onClick={handleClaimWelcome}
                       className="w-full"
                     >
-                      {COACH_COPY.claimFree}
+                      {tCoach("claimFree")}
                     </Button>
                   }
-                  meta={COACH_COPY.welcomeNote}
+                  meta={tCoach("welcomeNote")}
                 >
                   <CoachWelcome />
                 </CandyGlassShell>

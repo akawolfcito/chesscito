@@ -1,6 +1,7 @@
 "use client";
 
-import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
+
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
@@ -24,7 +25,15 @@ export function VictoryClaiming({
   claimStep = "signing",
   onBackToHub,
 }: Props) {
+  const tArena = useTranslations("ARENA_COPY");
+  const tClaim = useTranslations("VICTORY_CLAIM_COPY");
+  const tCelebration = useTranslations("VICTORY_CELEBRATION_COPY");
   const time = formatTime(elapsedMs);
+  const progressSteps = tClaim.raw("progressSteps") as readonly string[];
+  const difficultyKey = difficulty as "easy" | "medium" | "hard";
+  const difficultyLabel = ["easy", "medium", "hard"].includes(difficultyKey)
+    ? tArena(`difficulty.${difficultyKey}`)
+    : difficulty;
 
   return (
     <div
@@ -48,7 +57,7 @@ export function VictoryClaiming({
           cta={
             <div className="flex w-full flex-col items-center gap-4">
               <div className="flex items-center gap-3">
-                {VICTORY_CLAIM_COPY.progressSteps.map((label, i) => {
+                {progressSteps.map((label, i) => {
                   const stepKeys = ["signing", "confirming", "done"] as const;
                   const currentIdx = stepKeys.indexOf(claimStep);
                   const isDone = i < currentIdx;
@@ -80,7 +89,7 @@ export function VictoryClaiming({
                           {label}
                         </span>
                       </div>
-                      {i < VICTORY_CLAIM_COPY.progressSteps.length - 1 && (
+                      {i < progressSteps.length - 1 && (
                         <div
                           className="mb-4 h-px w-6"
                           style={{
@@ -93,7 +102,7 @@ export function VictoryClaiming({
                 })}
               </div>
               <p className="text-xs font-bold text-amber-900/60">
-                {VICTORY_CLAIM_COPY.progressTimeHint}
+                {tClaim("progressTimeHint")}
               </p>
               {/* Exit shortcut */}
               <button
@@ -101,7 +110,7 @@ export function VictoryClaiming({
                 onClick={onBackToHub}
                 className="mt-1 w-full py-2 text-xs font-black uppercase tracking-[0.22em] text-amber-900/80 transition-opacity hover:opacity-100"
               >
-                {ARENA_COPY.backToHub}
+                {tArena("backToHub")}
               </button>
             </div>
           }
@@ -113,10 +122,10 @@ export function VictoryClaiming({
                 <div className="absolute h-28 w-28 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.22)_0%,rgba(217,180,74,0.10)_50%,transparent_70%)]" />
                 <LottieAnimation animationData={trophyData} loop={false} className="relative h-full w-full" />
               </div>
-              
+
               <div className="mt-1.5 flex flex-col items-center gap-0.5">
                 <span className="text-nano font-black uppercase tracking-[0.25em] text-amber-900/60">
-                  {VICTORY_CELEBRATION_COPY.title}
+                  {tCelebration("title")}
                 </span>
                 <h2
                   className="fantasy-title animate-pulse text-3xl font-extrabold leading-tight tracking-tight text-amber-900/90"
@@ -124,32 +133,32 @@ export function VictoryClaiming({
                     textShadow: "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 8px rgba(245, 158, 11, 0.30)",
                   }}
                 >
-                  {VICTORY_CLAIM_COPY.progressTitle || "Saving..."}
+                  {tClaim("progressTitle")}
                 </h2>
               </div>
             </div>
 
             {/* Performance line */}
             <p className="max-w-[260px] text-xs font-bold leading-relaxed text-amber-900/80">
-              {VICTORY_CELEBRATION_COPY.performanceLineCheckmate(moves, time)}
+              {tCelebration("performanceLineCheckmate", { moves, time })}
             </p>
 
             {/* Stats Row */}
             <div className="flex w-full gap-1.5 px-0.5">
               <PaperStatCard
                 icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
-                value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty}
-                label={VICTORY_CELEBRATION_COPY.stats.difficulty}
+                value={difficultyLabel}
+                label={tCelebration("stats.difficulty")}
               />
               <PaperStatCard
                 icon={<CandyIcon name="move" className="h-4 w-4" />}
                 value={String(moves)}
-                label={VICTORY_CELEBRATION_COPY.stats.moves}
+                label={tCelebration("stats.moves")}
               />
               <PaperStatCard
                 icon={<CandyIcon name="time" className="h-4 w-4" />}
                 value={time}
-                label={VICTORY_CELEBRATION_COPY.stats.time}
+                label={tCelebration("stats.time")}
               />
             </div>
           </div>

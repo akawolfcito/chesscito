@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { cleanup } from "@testing-library/react";
+import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
 // Stub Lottie wrapper — its dotlottie/lottie-web deps require canvas
 // (jsdom does not provide one). The hint pill assertions don't need

@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect } from "react";
-import { ARENA_COPY, COACH_ENTRY_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 
 import type { ArenaStatus } from "@/lib/game/types";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
@@ -60,16 +60,18 @@ type Props = {
   onDismissPersistError?: () => void;
 };
 
-function getLoseText(status: ArenaStatus): string {
+type ArenaTranslator = ReturnType<typeof useTranslations>;
+
+function getLoseText(status: ArenaStatus, t: ArenaTranslator): string {
   switch (status) {
     case "checkmate":
-      return ARENA_COPY.endState.checkmate.lose;
+      return t("endState.checkmate.lose");
     case "stalemate":
-      return ARENA_COPY.endState.stalemate;
+      return t("endState.stalemate");
     case "draw":
-      return ARENA_COPY.endState.draw;
+      return t("endState.draw");
     case "resigned":
-      return ARENA_COPY.endState.resigned;
+      return t("endState.resigned");
     default:
       return "";
   }
@@ -100,6 +102,9 @@ export function ArenaEndState({
   onRetryPersist,
   onDismissPersistError,
 }: Props) {
+  const tArena = useTranslations("ARENA_COPY");
+  const tCelebration = useTranslations("VICTORY_CELEBRATION_COPY");
+  const tEntry = useTranslations("COACH_ENTRY_COPY");
   // Cluster E §0.1 — CTA gating + 0-move guard.
   // Fail-closed default: an unwired consumer renders CTAs disabled so a
   // forgotten prop never silently re-introduces the original race.
@@ -116,13 +121,19 @@ export function ArenaEndState({
       state={persistState}
       onRetry={onRetryPersist}
       onDismiss={onDismissPersistError}
+      labels={{
+        matchNotSaved: tEntry("matchNotSaved"),
+        matchNotSavedRetry: tEntry("matchNotSavedRetry"),
+        savingMatch: tEntry("savingMatch"),
+        dismissLabel: tEntry("persistDismissLabel"),
+      }}
     />
   );
   /* Hooks must run unconditionally on every render (React rules-of-hooks).
      Compute `text` here so the effect — and the early-return path below —
      share the same source. The effect's own guard skips the track() call
      on win / no-text, preserving previous behavior. */
-  const text = getLoseText(status);
+  const text = getLoseText(status, tArena);
 
   useEffect(() => {
     if (!text || isPlayerWin) return;
@@ -258,8 +269,8 @@ export function ArenaEndState({
         <div className="mx-auto w-full max-w-[var(--app-max-width)] px-2">
           <ContextualHeader
             variant="back-control"
-            title={ARENA_COPY.title}
-            back={{ onClick: onBackToHub, label: ARENA_COPY.backToHubAria }}
+            title={tArena("title")}
+            back={{ onClick: onBackToHub, label: tArena("backToHubAria") }}
           />
         </div>
       </header>
@@ -280,28 +291,33 @@ export function ArenaEndState({
             </picture>
           </div>
 
-          <span className="arena-result-kicker">Match Ended</span>
+          <span className="arena-result-kicker">{tArena("matchEndedLabel")}</span>
 
           <h1 className="arena-result-title">{text}</h1>
 
-          <p className="arena-result-subtitle">Try again when ready.</p>
+          <p className="arena-result-subtitle">{tArena("matchEndedHint")}</p>
         </section>
 
         <div className="arena-result-stats">
           <PaperStatCard
             icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
-            value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty}
-            label={VICTORY_CELEBRATION_COPY.stats.difficulty}
+            value={(() => {
+              const k = difficulty as "easy" | "medium" | "hard";
+              return ["easy", "medium", "hard"].includes(k)
+                ? tArena(`difficulty.${k}`)
+                : difficulty;
+            })()}
+            label={tCelebration("stats.difficulty")}
           />
           <PaperStatCard
             icon={<CandyIcon name="move" className="h-4 w-4" />}
             value={String(moves)}
-            label={VICTORY_CELEBRATION_COPY.stats.moves}
+            label={tCelebration("stats.moves")}
           />
           <PaperStatCard
             icon={<CandyIcon name="time" className="h-4 w-4" />}
             value={time}
-            label={VICTORY_CELEBRATION_COPY.stats.time}
+            label={tCelebration("stats.time")}
           />
         </div>
 
@@ -329,7 +345,7 @@ export function ArenaEndState({
           className="arena-result-primary-cta arena-result-primary-cta--amber"
         >
           <CandyIcon name="refresh" className="h-5 w-5 shrink-0" />
-          <span className="arena-result-primary-cta-label">{ARENA_COPY.playAgain}</span>
+          <span className="arena-result-primary-cta-label">{tArena("playAgain")}</span>
         </button>
       </main>
       {persistOverlay}
@@ -360,9 +376,10 @@ function CoachAnalysisCta({
   ariaBusy: boolean;
   tooShort: boolean;
 }) {
-  const describedById = COACH_ENTRY_COPY.victorySecondaryDescribedById;
-  const label = COACH_ENTRY_COPY.getCoachAnalysis;
-  const tooltip = tooShort ? COACH_ENTRY_COPY.matchTooShort : undefined;
+  const t = useTranslations("COACH_ENTRY_COPY");
+  const describedById = t("victorySecondaryDescribedById");
+  const label = t("getCoachAnalysis");
+  const tooltip = tooShort ? t("matchTooShort") : undefined;
 
   const handleClick = () => {
     if (disabled) return;
@@ -409,7 +426,7 @@ function CoachAnalysisCta({
         <span>{label}</span>
       </button>
       <span id={describedById} className="sr-only">
-        {COACH_ENTRY_COPY.victorySecondaryDescription}
+        {t("victorySecondaryDescription")}
       </span>
     </div>
   );
@@ -420,15 +437,31 @@ function CoachAnalysisCta({
  * the bottom of the viewport while `/api/games` POST is in-flight, and
  * morphs into a warning row + Retry/Dismiss when the POST fails.
  */
+type PersistOverlayLabels = {
+  matchNotSaved: string;
+  matchNotSavedRetry: string;
+  savingMatch: string;
+  dismissLabel: string;
+};
+
 export function PersistOverlay({
   state,
   onRetry,
   onDismiss,
+  labels,
 }: {
   state: PersistState;
   onRetry?: () => void;
   onDismiss?: () => void;
+  /** Locale-resolved copy. Optional so VR fixtures + storybook can render
+   *  without an intl provider — defaults reproduce the EN literals. */
+  labels?: Partial<PersistOverlayLabels>;
 }) {
+  const matchNotSaved = labels?.matchNotSaved ?? "Match not saved · play continues";
+  const matchNotSavedRetry = labels?.matchNotSavedRetry ?? "Retry";
+  const savingMatch = labels?.savingMatch ?? "Saving match…";
+  const dismissLabel = labels?.dismissLabel ?? "Dismiss";
+
   if (state === "idle" || state === "dismissed") return null;
 
   if (state === "failed") {
@@ -436,7 +469,7 @@ export function PersistOverlay({
       <div
         role="alert"
         aria-live="assertive"
-        aria-label={COACH_ENTRY_COPY.matchNotSaved}
+        aria-label={matchNotSaved}
         className="pointer-events-auto fixed inset-x-0 bottom-24 z-[55] mx-auto flex w-full max-w-[var(--app-max-width,390px)] items-center gap-2 px-4 animate-in fade-in slide-in-from-bottom-2 duration-200"
       >
         <div
@@ -449,7 +482,7 @@ export function PersistOverlay({
           }}
         >
           <span aria-hidden="true">!</span>
-          <span className="flex-1">{COACH_ENTRY_COPY.matchNotSaved}</span>
+          <span className="flex-1">{matchNotSaved}</span>
           {onRetry && (
             <button
               type="button"
@@ -457,14 +490,14 @@ export function PersistOverlay({
               className="rounded-full px-2 py-1 text-nano font-extrabold uppercase tracking-wider"
               style={{ background: "rgba(159, 18, 57, 0.15)" }}
             >
-              {COACH_ENTRY_COPY.matchNotSavedRetry}
+              {matchNotSavedRetry}
             </button>
           )}
           {onDismiss && (
             <button
               type="button"
               onClick={onDismiss}
-              aria-label="Dismiss"
+              aria-label={dismissLabel}
               className="rounded-full px-2 py-1 text-nano font-extrabold uppercase tracking-wider opacity-70"
             >
               ✕
@@ -480,7 +513,7 @@ export function PersistOverlay({
       <div className="pointer-events-auto">
         <TxProgressSteps
           variant="toast"
-          steps={[{ code: "wait", label: COACH_ENTRY_COPY.savingMatch }]}
+          steps={[{ code: "wait", label: savingMatch }]}
           current={state === "persisting" ? "wait" : "done"}
           flow="save-score"
         />

@@ -1,13 +1,13 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 
 import { ContextualHeader } from '@/components/ui/contextual-header'
 import { CandyIcon } from '@/components/redesign/candy-icon'
 import { PrimitiveBoundary } from '@/components/error/primitive-boundary'
 import { PrimaryPlayCta } from '@/components/kingdom/primary-play-cta'
 import { MissionRibbon } from '@/components/pro-mission/mission-ribbon'
-import { ARENA_COPY } from '@/lib/content/editorial'
 import type { ArenaDifficulty } from '@/lib/game/types'
 import type { PlayerColor } from '@/lib/game/use-chess-game'
 
@@ -44,12 +44,9 @@ const DIFFICULTY_CARD: Record<
 
 const DIFFICULTY_ORDER: ArenaDifficulty[] = ['easy', 'medium', 'hard']
 const COLOR_ORDER: PlayerColor[] = ['w', 'b']
-const COLOR_CARD: Record<
-  PlayerColor,
-  { label: string; piece: 'w-pawn' | 'b-pawn' }
-> = {
-  w: { label: ARENA_COPY.playAsWhite, piece: 'w-pawn' },
-  b: { label: ARENA_COPY.playAsBlack, piece: 'b-pawn' },
+const COLOR_PIECE: Record<PlayerColor, 'w-pawn' | 'b-pawn'> = {
+  w: 'w-pawn',
+  b: 'b-pawn',
 }
 
 const SURFACE = 'arena-select'
@@ -98,6 +95,16 @@ export function ArenaSelectScaffold({
   errorMessage,
   onError,
 }: Props) {
+  const t = useTranslations('ARENA_COPY')
+  const arenaTitle = t('title')
+  const colorLabels: Record<PlayerColor, string> = {
+    w: t('playAsWhite'),
+    b: t('playAsBlack'),
+  }
+  const colorNames: Record<PlayerColor, string> = {
+    w: t('playAsWhiteName'),
+    b: t('playAsBlackName'),
+  }
   const wrap = (primitiveName: string, children: ReactNode) => (
     <PrimitiveBoundary
       primitiveName={primitiveName}
@@ -112,7 +119,7 @@ export function ArenaSelectScaffold({
   return (
     <main
       className="arena-scaffold"
-      aria-label={`Chesscito ${ARENA_COPY.title}`}
+      aria-label={t('scaffoldPageAriaFormat', { title: arenaTitle })}
     >
       {/* Divider DROPPED on purpose (Sally pass 8, 2026-05-20):
        *  /arena selection is the entrance ramp to gameplay — diegetic,
@@ -122,11 +129,11 @@ export function ArenaSelectScaffold({
         {onBack ? (
           <ContextualHeader
             variant="back-control"
-            title={ARENA_COPY.title}
-            back={{ onClick: onBack, label: ARENA_COPY.backToHubAria }}
+            title={arenaTitle}
+            back={{ onClick: onBack, label: t('backToHubAria') }}
           />
         ) : (
-          <ContextualHeader variant="title" title={ARENA_COPY.title} />
+          <ContextualHeader variant="title" title={arenaTitle} />
         )}
       </header>
 
@@ -134,14 +141,14 @@ export function ArenaSelectScaffold({
         {softGate ? (
           <div
             role="region"
-            aria-label="Warm-up gate"
+            aria-label={t('softGateRegionLabel')}
             className="arena-scaffold-soft-gate"
           >
             <p className="arena-scaffold-soft-gate-title">
-              {ARENA_COPY.softGateTitle}
+              {t('softGateTitle')}
             </p>
             <p className="arena-scaffold-soft-gate-body">
-              {ARENA_COPY.softGateBody}
+              {t('softGateBody')}
             </p>
             <div className="arena-scaffold-soft-gate-actions">
               <button
@@ -149,14 +156,14 @@ export function ArenaSelectScaffold({
                 onClick={softGate.onLearn}
                 className="arena-scaffold-soft-gate-primary"
               >
-                {ARENA_COPY.softGateLearn}
+                {t('softGateLearn')}
               </button>
               <button
                 type="button"
                 onClick={softGate.onDismiss}
                 className="arena-scaffold-soft-gate-secondary"
               >
-                {ARENA_COPY.softGateEnter}
+                {t('softGateEnter')}
               </button>
             </div>
           </div>
@@ -169,7 +176,7 @@ export function ArenaSelectScaffold({
               background: 'rgba(255, 245, 205, 0.78)',
               borderColor: 'rgba(222, 159, 42, 0.38)',
             }}
-            aria-label={ARENA_COPY.prizePoolLabel}
+            aria-label={t('prizePoolLabel')}
           >
             <picture className="shrink-0">
               <source
@@ -192,19 +199,19 @@ export function ArenaSelectScaffold({
                 className="text-sm font-extrabold"
                 style={{ color: 'rgba(63, 34, 8, 0.95)' }}
               >
-                {ARENA_COPY.prizePoolLabel}
+                {t('prizePoolLabel')}
                 {' · '}
                 <span className="tabular-nums" style={{ color: '#15803d' }}>
                   {prizePool.isLoading
-                    ? ARENA_COPY.prizePoolLoading
-                    : prizePool.formatted ?? ARENA_COPY.prizePoolUnavailable}
+                    ? t('prizePoolLoading')
+                    : prizePool.formatted ?? t('prizePoolUnavailable')}
                 </span>
               </p>
               <p
                 className="mt-1 text-[0.7rem] font-medium"
                 style={{ color: 'rgba(110, 65, 15, 0.82)' }}
               >
-                {ARENA_COPY.prizePoolSoonHint}
+                {t('prizePoolSoonHint')}
               </p>
             </div>
           </div>
@@ -212,7 +219,7 @@ export function ArenaSelectScaffold({
 
         <div
           role="group"
-          aria-label="Choose your color"
+          aria-label={t('colorPickerAriaLabel')}
           className="arena-scaffold-color-toggle"
         >
           {COLOR_ORDER.map((c) => (
@@ -220,28 +227,28 @@ export function ArenaSelectScaffold({
               key={c}
               type="button"
               aria-pressed={playerColor === c}
-              aria-label={COLOR_CARD[c].label}
+              aria-label={colorLabels[c]}
               onClick={() => onSelectColor(c)}
               className="arena-scaffold-color-pill"
             >
               {playerColor === c ? <SelectedCheck /> : null}
               <picture className="arena-scaffold-color-piece">
                 <source
-                  srcSet={`/art/redesign/pieces/${COLOR_CARD[c].piece}.avif`}
+                  srcSet={`/art/redesign/pieces/${COLOR_PIECE[c]}.avif`}
                   type="image/avif"
                 />
                 <source
-                  srcSet={`/art/redesign/pieces/${COLOR_CARD[c].piece}.webp`}
+                  srcSet={`/art/redesign/pieces/${COLOR_PIECE[c]}.webp`}
                   type="image/webp"
                 />
                 <img
-                  src={`/art/redesign/pieces/${COLOR_CARD[c].piece}.png`}
+                  src={`/art/redesign/pieces/${COLOR_PIECE[c]}.png`}
                   alt=""
                 />
               </picture>
               <span className="arena-scaffold-color-copy">
-                <span>Play as</span>
-                <strong>{c === 'w' ? 'White' : 'Black'}</strong>
+                <span>{t('playAsPrefix')}</span>
+                <strong>{colorNames[c]}</strong>
               </span>
             </button>
           ))}
@@ -273,10 +280,10 @@ export function ArenaSelectScaffold({
                 </picture>
                 <span className="arena-scaffold-difficulty-text">
                   <span className="arena-scaffold-difficulty-label">
-                    {ARENA_COPY.difficulty[key]}
+                    {t(`difficulty.${key}`)}
                   </span>
                   <span className="arena-scaffold-difficulty-desc">
-                    {ARENA_COPY.difficultyDesc[key]}
+                    {t(`difficultyDesc.${key}`)}
                   </span>
                   <span className="arena-scaffold-difficulty-score">
                     <CandyIcon
@@ -304,8 +311,8 @@ export function ArenaSelectScaffold({
           'PrimaryPlayCta',
           <PrimaryPlayCta
             surface="arena-entry"
-            label={ARENA_COPY.startMatch}
-            ariaLabel={ARENA_COPY.startMatch}
+            label={t('startMatch')}
+            ariaLabel={t('startMatch')}
             onPress={onStart}
           />,
         )}

@@ -638,6 +638,12 @@ export const VICTORY_CLAIM_COPY = {
       hint: "Check your wallet first — if it's still pending, give it a moment before retrying.",
     },
   },
+  /** Big headline rendered inside the victory-claim-error panel —
+   *  branches on the `kind` prop (cancelled = polite, others = error). */
+  statusHeadlinePaused: "Paused",
+  statusHeadlineError: "Error",
+  /** Secondary action label on the victory-claim-success panel. */
+  reviewMatchCta: "Review Match",
 } as const;
 
 export const VICTORY_CELEBRATION_COPY = {
@@ -844,7 +850,44 @@ export const ARENA_COPY = {
     activeTitle: "REVIEW",
     activeBody: "Review your key moments and next training step.",
     activeCta: "REVIEW",
+    /** Visible kicker above the title in <CoachPreviewCard />. Stays
+     *  literal across locales — "Coach Review" is the product feature
+     *  name, not body copy. Mirrored here so the editorial namespace
+     *  owns every string the card paints. */
+    cardKicker: "Coach Review",
+    cardChipsAriaLabel: "Full review includes",
   },
+  /** <CoachReviewSignal /> — small pill in the action bar that promotes
+   *  the post-match Coach review. */
+  coachSignalAriaLabel: "Coach Review",
+  coachSignalTokenPro: "PRO",
+  coachSignalTokenFree: "Coach",
+  /** ARIA labels for the confirm-flow micro-interactions on the back
+   *  chip (arena-hud) and the resign button (arena-action-bar). */
+  confirmQuitAriaLabel: "Confirm quit",
+  confirmQuitLabel: "QUIT?",
+  confirmResignLabel: "Confirm?",
+  /** ICU placeholder filled with the formatted mm:ss timer. */
+  timerAriaLabel: "Elapsed time: {time}",
+  /** <PromotionOverlay /> dismiss affordance. */
+  promotionCancelAriaLabel: "Cancel promotion",
+  /** Color picker on the entry panels — both ArenaEntryPanel + the
+   *  scaffold variant share the same group label. */
+  colorPickerAriaLabel: "Choose your color",
+  /** <ArenaSelectScaffold /> additional region labels. */
+  softGateRegionLabel: "Warm-up gate",
+  /** Scaffold page-level aria — composed at the call site:
+   *  `Chesscito {title}`. */
+  scaffoldPageAriaFormat: "Chesscito {title}",
+  /** Color toggle in the scaffold — composed inline as "Play as"
+   *  + variant name. Two strings instead of one ICU so the bold/regular
+   *  weight split survives the migration. */
+  playAsPrefix: "Play as",
+  playAsWhiteName: "White",
+  playAsBlackName: "Black",
+  /** Non-win end-state overlay (loss/draw/resigned/stalemate) header. */
+  matchEndedLabel: "Match Ended",
+  matchEndedHint: "Try again when ready.",
 } as const;
 
 export const EXERCISE_DRAWER_COPY = {
@@ -1210,6 +1253,8 @@ export const COACH_ENTRY_COPY = {
   victorySecondaryDescription:
     "Secondary action — Mint Victory above is the primary action.",
   offlineToAnalyze: "You need to be online to analyze",
+  /** Dismiss control on the persist-error toast. */
+  persistDismissLabel: "Dismiss",
 } as const;
 
 /** Shared chrome for /about, /support, /privacy, /terms — anything

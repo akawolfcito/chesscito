@@ -1,15 +1,12 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { track } from "@/lib/telemetry";
-import {
-  ARENA_COPY,
-  SHARE_COPY,
-  VICTORY_CLAIM_COPY,
-  VICTORY_CELEBRATION_COPY,
-} from "@/lib/content/editorial";
+import { SHARE_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { ShareModal } from "@/components/share/share-modal";
@@ -41,6 +38,9 @@ export function VictoryClaimSuccess({
   onAskCoach,
   coachPreview,
 }: Props) {
+  const tArena = useTranslations("ARENA_COPY");
+  const tClaim = useTranslations("VICTORY_CLAIM_COPY");
+  const tCelebration = useTranslations("VICTORY_CELEBRATION_COPY");
   const time = formatTime(elapsedMs);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -53,8 +53,13 @@ export function VictoryClaimSuccess({
   }, [difficulty, moves]);
 
   const shareUrl = claimData.shareLinkUrl ?? SHARE_COPY.url;
-  const challengeText = VICTORY_CLAIM_COPY.challengeText(moves, shareUrl);
+  const challengeText = tClaim("challengeText", { moves, url: shareUrl });
   const isShareReady = shareStatus === "ready";
+  const playAgainLabel = tArena("playAgain");
+  const difficultyKey = difficulty as "easy" | "medium" | "hard";
+  const difficultyLabel = ["easy", "medium", "hard"].includes(difficultyKey)
+    ? tArena(`difficulty.${difficultyKey}`)
+    : difficulty;
 
   return (
     <div
@@ -76,8 +81,8 @@ export function VictoryClaimSuccess({
         <div className="mx-auto w-full max-w-[var(--app-max-width)] px-2">
           <ContextualHeader
             variant="back-control"
-            title={ARENA_COPY.title}
-            back={{ onClick: onBackToHub, label: ARENA_COPY.backToHubAria }}
+            title={tArena("title")}
+            back={{ onClick: onBackToHub, label: tArena("backToHubAria") }}
           />
         </div>
       </header>
@@ -94,37 +99,33 @@ export function VictoryClaimSuccess({
           </div>
 
           <span className="arena-result-kicker">
-            {VICTORY_CLAIM_COPY.successTitle}
+            {tClaim("successTitle")}
           </span>
 
           <h1 className="arena-result-title victory-text-slam">
-            {VICTORY_CLAIM_COPY.claimedBadge}
+            {tClaim("claimedBadge")}
           </h1>
 
           <p className="arena-result-subtitle">
-            {VICTORY_CELEBRATION_COPY.performanceLineCheckmate(moves, time)}
+            {tCelebration("performanceLineCheckmate", { moves, time })}
           </p>
         </section>
 
         <div className="arena-result-stats">
           <PaperStatCard
             icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
-            value={
-              ARENA_COPY.difficulty[
-              difficulty as keyof typeof ARENA_COPY.difficulty
-              ] ?? difficulty
-            }
-            label={VICTORY_CELEBRATION_COPY.stats.difficulty}
+            value={difficultyLabel}
+            label={tCelebration("stats.difficulty")}
           />
           <PaperStatCard
             icon={<CandyIcon name="move" className="h-4 w-4" />}
             value={String(moves)}
-            label={VICTORY_CELEBRATION_COPY.stats.moves}
+            label={tCelebration("stats.moves")}
           />
           <PaperStatCard
             icon={<CandyIcon name="time" className="h-4 w-4" />}
             value={time}
-            label={VICTORY_CELEBRATION_COPY.stats.time}
+            label={tCelebration("stats.time")}
           />
         </div>
 
@@ -132,12 +133,10 @@ export function VictoryClaimSuccess({
           type="button"
           onClick={onPlayAgain}
           className="arena-result-primary-cta arena-result-primary-cta--amber"
-          aria-label={ARENA_COPY.playAgain}
+          aria-label={playAgainLabel}
         >
           <CandyIcon name="refresh" className="h-5 w-5 shrink-0" />
-          <span className="arena-result-primary-cta-label">
-            {ARENA_COPY.playAgain}
-          </span>
+          <span className="arena-result-primary-cta-label">{playAgainLabel}</span>
         </button>
 
         {coachPreview && (
@@ -152,7 +151,7 @@ export function VictoryClaimSuccess({
               className="arena-result-secondary-action"
             >
               <CandyIcon name="coach" className="h-4 w-4" />
-              <span>Review Match</span>
+              <span>{tClaim("reviewMatchCta")}</span>
             </button>
           )}
 

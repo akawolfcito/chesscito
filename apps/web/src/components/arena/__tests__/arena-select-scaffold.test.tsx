@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 import userEvent from "@testing-library/user-event";
 
 import { ArenaSelectScaffold } from "../arena-select-scaffold";

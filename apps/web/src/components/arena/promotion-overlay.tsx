@@ -1,6 +1,7 @@
 "use client";
 
-import { ARENA_COPY, PIECE_LABELS } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
+
 import { ARENA_PIECE_IMG } from "@/lib/game/arena-utils";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { THEME_CONFIG } from "@/lib/theme";
@@ -12,12 +13,7 @@ type Props = {
   onCancel: () => void;
 };
 
-const CHOICES: { key: PromotionChoice; label: string }[] = [
-  { key: "q", label: PIECE_LABELS.queen },
-  { key: "r", label: PIECE_LABELS.rook },
-  { key: "b", label: PIECE_LABELS.bishop },
-  { key: "n", label: PIECE_LABELS.knight },
-];
+const CHOICES_ORDER: PromotionChoice[] = ["q", "r", "b", "n"];
 
 const PIECE_KEY_MAP: Record<PromotionChoice, keyof typeof ARENA_PIECE_IMG.w> = {
   q: "queen",
@@ -27,6 +23,12 @@ const PIECE_KEY_MAP: Record<PromotionChoice, keyof typeof ARENA_PIECE_IMG.w> = {
 };
 
 export function PromotionOverlay({ onSelect, onCancel }: Props) {
+  const t = useTranslations("ARENA_COPY");
+  const tPiece = useTranslations("PIECE_LABELS");
+  const choices = CHOICES_ORDER.map((key) => ({
+    key,
+    label: tPiece(PIECE_KEY_MAP[key]),
+  }));
   return (
     <div
       className="absolute inset-0 z-30 flex items-center justify-center bg-[var(--overlay-scrim)]"
@@ -50,7 +52,7 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
         <button
           type="button"
           onClick={onCancel}
-          aria-label="Cancel promotion"
+          aria-label={t("promotionCancelAriaLabel")}
           className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full transition-all active:scale-95"
           style={{
             background: "rgba(255, 255, 255, 0.30)",
@@ -66,10 +68,10 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
             textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
           }}
         >
-          {ARENA_COPY.promotionTitle}
+          {t("promotionTitle")}
         </p>
         <div className="flex gap-3">
-          {CHOICES.map(({ key, label }) => (
+          {choices.map(({ key, label }) => (
             <button
               key={key}
               type="button"

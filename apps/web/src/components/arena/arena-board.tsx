@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 import { ARENA_PIECE_IMG, squareToFileRank } from "@/lib/game/arena-utils";
-import { ARENA_COPY } from "@/lib/content/editorial";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { ChessBoardPiece } from "@/lib/game/types";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
@@ -80,6 +81,7 @@ export function ArenaBoard({
   isCheckmatePause = false,
   playerColor = "w",
 }: ArenaBoardProps) {
+  const t = useTranslations("ARENA_COPY");
   const flipped = playerColor === "b";
   const squares = useMemo(
     () => buildArenaSquares(selectedSquare, legalMoves, lastMove, checkSquare),
@@ -119,7 +121,7 @@ export function ArenaBoard({
       <div className="playhub-stage-shell w-full">
         <div className="playhub-game-stage">
           <div className="flex items-center justify-center aspect-square w-full">
-            <p className="text-sm text-rose-400">{ARENA_COPY.boardError}</p>
+            <p className="text-sm text-rose-400">{t("boardError")}</p>
           </div>
         </div>
       </div>

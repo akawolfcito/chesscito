@@ -104,5 +104,12 @@ m.COACH_COPY.latestReviewCard.ariaLabel =
   "Open {typeLabel} Coach Review — {result}, {difficulty}, {moves} moves";
 m.COACH_ENTRY_COPY.historyAnalyzeAriaLabel =
   "Analyze match from {timestamp}, {difficulty}, {result}";
+m.ARENA_COPY.coachPreview.insight =
+  "You finished a {difficulty} match in {moves} moves. Coach found key moments behind {result, select, win {your win} draw {the draw} resigned {the resignation} other {the loss}}.";
+m.VICTORY_CELEBRATION_COPY.performanceLine = "Solved in {moves} moves — {time}";
+m.VICTORY_CELEBRATION_COPY.performanceLineCheckmate = "Checkmate in {moves} moves — {time}";
+m.VICTORY_CLAIM_COPY.teaserCheckmate = "Checkmate in {moves} moves";
+m.VICTORY_CLAIM_COPY.card.performanceLine = "{moves} MOVES • {time}";
+m.VICTORY_CLAIM_COPY.card.byLine = "by {player}";
 
 export default messages;

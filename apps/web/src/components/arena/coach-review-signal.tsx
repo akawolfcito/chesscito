@@ -1,6 +1,6 @@
 "use client";
 
-import { ARENA_COPY } from "@/lib/content/editorial";
+import { useTranslations } from "next-intl";
 
 type CoachReviewSignalProps = {
   proActive: boolean;
@@ -8,7 +8,7 @@ type CoachReviewSignalProps = {
 };
 
 export function CoachReviewSignal({ proActive, onCta }: CoachReviewSignalProps) {
-  const copy = ARENA_COPY.coachSignal;
+  const t = useTranslations("ARENA_COPY");
 
   return (
     <button
@@ -19,17 +19,17 @@ export function CoachReviewSignal({ proActive, onCta }: CoachReviewSignalProps) 
           ? "bg-amber-100/40 text-amber-950 border border-amber-900/10 shadow-sm"
           : "bg-white/30 text-amber-900/60 hover:bg-white/50"
       }`}
-      aria-label="Coach Review"
+      aria-label={t("coachSignalAriaLabel")}
       data-testid="coach-review-signal"
     >
       <span className="opacity-80" aria-hidden="true">
-        {proActive ? "PRO" : "Coach"}
+        {proActive ? t("coachSignalTokenPro") : t("coachSignalTokenFree")}
       </span>
       <span className="opacity-40" aria-hidden="true">
         ·
       </span>
       <span className="opacity-90">
-        {copy.inactiveTitle}
+        {t("coachSignal.inactiveTitle")}
       </span>
     </button>
   );

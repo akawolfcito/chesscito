@@ -1,8 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
-import { ARENA_COPY, VICTORY_CLAIM_COPY, VICTORY_CELEBRATION_COPY } from "@/lib/content/editorial";
 import { Button } from "@/components/ui/button";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -36,11 +37,20 @@ export function VictoryClaimError({
   onRetry,
   kind = "error",
 }: Props) {
+  const tArena = useTranslations("ARENA_COPY");
+  const tClaim = useTranslations("VICTORY_CLAIM_COPY");
+  const tCelebration = useTranslations("VICTORY_CELEBRATION_COPY");
   const time = formatTime(elapsedMs);
   const performanceLine = isCheckmate
-    ? VICTORY_CELEBRATION_COPY.performanceLineCheckmate(moves, time)
-    : VICTORY_CELEBRATION_COPY.performanceLine(moves, time);
-  const kindCopy = VICTORY_CLAIM_COPY.errorKindCopy[kind];
+    ? tCelebration("performanceLineCheckmate", { moves, time })
+    : tCelebration("performanceLine", { moves, time });
+  const kindTitle = tClaim(`errorKindCopy.${kind}.title`);
+  const kindSubtitle = tClaim(`errorKindCopy.${kind}.subtitle`);
+  const kindHint = tClaim(`errorKindCopy.${kind}.hint`);
+  const difficultyKey = difficulty as "easy" | "medium" | "hard";
+  const difficultyLabel = ["easy", "medium", "hard"].includes(difficultyKey)
+    ? tArena(`difficulty.${difficultyKey}`)
+    : difficulty;
 
   // Tonal split: a deliberate user gesture (cancelled) is a warning, not
   // an error. Render in amber (per design system) with polite aria-live
@@ -48,10 +58,14 @@ export function VictoryClaimError({
   // failure. Errors and timeouts stay rose with assertive aria-live.
   const isCancelled = kind === "cancelled";
   const haloColor = isCancelled ? "rgba(217, 119, 6, 0.18)" : "rgba(190, 18, 60, 0.15)";
-  const subtitleColor = isCancelled ? "rgba(110, 65, 15, 0.95)" : "rgba(159, 18, 57, 0.95)";
   const trophyClass = isCancelled
     ? "relative h-24 w-24"
     : "relative h-24 w-24 opacity-55 grayscale-[30%]";
+  const statusHeadline = isCancelled
+    ? tClaim("statusHeadlinePaused")
+    : tClaim("statusHeadlineError");
+  const tryAgainLabel = tClaim("tryAgain");
+  const playAgainLabel = tArena("playAgain");
 
   return (
     <div
@@ -67,9 +81,9 @@ export function VictoryClaimError({
       {/* Main content container */}
       <div className="relative z-10 flex h-full w-full flex-col px-5 py-2 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
         <CandyGlassShell
-          title={ARENA_COPY.title}
+          title={tArena("title")}
           onClose={onBackToHub}
-          closeLabel={ARENA_COPY.backToHubAria}
+          closeLabel={tArena("backToHubAria")}
           presentation="screen"
           className="!gap-4 shadow-none"
           cta={
@@ -82,9 +96,9 @@ export function VictoryClaimError({
                       <CandyIcon name="refresh" className="h-4 w-4" />
                     }
                     onClick={onRetry}
-                    aria-label={VICTORY_CLAIM_COPY.tryAgain}
+                    aria-label={tryAgainLabel}
                   >
-                    {VICTORY_CLAIM_COPY.tryAgain}
+                    {tryAgainLabel}
                   </PrincipalButton>
                 </div>
               )}
@@ -95,7 +109,7 @@ export function VictoryClaimError({
                 onClick={onPlayAgain}
                 className="w-full !h-12 border-amber-900/10 bg-amber-900/5 text-sm font-bold text-amber-900/80"
               >
-                <CandyIcon name="refresh" className="mr-1.5 h-3.5 w-3.5" /> {ARENA_COPY.playAgain}
+                <CandyIcon name="refresh" className="mr-1.5 h-3.5 w-3.5" /> {playAgainLabel}
               </Button>
             </div>
           }
@@ -115,7 +129,7 @@ export function VictoryClaimError({
 
               <div className="mt-1.5 flex flex-col items-center gap-0.5">
                 <span className="text-nano font-black uppercase tracking-[0.25em] text-amber-900/60">
-                  {kindCopy.title}
+                  {kindTitle}
                 </span>
                 <h2
                   className="fantasy-title text-3xl font-extrabold leading-tight tracking-tight"
@@ -124,42 +138,38 @@ export function VictoryClaimError({
                     textShadow: "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 8px rgba(0,0,0,0.12)",
                   }}
                 >
-                  {isCancelled ? "Paused" : "Error"}
+                  {statusHeadline}
                 </h2>
               </div>
             </div>
 
             {/* Error Detail & Hint */}
             <div className="flex flex-col gap-1.5">
-              <p className="text-xs font-bold text-amber-900/90">
-                {kindCopy.subtitle}
-              </p>
+              <p className="text-xs font-bold text-amber-900/90">{kindSubtitle}</p>
               {kind === "error" && errorMessage && (
                 <p className="px-4 text-xs leading-relaxed text-rose-800/80">
                   {errorMessage}
                 </p>
               )}
-              <p className="text-xs font-bold text-amber-900/60">
-                {kindCopy.hint}
-              </p>
+              <p className="text-xs font-bold text-amber-900/60">{kindHint}</p>
             </div>
 
             {/* Stats Row */}
             <div className="flex w-full gap-1.5 px-0.5">
               <PaperStatCard
                 icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
-                value={ARENA_COPY.difficulty[difficulty as keyof typeof ARENA_COPY.difficulty] ?? difficulty}
-                label={VICTORY_CELEBRATION_COPY.stats.difficulty}
+                value={difficultyLabel}
+                label={tCelebration("stats.difficulty")}
               />
               <PaperStatCard
                 icon={<CandyIcon name="move" className="h-4 w-4" />}
                 value={String(moves)}
-                label={VICTORY_CELEBRATION_COPY.stats.moves}
+                label={tCelebration("stats.moves")}
               />
               <PaperStatCard
                 icon={<CandyIcon name="time" className="h-4 w-4" />}
                 value={time}
-                label={VICTORY_CELEBRATION_COPY.stats.time}
+                label={tCelebration("stats.time")}
               />
             </div>
           </div>
