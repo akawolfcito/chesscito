@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -11,9 +12,10 @@ import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { TrophyList } from "@/components/trophies/trophy-list";
 import { AchievementsGrid } from "@/components/trophies/achievements-grid";
 import { getVictoryAddress } from "@/lib/game/victory-events";
-import { TROPHY_VITRINE_COPY, ACHIEVEMENTS_COPY, ROADMAP_COPY } from "@/lib/content/editorial";
 import { computeAchievements } from "@/lib/achievements/compute";
 import type { VictoryEntry } from "@/lib/game/victory-events";
+
+type RoadmapItem = { title: string; description: string };
 
 type ApiVictoryRow = {
   tokenId: string;
@@ -66,6 +68,9 @@ function clearOptimisticVictory() {
 }
 
 export function TrophiesBody() {
+  const t = useTranslations("TROPHY_VITRINE_COPY");
+  const tAch = useTranslations("ACHIEVEMENTS_COPY");
+  const tRoad = useTranslations("ROADMAP_COPY");
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
 
@@ -101,11 +106,11 @@ export function TrophiesBody() {
       }
       setHallOfFame(entries);
     } catch {
-      setHofError(TROPHY_VITRINE_COPY.loadError);
+      setHofError(t("loadError"));
     } finally {
       setHofLoading(false);
     }
-  }, [configured]);
+  }, [configured, t]);
 
   const loadMyVictories = useCallback(async () => {
     if (!address || !configured) return;
@@ -127,11 +132,11 @@ export function TrophiesBody() {
       }
       setMyVictories(entries);
     } catch {
-      setMyError(TROPHY_VITRINE_COPY.loadError);
+      setMyError(t("loadError"));
     } finally {
       setMyLoading(false);
     }
-  }, [address, configured]);
+  }, [address, configured, t]);
 
   useEffect(() => {
     void loadHallOfFame();
@@ -156,7 +161,7 @@ export function TrophiesBody() {
           className="text-sm font-semibold leading-relaxed"
           style={{ color: "rgba(63, 34, 8, 0.85)" }}
         >
-          {TROPHY_VITRINE_COPY.configError}
+          {t("configError")}
         </p>
       </div>
     );
@@ -171,7 +176,7 @@ export function TrophiesBody() {
     <PageSection
       key="my-victories"
       icon={<CandyIcon name="crown" className="h-4 w-4" />}
-      title={TROPHY_VITRINE_COPY.myVictories}
+      title={t("myVictories")}
     >
       {!isConnected ? (
         <div className="candy-frame candy-frame-amber flex flex-col items-center gap-4 p-6 text-center">
@@ -185,13 +190,13 @@ export function TrophiesBody() {
             className="text-sm font-semibold leading-relaxed px-4"
             style={{ color: "rgba(63, 34, 8, 0.85)" }}
           >
-            {TROPHY_VITRINE_COPY.connectWallet}
+            {t("connectWallet")}
           </p>
           <PrincipalButton
             size="medium"
             onClick={() => openConnectModal?.()}
           >
-            {TROPHY_VITRINE_COPY.connectWalletButton}
+            {t("connectWalletButton")}
           </PrincipalButton>
         </div>
       ) : isEmptyConnected ? (
@@ -207,14 +212,14 @@ export function TrophiesBody() {
             className="text-sm font-semibold leading-relaxed px-2"
             style={{ color: "rgba(63, 34, 8, 0.85)" }}
           >
-            {TROPHY_VITRINE_COPY.noVictories}
+            {t("noVictories")}
           </p>
           <Link
             href="/arena?fresh=1"
             className="principal-button principal-button-medium inline-flex w-full items-center justify-center text-center"
           >
             <span className="principal-button-label">
-              {TROPHY_VITRINE_COPY.arenaLink}
+              {t("arenaLink")}
             </span>
           </Link>
         </div>
@@ -223,7 +228,7 @@ export function TrophiesBody() {
           victories={myVictories}
           loading={myLoading}
           error={myError}
-          emptyMessage={TROPHY_VITRINE_COPY.noVictories}
+          emptyMessage={t("noVictories")}
           variant="victory"
           onRetry={loadMyVictories}
         />
@@ -235,17 +240,17 @@ export function TrophiesBody() {
     <PageSection
       key="achievements"
       icon={<CandyIcon name="star" className="h-4 w-4" />}
-      title={ACHIEVEMENTS_COPY.sectionTitle}
+      title={tAch("sectionTitle")}
     >
       <div className="mb-4 flex items-center justify-center gap-2">
         <span className="text-nano font-black uppercase tracking-[0.18em] opacity-30">
-          PROGRESS
+          {tAch("progressEyebrow")}
         </span>
         <CandyChip variant="warm" tone="subtle">
-          {ACHIEVEMENTS_COPY.sectionDescription(
-            summary.earnedCount,
-            summary.total,
-          )}
+          {tAch("sectionDescription", {
+            earned: summary.earnedCount,
+            total: summary.total,
+          })}
         </CandyChip>
       </div>
 
@@ -253,7 +258,7 @@ export function TrophiesBody() {
 
       {summary.earnedCount === 0 && (
         <p className="mt-6 text-center text-xs font-bold uppercase tracking-widest opacity-40">
-          {ACHIEVEMENTS_COPY.emptyHint}
+          {tAch("emptyHint")}
         </p>
       )}
     </PageSection>
@@ -263,13 +268,13 @@ export function TrophiesBody() {
     <PageSection
       key="hall-of-fame"
       icon={<CandyIcon name="trophy" className="h-4 w-4" />}
-      title={TROPHY_VITRINE_COPY.hallOfFame}
+      title={t("hallOfFame")}
     >
       <TrophyList
         victories={hallOfFame}
         loading={hofLoading}
         error={hofError}
-        emptyMessage={TROPHY_VITRINE_COPY.noGlobalVictories}
+        emptyMessage={t("noGlobalVictories")}
         variant="hall-of-fame"
         onRetry={loadHallOfFame}
       />
@@ -289,13 +294,13 @@ export function TrophiesBody() {
         <div className="flex items-center gap-3 mb-6">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[rgba(110,65,15,0.15)]" />
           <h3 className="text-nano font-black uppercase tracking-[0.2em] text-[rgba(63,34,8,0.45)]">
-            {ROADMAP_COPY.sectionTitle}
+            {tRoad("sectionTitle")}
           </h3>
           <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[rgba(110,65,15,0.15)]" />
         </div>
 
         <ul className="flex flex-col gap-3" role="list">
-          {ROADMAP_COPY.items.map((item) => (
+          {(tRoad.raw("items") as RoadmapItem[]).map((item) => (
             <li key={item.title} className="roadmap-item">
               <div className="h-2 w-2 rounded-full bg-amber-500/60" />
               <div className="flex-1">
@@ -307,7 +312,7 @@ export function TrophiesBody() {
                 </p>
               </div>
               <CandyChip variant="warm" tone="subtle">
-                {ROADMAP_COPY.soonTag}
+                {tRoad("soonTag")}
               </CandyChip>
             </li>
           ))}

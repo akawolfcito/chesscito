@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
-import { DIFFICULTY_LABELS, TROPHY_VITRINE_COPY, VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
+import { DIFFICULTY_LABELS } from "@/lib/content/editorial";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
 const DIFFICULTY_VARIANT: Record<number, "success" | "warm" | "danger"> = {
@@ -39,6 +40,8 @@ type Props = {
 };
 
 export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
+  const t = useTranslations("TROPHY_VITRINE_COPY");
+  const tClaim = useTranslations("VICTORY_CLAIM_COPY");
   const [toast, setToast] = useState<string | null>(null);
   const difficultyLabel = DIFFICULTY_LABELS[entry.difficulty] ?? "???";
   const chipVariant = DIFFICULTY_VARIANT[entry.difficulty] ?? "warm";
@@ -50,14 +53,14 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({
-          text: VICTORY_CLAIM_COPY.challengeText(entry.totalMoves, victoryUrl),
+          text: tClaim("challengeText", { moves: entry.totalMoves, url: victoryUrl }),
         });
         return;
       } catch { /* cancelled */ }
     }
     try {
       await navigator.clipboard.writeText(victoryUrl);
-      setToast(TROPHY_VITRINE_COPY.copiedToast);
+      setToast(t("copiedToast"));
       setTimeout(() => setToast(null), 2000);
     } catch { /* silent */ }
   }
@@ -69,7 +72,7 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
         <div className="relative z-10">
           <div className="flex items-center justify-between">
             <span className="victory-card-id">
-              {TROPHY_VITRINE_COPY.cardIdPrefix} #{String(entry.tokenId)}
+              {t("cardIdPrefix")} #{String(entry.tokenId)}
             </span>
             <span className="text-nano font-bold text-[rgba(63,34,8,0.50)] uppercase tracking-widest">
               {formatDate(entry.timestamp)}
@@ -83,7 +86,7 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
               </div>
               <div>
                 <p className="text-lg font-black leading-tight tracking-tight text-[rgba(63,34,8,0.95)]">
-                  Verifiable Victory
+                  {t("verifiableVictoryHeadline")}
                 </p>
                 <CandyChip variant={chipVariant} tone="subtle">
                   {difficultyLabel}
@@ -96,14 +99,14 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
             <div className="flex flex-1 items-center gap-2 rounded-xl bg-[rgba(63,34,8,0.06)] p-2 border border-[rgba(63,34,8,0.10)]">
               <CandyIcon name="move" className="h-4 w-4 text-[rgba(63,34,8,0.60)]" />
               <div className="flex flex-col">
-                <span className="text-nano font-bold uppercase text-[rgba(63,34,8,0.40)] leading-none">Moves</span>
+                <span className="text-nano font-bold uppercase text-[rgba(63,34,8,0.40)] leading-none">{t("movesStatLabel")}</span>
                 <span className="text-sm font-black tabular-nums leading-none mt-1 text-[rgba(63,34,8,0.90)]">{entry.totalMoves}</span>
               </div>
             </div>
             <div className="flex flex-1 items-center gap-2 rounded-xl bg-[rgba(63,34,8,0.06)] p-2 border border-[rgba(63,34,8,0.10)]">
               <CandyIcon name="time" className="h-4 w-4 text-[rgba(63,34,8,0.60)]" />
               <div className="flex flex-col">
-                <span className="text-nano font-bold uppercase text-[rgba(63,34,8,0.40)] leading-none">Time</span>
+                <span className="text-nano font-bold uppercase text-[rgba(63,34,8,0.40)] leading-none">{t("timeStatLabel")}</span>
                 <span className="text-sm font-black tabular-nums leading-none mt-1 text-[rgba(63,34,8,0.90)]">{formatTimeMs(entry.timeMs)}</span>
               </div>
             </div>
@@ -111,7 +114,7 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
 
           <div className="mt-6 flex items-center justify-between gap-4">
             <div className="flex flex-col gap-0.5">
-              <span className="text-nano font-bold uppercase text-[rgba(63,34,8,0.40)] tracking-wider">Player</span>
+              <span className="text-nano font-bold uppercase text-[rgba(63,34,8,0.40)] tracking-wider">{t("playerStatLabel")}</span>
               <span className="text-xs font-mono text-[rgba(63,34,8,0.70)]">{truncateAddress(entry.player)}</span>
             </div>
             <button
@@ -120,7 +123,7 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
               className="flex h-10 px-4 items-center gap-2 rounded-xl bg-[rgba(63,34,8,0.10)] font-bold text-xs text-[rgba(63,34,8,0.80)] transition active:scale-95"
             >
               <CandyIcon name="share" className="h-3.5 w-3.5" />
-              {TROPHY_VITRINE_COPY.shareLabel}
+              {t("shareLabel")}
             </button>
           </div>
           

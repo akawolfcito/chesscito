@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { TrophiesBody } from "@/components/trophies/trophies-body";
-import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 
 /**
  * Standalone /trophies route. Mirrors the in-hub TrophiesSheet so the
@@ -19,6 +19,7 @@ import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
  */
 export default function TrophiesPage() {
   const router = useRouter();
+  const t = useTranslations("TROPHY_VITRINE_COPY");
   return (
     <main className="trophies-candy-page mission-shell flex min-h-[100dvh] justify-center">
       <div className="flex w-full max-w-[var(--app-max-width,390px)] flex-col">
@@ -26,9 +27,9 @@ export default function TrophiesPage() {
           <ContextualHeader
             variant="back-control"
             iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
-            title={TROPHY_VITRINE_COPY.pageTitle}
-            subtitle={TROPHY_VITRINE_COPY.pageDescription}
-            back={{ onClick: () => router.push("/hub"), label: "Back" }}
+            title={t("pageTitle")}
+            subtitle={t("pageDescription")}
+            back={{ onClick: () => router.push("/hub"), label: t("backLabel") }}
           />
         </header>
         <div className="flex-1 space-y-6 overflow-y-auto px-4 pb-8 pt-4">

@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
-import { ACHIEVEMENTS_COPY } from "@/lib/content/editorial";
 import type { Achievement } from "@/lib/achievements/compute";
 import { AchievementDetailSheet } from "./achievement-detail-sheet";
+
+type AchievementCopy = { title: string; description: string };
 
 type Props = {
   achievements: Achievement[];
 };
 
 export function AchievementsGrid({ achievements }: Props) {
+  const t = useTranslations("ACHIEVEMENTS_COPY");
   const [selected, setSelected] = useState<Achievement | null>(null);
 
   // Group by earned status but display in a single grid or logical sections
@@ -23,15 +26,15 @@ export function AchievementsGrid({ achievements }: Props) {
       <div className="flex flex-col gap-8">
         {earned.length > 0 && (
           <Section
-            label={ACHIEVEMENTS_COPY.sectionEarned}
+            label={t("sectionEarned")}
             achievements={earned}
             onSelect={setSelected}
           />
         )}
-        
+
         {locked.length > 0 && (
           <Section
-            label={ACHIEVEMENTS_COPY.sectionLocked}
+            label={t("sectionLocked")}
             achievements={locked}
             onSelect={setSelected}
           />
@@ -58,6 +61,7 @@ function Section({
   achievements: Achievement[];
   onSelect: (a: Achievement) => void;
 }) {
+  const t = useTranslations("ACHIEVEMENTS_COPY");
   return (
     <section>
       <div className="mb-4 flex items-center justify-between px-1">
@@ -65,10 +69,10 @@ function Section({
           {label}
         </h3>
         <span className="text-nano font-black text-[rgba(63,34,8,0.30)]">
-          {achievements.length} ITEMS
+          {achievements.length} {t("itemsLabel")}
         </span>
       </div>
-      
+
       <div className="achievement-tile-grid">
         {achievements.map((a) => (
           <AchievementTile key={a.id} achievement={a} onSelect={onSelect} />
@@ -85,7 +89,9 @@ function AchievementTile({
   achievement: Achievement;
   onSelect: (a: Achievement) => void;
 }) {
-  const copy = ACHIEVEMENTS_COPY.items[achievement.id as keyof typeof ACHIEVEMENTS_COPY.items];
+  const t = useTranslations("ACHIEVEMENTS_COPY");
+  const items = t.raw("items") as Record<string, AchievementCopy | undefined>;
+  const copy = items[achievement.id];
   if (!copy) return null;
 
   const { earned, progress } = achievement;
@@ -114,11 +120,11 @@ function AchievementTile({
       {!earned && progress ? (
         <div className="mt-3 w-full">
           <div className="flex items-center justify-between px-1 mb-1 text-nano font-black text-[rgba(63,34,8,0.50)]">
-            <span>PROGRESS</span>
+            <span>{t("progressEyebrow")}</span>
             <span>{progress.current}/{progress.goal}</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-[rgba(63,34,8,0.06)] overflow-hidden">
-            <div 
+            <div
               className="h-full bg-amber-500 rounded-full transition-all duration-500"
               style={{ width: `${(progress.current / progress.goal) * 100}%` }}
             />
@@ -127,13 +133,13 @@ function AchievementTile({
       ) : earned ? (
         <div className="mt-3">
           <CandyChip variant="success" tone="subtle">
-            {ACHIEVEMENTS_COPY.earnedLabel}
+            {t("earnedLabel")}
           </CandyChip>
         </div>
       ) : (
         <div className="mt-3">
           <CandyChip variant="warm" tone="subtle">
-            {ACHIEVEMENTS_COPY.lockedLabel}
+            {t("lockedLabel")}
           </CandyChip>
         </div>
       )}

@@ -1,9 +1,12 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { TrophyCard } from "./trophy-card";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { TROPHY_VITRINE_COPY } from "@/lib/content/editorial";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
 function SkeletonCards() {
+  const t = useTranslations("TROPHY_VITRINE_COPY");
   return (
     <div className="space-y-3">
       <div className="h-[220px] animate-pulse rounded-[24px] border border-[rgba(255,255,255,0.45)] bg-white/15" />
@@ -14,7 +17,7 @@ function SkeletonCards() {
         />
       ))}
       <p className="pt-2 text-center text-xs font-bold uppercase tracking-widest opacity-40">
-        {TROPHY_VITRINE_COPY.loadingText}
+        {t("loadingText")}
       </p>
     </div>
   );
@@ -37,6 +40,7 @@ export function TrophyList({
   variant,
   onRetry,
 }: Props) {
+  const t = useTranslations("TROPHY_VITRINE_COPY");
   if (loading) return <SkeletonCards />;
 
   if (error) {
@@ -58,7 +62,7 @@ export function TrophyList({
             className="mt-3 inline-flex h-11 items-center justify-center px-6 rounded-xl bg-rose-600/10 text-xs font-black uppercase tracking-wider transition active:scale-95"
             style={{ color: "rgba(159, 18, 57, 0.95)" }}
           >
-            {TROPHY_VITRINE_COPY.tapToRetry}
+            {t("tapToRetry")}
           </button>
         )}
       </div>
@@ -99,7 +103,7 @@ export function TrophyList({
         <div className="flex flex-col gap-2">
           {isPersonal && featured && (
             <h4 className="px-2 text-nano font-black uppercase tracking-[0.2em] opacity-40 mb-1">
-              History
+              {t("historyHeading")}
             </h4>
           )}
           {history.map((v, i) => (

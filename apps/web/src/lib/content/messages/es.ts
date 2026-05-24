@@ -331,6 +331,103 @@ const messages = {
     metaFallback: "¿Puedes superarlo? Juega Chesscito en Celo.",
     metaFallbackTitle: "Victoria #{id}",
   },
+  VICTORY_CLAIM_COPY: {
+    ...en.VICTORY_CLAIM_COPY,
+    challengeText:
+      "Resolví esto en {moves} movimientos. ¿Puedes superarme?\nJuega Chesscito en Celo 👉 {url}",
+  },
+  TROPHY_VITRINE_COPY: {
+    pageTitle: "TROFEOS",
+    pageDescription: "Tus victorias guardadas.",
+    myVictories: "Mis victorias",
+    hallOfFame: "Salón de la fama",
+    movesLabel: "movimientos",
+    shareLabel: "Compartir",
+    loadingText: "Cargando trofeos...",
+    copiedToast: "¡Link copiado!",
+    connectWallet: "Conecta para ver tus trofeos",
+    connectWalletButton: "Conectar billetera",
+    noVictories: "Aún sin victorias",
+    noGlobalVictories: "Aún no hay victorias registradas",
+    loadError: "No se pudieron cargar las victorias",
+    tapToRetry: "Tocá para reintentar",
+    configError: "Trofeos sin conexión",
+    roadmap: "Próximamente: Torneos • Pases VIP • Recompensas de temporada",
+    arenaLink: "ARENA",
+    cardIdPrefix: "Victoria",
+    backLabel: "Atrás",
+    verifiableVictoryHeadline: "Victoria verificable",
+    movesStatLabel: "Movimientos",
+    timeStatLabel: "Tiempo",
+    playerStatLabel: "Jugador",
+    historyHeading: "Historial",
+  },
+  ACHIEVEMENTS_COPY: {
+    sectionTitle: "Logros",
+    sectionDescription: "{earned} de {total} desbloqueados",
+    emptyHint: "Gana en Arena para desbloquear logros",
+    lockedLabel: "Bloqueado",
+    earnedLabel: "Ganado",
+    progressLabel: "{current}/{goal}",
+    sectionEarned: "Ganados",
+    sectionLocked: "Bloqueados",
+    detailEarnedSubtitle: "Logro desbloqueado",
+    detailLockedSubtitle: "Cómo desbloquear",
+    goalLabel: "Meta",
+    detailCloseLabel: "Cerrar",
+    progressEyebrow: "PROGRESO",
+    itemsLabel: "ÍTEMS",
+    closeAchievementLabel: "Cerrar logro",
+    items: {
+      "first-victory": {
+        title: "Primera victoria",
+        description: "Gana tu primera partida en Arena.",
+      },
+      "arena-champion-medium": {
+        title: "Jugador sólido",
+        description: "Vence a la IA en Medio o Difícil.",
+      },
+      "arena-champion-hard": {
+        title: "Campeón del Arena",
+        description: "Vence a la IA en Difícil.",
+      },
+      speedrunner: {
+        title: "Velocista",
+        description: "Gana una partida en 20 movimientos o menos.",
+      },
+      "rapid-finish": {
+        title: "Cierre rápido",
+        description: "Gana una partida en menos de 30 segundos.",
+      },
+      "five-crowns": {
+        title: "Cinco coronas",
+        description: "Gana 5 partidas en Arena.",
+      },
+      dedication: {
+        title: "Dedicación",
+        description: "Gana 25 partidas en Arena.",
+      },
+    },
+  },
+  ROADMAP_COPY: {
+    sectionTitle: "Próximamente",
+    sectionDescription: "Lo que viene a Chesscito.",
+    soonTag: "Pronto",
+    items: [
+      {
+        title: "Torneos",
+        description: "Brackets agendados con pozos compartidos.",
+      },
+      {
+        title: "Pases VIP",
+        description: "Pases ligados a eventos futuros de la comunidad Celo.",
+      },
+      {
+        title: "Recompensas de temporada",
+        description: "Retos rotativos con coleccionables verificables únicos.",
+      },
+    ],
+  },
 };
 
 export default messages;

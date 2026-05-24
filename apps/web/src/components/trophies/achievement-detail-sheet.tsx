@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { TreasureTile } from "@/components/scene-rooted/treasure-tile";
 import {
@@ -8,8 +9,9 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { ACHIEVEMENTS_COPY } from "@/lib/content/editorial";
 import type { Achievement } from "@/lib/achievements/compute";
+
+type AchievementCopy = { title: string; description: string };
 
 type Props = {
   open: boolean;
@@ -18,15 +20,16 @@ type Props = {
 };
 
 export function AchievementDetailSheet({ open, onOpenChange, achievement }: Props) {
+  const t = useTranslations("ACHIEVEMENTS_COPY");
   if (!achievement) return null;
-  const copy =
-    ACHIEVEMENTS_COPY.items[achievement.id as keyof typeof ACHIEVEMENTS_COPY.items];
+  const items = t.raw("items") as Record<string, AchievementCopy | undefined>;
+  const copy = items[achievement.id];
   if (!copy) return null;
 
   const { earned, progress } = achievement;
   const subtitle = earned
-    ? ACHIEVEMENTS_COPY.detailEarnedSubtitle
-    : ACHIEVEMENTS_COPY.detailLockedSubtitle;
+    ? t("detailEarnedSubtitle")
+    : t("detailLockedSubtitle");
 
   const progressPct = progress
     ? Math.min(100, Math.round((progress.current / progress.goal) * 100))
@@ -55,7 +58,7 @@ export function AchievementDetailSheet({ open, onOpenChange, achievement }: Prop
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
             title={copy.title}
-            close={{ onClick: () => onOpenChange(false), label: "Close achievement" }}
+            close={{ onClick: () => onOpenChange(false), label: t("closeAchievementLabel") }}
           />
         </div>
 
@@ -77,7 +80,7 @@ export function AchievementDetailSheet({ open, onOpenChange, achievement }: Prop
               }
               onClick={() => {}}
               disabled
-              aria-label={`${copy.title} — ${earned ? ACHIEVEMENTS_COPY.earnedLabel : ACHIEVEMENTS_COPY.lockedLabel}`}
+              aria-label={`${copy.title} — ${earned ? t("earnedLabel") : t("lockedLabel")}`}
             />
           </div>
 
@@ -98,13 +101,13 @@ export function AchievementDetailSheet({ open, onOpenChange, achievement }: Prop
                   className="text-xs font-bold uppercase tracking-wider"
                   style={{ color: "rgba(110, 65, 15, 0.85)" }}
                 >
-                  {ACHIEVEMENTS_COPY.goalLabel}
+                  {t("goalLabel")}
                 </p>
                 <p
                   className="text-sm font-extrabold"
                   style={{ color: "rgba(110, 65, 15, 0.95)" }}
                 >
-                  {ACHIEVEMENTS_COPY.progressLabel(progress.current, progress.goal)}
+                  {t("progressLabel", { current: progress.current, goal: progress.goal })}
                 </p>
               </div>
               <div

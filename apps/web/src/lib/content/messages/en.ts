@@ -66,5 +66,9 @@ m.VICTORY_PAGE_COPY.metaComplete = "Complete in {moves} moves";
 m.VICTORY_PAGE_COPY.metaChallenge =
   "Can you beat that? Victory #{id} saved as a Chesscito victory card.";
 m.VICTORY_PAGE_COPY.metaFallbackTitle = "Victory #{id}";
+m.ACHIEVEMENTS_COPY.sectionDescription = "{earned} of {total} unlocked";
+m.ACHIEVEMENTS_COPY.progressLabel = "{current}/{goal}";
+m.VICTORY_CLAIM_COPY.challengeText =
+  "I solved this in {moves} moves. Can you beat me?\nPlay Chesscito on Celo 👉 {url}";
 
 export default messages;

@@ -665,6 +665,12 @@ export const TROPHY_VITRINE_COPY = {
   roadmap: "Coming later: Tournaments • VIP Passes • Seasonal Rewards",
   arenaLink: "ARENA",
   cardIdPrefix: "Victory",
+  backLabel: "Back",
+  verifiableVictoryHeadline: "Verifiable Victory",
+  movesStatLabel: "Moves",
+  timeStatLabel: "Time",
+  playerStatLabel: "Player",
+  historyHeading: "History",
 } as const;
 
 /** Achievement surface copy (feature #23). Achievements are derived from
@@ -688,6 +694,9 @@ export const ACHIEVEMENTS_COPY = {
   /** Goal callout under the progress bar in the detail sheet. */
   goalLabel: "Goal",
   detailCloseLabel: "Close",
+  progressEyebrow: "PROGRESS",
+  itemsLabel: "ITEMS",
+  closeAchievementLabel: "Close achievement",
   items: {
     "first-victory": {
       title: "First Victory",
