@@ -1763,6 +1763,25 @@ export const GLOBAL_STATUS_BAR_COPY = {
   accountChipLabel: "Account",
 } as const;
 
+/** Non-blocking nudge shown to disconnected players when they hit a
+ *  meaningful milestone (★★★ on a piece, arena victory, badge sheet
+ *  with claimables). One-shot per milestone per browser — the hook
+ *  flips a `chesscito:connect-prompt-shown:{milestone}` flag the
+ *  first time the prompt fires and never re-nags the same milestone.
+ *  Other milestones still fire independently.
+ *
+ *  Phase 2 of plan 2026-05-25-account-chip-and-local-progress.md. */
+export const CONNECT_PROMPT_COPY = {
+  title: "Save your progress on-chain",
+  starsSubline: "You earned 3 stars. Connect your wallet to keep them safe.",
+  victorySubline: "You won. Connect your wallet to mint and keep your victory.",
+  badgesSubline: "Badges are ready to claim. Connect your wallet to keep them.",
+  connectCta: "Connect to save",
+  dismissCta: "Maybe later",
+  dismissAriaLabel: "Dismiss connect reminder",
+  successAfterConnect: "Your progress is now saved on-chain.",
+} as const;
+
 export const ACCOUNT_SHEET_COPY = {
   title: "Account",
   description: "Wallet, network and PRO status",

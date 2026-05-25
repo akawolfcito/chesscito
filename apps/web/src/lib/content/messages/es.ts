@@ -220,6 +220,16 @@ const messages = {
     accountLabel: "Abrir cuenta",
     accountChipLabel: "Cuenta",
   },
+  CONNECT_PROMPT_COPY: {
+    title: "Guarda tu progreso en cadena",
+    starsSubline: "Ganaste 3 estrellas. Conecta tu wallet para no perderlas.",
+    victorySubline: "¡Ganaste! Conecta tu wallet para acuñar tu victoria.",
+    badgesSubline: "Tienes badges para reclamar. Conecta tu wallet para conservarlos.",
+    connectCta: "Conectar para guardar",
+    dismissCta: "Quizás luego",
+    dismissAriaLabel: "Descartar recordatorio de conexión",
+    successAfterConnect: "Tu progreso está guardado en cadena.",
+  },
   ACCOUNT_SHEET_COPY: {
     title: "Cuenta",
     description: "Wallet, red y estado PRO",
