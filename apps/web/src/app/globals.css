@@ -8475,42 +8475,42 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .shop-item-tile-buy-btn {
-  min-width: 110px !important;
+  /* Bounding box sized to the asset's native 3.375:1 aspect ratio
+     (540×160 source). At 135×40 the inherited `background-size:
+     contain` renders the pill at full visible width without the
+     transparent side-padding that `contain` would leave at the
+     wider 220px medium default — and without the squish that a
+     `100% 100%` stretch would introduce. Compact, proportional,
+     right-aligned by the footer's flex-end. */
+  width: 135px !important;
+  min-width: 0 !important;
   height: 40px !important;
   padding: 0 14px !important;
   font-size: 0.88rem !important;
-  /* The PrincipalButton asset ships with transparent padding around
-     the carved oval, so the default `background-size: contain` from
-     `.principal-button` leaves visible gaps on both sides. Stretch
-     the asset to the full bounding box here so the rendered pill
-     hugs the flex-end edge of the tile footer. The squish at this
-     compact size is imperceptible — the rule is scoped via the
-     `.shop-item-tile-buy-btn` class so the default sweet-spot
-     contain mode is preserved for every other PrincipalButton. */
-  background-size: 100% 100% !important;
 }
 
-/* CELO twin button — same PrincipalButton shape, recolored to yellow
-   via a sepia-anchored pipeline. sepia() collapses every hue toward
-   amber, saturate() boosts to gold, brightness() lifts to a vibrant
-   sunny yellow that reads as a clearly different SKU from the green
-   USD button without losing the wood-carved shape. */
+/* Pay with CELO ships a longer label ("Pay with CELO") that needs a
+   slightly wider plank than the short price labels — same height so
+   the two buttons read as siblings. */
 .shop-item-tile-buy-btn--celo {
-  filter:
-    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.30))
-    sepia(1)
-    saturate(7)
-    hue-rotate(-5deg)
-    brightness(1.25);
+  width: 150px !important;
 }
 
-.shop-item-tile-buy-btn--celo:active:not(:disabled) {
-  filter:
-    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.30))
-    sepia(1)
-    saturate(7)
-    hue-rotate(-5deg)
-    brightness(1.25);
+/* CELO twin button — bright yellow variant of the carved plank.
+   Uses a bespoke asset (`principalbutton-celo`, generated from the
+   green source via ImageMagick hue modulation) instead of fighting
+   CSS filters. Same drop-shadow pipeline as the base, but with the
+   wood-carved silhouette in yellow. The label switches to dark
+   brown so the text contrasts against the bright yellow plank
+   (white text on yellow is unreadable). */
+.shop-item-tile-buy-btn--celo {
+  --principal-button-bg: image-set(
+    url("/art/shop/principalbutton-celo.avif") type("image/avif"),
+    url("/art/shop/principalbutton-celo.webp") type("image/webp"),
+    url("/art/shop/principalbutton-celo.png") type("image/png")
+  );
+  color: #3f2208 !important;
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.55) !important;
 }
 
 /* ── Badges Collection (badge-sheet.tsx) ───────────────────────────────────
