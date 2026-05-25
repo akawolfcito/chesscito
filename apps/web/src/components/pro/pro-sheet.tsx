@@ -207,7 +207,7 @@ export function ProSheet(props: ProSheetProps) {
          *  sheet content. Shell is shared between active and non-active
          *  states — only the central card + CTA block branch on
          *  `showActiveBanner`. */}
-        <div className="relative mx-auto flex w-full max-w-[var(--app-max-width)] flex-col overflow-y-auto overflow-x-visible overscroll-contain pt-[18%]">
+        <div className="relative mx-auto flex w-full max-w-[var(--app-max-width)] flex-col overflow-y-auto overflow-x-visible overscroll-contain pt-[12%]">
           {/* Floating banner */}
           <picture className="pointer-events-none absolute left-1/2 top-0 z-20 w-[78%] -translate-x-1/2">
             <source
@@ -265,7 +265,7 @@ export function ProSheet(props: ProSheetProps) {
               backgroundRepeat: "no-repeat",
             }}
           >
-            <div className="flex flex-col items-stretch px-[8%] pt-[22%] pb-[6%]">
+            <div className="flex flex-col items-stretch px-[8%] pt-[16%] pb-[4%]">
               {/* TRAINING PASS pill */}
               <span
                 data-testid="pro-kicker"
@@ -282,7 +282,7 @@ export function ProSheet(props: ProSheetProps) {
 
               {/* Title */}
               <h2
-                className="mt-3 text-3xl font-extrabold leading-tight"
+                className="mt-2 text-2xl font-extrabold leading-tight"
                 style={{
                   color: "rgba(63, 34, 8, 0.95)",
                   textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
@@ -294,7 +294,7 @@ export function ProSheet(props: ProSheetProps) {
               {/* Thin gold divider */}
               <div
                 aria-hidden="true"
-                className="mt-2 h-px w-full"
+                className="mt-1.5 h-px w-full"
                 style={{
                   background:
                     "linear-gradient(90deg, transparent 0%, rgba(217, 180, 74, 0.7) 20%, rgba(217, 180, 74, 0.7) 80%, transparent 100%)",
@@ -303,7 +303,7 @@ export function ProSheet(props: ProSheetProps) {
 
               {/* Tagline */}
               <p
-                className="mt-3 text-sm leading-snug"
+                className="mt-2 text-xs leading-snug"
                 style={{ color: "rgba(110, 65, 15, 0.78)" }}
               >
                 {t("tagline")}
@@ -315,7 +315,7 @@ export function ProSheet(props: ProSheetProps) {
               {showActiveBanner && days !== null && status?.expiresAt ? (
                 <div
                   data-testid="pro-active-banner"
-                  className="mt-4 rounded-2xl border px-4 py-3"
+                  className="mt-3 rounded-2xl border px-3 py-2"
                   style={{
                     background: "rgba(255, 245, 205, 0.55)",
                     borderColor: "rgba(110, 65, 15, 0.18)",
@@ -352,20 +352,20 @@ export function ProSheet(props: ProSheetProps) {
                 </div>
               ) : (
                 <div
-                  className="mt-4 rounded-2xl border px-4 py-3 text-center"
+                  className="mt-3 rounded-2xl border px-3 py-2 text-center"
                   style={{
                     background: "rgba(255, 245, 205, 0.55)",
                     borderColor: "rgba(110, 65, 15, 0.18)",
                   }}
                 >
                   <p
-                    className="text-2xl font-extrabold"
+                    className="text-xl font-extrabold leading-tight"
                     style={{ color: "rgb(91, 33, 182)" }}
                   >
                     {t("priceLabel")}
                   </p>
                   <p
-                    className="mt-1 text-xs"
+                    className="mt-0.5 text-nano"
                     style={{ color: "rgba(110, 65, 15, 0.65)" }}
                   >
                     {t("noAutoBillingLine", { duration: t("durationLabel") })}
@@ -375,7 +375,7 @@ export function ProSheet(props: ProSheetProps) {
 
               {/* ACTIVE PERKS pill */}
               <span
-                className="mt-5 self-start rounded-full px-3 py-1 text-nano font-extrabold uppercase tracking-wider"
+                className="mt-3 self-start rounded-full px-2.5 py-0.5 text-nano font-extrabold uppercase tracking-wider"
                 style={{
                   background:
                     "linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)",
@@ -388,14 +388,14 @@ export function ProSheet(props: ProSheetProps) {
 
               {/* Perks list */}
               <ul
-                className="mt-3 space-y-2 text-sm"
+                className="mt-2 space-y-1 text-xs"
                 style={{ color: "rgba(63, 34, 8, 0.90)" }}
               >
                 {perks.map((perk) => (
-                  <li key={perk} className="flex items-start gap-2.5">
+                  <li key={perk} className="flex items-start gap-2">
                     <span
                       aria-hidden="true"
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                      className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold leading-none text-white"
                       style={{
                         background:
                           "linear-gradient(180deg, #22c55e 0%, #15803d 100%)",
@@ -449,7 +449,7 @@ export function ProSheet(props: ProSheetProps) {
                *  Non-active: single PrincipalButton "Unlock PRO" /
                *  "Connect wallet". */}
               {showActiveBanner ? (
-                <div data-testid="pro-active-actions" className="mt-5 flex flex-col items-stretch gap-3">
+                <div data-testid="pro-active-actions" className="mt-4 flex flex-col items-stretch gap-2">
                   <button
                     type="button"
                     onClick={openTrainingJournal}
@@ -509,7 +509,7 @@ export function ProSheet(props: ProSheetProps) {
                   </div>
                 </div>
               ) : (
-                <div className="mt-5 flex justify-center">
+                <div className="mt-4 flex justify-center">
                   <PrincipalButton
                     size="large"
                     loading={cta.loading}
