@@ -562,13 +562,23 @@ export function PieceCompletePrompt({
     setTimeout(cb, 250);
   }
 
+  // Dismissing the popup (X close OR scrim tap) used to fire
+  // `onPracticeAgain`, which kept the user on the SAME piece at the
+  // same last exercise — players reported this as "stuck on the last
+  // level" after completing a piece. New mapping: close advances to
+  // the next piece when one exists (the primary CTA's natural
+  // destination); on the final piece, close still falls back to
+  // practice-again so the player isn't dropped out of the surface
+  // they're choosing to dismiss.
+  const handleDismiss = nextPiece ? onNextPiece : onPracticeAgain;
+
   return (
     <div
       className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={tComplete("title")}
-      onClick={() => handleAction(onPracticeAgain)}
+      onClick={() => handleAction(handleDismiss)}
     >
       <div
         className="relative w-full max-w-xs"
@@ -577,8 +587,12 @@ export function PieceCompletePrompt({
       >
         <CandyGlassShell
           title={tComplete("title")}
-          onClose={() => handleAction(onPracticeAgain)}
-          closeLabel={tComplete("practiceAgain")}
+          onClose={() => handleAction(handleDismiss)}
+          closeLabel={
+            nextPiece
+              ? tComplete("nextPiece", { piece: tPiece(nextPiece) })
+              : tComplete("practiceAgain")
+          }
           cta={
             /* Trimmed CTA hierarchy — was 4 visible actions, dropped to
                2 buttons + 1 quiet text link. The X close handles

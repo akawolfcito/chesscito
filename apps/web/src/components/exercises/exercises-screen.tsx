@@ -1974,7 +1974,17 @@ export function ExercisesScreen({
               canSaveScore
                 ? () => {
                     setShowPieceComplete(false);
+                    // Submit-and-close used to drop the user back on
+                    // the final exercise of the just-completed piece
+                    // while the score POST flew off; align it with
+                    // the dismiss/next-piece path so the surface
+                    // advances even when the user picks the on-chain
+                    // save route.
                     void handleSubmitScore();
+                    if (nextPiece) {
+                      setSelectedPiece(nextPiece);
+                      resetBoard();
+                    }
                   }
                 : undefined
             }
