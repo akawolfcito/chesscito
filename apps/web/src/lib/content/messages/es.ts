@@ -1211,14 +1211,6 @@ const messages = {
       unavailable: "No disponible",
       notConfigured: "Próximamente",
     },
-    kicker: {
-      support: "Apoya a Chesscito",
-      training: "Ítem de entrenamiento",
-    },
-    sections: {
-      support: "Apoyo",
-      training: "Entrenamiento",
-    },
   },
   LEADERBOARD_SHEET_COPY: {
     title: "LÍDERES",

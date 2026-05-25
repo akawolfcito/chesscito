@@ -8398,14 +8398,50 @@ button.hud-resource-chip:active:not(:disabled) {
   transform: scale(0.985);
 }
 
-/* Featured ribbon styling — keeps gold accent without overriding the
-   per-tile background texture. Border + outer glow only. */
+/* Featured tile — stronger gold halo + a richer drop shadow so the
+   FEATURED SKU reads as the hero card at a glance, not just "a card
+   with a thin gold outline". Pairs with the explicit ribbon badge
+   below to give the featured slot two reinforcing cues (frame +
+   ribbon) instead of one whispered one. */
 .shop-item-tile--featured {
-  border: 1.5px solid rgba(255, 215, 120, 0.85);
+  border: 1.5px solid rgba(255, 215, 120, 0.90);
   box-shadow:
-    0 0 0 1px rgba(255, 215, 120, 0.35),
-    0 6px 18px rgba(135, 82, 13, 0.30),
-    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+    0 0 0 1px rgba(255, 215, 120, 0.45),
+    0 0 22px rgba(255, 210, 120, 0.28),
+    0 8px 22px rgba(135, 82, 13, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+/* Featured ribbon — absolute-positioned gold badge overhanging the
+   top-right corner of the tile. Replaces the previous tiny inline
+   "FEATURED" label that visually weighed the same as a kicker. A
+   real ribbon with its own color + drop-shadow earns the cognitive
+   weight that "this is the hero SKU" deserves. The `-8px` top
+   offset is what makes it feel like a sticker pinned ONTO the
+   card rather than rendered inside it. */
+.shop-item-tile-featured-ribbon {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+  border: 1px solid rgba(120, 53, 15, 0.80);
+  color: #3f2208;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 240, 175, 0.65);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(120, 53, 15, 0.30),
+    0 3px 6px rgba(120, 53, 15, 0.40);
+  pointer-events: none;
 }
 
 /* Full-bleed floating icon — bespoke art reads above the card scale.
@@ -8449,24 +8485,6 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-direction: column;
   gap: 1px;
   min-width: 0;
-}
-
-.shop-item-tile-kicker {
-  font-size: 0.55rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255, 245, 220, 0.85);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
-}
-
-.shop-item-tile-featured-label {
-  font-size: 0.55rem;
-  font-weight: 900;
-  color: #FFD27A;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .shop-item-tile-name {

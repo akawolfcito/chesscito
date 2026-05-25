@@ -413,17 +413,6 @@ export const SHOP_SHEET_COPY = {
     unavailable: "Unavailable",
     notConfigured: "Coming soon",
   },
-  /** Item-level kicker labels rendered above the item name on each card.
-   *  Communicates purpose at a glance without changing purchase logic. */
-  kicker: {
-    support: "Support Chesscito",
-    training: "Training Item",
-  },
-  /** Section headers for the catalog grid. */
-  sections: {
-    support: "Support",
-    training: "Training",
-  },
 } as const;
 
 

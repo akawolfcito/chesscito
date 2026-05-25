@@ -80,8 +80,6 @@ function ShopItemCard({
 }) {
   const t = useTranslations("SHOP_SHEET_COPY");
   const copyKey = copyKeyForItem(item.itemId);
-  const kickerKey = copyKey === "founderBadge" ? "support" : "training";
-  const kicker = t(`kicker.${kickerKey}` as const);
   const assets = SHOP_TILE_ASSETS[copyKey];
   const priceLabel = item.configured
     ? formatUsd(item.onChainPrice)
@@ -126,12 +124,22 @@ function ShopItemCard({
         />
       </picture>
 
-      {/* Name + kicker + short copy */}
+      {/* Featured ribbon — absolute-positioned over the top-right
+       *  corner of the tile so it reads as an honest badge instead
+       *  of a meta-label fighting the kicker hierarchy. Only the
+       *  designated SKU gets one. */}
+      {isFeatured && (
+        <span className="shop-item-tile-featured-ribbon" aria-hidden="true">
+          ★ {t("featured")}
+        </span>
+      )}
+
+      {/* Identity — name + subtitle. Kicker dropped: the bg color,
+       *  bespoke art, and name already disambiguate each SKU; an
+       *  extra "TRAINING ITEM" / "SUPPORT CHESSCITO" line above
+       *  was redundant meta-noise that diluted the visual
+       *  hierarchy in a 390px viewport. */}
       <div className="shop-item-tile-identity">
-        <div className="flex items-center justify-between">
-          <p className="shop-item-tile-kicker">{kicker}</p>
-          {isFeatured && <span className="shop-item-tile-featured-label">{t("featured")}</span>}
-        </div>
         <p className="shop-item-tile-name">{item.label}</p>
         <p className="shop-item-tile-subtitle">{item.subtitle}</p>
       </div>
