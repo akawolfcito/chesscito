@@ -1478,46 +1478,30 @@
 
     6% {
       opacity: 1;
-      transform: translate(
-          calc(-50% + var(--burst-x, 0px) * 0.25),
-          calc(-50% + var(--burst-y, 0px) * 0.25)
-        )
-        rotate(calc(var(--spin, 720deg) * 0.06))
-        scale(1);
+      transform: translate(calc(-50% + var(--burst-x, 0px) * 0.25),
+          calc(-50% + var(--burst-y, 0px) * 0.25)) rotate(calc(var(--spin, 720deg) * 0.06)) scale(1);
     }
 
     /* Radial burst peak — sharp, fast outward push */
     25% {
       opacity: 1;
-      transform: translate(
-          calc(-50% + var(--burst-x, 0px)),
-          calc(-50% + var(--burst-y, 0px))
-        )
-        rotate(calc(var(--spin, 720deg) * 0.25))
-        scale(1);
+      transform: translate(calc(-50% + var(--burst-x, 0px)),
+          calc(-50% + var(--burst-y, 0px))) rotate(calc(var(--spin, 720deg) * 0.25)) scale(1);
     }
 
     /* Mid-fall — gentle gravity descent (only ~18vh past peak) */
     65% {
       opacity: 1;
-      transform: translate(
-          calc(-50% + var(--burst-x, 0px) + var(--drift-x, 0px) * 0.55),
-          calc(-50% + var(--burst-y, 0px) + 18vh)
-        )
-        rotate(calc(var(--spin, 720deg) * 0.65))
-        scale(1);
+      transform: translate(calc(-50% + var(--burst-x, 0px) + var(--drift-x, 0px) * 0.55),
+          calc(-50% + var(--burst-y, 0px) + 18vh)) rotate(calc(var(--spin, 720deg) * 0.65)) scale(1);
     }
 
     /* Fade tail starts here — chip dissolves while still drifting,
        so we never need to render a full bottom-of-screen fall. */
     100% {
       opacity: 0;
-      transform: translate(
-          calc(-50% + var(--burst-x, 0px) + var(--drift-x, 0px)),
-          calc(-50% + var(--burst-y, 0px) + 40vh)
-        )
-        rotate(var(--spin, 720deg))
-        scale(1);
+      transform: translate(calc(-50% + var(--burst-x, 0px) + var(--drift-x, 0px)),
+          calc(-50% + var(--burst-y, 0px) + 40vh)) rotate(var(--spin, 720deg)) scale(1);
     }
   }
 
@@ -2063,14 +2047,15 @@
      Fuera del pulso el filtro queda fijo en la sombra base, así el
      navegador no repinta el resto del ciclo. */
   @keyframes save-pulse-cycle {
+
     0%,
     0.5%,
     100% {
       filter: drop-shadow(0 3px 3px rgba(99, 47, 5, 0.24));
     }
+
     0.25% {
-      filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.85))
-        drop-shadow(0 3px 3px rgba(99, 47, 5, 0.24));
+      filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.85)) drop-shadow(0 3px 3px rgba(99, 47, 5, 0.24));
     }
   }
 
@@ -4120,8 +4105,7 @@ button.hud-resource-chip:active:not(:disabled) {
   transform: translateY(-50%);
   color: #b86609;
   filter:
-    drop-shadow(0 1px 0 rgba(255, 246, 186, 0.70))
-    drop-shadow(0 3px 4px rgba(99, 47, 5, 0.42));
+    drop-shadow(0 1px 0 rgba(255, 246, 186, 0.70)) drop-shadow(0 3px 4px rgba(99, 47, 5, 0.42));
 }
 
 .arena-timer-chip-value {
@@ -5285,12 +5269,9 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 1.1rem;
   border-radius: 14px;
   background:
-    image-set(
-      url("/art/scene-rooted/principalbutton.avif") type("image/avif"),
+    image-set(url("/art/scene-rooted/principalbutton.avif") type("image/avif"),
       url("/art/scene-rooted/principalbutton.webp") type("image/webp"),
-      url("/art/scene-rooted/principalbutton.png") type("image/png")
-    )
-    center / 100% 100% no-repeat;
+      url("/art/scene-rooted/principalbutton.png") type("image/png")) center / 100% 100% no-repeat;
 }
 
 .primary-play-cta--arena-entry .primary-play-cta-icon {
@@ -5367,6 +5348,18 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 8px;
 }
 
+/* `.candy-tray-pill` defaults to `width: 100%` because it's authored
+ * for tray rows that fill their container. In the HUD the chips need
+ * to size to their content (the gold pill should hug the trophy icon
+ * + value, not stretch across the row). Border 0 strips the dimmer
+ * brown outline so the chip matches the floating-pill style used by
+ * the candy-tray-pill icon family in `/exercises`. */
+.hub-hud-pill {
+  width: auto;
+  border: 0;
+  cursor: pointer;
+}
+
 .hub-scaffold-hud-right {
   justify-content: flex-end;
 }
@@ -5398,7 +5391,7 @@ button.hud-resource-chip:active:not(:disabled) {
    * FRAME (not the crown's tip) align with the trophy + connect
    * chips' top edge — the crown reads as decoration above the row
    * instead of pushing the row down. */
-  margin-top: -16px;
+  margin-top: -8px;
 }
 
 .hub-pro-badge:hover {
@@ -8649,6 +8642,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @media (min-width: 768px) {
+
   /*
    * Shell paints the graphite gradient AROUND the frame. Body bg stays
    * untouched (var(--playhub-game-bg)), so the inside of the frame can

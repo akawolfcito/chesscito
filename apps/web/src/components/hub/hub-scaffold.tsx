@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { HudResourceChip } from "@/components/hud/hud-resource-chip";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { HudSecondaryRow } from "@/components/hud/hud-secondary-row";
 import { KingdomAnchor } from "@/components/kingdom/kingdom-anchor";
 import { PrimaryPlayCta } from "@/components/kingdom/primary-play-cta";
@@ -180,29 +180,28 @@ export function HubScaffold({
       <header className="hub-scaffold-hud">
         <div className="hub-scaffold-hud-top">
           <div className="hub-scaffold-hud-left">
-            {wrap(
-              "HudResourceChip",
-              <HudResourceChip
-                tone="trophy"
-                value={trophies}
-                ariaLabel={tHud("trophiesAriaLabel", { count: trophies })}
-                onClick={onTrophyTap}
-              />,
-            )}
+            <button
+              type="button"
+              onClick={onTrophyTap}
+              aria-label={tHud("trophiesAriaLabel", { count: trophies })}
+              className="candy-tray-pill hub-hud-pill"
+            >
+              <CandyIcon name="trophy" className="candy-tray-pill-icon" />
+              <span>{trophies}</span>
+            </button>
           </div>
           <div className="hub-scaffold-hud-right">
-            {!isWalletConnected && onConnectTap
-              ? wrap(
-                  "HudResourceChip",
-                  <HudResourceChip
-                    tone="default"
-                    icon="wallet"
-                    value={tHud("connectLabel")}
-                    ariaLabel={tHud("connectAriaLabel")}
-                    onClick={onConnectTap}
-                  />,
-                )
-              : null}
+            {!isWalletConnected && onConnectTap ? (
+              <button
+                type="button"
+                onClick={onConnectTap}
+                aria-label={tHud("connectAriaLabel")}
+                className="candy-tray-pill hub-hud-pill"
+              >
+                <CandyIcon name="wallet" className="candy-tray-pill-icon" />
+                <span>{tHud("connectLabel")}</span>
+              </button>
+            ) : null}
             {wrap(
               "HubProBadge",
               <HubProBadge
