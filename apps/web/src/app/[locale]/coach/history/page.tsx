@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useAccount } from "wagmi";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CoachHistoryDeletePanel } from "@/components/coach/coach-history-delete-panel";
@@ -11,6 +11,7 @@ import { CoachPanel } from "@/components/coach/coach-panel";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { requestCoachAnalyze } from "@/lib/coach/request-coach-analyze";
 import type { CoachAnalysisRecord, CoachResponse, GameRecord } from "@/lib/coach/types";
 
 type HistoryEntry = CoachAnalysisRecord & { game: GameRecord };
@@ -18,6 +19,8 @@ type HistoryEntry = CoachAnalysisRecord & { game: GameRecord };
 type SelectedFullEntry = {
   response: Extract<CoachResponse, { kind: "full" }>;
   game: GameRecord;
+  gameId: string;
+  locale?: "en" | "es";
 };
 
 /**
@@ -55,7 +58,41 @@ export default function CoachHistoryPage() {
   const t = useTranslations("COACH_COPY");
   const { address } = useAccount();
   const router = useRouter();
+  const activeLocale = useLocale() as "en" | "es";
   const [selected, setSelected] = useState<SelectedFullEntry | null>(null);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
+
+  /**
+   * Reanalyze handler — mirrors the arena page wire-up. Bypasses the
+   * locale-keyed idempotency cache via `forceLocale: true` so the LLM
+   * regenerates in the user's active locale. On success, swaps the
+   * panel's response + locale in place; the URL / wrapper stay put.
+   */
+  const handleReanalyze = useCallback(async () => {
+    if (!address || !selected) return;
+    setIsReanalyzing(true);
+    try {
+      const outcome = await requestCoachAnalyze(
+        selected.gameId,
+        address,
+        fetch,
+        activeLocale,
+        { forceLocale: true },
+      );
+      if (outcome.kind === "ready" && outcome.response.kind === "full") {
+        setSelected({
+          ...selected,
+          response: outcome.response,
+          locale: outcome.locale ?? activeLocale,
+        });
+      }
+      // Other outcomes (queued/paywall/error) currently leave the panel
+      // as-is. The history page doesn't host a loading/paywall surface
+      // — surfacing those would need a parity rework with /arena.
+    } finally {
+      setIsReanalyzing(false);
+    }
+  }, [address, selected, activeLocale]);
 
   if (!address) {
     return (
@@ -68,7 +105,12 @@ export default function CoachHistoryPage() {
 
   function handleSelect(entry: HistoryEntry) {
     if (entry.response.kind !== "full") return;
-    setSelected({ response: entry.response, game: entry.game });
+    setSelected({
+      response: entry.response,
+      game: entry.game,
+      gameId: entry.gameId,
+      locale: entry.locale,
+    });
   }
 
   if (selected) {
@@ -90,6 +132,9 @@ export default function CoachHistoryPage() {
               credits={0}
               onPlayAgain={() => router.push("/arena?fresh=1")}
               onBackToHub={() => setSelected(null)}
+              analysisLocale={selected.locale}
+              onReanalyze={handleReanalyze}
+              isReanalyzing={isReanalyzing}
             />
           </CandyGlassShell>
         </div>
