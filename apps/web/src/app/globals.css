@@ -8506,7 +8506,13 @@ button.hud-resource-chip:active:not(:disabled) {
    chip family. The `--green` modifier tints USD price buttons, the
    `--yellow` modifier tints the CELO route. Compact dimensions so
    the chips hug their labels and sit cleanly inside the tile
-   footer without dwarfing the tile content above. */
+   footer without dwarfing the tile content above.
+
+   `white-space: nowrap` is non-negotiable here — these are HUD
+   chips, not multi-line labels. A pill that wraps reads as a
+   broken layout. If a label is too long for the available width,
+   we tighten font-size on the longer-label modifier (see
+   `--yellow` below) instead of allowing wrap. */
 .shop-item-tile-buy-pill {
   width: auto;
   min-width: 0;
@@ -8515,6 +8521,7 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.01em;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -8543,8 +8550,15 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* Yellow tint — CELO route. Sunny amber gradient that pops against
    the orange Founder tile bg, paired with dark-brown ink so the
-   "Pay with CELO" label stays legible (white-on-yellow doesn't). */
+   "Pay with CELO" label stays legible (white-on-yellow doesn't).
+   Font-size tightened vs the --green sibling because the CELO
+   label ("Pay with CELO") is longer than the price labels and we
+   never wrap (see base rule). Tighter side padding for the same
+   reason — gives the label more horizontal room without bloating
+   the pill. */
 .shop-item-tile-buy-pill--yellow {
+  font-size: 0.74rem;
+  padding: 0.25rem 0.8rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, transparent 32%),
     linear-gradient(180deg, #fde047 0%, #eab308 100%);
