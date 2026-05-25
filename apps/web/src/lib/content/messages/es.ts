@@ -420,6 +420,8 @@ const messages = {
       confirmTitle: "¿Reanalizar esta partida?",
       confirmBody:
         "Esto genera un análisis nuevo en tu idioma actual y usa 1 crédito.",
+      confirmBodyPro:
+        "Esto genera un análisis nuevo en tu idioma actual. Los suscriptores PRO no gastan créditos.",
       confirmAccept: "Sí, reanalizar",
       confirmCancel: "Cancelar",
       inFlightLabel: "Generando nuevo análisis…",

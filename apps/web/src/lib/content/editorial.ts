@@ -1322,14 +1322,18 @@ export const COACH_COPY = {
     ariaLabel: "Analysis language: {locale}",
   },
   /** Reanalyze flow (2026-05-24). User regenerates the cached analysis
-   *  in their active locale — costs 1 credit, fires a fresh LLM call,
-   *  overwrites the per-locale cache key for the active locale only. */
+   *  in their active locale — costs 1 credit (or none for PRO), fires a
+   *  fresh LLM call, overwrites the per-locale cache key for the active
+   *  locale only. `confirmBodyPro` is rendered when the caller passes
+   *  `proActive` so the copy stays honest about the (lack of) cost. */
   reanalyze: {
     cta: "Reanalyze",
     ariaLabel: "Reanalyze this game in your current language",
     confirmTitle: "Reanalyze this game?",
     confirmBody:
       "This generates a fresh analysis in your current language and uses 1 credit.",
+    confirmBodyPro:
+      "This generates a fresh analysis in your current language. PRO subscribers don't spend credits.",
     confirmAccept: "Yes, reanalyze",
     confirmCancel: "Cancel",
     /* Pending overlay reused while the LLM is regenerating. */

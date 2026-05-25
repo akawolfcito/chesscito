@@ -259,7 +259,13 @@ export function CoachPanel({
               {t("reanalyze.confirmTitle")}
             </SheetTitle>
             <SheetDescription className="text-sm" style={{ color: warmMuted }}>
-              {t("reanalyze.confirmBody")}
+              {/* PRO subscribers don't spend credits — the server's
+               *  /api/coach/analyze short-circuits the DECR. Branching
+               *  the copy keeps the confirm honest about the actual
+               *  cost the user is about to incur. */}
+              {proActive
+                ? t("reanalyze.confirmBodyPro")
+                : t("reanalyze.confirmBody")}
             </SheetDescription>
             <div className="mt-6 flex flex-col gap-2">
               <Button

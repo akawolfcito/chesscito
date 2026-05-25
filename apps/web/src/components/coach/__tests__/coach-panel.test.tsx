@@ -144,6 +144,24 @@ describe("<CoachPanel> reanalyze CTA (2026-05-24)", () => {
     expect(screen.getByText(COACH_COPY.reanalyze.confirmTitle)).toBeInTheDocument();
   });
 
+  it("confirm body says '1 credit' for non-PRO users", () => {
+    const onReanalyze = vi.fn().mockResolvedValue(undefined);
+    render(<CoachPanel {...baseProps} onReanalyze={onReanalyze} />);
+    fireEvent.click(screen.getByTestId("coach-reanalyze-cta"));
+    expect(screen.getByText(COACH_COPY.reanalyze.confirmBody)).toBeInTheDocument();
+    expect(screen.queryByText(COACH_COPY.reanalyze.confirmBodyPro)).toBeNull();
+  });
+
+  it("confirm body says 'PRO subscribers don't spend credits' for PRO users", () => {
+    const onReanalyze = vi.fn().mockResolvedValue(undefined);
+    render(
+      <CoachPanel {...baseProps} proActive onReanalyze={onReanalyze} />,
+    );
+    fireEvent.click(screen.getByTestId("coach-reanalyze-cta"));
+    expect(screen.getByText(COACH_COPY.reanalyze.confirmBodyPro)).toBeInTheDocument();
+    expect(screen.queryByText(COACH_COPY.reanalyze.confirmBody)).toBeNull();
+  });
+
   it("disables the CTA + relabels while isReanalyzing", () => {
     render(
       <CoachPanel
