@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 
 import { CandyBanner } from "@/components/redesign/candy-banner";
@@ -20,6 +20,11 @@ type Props = {
    *  in-match Coach signpost beneath the matchup row. Gated by
    *  NEXT_PUBLIC_ENABLE_COACH at the call site (arena/page.tsx). */
   showCoachHint?: boolean;
+  /** Optional slot rendered DIRECTLY under the central VS banner, in
+   *  the same flex column as the wooden plate. Used to anchor the
+   *  difficulty selector pill so it visually anchors the matchup
+   *  axis rather than floating below the avatar row. */
+  vsBelowSlot?: ReactNode;
 };
 
 const CONFIRM_TIMEOUT_MS = 3000;
@@ -139,6 +144,7 @@ export function ArenaHud({
   onBack,
   isEndState,
   elapsedMs,
+  vsBelowSlot,
 }: Props) {
   const t = useTranslations("ARENA_COPY");
   const needsBackConfirm = !isEndState;
@@ -170,8 +176,9 @@ export function ArenaHud({
           <PlayerAvatar variant="you" className="h-24 w-24 drop-shadow-xl" />
         </div>
 
-        <div className="flex shrink-0 items-center justify-center">
+        <div className="flex shrink-0 flex-col items-center justify-center gap-2">
           <WoodenBanner variant="vs" className="scale-90 drop-shadow-lg" />
+          {vsBelowSlot}
         </div>
 
         <div className="relative flex flex-1 justify-center">

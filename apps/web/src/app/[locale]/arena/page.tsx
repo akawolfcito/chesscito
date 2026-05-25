@@ -1753,30 +1753,25 @@ function ArenaPageInner() {
           isEndState={isEndState}
           elapsedMs={game.elapsedMs}
           showCoachHint={ENABLE_COACH}
+          vsBelowSlot={
+            !isEndState ? (
+              <button
+                type="button"
+                onClick={handleChangeDifficulty}
+                className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-difficulty-pill"
+                aria-label={`Difficulty: ${difficultyLabel(game.difficulty)}. Tap to change.`}
+              >
+                <CandyIcon
+                  name="shield"
+                  className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+                />
+                <span className="arena-difficulty-pill-label">
+                  {difficultyLabel(game.difficulty)}
+                </span>
+              </button>
+            ) : null
+          }
         />
-
-        {!isEndState && (
-          <div className="flex w-full justify-center px-4 mt-2">
-            <button
-              type="button"
-              onClick={handleChangeDifficulty}
-              className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-difficulty-pill"
-              aria-label={`Difficulty: ${difficultyLabel(game.difficulty)}. Tap to change.`}
-            >
-              <CandyIcon
-                name="shield"
-                className="candy-tray-pill-icon candy-tray-pill-icon--floating"
-              />
-              <span className="arena-difficulty-pill-label">
-                {difficultyLabel(game.difficulty)}
-              </span>
-              <CandyIcon
-                name="check"
-                className="arena-difficulty-pill-check"
-              />
-            </button>
-          </div>
-        )}
 
         <div className="relative w-full flex-1 min-h-0 flex flex-col justify-center">
           <div className="w-full px-2">

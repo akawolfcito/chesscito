@@ -3526,17 +3526,6 @@
   letter-spacing: 0.02em;
 }
 
-/* Trailing check glyph — small, warm-brown to read as "this is the
- * current selection, tap to change". The leading shield uses the
- * floating-icon modifier (sized + positioned by `.hub-hud-pill`). */
-.arena-difficulty-pill-check {
-  width: 0.8rem;
-  height: 0.8rem;
-  margin-left: 0.4rem;
-  color: rgba(110, 65, 15, 0.65);
-  flex-shrink: 0;
-}
-
 .arena-action-banner {
   width: min(100%, 11rem);
 }
