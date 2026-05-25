@@ -3472,9 +3472,9 @@
   display: block;
   width: 3rem;
   height: 3rem;
-  filter:
-    drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35))
-    drop-shadow(0 1px 0 rgba(110, 65, 15, 0.45));
+  /* Shadow stripped 2026-05-25 — the carved icons already carry
+   * their own painted shadows in the asset, the extra CSS drop-
+   * shadows on top read as a halo rather than depth. */
 }
 
 .arena-action-button-icon img {
@@ -6838,17 +6838,21 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(83, 49, 12, 0.82);
 }
 
+/* Color picker — refactored 2026-05-25 from a 2-column grid of two
+ * standalone pills into a single track (segmented control / switch).
+ * Both halves live on one cream-amber backplate; the active half
+ * gets a brighter gradient + subtle inset to read as the selected
+ * "thumb". Reads as one control with two states instead of two
+ * separate buttons sitting next to each other. */
 .arena-scaffold-color-toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  /* border-radius: 22px; */
-  /* background: linear-gradient(180deg, rgba(255, 250, 226, 0.92), rgba(248, 225, 166, 0.78)); */
-  /* border: 2px solid rgba(222, 159, 42, 0.72); */
-  /* padding: 10px; */
-  /* box-shadow:
-    0 4px 0 rgba(135, 82, 13, 0.24),
-    inset 0 2px 0 rgba(255, 255, 255, 0.68); */
+  gap: 0;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(247, 226, 175, 0.55) 0%, rgba(232, 197, 117, 0.55) 100%);
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  padding: 4px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .arena-scaffold-color-pill {
@@ -6857,29 +6861,25 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  /* min-height: 74px; */
-  border-radius: 18px;
-  /* border: 2px solid rgba(194, 132, 18, 0.62); */
-  background: linear-gradient(180deg, #fff4cb 0%, #f4d284 100%);
-  color: #4a2b11;
+  border-radius: 9999px;
+  background: transparent;
+  color: rgba(74, 43, 17, 0.62);
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-size: 0.68rem;
   font-weight: 900;
   cursor: pointer;
-  transition: all 120ms ease;
-  box-shadow:
-    0 4px 0 rgba(114, 73, 10, 0.36),
-    inset 0 2px 0 rgba(255, 255, 255, 0.74);
+  transition: background 140ms ease, color 140ms ease, transform 120ms ease;
+  /* No box-shadow on the resting state — the track carries the
+   * affordance, the thumb (pressed state below) carries the focus. */
 }
 
 .arena-scaffold-color-pill[aria-pressed="true"] {
-  border-color: #ffd84a;
   background: linear-gradient(180deg, #fff7dc 0%, #f7d064 100%);
-  /* box-shadow:
-    0 0 0 2px rgba(119, 73, 6, 0.48),
-    0 0 16px rgba(255, 216, 74, 0.52),
-    0 4px 0 rgba(114, 73, 10, 0.36),
-    inset 0 2px 0 rgba(255, 255, 255, 0.74); */
+  color: #4a2b11;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -1px 0 rgba(150, 90, 20, 0.18),
+    0 1px 2px rgba(110, 65, 15, 0.18);
 }
 
 .arena-scaffold-color-pill:not([aria-pressed="true"]):active {
@@ -6935,11 +6935,23 @@ button.hud-resource-chip:active:not(:disabled) {
   text-align: left;
   cursor: pointer;
   transition: all 120ms ease;
+  /* Shadows trimmed 2026-05-25 — the 4px solid drop + 8px ambient
+   * blob + inset rim added depth that read as noise rather than
+   * affordance. Keep only the inner top highlight (sells the gloss
+   * on the candy plate) and a tiny ambient. */
   box-shadow:
-    0 4px 0 rgba(70, 83, 10, 0.50),
-    0 8px 12px rgba(68, 45, 8, 0.18),
-    inset 0 2px 0 rgba(255, 255, 255, 0.56),
-    inset 0 -3px 0 rgba(80, 49, 8, 0.18);
+    inset 0 2px 0 rgba(255, 255, 255, 0.48),
+    0 2px 4px rgba(68, 45, 8, 0.16);
+}
+
+/* The hardest tier (Hard, red) sits against the bottom of the
+ * difficulty stack with no following item to absorb the click
+ * target's bottom margin. On shorter phones the lower rounded
+ * edge clipped the viewport. 2px of extra bottom padding gives
+ * the touch target breathing room without changing the apparent
+ * pill height. */
+.arena-scaffold-difficulty li:nth-child(3) .arena-scaffold-difficulty-pill {
+  padding-bottom: 6px;
 }
 
 .arena-scaffold-difficulty li:nth-child(2) .arena-scaffold-difficulty-pill {
@@ -7050,8 +7062,12 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding-top: 12px;
+  /* Compact footer — the PLAY CTA + mission-ribbon sub-line read
+   * as a single unit; the previous 12px gap + 12px top padding
+   * left a visible band between them. Tightened so the ribbon
+   * sits close under the plank. */
+  gap: 4px;
+  padding-top: 0;
   /* Footer is pinned to the scaffold's bottom (body owns the scroll).
      flex-shrink:0 + position:relative keep the PLAY CTA in flow and
      out of the body's overflow window, avoiding the older-Android
