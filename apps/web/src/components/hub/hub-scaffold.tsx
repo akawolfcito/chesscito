@@ -184,7 +184,7 @@ export function HubScaffold({
               type="button"
               onClick={onTrophyTap}
               aria-label={tHud("trophiesAriaLabel", { count: trophies })}
-              className="candy-tray-pill hub-hud-pill"
+              className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
             >
               <CandyIcon name="trophy" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
               <span>{trophies}</span>
