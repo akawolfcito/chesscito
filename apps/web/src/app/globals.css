@@ -5344,9 +5344,17 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .hub-scaffold-hud-top {
   display: flex;
-  align-items: center;
+  /* `flex-start` (not `center`) — the trophy chip (~36px) and the PRO
+   * badge (~94px) have very different heights. Centering pulled the
+   * trophy halfway down the row; align-start keeps both pinned to the
+   * top so the HUD reads as a single top edge. */
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  /* Breathing room from the device viewport edges. Without this the
+   * trophy + PRO panels were flush against the screen border. */
+  padding-inline: 8px;
+  padding-top: 4px;
 }
 
 /* Hub HUD top — left + right cluster wrappers. Group chips so the PRO
@@ -5355,7 +5363,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .hub-scaffold-hud-left,
 .hub-scaffold-hud-right {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
 }
 
