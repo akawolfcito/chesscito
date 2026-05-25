@@ -8,6 +8,10 @@ export type AnalyzeOutcome =
       proActive: boolean;
       historyMeta: { gamesPlayed: number } | undefined;
       idempotent: boolean;
+      /** Locale of the cached or freshly-generated analysis the server
+       *  served back. Optional for back-compat — pre-migration servers
+       *  omit it and callers default to the request locale. */
+      locale?: CoachLocale;
     }
   | { kind: "queued"; jobId: string; idempotent: boolean }
   | { kind: "paywall" }
@@ -20,6 +24,15 @@ type RawAnalyzeResponse = {
   historyMeta?: { gamesPlayed?: number };
   jobId?: string;
   idempotent?: boolean;
+  locale?: CoachLocale;
+};
+
+export type AnalyzeRequestOptions = {
+  /** When true, the server bypasses the locale-keyed idempotency cache
+   *  and regenerates the analysis (consuming 1 credit). Wired up to the
+   *  CoachPanel "Reanalyze" CTA. Default `false` — the standard
+   *  /analyze call stays idempotent. */
+  forceLocale?: boolean;
 };
 
 export async function requestCoachAnalyze(
@@ -27,15 +40,17 @@ export async function requestCoachAnalyze(
   walletAddress: string,
   fetchImpl: typeof fetch = fetch,
   locale?: CoachLocale,
+  options: AnalyzeRequestOptions = {},
 ): Promise<AnalyzeOutcome> {
   // H-4: locale is optional + omitted from the body when undefined so
   // pre-locale callers (legacy MiniPay clients in production) keep their
   // bit-identical request signature. The server defaults to "en" when
   // the field is absent.
-  const body =
-    locale !== undefined
-      ? { gameId, walletAddress, locale }
-      : { gameId, walletAddress };
+  // 2026-05-24: `forceLocale` is also omitted unless explicitly true,
+  // preserving that bit-identical legacy request signature.
+  const body: Record<string, unknown> = { gameId, walletAddress };
+  if (locale !== undefined) body.locale = locale;
+  if (options.forceLocale) body.forceLocale = true;
   let res: Response;
   try {
     res = await fetchImpl("/api/coach/analyze", {
@@ -69,6 +84,7 @@ export async function requestCoachAnalyze(
         ? { gamesPlayed: data.historyMeta.gamesPlayed ?? 0 }
         : undefined,
       idempotent: data.idempotent === true,
+      locale: data.locale,
     };
   }
   if (typeof data?.jobId === "string" && data.jobId.length > 0) {

@@ -110,4 +110,58 @@ describe("requestCoachAnalyze (Cluster E defer — Edge hunter #16)", () => {
 
     expect(result).toEqual({ kind: "error", reason: "no_payload", status: 200 });
   });
+
+  // ──────────────────────────────────────────────────────────────────
+  // Per-locale cache migration (2026-05-24)
+  // ──────────────────────────────────────────────────────────────────
+
+  it("forwards forceLocale=true in the request body when set (Reanalyze flow)", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({ status: "ready", response: { summary: "fresh" }, locale: "es" }),
+    );
+
+    await requestCoachAnalyze(GAME_ID, WALLET, fetchImpl, "es", {
+      forceLocale: true,
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "/api/coach/analyze",
+      expect.objectContaining({
+        body: JSON.stringify({
+          gameId: GAME_ID,
+          walletAddress: WALLET,
+          locale: "es",
+          forceLocale: true,
+        }),
+      }),
+    );
+  });
+
+  it("omits forceLocale from the body when option is false / absent (idempotent default)", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({ status: "ready", response: { summary: "cached" } }),
+    );
+
+    await requestCoachAnalyze(GAME_ID, WALLET, fetchImpl, "en");
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "/api/coach/analyze",
+      expect.objectContaining({
+        body: JSON.stringify({ gameId: GAME_ID, walletAddress: WALLET, locale: "en" }),
+      }),
+    );
+  });
+
+  it("echoes the server's locale field on a ready outcome", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({ status: "ready", response: { summary: "es-resp" }, locale: "es" }),
+    );
+
+    const result = await requestCoachAnalyze(GAME_ID, WALLET, fetchImpl, "es");
+
+    expect(result.kind).toBe("ready");
+    if (result.kind === "ready") {
+      expect(result.locale).toBe("es");
+    }
+  });
 });

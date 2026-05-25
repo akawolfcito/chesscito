@@ -323,6 +323,13 @@ function ArenaPageInner() {
   const [coachCredits, setCoachCredits] = useState(0);
   const [coachProActive, setCoachProActive] = useState<boolean>(false);
   const [coachHistoryMeta, setCoachHistoryMeta] = useState<{ gamesPlayed: number } | undefined>(undefined);
+  // 2026-05-24 (per-locale cache migration): track the locale of the
+  // cached analysis so <CoachPanel> can render the EN/ES badge without
+  // an extra round-trip. Falls back to the active UI locale for legacy
+  // records that pre-date the per-locale cache key.
+  const [coachAnalysisLocale, setCoachAnalysisLocale] = useState<"en" | "es" | undefined>(undefined);
+  const [coachReanalyzeGameId, setCoachReanalyzeGameId] = useState<string | null>(null);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
   // Diagnostic: when client-side PRO is true but server still rejects
   // analyze with 402, surface the mismatch so the user can report it
   // (rather than silently falling to the free quick-review fallback).
@@ -569,10 +576,20 @@ function ArenaPageInner() {
         setCoachResponse(analyzeData.response);
         setCoachProActive(analyzeData.proActive === true);
         setCoachHistoryMeta(analyzeData.historyMeta);
+        setCoachAnalysisLocale(
+          analyzeData.locale === "es" || analyzeData.locale === "en"
+            ? analyzeData.locale
+            : undefined,
+        );
+        setCoachReanalyzeGameId(analyzeGameId);
         setCoachCredits((c) => Math.max(0, c - 1));
         setCoachPhase("result");
       } else if (analyzeData.jobId) {
         setCoachJobId(analyzeData.jobId);
+        // Track the gameId so the polled `result` phase can offer the
+        // reanalyze CTA. Polling completion path can't know the locale
+        // independently — it inherits `activeLocale` at onReady.
+        setCoachReanalyzeGameId(analyzeGameId);
         setCoachPhase("loading");
       } else {
         // Server didn't return ready/jobId — log the error for diagnostics
@@ -1038,6 +1055,9 @@ function ArenaPageInner() {
     setCoachJobId(null);
     setCoachResponse(null);
     setCoachFallbackResponse(null);
+    setCoachAnalysisLocale(undefined);
+    setCoachReanalyzeGameId(null);
+    setIsReanalyzing(false);
     setCoachCredits(0);
     setCoachServerError(null);
   }, []);
@@ -1261,6 +1281,8 @@ function ArenaPageInner() {
         setCoachResponse(outcome.response);
         setCoachProActive(outcome.proActive);
         setCoachHistoryMeta(outcome.historyMeta);
+        setCoachAnalysisLocale(outcome.locale);
+        setCoachReanalyzeGameId(gameId);
         setCoachPhase("result");
         return;
       }
@@ -1285,6 +1307,54 @@ function ArenaPageInner() {
     },
     [address, activeLocale],
   );
+
+  /**
+   * 2026-05-24 — Reanalyze CTA handler. Bypasses the locale-keyed
+   * idempotency cache via `forceLocale: true` so the LLM regenerates
+   * in the user's active locale and consumes 1 credit. The persisted
+   * gameId tracked in `coachReanalyzeGameId` is the same id we used to
+   * land on the result phase (kick-off path, history-entry path, or
+   * polling-completion path).
+   */
+  const handleReanalyze = useCallback(async () => {
+    if (!address || !coachReanalyzeGameId) return;
+    setIsReanalyzing(true);
+    try {
+      const outcome = await requestCoachAnalyze(
+        coachReanalyzeGameId,
+        address,
+        fetch,
+        activeLocale,
+        { forceLocale: true },
+      );
+      if (outcome.kind === "ready") {
+        setCoachResponse(outcome.response);
+        setCoachProActive(outcome.proActive);
+        setCoachHistoryMeta(outcome.historyMeta);
+        setCoachAnalysisLocale(outcome.locale ?? activeLocale);
+        setCoachCredits((c) => Math.max(0, c - 1));
+        return;
+      }
+      if (outcome.kind === "queued") {
+        setCoachJobId(outcome.jobId);
+        setCoachPhase("loading");
+        return;
+      }
+      if (outcome.kind === "paywall") {
+        setCoachPhase("paywall");
+        return;
+      }
+      // outcome.kind === "error" — surface for triage; UI stays on the
+      // current result phase (graceful no-op).
+      trackAnalyzeFailed({
+        source: "history",
+        reason: outcome.reason,
+        status: outcome.status,
+      });
+    } finally {
+      setIsReanalyzing(false);
+    }
+  }, [address, coachReanalyzeGameId, activeLocale]);
 
   // arena_game_end — fires once per transition into a terminal state.
   const endTrackedRef = useRef<string | null>(null);
@@ -1599,6 +1669,11 @@ function ArenaPageInner() {
               onViewHistory={address ? () => setCoachPhase("history") : undefined}
               proActive={coachProActive}
               historyMeta={coachHistoryMeta}
+              analysisLocale={coachAnalysisLocale}
+              onReanalyze={
+                address && coachReanalyzeGameId ? handleReanalyze : undefined
+              }
+              isReanalyzing={isReanalyzing}
             />
           </CandyGlassShell>
         </div>
@@ -1654,6 +1729,8 @@ function ArenaPageInner() {
               onSelectEntry={(entry) => {
                 if (entry.response.kind === "full") {
                   setCoachResponse(entry.response);
+                  setCoachAnalysisLocale(entry.locale);
+                  setCoachReanalyzeGameId(entry.gameId);
                   setCoachPhase("result");
                 }
               }}
@@ -1845,7 +1922,17 @@ function ArenaPageInner() {
                     <CoachLoading
                       jobId={coachJobId ?? undefined}
                       wallet={address?.toLowerCase()}
-                      onReady={(response) => { setCoachResponse(response); setCoachCredits((c) => Math.max(0, c - 1)); setCoachPhase("result"); }}
+                      onReady={(response) => {
+                        // Polling completes mid-job — the job record doesn't
+                        // track locale, so the badge inherits the active UI
+                        // locale (which matched the kick-off in 99.9% of
+                        // cases). The reanalyze CTA will only appear when
+                        // `coachReanalyzeGameId` is set (kick-off path).
+                        setCoachResponse(response);
+                        setCoachAnalysisLocale(activeLocale);
+                        setCoachCredits((c) => Math.max(0, c - 1));
+                        setCoachPhase("result");
+                      }}
                     onFailed={() => {
                       const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
                       setCoachFallbackResponse(quick);
