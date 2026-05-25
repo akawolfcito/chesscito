@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { CandyChip } from "@/components/redesign/candy-chip";
 import {
   Sheet,
   SheetContent,
@@ -63,31 +62,6 @@ function copyKeyForItem(itemId: bigint): ShopCopyKey {
   return "retryShield";
 }
 
-/** Availability chip for an item. */
-function AvailabilityChip({ configured, enabled }: { configured: boolean; enabled: boolean }) {
-  const t = useTranslations("SHOP_SHEET_COPY");
-  if (configured && enabled) {
-    return (
-      <CandyChip variant="success" tone="subtle">
-        <CandyIcon name="check" className="mr-0.5 inline h-2.5 w-2.5" />
-        {t("status.available")}
-      </CandyChip>
-    );
-  }
-  if (configured) {
-    return (
-      <CandyChip variant="danger" tone="subtle">
-        {t("status.unavailable")}
-      </CandyChip>
-    );
-  }
-  return (
-    <CandyChip variant="warm" tone="subtle">
-      {t("status.notConfigured")}
-    </CandyChip>
-  );
-}
-
 /** Build a CSS `image-set()` resolving to the AVIF/WebP/PNG triplet
  *  for a basename like `/art/shop/pro` (no extension). Browsers pick
  *  the first format they support; PNG is the fallback. */
@@ -136,23 +110,23 @@ function ShopItemCard({
       }}
       data-copy-key={copyKey}
     >
-      {/* Tile top: icon + identity column */}
+      {/* Tile top: icon + identity column. The icon is rendered
+       *  full-bleed (no chrome wrap) so the bespoke art reads at
+       *  card scale. The container reserves a fixed slot so the
+       *  identity column doesn't reflow when art aspect ratios
+       *  differ between PRO / Founder / Shield. */}
       <div className="shop-item-tile-content">
-        {/* Large item icon — bespoke art per tile, replacing the
-         *  generic CandyIcon. AVIF→WebP→PNG fallback via <picture>. */}
-        <div className="shop-item-tile-icon-wrap">
-          <picture>
-            <source srcSet={`${assets.icon}.avif`} type="image/avif" />
-            <source srcSet={`${assets.icon}.webp`} type="image/webp" />
-            <img
-              src={`${assets.icon}.png`}
-              alt=""
-              aria-hidden="true"
-              className="shop-item-tile-icon-img"
-              draggable={false}
-            />
-          </picture>
-        </div>
+        <picture className="shop-item-tile-icon-figure">
+          <source srcSet={`${assets.icon}.avif`} type="image/avif" />
+          <source srcSet={`${assets.icon}.webp`} type="image/webp" />
+          <img
+            src={`${assets.icon}.png`}
+            alt=""
+            aria-hidden="true"
+            className="shop-item-tile-icon-img"
+            draggable={false}
+          />
+        </picture>
 
         {/* Name + kicker + short copy */}
         <div className="shop-item-tile-identity">
@@ -165,22 +139,21 @@ function ShopItemCard({
         </div>
       </div>
 
-      {/* Footer: Meta + Buy button */}
+      {/* Footer — right-aligned button stack. Optional CELO twin sits
+       *  to the left of the primary buy button; both share the same
+       *  PrincipalButton shape so the user reads them as siblings
+       *  rather than a button + link. */}
       <div className="shop-item-tile-footer">
-        <div className="flex items-center gap-2">
-          <AvailabilityChip configured={item.configured} enabled={item.enabled} />
-          {item.celoSibling && (
-            <button
-              type="button"
-              onClick={() => onSelectItem(item.celoSibling!.itemId)}
-              className="shop-item-tile-celo-link"
-              aria-label={t("buyWithCelo")}
-            >
-              {t("payWithCeloShort")}
-            </button>
-          )}
-        </div>
-
+        {item.celoSibling && (
+          <PrincipalButton
+            size="medium"
+            className="shop-item-tile-buy-btn shop-item-tile-buy-btn--celo"
+            onClick={() => onSelectItem(item.celoSibling!.itemId)}
+            aria-label={t("buyWithCelo")}
+          >
+            {t("payWithCeloShort")}
+          </PrincipalButton>
+        )}
         <PrincipalButton
           size="medium"
           className="shop-item-tile-buy-btn"

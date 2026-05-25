@@ -8396,20 +8396,15 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
 }
 
-/* Icon plate — translucent so the per-tile bg texture still
-   shows through behind the bespoke art. */
-.shop-item-tile-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.10);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+/* Full-bleed icon figure — bespoke art reads at card scale with no
+   chrome (no plate, no border, no scrim). Width fixed so the
+   identity column doesn't reflow between PRO / Founder / Shield
+   art aspect ratios. */
+.shop-item-tile-icon-figure {
+  display: block;
+  width: 96px;
   flex-shrink: 0;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
-  overflow: hidden;
+  align-self: stretch;
 }
 
 .shop-item-tile-icon-img {
@@ -8417,6 +8412,10 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 100%;
   object-fit: contain;
   display: block;
+  /* Subtle drop-shadow lifts the figure off the bg texture without
+     needing a plate. Tracks the alpha channel so the silhouette
+     stays organic. */
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
 }
 
 /* Identity column */
@@ -8465,35 +8464,44 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
-/* Footer row: Meta + CTA */
+/* Footer row: right-aligned button stack. No top border + no left
+   metadata so the buttons sit cleanly against the tile texture. */
 .shop-item-tile-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 8px;
   margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .shop-item-tile-buy-btn {
-  min-width: 90px !important;
-  height: 34px !important;
-  padding: 0 12px !important;
-  font-size: 0.85rem !important;
+  min-width: 110px !important;
+  height: 40px !important;
+  padding: 0 14px !important;
+  font-size: 0.88rem !important;
 }
 
-.shop-item-tile-celo-link {
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: rgba(255, 245, 220, 0.78);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: color 0.15s ease;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+/* CELO twin button — same PrincipalButton shape, recolored to yellow
+   via a sepia-anchored pipeline. sepia() collapses every hue toward
+   amber, saturate() boosts to gold, brightness() lifts to a vibrant
+   sunny yellow that reads as a clearly different SKU from the green
+   USD button without losing the wood-carved shape. */
+.shop-item-tile-buy-btn--celo {
+  filter:
+    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.30))
+    sepia(1)
+    saturate(7)
+    hue-rotate(-5deg)
+    brightness(1.25);
 }
 
-.shop-item-tile-celo-link:hover {
-  color: rgba(255, 255, 245, 1);
+.shop-item-tile-buy-btn--celo:active:not(:disabled) {
+  filter:
+    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.30))
+    sepia(1)
+    saturate(7)
+    hue-rotate(-5deg)
+    brightness(1.25);
 }
 
 /* ── Badges Collection (badge-sheet.tsx) ───────────────────────────────────
