@@ -511,7 +511,7 @@ export function ProSheet(props: ProSheetProps) {
               ) : (
                 <div className="mt-4 flex justify-center">
                   <PrincipalButton
-                    size="large"
+                    size="medium"
                     loading={cta.loading}
                     disabled={cta.disabled}
                     onClick={handleCtaClick}
