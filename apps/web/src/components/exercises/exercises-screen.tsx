@@ -45,6 +45,8 @@ import {
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { useSaveScoreState } from "@/hooks/use-save-score-state";
 import { SavedChip } from "@/components/exercises/saved-chip";
+import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
+import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 import { deriveTxToastState } from "@/lib/exercises/tx-toast-state";
 import { useMiniPay } from "@/hooks/use-minipay";
@@ -378,6 +380,7 @@ export function ExercisesScreen({
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const starsConnectPrompt = useConnectPrompt("stars");
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
   const { openConnectModal } = useConnectModal();
@@ -1037,6 +1040,18 @@ export function ExercisesScreen({
       const elapsed = timerStart.current > 0 ? Date.now() - timerStart.current : 1000;
       setElapsedMs(elapsed);
       completeExercise(movesCount);
+
+      // Phase 2 nudge: first ★★★ on any exercise while disconnected
+      // triggers the one-shot "Connect to save" prompt. Hook is idempotent —
+      // calling show() after the flag is set is a no-op, so this branch
+      // runs cheaply on every perfect.
+      if (
+        !isConnected &&
+        computeStars(movesCount, currentExercise.optimalMoves) === 3
+      ) {
+        starsConnectPrompt.show();
+      }
+
       track("exercise_complete", {
         piece: selectedPiece,
         exercise_id: currentExercise.id,
@@ -1761,6 +1776,15 @@ export function ExercisesScreen({
                 stars={Math.floor(lastSavedScore / Number(POINTS_PER_STAR))}
                 total={BADGE_THRESHOLD}
                 receiptUrl={savedReceiptUrl}
+              />
+            ) : starsConnectPrompt.isVisible ? (
+              <ConnectPromptToast
+                milestone="stars"
+                onConnect={() => {
+                  starsConnectPrompt.dismiss();
+                  openConnectModal?.();
+                }}
+                onDismiss={starsConnectPrompt.dismiss}
               />
             ) : (
               <ContextualActionSlot
