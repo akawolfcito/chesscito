@@ -1658,17 +1658,31 @@ export function ExercisesScreen({
               label: tStatus("backLabel"),
             }}
             trailingControl={
-              address && !proLoading ? (
+              !address ? (
                 <HudResourceChip
-                  tone="pro"
+                  tone="default"
                   size="compact"
                   atmosphere="adventure"
-                  imageIconSrc="/art/screen-mission/corona-pro.png"
-                  value="PRO"
+                  imageIconSrc="/art/screen-mission/account-icon.png"
+                  value={tStatus("accountConnectLabel")}
+                  ariaLabel={tStatus("accountConnectAriaLabel")}
+                  onClick={() => openConnectModal?.()}
+                />
+              ) : !proLoading ? (
+                <HudResourceChip
+                  tone={proStatus?.active ? "pro" : "default"}
+                  size="compact"
+                  atmosphere="adventure"
+                  imageIconSrc={
+                    proStatus?.active
+                      ? "/art/screen-mission/corona-pro.png"
+                      : "/art/screen-mission/account-icon.png"
+                  }
+                  value={tStatus("accountChipLabel")}
                   ariaLabel={
                     proStatus?.active
                       ? tStatus("proManageLabel")
-                      : tStatus("proViewLabel")
+                      : tStatus("accountLabel")
                   }
                   onClick={() => setAccountSheetOpen(true)}
                 />
