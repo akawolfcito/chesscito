@@ -113,7 +113,7 @@ function LatestReviewCard({
         {finalFen && (
           <BoardThumbnail
             fen={finalFen}
-            size={96}
+            size={120}
             ariaLabel={`Final position — ${result}, ${diffLabel}`}
           />
         )}
@@ -147,7 +147,6 @@ function OlderReviewRow({
     entry.game.difficulty;
   const typeLabel = entry.response.kind === "full" ? t("full") : t("quick");
   const result = resultLabel(entry.game.result, t);
-  const finalFen = movesToFen(entry.game.moves);
 
   return (
     <button
@@ -163,14 +162,10 @@ function OlderReviewRow({
       })}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        {finalFen ? (
-          <BoardThumbnail fen={finalFen} size={36} ariaLabel="" />
-        ) : (
-          <CandyIcon
-            name={entry.game.result === "win" ? "trophy" : "close"}
-            className="h-3.5 w-3.5 shrink-0 opacity-75"
-          />
-        )}
+        <CandyIcon
+          name={entry.game.result === "win" ? "trophy" : "close"}
+          className="h-3.5 w-3.5 shrink-0 opacity-75"
+        />
         <span className="tj-older-row-label truncate">
           {result} · {diffLabel} · {entry.game.totalMoves} moves
         </span>
@@ -204,7 +199,6 @@ function UnanalyzedReviewRow({
     difficulty: diffLabel,
     result,
   });
-  const finalFen = movesToFen(entry.game.moves);
 
   return (
     <button
@@ -215,11 +209,7 @@ function UnanalyzedReviewRow({
       className="tj-older-row w-full text-left"
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        {finalFen ? (
-          <BoardThumbnail fen={finalFen} size={36} ariaLabel="" />
-        ) : (
-          <CandyIcon name="time" className="h-3.5 w-3.5 shrink-0 opacity-75" />
-        )}
+        <CandyIcon name="time" className="h-3.5 w-3.5 shrink-0 opacity-75" />
         <span className="tj-older-row-label truncate">
           {tEntry("historyMatchLabel")} · {diffLabel} · {result} · {relative}
         </span>

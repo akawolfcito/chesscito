@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
+import { BoardThumbnail } from "@/components/board/board-thumbnail";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import type { CoachResponse } from "@/lib/coach/types";
 import { formatTime } from "@/lib/game/arena-utils";
+import { movesToFen } from "@/lib/game/moves-to-fen";
 
 type Props = {
   response: CoachResponse;
@@ -46,6 +48,12 @@ type Props = {
   /** Parent-driven "Generating new analysis…" state — drives the
    *  CTA's disabled state and the confirm sheet's working flag. */
   isReanalyzing?: boolean;
+  /** 2026-05-24: persisted move list for the analyzed game. When
+   *  provided, the panel renders a large board thumbnail of the final
+   *  position above the summary so the user has a visual anchor for
+   *  what game they're reading about. Optional for back-compat — old
+   *  callers that don't have access to moves still work. */
+  moves?: string[];
 };
 
 export function CoachPanel({
@@ -62,6 +70,7 @@ export function CoachPanel({
   analysisLocale,
   onReanalyze,
   isReanalyzing,
+  moves,
 }: Props) {
   const t = useTranslations("COACH_COPY");
   const tArena = useTranslations("ARENA_COPY");
@@ -86,6 +95,12 @@ export function CoachPanel({
   const badgeLocale: "en" | "es" = analysisLocale ?? activeLocale;
   const badgeLabel = (t.raw("analysisLocaleBadge") as Record<string, string>)[badgeLocale];
   const badgeAria = t("analysisLocaleBadge.ariaLabel", { locale: badgeLabel });
+
+  // Reconstruct the final position from the persisted moves for the
+  // hero thumbnail. Null FEN (no moves / corrupt record / caller didn't
+  // pass moves) gracefully omits the hero — the rest of the panel
+  // (summary, mistakes, takeaways) is the canonical content.
+  const finalFen = moves && moves.length > 0 ? movesToFen(moves) : null;
 
   async function handleReanalyzeConfirm() {
     if (!onReanalyze) return;
@@ -129,6 +144,20 @@ export function CoachPanel({
           {credits} credits
         </span>
       </div>
+
+      {/* Final position hero (2026-05-24) — large visual anchor for
+       *  the game being analyzed. Centered, ~280px wide. Skipped when
+       *  the caller didn't pass `moves` (back-compat) or when the FEN
+       *  reconstruction failed. */}
+      {finalFen && (
+        <div className="flex justify-center">
+          <BoardThumbnail
+            fen={finalFen}
+            size={280}
+            ariaLabel="Final position of the analyzed game"
+          />
+        </div>
+      )}
 
       {/* Summary */}
       <div className="candy-tray">

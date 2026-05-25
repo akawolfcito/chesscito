@@ -135,6 +135,7 @@ export default function CoachHistoryPage() {
               analysisLocale={selected.locale}
               onReanalyze={handleReanalyze}
               isReanalyzing={isReanalyzing}
+              moves={selected.game.moves}
             />
           </CandyGlassShell>
         </div>

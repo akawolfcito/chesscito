@@ -1674,6 +1674,7 @@ function ArenaPageInner() {
                 address && coachReanalyzeGameId ? handleReanalyze : undefined
               }
               isReanalyzing={isReanalyzing}
+              moves={game.moveHistory}
             />
           </CandyGlassShell>
         </div>
