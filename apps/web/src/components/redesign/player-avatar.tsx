@@ -47,13 +47,17 @@ export function PlayerAvatar({
       } ${className}`.trim()}
     >
       {pro && (
-        <img
-          src={proFrameSrc}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          className="player-card-pro-frame"
-        />
+        <picture>
+          <source srcSet={proFrameSrc.replace(/\.png$/, ".avif")} type="image/avif" />
+          <source srcSet={proFrameSrc.replace(/\.png$/, ".webp")} type="image/webp" />
+          <img
+            src={proFrameSrc}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className="player-card-pro-frame"
+          />
+        </picture>
       )}
       <img
         src={src}

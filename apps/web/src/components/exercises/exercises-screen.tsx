@@ -193,12 +193,7 @@ function AccountSheet({
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
-            iconSlot={
-              <TileIconSlot
-                src="/art/screen-mission/account-icon"
-                optimized={false}
-              />
-            }
+            iconSlot={<TileIconSlot src="/art/screen-mission/account-icon" />}
             title={t("title")}
             subtitle={t("description")}
             close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
@@ -1721,13 +1716,17 @@ export function ExercisesScreen({
                     proStatus?.active ? " hub-hud-pill--pro" : ""
                   }`}
                 >
-                  <img
-                    src="/art/screen-mission/account-icon.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    className="candy-tray-pill-icon candy-tray-pill-icon--floating"
-                  />
+                  <picture>
+                    <source srcSet="/art/screen-mission/account-icon.avif" type="image/avif" />
+                    <source srcSet="/art/screen-mission/account-icon.webp" type="image/webp" />
+                    <img
+                      src="/art/screen-mission/account-icon.png"
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                      className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+                    />
+                  </picture>
                   <span>{tStatus("accountChipLabel")}</span>
                 </button>
               ) : (
