@@ -5406,6 +5406,14 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 2.6rem;
   height: 2.6rem;
   margin: 0;
+  /* Two-layer drop-shadow — the larger 2.6rem sprite needs more
+   * presence than the default `.candy-tray-pill-icon--floating`
+   * shadow (0 2px 3px) provides. Bottom layer is a tight contact
+   * shadow, top layer is a soft warm glow that lifts the icon off
+   * the candy pill / blue sky background. */
+  filter:
+    drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32))
+    drop-shadow(0 1px 0 rgba(110, 65, 15, 0.45));
 }
 
 /* `--anchored-left` modifier — the chip's left edge is squared off
