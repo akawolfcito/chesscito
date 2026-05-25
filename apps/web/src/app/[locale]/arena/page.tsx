@@ -195,11 +195,20 @@ function ArenaPageInner() {
   }, [arenaScaffoldEnabled, game.status]);
 
   // Publish the dock-driven sheet state to the shared store so the
-  // <PersistentDock>'s center button can detect "overlay is open".
+  // <PersistentDock>'s center button can detect "overlay is open" —
+  // dock-driven (badge/shop/trophies/leaderboard) OR non-dock
+  // (ProSheet). The `"overlay"` sentinel keeps the dock in close mode
+  // without lighting any side-item glow.
   useEffect(() => {
-    setDockSheet(activeDockTab);
+    if (activeDockTab) {
+      setDockSheet(activeDockTab);
+    } else if (proSheet.open) {
+      setDockSheet("overlay");
+    } else {
+      setDockSheet(null);
+    }
     return () => setDockSheet(null);
-  }, [activeDockTab]);
+  }, [activeDockTab, proSheet.open]);
 
   // Register dock store handlers — opener for same-route dock taps,
   // closer for the center button. badgeSheet/shopSheet own internal
@@ -219,17 +228,22 @@ function ArenaPageInner() {
       } else if (slug === "trophies" || slug === "leaderboard") {
         setActiveDockTab(slug);
       }
+      // "arena" / "overlay" slugs aren't openable side-items here.
     });
     const unregisterCloser = registerDockSheetCloser(() => {
+      // Close the dock-driven tab first, then non-dock overlays. Each
+      // close is a no-op if the matching sheet isn't open, so order
+      // is safe even if state desyncs across renders.
       if (activeDockTab === "shop") handleShopSheetOpenChange(false);
       else if (activeDockTab === "badge") handleBadgeSheetOpenChange(false);
       else setActiveDockTab(null);
+      if (proSheet.open) proSheet.closeSheet();
     });
     return () => {
       unregisterOpener();
       unregisterCloser();
     };
-  }, [activeDockTab, badgeSheet, shopSheet, handleShopSheetOpenChange, handleBadgeSheetOpenChange]);
+  }, [activeDockTab, badgeSheet, shopSheet, handleShopSheetOpenChange, handleBadgeSheetOpenChange, proSheet]);
 
   // One-shot deep-link consumption: applies the URL `?sheet=` param
   // exactly once on mount, then history.replaceState's it away so the

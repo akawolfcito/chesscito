@@ -5,13 +5,20 @@ import { useSyncExternalStore } from "react";
 /** Dock-driven auxiliary sheets that pages mount as siblings to the
  *  PersistentDock. Pages publish their currently-open sheet here so the
  *  dock's center button can switch its behavior from "swap routes" to
- *  "close overlay" without prop-drilling through the route tree. */
+ *  "close overlay" without prop-drilling through the route tree.
+ *
+ *  `"overlay"` is a sentinel for non-dock-side overlays (AccountSheet,
+ *  ProSheet, ExerciseDrawer, etc.) — pages report it so the dock's
+ *  center button still flips to "close overlay" mode even though no
+ *  side-item light should be lit. Side items match against the
+ *  specific slugs only; "overlay" matches none of them. */
 export type DockSheetSlug =
   | "badge"
   | "shop"
   | "trophies"
   | "leaderboard"
-  | "arena";
+  | "arena"
+  | "overlay";
 
 let currentSheet: DockSheetSlug | null = null;
 const listeners = new Set<() => void>();

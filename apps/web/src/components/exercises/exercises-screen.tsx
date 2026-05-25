@@ -541,30 +541,49 @@ export function ExercisesScreen({
 
   // Publish the dock-driven sheet state to the shared store so the
   // <PersistentDock>'s center button can swap into "close overlay"
-  // mode when any of badge/shop/trophies/leaderboard is open.
+  // mode whenever ANY aux sheet is open — dock-side (badge/shop/
+  // trophies/leaderboard) OR a non-dock overlay (account / pro /
+  // exercise drawer). The sentinel `"overlay"` covers the non-dock
+  // case so the center button still flips to close mode without
+  // lighting any side-item glow.
+  const hasNonDockOverlay = proSheetOpen || accountSheetOpen;
   useEffect(() => {
-    setDockSheet(activeDockTab);
+    if (activeDockTab) {
+      setDockSheet(activeDockTab);
+    } else if (hasNonDockOverlay) {
+      setDockSheet("overlay");
+    } else {
+      setDockSheet(null);
+    }
     return () => setDockSheet(null);
-  }, [activeDockTab]);
+  }, [activeDockTab, hasNonDockOverlay]);
 
   // Register the dock store's open + close handlers. Same-route dock
   // taps now dispatch through the store (no URL push), so we open
   // the matching sheet here directly. The closer returns the user to
-  // the visible base route via the center button.
+  // the visible base route via the center button — closes the
+  // currently-open sheet, whether dock-driven or non-dock.
   useEffect(() => {
     const unregisterOpener = registerDockSheetOpener((slug) => {
       if (slug === "badge" || slug === "shop" || slug === "trophies" || slug === "leaderboard") {
         setActiveDockTab(slug);
       }
-      // "arena" slug isn't a sheet here — center button handles the
-      // route swap directly.
+      // "arena" / "overlay" slugs aren't openable side-items — the
+      // center button handles the route swap / overlay close directly.
     });
-    const unregisterCloser = registerDockSheetCloser(() => setActiveDockTab(null));
+    const unregisterCloser = registerDockSheetCloser(() => {
+      // Close the dock-driven tab first (if any), then close non-dock
+      // overlays. Order matters when both are somehow open: closing
+      // the dock sheet shouldn't leave a non-dock overlay floating.
+      setActiveDockTab(null);
+      if (proSheetOpen) setProSheetOpen(false);
+      if (accountSheetOpen) setAccountSheetOpen(false);
+    });
     return () => {
       unregisterOpener();
       unregisterCloser();
     };
-  }, []);
+  }, [proSheetOpen, accountSheetOpen]);
   const [shieldCount, setShieldCount] = useState(0);
   const [claimingPiece, setClaimingPiece] = useState<PieceKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
