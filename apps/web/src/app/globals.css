@@ -5358,18 +5358,30 @@ button.hud-resource-chip:active:not(:disabled) {
   width: auto;
   border: 0;
   cursor: pointer;
+  /* Allow the floating icon to escape the chip's bounding box without
+   * growing the chip. Combined with the absolute-positioned icon
+   * below, the pill sizes purely to its text content. */
+  position: relative;
+  overflow: visible;
+  /* Reserve space inside the pill for the icon that's positioned
+   * absolutely. Without this the value glyph would slide flush
+   * against the left edge / pill border. */
+  padding-left: 2.5rem;
 }
 
-/* HUD-specific floating-icon override — the default 1.8rem (used by
- * the piece-picker pill in /exercises) reads small against the
- * surrounding panel art at the top corner. Bumping size + adjusting
- * the negative margin lifts the icon visibly without growing the
- * pill's overall height. Scoped under `.hub-hud-pill` so the
- * /exercises piece-picker keeps its tighter sizing. */
+/* HUD floating icon — pulled out of the flex flow entirely so a
+ * larger sprite can overflow the chip on top/bottom/left without
+ * pushing the pill's height up. The chip stays sized to its text;
+ * the icon reads as floating on the pill, escaping the pill's
+ * rounded edge on the leading side. */
 .hub-hud-pill .candy-tray-pill-icon--floating {
-  width: 2.25rem;
-  height: 2.25rem;
-  margin: -0.6rem 0;
+  position: absolute;
+  left: -0.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0;
 }
 
 .hub-scaffold-hud-right {
