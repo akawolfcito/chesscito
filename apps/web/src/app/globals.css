@@ -5459,6 +5459,28 @@ button.hud-resource-chip:active:not(:disabled) {
   left: -1.3rem;
 }
 
+/* `--pro` modifier — same shape/size as the cream candy chip, but
+ * the cream gradient is replaced by the PRO purple palette so PRO
+ * subscribers get a visual distinction without changing the chip
+ * family. Palette + text colors mirror the legacy
+ * `.hud-resource-chip--pro` so the recognition cue (purple pill +
+ * warm-yellow label) carries over. Used by the Account chip in
+ * /exercises when PRO is active. */
+.hub-hud-pill--pro {
+  background:
+    linear-gradient(180deg, rgba(255, 229, 114, 0.26) 0%, transparent 28%),
+    linear-gradient(180deg, #7c4ab5 0%, #5d3197 52%, #3f1e73 100%);
+  border-color: rgba(63, 27, 102, 0.85);
+  color: #ffe66e;
+  text-shadow:
+    0 2px 0 rgba(61, 27, 102, 0.82),
+    0 0 8px rgba(255, 224, 89, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 229, 114, 0.30),
+    inset 0 -1px 0 rgba(40, 15, 80, 0.55),
+    0 1px 2px rgba(40, 15, 80, 0.35);
+}
+
 .hub-scaffold-hud-right {
   justify-content: flex-end;
 }

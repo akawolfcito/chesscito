@@ -69,7 +69,6 @@ import {
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
 } from "@/lib/contracts/shop-catalog";
-import { HudResourceChip } from "@/components/hud/hud-resource-chip";
 import {
   Sheet,
   SheetContent,
@@ -1693,19 +1692,27 @@ export function ExercisesScreen({
                   <span>{tHud("connectLabel")}</span>
                 </button>
               ) : !proLoading ? (
-                <HudResourceChip
-                  tone={proStatus?.active ? "pro" : "default"}
-                  size="compact"
-                  atmosphere="adventure"
-                  imageIconSrc="/art/screen-mission/account-icon.png"
-                  value={tStatus("accountChipLabel")}
-                  ariaLabel={
+                <button
+                  type="button"
+                  onClick={() => setAccountSheetOpen(true)}
+                  aria-label={
                     proStatus?.active
                       ? tStatus("proManageLabel")
                       : tStatus("accountLabel")
                   }
-                  onClick={() => setAccountSheetOpen(true)}
-                />
+                  className={`candy-tray-pill hub-hud-pill${
+                    proStatus?.active ? " hub-hud-pill--pro" : ""
+                  }`}
+                >
+                  <img
+                    src="/art/screen-mission/account-icon.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+                  />
+                  <span>{tStatus("accountChipLabel")}</span>
+                </button>
               ) : (
                 <span aria-hidden="true" className="block h-6 w-6" />
               )
