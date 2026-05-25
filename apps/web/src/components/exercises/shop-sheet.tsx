@@ -260,8 +260,14 @@ export function ShopSheet({
          *  per-tile bg textures + bespoke art provide enough visual
          *  separation that the SUPPORT/TRAINING headers no longer earn
          *  their vertical real-estate. Founder Badge keeps the
-         *  "Featured" ribbon since it's the canonical featured SKU. */}
-        <div className="mt-4 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-6">
+         *  "Featured" ribbon since it's the canonical featured SKU.
+         *
+         *  `pl-6` shifts every tile ~24px right of the sheet's
+         *  left padding so the bespoke icon (which overhangs the
+         *  tile by 22px via `margin-left: -22px` in the CSS) lands
+         *  fully INSIDE the sheet's safe area instead of getting
+         *  clipped by `.mission-shell { overflow-x: clip }`. */}
+        <div className="mt-4 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pl-6 pb-6">
           {items.length === 0 && (
             <p
               className="text-center text-sm"
