@@ -2247,6 +2247,12 @@ export const LANDING_COPY = {
 export const HOME_ANCHOR_COPY = {
   alt: "Chesscito kingdom — Wolfcito the wizard with chess piece statues",
   attractHint: "Your training awaits in the kingdom",
+  /** Two-line tagline rendered inside the portal asset, below the
+   *  wizard. The first line is the lead-in; the highlight line is
+   *  rendered bolded as the focal closer. Same copy in both
+   *  inactive + PRO portal variants for now (per 2026-05-25 brief). */
+  taglineLead: "Train your pieces. Master the board.",
+  taglineHighlight: "Then play and win!",
 } as const;
 
 /** Persistent HUD chip copy. Consumed by `<HudResourceChip>` (top row) and

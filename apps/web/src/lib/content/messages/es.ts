@@ -911,6 +911,8 @@ const messages = {
   HOME_ANCHOR_COPY: {
     alt: "Reino de Chesscito — Wolfcito el mago con estatuas de piezas de ajedrez",
     attractHint: "Tu entrenamiento te espera en el reino",
+    taglineLead: "Entrena tus piezas. Domina el tablero.",
+    taglineHighlight: "¡Después juega y gana!",
   },
   REWARD_COPY: {
     rook: {

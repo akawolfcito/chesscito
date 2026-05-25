@@ -3771,6 +3771,41 @@
     drop-shadow(0 0 18px var(--kingdom-warm-glow)) drop-shadow(0 12px 22px var(--kingdom-deep-shadow));
 }
 
+/* Tagline overlay rendered inside the playhub portal asset, anchored
+ * to the bottom of the carved-wood frame where the asset reserves a
+ * blank scroll band for copy. Two-line stack — lead-in on top, the
+ * highlight closer bolded below. The percentages match the visible
+ * scroll band in `chesscito-normal-portal.png` / `chesscito-pro-portal.png`
+ * (both share the same frame geometry). */
+.kingdom-anchor--playhub .kingdom-anchor-tagline {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 6%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  text-align: center;
+  pointer-events: none;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.65);
+}
+
+.kingdom-anchor-tagline-lead {
+  font-family: var(--font-fredoka), system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.kingdom-anchor-tagline-highlight {
+  font-family: var(--font-fredoka), system-ui, sans-serif;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
 .kingdom-anchor-picture {
   display: block;
   width: 100%;

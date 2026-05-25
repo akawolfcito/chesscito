@@ -1,31 +1,44 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { renderWithIntl as render } from "@/test-utils/render-with-intl";
 import { screen } from "@testing-library/react";
+
+// `useIsProActive()` reaches into wagmi via `useAccount`. The KingdomAnchor
+// tests don't mount a WagmiProvider, so mock the hook to return false by
+// default — the inactive portal asset is the right baseline for visual
+// assertions that predate the PRO swap.
+vi.mock("@/lib/pro/use-is-pro-active", () => ({
+  useIsProActive: () => false,
+}));
 
 import { KingdomAnchor } from "../kingdom-anchor";
 import { HOME_ANCHOR_COPY } from "@/lib/content/editorial";
 
 describe("KingdomAnchor", () => {
-  it("renders the kingdom hero asset via <picture> with AVIF/WebP/PNG fallback chain", () => {
+  it("renders the inactive hero asset via <picture> with AVIF/WebP/PNG fallback chain", () => {
     const { container } = render(<KingdomAnchor />);
-    const sources = container.querySelectorAll("source");
+    // Only the hero <picture> contributes <source> tags (the tagline
+    // overlay is text). Two sources expected: avif, webp.
+    const sources = container.querySelectorAll(".kingdom-anchor-picture source");
     expect(sources).toHaveLength(2);
     expect(sources[0]).toHaveAttribute(
       "srcset",
-      "/art/scene-rooted/portal-centered.avif",
+      "/art/new-assets-chesscito/hub/chesscito-normal-portal.avif",
     );
     expect(sources[0]).toHaveAttribute("type", "image/avif");
     expect(sources[1]).toHaveAttribute(
       "srcset",
-      "/art/scene-rooted/portal-centered.webp",
+      "/art/new-assets-chesscito/hub/chesscito-normal-portal.webp",
     );
     expect(sources[1]).toHaveAttribute("type", "image/webp");
 
-    const img = container.querySelector("img");
-    expect(img).toHaveAttribute("src", "/art/scene-rooted/portal-centered.png");
+    const img = container.querySelector(".kingdom-anchor-img");
+    expect(img).toHaveAttribute(
+      "src",
+      "/art/new-assets-chesscito/hub/chesscito-normal-portal.png",
+    );
   });
 
-  it("defaults to the playhub variant with the portal-centered aspect-ratio", () => {
+  it("defaults to the playhub variant with the inactive portal aspect-ratio", () => {
     render(<KingdomAnchor />);
     const node = screen.getByRole("img", { name: HOME_ANCHOR_COPY.alt });
     expect(node).toHaveStyle({ aspectRatio: "669 / 1040" });
@@ -61,11 +74,12 @@ describe("KingdomAnchor", () => {
     expect(boardImg).toHaveAttribute("src", "/art/redesign/board/board-ch.png");
   });
 
-  it("does NOT render the portal-centered hero asset in the arena-preview variant", () => {
+  it("does NOT render the hub portal hero asset in the arena-preview variant", () => {
     const { container } = render(<KingdomAnchor variant="arena-preview" />);
     const sources = container.querySelectorAll("source");
     sources.forEach((s) => {
-      expect(s.getAttribute("srcset")).not.toContain("portal-centered");
+      expect(s.getAttribute("srcset")).not.toContain("chesscito-normal-portal");
+      expect(s.getAttribute("srcset")).not.toContain("chesscito-pro-portal");
     });
   });
 
@@ -150,5 +164,38 @@ describe("KingdomAnchor", () => {
     const node = screen.getByRole("img", { name: HOME_ANCHOR_COPY.alt });
     expect(node.className).toMatch(/is-atmosphere-scholarly\b/);
     expect(node.className).not.toMatch(/is-atmosphere-adventure\b/);
+  });
+
+  it("renders the two-line tagline inside the playhub variant", () => {
+    const { container } = render(<KingdomAnchor />);
+    const tagline = container.querySelector(".kingdom-anchor-tagline");
+    expect(tagline).not.toBeNull();
+    expect(tagline).toHaveTextContent(HOME_ANCHOR_COPY.taglineLead);
+    expect(tagline).toHaveTextContent(HOME_ANCHOR_COPY.taglineHighlight);
+  });
+
+  it("does NOT render the tagline on the arena-preview variant", () => {
+    const { container } = render(<KingdomAnchor variant="arena-preview" />);
+    expect(container.querySelector(".kingdom-anchor-tagline")).toBeNull();
+  });
+});
+
+describe("KingdomAnchor — PRO variant swap", () => {
+  it("swaps to the PRO portal asset when useIsProActive returns true", async () => {
+    // Re-mock for this describe to flip the hook to true.
+    vi.resetModules();
+    vi.doMock("@/lib/pro/use-is-pro-active", () => ({
+      useIsProActive: () => true,
+    }));
+    const { KingdomAnchor: KingdomAnchorPro } = await import(
+      "../kingdom-anchor"
+    );
+    const { container } = render(<KingdomAnchorPro />);
+    const img = container.querySelector(".kingdom-anchor-img");
+    expect(img).toHaveAttribute(
+      "src",
+      "/art/new-assets-chesscito/hub/chesscito-pro-portal.png",
+    );
+    vi.doUnmock("@/lib/pro/use-is-pro-active");
   });
 });

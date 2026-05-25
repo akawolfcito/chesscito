@@ -3,6 +3,8 @@
 import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 
+import { useIsProActive } from "@/lib/pro/use-is-pro-active";
+
 export type KingdomAnchorVariant =
   | "playhub"
   | "arena-preview"
@@ -25,7 +27,16 @@ const ASPECT_RATIO: Record<KingdomAnchorVariant, string> = {
   "landing-hero": "1.5 / 1",
 };
 
-const HERO_ASSET_BASE = "/art/scene-rooted/portal-centered";
+/** Hero portal asset paths. The `playhub`/`landing-hero` variants
+ *  swap between `chesscito-normal-portal` and `chesscito-pro-portal`
+ *  on `useIsProActive()` — paying subscribers see their wizard in
+ *  premium garb as a quiet recognition cue. Both assets share the
+ *  same `669 / 1040` aspect ratio so the surrounding layout doesn't
+ *  jump on the swap. */
+const HERO_ASSET_BASE_FREE =
+  "/art/new-assets-chesscito/hub/chesscito-normal-portal";
+const HERO_ASSET_BASE_PRO =
+  "/art/new-assets-chesscito/hub/chesscito-pro-portal";
 const BOARD_ASSET_BASE = "/art/redesign/board/board-ch";
 const PIECES_ASSET_BASE = "/art/redesign/pieces";
 
@@ -63,6 +74,10 @@ export function KingdomAnchor({
   style,
 }: Props) {
   const t = useTranslations("HOME_ANCHOR_COPY");
+  const isProActive = useIsProActive();
+  const heroAssetBase = isProActive
+    ? HERO_ASSET_BASE_PRO
+    : HERO_ASSET_BASE_FREE;
   const classes = [
     "kingdom-anchor",
     `kingdom-anchor--${variant}`,
@@ -115,16 +130,31 @@ export function KingdomAnchor({
           </div>
         </div>
       ) : (
-        <picture className="kingdom-anchor-picture">
-          <source srcSet={`${HERO_ASSET_BASE}.avif`} type="image/avif" />
-          <source srcSet={`${HERO_ASSET_BASE}.webp`} type="image/webp" />
-          <img
-            src={`${HERO_ASSET_BASE}.png`}
-            alt=""
-            aria-hidden="true"
-            className="kingdom-anchor-img"
-          />
-        </picture>
+        <>
+          <picture className="kingdom-anchor-picture">
+            <source srcSet={`${heroAssetBase}.avif`} type="image/avif" />
+            <source srcSet={`${heroAssetBase}.webp`} type="image/webp" />
+            <img
+              src={`${heroAssetBase}.png`}
+              alt=""
+              aria-hidden="true"
+              className="kingdom-anchor-img"
+            />
+          </picture>
+          {/* Tagline rendered inside the portal frame, below the wizard.
+           *  The highlight line is bolded as the focal closer. Same copy
+           *  across both inactive + PRO portal variants for now. */}
+          {variant === "playhub" && (
+            <div className="kingdom-anchor-tagline" aria-hidden="true">
+              <span className="kingdom-anchor-tagline-lead">
+                {t("taglineLead")}
+              </span>
+              <span className="kingdom-anchor-tagline-highlight">
+                {t("taglineHighlight")}
+              </span>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

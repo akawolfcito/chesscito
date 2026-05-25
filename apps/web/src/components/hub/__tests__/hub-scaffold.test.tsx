@@ -10,6 +10,13 @@ vi.mock("@/lib/haptics", () => ({
   hapticTap: () => {},
 }));
 
+// `useIsProActive()` reaches into wagmi via `useAccount`. These scaffold
+// tests don't mount a WagmiProvider, so stub the hook to the inactive
+// branch — assertions here are about layout, not the PRO swap.
+vi.mock("@/lib/pro/use-is-pro-active", () => ({
+  useIsProActive: () => false,
+}));
+
 const baseTiles: RewardTile[] = [
   { id: "rook", state: "claimable" },
   { id: "bishop", state: "progress" },
