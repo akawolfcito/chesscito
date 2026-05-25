@@ -26,11 +26,32 @@ export const FOUNDER_BADGE_ITEM_ID = 1n;
  *  CELO button stays hidden — same safe-default as itemId 2. */
 export const FOUNDER_BADGE_CELO_ITEM_ID = 5n;
 
+/** Chesscito PRO — first commercial SKU. Phase 0 monthly pass at
+ *  $1.99 that unlocks unlimited Coach analyses (bypasses the
+ *  coach:credits ledger). Sold via Shop.buyItem like coach packs.
+ *  Verification at /api/verify-pro stores expiresAt at
+ *  coach:pro:<wallet> with a 30-day TTL.
+ *
+ *  Surfaced inside `SHOP_ITEMS` so the shop sheet renders a PRO row
+ *  next to founder/shield. The standalone `<ProSheet>` card in /hub
+ *  continues to exist as the hero discoverability surface — both
+ *  routes hit the same on-chain item, so a PRO bought from the shop
+ *  sheet is the same SKU as one bought from the PRO sheet.
+ *
+ *  Admin must call:
+ *    ShopUpgradeable.setItem(6, 1_990_000, true)
+ *  in Celo Mainnet with the admin wallet before the buy CTA becomes
+ *  purchasable. Until then verify-pro will see no matching
+ *  ItemPurchased event and the buy attempt will fail. */
+export const PRO_ITEM_ID = 6n;
+export const PRO_PRICE_USD6 = 1_990_000n; // $1.99
+export const PRO_DURATION_DAYS = 30;
+
 /** Locale-agnostic key into `SHOP_ITEM_COPY` for resolving a row's
  *  label / subtitle copy at render time. Callers thread the active
  *  `useTranslations("SHOP_ITEM_COPY")` translator and resolve
  *  `${copyKey}.label` / `${copyKey}.subtitle` locally. */
-export type ShopCopyKey = "founderBadge" | "retryShield";
+export type ShopCopyKey = "founderBadge" | "retryShield" | "pro";
 
 export type ShopCatalogEntry = {
   itemId: bigint;
@@ -39,6 +60,12 @@ export type ShopCatalogEntry = {
 
 export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
   { itemId: FOUNDER_BADGE_ITEM_ID, copyKey: "founderBadge" },
+  // Chesscito PRO row — `useShopSheetState` branches on this itemId
+  // to await the on-chain receipt and POST `/api/verify-pro` (parallel
+  // to the SHIELD_ITEM_ID /api/credit-shield branch). The standalone
+  // `<ProSheet>` card in /hub is the hero discoverability surface;
+  // both routes hit the same on-chain item.
+  { itemId: PRO_ITEM_ID, copyKey: "pro" },
   { itemId: SHIELD_ITEM_ID, copyKey: "retryShield" },
   // Helper entry for the CELO route. Hidden from the shop card list —
   // only its on-chain configured/enabled flags drive the visibility of
@@ -62,22 +89,3 @@ export const COACH_PACK_ITEMS: Record<CoachPackSize, { itemId: bigint; priceUsd6
   5: { itemId: 3n, priceUsd6: 50_000n },   // $0.05
   20: { itemId: 4n, priceUsd6: 100_000n }, // $0.10
 } as const;
-
-/** Chesscito PRO — first commercial SKU. Phase 0 monthly pass at
- *  $1.99 that unlocks unlimited Coach analyses (bypasses the
- *  coach:credits ledger). Sold via Shop.buyItem like coach packs.
- *  Verification at /api/verify-pro stores expiresAt at
- *  coach:pro:<wallet> with a 30-day TTL.
- *
- *  Intentionally NOT included in `SHOP_ITEMS` — PRO renders as its
- *  own stand-alone card in /hub instead of mixing into the
- *  founder/shield row.
- *
- *  Admin must call:
- *    ShopUpgradeable.setItem(6, 1_990_000, true)
- *  in Celo Mainnet with the admin wallet before the buy CTA in the
- *  PRO card becomes purchasable. Until then verify-pro will see no
- *  matching ItemPurchased event and the buy attempt will fail. */
-export const PRO_ITEM_ID = 6n;
-export const PRO_PRICE_USD6 = 1_990_000n; // $1.99
-export const PRO_DURATION_DAYS = 30;

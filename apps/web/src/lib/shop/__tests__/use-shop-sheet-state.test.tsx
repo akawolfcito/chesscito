@@ -25,11 +25,19 @@ const TEST_WALLET = "0x000000000000000000000000000000000000abcd";
 const SHOP_ADDRESS = "0x0000000000000000000000000000000000005099";
 const TEST_CHAIN_ID = 42220;
 
-// Mints the canonical SHOP_ITEMS shape consumed by useReadContracts:
-// itemId 1 (Founder $0.10), itemId 2 (Shield $0.025), itemId 5 (CELO sibling).
-function makeOnChainItems({ celoConfigured = true } = {}) {
+// Mints the canonical SHOP_ITEMS shape consumed by useReadContracts.
+// Order MUST match SHOP_ITEMS exactly:
+//   itemId 1 (Founder $0.10) → PRO 6 ($1.99) → Shield 2 ($0.025) → CELO sibling 5.
+function makeOnChainItems({
+  celoConfigured = true,
+  proConfigured = true,
+} = {}) {
   return [
     { status: "success", result: [100_000n, true] }, // Founder $0.10
+    {
+      status: proConfigured ? "success" : "failure",
+      result: proConfigured ? [1_990_000n, true] : null,
+    }, // PRO $1.99
     { status: "success", result: [25_000n, true] }, // Shield $0.025
     {
       status: celoConfigured ? "success" : "failure",
@@ -504,5 +512,66 @@ describe("useShopSheetState — CELO sibling visibility", () => {
     // as the secondary CTA on the Founder card.
     const celoEntry = result.current.sheetProps.items.find((i) => i.itemId === 5n);
     expect(celoEntry).toBeUndefined();
+  });
+});
+
+describe("useShopSheetState — PRO purchase", () => {
+  it("renders PRO (itemId 6n) in the sheet items so the user can tap it from the shop", () => {
+    setReadContractsState({ catalog: makeOnChainItems(), balances: makeBalances() });
+    const { result } = renderHook(() => useShopSheetState());
+    const pro = result.current.sheetProps.items.find((i) => i.itemId === 6n);
+    expect(pro).toBeDefined();
+    expect(pro?.enabled).toBe(true);
+    expect(pro?.onChainPrice).toBe(1_990_000n);
+  });
+
+  it("POSTs /api/verify-pro with the txHash + wallet after a successful PRO buy", async () => {
+    // PRO = $1.99 (1_990_000 USD6). Default balance helper provisions $1
+    // per stable — need to top up so `selectPaymentToken` finds enough
+    // funds to clear the price gate.
+    setReadContractsState({
+      catalog: makeOnChainItems(),
+      balances: makeBalances({ stableBalance: 5_000_000n }),
+    });
+    usePublicClientMock.mockReturnValue({
+      readContract: vi.fn().mockResolvedValue(10n ** 30n),
+    });
+    writeContractAsyncMock.mockResolvedValueOnce("0xprobuy");
+
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ active: true, expiresAt: Date.now() + 86_400_000 }),
+          { status: 200 },
+        ),
+      );
+
+    const { result } = renderHook(() => useShopSheetState());
+    act(() => result.current.sheetProps.onSelectItem(6n));
+    act(() => result.current.confirmProps.onConfirm());
+
+    await waitFor(() => {
+      expect(result.current.sheetProps.successBanner).not.toBeNull();
+    });
+
+    expect(trackMock).toHaveBeenCalledWith(
+      "shop_buy_tx",
+      expect.objectContaining({ stage: "success", source: "shop_pro" }),
+    );
+
+    const verifyCall = fetchSpy.mock.calls.find(([input]) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      return url.includes("/api/verify-pro");
+    });
+    expect(verifyCall).toBeDefined();
+    const init = verifyCall?.[1] as RequestInit | undefined;
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(init?.body as string)).toEqual({
+      txHash: "0xprobuy",
+      walletAddress: TEST_WALLET,
+    });
+
+    fetchSpy.mockRestore();
   });
 });

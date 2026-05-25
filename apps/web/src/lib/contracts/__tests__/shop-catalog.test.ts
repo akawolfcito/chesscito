@@ -18,8 +18,8 @@ describe("shop-catalog", () => {
     expect(FOUNDER_BADGE_CELO_ITEM_ID).toBe(5n);
   });
 
-  it("exposes all three items in the catalog with a copy key for locale-aware copy resolution", () => {
-    expect(SHOP_ITEMS).toHaveLength(3);
+  it("exposes founder + PRO + shield + CELO sibling in the catalog with copy keys for locale-aware resolution", () => {
+    expect(SHOP_ITEMS).toHaveLength(4);
     for (const item of SHOP_ITEMS) {
       expect(item.copyKey.length).toBeGreaterThan(0);
     }
@@ -63,7 +63,9 @@ describe("shop-catalog", () => {
     expect(PRO_DURATION_DAYS).toBe(30);
   });
 
-  it("does not include PRO in the SHOP_ITEMS row — PRO renders as its own stand-alone card", () => {
-    expect(SHOP_ITEMS.find((i) => i.itemId === PRO_ITEM_ID)).toBeUndefined();
+  it("includes PRO in SHOP_ITEMS with the 'pro' copy key so the shop sheet can render it next to founder/shield", () => {
+    const pro = SHOP_ITEMS.find((i) => i.itemId === PRO_ITEM_ID);
+    expect(pro).toBeDefined();
+    expect(pro?.copyKey).toBe("pro");
   });
 });

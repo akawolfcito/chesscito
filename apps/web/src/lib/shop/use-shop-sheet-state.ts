@@ -23,6 +23,7 @@ import { shopAbi } from "@/lib/contracts/shop";
 import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
+  PRO_ITEM_ID,
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
 } from "@/lib/contracts/shop-catalog";
@@ -409,7 +410,9 @@ export function useShopSheetState(
     const txSource =
       selectedItem.itemId === SHIELD_ITEM_ID
         ? "shop_retry_shield"
-        : "shop_founder_badge";
+        : selectedItem.itemId === PRO_ITEM_ID
+          ? "shop_pro"
+          : "shop_founder_badge";
     const itemIdNum = Number(selectedItem.itemId);
 
     setErrorMessage(null);
@@ -457,6 +460,32 @@ export function useShopSheetState(
       track("shop_buy_tx", { stage: "success", source: txSource, item_id: itemIdNum });
       if (selectedItem.itemId === SHIELD_ITEM_ID) {
         creditShieldServerSide(buyHash as `0x${string}`, address);
+      } else if (selectedItem.itemId === PRO_ITEM_ID) {
+        // verify-pro is the activation contract — without it the user
+        // paid on-chain but coach:pro:<wallet> never lands in Redis.
+        // Await the receipt + POST inline so an HTTP failure surfaces
+        // in `errorMessage` and the user knows to retry from the PRO
+        // sheet. The route is idempotent (proProcessedTx guard), so a
+        // retry with the same txHash returns the same expiresAt.
+        if (publicClient) {
+          try {
+            await waitForReceiptWithTimeout(publicClient, buyHash as `0x${string}`);
+            const res = await fetch("/api/verify-pro", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ txHash: buyHash, walletAddress: address }),
+            });
+            if (!res.ok) {
+              setErrorMessage(
+                "PRO purchased on-chain — activation pending. Open the PRO menu to retry verification.",
+              );
+            }
+          } catch {
+            setErrorMessage(
+              "PRO purchased on-chain — activation pending. Open the PRO menu to retry verification.",
+            );
+          }
+        }
       }
       setConfirmOpen(false);
       setSelectedItemId(null);

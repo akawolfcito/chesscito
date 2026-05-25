@@ -1329,6 +1329,10 @@ const messages = {
       label: "Créditos de Coach",
       subtitle: "Prueba el análisis IA — sin suscripción.",
     },
+    pro: {
+      label: "Chesscito PRO",
+      subtitle: "Análisis de Coach ilimitados · pase de 30 días.",
+    },
   },
   HUB_V2_SPLASH_COPY: {
     title: "Bienvenido",

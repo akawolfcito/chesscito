@@ -1575,6 +1575,10 @@ export const SHOP_ITEM_COPY = {
     label: "Coach Credits",
     subtitle: "Try AI analysis — no subscription needed.",
   },
+  pro: {
+    label: "Chesscito PRO",
+    subtitle: "Unlimited Coach analyses · 30-day pass.",
+  },
 } as const;
 
 

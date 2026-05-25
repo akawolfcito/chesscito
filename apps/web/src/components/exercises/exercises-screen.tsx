@@ -64,6 +64,7 @@ import { shopAbi } from "@/lib/contracts/shop";
 import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
+  PRO_ITEM_ID,
   PRO_PRICE_USD6,
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
@@ -1443,7 +1444,12 @@ export function ExercisesScreen({
 
     const unitPrice = selectedItem.onChainPrice;
     const normalizedTotal = normalizePrice(unitPrice, paymentToken.decimals);
-    const txSource = selectedItem.itemId === SHIELD_ITEM_ID ? "shop_retry_shield" : "shop_founder_badge";
+    const txSource =
+      selectedItem.itemId === SHIELD_ITEM_ID
+        ? "shop_retry_shield"
+        : selectedItem.itemId === PRO_ITEM_ID
+          ? "shop_pro"
+          : "shop_founder_badge";
     const itemIdNum = Number(selectedItem.itemId);
 
     setLastError(null);
@@ -1528,6 +1534,29 @@ export function ExercisesScreen({
             dispatchShieldChange();
           } catch {
             // network failure → leave queued, useShieldSync retries
+          }
+        })();
+      } else if (selectedItem.itemId === PRO_ITEM_ID && address && publicClient) {
+        // verify-pro activates the PRO pass server-side. Without this
+        // POST the user paid on-chain but coach:pro:<wallet> never
+        // lands in Redis. Idempotent (proProcessedTx guard) so retries
+        // are safe.
+        const buyerAddress = address;
+        void (async () => {
+          try {
+            await waitForReceiptWithTimeout(publicClient, buyHash as `0x${string}`);
+            await fetch("/api/verify-pro", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                txHash: buyHash,
+                walletAddress: buyerAddress,
+              }),
+            });
+          } catch {
+            // Verification will retry on next /api/pro/status read or
+            // when the user opens the PRO sheet (which re-posts on
+            // active=false).
           }
         })();
       }
