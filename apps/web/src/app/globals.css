@@ -427,6 +427,38 @@
     background-attachment: scroll;
     min-height: 100dvh;
     overflow-x: hidden;
+    /* App reads as a game, not a document — disable text selection,
+     * iOS long-press callout (Save Image / Copy), and the default tap
+     * highlight. Without this, holding any image / text shows the
+     * native share/save menu and a stray selection box. Inputs +
+     * `[data-allow-select]` opt back in below. */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* All images are decorative game art — never draggable, never
+   * source for the iOS callout. Keeps long-press from triggering
+   * "Save Image" / "Copy Image" on the wizard, pieces, board,
+   * panels, etc. */
+  img {
+    -webkit-user-drag: none;
+    user-drag: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Opt back in: fields the user must be able to type into + an
+   * explicit escape hatch for surfaces that should still allow
+   * selecting text (tx hashes, error messages, share copy). */
+  input,
+  textarea,
+  [contenteditable="true"],
+  [data-allow-select="true"],
+  [data-allow-select="true"] * {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
   }
 
   main {
