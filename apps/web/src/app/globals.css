@@ -8489,28 +8489,18 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 0.88rem !important;
 }
 
-/* Pay with CELO ships a longer label ("Pay with CELO") that needs a
-   slightly wider plank than the short price labels — same height so
-   the two buttons read as siblings. */
-.shop-item-tile-buy-btn--celo {
-  width: 150px !important;
-}
-
-/* CELO twin button — bright yellow variant of the carved plank.
-   Uses a bespoke asset (`principalbutton-celo`, generated from the
-   green source via ImageMagick hue modulation) instead of fighting
-   CSS filters. Same drop-shadow pipeline as the base, but with the
-   wood-carved silhouette in yellow. The label switches to dark
-   brown so the text contrasts against the bright yellow plank
-   (white text on yellow is unreadable). */
-.shop-item-tile-buy-btn--celo {
-  --principal-button-bg: image-set(
-    url("/art/shop/principalbutton-celo.avif") type("image/avif"),
-    url("/art/shop/principalbutton-celo.webp") type("image/webp"),
-    url("/art/shop/principalbutton-celo.png") type("image/png")
-  );
-  color: #3f2208 !important;
-  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.55) !important;
+/* Pay with CELO twin — reuses the canonical `.candy-tray-pill` cream
+   chip from the /exercises HUD instead of the wood-carved plank, so
+   the secondary payment route reads as a distinct affordance from
+   the primary stablecoin buy button. Width-constrained + compacted
+   here so the pill hugs its label and matches the visual height of
+   the green plank sibling instead of stacking taller. */
+.shop-item-tile-celo-pill {
+  width: auto;
+  min-width: 0;
+  min-height: 30px;
+  padding: 0.2rem 0.85rem;
+  font-size: 0.78rem;
 }
 
 /* ── Badges Collection (badge-sheet.tsx) ───────────────────────────────────

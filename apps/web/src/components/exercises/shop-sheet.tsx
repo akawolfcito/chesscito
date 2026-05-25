@@ -145,14 +145,14 @@ function ShopItemCard({
        *  rather than a button + link. */}
       <div className="shop-item-tile-footer">
         {item.celoSibling && (
-          <PrincipalButton
-            size="medium"
-            className="shop-item-tile-buy-btn shop-item-tile-buy-btn--celo"
+          <button
+            type="button"
+            className="candy-tray-pill shop-item-tile-celo-pill"
             onClick={() => onSelectItem(item.celoSibling!.itemId)}
             aria-label={t("buyWithCelo")}
           >
             {t("payWithCeloShort")}
-          </PrincipalButton>
+          </button>
         )}
         <PrincipalButton
           size="medium"
