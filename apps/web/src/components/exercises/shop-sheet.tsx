@@ -109,33 +109,31 @@ function ShopItemCard({
       }}
       data-copy-key={copyKey}
     >
-      {/* Tile top: icon + identity column. The icon is rendered
-       *  full-bleed (no chrome wrap) so the bespoke art reads at
-       *  card scale. The container reserves a fixed slot so the
-       *  identity column doesn't reflow when art aspect ratios
-       *  differ between PRO / Founder / Shield. */}
-      <div className="shop-item-tile-content">
-        <picture className="shop-item-tile-icon-figure">
-          <source srcSet={`${assets.icon}.avif`} type="image/avif" />
-          <source srcSet={`${assets.icon}.webp`} type="image/webp" />
-          <img
-            src={`${assets.icon}.png`}
-            alt=""
-            aria-hidden="true"
-            className="shop-item-tile-icon-img"
-            draggable={false}
-          />
-        </picture>
+      {/* 2-column grid: icon spans both rows on the left (vertically
+       *  centered + free to overflow the tile bounds via grid +
+       *  overflow:visible on the picture). Text identity sits on the
+       *  right row 1, footer pills on row 2 right. The bespoke art
+       *  reads at card scale without leaving empty space below it. */}
+      <picture className="shop-item-tile-icon-figure">
+        <source srcSet={`${assets.icon}.avif`} type="image/avif" />
+        <source srcSet={`${assets.icon}.webp`} type="image/webp" />
+        <img
+          src={`${assets.icon}.png`}
+          alt=""
+          aria-hidden="true"
+          className="shop-item-tile-icon-img"
+          draggable={false}
+        />
+      </picture>
 
-        {/* Name + kicker + short copy */}
-        <div className="shop-item-tile-identity">
-          <div className="flex items-center justify-between">
-            <p className="shop-item-tile-kicker">{kicker}</p>
-            {isFeatured && <span className="shop-item-tile-featured-label">{t("featured")}</span>}
-          </div>
-          <p className="shop-item-tile-name">{item.label}</p>
-          <p className="shop-item-tile-subtitle">{item.subtitle}</p>
+      {/* Name + kicker + short copy */}
+      <div className="shop-item-tile-identity">
+        <div className="flex items-center justify-between">
+          <p className="shop-item-tile-kicker">{kicker}</p>
+          {isFeatured && <span className="shop-item-tile-featured-label">{t("featured")}</span>}
         </div>
+        <p className="shop-item-tile-name">{item.label}</p>
+        <p className="shop-item-tile-subtitle">{item.subtitle}</p>
       </div>
 
       {/* Footer — right-aligned button stack. Both the CELO twin and

@@ -8343,11 +8343,25 @@ button.hud-resource-chip:active:not(:disabled) {
    via `style={{ backgroundImage }}` from shop-sheet.tsx. The CSS here
    only sets background-color as a fallback (rendered before the image
    loads or if image-set() is unsupported). Avoid the `background:`
-   shorthand here — it would clobber the inline background-image. */
+   shorthand here — it would clobber the inline background-image.
+
+   2-column grid layout:
+     col 1 = bespoke icon (spans both rows, vertically centered,
+             allowed to overflow the tile bounds via overflow:visible
+             so the floating art can extend above/below the card).
+     col 2 = identity (row 1) + footer pills (row 2).
+   `overflow: visible` lets the icon overhang; the per-tile bg
+   texture is contained by the bg-image painting which stops at the
+   border-radius, so the visual card stays crisp while the figure
+   floats free. */
 .shop-item-tile {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  grid-template-rows: 1fr auto;
+  column-gap: 14px;
+  row-gap: 10px;
+  align-items: center;
   padding: 14px;
   border-radius: 18px;
   background-color: rgba(40, 25, 15, 0.55);
@@ -8356,16 +8370,20 @@ button.hud-resource-chip:active:not(:disabled) {
     0 4px 14px rgba(0, 0, 0, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
   transition: transform 0.1s ease-out;
-  overflow: hidden;
+  overflow: visible;
   isolation: isolate;
 }
 
 /* Subtle dark scrim above the texture to lift white text contrast.
-   Pseudo-element so it doesn't override inline background-image. */
+   Pseudo-element so it doesn't override inline background-image.
+   Clipped to the tile's rounded border via border-radius +
+   overflow on the pseudo, so the scrim doesn't paint beyond the
+   visual card edge even though the parent is overflow:visible. */
 .shop-item-tile::before {
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: inherit;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.32) 100%);
   pointer-events: none;
   z-index: 0;
@@ -8390,21 +8408,25 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 1px 0 rgba(255, 255, 255, 0.30);
 }
 
-.shop-item-tile-content {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-/* Full-bleed icon figure — bespoke art reads at card scale with no
-   chrome (no plate, no border, no scrim). Width fixed so the
-   identity column doesn't reflow between PRO / Founder / Shield
-   art aspect ratios. */
+/* Full-bleed floating icon — bespoke art reads above the card scale.
+   Lives in the first grid column, spans both rows so it vertically
+   centers against the full tile height instead of the (shorter)
+   identity row. Anchored to the LEFT edge of its column so any
+   horizontal overflow falls OUTSIDE the tile (beyond the card's
+   left edge) instead of intruding into the identity text on the
+   right. Vertical negative margins let the figure overhang
+   top/bottom — matches the design spec ("si es flotante y que se
+   desborde de la card está bien"). */
 .shop-item-tile-icon-figure {
   display: block;
-  width: 96px;
-  flex-shrink: 0;
-  align-self: stretch;
+  grid-column: 1;
+  grid-row: 1 / -1;
+  align-self: center;
+  justify-self: start;
+  width: 120px;
+  height: 120px;
+  margin: -16px 0 -16px -22px;
+  pointer-events: none;
 }
 
 .shop-item-tile-icon-img {
@@ -8418,12 +8440,14 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
 }
 
-/* Identity column */
+/* Identity column — anchored to the second grid column, top row.
+   Stacks kicker + name + subtitle vertically. */
 .shop-item-tile-identity {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
   gap: 1px;
-  flex: 1;
   min-width: 0;
 }
 
@@ -8464,14 +8488,17 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
-/* Footer row: right-aligned button stack. No top border + no left
-   metadata so the buttons sit cleanly against the tile texture. */
+/* Footer row — anchored to the second grid column, second row.
+   Right-aligned button stack with gap between the (optional) CELO
+   twin and the primary buy pill. Grid row-gap (10px) handles
+   vertical separation from the identity above. */
 .shop-item-tile-footer {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 12px;
 }
 
 /* Shop tile buy pill — all 4 buttons (PRO/Founder/Shield prices +
