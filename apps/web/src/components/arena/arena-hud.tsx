@@ -110,23 +110,25 @@ function ArenaBackChip({
   );
 }
 
-/* Custom timer chip — purpose-built to escape HudResourceChip's
- * 240ms is-pulse flash that triggered on every per-second tick
- * (constant shadow flicker + width jitter). Uses tabular-nums so the
- * value can grow from "0:00" → "99:59" without layout shifts, and
- * floats an oversized clock icon off the chip's left edge so the
- * glyph reads as the badge and the time reads as the label. */
+/* Live match timer — reuses the HUD chip family from the Hub
+ * (candy-tray-pill + hub-hud-pill + --anchored-left) so the timer
+ * reads as a sibling of the trophy / connect chips: cream-amber
+ * pill, warm-brown outline, oversized icon floating off the leading
+ * edge, squared-off left corners tucked behind the icon. The icon
+ * stays `CandyIcon name="time"`; the value span carries the
+ * monospace + tabular-nums so per-second ticks don't jitter the
+ * pill width. */
 function ArenaTimerChip({ elapsedMs }: { elapsedMs: number }) {
   const t = useTranslations("ARENA_COPY");
   const value = formatTime(elapsedMs);
   return (
     <span
-      className="arena-timer-chip"
+      className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
       role="status"
       aria-live="polite"
       aria-label={t("timerAriaLabel", { time: value })}
     >
-      <CandyIcon name="time" className="arena-timer-chip-icon" />
+      <CandyIcon name="time" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
       <span className="arena-timer-chip-value">{value}</span>
     </span>
   );

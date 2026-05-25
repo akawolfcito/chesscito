@@ -4140,45 +4140,12 @@ button.hud-resource-chip:active:not(:disabled) {
    digits change. The clock icon is bumped up (36px) and positioned
    absolutely on the left edge so it reads as a floating badge attached
    to the pill instead of an inline glyph competing with the digits. */
-.arena-timer-chip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 84px;
-  min-height: 28px;
-  padding: 3px 14px 3px 40px;
-  border-radius: 999px;
-  border: 2px solid #b86d0a;
-  background:
-    linear-gradient(180deg, rgba(255, 250, 190, 0.72) 0%, transparent 34%),
-    linear-gradient(180deg, #ffce43 0%, #ef9f17 58%, #b86609 100%);
-  color: rgba(63, 34, 8, 0.92);
-  font-size: 0.95rem;
-  font-weight: 800;
-  line-height: 1;
-  text-shadow: 0 1px 0 rgba(255, 246, 186, 0.72);
-  /* Inset highlight only — the colored 4px bottom bar (drop shadow)
-     read as noise on a fast-ticking element. Keep depth via the soft
-     diffuse shadow + inset top highlight. */
-  box-shadow:
-    0 1px 0 rgba(255, 247, 179, 0.72) inset,
-    0 -2px 0 rgba(118, 61, 5, 0.20) inset,
-    0 3px 6px rgba(29, 61, 37, 0.18);
-}
-
-.arena-timer-chip-icon {
-  position: absolute;
-  left: -8px;
-  top: 50%;
-  width: 42px;
-  height: 42px;
-  transform: translateY(-50%);
-  color: #b86609;
-  filter:
-    drop-shadow(0 1px 0 rgba(255, 246, 186, 0.70)) drop-shadow(0 3px 4px rgba(99, 47, 5, 0.42));
-}
-
+/* Legacy `.arena-timer-chip` + `.arena-timer-chip-icon` blocks were
+ * retired 2026-05-25 — the Arena timer now reuses
+ * `.candy-tray-pill + .hub-hud-pill + .hub-hud-pill--anchored-left`
+ * so the visual matches the Hub trophy/connect chips. Only the
+ * value-span helper survives because the monospace + tabular-nums
+ * rule is timer-specific (it would be wrong on the trophy count). */
 .arena-timer-chip-value {
   display: inline-block;
   /* Monospace stack — guarantees fixed digit width even on fonts that
