@@ -221,16 +221,19 @@ export function BadgeSheet({
   // Phase 2 nudge: when a disconnected user opens the sheet AND has at
   // least one claimable badge (= local stars cross threshold but no
   // wallet on record), fire the one-shot prompt. Idempotent — the hook
-  // no-ops after the flag is set.
+  // no-ops after the flag is set. Depend on `.show` (memoized) rather
+  // than the whole hook object to avoid re-running the effect on every
+  // render (cf. /arena PLAY-button regression fix).
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const badgesConnectPrompt = useConnectPrompt("badges");
   const hasClaimable = badges.some((b) => b.state === "claimable");
+  const showBadgesPrompt = badgesConnectPrompt.show;
   useEffect(() => {
     if (open && !isConnected && hasClaimable) {
-      badgesConnectPrompt.show();
+      showBadgesPrompt();
     }
-  }, [open, isConnected, hasClaimable, badgesConnectPrompt]);
+  }, [open, isConnected, hasClaimable, showBadgesPrompt]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

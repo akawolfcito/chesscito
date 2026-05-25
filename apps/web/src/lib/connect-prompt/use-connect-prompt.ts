@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 const STORAGE_PREFIX = "chesscito:connect-prompt-shown:";
 
@@ -70,15 +70,20 @@ export function useConnectPrompt(
 ): UseConnectPromptResult {
   const [isVisible, setVisible] = useState(false);
 
-  const show = (): void => {
+  // Memoized so consumers can list `show` / `dismiss` (or the whole hook
+  // result) as `useEffect` deps without thrashing — fresh references each
+  // render would re-run the effect every commit. Caused a regression in
+  // /arena where the `isPreparing → game.startGame()` 400ms timer kept
+  // being torn down by neighbouring effects' deps changing.
+  const show = useCallback((): void => {
     if (readShown(milestone)) return;
     writeShown(milestone);
     setVisible(true);
-  };
+  }, [milestone]);
 
-  const dismiss = (): void => {
+  const dismiss = useCallback((): void => {
     setVisible(false);
-  };
+  }, []);
 
   return { isVisible, show, dismiss };
 }

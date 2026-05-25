@@ -391,12 +391,16 @@ function ArenaPageInner() {
   // Phase 2 nudge: first arena victory while disconnected triggers the
   // one-shot "Connect to save / mint" prompt. The hook is idempotent, so
   // re-renders at terminal state are safe — show() no-ops after the flag
-  // is set.
+  // is set. Depend on `.show` (memoized) rather than the whole hook
+  // object, otherwise the dep array would change every render and
+  // re-running this effect each commit thrashed the neighbouring
+  // isPreparing-timer effect (regression: PLAY never reached the board).
+  const showVictoryPrompt = victoryConnectPrompt.show;
   useEffect(() => {
     if (isPlayerWin && !isConnected) {
-      victoryConnectPrompt.show();
+      showVictoryPrompt();
     }
-  }, [isPlayerWin, isConnected, victoryConnectPrompt]);
+  }, [isPlayerWin, isConnected, showVictoryPrompt]);
 
   const moveCountBucket = useCallback((moves: number) => {
     if (moves <= 10) return "0-10";
