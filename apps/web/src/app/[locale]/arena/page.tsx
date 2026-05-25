@@ -1760,18 +1760,20 @@ function ArenaPageInner() {
             <button
               type="button"
               onClick={handleChangeDifficulty}
-              className="arena-difficulty-pill group scale-95"
+              className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-difficulty-pill"
               aria-label={`Difficulty: ${difficultyLabel(game.difficulty)}. Tap to change.`}
             >
-              <span className="arena-difficulty-pill-icon">
-                <CandyIcon name="shield" className="h-full w-full" />
-              </span>
+              <CandyIcon
+                name="shield"
+                className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+              />
               <span className="arena-difficulty-pill-label">
                 {difficultyLabel(game.difficulty)}
               </span>
-              <span className="arena-difficulty-pill-icon opacity-80 group-active:opacity-100 transition-opacity">
-                <CandyIcon name="check" className="h-2.5 w-2.5" />
-              </span>
+              <CandyIcon
+                name="check"
+                className="arena-difficulty-pill-check"
+              />
             </button>
           </div>
         )}
