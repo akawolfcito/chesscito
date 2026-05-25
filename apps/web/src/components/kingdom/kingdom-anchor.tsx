@@ -139,6 +139,12 @@ export function KingdomAnchor({
               alt=""
               aria-hidden="true"
               className="kingdom-anchor-img"
+              // The hub portal is the visual anchor of the hub —
+              // browsers should treat it as high-priority over the
+              // surrounding decorative assets so it lands before the
+              // hub-scaffold-center-stack hydrates and shifts.
+              fetchPriority="high"
+              decoding="async"
             />
           </picture>
           {/* Tagline rendered inside the portal frame, below the wizard.

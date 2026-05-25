@@ -5983,6 +5983,12 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 15px;
   width: 100%;
   padding-top: 0;
+  /* Reserve vertical space equal to the contents this stack will
+   * settle on (~46px guide + 15px gap + ~64px CTA). Prevents the
+   * column from collapsing to 0px while the conditional hero CTA
+   * hasn't hydrated yet, which used to bounce the LEARN column
+   * and reward rail when the page first painted. */
+  min-height: 125px;
 }
 
 /* Root-level CTA footer — sibling of `.hub-scaffold-body`. Sits at
