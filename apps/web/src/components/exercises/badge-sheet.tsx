@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
+import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
+import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
 import {
   Sheet,
   SheetContent,
@@ -214,6 +218,20 @@ export function BadgeSheet({
   const totalCollectedStars = badges.reduce((s, b) => s + b.totalStars, 0);
   const totalAvailableStars = badges.reduce((s, b) => s + b.maxStars, 0);
 
+  // Phase 2 nudge: when a disconnected user opens the sheet AND has at
+  // least one claimable badge (= local stars cross threshold but no
+  // wallet on record), fire the one-shot prompt. Idempotent — the hook
+  // no-ops after the flag is set.
+  const { isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  const badgesConnectPrompt = useConnectPrompt("badges");
+  const hasClaimable = badges.some((b) => b.state === "claimable");
+  useEffect(() => {
+    if (open && !isConnected && hasClaimable) {
+      badgesConnectPrompt.show();
+    }
+  }, [open, isConnected, hasClaimable, badgesConnectPrompt]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       {showTrigger ? (
@@ -258,6 +276,19 @@ export function BadgeSheet({
             close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
           />
         </div>
+
+        {badgesConnectPrompt.isVisible && (
+          <div className="shrink-0 mt-3">
+            <ConnectPromptToast
+              milestone="badges"
+              onConnect={() => {
+                badgesConnectPrompt.dismiss();
+                openConnectModal?.();
+              }}
+              onDismiss={badgesConnectPrompt.dismiss}
+            />
+          </div>
+        )}
 
         {/* Stats banner — star count + progress bar */}
         <div className="shrink-0 mt-3 flex flex-col gap-2">

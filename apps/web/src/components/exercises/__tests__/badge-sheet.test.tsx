@@ -9,6 +9,14 @@ vi.mock("@/lib/telemetry", () => ({
   track: vi.fn(),
 }));
 
+vi.mock("wagmi", () => ({
+  useAccount: () => ({ address: undefined, isConnected: false }),
+}));
+
+vi.mock("@rainbow-me/rainbowkit", () => ({
+  useConnectModal: () => ({ openConnectModal: vi.fn() }),
+}));
+
 function setStars(piece: PieceId, stars: number[]) {
   localStorage.setItem(
     `chesscito:progress:${piece}`,
