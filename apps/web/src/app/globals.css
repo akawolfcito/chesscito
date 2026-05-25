@@ -5333,8 +5333,10 @@ button.hud-resource-chip:active:not(:disabled) {
   justify-content: space-between;
   gap: 8px;
   /* Breathing room from the device viewport edges. Without this the
-   * trophy + PRO panels were flush against the screen border. */
-  padding-inline: 8px;
+   * trophy + PRO panels were flush against the screen border. Bumped
+   * to 20px (from 8px) so the trophy icon overhang doesn't tuck
+   * itself against the device frame. */
+  padding-inline: 20px;
   padding-top: 4px;
 }
 
