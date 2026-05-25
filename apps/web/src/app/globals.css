@@ -8477,32 +8477,41 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* Identity column — anchored to the second grid column, top row.
-   Stacks kicker + name + subtitle vertically. */
+   Stacks name + subtitle vertically with a 6px breath between them
+   so the title earns its silence before the supporting line. */
 .shop-item-tile-identity {
   grid-column: 2;
   grid-row: 1;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 6px;
   min-width: 0;
 }
 
+/* Product name — the visual anchor of the card. Generous size +
+   weight + tight leading make it CANT first, ahead of subtitle.
+   Soft contact shadow only (no chunky glow) so it reads as a
+   monumental headline against the bg texture rather than a
+   neon-game label. */
 .shop-item-tile-name {
   font-family: var(--font-game-action, system-ui, sans-serif);
-  font-size: 1.05rem;
+  font-size: 1.12rem;
   font-weight: 900;
-  color: rgba(255, 250, 235, 0.98);
-  line-height: 1.1;
-  text-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.55),
-    0 0 12px rgba(0, 0, 0, 0.25);
+  color: rgba(255, 250, 235, 1);
+  line-height: 1.05;
+  letter-spacing: 0.005em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.50);
 }
 
+/* Subtitle — supporting line. Lower opacity + lighter weight so it
+   plays second fiddle to the name and never competes. Slightly
+   roomier line-height for legibility when copy wraps to two
+   lines (e.g. PRO's "Unlimited Coach analyses · 30-day pass."). */
 .shop-item-tile-subtitle {
-  font-size: 0.74rem;
-  color: rgba(255, 245, 220, 0.88);
-  line-height: 1.3;
-  margin-top: 3px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: rgba(255, 245, 220, 0.78);
+  line-height: 1.35;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
