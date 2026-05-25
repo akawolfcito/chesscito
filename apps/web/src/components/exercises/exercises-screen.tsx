@@ -193,7 +193,12 @@ function AccountSheet({
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
-            iconSlot={<TileIconSlot src="/art/action-row/wallet" />}
+            iconSlot={
+              <TileIconSlot
+                src="/art/screen-mission/account-icon"
+                optimized={false}
+              />
+            }
             title={t("title")}
             subtitle={t("description")}
             close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
@@ -368,6 +373,7 @@ export function ExercisesScreen({
   const tUnlock = useTranslations("UNLOCK_COPY");
   const tDrawer = useTranslations("EXERCISE_DRAWER_COPY");
   const tStatus = useTranslations("GLOBAL_STATUS_BAR_COPY");
+  const tHud = useTranslations("HUD_COPY");
   const tFooter = useTranslations("FOOTER_CTA_COPY");
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const router = useRouter();
@@ -1659,25 +1665,24 @@ export function ExercisesScreen({
             }}
             trailingControl={
               !address ? (
-                <HudResourceChip
-                  tone="default"
-                  size="compact"
-                  atmosphere="adventure"
-                  imageIconSrc="/art/screen-mission/account-icon.png"
-                  value={tStatus("accountConnectLabel")}
-                  ariaLabel={tStatus("accountConnectAriaLabel")}
+                <button
+                  type="button"
                   onClick={() => openConnectModal?.()}
-                />
+                  aria-label={tHud("connectAriaLabel")}
+                  className="candy-tray-pill hub-hud-pill"
+                >
+                  <CandyIcon
+                    name="wallet"
+                    className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+                  />
+                  <span>{tHud("connectLabel")}</span>
+                </button>
               ) : !proLoading ? (
                 <HudResourceChip
                   tone={proStatus?.active ? "pro" : "default"}
                   size="compact"
                   atmosphere="adventure"
-                  imageIconSrc={
-                    proStatus?.active
-                      ? "/art/screen-mission/corona-pro.png"
-                      : "/art/screen-mission/account-icon.png"
-                  }
+                  imageIconSrc="/art/screen-mission/account-icon.png"
                   value={tStatus("accountChipLabel")}
                   ariaLabel={
                     proStatus?.active

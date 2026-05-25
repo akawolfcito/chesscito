@@ -1761,8 +1761,6 @@ export const GLOBAL_STATUS_BAR_COPY = {
   backLabel: "Back to hub",
   accountLabel: "Open account",
   accountChipLabel: "Account",
-  accountConnectLabel: "Connect",
-  accountConnectAriaLabel: "Connect wallet",
 } as const;
 
 export const ACCOUNT_SHEET_COPY = {

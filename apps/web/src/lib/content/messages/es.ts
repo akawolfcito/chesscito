@@ -219,8 +219,6 @@ const messages = {
     backLabel: "Volver al hub",
     accountLabel: "Abrir cuenta",
     accountChipLabel: "Cuenta",
-    accountConnectLabel: "Conectar",
-    accountConnectAriaLabel: "Conectar wallet",
   },
   ACCOUNT_SHEET_COPY: {
     title: "Cuenta",
