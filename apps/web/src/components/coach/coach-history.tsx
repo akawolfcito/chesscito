@@ -5,9 +5,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { ARENA_COPY } from "@/lib/content/editorial";
+import { BoardThumbnail } from "@/components/board/board-thumbnail";
 import { CandyChip } from "@/components/redesign/candy-chip";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { track } from "@/lib/telemetry";
+import { movesToFen } from "@/lib/game/moves-to-fen";
 import {
   parseAnalyzedHistory,
   parseUnanalyzedGames,
@@ -80,6 +82,9 @@ function LatestReviewCard({
       : entry.response.tips[0] ?? entry.response.summary;
   const typeLabel = entry.response.kind === "full" ? t("full") : t("quick");
   const result = resultLabel(entry.game.result, t);
+  // Reconstruct the final position from the persisted move list.
+  // Null FEN (no moves / corrupt record) gracefully omits the thumb.
+  const finalFen = movesToFen(entry.game.moves);
 
   return (
     <button
@@ -104,16 +109,26 @@ function LatestReviewCard({
         <span className="tj-latest-card-open-label">{t("latestReviewCard.openLabel")}</span>
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        <CandyChip variant={resultVariant(entry.game.result)} tone="subtle">
-          {result}
-        </CandyChip>
-        <CandyChip variant="warm" tone="subtle">{diffLabel}</CandyChip>
-        <CandyChip variant="warm" tone="subtle">{entry.game.totalMoves} moves</CandyChip>
-        <CandyChip variant="warm" tone="solid">{typeLabel}</CandyChip>
+      <div className="mt-2 flex items-start gap-3">
+        {finalFen && (
+          <BoardThumbnail
+            fen={finalFen}
+            size={96}
+            ariaLabel={`Final position — ${result}, ${diffLabel}`}
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap gap-1.5">
+            <CandyChip variant={resultVariant(entry.game.result)} tone="subtle">
+              {result}
+            </CandyChip>
+            <CandyChip variant="warm" tone="subtle">{diffLabel}</CandyChip>
+            <CandyChip variant="warm" tone="subtle">{entry.game.totalMoves} moves</CandyChip>
+            <CandyChip variant="warm" tone="solid">{typeLabel}</CandyChip>
+          </div>
+          <p className="tj-latest-card-takeaway">{topTakeaway}</p>
+        </div>
       </div>
-
-      <p className="tj-latest-card-takeaway">{topTakeaway}</p>
     </button>
   );
 }
@@ -132,6 +147,7 @@ function OlderReviewRow({
     entry.game.difficulty;
   const typeLabel = entry.response.kind === "full" ? t("full") : t("quick");
   const result = resultLabel(entry.game.result, t);
+  const finalFen = movesToFen(entry.game.moves);
 
   return (
     <button
@@ -147,10 +163,14 @@ function OlderReviewRow({
       })}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <CandyIcon
-          name={entry.game.result === "win" ? "trophy" : "close"}
-          className="h-3.5 w-3.5 shrink-0 opacity-75"
-        />
+        {finalFen ? (
+          <BoardThumbnail fen={finalFen} size={36} ariaLabel="" />
+        ) : (
+          <CandyIcon
+            name={entry.game.result === "win" ? "trophy" : "close"}
+            className="h-3.5 w-3.5 shrink-0 opacity-75"
+          />
+        )}
         <span className="tj-older-row-label truncate">
           {result} · {diffLabel} · {entry.game.totalMoves} moves
         </span>
@@ -184,6 +204,7 @@ function UnanalyzedReviewRow({
     difficulty: diffLabel,
     result,
   });
+  const finalFen = movesToFen(entry.game.moves);
 
   return (
     <button
@@ -194,7 +215,11 @@ function UnanalyzedReviewRow({
       className="tj-older-row w-full text-left"
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <CandyIcon name="time" className="h-3.5 w-3.5 shrink-0 opacity-75" />
+        {finalFen ? (
+          <BoardThumbnail fen={finalFen} size={36} ariaLabel="" />
+        ) : (
+          <CandyIcon name="time" className="h-3.5 w-3.5 shrink-0 opacity-75" />
+        )}
         <span className="tj-older-row-label truncate">
           {tEntry("historyMatchLabel")} · {diffLabel} · {result} · {relative}
         </span>
