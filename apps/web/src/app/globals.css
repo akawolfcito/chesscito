@@ -8575,6 +8575,60 @@ button.hud-resource-chip:active:not(:disabled) {
     0 2px 4px rgba(20, 83, 45, 0.30);
 }
 
+/* Ghost "more coming" placeholder — a roadmap card at the tail of
+   the catalog list. Dashed border + lower opacity + no bg texture
+   set it apart from the live tiles so users read it as "wishlist /
+   coming soon" instead of "broken item". Centered glyph + 2-line
+   text bands sized smaller than the real cards so it doesn't
+   compete for the buy intent. */
+.shop-item-tile-coming {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1.5px dashed rgba(110, 65, 15, 0.45);
+  background: rgba(255, 255, 255, 0.10);
+  color: rgba(63, 34, 8, 0.78);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+}
+
+.shop-item-tile-coming-glyph {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.30);
+  border: 1px solid rgba(110, 65, 15, 0.30);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: rgba(110, 65, 15, 0.78);
+}
+
+.shop-item-tile-coming-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shop-item-tile-coming-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.005em;
+  color: rgba(63, 34, 8, 0.92);
+}
+
+.shop-item-tile-coming-hint {
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(63, 34, 8, 0.64);
+}
+
 /* Yellow tint — CELO route. Sunny amber gradient that pops against
    the orange Founder tile bg, paired with dark-brown ink so the
    "Pay with CELO" label stays legible (white-on-yellow doesn't).

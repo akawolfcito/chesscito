@@ -283,6 +283,32 @@ export function ShopSheet({
               onSelectItem={onSelectItem}
             />
           ))}
+
+          {/* Ghost "more coming" placeholder — closes the visual gap
+           *  between the last live tile and the bottom of the sheet
+           *  with INTENT instead of accidental whitespace. Dashed
+           *  outline + muted tones telegraph "in development, not
+           *  yet available", so users read it as a roadmap promise
+           *  rather than a broken/disabled SKU. Renders only when
+           *  the live catalog has at least one item (no point
+           *  promising more if nothing is configured). */}
+          {items.length > 0 && (
+            <div
+              className="shop-item-tile-coming"
+              role="presentation"
+              aria-hidden="true"
+            >
+              <span className="shop-item-tile-coming-glyph">✦</span>
+              <div className="shop-item-tile-coming-text">
+                <p className="shop-item-tile-coming-title">
+                  {t("moreSoonTitle")}
+                </p>
+                <p className="shop-item-tile-coming-hint">
+                  {t("moreSoonHint")}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
