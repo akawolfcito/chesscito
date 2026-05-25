@@ -10,6 +10,7 @@ import { PlayerAvatar } from "@/components/redesign/player-avatar";
 import { WoodenBanner } from "@/components/redesign/wooden-banner";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { formatTime } from "@/lib/game/arena-utils";
+import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 
 type Props = {
   isThinking: boolean;
@@ -148,6 +149,7 @@ export function ArenaHud({
 }: Props) {
   const t = useTranslations("ARENA_COPY");
   const needsBackConfirm = !isEndState;
+  const isProActive = useIsProActive();
 
   return (
     <div className="arena-hud flex flex-col gap-4">
@@ -173,7 +175,11 @@ export function ArenaHud({
       {/* Row 2: Matchup art (Heads) — Symmetric Battle Header */}
       <div className="arena-hud-matchup relative flex items-center justify-between px-2 pt-2">
         <div className="flex flex-1 justify-center">
-          <PlayerAvatar variant="you" className="h-24 w-24 drop-shadow-xl" />
+          <PlayerAvatar
+            variant="you"
+            pro={isProActive}
+            className="h-24 w-24 drop-shadow-xl"
+          />
         </div>
 
         <div className="flex shrink-0 flex-col items-center justify-center gap-2">
@@ -182,7 +188,11 @@ export function ArenaHud({
         </div>
 
         <div className="relative flex flex-1 justify-center">
-          <PlayerAvatar variant="bot" className="h-24 w-24 drop-shadow-xl" />
+          <PlayerAvatar
+            variant="bot"
+            pro={isProActive}
+            className="h-24 w-24 drop-shadow-xl"
+          />
           {isThinking && (
             <span className="pointer-events-none absolute -top-2 -right-2 flex h-8 w-12">
               <LottieAnimation

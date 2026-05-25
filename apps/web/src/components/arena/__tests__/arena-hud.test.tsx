@@ -9,6 +9,14 @@ vi.mock("@/components/ui/lottie-animation", () => ({
   LottieAnimation: () => null,
 }));
 
+// `useIsProActive` reaches into wagmi (`useAccount` → `useConfig`), which
+// requires a WagmiProvider that this test file doesn't set up. Stub the
+// hook to a static `false` — these tests cover the coach-hint signpost,
+// not the PRO ornament frame, so the gate value doesn't affect them.
+vi.mock("@/lib/pro/use-is-pro-active", () => ({
+  useIsProActive: () => false,
+}));
+
 import { ArenaHud } from "../arena-hud";
 import { ARENA_COPY } from "@/lib/content/editorial";
 

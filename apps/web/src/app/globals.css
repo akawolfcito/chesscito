@@ -3424,6 +3424,54 @@
     drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) drop-shadow(0 0 8px rgba(251, 191, 36, 0.35));
 }
 
+/* PRO ornament frame around player + bot avatars in /arena. Marco
+ * asset is roughly square with a decorative gem + leaves below the
+ * inner cutout — composed as two layers:
+ *   1. `.player-card-pro-frame`: the marco itself, scaled 145% of the
+ *      avatar container so its inner cutout is wider than the avatar.
+ *   2. `.player-card-img` (when parent has `.player-card--pro`):
+ *      scaled down so the avatar sits comfortably inside the cutout
+ *      without its edges clipping against the frame's interior curve.
+ * Drop shadow already applied to `.player-card` carries through. */
+.player-card--pro {
+  position: relative;
+}
+
+.player-card-pro-frame {
+  position: absolute;
+  /* Marco is sized so its interior cutout (~60% of outer w) is
+   * slightly LARGER than the avatar at its target scale (0.88 →
+   * ~88% of parent). That gives the avatar a hairline of breathing
+   * room inside the frame without the avatar's own square edges
+   * leaking past the cutout's curved border. */
+  width: 152%;
+  height: auto;
+  top: 50%;
+  left: 50%;
+  /* The marco's interior cutout sits at ~42% of the asset's height
+   * (above the bottom gem/leaves decoration). With width 152% +
+   * native ~1:1.05 aspect → marco height ≈ 160% of parent. To align
+   * the cutout's center with the avatar's center (50% of parent),
+   * marco_top = avatar_center_y − 0.42 × marco_height
+   *           = 50% − 0.42 × 160% = −17% of parent_h.
+   * Expressed as `top: 50%` anchor + translate(-Y), we need
+   *   marco_top = 50% − Y × marco_height
+   * solving for Y: Y = (50% − (−17%)) / 160% ≈ 42%. */
+  transform: translate(-50%, -42%);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* The avatar is wrapped, not replaced — shrink it just enough so its
+ * square edges (the rounded blue/red badge art) sit inside the marco's
+ * interior cutout. Default transform-origin (50% 50%) keeps the avatar's
+ * center pinned to the parent's center, which now matches the marco's
+ * cutout center (computed in the rule above). */
+.player-card--pro .player-card-img {
+  transform: scale(0.88);
+}
+
 .arena-hud-chess-banner {
   flex: 1 1 0;
   min-width: 0;
