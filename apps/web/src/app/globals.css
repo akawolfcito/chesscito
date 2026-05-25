@@ -5387,10 +5387,12 @@ button.hud-resource-chip:active:not(:disabled) {
   position: relative;
   overflow: visible;
   /* Tight horizontal padding — the icon lives OUTSIDE the pill now
-   * (large negative `left` below), so the chip only reserves a tiny
+   * (large negative `left` below), so the chip only reserves a small
    * leading offset so the value glyph doesn't sit flush against the
-   * pill's rounded inner edge. */
-  padding-left: 0.85rem;
+   * pill's rounded inner edge. The leading value (1.05rem) gives
+   * dense raster icons (account-icon.png shield art) enough breathing
+   * room without pushing the wallet/CandyIcon variants out of balance. */
+  padding-left: 1.05rem;
   padding-right: 0.9rem;
   /* Push the button to the right so the icon's negative overhang
    * still falls inside the HUD frame (top-row padding is 8px, the
