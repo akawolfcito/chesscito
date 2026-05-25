@@ -1,46 +1,52 @@
 "use client";
 
 type Props = {
-  /** PRO subscription state. When active, the badge renders the
-   *  days-remaining count below the "PRO" tag in large type. When
-   *  inactive, only the "PRO" tag renders — the badge becomes the
-   *  promotional discovery CTA at the top-right corner. */
+  /** PRO subscription state. Both variants render the SAME panel
+   *  art (purple frame + crown from `panel-pro.png`) — only the
+   *  layered sub-text below the "PRO" title swaps:
+   *    - inactive: short promotional kicker ("Unlock the full
+   *      experience"-style, supplied by `sublineInactive`).
+   *    - active:   the days-remaining label in large type so the
+   *      remaining-time value is legible at a glance. */
   active: boolean;
   daysRemaining?: number;
   /** Accessible name — supplied by the parent so the copy stays in
    *  editorial.ts (HUD_COPY.proAriaLabel / proInactiveAriaLabel). */
   ariaLabel: string;
-  /** Suffix to render under the "PRO" line when `active === true`
-   *  (e.g. "7d"). Parent formats via `HUD_COPY.proRemainingFormat`
-   *  so the locale rule lives in editorial, not here. */
+  /** Formatted days suffix for the active state (e.g. "7d"). Parent
+   *  derives via `HUD_COPY.proRemainingFormat`. */
   daysLabel?: string;
+  /** Inactive-state promo subline. Parent supplies via
+   *  `HUB_ACTION_RAIL_COPY.proDiscoverySubtitle` so the copy stays in
+   *  editorial. */
+  sublineInactive?: string;
   onClick?: () => void;
 };
 
 /**
- * Top-right Hub badge for the PRO entry point. Replaces both:
- *  - the inline `<HudResourceChip tone="pro">` (which collapsed to
- *    `null` when inactive, leaving the corner empty), and
- *  - the wide `<HubProDiscoveryPanel>` that sat above the right-rail
- *    action tiles (Daily / Mate / Coach).
+ * Top-right Hub PRO entry point — same purple panel art (`panel-pro.png`,
+ * frame + crown) the old wide right-rail discovery panel used, just
+ * rendered at HUD-corner scale. The art stays consistent across states
+ * so PRO is recognizable; only the sub-text below the "PRO" title
+ * swaps between the inactive promo kicker and the active days-remaining
+ * count.
  *
- * Two visual variants, same component contract:
- *   1. `active === false` → compact single-line "PRO" pill, amber.
- *   2. `active === true`  → stacked 2-line badge — "PRO" / "Xd"
- *      with the days count rendered in large type so the value is
- *      legible at a glance.
+ * Replaces:
+ *   - the inline `<HudResourceChip tone="pro">` in the HUD top row
+ *     (collapsed to null when inactive, leaving the corner empty), and
+ *   - the wide `<HubProDiscoveryPanel>` above the right-rail action
+ *     tiles (Daily / Mate / Coach).
  *
- * Stays on the right edge of the HUD top row via the
- * `.hub-scaffold-hud-right` flex group (see `globals.css`). The
- * promotional discovery copy from the old wide panel ("Unlock the
- * full experience") moves into the badge's tooltip / aria-label —
- * the corner real estate doesn't fit a sub-line cleanly.
+ * Both variants render as a single tappable surface (button) when
+ * `onClick` is wired; otherwise it renders as a non-interactive
+ * `role="status"` element.
  */
 export function HubProBadge({
   active,
   daysRemaining,
   ariaLabel,
   daysLabel,
+  sublineInactive,
   onClick,
 }: Props) {
   const className = [
@@ -48,15 +54,23 @@ export function HubProBadge({
     active ? "hub-pro-badge--active" : "hub-pro-badge--inactive",
   ].join(" ");
 
-  const content = active ? (
+  const subline =
+    active && daysRemaining !== undefined && daysLabel
+      ? daysLabel
+      : sublineInactive;
+
+  const content = (
     <>
-      <span className="hub-pro-badge-tag">PRO</span>
-      {daysRemaining !== undefined && daysLabel && (
-        <span className="hub-pro-badge-days">{daysLabel}</span>
-      )}
+      <picture className="hub-pro-badge-bg" aria-hidden="true">
+        <source srcSet="/art/hub/panel-pro.avif" type="image/avif" />
+        <source srcSet="/art/hub/panel-pro.webp" type="image/webp" />
+        <img src="/art/hub/panel-pro.png" alt="" />
+      </picture>
+      <span className="hub-pro-badge-content" aria-hidden="true">
+        <span className="hub-pro-badge-title">PRO</span>
+        {subline && <span className="hub-pro-badge-sub">{subline}</span>}
+      </span>
     </>
-  ) : (
-    <span className="hub-pro-badge-tag">PRO</span>
   );
 
   if (onClick) {

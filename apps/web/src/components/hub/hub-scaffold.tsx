@@ -213,6 +213,7 @@ export function HubScaffold({
                     ? tHud("proRemainingFormat", { days: pro.daysRemaining })
                     : undefined
                 }
+                sublineInactive={tRail("proDiscoverySubtitle")}
                 ariaLabel={proAriaLabel}
                 onClick={onProTap}
               />,
