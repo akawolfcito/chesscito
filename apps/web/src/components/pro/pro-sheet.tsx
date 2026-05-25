@@ -209,7 +209,7 @@ export function ProSheet(props: ProSheetProps) {
          *  `showActiveBanner`. */}
         <div className="relative mx-auto flex w-full max-w-[var(--app-max-width)] flex-col overflow-y-auto overflow-x-visible overscroll-contain pt-[12%]">
           {/* Floating banner */}
-          <picture className="pointer-events-none absolute left-1/2 top-0 z-20 w-[78%] -translate-x-1/2">
+          <picture className="pointer-events-none absolute left-1/2 top-0 z-20 w-[62%] -translate-x-1/2">
             <source
               srcSet="/art/chesscito-pro/chesscito-header-pro-icon.avif"
               type="image/avif"
