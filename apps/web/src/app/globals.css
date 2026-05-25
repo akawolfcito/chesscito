@@ -5363,10 +5363,18 @@ button.hud-resource-chip:active:not(:disabled) {
    * below, the pill sizes purely to its text content. */
   position: relative;
   overflow: visible;
-  /* Reserve space inside the pill for the icon that's positioned
-   * absolutely. Without this the value glyph would slide flush
-   * against the left edge / pill border. */
-  padding-left: 2.5rem;
+  /* Tight horizontal padding — the icon lives OUTSIDE the pill now
+   * (large negative `left` below), so the chip only reserves a tiny
+   * leading offset so the value glyph doesn't sit flush against the
+   * pill's rounded inner edge. */
+  padding-left: 0.85rem;
+  padding-right: 0.9rem;
+  /* Push the button to the right so the icon's negative overhang
+   * still falls inside the HUD frame (top-row padding is 8px, the
+   * icon claims ~1.6rem of overhang). Same value applied to both
+   * left + right clusters — keeps the trophy and wallet chips
+   * spaced symmetrically from their respective edges. */
+  margin-left: 1.6rem;
   /* Tighten the vertical band — the default `.candy-tray-pill` rules
    * use 0.3rem y-padding + 38px min-height for tray rows; in the HUD
    * the chip just hugs its text, so ~2px (0.15rem) of breathing room
@@ -5376,18 +5384,18 @@ button.hud-resource-chip:active:not(:disabled) {
   min-height: 0;
 }
 
-/* HUD floating icon — pulled out of the flex flow entirely so a
- * larger sprite can overflow the chip on top/bottom/left without
- * pushing the pill's height up. The chip stays sized to its text;
- * the icon reads as floating on the pill, escaping the pill's
- * rounded edge on the leading side. */
+/* HUD floating icon — pulled OUT of the chip entirely so the icon
+ * reads as the dominant element with the pill emerging to its right.
+ * The icon's right edge meets the chip's left rounded edge (~0.2rem
+ * overlap so they don't appear detached), and the chip flows from
+ * there with its text. */
 .hub-hud-pill .candy-tray-pill-icon--floating {
   position: absolute;
-  left: -0.1rem;
+  left: -1.6rem;
   top: 50%;
   transform: translateY(-50%);
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.6rem;
+  height: 2.6rem;
   margin: 0;
 }
 
