@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
+import {
+  renderWithIntl as render,
+  screen,
+  fireEvent,
+} from "@/test-utils/render-with-intl";
 import { CoachPanel } from "../coach-panel";
 import { COACH_COPY } from "@/lib/content/editorial";
 import type { CoachResponse } from "@/lib/coach/types";
@@ -86,5 +90,70 @@ describe("<CoachPanel> personalized-coaching subtitle", () => {
   it("does NOT render the subtitle when historyMeta is undefined", () => {
     render(<CoachPanel {...baseProps} proActive />);
     expect(screen.queryByText(COACH_COPY.historyBannerSubtitle)).toBeNull();
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────
+// Per-locale cache migration (2026-05-24)
+// ──────────────────────────────────────────────────────────────────────
+
+describe("<CoachPanel> locale badge (2026-05-24)", () => {
+  it("renders 'EN' badge when analysisLocale='en'", () => {
+    render(<CoachPanel {...baseProps} analysisLocale="en" />);
+    expect(screen.getByTestId("coach-analysis-locale-badge")).toHaveTextContent("EN");
+  });
+
+  it("renders 'ES' badge when analysisLocale='es'", () => {
+    render(<CoachPanel {...baseProps} analysisLocale="es" />, { locale: "es" });
+    expect(screen.getByTestId("coach-analysis-locale-badge")).toHaveTextContent("ES");
+  });
+
+  it("falls back to the active UI locale when analysisLocale is omitted (legacy record)", () => {
+    render(<CoachPanel {...baseProps} />);
+    // Default test locale is "en" — see render-with-intl.tsx.
+    expect(screen.getByTestId("coach-analysis-locale-badge")).toHaveTextContent("EN");
+  });
+
+  it("exposes an a11y aria-label naming the language", () => {
+    render(<CoachPanel {...baseProps} analysisLocale="en" />);
+    expect(screen.getByTestId("coach-analysis-locale-badge")).toHaveAttribute(
+      "aria-label",
+      expect.stringMatching(/Analysis language: EN/),
+    );
+  });
+});
+
+describe("<CoachPanel> reanalyze CTA (2026-05-24)", () => {
+  it("does NOT render the CTA when onReanalyze is undefined", () => {
+    render(<CoachPanel {...baseProps} />);
+    expect(screen.queryByTestId("coach-reanalyze-cta")).toBeNull();
+  });
+
+  it("renders the CTA when onReanalyze is provided", () => {
+    const onReanalyze = vi.fn().mockResolvedValue(undefined);
+    render(<CoachPanel {...baseProps} onReanalyze={onReanalyze} />);
+    expect(screen.getByTestId("coach-reanalyze-cta")).toHaveTextContent(/Reanalyze/i);
+  });
+
+  it("opens a confirm sheet before invoking onReanalyze (no accidental credit spend)", () => {
+    const onReanalyze = vi.fn().mockResolvedValue(undefined);
+    render(<CoachPanel {...baseProps} onReanalyze={onReanalyze} />);
+    fireEvent.click(screen.getByTestId("coach-reanalyze-cta"));
+    // The confirm dialog is open. The handler MUST NOT have fired yet.
+    expect(onReanalyze).not.toHaveBeenCalled();
+    expect(screen.getByText(COACH_COPY.reanalyze.confirmTitle)).toBeInTheDocument();
+  });
+
+  it("disables the CTA + relabels while isReanalyzing", () => {
+    render(
+      <CoachPanel
+        {...baseProps}
+        onReanalyze={vi.fn().mockResolvedValue(undefined)}
+        isReanalyzing
+      />,
+    );
+    const cta = screen.getByTestId("coach-reanalyze-cta");
+    expect(cta).toBeDisabled();
+    expect(cta).toHaveTextContent(COACH_COPY.reanalyze.inFlightLabel);
   });
 });
