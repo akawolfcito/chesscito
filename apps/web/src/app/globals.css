@@ -5382,6 +5382,11 @@ button.hud-resource-chip:active:not(:disabled) {
   padding-top: 0.15rem;
   padding-bottom: 0.15rem;
   min-height: 0;
+  /* Floor for the chip's body width so single-digit values (e.g.
+   * "0" trophies) don't shrink to a tiny stub next to a 2.6rem icon.
+   * The wallet/Connect chip sets its own width via the longer label;
+   * this guarantees parity for short-value chips. */
+  min-width: 3.25rem;
 }
 
 /* HUD floating icon — pulled OUT of the chip entirely so the icon
