@@ -85,14 +85,17 @@ describe("ArenaSelectScaffold", () => {
     expect(screen.queryByRole("button", { name: /Back to Hub/i })).toBeNull();
   });
 
-  it("renders the soft-gate banner when softGate prop is provided", () => {
+  it("renders the soft-gate modal when softGate prop is provided", () => {
     render(
       <ArenaSelectScaffold
         {...baseProps}
         softGate={{ onLearn: vi.fn(), onDismiss: vi.fn() }}
       />,
     );
-    expect(screen.getByText(/Want a warm-up first/i)).toBeInTheDocument();
+    // Sheet renders the title twice — once sr-only (Radix Dialog
+    // a11y) and once as the visible <h2>. Both reflect the same
+    // editorial copy, so assert at least one match.
+    expect(screen.getAllByText(/Want a warm-up first/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("button", { name: SOFT_LEARN })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: SOFT_ENTER })).toBeInTheDocument();
   });

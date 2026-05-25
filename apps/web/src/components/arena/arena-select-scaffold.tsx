@@ -8,6 +8,7 @@ import { CandyIcon } from '@/components/redesign/candy-icon'
 import { PrimitiveBoundary } from '@/components/error/primitive-boundary'
 import { PrimaryPlayCta } from '@/components/kingdom/primary-play-cta'
 import { MissionRibbon } from '@/components/pro-mission/mission-ribbon'
+import { SoftGateSheet } from '@/components/arena/soft-gate-sheet'
 import type { ArenaDifficulty } from '@/lib/game/types'
 import type { PlayerColor } from '@/lib/game/use-chess-game'
 
@@ -138,36 +139,7 @@ export function ArenaSelectScaffold({
       </header>
 
       <section className="arena-scaffold-body">
-        {softGate ? (
-          <div
-            role="region"
-            aria-label={t('softGateRegionLabel')}
-            className="arena-scaffold-soft-gate"
-          >
-            <p className="arena-scaffold-soft-gate-title">
-              {t('softGateTitle')}
-            </p>
-            <p className="arena-scaffold-soft-gate-body">
-              {t('softGateBody')}
-            </p>
-            <div className="arena-scaffold-soft-gate-actions">
-              <button
-                type="button"
-                onClick={softGate.onLearn}
-                className="arena-scaffold-soft-gate-primary"
-              >
-                {t('softGateLearn')}
-              </button>
-              <button
-                type="button"
-                onClick={softGate.onDismiss}
-                className="arena-scaffold-soft-gate-secondary"
-              >
-                {t('softGateEnter')}
-              </button>
-            </div>
-          </div>
-        ) : null}
+        <SoftGateSheet softGate={softGate} />
 
         {prizePool ? (
           <div
