@@ -5431,7 +5431,11 @@ button.hud-resource-chip:active:not(:disabled) {
  * the candy-tray-pill icon family in `/exercises`. */
 .hub-hud-pill {
   width: auto;
-  border: 0;
+  /* `.candy-tray-pill` defines a `1px solid rgba(180, 120, 35, 0.45)`
+   * warm-brown outline — keep it so the HUD chips match the
+   * piece-picker pill in /exercises (and any other tray surfaces
+   * the design system shares). Earlier override stripped it; that
+   * regressed parity. */
   cursor: pointer;
   /* Allow the floating icon to escape the chip's bounding box without
    * growing the chip. Combined with the absolute-positioned icon
