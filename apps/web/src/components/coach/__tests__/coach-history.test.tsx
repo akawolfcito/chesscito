@@ -131,3 +131,63 @@ describe("<CoachHistory> — a11y landmark (Cluster E defer #5)", () => {
     });
   });
 });
+
+describe("<CoachHistory> — locale-aware fetch (2026-05-24)", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("passes the active locale as ?locale= so ES users see their ES analyses", async () => {
+    const fetchSpy = vi.fn(async (url: string) => ({
+      ok: true,
+      json: async () => [],
+    })) as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
+
+    render(
+      <CoachHistory
+        walletAddress={VALID_WALLET}
+        credits={0}
+        onSelectEntry={noop}
+      />,
+      { locale: "es" },
+    );
+
+    await waitFor(() => {
+      const historyCall = (fetchSpy as unknown as { mock: { calls: string[][] } }).mock.calls.find(
+        (args) => typeof args[0] === "string" && args[0].includes("/api/coach/history"),
+      );
+      expect(historyCall).toBeDefined();
+      expect(historyCall![0]).toContain(`wallet=${VALID_WALLET}`);
+      expect(historyCall![0]).toContain("locale=es");
+    });
+  });
+
+  it("defaults to ?locale=en when the active UI locale is EN", async () => {
+    const fetchSpy = vi.fn(async (url: string) => ({
+      ok: true,
+      json: async () => [],
+    })) as unknown as typeof fetch;
+    globalThis.fetch = fetchSpy;
+
+    render(
+      <CoachHistory
+        walletAddress={VALID_WALLET}
+        credits={0}
+        onSelectEntry={noop}
+      />,
+    );
+
+    await waitFor(() => {
+      const historyCall = (fetchSpy as unknown as { mock: { calls: string[][] } }).mock.calls.find(
+        (args) => typeof args[0] === "string" && args[0].includes("/api/coach/history"),
+      );
+      expect(historyCall).toBeDefined();
+      expect(historyCall![0]).toContain("locale=en");
+    });
+  });
+});

@@ -2,7 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { CandyChip } from "@/components/redesign/candy-chip";
@@ -276,6 +276,7 @@ export function CoachHistory({
   onAnalyzeUnanalyzed,
 }: Props) {
   const tCoach = useTranslations("COACH_COPY");
+  const activeLocale = useLocale() as "en" | "es";
   const [analyzed, setAnalyzed] = useState<AnalyzedEntry[]>([]);
   const [unanalyzed, setUnanalyzed] = useState<UnanalyzedEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -283,8 +284,13 @@ export function CoachHistory({
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    // Thread the active locale through so the server's per-locale
+    // fallback chain picks the ES record for ES users (instead of
+    // defaulting to EN, where ES-only analyses go missing). The server
+    // already accepts this param; this caller closes the loop. See
+    // `getCachedAnalysisWithFallback()` for the read order.
     Promise.all([
-      fetch(`/api/coach/history?wallet=${walletAddress}`)
+      fetch(`/api/coach/history?wallet=${walletAddress}&locale=${activeLocale}`)
         .then((r) => r.json())
         .catch(() => []),
       fetch(`/api/games?wallet=${walletAddress}`)
@@ -310,7 +316,7 @@ export function CoachHistory({
     return () => {
       cancelled = true;
     };
-  }, [walletAddress]);
+  }, [walletAddress, activeLocale]);
 
   // Telemetry — fire exactly once per mount with the unanalyzed bucket
   // size. Spec §2.4.10: `coach_history_unanalyzed_view{count}`. The ref
