@@ -12,7 +12,10 @@ import { routing } from "@/i18n/routing"
 
 const fredoka = Fredoka({
   subsets: ['latin'],
-  weight: '700',
+  // Load both regular + bold cuts. 400 is needed for the kingdom-anchor
+  // tagline lead — without it the browser falls back to the only loaded
+  // weight (700) and the lead reads as bold against the bold closer.
+  weight: ['400', '700'],
   variable: '--font-fredoka',
   display: 'swap',
 });
