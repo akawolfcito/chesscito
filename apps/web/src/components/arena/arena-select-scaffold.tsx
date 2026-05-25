@@ -37,9 +37,9 @@ const DIFFICULTY_CARD: Record<
     score: string
   }
 > = {
-  easy: { piece: 'pawn', score: '0 - 800' },
-  medium: { piece: 'knight', score: '800 - 1500' },
-  hard: { piece: 'bishop', score: '1500 - 2200' },
+  easy: { piece: 'pawn', score: '0 - 800 ELO' },
+  medium: { piece: 'knight', score: '801 - 1500 ELO' },
+  hard: { piece: 'bishop', score: '1501 - 2200 ELO' },
 }
 
 const DIFFICULTY_ORDER: ArenaDifficulty[] = ['easy', 'medium', 'hard']

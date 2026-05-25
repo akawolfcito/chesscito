@@ -6866,7 +6866,10 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(74, 43, 17, 0.62);
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-size: 0.68rem;
-  font-weight: 900;
+  /* Light base — matches the difficulty-score row's lighter
+   * register. The strong-tag inside the copy carries the visual
+   * weight (semi-bold) so "White" / "Black" still pops. */
+  font-weight: 400;
   cursor: pointer;
   transition: background 140ms ease, color 140ms ease, transform 120ms ease;
   /* No box-shadow on the resting state — the track carries the
