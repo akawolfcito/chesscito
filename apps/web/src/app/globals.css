@@ -5409,9 +5409,9 @@ button.hud-resource-chip:active:not(:disabled) {
  * emerges from the icon" instead of being a separate element next
  * to it. Used by the trophy chip on the left HUD cluster. */
 .hub-hud-pill--anchored-left {
-  /* Half the previous overhang — the chip starts inside the icon's
-   * mid-line instead of past its trailing edge. */
-  margin-left: 0.8rem;
+  /* Chip starts EXACTLY at the icon's midpoint — the icon's right
+   * half overlaps the chip's left edge. */
+  margin-left: 0.3rem;
   /* Square left corners so the chip looks like a tab sliding out of
    * the icon rather than a pill sitting next to it. */
   border-top-left-radius: 0;
@@ -5422,10 +5422,10 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .hub-hud-pill--anchored-left .candy-tray-pill-icon--floating {
-  /* Re-anchor the icon in absolute terms — the chip moved 0.8rem
-   * to the right, so the icon's `left` shifts by the same amount
-   * to keep its on-screen position constant. */
-  left: -0.8rem;
+  /* Re-anchor the icon: `-1.3rem` is half its width (2.6rem / 2), so
+   * its center sits exactly on the chip's left edge — half outside,
+   * half overlapping. */
+  left: -1.3rem;
 }
 
 .hub-scaffold-hud-right {
