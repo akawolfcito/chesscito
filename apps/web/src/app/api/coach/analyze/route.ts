@@ -12,6 +12,7 @@ import { aggregateHistory } from "@/lib/coach/history-digest";
 import { backfillRedisToSupabase } from "@/lib/coach/backfill";
 import { persistAnalysis } from "@/lib/coach/persistence";
 import { UUID_RE } from "@/lib/coach/game-persistence";
+import { ANALYSIS_LIST_LPUSH_LUA } from "@/lib/coach/analysis-list-write";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type { GameRecord, CoachAnalysisRecord, PlayerSummary, HistoryDigest } from "@/lib/coach/types";
@@ -273,7 +274,15 @@ export async function POST(req: Request) {
           analysisRecord,
           { ex: 30 * 24 * 60 * 60 },
         ),
-        redis.lpush(REDIS_KEYS.analysisList(wallet), gameId),
+        // 2026-05-24: atomic LPOS-then-LPUSH so an EN-then-ES analyze
+        // cycle on the same gameId no longer duplicates the entry on
+        // `coach:analyses:<wallet>`. Closes deferred #1 from the
+        // per-locale cache migration handoff.
+        redis.eval(
+          ANALYSIS_LIST_LPUSH_LUA,
+          [REDIS_KEYS.analysisList(wallet)],
+          [gameId],
+        ),
         ...(proStatus.active ? [] : [redis.decr(REDIS_KEYS.credits(wallet))]),
         redis.set(REDIS_KEYS.job(jobId), { status: "ready", response: normalized.data }, { ex: 30 * 24 * 60 * 60 }),
         redis.del(REDIS_KEYS.pendingJob(wallet)),
