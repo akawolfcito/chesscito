@@ -14,27 +14,27 @@ type Props = {
 
 /** Hub right-rail Special Training tile. Renders as a
  *  `.reward-tile.is-locked` (matches LEARN structure) and opens the
- *  MiniArenaSheet when unlocked. Locked variant disables interaction
- *  so players see the upcoming reward without dead-ending. */
+ *  MiniArenaSheet when unlocked. Pre-unlock the tile is HIDDEN
+ *  entirely — players reported the previous "visible but disabled"
+ *  state as a dead tap on first visit with no affordance explaining
+ *  why. Hiding until the rook-mastery threshold (12 stars) lights
+ *  it up tracks the same "show after interaction" model the rest
+ *  of the action rail uses. */
 export function HubArenaTile({ setup, unlocked }: Props) {
   const t = useTranslations("HUB_ACTION_RAIL_COPY");
   const [open, setOpen] = useState(false);
-  const ariaLabel = unlocked
-    ? t("arenaUnlockedAriaFormat", { name: setup.name })
-    : t("arenaLockedAriaFormat", { name: setup.name });
+
+  if (!unlocked) return null;
 
   return (
     <>
       <HubActionTile
         iconSrc="/art/new-icons-chesscito/play-chess.png"
         label={t("mateLabel")}
-        ariaLabel={ariaLabel}
-        onClick={() => unlocked && setOpen(true)}
-        disabled={!unlocked}
+        ariaLabel={t("arenaUnlockedAriaFormat", { name: setup.name })}
+        onClick={() => setOpen(true)}
       />
-      {unlocked ? (
-        <MiniArenaSheet open={open} onOpenChange={setOpen} setup={setup} />
-      ) : null}
+      <MiniArenaSheet open={open} onOpenChange={setOpen} setup={setup} />
     </>
   );
 }
