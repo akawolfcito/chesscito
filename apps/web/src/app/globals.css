@@ -3441,6 +3441,61 @@
   min-height: 4.75rem;
 }
 
+/* Resign + Undo — icon dominant, label below. The carved-art assets
+ * (`resign-game.png`, `undo-move.png`) carry the visual weight on
+ * their own; the previous circular plate read as noise around them.
+ * Pressed feedback is a subtle scale-down so the icon is the only
+ * thing the user looks at. */
+.arena-action-button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.arena-action-button:active:not(:disabled) {
+  transform: scale(0.93);
+}
+
+.arena-action-button:disabled {
+  opacity: 0.4;
+  filter: grayscale(0.6);
+  cursor: not-allowed;
+}
+
+.arena-action-button-icon {
+  display: block;
+  width: 3rem;
+  height: 3rem;
+  filter:
+    drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35))
+    drop-shadow(0 1px 0 rgba(110, 65, 15, 0.45));
+}
+
+.arena-action-button-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.arena-action-button-label {
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.45),
+    0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
 .arena-action-pill {
   position: relative;
   display: flex;
