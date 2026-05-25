@@ -186,7 +186,7 @@ export function HubScaffold({
               aria-label={tHud("trophiesAriaLabel", { count: trophies })}
               className="candy-tray-pill hub-hud-pill"
             >
-              <CandyIcon name="trophy" className="candy-tray-pill-icon" />
+              <CandyIcon name="trophy" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
               <span>{trophies}</span>
             </button>
           </div>
@@ -198,7 +198,7 @@ export function HubScaffold({
                 aria-label={tHud("connectAriaLabel")}
                 className="candy-tray-pill hub-hud-pill"
               >
-                <CandyIcon name="wallet" className="candy-tray-pill-icon" />
+                <CandyIcon name="wallet" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
                 <span>{tHud("connectLabel")}</span>
               </button>
             ) : null}
