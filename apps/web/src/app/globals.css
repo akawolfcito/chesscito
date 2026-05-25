@@ -3779,9 +3779,9 @@
  * `chesscito-pro-portal.png` (both share the same frame geometry). */
 .kingdom-anchor--playhub .kingdom-anchor-tagline {
   position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 3%;
+  left: 10%;
+  right: 10%;
+  bottom: 6%;
   display: flex;
   flex-direction: column;
   align-items: center;
