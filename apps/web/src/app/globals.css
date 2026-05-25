@@ -8479,6 +8479,15 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 40px !important;
   padding: 0 14px !important;
   font-size: 0.88rem !important;
+  /* The PrincipalButton asset ships with transparent padding around
+     the carved oval, so the default `background-size: contain` from
+     `.principal-button` leaves visible gaps on both sides. Stretch
+     the asset to the full bounding box here so the rendered pill
+     hugs the flex-end edge of the tile footer. The squish at this
+     compact size is imperceptible — the rule is scoped via the
+     `.shop-item-tile-buy-btn` class so the default sweet-spot
+     contain mode is preserved for every other PrincipalButton. */
+  background-size: 100% 100% !important;
 }
 
 /* CELO twin button — same PrincipalButton shape, recolored to yellow
