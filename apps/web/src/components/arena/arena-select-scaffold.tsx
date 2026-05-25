@@ -248,7 +248,7 @@ export function ArenaSelectScaffold({
               </picture>
               <span className="arena-scaffold-color-copy">
                 <span>{t('playAsPrefix')}</span>
-                <strong>{colorNames[c]}</strong>
+                <span>{colorNames[c]}</span>
               </span>
             </button>
           ))}
