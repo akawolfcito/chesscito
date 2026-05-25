@@ -256,32 +256,35 @@ describe("HubScaffoldClient — PRO chip", () => {
   });
 });
 
-describe("HubScaffoldClient — PRO discovery panel", () => {
-  it("renders the PRO discovery panel on first paint when the subscription is inactive", () => {
+describe("HubScaffoldClient — PRO badge (top-right corner)", () => {
+  it("renders the inactive PRO badge in the top-right HUD on first paint", () => {
     render(<HubScaffoldClient />);
 
-    const panel = screen.getByLabelText(
-      /Unlock PRO — full experience\./,
-    );
-    expect(panel).toBeInTheDocument();
+    // Inactive aria copy lives at HUD_COPY.proInactiveAriaLabel.
+    const badge = screen.getByLabelText(/PRO inactive — tap to learn more/);
+    expect(badge).toBeInTheDocument();
+    // Badge IS the entry point now (the wide discovery panel was
+    // retired 2026-05-24); it sits in the right HUD cluster.
+    expect(badge.closest(".hub-scaffold-hud-right")).not.toBeNull();
   });
 
-  it("opens ProSheet when the discovery panel is tapped (inactive)", async () => {
+  it("opens ProSheet when the inactive badge is tapped", async () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
-    const panel = screen.getByLabelText(
-      /Unlock PRO — full experience\./,
-    );
-    await user.click(panel);
+    const badge = screen.getByLabelText(/PRO inactive — tap to learn more/);
+    await user.click(badge);
 
     expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
-    expect(trackMock).toHaveBeenCalledWith("hub_pro_tile_tap", {
+    // The tap fires the canonical hub_pro_chip_tap event — the PRO
+    // badge replaces both the legacy HudResourceChip "pro" and the
+    // wide discovery panel, so we keep the single chip-tap dimension.
+    expect(trackMock).toHaveBeenCalledWith("hub_pro_chip_tap", {
       pro_active: false,
     });
   });
 
-  it("unmounts the discovery panel when PRO is active (HUD chip is the only recognition surface)", () => {
+  it("renders the badge with days remaining when PRO is active (no unmount)", () => {
     useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
     useProStatusMock.mockReturnValue({
       status: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
@@ -291,18 +294,16 @@ describe("HubScaffoldClient — PRO discovery panel", () => {
 
     render(<HubScaffoldClient />);
 
-    // Panel hides when active — avoids duplicating recognition with the
-    // HUD chip ("PRO 7d"), which stays as the canonical active-state cue.
-    expect(
-      screen.queryByLabelText(
-        /Unlock PRO — full experience\./,
-      ),
-    ).not.toBeInTheDocument();
-    // HUD chip continues to surface the active days remaining.
+    // Active state keeps the badge mounted — the days-remaining count
+    // is the whole point of the top-right corner now.
     expect(
       screen.queryByLabelText(/PRO active, 7 days remaining/) ??
         screen.queryByLabelText(/PRO active, 8 days remaining/),
     ).not.toBeNull();
+    // No legacy "Unlock PRO — full experience" wide panel anywhere.
+    expect(
+      screen.queryByLabelText(/Unlock PRO — full experience\./),
+    ).not.toBeInTheDocument();
   });
 });
 

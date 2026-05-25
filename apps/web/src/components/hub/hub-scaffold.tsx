@@ -12,6 +12,7 @@ import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubArenaTile } from "@/components/hub/hub-arena-tile";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
+import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
@@ -156,9 +157,6 @@ export function HubScaffold({
   const tSecondary = useTranslations("SECONDARY_CTA_COPY");
   const tScaffold = useTranslations("HUB_SCAFFOLD_COPY");
   const tRailLabels = useTranslations("HUB_RAIL_COPY");
-  const proValue = pro.active
-    ? `PRO ${tHud("proRemainingFormat", { days: pro.daysRemaining })}`
-    : null;
   const proAriaLabel = pro.active
     ? tHud("proAriaLabel", { days: pro.daysRemaining })
     : tHud("proInactiveAriaLabel");
@@ -181,37 +179,45 @@ export function HubScaffold({
     >
       <header className="hub-scaffold-hud">
         <div className="hub-scaffold-hud-top">
-          {wrap(
-            "HudResourceChip",
-            <HudResourceChip
-              tone="trophy"
-              value={trophies}
-              ariaLabel={tHud("trophiesAriaLabel", { count: trophies })}
-              onClick={onTrophyTap}
-            />,
-          )}
-          {wrap(
-            "HudResourceChip",
-            <HudResourceChip
-              tone="pro"
-              imageIconSrc="/art/screen-mission/corona-pro.png"
-              value={proValue}
-              ariaLabel={proAriaLabel}
-              onClick={onProTap}
-            />,
-          )}
-          {!isWalletConnected && onConnectTap
-            ? wrap(
-                "HudResourceChip",
-                <HudResourceChip
-                  tone="default"
-                  icon="wallet"
-                  value={tHud("connectLabel")}
-                  ariaLabel={tHud("connectAriaLabel")}
-                  onClick={onConnectTap}
-                />,
-              )
-            : null}
+          <div className="hub-scaffold-hud-left">
+            {wrap(
+              "HudResourceChip",
+              <HudResourceChip
+                tone="trophy"
+                value={trophies}
+                ariaLabel={tHud("trophiesAriaLabel", { count: trophies })}
+                onClick={onTrophyTap}
+              />,
+            )}
+          </div>
+          <div className="hub-scaffold-hud-right">
+            {!isWalletConnected && onConnectTap
+              ? wrap(
+                  "HudResourceChip",
+                  <HudResourceChip
+                    tone="default"
+                    icon="wallet"
+                    value={tHud("connectLabel")}
+                    ariaLabel={tHud("connectAriaLabel")}
+                    onClick={onConnectTap}
+                  />,
+                )
+              : null}
+            {wrap(
+              "HubProBadge",
+              <HubProBadge
+                active={pro.active}
+                daysRemaining={pro.active ? pro.daysRemaining : undefined}
+                daysLabel={
+                  pro.active
+                    ? tHud("proRemainingFormat", { days: pro.daysRemaining })
+                    : undefined
+                }
+                ariaLabel={proAriaLabel}
+                onClick={onProTap}
+              />,
+            )}
+          </div>
         </div>
         {wrap(
           "HudSecondaryRow",
@@ -306,31 +312,9 @@ export function HubScaffold({
               )}
             </>
           ) : null}
-          {onProTilePress && !pro.active
-            ? wrap(
-                "HubProDiscoveryPanel",
-                <button
-                  type="button"
-                  onClick={onProTilePress}
-                  aria-label={tRail("proDiscoveryAriaLabel")}
-                  className="hub-pro-discovery"
-                >
-                  <picture className="hub-pro-discovery-bg">
-                    <source srcSet="/art/hub/panel-pro.avif" type="image/avif" />
-                    <source srcSet="/art/hub/panel-pro.webp" type="image/webp" />
-                    <img src="/art/hub/panel-pro.png" alt="" aria-hidden="true" />
-                  </picture>
-                  <span className="hub-pro-discovery-content" aria-hidden="true">
-                    <span className="hub-pro-discovery-title">
-                      {tRail("proDiscoveryTitle")}
-                    </span>
-                    <span className="hub-pro-discovery-sub">
-                      {tRail("proDiscoverySubtitle")}
-                    </span>
-                  </span>
-                </button>,
-              )
-            : null}
+          {/* HubProDiscoveryPanel removed 2026-05-24 — the PRO entry
+           *  point now lives in the top-right HUD as <HubProBadge>.
+           *  See hub-scaffold-hud-right cluster above. */}
           {wrap(
             "HubActionRail",
             <div className="hub-action-rail">

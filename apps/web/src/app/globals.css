@@ -5349,6 +5349,83 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 8px;
 }
 
+/* Hub HUD top — left + right cluster wrappers. Group chips so the PRO
+ * badge sits flush against the right edge regardless of how many
+ * companion chips (wallet connect, etc.) render alongside it. */
+.hub-scaffold-hud-left,
+.hub-scaffold-hud-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hub-scaffold-hud-right {
+  justify-content: flex-end;
+}
+
+/* HubProBadge — top-right PRO entry point.
+ *
+ * Inactive: compact amber pill that reads as the promotional CTA.
+ * Active:   taller 2-line badge — "PRO" tag on top, days count
+ *           below in large type so the remaining-time value is
+ *           legible without leaning in. */
+.hub-pro-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  background: linear-gradient(180deg, #ffd866 0%, #f0a338 100%);
+  border-radius: 14px;
+  box-shadow:
+    0 2px 0 rgba(135, 82, 13, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.hub-pro-badge:active {
+  transform: scale(0.97);
+  box-shadow:
+    0 1px 0 rgba(135, 82, 13, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.hub-pro-badge--inactive {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  line-height: 1;
+  min-height: 36px;
+}
+
+.hub-pro-badge--active {
+  padding: 6px 14px;
+  min-height: 52px;
+  gap: 2px;
+}
+
+.hub-pro-badge-tag {
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.hub-pro-badge--active .hub-pro-badge-tag {
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.hub-pro-badge-days {
+  font-size: 1.05rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
 .hub-scaffold-body {
   display: grid;
   grid-template-columns: 78px minmax(0, 1fr) 78px;
