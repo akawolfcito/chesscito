@@ -8357,12 +8357,17 @@ button.hud-resource-chip:active:not(:disabled) {
 .shop-item-tile {
   position: relative;
   display: grid;
-  grid-template-columns: 96px 1fr;
+  grid-template-columns: 1fr;
   grid-template-rows: 1fr auto;
-  column-gap: 14px;
   row-gap: 10px;
   align-items: center;
-  padding: 14px;
+  /* Left padding reserves room for the absolutely-positioned icon
+     (110px = icon width 120px minus the ~10px we WANT to overhang
+     the card edge). The icon lives outside the grid flow, anchored
+     to the tile's left edge with a negative offset so it visually
+     "escapes" the card without fighting `overflow-x: clip` higher
+     up the tree. */
+  padding: 14px 14px 14px 108px;
   border-radius: 18px;
   background-color: rgba(40, 25, 15, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -8444,25 +8449,32 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
 }
 
-/* Full-bleed floating icon — bespoke art reads above the card scale.
-   Lives in the first grid column, spans both rows so it vertically
-   centers against the full tile height instead of the (shorter)
-   identity row. Anchored to the LEFT edge of its column so any
-   horizontal overflow falls OUTSIDE the tile (beyond the card's
-   left edge) instead of intruding into the identity text on the
-   right. Vertical negative margins let the figure overhang
-   top/bottom — matches the design spec ("si es flotante y que se
-   desborde de la card está bien"). */
+/* Floating icon — absolutely positioned out of the grid flow so it
+   can sit FLUSH against the card's left edge with a controlled
+   overhang. `left: -18px` pulls it 18px past the card edge into
+   the sheet padding zone; the figure is 120×120, so it visually
+   "escapes" the card with conviction without ever crowding the
+   sheet border (still 6px of breath before the
+   `overflow-x: clip`). Vertical center via top:50% + translate.
+   The tile reserves 108px of padding-left so the icon's right
+   edge clears the identity text. Math at the 390px MiniPay
+   viewport:
+     sheet padding (p-6)   = 24px → card left = 24px
+     icon offset           = left: -18px from card
+     icon left edge        = 24 - 18 = 6px from sheet edge
+                              (clear of the clip zone)
+     icon overhang on card = 18px visually outside the card edge
+   */
 .shop-item-tile-icon-figure {
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  transform: translateY(-50%);
   display: block;
-  grid-column: 1;
-  grid-row: 1 / -1;
-  align-self: center;
-  justify-self: start;
   width: 120px;
   height: 120px;
-  margin: -16px 0 -16px -22px;
   pointer-events: none;
+  z-index: 1;
 }
 
 .shop-item-tile-icon-img {
@@ -8476,11 +8488,11 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
 }
 
-/* Identity column — anchored to the second grid column, top row.
-   Stacks name + subtitle vertically with a 6px breath between them
-   so the title earns its silence before the supporting line. */
+/* Identity row — the tile's grid is now a single column (icon went
+   absolute). Identity sits in row 1, footer in row 2. The
+   `padding-left: 108px` on the tile keeps both clear of the icon
+   on the left. */
 .shop-item-tile-identity {
-  grid-column: 2;
   grid-row: 1;
   display: flex;
   flex-direction: column;
@@ -8515,12 +8527,11 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
-/* Footer row — anchored to the second grid column, second row.
-   Right-aligned button stack with gap between the (optional) CELO
-   twin and the primary buy pill. Grid row-gap (10px) handles
-   vertical separation from the identity above. */
+/* Footer row — single column, row 2. Right-aligned button stack
+   with gap between the (optional) CELO twin and the primary buy
+   pill. Grid row-gap (10px) handles vertical separation from the
+   identity above. */
 .shop-item-tile-footer {
-  grid-column: 2;
   grid-row: 2;
   display: flex;
   align-items: center;
