@@ -11,6 +11,9 @@ import {
   useWriteContract,
 } from "wagmi";
 import { decodeEventLog } from "viem";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
+import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
 import { useChessGame } from "@/lib/game/use-chess-game";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
@@ -171,6 +174,8 @@ function ArenaPageInner() {
   const arenaScaffoldEnabled = searchParams?.get("arena") !== "legacy";
   const game = useChessGame();
   const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  const victoryConnectPrompt = useConnectPrompt("victory");
   // Same hook the /hub PRO chip uses — single source of truth across
   // the app so the chip and the Coach gate never disagree.
   const { status: proStatusFromHook } = useProStatus(address?.toLowerCase());
@@ -382,6 +387,16 @@ function ArenaPageInner() {
   // (i.e. the opponent is the one who got mated).
   const opponentColor = game.playerColor === "w" ? "b" : "w";
   const isPlayerWin = game.status === "checkmate" && game.fen.includes(` ${opponentColor} `);
+
+  // Phase 2 nudge: first arena victory while disconnected triggers the
+  // one-shot "Connect to save / mint" prompt. The hook is idempotent, so
+  // re-renders at terminal state are safe — show() no-ops after the flag
+  // is set.
+  useEffect(() => {
+    if (isPlayerWin && !isConnected) {
+      victoryConnectPrompt.show();
+    }
+  }, [isPlayerWin, isConnected, victoryConnectPrompt]);
 
   const moveCountBucket = useCallback((moves: number) => {
     if (moves <= 10) return "0-10";
@@ -1880,6 +1895,18 @@ function ArenaPageInner() {
             onRetryPersist={handleRetryPersist}
             onDismissPersistError={handleDismissPersistError}
           />
+          {victoryConnectPrompt.isVisible && (
+            <div className="pointer-events-auto fixed inset-x-0 bottom-24 z-[55] mx-auto w-full max-w-[var(--app-max-width,390px)] px-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <ConnectPromptToast
+                milestone="victory"
+                onConnect={() => {
+                  victoryConnectPrompt.dismiss();
+                  openConnectModal?.();
+                }}
+                onDismiss={victoryConnectPrompt.dismiss}
+              />
+            </div>
+          )}
         </div>
       )}
 
