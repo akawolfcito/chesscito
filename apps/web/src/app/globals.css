@@ -5360,6 +5360,18 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
 }
 
+/* HUD-specific floating-icon override — the default 1.8rem (used by
+ * the piece-picker pill in /exercises) reads small against the
+ * surrounding panel art at the top corner. Bumping size + adjusting
+ * the negative margin lifts the icon visibly without growing the
+ * pill's overall height. Scoped under `.hub-hud-pill` so the
+ * /exercises piece-picker keeps its tighter sizing. */
+.hub-hud-pill .candy-tray-pill-icon--floating {
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: -0.6rem 0;
+}
+
 .hub-scaffold-hud-right {
   justify-content: flex-end;
 }
