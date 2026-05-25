@@ -8474,33 +8474,61 @@ button.hud-resource-chip:active:not(:disabled) {
   margin-top: 12px;
 }
 
-.shop-item-tile-buy-btn {
-  /* Bounding box sized to the asset's native 3.375:1 aspect ratio
-     (540×160 source). At 135×40 the inherited `background-size:
-     contain` renders the pill at full visible width without the
-     transparent side-padding that `contain` would leave at the
-     wider 220px medium default — and without the squish that a
-     `100% 100%` stretch would introduce. Compact, proportional,
-     right-aligned by the footer's flex-end. */
-  width: 135px !important;
-  min-width: 0 !important;
-  height: 40px !important;
-  padding: 0 14px !important;
-  font-size: 0.88rem !important;
-}
-
-/* Pay with CELO twin — reuses the canonical `.candy-tray-pill` cream
-   chip from the /exercises HUD instead of the wood-carved plank, so
-   the secondary payment route reads as a distinct affordance from
-   the primary stablecoin buy button. Width-constrained + compacted
-   here so the pill hugs its label and matches the visual height of
-   the green plank sibling instead of stacking taller. */
-.shop-item-tile-celo-pill {
+/* Shop tile buy pill — all 4 buttons (PRO/Founder/Shield prices +
+   Founder CELO twin) share the canonical `.candy-tray-pill` HUD
+   chip family. The `--green` modifier tints USD price buttons, the
+   `--yellow` modifier tints the CELO route. Compact dimensions so
+   the chips hug their labels and sit cleanly inside the tile
+   footer without dwarfing the tile content above. */
+.shop-item-tile-buy-pill {
   width: auto;
   min-width: 0;
-  min-height: 30px;
-  padding: 0.2rem 0.85rem;
-  font-size: 0.78rem;
+  min-height: 32px;
+  padding: 0.25rem 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.shop-item-tile-buy-pill:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Green tint — USD price route. Lush emerald gradient with a deep
+   forest border + cream text so the chip reads as "confirm purchase"
+   against any of the per-tile bg textures (purple / orange / blue). */
+.shop-item-tile-buy-pill--green {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, transparent 32%),
+    linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
+  border-color: rgba(20, 83, 45, 0.85);
+  color: #f0fdf4;
+  text-shadow:
+    0 1px 0 rgba(20, 83, 45, 0.65),
+    0 0 6px rgba(20, 83, 45, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(20, 83, 45, 0.30),
+    0 2px 4px rgba(20, 83, 45, 0.30);
+}
+
+/* Yellow tint — CELO route. Sunny amber gradient that pops against
+   the orange Founder tile bg, paired with dark-brown ink so the
+   "Pay with CELO" label stays legible (white-on-yellow doesn't). */
+.shop-item-tile-buy-pill--yellow {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, transparent 32%),
+    linear-gradient(180deg, #fde047 0%, #eab308 100%);
+  border-color: rgba(133, 77, 14, 0.85);
+  color: #422006;
+  text-shadow:
+    0 1px 0 rgba(255, 240, 175, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(133, 77, 14, 0.28),
+    0 2px 4px rgba(133, 77, 14, 0.32);
 }
 
 /* ── Badges Collection (badge-sheet.tsx) ───────────────────────────────────

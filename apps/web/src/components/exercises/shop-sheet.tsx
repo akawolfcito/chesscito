@@ -17,7 +17,6 @@ import {
   type ShopCopyKey,
 } from "@/lib/contracts/shop-catalog";
 import { formatUsd } from "@/lib/contracts/tokens";
-import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 
 type CatalogItem = {
   itemId: bigint;
@@ -139,30 +138,32 @@ function ShopItemCard({
         </div>
       </div>
 
-      {/* Footer — right-aligned button stack. Optional CELO twin sits
-       *  to the left of the primary buy button; both share the same
-       *  PrincipalButton shape so the user reads them as siblings
-       *  rather than a button + link. */}
+      {/* Footer — right-aligned button stack. Both the CELO twin and
+       *  the primary buy CTA share the `.candy-tray-pill` HUD chip
+       *  family (same shape as the Hub Connect / trophy chips). The
+       *  `--green` / `--yellow` modifiers tint them so the user can
+       *  scan the row as "yellow = CELO route, green = USD route"
+       *  without leaving the candy vocabulary. */}
       <div className="shop-item-tile-footer">
         {item.celoSibling && (
           <button
             type="button"
-            className="candy-tray-pill shop-item-tile-celo-pill"
+            className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--yellow"
             onClick={() => onSelectItem(item.celoSibling!.itemId)}
             aria-label={t("buyWithCelo")}
           >
             {t("payWithCeloShort")}
           </button>
         )}
-        <PrincipalButton
-          size="medium"
-          className="shop-item-tile-buy-btn"
+        <button
+          type="button"
+          className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--green"
           disabled={!item.configured || !item.enabled}
           onClick={() => onSelectItem(item.itemId)}
           aria-label={t("buyButtonAriaFormat", { action: t("buyButton"), item: item.label, price: priceLabel })}
         >
           {buyLabel}
-        </PrincipalButton>
+        </button>
       </div>
     </div>
   );
