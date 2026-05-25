@@ -8339,32 +8339,55 @@ button.hud-resource-chip:active:not(:disabled) {
    Compact premium game-shop layout. Horizontal tiles for scannability.
    shop-item-tile-* namespace is scoped to ShopSheet only. */
 
+/* shop-item-tile uses per-tile background textures injected inline
+   via `style={{ backgroundImage }}` from shop-sheet.tsx. The CSS here
+   only sets background-color as a fallback (rendered before the image
+   loads or if image-set() is unsupported). Avoid the `background:`
+   shorthand here — it would clobber the inline background-image. */
 .shop-item-tile {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 14px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(40, 25, 15, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    0 4px 14px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
   transition: transform 0.1s ease-out;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Subtle dark scrim above the texture to lift white text contrast.
+   Pseudo-element so it doesn't override inline background-image. */
+.shop-item-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.32) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.shop-item-tile > * {
+  position: relative;
+  z-index: 1;
 }
 
 .shop-item-tile:active {
   transform: scale(0.985);
 }
 
+/* Featured ribbon styling — keeps gold accent without overriding the
+   per-tile background texture. Border + outer glow only. */
 .shop-item-tile--featured {
-  background: linear-gradient(135deg, rgba(255, 250, 230, 0.98) 0%, rgba(250, 235, 195, 0.96) 100%);
-  border: 1.5px solid rgba(222, 159, 42, 0.50);
+  border: 1.5px solid rgba(255, 215, 120, 0.85);
   box-shadow:
-    0 4px 12px rgba(135, 82, 13, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 0 0 1px rgba(255, 215, 120, 0.35),
+    0 6px 18px rgba(135, 82, 13, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
 }
 
 .shop-item-tile-content {
@@ -8373,24 +8396,27 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
 }
 
-/* Horizontal icon wrap */
+/* Icon plate — translucent so the per-tile bg texture still
+   shows through behind the bespoke art. */
 .shop-item-tile-icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.35);
-  border: 1px solid rgba(110, 65, 15, 0.12);
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
 }
 
-.shop-item-tile-icon {
-  width: 28px;
-  height: 28px;
-  opacity: 0.9;
+.shop-item-tile-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 /* Identity column */
@@ -8407,30 +8433,36 @@ button.hud-resource-chip:active:not(:disabled) {
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(110, 65, 15, 0.55);
+  color: rgba(255, 245, 220, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .shop-item-tile-featured-label {
   font-size: 0.55rem;
   font-weight: 900;
-  color: #DE9F2A;
+  color: #FFD27A;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .shop-item-tile-name {
   font-family: var(--font-game-action, system-ui, sans-serif);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 900;
-  color: rgba(63, 34, 8, 0.98);
+  color: rgba(255, 250, 235, 0.98);
   line-height: 1.1;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 0 12px rgba(0, 0, 0, 0.25);
 }
 
 .shop-item-tile-subtitle {
-  font-size: 0.72rem;
-  color: rgba(110, 65, 15, 0.75);
+  font-size: 0.74rem;
+  color: rgba(255, 245, 220, 0.88);
   line-height: 1.3;
-  margin-top: 2px;
+  margin-top: 3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 /* Footer row: Meta + CTA */
@@ -8438,9 +8470,9 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(110, 65, 15, 0.08);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .shop-item-tile-buy-btn {
@@ -8453,38 +8485,15 @@ button.hud-resource-chip:active:not(:disabled) {
 .shop-item-tile-celo-link {
   font-size: 0.65rem;
   font-weight: 800;
-  color: rgba(110, 65, 15, 0.65);
+  color: rgba(255, 245, 220, 0.78);
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color 0.15s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .shop-item-tile-celo-link:hover {
-  color: rgba(110, 65, 15, 0.95);
-}
-
-/* ── Section Headers ──────────────────────────────────────────────────────── */
-
-.shop-section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.shop-section-title {
-  font-size: 0.65rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(110, 65, 15, 0.50);
-  white-space: nowrap;
-}
-
-.shop-section-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(110, 65, 15, 0.12) 0%, rgba(110, 65, 15, 0) 100%);
+  color: rgba(255, 255, 245, 1);
 }
 
 /* ── Badges Collection (badge-sheet.tsx) ───────────────────────────────────

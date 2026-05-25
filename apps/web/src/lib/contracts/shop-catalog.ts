@@ -59,19 +59,38 @@ export type ShopCatalogEntry = {
 };
 
 export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
-  { itemId: FOUNDER_BADGE_ITEM_ID, copyKey: "founderBadge" },
-  // Chesscito PRO row — `useShopSheetState` branches on this itemId
-  // to await the on-chain receipt and POST `/api/verify-pro` (parallel
-  // to the SHIELD_ITEM_ID /api/credit-shield branch). The standalone
-  // `<ProSheet>` card in /hub is the hero discoverability surface;
-  // both routes hit the same on-chain item.
+  // Chesscito PRO leads the catalog as the premium subscription tile.
+  // `useShopSheetState` branches on this itemId to await the on-chain
+  // receipt and POST `/api/verify-pro` (parallel to the SHIELD_ITEM_ID
+  // /api/credit-shield branch). The standalone `<ProSheet>` card in
+  // /hub is the hero discoverability surface; both routes hit the
+  // same on-chain item.
   { itemId: PRO_ITEM_ID, copyKey: "pro" },
+  { itemId: FOUNDER_BADGE_ITEM_ID, copyKey: "founderBadge" },
   { itemId: SHIELD_ITEM_ID, copyKey: "retryShield" },
   // Helper entry for the CELO route. Hidden from the shop card list —
   // only its on-chain configured/enabled flags drive the visibility of
-  // the "Buy with CELO" button rendered next to itemId 1.
+  // the "Buy with CELO" button rendered next to founder.
   { itemId: FOUNDER_BADGE_CELO_ITEM_ID, copyKey: "founderBadge" },
 ] as const;
+
+/** Per-tile art lookup for the shop sheet. Each entry pairs a copy
+ *  key with its foreground icon (the figure rendered on the left
+ *  side of the tile) and its background texture (paint applied as
+ *  the tile's full-bleed bg via `image-set()` so the AVIF/WebP/PNG
+ *  triplet from `apps/web/public/art/shop/` resolves on the client).
+ *  The CELO sibling shares the founder mapping since both surface
+ *  the founder badge.
+ *
+ *  Asset basenames (no extension) so the consumer can build the
+ *  `image-set()` URL list per format. New tiles MUST ship the
+ *  triplet (`scripts/optimize-art-assets.sh` / cwebp / avifenc) —
+ *  the `image-three-formats` memory rule. */
+export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { icon: string; bg: string }> = {
+  pro: { icon: "/art/shop/pro", bg: "/art/shop/bg-pro" },
+  founderBadge: { icon: "/art/shop/founder", bg: "/art/shop/bg-founder" },
+  retryShield: { icon: "/art/shop/shield", bg: "/art/shop/bg-shield" },
+};
 
 /** Number of shield uses credited to localStorage per successful
  *  on-chain purchase of itemId=2. Mirrored in the receipt effect at

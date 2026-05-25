@@ -10,6 +10,13 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import {
+  FOUNDER_BADGE_ITEM_ID,
+  PRO_ITEM_ID,
+  SHIELD_ITEM_ID,
+  SHOP_TILE_ASSETS,
+  type ShopCopyKey,
+} from "@/lib/contracts/shop-catalog";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 
@@ -44,16 +51,16 @@ type ShopSheetProps = {
   showTrigger?: boolean;
 };
 
-/** Derives the kicker label for an item based on its label content.
- *  Badge = support item, Shield = training utility. */
-function getKickerKey(label: string): "support" | "training" {
-  if (label.toLowerCase().includes("badge")) return "support";
-  return "training";
-}
-
-/** Derives the icon name for an item. */
-function getIcon(label: string): "trophy" | "shield" {
-  return label.toLowerCase().includes("badge") ? "trophy" : "shield";
+/** Map an on-chain itemId to its copy key. Drives both the kicker
+ *  copy lookup and the tile art lookup in `SHOP_TILE_ASSETS`. New
+ *  tiles MUST be added here + in `SHOP_TILE_ASSETS` for art to
+ *  resolve. Defaults to "retryShield" so unknown ids fall back to a
+ *  safe visual rather than crashing. */
+function copyKeyForItem(itemId: bigint): ShopCopyKey {
+  if (itemId === PRO_ITEM_ID) return "pro";
+  if (itemId === FOUNDER_BADGE_ITEM_ID) return "founderBadge";
+  if (itemId === SHIELD_ITEM_ID) return "retryShield";
+  return "retryShield";
 }
 
 /** Availability chip for an item. */
@@ -81,14 +88,11 @@ function AvailabilityChip({ configured, enabled }: { configured: boolean; enable
   );
 }
 
-/** Section header component for visual grouping. */
-function ShopSectionHeader({ title }: { title: string }) {
-  return (
-    <div className="shop-section-header">
-      <span className="shop-section-title">{title}</span>
-      <div className="shop-section-line" />
-    </div>
-  );
+/** Build a CSS `image-set()` resolving to the AVIF/WebP/PNG triplet
+ *  for a basename like `/art/shop/pro` (no extension). Browsers pick
+ *  the first format they support; PNG is the fallback. */
+function tileBgImageSet(basename: string): string {
+  return `image-set(url("${basename}.avif") type("image/avif"), url("${basename}.webp") type("image/webp"), url("${basename}.png") type("image/png"))`;
 }
 
 /** Compact shop item card — premium game-shop tile. */
@@ -102,8 +106,10 @@ function ShopItemCard({
   onSelectItem: (itemId: bigint) => void;
 }) {
   const t = useTranslations("SHOP_SHEET_COPY");
-  const kicker = t(`kicker.${getKickerKey(item.label)}` as const);
-  const icon = getIcon(item.label);
+  const copyKey = copyKeyForItem(item.itemId);
+  const kickerKey = copyKey === "founderBadge" ? "support" : "training";
+  const kicker = t(`kicker.${kickerKey}` as const);
+  const assets = SHOP_TILE_ASSETS[copyKey];
   const priceLabel = item.configured
     ? formatUsd(item.onChainPrice)
     : t("status.notConfigured");
@@ -122,12 +128,30 @@ function ShopItemCard({
       ]
         .filter(Boolean)
         .join(" ")}
+      style={{
+        backgroundImage: tileBgImageSet(assets.bg),
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+      }}
+      data-copy-key={copyKey}
     >
       {/* Tile top: icon + identity column */}
       <div className="shop-item-tile-content">
-        {/* Large item icon */}
+        {/* Large item icon — bespoke art per tile, replacing the
+         *  generic CandyIcon. AVIF→WebP→PNG fallback via <picture>. */}
         <div className="shop-item-tile-icon-wrap">
-          <CandyIcon name={icon} className="shop-item-tile-icon" />
+          <picture>
+            <source srcSet={`${assets.icon}.avif`} type="image/avif" />
+            <source srcSet={`${assets.icon}.webp`} type="image/webp" />
+            <img
+              src={`${assets.icon}.png`}
+              alt=""
+              aria-hidden="true"
+              className="shop-item-tile-icon-img"
+              draggable={false}
+            />
+          </picture>
         </div>
 
         {/* Name + kicker + short copy */}
@@ -180,9 +204,6 @@ export function ShopSheet({
   showTrigger = true,
 }: ShopSheetProps) {
   const t = useTranslations("SHOP_SHEET_COPY");
-  // Grouping items by category (rough logic based on name)
-  const supportItems = items.filter(i => i.label.toLowerCase().includes("badge"));
-  const trainingItems = items.filter(i => !i.label.toLowerCase().includes("badge"));
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -254,8 +275,13 @@ export function ShopSheet({
           </div>
         ) : null}
 
-        {/* Catalog */}
-        <div className="mt-4 flex-1 min-h-0 overflow-y-auto flex flex-col gap-5 pb-6">
+        {/* Catalog — flat list rendered in SHOP_ITEMS order
+         *  (PRO → Founder → Shield). Section grouping removed: the
+         *  per-tile bg textures + bespoke art provide enough visual
+         *  separation that the SUPPORT/TRAINING headers no longer earn
+         *  their vertical real-estate. Founder Badge keeps the
+         *  "Featured" ribbon since it's the canonical featured SKU. */}
+        <div className="mt-4 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-6">
           {items.length === 0 && (
             <p
               className="text-center text-sm"
@@ -265,56 +291,18 @@ export function ShopSheet({
             </p>
           )}
 
-          {/* Support Section */}
-          {supportItems.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <ShopSectionHeader title={t("sections.support")} />
-              {supportItems.map((item, index) => (
-                <ShopItemCard
-                  key={item.itemId.toString()}
-                  item={item}
-                  isFeatured={index === 0 && item.configured && item.enabled}
-                  onSelectItem={onSelectItem}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Training Section */}
-          {trainingItems.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <ShopSectionHeader title={t("sections.training")} />
-              {trainingItems.map((item, index) => (
-                <ShopItemCard
-                  key={item.itemId.toString()}
-                  item={item}
-                  isFeatured={index === 0 && item.configured && item.enabled && supportItems.length === 0}
-                  onSelectItem={onSelectItem}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* "More soon" ambient hint */}
-          {items.length > 0 && items.length < 3 && (
-            <div
-              className="flex items-center gap-3 rounded-2xl px-4 py-3 opacity-80"
-              style={{
-                background: "rgba(255, 255, 255, 0.15)",
-                border: "1px solid rgba(255, 255, 255, 0.30)",
-              }}
-            >
-              <CandyIcon name="shop" className="h-5 w-5 shrink-0 opacity-70" />
-              <div className="flex flex-col">
-                <p className="text-xs font-bold" style={{ color: "rgba(110, 65, 15, 0.85)" }}>
-                  {t("moreSoonTitle")}
-                </p>
-                <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.60)" }}>
-                  {t("moreSoonHint")}
-                </p>
-              </div>
-            </div>
-          )}
+          {items.map((item) => (
+            <ShopItemCard
+              key={item.itemId.toString()}
+              item={item}
+              isFeatured={
+                item.itemId === FOUNDER_BADGE_ITEM_ID &&
+                item.configured &&
+                item.enabled
+              }
+              onSelectItem={onSelectItem}
+            />
+          ))}
         </div>
       </SheetContent>
     </Sheet>
