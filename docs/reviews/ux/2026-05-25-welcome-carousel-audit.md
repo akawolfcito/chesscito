@@ -1,6 +1,6 @@
 # Welcome Carousel — UX Audit + Decision (2026-05-25)
 
-**Status:** awaiting product decision
+**Status:** RESOLVED — Option 3 (remove entirely) — see Decision section
 **Owner:** Wolfcito
 **Source feedback:** Phase #1 of post-marco UX review
 
@@ -91,3 +91,15 @@ Delete the WelcomeOverlay. Rely on:
 ## What I need from you
 
 Pick an option (1, 2, or 3) — or tell me to deep-dive on one of the open questions first. After your call I'll cut a focused PR.
+
+## Decision (2026-05-25)
+
+**Option 3 — remove entirely.** Wolfcito's reasoning:
+- Forgot the carousel existed until opening a fresh wallet to test
+- On normal sessions always taps `Skip` (doesn't want to read 3 slides)
+- The Hub already explains the app contextually — slides duplicate that
+- Color / content / mechanic didn't convince personally
+
+Real underlying gap the carousel was trying (badly) to solve: **soft account onboarding for web / non-MiniPay users** — social login or similar to remove the wallet-connect friction. That's a much larger feature, documented separately in `docs/specs/future/2026-05-25-soft-onboarding-web-non-minipay.md` so it isn't lost.
+
+Implementation of Option 3 ships in the same PR as this audit update.

@@ -24,7 +24,6 @@ import { MissionPanelCandy } from "@/components/exercises/mission-panel-candy";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
-import { WelcomeOverlay } from "@/components/welcome/welcome-overlay";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { ContextualActionSlot } from "@/components/exercises/contextual-action-slot";
 import { PersistentDock } from "@/components/exercises/persistent-dock";
@@ -1670,7 +1669,6 @@ export function ExercisesScreen({
 
   return (
     <div className="relative w-full overflow-x-hidden">
-      <WelcomeOverlay suppressed={activeDockTab !== null || proSheetOpen || accountSheetOpen} />
       {showSplash && (
         <div className="playhub-intro-overlay is-active" role="status" aria-live="polite" aria-busy="true">
           {/* Splash art carries the visual; copy below provides status. */}

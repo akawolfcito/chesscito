@@ -453,27 +453,6 @@ export const PURCHASE_CONFIRM_COPY = {
   unknownNetwork: "Unknown network",
 } as const;
 
-/** Welcome carousel copy — English-only per parent spec lock. The
- *  3-slide first-run onboarding shown to fresh wallets only (returning
- *  wallets are detected via `useOnboardingSignal` and the overlay
- *  short-circuits before mount). Per addendum §2.1.5. */
-export const WELCOME_COPY = {
-  slide1Title: "Welcome, Champion!",
-  slide1Body:
-    "Train your pieces. Master the board. Then play and win.",
-  slide2Title: "Climb to Arena with AI",
-  slide2Body:
-    "When you master pieces, full chess unlocks itself. Three difficulty levels.",
-  slide3Title: "Ready to play?",
-  slide3Body:
-    "Your first piece is the Rook. Tap below and let's begin.",
-  ctaContinue: "Continue",
-  ctaSkip: "Skip",
-  // Terminal CTA carries the `▶` ornament per addendum §2.1.3 wireframe
-  // — small affordance hint that the tap will *enter* the game.
-  ctaPlay: "Play ▶",
-} as const;
-
 /** Copy for the "Saved" chip rendered on /exercises action row when
  *  the player's local progress matches the last-saved on-chain score
  *  for the active piece (Cluster C addendum §2.2.4). When a receipt
