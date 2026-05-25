@@ -417,6 +417,9 @@ const messages = {
     reanalyze: {
       cta: "Reanalizar",
       ariaLabel: "Reanalizar esta partida en tu idioma actual",
+      panelTitle: "¿Querés otra perspectiva?",
+      panelBody:
+        "Los análisis del Coach son aproximados. Generá uno nuevo si este no te convenció, o para leerlo en tu idioma actual.",
       confirmTitle: "¿Reanalizar esta partida?",
       confirmBody:
         "Esto genera un análisis nuevo en tu idioma actual y usa 1 crédito.",

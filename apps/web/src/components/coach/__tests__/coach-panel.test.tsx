@@ -135,6 +135,22 @@ describe("<CoachPanel> reanalyze CTA (2026-05-24)", () => {
     expect(screen.getByTestId("coach-reanalyze-cta")).toHaveTextContent(/Reanalyze/i);
   });
 
+  it("renders the discovery panel (title + body) above the CTA", () => {
+    const onReanalyze = vi.fn().mockResolvedValue(undefined);
+    render(<CoachPanel {...baseProps} onReanalyze={onReanalyze} />);
+    const panel = screen.getByTestId("coach-reanalyze-panel");
+    expect(panel).toBeInTheDocument();
+    // Both halves of the leg must render — title explains WHAT, body
+    // explains WHY. Missing either is a user-discoverability bug.
+    expect(panel).toHaveTextContent(COACH_COPY.reanalyze.panelTitle);
+    expect(panel).toHaveTextContent(COACH_COPY.reanalyze.panelBody);
+  });
+
+  it("does NOT render the discovery panel when onReanalyze is omitted", () => {
+    render(<CoachPanel {...baseProps} />);
+    expect(screen.queryByTestId("coach-reanalyze-panel")).toBeNull();
+  });
+
   it("opens a confirm sheet before invoking onReanalyze (no accidental credit spend)", () => {
     const onReanalyze = vi.fn().mockResolvedValue(undefined);
     render(<CoachPanel {...baseProps} onReanalyze={onReanalyze} />);

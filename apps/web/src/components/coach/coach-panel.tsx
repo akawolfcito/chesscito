@@ -217,6 +217,46 @@ export function CoachPanel({
         </section>
       )}
 
+      {/* Reanalyze discovery panel — explains WHY the CTA exists so
+       *  users don't skip past a button labeled "Reanalyze" without
+       *  context. Rendered above the primary CTAs so the choice
+       *  "regenerate vs move on" is clear at the moment of decision. */}
+      {onReanalyze && (
+        <section
+          data-testid="coach-reanalyze-panel"
+          className="candy-tray flex flex-col gap-2"
+        >
+          <h3
+            className="text-xs font-semibold uppercase tracking-widest"
+            style={{ color: warmMuted }}
+          >
+            {t("reanalyze.panelTitle")}
+          </h3>
+          <p
+            className="text-xs"
+            style={{ color: warmText, textShadow: cream, lineHeight: 1.45 }}
+          >
+            {t("reanalyze.panelBody")}
+          </p>
+          <Button
+            type="button"
+            data-testid="coach-reanalyze-cta"
+            variant="game-ghost"
+            size="game-sm"
+            onClick={() => setConfirmReanalyzeOpen(true)}
+            disabled={isReanalyzing}
+            aria-label={t("reanalyze.ariaLabel")}
+            style={{
+              borderColor: "rgba(110, 65, 15, 0.35)",
+              color: warmText,
+            }}
+          >
+            <CandyIcon name="refresh" className="inline h-3.5 w-3.5 -mt-0.5" />{" "}
+            {isReanalyzing ? t("reanalyze.inFlightLabel") : t("reanalyze.cta")}
+          </Button>
+        </section>
+      )}
+
       {/* CTAs — Play Again primary, History secondary. The host shell
        *  (CandyGlassShell) already owns the back-to-hub affordance via
        *  its top-right close control, so the previous footer link was
@@ -239,19 +279,6 @@ export function CoachPanel({
           >
             {t("pastSessions")}
           </Button>
-        )}
-        {onReanalyze && (
-          <button
-            type="button"
-            data-testid="coach-reanalyze-cta"
-            onClick={() => setConfirmReanalyzeOpen(true)}
-            disabled={isReanalyzing}
-            aria-label={t("reanalyze.ariaLabel")}
-            className="self-center text-xs underline underline-offset-2 disabled:opacity-50"
-            style={{ color: warmSubtle }}
-          >
-            {isReanalyzing ? t("reanalyze.inFlightLabel") : t("reanalyze.cta")}
-          </button>
         )}
       </div>
 

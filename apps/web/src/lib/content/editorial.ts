@@ -1329,6 +1329,13 @@ export const COACH_COPY = {
   reanalyze: {
     cta: "Reanalyze",
     ariaLabel: "Reanalyze this game in your current language",
+    /* Discovery card body — sits below the analysis so the user
+     * understands WHY the reanalyze button exists and when to use it.
+     * Without this leg the CTA reads as a random "do this again"
+     * button and most users skip past it. */
+    panelTitle: "Want a different take?",
+    panelBody:
+      "Coach analyses are best-effort. Generate a fresh one if this didn't quite hit, or to read it in your current language.",
     confirmTitle: "Reanalyze this game?",
     confirmBody:
       "This generates a fresh analysis in your current language and uses 1 credit.",
