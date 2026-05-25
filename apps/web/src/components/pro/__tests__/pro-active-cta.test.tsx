@@ -41,7 +41,7 @@ describe("ProActiveCTA — navigational variant (non-/arena surfaces)", () => {
     const onClose = vi.fn();
     render(<ProActiveCTA source="/exercises" onClose={onClose} />);
     fireEvent.click(screen.getByTestId("pro-active-cta-button"));
-    expect(pushMock).toHaveBeenCalledWith("/arena");
+    expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
     // onClose intentionally NOT called: when the sheet was opened from
     // a navigational surface, calling onClose can race with router.push
     // and the close handler may win, dropping the user on the parent

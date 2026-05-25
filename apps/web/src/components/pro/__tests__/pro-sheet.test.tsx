@@ -227,7 +227,7 @@ describe("ProSheet", () => {
       const button = screen.getByTestId("pro-active-cta-button");
       expect(button).toHaveTextContent(PRO_COPY.activeCtaPlay);
       fireEvent.click(button);
-      expect(pushMock).toHaveBeenCalledWith("/arena");
+      expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
     });
 
     it("prioritizes Training Journal as the first active PRO action", () => {

@@ -362,12 +362,12 @@ describe("HubScaffoldClient — tap handlers", () => {
 
     await user.click(screen.getByLabelText("Enter Arena — full chess vs AI"));
 
-    // Spec D5: Arena is the *calm* secondary action under the
-    // contextual Hero CTA. No more `?fresh=1` — /arena now defaults to
-    // the selector on direct visits (the auto-launch shortcut moved
-    // under `?arena=legacy`). Hero CTA owns the contextual routing
-    // (e.g. `/exercises?slot=daily` when daily is pending).
-    expect(pushMock).toHaveBeenCalledWith("/arena");
+    // The Hub ENTER ARENA CTA carries `?fresh=1` so it lands on the
+    // difficulty + color selector instead of auto-resuming the
+    // previous match (regression caught 2026-05-25 — every other
+    // arena entry point already passes the flag, the hub button was
+    // the one that dropped it during the i18n migration).
+    expect(pushMock).toHaveBeenCalledWith("/arena?fresh=1");
   });
 
   it("keeps the shields shop affordance hidden while the Hub visual pass is active", () => {

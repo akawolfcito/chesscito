@@ -1886,7 +1886,7 @@ export function ExercisesScreen({
             }}
             onArena={() => {
               setShowPieceComplete(false);
-              window.location.href = "/arena";
+              window.location.href = "/arena?fresh=1";
             }}
             onPracticeAgain={() => {
               setShowPieceComplete(false);

@@ -45,7 +45,7 @@ export function ProActiveCTA({ source, onClose }: ProActiveCTAProps) {
       // docs/audits/2026-05-07-hub-audit.md). The legacy host
       // unmounts cleanly when the route changes; no manual close
       // needed.
-      router.push("/arena");
+      router.push("/arena?fresh=1");
       return;
     }
     onClose();

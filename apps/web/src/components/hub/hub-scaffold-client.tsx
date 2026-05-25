@@ -289,7 +289,13 @@ export function HubScaffoldClient({
 
   const handleArenaPress = useCallback(() => {
     track("secondary_arena_clicked");
-    router.push("/arena");
+    // `?fresh=1` forces the arena page to show the difficulty + color
+    // selector. Without it the route auto-resumes the previous match
+    // (or falls onto the default difficulty), which surprised users
+    // tapping the Hub's ENTER ARENA CTA expecting to configure a new
+    // run. Same param used by every other arena entry point (Hub
+    // dock, Coach history Play Again, Trophies, victory accept).
+    router.push("/arena?fresh=1");
   }, [router]);
 
   // Single page-view event per mount — anchors the funnel for every

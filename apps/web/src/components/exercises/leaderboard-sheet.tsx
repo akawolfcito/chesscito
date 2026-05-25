@@ -197,7 +197,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
               <p className="text-sm font-medium opacity-60 leading-relaxed px-8">
                 {t("empty")}
               </p>
-              <Link href="/arena" onClick={() => onOpenChange(false)}>
+              <Link href="/arena?fresh=1" onClick={() => onOpenChange(false)}>
                 <button type="button" className="flex h-11 items-center justify-center px-8 rounded-xl bg-amber-500 font-black text-white uppercase text-xs tracking-widest transition active:scale-95 shadow-lg shadow-amber-500/20">
                   {t("emptyArenaLink")}
                 </button>
