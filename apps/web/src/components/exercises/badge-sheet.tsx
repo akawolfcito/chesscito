@@ -211,6 +211,8 @@ export function BadgeSheet({
 
   const totalCollectedStars = badges.reduce((s, b) => s + b.totalStars, 0);
   const totalAvailableStars = badges.reduce((s, b) => s + b.maxStars, 0);
+  const piecesClaimed = badges.filter((b) => b.state === "claimed").length;
+  const progressPct = totalAvailableStars === 0 ? 0 : (totalCollectedStars / totalAvailableStars) * 100;
 
   // Phase 2 nudge: when a disconnected user opens the sheet AND has at
   // least one claimable badge (= local stars cross threshold but no
@@ -287,18 +289,54 @@ export function BadgeSheet({
           </div>
         )}
 
-        {/* Stats banner — star count + progress bar */}
-        <div className="shrink-0 mt-3 flex flex-col gap-2">
-          <div className="flex items-center justify-end">
-            <CandyChip variant="warm" tone="subtle">
-              {t("starsProgressFormat", { collected: totalCollectedStars, total: totalAvailableStars })}
-            </CandyChip>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full" style={{ background: "rgba(110, 65, 15, 0.12)" }}>
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-1000"
-              style={{ width: `${(totalCollectedStars / totalAvailableStars) * 100}%` }}
+        {/* HERO BAND — visual anchor for the Badges vitrine.
+         *  Brings the brand character (wolf wizard) + a glance-able
+         *  preview of all 6 pieces (claimed in color, locked as
+         *  silhouettes) + unified progress counters (pieces + stars).
+         *  Replaces the previous stats banner (chip + bare progress
+         *  bar) which read as a flat utility row. The hero is the
+         *  first thing a visual-first user sees after the header. */}
+        <div className="badge-vitrine-hero shrink-0 mt-3">
+          <picture className="badge-vitrine-hero-wolf">
+            <source srcSet="/art/scene-rooted/avatar-chesscito.avif" type="image/avif" />
+            <source srcSet="/art/scene-rooted/avatar-chesscito.webp" type="image/webp" />
+            <img
+              src="/art/scene-rooted/avatar-chesscito.png"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
             />
+          </picture>
+          <div className="badge-vitrine-hero-content">
+            <p className="badge-vitrine-hero-eyebrow">{t("title")}</p>
+            <div className="badge-vitrine-hero-pieces" role="list">
+              {PIECES.map((piece) => {
+                const claimed = Boolean(badgesClaimed[piece]);
+                return (
+                  <picture
+                    key={piece}
+                    role="listitem"
+                    className={`badge-vitrine-hero-piece${claimed ? " is-claimed" : ""}`}
+                    aria-label={tPiece(piece)}
+                  >
+                    <source srcSet={`${THEME_CONFIG.piecesBase}/w-${piece}.avif`} type="image/avif" />
+                    <source srcSet={`${THEME_CONFIG.piecesBase}/w-${piece}.webp`} type="image/webp" />
+                    <img src={`${THEME_CONFIG.piecesBase}/w-${piece}.png`} alt="" aria-hidden="true" draggable={false} />
+                  </picture>
+                );
+              })}
+            </div>
+            <p className="badge-vitrine-hero-stats">
+              <span className="badge-vitrine-hero-stats-piece">{piecesClaimed}/{PIECES.length} {t("heroPiecesLabel")}</span>
+              <span className="badge-vitrine-hero-stats-sep" aria-hidden="true">·</span>
+              <span className="badge-vitrine-hero-stats-star">{totalCollectedStars}/{totalAvailableStars} ★</span>
+            </p>
+            <div className="badge-vitrine-hero-progress">
+              <div
+                className="badge-vitrine-hero-progress-fill"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
           </div>
         </div>
 

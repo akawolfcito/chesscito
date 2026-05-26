@@ -95,10 +95,13 @@ describe("BadgeSheet — ContextualHeader canary", () => {
     expect(closeButtons[0].getAttribute("data-slot")).toBe("close-control");
   });
 
-  it("keeps the star-count chip and progress bar accessible below the header", () => {
+  it("renders the HERO BAND stats line (pieces + stars) below the header", () => {
     setStars("rook", [3, 3, 3, 3, 3]);
     renderBadgeSheet();
-    // 15 of 90 = 15/90 stars chip (rook full = 15 stars).
-    expect(screen.getByText(/of 90 stars/i)).toBeInTheDocument();
+    // 15 of 90 stars (rook full = 15 stars). Bishop is claimed in the
+    // default fixture → piecesClaimed = 1. HERO BAND format renders
+    // "1/6 PIECES" and "15/90 ★" as sibling spans.
+    expect(screen.getByText(/1\/6 PIECES/i)).toBeInTheDocument();
+    expect(screen.getByText(/15\/90 ★/)).toBeInTheDocument();
   });
 });

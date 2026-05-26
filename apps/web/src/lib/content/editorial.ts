@@ -253,6 +253,8 @@ export const BADGE_SHEET_COPY = {
    *  stars collected. Lead with the reward (collectible for life), not
    *  the action — the audience scans and skips jargon. */
   firstStepHint: "Master the Rook — claim your first digital collectible.",
+  /** HERO BAND piece counter label — short, fits beside the slash count. */
+  heroPiecesLabel: "PIECES",
 } as const;
 
 export const TUTORIAL_COPY = {

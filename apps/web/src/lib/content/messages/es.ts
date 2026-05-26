@@ -1141,6 +1141,7 @@ const messages = {
     claim: "Obtener",
     starsProgressFormat: "{collected} de {total} estrellas",
     firstStepHint: "Domina la Torre, reclama tu primer coleccionable digital.",
+    heroPiecesLabel: "PIEZAS",
   },
   TUTORIAL_COPY: {
     rook: "La Torre se mueve en líneas rectas — horizontal o vertical",
