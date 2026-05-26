@@ -1175,8 +1175,9 @@ export const COACH_COPY = {
   gamesAnalyzed: (n: number) => `Games analyzed: ${n}`,
   highestDifficulty: (d: string) => `Highest difficulty: ${d}`,
   currentStreak: (n: number) => `Current streak: ${n} wins`,
-  creditTitle: "Coach Credits",
-  creditExplain: "1 credit = 1 full game analysis",
+  creditTitle: "I'm still here",
+  creditExplain:
+    "I saw your game. You've used your 3 free analyses. Add a pack and we keep talking.",
   creditPack5: "5 analyses",
   creditPack20: "20 analyses",
   creditBest: "BEST",

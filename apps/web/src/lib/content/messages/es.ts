@@ -354,8 +354,9 @@ const messages = {
     gamesAnalyzed: "Partidas analizadas: {count}",
     highestDifficulty: "Dificultad máxima: {difficulty}",
     currentStreak: "Racha actual: {wins} victorias",
-    creditTitle: "Créditos del Coach",
-    creditExplain: "1 crédito = 1 análisis completo",
+    creditTitle: "Yo sigo acá",
+    creditExplain:
+      "Vi tu partida. Ya gastaste tus 3 análisis gratis. Sumá un pack y seguimos conversando.",
     creditPack5: "5 análisis",
     creditPack20: "20 análisis",
     creditBest: "MEJOR",
