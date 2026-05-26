@@ -1843,6 +1843,14 @@ export const ACCOUNT_SHEET_COPY = {
   inactivePro: "Not active",
   unknownNetwork: "Unknown network",
   closeAriaLabel: "Close account",
+  /** "Mi Coach" row inside <AccountSheet>. Routes to /coach/history.
+   *  Status chip flips on Luz availability: PRO → always-on, free with
+   *  credits → counted, free at 0 → soft empty state pointing to the
+   *  paywall handoff. */
+  coachRowLabel: "My Coach",
+  coachStatusActive: "Talking",
+  coachStatusFree: "Free",
+  coachStatusEmpty: "Out of free",
   /** Locale switcher block — sits above the disconnect button. The two
    *  language names stay rendered as proper nouns ("English" / "Español")
    *  so the user reads the destination, not the source. */
