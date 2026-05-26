@@ -149,6 +149,47 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
         </div>
 
         <div className="flex-1 overflow-y-auto mt-4 space-y-6 pb-[8rem]">
+          {/* HERO BAND — overview anchor that mirrors badge + trophy
+           *  vitrines. Golden crown character anchors the cream-amber
+           *  panel; the right column carries the champion summary +
+           *  total players, or an empty hint when the board is fresh.
+           *  Detail sections (champion card + competitors list) follow
+           *  below as usual. */}
+          <div className="leaderboard-vitrine-hero">
+            <picture className="leaderboard-vitrine-hero-anchor">
+              <source srcSet="/art/screen-mission/corona-pro.avif" type="image/avif" />
+              <source srcSet="/art/screen-mission/corona-pro.webp" type="image/webp" />
+              <img
+                src="/art/screen-mission/corona-pro.png"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+              />
+            </picture>
+            <div className="leaderboard-vitrine-hero-content">
+              <p className="leaderboard-vitrine-hero-eyebrow">{t("heroEyebrow")}</p>
+              {champion ? (
+                <>
+                  <p className="leaderboard-vitrine-hero-stats">
+                    {t("heroChampionLabelFormat", { player: champion.player })}
+                  </p>
+                  <p className="leaderboard-vitrine-hero-sub">
+                    {t("heroChampionStatsFormat", { score: champion.score, count: rows.length })}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="leaderboard-vitrine-hero-stats">
+                    {t("heroEmptyHeadline")}
+                  </p>
+                  <p className="leaderboard-vitrine-hero-sub">
+                    {t("heroEmptyHint")}
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Verification Banner — DISABLED 2026-05-25.
            *
            *  Passport (Gitcoin) verification lives on a different chain

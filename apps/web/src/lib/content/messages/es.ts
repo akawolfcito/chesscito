@@ -1234,6 +1234,11 @@ const messages = {
     champion: "Campeón",
     topCompetitors: "Mejores competidores",
     closeAriaLabel: "Cerrar líderes",
+    heroEyebrow: "EL RANKING",
+    heroChampionLabelFormat: "Campeón: {player}",
+    heroChampionStatsFormat: "{score} pts · {count} jugadores",
+    heroEmptyHeadline: "Aún sin ranking",
+    heroEmptyHint: "Sé el primero en sumar puntos.",
   },
   PURCHASE_CONFIRM_COPY: {
     title: "Confirmar compra",

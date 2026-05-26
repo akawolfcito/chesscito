@@ -435,6 +435,12 @@ export const LEADERBOARD_SHEET_COPY = {
   champion: "Champion",
   topCompetitors: "Top Competitors",
   closeAriaLabel: "Close leaders",
+  /** HERO BAND labels — overview anchor at the top of the sheet. */
+  heroEyebrow: "THE RANKING",
+  heroChampionLabelFormat: "Champion: {player}",
+  heroChampionStatsFormat: "{score} pts · {count} players",
+  heroEmptyHeadline: "No ranking yet",
+  heroEmptyHint: "Be the first to climb the board.",
 } as const;
 
 export const PURCHASE_CONFIRM_COPY = {
