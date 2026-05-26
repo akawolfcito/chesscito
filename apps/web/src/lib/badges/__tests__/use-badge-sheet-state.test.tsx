@@ -31,7 +31,6 @@ const useWriteContractMock = vi.hoisted(() =>
 );
 const trackMock = vi.hoisted(() => vi.fn());
 const hapticSuccessMock = vi.hoisted(() => vi.fn());
-const navigateToTrophiesMock = vi.hoisted(() => vi.fn());
 
 vi.mock("wagmi", () => ({
   useAccount: () => useAccountMock(),
@@ -87,7 +86,6 @@ beforeEach(() => {
   useWriteContractMock.mockReset();
   trackMock.mockReset();
   hapticSuccessMock.mockReset();
-  navigateToTrophiesMock.mockReset();
 
   useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
   useChainIdMock.mockReturnValue(42220);
@@ -110,7 +108,7 @@ afterEach(() => {
 describe("useBadgeSheetState — open/close", () => {
   it("starts closed; openSheet flips open=true on sheetProps", () => {
     const { result } = renderHook(() =>
-      useBadgeSheetState({ onNavigateToTrophies: navigateToTrophiesMock }),
+      useBadgeSheetState(),
     );
     expect(result.current.open).toBe(false);
     expect(result.current.sheetProps.open).toBe(false);
@@ -141,7 +139,7 @@ describe("useBadgeSheetState — open/close", () => {
     });
 
     const { result } = renderHook(() =>
-      useBadgeSheetState({ onNavigateToTrophies: navigateToTrophiesMock }),
+      useBadgeSheetState(),
     );
     act(() => {
       result.current.openSheet();
@@ -175,7 +173,7 @@ describe("useBadgeSheetState — handleClaim", () => {
   it("returns early without telemetry when wallet is missing", async () => {
     useAccountMock.mockReturnValue({ address: undefined, isConnected: false });
     const { result } = renderHook(() =>
-      useBadgeSheetState({ onNavigateToTrophies: navigateToTrophiesMock }),
+      useBadgeSheetState(),
     );
 
     await act(async () => {
@@ -210,7 +208,7 @@ describe("useBadgeSheetState — handleClaim", () => {
     writeContractAsyncMock.mockResolvedValueOnce("0xclaim");
 
     const { result } = renderHook(() =>
-      useBadgeSheetState({ onNavigateToTrophies: navigateToTrophiesMock }),
+      useBadgeSheetState(),
     );
 
     await act(async () => {
@@ -248,7 +246,7 @@ describe("useBadgeSheetState — handleClaim", () => {
     });
 
     const { result } = renderHook(() =>
-      useBadgeSheetState({ onNavigateToTrophies: navigateToTrophiesMock }),
+      useBadgeSheetState(),
     );
 
     await act(async () => {
@@ -280,7 +278,7 @@ describe("useBadgeSheetState — handleClaim", () => {
     writeContractAsyncMock.mockResolvedValueOnce("0xtx");
 
     const { result } = renderHook(() =>
-      useBadgeSheetState({ onNavigateToTrophies: navigateToTrophiesMock }),
+      useBadgeSheetState(),
     );
 
     await act(async () => {
@@ -320,7 +318,7 @@ describe("useBadgeSheetState — handleClaim", () => {
     );
 
     const { result } = renderHook(() =>
-      useBadgeSheetState({ onNavigateToTrophies: navigateToTrophiesMock }),
+      useBadgeSheetState(),
     );
 
     await act(async () => {
@@ -345,15 +343,6 @@ describe("useBadgeSheetState — handleClaim", () => {
 });
 
 describe("useBadgeSheetState — sheetProps shape", () => {
-  it("forwards onNavigateToTrophies verbatim so the sheet's footer link wires correctly", () => {
-    const { result } = renderHook(() =>
-      useBadgeSheetState({ onNavigateToTrophies: navigateToTrophiesMock }),
-    );
-    expect(result.current.sheetProps.onNavigateToTrophies).toBe(
-      navigateToTrophiesMock,
-    );
-  });
-
   it("derives badgesClaimed from useReadContracts results, mapping by index→piece", () => {
     useReadContractsMock.mockReturnValue({
       data: [
@@ -368,7 +357,7 @@ describe("useBadgeSheetState — sheetProps shape", () => {
     });
 
     const { result } = renderHook(() =>
-      useBadgeSheetState({ onNavigateToTrophies: navigateToTrophiesMock }),
+      useBadgeSheetState(),
     );
 
     expect(result.current.sheetProps.badgesClaimed).toEqual({

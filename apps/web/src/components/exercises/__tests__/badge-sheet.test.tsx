@@ -45,7 +45,6 @@ function renderBadgeSheet({
       isClaimBusy={false}
       claimingPiece={null}
       showNotification={false}
-      onNavigateToTrophies={() => {}}
       showTrigger={false}
     />,
   );

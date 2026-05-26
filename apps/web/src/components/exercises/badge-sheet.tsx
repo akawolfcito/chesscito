@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
@@ -157,9 +156,6 @@ type BadgeSheetProps = {
    *  for the same purpose, so it keeps this prop unset. */
   lastClaimedPiece?: PieceId | null;
   showNotification: boolean;
-  /** Switch to the Trophies sheet. Parent closes this sheet and opens
-   *  the trophy drawer in-place — no route navigation. */
-  onNavigateToTrophies: () => void;
   /** Render the built-in `<SheetTrigger>` dock button. Default `true`
    *  for legacy callers (`<ExercisesScreen>` mounts this inside the dock).
    *  Pass `false` from the scaffold, which controls open state via
@@ -178,12 +174,10 @@ export function BadgeSheet({
   claimingPiece = null,
   lastClaimedPiece = null,
   showNotification,
-  onNavigateToTrophies,
   showTrigger = true,
 }: BadgeSheetProps) {
   const t = useTranslations("BADGE_SHEET_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
-  const tAbout = useTranslations("ABOUT_LINK_COPY");
   // Initialize synchronously from localStorage to avoid progress bar flashing from 0%
   const [starsByPiece, setStarsByPiece] = useState<Record<PieceId, number[]>>(() =>
     Object.fromEntries(
@@ -337,29 +331,6 @@ export function BadgeSheet({
               claimingPiece={claimingPiece}
             />
           ))}
-        </div>
-
-        {/* Footer: Demoted Trophies CTA + Link */}
-        <div className="shrink-0 pt-2">
-          <div className="flex flex-col items-center gap-4">
-            <button
-              onClick={onNavigateToTrophies}
-              className="text-xs font-bold underline underline-offset-4 transition-colors hover:opacity-80"
-              style={{ color: "rgba(110, 65, 15, 0.75)" }}
-              aria-label={t("viewTrophies")}
-            >
-              {t("viewTrophies")}
-            </button>
-
-            <Link
-              href="/about"
-              onClick={() => onOpenChange(false)}
-              className="text-nano opacity-60 transition-colors hover:opacity-100"
-              style={{ color: "rgba(110, 65, 15, 0.65)" }}
-            >
-              {tAbout("label")}
-            </Link>
-          </div>
         </div>
       </SheetContent>
     </Sheet>

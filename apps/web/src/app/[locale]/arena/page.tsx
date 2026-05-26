@@ -125,13 +125,7 @@ function ArenaPageInner() {
   const [activeDockTab, setActiveDockTab] = useState<
     "badge" | "shop" | "trophies" | "leaderboard" | null
   >(null);
-  const openTrophiesFromBadgeSheet = useCallback(
-    () => setActiveDockTab("trophies"),
-    [],
-  );
-  const badgeSheet = useBadgeSheetState({
-    onNavigateToTrophies: openTrophiesFromBadgeSheet,
-  });
+  const badgeSheet = useBadgeSheetState();
   const shopSheet = useShopSheetState();
   const handleOpenBadgeSheet = useCallback(() => {
     setActiveDockTab("badge");
@@ -149,10 +143,6 @@ function ArenaPageInner() {
     },
     [badgeSheet],
   );
-  const handleBadgeNavigateToTrophies = useCallback(() => {
-    badgeSheet.closeSheet();
-    setActiveDockTab("trophies");
-  }, [badgeSheet]);
   const handleOpenShopSheet = useCallback(() => {
     setActiveDockTab("shop");
     shopSheet.openSheet();
@@ -1574,7 +1564,6 @@ function ArenaPageInner() {
             <BadgeSheet
               {...badgeSheet.sheetProps}
               onOpenChange={handleBadgeSheetOpenChange}
-              onNavigateToTrophies={handleBadgeNavigateToTrophies}
               showTrigger={false}
             />
             <ShopSheet
@@ -1655,7 +1644,6 @@ function ArenaPageInner() {
           <BadgeSheet
             {...badgeSheet.sheetProps}
             onOpenChange={handleBadgeSheetOpenChange}
-            onNavigateToTrophies={handleBadgeNavigateToTrophies}
             showTrigger={false}
           />
           <ShopSheet

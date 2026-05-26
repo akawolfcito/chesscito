@@ -64,16 +64,8 @@ export type UseBadgeSheetStateReturn = {
    *  destructuring sheet-only props. Updates flow through the same
    *  `useReadContracts` cycle as the sheet — no second on-chain fetch. */
   badgesClaimed: Record<PieceId, boolean | undefined>;
-  /** Spread directly onto `<BadgeSheet />`. Caller still owns the
-   *  navigation target for "View trophies" because that route lives
-   *  outside the badges domain. */
+  /** Spread directly onto `<BadgeSheet />`. */
   sheetProps: BadgeSheetProps;
-};
-
-export type UseBadgeSheetStateOptions = {
-  /** Wired to the "View trophies" footer button. Scaffold passes
-   *  `() => router.push('/trophies')`. */
-  onNavigateToTrophies: () => void;
 };
 
 /** BadgeSheet orchestration extracted from `<ExercisesScreen>` so the
@@ -87,9 +79,7 @@ export type UseBadgeSheetStateOptions = {
  *  the next-piece unlock celebration — both depend on ExercisesScreen
  *  state machinery (boards, exercises) that doesn't exist on the
  *  scaffold surface yet. */
-export function useBadgeSheetState({
-  onNavigateToTrophies,
-}: UseBadgeSheetStateOptions): UseBadgeSheetStateReturn {
+export function useBadgeSheetState(): UseBadgeSheetStateReturn {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
 
@@ -247,7 +237,6 @@ export function useBadgeSheetState({
     claimingPiece,
     lastClaimedPiece,
     showNotification: false,
-    onNavigateToTrophies,
     // Scaffold owns the open state. The legacy dock-style trigger
     // button is suppressed here; otherwise Radix renders an orphan
     // `<button aria-label="Badges">` next to `<HubScaffold>` in the

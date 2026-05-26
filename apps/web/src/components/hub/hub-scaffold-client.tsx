@@ -166,9 +166,7 @@ export function HubScaffoldClient({
   // through `?legacy=1&action=badges`. Solves audit B7 by giving every
   // piece tap a real destination (the sheet itself) rather than the
   // collapsed legacy view that dropped the piece query for queen/king.
-  const badgeSheet = useBadgeSheetState({
-    onNavigateToTrophies: () => router.push("/trophies"),
-  });
+  const badgeSheet = useBadgeSheetState();
 
   // Shop orchestration — same in-place pattern as PRO/Badges. Removes
   // the last `?legacy=1&action=shop` round-trip. Hook owns catalog +
