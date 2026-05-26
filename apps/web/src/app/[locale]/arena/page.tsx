@@ -56,7 +56,8 @@ import { CoachLoading } from "@/components/coach/coach-loading";
 import { CoachPanel } from "@/components/coach/coach-panel";
 import { CoachFallback } from "@/components/coach/coach-fallback";
 import { CoachPaywall } from "@/components/coach/coach-paywall";
-import { CoachWelcome } from "@/components/coach/coach-welcome";
+import { LuzOnboardingPanel } from "@/components/coach/luz-onboarding-panel";
+import { gameStatusToOnboardingOutcome } from "@/lib/coach/onboarding-outcome";
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { track } from "@/lib/telemetry";
@@ -1921,23 +1922,15 @@ function ArenaPageInner() {
             <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300 px-4">
               <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
-                  title={tCoach("welcomeTitle")}
+                  title="Luz"
                   onClose={() => setCoachPhase("idle")}
                   closeLabel="Close"
-                  cta={
-                    <Button
-                      type="button"
-                      variant="game-primary"
-                      size="game"
-                      onClick={handleClaimWelcome}
-                      className="w-full"
-                    >
-                      {tCoach("claimFree")}
-                    </Button>
-                  }
-                  meta={tCoach("welcomeNote")}
                 >
-                  <CoachWelcome />
+                  <LuzOnboardingPanel
+                    outcome={gameStatusToOnboardingOutcome(game.status, isPlayerWin)}
+                    onAccept={handleClaimWelcome}
+                    onDecline={() => setCoachPhase("idle")}
+                  />
                 </CandyGlassShell>
               </div>
             </div>
