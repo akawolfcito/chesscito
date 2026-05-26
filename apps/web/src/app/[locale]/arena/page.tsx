@@ -739,9 +739,7 @@ function ArenaPageInner() {
     ) : (
       <CoachPreviewCard
         proActive={proActiveCached}
-        difficultyLabel={difficultyLabel(game.difficulty)}
-        resultLabel={currentArenaResult()}
-        moveCount={game.moveHistory.length}
+        credits={coachCredits}
         onPrimaryCta={handleCoachPreviewCta}
         isCompact
       />
