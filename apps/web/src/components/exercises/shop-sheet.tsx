@@ -58,6 +58,8 @@ function copyKeyForItem(itemId: bigint): ShopCopyKey {
   if (itemId === PRO_ITEM_ID) return "pro";
   if (itemId === FOUNDER_BADGE_ITEM_ID) return "founderBadge";
   if (itemId === SHIELD_ITEM_ID) return "retryShield";
+  if (itemId === 3n) return "coachPack5";
+  if (itemId === 4n) return "coachPack20";
   return "retryShield";
 }
 
