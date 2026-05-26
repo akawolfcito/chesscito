@@ -17,6 +17,8 @@ import {
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { Board } from "@/components/board";
+import { AccountCoachRow } from "@/components/coach/account-coach-row";
+import { useCoachCredits } from "@/lib/coach/use-coach-credits";
 import { ExerciseDrawer } from "@/components/exercises/exercise-drawer";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
 import { MissionBriefing } from "@/components/exercises/mission-briefing";
@@ -157,7 +159,9 @@ function AccountSheet({
   walletShort,
   chainId,
   proActive,
+  coachCredits,
   onManagePro,
+  onOpenCoach,
   onDisconnect,
 }: {
   open: boolean;
@@ -166,7 +170,9 @@ function AccountSheet({
   walletShort: string;
   chainId: number | undefined;
   proActive: boolean;
+  coachCredits: number;
   onManagePro: () => void;
+  onOpenCoach: () => void;
   onDisconnect: () => void;
 }) {
   const t = useTranslations("ACCOUNT_SHEET_COPY");
@@ -280,6 +286,13 @@ function AccountSheet({
               {proActive ? t("activePro") : t("inactivePro")}
             </span>
           </button>
+
+          {/* Mi Coach — entry to /coach/history (Luz home surface) */}
+          <AccountCoachRow
+            isPro={proActive}
+            credits={coachCredits}
+            onPress={onOpenCoach}
+          />
 
           {/* Language — segmented switcher inline */}
           <div className="candy-tray flex items-center gap-2.5 !py-1.5 !px-2.5">
@@ -489,6 +502,7 @@ export function ExercisesScreen({
   } = useProStatus(address);
   const [proSheetOpen, setProSheetOpen] = useState(initialAction === "pro");
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+  const { credits: coachCredits } = useCoachCredits();
 
   // When the user landed on legacy via a scaffold deep link
   // (`?legacy=1&action=…`), bouncing back to `/hub` (scaffold) on the
@@ -1998,9 +2012,14 @@ export function ExercisesScreen({
             walletShort={formatWalletShort(address)}
             chainId={chainId}
             proActive={proStatus?.active === true}
+            coachCredits={coachCredits}
             onManagePro={() => {
               setAccountSheetOpen(false);
               setProSheetOpen(true);
+            }}
+            onOpenCoach={() => {
+              setAccountSheetOpen(false);
+              router.push("/coach/history");
             }}
             onDisconnect={() => {
               setAccountSheetOpen(false);
