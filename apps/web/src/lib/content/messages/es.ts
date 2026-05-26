@@ -493,7 +493,7 @@ const messages = {
     historyAnalyzeAriaLabel:
       "Analizar partida del {timestamp}, {difficulty}, {result}",
     victorySecondaryDescription:
-      "Acción secundaria — Reclamar Victoria arriba es la acción principal.",
+      "Acción secundaria. Reclamar Victoria arriba es la acción principal.",
     offlineToAnalyze: "Necesitas estar en línea para analizar",
     persistDismissLabel: "Cerrar",
   },
