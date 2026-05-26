@@ -51,7 +51,12 @@ export const PRO_DURATION_DAYS = 30;
  *  label / subtitle copy at render time. Callers thread the active
  *  `useTranslations("SHOP_ITEM_COPY")` translator and resolve
  *  `${copyKey}.label` / `${copyKey}.subtitle` locally. */
-export type ShopCopyKey = "founderBadge" | "retryShield" | "pro";
+export type ShopCopyKey =
+  | "founderBadge"
+  | "retryShield"
+  | "pro"
+  | "coachPack5"
+  | "coachPack20";
 
 export type ShopCatalogEntry = {
   itemId: bigint;
@@ -68,6 +73,16 @@ export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
   { itemId: PRO_ITEM_ID, copyKey: "pro" },
   { itemId: FOUNDER_BADGE_ITEM_ID, copyKey: "founderBadge" },
   { itemId: SHIELD_ITEM_ID, copyKey: "retryShield" },
+  // Coach packs (A2 cluster). itemIds 3n + 4n already configured
+  // on-chain — the existing CoachPaywall surface buys them today via
+  // `arena/page.tsx:handleBuyCredits`. Mounting them here exposes the
+  // packs as regular shop tiles so users can discover Coach without
+  // hitting a paywall first. Verified by /api/coach/verify-purchase
+  // post-receipt (mirrors the PRO_ITEM_ID branch in
+  // `useShopSheetState`). Hardcoded ids — `COACH_PACK_ITEMS` declared
+  // after SHOP_ITEMS, so referencing it here would TDZ.
+  { itemId: 3n, copyKey: "coachPack5" },
+  { itemId: 4n, copyKey: "coachPack20" },
   // Helper entry for the CELO route. Hidden from the shop card list —
   // only its on-chain configured/enabled flags drive the visibility of
   // the "Buy with CELO" button rendered next to founder.
@@ -90,6 +105,12 @@ export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { icon: string; bg: string }>
   pro: { icon: "/art/shop/pro", bg: "/art/shop/bg-pro" },
   founderBadge: { icon: "/art/shop/founder", bg: "/art/shop/bg-founder" },
   retryShield: { icon: "/art/shop/shield", bg: "/art/shop/bg-shield" },
+  // Placeholder assets (A2 cluster). Reuses Luz icon from
+  // /art/redesign/icons + bg from the existing shop palette. Replace
+  // with bespoke /art/shop/coach-pack-{5,20}.* triplets when Sally's
+  // visual-polish foundation (A4) lands.
+  coachPack5: { icon: "/art/redesign/icons/coach", bg: "/art/shop/bg-shield" },
+  coachPack20: { icon: "/art/redesign/icons/coach", bg: "/art/shop/bg-pro" },
 };
 
 /** Number of shield uses credited to localStorage per successful

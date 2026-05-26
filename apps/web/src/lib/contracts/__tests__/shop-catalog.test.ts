@@ -18,11 +18,19 @@ describe("shop-catalog", () => {
     expect(FOUNDER_BADGE_CELO_ITEM_ID).toBe(5n);
   });
 
-  it("exposes founder + PRO + shield + CELO sibling in the catalog with copy keys for locale-aware resolution", () => {
-    expect(SHOP_ITEMS).toHaveLength(4);
+  it("exposes founder + PRO + shield + coach packs + CELO sibling in the catalog with copy keys for locale-aware resolution", () => {
+    // PRO + Founder + Shield + CoachPack5 + CoachPack20 + CELO sibling.
+    expect(SHOP_ITEMS).toHaveLength(6);
     for (const item of SHOP_ITEMS) {
       expect(item.copyKey.length).toBeGreaterThan(0);
     }
+  });
+
+  it("includes both coach packs in SHOP_ITEMS with size-specific copy keys", () => {
+    const pack5 = SHOP_ITEMS.find((i) => i.itemId === COACH_PACK_ITEMS[5].itemId);
+    const pack20 = SHOP_ITEMS.find((i) => i.itemId === COACH_PACK_ITEMS[20].itemId);
+    expect(pack5?.copyKey).toBe("coachPack5");
+    expect(pack20?.copyKey).toBe("coachPack20");
   });
 
   it("the CELO sibling reuses the Founder Badge copy key so the UI can group both routes under one product card", () => {
