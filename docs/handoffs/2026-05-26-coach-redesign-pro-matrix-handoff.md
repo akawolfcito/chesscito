@@ -11,7 +11,7 @@
 
 Sesión de discovery con Sally que arrancó como "¿dónde vive el Coach?" y terminó redefiniendo todo el value-prop de PRO. Tres specs cerrados:
 
-1. **(b) Coach Free-Demo Redesign** — Reemplazar el stat-dump por análisis real de Ella con voz cálida (Escena 1), 3 calls free lifetime, contador siempre visible, paywall con cierre cálido, historial universal free re-read, packs x5/x20 surfaceados en SHOP.
+1. **(b) Coach Free-Demo Redesign** — Reemplazar el stat-dump por análisis real de Luz con voz cálida (Escena 1), 3 calls free lifetime, contador siempre visible, paywall con cierre cálido, historial universal free re-read, packs x5/x20 surfaceados en SHOP.
 
 2. **(a) PRO Value-Prop Matrix** — 4 frentes (visual polish / Coach AI / exercises depth / games catalog) con headline locked: **"Chesscito que crece con vos"**. V1 ship Coach + Visual polish; V2 Exercises; V3 Games; V4+ multiplayer/tournaments.
 
@@ -57,7 +57,7 @@ Bundled into one feature branch (per `bundle-dont-defer` HARD RULE). ~3-4 días 
 11. Update `<ProSheet>` hero copy:
     - Headline: *"Chesscito que crece con vos"*
     - Subtitle: *"Mientras más jugás, más app desbloqueás."*
-    - V1 bullets: *Análisis ilimitados con Ella* / *Avatares y board premium*
+    - V1 bullets: *Análisis ilimitados con Luz* / *Avatares y board premium*
 12. Echo del headline en Shop PRO tile + Coach paywall close.
 
 ### AccountSheet row

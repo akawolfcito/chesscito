@@ -22,10 +22,10 @@ describe("COACH_ONBOARDING_COPY (editorial / EN canonical)", () => {
     expect(COACH_ONBOARDING_COPY.ctaDecline.length).toBeGreaterThan(0);
   });
 
-  it("anchors Ella's voice in first person across every EN intro", () => {
+  it("anchors Luz's voice in first person across every EN intro", () => {
     for (const outcome of OUTCOMES) {
       const intro = COACH_ONBOARDING_COPY.intros[outcome];
-      expect(intro).toMatch(/I'm Ella/);
+      expect(intro).toMatch(/I'm Luz/);
       expect(intro).toMatch(/I watched your game/);
     }
   });
@@ -51,10 +51,10 @@ describe("COACH_ONBOARDING_COPY (ES mirror in messages/es.ts)", () => {
     expect(es.ctaDecline.length).toBeGreaterThan(0);
   });
 
-  it("anchors Ella's voice in first person across every ES intro", () => {
+  it("anchors Luz's voice in first person across every ES intro", () => {
     for (const outcome of OUTCOMES) {
       const intro = es.intros[outcome];
-      expect(intro).toMatch(/soy Ella/);
+      expect(intro).toMatch(/soy Luz/);
       expect(intro).toMatch(/Vi tu partida/);
     }
   });

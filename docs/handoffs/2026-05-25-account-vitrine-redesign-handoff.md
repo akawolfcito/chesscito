@@ -41,7 +41,7 @@ Sally + Wolfcito agreed: each slot defends its existence under the lens of "user
 | Trophies | NFT vitrina #2 — match-outcome collection with **Immortal Game** latent-value thesis |
 | Leaderboard | Competition + cognitive-mission narrative |
 
-Trophies was nearly dropped early in the conversation, but Wolfcito's narrative ("a game might not be known as great until much later, like The Immortal — Ella analyzes and tags it retroactively, making the NFT economically + pedagogically valuable over time") reframed it from vanity to thesis.
+Trophies was nearly dropped early in the conversation, but Wolfcito's narrative ("a game might not be known as great until much later, like The Immortal — Luz analyzes and tags it retroactively, making the NFT economically + pedagogically valuable over time") reframed it from vanity to thesis.
 
 ### HERO BAND pattern — reusable across vitrines
 **Composition:**
