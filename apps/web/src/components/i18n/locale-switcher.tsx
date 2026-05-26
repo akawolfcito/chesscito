@@ -2,7 +2,6 @@
 
 import { useLocale, useTranslations } from "next-intl";
 
-import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 
 /** Persist the user's choice for one year so subsequent visits skip
@@ -29,62 +28,58 @@ const LOCALE_NATIVE_NAMES: Record<Locale, string> = {
 export function LocaleSwitcher() {
   const t = useTranslations("ACCOUNT_SHEET_COPY");
   const locale = useLocale() as Locale;
-  const pathname = usePathname();
-  const router = useRouter();
-
-  const optionLabels: Record<Locale, string> = {
-    en: t("languageOptionEnglish"),
-    es: t("languageOptionSpanish"),
-  };
 
   function selectLocale(next: Locale) {
     if (next === locale) return;
+    if (typeof window === "undefined") return;
     document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; samesite=lax`;
-    router.replace(pathname, { locale: next });
+    // Read the raw URL directly and strip any existing locale segment, then
+    // prepend the new locale. Doing this from window.location (instead of
+    // next-intl's usePathname) avoids router edge cases where pathname
+    // could return null or already include the locale, which caused the
+    // hard navigation to land back on the same locale.
+    const current = window.location.pathname;
+    const localeRegex = new RegExp(`^/(${routing.locales.join("|")})(?=/|$)`);
+    const stripped = current.replace(localeRegex, "") || "/";
+    const target = `/${next}${stripped === "/" ? "" : stripped}${window.location.search}${window.location.hash}`;
+    window.location.assign(target);
   }
 
   return (
-    <div className="candy-tray">
-      <p
-        className="text-xs font-semibold uppercase tracking-[0.12em]"
-        style={{ color: "rgba(110, 65, 15, 0.70)" }}
-      >
-        {t("languageLabel")}
-      </p>
-      <div
-        role="group"
-        aria-label={t("languageLabel")}
-        className="mt-2 grid grid-cols-2 gap-1 rounded-xl p-1"
-        style={{ background: "rgba(110, 65, 15, 0.10)" }}
-      >
-        {routing.locales.map((option) => {
-          const isActive = option === locale;
-          return (
-            <button
-              key={option}
-              type="button"
-              onClick={() => selectLocale(option)}
-              aria-pressed={isActive}
-              aria-label={t("languageSwitchAriaFormat", {
-                name: LOCALE_NATIVE_NAMES[option],
-              })}
-              className="rounded-lg px-3 py-1.5 text-sm font-bold transition active:scale-95"
-              style={{
-                background: isActive ? "rgba(245, 158, 11, 0.85)" : "transparent",
-                color: isActive ? "rgba(63, 34, 8, 0.95)" : "rgba(110, 65, 15, 0.75)",
-                textShadow: isActive
-                  ? "0 1px 0 rgba(255, 245, 215, 0.55)"
-                  : undefined,
-                boxShadow: isActive
-                  ? "0 0 0 1px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 245, 215, 0.35)"
-                  : undefined,
-              }}
-            >
-              {optionLabels[option]}
-            </button>
-          );
-        })}
-      </div>
+    <div
+      role="group"
+      aria-label={t("languageLabel")}
+      className="inline-grid grid-cols-2 gap-0.5 rounded-lg p-0.5"
+      style={{ background: "rgba(110, 65, 15, 0.10)" }}
+    >
+      {routing.locales.map((option) => {
+        const isActive = option === locale;
+        const shortLabel = option === "en" ? "EN" : "ES";
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => selectLocale(option)}
+            aria-pressed={isActive}
+            aria-label={t("languageSwitchAriaFormat", {
+              name: LOCALE_NATIVE_NAMES[option],
+            })}
+            className="rounded-md px-2 py-0.5 text-xs font-bold transition active:scale-95"
+            style={{
+              background: isActive ? "rgba(245, 158, 11, 0.85)" : "transparent",
+              color: isActive ? "rgba(63, 34, 8, 0.95)" : "rgba(110, 65, 15, 0.75)",
+              textShadow: isActive
+                ? "0 1px 0 rgba(255, 245, 215, 0.55)"
+                : undefined,
+              boxShadow: isActive
+                ? "0 0 0 1px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 245, 215, 0.35)"
+                : undefined,
+            }}
+          >
+            {shortLabel}
+          </button>
+        );
+      })}
     </div>
   );
 }

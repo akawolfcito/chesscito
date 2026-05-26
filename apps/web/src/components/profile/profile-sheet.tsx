@@ -2,6 +2,7 @@
 import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAccount, useChainId, useDisconnect, useWriteContract } from "wagmi";
+import { Link } from "@/i18n/navigation";
 import {
   Sheet,
   SheetContent,
@@ -31,6 +32,7 @@ type Props = { open: boolean; onOpenChange: (open: boolean) => void };
 
 export function ProfileSheet({ open, onOpenChange }: Props) {
   const t = useTranslations("PROFILE_COPY");
+  const tAbout = useTranslations("ABOUT_LINK_COPY");
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
@@ -289,6 +291,17 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
             {t("disconnect")}
           </button>
         ) : null}
+
+        <div className="mt-4 flex justify-center">
+          <Link
+            href="/about"
+            onClick={() => onOpenChange(false)}
+            className="text-nano opacity-60 transition-colors hover:opacity-100"
+            style={{ color: "rgba(110, 65, 15, 0.65)" }}
+          >
+            {tAbout("label")}
+          </Link>
+        </div>
       </SheetContent>
     </Sheet>
   );

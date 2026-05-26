@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import {
   useAccount,
@@ -170,6 +170,7 @@ function AccountSheet({
   onDisconnect: () => void;
 }) {
   const t = useTranslations("ACCOUNT_SHEET_COPY");
+  const tAbout = useTranslations("ABOUT_LINK_COPY");
   const [copied, setCopied] = useState(false);
 
   async function copyAddress() {
@@ -189,7 +190,7 @@ function AccountSheet({
         hideClose
         title={t("title")}
         description={t("description")}
-        className="sheet-bg-hub rounded-t-3xl border-0 pb-[calc(env(safe-area-inset-bottom,0px)+2rem)]"
+        className="sheet-bg-hub rounded-t-3xl border-0 pb-[calc(env(safe-area-inset-bottom,0px)+6rem)]"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
@@ -201,78 +202,135 @@ function AccountSheet({
           />
         </div>
 
-        <div className="mt-4 space-y-3">
-          <div className="candy-tray">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
+        <div className="mt-3 space-y-1.5">
+          {/* Wallet — info row + copy affordance */}
+          <div className="candy-tray flex items-center gap-2.5 !py-1.5 !px-2.5">
+            <picture className="h-8 w-8 shrink-0">
+              <source srcSet="/art/new-assets-chesscito/account/wallet-icon.avif" type="image/avif" />
+              <source srcSet="/art/new-assets-chesscito/account/wallet-icon.webp" type="image/webp" />
+              <img
+                src="/art/new-assets-chesscito/account/wallet-icon.png"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </picture>
+            <span className="flex-1 text-sm font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
               {t("walletLabel")}
-            </p>
-            <div className="mt-1 flex items-center justify-between gap-2">
-              <span className="font-semibold tabular-nums" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-                {walletShort}
-              </span>
-              <button
-                type="button"
-                onClick={() => void copyAddress()}
-                aria-label={copied ? t("copiedAddress") : t("copyAddress")}
-                className="inline-flex items-center justify-center bg-transparent border-0 p-0 transition active:scale-90"
-                style={{ color: "rgba(63, 34, 8, 0.95)" }}
-              >
-                <CandyIcon name={copied ? "check" : "copy"} className="h-5 w-5" />
-              </button>
-            </div>
+            </span>
+            <span className="font-semibold tabular-nums text-xs" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+              {walletShort}
+            </span>
+            <button
+              type="button"
+              onClick={() => void copyAddress()}
+              aria-label={copied ? t("copiedAddress") : t("copyAddress")}
+              className="inline-flex items-center justify-center bg-transparent border-0 p-0 transition active:scale-90"
+              style={{ color: "rgba(63, 34, 8, 0.95)" }}
+            >
+              <CandyIcon name={copied ? "check" : "copy"} className="h-4 w-4" />
+            </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="candy-tray">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-                {t("networkLabel")}
-              </p>
-              <span className="account-status-pill mt-1" data-tone="celo">
-                <CandyIcon name="check" className="h-3 w-3" />
-                {networkName(chainId, t("unknownNetwork"))}
-              </span>
-            </div>
-            <div className="candy-tray">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-                {t("proLabel")}
-              </p>
-              <span
-                className="account-status-pill mt-1"
-                data-tone={proActive ? "active" : "inactive"}
-              >
-                <span aria-hidden="true">★</span>
-                {proActive ? t("activePro") : t("inactivePro")}
-              </span>
-            </div>
+          {/* Network — read-only status */}
+          <div className="candy-tray flex items-center gap-2.5 !py-1.5 !px-2.5">
+            <picture className="h-8 w-8 shrink-0">
+              <source srcSet="/art/new-assets-chesscito/account/network-icon.avif" type="image/avif" />
+              <source srcSet="/art/new-assets-chesscito/account/network-icon.webp" type="image/webp" />
+              <img
+                src="/art/new-assets-chesscito/account/network-icon.png"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </picture>
+            <span className="flex-1 text-sm font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+              {t("networkLabel")}
+            </span>
+            <span className="account-status-pill" data-tone="celo">
+              <CandyIcon name="check" className="h-3 w-3" />
+              {networkName(chainId, t("unknownNetwork"))}
+            </span>
           </div>
 
+          {/* Manage PRO — clickable row unifying status + CTA */}
           <button
             type="button"
             onClick={onManagePro}
-            className="account-manage-pro-cta w-full"
+            className="candy-tray flex w-full items-center gap-2.5 text-left transition active:scale-[0.98] !py-1.5 !px-2.5"
           >
-            <img
-              src="/art/screen-mission/corona-pro.png"
-              alt=""
-              aria-hidden="true"
-              className="account-manage-pro-cta-icon"
-              draggable={false}
-            />
-            <span>{proActive ? t("managePro") : t("viewPro")}</span>
+            <picture className="h-8 w-8 shrink-0">
+              <source srcSet="/art/screen-mission/corona-pro.avif" type="image/avif" />
+              <source srcSet="/art/screen-mission/corona-pro.webp" type="image/webp" />
+              <img
+                src="/art/screen-mission/corona-pro.png"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </picture>
+            <span className="flex-1 text-sm font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+              {proActive ? t("managePro") : t("viewPro")}
+            </span>
+            <span className="account-status-pill" data-tone={proActive ? "active" : "inactive"}>
+              <span aria-hidden="true">★</span>
+              {proActive ? t("activePro") : t("inactivePro")}
+            </span>
           </button>
-          <LocaleSwitcher />
-          <Button
+
+          {/* Language — segmented switcher inline */}
+          <div className="candy-tray flex items-center gap-2.5 !py-1.5 !px-2.5">
+            <picture className="h-8 w-8 shrink-0">
+              <source srcSet="/art/new-assets-chesscito/account/language-icon.avif" type="image/avif" />
+              <source srcSet="/art/new-assets-chesscito/account/language-icon.webp" type="image/webp" />
+              <img
+                src="/art/new-assets-chesscito/account/language-icon.png"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </picture>
+            <span className="flex-1 text-sm font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
+              {t("languageLabel")}
+            </span>
+            <LocaleSwitcher />
+          </div>
+
+          {/* Disconnect — destructive row */}
+          <button
             type="button"
-            variant="game-ghost"
-            size="game-sm"
-            className="mt-3 w-full"
             onClick={onDisconnect}
+            className="candy-tray flex w-full items-center gap-2.5 text-left transition active:scale-[0.98] !py-1.5 !px-2.5"
           >
-            {t("disconnect")}
-          </Button>
-          <p className="text-center text-xs" style={{ color: "rgba(110, 65, 15, 0.62)" }}>
+            <span
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+              style={{ background: "rgba(190, 18, 60, 0.15)" }}
+              aria-hidden="true"
+            >
+              <CandyIcon name="close" className="h-4 w-4" />
+            </span>
+            <span className="flex-1 text-sm font-bold" style={{ color: "rgba(159, 18, 57, 0.95)" }}>
+              {t("disconnect")}
+            </span>
+          </button>
+
+          <p className="text-center pt-1" style={{ color: "rgba(110, 65, 15, 0.62)", fontSize: "0.65rem", lineHeight: "0.9rem" }}>
             {t("minipayDisconnectHint")}
           </p>
+          <div className="mt-2 flex justify-center">
+            <Link
+              href="/about"
+              onClick={() => onOpenChange(false)}
+              className="text-nano opacity-60 transition-colors hover:opacity-100"
+              style={{ color: "rgba(110, 65, 15, 0.65)" }}
+            >
+              {tAbout("label")}
+            </Link>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
@@ -2152,7 +2210,6 @@ export function ExercisesScreen({
           isClaimBusy={isClaimBusy}
           claimingPiece={claimingPiece}
           showNotification={canSendOnChain && !Boolean(hasClaimedBadge)}
-          onNavigateToTrophies={() => setActiveDockTab("trophies")}
           showTrigger={false}
         />
         <ShopSheet
