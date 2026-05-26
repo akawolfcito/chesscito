@@ -5,6 +5,7 @@ import { useRouter } from "@/i18n/navigation";
 import { useAccount } from "wagmi";
 import { useLocale, useTranslations } from "next-intl";
 
+import { AskLuzBanner } from "@/components/coach/ask-luz-banner";
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CoachHistoryDeletePanel } from "@/components/coach/coach-history-delete-panel";
 import { CoachPanel } from "@/components/coach/coach-panel";
@@ -13,6 +14,8 @@ import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { requestCoachAnalyze } from "@/lib/coach/request-coach-analyze";
 import type { CoachAnalysisRecord, CoachResponse, GameRecord } from "@/lib/coach/types";
+import { useCoachCredits } from "@/lib/coach/use-coach-credits";
+import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 
 type HistoryEntry = CoachAnalysisRecord & { game: GameRecord };
 
@@ -61,6 +64,9 @@ export default function CoachHistoryPage() {
   const activeLocale = useLocale() as "en" | "es";
   const [selected, setSelected] = useState<SelectedFullEntry | null>(null);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const { credits } = useCoachCredits();
+  const isPro = useIsProActive();
+  const showAskLuzBanner = !!address && !isPro && credits === 0;
 
   /**
    * Reanalyze handler — mirrors the arena page wire-up. Bypasses the
@@ -147,9 +153,12 @@ export default function CoachHistoryPage() {
     <main className="tj-root">
       <PageHeader onBack={() => router.push("/hub")} />
       <div className="tj-content">
+        {showAskLuzBanner && (
+          <AskLuzBanner onPress={() => router.push("/arena?fresh=1")} />
+        )}
         <CoachHistory
           walletAddress={address}
-          credits={0}
+          credits={credits}
           onSelectEntry={handleSelect}
         />
         <CoachHistoryDeletePanel />
