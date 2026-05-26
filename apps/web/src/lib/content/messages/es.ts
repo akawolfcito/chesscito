@@ -497,6 +497,16 @@ const messages = {
     offlineToAnalyze: "Necesitas estar en línea para analizar",
     persistDismissLabel: "Cerrar",
   },
+  COACH_ONBOARDING_COPY: {
+    ...en.COACH_ONBOARDING_COPY,
+    intros: {
+      win: "Hola, soy Ella. Vi tu partida. Ganaste con criterio. ¿Te cuento qué vi?",
+      lose: "Hola, soy Ella. Vi tu partida. Perder duele, lo sé, pero ya hiciste cosas bien. ¿Te las muestro?",
+      draw: "Hola, soy Ella. Vi tu partida. Empate, interesante. ¿Te muestro dónde estuvo cerca?",
+    },
+    ctaAccept: "Sí, mostrame",
+    ctaDecline: "Ahora no",
+  },
   ARENA_COPY: {
     ...en.ARENA_COPY,
     title: "Arena",
