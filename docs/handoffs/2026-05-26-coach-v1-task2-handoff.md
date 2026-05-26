@@ -1,7 +1,8 @@
 # Handoff — Coach V1 Cluster A1 · Tasks 2/3/4 Closed (2026-05-26)
 
 **Owner:** Wolfcito · **Co-pilot:** Claude
-**Branch:** `main` — **12 commits sin push** (range `b15b90f8..b3e30a09`).
+**Branch:** `main` — **13 commits pushed** (range `b15b90f8..1875bf24`, incluye este handoff).
+**Push status:** ✅ `origin/main` sincronizado 2026-05-26.
 **Status:** Tasks 2, 3, 4 + pre-work cerrados. Tasks 5 + 6 quedan abiertos. Baseline tests 1971 → 2022.
 
 ---
