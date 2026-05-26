@@ -123,6 +123,27 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
     expect(tilesAfter[1].disabled).toBe(true);
   });
 
+  it("renders Luz voice in title + explain (cierre cálido)", () => {
+    render(
+      <CoachPaywall
+        open
+        onOpenChange={() => {}}
+        onBuy={() => {}}
+        onQuickReview={() => {}}
+      />,
+    );
+    // Title is the warm anchor — Luz reassures she's still here.
+    expect(COACH_COPY.creditTitle).toBe("I'm still here");
+    expect(screen.getAllByText(COACH_COPY.creditTitle).length).toBeGreaterThan(0);
+    // Explain narrates the 3-beat: I saw your game / quota gone / add a pack.
+    expect(COACH_COPY.creditExplain).toBe(
+      "I saw your game. You've used your 3 free analyses. Add a pack and we keep talking.",
+    );
+    expect(
+      screen.getAllByText(COACH_COPY.creditExplain).length,
+    ).toBeGreaterThan(0);
+  });
+
   it("Quick Review link is disabled while a buy is in flight", () => {
     render(
       <CoachPaywall
