@@ -507,6 +507,11 @@ const messages = {
     ctaAccept: "Sí, mostrame",
     ctaDecline: "Ahora no",
   },
+  COACH_CTA_COPY: {
+    ...en.COACH_CTA_COPY,
+    askWithCounter: "Pedile a Luz tu análisis (te quedan {count} gratis)",
+    askWhenZero: "Pedile a Luz tu análisis (necesitás PRO o un pack)",
+  },
   ARENA_COPY: {
     ...en.ARENA_COPY,
     title: "Arena",

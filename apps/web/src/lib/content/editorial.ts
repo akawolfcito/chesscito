@@ -1387,6 +1387,26 @@ export const COACH_ONBOARDING_COPY = {
   ctaDecline: "Not now",
 } as const;
 
+/**
+ * Post-game CoachPreviewCard counter band — labels for the new
+ * Luz-led free-user CTA. Spec §4 of
+ * _bmad-output/planning-artifacts/coach-demo-redesign-discovery-2026-05-26.md.
+ *
+ * Rendered for free users only. PRO users continue to render
+ * ARENA_COPY.coachPreview.activeCta ("REVIEW") since the counter is
+ * meaningless on unlimited.
+ */
+export const COACH_CTA_COPY = {
+  /** Free user with credits remaining. Counter is part of the
+   *  affordance, not a separate chip, so the tap target carries the
+   *  state in its own label. */
+  askWithCounter: (count: number) =>
+    `Ask Luz for your analysis (${count} free left)`,
+  /** Free user with zero credits. Tap routes to the paywall sheet
+   *  (PRO sub or pack purchase). */
+  askWhenZero: "Ask Luz for your analysis (need PRO or a pack)",
+} as const;
+
 /** Shared chrome for /about, /support, /privacy, /terms — anything
  *  rendered through <LegalPageShell>. Centralizes labels that aren't
  *  page-specific so locale bundles only need to override this once. */
