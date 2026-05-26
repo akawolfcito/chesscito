@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
+import { useThemeAsset } from "@/lib/themes/use-theme-asset";
 
 export type KingdomAnchorVariant =
   | "playhub"
@@ -27,16 +28,10 @@ const ASPECT_RATIO: Record<KingdomAnchorVariant, string> = {
   "landing-hero": "1.5 / 1",
 };
 
-/** Hero portal asset paths. The `playhub`/`landing-hero` variants
- *  swap between `chesscito-normal-portal` and `chesscito-pro-portal`
- *  on `useIsProActive()` — paying subscribers see their wizard in
- *  premium garb as a quiet recognition cue. Both assets share the
- *  same `669 / 1040` aspect ratio so the surrounding layout doesn't
- *  jump on the swap. */
-const HERO_ASSET_BASE_FREE =
-  "/art/new-assets-chesscito/hub/chesscito-normal-portal";
-const HERO_ASSET_BASE_PRO =
-  "/art/new-assets-chesscito/hub/chesscito-pro-portal";
+/** Board + pieces assets are still hardcoded — they have not yet been
+ *  audited into the theme system. When the arena-preview variant gets
+ *  reskinned, migrate these to `useThemeAsset("board.background")` +
+ *  `useThemeAsset("board.pieces")` per the audit doc playbook. */
 const BOARD_ASSET_BASE = "/art/redesign/board/board-ch";
 const PIECES_ASSET_BASE = "/art/redesign/pieces";
 
@@ -75,9 +70,17 @@ export function KingdomAnchor({
 }: Props) {
   const t = useTranslations("HOME_ANCHOR_COPY");
   const isProActive = useIsProActive();
-  const heroAssetBase = isProActive
-    ? HERO_ASSET_BASE_PRO
-    : HERO_ASSET_BASE_FREE;
+  /** Hub portal — first surface adopted into the theme system. Theme
+   *  manifest serves both variants (default + pro) so a future
+   *  Halloween / Christmas theme can ship its own portal art without
+   *  touching this component. The `isProActive` flag picks the PRO
+   *  variant within whichever theme is active; themes that don't ship
+   *  a PRO variant fall back to default automatically (see
+   *  `useThemeAsset` graceful-fallback contract). */
+  const heroAssetBase = useThemeAsset(
+    "hub.portal",
+    isProActive ? "pro" : "default",
+  );
   const classes = [
     "kingdom-anchor",
     `kingdom-anchor--${variant}`,
