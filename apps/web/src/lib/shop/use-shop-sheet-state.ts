@@ -21,6 +21,7 @@ import {
 } from "@/lib/contracts/chains";
 import { shopAbi } from "@/lib/contracts/shop";
 import {
+  COACH_PACK_ITEMS,
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
   PRO_ITEM_ID,
@@ -412,7 +413,11 @@ export function useShopSheetState(
         ? "shop_retry_shield"
         : selectedItem.itemId === PRO_ITEM_ID
           ? "shop_pro"
-          : "shop_founder_badge";
+          : selectedItem.itemId === COACH_PACK_ITEMS[5].itemId
+            ? "shop_coach_5"
+            : selectedItem.itemId === COACH_PACK_ITEMS[20].itemId
+              ? "shop_coach_20"
+              : "shop_founder_badge";
     const itemIdNum = Number(selectedItem.itemId);
 
     setErrorMessage(null);
@@ -460,6 +465,34 @@ export function useShopSheetState(
       track("shop_buy_tx", { stage: "success", source: txSource, item_id: itemIdNum });
       if (selectedItem.itemId === SHIELD_ITEM_ID) {
         creditShieldServerSide(buyHash as `0x${string}`, address);
+      } else if (
+        selectedItem.itemId === COACH_PACK_ITEMS[5].itemId ||
+        selectedItem.itemId === COACH_PACK_ITEMS[20].itemId
+      ) {
+        // Coach packs (itemId 3 + 4) mirror the PRO path: without the
+        // server-side credit grant the user paid on-chain but the
+        // coach:credits:<wallet> Redis key never increments. The
+        // /api/coach/verify-purchase route is idempotent (txHash guard),
+        // so retries from the Coach paywall recover gracefully.
+        if (publicClient) {
+          try {
+            await waitForReceiptWithTimeout(publicClient, buyHash as `0x${string}`);
+            const res = await fetch("/api/coach/verify-purchase", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ txHash: buyHash, walletAddress: address }),
+            });
+            if (!res.ok) {
+              setErrorMessage(
+                "Pack purchased on-chain — credits pending. Open the Coach paywall to retry.",
+              );
+            }
+          } catch {
+            setErrorMessage(
+              "Pack purchased on-chain — credits pending. Open the Coach paywall to retry.",
+            );
+          }
+        }
       } else if (selectedItem.itemId === PRO_ITEM_ID) {
         // verify-pro is the activation contract — without it the user
         // paid on-chain but coach:pro:<wallet> never lands in Redis.
