@@ -58,6 +58,7 @@ import { CoachFallback } from "@/components/coach/coach-fallback";
 import { CoachPaywall } from "@/components/coach/coach-paywall";
 import { LuzOnboardingPanel } from "@/components/coach/luz-onboarding-panel";
 import { gameStatusToOnboardingOutcome } from "@/lib/coach/onboarding-outcome";
+import { routeCoachPreviewCta } from "@/lib/coach/coach-preview-route";
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { track } from "@/lib/telemetry";
@@ -695,15 +696,23 @@ function ArenaPageInner() {
   }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, isConnected, address, startCoachAnalysis, proActiveCached]);
 
   const handleCoachPreviewCta = useCallback(() => {
-    const cta = proActiveCached ? "review_match" : "open_pro_sheet";
-    track("coach_preview_cta_tap", arenaCoachTelemetry(cta));
-    if (proActiveCached) {
-      track("coach_review_opened", arenaCoachTelemetry("review_match"));
+    const action = routeCoachPreviewCta({
+      proActive: proActiveCached,
+      credits: coachCredits,
+    });
+    if (action === "ask") {
+      const ctaTag = proActiveCached ? "review_match" : "use_credit";
+      track("coach_preview_cta_tap", arenaCoachTelemetry(ctaTag));
+      if (proActiveCached) {
+        track("coach_review_opened", arenaCoachTelemetry("review_match"));
+      }
       handleAskCoach();
-    } else {
-      proSheet.openSheet();
+      return;
     }
-  }, [arenaCoachTelemetry, handleAskCoach, proActiveCached, proSheet]);
+    // action === "paywall" — free user, no credits left.
+    track("coach_preview_cta_tap", arenaCoachTelemetry("open_pro_sheet"));
+    proSheet.openSheet();
+  }, [arenaCoachTelemetry, coachCredits, handleAskCoach, proActiveCached, proSheet]);
 
   useEffect(() => {
     if (!isEndState || !showEndOverlay || coachPhase !== "idle") {
