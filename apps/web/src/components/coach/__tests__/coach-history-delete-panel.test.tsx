@@ -111,7 +111,7 @@ describe("<CoachHistoryDeletePanel>", () => {
     fireEvent.click(screen.getByRole("button", { name: /Yes, delete everything/i }));
 
     await waitFor(() =>
-      expect(screen.getByText(/Could not delete — please retry/i)).toBeInTheDocument(),
+      expect(screen.getByText(/Could not delete\. Please retry/i)).toBeInTheDocument(),
     );
   });
 

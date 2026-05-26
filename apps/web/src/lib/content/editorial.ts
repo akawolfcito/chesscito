@@ -1186,7 +1186,7 @@ export const COACH_COPY = {
   getFullAnalysisSub: "See your key moments and personalized tips",
   analyzing: "Analyzing your game",
   reviewingMoves: "Reviewing your moves",
-  canLeave: "You can leave — we'll keep your result ready",
+  canLeave: "You can leave. We'll keep your result ready",
   analysisReady: "Your analysis is ready",
   analysisProcessing: "Your analysis is still processing...",
   analysisFailed: "Analysis couldn't be completed. Your credit was not spent.",
@@ -1215,7 +1215,7 @@ export const COACH_COPY = {
   analysisIncomplete: "Your review didn\u2019t complete.",
   analysisIncompleteBody: "Please try again. If it keeps happening, come back later.",
   // --- Secondary Screen Cohesion (2026-03-28) ---
-  loadingCanLeave: "You can leave — your result will be ready when you return.",
+  loadingCanLeave: "You can leave. Your result will be ready when you return.",
   creditPackSubtitle: (n: number) => `${n} game analyses`,
   unlockFullAnalysis: "PRO REVIEW",
   /* Coach session memory (PR 4 + PR 5). The footer renders inside
@@ -1241,7 +1241,7 @@ export const COACH_COPY = {
     /* Neutral wording so we never imply a positive action that may
      * not have happened (red-team P0-7). */
     successToast: "All Coach data cleared from our records",
-    errorToast: "Could not delete — please retry",
+    errorToast: "Could not delete. Please retry",
   },
   historyBannerSubtitle: "Personalized coaching from your game history.",
   /** /coach/history page header — back navigation + no-wallet gate. */
@@ -1279,7 +1279,7 @@ export const COACH_COPY = {
     title: "Latest Review",
     openLabel: "Review →",
     ariaLabel:
-      "Open {typeLabel} Coach Review — {result}, {difficulty}, {moves} moves",
+      "Open {typeLabel} Coach Review, {result}, {difficulty}, {moves} moves",
   },
   /** <ProgressCard /> stats — three short labels rendered under each
    *  stat number. "Reviewed" pairs with `analyzed.length`,
@@ -1360,7 +1360,7 @@ export const COACH_ENTRY_COPY = {
     `Analyze match from ${timestamp}, ${difficulty}, ${result}`,
   victorySecondaryDescribedById: "victory-coach-cta-desc",
   victorySecondaryDescription:
-    "Secondary action — Save Victory above is the primary action.",
+    "Secondary action. Save Victory above is the primary action.",
   offlineToAnalyze: "You need to be online to analyze",
   /** Dismiss control on the persist-error toast. */
   persistDismissLabel: "Dismiss",

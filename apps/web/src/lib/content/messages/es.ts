@@ -365,7 +365,7 @@ const messages = {
     getFullAnalysisSub: "Mira tus momentos clave y consejos personalizados",
     analyzing: "Analizando tu partida",
     reviewingMoves: "Revisando tus jugadas",
-    canLeave: "Puedes salir — guardamos tu resultado",
+    canLeave: "Puedes salir. Guardamos tu resultado",
     analysisReady: "Tu análisis está listo",
     analysisProcessing: "Tu análisis aún se está procesando…",
     analysisFailed:
@@ -398,7 +398,7 @@ const messages = {
     analysisIncompleteBody:
       "Inténtalo de nuevo. Si sigue fallando, vuelve más tarde.",
     loadingCanLeave:
-      "Puedes salir — tu resultado estará listo cuando regreses.",
+      "Puedes salir. Tu resultado estará listo cuando regreses.",
     creditPackSubtitle: "{count} análisis de partidas",
     unlockFullAnalysis: "ANÁLISIS PRO",
     historyFooter: {
@@ -418,7 +418,7 @@ const messages = {
       confirmAccept: "Sí, eliminar todo",
       confirmCancel: "Mantener mi historial",
       successToast: "Datos del Coach eliminados de nuestros registros",
-      errorToast: "No se pudo eliminar — intenta de nuevo",
+      errorToast: "No se pudo eliminar. Intenta de nuevo",
     },
     analysisLocaleBadge: {
       en: "EN",
@@ -463,7 +463,7 @@ const messages = {
       title: "Último análisis",
       openLabel: "Abrir →",
       ariaLabel:
-        "Abrir análisis {typeLabel} del Coach — {result}, {difficulty}, {moves} jugadas",
+        "Abrir análisis {typeLabel} del Coach, {result}, {difficulty}, {moves} jugadas",
     },
     progressStats: {
       reviewed: "Revisadas",
