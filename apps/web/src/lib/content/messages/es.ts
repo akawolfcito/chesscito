@@ -790,6 +790,8 @@ const messages = {
     connectWallet: "Conecta tu wallet para ver tus trofeos",
     connectWalletButton: "Conectar wallet",
     noVictories: "Aún sin victorias",
+    firstVictoryHeadline: "Cada victoria, tuya para siempre.",
+    firstVictorySub: "Gana una partida y recibe un coleccionable digital. Es tuyo de por vida.",
     noGlobalVictories: "Aún no hay victorias registradas",
     loadError: "No se pudieron cargar las victorias",
     tapToRetry: "Toca para reintentar",
@@ -1138,6 +1140,7 @@ const messages = {
     lockedShort: "Bloqueada",
     claim: "Obtener",
     starsProgressFormat: "{collected} de {total} estrellas",
+    firstStepHint: "Domina la Torre, reclama tu primer coleccionable digital.",
   },
   TUTORIAL_COPY: {
     rook: "La Torre se mueve en líneas rectas — horizontal o vertical",

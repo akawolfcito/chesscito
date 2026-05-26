@@ -320,6 +320,19 @@ export function BadgeSheet({
           </div>
         ) : null}
 
+        {/* Onboarding hint — visible only when the user has zero stars
+         *  collected. Sells the reward (digital collectible) in plain
+         *  language before they have to read anything else. Disappears
+         *  the moment they earn their first star. */}
+        {totalCollectedStars === 0 ? (
+          <p
+            className="shrink-0 mt-3 text-center text-sm font-bold leading-snug"
+            style={{ color: "rgba(63, 34, 8, 0.85)" }}
+          >
+            {t("firstStepHint")}
+          </p>
+        ) : null}
+
         {/* Badge Grid */}
         <div className="flex-1 overflow-y-auto mt-4 space-y-3 pb-6">
           {badges.map((badge) => (

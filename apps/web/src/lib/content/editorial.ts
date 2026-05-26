@@ -249,6 +249,10 @@ export const BADGE_SHEET_COPY = {
   lockedShort: "Locked",
   claim: "Claim",
   starsProgressFormat: "{collected} of {total} stars",
+  /** Onboarding hint shown above the badge grid when the user has zero
+   *  stars collected. Lead with the reward (collectible for life), not
+   *  the action — the audience scans and skips jargon. */
+  firstStepHint: "Master the Rook — claim your first digital collectible.",
 } as const;
 
 export const TUTORIAL_COPY = {
@@ -709,6 +713,11 @@ export const TROPHY_VITRINE_COPY = {
   connectWallet: "Connect to view your trophies",
   connectWalletButton: "Connect Wallet",
   noVictories: "No victories yet",
+  /** Narrative empty-state banner shown above the "no victories" frame
+   *  when the user is connected but hasn't minted any victory yet. Sells
+   *  the long-term value of the collectible without using jargon. */
+  firstVictoryHeadline: "Every victory, yours forever.",
+  firstVictorySub: "Win a match and earn a digital collectible. Yours for life.",
   noGlobalVictories: "No victories recorded yet",
   loadError: "Could not load victories",
   tapToRetry: "Tap to retry",

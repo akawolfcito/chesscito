@@ -208,12 +208,24 @@ export function TrophiesBody() {
             />
             <CandyIcon name="trophy" className="relative h-10 w-10" />
           </div>
-          <p
-            className="text-sm font-semibold leading-relaxed px-2"
-            style={{ color: "rgba(63, 34, 8, 0.85)" }}
-          >
-            {t("noVictories")}
-          </p>
+          {/* Narrative empty-state — sells the reward (collectible for
+           *  life) in plain language. Lead with the headline so the
+           *  visual-first user gets the promise even if they don't read
+           *  the sub. */}
+          <div className="flex flex-col items-center gap-1.5 px-2">
+            <p
+              className="text-base font-extrabold leading-tight"
+              style={{ color: "rgba(63, 34, 8, 0.95)" }}
+            >
+              {t("firstVictoryHeadline")}
+            </p>
+            <p
+              className="text-sm font-semibold leading-relaxed"
+              style={{ color: "rgba(63, 34, 8, 0.75)" }}
+            >
+              {t("firstVictorySub")}
+            </p>
+          </div>
           <Link
             href="/arena?fresh=1"
             className="principal-button principal-button-medium inline-flex w-full items-center justify-center text-center"
