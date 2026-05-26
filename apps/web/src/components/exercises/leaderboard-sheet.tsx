@@ -56,7 +56,9 @@ type LeaderboardSheetProps = {
 
 export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: LeaderboardSheetProps) {
   const t = useTranslations("LEADERBOARD_SHEET_COPY");
-  const tPassport = useTranslations("PASSPORT_COPY");
+  // Passport verify banner is hidden until we ship Celo-native verification.
+  // See the disabled JSX block below for the revival point.
+  // const tPassport = useTranslations("PASSPORT_COPY");
   const tDock = useTranslations("DOCK_LABELS");
   const [rows, setRows] = useState<LeaderboardRow[]>(prefetchedRows ?? []);
   const [loading, setLoading] = useState(false);
@@ -147,7 +149,19 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
         </div>
 
         <div className="flex-1 overflow-y-auto mt-4 space-y-6 pb-[8rem]">
-          {/* Verification Banner — Demoted but clear */}
+          {/* Verification Banner — DISABLED 2026-05-25.
+           *
+           *  Passport (Gitcoin) verification lives on a different chain
+           *  than Celo. Until we ship Celo-native score verification,
+           *  exposing this CTA in the Leaderboard sheet adds friction
+           *  + cross-chain confusion without any payoff. Re-enable when
+           *  the Celo verifier is in place; the translations + CSS
+           *  (leaderboard-verify-banner) stay intact for the revival.
+           *
+           *  Also restore the `tPassport` translations hook at the top
+           *  of this component when un-commenting.
+           */}
+          {/*
           <div className="leaderboard-verify-banner">
             <div className="flex items-center gap-2">
               <CandyIcon name="shield" className="h-4 w-4 text-violet-600" />
@@ -164,6 +178,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
               {tPassport("ctaLabel")}
             </a>
           </div>
+          */}
 
           {loading && rows.length === 0 && (
             <div className="space-y-3">
