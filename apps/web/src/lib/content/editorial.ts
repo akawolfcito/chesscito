@@ -1650,7 +1650,12 @@ export const PRO_COPY = {
    *  Frames PRO as a "training pass" rather than a feature gate, per
    *  the §11 canon mission line. Spec: addendum §3.6 / §6.1 commit #4. */
   kicker: "Training Pass",
-  tagline: "Your training plan. Your way to keep Chesscito free for everyone.",
+  tagline: "Chesscito that grows with you",
+  /** V1 hero subline rendered under the headline. Pairs with the
+   *  brand promise: the more the player engages, the more the app
+   *  unlocks (Coach, visual polish, exercises depth, games catalog).
+   *  Locked phrase per PRO value-prop V1 memory. */
+  taglineSub: "The more you play, the more it unlocks",
   subtitle: "Monthly pass that keeps Chesscito open. Renew when you want.",
   priceLabel: "$1.99 / month",
   durationLabel: "30 days",

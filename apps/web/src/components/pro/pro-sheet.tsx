@@ -301,12 +301,18 @@ export function ProSheet(props: ProSheetProps) {
                 }}
               />
 
-              {/* Tagline */}
+              {/* Tagline (V1 brand headline) + subline */}
               <p
-                className="mt-2 text-xs leading-snug"
-                style={{ color: "rgba(110, 65, 15, 0.78)" }}
+                className="mt-2 text-sm font-bold leading-snug"
+                style={{ color: "rgba(110, 65, 15, 0.92)" }}
               >
                 {t("tagline")}
+              </p>
+              <p
+                className="mt-1 text-xs leading-snug"
+                style={{ color: "rgba(110, 65, 15, 0.72)" }}
+              >
+                {t("taglineSub")}
               </p>
 
               {/* Center card — branches by subscription state.

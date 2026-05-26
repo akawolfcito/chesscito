@@ -256,8 +256,8 @@ const messages = {
     ...en.PRO_COPY,
     label: "Chesscito PRO",
     kicker: "Pase de entrenamiento",
-    tagline:
-      "Tu plan de entrenamiento. Tu forma de mantener Chesscito libre para todos.",
+    tagline: "Chesscito que crece con vos",
+    taglineSub: "Mientras más jugás, más app desbloqueás.",
     subtitle:
       "Pase mensual que mantiene a Chesscito abierto. Renueva cuando quieras.",
     priceLabel: "$1.99 / mes",
