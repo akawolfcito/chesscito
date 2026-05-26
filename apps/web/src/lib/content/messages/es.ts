@@ -1356,7 +1356,15 @@ const messages = {
     },
     coachPack: {
       label: "Créditos de Coach",
-      subtitle: "Prueba el análisis IA — sin suscripción.",
+      subtitle: "Prueba el análisis IA, sin suscripción.",
+    },
+    coachPack5: {
+      label: "5 Créditos de Coach",
+      subtitle: "5 análisis de partidas con Luz.",
+    },
+    coachPack20: {
+      label: "20 Créditos de Coach",
+      subtitle: "20 análisis de partidas con Luz. Mejor valor.",
     },
     pro: {
       label: "Chesscito PRO",
