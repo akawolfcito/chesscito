@@ -401,6 +401,9 @@ const messages = {
     loadingCanLeave:
       "Puedes salir. Tu resultado estará listo cuando regreses.",
     creditPackSubtitle: "{count} análisis de partidas",
+    historyAskNextTitle: "Pedile a Luz tu próximo análisis",
+    historyAskNextSub:
+      "Ya no te quedan análisis gratis. Sumá un pack y seguí conversando.",
     unlockFullAnalysis: "ANÁLISIS PRO",
     historyFooter: {
       building: "Construyendo tu historial…",

@@ -1218,6 +1218,9 @@ export const COACH_COPY = {
   // --- Secondary Screen Cohesion (2026-03-28) ---
   loadingCanLeave: "You can leave. Your result will be ready when you return.",
   creditPackSubtitle: (n: number) => `${n} game analyses`,
+  historyAskNextTitle: "Ask Luz for your next analysis",
+  historyAskNextSub:
+    "Your free analyses are gone. Add a pack and keep talking.",
   unlockFullAnalysis: "PRO REVIEW",
   /* Coach session memory (PR 4 + PR 5). The footer renders inside
    * <CoachPanel> when proActive && historyMeta are present. */
