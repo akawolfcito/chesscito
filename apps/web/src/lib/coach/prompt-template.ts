@@ -42,11 +42,11 @@ const HISTORY_COPY_EN: HistoryCopy = {
   header: (g, w, l, d) =>
     `Player history (last 20 games): ${g} games.\nRecent results: W:${w} L:${l} D:${d}.`,
   guardNoEvidence:
-    "Insufficient pattern data this session — do NOT speculate about\nrecurring weaknesses or strengths across past games. Analyze\nONLY the current game.",
+    "Insufficient pattern data this session. Do NOT speculate about\nrecurring weaknesses or strengths across past games. Analyze\nONLY the current game.",
   tagsLine: (tags) => `Recurring weakness areas: ${tags}.`,
   callout:
     "When analyzing this game, if any of the above weakness areas appear,\n" +
-    'call them out by name — e.g., "you\'ve shown weak king safety in 4 of\n' +
+    'call them out by name. For example, "you\'ve shown weak king safety in 4 of\n' +
     'your last 8 games." Tie the call-out to the count above. ' +
     "Do not fabricate a pattern that isn't in the data.",
 };
@@ -55,11 +55,11 @@ const HISTORY_COPY_ES: HistoryCopy = {
   header: (g, w, l, d) =>
     `Historial del jugador (últimas 20 partidas): ${g} partidas.\nResultados recientes: V:${w} D:${l} E:${d}.`,
   guardNoEvidence:
-    "Datos de patrones insuficientes esta sesión — NO especules sobre\ndebilidades o fortalezas recurrentes entre partidas pasadas. Analiza\nÚNICAMENTE la partida actual.",
+    "Datos de patrones insuficientes esta sesión. NO especules sobre\ndebilidades o fortalezas recurrentes entre partidas pasadas. Analiza\nÚNICAMENTE la partida actual.",
   tagsLine: (tags) => `Áreas de debilidad recurrentes: ${tags}.`,
   callout:
     "Al analizar esta partida, si aparece alguna de las áreas de debilidad\n" +
-    'anteriores, menciónala por nombre — ej., "has mostrado debilidad en\n' +
+    'anteriores, menciónala por nombre. Por ejemplo, "has mostrado debilidad en\n' +
     'seguridad del rey en 4 de tus últimas 8 partidas." Liga la mención al\n' +
     "conteo anterior. No inventes un patrón que no esté en los datos.",
 };
@@ -125,9 +125,9 @@ const INTRO_EN: IntroCopy = {
   rules: [
     "- mistakes: max 5, only include genuine mistakes",
     "- lessons: max 3, concrete and actionable",
-    "- praise: max 2, specific to this game (never empty — find something positive even in a loss)",
+    "- praise: max 2, specific to this game (never empty, find something positive even in a loss)",
     "- All text in English",
-    "- Keep explanations simple — the player may be a beginner",
+    "- Keep explanations simple. The player may be a beginner",
   ],
 };
 
@@ -150,9 +150,9 @@ const INTRO_ES: IntroCopy = {
   rules: [
     "- mistakes: máximo 5, solo incluir errores reales",
     "- lessons: máximo 3, concretas y accionables",
-    "- praise: máximo 2, específicas a esta partida (nunca vacío — encuentra algo positivo incluso en una derrota)",
+    "- praise: máximo 2, específicas a esta partida (nunca vacío, encuentra algo positivo incluso en una derrota)",
     "- JSON property names MUST remain in English (kind, summary, mistakes, lessons, praise, moveNumber, played, better, explanation). Solo los VALORES de tipo string deben estar en español (es-MX).",
-    "- Mantén las explicaciones simples — el jugador puede ser principiante",
+    "- Mantén las explicaciones simples. El jugador puede ser principiante",
   ],
 };
 

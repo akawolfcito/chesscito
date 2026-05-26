@@ -38,9 +38,9 @@ describe("buildCoachPrompt — free path (regression guard)", () => {
       Rules:
       - mistakes: max 5, only include genuine mistakes
       - lessons: max 3, concrete and actionable
-      - praise: max 2, specific to this game (never empty — find something positive even in a loss)
+      - praise: max 2, specific to this game (never empty, find something positive even in a loss)
       - All text in English
-      - Keep explanations simple — the player may be a beginner"
+      - Keep explanations simple. The player may be a beginner"
     `);
   });
 
@@ -125,7 +125,7 @@ describe("buildCoachPrompt — PRO standard branch (populated tags)", () => {
       recentResults: { win: 5, lose: 7, draw: 1, resigned: 1 },
       topWeaknessTags: [{ tag: "weak-king-safety", count: 4 }],
     });
-    expect(out).not.toContain("do NOT speculate");
+    expect(out).not.toContain("Do NOT speculate");
   });
 });
 
@@ -137,7 +137,7 @@ describe("buildCoachPrompt — PRO no-evidence branch (empty topWeaknessTags)", 
       topWeaknessTags: [],
     });
     expect(out).toContain("Insufficient pattern data this session");
-    expect(out).toContain("do NOT speculate");
+    expect(out).toContain("Do NOT speculate");
     expect(out).toContain("Analyze\nONLY the current game.");
   });
 
