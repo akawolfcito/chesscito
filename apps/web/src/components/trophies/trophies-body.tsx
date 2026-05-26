@@ -41,6 +41,16 @@ function toVictoryEntry(row: ApiVictoryRow): VictoryEntry {
 
 const OPTIMISTIC_TTL_MS = 2 * 60 * 1000;
 
+/** Compact time formatter used inside the HERO BAND's "Your best" line.
+ *  Mirrors trophy-card.tsx#formatTimeMs but kept local so the hero
+ *  doesn't pull a sibling-card private helper. */
+function formatTimeMs(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
 function getOptimisticVictory(): ApiVictoryRow | null {
   try {
     const raw = sessionStorage.getItem("chesscito:optimistic-victory");
@@ -171,6 +181,17 @@ export function TrophiesBody() {
   const isChampion = isConnected && hasVictories;
   const isEmptyConnected = isConnected && myVictories?.length === 0 && !myLoading && !myError;
   const summary = computeAchievements(myVictories);
+  const victoryCount = myVictories?.length ?? 0;
+  /** Best run = fewest moves, ties broken by shortest time. Drives the
+   *  HERO BAND's "Your best" line. Stays null when the user has no
+   *  victories yet so the empty hint shows in its place. */
+  const bestVictory = hasVictories
+    ? [...(myVictories ?? [])].sort(
+        (a, b) => a.totalMoves - b.totalMoves || a.timeMs - b.timeMs,
+      )[0]
+    : null;
+  const achievementsPct =
+    summary.total === 0 ? 0 : (summary.earnedCount / summary.total) * 100;
 
   const myVictoriesSection = (
     <PageSection
@@ -299,6 +320,51 @@ export function TrophiesBody() {
 
   return (
     <div className="flex flex-col gap-10 pb-10">
+      {/* HERO BAND — overview anchor that mirrors the Badges vitrine
+       *  pattern. Trofeo-épico character anchors the warm cream-amber
+       *  panel; the right column carries the glance-able stats (victory
+       *  count + best run when present, achievements progress). The
+       *  detail sections (My Victories, Achievements, Hall of Fame)
+       *  follow below — the hero is the FIRST thing visible. */}
+      <div className="trophy-vitrine-hero">
+        <picture className="trophy-vitrine-hero-anchor">
+          <source srcSet="/art/action-row/trofeo-epico.avif" type="image/avif" />
+          <source srcSet="/art/action-row/trofeo-epico.webp" type="image/webp" />
+          <img
+            src="/art/action-row/trofeo-epico.png"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+          />
+        </picture>
+        <div className="trophy-vitrine-hero-content">
+          <p className="trophy-vitrine-hero-eyebrow">{t("heroEyebrow")}</p>
+          <p className="trophy-vitrine-hero-stats">
+            <span className="trophy-vitrine-hero-stats-victory">
+              {victoryCount} {t("heroVictoriesLabel")}
+            </span>
+            <span className="trophy-vitrine-hero-stats-sep" aria-hidden="true">·</span>
+            <span className="trophy-vitrine-hero-stats-ach">
+              {summary.earnedCount}/{summary.total} {t("heroAchievementsLabel")}
+            </span>
+          </p>
+          <p className="trophy-vitrine-hero-sub">
+            {bestVictory
+              ? t("heroBestLabelFormat", {
+                  moves: bestVictory.totalMoves,
+                  time: formatTimeMs(bestVictory.timeMs),
+                })
+              : t("heroEmptyHint")}
+          </p>
+          <div className="trophy-vitrine-hero-progress">
+            <div
+              className="trophy-vitrine-hero-progress-fill"
+              style={{ width: `${achievementsPct}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       {ordered}
 
       {/* Roadmap — Footer */}

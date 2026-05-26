@@ -720,6 +720,12 @@ export const TROPHY_VITRINE_COPY = {
    *  the long-term value of the collectible without using jargon. */
   firstVictoryHeadline: "Every victory, yours forever.",
   firstVictorySub: "Win a match and earn a digital collectible. Yours for life.",
+  /** HERO BAND labels — overview anchor at the top of the sheet. */
+  heroEyebrow: "YOUR VITRINE",
+  heroVictoriesLabel: "VICTORIES",
+  heroAchievementsLabel: "ACHIEVEMENTS",
+  heroBestLabelFormat: "Your best: {moves} moves · {time}",
+  heroEmptyHint: "Your first victory awaits.",
   noGlobalVictories: "No victories recorded yet",
   loadError: "Could not load victories",
   tapToRetry: "Tap to retry",
