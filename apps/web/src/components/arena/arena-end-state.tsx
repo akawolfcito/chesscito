@@ -82,6 +82,33 @@ function getLoseText(status: ArenaStatus, t: ArenaTranslator): string {
   }
 }
 
+/* Per-status hero icon — themed asset that visually summarises the
+ * outcome (checkmate flash, stalemate red Xs, draw equals sign,
+ * resignation white flag). All in /art/new-assets-chesscito/games/. */
+type LossStatus = "checkmate" | "stalemate" | "draw" | "resigned";
+const HERO_ICON_BY_STATUS: Record<LossStatus, string> = {
+  checkmate: "/art/new-assets-chesscito/games/checkmate-game001",
+  stalemate: "/art/new-assets-chesscito/games/stalemate-game001",
+  draw: "/art/new-assets-chesscito/games/draw-game001",
+  resigned: "/art/new-assets-chesscito/games/resign-game001",
+};
+
+/* Per-status coach avatar — emotional register matching the outcome:
+ *   checkmate → asombrado (shocked at AI's mate)
+ *   stalemate → interrogativo (unusual outcome, "what just happened?")
+ *   draw → confiado (neutral, no loser)
+ *   resigned → triste (player gave up) */
+const AVATAR_BY_STATUS: Record<LossStatus, string> = {
+  checkmate: "/art/new-assets-chesscito/fun/avatar-asombrado",
+  stalemate: "/art/new-assets-chesscito/fun/avatar-interrogativo",
+  draw: "/art/new-assets-chesscito/fun/avatar-confiado",
+  resigned: "/art/new-assets-chesscito/fun/avatar-triste",
+};
+
+function isLossStatus(s: ArenaStatus): s is LossStatus {
+  return s === "checkmate" || s === "stalemate" || s === "draw" || s === "resigned";
+}
+
 export function ArenaEndState({
   status,
   isPlayerWin,
@@ -274,6 +301,12 @@ export function ArenaEndState({
     ? tEntry("reviewBodyTooShort")
     : tEntry("reviewBodyReady");
 
+  // Per-status asset paths — fall back to the resigned variant if
+  // somehow status arrives outside the LossStatus union.
+  const lossKey: LossStatus = isLossStatus(status) ? status : "resigned";
+  const heroIconBase = HERO_ICON_BY_STATUS[lossKey];
+  const avatarBase = AVATAR_BY_STATUS[lossKey];
+
   // Close handler: Sally's retention-loop guidance — X + backdrop tap
   // dismiss the popup without navigating away from /arena. When the
   // parent doesn't wire `onClose`, fall back to the legacy hub
@@ -346,10 +379,10 @@ export function ArenaEndState({
               keeps the popup balanced instead of all-heavy on one side. */}
           <div className="arena-result-hero-row">
             <picture className="arena-result-hero-icon">
-              <source srcSet="/art/new-assets-chesscito/arena/resign-game.avif" type="image/avif" />
-              <source srcSet="/art/new-assets-chesscito/arena/resign-game.webp" type="image/webp" />
+              <source srcSet={`${heroIconBase}.avif`} type="image/avif" />
+              <source srcSet={`${heroIconBase}.webp`} type="image/webp" />
               <img
-                src="/art/new-assets-chesscito/arena/resign-game.png"
+                src={`${heroIconBase}.png`}
                 alt=""
                 aria-hidden="true"
                 draggable={false}
@@ -394,10 +427,10 @@ export function ArenaEndState({
                     />
                   </div>
                   <picture className="arena-result-coach-avatar">
-                    <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.avif" type="image/avif" />
-                    <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.webp" type="image/webp" />
+                    <source srcSet={`${avatarBase}.avif`} type="image/avif" />
+                    <source srcSet={`${avatarBase}.webp`} type="image/webp" />
                     <img
-                      src="/art/new-assets-chesscito/fun/avatar-pensativo.png"
+                      src={`${avatarBase}.png`}
                       alt=""
                       aria-hidden="true"
                       draggable={false}
