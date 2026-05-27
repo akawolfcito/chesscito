@@ -394,4 +394,106 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
       FIXTURE_OPTS,
     );
   });
+
+  // vr9 — Arena end-state popups (Sally polish 2026-05-27). Baselines the
+  // win-* claim flow + the resigned loss popup that the win popups mirror.
+  // Each variant renders via /dev/arena-end-state. Animations (sparkles
+  // lottie, trophy lottie) are not loop:true on these states, so the
+  // settle() wait captures the held final frame.
+  test("vr9-arena-end-state-resigned — loss popup reference", async ({ page }) => {
+    await page.goto("/dev/arena-end-state?variant=resigned", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-resigned.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-win-celebration — Save Victory + Coach section", async ({
+    page,
+  }) => {
+    await page.goto("/dev/arena-end-state?variant=win-celebration", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-win-celebration.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-win-claiming — TX in flight", async ({ page }) => {
+    await page.goto("/dev/arena-end-state?variant=win-claiming", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-win-claiming.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-win-success — Victory Saved", async ({ page }) => {
+    await page.goto("/dev/arena-end-state?variant=win-success", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-win-success.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-win-error — TX failed", async ({ page }) => {
+    await page.goto("/dev/arena-end-state?variant=win-error", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-win-error.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-win-cancelled — user cancelled (paused)", async ({
+    page,
+  }) => {
+    await page.goto("/dev/arena-end-state?variant=win-cancelled", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-win-cancelled.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-win-timeout — still confirming (hang tight)", async ({
+    page,
+  }) => {
+    await page.goto("/dev/arena-end-state?variant=win-timeout", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-win-timeout.png",
+      FIXTURE_OPTS,
+    );
+  });
 });

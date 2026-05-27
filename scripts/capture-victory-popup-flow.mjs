@@ -56,20 +56,25 @@ async function main() {
     try {
       await page.goto(url, { waitUntil: "networkidle", timeout: 30_000 });
       await page.addStyleTag({ content: HIDE_DEV_UI });
-      // Settle lottie animations + scrim fade-in.
-      await page.waitForTimeout(1200);
+      // Wait for fonts + images + lottie + scrim fade-in to settle so
+      // the screenshot captures the final paint, not a layout-shifting
+      // mid-frame.
+      await page.evaluate(() => document.fonts?.ready);
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(2000);
       // Tight crop of the popup itself — finds the modal scrim's inner
       // panel (the max-w-[340px] container) and screenshots only that
       // box so reviewers see the popup, not the surrounding viewport.
-      const popup = page.locator(
-        '[role="alert"], [role="dialog"]'
-      ).locator('> div').first();
+      // Viewport-clipped screenshot. The popup uses `max-h-[92dvh]` +
+      // `overflow-y-auto` but Tailwind JIT sometimes doesn't apply
+      // arbitrary values on dev hot-reload, so we clip to the visible
+      // 390x844 viewport instead of locator.screenshot (which captures
+      // the full scrolled content height = a broken vertical strip).
       const file = path.join(OUT_DIR, `${slug}.png`);
-      if (await popup.count()) {
-        await popup.screenshot({ path: file });
-      } else {
-        await page.screenshot({ path: file, fullPage: false });
-      }
+      await page.screenshot({
+        path: file,
+        clip: { x: 0, y: 0, width: 390, height: 844 },
+      });
       console.log("ok");
     } catch (err) {
       console.log(`FAIL ${err.message}`);

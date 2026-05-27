@@ -60,11 +60,16 @@ export function VictoryClaimError({
     : difficulty;
 
   // Tonal split per design system: cancellation = warning (amber +
-  // polite), error/timeout = error (rose + assertive).
+  // polite), timeout = neutral wait (no red, polite), error = error
+  // (rose + assertive).
   const isCancelled = kind === "cancelled";
+  const isTimeout = kind === "timeout";
+  const isNeutral = isCancelled || isTimeout;
   const statusHeadline = isCancelled
     ? tClaim("statusHeadlinePaused")
-    : tClaim("statusHeadlineError");
+    : isTimeout
+      ? tClaim("statusHeadlineTimeout")
+      : tClaim("statusHeadlineError");
   const tryAgainLabel = tClaim("tryAgain");
   const playAgainLabel = tArena("playAgain");
   const handleClose = onClose ?? onBackToHub;
@@ -88,7 +93,7 @@ export function VictoryClaimError({
         <span className="arena-result-kicker">{kindTitle}</span>
         <h1
           className="arena-result-title"
-          style={isCancelled ? undefined : { color: "rgba(159, 18, 57, 0.95)" }}
+          style={isNeutral ? undefined : { color: "rgba(159, 18, 57, 0.95)" }}
         >
           {statusHeadline}
         </h1>

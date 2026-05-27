@@ -687,6 +687,7 @@ export const VICTORY_CLAIM_COPY = {
    *  branches on the `kind` prop (cancelled = polite, others = error). */
   statusHeadlinePaused: "Paused",
   statusHeadlineError: "Error",
+  statusHeadlineTimeout: "Hang tight",
   /** Secondary action label on the victory-claim-success panel. */
   reviewMatchCta: "Review Match",
 } as const;
@@ -708,7 +709,7 @@ export const VICTORY_CELEBRATION_COPY = {
     `♟ Checkmate in ${moves} moves. Can you beat that?\nI saved my Chesscito victory card #${tokenId} 👉 ${url}`,
   stats: { difficulty: "level", moves: "moves", time: "time" },
   primaryLabel: "Save Victory",
-  coachPillFree: "Coach explains this win",
+  coachPillFree: "See key moments",
   coachPillPro: "Open coach insight",
   playAgainShort: "Play again",
   shareShort: "Share",

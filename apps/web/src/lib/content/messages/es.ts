@@ -675,6 +675,7 @@ const messages = {
     },
     statusHeadlinePaused: "En pausa",
     statusHeadlineError: "Error",
+    statusHeadlineTimeout: "Un momento",
     reviewMatchCta: "Analizar partida",
   },
   VICTORY_CELEBRATION_COPY: {
@@ -686,7 +687,7 @@ const messages = {
     performanceLineCheckmate: "Jaque mate en {moves} jugadas — {time}",
     stats: { difficulty: "nivel", moves: "jugadas", time: "tiempo" },
     primaryLabel: "Guardar victoria",
-    coachPillFree: "El coach explica esta victoria",
+    coachPillFree: "Ver momentos clave",
     coachPillPro: "Abrir análisis del coach",
     playAgainShort: "Jugar otra",
     shareShort: "Compartir",
