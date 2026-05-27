@@ -490,7 +490,7 @@ const messages = {
   },
   COACH_ENTRY_COPY: {
     ...en.COACH_ENTRY_COPY,
-    getCoachAnalysis: "Obtener análisis del Coach",
+    getCoachAnalysis: "Preguntar al Coach",
     savingMatch: "Guardando partida…",
     matchSaved: "Partida guardada",
     matchNotSaved: "Partida no guardada · el juego continúa",

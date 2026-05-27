@@ -1352,7 +1352,7 @@ export const COACH_COPY = {
  * descriptions per §0.4. All copy is English.
  */
 export const COACH_ENTRY_COPY = {
-  getCoachAnalysis: "Get Coach Analysis",
+  getCoachAnalysis: "Ask Coach",
   savingMatch: "Saving match…",
   matchSaved: "Match saved",
   matchNotSaved: "Match not saved · play continues",
