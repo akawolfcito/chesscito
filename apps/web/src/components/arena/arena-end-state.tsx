@@ -334,14 +334,16 @@ export function ArenaEndState({
               resign-game icon on the LEFT and the message (kicker +
               title + subtitle) on the RIGHT. */}
 
-          {/* Kicker row with rules — same vocabulary as Coach Review's
-              kicker divider so the popup reads as two banded sections. */}
-          <div className="arena-result-coach-kicker-row">
-            <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
-            <span className="arena-result-kicker">{tArena("matchEndedLabel")}</span>
-            <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
-          </div>
-
+          {/* Hero — resign-game icon LEFT + title RIGHT. Sally pass
+              2026-05-26: dropped the kicker band "---ANOTHER ROUND?---"
+              and the subtitle "Try again when ready." The double-kicker
+              pattern (this + COACH REVIEW) read as "drawer inside a
+              drawer" — keeping only the COACH REVIEW band separates
+              the popup into ONE coherent surface. Subtitle is
+              redundant with the PLAY CTA below. */}
+          {/* Cross-balance: hero icon LEFT pairs with coach avatar RIGHT
+              below, creating a zig-zag diagonal of visual weight that
+              keeps the popup balanced instead of all-heavy on one side. */}
           <div className="arena-result-hero-row">
             <picture className="arena-result-hero-icon">
               <source srcSet="/art/new-assets-chesscito/arena/resign-game.avif" type="image/avif" />
@@ -355,7 +357,6 @@ export function ArenaEndState({
             </picture>
             <div className="arena-result-hero-text">
               <h1 className="arena-result-title">{text}</h1>
-              <p className="arena-result-subtitle">{tArena("matchEndedHint")}</p>
             </div>
           </div>
 
@@ -374,17 +375,11 @@ export function ArenaEndState({
                   <span className="arena-result-kicker">{tEntry("reviewKicker")}</span>
                   <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
                 </div>
+                {/* Text + CTA LEFT, half-body floating wolf RIGHT — Sally
+                    pass + Wolfcito cross-balance: avatar is character
+                    (NOT a portrait), so frame it transparent and let it
+                    peek from the right side of the panel. */}
                 <div className="arena-result-coach-body">
-                  <picture className="arena-result-coach-avatar">
-                    <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.avif" type="image/avif" />
-                    <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.webp" type="image/webp" />
-                    <img
-                      src="/art/new-assets-chesscito/fun/avatar-pensativo.png"
-                      alt=""
-                      aria-hidden="true"
-                      draggable={false}
-                    />
-                  </picture>
                   <div className="arena-result-coach-text">
                     <h2 id="arena-coach-review-headline" className="arena-result-coach-headline">
                       {reviewHeadline}
@@ -398,37 +393,51 @@ export function ArenaEndState({
                       tooShort={isTooShort}
                     />
                   </div>
+                  <picture className="arena-result-coach-avatar">
+                    <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.avif" type="image/avif" />
+                    <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.webp" type="image/webp" />
+                    <img
+                      src="/art/new-assets-chesscito/fun/avatar-pensativo.png"
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                    />
+                  </picture>
                 </div>
             </div>
           )}
 
-          {/* Stats — candy-tray-pill chips (same family as the arena
-              timer HUD). Each chip floats its icon outside the left
-              edge of the pill so the icon reads as the dominant
-              element. Labels intentionally dropped — value + icon
-              already communicate the dimension. */}
-          <div className="arena-result-stats-row arena-result-stats-row--chips">
-            <span className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-result-stat-chip">
-              <CandyIcon name="star" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
-              <span className="arena-result-stat-chip-value">{difficultyLabel}</span>
+          {/* Stats — .candy-stat-pill chips (same as MISSION popup
+              "1500 pts" / "1s" pills). Icon INSIDE the pill (no
+              overhang), cream-amber base, single-shape rounded pill. */}
+          <div className="arena-result-stats-row arena-result-stats-row--missionpills">
+            <span className="candy-stat-pill">
+              <span className="candy-stat-pill-icon">
+                <CandyIcon name="star" className="h-4 w-4" />
+              </span>
+              {difficultyLabel}
             </span>
-            <span className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-result-stat-chip">
-              <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
-                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-                <img
-                  src="/art/redesign/pieces/w-pawn.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                  className="block h-full w-full object-contain"
-                />
-              </picture>
-              <span className="arena-result-stat-chip-value">{String(moves)}</span>
+            <span className="candy-stat-pill">
+              <span className="candy-stat-pill-icon">
+                <picture>
+                  <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                  <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                  <img
+                    src="/art/redesign/pieces/w-pawn.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    className="block h-full w-full object-contain"
+                  />
+                </picture>
+              </span>
+              {String(moves)}
             </span>
-            <span className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-result-stat-chip">
-              <CandyIcon name="time" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
-              <span className="arena-result-stat-chip-value">{time}</span>
+            <span className="candy-stat-pill">
+              <span className="candy-stat-pill-icon">
+                <CandyIcon name="time" className="h-4 w-4" />
+              </span>
+              {time}
             </span>
           </div>
 

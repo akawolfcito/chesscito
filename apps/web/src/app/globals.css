@@ -1041,14 +1041,18 @@
         rgba(110, 65, 15, 0) 100%);
   }
 
-  /* Hero row: icon LEFT + message (kicker + title + subtitle) RIGHT,
-     vertically centered on the icon's axis. Icon column ~36% of the
-     row, text column takes the rest. */
+  /* Hero row: resign-game icon LEFT (decorative accent ~28% column) +
+     title RIGHT (~72%, dominant). Cross-balance with the coach row
+     below which has avatar floating RIGHT — the icon-LEFT +
+     avatar-RIGHT diagonal keeps visual weight balanced. Margin-bottom
+     adds an air pocket between the hero and the COACH REVIEW kicker. */
   .arena-result-hero-row {
     display: grid;
-    grid-template-columns: 38% minmax(0, 1fr);
+    grid-template-columns: 28% minmax(0, 1fr);
     align-items: center;
     gap: 10px;
+    padding-inline: 6%;
+    margin-bottom: 6px;
   }
 
   .arena-result-hero-icon {
@@ -1093,32 +1097,25 @@
     flex: 1 1 0;
   }
 
-  /* Chip variant: candy-tray-pill stat row with floating icons. Extra
-     horizontal gap so the icons overhanging each chip's left edge don't
-     visually collide with the previous chip's right edge. Each chip
-     anchors width: auto via the candy-tray-pill base — flex: 1 1 0
-     re-expands them to equal-share the row. */
-  .arena-result-stats-row--chips {
-    gap: 22px;
-    padding-left: 18px;
-    /* Push the chip row below the avatar's bottom overhang so the
-       wolf's body doesn't cover the rightmost chip. */
-    margin-top: 18px;
-    margin-bottom: 4px;
-  }
-
-  .arena-result-stat-chip {
-    flex: 1 1 0;
+  /* MISSION-style stat pill row — centered horizontally, generous gap
+     between pills, each pill auto-sized to its content (icon + value
+     INSIDE the pill, no overhang). Same vocabulary as the MISSION
+     popup "1500 pts" / "1s" pills. z-index lifts the chips above the
+     avatar's overhang below the coach section so the stats remain
+     readable even when the wolf's legs bleed into this row's area. */
+  .arena-result-stats-row--missionpills {
     justify-content: center;
-    min-width: 0;
+    flex-wrap: wrap;
+    gap: 10px;
+    position: relative;
+    z-index: 2;
   }
 
-  .arena-result-stat-chip-value {
-    font-family: var(--font-game-action);
-    font-size: 0.85rem;
-    font-weight: 900;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
+  /* Override the base `.arena-result-stats-row > *` flex: 1 1 0 rule
+     so candy-stat-pill chips stay content-sized instead of stretching
+     to equal columns (which would lose the MISSION pill compact feel). */
+  .arena-result-stats-row--missionpills>* {
+    flex: 0 0 auto;
   }
 
   .arena-result-coach-section {
@@ -1143,48 +1140,59 @@
         rgba(110, 65, 15, 0) 100%);
   }
 
-  /* Coach body: relative positioning context so the avatar can float
-     to the left, overhanging the popup-content padding to almost touch
-     the panel's left foliage. Text column gets padding-left equal to
-     the avatar footprint so they don't overlap. */
+  /* Sally pass 2026-05-26: avatar dropped from floating half-body
+     overhang back to a small framed circle (≈72px) inline with the
+     headline — same vocabulary as the MissionDetailSheet avatar. The
+     coach is the AGENT, not the protagonist; the framed circle reads
+     as "character offering help" without competing for space with
+     the headline / body / CTA stack. */
+  /* Coach body — text + CTA LEFT, half-body wolf wizard floating RIGHT.
+     Sally pass 2026-05-26 corrected: the wolf asset is full-body
+     CHARACTER (hat, hand-on-chin, magic staff). Forcing it into a
+     72px circle reduced it to "an eye + an ear" and killed the
+     character. Brought back as transparent half-body, floating right
+     with slight overhang on the panel edge — wolf peeks from behind
+     the foliage. Text + CTA get padding-right so they don't collide. */
   .arena-result-coach-body {
     position: relative;
-    min-height: 140px;
+    min-height: 150px;
   }
 
-  /* Floating avatar — half-body wolf wizard. Keeps the same WIDTH as
-     before (58% of coach body) but the container aspect-ratio is now
-     wider-than-tall (1 / 0.85) so the bottom of the asset gets cropped
-     by object-fit: cover + object-position: top. Effect: same on-screen
-     presence, less vertical bleed into the stats row. Native
-     orientation, no flip — wolf naturally faces LEFT toward the text. */
   .arena-result-coach-avatar {
     position: absolute;
-    right: -12%;
-    bottom: -4%;
-    width: 58%;
-    aspect-ratio: 1 / 0.85;
+    right: -10%;
+    bottom: -40%;
+    width: 140px;
+    /* Full asset aspect (≈887/1213 = 0.73). Avatar bleeds DOWN past
+       the coach section so the legs extend into the stats row area —
+       Wolfcito 2026-05-26: stats sit on z-index above the avatar so
+       they remain readable while the wolf reads as a "standing
+       character" instead of a cropped bust. */
+    aspect-ratio: 1 / 1.37;
     display: block;
     pointer-events: none;
     z-index: 1;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
   }
 
   .arena-result-coach-avatar img {
     width: 100%;
     height: 100%;
-    /* Cover + top-center crop yields a head-to-waist framing so the
-       expression reads at this larger size without showing feet. */
-    object-fit: cover;
+    object-fit: contain;
     object-position: center top;
     -webkit-user-drag: none;
     user-select: none;
-    filter: drop-shadow(0 4px 8px rgba(63, 34, 8, 0.32));
+    filter: drop-shadow(0 4px 8px rgba(63, 34, 8, 0.28));
   }
 
-  /* Text column sits to the LEFT of the floating avatar with enough
-     padding-right to clear the avatar's visible footprint. */
+  /* Text column takes left half — padding-right reserves space for
+     the floating avatar on the right. */
   .arena-result-coach-body .arena-result-coach-text {
-    padding-right: 48%;
+    padding-right: 44%;
     min-height: 130px;
     justify-content: center;
   }
