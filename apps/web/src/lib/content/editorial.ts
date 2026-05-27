@@ -707,6 +707,14 @@ export const VICTORY_CELEBRATION_COPY = {
   shareTextClaimed: (moves: number, tokenId: bigint | number, url: string) =>
     `♟ Checkmate in ${moves} moves. Can you beat that?\nI saved my Chesscito victory card #${tokenId} 👉 ${url}`,
   stats: { difficulty: "level", moves: "moves", time: "time" },
+  primaryLabel: "Save Victory",
+  coachPillFree: "Coach explains this win",
+  coachPillPro: "Open coach insight",
+  playAgainShort: "Play again",
+  shareShort: "Share",
+  saveSectionKicker: "SAVE THIS WIN",
+  saveSectionHeadline: "Yours forever.",
+  saveSectionBody: "A digital trophy of this match, yours for life.",
 } as const;
 
 export const TROPHY_VITRINE_COPY = {

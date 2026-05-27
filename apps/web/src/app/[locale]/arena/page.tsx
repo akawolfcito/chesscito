@@ -1909,6 +1909,7 @@ function ArenaPageInner() {
             gameRecordPersisted={isConnected ? gameRecordPersisted : true}
             onRetryPersist={handleRetryPersist}
             onDismissPersistError={handleDismissPersistError}
+            proActive={proActiveCached}
           />
           {victoryConnectPrompt.isVisible && (
             <div className="pointer-events-auto fixed inset-x-0 bottom-24 z-[55] mx-auto w-full max-w-[var(--app-max-width,390px)] px-4 animate-in fade-in slide-in-from-bottom-2 duration-200">

@@ -3,12 +3,11 @@
 import { useTranslations } from "next-intl";
 
 import { LottieAnimation } from "@/components/ui/lottie-animation";
-import { PaperStatCard } from "@/components/arena/paper-stat-card";
-import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
 import trophyData from "@/../public/animations/trophy.json";
+import { VictoryPopupShell } from "./victory-popup-shell";
 
 type Props = {
   moves: number;
@@ -16,154 +15,132 @@ type Props = {
   difficulty: string;
   claimStep?: "signing" | "confirming" | "done";
   onBackToHub: () => void;
+  /** Optional dismiss-without-navigate handler. Mint continues in the
+   *  background regardless — closing only hides the UI. */
+  onClose?: () => void;
 };
 
+const AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-confiado";
+const STEP_KEYS = ["signing", "confirming", "done"] as const;
+
+/**
+ * Victory claiming popup — shown while the Mint Victory NFT
+ * transaction is mid-flight (signing → confirming → done).
+ *
+ * Same popup vocabulary as the loss popup. Trophy lottie in the hero
+ * slot, "Saving Victory…" title, animated progress dots, avatar-confiado
+ * floating right (calm wolf, "trust the chain"). Close X hides the
+ * popup but the mint continues — parent will surface success/error
+ * when settled.
+ */
 export function VictoryClaiming({
   moves,
   elapsedMs,
   difficulty,
   claimStep = "signing",
   onBackToHub,
+  onClose,
 }: Props) {
   const tArena = useTranslations("ARENA_COPY");
   const tClaim = useTranslations("VICTORY_CLAIM_COPY");
   const tCelebration = useTranslations("VICTORY_CELEBRATION_COPY");
   const time = formatTime(elapsedMs);
   const progressSteps = tClaim.raw("progressSteps") as readonly string[];
+  const currentIdx = STEP_KEYS.indexOf(claimStep);
   const difficultyKey = difficulty as "easy" | "medium" | "hard";
   const difficultyLabel = ["easy", "medium", "hard"].includes(difficultyKey)
     ? tArena(`difficulty.${difficultyKey}`)
     : difficulty;
+  const handleClose = onClose ?? onBackToHub;
+  const title = tClaim("progressTitle");
 
   return (
-    <div
-      className="pointer-events-auto fixed inset-0 z-50 flex flex-col items-center justify-center result-screen-overlay animate-in fade-in duration-300"
+    <VictoryPopupShell
+      onClose={handleClose}
+      ariaLabel={title}
       role="alert"
-      aria-live="assertive"
+      ariaLive="assertive"
+      closeLabel={tArena("backToHubAria")}
     >
-      {/* Sparkles background */}
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-[0.25]" />
+      <div className="victory-popup-sparkles" aria-hidden="true">
+        <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-30" />
       </div>
 
-      {/* Main content container */}
-      <div className="relative z-10 flex h-full w-full flex-col px-5 py-2 animate-in zoom-in-95 slide-in-from-bottom-6 duration-500">
-        <CandyGlassShell
-          title=""
-          onClose={undefined as any}
-          closeLabel=""
-          presentation="screen"
-          className="!gap-4 shadow-none"
-          cta={
-            <div className="flex w-full flex-col items-center gap-4">
-              <div className="flex items-center gap-3">
-                {progressSteps.map((label, i) => {
-                  const stepKeys = ["signing", "confirming", "done"] as const;
-                  const currentIdx = stepKeys.indexOf(claimStep);
-                  const isDone = i < currentIdx;
-                  const isActive = i === currentIdx;
-                  return (
-                    <div key={label} className="flex items-center gap-3">
-                      <div className="flex flex-col items-center gap-1">
-                        <div
-                          className={`h-2.5 w-2.5 rounded-full ${
-                            isDone
-                              ? "bg-emerald-600"
-                              : isActive
-                                ? "bg-emerald-500 animate-pulse"
-                                : ""
-                          }`}
-                          style={!isDone && !isActive ? { background: "rgba(110,65,15,0.25)" } : undefined}
-                        />
-                        <span
-                          className="text-xs font-semibold"
-                          style={{
-                            color: isDone
-                              ? "rgba(4, 120, 87, 0.95)"
-                              : isActive
-                                ? "rgba(5, 150, 105, 0.98)"
-                                : "rgba(110, 65, 15, 0.60)",
-                            textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                          }}
-                        >
-                          {label}
-                        </span>
-                      </div>
-                      {i < progressSteps.length - 1 && (
-                        <div
-                          className="mb-4 h-px w-6"
-                          style={{
-                            background: isDone ? "rgba(4, 120, 87, 0.55)" : "rgba(110,65,15,0.25)",
-                          }}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="text-xs font-bold text-amber-900/60">
-                {tClaim("progressTimeHint")}
-              </p>
-              {/* Exit shortcut */}
-              <button
-                type="button"
-                onClick={onBackToHub}
-                className="mt-1 w-full py-2 text-xs font-black uppercase tracking-[0.22em] text-amber-900/80 transition-opacity hover:opacity-100"
-              >
-                {tArena("backToHub")}
-              </button>
-            </div>
-          }
-        >
-          <div className="flex flex-col items-center gap-3 text-center">
-            {/* Header: Trophy + Status + Saving... */}
-            <div className="flex flex-col items-center pt-1">
-              <div className="relative flex h-24 w-24 items-center justify-center">
-                <div className="absolute h-28 w-28 animate-pulse rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.22)_0%,rgba(217,180,74,0.10)_50%,transparent_70%)]" />
-                <LottieAnimation animationData={trophyData} loop={false} className="relative h-full w-full" />
-              </div>
+      {/* Hero row — trophy lottie + "Saving Victory…" title. */}
+      <div className="arena-result-hero-row">
+        <div className="arena-result-hero-icon">
+          <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
+        </div>
+        <div className="arena-result-hero-text">
+          <h1 className="arena-result-title">{title}</h1>
+        </div>
+      </div>
 
-              <div className="mt-1.5 flex flex-col items-center gap-0.5">
-                <span className="text-nano font-black uppercase tracking-[0.25em] text-amber-900/60">
-                  {tCelebration("title")}
-                </span>
-                <h2
-                  className="fantasy-title animate-pulse text-3xl font-extrabold leading-tight tracking-tight text-amber-900/90"
-                  style={{
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 8px rgba(245, 158, 11, 0.30)",
-                  }}
-                >
-                  {tClaim("progressTitle")}
-                </h2>
-              </div>
-            </div>
+      {/* Stats row — same MISSION-style pills. */}
+      <div className="arena-result-stats-row arena-result-stats-row--missionpills">
+        <span className="candy-stat-pill">
+          <span className="candy-stat-pill-icon">
+            <CandyIcon name="star" className="h-4 w-4" />
+          </span>
+          {difficultyLabel}
+        </span>
+        <span className="candy-stat-pill">
+          <span className="candy-stat-pill-icon">
+            <picture>
+              <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+              <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+              <img
+                src="/art/redesign/pieces/w-pawn.png"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className="block h-full w-full object-contain"
+              />
+            </picture>
+          </span>
+          {String(moves)}
+        </span>
+        <span className="candy-stat-pill">
+          <span className="candy-stat-pill-icon">
+            <CandyIcon name="time" className="h-4 w-4" />
+          </span>
+          {time}
+        </span>
+      </div>
 
-            {/* Performance line */}
-            <p className="max-w-[260px] text-xs font-bold leading-relaxed text-amber-900/80">
-              {tCelebration("performanceLineCheckmate", { moves, time })}
-            </p>
-
-            {/* Stats Row */}
-            <div className="flex w-full gap-1.5 px-0.5">
-              <PaperStatCard
-                icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
-                value={difficultyLabel}
-                label={tCelebration("stats.difficulty")}
-              />
-              <PaperStatCard
-                icon={<CandyIcon name="move" className="h-4 w-4" />}
-                value={String(moves)}
-                label={tCelebration("stats.moves")}
-              />
-              <PaperStatCard
-                icon={<CandyIcon name="time" className="h-4 w-4" />}
-                value={time}
-                label={tCelebration("stats.time")}
-              />
-            </div>
+      {/* Progress steps + calm wolf avatar floating right. */}
+      <div className="victory-popup-mint-row">
+        <div className="victory-popup-progress">
+          <div className="victory-popup-progress-steps">
+            {progressSteps.map((label, i) => {
+              const isDone = i < currentIdx;
+              const isActive = i === currentIdx;
+              return (
+                <div key={label} className="victory-popup-progress-step">
+                  <span
+                    className={`victory-popup-progress-dot${
+                      isDone ? " is-done" : isActive ? " is-active" : ""
+                    }`}
+                  />
+                  <span
+                    className={`victory-popup-progress-label${
+                      isDone ? " is-done" : isActive ? " is-active" : ""
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
-        </CandyGlassShell>
+          <p className="victory-popup-progress-hint">{tClaim("progressTimeHint")}</p>
+        </div>
+        <picture className="arena-result-coach-avatar victory-popup-avatar">
+          <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
+          <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
+          <img src={`${AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} />
+        </picture>
       </div>
-    </div>
+    </VictoryPopupShell>
   );
 }

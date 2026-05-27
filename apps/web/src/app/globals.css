@@ -835,6 +835,135 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.48);
   }
 
+  /* Treasure variant — mirrors the hub TRAIN PIECES pattern exactly:
+     /art/hub/cta-principal sprite + sticker icon scaled 1.25 + cream
+     uppercase text with dark embossed shadow. Price lives as a
+     featured-style ribbon overhanging the top-right corner. Sally
+     pass 13 (Wolfcito 2026-05-27). */
+  .arena-result-primary-cta--treasure {
+    position: relative;
+    width: auto;
+    max-width: 100%;
+    min-height: 92px;
+    padding: 8px 22px 18px 14px;
+    border: 0;
+    border-radius: 0;
+    background:
+      image-set(
+        url("/art/hub/cta-principal.avif") type("image/avif"),
+        url("/art/hub/cta-principal.webp") type("image/webp"),
+        url("/art/hub/cta-principal.png") type("image/png"));
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center;
+    box-shadow: none;
+    filter: drop-shadow(0 6px 10px rgba(120, 60, 0, 0.28));
+    color: rgba(255, 245, 215, 0.98);
+    text-shadow:
+      0 2px 0 rgba(63, 34, 8, 0.7),
+      0 0 12px rgba(232, 193, 96, 0.55);
+    overflow: visible;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .arena-result-primary-cta--treasure:active {
+    transform: translateY(2px) scale(0.99);
+    box-shadow: none;
+    filter:
+      drop-shadow(0 3px 6px rgba(120, 60, 0, 0.28))
+      brightness(0.96);
+  }
+
+  /* Single-line label inside the treasure pill — the price has moved
+     out to its own corner ribbon (see below). */
+  .arena-result-primary-cta--treasure .arena-result-primary-cta-label {
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  /* Price ribbon — featured-style pill overhanging the top-right
+     corner of the Save Victory button. Mirrors the
+     `.shop-item-tile-featured-ribbon` pattern: cream-amber gradient,
+     warm brown border + text, anchored with negative top offset so it
+     reads as a sticker stuck ON the button. */
+  .arena-result-treasure-price-ribbon {
+    position: absolute;
+    top: -10px;
+    right: 8px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+    border: 1px solid rgba(120, 53, 15, 0.85);
+    color: #3f2208;
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(120, 53, 15, 0.3),
+      0 3px 6px rgba(120, 53, 15, 0.4);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Sticker-style icon slot — 52px reserved width, scale 1.25 so the
+     icon visually grows to ~65px and feels like it's sitting ON the
+     pill rather than baked into the gradient. Mirrors the hub
+     TRAIN PIECES piece-icon treatment exactly. */
+  .arena-result-primary-cta-treasure-icon {
+    position: static;
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    transform: scale(1.25);
+    transform-origin: center;
+    pointer-events: none;
+    filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.32));
+  }
+
+  .arena-result-primary-cta-treasure-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+
+  /* Save section — headline + body + treasure pill. Mirrors
+     the coach-section structure but without an avatar slot (popup
+     keeps a single character in coach to avoid visual clutter).
+     Sally pass 14 (2026-05-27): kicker dropped (redundant with
+     "Yours forever" headline), margin-top boosted so the SAVE zone
+     reads as a distinct beat after the celebration unit. */
+  .arena-result-save-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding-inline: 4%;
+    margin-top: 14px;
+  }
+
+  .arena-result-save-section .arena-result-coach-headline {
+    text-align: center;
+    margin: 0;
+  }
+
+  .arena-result-save-section .arena-result-coach-body-text {
+    text-align: center;
+    margin: 0 0 6px;
+    max-width: 28ch;
+  }
+
   .arena-result-primary-cta-label {
     display: inline-block;
     max-width: 100%;
@@ -1095,6 +1224,201 @@
 
   .arena-result-stats-row>* {
     flex: 1 1 0;
+  }
+
+  /* ── Victory popup variants ──
+     Shared shell + content scaffolding used by VictoryCelebration,
+     VictoryClaiming, VictoryClaimSuccess, VictoryClaimError. All four
+     reuse the loss popup vocabulary (panel-bg1, popup-content padding,
+     hero-row, stats-row--missionpills, primary-cta--inset) and only
+     add a few victory-specific layout helpers below. */
+
+  /* Sparkles lottie sits BEHIND the popup content as a subtle
+     celebratory backdrop. Pointer-events disabled so taps still hit
+     the panel below; opacity tuned per variant via the inline style. */
+  .victory-popup-sparkles {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 12% / 8%;
+  }
+
+  /* Mint / claim / retry row — primary CTA on the LEFT with the
+     win-avatar floating RIGHT. Cross-balance mirrors the loss popup
+     pattern: hero icon top-left, avatar bottom-right. */
+  .victory-popup-mint-row {
+    position: relative;
+    min-height: 110px;
+    display: flex;
+    align-items: center;
+  }
+
+  .victory-popup-mint-row .arena-result-primary-cta {
+    flex: 1 1 auto;
+    margin-right: 40%;
+  }
+
+  .victory-popup-mint-row .victory-popup-avatar {
+    position: absolute;
+    right: -10%;
+    bottom: -8%;
+    width: 44%;
+    aspect-ratio: 1 / 1.15;
+  }
+
+  .victory-popup-mint-row .victory-popup-avatar img {
+    object-fit: contain;
+    object-position: center top;
+  }
+
+  /* Progress steps inside VictoryClaiming — replaces the legacy dots
+     in CandyGlassShell.cta. */
+  .victory-popup-progress {
+    flex: 1 1 auto;
+    margin-right: 40%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .victory-popup-progress-steps {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .victory-popup-progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .victory-popup-progress-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(110, 65, 15, 0.25);
+  }
+
+  .victory-popup-progress-dot.is-done {
+    background: rgb(4, 120, 87);
+  }
+
+  .victory-popup-progress-dot.is-active {
+    background: rgb(5, 150, 105);
+    animation: glow-pulse-once 900ms ease-in-out infinite;
+  }
+
+  .victory-popup-progress-label {
+    font-size: 10px;
+    font-weight: 800;
+    text-align: center;
+    color: rgba(110, 65, 15, 0.6);
+  }
+
+  .victory-popup-progress-label.is-done {
+    color: rgba(4, 120, 87, 0.95);
+  }
+
+  .victory-popup-progress-label.is-active {
+    color: rgba(5, 150, 105, 0.98);
+  }
+
+  .victory-popup-progress-hint {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(110, 65, 15, 0.65);
+  }
+
+  /* Error detail block — subtitle + optional reason + hint stacked
+     centered between the hero and the stats. */
+  .victory-popup-error-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    text-align: center;
+    padding-inline: 4%;
+  }
+
+  .victory-popup-error-subtitle {
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(110, 65, 15, 0.9);
+  }
+
+  .victory-popup-error-message {
+    font-size: 11px;
+    line-height: 1.4;
+    color: rgba(159, 18, 57, 0.85);
+    padding-inline: 12px;
+  }
+
+  .victory-popup-error-hint {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(110, 65, 15, 0.65);
+  }
+
+  /* Secondary actions row — Play Again + Share / Ask Coach paired
+     candy chips, same as the loss popup secondary-action style but
+     laid out in a flex row. */
+  .victory-popup-secondary-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
+
+  .victory-popup-secondary-row > .arena-result-secondary-action {
+    width: 100%;
+  }
+
+  /* ── Redesign 2026-05-27 (Sally) ──
+     Cleaner 5-zone hierarchy: hero / stats / primary / coach pill /
+     tertiary micro-pills. Avatar moves INTO the hero row (no longer
+     overlapping the primary CTA), primary uses justify-between with
+     a tabular price chip, coach collapses into a single cream pill,
+     tertiary becomes outline mini-pills. */
+
+  /* Hero solo — headline centered, no icon. Used by win celebration
+     popup after Sally pass 3 (Wolfcito 2026-05-27): trophy lottie
+     dropped so "Checkmate!" fits one line at full headline weight. */
+  .victory-popup-hero-solo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-inline: 4%;
+    margin-bottom: -6px;
+  }
+
+  .victory-popup-hero-solo .arena-result-title {
+    text-align: center;
+    font-size: clamp(26px, 5.4dvh, 36px);
+    line-height: 0.98;
+  }
+
+  /* Inline price after the primary CTA label. Same color/weight as the
+     label, slightly smaller scale, dot-separator inside the label
+     span — reads as ONE confident button label, no sticker. */
+  .victory-popup-primary-cta-price {
+    font-size: 0.85em;
+    font-weight: 800;
+    opacity: 0.94;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+    margin-left: 2px;
+  }
+
+  /* Coach section spacing inside victory popup — match resign's
+     COACH REVIEW band rhythm: extra breathing room above the kicker
+     so the eye gets a beat between primary and coach. */
+  .arena-result-popup-content .arena-result-coach-section {
+    margin-top: 8px;
   }
 
   /* MISSION-style stat pill row — centered horizontally, generous gap

@@ -63,6 +63,10 @@ type Props = {
    *  hub. Sally's retention-loop guidance (2026-05-26). Falls back to
    *  `onBackToHub` when omitted so legacy callers keep working. */
   onClose?: () => void;
+  /** PRO status — forwarded into VictoryCelebration so it doesn't
+   *  call useIsProActive() itself (the dev fixture renders this
+   *  outside a WagmiProvider). */
+  proActive?: boolean;
 };
 
 type ArenaTranslator = ReturnType<typeof useTranslations>;
@@ -134,6 +138,7 @@ export function ArenaEndState({
   onRetryPersist,
   onDismissPersistError,
   onClose,
+  proActive = false,
 }: Props) {
   const tArena = useTranslations("ARENA_COPY");
   const tCelebration = useTranslations("VICTORY_CELEBRATION_COPY");
@@ -186,27 +191,8 @@ export function ArenaEndState({
       isCheckmate: status === "checkmate",
       onPlayAgain,
       onBackToHub,
+      onClose,
     };
-
-    // Cluster E — secondary Coach CTA under Mint Victory on win. Mounts
-    // disabled + aria-busy until persistence settles. `aria-describedby`
-    // points to a hidden span clarifying the Mint relationship per §0.4.
-    const coachSecondaryCta = onAskCoach ? (
-      <CoachAnalysisCta
-        position="secondary-on-win"
-        onClick={() => onAskCoach()}
-        disabled={coachCtaDisabled}
-        ariaBusy={isPersistBusy}
-        tooShort={isTooShort}
-      />
-    ) : null;
-
-    const composedCoachPreview = (
-      <>
-        {coachPreview}
-        {coachSecondaryCta}
-      </>
-    );
 
     switch (claimPhase) {
       case "claiming":
@@ -277,7 +263,10 @@ export function ArenaEndState({
               fen={fen}
               playerColor={playerColor}
               onAskCoach={onAskCoach}
-              coachPreview={composedCoachPreview}
+              coachCtaDisabled={coachCtaDisabled}
+              coachCtaBusy={isPersistBusy}
+              coachTooShort={isTooShort}
+              proActive={proActive}
             />
             {persistOverlay}
           </>

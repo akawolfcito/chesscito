@@ -4,16 +4,15 @@ import { type ReactNode, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { ContextualHeader } from "@/components/ui/contextual-header";
 import { track } from "@/lib/telemetry";
 import { SHARE_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
-import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { ShareModal } from "@/components/share/share-modal";
 import { formatTime } from "@/lib/game/arena-utils";
 import type { ClaimData, ShareStatus } from "./arena-end-state";
 import sparklesData from "@/../public/animations/sparkles.json";
 import trophyData from "@/../public/animations/trophy.json";
+import { VictoryPopupShell } from "./victory-popup-shell";
 
 type Props = {
   moves: number;
@@ -21,18 +20,32 @@ type Props = {
   difficulty: string;
   onPlayAgain: () => void;
   onBackToHub: () => void;
+  /** Optional dismiss-without-navigate handler (Sally retention loop). */
+  onClose?: () => void;
   claimData: ClaimData;
   shareStatus: ShareStatus;
   onAskCoach?: () => void;
   coachPreview?: ReactNode;
 };
 
+const AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-feroz";
+
+/**
+ * Victory claim success popup — post-mint celebration.
+ *
+ * Same popup vocabulary as the loss + celebration variants. Trophy
+ * lottie hero + "Claimed!" headline. Avatar-feroz (triumphant wolf)
+ * floats right of the secondary actions row — the mint is done, the
+ * coach is hyped. Coach + Share live as secondary candy chips; PLAY
+ * AGAIN is the primary action to keep the loop going.
+ */
 export function VictoryClaimSuccess({
   moves,
   elapsedMs,
   difficulty,
   onPlayAgain,
   onBackToHub,
+  onClose,
   claimData,
   shareStatus,
   onAskCoach,
@@ -60,113 +73,112 @@ export function VictoryClaimSuccess({
   const difficultyLabel = ["easy", "medium", "hard"].includes(difficultyKey)
     ? tArena(`difficulty.${difficultyKey}`)
     : difficulty;
+  const headline = tClaim("claimedBadge");
+  const handleClose = onClose ?? onBackToHub;
 
   return (
-    <div
-      className="result-screen-overlay pointer-events-auto fixed inset-0 z-50 animate-in fade-in duration-300"
-      role="alert"
-      aria-live="assertive"
-    >
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <LottieAnimation
-          animationData={sparklesData}
-          speed={1.35}
-          className="h-full w-full opacity-[0.22]"
-        />
-      </div>
-
-      <header
-        className="absolute inset-x-0 top-0 z-20 border-b border-[rgba(110,65,15,0.30)] pt-[env(safe-area-inset-top)]"
+    <>
+      <VictoryPopupShell
+        onClose={handleClose}
+        ariaLabel={headline}
+        role="alert"
+        ariaLive="assertive"
+        closeLabel={tArena("backToHubAria")}
       >
-        <div className="mx-auto w-full max-w-[var(--app-max-width)] px-2">
-          <ContextualHeader
-            variant="back-control"
-            title={tArena("title")}
-            back={{ onClick: onBackToHub, label: tArena("backToHubAria") }}
-          />
+        <div className="victory-popup-sparkles" aria-hidden="true">
+          <LottieAnimation animationData={sparklesData} speed={1.35} className="h-full w-full opacity-30" />
         </div>
-      </header>
 
-      <main className="arena-result-screen relative z-10">
-        <section className="arena-result-header">
-          <div className="arena-result-trophy">
-            <div className="arena-result-trophy-glow" />
-            <LottieAnimation
-              animationData={trophyData}
-              loop={false}
-              className="relative h-full w-full"
-            />
+        {/* Hero — trophy lottie + "Claimed!" headline. */}
+        <div className="arena-result-hero-row">
+          <div className="arena-result-hero-icon">
+            <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
           </div>
-
-          <span className="arena-result-kicker">
-            {tClaim("successTitle")}
-          </span>
-
-          <h1 className="arena-result-title victory-text-slam">
-            {tClaim("claimedBadge")}
-          </h1>
-
-          <p className="arena-result-subtitle">
-            {tCelebration("performanceLineCheckmate", { moves, time })}
-          </p>
-        </section>
-
-        <div className="arena-result-stats">
-          <PaperStatCard
-            icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
-            value={difficultyLabel}
-            label={tCelebration("stats.difficulty")}
-          />
-          <PaperStatCard
-            icon={<CandyIcon name="move" className="h-4 w-4" />}
-            value={String(moves)}
-            label={tCelebration("stats.moves")}
-          />
-          <PaperStatCard
-            icon={<CandyIcon name="time" className="h-4 w-4" />}
-            value={time}
-            label={tCelebration("stats.time")}
-          />
+          <div className="arena-result-hero-text">
+            <h1 className="arena-result-title victory-text-slam">{headline}</h1>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onPlayAgain}
-          className="arena-result-primary-cta arena-result-primary-cta--amber"
-          aria-label={playAgainLabel}
-        >
-          <CandyIcon name="refresh" className="h-5 w-5 shrink-0" />
-          <span className="arena-result-primary-cta-label">{playAgainLabel}</span>
-        </button>
+        {/* Stats. */}
+        <div className="arena-result-stats-row arena-result-stats-row--missionpills">
+          <span className="candy-stat-pill">
+            <span className="candy-stat-pill-icon">
+              <CandyIcon name="star" className="h-4 w-4" />
+            </span>
+            {difficultyLabel}
+          </span>
+          <span className="candy-stat-pill">
+            <span className="candy-stat-pill-icon">
+              <picture>
+                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                <img
+                  src="/art/redesign/pieces/w-pawn.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="block h-full w-full object-contain"
+                />
+              </picture>
+            </span>
+            {String(moves)}
+          </span>
+          <span className="candy-stat-pill">
+            <span className="candy-stat-pill-icon">
+              <CandyIcon name="time" className="h-4 w-4" />
+            </span>
+            {time}
+          </span>
+        </div>
 
+        {/* PLAY AGAIN primary + triumphant wolf floating right. */}
+        <div className="victory-popup-mint-row">
+          <button
+            type="button"
+            onClick={onPlayAgain}
+            className="arena-result-primary-cta arena-result-primary-cta--amber arena-result-primary-cta--inset"
+            aria-label={playAgainLabel}
+          >
+            <span className="arena-result-primary-cta-label">{playAgainLabel}</span>
+          </button>
+          <picture className="arena-result-coach-avatar victory-popup-avatar">
+            <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
+            <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
+            <img src={`${AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} />
+          </picture>
+        </div>
+
+        {/* Parent's coach preview slot (post-game preview card). */}
         {coachPreview && (
           <div className="arena-result-coach-wrap">{coachPreview}</div>
         )}
 
-        <div className="arena-result-secondary-actions">
-          {onAskCoach && (
-            <button
-              type="button"
-              onClick={onAskCoach}
-              className="arena-result-secondary-action"
-            >
-              <CandyIcon name="coach" className="h-4 w-4" />
-              <span>{tClaim("reviewMatchCta")}</span>
-            </button>
-          )}
-
-          {isShareReady && (
-            <button
-              type="button"
-              onClick={() => setShareOpen(true)}
-              className="arena-result-secondary-action"
-            >
-              <CandyIcon name="share" className="h-4 w-4" />
-              <span>{SHARE_COPY.button}</span>
-            </button>
-          )}
-        </div>
-      </main>
+        {/* Secondary actions — Ask Coach + Share. */}
+        {(onAskCoach || isShareReady) && (
+          <div className="victory-popup-secondary-row">
+            {onAskCoach && (
+              <button
+                type="button"
+                onClick={onAskCoach}
+                className="arena-result-secondary-action"
+              >
+                <CandyIcon name="coach" className="h-4 w-4" />
+                <span>{tClaim("reviewMatchCta")}</span>
+              </button>
+            )}
+            {isShareReady && (
+              <button
+                type="button"
+                onClick={() => setShareOpen(true)}
+                className="arena-result-secondary-action"
+              >
+                <CandyIcon name="share" className="h-4 w-4" />
+                <span>{SHARE_COPY.button}</span>
+              </button>
+            )}
+          </div>
+        )}
+      </VictoryPopupShell>
 
       <ShareModal
         open={shareOpen}
@@ -175,6 +187,6 @@ export function VictoryClaimSuccess({
         text={challengeText}
         url={shareUrl}
       />
-    </div>
+    </>
   );
 }

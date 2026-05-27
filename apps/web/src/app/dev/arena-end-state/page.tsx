@@ -14,6 +14,12 @@ const VARIANTS = new Set([
   "coach-cta-enabled",
   "coach-cta-disabled-short",
   "coach-cta-disabled-persisting",
+  "win-celebration",
+  "win-claiming",
+  "win-success",
+  "win-error",
+  "win-cancelled",
+  "win-timeout",
 ]);
 
 export default function ArenaEndStateDevPage({
