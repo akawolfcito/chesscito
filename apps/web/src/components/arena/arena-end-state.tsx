@@ -326,15 +326,13 @@ export function ArenaEndState({
 
         <div className="flex flex-col arena-result-popup-content">
 
-          {/* Hero — kicker + headline + subtitle (left) + resign-game
-              character art (right). */}
+          {/* Section order (Wolfcito 2026-05-26): hero row → coach
+              review → stats → PLAY. Hero is a single row with the
+              resign-game icon on the LEFT and the message (kicker +
+              title + subtitle) on the RIGHT. */}
+
           <div className="arena-result-hero-row">
-            <div className="arena-result-hero-text">
-              <span className="arena-result-kicker">{tArena("matchEndedLabel")}</span>
-              <h1 className="arena-result-title">{text}</h1>
-              <p className="arena-result-subtitle">{tArena("matchEndedHint")}</p>
-            </div>
-            <picture className="arena-result-hero-art">
+            <picture className="arena-result-hero-icon">
               <source srcSet="/art/new-assets-chesscito/arena/resign-game.avif" type="image/avif" />
               <source srcSet="/art/new-assets-chesscito/arena/resign-game.webp" type="image/webp" />
               <img
@@ -344,54 +342,25 @@ export function ArenaEndState({
                 draggable={false}
               />
             </picture>
+            <div className="arena-result-hero-text">
+              <span className="arena-result-kicker">{tArena("matchEndedLabel")}</span>
+              <h1 className="arena-result-title">{text}</h1>
+              <p className="arena-result-subtitle">{tArena("matchEndedHint")}</p>
+            </div>
           </div>
 
-          <hr className="arena-result-section-rule" aria-hidden="true" />
+          {/* coachPreview slot intentionally NOT rendered in the loss
+              popup — the Coach Review section below replaces it with
+              the canonical avatar + headline + CTA pattern. The prop
+              is still accepted so the win path (VictoryCelebration /
+              VictoryClaimSuccess) can keep using it unchanged. */}
 
-          {/* Stats row — 3 paper tiles for difficulty / moves / time. */}
-          <div className="arena-result-stats-row">
-            <PaperStatCard
-              icon={<CandyIcon name="star" className="h-4 w-4" />}
-              value={difficultyLabel}
-              label={tCelebration("stats.difficulty")}
-            />
-            <PaperStatCard
-              icon={
-                <picture className="arena-result-pawn-icon" style={{ display: "block", width: 20, height: 20 }}>
-                  <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-                  <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-                  <img
-                    src="/art/redesign/pieces/w-pawn.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    className="block h-full w-full object-contain"
-                  />
-                </picture>
-              }
-              value={String(moves)}
-              label={tCelebration("stats.moves")}
-            />
-            <PaperStatCard
-              icon={<CandyIcon name="time" className="h-4 w-4" />}
-              value={time}
-              label={tCelebration("stats.time")}
-            />
-          </div>
-
-          {/* Coach preview slot still renders above the Coach Review row
-              if the parent provides it. */}
-          {coachPreview && (
-            <div className="arena-result-coach-wrap">{coachPreview}</div>
-          )}
-
+          {/* 3. Coach Review — bigger pensive avatar (flipped horizontally
+              to face the text) + headline + body + CTA. */}
           {onAskCoach && (
             <>
               <hr className="arena-result-section-rule" aria-hidden="true" />
 
-              {/* Coach Review — kicker divider + bigger pensive avatar
-                  (flipped horizontally to face the text) + headline +
-                  body + CTA. */}
               <div className="arena-result-coach-section" aria-labelledby="arena-coach-review-headline">
                 <div className="arena-result-coach-kicker-row">
                   <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
@@ -427,15 +396,45 @@ export function ArenaEndState({
             </>
           )}
 
-          {/* PLAY — primary CTA inside the panel as the last row. Sally:
-              after a loss the player wants immediate revenge, not a
-              decision; restart skips the difficulty picker. */}
+          <hr className="arena-result-section-rule" aria-hidden="true" />
+
+          {/* 4. Stats — 3 paper tiles for difficulty / moves / time. */}
+          <div className="arena-result-stats-row">
+            <PaperStatCard
+              icon={<CandyIcon name="star" className="h-4 w-4" />}
+              value={difficultyLabel}
+              label={tCelebration("stats.difficulty")}
+            />
+            <PaperStatCard
+              icon={
+                <picture className="arena-result-pawn-icon" style={{ display: "block", width: 20, height: 20 }}>
+                  <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                  <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                  <img
+                    src="/art/redesign/pieces/w-pawn.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    className="block h-full w-full object-contain"
+                  />
+                </picture>
+              }
+              value={String(moves)}
+              label={tCelebration("stats.moves")}
+            />
+            <PaperStatCard
+              icon={<CandyIcon name="time" className="h-4 w-4" />}
+              value={time}
+              label={tCelebration("stats.time")}
+            />
+          </div>
+
+          {/* 5. PLAY — primary CTA at the bottom. */}
           <button
             type="button"
             onClick={onPlayAgain}
             className="arena-result-primary-cta arena-result-primary-cta--amber arena-result-primary-cta--inset"
           >
-            <CandyIcon name="refresh" className="h-5 w-5 shrink-0" />
             <span className="arena-result-primary-cta-label">{tArena("playAgain")}</span>
           </button>
         </div>

@@ -912,26 +912,121 @@
      the panel asset stay in their native safe area. */
 
   /* Popup inner content — replicates the MISSION sheet's percentage
-     padding pattern (px-[10%] pt-[6%] pb-[5%]) so the panel-mision-icon
-     foliage corners stay in their safe area regardless of panel size.
-     Uses bigger top inset so the close X has breathing room over the
-     hero kicker. */
+     padding pattern so the panel-mision-icon foliage corners stay in
+     their safe area regardless of panel size. Top padding clears the
+     X button (44px sprite at top: 4%) plus a visual breathing band so
+     the hero kicker never sits at the same vertical level as the X. */
   .arena-result-popup-content {
     padding-left: 10%;
     padding-right: 10%;
-    padding-top: 9%;
+    padding-top: 18%;
     padding-bottom: 6%;
     display: flex;
     flex-direction: column;
     gap: clamp(10px, 1.4dvh, 14px);
   }
 
-  /* PLAY CTA inside the popup panel: full-width within the safe area,
-     slightly tighter than the standalone amber variant. */
+  /* PLAY CTA inside the popup panel — sized to its label (not stretched
+     full-width), centered, uses the /scene-rooted/principalbutton sprite
+     as the visual (green candy pill with brown base shadow). The asset
+     IS the button; CSS only positions the label over it. */
   .arena-result-primary-cta--inset {
-    width: 100%;
-    margin-inline: 0;
-    min-height: clamp(48px, 6dvh, 56px);
+    width: auto;
+    align-self: center;
+    margin-inline: auto;
+    min-height: 0;
+    min-width: 168px;
+    padding: 14px 36px 18px;
+    background:
+      image-set(
+        url("/art/scene-rooted/principalbutton.avif") type("image/avif"),
+        url("/art/scene-rooted/principalbutton.webp") type("image/webp"),
+        url("/art/scene-rooted/principalbutton.png") type("image/png")
+      );
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center;
+    border: 0;
+    box-shadow: none;
+    color: #fff8ed;
+    text-shadow:
+      0 1px 0 rgba(20, 60, 10, 0.55),
+      0 2px 4px rgba(20, 60, 10, 0.42);
+  }
+
+  .arena-result-primary-cta--inset:active {
+    transform: translateY(2px) scale(0.99);
+    box-shadow: none;
+    filter: brightness(0.95);
+  }
+
+  /* Purple pill modifier for the Coach CTA inside the popup. Mirrors
+     the shop --green/--yellow vocabulary so the Coach action reads as
+     a peer of the Shop buy pills but in the Coach's signature purple. */
+  .shop-item-tile-buy-pill--purple {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.30) 0%, transparent 32%),
+      linear-gradient(180deg, #a78bfa 0%, #7c3aed 100%);
+    border-color: rgba(46, 16, 101, 0.85);
+    color: #f5f3ff;
+    text-shadow:
+      0 1px 0 rgba(46, 16, 101, 0.65),
+      0 0 6px rgba(46, 16, 101, 0.35);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0 rgba(46, 16, 101, 0.30),
+      0 2px 4px rgba(46, 16, 101, 0.30);
+  }
+
+  /* Override CoachAnalysisCta inside the popup: drop the amber
+     primary-cta envelope and re-style as a candy-tray-pill in purple
+     (same family as Shop $1.99 / Pay with CELO buttons). Sized to
+     content (auto width), centered, no icon. */
+  .arena-result-coach-text .arena-result-primary-cta--amber {
+    /* Strip the inherited amber + base CTA styling. */
+    width: auto;
+    align-self: flex-start;
+    min-height: 32px;
+    padding: 0.35rem 1.1rem;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.30) 0%, transparent 32%),
+      linear-gradient(180deg, #a78bfa 0%, #7c3aed 100%);
+    border: 1px solid rgba(46, 16, 101, 0.85);
+    border-radius: 9999px;
+    color: #f5f3ff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    text-shadow:
+      0 1px 0 rgba(46, 16, 101, 0.65),
+      0 0 6px rgba(46, 16, 101, 0.35);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -1px 0 rgba(46, 16, 101, 0.30),
+      0 2px 4px rgba(46, 16, 101, 0.30);
+    margin-top: 4px;
+    gap: 6px;
+  }
+
+  .arena-result-coach-text .arena-result-primary-cta--amber:active {
+    transform: translateY(1px) scale(0.99);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.40),
+      inset 0 -1px 0 rgba(46, 16, 101, 0.34),
+      0 1px 2px rgba(46, 16, 101, 0.28);
+  }
+
+  .arena-result-coach-text .arena-result-primary-cta--amber:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* Hide the inline CandyIcon inside the Coach CTA when in popup
+     context — labels-only per Wolfcito feedback (icon felt redundant
+     against the purple pill chip vocabulary). */
+  .arena-result-coach-text .arena-result-primary-cta--amber .candy-icon {
+    display: none;
   }
 
   /* Horizontal rule separating mega-panel sections. Warm-brown fade
@@ -950,11 +1045,29 @@
     );
   }
 
+  /* Hero row: icon LEFT + message (kicker + title + subtitle) RIGHT,
+     vertically centered on the icon's axis. Icon column ~36% of the
+     row, text column takes the rest. */
   .arena-result-hero-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 34%;
+    grid-template-columns: 38% minmax(0, 1fr);
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+  }
+
+  .arena-result-hero-icon {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+  }
+
+  .arena-result-hero-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    -webkit-user-drag: none;
+    user-select: none;
+    filter: drop-shadow(0 4px 8px rgba(63, 34, 8, 0.22));
   }
 
   .arena-result-hero-text {
@@ -967,30 +1080,12 @@
   .arena-result-hero-text .arena-result-title {
     font-size: clamp(22px, 4.6dvh, 30px);
     line-height: 0.96;
-    /* Long status strings ("Checkmate — AI Wins") need to wrap cleanly
-       inside the narrow text column without overflowing the panel. */
     overflow-wrap: break-word;
   }
 
   .arena-result-hero-text .arena-result-subtitle {
     font-size: clamp(11px, 1.5dvh, 13px);
     max-width: none;
-  }
-
-  .arena-result-hero-art {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    aspect-ratio: 1 / 1;
-    min-width: 0;
-  }
-
-  .arena-result-hero-art img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    -webkit-user-drag: none;
-    user-select: none;
   }
 
   .arena-result-stats-row {
@@ -1026,34 +1121,49 @@
     );
   }
 
+  /* Coach body: relative positioning context so the avatar can float
+     to the left, overhanging the popup-content padding to almost touch
+     the panel's left foliage. Text column gets padding-left equal to
+     the avatar footprint so they don't overlap. */
   .arena-result-coach-body {
-    display: grid;
-    grid-template-columns: 44% minmax(0, 1fr);
-    align-items: center;
-    gap: 10px;
+    position: relative;
+    min-height: 140px;
   }
 
-  /* Bigger avatar showing half-body crop (face + torso + staff hand).
-     Flipped horizontally so the wolf wizard's gaze + staff angle face
-     the text column on its right instead of away from it. */
+  /* Floating avatar — bigger (~58% of coach body width), absolute
+     positioned so it overhangs the popup-content padding on the RIGHT.
+     Negative right offset (~ -10%) pushes it nearly to the panel edge.
+     No transform: native orientation already has the wolf facing
+     slightly LEFT toward the text column on its left. */
   .arena-result-coach-avatar {
+    position: absolute;
+    right: -12%;
+    bottom: -8%;
+    width: 58%;
+    aspect-ratio: 1 / 1.1;
     display: block;
-    aspect-ratio: 1 / 1;
-    min-width: 0;
-    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
   }
 
   .arena-result-coach-avatar img {
     width: 100%;
     height: 100%;
     /* Cover + top-center crop yields a head-to-waist framing so the
-       expression reads at the small avatar size. */
+       expression reads at this larger size without showing feet. */
     object-fit: cover;
     object-position: center top;
-    transform: scaleX(-1);
     -webkit-user-drag: none;
     user-select: none;
-    filter: drop-shadow(0 3px 6px rgba(63, 34, 8, 0.22));
+    filter: drop-shadow(0 4px 8px rgba(63, 34, 8, 0.32));
+  }
+
+  /* Text column sits to the LEFT of the floating avatar with enough
+     padding-right to clear the avatar's visible footprint. */
+  .arena-result-coach-body .arena-result-coach-text {
+    padding-right: 48%;
+    min-height: 130px;
+    justify-content: center;
   }
 
   .arena-result-coach-text {
