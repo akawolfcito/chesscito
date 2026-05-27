@@ -1879,6 +1879,7 @@ function ArenaPageInner() {
             isPlayerWin={isPlayerWin}
             onPlayAgain={handlePlayAgain}
             onBackToHub={handleBackToHub}
+            onClose={() => setShowEndOverlay(false)}
             claimPhase={claimPhase}
             claimStep={claimStep}
             shareStatus={shareStatus}

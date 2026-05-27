@@ -613,7 +613,7 @@ const messages = {
     playAsPrefix: "Juega como",
     playAsWhiteName: "Blancas",
     playAsBlackName: "Negras",
-    matchEndedLabel: "Partida terminada",
+    matchEndedLabel: "¿Otra ronda?",
     matchEndedHint: "Inténtalo de nuevo cuando estés listo.",
   },
   VICTORY_CLAIM_COPY: {

@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import type { ArenaStatus } from "@/lib/game/types";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 import { formatTime } from "@/lib/game/arena-utils";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
@@ -58,6 +57,12 @@ type Props = {
   gameRecordPersisted?: boolean;
   onRetryPersist?: () => void;
   onDismissPersistError?: () => void;
+  /** Loss-screen popup close handler. When provided, the X button +
+   *  backdrop tap call this instead of `onBackToHub`, so the player
+   *  stays on the final board view instead of being kicked out to the
+   *  hub. Sally's retention-loop guidance (2026-05-26). Falls back to
+   *  `onBackToHub` when omitted so legacy callers keep working. */
+  onClose?: () => void;
 };
 
 type ArenaTranslator = ReturnType<typeof useTranslations>;
@@ -101,6 +106,7 @@ export function ArenaEndState({
   gameRecordPersisted = false,
   onRetryPersist,
   onDismissPersistError,
+  onClose,
 }: Props) {
   const tArena = useTranslations("ARENA_COPY");
   const tCelebration = useTranslations("VICTORY_CELEBRATION_COPY");
@@ -268,127 +274,172 @@ export function ArenaEndState({
     ? tEntry("reviewBodyTooShort")
     : tEntry("reviewBodyReady");
 
+  // Close handler: Sally's retention-loop guidance — X + backdrop tap
+  // dismiss the popup without navigating away from /arena. When the
+  // parent doesn't wire `onClose`, fall back to the legacy hub
+  // navigation so callers like /coach/history keep working.
+  const handleClose = onClose ?? onBackToHub;
+
   return (
+    /* Canonical candy modal pattern — same vocabulary as MissionDetailSheet
+       (scrim, panel asset, close button position). Backdrop tap closes
+       without navigating; only the panel stops propagation. */
+    /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
     <div
-      className="result-screen-overlay pointer-events-auto fixed inset-0 z-50 animate-in fade-in duration-300"
+      className="candy-modal-scrim pointer-events-auto fixed inset-0 z-50 flex items-center justify-center animate-in fade-in duration-300"
       role="dialog"
       aria-modal="true"
       aria-label={text}
+      onClick={() => handleClose()}
     >
-      <header
-        className="absolute inset-x-0 top-0 z-10 border-b border-[rgba(110,65,15,0.30)] pt-[env(safe-area-inset-top)]"
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div
+        className="relative mx-4 w-full max-w-[340px] max-h-[92dvh] overflow-y-auto overscroll-contain"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundImage:
+            'image-set(url("/art/screen-mission/panel-mision-icon.avif") type("image/avif"), url("/art/screen-mission/panel-mision-icon.webp") type("image/webp"), url("/art/screen-mission/panel-mision-icon.png") type("image/png"))',
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+        }}
       >
-        <div className="mx-auto w-full max-w-[var(--app-max-width)] px-2">
-          <ContextualHeader
-            variant="back-control"
-            title={tArena("title")}
-            back={{ onClick: onBackToHub, label: tArena("backToHubAria") }}
-          />
-        </div>
-      </header>
-
-      <main className="arena-result-screen arena-result-screen--paneled">
-        {/* Hero — kicker + headline + subtitle on the left, resign-game
-            character on the right, inside a forest-cream panel. */}
-        <section className="arena-result-hero-panel">
-          <div className="arena-result-hero-text">
-            <span className="arena-result-kicker">{tArena("matchEndedLabel")}</span>
-            <h1 className="arena-result-title">{text}</h1>
-            <p className="arena-result-subtitle">{tArena("matchEndedHint")}</p>
-          </div>
-          <picture className="arena-result-hero-art">
-            <source srcSet="/art/new-assets-chesscito/arena/resign-game.avif" type="image/avif" />
-            <source srcSet="/art/new-assets-chesscito/arena/resign-game.webp" type="image/webp" />
+        {/* Close X — canonical candy-close-asset-button with the same
+            corner inset as MissionDetailSheet (4% from top + right). */}
+        <button
+          type="button"
+          onClick={handleClose}
+          aria-label={tArena("backToHubAria")}
+          className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
+        >
+          <picture>
+            <source srcSet="/art/screen-mission/close-icon.avif" type="image/avif" />
+            <source srcSet="/art/screen-mission/close-icon.webp" type="image/webp" />
             <img
-              src="/art/new-assets-chesscito/arena/resign-game.png"
+              src="/art/screen-mission/close-icon.png"
               alt=""
               aria-hidden="true"
+              className="h-10 w-10 object-contain"
               draggable={false}
             />
           </picture>
-        </section>
-
-        {/* Stats row — 3 paper tiles for difficulty / moves / time. */}
-        <section className="arena-result-stats-panel">
-          <PaperStatCard
-            icon={<CandyIcon name="star" className="h-4 w-4" />}
-            value={difficultyLabel}
-            label={tCelebration("stats.difficulty")}
-          />
-          <PaperStatCard
-            icon={
-              <picture className="arena-result-pawn-icon" style={{ display: "block", width: 20, height: 20 }}>
-                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-                <img
-                  src="/art/redesign/pieces/w-pawn.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                  className="block h-full w-full object-contain"
-                />
-              </picture>
-            }
-            value={String(moves)}
-            label={tCelebration("stats.moves")}
-          />
-          <PaperStatCard
-            icon={<CandyIcon name="time" className="h-4 w-4" />}
-            value={time}
-            label={tCelebration("stats.time")}
-          />
-        </section>
-
-        {/* Coach Review — kicker divider + sub-panel with pensive avatar
-            left + headline/body/CTA right. Coach preview slot still
-            renders above if the parent provides it. */}
-        {coachPreview && (
-          <div className="arena-result-coach-wrap">{coachPreview}</div>
-        )}
-        {onAskCoach && (
-          <section className="arena-result-coach-panel" aria-labelledby="arena-coach-review-headline">
-            <div className="arena-result-coach-kicker-row">
-              <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
-              <span className="arena-result-kicker">{tEntry("reviewKicker")}</span>
-              <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
-            </div>
-            <div className="arena-result-coach-body">
-              <picture className="arena-result-coach-avatar">
-                <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.avif" type="image/avif" />
-                <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.webp" type="image/webp" />
-                <img
-                  src="/art/new-assets-chesscito/fun/avatar-pensativo.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                />
-              </picture>
-              <div className="arena-result-coach-text">
-                <h2 id="arena-coach-review-headline" className="arena-result-coach-headline">
-                  {reviewHeadline}
-                </h2>
-                <p className="arena-result-coach-body-text">{reviewBody}</p>
-                <CoachAnalysisCta
-                  position="primary-on-lose"
-                  onClick={() => onAskCoach()}
-                  disabled={coachCtaDisabled}
-                  ariaBusy={isPersistBusy}
-                  tooShort={isTooShort}
-                />
-              </div>
-            </div>
-          </section>
-        )}
-
-        <button
-          type="button"
-          onClick={onPlayAgain}
-          className="arena-result-primary-cta arena-result-primary-cta--amber"
-        >
-          <CandyIcon name="refresh" className="h-5 w-5 shrink-0" />
-          <span className="arena-result-primary-cta-label">{tArena("playAgain")}</span>
         </button>
-      </main>
+
+        <div className="flex flex-col arena-result-popup-content">
+
+          {/* Hero — kicker + headline + subtitle (left) + resign-game
+              character art (right). */}
+          <div className="arena-result-hero-row">
+            <div className="arena-result-hero-text">
+              <span className="arena-result-kicker">{tArena("matchEndedLabel")}</span>
+              <h1 className="arena-result-title">{text}</h1>
+              <p className="arena-result-subtitle">{tArena("matchEndedHint")}</p>
+            </div>
+            <picture className="arena-result-hero-art">
+              <source srcSet="/art/new-assets-chesscito/arena/resign-game.avif" type="image/avif" />
+              <source srcSet="/art/new-assets-chesscito/arena/resign-game.webp" type="image/webp" />
+              <img
+                src="/art/new-assets-chesscito/arena/resign-game.png"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+              />
+            </picture>
+          </div>
+
+          <hr className="arena-result-section-rule" aria-hidden="true" />
+
+          {/* Stats row — 3 paper tiles for difficulty / moves / time. */}
+          <div className="arena-result-stats-row">
+            <PaperStatCard
+              icon={<CandyIcon name="star" className="h-4 w-4" />}
+              value={difficultyLabel}
+              label={tCelebration("stats.difficulty")}
+            />
+            <PaperStatCard
+              icon={
+                <picture className="arena-result-pawn-icon" style={{ display: "block", width: 20, height: 20 }}>
+                  <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                  <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                  <img
+                    src="/art/redesign/pieces/w-pawn.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    className="block h-full w-full object-contain"
+                  />
+                </picture>
+              }
+              value={String(moves)}
+              label={tCelebration("stats.moves")}
+            />
+            <PaperStatCard
+              icon={<CandyIcon name="time" className="h-4 w-4" />}
+              value={time}
+              label={tCelebration("stats.time")}
+            />
+          </div>
+
+          {/* Coach preview slot still renders above the Coach Review row
+              if the parent provides it. */}
+          {coachPreview && (
+            <div className="arena-result-coach-wrap">{coachPreview}</div>
+          )}
+
+          {onAskCoach && (
+            <>
+              <hr className="arena-result-section-rule" aria-hidden="true" />
+
+              {/* Coach Review — kicker divider + bigger pensive avatar
+                  (flipped horizontally to face the text) + headline +
+                  body + CTA. */}
+              <div className="arena-result-coach-section" aria-labelledby="arena-coach-review-headline">
+                <div className="arena-result-coach-kicker-row">
+                  <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
+                  <span className="arena-result-kicker">{tEntry("reviewKicker")}</span>
+                  <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
+                </div>
+                <div className="arena-result-coach-body">
+                  <picture className="arena-result-coach-avatar">
+                    <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.avif" type="image/avif" />
+                    <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.webp" type="image/webp" />
+                    <img
+                      src="/art/new-assets-chesscito/fun/avatar-pensativo.png"
+                      alt=""
+                      aria-hidden="true"
+                      draggable={false}
+                    />
+                  </picture>
+                  <div className="arena-result-coach-text">
+                    <h2 id="arena-coach-review-headline" className="arena-result-coach-headline">
+                      {reviewHeadline}
+                    </h2>
+                    <p className="arena-result-coach-body-text">{reviewBody}</p>
+                    <CoachAnalysisCta
+                      position="primary-on-lose"
+                      onClick={() => onAskCoach()}
+                      disabled={coachCtaDisabled}
+                      ariaBusy={isPersistBusy}
+                      tooShort={isTooShort}
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* PLAY — primary CTA inside the panel as the last row. Sally:
+              after a loss the player wants immediate revenge, not a
+              decision; restart skips the difficulty picker. */}
+          <button
+            type="button"
+            onClick={onPlayAgain}
+            className="arena-result-primary-cta arena-result-primary-cta--amber arena-result-primary-cta--inset"
+          >
+            <CandyIcon name="refresh" className="h-5 w-5 shrink-0" />
+            <span className="arena-result-primary-cta-label">{tArena("playAgain")}</span>
+          </button>
+        </div>
+      </div>
       {persistOverlay}
     </div>
   );

@@ -944,7 +944,7 @@ export const ARENA_COPY = {
   playAsWhiteName: "White",
   playAsBlackName: "Black",
   /** Non-win end-state overlay (loss/draw/resigned/stalemate) header. */
-  matchEndedLabel: "Match Ended",
+  matchEndedLabel: "Another round?",
   matchEndedHint: "Try again when ready.",
 } as const;
 
