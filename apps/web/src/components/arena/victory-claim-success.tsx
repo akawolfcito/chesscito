@@ -11,7 +11,6 @@ import { ShareModal } from "@/components/share/share-modal";
 import { formatTime } from "@/lib/game/arena-utils";
 import type { ClaimData, ShareStatus } from "./arena-end-state";
 import sparklesData from "@/../public/animations/sparkles.json";
-import trophyData from "@/../public/animations/trophy.json";
 import { VictoryPopupShell } from "./victory-popup-shell";
 
 type Props = {
@@ -89,14 +88,10 @@ export function VictoryClaimSuccess({
           <LottieAnimation animationData={sparklesData} speed={1.35} className="h-full w-full opacity-30" />
         </div>
 
-        {/* Hero — trophy lottie + "Claimed!" headline. */}
-        <div className="arena-result-hero-row">
-          <div className="arena-result-hero-icon">
-            <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
-          </div>
-          <div className="arena-result-hero-text">
-            <h1 className="arena-result-title victory-text-slam">{headline}</h1>
-          </div>
+        {/* Hero — centered headline alone (no trophy). Matches the win-
+            celebration hero so all win-* variants share the same opener. */}
+        <div className="victory-popup-hero-solo">
+          <h1 className="arena-result-title victory-text-slam">{headline}</h1>
         </div>
 
         {/* Stats. */}

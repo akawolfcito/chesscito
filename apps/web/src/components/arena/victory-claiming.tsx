@@ -6,7 +6,6 @@ import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
-import trophyData from "@/../public/animations/trophy.json";
 import { VictoryPopupShell } from "./victory-popup-shell";
 
 type Props = {
@@ -66,14 +65,10 @@ export function VictoryClaiming({
         <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-30" />
       </div>
 
-      {/* Hero row — trophy lottie + "Saving Victory…" title. */}
-      <div className="arena-result-hero-row">
-        <div className="arena-result-hero-icon">
-          <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
-        </div>
-        <div className="arena-result-hero-text">
-          <h1 className="arena-result-title">{title}</h1>
-        </div>
+      {/* Hero — centered headline alone (no trophy). Matches the win-
+          celebration hero so all win-* variants share the same opener. */}
+      <div className="victory-popup-hero-solo">
+        <h1 className="arena-result-title">{title}</h1>
       </div>
 
       {/* Stats row — same MISSION-style pills. */}

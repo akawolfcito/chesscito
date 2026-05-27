@@ -6,7 +6,6 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
-import trophyData from "@/../public/animations/trophy.json";
 import { VictoryPopupShell } from "./victory-popup-shell";
 
 export type ClaimEndKind = "error" | "cancelled" | "timeout";
@@ -82,24 +81,17 @@ export function VictoryClaimError({
         <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-15" />
       </div>
 
-      {/* Hero — trophy lottie (dimmed for error) + status headline +
-          kind kicker label above. */}
-      <div className="arena-result-hero-row">
-        <div
-          className="arena-result-hero-icon"
-          style={isCancelled ? undefined : { opacity: 0.55, filter: "grayscale(30%)" }}
+      {/* Hero — kicker + centered headline alone (no trophy). Matches
+          the win-celebration hero so all win-* variants share the same
+          opener. */}
+      <div className="victory-popup-hero-solo victory-popup-hero-solo--with-kicker">
+        <span className="arena-result-kicker">{kindTitle}</span>
+        <h1
+          className="arena-result-title"
+          style={isCancelled ? undefined : { color: "rgba(159, 18, 57, 0.95)" }}
         >
-          <LottieAnimation animationData={trophyData} loop={false} className="h-full w-full" />
-        </div>
-        <div className="arena-result-hero-text">
-          <span className="arena-result-kicker">{kindTitle}</span>
-          <h1
-            className="arena-result-title"
-            style={isCancelled ? undefined : { color: "rgba(159, 18, 57, 0.95)" }}
-          >
-            {statusHeadline}
-          </h1>
-        </div>
+          {statusHeadline}
+        </h1>
       </div>
 
       {/* Subtitle + optional error detail + hint. */}
@@ -152,7 +144,6 @@ export function VictoryClaimError({
             aria-label={tryAgainLabel}
             className="arena-result-primary-cta arena-result-primary-cta--amber arena-result-primary-cta--inset"
           >
-            <CandyIcon name="refresh" className="h-5 w-5 shrink-0" />
             <span className="arena-result-primary-cta-label">{tryAgainLabel}</span>
           </button>
         ) : (

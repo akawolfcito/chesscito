@@ -1402,6 +1402,17 @@
     line-height: 0.98;
   }
 
+  /* Hero with kicker — used by error/cancelled/timeout claim states.
+     Kicker label sits above the headline, both centered. */
+  .victory-popup-hero-solo--with-kicker {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .victory-popup-hero-solo--with-kicker .arena-result-kicker {
+    text-align: center;
+  }
+
   /* Inline price after the primary CTA label. Same color/weight as the
      label, slightly smaller scale, dot-separator inside the label
      span — reads as ONE confident button label, no sticker. */
