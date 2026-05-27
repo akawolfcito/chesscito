@@ -34,15 +34,42 @@ async function main() {
     deviceScaleFactor: 2,
   });
 
+  // CSS to hide the Next.js dev toolbar / build indicator so it doesn't
+  // pollute the capture. Covers v14 (`nextjs-portal`, `[data-nextjs-*]`)
+  // and the modern `[data-next-badge-root]` / `[data-next-mark]` ones.
+  const HIDE_DEV_UI = `
+    nextjs-portal,
+    [data-nextjs-toast],
+    [data-nextjs-dialog-overlay],
+    [data-nextjs-dev-tools-button],
+    [data-next-badge-root],
+    [data-next-mark],
+    [data-nextjs-router-tree-button] {
+      display: none !important;
+    }
+  `;
+
   for (const { slug, note } of VARIANTS) {
     const page = await ctx.newPage();
     const url = `${BASE}/dev/arena-end-state?variant=${slug}`;
     process.stdout.write(`→ ${slug.padEnd(20)} (${note}) ... `);
     try {
       await page.goto(url, { waitUntil: "networkidle", timeout: 30_000 });
-      await page.waitForTimeout(800);
+      await page.addStyleTag({ content: HIDE_DEV_UI });
+      // Settle lottie animations + scrim fade-in.
+      await page.waitForTimeout(1200);
+      // Tight crop of the popup itself — finds the modal scrim's inner
+      // panel (the max-w-[340px] container) and screenshots only that
+      // box so reviewers see the popup, not the surrounding viewport.
+      const popup = page.locator(
+        '[role="alert"], [role="dialog"]'
+      ).locator('> div').first();
       const file = path.join(OUT_DIR, `${slug}.png`);
-      await page.screenshot({ path: file, fullPage: false });
+      if (await popup.count()) {
+        await popup.screenshot({ path: file });
+      } else {
+        await page.screenshot({ path: file, fullPage: false });
+      }
       console.log("ok");
     } catch (err) {
       console.log(`FAIL ${err.message}`);

@@ -27,7 +27,7 @@ type Props = {
   coachPreview?: ReactNode;
 };
 
-const AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-feroz";
+const AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-feliz";
 
 /**
  * Victory claim success popup — post-mint celebration.
