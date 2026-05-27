@@ -297,8 +297,11 @@ export function ArenaEndState({
         className="relative mx-4 w-full max-w-[340px] max-h-[92dvh] overflow-y-auto overscroll-contain"
         onClick={(e) => e.stopPropagation()}
         style={{
+          /* panel-bg1 has a taller native aspect (4:5) than the square
+             panel-mision-icon, so the popup foliage corners stretch
+             less vertically when the content is tall. */
           backgroundImage:
-            'image-set(url("/art/screen-mission/panel-mision-icon.avif") type("image/avif"), url("/art/screen-mission/panel-mision-icon.webp") type("image/webp"), url("/art/screen-mission/panel-mision-icon.png") type("image/png"))',
+            'image-set(url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"), url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"), url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png"))',
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
         }}
@@ -331,6 +334,14 @@ export function ArenaEndState({
               resign-game icon on the LEFT and the message (kicker +
               title + subtitle) on the RIGHT. */}
 
+          {/* Kicker row with rules — same vocabulary as Coach Review's
+              kicker divider so the popup reads as two banded sections. */}
+          <div className="arena-result-coach-kicker-row">
+            <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
+            <span className="arena-result-kicker">{tArena("matchEndedLabel")}</span>
+            <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
+          </div>
+
           <div className="arena-result-hero-row">
             <picture className="arena-result-hero-icon">
               <source srcSet="/art/new-assets-chesscito/arena/resign-game.avif" type="image/avif" />
@@ -343,7 +354,6 @@ export function ArenaEndState({
               />
             </picture>
             <div className="arena-result-hero-text">
-              <span className="arena-result-kicker">{tArena("matchEndedLabel")}</span>
               <h1 className="arena-result-title">{text}</h1>
               <p className="arena-result-subtitle">{tArena("matchEndedHint")}</p>
             </div>
@@ -355,13 +365,10 @@ export function ArenaEndState({
               is still accepted so the win path (VictoryCelebration /
               VictoryClaimSuccess) can keep using it unchanged. */}
 
-          {/* 3. Coach Review — bigger pensive avatar (flipped horizontally
-              to face the text) + headline + body + CTA. */}
+          {/* Coach Review — its own kicker divider replaces the
+              section rule above (visual band is enough separation). */}
           {onAskCoach && (
-            <>
-              <hr className="arena-result-section-rule" aria-hidden="true" />
-
-              <div className="arena-result-coach-section" aria-labelledby="arena-coach-review-headline">
+            <div className="arena-result-coach-section" aria-labelledby="arena-coach-review-headline">
                 <div className="arena-result-coach-kicker-row">
                   <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
                   <span className="arena-result-kicker">{tEntry("reviewKicker")}</span>
@@ -392,41 +399,37 @@ export function ArenaEndState({
                     />
                   </div>
                 </div>
-              </div>
-            </>
+            </div>
           )}
 
-          <hr className="arena-result-section-rule" aria-hidden="true" />
-
-          {/* 4. Stats — 3 paper tiles for difficulty / moves / time. */}
-          <div className="arena-result-stats-row">
-            <PaperStatCard
-              icon={<CandyIcon name="star" className="h-4 w-4" />}
-              value={difficultyLabel}
-              label={tCelebration("stats.difficulty")}
-            />
-            <PaperStatCard
-              icon={
-                <picture className="arena-result-pawn-icon" style={{ display: "block", width: 20, height: 20 }}>
-                  <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-                  <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-                  <img
-                    src="/art/redesign/pieces/w-pawn.png"
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    className="block h-full w-full object-contain"
-                  />
-                </picture>
-              }
-              value={String(moves)}
-              label={tCelebration("stats.moves")}
-            />
-            <PaperStatCard
-              icon={<CandyIcon name="time" className="h-4 w-4" />}
-              value={time}
-              label={tCelebration("stats.time")}
-            />
+          {/* Stats — candy-tray-pill chips (same family as the arena
+              timer HUD). Each chip floats its icon outside the left
+              edge of the pill so the icon reads as the dominant
+              element. Labels intentionally dropped — value + icon
+              already communicate the dimension. */}
+          <div className="arena-result-stats-row arena-result-stats-row--chips">
+            <span className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-result-stat-chip">
+              <CandyIcon name="star" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
+              <span className="arena-result-stat-chip-value">{difficultyLabel}</span>
+            </span>
+            <span className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-result-stat-chip">
+              <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
+                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                <img
+                  src="/art/redesign/pieces/w-pawn.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="block h-full w-full object-contain"
+                />
+              </picture>
+              <span className="arena-result-stat-chip-value">{String(moves)}</span>
+            </span>
+            <span className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-result-stat-chip">
+              <CandyIcon name="time" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
+              <span className="arena-result-stat-chip-value">{time}</span>
+            </span>
           </div>
 
           {/* 5. PLAY — primary CTA at the bottom. */}

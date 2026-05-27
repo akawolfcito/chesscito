@@ -938,11 +938,9 @@
     min-width: 168px;
     padding: 14px 36px 18px;
     background:
-      image-set(
-        url("/art/scene-rooted/principalbutton.avif") type("image/avif"),
+      image-set(url("/art/scene-rooted/principalbutton.avif") type("image/avif"),
         url("/art/scene-rooted/principalbutton.webp") type("image/webp"),
-        url("/art/scene-rooted/principalbutton.png") type("image/png")
-      );
+        url("/art/scene-rooted/principalbutton.png") type("image/png"));
     background-repeat: no-repeat;
     background-size: 100% 100%;
     background-position: center;
@@ -1037,12 +1035,10 @@
     height: 1px;
     border: 0;
     margin: 0;
-    background: linear-gradient(
-      to right,
-      rgba(110, 65, 15, 0) 0%,
-      rgba(110, 65, 15, 0.28) 50%,
-      rgba(110, 65, 15, 0) 100%
-    );
+    background: linear-gradient(to right,
+        rgba(110, 65, 15, 0) 0%,
+        rgba(110, 65, 15, 0.28) 50%,
+        rgba(110, 65, 15, 0) 100%);
   }
 
   /* Hero row: icon LEFT + message (kicker + title + subtitle) RIGHT,
@@ -1093,8 +1089,36 @@
     gap: 8px;
   }
 
-  .arena-result-stats-row > * {
+  .arena-result-stats-row>* {
     flex: 1 1 0;
+  }
+
+  /* Chip variant: candy-tray-pill stat row with floating icons. Extra
+     horizontal gap so the icons overhanging each chip's left edge don't
+     visually collide with the previous chip's right edge. Each chip
+     anchors width: auto via the candy-tray-pill base — flex: 1 1 0
+     re-expands them to equal-share the row. */
+  .arena-result-stats-row--chips {
+    gap: 22px;
+    padding-left: 18px;
+    /* Push the chip row below the avatar's bottom overhang so the
+       wolf's body doesn't cover the rightmost chip. */
+    margin-top: 18px;
+    margin-bottom: 4px;
+  }
+
+  .arena-result-stat-chip {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .arena-result-stat-chip-value {
+    font-family: var(--font-game-action);
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
   }
 
   .arena-result-coach-section {
@@ -1113,12 +1137,10 @@
   .arena-result-coach-kicker-rule {
     flex: 1 1 0;
     height: 1px;
-    background: linear-gradient(
-      to right,
-      rgba(110, 65, 15, 0) 0%,
-      rgba(110, 65, 15, 0.32) 50%,
-      rgba(110, 65, 15, 0) 100%
-    );
+    background: linear-gradient(to right,
+        rgba(110, 65, 15, 0) 0%,
+        rgba(110, 65, 15, 0.32) 50%,
+        rgba(110, 65, 15, 0) 100%);
   }
 
   /* Coach body: relative positioning context so the avatar can float
@@ -1130,17 +1152,18 @@
     min-height: 140px;
   }
 
-  /* Floating avatar — bigger (~58% of coach body width), absolute
-     positioned so it overhangs the popup-content padding on the RIGHT.
-     Negative right offset (~ -10%) pushes it nearly to the panel edge.
-     No transform: native orientation already has the wolf facing
-     slightly LEFT toward the text column on its left. */
+  /* Floating avatar — half-body wolf wizard. Keeps the same WIDTH as
+     before (58% of coach body) but the container aspect-ratio is now
+     wider-than-tall (1 / 0.85) so the bottom of the asset gets cropped
+     by object-fit: cover + object-position: top. Effect: same on-screen
+     presence, less vertical bleed into the stats row. Native
+     orientation, no flip — wolf naturally faces LEFT toward the text. */
   .arena-result-coach-avatar {
     position: absolute;
     right: -12%;
-    bottom: -8%;
+    bottom: -4%;
     width: 58%;
-    aspect-ratio: 1 / 1.1;
+    aspect-ratio: 1 / 0.85;
     display: block;
     pointer-events: none;
     z-index: 1;
@@ -5794,8 +5817,7 @@ button.hud-resource-chip:active:not(:disabled) {
    * shadow, top layer is a soft warm glow that lifts the icon off
    * the candy pill / blue sky background. */
   filter:
-    drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32))
-    drop-shadow(0 1px 0 rgba(110, 65, 15, 0.45));
+    drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32)) drop-shadow(0 1px 0 rgba(110, 65, 15, 0.45));
 }
 
 /* `--anchored-left` modifier — the chip's left edge is squared off
@@ -8707,7 +8729,7 @@ button.hud-resource-chip:active:not(:disabled) {
   z-index: 0;
 }
 
-.shop-item-tile > * {
+.shop-item-tile>* {
   position: relative;
   z-index: 1;
 }
@@ -9429,6 +9451,7 @@ button.hud-resource-chip:active:not(:disabled) {
     0 6px 14px -8px rgba(110, 65, 15, 0.35);
   overflow: visible;
 }
+
 .badge-vitrine-hero-wolf {
   position: absolute;
   /* Wolf intentionally overflows the panel on the left + bottom so the
@@ -9442,11 +9465,13 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
   filter: drop-shadow(0 4px 8px rgba(110, 65, 15, 0.40));
 }
+
 .badge-vitrine-hero-wolf img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
+
 .badge-vitrine-hero-content {
   flex: 1;
   display: flex;
@@ -9454,6 +9479,7 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 0.375rem;
   min-width: 0;
 }
+
 .badge-vitrine-hero-eyebrow {
   font-size: 0.65rem;
   font-weight: 900;
@@ -9462,12 +9488,14 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(110, 65, 15, 0.70);
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
+
 .badge-vitrine-hero-pieces {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 0.25rem;
   align-items: center;
 }
+
 .badge-vitrine-hero-piece {
   display: block;
   aspect-ratio: 1 / 1;
@@ -9475,15 +9503,18 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: grayscale(0.85);
   transition: opacity 200ms, filter 200ms;
 }
+
 .badge-vitrine-hero-piece.is-claimed {
   opacity: 1;
   filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.65));
 }
+
 .badge-vitrine-hero-piece img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
+
 .badge-vitrine-hero-stats {
   display: flex;
   align-items: baseline;
@@ -9494,12 +9525,15 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(63, 34, 8, 0.95);
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
+
 .badge-vitrine-hero-stats-sep {
   opacity: 0.4;
 }
+
 .badge-vitrine-hero-stats-star {
   color: rgba(180, 83, 9, 0.95);
 }
+
 .badge-vitrine-hero-progress {
   height: 0.5rem;
   width: 100%;
@@ -9508,6 +9542,7 @@ button.hud-resource-chip:active:not(:disabled) {
   background: rgba(110, 65, 15, 0.18);
   box-shadow: inset 0 1px 0 rgba(110, 65, 15, 0.10);
 }
+
 .badge-vitrine-hero-progress-fill {
   height: 100%;
   border-radius: 9999px;
@@ -9536,6 +9571,7 @@ button.hud-resource-chip:active:not(:disabled) {
     0 6px 14px -8px rgba(110, 65, 15, 0.35);
   overflow: visible;
 }
+
 .trophy-vitrine-hero-anchor {
   position: absolute;
   /* Trophy intentionally overflows the panel on the left + bottom-aligns
@@ -9548,11 +9584,13 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
   filter: drop-shadow(0 4px 8px rgba(110, 65, 15, 0.40));
 }
+
 .trophy-vitrine-hero-anchor img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
+
 .trophy-vitrine-hero-content {
   flex: 1;
   display: flex;
@@ -9560,6 +9598,7 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 0.375rem;
   min-width: 0;
 }
+
 .trophy-vitrine-hero-eyebrow {
   font-size: 0.65rem;
   font-weight: 900;
@@ -9568,6 +9607,7 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(110, 65, 15, 0.70);
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
+
 .trophy-vitrine-hero-stats {
   display: flex;
   align-items: baseline;
@@ -9578,22 +9618,27 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(63, 34, 8, 0.95);
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
+
 .trophy-vitrine-hero-stats-victory {
   color: rgba(126, 34, 206, 0.95);
 }
+
 .trophy-vitrine-hero-stats-sep {
   opacity: 0.4;
   font-weight: 700;
 }
+
 .trophy-vitrine-hero-stats-ach {
   color: rgba(180, 83, 9, 0.95);
 }
+
 .trophy-vitrine-hero-sub {
   font-size: 0.75rem;
   font-weight: 700;
   color: rgba(63, 34, 8, 0.75);
   line-height: 1.25;
 }
+
 .trophy-vitrine-hero-progress {
   height: 0.5rem;
   width: 100%;
@@ -9602,6 +9647,7 @@ button.hud-resource-chip:active:not(:disabled) {
   background: rgba(110, 65, 15, 0.18);
   box-shadow: inset 0 1px 0 rgba(110, 65, 15, 0.10);
 }
+
 .trophy-vitrine-hero-progress-fill {
   height: 100%;
   border-radius: 9999px;
@@ -9634,6 +9680,7 @@ button.hud-resource-chip:active:not(:disabled) {
     0 6px 14px -8px rgba(110, 65, 15, 0.35);
   overflow: visible;
 }
+
 .leaderboard-vitrine-hero-anchor {
   position: absolute;
   /* Crown overflows on the left + bottom-aligns. Same composition rule
@@ -9646,11 +9693,13 @@ button.hud-resource-chip:active:not(:disabled) {
   pointer-events: none;
   filter: drop-shadow(0 4px 8px rgba(110, 65, 15, 0.40));
 }
+
 .leaderboard-vitrine-hero-anchor img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
+
 .leaderboard-vitrine-hero-content {
   flex: 1;
   display: flex;
@@ -9659,6 +9708,7 @@ button.hud-resource-chip:active:not(:disabled) {
   min-width: 0;
   justify-content: center;
 }
+
 .leaderboard-vitrine-hero-eyebrow {
   font-size: 0.65rem;
   font-weight: 900;
@@ -9667,6 +9717,7 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(110, 65, 15, 0.70);
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
+
 .leaderboard-vitrine-hero-stats {
   font-size: 0.95rem;
   font-weight: 900;
@@ -9680,6 +9731,7 @@ button.hud-resource-chip:active:not(:disabled) {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .leaderboard-vitrine-hero-sub {
   font-size: 0.75rem;
   font-weight: 700;
