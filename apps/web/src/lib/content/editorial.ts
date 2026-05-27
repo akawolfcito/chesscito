@@ -1368,6 +1368,14 @@ export const COACH_ENTRY_COPY = {
   offlineToAnalyze: "You need to be online to analyze",
   /** Dismiss control on the persist-error toast. */
   persistDismissLabel: "Dismiss",
+  /** Loss/draw/resigned Coach Review panel — kicker + headline + body.
+   *  Ready: match has ≥1 move and game record persisted, CTA enabled.
+   *  TooShort: match has 0 moves, CTA disabled with explanation. */
+  reviewKicker: "COACH REVIEW",
+  reviewHeadlineReady: "Want a deeper look?",
+  reviewBodyReady: "Coach reviews your match and surfaces key moments.",
+  reviewHeadlineTooShort: "No moves to analyze",
+  reviewBodyTooShort: "Make at least one move before asking the Coach.",
 } as const;
 
 /**

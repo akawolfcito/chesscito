@@ -504,6 +504,11 @@ const messages = {
       "Acción secundaria. Reclamar Victoria arriba es la acción principal.",
     offlineToAnalyze: "Necesitas estar en línea para analizar",
     persistDismissLabel: "Cerrar",
+    reviewKicker: "COACH REVIEW",
+    reviewHeadlineReady: "¿Una mirada más profunda?",
+    reviewBodyReady: "El Coach revisa tu partida y muestra los momentos clave.",
+    reviewHeadlineTooShort: "Sin jugadas para analizar",
+    reviewBodyTooShort: "Haz al menos una jugada antes de pedir análisis al Coach.",
   },
   COACH_ONBOARDING_COPY: {
     ...en.COACH_ONBOARDING_COPY,

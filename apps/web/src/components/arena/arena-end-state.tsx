@@ -255,6 +255,18 @@ export function ArenaEndState({
   if (!text) return null;
 
   const time = formatTime(elapsedMs);
+  const difficultyLabel = (() => {
+    const k = difficulty as "easy" | "medium" | "hard";
+    return ["easy", "medium", "hard"].includes(k)
+      ? tArena(`difficulty.${k}`)
+      : difficulty;
+  })();
+  const reviewHeadline = isTooShort
+    ? tEntry("reviewHeadlineTooShort")
+    : tEntry("reviewHeadlineReady");
+  const reviewBody = isTooShort
+    ? tEntry("reviewBodyTooShort")
+    : tEntry("reviewBodyReady");
 
   return (
     <div
@@ -275,42 +287,48 @@ export function ArenaEndState({
         </div>
       </header>
 
-      <main className="arena-result-screen">
-        <section className="arena-result-header">
-          <div className="arena-result-trophy">
-            <div className="arena-result-trophy-glow" />
-            <picture className="relative flex h-3/5 w-3/5 items-center justify-center">
-              <source srcSet="/art/favicon-wolf.avif" type="image/avif" />
-              <source srcSet="/art/favicon-wolf.webp" type="image/webp" />
-              <img
-                src="/art/favicon-wolf.png"
-                alt=""
-                aria-hidden="true"
-                className="h-9 w-9 opacity-50 drop-shadow-[0_4px_12px_rgba(120,65,5,0.30)]"
-              />
-            </picture>
+      <main className="arena-result-screen arena-result-screen--paneled">
+        {/* Hero — kicker + headline + subtitle on the left, resign-game
+            character on the right, inside a forest-cream panel. */}
+        <section className="arena-result-hero-panel">
+          <div className="arena-result-hero-text">
+            <span className="arena-result-kicker">{tArena("matchEndedLabel")}</span>
+            <h1 className="arena-result-title">{text}</h1>
+            <p className="arena-result-subtitle">{tArena("matchEndedHint")}</p>
           </div>
-
-          <span className="arena-result-kicker">{tArena("matchEndedLabel")}</span>
-
-          <h1 className="arena-result-title">{text}</h1>
-
-          <p className="arena-result-subtitle">{tArena("matchEndedHint")}</p>
+          <picture className="arena-result-hero-art">
+            <source srcSet="/art/new-assets-chesscito/arena/resign-game.avif" type="image/avif" />
+            <source srcSet="/art/new-assets-chesscito/arena/resign-game.webp" type="image/webp" />
+            <img
+              src="/art/new-assets-chesscito/arena/resign-game.png"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+            />
+          </picture>
         </section>
 
-        <div className="arena-result-stats">
+        {/* Stats row — 3 paper tiles for difficulty / moves / time. */}
+        <section className="arena-result-stats-panel">
           <PaperStatCard
-            icon={<CandyIcon name="crosshair" className="h-4 w-4" />}
-            value={(() => {
-              const k = difficulty as "easy" | "medium" | "hard";
-              return ["easy", "medium", "hard"].includes(k)
-                ? tArena(`difficulty.${k}`)
-                : difficulty;
-            })()}
+            icon={<CandyIcon name="star" className="h-4 w-4" />}
+            value={difficultyLabel}
             label={tCelebration("stats.difficulty")}
           />
           <PaperStatCard
-            icon={<CandyIcon name="move" className="h-4 w-4" />}
+            icon={
+              <picture className="arena-result-pawn-icon" style={{ display: "block", width: 20, height: 20 }}>
+                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                <img
+                  src="/art/redesign/pieces/w-pawn.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="block h-full w-full object-contain"
+                />
+              </picture>
+            }
             value={String(moves)}
             label={tCelebration("stats.moves")}
           />
@@ -319,24 +337,47 @@ export function ArenaEndState({
             value={time}
             label={tCelebration("stats.time")}
           />
-        </div>
+        </section>
 
+        {/* Coach Review — kicker divider + sub-panel with pensive avatar
+            left + headline/body/CTA right. Coach preview slot still
+            renders above if the parent provides it. */}
         {coachPreview && (
           <div className="arena-result-coach-wrap">{coachPreview}</div>
         )}
-
-        {/* Cluster E — Coach CTA is PRIMARY on loss/draw/resigned (no
-            Mint peer). Mounts disabled until the game record persists;
-            aria-busy is reserved for the in-flight phase so screen
-            readers don't announce a permanently-disabled CTA as busy. */}
         {onAskCoach && (
-          <CoachAnalysisCta
-            position="primary-on-lose"
-            onClick={() => onAskCoach()}
-            disabled={coachCtaDisabled}
-            ariaBusy={isPersistBusy}
-            tooShort={isTooShort}
-          />
+          <section className="arena-result-coach-panel" aria-labelledby="arena-coach-review-headline">
+            <div className="arena-result-coach-kicker-row">
+              <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
+              <span className="arena-result-kicker">{tEntry("reviewKicker")}</span>
+              <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
+            </div>
+            <div className="arena-result-coach-body">
+              <picture className="arena-result-coach-avatar">
+                <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.avif" type="image/avif" />
+                <source srcSet="/art/new-assets-chesscito/fun/avatar-pensativo.webp" type="image/webp" />
+                <img
+                  src="/art/new-assets-chesscito/fun/avatar-pensativo.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                />
+              </picture>
+              <div className="arena-result-coach-text">
+                <h2 id="arena-coach-review-headline" className="arena-result-coach-headline">
+                  {reviewHeadline}
+                </h2>
+                <p className="arena-result-coach-body-text">{reviewBody}</p>
+                <CoachAnalysisCta
+                  position="primary-on-lose"
+                  onClick={() => onAskCoach()}
+                  disabled={coachCtaDisabled}
+                  ariaBusy={isPersistBusy}
+                  tooShort={isTooShort}
+                />
+              </div>
+            </div>
+          </section>
         )}
 
         <button
@@ -363,7 +404,7 @@ export function ArenaEndState({
  * (`moves === 0`). On secondary mode the `aria-describedby` hidden span
  * clarifies the Mint relationship per spec §0.4.
  */
-function CoachAnalysisCta({
+export function CoachAnalysisCta({
   position,
   onClick,
   disabled,
