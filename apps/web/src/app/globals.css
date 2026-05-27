@@ -3448,6 +3448,7 @@
   height: auto;
   top: 50%;
   left: 50%;
+  z-index: 2;
   /* The marco's interior cutout sits at ~42% of the asset's height
    * (above the bottom gem/leaves decoration). With width 152% +
    * native ~1:1.05 aspect → marco height ≈ 160% of parent. To align
