@@ -86,16 +86,28 @@ export function ArenaActionBar({
     );
   }
 
-  if (isEndState) return null;
-
   const resignLabel = t("resign");
   const resignConfirmLabel = t("resignConfirm");
   const confirmResignLabel = t("confirmResignLabel");
 
+  /* When the match ends we still RENDER the action bar (same DOM
+   * structure + size) but hide it visually. Returning null would
+   * remove the row from the flex column and the board / HUD above
+   * would jump down to fill the gap — a layout flash the player
+   * notices on every endgame. `visibility: hidden` preserves the
+   * footprint; `aria-hidden` keeps screen readers from announcing
+   * the dead controls. */
+  const isHidden = isEndState;
+
   return (
-    <div className="arena-action-bar flex items-center justify-between px-4 pb-2 pt-2">
+    <div
+      className="arena-action-bar flex items-center justify-between px-4 pb-2 pt-2"
+      style={isHidden ? { visibility: "hidden" } : undefined}
+      aria-hidden={isHidden || undefined}
+    >
       <ArenaActionButton
-        onClick={handleResignClick}
+        onClick={isHidden ? undefined : handleResignClick}
+        disabled={isHidden}
         ariaLabel={confirmingResign ? resignConfirmLabel : resignLabel}
         ariaPressed={confirmingResign}
         iconBase={RESIGN_ICON_BASE}
@@ -103,8 +115,8 @@ export function ArenaActionBar({
       />
 
       <ArenaActionButton
-        onClick={onUndo}
-        disabled={!canUndo || !onUndo}
+        onClick={isHidden ? undefined : onUndo}
+        disabled={isHidden || !canUndo || !onUndo}
         ariaLabel={t("undo")}
         iconBase={UNDO_ICON_BASE}
         label={t("undo")}
