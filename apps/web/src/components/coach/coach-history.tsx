@@ -346,10 +346,13 @@ export function CoachHistory({
 
   // Mixed chronological — newest first by game.timestamp. No Analyzed /
   // Pending section split per spec §2.4.9.
+  // Zero-move entries are filtered out (red-team H-9): the /coach/[gameId]
+  // viewer handles them defensively, but they should never be a primary
+  // surface in the history list.
   const mergedSorted: HistoryEntry[] = useMemo(() => {
-    return [...analyzed, ...unanalyzed].sort(
-      (a, b) => b.game.timestamp - a.game.timestamp,
-    );
+    return [...analyzed, ...unanalyzed]
+      .filter((e) => (e.game?.totalMoves ?? 0) !== 0)
+      .sort((a, b) => b.game.timestamp - a.game.timestamp);
   }, [analyzed, unanalyzed]);
 
   // Derived stats (analyzed-only — Reviewed/Highest/Streak)

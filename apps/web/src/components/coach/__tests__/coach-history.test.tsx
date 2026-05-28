@@ -132,6 +132,71 @@ describe("<CoachHistory> — a11y landmark (Cluster E defer #5)", () => {
   });
 });
 
+describe("<CoachHistory> — zero-move filter (T11 / red-team H-9)", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("hides analyzed entries with totalMoves === 0 from the list", async () => {
+    const zeroMoveRecord = {
+      ...analyzedRecord(UUID_A, "win"),
+      game: { ...analyzedRecord(UUID_A, "win").game, totalMoves: 0 },
+    };
+    const normalRecord = analyzedRecord(UUID_B, "win");
+
+    globalThis.fetch = mockFetch([zeroMoveRecord, normalRecord], []) as typeof fetch;
+
+    render(
+      <CoachHistory walletAddress={VALID_WALLET} credits={0} onSelectEntry={noop} />,
+    );
+
+    // The normal entry renders via LatestReviewCard (role="button").
+    // The zero-move entry is silently filtered — only 1 entry total.
+    const latestCard = await screen.findByRole("button", {
+      name: /Open .* Coach Review/i,
+    });
+    expect(latestCard).toBeInTheDocument();
+    // Zero-move record must not appear — no "0 moves" text anywhere.
+    expect(screen.queryByText(/\b0 moves\b/)).not.toBeInTheDocument();
+  });
+
+  it("hides unanalyzed entries with totalMoves === 0", async () => {
+    const zeroMoveGame = { ...unanalyzedGame(UUID_A), totalMoves: 0 };
+    const normalGame = unanalyzedGame(UUID_B);
+
+    globalThis.fetch = mockFetch([], [zeroMoveGame, normalGame]) as typeof fetch;
+
+    render(
+      <CoachHistory walletAddress={VALID_WALLET} credits={0} onSelectEntry={noop} />,
+    );
+
+    await screen.findByRole("region", { name: /coach review history/i });
+    // Only the normal unanalyzed entry renders (role="listitem" on the button).
+    // Zero-move entry must produce no row — no "0 moves" text in the list.
+    await screen.findByRole("listitem");
+    expect(screen.queryByText(/\b0 moves\b/)).not.toBeInTheDocument();
+  });
+
+  it("shows empty state when ALL entries have totalMoves === 0", async () => {
+    const zeroMoveGame = { ...unanalyzedGame(UUID_A), totalMoves: 0 };
+
+    globalThis.fetch = mockFetch([], [zeroMoveGame]) as typeof fetch;
+
+    render(
+      <CoachHistory walletAddress={VALID_WALLET} credits={0} onSelectEntry={noop} />,
+    );
+
+    await screen.findByRole("region", { name: /coach review history/i });
+    // All filtered → empty state rendered.
+    await screen.findByRole("link", { name: /go to arena/i });
+    expect(screen.queryByRole("listitem")).not.toBeInTheDocument();
+  });
+});
+
 describe("<CoachHistory> — locale-aware fetch (2026-05-24)", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
