@@ -670,6 +670,18 @@ function ArenaPageInner() {
     }
   }, [persistState, persistedGameId, address, router]);
 
+  // #116 — Prefetch /coach/[gameId] while the end-state popup is visible
+  // so the X-close transition feels instant. The route's RSC payload +
+  // first /api/games hop are warm by the time the user taps the X.
+  // router.prefetch is idempotent and de-dupes on the Next.js side; safe
+  // to re-fire on each terminal-state churn. Guest pathway (no wallet) is
+  // skipped — those users route to /arena?fresh=1, not the coach surface.
+  useEffect(() => {
+    if (!showEndOverlay) return;
+    if (!address || !persistedGameId) return;
+    router.prefetch(`/coach/${persistedGameId}?wallet=${address}`);
+  }, [showEndOverlay, address, persistedGameId, router]);
+
 
   // arena_game_end — fires once per transition into a terminal state.
   const endTrackedRef = useRef<string | null>(null);
