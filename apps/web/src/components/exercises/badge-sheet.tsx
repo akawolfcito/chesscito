@@ -313,16 +313,18 @@ export function BadgeSheet({
               {PIECES.map((piece) => {
                 const claimed = Boolean(badgesClaimed[piece]);
                 return (
-                  <picture
+                  <span
                     key={piece}
                     role="listitem"
                     className={`badge-vitrine-hero-piece${claimed ? " is-claimed" : ""}`}
                     aria-label={tPiece(piece)}
                   >
-                    <source srcSet={`${THEME_CONFIG.piecesBase}/w-${piece}.avif`} type="image/avif" />
-                    <source srcSet={`${THEME_CONFIG.piecesBase}/w-${piece}.webp`} type="image/webp" />
-                    <img src={`${THEME_CONFIG.piecesBase}/w-${piece}.png`} alt="" aria-hidden="true" draggable={false} />
-                  </picture>
+                    <picture>
+                      <source srcSet={`${THEME_CONFIG.piecesBase}/w-${piece}.avif`} type="image/avif" />
+                      <source srcSet={`${THEME_CONFIG.piecesBase}/w-${piece}.webp`} type="image/webp" />
+                      <img src={`${THEME_CONFIG.piecesBase}/w-${piece}.png`} alt="" aria-hidden="true" draggable={false} />
+                    </picture>
+                  </span>
                 );
               })}
             </div>

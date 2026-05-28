@@ -61,7 +61,7 @@ export function HubProBadge({
 
   const content = (
     <>
-      <picture className="hub-pro-badge-bg" aria-hidden="true">
+      <picture className="hub-pro-badge-bg">
         <source srcSet="/art/hub/panel-pro.avif" type="image/avif" />
         <source srcSet="/art/hub/panel-pro.webp" type="image/webp" />
         <img src="/art/hub/panel-pro.png" alt="" />

@@ -204,10 +204,7 @@ export function VictoryCelebration({
               aria-label={claimAriaLabel}
               className="arena-result-primary-cta arena-result-primary-cta--treasure"
             >
-              <picture
-                className="arena-result-primary-cta-treasure-icon"
-                aria-hidden="true"
-              >
+              <picture className="arena-result-primary-cta-treasure-icon">
                 <source srcSet="/art/new-icons-chesscito/save.avif" type="image/avif" />
                 <source srcSet="/art/new-icons-chesscito/save.webp" type="image/webp" />
                 <img src="/art/new-icons-chesscito/save.png" alt="" draggable={false} />

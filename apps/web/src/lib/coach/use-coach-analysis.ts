@@ -112,6 +112,9 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
   const proActive = input.injected?.proActive ?? proActiveHook;
 
   const isConnected = input.isConnected ?? wagmiAccount.isConnected;
+  // Destructured to make `onAnalyzeTelemetry` a direct callback dep (avoids
+  // react-hooks/exhaustive-deps warnings on optional-chain accessors).
+  const { onAnalyzeTelemetry } = input;
 
   // --- phase machine state ---
   const [phase, setPhaseState] = useState<CoachPhase>("idle");
@@ -226,7 +229,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
       if ((analyzeData as { idempotent?: boolean })?.idempotent === true) {
         // Idempotent hit — no credit consumed
         trackAnalyzeIdempotentHit(analyzeSource);
-        input.onAnalyzeTelemetry?.({ stage: "idempotent_hit", gameId: analyzeGameId, source: analyzeSource });
+        onAnalyzeTelemetry?.({ stage: "idempotent_hit", gameId: analyzeGameId, source: analyzeSource });
       } else {
         trackAnalyzeRequest({
           source: analyzeSource,
@@ -235,7 +238,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
           moves: movesArr.length,
           result: gameResult,
         });
-        input.onAnalyzeTelemetry?.({ stage: "request", gameId: analyzeGameId, source: analyzeSource });
+        onAnalyzeTelemetry?.({ stage: "request", gameId: analyzeGameId, source: analyzeSource });
       }
 
       const data = analyzeData as {
@@ -311,7 +314,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
     input.moves,
     input.elapsedMs,
     input.gameId,
-    input.onAnalyzeTelemetry,
+    onAnalyzeTelemetry,
   ]);
 
   // --- askCoach ---
@@ -379,10 +382,10 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
         (outcome.kind === "ready" || outcome.kind === "queued") && outcome.idempotent;
       if (isIdempotent) {
         trackAnalyzeIdempotentHit("history");
-        input.onAnalyzeTelemetry?.({ stage: "idempotent_hit", gameId, source: "history" });
+        onAnalyzeTelemetry?.({ stage: "idempotent_hit", gameId, source: "history" });
       } else {
         trackAnalyzeRequest({ source: "history", gameId });
-        input.onAnalyzeTelemetry?.({ stage: "request", gameId, source: "history" });
+        onAnalyzeTelemetry?.({ stage: "request", gameId, source: "history" });
       }
     }
 
@@ -409,9 +412,9 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
       reason: outcome.reason,
       status: outcome.status,
     });
-    input.onAnalyzeTelemetry?.({ stage: "failed", gameId, source: "history" });
+    onAnalyzeTelemetry?.({ stage: "failed", gameId, source: "history" });
     setPhaseState("history");
-  }, [address, activeLocale, input.onAnalyzeTelemetry]);
+  }, [address, activeLocale, onAnalyzeTelemetry]);
 
   // --- reanalyze ---
   // Mirrors arena/page.tsx handleReanalyze.
