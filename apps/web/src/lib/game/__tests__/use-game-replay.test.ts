@@ -79,6 +79,16 @@ describe("useGameReplay", () => {
     expect(result.current.currentFen).toBe(customFen);
   });
 
+  it("invalid startingFen: falls back to startpos + error.atIndex -1, no replay", () => {
+    const { result } = renderHook(() => useGameReplay(["e4"], "this-is-not-a-fen"));
+    expect(result.current.error).toEqual({ atIndex: -1, badSan: "" });
+    expect(result.current.lastValidIndex).toBe(0);
+    expect(result.current.currentIndex).toBe(0);
+    expect(result.current.totalMoves).toBe(1);
+    // Moves array length is reported even though replay was skipped.
+    // The hook does not attempt to replay e4 after the bad startingFen.
+  });
+
   it("currentFen updates as we navigate", () => {
     const moves = ["e4", "e5"];
     const { result } = renderHook(() => useGameReplay(moves));
