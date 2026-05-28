@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -33,7 +33,6 @@ type Props = {
    *  VictoryCelebration. Drives the coach pill label
    *  ("Open coach insight" vs "See key moments"). */
   proActive?: boolean;
-  coachPreview?: ReactNode;
 };
 
 const AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-feliz";
@@ -61,7 +60,6 @@ export function VictoryClaimSuccess({
   coachCtaBusy = false,
   coachTooShort = false,
   proActive = false,
-  coachPreview,
 }: Props) {
   const tArena = useTranslations("ARENA_COPY");
   const tClaim = useTranslations("VICTORY_CLAIM_COPY");
@@ -207,11 +205,6 @@ export function VictoryClaimSuccess({
               </picture>
             </div>
           </div>
-        )}
-
-        {/* Parent's coach preview slot (post-game preview card). */}
-        {coachPreview && (
-          <div className="arena-result-coach-wrap">{coachPreview}</div>
         )}
 
         {/* TERTIARY — Play again + Share cream mini-pills. Matches the

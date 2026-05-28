@@ -204,9 +204,9 @@ export function ArenaEndState({
         );
       case "success":
         // Post-mint: VictoryClaimSuccess renders its own AskCoach CTA via
-        // the `onAskCoach` prop. We delegate the source-dim selection
-        // there (victory-mint preferred) and do NOT inject the secondary
-        // CTA into `coachPreview` to avoid double-rendering.
+        // the `onAskCoach` prop. The `coachPreview` slot is intentionally
+        // omitted to avoid double-rendering — the prop was removed from
+        // VictoryClaimSuccess so a future regression can't slip back in.
         return (
           <>
             <VictoryClaimSuccess
@@ -218,7 +218,6 @@ export function ArenaEndState({
               coachCtaBusy={isPersistBusy}
               coachTooShort={isTooShort}
               proActive={proActive}
-              coachPreview={coachPreview}
             />
             {persistOverlay}
           </>
