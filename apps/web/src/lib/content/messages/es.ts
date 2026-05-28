@@ -525,6 +525,17 @@ const messages = {
     askWithCounter: "Pedile a Luz tu análisis (te quedan {count} gratis)",
     askWhenZero: "Pedile a Luz tu análisis (necesitás PRO o un pack)",
   },
+  COACH_VIEWER_COPY: {
+    ...en.COACH_VIEWER_COPY,
+    tooShortToReview: "Esta partida fue demasiado corta para revisar.",
+    replayStoppedAtMove:
+      "La reproducción se detuvo en la jugada {n} — no se pudo reproducir {san}.",
+    previousMove: "Jugada anterior",
+    nextMove: "Jugada siguiente",
+    sliderAriaLabel: "Saltar a jugada",
+    controlsAriaLabel: "Controles de reproducción",
+    sanListAriaLabel: "Lista de jugadas",
+  },
   ARENA_COPY: {
     ...en.ARENA_COPY,
     title: "Arena",

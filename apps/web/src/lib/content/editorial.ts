@@ -1431,6 +1431,16 @@ export const COACH_CTA_COPY = {
 /** Shared chrome for /about, /support, /privacy, /terms — anything
  *  rendered through <LegalPageShell>. Centralizes labels that aren't
  *  page-specific so locale bundles only need to override this once. */
+export const COACH_VIEWER_COPY = {
+  tooShortToReview: "This match was too short to review.",
+  replayStoppedAtMove: "Replay stopped at move {n} — couldn't play {san}.",
+  previousMove: "Previous move",
+  nextMove: "Next move",
+  sliderAriaLabel: "Jump to move",
+  controlsAriaLabel: "Replay controls",
+  sanListAriaLabel: "Move list",
+} as const;
+
 export const LEGAL_SHELL_COPY = {
   back: "Back",
   aboutTitle: "About",
