@@ -136,6 +136,7 @@ export function VictoryCelebration({
     <>
       <VictoryPopupShell
         onClose={handleClose}
+        disableBackdropClose={Boolean(onClaimVictory)}
         ariaLabel={headline}
         role="alert"
         ariaLive="assertive"

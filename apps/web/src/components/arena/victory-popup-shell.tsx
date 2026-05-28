@@ -3,11 +3,18 @@
 import type { ReactNode } from "react";
 
 type Props = {
-  /** Optional close handler. When provided, X + backdrop tap call this
-   *  to dismiss the popup without navigating (Sally's retention-loop
-   *  pattern shared with the loss popup). When omitted, the backdrop
-   *  + X are inert. */
+  /** Optional close handler. When provided, X tap calls this to dismiss
+   *  the popup (Sally's retention-loop pattern shared with the loss
+   *  popup). Backdrop tap also routes here UNLESS
+   *  `disableBackdropClose` is true. When omitted, both surfaces are
+   *  inert. */
   onClose?: () => void;
+  /** When true, backdrop tap is a no-op while X tap still dismisses.
+   *  Used by win popups with a primary mint CTA visible: accidental
+   *  backdrop dismissal would hide the Save Victory affordance with no
+   *  in-flow way to re-summon it (#114). Defaults to false (legacy
+   *  behavior: backdrop tap == X tap). */
+  disableBackdropClose?: boolean;
   /** Accessible label for the dialog — usually the headline text. */
   ariaLabel?: string;
   /** Optional aria-live region. Use "alert" for win celebrations to
@@ -32,12 +39,14 @@ type Props = {
  */
 export function VictoryPopupShell({
   onClose,
+  disableBackdropClose = false,
   ariaLabel,
   role = "dialog",
   ariaLive,
   closeLabel = "Close",
   children,
 }: Props) {
+  const handleBackdropClick = disableBackdropClose ? undefined : () => onClose?.();
   return (
     /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
     <div
@@ -46,7 +55,7 @@ export function VictoryPopupShell({
       aria-modal="true"
       aria-label={ariaLabel}
       aria-live={ariaLive}
-      onClick={() => onClose?.()}
+      onClick={handleBackdropClick}
     >
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
