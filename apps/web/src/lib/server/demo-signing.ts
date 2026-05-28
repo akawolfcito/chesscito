@@ -96,9 +96,16 @@ export function enforceOrigin(request: Request) {
     throw new Error("Forbidden");
   }
 
-  // Collect all allowed hosts: explicit app URL, Vercel deployment URL, and production alias
+  // Collect all allowed hosts: explicit app URL, optional preview alias,
+  // Vercel deployment URL, Vercel branch alias, and production alias.
   const allowedHosts = new Set<string>();
-  for (const envVar of [process.env.NEXT_PUBLIC_APP_URL, process.env.VERCEL_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL]) {
+  for (const envVar of [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_PREVIEW_URL,
+    process.env.VERCEL_URL,
+    process.env.VERCEL_BRANCH_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  ]) {
     if (envVar) {
       allowedHosts.add(envVar.replace(/^https?:\/\//, ""));
     }

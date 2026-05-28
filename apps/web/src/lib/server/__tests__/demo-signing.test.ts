@@ -34,7 +34,13 @@ function withEnv(overrides: Record<string, string | undefined>, fn: () => void) 
 // ─── enforceOrigin ──────────────────────────────────────────────────────────
 
 describe("enforceOrigin", () => {
-  const ENV_KEYS = ["NEXT_PUBLIC_APP_URL", "VERCEL_URL", "VERCEL_PROJECT_PRODUCTION_URL"] as const;
+  const ENV_KEYS = [
+    "NEXT_PUBLIC_APP_URL",
+    "NEXT_PUBLIC_PREVIEW_URL",
+    "VERCEL_URL",
+    "VERCEL_BRANCH_URL",
+    "VERCEL_PROJECT_PRODUCTION_URL",
+  ] as const;
   let savedEnv: Record<string, string | undefined>;
 
   beforeEach(() => {
@@ -81,6 +87,20 @@ describe("enforceOrigin", () => {
     withEnv({ VERCEL_URL: "chesscito-abc123.vercel.app" }, () => {
       expect(() =>
         enforceOrigin(fakeRequest({ origin: "https://chesscito-abc123.vercel.app" }))).not.toThrow();
+    });
+  });
+
+  it("allows matching origin with NEXT_PUBLIC_PREVIEW_URL (custom preview alias)", () => {
+    withEnv({ NEXT_PUBLIC_PREVIEW_URL: "preview.chesscito.com" }, () => {
+      expect(() =>
+        enforceOrigin(fakeRequest({ origin: "https://preview.chesscito.com" }))).not.toThrow();
+    });
+  });
+
+  it("allows matching origin with VERCEL_BRANCH_URL (branch alias)", () => {
+    withEnv({ VERCEL_BRANCH_URL: "chesscito-git-main-wolfcito.vercel.app" }, () => {
+      expect(() =>
+        enforceOrigin(fakeRequest({ origin: "https://chesscito-git-main-wolfcito.vercel.app" }))).not.toThrow();
     });
   });
 
