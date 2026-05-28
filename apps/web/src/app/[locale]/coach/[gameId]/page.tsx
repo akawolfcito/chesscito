@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { ContextualHeader } from "@/components/ui/contextual-header";
@@ -37,15 +36,15 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
   const url = `${proto}://${host}/api/games/${encodeURIComponent(gameId)}?wallet=${encodeURIComponent(wallet)}`;
 
   const res = await fetch(url, { cache: "no-store" });
-  if (res.status === 404) notFound();
   if (!res.ok) {
+    const is404 = res.status === 404;
     return (
       <main className="arena-bg arena-scroll-screen h-[100dvh]">
         <ContextualHeader
           variant="back-control"
           iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
-          title={t("loadErrorTitle")}
-          subtitle={t("loadErrorSubtitle")}
+          title={is404 ? t("notFoundMessage") : t("loadErrorTitle")}
+          subtitle={is404 ? undefined : t("loadErrorSubtitle")}
         />
         <CoachGameClient gameRecord={null} walletAddress={wallet as `0x${string}`} />
       </main>
