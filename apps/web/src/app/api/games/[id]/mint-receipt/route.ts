@@ -12,13 +12,21 @@ const log = createLogger({ route: "/api/games/[id]/mint-receipt" });
 
 const TX_HASH_RE = /^0x[a-fA-F0-9]{64}$/;
 
+function isHttpsUrl(s: string | undefined): s is string {
+  if (!s) return false;
+  try {
+    return new URL(s).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(
   req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
     enforceOrigin(req);
-    await enforceRateLimit(getRequestIp(req));
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -45,14 +53,21 @@ export async function POST(
   if (!wallet || !isAddress(wallet)) {
     return NextResponse.json({ error: "Invalid wallet" }, { status: 400 });
   }
+
+  try {
+    await enforceRateLimit(getRequestIp(req), wallet);
+  } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   if (!body.tokenId || !/^\d+$/.test(body.tokenId)) {
     return NextResponse.json({ error: "Invalid tokenId" }, { status: 400 });
   }
   if (!body.claimTxHash || !TX_HASH_RE.test(body.claimTxHash)) {
     return NextResponse.json({ error: "Invalid claimTxHash" }, { status: 400 });
   }
-  if (!body.shareCardUrl || !body.shareLinkUrl) {
-    return NextResponse.json({ error: "Missing share URLs" }, { status: 400 });
+  if (!isHttpsUrl(body.shareCardUrl) || !isHttpsUrl(body.shareLinkUrl)) {
+    return NextResponse.json({ error: "Invalid share URLs" }, { status: 400 });
   }
 
   const key = REDIS_KEYS.game(wallet, gameId);
@@ -84,6 +99,12 @@ export async function POST(
     shareLinkUrl: body.shareLinkUrl,
   };
   await redis.set(key, updated, { ex: 90 * 24 * 60 * 60 });
+
+  log.info("mint_receipt_written", {
+    wallet_hash: hashWallet(wallet),
+    game_id_prefix: gameId.slice(0, 8),
+    token_id: body.tokenId,
+  });
 
   return NextResponse.json({ ok: true });
 }

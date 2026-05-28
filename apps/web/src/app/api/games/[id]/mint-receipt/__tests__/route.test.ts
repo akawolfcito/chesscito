@@ -50,7 +50,7 @@ describe("POST /api/games/[id]/mint-receipt", () => {
     const res = await POST(
       new Request("http://localhost/api/games/bad/mint-receipt", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet, tokenId: "1", claimTxHash: txHash, shareCardUrl: "https://x", shareLinkUrl: "https://y" }),
+        body: JSON.stringify({ wallet, tokenId: "1", claimTxHash: txHash, shareCardUrl: "https://chesscito.com/og/1", shareLinkUrl: "https://chesscito.com/v/1" }),
       }),
       { params: Promise.resolve({ id: "bad" }) },
     );
@@ -60,7 +60,7 @@ describe("POST /api/games/[id]/mint-receipt", () => {
   it("returns 400 when tokenId not numeric", async () => {
     const res = await POST(makeReq({
       wallet, tokenId: "abc", claimTxHash: txHash,
-      shareCardUrl: "https://x", shareLinkUrl: "https://y",
+      shareCardUrl: "https://chesscito.com/og/1", shareLinkUrl: "https://chesscito.com/v/1",
     }), { params: Promise.resolve({ id: gameId }) });
     expect(res.status).toBe(400);
   });
@@ -68,7 +68,25 @@ describe("POST /api/games/[id]/mint-receipt", () => {
   it("returns 400 when claimTxHash malformed", async () => {
     const res = await POST(makeReq({
       wallet, tokenId: "1", claimTxHash: "0x123",
-      shareCardUrl: "https://x", shareLinkUrl: "https://y",
+      shareCardUrl: "https://chesscito.com/og/1", shareLinkUrl: "https://chesscito.com/v/1",
+    }), { params: Promise.resolve({ id: gameId }) });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when shareCardUrl is not HTTPS", async () => {
+    const res = await POST(makeReq({
+      wallet, tokenId: "1", claimTxHash: txHash,
+      shareCardUrl: "http://insecure.example/og",
+      shareLinkUrl: "https://chesscito.com/v/1",
+    }), { params: Promise.resolve({ id: gameId }) });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when shareLinkUrl is not HTTPS", async () => {
+    const res = await POST(makeReq({
+      wallet, tokenId: "1", claimTxHash: txHash,
+      shareCardUrl: "https://chesscito.com/og/1",
+      shareLinkUrl: "http://insecure.example/v/1",
     }), { params: Promise.resolve({ id: gameId }) });
     expect(res.status).toBe(400);
   });
@@ -77,7 +95,7 @@ describe("POST /api/games/[id]/mint-receipt", () => {
     redisGet.mockResolvedValue(null);
     const res = await POST(makeReq({
       wallet, tokenId: "1", claimTxHash: txHash,
-      shareCardUrl: "https://x", shareLinkUrl: "https://y",
+      shareCardUrl: "https://chesscito.com/og/1", shareLinkUrl: "https://chesscito.com/v/1",
     }), { params: Promise.resolve({ id: gameId }) });
     expect(res.status).toBe(404);
   });
@@ -92,19 +110,20 @@ describe("POST /api/games/[id]/mint-receipt", () => {
     }), { params: Promise.resolve({ id: gameId }) });
     expect(res.status).toBe(200);
     expect(redisSet).toHaveBeenCalledOnce();
-    const [, written] = redisSet.mock.calls[0];
+    const [, written, options] = redisSet.mock.calls[0];
     expect(written).toMatchObject({
       gameId, mintedTokenId: "42", claimTxHash: txHash,
       shareCardUrl: "https://chesscito.com/og/42",
       shareLinkUrl: "https://chesscito.com/v/42",
     });
+    expect(options).toEqual({ ex: 90 * 24 * 60 * 60 });
   });
 
   it("is idempotent — same tokenId re-write returns 200 with no write", async () => {
     redisGet.mockResolvedValue({ ...baseRecord, mintedTokenId: "42" });
     const res = await POST(makeReq({
       wallet, tokenId: "42", claimTxHash: txHash,
-      shareCardUrl: "https://x", shareLinkUrl: "https://y",
+      shareCardUrl: "https://chesscito.com/og/42", shareLinkUrl: "https://chesscito.com/v/42",
     }), { params: Promise.resolve({ id: gameId }) });
     expect(res.status).toBe(200);
     expect(redisSet).not.toHaveBeenCalled();
@@ -114,7 +133,7 @@ describe("POST /api/games/[id]/mint-receipt", () => {
     redisGet.mockResolvedValue({ ...baseRecord, mintedTokenId: "100" });
     const res = await POST(makeReq({
       wallet, tokenId: "42", claimTxHash: txHash,
-      shareCardUrl: "https://x", shareLinkUrl: "https://y",
+      shareCardUrl: "https://chesscito.com/og/42", shareLinkUrl: "https://chesscito.com/v/42",
     }), { params: Promise.resolve({ id: gameId }) });
     expect(res.status).toBe(409);
   });
@@ -126,9 +145,21 @@ describe("POST /api/games/[id]/mint-receipt", () => {
     });
     const res = await POST(makeReq({
       wallet, tokenId: "1", claimTxHash: txHash,
-      shareCardUrl: "https://x", shareLinkUrl: "https://y",
+      shareCardUrl: "https://chesscito.com/og/1", shareLinkUrl: "https://chesscito.com/v/1",
     }), { params: Promise.resolve({ id: gameId }) });
     expect(res.status).toBe(403);
     (enforceOrigin as ReturnType<typeof vi.fn>).mockReset();
+  });
+
+  it("returns 403 when enforceRateLimit rejects", async () => {
+    const { enforceRateLimit } = await import("@/lib/server/demo-signing");
+    (enforceRateLimit as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("rate limit exceeded"));
+    redisGet.mockResolvedValue(baseRecord);
+    const res = await POST(makeReq({
+      wallet, tokenId: "1", claimTxHash: txHash,
+      shareCardUrl: "https://chesscito.com/og/1", shareLinkUrl: "https://chesscito.com/v/1",
+    }), { params: Promise.resolve({ id: gameId }) });
+    expect(res.status).toBe(403);
+    (enforceRateLimit as ReturnType<typeof vi.fn>).mockReset();
   });
 });

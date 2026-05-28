@@ -40,6 +40,9 @@ export type GameRecord = {
   claimTxHash?: `0x${string}`;
   shareCardUrl?: string;
   shareLinkUrl?: string;
+  /** Cluster E §0.1 — present when persist read /api/coach/check-analysis
+   *  at write time. Optional — recent records may have it; older ones don't. */
+  analysis?: CoachAnalysisRecord;
 };
 
 export type Mistake = {
