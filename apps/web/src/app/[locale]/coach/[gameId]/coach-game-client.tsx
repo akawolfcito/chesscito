@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import type { GameRecord } from "@/lib/coach/types";
@@ -13,6 +13,7 @@ import { useCoachAnalysis } from "@/lib/coach/use-coach-analysis";
 import { useMintVictory } from "@/lib/coach/use-mint-victory";
 import { useGameReplay } from "@/lib/game/use-game-replay";
 import { track } from "@/lib/telemetry";
+import { postMintReceipt } from "@/lib/coach/post-mint-receipt";
 
 type Props = {
   gameRecord: GameRecord | null;
@@ -68,6 +69,23 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     totalMoves: gameRecord?.totalMoves ?? 0,
     elapsedMs: gameRecord?.elapsedMs ?? 0,
   });
+
+  // Persist mint outcome to gameRecord for cold-load viewers (fire-and-forget).
+  // mint.data.tokenId is bigint | null — convert to string before posting.
+  useEffect(() => {
+    if (mint.phase !== "success") return;
+    if (!mint.data.tokenId || !mint.data.claimTxHash || !mint.data.shareCardUrl || !mint.data.shareLinkUrl) return;
+    if (!gameRecord || !walletAddress) return;
+    void postMintReceipt({
+      gameId: gameRecord.gameId,
+      walletAddress,
+      tokenId: String(mint.data.tokenId),
+      claimTxHash: mint.data.claimTxHash,
+      shareCardUrl: mint.data.shareCardUrl,
+      shareLinkUrl: mint.data.shareLinkUrl,
+      surface: "coach_viewer",
+    });
+  }, [mint.phase, mint.data, gameRecord, walletAddress]);
 
   // Branch 1: no wallet
   if (!walletAddress) {

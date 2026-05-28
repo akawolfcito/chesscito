@@ -89,6 +89,7 @@ import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
 import { useCoachAnalysis } from "@/lib/coach/use-coach-analysis";
 import { useCoachCreditsPurchase } from "@/lib/coach/use-coach-credits-purchase";
 import { useMintVictory } from "@/lib/coach/use-mint-victory";
+import { postMintReceipt } from "@/lib/coach/post-mint-receipt";
 
 const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
 
@@ -416,6 +417,24 @@ function ArenaPageInner() {
       }
     } catch { /* corrupt data — ignore */ }
   }, []);
+
+  // Persist mint outcome to gameRecord for cold-load viewers (fire-and-forget).
+  // claimData.tokenId is bigint | null — convert to string before posting.
+  useEffect(() => {
+    if (claimPhase !== "success") return;
+    const { tokenId, claimTxHash, shareCardUrl, shareLinkUrl } = claimData;
+    if (!tokenId || !claimTxHash || !shareCardUrl || !shareLinkUrl) return;
+    if (!persistedGameId || !address) return;
+    void postMintReceipt({
+      gameId: persistedGameId,
+      walletAddress: address as `0x${string}`,
+      tokenId: String(tokenId),
+      claimTxHash: claimTxHash as `0x${string}`,
+      shareCardUrl,
+      shareLinkUrl,
+      surface: "arena_endgame",
+    });
+  }, [claimPhase, claimData, persistedGameId, address]);
 
   const isEndState = ["checkmate", "stalemate", "draw", "resigned"].includes(game.status);
   // Player wins on checkmate when it's the OPPONENT's turn to move
