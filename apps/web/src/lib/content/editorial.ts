@@ -1446,6 +1446,15 @@ export const COACH_VIEWER_COPY = {
   viewNft: "View NFT",
   share: "Share",
   playAgain: "Play again",
+  title: "Match review",
+  reconnectTitle: "Reconnect to view",
+  reconnectSubtitle: "This match is tied to your wallet.",
+  reconnectCta: "Connect wallet",
+  loadErrorTitle: "Couldn't load this match",
+  loadErrorSubtitle: "Network or server issue — try again, or play another.",
+  loadErrorRetry: "Retry",
+  notFoundMessage: "Match not found.",
+  backLabel: "Back",
 } as const;
 
 export const LEGAL_SHELL_COPY = {
