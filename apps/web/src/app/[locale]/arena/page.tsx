@@ -86,6 +86,8 @@ import {
   normalizePrice,
 } from "@/lib/contracts/tokens";
 import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
+import { useCoachAnalysis } from "@/lib/coach/use-coach-analysis";
+import { useCoachCreditsPurchase } from "@/lib/coach/use-coach-credits-purchase";
 
 const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
 
@@ -165,6 +167,17 @@ function ArenaPageInner() {
   // single-user dev smoke. Opt-out remains via `?arena=legacy`.
   const arenaScaffoldEnabled = searchParams?.get("arena") !== "legacy";
   const game = useChessGame();
+
+  // T5 skeleton: extracted coach hooks called UNCONDITIONALLY.
+  // Flag selects which state the JSX reads. Default OFF — legacy
+  // inline state is the source of truth until T5b/T5c transplant.
+  const USE_EXTRACTED_COACH = process.env.NEXT_PUBLIC_USE_EXTRACTED_COACH_HOOKS === "true";
+  const _coachExtracted = useCoachAnalysis({ surface: "arena_endgame" });
+  const _creditsExtracted = useCoachCreditsPurchase({});
+  // Underscore prefix marks them as currently unused — T5b/T5c wire them in.
+  // USE_EXTRACTED_COACH is referenced so the import isn't dead-stripped.
+  void USE_EXTRACTED_COACH;
+
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
   const victoryConnectPrompt = useConnectPrompt("victory");
