@@ -37,10 +37,20 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     track("coach_viewer_back_tap", {
       gameId: gameRecord?.gameId ?? "unknown",
       history_depth: typeof window !== "undefined" ? window.history.length : 0,
+      has_record: !!gameRecord,
     });
+    // Bug 3 — when the viewer is in its no-record fallback (404 / load
+    // error) the previous history entry is the arena flow that already
+    // failed; router.back() would just bounce the user into the same
+    // broken state. Force a clean push to /hub so the dead-end is
+    // recoverable.
+    if (!gameRecord) {
+      router.push("/hub");
+      return;
+    }
     if (typeof window !== "undefined" && window.history.length > 1) router.back();
     else router.push("/hub");
-  }, [router, gameRecord?.gameId]);
+  }, [router, gameRecord]);
 
   const handlePlayAgain = useCallback(() => {
     track("coach_viewer_play_again_tap", { gameId: gameRecord?.gameId ?? "unknown" });
