@@ -4,7 +4,7 @@ import { isAddress } from "viem";
 import { REDIS_KEYS } from "@/lib/coach/redis-keys";
 import { UUID_RE } from "@/lib/coach/game-persistence";
 import { createLogger } from "@/lib/server/logger";
-import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { enforceOrigin, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
 import type { GameRecord } from "@/lib/coach/types";
 
 const redis = Redis.fromEnv();
@@ -16,7 +16,7 @@ export async function GET(
 ) {
   try {
     enforceOrigin(req);
-    await enforceRateLimit(getRequestIp(req));
+    await enforceReadRateLimit(getRequestIp(req));
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

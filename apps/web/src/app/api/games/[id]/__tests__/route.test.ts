@@ -6,7 +6,7 @@ vi.mock("@upstash/redis", () => ({
 }));
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
-  enforceRateLimit: vi.fn(),
+  enforceReadRateLimit: vi.fn(),
   getRequestIp: () => "127.0.0.1",
 }));
 vi.mock("@/lib/server/logger", () => ({
@@ -64,6 +64,17 @@ describe("GET /api/games/[id]", () => {
     const res = await GET(req, { params: Promise.resolve({ id: gameId }) });
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.gameId).toBe(gameId);
+    expect(body).toEqual(record);
+  });
+
+  it("returns 403 when enforceOrigin rejects", async () => {
+    const { enforceOrigin } = await import("@/lib/server/demo-signing");
+    (enforceOrigin as ReturnType<typeof vi.fn>).mockImplementationOnce(() => {
+      throw new Error("origin rejected");
+    });
+    const req = new Request(`http://localhost/api/games/${gameId}?wallet=${wallet}`);
+    const res = await GET(req, { params: Promise.resolve({ id: gameId }) });
+    expect(res.status).toBe(403);
+    (enforceOrigin as ReturnType<typeof vi.fn>).mockReset();
   });
 });
