@@ -2,6 +2,12 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useMintVictory } from "../use-mint-victory";
 
+// ── next-intl mock (#118: hook now reads useTranslations for error i18n) ─────
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
+}));
+
 // ── wagmi mocks ───────────────────────────────────────────────────────────────
 vi.mock("wagmi", () => ({
   useAccount: () => ({ address: undefined, isConnected: false }),

@@ -15,6 +15,7 @@ import {
   useWriteContract,
 } from "wagmi";
 import { decodeEventLog } from "viem";
+import { useTranslations } from "next-intl";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
 import { victoryAbi } from "@/lib/contracts/victory";
 import {
@@ -26,7 +27,6 @@ import {
 } from "@/lib/contracts/tokens";
 import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
-import { RESULT_OVERLAY_COPY } from "@/lib/content/editorial";
 import { hapticSuccess } from "@/lib/haptics";
 import {
   classifyTxErrorKind,
@@ -106,23 +106,6 @@ export type MintVictoryState = {
   reset: () => void;
 };
 
-// ─── Inline error translator (avoids useTranslations in the hook body) ───────
-
-function translateTxError(error: unknown): string {
-  const kind = classifyTxErrorKind(error);
-  const map: Record<string, string> = {
-    cancelled: RESULT_OVERLAY_COPY.error.cancelled,
-    timeout: RESULT_OVERLAY_COPY.error.timeout,
-    insufficientFunds: RESULT_OVERLAY_COPY.error.insufficientFunds,
-    network: RESULT_OVERLAY_COPY.error.network,
-    badgeAlreadyClaimed: RESULT_OVERLAY_COPY.error.badgeAlreadyClaimed,
-    signingUnavailable: RESULT_OVERLAY_COPY.error.signingUnavailable,
-    revert: RESULT_OVERLAY_COPY.error.revert,
-    unknown: RESULT_OVERLAY_COPY.error.unknown,
-  };
-  return map[kind] ?? RESULT_OVERLAY_COPY.error.unknown;
-}
-
 type SignatureResponse =
   | { nonce: string; deadline: string; signature: `0x${string}`; error?: never }
   | { error: string };
@@ -149,6 +132,15 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
   const wagmiChainId = useChainId();
   const wagmiPublicClient = usePublicClient({ chainId: wagmiChainId });
   const { writeContractAsync } = useWriteContract();
+
+  // ── i18n (#118): translate user-facing error strings via the active
+  //    locale's RESULT_OVERLAY_COPY bundle. Closure pattern mirrors
+  //    `classifyTxError(error, t)` in lib/errors.ts. ─────────────────────────
+  const tOverlay = useTranslations("RESULT_OVERLAY_COPY");
+  const translateTxError = useCallback((error: unknown): string => {
+    const kind = classifyTxErrorKind(error);
+    return tOverlay(`error.${kind}`);
+  }, [tOverlay]);
 
   // Resolve effective values (injected overrides win)
   const address = input.injected?.address ?? input.walletAddress ?? wagmiAccount.address;
@@ -520,7 +512,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
       const raw = err instanceof Error ? err.message : "Claim failed";
       const errorKind = /expired/i.test(raw) ? "expired" : String(classifyTxErrorKind(err));
       const friendly = /expired/i.test(raw)
-        ? "Signature expired — tap to get a fresh one"
+        ? tOverlay("error.signatureExpired")
         : translateTxError(err);
 
       setClaimError(friendly);

@@ -192,9 +192,12 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
         return;
       }
 
-      // Offline guard
+      // Offline guard. #118: serverError is a semantic flag, not copy
+      // (sister values are "not_persisted" / "error"). Consumers read it
+      // as a truthy toggle and resolve their own localized title via
+      // useTranslations — the hook stays locale-agnostic.
       if (typeof navigator !== "undefined" && navigator.onLine === false) {
-        setCoachServerError("You are offline. Please reconnect to analyze.");
+        setCoachServerError("offline");
         const quick = generateQuickReview({
           result: gameResult,
           difficulty,

@@ -1148,6 +1148,7 @@ const messages = {
       unknown: "Algo salió mal. Por favor reintenta",
       badgeAlreadyClaimed: "¡Ya tienes esta insignia!",
       signingUnavailable: "Servicio de firma no disponible — reintenta en un momento.",
+      signatureExpired: "La firma expiró — toca para obtener una nueva",
       purchaseKindCopy: {
         error: {
           title: "No se pudo comprar",

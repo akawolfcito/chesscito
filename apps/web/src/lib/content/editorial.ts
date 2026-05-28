@@ -166,6 +166,11 @@ export const RESULT_OVERLAY_COPY = {
      *  user understands the issue is server-side, not their wallet
      *  connection. */
     signingUnavailable: "Signing service unavailable — try again in a moment.",
+    /** Surfaced when the EIP-712 signature returned by /api/sign-victory
+     *  is older than the contract's deadline (clock-skew or app-resume).
+     *  Distinct from the generic `revert` so the user understands a
+     *  fresh signature will fix it. */
+    signatureExpired: "Signature expired — tap to get a fresh one",
     /** Per-kind copy for purchase end states (Buy Item Shop, Buy Coach
      *  Credits). Mirrors the cancelled/timeout/error split that
      *  VictoryClaimError.errorKindCopy already uses for Mint Victory,
