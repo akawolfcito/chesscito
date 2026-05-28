@@ -6,11 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import {
   useAccount,
   useChainId,
-  usePublicClient,
-  useReadContracts,
-  useWriteContract,
 } from "wagmi";
-import { decodeEventLog } from "viem";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
 import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
@@ -28,7 +24,7 @@ import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { ArenaHud } from "@/components/arena/arena-hud";
 import { ArenaActionBar } from "@/components/arena/arena-action-bar";
 import { PromotionOverlay } from "@/components/arena/promotion-overlay";
-import { ArenaEndState, type ClaimPhase, type ShareStatus, type ClaimData, type PersistState } from "@/components/arena/arena-end-state";
+import { ArenaEndState, type PersistState } from "@/components/arena/arena-end-state";
 import { useTranslations } from "next-intl";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -38,17 +34,6 @@ import { usePrizePoolBalance } from "@/lib/contracts/use-prize-pool";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
-import { generateQuickReview } from "@/lib/coach/fallback-engine";
-import { shouldShowPaywall } from "@/lib/coach/paywall-gate";
-import { requestCoachAnalyze } from "@/lib/coach/request-coach-analyze";
-import type { CoachLocale } from "@/lib/coach/prompt-template";
-import { useLocale } from "next-intl";
-import {
-  trackAnalyzeRequest,
-  trackAnalyzeIdempotentHit,
-  trackAnalyzeFailed,
-  type AnalyzeSource,
-} from "@/lib/coach/analyze-telemetry";
 import { useProStatus } from "@/lib/pro/use-pro-status";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { ProSheet } from "@/components/pro/pro-sheet";
@@ -62,11 +47,9 @@ import { routeCoachPreviewCta } from "@/lib/coach/coach-preview-route";
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { track } from "@/lib/telemetry";
-import type { CoachResponse, BasicCoachResponse, GameRecord } from "@/lib/coach/types";
-import { getConfiguredChainId, getVictoryNFTAddress, getShopAddress } from "@/lib/contracts/chains";
-import { hapticImpact, hapticSuccess } from "@/lib/haptics";
-import { victoryAbi } from "@/lib/contracts/victory";
-import { shopAbi } from "@/lib/contracts/shop";
+import type { GameRecord } from "@/lib/coach/types";
+import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
+import { hapticImpact } from "@/lib/haptics";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
 import {
@@ -74,18 +57,11 @@ import {
   registerDockSheetOpener,
   setDockSheet,
 } from "@/lib/ui/dock-sheet-store";
-import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
-import { COACH_PACK_ITEMS, type CoachPackSize } from "@/lib/contracts/shop-catalog";
-import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation } from "@/lib/errors";
 import {
-  ACCEPTED_TOKENS,
   DIFFICULTY_TO_CHAIN,
   VICTORY_PRICES,
-  erc20Abi,
   formatUsd,
-  normalizePrice,
 } from "@/lib/contracts/tokens";
-import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
 import { useCoachAnalysis } from "@/lib/coach/use-coach-analysis";
 import { useCoachCreditsPurchase } from "@/lib/coach/use-coach-credits-purchase";
 import { useMintVictory } from "@/lib/coach/use-mint-victory";
@@ -98,10 +74,6 @@ const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
 // without violating Next.js App Router's page-export constraints (only the
 // default export + reserved Next.js names are allowed in page files).
 import { evaluateXClose } from "./end-state-close-policy";
-
-type SignatureResponse =
-  | { nonce: string; deadline: string; signature: `0x${string}`; error?: never }
-  | { error: string };
 
 export default function ArenaPage() {
   // useSearchParams() requires a Suspense boundary for static prerender
@@ -117,14 +89,8 @@ export default function ArenaPage() {
 function ArenaPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // H-4: snapshot the current locale so /api/coach/analyze can prompt the
-  // LLM in the matching language. Re-asks for the same gameId stay in
-  // their original locale per the route handler's idempotency contract.
-  const activeLocale = useLocale() as CoachLocale;
   const tArena = useTranslations("ARENA_COPY");
   const tCoach = useTranslations("COACH_COPY");
-  const tEntry = useTranslations("COACH_ENTRY_COPY");
-  const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const difficultyLabel = (key: string): string => {
     const k = key as "easy" | "medium" | "hard";
     return ["easy", "medium", "hard"].includes(k) ? tArena(`difficulty.${k}`) : key;
@@ -175,25 +141,6 @@ function ArenaPageInner() {
   // single-user dev smoke. Opt-out remains via `?arena=legacy`.
   const arenaScaffoldEnabled = searchParams?.get("arena") !== "legacy";
   const game = useChessGame();
-
-  // T5 skeleton: extracted coach hooks called UNCONDITIONALLY.
-  // Flag selects which state the JSX reads. Default OFF — legacy
-  // inline state is the source of truth until T5b/T5c transplant.
-  const USE_EXTRACTED_COACH = process.env.NEXT_PUBLIC_USE_EXTRACTED_COACH_HOOKS === "true";
-  const _coachExtracted = useCoachAnalysis({ surface: "arena_endgame" });
-  const _creditsExtracted = useCoachCreditsPurchase({});
-  // Underscore prefix marks them as currently unused — T5b/T5c wire them in.
-  // USE_EXTRACTED_COACH is referenced so the import isn't dead-stripped.
-  void USE_EXTRACTED_COACH;
-
-  // T6 skeleton: extracted mint-victory hook called UNCONDITIONALLY.
-  // Flag selects which state the JSX reads. Default OFF — legacy
-  // inline state is the source of truth until T6b transplants the logic.
-  const USE_EXTRACTED_MINT = process.env.NEXT_PUBLIC_USE_EXTRACTED_MINT_HOOK === "true";
-  const _mintExtracted = useMintVictory({});
-  // Underscore prefix marks it as currently unused — T6b wires it in.
-  // USE_EXTRACTED_MINT is referenced so the import isn't dead-stripped.
-  void USE_EXTRACTED_MINT;
 
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -301,20 +248,6 @@ function ArenaPageInner() {
   }, [searchParams, shopSheet, proSheet, badgeSheet]);
 
   const chainId = useChainId();
-  const publicClient = usePublicClient({ chainId });
-  const { writeContractAsync } = useWriteContract();
-
-  const [claimPhase, setClaimPhase] = useState<ClaimPhase>("ready");
-  const [claimStep, setClaimStep] = useState<"signing" | "confirming" | "done">("signing");
-  const [claimData, setClaimData] = useState<ClaimData>({
-    tokenId: null,
-    claimTxHash: null,
-    shareCardUrl: null,
-    shareLinkUrl: null,
-  });
-  const [shareStatus, setShareStatus] = useState<ShareStatus>("locked");
-  const [claimError, setClaimError] = useState<string | null>(null);
-  const claimingRef = useRef(false);
 
   /** Soft-gate visibility — rendered above the difficulty picker only
    *  when the player has no recorded piece-path progress. Starts false
@@ -349,80 +282,60 @@ function ArenaPageInner() {
   const pendingGameIdRef = useRef<string | null>(null);
   const persistTelemetryRef = useRef<Record<string, unknown>>({});
   const gameRecordPersisted = persistState === "persisted" && persistedGameId !== null;
-  // Source dim for coach_analyze_request (§2.4.10). Set just before
-  // each call site fires; defaults to "immediate" for the end-state CTA.
-  // `AnalyzeSource` lifted to `lib/coach/analyze-telemetry.ts` so both this
-  // flow and the history flow share one canonical union (Acceptance #12).
-  const analyzeSourceRef = useRef<AnalyzeSource>("immediate");
 
-  // Coach state
-  type CoachPhase = "idle" | "welcome" | "loading" | "result" | "fallback" | "paywall" | "history";
-  const [coachPhase, setCoachPhase] = useState<CoachPhase>("idle");
-  const [coachJobId, setCoachJobId] = useState<string | null>(null);
-  const [coachResponse, setCoachResponse] = useState<CoachResponse | null>(null);
-  const [coachFallbackResponse, setCoachFallbackResponse] = useState<BasicCoachResponse | null>(null);
-  const [coachCredits, setCoachCredits] = useState(0);
-  const [coachProActive, setCoachProActive] = useState<boolean>(false);
-  const [coachHistoryMeta, setCoachHistoryMeta] = useState<{ gamesPlayed: number } | undefined>(undefined);
-  // 2026-05-24 (per-locale cache migration): track the locale of the
-  // cached analysis so <CoachPanel> can render the EN/ES badge without
-  // an extra round-trip. Falls back to the active UI locale for legacy
-  // records that pre-date the per-locale cache key.
-  const [coachAnalysisLocale, setCoachAnalysisLocale] = useState<"en" | "es" | undefined>(undefined);
-  const [coachReanalyzeGameId, setCoachReanalyzeGameId] = useState<string | null>(null);
-  const [isReanalyzing, setIsReanalyzing] = useState(false);
-  // Diagnostic: when client-side PRO is true but server still rejects
-  // analyze with 402, surface the mismatch so the user can report it
-  // (rather than silently falling to the free quick-review fallback).
-  const [coachServerError, setCoachServerError] = useState<string | null>(null);
-  const coachAbortRef = useRef<AbortController | null>(null);
+  const isEndState = ["checkmate", "stalemate", "draw", "resigned"].includes(game.status);
+  // Player wins on checkmate when it's the OPPONENT's turn to move
+  // (i.e. the opponent is the one who got mated).
+  const opponentColor = game.playerColor === "w" ? "b" : "w";
+  const isPlayerWin = game.status === "checkmate" && game.fen.includes(` ${opponentColor} `);
 
-  // Persist claim success so returning from share keeps context
-  useEffect(() => {
-    if (claimPhase === "success" && claimData.claimTxHash) {
-      try {
-        sessionStorage.setItem("chesscito:claim", JSON.stringify({
-          phase: "success",
-          tokenId: claimData.tokenId?.toString() ?? null,
-          claimTxHash: claimData.claimTxHash,
-          moves: game.moveCount,
-          elapsedMs: game.elapsedMs,
-          difficulty: game.difficulty,
-        }));
-      } catch { /* storage full or unavailable */ }
-    }
-  }, [claimPhase, claimData, game.moveCount, game.elapsedMs, game.difficulty]);
+  // T13: extracted hooks — now the sole source of truth.
+  // Hooks read all live values from liveRef internally; pass current game
+  // context so it's always up-to-date when the user fires an action.
+  const coach = useCoachAnalysis({
+    surface: "arena_endgame",
+    gameId: persistedGameId ?? undefined,
+    result: mapArenaResult(game.status, isPlayerWin),
+    difficulty: game.difficulty,
+    moves: game.moveHistory,
+    elapsedMs: game.elapsedMs,
+    isConnected,
+  });
 
-  // Restore claim success on mount (e.g., returning from WhatsApp)
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("chesscito:claim");
-      if (!raw) return;
-      const saved = JSON.parse(raw);
-      if (saved.phase === "success") {
-        setClaimPhase("success");
-        setClaimData({
-          tokenId: saved.tokenId ? BigInt(saved.tokenId) : null,
-          claimTxHash: saved.claimTxHash,
-          shareCardUrl: null,
-          shareLinkUrl: null,
-        });
-        setShareStatus("ready");
-      } else if (saved.phase === "claiming") {
-        // Stale claiming state from a previous session — clear it.
-        // The game resets on mount so there's no end state to show the
-        // claiming overlay. Keeping stale "claiming" would be invisible
-        // and block future claims.
-        sessionStorage.removeItem("chesscito:claim");
-      }
-    } catch { /* corrupt data — ignore */ }
-  }, []);
+  const credits = useCoachCreditsPurchase({
+    onPurchaseSuccess: () => {
+      // Credits acquired — trigger analysis automatically (mirrors legacy handleBuyCredits)
+      coach.setPhase("idle");
+      coach.askCoach("immediate");
+    },
+  });
+
+  const mint = useMintVictory({
+    gameId: persistedGameId ?? undefined,
+    difficulty: game.difficulty,
+    result: isPlayerWin ? "win" : undefined,
+    totalMoves: game.moveHistory.length,
+    elapsedMs: game.elapsedMs,
+    moveHistory: game.moveHistory,
+    playerColor: game.playerColor,
+    isConnected,
+    onClaimTelemetry: (event) => {
+      track("victory_claim_tx", {
+        stage: event.stage,
+        difficulty: game.difficulty,
+        moves: game.moveCount,
+        elapsed_ms: game.elapsedMs,
+        has_token_id: event.has_token_id,
+        error_kind: event.error_kind,
+      });
+    },
+  });
 
   // Persist mint outcome to gameRecord for cold-load viewers (fire-and-forget).
-  // claimData.tokenId is bigint | null — convert to string before posting.
+  // mint.data.tokenId is bigint | null — convert to string before posting.
   useEffect(() => {
-    if (claimPhase !== "success") return;
-    const { tokenId, claimTxHash, shareCardUrl, shareLinkUrl } = claimData;
+    if (mint.phase !== "success") return;
+    const { tokenId, claimTxHash, shareCardUrl, shareLinkUrl } = mint.data;
     if (!tokenId || !claimTxHash || !shareCardUrl || !shareLinkUrl) return;
     if (!persistedGameId || !address) return;
     void postMintReceipt({
@@ -434,13 +347,7 @@ function ArenaPageInner() {
       shareLinkUrl,
       surface: "arena_endgame",
     });
-  }, [claimPhase, claimData, persistedGameId, address]);
-
-  const isEndState = ["checkmate", "stalemate", "draw", "resigned"].includes(game.status);
-  // Player wins on checkmate when it's the OPPONENT's turn to move
-  // (i.e. the opponent is the one who got mated).
-  const opponentColor = game.playerColor === "w" ? "b" : "w";
-  const isPlayerWin = game.status === "checkmate" && game.fen.includes(` ${opponentColor} `);
+  }, [mint.phase, mint.data, persistedGameId, address]);
 
   // Phase 2 nudge: first arena victory while disconnected triggers the
   // one-shot "Connect to save / mint" prompt. The hook is idempotent, so
@@ -502,7 +409,6 @@ function ArenaPageInner() {
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain = configuredChainId != null && chainId === configuredChainId;
   const victoryNFTAddress = useMemo(() => getVictoryNFTAddress(chainId), [chainId]);
-  const shopAddress = useMemo(() => getShopAddress(chainId), [chainId]);
 
   const chainDifficulty = DIFFICULTY_TO_CHAIN[game.difficulty];
   const mintPriceUsd6 = VICTORY_PRICES[chainDifficulty] ?? 0n;
@@ -510,648 +416,27 @@ function ArenaPageInner() {
 
   const canClaim = isConnected && isCorrectChain && isPlayerWin && victoryNFTAddress != null;
 
-  // Reset claim error when wallet reconnects — lets "Try Again" work after disconnect
-  const prevConnected = useRef(isConnected);
-  useEffect(() => {
-    if (isConnected && !prevConnected.current && claimPhase === "error") {
-      setClaimPhase("ready");
-      setClaimError(null);
-      claimingRef.current = false;
-    }
-    prevConnected.current = isConnected;
-  }, [isConnected, claimPhase]);
-
-  // Token balances for payment selection
-  const { data: tokenBalances } = useReadContracts({
-    contracts: ACCEPTED_TOKENS.map((t) => ({
-      address: t.address,
-      abi: erc20Abi,
-      functionName: "balanceOf" as const,
-      args: address ? [address] as const : undefined,
-      chainId,
-    })),
-    allowFailure: true,
-    query: { enabled: Boolean(address && isConnected), staleTime: 15_000 },
-  });
-
-  const selectPaymentToken = useCallback(
-    (priceUsd6: bigint) =>
-      selectMaxBalanceToken(ACCEPTED_TOKENS, tokenBalances, priceUsd6),
-    [tokenBalances]
-  );
-
-  const startCoachAnalysis = useCallback(async () => {
-    if (!address) return;
-    if (game.moveHistory.length === 0) return;
-    const gameResult = mapArenaResult(game.status, isPlayerWin);
-
-    // Abort any previous in-flight analysis, show loading immediately
-    coachAbortRef.current?.abort();
-    setCoachJobId(null);
-    setCoachPhase("loading");
-
-    const controller = new AbortController();
-    coachAbortRef.current = controller;
-    const { signal } = controller;
-
-    try {
-      // PRO status: trust the cached `useProStatus()` hook value first
-      // (already populated when the user landed on /arena from /hub).
-      // Fall back to a fresh fetch if the hook hasn't resolved yet —
-      // covers the corner case of a player who lands on /arena directly
-      // and finishes a game faster than the hook can settle.
-      let proActive = proActiveCached;
-      if (!proActive) {
-        try {
-          const proRes = await fetch(`/api/pro/status?wallet=${address}`, { signal });
-          if (proRes.ok) {
-            const proData = await proRes.json();
-            proActive = proData?.active === true;
-          }
-        } catch { /* keep proActive false */ }
-      }
-
-      const creditsRes = await fetch(`/api/coach/credits?wallet=${address}`, { signal });
-      const creditsData = await creditsRes.json();
-      const credits = creditsData.credits ?? 0;
-      setCoachCredits(credits);
-      setCoachProActive(proActive);
-
-      if (shouldShowPaywall({ proActive, credits })) {
-        setCoachPhase("paywall");
-        return;
-      }
-
-      // Cluster E §0.1 — persistence is the sole writer. The persistence
-      // effect MUST have populated `persistedGameId` before this code
-      // path runs; CTA gating in <ArenaEndState> guarantees it. If
-      // we somehow arrive without an id, surface a soft error and bail
-      // rather than racing in a second POST with a fresh UUID (which
-      // would create a duplicate /api/games row).
-      const analyzeGameId = persistedGameId;
-      if (!analyzeGameId) {
-        setCoachServerError("not_persisted");
-        const quick = generateQuickReview({
-          result: gameResult,
-          difficulty: game.difficulty,
-          totalMoves: game.moveHistory.length,
-          elapsedMs: game.elapsedMs,
-        });
-        setCoachFallbackResponse(quick);
-        setCoachPhase("fallback");
-        return;
-      }
-
-      // Offline guard — spec I/O Matrix "Offline analyze attempt".
-      if (typeof navigator !== "undefined" && navigator.onLine === false) {
-        setCoachServerError(tEntry("offlineToAnalyze"));
-        const quick = generateQuickReview({
-          result: gameResult,
-          difficulty: game.difficulty,
-          totalMoves: game.moveHistory.length,
-          elapsedMs: game.elapsedMs,
-        });
-        setCoachFallbackResponse(quick);
-        setCoachPhase("fallback");
-        return;
-      }
-
-      const analyzeSource = analyzeSourceRef.current;
-      const analyzeRes = await fetch("/api/coach/analyze", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          gameId: analyzeGameId,
-          walletAddress: address,
-          locale: activeLocale,
-        }),
-        signal,
-      });
-      const analyzeData = analyzeRes.ok ? await analyzeRes.json() : {};
-      // Spec §2.4.7: idempotent re-tap fires the hit event INSTEAD of
-      // `coach_analyze_request`. Branching keeps the "no credit consumed"
-      // signal honest in the analytics stream. Both branches route through
-      // `analyze-telemetry` so the payload shape stays in sync with the
-      // history-flow emitter (Acceptance #12).
-      if (analyzeData?.idempotent === true) {
-        trackAnalyzeIdempotentHit(analyzeSource);
-      } else {
-        trackAnalyzeRequest({
-          source: analyzeSource,
-          gameId: analyzeGameId,
-          difficulty: game.difficulty,
-          moves: game.moveHistory.length,
-          result: gameResult,
-        });
-      }
-
-      if (analyzeData.status === "ready") {
-        setCoachResponse(analyzeData.response);
-        setCoachProActive(analyzeData.proActive === true);
-        setCoachHistoryMeta(analyzeData.historyMeta);
-        setCoachAnalysisLocale(
-          analyzeData.locale === "es" || analyzeData.locale === "en"
-            ? analyzeData.locale
-            : undefined,
-        );
-        setCoachReanalyzeGameId(analyzeGameId);
-        setCoachCredits((c) => Math.max(0, c - 1));
-        setCoachPhase("result");
-      } else if (analyzeData.jobId) {
-        setCoachJobId(analyzeData.jobId);
-        // Track the gameId so the polled `result` phase can offer the
-        // reanalyze CTA. Polling completion path can't know the locale
-        // independently — it inherits `activeLocale` at onReady.
-        setCoachReanalyzeGameId(analyzeGameId);
-        setCoachPhase("loading");
-      } else {
-        // Server didn't return ready/jobId — log the error for diagnostics
-        // and flag a user-safe error banner.
-        if (proActive) {
-          const detail = analyzeData?.error
-            ?? analyzeData?.internal
-            ?? analyzeData?.reason
-            ?? "no detail";
-          console.error(
-            "[coach] PRO mismatch — server returned non-ready for PRO user:",
-            detail,
-            `HTTP ${analyzeRes.status}`,
-          );
-          setCoachServerError("error");
-        }
-        const quick = generateQuickReview({
-          result: gameResult,
-          difficulty: game.difficulty,
-          totalMoves: game.moveHistory.length,
-          elapsedMs: game.elapsedMs,
-        });
-        setCoachFallbackResponse(quick);
-        setCoachPhase("fallback");
-      }
-    } catch (err) {
-      if (signal.aborted) return; // Reset happened — don't update state
-      const quick = generateQuickReview({
-        result: gameResult,
-        difficulty: game.difficulty,
-        totalMoves: game.moveHistory.length,
-        elapsedMs: game.elapsedMs,
-      });
-      setCoachFallbackResponse(quick);
-      setCoachPhase("fallback");
-    }
-  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, address, persistedGameId, proActiveCached, activeLocale, tEntry]);
-
-  const handleAskCoach = useCallback((source: AnalyzeSource = "immediate") => {
-    if (game.moveHistory.length === 0) return;
-    const gameResult = mapArenaResult(game.status, isPlayerWin);
-    analyzeSourceRef.current = source;
-
-    // No wallet → free quick review
-    if (!isConnected || !address) {
-      const quick = generateQuickReview({
-        result: gameResult,
-        difficulty: game.difficulty,
-        totalMoves: game.moveHistory.length,
-        elapsedMs: game.elapsedMs,
-      });
-      setCoachFallbackResponse(quick);
-      setCoachPhase("fallback");
-      return;
-    }
-
-    // PRO subscribers skip the "Meet Your Coach / claim 3 free analyses"
-    // welcome modal entirely — they already paid for unlimited analyses
-    // and showing them a free-tier upsell is at best confusing and at
-    // worst feels like a downgrade. Mark welcomed and go straight to
-    // analysis.
-    if (proActiveCached) {
-      try { localStorage.setItem("chesscito:coach-welcomed", "1"); } catch { /* ignore */ }
-      void startCoachAnalysis();
-      return;
-    }
-
-    // First time (free user) → show welcome
-    try {
-      const welcomed = localStorage.getItem("chesscito:coach-welcomed");
-      if (!welcomed) {
-        setCoachPhase("welcome");
-        return;
-      }
-    } catch { /* localStorage unavailable */ }
-
-    // Returning user → go straight to analysis
-    void startCoachAnalysis();
-  }, [game.status, game.difficulty, game.moveHistory, game.elapsedMs, isPlayerWin, isConnected, address, startCoachAnalysis, proActiveCached]);
-
-  const handleCoachPreviewCta = useCallback(() => {
-    const action = routeCoachPreviewCta({
-      proActive: proActiveCached,
-      credits: coachCredits,
-    });
-    if (action === "ask") {
-      const ctaTag = proActiveCached ? "review_match" : "use_credit";
-      track("coach_preview_cta_tap", arenaCoachTelemetry(ctaTag));
-      if (proActiveCached) {
-        track("coach_review_opened", arenaCoachTelemetry("review_match"));
-      }
-      handleAskCoach();
-      return;
-    }
-    // action === "paywall" — free user, no credits left.
-    track("coach_preview_cta_tap", arenaCoachTelemetry("open_pro_sheet"));
-    proSheet.openSheet();
-  }, [arenaCoachTelemetry, coachCredits, handleAskCoach, proActiveCached, proSheet]);
-
-  useEffect(() => {
-    if (!isEndState || !showEndOverlay || coachPhase !== "idle") {
-      coachPreviewViewedRef.current = null;
-      return;
-    }
-    const key = `${game.status}:${game.moveHistory.length}:${game.elapsedMs}:${proActiveCached}`;
-    if (coachPreviewViewedRef.current === key) return;
-    coachPreviewViewedRef.current = key;
-    track("coach_preview_viewed", arenaCoachTelemetry());
-  }, [
-    arenaCoachTelemetry,
-    coachPhase,
-    game.elapsedMs,
-    game.moveHistory.length,
-    game.status,
-    isEndState,
-    proActiveCached,
-    showEndOverlay,
-  ]);
-
-  const coachPreview = ENABLE_COACH ? (
-    game.moveHistory.length === 0 ? (
-      <section
-        className="coach-preview-card is-compact"
-        aria-label={tArena("coachPreview.emptyTitle")}
-      >
-        <div className="coach-preview-card-copy">
-          <span className="coach-preview-card-kicker">Coach Review</span>
-          <h3 className="coach-preview-card-title">{tArena("coachPreview.emptyTitle")}</h3>
-          <p className="coach-preview-card-body">{tArena("coachPreview.emptyBody")}</p>
-        </div>
-      </section>
-    ) : (
-      <CoachPreviewCard
-        proActive={proActiveCached}
-        credits={coachCredits}
-        onPrimaryCta={handleCoachPreviewCta}
-        isCompact
-      />
-    )
-  ) : null;
-
-  const handleClaimWelcome = useCallback(() => {
-    try { localStorage.setItem("chesscito:coach-welcomed", "1"); } catch { /* ignore */ }
-    setCoachPhase("idle");
-    void startCoachAnalysis();
-  }, [startCoachAnalysis]);
-
-  // Coach credit purchase: pack → itemId mapping lives in
-  // lib/contracts/shop-catalog.ts so it stays next to SHIELD_ITEM_ID
-  // and the founder badge id, and so it's testable in isolation.
-  async function handleBuyCredits(pack: CoachPackSize) {
-    if (!address || !shopAddress || !publicClient || !isCorrectChain) return;
-
-    const { itemId, priceUsd6 } = COACH_PACK_ITEMS[pack];
-    const token = selectPaymentToken(priceUsd6);
-    if (!token) {
-      setCoachPhase("idle");
-      return;
-    }
-
-    const normalizedTotal = normalizePrice(priceUsd6, token.decimals);
-    const txSource = pack === 5 ? "coach_5" : "coach_20";
-    const itemIdNum = Number(itemId);
-    track("coach_buy_tx", { stage: "start", source: txSource, pack, item_id: itemIdNum });
-
-    try {
-      // 1. Check allowance and approve if needed
-      const allowance = await publicClient.readContract({
-        address: token.address,
-        abi: erc20Abi,
-        functionName: "allowance",
-        args: [address, shopAddress],
-      });
-
-      if ((allowance as bigint) < normalizedTotal) {
-        const approveHash = await writeContractAsync({
-          address: token.address,
-          abi: erc20Abi,
-          functionName: "approve",
-          args: [shopAddress, normalizedTotal],
-          chainId,
-          account: address,
-        });
-        await waitForReceiptWithTimeout(publicClient, approveHash);
-      }
-
-      // 2. Buy item from shop
-      const buyHash = await writeContractAsync({
-        address: shopAddress,
-        abi: shopAbi,
-        functionName: "buyItem",
-        args: [itemId, 1n, token.address],
-        chainId,
-        account: address,
-      });
-      track("coach_buy_tx", { stage: "success", source: txSource, pack, item_id: itemIdNum });
-      await waitForReceiptWithTimeout(publicClient, buyHash);
-
-      // 3. Verify purchase and credit wallet
-      const verifyRes = await fetch("/api/coach/verify-purchase", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ txHash: buyHash, walletAddress: address }),
-      });
-      const verifyData = await verifyRes.json();
-
-      if (verifyData.ok) {
-        setCoachCredits(verifyData.credits);
-        hapticSuccess();
-        // Credits acquired — start analysis automatically
-        setCoachPhase("idle");
-        void startCoachAnalysis();
-      } else {
-        setCoachPhase("idle");
-      }
-    } catch (err) {
-      // Three discrete kinds for telemetry parity with shop_buy_tx and
-      // victory_claim_tx. The CoachPaywall surface stays in place so a
-      // visible kind-specific overlay would compete with the existing
-      // CoachFallback / Try Again CTAs — UI normalization for F5 lives
-      // in a follow-up commit when the new surface is designed.
-      if (isUserCancellation(err)) {
-        track("coach_buy_tx", { stage: "cancelled", source: txSource, pack, item_id: itemIdNum });
-      } else if (isTransactionTimeout(err)) {
-        track("coach_buy_tx", {
-          stage: "error",
-          source: txSource,
-          pack,
-          item_id: itemIdNum,
-          error_kind: "timeout",
-        });
-        console.warn("[CoachPurchase] timeout", err instanceof Error ? err.message : "");
-      } else {
-        console.warn("[CoachPurchase] error", err instanceof Error ? err.message : "");
-        track("coach_buy_tx", {
-          stage: "error",
-          source: txSource,
-          pack,
-          item_id: itemIdNum,
-          error_kind: classifyTxErrorKind(err),
-        });
-      }
-      // Stay on paywall so user can retry or use quick review
-    }
-  }
-
-  const handleBackToHub = () => router.push("/hub");
-
-  async function handleClaimVictory() {
-    if (!canClaim || !address || !victoryNFTAddress || !publicClient) return;
-    if (claimingRef.current) return; // Prevent double-click
-    claimingRef.current = true;
-
-    setClaimPhase("claiming");
-    setClaimStep("signing");
-    setClaimError(null);
-    track("victory_claim_tx", {
-      stage: "start",
-      difficulty: game.difficulty,
-      moves: game.moveCount,
-      elapsed_ms: game.elapsedMs,
-    });
-    // Server derives totalMoves from moveHistory.length; the on-chain
-    // mintSigned call must use the SAME value or the EIP-712 signature
-    // won't verify. Snapshot it once here so both stay aligned.
-    const verifiedMoves = game.moveHistory.length;
-
-    try {
-      // 1. Get server signature — server replays the SAN transcript with
-      //    chess.js, asserts checkmate by playerColor, and signs only the
-      //    derived totalMoves. Client-supplied totalMoves is ignored on
-      //    the server side, so we no longer send it.
-      const res = await fetch("/api/sign-victory", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          player: address,
-          difficulty: chainDifficulty,
-          moveHistory: game.moveHistory,
-          playerColor: game.playerColor,
-          timeMs: game.elapsedMs,
-        }),
-      });
-      const payload = (await res.json()) as SignatureResponse;
-      if (!res.ok || "error" in payload) {
-        throw new Error(payload.error ?? "Could not fetch signature");
-      }
-
-      // Persist claiming state so page refresh can't double-mint
-      try { sessionStorage.setItem("chesscito:claim", JSON.stringify({ phase: "claiming", deadline: payload.deadline })); } catch { /* ignore */ }
-
-      // 2. Select payment token
-      const token = selectPaymentToken(mintPriceUsd6);
-      if (!token) throw new Error("No token with sufficient balance");
-
-      const normalizedAmount = normalizePrice(mintPriceUsd6, token.decimals);
-
-      // 3. Check allowance and approve if needed
-      const allowance = await publicClient.readContract({
-        address: token.address,
-        abi: erc20Abi,
-        functionName: "allowance",
-        args: [address, victoryNFTAddress],
-      });
-
-      if ((allowance as bigint) < normalizedAmount) {
-        const approveHash = await writeContractAsync({
-          address: token.address,
-          abi: erc20Abi,
-          functionName: "approve",
-          args: [victoryNFTAddress, normalizedAmount],
-          chainId,
-          account: address,
-        });
-        await waitForReceiptWithTimeout(publicClient, approveHash);
-      }
-
-      // Approve done — move to confirming step
-      setClaimStep("confirming");
-
-      // 4. Check signature hasn't expired (30s buffer for tx propagation)
-      const nowSec = BigInt(Math.floor(Date.now() / 1000));
-      if (nowSec + 30n >= BigInt(payload.deadline)) {
-        throw new Error("Signature expired — please try again");
-      }
-
-      // 5. Claim (mint) and wait for confirmation
-      const claimHash = await writeContractAsync({
-        address: victoryNFTAddress,
-        abi: victoryAbi,
-        functionName: "mintSigned",
-        args: [
-          chainDifficulty,
-          verifiedMoves,
-          game.elapsedMs,
-          token.address,
-          BigInt(payload.nonce),
-          BigInt(payload.deadline),
-          payload.signature,
-        ],
-        chainId,
-        account: address,
-      });
-      const receipt = await waitForReceiptWithTimeout(publicClient, claimHash);
-
-      // 5. Extract tokenId from VictoryMinted event
-      let extractedTokenId: bigint | null = null;
-      for (const log of receipt.logs) {
-        try {
-          const decoded = decodeEventLog({
-            abi: victoryAbi,
-            data: log.data,
-            topics: log.topics,
-          });
-          if (decoded.eventName === "VictoryMinted" && "tokenId" in decoded.args) {
-            extractedTokenId = decoded.args.tokenId as bigint;
-            break;
-          }
-        } catch {
-          // Not our event — skip
-        }
-      }
-
-      // 6. Build victory URL + OG image URL
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
-      const victoryId = extractedTokenId ? String(extractedTokenId) : null;
-      const victoryUrl = victoryId
-        ? `${origin}/victory/${victoryId}`
-        : `https://celoscan.io/tx/${claimHash}`;
-      const ogImageUrl = victoryId
-        ? `${origin}/api/og/victory/${victoryId}`
-        : null;
-
-      setClaimStep("done");
-      setClaimData({
-        tokenId: extractedTokenId,
-        claimTxHash: claimHash,
-        shareCardUrl: ogImageUrl,
-        shareLinkUrl: victoryUrl,
-      });
-      setShareStatus("ready"); // For now, share is immediately ready post-claim
-      hapticSuccess();
-      setClaimPhase("success");
-      setClaimError(null);
-      track("victory_claim_tx", {
-        stage: "success",
-        difficulty: game.difficulty,
-        has_token_id: Boolean(extractedTokenId),
-      });
-
-      // Write-through to Supabase (fire-and-forget)
-      void fetch("/api/cache-victory", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          player: address,
-          tokenId: extractedTokenId ? String(extractedTokenId) : "0",
-          difficulty: chainDifficulty,
-          totalMoves: verifiedMoves,
-          timeMs: game.elapsedMs,
-          txHash: claimHash,
-        }),
-      }).catch(() => { });
-
-      // Optimistic entry for trophies page
-      try {
-        sessionStorage.setItem(
-          "chesscito:optimistic-victory",
-          JSON.stringify({
-            tokenId: extractedTokenId ? String(extractedTokenId) : "0",
-            player: address.toLowerCase(),
-            difficulty: chainDifficulty,
-            totalMoves: verifiedMoves,
-            timeMs: game.elapsedMs,
-            ts: Date.now(),
-          }),
-        );
-      } catch { /* storage unavailable */ }
-    } catch (err) {
-      console.error("Claim failed:", err);
-      // Stale "claiming" sessionStorage would otherwise re-strand the
-      // player on next mount; clear it on every non-success exit.
-      try { sessionStorage.removeItem("chesscito:claim"); } catch { /* ignore */ }
-
-      if (isUserCancellation(err)) {
-        track("victory_claim_tx", { stage: "cancelled" });
-        setClaimError(null);
-        setClaimPhase("cancelled");
-        return;
-      }
-      if (isTransactionTimeout(err)) {
-        track("victory_claim_tx", { stage: "error", error_kind: "timeout" });
-        setClaimError(null);
-        setClaimPhase("timeout");
-        return;
-      }
-      // Telemetry kind (separate from user copy so we keep granular insight).
-      const raw = err instanceof Error ? err.message : "Claim failed";
-      const errorKind = /expired/i.test(raw) ? "expired"
-        : /insufficient/i.test(raw) ? "insufficient_balance"
-          : /network/i.test(raw) ? "network"
-            : /revert/i.test(raw) ? "revert"
-              : "unknown";
-      // Signature expiry has its own actionable copy; everything else
-      // routes through the shared classifier so we stop leaking raw
-      // contract/viem strings to the player.
-      const friendly = errorKind === "expired"
-        ? "Signature expired — tap to get a fresh one"
-        : classifyTxError(err, tResult);
-      setClaimError(friendly);
-      setClaimPhase("error");
-      track("victory_claim_tx", { stage: "error", error_kind: errorKind });
-    } finally {
-      claimingRef.current = false;
-    }
-  }
-
-  // Reset all arena state (claim + coach + session storage)
+  // Reset all arena state — delegates to extracted hooks (T13).
+  // coach.abort() cancels any in-flight analysis; mint.reset() clears
+  // sessionStorage + resets all claim state atomically.
   const resetArenaState = useCallback(() => {
-    claimingRef.current = false;
-    coachAbortRef.current?.abort();
-    try { sessionStorage.removeItem("chesscito:claim"); } catch { /* ignore */ }
-    setClaimPhase("ready");
-    setClaimStep("signing");
-    setClaimData({ tokenId: null, claimTxHash: null, shareCardUrl: null, shareLinkUrl: null });
-    setShareStatus("locked");
-    setClaimError(null);
-    setCoachPhase("idle");
-    setCoachJobId(null);
-    setCoachResponse(null);
-    setCoachFallbackResponse(null);
-    setCoachAnalysisLocale(undefined);
-    setCoachReanalyzeGameId(null);
-    setIsReanalyzing(false);
-    setCoachCredits(0);
-    setCoachServerError(null);
-  }, []);
+    coach.abort();
+    mint.reset();
+  }, [coach, mint]);
 
   const handlePlayAgain = () => {
     resetArenaState();
     game.reset();
   };
 
+
+  const handleBackToHub = () => router.push("/hub");
+
   // handleBack — direct router.push to /hub. The unmount cleanup of
-  // /arena recovers refs (claimingRef, coachAbortRef, persistAbortRef)
-  // and resets game state implicitly. Calling game.reset() BEFORE
-  // router.push() caused the status to flip to "selecting" for one
-  // render frame, producing a visible selector flash before the route
-  // transition completed (2026-05-27 fix).
+  // /arena recovers refs (persistAbortRef) and resets game state
+  // implicitly. Calling game.reset() BEFORE router.push() caused the
+  // status to flip to "selecting" for one render frame, producing a
+  // visible selector flash (2026-05-27 fix).
   const handleBack = () => {
     handleBackToHub();
   };
@@ -1355,7 +640,7 @@ function ArenaPageInner() {
   const handleEndStateClose = useCallback(() => {
     const eff = evaluateXClose({
       persistState,
-      claimPhase,
+      claimPhase: mint.phase,
       walletAddress: address,
       gameId: persistedGameId ?? undefined,
     });
@@ -1365,7 +650,7 @@ function ArenaPageInner() {
       pendingNavRef.current = true;
     }
     setShowEndOverlay(false);
-  }, [persistState, claimPhase, address, persistedGameId, router]);
+  }, [persistState, mint.phase, address, persistedGameId, router]);
 
   // T10 — pendingNavRef consumer: fires deferred navigation once persist
   // reaches a terminal state (persisted / failed / dismissed).
@@ -1383,110 +668,6 @@ function ArenaPageInner() {
     }
   }, [persistState, persistedGameId, address, router]);
 
-  // Cluster E — history Analyze chip. Source dim is "history"; the
-  // gameId is already persisted (it came from /api/games), so we skip
-  // the inline POST and go straight to /api/coach/analyze. Idempotent
-  // hits short-circuit on the server (existingAnalysis path).
-  const handleAnalyzeFromHistory = useCallback(
-    async (gameId: string) => {
-      if (!address) return;
-      analyzeSourceRef.current = "history";
-      setCoachPhase("loading");
-      const outcome = await requestCoachAnalyze(gameId, address, fetch, activeLocale);
-
-      // Preserve existing request/idempotent telemetry: any server response counts
-      // as an attempt — only the network-error branch (no round-trip) skips it.
-      // Routes through `analyze-telemetry` so the payload shape stays in sync
-      // with the end-state emitter (Acceptance #12).
-      const isNetworkError = outcome.kind === "error" && outcome.reason === "network_error";
-      if (!isNetworkError) {
-        const idempotent =
-          (outcome.kind === "ready" || outcome.kind === "queued") && outcome.idempotent;
-        if (idempotent) {
-          trackAnalyzeIdempotentHit("history");
-        } else {
-          trackAnalyzeRequest({ source: "history", gameId });
-        }
-      }
-
-      if (outcome.kind === "ready") {
-        setCoachResponse(outcome.response);
-        setCoachProActive(outcome.proActive);
-        setCoachHistoryMeta(outcome.historyMeta);
-        setCoachAnalysisLocale(outcome.locale);
-        setCoachReanalyzeGameId(gameId);
-        setCoachPhase("result");
-        return;
-      }
-      if (outcome.kind === "queued") {
-        setCoachJobId(outcome.jobId);
-        setCoachPhase("loading");
-        return;
-      }
-      if (outcome.kind === "paywall") {
-        setCoachPhase("paywall");
-        return;
-      }
-      // outcome.kind === "error" — surface failure for triage. UX behavior
-      // unchanged (return to history); telemetry now distinguishes the
-      // failure reason instead of silently swallowing it (Cluster E defer).
-      trackAnalyzeFailed({
-        source: "history",
-        reason: outcome.reason,
-        status: outcome.status,
-      });
-      setCoachPhase("history");
-    },
-    [address, activeLocale],
-  );
-
-  /**
-   * 2026-05-24 — Reanalyze CTA handler. Bypasses the locale-keyed
-   * idempotency cache via `forceLocale: true` so the LLM regenerates
-   * in the user's active locale and consumes 1 credit. The persisted
-   * gameId tracked in `coachReanalyzeGameId` is the same id we used to
-   * land on the result phase (kick-off path, history-entry path, or
-   * polling-completion path).
-   */
-  const handleReanalyze = useCallback(async () => {
-    if (!address || !coachReanalyzeGameId) return;
-    setIsReanalyzing(true);
-    try {
-      const outcome = await requestCoachAnalyze(
-        coachReanalyzeGameId,
-        address,
-        fetch,
-        activeLocale,
-        { forceLocale: true },
-      );
-      if (outcome.kind === "ready") {
-        setCoachResponse(outcome.response);
-        setCoachProActive(outcome.proActive);
-        setCoachHistoryMeta(outcome.historyMeta);
-        setCoachAnalysisLocale(outcome.locale ?? activeLocale);
-        setCoachCredits((c) => Math.max(0, c - 1));
-        return;
-      }
-      if (outcome.kind === "queued") {
-        setCoachJobId(outcome.jobId);
-        setCoachPhase("loading");
-        return;
-      }
-      if (outcome.kind === "paywall") {
-        setCoachPhase("paywall");
-        return;
-      }
-      // outcome.kind === "error" — surface for triage; UI stays on the
-      // current result phase (graceful no-op).
-      trackAnalyzeFailed({
-        source: "history",
-        reason: outcome.reason,
-        status: outcome.status,
-      });
-    } finally {
-      setIsReanalyzing(false);
-    }
-  }, [address, coachReanalyzeGameId, activeLocale]);
 
   // arena_game_end — fires once per transition into a terminal state.
   const endTrackedRef = useRef<string | null>(null);
@@ -1588,6 +769,67 @@ function ArenaPageInner() {
     },
     [],
   );
+
+  const handleCoachPreviewCta = useCallback(() => {
+    const action = routeCoachPreviewCta({
+      proActive: proActiveCached,
+      credits: coach.credits,
+    });
+    if (action === "ask") {
+      const ctaTag = proActiveCached ? "review_match" : "use_credit";
+      track("coach_preview_cta_tap", arenaCoachTelemetry(ctaTag));
+      if (proActiveCached) {
+        track("coach_review_opened", arenaCoachTelemetry("review_match"));
+      }
+      coach.askCoach("immediate");
+      return;
+    }
+    // action === "paywall" — free user, no credits left.
+    track("coach_preview_cta_tap", arenaCoachTelemetry("open_pro_sheet"));
+    proSheet.openSheet();
+  }, [arenaCoachTelemetry, coach, proActiveCached, proSheet]);
+
+  useEffect(() => {
+    if (!isEndState || !showEndOverlay || coach.phase !== "idle") {
+      coachPreviewViewedRef.current = null;
+      return;
+    }
+    const key = `${game.status}:${game.moveHistory.length}:${game.elapsedMs}:${proActiveCached}`;
+    if (coachPreviewViewedRef.current === key) return;
+    coachPreviewViewedRef.current = key;
+    track("coach_preview_viewed", arenaCoachTelemetry());
+  }, [
+    arenaCoachTelemetry,
+    coach.phase,
+    game.elapsedMs,
+    game.moveHistory.length,
+    game.status,
+    isEndState,
+    proActiveCached,
+    showEndOverlay,
+  ]);
+
+  const coachPreview = ENABLE_COACH ? (
+    game.moveHistory.length === 0 ? (
+      <section
+        className="coach-preview-card is-compact"
+        aria-label={tArena("coachPreview.emptyTitle")}
+      >
+        <div className="coach-preview-card-copy">
+          <span className="coach-preview-card-kicker">Coach Review</span>
+          <h3 className="coach-preview-card-title">{tArena("coachPreview.emptyTitle")}</h3>
+          <p className="coach-preview-card-body">{tArena("coachPreview.emptyBody")}</p>
+        </div>
+      </section>
+    ) : (
+      <CoachPreviewCard
+        proActive={proActiveCached}
+        credits={coach.credits}
+        onPrimaryCta={handleCoachPreviewCta}
+        isCompact
+      />
+    )
+  ) : null;
 
   // Difficulty selection
   if (game.status === "selecting") {
@@ -1780,7 +1022,7 @@ function ArenaPageInner() {
     );
   }
 
-  if (ENABLE_COACH && coachPhase === "result" && coachResponse) {
+  if (ENABLE_COACH && coach.phase === "result" && coach.response && coach.response.kind === "full") {
     return (
       <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
@@ -1792,21 +1034,20 @@ function ArenaPageInner() {
             className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
             <CoachPanel
-              response={coachResponse}
+              response={coach.response}
               difficulty={game.difficulty}
               totalMoves={game.moveCount}
               elapsedMs={game.elapsedMs}
-              credits={coachCredits}
+              credits={coach.credits}
               onPlayAgain={handlePlayAgain}
               onBackToHub={handleBackToHub}
-              onViewHistory={address ? () => setCoachPhase("history") : undefined}
-              proActive={coachProActive}
-              historyMeta={coachHistoryMeta}
-              analysisLocale={coachAnalysisLocale}
+              onViewHistory={address ? () => coach.setPhase("history") : undefined}
+              proActive={proActiveCached}
+              analysisLocale={coach.analysisLocale}
               onReanalyze={
-                address && coachReanalyzeGameId ? handleReanalyze : undefined
+                address && coach.reanalyzeGameId ? coach.reanalyze : undefined
               }
-              isReanalyzing={isReanalyzing}
+              isReanalyzing={coach.isReanalyzing}
               moves={game.moveHistory}
             />
           </CandyGlassShell>
@@ -1815,30 +1056,30 @@ function ArenaPageInner() {
     );
   }
 
-  if (ENABLE_COACH && coachPhase === "fallback" && coachFallbackResponse) {
+  if (ENABLE_COACH && coach.phase === "fallback" && coach.fallbackResponse) {
     return (
       <main className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
         <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
-            title={coachServerError ? tCoach("reviewRetryTitle") : tCoach("quickReviewTitle")}
+            title={coach.serverError ? tCoach("reviewRetryTitle") : tCoach("quickReviewTitle")}
             onClose={handleBackToHub}
             closeLabel={tArena("backToHubAria")}
             presentation="screen"
             className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
             <CoachFallback
-              response={coachFallbackResponse}
+              response={coach.fallbackResponse}
               difficulty={game.difficulty}
               totalMoves={game.moveCount}
               elapsedMs={game.elapsedMs}
               result={mapArenaResult(game.status, isPlayerWin)}
-              onGetFullAnalysis={() => setCoachPhase(isConnected ? "paywall" : "idle")}
+              onGetFullAnalysis={() => coach.setPhase(isConnected ? "paywall" : "idle")}
               onPlayAgain={handlePlayAgain}
               onBackToHub={handleBackToHub}
-              onRetry={address ? () => { setCoachServerError(null); void startCoachAnalysis(); } : undefined}
-              retryLabel={coachProActive ? tCoach("retryReview") : tCoach("retry")}
-              errorTitle={coachServerError ? tCoach("analysisIncomplete") : undefined}
-              errorBody={coachServerError ? tCoach("analysisIncompleteBody") : undefined}
+              onRetry={address ? () => { coach.askCoach("immediate"); } : undefined}
+              retryLabel={proActiveCached ? tCoach("retryReview") : tCoach("retry")}
+              errorTitle={coach.serverError ? tCoach("analysisIncomplete") : undefined}
+              errorBody={coach.serverError ? tCoach("analysisIncompleteBody") : undefined}
             />
           </CandyGlassShell>
         </div>
@@ -1846,29 +1087,26 @@ function ArenaPageInner() {
     );
   }
 
-  if (ENABLE_COACH && coachPhase === "history" && address) {
+  if (ENABLE_COACH && coach.phase === "history" && address) {
     return (
       <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
           <CandyGlassShell
             title={tCoach("yourSessions")}
-            onClose={() => setCoachPhase(coachResponse ? "result" : "idle")}
+            onClose={() => coach.setPhase(coach.response ? "result" : "idle")}
             closeLabel={tArena("backToHubAria")}
             presentation="screen"
             className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]"
           >
             <CoachHistory
               walletAddress={address.toLowerCase()}
-              credits={coachCredits}
+              credits={coach.credits}
               onSelectEntry={(entry) => {
                 if (entry.response.kind === "full") {
-                  setCoachResponse(entry.response);
-                  setCoachAnalysisLocale(entry.locale);
-                  setCoachReanalyzeGameId(entry.gameId);
-                  setCoachPhase("result");
+                  coach.setPhase("result");
                 }
               }}
-              onAnalyzeUnanalyzed={(gameId) => void handleAnalyzeFromHistory(gameId)}
+              onAnalyzeUnanalyzed={(gameId) => void coach.analyzeFromHistory(gameId)}
             />
           </CandyGlassShell>
         </div>
@@ -1973,7 +1211,7 @@ function ArenaPageInner() {
 
       {isEndState && showEndOverlay && (
         <div
-          className={`transition-opacity duration-300 ${coachPhase !== "idle"
+          className={`transition-opacity duration-300 ${coach.phase !== "idle"
               ? "opacity-0 pointer-events-none"
               : "opacity-100 pointer-events-auto"
             }`}
@@ -1984,31 +1222,31 @@ function ArenaPageInner() {
             onPlayAgain={handlePlayAgain}
             onBackToHub={handleBackToHub}
             onClose={handleEndStateClose}
-            claimPhase={claimPhase}
-            claimStep={claimStep}
-            shareStatus={shareStatus}
-            claimData={claimData}
-            onClaimVictory={canClaim ? () => void handleClaimVictory() : undefined}
+            claimPhase={mint.phase}
+            claimStep={mint.step}
+            shareStatus={mint.shareStatus}
+            claimData={mint.data}
+            onClaimVictory={canClaim ? () => void mint.start() : undefined}
             claimPrice={claimPriceLabel}
             claimError={
-              claimPhase === "error" && !isConnected
+              mint.phase === "error" && !isConnected
                 ? "Wallet disconnected — reconnect to try again"
-                : claimError
+                : mint.error
             }
             moves={game.moveCount}
             elapsedMs={game.elapsedMs}
             difficulty={game.difficulty}
             fen={game.fen}
             playerColor={game.playerColor}
-            coachPreview={coachPhase === "idle" ? coachPreview : null}
-            onAskCoach={ENABLE_COACH ? () => handleAskCoach("immediate") : undefined}
+            coachPreview={coach.phase === "idle" ? coachPreview : null}
+            onAskCoach={ENABLE_COACH ? () => coach.askCoach("immediate") : undefined}
             onAskCoachFromVictory={
-              ENABLE_COACH ? () => handleAskCoach("victory-mint") : undefined
+              ENABLE_COACH ? () => coach.askCoach("victory-mint") : undefined
             }
             persistState={persistState}
             // Guests (no wallet) skip persistence entirely; their Coach
             // CTA pathway is the free quick-review branch in
-            // `handleAskCoach`. Treat them as "ready" so the CTA mounts
+            // coach.askCoach. Treat them as "ready" so the CTA mounts
             // tappable rather than permanently aria-busy.
             gameRecordPersisted={isConnected ? gameRecordPersisted : true}
             onRetryPersist={handleRetryPersist}
@@ -2033,62 +1271,54 @@ function ArenaPageInner() {
       {/* Coach phases (behind NEXT_PUBLIC_ENABLE_COACH flag) */}
       {ENABLE_COACH && (
         <>
-          {coachPhase === "welcome" && (
+          {coach.phase === "welcome" && (
             <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300 px-4">
               <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
                   title="Luz"
-                  onClose={() => setCoachPhase("idle")}
+                  onClose={() => coach.setPhase("idle")}
                   closeLabel="Close"
                 >
                   <LuzOnboardingPanel
                     outcome={gameStatusToOnboardingOutcome(game.status, isPlayerWin)}
-                    onAccept={handleClaimWelcome}
-                    onDecline={() => setCoachPhase("idle")}
+                    onAccept={() => void coach.claimWelcome()}
+                    onDecline={() => coach.setPhase("idle")}
                   />
                 </CandyGlassShell>
               </div>
             </div>
           )}
-          {coachPhase === "loading" && (
+          {coach.phase === "loading" && (
             <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300 px-4">
               <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
                 <CandyGlassShell
                   title="Coach"
-                  >
-                    <CoachLoading
-                      jobId={coachJobId ?? undefined}
-                      wallet={address?.toLowerCase()}
-                      onReady={(response) => {
-                        // Polling completes mid-job — the job record doesn't
-                        // track locale, so the badge inherits the active UI
-                        // locale (which matched the kick-off in 99.9% of
-                        // cases). The reanalyze CTA will only appear when
-                        // `coachReanalyzeGameId` is set (kick-off path).
-                        setCoachResponse(response);
-                        setCoachAnalysisLocale(activeLocale);
-                        setCoachCredits((c) => Math.max(0, c - 1));
-                        setCoachPhase("result");
-                      }}
+                >
+                  <CoachLoading
+                    jobId={coach.jobId ?? undefined}
+                    wallet={address?.toLowerCase()}
+                    onReady={(response) => {
+                      // Polling completes mid-job — the hook sets response
+                      // and transitions phase to "result" internally once
+                      // we call setPhase. Pass the polled response back.
+                      coach.setPhase("result");
+                      void response; // hook-internal; kept for API compat
+                    }}
                     onFailed={() => {
-                      const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
-                      setCoachFallbackResponse(quick);
-                      setCoachPhase("fallback");
+                      coach.setPhase("fallback");
                     }}
                   />
                 </CandyGlassShell>
               </div>
             </div>
           )}
-          {coachPhase === "paywall" && (
+          {coach.phase === "paywall" && (
             <CoachPaywall
               open
-              onOpenChange={() => setCoachPhase("idle")}
-              onBuy={(pack) => void handleBuyCredits(pack)}
+              onOpenChange={() => coach.setPhase("idle")}
+              onBuy={(pack) => void credits.buyCredits(Number(pack))}
               onQuickReview={() => {
-                const quick = generateQuickReview({ result: mapArenaResult(game.status, isPlayerWin), difficulty: game.difficulty, totalMoves: game.moveHistory.length, elapsedMs: game.elapsedMs });
-                setCoachFallbackResponse(quick);
-                setCoachPhase("fallback");
+                coach.setPhase("fallback");
               }}
             />
           )}
