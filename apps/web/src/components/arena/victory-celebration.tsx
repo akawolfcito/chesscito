@@ -79,15 +79,23 @@ export function VictoryCelebration({
   const time = formatTime(elapsedMs);
   const [shareOpen, setShareOpen] = useState(false);
 
+  // Boolean-signature deps prevent modal_open from re-firing on every
+  // parent render that hands us new callback identities — the prior
+  // [onClaimVictory, onAskCoach] deps tripled the event on a single
+  // celebration (observed in telemetry 2026-05-28). The semantic
+  // signal we want is "did availability of these CTAs change?", which
+  // these booleans answer exactly.
+  const canClaim = Boolean(onClaimVictory);
+  const coachCtaVisible = Boolean(onAskCoach);
   useEffect(() => {
     track("modal_open", {
       id: "victory-celebration",
       difficulty,
       moves,
-      can_claim: Boolean(onClaimVictory),
-      coach_cta_visible: Boolean(onAskCoach),
+      can_claim: canClaim,
+      coach_cta_visible: coachCtaVisible,
     });
-  }, [difficulty, moves, onClaimVictory, onAskCoach]);
+  }, [difficulty, moves, canClaim, coachCtaVisible]);
 
   const cardParams = new URLSearchParams({
     moves: String(moves),

@@ -609,7 +609,12 @@ function ArenaPageInner() {
       return;
     }
     wasTerminalRef.current = true;
-    const key = `${game.status}:${game.moveCount}:${game.elapsedMs}`;
+    // Dedupe key intentionally OMITS game.elapsedMs — the live tick keeps
+    // incrementing after the terminal transition, so including it in the
+    // key produced one extra persist per tick (two POSTs with different
+    // UUIDs, observed in telemetry 2026-05-28). status + moveCount is
+    // sufficient: a fresh terminal state always brings a fresh moveCount.
+    const key = `${game.status}:${game.moveCount}`;
     if (persistAttemptedRef.current === key) return;
     persistAttemptedRef.current = key;
     if (!address) return;
@@ -710,6 +715,13 @@ function ArenaPageInner() {
 
 
   // arena_game_end — fires once per transition into a terminal state.
+  // Dedupe key OMITS game.elapsedMs for the same reason the persist
+  // effect above does: the live tick keeps incrementing after the
+  // terminal transition and would otherwise produce duplicate fires
+  // (two arena_game_end events with different elapsed_ms, observed in
+  // telemetry 2026-05-28). The track call still reads the closure
+  // value, so the captured elapsed_ms reflects the moment the terminal
+  // transition was first observed — exactly what we want.
   const endTrackedRef = useRef<string | null>(null);
   useEffect(() => {
     const terminal = ["checkmate", "stalemate", "draw", "resigned"];
@@ -717,7 +729,7 @@ function ArenaPageInner() {
       endTrackedRef.current = null;
       return;
     }
-    const key = `${game.status}:${game.moveCount}:${game.elapsedMs}`;
+    const key = `${game.status}:${game.moveCount}`;
     if (endTrackedRef.current === key) return;
     endTrackedRef.current = key;
     track("arena_game_end", {
