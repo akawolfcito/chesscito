@@ -67,6 +67,12 @@ export type CoachAnalysisState = {
   reanalyzeGameId: string | null;
   isReanalyzing: boolean;
   serverError: string | null;
+  /** PRO-only session-history footer payload from the analyze response.
+   *  Mirrors `data.historyMeta` from /api/coach/analyze. Used by
+   *  <CoachPanel> to render the "Reviewing N sessions" footer + the
+   *  personalized-coaching subtitle. Undefined for free users / pre-ready
+   *  phases (#117). */
+  historyMeta?: { gamesPlayed: number };
   setPhase: (p: CoachPhase) => void;
   askCoach: (source?: "immediate" | "victory-mint" | "history" | "viewer") => void;
   analyzeFromHistory: (gameId: string) => void;
@@ -117,6 +123,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
   const [coachReanalyzeGameId, setCoachReanalyzeGameId] = useState<string | null>(null);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [coachServerError, setCoachServerError] = useState<string | null>(null);
+  const [coachHistoryMeta, setCoachHistoryMeta] = useState<{ gamesPlayed: number } | undefined>(undefined);
 
   // Internal refs
   const analyzeSourceRef = useRef<AnalyzeSource>("immediate");
@@ -248,6 +255,11 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
             ? (data.locale as "en" | "es")
             : undefined,
         );
+        setCoachHistoryMeta(
+          data.historyMeta
+            ? { gamesPlayed: data.historyMeta.gamesPlayed ?? 0 }
+            : undefined,
+        );
         setCoachReanalyzeGameId(analyzeGameId);
         setCoachCredits((c) => Math.max(0, c - 1));
         setPhaseState("result");
@@ -374,6 +386,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
     if (outcome.kind === "ready") {
       setCoachResponse(outcome.response);
       setCoachAnalysisLocale(outcome.locale);
+      setCoachHistoryMeta(outcome.historyMeta);
       setCoachReanalyzeGameId(gameId);
       setPhaseState("result");
       return;
@@ -413,6 +426,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
       if (outcome.kind === "ready") {
         setCoachResponse(outcome.response);
         setCoachAnalysisLocale(outcome.locale ?? activeLocale);
+        setCoachHistoryMeta(outcome.historyMeta);
         setCoachCredits((c) => Math.max(0, c - 1));
         return;
       }
@@ -460,6 +474,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
     reanalyzeGameId: coachReanalyzeGameId,
     isReanalyzing,
     serverError: coachServerError,
+    historyMeta: coachHistoryMeta,
     setPhase,
     askCoach,
     analyzeFromHistory,

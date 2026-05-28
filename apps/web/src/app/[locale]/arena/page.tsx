@@ -1058,6 +1058,7 @@ function ArenaPageInner() {
               onViewHistory={address ? () => coach.setPhase("history") : undefined}
               proActive={proActiveCached}
               analysisLocale={coach.analysisLocale}
+              historyMeta={coach.historyMeta}
               onReanalyze={
                 address && coach.reanalyzeGameId ? coach.reanalyze : undefined
               }

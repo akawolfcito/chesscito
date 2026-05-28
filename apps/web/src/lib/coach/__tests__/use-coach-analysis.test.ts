@@ -26,6 +26,9 @@ describe("useCoachAnalysis (skeleton)", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     localStorage.clear();
+    // jsdom does not seed navigator.onLine; the hook's offline-guard would
+    // otherwise bail out to the fallback phase before reaching /api/coach/analyze.
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
   });
 
   it("starts in idle phase, no response", () => {
@@ -97,6 +100,99 @@ describe("useCoachAnalysis (skeleton)", () => {
   it("abort() clears in-flight request without crashing", () => {
     const { result } = renderHook(() => useCoachAnalysis({ surface: "coach_viewer" }));
     expect(() => result.current.abort()).not.toThrow();
+  });
+
+  it("askCoach surfaces historyMeta from a PRO ready response (#117)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((url: string) => {
+      if (typeof url === "string" && url.includes("/api/coach/credits")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ credits: 3 }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          status: "ready",
+          response: { kind: "full", summary: "g", mistakes: [], lessons: [], praise: [] },
+          proActive: true,
+          historyMeta: { gamesPlayed: 12 },
+          idempotent: false,
+        }),
+      });
+    }));
+
+    const { result } = renderHook(() => useCoachAnalysis({
+      surface: "coach_viewer",
+      gameId: "550e8400-e29b-41d4-a716-446655440000",
+      walletAddress: "0x1111111111111111111111111111111111111111",
+      result: "win",
+      difficulty: "easy",
+      moves: ["e4"],
+      elapsedMs: 5000,
+      isConnected: true,
+      injected: {
+        address: "0x1111111111111111111111111111111111111111",
+        proActive: true,
+        activeLocale: "en",
+      },
+    }));
+
+    act(() => { result.current.askCoach("immediate"); });
+
+    await waitFor(() => expect(result.current.phase).toBe("result"));
+    expect(result.current.historyMeta).toEqual({ gamesPlayed: 12 });
+
+    vi.unstubAllGlobals();
+  });
+
+  it("askCoach leaves historyMeta undefined when server omits it (free user)", async () => {
+    // Skip the welcome gate so askCoach goes straight to startCoachAnalysis.
+    localStorage.setItem("chesscito:coach-welcomed", "1");
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((url: string) => {
+      if (typeof url === "string" && url.includes("/api/coach/credits")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ credits: 3 }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          status: "ready",
+          response: { kind: "full", summary: "g", mistakes: [], lessons: [], praise: [] },
+          // proActive omitted, historyMeta omitted — free path
+          idempotent: false,
+        }),
+      });
+    }));
+
+    const { result } = renderHook(() => useCoachAnalysis({
+      surface: "coach_viewer",
+      gameId: "550e8400-e29b-41d4-a716-446655440002",
+      walletAddress: "0x1111111111111111111111111111111111111111",
+      result: "win",
+      difficulty: "easy",
+      moves: ["e4"],
+      elapsedMs: 5000,
+      isConnected: true,
+      injected: {
+        address: "0x1111111111111111111111111111111111111111",
+        proActive: false,
+        activeLocale: "en",
+      },
+    }));
+
+    act(() => { result.current.askCoach("immediate"); });
+
+    await waitFor(() => expect(result.current.phase).toBe("result"));
+    expect(result.current.historyMeta).toBeUndefined();
+
+    vi.unstubAllGlobals();
   });
 
   it("claimWelcome writes localStorage chesscito:coach-welcomed", async () => {
