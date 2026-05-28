@@ -417,10 +417,15 @@ function ArenaPageInner() {
   const canClaim = isConnected && isCorrectChain && isPlayerWin && victoryNFTAddress != null;
 
   // Reset all arena state — delegates to extracted hooks (T13).
-  // coach.abort() cancels any in-flight analysis; mint.reset() clears
-  // sessionStorage + resets all claim state atomically.
+  // coach.abort() cancels any in-flight analysis but does NOT reset the
+  // phase machine — without coach.setPhase("idle") the result-phase
+  // early return at line ~1095 keeps rendering CoachPanel after the
+  // user taps "Play Again", trapping them in a visual loop that only
+  // the X (handleBackToHub) escapes. mint.reset() clears sessionStorage
+  // + resets all claim state atomically.
   const resetArenaState = useCallback(() => {
     coach.abort();
+    coach.setPhase("idle");
     mint.reset();
   }, [coach, mint]);
 
