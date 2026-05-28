@@ -107,7 +107,7 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
 
   const address = input.injected?.address ?? input.walletAddress ?? wagmiAccount.address;
   // chainId is available for future use (e.g., multi-chain credits endpoint)
-  const _chainId = input.injected?.chainId ?? wagmiChainId; // eslint-disable-line @typescript-eslint/no-unused-vars
+  const _chainId = input.injected?.chainId ?? wagmiChainId; // eslint-disable-line no-unused-vars
   const activeLocale = (input.injected?.activeLocale ?? activeLocaleHook) as CoachLocale;
   const proActive = input.injected?.proActive ?? proActiveHook;
 

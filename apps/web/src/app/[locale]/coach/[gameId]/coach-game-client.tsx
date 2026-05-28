@@ -87,6 +87,44 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     });
   }, [mint.phase, mint.data, gameRecord, walletAddress]);
 
+  const handleAskCoach = useCallback(() => {
+    if (!gameRecord) return;
+    track("coach_viewer_ask_coach_tap", {
+      gameId: gameRecord.gameId,
+      has_existing_analysis: !!gameRecord.analysis,
+    });
+    coach.askCoach("viewer");
+  }, [coach, gameRecord]);
+
+  const handleMint = useCallback(() => {
+    if (!gameRecord) return;
+    track("coach_viewer_mint_tap", { gameId: gameRecord.gameId, difficulty: gameRecord.difficulty });
+    void mint.start();
+  }, [mint, gameRecord]);
+
+  const handleShare = useCallback(() => {
+    if (!gameRecord) return;
+    const tokenId =
+      mint.data.tokenId != null ? String(mint.data.tokenId) : (gameRecord.mintedTokenId ?? null);
+    const shareLink = mint.data.shareLinkUrl ?? gameRecord.shareLinkUrl ?? null;
+    track("coach_viewer_share_tap", {
+      gameId: gameRecord.gameId,
+      tokenId: tokenId ?? undefined,
+    });
+    if (shareLink && typeof navigator !== "undefined" && "share" in navigator) {
+      const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
+      void nav.share?.({ url: shareLink });
+    }
+  }, [gameRecord, mint.data.tokenId, mint.data.shareLinkUrl]);
+
+  const handleViewNft = useCallback(() => {
+    if (!gameRecord) return;
+    const tx = mint.data.claimTxHash ?? gameRecord.claimTxHash;
+    if (tx && typeof window !== "undefined") {
+      window.open(`https://celoscan.io/tx/${tx}`, "_blank", "noopener");
+    }
+  }, [mint.data.claimTxHash, gameRecord]);
+
   // Branch 1: no wallet
   if (!walletAddress) {
     return (
@@ -128,37 +166,6 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
       ? String(mint.data.tokenId)
       : (gameRecord.mintedTokenId ?? null);
   const shareLinkEffective = mint.data.shareLinkUrl ?? gameRecord.shareLinkUrl ?? null;
-
-  const handleAskCoach = useCallback(() => {
-    track("coach_viewer_ask_coach_tap", {
-      gameId: gameRecord.gameId,
-      has_existing_analysis: !!gameRecord.analysis,
-    });
-    coach.askCoach("viewer");
-  }, [coach, gameRecord.gameId, gameRecord.analysis]);
-
-  const handleMint = useCallback(() => {
-    track("coach_viewer_mint_tap", { gameId: gameRecord.gameId, difficulty: gameRecord.difficulty });
-    void mint.start();
-  }, [mint, gameRecord.gameId, gameRecord.difficulty]);
-
-  const handleShare = useCallback(() => {
-    track("coach_viewer_share_tap", {
-      gameId: gameRecord.gameId,
-      tokenId: tokenIdEffective ?? undefined,
-    });
-    if (shareLinkEffective && typeof navigator !== "undefined" && "share" in navigator) {
-      const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
-      void nav.share?.({ url: shareLinkEffective });
-    }
-  }, [gameRecord.gameId, tokenIdEffective, shareLinkEffective]);
-
-  const handleViewNft = useCallback(() => {
-    const tx = mint.data.claimTxHash ?? gameRecord.claimTxHash;
-    if (tx && typeof window !== "undefined") {
-      window.open(`https://celoscan.io/tx/${tx}`, "_blank", "noopener");
-    }
-  }, [mint.data.claimTxHash, gameRecord.claimTxHash]);
 
   // Inline analysis surface (when record has cached analysis)
   let inlineAnalysisNode: React.ReactNode = null;
