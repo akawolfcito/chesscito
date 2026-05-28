@@ -1098,9 +1098,13 @@ function ArenaPageInner() {
     game.reset();
   };
 
+  // handleBack — direct router.push to /hub. The unmount cleanup of
+  // /arena recovers refs (claimingRef, coachAbortRef, persistAbortRef)
+  // and resets game state implicitly. Calling game.reset() BEFORE
+  // router.push() caused the status to flip to "selecting" for one
+  // render frame, producing a visible selector flash before the route
+  // transition completed (2026-05-27 fix).
   const handleBack = () => {
-    resetArenaState();
-    game.reset();
     handleBackToHub();
   };
 
@@ -1515,7 +1519,10 @@ function ArenaPageInner() {
     // intact below as the default until the flag flips.
     if (arenaScaffoldEnabled) {
       return (
-        <main className="arena-select-route flex h-[100dvh] min-h-0 flex-col items-center overflow-hidden arena-bg">
+        <main
+          className="arena-select-route flex h-[100dvh] min-h-0 flex-col items-center overflow-hidden arena-bg"
+          data-testid="arena-difficulty-selector"
+        >
           {isPreparing ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 animate-in fade-in duration-300 arena-scaffold">
               <p className="text-sm font-semibold text-amber-400/80">
@@ -1597,7 +1604,7 @@ function ArenaPageInner() {
     }
 
     return (
-      <main className="flex min-h-[100dvh] flex-col arena-bg">
+      <main className="flex min-h-[100dvh] flex-col arena-bg" data-testid="arena-difficulty-selector">
         <div className="flex flex-1 flex-col items-center justify-center">
           {isPreparing ? (
             <div className="flex flex-col items-center gap-4 animate-in fade-in duration-300">
