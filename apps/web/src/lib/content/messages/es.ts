@@ -662,6 +662,7 @@ const messages = {
     successSubtitle: "Tu victoria quedó guardada en Celo. Tu tarjeta está lista.",
     errorTitle: "No se pudo guardar",
     errorSubtitle: "Algo salió mal al guardar tu victoria.",
+    errorInsufficientBalance: "Agrega algún stablecoin USD para guardar tu victoria.",
     tryAgain: "Reintentar",
     shareCard: "Compartir tarjeta",
     challengeFriend: "Retar a alguien",
@@ -679,13 +680,12 @@ const messages = {
     progressSteps: ["Firmando", "Confirmando", "Listo"],
     progressTimeHint: "Tarda unos segundos",
     claimedBadge: "Victoria guardada",
-    errorRecoveryHint:
-      "Tu partida está guardada. Puedes intentar guardarla de nuevo cuando quieras.",
+    errorRecoveryHint: "Tu progreso está a salvo. Toca reintentar cuando quieras.",
     errorKindCopy: {
       error: {
         title: "No se pudo guardar",
-        subtitle: "Algo salió mal al guardar tu victoria.",
-        hint: "Tu partida está guardada. Puedes intentar guardarla de nuevo cuando quieras.",
+        subtitle: "",
+        hint: "Tu progreso está a salvo. Toca reintentar cuando quieras.",
       },
       cancelled: {
         title: "Guardada para después",

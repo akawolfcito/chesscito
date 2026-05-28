@@ -17,6 +17,7 @@ import {
 import { decodeEventLog } from "viem";
 import { useTranslations } from "next-intl";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
+import { VICTORY_CLAIM_COPY } from "@/lib/content/editorial";
 import { victoryAbi } from "@/lib/contracts/victory";
 import {
   ACCEPTED_TOKENS,
@@ -511,9 +512,16 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
 
       const raw = err instanceof Error ? err.message : "Claim failed";
       const errorKind = /expired/i.test(raw) ? "expired" : String(classifyTxErrorKind(err));
+      // Insufficient-balance check sits ABOVE translateTxError because the
+      // raw contract message ("No token with sufficient balance") is too
+      // opaque to surface to MiniPay/LATAM users. The friendly variant
+      // umbrellas USDC / USDT / USDm without naming them and works for
+      // both MiniPay (no CELO surface) and web wallets.
       const friendly = /expired/i.test(raw)
         ? tOverlay("error.signatureExpired")
-        : translateTxError(err);
+        : /No token with sufficient balance/i.test(raw)
+          ? VICTORY_CLAIM_COPY.errorInsufficientBalance
+          : translateTxError(err);
 
       setClaimError(friendly);
       setClaimPhase("error");

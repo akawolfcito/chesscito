@@ -646,6 +646,12 @@ export const VICTORY_CLAIM_COPY = {
   successSubtitle: "Your victory is saved. Your share card is ready.",
   errorTitle: "Couldn't save your victory",
   errorSubtitle: "Something went wrong while saving your result.",
+  /** Insufficient-balance specific subtitle. Surfaced when the mint
+   *  flow throws a "No token with sufficient balance" error (see
+   *  use-mint-victory.ts). "USD stablecoin" umbrellas USDC / USDT /
+   *  USDm without enumerating them and works for both MiniPay
+   *  (no CELO surface) and web wallets. */
+  errorInsufficientBalance: "Add some USD stablecoin to save your victory.",
   tryAgain: "Try Again",
   shareCard: "Share Card",
   challengeFriend: "Challenge a Friend",
@@ -666,7 +672,7 @@ export const VICTORY_CLAIM_COPY = {
   progressSteps: ["Signing", "Confirming", "Done"] as const,
   progressTimeHint: "This usually takes a few seconds",
   claimedBadge: "Victory Saved",
-  errorRecoveryHint: "Your game result is saved. You can try saving again anytime.",
+  errorRecoveryHint: "Your progress is safe. Tap try again any time.",
   /** Per-kind copy for the recoverable end states the claim flow can
    *  land in. The default "error" branch matches the historical
    *  errorTitle/errorSubtitle/errorRecoveryHint values so existing
@@ -674,8 +680,8 @@ export const VICTORY_CLAIM_COPY = {
   errorKindCopy: {
     error: {
       title: "Couldn't save your victory",
-      subtitle: "Something went wrong while saving your result.",
-      hint: "Your game result is saved. You can try saving again anytime.",
+      subtitle: "",
+      hint: "Your progress is safe. Tap try again any time.",
     },
     cancelled: {
       title: "Saved for later",

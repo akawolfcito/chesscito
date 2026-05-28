@@ -86,27 +86,49 @@ export function VictoryClaimError({
         <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-15" />
       </div>
 
-      {/* Hero — kicker + centered headline alone (no trophy). Matches
-          the win-celebration hero so all win-* variants share the same
-          opener. */}
-      <div className="victory-popup-hero-solo victory-popup-hero-solo--with-kicker">
-        <span className="arena-result-kicker">{kindTitle}</span>
-        <h1
-          className="arena-result-title"
-          style={isNeutral ? undefined : { color: "rgba(159, 18, 57, 0.95)" }}
-        >
-          {statusHeadline}
-        </h1>
-      </div>
+      {/* Hero — for kind="error" the descriptive title becomes the H1
+          (the bare "Error" status added no information and stacked
+          redundantly above the same subtitle). cancelled/timeout keep
+          the prior kicker + statusHeadline rhythm so the polite/wait
+          variants stay distinguishable. */}
+      {kind === "error" ? (
+        <div className="victory-popup-hero-solo">
+          <h1
+            className="arena-result-title"
+            style={{ color: "rgba(159, 18, 57, 0.95)" }}
+          >
+            {kindTitle}
+          </h1>
+        </div>
+      ) : (
+        <div className="victory-popup-hero-solo victory-popup-hero-solo--with-kicker">
+          <span className="arena-result-kicker">{kindTitle}</span>
+          <h1
+            className="arena-result-title"
+            style={isNeutral ? undefined : { color: "rgba(159, 18, 57, 0.95)" }}
+          >
+            {statusHeadline}
+          </h1>
+        </div>
+      )}
 
-      {/* Subtitle + optional error detail + hint. */}
-      <div className="victory-popup-error-detail">
-        <p className="victory-popup-error-subtitle">{kindSubtitle}</p>
-        {kind === "error" && errorMessage && (
-          <p className="victory-popup-error-message">{errorMessage}</p>
-        )}
-        <p className="victory-popup-error-hint">{kindHint}</p>
-      </div>
+      {/* Body. For kind="error" the line is either the specific error
+          message (e.g., insufficient balance) OR the generic recovery
+          hint, never both. Drops the old triple-stack of subtitle +
+          errorMessage + hint that surfaced the same idea three times
+          and contradicted itself ("Couldn't save" + "your result is
+          saved"). cancelled/timeout keep the additive subtitle + hint
+          structure because each line adds distinct context. */}
+      {kind === "error" ? (
+        <div className="victory-popup-error-detail">
+          <p className="victory-popup-error-hint">{errorMessage || kindHint}</p>
+        </div>
+      ) : (
+        <div className="victory-popup-error-detail">
+          {kindSubtitle && <p className="victory-popup-error-subtitle">{kindSubtitle}</p>}
+          <p className="victory-popup-error-hint">{kindHint}</p>
+        </div>
+      )}
 
       {/* Stats. */}
       <div className="arena-result-stats-row arena-result-stats-row--missionpills">
