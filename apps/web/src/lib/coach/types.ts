@@ -31,6 +31,15 @@ export type GameRecord = {
   elapsedMs: number;
   timestamp: number;
   receivedAt?: number;
+  /** Forward-leaning — server doesn't write today (standard chess only).
+   *  Reserved for Chess960 / variant openings. */
+  startingFen?: string;
+  /** Populated by POST /api/games/[id]/mint-receipt after mint success.
+   *  Serialized as decimal string (bigint not JSON-safe). */
+  mintedTokenId?: string;
+  claimTxHash?: `0x${string}`;
+  shareCardUrl?: string;
+  shareLinkUrl?: string;
 };
 
 export type Mistake = {
