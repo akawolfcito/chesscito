@@ -92,6 +92,12 @@ import { useMintVictory } from "@/lib/coach/use-mint-victory";
 
 const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
 
+// Import the pure X-close state machine. Logic lives in end-state-close-policy.ts
+// so tests can import it directly without pulling in the full page tree, and
+// without violating Next.js App Router's page-export constraints (only the
+// default export + reserved Next.js names are allowed in page files).
+import { evaluateXClose } from "./end-state-close-policy";
+
 type SignatureResponse =
   | { nonce: string; deadline: string; signature: `0x${string}`; error?: never }
   | { error: string };
@@ -1171,6 +1177,18 @@ function ArenaPageInner() {
     };
   }, [isEndState]);
 
+  // T10 — visibilitychange guard: if the WebView is backgrounded during the
+  // 800ms endOverlayTimer gap the timeout may stall; re-show the popup when
+  // the tab becomes visible again so the user never sees a blank end-state.
+  useEffect(() => {
+    if (!isEndState || showEndOverlay) return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") setShowEndOverlay(true);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [isEndState, showEndOverlay]);
+
   const handleStartWithLoading = useCallback(() => {
     // Remember for next visit — so returning users skip the selector.
     try {
@@ -1308,6 +1326,43 @@ function ArenaPageInner() {
       result: "user-dismissed",
     });
   }, []);
+
+  // T10 — X-close state machine (pendingNavRef + handleEndStateClose).
+  // When the user taps X during an in-flight persist we set the ref and
+  // let the terminal-transition consumer below fire the navigation once
+  // the persist settles, rather than navigating mid-request.
+  const pendingNavRef = useRef(false);
+
+  const handleEndStateClose = useCallback(() => {
+    const eff = evaluateXClose({
+      persistState,
+      claimPhase,
+      walletAddress: address,
+      gameId: persistedGameId ?? undefined,
+    });
+    if (eff.type === "push") {
+      router.push(eff.href);
+    } else if (eff.type === "set-pending") {
+      pendingNavRef.current = true;
+    }
+    setShowEndOverlay(false);
+  }, [persistState, claimPhase, address, persistedGameId, router]);
+
+  // T10 — pendingNavRef consumer: fires deferred navigation once persist
+  // reaches a terminal state (persisted / failed / dismissed).
+  useEffect(() => {
+    if (!pendingNavRef.current) return;
+    if (persistState === "persisted" && persistedGameId && address) {
+      pendingNavRef.current = false;
+      router.push(`/coach/${persistedGameId}?wallet=${address}`);
+    } else if (persistState === "failed") {
+      pendingNavRef.current = false;
+      router.push("/arena?fresh=1");
+      // failure toast already rendered by PersistOverlay component
+    } else if (persistState === "dismissed") {
+      pendingNavRef.current = false;
+    }
+  }, [persistState, persistedGameId, address, router]);
 
   // Cluster E — history Analyze chip. Source dim is "history"; the
   // gameId is already persisted (it came from /api/games), so we skip
@@ -1909,7 +1964,7 @@ function ArenaPageInner() {
             isPlayerWin={isPlayerWin}
             onPlayAgain={handlePlayAgain}
             onBackToHub={handleBackToHub}
-            onClose={() => setShowEndOverlay(false)}
+            onClose={handleEndStateClose}
             claimPhase={claimPhase}
             claimStep={claimStep}
             shareStatus={shareStatus}
