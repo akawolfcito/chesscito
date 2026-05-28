@@ -1,0 +1,69 @@
+import { describe, expect, it, vi, beforeEach } from "vitest";
+
+const redisGet = vi.hoisted(() => vi.fn());
+vi.mock("@upstash/redis", () => ({
+  Redis: { fromEnv: () => ({ get: redisGet }) },
+}));
+vi.mock("@/lib/server/demo-signing", () => ({
+  enforceOrigin: vi.fn(),
+  enforceRateLimit: vi.fn(),
+  getRequestIp: () => "127.0.0.1",
+}));
+vi.mock("@/lib/server/logger", () => ({
+  createLogger: () => ({ warn: vi.fn(), error: vi.fn() }),
+  hashWallet: (w: string) => `hash(${w})`,
+}));
+
+import { GET } from "../route";
+
+describe("GET /api/games/[id]", () => {
+  const wallet = "0x1111111111111111111111111111111111111111";
+  const gameId = "550e8400-e29b-41d4-a716-446655440000";
+
+  beforeEach(() => {
+    redisGet.mockReset();
+  });
+
+  it("returns 400 when wallet missing", async () => {
+    const req = new Request(`http://localhost/api/games/${gameId}`);
+    const res = await GET(req, { params: Promise.resolve({ id: gameId }) });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when wallet invalid", async () => {
+    const req = new Request(`http://localhost/api/games/${gameId}?wallet=not-an-address`);
+    const res = await GET(req, { params: Promise.resolve({ id: gameId }) });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when gameId not UUID", async () => {
+    const req = new Request(`http://localhost/api/games/garbage?wallet=${wallet}`);
+    const res = await GET(req, { params: Promise.resolve({ id: "garbage" }) });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 on cache miss", async () => {
+    redisGet.mockResolvedValue(null);
+    const req = new Request(`http://localhost/api/games/${gameId}?wallet=${wallet}`);
+    const res = await GET(req, { params: Promise.resolve({ id: gameId }) });
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 200 with gameRecord on cache hit", async () => {
+    const record = {
+      gameId,
+      moves: ["e4", "e5"],
+      result: "win",
+      difficulty: "easy",
+      totalMoves: 2,
+      elapsedMs: 12_000,
+      timestamp: Date.now(),
+    };
+    redisGet.mockResolvedValue(record);
+    const req = new Request(`http://localhost/api/games/${gameId}?wallet=${wallet}`);
+    const res = await GET(req, { params: Promise.resolve({ id: gameId }) });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.gameId).toBe(gameId);
+  });
+});
