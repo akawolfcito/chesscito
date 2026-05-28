@@ -88,6 +88,7 @@ import {
 import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
 import { useCoachAnalysis } from "@/lib/coach/use-coach-analysis";
 import { useCoachCreditsPurchase } from "@/lib/coach/use-coach-credits-purchase";
+import { useMintVictory } from "@/lib/coach/use-mint-victory";
 
 const ENABLE_COACH = process.env.NEXT_PUBLIC_ENABLE_COACH !== "false";
 
@@ -177,6 +178,15 @@ function ArenaPageInner() {
   // Underscore prefix marks them as currently unused — T5b/T5c wire them in.
   // USE_EXTRACTED_COACH is referenced so the import isn't dead-stripped.
   void USE_EXTRACTED_COACH;
+
+  // T6 skeleton: extracted mint-victory hook called UNCONDITIONALLY.
+  // Flag selects which state the JSX reads. Default OFF — legacy
+  // inline state is the source of truth until T6b transplants the logic.
+  const USE_EXTRACTED_MINT = process.env.NEXT_PUBLIC_USE_EXTRACTED_MINT_HOOK === "true";
+  const _mintExtracted = useMintVictory({});
+  // Underscore prefix marks it as currently unused — T6b wires it in.
+  // USE_EXTRACTED_MINT is referenced so the import isn't dead-stripped.
+  void USE_EXTRACTED_MINT;
 
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
