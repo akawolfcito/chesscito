@@ -15,6 +15,11 @@ export type ArenaGameSave = {
   difficulty: ArenaDifficulty;
   playerColor: PlayerColor;
   savedAt: number;
+  /** Origin FEN for the move-history replay. Undefined ⇒ standard startpos
+   *  (fresh game). On resume from localStorage we capture the resumed FEN
+   *  here so the post-game viewer can replay `moveHistory` from a consistent
+   *  origin instead of failing as illegal SAN from startpos. */
+  startingFen?: string;
 };
 
 function isArenaDifficulty(value: unknown): value is ArenaDifficulty {
@@ -66,6 +71,11 @@ export function loadArenaGame(): ArenaGameSave | null {
       ? parsed.playerColor
       : "w";
 
+    // startingFen is optional and forward-compatible: a non-string value
+    // (legacy save, or someone hand-edited the key) is dropped rather
+    // than discarded. The consumer falls back to saved.fen as the origin.
+    const startingFen = typeof parsed.startingFen === "string" ? parsed.startingFen : undefined;
+
     return {
       fen: parsed.fen,
       moveHistory: parsed.moveHistory.filter((m): m is string => typeof m === "string"),
@@ -74,6 +84,7 @@ export function loadArenaGame(): ArenaGameSave | null {
       difficulty: parsed.difficulty,
       playerColor,
       savedAt: parsed.savedAt,
+      startingFen,
     };
   } catch {
     clearArenaGame();

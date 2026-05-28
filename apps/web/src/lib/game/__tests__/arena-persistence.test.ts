@@ -137,6 +137,39 @@ describe("arena-persistence", () => {
       const loaded = loadArenaGame();
       expect(loaded!.moveHistory).toEqual(["e4", "e5"]);
     });
+
+    it("round-trips startingFen when present", () => {
+      saveArenaGame({
+        fen: AFTER_E4_FEN,
+        moveHistory: ["e4"],
+        moveCount: 1,
+        elapsedMs: 5000,
+        difficulty: "easy",
+        playerColor: "w",
+        startingFen: VALID_FEN,
+      });
+      const loaded = loadArenaGame();
+      expect(loaded).not.toBeNull();
+      expect(loaded!.startingFen).toEqual(VALID_FEN);
+    });
+
+    it("treats missing startingFen as undefined (legacy save)", () => {
+      const legacy = makeSave();
+      localStorage.setItem(ARENA_GAME_KEY, JSON.stringify(legacy));
+      const loaded = loadArenaGame();
+      expect(loaded).not.toBeNull();
+      expect(loaded!.startingFen).toBeUndefined();
+    });
+
+    it("drops non-string startingFen to undefined (does not discard the save)", () => {
+      localStorage.setItem(
+        ARENA_GAME_KEY,
+        JSON.stringify(makeSave({ startingFen: 42 as unknown as string })),
+      );
+      const loaded = loadArenaGame();
+      expect(loaded).not.toBeNull();
+      expect(loaded!.startingFen).toBeUndefined();
+    });
   });
 
   describe("clearArenaGame", () => {

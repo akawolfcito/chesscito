@@ -42,6 +42,10 @@ export type ChessGameState = {
   moveCount: number;
   moveHistory: string[];
   elapsedMs: number;
+  /** Origin FEN for the moveHistory replay. Undefined ⇒ standard startpos
+   *  (fresh game). Populated on resume from localStorage so the post-game
+   *  Coach viewer can replay moves from the correct origin. */
+  startingFen: string | undefined;
   errorMessage: string | null;
   selectSquare: (square: string) => void;
   promoteWith: (piece: "q" | "r" | "b" | "n") => void;
@@ -65,6 +69,7 @@ export function useChessGame(): ChessGameState {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [moveCount, setMoveCount] = useState(0);
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
+  const [startingFen, setStartingFen] = useState<string | undefined>(undefined);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [rejectingSquare, setRejectingSquare] = useState<string | null>(null);
   const gameStartRef = useRef<number>(0);
@@ -340,6 +345,7 @@ export function useChessGame(): ChessGameState {
     setErrorMessage(null);
     setMoveCount(0);
     setMoveHistory([]);
+    setStartingFen(undefined);
     setElapsedMs(0);
     setRejectingSquare(null);
     gameStartRef.current = 0;
@@ -366,6 +372,7 @@ export function useChessGame(): ChessGameState {
     setErrorMessage(null);
     setMoveCount(0);
     setMoveHistory([]);
+    setStartingFen(undefined);
     setElapsedMs(0);
     gameStartRef.current = Date.now();
     gameEndRef.current = 0;
@@ -396,8 +403,21 @@ export function useChessGame(): ChessGameState {
     gameStartRef.current = Date.now() - saved.elapsedMs;
     gameEndRef.current = 0;
     setFen(saved.fen);
-    setMoveHistory(saved.moveHistory);
-    setMoveCount(saved.moveCount);
+    // startingFen contract: nuevos saves arrastran su origen explícito (puede
+    // ser undefined si la partida arrancó fresh y no se ha resumido nunca);
+    // legacy saves (pre-fix) carecen del campo, así que adoptamos saved.fen
+    // como nuevo origen y reseteamos moveHistory — los moves pre-refresh no
+    // son replayables desde startpos y el partial-replay banner del viewer
+    // (T7) los habría descartado igualmente.
+    if (saved.startingFen !== undefined) {
+      setStartingFen(saved.startingFen);
+      setMoveHistory(saved.moveHistory);
+      setMoveCount(saved.moveCount);
+    } else {
+      setStartingFen(saved.fen);
+      setMoveHistory([]);
+      setMoveCount(0);
+    }
     setElapsedMs(saved.elapsedMs);
     setDifficulty(saved.difficulty);
     setPlayerColor(saved.playerColor);
@@ -430,9 +450,10 @@ export function useChessGame(): ChessGameState {
       elapsedMs,
       difficulty,
       playerColor,
+      startingFen,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fen, status, moveCount, difficulty, playerColor]);
+  }, [fen, status, moveCount, difficulty, playerColor, startingFen]);
 
   return {
     fen,
@@ -450,6 +471,7 @@ export function useChessGame(): ChessGameState {
     moveCount,
     moveHistory,
     elapsedMs,
+    startingFen,
     errorMessage,
     selectSquare,
     promoteWith,

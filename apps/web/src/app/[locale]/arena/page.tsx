@@ -548,6 +548,7 @@ function ArenaPageInner() {
               totalMoves: game.moveHistory.length,
               elapsedMs: game.elapsedMs,
               timestamp: Date.now(),
+              ...(game.startingFen !== undefined && { startingFen: game.startingFen }),
             } satisfies GameRecord,
           }),
         });
@@ -572,6 +573,7 @@ function ArenaPageInner() {
       game.elapsedMs,
       game.moveCount,
       game.moveHistory,
+      game.startingFen,
       game.status,
       isPlayerWin,
     ],
