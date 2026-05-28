@@ -24,6 +24,15 @@ type Props = {
   claimData: ClaimData;
   shareStatus: ShareStatus;
   onAskCoach?: () => void;
+  /** Coach CTA gating — mirrors VictoryCelebration so post-mint shares
+   *  the same coach-section vocabulary (#115). */
+  coachCtaDisabled?: boolean;
+  coachCtaBusy?: boolean;
+  coachTooShort?: boolean;
+  /** PRO status forwarded from arena-end-state — same flag as
+   *  VictoryCelebration. Drives the coach pill label
+   *  ("Open coach insight" vs "See key moments"). */
+  proActive?: boolean;
   coachPreview?: ReactNode;
 };
 
@@ -48,11 +57,16 @@ export function VictoryClaimSuccess({
   claimData,
   shareStatus,
   onAskCoach,
+  coachCtaDisabled = false,
+  coachCtaBusy = false,
+  coachTooShort = false,
+  proActive = false,
   coachPreview,
 }: Props) {
   const tArena = useTranslations("ARENA_COPY");
   const tClaim = useTranslations("VICTORY_CLAIM_COPY");
   const tCelebration = useTranslations("VICTORY_CELEBRATION_COPY");
+  const tCoachEntry = useTranslations("COACH_ENTRY_COPY");
   const time = formatTime(elapsedMs);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -74,6 +88,26 @@ export function VictoryClaimSuccess({
     : difficulty;
   const headline = tClaim("claimedBadge");
   const handleClose = onClose ?? onBackToHub;
+  const coachLabel = proActive
+    ? tCelebration("coachPillPro")
+    : tCelebration("coachPillFree");
+  const coachKicker = tCoachEntry("reviewKicker");
+  const coachHeadline = coachTooShort
+    ? tCoachEntry("reviewHeadlineTooShort")
+    : tCoachEntry("reviewHeadlineReady");
+  const coachBody = coachTooShort
+    ? tCoachEntry("reviewBodyTooShort")
+    : tCoachEntry("reviewBodyReady");
+  const coachTooltip = coachTooShort ? tCoachEntry("matchTooShort") : undefined;
+
+  const handleCoachClick = () => {
+    if (coachCtaDisabled || !onAskCoach) return;
+    track("coach_victory_analyze_tap", {
+      position: "secondary-on-claimed",
+      too_short: coachTooShort,
+    });
+    onAskCoach();
+  };
 
   return (
     <>
@@ -126,53 +160,84 @@ export function VictoryClaimSuccess({
           </span>
         </div>
 
-        {/* PLAY AGAIN primary + triumphant wolf floating right. */}
-        <div className="victory-popup-mint-row">
-          <button
-            type="button"
-            onClick={onPlayAgain}
-            className="arena-result-primary-cta arena-result-primary-cta--amber arena-result-primary-cta--inset"
-            aria-label={playAgainLabel}
+        {/* COACH — kicker + body (amber Ask Coach pill LEFT, wolf RIGHT).
+            Mirrors VictoryCelebration vocabulary so pre-mint and post-mint
+            share the same coach-section silhouette (#115). */}
+        {onAskCoach && (
+          <div
+            className="arena-result-coach-section"
+            aria-labelledby="victory-claim-coach-headline"
           >
-            <span className="arena-result-primary-cta-label">{playAgainLabel}</span>
-          </button>
-          <picture className="arena-result-coach-avatar victory-popup-avatar">
-            <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
-            <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
-            <img src={`${AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} />
-          </picture>
-        </div>
+            <div className="arena-result-coach-kicker-row">
+              <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
+              <span
+                className="arena-result-kicker"
+                id="victory-claim-coach-headline"
+              >
+                {coachKicker}
+              </span>
+              <span className="arena-result-coach-kicker-rule" aria-hidden="true" />
+            </div>
+            <div className="arena-result-coach-body">
+              <div className="arena-result-coach-text">
+                <h2
+                  id="victory-claim-coach-headline-h2"
+                  className="arena-result-coach-headline"
+                >
+                  {coachHeadline}
+                </h2>
+                <p className="arena-result-coach-body-text">{coachBody}</p>
+                <button
+                  type="button"
+                  onClick={handleCoachClick}
+                  disabled={coachCtaDisabled}
+                  aria-busy={coachCtaBusy || undefined}
+                  aria-disabled={coachCtaDisabled || undefined}
+                  title={coachTooltip}
+                  className="arena-result-primary-cta arena-result-primary-cta--amber disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <CandyIcon name="coach" className="h-5 w-5 shrink-0" />
+                  <span className="arena-result-primary-cta-label">{coachLabel}</span>
+                </button>
+              </div>
+              <picture className="arena-result-coach-avatar">
+                <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
+                <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
+                <img src={`${AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} />
+              </picture>
+            </div>
+          </div>
+        )}
 
         {/* Parent's coach preview slot (post-game preview card). */}
         {coachPreview && (
           <div className="arena-result-coach-wrap">{coachPreview}</div>
         )}
 
-        {/* Secondary actions — Ask Coach + Share. */}
-        {(onAskCoach || isShareReady) && (
-          <div className="victory-popup-secondary-row">
-            {onAskCoach && (
-              <button
-                type="button"
-                onClick={onAskCoach}
-                className="arena-result-secondary-action"
-              >
-                <CandyIcon name="coach" className="h-4 w-4" />
-                <span>{tClaim("reviewMatchCta")}</span>
-              </button>
-            )}
-            {isShareReady && (
-              <button
-                type="button"
-                onClick={() => setShareOpen(true)}
-                className="arena-result-secondary-action"
-              >
-                <CandyIcon name="share" className="h-4 w-4" />
-                <span>{SHARE_COPY.button}</span>
-              </button>
-            )}
-          </div>
-        )}
+        {/* TERTIARY — Play again + Share cream mini-pills. Matches the
+            VictoryCelebration tertiary row so both pre- and post-mint
+            share the same closing footprint. */}
+        <div className="victory-popup-secondary-row">
+          <button
+            type="button"
+            onClick={onPlayAgain}
+            className="arena-result-secondary-action"
+            aria-label={playAgainLabel}
+          >
+            <CandyIcon name="refresh" className="h-4 w-4" />
+            <span>{tCelebration("playAgainShort")}</span>
+          </button>
+          {isShareReady && (
+            <button
+              type="button"
+              onClick={() => setShareOpen(true)}
+              className="arena-result-secondary-action"
+            >
+              <CandyIcon name="share" className="h-4 w-4" />
+              <span>{SHARE_COPY.button}</span>
+            </button>
+          )}
+        </div>
       </VictoryPopupShell>
 
       <ShareModal

@@ -214,6 +214,10 @@ export function ArenaEndState({
               claimData={claimData}
               shareStatus={shareStatus}
               onAskCoach={onAskCoachFromVictory ?? onAskCoach}
+              coachCtaDisabled={coachCtaDisabled}
+              coachCtaBusy={isPersistBusy}
+              coachTooShort={isTooShort}
+              proActive={proActive}
               coachPreview={coachPreview}
             />
             {persistOverlay}
