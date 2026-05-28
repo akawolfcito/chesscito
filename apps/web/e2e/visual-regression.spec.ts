@@ -496,4 +496,76 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
       FIXTURE_OPTS,
     );
   });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // #119 — VR10 coach-viewer surface (`/coach/[gameId]` post-game review).
+  //
+  // Locks the GameViewer (board + slider + SAN list + partial-replay banner)
+  // + GameActionsBar (result-aware CTA matrix). Mounts both via a fixture
+  // under /dev/coach-viewer/ — no wagmi / no server fetch, deterministic
+  // moves drive useGameReplay.
+  //
+  // Coverage: 4 variants × minipay viewport. Desktop deferred — minipay is
+  // the production target per `feedback_vr_baseline_discipline.md`.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  test("vr10-coach-viewer-win-unminted — Ask Coach + Mint Victory + Play Again", async ({
+    page,
+  }) => {
+    await page.goto("/dev/coach-viewer?variant=viewer-win-unminted", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 600);
+    await expect(page).toHaveScreenshot(
+      "vr10-coach-viewer-win-unminted.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr10-coach-viewer-win-minted — Ask Coach Again + View NFT + Share + Play Again", async ({
+    page,
+  }) => {
+    await page.goto("/dev/coach-viewer?variant=viewer-win-minted", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 600);
+    await expect(page).toHaveScreenshot(
+      "vr10-coach-viewer-win-minted.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr10-coach-viewer-loss — Ask Coach + Play Again (no mint surface)", async ({
+    page,
+  }) => {
+    await page.goto("/dev/coach-viewer?variant=viewer-loss", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 600);
+    await expect(page).toHaveScreenshot(
+      "vr10-coach-viewer-loss.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr10-coach-viewer-partial-replay — illegal SAN surfaces error banner + disabled Ask Coach", async ({
+    page,
+  }) => {
+    await page.goto("/dev/coach-viewer?variant=viewer-partial-replay", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 600);
+    await expect(page).toHaveScreenshot(
+      "vr10-coach-viewer-partial-replay.png",
+      FIXTURE_OPTS,
+    );
+  });
 });
