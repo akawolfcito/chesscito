@@ -4,6 +4,7 @@ import {
   GAME_LIST_CAP,
   UUID_RE,
   EVICT_IF_UNANALYZED_LUA,
+  getGameRecord,
 } from "../game-persistence.js";
 
 type PipelineLike = {
@@ -354,5 +355,43 @@ describe("enforceGameCap — option overrides", () => {
       evicted: [],
       softOverflow: true,
     });
+  });
+});
+
+describe("getGameRecord", () => {
+  const GAME_ID = "6b3890dd-635d-40dd-aa85-8fe016a5e8aa";
+
+  function makeGetRedis(value: unknown) {
+    return { get: vi.fn().mockResolvedValue(value) };
+  }
+
+  it("reads the wallet-scoped key and returns the record", async () => {
+    const record = { gameId: GAME_ID, result: "win" } as never;
+    const redis = makeGetRedis(record);
+
+    const out = await getGameRecord(redis as never, WALLET, GAME_ID);
+
+    expect(out).toBe(record);
+    expect(redis.get).toHaveBeenCalledWith(`coach:game:${WALLET}:${GAME_ID}`);
+  });
+
+  it("returns null when redis has no entry", async () => {
+    const redis = makeGetRedis(null);
+    await expect(getGameRecord(redis as never, WALLET, GAME_ID)).resolves.toBeNull();
+  });
+
+  it("lowercases the wallet so checksum-cased callers hit the canonical key", async () => {
+    const redis = makeGetRedis(null);
+    const checksumed = "0xCc4179A22b473Ea2eB2B9b9b210458d0F60Fc2dD";
+
+    await getGameRecord(redis as never, checksumed, GAME_ID);
+
+    expect(redis.get).toHaveBeenCalledWith(`coach:game:${checksumed.toLowerCase()}:${GAME_ID}`);
+  });
+
+  it("propagates redis errors so callers can decide how to surface them", async () => {
+    const redis = { get: vi.fn().mockRejectedValue(new Error("conn refused")) };
+
+    await expect(getGameRecord(redis as never, WALLET, GAME_ID)).rejects.toThrow("conn refused");
   });
 });

@@ -1,14 +1,19 @@
-import { headers } from "next/headers";
+import { Redis } from "@upstash/redis";
+import { isAddress } from "viem";
 import { getTranslations } from "next-intl/server";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import type { GameRecord } from "@/lib/coach/types";
+import { UUID_RE, getGameRecord } from "@/lib/coach/game-persistence";
+import { createLogger } from "@/lib/server/logger";
 import { CoachGameClient } from "./coach-game-client";
 
 type PageProps = {
   params: Promise<{ locale: string; gameId: string }>;
   searchParams: Promise<{ wallet?: string }>;
 };
+
+const redis = Redis.fromEnv();
+const log = createLogger({ route: "/coach/[gameId]" });
 
 export default async function CoachGamePage({ params, searchParams }: PageProps) {
   const { gameId } = await params;
@@ -30,28 +35,58 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
     );
   }
 
-  const h = await headers();
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  const host = h.get("host") ?? "localhost:3000";
-  const url = `${proto}://${host}/api/games/${encodeURIComponent(gameId)}?wallet=${encodeURIComponent(wallet)}`;
-
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    const is404 = res.status === 404;
+  // Input guards mirror the /api/games/[id] route so an invalid wallet/UUID
+  // surfaces the same in-page 404 fallback instead of leaking a 500.
+  if (!isAddress(wallet) || !UUID_RE.test(gameId)) {
     return (
       <main className="arena-bg arena-scroll-screen h-[100dvh]">
         <ContextualHeader
           variant="back-control"
           iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
-          title={is404 ? t("notFoundMessage") : t("loadErrorTitle")}
-          subtitle={is404 ? undefined : t("loadErrorSubtitle")}
+          title={t("notFoundMessage")}
         />
         <CoachGameClient gameRecord={null} walletAddress={wallet as `0x${string}`} />
       </main>
     );
   }
 
-  const gameRecord = (await res.json()) as GameRecord;
+  // Read Redis directly — the prior SSR→`/api/games/[id]` fetch was a same-
+  // deployment HTTP roundtrip that didn't carry the user's auth cookie, so
+  // Vercel Deployment Protection rejected it with 401. The wallet-scoped
+  // Redis key is the canonical privacy boundary; the API route remains for
+  // legitimate client-side reads.
+  let gameRecord;
+  try {
+    gameRecord = await getGameRecord(redis, wallet, gameId);
+  } catch (err) {
+    log.error("game_fetch_error", {
+      error: err instanceof Error ? err.message : "unknown",
+    });
+    return (
+      <main className="arena-bg arena-scroll-screen h-[100dvh]">
+        <ContextualHeader
+          variant="back-control"
+          iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
+          title={t("loadErrorTitle")}
+          subtitle={t("loadErrorSubtitle")}
+        />
+        <CoachGameClient gameRecord={null} walletAddress={wallet as `0x${string}`} />
+      </main>
+    );
+  }
+
+  if (!gameRecord) {
+    return (
+      <main className="arena-bg arena-scroll-screen h-[100dvh]">
+        <ContextualHeader
+          variant="back-control"
+          iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
+          title={t("notFoundMessage")}
+        />
+        <CoachGameClient gameRecord={null} walletAddress={wallet as `0x${string}`} />
+      </main>
+    );
+  }
 
   return (
     <main className="arena-bg arena-scroll-screen h-[100dvh]">

@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import { isAddress } from "viem";
-import { REDIS_KEYS } from "@/lib/coach/redis-keys";
-import { UUID_RE } from "@/lib/coach/game-persistence";
+import { UUID_RE, getGameRecord } from "@/lib/coach/game-persistence";
 import { createLogger } from "@/lib/server/logger";
 import { enforceOrigin, enforceReadRateLimit, getRequestIp } from "@/lib/server/demo-signing";
-import type { GameRecord } from "@/lib/coach/types";
 
 const redis = Redis.fromEnv();
 const log = createLogger({ route: "/api/games/[id]" });
@@ -34,7 +32,7 @@ export async function GET(
   }
 
   try {
-    const record = await redis.get<GameRecord>(REDIS_KEYS.game(wallet, gameId));
+    const record = await getGameRecord(redis, wallet, gameId);
     if (!record) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }

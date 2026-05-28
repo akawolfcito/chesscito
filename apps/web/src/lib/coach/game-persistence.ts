@@ -1,4 +1,5 @@
 import type { Redis } from "@upstash/redis";
+import type { GameRecord } from "./types";
 import { REDIS_KEYS } from "./redis-keys";
 
 /**
@@ -208,4 +209,28 @@ export async function enforceGameCap(
   }
 
   return { evicted, softOverflow: false };
+}
+
+type GetGameRecordRedis = Pick<Redis, "get">;
+
+/**
+ * Single source of truth for "read one game record by wallet+id".
+ *
+ * Used by both `/api/games/[id]` (client-facing) and the `/coach/[gameId]`
+ * server component (SSR). The server component calls this directly instead
+ * of going through the API route — that roundtrip used to be intercepted
+ * by Vercel Deployment Protection with a 401 because internal server-to-
+ * server fetches don't carry the user's auth cookie.
+ *
+ * Caller is responsible for input validation (`isAddress`, `UUID_RE`).
+ * The wallet is normalized to lowercase to match the canonical Redis
+ * key shape produced by `REDIS_KEYS.game`.
+ */
+export async function getGameRecord(
+  redis: GetGameRecordRedis,
+  wallet: string,
+  gameId: string,
+): Promise<GameRecord | null> {
+  const normalizedWallet = wallet.toLowerCase();
+  return redis.get<GameRecord>(REDIS_KEYS.game(normalizedWallet, gameId));
 }
