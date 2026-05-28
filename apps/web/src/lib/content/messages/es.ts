@@ -535,6 +535,13 @@ const messages = {
     sliderAriaLabel: "Saltar a jugada",
     controlsAriaLabel: "Controles de reproducción",
     sanListAriaLabel: "Lista de jugadas",
+    actionsAriaLabel: "Acciones de la partida",
+    askCoach: "Preguntar al Coach",
+    askCoachAgain: "Preguntar al Coach otra vez",
+    mintVictory: "Acuñar Victoria",
+    viewNft: "Ver NFT",
+    share: "Compartir",
+    playAgain: "Jugar otra vez",
   },
   ARENA_COPY: {
     ...en.ARENA_COPY,

@@ -1439,6 +1439,13 @@ export const COACH_VIEWER_COPY = {
   sliderAriaLabel: "Jump to move",
   controlsAriaLabel: "Replay controls",
   sanListAriaLabel: "Move list",
+  actionsAriaLabel: "Match actions",
+  askCoach: "Ask Coach",
+  askCoachAgain: "Ask Coach again",
+  mintVictory: "Mint Victory",
+  viewNft: "View NFT",
+  share: "Share",
+  playAgain: "Play again",
 } as const;
 
 export const LEGAL_SHELL_COPY = {
