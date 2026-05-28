@@ -155,8 +155,20 @@ export function ShareModal({
               close={{ onClick: () => onOpenChange(false), label: t("closeLabel") }}
             />
           </div>
-          <div className="px-5 pt-5">
-            <ShareGrid text={text} url={url ?? tShare("url")} cardUrl={cardUrl ?? undefined} />
+          {/* Cream candy-panel wraps the icon grid so the icons read as
+              a contained card on top of the short sheet, matching the
+              visual rhythm of dock sheets (which are full-height and
+              show more bg-ch texture above the content). */}
+          <div className="px-4 pt-4 pb-2">
+            <div
+              className="rounded-[var(--candy-card-radius)] border border-[rgba(110,65,15,0.18)] p-4"
+              style={{
+                background: "rgba(255, 245, 215, 0.55)",
+                boxShadow: "0 2px 6px rgba(110, 65, 15, 0.08)",
+              }}
+            >
+              <ShareGrid text={text} url={url ?? tShare("url")} cardUrl={cardUrl ?? undefined} />
+            </div>
           </div>
         </div>
       </div>
