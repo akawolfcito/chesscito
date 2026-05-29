@@ -192,9 +192,9 @@ export function GameActionsBar({
         type="button"
         onClick={onViewNft}
         className="coach-viewer__actions-tertiary"
-        aria-label={t("viewNft")}
+        aria-label={t("viewOnCeloscan")}
       >
-        {t("viewNft")}
+        {t("viewOnCeloscan")}
       </button>
     );
   } else {

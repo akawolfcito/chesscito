@@ -37,11 +37,12 @@ describe("GameActionsBar", () => {
     expect(screen.queryByRole("button", { name: /^share$/ })).toBeNull();
   });
 
-  it("win + minted: Mint gone, Share secondary present, View NFT demoted to tertiary", () => {
-    // 2026-05-29 (Cluster C, commit 3a): post-mint, the primary CTA
-    // shifts to Ask Coach (or Play Again if analysis already done) and
-    // View NFT moves to a tertiary text link. The Mint button is no
-    // longer rendered for this state.
+  it("win + minted: Mint gone, Share secondary present, View on Celoscan tertiary", () => {
+    // 2026-05-29 (Cluster C, commit 3c): the tertiary "View NFT"
+    // label was renamed to "View on Celoscan" to set expectations
+    // (the tap opens the chain explorer in a new tab, not a profile
+    // page). The button still wires `onViewNft` — only the label
+    // changed.
     render(
       <GameActionsBar
         {...baseProps}
@@ -50,8 +51,9 @@ describe("GameActionsBar", () => {
       />,
     );
     expect(screen.queryByRole("button", { name: /^mintVictory$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^saveVictory$/ })).toBeNull();
     expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /viewNft/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /viewOnCeloscan/ })).toBeInTheDocument();
     // Primary now reads askCoach (hasAnalysis defaults to false).
     expect(screen.getByRole("button", { name: /^askCoach$/ })).toBeInTheDocument();
   });
@@ -113,7 +115,7 @@ describe("GameActionsBar", () => {
     expect(onMint).toHaveBeenCalledOnce();
   });
 
-  it("View NFT calls onViewNft when minted", () => {
+  it("View on Celoscan calls onViewNft when minted", () => {
     const onViewNft = vi.fn();
     render(
       <GameActionsBar
@@ -123,7 +125,7 @@ describe("GameActionsBar", () => {
         onViewNft={onViewNft}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /viewNft/ }));
+    fireEvent.click(screen.getByRole("button", { name: /viewOnCeloscan/ }));
     expect(onViewNft).toHaveBeenCalledOnce();
   });
 });

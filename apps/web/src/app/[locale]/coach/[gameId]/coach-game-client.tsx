@@ -257,6 +257,14 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
       </header>
 
       <div className="coach-viewer__board-card">
+        {tokenIdEffective && (
+          <span
+            className="coach-viewer__trophy-ribbon"
+            aria-label={t("trophyRibbonAriaLabel", { tokenId: tokenIdEffective })}
+          >
+            {t("trophyRibbon", { tokenId: tokenIdEffective })}
+          </span>
+        )}
         <div className="coach-viewer__board-frame">
           <BoardThumbnail
             fen={replay.currentFen}

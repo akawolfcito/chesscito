@@ -1481,6 +1481,13 @@ export const COACH_VIEWER_COPY = {
   // arena context. ES override in messages/es.ts.
   saveVictory: "Save Victory",
   saveVictoryAriaLabel: "Save Victory for {price}",
+  // 2026-05-29 (Cluster C, commit 3c): trophy ribbon + Celoscan
+  // tertiary. ES overrides in messages/es.ts. `viewNft` (legacy key)
+  // stays around because the dev fixture + existing tests still
+  // resolve it; the visor renders `viewOnCeloscan` exclusively.
+  trophyRibbon: "#{tokenId}",
+  trophyRibbonAriaLabel: "Trophy #{tokenId} saved on-chain",
+  viewOnCeloscan: "View on Celoscan",
 } as const;
 
 export const LEGAL_SHELL_COPY = {
