@@ -10139,6 +10139,41 @@ button.hud-resource-chip:active:not(:disabled) {
     drop-shadow(0 20px 32px rgba(63, 34, 8, 0.12));
 }
 
+/* Sally pass 5 — chapter break between Board and MOVES. Two thin
+ * warm-brown rules flanking a small ornament glyph. Reads as a book-
+ * page chapter divider; ties the 3 sections into one journal entry
+ * rather than 3 island cards. */
+.coach-viewer__chapter-break {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.15rem 0;
+  margin: 0 auto;
+  width: 70%;
+  max-width: 260px;
+  user-select: none;
+}
+
+.coach-viewer__chapter-break-rule {
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(110, 65, 15, 0) 0%,
+    rgba(110, 65, 15, 0.35) 50%,
+    rgba(110, 65, 15, 0) 100%
+  );
+}
+
+.coach-viewer__chapter-break-glyph {
+  color: rgba(180, 83, 9, 0.7);
+  font-size: 0.78rem;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.65);
+  letter-spacing: 0.1em;
+}
+
 .coach-viewer__board-frame > [role="img"] {
   /* BoardThumbnail renders its outer wrapper with inline `position:
    * relative`. Anchor it into our frame so percentages resolve against
@@ -10224,14 +10259,17 @@ button.hud-resource-chip:active:not(:disabled) {
   overflow: visible;
 }
 
-/* Replay row — inside the action deck, no own border or background
- * (the deck owns the frame). Arrows + slider on a single line. */
+/* Replay row — inside the action deck. Sally pass 5 adds a thin
+ * recessed channel under the slider so it reads as "tallado en el
+ * deck" rather than floating bar. The arrows stand above the channel
+ * (their own background stays transparent — the channel only wraps
+ * the slider itself, see .coach-viewer__replay-slider rule). */
 .coach-viewer__replay {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0;
+  gap: 0.5rem;
+  padding: 0.15rem 0.1rem;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -10286,17 +10324,20 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__replay-slider {
-  /* Vitrine-progress treatment — mirrors `.trophy-vitrine-hero-progress`
-   * (warm-brown muted track + subtle inner shadow) with a discreet
-   * cream thumb for scrubbing. The fill bar visualization stays in
-   * the thumb's position; we don't try to JS-update a left-fill var. */
+  /* Sally pass 5 — slider track now reads as a channel TALLADO INTO
+   * the deck rather than a bar lying on top of it. Inset shadow
+   * stack: dark inner top edge (depth) + light inner bottom edge
+   * (highlight catching from below) + thin gold rim. */
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
   height: 0.5rem;
   border-radius: 9999px;
-  background: rgba(110, 65, 15, 0.18);
-  box-shadow: inset 0 1px 0 rgba(110, 65, 15, 0.1);
+  background: linear-gradient(180deg, rgba(110, 65, 15, 0.28) 0%, rgba(180, 120, 35, 0.18) 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(63, 34, 8, 0.4),
+    inset 0 -1px 0 rgba(255, 245, 215, 0.5),
+    inset 0 0 0 1px rgba(232, 193, 96, 0.4);
   border: 0;
   cursor: pointer;
   outline: none;
@@ -10347,6 +10388,29 @@ button.hud-resource-chip:active:not(:disabled) {
     0 16px 30px rgba(63, 34, 8, 0.08);
   padding: 0.4rem 0.6rem 0.45rem;
   overflow: hidden;
+}
+
+/* Sally pass 5 — diagonal corner accents (top-left + bottom-right)
+ * read as gold-leaf framing on both cream panels. Pseudo-element
+ * carries a 4-corner background-image trick: linear-gradients masked
+ * to small L-shapes anchored at each corner. Same accent style on
+ * MOVES + Action Deck rhymes them as "two pages of the same book". */
+.coach-viewer__move-list::before,
+.coach-viewer__action-deck::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    /* top-left corner — horizontal stroke */
+    linear-gradient(90deg, rgba(232, 193, 96, 0.85) 0%, rgba(232, 193, 96, 0.85) 14px, transparent 14px) top left / 14px 1.5px no-repeat,
+    /* top-left corner — vertical stroke */
+    linear-gradient(180deg, rgba(232, 193, 96, 0.85) 0%, rgba(232, 193, 96, 0.85) 14px, transparent 14px) top left / 1.5px 14px no-repeat,
+    /* bottom-right corner — horizontal stroke */
+    linear-gradient(90deg, rgba(232, 193, 96, 0.85) 0%, rgba(232, 193, 96, 0.85) 14px, transparent 14px) bottom right / 14px 1.5px no-repeat,
+    /* bottom-right corner — vertical stroke */
+    linear-gradient(180deg, rgba(232, 193, 96, 0.85) 0%, rgba(232, 193, 96, 0.85) 14px, transparent 14px) bottom right / 1.5px 14px no-repeat;
 }
 
 .coach-viewer__move-list-header {

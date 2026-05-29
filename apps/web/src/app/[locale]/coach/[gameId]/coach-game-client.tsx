@@ -335,6 +335,12 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
           />
         </div>
 
+        <div className="coach-viewer__chapter-break" aria-hidden="true">
+          <span className="coach-viewer__chapter-break-rule"></span>
+          <span className="coach-viewer__chapter-break-glyph">⟁</span>
+          <span className="coach-viewer__chapter-break-rule"></span>
+        </div>
+
         <GameViewer
           moves={gameRecord.moves}
           startingFen={gameRecord.startingFen}
