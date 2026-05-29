@@ -10227,78 +10227,89 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__replay-arrow {
+  /* Asset-driven arrow buttons — the chip background was dropped so
+   * the play.png illustration reads as the dominant affordance. The
+   * `<button>` is sized to the icon directly + a small hit-target
+   * inset for thumb-friendly taps. */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 9999px;
-  border: 1px solid rgba(180, 120, 35, 0.45);
-  background: rgba(255, 245, 215, 0.92);
-  color: rgba(63, 34, 8, 0.95);
-  font-size: 1rem;
-  font-weight: 800;
-  line-height: 1;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   cursor: pointer;
-  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55), 0 1px 2px rgba(63, 34, 8, 0.16);
-  transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+  transition: transform var(--duration-snap) ease, filter var(--duration-snap) ease;
+}
+
+.coach-viewer__replay-arrow picture,
+.coach-viewer__replay-arrow img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.coach-viewer__replay-arrow--prev img {
+  /* The `play.png` source faces right. Flip horizontally for the
+   * back-arrow position so we ship one asset for both directions. */
+  transform: scaleX(-1);
 }
 
 .coach-viewer__replay-arrow:hover:not(:disabled) {
-  background: rgba(255, 245, 215, 1);
+  filter: brightness(1.05);
 }
 
 .coach-viewer__replay-arrow:active:not(:disabled) {
-  transform: scale(0.94);
+  transform: scale(0.92);
 }
 
 .coach-viewer__replay-arrow:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
+  filter: grayscale(0.4);
 }
 
 .coach-viewer__replay-slider {
-  /* Reset native chrome — the inherited blue/purple track in the
-   * unstyled visor was loud and didn't match the candy palette. */
+  /* Vitrine-progress treatment — mirrors `.trophy-vitrine-hero-progress`
+   * (warm-brown muted track + subtle inner shadow) with a discreet
+   * cream thumb for scrubbing. The fill bar visualization stays in
+   * the thumb's position; we don't try to JS-update a left-fill var. */
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 8px;
+  height: 0.5rem;
   border-radius: 9999px;
-  background: linear-gradient(
-    90deg,
-    rgba(180, 83, 9, 0.72) 0%,
-    rgba(180, 83, 9, 0.72) calc(var(--coach-viewer-slider-fill, 50%) * 1),
-    rgba(255, 245, 215, 0.85) calc(var(--coach-viewer-slider-fill, 50%) * 1),
-    rgba(255, 245, 215, 0.85) 100%
-  );
-  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(110, 65, 15, 0.18);
+  box-shadow: inset 0 1px 0 rgba(110, 65, 15, 0.1);
+  border: 0;
   cursor: pointer;
   outline: none;
-  /* The gradient fill needs a custom property that JS isn't wiring up
-   * (it's a v1 cosmetic — the value defaults to 50% so the track
-   * still looks balanced even without the live progress update). */
 }
 
 .coach-viewer__replay-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 9999px;
-  background: rgba(255, 245, 215, 1);
-  border: 2px solid rgba(180, 83, 9, 0.9);
-  box-shadow: 0 1px 2px rgba(63, 34, 8, 0.28);
+  background: linear-gradient(180deg, rgb(168, 85, 247) 0%, rgb(126, 34, 206) 100%);
+  border: 2px solid rgba(255, 245, 215, 0.95);
+  box-shadow: 0 1px 2px rgba(63, 34, 8, 0.32);
   cursor: pointer;
 }
 
 .coach-viewer__replay-slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 9999px;
-  background: rgba(255, 245, 215, 1);
-  border: 2px solid rgba(180, 83, 9, 0.9);
-  box-shadow: 0 1px 2px rgba(63, 34, 8, 0.28);
+  background: linear-gradient(180deg, rgb(168, 85, 247) 0%, rgb(126, 34, 206) 100%);
+  border: 2px solid rgba(255, 245, 215, 0.95);
+  box-shadow: 0 1px 2px rgba(63, 34, 8, 0.32);
   cursor: pointer;
 }
 

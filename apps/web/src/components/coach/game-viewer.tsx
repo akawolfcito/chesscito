@@ -142,9 +142,13 @@ export function GameViewer({
           onClick={replay.goPrev}
           disabled={!replay.canPrev}
           aria-label={t("previousMove")}
-          className="coach-viewer__replay-arrow"
+          className="coach-viewer__replay-arrow coach-viewer__replay-arrow--prev"
         >
-          ←
+          <picture>
+            <source srcSet="/art/new-assets-chesscito/btns/play.avif" type="image/avif" />
+            <source srcSet="/art/new-assets-chesscito/btns/play.webp" type="image/webp" />
+            <img src="/art/new-assets-chesscito/btns/play.png" alt="" draggable={false} />
+          </picture>
         </button>
         <input
           type="range"
@@ -174,9 +178,13 @@ export function GameViewer({
           onClick={replay.goNext}
           disabled={!replay.canNext}
           aria-label={t("nextMove")}
-          className="coach-viewer__replay-arrow"
+          className="coach-viewer__replay-arrow coach-viewer__replay-arrow--next"
         >
-          →
+          <picture>
+            <source srcSet="/art/new-assets-chesscito/btns/play.avif" type="image/avif" />
+            <source srcSet="/art/new-assets-chesscito/btns/play.webp" type="image/webp" />
+            <img src="/art/new-assets-chesscito/btns/play.png" alt="" draggable={false} />
+          </picture>
         </button>
       </div>
     </>

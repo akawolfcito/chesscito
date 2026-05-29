@@ -41,9 +41,9 @@ type Tile = {
 
 const TILE_ICON: Record<TileKind, { avif: string; webp: string; png: string }> = {
   "play-again": {
-    avif: "/art/action-row/refresh.avif",
-    webp: "/art/action-row/refresh.webp",
-    png: "/art/action-row/refresh.png",
+    avif: "/art/new-assets-chesscito/btns/play-again-icon.avif",
+    webp: "/art/new-assets-chesscito/btns/play-again-icon.webp",
+    png: "/art/new-assets-chesscito/btns/play-again-icon.png",
   },
   "save-victory": {
     avif: "/art/new-icons-chesscito/save.avif",
@@ -51,9 +51,9 @@ const TILE_ICON: Record<TileKind, { avif: string; webp: string; png: string }> =
     png: "/art/new-icons-chesscito/save.png",
   },
   "ask-coach": {
-    avif: "/art/redesign/icons/coach.avif",
-    webp: "/art/redesign/icons/coach.webp",
-    png: "/art/redesign/icons/coach.png",
+    avif: "/art/new-assets-chesscito/btns/ask-coach-icon.avif",
+    webp: "/art/new-assets-chesscito/btns/ask-coach-icon.webp",
+    png: "/art/new-assets-chesscito/btns/ask-coach-icon.png",
   },
   share: {
     avif: "/art/action-row/trofeo-epico.avif",
