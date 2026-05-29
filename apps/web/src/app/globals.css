@@ -9813,6 +9813,10 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  /* 2026-05-29 — flip horizontally so the wizard wolf faces RIGHT
+   * (into the badges) rather than LEFT (away from the panel
+   * content). Reads as a guide presenting the badges. */
+  transform: scaleX(-1);
 }
 
 .badge-vitrine-hero-content {

@@ -261,33 +261,10 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
             </div>
           )}
 
-          {champion && (
-            <div className="leaderboard-champion-card">
-              <div className="leaderboard-champion-glow" />
-              <div className="relative z-10 flex flex-col items-center">
-                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/20 shadow-inner">
-                  <CandyIcon name="crown" className="h-8 w-8 text-amber-600 drop-shadow-[0_2px_4px_rgba(180,83,9,0.3)]" />
-                </div>
-                <span className="text-nano font-black uppercase tracking-[0.3em] text-amber-900/40">
-                  {t("champion")}
-                </span>
-                <p className="mt-1 font-mono text-xs font-black text-amber-950">
-                  {champion.player}
-                  {champion.isVerified && (
-                    <CandyIcon name="check" className="ml-1 inline-block h-3.5 w-3.5 text-amber-600" />
-                  )}
-                </p>
-                <div className="mt-4 flex flex-col items-center">
-                  <span className="text-nano font-black uppercase tracking-widest text-amber-900/40">
-                    {t("columnScore")}
-                  </span>
-                  <span className="text-3xl font-black tabular-nums text-amber-950">
-                    {champion.score}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Champion duplicate card removed 2026-05-29 — the hero
+              "THE RANKING" band above already surfaces champion +
+              score; the duplicate card was visual noise that ate
+              vertical space without adding new info. */}
 
           {competitors.length > 0 && (
             <div className="flex flex-col gap-2.5">
