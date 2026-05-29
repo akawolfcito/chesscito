@@ -124,11 +124,10 @@ export function BoardRender({
       {pieces.map((p, i) => {
         const r = flipped ? 7 - p.rank : p.rank;
         const f = flipped ? 7 - p.file : p.file;
-        // WebP instead of PNG: Satori (@vercel/og runtime) supports
-        // both, and the .webp variants don't carry the 8-bit colormap
-        // metadata that newer Satori builds reject as "Unsupported
-        // image type". Same visual output, ~50% smaller fetch.
-        const pieceFile = p.color + "-" + PIECE_FILENAME[p.piece] + ".webp";
+        // PNG (RGBA, no 8-bit colormap). WebP rendered empty in Satori
+        // on @vercel/og preview runtime; PNGs work consistently as long
+        // as they're RGBA (re-encoded in adb19ae4).
+        const pieceFile = p.color + "-" + PIECE_FILENAME[p.piece] + ".png";
         const src = piecesBase + "/" + pieceFile;
         return (
           <div

@@ -40,13 +40,10 @@ export async function GET(req: Request) {
   const flipped = params.get("color") === "b";
   const fen = sanitizeFen(params.get("fen"));
 
-  // WebP variants of the same assets — Satori accepts WebP cleanly,
-  // and the .webp files don't carry the colormap PNG metadata that
-  // newer @vercel/og runtimes reject ("Unsupported image type:
-  // unknown"). Source PNGs stay around for non-OG consumers via
-  // image-set() picture fallbacks; only the OG endpoints switch.
-  const mascotUrl = new URL("/art/favicon-wolf.webp", req.url).toString();
-  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.webp", req.url).toString();
+  // PNG (RGBA). WebP rendered empty in Satori on @vercel/og preview
+  // runtime; PNGs work after the colormap → RGBA re-encode in adb19ae4.
+  const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
   const origin = new URL(req.url).origin;
 
   const cinzelData = await loadCinzelFont(req.url);

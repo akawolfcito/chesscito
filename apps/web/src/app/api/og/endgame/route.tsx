@@ -65,9 +65,10 @@ export async function GET(req: Request) {
 
   const fen = buildKrkFen(wk, wr, bk);
 
-  // WebP variants — see /api/og/match/route.tsx for the full rationale.
-  const mascotUrl = new URL("/art/favicon-wolf.webp", req.url).toString();
-  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.webp", req.url).toString();
+  // PNG (RGBA). WebP rendered empty in Satori; PNGs work after the
+  // colormap → RGBA re-encode in adb19ae4.
+  const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
 

@@ -48,10 +48,11 @@ export async function GET(req: Request) {
     ["piece-complete", "badge-earned", "daily"] as const,
   );
 
-  // WebP variants — see /api/og/match/route.tsx for the full rationale.
-  const mascotUrl = new URL("/art/favicon-wolf.webp", req.url).toString();
-  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.webp", req.url).toString();
-  const pieceFile = "w-" + piece + ".webp";
+  // PNG (RGBA). WebP rendered empty in Satori; PNGs work after the
+  // colormap → RGBA re-encode in adb19ae4.
+  const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
+  const pieceFile = "w-" + piece + ".png";
   const pieceUrl = new URL(THEME_CONFIG.piecesBase + "/" + pieceFile, req.url).toString();
 
   const cinzelData = await loadCinzelFont(req.url);
@@ -82,7 +83,7 @@ export async function GET(req: Request) {
   let dailyFen: string | null = null;
   if (type === "daily" && startPos && targetPos) {
     dailyFen = buildExerciseFen(piece, startPos);
-    const starUrl = new URL("/art/redesign/icons/star.webp", req.url).toString();
+    const starUrl = new URL("/art/redesign/icons/star.png", req.url).toString();
     dailyOverlays = [{ rank: 7 - targetPos.rank, file: targetPos.file, iconUrl: starUrl }];
   }
 
