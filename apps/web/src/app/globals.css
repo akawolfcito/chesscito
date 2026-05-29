@@ -10242,25 +10242,9 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
 
-/* Action Deck (Sally pass 6) — same `.badge-vitrine-hero` material
- * as the MOVES panel above. Bottom-anchored via `margin-top: auto`.
- * Price ribbon (Save Victory) overhangs the top edge — overflow
- * visible + extra top padding for breathing room. */
-.coach-viewer__action-deck {
-  position: relative;
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem 0.85rem 0.85rem;
-  border-radius: 1.25rem;
-  background: linear-gradient(160deg, rgba(255, 245, 215, 0.95) 0%, rgba(252, 211, 77, 0.55) 100%);
-  border: 1px solid rgba(180, 120, 35, 0.55);
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 245, 215, 0.55),
-    0 6px 14px -8px rgba(110, 65, 15, 0.35);
-  overflow: visible;
-}
+/* `.coach-viewer__action-deck` removed in Sally pass 7 — its content
+ * (replay row + tiles row + tertiary) lives directly under
+ * `.coach-viewer__page` now. */
 
 /* Replay row — inside the action deck. Sally pass 5 adds a thin
  * recessed channel under the slider so it reads as "tallado en el
@@ -10368,24 +10352,53 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
 }
 
-/* Static move list (Sally pass 6) — adopts the canonical
- * `.badge-vitrine-hero` panel treatment so the visor speaks the same
- * material language as the Badges sheet. Diagonal cream→amber
- * gradient + thick cream inset highlight + single soft outer shadow.
- * Cleaner than the multi-layer stack from pass 3.1; reads as the
- * production-grade premium panel the rest of the app already uses. */
-.coach-viewer__move-list {
+/* Page panel (Sally pass 7) — one badge-vitrine sheet wraps the
+ * moves history + replay controls + action tiles into a single
+ * "journal page" instead of two stacked cards. Bottom-anchored via
+ * `margin-top: auto` so short games still glue the page to the
+ * viewport floor. Generous bottom padding so the action labels
+ * don't feel "al ras" against the page edge. */
+.coach-viewer__page {
   position: relative;
+  margin-top: auto;
   display: flex;
   flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.7rem 0.85rem 1.4rem;
   border-radius: 1.25rem;
   background: linear-gradient(160deg, rgba(255, 245, 215, 0.95) 0%, rgba(252, 211, 77, 0.55) 100%);
   border: 1px solid rgba(180, 120, 35, 0.55);
   box-shadow:
     inset 0 0 0 2px rgba(255, 245, 215, 0.55),
     0 6px 14px -8px rgba(110, 65, 15, 0.35);
-  padding: 0.4rem 0.6rem 0.45rem;
-  overflow: hidden;
+  overflow: visible;
+}
+
+/* Internal divider between the moves history and the controls +
+ * tiles section. Subtle warm-brown gradient rule — softer than the
+ * inter-page chapter break so the section transition reads as a
+ * paragraph break, not a chapter end. */
+.coach-viewer__page-divider {
+  height: 1px;
+  margin: 0.1rem 0.4rem;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(110, 65, 15, 0.28) 50%,
+    transparent 100%
+  );
+}
+
+/* MOVES section — INSIDE the merged page panel. Pass 7 drops the
+ * panel chrome (bg + border + shadow + outer padding) that pass 6
+ * had given it as a standalone card. The section now lives as a
+ * paragraph inside the page. */
+.coach-viewer__move-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: visible;
 }
 
 /* Pass 5 corner accents removed — the canonical badge-vitrine

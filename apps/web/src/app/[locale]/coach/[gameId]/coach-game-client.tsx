@@ -345,18 +345,22 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
           <span className="coach-viewer__chapter-break-rule"></span>
         </div>
 
-        <GameViewer
-          moves={gameRecord.moves}
-          startingFen={gameRecord.startingFen}
-          replay={replay}
-          hideBoardThumbnail
-          onMoveJump={handleMoveJump}
-        />
+        {/* Page panel — merges MOVES history + replay controls + action
+            tiles into ONE cream-amber sheet (Sally pass 7). They were
+            two stacked cards before; the merge reads as a single
+            journal page with internal section transitions instead of
+            duplicate UI containers. Bottom-anchored via
+            `margin-top: auto`. */}
+        <div className="coach-viewer__page">
+          <GameViewer
+            moves={gameRecord.moves}
+            startingFen={gameRecord.startingFen}
+            replay={replay}
+            hideBoardThumbnail
+            onMoveJump={handleMoveJump}
+          />
 
-        {/* Action Deck — replay slider + tiles + tertiary, wrapped in
-            one cream-amber panel anchored to the viewport bottom via
-            `margin-top: auto` on `.coach-viewer__action-deck`. */}
-        <div className="coach-viewer__action-deck">
+          <div className="coach-viewer__page-divider" aria-hidden="true"></div>
           {replay.error && (
             <div role="alert" className="coach-viewer__replay-error">
               {t("replayStoppedAtMove", {
