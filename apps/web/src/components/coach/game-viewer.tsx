@@ -79,57 +79,6 @@ export function GameViewer({
         </div>
       )}
 
-      <div
-        className="coach-viewer__replay"
-        role="group"
-        aria-label={t("controlsAriaLabel")}
-      >
-        <button
-          type="button"
-          onClick={replay.goPrev}
-          disabled={!replay.canPrev}
-          aria-label={t("previousMove")}
-          className="coach-viewer__replay-arrow"
-        >
-          ←
-        </button>
-        <input
-          type="range"
-          min={0}
-          max={replay.lastValidIndex}
-          step={1}
-          value={replay.currentIndex}
-          onChange={(e) => replay.goTo(Number(e.target.value))}
-          onPointerDown={() => {
-            scrubStartRef.current = replay.currentIndex;
-          }}
-          onPointerUp={() => {
-            const from = scrubStartRef.current;
-            scrubStartRef.current = null;
-            if (from == null) return;
-            onReplayScrub?.(from, replay.currentIndex);
-          }}
-          aria-label={t("sliderAriaLabel")}
-          aria-valuetext={t("sliderProgress", {
-            current: String(replay.currentIndex),
-            total: String(replay.lastValidIndex),
-          })}
-          className="coach-viewer__replay-slider"
-        />
-        <button
-          type="button"
-          onClick={replay.goNext}
-          disabled={!replay.canNext}
-          aria-label={t("nextMove")}
-          className="coach-viewer__replay-arrow"
-        >
-          →
-        </button>
-        <span className="coach-viewer__replay-counter" aria-hidden="true">
-          {replay.currentIndex} / {replay.lastValidIndex}
-        </span>
-      </div>
-
       <div className="coach-viewer__move-list">
         <header
           className="coach-viewer__move-list-header"
@@ -181,6 +130,54 @@ export function GameViewer({
             );
           })}
         </ol>
+      </div>
+
+      <div
+        className="coach-viewer__replay"
+        role="group"
+        aria-label={t("controlsAriaLabel")}
+      >
+        <button
+          type="button"
+          onClick={replay.goPrev}
+          disabled={!replay.canPrev}
+          aria-label={t("previousMove")}
+          className="coach-viewer__replay-arrow"
+        >
+          ←
+        </button>
+        <input
+          type="range"
+          min={0}
+          max={replay.lastValidIndex}
+          step={1}
+          value={replay.currentIndex}
+          onChange={(e) => replay.goTo(Number(e.target.value))}
+          onPointerDown={() => {
+            scrubStartRef.current = replay.currentIndex;
+          }}
+          onPointerUp={() => {
+            const from = scrubStartRef.current;
+            scrubStartRef.current = null;
+            if (from == null) return;
+            onReplayScrub?.(from, replay.currentIndex);
+          }}
+          aria-label={t("sliderAriaLabel")}
+          aria-valuetext={t("sliderProgress", {
+            current: String(replay.currentIndex),
+            total: String(replay.lastValidIndex),
+          })}
+          className="coach-viewer__replay-slider"
+        />
+        <button
+          type="button"
+          onClick={replay.goNext}
+          disabled={!replay.canNext}
+          aria-label={t("nextMove")}
+          className="coach-viewer__replay-arrow"
+        >
+          →
+        </button>
       </div>
     </>
   );

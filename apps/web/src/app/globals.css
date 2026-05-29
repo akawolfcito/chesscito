@@ -10202,12 +10202,13 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
 
-/* Replay row — arrows + slider + ply counter on a single line. The
- * counter floats right of the row at a fixed width so the slider
- * keeps a stable scrubbing area regardless of digit count. */
+/* Replay row — arrows + slider on a single line. The ply counter
+ * was dropped in M2 (the slider's thumb position is the source of
+ * truth; doubling it as a digit pair felt redundant). `aria-valuetext`
+ * still announces `{current} / {total}` for screen readers. */
 .coach-viewer__replay {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.65rem;
@@ -10291,21 +10292,6 @@ button.hud-resource-chip:active:not(:disabled) {
   border: 2px solid rgba(180, 83, 9, 0.9);
   box-shadow: 0 1px 2px rgba(63, 34, 8, 0.28);
   cursor: pointer;
-}
-
-.coach-viewer__replay-counter {
-  /* Reserve a stable width so the slider doesn't twitch as digits
-   * shift between 1/9 → 10/99. 4.25em fits up to "999 / 999". */
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-width: 4.25em;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: rgba(63, 34, 8, 0.85);
-  font-variant-numeric: tabular-nums;
-  user-select: none;
 }
 
 /* Static move list (M1) — always-visible 2-col panel with a decorated
