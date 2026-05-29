@@ -1494,6 +1494,10 @@ export const COACH_VIEWER_COPY = {
   trophyRibbon: "#{tokenId}",
   trophyRibbonAriaLabel: "Trophy #{tokenId} saved on-chain",
   viewOnCeloscan: "View on Celoscan",
+  // 2026-05-29 (Cluster C, M3): post-mint Share tile label —
+  // distinct from the legacy `share` key (which arena re-uses) so
+  // the tile copy can evolve without coupling.
+  shareTrophy: "Share trophy",
 } as const;
 
 export const LEGAL_SHELL_COPY = {

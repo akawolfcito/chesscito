@@ -561,6 +561,7 @@ const messages = {
     // trophyRibbon: "#{tokenId}" — formato sin localizar.
     trophyRibbonAriaLabel: "Trofeo #{tokenId} guardado en cadena",
     viewOnCeloscan: "Ver en Celoscan",
+    shareTrophy: "Compartir trofeo",
   },
   ARENA_COPY: {
     ...en.ARENA_COPY,

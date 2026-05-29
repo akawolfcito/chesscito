@@ -37,12 +37,12 @@ describe("GameActionsBar", () => {
     expect(screen.queryByRole("button", { name: /^share$/ })).toBeNull();
   });
 
-  it("win + minted: Mint gone, Share secondary present, View on Celoscan tertiary", () => {
-    // 2026-05-29 (Cluster C, commit 3c): the tertiary "View NFT"
-    // label was renamed to "View on Celoscan" to set expectations
-    // (the tap opens the chain explorer in a new tab, not a profile
-    // page). The button still wires `onViewNft` — only the label
-    // changed.
+  it("win + minted: Mint gone, Share trophy tile present, View on Celoscan tertiary", () => {
+    // 2026-05-29 (Cluster C, M3): post-mint, the actions row renders
+    // 3 tiles — Play Again + Share trophy + Ask Coach — with View on
+    // Celoscan as the tertiary text link below. Save Victory is gone
+    // (already claimed); Share is the "shareTrophy" key (distinct
+    // from arena's legacy "share").
     render(
       <GameActionsBar
         {...baseProps}
@@ -52,10 +52,10 @@ describe("GameActionsBar", () => {
     );
     expect(screen.queryByRole("button", { name: /^mintVictory$/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^saveVictory$/ })).toBeNull();
-    expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /shareTrophy/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /viewOnCeloscan/ })).toBeInTheDocument();
-    // Primary now reads askCoach (hasAnalysis defaults to false).
     expect(screen.getByRole("button", { name: /^askCoach$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^playAgain$/ })).toBeInTheDocument();
   });
 
   it("loss: no Mint, no Share, Ask Coach + Play Again", () => {
