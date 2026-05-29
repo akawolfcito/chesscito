@@ -144,10 +144,19 @@ export function BoardRender({
               justifyContent: "center",
             }}
           >
+            {/* Both width AND height explicit so Satori never has to
+                decode the image bytes to infer aspect ratio — that
+                inference path keeps tripping in the latest @vercel/og
+                runtime with "Image size cannot be determined". Source
+                piece assets are 111×146 (knight/pawn/bishop/queen/rook)
+                or 118×163 (king); 0.76 covers the common case and is
+                close enough for king without visible distortion at OG
+                render scale. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={src}
               alt=""
+              width={Math.round((size / 8) * 0.9 * 0.76)}
               height={Math.round((size / 8) * 0.9)}
               style={{ display: "flex" }}
             />
@@ -171,10 +180,13 @@ export function BoardRender({
               justifyContent: "center",
             }}
           >
+            {/* Overlay icons (star) are square — width = height keeps
+                Satori from re-running the decode-for-aspect path. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={o.iconUrl}
               alt=""
+              width={Math.round((size / 8) * 0.75)}
               height={Math.round((size / 8) * 0.75)}
               style={{ display: "flex" }}
             />
