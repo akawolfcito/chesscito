@@ -98,7 +98,9 @@ export function ShareModal({
               <img
                 src={cardUrl}
                 alt={t("previewAlt")}
-                className="h-full w-full object-contain"
+                className="h-full w-full object-contain transition-opacity duration-300 ease-out"
+                decoding="async"
+                style={{ opacity: imgLoaded ? 1 : 0 }}
                 onLoad={() => setImgLoaded(true)}
                 onError={() => { setImgLoaded(true); setImgError(true); }}
               />
