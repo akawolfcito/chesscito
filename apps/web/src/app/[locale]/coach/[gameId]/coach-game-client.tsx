@@ -18,6 +18,8 @@ import { formatTime } from "@/lib/game/arena-utils";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { BoardThumbnail } from "@/components/board/board-thumbnail";
 import { formatVictoryPriceForDifficulty } from "@/lib/coach/format-price";
+import { ContextualHeader } from "@/components/ui/contextual-header";
+import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 
 type Props = {
   gameRecord: GameRecord | null;
@@ -308,31 +310,24 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
   // the value in every other state).
   const claimPrice = formatVictoryPriceForDifficulty(gameRecord.difficulty);
 
-  return (
-    <div className="coach-viewer">
-      <header className="coach-viewer__header">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="coach-viewer__header-back"
-          aria-label={t("backLabel")}
-        >
-          ←
-        </button>
-        <h1 className="coach-viewer__header-title">{t("title")}</h1>
-        <span
-          className="coach-viewer__header-meta"
-          aria-label={`${difficultyLabel}, ${movesLabel}, ${timeLabel}`}
-        >
-          <span>{difficultyLabel}</span>
-          <span className="coach-viewer__header-meta-sep" aria-hidden="true">·</span>
-          <span>{movesLabel}</span>
-          <span className="coach-viewer__header-meta-sep" aria-hidden="true">·</span>
-          <span>{timeLabel}</span>
-        </span>
-      </header>
+  // Canonical header — same `<ContextualHeader>` envelope every other
+  // meta surface uses (trophies, journal, legal). Subtitle carries the
+  // match meta (difficulty · moves · time) so the row stays scan-able
+  // without the trailing chip the previous custom band tried to fit.
+  const headerSubtitle = `${difficultyLabel} · ${movesLabel} · ${timeLabel}`;
 
-      <div className="coach-viewer__board-card">
+  return (
+    <>
+      <ContextualHeader
+        variant="back-control"
+        iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
+        title={t("title")}
+        subtitle={headerSubtitle}
+        back={{ onClick: handleBack, label: t("backLabel") }}
+      />
+
+      <div className="coach-viewer">
+        <div className="coach-viewer__board-card">
         {tokenIdEffective && (
           <span
             className="coach-viewer__trophy-ribbon"
@@ -379,6 +374,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
       />
 
       {inlineAnalysisNode}
-    </div>
+      </div>
+    </>
   );
 }
