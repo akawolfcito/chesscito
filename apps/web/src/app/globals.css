@@ -10081,3 +10081,212 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(63, 34, 8, 0.75);
   line-height: 1.25;
 }
+
+/* ==========================================================================
+ * COACH VIEWER — /coach/[gameId] post-game match review surface (Cluster C)
+ *
+ * Foundation classes for the rebuilt visor. Layout precedence:
+ *   .coach-viewer            (outer mobile-first shell)
+ *     .coach-viewer__header  (sticky-ish band: back · title · meta)
+ *     .coach-viewer__board-card  (cream-amber panel → square board frame)
+ *
+ * Later commits in Cluster C add:
+ *   .coach-viewer__replay   (slider + arrows + ply counter — commit 2)
+ *   .coach-viewer__move-list (collapsible 2-col grid — commit 2)
+ *   .coach-viewer__actions  (state-driven CTA stack — commits 3a/3b/3c)
+ *   .coach-viewer__trophy-ribbon (win+claimed corner badge — commit 3c)
+ *
+ * Visual language reused from existing tokens: warm-brown text
+ * (rgba(63,34,8,*)), cream highlights (rgba(255,245,215,0.55) shadow),
+ * amber borders (rgba(180,120,35,0.45)). No new CSS variables. No new
+ * art assets — board uses BoardThumbnail at responsive size="100%".
+ * ========================================================================== */
+
+.coach-viewer {
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 0.75rem 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  /* Avoid the in-page horizontal scroll the legacy unstyled visor
+   * exhibited when long SAN lists wrapped onto the page. */
+  overflow-x: clip;
+}
+
+.coach-viewer__header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.coach-viewer__header-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(255, 245, 215, 0.72);
+  color: rgba(63, 34, 8, 0.95);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55), 0 1px 2px rgba(63, 34, 8, 0.18);
+  transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+}
+
+.coach-viewer__header-back:hover {
+  background: rgba(255, 245, 215, 0.92);
+}
+
+.coach-viewer__header-back:active {
+  transform: scale(0.96);
+}
+
+.coach-viewer__header-title {
+  /* Centered between the back chip and the meta pill — the 1fr column
+   * in the grid expands while back + meta hug their content widths. */
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  /* Truncate the (rare) very long localized title rather than wrap
+   * into a second line and break the band height. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coach-viewer__header-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(255, 245, 215, 0.72);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(63, 34, 8, 0.92);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  white-space: nowrap;
+  /* Informational chip — not interactive in v1. Pointer cursor would
+   * lie about the affordance. */
+  cursor: default;
+  user-select: none;
+}
+
+.coach-viewer__header-meta-sep {
+  /* Tiny center dot between difficulty · moves · time pieces. Slightly
+   * dimmer than the surrounding text so the eye reads the values, not
+   * the separator. */
+  color: rgba(110, 65, 15, 0.55);
+  font-weight: 900;
+}
+
+.coach-viewer__board-card {
+  /* Cream-amber panel that frames the hero board. Mirrors the visual
+   * language of `.candy-tray-pill` panels across the app without
+   * inheriting the chip-scale shape rules. */
+  position: relative;
+  width: 100%;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(255, 245, 215, 0.65);
+  padding: 0.5rem;
+  box-shadow:
+    0 1px 0 rgba(255, 245, 215, 0.55) inset,
+    0 2px 4px rgba(63, 34, 8, 0.16),
+    0 8px 16px rgba(63, 34, 8, 0.10);
+}
+
+.coach-viewer__board-frame {
+  /* Square aspect-ratio container — owns the size so BoardThumbnail
+   * can pass through as size="100%" and scale to whatever the viewport
+   * allows (covered by `.coach-viewer__board-card` padding + outer
+   * `.coach-viewer` `max-width: var(--app-max-width)`). Solves
+   * red-team P0-2 (hard-coded 358px broke on <390px viewports). */
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 0.875rem;
+  overflow: hidden;
+}
+
+.coach-viewer__board-frame > [role="img"] {
+  /* BoardThumbnail renders its outer wrapper with inline `position:
+   * relative`. Anchor it into our frame so percentages resolve against
+   * the square box, not the surrounding panel padding. */
+  position: absolute;
+  inset: 0;
+}
+
+/* Fallback states reused from the old surface: no-wallet branch is
+ * owned by ConnectPromptToast; no-record branch is the load-error
+ * card. Both get foundation-level polish here; richer treatment lands
+ * with the actions stack in commit 3a. */
+
+.coach-game-client {
+  /* Bridge: the legacy outer wrapper still wraps the no-wallet and
+   * no-record branches. Centering + padding keep them from rendering
+   * flush against the viewport edge. */
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.coach-game-client--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  padding-top: 3rem;
+}
+
+.coach-game-client__error-message {
+  font-size: 1rem;
+  font-weight: 800;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+}
+
+.coach-game-client__error-subtitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(110, 65, 15, 0.78);
+  max-width: 28ch;
+}
+
+.coach-game-client__cta {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(180, 120, 35, 0.55);
+  background: rgba(255, 245, 215, 0.92);
+  color: rgba(63, 34, 8, 0.95);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55), 0 2px 4px rgba(63, 34, 8, 0.16);
+  transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+}
+
+.coach-game-client__cta:active {
+  transform: scale(0.97);
+}

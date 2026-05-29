@@ -54,6 +54,12 @@ type Props = {
    *  what game they're reading about. Optional for back-compat — old
    *  callers that don't have access to moves still work. */
   moves?: string[];
+  /** 2026-05-29 (Cluster C): when true, the host surface already
+   *  exposes Play Again / Ask Coach affordances above this panel, so
+   *  the panel hides its own duplicate CTAs (Play Again button +
+   *  optional View History sibling). Reanalyze stays visible — it is
+   *  an in-analysis affordance with no upstream equivalent. */
+  embedded?: boolean;
 };
 
 export function CoachPanel({
@@ -71,6 +77,7 @@ export function CoachPanel({
   onReanalyze,
   isReanalyzing,
   moves,
+  embedded,
 }: Props) {
   const t = useTranslations("COACH_COPY");
   const tArena = useTranslations("ARENA_COPY");
@@ -260,27 +267,32 @@ export function CoachPanel({
       {/* CTAs — Play Again primary, History secondary. The host shell
        *  (CandyGlassShell) already owns the back-to-hub affordance via
        *  its top-right close control, so the previous footer link was
-       *  removed (2026-05-24 — duplicated exit affordance feedback). */}
-      <div className="mt-2 flex flex-col gap-2">
-        <Button type="button" variant="game-primary" size="game" onClick={onPlayAgain}>
-          <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" />{" "}
-          {tArena("playAgain")}
-        </Button>
-        {onViewHistory && (
-          <Button
-            type="button"
-            variant="game-ghost"
-            size="game-sm"
-            onClick={onViewHistory}
-            style={{
-              borderColor: "rgba(110, 65, 15, 0.25)",
-              color: warmMuted,
-            }}
-          >
-            {t("pastSessions")}
+       *  removed (2026-05-24 — duplicated exit affordance feedback).
+       *  When `embedded`, the parent surface (coach viewer) already
+       *  exposes Play Again above the analysis, so the entire CTA
+       *  stack hides to avoid duplication (Cluster C 2026-05-29). */}
+      {!embedded && (
+        <div className="mt-2 flex flex-col gap-2">
+          <Button type="button" variant="game-primary" size="game" onClick={onPlayAgain}>
+            <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" />{" "}
+            {tArena("playAgain")}
           </Button>
-        )}
-      </div>
+          {onViewHistory && (
+            <Button
+              type="button"
+              variant="game-ghost"
+              size="game-sm"
+              onClick={onViewHistory}
+              style={{
+                borderColor: "rgba(110, 65, 15, 0.25)",
+                color: warmMuted,
+              }}
+            >
+              {t("pastSessions")}
+            </Button>
+          )}
+        </div>
+      )}
 
       {proActive && historyMeta && (
         <p

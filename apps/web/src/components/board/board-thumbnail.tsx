@@ -10,9 +10,12 @@ type Props = {
   /** Standard FEN string describing the position to render. Anything
    *  invalid falls through to an empty board (no pieces rendered). */
   fen: string;
-  /** Pixel size of the thumbnail's outer box. Width === height; the
-   *  board image scales to fill. Defaults to 56px (row-thumb size). */
-  size?: number;
+  /** Outer box size. Width === height; the board image scales to fill.
+   *  Numbers are interpreted as pixels (back-compat with row-thumb
+   *  callers). Strings are passed through as CSS values, enabling
+   *  responsive parents (e.g. `"100%"` inside an `aspect-ratio: 1/1`
+   *  container). Defaults to 56px. */
+  size?: number | string;
   /** When `"b"`, the board renders from black's perspective (h-file
    *  left, rank 8 bottom). Matches the `<ArenaBoard>` flipping rule. */
   perspective?: "w" | "b";
@@ -44,13 +47,14 @@ export function BoardThumbnail({
 }: Props) {
   const pieces = useMemo(() => fenToPieces(fen), [fen]);
   const flipped = perspective === "b";
+  const cssSize = typeof size === "number" ? `${size}px` : size;
 
   return (
     <div
       className={className}
       style={{
-        width: size,
-        height: size,
+        width: cssSize,
+        height: cssSize,
         position: "relative",
         flexShrink: 0,
       }}

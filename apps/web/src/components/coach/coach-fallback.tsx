@@ -21,6 +21,11 @@ type Props = {
   retryLabel?: string;
   errorTitle?: string;
   errorBody?: string;
+  /** 2026-05-29 (Cluster C): when true, the host surface already
+   *  exposes Play Again / Ask Coach / Back-to-Hub above this panel,
+   *  so the bottom CTA stack hides entirely. Retry stays visible —
+   *  it is an in-error affordance with no upstream equivalent. */
+  embedded?: boolean;
 };
 
 export function CoachFallback({
@@ -36,6 +41,7 @@ export function CoachFallback({
   retryLabel,
   errorTitle,
   errorBody,
+  embedded,
 }: Props) {
   const t = useTranslations("COACH_COPY");
   const time = formatTime(elapsedMs);
@@ -88,7 +94,8 @@ export function CoachFallback({
 
       {showRetry ? (
         <>
-          {/* Primary: Retry Review — recoverable error state */}
+          {/* Primary: Retry Review — recoverable error state, kept in
+              embedded mode because no upstream surface owns retry. */}
           <Button
             type="button"
             variant="game-primary"
@@ -99,60 +106,68 @@ export function CoachFallback({
             <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {retryLabel ?? retryReview}
           </Button>
 
-          {/* Secondary: Play Again */}
-          <Button
-            type="button"
-            variant="game-ghost"
-            size="game-sm"
-            onClick={onPlayAgain}
-            aria-label={ARENA_COPY.playAgain}
-            style={{
-              borderColor: "rgba(110, 65, 15, 0.25)",
-              color: warmMuted,
-            }}
-          >
-            {ARENA_COPY.playAgain}
-          </Button>
+          {/* Secondary: Play Again — hidden when embedded (host owns it). */}
+          {!embedded && (
+            <Button
+              type="button"
+              variant="game-ghost"
+              size="game-sm"
+              onClick={onPlayAgain}
+              aria-label={ARENA_COPY.playAgain}
+              style={{
+                borderColor: "rgba(110, 65, 15, 0.25)",
+                color: warmMuted,
+              }}
+            >
+              {ARENA_COPY.playAgain}
+            </Button>
+          )}
         </>
       ) : (
-        <>
-          {/* Primary: Play Again — retention CTA */}
-          <Button
-            type="button"
-            variant="game-primary"
-            size="game"
-            onClick={onPlayAgain}
-            aria-label={ARENA_COPY.playAgain}
-          >
-            <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
-          </Button>
+        !embedded && (
+          <>
+            {/* Primary: Play Again — retention CTA. Hidden when
+                embedded (host's actions bar owns Play Again). */}
+            <Button
+              type="button"
+              variant="game-primary"
+              size="game"
+              onClick={onPlayAgain}
+              aria-label={ARENA_COPY.playAgain}
+            >
+              <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" /> {ARENA_COPY.playAgain}
+            </Button>
 
-          {/* Secondary: Unlock Full Analysis — commercial upsell */}
-          <Button
-            type="button"
-            variant="game-ghost"
-            size="game-sm"
-            onClick={onGetFullAnalysis!}
-            aria-label={unlockFullAnalysis}
-            style={{
-              borderColor: "rgba(110, 65, 15, 0.25)",
-              color: warmMuted,
-            }}
-          >
-            {unlockFullAnalysis}
-          </Button>
-        </>
+            {/* Secondary: Unlock Full Analysis — duplicates host's
+                Ask Coach when embedded, so hidden there too. */}
+            <Button
+              type="button"
+              variant="game-ghost"
+              size="game-sm"
+              onClick={onGetFullAnalysis!}
+              aria-label={unlockFullAnalysis}
+              style={{
+                borderColor: "rgba(110, 65, 15, 0.25)",
+                color: warmMuted,
+              }}
+            >
+              {unlockFullAnalysis}
+            </Button>
+          </>
+        )
       )}
 
-      {/* Tertiary: Back to Hub */}
-      <button
-        type="button"
-        onClick={onBackToHub}
-        className="w-full py-1 text-xs font-semibold underline underline-offset-2"
-        style={{ color: "rgba(110, 65, 15, 0.70)" }}
-      >
-        {ARENA_COPY.backToHub}
-      </button>
+      {/* Tertiary: Back to Hub — host band exposes back in embedded mode. */}
+      {!embedded && (
+        <button
+          type="button"
+          onClick={onBackToHub}
+          className="w-full py-1 text-xs font-semibold underline underline-offset-2"
+          style={{ color: "rgba(110, 65, 15, 0.70)" }}
+        >
+          {ARENA_COPY.backToHub}
+        </button>
+      )}
     </div>
   );
 }

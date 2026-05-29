@@ -14,6 +14,9 @@ import { useMintVictory } from "@/lib/coach/use-mint-victory";
 import { useGameReplay } from "@/lib/game/use-game-replay";
 import { track } from "@/lib/telemetry";
 import { postMintReceipt } from "@/lib/coach/post-mint-receipt";
+import { formatTime } from "@/lib/game/arena-utils";
+import { ARENA_COPY } from "@/lib/content/editorial";
+import { BoardThumbnail } from "@/components/board/board-thumbnail";
 
 type Props = {
   gameRecord: GameRecord | null;
@@ -177,7 +180,11 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
       : (gameRecord.mintedTokenId ?? null);
   const shareLinkEffective = mint.data.shareLinkUrl ?? gameRecord.shareLinkUrl ?? null;
 
-  // Inline analysis surface (when record has cached analysis)
+  // Inline analysis surface (when record has cached analysis).
+  // 2026-05-29 (Cluster C, commit 1): `embedded` hides the panel's own
+  // Play Again / Back-to-Hub / Get-Full-Analysis CTAs — those now live
+  // in the host's actions bar above, and rendering them twice was the
+  // visual clutter the redesign is fixing.
   let inlineAnalysisNode: React.ReactNode = null;
   if (gameRecord.analysis) {
     if (gameRecord.analysis.response.kind === "full") {
@@ -192,6 +199,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
           onBackToHub={handleBack}
           analysisLocale={gameRecord.analysis.locale}
           moves={gameRecord.moves}
+          embedded
         />
       );
     } else {
@@ -206,14 +214,59 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
           onGetFullAnalysis={handleAskCoach}
           onPlayAgain={handlePlayAgain}
           onBackToHub={handleBack}
+          embedded
         />
       );
     }
   }
 
+  // Header band meta — difficulty · moves · time. Single-line chip.
+  const difficultyLabel =
+    ARENA_COPY.difficulty[gameRecord.difficulty as keyof typeof ARENA_COPY.difficulty] ??
+    gameRecord.difficulty;
+  const movesLabel = `${gameRecord.totalMoves} ${gameRecord.totalMoves === 1 ? "move" : "moves"}`;
+  const timeLabel = formatTime(gameRecord.elapsedMs);
+
   return (
-    <div className="coach-game-client">
-      <GameViewer moves={gameRecord.moves} startingFen={gameRecord.startingFen} />
+    <div className="coach-viewer">
+      <header className="coach-viewer__header">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="coach-viewer__header-back"
+          aria-label={t("backLabel")}
+        >
+          ←
+        </button>
+        <h1 className="coach-viewer__header-title">{t("title")}</h1>
+        <span
+          className="coach-viewer__header-meta"
+          aria-label={`${difficultyLabel}, ${movesLabel}, ${timeLabel}`}
+        >
+          <span>{difficultyLabel}</span>
+          <span className="coach-viewer__header-meta-sep" aria-hidden="true">·</span>
+          <span>{movesLabel}</span>
+          <span className="coach-viewer__header-meta-sep" aria-hidden="true">·</span>
+          <span>{timeLabel}</span>
+        </span>
+      </header>
+
+      <div className="coach-viewer__board-card">
+        <div className="coach-viewer__board-frame">
+          <BoardThumbnail
+            fen={replay.currentFen}
+            size="100%"
+            ariaLabel={`Position after move ${replay.currentIndex} of ${replay.lastValidIndex}`}
+          />
+        </div>
+      </div>
+
+      <GameViewer
+        moves={gameRecord.moves}
+        startingFen={gameRecord.startingFen}
+        replay={replay}
+        hideBoardThumbnail
+      />
 
       <GameActionsBar
         gameId={gameRecord.gameId}

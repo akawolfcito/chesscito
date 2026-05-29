@@ -2,21 +2,35 @@
 
 import { useTranslations } from "next-intl";
 import { BoardThumbnail } from "@/components/board/board-thumbnail";
-import { useGameReplay } from "@/lib/game/use-game-replay";
+import { useGameReplay, type GameReplayState } from "@/lib/game/use-game-replay";
 
 type Props = {
   moves: string[];
   startingFen?: string;
+  /** 2026-05-29 (Cluster C, commit 1): when true, GameViewer skips
+   *  rendering its internal thumbnail and only emits the replay
+   *  controls + SAN list. The host (`coach-game-client`) renders the
+   *  hero board above as a sibling so the player sees one large board,
+   *  not a thumbnail + hero. Slider/list refactor lands in commit 2. */
+  hideBoardThumbnail?: boolean;
+  /** 2026-05-29 (Cluster C, commit 1): when provided, GameViewer uses
+   *  the host's replay state instead of creating its own. Lets the
+   *  hero board (rendered in the host) and the slider/list (rendered
+   *  here) stay in lock-step during scrubbing. When omitted, falls
+   *  back to internal replay state — preserves back-compat with any
+   *  future standalone caller. */
+  replay?: GameReplayState;
 };
 
-export function GameViewer({ moves, startingFen }: Props) {
+export function GameViewer({ moves, startingFen, hideBoardThumbnail, replay: replayProp }: Props) {
   const t = useTranslations("COACH_VIEWER_COPY");
-  const replay = useGameReplay(moves, startingFen);
+  const internalReplay = useGameReplay(moves, startingFen);
+  const replay = replayProp ?? internalReplay;
 
   if (replay.totalMoves === 0) {
     return (
       <div className="game-viewer game-viewer--empty">
-        <BoardThumbnail fen={replay.currentFen} />
+        {!hideBoardThumbnail && <BoardThumbnail fen={replay.currentFen} />}
         <p className="game-viewer__empty-message">{t("tooShortToReview")}</p>
       </div>
     );
@@ -24,7 +38,7 @@ export function GameViewer({ moves, startingFen }: Props) {
 
   return (
     <div className="game-viewer">
-      <BoardThumbnail fen={replay.currentFen} />
+      {!hideBoardThumbnail && <BoardThumbnail fen={replay.currentFen} />}
 
       {replay.error && (
         <div role="alert" className="game-viewer__error-banner">
