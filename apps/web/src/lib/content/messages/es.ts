@@ -555,6 +555,8 @@ const messages = {
     moveListToggleClosed: "Todas las jugadas ({n})",
     moveListToggleOpen: "Ocultar jugadas",
     backToHub: "Volver al Hub",
+    saveVictory: "Guardar Victoria",
+    saveVictoryAriaLabel: "Guardar Victoria por {price}",
   },
   ARENA_COPY: {
     ...en.ARENA_COPY,

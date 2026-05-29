@@ -17,6 +17,7 @@ import { postMintReceipt } from "@/lib/coach/post-mint-receipt";
 import { formatTime } from "@/lib/game/arena-utils";
 import { ARENA_COPY } from "@/lib/content/editorial";
 import { BoardThumbnail } from "@/components/board/board-thumbnail";
+import { formatVictoryPriceForDifficulty } from "@/lib/coach/format-price";
 
 type Props = {
   gameRecord: GameRecord | null;
@@ -226,6 +227,10 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     gameRecord.difficulty;
   const movesLabel = `${gameRecord.totalMoves} ${gameRecord.totalMoves === 1 ? "move" : "moves"}`;
   const timeLabel = formatTime(gameRecord.elapsedMs);
+  // Save Victory price ribbon — only meaningful on the win + !claimed
+  // state, but harmless to compute up front (the actions bar ignores
+  // the value in every other state).
+  const claimPrice = formatVictoryPriceForDifficulty(gameRecord.difficulty);
 
   return (
     <div className="coach-viewer">
@@ -282,6 +287,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
         onPlayAgain={handlePlayAgain}
         onViewNft={handleViewNft}
         onBackToHub={handleBack}
+        claimPrice={claimPrice}
       />
 
       {inlineAnalysisNode}

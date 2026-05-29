@@ -20,6 +20,11 @@ type Props = {
    *  visor's success branch routes back to /hub via a clean push
    *  (avoids router.back loops on cold-load entries). */
   onBackToHub: () => void;
+  /** 2026-05-29 (Cluster C, commit 3b): formatted price ribbon for the
+   *  Save Victory primary CTA (win + !claimed state). Optional —
+   *  unknown difficulty falls back to the candy-pill primary without
+   *  the ribbon so the action stays reachable. */
+  claimPrice?: string | null;
 };
 
 /**
@@ -49,6 +54,7 @@ export function GameActionsBar({
   onPlayAgain,
   onViewNft,
   onBackToHub,
+  claimPrice,
 }: Props) {
   const t = useTranslations("COACH_VIEWER_COPY");
   const isWin = result === "win";
@@ -86,15 +92,36 @@ export function GameActionsBar({
       </button>
     );
   } else if (isWin && !isMinted) {
-    // Save Victory primary — sprite + price treatment lands in commit 3b.
+    // Save Victory primary — `.cta-principal` sprite + sticker save
+    // icon + corner price ribbon. Mirrors the arena end-state popup's
+    // treasure CTA verbatim (spec §6 visual rhyme). Falls back to a
+    // plain candy-pill primary when the difficulty doesn't resolve to
+    // a known tier — keeps the mint flow reachable for safety.
+    const saveLabel = t("saveVictory");
+    const ariaLabel = claimPrice
+      ? t("saveVictoryAriaLabel", { price: claimPrice })
+      : saveLabel;
     primary = (
       <button
         type="button"
         onClick={onMint}
-        className="coach-viewer__actions-primary"
-        aria-label={t("mintVictory")}
+        aria-label={ariaLabel}
+        className="coach-viewer__actions-primary coach-viewer__actions-primary--treasure"
       >
-        {t("mintVictory")}
+        <picture className="coach-viewer__actions-primary-icon">
+          <source srcSet="/art/new-icons-chesscito/save.avif" type="image/avif" />
+          <source srcSet="/art/new-icons-chesscito/save.webp" type="image/webp" />
+          <img src="/art/new-icons-chesscito/save.png" alt="" draggable={false} />
+        </picture>
+        <span className="coach-viewer__actions-primary-label">{saveLabel}</span>
+        {claimPrice && (
+          <span
+            className="coach-viewer__actions-primary-price-ribbon"
+            aria-hidden="true"
+          >
+            {claimPrice}
+          </span>
+        )}
       </button>
     );
     secondaries = [

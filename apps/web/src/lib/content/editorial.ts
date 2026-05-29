@@ -1476,6 +1476,11 @@ export const COACH_VIEWER_COPY = {
   // Tertiary link reused across non-win states (loss / draw / resigned
   // / too-short / replay-errored). ES override in messages/es.ts.
   backToHub: "Back to Hub",
+  // 2026-05-29 (Cluster C, commit 3b): Save Victory sprite primary.
+  // `saveVictory` is the visor-only label — `mintVictory` stays in
+  // arena context. ES override in messages/es.ts.
+  saveVictory: "Save Victory",
+  saveVictoryAriaLabel: "Save Victory for {price}",
 } as const;
 
 export const LEGAL_SHELL_COPY = {

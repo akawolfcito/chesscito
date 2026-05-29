@@ -24,10 +24,14 @@ const baseProps = {
 };
 
 describe("GameActionsBar", () => {
-  it("win + unminted: shows Ask Coach, Mint, Play Again. No View NFT. No Share.", () => {
-    render(<GameActionsBar {...baseProps} />);
+  it("win + unminted: shows Save Victory primary, Ask Coach + Play Again secondaries", () => {
+    // 2026-05-29 (Cluster C, commit 3b): the Mint primary is now the
+    // treasure-sprite Save Victory CTA. Aria-label uses the new
+    // `saveVictory` / `saveVictoryAriaLabel` keys; the price ribbon
+    // appears when `claimPrice` is provided.
+    render(<GameActionsBar {...baseProps} claimPrice="$0.005" />);
+    expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /mintVictory/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /viewNft/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^share$/ })).toBeNull();
@@ -99,10 +103,13 @@ describe("GameActionsBar", () => {
     expect(onPlayAgain).toHaveBeenCalledOnce();
   });
 
-  it("Mint calls onMint when win + unminted", () => {
+  it("Save Victory calls onMint when win + unminted", () => {
+    // The primary CTA renamed from Mint to Save Victory in commit 3b;
+    // the callback still wires through `onMint` to keep the contract
+    // page → bar boundary unchanged.
     const onMint = vi.fn();
-    render(<GameActionsBar {...baseProps} onMint={onMint} />);
-    fireEvent.click(screen.getByRole("button", { name: /mintVictory/ }));
+    render(<GameActionsBar {...baseProps} onMint={onMint} claimPrice="$0.005" />);
+    fireEvent.click(screen.getByRole("button", { name: /saveVictory/ }));
     expect(onMint).toHaveBeenCalledOnce();
   });
 
