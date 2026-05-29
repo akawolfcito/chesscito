@@ -9370,21 +9370,24 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .badge-card-icon-wrap {
-  width: 48px;
-  height: 48px;
+  /* 2026-05-29 — inner square frame removed (white wash + border +
+   * radius). The piece silhouettes already read as discrete objects;
+   * the frame around them squashed the natural aspect and added
+   * redundant chrome. The wrap stays as a layout slot only. */
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.25);
-  border: 1px solid rgba(110, 65, 15, 0.10);
   flex-shrink: 0;
 }
 
 .badge-card-icon-img {
-  width: 32px;
-  height: 32px;
-  object-contain: contain;
+  /* Fill the layout slot at natural aspect — chess pieces are taller
+   * than wide, so a forced 32×32 square was squashing them. */
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .badge-card--locked .badge-card-icon-img {

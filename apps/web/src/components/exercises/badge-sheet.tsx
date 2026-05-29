@@ -82,7 +82,7 @@ function BadgeCard({
     >
       {/* Horizontal icon wrap */}
       <div className="badge-card-icon-wrap">
-        <picture className="h-8 w-8">
+        <picture className="block h-full w-full">
           {THEME_CONFIG.hasOptimizedFormats && (
             <>
               <source srcSet={BADGE_ART[badge.piece].replace(".png", ".avif")} type="image/avif" />
