@@ -10,6 +10,7 @@ import { CandyChip } from "@/components/redesign/candy-chip";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { track } from "@/lib/telemetry";
 import { movesToFen } from "@/lib/game/moves-to-fen";
+import { hasReplayError } from "@/lib/game/use-game-replay";
 import {
   parseAnalyzedHistory,
   parseUnanalyzedGames,
@@ -346,12 +347,21 @@ export function CoachHistory({
 
   // Mixed chronological — newest first by game.timestamp. No Analyzed /
   // Pending section split per spec §2.4.9.
-  // Zero-move entries are filtered out (red-team H-9): the /coach/[gameId]
-  // viewer handles them defensively, but they should never be a primary
-  // surface in the history list.
+  //
+  // Filtered out at the list level:
+  //   • Zero-move entries (red-team H-9) — `/coach/[gameId]` handles
+  //     them defensively but they're never a useful row to surface.
+  //   • Replay-corrupted entries (Cluster C, 2026-05-29) — a row whose
+  //     SAN sequence fails mid-stream lands the user on a visor with
+  //     Ask Coach disabled. Honest chip semantics matter more than
+  //     showing the row, so the entry is dropped from the journal.
   const mergedSorted: HistoryEntry[] = useMemo(() => {
     return [...analyzed, ...unanalyzed]
-      .filter((e) => (e.game?.totalMoves ?? 0) !== 0)
+      .filter((e) => {
+        if ((e.game?.totalMoves ?? 0) === 0) return false;
+        if (hasReplayError(e.game.moves, e.game.startingFen)) return false;
+        return true;
+      })
       .sort((a, b) => b.game.timestamp - a.game.timestamp);
   }, [analyzed, unanalyzed]);
 

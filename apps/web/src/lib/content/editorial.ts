@@ -1379,9 +1379,13 @@ export const COACH_ENTRY_COPY = {
   matchNotSavedRetry: "Retry",
   matchTooShort: "Match too short to analyze",
   historyMatchLabel: "Match",
-  analyzeChipLabel: "Analyze",
+  // 2026-05-29 (Cluster C follow-up): chip routes to /coach/[gameId]
+  // (not analyze-in-place). The label was renamed to "Review" so it
+  // honestly describes the tap target — analysis happens inside the
+  // visor, via the credit-aware Ask Coach primary.
+  analyzeChipLabel: "Review",
   historyAnalyzeAriaLabel: (timestamp: string, difficulty: string, result: string): string =>
-    `Analyze match from ${timestamp}, ${difficulty}, ${result}`,
+    `Review match from ${timestamp}, ${difficulty}, ${result}`,
   victorySecondaryDescribedById: "victory-coach-cta-desc",
   victorySecondaryDescription:
     "Secondary action. Save Victory above is the primary action.",

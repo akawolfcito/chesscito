@@ -68,6 +68,15 @@ export default function CoachHistoryPage() {
     router.push(`/coach/${entry.gameId}?wallet=${address}`);
   }
 
+  // 2026-05-29 (Cluster C follow-up): unanalyzed rows route to the
+  // canonical /coach/[gameId] viewer too, where the credit-aware
+  // Ask Coach CTA lives. The previous gap left the chip wired to a
+  // no-op in this surface (only /arena passed `onAnalyzeUnanalyzed`),
+  // so taps did nothing — see docs/handoffs/2026-05-29-coach-viewer-cluster-c-handoff.md.
+  function handleAnalyzeUnanalyzed(gameId: string) {
+    router.push(`/coach/${gameId}?wallet=${address}`);
+  }
+
   return (
     <main className="tj-root">
       <PageHeader onBack={() => router.push("/hub")} />
@@ -79,6 +88,7 @@ export default function CoachHistoryPage() {
           walletAddress={address}
           credits={credits}
           onSelectEntry={handleSelect}
+          onAnalyzeUnanalyzed={handleAnalyzeUnanalyzed}
         />
         <CoachHistoryDeletePanel />
       </div>

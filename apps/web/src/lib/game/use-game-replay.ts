@@ -8,6 +8,37 @@ export type GameReplayError = {
   badSan: string;
 };
 
+/**
+ * Lightweight replay validator — runs the same chess.js sequence the
+ * full `useGameReplay` hook does, but stops at the first failure and
+ * returns just a boolean. Cheap enough to call inside a list-filter
+ * `useMemo` (validates ~20 games × ~80 moves in <50ms).
+ *
+ * Used by `/coach/history` to drop replay-corrupted games from the
+ * journal so the user only ever sees rows that successfully open the
+ * coach viewer.
+ */
+export function hasReplayError(
+  moves: readonly string[],
+  startingFen?: string,
+): boolean {
+  let game: Chess;
+  try {
+    game = new Chess(startingFen ?? undefined);
+  } catch {
+    return true;
+  }
+  for (let i = 0; i < moves.length; i++) {
+    try {
+      const applied = game.move(moves[i]);
+      if (!applied) return true;
+    } catch {
+      return true;
+    }
+  }
+  return false;
+}
+
 export type GameReplayState = {
   totalMoves: number;
   lastValidIndex: number;

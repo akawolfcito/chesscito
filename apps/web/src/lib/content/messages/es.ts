@@ -497,9 +497,9 @@ const messages = {
     matchNotSavedRetry: "Reintentar",
     matchTooShort: "Partida demasiado corta para analizar",
     historyMatchLabel: "Partida",
-    analyzeChipLabel: "Analizar",
+    analyzeChipLabel: "Revisar",
     historyAnalyzeAriaLabel:
-      "Analizar partida del {timestamp}, {difficulty}, {result}",
+      "Revisar partida del {timestamp}, {difficulty}, {result}",
     victorySecondaryDescription:
       "Acción secundaria. Reclamar Victoria arriba es la acción principal.",
     offlineToAnalyze: "Necesitas estar en línea para analizar",
