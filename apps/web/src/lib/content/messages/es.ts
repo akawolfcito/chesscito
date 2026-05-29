@@ -551,6 +551,9 @@ const messages = {
     loadErrorRetry: "Reintentar",
     notFoundMessage: "Partida no encontrada.",
     backLabel: "Atrás",
+    // sliderProgress: "{current} / {total}" — numeric, no ES override.
+    moveListToggleClosed: "Todas las jugadas ({n})",
+    moveListToggleOpen: "Ocultar jugadas",
   },
   ARENA_COPY: {
     ...en.ARENA_COPY,

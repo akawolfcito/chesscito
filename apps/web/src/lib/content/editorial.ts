@@ -1466,6 +1466,12 @@ export const COACH_VIEWER_COPY = {
   loadErrorRetry: "Retry",
   notFoundMessage: "Match not found.",
   backLabel: "Back",
+  // 2026-05-29 (Cluster C, commit 2): slider/replay polish + collapsed
+  // move list. `sliderProgress` is locale-neutral (numbers only); the
+  // toggle labels need ES overrides in messages/es.ts.
+  sliderProgress: "{current} / {total}",
+  moveListToggleClosed: "All moves ({n})",
+  moveListToggleOpen: "Hide moves",
 } as const;
 
 export const LEGAL_SHELL_COPY = {

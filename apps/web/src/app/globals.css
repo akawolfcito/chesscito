@@ -10230,6 +10230,241 @@ button.hud-resource-chip:active:not(:disabled) {
   inset: 0;
 }
 
+/* Replay error banner (commit 2). Surfaces useGameReplay's mid-game
+ * decode error in plain language without breaking the visual stack. */
+.coach-viewer__replay-error {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(225, 175, 30, 0.55);
+  background: rgba(255, 245, 215, 0.78);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: rgba(120, 70, 15, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+}
+
+/* Replay row — arrows + slider + ply counter on a single line. The
+ * counter floats right of the row at a fixed width so the slider
+ * keeps a stable scrubbing area regardless of digit count. */
+.coach-viewer__replay {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(255, 245, 215, 0.7);
+  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55) inset;
+}
+
+.coach-viewer__replay-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(255, 245, 215, 0.92);
+  color: rgba(63, 34, 8, 0.95);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55), 0 1px 2px rgba(63, 34, 8, 0.16);
+  transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+}
+
+.coach-viewer__replay-arrow:hover:not(:disabled) {
+  background: rgba(255, 245, 215, 1);
+}
+
+.coach-viewer__replay-arrow:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.coach-viewer__replay-arrow:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.coach-viewer__replay-slider {
+  /* Reset native chrome — the inherited blue/purple track in the
+   * unstyled visor was loud and didn't match the candy palette. */
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    rgba(180, 83, 9, 0.72) 0%,
+    rgba(180, 83, 9, 0.72) calc(var(--coach-viewer-slider-fill, 50%) * 1),
+    rgba(255, 245, 215, 0.85) calc(var(--coach-viewer-slider-fill, 50%) * 1),
+    rgba(255, 245, 215, 0.85) 100%
+  );
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  cursor: pointer;
+  outline: none;
+  /* The gradient fill needs a custom property that JS isn't wiring up
+   * (it's a v1 cosmetic — the value defaults to 50% so the track
+   * still looks balanced even without the live progress update). */
+}
+
+.coach-viewer__replay-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: rgba(255, 245, 215, 1);
+  border: 2px solid rgba(180, 83, 9, 0.9);
+  box-shadow: 0 1px 2px rgba(63, 34, 8, 0.28);
+  cursor: pointer;
+}
+
+.coach-viewer__replay-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: rgba(255, 245, 215, 1);
+  border: 2px solid rgba(180, 83, 9, 0.9);
+  box-shadow: 0 1px 2px rgba(63, 34, 8, 0.28);
+  cursor: pointer;
+}
+
+.coach-viewer__replay-counter {
+  /* Reserve a stable width so the slider doesn't twitch as digits
+   * shift between 1/9 → 10/99. 4.25em fits up to "999 / 999". */
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 4.25em;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(63, 34, 8, 0.85);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+/* Collapsible move list — single pill toggle when closed, 2-column
+ * scrollable grid when open. Snap toggle (no CSS animation) keeps the
+ * implementation surface small and sidesteps reduced-motion concerns. */
+.coach-viewer__move-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.coach-viewer__move-list-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(255, 245, 215, 0.78);
+  color: rgba(63, 34, 8, 0.92);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55), 0 1px 2px rgba(63, 34, 8, 0.16);
+  transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+}
+
+.coach-viewer__move-list-toggle:hover {
+  background: rgba(255, 245, 215, 0.95);
+}
+
+.coach-viewer__move-list-toggle:active {
+  transform: scale(0.97);
+}
+
+.coach-viewer__move-list-toggle::after {
+  /* Tiny chevron that flips when open. Pure CSS — keeps the toggle's
+   * label single-source-of-truth in editorial.ts. */
+  content: "▾";
+  display: inline-block;
+  font-size: 0.7em;
+  line-height: 1;
+  color: rgba(110, 65, 15, 0.65);
+  transition: transform var(--duration-snap) ease;
+}
+
+.coach-viewer__move-list[data-open="true"] .coach-viewer__move-list-toggle::after {
+  transform: rotate(180deg);
+}
+
+.coach-viewer__move-list-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0.4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem 0.5rem;
+  max-height: 240px;
+  overflow-y: auto;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(255, 245, 215, 0.55);
+  /* Smooth thumb scroll inside the bounded region without bleeding
+   * the rest of the page. */
+  overscroll-behavior: contain;
+}
+
+.coach-viewer__move-item {
+  list-style: none;
+}
+
+.coach-viewer__move-item-btn {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  align-items: center;
+  width: 100%;
+  min-height: 32px;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 0;
+  background: transparent;
+  color: rgba(63, 34, 8, 0.88);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--duration-snap) ease;
+}
+
+.coach-viewer__move-item-btn:hover {
+  background: rgba(255, 245, 215, 0.65);
+}
+
+.coach-viewer__move-item-btn[aria-pressed="true"] {
+  background: rgba(180, 83, 9, 0.18);
+  color: rgba(63, 34, 8, 1);
+  font-weight: 900;
+}
+
+.coach-viewer__move-item-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(110, 65, 15, 0.65);
+  letter-spacing: 0.01em;
+}
+
+.coach-viewer__move-item-san {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: inherit;
+}
+
 /* Fallback states reused from the old surface: no-wallet branch is
  * owned by ConnectPromptToast; no-record branch is the load-error
  * card. Both get foundation-level polish here; richer treatment lands
