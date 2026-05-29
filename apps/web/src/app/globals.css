@@ -10106,18 +10106,16 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
   max-width: var(--app-max-width);
   margin: 0 auto;
-  /* Sally pass 2 — the visor's outer becomes a vertical flex column
-   * that fills the viewport. The board + moves panel sit at the top;
-   * the `.coach-viewer__action-deck` gets `margin-top: auto` to anchor
-   * to the bottom edge. Without this, short games left the deck
-   * floating mid-screen with awkward green grass below. */
+  /* Sally pass 10 — bottom padding bumped to safe-area-aware floor
+   * so tile labels don't clip against the viewport edge. The
+   * `.coach-viewer__controls` bottom-anchors via `margin-top: auto`;
+   * without enough bottom room here, "Play again / Save Victory /
+   * Ask Coach" labels were getting cropped. */
   min-height: calc(100dvh - 60px); /* header reserve */
-  padding: 0.5rem 0.85rem 0.65rem;
+  padding: 0.5rem 0.85rem max(1.6rem, env(safe-area-inset-bottom, 1.6rem));
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  /* Avoid the in-page horizontal scroll the legacy unstyled visor
-   * exhibited when long SAN lists wrapped onto the page. */
   overflow-x: clip;
 }
 
@@ -10139,55 +10137,33 @@ button.hud-resource-chip:active:not(:disabled) {
     drop-shadow(0 20px 32px rgba(63, 34, 8, 0.12));
 }
 
-/* Sally pass 5 — chapter break between Board and MOVES. Two thin
- * warm-brown rules flanking a small ornament glyph. Reads as a book-
- * page chapter divider; ties the 3 sections into one journal entry
- * rather than 3 island cards. */
+/* Chapter break (pass 10) — the adorno-icon asset is already a
+ * complete ornament with painted gold rules + crown. The flanking
+ * CSS rule spans were duplicating the artwork. Now we render just
+ * the painted asset centered between board and the MOVES panel. */
 .coach-viewer__chapter-break {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
-  padding: 0.15rem 0;
   margin: 0 auto;
-  width: 70%;
-  max-width: 260px;
+  padding: 0.1rem 0;
   user-select: none;
 }
 
-.coach-viewer__chapter-break-rule {
-  flex: 1 1 auto;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    rgba(110, 65, 15, 0) 0%,
-    rgba(110, 65, 15, 0.35) 50%,
-    rgba(110, 65, 15, 0) 100%
-  );
-}
-
 .coach-viewer__chapter-break-glyph {
-  /* Pass 9 — bumped from 28px to 44px so the painted ornament
-   * actually reads against the green-grass background at MiniPay
-   * scale. Stronger multi-layer drop-shadow (warm highlight + dark
-   * cast) gives it weight + saturation lift via filter so the
-   * gold tones sing instead of fading into the grass. */
   display: inline-block;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+  width: 220px;
+  height: auto;
   filter:
-    drop-shadow(0 1px 0 rgba(255, 245, 215, 0.85))
-    drop-shadow(0 2px 4px rgba(63, 34, 8, 0.32))
-    drop-shadow(0 6px 10px rgba(63, 34, 8, 0.18))
-    saturate(1.1);
+    drop-shadow(0 1px 0 rgba(255, 245, 215, 0.7))
+    drop-shadow(0 2px 4px rgba(63, 34, 8, 0.28))
+    drop-shadow(0 6px 10px rgba(63, 34, 8, 0.16));
 }
 
 .coach-viewer__chapter-break-glyph img {
   display: block;
   width: 100%;
-  height: 100%;
-  object-fit: contain;
+  height: auto;
   -webkit-user-drag: none;
   user-select: none;
 }
