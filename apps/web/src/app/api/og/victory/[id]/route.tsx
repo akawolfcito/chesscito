@@ -47,8 +47,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
   const tokenId = BigInt(raw);
 
-  const bgUrl = new URL("/art/redesign/bg/bg-ch.png", req.url).toString();
-  const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  // WebP variants — see /api/og/match/route.tsx for the full rationale.
+  const bgUrl = new URL("/art/redesign/bg/bg-ch.webp", req.url).toString();
+  const mascotUrl = new URL("/art/favicon-wolf.webp", req.url).toString();
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
 
@@ -87,7 +88,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 
   const displayId = truncateId(raw); // R11: ID truncation
-  const badgeUrl = new URL("/art/badge-chesscito.png", req.url).toString();
+  const badgeUrl = new URL("/art/badge-chesscito.webp", req.url).toString();
 
   const pngResponse = new ImageResponse(
     (

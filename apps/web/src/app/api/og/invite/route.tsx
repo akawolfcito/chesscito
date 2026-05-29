@@ -40,10 +40,11 @@ export async function GET(req: Request) {
   const flipped = parseEnumParam(qs.get("color"), ["w", "b"] as const) === "b";
   const star = parseSquare(qs.get("star"));
 
-  const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
-  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
-  const badgeUrl = new URL("/art/badge-chesscito.png", req.url).toString();
-  const starUrl = new URL("/art/redesign/icons/star.png", req.url).toString();
+  // WebP variants — see /api/og/match/route.tsx for the full rationale.
+  const mascotUrl = new URL("/art/favicon-wolf.webp", req.url).toString();
+  const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.webp", req.url).toString();
+  const badgeUrl = new URL("/art/badge-chesscito.webp", req.url).toString();
+  const starUrl = new URL("/art/redesign/icons/star.webp", req.url).toString();
   const origin = new URL(req.url).origin;
 
   const cinzelData = await loadCinzelFont(req.url);
