@@ -10167,12 +10167,20 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__chapter-break-glyph {
+  /* Pass 9 — bumped from 28px to 44px so the painted ornament
+   * actually reads against the green-grass background at MiniPay
+   * scale. Stronger multi-layer drop-shadow (warm highlight + dark
+   * cast) gives it weight + saturation lift via filter so the
+   * gold tones sing instead of fading into the grass. */
   display: inline-block;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
-  filter: drop-shadow(0 1px 0 rgba(255, 245, 215, 0.65))
-    drop-shadow(0 2px 3px rgba(63, 34, 8, 0.22));
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 245, 215, 0.85))
+    drop-shadow(0 2px 4px rgba(63, 34, 8, 0.32))
+    drop-shadow(0 6px 10px rgba(63, 34, 8, 0.18))
+    saturate(1.1);
 }
 
 .coach-viewer__chapter-break-glyph img {
@@ -10368,16 +10376,17 @@ button.hud-resource-chip:active:not(:disabled) {
 /* MOVES section restored to its own badge-vitrine panel — data
  * tables benefit from a container that defines the scroll boundary
  * + creates intentional visual density contrast against the open
- * controls floating below. */
+ * controls floating below. Pass 9: bg alpha softened so the green
+ * grass page background filters through subtly. */
 .coach-viewer__move-list {
   position: relative;
   display: flex;
   flex-direction: column;
   border-radius: 1.25rem;
-  background: linear-gradient(160deg, rgba(255, 245, 215, 0.95) 0%, rgba(252, 211, 77, 0.55) 100%);
+  background: linear-gradient(160deg, rgba(255, 245, 215, 0.78) 0%, rgba(252, 211, 77, 0.45) 100%);
   border: 1px solid rgba(180, 120, 35, 0.55);
   box-shadow:
-    inset 0 0 0 2px rgba(255, 245, 215, 0.55),
+    inset 0 0 0 2px rgba(255, 245, 215, 0.5),
     0 6px 14px -8px rgba(110, 65, 15, 0.35);
   padding: 0.4rem 0.6rem 0.45rem;
   overflow: hidden;
@@ -10473,10 +10482,14 @@ button.hud-resource-chip:active:not(:disabled) {
 .coach-viewer__move-item-btn[aria-pressed="true"] {
   /* Active row — amber-cream wash mirroring the mockup's highlighted
    * mate row. Slightly darker text + bolder weight reinforces the
-   * "you are here" cue. */
+   * "you are here" cue. Rounded corners + suppressed bottom rule
+   * so the highlight reads as a soft pill, not a rectangle on top
+   * of a divider line (pass 9). */
   background: rgba(245, 195, 110, 0.45);
   color: rgba(63, 34, 8, 1);
   font-weight: 900;
+  border-bottom-color: transparent;
+  border-radius: 8px;
   box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.35);
 }
 
