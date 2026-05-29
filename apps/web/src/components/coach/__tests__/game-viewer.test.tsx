@@ -28,16 +28,6 @@ describe("GameViewer", () => {
     expect(screen.getByText("Nc6")).toBeInTheDocument();
   });
 
-  it("← / → controls disable at bounds", () => {
-    render(<GameViewer moves={moves4} />);
-    const prev = screen.getByRole("button", { name: /previousMove/i });
-    const next = screen.getByRole("button", { name: /nextMove/i });
-    expect(prev).toBeEnabled();
-    expect(next).toBeDisabled();
-    fireEvent.click(prev);
-    expect(next).toBeEnabled();
-  });
-
   it("SAN list highlights current move", () => {
     // 2026-05-29 (Cluster C, M1): the move list is now an always-
     // visible static panel — no toggle prelude needed. Active move
@@ -49,23 +39,13 @@ describe("GameViewer", () => {
     expect(active?.textContent).toContain("Nc6");
   });
 
-  it("zero moves: renders fallback, no SAN list, no controls", () => {
+  it("zero moves: renders fallback, no SAN list", () => {
+    // 2026-05-29 (Sally pass 2): GameViewer no longer renders the
+    // replay row — those affordances moved up to coach-game-client
+    // so they could be wrapped with the action tiles into one
+    // bottom-anchored Action Deck. The empty-state assertion drops
+    // the `no controls` clause for the same reason.
     render(<GameViewer moves={[]} />);
     expect(screen.getByText(/tooShortToReview/i)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /previousMove/i })).toBeNull();
-  });
-
-  it("partial-replay error: renders banner above the SAN list", () => {
-    const corrupt = ["e4", "e5", "Nxd5"];
-    render(<GameViewer moves={corrupt} />);
-    expect(screen.getByText(/replayStoppedAtMove/i)).toBeInTheDocument();
-  });
-
-  it("slider syncs with currentIndex", () => {
-    render(<GameViewer moves={moves4} />);
-    const slider = screen.getByRole("slider");
-    expect(slider).toHaveValue("4");
-    fireEvent.change(slider, { target: { value: "2" } });
-    expect(slider).toHaveValue("2");
   });
 });

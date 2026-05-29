@@ -10106,50 +10106,35 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
   max-width: var(--app-max-width);
   margin: 0 auto;
-  /* Compact pass — tighter top/bottom and inter-section gap so the
-   * full visor (header + board + moves + replay + 3 tiles) fits on
-   * a single 100dvh viewport without scroll on the dominant
-   * 390×844 / 390×812 MiniPay devices. */
-  padding: 0.5rem 0.85rem 0.85rem;
+  /* Sally pass 2 — the visor's outer becomes a vertical flex column
+   * that fills the viewport. The board + moves panel sit at the top;
+   * the `.coach-viewer__action-deck` gets `margin-top: auto` to anchor
+   * to the bottom edge. Without this, short games left the deck
+   * floating mid-screen with awkward green grass below. */
+  min-height: calc(100dvh - 60px); /* header reserve */
+  padding: 0.5rem 0.85rem 0.65rem;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.5rem;
   /* Avoid the in-page horizontal scroll the legacy unstyled visor
    * exhibited when long SAN lists wrapped onto the page. */
   overflow-x: clip;
 }
 
-.coach-viewer__board-card {
-  /* Cream-amber panel that frames the hero board. Mirrors the visual
-   * language of `.candy-tray-pill` panels across the app without
-   * inheriting the chip-scale shape rules. Compact pass dropped the
-   * padding so the board fills more of the card without growing the
-   * outer footprint. */
-  position: relative;
-  width: 100%;
-  border-radius: 1rem;
-  border: 1px solid rgba(180, 120, 35, 0.45);
-  background: rgba(255, 245, 215, 0.65);
-  padding: 0.35rem;
-  box-shadow:
-    0 1px 0 rgba(255, 245, 215, 0.55) inset,
-    0 2px 4px rgba(63, 34, 8, 0.16),
-    0 6px 12px rgba(63, 34, 8, 0.10);
-}
-
 .coach-viewer__board-frame {
-  /* Square aspect-ratio container — owns the size so BoardThumbnail
-   * can pass through as size="100%" and scale to whatever the viewport
-   * allows. Compact pass caps the board at 38vh so on shorter
-   * viewports (e.g. MiniPay's ~720dp inner area) the rest of the
-   * sections (moves panel, replay, tiles) still fit above the fold. */
+  /* Sally pass 2 — outer cream-amber card dropped. The chess board
+   * illustration carries its own painted wood frame; the cream
+   * rectangle around it created a "frame inside a frame" visual
+   * conflict. The board now stands alone with a subtle drop-shadow
+   * lifting it off the green grass background. */
   position: relative;
   width: 100%;
   max-width: 38vh;
   margin: 0 auto;
   aspect-ratio: 1 / 1;
-  border-radius: 0.75rem;
-  overflow: hidden;
+  border-radius: 1rem;
+  overflow: visible;
+  filter: drop-shadow(0 4px 12px rgba(63, 34, 8, 0.22));
 }
 
 .coach-viewer__board-frame > [role="img"] {
@@ -10210,20 +10195,39 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
 
-/* Replay row — arrows + slider on a single line. The ply counter
- * was dropped in M2 (the slider's thumb position is the source of
- * truth; doubling it as a digit pair felt redundant). `aria-valuetext`
- * still announces `{current} / {total}` for screen readers. */
+/* Action Deck (Sally pass 2) — one cream-amber panel wraps replay
+ * slider + tiles row + tertiary into a single bottom-anchored unit.
+ * The deck pushes to the viewport floor via `margin-top: auto` on a
+ * flex parent so short games don't leave it floating. The price
+ * ribbon on Save Victory overhangs `top: -10px`, so the deck needs
+ * `overflow: visible` + extra top padding for the ribbon to breathe. */
+.coach-viewer__action-deck {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.9rem 0.7rem 0.65rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(255, 245, 215, 0.7);
+  box-shadow:
+    0 1px 0 rgba(255, 245, 215, 0.55) inset,
+    0 2px 4px rgba(63, 34, 8, 0.14),
+    0 6px 12px rgba(63, 34, 8, 0.10);
+  overflow: visible;
+}
+
+/* Replay row — inside the action deck, no own border or background
+ * (the deck owns the frame). Arrows + slider on a single line. */
 .coach-viewer__replay {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.3rem 0.5rem;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(180, 120, 35, 0.45);
-  background: rgba(255, 245, 215, 0.7);
-  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55) inset;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .coach-viewer__replay-arrow {
@@ -10338,24 +10342,17 @@ button.hud-resource-chip:active:not(:disabled) {
   border-bottom: 1px solid rgba(180, 120, 35, 0.28);
 }
 
-.coach-viewer__move-list-header-flourish {
-  /* Decorative scroll-glyphs flanking the title. `currentColor`
-   * inherits the muted warm-brown so the swirl reads as ornamental,
-   * not actionable. */
-  color: rgba(110, 65, 15, 0.55);
-  font-size: 1.1rem;
-  font-weight: 400;
-  line-height: 1;
-  user-select: none;
-}
-
 .coach-viewer__move-list-header-title {
-  font-size: 0.82rem;
+  /* Sally pass 2 — flourishes dropped. The plain centered uppercase
+   * label reads as an editorial divider rather than a scrapbook
+   * heading at MiniPay scale. Muted color demotes it below the
+   * title row in the visual hierarchy. */
+  font-size: 0.72rem;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(63, 34, 8, 0.95);
-  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.65);
+  color: rgba(63, 34, 8, 0.55);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
 
 .coach-viewer__move-list-grid {
@@ -10379,8 +10376,12 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__move-item-btn {
+  /* Sally pass 2 — `[badge] [SAN+annotation]` 2-column layout. The
+   * annotation pill (MATE/CHECK) now sits inline next to the SAN
+   * rather than pushed to the right end of the cell, so the row
+   * clusters as one semantic unit. */
   display: grid;
-  grid-template-columns: 1.4rem 1fr auto;
+  grid-template-columns: 1.4rem 1fr;
   align-items: center;
   gap: 0.4rem;
   width: 100%;
@@ -10396,6 +10397,13 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
   font-variant-numeric: tabular-nums;
   transition: background-color var(--duration-snap) ease;
+}
+
+.coach-viewer__move-item-san-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
 }
 
 .coach-viewer__move-item-btn:hover {
@@ -10444,19 +10452,21 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__move-item-annotation {
-  /* Small pill flag for mate / check on the active move. Cream
-   * background + warm-brown text — discreet, not screaming. */
+  /* Sally pass 2 — inline badge next to the SAN. Smaller + transparent
+   * bg + thin border so it reads as "tag on the move", not as a
+   * separate floating chip. */
   display: inline-flex;
   align-items: center;
-  padding: 0.1rem 0.5rem;
-  border-radius: 9999px;
-  background: rgba(255, 245, 215, 0.92);
-  border: 1px solid rgba(180, 120, 35, 0.45);
-  color: rgba(63, 34, 8, 0.92);
-  font-size: 0.68rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid rgba(180, 83, 9, 0.35);
+  color: rgba(180, 83, 9, 0.85);
+  font-size: 0.6rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* Actions block (M3) — flat row of 1–3 icon tiles + optional tertiary
@@ -10526,19 +10536,21 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .coach-viewer__tile-canvas {
   /* Square tile background — purple gradient with cream highlights so
-   * the icon pops in front. Same visual language as the mockup the
-   * user shared. */
+   * the icon pops in front. Sally pass 2: shadows softened + thin
+   * cream ring so the tiles read as JEWELS INSET INTO the deck
+   * rather than floating jewels on green. */
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 1rem;
+  border-radius: 0.875rem;
   background: linear-gradient(180deg, #7c3aed 0%, #4c1d95 100%);
   border: 1px solid rgba(35, 10, 75, 0.65);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     inset 0 -1px 0 rgba(0, 0, 0, 0.18),
-    0 2px 4px rgba(35, 10, 75, 0.28),
-    0 6px 12px rgba(35, 10, 75, 0.18);
+    0 0 0 1px rgba(255, 245, 215, 0.4),
+    0 1px 2px rgba(35, 10, 75, 0.22),
+    0 3px 6px rgba(35, 10, 75, 0.14);
   display: flex;
   align-items: center;
   justify-content: center;

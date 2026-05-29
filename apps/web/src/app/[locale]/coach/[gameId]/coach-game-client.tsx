@@ -193,6 +193,9 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
   // double-invocation in dev doesn't double-emit, and so cold reloads
   // that re-mount the client component still log exactly one view.
   const viewedFiredRef = useRef(false);
+  // Tracks the slider's currentIndex at pointerdown so the host
+  // can emit a single from→to telemetry event when the user releases.
+  const scrubStartRef = useRef<number | null>(null);
   useEffect(() => {
     if (viewedFiredRef.current) return;
     if (!gameRecord || !walletAddress) return;
@@ -316,52 +319,118 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
       />
 
       <div className="coach-viewer">
-        <div className="coach-viewer__board-card">
-        {tokenIdEffective && (
-          <span
-            className="coach-viewer__trophy-ribbon"
-            aria-label={t("trophyRibbonAriaLabel", { tokenId: tokenIdEffective })}
-          >
-            {t("trophyRibbon", { tokenId: tokenIdEffective })}
-          </span>
-        )}
         <div className="coach-viewer__board-frame">
+          {tokenIdEffective && (
+            <span
+              className="coach-viewer__trophy-ribbon"
+              aria-label={t("trophyRibbonAriaLabel", { tokenId: tokenIdEffective })}
+            >
+              {t("trophyRibbon", { tokenId: tokenIdEffective })}
+            </span>
+          )}
           <BoardThumbnail
             fen={replay.currentFen}
             size="100%"
             ariaLabel={`Position after move ${replay.currentIndex} of ${replay.lastValidIndex}`}
           />
         </div>
-      </div>
 
-      <GameViewer
-        moves={gameRecord.moves}
-        startingFen={gameRecord.startingFen}
-        replay={replay}
-        hideBoardThumbnail
-        onMoveJump={handleMoveJump}
-        onReplayScrub={handleReplayScrub}
-        onReplayErrorShown={handleReplayErrorShown}
-      />
+        <GameViewer
+          moves={gameRecord.moves}
+          startingFen={gameRecord.startingFen}
+          replay={replay}
+          hideBoardThumbnail
+          onMoveJump={handleMoveJump}
+        />
 
-      <GameActionsBar
-        gameId={gameRecord.gameId}
-        result={mappedResult}
-        totalMoves={gameRecord.totalMoves}
-        hasAnalysis={!!gameRecord.analysis}
-        hasPartialReplayError={!!replay.error}
-        mintedTokenId={tokenIdEffective}
-        shareLinkUrl={shareLinkEffective}
-        onAskCoach={handleAskCoach}
-        onMint={handleMint}
-        onShare={handleShare}
-        onPlayAgain={handlePlayAgain}
-        onViewNft={handleViewNft}
-        onBackToHub={handleBackToHub}
-        claimPrice={claimPrice}
-      />
+        {/* Action Deck — replay slider + tiles + tertiary, wrapped in
+            one cream-amber panel anchored to the viewport bottom via
+            `margin-top: auto` on `.coach-viewer__action-deck`. */}
+        <div className="coach-viewer__action-deck">
+          {replay.error && (
+            <div role="alert" className="coach-viewer__replay-error">
+              {t("replayStoppedAtMove", {
+                n: String(replay.error.atIndex + 1),
+                san: replay.error.badSan,
+              })}
+            </div>
+          )}
 
-      {inlineAnalysisNode}
+          <div
+            className="coach-viewer__replay"
+            role="group"
+            aria-label={t("controlsAriaLabel")}
+          >
+            <button
+              type="button"
+              onClick={replay.goPrev}
+              disabled={!replay.canPrev}
+              aria-label={t("previousMove")}
+              className="coach-viewer__replay-arrow coach-viewer__replay-arrow--prev"
+            >
+              <picture>
+                <source srcSet="/art/new-assets-chesscito/btns/play.avif" type="image/avif" />
+                <source srcSet="/art/new-assets-chesscito/btns/play.webp" type="image/webp" />
+                <img src="/art/new-assets-chesscito/btns/play.png" alt="" draggable={false} />
+              </picture>
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={replay.lastValidIndex}
+              step={1}
+              value={replay.currentIndex}
+              onChange={(e) => replay.goTo(Number(e.target.value))}
+              onPointerDown={() => {
+                scrubStartRef.current = replay.currentIndex;
+              }}
+              onPointerUp={() => {
+                const from = scrubStartRef.current;
+                scrubStartRef.current = null;
+                if (from == null) return;
+                handleReplayScrub(from, replay.currentIndex);
+              }}
+              aria-label={t("sliderAriaLabel")}
+              aria-valuetext={t("sliderProgress", {
+                current: String(replay.currentIndex),
+                total: String(replay.lastValidIndex),
+              })}
+              className="coach-viewer__replay-slider"
+            />
+            <button
+              type="button"
+              onClick={replay.goNext}
+              disabled={!replay.canNext}
+              aria-label={t("nextMove")}
+              className="coach-viewer__replay-arrow coach-viewer__replay-arrow--next"
+            >
+              <picture>
+                <source srcSet="/art/new-assets-chesscito/btns/play.avif" type="image/avif" />
+                <source srcSet="/art/new-assets-chesscito/btns/play.webp" type="image/webp" />
+                <img src="/art/new-assets-chesscito/btns/play.png" alt="" draggable={false} />
+              </picture>
+            </button>
+          </div>
+
+          <GameActionsBar
+            gameId={gameRecord.gameId}
+            result={mappedResult}
+            totalMoves={gameRecord.totalMoves}
+            hasAnalysis={!!gameRecord.analysis}
+            hasPartialReplayError={!!replay.error}
+            mintedTokenId={tokenIdEffective}
+            shareLinkUrl={shareLinkEffective}
+            onAskCoach={handleAskCoach}
+            onMint={handleMint}
+            onShare={handleShare}
+            onPlayAgain={handlePlayAgain}
+            onViewNft={handleViewNft}
+            onBackToHub={handleBackToHub}
+            claimPrice={claimPrice}
+          />
+        </div>
+
+        {inlineAnalysisNode}
       </div>
     </>
   );

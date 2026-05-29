@@ -9,56 +9,39 @@ type Props = {
   moves: string[];
   startingFen?: string;
   /** When true, GameViewer skips rendering its internal thumbnail and
-   *  only emits the replay controls + SAN list. The host renders the
-   *  hero board above as a sibling. */
+   *  only emits the moves panel. The host renders the hero board
+   *  above as a sibling. */
   hideBoardThumbnail?: boolean;
   /** When provided, GameViewer uses the host's replay state instead
-   *  of creating its own — keeps the hero board and the slider/list
-   *  in lock-step during scrubbing. */
+   *  of creating its own — keeps the hero board and the move list in
+   *  lock-step when the slider scrubs in the parent's action deck. */
   replay?: GameReplayState;
-  /** 2026-05-29 (Cluster C, commit 5): telemetry callbacks. The host
-   *  owns event names so the wire format stays consistent with the
-   *  other `coach_viewer_*` events fired from coach-game-client. All
-   *  optional so non-visor callers (none today, but reserved) don't
-   *  need to opt in. `onMoveListToggle` removed in M1 — the move list
-   *  is now always visible (no toggle event to emit). */
+  /** Telemetry: move-cell tap. Replay slider events live in the host
+   *  now (Sally pass 2 — replay row moved into the action deck). */
   onMoveJump?: (ply: number) => void;
-  onReplayScrub?: (fromPly: number, toPly: number) => void;
-  onReplayErrorShown?: (atIndex: number, badSan: string) => void;
 };
 
+/**
+ * Moves panel (Sally pass 2). The replay row + arrows used to live
+ * here but moved up to the host so they could be wrapped together
+ * with the action tiles into one bottom-anchored "Action Deck"
+ * panel. GameViewer now owns ONLY the moves list.
+ */
 export function GameViewer({
   moves,
   startingFen,
   hideBoardThumbnail,
   replay: replayProp,
   onMoveJump,
-  onReplayScrub,
-  onReplayErrorShown,
 }: Props) {
   const t = useTranslations("COACH_VIEWER_COPY");
   const internalReplay = useGameReplay(moves, startingFen);
   const replay = replayProp ?? internalReplay;
-  // Capture the slider's position at scrub start so we can report a
-  // single from→to event when the user releases — not one event per
-  // intermediate value (would flood telemetry).
-  const scrubStartRef = useRef<number | null>(null);
-  // Fire `coach_viewer_replay_error_shown` once per mount when the
-  // error transitions from absent → present. Ref-gated so re-renders
-  // don't re-fire.
-  const errorReportedRef = useRef(false);
-  useEffect(() => {
-    if (!replay.error) return;
-    if (errorReportedRef.current) return;
-    errorReportedRef.current = true;
-    onReplayErrorShown?.(replay.error.atIndex, replay.error.badSan);
-  }, [replay.error, onReplayErrorShown]);
 
   // Auto-scroll the active move into view as the player scrubs / taps
   // arrows. `block: "nearest"` keeps the page from jumping; only the
-  // bounded `<ol>` scrolls. Runs after layout so the active row's
-  // position is settled. JSDOM doesn't ship `scrollIntoView` — guard
-  // so the unit tests don't crash in non-browser envs.
+  // bounded `<ol>` scrolls. JSDOM doesn't ship `scrollIntoView` — guard
+  // so unit tests don't crash.
   const moveListRef = useRef<HTMLOListElement>(null);
   useEffect(() => {
     const active = moveListRef.current?.querySelector<HTMLElement>(
@@ -79,31 +62,16 @@ export function GameViewer({
   }
 
   const playedMoves = moves.slice(0, replay.lastValidIndex);
-  const totalPlayed = playedMoves.length;
 
   return (
     <>
       {!hideBoardThumbnail && <BoardThumbnail fen={replay.currentFen} />}
 
-      {replay.error && (
-        <div role="alert" className="coach-viewer__replay-error">
-          {t("replayStoppedAtMove", {
-            n: String(replay.error.atIndex + 1),
-            san: replay.error.badSan,
-          })}
-        </div>
-      )}
-
       <div className="coach-viewer__move-list">
-        <header
-          className="coach-viewer__move-list-header"
-          aria-hidden="true"
-        >
-          <span className="coach-viewer__move-list-header-flourish">⊰</span>
+        <header className="coach-viewer__move-list-header" aria-hidden="true">
           <span className="coach-viewer__move-list-header-title">
             {t("movesPanelTitle")}
           </span>
-          <span className="coach-viewer__move-list-header-flourish">⊱</span>
         </header>
         <ol
           ref={moveListRef}
@@ -135,73 +103,19 @@ export function GameViewer({
                     {moveNum}
                     {isWhite ? "." : "..."}
                   </span>
-                  <span className="coach-viewer__move-item-san">{san}</span>
-                  {(isMate || isCheck) && (
-                    <span className="coach-viewer__move-item-annotation">
-                      {isMate ? t("moveAnnotationMate") : t("moveAnnotationCheck")}
-                    </span>
-                  )}
+                  <span className="coach-viewer__move-item-san-cluster">
+                    <span className="coach-viewer__move-item-san">{san}</span>
+                    {(isMate || isCheck) && (
+                      <span className="coach-viewer__move-item-annotation">
+                        {isMate ? t("moveAnnotationMate") : t("moveAnnotationCheck")}
+                      </span>
+                    )}
+                  </span>
                 </button>
               </li>
             );
           })}
         </ol>
-      </div>
-
-      <div
-        className="coach-viewer__replay"
-        role="group"
-        aria-label={t("controlsAriaLabel")}
-      >
-        <button
-          type="button"
-          onClick={replay.goPrev}
-          disabled={!replay.canPrev}
-          aria-label={t("previousMove")}
-          className="coach-viewer__replay-arrow coach-viewer__replay-arrow--prev"
-        >
-          <picture>
-            <source srcSet="/art/new-assets-chesscito/btns/play.avif" type="image/avif" />
-            <source srcSet="/art/new-assets-chesscito/btns/play.webp" type="image/webp" />
-            <img src="/art/new-assets-chesscito/btns/play.png" alt="" draggable={false} />
-          </picture>
-        </button>
-        <input
-          type="range"
-          min={0}
-          max={replay.lastValidIndex}
-          step={1}
-          value={replay.currentIndex}
-          onChange={(e) => replay.goTo(Number(e.target.value))}
-          onPointerDown={() => {
-            scrubStartRef.current = replay.currentIndex;
-          }}
-          onPointerUp={() => {
-            const from = scrubStartRef.current;
-            scrubStartRef.current = null;
-            if (from == null) return;
-            onReplayScrub?.(from, replay.currentIndex);
-          }}
-          aria-label={t("sliderAriaLabel")}
-          aria-valuetext={t("sliderProgress", {
-            current: String(replay.currentIndex),
-            total: String(replay.lastValidIndex),
-          })}
-          className="coach-viewer__replay-slider"
-        />
-        <button
-          type="button"
-          onClick={replay.goNext}
-          disabled={!replay.canNext}
-          aria-label={t("nextMove")}
-          className="coach-viewer__replay-arrow coach-viewer__replay-arrow--next"
-        >
-          <picture>
-            <source srcSet="/art/new-assets-chesscito/btns/play.avif" type="image/avif" />
-            <source srcSet="/art/new-assets-chesscito/btns/play.webp" type="image/webp" />
-            <img src="/art/new-assets-chesscito/btns/play.png" alt="" draggable={false} />
-          </picture>
-        </button>
       </div>
     </>
   );
