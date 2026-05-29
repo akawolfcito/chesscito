@@ -10167,11 +10167,21 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__chapter-break-glyph {
-  color: rgba(180, 83, 9, 0.7);
-  font-size: 0.78rem;
-  line-height: 1;
-  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.65);
-  letter-spacing: 0.1em;
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  filter: drop-shadow(0 1px 0 rgba(255, 245, 215, 0.65))
+    drop-shadow(0 2px 3px rgba(63, 34, 8, 0.22));
+}
+
+.coach-viewer__chapter-break-glyph img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .coach-viewer__board-frame > [role="img"] {
@@ -10232,11 +10242,10 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
 
-/* Action Deck (Sally pass 3.1) — premium CSS treatment matches the
- * MOVES panel above so they read as one material family. Slightly
- * richer gradient (deeper amber at the foot) so the deck reads as
- * the "weight settling at the bottom" anchor + a gold inset edge
- * for the "treasure deck holding the action jewels" cue. */
+/* Action Deck (Sally pass 6) — same `.badge-vitrine-hero` material
+ * as the MOVES panel above. Bottom-anchored via `margin-top: auto`.
+ * Price ribbon (Save Victory) overhangs the top edge — overflow
+ * visible + extra top padding for breathing room. */
 .coach-viewer__action-deck {
   position: relative;
   margin-top: auto;
@@ -10245,17 +10254,11 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 0.75rem;
   padding: 1rem 0.85rem 0.85rem;
   border-radius: 1.25rem;
-  background:
-    radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 55%),
-    linear-gradient(180deg, rgba(255, 250, 232, 0.96) 0%, rgba(250, 218, 162, 0.94) 100%);
+  background: linear-gradient(160deg, rgba(255, 245, 215, 0.95) 0%, rgba(252, 211, 77, 0.55) 100%);
   border: 1px solid rgba(180, 120, 35, 0.55);
   box-shadow:
-    inset 0 0 0 1px rgba(232, 193, 96, 0.6),
-    inset 0 2px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 0 rgba(180, 83, 9, 0.22),
-    0 1px 2px rgba(63, 34, 8, 0.2),
-    0 6px 14px rgba(63, 34, 8, 0.16),
-    0 16px 30px rgba(63, 34, 8, 0.1);
+    inset 0 0 0 2px rgba(255, 245, 215, 0.55),
+    0 6px 14px -8px rgba(110, 65, 15, 0.35);
   overflow: visible;
 }
 
@@ -10365,53 +10368,30 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
 }
 
-/* Static move list (Sally pass 3.1) — `panel-bg4` reverted (the
- * painted scenery asset was a scene-map shell, not a content panel;
- * its rocks + flowers ate the corner ribbon real-estate). Replaced
- * with a premium CSS treatment: warm vellum gradient + gold inset
- * edge + multi-layer ambient shadow + radial highlight from above. */
+/* Static move list (Sally pass 6) — adopts the canonical
+ * `.badge-vitrine-hero` panel treatment so the visor speaks the same
+ * material language as the Badges sheet. Diagonal cream→amber
+ * gradient + thick cream inset highlight + single soft outer shadow.
+ * Cleaner than the multi-layer stack from pass 3.1; reads as the
+ * production-grade premium panel the rest of the app already uses. */
 .coach-viewer__move-list {
   position: relative;
   display: flex;
   flex-direction: column;
   border-radius: 1.25rem;
-  background:
-    radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 60%),
-    linear-gradient(180deg, rgba(255, 250, 232, 0.96) 0%, rgba(252, 232, 188, 0.94) 100%);
+  background: linear-gradient(160deg, rgba(255, 245, 215, 0.95) 0%, rgba(252, 211, 77, 0.55) 100%);
   border: 1px solid rgba(180, 120, 35, 0.55);
   box-shadow:
-    inset 0 0 0 1px rgba(232, 193, 96, 0.55),
-    inset 0 2px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 0 rgba(180, 83, 9, 0.2),
-    0 1px 2px rgba(63, 34, 8, 0.18),
-    0 6px 14px rgba(63, 34, 8, 0.14),
-    0 16px 30px rgba(63, 34, 8, 0.08);
+    inset 0 0 0 2px rgba(255, 245, 215, 0.55),
+    0 6px 14px -8px rgba(110, 65, 15, 0.35);
   padding: 0.4rem 0.6rem 0.45rem;
   overflow: hidden;
 }
 
-/* Sally pass 5 — diagonal corner accents (top-left + bottom-right)
- * read as gold-leaf framing on both cream panels. Pseudo-element
- * carries a 4-corner background-image trick: linear-gradients masked
- * to small L-shapes anchored at each corner. Same accent style on
- * MOVES + Action Deck rhymes them as "two pages of the same book". */
-.coach-viewer__move-list::before,
-.coach-viewer__action-deck::before {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    /* top-left corner — horizontal stroke */
-    linear-gradient(90deg, rgba(232, 193, 96, 0.85) 0%, rgba(232, 193, 96, 0.85) 14px, transparent 14px) top left / 14px 1.5px no-repeat,
-    /* top-left corner — vertical stroke */
-    linear-gradient(180deg, rgba(232, 193, 96, 0.85) 0%, rgba(232, 193, 96, 0.85) 14px, transparent 14px) top left / 1.5px 14px no-repeat,
-    /* bottom-right corner — horizontal stroke */
-    linear-gradient(90deg, rgba(232, 193, 96, 0.85) 0%, rgba(232, 193, 96, 0.85) 14px, transparent 14px) bottom right / 14px 1.5px no-repeat,
-    /* bottom-right corner — vertical stroke */
-    linear-gradient(180deg, rgba(232, 193, 96, 0.85) 0%, rgba(232, 193, 96, 0.85) 14px, transparent 14px) bottom right / 1.5px 14px no-repeat;
-}
+/* Pass 5 corner accents removed — the canonical badge-vitrine
+ * treatment carries enough material signature on its own; corner
+ * gold leaves felt additive in a way the production design system
+ * doesn't. Cleaner without them. */
 
 .coach-viewer__move-list-header {
   display: flex;

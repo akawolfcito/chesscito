@@ -337,7 +337,11 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
 
         <div className="coach-viewer__chapter-break" aria-hidden="true">
           <span className="coach-viewer__chapter-break-rule"></span>
-          <span className="coach-viewer__chapter-break-glyph">⟁</span>
+          <picture className="coach-viewer__chapter-break-glyph">
+            <source srcSet="/art/screen-mission/adorno-icon.avif" type="image/avif" />
+            <source srcSet="/art/screen-mission/adorno-icon.webp" type="image/webp" />
+            <img src="/art/screen-mission/adorno-icon.png" alt="" draggable={false} />
+          </picture>
           <span className="coach-viewer__chapter-break-rule"></span>
         </div>
 
