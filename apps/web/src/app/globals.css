@@ -10365,10 +10365,11 @@ button.hud-resource-chip:active:not(:disabled) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.15rem 0.4rem;
-  /* Compact pass — ~3 rows visible at the new 32-34px row height so
-   * the panel stays under ~120px and the rest of the visor fits in
-   * the viewport. Internal scroll past 3 rows. */
-  max-height: 130px;
+  /* Compact pass v2 — locked to exactly 3 rows tall (32px row + ~2.5px
+   * gap × 3 + padding ≈ 110px). The list auto-scrolls the active row
+   * into view as the player scrubs, so the 3-row window stays
+   * informative without forcing manual scroll. */
+  max-height: 110px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }

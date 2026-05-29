@@ -54,6 +54,21 @@ export function GameViewer({
     onReplayErrorShown?.(replay.error.atIndex, replay.error.badSan);
   }, [replay.error, onReplayErrorShown]);
 
+  // Auto-scroll the active move into view as the player scrubs / taps
+  // arrows. `block: "nearest"` keeps the page from jumping; only the
+  // bounded `<ol>` scrolls. Runs after layout so the active row's
+  // position is settled. JSDOM doesn't ship `scrollIntoView` — guard
+  // so the unit tests don't crash in non-browser envs.
+  const moveListRef = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    const active = moveListRef.current?.querySelector<HTMLElement>(
+      '[data-active="true"]',
+    );
+    if (typeof active?.scrollIntoView === "function") {
+      active.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [replay.currentIndex]);
+
   if (replay.totalMoves === 0) {
     return (
       <div className="game-viewer game-viewer--empty">
@@ -91,6 +106,7 @@ export function GameViewer({
           <span className="coach-viewer__move-list-header-flourish">⊱</span>
         </header>
         <ol
+          ref={moveListRef}
           className="coach-viewer__move-list-grid"
           aria-label={t("sanListAriaLabel")}
         >
