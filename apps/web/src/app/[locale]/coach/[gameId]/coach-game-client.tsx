@@ -345,22 +345,23 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
           <span className="coach-viewer__chapter-break-rule"></span>
         </div>
 
-        {/* Page panel — merges MOVES history + replay controls + action
-            tiles into ONE cream-amber sheet (Sally pass 7). They were
-            two stacked cards before; the merge reads as a single
-            journal page with internal section transitions instead of
-            duplicate UI containers. Bottom-anchored via
-            `margin-top: auto`. */}
-        <div className="coach-viewer__page">
-          <GameViewer
-            moves={gameRecord.moves}
-            startingFen={gameRecord.startingFen}
-            replay={replay}
-            hideBoardThumbnail
-            onMoveJump={handleMoveJump}
-          />
+        {/* MOVES section keeps its own badge-vitrine panel — it's a
+            scrollable data table and benefits from a container that
+            defines the boundary. The controls + tiles below render
+            OPEN on the page (no panel) for visual breathing room
+            and density contrast (Sally pass 8). */}
+        <GameViewer
+          moves={gameRecord.moves}
+          startingFen={gameRecord.startingFen}
+          replay={replay}
+          hideBoardThumbnail
+          onMoveJump={handleMoveJump}
+        />
 
-          <div className="coach-viewer__page-divider" aria-hidden="true"></div>
+        {/* Floating controls — replay row + action tiles, bottom-
+            anchored via `margin-top: auto`. No panel chrome; the
+            tiles ARE the affordance, they don't need a frame. */}
+        <div className="coach-viewer__controls">
           {replay.error && (
             <div role="alert" className="coach-viewer__replay-error">
               {t("replayStoppedAtMove", {
