@@ -88,13 +88,13 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
     );
   }
 
+  // Success branch — Cluster C owns the visor chrome end-to-end. The
+  // shell's ContextualHeader was rendering "Match review" a second
+  // time above the new header band the client emits (2026-05-29).
+  // Error/no-record branches still render ContextualHeader for shell
+  // consistency, since they don't reach the redesigned actions stack.
   return (
     <main className="arena-bg arena-scroll-screen h-[100dvh]">
-      <ContextualHeader
-        variant="back-control"
-        iconSlot={<TileIconSlot src="/art/new-icons-chesscito/training" />}
-        title={t("title")}
-      />
       <CoachGameClient gameRecord={gameRecord} walletAddress={wallet as `0x${string}`} />
     </main>
   );
