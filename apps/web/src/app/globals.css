@@ -10122,19 +10122,21 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__board-frame {
-  /* Sally pass 2 — outer cream-amber card dropped. The chess board
-   * illustration carries its own painted wood frame; the cream
-   * rectangle around it created a "frame inside a frame" visual
-   * conflict. The board now stands alone with a subtle drop-shadow
-   * lifting it off the green grass background. */
+  /* Sally pass 3 — outer card dropped + board ~22% larger so it
+   * unambiguously owns the visor as the hero. Multi-layer shadow
+   * (sharp + key + ambient) gives it real atmospheric depth so it
+   * feels lifted off the green grass rather than pasted on top. */
   position: relative;
   width: 100%;
-  max-width: 38vh;
+  max-width: 46vh;
   margin: 0 auto;
   aspect-ratio: 1 / 1;
   border-radius: 1rem;
   overflow: visible;
-  filter: drop-shadow(0 4px 12px rgba(63, 34, 8, 0.22));
+  filter:
+    drop-shadow(0 1px 2px rgba(63, 34, 8, 0.28))
+    drop-shadow(0 8px 16px rgba(63, 34, 8, 0.22))
+    drop-shadow(0 20px 32px rgba(63, 34, 8, 0.12));
 }
 
 .coach-viewer__board-frame > [role="img"] {
@@ -10195,25 +10197,25 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
 }
 
-/* Action Deck (Sally pass 2) — one cream-amber panel wraps replay
- * slider + tiles row + tertiary into a single bottom-anchored unit.
- * The deck pushes to the viewport floor via `margin-top: auto` on a
- * flex parent so short games don't leave it floating. The price
- * ribbon on Save Victory overhangs `top: -10px`, so the deck needs
- * `overflow: visible` + extra top padding for the ribbon to breathe. */
+/* Action Deck (Sally pass 3) — panel-bg4 painted asset, same
+ * material as the victory popup + the MOVES panel above. The deck
+ * pushes to the viewport floor via `margin-top: auto`. Ribbon
+ * (Save Victory price) overhangs the top edge, so overflow stays
+ * visible + extra top padding for breathing room. */
 .coach-viewer__action-deck {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  padding: 0.9rem 0.7rem 0.65rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(180, 120, 35, 0.45);
-  background: rgba(255, 245, 215, 0.7);
-  box-shadow:
-    0 1px 0 rgba(255, 245, 215, 0.55) inset,
-    0 2px 4px rgba(63, 34, 8, 0.14),
-    0 6px 12px rgba(63, 34, 8, 0.10);
+  gap: 0.7rem;
+  padding: 1rem 0.85rem 0.85rem;
+  border: 0;
+  background-image: image-set(
+    url("/art/new-assets-chesscito/paneles/panel-bg4.avif") type("image/avif"),
+    url("/art/new-assets-chesscito/paneles/panel-bg4.webp") type("image/webp"),
+    url("/art/new-assets-chesscito/paneles/panel-bg4.png") type("image/png")
+  );
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   overflow: visible;
 }
 
@@ -10317,19 +10319,25 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
 }
 
-/* Static move list (M1) — always-visible 2-col panel with a decorated
- * "Moves" header and ~4 visible rows + internal scroll on overflow.
- * Replaces the collapsible-toggle pattern; the player never has to
- * tap to see the move history. */
+/* Static move list (Sally pass 3) — panel-bg4 painted asset replaces
+ * the flat cream-amber bg + border + shadow. Same game-asset language
+ * as the victory popup, which is the premium-moment grammar across
+ * the rest of the app. Inner content sits over the painted texture
+ * with thin warm-brown dividers for row separation. */
 .coach-viewer__move-list {
   display: flex;
   flex-direction: column;
-  border-radius: 1rem;
-  border: 1px solid rgba(180, 120, 35, 0.45);
-  background: rgba(255, 245, 215, 0.7);
-  box-shadow:
-    0 1px 0 rgba(255, 245, 215, 0.55) inset,
-    0 1px 2px rgba(63, 34, 8, 0.12);
+  border: 0;
+  background-image: image-set(
+    url("/art/new-assets-chesscito/paneles/panel-bg4.avif") type("image/avif"),
+    url("/art/new-assets-chesscito/paneles/panel-bg4.webp") type("image/webp"),
+    url("/art/new-assets-chesscito/paneles/panel-bg4.png") type("image/png")
+  );
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  /* Pull content INSIDE the panel-bg's painted frame so text + badges
+   * don't ride the edge ornament. */
+  padding: 0.45rem 0.6rem 0.55rem;
   overflow: hidden;
 }
 
@@ -10338,8 +10346,8 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.3rem 0.75rem 0.25rem;
-  border-bottom: 1px solid rgba(180, 120, 35, 0.28);
+  padding: 0.1rem 0.5rem 0.35rem;
+  border-bottom: 1px solid rgba(110, 65, 15, 0.25);
 }
 
 .coach-viewer__move-list-header-title {
@@ -10358,15 +10366,15 @@ button.hud-resource-chip:active:not(:disabled) {
 .coach-viewer__move-list-grid {
   list-style: none;
   margin: 0;
-  padding: 0.3rem 0.45rem;
+  padding: 0.3rem 0.1rem 0.1rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.15rem 0.4rem;
-  /* Compact pass v2 — locked to exactly 3 rows tall (32px row + ~2.5px
-   * gap × 3 + padding ≈ 110px). The list auto-scrolls the active row
-   * into view as the player scrubs, so the 3-row window stays
-   * informative without forcing manual scroll. */
-  max-height: 110px;
+  /* Pass 3 — tight column gap, rowgap via a sibling divider effect
+   * (1px warm-brown rule on each row's btn-bottom) instead of true
+   * gap so the layout reads as a real chess journal entry table. */
+  column-gap: 0.5rem;
+  row-gap: 0;
+  max-height: 100px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -10376,27 +10384,32 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__move-item-btn {
-  /* Sally pass 2 — `[badge] [SAN+annotation]` 2-column layout. The
-   * annotation pill (MATE/CHECK) now sits inline next to the SAN
-   * rather than pushed to the right end of the cell, so the row
-   * clusters as one semantic unit. */
+  /* Sally pass 3 — compact rows. Thin warm-brown bottom rule per row
+   * acts as a chess-journal table divider; rowgap 0 in the parent
+   * grid lets the rules align across columns. */
   display: grid;
-  grid-template-columns: 1.4rem 1fr;
+  grid-template-columns: 1.15rem 1fr;
   align-items: center;
   gap: 0.4rem;
   width: 100%;
-  min-height: 32px;
-  padding: 0.25rem 0.45rem;
-  border-radius: 0.5rem;
+  min-height: 28px;
+  padding: 0.2rem 0.35rem;
+  border-radius: 0;
   border: 0;
+  border-bottom: 1px solid rgba(110, 65, 15, 0.18);
   background: transparent;
   color: rgba(63, 34, 8, 0.92);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 800;
   text-align: left;
   cursor: pointer;
   font-variant-numeric: tabular-nums;
   transition: background-color var(--duration-snap) ease;
+}
+
+.coach-viewer__move-item:last-child .coach-viewer__move-item-btn,
+.coach-viewer__move-item:nth-last-child(2):nth-child(odd) ~ .coach-viewer__move-item .coach-viewer__move-item-btn {
+  border-bottom: 0;
 }
 
 .coach-viewer__move-item-san-cluster {
@@ -10421,26 +10434,23 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__move-item-num {
-  /* Green-circle badge — matches the mockup's per-row chess-themed
-   * marker. The dot suffix ("..." for black) stays inline so the
-   * single span keeps the badge geometry stable. */
+  /* Pass 3 — green badge stays (user loved it from M1) but smaller
+   * to fit the compact 28px row + tighter typography. */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 1.15rem;
+  height: 1.15rem;
   border-radius: 9999px;
   background: linear-gradient(180deg, #2d8c3f 0%, #1f6a2e 100%);
   border: 1px solid rgba(15, 60, 25, 0.55);
   color: rgba(255, 250, 220, 1);
-  font-size: 0.62rem;
+  font-size: 0.55rem;
   font-weight: 900;
   letter-spacing: 0.02em;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
     0 1px 2px rgba(15, 60, 25, 0.35);
-  /* Truncate the "1..." style suffix gracefully — the dots are
-   * primarily a black-vs-white cue, the number is the truth. */
   overflow: hidden;
   white-space: nowrap;
 }
