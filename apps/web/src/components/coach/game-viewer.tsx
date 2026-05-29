@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { BoardThumbnail } from "@/components/board/board-thumbnail";
 import { useGameReplay, type GameReplayState } from "@/lib/game/use-game-replay";
@@ -16,13 +16,45 @@ type Props = {
    *  of creating its own — keeps the hero board and the slider/list
    *  in lock-step during scrubbing. */
   replay?: GameReplayState;
+  /** 2026-05-29 (Cluster C, commit 5): telemetry callbacks. The host
+   *  owns event names so the wire format stays consistent with the
+   *  other `coach_viewer_*` events fired from coach-game-client. All
+   *  optional so non-visor callers (none today, but reserved) don't
+   *  need to opt in. */
+  onMoveListToggle?: (open: boolean) => void;
+  onMoveJump?: (ply: number) => void;
+  onReplayScrub?: (fromPly: number, toPly: number) => void;
+  onReplayErrorShown?: (atIndex: number, badSan: string) => void;
 };
 
-export function GameViewer({ moves, startingFen, hideBoardThumbnail, replay: replayProp }: Props) {
+export function GameViewer({
+  moves,
+  startingFen,
+  hideBoardThumbnail,
+  replay: replayProp,
+  onMoveListToggle,
+  onMoveJump,
+  onReplayScrub,
+  onReplayErrorShown,
+}: Props) {
   const t = useTranslations("COACH_VIEWER_COPY");
   const internalReplay = useGameReplay(moves, startingFen);
   const replay = replayProp ?? internalReplay;
   const [moveListOpen, setMoveListOpen] = useState(false);
+  // Capture the slider's position at scrub start so we can report a
+  // single from→to event when the user releases — not one event per
+  // intermediate value (would flood telemetry).
+  const scrubStartRef = useRef<number | null>(null);
+  // Fire `coach_viewer_replay_error_shown` once per mount when the
+  // error transitions from absent → present. Ref-gated so re-renders
+  // don't re-fire.
+  const errorReportedRef = useRef(false);
+  useEffect(() => {
+    if (!replay.error) return;
+    if (errorReportedRef.current) return;
+    errorReportedRef.current = true;
+    onReplayErrorShown?.(replay.error.atIndex, replay.error.badSan);
+  }, [replay.error, onReplayErrorShown]);
 
   if (replay.totalMoves === 0) {
     return (
@@ -70,6 +102,15 @@ export function GameViewer({ moves, startingFen, hideBoardThumbnail, replay: rep
           step={1}
           value={replay.currentIndex}
           onChange={(e) => replay.goTo(Number(e.target.value))}
+          onPointerDown={() => {
+            scrubStartRef.current = replay.currentIndex;
+          }}
+          onPointerUp={() => {
+            const from = scrubStartRef.current;
+            scrubStartRef.current = null;
+            if (from == null) return;
+            onReplayScrub?.(from, replay.currentIndex);
+          }}
           aria-label={t("sliderAriaLabel")}
           aria-valuetext={t("sliderProgress", {
             current: String(replay.currentIndex),
@@ -95,7 +136,13 @@ export function GameViewer({ moves, startingFen, hideBoardThumbnail, replay: rep
         <button
           type="button"
           className="coach-viewer__move-list-toggle"
-          onClick={() => setMoveListOpen((open) => !open)}
+          onClick={() =>
+            setMoveListOpen((open) => {
+              const next = !open;
+              onMoveListToggle?.(next);
+              return next;
+            })
+          }
           aria-expanded={moveListOpen}
           aria-controls="coach-viewer-move-list-region"
         >
@@ -122,7 +169,10 @@ export function GameViewer({ moves, startingFen, hideBoardThumbnail, replay: rep
                 <button
                   type="button"
                   className="coach-viewer__move-item-btn"
-                  onClick={() => replay.goTo(i + 1)}
+                  onClick={() => {
+                    replay.goTo(i + 1);
+                    onMoveJump?.(i + 1);
+                  }}
                   aria-pressed={isActive}
                 >
                   <span className="coach-viewer__move-item-num">

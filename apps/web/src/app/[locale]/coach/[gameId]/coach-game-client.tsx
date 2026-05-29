@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import type { GameRecord } from "@/lib/coach/types";
@@ -133,11 +133,87 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
 
   const handleViewNft = useCallback(() => {
     if (!gameRecord) return;
+    const tokenId =
+      mint.data.tokenId != null ? String(mint.data.tokenId) : (gameRecord.mintedTokenId ?? null);
+    track("coach_viewer_view_celoscan_tap", {
+      gameId: gameRecord.gameId,
+      tokenId: tokenId ?? undefined,
+    });
     const tx = mint.data.claimTxHash ?? gameRecord.claimTxHash;
     if (tx && typeof window !== "undefined") {
       window.open(`https://celoscan.io/tx/${tx}`, "_blank", "noopener");
     }
-  }, [mint.data.claimTxHash, gameRecord]);
+  }, [mint.data.claimTxHash, mint.data.tokenId, gameRecord]);
+
+  const handleBackToHub = useCallback(() => {
+    track("coach_viewer_back_to_hub_tap", {
+      gameId: gameRecord?.gameId ?? "unknown",
+      result: gameRecord?.result ?? "unknown",
+    });
+    router.push("/hub");
+  }, [router, gameRecord]);
+
+  const handleMoveListToggle = useCallback(
+    (open: boolean) => {
+      if (!gameRecord) return;
+      track("coach_viewer_move_list_toggle", {
+        gameId: gameRecord.gameId,
+        open,
+      });
+    },
+    [gameRecord],
+  );
+
+  const handleMoveJump = useCallback(
+    (ply: number) => {
+      if (!gameRecord) return;
+      track("coach_viewer_move_jump", { gameId: gameRecord.gameId, ply });
+    },
+    [gameRecord],
+  );
+
+  const handleReplayScrub = useCallback(
+    (fromPly: number, toPly: number) => {
+      if (!gameRecord) return;
+      if (fromPly === toPly) return;
+      track("coach_viewer_replay_scrub", {
+        gameId: gameRecord.gameId,
+        fromPly,
+        toPly,
+      });
+    },
+    [gameRecord],
+  );
+
+  const handleReplayErrorShown = useCallback(
+    (atIndex: number, badSan: string) => {
+      if (!gameRecord) return;
+      track("coach_viewer_replay_error_shown", {
+        gameId: gameRecord.gameId,
+        atIndex,
+        badSan,
+      });
+    },
+    [gameRecord],
+  );
+
+  // `coach_viewer_viewed` — fires once after the route lands and the
+  // wallet + record both resolve (P1-6). Ref-gated so React Strict
+  // double-invocation in dev doesn't double-emit, and so cold reloads
+  // that re-mount the client component still log exactly one view.
+  const viewedFiredRef = useRef(false);
+  useEffect(() => {
+    if (viewedFiredRef.current) return;
+    if (!gameRecord || !walletAddress) return;
+    viewedFiredRef.current = true;
+    track("coach_viewer_viewed", {
+      gameId: gameRecord.gameId,
+      result: gameRecord.result,
+      claimed: !!gameRecord.mintedTokenId,
+      hasAnalysis: !!gameRecord.analysis,
+      totalMoves: gameRecord.totalMoves,
+    });
+  }, [gameRecord, walletAddress]);
 
   // Branch 1: no wallet
   if (!walletAddress) {
@@ -279,6 +355,10 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
         startingFen={gameRecord.startingFen}
         replay={replay}
         hideBoardThumbnail
+        onMoveListToggle={handleMoveListToggle}
+        onMoveJump={handleMoveJump}
+        onReplayScrub={handleReplayScrub}
+        onReplayErrorShown={handleReplayErrorShown}
       />
 
       <GameActionsBar
@@ -294,7 +374,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
         onShare={handleShare}
         onPlayAgain={handlePlayAgain}
         onViewNft={handleViewNft}
-        onBackToHub={handleBack}
+        onBackToHub={handleBackToHub}
         claimPrice={claimPrice}
       />
 
