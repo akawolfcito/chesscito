@@ -552,8 +552,9 @@ const messages = {
     notFoundMessage: "Partida no encontrada.",
     backLabel: "Atrás",
     // sliderProgress: "{current} / {total}" — numeric, no ES override.
-    moveListToggleClosed: "Todas las jugadas ({n})",
-    moveListToggleOpen: "Ocultar jugadas",
+    movesPanelTitle: "Jugadas",
+    moveAnnotationMate: "Mate",
+    moveAnnotationCheck: "Jaque",
     backToHub: "Volver al Hub",
     saveVictory: "Guardar Victoria",
     saveVictoryAriaLabel: "Guardar Victoria por {price}",

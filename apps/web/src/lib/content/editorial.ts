@@ -1470,12 +1470,14 @@ export const COACH_VIEWER_COPY = {
   loadErrorRetry: "Retry",
   notFoundMessage: "Match not found.",
   backLabel: "Back",
-  // 2026-05-29 (Cluster C, commit 2): slider/replay polish + collapsed
-  // move list. `sliderProgress` is locale-neutral (numbers only); the
-  // toggle labels need ES overrides in messages/es.ts.
+  // 2026-05-29 (Cluster C, commit 2): slider/replay polish.
+  // `sliderProgress` is locale-neutral (numbers only).
   sliderProgress: "{current} / {total}",
-  moveListToggleClosed: "All moves ({n})",
-  moveListToggleOpen: "Hide moves",
+  // 2026-05-29 (Cluster C, M1): move list redesigned to a static
+  // 4-row panel with a flanking-flourish header — toggle pill dropped.
+  movesPanelTitle: "Moves",
+  moveAnnotationMate: "Mate",
+  moveAnnotationCheck: "Check",
   // 2026-05-29 (Cluster C, commit 3a): state-driven actions stack.
   // Tertiary link reused across non-win states (loss / draw / resigned
   // / too-short / replay-errored). ES override in messages/es.ts.

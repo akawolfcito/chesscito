@@ -38,15 +38,11 @@ describe("GameViewer", () => {
     expect(next).toBeEnabled();
   });
 
-  it("SAN list highlights current move when expanded", () => {
-    // 2026-05-29 (Cluster C, commit 2): the move list is collapsed by
-    // default — the player taps `moveListToggleClosed` to reveal it.
-    // The list-item a11y role is therefore unreachable until the
-    // toggle flips, so the test opens it explicitly before querying.
+  it("SAN list highlights current move", () => {
+    // 2026-05-29 (Cluster C, M1): the move list is now an always-
+    // visible static panel — no toggle prelude needed. Active move
+    // identified by `data-active="true"` on the <li>.
     render(<GameViewer moves={moves4} />);
-    fireEvent.click(
-      screen.getByRole("button", { name: /moveListToggleClosed/i }),
-    );
     const items = screen.getAllByRole("listitem");
     const active = items.find((el) => el.getAttribute("data-active") === "true");
     expect(active).toBeTruthy();

@@ -155,17 +155,6 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     router.push("/hub");
   }, [router, gameRecord]);
 
-  const handleMoveListToggle = useCallback(
-    (open: boolean) => {
-      if (!gameRecord) return;
-      track("coach_viewer_move_list_toggle", {
-        gameId: gameRecord.gameId,
-        open,
-      });
-    },
-    [gameRecord],
-  );
-
   const handleMoveJump = useCallback(
     (ply: number) => {
       if (!gameRecord) return;
@@ -350,7 +339,6 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
         startingFen={gameRecord.startingFen}
         replay={replay}
         hideBoardThumbnail
-        onMoveListToggle={handleMoveListToggle}
         onMoveJump={handleMoveJump}
         onReplayScrub={handleReplayScrub}
         onReplayErrorShown={handleReplayErrorShown}

@@ -10308,72 +10308,63 @@ button.hud-resource-chip:active:not(:disabled) {
   user-select: none;
 }
 
-/* Collapsible move list — single pill toggle when closed, 2-column
- * scrollable grid when open. Snap toggle (no CSS animation) keeps the
- * implementation surface small and sidesteps reduced-motion concerns. */
+/* Static move list (M1) — always-visible 2-col panel with a decorated
+ * "Moves" header and ~4 visible rows + internal scroll on overflow.
+ * Replaces the collapsible-toggle pattern; the player never has to
+ * tap to see the move history. */
 .coach-viewer__move-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(255, 245, 215, 0.7);
+  box-shadow:
+    0 1px 0 rgba(255, 245, 215, 0.55) inset,
+    0 1px 2px rgba(63, 34, 8, 0.12);
+  overflow: hidden;
 }
 
-.coach-viewer__move-list-toggle {
-  display: inline-flex;
+.coach-viewer__move-list-header {
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  min-height: 44px;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(180, 120, 35, 0.45);
-  background: rgba(255, 245, 215, 0.78);
-  color: rgba(63, 34, 8, 0.92);
-  font-size: 0.82rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
-  cursor: pointer;
-  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55), 0 1px 2px rgba(63, 34, 8, 0.16);
-  transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem 0.4rem;
+  border-bottom: 1px solid rgba(180, 120, 35, 0.28);
 }
 
-.coach-viewer__move-list-toggle:hover {
-  background: rgba(255, 245, 215, 0.95);
-}
-
-.coach-viewer__move-list-toggle:active {
-  transform: scale(0.97);
-}
-
-.coach-viewer__move-list-toggle::after {
-  /* Tiny chevron that flips when open. Pure CSS — keeps the toggle's
-   * label single-source-of-truth in editorial.ts. */
-  content: "▾";
-  display: inline-block;
-  font-size: 0.7em;
+.coach-viewer__move-list-header-flourish {
+  /* Decorative scroll-glyphs flanking the title. `currentColor`
+   * inherits the muted warm-brown so the swirl reads as ornamental,
+   * not actionable. */
+  color: rgba(110, 65, 15, 0.55);
+  font-size: 1.1rem;
+  font-weight: 400;
   line-height: 1;
-  color: rgba(110, 65, 15, 0.65);
-  transition: transform var(--duration-snap) ease;
+  user-select: none;
 }
 
-.coach-viewer__move-list[data-open="true"] .coach-viewer__move-list-toggle::after {
-  transform: rotate(180deg);
+.coach-viewer__move-list-header-title {
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.65);
 }
 
 .coach-viewer__move-list-grid {
   list-style: none;
   margin: 0;
-  padding: 0.4rem;
+  padding: 0.4rem 0.5rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.25rem 0.5rem;
-  max-height: 240px;
+  /* Approximate 4 rows visible — each row is ~44px (button min-height
+   * plus row gap). Scroll internally past that without bleeding the
+   * rest of the page. */
+  max-height: 200px;
   overflow-y: auto;
-  border-radius: 0.875rem;
-  border: 1px solid rgba(180, 120, 35, 0.45);
-  background: rgba(255, 245, 215, 0.55);
-  /* Smooth thumb scroll inside the bounded region without bleeding
-   * the rest of the page. */
   overscroll-behavior: contain;
 }
 
@@ -10383,17 +10374,18 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .coach-viewer__move-item-btn {
   display: grid;
-  grid-template-columns: 2rem 1fr;
+  grid-template-columns: 1.6rem 1fr auto;
   align-items: center;
+  gap: 0.5rem;
   width: 100%;
-  min-height: 32px;
-  padding: 0.3rem 0.5rem;
-  border-radius: 0.5rem;
+  min-height: 40px;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.625rem;
   border: 0;
   background: transparent;
-  color: rgba(63, 34, 8, 0.88);
-  font-size: 0.82rem;
-  font-weight: 700;
+  color: rgba(63, 34, 8, 0.92);
+  font-size: 0.92rem;
+  font-weight: 800;
   text-align: left;
   cursor: pointer;
   font-variant-numeric: tabular-nums;
@@ -10405,22 +10397,60 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__move-item-btn[aria-pressed="true"] {
-  background: rgba(180, 83, 9, 0.18);
+  /* Active row — amber-cream wash mirroring the mockup's highlighted
+   * mate row. Slightly darker text + bolder weight reinforces the
+   * "you are here" cue. */
+  background: rgba(245, 195, 110, 0.45);
   color: rgba(63, 34, 8, 1);
   font-weight: 900;
+  box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.35);
 }
 
 .coach-viewer__move-item-num {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: rgba(110, 65, 15, 0.65);
-  letter-spacing: 0.01em;
+  /* Green-circle badge — matches the mockup's per-row chess-themed
+   * marker. The dot suffix ("..." for black) stays inline so the
+   * single span keeps the badge geometry stable. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #2d8c3f 0%, #1f6a2e 100%);
+  border: 1px solid rgba(15, 60, 25, 0.55);
+  color: rgba(255, 250, 220, 1);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 1px 2px rgba(15, 60, 25, 0.35);
+  /* Truncate the "1..." style suffix gracefully — the dots are
+   * primarily a black-vs-white cue, the number is the truth. */
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .coach-viewer__move-item-san {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: inherit;
+}
+
+.coach-viewer__move-item-annotation {
+  /* Small pill flag for mate / check on the active move. Cream
+   * background + warm-brown text — discreet, not screaming. */
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+  background: rgba(255, 245, 215, 0.92);
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  color: rgba(63, 34, 8, 0.92);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* Actions stack (commit 3a). Vertical column: primary CTA → optional

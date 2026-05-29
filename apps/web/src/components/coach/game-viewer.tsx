@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { BoardThumbnail } from "@/components/board/board-thumbnail";
 import { useGameReplay, type GameReplayState } from "@/lib/game/use-game-replay";
@@ -20,8 +20,8 @@ type Props = {
    *  owns event names so the wire format stays consistent with the
    *  other `coach_viewer_*` events fired from coach-game-client. All
    *  optional so non-visor callers (none today, but reserved) don't
-   *  need to opt in. */
-  onMoveListToggle?: (open: boolean) => void;
+   *  need to opt in. `onMoveListToggle` removed in M1 — the move list
+   *  is now always visible (no toggle event to emit). */
   onMoveJump?: (ply: number) => void;
   onReplayScrub?: (fromPly: number, toPly: number) => void;
   onReplayErrorShown?: (atIndex: number, badSan: string) => void;
@@ -32,7 +32,6 @@ export function GameViewer({
   startingFen,
   hideBoardThumbnail,
   replay: replayProp,
-  onMoveListToggle,
   onMoveJump,
   onReplayScrub,
   onReplayErrorShown,
@@ -40,7 +39,6 @@ export function GameViewer({
   const t = useTranslations("COACH_VIEWER_COPY");
   const internalReplay = useGameReplay(moves, startingFen);
   const replay = replayProp ?? internalReplay;
-  const [moveListOpen, setMoveListOpen] = useState(false);
   // Capture the slider's position at scrub start so we can report a
   // single from→to event when the user releases — not one event per
   // intermediate value (would flood telemetry).
@@ -132,34 +130,27 @@ export function GameViewer({
         </span>
       </div>
 
-      <div className="coach-viewer__move-list" data-open={moveListOpen ? "true" : "false"}>
-        <button
-          type="button"
-          className="coach-viewer__move-list-toggle"
-          onClick={() =>
-            setMoveListOpen((open) => {
-              const next = !open;
-              onMoveListToggle?.(next);
-              return next;
-            })
-          }
-          aria-expanded={moveListOpen}
-          aria-controls="coach-viewer-move-list-region"
+      <div className="coach-viewer__move-list">
+        <header
+          className="coach-viewer__move-list-header"
+          aria-hidden="true"
         >
-          {moveListOpen
-            ? t("moveListToggleOpen")
-            : t("moveListToggleClosed", { n: String(totalPlayed) })}
-        </button>
+          <span className="coach-viewer__move-list-header-flourish">⊰</span>
+          <span className="coach-viewer__move-list-header-title">
+            {t("movesPanelTitle")}
+          </span>
+          <span className="coach-viewer__move-list-header-flourish">⊱</span>
+        </header>
         <ol
-          id="coach-viewer-move-list-region"
           className="coach-viewer__move-list-grid"
           aria-label={t("sanListAriaLabel")}
-          hidden={!moveListOpen}
         >
           {playedMoves.map((san, i) => {
             const moveNum = Math.floor(i / 2) + 1;
             const isWhite = i % 2 === 0;
             const isActive = i === replay.currentIndex - 1;
+            const isMate = san.endsWith("#");
+            const isCheck = san.endsWith("+");
             return (
               <li
                 key={i}
@@ -180,6 +171,11 @@ export function GameViewer({
                     {isWhite ? "." : "..."}
                   </span>
                   <span className="coach-viewer__move-item-san">{san}</span>
+                  {(isMate || isCheck) && (
+                    <span className="coach-viewer__move-item-annotation">
+                      {isMate ? t("moveAnnotationMate") : t("moveAnnotationCheck")}
+                    </span>
+                  )}
                 </button>
               </li>
             );
