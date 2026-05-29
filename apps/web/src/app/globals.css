@@ -10106,10 +10106,14 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
   max-width: var(--app-max-width);
   margin: 0 auto;
-  padding: 0.75rem 1rem 1.5rem;
+  /* Compact pass — tighter top/bottom and inter-section gap so the
+   * full visor (header + board + moves + replay + 3 tiles) fits on
+   * a single 100dvh viewport without scroll on the dominant
+   * 390×844 / 390×812 MiniPay devices. */
+  padding: 0.5rem 0.85rem 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 0.55rem;
   /* Avoid the in-page horizontal scroll the legacy unstyled visor
    * exhibited when long SAN lists wrapped onto the page. */
   overflow-x: clip;
@@ -10118,29 +10122,33 @@ button.hud-resource-chip:active:not(:disabled) {
 .coach-viewer__board-card {
   /* Cream-amber panel that frames the hero board. Mirrors the visual
    * language of `.candy-tray-pill` panels across the app without
-   * inheriting the chip-scale shape rules. */
+   * inheriting the chip-scale shape rules. Compact pass dropped the
+   * padding so the board fills more of the card without growing the
+   * outer footprint. */
   position: relative;
   width: 100%;
-  border-radius: 1.25rem;
+  border-radius: 1rem;
   border: 1px solid rgba(180, 120, 35, 0.45);
   background: rgba(255, 245, 215, 0.65);
-  padding: 0.5rem;
+  padding: 0.35rem;
   box-shadow:
     0 1px 0 rgba(255, 245, 215, 0.55) inset,
     0 2px 4px rgba(63, 34, 8, 0.16),
-    0 8px 16px rgba(63, 34, 8, 0.10);
+    0 6px 12px rgba(63, 34, 8, 0.10);
 }
 
 .coach-viewer__board-frame {
   /* Square aspect-ratio container — owns the size so BoardThumbnail
    * can pass through as size="100%" and scale to whatever the viewport
-   * allows (covered by `.coach-viewer__board-card` padding + outer
-   * `.coach-viewer` `max-width: var(--app-max-width)`). Solves
-   * red-team P0-2 (hard-coded 358px broke on <390px viewports). */
+   * allows. Compact pass caps the board at 38vh so on shorter
+   * viewports (e.g. MiniPay's ~720dp inner area) the rest of the
+   * sections (moves panel, replay, tiles) still fit above the fold. */
   position: relative;
   width: 100%;
+  max-width: 38vh;
+  margin: 0 auto;
   aspect-ratio: 1 / 1;
-  border-radius: 0.875rem;
+  border-radius: 0.75rem;
   overflow: hidden;
 }
 
@@ -10210,9 +10218,9 @@ button.hud-resource-chip:active:not(:disabled) {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.65rem;
-  border-radius: 0.875rem;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.75rem;
   border: 1px solid rgba(180, 120, 35, 0.45);
   background: rgba(255, 245, 215, 0.7);
   box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55) inset;
@@ -10222,8 +10230,8 @@ button.hud-resource-chip:active:not(:disabled) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 9999px;
   border: 1px solid rgba(180, 120, 35, 0.45);
   background: rgba(255, 245, 215, 0.92);
@@ -10314,8 +10322,8 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.65rem;
-  padding: 0.55rem 0.75rem 0.4rem;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem 0.25rem;
   border-bottom: 1px solid rgba(180, 120, 35, 0.28);
 }
 
@@ -10331,7 +10339,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__move-list-header-title {
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -10342,14 +10350,14 @@ button.hud-resource-chip:active:not(:disabled) {
 .coach-viewer__move-list-grid {
   list-style: none;
   margin: 0;
-  padding: 0.4rem 0.5rem;
+  padding: 0.3rem 0.45rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.25rem 0.5rem;
-  /* Approximate 4 rows visible — each row is ~44px (button min-height
-   * plus row gap). Scroll internally past that without bleeding the
-   * rest of the page. */
-  max-height: 200px;
+  gap: 0.15rem 0.4rem;
+  /* Compact pass — ~3 rows visible at the new 32-34px row height so
+   * the panel stays under ~120px and the rest of the visor fits in
+   * the viewport. Internal scroll past 3 rows. */
+  max-height: 130px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -10360,17 +10368,17 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .coach-viewer__move-item-btn {
   display: grid;
-  grid-template-columns: 1.6rem 1fr auto;
+  grid-template-columns: 1.4rem 1fr auto;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   width: 100%;
-  min-height: 40px;
-  padding: 0.4rem 0.55rem;
-  border-radius: 0.625rem;
+  min-height: 32px;
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.5rem;
   border: 0;
   background: transparent;
   color: rgba(63, 34, 8, 0.92);
-  font-size: 0.92rem;
+  font-size: 0.85rem;
   font-weight: 800;
   text-align: left;
   cursor: pointer;
@@ -10399,13 +10407,13 @@ button.hud-resource-chip:active:not(:disabled) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 1.4rem;
+  height: 1.4rem;
   border-radius: 9999px;
   background: linear-gradient(180deg, #2d8c3f 0%, #1f6a2e 100%);
   border: 1px solid rgba(15, 60, 25, 0.55);
   color: rgba(255, 250, 220, 1);
-  font-size: 0.7rem;
+  font-size: 0.62rem;
   font-weight: 900;
   letter-spacing: 0.02em;
   box-shadow:
@@ -10480,11 +10488,17 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
+  /* Compact pass — cap the tile width so on 390px the 3 tiles read
+   * as discrete cards instead of stretched plates. The grid still
+   * distributes equal columns; this just stops each canvas from
+   * blowing up to ~120px on viewport-width grids. */
+  max-width: 96px;
+  margin-inline: auto;
   /* Lean transition so the active feedback is snappy but the canvas
    * shadow doesn't jitter on hover. */
   transition: transform var(--duration-snap) ease;
@@ -10570,9 +10584,10 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__tile-label {
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.01em;
+  line-height: 1.15;
   color: rgba(63, 34, 8, 0.95);
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
   text-align: center;
