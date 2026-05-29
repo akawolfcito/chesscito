@@ -20,6 +20,7 @@ const baseProps = {
   onShare: vi.fn(),
   onPlayAgain: vi.fn(),
   onViewNft: vi.fn(),
+  onBackToHub: vi.fn(),
 };
 
 describe("GameActionsBar", () => {
@@ -32,7 +33,11 @@ describe("GameActionsBar", () => {
     expect(screen.queryByRole("button", { name: /^share$/ })).toBeNull();
   });
 
-  it("win + minted: View NFT replaces Mint; Share enabled", () => {
+  it("win + minted: Mint gone, Share secondary present, View NFT demoted to tertiary", () => {
+    // 2026-05-29 (Cluster C, commit 3a): post-mint, the primary CTA
+    // shifts to Ask Coach (or Play Again if analysis already done) and
+    // View NFT moves to a tertiary text link. The Mint button is no
+    // longer rendered for this state.
     render(
       <GameActionsBar
         {...baseProps}
@@ -40,9 +45,11 @@ describe("GameActionsBar", () => {
         shareLinkUrl="https://chesscito.com/v/42"
       />,
     );
-    expect(screen.getByRole("button", { name: /viewNft/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^mintVictory$/ })).toBeNull();
     expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /viewNft/ })).toBeInTheDocument();
+    // Primary now reads askCoach (hasAnalysis defaults to false).
+    expect(screen.getByRole("button", { name: /^askCoach$/ })).toBeInTheDocument();
   });
 
   it("loss: no Mint, no Share, Ask Coach + Play Again", () => {
@@ -69,9 +76,14 @@ describe("GameActionsBar", () => {
     expect(screen.getByRole("button", { name: /askCoach/ })).toBeDisabled();
   });
 
-  it("Ask Coach disabled when zero moves", () => {
+  it("zero moves (too short): Ask Coach gone, Play Again is the only primary", () => {
+    // 2026-05-29 (Cluster C, commit 3a): per spec §3.1, the too-short
+    // state strips Ask Coach entirely — there is nothing to analyze.
+    // The primary collapses to Play Again with a Back-to-Hub tertiary.
     render(<GameActionsBar {...baseProps} totalMoves={0} />);
-    expect(screen.getByRole("button", { name: /askCoach/ })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /askCoach/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /backToHub/ })).toBeInTheDocument();
   });
 
   it("Ask Coach label switches when hasAnalysis is true", () => {

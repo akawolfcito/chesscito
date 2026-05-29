@@ -281,6 +281,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
         onShare={handleShare}
         onPlayAgain={handlePlayAgain}
         onViewNft={handleViewNft}
+        onBackToHub={handleBack}
       />
 
       {inlineAnalysisNode}

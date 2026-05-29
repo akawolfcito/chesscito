@@ -1472,6 +1472,10 @@ export const COACH_VIEWER_COPY = {
   sliderProgress: "{current} / {total}",
   moveListToggleClosed: "All moves ({n})",
   moveListToggleOpen: "Hide moves",
+  // 2026-05-29 (Cluster C, commit 3a): state-driven actions stack.
+  // Tertiary link reused across non-win states (loss / draw / resigned
+  // / too-short / replay-errored). ES override in messages/es.ts.
+  backToHub: "Back to Hub",
 } as const;
 
 export const LEGAL_SHELL_COPY = {

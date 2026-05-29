@@ -46,6 +46,7 @@ export function CoachViewerFixture({ variant }: { variant: Variant }) {
           onShare={() => {}}
           onPlayAgain={() => {}}
           onViewNft={() => {}}
+          onBackToHub={() => {}}
         />
       </div>
     </main>

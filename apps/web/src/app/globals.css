@@ -10465,6 +10465,139 @@ button.hud-resource-chip:active:not(:disabled) {
   color: inherit;
 }
 
+/* Actions stack (commit 3a). Vertical column: primary CTA → optional
+ * secondaries row (1 or 2 buttons side-by-side, equal width) → tertiary
+ * text link. State-driven rendering lives in `<GameActionsBar>`; this
+ * sheet only owns visual tokens.
+ *
+ * Commit 3b replaces the candy-pill primary with a gold-gradient
+ * sprite + price ribbon for the Save Victory state. Commit 3c adds the
+ * trophy ribbon and the "View on Celoscan" tertiary treatment. */
+.coach-viewer__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.coach-viewer__actions-primary {
+  /* Primary CTA — full-width candy-pill, slightly taller and louder
+   * than secondaries so the eye lands on it first. The sprite + price
+   * upgrade in commit 3b drops in here without restructure. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.6rem 1.1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(180, 83, 9, 0.65);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 230, 160, 1) 0%,
+    rgba(245, 195, 110, 1) 100%
+  );
+  color: rgba(63, 34, 8, 0.96);
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.65);
+  cursor: pointer;
+  box-shadow:
+    0 1px 0 rgba(255, 245, 215, 0.65) inset,
+    0 2px 4px rgba(63, 34, 8, 0.22),
+    0 6px 12px rgba(63, 34, 8, 0.16);
+  transition: transform var(--duration-snap) ease, filter var(--duration-snap) ease;
+}
+
+.coach-viewer__actions-primary:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.coach-viewer__actions-primary:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.coach-viewer__actions-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.25);
+}
+
+.coach-viewer__actions-secondary-row {
+  /* One or two secondaries — flex with equal-width columns so two
+   * pills don't visually tilt the row. `data-count` flag is set on the
+   * container by GameActionsBar so a single secondary doesn't force a
+   * full-width oversize (rare path: only win+claimed without share). */
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.coach-viewer__actions-secondary-row > .coach-viewer__actions-secondary {
+  flex: 1 1 0;
+}
+
+.coach-viewer__actions-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  background: rgba(255, 245, 215, 0.85);
+  color: rgba(63, 34, 8, 0.92);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55), 0 1px 2px rgba(63, 34, 8, 0.16);
+  transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+}
+
+.coach-viewer__actions-secondary:hover:not(:disabled) {
+  background: rgba(255, 245, 215, 1);
+}
+
+.coach-viewer__actions-secondary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.coach-viewer__actions-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.coach-viewer__actions-tertiary {
+  /* Plain text link — no chrome, no border, no background. Underline
+   * tells the user it's tappable; warm-brown muted color demotes it
+   * below the candy-pill secondaries. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  min-height: 36px;
+  padding: 0.25rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: rgba(110, 65, 15, 0.78);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(110, 65, 15, 0.4);
+  cursor: pointer;
+  transition: color var(--duration-snap) ease;
+}
+
+.coach-viewer__actions-tertiary:hover {
+  color: rgba(63, 34, 8, 0.95);
+}
+
 /* Fallback states reused from the old surface: no-wallet branch is
  * owned by ConnectPromptToast; no-record branch is the load-error
  * card. Both get foundation-level polish here; richer treatment lands

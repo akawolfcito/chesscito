@@ -15,8 +15,27 @@ type Props = {
   onShare: () => void;
   onPlayAgain: () => void;
   onViewNft: () => void;
+  /** 2026-05-29 (Cluster C, commit 3a): tertiary link target for the
+   *  loss / draw / resigned / too-short / replay-errored states. The
+   *  visor's success branch routes back to /hub via a clean push
+   *  (avoids router.back loops on cold-load entries). */
+  onBackToHub: () => void;
 };
 
+/**
+ * State-driven CTA stack for the coach viewer (Cluster C, commit 3a).
+ *
+ * The visor's terminal screen exposes ONE primary action, up to two
+ * secondaries, and an optional tertiary text link. The exact slate of
+ * actions changes by game state — see the §3.1 state matrix in the
+ * spec at _bmad-output/planning-artifacts/coach-viewer-cluster-c-spec-2026-05-29.md.
+ *
+ * Commit 3a ships the layout + non-win states with plain candy-pill
+ * styling. Commit 3b replaces the Save Victory primary with the
+ * gold-gradient sprite + price ribbon. Commit 3c adds the trophy
+ * ribbon overlay for win+claimed and promotes View NFT to a "View on
+ * Celoscan" tertiary link.
+ */
 export function GameActionsBar({
   result,
   totalMoves,
@@ -29,61 +48,181 @@ export function GameActionsBar({
   onShare,
   onPlayAgain,
   onViewNft,
+  onBackToHub,
 }: Props) {
   const t = useTranslations("COACH_VIEWER_COPY");
   const isWin = result === "win";
   const isMinted = mintedTokenId != null;
   const isTooShort = totalMoves === 0;
-  const coachDisabled = hasPartialReplayError || isTooShort;
+  const askCoachDisabled = hasPartialReplayError || isTooShort;
+  const askCoachLabel = hasAnalysis ? t("askCoachAgain") : t("askCoach");
 
-  return (
-    <div className="game-actions-bar" role="group" aria-label={t("actionsAriaLabel")}>
-      <button
-        type="button"
-        onClick={onAskCoach}
-        disabled={coachDisabled}
-        className="game-actions-bar__cta game-actions-bar__cta--ask-coach"
-      >
-        {hasAnalysis ? t("askCoachAgain") : t("askCoach")}
-      </button>
+  // State derivation per spec §3.1. Order matters: too-short and
+  // replay-errored short-circuit ahead of win-state branches so a
+  // partial-replay error on a winning game lands on the "fix it" path,
+  // not the mint path.
+  let primary: React.ReactNode;
+  let secondaries: React.ReactNode[] = [];
+  let tertiary: React.ReactNode = null;
 
-      {isWin && !isMinted && (
-        <button
-          type="button"
-          onClick={onMint}
-          className="game-actions-bar__cta game-actions-bar__cta--mint"
-        >
-          {t("mintVictory")}
-        </button>
-      )}
-
-      {isWin && isMinted && (
-        <button
-          type="button"
-          onClick={onViewNft}
-          className="game-actions-bar__cta game-actions-bar__cta--view-nft"
-        >
-          {t("viewNft")}
-        </button>
-      )}
-
-      {isWin && isMinted && shareLinkUrl && (
-        <button
-          type="button"
-          onClick={onShare}
-          className="game-actions-bar__cta game-actions-bar__cta--share"
-        >
-          {t("share")}
-        </button>
-      )}
-
+  if (isTooShort) {
+    primary = (
       <button
         type="button"
         onClick={onPlayAgain}
-        className="game-actions-bar__cta game-actions-bar__cta--play-again"
+        className="coach-viewer__actions-primary"
+        aria-label={t("playAgain")}
       >
         {t("playAgain")}
       </button>
+    );
+    tertiary = (
+      <button
+        type="button"
+        onClick={onBackToHub}
+        className="coach-viewer__actions-tertiary"
+      >
+        {t("backToHub")}
+      </button>
+    );
+  } else if (isWin && !isMinted) {
+    // Save Victory primary — sprite + price treatment lands in commit 3b.
+    primary = (
+      <button
+        type="button"
+        onClick={onMint}
+        className="coach-viewer__actions-primary"
+        aria-label={t("mintVictory")}
+      >
+        {t("mintVictory")}
+      </button>
+    );
+    secondaries = [
+      <button
+        key="ask"
+        type="button"
+        onClick={onAskCoach}
+        disabled={askCoachDisabled}
+        className="coach-viewer__actions-secondary"
+        aria-label={askCoachLabel}
+      >
+        {askCoachLabel}
+      </button>,
+      <button
+        key="play"
+        type="button"
+        onClick={onPlayAgain}
+        className="coach-viewer__actions-secondary"
+        aria-label={t("playAgain")}
+      >
+        {t("playAgain")}
+      </button>,
+    ];
+  } else if (isWin && isMinted) {
+    // Trophy ribbon + dedicated "View on Celoscan" tertiary land in
+    // commit 3c. For 3a, View NFT becomes a tertiary text link so the
+    // win+claimed state has a coherent stack today.
+    const winClaimedPrimary = hasAnalysis ? onPlayAgain : onAskCoach;
+    const winClaimedPrimaryLabel = hasAnalysis ? t("playAgain") : askCoachLabel;
+    primary = (
+      <button
+        type="button"
+        onClick={winClaimedPrimary}
+        disabled={!hasAnalysis && askCoachDisabled}
+        className="coach-viewer__actions-primary"
+        aria-label={winClaimedPrimaryLabel}
+      >
+        {winClaimedPrimaryLabel}
+      </button>
+    );
+    secondaries = [
+      ...(shareLinkUrl
+        ? [
+            <button
+              key="share"
+              type="button"
+              onClick={onShare}
+              className="coach-viewer__actions-secondary"
+              aria-label={t("share")}
+            >
+              {t("share")}
+            </button>,
+          ]
+        : []),
+      <button
+        key="alt"
+        type="button"
+        onClick={hasAnalysis ? onAskCoach : onPlayAgain}
+        disabled={!hasAnalysis ? false : askCoachDisabled}
+        className="coach-viewer__actions-secondary"
+        aria-label={hasAnalysis ? askCoachLabel : t("playAgain")}
+      >
+        {hasAnalysis ? askCoachLabel : t("playAgain")}
+      </button>,
+    ];
+    tertiary = (
+      <button
+        type="button"
+        onClick={onViewNft}
+        className="coach-viewer__actions-tertiary"
+        aria-label={t("viewNft")}
+      >
+        {t("viewNft")}
+      </button>
+    );
+  } else {
+    // loss / draw / resigned / replay-errored — same stack: Ask Coach
+    // primary (disabled with banner via GameViewer when errored), Play
+    // again secondary, Back to Hub tertiary.
+    primary = (
+      <button
+        type="button"
+        onClick={onAskCoach}
+        disabled={askCoachDisabled}
+        className="coach-viewer__actions-primary"
+        aria-label={askCoachLabel}
+      >
+        {askCoachLabel}
+      </button>
+    );
+    secondaries = [
+      <button
+        key="play"
+        type="button"
+        onClick={onPlayAgain}
+        className="coach-viewer__actions-secondary"
+        aria-label={t("playAgain")}
+      >
+        {t("playAgain")}
+      </button>,
+    ];
+    tertiary = (
+      <button
+        type="button"
+        onClick={onBackToHub}
+        className="coach-viewer__actions-tertiary"
+      >
+        {t("backToHub")}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="coach-viewer__actions"
+      role="group"
+      aria-label={t("actionsAriaLabel")}
+    >
+      {primary}
+      {secondaries.length > 0 && (
+        <div
+          className="coach-viewer__actions-secondary-row"
+          data-count={secondaries.length}
+        >
+          {secondaries}
+        </div>
+      )}
+      {tertiary}
     </div>
   );
 }

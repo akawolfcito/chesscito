@@ -554,6 +554,7 @@ const messages = {
     // sliderProgress: "{current} / {total}" — numeric, no ES override.
     moveListToggleClosed: "Todas las jugadas ({n})",
     moveListToggleOpen: "Ocultar jugadas",
+    backToHub: "Volver al Hub",
   },
   ARENA_COPY: {
     ...en.ARENA_COPY,
