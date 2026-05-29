@@ -201,21 +201,19 @@ export function GameActionsBar({
               className="coach-viewer__tile"
               data-kind={tile.kind}
             >
-              <div className="coach-viewer__tile-canvas">
-                <picture className="coach-viewer__tile-icon">
-                  <source srcSet={icon.avif} type="image/avif" />
-                  <source srcSet={icon.webp} type="image/webp" />
-                  <img src={icon.png} alt="" draggable={false} />
-                </picture>
-                {tile.priceRibbon && (
-                  <span
-                    className="coach-viewer__tile-price-ribbon"
-                    aria-hidden="true"
-                  >
-                    {tile.priceRibbon}
-                  </span>
-                )}
-              </div>
+              {tile.priceRibbon && (
+                <span
+                  className="coach-viewer__tile-price-ribbon"
+                  aria-hidden="true"
+                >
+                  {tile.priceRibbon}
+                </span>
+              )}
+              <picture className="coach-viewer__tile-icon">
+                <source srcSet={icon.avif} type="image/avif" />
+                <source srcSet={icon.webp} type="image/webp" />
+                <img src={icon.png} alt="" draggable={false} />
+              </picture>
               <span className="coach-viewer__tile-label">{tile.label}</span>
             </button>
           );

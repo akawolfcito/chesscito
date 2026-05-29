@@ -10525,69 +10525,53 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__tile {
+  /* Sally pass 4 — purple canvas dropped. The crafted icon assets
+   * carry their own painted bgs (refresh shield, save disk, coach
+   * book); stacking them inside a purple square was visual stutter
+   * and competed with the board for hero hierarchy. Each icon now
+   * sits directly on the deck's cream-amber surface like a figurine
+   * on a journal table. Touch target is preserved via padding so the
+   * button still hits 44×44+ even though the icon is smaller. */
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0;
+  gap: 0.4rem;
+  padding: 0.45rem 0.25rem 0.3rem;
   border: 0;
   background: transparent;
   cursor: pointer;
-  /* Compact pass — cap the tile width so on 390px the 3 tiles read
-   * as discrete cards instead of stretched plates. The grid still
-   * distributes equal columns; this just stops each canvas from
-   * blowing up to ~120px on viewport-width grids. */
   max-width: 96px;
   margin-inline: auto;
-  /* Lean transition so the active feedback is snappy but the canvas
-   * shadow doesn't jitter on hover. */
-  transition: transform var(--duration-snap) ease;
+  transition: transform var(--duration-snap) ease, filter var(--duration-snap) ease;
+}
+
+.coach-viewer__tile:hover:not(:disabled) {
+  filter: brightness(1.04);
 }
 
 .coach-viewer__tile:active:not(:disabled) {
-  transform: scale(0.96);
+  transform: scale(0.94);
 }
 
 .coach-viewer__tile:disabled {
   cursor: not-allowed;
-}
-
-.coach-viewer__tile-canvas {
-  /* Square tile background — purple gradient with cream highlights so
-   * the icon pops in front. Sally pass 2: shadows softened + thin
-   * cream ring so the tiles read as JEWELS INSET INTO the deck
-   * rather than floating jewels on green. */
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 0.875rem;
-  background: linear-gradient(180deg, #7c3aed 0%, #4c1d95 100%);
-  border: 1px solid rgba(35, 10, 75, 0.65);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
-    0 0 0 1px rgba(255, 245, 215, 0.4),
-    0 1px 2px rgba(35, 10, 75, 0.22),
-    0 3px 6px rgba(35, 10, 75, 0.14);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-}
-
-.coach-viewer__tile:disabled .coach-viewer__tile-canvas {
-  filter: grayscale(0.6) brightness(0.85);
+  filter: grayscale(0.55) brightness(0.92);
   opacity: 0.7;
 }
 
 .coach-viewer__tile-icon {
-  /* Reserve ~70% of the canvas so the icon reads as the dominant
-   * element with comfortable breathing room around it. */
+  /* Icon stands alone — generous size + atmospheric drop-shadow so
+   * it reads as a physical object resting on the deck. The asset's
+   * own painted edges + shadows do the rest. */
   display: block;
-  width: 72%;
-  height: 72%;
+  width: 56px;
+  height: 56px;
   pointer-events: none;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.35));
+  filter:
+    drop-shadow(0 1px 1px rgba(63, 34, 8, 0.28))
+    drop-shadow(0 4px 8px rgba(63, 34, 8, 0.22))
+    drop-shadow(0 10px 16px rgba(63, 34, 8, 0.12));
 }
 
 .coach-viewer__tile-icon img {
@@ -10599,50 +10583,48 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__tile-price-ribbon {
-  /* Same featured-pill language we use on the board's trophy ribbon
-   * and the legacy treasure CTA. Top-right overhang signals "premium
-   * action" without competing with the icon. */
+  /* Save Victory cost cue — small chip floating above the icon
+   * center. Same featured-pill (gold gradient + warm-brown border)
+   * language as the board's trophy ribbon, but centered above the
+   * icon rather than corner-offset (the canvas anchor it used to
+   * hang on is gone). */
   position: absolute;
-  top: -10px;
-  right: -6px;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 2px 8px;
   border-radius: 9999px;
   background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
   border: 1px solid rgba(120, 53, 15, 0.85);
   color: #3f2208;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 900;
   letter-spacing: 0.02em;
   text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     inset 0 -1px 0 rgba(120, 53, 15, 0.3),
-    0 3px 6px rgba(120, 53, 15, 0.4);
+    0 2px 4px rgba(120, 53, 15, 0.32);
   pointer-events: none;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .coach-viewer__tile-label {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
   line-height: 1.15;
-  color: rgba(63, 34, 8, 0.95);
+  color: rgba(63, 34, 8, 0.92);
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
   text-align: center;
-  /* Two-line cap so longer i18n labels don't blow up the row height
-   * ("Compartir trofeo" is 16 chars vs "Share trophy" 12). */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.coach-viewer__tile:disabled .coach-viewer__tile-label {
-  color: rgba(63, 34, 8, 0.55);
 }
 
 .coach-viewer__actions-tertiary {
