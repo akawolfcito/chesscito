@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import {
   COACH_PACK_ITEMS,
   FOUNDER_BADGE_CELO_ITEM_ID,
@@ -9,7 +11,21 @@ import {
   SHIELDS_PER_PURCHASE,
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
+  SHOP_TILE_ASSETS,
 } from "../shop-catalog";
+
+function findWebRoot(): string {
+  let dir = __dirname;
+  for (let i = 0; i < 10; i++) {
+    const pkg = join(dir, "package.json");
+    if (existsSync(pkg)) {
+      const content = JSON.parse(readFileSync(pkg, "utf-8"));
+      if (content.name === "web") return dir;
+    }
+    dir = dirname(dir);
+  }
+  throw new Error("Could not find apps/web root");
+}
 
 describe("shop-catalog", () => {
   it("publishes the founder badge as itemId 1n, the retry shield as 2n, and the CELO sibling as 5n", () => {
@@ -76,4 +92,31 @@ describe("shop-catalog", () => {
     expect(pro).toBeDefined();
     expect(pro?.copyKey).toBe("pro");
   });
+});
+
+describe("SHOP_TILE_ASSETS path resolution", () => {
+  const PUBLIC = join(findWebRoot(), "public");
+  const FORMATS = [".avif", ".webp", ".png"] as const;
+  const entries = Object.entries(SHOP_TILE_ASSETS);
+
+  it("declares an icon basename for every ShopCopyKey", () => {
+    const expectedKeys = ["pro", "founderBadge", "retryShield", "coachPack5", "coachPack20"];
+    expect(entries.map(([key]) => key).sort()).toEqual(expectedKeys.sort());
+  });
+
+  it("uses extensionless basenames so the consumer can build image-set() per format", () => {
+    for (const [, { icon }] of entries) {
+      expect(icon).not.toMatch(/\.(png|webp|avif|jpg|jpeg|svg)$/i);
+      expect(icon.startsWith("/art/")).toBe(true);
+    }
+  });
+
+  for (const [copyKey, { icon }] of entries) {
+    for (const ext of FORMATS) {
+      it(`${copyKey} icon resolves to ${icon}${ext}`, () => {
+        const full = join(PUBLIC, `${icon}${ext}`);
+        expect(existsSync(full)).toBe(true);
+      });
+    }
+  }
 });
