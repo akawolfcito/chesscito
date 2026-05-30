@@ -9,14 +9,28 @@ import { join } from "node:path";
  * and en-dash (–) because dash-heavy prose reads as AI-generated. The
  * source of truth for UI copy is `editorial.ts`.
  *
- * This test snapshots the CURRENT count of dashes as a ceiling. New PRs
- * may not increase the count. As copy is rewritten and dashes drop, lower
- * the baseline in the same commit so the floor walks down monotonically.
+ * Scope: dashes inside JSDoc and line comments are dev-only notes, not
+ * user-facing copy, so they are excluded. The ceiling reflects only the
+ * count in non-comment positions (string literals, template literals).
+ *
+ * New PRs may not increase the count. As copy is rewritten and dashes
+ * drop, lower the ceiling in the same commit so the floor walks down
+ * monotonically toward zero.
  *
  * Baseline captured 2026-05-30. Target: 0.
  */
-const EM_DASH_CEILING = 181;
-const EN_DASH_CEILING = 4;
+const EM_DASH_CEILING = 96;
+const EN_DASH_CEILING = 1;
+
+/** Remove /* ... *​/ block comments and // line comments so the remaining
+ *  text approximates the union of string literals + code identifiers.
+ *  Em-dashes do not appear in identifiers; any residual count reflects
+ *  user-facing copy. */
+function stripComments(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:'"`])\/\/.*$/gm, "$1");
+}
 
 function countOccurrences(source: string, char: string): number {
   let n = 0;
@@ -26,7 +40,7 @@ function countOccurrences(source: string, char: string): number {
 
 describe("editorial.ts anti-AI-prose guard", () => {
   const path = join(__dirname, "..", "editorial.ts");
-  const source = readFileSync(path, "utf-8");
+  const source = stripComments(readFileSync(path, "utf-8"));
 
   it(`does not exceed the em-dash (—) ceiling of ${EM_DASH_CEILING}`, () => {
     const count = countOccurrences(source, "—");
