@@ -3,24 +3,29 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * Anti-AI-prose guard for editorial.ts.
+ * Anti-AI-prose guard for the user-facing copy surface.
  *
  * Policy (memory: anti-ai-prose): user-facing copy must avoid em-dash (—)
  * and en-dash (–) because dash-heavy prose reads as AI-generated. The
- * source of truth for UI copy is `editorial.ts`.
+ * sources of truth are `editorial.ts` (EN defaults + types) and
+ * `messages/{en,es}.ts` (locale overrides loaded by next-intl).
  *
  * Scope: dashes inside JSDoc and line comments are dev-only notes, not
- * user-facing copy, so they are excluded. The ceiling reflects only the
+ * user-facing copy, so they are excluded. Each ceiling reflects only the
  * count in non-comment positions (string literals, template literals).
  *
- * New PRs may not increase the count. As copy is rewritten and dashes
+ * New PRs may not increase any count. As copy is rewritten and dashes
  * drop, lower the ceiling in the same commit so the floor walks down
  * monotonically toward zero.
  *
- * Baseline captured 2026-05-30. Target: 0.
+ * Baseline captured 2026-05-30 after chunk 1 sweep (REWARD_COPY
+ * ariaLabels + pawn lockedHint). Target: 0.
  */
-const EM_DASH_CEILING = 96;
-const EN_DASH_CEILING = 1;
+const COPY_SOURCES = [
+  { file: "editorial.ts", emCeiling: 75, enCeiling: 1 },
+  { file: "messages/en.ts", emCeiling: 11, enCeiling: 0 },
+  { file: "messages/es.ts", emCeiling: 74, enCeiling: 1 },
+] as const;
 
 /** Remove /* ... *​/ block comments and // line comments so the remaining
  *  text approximates the union of string literals + code identifiers.
@@ -38,27 +43,31 @@ function countOccurrences(source: string, char: string): number {
   return n;
 }
 
-describe("editorial.ts anti-AI-prose guard", () => {
-  const path = join(__dirname, "..", "editorial.ts");
-  const source = stripComments(readFileSync(path, "utf-8"));
+describe("anti-AI-prose guard (editorial + i18n)", () => {
+  for (const { file, emCeiling, enCeiling } of COPY_SOURCES) {
+    describe(file, () => {
+      const path = join(__dirname, "..", file);
+      const source = stripComments(readFileSync(path, "utf-8"));
 
-  it(`does not exceed the em-dash (—) ceiling of ${EM_DASH_CEILING}`, () => {
-    const count = countOccurrences(source, "—");
-    expect(
-      count,
-      `em-dash count is ${count}, ceiling is ${EM_DASH_CEILING}. ` +
-        `If you added one, rewrite with commas/periods. ` +
-        `If you removed some, lower EM_DASH_CEILING to ${count} in the same commit.`,
-    ).toBeLessThanOrEqual(EM_DASH_CEILING);
-  });
+      it(`does not exceed the em-dash (—) ceiling of ${emCeiling}`, () => {
+        const count = countOccurrences(source, "—");
+        expect(
+          count,
+          `${file} em-dash count is ${count}, ceiling is ${emCeiling}. ` +
+            `If you added one, rewrite with commas/periods. ` +
+            `If you removed some, lower the ceiling for ${file} to ${count} in the same commit.`,
+        ).toBeLessThanOrEqual(emCeiling);
+      });
 
-  it(`does not exceed the en-dash (–) ceiling of ${EN_DASH_CEILING}`, () => {
-    const count = countOccurrences(source, "–");
-    expect(
-      count,
-      `en-dash count is ${count}, ceiling is ${EN_DASH_CEILING}. ` +
-        `If you added one, rewrite with commas/periods. ` +
-        `If you removed some, lower EN_DASH_CEILING to ${count} in the same commit.`,
-    ).toBeLessThanOrEqual(EN_DASH_CEILING);
-  });
+      it(`does not exceed the en-dash (–) ceiling of ${enCeiling}`, () => {
+        const count = countOccurrences(source, "–");
+        expect(
+          count,
+          `${file} en-dash count is ${count}, ceiling is ${enCeiling}. ` +
+            `If you added one, rewrite with commas/periods. ` +
+            `If you removed some, lower the ceiling for ${file} to ${count} in the same commit.`,
+        ).toBeLessThanOrEqual(enCeiling);
+      });
+    });
+  }
 });

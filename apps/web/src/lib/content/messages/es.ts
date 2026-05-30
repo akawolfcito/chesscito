@@ -1027,7 +1027,7 @@ const messages = {
       lockedHint: "Completa los 3 niveles de Torre para desbloquear",
       unlockRequirement: "Completa Torre L1 + L2 + L3",
       ariaLabel:
-        "{state, select, claimable {Reclama la insignia de maestría de Torre — lista} progress {Maestría de Torre — en progreso} other {Maestría de Torre — bloqueada}}",
+        "{state, select, claimable {Reclama la insignia de maestría de Torre: lista} progress {Maestría de Torre: en progreso} other {Maestría de Torre: bloqueada}}",
     },
     bishop: {
       label: "Maestría de Alfil",
@@ -1035,7 +1035,7 @@ const messages = {
       lockedHint: "Domina la Torre primero, luego completa los 3 niveles de Alfil",
       unlockRequirement: "Completa Alfil L1 + L2 + L3",
       ariaLabel:
-        "{state, select, claimable {Reclama la insignia de maestría de Alfil — lista} progress {Maestría de Alfil — en progreso} other {Maestría de Alfil — bloqueada}}",
+        "{state, select, claimable {Reclama la insignia de maestría de Alfil: lista} progress {Maestría de Alfil: en progreso} other {Maestría de Alfil: bloqueada}}",
     },
     queen: {
       label: "Maestría de Reina",
@@ -1043,7 +1043,7 @@ const messages = {
       lockedHint: "Domina Torre + Alfil para desbloquear",
       unlockRequirement: "Domina Torre + Alfil",
       ariaLabel:
-        "{state, select, claimable {Reclama la insignia de maestría de Reina — lista} progress {Maestría de Reina — en progreso} other {Maestría de Reina — bloqueada}}",
+        "{state, select, claimable {Reclama la insignia de maestría de Reina: lista} progress {Maestría de Reina: en progreso} other {Maestría de Reina: bloqueada}}",
     },
     knight: {
       label: "Maestría de Caballo",
@@ -1051,7 +1051,7 @@ const messages = {
       lockedHint: "Domina la Reina primero, luego completa los 3 niveles de Caballo",
       unlockRequirement: "Domina la Reina, luego completa Caballo L1 + L2 + L3",
       ariaLabel:
-        "{state, select, claimable {Reclama la insignia de maestría de Caballo — lista} progress {Maestría de Caballo — en progreso} other {Maestría de Caballo — bloqueada}}",
+        "{state, select, claimable {Reclama la insignia de maestría de Caballo: lista} progress {Maestría de Caballo: en progreso} other {Maestría de Caballo: bloqueada}}",
     },
     king: {
       label: "Maestría de Rey",
@@ -1059,15 +1059,15 @@ const messages = {
       lockedHint: "Domina el Caballo primero",
       unlockRequirement: "Domina el Caballo, luego completa Rey L1 + L2 + L3",
       ariaLabel:
-        "{state, select, claimable {Reclama la insignia de maestría de Rey — lista} progress {Maestría de Rey — en progreso} other {Maestría de Rey — bloqueada}}",
+        "{state, select, claimable {Reclama la insignia de maestría de Rey: lista} progress {Maestría de Rey: en progreso} other {Maestría de Rey: bloqueada}}",
     },
     pawn: {
       label: "Maestría de Peón",
       claimableHint: "Toca para reclamar tu insignia de Peón",
-      lockedHint: "Domina el Rey primero — el Peón es el jefe final",
+      lockedHint: "Domina el Rey primero. El Peón es el jefe final",
       unlockRequirement: "Domina el Rey, luego completa Peón L1 + L2 + L3",
       ariaLabel:
-        "{state, select, claimable {Reclama la insignia de maestría de Peón — lista} progress {Maestría de Peón — en progreso} other {Maestría de Peón — bloqueada}}",
+        "{state, select, claimable {Reclama la insignia de maestría de Peón: lista} progress {Maestría de Peón: en progreso} other {Maestría de Peón: bloqueada}}",
     },
     victory: {
       label: "Guarda tu victoria",
@@ -1075,7 +1075,7 @@ const messages = {
       lockedHint: "Gana una partida en Arena para desbloquear",
       unlockRequirement: "Gana una partida en Arena",
       ariaLabel:
-        "{state, select, claimable {Victoria lista — toca para guardar} progress {Victoria en progreso} other {Sin victoria lista — gana una partida en Arena}}",
+        "{state, select, claimable {Victoria lista: toca para guardar} progress {Victoria en progreso} other {Sin victoria lista: gana una partida en Arena}}",
     },
   },
   ROADMAP_COPY: {

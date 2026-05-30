@@ -89,19 +89,19 @@ m.ACHIEVEMENTS_COPY.progressLabel = "{current}/{goal}";
 m.VICTORY_CLAIM_COPY.challengeText =
   "I solved this in {moves} moves. Can you beat me?\nPlay Chesscito on Celo 👉 {url}";
 m.REWARD_COPY.rook.ariaLabel =
-  "{state, select, claimable {Claim Rook mastery badge — ready} progress {Rook mastery — in progress} other {Rook mastery — locked}}";
+  "{state, select, claimable {Claim Rook mastery badge: ready} progress {Rook mastery: in progress} other {Rook mastery: locked}}";
 m.REWARD_COPY.bishop.ariaLabel =
-  "{state, select, claimable {Claim Bishop mastery badge — ready} progress {Bishop mastery — in progress} other {Bishop mastery — locked}}";
+  "{state, select, claimable {Claim Bishop mastery badge: ready} progress {Bishop mastery: in progress} other {Bishop mastery: locked}}";
 m.REWARD_COPY.queen.ariaLabel =
-  "{state, select, claimable {Claim Queen mastery badge — ready} progress {Queen mastery — in progress} other {Queen mastery — locked}}";
+  "{state, select, claimable {Claim Queen mastery badge: ready} progress {Queen mastery: in progress} other {Queen mastery: locked}}";
 m.REWARD_COPY.knight.ariaLabel =
-  "{state, select, claimable {Claim Knight mastery badge — ready} progress {Knight mastery — in progress} other {Knight mastery — locked}}";
+  "{state, select, claimable {Claim Knight mastery badge: ready} progress {Knight mastery: in progress} other {Knight mastery: locked}}";
 m.REWARD_COPY.king.ariaLabel =
-  "{state, select, claimable {Claim King mastery badge — ready} progress {King mastery — in progress} other {King mastery — locked}}";
+  "{state, select, claimable {Claim King mastery badge: ready} progress {King mastery: in progress} other {King mastery: locked}}";
 m.REWARD_COPY.pawn.ariaLabel =
-  "{state, select, claimable {Claim Pawn mastery badge — ready} progress {Pawn mastery — in progress} other {Pawn mastery — locked}}";
+  "{state, select, claimable {Claim Pawn mastery badge: ready} progress {Pawn mastery: in progress} other {Pawn mastery: locked}}";
 m.REWARD_COPY.victory.ariaLabel =
-  "{state, select, claimable {Save victory ready — tap to save} progress {Victory in progress} other {No victory ready — win an Arena match}}";
+  "{state, select, claimable {Save victory ready: tap to save} progress {Victory in progress} other {No victory ready: win an Arena match}}";
 m.PRO_COPY.statusActiveSuffix =
   "{daysLeft, plural, =1 {Expires tomorrow} other {# days left}}";
 m.PRO_COPY.hubCoachCard.active.title = "PRO Active · {remainingDays}d";

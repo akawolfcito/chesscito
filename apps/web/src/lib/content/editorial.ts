@@ -2550,10 +2550,10 @@ export const REWARD_COPY = {
     unlockRequirement: "Complete Rook L1 + L2 + L3",
     ariaLabel: (state: "claimable" | "progress" | "locked") =>
       state === "claimable"
-        ? "Claim Rook mastery badge — ready"
+        ? "Claim Rook mastery badge: ready"
         : state === "progress"
-          ? "Rook mastery — in progress"
-          : "Rook mastery — locked",
+          ? "Rook mastery: in progress"
+          : "Rook mastery: locked",
   },
   bishop: {
     label: "Bishop mastery",
@@ -2562,10 +2562,10 @@ export const REWARD_COPY = {
     unlockRequirement: "Complete Bishop L1 + L2 + L3",
     ariaLabel: (state: "claimable" | "progress" | "locked") =>
       state === "claimable"
-        ? "Claim Bishop mastery badge — ready"
+        ? "Claim Bishop mastery badge: ready"
         : state === "progress"
-          ? "Bishop mastery — in progress"
-          : "Bishop mastery — locked",
+          ? "Bishop mastery: in progress"
+          : "Bishop mastery: locked",
   },
   queen: {
     label: "Queen mastery",
@@ -2574,10 +2574,10 @@ export const REWARD_COPY = {
     unlockRequirement: "Master Rook + Bishop",
     ariaLabel: (state: "claimable" | "progress" | "locked") =>
       state === "claimable"
-        ? "Claim Queen mastery badge — ready"
+        ? "Claim Queen mastery badge: ready"
         : state === "progress"
-          ? "Queen mastery — in progress"
-          : "Queen mastery — locked",
+          ? "Queen mastery: in progress"
+          : "Queen mastery: locked",
   },
   knight: {
     label: "Knight mastery",
@@ -2586,10 +2586,10 @@ export const REWARD_COPY = {
     unlockRequirement: "Master Queen, then complete Knight L1 + L2 + L3",
     ariaLabel: (state: "claimable" | "progress" | "locked") =>
       state === "claimable"
-        ? "Claim Knight mastery badge — ready"
+        ? "Claim Knight mastery badge: ready"
         : state === "progress"
-          ? "Knight mastery — in progress"
-          : "Knight mastery — locked",
+          ? "Knight mastery: in progress"
+          : "Knight mastery: locked",
   },
   king: {
     label: "King mastery",
@@ -2598,22 +2598,22 @@ export const REWARD_COPY = {
     unlockRequirement: "Master Knight, then complete King L1 + L2 + L3",
     ariaLabel: (state: "claimable" | "progress" | "locked") =>
       state === "claimable"
-        ? "Claim King mastery badge — ready"
+        ? "Claim King mastery badge: ready"
         : state === "progress"
-          ? "King mastery — in progress"
-          : "King mastery — locked",
+          ? "King mastery: in progress"
+          : "King mastery: locked",
   },
   pawn: {
     label: "Pawn mastery",
     claimableHint: "Tap to claim your Pawn badge",
-    lockedHint: "Master King first — Pawn is the boss final",
+    lockedHint: "Master King first. Pawn is the boss final",
     unlockRequirement: "Master King, then complete Pawn L1 + L2 + L3",
     ariaLabel: (state: "claimable" | "progress" | "locked") =>
       state === "claimable"
-        ? "Claim Pawn mastery badge — ready"
+        ? "Claim Pawn mastery badge: ready"
         : state === "progress"
-          ? "Pawn mastery — in progress"
-          : "Pawn mastery — locked",
+          ? "Pawn mastery: in progress"
+          : "Pawn mastery: locked",
   },
   /** Victory tile — represents an Arena victory ready to mint. Distinct
    *  from piece-mastery tiles; appears at top of column when claimable. */
@@ -2624,10 +2624,10 @@ export const REWARD_COPY = {
     unlockRequirement: "Win an Arena match",
     ariaLabel: (state: "claimable" | "progress" | "locked") =>
       state === "claimable"
-        ? "Save victory ready — tap to save"
+        ? "Save victory ready: tap to save"
         : state === "progress"
           ? "Victory in progress"
-          : "No victory ready — win an Arena match",
+          : "No victory ready: win an Arena match",
   },
 } as const;
 
