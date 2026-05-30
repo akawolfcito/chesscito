@@ -213,6 +213,11 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
   const claimingRef = useRef(false);
 
   // ── Persist success to sessionStorage ────────────────────────────────────
+  // 2026-05-30: payload includes `gameId` so the restore effect can
+  // reject saves from a previous game. Without this, the visor for
+  // game B reads game A's saved success on remount (e.g. after a
+  // phone unlock) and hides the Save Victory tile thinking game B
+  // is already claimed.
   useEffect(() => {
     if (claimPhase === "success" && claimData.claimTxHash) {
       const { input: inp } = liveRef.current;
@@ -221,6 +226,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
           "chesscito:claim",
           JSON.stringify({
             phase: "success",
+            gameId: inp.gameId ?? null,
             tokenId: claimData.tokenId?.toString() ?? null,
             claimTxHash: claimData.claimTxHash,
             moves: inp.totalMoves ?? 0,
@@ -233,12 +239,25 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
   }, [claimPhase, claimData]);
 
   // ── Restore claim success on mount (e.g. returning from WhatsApp) ─────────
+  // Only restore when the saved `gameId` matches the current mount's
+  // input.gameId. Any other case (different game, missing gameId,
+  // legacy payload without the field) is treated as stale and cleared.
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("chesscito:claim");
       if (!raw) return;
       const saved = JSON.parse(raw) as Record<string, unknown>;
+      const currentGameId = liveRef.current.input.gameId ?? null;
       if (saved.phase === "success") {
+        const savedGameId = (saved.gameId as string | null | undefined) ?? null;
+        const matchesCurrentGame =
+          savedGameId != null && currentGameId != null && savedGameId === currentGameId;
+        if (!matchesCurrentGame) {
+          // Belongs to a previous game (or pre-gameId payload) — drop
+          // it so it can't leak into the current visor's state.
+          sessionStorage.removeItem("chesscito:claim");
+          return;
+        }
         setClaimPhase("success");
         setClaimData({
           tokenId: saved.tokenId ? BigInt(saved.tokenId as string) : null,

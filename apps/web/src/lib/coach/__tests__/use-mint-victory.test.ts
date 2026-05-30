@@ -183,4 +183,68 @@ describe("useMintVictory", () => {
     expect(result.current.phase).toBe("ready");
     expect(sessionStorage.getItem("chesscito:claim")).toBeNull();
   });
+
+  // 2026-05-30: gameId-scoped restore — prevents a saved success from a
+  // previous game leaking into the next visor's state (cf. MiniPay smoke
+  // bug: Save tile disappeared after phone unlock because the previous
+  // game's tokenId hydrated the new game's mint hook).
+  it("does NOT restore success when saved gameId differs from input.gameId", () => {
+    sessionStorage.setItem(
+      "chesscito:claim",
+      JSON.stringify({
+        phase: "success",
+        gameId: "previous-game-id",
+        tokenId: "42",
+        claimTxHash: "0xabc",
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useMintVictory({ gameId: "current-game-id" }),
+    );
+
+    expect(result.current.phase).toBe("ready");
+    expect(result.current.data.tokenId).toBeNull();
+    // Stale entry was cleared, not left behind for the next mount.
+    expect(sessionStorage.getItem("chesscito:claim")).toBeNull();
+  });
+
+  it("does NOT restore legacy success without gameId field", () => {
+    sessionStorage.setItem(
+      "chesscito:claim",
+      JSON.stringify({
+        phase: "success",
+        tokenId: "42",
+        claimTxHash: "0xabc",
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useMintVictory({ gameId: "some-game-id" }),
+    );
+
+    expect(result.current.phase).toBe("ready");
+    expect(sessionStorage.getItem("chesscito:claim")).toBeNull();
+  });
+
+  it("restores success when saved gameId matches input.gameId", () => {
+    sessionStorage.setItem(
+      "chesscito:claim",
+      JSON.stringify({
+        phase: "success",
+        gameId: "match-id",
+        tokenId: "42",
+        claimTxHash: "0xabc",
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useMintVictory({ gameId: "match-id" }),
+    );
+
+    expect(result.current.phase).toBe("success");
+    expect(result.current.data.tokenId).toBe(42n);
+    expect(result.current.data.claimTxHash).toBe("0xabc");
+    expect(result.current.shareStatus).toBe("ready");
+  });
 });
