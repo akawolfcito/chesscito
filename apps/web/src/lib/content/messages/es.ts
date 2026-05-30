@@ -562,6 +562,8 @@ const messages = {
     trophyRibbonAriaLabel: "Trofeo #{tokenId} guardado en cadena",
     viewOnCeloscan: "Ver en Celoscan",
     shareTrophy: "Compartir trofeo",
+    analysisPending: "Analizando tu partida…",
+    analysisPendingHint: "Quédate aquí — el análisis aparece debajo apenas esté listo.",
   },
   ARENA_COPY: {
     ...en.ARENA_COPY,

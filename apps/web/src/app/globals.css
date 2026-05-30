@@ -10690,6 +10690,65 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(63, 34, 8, 0.95);
 }
 
+/* Pending analysis banner (2026-05-30 — Bug #2 fix).
+ * Renders in place of the cached analysis panel while `coach.phase ===
+ * "loading"`. Same cream-amber badge-vitrine treatment so the surface
+ * doesn't feel like a different page; the spinner + copy are the
+ * only signal the user is waiting on the coach. */
+.coach-viewer__analysis-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding: 1.25rem 1rem 1.4rem;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #fff6dd 0%, #ffe2a8 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 248, 220, 0.95),
+    0 12px 24px -16px rgba(80, 40, 8, 0.45);
+  color: rgba(63, 34, 8, 0.92);
+  text-align: center;
+}
+
+.coach-viewer__analysis-pending-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(110, 65, 15, 0.18);
+  border-top-color: rgba(110, 65, 15, 0.85);
+  animation: coach-viewer-pending-spin 0.9s linear infinite;
+}
+
+@keyframes coach-viewer-pending-spin {
+  to { transform: rotate(360deg); }
+}
+
+.coach-viewer__analysis-pending-label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.coach-viewer__analysis-pending-hint {
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(110, 65, 15, 0.78);
+  max-width: 28ch;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-viewer__analysis-pending-spinner {
+    animation: none;
+    border-top-color: rgba(110, 65, 15, 0.45);
+  }
+}
+
 /* Fallback states reused from the old surface: no-wallet branch is
  * owned by ConnectPromptToast; no-record branch is the load-error
  * card. Both get foundation-level polish here; richer treatment lands

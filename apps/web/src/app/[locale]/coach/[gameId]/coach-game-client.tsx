@@ -251,13 +251,66 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
       : (gameRecord.mintedTokenId ?? null);
   const shareLinkEffective = mint.data.shareLinkUrl ?? gameRecord.shareLinkUrl ?? null;
 
-  // Inline analysis surface (when record has cached analysis).
+  // Inline analysis surface.
   // 2026-05-29 (Cluster C, commit 1): `embedded` hides the panel's own
   // Play Again / Back-to-Hub / Get-Full-Analysis CTAs — those now live
   // in the host's actions bar above, and rendering them twice was the
   // visual clutter the redesign is fixing.
+  // 2026-05-30 (Bug #2 fix): priority chain reads the live `coach` hook
+  // state first so the visor rehydrates IN PLACE when the user taps
+  // Ask Coach. Cold-load (`gameRecord.analysis`) is the fallback for
+  // direct URL entries where the analysis is already cached server-side.
   let inlineAnalysisNode: React.ReactNode = null;
-  if (gameRecord.analysis) {
+  if (coach.phase === "loading") {
+    inlineAnalysisNode = (
+      <div
+        className="coach-viewer__analysis-pending"
+        role="status"
+        aria-live="polite"
+      >
+        <span
+          className="coach-viewer__analysis-pending-spinner"
+          aria-hidden="true"
+        />
+        <p className="coach-viewer__analysis-pending-label">
+          {t("analysisPending")}
+        </p>
+        <p className="coach-viewer__analysis-pending-hint">
+          {t("analysisPendingHint")}
+        </p>
+      </div>
+    );
+  } else if (coach.phase === "result" && coach.response && coach.response.kind === "full") {
+    inlineAnalysisNode = (
+      <CoachPanel
+        response={coach.response}
+        difficulty={gameRecord.difficulty}
+        totalMoves={gameRecord.totalMoves}
+        elapsedMs={gameRecord.elapsedMs}
+        credits={coach.credits}
+        onPlayAgain={handlePlayAgain}
+        onBackToHub={handleBack}
+        analysisLocale={coach.analysisLocale}
+        historyMeta={coach.historyMeta}
+        moves={gameRecord.moves}
+        embedded
+      />
+    );
+  } else if (coach.phase === "fallback" && coach.fallbackResponse) {
+    inlineAnalysisNode = (
+      <CoachFallback
+        response={coach.fallbackResponse}
+        difficulty={gameRecord.difficulty}
+        totalMoves={gameRecord.totalMoves}
+        elapsedMs={gameRecord.elapsedMs}
+        result={mappedResult}
+        onGetFullAnalysis={handleAskCoach}
+        onPlayAgain={handlePlayAgain}
+        onBackToHub={handleBack}
+        embedded
+      />
+    );
+  } else if (gameRecord.analysis) {
     if (gameRecord.analysis.response.kind === "full") {
       inlineAnalysisNode = (
         <CoachPanel
@@ -274,7 +327,6 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
         />
       );
     } else {
-      // quick kind — CoachFallback also requires `result` prop
       inlineAnalysisNode = (
         <CoachFallback
           response={gameRecord.analysis.response}
