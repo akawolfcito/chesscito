@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { TrophiesBody } from "@/components/trophies/trophies-body";
+import { TrophiesBody, TrophiesHeroBand } from "@/components/trophies/trophies-body";
 
 /**
  * Standalone /trophies route. Mirrors the in-hub TrophiesSheet so the
@@ -32,8 +32,18 @@ export default function TrophiesPage() {
             back={{ onClick: () => router.push("/hub"), label: t("backLabel") }}
           />
         </header>
-        <div className="flex-1 space-y-6 overflow-y-auto px-4 pb-8 pt-4">
-          <TrophiesBody />
+        {/* 2026-05-30: hero band hoisted outside the scroll container.
+         *  Mirrors the sheet pattern (commit 507bcb8b) — `overflow-y-auto`
+         *  on the scroll div promotes overflow-x to auto and clips the
+         *  trofeo-épico anchor's `left: -1.25rem` overhang. Hoisting
+         *  keeps the character visibly escaping the panel and turns the
+         *  band into a persistent overview header that doesn't scroll
+         *  off with the detail sections. */}
+        <div className="shrink-0 mt-4 px-4">
+          <TrophiesHeroBand />
+        </div>
+        <div className="flex-1 space-y-6 overflow-y-auto px-4 pb-8 pt-6">
+          <TrophiesBody hideHero />
         </div>
       </div>
     </main>
