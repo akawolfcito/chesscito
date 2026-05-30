@@ -196,6 +196,29 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
   // Tracks the slider's currentIndex at pointerdown so the host
   // can emit a single from→to telemetry event when the user releases.
   const scrubStartRef = useRef<number | null>(null);
+  // 2026-05-30 (Bug #2 fix): when the inline analysis panel finishes
+  // rendering after a loading transition, scroll it into view so the
+  // user sees the result without having to hunt down the surface.
+  // The slot wraps the entire inline analysis area (panel OR pending
+  // banner OR cold-load card); we scroll on the loading → settled
+  // edge only, so cold-load entries (already-settled phase) don't
+  // pull the user past the board hero on mount.
+  const inlineAnalysisRef = useRef<HTMLDivElement | null>(null);
+  const prevCoachPhaseRef = useRef(coach.phase);
+  useEffect(() => {
+    const prev = prevCoachPhaseRef.current;
+    const next = coach.phase;
+    prevCoachPhaseRef.current = next;
+    if (prev !== "loading") return;
+    if (next !== "result" && next !== "fallback") return;
+    const node = inlineAnalysisRef.current;
+    if (!node) return;
+    // requestAnimationFrame defers until after the panel paints so the
+    // scroll target has its final dimensions.
+    requestAnimationFrame(() => {
+      node.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [coach.phase]);
   useEffect(() => {
     if (viewedFiredRef.current) return;
     if (!gameRecord || !walletAddress) return;
@@ -496,7 +519,9 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
           />
         </div>
 
-        {inlineAnalysisNode}
+        <div ref={inlineAnalysisRef} className="coach-viewer__analysis-slot">
+          {inlineAnalysisNode}
+        </div>
       </div>
     </>
   );

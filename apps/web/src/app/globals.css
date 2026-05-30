@@ -10728,6 +10728,15 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(63, 34, 8, 0.95);
 }
 
+/* Inline analysis slot wrapper — scroll target for the loading →
+ * result transition (2026-05-30, Bug #2 fix). No chrome of its own;
+ * exists so coach-game-client can ref the surface and call
+ * scrollIntoView on completion. `scroll-margin-top` keeps the
+ * persistent header from clipping the first line. */
+.coach-viewer__analysis-slot {
+  scroll-margin-top: 4.5rem;
+}
+
 /* Pending analysis banner (2026-05-30 — Bug #2 fix).
  * Renders in place of the cached analysis panel while `coach.phase ===
  * "loading"`. Same cream-amber badge-vitrine treatment so the surface
