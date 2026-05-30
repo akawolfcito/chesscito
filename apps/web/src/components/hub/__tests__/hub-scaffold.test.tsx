@@ -304,7 +304,7 @@ describe("HubScaffold", () => {
         <HubScaffold {...baseProps} heroCta={heroAmber} onArenaPress={vi.fn()} />,
       );
       expect(
-        screen.getByLabelText("Enter Arena — full chess vs AI"),
+        screen.getByLabelText("Enter Arena: full chess vs AI"),
       ).toBeInTheDocument();
     });
 
@@ -318,14 +318,14 @@ describe("HubScaffold", () => {
           onArenaPress={onArenaPress}
         />,
       );
-      await user.click(screen.getByLabelText("Enter Arena — full chess vs AI"));
+      await user.click(screen.getByLabelText("Enter Arena: full chess vs AI"));
       expect(onArenaPress).toHaveBeenCalledTimes(1);
     });
 
     it("omits the SecondaryCta when onArenaPress is not provided", () => {
       render(<HubScaffold {...baseProps} heroCta={heroAmber} />);
       expect(
-        screen.queryByLabelText("Enter Arena — full chess vs AI"),
+        screen.queryByLabelText("Enter Arena: full chess vs AI"),
       ).not.toBeInTheDocument();
     });
   });

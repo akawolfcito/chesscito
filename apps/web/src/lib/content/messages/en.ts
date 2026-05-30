@@ -149,8 +149,8 @@ m.SHOP_SHEET_COPY.successBannerFormat = "{item} secured!";
 m.SHOP_SHEET_COPY.successBannerTxFormat = "tx {hash}";
 m.SHOP_SHEET_COPY.buyButtonAriaFormat = "{action}: {item} for {price}";
 m.MISSION_BRIEFING_COPY.visibleMissionTargetFormat = "Move to {target}";
-m.MISSION_BRIEFING_COPY.openDetailsLabyrinthAriaFormat = "Open mission details — optimal path {moves} moves";
-m.MISSION_BRIEFING_COPY.openDetailsTargetAriaFormat = "Open mission details — target {target}";
+m.MISSION_BRIEFING_COPY.openDetailsLabyrinthAriaFormat = "Open mission details: optimal path {moves} moves";
+m.MISSION_BRIEFING_COPY.openDetailsTargetAriaFormat = "Open mission details: target {target}";
 m.HUD_COPY.shieldsAriaLabel =
   "{count, plural, =1 {1 streak shield available} other {# streak shields available}}";
 m.HUD_COPY.shieldsFormat = "Shield ×{count}";
@@ -210,7 +210,7 @@ m.HUD_COPY.streakAriaLabel =
 
 // Hub scaffold premium slot active aria.
 m.HUB_SCAFFOLD_COPY.premiumActiveAriaFormat =
-  "Training Pass — {used} of {total} sessions used, {days} days remaining";
+  "Training Pass: {used} of {total} sessions used, {days} days remaining";
 m.ACCOUNT_SHEET_COPY.languageSwitchAriaFormat = "Switch language to {name}";
 
 export default messages;

@@ -589,9 +589,9 @@ export const MISSION_BRIEFING_COPY = {
   captureLabel: "Capture",
   /** ARIA labels for the mission peek pill — three variants for the
    *  active mode (labyrinth / capture / standard move). */
-  openDetailsLabyrinthAriaFormat: "Open mission details — optimal path {moves} moves",
-  openDetailsCaptureAriaLabel: "Open mission details — capture target",
-  openDetailsTargetAriaFormat: "Open mission details — target {target}",
+  openDetailsLabyrinthAriaFormat: "Open mission details: optimal path {moves} moves",
+  openDetailsCaptureAriaLabel: "Open mission details: capture target",
+  openDetailsTargetAriaFormat: "Open mission details: target {target}",
 } as const;
 
 export const VICTORY_PAGE_COPY = {
@@ -1155,7 +1155,7 @@ export const HUB_V2_TRAINING_COPY = {
       "Premium HUD",
     ] as const,
     cta: "See plan",
-    ariaLabel: "Training Pass — $1.99 for 30 days, see plan",
+    ariaLabel: "Training Pass, $1.99 for 30 days, see plan",
   },
 } as const;
 
@@ -2471,7 +2471,7 @@ export const HUD_COPY = {
     days === 1
       ? "PRO active, 1 day remaining"
       : `PRO active, ${days} days remaining`,
-  proInactiveAriaLabel: "PRO inactive — tap to learn more",
+  proInactiveAriaLabel: "PRO inactive: tap to learn more",
 
   /** Connect-wallet chip (top row, conditional — visible only when no
    *  wallet is connected and a connect handler is wired). Acts as a
@@ -2720,7 +2720,7 @@ export const HERO_CTA_COPY = {
  *  signal, not an explanation. */
 export const DAILY_BADGE_COPY = {
   label: "Daily ready",
-  ariaLabel: "Today's daily tactic is ready — tap to play",
+  ariaLabel: "Today's daily tactic is ready: tap to play",
 } as const;
 
 /** Hub right-rail action tile labels. Short titles (≤6 chars) that
@@ -2742,7 +2742,7 @@ export const HUB_ACTION_RAIL_COPY = {
     "Unlock PRO — full experience.",
   /** Arena tile aria labels — composed from MiniArenaSetup.name. */
   arenaUnlockedAriaFormat: "Special training: {name}",
-  arenaLockedAriaFormat: "{name} — locked",
+  arenaLockedAriaFormat: "{name}: locked",
   /** Daily tile aria labels — composed from puzzle name + completion state. */
   dailyCompletedAriaFormat: "Daily Tactic completed. Fresh in {hours}h.",
   dailyPlayAriaFormat: "Play today's Daily Tactic. {name}.",
@@ -2751,7 +2751,7 @@ export const HUB_ACTION_RAIL_COPY = {
 export const SECONDARY_CTA_COPY = {
   arena: {
     label: "Enter Arena",
-    ariaLabel: "Enter Arena — full chess vs AI",
+    ariaLabel: "Enter Arena: full chess vs AI",
   },
 } as const;
 
@@ -2792,9 +2792,9 @@ export const HUB_SCAFFOLD_COPY = {
   playAriaLabel: "Enter the Arena",
   /** Aria templates rendered on the PremiumSlot, composed inline by
    *  hub-scaffold-client based on PRO state. */
-  premiumInactiveAriaLabel: "Training Pass — tap to unlock",
+  premiumInactiveAriaLabel: "Training Pass: tap to unlock",
   premiumActiveAriaFormat:
-    "Training Pass — {used} of {total} sessions used, {days} days remaining",
+    "Training Pass: {used} of {total} sessions used, {days} days remaining",
 } as const;
 
 export const HUB_RAIL_COPY = {

@@ -32,11 +32,11 @@ describe("PremiumSlot", () => {
         usedSessions={6}
         totalSessions={10}
         daysRemaining={23}
-        ariaLabel="Training Pass — 6 of 10 sessions, 23 days remaining"
+        ariaLabel="Training Pass: 6 of 10 sessions, 23 days remaining"
       />,
     );
     const tile = screen.getByRole("button", {
-      name: "Training Pass — 6 of 10 sessions, 23 days remaining",
+      name: "Training Pass: 6 of 10 sessions, 23 days remaining",
     });
     expect(tile.className).toMatch(/is-active\b/);
     expect(tile.textContent).toContain("Training Pass");
@@ -54,10 +54,10 @@ describe("PremiumSlot", () => {
         usedSessions={9}
         totalSessions={10}
         daysRemaining={2}
-        ariaLabel="Training Pass — expiring"
+        ariaLabel="Training Pass: expiring"
       />,
     );
-    const tile = screen.getByRole("button", { name: "Training Pass — expiring" });
+    const tile = screen.getByRole("button", { name: "Training Pass: expiring" });
     expect(tile.className).toMatch(/is-expiring\b/);
     expect(tile.textContent).toContain("Training Pass");
   });
@@ -71,10 +71,10 @@ describe("PremiumSlot", () => {
         totalSessions={10}
         daysRemaining={30}
         recentlyRenewed
-        ariaLabel="Training Pass — just renewed"
+        ariaLabel="Training Pass: just renewed"
       />,
     );
-    const tile = screen.getByRole("button", { name: "Training Pass — just renewed" });
+    const tile = screen.getByRole("button", { name: "Training Pass: just renewed" });
     expect(tile.className).toMatch(/is-recently-renewed\b/);
     expect(tile.className).toMatch(/is-active\b/);
   });
@@ -87,7 +87,7 @@ describe("PremiumSlot", () => {
         usedSessions={15}
         totalSessions={10}
         daysRemaining={5}
-        ariaLabel="Training Pass — over"
+        ariaLabel="Training Pass: over"
       />,
     );
     const fill = screen.getByTestId("premium-slot-progress-fill");
@@ -102,7 +102,7 @@ describe("PremiumSlot", () => {
         usedSessions={0}
         totalSessions={0}
         daysRemaining={0}
-        ariaLabel="Training Pass — empty"
+        ariaLabel="Training Pass: empty"
       />,
     );
     const fill = screen.getByTestId("premium-slot-progress-fill");

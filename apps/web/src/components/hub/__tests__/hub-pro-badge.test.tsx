@@ -9,7 +9,7 @@ describe("<HubProBadge>", () => {
       <HubProBadge
         active={false}
         sublineInactive="Unlock the full experience"
-        ariaLabel="PRO inactive — tap to learn more"
+        ariaLabel="PRO inactive: tap to learn more"
       />,
     );
     const root = screen.getByLabelText(/PRO inactive/);

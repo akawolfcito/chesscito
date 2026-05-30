@@ -1375,9 +1375,9 @@ const messages = {
     visibleMissionTargetFormat: "Mover a {target}",
     captureLabel: "Captura",
     openDetailsLabyrinthAriaFormat:
-      "Abrir detalles de misión — ruta óptima {moves} movimientos",
-    openDetailsCaptureAriaLabel: "Abrir detalles de misión — capturar objetivo",
-    openDetailsTargetAriaFormat: "Abrir detalles de misión — objetivo {target}",
+      "Abrir detalles de misión: ruta óptima {moves} movimientos",
+    openDetailsCaptureAriaLabel: "Abrir detalles de misión: capturar objetivo",
+    openDetailsTargetAriaFormat: "Abrir detalles de misión: objetivo {target}",
   },
   EXERCISE_DRAWER_COPY: {
     title: "Ejercicios",
@@ -1533,14 +1533,14 @@ const messages = {
     proDiscoveryAriaLabel:
       "Desbloquea PRO — experiencia completa.",
     arenaUnlockedAriaFormat: "Entrenamiento especial: {name}",
-    arenaLockedAriaFormat: "{name} — bloqueado",
+    arenaLockedAriaFormat: "{name}: bloqueado",
     dailyCompletedAriaFormat: "Táctica Diaria completada. Nueva en {hours}h.",
     dailyPlayAriaFormat: "Juega la Táctica Diaria de hoy. {name}.",
   },
   SECONDARY_CTA_COPY: {
     arena: {
       label: "Entrar a Arena",
-      ariaLabel: "Entrar a Arena — ajedrez completo vs IA",
+      ariaLabel: "Entrar a Arena: ajedrez completo vs IA",
     },
   },
   SETTINGS_STUB_COPY: {
@@ -1558,9 +1558,9 @@ const messages = {
     premiumInactiveLabel: "Hazte PRO",
     playLabel: "ENTRAR A ARENA",
     playAriaLabel: "Entrar a la Arena",
-    premiumInactiveAriaLabel: "Pase de entrenamiento — toca para desbloquear",
+    premiumInactiveAriaLabel: "Pase de entrenamiento: toca para desbloquear",
     premiumActiveAriaFormat:
-      "Pase de entrenamiento — {used} de {total} sesiones usadas, {days} días restantes",
+      "Pase de entrenamiento: {used} de {total} sesiones usadas, {days} días restantes",
   },
   HUB_RAIL_COPY: {
     ...en.HUB_RAIL_COPY,
@@ -1575,7 +1575,7 @@ const messages = {
     proRemainingFormat: "{days}d",
     proAriaLabel:
       "{days, plural, =1 {PRO activo, 1 día restante} other {PRO activo, # días restantes}}",
-    proInactiveAriaLabel: "PRO inactivo — toca para saber más",
+    proInactiveAriaLabel: "PRO inactivo: toca para saber más",
     connectLabel: "Conectar",
     connectAriaLabel: "Conecta tu wallet para ver tus stats",
     coachLabel: "Coach",
@@ -1604,7 +1604,7 @@ const messages = {
   },
   DAILY_BADGE_COPY: {
     label: "Diario listo",
-    ariaLabel: "La táctica del día está lista — toca para jugar",
+    ariaLabel: "La táctica del día está lista: toca para jugar",
   },
   DIFFICULTY_LABELS: {
     1: "Fácil",

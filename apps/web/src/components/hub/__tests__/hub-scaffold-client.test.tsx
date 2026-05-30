@@ -261,7 +261,7 @@ describe("HubScaffoldClient — PRO badge (top-right corner)", () => {
     render(<HubScaffoldClient />);
 
     // Inactive aria copy lives at HUD_COPY.proInactiveAriaLabel.
-    const badge = screen.getByLabelText(/PRO inactive — tap to learn more/);
+    const badge = screen.getByLabelText(/PRO inactive: tap to learn more/);
     expect(badge).toBeInTheDocument();
     // Badge IS the entry point now (the wide discovery panel was
     // retired 2026-05-24); it sits in the right HUD cluster.
@@ -272,7 +272,7 @@ describe("HubScaffoldClient — PRO badge (top-right corner)", () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
-    const badge = screen.getByLabelText(/PRO inactive — tap to learn more/);
+    const badge = screen.getByLabelText(/PRO inactive: tap to learn more/);
     await user.click(badge);
 
     expect(await screen.findByTestId("pro-kicker")).toBeInTheDocument();
@@ -360,7 +360,7 @@ describe("HubScaffoldClient — tap handlers", () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
-    await user.click(screen.getByLabelText("Enter Arena — full chess vs AI"));
+    await user.click(screen.getByLabelText("Enter Arena: full chess vs AI"));
 
     // The Hub ENTER ARENA CTA carries `?fresh=1` so it lands on the
     // difficulty + color selector instead of auto-resuming the
@@ -564,7 +564,7 @@ describe("HubScaffoldClient — telemetry", () => {
     const user = userEvent.setup();
     render(<HubScaffoldClient />);
 
-    await user.click(screen.getByLabelText("Enter Arena — full chess vs AI"));
+    await user.click(screen.getByLabelText("Enter Arena: full chess vs AI"));
 
     // Replaces the legacy `hub_play_tap` event — the primary play CTA
     // is now the contextual Hero (fires `hero_cta_clicked`), and the
