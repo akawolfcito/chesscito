@@ -77,7 +77,110 @@ function clearOptimisticVictory() {
   try { sessionStorage.removeItem("chesscito:optimistic-victory"); } catch { /* ignore */ }
 }
 
-export function TrophiesBody() {
+// ── Lightweight my-victories fetcher used by TrophiesHeroBand ────────────
+// 2026-05-30: extracted so the hero can render outside the scroll container
+// (mirror Badges pattern). The body keeps its own copy of the same fetch
+// because it needs the data for the My Victories section + achievements.
+// Both fetches hit the same cached endpoint so the duplicate is cheap.
+function useMyVictoriesQuick(): { victories: VictoryEntry[] | undefined } {
+  const { address, isConnected } = useAccount();
+  const [victories, setVictories] = useState<VictoryEntry[] | undefined>();
+  const configured = getVictoryAddress() !== null;
+
+  useEffect(() => {
+    if (!isConnected || !address || !configured) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/my-victories?player=${address}`);
+        if (!res.ok) return;
+        const rows = (await res.json()) as ApiVictoryRow[];
+        if (cancelled) return;
+        const entries = rows.map(toVictoryEntry);
+        const optimistic = getOptimisticVictory();
+        if (optimistic && optimistic.player.toLowerCase() === address.toLowerCase()) {
+          const found = entries.some((e) => String(e.tokenId) === optimistic.tokenId);
+          if (!found) entries.unshift(toVictoryEntry(optimistic));
+        }
+        setVictories(entries);
+      } catch {
+        // Stay undefined — the hero falls back to its empty hint.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [address, isConnected, configured]);
+
+  return { victories };
+}
+
+/**
+ * HERO BAND for the trophies surface. Extracted from `TrophiesBody` so it
+ * can render OUTSIDE the parent scroll container — the scroll's
+ * `overflow-y-auto` collapses overflow-x to `auto` per CSS spec and
+ * clips the anchor's `left: -1.25rem` overhang. Rendering the band as
+ * a sibling (shrink-0) lets the trofeo-épico character visibly escape
+ * the panel's left edge, matching the Badges hero treatment.
+ *
+ * Consumers should pair this with `<TrophiesBody hideHero />` so the
+ * hero is not duplicated.
+ */
+export function TrophiesHeroBand() {
+  const t = useTranslations("TROPHY_VITRINE_COPY");
+  const { victories } = useMyVictoriesQuick();
+  const summary = computeAchievements(victories);
+  const victoryCount = victories?.length ?? 0;
+  const hasVictories = victoryCount > 0;
+  const bestVictory = hasVictories
+    ? [...(victories ?? [])].sort(
+        (a, b) => a.totalMoves - b.totalMoves || a.timeMs - b.timeMs,
+      )[0]
+    : null;
+  const achievementsPct =
+    summary.total === 0 ? 0 : (summary.earnedCount / summary.total) * 100;
+
+  return (
+    <div className="trophy-vitrine-hero">
+      <picture className="trophy-vitrine-hero-anchor">
+        <source srcSet="/art/action-row/trofeo-epico.avif" type="image/avif" />
+        <source srcSet="/art/action-row/trofeo-epico.webp" type="image/webp" />
+        <img
+          src="/art/action-row/trofeo-epico.png"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
+      </picture>
+      <div className="trophy-vitrine-hero-content">
+        <p className="trophy-vitrine-hero-eyebrow">{t("heroEyebrow")}</p>
+        <p className="trophy-vitrine-hero-stats">
+          <span className="trophy-vitrine-hero-stats-victory">
+            {victoryCount} {t("heroVictoriesLabel")}
+          </span>
+          <span className="trophy-vitrine-hero-stats-sep" aria-hidden="true">·</span>
+          <span className="trophy-vitrine-hero-stats-ach">
+            {summary.earnedCount}/{summary.total} {t("heroAchievementsLabel")}
+          </span>
+        </p>
+        <p className="trophy-vitrine-hero-sub">
+          {bestVictory
+            ? t("heroBestLabelFormat", {
+                moves: bestVictory.totalMoves,
+                time: formatTimeMs(bestVictory.timeMs),
+              })
+            : t("heroEmptyHint")}
+        </p>
+        <div className="trophy-vitrine-hero-progress">
+          <div
+            className="trophy-vitrine-hero-progress-fill"
+            style={{ width: `${achievementsPct}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
   const t = useTranslations("TROPHY_VITRINE_COPY");
   const tAch = useTranslations("ACHIEVEMENTS_COPY");
   const tRoad = useTranslations("ROADMAP_COPY");
@@ -323,9 +426,13 @@ export function TrophiesBody() {
       {/* HERO BAND — overview anchor that mirrors the Badges vitrine
        *  pattern. Trofeo-épico character anchors the warm cream-amber
        *  panel; the right column carries the glance-able stats (victory
-       *  count + best run when present, achievements progress). The
-       *  detail sections (My Victories, Achievements, Hall of Fame)
-       *  follow below — the hero is the FIRST thing visible. */}
+       *  count + best run when present, achievements progress).
+       *  2026-05-30: when `hideHero` is true the band is rendered as a
+       *  sibling OUTSIDE the parent scroll container (mirror badges)
+       *  so its anchor's `left: -1.25rem` overhang isn't clipped by
+       *  the scroll's spec-promoted overflow-x. The body skips the
+       *  block entirely in that case to avoid duplicate render. */}
+      {!hideHero && (
       <div className="trophy-vitrine-hero">
         <picture className="trophy-vitrine-hero-anchor">
           <source srcSet="/art/action-row/trofeo-epico.avif" type="image/avif" />
@@ -364,6 +471,7 @@ export function TrophiesBody() {
           </div>
         </div>
       </div>
+      )}
 
       {ordered}
 

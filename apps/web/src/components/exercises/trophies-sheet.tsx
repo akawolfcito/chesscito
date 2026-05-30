@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { TrophiesBody } from "@/components/trophies/trophies-body";
+import { TrophiesBody, TrophiesHeroBand } from "@/components/trophies/trophies-body";
 
 type TrophiesSheetProps = {
   open: boolean;
@@ -63,8 +63,18 @@ export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: Trophi
             close={{ onClick: () => onOpenChange(false), label: t("closeSheetLabel") }}
           />
         </div>
-        <div className="flex-1 overflow-y-auto overscroll-contain mt-4 space-y-6">
-          <TrophiesBody />
+        {/* 2026-05-30: hero band rendered as a sibling OUTSIDE the
+         *  scroll container (mirror Badges pattern). The scroll's
+         *  `overflow-y-auto` per CSS spec promotes overflow-x to auto
+         *  and would clip the anchor's `left: -1.25rem` overhang.
+         *  Hoisting the band keeps the trofeo-épico character visibly
+         *  escaping the panel + makes the band a persistent overview
+         *  header that doesn't scroll off with the detail sections. */}
+        <div className="shrink-0 mt-4">
+          <TrophiesHeroBand />
+        </div>
+        <div className="flex-1 overflow-y-auto overscroll-contain mt-6 space-y-6">
+          <TrophiesBody hideHero />
         </div>
       </SheetContent>
     </Sheet>

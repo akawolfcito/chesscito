@@ -4,6 +4,7 @@ import { TrophiesSheet } from "../trophies-sheet";
 
 vi.mock("@/components/trophies/trophies-body", () => ({
   TrophiesBody: () => <div data-testid="trophies-body" />,
+  TrophiesHeroBand: () => <div data-testid="trophies-hero-band" />,
 }));
 
 describe("TrophiesSheet — showTrigger gate", () => {
