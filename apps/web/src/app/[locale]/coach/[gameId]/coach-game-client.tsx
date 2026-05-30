@@ -20,6 +20,7 @@ import { BoardThumbnail } from "@/components/board/board-thumbnail";
 import { formatVictoryPriceForDifficulty } from "@/lib/coach/format-price";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 
 type Props = {
   gameRecord: GameRecord | null;
@@ -38,6 +39,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
   const router = useRouter();
   // ConnectPromptToast requires onDismiss — track dismissed state locally
   const [connectPromptDismissed, setConnectPromptDismissed] = useState(false);
+  const proActive = useIsProActive();
 
   const handleBack = useCallback(() => {
     track("coach_viewer_back_tap", {
@@ -537,6 +539,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
             claimPrice={claimPrice}
             askCoachPending={coach.phase === "loading"}
             coachCredits={coach.credits}
+            proActive={proActive}
           />
         </div>
 

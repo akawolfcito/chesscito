@@ -1508,6 +1508,10 @@ export const COACH_VIEWER_COPY = {
   // Suppressed at credits === 0 so the paywall stays the primary signal
   // for an empty balance. ES override in messages/es.ts.
   creditsHint: "Uses 1 credit · {count} left",
+  // 2026-05-30 (Phase 2 shop oscuridad): PRO active variant — replaces
+  // the paid-credits hint so PRO subscribers see a clear "no cost"
+  // signal at the point of action. ES override in messages/es.ts.
+  creditsHintPro: "Unlimited · PRO active",
 } as const;
 
 export const LEGAL_SHELL_COPY = {

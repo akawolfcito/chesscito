@@ -574,6 +574,7 @@ const messages = {
     analysisPending: "Analizando tu partida…",
     analysisPendingHint: "Quédate aquí — el análisis aparece debajo apenas esté listo.",
     creditsHint: "Usa 1 crédito · te quedan {count}",
+    creditsHintPro: "Ilimitado · PRO activo",
   },
   ARENA_COPY: {
     ...en.ARENA_COPY,

@@ -203,4 +203,54 @@ describe("GameActionsBar", () => {
     );
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
+
+  // PRO active variant — takes precedence over paid-credits hint.
+  it("renders PRO hint instead of credits when proActive (even with paid credits)", () => {
+    render(
+      <GameActionsBar
+        {...baseProps}
+        result="lose"
+        coachCredits={7}
+        proActive
+      />,
+    );
+    const hint = screen.getByRole("status");
+    expect(hint).toHaveAttribute("data-variant", "pro");
+    expect(hint).toHaveTextContent(/creditsHintPro/);
+  });
+
+  it("renders PRO hint when proActive even with zero credits", () => {
+    render(
+      <GameActionsBar
+        {...baseProps}
+        result="lose"
+        coachCredits={0}
+        proActive
+      />,
+    );
+    expect(screen.getByRole("status")).toHaveAttribute("data-variant", "pro");
+  });
+
+  it("hides PRO hint when Ask Coach is pending", () => {
+    render(
+      <GameActionsBar
+        {...baseProps}
+        result="lose"
+        proActive
+        askCoachPending
+      />,
+    );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("hides PRO hint when too-short (Ask Coach absent)", () => {
+    render(
+      <GameActionsBar
+        {...baseProps}
+        totalMoves={0}
+        proActive
+      />,
+    );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
 });

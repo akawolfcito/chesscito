@@ -35,6 +35,11 @@ type Props = {
    *  spend at the point of action. Suppressed at 0 (paywall takes over)
    *  or while the analysis is pending (hint would compete with spinner). */
   coachCredits?: number;
+  /** 2026-05-30 (Phase 2 shop oscuridad): PRO active variant. Takes
+   *  precedence over the paid-credits hint so PRO subscribers see a
+   *  clear "no cost" signal at the point of action, regardless of
+   *  any leftover paid credits in the wallet. */
+  proActive?: boolean;
 };
 
 type TileKind = "play-again" | "save-victory" | "ask-coach" | "share";
@@ -110,20 +115,25 @@ export function GameActionsBar({
   claimPrice,
   askCoachPending,
   coachCredits,
+  proActive,
 }: Props) {
   const t = useTranslations("COACH_VIEWER_COPY");
   const isWin = result === "win";
   const isMinted = mintedTokenId != null;
   const isTooShort = totalMoves === 0;
   const askCoachDisabled = hasPartialReplayError || isTooShort || !!askCoachPending;
-  // Credits hint fires only when the Ask Coach tile is actually reachable
-  // (not too-short, not replay-errored, not currently analyzing) AND the
-  // wallet holds paid credits. Zero suppresses the hint so the paywall
-  // stays the primary signal for an empty balance.
+  // Point-of-use hint under the Ask Coach tile. Two variants:
+  //   • PRO active → "Unlimited · PRO active" (takes precedence)
+  //   • coachCredits > 0 → "Uses 1 credit · {N} left"
+  // Both gated by Ask Coach being reachable (not too-short, not
+  // replay-errored, not currently analyzing). Zero credits + non-PRO
+  // suppresses the hint so the paywall stays the primary signal.
+  const askCoachReachable =
+    !isTooShort && !hasPartialReplayError && !askCoachPending;
+  const showProHint = askCoachReachable && !!proActive;
   const showCreditsHint =
-    !isTooShort &&
-    !hasPartialReplayError &&
-    !askCoachPending &&
+    askCoachReachable &&
+    !proActive &&
     typeof coachCredits === "number" &&
     coachCredits > 0;
   const askCoachLabel = askCoachPending
@@ -259,6 +269,16 @@ export function GameActionsBar({
           );
         })}
       </div>
+      {showProHint && (
+        <p
+          className="coach-viewer__credits-hint coach-viewer__credits-hint--pro"
+          role="status"
+          aria-live="off"
+          data-variant="pro"
+        >
+          {t("creditsHintPro")}
+        </p>
+      )}
       {showCreditsHint && (
         <p
           className="coach-viewer__credits-hint"
