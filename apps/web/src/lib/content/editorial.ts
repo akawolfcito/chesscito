@@ -327,8 +327,8 @@ export const DAILY_SHARE_COPY = {
   ctaSolvedNoStreak: "I solved today\u2019s puzzle. Can you?",
   ctaSolvedWithStreak: "I solved today\u2019s puzzle. Streak: {streak}. Can you?",
   /** Page chrome for `/share/daily`. */
-  metaTitleChallenge: "Daily Tactic — Chesscito",
-  metaTitleSolved: "Daily Tactic solved — Chesscito",
+  metaTitleChallenge: "Daily Tactic · Chesscito",
+  metaTitleSolved: "Daily Tactic solved · Chesscito",
   headlineChallenge: "Daily Tactic",
   headlineSolved: "Daily Tactic solved",
   defaultName: "Daily Tactic",
@@ -347,8 +347,8 @@ export const ENDGAME_SHARE_COPY = {
   ctaSolvedNoMoves: "I solved this endgame. Can you?",
   ctaSolvedWithMoves: "I solved this K+R vs K training in {moves}/{limit} moves. Can you?",
   /** Page chrome for `/share/endgame`. */
-  metaTitleChallenge: "Endgame challenge — Chesscito",
-  metaTitleSolved: "Endgame solved — Chesscito",
+  metaTitleChallenge: "Endgame challenge · Chesscito",
+  metaTitleSolved: "Endgame solved · Chesscito",
   headlineChallenge: "Endgame challenge",
   headlineSolved: "Endgame solved",
   defaultName: "K+R vs K",
@@ -2312,7 +2312,7 @@ export const LANDING_COPY = {
         ],
         ctaLabel: "I want PRO access",
         ctaKind: "mailto" as const,
-        ctaSubject: "Chesscito PRO — I want access",
+        ctaSubject: "Chesscito PRO: I want access",
       },
       {
         name: "FAMILY",
@@ -2325,7 +2325,7 @@ export const LANDING_COPY = {
         ],
         ctaLabel: "Let me know when it's ready",
         ctaKind: "mailto" as const,
-        ctaSubject: "Family plan — Waitlist",
+        ctaSubject: "Family plan: Waitlist",
       },
       {
         name: "EDUCATORS & PARTNERS",
@@ -2446,7 +2446,7 @@ export const LANDING_COPY = {
 /** Aria-label and ambient hint copy for the central kingdom anchor.
  *  Consumed by `<KingdomAnchor>` (Step 11 §1 of UX spec). */
 export const HOME_ANCHOR_COPY = {
-  alt: "Chesscito kingdom — Wolfcito the wizard with chess piece statues",
+  alt: "Chesscito kingdom: Wolfcito the wizard with chess piece statues",
   attractHint: "Your training awaits in the kingdom",
   /** Two-line tagline rendered inside the portal asset, below the
    *  wizard. The first line is the lead-in; the highlight line is
