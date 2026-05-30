@@ -24,6 +24,11 @@ type Props = {
    *  Save Victory primary CTA (win + !claimed state). Optional —
    *  unknown difficulty hides the ribbon but keeps the tile reachable. */
   claimPrice?: string | null;
+  /** 2026-05-30 (Bug #2 fix): the coach hook is currently running an
+   *  analysis. The Ask Coach tile renders a spinner overlay, swaps to
+   *  a "Analyzing…" label, and becomes disabled so repeated taps don't
+   *  re-trigger requestCoachAnalyze. Other tiles stay reachable. */
+  askCoachPending?: boolean;
 };
 
 type TileKind = "play-again" | "save-victory" | "ask-coach" | "share";
@@ -37,6 +42,10 @@ type Tile = {
   /** Optional price ribbon on the tile's top-right corner. Reserved
    *  for the Save Victory tile in the win + !claimed state. */
   priceRibbon?: string;
+  /** 2026-05-30 (Bug #2 fix): render a spinner overlay on the tile icon.
+   *  Drives `data-loading="true"` on the button — the CSS handles the
+   *  spinning ring + dimming. Only the Ask Coach tile uses it today. */
+  pending?: boolean;
 };
 
 const TILE_ICON: Record<TileKind, { avif: string; webp: string; png: string }> = {
@@ -93,13 +102,18 @@ export function GameActionsBar({
   onViewNft,
   onBackToHub,
   claimPrice,
+  askCoachPending,
 }: Props) {
   const t = useTranslations("COACH_VIEWER_COPY");
   const isWin = result === "win";
   const isMinted = mintedTokenId != null;
   const isTooShort = totalMoves === 0;
-  const askCoachDisabled = hasPartialReplayError || isTooShort;
-  const askCoachLabel = hasAnalysis ? t("askCoachAgain") : t("askCoach");
+  const askCoachDisabled = hasPartialReplayError || isTooShort || !!askCoachPending;
+  const askCoachLabel = askCoachPending
+    ? t("analysisPending")
+    : hasAnalysis
+      ? t("askCoachAgain")
+      : t("askCoach");
 
   const playAgainTile: Tile = {
     kind: "play-again",
@@ -111,6 +125,7 @@ export function GameActionsBar({
     label: askCoachLabel,
     onClick: onAskCoach,
     disabled: askCoachDisabled,
+    pending: !!askCoachPending,
   };
 
   let tiles: Tile[];
@@ -198,8 +213,10 @@ export function GameActionsBar({
               onClick={tile.onClick}
               disabled={tile.disabled}
               aria-label={tile.ariaLabel ?? tile.label}
+              aria-busy={tile.pending || undefined}
               className="coach-viewer__tile"
               data-kind={tile.kind}
+              data-loading={tile.pending || undefined}
             >
               {tile.priceRibbon && (
                 <span
@@ -214,6 +231,12 @@ export function GameActionsBar({
                 <source srcSet={icon.webp} type="image/webp" />
                 <img src={icon.png} alt="" draggable={false} />
               </picture>
+              {tile.pending && (
+                <span
+                  className="coach-viewer__tile-spinner"
+                  aria-hidden="true"
+                />
+              )}
               <span className="coach-viewer__tile-label">{tile.label}</span>
             </button>
           );

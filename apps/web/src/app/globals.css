@@ -10595,6 +10595,44 @@ button.hud-resource-chip:active:not(:disabled) {
   opacity: 0.7;
 }
 
+/* Pending state overrides the disabled grayscale — the user shouldn't
+ * read "broken" while a request is in flight. Spinner overlays the
+ * icon, label switches to "Analyzing…" via the React layer. */
+.coach-viewer__tile[data-loading="true"] {
+  cursor: progress;
+  filter: none;
+  opacity: 0.95;
+}
+
+.coach-viewer__tile[data-loading="true"] .coach-viewer__tile-icon {
+  opacity: 0.35;
+}
+
+.coach-viewer__tile-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  border: 3px solid rgba(110, 65, 15, 0.22);
+  border-top-color: rgba(110, 65, 15, 0.92);
+  animation: coach-viewer-tile-spin 0.85s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes coach-viewer-tile-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-viewer__tile-spinner {
+    animation: none;
+    border-top-color: rgba(110, 65, 15, 0.55);
+  }
+}
+
 .coach-viewer__tile-icon {
   /* Icon stands alone — generous size + atmospheric drop-shadow so
    * it reads as a physical object resting on the deck. The asset's

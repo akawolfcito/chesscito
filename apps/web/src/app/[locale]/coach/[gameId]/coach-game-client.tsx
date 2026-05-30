@@ -481,7 +481,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
             gameId={gameRecord.gameId}
             result={mappedResult}
             totalMoves={gameRecord.totalMoves}
-            hasAnalysis={!!gameRecord.analysis}
+            hasAnalysis={!!gameRecord.analysis || coach.phase === "result"}
             hasPartialReplayError={!!replay.error}
             mintedTokenId={tokenIdEffective}
             shareLinkUrl={shareLinkEffective}
@@ -492,6 +492,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
             onViewNft={handleViewNft}
             onBackToHub={handleBackToHub}
             claimPrice={claimPrice}
+            askCoachPending={coach.phase === "loading"}
           />
         </div>
 
