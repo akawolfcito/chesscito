@@ -128,4 +128,32 @@ describe("GameActionsBar", () => {
     fireEvent.click(screen.getByRole("button", { name: /viewOnCeloscan/ }));
     expect(onViewNft).toHaveBeenCalledOnce();
   });
+
+  // 2026-05-30 (Bug #2 fix): pending state on Ask Coach tile.
+  it("askCoachPending: tile shows analysisPending label and is disabled", () => {
+    render(<GameActionsBar {...baseProps} askCoachPending />);
+    // Label swapped to analysisPending key (mocked-intl returns the key)
+    const tile = screen.getByRole("button", { name: /analysisPending/ });
+    expect(tile).toBeInTheDocument();
+    expect(tile).toBeDisabled();
+    expect(tile).toHaveAttribute("aria-busy", "true");
+    expect(tile).toHaveAttribute("data-loading", "true");
+  });
+
+  it("askCoachPending: does NOT fire onAskCoach when clicked", () => {
+    const onAskCoach = vi.fn();
+    render(
+      <GameActionsBar {...baseProps} onAskCoach={onAskCoach} askCoachPending />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /analysisPending/ }));
+    expect(onAskCoach).not.toHaveBeenCalled();
+  });
+
+  it("askCoachPending false: normal askCoach label, no aria-busy", () => {
+    render(<GameActionsBar {...baseProps} askCoachPending={false} />);
+    const tile = screen.getByRole("button", { name: /askCoach/ });
+    expect(tile).not.toBeDisabled();
+    expect(tile).not.toHaveAttribute("aria-busy");
+    expect(tile).not.toHaveAttribute("data-loading");
+  });
 });
