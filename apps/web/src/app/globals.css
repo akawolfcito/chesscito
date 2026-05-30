@@ -9129,23 +9129,27 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* Floating icon — absolutely positioned out of the grid flow so it
    can sit FLUSH against the card's left edge with a controlled
-   overhang. `left: -18px` pulls it 18px past the card edge into
-   the sheet padding zone; the figure is 120×120, so it visually
-   "escapes" the card with conviction without ever crowding the
-   sheet border (still 6px of breath before the
-   `overflow-x: clip`). Vertical center via top:50% + translate.
+   overhang. `left: -24px` pulls it past the card edge into the
+   sheet padding zone; combined with the scroll container's
+   `-mx-6 px-6` bleed (shop-sheet.tsx) the clip box extends to the
+   sheet padding-box edge so the icon visibly escapes the card
+   without being chopped by the scroll container's spec-promoted
+   `overflow-x: auto`. Vertical center via top:50% + translate.
    The tile reserves 108px of padding-left so the icon's right
    edge clears the identity text. Math at the 390px MiniPay
    viewport:
      sheet padding (p-6)   = 24px → card left = 24px
-     icon offset           = left: -18px from card
-     icon left edge        = 24 - 18 = 6px from sheet edge
-                              (clear of the clip zone)
-     icon overhang on card = 18px visually outside the card edge
-   */
+     scroll bleed          = -mx-6 px-6 → scroll box L edge = sheet L edge
+     icon offset           = left: -24px from card
+     icon left edge        = 24 - 24 = 0px from sheet edge
+                              (flush with the clip zone — visible)
+     icon overhang on card = 24px visually outside the card edge
+   2026-05-30: bumped from -18px → -24px so the floating effect
+   actually reads on device (previous value was too timid + got
+   clipped by the scroll container per CSS spec). */
 .shop-item-tile-icon-figure {
   position: absolute;
-  left: -18px;
+  left: -24px;
   top: 50%;
   transform: translateY(-50%);
   display: block;

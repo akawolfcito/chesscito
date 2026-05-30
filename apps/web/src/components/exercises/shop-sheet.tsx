@@ -269,7 +269,16 @@ export function ShopSheet({
          *  `.sheet-bg-shop` opening up `overflow-x: visible`
          *  (overriding the shared `.mission-shell` clip), not via
          *  asymmetric catalog padding. */}
-        <div className="mt-4 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-6">
+        {/* 2026-05-30 (shop icon overhang fix): bleed horizontally
+         *  with `-mx-6 px-6` so the scroll container's clip box (which
+         *  per CSS spec collapses overflow-x to auto when overflow-y
+         *  is auto) extends past the card edges. Without this the
+         *  card icons' `left: -24px` overhang was being clipped by
+         *  the scroll div even though `.sheet-bg-shop` was set up to
+         *  allow it. Cards re-pad inward via `px-6` so layout looks
+         *  identical — the only difference is icons can now visibly
+         *  float past the card's left edge. */}
+        <div className="mt-4 -mx-6 px-6 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-6">
           {items.length === 0 && (
             <p
               className="text-center text-sm"
