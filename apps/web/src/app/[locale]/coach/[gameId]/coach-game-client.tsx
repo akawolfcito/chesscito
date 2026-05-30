@@ -77,6 +77,20 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     surface: "coach_viewer",
   });
 
+  // Derive playerColor from the move-list parity. /api/sign-victory
+  // requires the transcript end in checkmate AND that the player
+  // delivered it; sending the wrong side fails server validation with
+  // HTTP 400. In standard chess every odd-indexed move is white's,
+  // even-indexed is black's — so if `moves.length` is odd, white
+  // played the last (mating) move; if even, black did. GameRecord
+  // doesn't persist playerColor today (forward-compat TODO for a
+  // future cluster); the parity derivation is reliable because today
+  // `result === "win"` only fires on checkmate.
+  const safePlayerColor: "w" | "b" =
+    gameRecord && gameRecord.moves.length > 0 && gameRecord.moves.length % 2 === 0
+      ? "b"
+      : "w";
+
   const mint = useMintVictory({
     gameId: gameRecord?.gameId,
     walletAddress,
@@ -84,6 +98,13 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     result: "win",
     totalMoves: gameRecord?.totalMoves ?? 0,
     elapsedMs: gameRecord?.elapsedMs ?? 0,
+    // 2026-05-30 (Bug from MiniPay smoke): without moveHistory the
+    // route returns 400 immediately (`moveHistory must contain at
+    // least one move`). The visor knows the moves from gameRecord —
+    // pass them through so Save Victory works from the visor exactly
+    // like it does from the arena end-state popup.
+    moveHistory: gameRecord?.moves,
+    playerColor: safePlayerColor,
   });
 
   // Persist mint outcome to gameRecord for cold-load viewers (fire-and-forget).
