@@ -77,19 +77,18 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     surface: "coach_viewer",
   });
 
-  // Derive playerColor from the move-list parity. /api/sign-victory
-  // requires the transcript end in checkmate AND that the player
-  // delivered it; sending the wrong side fails server validation with
-  // HTTP 400. In standard chess every odd-indexed move is white's,
-  // even-indexed is black's — so if `moves.length` is odd, white
-  // played the last (mating) move; if even, black did. GameRecord
-  // doesn't persist playerColor today (forward-compat TODO for a
-  // future cluster); the parity derivation is reliable because today
-  // `result === "win"` only fires on checkmate.
+  // Prefer the persisted playerColor (arena POST writes it as of 2026-05-30).
+  // Legacy records written before that change omit the field, so we fall back
+  // to move-list parity: every odd-indexed move is white's, even-indexed is
+  // black's — so if `moves.length` is odd, white played the last (mating)
+  // move; if even, black did. Parity is reliable while `result === "win"`
+  // means checkmate; the persisted field removes the implicit assumption for
+  // every new record.
   const safePlayerColor: "w" | "b" =
-    gameRecord && gameRecord.moves.length > 0 && gameRecord.moves.length % 2 === 0
+    gameRecord?.playerColor ??
+    (gameRecord && gameRecord.moves.length > 0 && gameRecord.moves.length % 2 === 0
       ? "b"
-      : "w";
+      : "w");
 
   const mint = useMintVictory({
     gameId: gameRecord?.gameId,
