@@ -11,6 +11,7 @@ import { WoodenBanner } from "@/components/redesign/wooden-banner";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { formatTime } from "@/lib/game/arena-utils";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
+import { useShieldsCount } from "@/lib/shop/use-shields-count";
 
 type Props = {
   isThinking: boolean;
@@ -140,6 +141,32 @@ function ArenaTimerChip({ elapsedMs }: { elapsedMs: number }) {
   );
 }
 
+/* Shields-available chip — point-of-use callout for Phase 2 shop
+ * oscuridad (handoff 2026-05-30 §1). Renders only when count > 0 and
+ * the match is in-play; suppressed in end-state so the closing UI
+ * doesn't compete. Reuses the canonical candy-tray-pill family + the
+ * HUD_COPY shields* keys already provisioned for the hub HUD. */
+function ArenaShieldsChip() {
+  const t = useTranslations("HUD_COPY");
+  const count = useShieldsCount();
+  if (count <= 0) return null;
+  return (
+    <span
+      className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
+      role="status"
+      aria-label={t("shieldsAriaLabel", { count })}
+    >
+      <CandyIcon
+        name="shield"
+        className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+      />
+      <span className="arena-timer-chip-value">
+        {t("shieldsFormat", { count })}
+      </span>
+    </span>
+  );
+}
+
 export function ArenaHud({
   isThinking,
   onBack,
@@ -171,6 +198,15 @@ export function ArenaHud({
           trailingControl={<ArenaTimerChip elapsedMs={elapsedMs} />}
         />
       </div>
+
+      {/* Point-of-use shields callout — Phase 2 shop oscuridad. Only
+       *  renders when the wallet has shields ready AND the match is
+       *  in-play; suppressed in end-state so closing flow stays clean. */}
+      {!isEndState ? (
+        <div className="flex justify-end px-2">
+          <ArenaShieldsChip />
+        </div>
+      ) : null}
 
       {/* Row 2: Matchup art (Heads) — Symmetric Battle Header */}
       <div className="arena-hud-matchup relative flex items-center justify-between px-2 pt-2">

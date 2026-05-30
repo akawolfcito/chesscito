@@ -17,6 +17,14 @@ vi.mock("@/lib/pro/use-is-pro-active", () => ({
   useIsProActive: () => false,
 }));
 
+// Shields chip uses `useShieldsCount`, which reads localStorage and
+// subscribes to the in-tab event bus. Stub at module level so each
+// describe block can override per-test via `mockedShieldsCount`.
+const mockedShieldsCount = vi.fn<() => number>(() => 0);
+vi.mock("@/lib/shop/use-shields-count", () => ({
+  useShieldsCount: () => mockedShieldsCount(),
+}));
+
 import { ArenaHud } from "../arena-hud";
 import { ARENA_COPY } from "@/lib/content/editorial";
 
@@ -58,5 +66,36 @@ describe("ArenaHud — coach hint signpost", () => {
   it("defaults to hidden when showCoachHint prop is omitted", () => {
     renderHud();
     expect(screen.queryByTestId("arena-coach-hint")).not.toBeInTheDocument();
+  });
+});
+
+describe("ArenaHud — shields point-of-use chip", () => {
+  it("renders Shield ×N chip when shields > 0 and match is in-play", () => {
+    mockedShieldsCount.mockReturnValue(3);
+    renderHud();
+    expect(screen.getByText("Shield ×3")).toBeInTheDocument();
+    expect(
+      screen.getByRole("status", { name: /3 streak shields available/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the chip when shields count is 0", () => {
+    mockedShieldsCount.mockReturnValue(0);
+    renderHud();
+    expect(screen.queryByText(/Shield ×/)).not.toBeInTheDocument();
+  });
+
+  it("hides the chip on end-state even when shields > 0", () => {
+    mockedShieldsCount.mockReturnValue(2);
+    renderHud({ isEndState: true });
+    expect(screen.queryByText(/Shield ×/)).not.toBeInTheDocument();
+  });
+
+  it("uses singular aria-label when exactly 1 shield", () => {
+    mockedShieldsCount.mockReturnValue(1);
+    renderHud();
+    expect(
+      screen.getByRole("status", { name: /1 streak shield available/i }),
+    ).toBeInTheDocument();
   });
 });
