@@ -19,6 +19,8 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Board } from "@/components/board";
 import { AccountCoachRow } from "@/components/coach/account-coach-row";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
+import { useShieldsCount } from "@/lib/shop/use-shields-count";
+import { useFounderStatus } from "@/lib/founder/use-founder-status";
 import { ExerciseDrawer } from "@/components/exercises/exercise-drawer";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
 import { MissionBriefing } from "@/components/exercises/mission-briefing";
@@ -162,6 +164,8 @@ function AccountSheet({
   coachCredits,
   onManagePro,
   onOpenCoach,
+  onOpenShieldsHelp,
+  onOpenShop,
   onDisconnect,
 }: {
   open: boolean;
@@ -173,11 +177,23 @@ function AccountSheet({
   coachCredits: number;
   onManagePro: () => void;
   onOpenCoach: () => void;
+  /** 2026-05-30: open the surface where shields fire (exercises retry).
+   *  Lets the user verify "yes, this is where my shields get spent". */
+  onOpenShieldsHelp: () => void;
+  /** 2026-05-30: open the Shop sheet — used by the Founder row when
+   *  the user does not yet own the badge. Owned-state row stays
+   *  decorative (status pill only). */
+  onOpenShop: () => void;
   onDisconnect: () => void;
 }) {
   const t = useTranslations("ACCOUNT_SHEET_COPY");
   const tAbout = useTranslations("ABOUT_LINK_COPY");
   const [copied, setCopied] = useState(false);
+  // 2026-05-30 (shop oscuridad fix): live inventory reads for the
+  // Streak Shields + Founder Badge rows. Both hooks are SSR-safe and
+  // re-render on storage changes (shields) / fetch completion (founder).
+  const shieldsCount = useShieldsCount();
+  const founderOwned = useFounderStatus();
 
   async function copyAddress() {
     try {
@@ -293,6 +309,95 @@ function AccountSheet({
             credits={coachCredits}
             onPress={onOpenCoach}
           />
+
+          {/* Streak Shields — inventory row (2026-05-30 shop oscuridad
+           *  fix). Surface where to USE the shields and the current
+           *  balance. Tap routes to /exercises (the only surface where
+           *  shields fire) so the user can verify they're real.
+           *  Subtitle teaches the trigger ("retry without losing
+           *  streak"). */}
+          <button
+            type="button"
+            onClick={onOpenShieldsHelp}
+            className="candy-tray flex w-full items-start gap-2.5 text-left transition active:scale-[0.98] !py-1.5 !px-2.5"
+          >
+            <picture className="h-8 w-8 shrink-0 mt-0.5">
+              <source srcSet="/art/shop/shield.avif" type="image/avif" />
+              <source srcSet="/art/shop/shield.webp" type="image/webp" />
+              <img
+                src="/art/shop/shield.png"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </picture>
+            <span className="flex-1 min-w-0">
+              <span
+                className="block text-sm font-bold"
+                style={{ color: "rgba(63, 34, 8, 0.95)" }}
+              >
+                {t("shieldsRowLabel")}
+              </span>
+              <span
+                className="block text-xs leading-tight"
+                style={{ color: "rgba(63, 34, 8, 0.65)" }}
+              >
+                {t("shieldsRowSubtitle")}
+              </span>
+            </span>
+            <span
+              className="account-status-pill shrink-0"
+              data-tone={shieldsCount > 0 ? "celo" : "inactive"}
+            >
+              {shieldsCount > 0
+                ? t("shieldsStatusAvailable", { count: shieldsCount })
+                : t("shieldsStatusEmpty")}
+            </span>
+          </button>
+
+          {/* Founder Badge — inventory row (2026-05-30 shop oscuridad
+           *  fix). Permanent collectible — surface the "yes, you have
+           *  it" recognition the SKU promised. Owned state is purely
+           *  decorative (no nav target); not-owned routes to the Shop
+           *  sheet so the user can complete the purchase. */}
+          <button
+            type="button"
+            onClick={founderOwned ? () => onOpenChange(false) : onOpenShop}
+            className="candy-tray flex w-full items-start gap-2.5 text-left transition active:scale-[0.98] !py-1.5 !px-2.5"
+          >
+            <picture className="h-8 w-8 shrink-0 mt-0.5">
+              <source srcSet="/art/shop/founder.avif" type="image/avif" />
+              <source srcSet="/art/shop/founder.webp" type="image/webp" />
+              <img
+                src="/art/shop/founder.png"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </picture>
+            <span className="flex-1 min-w-0">
+              <span
+                className="block text-sm font-bold"
+                style={{ color: "rgba(63, 34, 8, 0.95)" }}
+              >
+                {t("founderRowLabel")}
+              </span>
+              <span
+                className="block text-xs leading-tight"
+                style={{ color: "rgba(63, 34, 8, 0.65)" }}
+              >
+                {t("founderRowSubtitle")}
+              </span>
+            </span>
+            <span
+              className="account-status-pill shrink-0"
+              data-tone={founderOwned ? "active" : "inactive"}
+            >
+              {founderOwned ? t("founderStatusOwned") : t("founderStatusNotYet")}
+            </span>
+          </button>
 
           {/* Language — segmented switcher inline */}
           <div className="candy-tray flex items-center gap-2.5 !py-1.5 !px-2.5">
@@ -2020,6 +2125,14 @@ export function ExercisesScreen({
             onOpenCoach={() => {
               setAccountSheetOpen(false);
               router.push("/coach/history");
+            }}
+            onOpenShieldsHelp={() => {
+              setAccountSheetOpen(false);
+              router.push("/exercises");
+            }}
+            onOpenShop={() => {
+              setAccountSheetOpen(false);
+              setStoreOpen(true);
             }}
             onDisconnect={() => {
               setAccountSheetOpen(false);

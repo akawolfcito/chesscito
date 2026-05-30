@@ -1954,7 +1954,22 @@ export const ACCOUNT_SHEET_COPY = {
   coachRowLabel: "My Coach",
   coachStatusActive: "Talking",
   coachStatusFree: "Free",
+  /** 2026-05-30 (shop oscuridad fix): explicit-count variant for free
+   *  users with credits. ICU `{count}` is the integer credit balance. */
+  coachStatusFreeWithCount: "{count} credits",
   coachStatusEmpty: "Out of free",
+  /** 2026-05-30: Streak Shields inventory row. Renders below the Coach
+   *  row, deep-links to /exercises (where shields fire on retry). */
+  shieldsRowLabel: "Streak Shields",
+  shieldsRowSubtitle: "Retry exercises without losing your streak.",
+  shieldsStatusAvailable: "{count} ready",
+  shieldsStatusEmpty: "None — get some",
+  /** 2026-05-30: Founder Badge inventory row. Permanent collectible;
+   *  status flips to "Owned" once the chain scan confirms purchase. */
+  founderRowLabel: "Founder Badge",
+  founderRowSubtitle: "Day-one supporter recognition.",
+  founderStatusOwned: "Owned",
+  founderStatusNotYet: "Not yet",
   /** Locale switcher block — sits above the disconnect button. The two
    *  language names stay rendered as proper nouns ("English" / "Español")
    *  so the user reads the destination, not the source. */

@@ -20,7 +20,14 @@ export function AccountCoachRow({ isPro, credits, onPress }: Props) {
   const t = useTranslations("ACCOUNT_SHEET_COPY");
   const label = t("coachRowLabel");
   const statusKey = resolveStatusKey(isPro, credits);
-  const statusLabel = t(statusKey);
+  // 2026-05-30 (shop oscuridad fix): when the user is on free credits,
+  // surface the explicit count instead of a vague "Free" pill. PRO
+  // users keep the "Active" label (unlimited so a number is wrong);
+  // empty users keep the "Empty" label (0 reads stronger as a CTA).
+  const statusLabel =
+    !isPro && credits > 0
+      ? t("coachStatusFreeWithCount", { count: credits })
+      : t(statusKey);
   const tone = isPro ? "active" : credits > 0 ? "celo" : "inactive";
 
   return (

@@ -34,7 +34,9 @@ describe("AccountCoachRow — Mi Coach row in AccountSheet", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows 'Free' status when free user has credits remaining", () => {
+  it("shows explicit credit count when free user has credits remaining", () => {
+    // 2026-05-30 (shop oscuridad fix): free users with credits get the
+    // count surfaced ("2 credits") instead of the vague "Free" pill.
     render(
       <AccountCoachRow
         isPro={false}
@@ -43,7 +45,9 @@ describe("AccountCoachRow — Mi Coach row in AccountSheet", () => {
       />,
     );
     expect(
-      screen.getByText(ACCOUNT_SHEET_COPY.coachStatusFree),
+      screen.getByText(
+        ACCOUNT_SHEET_COPY.coachStatusFreeWithCount.replace("{count}", "2"),
+      ),
     ).toBeInTheDocument();
   });
 
