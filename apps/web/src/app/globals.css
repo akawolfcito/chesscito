@@ -9032,7 +9032,22 @@ button.hud-resource-chip:active:not(:disabled) {
    texture is contained by the bg-image painting which stops at the
    border-radius, so the visual card stays crisp while the figure
    floats free. */
+/* 2026-05-30: cards migrated from dark texture PNG + scrim to the
+   vitrine-hero panel treatment used in Badges/Trophies/Leaderboard
+   (cream-amber gradient + inset cream highlight + soft drop shadow).
+   The base treatment defaults to amber; per-card accent (purple /
+   orange / blue) is swapped via `data-tone` attributes that override
+   the `--shop-tile-accent-*` custom properties below. Text colors
+   shift to warm-brown to read against the lighter panel — same
+   approach Badges/Trophies use. The dark scrim `::before` is no
+   longer needed and was removed; identity row + footer no longer
+   need their own z-index stacking. */
 .shop-item-tile {
+  /* Default tone: amber — overridden by `[data-tone="..."]` below. */
+  --shop-tile-accent-base: #fff5d7;
+  --shop-tile-accent-mid: #f8db78;
+  --shop-tile-accent-border: rgba(180, 120, 35, 0.55);
+
   position: relative;
   display: grid;
   grid-template-columns: 1fr;
@@ -9040,41 +9055,48 @@ button.hud-resource-chip:active:not(:disabled) {
   row-gap: 10px;
   align-items: center;
   /* Left padding reserves room for the absolutely-positioned icon
-     (110px = icon width 120px minus the ~10px we WANT to overhang
-     the card edge). The icon lives outside the grid flow, anchored
-     to the tile's left edge with a negative offset so it visually
-     "escapes" the card without fighting `overflow-x: clip` higher
-     up the tree. */
+     (108px = icon width 120px minus the 12px gap we want between the
+     icon's right edge and the identity text). The icon lives outside
+     the grid flow, anchored to the tile's left edge with a negative
+     offset so it visually "escapes" the card without fighting
+     `overflow-x: clip` higher up the tree. */
   padding: 14px 14px 14px 108px;
   border-radius: 18px;
-  background-color: rgba(40, 25, 15, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(
+    160deg,
+    var(--shop-tile-accent-base) 0%,
+    var(--shop-tile-accent-mid) 100%
+  );
+  border: 1px solid var(--shop-tile-accent-border);
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    inset 0 0 0 2px rgba(255, 255, 255, 0.55),
+    0 6px 14px -8px rgba(60, 30, 8, 0.32);
   transition: transform 0.1s ease-out;
   overflow: visible;
   isolation: isolate;
 }
 
-/* Subtle dark scrim above the texture to lift white text contrast.
-   Pseudo-element so it doesn't override inline background-image.
-   Clipped to the tile's rounded border via border-radius +
-   overflow on the pseudo, so the scrim doesn't paint beyond the
-   visual card edge even though the parent is overflow:visible. */
-.shop-item-tile::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.32) 100%);
-  pointer-events: none;
-  z-index: 0;
+/* Per-tone palettes. Each maps to the bg PNG family the tile used
+   before: PRO + Coach 20-pack share the purple slate; Founder Badge
+   the orange/peach slate; Streak Shield + Coach 5-pack the blue
+   slate. Border tracks the accent so the panel edge reads as one
+   coherent material instead of a generic cream-amber outline. */
+.shop-item-tile[data-tone="purple"] {
+  --shop-tile-accent-base: #f0e2ff;
+  --shop-tile-accent-mid: #c8a9ed;
+  --shop-tile-accent-border: rgba(112, 65, 175, 0.55);
 }
 
-.shop-item-tile>* {
-  position: relative;
-  z-index: 1;
+.shop-item-tile[data-tone="orange"] {
+  --shop-tile-accent-base: #ffe7c8;
+  --shop-tile-accent-mid: #f7b46a;
+  --shop-tile-accent-border: rgba(180, 95, 25, 0.55);
+}
+
+.shop-item-tile[data-tone="blue"] {
+  --shop-tile-accent-base: #dde9ff;
+  --shop-tile-accent-mid: #9fbcec;
+  --shop-tile-accent-border: rgba(55, 95, 175, 0.55);
 }
 
 .shop-item-tile:active {
@@ -9184,17 +9206,18 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* Product name — the visual anchor of the card. Generous size +
    weight + tight leading make it CANT first, ahead of subtitle.
-   Soft contact shadow only (no chunky glow) so it reads as a
-   monumental headline against the bg texture rather than a
-   neon-game label. */
+   2026-05-30: warm-brown ink replaces cream after the panel
+   migrated to pastel gradients. Cream highlight on text-shadow
+   gives a subtle embossed lift instead of the previous neon-on-dark
+   approach. */
 .shop-item-tile-name {
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-size: 1.12rem;
   font-weight: 900;
-  color: rgba(255, 250, 235, 1);
+  color: rgba(63, 34, 8, 0.96);
   line-height: 1.05;
   letter-spacing: 0.005em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.50);
+  text-shadow: 0 1px 0 rgba(255, 248, 220, 0.55);
 }
 
 /* Subtitle — supporting line. Lower opacity + lighter weight so it
@@ -9204,9 +9227,9 @@ button.hud-resource-chip:active:not(:disabled) {
 .shop-item-tile-subtitle {
   font-size: 0.76rem;
   font-weight: 500;
-  color: rgba(255, 245, 220, 0.78);
+  color: rgba(63, 34, 8, 0.72);
   line-height: 1.35;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 1px 0 rgba(255, 248, 220, 0.40);
 }
 
 /* Footer row — single column, row 2. Right-aligned button stack

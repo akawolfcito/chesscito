@@ -63,11 +63,25 @@ function copyKeyForItem(itemId: bigint): ShopCopyKey {
   return "retryShield";
 }
 
-/** Build a CSS `image-set()` resolving to the AVIF/WebP/PNG triplet
- *  for a basename like `/art/shop/pro` (no extension). Browsers pick
- *  the first format they support; PNG is the fallback. */
-function tileBgImageSet(basename: string): string {
-  return `image-set(url("${basename}.avif") type("image/avif"), url("${basename}.webp") type("image/webp"), url("${basename}.png") type("image/png"))`;
+/** Map a shop card's `copyKey` to a tone slug that drives the
+ *  `data-tone` attribute on `.shop-item-tile`. The tile CSS reads
+ *  the attribute to swap its `--shop-tile-accent-*` custom
+ *  properties (gradient base + mid + border) per-card. Centralized
+ *  here so a new SKU only needs one entry to inherit the panel
+ *  treatment from Badges/Trophies/Leaderboard with its own accent. */
+type ShopTileTone = "purple" | "orange" | "blue";
+
+function toneForCopyKey(copyKey: ShopCopyKey): ShopTileTone {
+  switch (copyKey) {
+    case "pro":
+    case "coachPack20":
+      return "purple";
+    case "founderBadge":
+      return "orange";
+    case "retryShield":
+    case "coachPack5":
+      return "blue";
+  }
 }
 
 /** Compact shop item card — premium game-shop tile. */
@@ -101,13 +115,8 @@ function ShopItemCard({
       ]
         .filter(Boolean)
         .join(" ")}
-      style={{
-        backgroundImage: tileBgImageSet(assets.bg),
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }}
       data-copy-key={copyKey}
+      data-tone={toneForCopyKey(copyKey)}
     >
       {/* 2-column grid: icon spans both rows on the left (vertically
        *  centered + free to overflow the tile bounds via grid +
