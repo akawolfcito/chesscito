@@ -145,6 +145,16 @@ test.describe("visual regression — Step 1 baselines", () => {
 
     const sheet = page.locator('[role="dialog"][data-state="open"]');
     await expect(sheet).toBeVisible({ timeout: 5_000 });
+
+    // Wait for the on-chain catalog read (`useReadContracts` →
+    // `getItem`) to resolve. Until it does, every buy pill renders
+    // its "Coming soon" copy; once resolved it flips to the USD
+    // price label (`formatUsd(...)` → `$X.XX`). Snapshotting in
+    // between produced the 2026-05-30 flake — see handoff and
+    // `use-shop-sheet-state.ts:211-254`.
+    await expect(
+      page.locator(".shop-item-tile-buy-pill--green").first(),
+    ).toContainText("$", { timeout: 10_000 });
     await settle(page, 500);
 
     await expect(page).toHaveScreenshot(
