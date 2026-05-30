@@ -82,6 +82,7 @@ import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { LocaleSwitcher } from "@/components/i18n/locale-switcher";
 import { ProSheet } from "@/components/pro/pro-sheet";
 import { useProStatus } from "@/lib/pro/use-pro-status";
+import { daysRemaining } from "@/lib/pro/days-remaining";
 import { formatWalletShort } from "@/lib/wallet/format";
 import { executeProPurchase } from "@/lib/pro/purchase";
 import { ACCEPTED_TOKENS, CELO_TOKEN, erc20Abi, normalizePrice } from "@/lib/contracts/tokens";
@@ -161,6 +162,7 @@ function AccountSheet({
   walletShort,
   chainId,
   proActive,
+  proExpiresAt,
   coachCredits,
   onManagePro,
   onOpenCoach,
@@ -174,6 +176,11 @@ function AccountSheet({
   walletShort: string;
   chainId: number | undefined;
   proActive: boolean;
+  /** Unix-ms expiry of the active PRO pass. When paired with
+   *  `proActive`, drives the "N days left" sub-line under the Manage
+   *  PRO row. `null` hides the sub-line — either no PRO or the
+   *  server payload omitted the timestamp. */
+  proExpiresAt: number | null;
   coachCredits: number;
   onManagePro: () => void;
   onOpenCoach: () => void;
@@ -187,7 +194,9 @@ function AccountSheet({
   onDisconnect: () => void;
 }) {
   const t = useTranslations("ACCOUNT_SHEET_COPY");
+  const tPro = useTranslations("PRO_COPY");
   const tAbout = useTranslations("ABOUT_LINK_COPY");
+  const proDaysLeft = proActive ? daysRemaining(proExpiresAt, Date.now()) : null;
   const [copied, setCopied] = useState(false);
   // 2026-05-30 (shop oscuridad fix): live inventory reads for the
   // Streak Shields + Founder Badge rows. Both hooks are SSR-safe and
@@ -277,13 +286,16 @@ function AccountSheet({
             </span>
           </div>
 
-          {/* Manage PRO — clickable row unifying status + CTA */}
+          {/* Manage PRO — clickable row unifying status + CTA. Active
+           *  passes render a calm sub-line under the label with days
+           *  remaining (`PRO_COPY.statusActiveSuffix`), matching the
+           *  two-line shape of the Shields/Founder rows below. */}
           <button
             type="button"
             onClick={onManagePro}
-            className="candy-tray flex w-full items-center gap-2.5 text-left transition active:scale-[0.98] !py-1.5 !px-2.5"
+            className="candy-tray flex w-full items-start gap-2.5 text-left transition active:scale-[0.98] !py-1.5 !px-2.5"
           >
-            <picture className="h-8 w-8 shrink-0">
+            <picture className="h-8 w-8 shrink-0 mt-0.5">
               <source srcSet="/art/screen-mission/corona-pro.avif" type="image/avif" />
               <source srcSet="/art/screen-mission/corona-pro.webp" type="image/webp" />
               <img
@@ -294,10 +306,26 @@ function AccountSheet({
                 draggable={false}
               />
             </picture>
-            <span className="flex-1 text-sm font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-              {proActive ? t("managePro") : t("viewPro")}
+            <span className="flex-1 min-w-0">
+              <span
+                className="block text-sm font-bold"
+                style={{ color: "rgba(63, 34, 8, 0.95)" }}
+              >
+                {proActive ? t("managePro") : t("viewPro")}
+              </span>
+              {proDaysLeft != null && (
+                <span
+                  className="block text-xs leading-tight"
+                  style={{ color: "rgba(63, 34, 8, 0.65)" }}
+                >
+                  {tPro("statusActiveSuffix", { daysLeft: proDaysLeft })}
+                </span>
+              )}
             </span>
-            <span className="account-status-pill" data-tone={proActive ? "active" : "inactive"}>
+            <span
+              className="account-status-pill shrink-0"
+              data-tone={proActive ? "active" : "inactive"}
+            >
               <span aria-hidden="true">★</span>
               {proActive ? t("activePro") : t("inactivePro")}
             </span>
@@ -2117,6 +2145,7 @@ export function ExercisesScreen({
             walletShort={formatWalletShort(address)}
             chainId={chainId}
             proActive={proStatus?.active === true}
+            proExpiresAt={proStatus?.expiresAt ?? null}
             coachCredits={coachCredits}
             onManagePro={() => {
               setAccountSheetOpen(false);

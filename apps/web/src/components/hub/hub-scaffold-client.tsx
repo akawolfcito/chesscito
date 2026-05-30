@@ -28,6 +28,7 @@ import { badgesAbi } from "@/lib/contracts/badges";
 import { getBadgesAddress } from "@/lib/contracts/chains";
 import type { PieceId } from "@/lib/game/types";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
+import { daysRemaining } from "@/lib/pro/days-remaining";
 import { subscribeToShieldChanges } from "@/lib/shop/shield-events";
 import { readDisplayedShields } from "@/lib/shop/shield-storage";
 import { useShieldSync } from "@/lib/shop/use-shield-sync";
@@ -53,7 +54,6 @@ const BADGE_PIECE_BY_INDEX: readonly PieceId[] = [
 const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
 
 const PROGRESS_STORAGE_PREFIX = "chesscito:progress:";
-const MS_PER_DAY = 86_400_000;
 
 export type HubInitialSheet =
   | "shop"
@@ -119,14 +119,10 @@ function deriveProShape(
   status: { active: boolean; expiresAt: number | null } | null,
   now: number,
 ): ProShape {
-  if (!status?.active || !status.expiresAt || status.expiresAt <= now) {
-    return { active: false };
-  }
-  const daysRemaining = Math.max(
-    0,
-    Math.ceil((status.expiresAt - now) / MS_PER_DAY),
-  );
-  return { active: true, daysRemaining };
+  if (!status?.active) return { active: false };
+  const days = daysRemaining(status.expiresAt, now);
+  if (days == null) return { active: false };
+  return { active: true, daysRemaining: days };
 }
 
 /** Client-side container that hydrates `<HubScaffold>` with real data:
