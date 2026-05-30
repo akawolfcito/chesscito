@@ -91,26 +91,25 @@ export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
 
 /** Per-tile art lookup for the shop sheet. Each entry pairs a copy
  *  key with its foreground icon (the figure rendered on the left
- *  side of the tile) and its background texture (paint applied as
- *  the tile's full-bleed bg via `image-set()` so the AVIF/WebP/PNG
- *  triplet from `apps/web/public/art/shop/` resolves on the client).
- *  The CELO sibling shares the founder mapping since both surface
- *  the founder badge.
+ *  side of the tile). Tile backgrounds are painted by the vitrine
+ *  candy-pill family in CSS — no image asset needed. The CELO
+ *  sibling shares the founder mapping since both surface the
+ *  founder badge.
  *
  *  Asset basenames (no extension) so the consumer can build the
  *  `image-set()` URL list per format. New tiles MUST ship the
  *  triplet (`scripts/optimize-art-assets.sh` / cwebp / avifenc) —
  *  the `image-three-formats` memory rule. */
-export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { icon: string; bg: string }> = {
-  pro: { icon: "/art/shop/pro", bg: "/art/shop/bg-pro" },
-  founderBadge: { icon: "/art/shop/founder", bg: "/art/shop/bg-founder" },
-  retryShield: { icon: "/art/shop/shield", bg: "/art/shop/bg-shield" },
+export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { icon: string }> = {
+  pro: { icon: "/art/shop/pro" },
+  founderBadge: { icon: "/art/shop/founder" },
+  retryShield: { icon: "/art/shop/shield" },
   // Placeholder assets (A2 cluster). Reuses Luz icon from
-  // /art/redesign/icons + bg from the existing shop palette. Replace
-  // with bespoke /art/shop/coach-pack-{5,20}.* triplets when Sally's
+  // /art/redesign/icons. Replace with bespoke
+  // /art/shop/coach-pack-{5,20}.* triplets when Sally's
   // visual-polish foundation (A4) lands.
-  coachPack5: { icon: "/art/redesign/icons/coach", bg: "/art/shop/bg-shield" },
-  coachPack20: { icon: "/art/redesign/icons/coach", bg: "/art/shop/bg-pro" },
+  coachPack5: { icon: "/art/redesign/icons/coach" },
+  coachPack20: { icon: "/art/redesign/icons/coach" },
 };
 
 /** Number of shield uses credited to localStorage per successful
