@@ -34,6 +34,12 @@ export type GameRecord = {
   /** Forward-leaning — server doesn't write today (standard chess only).
    *  Reserved for Chess960 / variant openings. */
   startingFen?: string;
+  /** Side the player controlled this match — written by arena persist after
+   *  2026-05-30. Legacy records (pre-cluster) omit this; visor falls back to
+   *  move-list parity, which only stays reliable while `result === "win"`
+   *  means checkmate. Once parity-fallback consumers drop, this can become
+   *  required. */
+  playerColor?: "w" | "b";
   /** Populated by POST /api/games/[id]/mint-receipt after mint success.
    *  Serialized as decimal string (bigint not JSON-safe). */
   mintedTokenId?: string;

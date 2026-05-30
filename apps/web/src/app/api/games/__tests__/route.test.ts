@@ -141,6 +141,41 @@ describe("POST /api/games", () => {
     expect(res.status).toEqual(400);
   });
 
+  it("persists playerColor when present and valid (white)", async () => {
+    const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame({ playerColor: "w" }) }));
+    expect(res.status).toEqual(200);
+    expect(redisMock.set).toHaveBeenCalledWith(
+      `coach:game:${VALID_WALLET}:${VALID_GAME_ID}`,
+      expect.objectContaining({ playerColor: "w" }),
+      expect.objectContaining({ ex: expect.any(Number) }),
+    );
+  });
+
+  it("persists playerColor when present and valid (black)", async () => {
+    const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame({ playerColor: "b" }) }));
+    expect(res.status).toEqual(200);
+    expect(redisMock.set).toHaveBeenCalledWith(
+      `coach:game:${VALID_WALLET}:${VALID_GAME_ID}`,
+      expect.objectContaining({ playerColor: "b" }),
+      expect.objectContaining({ ex: expect.any(Number) }),
+    );
+  });
+
+  it("returns 400 when playerColor is not 'w' or 'b'", async () => {
+    const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame({ playerColor: "x" }) }));
+    expect(res.status).toEqual(400);
+  });
+
+  it("accepts records without playerColor (backward compat with legacy entries)", async () => {
+    const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));
+    expect(res.status).toEqual(200);
+    expect(redisMock.set).toHaveBeenCalledWith(
+      `coach:game:${VALID_WALLET}:${VALID_GAME_ID}`,
+      expect.not.objectContaining({ playerColor: expect.anything() }),
+      expect.objectContaining({ ex: expect.any(Number) }),
+    );
+  });
+
   it("returns 500 when enforceOrigin throws", async () => {
     mockedOrigin.mockImplementation(() => { throw new Error("forbidden"); });
     const res = await POST(makePost({ walletAddress: VALID_WALLET, game: validGame() }));

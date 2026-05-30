@@ -33,6 +33,9 @@ export async function POST(req: Request) {
         game.moves.some((m: unknown) => typeof m !== "string" || m.length > 10)) {
       return NextResponse.json({ error: "Invalid moves" }, { status: 400 });
     }
+    if (game.playerColor !== undefined && game.playerColor !== "w" && game.playerColor !== "b") {
+      return NextResponse.json({ error: "Invalid playerColor" }, { status: 400 });
+    }
 
     const wallet = walletAddress.toLowerCase();
     const record: GameRecord = {
