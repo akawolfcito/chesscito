@@ -148,13 +148,18 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto mt-4 space-y-6 pb-[8rem]">
-          {/* HERO BAND — overview anchor that mirrors badge + trophy
-           *  vitrines. Golden crown character anchors the cream-amber
-           *  panel; the right column carries the champion summary +
-           *  total players, or an empty hint when the board is fresh.
-           *  Detail sections (champion card + competitors list) follow
-           *  below as usual. */}
+        {/* HERO BAND — overview anchor that mirrors badge + trophy
+         *  vitrines. Golden crown character anchors the cream-amber
+         *  panel; the right column carries the champion summary +
+         *  total players, or an empty hint when the board is fresh.
+         *  2026-05-30: rendered as a sibling OUTSIDE the scroll
+         *  container (mirror Badges + Trophies). The scroll's
+         *  `overflow-y-auto` per CSS spec promotes overflow-x to auto
+         *  and was clipping the anchor's `left: -1.25rem` overhang.
+         *  Hoisting keeps the corona-pro visibly escaping the panel
+         *  + makes the band a persistent overview header that doesn't
+         *  scroll off with the competitors list. */}
+        <div className="shrink-0 mt-4">
           <div className="leaderboard-vitrine-hero">
             <picture className="leaderboard-vitrine-hero-anchor">
               <source srcSet="/art/screen-mission/corona-pro.avif" type="image/avif" />
@@ -189,7 +194,9 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
               )}
             </div>
           </div>
+        </div>
 
+        <div className="flex-1 overflow-y-auto mt-6 space-y-6 pb-[8rem]">
           {/* Verification Banner — DISABLED 2026-05-25.
            *
            *  Passport (Gitcoin) verification lives on a different chain
