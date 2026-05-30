@@ -75,9 +75,9 @@ const m = messages as any;
 m.HUD_COPY.proRemainingFormat = "{days}d";
 m.TX_PROGRESS_COPY.stepCounter = "Step {current} of {total}";
 m.SHARE_COPY.badge =
-  "I earned the {piece} Ascendant badge on Chesscito! {stars}/15 stars — saved on Celo forever.";
+  "I earned the {piece} Ascendant badge on Chesscito! {stars}/15 stars. Saved on Celo forever.";
 m.SHARE_COPY.score =
-  "I just saved my Chesscito score on Celo! {stars}/15 stars — kept forever.";
+  "I just saved my Chesscito score on Celo! {stars}/15 stars. Kept forever.";
 m.SHARE_COPY.shop = "I just got {item} on Chesscito!";
 m.VICTORY_PAGE_COPY.metaCheckmate = "Checkmate in {moves} moves";
 m.VICTORY_PAGE_COPY.metaComplete = "Complete in {moves} moves";
@@ -186,7 +186,7 @@ for (const piece of MASTERY_PIECES) {
   // (`in-progress`, `locked-buildable`) are converted to camelCase
   // (`inProgress`, `lockedBuildable`) at the call site.
   m.HUB_V2_MASTERY_COPY[piece].ariaLabel =
-    `{state, select, mastered {${label} mastered, three stars} inProgress {${label} in progress, {current} of {total} stars} lockedBuildable {${label} — start practicing to earn stars} other {${label} — coming soon}}`;
+    `{state, select, mastered {${label} mastered, three stars} inProgress {${label} in progress, {current} of {total} stars} lockedBuildable {${label}: start practicing to earn stars} other {${label}: coming soon}}`;
 }
 m.HUB_V2_MASTERY_COPY.streakLabel =
   "{days, plural, =0 {} =1 {1-day streak} other {#-day streak}}";

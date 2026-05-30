@@ -789,9 +789,9 @@ const messages = {
     ...en.SHARE_COPY,
     button: "Compartir",
     badge:
-      "¡Gané la insignia Ascendente de {piece} en Chesscito! {stars}/15 estrellas — guardado en Celo para siempre.",
+      "¡Gané la insignia Ascendente de {piece} en Chesscito! {stars}/15 estrellas. Guardado en Celo para siempre.",
     score:
-      "¡Acabo de guardar mi puntaje de Chesscito en Celo! {stars}/15 estrellas — para siempre.",
+      "¡Acabo de guardar mi puntaje de Chesscito en Celo! {stars}/15 estrellas, para siempre.",
     shop: "¡Acabo de obtener {item} en Chesscito!",
     fallbackCopied: "¡Copiado!",
     playCta: "Jugar Chesscito",
@@ -1452,7 +1452,7 @@ const messages = {
       subMastered: "★★★",
       subComingSoon: "Próximamente",
       ariaLabel:
-        "{state, select, mastered {Torre dominada, tres estrellas} inProgress {Torre en progreso, {current} de {total} estrellas} lockedBuildable {Torre — empieza a practicar para ganar estrellas} other {Torre — próximamente}}",
+        "{state, select, mastered {Torre dominada, tres estrellas} inProgress {Torre en progreso, {current} de {total} estrellas} lockedBuildable {Torre: empieza a practicar para ganar estrellas} other {Torre: próximamente}}",
     },
     bishop: {
       label: "Alfil",
@@ -1461,7 +1461,7 @@ const messages = {
       subMastered: "★★★",
       subComingSoon: "Próximamente",
       ariaLabel:
-        "{state, select, mastered {Alfil dominado, tres estrellas} inProgress {Alfil en progreso, {current} de {total} estrellas} lockedBuildable {Alfil — empieza a practicar para ganar estrellas} other {Alfil — próximamente}}",
+        "{state, select, mastered {Alfil dominado, tres estrellas} inProgress {Alfil en progreso, {current} de {total} estrellas} lockedBuildable {Alfil: empieza a practicar para ganar estrellas} other {Alfil: próximamente}}",
     },
     knight: {
       label: "Caballo",
@@ -1470,7 +1470,7 @@ const messages = {
       subMastered: "★★★",
       subComingSoon: "Próximamente",
       ariaLabel:
-        "{state, select, mastered {Caballo dominado, tres estrellas} inProgress {Caballo en progreso, {current} de {total} estrellas} lockedBuildable {Caballo — empieza a practicar para ganar estrellas} other {Caballo — próximamente}}",
+        "{state, select, mastered {Caballo dominado, tres estrellas} inProgress {Caballo en progreso, {current} de {total} estrellas} lockedBuildable {Caballo: empieza a practicar para ganar estrellas} other {Caballo: próximamente}}",
     },
     pawn: {
       label: "Peón",
@@ -1479,7 +1479,7 @@ const messages = {
       subMastered: "★★★",
       subComingSoon: "Próximamente",
       ariaLabel:
-        "{state, select, mastered {Peón dominado, tres estrellas} inProgress {Peón en progreso, {current} de {total} estrellas} lockedBuildable {Peón — empieza a practicar para ganar estrellas} other {Peón — próximamente}}",
+        "{state, select, mastered {Peón dominado, tres estrellas} inProgress {Peón en progreso, {current} de {total} estrellas} lockedBuildable {Peón: empieza a practicar para ganar estrellas} other {Peón: próximamente}}",
     },
     queen: {
       label: "Reina",
@@ -1488,7 +1488,7 @@ const messages = {
       subMastered: "★★★",
       subComingSoon: "Próximamente",
       ariaLabel:
-        "{state, select, mastered {Reina dominada, tres estrellas} inProgress {Reina en progreso, {current} de {total} estrellas} lockedBuildable {Reina — empieza a practicar para ganar estrellas} other {Reina — próximamente}}",
+        "{state, select, mastered {Reina dominada, tres estrellas} inProgress {Reina en progreso, {current} de {total} estrellas} lockedBuildable {Reina: empieza a practicar para ganar estrellas} other {Reina: próximamente}}",
     },
     king: {
       label: "Rey",
@@ -1497,7 +1497,7 @@ const messages = {
       subMastered: "★★★",
       subComingSoon: "Próximamente",
       ariaLabel:
-        "{state, select, mastered {Rey dominado, tres estrellas} inProgress {Rey en progreso, {current} de {total} estrellas} lockedBuildable {Rey — empieza a practicar para ganar estrellas} other {Rey — próximamente}}",
+        "{state, select, mastered {Rey dominado, tres estrellas} inProgress {Rey en progreso, {current} de {total} estrellas} lockedBuildable {Rey: empieza a practicar para ganar estrellas} other {Rey: próximamente}}",
     },
     streakLabel:
       "{days, plural, =0 {} =1 {Racha de 1 día} other {Racha de # días}}",

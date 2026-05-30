@@ -295,9 +295,9 @@ export const INVITE_COPY = {
 export const SHARE_COPY = {
   button: "Share",
   badge: (piece: string, stars: number) =>
-    `I earned the ${piece} Ascendant badge on Chesscito! ${stars}/15 stars — saved on Celo forever.`,
+    `I earned the ${piece} Ascendant badge on Chesscito! ${stars}/15 stars. Saved on Celo forever.`,
   score: (stars: number) =>
-    `I just saved my Chesscito score on Celo! ${stars}/15 stars — kept forever.`,
+    `I just saved my Chesscito score on Celo! ${stars}/15 stars. Kept forever.`,
   shop: (item: string) =>
     `I just got ${item} on Chesscito!`,
   fallbackCopied: "Copied to clipboard!",
@@ -1113,8 +1113,8 @@ function buildHubV2MasteryPieceCopy(label: string) {
       if (state === "in-progress")
         return `${label} in progress, ${current ?? 0} of ${total ?? 0} stars`;
       if (state === "locked-buildable")
-        return `${label} — start practicing to earn stars`;
-      return `${label} — coming soon`;
+        return `${label}: start practicing to earn stars`;
+      return `${label}: coming soon`;
     },
   } as const;
 }
