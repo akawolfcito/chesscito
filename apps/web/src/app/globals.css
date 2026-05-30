@@ -10755,6 +10755,22 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(63, 34, 8, 0.95);
 }
 
+/* Phase 2 shop oscuridad (2026-05-30) — point-of-use credits readout
+ * rendered below the action tiles when the wallet holds paid coach
+ * credits. Mirrors the tertiary link typography but stays passive
+ * (no underline, no hover) so it reads as a static fact, not a CTA. */
+.coach-viewer__credits-hint {
+  align-self: center;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(110, 65, 15, 0.78);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  text-align: center;
+  margin-block-end: 0;
+}
+
 /* Inline analysis slot wrapper — scroll target for the loading →
  * result transition (2026-05-30, Bug #2 fix). No chrome of its own;
  * exists so coach-game-client can ref the surface and call

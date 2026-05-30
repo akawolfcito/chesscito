@@ -573,6 +573,7 @@ const messages = {
     shareTrophy: "Compartir trofeo",
     analysisPending: "Analizando tu partida…",
     analysisPendingHint: "Quédate aquí — el análisis aparece debajo apenas esté listo.",
+    creditsHint: "Usa 1 crédito · te quedan {count}",
   },
   ARENA_COPY: {
     ...en.ARENA_COPY,

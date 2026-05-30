@@ -1503,6 +1503,11 @@ export const COACH_VIEWER_COPY = {
   // the visor visually identical for ~20-30s (cf. project_coach_viewer_cluster_c).
   analysisPending: "Analyzing your match…",
   analysisPendingHint: "Stay here — the analysis appears below as soon as it's ready.",
+  // 2026-05-30 (Phase 2 shop oscuridad): point-of-use credits readout
+  // rendered under the Ask Coach tile when the wallet has paid credits.
+  // Suppressed at credits === 0 so the paywall stays the primary signal
+  // for an empty balance. ES override in messages/es.ts.
+  creditsHint: "Uses 1 credit · {count} left",
 } as const;
 
 export const LEGAL_SHELL_COPY = {

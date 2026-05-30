@@ -29,6 +29,12 @@ type Props = {
    *  a "Analyzing…" label, and becomes disabled so repeated taps don't
    *  re-trigger requestCoachAnalyze. Other tiles stay reachable. */
   askCoachPending?: boolean;
+  /** 2026-05-30 (Phase 2 shop oscuridad): remaining paid coach credits
+   *  in the wallet. When > 0, the bar renders a tertiary "Uses 1 credit
+   *  · {count} left" hint under the Ask Coach tile so users can track
+   *  spend at the point of action. Suppressed at 0 (paywall takes over)
+   *  or while the analysis is pending (hint would compete with spinner). */
+  coachCredits?: number;
 };
 
 type TileKind = "play-again" | "save-victory" | "ask-coach" | "share";
@@ -103,12 +109,23 @@ export function GameActionsBar({
   onBackToHub,
   claimPrice,
   askCoachPending,
+  coachCredits,
 }: Props) {
   const t = useTranslations("COACH_VIEWER_COPY");
   const isWin = result === "win";
   const isMinted = mintedTokenId != null;
   const isTooShort = totalMoves === 0;
   const askCoachDisabled = hasPartialReplayError || isTooShort || !!askCoachPending;
+  // Credits hint fires only when the Ask Coach tile is actually reachable
+  // (not too-short, not replay-errored, not currently analyzing) AND the
+  // wallet holds paid credits. Zero suppresses the hint so the paywall
+  // stays the primary signal for an empty balance.
+  const showCreditsHint =
+    !isTooShort &&
+    !hasPartialReplayError &&
+    !askCoachPending &&
+    typeof coachCredits === "number" &&
+    coachCredits > 0;
   const askCoachLabel = askCoachPending
     ? t("analysisPending")
     : hasAnalysis
@@ -242,6 +259,15 @@ export function GameActionsBar({
           );
         })}
       </div>
+      {showCreditsHint && (
+        <p
+          className="coach-viewer__credits-hint"
+          role="status"
+          aria-live="off"
+        >
+          {t("creditsHint", { count: coachCredits as number })}
+        </p>
+      )}
       {tertiary}
     </div>
   );

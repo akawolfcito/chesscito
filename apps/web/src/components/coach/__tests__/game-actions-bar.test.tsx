@@ -156,4 +156,51 @@ describe("GameActionsBar", () => {
     expect(tile).not.toHaveAttribute("aria-busy");
     expect(tile).not.toHaveAttribute("data-loading");
   });
+
+  // 2026-05-30 (Phase 2 shop oscuridad): point-of-use credits hint.
+  it("renders credits hint when coachCredits > 0 and Ask Coach is reachable", () => {
+    render(<GameActionsBar {...baseProps} result="lose" coachCredits={4} />);
+    expect(screen.getByRole("status")).toHaveTextContent(/creditsHint/);
+  });
+
+  it("hides credits hint when coachCredits is 0", () => {
+    render(<GameActionsBar {...baseProps} result="lose" coachCredits={0} />);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("hides credits hint when coachCredits is undefined", () => {
+    render(<GameActionsBar {...baseProps} result="lose" />);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("hides credits hint while Ask Coach is pending", () => {
+    render(
+      <GameActionsBar
+        {...baseProps}
+        result="lose"
+        coachCredits={4}
+        askCoachPending
+      />,
+    );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("hides credits hint when too-short (Ask Coach absent)", () => {
+    render(
+      <GameActionsBar {...baseProps} totalMoves={0} coachCredits={4} />,
+    );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("hides credits hint on partial replay error (Ask Coach disabled)", () => {
+    render(
+      <GameActionsBar
+        {...baseProps}
+        result="lose"
+        coachCredits={4}
+        hasPartialReplayError
+      />,
+    );
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
 });

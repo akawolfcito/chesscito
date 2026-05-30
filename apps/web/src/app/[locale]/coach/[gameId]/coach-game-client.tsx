@@ -536,6 +536,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
             onBackToHub={handleBackToHub}
             claimPrice={claimPrice}
             askCoachPending={coach.phase === "loading"}
+            coachCredits={coach.credits}
           />
         </div>
 
