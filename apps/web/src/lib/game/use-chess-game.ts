@@ -42,6 +42,12 @@ export type ChessGameState = {
   moveCount: number;
   moveHistory: string[];
   elapsedMs: number;
+  /** Wall-clock ms at which the current game started (or 0 when no
+   *  game is active). Stable for the lifetime of the game; lets
+   *  consumers dedupe per-game effects across back-to-back matches
+   *  with identical terminal stats. Set on startGame() and on resume
+   *  (back-dated by savedElapsedMs so the live timer stays correct). */
+  gameStartedAt: number;
   /** Origin FEN for the moveHistory replay. Undefined ⇒ standard startpos
    *  (fresh game). Populated on resume from localStorage so the post-game
    *  Coach viewer can replay moves from the correct origin. */
@@ -71,6 +77,7 @@ export function useChessGame(): ChessGameState {
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [startingFen, setStartingFen] = useState<string | undefined>(undefined);
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [gameStartedAt, setGameStartedAt] = useState(0);
   const [rejectingSquare, setRejectingSquare] = useState<string | null>(null);
   const gameStartRef = useRef<number>(0);
   const gameEndRef = useRef<number>(0);
@@ -350,6 +357,7 @@ export function useChessGame(): ChessGameState {
     setRejectingSquare(null);
     gameStartRef.current = 0;
     gameEndRef.current = 0;
+    setGameStartedAt(0);
     clearArenaGame();
     // Keep playerColor — it's a user preference, same as difficulty.
     setStatus("selecting");
@@ -374,8 +382,10 @@ export function useChessGame(): ChessGameState {
     setMoveHistory([]);
     setStartingFen(undefined);
     setElapsedMs(0);
-    gameStartRef.current = Date.now();
+    const startedAt = Date.now();
+    gameStartRef.current = startedAt;
     gameEndRef.current = 0;
+    setGameStartedAt(startedAt);
     clearArenaGame();
     setStatus("playing");
     // If the human picked black, white (AI) moves first.
@@ -400,8 +410,10 @@ export function useChessGame(): ChessGameState {
       clearArenaGame();
       return;
     }
-    gameStartRef.current = Date.now() - saved.elapsedMs;
+    const resumeStartedAt = Date.now() - saved.elapsedMs;
+    gameStartRef.current = resumeStartedAt;
     gameEndRef.current = 0;
+    setGameStartedAt(resumeStartedAt);
     setFen(saved.fen);
     // startingFen contract: nuevos saves arrastran su origen explícito (puede
     // ser undefined si la partida arrancó fresh y no se ha resumido nunca);
@@ -471,6 +483,7 @@ export function useChessGame(): ChessGameState {
     moveCount,
     moveHistory,
     elapsedMs,
+    gameStartedAt,
     startingFen,
     errorMessage,
     selectSquare,

@@ -71,3 +71,43 @@ describe("useChessGame — lifecycle", () => {
     expect(result.current.status).toEqual("resigned");
   });
 });
+
+describe("useChessGame — gameStartedAt nonce (defer #14)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("starts at 0 before any game", () => {
+    const { result } = renderHook(() => useChessGame());
+    expect(result.current.gameStartedAt).toEqual(0);
+  });
+
+  it("is set to a positive timestamp on startGame()", () => {
+    vi.setSystemTime(new Date("2026-05-31T12:00:00Z"));
+    const { result } = renderHook(() => useChessGame());
+    act(() => result.current.startGame());
+    expect(result.current.gameStartedAt).toBeGreaterThan(0);
+  });
+
+  it("resets to 0 on reset()", () => {
+    const { result } = renderHook(() => useChessGame());
+    act(() => result.current.startGame());
+    act(() => result.current.reset());
+    expect(result.current.gameStartedAt).toEqual(0);
+  });
+
+  it("changes between back-to-back games (closes pendingGameIdRef collision)", () => {
+    const { result } = renderHook(() => useChessGame());
+    vi.setSystemTime(new Date("2026-05-31T12:00:00Z"));
+    act(() => result.current.startGame());
+    const first = result.current.gameStartedAt;
+    act(() => result.current.reset());
+    vi.setSystemTime(new Date("2026-05-31T12:00:05Z"));
+    act(() => result.current.startGame());
+    const second = result.current.gameStartedAt;
+    expect(second).not.toEqual(first);
+  });
+});

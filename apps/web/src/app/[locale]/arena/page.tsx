@@ -614,9 +614,11 @@ function ArenaPageInner() {
     // Dedupe key intentionally OMITS game.elapsedMs — the live tick keeps
     // incrementing after the terminal transition, so including it in the
     // key produced one extra persist per tick (two POSTs with different
-    // UUIDs, observed in telemetry 2026-05-28). status + moveCount is
-    // sufficient: a fresh terminal state always brings a fresh moveCount.
-    const key = `${game.status}:${game.moveCount}`;
+    // UUIDs, observed in telemetry 2026-05-28). gameStartedAt is the
+    // per-game nonce that disambiguates back-to-back games with identical
+    // terminal stats (e.g., two 4-move Fool's Mates) so the second one
+    // still persists (Edge case hunter #1).
+    const key = `${game.gameStartedAt}:${game.status}:${game.moveCount}`;
     if (persistAttemptedRef.current === key) return;
     persistAttemptedRef.current = key;
     if (!address) return;
@@ -625,6 +627,7 @@ function ArenaPageInner() {
     void runPersist(gameId);
   }, [
     address,
+    game.gameStartedAt,
     game.status,
     game.moveCount,
     game.elapsedMs,

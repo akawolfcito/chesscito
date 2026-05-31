@@ -54,6 +54,7 @@ vi.mock("@/lib/game/use-chess-game", () => ({
     moveCount: 12,
     moveHistory: ["e4"],
     elapsedMs: 60_000,
+    gameStartedAt: 1_700_000_000_000,
     errorMessage: null,
     fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
     selectSquare: vi.fn(),
