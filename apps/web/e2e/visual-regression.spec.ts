@@ -694,6 +694,44 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
   // intrinsic pixels.
   // ──────────────────────────────────────────────────────────────────────────
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // VR12 — Hub PRO chip (active + inactive variants).
+  //
+  // HubProBadge already takes its truth as props (no wagmi inside), so the
+  // fixture just controls `active` + `daysLabel`. Locks the panel-pro art
+  // + the active vs inactive subline swap.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  test("vr12-pro-chip-active — PRO active, 7 days remaining", async ({
+    page,
+  }) => {
+    await page.goto("/dev/pro-chip?variant=active", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 600);
+    await expect(page).toHaveScreenshot(
+      "vr12-pro-chip-active.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr12-pro-chip-inactive — discovery state with promo subline", async ({
+    page,
+  }) => {
+    await page.goto("/dev/pro-chip?variant=inactive", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 600);
+    await expect(page).toHaveScreenshot(
+      "vr12-pro-chip-inactive.png",
+      FIXTURE_OPTS,
+    );
+  });
+
   test("vr11-arena-shields-chip — 3 shields available, in-play state", async ({
     page,
   }) => {
