@@ -133,6 +133,18 @@ vi.mock("@rainbow-me/rainbowkit", () => ({
   useConnectModal: () => useConnectModalMock(),
 }));
 
+// Welcome Pack hook is wired into useShopSheetState; mock it here so
+// this test stays focused on shop purchase orchestration. End-to-end
+// coverage for the claim flow lives in use-welcome-pack-claim tests.
+vi.mock("@/lib/shop/use-welcome-pack-claim", () => ({
+  useWelcomePackClaim: () => ({
+    state: "connect",
+    claimedAt: null,
+    onClaim: vi.fn(),
+    onConnect: vi.fn(),
+  }),
+}));
+
 vi.mock("@/hooks/use-minipay", () => ({
   useMiniPay: () => useMiniPayMock(),
 }));

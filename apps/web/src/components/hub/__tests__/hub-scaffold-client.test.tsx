@@ -94,6 +94,18 @@ vi.mock("@rainbow-me/rainbowkit", () => ({
   useConnectModal: () => ({ openConnectModal: openConnectModalMock }),
 }));
 
+// Welcome Pack hook wires into useShopSheetState (commit 6 of shield-
+// rescue cluster). Stub it here so the scaffold tests stay focused on
+// hub orchestration. End-to-end coverage lives next to the hook.
+vi.mock("@/lib/shop/use-welcome-pack-claim", () => ({
+  useWelcomePackClaim: () => ({
+    state: "connect",
+    claimedAt: null,
+    onClaim: vi.fn(),
+    onConnect: vi.fn(),
+  }),
+}));
+
 // SPEC 1 Task 5.5 wired `<ProfileSheet>` and `useClaimQueue` into the
 // scaffold. ProfileSheet pulls in wagmi.useDisconnect + the wallet
 // provider's wagmiConfig (via claims/sources). The unit tests below

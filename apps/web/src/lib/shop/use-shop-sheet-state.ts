@@ -43,6 +43,10 @@ import {
   enqueuePendingTx,
   writeCreditedCache,
 } from "@/lib/shop/shield-storage";
+import {
+  useWelcomePackClaim,
+  type UseWelcomePackClaimReturn,
+} from "@/lib/shop/use-welcome-pack-claim";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
 import { track } from "@/lib/telemetry";
 
@@ -72,6 +76,11 @@ type SheetProps = {
   onSelectItem: (itemId: bigint) => void;
   successBanner: SuccessBanner;
   showTrigger: false;
+  /** Welcome Pack tile state + handlers (forcing-function pinned
+   *  tile at the top of the catalog). Propagated from
+   *  useWelcomePackClaim so all four ShopSheet callers inherit the
+   *  wiring through `{...sheetProps}` without bespoke setup. */
+  welcomePack: UseWelcomePackClaimReturn;
 };
 
 type ConfirmProps = {
@@ -149,6 +158,7 @@ export function useShopSheetState(
   const { switchChain } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
   const { isMiniPay } = useMiniPay();
+  const welcomePack = useWelcomePackClaim();
 
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain =
@@ -599,6 +609,7 @@ export function useShopSheetState(
     onSelectItem: handleSelectItem,
     successBanner,
     showTrigger: false,
+    welcomePack,
   };
 
   const confirmProps: ConfirmProps = {
