@@ -578,4 +578,43 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
       FIXTURE_OPTS,
     );
   });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // #2 hint-variant baselines — point-of-use hints under the Ask Coach tile.
+  //
+  // Locks the two hint states GameActionsBar renders when the wallet has
+  // either paid credits (`coachCredits > 0`) or an active PRO pass
+  // (`proActive=true`). Both share the win-unminted base so the Ask Coach
+  // tile is reachable and the hint actually renders.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  test("vr10-coach-viewer-win-credits-hint — Uses 1 credit · N left under Ask Coach", async ({
+    page,
+  }) => {
+    await page.goto("/dev/coach-viewer?variant=viewer-win-credits-hint", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 600);
+    await expect(page).toHaveScreenshot(
+      "vr10-coach-viewer-win-credits-hint.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr10-coach-viewer-win-pro-hint — Unlimited · PRO active under Ask Coach", async ({
+    page,
+  }) => {
+    await page.goto("/dev/coach-viewer?variant=viewer-win-pro-hint", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 600);
+    await expect(page).toHaveScreenshot(
+      "vr10-coach-viewer-win-pro-hint.png",
+      FIXTURE_OPTS,
+    );
+  });
 });
