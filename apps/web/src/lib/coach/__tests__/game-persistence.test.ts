@@ -309,10 +309,11 @@ describe("enforceGameCap — pipeline behaviour (defer #18)", () => {
   });
 
   it("does not invoke pipeline when the overflow window contains no usable ids", async () => {
-    // Defensive: if lrange returns falsy-only entries (Redis-level corruption,
-    // defer #9 territory), no evals are queued — skip exec entirely instead of
-    // calling it on an empty pipeline. Soft overflow is reported because the
-    // overflow window could not be drained.
+    // Defensive: if lrange returns falsy-only entries (Redis-level
+    // corruption, defer #9 territory), no evals are queued and softOverflow
+    // stays FALSE. Null entries can't be evicted by gameId, so they're
+    // clamped out of `overflowCount` upfront — they don't pollute the
+    // analyzed-blocked telemetry signal. Closes defer #9 (2026-05-30).
     redis.llen.mockResolvedValue(201);
     redis.lrange.mockResolvedValue([null as unknown as string]);
     const onOverflow = vi.fn();
@@ -322,8 +323,30 @@ describe("enforceGameCap — pipeline behaviour (defer #18)", () => {
     expect(pipeline.eval).not.toHaveBeenCalled();
     expect(pipeline.exec).not.toHaveBeenCalled();
     expect(out.evicted).toEqual([]);
-    expect(out.softOverflow).toBe(true);
-    expect(onOverflow).toHaveBeenCalledTimes(1);
+    expect(out.softOverflow).toBe(false);
+    expect(onOverflow).not.toHaveBeenCalled();
+  });
+
+  it("treats null entries as unevictable but lets valid neighbors evict (softOverflow stays false)", async () => {
+    // Mixed-null tail: 3 entries (llen-cap = 3) but the middle slot is a
+    // null hole. The 2 valid neighbors are unanalyzed and should evict;
+    // the null slot is clamped out of `overflowCount` so the post-loop
+    // check doesn't fire a false softOverflow. Closes defer #9 (2026-05-30).
+    redis.llen.mockResolvedValue(203);
+    redis.lrange.mockResolvedValue([
+      "valid-newer",
+      null as unknown as string,
+      "valid-older",
+    ]);
+    pipeline.exec.mockResolvedValue([1, 1]); // both valid candidates evicted
+    const onOverflow = vi.fn();
+
+    const out = await enforceGameCap(redis as never, WALLET, { onOverflow });
+
+    // Eviction order is oldest-first per `for (let i = tail.length - 1; ...)`.
+    expect(out.evicted).toEqual(["valid-older", "valid-newer"]);
+    expect(out.softOverflow).toBe(false);
+    expect(onOverflow).not.toHaveBeenCalled();
   });
 });
 

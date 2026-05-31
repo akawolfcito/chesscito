@@ -157,13 +157,25 @@ export async function enforceGameCap(
   }
 
   const tail = await redis.lrange<string>(listKey, cap, -1);
-  const overflowCount = length - cap;
+
+  // Defense-in-depth: if `lrange` returns null entries (Redis-level data
+  // corruption or a concurrent LREM hole), they can't be evicted by
+  // gameId so they shouldn't count toward the eviction target. Without
+  // this clamp, a null entry inflates `overflowCount` and the post-loop
+  // `evicted.length < overflowCount` check fires a false softOverflow
+  // burst into telemetry. Closes deferred-work Edge case hunter #9
+  // (2026-05-20).
+  const validTailCount = tail.reduce(
+    (acc, entry) => (entry ? acc + 1 : acc),
+    0,
+  );
+  const overflowCount = Math.min(length - cap, validTailCount);
 
   // First pass — collect candidate gameIds in eviction order (oldest first)
   // and queue one EVICT_IF_UNANALYZED_LUA call per candidate on a single
-  // pipeline. Falsy entries (Redis-level corruption) are skipped to avoid
-  // dispatching invalid analysis keys; the missed slot still counts toward
-  // softOverflow via the final `evicted.length < overflowCount` check.
+  // pipeline. Falsy entries (Redis-level corruption) are skipped above
+  // via `overflowCount` clamping; the softOverflow signal now only fires
+  // when a real analyzed entry blocks eviction.
   const candidates: string[] = [];
   const pipeline = redis.pipeline();
   for (let i = tail.length - 1; i >= 0; i -= 1) {
