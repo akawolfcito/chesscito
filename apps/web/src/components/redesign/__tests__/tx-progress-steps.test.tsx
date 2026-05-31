@@ -9,9 +9,18 @@ vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
 
 import { TxProgressSteps } from "../tx-progress-steps";
 import type {
+  TxFlowName,
   TxStepDescriptor,
   TxProgressStepsProps,
 } from "../tx-progress-steps";
+
+// Typed flow constants — pin to the exported TxFlowName union so a
+// rename or shrink of the union breaks these tests at the binding site
+// instead of relying on the implicit `Partial<TxProgressStepsProps>`
+// path. Closes B1 #9 follow-up from `_bmad-output/.../deferred-work.md`.
+const FLOW_SAVE = "save-score" satisfies TxFlowName;
+const FLOW_SHOP = "shop-buy" satisfies TxFlowName;
+const FLOW_MINT = "mint-victory" satisfies TxFlowName;
 
 const SAVE_STEPS: TxStepDescriptor[] = [
   { code: "sign" },
@@ -35,7 +44,7 @@ function defaults(
     variant: "pills",
     steps: SAVE_STEPS,
     current: "send",
-    flow: "save-score",
+    flow: FLOW_SAVE,
     ...overrides,
   };
 }
@@ -319,7 +328,7 @@ describe("TxProgressSteps — done success auto-unmount (AC-2.3.5 success branch
 describe("TxProgressSteps — flow telemetry context (B2 surface)", () => {
   it("flow prop mirrors to data-flow attribute on root (pills + toast)", () => {
     const pills = render(
-      <TxProgressSteps {...defaults({ flow: "shop-buy" })} />,
+      <TxProgressSteps {...defaults({ flow: FLOW_SHOP })} />,
     );
     expect(
       pills.container
@@ -330,7 +339,7 @@ describe("TxProgressSteps — flow telemetry context (B2 surface)", () => {
 
     const toast = render(
       <TxProgressSteps
-        {...defaults({ variant: "toast", flow: "mint-victory" })}
+        {...defaults({ variant: "toast", flow: FLOW_MINT })}
       />,
     );
     expect(
@@ -354,25 +363,25 @@ describe("TxProgressSteps — telemetry (AC-2.3.6)", () => {
   });
 
   it("view event fires once on mount with {flow, variant}", () => {
-    render(<TxProgressSteps {...defaults({ flow: "save-score" })} />);
+    render(<TxProgressSteps {...defaults({ flow: FLOW_SAVE })} />);
     const viewCalls = trackMock.mock.calls.filter(
       (c) => c[0] === "tx_progress_view",
     );
     expect(viewCalls.length).toBe(1);
-    expect(viewCalls[0]?.[1]).toEqual({ flow: "save-score", variant: "pills" });
+    expect(viewCalls[0]?.[1]).toEqual({ flow: FLOW_SAVE, variant: "pills" });
   });
 
   it("initial step event fires on mount for the starting step", () => {
     render(
       <TxProgressSteps
-        {...defaults({ steps: SAVE_STEPS, current: "sign", flow: "save-score" })}
+        {...defaults({ steps: SAVE_STEPS, current: "sign", flow: FLOW_SAVE })}
       />,
     );
     const stepCalls = trackMock.mock.calls.filter(
       (c) => c[0] === "tx_progress_step",
     );
     expect(stepCalls.length).toBe(1);
-    expect(stepCalls[0]?.[1]).toEqual({ flow: "save-score", step: "sign" });
+    expect(stepCalls[0]?.[1]).toEqual({ flow: FLOW_SAVE, step: "sign" });
     // No step_duration on initial mount (prev was null)
     const durationCalls = trackMock.mock.calls.filter(
       (c) => c[0] === "tx_progress_step_duration",
@@ -401,11 +410,11 @@ describe("TxProgressSteps — telemetry (AC-2.3.6)", () => {
     const stepCall = calls.find((c) => c[0] === "tx_progress_step");
 
     expect(durationCall?.[1]).toMatchObject({
-      flow: "save-score",
+      flow: FLOW_SAVE,
       step: "sign",
     });
     expect(durationCall?.[1].duration_ms).toBeGreaterThanOrEqual(0);
-    expect(stepCall?.[1]).toEqual({ flow: "save-score", step: "send" });
+    expect(stepCall?.[1]).toEqual({ flow: FLOW_SAVE, step: "send" });
   });
 
   it("transition to done fires step_duration + done with outcome:success + positive total_duration_ms", () => {
@@ -431,7 +440,7 @@ describe("TxProgressSteps — telemetry (AC-2.3.6)", () => {
 
     expect(durationCall?.[1]).toMatchObject({ step: "wait" });
     expect(doneCall?.[1]).toMatchObject({
-      flow: "save-score",
+      flow: FLOW_SAVE,
       outcome: "success",
     });
     expect(doneCall?.[1].total_duration_ms).toBeGreaterThanOrEqual(0);
@@ -455,7 +464,7 @@ describe("TxProgressSteps — telemetry (AC-2.3.6)", () => {
       (c) => c[0] === "tx_progress_done",
     );
     expect(doneCall?.[1]).toMatchObject({
-      flow: "save-score",
+      flow: FLOW_SAVE,
       outcome: "failed",
     });
   });
@@ -499,14 +508,14 @@ describe("TxProgressSteps — telemetry (AC-2.3.6)", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { rerender } = render(
       <TxProgressSteps
-        {...defaults({ flow: "save-score", current: "sign" })}
+        {...defaults({ flow: FLOW_SAVE, current: "sign" })}
       />,
     );
     trackMock.mockClear();
 
     rerender(
       <TxProgressSteps
-        {...defaults({ flow: "shop-buy", current: "send" })}
+        {...defaults({ flow: FLOW_SHOP, current: "send" })}
       />,
     );
 
@@ -514,7 +523,7 @@ describe("TxProgressSteps — telemetry (AC-2.3.6)", () => {
     const stepCall = trackMock.mock.calls.find(
       (c) => c[0] === "tx_progress_step",
     );
-    expect(stepCall?.[1]).toEqual({ flow: "save-score", step: "send" });
+    expect(stepCall?.[1]).toEqual({ flow: FLOW_SAVE, step: "send" });
 
     // Dev-mode warn fires so the surface bug is noisy in dev (silent in prod)
     expect(warnSpy).toHaveBeenCalledWith(
@@ -584,7 +593,7 @@ describe("TxProgressSteps — telemetry (AC-2.3.6)", () => {
     );
     expect(doneCalls.length).toBe(1);
     expect(doneCalls[0][1]).toMatchObject({
-      flow: "save-score",
+      flow: FLOW_SAVE,
       outcome: "success",
     });
     expect(doneCalls[0][1].total_duration_ms).toBeGreaterThanOrEqual(0);
