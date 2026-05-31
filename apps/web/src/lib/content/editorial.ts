@@ -276,6 +276,10 @@ export const CAPTURE_COPY = {
   tutorialBanner: "Capture the target. Move your Rook to its square.",
 } as const;
 
+export const BOARD_HINT_COPY = {
+  selectPieceFirst: "Tap your piece first",
+} as const;
+
 export const SHIELD_COPY = {
   label: "Streak Shield",
   subtitle: "Failed a trial? Use a shield to try again without penalty.",

@@ -14,6 +14,9 @@ import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry"
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { hapticTap, hapticReject, hapticSuccess } from "@/lib/haptics";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
+import { BOARD_HINT_COPY } from "@/lib/content/editorial";
+
+const SELECT_HINT_DURATION_MS = 2200;
 
 const PIECE_BASE = THEME_CONFIG.piecesBase;
 
@@ -77,8 +80,18 @@ export function Board({
   );
   const [movesCount, setMovesCount] = useState(0);
   const [isRejecting, setIsRejecting] = useState(false);
+  // Surfaced when the user taps an empty cell with no piece selected — the
+  // exact dead-end pattern reported on iPhone 17 Pro Max (2026-05-31).
+  // Without this hint, the only feedback was the piece's reject shake,
+  // which a first-time user could read as "the board is broken / locked."
+  const [showSelectHint, setShowSelectHint] = useState(false);
+  const selectHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(false);
   useEffect(() => { mountedRef.current = true; }, []);
+
+  useEffect(() => () => {
+    if (selectHintTimerRef.current) clearTimeout(selectHintTimerRef.current);
+  }, []);
 
   // Sync internal state when exercise changes (e.g. localStorage loads progress after board mounts,
   // or the user navigates exercises via the stars bar). Without this, the piece stays at the
@@ -120,6 +133,9 @@ export function Board({
     if (arePositionsEqual(piecePosition, nextPosition)) {
       // If already selected, ignore tap (no accidental deselection)
       if (!selectedPosition) setSelectedPosition(piecePosition);
+      // User found the piece — dismiss any pending hint to avoid clutter.
+      if (selectHintTimerRef.current) clearTimeout(selectHintTimerRef.current);
+      setShowSelectHint(false);
       return;
     }
 
@@ -149,6 +165,21 @@ export function Board({
     hapticReject();
     setIsRejecting(true);
     setTimeout(() => setIsRejecting(false), 200);
+
+    // Contextual hint: when the user taps an empty cell WITHOUT having
+    // selected the piece first, surface a short "Tap your piece first"
+    // overlay. This closes the iPhone field-report pattern where a
+    // first-time user kept tapping the target star and gave up because
+    // the only feedback was the (offscreen) piece shake.
+    if (!selectedPosition) {
+      if (selectHintTimerRef.current) clearTimeout(selectHintTimerRef.current);
+      setShowSelectHint(true);
+      selectHintTimerRef.current = setTimeout(() => {
+        setShowSelectHint(false);
+        selectHintTimerRef.current = null;
+      }, SELECT_HINT_DURATION_MS);
+    }
+
     setSelectedPosition(null);
   };
 
@@ -334,6 +365,26 @@ export function Board({
                   </div>
                 );
               })}
+
+              {/* Contextual hint — appears above the piece when the user taps
+                  an empty cell without first selecting the piece. Pointer
+                  events disabled so it never intercepts taps. */}
+              {showSelectHint && (() => {
+                const center = cellCenter(piece.position.file, piece.position.rank);
+                return (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="playhub-board-select-hint"
+                    style={{
+                      left: `${center.x}%`,
+                      top: `${center.y}%`,
+                    }}
+                  >
+                    {BOARD_HINT_COPY.selectPieceFirst}
+                  </div>
+                );
+              })()}
 
               {/* Floating piece layer — same element moves with transition */}
               {(() => {

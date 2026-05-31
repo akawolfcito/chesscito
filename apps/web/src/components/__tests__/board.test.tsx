@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render } from "@testing-library/react";
+import { render, fireEvent, screen } from "@testing-library/react";
 import { Board } from "../board";
 
 describe("<Board>", () => {
@@ -37,5 +37,50 @@ describe("<Board>", () => {
     // The candy star marker lives on the highlighted target cell
     const target = container.querySelector(".playhub-board-target");
     expect(target).toBeInTheDocument();
+  });
+
+  // ─── Tap-hint (red-team P0-P3 — iPhone field report 2026-05-31) ──────────
+
+  describe("tap-piece hint", () => {
+    it("shows the hint when an empty cell is tapped with no piece selected", () => {
+      const { container } = render(
+        <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} />
+      );
+      expect(container.querySelector(".playhub-board-select-hint")).toBeNull();
+
+      // Tap an empty far square (no piece, no prior selection).
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square d4" }));
+
+      const hint = container.querySelector(".playhub-board-select-hint");
+      expect(hint).toBeInTheDocument();
+      expect(hint?.textContent).toMatch(/tap your piece/i);
+    });
+
+    it("does NOT show the hint when the user taps the piece itself", () => {
+      const { container } = render(
+        <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} />
+      );
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+      expect(container.querySelector(".playhub-board-select-hint")).toBeNull();
+    });
+
+    it("does NOT show the hint after the piece is selected (only reject animation runs)", () => {
+      const { container } = render(
+        <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} />
+      );
+      // 1. Select the piece.
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+      // 2. Tap a square the rook cannot reach (b2 — diagonal blocked).
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square b2" }));
+      expect(container.querySelector(".playhub-board-select-hint")).toBeNull();
+    });
+
+    it("does NOT show the hint in tutorial mode (interaction disabled)", () => {
+      const { container } = render(
+        <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} mode="tutorial" />
+      );
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square d4" }));
+      expect(container.querySelector(".playhub-board-select-hint")).toBeNull();
+    });
   });
 });
