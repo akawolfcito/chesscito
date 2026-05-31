@@ -274,7 +274,7 @@ export function ProSheet(props: ProSheetProps) {
                   background:
                     "linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)",
                   color: "#fef3c7",
-                  boxShadow: "0 2px 4px rgba(63, 34, 8, 0.25)",
+                  boxShadow: "0 2px 4px var(--shadow-warm-wood)",
                 }}
               >
                 {t("trainingPassLabel")}
@@ -386,7 +386,7 @@ export function ProSheet(props: ProSheetProps) {
                   background:
                     "linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)",
                   color: "#fef3c7",
-                  boxShadow: "0 2px 4px rgba(63, 34, 8, 0.25)",
+                  boxShadow: "0 2px 4px var(--shadow-warm-wood)",
                 }}
               >
                 {t("activePerksLabel")}

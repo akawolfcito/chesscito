@@ -110,6 +110,9 @@
     --paper-text-subtle: rgba(110, 65, 15, 0.45);
     --paper-divider: rgba(110, 65, 15, 0.20);
     --paper-accent: rgba(251, 191, 36, 0.95);
+    /* Warm-wood drop shadow used by action-row pedestals + PRO sheet
+       tile shadows. Tokenized 2026-05-30 (deferred-work G3 follow-up). */
+    --shadow-warm-wood: rgba(63, 34, 8, 0.25);
 
     /* ── Landing — softened palette (Duolingo-inspired) ──
        The candy-paper aesthetic is intentional inside the game (high
@@ -8125,7 +8128,7 @@ button.hud-resource-chip:active:not(:disabled) {
   background-image: none;
   border: 0;
   border-radius: 0;
-  filter: drop-shadow(0 3px 6px rgba(63, 34, 8, 0.25));
+  filter: drop-shadow(0 3px 6px var(--shadow-warm-wood));
 }
 
 /* Neutralize the StonePedestal is-placeholder fallback in action-row
