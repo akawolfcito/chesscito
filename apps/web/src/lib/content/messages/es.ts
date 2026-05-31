@@ -1010,7 +1010,7 @@ const messages = {
     claimVerb: "Obtener",
     costGasOnly: "Solo tarifa de red",
     costEstimateUsd: "~${amount}",
-    inFlightLabel: "En curso — reconecta para verificar",
+    inFlightLabel: "En curso. Reconecta para verificar",
     refreshAria: "Actualizar",
     emptyAria: "Sin reclamos pendientes",
   },
@@ -1531,7 +1531,7 @@ const messages = {
     proDiscoveryTitle: "PRO",
     proDiscoverySubtitle: "Desbloquea la experiencia completa",
     proDiscoveryAriaLabel:
-      "Desbloquea PRO — experiencia completa.",
+      "Desbloquea PRO: experiencia completa.",
     arenaUnlockedAriaFormat: "Entrenamiento especial: {name}",
     arenaLockedAriaFormat: "{name}: bloqueado",
     dailyCompletedAriaFormat: "Táctica Diaria completada. Nueva en {hours}h.",
@@ -1703,7 +1703,7 @@ const messages = {
   },
   PRO_DROP_COPY: {
     current: "Knight's Tour",
-    activeLabel: "PRO · {puzzle} — resuelve el tablero",
+    activeLabel: "PRO · {puzzle}. Resuelve el tablero",
     inactiveLabel: "Desbloquea {puzzle} + puzzles mensuales",
   },
   PURCHASE_FIELD_LABELS: {

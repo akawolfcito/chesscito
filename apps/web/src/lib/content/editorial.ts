@@ -2691,7 +2691,7 @@ export const CLAIM_COPY = {
   claimVerb: "Claim",
   costGasOnly: "Network fee only",
   costEstimateUsd: "~${amount}",
-  inFlightLabel: "In progress — reconnect to verify",
+  inFlightLabel: "In progress. Reconnect to verify",
   refreshAria: "Refresh",
   emptyAria: "No pending claims",
 } as const;
@@ -2739,7 +2739,7 @@ export const HUB_ACTION_RAIL_COPY = {
   proDiscoveryTitle: "PRO",
   proDiscoverySubtitle: "Unlock the full experience",
   proDiscoveryAriaLabel:
-    "Unlock PRO — full experience.",
+    "Unlock PRO: full experience.",
   /** Arena tile aria labels — composed from MiniArenaSetup.name. */
   arenaUnlockedAriaFormat: "Special training: {name}",
   arenaLockedAriaFormat: "{name}: locked",
@@ -2766,7 +2766,7 @@ export const PRO_DROP_COPY = {
   /** OPERATIONAL: update this constant in the same commit as the on-chain
    *  shop catalog item update. See SPEC 1 §D12 P1-11. */
   current: "Knight's Tour",
-  activeLabel: "PRO · {puzzle} — solve the board",
+  activeLabel: "PRO · {puzzle}. Solve the board",
   inactiveLabel: "Unlock {puzzle} + monthly puzzles",
 } as const;
 

@@ -300,9 +300,9 @@ describe("HubScaffoldClient — PRO badge (top-right corner)", () => {
       screen.queryByLabelText(/PRO active, 7 days remaining/) ??
         screen.queryByLabelText(/PRO active, 8 days remaining/),
     ).not.toBeNull();
-    // No legacy "Unlock PRO — full experience" wide panel anywhere.
+    // No legacy "Unlock PRO: full experience" wide panel anywhere.
     expect(
-      screen.queryByLabelText(/Unlock PRO — full experience\./),
+      screen.queryByLabelText(/Unlock PRO: full experience\./),
     ).not.toBeInTheDocument();
   });
 });
