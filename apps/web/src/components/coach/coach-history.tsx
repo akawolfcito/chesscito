@@ -126,6 +126,11 @@ function LatestReviewCard({
             <CandyChip variant="warm" tone="subtle">{diffLabel}</CandyChip>
             <CandyChip variant="warm" tone="subtle">{entry.game.totalMoves} moves</CandyChip>
             <CandyChip variant="warm" tone="solid">{typeLabel}</CandyChip>
+            {entry.game.result === "win" && !entry.game.mintedTokenId && (
+              <CandyChip variant="success" tone="solid">
+                {t("saveAvailable")}
+              </CandyChip>
+            )}
           </div>
           <p className="tj-latest-card-takeaway">{topTakeaway}</p>
         </div>
@@ -172,6 +177,11 @@ function OlderReviewRow({
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
+        {entry.game.result === "win" && !entry.game.mintedTokenId && (
+          <CandyChip variant="success" tone="solid">
+            {t("saveAvailable")}
+          </CandyChip>
+        )}
         <CandyChip variant="warm" tone="subtle">{typeLabel}</CandyChip>
         <span className="tj-older-row-open">→</span>
       </div>

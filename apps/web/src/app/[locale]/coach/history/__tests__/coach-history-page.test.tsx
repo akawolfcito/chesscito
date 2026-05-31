@@ -41,26 +41,76 @@ vi.mock("@/components/coach/coach-history", () => ({
   CoachHistory: ({
     onSelectEntry,
   }: {
-    onSelectEntry: (e: { gameId: string }) => void;
+    onSelectEntry: (e: {
+      gameId: string;
+      game: { result: string; mintedTokenId?: string };
+    }) => void;
   }) => (
-    <button
-      data-testid="entry-row"
-      onClick={() => onSelectEntry({ gameId: "g123" } as never)}
-    >
-      tap
-    </button>
+    <>
+      <button
+        data-testid="entry-row-loss"
+        onClick={() =>
+          onSelectEntry({
+            gameId: "g123",
+            game: { result: "loss" },
+          } as never)
+        }
+      >
+        tap-loss
+      </button>
+      <button
+        data-testid="entry-row-win-unclaimed"
+        onClick={() =>
+          onSelectEntry({
+            gameId: "g456",
+            game: { result: "win" },
+          } as never)
+        }
+      >
+        tap-win-unclaimed
+      </button>
+      <button
+        data-testid="entry-row-win-claimed"
+        onClick={() =>
+          onSelectEntry({
+            gameId: "g789",
+            game: { result: "win", mintedTokenId: "42" },
+          } as never)
+        }
+      >
+        tap-win-claimed
+      </button>
+    </>
   ),
 }));
 
 import CoachHistoryPage from "../page";
 
 describe("/coach/history tap-entry routing", () => {
-  it("tap entry → push /coach/[gameId] with wallet query", () => {
+  it("tap loss entry → push /coach/[gameId] with wallet query (no focus)", () => {
     pushMock.mockReset();
     render(<CoachHistoryPage />);
-    fireEvent.click(screen.getByTestId("entry-row"));
+    fireEvent.click(screen.getByTestId("entry-row-loss"));
     expect(pushMock).toHaveBeenCalledWith(
       "/coach/g123?wallet=0x1111111111111111111111111111111111111111",
+    );
+  });
+
+  it("tap win+!minted entry → push with focus=save (Save Later, 2026-05-31)", () => {
+    pushMock.mockReset();
+    render(<CoachHistoryPage />);
+    fireEvent.click(screen.getByTestId("entry-row-win-unclaimed"));
+    expect(pushMock).toHaveBeenCalledWith(
+      "/coach/g456?wallet=0x1111111111111111111111111111111111111111&focus=save",
+    );
+  });
+
+  it("tap win+minted entry → no focus param (already saved)", () => {
+    pushMock.mockReset();
+    render(<CoachHistoryPage />);
+    fireEvent.click(screen.getByTestId("entry-row-win-claimed"));
+    expect(pushMock).toHaveBeenCalledWith(
+      "/coach/g789?wallet=0x1111111111111111111111111111111111111111",
     );
   });
 

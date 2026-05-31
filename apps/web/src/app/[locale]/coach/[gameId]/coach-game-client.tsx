@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import type { GameRecord } from "@/lib/coach/types";
@@ -37,6 +38,8 @@ function mapResult(r: GameRecord["result"] | undefined): "win" | "lose" | "draw"
 export function CoachGameClient({ gameRecord, walletAddress }: Props) {
   const t = useTranslations("COACH_VIEWER_COPY");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const focusSave = searchParams?.get("focus") === "save";
   // ConnectPromptToast requires onDismiss — track dismissed state locally
   const [connectPromptDismissed, setConnectPromptDismissed] = useState(false);
   const proActive = useIsProActive();
@@ -241,6 +244,29 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
       node.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }, [coach.phase]);
+  // Save Later (2026-05-31): when the visor is opened from
+  // /coach/history with `?focus=save`, scroll to + briefly highlight
+  // the Save Victory tile so the user knows what to tap. No auto-fire
+  // of the mint signature — the highlight is informational, the tap
+  // stays the user's conscious action. The tile only exists in the
+  // win+!claimed slate; on any other slate the querySelector returns
+  // null and the effect no-ops.
+  useEffect(() => {
+    if (!focusSave) return;
+    const settleTimer = setTimeout(() => {
+      const tile = document.querySelector(
+        '[data-kind="save-victory"]',
+      ) as HTMLElement | null;
+      if (!tile) return;
+      tile.scrollIntoView({ behavior: "smooth", block: "center" });
+      tile.dataset.focused = "true";
+      const clearTimer = setTimeout(() => {
+        delete tile.dataset.focused;
+      }, 3000);
+      return () => clearTimeout(clearTimer);
+    }, 200);
+    return () => clearTimeout(settleTimer);
+  }, [focusSave]);
   useEffect(() => {
     if (viewedFiredRef.current) return;
     if (!gameRecord || !walletAddress) return;

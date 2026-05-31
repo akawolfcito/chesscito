@@ -1322,6 +1322,12 @@ export const COACH_COPY = {
     cta: "ARENA",
     ctaAriaLabel: "Go to Arena and play a match",
   },
+  /** Save Later chip — visual indicator on a Training Journal row for a
+   *  win that was never minted. Tapping the row routes to the visor
+   *  with `?focus=save`, which scrolls + highlights the Save tile so
+   *  the user can complete the save. Solves "yours forever IF you
+   *  tapped at the right moment" — gives a second chance to past wins. */
+  saveAvailable: "Save available",
   /** <CoachHistoryDeletePanel /> collapsible toggle. Flips between
    *  Manage / Close depending on `manageOpen` state. */
   manageHistoryOpen: "Manage history",

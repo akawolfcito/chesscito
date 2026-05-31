@@ -256,3 +256,63 @@ describe("<CoachHistory> — locale-aware fetch (2026-05-24)", () => {
     });
   });
 });
+
+describe("<CoachHistory> — Save Later chip (2026-05-31)", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function recordWithMint(
+    gameId: string,
+    result: "win" | "loss",
+    mintedTokenId?: string,
+  ) {
+    return {
+      ...analyzedRecord(gameId, result),
+      game: {
+        ...analyzedRecord(gameId, result).game,
+        mintedTokenId,
+      },
+    };
+  }
+
+  it("renders the chip on a win row that was never minted", async () => {
+    globalThis.fetch = mockFetch(
+      [recordWithMint(UUID_A, "win", undefined)],
+      [],
+    ) as typeof fetch;
+    render(
+      <CoachHistory walletAddress={VALID_WALLET} credits={0} onSelectEntry={noop} />,
+    );
+    expect(await screen.findByText(/save available/i)).toBeInTheDocument();
+  });
+
+  it("hides the chip on a win row that is already minted", async () => {
+    globalThis.fetch = mockFetch(
+      [recordWithMint(UUID_A, "win", "42")],
+      [],
+    ) as typeof fetch;
+    render(
+      <CoachHistory walletAddress={VALID_WALLET} credits={0} onSelectEntry={noop} />,
+    );
+    // Wait for the row to mount via its open-label affordance.
+    await screen.findByText("32 moves");
+    expect(screen.queryByText(/save available/i)).not.toBeInTheDocument();
+  });
+
+  it("hides the chip on a loss row regardless of mint state", async () => {
+    globalThis.fetch = mockFetch(
+      [recordWithMint(UUID_A, "loss", undefined)],
+      [],
+    ) as typeof fetch;
+    render(
+      <CoachHistory walletAddress={VALID_WALLET} credits={0} onSelectEntry={noop} />,
+    );
+    await screen.findByText("32 moves");
+    expect(screen.queryByText(/save available/i)).not.toBeInTheDocument();
+  });
+});

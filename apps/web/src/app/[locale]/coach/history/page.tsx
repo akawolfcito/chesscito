@@ -65,7 +65,17 @@ export default function CoachHistoryPage() {
   }
 
   function handleSelect(entry: HistoryEntry) {
-    router.push(`/coach/${entry.gameId}?wallet=${address}`);
+    // Save Later (2026-05-31): win+!minted rows append `?focus=save` so
+    // the visor scrolls + highlights the Save Victory tile on mount.
+    // Gives users a second chance to mint a past win they cancelled in
+    // the moment. See `project_satori_og_perf_constraints` neighbor
+    // memory + this cluster's handoff for the full rationale.
+    const shouldFocusSave =
+      entry.game.result === "win" && !entry.game.mintedTokenId;
+    const url = shouldFocusSave
+      ? `/coach/${entry.gameId}?wallet=${address}&focus=save`
+      : `/coach/${entry.gameId}?wallet=${address}`;
+    router.push(url);
   }
 
   // 2026-05-29 (Cluster C follow-up): unanalyzed rows route to the

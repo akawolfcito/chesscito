@@ -487,6 +487,7 @@ const messages = {
       highest: "Máxima",
       winStreak: "Racha",
     },
+    saveAvailable: "Guardar disponible",
     emptyState: {
       title: "Aún sin análisis",
       body:
