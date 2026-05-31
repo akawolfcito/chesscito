@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { TrophiesBody, TrophiesHeroBand } from "@/components/trophies/trophies-body";
+import { TrophiesDataProvider } from "@/components/trophies/trophies-data-provider";
 
 /**
  * Standalone /trophies route. Mirrors the in-hub TrophiesSheet so the
@@ -38,13 +39,17 @@ export default function TrophiesPage() {
          *  trofeo-épico anchor's `left: -1.25rem` overhang. Hoisting
          *  keeps the character visibly escaping the panel and turns the
          *  band into a persistent overview header that doesn't scroll
-         *  off with the detail sections. */}
-        <div className="shrink-0 mt-4 px-4">
-          <TrophiesHeroBand />
-        </div>
-        <div className="flex-1 space-y-6 overflow-y-auto px-4 pb-8 pt-6">
-          <TrophiesBody hideHero />
-        </div>
+         *  off with the detail sections. `TrophiesDataProvider` wraps
+         *  both so the hero and the body share a single
+         *  `/api/my-victories` fetch. */}
+        <TrophiesDataProvider>
+          <div className="shrink-0 mt-4 px-4">
+            <TrophiesHeroBand />
+          </div>
+          <div className="flex-1 space-y-6 overflow-y-auto px-4 pb-8 pt-6">
+            <TrophiesBody hideHero />
+          </div>
+        </TrophiesDataProvider>
       </div>
     </main>
   );

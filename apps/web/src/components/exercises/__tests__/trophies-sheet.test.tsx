@@ -7,6 +7,12 @@ vi.mock("@/components/trophies/trophies-body", () => ({
   TrophiesHeroBand: () => <div data-testid="trophies-hero-band" />,
 }));
 
+vi.mock("@/components/trophies/trophies-data-provider", () => ({
+  TrophiesDataProvider: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="trophies-data-provider">{children}</div>
+  ),
+}));
+
 describe("TrophiesSheet — showTrigger gate", () => {
   it("renders the dock trigger by default", () => {
     render(<TrophiesSheet open={false} onOpenChange={() => {}} />);

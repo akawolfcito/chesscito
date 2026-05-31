@@ -11,6 +11,7 @@ import {
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { TrophiesBody, TrophiesHeroBand } from "@/components/trophies/trophies-body";
+import { TrophiesDataProvider } from "@/components/trophies/trophies-data-provider";
 
 type TrophiesSheetProps = {
   open: boolean;
@@ -69,13 +70,17 @@ export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: Trophi
          *  and would clip the anchor's `left: -1.25rem` overhang.
          *  Hoisting the band keeps the trofeo-épico character visibly
          *  escaping the panel + makes the band a persistent overview
-         *  header that doesn't scroll off with the detail sections. */}
-        <div className="shrink-0 mt-4">
-          <TrophiesHeroBand />
-        </div>
-        <div className="flex-1 overflow-y-auto overscroll-contain mt-6 space-y-6">
-          <TrophiesBody hideHero />
-        </div>
+         *  header that doesn't scroll off with the detail sections.
+         *  `TrophiesDataProvider` wraps both so the hero and the body
+         *  share a single `/api/my-victories` fetch. */}
+        <TrophiesDataProvider>
+          <div className="shrink-0 mt-4">
+            <TrophiesHeroBand />
+          </div>
+          <div className="flex-1 overflow-y-auto overscroll-contain mt-6 space-y-6">
+            <TrophiesBody hideHero />
+          </div>
+        </TrophiesDataProvider>
       </SheetContent>
     </Sheet>
   );
