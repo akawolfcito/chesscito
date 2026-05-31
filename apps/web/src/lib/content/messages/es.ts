@@ -1723,7 +1723,7 @@ const messages = {
   },
   LANDING_COPY: {
     meta: {
-      title: "Chesscito — Pequeñas jugadas. Grandes hábitos mentales.",
+      title: "Chesscito: Pequeñas jugadas. Grandes hábitos mentales.",
       description:
         "Chesscito convierte el ajedrez en retos visuales de pocos minutos para ejercitar atención, memoria, planificación y toma de decisiones desde edades tempranas.",
     },
@@ -1764,7 +1764,7 @@ const messages = {
     solution: {
       title: "Ajedrez antes del ajedrez.",
       body:
-        "No necesitas saber jugar para empezar. En Chesscito conviertes cada pieza en retos cortos, visuales y guiados. Aprendes cómo se mueve, resuelves laberintos con ella, dominas su identidad. Cuando ya juntas todas las piezas, el ajedrez completo se desbloquea solo — sin acantilados, sin clases pesadas, sin frustración.",
+        "No necesitas saber jugar para empezar. En Chesscito conviertes cada pieza en retos cortos, visuales y guiados. Aprendes cómo se mueve, resuelves laberintos con ella, dominas su identidad. Cuando ya juntas todas las piezas, el ajedrez completo se desbloquea solo. Sin acantilados, sin clases pesadas, sin frustración.",
     },
     howItWorks: {
       title: "Una escalera, no una pared.",
@@ -1834,7 +1834,7 @@ const messages = {
         {
           title: "Familias",
           body:
-            "Una rutina ligera para compartir minutos de juego, conversación y crecimiento personal — sin pantallazos infinitos.",
+            "Una rutina ligera para compartir minutos de juego, conversación y crecimiento personal, sin pantallazos infinitos.",
         },
         {
           title: "Educadores y comunidades",
@@ -1867,7 +1867,7 @@ const messages = {
           featured: true,
           bullets: [
             "Coach con IA para analizar tus partidas",
-            "Streak Shield incluido — sin compras adicionales",
+            "Streak Shield incluido, sin compras adicionales",
             "Badge PRO visible en tu perfil",
             "Guarda tus victorias sin costo extra",
             "Tu aporte sostiene el acceso gratuito",
@@ -1883,7 +1883,7 @@ const messages = {
           bullets: [
             "Pensado para compartir minutos de juego en casa",
             "Sin publicidad, sin distractores",
-            "Early access — tu interés nos ayuda a priorizar",
+            "Early access. Tu interés nos ayuda a priorizar.",
           ],
           ctaLabel: "Avísame cuando esté listo",
           ctaKind: "mailto",
@@ -1932,7 +1932,7 @@ const messages = {
     founders: {
       title: "La gente detrás de Chesscito.",
       lead:
-        "Una combinación poco común: tecnología, IA y un Maestro FIDE con décadas de aula. La metodología detrás de Chesscito viene de más de 100 estudiantes acompañados — incluyendo alumnos que compitieron en torneos nacionales e internacionales.",
+        "Una combinación poco común: tecnología, IA y un Maestro FIDE con décadas de aula. La metodología detrás de Chesscito viene de más de 100 estudiantes acompañados, incluyendo alumnos que compitieron en torneos nacionales e internacionales.",
       cards: [
         {
           name: "Luis Fernando Ushiña",

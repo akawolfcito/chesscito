@@ -2018,7 +2018,7 @@ export const COGNITIVE_DISCLAIMER_COPY = {
 
 export const WHY_PAGE_COPY = {
   meta: {
-    title: "Chesscito — Juega. Piensa. Entrena tu mente.",
+    title: "Chesscito: Juega. Piensa. Entrena tu mente.",
     description:
       "Una aventura de retos inspirados en ajedrez para fortalecer atención, memoria y toma de decisiones mediante juego.",
   },
@@ -2034,7 +2034,7 @@ export const WHY_PAGE_COPY = {
   preChess: {
     title: "Ajedrez antes del ajedrez.",
     body:
-      "En Chesscito convertimos piezas, movimientos y decisiones en retos cortos, visuales y fáciles de jugar. No necesitas saber jugar ajedrez para empezar — solo curiosidad.",
+      "En Chesscito convertimos piezas, movimientos y decisiones en retos cortos, visuales y fáciles de jugar. No necesitas saber jugar ajedrez para empezar, solo curiosidad.",
     bullets: [
       "Movimientos sencillos",
       "Tableros guiados",
@@ -2058,7 +2058,7 @@ export const WHY_PAGE_COPY = {
   progress: {
     title: "Progreso que se siente como aventura.",
     body:
-      "Avanzas por mundos, completas retos, ganas estrellas, desbloqueas piezas y coleccionas insignias que viven contigo. Cada paso suma — sin atajos, sin trampas.",
+      "Avanzas por mundos, completas retos, ganas estrellas, desbloqueas piezas y coleccionas insignias que viven contigo. Cada paso suma. Sin atajos, sin trampas.",
     bullets: [
       "Mundos por desbloquear",
       "Estrellas por reto",
@@ -2068,7 +2068,7 @@ export const WHY_PAGE_COPY = {
   community: {
     title: "Una herramienta simple para acompañar el bienestar cognitivo.",
     body:
-      "Pensado para que cualquier persona — un niño en casa, una familia, un docente, una comunidad o una institución — pueda integrarlo a una rutina sana de ejercicio mental.",
+      "Pensado para que cualquier persona (un niño en casa, una familia, un docente, una comunidad o una institución) pueda integrarlo a una rutina sana de ejercicio mental.",
     cards: [
       {
         title: "Familias",
@@ -2090,7 +2090,7 @@ export const WHY_PAGE_COPY = {
   sponsors: {
     title: "Construido para impacto.",
     body:
-      "Buscamos aliados que crean en el juego como vehículo de bienestar cognitivo y aprendizaje. Tu apoyo nos ayuda a llegar a más personas — más niños, más comunidades, más impacto.",
+      "Buscamos aliados que crean en el juego como vehículo de bienestar cognitivo y aprendizaje. Tu apoyo nos ayuda a llegar a más personas, más niños, más comunidades, más impacto.",
     denLabs:
       "Chesscito es el primer experimento de Den Labs, un laboratorio que combina tecnología web2/web3 e IA para crear experiencias con propósito.",
     contactPrimary: "Escríbenos",
@@ -2129,7 +2129,7 @@ export const WHY_PAGE_COPY = {
 
 export const LANDING_COPY = {
   meta: {
-    title: "Chesscito — Small plays. Big mental habits.",
+    title: "Chesscito: Small plays. Big mental habits.",
     description:
       "Chesscito turns chess into short visual challenges to exercise attention, memory, planning, and decision-making from an early age.",
   },
@@ -2184,7 +2184,7 @@ export const LANDING_COPY = {
   solution: {
     title: "Chess before chess.",
     body:
-      "You don't need to know how to play to start. In Chesscito each piece becomes short, visual, guided challenges. You learn how it moves, solve labyrinths with it, master its identity. When you've gathered every piece, full chess unlocks itself — no cliffs, no heavy lessons, no frustration.",
+      "You don't need to know how to play to start. In Chesscito each piece becomes short, visual, guided challenges. You learn how it moves, solve labyrinths with it, master its identity. When you've gathered every piece, full chess unlocks itself. No cliffs, no heavy lessons, no frustration.",
   },
 
   /** §4 How it works — new five-step ladder. */
@@ -2261,7 +2261,7 @@ export const LANDING_COPY = {
       {
         title: "Families",
         body:
-          "A light routine to share minutes of play, conversation, and personal growth — without endless scrolling.",
+          "A light routine to share minutes of play, conversation, and personal growth, without endless scrolling.",
       },
       {
         title: "Educators and communities",
@@ -2305,7 +2305,7 @@ export const LANDING_COPY = {
         featured: true,
         bullets: [
           "AI Coach to analyze your matches",
-          "Streak Shield included — no extra purchases",
+          "Streak Shield included, no extra purchases",
           "PRO badge visible on your profile",
           "Save your victories at no extra cost",
           "Your contribution sustains free access",
@@ -2321,7 +2321,7 @@ export const LANDING_COPY = {
         bullets: [
           "Built to share minutes of play at home",
           "No ads, no distractions",
-          "Early access — your interest helps us prioritize",
+          "Early access. Your interest helps us prioritize.",
         ],
         ctaLabel: "Let me know when it's ready",
         ctaKind: "mailto" as const,
@@ -2382,7 +2382,7 @@ export const LANDING_COPY = {
   founders: {
     title: "The people behind Chesscito.",
     lead:
-      "An uncommon combination: technology, AI, and a FIDE Master with decades in the classroom. The methodology behind Chesscito comes from coaching 100+ students — including players who competed in national and international tournaments.",
+      "An uncommon combination: technology, AI, and a FIDE Master with decades in the classroom. The methodology behind Chesscito comes from coaching 100+ students, including players who competed in national and international tournaments.",
     cards: [
       {
         name: "Luis Fernando Ushiña",
