@@ -17,6 +17,10 @@ import {
   type ShopCopyKey,
 } from "@/lib/contracts/shop-catalog";
 import { formatUsd } from "@/lib/contracts/tokens";
+import {
+  WelcomePackTile,
+  type WelcomePackTileState,
+} from "@/components/exercises/welcome-pack-tile";
 
 type CatalogItem = {
   itemId: bigint;
@@ -47,6 +51,18 @@ type ShopSheetProps = {
    *  for legacy compatibility — the scaffold passes `false` so Radix
    *  doesn't leave an orphan `<button>` rendered in the layout tree. */
   showTrigger?: boolean;
+  /** Welcome Pack tile state. Pinned at the TOP of the catalog (above
+   *  the live SKUs) as the Forcing-Function-for-Catalog-Awareness
+   *  anchor — see docs/design-patterns/game-economy-patterns.md.
+   *  Defaults to `"connect"` so the tile renders in connect-gated
+   *  state without breaking when callers haven't wired the real
+   *  state yet (commit 6 will pass actual state + handlers). */
+  welcomePack?: {
+    state: WelcomePackTileState;
+    claimedAt?: string | null;
+    onClaim?: () => void;
+    onConnect?: () => void;
+  };
 };
 
 /** Map an on-chain itemId to its copy key. Drives both the kicker
@@ -193,6 +209,7 @@ export function ShopSheet({
   onSelectItem,
   successBanner = null,
   showTrigger = true,
+  welcomePack,
 }: ShopSheetProps) {
   const t = useTranslations("SHOP_SHEET_COPY");
 
@@ -288,6 +305,21 @@ export function ShopSheet({
          *  identical — the only difference is icons can now visibly
          *  float past the card's left edge. */}
         <div className="mt-4 -mx-6 px-6 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-6">
+          {/* Welcome Pack pinned tile — Forcing-Function-for-Catalog-
+           *  Awareness anchor. ALWAYS at the top of the catalog scroll
+           *  region (above SKUs and above the "More coming" ghost),
+           *  per spec ux-shield-rescue-and-welcome-pack-2026-05-31
+           *  §4.1. Pinning is non-negotiable: this is the surface
+           *  the fail-rescue modal deep-links to. */}
+          {welcomePack ? (
+            <WelcomePackTile
+              state={welcomePack.state}
+              claimedAt={welcomePack.claimedAt}
+              onClaim={welcomePack.onClaim}
+              onConnect={welcomePack.onConnect}
+            />
+          ) : null}
+
           {items.length === 0 && (
             <p
               className="text-center text-sm"

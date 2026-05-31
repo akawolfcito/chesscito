@@ -9198,8 +9198,92 @@ button.hud-resource-chip:active:not(:disabled) {
   --shop-tile-accent-border: rgba(55, 95, 175, 0.55);
 }
 
+/* Welcome Pack tone — warmer cream-amber than the default amber so
+   the pinned tile differentiates from any standard amber SKUs that
+   might land later, while staying in the same warm family (signals
+   "gift / celebratory" without competing with the featured ribbon's
+   gold halo). See spec ux-shield-rescue-and-welcome-pack-2026-05-31
+   §4.1. */
+.shop-item-tile[data-tone="welcome"],
+.welcome-pack-tile[data-tone="welcome"] {
+  --shop-tile-accent-base: #fff1c8;
+  --shop-tile-accent-mid: #f5c44b;
+  --shop-tile-accent-border: rgba(190, 120, 25, 0.65);
+}
+
 .shop-item-tile:active {
   transform: scale(0.985);
+}
+
+/* Welcome Pack tile — extends `.shop-item-tile` for the expanded
+   (idle / connect / claiming) states. Adds a 3rd identity row
+   (tile.body), reserves a sticker overhang slot on the left, and
+   slightly bumps the border weight so the pinned tile reads as
+   "this is the offer" without needing the Featured ribbon. */
+.welcome-pack-tile {
+  border-width: 1.5px;
+  box-shadow:
+    0 0 0 1px rgba(255, 215, 120, 0.40),
+    0 6px 18px rgba(180, 120, 25, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40);
+}
+
+.welcome-pack-tile-sticker-slot {
+  /* Reserves vertical airspace for the future sticker sprite. Empty
+     today; commit 6+ drops the shield-gift sprite here with
+     `position: absolute` overhang per [overflow-clip-escape-pattern]
+     memory. The reserved height keeps the layout stable when the
+     sprite lands. */
+  min-height: 0.25rem;
+}
+
+.welcome-pack-tile-identity {
+  /* Pinned tile shows a 3rd line (body) below name + subtitle. */
+  gap: 0.15rem;
+}
+
+.welcome-pack-tile-body {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(110, 65, 15, 0.78);
+  margin-top: 0.25rem;
+  line-height: 1.25;
+}
+
+.welcome-pack-tile-footer {
+  /* Single CTA; no CELO twin row. Right-align like the rest of the
+     shop tiles for muscle-memory consistency. */
+  justify-content: flex-end;
+}
+
+/* Post-claim collapsed state — replaces the full tile with a compact
+   single-line confirmation row. Preserves the tone accent so the
+   user can still locate "where the welcome pack used to be". */
+.welcome-pack-tile--claimed {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(
+    140deg,
+    var(--shop-tile-accent-base) 0%,
+    var(--shop-tile-accent-mid) 100%
+  );
+  border: 1px solid var(--shop-tile-accent-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.welcome-pack-tile-checkmark {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: rgba(16, 95, 50, 0.85);
+}
+
+.welcome-pack-tile-claimed-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(110, 65, 15, 0.85);
 }
 
 /* Featured tile — stronger gold halo + a richer drop shadow so the
