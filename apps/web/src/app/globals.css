@@ -2550,13 +2550,13 @@
   }
 
   /* Tap-hint pill — shown when user taps an empty cell with no piece
-     selected. Anchored at the piece's cell centre then lifted upward so
-     it points the user's eye toward the piece. pointer-events: none
+     selected. Placement flips per [data-placement] so the pill never
+     clips against the board edge (piece near top → render below, piece
+     near a/h file → render to the side). pointer-events: none
      guarantees it never blocks a tap on the cell button beneath. */
   .playhub-board-select-hint {
     position: absolute;
     z-index: 12;
-    transform: translate(-50%, calc(-50% - 2.2rem));
     pointer-events: none;
     white-space: nowrap;
     padding: 0.4rem 0.75rem;
@@ -2569,12 +2569,80 @@
     box-shadow:
       0 2px 6px rgba(0, 0, 0, 0.35),
       inset 0 1px 0 rgba(255, 245, 215, 0.18);
-    animation: playhub-board-hint-fade var(--duration-snap, 180ms) ease-out;
   }
 
-  @keyframes playhub-board-hint-fade {
+  /* Pointer arrow — built from a solid square rotated 45° so the seam with
+     the pill body is invisible (true CSS triangles via borders show a
+     hairline on retina). Anchored per placement and sized to match the
+     pill's background. */
+  .playhub-board-select-hint::after {
+    content: "";
+    position: absolute;
+    width: 0.55rem;
+    height: 0.55rem;
+    background: rgba(40, 24, 10, 0.92);
+    transform: rotate(45deg);
+  }
+
+  /* TOP — pill sits above the piece, arrow points down. */
+  .playhub-board-select-hint[data-placement="top"] {
+    transform: translate(-50%, calc(-50% - 2.2rem));
+    animation: playhub-board-hint-fade-top var(--duration-snap, 180ms) ease-out;
+  }
+  .playhub-board-select-hint[data-placement="top"]::after {
+    left: 50%;
+    bottom: -0.22rem;
+    margin-left: -0.275rem;
+  }
+
+  /* BOTTOM — pill sits below the piece, arrow points up. */
+  .playhub-board-select-hint[data-placement="bottom"] {
+    transform: translate(-50%, calc(-50% + 2.2rem));
+    animation: playhub-board-hint-fade-bottom var(--duration-snap, 180ms) ease-out;
+  }
+  .playhub-board-select-hint[data-placement="bottom"]::after {
+    left: 50%;
+    top: -0.22rem;
+    margin-left: -0.275rem;
+  }
+
+  /* RIGHT — pill sits to the right of the piece, arrow points left. */
+  .playhub-board-select-hint[data-placement="right"] {
+    transform: translate(1.6rem, -50%);
+    animation: playhub-board-hint-fade-right var(--duration-snap, 180ms) ease-out;
+  }
+  .playhub-board-select-hint[data-placement="right"]::after {
+    top: 50%;
+    left: -0.22rem;
+    margin-top: -0.275rem;
+  }
+
+  /* LEFT — pill sits to the left of the piece, arrow points right. */
+  .playhub-board-select-hint[data-placement="left"] {
+    transform: translate(calc(-100% - 1.6rem), -50%);
+    animation: playhub-board-hint-fade-left var(--duration-snap, 180ms) ease-out;
+  }
+  .playhub-board-select-hint[data-placement="left"]::after {
+    top: 50%;
+    right: -0.22rem;
+    margin-top: -0.275rem;
+  }
+
+  @keyframes playhub-board-hint-fade-top {
     from { opacity: 0; transform: translate(-50%, calc(-50% - 1.6rem)); }
     to   { opacity: 1; transform: translate(-50%, calc(-50% - 2.2rem)); }
+  }
+  @keyframes playhub-board-hint-fade-bottom {
+    from { opacity: 0; transform: translate(-50%, calc(-50% + 1.6rem)); }
+    to   { opacity: 1; transform: translate(-50%, calc(-50% + 2.2rem)); }
+  }
+  @keyframes playhub-board-hint-fade-right {
+    from { opacity: 0; transform: translate(1.0rem, -50%); }
+    to   { opacity: 1; transform: translate(1.6rem, -50%); }
+  }
+  @keyframes playhub-board-hint-fade-left {
+    from { opacity: 0; transform: translate(calc(-100% - 1.0rem), -50%); }
+    to   { opacity: 1; transform: translate(calc(-100% - 1.6rem), -50%); }
   }
 
   .playhub-board-piece-float {

@@ -82,5 +82,47 @@ describe("<Board>", () => {
       fireEvent.click(screen.getByRole("gridcell", { name: "Square d4" }));
       expect(container.querySelector(".playhub-board-select-hint")).toBeNull();
     });
+
+    // ─── Placement: pill never clips the board edge ─────────────────────
+    // Piece on a-file & low rank → render to the right.
+    // Piece on h-file & low rank → render to the left.
+    // Piece on top ranks → render below (otherwise pill clips the top edge).
+    // Anywhere else → render above (default).
+
+    it("places hint to the right when the piece is on the left edge (a-file)", () => {
+      const { container } = render(
+        <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} />
+      );
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square d4" }));
+      const hint = container.querySelector(".playhub-board-select-hint");
+      expect(hint?.getAttribute("data-placement")).toBe("right");
+    });
+
+    it("places hint to the left when the piece is on the right edge (h-file)", () => {
+      const { container } = render(
+        <Board pieceType="rook" startPosition={{ file: 7, rank: 0 }} />
+      );
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square d4" }));
+      const hint = container.querySelector(".playhub-board-select-hint");
+      expect(hint?.getAttribute("data-placement")).toBe("left");
+    });
+
+    it("places hint below the piece when the piece is on the top ranks (rank 7-8)", () => {
+      const { container } = render(
+        <Board pieceType="rook" startPosition={{ file: 3, rank: 7 }} />
+      );
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square d4" }));
+      const hint = container.querySelector(".playhub-board-select-hint");
+      expect(hint?.getAttribute("data-placement")).toBe("bottom");
+    });
+
+    it("places hint above the piece (default) when in the central interior", () => {
+      const { container } = render(
+        <Board pieceType="rook" startPosition={{ file: 3, rank: 3 }} />
+      );
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square h8" }));
+      const hint = container.querySelector(".playhub-board-select-hint");
+      expect(hint?.getAttribute("data-placement")).toBe("top");
+    });
   });
 });

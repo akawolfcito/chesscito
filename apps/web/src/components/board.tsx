@@ -18,6 +18,19 @@ import { BOARD_HINT_COPY } from "@/lib/content/editorial";
 
 const SELECT_HINT_DURATION_MS = 2200;
 
+type HintPlacement = "top" | "bottom" | "left" | "right";
+
+/** Choose hint placement so the pill never clips against the board edge.
+ *  Vertical edges (top of the board) bite first — the original "always
+ *  above" placement clipped on rank 7-8. Horizontal edges matter for the
+ *  a/h files where the centered pill would overflow the canvas. */
+function pickHintPlacement(file: number, rank: number): HintPlacement {
+  if (rank >= 6) return "bottom";
+  if (file <= 1) return "right";
+  if (file >= 6) return "left";
+  return "top";
+}
+
 const PIECE_BASE = THEME_CONFIG.piecesBase;
 
 const PIECE_IMG: Record<PieceId, string> = {
@@ -366,16 +379,20 @@ export function Board({
                 );
               })}
 
-              {/* Contextual hint — appears above the piece when the user taps
-                  an empty cell without first selecting the piece. Pointer
-                  events disabled so it never intercepts taps. */}
+              {/* Contextual hint — appears next to the piece when the user
+                  taps an empty cell without first selecting the piece.
+                  Placement flips per piece location so the pill never
+                  clips against the board edge. Pointer events disabled so
+                  it never intercepts taps. */}
               {showSelectHint && (() => {
                 const center = cellCenter(piece.position.file, piece.position.rank);
+                const placement = pickHintPlacement(piece.position.file, piece.position.rank);
                 return (
                   <div
                     role="status"
                     aria-live="polite"
                     className="playhub-board-select-hint"
+                    data-placement={placement}
                     style={{
                       left: `${center.x}%`,
                       top: `${center.y}%`,
