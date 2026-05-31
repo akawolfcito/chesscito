@@ -16,12 +16,30 @@ type Variant =
   | "viewer-win-unminted"
   | "viewer-win-minted"
   | "viewer-loss"
-  | "viewer-partial-replay";
+  | "viewer-partial-replay"
+  | "viewer-win-credits-hint"
+  | "viewer-win-pro-hint";
+
+const WIN_VARIANTS = new Set<Variant>([
+  "viewer-win-unminted",
+  "viewer-win-minted",
+  "viewer-win-credits-hint",
+  "viewer-win-pro-hint",
+]);
 
 export function CoachViewerFixture({ variant }: { variant: Variant }) {
-  const isWin = variant === "viewer-win-unminted" || variant === "viewer-win-minted";
+  const isWin = WIN_VARIANTS.has(variant);
   const isMinted = variant === "viewer-win-minted";
   const isPartial = variant === "viewer-partial-replay";
+  // 2026-05-30 (#2 hint-variant baselines): GameActionsBar renders a
+  // point-of-use hint under the Ask Coach tile when the wallet has
+  // either paid credits or an active PRO pass. The fixture exposes
+  // each state in isolation so the VR baseline captures only that
+  // variant's pixels (mode set to win-unminted so Ask Coach is
+  // reachable; otherwise the tile would be disabled and the hint
+  // suppressed by `askCoachReachable`).
+  const coachCredits = variant === "viewer-win-credits-hint" ? 5 : undefined;
+  const proActive = variant === "viewer-win-pro-hint";
 
   const moves = isPartial ? PARTIAL_REPLAY_MOVES : VIEWER_MOVES;
   const result = isWin ? "win" : isPartial ? "win" : "lose";
@@ -41,6 +59,8 @@ export function CoachViewerFixture({ variant }: { variant: Variant }) {
           hasPartialReplayError={isPartial}
           mintedTokenId={isMinted ? "42" : null}
           shareLinkUrl={isMinted ? "https://chesscito.com/m/test" : null}
+          coachCredits={coachCredits}
+          proActive={proActive}
           onAskCoach={() => {}}
           onMint={() => {}}
           onShare={() => {}}

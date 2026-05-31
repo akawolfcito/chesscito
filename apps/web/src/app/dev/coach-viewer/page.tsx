@@ -11,6 +11,10 @@ const VARIANTS = new Set([
   "viewer-win-minted",
   "viewer-loss",
   "viewer-partial-replay",
+  // 2026-05-30 (#2 hint-variant baselines): hints rendered under the Ask
+  // Coach tile when the wallet has paid credits or an active PRO pass.
+  "viewer-win-credits-hint",
+  "viewer-win-pro-hint",
 ]);
 
 export default function CoachViewerDevPage({
