@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { ActionRowIcon } from "@/components/action-row/action-row-icon";
 import { StonePedestal } from "@/components/scene-rooted/stone-pedestal";
 import { MiniArenaSheet } from "./mini-arena-sheet";
@@ -27,6 +28,7 @@ type Props = {
  * pin so the bridge entry point doesn't push the board down.
  */
 export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: Props) {
+  const t = useTranslations("HUB_ACTION_RAIL_COPY");
   const [open, setOpen] = useState(false);
   if (!unlocked && !renderLocked) return null;
 
@@ -40,7 +42,11 @@ export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: P
           icon={<ActionRowIcon name="play-chess" className="h-14 w-14 object-contain" />}
           onClick={() => setOpen(true)}
           disabled={!unlocked}
-          aria-label={unlocked ? `Reto avanzado: ${setup.name}` : `${setup.name}: locked`}
+          aria-label={
+            unlocked
+              ? t("arenaUnlockedAriaFormat", { name: setup.name })
+              : t("arenaLockedAriaFormat", { name: setup.name })
+          }
         />
       </span>
       {unlocked ? (
