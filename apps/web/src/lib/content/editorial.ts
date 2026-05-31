@@ -1701,7 +1701,7 @@ export const ABOUT_METHODOLOGY_COPY = {
   body:
     "Chesscito's curriculum is designed by a real human team. Pedagogy by FIDE Master César Litvinov Alarcón. Over 100 students supported, with alumni who have competed in national and international tournaments.",
   cesar: "César Litvinov Alarcón · FIDE Master",
-  wolfcito: "Wolfcito · Co-Founder",
+  wolfcito: "Luis Fernando Ushiña · Software Developer Architect · Founder",
 } as const;
 
 export const UNLOCK_COPY = {
@@ -2387,7 +2387,7 @@ export const LANDING_COPY = {
       {
         name: "Luis Fernando Ushiña",
         handle: "aka Wolfcito",
-        title: "Software Developer Architect · Co-Founder Chesscito",
+        title: "Software Developer Architect · Founder Chesscito",
         body: "Leads product, technology, and the vision for a scalable cognitive platform.",
       },
       {

@@ -73,7 +73,7 @@ const messages = {
     body:
       "El plan de estudios de Chesscito está diseñado por un equipo humano real. Pedagogía a cargo del Maestro FIDE César Litvinov Alarcón. Más de 100 estudiantes acompañados, con egresados que han competido en torneos nacionales e internacionales.",
     cesar: "César Litvinov Alarcón · Maestro FIDE",
-    wolfcito: "Wolfcito · Co-fundador",
+    wolfcito: "Luis Fernando Ushiña · Software Developer Architect · Fundador",
   },
   COGNITIVE_DISCLAIMER_COPY: {
     short:
@@ -1937,7 +1937,7 @@ const messages = {
         {
           name: "Luis Fernando Ushiña",
           handle: "aka Wolfcito",
-          title: "Software Developer Architect · Co-Founder Chesscito",
+          title: "Software Developer Architect · Founder Chesscito",
           body: "Lidera producto, tecnología y la visión de plataforma cognitiva escalable.",
         },
         {
