@@ -1973,6 +1973,41 @@ const messages = {
       confirm: "Listo. Te escribiremos pronto.",
     },
   },
+  RESCUE_MODAL_COPY: {
+    header: "Casi.",
+    body: {
+      withShieldsFirst:
+        "Un Escudo rescata tu racha. Úsalo y reintenta sin perder estrellas.",
+      withShieldsRecurring: "Usa un Escudo para mantener tu racha.",
+      withoutShieldsPreClaim:
+        "Te quedaste sin Escudos. Reclama tu regalo y rescata esta partida.",
+      withoutShieldsPostClaim:
+        "Te quedaste sin Escudos. Repón y mantén tu racha viva.",
+    },
+    cta: {
+      claimFree: "Reclamar gratis",
+      claimFreeSubtitle: "3 escudos",
+      getShields: "Comprar escudos",
+      retryAnyway: "Reintentar igual",
+    },
+    closeLabel: "Cerrar rescate",
+  },
+  WELCOME_PACK_COPY: {
+    tile: {
+      title: "Regalo de bienvenida",
+      subtitle: "Solo para nuevos",
+      body: "3 escudos gratis. Uno por wallet.",
+    },
+    cta: {
+      claim: "Reclamar gratis",
+      connect: "Conectar para reclamar",
+    },
+    claimedLabel: "Reclamado",
+    toasts: {
+      success: "+3 escudos",
+      error: "Falló. Reintenta.",
+    },
+  },
 };
 
 export default messages;

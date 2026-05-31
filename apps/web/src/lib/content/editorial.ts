@@ -2826,3 +2826,71 @@ export const HUB_RAIL_COPY = {
     badges: "Badges",
   },
 } as const;
+
+/** Fail-rescue modal copy (spec ux-shield-rescue-and-welcome-pack-2026-
+ *  05-31.md §3.4). Lives inside the extended PhaseFlash failure branch.
+ *  CTA labels reuse FOOTER_CTA_COPY.useShield + shieldsLeft(n) for the
+ *  primary "Use Shield · N left" pair, so this constant only declares
+ *  the body strings + the secondary/tertiary CTAs unique to the modal.
+ *  Brief-compliance: no decorative emojis, buttons ≤2 words (critical
+ *  actions ≤3), no Web3 jargon, verb-first. */
+export const RESCUE_MODAL_COPY = {
+  header: "Almost.",
+  body: {
+    /** State A — with-shields, first encounter. Includes one-line
+     *  shield primer per brief §3 (educate first time, never repeat). */
+    withShieldsFirst:
+      "A Shield rescues your streak. Use one and try again without losing a star.",
+    /** State B — with-shields, recurring. Compact; no primer. */
+    withShieldsRecurring: "Use a Shield to keep your streak.",
+    /** State C — without-shields, pre-claim. Forcing-function pitch
+     *  for the Welcome Pack deep link. */
+    withoutShieldsPreClaim:
+      "Out of Shields. Claim your Welcome gift and rescue this run.",
+    /** State D — without-shields, post-claim or 3+ ignores. Paid SKU
+     *  upsell. */
+    withoutShieldsPostClaim:
+      "Out of Shields. Restock and keep your streak alive.",
+  },
+  cta: {
+    /** State C primary. Subtitle renders as a small chip beside the
+     *  label, NOT as part of the button word count. */
+    claimFree: "Claim free",
+    claimFreeSubtitle: "3 shields",
+    /** State D primary. Price chip rendered separately. */
+    getShields: "Get Shields",
+    /** Secondary CTA (all states). Explicit "anyway" keeps the cost
+     *  intuition: "yes, despite losing a star". */
+    retryAnyway: "Retry anyway",
+  },
+  /** Top-right [✕] close button (reuses the existing
+   *  `.candy-close-asset-button` sprite + a11y label pattern from
+   *  victory-popup-shell.tsx). Same outcome as Retry anyway. */
+  closeLabel: "Close rescue modal",
+} as const;
+
+/** Welcome Pack tile copy (spec ux-shield-rescue-and-welcome-pack-2026-
+ *  05-31.md §4.3). Tile is pinned at the TOP of the Shop sheet as the
+ *  Forcing-Function-for-Catalog-Awareness anchor (see
+ *  docs/design-patterns/game-economy-patterns.md). Pinning is
+ *  non-negotiable. */
+export const WELCOME_PACK_COPY = {
+  tile: {
+    title: "Welcome gift",
+    subtitle: "New players only",
+    body: "3 free Shields. One per wallet.",
+  },
+  cta: {
+    /** Primary CTA, candy-pill --green family. */
+    claim: "Claim free",
+    /** Connect-gated state (browser without wallet connected). */
+    connect: "Connect to claim",
+  },
+  /** Post-claim collapsed label (does NOT disappear — preserves trust
+   *  and serves as anchor for future seasonal welcome packs). */
+  claimedLabel: "Claimed",
+  toasts: {
+    success: "+3 Shields",
+    error: "Claim failed. Try again.",
+  },
+} as const;
