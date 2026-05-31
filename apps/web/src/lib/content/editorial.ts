@@ -263,17 +263,17 @@ export const BADGE_SHEET_COPY = {
 } as const;
 
 export const TUTORIAL_COPY = {
-  rook: "The Rook moves in straight lines — horizontal or vertical",
-  bishop: "The Bishop moves diagonally — any distance",
-  knight: "The Knight jumps in an L-shape — 2+1 squares",
-  pawn: "The Pawn moves forward one square — captures diagonally",
-  queen: "The Queen moves any direction — any distance",
+  rook: "The Rook moves in straight lines, horizontal or vertical",
+  bishop: "The Bishop moves diagonally, any distance",
+  knight: "The Knight jumps in an L-shape, 2+1 squares",
+  pawn: "The Pawn moves forward one square, captures diagonally",
+  queen: "The Queen moves any direction, any distance",
   king: "The King moves one square in any direction",
 } as const;
 
 export const CAPTURE_COPY = {
   statsLabel: "CAPTURE",
-  tutorialBanner: "Capture the target — move your Rook to its square",
+  tutorialBanner: "Capture the target. Move your Rook to its square.",
 } as const;
 
 export const SHIELD_COPY = {
@@ -855,9 +855,9 @@ export const ARENA_COPY = {
     hard: "Hard",
   },
   difficultyDesc: {
-    easy: "Friendly AI — makes mistakes often",
-    medium: "Solid player — a fair challenge",
-    hard: "Expert — plays to win",
+    easy: "Friendly AI, makes mistakes often",
+    medium: "Solid player, a fair challenge",
+    hard: "Expert, plays to win",
   },
   startMatch: "PLAY",
   backToHub: "HUB",
