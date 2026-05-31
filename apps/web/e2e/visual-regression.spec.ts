@@ -212,6 +212,22 @@ test.describe("visual regression — Step 2 baselines", () => {
     await settle(page, 400);
     await expect(page).toHaveScreenshot("privacy-page.png", STATIC_PAGE_OPTS);
   });
+
+  // Landing tagline first-fold. The route SSR-redirects MiniPay UAs to
+  // /hub via `detectWalletFromUserAgent`; Playwright's default Pixel 5
+  // UA does NOT include "MiniPay", so the redirect doesn't fire and the
+  // landing renders. The client-side `useMiniPay` fallback also stays
+  // false because the browser has no `window.ethereum.isMinipay`. Closes
+  // the em-dash chunks 8-12 coverage gap for `/`.
+  test("landing-page — tagline + hero first-fold", async ({ page }) => {
+    await bypassFirstVisit(page);
+    await page.goto("/", { waitUntil: "networkidle", timeout: 30_000 });
+    // Sanity: confirm we did not get redirected to /hub.
+    await expect(page).toHaveURL(/\/(?:en|es)?\/?$/);
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot("landing-page.png", STATIC_PAGE_OPTS);
+  });
 });
 
 // Step 3 baselines — fixture-driven component isolation. Backed by the
