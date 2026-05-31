@@ -8,6 +8,7 @@ import {
   createNonce,
   createDeadline,
 } from "../demo-signing.js";
+import { __setLoggerSink, __resetLoggerSink } from "../logger.js";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -248,5 +249,71 @@ describe("createDeadline", () => {
     const diff = deadline - now;
     // Should be between 9 and 11 minutes (account for execution time)
     expect(diff >= 540n && diff <= 660n).toBeTruthy();
+  });
+});
+
+// ─── enforceOrigin telemetry rollout (red-team P0-W2) ───────────────────────
+
+describe("enforceOrigin telemetry rollout", () => {
+  let captured: string[];
+  const savedVercelEnv = process.env.VERCEL_ENV;
+
+  beforeEach(() => {
+    captured = [];
+    __setLoggerSink((line) => captured.push(line));
+  });
+
+  afterEach(() => {
+    __resetLoggerSink();
+    if (savedVercelEnv === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = savedVercelEnv;
+  });
+
+  function makeReq(url: string, method: string, headers: Record<string, string> = {}): Request {
+    return new Request(url, { method, headers });
+  }
+
+  it("logs origin_bypass_triggered when bypass fires in production-like env", () => {
+    process.env.VERCEL_ENV = "production";
+    // Bypass: no origin AND no referer.
+    enforceOrigin(makeReq("https://chesscito.com/api/sign-victory", "POST", { "user-agent": "MiniPay-WebView/1.0" }));
+
+    expect(captured).toHaveLength(1);
+    const parsed = JSON.parse(captured[0]);
+    expect(parsed.level).toBe("warn");
+    expect(parsed.msg).toBe("origin_bypass_triggered");
+    expect(parsed.route).toBe("demo-signing.enforceOrigin");
+    expect(parsed.method).toBe("POST");
+    expect(parsed.path).toBe("/api/sign-victory");
+    expect(parsed.user_agent).toBe("MiniPay-WebView/1.0");
+  });
+
+  it("does NOT log when bypass fires in local dev (no VERCEL_ENV)", () => {
+    delete process.env.VERCEL_ENV;
+    enforceOrigin(makeReq("http://localhost:3000/api/anything", "POST"));
+    expect(captured).toHaveLength(0);
+  });
+
+  it("does NOT log when origin is present (no bypass)", () => {
+    process.env.VERCEL_ENV = "production";
+    // Allowlist NOT configured, so the request is admitted via the dev-fallback
+    // path — but still NOT via the bypass branch. Telemetry must stay silent.
+    enforceOrigin(makeReq("https://chesscito.com/api/x", "POST", { origin: "https://chesscito.com" }));
+    expect(captured).toHaveLength(0);
+  });
+
+  it("bypass STILL admits the request (behavior unchanged — observability only)", () => {
+    process.env.VERCEL_ENV = "production";
+    expect(() =>
+      enforceOrigin(makeReq("https://chesscito.com/api/sign-victory", "POST")),
+    ).not.toThrow();
+  });
+
+  it("caps user_agent at 200 chars to keep log lines bounded", () => {
+    process.env.VERCEL_ENV = "production";
+    const longUa = "A".repeat(500);
+    enforceOrigin(makeReq("https://chesscito.com/api/x", "POST", { "user-agent": longUa }));
+    const parsed = JSON.parse(captured[0]);
+    expect(parsed.user_agent.length).toBe(200);
   });
 });

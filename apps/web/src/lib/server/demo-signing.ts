@@ -2,6 +2,9 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { ethers } from "ethers";
 import { decryptSignerKey } from "./crypto";
+import { createLogger } from "./logger";
+
+const originLog = createLogger({ route: "demo-signing.enforceOrigin" });
 
 const MAX_REQUESTS_PER_IP = 5;
 const MAX_REQUESTS_PER_ADDRESS = 3;
@@ -87,7 +90,31 @@ export function enforceOrigin(request: Request) {
 
   // MiniPay's WebView may omit Origin/Referer on same-site fetches — allow through.
   // Security is still enforced by rate limiting, nonce uniqueness, and signature verification.
-  if (!source) return;
+  //
+  // Observability rollout (red-team P0-W2, 2026-05-31): the bypass is the
+  // weakest link in the documented defense — any curl/server-side caller
+  // omitting both headers also passes. Before tightening to "reject POST
+  // without Origin in production" (which would re-break the March 2026
+  // MiniPay incident in commit 44c6b500), instrument every bypass hit so
+  // we can see which UAs and routes actually rely on it. Once 7 days of
+  // telemetry confirm MiniPay is the only legit caller, replace the
+  // early return with a UA-gated enforcement.
+  if (!source) {
+    if (process.env.VERCEL_ENV) {
+      let path = "unknown";
+      try {
+        if (request.url) path = new URL(request.url).pathname;
+      } catch {
+        // request.url malformed — log "unknown" rather than crash the handler
+      }
+      originLog.warn("origin_bypass_triggered", {
+        method: request.method ?? "unknown",
+        path,
+        user_agent: request.headers.get("user-agent")?.slice(0, 200) ?? null,
+      });
+    }
+    return;
+  }
 
   let sourceHost: string;
   try {
