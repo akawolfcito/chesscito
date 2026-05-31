@@ -617,4 +617,40 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
       FIXTURE_OPTS,
     );
   });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // VR11 — Arena shields chip.
+  //
+  // Locks the point-of-use shields callout that arena renders under the HUD
+  // when the wallet has shields ready. `useShieldsCount()` reads from
+  // `chesscito:shields:credited-cache`; we seed it via addInitScript before
+  // navigation so the chip mounts with a known count > 0. The fixture mounts
+  // the chip in isolation (no wagmi) so the baseline locks only the chip's
+  // intrinsic pixels.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  test("vr11-arena-shields-chip — 3 shields available, in-play state", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      try {
+        window.localStorage.setItem(
+          "chesscito:shields:credited-cache",
+          "3",
+        );
+      } catch {
+        /* storage unavailable — chip falls back to count=0 (off state) */
+      }
+    });
+    await page.goto("/dev/arena-shields-chip", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 600);
+    await expect(page).toHaveScreenshot(
+      "vr11-arena-shields-chip.png",
+      FIXTURE_OPTS,
+    );
+  });
 });
