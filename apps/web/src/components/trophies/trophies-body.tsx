@@ -14,32 +14,15 @@ import { AchievementsGrid } from "@/components/trophies/achievements-grid";
 import { getVictoryAddress } from "@/lib/game/victory-events";
 import { computeAchievements } from "@/lib/achievements/compute";
 import type { VictoryEntry } from "@/lib/game/victory-events";
+import {
+  clearOptimisticVictory,
+  getOptimisticVictory,
+  toVictoryEntry,
+  useTrophiesData,
+  type ApiVictoryRow,
+} from "@/components/trophies/trophies-data-provider";
 
 type RoadmapItem = { title: string; description: string };
-
-type ApiVictoryRow = {
-  tokenId: string;
-  player: string;
-  difficulty: number;
-  totalMoves: number;
-  timeMs: number;
-  timestamp: number;
-};
-
-function toVictoryEntry(row: ApiVictoryRow): VictoryEntry {
-  return {
-    tokenId: BigInt(row.tokenId),
-    player: row.player,
-    difficulty: row.difficulty,
-    totalMoves: row.totalMoves,
-    blockNumber: 0n,
-    logIndex: 0,
-    timestamp: row.timestamp,
-    timeMs: row.timeMs,
-  };
-}
-
-const OPTIMISTIC_TTL_MS = 2 * 60 * 1000;
 
 /** Compact time formatter used inside the HERO BAND's "Your best" line.
  *  Mirrors trophy-card.tsx#formatTimeMs but kept local so the hero
@@ -49,68 +32,6 @@ function formatTimeMs(ms: number): string {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
-}
-
-function getOptimisticVictory(): ApiVictoryRow | null {
-  try {
-    const raw = sessionStorage.getItem("chesscito:optimistic-victory");
-    if (!raw) return null;
-    const entry = JSON.parse(raw);
-    if (Date.now() - entry.ts > OPTIMISTIC_TTL_MS) {
-      sessionStorage.removeItem("chesscito:optimistic-victory");
-      return null;
-    }
-    return {
-      tokenId: entry.tokenId,
-      player: entry.player,
-      difficulty: entry.difficulty,
-      totalMoves: entry.totalMoves,
-      timeMs: entry.timeMs,
-      timestamp: Math.floor(entry.ts / 1000),
-    };
-  } catch {
-    return null;
-  }
-}
-
-function clearOptimisticVictory() {
-  try { sessionStorage.removeItem("chesscito:optimistic-victory"); } catch { /* ignore */ }
-}
-
-// ── Lightweight my-victories fetcher used by TrophiesHeroBand ────────────
-// 2026-05-30: extracted so the hero can render outside the scroll container
-// (mirror Badges pattern). The body keeps its own copy of the same fetch
-// because it needs the data for the My Victories section + achievements.
-// Both fetches hit the same cached endpoint so the duplicate is cheap.
-function useMyVictoriesQuick(): { victories: VictoryEntry[] | undefined } {
-  const { address, isConnected } = useAccount();
-  const [victories, setVictories] = useState<VictoryEntry[] | undefined>();
-  const configured = getVictoryAddress() !== null;
-
-  useEffect(() => {
-    if (!isConnected || !address || !configured) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/my-victories?player=${address}`);
-        if (!res.ok) return;
-        const rows = (await res.json()) as ApiVictoryRow[];
-        if (cancelled) return;
-        const entries = rows.map(toVictoryEntry);
-        const optimistic = getOptimisticVictory();
-        if (optimistic && optimistic.player.toLowerCase() === address.toLowerCase()) {
-          const found = entries.some((e) => String(e.tokenId) === optimistic.tokenId);
-          if (!found) entries.unshift(toVictoryEntry(optimistic));
-        }
-        setVictories(entries);
-      } catch {
-        // Stay undefined — the hero falls back to its empty hint.
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [address, isConnected, configured]);
-
-  return { victories };
 }
 
 /**
@@ -126,7 +47,7 @@ function useMyVictoriesQuick(): { victories: VictoryEntry[] | undefined } {
  */
 export function TrophiesHeroBand() {
   const t = useTranslations("TROPHY_VITRINE_COPY");
-  const { victories } = useMyVictoriesQuick();
+  const { victories } = useTrophiesData();
   const summary = computeAchievements(victories);
   const victoryCount = victories?.length ?? 0;
   const hasVictories = victoryCount > 0;
@@ -187,11 +108,15 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
 
-  const [myVictories, setMyVictories] = useState<VictoryEntry[]>();
+  const {
+    victories: myVictories,
+    loading: myLoading,
+    error: myError,
+    reload: loadMyVictories,
+  } = useTrophiesData();
+
   const [hallOfFame, setHallOfFame] = useState<VictoryEntry[]>();
-  const [myLoading, setMyLoading] = useState(false);
   const [hofLoading, setHofLoading] = useState(true);
-  const [myError, setMyError] = useState<string | null>(null);
   const [hofError, setHofError] = useState<string | null>(null);
 
   const configured = getVictoryAddress() !== null;
@@ -225,41 +150,9 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
     }
   }, [configured, t]);
 
-  const loadMyVictories = useCallback(async () => {
-    if (!address || !configured) return;
-    setMyLoading(true);
-    setMyError(null);
-    try {
-      const res = await fetch(`/api/my-victories?player=${address}`);
-      if (!res.ok) throw new Error("fetch failed");
-      const rows = (await res.json()) as ApiVictoryRow[];
-      const entries = rows.map(toVictoryEntry);
-      const optimistic = getOptimisticVictory();
-      if (optimistic && optimistic.player.toLowerCase() === address?.toLowerCase()) {
-        const found = entries.some((e) => String(e.tokenId) === optimistic.tokenId);
-        if (found) {
-          clearOptimisticVictory();
-        } else {
-          entries.unshift(toVictoryEntry(optimistic));
-        }
-      }
-      setMyVictories(entries);
-    } catch {
-      setMyError(t("loadError"));
-    } finally {
-      setMyLoading(false);
-    }
-  }, [address, configured, t]);
-
   useEffect(() => {
     void loadHallOfFame();
   }, [loadHallOfFame]);
-
-  useEffect(() => {
-    if (isConnected && address) {
-      void loadMyVictories();
-    }
-  }, [isConnected, address, loadMyVictories]);
 
   if (!configured) {
     return (
