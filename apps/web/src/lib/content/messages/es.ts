@@ -892,6 +892,7 @@ const messages = {
     configError: "Trofeos sin conexión",
     roadmap: "Próximamente: Torneos • Pases VIP • Recompensas de temporada",
     arenaLink: "ARENA",
+    saveLaterFromHistoryLink: "O guarda una victoria pasada →",
     cardIdPrefix: "Victoria",
     backLabel: "Atrás",
     verifiableVictoryHeadline: "Victoria verificable",

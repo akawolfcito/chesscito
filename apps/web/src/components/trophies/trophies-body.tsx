@@ -13,6 +13,7 @@ import { TrophyList } from "@/components/trophies/trophy-list";
 import { AchievementsGrid } from "@/components/trophies/achievements-grid";
 import { getVictoryAddress } from "@/lib/game/victory-events";
 import { computeAchievements } from "@/lib/achievements/compute";
+import { useCoachHistoryCount } from "@/lib/coach/use-coach-history-count";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 import {
   clearOptimisticVictory,
@@ -107,6 +108,12 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
   const tRoad = useTranslations("ROADMAP_COPY");
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
+  // Save Later (2026-05-31): empty-state secondary CTA "Or save a past
+  // victory" only renders when the user has at least one match in
+  // history. Gating prevents a brand-new user from being routed to an
+  // empty /coach/history dead-end.
+  const { rowCount: historyRowCount } = useCoachHistoryCount(address);
+  const hasPastMatches = (historyRowCount ?? 0) > 0;
 
   const {
     victories: myVictories,
@@ -251,6 +258,15 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
               {t("arenaLink")}
             </span>
           </Link>
+          {hasPastMatches && (
+            <Link
+              href="/coach/history"
+              className="text-sm font-semibold underline decoration-dotted underline-offset-4"
+              style={{ color: "rgba(63, 34, 8, 0.78)" }}
+            >
+              {t("saveLaterFromHistoryLink")}
+            </Link>
+          )}
         </div>
       ) : (
         <TrophyList
