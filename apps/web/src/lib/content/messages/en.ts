@@ -155,7 +155,7 @@ m.HUD_COPY.shieldsAriaLabel =
   "{count, plural, =1 {1 streak shield available} other {# streak shields available}}";
 m.HUD_COPY.shieldsFormat = "Shield ×{count}";
 m.RESULT_OVERLAY_COPY.badge.subtitle = "{piece} Ascendant is now yours to keep";
-m.RESULT_OVERLAY_COPY.shop.subtitle = "{item} acquired — thank you for supporting Chesscito";
+m.RESULT_OVERLAY_COPY.shop.subtitle = "{item} acquired. Thank you for supporting Chesscito";
 m.BADGE_EARNED_COPY.title = "{piece} Ascendant Earned";
 m.PIECE_COMPLETE_COPY.subtitleWithNext = "You've mastered this piece! The {next} awaits.";
 m.PIECE_COMPLETE_COPY.nextPiece = "Start {piece}";
@@ -193,7 +193,7 @@ m.HUB_V2_MASTERY_COPY.streakLabel =
 
 // HUB action rail + scaffold format helpers.
 m.HUB_ACTION_RAIL_COPY.arenaUnlockedAriaFormat = "Special training: {name}";
-m.HUB_ACTION_RAIL_COPY.arenaLockedAriaFormat = "{name} — locked";
+m.HUB_ACTION_RAIL_COPY.arenaLockedAriaFormat = "{name}: locked";
 m.HUB_ACTION_RAIL_COPY.dailyCompletedAriaFormat =
   "Daily Tactic completed. Fresh in {hours}h.";
 m.HUB_ACTION_RAIL_COPY.dailyPlayAriaFormat = "Play today's Daily Tactic. {name}.";

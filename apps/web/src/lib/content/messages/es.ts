@@ -721,7 +721,7 @@ const messages = {
         title: "Aún confirmando…",
         subtitle:
           "La red está tardando más de lo normal. Tu wallet puede tener ya la confirmación.",
-        hint: "Revisa primero tu wallet — si sigue pendiente, espera un momento antes de reintentar.",
+        hint: "Revisa primero tu wallet. Si sigue pendiente, espera un momento antes de reintentar.",
       },
     },
     statusHeadlinePaused: "En pausa",
@@ -1015,7 +1015,7 @@ const messages = {
     emptyAria: "Sin reclamos pendientes",
   },
   HOME_ANCHOR_COPY: {
-    alt: "Reino de Chesscito — Wolfcito el mago con estatuas de piezas de ajedrez",
+    alt: "Reino de Chesscito. Wolfcito el mago con estatuas de piezas de ajedrez",
     attractHint: "Tu entrenamiento te espera en el reino",
     taglineLead: "Entrena tus piezas. Domina el tablero.",
     taglineHighlight: "¡Después juega y gana!",
@@ -1521,7 +1521,7 @@ const messages = {
         "HUD premium",
       ],
       cta: "Ver plan",
-      ariaLabel: "Pase de entrenamiento — $1.99 por 30 días, ver plan",
+      ariaLabel: "Pase de entrenamiento: $1.99 por 30 días, ver plan",
     },
   },
   HUB_ACTION_RAIL_COPY: {

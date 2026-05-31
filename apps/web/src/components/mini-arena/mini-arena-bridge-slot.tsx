@@ -40,7 +40,7 @@ export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: P
           icon={<ActionRowIcon name="play-chess" className="h-14 w-14 object-contain" />}
           onClick={() => setOpen(true)}
           disabled={!unlocked}
-          aria-label={unlocked ? `Reto avanzado: ${setup.name}` : `${setup.name} — locked`}
+          aria-label={unlocked ? `Reto avanzado: ${setup.name}` : `${setup.name}: locked`}
         />
       </span>
       {unlocked ? (

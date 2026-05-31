@@ -1175,8 +1175,8 @@ export const HUB_V2_DOCK_COPY = {
     count === 1 ? "Shield ×1" : `Shields ×${count}`,
   shieldsRibbonAriaLabel: (count: number): string =>
     count === 1
-      ? "1 streak shield available — open shop"
-      : `${count} streak shields available — open shop`,
+      ? "1 streak shield available. Open shop"
+      : `${count} streak shields available. Open shop`,
   primaryActionsAriaLabel: "Primary actions",
 } as const;
 
@@ -1972,7 +1972,7 @@ export const ACCOUNT_SHEET_COPY = {
   shieldsRowLabel: "Streak Shields",
   shieldsRowSubtitle: "Retry exercises without losing your streak.",
   shieldsStatusAvailable: "{count} ready",
-  shieldsStatusEmpty: "None — get some",
+  shieldsStatusEmpty: "None. Get some",
   /** 2026-05-30: Founder Badge inventory row. Permanent collectible;
    *  status flips to "Owned" once the chain scan confirms purchase. */
   founderRowLabel: "Founder Badge",
