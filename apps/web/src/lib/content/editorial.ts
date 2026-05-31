@@ -711,9 +711,9 @@ export const VICTORY_CELEBRATION_COPY = {
   headlineCheckmate: "Checkmate!",
   headlineWin: "Victory!",
   performanceLine: (moves: number, time: string) =>
-    `Solved in ${moves} moves — ${time}`,
+    `Solved in ${moves} moves · ${time}`,
   performanceLineCheckmate: (moves: number, time: string) =>
-    `Checkmate in ${moves} moves — ${time}`,
+    `Checkmate in ${moves} moves · ${time}`,
   shareTextBasic: (moves: number, url: string) =>
     `♟ Checkmate in ${moves} moves. Can you beat that?\nPlay Chesscito on Celo 👉 ${url}`,
   shareTextClaimed: (moves: number, tokenId: bigint | number, url: string) =>
@@ -874,10 +874,10 @@ export const ARENA_COPY = {
   promotionTitle: "Promote pawn to:",
   endState: {
     checkmate: {
-      win: "Checkmate — You Win!",
-      lose: "Checkmate — AI Wins",
+      win: "Checkmate. You Win!",
+      lose: "Checkmate. AI Wins",
     },
-    stalemate: "Stalemate — Draw",
+    stalemate: "Stalemate. Draw",
     draw: "Draw",
     resigned: "You resigned",
   },

@@ -605,8 +605,8 @@ const messages = {
     promotionTitle: "Promueve el peón a:",
     endState: {
       checkmate: {
-        win: "Jaque mate — ¡Ganaste!",
-        lose: "Jaque mate — La IA ganó",
+        win: "Jaque mate. ¡Ganaste!",
+        lose: "Jaque mate. La IA ganó",
       },
       stalemate: "Tablas por ahogado",
       draw: "Tablas",
@@ -734,8 +734,8 @@ const messages = {
     title: "Victoria",
     headlineCheckmate: "¡Jaque mate!",
     headlineWin: "¡Victoria!",
-    performanceLine: "Resuelta en {moves} jugadas — {time}",
-    performanceLineCheckmate: "Jaque mate en {moves} jugadas — {time}",
+    performanceLine: "Resuelta en {moves} jugadas · {time}",
+    performanceLineCheckmate: "Jaque mate en {moves} jugadas · {time}",
     stats: { difficulty: "nivel", moves: "jugadas", time: "tiempo" },
     primaryLabel: "Guardar victoria",
     coachPillFree: "Ver momentos clave",
