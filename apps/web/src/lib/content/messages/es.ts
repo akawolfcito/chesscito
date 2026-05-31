@@ -152,7 +152,7 @@ const messages = {
         },
         {
           heading: "Transacciones on-chain",
-          body: "Ciertas acciones — incluyendo reclamos de badges, envío de scores, compras en la tienda y mint de NFTs — interactúan con smart contracts en la blockchain de Celo. Estas transacciones son irreversibles una vez confirmadas on-chain.",
+          body: "Ciertas acciones (incluyendo reclamos de badges, envío de scores, compras en la tienda y mint de NFTs) interactúan con smart contracts en la blockchain de Celo. Estas transacciones son irreversibles una vez confirmadas on-chain.",
         },
         {
           heading: "Activos digitales",
@@ -572,7 +572,7 @@ const messages = {
     viewOnCeloscan: "Ver en Celoscan",
     shareTrophy: "Compartir trofeo",
     analysisPending: "Analizando tu partida…",
-    analysisPendingHint: "Quédate aquí — el análisis aparece debajo apenas esté listo.",
+    analysisPendingHint: "Quédate aquí. El análisis aparece debajo apenas esté listo.",
     creditsHint: "Usa 1 crédito · te quedan {count}",
     creditsHintPro: "Ilimitado · PRO activo",
   },
@@ -622,7 +622,7 @@ const messages = {
     prizePoolLoading: "Cargando premio…",
     prizePoolUnavailable: "Premio no disponible",
     prizePoolSoonHint:
-      "Distribución v2 próximamente — 20% de cada victoria guardada va al premio comunitario",
+      "Distribución v2 próximamente. 20% de cada victoria guardada va al premio comunitario",
     aiError: "IA desconectada",
     aiTimeout: "La IA tardó demasiado",
     engineError: "Error del motor. Reinicia la partida.",
@@ -851,7 +851,7 @@ const messages = {
     previewUnavailable: "Vista previa no disponible",
   },
   VICTORY_PAGE_COPY: {
-    tagline: "Entrena tu mente con retos pre-ajedrecísticos — un juego de Celo MiniPay",
+    tagline: "Entrena tu mente con retos pre-ajedrecísticos. Un juego de Celo MiniPay",
     challengeLine: "¿Puedes superarlo?",
     acceptChallenge: "Aceptar reto",
     backToHub: "HUB",
@@ -1159,7 +1159,7 @@ const messages = {
     },
     shop: {
       title: "¡Compra lista!",
-      subtitle: "{item} desbloqueado — gracias por apoyar Chesscito",
+      subtitle: "{item} desbloqueado. Gracias por apoyar Chesscito",
     },
     error: {
       title: "No se pudo guardar",
@@ -1203,7 +1203,7 @@ const messages = {
     title: "¡Todos los ejercicios completos!",
     subtitleWithNext: "¡Has dominado esta pieza! Te espera {next}.",
     subtitleFinal: "¡Has conquistado cada pieza. Ahora demuéstralo en la Arena!",
-    subtitleKeepPracticing: "Sigue empujando — ¡más estrellas desbloquean tu insignia!",
+    subtitleKeepPracticing: "Sigue empujando. ¡Más estrellas desbloquean tu insignia!",
     tryArena: "ARENA",
     nextPiece: "Comenzar {piece}",
     practiceAgain: "Practicar de nuevo",

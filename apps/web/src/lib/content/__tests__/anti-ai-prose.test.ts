@@ -22,9 +22,9 @@ import { join } from "node:path";
  * ariaLabels + pawn lockedHint). Target: 0.
  */
 const COPY_SOURCES = [
-  { file: "editorial.ts", emCeiling: 12, enCeiling: 1 },
+  { file: "editorial.ts", emCeiling: 4, enCeiling: 1 },
   { file: "messages/en.ts", emCeiling: 2, enCeiling: 0 },
-  { file: "messages/es.ts", emCeiling: 11, enCeiling: 1 },
+  { file: "messages/es.ts", emCeiling: 4, enCeiling: 1 },
 ] as const;
 
 /** Remove /* ... *​/ block comments and // line comments so the remaining
