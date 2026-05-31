@@ -195,12 +195,12 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
     setFading(false)
 
     /* Success holds longer so the radial burst + gentle gravity fall
-       (~2.5s + delays) can play through. The confetti opacity reaches
-       0 inside the keyframe (100%) before the scrim fade kicks in, so
-       fadeAt lines up with the last chips dissolving naturally.
-       Failure keeps the snappy original timing. */
-    const fadeAt = isSuccess ? 2200 : 600
-    const hideAt = isSuccess ? 2600 : 950
+       (~3s + delays) can play through. Failure is intentionally shorter
+       than success — it's informative feedback, not a celebration, and
+       a long modal punishes losing streaks. 1.8/2.2s is enough to read
+       "Try Again" + the avatar without dragging on a 3-fail run. */
+    const fadeAt = isSuccess ? 2700 : 1800
+    const hideAt = isSuccess ? 3100 : 2200
 
     const fadeTimer = setTimeout(() => setFading(true), fadeAt)
     const hideTimer = setTimeout(() => setVisible(false), hideAt)
@@ -215,17 +215,22 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
 
   return (
     <div
-      className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${
+      className={`pointer-events-none fixed inset-0 z-[70] flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${
         fading ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      <div className="relative flex flex-col items-center gap-3 animate-in zoom-in-90 duration-300">
+      {/* Avatar is the centering anchor — banner sits absolutely above it
+          so it doesn't add to the stack height and push the avatar below
+          viewport center. Result: the wolf reads as the focal point at
+          true X+Y center, with the banner overlapping the airspace
+          above. */}
+      <div className="relative animate-in zoom-in-90 duration-300">
         {(() => {
           const bannerBase = isSuccess ? 'welldone-sms' : 'try-again'
           const avatarBase = isSuccess ? 'avatar-fun' : 'avatar-try-again'
           return (
             <>
-              <picture>
+              <picture className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2">
                 <source
                   srcSet={`/art/${bannerBase}.avif`}
                   type="image/avif"
@@ -237,14 +242,14 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
                 <img
                   src={`/art/${bannerBase}.png`}
                   alt={flashText}
-                  className="h-auto w-[78%] max-w-[300px] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
+                  className="h-auto w-[260px] max-w-[78vw] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
                   style={{
                     animation:
                       'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
                   }}
                 />
               </picture>
-              <div className="relative flex h-44 w-44 items-center justify-center">
+              <div className="relative flex h-80 w-80 items-center justify-center">
                 {/* Confetti lives inside the avatar container so the
                     radial burst emanates from the avatar's center.
                     Container must NOT clip overflow — chips travel far
@@ -263,7 +268,7 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
                     mass without competing with the sparkle burst on
                     success. */}
                 <div
-                  className="pointer-events-none absolute h-40 w-40 rounded-full"
+                  className="pointer-events-none absolute h-72 w-72 rounded-full"
                   style={{
                     background:
                       'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
@@ -282,7 +287,7 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
                     src={`/art/${avatarBase}.png`}
                     alt=""
                     aria-hidden="true"
-                    className="h-40 w-40 object-contain drop-shadow-[0_4px_14px_rgba(120,65,5,0.55)]"
+                    className="h-80 w-80 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
                     style={{
                       animation:
                         'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
