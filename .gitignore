@@ -115,9 +115,13 @@ private/
 .agents/
 .claude/projects/
 .claude/skills/
+.claude/commands/
 .cursor/
 .gemini/
 .superpowers/
+
+# Local-only ops tooling (per memory: disk-telemetry intentionally uncommitted)
+scripts/disk-telemetry.sh
 
 # Session handoff notes — personal, not project
 SESSION.md
