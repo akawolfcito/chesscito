@@ -113,6 +113,36 @@ describe("POST /api/sign-victory", () => {
       expect(res.status).toEqual(200);
       expect((await res.json()).totalMoves).toBe("4");
     });
+
+    /**
+     * Save Later contract (2026-05-31): the route signs ANY transcript
+     * that replays into a valid mate by the claimed colour. No
+     * timestamp / freshness / age field exists in the body schema, so
+     * a user can sign a victory from a match they played yesterday or
+     * months ago. Documents-as-code regression guard for the Save Later
+     * cluster — if a `gameAge`/`maxAge` field is ever added that
+     * rejects past matches, this assertion fails and forces a deliberate
+     * cluster revisit.
+     */
+    it("Save Later: accepts arbitrary past games (no time-window guard in body schema)", async () => {
+      const signFn = goodConfig();
+      const res = await POST(makeRequest(validBody()));
+      expect(res.status).toEqual(200);
+      const signedPayload = signFn.mock.calls[0][2] as Record<string, unknown>;
+      // The signed EIP-712 payload exposes the public surface; no
+      // freshness field should leak in. If a new freshness key appears,
+      // confirm intentionally by updating this allowlist.
+      expect(Object.keys(signedPayload).sort()).toEqual(
+        [
+          "player",
+          "difficulty",
+          "totalMoves",
+          "timeMs",
+          "nonce",
+          "deadline",
+        ].sort(),
+      );
+    });
   });
 
   describe("transcript validation", () => {
