@@ -1,4 +1,11 @@
-# Em-dash sweep + regression guard — Handoff
+# Em-dash sweep + regression guard — Handoff (chunks 1-7, SUPERSEDED)
+
+> **SUPERSEDED 2026-05-30:** The sweep continued in chunks 8-12 the same
+> day and closed the cluster at 0/0/0 em-dash. Full closure record:
+> `docs/handoffs/2026-05-30-em-dash-sweep-cluster-closed-handoff.md`.
+> This file is the originating handoff (chunks 1-7) — kept for the
+> per-chunk delta accounting and convention history. The "What's left
+> (42 em-dashes…)" section is OBSOLETE; all 42 have been swept.
 
 **Date:** 2026-05-30 (third session of the day) · **Branch:** main · **Range:** `d8034243..974afd07` (10 commits)
 **Status:** All commits pushed to `origin/main`. No production promote.
@@ -6,6 +13,7 @@
 Sibling handoffs (same day):
 - `2026-05-30-playercolor-callouts-vr-refresh-handoff.md` — Cluster C visor + VR baseline refresh.
 - `2026-05-30-shop-cleanup-vr-settle-pro-days-handoff.md` — shop tile cleanup + PRO days-remaining sub-line.
+- `2026-05-30-em-dash-sweep-cluster-closed-handoff.md` — chunks 8-12 + closure (this cluster's final state).
 
 ## What shipped
 
