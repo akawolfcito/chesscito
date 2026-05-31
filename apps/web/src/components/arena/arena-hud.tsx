@@ -145,8 +145,12 @@ function ArenaTimerChip({ elapsedMs }: { elapsedMs: number }) {
  * oscuridad (handoff 2026-05-30 §1). Renders only when count > 0 and
  * the match is in-play; suppressed in end-state so the closing UI
  * doesn't compete. Reuses the canonical candy-tray-pill family + the
- * HUD_COPY shields* keys already provisioned for the hub HUD. */
-function ArenaShieldsChip() {
+ * HUD_COPY shields* keys already provisioned for the hub HUD.
+ *
+ * Exported (2026-05-30) so the /dev/arena-shields-chip fixture can
+ * mount this slice in isolation without pulling the full ArenaHud +
+ * wagmi tree into the VR harness. */
+export function ArenaShieldsChip() {
   const t = useTranslations("HUD_COPY");
   const count = useShieldsCount();
   if (count <= 0) return null;
