@@ -193,6 +193,25 @@ test.describe("visual regression — Step 2 baselines", () => {
     await settle(page, 400);
     await expect(page).toHaveScreenshot("about-page.png", STATIC_PAGE_OPTS);
   });
+
+  // 2026-05-30: legal page baselines added to cover the em-dash sweep
+  // pass on these surfaces (chunks 8-12). Pairs with about/support so
+  // the LegalPageShell family is locked end-to-end.
+  test("terms-page — Terms of Service body + footer", async ({ page }) => {
+    await bypassFirstVisit(page);
+    await page.goto("/terms", { waitUntil: "networkidle", timeout: 30_000 });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot("terms-page.png", STATIC_PAGE_OPTS);
+  });
+
+  test("privacy-page — Privacy Policy body + footer", async ({ page }) => {
+    await bypassFirstVisit(page);
+    await page.goto("/privacy", { waitUntil: "networkidle", timeout: 30_000 });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot("privacy-page.png", STATIC_PAGE_OPTS);
+  });
 });
 
 // Step 3 baselines — fixture-driven component isolation. Backed by the
@@ -419,6 +438,52 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     await settle(page, 800);
     await expect(page).toHaveScreenshot(
       "vr9-arena-end-state-resigned.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  // 2026-05-30: loss/draw variants added to lock the remaining
+  // ArenaEndState terminal branches that the em-dash sweep (chunks 8-12)
+  // touched. The win-* family was already covered; these three close the
+  // matrix so any future copy or layout drift surfaces here instead of in
+  // production.
+  test("vr9-arena-end-state-checkmate — opponent mates the player", async ({
+    page,
+  }) => {
+    await page.goto("/dev/arena-end-state?variant=checkmate", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-checkmate.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-stalemate — draw by stalemate", async ({ page }) => {
+    await page.goto("/dev/arena-end-state?variant=stalemate", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-stalemate.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-draw — agreed draw", async ({ page }) => {
+    await page.goto("/dev/arena-end-state?variant=draw", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-draw.png",
       FIXTURE_OPTS,
     );
   });
