@@ -12,13 +12,39 @@ const log = createLogger({ route: "/api/games/[id]/mint-receipt" });
 
 const TX_HASH_RE = /^0x[a-fA-F0-9]{64}$/;
 
-function isHttpsUrl(s: string | undefined): s is string {
+// Build the host allowlist for share URLs from the same env vars used by
+// enforceOrigin. Exact host match — no wildcards — to block lookalike
+// domains, IDN homographs, and DNS takeover of orphan subdomains.
+function buildAllowedShareHosts(): Set<string> {
+  const hosts = new Set<string>();
+  for (const envVar of [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_PREVIEW_URL,
+    process.env.VERCEL_URL,
+    process.env.VERCEL_BRANCH_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  ]) {
+    if (envVar) hosts.add(envVar.replace(/^https?:\/\//, ""));
+  }
+  return hosts;
+}
+
+// Rejects HTTP, malformed URLs, and any host outside the allowlist. When the
+// allowlist is empty (local dev with no env vars set), falls back to
+// HTTPS-only to preserve developer DX — production / preview / Vercel
+// deploys always have at least one of the env vars populated, so the
+// allowlist enforcement always runs there.
+function isAllowedShareUrl(s: string | undefined, allowedHosts: Set<string>): s is string {
   if (!s) return false;
+  let url: URL;
   try {
-    return new URL(s).protocol === "https:";
+    url = new URL(s);
   } catch {
     return false;
   }
+  if (url.protocol !== "https:") return false;
+  if (allowedHosts.size === 0) return true;
+  return allowedHosts.has(url.host);
 }
 
 export async function POST(
@@ -66,7 +92,8 @@ export async function POST(
   if (!body.claimTxHash || !TX_HASH_RE.test(body.claimTxHash)) {
     return NextResponse.json({ error: "Invalid claimTxHash" }, { status: 400 });
   }
-  if (!isHttpsUrl(body.shareCardUrl) || !isHttpsUrl(body.shareLinkUrl)) {
+  const allowedHosts = buildAllowedShareHosts();
+  if (!isAllowedShareUrl(body.shareCardUrl, allowedHosts) || !isAllowedShareUrl(body.shareLinkUrl, allowedHosts)) {
     return NextResponse.json({ error: "Invalid share URLs" }, { status: 400 });
   }
 
