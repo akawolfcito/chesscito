@@ -340,7 +340,7 @@ const messages = {
       purchaseFailed:
         "No se pudo verificar la compra. Intenta de nuevo.",
       walletRequired: "Conecta tu wallet para comprar PRO.",
-      verifyFailedTitle: "Pago confirmado — verificación pendiente.",
+      verifyFailedTitle: "Pago confirmado. Verificación pendiente.",
       verifyFailedReassurance:
         "Tu pago quedó guardado en Celo. Reintentar no genera doble cobro.",
       retryVerifyCta: "Reintentar",
@@ -538,7 +538,7 @@ const messages = {
     ...en.COACH_VIEWER_COPY,
     tooShortToReview: "Esta partida fue demasiado corta para revisar.",
     replayStoppedAtMove:
-      "La reproducción se detuvo en la jugada {n} — no se pudo reproducir {san}.",
+      "La reproducción se detuvo en la jugada {n}. No se pudo reproducir {san}.",
     previousMove: "Jugada anterior",
     nextMove: "Jugada siguiente",
     sliderAriaLabel: "Saltar a jugada",
@@ -556,7 +556,7 @@ const messages = {
     reconnectSubtitle: "Esta partida está vinculada a tu wallet.",
     reconnectCta: "Conectar wallet",
     loadErrorTitle: "No se pudo cargar esta partida",
-    loadErrorSubtitle: "Problema de red o servidor — intenta de nuevo o juega otra.",
+    loadErrorSubtitle: "Problema de red o servidor. Intenta de nuevo o juega otra.",
     loadErrorRetry: "Reintentar",
     notFoundMessage: "Partida no encontrada.",
     backLabel: "Atrás",
@@ -625,9 +625,9 @@ const messages = {
       "Distribución v2 próximamente — 20% de cada victoria guardada va al premio comunitario",
     aiError: "IA desconectada",
     aiTimeout: "La IA tardó demasiado",
-    engineError: "Error del motor — reinicia la partida",
+    engineError: "Error del motor. Reinicia la partida.",
     restartMatch: "Reiniciar",
-    boardError: "Error del tablero — reinicia la partida",
+    boardError: "Error del tablero. Reinicia la partida.",
     coachSignal: {
       inactiveTitle: "ANÁLISIS",
       inactiveBody: "Desbloquea el análisis completo al jugar",
@@ -783,7 +783,7 @@ const messages = {
     toastDoneSuccess: "Listo",
     toastDoneFailed: "Falló",
     stepCounter: "Paso {current} de {total}",
-    toastErrorFallback: "Transacción fallida — ver detalles",
+    toastErrorFallback: "Transacción fallida. Ver detalles.",
   },
   SHARE_COPY: {
     ...en.SHARE_COPY,
@@ -1124,7 +1124,7 @@ const messages = {
     switchNetwork: { label: "Cambiar Red", compactLabel: "Red", loading: null },
     shieldsLeft: "{n} restantes",
     submitCanceled: "Guardado cancelado",
-    submitFailed: "Falló el guardado — reintenta",
+    submitFailed: "Falló el guardado. Reintenta.",
   },
   PIECE_RAIL_COPY: {
     comingSoon: "Pronto",
@@ -1165,14 +1165,14 @@ const messages = {
       title: "No se pudo guardar",
       cancelled: "El guardado fue cancelado",
       insufficientFunds: "Fondos insuficientes para completar esta acción",
-      network: "Error de red — revisa tu conexión y reintenta",
+      network: "Error de red. Revisa tu conexión y reintenta.",
       timeout:
         "Esto está tardando más de lo esperado. Revisa tu wallet o reintenta.",
-      revert: "Falló la confirmación — esta acción puede no estar disponible ahora",
+      revert: "Falló la confirmación. Esta acción puede no estar disponible ahora.",
       unknown: "Algo salió mal. Por favor reintenta",
       badgeAlreadyClaimed: "¡Ya tienes esta insignia!",
-      signingUnavailable: "Servicio de firma no disponible — reintenta en un momento.",
-      signatureExpired: "La firma expiró — toca para obtener una nueva",
+      signingUnavailable: "Servicio de firma no disponible. Reintenta en un momento.",
+      signatureExpired: "La firma expiró. Toca para obtener una nueva.",
       purchaseKindCopy: {
         error: {
           title: "No se pudo comprar",
@@ -1188,7 +1188,7 @@ const messages = {
           title: "Todavía confirmando…",
           subtitle:
             "La red está tardando más de lo usual. Tu wallet puede ya tener la transacción.",
-          hint: "Revisa tu wallet primero — si sigue pendiente, dale un momento antes de reintentar.",
+          hint: "Revisa tu wallet primero. Si sigue pendiente, dale un momento antes de reintentar.",
         },
       },
     },

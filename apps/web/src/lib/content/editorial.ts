@@ -50,7 +50,7 @@ export const FOOTER_CTA_COPY = {
   switchNetwork: { label: "Switch Network", compactLabel: "Network", loading: null },
   shieldsLeft: (n: number) => `${n} left`,
   submitCanceled: "Save canceled",
-  submitFailed: "Save failed — try again",
+  submitFailed: "Save failed. Try again.",
 } as const;
 
 /** ICU placeholders mirrored in messages/en.ts for the function helpers
@@ -148,11 +148,11 @@ export const RESULT_OVERLAY_COPY = {
     title: "Couldn't save",
     cancelled: "Save was cancelled",
     insufficientFunds: "Not enough funds to complete this transaction",
-    network: "Network error — check your connection and try again",
+    network: "Network error. Check your connection and try again.",
     timeout:
       "This is taking longer than expected. Check your wallet or try again.",
     revert:
-      "Transaction failed — this action may not be available right now",
+      "Transaction failed. This action may not be available right now.",
     unknown: "Something went wrong. Please try again",
     /** Surfaced by classifyTxError when the on-chain revert reason
      *  matches BadgeAlreadyClaimed (badge contract guard). Distinct
@@ -165,12 +165,12 @@ export const RESULT_OVERLAY_COPY = {
      *  mismatches from rotated keys). Distinct from `network` so the
      *  user understands the issue is server-side, not their wallet
      *  connection. */
-    signingUnavailable: "Signing service unavailable — try again in a moment.",
+    signingUnavailable: "Signing service unavailable. Try again in a moment.",
     /** Surfaced when the EIP-712 signature returned by /api/sign-victory
      *  is older than the contract's deadline (clock-skew or app-resume).
      *  Distinct from the generic `revert` so the user understands a
      *  fresh signature will fix it. */
-    signatureExpired: "Signature expired — tap to get a fresh one",
+    signatureExpired: "Signature expired. Tap to get a fresh one.",
     /** Per-kind copy for purchase end states (Buy Item Shop, Buy Coach
      *  Credits). Mirrors the cancelled/timeout/error split that
      *  VictoryClaimError.errorKindCopy already uses for Mint Victory,
@@ -192,7 +192,7 @@ export const RESULT_OVERLAY_COPY = {
         title: "Still Confirming…",
         subtitle:
           "The network is taking longer than usual. Your wallet may already have the transaction.",
-        hint: "Check your wallet first — if it's still pending, give it a moment before retrying.",
+        hint: "Check your wallet first. If it's still pending, give it a moment before retrying.",
       },
     },
   },
@@ -511,7 +511,7 @@ export const TX_PROGRESS_COPY = {
   stepCounter: (current: number, total: number) => `Step ${current} of ${total}`,
 
   // Generic error sub-copy when the surface didn't supply errorMessage
-  toastErrorFallback: "Transaction failed — see details",
+  toastErrorFallback: "Transaction failed. See details.",
 } as const;
 
 export const STATUS_STRIP_COPY = {
@@ -691,7 +691,7 @@ export const VICTORY_CLAIM_COPY = {
     timeout: {
       title: "Still confirming…",
       subtitle: "The network is taking longer than usual. Your wallet may already have the transaction.",
-      hint: "Check your wallet first — if it's still pending, give it a moment before retrying.",
+      hint: "Check your wallet first. If it's still pending, give it a moment before retrying.",
     },
   },
   /** Big headline rendered inside the victory-claim-error panel —
@@ -899,9 +899,9 @@ export const ARENA_COPY = {
   prizePoolSoonHint: "Distribution v2 coming — 20% of every saved Victory funds the community pool",
   aiError: "AI disconnected",
   aiTimeout: "AI timed out",
-  engineError: "Engine error — please restart the match",
+  engineError: "Engine error. Please restart the match.",
   restartMatch: "Restart",
-  boardError: "Board error — please restart the game",
+  boardError: "Board error. Please restart the game.",
   coachSignal: {
     inactiveTitle: "REVIEW",
     inactiveBody: "Unlock full review after playing",
@@ -1448,7 +1448,7 @@ export const COACH_CTA_COPY = {
  *  page-specific so locale bundles only need to override this once. */
 export const COACH_VIEWER_COPY = {
   tooShortToReview: "This match was too short to review.",
-  replayStoppedAtMove: "Replay stopped at move {n} — couldn't play {san}.",
+  replayStoppedAtMove: "Replay stopped at move {n}. Couldn't play {san}.",
   previousMove: "Previous move",
   nextMove: "Next move",
   sliderAriaLabel: "Jump to move",
@@ -1466,7 +1466,7 @@ export const COACH_VIEWER_COPY = {
   reconnectSubtitle: "This match is tied to your wallet.",
   reconnectCta: "Connect wallet",
   loadErrorTitle: "Couldn't load this match",
-  loadErrorSubtitle: "Network or server issue — try again, or play another.",
+  loadErrorSubtitle: "Network or server issue. Try again, or play another.",
   loadErrorRetry: "Retry",
   notFoundMessage: "Match not found.",
   backLabel: "Back",
@@ -1882,7 +1882,7 @@ export const PRO_COPY = {
     notConfigured: "PRO is not yet active. Check back shortly.",
     purchaseFailed: "Purchase could not be verified. Please try again.",
     walletRequired: "Connect your wallet to purchase PRO.",
-    verifyFailedTitle: "Payment confirmed — verification pending.",
+    verifyFailedTitle: "Payment confirmed. Verification pending.",
     verifyFailedReassurance:
       "Your payment is saved on Celo. Retrying won't double-charge.",
     retryVerifyCta: "Retry verification",
