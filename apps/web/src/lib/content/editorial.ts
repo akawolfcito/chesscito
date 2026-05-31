@@ -1699,7 +1699,7 @@ export const ABOUT_COPY = {
 export const ABOUT_METHODOLOGY_COPY = {
   sectionTitle: "Methodology",
   body:
-    "Chesscito's curriculum is designed by a real human team. Pedagogy by FIDE Master César Litvinov Alarcón — over 100 students supported, with alumni who have competed in national and international tournaments.",
+    "Chesscito's curriculum is designed by a real human team. Pedagogy by FIDE Master César Litvinov Alarcón. Over 100 students supported, with alumni who have competed in national and international tournaments.",
   cesar: "César Litvinov Alarcón · FIDE Master",
   wolfcito: "Wolfcito · Co-Founder",
 } as const;

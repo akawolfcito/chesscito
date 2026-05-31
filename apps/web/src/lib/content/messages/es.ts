@@ -71,7 +71,7 @@ const messages = {
   ABOUT_METHODOLOGY_COPY: {
     sectionTitle: "Metodología",
     body:
-      "El plan de estudios de Chesscito está diseñado por un equipo humano real. Pedagogía a cargo del Maestro FIDE César Litvinov Alarcón — más de 100 estudiantes acompañados, con egresados que han competido en torneos nacionales e internacionales.",
+      "El plan de estudios de Chesscito está diseñado por un equipo humano real. Pedagogía a cargo del Maestro FIDE César Litvinov Alarcón. Más de 100 estudiantes acompañados, con egresados que han competido en torneos nacionales e internacionales.",
     cesar: "César Litvinov Alarcón · Maestro FIDE",
     wolfcito: "Wolfcito · Co-fundador",
   },
