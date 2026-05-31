@@ -51,12 +51,21 @@ describe("GET /api/cron/sync", () => {
     expect(runSyncMock).not.toHaveBeenCalled();
   });
 
-  it("runs the sync without auth check when CRON_SECRET is not configured", async () => {
+  it("fails closed with 401 when CRON_SECRET is not configured", async () => {
+    // Defense-in-depth: missing env must reject all callers. Previous behavior
+    // returned 200 on missing secret, which let any unauthenticated caller
+    // trigger runSync() and burn Celo RPC + Redis budget.
     delete process.env.CRON_SECRET;
-    runSyncMock.mockResolvedValue({ synced: 0, failed: 0 });
+    const res = await GET(makeRequest("Bearer anything"));
+    expect(res.status).toEqual(401);
+    expect(runSyncMock).not.toHaveBeenCalled();
+  });
+
+  it("fails closed with 401 when CRON_SECRET is not configured and no auth header", async () => {
+    delete process.env.CRON_SECRET;
     const res = await GET(makeRequest());
-    expect(res.status).toEqual(200);
-    expect(runSyncMock).toHaveBeenCalledOnce();
+    expect(res.status).toEqual(401);
+    expect(runSyncMock).not.toHaveBeenCalled();
   });
 
   it("returns 500 when runSync throws", async () => {

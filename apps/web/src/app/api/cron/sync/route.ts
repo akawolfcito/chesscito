@@ -8,7 +8,10 @@ export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  // Defense-in-depth: missing CRON_SECRET must fail closed, otherwise any
+  // unauthenticated caller can trigger runSync() and burn Celo RPC + Redis
+  // budget. Matches /api/cron/coach-purge guard.
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
