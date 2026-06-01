@@ -30,13 +30,22 @@ type Props = {
   "data-testid"?: string;
 };
 
-/** Backplate art per surface. Hub uses the candy-style green
- *  `principalbutton` introduced 2026-05-08 (audit B6); other surfaces
- *  retain the stone backplate so the redesign rolls in incrementally. */
-const SURFACE_BACKPLATE_BASE: Record<PrimaryPlayCtaSurface, string> = {
-  playhub: "/art/redesign/banners/principalbutton",
+/** Backplate art per surface. Stone-textured surfaces keep their PNG
+ *  backplate; the "green" surfaces (playhub + arena-entry) migrated
+ *  2026-06-01 to a CSS gradient styled like .fail-rescue-modal-primary
+ *  but in green — user requested consolidation so all "primary-action"
+ *  buttons share the same bevel shadow + radius vocabulary. The CSS
+ *  variant is selected by class `.primary-play-cta--green-css` applied
+ *  in the className computation below. */
+const GREEN_CSS_SURFACES = new Set<PrimaryPlayCtaSurface>([
+  "playhub",
+  "arena-entry",
+]);
+
+const SURFACE_BACKPLATE_BASE: Record<PrimaryPlayCtaSurface, string | null> = {
+  playhub: null,
   arena: "/art/redesign/banners/btn-stone-bg",
-  "arena-entry": "/art/scene-rooted/principalbutton",
+  "arena-entry": null,
   "landing-hero": "/art/redesign/banners/btn-stone-bg",
   "landing-final-cta": "/art/redesign/banners/btn-stone-bg",
 };
@@ -79,9 +88,12 @@ export function PrimaryPlayCta({
     onPress?.();
   };
 
+  const usesGreenCss = GREEN_CSS_SURFACES.has(surface);
+
   const classes = [
     "primary-play-cta",
     `primary-play-cta--${surface}`,
+    usesGreenCss ? "primary-play-cta--green-css" : "",
     `is-atmosphere-${atmosphere}`,
     loading ? "is-loading" : "",
     disabled ? "is-disabled" : "",
@@ -101,16 +113,18 @@ export function PrimaryPlayCta({
       className={classes}
       data-testid={dataTestId}
     >
-      <picture className="primary-play-cta-backplate">
-        <source srcSet={`${backplateBase}.avif`} type="image/avif" />
-        <source srcSet={`${backplateBase}.webp`} type="image/webp" />
-        <img
-          src={`${backplateBase}.png`}
-          alt=""
-          aria-hidden="true"
-          className="primary-play-cta-backplate-img"
-        />
-      </picture>
+      {backplateBase ? (
+        <picture className="primary-play-cta-backplate">
+          <source srcSet={`${backplateBase}.avif`} type="image/avif" />
+          <source srcSet={`${backplateBase}.webp`} type="image/webp" />
+          <img
+            src={`${backplateBase}.png`}
+            alt=""
+            aria-hidden="true"
+            className="primary-play-cta-backplate-img"
+          />
+        </picture>
+      ) : null}
       <picture className="primary-play-cta-icon">
         <source srcSet={`${iconBase}.avif`} type="image/avif" />
         <source srcSet={`${iconBase}.webp`} type="image/webp" />

@@ -15,7 +15,7 @@ beforeEach(() => {
 });
 
 describe("PrimaryPlayCta", () => {
-  it("renders the playhub surface with the principalbutton backplate and the battle icon", () => {
+  it("renders the playhub surface with the CSS green variant and the battle icon", () => {
     const { container } = render(
       <PrimaryPlayCta surface="playhub" label="PLAY" ariaLabel="Play" />,
     );
@@ -23,12 +23,17 @@ describe("PrimaryPlayCta", () => {
     expect(cta.textContent).toContain("PLAY");
     expect(cta.className).toMatch(/primary-play-cta\b/);
     expect(cta.className).toMatch(/primary-play-cta--playhub\b/);
+    // 2026-06-01: green surfaces (playhub + arena-entry) migrated
+    // from PNG backplate to a CSS gradient via primary-play-cta--
+    // green-css. The backplate <picture> is no longer rendered;
+    // the battle-icon overlay PNG stays so users still see it.
+    expect(cta.className).toMatch(/primary-play-cta--green-css\b/);
 
     const sources = Array.from(container.querySelectorAll("source"));
     const srcsets = sources.map((s) => s.getAttribute("srcset"));
-    // Hub backplate swapped to candy-style green button (audit B6, 2026-05-08).
-    // Stone backplate retained on arena/landing surfaces — see SURFACE_BACKPLATE_BASE.
-    expect(srcsets).toContain("/art/redesign/banners/principalbutton.avif");
+    expect(srcsets).not.toContain(
+      "/art/redesign/banners/principalbutton.avif",
+    );
     expect(srcsets).toContain("/art/redesign/banners/btn-battle.avif");
   });
 
@@ -109,7 +114,7 @@ describe("PrimaryPlayCta", () => {
     expect(srcsets).toContain("/art/redesign/banners/btn-play.avif");
   });
 
-  it("renders the btn-play icon for the arena-entry surface", () => {
+  it("renders the btn-play icon for the arena-entry surface with the CSS green variant", () => {
     const { container } = render(
       <PrimaryPlayCta
         surface="arena-entry"
@@ -119,12 +124,15 @@ describe("PrimaryPlayCta", () => {
     );
     const cta = screen.getByRole("button", { name: "Start arena match" });
     expect(cta.className).toMatch(/primary-play-cta--arena-entry\b/);
+    expect(cta.className).toMatch(/primary-play-cta--green-css\b/);
     expect(cta.textContent).toContain("START");
     const srcsets = Array.from(container.querySelectorAll("source")).map((s) =>
       s.getAttribute("srcset"),
     );
     expect(srcsets).toContain("/art/redesign/banners/btn-play.avif");
-    expect(srcsets).toContain("/art/scene-rooted/principalbutton.avif");
+    // 2026-06-01: arena-entry no longer ships the scene-rooted/
+    // principalbutton PNG backplate — CSS gradient takes over.
+    expect(srcsets).not.toContain("/art/scene-rooted/principalbutton.avif");
   });
 
   it("treats arena and arena-entry as distinct surface modifiers", () => {
