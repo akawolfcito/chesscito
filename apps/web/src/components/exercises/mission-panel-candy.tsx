@@ -67,6 +67,12 @@ type MissionPanelProps = {
    *  bridge) that shouldn't push the board down. */
   actionRowLeft?: ReactNode
   actionRowRight?: ReactNode
+  /** Optional fail-rescue overlay (FailRescueModal). When supplied and
+   *  phase === 'failure', PhaseFlash holds open without autodismiss
+   *  and mounts the slot below the wolf after 1800ms. When omitted
+   *  (no rescue host wired), failure behavior stays byte-identical to
+   *  pre-cluster. */
+  failureRescueSlot?: ReactNode
 }
 
 type FlashConfig = { textKey: 'success' | 'failure'; accent: string; stroke: string }
@@ -176,23 +182,54 @@ function Confetti() {
   )
 }
 
-function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
+function PhaseFlash({
+  phase,
+  failureRescueSlot,
+}: {
+  phase: MissionPanelProps['phase']
+  /** Optional failure-only overlay slot. When supplied AND phase ===
+   *  'failure', PhaseFlash:
+   *    - skips the 1800/2200ms autodismiss timers (modal needs explicit
+   *      user action; see spec §3.2 decision 1)
+   *    - mounts the slot below the wolf after the 1800ms banner entry
+   *      animation finishes (spec §3.1)
+   *    - flips the scrim to pointer-events-auto so the modal CTAs are
+   *      tappable (background taps still do nothing — decision 2)
+   *  Success path and the no-slot failure path stay byte-identical to
+   *  pre-cluster behavior. */
+  failureRescueSlot?: React.ReactNode
+}) {
   const tFlash = useTranslations('PHASE_FLASH_COPY')
   const [visible, setVisible] = useState(false)
   const [fading, setFading] = useState(false)
+  const [rescueMounted, setRescueMounted] = useState(false)
   const flash = PHASE_FLASH[phase]
   const isSuccess = phase === 'success'
   const flashText = flash ? tFlash(flash.textKey) : ''
+  const hasRescue = phase === 'failure' && Boolean(failureRescueSlot)
 
   useEffect(() => {
     if (!flash) {
       setVisible(false)
       setFading(false)
+      setRescueMounted(false)
       return
     }
 
     setVisible(true)
     setFading(false)
+    setRescueMounted(false)
+
+    if (hasRescue) {
+      /* Failure-with-rescue: NO autodismiss. The flash holds until
+         the parent transitions phase away from 'failure' (after a
+         rescue or skip handler resets the board). Mount the rescue
+         slot once the banner entry animation has finished so the
+         wolf + banner read first, then the decision overlay slides
+         up beneath them. */
+      const rescueTimer = setTimeout(() => setRescueMounted(true), 1800)
+      return () => clearTimeout(rescueTimer)
+    }
 
     /* Success holds longer so the radial burst + gentle gravity fall
        (~3s + delays) can play through. Failure is intentionally shorter
@@ -209,96 +246,86 @@ function PhaseFlash({ phase }: { phase: MissionPanelProps['phase'] }) {
       clearTimeout(fadeTimer)
       clearTimeout(hideTimer)
     }
-  }, [phase, flash, isSuccess])
+  }, [phase, flash, isSuccess, hasRescue])
 
   if (!visible || !flash) return null
 
+  const bannerBase = isSuccess ? 'welldone-sms' : 'try-again'
+  const avatarBase = isSuccess ? 'avatar-fun' : 'avatar-try-again'
+
+  /* Wolf block extracted so both layouts (rescue + non-rescue) can
+     render it without JSX duplication. Identical to the pre-cluster
+     markup. */
+  const wolfBlock = (
+    <div className="relative animate-in zoom-in-90 duration-300">
+      <picture className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2">
+        <source srcSet={`/art/${bannerBase}.avif`} type="image/avif" />
+        <source srcSet={`/art/${bannerBase}.webp`} type="image/webp" />
+        <img
+          src={`/art/${bannerBase}.png`}
+          alt={flashText}
+          className="h-auto w-[260px] max-w-[78vw] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
+          style={{
+            animation:
+              'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+          }}
+        />
+      </picture>
+      <div className="relative flex h-80 w-80 items-center justify-center">
+        {isSuccess && <Confetti />}
+        {isSuccess && (
+          <div className="pointer-events-none absolute inset-0">
+            <LottieAnimation
+              src="/animations/sparkle-burst.lottie"
+              loop={false}
+              className="h-full w-full"
+            />
+          </div>
+        )}
+        <div
+          className="pointer-events-none absolute h-72 w-72 rounded-full"
+          style={{
+            background:
+              'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
+          }}
+        />
+        <picture className="relative z-10">
+          <source srcSet={`/art/${avatarBase}.avif`} type="image/avif" />
+          <source srcSet={`/art/${avatarBase}.webp`} type="image/webp" />
+          <img
+            src={`/art/${avatarBase}.png`}
+            alt=""
+            aria-hidden="true"
+            className="h-80 w-80 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
+            style={{
+              animation:
+                'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
+            }}
+          />
+        </picture>
+      </div>
+    </div>
+  )
+
+  /* Layered scrim. pointer-events flip: by default `-none` so the flash
+     is purely informational (success path unchanged); flips to `-auto`
+     ONLY when the rescue slot is mounted so the modal's CTAs are
+     interactive. The scrim itself has no onClick → background taps do
+     nothing (spec §3.2 decision 2). */
   return (
     <div
-      className={`pointer-events-none fixed inset-0 z-[70] flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${
+      className={`fixed inset-0 z-[70] flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${
         fading ? 'opacity-0' : 'opacity-100'
-      }`}
+      } ${hasRescue ? 'pointer-events-auto' : 'pointer-events-none'}`}
     >
-      {/* Avatar is the centering anchor — banner sits absolutely above it
-          so it doesn't add to the stack height and push the avatar below
-          viewport center. Result: the wolf reads as the focal point at
-          true X+Y center, with the banner overlapping the airspace
-          above. */}
-      <div className="relative animate-in zoom-in-90 duration-300">
-        {(() => {
-          const bannerBase = isSuccess ? 'welldone-sms' : 'try-again'
-          const avatarBase = isSuccess ? 'avatar-fun' : 'avatar-try-again'
-          return (
-            <>
-              <picture className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2">
-                <source
-                  srcSet={`/art/${bannerBase}.avif`}
-                  type="image/avif"
-                />
-                <source
-                  srcSet={`/art/${bannerBase}.webp`}
-                  type="image/webp"
-                />
-                <img
-                  src={`/art/${bannerBase}.png`}
-                  alt={flashText}
-                  className="h-auto w-[260px] max-w-[78vw] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
-                  style={{
-                    animation:
-                      'reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
-                  }}
-                />
-              </picture>
-              <div className="relative flex h-80 w-80 items-center justify-center">
-                {/* Confetti lives inside the avatar container so the
-                    radial burst emanates from the avatar's center.
-                    Container must NOT clip overflow — chips travel far
-                    beyond. */}
-                {isSuccess && <Confetti />}
-                {isSuccess && (
-                  <div className="pointer-events-none absolute inset-0">
-                    <LottieAnimation
-                      src="/animations/sparkle-burst.lottie"
-                      loop={false}
-                      className="h-full w-full"
-                    />
-                  </div>
-                )}
-                {/* Soft warm halo behind the mascot — gives the figure
-                    mass without competing with the sparkle burst on
-                    success. */}
-                <div
-                  className="pointer-events-none absolute h-72 w-72 rounded-full"
-                  style={{
-                    background:
-                      'radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(245, 158, 11, 0.10) 55%, transparent 80%)',
-                  }}
-                />
-                <picture className="relative z-10">
-                  <source
-                    srcSet={`/art/${avatarBase}.avif`}
-                    type="image/avif"
-                  />
-                  <source
-                    srcSet={`/art/${avatarBase}.webp`}
-                    type="image/webp"
-                  />
-                  <img
-                    src={`/art/${avatarBase}.png`}
-                    alt=""
-                    aria-hidden="true"
-                    className="h-80 w-80 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
-                    style={{
-                      animation:
-                        'reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both',
-                    }}
-                  />
-                </picture>
-              </div>
-            </>
-          )
-        })()}
-      </div>
+      {hasRescue ? (
+        <div className="flex flex-col items-center gap-3 px-4">
+          {wolfBlock}
+          {rescueMounted ? failureRescueSlot : null}
+        </div>
+      ) : (
+        wolfBlock
+      )}
     </div>
   )
 }
@@ -328,6 +355,7 @@ export function MissionPanelCandy({
   actionRowRight,
   shieldCount,
   pieceHint,
+  failureRescueSlot,
 }: MissionPanelProps) {
   const tMission = useTranslations('MISSION_BRIEFING_COPY')
   const tLab = useTranslations('LABYRINTH_COPY')
@@ -555,7 +583,7 @@ export function MissionPanelCandy({
       </div>
 
       {/* Fullscreen phase flash — auto-fades */}
-      <PhaseFlash phase={phase} />
+      <PhaseFlash phase={phase} failureRescueSlot={failureRescueSlot} />
     </section>
   )
 }

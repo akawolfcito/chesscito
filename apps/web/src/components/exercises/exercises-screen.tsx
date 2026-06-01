@@ -25,6 +25,8 @@ import { ExerciseDrawer } from "@/components/exercises/exercise-drawer";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
 import { MissionBriefing } from "@/components/exercises/mission-briefing";
 import { MissionPanelCandy } from "@/components/exercises/mission-panel-candy";
+import { FailRescueModal } from "@/components/exercises/fail-rescue-modal";
+import { useFailRescue } from "@/lib/exercises/use-fail-rescue";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
@@ -1235,6 +1237,34 @@ export function ExercisesScreen({
     }
   }
 
+  // Fail-rescue host. The hook owns the modal state machine
+  // (variant A/B/C/D + shield-spend + ignore counters). Handlers
+  // re-use this scope's resetBoard + setStoreOpen via the lambdas
+  // below — resetBoard is defined below this block so we reference
+  // it via the function declaration's hoisted binding.
+  const failRescue = useFailRescue({
+    onRescued: () => {
+      autoReset.clear();
+      resetBoard();
+    },
+    onSkipped: () => {
+      autoReset.clear();
+      resetBoard();
+    },
+    onOpenShop: () => {
+      autoReset.clear();
+      setStoreOpen(true);
+    },
+  });
+
+  // Bump seen-counter once per failure so variant B replaces A on the
+  // second encounter (primer-suppression invariant in selector).
+  useEffect(() => {
+    if (phase === "failure") failRescue.markSeen();
+    // failRescue.markSeen is stable (useCallback), no need to depend.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   function resetBoard() {
     autoReset.clear();
     setBoardKey((previous) => previous + 1);
@@ -1323,12 +1353,11 @@ export function ExercisesScreen({
         moves: movesCount,
         is_capture: Boolean(currentExercise.isCapture),
       });
-      // When shields are available, give the user a real window to
-      // decide. 1.5s is too short to read the chip + tap the button —
-      // the feature is paid ($0.025) so it must be reachable. 6s if
-      // shields, 1.5s otherwise (preserves prior fast-flow when there
-      // is nothing to decide).
-      autoReset.schedule(() => resetBoard(), shieldCount > 0 ? 6_000 : 1_500);
+      // Modal takes over the failure dwell (commit 8 of shield-rescue
+      // cluster). The FailRescueModal mounts after PhaseFlash's 1800ms
+      // banner entry; user decides via Use Shield / Claim free / Get
+      // Shields / Retry anyway / X. resetBoard fires from those
+      // handlers, NOT from a timeout. No autodismiss per spec §3.2 #1.
     }
   }
 
@@ -2007,6 +2036,19 @@ export function ExercisesScreen({
           currentStars={totalStars}
           claimedBadges={badgesClaimed}
           shieldCount={shieldCount}
+          failureRescueSlot={
+            phase === "failure" ? (
+              <FailRescueModal
+                visible
+                variant={failRescue.variant}
+                shieldsCount={failRescue.shieldsCount}
+                onUseShield={failRescue.onUseShield}
+                onRetryAnyway={failRescue.onRetryAnyway}
+                onClaimFree={failRescue.onClaimFree}
+                onGetShields={failRescue.onGetShields}
+              />
+            ) : null
+          }
           actionRowLeft={<DailyTacticSlot />}
           actionRowRight={
             <MiniArenaBridgeSlot
