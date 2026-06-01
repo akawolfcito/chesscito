@@ -157,9 +157,15 @@ function ArenaTimerChip({
             aria-hidden="true"
             className="candy-tray-pill-divider"
           />
+          {/* Inline shield sprite — must NOT use candy-tray-pill-icon
+           *  --floating because that class is positioned absolute
+           *  inside a hub-hud-pill (left: -1.3rem) and would stack
+           *  on top of the time icon. The arena-timer-chip-inline-
+           *  icon class below renders inline at 1.4rem so the chip
+           *  reads "clock 0:25 | shield 7" left-to-right. */}
           <picture
             aria-hidden="true"
-            className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+            className="arena-timer-chip-inline-icon"
           >
             <source srcSet="/art/redesign/icons/shield.avif" type="image/avif" />
             <source srcSet="/art/redesign/icons/shield.webp" type="image/webp" />

@@ -4991,6 +4991,31 @@ button.hud-resource-chip:active:not(:disabled) {
  * so the visual matches the Hub trophy/connect chips. Only the
  * value-span helper survives because the monospace + tabular-nums
  * rule is timer-specific (it would be wrong on the trophy count). */
+/* Inline secondary icon for the arena timer chip — used by the
+   shield slot when both time + shield render in the same pill.
+   MUST NOT use .candy-tray-pill-icon--floating; that class is
+   re-anchored to position:absolute left:-1.3rem inside
+   .hub-hud-pill--anchored-left, which would stack the shield ON
+   TOP of the time icon (user-reported bug 2026-06-01: "icon +
+   text | text" — shield invisible because behind clock). */
+.arena-timer-chip-inline-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: -0.3rem 0;
+  filter: drop-shadow(0 1px 2px rgba(110, 65, 15, 0.35));
+}
+
+.arena-timer-chip-inline-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .arena-timer-chip-value {
   display: inline-block;
   /* Monospace stack — guarantees fixed digit width even on fonts that
