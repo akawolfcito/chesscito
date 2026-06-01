@@ -51,22 +51,19 @@ describe("selectRescueModalState", () => {
     expect(result).toEqual({ variant: "D", hasShields: false });
   });
 
-  it("returns variant D when shields == 0 AND seenCount >= 3 (graduates from welcome pitch to paid SKU)", () => {
-    const result = selectRescueModalState({
-      shieldsCount: 0,
-      welcomePackClaimed: false,
-      rescueSeenCount: 3,
-    });
-    expect(result).toEqual({ variant: "D", hasShields: false });
-  });
-
-  it("returns variant C at the boundary (seenCount == 2, just under graduation threshold)", () => {
-    const result = selectRescueModalState({
-      shieldsCount: 0,
-      welcomePackClaimed: false,
-      rescueSeenCount: 2,
-    });
-    expect(result.variant).toBe("C");
+  it("ALWAYS returns variant C while welcome pack is unclaimed, regardless of seenCount (no nag graduation)", () => {
+    // Earlier iteration used seenCount >= 3 as a graduation threshold
+    // from C → D. That trapped players on the paid upsell after just
+    // 3 failures even though the free welcome pack was still
+    // available. Reverted 2026-05-31 per user feedback.
+    for (const seen of [0, 1, 2, 3, 5, 10]) {
+      const result = selectRescueModalState({
+        shieldsCount: 0,
+        welcomePackClaimed: false,
+        rescueSeenCount: seen,
+      });
+      expect(result.variant).toBe("C");
+    }
   });
 
   it("hasShields flag matches the variant family (A/B = true, C/D = false)", () => {

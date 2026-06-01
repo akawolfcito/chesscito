@@ -73,12 +73,24 @@ export function selectRescueModalState(
   }
 
   // shieldsCount === 0
-  if (!welcomePackClaimed && rescueSeenCount < 3) {
-    // Pre-claim + still pitching the Welcome Pack. After 3 dismissals
-    // we assume the user has seen enough of the pitch and graduate to
-    // the paid SKU CTA, avoiding nag fatigue.
+  //
+  // The Welcome Pack is once-per-wallet. Until the player claims it,
+  // every rescue should offer the pitch — graduating to the paid SKU
+  // (variant D) before claim would trap the player on the upsell
+  // even though the free pack is still available.
+  //
+  // Earlier iteration used `rescueSeenCount >= 3` as a nag-fatigue
+  // graduation gate, but that fired after just 3 failures (seenCount
+  // bumps every modal mount, not every dismissal) and made variant
+  // C unreachable in practice. Reverted 2026-05-31 per user
+  // feedback: "me sale COMPRAR ESCUDOS y no reclamar SHIELDS".
+  // rescueSeenCount is still consumed for A vs B (primer
+  // suppression), just not for C/D anymore.
+  if (!welcomePackClaimed) {
     return { variant: "C", hasShields: false };
   }
 
+  // welcomePackClaimed === true → pack is gone, surface the paid
+  // upsell so the player can restock.
   return { variant: "D", hasShields: false };
 }
