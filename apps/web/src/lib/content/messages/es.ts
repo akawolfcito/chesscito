@@ -1975,19 +1975,33 @@ const messages = {
   },
   RESCUE_MODAL_COPY: {
     header: "Casi.",
+    kicker: {
+      withShields: "RACHA EN RIESGO",
+      withoutShields: "SIN ESCUDOS",
+    },
     body: {
       withShieldsFirst:
-        "Un Escudo rescata tu racha. Úsalo y reintenta sin perder estrellas.",
+        "Un Escudo protege tu racha. Úsalo y reintenta sin perder estrellas.",
       withShieldsRecurring: "Usa un Escudo para mantener tu racha.",
       withoutShieldsPreClaim:
-        "Te quedaste sin Escudos. Reclama tu regalo y rescata esta partida.",
+        "Te quedaste sin Escudos. Reclama tu primer regalo y rescata esta racha.",
       withoutShieldsPostClaim:
-        "Te quedaste sin Escudos. Repón y mantén tu racha viva.",
+        "Te quedaste sin Escudos. Repón para mantener tu racha viva.",
+    },
+    footer: {
+      withShields: "Mantén tu racha viva.",
+      deepLink: "Te llevamos a la Tienda.",
+    },
+    pills: {
+      shieldCount: "Escudo · {n} restantes",
+      starProtected: "Estrella protegida",
+      giftCount: "Regalo · {n} gratis",
+      shieldPrice: "Compra por {price}",
     },
     cta: {
-      claimFree: "Reclamar gratis",
-      claimFreeSubtitle: "3 escudos",
-      getShields: "Comprar escudos",
+      useShield: "Usar Escudo",
+      claimShields: "Reclamar {n} Escudos",
+      getShields: "Comprar Escudos",
       retryAnyway: "Reintentar igual",
     },
     closeLabel: "Cerrar rescate",

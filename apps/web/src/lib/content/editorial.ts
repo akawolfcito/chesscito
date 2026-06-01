@@ -2835,29 +2835,59 @@ export const HUB_RAIL_COPY = {
  *  Brief-compliance: no decorative emojis, buttons ≤2 words (critical
  *  actions ≤3), no Web3 jargon, verb-first. */
 export const RESCUE_MODAL_COPY = {
+  /** Big heading — same word, every variant, anchors the moment. */
   header: "Almost.",
+  /** Above the heading, short ALL CAPS context label. Differs by
+   *  variant so the player knows what they're being shown — "STREAK
+   *  AT RISK" reads as protection-time, "NO SHIELDS LEFT" reads as
+   *  acquire-time. */
+  kicker: {
+    withShields: "STREAK AT RISK",
+    withoutShields: "NO SHIELDS LEFT",
+  },
   body: {
     /** State A — with-shields, first encounter. Includes one-line
-     *  shield primer per brief §3 (educate first time, never repeat). */
+     *  shield primer (educate first time). */
     withShieldsFirst:
-      "A Shield rescues your streak. Use one and try again without losing a star.",
+      "A Shield protects your streak. Use one now and try again without losing a star.",
     /** State B — with-shields, recurring. Compact; no primer. */
-    withShieldsRecurring: "Use a Shield to keep your streak.",
+    withShieldsRecurring: "Use a Shield now to keep your streak.",
     /** State C — without-shields, pre-claim. Forcing-function pitch
      *  for the Welcome Pack deep link. */
     withoutShieldsPreClaim:
-      "Out of Shields. Claim your Welcome gift and rescue this run.",
+      "You ran out of Shields. Claim your first free gift and rescue this streak.",
     /** State D — without-shields, post-claim or 3+ ignores. Paid SKU
      *  upsell. */
     withoutShieldsPostClaim:
-      "Out of Shields. Restock and keep your streak alive.",
+      "You ran out of Shields. Restock now to keep your streak alive.",
+  },
+  /** Small footer line under the secondary CTA — clarifies what
+   *  the primary CTA actually does (deep-link to Shop, or use a
+   *  shield in place). */
+  footer: {
+    withShields: "Keep your streak alive.",
+    deepLink: "We’ll take you to the Shop.",
+  },
+  /** Stats pills row — shown between the body and the primary CTA.
+   *  Mirrors the candy-pill HUD vocabulary so the count format
+   *  reads consistently with the rest of the app. */
+  pills: {
+    /** `Shield · {n} left` */
+    shieldCount: "Shield · {n} left",
+    /** With-shields companion pill. */
+    starProtected: "Star protected",
+    /** Without-shields, variant C. */
+    giftCount: "Gift · {n} free",
+    /** Without-shields, variant D — price label. */
+    shieldPrice: "Get for {price}",
   },
   cta: {
-    /** State C primary. Subtitle renders as a small chip beside the
-     *  label, NOT as part of the button word count. */
-    claimFree: "Claim free",
-    claimFreeSubtitle: "3 shields",
-    /** State D primary. Price chip rendered separately. */
+    /** State A/B primary — appended with the live shieldsLeft chip
+     *  via FOOTER_CTA_COPY.useShield + shieldsLeft(n) at render. */
+    useShield: "Use Shield",
+    /** State C primary. */
+    claimShields: "Claim {n} Shields",
+    /** State D primary. */
     getShields: "Get Shields",
     /** Secondary CTA (all states). Explicit "anyway" keeps the cost
      *  intuition: "yes, despite losing a star". */

@@ -219,7 +219,6 @@ function PhaseFlash({
   const tFlash = useTranslations('PHASE_FLASH_COPY')
   const [visible, setVisible] = useState(false)
   const [fading, setFading] = useState(false)
-  const [rescueMounted, setRescueMounted] = useState(false)
   const flash = PHASE_FLASH[phase]
   const isSuccess = phase === 'success'
   const flashText = flash ? tFlash(flash.textKey) : ''
@@ -229,30 +228,27 @@ function PhaseFlash({
     if (!flash) {
       setVisible(false)
       setFading(false)
-      setRescueMounted(false)
       return
     }
 
     setVisible(true)
     setFading(false)
-    setRescueMounted(false)
 
     if (hasRescue) {
-      /* Failure-with-rescue: NO autodismiss. The flash holds until
-         the parent transitions phase away from 'failure' (after a
-         rescue or skip handler resets the board). Mount the rescue
-         slot once the banner entry animation has finished so the
-         wolf + banner read first, then the decision overlay slides
-         up beneath them. */
-      const rescueTimer = setTimeout(() => setRescueMounted(true), 1800)
-      return () => clearTimeout(rescueTimer)
+      /* Failure-with-rescue: single coherent moment — the rescue
+         modal fades in immediately alongside the scrim instead of
+         the legacy banner-then-modal 2-step (user feedback
+         2026-05-31: the prior split felt disjointed). No autodismiss
+         either: the flash holds until the parent transitions phase
+         away from 'failure'. */
+      return
     }
 
     /* Success holds longer so the radial burst + gentle gravity fall
-       (~3s + delays) can play through. Failure is intentionally shorter
-       than success — it's informative feedback, not a celebration, and
-       a long modal punishes losing streaks. 1.8/2.2s is enough to read
-       "Try Again" + the avatar without dragging on a 3-fail run. */
+       (~3s + delays) can play through. Failure-without-rescue (rare
+       — host that doesn't wire failureRescueSlot) keeps the legacy
+       short flash. 1.8/2.2s is enough to read "Try Again" + the
+       avatar without dragging on a 3-fail run. */
     const fadeAt = isSuccess ? 2700 : 1800
     const hideAt = isSuccess ? 3100 : 2200
 
@@ -364,28 +360,30 @@ function PhaseFlash({
       </div>
     ) : null
 
-  /* Layered scrim. pointer-events flip: by default `-none` so the flash
-     is purely informational (success path unchanged); flips to `-auto`
-     ONLY when the rescue slot is mounted so the modal's CTAs are
-     interactive. The scrim itself has no onClick → background taps do
-     nothing (spec §3.2 decision 2). */
+  /* Rescue path: the FailRescueModal is a fully self-contained
+     overlay (its own scrim + panel + wolf inside the panel asset).
+     PhaseFlash hands rendering entirely over to it — no wrapping
+     scrim, no separate wolf block — so the user sees a single
+     coherent moment fading in. The modal's `visible` prop is
+     controlled by the slot itself; PhaseFlash just decides whether
+     to mount the React subtree.
+
+     Non-rescue path (success, or failure without a wired host):
+     legacy scrim + wolf + reward pills, unchanged. */
+  if (hasRescue) {
+    return <>{failureRescueSlot}</>
+  }
+
   return (
     <div
-      className={`fixed inset-0 z-[70] flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${
+      className={`pointer-events-none fixed inset-0 z-[70] flex items-center justify-center candy-modal-scrim transition-opacity duration-400 ${
         fading ? 'opacity-0' : 'opacity-100'
-      } ${hasRescue ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      }`}
     >
-      {hasRescue ? (
-        <div className="flex flex-col items-center gap-3 px-4">
-          {wolfBlock}
-          {rescueMounted ? failureRescueSlot : null}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center gap-3 px-4">
-          {wolfBlock}
-          {rewardPills}
-        </div>
-      )}
+      <div className="flex flex-col items-center gap-3 px-4">
+        {wolfBlock}
+        {rewardPills}
+      </div>
     </div>
   )
 }
