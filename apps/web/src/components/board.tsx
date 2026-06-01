@@ -230,6 +230,21 @@ export function Board({
                           top: `${geo.top}%`,
                           width: `${geo.width}%`,
                           height: `${geo.height}%`,
+                          // Chebyshev distance from the selected piece drives
+                          // the highlight stagger reveal: cells closer to the
+                          // piece light up first, then ripples outward at
+                          // 40ms intervals. The CSS rule on
+                          // .playhub-board-cell.is-highlighted picks up the
+                          // --cell-stagger custom property as transition-delay.
+                          ...(square.isHighlighted && selectedPosition
+                            ? {
+                                ["--cell-stagger" as string]:
+                                  Math.max(
+                                    Math.abs(square.file - selectedPosition.file),
+                                    Math.abs(square.rank - selectedPosition.rank),
+                                  ) - 1,
+                              }
+                            : null),
                         }}
                         className={[
                           "playhub-board-cell",

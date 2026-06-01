@@ -2487,13 +2487,20 @@
 
   /* ── Cell Inset Glow system — light emanates from within ── */
 
-  /* Valid move cells — subtle inner glow, no fill */
+  /* Valid move cells — subtle inner glow, no fill.
+     Stagger reveal: cells closer to the selected piece light up
+     first, ripples outward at 40ms intervals. --cell-stagger is
+     set inline in board.tsx as the Chebyshev distance minus 1
+     (so the closest highlighted cell starts at index 0). Sally
+     audit #4 — gives the rook a feeling of "projecting" its
+     reach rather than blasting all moves on at once. */
   .playhub-board-cell.is-highlighted {
     background: transparent;
     box-shadow:
       inset 0 0 8px rgba(217, 180, 74, 0.15),
       inset 0 0 0 1px rgba(217, 180, 74, 0.18);
     transition: box-shadow 180ms ease-out, background 180ms ease-out;
+    transition-delay: calc(var(--cell-stagger, 0) * 40ms);
   }
 
   /* Endpoint cells — brighter rim, stronger glow (farthest in each ray) */
@@ -2503,13 +2510,18 @@
       inset 0 0 0 1px rgba(217, 180, 74, 0.30);
   }
 
-  /* Origin — radial halo under the piece */
+  /* Origin — radial halo under the piece.
+     60ms transition-delay so the piece's scale+rotate reaction
+     plays FIRST, then the cell halo lights under it. Sally audit
+     #4: sequencing builds causality ("I tapped, the piece moved,
+     the cell answered"). */
   .playhub-board-cell.is-selected {
     background: radial-gradient(circle at 50% 55%, rgba(217, 180, 74, 0.18) 0%, transparent 70%);
     box-shadow:
       inset 0 0 12px rgba(217, 180, 74, 0.25),
       inset 0 0 0 1px rgba(217, 180, 74, 0.40);
     transition: box-shadow 180ms ease-out, background 180ms ease-out;
+    transition-delay: 60ms;
   }
 
   /* Target cell — warm amber inset glow (beneath the pulsing star) */
