@@ -9259,13 +9259,12 @@ button.hud-resource-chip:active:not(:disabled) {
   grid-template-rows: 1fr auto;
   row-gap: 10px;
   align-items: center;
-  /* Left padding reserves room for the absolutely-positioned icon
-     (88px = icon width 100px minus the 12px gap we want between the
-     icon's right edge and the identity text). The icon lives outside
-     the grid flow, anchored to the tile's left edge with a negative
-     offset so it visually "escapes" the card without fighting
-     `overflow-x: clip` higher up the tree. */
-  padding: 14px 14px 14px 88px;
+  /* Left padding reserves room for the absolutely-positioned icon.
+     Math: icon width 100 + icon left -12 → icon right edge at
+     100 - 12 = 88px from card edge. Add 12px gap → padding-left
+     of 100px. The icon now sits MOSTLY inside the card body with
+     just a small slice (12px) overhanging on the left edge. */
+  padding: 14px 14px 14px 100px;
   border-radius: 18px;
   background: linear-gradient(
     160deg,
@@ -9625,14 +9624,14 @@ button.hud-resource-chip:active:not(:disabled) {
    clipped by the scroll container per CSS spec). */
 .shop-item-tile-icon-figure {
   position: absolute;
-  left: -24px;
+  /* 2026-06-01 (user feedback iteration 3): pull the icon
+     INWARD — overhang reduced from -24px to -12px so more of
+     the sprite sits inside the card body. Card height
+     unchanged (vertical padding untouched). */
+  left: -12px;
   top: 50%;
   transform: translateY(-50%);
   display: block;
-  /* 2026-06-01 (user feedback iteration 2): hero icon shrunk
-     from 120px → 100px to give Chesscito PRO and Founder Badge
-     identity text more breathing room. Card padding-left bumped
-     to match the new right-edge math (100 - 24 = 76; +12 gap → 88). */
   width: 100px;
   height: 100px;
   pointer-events: none;
