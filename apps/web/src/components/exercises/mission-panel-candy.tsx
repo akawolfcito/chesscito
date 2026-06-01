@@ -44,6 +44,10 @@ type MissionPanelProps = {
    *  Shield rescue mechanic gains psychological weight — the user
    *  sees what they're protecting. */
   streakCount?: number
+  /** Stars earned on the just-completed exercise (0-3). Drives the
+   *  "+N STAR" pill in the WELL DONE flash. Only consumed when
+   *  phase === 'success'. */
+  lastEarnedStars?: number
   /** Total stars earned on the current piece (0–15). Feeds the
    *  mission-detail journey rail so the user sees how close they are
    *  to claiming the badge. */
@@ -190,6 +194,8 @@ function Confetti() {
 function PhaseFlash({
   phase,
   failureRescueSlot,
+  streakCount,
+  lastEarnedStars,
 }: {
   phase: MissionPanelProps['phase']
   /** Optional failure-only overlay slot. When supplied AND phase ===
@@ -203,6 +209,12 @@ function PhaseFlash({
    *  Success path and the no-slot failure path stay byte-identical to
    *  pre-cluster behavior. */
   failureRescueSlot?: React.ReactNode
+  /** Streak counter for the WELL DONE "STREAK ×N" pill. Only shown
+   *  when phase === 'success' AND streakCount >= 2. */
+  streakCount?: number
+  /** Stars earned on this exercise for the WELL DONE "+N STAR"
+   *  pill. Only shown when phase === 'success' AND > 0. */
+  lastEarnedStars?: number
 }) {
   const tFlash = useTranslations('PHASE_FLASH_COPY')
   const [visible, setVisible] = useState(false)
@@ -312,6 +324,46 @@ function PhaseFlash({
     </div>
   )
 
+  /* Reward pills — surface "what the player just gained" so the
+     shield rescue mechanic gains psychological weight when the next
+     failure threatens it (commit 2 of polish pass). Success-only;
+     never renders during failure. */
+  const showStarPill =
+    isSuccess && typeof lastEarnedStars === 'number' && lastEarnedStars > 0
+  const showStreakPill =
+    isSuccess && typeof streakCount === 'number' && streakCount >= 2
+  const rewardPills =
+    showStarPill || showStreakPill ? (
+      <div className="fail-rescue-reward-row" aria-hidden="true">
+        {showStarPill ? (
+          <span className="fail-rescue-reward-pill fail-rescue-reward-pill--star">
+            <picture>
+              <source
+                srcSet="/art/redesign/icons/star.avif"
+                type="image/avif"
+              />
+              <source
+                srcSet="/art/redesign/icons/star.webp"
+                type="image/webp"
+              />
+              <img
+                src="/art/redesign/icons/star.png"
+                alt=""
+                aria-hidden="true"
+              />
+            </picture>
+            <span>+{lastEarnedStars} STAR</span>
+          </span>
+        ) : null}
+        {showStreakPill ? (
+          <span className="fail-rescue-reward-pill fail-rescue-reward-pill--streak">
+            <span aria-hidden="true">×{streakCount}</span>
+            <span>STREAK</span>
+          </span>
+        ) : null}
+      </div>
+    ) : null
+
   /* Layered scrim. pointer-events flip: by default `-none` so the flash
      is purely informational (success path unchanged); flips to `-auto`
      ONLY when the rescue slot is mounted so the modal's CTAs are
@@ -329,7 +381,10 @@ function PhaseFlash({
           {rescueMounted ? failureRescueSlot : null}
         </div>
       ) : (
-        wolfBlock
+        <div className="flex flex-col items-center gap-3 px-4">
+          {wolfBlock}
+          {rewardPills}
+        </div>
       )}
     </div>
   )
@@ -360,6 +415,7 @@ export function MissionPanelCandy({
   actionRowRight,
   shieldCount,
   streakCount,
+  lastEarnedStars,
   pieceHint,
   failureRescueSlot,
 }: MissionPanelProps) {
@@ -512,18 +568,10 @@ export function MissionPanelCandy({
           </div>
         )}
 
-        {shieldCount > 0 && (
-          <div className="mt-2 flex justify-end">
-            <HudResourceChip
-              tone="default"
-              size="compact"
-              icon="shield"
-              value={shieldCount}
-              ariaLabel={tHud('shieldsAriaLabel', { count: shieldCount })}
-              pulseDamageOnDecrement
-            />
-          </div>
-        )}
+        {/* Shield chip standalone row removed 2026-05-31: shield count
+            now lives INSIDE the candy-tray-pill stars trigger (see
+            ExerciseDrawer trigger). One row, not two — consistent
+            with the rest of the candy-tray-pill HUD family. */}
       </div>
 
       {/* PiecePickerSheet rendered as a sibling of the canopy. Open state
@@ -590,7 +638,12 @@ export function MissionPanelCandy({
       </div>
 
       {/* Fullscreen phase flash — auto-fades */}
-      <PhaseFlash phase={phase} failureRescueSlot={failureRescueSlot} />
+      <PhaseFlash
+        phase={phase}
+        failureRescueSlot={failureRescueSlot}
+        streakCount={streakCount}
+        lastEarnedStars={lastEarnedStars}
+      />
     </section>
   )
 }

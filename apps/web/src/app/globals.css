@@ -1988,6 +1988,37 @@
     opacity: 0.85;
   }
 
+  /* Inline icon variant for compact dual-resource pills (e.g. the
+     stars+shields trigger). Smaller than the floating icon, sits
+     flush with the digit band so the pill reads as "stars 6 |
+     shields 8" in one horizontal scan. */
+  .candy-tray-pill-icon-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .candy-tray-pill-icon-inline img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* Vertical divider between two resources inside the same pill.
+     Subtle warm-brown line; preserves the pill's seamless look
+     while signaling "two separate counts, same affordance". */
+  .candy-tray-pill-divider {
+    display: inline-block;
+    width: 1px;
+    height: 0.95rem;
+    background-color: rgba(120, 65, 5, 0.35);
+    margin: 0 0.15rem;
+    flex-shrink: 0;
+  }
+
   /* ── Candy page panel ──
      Secondary routes (trophies / about / support / privacy / terms)
      render an opaque dark panel over the candy body bg, which reads as
@@ -11288,4 +11319,62 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .fail-rescue-modal-secondary:hover {
   background-color: rgba(110, 65, 15, 0.08);
+}
+
+/* ─── WELL DONE reward pills ──────────────────────────────────────
+   Surfaced inside PhaseFlash success path. +1 STAR (always) +
+   STREAK ×N (when N >= 2). Matches the visual language of the
+   candy-tray-pill family but with a stronger gold halo so it reads
+   as "you just gained this", not as a passive HUD element. */
+
+.fail-rescue-reward-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  /* Slightly delayed entry vs the wolf/banner so the eye lands on
+     the mascot first, then sees the reward chips arrive. */
+  animation:
+    reward-icon-enter 360ms cubic-bezier(0.34, 1.56, 0.64, 1) 220ms both;
+}
+
+.fail-rescue-reward-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff5d7 0%, #f7c64a 100%);
+  border: 1.5px solid rgba(180, 120, 35, 0.70);
+  color: rgba(63, 34, 8, 0.95);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 4px 10px rgba(120, 65, 5, 0.32),
+    0 0 0 1px rgba(255, 215, 120, 0.45);
+}
+
+.fail-rescue-reward-pill picture,
+.fail-rescue-reward-pill img {
+  display: inline-block;
+  width: 1.4rem;
+  height: 1.4rem;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(120, 65, 5, 0.35));
+}
+
+/* Streak pill: same gold base but tighter to differentiate the
+   chips when both show side-by-side. The ×N reads first (like a
+   multiplier) then the STREAK label. */
+.fail-rescue-reward-pill--streak {
+  letter-spacing: 0.05em;
+}
+
+.fail-rescue-reward-pill--streak > span:first-child {
+  font-size: 1.05rem;
+  color: rgba(180, 60, 25, 0.95);
 }

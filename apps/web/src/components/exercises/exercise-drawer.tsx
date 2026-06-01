@@ -22,6 +22,11 @@ type ExerciseDrawerProps = {
   activeIndex: number;
   totalStars: number;
   onNavigate: (index: number) => void;
+  /** Live shield count. When provided AND > 0, the trigger pill
+   *  renders an inline divider + shield count next to the stars so
+   *  the HUD collapses two chips into one. Omit (or pass 0) to
+   *  preserve the legacy single-stars trigger. */
+  shieldCount?: number;
 };
 
 function StarDisplay({ count }: { count: number }) {
@@ -47,6 +52,7 @@ export function ExerciseDrawer({
   activeIndex,
   totalStars,
   onNavigate,
+  shieldCount,
 }: ExerciseDrawerProps) {
   const t = useTranslations("EXERCISE_DRAWER_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -79,6 +85,27 @@ export function ExerciseDrawer({
           >
             {totalStars}
           </span>
+          {typeof shieldCount === "number" && shieldCount > 0 ? (
+            <>
+              <span
+                aria-hidden="true"
+                className="candy-tray-pill-divider"
+              />
+              <picture className="candy-tray-pill-icon-inline">
+                <source srcSet="/art/redesign/icons/shield.avif" type="image/avif" />
+                <source srcSet="/art/redesign/icons/shield.webp" type="image/webp" />
+                <img
+                  src="/art/redesign/icons/shield.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                />
+              </picture>
+              <span className="tabular-nums text-sm font-extrabold">
+                {shieldCount}
+              </span>
+            </>
+          ) : null}
         </button>
       </SheetTrigger>
       <SheetContent

@@ -1244,6 +1244,14 @@ export function ExercisesScreen({
   // bumpStreak/resetStreak in the success / skip paths.
   const streakCount = useStreak();
 
+  // Stars earned on the just-completed exercise (0-3). Set
+  // synchronously in the success path so the WELL DONE PhaseFlash
+  // can render "+N STAR" on its very first frame. Reset to 0
+  // implicitly when the next failure / next-success replaces the
+  // value (no manual reset needed — pill only shows in success
+  // phase).
+  const [lastEarnedStars, setLastEarnedStars] = useState(0);
+
   // Fail-rescue host. The hook owns the modal state machine
   // (variant A/B/C/D + shield-spend + ignore counters). Handlers
   // re-use this scope's resetBoard + setStoreOpen via the lambdas
@@ -1297,10 +1305,12 @@ export function ExercisesScreen({
 
     if (isTarget) {
       hapticSuccess();
-      // Bump streak BEFORE setPhase so the WELL DONE PhaseFlash sees
-      // the new count on its first render. Replays count toward the
-      // streak too: completing an exercise (fresh or repeat) is the
-      // unit of "successful action" the player is chaining.
+      // Compute earned stars + bump streak BEFORE setPhase so the
+      // WELL DONE PhaseFlash sees both on its first render. Replays
+      // count toward the streak too: completing an exercise (fresh
+      // or repeat) is the unit of "successful action" the player is
+      // chaining.
+      setLastEarnedStars(computeStars(movesCount, currentExercise.optimalMoves));
       bumpStreak();
       setPhase("success");
       const elapsed = timerStart.current > 0 ? Date.now() - timerStart.current : 1000;
@@ -2055,6 +2065,7 @@ export function ExercisesScreen({
           claimedBadges={badgesClaimed}
           shieldCount={shieldCount}
           streakCount={streakCount}
+          lastEarnedStars={lastEarnedStars}
           failureRescueSlot={
             phase === "failure" ? (
               <FailRescueModal
@@ -2145,6 +2156,7 @@ export function ExercisesScreen({
               activeIndex={progress.exerciseIndex}
               totalStars={totalStars}
               onNavigate={handleExerciseNavigate}
+              shieldCount={shieldCount}
             />
           }
           isReplay={isReplay}
