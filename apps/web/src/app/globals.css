@@ -9372,7 +9372,13 @@ button.hud-resource-chip:active:not(:disabled) {
 .shop-item-tile--compact .shop-item-tile-footer {
   justify-content: center;
   width: 100%;
-  margin-top: 4px;
+  /* `margin-top: auto` consumes the remaining vertical space inside
+     the flex column so the CTA always lands at the BOTTOM of the
+     card. Combined with CSS Grid's default row-stretch, all four
+     mini-cards in a row become the same height and their CTAs
+     align horizontally — user feedback 2026-06-01: "el botón
+     debería estar alineado abajo". */
+  margin-top: auto;
 }
 
 .shop-item-tile--compact .shop-item-tile-buy-pill {
