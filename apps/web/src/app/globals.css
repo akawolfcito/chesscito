@@ -9308,9 +9308,17 @@ button.hud-resource-chip:active:not(:disabled) {
      explicit width/height take effect — <picture> defaults to inline
      and inline elements ignore width. The hero rule relies on the
      implicit block-like behavior of position:absolute; the compact
-     mode reverts to position:static and must restore display. */
+     mode reverts to position:static and must restore display.
+     `transform: none` cancels the hero's translateY(-50%) which
+     would otherwise still apply (transform doesn't require
+     position:absolute) and lift the icon another half-height above
+     the card — root cause of the over-overhang the user flagged
+     2026-06-01 on Shield + Coach 5 + Coach 20 mini-cards. */
   position: static;
   display: block;
+  transform: none;
+  left: auto;
+  top: auto;
   width: 72px;
   height: 72px;
   /* Negative top margin pulls the icon up so a small slice (~4px)
