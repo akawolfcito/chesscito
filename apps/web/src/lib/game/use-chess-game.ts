@@ -36,6 +36,12 @@ export type ChessGameState = {
   lastMove: { from: string; to: string } | null;
   checkSquare: string | null;
   rejectingSquare: string | null;
+  /** Transient destination square of a capture move (player or AI).
+   *  Set when a move's chess.js flags include capture ("c" or en-
+   *  passant "e"), cleared 280ms later via setTimeout. The arena
+   *  board renders an amber-red flash on this cell so the player
+   *  sees the take resolve. Sally audit #5. */
+  captureFlashSquare: string | null;
   pendingPromotion: { from: string; to: string } | null;
   difficulty: ArenaDifficulty;
   playerColor: PlayerColor;
@@ -79,9 +85,23 @@ export function useChessGame(): ChessGameState {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [gameStartedAt, setGameStartedAt] = useState(0);
   const [rejectingSquare, setRejectingSquare] = useState<string | null>(null);
+  const [captureFlashSquare, setCaptureFlashSquare] = useState<string | null>(null);
   const gameStartRef = useRef<number>(0);
   const gameEndRef = useRef<number>(0);
   const rejectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const captureFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Detect capture from chess.js move flags and pulse the
+  // destination cell for 280ms. Sally audit #5.
+  const fireCaptureFlash = useCallback((square: string, flags: string | undefined) => {
+    if (!flags || (!flags.includes("c") && !flags.includes("e"))) return;
+    if (captureFlashTimerRef.current) clearTimeout(captureFlashTimerRef.current);
+    setCaptureFlashSquare(square);
+    captureFlashTimerRef.current = setTimeout(() => {
+      setCaptureFlashSquare(null);
+      captureFlashTimerRef.current = null;
+    }, 280);
+  }, []);
 
   const gameRef = useRef(new Chess());
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -218,6 +238,7 @@ export function useChessGame(): ChessGameState {
         setMoveCount(c => c + 1);
         setMoveHistory(game.history());
         setIsThinking(false);
+        fireCaptureFlash(to, moveResult?.flags);
 
         const isMate = game.isCheckmate();
         dispatchMoveHaptic(moveResult?.flags, game.isCheck(), isMate);
@@ -269,6 +290,7 @@ export function useChessGame(): ChessGameState {
         setMoveHistory(game.history());
         setSelectedSquare(null);
         setLegalMoves([]);
+        fireCaptureFlash(square, moveResult?.flags);
 
         const isMate = game.isCheckmate();
         dispatchMoveHaptic(moveResult?.flags, game.isCheck(), isMate);
@@ -477,6 +499,7 @@ export function useChessGame(): ChessGameState {
     lastMove,
     checkSquare,
     rejectingSquare,
+    captureFlashSquare,
     pendingPromotion,
     difficulty,
     playerColor,

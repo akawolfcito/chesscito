@@ -2472,7 +2472,15 @@
     margin: 0;
     color: #d9f7ff;
     cursor: pointer;
-    transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+    /* Base transition handles the EXIT direction (highlighted → not).
+       180ms in, 120ms out — the move resolves and the cells fade
+       away faster than they lit (Sally audit #4: shorter exit
+       respects that the decision is over, no need to linger). */
+    transition:
+      transform var(--duration-snap) ease,
+      background-color var(--duration-snap) ease,
+      box-shadow 120ms ease-in,
+      background 120ms ease-in;
   }
 
   .playhub-board-cell.is-light,
@@ -3026,6 +3034,37 @@
        conveys selection. */
     background: transparent;
     box-shadow: none;
+  }
+
+  /* Capture flash — a 280ms amber-red pulse on the destination
+     cell whenever a piece takes another piece (player or AI).
+     Adds tangible feedback to a chess take, which would otherwise
+     be a silent piece-swap. Sally audit #5. Set via the
+     `is-capture-flash` class toggled by useChessGame for the
+     duration of `captureFlashTimerRef`. */
+  @keyframes arena-capture-flash {
+
+    0% {
+      box-shadow:
+        inset 0 0 0 1px rgba(220, 60, 40, 0.0),
+        inset 0 0 12px rgba(220, 60, 40, 0.0);
+    }
+
+    35% {
+      box-shadow:
+        inset 0 0 0 2px rgba(220, 60, 40, 0.80),
+        inset 0 0 14px rgba(255, 110, 60, 0.55);
+    }
+
+    100% {
+      box-shadow:
+        inset 0 0 0 1px rgba(220, 60, 40, 0.0),
+        inset 0 0 12px rgba(220, 60, 40, 0.0);
+    }
+  }
+
+  .arena-board-cell.is-capture-flash {
+    animation: arena-capture-flash 280ms ease-out;
   }
 
   .arena-board-cell.is-last-move {

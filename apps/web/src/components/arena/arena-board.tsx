@@ -29,6 +29,11 @@ type ArenaBoardProps = {
   lastMove: { from: string; to: string } | null;
   checkSquare: string | null;
   rejectingSquare?: string | null;
+  /** Transient capture-flash square set by useChessGame for ~280ms
+   *  after a capture (player or AI). The matching cell briefly
+   *  pulses amber-red so the take resolves with visible feedback.
+   *  Sally audit #5. */
+  captureFlashSquare?: string | null;
   isLocked: boolean;
   isThinking?: boolean;
   onSquareClick: (square: string) => void;
@@ -75,6 +80,7 @@ export function ArenaBoard({
   lastMove,
   checkSquare,
   rejectingSquare = null,
+  captureFlashSquare = null,
   isLocked,
   isThinking = false,
   onSquareClick,
@@ -171,6 +177,7 @@ export function ArenaBoard({
                       sq.isSelected ? "is-selected" : "",
                       sq.isLastMove ? "is-last-move" : "",
                       sq.isCheck ? "is-check" : "",
+                      sq.label === captureFlashSquare ? "is-capture-flash" : "",
                     ].join(" ")}
                   >
                     <span className="playhub-board-label">{sq.label}</span>
