@@ -98,7 +98,10 @@ export function ExerciseDrawer({
                 aria-hidden="true"
                 className="candy-tray-pill-divider"
               />
-              <picture className="candy-tray-pill-icon-inline">
+              <picture
+                aria-hidden="true"
+                className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+              >
                 <source srcSet="/art/redesign/icons/shield.avif" type="image/avif" />
                 <source srcSet="/art/redesign/icons/shield.webp" type="image/webp" />
                 <img
@@ -119,12 +122,19 @@ export function ExerciseDrawer({
                 aria-hidden="true"
                 className="candy-tray-pill-divider"
               />
-              <span
+              <picture
                 aria-hidden="true"
-                className="candy-tray-pill-streak-glyph"
+                className="candy-tray-pill-icon candy-tray-pill-icon--floating"
               >
-                ×
-              </span>
+                <source srcSet="/art/redesign/icons/streak.avif" type="image/avif" />
+                <source srcSet="/art/redesign/icons/streak.webp" type="image/webp" />
+                <img
+                  src="/art/redesign/icons/streak.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                />
+              </picture>
               <span className="tabular-nums text-sm font-extrabold">
                 {streakCount}
               </span>

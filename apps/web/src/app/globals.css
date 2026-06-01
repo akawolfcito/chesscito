@@ -1977,6 +1977,19 @@
     filter: drop-shadow(0 2px 3px rgba(120, 65, 5, 0.35));
   }
 
+  /* When the floating icon wraps a <picture> sprite (shield, streak)
+     rather than a CandyIcon SVG, the inner <img> needs to fill the
+     1.8rem slot. Padding zero on the wrapper keeps the sprite edge
+     flush; object-fit contain handles aspect ratios that don't match
+     the square slot. */
+  .candy-tray-pill-icon--floating > img,
+  .candy-tray-pill-icon--floating > picture img,
+  .candy-tray-pill-icon--floating picture {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
   /* Minimal "tap to expand" affordance — replaces the chevron-down
      sprite on the piece picker with a single Unicode glyph styled in
      the warm-brown ink palette. Less visual weight than the sprite so
@@ -1986,25 +1999,6 @@
     line-height: 1;
     color: rgba(120, 65, 5, 0.75);
     opacity: 0.85;
-  }
-
-  /* Inline icon variant for compact dual-resource pills (e.g. the
-     stars+shields trigger). Smaller than the floating icon, sits
-     flush with the digit band so the pill reads as "stars 6 |
-     shields 8" in one horizontal scan. */
-  .candy-tray-pill-icon-inline {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 1rem;
-    height: 1rem;
-  }
-
-  .candy-tray-pill-icon-inline img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
   }
 
   /* Vertical divider between two resources inside the same pill.
@@ -2019,17 +2013,6 @@
     flex-shrink: 0;
   }
 
-  /* Streak multiplier glyph — small "×" rendered in the same warm-
-     brown ink palette as the digit, slightly oversized so the eye
-     reads "×N" as a unit. No CandyIcon needed; the glyph + tabular-
-     nums digit is enough at HUD scale. */
-  .candy-tray-pill-streak-glyph {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: rgba(110, 65, 15, 0.85);
-    line-height: 1;
-    margin-right: -0.1rem;
-  }
 
   /* ── Candy page panel ──
      Secondary routes (trophies / about / support / privacy / terms)

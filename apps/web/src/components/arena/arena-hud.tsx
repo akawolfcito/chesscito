@@ -157,7 +157,10 @@ function ArenaTimerChip({
             aria-hidden="true"
             className="candy-tray-pill-divider"
           />
-          <picture className="candy-tray-pill-icon-inline">
+          <picture
+            aria-hidden="true"
+            className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+          >
             <source srcSet="/art/redesign/icons/shield.avif" type="image/avif" />
             <source srcSet="/art/redesign/icons/shield.webp" type="image/webp" />
             <img
