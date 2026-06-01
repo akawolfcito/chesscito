@@ -1990,20 +1990,12 @@
     object-fit: contain;
   }
 
-  /* Streak sprite is a cream-beige flame in the source PNG and gets
-     lost against the cream pill background. The filter recolors any
-     non-transparent pixel into a saturated gold-orange so the flame
-     reads at a glance. `sepia(1)` collapses the sprite to a single
-     warm hue, `saturate(7)` pushes the chroma, `hue-rotate(-15deg)`
-     steers toward orange instead of yellow, and the brightness clamp
-     keeps the silhouette from blowing out. */
+  /* Streak sprite ships in its final orange-flame colorway as of
+     2026-06-01 (design/version1-new/fire-icon.png). No CSS recolor
+     needed anymore — only the warm drop-shadow to anchor it on the
+     cream pill background. */
   .candy-tray-pill-icon--streak {
-    filter:
-      sepia(1)
-      saturate(7)
-      hue-rotate(-15deg)
-      brightness(0.95)
-      drop-shadow(0 2px 3px rgba(180, 95, 5, 0.5));
+    filter: drop-shadow(0 2px 3px rgba(180, 95, 5, 0.5));
   }
 
   /* Minimal "tap to expand" affordance — replaces the chevron-down
