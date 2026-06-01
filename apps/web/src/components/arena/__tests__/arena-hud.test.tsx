@@ -69,33 +69,42 @@ describe("ArenaHud — coach hint signpost", () => {
   });
 });
 
-describe("ArenaHud — shields point-of-use chip", () => {
-  it("renders Shield ×N chip when shields > 0 and match is in-play", () => {
+describe("ArenaHud — shields inline inside timer chip", () => {
+  // Behavior after the 2026-05-31 combined-pill refactor: shields no
+  // longer render as a separate row. They render inline INSIDE the
+  // timer chip as "divider + shield icon + count", matching the
+  // /exercises HUD pattern. The aria-label is compound.
+
+  it("renders inline shield count beside the timer when shields > 0", () => {
     mockedShieldsCount.mockReturnValue(3);
     renderHud();
-    expect(screen.getByText("Shield ×3")).toBeInTheDocument();
+    // The chip's aria-label embeds shields when present.
     expect(
-      screen.getByRole("status", { name: /3 streak shields available/i }),
+      screen.getByRole("status", { name: /3 shields/i }),
     ).toBeInTheDocument();
   });
 
-  it("hides the chip when shields count is 0", () => {
+  it("does NOT decorate the chip when shields == 0 (timer-only fallback)", () => {
     mockedShieldsCount.mockReturnValue(0);
     renderHud();
-    expect(screen.queryByText(/Shield ×/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("status", { name: /shields/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("hides the chip on end-state even when shields > 0", () => {
+  it("suppresses the inline shield count on end-state (clean closing UI)", () => {
     mockedShieldsCount.mockReturnValue(2);
     renderHud({ isEndState: true });
-    expect(screen.queryByText(/Shield ×/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("status", { name: /shields/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("uses singular aria-label when exactly 1 shield", () => {
+  it("singular vs plural — chip aria-label switches at count==1", () => {
     mockedShieldsCount.mockReturnValue(1);
     renderHud();
     expect(
-      screen.getByRole("status", { name: /1 streak shield available/i }),
+      screen.getByRole("status", { name: /1 shields/i }),
     ).toBeInTheDocument();
   });
 });

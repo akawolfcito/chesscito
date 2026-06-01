@@ -117,26 +117,61 @@ function ArenaBackChip({
   );
 }
 
-/* Live match timer — reuses the HUD chip family from the Hub
- * (candy-tray-pill + hub-hud-pill + --anchored-left) so the timer
- * reads as a sibling of the trophy / connect chips: cream-amber
- * pill, warm-brown outline, oversized icon floating off the leading
- * edge, squared-off left corners tucked behind the icon. The icon
- * stays `CandyIcon name="time"`; the value span carries the
- * monospace + tabular-nums so per-second ticks don't jitter the
- * pill width. */
-function ArenaTimerChip({ elapsedMs }: { elapsedMs: number }) {
+/* Live match timer + inline shield count — reuses the HUD chip family
+ * from the Hub (candy-tray-pill + hub-hud-pill + --anchored-left) so
+ * the chip reads as a sibling of the trophy / connect pills. When the
+ * wallet has shields available, an inline divider + shield count
+ * appears beside the timer (consistent with the exercises HUD's
+ * stars+shields combined pill — same visual vocabulary across the
+ * app). When shields == 0 the chip renders as the legacy timer-only
+ * pill (no divider). */
+function ArenaTimerChip({
+  elapsedMs,
+  isEndState,
+}: {
+  elapsedMs: number;
+  isEndState?: boolean;
+}) {
   const t = useTranslations("ARENA_COPY");
   const value = formatTime(elapsedMs);
+  const shieldsCount = useShieldsCount();
+  // Shields suppressed on end-state so the closing UI stays clean
+  // (preserves the rule from the pre-combined separate-row design).
+  const showShields = shieldsCount > 0 && !isEndState;
   return (
     <span
       className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
       role="status"
       aria-live="polite"
-      aria-label={t("timerAriaLabel", { time: value })}
+      aria-label={
+        showShields
+          ? `${t("timerAriaLabel", { time: value })} · ${shieldsCount} shields`
+          : t("timerAriaLabel", { time: value })
+      }
     >
       <CandyIcon name="time" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
       <span className="arena-timer-chip-value">{value}</span>
+      {showShields ? (
+        <>
+          <span
+            aria-hidden="true"
+            className="candy-tray-pill-divider"
+          />
+          <picture className="candy-tray-pill-icon-inline">
+            <source srcSet="/art/redesign/icons/shield.avif" type="image/avif" />
+            <source srcSet="/art/redesign/icons/shield.webp" type="image/webp" />
+            <img
+              src="/art/redesign/icons/shield.png"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+            />
+          </picture>
+          <span className="tabular-nums text-sm font-extrabold">
+            {shieldsCount}
+          </span>
+        </>
+      ) : null}
     </span>
   );
 }
@@ -199,18 +234,18 @@ export function ArenaHud({
           backSlot={
             <ArenaBackChip onBack={onBack} needsConfirm={needsBackConfirm} />
           }
-          trailingControl={<ArenaTimerChip elapsedMs={elapsedMs} />}
+          trailingControl={
+            <ArenaTimerChip elapsedMs={elapsedMs} isEndState={isEndState} />
+          }
         />
       </div>
 
-      {/* Point-of-use shields callout — Phase 2 shop oscuridad. Only
-       *  renders when the wallet has shields ready AND the match is
-       *  in-play; suppressed in end-state so closing flow stays clean. */}
-      {!isEndState ? (
-        <div className="flex justify-end px-2">
-          <ArenaShieldsChip />
-        </div>
-      ) : null}
+      {/* Shields chip standalone row removed 2026-05-31: shield count
+       *  now lives INSIDE the timer pill (see ArenaTimerChip). One
+       *  combined chip matches the /exercises HUD pattern and removes
+       *  the dedicated row that pushed the matchup below the fold on
+       *  smaller viewports. ArenaShieldsChip export preserved for the
+       *  /dev/arena-shields-chip fixture. */}
 
       {/* Row 2: Matchup art (Heads) — Symmetric Battle Header */}
       <div className="arena-hud-matchup relative flex items-center justify-between px-2 pt-2">
