@@ -9304,11 +9304,33 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .shop-item-tile--compact .shop-item-tile-icon-figure {
+  /* CRITICAL: `display: block` (or inline-block) is required so the
+     explicit width/height take effect — <picture> defaults to inline
+     and inline elements ignore width. The hero rule relies on the
+     implicit block-like behavior of position:absolute; the compact
+     mode reverts to position:static and must restore display. */
   position: static;
-  width: 64px;
-  height: 64px;
-  margin: 0 auto;
+  display: block;
+  width: 72px;
+  height: 72px;
+  /* Negative top margin pulls the icon up so a small slice (~8px)
+     overhangs the card's top edge — visual "this is the item" cue
+     without dominating the card body. Math at runtime:
+       card padding-top = 12px
+       margin-top = -20px
+       → icon top edge = 12 - 20 = -8px (8px overhang)
+     The mini-cards grid uses gap-y-4 (16px) so the overhang has
+     breathing room above and never collides with the card above. */
+  margin: -20px auto 0 auto;
   pointer-events: none;
+}
+
+.shop-item-tile--compact .shop-item-tile-icon-figure picture,
+.shop-item-tile--compact .shop-item-tile-icon-figure img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .shop-item-tile--compact .shop-item-tile-icon-img {

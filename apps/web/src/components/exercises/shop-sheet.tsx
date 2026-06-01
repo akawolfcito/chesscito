@@ -357,8 +357,11 @@ export function ShopSheet({
           {/* Mini-cards lane — half-width 2-column grid for the
               consumables + welcome pack. Order is intentional:
               Welcome gift first (free-claim CTA visible above the
-              fold), then Streak Shield, then 5/20 Coach Credits. */}
-          <div className="grid grid-cols-2 gap-2.5">
+              fold), then Streak Shield, then 5/20 Coach Credits.
+              gap-4 (16px) leaves breathing room for the icon's
+              -10px top overhang so the sprite never collides with
+              the card above. */}
+          <div className="grid grid-cols-2 gap-x-2.5 gap-y-4">
             {welcomePack ? (
               <WelcomePackTile
                 compact
