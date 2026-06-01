@@ -87,32 +87,31 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
         <div className="promotion-overlay-content">
           <p className="promotion-overlay-title">{t("promotionTitle")}</p>
 
-          {/* Divider — two short lines flanking a small crown sprite.
-              Same visual vocabulary as the wooden-banner / crown
-              ornaments used elsewhere in the brand. */}
-          <div className="promotion-overlay-divider" aria-hidden="true">
-            <span className="promotion-overlay-divider-line" />
-            <picture className="promotion-overlay-divider-crown">
-              <source
-                srcSet="/art/redesign/icons/crown.avif"
-                type="image/avif"
-              />
-              <source
-                srcSet="/art/redesign/icons/crown.webp"
-                type="image/webp"
-              />
-              <img
-                src="/art/redesign/icons/crown.png"
-                alt=""
-                aria-hidden="true"
-              />
-            </picture>
-            <span className="promotion-overlay-divider-line" />
-          </div>
+          {/* Divider — single ornamental sprite (adorno-icon triplet)
+              that already exists in the brand asset library. Replaces
+              the earlier line + crown composite. User feedback
+              2026-06-01. */}
+          <picture
+            aria-hidden="true"
+            className="promotion-overlay-adorno"
+          >
+            <source
+              srcSet="/art/screen-mission/adorno-icon.avif"
+              type="image/avif"
+            />
+            <source
+              srcSet="/art/screen-mission/adorno-icon.webp"
+              type="image/webp"
+            />
+            <img
+              src="/art/screen-mission/adorno-icon.png"
+              alt=""
+              aria-hidden="true"
+            />
+          </picture>
 
           <div className="promotion-overlay-grid">
             {choices.map(({ key, label }) => {
-              const isDefault = key === "q";
               const imgBase = ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]];
               return (
                 <button
@@ -120,33 +119,8 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
                   type="button"
                   onClick={() => onSelect(key)}
                   aria-label={label}
-                  className={[
-                    "promotion-card",
-                    isDefault ? "promotion-card--default" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                  className="promotion-card"
                 >
-                  {isDefault ? (
-                    <picture
-                      aria-hidden="true"
-                      className="promotion-card-crown"
-                    >
-                      <source
-                        srcSet="/art/redesign/icons/crown.avif"
-                        type="image/avif"
-                      />
-                      <source
-                        srcSet="/art/redesign/icons/crown.webp"
-                        type="image/webp"
-                      />
-                      <img
-                        src="/art/redesign/icons/crown.png"
-                        alt=""
-                        aria-hidden="true"
-                      />
-                    </picture>
-                  ) : null}
                   <picture className="promotion-card-piece">
                     {THEME_CONFIG.hasOptimizedFormats && (
                       <>
