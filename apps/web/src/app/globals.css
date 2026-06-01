@@ -4989,6 +4989,45 @@ button.hud-resource-chip:active:not(:disabled) {
   }
 }
 
+/* Damage pulse — 250ms rose flash + brief desaturation. Telegraphs
+   "shield used" when the shields chip decrements (spec section 3.5).
+   Static sprite-swap analogue until the damaged-shield art lands.
+   Caller opts in per chip via the `pulseDamageOnDecrement` prop. */
+.hud-resource-chip.is-pulse-damage {
+  animation: hud-resource-chip-pulse-damage 250ms ease-out;
+}
+
+@keyframes hud-resource-chip-pulse-damage {
+
+  0% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.55) inset,
+      0 0 0 0 rgba(244, 63, 94, 0.55);
+    filter: saturate(1);
+  }
+
+  35% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.55) inset,
+      0 0 0 5px rgba(244, 63, 94, 0.45);
+    filter: saturate(0.4) brightness(0.92);
+  }
+
+  100% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.55) inset,
+      0 1px 2px rgba(63, 34, 8, 0.18);
+    filter: saturate(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .hud-resource-chip.is-pulse-damage {
+    animation: none;
+  }
+}
+
 /* ── HUD Secondary Row — conditional power-user resource row ──
    Spec: docs/product/visual-language-minimum-2026-05-03.md §4.7 +
    _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §3.

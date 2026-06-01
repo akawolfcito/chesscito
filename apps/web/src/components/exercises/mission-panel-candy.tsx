@@ -514,6 +514,7 @@ export function MissionPanelCandy({
               icon="shield"
               value={shieldCount}
               ariaLabel={tHud('shieldsAriaLabel', { count: shieldCount })}
+              pulseDamageOnDecrement
             />
           </div>
         )}

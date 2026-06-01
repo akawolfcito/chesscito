@@ -28,6 +28,13 @@ type Props = {
    *  otherwise as `<span>`. */
   onClick?: () => void;
   className?: string;
+  /** When true and `value` is a number that decremented vs the
+   *  previous render, the chip applies the `is-pulse-damage` class
+   *  for 250ms instead of the default `is-pulse`. Used by the
+   *  shields chip to telegraph "shield used" (spec section 3.5 —
+   *  damaged-shield sprite swap analogue, CSS-only until the sprite
+   *  asset ships). No-op for non-numeric values. */
+  pulseDamageOnDecrement?: boolean;
 };
 
 const TONE_DEFAULT_ICON: Partial<Record<HudResourceTone, CandyIconName>> = {
@@ -36,6 +43,7 @@ const TONE_DEFAULT_ICON: Partial<Record<HudResourceTone, CandyIconName>> = {
 };
 
 const PULSE_DURATION_MS = 240;
+const DAMAGE_PULSE_DURATION_MS = 250;
 
 /** Persistent HUD pill rendering one Chesscito-native resource. Adventure
  *  primitive — the cream backplate, warm border, and 240ms pulse on value
@@ -52,19 +60,41 @@ export function HudResourceChip({
   imageIconSrc,
   onClick,
   className = "",
+  pulseDamageOnDecrement = false,
 }: Props) {
   const [pulsing, setPulsing] = useState(false);
+  const [damagePulsing, setDamagePulsing] = useState(false);
   const previousValueRef = useRef(value);
 
   useEffect(() => {
-    if (previousValueRef.current === value) {
+    const prev = previousValueRef.current;
+    if (prev === value) {
       return;
     }
     previousValueRef.current = value;
+
+    // Damage variant: numeric value decreased AND caller opted in.
+    // Tells the user "shield used" (spec section 3.5). Visually
+    // overrides the default pulse so we don't double-animate.
+    const isDecrement =
+      pulseDamageOnDecrement &&
+      typeof prev === "number" &&
+      typeof value === "number" &&
+      value < prev;
+
+    if (isDecrement) {
+      setDamagePulsing(true);
+      const id = window.setTimeout(
+        () => setDamagePulsing(false),
+        DAMAGE_PULSE_DURATION_MS,
+      );
+      return () => window.clearTimeout(id);
+    }
+
     setPulsing(true);
     const id = window.setTimeout(() => setPulsing(false), PULSE_DURATION_MS);
     return () => window.clearTimeout(id);
-  }, [value]);
+  }, [value, pulseDamageOnDecrement]);
 
   if (value === null || value === undefined) {
     return null;
@@ -76,7 +106,7 @@ export function HudResourceChip({
     `hud-resource-chip--${tone}`,
     `hud-resource-chip--${size}`,
     `is-atmosphere-${atmosphere}`,
-    pulsing ? "is-pulse" : "",
+    damagePulsing ? "is-pulse-damage" : pulsing ? "is-pulse" : "",
     className,
   ]
     .filter(Boolean)
