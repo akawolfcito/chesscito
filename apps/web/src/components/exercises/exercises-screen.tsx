@@ -1410,11 +1410,22 @@ export function ExercisesScreen({
         moves: movesCount,
         is_capture: Boolean(currentExercise.isCapture),
       });
-      // Modal takes over the failure dwell (commit 8 of shield-rescue
-      // cluster). The FailRescueModal mounts after PhaseFlash's 1800ms
-      // banner entry; user decides via Use Shield / Claim free / Get
-      // Shields / Retry anyway / X. resetBoard fires from those
-      // handlers, NOT from a timeout. No autodismiss per spec §3.2 #1.
+      // FTUX gating (user feedback 2026-06-01): the rescue modal
+      // pitches "save your streak" + "claim free shields" — concepts
+      // a brand-new player has never encountered. Showing it on the
+      // FIRST EVER failure is over-pitching. Gate the modal by player
+      // context; if none, fall back to a brief 1.5s auto-reset like
+      // the pre-cluster behavior. The modal kicks in once the player
+      // has any of: a streak in progress, shields owned, or has
+      // already claimed the Welcome Pack.
+      const hasRescueContext =
+        streakCount >= 1 ||
+        shieldCount >= 1 ||
+        welcomePack.state === "claimed";
+      if (!hasRescueContext) {
+        autoReset.schedule(() => resetBoard(), 1500);
+      }
+      // else: modal handles the dwell; no autoReset.
     }
   }
 
@@ -2096,7 +2107,10 @@ export function ExercisesScreen({
           streakCount={streakCount}
           lastEarnedStars={lastEarnedStars}
           failureRescueSlot={
-            phase === "failure" ? (
+            phase === "failure" &&
+            (streakCount >= 1 ||
+              shieldCount >= 1 ||
+              welcomePack.state === "claimed") ? (
               <FailRescueModal
                 visible
                 variant={failRescue.variant}
