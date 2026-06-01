@@ -73,6 +73,15 @@ function buildCanonicalMessage(address: string, isoTimestamp: string): string {
   return `Chesscito Welcome Pack — claim for ${address} at ${isoTimestamp}`;
 }
 
+export type UseWelcomePackClaimOptions = {
+  /** Fired ONCE after the server confirms a fresh claim (not on
+   *  `already_claimed`). Lets the caller stage a post-claim flow
+   *  like auto-closing the Shop sheet so the player isn't trapped
+   *  on the catalog when they came from a deep link. Per spec
+   *  section 4 forcing-function review (user feedback 2026-05-31). */
+  onClaimedFresh?: () => void;
+};
+
 export type UseWelcomePackClaimReturn = {
   state: WelcomePackTileState;
   claimedAt: string | null;
@@ -80,7 +89,9 @@ export type UseWelcomePackClaimReturn = {
   onConnect: () => void;
 };
 
-export function useWelcomePackClaim(): UseWelcomePackClaimReturn {
+export function useWelcomePackClaim(
+  options?: UseWelcomePackClaimOptions,
+): UseWelcomePackClaimReturn {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { openConnectModal } = useConnectModal();
@@ -99,6 +110,14 @@ export function useWelcomePackClaim(): UseWelcomePackClaimReturn {
       isMountedRef.current = false;
     };
   }, []);
+
+  // Capture onClaimedFresh in a ref so the claim callback closure
+  // below doesn't have to depend on it (avoids re-creating the
+  // useCallback on every parent render).
+  const onClaimedFreshRef = useRef(options?.onClaimedFresh);
+  useEffect(() => {
+    onClaimedFreshRef.current = options?.onClaimedFresh;
+  });
 
   // Re-seed from cache when the active wallet changes, then refresh from
   // the server. Mirror of useFounderStatus — once claimed never reverts,
@@ -182,6 +201,11 @@ export function useWelcomePackClaim(): UseWelcomePackClaimReturn {
           // create a phantom shield delta in the UI.
           if (payload.claimed && typeof payload.credited === "number") {
             dispatchShieldChange();
+            // Fire post-fresh-claim callback (e.g. auto-close Shop
+            // sheet so the player returns to the exercises arena).
+            // Only on fresh claim — already_claimed should NOT
+            // trigger a redundant celebration close.
+            onClaimedFreshRef.current?.();
           }
         }
         // Non-ok responses are surfaced via the tile reverting to its

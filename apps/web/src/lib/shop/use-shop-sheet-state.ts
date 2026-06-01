@@ -158,7 +158,22 @@ export function useShopSheetState(
   const { switchChain } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
   const { isMiniPay } = useMiniPay();
-  const welcomePack = useWelcomePackClaim();
+  // Welcome Pack hook accepts an `onClaimedFresh` callback to stage
+  // the post-claim auto-close (600ms celebration window: HUD chip
+  // pulses with +3, tile collapses to "Claimed", then the sheet
+  // closes so the player returns to the prior surface — typically
+  // the rescue-modal deep-link source). See user feedback
+  // 2026-05-31 on the rescue → shop → claim → return loop.
+  //
+  // closeSheet is defined further down via useCallback so we cannot
+  // reference it directly here (TDZ). Forward via a ref that the
+  // useEffect below populates each render.
+  const closeSheetRef = useRef<(() => void) | null>(null);
+  const welcomePack = useWelcomePackClaim({
+    onClaimedFresh: () => {
+      window.setTimeout(() => closeSheetRef.current?.(), 600);
+    },
+  });
 
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain =
@@ -372,6 +387,13 @@ export function useShopSheetState(
     setOpen(false);
     setErrorMessage(null);
   }, [purchasePhase]);
+
+  // Forward `closeSheet` to the ref consumed by the Welcome-Pack
+  // onClaimedFresh callback above. Refreshed each render so the
+  // latest closure (with current purchasePhase dep) is what fires.
+  useEffect(() => {
+    closeSheetRef.current = closeSheet;
+  });
 
   const handleSelectItem = useCallback(
     (itemId: bigint) => {

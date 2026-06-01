@@ -1273,7 +1273,15 @@ export function ExercisesScreen({
       resetBoard();
     },
     onOpenShop: () => {
+      // Critical: resetBoard BEFORE setStoreOpen so PhaseFlash unmounts
+      // (phase 'failure' → 'ready') before the Shop sheet opens. Without
+      // this, the z-[70] PhaseFlash scrim sits on top of the Sheet and
+      // the Welcome Pack tile is hidden behind it (user feedback
+      // 2026-05-31). Opening shop counts as a skip of the current
+      // failure → resetStreak mirrors the onSkipped branch.
       autoReset.clear();
+      resetStreak();
+      resetBoard();
       setStoreOpen(true);
     },
   });
