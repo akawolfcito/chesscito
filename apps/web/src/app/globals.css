@@ -9313,15 +9313,15 @@ button.hud-resource-chip:active:not(:disabled) {
   display: block;
   width: 72px;
   height: 72px;
-  /* Negative top margin pulls the icon up so a small slice (~8px)
+  /* Negative top margin pulls the icon up so a small slice (~4px)
      overhangs the card's top edge — visual "this is the item" cue
      without dominating the card body. Math at runtime:
        card padding-top = 12px
-       margin-top = -20px
-       → icon top edge = 12 - 20 = -8px (8px overhang)
+       margin-top = -16px
+       → icon top edge = 12 - 16 = -4px (4px overhang)
      The mini-cards grid uses gap-y-4 (16px) so the overhang has
      breathing room above and never collides with the card above. */
-  margin: -20px auto 0 auto;
+  margin: -16px auto 0 auto;
   pointer-events: none;
 }
 
@@ -9379,19 +9379,35 @@ button.hud-resource-chip:active:not(:disabled) {
   display: none;
 }
 
-/* Welcome-pack tile in compact mode: shrink the overhanging sticker
-   so it doesn't dominate the mini-card, and drop the extra body
-   line so the mini-card matches the rhythm of the other SKU tiles
-   (name + subtitle + CTA). The body copy "3 free Shields. One per
-   wallet." remains available in the full-width mode for when the
-   tile gets used elsewhere. */
+/* Welcome-pack tile in compact mode: the gift sticker (which is
+   absolute-positioned top-left in the full-width mode) gets
+   normalized into the same centered-top icon layout the other 3
+   mini-cards use (Streak Shield + Coach packs). User feedback
+   2026-06-01: "el icono de Welcome gift está muy roto" + user
+   drew guides showing all four mini-card icons should be centered
+   above their titles. Match `.shop-item-tile--compact
+   .shop-item-tile-icon-figure` math exactly so the four cards
+   read as a coherent grid. */
 .welcome-pack-tile--compact .welcome-pack-tile-sticker {
-  width: 2.4rem;
-  height: 2.4rem;
-  top: -0.4rem;
-  left: -0.3rem;
+  position: static;
+  display: block;
+  width: 72px;
+  height: 72px;
+  top: auto;
+  left: auto;
+  margin: -16px auto 0 auto;
 }
 
+.welcome-pack-tile--compact .welcome-pack-tile-sticker img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Drop the extra body line so the Welcome mini-card matches the
+   rhythm of the other SKU tiles (name + subtitle + CTA). The body
+   copy remains available in the full-width mode. */
 .welcome-pack-tile--compact .welcome-pack-tile-body {
   display: none;
 }
