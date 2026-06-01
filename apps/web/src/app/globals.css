@@ -9279,6 +9279,16 @@ button.hud-resource-chip:active:not(:disabled) {
   --shop-tile-accent-border: rgba(55, 95, 175, 0.55);
 }
 
+/* Green tone — celebratory cream-to-leaf gradient. Used by the
+   Founder Badge tile so its gold/purple sprite reads against a
+   cool accent (user feedback 2026-06-01: "founder bg should be
+   green tonalities"). */
+.shop-item-tile[data-tone="green"] {
+  --shop-tile-accent-base: #e0f1d4;
+  --shop-tile-accent-mid: #95c66a;
+  --shop-tile-accent-border: rgba(70, 130, 30, 0.55);
+}
+
 /* Welcome Pack tone — warmer cream-amber than the default amber so
    the pinned tile differentiates from any standard amber SKUs that
    might land later, while staying in the same warm family (signals
@@ -9310,12 +9320,30 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .welcome-pack-tile-sticker-slot {
-  /* Reserves vertical airspace for the future sticker sprite. Empty
-     today; commit 6+ drops the shield-gift sprite here with
-     `position: absolute` overhang per [overflow-clip-escape-pattern]
-     memory. The reserved height keeps the layout stable when the
-     sprite lands. */
+  /* Reserves vertical airspace for the sticker sprite. */
   min-height: 0.25rem;
+}
+
+/* Welcome-gift sticker sprite. Anchors top-left and overhangs via
+   negative margins per [overflow-clip-escape-pattern] memory — the
+   parent .shop-item-tile inherits overflow:visible from the shop
+   sheet container so the sprite can spill past the tile bounds and
+   read as a "this is special" callout. */
+.welcome-pack-tile-sticker {
+  position: absolute;
+  top: -0.6rem;
+  left: -0.4rem;
+  width: 3.2rem;
+  height: 3.2rem;
+  display: inline-flex;
+  pointer-events: none;
+}
+
+.welcome-pack-tile-sticker img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(120, 65, 5, 0.4));
 }
 
 .welcome-pack-tile-identity {

@@ -104,12 +104,10 @@ export const SHOP_TILE_ASSETS: Record<ShopCopyKey, { icon: string }> = {
   pro: { icon: "/art/shop/pro" },
   founderBadge: { icon: "/art/shop/founder" },
   retryShield: { icon: "/art/shop/shield" },
-  // Placeholder assets (A2 cluster). Reuses Luz icon from
-  // /art/redesign/icons. Replace with bespoke
-  // /art/shop/coach-pack-{5,20}.* triplets when Sally's
-  // visual-polish foundation (A4) lands.
-  coachPack5: { icon: "/art/redesign/icons/coach" },
-  coachPack20: { icon: "/art/redesign/icons/coach" },
+  // Dedicated triplets shipped 2026-06-01 (replaces the legacy
+  // shared Luz placeholder from the A2 cluster).
+  coachPack5: { icon: "/art/shop/coach-pack-5" },
+  coachPack20: { icon: "/art/shop/coach-pack-20" },
 };
 
 /** Number of shield uses credited to localStorage per successful

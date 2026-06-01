@@ -102,13 +102,23 @@ export function WelcomePackTile({
       data-tone="welcome"
       data-copy-key="welcomePack"
     >
-      {/* Sticker overhang slot. Sprite asset not yet shipped — the
-       *  slot exists so commit 6+ can drop the art in without
-       *  re-layouting the tile. */}
-      <div
-        className="welcome-pack-tile-sticker-slot"
+      {/* Sticker overhang sprite — shipped 2026-06-01 from
+       *  design/version1-new/welcome-gift-icon.png. Overhangs the
+       *  tile via the existing slot reserved earlier in the cluster.
+       *  Triplet under /art/shop/welcome-gift. */}
+      <picture
         aria-hidden="true"
-      />
+        className="welcome-pack-tile-sticker-slot welcome-pack-tile-sticker"
+      >
+        <source srcSet="/art/shop/welcome-gift.avif" type="image/avif" />
+        <source srcSet="/art/shop/welcome-gift.webp" type="image/webp" />
+        <img
+          src="/art/shop/welcome-gift.png"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
+      </picture>
 
       <div className="shop-item-tile-identity welcome-pack-tile-identity">
         <p className="shop-item-tile-name">{t("tile.title")}</p>

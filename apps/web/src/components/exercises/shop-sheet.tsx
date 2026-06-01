@@ -85,7 +85,7 @@ function copyKeyForItem(itemId: bigint): ShopCopyKey {
  *  properties (gradient base + mid + border) per-card. Centralized
  *  here so a new SKU only needs one entry to inherit the panel
  *  treatment from Badges/Trophies/Leaderboard with its own accent. */
-type ShopTileTone = "purple" | "orange" | "blue";
+type ShopTileTone = "purple" | "orange" | "blue" | "green";
 
 function toneForCopyKey(copyKey: ShopCopyKey): ShopTileTone {
   switch (copyKey) {
@@ -93,7 +93,11 @@ function toneForCopyKey(copyKey: ShopCopyKey): ShopTileTone {
     case "coachPack20":
       return "purple";
     case "founderBadge":
-      return "orange";
+      // User feedback 2026-06-01: founder badge tile should read in
+      // green tonalities rather than orange so the celebratory gold/
+      // purple sprite art reads against a cool accent instead of
+      // doubling on warm tones.
+      return "green";
     case "retryShield":
     case "coachPack5":
       return "blue";

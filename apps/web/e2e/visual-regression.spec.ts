@@ -152,8 +152,15 @@ test.describe("visual regression — Step 1 baselines", () => {
     // price label (`formatUsd(...)` → `$X.XX`). Snapshotting in
     // between produced the 2026-05-30 flake — see handoff and
     // `use-shop-sheet-state.ts:211-254`.
+    //
+    // Filter out the WelcomePackTile (pinned at the top of the
+    // catalog as of 2026-05-31) — its buy pill renders "Connect
+    // to claim" / "Claim free" rather than a USD price, so we
+    // wait specifically for the FIRST regular SKU pill instead.
     await expect(
-      page.locator(".shop-item-tile-buy-pill--green").first(),
+      page
+        .locator(".shop-item-tile:not(.welcome-pack-tile) .shop-item-tile-buy-pill--green")
+        .first(),
     ).toContainText("$", { timeout: 10_000 });
     await settle(page, 500);
 
