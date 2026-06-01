@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import type { RescueModalVariant } from "@/lib/exercises/use-rescue-modal-state";
 
@@ -58,6 +59,11 @@ export type FailRescueModalProps = {
   onClaimFree: () => void;
   /** Tap "Get Shields" deep link — only consumed by variant D. */
   onGetShields: () => void;
+  /** Fired the first time this component renders with variant A, so
+   *  the hook can persist a "primer shown" flag. Subsequent rescues
+   *  with shields then render variant B (compact). E18 fix from the
+   *  red-team audit. Optional — the dev fixture can omit it. */
+  onPrimerShown?: () => void;
 };
 
 const WELCOME_PACK_GIFT_COUNT = 3;
@@ -83,9 +89,18 @@ export function FailRescueModal({
   onRetryAnyway,
   onClaimFree,
   onGetShields,
+  onPrimerShown,
 }: FailRescueModalProps) {
   const tRescue = useTranslations("RESCUE_MODAL_COPY");
   const tFooter = useTranslations("FOOTER_CTA_COPY");
+
+  // Persist the primer-shown flag the moment variant A actually
+  // surfaces. Future rescues with shields then render variant B.
+  useEffect(() => {
+    if (visible && variant === "A") {
+      onPrimerShown?.();
+    }
+  }, [visible, variant, onPrimerShown]);
 
   if (!visible) return null;
 

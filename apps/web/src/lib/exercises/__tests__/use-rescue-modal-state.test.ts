@@ -3,41 +3,42 @@ import { describe, it, expect } from "vitest";
 import { selectRescueModalState } from "../use-rescue-modal-state";
 
 describe("selectRescueModalState", () => {
-  it("returns variant A when shields >= 1 and seenCount == 0 (first-encounter primer)", () => {
+  it("returns variant A when shields >= 1 and primer has NOT been shown", () => {
     const result = selectRescueModalState({
       shieldsCount: 3,
       welcomePackClaimed: false,
-      rescueSeenCount: 0,
+      rescuePrimerShown: false,
     });
     expect(result).toEqual({ variant: "A", hasShields: true });
   });
 
-  it("returns variant B when shields >= 1 and seenCount >= 1 (no primer)", () => {
+  it("returns variant B when shields >= 1 and primer has been shown", () => {
     const result = selectRescueModalState({
       shieldsCount: 3,
       welcomePackClaimed: false,
-      rescueSeenCount: 1,
+      rescuePrimerShown: true,
     });
     expect(result).toEqual({ variant: "B", hasShields: true });
   });
 
-  it("returns variant A on the first shield-available encounter EVEN IF user previously saw without-shields variants", () => {
-    // User saw C/D first (without shields), got shields, now fails
-    // again. They've never seen the shield mechanic explained at
-    // the rescue moment → primer is appropriate.
+  it("returns variant A even after claiming the Welcome Pack — primer fires on FIRST shield-available rescue (E18 fix)", () => {
+    // Scenario: player's first failure was variant C (without
+    // shields). seenCount-based selector would have bumped a counter
+    // and skipped A on the next-failure-with-shields. The primer flag
+    // is independent of that counter, so A correctly fires.
     const result = selectRescueModalState({
-      shieldsCount: 1,
+      shieldsCount: 3,
       welcomePackClaimed: true,
-      rescueSeenCount: 0,
+      rescuePrimerShown: false,
     });
     expect(result.variant).toBe("A");
   });
 
-  it("returns variant C when shields == 0, welcome pack NOT claimed, ignoreCount < 3", () => {
+  it("returns variant C when shields == 0 and welcome pack NOT claimed", () => {
     const result = selectRescueModalState({
       shieldsCount: 0,
       welcomePackClaimed: false,
-      rescueSeenCount: 0,
+      rescuePrimerShown: false,
     });
     expect(result).toEqual({ variant: "C", hasShields: false });
   });
@@ -46,21 +47,17 @@ describe("selectRescueModalState", () => {
     const result = selectRescueModalState({
       shieldsCount: 0,
       welcomePackClaimed: true,
-      rescueSeenCount: 0,
+      rescuePrimerShown: false,
     });
     expect(result).toEqual({ variant: "D", hasShields: false });
   });
 
-  it("ALWAYS returns variant C while welcome pack is unclaimed, regardless of seenCount (no nag graduation)", () => {
-    // Earlier iteration used seenCount >= 3 as a graduation threshold
-    // from C → D. That trapped players on the paid upsell after just
-    // 3 failures even though the free welcome pack was still
-    // available. Reverted 2026-05-31 per user feedback.
-    for (const seen of [0, 1, 2, 3, 5, 10]) {
+  it("variant C is independent of primer flag — without shields the primer state is irrelevant", () => {
+    for (const primer of [false, true]) {
       const result = selectRescueModalState({
         shieldsCount: 0,
         welcomePackClaimed: false,
-        rescueSeenCount: seen,
+        rescuePrimerShown: primer,
       });
       expect(result.variant).toBe("C");
     }
@@ -71,28 +68,28 @@ describe("selectRescueModalState", () => {
       selectRescueModalState({
         shieldsCount: 5,
         welcomePackClaimed: false,
-        rescueSeenCount: 0,
+        rescuePrimerShown: false,
       }).hasShields,
     ).toBe(true);
     expect(
       selectRescueModalState({
         shieldsCount: 5,
         welcomePackClaimed: true,
-        rescueSeenCount: 5,
+        rescuePrimerShown: true,
       }).hasShields,
     ).toBe(true);
     expect(
       selectRescueModalState({
         shieldsCount: 0,
         welcomePackClaimed: false,
-        rescueSeenCount: 0,
+        rescuePrimerShown: false,
       }).hasShields,
     ).toBe(false);
     expect(
       selectRescueModalState({
         shieldsCount: 0,
         welcomePackClaimed: true,
-        rescueSeenCount: 0,
+        rescuePrimerShown: false,
       }).hasShields,
     ).toBe(false);
   });
@@ -101,7 +98,7 @@ describe("selectRescueModalState", () => {
     const input = {
       shieldsCount: 2,
       welcomePackClaimed: false,
-      rescueSeenCount: 1,
+      rescuePrimerShown: true,
     };
     expect(selectRescueModalState(input)).toEqual(
       selectRescueModalState(input),

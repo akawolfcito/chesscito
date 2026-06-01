@@ -34,11 +34,14 @@ export type RescueModalVariant =
 export type RescueModalStateInput = {
   shieldsCount: number;
   welcomePackClaimed: boolean;
-  /** Times the user dismissed the modal without using a shield, kept
-   *  in localStorage. After 3 dismissals on the without-shields branch
-   *  we stop pitching the Welcome Pack (the user has seen it) and
-   *  graduate to the paid upsell. */
-  rescueSeenCount: number;
+  /** Whether the player has seen the primer variant A explicitly.
+   *  Set by FailRescueModal on first render of variant A. Drives the
+   *  A↔B switch: A only fires when shields are available AND the
+   *  primer hasn't been shown yet. Replaces the legacy
+   *  rescueSeenCount-based selector which surfaced B prematurely when
+   *  the player's first failure was without shields (E18 from the
+   *  red-team audit 2026-05-31). */
+  rescuePrimerShown: boolean;
 };
 
 export type RescueModalState = {
@@ -57,40 +60,34 @@ export type RescueModalState = {
 export function selectRescueModalState(
   input: RescueModalStateInput,
 ): RescueModalState {
-  const { shieldsCount, welcomePackClaimed, rescueSeenCount } = input;
+  const { shieldsCount, welcomePackClaimed, rescuePrimerShown } = input;
   const hasShields = shieldsCount >= 1;
 
   if (hasShields) {
-    // First-time rescue with shields → variant A with the primer line.
-    // We use rescueSeenCount === 0 (not "first time with shields") so
-    // a user who saw the without-shields variant first STILL gets the
-    // primer the first time they have shields available — they've never
-    // seen the shield mechanic explained at the rescue moment.
+    // Variant A = first time the player has shields available at a
+    // rescue moment, with the "A Shield protects your streak" primer.
+    // Variant B = compact recurring version, no primer.
+    //
+    // Key invariant fixed 2026-05-31 (E18 from red-team): the primer
+    // tracking key is INDEPENDENT from any "modal seen" counter. A
+    // player whose first failure landed on variant C (without shields)
+    // bumps no primer state — when they later acquire shields and
+    // fail again, they correctly land on A. Previous design bumped a
+    // generic seenCount and silently skipped A in this exact scenario.
     return {
-      variant: rescueSeenCount === 0 ? "A" : "B",
+      variant: rescuePrimerShown ? "B" : "A",
       hasShields: true,
     };
   }
 
   // shieldsCount === 0
   //
-  // The Welcome Pack is once-per-wallet. Until the player claims it,
-  // every rescue should offer the pitch — graduating to the paid SKU
-  // (variant D) before claim would trap the player on the upsell
-  // even though the free pack is still available.
-  //
-  // Earlier iteration used `rescueSeenCount >= 3` as a nag-fatigue
-  // graduation gate, but that fired after just 3 failures (seenCount
-  // bumps every modal mount, not every dismissal) and made variant
-  // C unreachable in practice. Reverted 2026-05-31 per user
-  // feedback: "me sale COMPRAR ESCUDOS y no reclamar SHIELDS".
-  // rescueSeenCount is still consumed for A vs B (primer
-  // suppression), just not for C/D anymore.
+  // Welcome Pack is once-per-wallet. Until claimed, every rescue
+  // offers the pitch (C). Once claimed, C is gone (the free pack is
+  // spent) and we surface the paid upsell (D).
   if (!welcomePackClaimed) {
     return { variant: "C", hasShields: false };
   }
 
-  // welcomePackClaimed === true → pack is gone, surface the paid
-  // upsell so the player can restock.
   return { variant: "D", hasShields: false };
 }

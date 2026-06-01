@@ -39,7 +39,7 @@ import {
  */
 
 const IGNORE_KEY = "chesscito:rescue_ignores";
-const SEEN_KEY = "chesscito:rescue_seen";
+const PRIMER_SHOWN_KEY = "chesscito:rescue_primer_shown";
 
 function safeReadInt(key: string): number {
   if (typeof window === "undefined") return 0;
@@ -63,25 +63,47 @@ function safeWriteInt(key: string, value: number): void {
   }
 }
 
+function safeReadBool(key: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(key) === "1";
+  } catch {
+    return false;
+  }
+}
+
 function bumpIgnoreCount(): void {
   safeWriteInt(IGNORE_KEY, safeReadInt(IGNORE_KEY) + 1);
 }
 
-function bumpSeenCount(): void {
-  safeWriteInt(SEEN_KEY, safeReadInt(SEEN_KEY) + 1);
+function markPrimerShown(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PRIMER_SHOWN_KEY, "1");
+  } catch {
+    /* ignore */
+  }
 }
 
 export type UseFailRescueOptions = {
   /** Side-effect run AFTER the server confirms a successful shield
    *  spend. Caller resets the board and keeps the streak. */
   onRescued: () => void;
-  /** Side-effect run when the user closes the modal without using a
-   *  shield (X tap, Retry anyway, or server reported insufficient).
-   *  Caller resets the board and decrements the streak. */
+  /** Side-effect run when the user DELIBERATELY closes the modal
+   *  without using a shield (X tap, Retry anyway, or server reported
+   *  409 insufficient because the cache was stale). Caller resets the
+   *  board AND decrements the streak — the player chose to abandon
+   *  the rescue. */
   onSkipped: () => void;
+  /** Side-effect run when the player tried to use a shield but the
+   *  server failed with a 5xx / network error. The player INTENDED to
+   *  rescue — penalizing the streak here would feel like punishment
+   *  for our infra glitch. Caller resets the board but PRESERVES the
+   *  streak. Distinct from onSkipped per red-team E11. */
+  onServerError: () => void;
   /** Opens the Shop sheet focused on a specific surface. v1 just opens
-   *  the sheet; commit 10 polish pass can wire actual scroll-to-focus
-   *  via a query param. */
+   *  the sheet; polish pass can wire actual scroll-to-focus via a
+   *  query param. */
   onOpenShop: (focus: "welcome-pack" | "shield-sku") => void;
 };
 
@@ -96,11 +118,12 @@ export type UseFailRescueReturn = {
   onRetryAnyway: () => void;
   onClaimFree: () => void;
   onGetShields: () => void;
-  /** Called by the caller once when the modal first becomes visible
-   *  for a given failure, so the seen-count primer-suppression
-   *  invariant tracks correctly (variant B once user has seen
-   *  variant A). Idempotent — safe to call repeatedly per failure. */
-  markSeen: () => void;
+  /** Called by FailRescueModal when it actually renders variant A (the
+   *  primer). Sets a localStorage flag so subsequent rescues with
+   *  shields show variant B (compact, no primer). Idempotent. Critical
+   *  for E18 fix: the flag is bumped ONLY when A actually shows, not
+   *  on every modal mount. */
+  markPrimerShown: () => void;
 };
 
 export function useFailRescue(
@@ -125,12 +148,12 @@ export function useFailRescue(
     return selectRescueModalState({
       shieldsCount,
       welcomePackClaimed: welcomePack.state === "claimed",
-      rescueSeenCount: safeReadInt(SEEN_KEY),
+      rescuePrimerShown: safeReadBool(PRIMER_SHOWN_KEY),
     });
   }, [shieldsCount, welcomePack.state]);
 
-  const markSeen = useCallback(() => {
-    bumpSeenCount();
+  const markPrimerShownCb = useCallback(() => {
+    markPrimerShown();
   }, []);
 
   const onUseShield = useCallback(() => {
@@ -159,15 +182,22 @@ export function useFailRescue(
           writeCreditedCache(data.balance + readConsumedCount());
           dispatchShieldChange();
           optionsRef.current.onRescued();
+        } else if (!res.ok && res.status >= 500) {
+          // 5xx — server error during a real rescue attempt. The
+          // player TRIED to rescue; don't penalize the streak for
+          // our infra glitch (red-team E11).
+          optionsRef.current.onServerError();
         } else {
-          // 409 insufficient (race with another tab) or 5xx: treat
-          // as skip so the user isn't trapped. The HUD chip will
-          // re-fetch on the next useShieldsCount tick.
+          // 409 insufficient or any other 4xx — the player's local
+          // state was out of sync with the server, but functionally
+          // this is the same outcome as a deliberate skip: no shield
+          // was spent, the streak resets.
           optionsRef.current.onSkipped();
         }
       } catch {
-        // Network failure. Same fallback as 5xx.
-        optionsRef.current.onSkipped();
+        // Network failure — same psychology as 5xx, treat as server
+        // error rather than punishing the player (red-team E11).
+        optionsRef.current.onServerError();
       } finally {
         setIsSpending(false);
       }
@@ -195,6 +225,6 @@ export function useFailRescue(
     onRetryAnyway,
     onClaimFree,
     onGetShields,
-    markSeen,
+    markPrimerShown: markPrimerShownCb,
   };
 }

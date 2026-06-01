@@ -1284,27 +1284,28 @@ export function ExercisesScreen({
       resetStreak();
       resetBoard();
     },
-    onOpenShop: () => {
-      // Critical: resetBoard BEFORE setStoreOpen so PhaseFlash unmounts
-      // (phase 'failure' → 'ready') before the Shop sheet opens. Without
-      // this, the z-[70] PhaseFlash scrim sits on top of the Sheet and
-      // the Welcome Pack tile is hidden behind it (user feedback
-      // 2026-05-31). Opening shop counts as a skip of the current
-      // failure → resetStreak mirrors the onSkipped branch.
+    onServerError: () => {
+      // Player tried to use a shield but the server failed. They
+      // INTENDED to rescue — don't penalize the streak for our
+      // infra glitch (red-team E11). Just reset the board so the
+      // player can replay; HUD chip will re-sync on next mount.
       autoReset.clear();
-      resetStreak();
       resetBoard();
+    },
+    onOpenShop: () => {
+      // Variante B (red-team approved): preserve phase=failure
+      // throughout the shop visit so the modal re-mounts cleanly
+      // when the sheet closes — with the freshly-acquired shields
+      // now available. Don't resetStreak; opening shop in the
+      // middle of a rescue is the player ACTING on their streak,
+      // not abandoning it. The display-phase trick below
+      // (storeOpen ? "ready" : phase) hides the PhaseFlash overlay
+      // while the shop is on-screen so it doesn't sit above the
+      // Sheet z-stack.
+      autoReset.clear();
       setStoreOpen(true);
     },
   });
-
-  // Bump seen-counter once per failure so variant B replaces A on the
-  // second encounter (primer-suppression invariant in selector).
-  useEffect(() => {
-    if (phase === "failure") failRescue.markSeen();
-    // failRescue.markSeen is stable (useCallback), no need to depend.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
 
   function resetBoard() {
     autoReset.clear();
@@ -2074,7 +2075,7 @@ export function ExercisesScreen({
             { key: "queen", label: tPiece("queen"), enabled: true },
             { key: "king", label: tPiece("king"), enabled: false },
           ]}
-          phase={phase}
+          phase={storeOpen ? "ready" : phase}
           targetLabel={targetLabel}
           pieceHint={pieceHint}
           isCapture={Boolean(currentExercise.isCapture)}
@@ -2104,6 +2105,7 @@ export function ExercisesScreen({
                 onRetryAnyway={failRescue.onRetryAnyway}
                 onClaimFree={failRescue.onClaimFree}
                 onGetShields={failRescue.onGetShields}
+                onPrimerShown={failRescue.markPrimerShown}
               />
             ) : null
           }
