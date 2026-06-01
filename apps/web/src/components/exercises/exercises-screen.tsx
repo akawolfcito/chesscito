@@ -27,6 +27,7 @@ import { MissionBriefing } from "@/components/exercises/mission-briefing";
 import { MissionPanelCandy } from "@/components/exercises/mission-panel-candy";
 import { FailRescueModal } from "@/components/exercises/fail-rescue-modal";
 import { useFailRescue } from "@/lib/exercises/use-fail-rescue";
+import { bumpStreak, resetStreak, useStreak } from "@/lib/exercises/use-streak";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
@@ -1237,6 +1238,12 @@ export function ExercisesScreen({
     }
   }
 
+  // Live streak counter — feeds the WELL DONE flash + the new
+  // Star+Shield combined HUD pill. Reads localStorage on mount +
+  // re-renders on chesscito:streak-changed events fired by
+  // bumpStreak/resetStreak in the success / skip paths.
+  const streakCount = useStreak();
+
   // Fail-rescue host. The hook owns the modal state machine
   // (variant A/B/C/D + shield-spend + ignore counters). Handlers
   // re-use this scope's resetBoard + setStoreOpen via the lambdas
@@ -1244,11 +1251,17 @@ export function ExercisesScreen({
   // it via the function declaration's hoisted binding.
   const failRescue = useFailRescue({
     onRescued: () => {
+      // Shield used — streak preserved (do NOT call resetStreak).
       autoReset.clear();
       resetBoard();
     },
     onSkipped: () => {
+      // Retry without shield (or close) — racha rota. This is the
+      // moment the shield mechanic becomes psychologically real:
+      // user JUST saw "STREAK ×N" on the prior success, now they
+      // pay for skipping.
       autoReset.clear();
+      resetStreak();
       resetBoard();
     },
     onOpenShop: () => {
@@ -1284,6 +1297,11 @@ export function ExercisesScreen({
 
     if (isTarget) {
       hapticSuccess();
+      // Bump streak BEFORE setPhase so the WELL DONE PhaseFlash sees
+      // the new count on its first render. Replays count toward the
+      // streak too: completing an exercise (fresh or repeat) is the
+      // unit of "successful action" the player is chaining.
+      bumpStreak();
       setPhase("success");
       const elapsed = timerStart.current > 0 ? Date.now() - timerStart.current : 1000;
       setElapsedMs(elapsed);
@@ -2036,6 +2054,7 @@ export function ExercisesScreen({
           currentStars={totalStars}
           claimedBadges={badgesClaimed}
           shieldCount={shieldCount}
+          streakCount={streakCount}
           failureRescueSlot={
             phase === "failure" ? (
               <FailRescueModal

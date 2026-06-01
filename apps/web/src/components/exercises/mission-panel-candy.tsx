@@ -39,6 +39,11 @@ type MissionPanelProps = {
    *  /hub canon and avoid layout jumps when the count transitions
    *  0↔1. */
   shieldCount: number
+  /** Live consecutive-success streak counter. Surfaces in the WELL
+   *  DONE flash (commit 2 of this cluster's polish pass) so the
+   *  Shield rescue mechanic gains psychological weight — the user
+   *  sees what they're protecting. */
+  streakCount?: number
   /** Total stars earned on the current piece (0–15). Feeds the
    *  mission-detail journey rail so the user sees how close they are
    *  to claiming the badge. */
@@ -354,6 +359,7 @@ export function MissionPanelCandy({
   actionRowLeft,
   actionRowRight,
   shieldCount,
+  streakCount,
   pieceHint,
   failureRescueSlot,
 }: MissionPanelProps) {
