@@ -28,6 +28,7 @@ import { MissionPanelCandy } from "@/components/exercises/mission-panel-candy";
 import { FailRescueModal } from "@/components/exercises/fail-rescue-modal";
 import { useFailRescue } from "@/lib/exercises/use-fail-rescue";
 import { bumpStreak, resetStreak, useStreak } from "@/lib/exercises/use-streak";
+import { useWelcomePackClaim } from "@/lib/shop/use-welcome-pack-claim";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
@@ -1243,6 +1244,17 @@ export function ExercisesScreen({
   // re-renders on chesscito:streak-changed events fired by
   // bumpStreak/resetStreak in the success / skip paths.
   const streakCount = useStreak();
+
+  // Welcome Pack hook — wired so the ShopSheet on this route can
+  // render the pinned tile. exercises-screen mounts <ShopSheet>
+  // directly (NOT via useShopSheetState), so we duplicate the
+  // wiring here. onClaimedFresh auto-closes the sheet after a 600ms
+  // celebration window so the player returns to the rescue board.
+  const welcomePack = useWelcomePackClaim({
+    onClaimedFresh: () => {
+      window.setTimeout(() => setStoreOpen(false), 600);
+    },
+  });
 
   // Stars earned on the just-completed exercise (0-3). Set
   // synchronously in the success path so the WELL DONE PhaseFlash
@@ -2475,6 +2487,7 @@ export function ExercisesScreen({
             setConfirmOpen(true);
           }}
           showTrigger={false}
+          welcomePack={welcomePack}
         />
         <TrophiesSheet
           open={trophiesSheetOpen}
