@@ -52,6 +52,12 @@ type WelcomePackTileProps = {
   /** Connect handler — opens the wallet connect flow when `state` is
    *  `connect`. */
   onConnect?: () => void;
+  /** When true, render as a half-width mini-card (2-col grid format,
+   *  smaller sticker, condensed copy). Used inside the new "mini
+   *  cards" zone of the Shop sheet (user feedback 2026-06-01: too
+   *  much scroll, want everything closer to the fold). When false
+   *  (default), renders the original full-width pinned tile. */
+  compact?: boolean;
 };
 
 function formatClaimedDate(iso: string | null | undefined): string {
@@ -69,6 +75,7 @@ export function WelcomePackTile({
   claimedAt,
   onClaim,
   onConnect,
+  compact = false,
 }: WelcomePackTileProps) {
   const t = useTranslations("WELCOME_PACK_COPY");
 
@@ -98,7 +105,13 @@ export function WelcomePackTile({
 
   return (
     <div
-      className="shop-item-tile welcome-pack-tile"
+      className={[
+        "shop-item-tile",
+        "welcome-pack-tile",
+        compact ? "shop-item-tile--compact welcome-pack-tile--compact" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-tone="welcome"
       data-copy-key="welcomePack"
     >

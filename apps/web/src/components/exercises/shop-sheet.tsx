@@ -90,29 +90,41 @@ type ShopTileTone = "purple" | "orange" | "blue" | "green";
 function toneForCopyKey(copyKey: ShopCopyKey): ShopTileTone {
   switch (copyKey) {
     case "pro":
-    case "coachPack20":
       return "purple";
     case "founderBadge":
-      // User feedback 2026-06-01: founder badge tile should read in
-      // green tonalities rather than orange so the celebratory gold/
-      // purple sprite art reads against a cool accent instead of
-      // doubling on warm tones.
-      return "green";
+      return "orange";
     case "retryShield":
     case "coachPack5":
       return "blue";
+    case "coachPack20":
+      // User correction 2026-06-01: the green accent belongs on the
+      // 20 Coach Credits "best value" tier rather than the Founder
+      // badge. Green reads as the upgrade/value lane.
+      return "green";
   }
 }
 
-/** Compact shop item card — premium game-shop tile. */
+/** Compact shop item card — premium game-shop tile.
+ *
+ *  Two layout modes:
+ *  - Default (full-width): the original 2-column hero layout with a
+ *    big left-overhang icon, multi-line identity, and a price-on-CTA
+ *    footer. Used for PRO + Founder (the "hero" lane).
+ *  - `compact`: half-width mini-card for the 2-column grid below.
+ *    Smaller icon, vertical stack, price chip below the body — fits
+ *    two SKUs per row at 390px so the player sees more catalog
+ *    above the fold (user feedback 2026-06-01).
+ */
 function ShopItemCard({
   item,
   isFeatured,
   onSelectItem,
+  compact = false,
 }: {
   item: CatalogItem;
   isFeatured: boolean;
   onSelectItem: (itemId: bigint) => void;
+  compact?: boolean;
 }) {
   const t = useTranslations("SHOP_SHEET_COPY");
   const copyKey = copyKeyForItem(item.itemId);
@@ -131,6 +143,7 @@ function ShopItemCard({
     <div
       className={[
         "shop-item-tile",
+        compact ? "shop-item-tile--compact" : "",
         isFeatured ? "shop-item-tile--featured" : "",
       ]
         .filter(Boolean)
@@ -309,21 +322,6 @@ export function ShopSheet({
          *  identical — the only difference is icons can now visibly
          *  float past the card's left edge. */}
         <div className="mt-4 -mx-6 px-6 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-6">
-          {/* Welcome Pack pinned tile — Forcing-Function-for-Catalog-
-           *  Awareness anchor. ALWAYS at the top of the catalog scroll
-           *  region (above SKUs and above the "More coming" ghost),
-           *  per spec ux-shield-rescue-and-welcome-pack-2026-05-31
-           *  §4.1. Pinning is non-negotiable: this is the surface
-           *  the fail-rescue modal deep-links to. */}
-          {welcomePack ? (
-            <WelcomePackTile
-              state={welcomePack.state}
-              claimedAt={welcomePack.claimedAt}
-              onClaim={welcomePack.onClaim}
-              onConnect={welcomePack.onConnect}
-            />
-          ) : null}
-
           {items.length === 0 && (
             <p
               className="text-center text-sm"
@@ -333,18 +331,59 @@ export function ShopSheet({
             </p>
           )}
 
-          {items.map((item) => (
-            <ShopItemCard
-              key={item.itemId.toString()}
-              item={item}
-              isFeatured={
-                item.itemId === FOUNDER_BADGE_ITEM_ID &&
-                item.configured &&
-                item.enabled
-              }
-              onSelectItem={onSelectItem}
-            />
-          ))}
+          {/* Hero lane — full-width cards for the two flagship SKUs:
+              Chesscito PRO + Founder Badge, in that exact order.
+              Refactored 2026-06-01 (user feedback) from "everything
+              full-width with the Welcome Pack pinned on top". */}
+          {(() => {
+            const heroOrder: bigint[] = [PRO_ITEM_ID, FOUNDER_BADGE_ITEM_ID];
+            const heroItems = heroOrder
+              .map((id) => items.find((it) => it.itemId === id))
+              .filter((it): it is CatalogItem => it != null);
+            return heroItems.map((item) => (
+              <ShopItemCard
+                key={item.itemId.toString()}
+                item={item}
+                isFeatured={
+                  item.itemId === FOUNDER_BADGE_ITEM_ID &&
+                  item.configured &&
+                  item.enabled
+                }
+                onSelectItem={onSelectItem}
+              />
+            ));
+          })()}
+
+          {/* Mini-cards lane — half-width 2-column grid for the
+              consumables + welcome pack. Order is intentional:
+              Welcome gift first (free-claim CTA visible above the
+              fold), then Streak Shield, then 5/20 Coach Credits. */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {welcomePack ? (
+              <WelcomePackTile
+                compact
+                state={welcomePack.state}
+                claimedAt={welcomePack.claimedAt}
+                onClaim={welcomePack.onClaim}
+                onConnect={welcomePack.onConnect}
+              />
+            ) : null}
+            {(() => {
+              const miniOrder: bigint[] = [SHIELD_ITEM_ID, 3n, 4n];
+              const miniItems = miniOrder
+                .map((id) => items.find((it) => it.itemId === id))
+                .filter((it): it is CatalogItem => it != null);
+              return miniItems.map((item) => (
+                <ShopItemCard
+                  key={item.itemId.toString()}
+                  item={item}
+                  isFeatured={false}
+                  onSelectItem={onSelectItem}
+                  compact
+                />
+              ));
+            })()}
+          </div>
 
           {/* Ghost "more coming" placeholder — closes the visual gap
            *  between the last live tile and the bottom of the sheet

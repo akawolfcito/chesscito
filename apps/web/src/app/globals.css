@@ -9279,14 +9279,99 @@ button.hud-resource-chip:active:not(:disabled) {
   --shop-tile-accent-border: rgba(55, 95, 175, 0.55);
 }
 
-/* Green tone — celebratory cream-to-leaf gradient. Used by the
-   Founder Badge tile so its gold/purple sprite reads against a
-   cool accent (user feedback 2026-06-01: "founder bg should be
-   green tonalities"). */
+/* Green tone — celebratory cream-to-leaf gradient. Reassigned
+   2026-06-01 (user correction) to the 20 Coach Credits mini-card
+   so the "best value" tier reads against a green/upgrade accent. */
 .shop-item-tile[data-tone="green"] {
   --shop-tile-accent-base: #e0f1d4;
   --shop-tile-accent-mid: #95c66a;
   --shop-tile-accent-border: rgba(70, 130, 30, 0.55);
+}
+
+/* Compact variant — half-width mini-card used inside the 2-col
+   grid below the hero lane (PRO + Founder). Vertical icon-on-top
+   layout instead of the hero's left-overhang grid, smaller padding,
+   condensed identity. The icon sits inside the card bounds (no
+   overhang) at a fixed size so two tiles share a row cleanly at
+   390px viewport. */
+.shop-item-tile--compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 12px 10px 12px 10px;
+  gap: 6px;
+}
+
+.shop-item-tile--compact .shop-item-tile-icon-figure {
+  position: static;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+  pointer-events: none;
+}
+
+.shop-item-tile--compact .shop-item-tile-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.shop-item-tile--compact .shop-item-tile-identity {
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+}
+
+.shop-item-tile--compact .shop-item-tile-name {
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
+.shop-item-tile--compact .shop-item-tile-subtitle {
+  font-size: 0.72rem;
+  line-height: 1.25;
+  /* Allow two-line wrap so longer subtitles ("5 game analyses with
+     Luz.") don't ellipsize awkwardly in the narrow mini-card. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.shop-item-tile--compact .shop-item-tile-footer {
+  justify-content: center;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.shop-item-tile--compact .shop-item-tile-buy-pill {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+  width: 100%;
+}
+
+/* Featured ribbon doesn't render in compact mode (no room) — hide
+   defensively in case the prop ever lands on a compact tile. */
+.shop-item-tile--compact .shop-item-tile-featured-ribbon {
+  display: none;
+}
+
+/* Welcome-pack tile in compact mode: shrink the overhanging sticker
+   so it doesn't dominate the mini-card, and drop the extra body
+   line so the mini-card matches the rhythm of the other SKU tiles
+   (name + subtitle + CTA). The body copy "3 free Shields. One per
+   wallet." remains available in the full-width mode for when the
+   tile gets used elsewhere. */
+.welcome-pack-tile--compact .welcome-pack-tile-sticker {
+  width: 2.4rem;
+  height: 2.4rem;
+  top: -0.4rem;
+  left: -0.3rem;
+}
+
+.welcome-pack-tile--compact .welcome-pack-tile-body {
+  display: none;
 }
 
 /* Welcome Pack tone — warmer cream-amber than the default amber so
