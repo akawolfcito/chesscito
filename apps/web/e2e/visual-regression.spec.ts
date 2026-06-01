@@ -772,4 +772,69 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
       FIXTURE_OPTS,
     );
   });
+
+  /* vr12 — Fail Rescue Modal (4 variants) — spec section 3.3 state
+     matrix. Standalone fixture at /dev/rescue-modal renders the
+     modal over a PhaseFlash-equivalent scrim. Commit 10 of shield-
+     rescue cluster. */
+
+  test("vr12-rescue-modal-a — with-shields, first encounter (primer)", async ({
+    page,
+  }) => {
+    await page.goto("/dev/rescue-modal?variant=A&shields=8", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot(
+      "vr12-rescue-modal-a.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr12-rescue-modal-b — with-shields, recurring (compact)", async ({
+    page,
+  }) => {
+    await page.goto("/dev/rescue-modal?variant=B&shields=2", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot(
+      "vr12-rescue-modal-b.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr12-rescue-modal-c — without-shields, pre-claim (welcome pitch)", async ({
+    page,
+  }) => {
+    await page.goto("/dev/rescue-modal?variant=C&shields=0", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot(
+      "vr12-rescue-modal-c.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr12-rescue-modal-d — without-shields, post-claim (paid upsell)", async ({
+    page,
+  }) => {
+    await page.goto("/dev/rescue-modal?variant=D&shields=0", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 400);
+    await expect(page).toHaveScreenshot(
+      "vr12-rescue-modal-d.png",
+      FIXTURE_OPTS,
+    );
+  });
 });

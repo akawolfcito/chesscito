@@ -154,6 +154,9 @@ m.MISSION_BRIEFING_COPY.openDetailsTargetAriaFormat = "Open mission details: tar
 m.HUD_COPY.shieldsAriaLabel =
   "{count, plural, =1 {1 streak shield available} other {# streak shields available}}";
 m.HUD_COPY.shieldsFormat = "Shield ×{count}";
+// ICU mirror for the editorial.ts `shieldsLeft(n)` function helper.
+// Consumed by FailRescueModal's "Use Shield" chip subtitle.
+m.FOOTER_CTA_COPY.shieldsLeft = "{n} left";
 m.RESULT_OVERLAY_COPY.badge.subtitle = "{piece} Ascendant is now yours to keep";
 m.RESULT_OVERLAY_COPY.shop.subtitle = "{item} acquired. Thank you for supporting Chesscito";
 m.BADGE_EARNED_COPY.title = "{piece} Ascendant Earned";
