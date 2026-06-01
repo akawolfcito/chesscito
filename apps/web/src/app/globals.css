@@ -11644,6 +11644,164 @@ button.hud-resource-chip:active:not(:disabled) {
   letter-spacing: 0.02em;
 }
 
+/* ─── Promotion overlay (arena pawn promotion picker) ──────────────
+   Shares the panel-bg1 forest-frame visual family with
+   VictoryPopupShell + FailRescueModal so the player reads it as a
+   sibling popup. Visual ref: user Image #27 (2026-06-01). */
+
+.promotion-overlay-panel {
+  /* Slightly wider than the rescue modal because we fit 4 piece
+     cards across instead of stacked CTAs. */
+  aspect-ratio: 5 / 3.4;
+  min-height: 320px;
+}
+
+.promotion-overlay-content {
+  position: relative;
+  padding: 7% 8% 8% 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+}
+
+.promotion-overlay-title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-game-action);
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(63, 34, 8, 0.97);
+  text-shadow: var(--text-shadow-display);
+  padding: 0 2rem;
+}
+
+.promotion-overlay-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0.1rem 0 0.35rem;
+}
+
+.promotion-overlay-divider-line {
+  flex: 0 0 3.5rem;
+  height: 1.5px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(110, 65, 15, 0.42) 40%,
+    rgba(110, 65, 15, 0.42) 60%,
+    transparent 100%
+  );
+  border-radius: 999px;
+}
+
+.promotion-overlay-divider-crown {
+  display: inline-block;
+  width: 1.4rem;
+  height: 1.4rem;
+  filter: drop-shadow(0 1px 2px rgba(120, 65, 5, 0.30));
+}
+
+.promotion-overlay-divider-crown img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.promotion-overlay-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+/* Cream paper card with rounded corners. Each card holds a piece
+   sprite + label below. The default-choice card (queen) gets a
+   gold ring + small crown floating above. */
+.promotion-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  padding: 0.6rem 0.4rem;
+  border-radius: 1rem;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 251, 232, 0.95) 0%,
+    rgba(247, 232, 187, 0.95) 100%
+  );
+  border: 1.5px solid rgba(180, 120, 35, 0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.70),
+    0 2px 4px rgba(110, 65, 15, 0.18);
+  cursor: pointer;
+  transition: transform var(--duration-snap) ease;
+}
+
+.promotion-card:active {
+  transform: scale(0.96);
+}
+
+.promotion-card--default {
+  /* Gold halo: thicker amber border + outer ring glow so Queen
+     reads as "the recommended choice" without removing agency
+     from the other 3 cards. */
+  border-color: rgba(220, 165, 35, 0.85);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 2px rgba(255, 200, 60, 0.55),
+    0 3px 8px rgba(180, 120, 35, 0.40);
+}
+
+.promotion-card-crown {
+  /* Crown floats just above the card border with a slight overhang.
+     Telegraphs "this one wears the crown" before the player even
+     reads the label. */
+  position: absolute;
+  top: -0.85rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.6rem;
+  height: 1.6rem;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(180, 120, 35, 0.45));
+}
+
+.promotion-card-crown img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.promotion-card-piece {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 4.5rem;
+}
+
+.promotion-card-piece img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(40, 20, 5, 0.45));
+}
+
+.promotion-card-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: rgba(63, 34, 8, 0.92);
+  letter-spacing: 0.01em;
+}
+
 /* ─── WELL DONE reward pills ──────────────────────────────────────
    Surfaced inside PhaseFlash success path. +1 STAR (always) +
    STREAK ×N (when N >= 2). Matches the visual language of the

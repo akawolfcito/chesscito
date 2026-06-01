@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 
 import { ARENA_PIECE_IMG } from "@/lib/game/arena-utils";
-import { CandyIcon } from "@/components/redesign/candy-icon";
 import { THEME_CONFIG } from "@/lib/theme";
 
 type PromotionChoice = "q" | "r" | "b" | "n";
@@ -22,6 +21,16 @@ const PIECE_KEY_MAP: Record<PromotionChoice, keyof typeof ARENA_PIECE_IMG.w> = {
   n: "knight",
 };
 
+/**
+ * Promotion picker. Adopts the same panel-bg1 visual family used by
+ * VictoryPopupShell + FailRescueModal so the player reads it as a
+ * sibling popup, not a separate modal class. Queen card carries a
+ * "default choice" highlight (gold ring + small crown above) — in
+ * chess promotion the queen is the optimal pick 99% of the time, so
+ * the visual cue accelerates the decision without removing agency.
+ *
+ * Visual ref: user-supplied Image #27, 2026-06-01.
+ */
 export function PromotionOverlay({ onSelect, onCancel }: Props) {
   const t = useTranslations("ARENA_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -29,81 +38,135 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
     key,
     label: tPiece(PIECE_KEY_MAP[key]),
   }));
+
   return (
+    /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
     <div
-      className="absolute inset-0 z-30 flex items-center justify-center bg-[var(--overlay-scrim)]"
+      className="candy-modal-scrim pointer-events-auto fixed inset-0 z-30 flex items-center justify-center animate-in fade-in duration-200"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("promotionTitle")}
       onClick={onCancel}
     >
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className="relative flex flex-col items-center gap-3 rounded-2xl border p-5"
-        style={{
-          background: "rgba(255, 255, 255, 0.18)",
-          backdropFilter: "blur(14px)",
-          WebkitBackdropFilter: "blur(14px)",
-          borderColor: "rgba(255, 255, 255, 0.45)",
-          boxShadow:
-            "0 10px 28px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 245, 215, 0.55)",
-        }}
+        className="promotion-overlay-panel relative mx-4 w-full max-w-[480px]"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundImage:
+            'image-set(url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"), url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"), url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png"))',
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+        }}
       >
-        {/* Explicit dismiss affordance — click-outside still works but
-            on touch the close icon is the discoverable path. */}
         <button
           type="button"
           onClick={onCancel}
           aria-label={t("promotionCancelAriaLabel")}
-          className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full transition-all active:scale-95"
-          style={{
-            background: "rgba(255, 255, 255, 0.30)",
-            border: "1px solid rgba(110, 65, 15, 0.25)",
-          }}
+          className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
         >
-          <CandyIcon name="close" className="h-5 w-5" />
+          <picture>
+            <source
+              srcSet="/art/screen-mission/close-icon.avif"
+              type="image/avif"
+            />
+            <source
+              srcSet="/art/screen-mission/close-icon.webp"
+              type="image/webp"
+            />
+            <img
+              src="/art/screen-mission/close-icon.png"
+              alt=""
+              aria-hidden="true"
+              className="h-10 w-10 object-contain"
+              draggable={false}
+            />
+          </picture>
         </button>
-        <p
-          className="fantasy-title text-sm font-extrabold uppercase tracking-[0.10em]"
-          style={{
-            color: "rgba(110, 65, 15, 0.95)",
-            textShadow: "0 1px 0 rgba(255, 245, 215, 0.80)",
-          }}
-        >
-          {t("promotionTitle")}
-        </p>
-        <div className="flex gap-3">
-          {choices.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onSelect(key)}
-              className="flex min-h-[44px] flex-col items-center gap-1 rounded-xl border p-3 transition-all hover:bg-white/25 active:scale-95"
-              style={{
-                background: "rgba(255, 255, 255, 0.15)",
-                borderColor: "rgba(255, 255, 255, 0.45)",
-              }}
-              aria-label={label}
-            >
-              <picture>
-                {THEME_CONFIG.hasOptimizedFormats && (
-                  <>
-                    <source
-                      srcSet={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]].replace(".png", ".avif")}
-                      type="image/avif"
-                    />
-                    <source
-                      srcSet={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]].replace(".png", ".webp")}
-                      type="image/webp"
-                    />
-                  </>
-                )}
-                <img
-                  src={ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]]}
-                  alt={label}
-                  className="h-12 w-12 object-contain"
-                />
-              </picture>
-            </button>
-          ))}
+
+        <div className="promotion-overlay-content">
+          <p className="promotion-overlay-title">{t("promotionTitle")}</p>
+
+          {/* Divider — two short lines flanking a small crown sprite.
+              Same visual vocabulary as the wooden-banner / crown
+              ornaments used elsewhere in the brand. */}
+          <div className="promotion-overlay-divider" aria-hidden="true">
+            <span className="promotion-overlay-divider-line" />
+            <picture className="promotion-overlay-divider-crown">
+              <source
+                srcSet="/art/redesign/icons/crown.avif"
+                type="image/avif"
+              />
+              <source
+                srcSet="/art/redesign/icons/crown.webp"
+                type="image/webp"
+              />
+              <img
+                src="/art/redesign/icons/crown.png"
+                alt=""
+                aria-hidden="true"
+              />
+            </picture>
+            <span className="promotion-overlay-divider-line" />
+          </div>
+
+          <div className="promotion-overlay-grid">
+            {choices.map(({ key, label }) => {
+              const isDefault = key === "q";
+              const imgBase = ARENA_PIECE_IMG.w[PIECE_KEY_MAP[key]];
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onSelect(key)}
+                  aria-label={label}
+                  className={[
+                    "promotion-card",
+                    isDefault ? "promotion-card--default" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {isDefault ? (
+                    <picture
+                      aria-hidden="true"
+                      className="promotion-card-crown"
+                    >
+                      <source
+                        srcSet="/art/redesign/icons/crown.avif"
+                        type="image/avif"
+                      />
+                      <source
+                        srcSet="/art/redesign/icons/crown.webp"
+                        type="image/webp"
+                      />
+                      <img
+                        src="/art/redesign/icons/crown.png"
+                        alt=""
+                        aria-hidden="true"
+                      />
+                    </picture>
+                  ) : null}
+                  <picture className="promotion-card-piece">
+                    {THEME_CONFIG.hasOptimizedFormats && (
+                      <>
+                        <source
+                          srcSet={imgBase.replace(".png", ".avif")}
+                          type="image/avif"
+                        />
+                        <source
+                          srcSet={imgBase.replace(".png", ".webp")}
+                          type="image/webp"
+                        />
+                      </>
+                    )}
+                    <img src={imgBase} alt="" aria-hidden="true" />
+                  </picture>
+                  <span className="promotion-card-label">{label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
