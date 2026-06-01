@@ -2019,6 +2019,18 @@
     flex-shrink: 0;
   }
 
+  /* Streak multiplier glyph — small "×" rendered in the same warm-
+     brown ink palette as the digit, slightly oversized so the eye
+     reads "×N" as a unit. No CandyIcon needed; the glyph + tabular-
+     nums digit is enough at HUD scale. */
+  .candy-tray-pill-streak-glyph {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: rgba(110, 65, 15, 0.85);
+    line-height: 1;
+    margin-right: -0.1rem;
+  }
+
   /* ── Candy page panel ──
      Secondary routes (trophies / about / support / privacy / terms)
      render an opaque dark panel over the candy body bg, which reads as

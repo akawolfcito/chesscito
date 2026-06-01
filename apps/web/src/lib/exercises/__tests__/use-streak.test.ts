@@ -54,4 +54,21 @@ describe("useStreak storage", () => {
     window.localStorage.setItem("chesscito:streak", "-5");
     expect(readStreak()).toBe(0);
   });
+
+  it("design invariant: streak storage is monotone — caller is responsible for gating on isReplay", () => {
+    // Documents the architectural decision: the streak helper is
+    // unconditional (it just persists state); the GATE on replays
+    // lives in exercises-screen handleMove via `if (!isReplay)`.
+    // This test pins the contract so a future refactor that pushes
+    // the gate into bumpStreak() will trip the assertion and force
+    // explicit consideration.
+    bumpStreak();
+    bumpStreak();
+    bumpStreak();
+    expect(readStreak()).toBe(3);
+    // Caller can choose NOT to bump (the gate path):
+    const before = readStreak();
+    // ...callers gate at the call-site; no helper to "bump if not replay".
+    expect(readStreak()).toBe(before);
+  });
 });

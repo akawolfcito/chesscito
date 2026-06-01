@@ -1314,12 +1314,20 @@ export function ExercisesScreen({
     if (isTarget) {
       hapticSuccess();
       // Compute earned stars + bump streak BEFORE setPhase so the
-      // WELL DONE PhaseFlash sees both on its first render. Replays
-      // count toward the streak too: completing an exercise (fresh
-      // or repeat) is the unit of "successful action" the player is
-      // chaining.
+      // WELL DONE PhaseFlash sees both on its first render.
+      //
+      // Streak gating (user feedback 2026-05-31): replays do NOT
+      // bump the streak. Allowing replays to count produced an
+      // infinite grind loophole — open the exercise drawer, tap a
+      // completed exercise, finish it, +1 streak, repeat. The
+      // streak is meaningful only when chained against FRESH
+      // exercises. `isReplay` comes from useExerciseProgress and
+      // is true when the active exercise already has stars in
+      // progress.stars[index].
       setLastEarnedStars(computeStars(movesCount, currentExercise.optimalMoves));
-      bumpStreak();
+      if (!isReplay) {
+        bumpStreak();
+      }
       setPhase("success");
       const elapsed = timerStart.current > 0 ? Date.now() - timerStart.current : 1000;
       setElapsedMs(elapsed);
@@ -2165,6 +2173,7 @@ export function ExercisesScreen({
               totalStars={totalStars}
               onNavigate={handleExerciseNavigate}
               shieldCount={shieldCount}
+              streakCount={streakCount}
             />
           }
           isReplay={isReplay}

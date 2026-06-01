@@ -27,6 +27,12 @@ type ExerciseDrawerProps = {
    *  the HUD collapses two chips into one. Omit (or pass 0) to
    *  preserve the legacy single-stars trigger. */
   shieldCount?: number;
+  /** Live consecutive-success streak. When provided AND >= 2, the
+   *  trigger pill renders an inline divider + flame icon + count
+   *  so the player always sees what they're protecting. Below 2
+   *  it's omitted to avoid mounting "1" right after the first
+   *  success of a session (visual noise). */
+  streakCount?: number;
 };
 
 function StarDisplay({ count }: { count: number }) {
@@ -53,6 +59,7 @@ export function ExerciseDrawer({
   totalStars,
   onNavigate,
   shieldCount,
+  streakCount,
 }: ExerciseDrawerProps) {
   const t = useTranslations("EXERCISE_DRAWER_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -103,6 +110,23 @@ export function ExerciseDrawer({
               </picture>
               <span className="tabular-nums text-sm font-extrabold">
                 {shieldCount}
+              </span>
+            </>
+          ) : null}
+          {typeof streakCount === "number" && streakCount >= 2 ? (
+            <>
+              <span
+                aria-hidden="true"
+                className="candy-tray-pill-divider"
+              />
+              <span
+                aria-hidden="true"
+                className="candy-tray-pill-streak-glyph"
+              >
+                ×
+              </span>
+              <span className="tabular-nums text-sm font-extrabold">
+                {streakCount}
               </span>
             </>
           ) : null}
