@@ -11238,12 +11238,13 @@ button.hud-resource-chip:active:not(:disabled) {
 .fail-rescue-modal-heading {
   margin: 0;
   text-align: center;
-  font-family: var(--font-fantasy, ui-rounded, system-ui);
+  font-family: var(--font-game-action);
   font-size: 2.1rem;
   font-weight: 900;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
   color: rgba(63, 34, 8, 0.97);
   line-height: 1;
+  text-shadow: var(--text-shadow-display);
 }
 
 .fail-rescue-modal-body {
@@ -11292,8 +11293,17 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .fail-rescue-modal-stat-icon {
   display: inline-flex;
-  width: 1.5rem;
-  height: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  /* Floating sprite: bigger than the pill's text band, anchored by a
+     negative vertical margin so the pill min-height stays put. Mirrors
+     the .candy-tray-pill-icon--floating recipe from the HUD chip
+     family so the icon visually "sits on top of" the pill rather than
+     being inline. */
+  width: 2.1rem;
+  height: 2.1rem;
+  margin: -0.55rem 0 -0.55rem -0.35rem;
+  filter: drop-shadow(0 2px 3px rgba(120, 65, 5, 0.35));
 }
 
 .fail-rescue-modal-stat-icon img {
@@ -11303,18 +11313,23 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .fail-rescue-modal-stat-icon-glyph {
-  font-size: 1.35rem;
+  font-size: 1.85rem;
   line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(120, 65, 5, 0.35));
 }
 
 .fail-rescue-modal-wolf {
   position: absolute;
-  right: 4%;
-  top: 22%;
-  width: 38%;
-  /* Max height clamp so the wolf never extends down into the CTA
-     stack regardless of natural sprite aspect ratio. */
-  max-height: 45%;
+  right: 3%;
+  /* Pulled DOWN so the wolf sits in the lower-right corner near the
+     stats row, NOT overlapping the body text above OR the primary CTA
+     below. User feedback 2026-06-01: previous top:22% had the
+     mascot's head obscuring the body line "rescue this streak". */
+  top: 38%;
+  width: 32%;
+  /* Hard clamp so the wolf never reaches down into the CTA stack
+     regardless of natural sprite aspect ratio. */
+  max-height: 30%;
   display: flex;
   align-items: flex-start;
   justify-content: center;
