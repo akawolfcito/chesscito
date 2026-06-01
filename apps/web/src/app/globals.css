@@ -2696,6 +2696,15 @@
       left 320ms ease-in-out,
       top 320ms ease-in-out,
       transform var(--duration-snap, 120ms) var(--ease-spring, ease-out);
+    /* Promote to a GPU layer during transitions. Without this the
+       browser composites the piece + its filter on every paint pass,
+       which produces the smeary "dirt trail" the user reported
+       2026-06-01 when pieces slide between squares. `will-change:
+       transform` plus the implicit z-context from translateZ keeps
+       the piece on its own composited layer for the duration of
+       the move. */
+    will-change: transform, left, top;
+    backface-visibility: hidden;
   }
 
   .playhub-board-piece-float.is-selected {
@@ -2706,8 +2715,13 @@
   .playhub-board-piece-img {
     height: auto;
     object-fit: contain;
-    filter:
-      drop-shadow(0 0 6px rgba(103, 232, 249, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+    /* Drop the cyan glow that was bleeding into a vertical smear
+       during the 320ms slide transition (user-reported 2026-06-01:
+       "marca de suciedad"). The animated filter recomputed every
+       frame and left visible residue between square centers.
+       Keep only the warm-brown contact shadow underneath the
+       sprite — natural read, no animation cost. */
+    filter: drop-shadow(0 2px 4px rgba(40, 20, 5, 0.55));
   }
 
   /* ── Target piece — visible enemy for capture exercises ── */
