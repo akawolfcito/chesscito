@@ -14,12 +14,14 @@ const VARIANTS: Record<PlayerAvatarVariant, Variant> = {
   you: {
     src: "/art/new-icons-chesscito/avatar-blue.png",
     defaultAlt: "You",
-    proFrameSrc: "/art/new-icons-chesscito/marco-blue-pro.png",
+    /* Refreshed 2026-05-31: golden ornamental border matched to the
+     * blue avatar (user feedback — design/chesscito-pro source). */
+    proFrameSrc: "/art/chesscito-pro/borde-dorado-avatar-azul.png",
   },
   bot: {
     src: "/art/new-icons-chesscito/avatar-red.png",
     defaultAlt: "Bot",
-    proFrameSrc: "/art/new-icons-chesscito/marco-red-pro.png",
+    proFrameSrc: "/art/chesscito-pro/borde-dorado-avatar-rojo.png",
   },
 };
 
