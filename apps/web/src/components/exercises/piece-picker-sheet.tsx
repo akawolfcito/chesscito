@@ -32,11 +32,31 @@ type Props = {
    *  flips `open` directly. This is the Phase-2 zone-map pattern: trigger
    *  lives in Z2 (`<ContextualHeader>`), sheet renders as a sibling. */
   trigger?: React.ReactNode;
+  /** Per-piece badge claim status. Drives the "Switch piece" CTA gate
+   *  — until the player has claimed at least one piece's badge, the
+   *  sheet stays in pure-info mode (no switch). Pedagogical: a fresh
+   *  player learning their first piece is not offered a distraction
+   *  to other pieces (user feedback 2026-05-31). */
+  claimedBadges?: Partial<Record<PieceOption["key"], boolean>>;
 };
 
-export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, onSelectPiece, trigger }: Props) {
+export function PiecePickerSheet({
+  open,
+  onOpenChange,
+  selectedPiece,
+  pieces,
+  onSelectPiece,
+  trigger,
+  claimedBadges,
+}: Props) {
   const t = useTranslations("PIECE_RAIL_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
+  // Switch CTA gating: only after the player has claimed at least one
+  // badge (meaning they've fully completed one piece's curriculum)
+  // do we surface the "Switch piece" grid. Before that, the sheet is
+  // pure-info — pedagogy-first.
+  const hasClaimedAnyBadge =
+    claimedBadges != null && Object.values(claimedBadges).some(Boolean);
   function handleSelect(piece: PieceOption["key"]) {
     onSelectPiece(piece);
     onOpenChange(false);
@@ -60,7 +80,63 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
           />
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
+        {/* Info-first section — the active piece large + its name +
+            a primer line. Renders always so even a brand-new player
+            opening the chip sees CONTEXT before any switch
+            affordance. */}
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <picture className="h-20 w-20">
+            {THEME_CONFIG.hasOptimizedFormats && (
+              <>
+                <source
+                  srcSet={`${PIECE_IMAGES[selectedPiece]}.avif`}
+                  type="image/avif"
+                />
+                <source
+                  srcSet={`${PIECE_IMAGES[selectedPiece]}.webp`}
+                  type="image/webp"
+                />
+              </>
+            )}
+            <img
+              src={`${PIECE_IMAGES[selectedPiece]}.png`}
+              alt=""
+              aria-hidden="true"
+              className="h-full w-full object-contain drop-shadow-[0_4px_8px_rgba(120,65,5,0.35)]"
+            />
+          </picture>
+          <p
+            className="fantasy-title text-lg font-extrabold uppercase tracking-[0.10em]"
+            style={{
+              color: "rgba(63, 34, 8, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+            }}
+          >
+            {tPiece(selectedPiece as keyof typeof PIECE_LABELS)}
+          </p>
+          <p
+            className="text-center text-xs font-semibold"
+            style={{ color: "rgba(110, 65, 15, 0.78)" }}
+          >
+            {t("infoSubtitle")}
+          </p>
+        </div>
+
+        {/* Switch piece grid — gated. Surfaces ONLY after the player
+            has claimed at least one badge. Until then the sheet is
+            pure pedagogy and the player stays focused on the active
+            piece. */}
+        {hasClaimedAnyBadge ? (
+          <p
+            className="mt-5 mb-1 text-center text-[0.7rem] font-extrabold uppercase tracking-[0.16em]"
+            style={{ color: "rgba(110, 65, 15, 0.65)" }}
+          >
+            {t("switchSectionLabel")}
+          </p>
+        ) : null}
+
+        {hasClaimedAnyBadge ? (
+        <div className="mt-2 grid grid-cols-3 gap-2">
           {pieces.map((piece) => {
             const isActive = selectedPiece === piece.key;
             const isLocked = !piece.enabled;
@@ -122,6 +198,7 @@ export function PiecePickerSheet({ open, onOpenChange, selectedPiece, pieces, on
             );
           })}
         </div>
+        ) : null}
       </SheetContent>
     </Sheet>
   );

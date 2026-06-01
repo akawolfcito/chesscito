@@ -1130,7 +1130,9 @@ const messages = {
   },
   PIECE_RAIL_COPY: {
     comingSoon: "Pronto",
-    title: "Elige una pieza",
+    title: "Información de la pieza",
+    infoSubtitle: "Sigue practicando para reclamar su insignia.",
+    switchSectionLabel: "Cambiar pieza",
     triggerAriaFormat: "Cambiar pieza (actual: {piece})",
     closeLabel: "Cerrar selector de pieza",
   },

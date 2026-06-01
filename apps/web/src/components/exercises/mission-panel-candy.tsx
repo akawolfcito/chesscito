@@ -580,6 +580,7 @@ export function MissionPanelCandy({
         selectedPiece={selectedPiece}
         pieces={pieces}
         onSelectPiece={onSelectPiece}
+        claimedBadges={claimedBadges}
       />
 
       {/* Optional header slot (e.g., Daily Tactic card). Rendered between

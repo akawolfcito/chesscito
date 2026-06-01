@@ -67,7 +67,14 @@ export const PIECE_LABELS = {
 
 export const PIECE_RAIL_COPY = {
   comingSoon: "Soon",
-  title: "Choose a piece",
+  title: "Piece info",
+  /** Line under the piece name inside the info sheet — invites the
+   *  player to keep playing the active piece rather than nudging
+   *  them to switch (pedagogy-first). */
+  infoSubtitle: "Keep practicing to claim its badge.",
+  /** Section header for the gated switch grid (visible only after the
+   *  player has claimed at least one badge). */
+  switchSectionLabel: "Switch piece",
   /** ICU placeholder for the trigger button's screen-reader label. */
   triggerAriaFormat: "Switch piece (current: {piece})",
   /** Close affordance inside the sheet's contextual header. */
