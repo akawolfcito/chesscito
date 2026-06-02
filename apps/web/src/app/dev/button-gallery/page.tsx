@@ -4,11 +4,21 @@ import type { ReactNode } from "react";
 
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 
-type Verdict = "unified" | "unified-blue" | "candidate" | "keep";
+type Verdict =
+  | "unified"
+  | "unified-blue"
+  | "unified-cream"
+  | "propose"
+  | "decision"
+  | "candidate"
+  | "keep";
 
 const VERDICT_LABEL: Record<Verdict, string> = {
   unified: "UNIFICADO VERDE",
   "unified-blue": "UNIFICADO AZUL",
+  "unified-cream": "UNIFICADO CREMA",
+  propose: "PROPUESTA · DECIDE",
+  decision: "REQUIERE DECISIÓN",
   candidate: "CANDIDATO A MIGRAR",
   keep: "MANTENER DISTINTO",
 };
@@ -16,6 +26,9 @@ const VERDICT_LABEL: Record<Verdict, string> = {
 const VERDICT_COLOR: Record<Verdict, string> = {
   unified: "rgba(34, 139, 34, 0.92)",
   "unified-blue": "rgba(20, 100, 170, 0.92)",
+  "unified-cream": "rgba(180, 130, 50, 0.92)",
+  propose: "rgba(232, 132, 18, 0.92)",
+  decision: "rgba(124, 58, 237, 0.92)",
   candidate: "rgba(232, 132, 18, 0.92)",
   keep: "rgba(120, 65, 15, 0.92)",
 };
@@ -142,8 +155,30 @@ export default function ButtonGalleryPage() {
       </h1>
       <p style={{ fontSize: "0.82rem", color: "rgba(63, 34, 8, 0.75)", margin: 0 }}>
         Cada tarjeta muestra el botón real + class name + rol + veredicto de
-        migración al verde candy unificado.
+        migración.
       </p>
+
+      <div
+        style={{
+          marginTop: "0.5rem",
+          padding: "0.75rem 1rem",
+          borderRadius: "0.625rem",
+          background: "rgba(255, 248, 222, 0.85)",
+          border: "1px solid rgba(180, 120, 35, 0.45)",
+          fontSize: "0.75rem",
+          color: "rgba(63, 34, 8, 0.92)",
+          lineHeight: 1.45,
+        }}
+      >
+        <strong style={{ display: "block", marginBottom: "0.3rem", letterSpacing: "0.03em" }}>
+          REGLA SEMÁNTICA
+        </strong>
+        <span style={{ color: "rgb(40, 110, 30)" }}>● Verde</span> = practicar / continuar<br />
+        <span style={{ color: "rgb(20, 100, 170)" }}>● Azul</span> = competir<br />
+        <span style={{ color: "rgb(180, 130, 50)" }}>● Crema</span> = secundario (no compite)<br />
+        <span style={{ color: "rgb(200, 140, 20)" }}>● Dorado</span> = ganar / desbloquear / premio
+        <span style={{ opacity: 0.6 }}> (pendiente mintar)</span>
+      </div>
 
       {/* ───────── UNIFIED ───────── */}
       <SectionHeader label="Ya unificados con --cta-primary-green-grad" badge="✅" />
@@ -188,7 +223,7 @@ export default function ButtonGalleryPage() {
       </ButtonCard>
 
       {/* ───────── CANDIDATES ───────── */}
-      <SectionHeader label="Candidatos para migrar al verde" badge="⚠️" />
+      <SectionHeader label="Unificados — hub / landing / rescue" badge="✅" />
 
       <ButtonCard
         title="Hub → Arena CTA"
@@ -246,8 +281,81 @@ export default function ButtonGalleryPage() {
         </button>
       </ButtonCard>
 
+      {/* ───────── UNIFIED CREMA ───────── */}
+      <SectionHeader label="Unificados — familia CREMA secundaria" badge="✅" />
+
+      <ButtonCard
+        title="Fail rescue secondary — template del CREMA"
+        classNames=".fail-rescue-modal-secondary"
+        role="Botón secundario del modal de rescate. Texto real: 'Retry anyway'."
+        verdict="unified-cream"
+        notes="Tokenizado: consume --cta-secondary-cream-* (grad/border/bevel/color/text-shadow). Referencia canónica de la familia crema."
+      >
+        <button type="button" className="fail-rescue-modal-secondary">
+          Retry anyway
+        </button>
+      </ButtonCard>
+
+      <ButtonCard
+        title="Soft-gate primary — PIECES (→ verde)"
+        classNames=".arena-scaffold-soft-gate-primary"
+        role="Modal '¿Want a warm-up first?'. Lleva a /exercises (practica una pieza)."
+        verdict="unified"
+        notes="Migrado al VERDE (semántica: practicar)."
+      >
+        <button type="button" className="arena-scaffold-soft-gate-primary">
+          PIECES
+        </button>
+      </ButtonCard>
+
+      <ButtonCard
+        title="Soft-gate secondary — ARENA (→ crema)"
+        classNames=".arena-scaffold-soft-gate-secondary"
+        role="Misma modal, opción 'skip the warm-up' que entra directo a /arena."
+        verdict="unified-cream"
+        notes="Migrado al CREMA (es el 'no quiero el warm-up' = secundario, no compite)."
+      >
+        <button type="button" className="arena-scaffold-soft-gate-secondary">
+          ARENA
+        </button>
+      </ButtonCard>
+
       {/* ───────── KEEP DISTINCT ───────── */}
       <SectionHeader label="Mantener distintos (preservan semántica)" badge="❌" />
+
+      <ButtonCard
+        title="Coach viewer tile — Play again"
+        classNames='.coach-viewer__tile[data-kind="play-again"]'
+        role="Tile flotante en /coach/[gameId]. El asset PNG ES el botón (icon-as-button)."
+        verdict="keep"
+        notes="Decisión Wolfcito: mantener vocabulary distinto. El asset pintado lleva el peso visual; no es una pill CSS."
+      >
+        <button type="button" className="coach-viewer__tile" data-kind="play-again">
+          <picture className="coach-viewer__tile-icon">
+            <source srcSet="/art/new-assets-chesscito/btns/play-again-icon.avif" type="image/avif" />
+            <source srcSet="/art/new-assets-chesscito/btns/play-again-icon.webp" type="image/webp" />
+            <img src="/art/new-assets-chesscito/btns/play-again-icon.png" alt="" draggable={false} />
+          </picture>
+          <span className="coach-viewer__tile-label">Play again</span>
+        </button>
+      </ButtonCard>
+
+      <ButtonCard
+        title="Coach viewer tile — Ask Coach"
+        classNames='.coach-viewer__tile[data-kind="ask-coach"]'
+        role="Mismo patrón que Play again — icono pintado + label cream."
+        verdict="keep"
+        notes="Decisión Wolfcito: mantener icon-as-button. La identidad Coach (violeta) la lleva el asset, no el contenedor."
+      >
+        <button type="button" className="coach-viewer__tile" data-kind="ask-coach">
+          <picture className="coach-viewer__tile-icon">
+            <source srcSet="/art/new-assets-chesscito/btns/ask-coach-icon.avif" type="image/avif" />
+            <source srcSet="/art/new-assets-chesscito/btns/ask-coach-icon.webp" type="image/webp" />
+            <img src="/art/new-assets-chesscito/btns/ask-coach-icon.png" alt="" draggable={false} />
+          </picture>
+          <span className="coach-viewer__tile-label">Ask Coach</span>
+        </button>
+      </ButtonCard>
 
       <ButtonCard
         title="Shop buy pill — green (USD)"
