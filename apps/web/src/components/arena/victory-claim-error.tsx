@@ -198,7 +198,6 @@ export function VictoryClaimError({
             onClick={onPlayAgain}
             className="arena-result-secondary-action"
           >
-            <CandyIcon name="refresh" className="h-4 w-4" />
             <span>{playAgainLabel}</span>
           </button>
         </div>
