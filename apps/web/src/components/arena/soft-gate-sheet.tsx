@@ -118,8 +118,8 @@ export function SoftGateSheet({ softGate }: Props) {
                 id="soft-gate-modal-title"
                 className="fantasy-title text-2xl font-extrabold tracking-wide"
                 style={{
-                  color: "rgba(63, 34, 8, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
+                  color: "var(--popup-title-color)",
+                  textShadow: "var(--popup-title-text-shadow)",
                 }}
               >
                 {t("softGateModalTitle").toUpperCase()}
