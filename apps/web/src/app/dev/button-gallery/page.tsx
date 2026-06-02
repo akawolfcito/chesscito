@@ -225,9 +225,9 @@ export default function ButtonGalleryPage() {
       <ButtonCard
         title="Fail rescue modal primary"
         classNames=".fail-rescue-modal-primary"
-        role="CTA principal del modal de rescate al fallar un ejercicio. Inspiró la variante --green-css."
-        verdict="candidate"
-        notes="Hoy es amber, pero su forma/bevel es EXACTAMENTE el patrón del verde unificado. Migrar = simetría perfecta."
+        role="CTA principal del modal de rescate al fallar un ejercicio."
+        verdict="unified"
+        notes="Migrado al verde unificado. Si necesitamos ámbar/dorado más adelante, mintamos --cta-primary-amber-* sobre la misma estructura."
       >
         <button type="button" className="fail-rescue-modal-primary">
           <span className="fail-rescue-modal-primary-label">Retry</span>
