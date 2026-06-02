@@ -26,12 +26,12 @@ describe("ContextualActionSlot — compact label", () => {
         onRetry={onRetry}
       />,
     );
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "RETRY" })).toBeInTheDocument();
     // The compact label is a <span> rendered next to the button. Since it
     // mirrors the button's own a11y name in this case, scope by tag to
     // avoid the duplicate-match ambiguity.
     const label = screen
-      .getAllByText("Retry")
+      .getAllByText("RETRY")
       .find((el) => el.tagName === "SPAN");
     expect(label).toBeDefined();
     fireEvent.click(screen.getByRole("button"));

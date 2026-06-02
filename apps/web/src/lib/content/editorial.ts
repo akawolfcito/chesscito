@@ -33,10 +33,10 @@ export const GLOSSARY = {
 
 export const CTA_LABELS = {
   startTrial: "Start Trial",
-  continue: "Continue",
+  continue: "CONTINUE",
   claimBadge: GLOSSARY.claimBadge,
   submitScore: GLOSSARY.submitScore,
-  retry: "Retry",
+  retry: "RETRY",
   viewLeaderboard: "LEADERS",
   backToPlay: "Back to Play",
 } as const;
@@ -45,8 +45,8 @@ export const FOOTER_CTA_COPY = {
   submitScore: { label: "SAVE", compactLabel: "SAVE", loading: "Saving..." },
   useShield: { label: "Use Shield", compactLabel: "Shield", loading: "Using Shield..." },
   claimBadge: { label: "CLAIM", compactLabel: "CLAIM", loading: "Claiming..." },
-  retry: { label: "Retry", compactLabel: "Retry", loading: null },
-  connectWallet: { label: "Connect Wallet", compactLabel: "Connect", loading: null },
+  retry: { label: "RETRY", compactLabel: "RETRY", loading: null },
+  connectWallet: { label: "Connect Wallet", compactLabel: "CONNECT", loading: null },
   switchNetwork: { label: "Switch Network", compactLabel: "Network", loading: null },
   shieldsLeft: (n: number) => `${n} left`,
   submitCanceled: "Save canceled",
@@ -204,8 +204,8 @@ export const RESULT_OVERLAY_COPY = {
     },
   },
   cta: {
-    continue: "Continue",
-    tryAgain: "Try Again",
+    continue: "CONTINUE",
+    tryAgain: "Try again",
     dismiss: "Dismiss",
     receiptOnCeloscan: "Receipt on CeloScan",
   },
@@ -447,7 +447,7 @@ export const LEADERBOARD_SHEET_COPY = {
   empty: "No champions yet.",
   emptyArenaLink: "ARENA",
   error: "Could not load rankings",
-  retry: "Retry",
+  retry: "RETRY",
   champion: "Champion",
   topCompetitors: "Top Competitors",
   closeAriaLabel: "Close leaders",
@@ -663,7 +663,7 @@ export const VICTORY_CLAIM_COPY = {
    *  USDm without enumerating them and works for both MiniPay
    *  (no CELO surface) and web wallets. */
   errorInsufficientBalance: "Add some USD stablecoin to save your victory.",
-  tryAgain: "Try Again",
+  tryAgain: "Try again",
   shareCard: "Share Card",
   challengeFriend: "Challenge a Friend",
   challengeText: (moves: number, url: string) =>
@@ -1057,7 +1057,7 @@ export const LABYRINTH_COPY = {
   newBestFormat: "New best! Beat {previous} → {current}",
   firstCompletionFormat: "First completion · {moves} moves",
   yourBestFormat: "Your best: {previous} moves",
-  retry: "Try Again",
+  retry: "Try again",
   back: "Back to Exercises",
   /** ARIA label for the L1/L2 layer toggle tablist on mission panel. */
   layerToggleAriaLabel: "Layer toggle",
@@ -1231,7 +1231,7 @@ export const COACH_COPY = {
   analysisFailed: "Analysis couldn't be completed. Your credit was not spent.",
   coachResting: "Coach is resting. Try again later.",
   cancel: "Cancel",
-  retry: "Retry",
+  retry: "RETRY",
   full: "Full",
   quick: "Quick",
   keyMomentsCount: (n: number) => `${n} key moments`,
@@ -1400,7 +1400,7 @@ export const COACH_ENTRY_COPY = {
   savingMatch: "Saving match…",
   matchSaved: "Match saved",
   matchNotSaved: "Match not saved · play continues",
-  matchNotSavedRetry: "Retry",
+  matchNotSavedRetry: "RETRY",
   matchTooShort: "Match too short to analyze",
   historyMatchLabel: "Match",
   // 2026-05-29 (Cluster C follow-up): chip routes to /coach/[gameId]
@@ -1491,7 +1491,7 @@ export const COACH_VIEWER_COPY = {
   reconnectCta: "Connect wallet",
   loadErrorTitle: "Couldn't load this match",
   loadErrorSubtitle: "Network or server issue. Try again, or play another.",
-  loadErrorRetry: "Retry",
+  loadErrorRetry: "RETRY",
   notFoundMessage: "Match not found.",
   backLabel: "Back",
   // 2026-05-29 (Cluster C, commit 2): slider/replay polish.
