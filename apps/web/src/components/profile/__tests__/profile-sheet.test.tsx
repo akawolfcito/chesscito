@@ -35,6 +35,31 @@ vi.mock("@/hooks/use-claim-queue", () => ({
 vi.mock("@/hooks/use-display-name", () => ({
   useDisplayName: () => ({ name: "Akawolf", setName: vi.fn() }),
 }));
+// M1 funnel (Commit 6) — ProfileSheet now spawns a ProSheet for the
+// renew flow. Mock useProSheetState so the test doesn't have to pull
+// in usePublicClient / useSwitchChain / RainbowKit / fetch.
+vi.mock("@/lib/pro/use-pro-sheet-state", () => ({
+  useProSheetState: () => ({
+    proStatus: null,
+    openSheet: vi.fn(),
+    sheetProps: {
+      open: false,
+      onOpenChange: vi.fn(),
+      status: null,
+      isConnected: false,
+      isCorrectChain: false,
+      isPurchasing: false,
+      isVerifying: false,
+      errorMessage: null,
+      onConnectWallet: vi.fn(),
+      onSwitchNetwork: vi.fn(),
+      onPurchase: vi.fn(),
+    },
+  }),
+}));
+vi.mock("@/components/pro/pro-sheet", () => ({
+  ProSheet: () => null,
+}));
 
 describe("<ProfileSheet>", () => {
   it("renders banner, stats section, wallet/network rows, disconnect link", () => {

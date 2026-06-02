@@ -291,6 +291,14 @@ const messages = {
     txTimeout: "Esto tardó más de lo esperado. Intenta de nuevo.",
     statusActiveSuffix:
       "{daysLeft, plural, =1 {Vence mañana} other {# días restantes}}",
+    daysLeftActiveLabel:
+      "{daysLeft, plural, =1 {Tu pase expira mañana.} other {Tu pase expira en # días.}}",
+    expiredLabel:
+      "Tu pase expiró. Renueva para seguir entrenando con Luz.",
+    renewTrainingCta: "Renovar tu entrenamiento.",
+    chipDaysSuffix: "PRO · {daysLeft}d",
+    chipExpiringAriaLabel:
+      "{daysLeft, plural, =1 {PRO activo, expira mañana} other {PRO activo, expira en # días}}",
     expiringMicroCopy: "Renueva cuando quieras para seguir entrenando",
     statusBadgeActive: "ACTIVO",
     statusBadgeExpiring: "POR VENCER",

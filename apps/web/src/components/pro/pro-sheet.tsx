@@ -10,12 +10,16 @@ import {
   SheetContent,
 } from "@/components/ui/sheet";
 import type { ProStatus } from "@/lib/pro/use-pro-status";
+import { daysRemaining } from "@/lib/pro/days-remaining";
 import { track } from "@/lib/telemetry";
 
 import { ProActiveBadge } from "./pro-active-badge";
 import { ProActiveCTA } from "./pro-active-cta";
 
-const EXPIRING_THRESHOLD_DAYS = 3;
+/** M1 funnel (Commit 6, 2026-06-02) — threshold widened from 3 to 7 so
+ *  the expiring-sub-line (renew nudge) surfaces a full week before the
+ *  pass expires, matching the canonical M1 retention loop. */
+const EXPIRING_THRESHOLD_DAYS = 7;
 
 export type ProSheetProps = {
   open: boolean;
@@ -40,11 +44,8 @@ export type ProSheetProps = {
   onPurchase: () => void;
 };
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function daysLeft(expiresAt: number): number {
-  return Math.max(1, Math.ceil((expiresAt - Date.now()) / MS_PER_DAY));
-}
+// Days math lives in @/lib/pro/days-remaining so this surface shares
+// the same rounding semantics as the Hub PremiumSlot and Account row.
 
 type CtaConfig = {
   label: string;
@@ -165,7 +166,7 @@ export function ProSheet(props: ProSheetProps) {
   const showActiveBanner = Boolean(
     status?.active && status.expiresAt && status.expiresAt > Date.now(),
   );
-  const days = status?.expiresAt ? daysLeft(status.expiresAt) : null;
+  const days = daysRemaining(status?.expiresAt, Date.now());
 
   function handleCtaClick() {
     if (!cta.onClick) return;

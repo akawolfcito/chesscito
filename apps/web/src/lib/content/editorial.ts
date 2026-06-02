@@ -1870,6 +1870,29 @@ export const PRO_COPY = {
   txTimeout: "This is taking longer than expected. Please try again.",
   statusActiveSuffix: (daysLeft: number) =>
     daysLeft === 1 ? "Expires tomorrow" : `${daysLeft} days left`,
+  /** M1 funnel (Commit 6, 2026-06-02) — PRO row + Hub chip + ProSheet
+   *  shared days-left copy. Threshold for "expiring" surfaces is 7 days
+   *  per the M1 plan. */
+  daysLeftActiveLabel: (daysLeft: number) =>
+    daysLeft === 1
+      ? "Your pass expires tomorrow."
+      : `Your pass expires in ${daysLeft} days.`,
+  /** Post-expire copy surfaced on the Account PRO row. Frames the
+   *  renewal as keeping training alive with Luz, not loss aversion. */
+  expiredLabel: "Your pass expired. Renew to keep training with Luz.",
+  /** Renew CTA reused across surfaces. Pairs with `ctaRenew` (which
+   *  remains "Renew your training" since Commit 5). */
+  renewTrainingCta: "Renew your training.",
+  /** Short Hub-chip copy when daysRemaining ≤ 7. Fits the 120px chip
+   *  while the aria-label below carries the long-form context. */
+  chipDaysSuffix: (daysLeft: number) => `PRO · ${daysLeft}d`,
+  /** Aria label for the expiring Hub chip — long-form for screen
+   *  readers. Static "expires in X days" reads consistently regardless
+   *  of whether the visible suffix uses the short "Nd" notation. */
+  chipExpiringAriaLabel: (daysLeft: number) =>
+    daysLeft === 1
+      ? "PRO active, expires tomorrow"
+      : `PRO active, expires in ${daysLeft} days`,
   /** Inline sub-line shown when daysLeft ≤ 3 (badge in EXPIRING variant).
    *  Pairs with a text-link reusing `ctaRenew` for the extend action.
    *  Canon §11 (Journey 3): no FOMO countdown, no urgency framing —

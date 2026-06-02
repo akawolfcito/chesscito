@@ -74,7 +74,13 @@ describe("ProChip", () => {
       rerender(
         <ProChip status={{ active: false, expiresAt: null }} isLoading={false} onClick={vi.fn()} />,
       );
-      expect(trackMock).toHaveBeenCalledTimes(1);
+      // M1 funnel (Commit 6) — mount now ships pro_card_viewed AND the
+      // monetization.pro_chip_view companion. Filter by event name so
+      // this assertion stays focused on the legacy event behavior.
+      const proCardCalls = trackMock.mock.calls.filter(
+        ([name]) => name === "pro_card_viewed",
+      );
+      expect(proCardCalls).toHaveLength(1);
     });
 
     it("fires pro_cta_clicked with source=chip on tap", () => {

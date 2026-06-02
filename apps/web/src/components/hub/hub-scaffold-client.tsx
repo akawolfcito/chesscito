@@ -309,7 +309,42 @@ export function HubScaffoldClient({
       wallet_connected: isConnected,
       cta: pro.active ? "training_journal" : "open_pro_sheet",
     });
-  }, [isConnected, pro.active, proStatus]);
+    // M1 funnel (Commit 6, 2026-06-02) — monetization-namespaced view
+    // event for the Hub chip surface. Mirrors the legacy training_card
+    // gate (once per mount, once status resolves) so the funnel rolls
+    // up cleanly without duplicate counting on re-renders.
+    track("monetization.pro_chip_view", {
+      active: pro.active,
+      daysRemaining: pro.active ? pro.daysRemaining : null,
+    });
+    // Anti-spam expiring nudge — fires at most once per session per
+    // (wallet, expiresAt) pair so a renewal mid-session can re-arm the
+    // event for the NEW expiresAt without overwriting the same key.
+    if (pro.active && pro.daysRemaining <= 7 && address && proStatus?.expiresAt) {
+      const storageKey = "chesscito:pro-expiring-chip-shown";
+      const sessionValue = `${address.toLowerCase()}:${proStatus.expiresAt}`;
+      try {
+        const previous = window.sessionStorage.getItem(storageKey);
+        if (previous !== sessionValue) {
+          window.sessionStorage.setItem(storageKey, sessionValue);
+          track("monetization.pro_expiring_view", {
+            daysRemaining: pro.daysRemaining,
+          });
+        }
+      } catch {
+        // sessionStorage can throw in private-mode iframes; fail open
+        // and ship the event anyway so we don't lose the signal.
+        track("monetization.pro_expiring_view", {
+          daysRemaining: pro.daysRemaining,
+        });
+      }
+    }
+  }, [
+    address,
+    isConnected,
+    pro,
+    proStatus,
+  ]);
 
   const rewardTiles = useMemo(() => {
     const tiles = deriveRewardTiles({ badgesClaimed, starsPerPiece });
@@ -360,6 +395,12 @@ export function HubScaffoldClient({
         }}
         onProTap={() => {
           track("hub_pro_chip_tap", { pro_active: pro.active });
+          // M1 funnel (Commit 6) — monetization-namespaced tap with
+          // daysRemaining payload, parallel to the legacy event.
+          track("monetization.pro_chip_tap", {
+            active: pro.active,
+            daysRemaining: pro.active ? pro.daysRemaining : null,
+          });
           // In-place ProSheet (port 2026-05-07). Kills the legacy
           // ?legacy=1&action=pro round-trip + the B2 nav race that
           // bounce caused; sheet renders directly above the scaffold.

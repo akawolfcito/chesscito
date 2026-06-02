@@ -4,7 +4,9 @@ type Props = {
   active: boolean;
   usedSessions?: number;
   totalSessions?: number;
-  /** Drives the `expiring` modifier when ≤ 3. */
+  /** Drives the `expiring` modifier when ≤ 7. Threshold widened in
+   *  M1 funnel Commit 6 (2026-06-02) so the renewal nudge surfaces a
+   *  full week before the pass lapses. */
   daysRemaining?: number;
   /** Adds the `recently-renewed` modifier on top of `active` for a 3s
    *  shimmer. The parent owns the timing — the primitive does not
@@ -39,7 +41,7 @@ export function PremiumSlot({
   onTap,
   className = "",
 }: Props) {
-  const isExpiring = active && typeof daysRemaining === "number" && daysRemaining <= 3;
+  const isExpiring = active && typeof daysRemaining === "number" && daysRemaining <= 7;
   const stateClass = active ? "is-active" : "is-inactive";
   const percent =
     totalSessions > 0

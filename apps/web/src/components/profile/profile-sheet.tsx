@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAccount, useChainId, useDisconnect, useWriteContract } from "wagmi";
 import { Link } from "@/i18n/navigation";
@@ -26,13 +26,44 @@ import {
   getScoreboardAddress,
   getMiniPayFeeCurrency,
 } from "@/lib/contracts/chains";
+import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
+import { daysRemaining } from "@/lib/pro/days-remaining";
+import { ProSheet } from "@/components/pro/pro-sheet";
 import type { Claim } from "@/lib/claims/queue";
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void };
 
+/** M1 funnel (Commit 6, 2026-06-02) — Account PRO row. Shows active
+ *  pass with days remaining + renew CTA. Surfaces post-expire copy
+ *  when the pass lapsed. Hidden entirely for users who never had PRO
+ *  so the Account sheet doesn't morph into a Shop surface. */
+type ProRowState =
+  | { kind: "hidden" }
+  | { kind: "active"; daysLeft: number; expiring: boolean }
+  | { kind: "expired" };
+
+function deriveProRowState(
+  status: { active: boolean; expiresAt: number | null } | null,
+  now: number,
+): ProRowState {
+  if (status == null) return { kind: "hidden" };
+  if (status.active) {
+    const days = daysRemaining(status.expiresAt, now);
+    if (days == null) return { kind: "expired" };
+    return { kind: "active", daysLeft: days, expiring: days <= 7 };
+  }
+  // Status returned active=false but carries an expiresAt — that's a
+  // user who DID hold PRO at some point. Free-from-day-one users never
+  // get a status payload that mentions expiresAt, so the row stays
+  // hidden and Account does not look like a Shop entry.
+  if (status.expiresAt != null) return { kind: "expired" };
+  return { kind: "hidden" };
+}
+
 export function ProfileSheet({ open, onOpenChange }: Props) {
   const t = useTranslations("PROFILE_COPY");
   const tAbout = useTranslations("ABOUT_LINK_COPY");
+  const tPro = useTranslations("PRO_COPY");
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
@@ -40,6 +71,38 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
   const { name, setName, isVisitor } = useDisplayName(address);
   const tTier = useTranslations("TIER_LABELS");
   const { stats, refetch } = useProfileStats(address);
+  // M1 funnel (Commit 6) — Profile-owned ProSheet instance. The Hub
+  // also mounts its own ProSheet (via use-pro-sheet-state); here we
+  // spin up a separate orchestration so a renew tap from the Account
+  // row opens ProSheet ON TOP of the (closed) profile sheet without
+  // depending on the Hub's tree.
+  const proSheet = useProSheetState();
+  const proStatus = proSheet.proStatus;
+  const proRowState = deriveProRowState(proStatus, Date.now());
+  // Fire pro_expired_view exactly once per (sheet open + expired
+  // status). Reset when the sheet closes so a follow-up open ships
+  // the event again as a distinct view intent.
+  const expiredViewedRef = useRef(false);
+  useEffect(() => {
+    if (!open) {
+      expiredViewedRef.current = false;
+      return;
+    }
+    if (proRowState.kind !== "expired" || expiredViewedRef.current) return;
+    expiredViewedRef.current = true;
+    track("monetization.pro_expired_view", {});
+  }, [open, proRowState.kind]);
+  const handleProRenewTap = useCallback(() => {
+    const context =
+      proRowState.kind === "expired"
+        ? "expired_row"
+        : proRowState.kind === "active" && proRowState.expiring
+          ? "expiring_chip"
+          : "account_row";
+    track("monetization.pro_renew_tap", { context });
+    onOpenChange(false);
+    proSheet.openSheet();
+  }, [onOpenChange, proRowState, proSheet]);
 
   const performClaim = useCallback<PerformClaimFn>(
     async (claim: Claim) => {
@@ -197,6 +260,7 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
   });
 
   return (
+    <>
     <Sheet
       open={open}
       onOpenChange={(next) => {
@@ -271,6 +335,76 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
           nftsMinted={stats?.nftsMinted ?? 0}
         />
 
+        {/* M1 funnel (Commit 6, 2026-06-02) — Account PRO row.
+         *  - Hidden when the user has never held PRO.
+         *  - Active: days left + renew CTA. CTA gains emphasis when
+         *    expiring (≤ 7 days).
+         *  - Expired: post-expire copy + renew CTA. */}
+        {proRowState.kind !== "hidden" && (
+          <section
+            aria-label={tPro("label")}
+            className="mt-3 rounded-2xl border px-3 py-3"
+            style={{
+              background: "rgba(255, 245, 215, 0.55)",
+              borderColor:
+                proRowState.kind === "active" && proRowState.expiring
+                  ? "rgba(217, 119, 6, 0.55)"
+                  : "rgba(110, 65, 15, 0.22)",
+              boxShadow:
+                proRowState.kind === "active" && proRowState.expiring
+                  ? "inset 0 1px 0 rgba(255, 235, 175, 0.65)"
+                  : "inset 0 1px 0 rgba(255, 245, 215, 0.55)",
+            }}
+          >
+            <p
+              className="text-[0.62rem] font-extrabold uppercase tracking-[0.16em]"
+              style={{ color: "rgba(110, 65, 15, 0.78)" }}
+            >
+              {tPro("label")}
+            </p>
+            <p
+              className="mt-1 text-sm font-extrabold leading-snug"
+              style={{
+                color: "rgba(63, 34, 8, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+              }}
+            >
+              {proRowState.kind === "active"
+                ? tPro("daysLeftActiveLabel", { daysLeft: proRowState.daysLeft })
+                : tPro("expiredLabel")}
+            </p>
+            <button
+              type="button"
+              onClick={handleProRenewTap}
+              aria-label={tPro("renewTrainingCta")}
+              className="mt-3 inline-flex w-full items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-extrabold transition-all active:scale-[0.98]"
+              style={
+                proRowState.kind === "expired" ||
+                (proRowState.kind === "active" && proRowState.expiring)
+                  ? {
+                      background:
+                        "linear-gradient(180deg, rgba(255, 235, 175, 0.95), rgba(232, 184, 84, 0.95))",
+                      color: "rgba(63, 34, 8, 0.95)",
+                      border: "1px solid rgba(180, 120, 35, 0.55)",
+                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.6)",
+                      boxShadow:
+                        "0 3px 0 rgba(135, 82, 13, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.55)",
+                    }
+                  : {
+                      background: "rgba(255, 245, 215, 0.65)",
+                      color: "rgba(110, 65, 15, 0.95)",
+                      border: "1px solid rgba(110, 65, 15, 0.25)",
+                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                    }
+              }
+            >
+              {proRowState.kind === "active" && !proRowState.expiring
+                ? tPro("ctaRenew")
+                : tPro("renewTrainingCta")}
+            </button>
+          </section>
+        )}
+
         <div className="profile-utility-row">
           <div className="profile-utility-card">
             <span>{t("walletLabel")}</span>
@@ -304,5 +438,11 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
         </div>
       </SheetContent>
     </Sheet>
+
+    {/* M1 funnel (Commit 6) — Profile-owned ProSheet, rendered as a
+     *  sibling so it survives the parent profile sheet closing.
+     *  handleProRenewTap closes profile first then opens this. */}
+    <ProSheet {...proSheet.sheetProps} />
+    </>
   );
 }
