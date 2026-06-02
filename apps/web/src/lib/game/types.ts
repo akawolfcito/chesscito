@@ -39,6 +39,22 @@ export type Exercise = {
    *  captureTargets or targetPos. Rendered as capturable markers
    *  without a lock icon, visually distinct from obstacles. */
   captureTargets?: BoardPosition[];
+
+  /* ── Labyrinth System v0.2 — mint metadata (all optional, additive).
+   *  Spec: docs/superpowers/specs/2026-06-02-labyrinth-system-v0.2.md §4.1
+   *  Defaults are applied by `resolveLabyrinthMintPolicy` — never read
+   *  these directly; always resolve through the helper so UI, sign
+   *  endpoint, and leaderboard reader share one source of truth. */
+  mintable?: boolean;
+  leaderboardEligible?: boolean;
+  rewardEligible?: boolean;
+  campaignEligible?: boolean;
+  minStarsToMint?: 1 | 2 | 3;
+  minStarsForReward?: 1 | 2 | 3;
+  seasonId?: string;
+  campaignId?: string;
+  partnerId?: string;
+  rewardTier?: "none" | "in_game" | "partner" | "mystery";
 };
 
 export type LabyrinthProgress = {
