@@ -371,6 +371,15 @@
       0 2px 0 rgba(10, 55, 90, 0.55),
       0 4px 8px rgba(10, 55, 90, 0.30);
     --cta-primary-blue-text-shadow: 0 2px 0 rgba(10, 55, 90, 0.65);
+    --cta-secondary-cream-grad:
+      linear-gradient(180deg, rgba(255, 248, 222, 0.95), rgba(247, 226, 175, 0.95));
+    --cta-secondary-cream-border: rgba(180, 120, 35, 0.45);
+    --cta-secondary-cream-bevel:
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      inset 0 -1px 0 rgba(150, 90, 20, 0.18),
+      0 1px 2px rgba(110, 65, 15, 0.18);
+    --cta-secondary-cream-color: rgba(63, 34, 8, 0.95);
+    --cta-secondary-cream-text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
     --wood-banner-bg-short: url("/art/scene-rooted/wood-banner-blank-short.webp");
     --wood-banner-bg-medium: url("/art/scene-rooted/wood-banner-blank-medium.webp");
     --wood-banner-bg-large: url("/art/scene-rooted/wood-banner-blank-large.webp");
@@ -3712,72 +3721,6 @@
     border-color: #f4d97a;
   }
 
-  /* === hub secondary cta (D5 — Arena destination below Hero) ===
-     Sally R5 — palette-bonded to TRAIN PIECES so the two action-stack
-     pieces feel cut from the same kingdom wood. Same dark-brown
-     border, same 4px carved depth, same white inset highlight, but
-     the interior paint stays cream-to-pale-gold instead of jumping to
-     full amber — the asymmetry (primary candy-card vs secondary pill)
-     survives. The pill still reads as subordinate by silhouette and
-     stature, not by feeling like a different material. */
-  .hub-secondary-cta {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: .55rem;
-    padding: .55rem 1.1rem;
-    background: linear-gradient(180deg, rgba(255, 244, 210, 0.95) 0%, rgba(240, 205, 130, 0.92) 100%);
-    color: rgba(63, 34, 8, 0.95);
-    border: 2px solid rgba(110, 65, 15, 0.65);
-    border-radius: 999px;
-    font-family: var(--font-game-display), system-ui, sans-serif;
-    font-size: 1rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-shadow: 0 1px 0 rgba(255, 250, 230, 0.85);
-    box-shadow:
-      0 4px 0 rgba(110, 65, 15, 0.45),
-      0 6px 14px rgba(0, 0, 0, 0.22),
-      inset 0 2px 0 rgba(255, 255, 255, 0.55),
-      inset 0 -2px 0 rgba(110, 65, 15, 0.18);
-    transition: transform var(--duration-snap), box-shadow var(--duration-snap), background var(--duration-snap);
-  }
-
-  .hub-secondary-cta>span[aria-hidden="true"] {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.35rem;
-    height: 1.35rem;
-    border-radius: 999px;
-    background: linear-gradient(180deg, #ffd66b 0%, #e69a1a 100%);
-    color: rgba(40, 20, 0, 1);
-    border: 1.5px solid rgba(110, 65, 15, 0.75);
-    font-size: .85rem;
-    font-weight: 900;
-    line-height: 1;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    transition: transform var(--duration-snap);
-  }
-
-  .hub-secondary-cta:hover,
-  .hub-secondary-cta:active {
-    background: linear-gradient(180deg, rgba(255, 248, 220, 0.97) 0%, rgba(245, 215, 145, 0.94) 100%);
-  }
-
-  .hub-secondary-cta:active {
-    transform: translateY(2px);
-    box-shadow:
-      0 2px 0 rgba(110, 65, 15, 0.45),
-      0 3px 8px rgba(0, 0, 0, 0.22),
-      inset 0 2px 0 rgba(255, 255, 255, 0.45),
-      inset 0 -1px 0 rgba(110, 65, 15, 0.18);
-  }
-
-  .hub-secondary-cta:hover>span[aria-hidden="true"],
-  .hub-secondary-cta:active>span[aria-hidden="true"] {
-    transform: translateX(3px);
-  }
 
   /* === settings sheet stub (v1 placeholder) === */
   .settings-stub {
@@ -7783,20 +7726,28 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .arena-scaffold-soft-gate-primary {
-  background: rgba(245, 158, 11, 0.95);
-  color: rgba(63, 34, 8, 0.95);
-  border: 1px solid rgba(245, 158, 11, 1);
+  background: var(--cta-primary-green-grad);
+  color: #fff8ed;
+  border: 2px solid var(--cta-primary-green-border);
+  box-shadow: var(--cta-primary-green-bevel);
+  text-shadow: var(--cta-primary-green-text-shadow);
 }
 
 .arena-scaffold-soft-gate-secondary {
-  background: rgba(255, 255, 255, 0.30);
-  color: rgba(63, 34, 8, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: var(--cta-secondary-cream-grad);
+  color: var(--cta-secondary-cream-color);
+  border: 1px solid var(--cta-secondary-cream-border);
+  box-shadow: var(--cta-secondary-cream-bevel);
+  text-shadow: var(--cta-secondary-cream-text-shadow);
 }
 
-.arena-scaffold-soft-gate-primary:active,
+.arena-scaffold-soft-gate-primary:active {
+  transform: translateY(2px);
+  box-shadow: var(--cta-primary-green-bevel-pressed);
+}
+
 .arena-scaffold-soft-gate-secondary:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 .arena-scaffold-prize-pool {
@@ -11628,19 +11579,12 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 0.7rem 1rem;
   font-size: 0.95rem;
   font-weight: 800;
-  color: rgba(63, 34, 8, 0.95);
-  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 248, 222, 0.95) 0%,
-    rgba(247, 226, 175, 0.95) 100%
-  );
-  border: 1px solid rgba(180, 120, 35, 0.45);
+  color: var(--cta-secondary-cream-color);
+  text-shadow: var(--cta-secondary-cream-text-shadow);
+  background: var(--cta-secondary-cream-grad);
+  border: 1px solid var(--cta-secondary-cream-border);
   border-radius: 1.1rem;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    inset 0 -1px 0 rgba(150, 90, 20, 0.18),
-    0 1px 2px rgba(110, 65, 15, 0.18);
+  box-shadow: var(--cta-secondary-cream-bevel);
   cursor: pointer;
   transition: transform var(--duration-snap) ease;
 }
