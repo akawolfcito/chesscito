@@ -732,6 +732,12 @@ export function ExercisesScreen({
   }, [resultOverlay]);
   const [showBadgeEarned, setShowBadgeEarned] = useState(false);
   const [showPieceComplete, setShowPieceComplete] = useState(false);
+  /** Imperative open-signal for the PiecePickerSheet (owned by
+   *  MissionPanelCandy). Incremented by the PieceComplete "Choose
+   *  another piece" CTA when the player has no labyrinth / next piece
+   *  to advance to and we want them to land on the picker rather than
+   *  Arena. Starts at 0 so the panel ignores the initial sync. */
+  const [pickerOpenSignal, setPickerOpenSignal] = useState(0);
   const badgeSheetOpen = activeDockTab === "badge";
   const setBadgeSheetOpen = (v: boolean) => {
     if (v) setActiveDockTab("badge");
@@ -2068,6 +2074,7 @@ export function ExercisesScreen({
         </div>
         <MissionPanelCandy
           selectedPiece={selectedPiece}
+          openPickerSignal={pickerOpenSignal}
           onSelectPiece={(piece) => {
             autoReset.invalidate();
             setSelectedPiece(piece);
@@ -2333,6 +2340,10 @@ export function ExercisesScreen({
                   }
                 : undefined
             }
+            onChoosePiece={() => {
+              setShowPieceComplete(false);
+              setPickerOpenSignal((n) => n + 1);
+            }}
             onSubmitScore={
               canSaveScore
                 ? () => {

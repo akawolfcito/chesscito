@@ -521,14 +521,24 @@ type PieceCompletePromptProps = {
   onNextPiece: () => void;
   onArena: () => void;
   onPracticeAgain: () => void;
-  /** When provided, shows a "Try Labyrinth" CTA so the player can step
-   *  into L2 directly from the L1 completion ceremony. Only meaningful
-   *  for pieces that have at least one labyrinth defined. */
+  /** When provided, surfaces "Try Labyrinth" as the primary CTA in the
+   *  no-nextPiece branch. Presence == "the current piece has at least
+   *  one labyrinth available", so the parent's gating is the single
+   *  source of truth (we never need labyrinthList.length passed
+   *  separately). */
   onTryLabyrinth?: () => void;
   /** Re-surfaces the Submit Score transactional moment that may have
    *  been lost when the user dismissed BadgeEarnedPrompt with "Later".
    *  Only wired when canSendOnChain && score is eligible. */
   onSubmitScore?: () => void;
+  /** Opens the PiecePickerSheet from the completion ceremony. Used as
+   *  the primary CTA when there is no next piece in the linear order
+   *  AND no labyrinth available for the current piece — without this
+   *  the player would be dropped on Arena as the primary path, which
+   *  feels wrong for a still-incomplete piece like King (no labyrinths
+   *  yet). Arena stays available as a secondary text-link in this
+   *  branch (`tryArenaSecondary`). */
+  onChoosePiece?: () => void;
 };
 
 export function PieceCompletePrompt({
@@ -541,6 +551,7 @@ export function PieceCompletePrompt({
   onPracticeAgain,
   onTryLabyrinth,
   onSubmitScore,
+  onChoosePiece,
 }: PieceCompletePromptProps) {
   const tComplete = useTranslations("PIECE_COMPLETE_COPY");
   const tLab = useTranslations("LABYRINTH_COPY");
@@ -572,6 +583,35 @@ export function PieceCompletePrompt({
   // they're choosing to dismiss.
   const handleDismiss = nextPiece ? onNextPiece : onPracticeAgain;
 
+  /* Primary CTA priority (drives both label and handler):
+   *   1. nextPiece exists       → "Start {nextPiece}"
+   *   2. onTryLabyrinth defined → "Try Labyrinth"   (current piece has
+   *                                                  ≥1 labyrinth)
+   *   3. onChoosePiece defined  → "Choose another piece"
+   *   4. fallback (no other path) → "ARENA"
+   *
+   * Arena keeps the defensive 4th slot so a misconfigured callsite
+   * never lands the user on an inert button. When Arena is NOT primary
+   * AND there is no next piece, surface it as a secondary text-link
+   * (`tryArenaSecondary`) — Arena stays a valid escape hatch but stops
+   * dominating the moment for pieces that still have no follow-up
+   * content (King v0.1). */
+  type CTA = { label: string; handler: () => void };
+  const primaryCTA: CTA = nextPiece
+    ? {
+        label: tComplete("nextPiece", { piece: tPiece(nextPiece) }),
+        handler: onNextPiece,
+      }
+    : onTryLabyrinth
+      ? { label: tLab("tryLabyrinth"), handler: onTryLabyrinth }
+      : onChoosePiece
+        ? { label: tComplete("choosePiece"), handler: onChoosePiece }
+        : { label: tComplete("tryArena"), handler: onArena };
+
+  const arenaIsPrimary = primaryCTA.handler === onArena;
+  const showArenaSecondary = !nextPiece && !arenaIsPrimary;
+  const showCoachHint = nextPiece != null;
+
   return (
     <div
       className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
@@ -594,34 +634,22 @@ export function PieceCompletePrompt({
               : tComplete("practiceAgain")
           }
           cta={
-            /* Trimmed CTA hierarchy — was 4 visible actions, dropped to
-               2 buttons + 1 quiet text link. The X close handles
-               dismiss; "Practice Again" was redundant with it after
-               mastery. Try Labyrinth demotes from ghost button to
-               text link so it doesn't compete with the Submit Score
-               transactional moment. */
+            /* CTA hierarchy is context-aware: primaryCTA encodes the
+               nextPiece → labyrinth → choose-piece → arena priority
+               cascade computed above. Arena demotes to a tertiary
+               text-link whenever it isn't primary, so it stays a valid
+               escape hatch but never dominates the completion moment
+               for pieces with no follow-up content yet. */
             <div className="flex flex-col gap-1.5">
-              {nextPiece ? (
-                <Button
-                  type="button"
-                  variant="game-solid"
-                  size="game"
-                  onClick={() => handleAction(onNextPiece)}
-                  className="w-full"
-                >
-                  {tComplete("nextPiece", { piece: tPiece(nextPiece) })}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="game-solid"
-                  size="game"
-                  onClick={() => handleAction(onArena)}
-                  className="w-full"
-                >
-                  {tComplete("tryArena")}
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="game-solid"
+                size="game"
+                onClick={() => handleAction(primaryCTA.handler)}
+                className="w-full"
+              >
+                {primaryCTA.label}
+              </Button>
               {onSubmitScore && (
                 <Button
                   type="button"
@@ -633,20 +661,20 @@ export function PieceCompletePrompt({
                   {tComplete("submitScore")}
                 </Button>
               )}
-              {onTryLabyrinth && (
+              {showArenaSecondary && (
                 <button
                   type="button"
-                  onClick={() => handleAction(onTryLabyrinth)}
+                  onClick={() => handleAction(onArena)}
                   className="w-full py-1.5 text-xs font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
                   style={{ color: "rgba(110, 65, 15, 0.70)" }}
                 >
-                  {tLab("orTryLabyrinth")}
+                  {tComplete("tryArenaSecondary")}
                 </button>
               )}
-              {/* Tertiary Coach discovery — skip when the primary CTA
-                  is already "Try Arena" (no nextPiece) so we don't ship
-                  two Arena hops in the same overlay. */}
-              {nextPiece && (
+              {/* Tertiary Coach discovery — only when the primary CTA
+                  is "Start <next piece>" so we don't ship two Arena
+                  hops in the same overlay. */}
+              {showCoachHint && (
                 <button
                   type="button"
                   onClick={() => {

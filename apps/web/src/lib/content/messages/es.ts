@@ -1231,6 +1231,8 @@ const messages = {
     practiceAgain: "Practicar de nuevo",
     submitScore: "GUARDAR",
     coachHint: "Prueba el Coach en Arena",
+    choosePiece: "Elige otra pieza",
+    tryArenaSecondary: "Probar Arena",
   },
   BADGE_EARNED_COPY: {
     title: "{piece} Ascendente obtenida",

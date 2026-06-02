@@ -82,6 +82,13 @@ type MissionPanelProps = {
    *  (no rescue host wired), failure behavior stays byte-identical to
    *  pre-cluster. */
   failureRescueSlot?: ReactNode
+  /** Imperative open-signal for the PiecePickerSheet. The parent
+   *  increments this number to request the picker open (e.g. from the
+   *  PieceComplete "Choose another piece" CTA when no labyrinth /
+   *  next piece is available). Initial value (0 or undefined) is a
+   *  no-op; only subsequent increments fire the open. Picker state
+   *  itself stays owned here. */
+  openPickerSignal?: number
 }
 
 type FlashConfig = { textKey: 'success' | 'failure'; accent: string; stroke: string }
@@ -416,6 +423,7 @@ export function MissionPanelCandy({
   lastEarnedStars,
   pieceHint,
   failureRescueSlot,
+  openPickerSignal,
 }: MissionPanelProps) {
   const tMission = useTranslations('MISSION_BRIEFING_COPY')
   const tLab = useTranslations('LABYRINTH_COPY')
@@ -424,6 +432,13 @@ export function MissionPanelCandy({
   // them when the parent signals a dock destination sheet is opening.
   const [piecePickerOpen, setPiecePickerOpen] = useState(false)
   const [missionDetailOpen, setMissionDetailOpen] = useState(false)
+
+  // Parent-requested open-signal: increment to request the picker.
+  // Skip the first sync to avoid auto-opening on mount.
+  useEffect(() => {
+    if (openPickerSignal === undefined || openPickerSignal === 0) return
+    setPiecePickerOpen(true)
+  }, [openPickerSignal])
 
   useEffect(() => {
     if (isDockSheetOpen) {

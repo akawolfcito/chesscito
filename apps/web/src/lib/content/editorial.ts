@@ -229,6 +229,16 @@ export const PIECE_COMPLETE_COPY = {
    *  the primary CTA is "Start <next piece>" — when the primary is
    *  already "Try Arena" we skip it to avoid a duplicate Arena hop. */
   coachHint: "Try Coach review in Arena",
+  /** Primary CTA used when there is no next piece in the linear order
+   *  AND the current piece has no labyrinth available (e.g. King in
+   *  v0.1 — no labyrinths defined yet). Opens the PiecePickerSheet so
+   *  the player can return to any piece they want to keep training. */
+  choosePiece: "Choose another piece",
+  /** Demoted text-link variant of tryArena. Used when the primary CTA
+   *  is "Try Labyrinth" or "Choose another piece" but Arena is still a
+   *  valid path the player may want to take. Sentence case (not the
+   *  uppercase "ARENA") matches the surrounding tertiary-link styling. */
+  tryArenaSecondary: "Try Arena",
 } as const;
 
 export const BADGE_EARNED_COPY = {
