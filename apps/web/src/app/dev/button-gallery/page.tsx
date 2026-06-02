@@ -8,6 +8,7 @@ type Verdict =
   | "unified"
   | "unified-blue"
   | "unified-cream"
+  | "unified-gold"
   | "propose"
   | "decision"
   | "candidate"
@@ -17,6 +18,7 @@ const VERDICT_LABEL: Record<Verdict, string> = {
   unified: "UNIFICADO VERDE",
   "unified-blue": "UNIFICADO AZUL",
   "unified-cream": "UNIFICADO CREMA",
+  "unified-gold": "UNIFICADO DORADO",
   propose: "PROPUESTA · DECIDE",
   decision: "REQUIERE DECISIÓN",
   candidate: "CANDIDATO A MIGRAR",
@@ -27,6 +29,7 @@ const VERDICT_COLOR: Record<Verdict, string> = {
   unified: "rgba(34, 139, 34, 0.92)",
   "unified-blue": "rgba(20, 100, 170, 0.92)",
   "unified-cream": "rgba(180, 130, 50, 0.92)",
+  "unified-gold": "rgba(200, 140, 20, 0.92)",
   propose: "rgba(232, 132, 18, 0.92)",
   decision: "rgba(124, 58, 237, 0.92)",
   candidate: "rgba(232, 132, 18, 0.92)",
@@ -176,8 +179,7 @@ export default function ButtonGalleryPage() {
         <span style={{ color: "rgb(40, 110, 30)" }}>● Verde</span> = practicar / continuar<br />
         <span style={{ color: "rgb(20, 100, 170)" }}>● Azul</span> = competir<br />
         <span style={{ color: "rgb(180, 130, 50)" }}>● Crema</span> = secundario (no compite)<br />
-        <span style={{ color: "rgb(200, 140, 20)" }}>● Dorado</span> = ganar / desbloquear / premio
-        <span style={{ opacity: 0.6 }}> (pendiente mintar)</span>
+        <span style={{ color: "rgb(200, 140, 20)" }}>● Dorado</span> = ganar / desbloquear / premio / PRO
       </div>
 
       {/* ───────── UNIFIED ───────── */}
@@ -320,6 +322,131 @@ export default function ButtonGalleryPage() {
         </button>
       </ButtonCard>
 
+      {/* ───────── DECISIONES PENDIENTES (ronda 3) ───────── */}
+      <SectionHeader label="Unificados — ronda 3 (CHECKMATE / connect prompt) → CREMA" badge="✅" />
+
+      <ButtonCard
+        title="Arena result secondary — Play again"
+        classNames=".arena-result-secondary-action"
+        role="Tertiary pill en el popup de CHECKMATE/loss/draw. Texto real: 'Play again'."
+        verdict="unified-cream"
+        notes="Migrado: tokens crema + dim twin de fail-rescue-secondary (padding 0.7rem/1rem, font 0.95rem/800, radius 1.1rem). Icon removido por decisión Wolfcito."
+      >
+        <button type="button" className="arena-result-secondary-action">
+          <span>Play again</span>
+        </button>
+      </ButtonCard>
+
+      <ButtonCard
+        title="Arena result secondary — Share"
+        classNames=".arena-result-secondary-action"
+        role="Misma clase, instancia Share del popup."
+        verdict="unified-cream"
+        notes="Mismo migration que Play again — gemelo del template crema sin icon."
+      >
+        <button type="button" className="arena-result-secondary-action">
+          <span>Share</span>
+        </button>
+      </ButtonCard>
+
+      <ButtonCard
+        title="Connect prompt toast — Save your progress on-chain"
+        classNames=".candy-tray.connect-prompt-toast-panel"
+        role="Panel que aparece sobre el forest después de un milestone (★★★, victoria, badge claimable)."
+        verdict="unified-cream"
+        notes="Migrado: sub-clase .connect-prompt-toast-panel override con tokens crema sólidos (.candy-tray base intacto para otros usos)."
+      >
+        <div
+          data-component="connect-prompt-toast"
+          className="candy-tray w-full"
+          style={{ maxWidth: 320, color: "rgba(63, 34, 8, 0.95)" }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <span aria-hidden="true" style={{ fontSize: "1.2rem" }}>💼</span>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <p style={{ fontSize: "0.85rem", fontWeight: 700, lineHeight: 1.2, margin: 0 }}>
+                Save your progress on-chain
+              </p>
+              <p style={{ fontSize: "0.72rem", lineHeight: 1.35, margin: "2px 0 0", color: "rgba(110,65,15,0.85)" }}>
+                You won. Connect your wallet to mint and keep your victory.
+              </p>
+            </div>
+          </div>
+          <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}>
+            <button type="button" className="candy-tray-pill hub-hud-pill">
+              <span>Connect to save</span>
+            </button>
+          </div>
+        </div>
+      </ButtonCard>
+
+      {/* ───────── UNIFIED DORADO ───────── */}
+      <SectionHeader label="Unificados — familia DORADA (premium / claim / treasure)" badge="✅" />
+
+      <ButtonCard
+        title="Coach PRO card CTA — COACH / JOURNAL"
+        classNames=".coach-pro-card-cta"
+        role="Botón dentro del Coach PRO card. Inactive: 'COACH' (PRO upsell). Active: 'JOURNAL'."
+        verdict="unified-gold"
+        notes="Migrado: tokens dorado + border + bevel. PRO premium semántica."
+      >
+        <button type="button" className="coach-pro-card-cta">
+          COACH
+        </button>
+      </ButtonCard>
+
+      <ButtonCard
+        title="Treasure save victory — Save Victory + price"
+        classNames=".arena-result-primary-cta--treasure"
+        role="CTA dorado dentro del popup de victoria. Mint Victory NFT con price ribbon."
+        verdict="unified-gold"
+        notes="Migrado: sprite cta-principal.png reemplazado por tokens dorado + bevel. Treasure icon + price ribbon viven como children."
+      >
+        <button type="button" className="arena-result-primary-cta arena-result-primary-cta--treasure" style={{ minWidth: 200 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span aria-hidden="true">💰</span>
+            <span>Save Victory</span>
+          </span>
+        </button>
+      </ButtonCard>
+
+      <ButtonCard
+        title="Profile claim CTA — Claim"
+        classNames=".profile-claim-cta"
+        role="Pending claims sheet en /profile. Reclama premios pendientes."
+        verdict="unified-gold"
+        notes="Migrado del rojo crimson al DORADO (semántica 'reclamar premio')."
+      >
+        <button type="button" className="profile-claim-cta">
+          Claim
+        </button>
+      </ButtonCard>
+
+      <ButtonCard
+        title="Fail rescue reward pill — ×3 STREAK (template del DORADO)"
+        classNames=".fail-rescue-reward-pill"
+        role="Pill informativo (no actionable) en fail-rescue modal."
+        verdict="keep"
+        notes="Mantenido. Sirvió de TEMPLATE para los tokens dorado: gradient + border. No es CTA actionable, queda como referencia visual canónica."
+      >
+        <span className="fail-rescue-reward-pill fail-rescue-reward-pill--streak">
+          <span aria-hidden="true">×3</span>
+          <span>STREAK</span>
+        </span>
+      </ButtonCard>
+
+      <ButtonCard
+        title="Trophy journey empty — Start training"
+        classNames=".tj-empty-state-cta"
+        role="CTA en empty state del trophy journey. Lleva a /arena para empezar."
+        verdict="unified"
+        notes="Migrado: tokens verde + dim twin del template padre (padding 0.85rem/1rem, font 1.05rem/900, radius 1.1rem, border 2px). Antes era pill 44px/999px hardcoded."
+      >
+        <button type="button" className="tj-empty-state-cta">
+          Start training
+        </button>
+      </ButtonCard>
+
       {/* ───────── KEEP DISTINCT ───────── */}
       <SectionHeader label="Mantener distintos (preservan semántica)" badge="❌" />
 
@@ -405,11 +532,17 @@ export default function ButtonGalleryPage() {
         </button>
       </ButtonCard>
 
-      <div style={{ marginTop: "2rem", padding: "1rem", borderRadius: "0.625rem", background: "rgba(63, 34, 8, 0.05)", border: "1px dashed rgba(110, 65, 15, 0.35)" }}>
+      <div style={{ marginTop: "2rem", padding: "1rem", borderRadius: "0.625rem", background: "rgba(63, 34, 8, 0.05)", border: "1px dashed rgba(110, 65, 15, 0.35)", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
         <p style={{ margin: 0, fontSize: "0.75rem", color: "rgba(63, 34, 8, 0.75)", lineHeight: 1.4 }}>
-          <strong>Recordatorio:</strong> esta página es para revisión visual.
-          Toda la decisión queda en chat. Mark <code>.dev/button-gallery</code> for
-          deletion when terminamos la migración.
+          <strong>Notas del sweep:</strong>
+        </p>
+        <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.72rem", color: "rgba(63, 34, 8, 0.75)", lineHeight: 1.4 }}>
+          <li><code>.coach-review-signal-cta</code> — DEAD CODE borrado (CSS sin consumidor).</li>
+          <li><code>.badge-card-claim-btn</code> — ya hereda verde de <code>.principal-button</code> (solo overrides dimensionales). No requiere migración.</li>
+          <li><code>.account-manage-pro-cta</code>, <code>.coach-preview-card-cta</code>, <code>.gem-button</code>, chrome y HUD pills informativos → keep distinct por semántica.</li>
+        </ul>
+        <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(63, 34, 8, 0.75)", lineHeight: 1.4 }}>
+          Esta página es solo para revisión visual. Toda decisión va en chat. Borramos <code>/dev/button-gallery</code> al cerrar el cluster.
         </p>
       </div>
     </div>
