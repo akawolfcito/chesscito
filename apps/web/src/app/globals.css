@@ -7717,15 +7717,19 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .arena-scaffold-soft-gate-primary,
 .arena-scaffold-soft-gate-secondary {
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1.1rem;
   cursor: pointer;
-  transition: transform 120ms ease;
+  transition: transform var(--duration-snap) ease, box-shadow var(--duration-snap) ease;
 }
 
 .arena-scaffold-soft-gate-primary {
+  padding: 0.85rem 1rem;
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
   background: var(--cta-primary-green-grad);
   color: #fff8ed;
   border: 2px solid var(--cta-primary-green-border);
@@ -7734,6 +7738,9 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .arena-scaffold-soft-gate-secondary {
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 800;
   background: var(--cta-secondary-cream-grad);
   color: var(--cta-secondary-cream-color);
   border: 1px solid var(--cta-secondary-cream-border);
