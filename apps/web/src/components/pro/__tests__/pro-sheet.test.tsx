@@ -158,7 +158,24 @@ describe("ProSheet", () => {
         surface: "sheet",
         active: false,
       });
-      expect(trackMock).toHaveBeenCalledTimes(1);
+      // M1 funnel (Commit 5) — pro_card_viewed ships exactly once, but
+      // mount also fires the monetization.pro_sheet_view companion. Filter
+      // to the legacy event so this assertion stays focused.
+      const proCardCalls = trackMock.mock.calls.filter(
+        ([name]) => name === "pro_card_viewed",
+      );
+      expect(proCardCalls).toHaveLength(1);
+    });
+
+    it("fires monetization.pro_sheet_view on open (M1 funnel)", () => {
+      renderSheet({ open: true });
+      expect(trackMock).toHaveBeenCalledWith("monetization.pro_sheet_view", {
+        active: false,
+      });
+      const m1Calls = trackMock.mock.calls.filter(
+        ([name]) => name === "monetization.pro_sheet_view",
+      );
+      expect(m1Calls).toHaveLength(1);
     });
 
     it("does not fire pro_card_viewed when open is false", () => {

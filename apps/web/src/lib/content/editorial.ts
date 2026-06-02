@@ -1173,12 +1173,16 @@ export const HUB_V2_TRAINING_COPY = {
       `Training Pass active, ${d} days remaining, ${used} of ${total} sessions used`,
   },
   inactive: {
-    title: "Unlock Coach + Premium",
+    /** M1 funnel (Commit 5, 2026-06-01) — band title aligns with the
+     *  ProSheet canonical promise. Drops "Premium" wording (banned by
+     *  M1 commercial copy rules). Short variants of the ProSheet
+     *  bullets fit the chip-sized band layout. */
+    title: "Train with Luz every day.",
     priceLabel: "$1.99 / 30 days",
     perks: [
-      "Daily Coach analyses",
-      "12 Arena sessions",
-      "Premium HUD",
+      "Luz unlimited",
+      "Training Journal",
+      "PRO identity",
     ] as const,
     cta: "See plan",
     ariaLabel: "Training Pass, $1.99 for 30 days, see plan",
@@ -1815,16 +1819,22 @@ export const PRO_COPY = {
    *  Frames PRO as a "training pass" rather than a feature gate, per
    *  the §11 canon mission line. Spec: addendum §3.6 / §6.1 commit #4. */
   kicker: "Training Pass",
-  tagline: "Chesscito that grows with you",
-  /** V1 hero subline rendered under the headline. Pairs with the
-   *  brand promise: the more the player engages, the more the app
-   *  unlocks (Coach, visual polish, exercises depth, games catalog).
-   *  Locked phrase per PRO value-prop V1 memory. */
-  taglineSub: "The more you play, the more it unlocks",
+  /** M1 funnel (Commit 5, 2026-06-01) — promise-first headline.
+   *  Replaces the V1 "Chesscito that grows with you" tagline with the
+   *  canonical M1 direction: PRO is the daily training pass with Luz,
+   *  not a vague growth promise. */
+  tagline: "Train with Luz every day.",
+  /** M1 funnel (Commit 5) — short subline that names what PRO IS in
+   *  plain language. Drops the V1 "the more you play, the more it
+   *  unlocks" hook to avoid feature-gate framing. */
+  taglineSub: "Your monthly training pass.",
   subtitle: "Monthly pass that keeps Chesscito open. Renew when you want.",
-  priceLabel: "$1.99 / month",
+  priceLabel: "$1.99 USD / 30 days",
+  /** M1 funnel (Commit 5) — secondary pricing line that surfaces the
+   *  per-day cost without replacing the canonical 30-day price. */
+  priceSubLabel: "≈ 6 cents a day",
   durationLabel: "30 days",
-  ctaBuy: "Unlock PRO",
+  ctaBuy: "Activate PRO",
   /** Short CTA label used when the wallet is not connected — fits a
    *  PrincipalButton (≤16 char target). The longer
    *  `errors.walletRequired` copy stays as the inline error message
@@ -1837,7 +1847,7 @@ export const PRO_COPY = {
    *  rendered above the perks bullet list. */
   activePerksLabel: "ACTIVE PERKS",
   ctaActive: "PRO Active",
-  ctaRenew: "Extend training",
+  ctaRenew: "Renew your training",
   /** Inline CTA labels surfaced inside <ProSheet> when the purchase /
    *  verification flow is mid-flight. Migrated to next-intl in the pro/*
    *  batch so the strings ship per-locale via PRO_COPY. */
@@ -1884,9 +1894,11 @@ export const PRO_COPY = {
   activeSublineArena: "Coach activates after checkmate",
   /** Mission framing rendered between the perks list and the CTA. PRO
    *  is positioned as both a personal training plan and a way to
-   *  sustain free access for new players, families and schools. */
+   *  sustain free access. M1 funnel (Commit 5) drops the "subscription"
+   *  wording per the commercial-copy-rules ban; copy now reads PRO as
+   *  a "pass" that keeps training open for everyone. */
   missionNote:
-    "Every PRO subscription helps us keep the free tier open for new players, families, and schools.",
+    "Every PRO pass helps Chesscito keep training open.",
   /** Floating chip in play-hub. Kept tight (28px tall, max 120px wide)
    *  so the inactive label has to be a single short token. We dropped
    *  the old "GET PRO" because it read transactional; "PRO" alone with
@@ -1925,10 +1937,14 @@ export const PRO_COPY = {
     journal: "JOURNAL",
     journalSubline: "Review your coach history and pick the next lesson.",
   },
+  /** M1 funnel (Commit 5) — value bullets rendered before the price
+   *  card so PRO is framed as "what you get" before "what you pay".
+   *  Three bullets, full sentences, in the canonical order:
+   *  Luz access → Training Journal → PRO identity. */
   perksActive: [
-    "AI Coach: instant analysis, no daily limit",
-    "Personalized coaching plan from match history",
-    "Your contribution keeps Chesscito free for new players",
+    "Luz unlimited. Coach review on every game.",
+    "Full Training Journal. Every match kept.",
+    "PRO identity on your profile.",
   ] as const,
   errors: {
     notConfigured: "PRO is not yet active. Check back shortly.",

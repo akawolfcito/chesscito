@@ -155,6 +155,11 @@ export function ProSheet(props: ProSheetProps) {
     if (viewedRef.current) return;
     viewedRef.current = true;
     track("pro_card_viewed", { surface: "sheet", active: status?.active ?? false });
+    // M1 funnel (Commit 5, 2026-06-01) — monetization-namespaced view
+    // event so the PRO funnel rolls up alongside coach_paywall_view /
+    // save_victory_* without disturbing the legacy pro_card_viewed
+    // dashboards. Same one-per-open gate.
+    track("monetization.pro_sheet_view", { active: status?.active ?? false });
   }, [open, status]);
 
   const showActiveBanner = Boolean(
@@ -315,13 +320,57 @@ export function ProSheet(props: ProSheetProps) {
                 {t("taglineSub")}
               </p>
 
+              {/* M1 funnel (Commit 5, 2026-06-01) — value-before-price.
+               *  Perks pill + perks list render BEFORE the center card
+               *  (price for inactive / ProActiveBadge for active) so the
+               *  user sees what PRO delivers before what it costs.
+               *  Buyers in the inactive state get the canonical M1 frame;
+               *  active users see their PRO benefits anchored above the
+               *  expiration badge. */}
+              <span
+                className="mt-3 self-start rounded-full px-2.5 py-0.5 text-nano font-extrabold uppercase tracking-wider"
+                style={{
+                  background:
+                    "linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)",
+                  color: "#fef3c7",
+                  boxShadow: "0 2px 4px var(--shadow-warm-wood)",
+                }}
+              >
+                {t("activePerksLabel")}
+              </span>
+
+              <ul
+                className="mt-2 space-y-1 text-xs"
+                style={{ color: "rgba(63, 34, 8, 0.90)" }}
+              >
+                {perks.map((perk) => (
+                  <li key={perk} className="flex items-start gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold leading-none text-white"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, #22c55e 0%, #15803d 100%)",
+                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.20)",
+                      }}
+                    >
+                      ✓
+                    </span>
+                    <span className="leading-snug">{perk}</span>
+                  </li>
+                ))}
+              </ul>
+
               {/* Center card — branches by subscription state.
-               *  Non-active: price card.
+               *  Non-active: price card with $1.99 USD / 30 days + the
+               *  per-day equivalent (M1 funnel adds priceSubLabel under
+               *  priceLabel so the price stays readable while the
+               *  per-day cost lowers the perceived barrier).
                *  Active: ProActiveBadge + optional expiring sub-line. */}
               {showActiveBanner && days !== null && status?.expiresAt ? (
                 <div
                   data-testid="pro-active-banner"
-                  className="mt-3 rounded-2xl border px-3 py-2"
+                  className="mt-4 rounded-2xl border px-3 py-2"
                   style={{
                     background: "rgba(255, 245, 205, 0.55)",
                     borderColor: "rgba(110, 65, 15, 0.18)",
@@ -358,7 +407,7 @@ export function ProSheet(props: ProSheetProps) {
                 </div>
               ) : (
                 <div
-                  className="mt-3 rounded-2xl border px-3 py-2 text-center"
+                  className="mt-4 rounded-2xl border px-3 py-2 text-center"
                   style={{
                     background: "rgba(255, 245, 205, 0.55)",
                     borderColor: "rgba(110, 65, 15, 0.18)",
@@ -371,6 +420,12 @@ export function ProSheet(props: ProSheetProps) {
                     {t("priceLabel")}
                   </p>
                   <p
+                    className="mt-0.5 text-nano font-semibold"
+                    style={{ color: "rgba(110, 65, 15, 0.78)" }}
+                  >
+                    {t("priceSubLabel")}
+                  </p>
+                  <p
                     className="mt-0.5 text-nano"
                     style={{ color: "rgba(110, 65, 15, 0.65)" }}
                   >
@@ -378,42 +433,6 @@ export function ProSheet(props: ProSheetProps) {
                   </p>
                 </div>
               )}
-
-              {/* ACTIVE PERKS pill */}
-              <span
-                className="mt-3 self-start rounded-full px-2.5 py-0.5 text-nano font-extrabold uppercase tracking-wider"
-                style={{
-                  background:
-                    "linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)",
-                  color: "#fef3c7",
-                  boxShadow: "0 2px 4px var(--shadow-warm-wood)",
-                }}
-              >
-                {t("activePerksLabel")}
-              </span>
-
-              {/* Perks list */}
-              <ul
-                className="mt-2 space-y-1 text-xs"
-                style={{ color: "rgba(63, 34, 8, 0.90)" }}
-              >
-                {perks.map((perk) => (
-                  <li key={perk} className="flex items-start gap-2">
-                    <span
-                      aria-hidden="true"
-                      className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[0.6rem] font-bold leading-none text-white"
-                      style={{
-                        background:
-                          "linear-gradient(180deg, #22c55e 0%, #15803d 100%)",
-                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.20)",
-                      }}
-                    >
-                      ✓
-                    </span>
-                    <span className="leading-snug">{perk}</span>
-                  </li>
-                ))}
-              </ul>
 
               {/* Error region (purchase / verify failures) */}
               {errorMessage && (
