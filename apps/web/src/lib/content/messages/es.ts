@@ -519,6 +519,7 @@ const messages = {
     reviewBodyReady: "El Coach revisa tu partida y muestra los momentos clave.",
     reviewHeadlineTooShort: "Sin jugadas para analizar",
     reviewBodyTooShort: "Haz al menos una jugada antes de pedir análisis al Coach.",
+    lossReviewCta: "Vamos a ver qué pasó.",
   },
   COACH_ONBOARDING_COPY: {
     ...en.COACH_ONBOARDING_COPY,
@@ -614,6 +615,8 @@ const messages = {
       resigned: "Te rendiste",
     },
     playAgain: "JUGAR",
+    lossPlayAgainCta: "Otra vez.",
+    lossSubtitle: "Cada partida enseña algo.",
     softGateModalTitle: "Calienta",
     softGateTitle: "¿Calentamos antes?",
     softGateBody:

@@ -900,6 +900,13 @@ export const ARENA_COPY = {
     resigned: "You resigned",
   },
   playAgain: "PLAY",
+  /** M1 funnel — endgame loss/resign popup (Commit 2, 2026-06-01).
+   *  Reorders CTAs so Coach Review is primary and Play Again is secondary.
+   *  These two strings replace the `playAgain` label + reintroduce a
+   *  short emotional subtitle (Sally dropped the previous redundant
+   *  subtitle in 2026-05-26 — this one frames learning, not retry). */
+  lossPlayAgainCta: "Try again.",
+  lossSubtitle: "Each match teaches something.",
   /** Soft-gate banner shown only on direct /arena entry when the player
    *  has no recorded piece-path progress. Intent: guide rookies into the
    *  tutorial without gatekeeping. Two decisive CTAs replace the old
@@ -1418,6 +1425,10 @@ export const COACH_ENTRY_COPY = {
   reviewBodyReady: "Coach reviews your match and surfaces key moments.",
   reviewHeadlineTooShort: "No moves to analyze",
   reviewBodyTooShort: "Make at least one move before asking the Coach.",
+  /** M1 funnel — Coach Review primary CTA label, used only in the
+   *  loss/resign endgame popup. The shared `getCoachAnalysis` label
+   *  still covers the win-secondary slot. */
+  lossReviewCta: "Let's see what happened.",
 } as const;
 
 /**

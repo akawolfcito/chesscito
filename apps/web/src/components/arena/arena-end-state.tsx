@@ -173,6 +173,13 @@ export function ArenaEndState({
      on win / no-text, preserving previous behavior. */
   const text = getLoseText(status, tArena);
 
+  // M1 funnel (Commit 2, 2026-06-01) — loss-or-resign CTA reorder.
+  // Only checkmate (player lost) and resigned get the new Coach-primary
+  // hierarchy in M1. Stalemate / draw keep current behavior and will be
+  // covered by Commit 4 (win/draw rework).
+  const isLossOrResign = status === "checkmate" || status === "resigned";
+  const lossContext = status === "resigned" ? "endgame_resign" : "endgame_loss";
+
   useEffect(() => {
     if (!text || isPlayerWin) return;
     track("modal_open", {
@@ -182,6 +189,11 @@ export function ArenaEndState({
       moves,
     });
   }, [text, isPlayerWin, status, difficulty, moves]);
+
+  useEffect(() => {
+    if (!text || isPlayerWin || !isLossOrResign) return;
+    track("monetization.coach_review_offered", { context: lossContext });
+  }, [text, isPlayerWin, isLossOrResign, lossContext]);
 
   if (isPlayerWin) {
     const sharedProps = {
@@ -382,6 +394,14 @@ export function ArenaEndState({
             </picture>
             <div className="arena-result-hero-text">
               <h1 className="arena-result-title">{text}</h1>
+              {isLossOrResign && (
+                <p
+                  className="arena-result-hero-subtitle mt-1 text-xs font-semibold"
+                  style={{ color: "rgba(110, 65, 15, 0.78)" }}
+                >
+                  {tArena("lossSubtitle")}
+                </p>
+              )}
             </div>
           </div>
 
@@ -412,10 +432,16 @@ export function ArenaEndState({
                     <p className="arena-result-coach-body-text">{reviewBody}</p>
                     <CoachAnalysisCta
                       position="primary-on-lose"
-                      onClick={() => onAskCoach()}
+                      onClick={() => {
+                        if (isLossOrResign) {
+                          track("monetization.coach_review_tap", { context: lossContext });
+                        }
+                        onAskCoach();
+                      }}
                       disabled={coachCtaDisabled}
                       ariaBusy={isPersistBusy}
                       tooShort={isTooShort}
+                      label={isLossOrResign ? tEntry("lossReviewCta") : undefined}
                     />
                   </div>
                   <picture className="arena-result-coach-avatar">
@@ -466,13 +492,27 @@ export function ArenaEndState({
             </span>
           </div>
 
-          {/* 5. PLAY — primary CTA at the bottom. */}
+          {/* PLAY button — M1 funnel (Commit 2): demoted to secondary
+              cream when the outcome is loss/resign so Coach Review reads
+              as the dominant action. Stalemate / draw still get the
+              amber primary until Commit 4 reworks them. */}
           <button
             type="button"
-            onClick={onPlayAgain}
-            className="arena-result-primary-cta arena-result-primary-cta--amber arena-result-primary-cta--inset"
+            onClick={() => {
+              if (isLossOrResign) {
+                track("monetization.play_again_tap", { context: lossContext });
+              }
+              onPlayAgain();
+            }}
+            className={
+              isLossOrResign
+                ? "arena-result-secondary-action"
+                : "arena-result-primary-cta arena-result-primary-cta--amber arena-result-primary-cta--inset"
+            }
           >
-            <span className="arena-result-primary-cta-label">{tArena("playAgain")}</span>
+            <span className="arena-result-primary-cta-label">
+              {isLossOrResign ? tArena("lossPlayAgainCta") : tArena("playAgain")}
+            </span>
           </button>
         </div>
       </div>
@@ -497,16 +537,21 @@ export function CoachAnalysisCta({
   disabled,
   ariaBusy,
   tooShort,
+  label: labelOverride,
 }: {
   position: "primary-on-lose" | "secondary-on-win";
   onClick: () => void;
   disabled: boolean;
   ariaBusy: boolean;
   tooShort: boolean;
+  /** Override the default `getCoachAnalysis` label. M1 funnel uses this
+   *  to surface a context-specific copy on the loss/resign popup
+   *  without affecting the shared win-secondary slot. */
+  label?: string;
 }) {
   const t = useTranslations("COACH_ENTRY_COPY");
   const describedById = t("victorySecondaryDescribedById");
-  const label = t("getCoachAnalysis");
+  const label = labelOverride ?? t("getCoachAnalysis");
   const tooltip = tooShort ? t("matchTooShort") : undefined;
 
   const handleClick = () => {
