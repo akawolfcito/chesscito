@@ -2263,7 +2263,7 @@ export const LANDING_COPY = {
       },
       {
         icon: "star" as const,
-        label: "The earlier you start, the easier the habit.",
+        label: "Steady practice builds the habit, at any age.",
       },
       {
         icon: "time" as const,
@@ -2343,19 +2343,27 @@ export const LANDING_COPY = {
     ],
   },
 
-  /** §6 Audiences — softened from "ventana / toda la vida". */
+  /** §6 Audiences — v0.6 shift to beginners / casual / adults-first.
+   *  Card order: casual+curious → families → younger learners (with
+   *  guidance) → educators. Spec:
+   *  docs/superpowers/specs/2026-06-02-landing-narrative-v0.6.md */
   audiences: {
-    title: "Made to start early. Useful at any age.",
+    title: "Made for any age. Built for daily practice.",
     cards: [
       {
-        title: "Kids and teens (8–16)",
+        title: "Casual players & curious beginners",
         body:
-          "A key stage to build cognitive habits that can last a lifetime.",
+          "For anyone curious about chess. Short, visual challenges make each session easy to start.",
       },
       {
         title: "Families",
         body:
-          "A light routine to share minutes of play, conversation, and personal growth, without endless scrolling.",
+          "A simple routine to share a few minutes of play instead of endless scrolling.",
+      },
+      {
+        title: "Younger learners, with guidance",
+        body:
+          "A friendly way to learn when shared with a parent, coach, or mentor.",
       },
       {
         title: "Educators and communities",

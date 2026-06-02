@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | Date | 2026-04-25 |
-| Status | v0.5 — locked, cleared for nine-commit implementation |
+| Status | SUPERSEDED 2026-06-02 by [`2026-06-02-landing-narrative-v0.6.md`](./2026-06-02-landing-narrative-v0.6.md). v0.5 originally locked, shipped via the nine-commit implementation; audiences + problem.claims[1] narrative replaced by v0.6 Phase A. |
 | Type | Brand strategy + product copy + UX writing |
 | Parent docs | [`2026-04-25-why-landing-page-design.md`](./2026-04-25-why-landing-page-design.md) (copy + non-claims policy) · [`2026-04-25-web-landing-architecture.md`](./2026-04-25-web-landing-architecture.md) (URL split + responsive layout) |
 | Surface | `/` public landing (web-responsive Spanish v1) |

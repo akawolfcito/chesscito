@@ -1775,7 +1775,7 @@ const messages = {
         },
         {
           icon: "star",
-          label: "Mientras antes empieces, más fácil es crear el hábito.",
+          label: "La práctica constante construye el hábito, a cualquier edad.",
         },
         {
           icon: "time",
@@ -1846,17 +1846,22 @@ const messages = {
       ],
     },
     audiences: {
-      title: "Hecho para empezar pronto. Útil a cualquier edad.",
+      title: "Para cualquier edad. Pensado para practicar a diario.",
       cards: [
         {
-          title: "Niños y adolescentes (8–16)",
+          title: "Jugadores casuales y principiantes curiosos",
           body:
-            "Una etapa clave para cultivar hábitos cognitivos que pueden acompañar a lo largo del tiempo.",
+            "Para cualquiera con curiosidad por el ajedrez. Retos cortos y visuales para empezar sin presión.",
         },
         {
           title: "Familias",
           body:
-            "Una rutina ligera para compartir minutos de juego, conversación y crecimiento personal, sin pantallazos infinitos.",
+            "Una rutina simple para compartir unos minutos de juego, sin pantallazos infinitos.",
+        },
+        {
+          title: "Jóvenes aprendices con guía",
+          body:
+            "Una forma amigable de aprender junto a un familiar, entrenador o mentor.",
         },
         {
           title: "Educadores y comunidades",
