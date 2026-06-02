@@ -733,6 +733,13 @@ export const VICTORY_CELEBRATION_COPY = {
   primaryLabel: "Save Victory",
   coachPillFree: "See key moments",
   coachPillPro: "Open coach insight",
+  /** M1 funnel (Commit 4) — Coach Review CTA label for the win popup
+   *  (pre-mint celebration + post-mint claim success). Frames the
+   *  invitation as curiosity about success, not "ask coach" boilerplate.
+   *  Replaces coachPillFree / coachPillPro at the call site. Both legacy
+   *  strings remain in editorial for now in case future surfaces still
+   *  consume them. */
+  winCoachReviewCta: "Why did you win?",
   playAgainShort: "Play again",
   shareShort: "Share",
   saveSectionKicker: "SAVE THIS WIN",
@@ -1441,6 +1448,10 @@ export const COACH_ENTRY_COPY = {
    *  loss/resign endgame popup. The shared `getCoachAnalysis` label
    *  still covers the win-secondary slot. */
   lossReviewCta: "Let's see what happened.",
+  /** M1 funnel (Commit 4) — Coach Review primary CTA label for the
+   *  draw / stalemate endgame popup. Frame is curiosity, not regret —
+   *  the player didn't lose, they tied. */
+  drawReviewCta: "How did this end?",
 } as const;
 
 /**

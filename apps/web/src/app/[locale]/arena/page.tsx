@@ -1406,15 +1406,21 @@ function ArenaPageInner() {
                 proSheet.openSheet();
               }}
               context={
-                // M1 funnel (Commit 3) — only loss/resign get tagged in this
-                // commit. win/draw paywall entries arrive with Commit 4 and
-                // will extend this mapping. Other statuses leave context
-                // undefined so no monetization.* event fires.
+                // M1 funnel (Commit 3 + Commit 4) — covers all four
+                // endgame outcomes. The paywall only mounts when
+                // shouldShowPaywall returns true (free user + 0 credits),
+                // and on win it only reaches that gate after the user
+                // explicitly taps Coach Review — Save Victory routes to
+                // the mint flow, never to the paywall.
                 game.status === "resigned"
                   ? "endgame_resign"
                   : game.status === "checkmate" && !isPlayerWin
                     ? "endgame_loss"
-                    : undefined
+                    : game.status === "checkmate" && isPlayerWin
+                      ? "endgame_win"
+                      : game.status === "draw" || game.status === "stalemate"
+                        ? "endgame_draw"
+                        : undefined
               }
             />
           )}

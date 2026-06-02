@@ -12,9 +12,14 @@ import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { TreasureTile } from "@/components/scene-rooted/treasure-tile";
 import { track } from "@/lib/telemetry";
 
-/** M1 funnel — telemetry context for paywall events. Other surfaces
- *  (win/draw, journal) are reserved for later commits. */
-export type CoachPaywallContext = "endgame_loss" | "endgame_resign";
+/** M1 funnel — telemetry context for paywall events. Commit 4 extends
+ *  coverage to win + draw endgame surfaces; journal entry is reserved
+ *  for a later commit. */
+export type CoachPaywallContext =
+  | "endgame_loss"
+  | "endgame_resign"
+  | "endgame_win"
+  | "endgame_draw";
 
 type Props = {
   open: boolean;

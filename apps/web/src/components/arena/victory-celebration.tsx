@@ -116,9 +116,10 @@ export function VictoryCelebration({
   const headline = isCheckmate
     ? tCelebration("headlineCheckmate")
     : tCelebration("headlineWin");
-  const coachLabel = proActive
-    ? tCelebration("coachPillPro")
-    : tCelebration("coachPillFree");
+  // M1 funnel (Commit 4) — Coach CTA now frames the invitation as
+  // curiosity about success ("Why did you win?") regardless of PRO
+  // status. Replaces the legacy coachPillFree / coachPillPro split.
+  const coachLabel = tCelebration("winCoachReviewCta");
   const coachKicker = tCoachEntry("reviewKicker");
   const coachHeadline = coachTooShort
     ? tCoachEntry("reviewHeadlineTooShort")
@@ -137,7 +138,20 @@ export function VictoryCelebration({
       position: "secondary-on-win",
       too_short: coachTooShort,
     });
+    // M1 funnel (Commit 4) — monetization-namespaced event so the win
+    // funnel rolls up alongside loss/resign/draw events without
+    // disturbing the legacy coach_victory_analyze_tap dashboards.
+    track("monetization.coach_review_tap", {
+      context: "endgame_win",
+      source: "endgame",
+    });
     onAskCoach();
+  };
+
+  const handleClaimClick = () => {
+    if (!onClaimVictory) return;
+    track("monetization.save_victory_tap", { context: "endgame_win" });
+    onClaimVictory();
   };
 
   return (
@@ -208,7 +222,7 @@ export function VictoryCelebration({
             <p className="arena-result-coach-body-text">{saveBody}</p>
             <button
               type="button"
-              onClick={onClaimVictory}
+              onClick={handleClaimClick}
               aria-label={claimAriaLabel}
               className="arena-result-primary-cta arena-result-primary-cta--treasure"
             >

@@ -173,12 +173,22 @@ export function ArenaEndState({
      on win / no-text, preserving previous behavior. */
   const text = getLoseText(status, tArena);
 
-  // M1 funnel (Commit 2, 2026-06-01) — loss-or-resign CTA reorder.
-  // Only checkmate (player lost) and resigned get the new Coach-primary
-  // hierarchy in M1. Stalemate / draw keep current behavior and will be
-  // covered by Commit 4 (win/draw rework).
+  // M1 funnel (Commit 2 + Commit 4, 2026-06-01) — Coach-primary CTA
+  // hierarchy. Commit 2 covered checkmate-lost + resigned; Commit 4
+  // extends to stalemate + draw (the "no winner" outcomes). All four
+  // share the same secondary Play Again + subtitle treatment; only the
+  // primary Coach CTA label diverges per outcome semantic.
   const isLossOrResign = status === "checkmate" || status === "resigned";
-  const lossContext = status === "resigned" ? "endgame_resign" : "endgame_loss";
+  const isDrawOrStalemate = status === "draw" || status === "stalemate";
+  const isCoachPrimaryVariant = isLossOrResign || isDrawOrStalemate;
+  const endgameContext: "endgame_loss" | "endgame_resign" | "endgame_draw" | null =
+    status === "resigned"
+      ? "endgame_resign"
+      : status === "checkmate"
+        ? "endgame_loss"
+        : isDrawOrStalemate
+          ? "endgame_draw"
+          : null;
 
   useEffect(() => {
     if (!text || isPlayerWin) return;
@@ -191,9 +201,9 @@ export function ArenaEndState({
   }, [text, isPlayerWin, status, difficulty, moves]);
 
   useEffect(() => {
-    if (!text || isPlayerWin || !isLossOrResign) return;
-    track("monetization.coach_review_offered", { context: lossContext });
-  }, [text, isPlayerWin, isLossOrResign, lossContext]);
+    if (!text || isPlayerWin || !isCoachPrimaryVariant || !endgameContext) return;
+    track("monetization.coach_review_offered", { context: endgameContext });
+  }, [text, isPlayerWin, isCoachPrimaryVariant, endgameContext]);
 
   if (isPlayerWin) {
     const sharedProps = {
@@ -394,7 +404,7 @@ export function ArenaEndState({
             </picture>
             <div className="arena-result-hero-text">
               <h1 className="arena-result-title">{text}</h1>
-              {isLossOrResign && (
+              {isCoachPrimaryVariant && (
                 <p
                   className="arena-result-hero-subtitle mt-1 text-xs font-semibold"
                   style={{ color: "rgba(110, 65, 15, 0.78)" }}
@@ -433,15 +443,24 @@ export function ArenaEndState({
                     <CoachAnalysisCta
                       position="primary-on-lose"
                       onClick={() => {
-                        if (isLossOrResign) {
-                          track("monetization.coach_review_tap", { context: lossContext });
+                        if (isCoachPrimaryVariant && endgameContext) {
+                          track("monetization.coach_review_tap", {
+                            context: endgameContext,
+                            source: "endgame",
+                          });
                         }
                         onAskCoach();
                       }}
                       disabled={coachCtaDisabled}
                       ariaBusy={isPersistBusy}
                       tooShort={isTooShort}
-                      label={isLossOrResign ? tEntry("lossReviewCta") : undefined}
+                      label={
+                        isLossOrResign
+                          ? tEntry("lossReviewCta")
+                          : isDrawOrStalemate
+                            ? tEntry("drawReviewCta")
+                            : undefined
+                      }
                     />
                   </div>
                   <picture className="arena-result-coach-avatar">
@@ -492,26 +511,26 @@ export function ArenaEndState({
             </span>
           </div>
 
-          {/* PLAY button — M1 funnel (Commit 2): demoted to secondary
-              cream when the outcome is loss/resign so Coach Review reads
-              as the dominant action. Stalemate / draw still get the
-              amber primary until Commit 4 reworks them. */}
+          {/* PLAY button — M1 funnel (Commit 2 + Commit 4): demoted to
+              secondary cream when Coach Review owns the primary slot
+              (loss/resign + draw/stalemate). Wins use the dedicated
+              VictoryCelebration popup and never reach this branch. */}
           <button
             type="button"
             onClick={() => {
-              if (isLossOrResign) {
-                track("monetization.play_again_tap", { context: lossContext });
+              if (isCoachPrimaryVariant && endgameContext) {
+                track("monetization.play_again_tap", { context: endgameContext });
               }
               onPlayAgain();
             }}
             className={
-              isLossOrResign
+              isCoachPrimaryVariant
                 ? "arena-result-secondary-action"
                 : "arena-result-primary-cta arena-result-primary-cta--amber arena-result-primary-cta--inset"
             }
           >
             <span className="arena-result-primary-cta-label">
-              {isLossOrResign ? tArena("lossPlayAgainCta") : tArena("playAgain")}
+              {isCoachPrimaryVariant ? tArena("lossPlayAgainCta") : tArena("playAgain")}
             </span>
           </button>
         </div>

@@ -74,6 +74,10 @@ export function VictoryClaimSuccess({
       difficulty,
       moves,
     });
+    // M1 funnel (Commit 4) — fire save_victory_success exactly once per
+    // mount of the post-mint surface so the funnel sees the conversion
+    // even when the user navigates away before tapping a follow-up CTA.
+    track("monetization.save_victory_success", { context: "endgame_win" });
   }, [difficulty, moves]);
 
   const shareUrl = claimData.shareLinkUrl ?? SHARE_COPY.url;
@@ -86,9 +90,10 @@ export function VictoryClaimSuccess({
     : difficulty;
   const headline = tClaim("claimedBadge");
   const handleClose = onClose ?? onBackToHub;
-  const coachLabel = proActive
-    ? tCelebration("coachPillPro")
-    : tCelebration("coachPillFree");
+  // M1 funnel (Commit 4) — post-mint Coach CTA inherits the same
+  // curiosity frame as the pre-mint celebration so both surfaces
+  // share one voice. Drops the PRO / free label split.
+  const coachLabel = tCelebration("winCoachReviewCta");
   const coachKicker = tCoachEntry("reviewKicker");
   const coachHeadline = coachTooShort
     ? tCoachEntry("reviewHeadlineTooShort")
@@ -103,6 +108,13 @@ export function VictoryClaimSuccess({
     track("coach_victory_analyze_tap", {
       position: "secondary-on-claimed",
       too_short: coachTooShort,
+    });
+    // M1 funnel (Commit 4) — source="save_success" distinguishes
+    // post-mint taps from pre-mint celebration taps without proliferating
+    // event names. Same context (endgame_win) so dashboards roll up.
+    track("monetization.coach_review_tap", {
+      context: "endgame_win",
+      source: "save_success",
     });
     onAskCoach();
   };

@@ -528,6 +528,7 @@ const messages = {
     reviewHeadlineTooShort: "Sin jugadas para analizar",
     reviewBodyTooShort: "Haz al menos una jugada antes de pedir análisis al Coach.",
     lossReviewCta: "Vamos a ver qué pasó.",
+    drawReviewCta: "¿Cómo terminó esto?",
   },
   COACH_ONBOARDING_COPY: {
     ...en.COACH_ONBOARDING_COPY,
@@ -748,6 +749,7 @@ const messages = {
     primaryLabel: "Guardar victoria",
     coachPillFree: "Ver momentos clave",
     coachPillPro: "Abrir análisis del coach",
+    winCoachReviewCta: "¿Por qué ganaste?",
     playAgainShort: "Jugar otra",
     shareShort: "Compartir",
     saveSectionKicker: "GUARDA ESTA VICTORIA",
