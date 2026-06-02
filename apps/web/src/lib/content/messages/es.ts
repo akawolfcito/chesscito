@@ -1681,6 +1681,11 @@ const messages = {
     "queen-3": "Diagonal corta",
     "queen-4": "Fila horizontal",
     "queen-5": "Ruta en dos jugadas",
+    "king-1": "Movimiento simple",
+    "king-2": "Paso diagonal",
+    "king-3": "Camino al borde",
+    "king-4": "Captura corta",
+    "king-5": "Refugio en esquina",
   },
   HUB_V2_DOCK_COPY: {
     playLabel: "ARENA",

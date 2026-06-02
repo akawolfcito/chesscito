@@ -1043,6 +1043,11 @@ export const EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "queen-3": "Short diagonal",
   "queen-4": "Horizontal rank",
   "queen-5": "Two-move path",
+  "king-1": "One-square move",
+  "king-2": "Diagonal step",
+  "king-3": "Edge walk",
+  "king-4": "Capture step",
+  "king-5": "Corner shelter",
 };
 
 export const PRACTICE_COPY = {
