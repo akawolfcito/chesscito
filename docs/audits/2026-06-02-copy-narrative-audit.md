@@ -88,7 +88,7 @@ LANDING_COPY locked, y agendar el diseño de la economía Peones.
 
 ---
 
-## 4. Addendum — MiniPay Copy Safety Pass (2026-06-02)
+## 4. Addendum — MiniPay Copy Safety Pass (2026-06-02) — ✅ APPROVED
 
 **Regla:** mientras Chesscito no esté oficialmente listado / integrado / aprobado en MiniPay, ningún
 copy debe afirmar o sugerir que **ya es** un "MiniPay game", "available on MiniPay",
@@ -127,4 +127,39 @@ copy debe afirmar o sugerir que **ya es** un "MiniPay game", "available on MiniP
 - Cero cambios en lógica de detección MiniPay (`useMiniPay`, redirects, `connectButton`).
 - Cero cambios en disclaimers de independencia (refuerzan la regla).
 - Cero cambios en componentes / rutas / hooks.
+
+### 4.5 Estado final aprobado (2026-06-02)
+
+- ✅ **MiniPay user-facing copy seguro** en surfaces no legales (Shop, About share,
+  Victory share/OG metadata, Home anchor, Mission ribbon, Arena, PRO Coach card).
+- ✅ **LANDING_COPY sin cambios** — narrativa v0.5 locked intacta.
+- ⏳ **Terms of Service pendiente** de revisión legal explícita
+  (`TERMS_COPY.sections[1].body` — wording "accessible via MiniPay").
+
+### 4.6 TODO — pendientes para futuras pasadas
+
+- [ ] **TERMS legal-copy safety pass** — revisar `TERMS_COPY.sections[1].body` y
+  variantes ES (`messages/es.ts:143`). Wording propuesto: "designed to be used with
+  MiniPay-compatible wallets on the Celo blockchain." Cambio requiere paso explícito
+  por el operador (no editar de oficio).
+- [ ] **Abrir spec LANDING_COPY v0.6** — mover la narrativa de *kids-first* hacia
+  *beginners / casual / adults-first*. Items en alcance:
+  - reordenar `LANDING_COPY.audiences.cards` (#9 de §1)
+  - suavizar `LANDING_COPY.audiences.title` (#10)
+  - reformular `LANDING_COPY.problem.claims[1]` para quitar sesgo "the earlier you start" (#11)
+  - revisar `HUB_V2_SPLASH_COPY.title` ("Welcome, friend") en el mismo paso de design-lock (#12)
+  - spec source: `docs/superpowers/specs/2026-04-25-landing-narrative-v0.5.md` → bump a v0.6.
+- [ ] **Regla MiniPay vigente (canónica hasta listing oficial)** — prohibido
+  cualquier copy que afirme o sugiera disponibilidad oficial:
+  - ❌ "MiniPay game"
+  - ❌ "Free on MiniPay"
+  - ❌ "Available on MiniPay"
+  - ❌ "Play on MiniPay"
+  - ❌ "MiniPay app"
+  - ❌ "Built for MiniPay users"
+  - ✅ Aceptado: "Designed with MiniPay in mind", "Designed for MiniPay",
+    "Planned for MiniPay", "Built with MiniPay in mind", "Pensado para MiniPay",
+    "Diseñado pensando en MiniPay", "Preparado para MiniPay".
+  - **Vence:** cuando exista aprobación / listing oficial confirmado por el operador
+    Wolfcito. Hasta entonces, la regla aplica a todo PR de copy.
 
