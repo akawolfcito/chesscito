@@ -694,6 +694,8 @@ N/A (no UI changes).
 
 ### Commit 9 — `refactor(shop): consolidate PRO purchase flow into useShopSheetState`
 
+> **DEFERRED BY AUDIT (2026-06-02):** Commit 9 did NOT execute the migration. Pre-edit exploration revealed the work is structural refactor (~150-250 LOC in exercises-screen.tsx) with high regression risk in the MiniPay revenue path absent an integration test harness. Decision tomada Opción 3 (defer + document). The M1 commit landed only docs (`docs/monetization/pro-purchase-consolidation-audit-m1.md`) capturing findings + post-M1 plan + acceptance criteria. The deuda P0 stays open until a dedicated cluster ships with integration tests.
+
 #### Objetivo
 Resolver deuda técnica P0: lógica de compra PRO duplicada entre `useShopSheetState` y `exercises-screen.tsx`. Migrar todo a `useShopSheetState` y borrar el path legacy.
 

@@ -220,7 +220,7 @@ Ver `docs/product/chesscito-monetization-parking-lot-2026-06-01.md`.
 ## H. Deuda técnica crítica (P0/P1)
 
 ### P0 (bloqueante para M1)
-1. **Lógica duplicada de compra PRO** (D1) — bloquea cualquier cambio confiable de flow.
+1. **Lógica duplicada de compra PRO** (D1) — bloquea cualquier cambio confiable de flow. **Commit 9 deferred by audit (2026-06-02):** pre-edit exploration confirmó que la consolidación es refactor estructural (~150-250 LOC en exercises-screen.tsx) y no drop-in replacement. Sin integration test harness, el riesgo de regresión silenciosa en MiniPay revenue path supera el beneficio en M1. Decisión tomada Opción 3 (defer + document). Detalle completo + plan post-M1 + acceptance criteria: `docs/monetization/pro-purchase-consolidation-audit-m1.md`.
 2. **Coach paywall no se invoca en endgame** (C13) — el gancho clave está apagado.
 3. **Prize pool visible sin distribución** (C3) — deuda con usuario activa.
 4. **`setItem(6, ...)` mainnet pendiente** — PRO inactivo.
