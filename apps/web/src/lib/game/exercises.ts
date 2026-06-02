@@ -296,13 +296,45 @@ const QUEEN_LABYRINTHS: Exercise[] = [
   }),
 ];
 
+const KING_LABYRINTHS: Exercise[] = [
+  /**
+   * king-lab-1 — "King Shelter I" (Easy)
+   * From e1 to the a1 corner shelter. c1 blocks the direct rank-walk,
+   * so the king must step one square N and detour via the second rank
+   * before returning to a1. Showcases that the king's 8-direction
+   * one-square reach lets it sidestep a blocker without losing optimal
+   * distance.
+   *
+   *   8 . . . . . . . .
+   *   7 . . . . . . . .
+   *   6 . . . . . . . .
+   *   5 . . . . . . . .
+   *   4 . . . . . . . .
+   *   3 . . . . . . . .
+   *   2 . . . . . . . .
+   *   1 ★ . X . ♔ . . .
+   *     a b c d e f g h
+   *
+   * Threats are NOT modeled in v0.1 — see training-content-v0.1.md §7
+   * + §12. Real "avoid danger" mechanics come with attackedSquares in
+   * v0.2.
+   */
+  defineLabyrinth({
+    id: "king-lab-1",
+    start: "e1",
+    target: "a1",
+    obstacles: ["c1"],
+    optimalMoves: 4,
+  }),
+];
+
 export const LABYRINTHS: Record<PieceId, Exercise[]> = {
   rook:   ROOK_LABYRINTHS,
   bishop: BISHOP_LABYRINTHS,
   knight: KNIGHT_LABYRINTHS,
   pawn:   PAWN_LABYRINTHS,
   queen:  QUEEN_LABYRINTHS,
-  king:   [],
+  king:   KING_LABYRINTHS,
 };
 
 /** Compute stars earned in a labyrinth. */
