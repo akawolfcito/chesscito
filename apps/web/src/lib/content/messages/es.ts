@@ -614,6 +614,7 @@ const messages = {
       resigned: "Te rendiste",
     },
     playAgain: "JUGAR",
+    softGateModalTitle: "Calienta",
     softGateTitle: "¿Calentamos antes?",
     softGateBody:
       "Aprende una pieza en menos de 2 minutos y luego reta a la IA.",

@@ -904,6 +904,7 @@ export const ARENA_COPY = {
    *  has no recorded piece-path progress. Intent: guide rookies into the
    *  tutorial without gatekeeping. Two decisive CTAs replace the old
    *  question + Skip pattern: games don't ask permission to exist. */
+  softGateModalTitle: "Warm up",
   softGateTitle: "Want a warm-up first?",
   softGateBody: "Learn a piece in under 2 minutes, then challenge the AI.",
   softGateLearn: "PIECES",
