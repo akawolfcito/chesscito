@@ -148,22 +148,17 @@ describe("PrincipalButton — interaction (loading / disabled)", () => {
   });
 });
 
-describe("PrincipalButton — placeholder fallback (Behavior #9)", () => {
-  it("when computed background-image resolves to empty/none, root carries .is-placeholder", () => {
-    const { container } = render(
-      <PrincipalButton onClick={() => {}}>Play</PrincipalButton>,
-    );
-    expect(getRoot(container).classList.contains("is-placeholder")).toBe(true);
-  });
-});
-
 describe("PrincipalButton — globals.css contract", () => {
-  it("globals.css declares --principal-button-bg var", async () => {
+  it("globals.css consumes --cta-primary-green-grad on .principal-button (sprite migrated)", async () => {
     const fs = await import("node:fs");
     const path = await import("node:path");
     const cssPath = path.resolve(__dirname, "../../../app/globals.css");
     const css = fs.readFileSync(cssPath, "utf8");
-    expect(css).toMatch(/--principal-button-bg\s*:\s*url\(/);
+    expect(css).toMatch(/--cta-primary-green-grad\s*:\s*linear-gradient/);
+    expect(css).toMatch(
+      /\.principal-button\s*\{[\s\S]*?background-image:\s*var\(--cta-primary-green-grad\)/,
+    );
+    expect(css).not.toMatch(/scene-rooted\/principalbutton\./);
   });
 
   it("globals.css defines press feedback rule for .principal-button:active", async () => {

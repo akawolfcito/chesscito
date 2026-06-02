@@ -345,7 +345,32 @@
     --stone-pedestal-bg-10: url("/art/scene-rooted/piedra10.webp");
     --treasure-chest-bg-small: url("/art/scene-rooted/treasure-chest-small.webp");
     --treasure-chest-bg-large: url("/art/scene-rooted/treasure-chest-large.webp");
-    --principal-button-bg: url("/art/scene-rooted/principalbutton.webp");
+    --cta-primary-green-grad: linear-gradient(180deg, #87db28, #4aaa16);
+    --cta-primary-green-border: rgba(70, 130, 30, 0.85);
+    --cta-primary-green-bevel:
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(50, 100, 25, 0.55),
+      0 4px 0 rgba(40, 90, 20, 0.55),
+      0 6px 14px rgba(40, 90, 20, 0.35);
+    --cta-primary-green-bevel-pressed:
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(50, 100, 25, 0.55),
+      0 2px 0 rgba(40, 90, 20, 0.55),
+      0 4px 8px rgba(40, 90, 20, 0.30);
+    --cta-primary-green-text-shadow: 0 2px 0 rgba(40, 90, 20, 0.65);
+    --cta-primary-blue-grad: linear-gradient(180deg, #2bb5f0, #0e5a99);
+    --cta-primary-blue-border: rgba(10, 60, 110, 0.85);
+    --cta-primary-blue-bevel:
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(10, 60, 100, 0.55),
+      0 4px 0 rgba(10, 55, 90, 0.55),
+      0 6px 14px rgba(10, 55, 90, 0.35);
+    --cta-primary-blue-bevel-pressed:
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(10, 60, 100, 0.55),
+      0 2px 0 rgba(10, 55, 90, 0.55),
+      0 4px 8px rgba(10, 55, 90, 0.30);
+    --cta-primary-blue-text-shadow: 0 2px 0 rgba(10, 55, 90, 0.65);
     --wood-banner-bg-short: url("/art/scene-rooted/wood-banner-blank-short.webp");
     --wood-banner-bg-medium: url("/art/scene-rooted/wood-banner-blank-medium.webp");
     --wood-banner-bg-large: url("/art/scene-rooted/wood-banner-blank-large.webp");
@@ -827,15 +852,23 @@
   }
 
   .arena-result-primary-cta--amber {
-    background:
-      linear-gradient(180deg,
-        rgba(255, 255, 255, 0.40) 0%,
-        rgba(255, 255, 255, 0) 38%),
-      linear-gradient(180deg, #ffd75a 0%, #f6a400 50%, #b86b0e 100%);
-    box-shadow:
-      0 5px 0 rgba(112, 65, 10, 0.72),
-      0 12px 24px rgba(130, 74, 20, 0.24),
-      inset 0 1px 0 rgba(255, 255, 255, 0.48);
+    width: auto;
+    align-self: center;
+    margin-inline: auto;
+    min-height: 52px;
+    min-width: 168px;
+    padding: 12px 42px;
+    font-size: 1.1rem;
+    background: var(--cta-primary-green-grad);
+    border: 2px solid var(--cta-primary-green-border);
+    border-radius: 14px;
+    box-shadow: var(--cta-primary-green-bevel);
+    text-shadow: var(--cta-primary-green-text-shadow);
+  }
+
+  .arena-result-primary-cta--amber:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: var(--cta-primary-green-bevel-pressed);
   }
 
   /* Treasure variant — mirrors the hub TRAIN PIECES pattern exactly:
@@ -1059,35 +1092,28 @@
   }
 
   /* PLAY CTA inside the popup panel — sized to its label (not stretched
-     full-width), centered, uses the /scene-rooted/principalbutton sprite
-     as the visual (green candy pill with brown base shadow). The asset
-     IS the button; CSS only positions the label over it. */
+     full-width), centered. Uses the shared --cta-primary-green-grad
+     family so it reads as a twin of the /arena entry PLAY. */
   .arena-result-primary-cta--inset {
     width: auto;
     align-self: center;
     margin-inline: auto;
-    min-height: 0;
+    min-height: 52px;
     min-width: 168px;
-    padding: 14px 36px 18px;
-    background:
-      image-set(url("/art/scene-rooted/principalbutton.avif") type("image/avif"),
-        url("/art/scene-rooted/principalbutton.webp") type("image/webp"),
-        url("/art/scene-rooted/principalbutton.png") type("image/png"));
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-position: center;
-    border: 0;
-    box-shadow: none;
+    padding: 12px 42px;
+    font-size: 1.1rem;
+    background: var(--cta-primary-green-grad);
+    border: 2px solid var(--cta-primary-green-border);
+    border-radius: 14px;
+    box-shadow: var(--cta-primary-green-bevel);
     color: #fff8ed;
-    text-shadow:
-      0 1px 0 rgba(20, 60, 10, 0.55),
-      0 2px 4px rgba(20, 60, 10, 0.42);
+    text-shadow: var(--cta-primary-green-text-shadow);
   }
 
   .arena-result-primary-cta--inset:active {
-    transform: translateY(2px) scale(0.99);
-    box-shadow: none;
-    filter: brightness(0.95);
+    transform: translateY(2px);
+    box-shadow: var(--cta-primary-green-bevel-pressed);
+    filter: none;
   }
 
   /* Purple pill modifier for the Coach CTA inside the popup. Mirrors
@@ -1610,6 +1636,12 @@
       font-size: 20px;
     }
 
+    .arena-result-primary-cta--inset,
+    .arena-result-primary-cta--amber {
+      min-height: 52px;
+      font-size: 1.1rem;
+    }
+
     .arena-result-secondary-action {
       min-height: 44px;
       font-size: 14px;
@@ -1705,46 +1737,33 @@
     justify-content: center;
     box-sizing: border-box;
     flex: 0 0 auto;
-    border: 1px solid rgba(15, 111, 53, 0.45);
+    border: 2px solid var(--cta-primary-green-border);
     border-radius: 14px;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 42%),
-      linear-gradient(180deg, var(--landing-cta-green) 0%, var(--landing-cta-green-hover) 100%);
-    box-shadow:
-      0 2px 0 var(--landing-cta-green-dark),
-      0 8px 18px rgba(15, 111, 53, 0.18);
-    color: white;
+    background: var(--cta-primary-green-grad);
+    box-shadow: var(--cta-primary-green-bevel);
+    color: #fff8ed;
     font-family: var(--font-sans, system-ui, sans-serif);
     font-weight: 800;
     letter-spacing: 0.01em;
     line-height: 1;
     text-align: center;
     text-decoration: none;
-    text-shadow: none;
+    text-shadow: var(--cta-primary-green-text-shadow);
     white-space: nowrap;
     cursor: pointer;
     transition:
       transform 120ms ease,
-      box-shadow 120ms ease,
-      background 120ms ease,
-      border-color 120ms ease;
+      box-shadow 120ms ease;
   }
 
   .landing-green-cta:hover {
-    border-color: rgba(15, 111, 53, 0.58);
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 42%),
-      linear-gradient(180deg, #25b95f 0%, #1a934a 100%);
-    box-shadow:
-      0 2px 0 var(--landing-cta-green-dark),
-      0 10px 22px rgba(15, 111, 53, 0.22);
+    filter: brightness(1.04);
   }
 
   .landing-green-cta:active {
-    transform: translateY(1px);
-    box-shadow:
-      0 1px 0 var(--landing-cta-green-dark),
-      0 5px 12px rgba(15, 111, 53, 0.18);
+    transform: translateY(2px);
+    box-shadow: var(--cta-primary-green-bevel-pressed);
+    filter: none;
   }
 
   .landing-green-cta:focus-visible {
@@ -4171,78 +4190,6 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════
-   Redesign components — candy-game aesthetic
-   ═══════════════════════════════════════════════════ */
-
-.candy-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  transition: transform var(--duration-snap) var(--ease-spring),
-    filter var(--duration-snap) ease;
-}
-
-.candy-button:active {
-  transform: translateY(2px) scale(0.97);
-  filter: brightness(0.95);
-}
-
-.candy-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.candy-button-img {
-  display: block;
-  width: 100%;
-  height: auto;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.candy-button-play {
-  width: min(100%, 16rem);
-}
-
-.candy-button-resign,
-.candy-button-undo {
-  width: 3.75rem;
-}
-
-/* Ghost variant — candy frame without a sprite. Used for dynamic-label
-   context actions where the label changes at runtime (continue, retry,
-   claim, etc.). Matches the press/disabled physics of sprite variants. */
-.candy-button-ghost {
-  min-height: 44px;
-  padding: 0.625rem 1.25rem;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -2px 0 rgba(120, 53, 15, 0.35),
-    0 2px 4px rgba(0, 0, 0, 0.25);
-  color: #3f2208;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
-  font-size: 0.875rem;
-  line-height: 1;
-}
-
-.candy-button-ghost-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  pointer-events: none;
-}
-
 .wooden-banner {
   display: block;
   line-height: 0;
@@ -6156,35 +6103,22 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 2px 0 var(--gold-leaf-shadow));
 }
 
-/* Green CSS variant — replaces the legacy principalbutton PNG with
-   a gradient + 4-side bevel shadow styled like .fail-rescue-modal-
-   primary but in the leaf-green palette. User consolidation request
-   2026-06-01: all "primary action" buttons should share the same
-   bevel + radius vocabulary. Active state matches the rescue
-   primary's translateY(2px) compression. */
+/* Green CSS variant — shared --cta-primary-green-* token family
+   (gradient + bevel + border + text-shadow). Canonical primary action
+   button across /arena entry, popups, and <PrincipalButton>. */
 .primary-play-cta--green-css {
-  background: linear-gradient(180deg, #b9e57a 0%, #6cb43a 100%);
-  border: 2px solid rgba(70, 130, 30, 0.85);
+  background: var(--cta-primary-green-grad);
+  border: 2px solid var(--cta-primary-green-border);
   border-radius: 1.1rem;
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -3px 0 rgba(50, 100, 25, 0.55),
-    0 4px 0 rgba(40, 90, 20, 0.55),
-    0 6px 14px rgba(40, 90, 20, 0.35);
-  text-shadow: 0 2px 0 rgba(40, 90, 20, 0.65);
-  /* Cancel the parent's gold drop-shadow filter — we own depth via
-     box-shadow now, and stacking both produces a doubled rim. */
+  box-shadow: var(--cta-primary-green-bevel);
+  text-shadow: var(--cta-primary-green-text-shadow);
   filter: none;
 }
 
 .primary-play-cta--green-css:active:not(:disabled) {
   transform: translateY(2px);
   filter: none;
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -3px 0 rgba(50, 100, 25, 0.55),
-    0 2px 0 rgba(40, 90, 20, 0.55),
-    0 4px 8px rgba(40, 90, 20, 0.30);
+  box-shadow: var(--cta-primary-green-bevel-pressed);
 }
 
 .primary-play-cta--playhub {
@@ -6240,8 +6174,19 @@ button.hud-resource-chip:active:not(:disabled) {
   max-width: none;
   min-height: 78px;
   font-size: 0.85rem;
-  background: url("/art/hub/cta-principal.png") center / 100% 100% no-repeat;
-  filter: drop-shadow(0 6px 10px rgba(120, 60, 0, 0.28));
+  background: var(--cta-primary-green-grad);
+  border: 2px solid var(--cta-primary-green-border);
+  border-radius: 14px;
+  box-shadow: var(--cta-primary-green-bevel);
+  text-shadow: var(--cta-primary-green-text-shadow);
+  filter: none;
+  color: #fff8ed;
+}
+
+.hub-scaffold-practice-cta:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: var(--cta-primary-green-bevel-pressed);
+  filter: none;
 }
 
 .hub-scaffold-arena-cta {
@@ -6250,10 +6195,19 @@ button.hud-resource-chip:active:not(:disabled) {
   max-width: none;
   min-height: 78px;
   font-size: 0.85rem;
-  background: url("/art/hub/cta-secondary.png") center / 100% 100% no-repeat;
-  filter: drop-shadow(0 6px 10px rgba(8, 40, 90, 0.32));
-  text-shadow: 0 2px 0 rgba(8, 30, 60, 0.65);
+  background: var(--cta-primary-blue-grad);
+  border: 2px solid var(--cta-primary-blue-border);
+  border-radius: 14px;
+  box-shadow: var(--cta-primary-blue-bevel);
+  text-shadow: var(--cta-primary-blue-text-shadow);
+  filter: none;
   color: #f4f8ff;
+}
+
+.hub-scaffold-arena-cta:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: var(--cta-primary-blue-bevel-pressed);
+  filter: none;
 }
 
 /* Shrink-to-content layout inside each pill — icon + label form a tight
@@ -6311,10 +6265,7 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 12px 42px;
   font-size: 1.1rem;
   border-radius: 14px;
-  background:
-    image-set(url("/art/scene-rooted/principalbutton.avif") type("image/avif"),
-      url("/art/scene-rooted/principalbutton.webp") type("image/webp"),
-      url("/art/scene-rooted/principalbutton.png") type("image/png")) center / 100% 100% no-repeat;
+  background: var(--cta-primary-green-grad);
 }
 
 .primary-play-cta--arena-entry .primary-play-cta-icon {
@@ -8654,7 +8605,7 @@ button.hud-resource-chip:active:not(:disabled) {
   }
 }
 
-/* ── <PrincipalButton> — primary CTA backed by principalbutton.webp (M3.5) ── */
+/* ── <PrincipalButton> — primary CTA backed by --cta-primary-green-grad ── */
 .principal-button {
   position: relative;
   display: inline-flex;
@@ -8662,51 +8613,48 @@ button.hud-resource-chip:active:not(:disabled) {
   justify-content: center;
   gap: 0.5rem;
   padding: 0;
-  border: 0;
   background-color: transparent;
   background-repeat: no-repeat;
   background-position: center;
-  /* `contain` (not `100% 100%`) so the wood-carved asset displays at
-     its natural aspect ratio instead of stretching to fill the
-     button's bounding box — the previous mode visually "extended"
-     the artwork beyond its sweet-spot proportions. */
-  background-size: contain;
+  background-size: 100% 100%;
+  background-image: var(--cta-primary-green-grad);
+  border: 2px solid var(--cta-primary-green-border);
+  border-radius: 14px;
+  box-shadow: var(--cta-primary-green-bevel);
   color: #fff8ed;
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
-  text-shadow: 0 2px 0 rgba(80, 40, 0, 0.35);
+  text-shadow: var(--cta-primary-green-text-shadow);
   transition:
     transform var(--duration-snap, 120ms) var(--ease-spring, ease-out),
-    filter var(--duration-snap, 120ms) ease-out,
+    box-shadow var(--duration-snap, 120ms) ease-out,
     border-color 200ms ease-out;
   outline: none;
-  background-image: var(--principal-button-bg);
-  /* drop-shadow follows the asset's alpha channel so the cast shadow
-     hugs the wood-plank silhouette, not the rectangular button bounds.
-     Avoids the "square shadow around a rounded asset" tell. */
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.30));
+  filter: none;
 }
 
 .principal-button-medium {
   width: 220px;
-  height: 64px;
+  min-height: 52px;
+  height: auto;
+  padding: 12px 24px;
   font-size: 1.05rem;
 }
 
 .principal-button-large {
   width: 280px;
-  height: 80px;
+  min-height: 60px;
+  height: auto;
+  padding: 14px 28px;
   font-size: 1.25rem;
 }
 
 .principal-button:active:not(:disabled) {
-  transform: scale(0.96);
-  /* press feedback: tighter drop-shadow (asset closer to the surface).
-     Stays drop-shadow (not box-shadow) so the silhouette tracks the
-     wood-plank shape under press. */
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.40));
+  transform: translateY(2px);
+  box-shadow: var(--cta-primary-green-bevel-pressed);
+  filter: none;
 }
 
 .principal-button:focus-visible {
@@ -8728,14 +8676,6 @@ button.hud-resource-chip:active:not(:disabled) {
 .principal-button.is-loading .principal-button-label,
 .principal-button.is-loading .principal-button-leading-icon {
   opacity: 0.3;
-}
-
-.principal-button.is-placeholder {
-  background-image: linear-gradient(180deg,
-      rgba(246, 164, 0, 0.92) 0%,
-      rgba(180, 90, 10, 0.95) 100%);
-  border-radius: 12px;
-  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.3);
 }
 
 .principal-button-leading-icon {

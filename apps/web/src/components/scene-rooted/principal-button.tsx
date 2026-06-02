@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useEffect, useRef, useState, type ReactNode } from "react";
+import { forwardRef, type ReactNode } from "react";
 
 export type PrincipalButtonSize = "medium" | "large";
 
@@ -33,31 +33,11 @@ export const PrincipalButton = forwardRef<
   },
   forwardedRef,
 ) {
-  const localRef = useRef<HTMLButtonElement | null>(null);
-  const [isPlaceholder, setIsPlaceholder] = useState(false);
-
-  // Merge the local ref (used by the placeholder probe) with the
-  // optional forwarded ref so callers can imperatively focus or measure
-  // the button without losing the placeholder fallback.
-  const setRefs = (node: HTMLButtonElement | null) => {
-    localRef.current = node;
-    if (typeof forwardedRef === "function") forwardedRef(node);
-    else if (forwardedRef) forwardedRef.current = node;
-  };
-
-  useEffect(() => {
-    const node = localRef.current;
-    if (!node) return;
-    const computed = window.getComputedStyle(node).backgroundImage;
-    setIsPlaceholder(!computed || computed === "none" || computed === "");
-  }, []);
-
   const state = loading ? "loading" : disabled ? "disabled" : "default";
 
   const classes = [
     "principal-button",
     `principal-button-${size}`,
-    isPlaceholder ? "is-placeholder" : "",
     loading ? "is-loading" : "",
     disabled ? "is-disabled" : "",
     className,
@@ -73,7 +53,7 @@ export const PrincipalButton = forwardRef<
 
   return (
     <button
-      ref={setRefs}
+      ref={forwardedRef}
       type="button"
       data-component="principal-button"
       data-size={size}
