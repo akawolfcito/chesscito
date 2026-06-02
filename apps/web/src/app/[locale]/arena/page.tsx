@@ -1401,9 +1401,21 @@ function ArenaPageInner() {
               open
               onOpenChange={() => coach.setPhase("idle")}
               onBuy={(pack) => void credits.buyCredits(Number(pack))}
-              onQuickReview={() => {
-                coach.setPhase("fallback");
+              onSeePro={() => {
+                coach.setPhase("idle");
+                proSheet.openSheet();
               }}
+              context={
+                // M1 funnel (Commit 3) — only loss/resign get tagged in this
+                // commit. win/draw paywall entries arrive with Commit 4 and
+                // will extend this mapping. Other statuses leave context
+                // undefined so no monetization.* event fires.
+                game.status === "resigned"
+                  ? "endgame_resign"
+                  : game.status === "checkmate" && !isPlayerWin
+                    ? "endgame_loss"
+                    : undefined
+              }
             />
           )}
           <ProSheet {...proSheet.sheetProps} />

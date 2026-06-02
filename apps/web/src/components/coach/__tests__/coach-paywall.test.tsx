@@ -18,7 +18,6 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
         open
         onOpenChange={() => {}}
         onBuy={() => {}}
-        onQuickReview={() => {}}
       />,
     );
     const tiles = getTiles();
@@ -33,7 +32,6 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
         open
         onOpenChange={() => {}}
         onBuy={() => {}}
-        onQuickReview={() => {}}
       />,
     );
     const tiles = getTiles();
@@ -50,7 +48,6 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
         open
         onOpenChange={() => {}}
         onBuy={() => {}}
-        onQuickReview={() => {}}
       />,
     );
     const tiles = getTiles();
@@ -65,7 +62,6 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
         open
         onOpenChange={() => {}}
         onBuy={() => {}}
-        onQuickReview={() => {}}
       />,
     );
     const tiles = getTiles();
@@ -82,7 +78,6 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
         open
         onOpenChange={() => {}}
         onBuy={onBuy}
-        onQuickReview={() => {}}
       />,
     );
     fireEvent.click(getTiles()[0]);
@@ -96,7 +91,6 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
         open
         onOpenChange={() => {}}
         onBuy={onBuy}
-        onQuickReview={() => {}}
       />,
     );
     fireEvent.click(getTiles()[1]);
@@ -110,7 +104,6 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
         open
         onOpenChange={() => {}}
         onBuy={onBuy}
-        onQuickReview={() => {}}
       />,
     );
     fireEvent.click(getTiles()[0]); // start buying 5-pack
@@ -123,19 +116,21 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
     expect(tilesAfter[1].disabled).toBe(true);
   });
 
-  it("renders Luz voice in title + explain (cierre cálido)", () => {
+  it("renders the M1 paywall heading + the canonical Luz subtitle (cierre cálido)", () => {
     render(
       <CoachPaywall
         open
         onOpenChange={() => {}}
         onBuy={() => {}}
-        onQuickReview={() => {}}
       />,
     );
-    // Title is the warm anchor — Luz reassures she's still here.
-    expect(COACH_COPY.creditTitle).toBe("I'm still here");
-    expect(screen.getAllByText(COACH_COPY.creditTitle).length).toBeGreaterThan(0);
-    // Explain narrates the 3-beat: I saw your game / quota gone / add a pack.
+    // M1 funnel (Commit 3) — heading replaces the legacy creditTitle so
+    // the surface promises "review your game" before listing prices.
+    expect(COACH_COPY.paywallHeading).toBe("Review your game with Luz.");
+    expect(
+      screen.getAllByText(COACH_COPY.paywallHeading).length,
+    ).toBeGreaterThan(0);
+    // Subtitle still surfaces the canonical Luz voice (creditExplain).
     expect(COACH_COPY.creditExplain).toBe(
       "I saw your game. You've used your 3 free analyses. Add a pack and we keep talking.",
     );
@@ -144,22 +139,80 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("Quick Review link is disabled while a buy is in flight", () => {
+  it("renders the sample preview block with editorial copy", () => {
     render(
       <CoachPaywall
         open
         onOpenChange={() => {}}
         onBuy={() => {}}
-        onQuickReview={() => {}}
       />,
     );
-    fireEvent.click(getTiles()[0]);
-    // Source the label from editorial.ts so the test stays aligned with
-    // the COACH_COPY.orQuickReview canonical copy (renamed to "REVIEW"
-    // in the M3.5 copy purge; previous string was "Quick Review").
-    const quickReview = screen.getByRole("button", {
-      name: COACH_COPY.orQuickReview,
+    expect(
+      screen.getByText(COACH_COPY.paywallPreviewTitle),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(COACH_COPY.paywallPreviewBody),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the PRO CTA only when onSeePro is wired", () => {
+    const { rerender } = render(
+      <CoachPaywall
+        open
+        onOpenChange={() => {}}
+        onBuy={() => {}}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: COACH_COPY.paywallProCta }),
+    ).toBeNull();
+
+    const onSeePro = vi.fn();
+    rerender(
+      <CoachPaywall
+        open
+        onOpenChange={() => {}}
+        onBuy={() => {}}
+        onSeePro={onSeePro}
+      />,
+    );
+    const proCta = screen.getByRole("button", {
+      name: COACH_COPY.paywallProCta,
+    });
+    fireEvent.click(proCta);
+    expect(onSeePro).toHaveBeenCalledTimes(1);
+  });
+
+  it("Later link dismisses and is disabled while a buy is in flight", () => {
+    const onOpenChange = vi.fn();
+    render(
+      <CoachPaywall
+        open
+        onOpenChange={onOpenChange}
+        onBuy={() => {}}
+      />,
+    );
+    const later = screen.getByRole("button", {
+      name: COACH_COPY.paywallDismiss,
     }) as HTMLButtonElement;
-    expect(quickReview.disabled).toBe(true);
+    fireEvent.click(later);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+
+    // After a buy starts, Later locks alongside the tiles so the user
+    // doesn't dismiss mid-tx.
+    onOpenChange.mockReset();
+    render(
+      <CoachPaywall
+        open
+        onOpenChange={onOpenChange}
+        onBuy={() => {}}
+      />,
+    );
+    const tiles = getTiles();
+    fireEvent.click(tiles[0]);
+    const laterAfter = screen.getAllByRole("button", {
+      name: COACH_COPY.paywallDismiss,
+    }) as HTMLButtonElement[];
+    expect(laterAfter[laterAfter.length - 1].disabled).toBe(true);
   });
 });

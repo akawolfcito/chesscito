@@ -1222,6 +1222,18 @@ export const COACH_COPY = {
   creditBest: "BEST",
   buyWithUsdc: "Buy with stablecoin",
   orQuickReview: "REVIEW",
+  /** M1 funnel (Commit 3, 2026-06-01) — paywall reskin for the
+   *  loss/resign endgame surface. Adds a sample-only preview band
+   *  (no LLM call, no credit consumption) plus a PRO alternative
+   *  alongside the existing pack tiles. */
+  paywallHeading: "Review your game with Luz.",
+  paywallPreviewLabel: "Example insight",
+  paywallPreviewTitle: "This move left your rook exposed.",
+  paywallPreviewBody: "Luz explains what changed and what to try next.",
+  paywallPack5Cta: "Get 5 reviews",
+  paywallPack20Cta: "Get 20 reviews",
+  paywallProCta: "Train with Luz every day",
+  paywallDismiss: "Later",
   getFullAnalysis: "PRO REVIEW",
   getFullAnalysisSub: "See your key moments and personalized tips",
   analyzing: "Analyzing your game",
