@@ -380,6 +380,20 @@
       0 1px 2px rgba(110, 65, 15, 0.18);
     --cta-secondary-cream-color: rgba(63, 34, 8, 0.95);
     --cta-secondary-cream-text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
+    --cta-primary-gold-grad: linear-gradient(180deg, #fff5d7, #f7c64a);
+    --cta-primary-gold-border: rgba(180, 120, 35, 0.85);
+    --cta-primary-gold-bevel:
+      inset 0 2px 0 rgba(255, 255, 255, 0.65),
+      inset 0 -3px 0 rgba(180, 120, 35, 0.55),
+      0 4px 0 rgba(120, 65, 5, 0.55),
+      0 6px 14px rgba(120, 65, 5, 0.35);
+    --cta-primary-gold-bevel-pressed:
+      inset 0 2px 0 rgba(255, 255, 255, 0.65),
+      inset 0 -3px 0 rgba(180, 120, 35, 0.55),
+      0 2px 0 rgba(120, 65, 5, 0.55),
+      0 4px 8px rgba(120, 65, 5, 0.30);
+    --cta-primary-gold-color: rgba(63, 34, 8, 0.95);
+    --cta-primary-gold-text-shadow: 0 1px 0 rgba(255, 245, 215, 0.75);
     --wood-banner-bg-short: url("/art/scene-rooted/wood-banner-blank-short.webp");
     --wood-banner-bg-medium: url("/art/scene-rooted/wood-banner-blank-medium.webp");
     --wood-banner-bg-large: url("/art/scene-rooted/wood-banner-blank-large.webp");
@@ -880,33 +894,24 @@
     box-shadow: var(--cta-primary-green-bevel-pressed);
   }
 
-  /* Treasure variant — mirrors the hub TRAIN PIECES pattern exactly:
-     /art/hub/cta-principal sprite + sticker icon scaled 1.25 + cream
-     uppercase text with dark embossed shadow. Price lives as a
-     featured-style ribbon overhanging the top-right corner. Sally
-     pass 13 (Wolfcito 2026-05-27). */
+  /* Treasure variant — Save Victory CTA. Migrated 2026-06-01 from the
+     /art/hub/cta-principal sprite to the canonical --cta-primary-gold-*
+     token family so it reads as a member of the unified primary CTA
+     vocabulary. The treasure icon + price ribbon overhang stay as
+     children. */
   .arena-result-primary-cta--treasure {
     position: relative;
     width: auto;
     max-width: 100%;
     min-height: 92px;
-    padding: 8px 22px 18px 14px;
-    border: 0;
-    border-radius: 0;
-    background:
-      image-set(
-        url("/art/hub/cta-principal.avif") type("image/avif"),
-        url("/art/hub/cta-principal.webp") type("image/webp"),
-        url("/art/hub/cta-principal.png") type("image/png"));
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-position: center;
-    box-shadow: none;
-    filter: drop-shadow(0 6px 10px rgba(120, 60, 0, 0.28));
-    color: rgba(255, 245, 215, 0.98);
-    text-shadow:
-      0 2px 0 rgba(63, 34, 8, 0.7),
-      0 0 12px rgba(232, 193, 96, 0.55);
+    padding: 12px 22px;
+    background: var(--cta-primary-gold-grad);
+    border: 2px solid var(--cta-primary-gold-border);
+    border-radius: 1.1rem;
+    box-shadow: var(--cta-primary-gold-bevel);
+    filter: none;
+    color: var(--cta-primary-gold-color);
+    text-shadow: var(--cta-primary-gold-text-shadow);
     overflow: visible;
     display: inline-flex;
     flex-direction: row;
@@ -916,11 +921,9 @@
   }
 
   .arena-result-primary-cta--treasure:active {
-    transform: translateY(2px) scale(0.99);
-    box-shadow: none;
-    filter:
-      drop-shadow(0 3px 6px rgba(120, 60, 0, 0.28))
-      brightness(0.96);
+    transform: translateY(2px);
+    box-shadow: var(--cta-primary-gold-bevel-pressed);
+    filter: none;
   }
 
   /* Single-line label inside the treasure pill — the price has moved
@@ -1034,31 +1037,25 @@
   }
 
   .arena-result-secondary-action {
-    min-height: 48px;
-    border-radius: 18px;
-    border: 1px solid rgba(130, 74, 20, 0.22);
-    background: rgba(255, 248, 230, 0.54);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.42),
-      0 5px 14px rgba(110, 65, 15, 0.08);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    color: rgba(110, 65, 15, 0.92);
+    padding: 0.7rem 1rem;
     font-family: var(--font-game-action);
-    font-size: 16px;
-    font-weight: 900;
-    text-shadow: 0 1px 0 rgba(255, 245, 215, 0.75);
-    transition:
-      transform 120ms ease,
-      background 120ms ease,
-      box-shadow 120ms ease;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--cta-secondary-cream-color);
+    text-shadow: var(--cta-secondary-cream-text-shadow);
+    background: var(--cta-secondary-cream-grad);
+    border: 1px solid var(--cta-secondary-cream-border);
+    border-radius: 1.1rem;
+    box-shadow: var(--cta-secondary-cream-bevel);
+    cursor: pointer;
+    transition: transform var(--duration-snap) ease;
   }
 
   .arena-result-secondary-action:active {
-    transform: translateY(1px) scale(0.99);
-    background: rgba(255, 248, 230, 0.70);
+    transform: scale(0.98);
   }
 
   .arena-result-back-link {
@@ -1652,8 +1649,8 @@
     }
 
     .arena-result-secondary-action {
-      min-height: 44px;
-      font-size: 14px;
+      padding: 0.55rem 0.9rem;
+      font-size: 0.85rem;
     }
   }
 
@@ -1804,6 +1801,18 @@
     border: 1px solid rgba(255, 255, 255, 0.45);
     padding: 0.5rem 0.75rem;
     box-shadow: inset 0 1px 0 rgba(255, 245, 215, 0.55);
+  }
+
+  /* Solid-cream override for the connect-prompt-toast surface
+   * (the "Save your progress on-chain" panel). Replaces the
+   * 15% translucent .candy-tray bg with the canonical cream
+   * tokens so the panel reads cleanly against the forest
+   * background. Other .candy-tray callsites stay translucent. */
+  .candy-tray.connect-prompt-toast-panel {
+    background: var(--cta-secondary-cream-grad);
+    border-color: var(--cta-secondary-cream-border);
+    box-shadow: var(--cta-secondary-cream-bevel);
+    color: var(--cta-secondary-cream-color);
   }
 
   .paper-row {
@@ -3850,14 +3859,15 @@
   .profile-claim-cta {
     min-height: 36px;
     padding: 0 .75rem;
-    border-radius: 8px;
-    border: 1.5px solid #f4d97a;
-    background: linear-gradient(180deg, #cf2d2d, #7a1818);
-    color: #fff;
+    border-radius: 1.1rem;
+    border: 1.5px solid var(--cta-primary-gold-border);
+    background: var(--cta-primary-gold-grad);
+    color: var(--cta-primary-gold-color);
+    box-shadow: var(--cta-primary-gold-bevel);
+    text-shadow: var(--cta-primary-gold-text-shadow);
     font-family: inherit;
-    font-weight: 700;
+    font-weight: 800;
     font-size: .8rem;
-    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
   }
 
   /* === profile general stats grid === */
@@ -5536,28 +5546,23 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 108px;
   min-height: 68px;
   padding: 8px 9px;
-  border: 0;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #965918 0%, #764207 100%);
-  color: #fff2bf;
+  border: 2px solid var(--cta-primary-gold-border);
+  border-radius: 1.1rem;
+  background: var(--cta-primary-gold-grad);
+  color: var(--cta-primary-gold-color);
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
   font-size: 0.82rem;
   font-weight: 900;
   line-height: 1.02;
   text-align: center;
-  text-shadow: 0 2px 0 rgba(68, 37, 5, 0.70);
-  box-shadow:
-    0 1px 0 rgba(255, 244, 186, 0.35) inset,
-    0 6px 0 rgba(72, 41, 5, 0.25),
-    0 11px 17px rgba(55, 88, 18, 0.20);
+  text-shadow: var(--cta-primary-gold-text-shadow);
+  box-shadow: var(--cta-primary-gold-bevel);
   cursor: pointer;
 }
 
 .coach-pro-card-cta:active {
-  transform: translateY(1px);
-  box-shadow:
-    0 1px 0 rgba(255, 244, 186, 0.35) inset,
-    0 2px 0 rgba(72, 41, 5, 0.25);
+  transform: translateY(2px);
+  box-shadow: var(--cta-primary-gold-bevel-pressed);
 }
 
 /* ── Arena Coach Monetization Loop ── */
@@ -5649,32 +5654,6 @@ button.hud-resource-chip:active:not(:disabled) {
   white-space: nowrap;
 }
 
-.coach-review-signal-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 30px;
-  max-width: 92px;
-  padding: 5px 8px;
-  border: 0;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #8f5414 0%, #704006 100%);
-  color: #fff2bf;
-  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
-  font-size: 0.58rem;
-  font-weight: 900;
-  line-height: 1.02;
-  text-align: center;
-  text-shadow: 0 2px 0 rgba(58, 31, 4, 0.66);
-  box-shadow:
-    0 1px 0 rgba(255, 244, 186, 0.35) inset,
-    0 3px 0 rgba(72, 41, 5, 0.22);
-  cursor: pointer;
-}
-
-.coach-review-signal-cta:active {
-  transform: translateY(1px);
-}
 
 .coach-preview-card {
   position: relative;
@@ -8979,25 +8958,26 @@ button.hud-resource-chip:active:not(:disabled) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
-  padding: 0 20px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #87db28 0%, #4aaa16 100%);
-  color: #fff8e9;
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--cta-primary-green-border);
+  border-radius: 1.1rem;
+  background: var(--cta-primary-green-grad);
+  color: #fff8ed;
   font-family: var(--font-game-action, system-ui, sans-serif);
-  font-size: 0.82rem;
+  font-size: 1.05rem;
   font-weight: 900;
+  letter-spacing: 0.01em;
   text-decoration: none;
-  text-shadow: 0 2px 0 rgba(52, 80, 8, 0.45);
-  box-shadow:
-    0 4px 0 rgba(70, 83, 10, 0.50),
-    inset 0 2px 0 rgba(255, 255, 255, 0.38);
-  transition: transform 120ms ease;
+  text-shadow: var(--cta-primary-green-text-shadow);
+  box-shadow: var(--cta-primary-green-bevel);
+  cursor: pointer;
+  transition: transform var(--duration-snap) ease, box-shadow var(--duration-snap) ease;
   margin-top: 4px;
 }
 
 .tj-empty-state-cta:active {
-  transform: scale(0.97);
+  transform: translateY(2px);
+  box-shadow: var(--cta-primary-green-bevel-pressed);
 }
 
 /* ── Latest review card ─── */

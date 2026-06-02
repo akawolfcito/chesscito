@@ -44,7 +44,7 @@ export function ConnectPromptToast({ milestone, onConnect, onDismiss }: Props) {
       aria-describedby="connect-prompt-subline"
       data-component="connect-prompt-toast"
       data-milestone={milestone}
-      className="candy-tray w-full"
+      className="candy-tray connect-prompt-toast-panel w-full"
     >
       <div className="flex items-start gap-3">
         <span

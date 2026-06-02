@@ -217,7 +217,6 @@ export function VictoryClaimSuccess({
             className="arena-result-secondary-action"
             aria-label={playAgainLabel}
           >
-            <CandyIcon name="refresh" className="h-4 w-4" />
             <span>{tCelebration("playAgainShort")}</span>
           </button>
           {isShareReady && (
@@ -226,7 +225,6 @@ export function VictoryClaimSuccess({
               onClick={() => setShareOpen(true)}
               className="arena-result-secondary-action"
             >
-              <CandyIcon name="share" className="h-4 w-4" />
               <span>{SHARE_COPY.button}</span>
             </button>
           )}

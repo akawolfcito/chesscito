@@ -286,7 +286,6 @@ export function VictoryCelebration({
             onClick={onPlayAgain}
             className="arena-result-secondary-action"
           >
-            <CandyIcon name="refresh" className="h-4 w-4" />
             <span>{tCelebration("playAgainShort")}</span>
           </button>
           <button
@@ -294,7 +293,6 @@ export function VictoryCelebration({
             onClick={() => setShareOpen(true)}
             className="arena-result-secondary-action"
           >
-            <CandyIcon name="share" className="h-4 w-4" />
             <span>{tCelebration("shareShort")}</span>
           </button>
         </div>
