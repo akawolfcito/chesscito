@@ -30,12 +30,6 @@ type Props = {
     onLearn: () => void
     onDismiss: () => void
   }
-  /** Live prize pool balance rendered as a transparent "coming soon"
-   *  pill. Caller owns the read (usePrizePoolBalance). Omit to hide. */
-  prizePool?: {
-    formatted: string | null
-    isLoading: boolean
-  }
 }
 
 const LEVELS: { key: ArenaDifficulty; dot: string }[] = [
@@ -61,7 +55,6 @@ export function ArenaEntryPanel({
   onBack,
   bare = false,
   softGate,
-  prizePool,
 }: Props) {
   const t = useTranslations('ARENA_COPY')
   const colorOptions: { key: PlayerColor; label: string }[] = [
@@ -160,47 +153,6 @@ export function ArenaEntryPanel({
             >
               {t('softGateEnter')}
             </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Prize pool pill — transparent communication about the 20%
-          mint-fee cut. No hype, no promises: shows the live balance
-          plus an honest "distribution v2 coming" hint. */}
-      {prizePool && (
-        <div
-          className="flex items-center gap-2 rounded-full px-3 py-1.5"
-          style={{
-            background: 'rgba(255, 245, 215, 0.45)',
-            border: '1px solid rgba(110, 65, 15, 0.25)',
-          }}
-          aria-label={t('prizePoolLabel')}
-        >
-          <img
-            src="/art/arena/community-pool.png"
-            alt=""
-            aria-hidden="true"
-            className="h-8 w-8 shrink-0 object-contain"
-          />
-          <div className="flex min-w-0 flex-1 flex-col leading-tight">
-            <span
-              className="text-[0.7rem] font-bold"
-              style={{ color: 'rgba(63, 34, 8, 0.95)' }}
-            >
-              {t('prizePoolLabel')}
-              {' · '}
-              <span className="tabular-nums">
-                {prizePool.isLoading
-                  ? t('prizePoolLoading')
-                  : prizePool.formatted ?? t('prizePoolUnavailable')}
-              </span>
-            </span>
-            <span
-              className="text-[0.6rem]"
-              style={{ color: 'rgba(110, 65, 15, 0.70)' }}
-            >
-              {t('prizePoolSoonHint')}
-            </span>
           </div>
         </div>
       )}

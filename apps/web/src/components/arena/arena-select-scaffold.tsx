@@ -58,11 +58,6 @@ type SoftGate = {
   onDismiss: () => void
 }
 
-type PrizePool = {
-  formatted: string | null
-  isLoading: boolean
-}
-
 type Props = {
   difficulty: ArenaDifficulty
   playerColor: PlayerColor
@@ -71,7 +66,6 @@ type Props = {
   onStart: () => void
   onBack?: () => void
   softGate?: SoftGate
-  prizePool?: PrizePool
   errorMessage?: string | null
   onError?: (
     context: import('@/components/error/primitive-boundary').PrimitiveBoundaryErrorContext,
@@ -92,7 +86,6 @@ export function ArenaSelectScaffold({
   onStart,
   onBack,
   softGate,
-  prizePool,
   errorMessage,
   onError,
 }: Props) {
@@ -140,54 +133,6 @@ export function ArenaSelectScaffold({
 
       <section className="arena-scaffold-body">
         <SoftGateSheet softGate={softGate} />
-
-        {prizePool ? (
-          <div
-            className="mt-1 mb-3 flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 shadow-sm"
-            style={{
-              background: 'rgba(255, 245, 205, 0.78)',
-              borderColor: 'rgba(222, 159, 42, 0.38)',
-            }}
-            aria-label={t('prizePoolLabel')}
-          >
-            <picture className="shrink-0">
-              <source
-                srcSet="/art/arena/community-pool.avif"
-                type="image/avif"
-              />
-              <source
-                srcSet="/art/arena/community-pool.webp"
-                type="image/webp"
-              />
-              <img
-                src="/art/arena/community-pool.png"
-                alt=""
-                aria-hidden="true"
-                className="h-16 w-16 object-contain drop-shadow-[0_2px_4px_rgba(120,65,5,0.25)]"
-              />
-            </picture>
-            <div className="min-w-0 flex-1 leading-tight">
-              <p
-                className="text-sm font-extrabold"
-                style={{ color: 'rgba(63, 34, 8, 0.95)' }}
-              >
-                {t('prizePoolLabel')}
-                {' · '}
-                <span className="tabular-nums" style={{ color: '#15803d' }}>
-                  {prizePool.isLoading
-                    ? t('prizePoolLoading')
-                    : prizePool.formatted ?? t('prizePoolUnavailable')}
-                </span>
-              </p>
-              <p
-                className="mt-1 text-[0.7rem] font-medium"
-                style={{ color: 'rgba(110, 65, 15, 0.82)' }}
-              >
-                {t('prizePoolSoonHint')}
-              </p>
-            </div>
-          </div>
-        ) : null}
 
         <div
           role="group"

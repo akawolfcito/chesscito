@@ -155,9 +155,6 @@ vi.mock("@/components/scene-rooted/gem", () => ({ GemButton: () => null }));
 vi.mock("@/lib/connect-prompt/use-connect-prompt", () => ({
   useConnectPrompt: () => ({ show: vi.fn(), dismiss: vi.fn(), isVisible: false }),
 }));
-vi.mock("@/lib/contracts/use-prize-pool", () => ({
-  usePrizePoolBalance: () => ({ formatted: null, isLoading: false }),
-}));
 vi.mock("@/lib/pro/use-pro-status", () => ({
   useProStatus: () => ({ isProActive: false, isLoading: false }),
 }));

@@ -30,7 +30,6 @@ import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { GemButton } from "@/components/scene-rooted/gem";
 import { hasAnyPieceProgress } from "@/lib/game/has-progress";
-import { usePrizePoolBalance } from "@/lib/contracts/use-prize-pool";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/game/arena-utils";
 import { mapArenaResult } from "@/lib/coach/game-result";
@@ -134,11 +133,12 @@ function ArenaPageInner() {
     [shopSheet],
   );
   // Arena scaffold is the new default (2026-05-07): the hub-anchored
-  // selector ships without the prize-pool placeholder card and matches
-  // what users see when they navigate from /hub → Play. Direct visits
-  // to /arena previously rendered the legacy ArenaEntryPanel which
-  // surfaced "Community prize pool · Loading pool…" copy that confused
-  // single-user dev smoke. Opt-out remains via `?arena=legacy`.
+  // selector matches what users see when they navigate from /hub → Play.
+  // The prize-pool surface (legacy ArenaEntryPanel teaser + new scaffold
+  // pill) was removed in M1 funnel work (2026-06-01) — the on-chain
+  // 20% fee split keeps accumulating, but UI no longer communicates it
+  // as a promise to users until distribution is implemented. Opt-out
+  // for the legacy panel remains via `?arena=legacy`.
   const arenaScaffoldEnabled = searchParams?.get("arena") !== "legacy";
   const game = useChessGame();
 
@@ -257,8 +257,6 @@ function ArenaPageInner() {
   useEffect(() => {
     setSoftGateOpen(!hasAnyPieceProgress());
   }, []);
-
-  const prizePool = usePrizePoolBalance(chainId);
 
   // Preparing state (loading between difficulty selection and game start)
   const [isPreparing, setIsPreparing] = useState(false);
@@ -995,10 +993,6 @@ function ArenaPageInner() {
                   }
                   : undefined
               }
-              prizePool={{
-                formatted: prizePool.formatted,
-                isLoading: prizePool.isLoading,
-              }}
               errorMessage={game.errorMessage}
             />
           )}
@@ -1061,10 +1055,6 @@ function ArenaPageInner() {
                   }
                   : undefined
               }
-              prizePool={{
-                formatted: prizePool.formatted,
-                isLoading: prizePool.isLoading,
-              }}
             />
           )}
           {game.errorMessage && (

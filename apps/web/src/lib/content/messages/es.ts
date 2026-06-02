@@ -620,11 +620,6 @@ const messages = {
       "Aprende una pieza en menos de 2 minutos y luego reta a la IA.",
     softGateLearn: "PIEZAS",
     softGateEnter: "ARENA",
-    prizePoolLabel: "Premio comunitario",
-    prizePoolLoading: "Cargando premio…",
-    prizePoolUnavailable: "Premio no disponible",
-    prizePoolSoonHint:
-      "Distribución v2 próximamente. 20% de cada victoria guardada va al premio comunitario",
     aiError: "IA desconectada",
     aiTimeout: "La IA tardó demasiado",
     engineError: "Error del motor. Reinicia la partida.",
@@ -1088,7 +1083,7 @@ const messages = {
     items: [
       {
         title: "Torneos",
-        description: "Brackets agendados con pozos compartidos.",
+        description: "Brackets agendados con formatos comunitarios.",
       },
       {
         title: "Pases VIP",

@@ -851,7 +851,7 @@ export const ROADMAP_COPY = {
   items: [
     {
       title: "Tournaments",
-      description: "Scheduled brackets with shared prize pools.",
+      description: "Scheduled brackets with community formats.",
     },
     {
       title: "VIP Passes",
@@ -909,13 +909,6 @@ export const ARENA_COPY = {
   softGateBody: "Learn a piece in under 2 minutes, then challenge the AI.",
   softGateLearn: "PIECES",
   softGateEnter: "ARENA",
-  /** Prize pool surface — shown above the difficulty picker on direct
-   *  /arena entry. Communicates what the 20% mint-fee cut becomes,
-   *  transparently acknowledging distribution is not yet live. */
-  prizePoolLabel: "Community prize pool",
-  prizePoolLoading: "Loading pool…",
-  prizePoolUnavailable: "Pool unavailable",
-  prizePoolSoonHint: "Distribution v2 coming. 20% of every saved Victory funds the community pool",
   aiError: "AI disconnected",
   aiTimeout: "AI timed out",
   engineError: "Engine error. Please restart the match.",

@@ -105,27 +105,6 @@ describe("ArenaSelectScaffold", () => {
     expect(screen.queryByText(/Want a warm-up first/i)).toBeNull();
   });
 
-  it("renders the prize pool pill when prizePool is provided", () => {
-    render(
-      <ArenaSelectScaffold
-        {...baseProps}
-        prizePool={{ formatted: "$12.34", isLoading: false }}
-      />,
-    );
-    expect(screen.getByLabelText(/Community prize pool/i)).toBeInTheDocument();
-    expect(screen.getByText(/\$12\.34/)).toBeInTheDocument();
-  });
-
-  it("renders the prize pool loading state", () => {
-    render(
-      <ArenaSelectScaffold
-        {...baseProps}
-        prizePool={{ formatted: null, isLoading: true }}
-      />,
-    );
-    expect(screen.getByText(/Loading pool/i)).toBeInTheDocument();
-  });
-
   it("does NOT render the Coach review chip — removed 2026-05-22 to declutter the selector", () => {
     render(<ArenaSelectScaffold {...baseProps} />);
     expect(screen.queryByTestId("coach-review-signal")).not.toBeInTheDocument();
