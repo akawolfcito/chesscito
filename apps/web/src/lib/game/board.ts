@@ -48,9 +48,20 @@ export function getValidTargets(
     case "bishop": moves = getBishopMoves(position, blockers); break;
     case "knight": moves = getKnightMoves(position); break;
     case "pawn": {
+      /* Pawn diagonal allow-list semantics:
+       *  - Labyrinth (captureTargets defined): captureTargets ∪ targetPos.
+       *  - L1 capture exercise (isCapture=true, no captureTargets, targetPos
+       *    defined): only targetPos — the pawn must not pseudo-capture on
+       *    empty diagonal squares (see spec
+       *    docs/superpowers/specs/2026-06-02-labyrinth-design-v0.1.md §4).
+       *  - Direct API call (no targetPos): undefined → backward-compat
+       *    "all diagonals" semantics for tutorialHints + tests that don't
+       *    care about target-square enforcement. */
       const pawnCaptureSquares = captureTargets !== undefined
         ? targetPos ? [...captureTargets, targetPos] : captureTargets
-        : undefined;
+        : isCapture && targetPos
+          ? [targetPos]
+          : undefined;
       moves = getPawnMoves(position, blockers, isCapture, pawnCaptureSquares);
       break;
     }

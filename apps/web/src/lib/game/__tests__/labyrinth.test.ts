@@ -598,3 +598,87 @@ describe("captureTargets — pawn diagonal restriction mechanics", () => {
     expect(onCapture).toBe(false); // obstacle blocked
   });
 });
+
+/* L1 pawn capture exercise rule — when `isCapture=true` AND no
+ * explicit `captureTargets` are provided AND a `targetPos` IS provided
+ * (the shape of every L1 pawn capture exercise — pawn-3/pawn-4/pawn-5),
+ * diagonal moves must be restricted to the target square only. The pawn
+ * must not be able to pseudo-capture on empty diagonal squares.
+ *
+ * Spec: docs/superpowers/specs/2026-06-02-labyrinth-design-v0.1.md §4
+ *
+ * The `backward compat` test above (no targetPos, captureSquares undefined)
+ * intentionally keeps the all-diagonals behavior for direct-API callers
+ * like tutorialHints. */
+describe("L1 pawn capture exercise — diagonal restricted to targetPos", () => {
+  it("pawn-3 (c5→d6 isCapture=true): diagonal allowed onto target d6", () => {
+    const targets = getValidTargets(
+      "pawn",
+      pos(2, 4), // c5
+      [],
+      true,
+      undefined,
+      pos(3, 5), // d6 = target
+    );
+    expect(targets.some((t) => t.file === 3 && t.rank === 5)).toBe(true);
+  });
+
+  it("pawn-3 (c5→d6 isCapture=true): diagonal DENIED onto empty b6", () => {
+    const targets = getValidTargets(
+      "pawn",
+      pos(2, 4), // c5
+      [],
+      true,
+      undefined,
+      pos(3, 5), // d6 = target
+    );
+    // b6 = (file=1, rank=5) is the opposite diagonal. Empty, no enemy,
+    // and not the target. Pre-fix this was allowed (bug); post-fix it
+    // must be denied so the pawn cannot pseudo-capture.
+    expect(targets.some((t) => t.file === 1 && t.rank === 5)).toBe(false);
+  });
+
+  it("pawn forward move still allowed in L1 capture exercise", () => {
+    const targets = getValidTargets(
+      "pawn",
+      pos(2, 4), // c5
+      [],
+      true,
+      undefined,
+      pos(3, 5), // d6 = target
+    );
+    // Forward = c6 = (file=2, rank=5). Always allowed when not blocked.
+    expect(targets.some((t) => t.file === 2 && t.rank === 5)).toBe(true);
+  });
+
+  it("pawn-5 (d2→…→e6) mid-puzzle from d5: diagonal allowed onto target e6", () => {
+    // After d2→d4 (fwd2)→d5 (fwd1), the pawn is at d5. The remaining
+    // capture must land on e6 (the target). The opposite diagonal c6
+    // is an empty square and must be denied.
+    const fromD5 = pos(3, 4);
+    const targets = getValidTargets(
+      "pawn",
+      fromD5,
+      [],
+      true,
+      undefined,
+      pos(4, 5), // e6 = target
+    );
+    expect(targets.some((t) => t.file === 4 && t.rank === 5)).toBe(true); // e6 allowed
+    expect(targets.some((t) => t.file === 2 && t.rank === 5)).toBe(false); // c6 denied
+  });
+
+  it("isCapture=false + targetPos defined: diagonals stay denied (no regression)", () => {
+    // Movement-only exercise — pawn must never move diagonally regardless
+    // of target shape.
+    const targets = getValidTargets(
+      "pawn",
+      pos(2, 4),
+      [],
+      false,
+      undefined,
+      pos(3, 5),
+    );
+    expect(targets.some((t) => t.file !== 2)).toBe(false);
+  });
+});
