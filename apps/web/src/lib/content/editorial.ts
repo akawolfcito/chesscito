@@ -409,7 +409,7 @@ export const PHASE_FLASH_COPY = {
 
 export const SHOP_SHEET_COPY = {
   title: "SHOP",
-  description: "Arcane gear for training.",
+  description: "Tools to sharpen your training.",
   featured: "Featured",
   buyButton: "Buy",
   /** Companion CTA shown next to the USDC button on the Founder Badge
@@ -423,8 +423,8 @@ export const SHOP_SHEET_COPY = {
   buyButtonComingSoon: "Coming soon",
   buyButtonUnavailable: "Unavailable",
   empty: "Shop items are not available right now.",
-  moreSoonTitle: "More treasures coming",
-  moreSoonHint: "Skins, cosmetics and boosters are brewing in the workshop.",
+  moreSoonTitle: "More items coming",
+  moreSoonHint: "Skins, boards and boosters in the works.",
   ariaLabel: "Shop",
   closeAriaLabel: "Close shop",
   successBannerFormat: "{item} unlocked!",
@@ -606,7 +606,7 @@ export const MISSION_BRIEFING_COPY = {
 } as const;
 
 export const VICTORY_PAGE_COPY = {
-  tagline: "Train your mind with pre-chess challenges. A Celo MiniPay game",
+  tagline: "Train your mind with short chess challenges. Designed with MiniPay in mind.",
   challengeLine: "Can you beat this?",
   acceptChallenge: "Accept Challenge",
   backToHub: "HUB",
@@ -873,7 +873,7 @@ export const ROADMAP_COPY = {
 
 export const ARENA_COPY = {
   title: "Arena",
-  subtitle: "Choose your rank. Rule the board.",
+  subtitle: "Choose your level. Rule the board.",
   difficulty: {
     easy: "Easy",
     medium: "Medium",
@@ -1737,7 +1737,7 @@ export const ABOUT_COPY = {
   clipboardFeedback: "Copied!",
   shareTitle: "Chesscito",
   shareText:
-    "Learn chess piece movements with gamified, verifiable challenges on Celo.",
+    "Train your mind with short chess challenges. Designed with MiniPay in mind.",
   shareUrl: "https://chesscito.com",
 } as const;
 
@@ -1948,7 +1948,7 @@ export const PRO_COPY = {
     inactive: {
       title: "Coach PRO",
       body: "Get feedback after games and practice.",
-      chips: ["Mistakes", "Tips", "History"] as const,
+      chips: ["Insights", "Tips", "History"] as const,
       cta: "COACH",
     },
     active: {
@@ -2541,7 +2541,7 @@ export const LANDING_COPY = {
  *  Consumed by `<KingdomAnchor>` (Step 11 §1 of UX spec). */
 export const HOME_ANCHOR_COPY = {
   alt: "Chesscito kingdom: Wolfcito the wizard with chess piece statues",
-  attractHint: "Your training awaits in the kingdom",
+  attractHint: "Your training is ready.",
   /** Two-line tagline rendered inside the portal asset, below the
    *  wizard. The first line is the lead-in; the highlight line is
    *  rendered bolded as the focal closer. Same copy in both
@@ -2627,7 +2627,7 @@ export const MISSION_RIBBON_COPY = {
   /** Exercises fallback. Live use passes runtime `pieceHint` via the
    *  `<MissionRibbon text>` override; this is the safety net for
    *  default rendering / tests. */
-  exercises: "Watch the piece. Move it.",
+  exercises: "Pick a square. Move.",
   ariaLabel: "Mission statement",
 } as const;
 

@@ -65,7 +65,7 @@ const messages = {
     clipboardFeedback: "¡Copiado!",
     shareTitle: "Chesscito",
     shareText:
-      "Aprende los movimientos de las piezas de ajedrez con retos gamificados y verificables en Celo.",
+      "Entrena tu mente con retos cortos de ajedrez. Pensado para MiniPay.",
     shareUrl: "https://chesscito.com",
   },
   ABOUT_METHODOLOGY_COPY: {
@@ -323,7 +323,7 @@ const messages = {
       inactive: {
         title: "Coach PRO",
         body: "Recibe feedback después de partidas y prácticas.",
-        chips: ["Errores", "Consejos", "Historial"],
+        chips: ["Análisis", "Consejos", "Historial"],
         cta: "COACH",
       },
       active: {
@@ -599,7 +599,7 @@ const messages = {
   ARENA_COPY: {
     ...en.ARENA_COPY,
     title: "Arena",
-    subtitle: "Elige tu rango. Domina el tablero.",
+    subtitle: "Elige tu nivel. Domina el tablero.",
     difficulty: {
       easy: "Fácil",
       medium: "Medio",
@@ -870,7 +870,7 @@ const messages = {
     previewUnavailable: "Vista previa no disponible",
   },
   VICTORY_PAGE_COPY: {
-    tagline: "Entrena tu mente con retos pre-ajedrecísticos. Un juego de Celo MiniPay",
+    tagline: "Entrena tu mente con retos cortos de ajedrez. Pensado para MiniPay.",
     challengeLine: "¿Puedes superarlo?",
     acceptChallenge: "Aceptar reto",
     backToHub: "HUB",
@@ -1036,7 +1036,7 @@ const messages = {
   },
   HOME_ANCHOR_COPY: {
     alt: "Reino de Chesscito. Wolfcito el mago con estatuas de piezas de ajedrez",
-    attractHint: "Tu entrenamiento te espera en el reino",
+    attractHint: "Tu entrenamiento te espera.",
     taglineLead: "Entrena tus piezas. Domina el tablero.",
     taglineHighlight: "¡Después juega y gana!",
   },
@@ -1311,7 +1311,7 @@ const messages = {
   },
   SHOP_SHEET_COPY: {
     title: "TIENDA",
-    description: "Equipo arcano para entrenar.",
+    description: "Herramientas para afinar tu entrenamiento.",
     featured: "Destacado",
     buyButton: "Comprar",
     buyWithCelo: "Comprar con 1 CELO",
@@ -1319,8 +1319,8 @@ const messages = {
     buyButtonComingSoon: "Próximamente",
     buyButtonUnavailable: "No disponible",
     empty: "Los ítems de la tienda no están disponibles ahora.",
-    moreSoonTitle: "Más tesoros vienen",
-    moreSoonHint: "Skins, cosméticos y boosters se preparan en el taller.",
+    moreSoonTitle: "Más ítems en camino",
+    moreSoonHint: "Skins, tableros y boosters en preparación.",
     ariaLabel: "Tienda",
     closeAriaLabel: "Cerrar tienda",
     successBannerFormat: "¡{item} desbloqueado!",
@@ -1711,7 +1711,7 @@ const messages = {
     "pro-sheet":
       "Tu plan de entrenamiento. Tu forma de mantener Chesscito libre para todos.",
     "landing-cta-bar": "Pequeñas jugadas. Grandes hábitos mentales.",
-    exercises: "Observa la pieza. Muévela.",
+    exercises: "Elige una casilla. Mueve.",
     ariaLabel: "Mensaje de misión",
   },
   PASSPORT_COPY: {
