@@ -73,8 +73,21 @@ const QUEEN_EXERCISES: Exercise[] = [
   { id: "queen-5", startPos: pos(4, 3), targetPos: pos(1, 7), optimalMoves: 2 },
 ];
 
+const KING_EXERCISES: Exercise[] = [
+  // 1. One-square move — simplest king step (forward one).
+  { id: "king-1", startPos: pos(4, 0), targetPos: pos(4, 1), optimalMoves: 1 },
+  // 2. Safe square — one-square diagonal step, introduces 8-direction reach.
+  { id: "king-2", startPos: pos(4, 0), targetPos: pos(5, 1), optimalMoves: 1 },
+  // 3. Avoid danger — walk two squares away from the centre toward the edge.
+  { id: "king-3", startPos: pos(3, 3), targetPos: pos(1, 5), optimalMoves: 2 },
+  // 4. King capture — diagonal one-square capture.
+  { id: "king-4", startPos: pos(4, 0), targetPos: pos(3, 1), optimalMoves: 1, isCapture: true },
+  // 5. Reach the shelter — three NE diagonal steps from e5 to h8 corner.
+  { id: "king-5", startPos: pos(4, 4), targetPos: pos(7, 7), optimalMoves: 3 },
+];
+
 /** Pieces with exercises defined and playable */
-export const PLAYABLE_PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen"];
+export const PLAYABLE_PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
 
 export const EXERCISES: Record<PieceId, Exercise[]> = {
   rook:   ROOK_EXERCISES,
@@ -82,7 +95,7 @@ export const EXERCISES: Record<PieceId, Exercise[]> = {
   knight: KNIGHT_EXERCISES,
   pawn:   PAWN_EXERCISES,
   queen:  QUEEN_EXERCISES,
-  king:   [], // PR-9
+  king:   KING_EXERCISES,
 };
 
 export const BADGE_THRESHOLD = 10; // de 15 estrellas posibles

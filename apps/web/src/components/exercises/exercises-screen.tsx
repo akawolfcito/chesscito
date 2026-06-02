@@ -2084,7 +2084,7 @@ export function ExercisesScreen({
             { key: "knight", label: tPiece("knight"), enabled: true },
             { key: "pawn", label: tPiece("pawn"), enabled: true },
             { key: "queen", label: tPiece("queen"), enabled: true },
-            { key: "king", label: tPiece("king"), enabled: false },
+            { key: "king", label: tPiece("king"), enabled: true },
           ]}
           phase={storeOpen ? "ready" : phase}
           targetLabel={targetLabel}

@@ -1,5 +1,6 @@
 import type { BoardPiece, BoardPosition, PieceId, SquareState } from "@/lib/game/types";
 import { getBishopMoves } from "@/lib/game/rules/bishop";
+import { getKingMoves } from "@/lib/game/rules/king";
 import { getKnightMoves } from "@/lib/game/rules/knight";
 import { getPawnMoves } from "@/lib/game/rules/pawn";
 import { getRookMoves } from "@/lib/game/rules/rook";
@@ -54,6 +55,7 @@ export function getValidTargets(
       break;
     }
     case "queen":  moves = getQueenMoves(position, blockers); break;
+    case "king":   moves = getKingMoves(position, blockers); break;
     default:       moves = []; break;
   }
   // Prevent landing on obstacle squares (labyrinth rule)
