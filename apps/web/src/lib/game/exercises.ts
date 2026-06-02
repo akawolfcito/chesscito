@@ -239,6 +239,33 @@ const KNIGHT_LABYRINTHS: Exercise[] = [
 ];
 
 const PAWN_LABYRINTHS: Exercise[] = [
+  /**
+   * pawn-lab-1 — "First Capture" (Easy)
+   * Forward path is sealed by d3 (and d4 backs it up so forward-2 from rank 1
+   * also fails). The only legal first move is the diagonal capture to e3.
+   * After the capture, every subsequent step has exactly one legal move
+   * (e3 → e4 → e5), so there is no dead-state branch: a beginner cannot
+   * stray off the rails by going forward where a capture was expected.
+   *
+   *   8 . . . . . . . .
+   *   7 . . . . . . . .
+   *   6 . . . . . . . .
+   *   5 . . . . ★ . . .
+   *   4 . . . X . . . .
+   *   3 . . . X ✸ . . .
+   *   2 . . . ♙ . . . .
+   *   1 . . . . . . . .
+   *     a b c d e f g h
+   */
+  defineLabyrinth({
+    id: "pawn-lab-1",
+    start: "d2",
+    target: "e5",
+    obstacles: ["d3", "d4"],
+    captureTargets: ["e3"],
+    isCapture: true,
+    optimalMoves: 3,
+  }),
   defineLabyrinth({
     id: "pawn-lab-3",
     start: "a2",

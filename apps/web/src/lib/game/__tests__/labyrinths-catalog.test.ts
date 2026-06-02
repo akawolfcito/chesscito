@@ -63,8 +63,8 @@ describe("LABYRINTHS catalog — per-piece counts (regression guards)", () => {
     expect(LABYRINTHS.knight.length).toBe(5);
   });
 
-  it("Pawn keeps its 3 labyrinths", () => {
-    expect(LABYRINTHS.pawn.length).toBe(3);
+  it("Pawn keeps its 4 labyrinths", () => {
+    expect(LABYRINTHS.pawn.length).toBe(4);
   });
 
   it("Queen keeps its 3 labyrinths", () => {

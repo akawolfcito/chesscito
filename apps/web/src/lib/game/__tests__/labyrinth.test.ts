@@ -288,6 +288,7 @@ describe("L2 labyrinth — knight path existence", () => {
 
 describe("L2 labyrinth — pawn path existence", () => {
   const setups: { piece: PieceId; id: string; optimal: number }[] = [
+    { piece: "pawn", id: "pawn-lab-1", optimal: 3 },
     { piece: "pawn", id: "pawn-lab-3", optimal: 5 },
     { piece: "pawn", id: "pawn-lab-4", optimal: 4 },
     { piece: "pawn", id: "pawn-lab-5", optimal: 5 },
@@ -337,6 +338,40 @@ describe("L2 labyrinth — pawn path existence", () => {
       }
     },
   );
+});
+
+describe("L2 labyrinth — pawn-lab-1 forced single-capture path", () => {
+  it("pawn-lab-1: from d2 the only legal target is e3 (forward sealed by d3+d4)", () => {
+    const lab = LABYRINTHS.pawn.find((l) => l.id === "pawn-lab-1");
+    expect(lab).toBeDefined();
+    if (!lab) return;
+    const targets = getValidTargets(
+      "pawn",
+      lab.startPos,
+      lab.obstacles ?? [],
+      true,
+      lab.captureTargets,
+      lab.targetPos,
+    );
+    expect(targets).toHaveLength(1);
+    expect(targets[0]).toEqual({ file: 4, rank: 2 }); // e3
+  });
+
+  it("pawn-lab-1: from e3 the only legal target is e4 (all diagonals dead)", () => {
+    const lab = LABYRINTHS.pawn.find((l) => l.id === "pawn-lab-1");
+    expect(lab).toBeDefined();
+    if (!lab) return;
+    const targets = getValidTargets(
+      "pawn",
+      { file: 4, rank: 2 }, // e3
+      lab.obstacles ?? [],
+      true,
+      lab.captureTargets,
+      lab.targetPos,
+    );
+    expect(targets).toHaveLength(1);
+    expect(targets[0]).toEqual({ file: 4, rank: 3 }); // e4
+  });
 });
 
 describe("L2 labyrinth — pawn isCapture + captureTargets verification", () => {
