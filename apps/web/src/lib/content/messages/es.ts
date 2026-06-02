@@ -1444,7 +1444,7 @@ const messages = {
     },
     coachPack: {
       label: "Créditos de Coach",
-      subtitle: "Prueba el análisis IA, sin suscripción.",
+      subtitle: "Revisa tu partida con Luz desde $0.05.",
     },
     coachPack5: {
       label: "5 Créditos de Coach",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
@@ -17,10 +18,32 @@ import {
   type ShopCopyKey,
 } from "@/lib/contracts/shop-catalog";
 import { formatUsd } from "@/lib/contracts/tokens";
+import { track } from "@/lib/telemetry";
 import {
   WelcomePackTile,
   type WelcomePackTileState,
 } from "@/components/exercises/welcome-pack-tile";
+
+/** M1 funnel (Commit 7, 2026-06-02) — narrows the Shop tile tier
+ *  identifier used for monetization telemetry. Founder is kept in the
+ *  union so the type covers every catalog SKU even though the Shop
+ *  display hides it in M1 (the value is consumable from Account /
+ *  status surfaces). */
+type ShopTier = "pro" | "coach" | "shield" | "founder";
+
+function tierForCopyKey(copyKey: ShopCopyKey): ShopTier {
+  switch (copyKey) {
+    case "pro":
+      return "pro";
+    case "coachPack5":
+    case "coachPack20":
+      return "coach";
+    case "retryShield":
+      return "shield";
+    case "founderBadge":
+      return "founder";
+  }
+}
 
 type CatalogItem = {
   itemId: bigint;
@@ -120,15 +143,37 @@ function ShopItemCard({
   isFeatured,
   onSelectItem,
   compact = false,
+  position,
+  tier,
 }: {
   item: CatalogItem;
   isFeatured: boolean;
   onSelectItem: (itemId: bigint) => void;
   compact?: boolean;
+  /** M1 funnel (Commit 7) — zero-based render position within the
+   *  Shop catalog (hero lane first, then mini lane). Drives the
+   *  monetization.shop_item_view payload. */
+  position: number;
+  /** M1 funnel (Commit 7) — tier classification for telemetry. */
+  tier: ShopTier;
 }) {
   const t = useTranslations("SHOP_SHEET_COPY");
   const copyKey = copyKeyForItem(item.itemId);
   const assets = SHOP_TILE_ASSETS[copyKey];
+
+  // M1 funnel (Commit 7) — fires shop_item_view exactly once per
+  // mount. Ref-gated so re-renders driven by purchase state don't
+  // re-ship the event. Item identity is what matters for the funnel.
+  const viewedRef = useRef(false);
+  useEffect(() => {
+    if (viewedRef.current) return;
+    viewedRef.current = true;
+    track("monetization.shop_item_view", {
+      item_id: Number(item.itemId),
+      position,
+      tier,
+    });
+  }, [item.itemId, position, tier]);
   const priceLabel = item.configured
     ? formatUsd(item.onChainPrice)
     : t("status.notConfigured");
@@ -331,27 +376,37 @@ export function ShopSheet({
             </p>
           )}
 
-          {/* Hero lane — full-width cards for the two flagship SKUs:
-              Chesscito PRO + Founder Badge, in that exact order.
-              Refactored 2026-06-01 (user feedback) from "everything
-              full-width with the Welcome Pack pinned on top". */}
+          {/* Hero lane — full-width cards for the two flagship M1 SKUs:
+              Coach 20 (best-value Luz access) + Chesscito PRO. Founder
+              Badge is hidden from display in M1 (D-M1.2 Opción A) —
+              catalog, hook, status, and contract entries all stay
+              intact so Account inventory can keep deriving Founder
+              ownership for users who already bought it. Featured ribbon
+              moves from Founder to Coach 20 since that's the new
+              best-value tier. */}
           {(() => {
-            const heroOrder: bigint[] = [PRO_ITEM_ID, FOUNDER_BADGE_ITEM_ID];
+            const COACH_PACK_20_ITEM_ID: bigint = 4n;
+            const heroOrder: bigint[] = [COACH_PACK_20_ITEM_ID, PRO_ITEM_ID];
             const heroItems = heroOrder
               .map((id) => items.find((it) => it.itemId === id))
               .filter((it): it is CatalogItem => it != null);
-            return heroItems.map((item) => (
-              <ShopItemCard
-                key={item.itemId.toString()}
-                item={item}
-                isFeatured={
-                  item.itemId === FOUNDER_BADGE_ITEM_ID &&
-                  item.configured &&
-                  item.enabled
-                }
-                onSelectItem={onSelectItem}
-              />
-            ));
+            return heroItems.map((item, index) => {
+              const copyKey = copyKeyForItem(item.itemId);
+              return (
+                <ShopItemCard
+                  key={item.itemId.toString()}
+                  item={item}
+                  isFeatured={
+                    item.itemId === COACH_PACK_20_ITEM_ID &&
+                    item.configured &&
+                    item.enabled
+                  }
+                  onSelectItem={onSelectItem}
+                  position={index}
+                  tier={tierForCopyKey(copyKey)}
+                />
+              );
+            });
           })()}
 
           {/* Mini-cards lane — half-width 2-column grid for the
@@ -372,19 +427,28 @@ export function ShopSheet({
               />
             ) : null}
             {(() => {
-              const miniOrder: bigint[] = [SHIELD_ITEM_ID, 3n, 4n];
+              // M1 funnel (Commit 7) — Coach 20 promoted to hero lane,
+              // so the mini lane keeps Coach 5 + Shield. Position
+              // numbering continues after the hero lane (2 hero tiles =
+              // 2 slots, so mini lane starts at index 2).
+              const miniOrder: bigint[] = [3n, SHIELD_ITEM_ID];
               const miniItems = miniOrder
                 .map((id) => items.find((it) => it.itemId === id))
                 .filter((it): it is CatalogItem => it != null);
-              return miniItems.map((item) => (
-                <ShopItemCard
-                  key={item.itemId.toString()}
-                  item={item}
-                  isFeatured={false}
-                  onSelectItem={onSelectItem}
-                  compact
-                />
-              ));
+              return miniItems.map((item, index) => {
+                const copyKey = copyKeyForItem(item.itemId);
+                return (
+                  <ShopItemCard
+                    key={item.itemId.toString()}
+                    item={item}
+                    isFeatured={false}
+                    onSelectItem={onSelectItem}
+                    compact
+                    position={2 + index}
+                    tier={tierForCopyKey(copyKey)}
+                  />
+                );
+              });
             })()}
           </div>
 

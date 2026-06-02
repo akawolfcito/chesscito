@@ -1786,7 +1786,10 @@ export const SHOP_ITEM_COPY = {
    *  COACH_COPY source to avoid drift. */
   coachPack: {
     label: "Coach Credits",
-    subtitle: "Try AI analysis, no subscription needed.",
+    /** M1 funnel (Commit 7, 2026-06-02) — drops banned "AI" + "subscription"
+     *  wording per the commercial-copy-rules. Aligned with the Coach
+     *  paywall canonical voice from Commit 3. */
+    subtitle: "Review your game with Luz from $0.05.",
   },
   /** Coach packs surfaced as full shop tiles (A2 cluster). Each pack
    *  size gets a distinct label/subtitle so the shop list shows two
