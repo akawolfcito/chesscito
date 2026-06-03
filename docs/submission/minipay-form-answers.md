@@ -320,19 +320,52 @@ Key features:
 
 ## Q: Public platform metrics
 
-Public stats dashboard is live at **https://www.chesscito.com/stats** (linked from the landing footer; no auth).
+**Status: MVP available, full analytics roadmap pending.**
 
-The page surfaces:
+A public stats page is live at **https://www.chesscito.com/stats** (linked from the landing footer; no auth, no wallet). Every number on the page reads from the same Supabase tables that record real activity (`victories`, `welcome_pack_claims`, `analytics_events`, `coach_analyses`, `leaderboard_v`). No data is mocked or fabricated; missing metrics are declared explicitly rather than approximated.
 
-- **Total Victories minted** (lifetime), and 7-day / 30-day Victory mint windows.
-- **Approximate active sessions** (7-day and 30-day, counted by anonymous client-side session IDs).
-- **Unique wallets with Victory mints** (lifetime).
-- **Welcome Packs claimed** (lifetime and 7-day).
-- **Victories by difficulty** (Easy / Medium / Hard breakdown).
-- **Hall of Fame** — 10 most recent Victory mints.
-- **Top 10 Leaderboard** — by accumulated exercise score (sourced from `scores`, not `victories`).
+### Current surface
 
-A Methodology footer on the page declares the four metrics not yet available (wallet retention D1 / D7 / D30, stablecoin volume per token, network fees paid, protocol revenue per stablecoin) and why each is deferred. The page does not overstate coverage.
+- **Chesscito Platform Stats** header with explicit framing that the page is platform-level activity, not a single player profile.
+- **What this shows** — three-bullet orientation block.
+- **Primary metrics**: Victory NFTs minted (lifetime), Approx. App Sessions (7d), Victory Mints (30d).
+- **Activity windows**: Victory Mints (7d), Wallets with Victory Mints, Approx. App Sessions (30d), Welcome Packs Claimed (lifetime), Welcome Packs (7d).
+- **Victories by difficulty** — Easy / Medium / Hard breakdown with a horizontal mix bar.
+- **Platform signals** — three narrated insights derived from the live snapshot at render time.
+- **Activity trend, last 30 days** — two 30-bar SVG sparklines (sessions + mints) over the same axis.
+- **Recent Victory Mints** — 10 most recent on-chain mints, wallets truncated.
+- **Community Leaderboard** — Top 10 by accumulated game score (sourced from `scores`, not `victories`; microcopy disambiguates).
+- **Tracked today / Coming next** — bifurcated scope card so a reviewer sees both coverage and gaps at a glance.
+- **Methodology footnote** — term-level definitions for the metric labels.
 
-Sources, refresh cadence (1 hour `revalidate`), privacy posture (aggregates only, truncated wallets), and "coming soon" rationale are documented in `docs/product/stats-mvp.md` in the project repository.
+### Honest coverage against MiniPay §8 Analytics requirements
+
+| MiniPay §8 requirement | /stats today | Notes |
+|---|---|---|
+| DAU / MAU | 🟡 Proxy via `analytics_events.session_id` (7d + 30d) | Anonymous session IDs, not wallet-tied; cross-device users sub-count. Labeled "Approx." on the page. |
+| Retention D1 / D7 / D30 | ❌ Not surfaced | Requires wallet-tied event stream — listed under "Coming next". |
+| Top countries | ❌ Not surfaced | No geo telemetry instrumented. Roadmap. |
+| Transactions per day / week / month | 🟡 Partial (Victory mints only) | Other on-chain interactions (shop purchases, badge claims, PRO renewals, Welcome Pack signatures) are not aggregated yet. |
+| Unique on-chain users | 🟡 Partial (mint-only) | Card "Wallets with Victory Mints" tracks distinct `victories.player`; broader on-chain user set is not aggregated. |
+| Volume per stablecoin | ❌ Not surfaced | Listed under "Coming next". |
+| Network fees paid | ❌ Not surfaced | Listed under "Coming next". |
+| Protocol revenue (FeeCollected) | ❌ Not surfaced | Listed under "Coming next". |
+| Failed-tx rate | ❌ Not surfaced | Listed under "Coming next". |
+
+### Roadmap
+
+The full §8 analytics gap is acknowledged and scoped as a separate engineering cluster (not bundled with listing submission). Closing the gap requires:
+
+1. Wallet-tied event stream persistence (real DAU/MAU + retention cohorts).
+2. On-chain indexer or event listener (transaction breakdown, stablecoin volume, fees, protocol revenue).
+3. Tx-state ledger (failed-tx rate).
+4. Geo telemetry instrumentation (top countries).
+
+Estimated 2-4 weeks of dedicated work. Tracked publicly in `docs/product/stats-mvp.md` (§7 Future evolutions) and on the `/stats` page itself ("Coming next" column).
+
+### Why we ship the MVP now
+
+Two reasons. First, the page provides real transparency today rather than withholding everything until a complete solution exists. Second, the honest "Coming next" enumeration on the page itself sets reviewer expectations correctly — there is no surprise gap once the page is opened.
+
+Architecture, refresh cadence (1 hour `revalidate`), privacy posture (aggregates only, truncated wallets), and per-metric sources are documented in `docs/product/stats-mvp.md` in the project repository.
 

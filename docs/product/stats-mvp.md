@@ -159,3 +159,6 @@ If any source moves to a new table or column, update §2 + §5 + §6 in this doc
 | Date | Change |
 |---|---|
 | 2026-06-03 | Initial MVP shipped — aggregator + page route + 4 disambiguation sublabels |
+| 2026-06-03 | Dashboard polish — full-width shell, soft cream scrim, platform-level copy, "What this shows" + "Platform signals" + "Tracked today / Coming next" sections |
+| 2026-06-03 | Activity charts — 30-day SVG sparklines (sessions + mints) + horizontal difficulty mix bars, zero new dependencies |
+| 2026-06-03 | Cluster closed as honest MVP. §8 coverage marked partial in the MiniPay submission packet; closing the full §8 gap (real DAU/MAU, retention cohorts, stablecoin volume, fees, revenue, failed-tx rate, top countries) deferred to a dedicated analytics cluster (~2-4 weeks). No further polish until a real instrumentation/indexing path is opened. |
