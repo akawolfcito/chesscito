@@ -22,9 +22,13 @@ export default async function StatsRoute() {
   // platform dashboard, not an in-app sheet — it deserves to breathe
   // on desktop and look like the landing footer / about page family
   // rather than a player-profile card.
+  //
+  // `stats-page-scrim` overrides the default dark `secondary-page-scrim`
+  // with a cream/amber wash so the forest body bg stays visible (brand
+  // continuity) but stops competing with the dashboard content.
   return (
     <main
-      className="mission-shell secondary-page-scrim min-h-[100dvh] w-full"
+      className="mission-shell stats-page-scrim min-h-[100dvh] w-full"
       style={{ color: "var(--paper-text)" }}
     >
       <div className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-10 md:py-12">

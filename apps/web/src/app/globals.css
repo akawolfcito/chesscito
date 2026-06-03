@@ -2873,6 +2873,30 @@
         rgba(6, 14, 28, 0.66) 100%);
   }
 
+  /* ── Stats page scrim ──
+     Public dashboard variant. Keeps the body forest background
+     visible for brand continuity but lays a heavy cream/amber wash
+     on top (~88-92% opacity) so the platform metrics page reads as
+     a calm, institutional surface rather than a glowing in-app
+     sheet. Amber radial at the top + subtle warm fade at the bottom
+     keep the Chesscito palette without re-introducing the secondary
+     scrim's dark blue. Do not use on routes that already render
+     their own paper panel (about / privacy / terms) — the cream
+     wash would double up under the existing panel. */
+  .stats-page-scrim {
+    background:
+      radial-gradient(ellipse 120% 40% at 50% 0%,
+        rgba(251, 191, 36, 0.12) 0%,
+        rgba(251, 191, 36, 0.00) 60%),
+      radial-gradient(ellipse 140% 50% at 50% 100%,
+        rgba(180, 110, 20, 0.08) 0%,
+        rgba(180, 110, 20, 0.00) 65%),
+      linear-gradient(180deg,
+        rgba(255, 244, 215, 0.92) 0%,
+        rgba(252, 232, 188, 0.88) 50%,
+        rgba(250, 224, 175, 0.92) 100%);
+  }
+
   /* ── Panel tier system — material surfaces ── */
 
   .panel-base {
