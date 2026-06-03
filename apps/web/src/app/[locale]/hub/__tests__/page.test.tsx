@@ -60,14 +60,6 @@ describe("/hub page (server)", () => {
       );
     });
 
-    it("preloads the WebP fallback for browsers without AVIF support", () => {
-      renderPage({});
-      expect(preloadMock).toHaveBeenCalledWith(
-        "/art/redesign/bg/bg-new-hub.webp",
-        { as: "image", type: "image/webp" },
-      );
-    });
-
     it("preloads the daily-exercise icon AVIF (LCP candidate post-hydration)", () => {
       renderPage({});
       expect(preloadMock).toHaveBeenCalledWith(
@@ -76,11 +68,12 @@ describe("/hub page (server)", () => {
       );
     });
 
-    it("preloads the daily-exercise icon WebP fallback", () => {
+    it("does NOT preload WebP fallbacks (AVIF-only for MiniPay Chromium)", () => {
       renderPage({});
-      expect(preloadMock).toHaveBeenCalledWith(
+      const calls = preloadMock.mock.calls.map((args) => args[0] as string);
+      expect(calls).not.toContain("/art/redesign/bg/bg-new-hub.webp");
+      expect(calls).not.toContain(
         "/art/new-icons-chesscito/ejercicio-diario-chess.webp",
-        { as: "image", type: "image/webp" },
       );
     });
 

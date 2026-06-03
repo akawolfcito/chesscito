@@ -94,36 +94,27 @@ export default function HubPage({
   // (`/art/redesign/bg/bg-new-hub`, declared in globals.css `.hub-scaffold`).
   // CSS-gated discovery meant the browser only fetched it after parsing the
   // render-blocking stylesheet — costing ~2.3s of LCP "Load Delay" on mobile
-  // Slow-4G. Preloading the AVIF + WebP triplet here lets the preload scanner
-  // kick off the download in parallel with CSS download/parse. Browsers
-  // without AVIF support drop the AVIF hint via `type=image/avif`
-  // content-negotiation and consume the WebP preload instead. See
-  // `docs/audits/2026-06-03-hub-lcp-root-cause.md`.
+  // Slow-4G. AVIF-only preload because MiniPay Chromium (~99% of audience)
+  // supports AVIF; iOS<16 still falls back through the CSS image-set chain
+  // (WebP/PNG) at a discovery cost. Doble-preloading WebP wasted ~126KB per
+  // visit. See `docs/audits/2026-06-03-hub-lcp-root-cause.md`.
   preload("/art/redesign/bg/bg-new-hub.avif", {
     as: "image",
     type: "image/avif",
     fetchPriority: "high",
-  });
-  preload("/art/redesign/bg/bg-new-hub.webp", {
-    as: "image",
-    type: "image/webp",
   });
 
   // HubDailyTile gates its <img> behind a hydration flag (visible:hidden
   // placeholder until useEffect flips state). The browser only discovers
   // the icon URL after hydration → on mobile Slow-4G the daily icon
   // arrives ~2.5s later than every other above-the-fold asset, becoming
-  // the new LCP candidate post the bg-new-hub preload. Warming the AVIF +
-  // WebP triplet during the hydration window makes the paint instant once
-  // the <img> mounts. See docs/audits/2026-06-03-hub-reward-rail-lcp-audit.md.
+  // the new LCP candidate post the bg-new-hub preload. AVIF-only for the
+  // same MiniPay-first reason as above. See
+  // docs/audits/2026-06-03-hub-reward-rail-lcp-audit.md.
   preload("/art/new-icons-chesscito/ejercicio-diario-chess.avif", {
     as: "image",
     type: "image/avif",
     fetchPriority: "high",
-  });
-  preload("/art/new-icons-chesscito/ejercicio-diario-chess.webp", {
-    as: "image",
-    type: "image/webp",
   });
 
   return <HubScaffoldClient initialSheet={initialSheet} />;
