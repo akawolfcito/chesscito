@@ -1,3 +1,4 @@
+import { preload } from "react-dom";
 import { redirect } from "next/navigation";
 import { HubScaffoldClient } from "@/components/hub/hub-scaffold-client";
 import { EXERCISES } from "@/lib/game/exercises";
@@ -88,6 +89,12 @@ export default function HubPage({
   }
 
   const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
+
+  preload("/art/new-icons-chesscito/ejercicio-diario-chess.avif", {
+    as: "image",
+    type: "image/avif",
+    fetchPriority: "high",
+  });
 
   return <HubScaffoldClient initialSheet={initialSheet} />;
 }

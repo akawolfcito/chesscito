@@ -112,6 +112,9 @@ export function HubDailyTile() {
         onClick={() => setOpen(true)}
         disabled={completed}
         badge={badge}
+        priority
+        iconWidth={256}
+        iconHeight={273}
       />
       <DailyTacticSheet
         open={open}

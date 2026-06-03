@@ -12,6 +12,10 @@ vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
+vi.mock("react-dom", () => ({
+  preload: vi.fn(),
+}));
+
 vi.mock("@/components/hub/hub-scaffold-client", () => ({
   HubScaffoldClient: () => ({ type: "HubScaffoldClient", props: {} }),
 }));
