@@ -287,3 +287,92 @@ Plan registrado para implementar en cluster propio (NO en este sprint):
 - UX intacto por defense in depth del cache cliente.
 
 Aceptable como estado interino hasta Patch 2.
+
+---
+
+## Outcome — Patch 2 (commit `7538bee0`) + diagnóstico final
+
+**Fecha promote:** 2026-06-03
+**Commit code:** `7538bee0` (`perf(api): add founder-status RPC override and stale fallback`)
+**HEAD `origin/production`:** `7538bee0`
+
+### Qué cerró Patch 2
+
+- ✓ `CELO_RPC_URL` env var configurable (default Forno vía `http(undefined)`).
+- ✓ Stale-on-error: chain failure → `200 { ownsFounder: false, since: null, stale: true }` con Redis cache 5 min.
+- ✓ `FounderStatus.stale?: boolean` agregado al tipo.
+- ✓ Tests: 12/12 verde (flip de 500-no-cache → 200+stale+5min cache + 2 nuevos para `CELO_RPC_URL`).
+- ✓ Eliminó el 500-loop de 42s en todo cold-cache hit.
+
+### Smoke real-world post-Patch-2 (3 wallets distintas fresh-cache)
+
+| Wallet | Tiempo | Status | Body |
+|---|---|---|---|
+| `0x0924...eba4` | 0.89 s | 200 | `{ ownsFounder: false, since: null, stale: true }` |
+| `0x3333...3333` | 0.46 s | 200 | idem |
+| `0x4444...4444` | 0.60 s | 200 | idem |
+
+UX: 200 rápido + stale flag. Function execution time deja de acumular ~42s por hit. ✓ mitigación completa.
+
+### Por qué `stale: true` en todos los hits — diagnóstico final
+
+`CELO_RPC_URL` testeado contra dos providers free tier consecutivos:
+
+| Provider | Free tier cap `eth_getLogs` | Resultado vs query 37.8M→latest |
+|---|---|---|
+| **Alchemy free** | **10 bloques** | HTTP 400 `code: -32600` "Under the Free tier plan, you can make eth_getLogs requests with up to a 10 block range" |
+| **dRPC free** | **10,000 bloques** | HTTP 400 `code: 35` "ranges over 10000 blocks are not supported on freetier" |
+| **Forno (default)** | sin cap explícito | timeout ~42s (testeado en Patch 1) |
+
+Confirmado vía Vercel logs 2026-06-03. **Free tier RPCs categóricamente no soportan el query unbounded** (~5M bloques desde `0x240c840` a latest).
+
+### Política de provider explicit
+
+**PAYG/paid tiers OFF-LIMITS** por directiva user (2026-06-03). Memory ref: `feedback_no_payg_rpc.md`. Free tier o rearch only.
+
+---
+
+## 9. Cura real (backlog, NO abierto en este sprint)
+
+**C1 — Redis write-through en Shop purchase** (recomendado).
+
+### Arquitectura
+
+1. **Write side:** cuando una compra de Founder Badge (`itemId IN (1, 5)`) se confirma on-chain, el handler de purchase escribe el wallet en un Redis set `founder:wallets`.
+   - Puntos candidatos: `apps/web/src/app/api/sign-purchase/route.ts` (post-tx callback), o un endpoint `/api/shop/confirm-purchase` que el cliente llame post-receipt.
+2. **Read side:** `/api/founder-status` cambia su implementación de `eth_getLogs` a `SISMEMBER founder:wallets <wallet>`. O(1), zero RPC dependency en runtime.
+3. **Shape público intacto:** el cliente sigue recibiendo `{ ownsFounder, since, stale? }`. `since` se persiste también en el write-through (`HSET founder:since <wallet> <block_or_timestamp>`).
+4. **Backfill one-time:** script Node que usa la **Celoscan API REST** (sin cap de block range para event listings, free) para listar todos los `ItemPurchased(itemId IN (1,5))` históricos, popula Redis, se borra.
+
+### Trabajo estimado
+
+2-4h split en commits:
+- `feat(api): write founder wallets to Redis on Shop purchase`
+- `feat(api): /api/founder-status reads from Redis instead of chain`
+- `chore(scripts): one-time backfill founder set from Celoscan`
+- Tests integrados en cada commit.
+
+### Alternativas descartadas
+
+- **C2 — Subgraph (The Graph)**: hosted service en deprecation; dependencia externa innecesaria para volumen actual.
+- **C3 — Pagination chunks 10k + retries**: 500 requests por wallet cold-load contra dRPC free, lento + brittle, rate-limit-fail probable.
+
+### Triggers para abrir el cluster C1
+
+- Volumen de founders >500 wallets (telemetría: cuántos `Save` se completan).
+- Logs muestran proporción alta de cold-cache hits con `stale: true` (UX degrade real).
+- Partner/demo dependa de founder-status en MiniPay cold install.
+
+Hasta que cualquiera ocurra: estado actual `stale: true` es aceptable indefinido.
+
+---
+
+## 10. Cierre del cluster founder-status
+
+**Mitigado, no curado.** Cluster cerrado regulatoriamente.
+
+- Bug original (500 en 42s, quema CPU): **resuelto**.
+- Bug funcional residual (founders cold-load sin localStorage ven `false`): **diferido a C1**.
+- Memory: `project_founder_status_forno_partial_2026_06_03.md` actualizada con outcome final.
+- MEMORY.md index actualizado.
+- Próximo trabajo: **return to MiniPay readiness checklist** (no abrir C1 ahora).
