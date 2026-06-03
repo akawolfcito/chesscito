@@ -949,6 +949,14 @@ export function LandingPage() {
             >
               About
             </Link>
+            <span style={{ color: "rgba(110, 65, 15, 0.35)" }}>·</span>
+            <Link
+              href="/stats"
+              className="font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
+              style={{ color: "rgba(110, 65, 15, 0.75)" }}
+            >
+              Stats
+            </Link>
           </div>
           <div className="flex flex-col items-center gap-1 pt-1">
             <p

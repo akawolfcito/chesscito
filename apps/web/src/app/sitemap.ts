@@ -28,6 +28,7 @@ const STATIC_PATHS = [
   "/coach/history",
   "/why",
   "/about",
+  "/stats",
   "/support",
   "/privacy",
   "/terms",
