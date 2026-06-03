@@ -68,11 +68,19 @@ describe("/hub page (server)", () => {
       );
     });
 
-    it("does NOT preload the legacy daily-exercise icon", () => {
+    it("preloads the daily-exercise icon AVIF (LCP candidate post-hydration)", () => {
       renderPage({});
-      const calls = preloadMock.mock.calls.map((args) => args[0] as string);
-      expect(calls).not.toContain(
+      expect(preloadMock).toHaveBeenCalledWith(
         "/art/new-icons-chesscito/ejercicio-diario-chess.avif",
+        { as: "image", type: "image/avif", fetchPriority: "high" },
+      );
+    });
+
+    it("preloads the daily-exercise icon WebP fallback", () => {
+      renderPage({});
+      expect(preloadMock).toHaveBeenCalledWith(
+        "/art/new-icons-chesscito/ejercicio-diario-chess.webp",
+        { as: "image", type: "image/webp" },
       );
     });
 

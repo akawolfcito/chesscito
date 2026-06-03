@@ -109,5 +109,22 @@ export default function HubPage({
     type: "image/webp",
   });
 
+  // HubDailyTile gates its <img> behind a hydration flag (visible:hidden
+  // placeholder until useEffect flips state). The browser only discovers
+  // the icon URL after hydration → on mobile Slow-4G the daily icon
+  // arrives ~2.5s later than every other above-the-fold asset, becoming
+  // the new LCP candidate post the bg-new-hub preload. Warming the AVIF +
+  // WebP triplet during the hydration window makes the paint instant once
+  // the <img> mounts. See docs/audits/2026-06-03-hub-reward-rail-lcp-audit.md.
+  preload("/art/new-icons-chesscito/ejercicio-diario-chess.avif", {
+    as: "image",
+    type: "image/avif",
+    fetchPriority: "high",
+  });
+  preload("/art/new-icons-chesscito/ejercicio-diario-chess.webp", {
+    as: "image",
+    type: "image/webp",
+  });
+
   return <HubScaffoldClient initialSheet={initialSheet} />;
 }
