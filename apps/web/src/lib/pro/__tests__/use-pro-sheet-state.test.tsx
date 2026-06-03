@@ -216,6 +216,43 @@ describe("useProSheetState — handlePurchase", () => {
     expect(executeProPurchaseMock).not.toHaveBeenCalled();
   });
 
+  it("P1-6 invariant: never settles in CELO even when CELO is the only token with balance", async () => {
+    // CELO at the tail of the read; ACCEPTED_TOKENS (USDC/USDT/USDM) all
+    // empty. If `selectPaymentToken` accidentally widened to include
+    // CELO (e.g. by dropping the `slice(0, ACCEPTED_TOKENS.length)`
+    // or by swapping `ACCEPTED_TOKENS` → `BALANCE_READ_TOKENS` in the
+    // call), this test would surface a successful selection of CELO
+    // and fail. Today the slice keeps CELO out → no-token fires.
+    //
+    // Closes P1-6 (CELO oculto en runtime MiniPay). MiniPay never
+    // surfaces CELO; we make PRO equally strict regardless of runtime
+    // so a user with only CELO outside MiniPay also can't accidentally
+    // settle PRO in CELO at distorted USD value.
+    useReadContractsMock.mockReturnValue({
+      data: [
+        // USDC / USDT / USDM all empty
+        { result: 0n, status: "success" },
+        { result: 0n, status: "success" },
+        { result: 0n, status: "success" },
+        // CELO at the tail — huge balance (1000 CELO at 18 decimals)
+        { result: 1_000_000_000_000_000_000_000n, status: "success" },
+      ],
+    });
+    const { result } = renderProSheetHook();
+
+    await act(async () => {
+      await result.current.sheetProps.onPurchase();
+    });
+
+    expect(trackMock).toHaveBeenCalledWith("pro_purchase_failed", {
+      kind: "no-token",
+    });
+    expect(
+      trackMock.mock.calls.find((c) => c[0] === "pro_purchase_started"),
+    ).toBeUndefined();
+    expect(executeProPurchaseMock).not.toHaveBeenCalled();
+  });
+
   it("on success: closes sheet, refetches PRO status, fires haptic + confirmed event", async () => {
     withSufficientBalances();
     executeProPurchaseMock.mockResolvedValueOnce({
