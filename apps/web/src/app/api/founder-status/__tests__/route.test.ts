@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // SHOP_ADDRESS captured at module import — set before route loads.
 vi.hoisted(() => {
@@ -129,5 +129,43 @@ describe("/api/founder-status", () => {
     clientMock.getLogs.mockResolvedValueOnce([]);
     await GET(makeRequest(VALID_WALLET));
     expect(enforceReadRateLimit).toHaveBeenCalledTimes(1);
+  });
+
+  // Forno rejects unbounded ranges; the route MUST send a bigint
+  // fromBlock derived from SHOP_DEPLOY_BLOCK_CELO or the hardcoded
+  // fallback, never the previous "earliest" string.
+  describe("fromBlock fallback", () => {
+    const SHOP_DEPLOY_BLOCK_FALLBACK = 37_800_000n;
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("uses the hardcoded bigint fallback when SHOP_DEPLOY_BLOCK_CELO is unset", async () => {
+      vi.stubEnv("SHOP_DEPLOY_BLOCK_CELO", "");
+      clientMock.getLogs.mockResolvedValueOnce([]);
+      await GET(makeRequest(VALID_WALLET));
+      const call = clientMock.getLogs.mock.calls[0][0];
+      expect(call.fromBlock).not.toBe("earliest");
+      expect(typeof call.fromBlock).toBe("bigint");
+      expect(call.fromBlock).toBe(SHOP_DEPLOY_BLOCK_FALLBACK);
+    });
+
+    it("falls back to the hardcoded bigint when SHOP_DEPLOY_BLOCK_CELO is invalid", async () => {
+      vi.stubEnv("SHOP_DEPLOY_BLOCK_CELO", "not-a-number");
+      clientMock.getLogs.mockResolvedValueOnce([]);
+      await GET(makeRequest(VALID_WALLET));
+      const call = clientMock.getLogs.mock.calls[0][0];
+      expect(typeof call.fromBlock).toBe("bigint");
+      expect(call.fromBlock).toBe(SHOP_DEPLOY_BLOCK_FALLBACK);
+    });
+
+    it("honors a valid SHOP_DEPLOY_BLOCK_CELO override", async () => {
+      vi.stubEnv("SHOP_DEPLOY_BLOCK_CELO", "12345");
+      clientMock.getLogs.mockResolvedValueOnce([]);
+      await GET(makeRequest(VALID_WALLET));
+      const call = clientMock.getLogs.mock.calls[0][0];
+      expect(call.fromBlock).toBe(12345n);
+    });
   });
 });

@@ -41,28 +41,23 @@ const SHOP_ADDRESS = process.env.NEXT_PUBLIC_SHOP_ADDRESS as
   | `0x${string}`
   | undefined;
 
-// Production REQUIRES `SHOP_DEPLOY_BLOCK_CELO` because Celo's Forno
-// public RPC + most providers cap eth_getLogs at ~10k blocks per call.
-// "earliest" on a 6-year-old chain would fail or silently truncate.
-// Dev / test environments without the env var fall through to
-// "earliest" and we log a one-time warning. The hook tolerates the
-// resulting 500 — other signals (PRO + badge + shield) still recover
-// returning-user detection if founder data is unavailable.
-const SHOP_DEPLOY_BLOCK = process.env.SHOP_DEPLOY_BLOCK_CELO
-  ? BigInt(process.env.SHOP_DEPLOY_BLOCK_CELO)
-  : null;
+// Hardcoded fallback when `SHOP_DEPLOY_BLOCK_CELO` env var is unset or
+// invalid. Mirrors `shopDeployedAt: 2026-03-12T16:47:12.872Z` from
+// `apps/contracts/deployments/celo.json`. Update if Shop is redeployed
+// to a new proxy. The env var still wins when set (e.g. preview deploys
+// against a fresh Shop fixture). This eliminates the prior fallback to
+// `fromBlock: "earliest"`, which Forno rejected as an unbounded range
+// and caused the route to 500 after ~40s.
+const SHOP_DEPLOY_BLOCK_FALLBACK = 37_800_000n;
 
-if (!SHOP_DEPLOY_BLOCK && process.env.NODE_ENV === "production") {
-  // Module-load side-effect — fires once per cold start, not per
-  // request, so log volume stays bounded.
-  // eslint-disable-next-line no-console
-  console.warn(
-    "[founder-status] SHOP_DEPLOY_BLOCK_CELO is not set. " +
-      "Falling back to fromBlock=earliest. Public Celo RPC providers " +
-      "will likely reject the unbounded range and the route will 500. " +
-      "Set this env var to the Shop deploy block (~37800000 for the " +
-      "2026-03-12 deploy per apps/contracts/deployments/celo.json).",
-  );
+function getShopDeployBlock(): bigint {
+  const raw = process.env.SHOP_DEPLOY_BLOCK_CELO;
+  if (!raw) return SHOP_DEPLOY_BLOCK_FALLBACK;
+  try {
+    return BigInt(raw);
+  } catch {
+    return SHOP_DEPLOY_BLOCK_FALLBACK;
+  }
 }
 
 const redis = Redis.fromEnv();
@@ -123,7 +118,7 @@ export async function GET(req: Request) {
         buyer: wallet as `0x${string}`,
         itemId: [FOUNDER_BADGE_ITEM_ID, FOUNDER_BADGE_CELO_ITEM_ID],
       },
-      fromBlock: SHOP_DEPLOY_BLOCK ?? "earliest",
+      fromBlock: getShopDeployBlock(),
       toBlock: "latest",
     });
 
