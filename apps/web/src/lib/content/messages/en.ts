@@ -104,6 +104,8 @@ m.REWARD_COPY.victory.ariaLabel =
   "{state, select, claimable {Save victory ready: tap to save} progress {Victory in progress} other {No victory ready: win an Arena match}}";
 m.PRO_COPY.statusActiveSuffix =
   "{daysLeft, plural, =1 {Expires tomorrow} other {# days left}}";
+m.PRO_COPY.daysLeftActiveLabel =
+  "{daysLeft, plural, =1 {Your pass expires tomorrow.} other {Your pass expires in # days.}}";
 m.PRO_COPY.hubCoachCard.active.title = "PRO Active · {remainingDays}d";
 m.COACH_COPY.gamesAnalyzed = "Games analyzed: {count}";
 m.COACH_COPY.highestDifficulty = "Highest difficulty: {difficulty}";
