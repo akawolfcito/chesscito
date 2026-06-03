@@ -221,3 +221,69 @@ Cerrar el sprint de follow-ups funcionales (i18n + founder-status). Backlog perf
 ### Si el patch no funciona (timeouts siguen)
 
 Significa que el rango `37.8M → latest` ya es demasiado grande para Forno. Patch siguiente: pagination en chunks de 10k bloques, o switch a un RPC con mayor cap (público Quicknode, Alchemy, etc).
+
+---
+
+## Outcome (post-deploy) — patch parcial, bug funcional NO cerrado
+
+**Fecha promote:** 2026-06-03
+**Commit code:** `0bc34d24` (`perf(api): hardcode founder-status shop deploy block fallback`)
+**Commit doc:** `6b3715f2` (`docs(audits): record founder-status timeout audit`)
+**HEAD `origin/production` final:** `6b3715f2`
+**HEAD `origin/main` final:** alineado
+
+### Smoke real-world contra prod
+
+3 requests consecutivos contra `https://www.chesscito.com/api/founder-status` tras el deploy:
+
+| Wallet | Tiempo | Status | Cuerpo |
+|---|---|---|---|
+| `0x0924d1afc2ecbd5257ee3b1302d978c3ffa7eba4` (provided) | 42.5 s | 500 | `{"error":"Chain read failed"}` |
+| `0x0924...eba4` (retry) | 41.8 s | 500 | idem |
+| `0x1111111111111111111111111111111111111111` (cold cache distinto) | 41.7 s | 500 | idem |
+
+Consistente, no transient. El fallback `37_800_000n` previene el "earliest disaster" original, pero **Forno también rechaza el range `37.8M → latest`** (~5M bloques al momento del deploy). El riesgo §7 del audit se materializó tal como estaba descripto.
+
+### Lo que cerró este patch
+
+- ✓ `route.ts` no puede enviar `fromBlock: "earliest"` jamás.
+- ✓ Parse seguro del env var (typo o invalid input ya no rompe).
+- ✓ `console.warn` cold-start removido (signal de bug ya corregido).
+- ✓ 3 tests nuevos: fallback unset / fallback invalid / env override — locks contra regresión.
+- ✓ Documentación de la env var key en el template.
+
+### Lo que NO cerró
+
+- ✗ El endpoint sigue devolviendo `500 Chain read failed` en producción.
+- ✗ Cada cold-cache hit consume ~42 s de Function execution time.
+- ✗ UX salvado solo por el `localStorage` cache del hook + tolerancia silenciosa al 500 en `use-founder-status.ts:74-83`. Founders cold-load sin cache local siguen viendo `false`.
+
+### Próxima sesión — Patch 2 (Opción D: RPC configurable + stale-on-error defensivo)
+
+Plan registrado para implementar en cluster propio (NO en este sprint):
+
+1. **Soportar `CELO_RPC_URL` como provider configurable** en `route.ts:71`:
+   ```ts
+   transport: http(process.env.CELO_RPC_URL ?? "https://forno.celo.org")
+   ```
+2. **Setear en Vercel Production + Preview** una URL de RPC con mayor capacidad histórica (dRPC, Alchemy, QuickNode tier free son candidatos válidos para el volumen actual).
+3. **Mantener Forno como fallback** (default cuando la env var no está).
+4. **Stale-on-error defensivo**: si el `getLogs` falla pese al nuevo RPC, cachear `{ ownsFounder: false, since: null, stale: true }` por TTL corto (e.g. 5 min) para evitar que cada cold-cache hit consuma 40 s. UX trade-off documentado: founders cold-load sin localStorage cache verán `false` durante esos 5 min — aceptable porque `use-founder-status.ts` re-fetcha en el siguiente mount y eventualmente convergirá al estado correcto.
+5. **Test de end-to-end**: verificar que la ruta no devuelve 500 lento.
+
+### Por qué NO se implementaron Opción A (pagination) ni Opción C (stale-on-error sola)
+
+- **A (pagination)** genera ~500 requests al RPC público por wallet cold-load. Sobrecarga Forno; rate-limit-fail probable bajo volumen. Sobre-engineering vs Opción B.
+- **C (stale-on-error sola)** tapa el síntoma pero deja la causa raíz (Forno over-capacity) intacta. Cada cold-cache hit sigue costando 40 s de Function time hasta que cae el TTL. Solo se justifica COMBINADA con el RPC fix (= Opción D).
+
+### Estado regulatorio del cluster founder-status
+
+**Cerrado parcialmente.** Mitigación del crash mode original aceptada. Bug funcional re-clasificado como follow-up `perf(api): switch founder-status RPC + defensive caching` (Opción D), próxima sesión.
+
+### Riesgo de no implementar Patch 2 ahora
+
+- Endpoint sigue tirando 500 silenciosos en logs server (volumen acotado: 1 callsite, 1-2 hits por sesión PRO/Founder).
+- Vercel Function execution time se acumula (~42s × volumen). Para Hobby plan podría chocar con quotas; para Pro el costo es marginal.
+- UX intacto por defense in depth del cache cliente.
+
+Aceptable como estado interino hasta Patch 2.
