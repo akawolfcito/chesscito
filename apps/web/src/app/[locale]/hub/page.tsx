@@ -90,10 +90,23 @@ export default function HubPage({
 
   const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
 
-  preload("/art/new-icons-chesscito/ejercicio-diario-chess.avif", {
+  // LCP candidate on /hub mobile is the `<main.hub-scaffold>` background-image
+  // (`/art/redesign/bg/bg-new-hub`, declared in globals.css `.hub-scaffold`).
+  // CSS-gated discovery meant the browser only fetched it after parsing the
+  // render-blocking stylesheet — costing ~2.3s of LCP "Load Delay" on mobile
+  // Slow-4G. Preloading the AVIF + WebP triplet here lets the preload scanner
+  // kick off the download in parallel with CSS download/parse. Browsers
+  // without AVIF support drop the AVIF hint via `type=image/avif`
+  // content-negotiation and consume the WebP preload instead. See
+  // `docs/audits/2026-06-03-hub-lcp-root-cause.md`.
+  preload("/art/redesign/bg/bg-new-hub.avif", {
     as: "image",
     type: "image/avif",
     fetchPriority: "high",
+  });
+  preload("/art/redesign/bg/bg-new-hub.webp", {
+    as: "image",
+    type: "image/webp",
   });
 
   return <HubScaffoldClient initialSheet={initialSheet} />;

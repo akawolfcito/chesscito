@@ -8,12 +8,14 @@ const redirectMock = vi.hoisted(() =>
   }),
 );
 
+const preloadMock = vi.hoisted(() => vi.fn());
+
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
 vi.mock("react-dom", () => ({
-  preload: vi.fn(),
+  preload: preloadMock,
 }));
 
 vi.mock("@/components/hub/hub-scaffold-client", () => ({
@@ -46,6 +48,38 @@ function renderPage(searchParams: SearchParamsLike): RenderedElement | undefined
 describe("/hub page (server)", () => {
   beforeEach(() => {
     redirectMock.mockClear();
+    preloadMock.mockClear();
+  });
+
+  describe("LCP preload", () => {
+    it("preloads the hub-scaffold background AVIF with high priority", () => {
+      renderPage({});
+      expect(preloadMock).toHaveBeenCalledWith(
+        "/art/redesign/bg/bg-new-hub.avif",
+        { as: "image", type: "image/avif", fetchPriority: "high" },
+      );
+    });
+
+    it("preloads the WebP fallback for browsers without AVIF support", () => {
+      renderPage({});
+      expect(preloadMock).toHaveBeenCalledWith(
+        "/art/redesign/bg/bg-new-hub.webp",
+        { as: "image", type: "image/webp" },
+      );
+    });
+
+    it("does NOT preload the legacy daily-exercise icon", () => {
+      renderPage({});
+      const calls = preloadMock.mock.calls.map((args) => args[0] as string);
+      expect(calls).not.toContain(
+        "/art/new-icons-chesscito/ejercicio-diario-chess.avif",
+      );
+    });
+
+    it("skips preloads on legacy bookmark redirects", () => {
+      renderPage({ legacy: "1" });
+      expect(preloadMock).not.toHaveBeenCalled();
+    });
   });
 
   describe("default → scaffold", () => {
