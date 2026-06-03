@@ -1,16 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useAccount, useChainId, useReadContracts } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { HubScaffold } from "@/components/hub/hub-scaffold";
-import { BadgeSheet } from "@/components/exercises/badge-sheet";
-import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
-import { ShopSheet } from "@/components/exercises/shop-sheet";
-import { ProSheet } from "@/components/pro/pro-sheet";
+const BadgeSheet = dynamic(
+  () => import("@/components/exercises/badge-sheet").then((m) => m.BadgeSheet),
+  { ssr: false },
+);
+const PurchaseConfirmSheet = dynamic(
+  () =>
+    import("@/components/exercises/purchase-confirm-sheet").then(
+      (m) => m.PurchaseConfirmSheet,
+    ),
+  { ssr: false },
+);
+const ShopSheet = dynamic(
+  () => import("@/components/exercises/shop-sheet").then((m) => m.ShopSheet),
+  { ssr: false },
+);
+const ProSheet = dynamic(
+  () => import("@/components/pro/pro-sheet").then((m) => m.ProSheet),
+  { ssr: false },
+);
 import { ProfileSheet } from "@/components/profile/profile-sheet";
 import { SettingsSheetStub } from "@/components/hub/settings-sheet-stub";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
