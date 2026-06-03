@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import { track } from "@/lib/telemetry";
 import { Button } from "@/components/ui/button";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
+import { AddCashCta } from "@/components/minipay/add-cash-cta";
+import type { TxErrorKind } from "@/lib/errors";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { ShareModal } from "@/components/share/share-modal";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
@@ -31,6 +33,14 @@ type ResultOverlayProps = {
   celoscanHref?: string;
   errorMessage?: string;
   errorKind?: ErrorKind;
+  /** Locale-agnostic tx classification from classifyTxErrorKind.
+   *  Distinct from `errorKind` (UI variant for purchase copy). When
+   *  set to "insufficientFunds" AND the runtime is MiniPay, the
+   *  overlay surfaces the AddCashCta recovery deeplink. Only the
+   *  shop-buy caller is expected to pass this in v1; badge claim
+   *  and score submit deliberately omit it so the CTA does not
+   *  appear in non-paid surfaces. */
+  txErrorKind?: TxErrorKind | null;
   onDismiss: () => void;
   onRetry?: () => void;
   totalStars?: number;
@@ -219,6 +229,7 @@ export function ResultOverlay({
   celoscanHref,
   errorMessage,
   errorKind,
+  txErrorKind,
   onDismiss,
   onRetry,
   totalStars,
@@ -382,7 +393,9 @@ export function ResultOverlay({
               </p>
             ) : null}
 
-
+            {isError && txErrorKind === "insufficientFunds" && (
+              <AddCashCta source="shop-buy" className="mt-2" />
+            )}
 
           </div>
         </CandyGlassShell>
