@@ -94,7 +94,7 @@ export function StatsPage({ stats }: StatsPageProps) {
             label="Unique Minter Wallets"
             value={stats.uniqueMintersLifetime}
             variant="secondary"
-            sublabel="Lifetime"
+            sublabel="Wallets with Victory mints"
           />
           <StatCard
             label="Approx. Sessions (30d)"
@@ -105,7 +105,7 @@ export function StatsPage({ stats }: StatsPageProps) {
             label="Welcome Packs Claimed"
             value={stats.welcomePacksLifetime}
             variant="secondary"
-            sublabel="Lifetime"
+            sublabel="Claims tracked after launch"
           />
           <StatCard
             label="Welcome Packs (7d)"
@@ -180,11 +180,17 @@ export function StatsPage({ stats }: StatsPageProps) {
       {/* Leaderboard */}
       <section>
         <h3
-          className="mb-2 text-sm font-bold"
+          className="mb-1 text-sm font-bold"
           style={{ color: "var(--paper-text)" }}
         >
           Top 10 Leaderboard
         </h3>
+        <p
+          className="mb-2 text-[0.6875rem] leading-tight"
+          style={{ color: "var(--paper-text-subtle)" }}
+        >
+          Based on game scores, not only minted victories.
+        </p>
         {stats.leaderboardTop10.length === 0 ? (
           <p
             className="text-xs"

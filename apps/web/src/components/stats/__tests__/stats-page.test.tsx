@@ -123,4 +123,30 @@ describe("StatsPage", () => {
       screen.getByText(/Active sessions counted by anonymous client-side IDs/),
     ).toBeInTheDocument();
   });
+
+  it("disambiguates the cards whose source differs from Victories table", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+
+    // Unique Minter Wallets reads `victories.player` distinct — calling
+    // it out prevents the reader from assuming it tracks the broader
+    // leaderboard player population.
+    expect(
+      screen.getByText("Wallets with Victory mints"),
+    ).toBeInTheDocument();
+
+    // Welcome Packs ledger started post-launch — sublabel signals the
+    // zero/low value is a recency artifact, not absence of users.
+    expect(
+      screen.getByText("Claims tracked after launch"),
+    ).toBeInTheDocument();
+
+    // Leaderboard reads `leaderboard_v` (derived from `scores`), NOT
+    // `victories`. The microcopy stops the reader from cross-counting
+    // the rank list against the Unique Minter Wallets card.
+    expect(
+      screen.getByText(
+        "Based on game scores, not only minted victories.",
+      ),
+    ).toBeInTheDocument();
+  });
 });
