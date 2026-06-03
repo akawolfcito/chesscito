@@ -49,8 +49,16 @@ type QueryFixture = {
 /**
  * Sequencer for `supabase.from(...)`: returns one fixture per call,
  * matched to the aggregator's invocation order. The aggregator calls
- * `.from(...)` 12 times (the 13th promise — leaderboard — bypasses
- * `from` via fetchLeaderboardFromDb mock).
+ * `.from(...)` 13 times (the leaderboard promise bypasses `from`
+ * via fetchLeaderboardFromDb mock):
+ *   0-2  victories count queries (total, 7d, 30d)
+ *   3    victories.player rows (distinct minters)
+ *   4    victories.difficulty rows
+ *   5-6  welcome_pack_claims count queries (lifetime, 7d)
+ *   7-8  analytics_events session_id rows (7d, 30d)
+ *   9-10 coach_analyses count queries (lifetime, 7d)
+ *   11   victories HoF rows (top 10 by minted_at)
+ *   12   victories.minted_at rows (trend chart mint series)
  */
 function buildSupabaseStub(fixtures: QueryFixture[]) {
   const calls = [...fixtures];
@@ -70,7 +78,7 @@ function buildSupabaseStub(fixtures: QueryFixture[]) {
   };
 }
 
-const EMPTY_FIXTURES: QueryFixture[] = Array.from({ length: 12 }, () => ({
+const EMPTY_FIXTURES: QueryFixture[] = Array.from({ length: 13 }, () => ({
   count: 0,
   data: [],
 }));
@@ -123,6 +131,7 @@ describe("getPublicStats", () => {
           },
         ],
       }, // 11 hall of fame
+      { count: null, data: [] }, // 12 mints trend (empty — dedicated test covers shape)
     ];
     getSupabaseServerMock.mockReturnValue(buildSupabaseStub(fixtures));
     fetchLeaderboardFromDbMock.mockResolvedValue([
@@ -163,6 +172,7 @@ describe("getPublicStats", () => {
       { count: 1, data: null }, // 9
       { count: 1, data: null }, // 10
       { count: null, data: [] }, // 11 hall of fame empty
+      { count: null, data: [] }, // 12 mints trend empty
     ];
     getSupabaseServerMock.mockReturnValue(buildSupabaseStub(fixtures));
 
@@ -178,6 +188,7 @@ describe("getPublicStats", () => {
     const fixtures: QueryFixture[] = [
       ...Array.from({ length: 11 }, () => ({ count: 0, data: [] })),
       { count: null, data: null, error: new Error("hof fail") }, // 11 hall of fame FAILS
+      { count: null, data: [] }, // 12 mints trend (empty)
     ];
     getSupabaseServerMock.mockReturnValue(buildSupabaseStub(fixtures));
     fetchLeaderboardFromDbMock.mockRejectedValue(new Error("leaderboard fail"));
@@ -201,7 +212,7 @@ describe("getPublicStats", () => {
           { difficulty: 99 }, // future band
         ],
       },
-      ...Array.from({ length: 7 }, () => ({ count: 0, data: [] })),
+      ...Array.from({ length: 8 }, () => ({ count: 0, data: [] })),
     ];
     getSupabaseServerMock.mockReturnValue(buildSupabaseStub(fixtures));
 
@@ -216,5 +227,73 @@ describe("getPublicStats", () => {
 
     expect(typeof stats.generatedAt).toBe("string");
     expect(Date.parse(stats.generatedAt)).not.toBeNaN();
+  });
+
+  it("builds a dense 30-day activity trend with daily session + mint buckets", async () => {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const todayKey = today.toISOString().slice(0, 10);
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
+      .toISOString();
+    const todayIso = today.toISOString();
+
+    const fixtures: QueryFixture[] = [
+      ...Array.from({ length: 8 }, () => ({ count: 0, data: [] })),
+      // index 8 — sessions 30d rows feed both distinct count AND
+      // daily session bucket. Two distinct sessions today + one
+      // duplicate today + one different session yesterday.
+      {
+        count: null,
+        data: [
+          { session_id: "s-today-A", created_at: todayIso },
+          { session_id: "s-today-B", created_at: todayIso },
+          { session_id: "s-today-A", created_at: todayIso }, // duplicate
+          { session_id: "s-yest-A", created_at: yesterday },
+        ],
+      },
+      ...Array.from({ length: 3 }, () => ({ count: 0, data: [] })), // 9-11
+      // index 12 — mints trend rows. Two mints today, one yesterday.
+      {
+        count: null,
+        data: [
+          { minted_at: todayIso },
+          { minted_at: todayIso },
+          { minted_at: yesterday },
+        ],
+      },
+    ];
+    getSupabaseServerMock.mockReturnValue(buildSupabaseStub(fixtures));
+
+    const stats = await getPublicStats();
+
+    // Dense 30-day window, today is the LAST bucket.
+    expect(stats.activityTrend30d).toHaveLength(30);
+    const last = stats.activityTrend30d[29];
+    expect(last.date).toBe(todayKey);
+    expect(last.sessions).toBe(2); // duplicate session_id collapsed
+    expect(last.mints).toBe(2);
+
+    const dayBefore = stats.activityTrend30d[28];
+    expect(dayBefore.sessions).toBe(1);
+    expect(dayBefore.mints).toBe(1);
+
+    // Days with no activity stay at zero — chart can index by
+    // position without skipping holes.
+    const someEmptyDay = stats.activityTrend30d[5];
+    expect(someEmptyDay.sessions).toBe(0);
+    expect(someEmptyDay.mints).toBe(0);
+  });
+
+  it("returns an empty activityTrend30d when BOTH trend queries fail", async () => {
+    const fixtures: QueryFixture[] = [
+      ...Array.from({ length: 8 }, () => ({ count: 0, data: [] })),
+      { count: null, data: null, error: new Error("sessions fail") }, // 8 sessions30d FAILS
+      ...Array.from({ length: 3 }, () => ({ count: 0, data: [] })), // 9-11
+      { count: null, data: null, error: new Error("mints fail") }, // 12 mints trend FAILS
+    ];
+    getSupabaseServerMock.mockReturnValue(buildSupabaseStub(fixtures));
+
+    const stats = await getPublicStats();
+    expect(stats.activityTrend30d).toEqual([]);
   });
 });

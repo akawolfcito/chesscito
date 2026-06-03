@@ -1,9 +1,176 @@
-import type { DifficultyTally, PublicStats } from "@/lib/stats/public-aggregator";
+import type {
+  DailyBucket,
+  DifficultyTally,
+  PublicStats,
+} from "@/lib/stats/public-aggregator";
 import { StatCard } from "./stat-card";
 
 type StatsPageProps = {
   stats: PublicStats;
 };
+
+const TREND_SESSIONS_ACCENT = "rgba(110, 65, 15, 0.55)";
+const TREND_MINTS_ACCENT = "rgba(217, 119, 6, 0.85)";
+const DIFFICULTY_BAR_TRACK = "rgba(110, 65, 15, 0.10)";
+const DIFFICULTY_BAR_FILL = "rgba(217, 119, 6, 0.85)";
+
+function nf(n: number): string {
+  return new Intl.NumberFormat("en-US").format(n);
+}
+
+function difficultyMixCaption(tally: DifficultyTally): string {
+  const max = Math.max(tally.easy, tally.medium, tally.hard);
+  if (tally.easy === max) return "Most current mints are beginner/onboarding activity.";
+  if (tally.medium === max) return "Most current mints are mid-skill activity.";
+  return "Most current mints are advanced/expert activity.";
+}
+
+/**
+ * Decorative SVG sparkline of 30 daily bars. Pure SVG, no chart
+ * library. Empty days render as a 0.5-unit stub so the eye reads
+ * "30 evenly spaced bars" instead of gaps that suggest missing data.
+ * The series is exposed numerically above the chart and via the
+ * dense bucket array in the aggregator, so screen readers don't
+ * lose information by treating the SVG as decoration.
+ */
+function TrendSparkline({
+  values,
+  accent,
+}: {
+  values: number[];
+  accent: string;
+}) {
+  const N = Math.max(1, values.length);
+  const max = Math.max(1, ...values);
+  const W = 300;
+  const H = 56;
+  const GAP = 1.2;
+  const barW = Math.max(1, (W - GAP * (N - 1)) / N);
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      width="100%"
+      height={H}
+      role="img"
+      aria-hidden
+    >
+      {values.map((v, i) => {
+        const h = (v / max) * H;
+        const x = i * (barW + GAP);
+        const y = H - h;
+        return (
+          <rect
+            key={i}
+            x={x}
+            y={y}
+            width={barW}
+            height={h > 0 ? Math.max(h, 1) : 0.5}
+            fill={accent}
+            opacity={v > 0 ? 1 : 0.35}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+function TrendPanel({
+  label,
+  total,
+  values,
+  accent,
+  rangeFrom,
+  rangeTo,
+}: {
+  label: string;
+  total: number;
+  values: number[];
+  accent: string;
+  rangeFrom: string;
+  rangeTo: string;
+}) {
+  return (
+    <div className="paper-tray flex flex-col gap-2 px-4 py-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <span
+          className="text-[0.625rem] font-semibold uppercase tracking-wide"
+          style={{ color: "var(--paper-text-subtle)" }}
+        >
+          {label}
+        </span>
+        <span
+          className="text-sm font-bold"
+          style={{ color: "var(--paper-text)" }}
+        >
+          {nf(total)}
+          <span
+            className="ml-1 text-[0.6875rem] font-normal"
+            style={{ color: "var(--paper-text-subtle)" }}
+          >
+            total 30d
+          </span>
+        </span>
+      </div>
+      <TrendSparkline values={values} accent={accent} />
+      <div
+        className="flex justify-between text-[0.625rem]"
+        style={{ color: "var(--paper-text-subtle)" }}
+      >
+        <span>{rangeFrom}</span>
+        <span>{rangeTo}</span>
+      </div>
+    </div>
+  );
+}
+
+function DifficultyMixChart({ tally }: { tally: DifficultyTally }) {
+  const total = tally.easy + tally.medium + tally.hard;
+  if (total <= 0) return null;
+  const bands: Array<{ key: keyof DifficultyTally; label: string }> = [
+    { key: "easy", label: "Easy" },
+    { key: "medium", label: "Medium" },
+    { key: "hard", label: "Hard" },
+  ];
+  return (
+    <div className="paper-tray flex flex-col gap-2 px-4 py-3">
+      {bands.map((b) => {
+        const value = tally[b.key];
+        const pct = (value / total) * 100;
+        return (
+          <div key={b.key} className="flex items-center gap-3 text-xs">
+            <span
+              className="w-16 shrink-0 font-semibold"
+              style={{ color: "var(--paper-text)" }}
+            >
+              {b.label}
+            </span>
+            <div
+              className="flex-1 overflow-hidden rounded-full"
+              style={{ background: DIFFICULTY_BAR_TRACK, height: "0.625rem" }}
+              role="img"
+              aria-label={`${b.label}: ${value} of ${total} mints (${pct.toFixed(0)}%)`}
+            >
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${pct}%`,
+                  background: DIFFICULTY_BAR_FILL,
+                }}
+              />
+            </div>
+            <span
+              className="w-12 shrink-0 text-right font-semibold tabular-nums"
+              style={{ color: "var(--paper-text)" }}
+            >
+              {nf(value)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 const DIFFICULTY_LABELS: Record<keyof DifficultyTally, string> = {
   easy: "Easy",
@@ -292,6 +459,75 @@ export function StatsPage({ stats }: StatsPageProps) {
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {/* Activity trend chart — two 30-day sparklines (sessions +
+          mints) over the same time axis. Hidden entirely when the
+          aggregator returned an empty trend (both upstream queries
+          failed) rather than rendering an empty grid. */}
+      {stats.activityTrend30d.length > 0 ? (() => {
+        const sessions = stats.activityTrend30d.map((b: DailyBucket) => b.sessions);
+        const mints = stats.activityTrend30d.map((b: DailyBucket) => b.mints);
+        const sessionsTotal = sessions.reduce((a, b) => a + b, 0);
+        const mintsTotal = mints.reduce((a, b) => a + b, 0);
+        const first = stats.activityTrend30d[0]?.date ?? "";
+        const last =
+          stats.activityTrend30d[stats.activityTrend30d.length - 1]?.date ?? "";
+        return (
+          <section>
+            <h3
+              className="mb-1 text-base font-bold md:text-lg"
+              style={{ color: "var(--paper-text)" }}
+            >
+              Activity trend, last 30 days
+            </h3>
+            <p
+              className="mb-3 text-[0.6875rem] leading-tight"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              Approx. app sessions and Victory mints over the last 30 days.
+            </p>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <TrendPanel
+                label="Approx. app sessions"
+                total={sessionsTotal}
+                values={sessions}
+                accent={TREND_SESSIONS_ACCENT}
+                rangeFrom={first}
+                rangeTo={last}
+              />
+              <TrendPanel
+                label="Victory mints"
+                total={mintsTotal}
+                values={mints}
+                accent={TREND_MINTS_ACCENT}
+                rangeFrom={first}
+                rangeTo={last}
+              />
+            </div>
+          </section>
+        );
+      })() : null}
+
+      {/* Victory difficulty mix — horizontal bars complement the
+          three-card breakdown above; cards give precise integers,
+          bars give visual proportion at a glance. */}
+      {diff && diff.easy + diff.medium + diff.hard > 0 ? (
+        <section>
+          <h3
+            className="mb-1 text-base font-bold md:text-lg"
+            style={{ color: "var(--paper-text)" }}
+          >
+            Victory difficulty mix
+          </h3>
+          <p
+            className="mb-3 text-[0.6875rem] leading-tight"
+            style={{ color: "var(--paper-text-subtle)" }}
+          >
+            {difficultyMixCaption(diff)}
+          </p>
+          <DifficultyMixChart tally={diff} />
         </section>
       ) : null}
 

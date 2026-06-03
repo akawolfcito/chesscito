@@ -26,6 +26,18 @@ export type DifficultyTally = {
   hard: number;
 };
 
+/** Per-day aggregate for the trailing 30-day activity chart. `date`
+ *  is a `YYYY-MM-DD` UTC string; `sessions` is the distinct
+ *  session_id count for that calendar day; `mints` is the number
+ *  of Victory NFTs minted that day. Buckets are dense (every day in
+ *  the window is present, missing days come through as zeros) so
+ *  the chart consumer can index by position without holes. */
+export type DailyBucket = {
+  date: string;
+  sessions: number;
+  mints: number;
+};
+
 export type PublicStats = {
   totalVictories: number | null;
   victories7d: number | null;
@@ -45,6 +57,10 @@ export type PublicStats = {
   coachAnalyses7d: number | null;
   hallOfFame: VictoryRow[];
   leaderboardTop10: LeaderboardRow[];
+  /** 30 entries, oldest day first. Empty array if either underlying
+   *  query fails — the consumer hides the chart entirely rather than
+   *  rendering a misleading flat line. */
+  activityTrend30d: DailyBucket[];
   /** ISO timestamp at aggregation time. Used by the page as the
    *  "as of" label so a stale CDN snapshot is identifiable. */
   generatedAt: string;
@@ -64,6 +80,7 @@ export const EMPTY_PUBLIC_STATS: PublicStats = {
   coachAnalyses7d: null,
   hallOfFame: [],
   leaderboardTop10: [],
+  activityTrend30d: [],
   generatedAt: new Date(0).toISOString(),
 };
 
@@ -104,6 +121,59 @@ function extractRows<T>(res: PromiseSettledResult<DataResult<T>>): T[] {
   if (res.status !== "fulfilled") return [];
   if (res.value?.error) return [];
   return Array.isArray(res.value?.data) ? res.value.data : [];
+}
+
+/**
+ * Build a dense 30-day window (oldest UTC day first → today) of
+ * session + mint counts. Days with no activity come through as
+ * zeros so the chart consumer can index by position without
+ * skipping holes. Distinct session_id per day is computed in JS
+ * over the same row set the lifetime distinct count uses, no extra
+ * query.
+ */
+function computeActivityTrend(
+  sessionRows: { session_id?: string | null; created_at?: string | null }[]
+    | null
+    | undefined,
+  mintRows: { minted_at?: string | null }[] | null | undefined,
+): DailyBucket[] {
+  type Bucket = { sessions: Set<string>; mints: number };
+  const buckets = new Map<string, Bucket>();
+
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  for (let offset = 29; offset >= 0; offset -= 1) {
+    const d = new Date(today.getTime() - offset * 24 * 60 * 60 * 1000);
+    const key = d.toISOString().slice(0, 10);
+    buckets.set(key, { sessions: new Set(), mints: 0 });
+  }
+
+  if (Array.isArray(sessionRows)) {
+    for (const row of sessionRows) {
+      const ts = typeof row?.created_at === "string" ? row.created_at : null;
+      const sid = typeof row?.session_id === "string" ? row.session_id : null;
+      if (!ts || !sid) continue;
+      const key = ts.slice(0, 10);
+      const b = buckets.get(key);
+      if (b) b.sessions.add(sid);
+    }
+  }
+
+  if (Array.isArray(mintRows)) {
+    for (const row of mintRows) {
+      const ts = typeof row?.minted_at === "string" ? row.minted_at : null;
+      if (!ts) continue;
+      const key = ts.slice(0, 10);
+      const b = buckets.get(key);
+      if (b) b.mints += 1;
+    }
+  }
+
+  return Array.from(buckets.entries()).map(([date, b]) => ({
+    date,
+    sessions: b.sessions.size,
+    mints: b.mints,
+  }));
 }
 
 function tallyDifficulty(
@@ -188,13 +258,16 @@ export async function getPublicStats(): Promise<PublicStats> {
       .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
       DataResult<{ session_id: string }>
     >,
-    // 8. Active sessions 30d
+    // 8. Active sessions 30d — also feeds the daily session bucket
+    //    in the activity trend chart, so select `created_at` too.
+    //    extractDistinctCount only reads `session_id` and ignores
+    //    the extra column.
     supabase
       .from("analytics_events")
-      .select("session_id")
+      .select("session_id, created_at")
       .gte("created_at", since30d)
       .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
-      DataResult<{ session_id: string }>
+      DataResult<{ session_id: string; created_at: string }>
     >,
     // 9. Coach analyses lifetime
     supabase
@@ -216,6 +289,16 @@ export async function getPublicStats(): Promise<PublicStats> {
     // 12. Leaderboard top 10 — reuses the existing helper which
     //     prefers `get_leaderboard` RPC and falls back to view.
     fetchLeaderboardFromDb(),
+    // 13. Daily mints over the last 30 days — feeds the activity
+    //     trend chart's mint series. Only `minted_at` is needed;
+    //     bucketing into per-day counts happens in JS.
+    supabase
+      .from("victories")
+      .select("minted_at")
+      .gte("minted_at", since30d)
+      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
+      DataResult<{ minted_at: string }>
+    >,
   ]);
 
   const [
@@ -232,7 +315,29 @@ export async function getPublicStats(): Promise<PublicStats> {
     coach7dRes,
     hallOfFameRes,
     leaderboardRes,
+    mintsTrendRes,
   ] = results;
+
+  // Activity trend: both queries must have fulfilled with arrays;
+  // any failure on either side produces an empty trend so the
+  // consumer can hide the chart instead of drawing a misleading
+  // flat line with one-sided data.
+  const sessionTrendRows =
+    sessions30dRes.status === "fulfilled" &&
+    Array.isArray(
+      (sessions30dRes.value as DataResult<{ session_id: string; created_at: string }>)?.data,
+    )
+      ? (sessions30dRes.value as DataResult<{ session_id: string; created_at: string }>).data!
+      : null;
+  const mintTrendRows =
+    mintsTrendRes.status === "fulfilled" &&
+    Array.isArray((mintsTrendRes.value as DataResult<{ minted_at: string }>)?.data)
+      ? (mintsTrendRes.value as DataResult<{ minted_at: string }>).data!
+      : null;
+  const activityTrend30d =
+    sessionTrendRows == null && mintTrendRows == null
+      ? []
+      : computeActivityTrend(sessionTrendRows, mintTrendRows);
 
   return {
     totalVictories: extractCount(totalVictoriesRes as PromiseSettledResult<CountResult>),
@@ -274,6 +379,7 @@ export async function getPublicStats(): Promise<PublicStats> {
       leaderboardRes.status === "fulfilled"
         ? leaderboardRes.value.slice(0, 10)
         : [],
+    activityTrend30d,
     generatedAt,
   };
 }

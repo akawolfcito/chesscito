@@ -46,6 +46,11 @@ const SAMPLE_STATS: PublicStats = {
     { rank: 1, player: "0xabc1230000000000000000000000000000009999", total_score: 9999, is_verified: true },
     { rank: 2, player: "0xdef4560000000000000000000000000000008888", total_score: 8888, is_verified: false },
   ],
+  activityTrend30d: Array.from({ length: 30 }, (_, i) => ({
+    date: `2026-05-${String(i + 1).padStart(2, "0")}`,
+    sessions: i % 5,
+    mints: i % 3,
+  })),
   generatedAt: new Date().toISOString(),
 };
 
@@ -92,14 +97,16 @@ describe("StatsPage", () => {
 
   it("renders the difficulty breakdown with mapped labels", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
-    // Easy/Medium/Hard appear in both the difficulty cards AND the
-    // Hall of Fame badges, so use getAllByText.
+    // Easy/Medium/Hard appear in: difficulty cards, HoF badges, AND
+    // the new horizontal mix chart — getAllByText keeps all callsites
+    // legal while still proving the section renders.
     expect(screen.getAllByText("Easy").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Medium").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Hard").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("500")).toBeInTheDocument();
-    expect(screen.getByText("600")).toBeInTheDocument();
-    expect(screen.getByText("134")).toBeInTheDocument();
+    // Counts surface twice each (small card + mix bar trailing number).
+    expect(screen.getAllByText("500").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("600").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("134").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders Hall of Fame entries with truncated wallet + difficulty + relative time", () => {
@@ -193,6 +200,47 @@ describe("StatsPage", () => {
     // sentence can be rendered honestly, so the section is skipped
     // rather than printing a header with no content.
     expect(screen.queryByText("Platform signals")).toBeNull();
+  });
+
+  it("renders the Activity trend section with both series labeled", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(
+      screen.getByText("Activity trend, last 30 days"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Approx\. app sessions and Victory mints over the last 30 days\./,
+      ),
+    ).toBeInTheDocument();
+    // "Approx. app sessions" is unique to the trend panel label.
+    expect(screen.getByText("Approx. app sessions")).toBeInTheDocument();
+    // "Victory mints" appears in the trend panel label AND in the
+    // Tracked today bullet — getAllByText keeps both meanings legal.
+    expect(screen.getAllByText("Victory mints").length).toBeGreaterThanOrEqual(2);
+    // Totals from SAMPLE_STATS: sessions = sum(i%5 for i in 0..29) = 60,
+    // mints = sum(i%3 for i in 0..29) = 30.
+    expect(screen.getByText("60")).toBeInTheDocument();
+    expect(screen.getByText("30")).toBeInTheDocument();
+  });
+
+  it("hides the Activity trend section entirely when the trend is empty", () => {
+    render(<StatsPage stats={EMPTY_PUBLIC_STATS} />);
+    expect(screen.queryByText("Activity trend, last 30 days")).toBeNull();
+  });
+
+  it("renders the Victory difficulty mix chart with a band-aware caption", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText("Victory difficulty mix")).toBeInTheDocument();
+    // SAMPLE_STATS difficulty: easy=500, medium=600, hard=134 →
+    // medium is the max band, so caption is the mid-skill variant.
+    expect(
+      screen.getByText("Most current mints are mid-skill activity."),
+    ).toBeInTheDocument();
+  });
+
+  it("hides Victory difficulty mix when no difficulty data is available", () => {
+    render(<StatsPage stats={EMPTY_PUBLIC_STATS} />);
+    expect(screen.queryByText("Victory difficulty mix")).toBeNull();
   });
 
   it("renders 'Tracked today / Coming next' bifurcation", () => {
