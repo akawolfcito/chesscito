@@ -138,15 +138,75 @@ describe("StatsPage", () => {
   it("renders the methodology caveat block with the platform framing copy", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
     expect(screen.getByText("Methodology")).toBeInTheDocument();
+    // Term-level definitions kept here so a reader can decode the
+    // metric labels above; the "not yet" enumeration moved into the
+    // "Tracked today / Coming next" section.
     expect(
       screen.getByText(/Active sessions are anonymous app sessions/),
     ).toBeInTheDocument();
-    // Explicit "not yet" enumeration so the page never inflates coverage.
     expect(
       screen.getByText(
-        /Connected wallets, stablecoin volume, failed transactions, protocol revenue, and retention cohorts are not included yet/,
+        /Leaderboard entries are based on game scores and may include players who have not minted a Victory NFT/,
       ),
     ).toBeInTheDocument();
+  });
+
+  it("renders the 'What this shows' orientation bullets", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText("What this shows")).toBeInTheDocument();
+    expect(
+      screen.getByText("Recent app activity from anonymous sessions."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "On-chain saved victories from Chesscito records.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Community activity from mints and scoreboards."),
+    ).toBeInTheDocument();
+  });
+
+  it("renders Platform signals derived from the current snapshot", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText("Platform signals")).toBeInTheDocument();
+    // SAMPLE_STATS: victories30d=250, totalVictories=1234, victories7d=56,
+    // diff easy=500 medium=600 hard=134 → Medium is the max band.
+    expect(
+      screen.getByText(
+        "250 of 1234 Victory mints happened in the last 30 days.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("56 Victory mints happened in the last 7 days."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Most minted victories are Medium difficulty, showing steady mid-skill engagement.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("hides Platform signals entirely when no insight is computable", () => {
+    render(<StatsPage stats={EMPTY_PUBLIC_STATS} />);
+    // EMPTY_PUBLIC_STATS has every numeric field null → no signal
+    // sentence can be rendered honestly, so the section is skipped
+    // rather than printing a header with no content.
+    expect(screen.queryByText("Platform signals")).toBeNull();
+  });
+
+  it("renders 'Tracked today / Coming next' bifurcation", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(
+      screen.getByText("Tracked today / Coming next"),
+    ).toBeInTheDocument();
+    // Tracked today bullets (sample)
+    expect(screen.getByText("App sessions")).toBeInTheDocument();
+    expect(screen.getByText("Welcome pack claims")).toBeInTheDocument();
+    // Coming next bullets (sample)
+    expect(screen.getByText("Connected wallets")).toBeInTheDocument();
+    expect(screen.getByText("Retention cohorts")).toBeInTheDocument();
+    expect(screen.getByText("Purchase conversion")).toBeInTheDocument();
   });
 
   it("disambiguates the cards whose source differs from Victories table", () => {

@@ -39,8 +39,81 @@ function formatGeneratedAt(iso: string): string {
   return new Date(ts).toISOString().replace("T", " ").slice(0, 16) + " UTC";
 }
 
+/**
+ * Derives short narrative insights from the current snapshot. Each
+ * bullet is independently gated so a missing field (null from a
+ * failed query) silently drops its line instead of rendering a
+ * partial / nonsensical sentence.
+ */
+function computePlatformSignals(stats: PublicStats): string[] {
+  const signals: string[] = [];
+
+  if (
+    stats.victories30d != null &&
+    stats.totalVictories != null &&
+    stats.totalVictories > 0
+  ) {
+    signals.push(
+      `${stats.victories30d} of ${stats.totalVictories} Victory mints happened in the last 30 days.`,
+    );
+  }
+
+  if (stats.victories7d != null) {
+    signals.push(
+      `${stats.victories7d} Victory mints happened in the last 7 days.`,
+    );
+  }
+
+  const diff = stats.victoriesByDifficulty;
+  if (diff) {
+    const total = diff.easy + diff.medium + diff.hard;
+    if (total > 0) {
+      const max = Math.max(diff.easy, diff.medium, diff.hard);
+      let label = "";
+      let context = "";
+      if (diff.easy === max) {
+        label = "Easy";
+        context = "showing beginner/onboarding usage";
+      } else if (diff.medium === max) {
+        label = "Medium";
+        context = "showing steady mid-skill engagement";
+      } else {
+        label = "Hard";
+        context = "showing strong advanced engagement";
+      }
+      signals.push(
+        `Most minted victories are ${label} difficulty, ${context}.`,
+      );
+    }
+  }
+
+  return signals;
+}
+
+const WHAT_THIS_SHOWS: ReadonlyArray<string> = [
+  "Recent app activity from anonymous sessions.",
+  "On-chain saved victories from Chesscito records.",
+  "Community activity from mints and scoreboards.",
+];
+
+const TRACKED_TODAY: ReadonlyArray<string> = [
+  "App sessions",
+  "Victory mints",
+  "Welcome pack claims",
+  "Leaderboard scores",
+];
+
+const COMING_NEXT: ReadonlyArray<string> = [
+  "Connected wallets",
+  "Stablecoin volume",
+  "Purchase conversion",
+  "Failed transaction rate",
+  "Retention cohorts",
+];
+
 export function StatsPage({ stats }: StatsPageProps) {
   const diff = stats.victoriesByDifficulty;
+  const platformSignals = computePlatformSignals(stats);
 
   return (
     <div className="space-y-8 md:space-y-10">
@@ -79,6 +152,35 @@ export function StatsPage({ stats }: StatsPageProps) {
           </span>
         </p>
       </header>
+
+      {/* What this shows — orientation block so a reviewer reads the
+          numbers below as platform analytics, not as a personal
+          dashboard or a marketing scoreboard. */}
+      <section>
+        <h2
+          className="mb-2 text-sm font-bold md:text-base"
+          style={{ color: "var(--paper-text)" }}
+        >
+          What this shows
+        </h2>
+        <ul
+          className="space-y-1.5 text-xs md:text-sm"
+          style={{ color: "var(--paper-text-muted)" }}
+        >
+          {WHAT_THIS_SHOWS.map((line) => (
+            <li
+              key={line}
+              className="flex gap-2"
+              style={{ color: "var(--paper-text-muted)" }}
+            >
+              <span aria-hidden style={{ color: "var(--paper-text-subtle)" }}>
+                •
+              </span>
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {/* Primary headline metrics — platform-level signal, not
           player-level. Welcome Packs (potentially zero-state or env-
@@ -159,6 +261,39 @@ export function StatsPage({ stats }: StatsPageProps) {
           ))}
         </div>
       </section>
+
+      {/* Platform signals — short narrated insights derived from the
+          numbers above. Each bullet is independently null-gated by
+          computePlatformSignals, so a missing field drops its line
+          instead of producing a partial sentence. Section is hidden
+          entirely when no signal is computable. */}
+      {platformSignals.length > 0 ? (
+        <section>
+          <h3
+            className="mb-2 text-base font-bold md:text-lg"
+            style={{ color: "var(--paper-text)" }}
+          >
+            Platform signals
+          </h3>
+          <ul
+            className="space-y-1.5 text-xs md:text-sm"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {platformSignals.map((line) => (
+              <li
+                key={line}
+                className="flex gap-2"
+                style={{ color: "var(--paper-text-muted)" }}
+              >
+                <span aria-hidden style={{ color: "var(--paper-text-subtle)" }}>
+                  •
+                </span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {/* Recent Victory Mints (was: "Hall of Fame" — renamed so the
           section reads as a platform activity feed rather than an
@@ -251,7 +386,83 @@ export function StatsPage({ stats }: StatsPageProps) {
         )}
       </section>
 
-      {/* Methodology + caveats */}
+      {/* Tracked today / Coming next — bifurcated scope so the page
+          self-discloses both what it covers and what it deliberately
+          excludes. Sits above the Methodology footnote because the
+          enumeration is the higher-signal answer to "is this honest
+          coverage?", and the methodology prose then explains the
+          terms (sessions vs wallets). */}
+      <section>
+        <h3
+          className="mb-2 text-base font-bold md:text-lg"
+          style={{ color: "var(--paper-text)" }}
+        >
+          Tracked today / Coming next
+        </h3>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div
+            className="paper-tray px-4 py-3"
+            style={{ color: "var(--paper-text)" }}
+          >
+            <p
+              className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              Tracked today
+            </p>
+            <ul className="space-y-1 text-xs md:text-sm">
+              {TRACKED_TODAY.map((line) => (
+                <li
+                  key={line}
+                  className="flex gap-2"
+                  style={{ color: "var(--paper-text-muted)" }}
+                >
+                  <span
+                    aria-hidden
+                    style={{ color: "var(--paper-text-subtle)" }}
+                  >
+                    •
+                  </span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div
+            className="paper-tray px-4 py-3"
+            style={{ color: "var(--paper-text)" }}
+          >
+            <p
+              className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+              style={{ color: "var(--paper-text-subtle)" }}
+            >
+              Coming next
+            </p>
+            <ul className="space-y-1 text-xs md:text-sm">
+              {COMING_NEXT.map((line) => (
+                <li
+                  key={line}
+                  className="flex gap-2"
+                  style={{ color: "var(--paper-text-muted)" }}
+                >
+                  <span
+                    aria-hidden
+                    style={{ color: "var(--paper-text-subtle)" }}
+                  >
+                    •
+                  </span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Methodology — short footnote. The Tracked today / Coming
+          next block above already enumerates scope; this block just
+          gives the term-level definitions a reader needs to read
+          "App sessions" and "Victory mints" correctly. */}
       <section
         className="rounded-xl border px-3 py-3 text-[0.6875rem] leading-snug"
         style={{
@@ -267,9 +478,7 @@ export function StatsPage({ stats }: StatsPageProps) {
           Active sessions are anonymous app sessions, not connected
           wallets. Victory mints count saved on-chain victories.
           Leaderboard entries are based on game scores and may include
-          players who have not minted a Victory NFT. Connected wallets,
-          stablecoin volume, failed transactions, protocol revenue, and
-          retention cohorts are not included yet.
+          players who have not minted a Victory NFT.
         </p>
       </section>
     </div>
