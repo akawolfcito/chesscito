@@ -10,6 +10,8 @@ import {
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { TreasureTile } from "@/components/scene-rooted/treasure-tile";
+import { AddCashCta } from "@/components/minipay/add-cash-cta";
+import type { TxErrorKind } from "@/lib/errors";
 import { track } from "@/lib/telemetry";
 
 /** M1 funnel — telemetry context for paywall events. Commit 4 extends
@@ -33,6 +35,13 @@ type Props = {
    *  endgame surface. When omitted, paywall renders but emits no
    *  monetization.* events (legacy / dev fixture path). */
   context?: CoachPaywallContext;
+  /** Surfaced error from useCoachCreditsPurchase. When set, the
+   *  paywall renders an inline error banner above the pack tiles. */
+  error?: string | null;
+  /** Locale-agnostic kind from useCoachCreditsPurchase. When set to
+   *  "insufficientFunds" AND the runtime is MiniPay, the banner also
+   *  surfaces the AddCashCta recovery deeplink. */
+  errorKind?: TxErrorKind | null;
 };
 
 const PACK_PRICE: Record<5 | 20, string> = {
@@ -60,6 +69,8 @@ export function CoachPaywall({
   onBuy,
   onSeePro,
   context,
+  error,
+  errorKind,
 }: Props) {
   const t = useTranslations("COACH_COPY");
   const [buying, setBuying] = useState<5 | 20 | null>(null);
@@ -191,6 +202,23 @@ export function CoachPaywall({
             {previewBody}
           </p>
         </section>
+
+        {error && (
+          <div
+            role="alert"
+            className="mt-4 flex flex-col items-start gap-2 rounded-2xl border px-4 py-3 text-sm"
+            style={{
+              borderColor: "rgba(159, 18, 57, 0.35)",
+              background: "rgba(255, 241, 245, 0.92)",
+              color: "rgba(159, 18, 57, 0.95)",
+            }}
+          >
+            <p className="font-semibold leading-snug">{error}</p>
+            {errorKind === "insufficientFunds" && (
+              <AddCashCta source="coach-credits" />
+            )}
+          </div>
+        )}
 
         <div className="mt-6 grid grid-cols-2 place-items-center gap-3">
           <div className="flex flex-col items-center gap-2">

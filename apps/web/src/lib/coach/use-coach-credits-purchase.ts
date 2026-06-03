@@ -10,7 +10,7 @@ import { selectMaxBalanceToken } from "@/lib/contracts/select-payment-token";
 import { COACH_PACK_ITEMS } from "@/lib/contracts/shop-catalog";
 import type { CoachPackSize } from "@/lib/contracts/shop-catalog";
 import { waitForReceiptWithTimeout } from "@/lib/contracts/transaction-helpers";
-import { isUserCancellation, isTransactionTimeout, classifyTxErrorKind } from "@/lib/errors";
+import { isUserCancellation, isTransactionTimeout, classifyTxErrorKind, type TxErrorKind } from "@/lib/errors";
 
 export type CoachCreditsPurchaseInjected = {
   address?: `0x${string}`;
@@ -38,6 +38,12 @@ export type CoachCreditsPurchaseInput = {
 export type CoachCreditsPurchaseState = {
   isProcessing: boolean;
   error: string | null;
+  /** Locale-agnostic tx classification from classifyTxErrorKind. Null
+   *  unless the most recent purchase attempt errored with an
+   *  actionable kind (insufficientFunds, network, revert, etc.).
+   *  Cancellations and timeouts emit null. Consumed by CoachPaywall
+   *  to gate the AddCashCta recovery deeplink. */
+  errorKind: TxErrorKind | null;
   /** Last-completed tx hash (for receipt links etc.). Resets on next call. */
   lastTxHash: `0x${string}` | null;
   buyCredits: (itemId: number) => Promise<void>;
@@ -54,6 +60,9 @@ export type CoachCreditsPurchaseState = {
 export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): CoachCreditsPurchaseState {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Kept in lock-step with `error` — null whenever no error is set.
+  // See CoachPaywall for the consumer-side AddCashCta gating.
+  const [errorKind, setErrorKind] = useState<TxErrorKind | null>(null);
   const [lastTxHash, setLastTxHash] = useState<`0x${string}` | null>(null);
 
   // Wagmi reads — accept injected overrides for VR fixtures / tests
@@ -67,6 +76,7 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
 
   const reset = useCallback(() => {
     setError(null);
+    setErrorKind(null);
     setLastTxHash(null);
   }, []);
 
@@ -78,6 +88,7 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
 
       if (!packEntry) {
         setError(`Unknown coach item id: ${itemId}`);
+        setErrorKind(null);
         return;
       }
 
@@ -85,6 +96,7 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
 
       if (!address) {
         setError("Wallet not connected");
+        setErrorKind(null);
         return;
       }
 
@@ -93,6 +105,7 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
       if (input.injected?.sendPurchase) {
         setIsProcessing(true);
         setError(null);
+        setErrorKind(null);
         setLastTxHash(null);
         try {
           // For injected path, select best token from injected balances if available,
@@ -119,6 +132,7 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Purchase failed";
           setError(msg);
+          setErrorKind(classifyTxErrorKind(err));
           input.onPurchaseTelemetry?.({ stage: "failed", itemId, error: msg });
         } finally {
           setIsProcessing(false);
@@ -130,6 +144,7 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
       const shopAddress = getShopAddress(chainId);
       if (!shopAddress) {
         setError("Shop unavailable on this chain");
+        setErrorKind(null);
         return;
       }
 
@@ -138,6 +153,7 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
 
       if (!publicClient) {
         setError("Public client unavailable");
+        setErrorKind(null);
         return;
       }
 
@@ -173,6 +189,7 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
 
       if (!paymentToken) {
         setError("Insufficient token balance");
+        setErrorKind("insufficientFunds");
         return;
       }
 
@@ -182,6 +199,7 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
 
       setIsProcessing(true);
       setError(null);
+      setErrorKind(null);
       setLastTxHash(null);
       input.onPurchaseTelemetry?.({ stage: "request", itemId });
 
@@ -235,16 +253,20 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
         }
       } catch (err) {
         let errorMsg: string;
+        let kind: TxErrorKind | null = null;
         if (isUserCancellation(err)) {
           errorMsg = "cancelled";
         } else if (isTransactionTimeout(err)) {
           errorMsg = "timeout";
           console.warn("[CoachPurchase] timeout", err instanceof Error ? err.message : "");
         } else {
-          errorMsg = classifyTxErrorKind(err);
+          const classified = classifyTxErrorKind(err);
+          errorMsg = classified;
+          kind = classified;
           console.warn("[CoachPurchase] error", err instanceof Error ? err.message : "");
         }
         setError(errorMsg);
+        setErrorKind(kind);
         input.onPurchaseTelemetry?.({ stage: "failed", itemId, error: errorMsg });
         // Stay on paywall so user can retry or use quick review
       } finally {
@@ -266,6 +288,7 @@ export function useCoachCreditsPurchase(input: CoachCreditsPurchaseInput): Coach
   return {
     isProcessing,
     error,
+    errorKind,
     lastTxHash,
     buyCredits,
     reset,

@@ -216,3 +216,65 @@ describe("CoachPaywall — TreasureTile composition (post-M3.5)", () => {
     expect(laterAfter[laterAfter.length - 1].disabled).toBe(true);
   });
 });
+
+// AddCashCta reads useMiniPay — control it per test so we can assert
+// both the in-MiniPay (CTA visible) and out-of-MiniPay (CTA hidden)
+// branches of the insufficient-funds recovery affordance.
+vi.mock("@/hooks/use-minipay", () => ({
+  useMiniPay: vi.fn(() => ({ isReady: true, isMiniPay: false, hasProvider: false })),
+}));
+import { useMiniPay } from "@/hooks/use-minipay";
+
+const setMiniPay = (isMiniPay: boolean) => {
+  (useMiniPay as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+    isReady: true,
+    isMiniPay,
+    hasProvider: false,
+  });
+};
+
+describe("CoachPaywall — error banner + AddCashCta", () => {
+  it("renders no banner when error is null", () => {
+    render(
+      <CoachPaywall
+        open
+        onOpenChange={() => {}}
+        onBuy={() => {}}
+      />,
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("renders the banner with message when error is set, hides CTA outside MiniPay", () => {
+    setMiniPay(false);
+    render(
+      <CoachPaywall
+        open
+        onOpenChange={() => {}}
+        onBuy={() => {}}
+        error="Insufficient token balance"
+        errorKind="insufficientFunds"
+      />,
+    );
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(screen.getByText("Insufficient token balance")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /Deposit in MiniPay/i }),
+    ).toBeNull();
+  });
+
+  it("renders the banner + AddCashCta when errorKind=insufficientFunds inside MiniPay", () => {
+    setMiniPay(true);
+    render(
+      <CoachPaywall
+        open
+        onOpenChange={() => {}}
+        onBuy={() => {}}
+        error="Insufficient token balance"
+        errorKind="insufficientFunds"
+      />,
+    );
+    const link = screen.getByRole("link", { name: /Deposit in MiniPay/i });
+    expect(link).toHaveAttribute("href", "https://minipay.opera.com/add_cash");
+  });
+});

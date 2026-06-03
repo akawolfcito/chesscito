@@ -20,6 +20,11 @@ describe("useCoachCreditsPurchase (skeleton)", () => {
     expect(result.current.error).toBeNull();
   });
 
+  it("exposes errorKind=null in initial state", () => {
+    const { result } = renderHook(() => useCoachCreditsPurchase(baseInput));
+    expect(result.current.errorKind).toBeNull();
+  });
+
   it("buyCredits is referentially stable across re-renders", () => {
     const { result, rerender } = renderHook((p) => useCoachCreditsPurchase(p), { initialProps: baseInput });
     const fn = result.current.buyCredits;
@@ -61,5 +66,18 @@ describe("useCoachCreditsPurchase (transplanted)", () => {
     await act(async () => { await result.current.buyCredits(3); });
     expect(result.current.error).toBeTruthy();
     expect(result.current.isProcessing).toBe(false);
+  });
+
+  it("buyCredits insufficient-funds error: exposes errorKind=insufficientFunds", async () => {
+    const sendPurchase = vi.fn().mockRejectedValue(
+      new Error("execution reverted: insufficient funds for transfer"),
+    );
+    const { result } = renderHook(() => useCoachCreditsPurchase({
+      ...baseInput,
+      injected: { ...baseInput.injected, sendPurchase },
+    }));
+    await act(async () => { await result.current.buyCredits(3); });
+    expect(result.current.error).toBeTruthy();
+    expect(result.current.errorKind).toBe("insufficientFunds");
   });
 });

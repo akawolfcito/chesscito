@@ -1402,6 +1402,8 @@ function ArenaPageInner() {
               open
               onOpenChange={() => coach.setPhase("idle")}
               onBuy={(pack) => void credits.buyCredits(Number(pack))}
+              error={credits.error}
+              errorKind={credits.errorKind}
               onSeePro={() => {
                 coach.setPhase("idle");
                 proSheet.openSheet();
