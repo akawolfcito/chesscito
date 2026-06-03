@@ -29,6 +29,13 @@ export default defineConfig({
       use: { ...devices["Pixel 5"], viewport: { width: 390, height: 844 } },
     },
     {
+      // MiniPay store-required minimum viewport per
+      // docs/reviews/2026-06-03-viewport-360x640-audit.md.
+      // Additional coverage — `minipay` (390 × 844) stays canonical for VR.
+      name: "minipay-360",
+      use: { ...devices["Pixel 5"], viewport: { width: 360, height: 640 } },
+    },
+    {
       name: "desktop",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
     },
