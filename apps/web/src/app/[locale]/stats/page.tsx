@@ -1,12 +1,11 @@
-import { LegalPageShell } from "@/components/legal-page-shell";
 import { StatsPage } from "@/components/stats/stats-page";
 import { getPublicStats } from "@/lib/stats/public-aggregator";
 
 export const metadata = {
-  title: "Stats — Chesscito",
+  title: "Platform Stats — Chesscito",
   description:
-    "Public platform statistics for Chesscito on Celo — mints, " +
-    "claims, and approximate activity.",
+    "Public activity metrics for Chesscito on Celo — sessions, " +
+    "mints, onboarding, and community activity.",
 };
 
 // Snapshot refreshed by Next.js every hour. Falls back to stale data
@@ -18,9 +17,19 @@ export const revalidate = 3600;
 export default async function StatsRoute() {
   const stats = await getPublicStats();
 
+  // Dropped LegalPageShell (locked to var(--app-max-width) = 390px) in
+  // favor of a landing-aligned full-width shell. /stats is a public
+  // platform dashboard, not an in-app sheet — it deserves to breathe
+  // on desktop and look like the landing footer / about page family
+  // rather than a player-profile card.
   return (
-    <LegalPageShell title="Stats" backHref="/about">
-      <StatsPage stats={stats} />
-    </LegalPageShell>
+    <main
+      className="mission-shell secondary-page-scrim min-h-[100dvh] w-full"
+      style={{ color: "var(--paper-text)" }}
+    >
+      <div className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-10 md:py-12">
+        <StatsPage stats={stats} />
+      </div>
+    </main>
   );
 }

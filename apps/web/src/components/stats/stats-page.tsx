@@ -43,17 +43,34 @@ export function StatsPage({ stats }: StatsPageProps) {
   const diff = stats.victoriesByDifficulty;
 
   return (
-    <div className="space-y-6">
-      <p
-        className="text-[0.6875rem]"
-        style={{ color: "var(--paper-text-subtle)" }}
-      >
-        Public platform metrics. Updated hourly. As of{" "}
-        <span style={{ color: "var(--paper-text-muted)" }}>
-          {formatGeneratedAt(stats.generatedAt)}
-        </span>
-        .
-      </p>
+    <div className="space-y-8 md:space-y-10">
+      <header className="space-y-2">
+        <h1
+          className="fantasy-title text-2xl font-bold md:text-4xl"
+          style={{
+            color: "var(--paper-text)",
+            textShadow: "0 1px 0 rgba(255, 235, 180, 0.7)",
+          }}
+        >
+          Platform Stats
+        </h1>
+        <p
+          className="text-sm md:text-base"
+          style={{ color: "var(--paper-text-muted)" }}
+        >
+          Public activity metrics for Chesscito: sessions, mints,
+          onboarding, and community activity.
+        </p>
+        <p
+          className="text-[0.6875rem]"
+          style={{ color: "var(--paper-text-subtle)" }}
+        >
+          Updated hourly · As of{" "}
+          <span style={{ color: "var(--paper-text-muted)" }}>
+            {formatGeneratedAt(stats.generatedAt)}
+          </span>
+        </p>
+      </header>
 
       {/* Primary headline metrics — platform-level signal, not
           player-level. Welcome Packs (potentially zero-state or env-
@@ -135,13 +152,15 @@ export function StatsPage({ stats }: StatsPageProps) {
         </div>
       </section>
 
-      {/* Hall of Fame */}
+      {/* Recent Victory Mints (was: "Hall of Fame" — renamed so the
+          section reads as a platform activity feed rather than an
+          opinionated curatorial list). */}
       <section>
         <h3
-          className="mb-2 text-sm font-bold"
+          className="mb-2 text-base font-bold md:text-lg"
           style={{ color: "var(--paper-text)" }}
         >
-          Hall of Fame
+          Recent Victory Mints
         </h3>
         {stats.hallOfFame.length === 0 ? (
           <p
@@ -177,13 +196,13 @@ export function StatsPage({ stats }: StatsPageProps) {
         )}
       </section>
 
-      {/* Leaderboard */}
+      {/* Community Leaderboard (was: "Top 10 Leaderboard"). */}
       <section>
         <h3
-          className="mb-1 text-sm font-bold"
+          className="mb-1 text-base font-bold md:text-lg"
           style={{ color: "var(--paper-text)" }}
         >
-          Top 10 Leaderboard
+          Community Leaderboard
         </h3>
         <p
           className="mb-2 text-[0.6875rem] leading-tight"

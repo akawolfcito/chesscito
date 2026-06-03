@@ -50,6 +50,16 @@ const SAMPLE_STATS: PublicStats = {
 };
 
 describe("StatsPage", () => {
+  it("renders the public dashboard header (title + intro)", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText("Platform Stats")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Public activity metrics for Chesscito.*sessions, mints, onboarding/,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("renders the three platform-level primary headline metrics", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
 
