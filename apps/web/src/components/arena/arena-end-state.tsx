@@ -14,6 +14,7 @@ import { VictoryCelebration } from "./victory-celebration";
 import { VictoryClaiming } from "./victory-claiming";
 import { VictoryClaimSuccess } from "./victory-claim-success";
 import { VictoryClaimError } from "./victory-claim-error";
+import type { TxErrorKind } from "@/lib/errors";
 
 export type ClaimPhase = "ready" | "claiming" | "success" | "error" | "cancelled" | "timeout";
 
@@ -42,6 +43,10 @@ type Props = {
   onClaimVictory?: () => void;
   claimPrice?: string;
   claimError?: string | null;
+  /** Locale-agnostic kind from useMintVictory(). Forwarded to
+   *  VictoryClaimError so it can surface the AddCashCta recovery
+   *  deeplink when the failure is insufficientFunds + MiniPay. */
+  claimErrorKind?: TxErrorKind | null;
   moves: number;
   elapsedMs: number;
   difficulty: string;
@@ -125,6 +130,7 @@ export function ArenaEndState({
   onClaimVictory,
   claimPrice,
   claimError,
+  claimErrorKind,
   moves,
   elapsedMs,
   difficulty,
@@ -250,6 +256,7 @@ export function ArenaEndState({
             <VictoryClaimError
               {...sharedProps}
               errorMessage={claimError}
+              errorKind={claimErrorKind}
               onRetry={onClaimVictory}
               kind="error"
             />

@@ -33,6 +33,7 @@ import {
   classifyTxErrorKind,
   isTransactionTimeout,
   isUserCancellation,
+  type TxErrorKind,
 } from "@/lib/errors";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -101,6 +102,10 @@ export type MintVictoryState = {
   shareStatus: ShareStatus;
   /** Localized error message, or null when no error. */
   error: string | null;
+  /** Locale-agnostic kind from classifyTxErrorKind. Null unless the
+   *  hook is in the "error" phase. Consumed by VictoryClaimError to
+   *  decide whether to surface the AddCashCta recovery deeplink. */
+  errorKind: TxErrorKind | null;
   /** Begin the claim flow. No-op when already claiming or guard fails. */
   start: () => Promise<void>;
   /** Reset all claim state + sessionStorage chesscito:claim. */
@@ -210,6 +215,10 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
   });
   const [shareStatus, setShareStatus] = useState<ShareStatus>("locked");
   const [claimError, setClaimError] = useState<string | null>(null);
+  // Locale-agnostic kind exposed so consumer popups can render
+  // recovery affordances (e.g., AddCashCta for "insufficientFunds").
+  // Kept in lock-step with claimError — null whenever phase != "error".
+  const [claimErrorKind, setClaimErrorKind] = useState<TxErrorKind | null>(null);
   const claimingRef = useRef(false);
 
   // ── Persist success to sessionStorage ────────────────────────────────────
@@ -281,6 +290,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
     if (isConnected && !prevConnected.current && claimPhase === "error") {
       setClaimPhase("ready");
       setClaimError(null);
+      setClaimErrorKind(null);
       claimingRef.current = false;
     }
     prevConnected.current = isConnected;
@@ -319,6 +329,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
     setClaimPhase("claiming");
     setClaimStep("signing");
     setClaimError(null);
+    setClaimErrorKind(null);
 
     inp.onClaimTelemetry?.({ stage: "start", gameId: inp.gameId });
 
@@ -475,6 +486,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
       hapticSuccess();
       setClaimPhase("success");
       setClaimError(null);
+      setClaimErrorKind(null);
 
       inp.onClaimTelemetry?.({
         stage: "success",
@@ -519,12 +531,14 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
       if (isUserCancellation(err)) {
         inp.onClaimTelemetry?.({ stage: "cancelled", gameId: inp.gameId });
         setClaimError(null);
+        setClaimErrorKind(null);
         setClaimPhase("cancelled");
         return;
       }
       if (isTransactionTimeout(err)) {
         inp.onClaimTelemetry?.({ stage: "timeout", gameId: inp.gameId });
         setClaimError(null);
+        setClaimErrorKind(null);
         setClaimPhase("timeout");
         return;
       }
@@ -543,6 +557,22 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
           : translateTxError(err);
 
       setClaimError(friendly);
+      // Surface the TxErrorKind consumers can act on. Both the literal
+      // "insufficient funds / exceeds balance" string (classified to
+      // "insufficientFunds") AND the VictoryNFT-specific "No token with
+      // sufficient balance" guard map to "insufficientFunds" here so
+      // popups render the AddCashCta deeplink in both code paths.
+      // "expired" is a telemetry-only sentinel (not a TxErrorKind) →
+      // emit null so consumers don't have to mirror the sentinel.
+      const isExpired = /expired/i.test(raw);
+      const isNoTokenBalance = /No token with sufficient balance/i.test(raw);
+      setClaimErrorKind(
+        isExpired
+          ? null
+          : isNoTokenBalance
+            ? "insufficientFunds"
+            : classifyTxErrorKind(err),
+      );
       setClaimPhase("error");
 
       inp.onClaimTelemetry?.({
@@ -567,6 +597,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
     setClaimData({ tokenId: null, claimTxHash: null, shareCardUrl: null, shareLinkUrl: null });
     setShareStatus("locked");
     setClaimError(null);
+    setClaimErrorKind(null);
   }, []);
 
   return {
@@ -575,6 +606,7 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
     data: claimData,
     shareStatus,
     error: claimError,
+    errorKind: claimErrorKind,
     start,
     reset,
   };

@@ -9,6 +9,22 @@ vi.mock("@/components/ui/lottie-animation", () => ({
   LottieAnimation: () => null,
 }));
 
+// AddCashCta reads useMiniPay — control the runtime per test so we
+// can assert both the in-MiniPay (CTA visible) and out-of-MiniPay
+// (CTA hidden) branches of the insufficient-funds recovery affordance.
+vi.mock("@/hooks/use-minipay", () => ({
+  useMiniPay: vi.fn(() => ({ isReady: true, isMiniPay: false, hasProvider: false })),
+}));
+import { useMiniPay } from "@/hooks/use-minipay";
+
+const setMiniPay = (isMiniPay: boolean) => {
+  (useMiniPay as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+    isReady: true,
+    isMiniPay,
+    hasProvider: false,
+  });
+};
+
 describe("VictoryClaimError — empty-wallet / insufficient balance path", () => {
   const baseProps = {
     moves: 13,
@@ -56,5 +72,43 @@ describe("VictoryClaimError — empty-wallet / insufficient balance path", () =>
   it("renders stats (difficulty/moves/time) for user context", () => {
     render(<VictoryClaimError {...baseProps} errorMessage="Insufficient balance" />);
     expect(screen.getByText("13")).toBeInTheDocument(); // moves
+  });
+});
+
+describe("VictoryClaimError — Add Cash deeplink CTA", () => {
+  const baseProps = {
+    moves: 13,
+    elapsedMs: 11583,
+    difficulty: "easy",
+    onPlayAgain: vi.fn(),
+    onBackToHub: vi.fn(),
+    onRetry: vi.fn(),
+  };
+
+  it("renders the AddCashCta when errorKind=insufficientFunds inside MiniPay", () => {
+    setMiniPay(true);
+    render(
+      <VictoryClaimError
+        {...baseProps}
+        errorMessage="Insufficient balance"
+        errorKind="insufficientFunds"
+      />,
+    );
+    const link = screen.getByRole("link", { name: /Deposit in MiniPay/i });
+    expect(link).toHaveAttribute("href", "https://minipay.opera.com/add_cash");
+  });
+
+  it("hides the AddCashCta outside MiniPay even when errorKind=insufficientFunds", () => {
+    setMiniPay(false);
+    render(
+      <VictoryClaimError
+        {...baseProps}
+        errorMessage="Insufficient balance"
+        errorKind="insufficientFunds"
+      />,
+    );
+    expect(
+      screen.queryByRole("link", { name: /Deposit in MiniPay/i }),
+    ).not.toBeInTheDocument();
   });
 });

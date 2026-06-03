@@ -1317,6 +1317,7 @@ function ArenaPageInner() {
                 ? "Wallet disconnected — reconnect to try again"
                 : mint.error
             }
+            claimErrorKind={mint.errorKind}
             moves={game.moveCount}
             elapsedMs={game.elapsedMs}
             difficulty={game.difficulty}

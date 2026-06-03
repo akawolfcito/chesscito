@@ -4,6 +4,8 @@ import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
+import { AddCashCta } from "@/components/minipay/add-cash-cta";
+import type { TxErrorKind } from "@/lib/errors";
 import { formatTime } from "@/lib/game/arena-utils";
 import sparklesData from "@/../public/animations/sparkles.json";
 import { VictoryPopupShell } from "./victory-popup-shell";
@@ -22,6 +24,12 @@ type Props = {
   errorMessage?: string | null;
   onRetry?: () => void;
   kind?: ClaimEndKind;
+  /** Locale-agnostic kind from useMintVictory(). When set to
+   *  "insufficientFunds" AND the runtime is MiniPay, the popup
+   *  surfaces an Add Cash recovery deeplink alongside the existing
+   *  Try Again / Play Again CTAs. Outside MiniPay AddCashCta returns
+   *  null so the existing UX is preserved. */
+  errorKind?: TxErrorKind | null;
 };
 
 const AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-asustado";
@@ -46,6 +54,7 @@ export function VictoryClaimError({
   errorMessage,
   onRetry,
   kind = "error",
+  errorKind = null,
 }: Props) {
   const tArena = useTranslations("ARENA_COPY");
   const tClaim = useTranslations("VICTORY_CLAIM_COPY");
@@ -176,16 +185,25 @@ export function VictoryClaimError({
         </picture>
       </div>
 
-      {/* If retry is the primary, expose Play Again as secondary. */}
-      {onRetry && (
+      {/* Secondary row. Renders if EITHER Play Again is exposed (retry
+          is the primary) OR the AddCashCta should appear (insufficient
+          funds inside MiniPay). The CTA does not depend on `onRetry`
+          so an accidental missing handler does not drop the recovery
+          affordance. */}
+      {(onRetry || errorKind === "insufficientFunds") && (
         <div className="victory-popup-secondary-row">
-          <button
-            type="button"
-            onClick={onPlayAgain}
-            className="arena-result-secondary-action"
-          >
-            <span>{playAgainLabel}</span>
-          </button>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onPlayAgain}
+              className="arena-result-secondary-action"
+            >
+              <span>{playAgainLabel}</span>
+            </button>
+          )}
+          {errorKind === "insufficientFunds" && (
+            <AddCashCta source="mint-victory" />
+          )}
         </div>
       )}
     </VictoryPopupShell>
