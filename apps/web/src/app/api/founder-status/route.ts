@@ -50,6 +50,12 @@ const SHOP_ADDRESS = process.env.NEXT_PUBLIC_SHOP_ADDRESS as
 // and caused the route to 500 after ~40s.
 const SHOP_DEPLOY_BLOCK_FALLBACK = 37_800_000n;
 
+// Stale-on-error TTL. When the chain read fails we still cache a
+// degraded response (`stale: true`) so cold-cache hits don't burn ~40s
+// of Function execution on every retry. Short enough that recovery is
+// quick once the RPC heals.
+const CHAIN_ERROR_CACHE_TTL_SECONDS = 5 * 60;
+
 function getShopDeployBlock(): bigint {
   const raw = process.env.SHOP_DEPLOY_BLOCK_CELO;
   if (!raw) return SHOP_DEPLOY_BLOCK_FALLBACK;
@@ -62,13 +68,21 @@ function getShopDeployBlock(): bigint {
 
 const redis = Redis.fromEnv();
 
+// `CELO_RPC_URL` lets us swap Forno for a higher-capacity provider
+// (dRPC / Alchemy / QuickNode) when the unbounded historical scan
+// stresses the public endpoint. Undefined falls back to the chain's
+// default (Forno) inside viem's `http()`.
 const client = SHOP_ADDRESS
-  ? createPublicClient({ chain: celo, transport: http() })
+  ? createPublicClient({
+      chain: celo,
+      transport: http(process.env.CELO_RPC_URL || undefined),
+    })
   : null;
 
 type FounderStatus = {
   ownsFounder: boolean;
   since: number | null;
+  stale?: boolean;
 };
 
 export async function GET(req: Request) {
@@ -148,16 +162,28 @@ export async function GET(req: Request) {
       errName: err instanceof Error ? err.name : "unknown",
       errMessage: err instanceof Error ? err.message : String(err),
     });
-    return NextResponse.json(
-      { error: "Chain read failed" },
-      { status: 500 },
-    );
+    // Stale-on-error: return a degraded `{ stale: true }` payload with
+    // a short TTL so the next cold-cache hit doesn't pay another ~40s
+    // of Function time. The consumer hook (`use-founder-status.ts`)
+    // already tolerates `false` via its own localStorage cache, so
+    // founders without local cache will reconverge once the RPC heals.
+    const staleStatus: FounderStatus = {
+      ownsFounder: false,
+      since: null,
+      stale: true,
+    };
+    await safeSetCache(cacheKey, staleStatus, CHAIN_ERROR_CACHE_TTL_SECONDS);
+    return NextResponse.json(staleStatus);
   }
 }
 
-async function safeSetCache(key: string, value: FounderStatus) {
+async function safeSetCache(
+  key: string,
+  value: FounderStatus,
+  ttlSeconds: number = CACHE_TTL_SECONDS,
+) {
   try {
-    await redis.set(key, JSON.stringify(value), { ex: CACHE_TTL_SECONDS });
+    await redis.set(key, JSON.stringify(value), { ex: ttlSeconds });
   } catch (err) {
     logger.warn("cache write failed", {
       errName: err instanceof Error ? err.name : "unknown",

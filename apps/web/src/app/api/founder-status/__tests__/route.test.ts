@@ -16,12 +16,13 @@ vi.mock("@upstash/redis", () => ({
 const clientMock = vi.hoisted(() => ({
   getLogs: vi.fn(),
 }));
+const httpMock = vi.hoisted(() => vi.fn(() => ({})));
 vi.mock("viem", async () => {
   const actual = await vi.importActual<typeof import("viem")>("viem");
   return {
     ...actual,
     createPublicClient: () => clientMock,
-    http: () => ({}),
+    http: httpMock,
   };
 });
 
@@ -115,12 +116,19 @@ describe("/api/founder-status", () => {
     expect(clientMock.getLogs).not.toHaveBeenCalled();
   });
 
-  it("returns 500 when getLogs throws (RPC failure) and does NOT cache", async () => {
+  it("returns 200 + stale=true and caches for 5min when getLogs throws", async () => {
     clientMock.getLogs.mockRejectedValueOnce(new Error("rpc down"));
 
     const res = await GET(makeRequest(VALID_WALLET));
-    expect(res.status).toBe(500);
-    expect(redisMock.set).not.toHaveBeenCalled();
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body).toEqual({ ownsFounder: false, since: null, stale: true });
+    expect(redisMock.set).toHaveBeenCalledWith(
+      `founder:${VALID_WALLET}`,
+      JSON.stringify({ ownsFounder: false, since: null, stale: true }),
+      { ex: 5 * 60 },
+    );
   });
 
   // Ensure the rate-limiter is exercised — defense against a regression
@@ -166,6 +174,32 @@ describe("/api/founder-status", () => {
       await GET(makeRequest(VALID_WALLET));
       const call = clientMock.getLogs.mock.calls[0][0];
       expect(call.fromBlock).toBe(12345n);
+    });
+  });
+
+  // The route reads CELO_RPC_URL at module load to build its viem
+  // transport. `vi.resetModules()` + re-import lets us assert on the
+  // env-driven branch without polluting the top-level `GET` import the
+  // rest of the suite relies on.
+  describe("CELO_RPC_URL transport", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("passes CELO_RPC_URL to viem.http() when the env var is set", async () => {
+      vi.resetModules();
+      vi.stubEnv("CELO_RPC_URL", "https://custom-rpc.example.com");
+      httpMock.mockClear();
+      await import("../route");
+      expect(httpMock).toHaveBeenCalledWith("https://custom-rpc.example.com");
+    });
+
+    it("falls back to viem.http(undefined) (default Forno) when unset", async () => {
+      vi.resetModules();
+      vi.stubEnv("CELO_RPC_URL", "");
+      httpMock.mockClear();
+      await import("../route");
+      expect(httpMock).toHaveBeenCalledWith(undefined);
     });
   });
 });
