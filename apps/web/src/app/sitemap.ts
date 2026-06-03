@@ -13,12 +13,14 @@ import { routing } from "@/i18n/routing";
  *
  * Spec: https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap
  */
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://chesscito.com";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.chesscito.com";
 
-/** Static, indexable paths under each `/{locale}/...` segment. Order
- *  drives sitemap rank — high-traffic routes first. */
+/** Static, indexable paths. Under `localePrefix: "as-needed"` the
+ *  default locale (EN) serves at the bare path and non-default
+ *  locales carry the `/<locale>/` prefix. Order drives sitemap
+ *  rank — high-traffic routes first. */
 const STATIC_PATHS = [
-  "", // locale root → /en, /es
+  "", // default locale root → "/", non-default → "/<locale>"
   "/hub",
   "/exercises",
   "/arena",
@@ -31,37 +33,30 @@ const STATIC_PATHS = [
   "/terms",
 ] as const;
 
+/** Canonical URL for a given locale + path under the as-needed
+ *  routing model. Default locale lives at the bare path; other
+ *  locales nest under `/<locale>/`. */
+function urlFor(locale: string, path: string): string {
+  if (locale === routing.defaultLocale) {
+    return path === "" ? BASE_URL : `${BASE_URL}${path}`;
+  }
+  return `${BASE_URL}/${locale}${path}`;
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-
-  // Landing route ("/") served by the root-level page; locale-prefixed
-  // variants are first-class siblings so we list each path × locale.
   const entries: MetadataRoute.Sitemap = [];
-
-  // Naked "/" landing — redirects via middleware to the user's best
-  // locale; still indexable as a canonical entry point.
-  entries.push({
-    url: BASE_URL,
-    lastModified: now,
-    changeFrequency: "weekly",
-    priority: 1,
-    alternates: {
-      languages: Object.fromEntries(
-        routing.locales.map((locale) => [locale, `${BASE_URL}/${locale}`]),
-      ),
-    },
-  });
 
   for (const path of STATIC_PATHS) {
     const alternates = Object.fromEntries(
-      routing.locales.map((locale) => [locale, `${BASE_URL}/${locale}${path}`]),
+      routing.locales.map((locale) => [locale, urlFor(locale, path)]),
     );
     for (const locale of routing.locales) {
       entries.push({
-        url: `${BASE_URL}/${locale}${path}`,
+        url: urlFor(locale, path),
         lastModified: now,
         changeFrequency: path === "" ? "weekly" : "monthly",
-        priority: path === "" ? 0.9 : 0.7,
+        priority: path === "" ? 1 : 0.7,
         alternates: { languages: alternates },
       });
     }

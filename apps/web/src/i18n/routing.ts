@@ -9,8 +9,13 @@ import { defineRouting } from "next-intl/routing";
  *   detection finds no Accept-Language match AND no cookie. The vast
  *   majority of first-time visitors land on the locale that matches
  *   their browser preferences (LATAM → `es`, US → `en`).
- * - `localePrefix: "always"`: every URL carries `/en/` or `/es/` so
- *   both audiences are first-class. Naked `/` gets redirected.
+ * - `localePrefix: "as-needed"`: the default locale (EN) serves at
+ *   the root (`/`, `/hub`, ...) without a `/en/` prefix; other
+ *   locales keep their prefix (`/es/`, `/es/hub`). Legacy `/en/*`
+ *   URLs continue to work — next-intl canonicalizes them to the
+ *   bare path with a one-hop 307. Killing the default-locale prefix
+ *   eliminates the 3.5 s mobile / ~11 s desktop redirect cost
+ *   documented in docs/pagespeed-report-2026-06-02.md.
  * - `localeDetection: true`: middleware reads `Accept-Language` on
  *   first hit and routes the user to the matching locale; cookie
  *   `NEXT_LOCALE` sticks the preference for subsequent visits.
@@ -18,7 +23,7 @@ import { defineRouting } from "next-intl/routing";
 export const routing = defineRouting({
   locales: ["en", "es"],
   defaultLocale: "en",
-  localePrefix: "always",
+  localePrefix: "as-needed",
   localeDetection: true,
 });
 

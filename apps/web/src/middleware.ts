@@ -31,7 +31,7 @@ const intlMiddleware = ES_READY
       defineRouting({
         locales: ["en"],
         defaultLocale: "en",
-        localePrefix: "always",
+        localePrefix: "as-needed",
         localeDetection: true,
       }),
     );
@@ -40,7 +40,11 @@ export default function middleware(request: NextRequest) {
   if (!ES_READY) {
     const { pathname } = request.nextUrl;
     if (pathname === "/es" || pathname.startsWith("/es/")) {
-      const target = pathname.replace(/^\/es/, "/en") || "/en";
+      // Under `localePrefix: "as-needed"` the EN canonical lives at
+      // the bare path (no `/en/` prefix), so redirect `/es/<path>`
+      // straight to `/<path>` and avoid the `/es → /en → bare`
+      // two-hop chain the previous `replace(/^\/es/, "/en")` produced.
+      const target = pathname.replace(/^\/es/, "") || "/";
       const redirectUrl = new URL(target, request.url);
       redirectUrl.search = request.nextUrl.search;
       return NextResponse.redirect(redirectUrl, 307);

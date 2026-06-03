@@ -30,7 +30,7 @@ const rowdies = Rowdies({
   display: 'swap',
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://chesscito.com";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.chesscito.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -42,16 +42,17 @@ export const metadata: Metadata = {
   },
   alternates: {
     /**
-     * Default-locale canonical at the locale root. Per-page surfaces
-     * (`/[locale]/hub`, `/[locale]/arena`, etc.) inherit this layout
-     * metadata, so EN / ES / x-default get emitted on every page via
-     * a single declaration. Google + Bing read `x-default` as the
-     * fallback when no locale matches the user.
+     * Under `localePrefix: "as-needed"` the default locale (EN)
+     * serves at the bare root and ES nests under `/es`. Per-page
+     * surfaces inherit this layout metadata, so EN / ES / x-default
+     * get emitted on every page via a single declaration. Google +
+     * Bing read `x-default` as the fallback when no locale matches
+     * the user.
      */
     languages: {
-      en: '/en',
+      en: '/',
       es: '/es',
-      'x-default': '/en',
+      'x-default': '/',
     },
   },
   openGraph: {
