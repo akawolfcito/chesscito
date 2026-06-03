@@ -50,12 +50,21 @@ const SAMPLE_STATS: PublicStats = {
 };
 
 describe("StatsPage", () => {
-  it("renders the public dashboard header (title + intro)", () => {
+  it("renders the public dashboard header (title + intro + framing block)", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
-    expect(screen.getByText("Platform Stats")).toBeInTheDocument();
+    expect(
+      screen.getByText("Chesscito Platform Stats"),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /Public activity metrics for Chesscito.*sessions, mints, onboarding/,
+        /Public activity metrics for Chesscito as a mini app/,
+      ),
+    ).toBeInTheDocument();
+    // Platform-vs-player framing block sits under the intro so the
+    // reader cannot mistake the page for a personal profile.
+    expect(
+      screen.getByText(
+        /These numbers describe platform-level activity, not a single player profile/,
       ),
     ).toBeInTheDocument();
   });
@@ -63,13 +72,13 @@ describe("StatsPage", () => {
   it("renders the three platform-level primary headline metrics", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
 
-    expect(screen.getByText("Total Victories Minted")).toBeInTheDocument();
+    expect(screen.getByText("Victory NFTs Minted")).toBeInTheDocument();
     expect(screen.getByText("1,234")).toBeInTheDocument();
 
-    expect(screen.getByText("Approx. Active Sessions (7d)")).toBeInTheDocument();
+    expect(screen.getByText("Approx. App Sessions (7d)")).toBeInTheDocument();
     expect(screen.getByText("410")).toBeInTheDocument();
 
-    expect(screen.getByText("Victories (30d)")).toBeInTheDocument();
+    expect(screen.getByText("Victory Mints (30d)")).toBeInTheDocument();
     expect(screen.getByText("250")).toBeInTheDocument();
   });
 
@@ -126,22 +135,31 @@ describe("StatsPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the methodology caveat block", () => {
+  it("renders the methodology caveat block with the platform framing copy", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
     expect(screen.getByText("Methodology")).toBeInTheDocument();
     expect(
-      screen.getByText(/Active sessions counted by anonymous client-side IDs/),
+      screen.getByText(/Active sessions are anonymous app sessions/),
+    ).toBeInTheDocument();
+    // Explicit "not yet" enumeration so the page never inflates coverage.
+    expect(
+      screen.getByText(
+        /Connected wallets, stablecoin volume, failed transactions, protocol revenue, and retention cohorts are not included yet/,
+      ),
     ).toBeInTheDocument();
   });
 
   it("disambiguates the cards whose source differs from Victories table", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
 
-    // Unique Minter Wallets reads `victories.player` distinct — calling
-    // it out prevents the reader from assuming it tracks the broader
-    // leaderboard player population.
+    // Unique Minter Wallets card label uses the platform-level phrasing;
+    // the sublabel restates the source explicitly so a reader does not
+    // assume it tracks the broader leaderboard population.
     expect(
-      screen.getByText("Wallets with Victory mints"),
+      screen.getByText("Wallets with Victory Mints"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Distinct wallets that minted a Victory"),
     ).toBeInTheDocument();
 
     // Welcome Packs ledger started post-launch — sublabel signals the

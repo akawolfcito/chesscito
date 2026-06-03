@@ -52,14 +52,22 @@ export function StatsPage({ stats }: StatsPageProps) {
             textShadow: "0 1px 0 rgba(255, 235, 180, 0.7)",
           }}
         >
-          Platform Stats
+          Chesscito Platform Stats
         </h1>
         <p
           className="text-sm md:text-base"
           style={{ color: "var(--paper-text-muted)" }}
         >
-          Public activity metrics for Chesscito: sessions, mints,
-          onboarding, and community activity.
+          Public activity metrics for Chesscito as a mini app: sessions,
+          Victory mints, onboarding, and community activity.
+        </p>
+        <p
+          className="text-xs md:text-sm leading-snug"
+          style={{ color: "var(--paper-text-subtle)" }}
+        >
+          These numbers describe platform-level activity, not a single
+          player profile. Some metrics are exact counts from Chesscito
+          records, while active sessions are anonymous usage estimates.
         </p>
         <p
           className="text-[0.6875rem]"
@@ -77,17 +85,17 @@ export function StatsPage({ stats }: StatsPageProps) {
           dependent) sits in the secondary grid below. */}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard
-          label="Total Victories Minted"
+          label="Victory NFTs Minted"
           value={stats.totalVictories}
-          sublabel="Lifetime on Celo mainnet"
+          sublabel="Saved victories on Celo mainnet"
         />
         <StatCard
-          label="Approx. Active Sessions (7d)"
+          label="Approx. App Sessions (7d)"
           value={stats.activeSessions7d}
-          sublabel="Unique sessions; sub-counts cross-device users"
+          sublabel="Anonymous sessions; not connected wallets"
         />
         <StatCard
-          label="Victories (30d)"
+          label="Victory Mints (30d)"
           value={stats.victories30d}
           sublabel="Mints in the last 30 days"
         />
@@ -103,18 +111,18 @@ export function StatsPage({ stats }: StatsPageProps) {
         </h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           <StatCard
-            label="Victories (7d)"
+            label="Victory Mints (7d)"
             value={stats.victories7d}
             variant="secondary"
           />
           <StatCard
-            label="Unique Minter Wallets"
+            label="Wallets with Victory Mints"
             value={stats.uniqueMintersLifetime}
             variant="secondary"
-            sublabel="Wallets with Victory mints"
+            sublabel="Distinct wallets that minted a Victory"
           />
           <StatCard
-            label="Approx. Sessions (30d)"
+            label="Approx. App Sessions (30d)"
             value={stats.activeSessions30d}
             variant="secondary"
           />
@@ -256,10 +264,12 @@ export function StatsPage({ stats }: StatsPageProps) {
           Methodology
         </p>
         <p>
-          Active sessions counted by anonymous client-side IDs. A single
-          user across multiple devices appears as multiple sessions.
-          Wallet retention (D1 / D7 / D30), stablecoin volume, protocol
-          revenue, and failed-tx rate are not yet available on this page.
+          Active sessions are anonymous app sessions, not connected
+          wallets. Victory mints count saved on-chain victories.
+          Leaderboard entries are based on game scores and may include
+          players who have not minted a Victory NFT. Connected wallets,
+          stablecoin volume, failed transactions, protocol revenue, and
+          retention cohorts are not included yet.
         </p>
       </section>
     </div>
