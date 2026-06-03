@@ -51,6 +51,7 @@ Chesscito is a single-player chess education mini-app. The user-facing surface s
 | Shop | sheet (any screen) | Buy Founder Badge ($0.10), Retry Shield ($0.025 → 3 uses), Chesscito PRO ($1.99 / 30 days), Coach Pack credits. |
 | Coach | sheet + `/coach/history` | PRO-gated AI review of any played Arena game; history list and delete. |
 | Legal / support | `/terms`, `/privacy`, `/support`, `/about`, `/why` | Static informational pages. |
+| Public stats | `/stats` | Platform-level metrics — lifetime mints, recent activity windows, difficulty breakdown, Hall of Fame, Top 10 leaderboard. Read-only, no auth. |
 
 ### On-chain methods the user signs
 
@@ -314,3 +315,24 @@ Key features:
 - Pedagogy — curriculum designed by FIDE Master César Litvinov Alarcón
   (100+ students, alumni in national/international tournaments).
 ```
+
+---
+
+## Q: Public platform metrics
+
+Public stats dashboard is live at **https://www.chesscito.com/stats** (linked from the landing footer; no auth).
+
+The page surfaces:
+
+- **Total Victories minted** (lifetime), and 7-day / 30-day Victory mint windows.
+- **Approximate active sessions** (7-day and 30-day, counted by anonymous client-side session IDs).
+- **Unique wallets with Victory mints** (lifetime).
+- **Welcome Packs claimed** (lifetime and 7-day).
+- **Victories by difficulty** (Easy / Medium / Hard breakdown).
+- **Hall of Fame** — 10 most recent Victory mints.
+- **Top 10 Leaderboard** — by accumulated exercise score (sourced from `scores`, not `victories`).
+
+A Methodology footer on the page declares the four metrics not yet available (wallet retention D1 / D7 / D30, stablecoin volume per token, network fees paid, protocol revenue per stablecoin) and why each is deferred. The page does not overstate coverage.
+
+Sources, refresh cadence (1 hour `revalidate`), privacy posture (aggregates only, truncated wallets), and "coming soon" rationale are documented in `docs/product/stats-mvp.md` in the project repository.
+
