@@ -155,6 +155,10 @@ export const RESULT_OVERLAY_COPY = {
     title: "Couldn't save",
     cancelled: "Save was cancelled",
     insufficientFunds: "Not enough funds to complete this transaction",
+    /** Recovery CTA shown when insufficientFunds fires inside MiniPay.
+     *  Surfaced by `<AddCashCta />` next to the error message. Wording
+     *  intentionally avoids web3 jargon per MiniPay copy guidelines. */
+    addCashCta: "Deposit in MiniPay",
     network: "Network error. Check your connection and try again.",
     timeout:
       "This is taking longer than expected. Check your wallet or try again.",

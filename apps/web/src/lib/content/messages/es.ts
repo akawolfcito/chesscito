@@ -1187,6 +1187,7 @@ const messages = {
       title: "No se pudo guardar",
       cancelled: "El guardado fue cancelado",
       insufficientFunds: "Fondos insuficientes para completar esta acción",
+      addCashCta: "Agregar fondos",
       network: "Error de red. Revisa tu conexión y reintenta.",
       timeout:
         "Esto está tardando más de lo esperado. Revisa tu wallet o reintenta.",
