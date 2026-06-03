@@ -78,10 +78,9 @@ export async function POST(request: Request) {
 
     const nonce = createNonce();
     const deadline = createDeadline();
-    const { chainId, badgesAddress, signer } = getDemoConfig();
+    const { chainId, labyrinthBadgesAddress, signer } = getDemoConfig();
 
-    // TODO(phase-D): replace verifyingContract if contract review chooses LabyrinthBadges
-    const verifyingContract = badgesAddress;
+    const verifyingContract = labyrinthBadgesAddress;
 
     const labyrinthIdHash = ethers.id(labyrinthId);
     const campaignIdHash = campaignId ? ethers.id(campaignId) : ethers.ZeroHash;

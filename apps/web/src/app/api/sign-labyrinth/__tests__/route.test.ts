@@ -45,6 +45,7 @@ function goodConfig() {
     badgesAddress: "0xf92759E52aA5EC5d6fDb6CE03b9AC9Cd9f000001",
     scoreboardAddress: "0x1681aAA12aA5EC5d6fDb6CE03b9AC9Cd9f000002",
     victoryNFTAddress: "0x87cC9fe03E76A5894De2FE1372E85D6f5Bb922A9",
+    labyrinthBadgesAddress: "0x8AA4006dfb3D5B7e255Df26B1065CD87A193171b",
     signer: { signTypedData } as unknown as ReturnType<typeof getDemoConfig>["signer"],
   });
   return signTypedData;

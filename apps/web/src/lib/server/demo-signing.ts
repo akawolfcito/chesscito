@@ -51,6 +51,9 @@ export function getDemoConfig() {
   const badgesAddress = ethers.getAddress(requireEnv("NEXT_PUBLIC_BADGES_ADDRESS"));
   const scoreboardAddress = ethers.getAddress(requireEnv("NEXT_PUBLIC_SCOREBOARD_ADDRESS"));
   const victoryNFTAddress = ethers.getAddress(requireEnv("NEXT_PUBLIC_VICTORY_NFT_ADDRESS"));
+  const labyrinthBadgesAddress = ethers.getAddress(
+    requireEnv("NEXT_PUBLIC_LABYRINTH_BADGES_ADDRESS")
+  );
   const signer = new ethers.Wallet(
     decryptSignerKey(requireEnv("TORRE_PRINCESA"), requireEnv("DRAGON"))
   );
@@ -60,6 +63,7 @@ export function getDemoConfig() {
     badgesAddress,
     scoreboardAddress,
     victoryNFTAddress,
+    labyrinthBadgesAddress,
     signer,
   };
 }
