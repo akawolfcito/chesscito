@@ -1,8 +1,8 @@
 # Network Manifest — Chesscito
 
-**Audit date:** 2026-03-23
+**Audit date:** 2026-03-23 (last reviewed 2026-06-02 — re-audit pending after domain switch)
 **Method:** Manual code inspection of `apps/web/src/`
-**App URL:** https://chesscito.vercel.app
+**App URL:** https://www.chesscito.com (canonical; apex `chesscito.com` 307s to www; vercel.app deprecated 2026-05-20)
 
 ## External Origins
 

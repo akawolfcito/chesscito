@@ -140,7 +140,7 @@ Badges.claimBadgeSigned - https://celoscan.io/tx/0x8be6052c7f833af83fd2d3d5c04d7
 
 ### Primary domain (custom — Chesscito-owned)
 
-**`chesscito.com`** is the canonical, user-facing domain. It is a custom domain registered to the publisher, not a Netlify or Vercel subdomain. DNS A / AAAA records point to Vercel's edge network, but the origin shown in the address bar and used as the production entrypoint is always the custom apex.
+**`www.chesscito.com`** is the canonical, user-facing domain (the apex `chesscito.com` 307-redirects to `www`). It is a custom domain registered to the publisher, not a Netlify or Vercel subdomain. DNS A / AAAA records point to Vercel's edge network, but the origin shown in the address bar and used as the production entrypoint is always the custom `www` subdomain.
 
 This domain hosts the full Next.js App Router bundle and every `/api/*` route handler that the client calls.
 
@@ -162,7 +162,7 @@ All other dependencies (RainbowKit, wagmi, viem, ethers, Supabase JS, OpenAI SDK
 ### Form-ready paste
 
 ```
-Primary domain (user-facing, custom):  chesscito.com
+Primary domain (user-facing, custom):  www.chesscito.com
 Preview deploys (Vercel infra only):    chesscito-<branch>-<hash>.vercel.app
 Legacy domain (deprecated 2026-05-20):  chesscito.vercel.app
 Third-party JS origin:                  va.vercel-scripts.com  (Vercel Analytics)
@@ -179,7 +179,7 @@ Chesscito offers three independent support channels covering all three options l
 | Channel type | Surface | Where |
 |---|---|---|
 | **Telegram (community + DM)** | Public group + direct messages | `@chesscito_app` (Telegram) |
-| **Web Based support** | In-app support page reachable from every footer | `https://chesscito.com/support` |
+| **Web Based support** | In-app support page reachable from every footer | `https://www.chesscito.com/support` |
 | **Ticket Based Support** | Public GitHub issue tracker + email | `https://github.com/wolfcito/chesscito/issues` and `mailto:` link on the support page |
 
 The web support page lists issue categories (loading problems, transaction errors, UI bugs, gameplay questions, feature requests) and documents the SLA: response within 48 hours.
@@ -187,14 +187,14 @@ The web support page lists issue categories (loading problems, transaction error
 ### Form selection
 
 - ☑ **WhatsApp/Telegram Support** — Telegram `@chesscito_app`
-- ☑ **Web Based support** — `chesscito.com/support`
+- ☑ **Web Based support** — `www.chesscito.com/support`
 - ☑ **Ticket Based Support** — GitHub Issues + email
 
 ### Form-ready paste
 
 ```text
 Telegram:  @chesscito_app
-Web:       https://chesscito.com/support
+Web:       https://www.chesscito.com/support
 Tickets:   https://github.com/wolfcito/chesscito/issues
 Email:     (mailto link on the support page; configured via NEXT_PUBLIC_SUPPORT_EMAIL)
 SLA:       response within 48 hours
@@ -210,7 +210,7 @@ Chesscito publishes a full Terms of Service page reachable both directly via URL
 
 | Field | Value |
 |---|---|
-| Public URL | `https://chesscito.com/terms` |
+| Public URL | `https://www.chesscito.com/terms` |
 | Source | `apps/web/src/app/terms/page.tsx` |
 | Content source of truth | `LEGAL_COPY.terms` in `apps/web/src/lib/content/editorial.ts` |
 | Last updated | March 15, 2026 |
@@ -219,7 +219,7 @@ Chesscito publishes a full Terms of Service page reachable both directly via URL
 ### Form-ready paste
 
 ```text
-https://chesscito.com/terms
+https://www.chesscito.com/terms
 ```
 
 ---
@@ -232,7 +232,7 @@ Chesscito publishes a full Privacy Policy page reachable both directly via URL a
 
 | Field | Value |
 |---|---|
-| Public URL | `https://chesscito.com/privacy` |
+| Public URL | `https://www.chesscito.com/privacy` |
 | Source | `apps/web/src/app/privacy/page.tsx` |
 | Content source of truth | `LEGAL_COPY.privacy` in `apps/web/src/lib/content/editorial.ts` |
 | Last updated | March 15, 2026 |
@@ -241,7 +241,7 @@ Chesscito publishes a full Privacy Policy page reachable both directly via URL a
 ### Form-ready paste
 
 ```text
-https://chesscito.com/privacy
+https://www.chesscito.com/privacy
 ```
 
 ---
@@ -264,8 +264,8 @@ Chesscito is an independent product built and operated by Wolfcito (@akawolfcito
 It is NOT operated by, affiliated with, or endorsed by Opera or MiniPay.
 MiniPay is referenced solely as a wallet and distribution channel.
 
-Operator surface:   https://chesscito.com/about
-Legal disclaimer:   https://chesscito.com/terms  (Section 1 — "Independent Operator")
+Operator surface:   https://www.chesscito.com/about
+Legal disclaimer:   https://www.chesscito.com/terms  (Section 1 — "Independent Operator")
 ```
 
 ---

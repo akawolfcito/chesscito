@@ -10,11 +10,11 @@
 | Tagline | Learn chess piece movements with gamified on-chain challenges on Celo. |
 | Publisher | Wolfcito |
 | Public handle | @akawolfcito |
-| Support URL | https://chesscito.vercel.app/support |
-| Terms of Service | https://chesscito.vercel.app/terms |
-| Privacy Policy | https://chesscito.vercel.app/privacy |
+| Support URL | https://www.chesscito.com/support |
+| Terms of Service | https://www.chesscito.com/terms |
+| Privacy Policy | https://www.chesscito.com/privacy |
 | Category | education |
-| App URL (linkUrl) | https://chesscito.vercel.app |
+| App URL (linkUrl) | https://www.chesscito.com  ⚠️ **DECISIÓN PENDIENTE** — candidato `https://www.chesscito.com/hub` (validar liviano + 360×640 + zero-click + links legales antes de submitir) |
 | Icon | `apps/web/public/icon-512.png` — 512x512 PNG |
 
 ## Supporting Artifacts
