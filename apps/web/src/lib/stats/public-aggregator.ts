@@ -69,6 +69,13 @@ export const EMPTY_PUBLIC_STATS: PublicStats = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Upper bound for PostgREST `range` on distinct-count queries.
+ *  Supabase Cloud's default `db-default-rows-limit` (currently 1000)
+ *  would silently truncate the row set and undercount distinct
+ *  values — explicit range bypasses that. Tune up if `victories` or
+ *  `analytics_events` row count approaches this ceiling. */
+const DISTINCT_QUERY_MAX_ROWS = 9_999;
+
 type CountResult = { count: number | null; error?: unknown };
 type DataResult<T> = { data: T[] | null; error?: unknown };
 
@@ -146,13 +153,19 @@ export async function getPublicStats(): Promise<PublicStats> {
     // 3. Unique minter wallets — fetch player column, dedupe in JS.
     //    Count-distinct via PostgREST requires an RPC; for current
     //    volume (low thousands at most), in-app dedupe is acceptable.
+    //    Explicit range bypasses the silent 1000-row default cap.
     supabase
       .from("victories")
-      .select("player") as unknown as Promise<DataResult<{ player: string }>>,
-    // 4. Difficulty distribution
+      .select("player")
+      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
+      DataResult<{ player: string }>
+    >,
+    // 4. Difficulty distribution — same defensive range so the tally
+    //    matches `totalVictories` instead of silently truncating.
     supabase
       .from("victories")
-      .select("difficulty") as unknown as Promise<
+      .select("difficulty")
+      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
       DataResult<{ difficulty: number }>
     >,
     // 5. Welcome Packs lifetime
@@ -166,17 +179,21 @@ export async function getPublicStats(): Promise<PublicStats> {
       .gte("claimed_at", since7d) as unknown as Promise<CountResult>,
     // 7. Active sessions 7d — distinct session_id from analytics_events.
     //    Table has a 90d rolling cleanup, so 30d is the practical max.
+    //    Range bound matches the distinct-count discipline; if
+    //    analytics volume passes the ceiling we'll need batched scans.
     supabase
       .from("analytics_events")
       .select("session_id")
-      .gte("created_at", since7d) as unknown as Promise<
+      .gte("created_at", since7d)
+      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
       DataResult<{ session_id: string }>
     >,
     // 8. Active sessions 30d
     supabase
       .from("analytics_events")
       .select("session_id")
-      .gte("created_at", since30d) as unknown as Promise<
+      .gte("created_at", since30d)
+      .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<
       DataResult<{ session_id: string }>
     >,
     // 9. Coach analyses lifetime

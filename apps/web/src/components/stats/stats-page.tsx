@@ -55,7 +55,9 @@ export function StatsPage({ stats }: StatsPageProps) {
         .
       </p>
 
-      {/* Primary headline metrics */}
+      {/* Primary headline metrics — platform-level signal, not
+          player-level. Welcome Packs (potentially zero-state or env-
+          dependent) sits in the secondary grid below. */}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard
           label="Total Victories Minted"
@@ -63,14 +65,14 @@ export function StatsPage({ stats }: StatsPageProps) {
           sublabel="Lifetime on Celo mainnet"
         />
         <StatCard
-          label="Welcome Packs Claimed"
-          value={stats.welcomePacksLifetime}
-          sublabel="One per wallet, lifetime"
-        />
-        <StatCard
           label="Approx. Active Sessions (7d)"
           value={stats.activeSessions7d}
           sublabel="Unique sessions; sub-counts cross-device users"
+        />
+        <StatCard
+          label="Victories (30d)"
+          value={stats.victories30d}
+          sublabel="Mints in the last 30 days"
         />
       </section>
 
@@ -89,11 +91,6 @@ export function StatsPage({ stats }: StatsPageProps) {
             variant="secondary"
           />
           <StatCard
-            label="Victories (30d)"
-            value={stats.victories30d}
-            variant="secondary"
-          />
-          <StatCard
             label="Unique Minter Wallets"
             value={stats.uniqueMintersLifetime}
             variant="secondary"
@@ -103,6 +100,12 @@ export function StatsPage({ stats }: StatsPageProps) {
             label="Approx. Sessions (30d)"
             value={stats.activeSessions30d}
             variant="secondary"
+          />
+          <StatCard
+            label="Welcome Packs Claimed"
+            value={stats.welcomePacksLifetime}
+            variant="secondary"
+            sublabel="Lifetime"
           />
           <StatCard
             label="Welcome Packs (7d)"

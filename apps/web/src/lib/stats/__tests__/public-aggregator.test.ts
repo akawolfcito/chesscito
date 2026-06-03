@@ -35,6 +35,7 @@ function thenable<T>(value: T) {
     gte: () => obj,
     order: () => obj,
     limit: () => obj,
+    range: () => obj,
   };
   return obj;
 }

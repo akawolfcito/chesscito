@@ -50,17 +50,25 @@ const SAMPLE_STATS: PublicStats = {
 };
 
 describe("StatsPage", () => {
-  it("renders all primary headline metrics with formatted numbers", () => {
+  it("renders the three platform-level primary headline metrics", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
 
     expect(screen.getByText("Total Victories Minted")).toBeInTheDocument();
     expect(screen.getByText("1,234")).toBeInTheDocument();
 
-    expect(screen.getByText("Welcome Packs Claimed")).toBeInTheDocument();
-    expect(screen.getByText("880")).toBeInTheDocument();
-
     expect(screen.getByText("Approx. Active Sessions (7d)")).toBeInTheDocument();
     expect(screen.getByText("410")).toBeInTheDocument();
+
+    expect(screen.getByText("Victories (30d)")).toBeInTheDocument();
+    expect(screen.getByText("250")).toBeInTheDocument();
+  });
+
+  it("renders Welcome Packs Claimed as a secondary metric (not in hero)", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+
+    // Label is still present, just no longer in the platform-level hero row.
+    expect(screen.getByText("Welcome Packs Claimed")).toBeInTheDocument();
+    expect(screen.getByText("880")).toBeInTheDocument();
   });
 
   it("renders the difficulty breakdown with mapped labels", () => {
