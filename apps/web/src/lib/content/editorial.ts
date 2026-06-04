@@ -2916,6 +2916,9 @@ export const HUB_SCAFFOLD_COPY = {
   premiumInactiveAriaLabel: "Training Pass: tap to unlock",
   premiumActiveAriaFormat:
     "Training Pass: {used} of {total} sessions used, {days} days remaining",
+  /** Onboarding ribbon overlaying the Train Pieces CTA — signals the
+   *  recommended first step in the sequence Train Pieces > Enter Arena. */
+  startHereLabel: "START HERE",
 } as const;
 
 export const HUB_RAIL_COPY = {

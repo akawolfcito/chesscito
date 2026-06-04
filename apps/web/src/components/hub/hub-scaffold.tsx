@@ -342,16 +342,32 @@ export function HubScaffold({
             {secondaryAction
               ? wrap(
                   "PrimaryPlayCta",
-                  <PrimaryPlayCta
-                    surface="playhub"
-                    label={secondaryAction.label}
-                    ariaLabel={secondaryAction.ariaLabel}
-                    onPress={secondaryAction.onPress}
-                    className="hub-scaffold-practice-cta"
-                    pieceIconSrc="/art/hub/train-pieces.png"
-                  />,
+                  <div className="hub-scaffold-practice-cta-wrap">
+                    <PrimaryPlayCta
+                      surface="playhub"
+                      label={secondaryAction.label}
+                      ariaLabel={secondaryAction.ariaLabel}
+                      onPress={secondaryAction.onPress}
+                      className="hub-scaffold-practice-cta"
+                      pieceIconSrc="/art/hub/train-pieces.png"
+                    />
+                    <span
+                      className="hub-scaffold-start-here-ribbon"
+                      aria-hidden="true"
+                    >
+                      {tScaffold("startHereLabel")}
+                    </span>
+                  </div>,
                 )
               : null}
+            {secondaryAction && onArenaPress ? (
+              <span
+                className="hub-scaffold-cta-chevron"
+                aria-hidden="true"
+              >
+                ›
+              </span>
+            ) : null}
             {onArenaPress
               ? wrap(
                   "ArenaCta",
