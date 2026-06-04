@@ -236,6 +236,44 @@ function formatRelative(iso: string): string {
   return `${Math.floor(diffSec / 86400)}d ago`;
 }
 
+/** Aggregates the hallOfFame feed into per-wallet rollups so the page
+ *  surfaces "Top Minting Wallets" instead of a flat event stream that
+ *  visually repeats the same wallet for every mint. Sort by total
+ *  mints desc, tiebreak by most-recent mint. */
+type TopMinterRow = {
+  player: string;
+  mintCount: number;
+  lastMintedAt: string;
+};
+
+function aggregateTopMinters(
+  rows: Array<{ player: string; minted_at: string }>,
+  limit = 10,
+): TopMinterRow[] {
+  const byPlayer = new Map<string, TopMinterRow>();
+  for (const row of rows) {
+    const existing = byPlayer.get(row.player);
+    if (existing) {
+      existing.mintCount += 1;
+      if (Date.parse(row.minted_at) > Date.parse(existing.lastMintedAt)) {
+        existing.lastMintedAt = row.minted_at;
+      }
+    } else {
+      byPlayer.set(row.player, {
+        player: row.player,
+        mintCount: 1,
+        lastMintedAt: row.minted_at,
+      });
+    }
+  }
+  return Array.from(byPlayer.values())
+    .sort((a, b) => {
+      if (b.mintCount !== a.mintCount) return b.mintCount - a.mintCount;
+      return Date.parse(b.lastMintedAt) - Date.parse(a.lastMintedAt);
+    })
+    .slice(0, limit);
+}
+
 function formatGeneratedAt(iso: string): string {
   const ts = Date.parse(iso);
   if (!Number.isFinite(ts) || ts <= 0) return "—";
@@ -508,7 +546,7 @@ export function StatsPage({ stats }: StatsPageProps) {
             variant="bare"
           />
           <StatCard
-            label="Wallets with Victory Mints"
+            label="Unique minter wallets"
             value={stats.uniqueMintersLifetime}
             variant="bare"
             sublabel="Distinct wallets that minted a Victory"
@@ -532,15 +570,16 @@ export function StatsPage({ stats }: StatsPageProps) {
         </div>
       </section>
 
-      {/* Recent Victory Mints — appendix tone. Heading reduced to
-          uppercase small caps so it reads as a supporting feed, not
-          as headline content competing with the Snapshot above. */}
+      {/* Top Minting Wallets — appendix tone. Aggregates the event
+          feed by wallet so the same wallet doesn't repeat for every
+          mint. Sort: total mints desc, tiebreak by most-recent mint.
+          Per-row triplet: wallet · total mints · last mint. */}
       <section>
         <h3
           className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide"
           style={{ color: "var(--paper-text-subtle)" }}
         >
-          Recent Victory Mints
+          Top Minting Wallets
         </h3>
         {stats.hallOfFame.length === 0 ? (
           <p
@@ -554,9 +593,9 @@ export function StatsPage({ stats }: StatsPageProps) {
             className="border-t"
             style={{ borderColor: "var(--paper-divider)" }}
           >
-            {stats.hallOfFame.map((row) => (
+            {aggregateTopMinters(stats.hallOfFame).map((row) => (
               <li
-                key={row.tx_hash}
+                key={row.player}
                 className="flex items-center justify-between gap-2 border-b py-2 text-xs"
                 style={{
                   color: "var(--paper-text)",
@@ -565,16 +604,16 @@ export function StatsPage({ stats }: StatsPageProps) {
               >
                 <span className="font-mono">{truncateWallet(row.player)}</span>
                 <span
-                  className="text-[0.625rem] uppercase tracking-wide"
+                  className="text-[0.625rem] uppercase tracking-wide tabular-nums"
                   style={{ color: "var(--paper-text-subtle)" }}
                 >
-                  {difficultyName(row.difficulty)}
+                  {row.mintCount === 1 ? "1 mint" : `${row.mintCount} mints`}
                 </span>
                 <span
-                  className="text-[0.6875rem]"
+                  className="text-[0.6875rem] tabular-nums"
                   style={{ color: "var(--paper-text-muted)" }}
                 >
-                  {formatRelative(row.minted_at)}
+                  last mint {formatRelative(row.lastMintedAt)}
                 </span>
               </li>
             ))}
@@ -787,6 +826,18 @@ export function StatsPage({ stats }: StatsPageProps) {
             >
               <span aria-hidden>→</span>
               <span>Badges contract on Celoscan</span>
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://celoscan.io/address/0x0eE22F830a99e7a67079018670711C0F94Abeeb0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 underline underline-offset-2 transition-colors hover:text-[var(--paper-text)]"
+              style={{ color: "var(--paper-text-muted)" }}
+            >
+              <span aria-hidden>→</span>
+              <span>Victory NFT contract on Celoscan</span>
             </a>
           </li>
         </ul>

@@ -95,15 +95,15 @@ describe("StatsPage", () => {
     expect(screen.getByText("880")).toBeInTheDocument();
   });
 
-  it("renders Hall of Fame entries with truncated wallet + difficulty + relative time", () => {
+  it("aggregates Hall of Fame into per-wallet rollups (Top Minting Wallets)", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
 
     expect(screen.getByText("0xabcd…1234")).toBeInTheDocument();
     expect(screen.getByText("0x0000…5678")).toBeInTheDocument();
-    // Hall of Fame badges: Easy + Hard appear once in cards, once per
-    // matching row — total ≥ 2 for Hard (1 card + 1 row), ≥ 2 for Easy.
-    expect(screen.getAllByText("Hard").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText("Easy").length).toBeGreaterThanOrEqual(2);
+    // Section now shows total mints + last-mint relative time instead
+    // of per-event difficulty badges. Each sample wallet has 1 mint.
+    expect(screen.getAllByText("1 mint").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText(/last mint/i).length).toBeGreaterThanOrEqual(2);
   });
 
   it("renders Leaderboard top entries with rank, wallet, score", () => {
@@ -278,7 +278,7 @@ describe("StatsPage", () => {
       "Victory difficulty mix",
       "Platform signals",
       "Activity windows",
-      "Recent Victory Mints",
+      "Top Minting Wallets",
       "Community Leaderboard",
       "Tracked today / Coming next",
       "Methodology",
@@ -303,9 +303,9 @@ describe("StatsPage", () => {
     expect(valueEl.className).toContain("md:text-4xl");
   });
 
-  it("Recent Victory Mints heading uses the demoted appendix style (uppercase small caps, not bold lg)", () => {
+  it("Top Minting Wallets heading uses the demoted appendix style (uppercase small caps, not bold lg)", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
-    const heading = screen.getByText("Recent Victory Mints");
+    const heading = screen.getByText("Top Minting Wallets");
     expect(heading.className).toContain("uppercase");
     expect(heading.className).not.toContain("font-bold");
   });
@@ -347,6 +347,15 @@ describe("StatsPage", () => {
     expect(celoscanLink).toHaveAttribute("target", "_blank");
     expect(celoscanLink.getAttribute("rel") ?? "").toContain("noopener");
     expect(celoscanLink.getAttribute("rel") ?? "").toContain("noreferrer");
+
+    const victoryLink = screen.getByRole("link", {
+      name: /Victory NFT contract on Celoscan/i,
+    });
+    expect(victoryLink).toHaveAttribute(
+      "href",
+      "https://celoscan.io/address/0x0eE22F830a99e7a67079018670711C0F94Abeeb0",
+    );
+    expect(victoryLink).toHaveAttribute("target", "_blank");
   });
 
   it("External verification block sits after Methodology in DOM order", () => {
@@ -366,7 +375,7 @@ describe("StatsPage", () => {
     // the sublabel restates the source explicitly so a reader does not
     // assume it tracks the broader leaderboard population.
     expect(
-      screen.getByText("Wallets with Victory Mints"),
+      screen.getByText("Unique minter wallets"),
     ).toBeInTheDocument();
     expect(
       screen.getByText("Distinct wallets that minted a Victory"),
