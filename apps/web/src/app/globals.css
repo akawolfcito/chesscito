@@ -5157,16 +5157,12 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 60px;
   height: 60px;
   padding: 6px 7px 7px;
-  border-radius: 17px;
-  border: 0;
-  background:
-    radial-gradient(ellipse at 50% 84%, rgba(121, 79, 10, 0.36) 0 42%, transparent 43%),
-    linear-gradient(180deg, #fff0a8 0%, #f4c953 58%, #b68224 100%);
+  border-radius: 14px;
+  border: 2px solid #8a4a08;
+  background: linear-gradient(180deg, #fbd64a 0%, #f5a623 60%, #d97f0a 100%);
   box-shadow:
-    0 2px 0 rgba(255, 255, 221, 0.72) inset,
-    0 -7px 0 rgba(92, 63, 14, 0.28) inset,
-    0 5px 0 rgba(83, 45, 5, 0.34),
-    0 10px 14px rgba(12, 40, 28, 0.24);
+    inset 0 2px 0 rgba(255, 244, 200, 0.55),
+    inset 0 -2px 0 rgba(130, 70, 8, 0.35);
   color: rgba(50, 25, 5, 0.95);
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
   font-size: 0.72rem;
@@ -5183,14 +5179,10 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .reward-tile.is-active-piece {
-  /* border: 3px solid #ffd84a; */
   box-shadow:
-    0 0 0 2px rgba(119, 73, 6, 0.52),
-    0 0 16px rgba(255, 216, 74, 0.58),
-    0 2px 0 rgba(255, 255, 221, 0.72) inset,
-    0 -7px 0 rgba(92, 63, 14, 0.28) inset,
-    0 5px 0 rgba(83, 45, 5, 0.34),
-    0 10px 14px rgba(12, 40, 28, 0.24);
+    0 0 0 2px rgba(255, 216, 74, 0.85),
+    inset 0 2px 0 rgba(255, 244, 200, 0.55),
+    inset 0 -2px 0 rgba(130, 70, 8, 0.35);
 }
 
 .reward-tile-label {
@@ -6869,6 +6861,33 @@ button.hud-resource-chip:active:not(:disabled) {
     0 3px 8px rgba(0, 0, 0, 0.32),
     inset 0 2px 0 rgba(255, 255, 255, 0.35),
     inset 0 -2px 0 rgba(34, 92, 7, 0.45);
+}
+
+/* TRAINING PATH header — purple variant for the left rail (LEARN
+   stack). Top-rounded only so it reads as a banner cap sitting on top
+   of the rail column rather than a floating pill. No bottom bevel
+   (flat base) per design ref. Two-line label wraps via white-space
+   normal + max-width. */
+.hub-scaffold-rail-header[data-rail="left"] {
+  top: -2px;
+  padding: 4px 8px 5px;
+  max-width: 78px;
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(180deg, #7b4cd6 0%, #5a3aa0 55%, #422680 100%);
+  border: 2px solid rgba(48, 22, 92, 0.9);
+  border-bottom: none;
+  color: #fff;
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  text-align: center;
+  white-space: normal;
+  text-shadow:
+    0 1px 0 rgba(48, 22, 92, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.32),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* SPEC 1 D2 — Contextual Hero CTA. Polished to the candy-frame

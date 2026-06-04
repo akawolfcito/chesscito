@@ -1590,7 +1590,7 @@ const messages = {
   },
   HUB_RAIL_COPY: {
     ...en.HUB_RAIL_COPY,
-    learnLabel: "APRENDE",
+    learnLabel: "RUTA DE ENTRENAMIENTO",
     unlockLabel: "DESBLOQUEA",
   },
   HUD_COPY: {

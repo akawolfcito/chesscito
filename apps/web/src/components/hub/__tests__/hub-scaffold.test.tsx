@@ -217,9 +217,9 @@ describe("HubScaffold", () => {
   });
 
   describe("rail headers (SPEC 1 D1)", () => {
-    it("renders 'LEARN' as the left-rail header", () => {
+    it("renders 'TRAINING PATH' as the left-rail header", () => {
       render(<HubScaffold {...baseProps} />);
-      expect(screen.getByText("LEARN")).toBeInTheDocument();
+      expect(screen.getByText("TRAINING PATH")).toBeInTheDocument();
     });
 
     it("renders 'UNLOCK' as the right-rail header when the rail body is mounted", () => {

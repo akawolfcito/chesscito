@@ -2922,7 +2922,7 @@ export const HUB_SCAFFOLD_COPY = {
 } as const;
 
 export const HUB_RAIL_COPY = {
-  learnLabel: "LEARN",
+  learnLabel: "TRAINING PATH",
   unlockLabel: "UNLOCK",
   tiles: {
     daily: "Daily",
