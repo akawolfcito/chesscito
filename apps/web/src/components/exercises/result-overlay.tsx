@@ -305,30 +305,45 @@ export function ResultOverlay({
           cta={
             isError && onRetry ? (
               <div className="flex flex-col gap-1.5">
-                <Button type="button" variant="game-solid" size="game" onClick={onRetry} className="w-full">
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="arena-scaffold-soft-gate-primary w-full"
+                >
                   {tResult("cta.tryAgain")}
-                </Button>
+                </button>
                 <button
                   type="button"
                   onClick={handleDismiss}
-                  className="w-full py-1 text-xs font-semibold underline underline-offset-2"
-                  style={{ color: "rgba(110, 65, 15, 0.70)" }}
+                  className="arena-result-back-link w-full"
                 >
                   {tResult("cta.dismiss")}
                 </button>
               </div>
             ) : isError ? (
-              <Button type="button" variant="game-primary" size="game" onClick={handleDismiss} className="w-full">
+              <button
+                type="button"
+                onClick={handleDismiss}
+                className="arena-scaffold-soft-gate-primary w-full"
+              >
                 {tResult("cta.dismiss")}
-              </Button>
+              </button>
             ) : (
               <div className="flex flex-col gap-1.5">
-                <Button type="button" variant="game-primary" size="game" onClick={() => setShareOpen(true)} className="w-full">
+                <button
+                  type="button"
+                  onClick={() => setShareOpen(true)}
+                  className="arena-scaffold-soft-gate-primary w-full"
+                >
                   {tShare("button")}
-                </Button>
-                <Button type="button" variant="game-ghost" size="game" onClick={handleDismiss} className="w-full">
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDismiss}
+                  className="arena-scaffold-soft-gate-secondary w-full"
+                >
                   {tResult("cta.continue")}
-                </Button>
+                </button>
               </div>
             )
           }
@@ -471,20 +486,17 @@ export function BadgeEarnedPrompt({
           closeLabel={tBadge("later")}
           cta={
             <div className="flex flex-col gap-1.5">
-              <Button
+              <button
                 type="button"
-                variant="game-solid"
-                size="game"
                 onClick={onSubmitScore}
-                className="w-full"
+                className="arena-scaffold-soft-gate-primary w-full"
               >
                 {tBadge("submitScore")}
-              </Button>
+              </button>
               <button
                 type="button"
                 onClick={handleLater}
-                className="w-full py-1 text-xs font-semibold underline underline-offset-2"
-                style={{ color: "rgba(110, 65, 15, 0.70)" }}
+                className="arena-result-back-link w-full"
               >
                 {tBadge("later")}
               </button>
@@ -654,25 +666,21 @@ export function PieceCompletePrompt({
                escape hatch but never dominates the completion moment
                for pieces with no follow-up content yet. */
             <div className="flex flex-col gap-1.5">
-              <Button
+              <button
                 type="button"
-                variant="game-solid"
-                size="game"
                 onClick={() => handleAction(primaryCTA.handler)}
-                className="w-full"
+                className="arena-scaffold-soft-gate-primary w-full"
               >
                 {primaryCTA.label}
-              </Button>
+              </button>
               {onSubmitScore && (
-                <Button
+                <button
                   type="button"
-                  variant="game-ghost"
-                  size="game"
                   onClick={() => handleAction(onSubmitScore)}
-                  className="w-full"
+                  className="arena-scaffold-soft-gate-secondary w-full"
                 >
                   {tComplete("submitScore")}
-                </Button>
+                </button>
               )}
               {showArenaSecondary && (
                 <button

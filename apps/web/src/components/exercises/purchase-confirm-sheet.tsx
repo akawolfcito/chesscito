@@ -6,7 +6,6 @@ import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { CHAIN_NAMES } from "@/lib/content/editorial";
-import { Button } from "@/components/ui/button";
 
 type SelectedItem = {
   label: string;
@@ -117,11 +116,9 @@ export function PurchaseConfirmSheet({
                 {chainId ? (CHAIN_NAMES[chainId] ?? t("unknownNetwork")) : "—"}
               </span>
             </p>
-            <Button
+            <button
               type="button"
-              variant="game-solid"
-              size="game"
-              className="mt-2"
+              className="arena-scaffold-soft-gate-primary mt-2 w-full disabled:cursor-not-allowed disabled:opacity-60"
               disabled={
                 isWriting ||
                 purchasePhase !== "idle" ||
@@ -142,7 +139,7 @@ export function PurchaseConfirmSheet({
                 : purchasePhase === "buying"
                   ? t("buying")
                   : t("confirmButton")}
-            </Button>
+            </button>
             <button
               type="button"
               className="mt-2 min-h-[44px] w-full py-3 text-center text-sm font-semibold transition-colors hover:opacity-80"
