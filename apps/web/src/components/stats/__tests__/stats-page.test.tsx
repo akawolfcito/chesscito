@@ -95,20 +95,6 @@ describe("StatsPage", () => {
     expect(screen.getByText("880")).toBeInTheDocument();
   });
 
-  it("renders the difficulty breakdown with mapped labels", () => {
-    render(<StatsPage stats={SAMPLE_STATS} />);
-    // Easy/Medium/Hard appear in: difficulty cards, HoF badges, AND
-    // the new horizontal mix chart — getAllByText keeps all callsites
-    // legal while still proving the section renders.
-    expect(screen.getAllByText("Easy").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Medium").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Hard").length).toBeGreaterThanOrEqual(1);
-    // Counts surface twice each (small card + mix bar trailing number).
-    expect(screen.getAllByText("500").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("600").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("134").length).toBeGreaterThanOrEqual(1);
-  });
-
   it("renders Hall of Fame entries with truncated wallet + difficulty + relative time", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
 
@@ -158,20 +144,22 @@ describe("StatsPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the 'What this shows' orientation bullets", () => {
+  it("does NOT render the legacy 'What this shows' bullets (absorbed into Hero subtitle)", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
-    expect(screen.getByText("What this shows")).toBeInTheDocument();
+    // The orientation bullets used to live in their own block before
+    // the visual-momentum refactor; their job is now done by the
+    // Hero subtitle, which already names sessions/victories/onboarding/
+    // community. The bullets must NOT render as a separate section.
+    expect(screen.queryByText("What this shows")).toBeNull();
     expect(
-      screen.getByText("Recent app activity from anonymous sessions."),
-    ).toBeInTheDocument();
+      screen.queryByText("Recent app activity from anonymous sessions."),
+    ).toBeNull();
     expect(
-      screen.getByText(
-        "On-chain saved victories from Chesscito records.",
-      ),
-    ).toBeInTheDocument();
+      screen.queryByText("On-chain saved victories from Chesscito records."),
+    ).toBeNull();
     expect(
-      screen.getByText("Community activity from mints and scoreboards."),
-    ).toBeInTheDocument();
+      screen.queryByText("Community activity from mints and scoreboards."),
+    ).toBeNull();
   });
 
   it("renders Platform signals derived from the current snapshot", () => {
@@ -194,12 +182,18 @@ describe("StatsPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("hides Platform signals entirely when no insight is computable", () => {
+  it("renders the Platform signals fallback paragraph when no insight is computable", () => {
     render(<StatsPage stats={EMPTY_PUBLIC_STATS} />);
-    // EMPTY_PUBLIC_STATS has every numeric field null → no signal
-    // sentence can be rendered honestly, so the section is skipped
-    // rather than printing a header with no content.
-    expect(screen.queryByText("Platform signals")).toBeNull();
+    // The visual-momentum refactor places Platform signals between
+    // the two chart sections and Activity windows. Hiding it entirely
+    // breaks the scroll rhythm, so the section now keeps its header
+    // and shows a single defensive line instead.
+    expect(screen.getByText("Platform signals")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Platform signals will appear here as activity accumulates/,
+      ),
+    ).toBeInTheDocument();
   });
 
   it("renders the Activity trend section with both series labeled", () => {
@@ -274,6 +268,58 @@ describe("StatsPage", () => {
     expect(screen.getByText("Connected wallets")).toBeInTheDocument();
     expect(screen.getByText("Retention cohorts")).toBeInTheDocument();
     expect(screen.getByText("Purchase conversion")).toBeInTheDocument();
+  });
+
+  it("renders sections in visual-momentum order (Snapshot → Trend → Mix → Signals → Windows → Recent → Leaderboard → Tracked → Methodology)", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    const order = [
+      "Victory NFTs Minted",
+      "Activity trend, last 30 days",
+      "Victory difficulty mix",
+      "Platform signals",
+      "Activity windows",
+      "Recent Victory Mints",
+      "Community Leaderboard",
+      "Tracked today / Coming next",
+      "Methodology",
+    ];
+    const anchors = order.map((txt) => screen.getByText(txt));
+    for (let i = 1; i < anchors.length; i++) {
+      const prev = anchors[i - 1];
+      const curr = anchors[i];
+      // compareDocumentPosition returns DOCUMENT_POSITION_FOLLOWING
+      // when curr appears after prev in the document.
+      const followsPrev =
+        prev.compareDocumentPosition(curr) & Node.DOCUMENT_POSITION_FOLLOWING;
+      expect(followsPrev).toBeTruthy();
+    }
+  });
+
+  it("Executive Snapshot tiles use the hero variant (text-3xl number)", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    // 1,234 is unique to the Victory NFTs Minted hero tile.
+    const valueEl = screen.getByText("1,234");
+    expect(valueEl.className).toContain("text-3xl");
+    expect(valueEl.className).toContain("md:text-4xl");
+  });
+
+  it("Recent Victory Mints heading uses the demoted appendix style (uppercase small caps, not bold lg)", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    const heading = screen.getByText("Recent Victory Mints");
+    expect(heading.className).toContain("uppercase");
+    expect(heading.className).not.toContain("font-bold");
+  });
+
+  it("Community Leaderboard heading uses the demoted appendix style", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    const heading = screen.getByText("Community Leaderboard");
+    expect(heading.className).toContain("uppercase");
+    expect(heading.className).not.toContain("font-bold");
+  });
+
+  it("does NOT render the standalone 'Victories by difficulty' 3-card grid (absorbed into stacked bar)", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.queryByText("Victories by difficulty")).toBeNull();
   });
 
   it("disambiguates the cards whose source differs from Victories table", () => {

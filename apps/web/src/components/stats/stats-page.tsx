@@ -201,12 +201,6 @@ function DifficultyMixChart({ tally }: { tally: DifficultyTally }) {
   );
 }
 
-const DIFFICULTY_LABELS: Record<keyof DifficultyTally, string> = {
-  easy: "Easy",
-  medium: "Medium",
-  hard: "Hard",
-};
-
 function truncateWallet(address: string): string {
   if (!address || address.length < 10) return address;
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -286,12 +280,6 @@ function computePlatformSignals(stats: PublicStats): string[] {
   return signals;
 }
 
-const WHAT_THIS_SHOWS: ReadonlyArray<string> = [
-  "Recent app activity from anonymous sessions.",
-  "On-chain saved victories from Chesscito records.",
-  "Community activity from mints and scoreboards.",
-];
-
 const TRACKED_TODAY: ReadonlyArray<string> = [
   "App sessions",
   "Victory mints",
@@ -349,152 +337,36 @@ export function StatsPage({ stats }: StatsPageProps) {
         </p>
       </header>
 
-      {/* What this shows — orientation block so a reviewer reads the
-          numbers below as platform analytics, not as a personal
-          dashboard or a marketing scoreboard. */}
-      <section>
-        <h2
-          className="mb-2 text-sm font-bold md:text-base"
-          style={{ color: "var(--paper-text)" }}
-        >
-          What this shows
-        </h2>
-        <ul
-          className="space-y-1.5 text-xs md:text-sm"
-          style={{ color: "var(--paper-text-muted)" }}
-        >
-          {WHAT_THIS_SHOWS.map((line) => (
-            <li
-              key={line}
-              className="flex gap-2"
-              style={{ color: "var(--paper-text-muted)" }}
-            >
-              <span aria-hidden style={{ color: "var(--paper-text-subtle)" }}>
-                •
-              </span>
-              <span>{line}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* Primary headline metrics — platform-level signal, not
-          player-level. Welcome Packs (potentially zero-state or env-
-          dependent) sits in the secondary grid below. */}
+      {/* Executive Snapshot — vital-signs cockpit. Three hero tiles
+          deliver scale at a glance: total minted, weekly sessions,
+          monthly mints. The Hero subtitle above already orients the
+          reader (so a separate "What this shows" prose block would
+          break visual momentum before the first chart). */}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard
           label="Victory NFTs Minted"
           value={stats.totalVictories}
           sublabel="Saved victories on Celo mainnet"
+          variant="hero"
         />
         <StatCard
           label="Approx. App Sessions (7d)"
           value={stats.activeSessions7d}
           sublabel="Anonymous sessions; not connected wallets"
+          variant="hero"
         />
         <StatCard
           label="Victory Mints (30d)"
           value={stats.victories30d}
           sublabel="Mints in the last 30 days"
+          variant="hero"
         />
       </section>
 
-      {/* Secondary metrics */}
-      <section>
-        <h3
-          className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide"
-          style={{ color: "var(--paper-text-subtle)" }}
-        >
-          Activity windows
-        </h3>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <StatCard
-            label="Victory Mints (7d)"
-            value={stats.victories7d}
-            variant="secondary"
-          />
-          <StatCard
-            label="Wallets with Victory Mints"
-            value={stats.uniqueMintersLifetime}
-            variant="secondary"
-            sublabel="Distinct wallets that minted a Victory"
-          />
-          <StatCard
-            label="Approx. App Sessions (30d)"
-            value={stats.activeSessions30d}
-            variant="secondary"
-          />
-          <StatCard
-            label="Welcome Packs Claimed"
-            value={stats.welcomePacksLifetime}
-            variant="secondary"
-            sublabel="Claims tracked after launch"
-          />
-          <StatCard
-            label="Welcome Packs (7d)"
-            value={stats.welcomePacks7d}
-            variant="secondary"
-          />
-        </div>
-      </section>
-
-      {/* Difficulty breakdown */}
-      <section>
-        <h3
-          className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide"
-          style={{ color: "var(--paper-text-subtle)" }}
-        >
-          Victories by difficulty
-        </h3>
-        <div className="grid grid-cols-3 gap-2">
-          {(["easy", "medium", "hard"] as const).map((key) => (
-            <StatCard
-              key={key}
-              label={DIFFICULTY_LABELS[key]}
-              value={diff ? diff[key] : null}
-              variant="secondary"
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Platform signals — short narrated insights derived from the
-          numbers above. Each bullet is independently null-gated by
-          computePlatformSignals, so a missing field drops its line
-          instead of producing a partial sentence. Section is hidden
-          entirely when no signal is computable. */}
-      {platformSignals.length > 0 ? (
-        <section>
-          <h3
-            className="mb-2 text-base font-bold md:text-lg"
-            style={{ color: "var(--paper-text)" }}
-          >
-            Platform signals
-          </h3>
-          <ul
-            className="space-y-1.5 text-xs md:text-sm"
-            style={{ color: "var(--paper-text-muted)" }}
-          >
-            {platformSignals.map((line) => (
-              <li
-                key={line}
-                className="flex gap-2"
-                style={{ color: "var(--paper-text-muted)" }}
-              >
-                <span aria-hidden style={{ color: "var(--paper-text-subtle)" }}>
-                  •
-                </span>
-                <span>{line}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {/* Activity trend chart — two 30-day sparklines (sessions +
-          mints) over the same time axis. Hidden entirely when the
-          aggregator returned an empty trend (both upstream queries
-          failed) rather than rendering an empty grid. */}
+      {/* Activity trend chart — first visual right after Snapshot so
+          the reader's absorb-numbers mode carries straight into the
+          sparklines without a prose block in between. Hidden entirely
+          when the aggregator returned an empty trend. */}
       {stats.activityTrend30d.length > 0 ? (() => {
         const sessions = stats.activityTrend30d.map((b: DailyBucket) => b.sessions);
         const mints = stats.activityTrend30d.map((b: DailyBucket) => b.mints);
@@ -539,9 +411,11 @@ export function StatsPage({ stats }: StatsPageProps) {
         );
       })() : null}
 
-      {/* Victory difficulty mix — horizontal bars complement the
-          three-card breakdown above; cards give precise integers,
-          bars give visual proportion at a glance. */}
+      {/* Victory difficulty mix — second chart, single stacked bar.
+          The redundant 3-card "Victories by difficulty" grid was
+          removed; absolute counts moved into segment titles + legend
+          percentages so the section delivers composition without
+          repeating the data twice. */}
       {diff && diff.easy + diff.medium + diff.hard > 0 ? (
         <section>
           <h3
@@ -560,13 +434,95 @@ export function StatsPage({ stats }: StatsPageProps) {
         </section>
       ) : null}
 
-      {/* Recent Victory Mints (was: "Hall of Fame" — renamed so the
-          section reads as a platform activity feed rather than an
-          opinionated curatorial list). */}
+      {/* Platform signals — sits AFTER the two charts so its three
+          derived bullets read as confirmation of the visual story
+          ("yes, the bar you just saw is mostly Easy") rather than
+          preamble. When no signal is computable (every numeric field
+          null), a defensive fallback paragraph keeps the page rhythm
+          intact instead of leaving a gap between charts and the
+          Activity windows grid. */}
       <section>
         <h3
           className="mb-2 text-base font-bold md:text-lg"
           style={{ color: "var(--paper-text)" }}
+        >
+          Platform signals
+        </h3>
+        {platformSignals.length > 0 ? (
+          <ul
+            className="space-y-1.5 text-xs md:text-sm"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            {platformSignals.map((line) => (
+              <li
+                key={line}
+                className="flex gap-2"
+                style={{ color: "var(--paper-text-muted)" }}
+              >
+                <span aria-hidden style={{ color: "var(--paper-text-subtle)" }}>
+                  •
+                </span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p
+            className="text-xs md:text-sm leading-snug"
+            style={{ color: "var(--paper-text-subtle)" }}
+          >
+            Platform signals will appear here as activity accumulates.
+          </p>
+        )}
+      </section>
+
+      {/* Activity windows — tabular cards as supporting evidence
+          after the dashboard's high-signal visuals. */}
+      <section>
+        <h3
+          className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide"
+          style={{ color: "var(--paper-text-subtle)" }}
+        >
+          Activity windows
+        </h3>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <StatCard
+            label="Victory Mints (7d)"
+            value={stats.victories7d}
+            variant="secondary"
+          />
+          <StatCard
+            label="Wallets with Victory Mints"
+            value={stats.uniqueMintersLifetime}
+            variant="secondary"
+            sublabel="Distinct wallets that minted a Victory"
+          />
+          <StatCard
+            label="Approx. App Sessions (30d)"
+            value={stats.activeSessions30d}
+            variant="secondary"
+          />
+          <StatCard
+            label="Welcome Packs Claimed"
+            value={stats.welcomePacksLifetime}
+            variant="secondary"
+            sublabel="Claims tracked after launch"
+          />
+          <StatCard
+            label="Welcome Packs (7d)"
+            value={stats.welcomePacks7d}
+            variant="secondary"
+          />
+        </div>
+      </section>
+
+      {/* Recent Victory Mints — appendix tone. Heading reduced to
+          uppercase small caps so it reads as a supporting feed, not
+          as headline content competing with the Snapshot above. */}
+      <section>
+        <h3
+          className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide"
+          style={{ color: "var(--paper-text-subtle)" }}
         >
           Recent Victory Mints
         </h3>
@@ -604,11 +560,14 @@ export function StatsPage({ stats }: StatsPageProps) {
         )}
       </section>
 
-      {/* Community Leaderboard (was: "Top 10 Leaderboard"). */}
+      {/* Community Leaderboard — appendix tone (same demoted heading
+          treatment as Recent Mints). Subtitle kept verbatim because
+          the caveat ("game scores, not only minted victories") is
+          load-bearing for honesty about the data source. */}
       <section>
         <h3
-          className="mb-1 text-base font-bold md:text-lg"
-          style={{ color: "var(--paper-text)" }}
+          className="mb-1 text-[0.6875rem] font-semibold uppercase tracking-wide"
+          style={{ color: "var(--paper-text-subtle)" }}
         >
           Community Leaderboard
         </h3>
