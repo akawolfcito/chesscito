@@ -9,22 +9,27 @@ type StatCardProps = {
   sublabel?: string;
   /**
    * `hero` = vital-signs tile for the Executive Snapshot (largest
-   * number, more padding). `primary` = default headline tile.
-   * `secondary` = supporting Activity-windows-style smaller tile.
+   * number, more padding, cream-amber fill). `primary` = default
+   * headline tile with fill. `secondary` = supporting smaller tile
+   * with fill. `bare` = typographic-only mode with NO tile fill,
+   * used for the Activity windows so they read as a tabular grid
+   * on the page background instead of yet another box family.
    */
-  variant?: "hero" | "primary" | "secondary";
+  variant?: "hero" | "primary" | "secondary" | "bare";
 };
 
 const VALUE_CLASS: Record<NonNullable<StatCardProps["variant"]>, string> = {
   hero: "text-3xl md:text-4xl font-bold tabular-nums",
   primary: "text-2xl font-bold",
   secondary: "text-lg font-semibold",
+  bare: "text-lg font-semibold tabular-nums",
 };
 
-const CONTAINER_PADDING: Record<NonNullable<StatCardProps["variant"]>, string> = {
-  hero: "px-5 py-4",
-  primary: "px-4 py-3",
-  secondary: "px-4 py-3",
+const CONTAINER_CLASS: Record<NonNullable<StatCardProps["variant"]>, string> = {
+  hero: "paper-tray px-5 py-4",
+  primary: "paper-tray px-4 py-3",
+  secondary: "paper-tray px-4 py-3",
+  bare: "py-2",
 };
 
 export function StatCard({
@@ -40,7 +45,7 @@ export function StatCard({
 
   return (
     <div
-      className={`paper-tray flex flex-col gap-1 ${CONTAINER_PADDING[variant]}`}
+      className={`flex flex-col gap-1 ${CONTAINER_CLASS[variant]}`}
       style={{ color: "var(--paper-text)" }}
     >
       <span

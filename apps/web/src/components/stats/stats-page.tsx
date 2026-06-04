@@ -152,7 +152,7 @@ function DifficultyMixChart({ tally }: { tally: DifficultyTally }) {
     "Difficulty mix: " +
     bands.map((b) => `${b.label} ${pct(tally[b.key])}%`).join(", ");
   return (
-    <div className="paper-tray flex flex-col gap-3 px-4 py-3">
+    <div className="flex flex-col gap-3">
       <div
         className="flex h-5 w-full overflow-hidden rounded-full"
         role="img"
@@ -476,8 +476,11 @@ export function StatsPage({ stats }: StatsPageProps) {
         )}
       </section>
 
-      {/* Activity windows — tabular cards as supporting evidence
-          after the dashboard's high-signal visuals. */}
+      {/* Activity windows — tabular grid as supporting evidence
+          after the dashboard's high-signal visuals. Tiles use the
+          `bare` variant (no cream-amber fill) so the page reads
+          as typography + whitespace instead of a wall of boxes
+          competing with the Snapshot hero tiles above. */}
       <section>
         <h3
           className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide"
@@ -485,33 +488,33 @@ export function StatsPage({ stats }: StatsPageProps) {
         >
           Activity windows
         </h3>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
           <StatCard
             label="Victory Mints (7d)"
             value={stats.victories7d}
-            variant="secondary"
+            variant="bare"
           />
           <StatCard
             label="Wallets with Victory Mints"
             value={stats.uniqueMintersLifetime}
-            variant="secondary"
+            variant="bare"
             sublabel="Distinct wallets that minted a Victory"
           />
           <StatCard
             label="Approx. App Sessions (30d)"
             value={stats.activeSessions30d}
-            variant="secondary"
+            variant="bare"
           />
           <StatCard
             label="Welcome Packs Claimed"
             value={stats.welcomePacksLifetime}
-            variant="secondary"
+            variant="bare"
             sublabel="Claims tracked after launch"
           />
           <StatCard
             label="Welcome Packs (7d)"
             value={stats.welcomePacks7d}
-            variant="secondary"
+            variant="bare"
           />
         </div>
       </section>
@@ -534,12 +537,18 @@ export function StatsPage({ stats }: StatsPageProps) {
             No mints yet.
           </p>
         ) : (
-          <ul className="space-y-1.5">
+          <ul
+            className="border-t"
+            style={{ borderColor: "var(--paper-divider)" }}
+          >
             {stats.hallOfFame.map((row) => (
               <li
                 key={row.tx_hash}
-                className="paper-tray flex items-center justify-between gap-2 px-3 py-2 text-xs"
-                style={{ color: "var(--paper-text)" }}
+                className="flex items-center justify-between gap-2 border-b py-2 text-xs"
+                style={{
+                  color: "var(--paper-text)",
+                  borderColor: "var(--paper-divider)",
+                }}
               >
                 <span className="font-mono">{truncateWallet(row.player)}</span>
                 <span
@@ -585,12 +594,18 @@ export function StatsPage({ stats }: StatsPageProps) {
             Leaderboard is currently unavailable.
           </p>
         ) : (
-          <ol className="space-y-1.5">
+          <ol
+            className="border-t"
+            style={{ borderColor: "var(--paper-divider)" }}
+          >
             {stats.leaderboardTop10.map((row) => (
               <li
                 key={`${row.rank}-${row.player}`}
-                className="paper-tray flex items-center justify-between gap-2 px-3 py-2 text-xs"
-                style={{ color: "var(--paper-text)" }}
+                className="flex items-center justify-between gap-2 border-b py-2 text-xs"
+                style={{
+                  color: "var(--paper-text)",
+                  borderColor: "var(--paper-divider)",
+                }}
               >
                 <span
                   className="w-6 text-center font-bold"

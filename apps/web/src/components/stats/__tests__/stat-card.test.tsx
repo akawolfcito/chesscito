@@ -82,4 +82,35 @@ describe("StatCard", () => {
     render(<StatCard label="Hero" value={null} variant="hero" />);
     expect(screen.getByText("—")).toBeInTheDocument();
   });
+
+  it("bare variant renders no paper-tray fill (typographic-only mode)", () => {
+    const { container } = render(
+      <StatCard label="Bare" value={42} variant="bare" />,
+    );
+    // Bare variant skips the cream-amber tile fill so the eye reads
+    // the metric as typography on the page background instead of
+    // another box competing with the Snapshot tiles above.
+    expect(container.querySelector(".paper-tray")).toBeNull();
+  });
+
+  it("bare variant still renders label, value, and sublabel", () => {
+    render(
+      <StatCard
+        label="Wallets with Victory Mints"
+        value={312}
+        sublabel="Distinct wallets that minted a Victory"
+        variant="bare"
+      />,
+    );
+    expect(screen.getByText("Wallets with Victory Mints")).toBeInTheDocument();
+    expect(screen.getByText("312")).toBeInTheDocument();
+    expect(
+      screen.getByText("Distinct wallets that minted a Victory"),
+    ).toBeInTheDocument();
+  });
+
+  it("bare variant renders em-dash for null value", () => {
+    render(<StatCard label="Bare" value={null} variant="bare" />);
+    expect(screen.getByText("—")).toBeInTheDocument();
+  });
 });
