@@ -5,6 +5,7 @@ export type ActionRowIconName =
   | "ejercicio-diario-chess"
   | "estrella"
   | "learning"
+  | "mate-icon"
   | "pergamino-tactico"
   | "play-chess"
   | "practice-pieces"
@@ -20,11 +21,18 @@ type Props = {
   alt?: string;
 };
 
+function resolveIconBase(name: ActionRowIconName): string {
+  if (name === "mate-icon") return "/art/hub";
+  if (
+    ["ejercicio-diario-chess", "learning", "play-chess", "practice-pieces", "save"].includes(name)
+  ) {
+    return "/art/new-icons-chesscito";
+  }
+  return "/art/action-row";
+}
+
 export function ActionRowIcon({ name, className = "", alt = "" }: Props) {
-  const iconBase = ["ejercicio-diario-chess", "learning", "play-chess", "practice-pieces", "save"].includes(name)
-    ? "/art/new-icons-chesscito"
-    : "/art/action-row";
-  const base = `${iconBase}/${name}`;
+  const base = `${resolveIconBase(name)}/${name}`;
 
   return (
     <picture className={className}>

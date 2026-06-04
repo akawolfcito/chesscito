@@ -474,7 +474,7 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
           <MissionHeaderCandy
               title={setup.name}
               subtitle="Special Training"
-              iconSlot={<TileIconSlot src="/art/new-icons-chesscito/play-chess" />}
+              iconSlot={<TileIconSlot src="/art/hub/mate-icon" />}
               objective={setup.description}
               onClose={() => handleOpenChange(false)}
             />
