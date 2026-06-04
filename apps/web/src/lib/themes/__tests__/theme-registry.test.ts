@@ -5,7 +5,10 @@ import {
   type ThemeAssetKey,
 } from "../theme-registry";
 
-const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = ["hub.portal"];
+const REQUIRED_ASSET_KEYS: readonly ThemeAssetKey[] = [
+  "hub.portal",
+  "hub.avatar",
+];
 
 describe("theme-registry", () => {
   it("publishes candy-forest as the default theme id", () => {
@@ -31,12 +34,14 @@ describe("theme-registry", () => {
 
   it("candy-forest exposes both default + pro variants for hub.portal", () => {
     const entry = THEMES["candy-forest"].assets["hub.portal"];
-    expect(entry.default).toBe(
-      "/art/new-assets-chesscito/hub/chesscito-normal-portal",
-    );
-    expect(entry.pro).toBe(
-      "/art/new-assets-chesscito/hub/chesscito-pro-portal",
-    );
+    expect(entry.default).toBe("/art/hub/portal-chesscito-normal");
+    expect(entry.pro).toBe("/art/hub/portal-chesscito-pro");
+  });
+
+  it("candy-forest exposes both default + pro variants for hub.avatar", () => {
+    const entry = THEMES["candy-forest"].assets["hub.avatar"];
+    expect(entry.default).toBe("/art/scene-rooted/avatar-chesscito");
+    expect(entry.pro).toBe("/art/hub/chesscito-avatar-new-light");
   });
 
   it("the default theme id resolves to a registered theme", () => {

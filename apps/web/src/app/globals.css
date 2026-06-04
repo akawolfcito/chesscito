@@ -4718,6 +4718,28 @@
   height: 100%;
 }
 
+/* Avatar overlay rendered on top of the playhub portal background.
+   Centered both axes; sized to ~64% of the portal width so the figure
+   sits inside the framed area without crowding the tagline band at
+   the bottom. Pointer-events off — the anchor is decorative; sibling
+   CTAs capture taps. */
+.kingdom-anchor-avatar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 64%;
+  transform: translate(-50%, -40%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.kingdom-anchor-avatar img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 10px rgba(20, 12, 5, 0.4));
+}
+
 .kingdom-anchor-img {
   display: block;
   width: 100%;

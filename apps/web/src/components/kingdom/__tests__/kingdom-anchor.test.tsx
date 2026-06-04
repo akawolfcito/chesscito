@@ -16,26 +16,42 @@ import { HOME_ANCHOR_COPY } from "@/lib/content/editorial";
 describe("KingdomAnchor", () => {
   it("renders the inactive hero asset via <picture> with AVIF/WebP/PNG fallback chain", () => {
     const { container } = render(<KingdomAnchor />);
-    // Only the hero <picture> contributes <source> tags (the tagline
-    // overlay is text). Two sources expected: avif, webp.
     const sources = container.querySelectorAll(".kingdom-anchor-picture source");
     expect(sources).toHaveLength(2);
     expect(sources[0]).toHaveAttribute(
       "srcset",
-      "/art/new-assets-chesscito/hub/chesscito-normal-portal.avif",
+      "/art/hub/portal-chesscito-normal.avif",
     );
     expect(sources[0]).toHaveAttribute("type", "image/avif");
     expect(sources[1]).toHaveAttribute(
       "srcset",
-      "/art/new-assets-chesscito/hub/chesscito-normal-portal.webp",
+      "/art/hub/portal-chesscito-normal.webp",
     );
     expect(sources[1]).toHaveAttribute("type", "image/webp");
 
     const img = container.querySelector(".kingdom-anchor-img");
     expect(img).toHaveAttribute(
       "src",
-      "/art/new-assets-chesscito/hub/chesscito-normal-portal.png",
+      "/art/hub/portal-chesscito-normal.png",
     );
+  });
+
+  it("overlays the inactive avatar on top of the portal background", () => {
+    const { container } = render(<KingdomAnchor />);
+    const avatar = container.querySelector(".kingdom-anchor-avatar");
+    expect(avatar).not.toBeNull();
+    const sources = avatar!.querySelectorAll("source");
+    expect(sources).toHaveLength(2);
+    expect(sources[0]).toHaveAttribute(
+      "srcset",
+      "/art/scene-rooted/avatar-chesscito.avif",
+    );
+    expect(sources[1]).toHaveAttribute(
+      "srcset",
+      "/art/scene-rooted/avatar-chesscito.webp",
+    );
+    const img = avatar!.querySelector("img");
+    expect(img).toHaveAttribute("src", "/art/scene-rooted/avatar-chesscito.png");
   });
 
   it("defaults to the playhub variant with the inactive portal aspect-ratio", () => {
@@ -78,8 +94,8 @@ describe("KingdomAnchor", () => {
     const { container } = render(<KingdomAnchor variant="arena-preview" />);
     const sources = container.querySelectorAll("source");
     sources.forEach((s) => {
-      expect(s.getAttribute("srcset")).not.toContain("chesscito-normal-portal");
-      expect(s.getAttribute("srcset")).not.toContain("chesscito-pro-portal");
+      expect(s.getAttribute("srcset")).not.toContain("portal-chesscito-normal");
+      expect(s.getAttribute("srcset")).not.toContain("portal-chesscito-pro");
     });
   });
 
@@ -194,7 +210,12 @@ describe("KingdomAnchor — PRO variant swap", () => {
     const img = container.querySelector(".kingdom-anchor-img");
     expect(img).toHaveAttribute(
       "src",
-      "/art/new-assets-chesscito/hub/chesscito-pro-portal.png",
+      "/art/hub/portal-chesscito-pro.png",
+    );
+    const avatarImg = container.querySelector(".kingdom-anchor-avatar img");
+    expect(avatarImg).toHaveAttribute(
+      "src",
+      "/art/hub/chesscito-avatar-new-light.png",
     );
     vi.doUnmock("@/lib/pro/use-is-pro-active");
   });

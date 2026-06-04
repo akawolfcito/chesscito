@@ -77,8 +77,12 @@ export function KingdomAnchor({
    *  variant within whichever theme is active; themes that don't ship
    *  a PRO variant fall back to default automatically (see
    *  `useThemeAsset` graceful-fallback contract). */
-  const heroAssetBase = useThemeAsset(
+  const portalAssetBase = useThemeAsset(
     "hub.portal",
+    isProActive ? "pro" : "default",
+  );
+  const avatarAssetBase = useThemeAsset(
+    "hub.avatar",
     isProActive ? "pro" : "default",
   );
   const classes = [
@@ -135,10 +139,10 @@ export function KingdomAnchor({
       ) : (
         <>
           <picture className="kingdom-anchor-picture">
-            <source srcSet={`${heroAssetBase}.avif`} type="image/avif" />
-            <source srcSet={`${heroAssetBase}.webp`} type="image/webp" />
+            <source srcSet={`${portalAssetBase}.avif`} type="image/avif" />
+            <source srcSet={`${portalAssetBase}.webp`} type="image/webp" />
             <img
-              src={`${heroAssetBase}.png`}
+              src={`${portalAssetBase}.png`}
               alt=""
               aria-hidden="true"
               className="kingdom-anchor-img"
@@ -150,6 +154,18 @@ export function KingdomAnchor({
               decoding="async"
             />
           </picture>
+          {variant === "playhub" && (
+            <picture className="kingdom-anchor-avatar">
+              <source srcSet={`${avatarAssetBase}.avif`} type="image/avif" />
+              <source srcSet={`${avatarAssetBase}.webp`} type="image/webp" />
+              <img
+                src={`${avatarAssetBase}.png`}
+                alt=""
+                aria-hidden="true"
+                decoding="async"
+              />
+            </picture>
+          )}
           {/* Tagline rendered inside the portal frame, below the wizard.
            *  The highlight line is bolded as the focal closer. Same copy
            *  across both inactive + PRO portal variants for now. */}

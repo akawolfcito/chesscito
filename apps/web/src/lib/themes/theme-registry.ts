@@ -39,7 +39,8 @@ export type ThemeAssetEntry = {
  *  off hardcoded paths. The string union doubles as the API surface
  *  of `useThemeAsset` — typos become compile errors. */
 export type ThemeAssetKey =
-  | "hub.portal";
+  | "hub.portal"
+  | "hub.avatar";
 
 export type ThemeDefinition = {
   /** Stable theme id — used as Shop itemId once monetized + as the
@@ -62,8 +63,12 @@ export const THEMES: Record<string, ThemeDefinition> = {
     name: "Candy Forest",
     assets: {
       "hub.portal": {
-        default: "/art/new-assets-chesscito/hub/chesscito-normal-portal",
-        pro: "/art/new-assets-chesscito/hub/chesscito-pro-portal",
+        default: "/art/hub/portal-chesscito-normal",
+        pro: "/art/hub/portal-chesscito-pro",
+      },
+      "hub.avatar": {
+        default: "/art/scene-rooted/avatar-chesscito",
+        pro: "/art/hub/chesscito-avatar-new-light",
       },
     },
   },
