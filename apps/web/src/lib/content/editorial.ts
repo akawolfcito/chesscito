@@ -2573,8 +2573,8 @@ export const HOME_ANCHOR_COPY = {
    *  wizard. The first line is the lead-in; the highlight line is
    *  rendered bolded as the focal closer. Same copy in both
    *  inactive + PRO portal variants for now (per 2026-05-25 brief). */
-  taglineLead: "Train your pieces. Master the board.",
-  taglineHighlight: "Then play and win!",
+  taglineLead: "Train your pieces first",
+  taglineHighlight: "Then enter the arena",
 } as const;
 
 /** Persistent HUD chip copy. Consumed by `<HudResourceChip>` (top row) and

@@ -361,12 +361,21 @@ export function HubScaffold({
                 )
               : null}
             {secondaryAction && onArenaPress ? (
-              <span
+              <svg
                 className="hub-scaffold-cta-chevron"
+                viewBox="0 0 24 36"
                 aria-hidden="true"
+                focusable="false"
               >
-                ›
-              </span>
+                <polyline
+                  points="8,6 18,18 8,30"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             ) : null}
             {onArenaPress
               ? wrap(

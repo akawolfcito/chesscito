@@ -1411,7 +1411,7 @@
     width: 100%;
   }
 
-  .victory-popup-secondary-row > .arena-result-secondary-action {
+  .victory-popup-secondary-row>.arena-result-secondary-action {
     width: 100%;
   }
 
@@ -2021,8 +2021,8 @@
      1.8rem slot. Padding zero on the wrapper keeps the sprite edge
      flush; object-fit contain handles aspect ratios that don't match
      the square slot. */
-  .candy-tray-pill-icon--floating > img,
-  .candy-tray-pill-icon--floating > picture img,
+  .candy-tray-pill-icon--floating>img,
+  .candy-tray-pill-icon--floating>picture img,
   .candy-tray-pill-icon--floating picture {
     width: 100%;
     height: 100%;
@@ -2682,6 +2682,7 @@
     transform: translate(-50%, calc(-50% - 2.2rem));
     animation: playhub-board-hint-fade-top var(--duration-snap, 180ms) ease-out;
   }
+
   .playhub-board-select-hint[data-placement="top"]::after {
     left: 50%;
     bottom: -0.22rem;
@@ -2693,6 +2694,7 @@
     transform: translate(-50%, calc(-50% + 2.2rem));
     animation: playhub-board-hint-fade-bottom var(--duration-snap, 180ms) ease-out;
   }
+
   .playhub-board-select-hint[data-placement="bottom"]::after {
     left: 50%;
     top: -0.22rem;
@@ -2704,6 +2706,7 @@
     transform: translate(1.6rem, -50%);
     animation: playhub-board-hint-fade-right var(--duration-snap, 180ms) ease-out;
   }
+
   .playhub-board-select-hint[data-placement="right"]::after {
     top: 50%;
     left: -0.22rem;
@@ -2715,6 +2718,7 @@
     transform: translate(calc(-100% - 1.6rem), -50%);
     animation: playhub-board-hint-fade-left var(--duration-snap, 180ms) ease-out;
   }
+
   .playhub-board-select-hint[data-placement="left"]::after {
     top: 50%;
     right: -0.22rem;
@@ -2722,20 +2726,51 @@
   }
 
   @keyframes playhub-board-hint-fade-top {
-    from { opacity: 0; transform: translate(-50%, calc(-50% - 1.6rem)); }
-    to   { opacity: 1; transform: translate(-50%, calc(-50% - 2.2rem)); }
+    from {
+      opacity: 0;
+      transform: translate(-50%, calc(-50% - 1.6rem));
+    }
+
+    to {
+      opacity: 1;
+      transform: translate(-50%, calc(-50% - 2.2rem));
+    }
   }
+
   @keyframes playhub-board-hint-fade-bottom {
-    from { opacity: 0; transform: translate(-50%, calc(-50% + 1.6rem)); }
-    to   { opacity: 1; transform: translate(-50%, calc(-50% + 2.2rem)); }
+    from {
+      opacity: 0;
+      transform: translate(-50%, calc(-50% + 1.6rem));
+    }
+
+    to {
+      opacity: 1;
+      transform: translate(-50%, calc(-50% + 2.2rem));
+    }
   }
+
   @keyframes playhub-board-hint-fade-right {
-    from { opacity: 0; transform: translate(1.0rem, -50%); }
-    to   { opacity: 1; transform: translate(1.6rem, -50%); }
+    from {
+      opacity: 0;
+      transform: translate(1.0rem, -50%);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate(1.6rem, -50%);
+    }
   }
+
   @keyframes playhub-board-hint-fade-left {
-    from { opacity: 0; transform: translate(calc(-100% - 1.0rem), -50%); }
-    to   { opacity: 1; transform: translate(calc(-100% - 1.6rem), -50%); }
+    from {
+      opacity: 0;
+      transform: translate(calc(-100% - 1.0rem), -50%);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate(calc(-100% - 1.6rem), -50%);
+    }
   }
 
   .playhub-board-piece-float {
@@ -2779,8 +2814,7 @@
        HUD scale. The pair lands as one composite filter pass; no
        animation cost vs the single layer. (Sally audit §4 #2.) */
     filter:
-      drop-shadow(0 1px 2px rgba(40, 20, 5, 0.55))
-      drop-shadow(0 4px 6px rgba(40, 20, 5, 0.20));
+      drop-shadow(0 1px 2px rgba(40, 20, 5, 0.55)) drop-shadow(0 4px 6px rgba(40, 20, 5, 0.20));
   }
 
   /* ── Target piece — visible enemy for capture exercises ── */
@@ -4666,15 +4700,15 @@
  * survives even if the variable font hasn't loaded yet. */
 .kingdom-anchor-tagline-lead {
   font-family: var(--font-fredoka), system-ui, sans-serif;
-  font-size: 0.65rem;
-  font-weight: 400;
+  font-size: 0.82rem;
+  font-weight: 700;
   line-height: 1.2;
 }
 
 .kingdom-anchor-tagline-highlight {
   font-family: var(--font-fredoka), system-ui, sans-serif;
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-size: 0.65rem;
+  font-weight: 400;
   line-height: 1.2;
 }
 
@@ -5158,11 +5192,9 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 60px;
   padding: 6px 7px 7px;
   border-radius: 14px;
-  border: 2px solid #8a4a08;
+  border: 0;
   background: linear-gradient(180deg, #fbd64a 0%, #f5a623 60%, #d97f0a 100%);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 244, 200, 0.55),
-    inset 0 -2px 0 rgba(130, 70, 8, 0.35);
+  box-shadow: none;
   color: rgba(50, 25, 5, 0.95);
   font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
   font-size: 0.72rem;
@@ -5179,10 +5211,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .reward-tile.is-active-piece {
-  box-shadow:
-    0 0 0 2px rgba(255, 216, 74, 0.85),
-    inset 0 2px 0 rgba(255, 244, 200, 0.55),
-    inset 0 -2px 0 rgba(130, 70, 8, 0.35);
+  box-shadow: none;
 }
 
 .reward-tile-label {
@@ -5270,14 +5299,16 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* State: progress — same gold backplate, no badge, no lock. */
 
-/* State: locked — asset-backed stone tile + lock icon. */
+/* State: locked — pure-CSS stone backplate. Flat gray gradient with a
+   subtle top highlight + bottom shade. No external bevel/drop shadow
+   per design ref (the tile reads as a sealed slab, not a 3D button). */
 .reward-tile.is-locked {
   opacity: 1;
   filter: none;
-  background: url("/art/scene-rooted/piece-locked.png") center / 100% 100% no-repeat;
+  background: linear-gradient(180deg, #a8acb0 0%, #74787c 55%, #494c50 100%);
   box-shadow:
-    0 5px 0 rgba(45, 51, 51, 0.28),
-    0 10px 14px rgba(12, 40, 28, 0.20);
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -3px 0 rgba(40, 44, 48, 0.4);
   color: #fff8e9;
   text-shadow:
     0 2px 0 rgba(35, 42, 45, 0.72),
@@ -6190,21 +6221,18 @@ button.hud-resource-chip:active:not(:disabled) {
   white-space: nowrap;
 }
 
-/* Sequence chevron between Train Pieces and Enter Arena. Gold + drop
-   shadow so it reads against the kingdom backdrop. Decorative only. */
+/* Sequence chevron between Train Pieces and Enter Arena. SVG polyline
+   with rounded line-cap + line-join so corners read soft instead of
+   sharp. drop-shadow layers produce the chunky 3D feel that
+   text-shadow could not deliver on the bare glyph. Decorative only. */
 .hub-scaffold-cta-chevron {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex: 0 0 auto;
   align-self: center;
-  font-size: 2rem;
-  font-weight: 900;
-  line-height: 1;
-  color: #f7c64a;
-  text-shadow:
-    0 1px 0 rgba(120, 70, 10, 0.7),
-    0 2px 6px rgba(0, 0, 0, 0.35);
+  width: 18px;
+  height: 26px;
+  color: #8a5a2a;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
   pointer-events: none;
   user-select: none;
 }
@@ -6217,7 +6245,7 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 0.85rem;
   background: var(--cta-primary-blue-grad);
   border: 2px solid var(--cta-primary-blue-border);
-  border-radius: 14px;
+  border-radius: 22px;
   box-shadow: var(--cta-primary-blue-bevel);
   text-shadow: var(--cta-primary-blue-text-shadow);
   filter: none;
@@ -6498,7 +6526,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .hub-pro-badge {
   position: relative;
   display: block;
-  width: 78px;
+  width: 72px;
   aspect-ratio: 225 / 272;
   padding: 0;
   border: 0;
@@ -7017,7 +7045,7 @@ button.hud-resource-chip:active:not(:disabled) {
    * column from collapsing to 0px while the conditional hero CTA
    * hasn't hydrated yet, which used to bounce the LEARN column
    * and reward rail when the page first painted. */
-  min-height: 125px;
+  min-height: 100px;
 }
 
 /* Root-level CTA footer — sibling of `.hub-scaffold-body`. Sits at
@@ -7037,19 +7065,14 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   justify-content: center;
   gap: 5px;
-  /* width: min(100%, 212px); */
   min-height: 46px;
   padding: 6px 10px;
   border-radius: 15px;
-  background:
-    radial-gradient(ellipse at 50% 88%, rgba(121, 79, 10, 0.16) 0 42%, transparent 43%),
-    linear-gradient(180deg, #fff3bd 0%, #f3d886 58%, #c49235 100%);
+  background: linear-gradient(180deg, #a8acb0 0%, #74787c 55%, #494c50 100%);
   box-shadow:
-    0 2px 0 rgba(255, 255, 225, 0.72) inset,
-    0 -7px 0 rgba(92, 63, 14, 0.20) inset,
-    0 5px 0 rgba(83, 45, 5, 0.25),
-    0 10px 14px rgba(12, 40, 28, 0.20);
-  filter: drop-shadow(0 4px 7px rgba(28, 55, 23, 0.18));
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -3px 0 rgba(40, 44, 48, 0.4);
+  filter: none;
 }
 
 .quest-tray-slot,
@@ -9295,11 +9318,9 @@ button.hud-resource-chip:active:not(:disabled) {
      just a small slice (12px) overhanging on the left edge. */
   padding: 14px 14px 14px 100px;
   border-radius: 18px;
-  background: linear-gradient(
-    160deg,
-    var(--shop-tile-accent-base) 0%,
-    var(--shop-tile-accent-mid) 100%
-  );
+  background: linear-gradient(160deg,
+      var(--shop-tile-accent-base) 0%,
+      var(--shop-tile-accent-mid) 100%);
   border: 1px solid var(--shop-tile-accent-border);
   box-shadow:
     inset 0 0 0 2px rgba(255, 255, 255, 0.55),
@@ -9564,11 +9585,9 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 0.6rem;
   padding: 0.7rem 1rem;
   border-radius: 1rem;
-  background: linear-gradient(
-    140deg,
-    var(--shop-tile-accent-base) 0%,
-    var(--shop-tile-accent-mid) 100%
-  );
+  background: linear-gradient(140deg,
+      var(--shop-tile-accent-base) 0%,
+      var(--shop-tile-accent-mid) 100%);
   border: 1px solid var(--shop-tile-accent-border);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
@@ -10631,7 +10650,8 @@ button.hud-resource-chip:active:not(:disabled) {
    * `.coach-viewer__controls` bottom-anchors via `margin-top: auto`;
    * without enough bottom room here, "Play again / Save Victory /
    * Ask Coach" labels were getting cropped. */
-  min-height: calc(100dvh - 60px); /* header reserve */
+  min-height: calc(100dvh - 60px);
+  /* header reserve */
   padding: 0.5rem 0.85rem max(1.6rem, env(safe-area-inset-bottom, 1.6rem));
   display: flex;
   flex-direction: column;
@@ -10652,9 +10672,7 @@ button.hud-resource-chip:active:not(:disabled) {
   border-radius: 1rem;
   overflow: visible;
   filter:
-    drop-shadow(0 1px 2px rgba(63, 34, 8, 0.28))
-    drop-shadow(0 8px 16px rgba(63, 34, 8, 0.22))
-    drop-shadow(0 20px 32px rgba(63, 34, 8, 0.12));
+    drop-shadow(0 1px 2px rgba(63, 34, 8, 0.28)) drop-shadow(0 8px 16px rgba(63, 34, 8, 0.22)) drop-shadow(0 20px 32px rgba(63, 34, 8, 0.12));
 }
 
 /* Chapter break (pass 10) — the adorno-icon asset is already a
@@ -10675,9 +10693,7 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 220px;
   height: auto;
   filter:
-    drop-shadow(0 1px 0 rgba(255, 245, 215, 0.7))
-    drop-shadow(0 2px 4px rgba(63, 34, 8, 0.28))
-    drop-shadow(0 6px 10px rgba(63, 34, 8, 0.16));
+    drop-shadow(0 1px 0 rgba(255, 245, 215, 0.7)) drop-shadow(0 2px 4px rgba(63, 34, 8, 0.28)) drop-shadow(0 6px 10px rgba(63, 34, 8, 0.16));
 }
 
 .coach-viewer__chapter-break-glyph img {
@@ -10688,7 +10704,7 @@ button.hud-resource-chip:active:not(:disabled) {
   user-select: none;
 }
 
-.coach-viewer__board-frame > [role="img"] {
+.coach-viewer__board-frame>[role="img"] {
   /* BoardThumbnail renders its outer wrapper with inline `position:
    * relative`. Anchor it into our frame so percentages resolve against
    * the square box, not the surrounding panel padding. */
@@ -10960,7 +10976,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 .coach-viewer__move-item:last-child .coach-viewer__move-item-btn,
-.coach-viewer__move-item:nth-last-child(2):nth-child(odd) ~ .coach-viewer__move-item .coach-viewer__move-item-btn {
+.coach-viewer__move-item:nth-last-child(2):nth-child(odd)~.coach-viewer__move-item .coach-viewer__move-item-btn {
   border-bottom: 0;
 }
 
@@ -11117,10 +11133,13 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @keyframes coach-viewer-tile-focus-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     filter: drop-shadow(0 0 0 rgba(95, 163, 41, 0));
   }
+
   50% {
     transform: scale(1.05);
     filter: drop-shadow(0 0 14px rgba(95, 163, 41, 0.85));
@@ -11155,7 +11174,9 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @keyframes coach-viewer-tile-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -11174,9 +11195,7 @@ button.hud-resource-chip:active:not(:disabled) {
   height: 56px;
   pointer-events: none;
   filter:
-    drop-shadow(0 1px 1px rgba(63, 34, 8, 0.28))
-    drop-shadow(0 4px 8px rgba(63, 34, 8, 0.22))
-    drop-shadow(0 10px 16px rgba(63, 34, 8, 0.12));
+    drop-shadow(0 1px 1px rgba(63, 34, 8, 0.28)) drop-shadow(0 4px 8px rgba(63, 34, 8, 0.22)) drop-shadow(0 10px 16px rgba(63, 34, 8, 0.12));
 }
 
 .coach-viewer__tile-icon img {
@@ -11328,7 +11347,9 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @keyframes coach-viewer-pending-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .coach-viewer__analysis-pending-label {
@@ -11499,11 +11520,9 @@ button.hud-resource-chip:active:not(:disabled) {
   font-weight: 800;
   color: rgba(63, 34, 8, 0.95);
   text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 248, 222, 0.95) 0%,
-    rgba(247, 226, 175, 0.95) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(255, 248, 222, 0.95) 0%,
+      rgba(247, 226, 175, 0.95) 100%);
   border: 1px solid rgba(180, 120, 35, 0.45);
   border-radius: 999px;
   box-shadow:
@@ -11711,11 +11730,9 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 0.3rem;
   padding: 0.6rem 0.4rem;
   border-radius: 1rem;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 251, 232, 0.95) 0%,
-    rgba(247, 232, 187, 0.95) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(255, 251, 232, 0.95) 0%,
+      rgba(247, 232, 187, 0.95) 100%);
   border: 1.5px solid rgba(180, 120, 35, 0.30);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.70),
@@ -11803,7 +11820,7 @@ button.hud-resource-chip:active:not(:disabled) {
   letter-spacing: 0.05em;
 }
 
-.fail-rescue-reward-pill--streak > span:first-child {
+.fail-rescue-reward-pill--streak>span:first-child {
   font-size: 1.05rem;
   color: rgba(180, 60, 25, 0.95);
 }
