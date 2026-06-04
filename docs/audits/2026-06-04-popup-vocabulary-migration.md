@@ -11,7 +11,7 @@ The codebase ships **three coherent visual registers**, not one. The user's refe
 | **A. WARM UP / panel-mision shell** | `arena/soft-gate-sheet`, `arena/arena-end-state` (all variants), `exercises/fail-rescue-modal`, `arena/promotion-overlay`, `arena/victory-popup-shell` siblings | ✅ Canonical — do NOT touch |
 | **B. ContextualHeader + green forest bg (full-takeover sheet)** | `exercises/daily-tactic-sheet`, `exercises/trophies-sheet`, `exercises/shop-sheet`, `exercises/exercises-screen` AccountSheet, `exercises/badge-sheet`, `exercises/leaderboard-sheet` | ✅ Canonical — do NOT touch |
 | **C. Dark theatre** | `coach/coach-game-client` (the /coach/[gameId] route) + the moves panel + circular medallions | 🟡 Intentional 3rd register for post-game review. NOT a migration target. Optional: confirm with Wolfcito it's the intended language. |
-| **D. True distant** | `exercises/purchase-confirm-sheet` (the only confirmed survivor) | ❌ Migrate to Register A or B |
+| **D. True distant** | `exercises/purchase-confirm-sheet:122` (brown game-solid) + `exercises/result-overlay.tsx:308/321/326` (brown game-solid/primary inside CandyGlassShell) | ❌ Migrate to Register A or B |
 
 The original 7-cluster punch-list collapses to **one confirmed distant surface** (Confirm Purchase) plus **two open questions** (Coach register, "Couldn't save" mid-exercise variant).
 
@@ -81,15 +81,20 @@ Hybrid surface: header is Register B, CTA is the retired brown vocabulary. Incon
 
 These survive from the first pass and still need Wolfcito's call:
 
-1. **Coach Viewer dark theatre — intended or migrate?**
+1. **Coach Viewer dark theatre — intended or migrate?** (UNANSWERED)
    The user's IMG_3132 and IMG_3121 from `errors/pantallas-lejanas/` show a DIFFERENT layout than what the dev fixture captures produce. The fixtures render the modern Cluster C dark theatre; the user's IMG_*.PNG captures show an older inline cream + brown CTA + underline HUB link layout. Likely the live `/coach/[gameId]` route hits a fallback state (no Coach response yet? auth gate?) that bypasses the Cluster C chrome. Worth a 10-min runtime check before assuming the whole route migrated.
 
-2. **`exercises/result-overlay.tsx` mid-exercise "Couldn't save" — verified or assumed migrated?**
-   The user's IMG_3136 / IMG_3139 / IMG_3143 show a popup with brown "Try again" + cream "Dismiss" link + a separate "Save failed. Try again." toast at the bottom. This is the /exercises save error, NOT the /arena one. The fixture captures cover arena, not exercises. To confirm whether result-overlay still ships the brown variant, capture it via Playwright (needs game state + failed signing) or open in dev manually.
+2. **`exercises/result-overlay.tsx` mid-exercise "Couldn't save"** (ANSWERED — confirmed distant)
+   Source traced to `exercises/result-overlay.tsx:308` — `<Button variant="game-solid">` "Try again" + underline "Dismiss" link, inside a `<CandyGlassShell>` (not panel-mision). Matches IMG_3136 exactly. Lines 308 (try-again), 321 (dismiss-only), 326 (share-success) all ship brown CTAs through the same shell. Status: **Register D, true distant**. Migration shape: swap shell to panel-mision and convert each `game-solid` / `game-primary` to `.arena-scaffold-soft-gate-*`.
 
-3. **Mini Arena Sheet (Mate)** — capture didn't open (size identical to hub baseline). Likely the unlock localStorage seed missed the actual key, or the tile is gated behind a different condition. Need to confirm the live state to know whether to migrate.
+3. **Mini Arena Sheet (Mate)** (ANSWERED — canonical)
+   Capture now succeeds with `[data-testid="mini-arena-trigger"]` + correct localStorage seed (`chesscito:progress:rook = { stars: [3,3,3,3,3,3] }` ≥ 12). Result: ContextualHeader + green forest bg + cream prompt + chess board. **Register B canonical, no migration needed.**
 
-4. **Confirm Purchase brown CTA** — the only confirmed migration target. One-line fix. Drop it into the next Cluster sweep (1a brown CTA retire) and the dialog reads as Register B end-to-end.
+4. **Account Sheet capture** (ANSWERED — Playwright limitation, not a vocabulary issue)
+   The Account trigger button conditionally renders only when wallet is connected and `!proLoading`. Without wallet-connect mocking, the spec lands on the Connect button branch instead. The Account sheet itself was redesigned earlier today (commit `d0dff3e5` — 3-col tile grid) and is **Register B canonical**. Adding wallet mock to the spec is a separate spike, not blocking.
+
+5. **Confirm Purchase brown CTA** (ANSWERED — one-line fix, confirmed)
+   `exercises/purchase-confirm-sheet.tsx:122` — the only confirmed migration target from the original sweep. Drop into the same cluster as the result-overlay migration below.
 
 ---
 
@@ -110,13 +115,21 @@ When we open Cluster 1a, instrument the missing surfaces with `data-testid` then
 
 Before this audit revision, the inventory doc estimated 7 clusters. Reality:
 
-| Phase | Scope | Effort |
-|---|---|---|
-| **Phase 0 — answer open questions** | (1) verify Coach register intent, (2) capture /exercises save error, (3) capture Mini Arena Sheet, (4) capture Account Sheet | 30 min |
-| **Phase 1 — Confirm Purchase brown CTA** | 1-line swap | 15 min |
-| **Phase 2 — any survivors found in Phase 0** | unknown until Phase 0 lands | TBD |
+| Phase | Scope | Effort | Status |
+|---|---|---|---|
+| **Phase 0** | Run capture spec, answer 5 open questions | 30 min | ✅ Done (this revision) |
+| **Phase 1** | Migrate Register D survivors | ~1h | Pending |
+| **Phase 2** | Resolve Coach Viewer register intent | depends on Wolfcito | Pending |
 
-The big "Cluster 1a brown CTA retire" sweep is no longer needed system-wide. The brown `game-primary` / `game-solid` Button variants remain in `button.tsx`, but the audit confirms they're either (a) intentionally retired everywhere we redesigned, or (b) only surviving at one or two callsites that we can swap surgically.
+**Phase 1 scope (confirmed)**:
+- `exercises/purchase-confirm-sheet.tsx:122` — 1-line CTA swap.
+- `exercises/result-overlay.tsx:308` — `game-solid` Try again → `.arena-scaffold-soft-gate-primary`.
+- `exercises/result-overlay.tsx:321` — `game-primary` Dismiss (error-only no-retry) → `.arena-scaffold-soft-gate-secondary`.
+- `exercises/result-overlay.tsx:326` — `game-primary` Share → `.arena-scaffold-soft-gate-primary` (success path).
+- Underline "Dismiss" link at result-overlay.tsx:314 → `.arena-result-back-link` (vocabulary alignment).
+- Wrap `<CandyGlassShell>` host for the error variant in the panel-mision shell so the frame matches Register A.
+
+The big "Cluster 1a brown CTA retire" sweep is no longer needed system-wide. The brown `game-primary` / `game-solid` Button variants remain in `button.tsx`, but the audit confirms they're either (a) intentionally retired everywhere we redesigned, or (b) only surviving in the two specific files above that we can swap surgically.
 
 ---
 

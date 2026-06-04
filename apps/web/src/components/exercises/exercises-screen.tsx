@@ -2032,6 +2032,7 @@ export function ExercisesScreen({
                       ? tStatus("proManageLabel")
                       : tStatus("accountLabel")
                   }
+                  data-testid="account-trigger"
                   className={`candy-tray-pill hub-hud-pill${
                     proStatus?.active ? " hub-hud-pill--pro" : ""
                   }`}

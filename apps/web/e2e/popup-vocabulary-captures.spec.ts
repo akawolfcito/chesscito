@@ -152,9 +152,7 @@ test.describe("Exercises screen — sheets", () => {
     await page.addInitScript(ONBOARDED);
     await page.goto("/exercises");
     await page.waitForLoadState("networkidle");
-    const accountTrigger = page
-      .getByRole("button", { name: /account|cuenta|profile/i })
-      .first();
+    const accountTrigger = page.locator('[data-testid="account-trigger"]').first();
     if (await accountTrigger.isVisible().catch(() => false)) {
       await accountTrigger.click().catch(() => {});
       await page.waitForTimeout(500);
@@ -210,12 +208,18 @@ test.describe("Hub right rail sheets", () => {
 
   test("mini-arena (mate) sheet — only when unlocked", async ({ page }) => {
     await page.addInitScript(() => {
-      ONBOARDED();
-      window.localStorage.setItem("chesscito:rook-stars", "12");
+      window.localStorage.setItem("chesscito:onboarded", "true");
+      window.localStorage.setItem("chesscito:welcome-dismissed", "1");
+      // Unlock condition is rook stars >= 12. Stars are aggregated from
+      // chesscito:progress:rook.stars = [3,3,3,3,...]. Seed 4×3 = 12.
+      window.localStorage.setItem(
+        "chesscito:progress:rook",
+        JSON.stringify({ stars: [3, 3, 3, 3, 3, 3] }),
+      );
     });
     await page.goto("/hub");
     await page.waitForLoadState("networkidle");
-    const trigger = page.getByRole("button", { name: /mate|special/i }).first();
+    const trigger = page.locator('[data-testid="mini-arena-trigger"] button').first();
     if (await trigger.isVisible().catch(() => false)) {
       await trigger.click().catch(() => {});
       await page.waitForTimeout(500);

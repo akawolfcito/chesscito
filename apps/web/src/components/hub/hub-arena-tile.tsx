@@ -28,12 +28,14 @@ export function HubArenaTile({ setup, unlocked }: Props) {
 
   return (
     <>
-      <HubActionTile
-        iconSrc="/art/hub/mate-icon.png"
-        label={t("mateLabel")}
-        ariaLabel={t("arenaUnlockedAriaFormat", { name: setup.name })}
-        onClick={() => setOpen(true)}
-      />
+      <div data-testid="mini-arena-trigger" className="contents">
+        <HubActionTile
+          iconSrc="/art/hub/mate-icon.png"
+          label={t("mateLabel")}
+          ariaLabel={t("arenaUnlockedAriaFormat", { name: setup.name })}
+          onClick={() => setOpen(true)}
+        />
+      </div>
       <MiniArenaSheet open={open} onOpenChange={setOpen} setup={setup} />
     </>
   );
