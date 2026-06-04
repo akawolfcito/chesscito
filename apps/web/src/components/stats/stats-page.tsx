@@ -705,6 +705,64 @@ export function StatsPage({ stats }: StatsPageProps) {
           players who have not minted a Victory NFT.
         </p>
       </section>
+
+      {/* External verification — third-party credibility footer. Two
+          outbound links let a reviewer cross-reference our self-
+          reported numbers against an independent source (Talent
+          Protocol's project dashboard tracks DAU / transactions /
+          gas fees) and against verified on-chain source (Celoscan).
+          Programmatic integration with Talent Protocol's API was
+          evaluated and deferred — see docs/references/
+          talent-protocol-api-reference-2026-06-03.md for the
+          conditions under which the API integration cluster would
+          be opened. */}
+      <section
+        className="rounded-xl border px-3 py-3 text-[0.6875rem] leading-snug"
+        style={{
+          borderColor: "var(--paper-divider)",
+          color: "var(--paper-text-subtle)",
+          background: "rgba(255, 235, 180, 0.18)",
+        }}
+      >
+        <p
+          className="mb-1 font-semibold"
+          style={{ color: "var(--paper-text-muted)" }}
+        >
+          External verification
+        </p>
+        <p className="mb-2">
+          Independent on-chain metrics for Chesscito (DAU, transactions,
+          gas fees) are tracked by Talent Protocol&apos;s project
+          impact dashboard. Smart contract source is verified on
+          Celoscan.
+        </p>
+        <ul className="flex flex-col gap-1.5">
+          <li>
+            <a
+              href="https://talent.app/~/projects/e850a453-2b0c-4080-a070-781d712791a7"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 underline underline-offset-2 transition-colors hover:text-[var(--paper-text)]"
+              style={{ color: "var(--paper-text-muted)" }}
+            >
+              <span aria-hidden>→</span>
+              <span>View live Talent Protocol dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://celoscan.io/address/0xf92759E5525763554515DD25E7650f72204a6739"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 underline underline-offset-2 transition-colors hover:text-[var(--paper-text)]"
+              style={{ color: "var(--paper-text-muted)" }}
+            >
+              <span aria-hidden>→</span>
+              <span>Badges contract on Celoscan</span>
+            </a>
+          </li>
+        </ul>
+      </section>
     </div>
   );
 }

@@ -322,6 +322,43 @@ describe("StatsPage", () => {
     expect(screen.queryByText("Victories by difficulty")).toBeNull();
   });
 
+  it("renders the External verification footer with Talent Protocol and Celoscan outbound links", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    expect(screen.getByText("External verification")).toBeInTheDocument();
+
+    const talentLink = screen.getByRole("link", {
+      name: /Talent Protocol/i,
+    });
+    expect(talentLink).toHaveAttribute(
+      "href",
+      "https://talent.app/~/projects/e850a453-2b0c-4080-a070-781d712791a7",
+    );
+    expect(talentLink).toHaveAttribute("target", "_blank");
+    expect(talentLink.getAttribute("rel") ?? "").toContain("noopener");
+    expect(talentLink.getAttribute("rel") ?? "").toContain("noreferrer");
+
+    const celoscanLink = screen.getByRole("link", {
+      name: /Badges contract on Celoscan/i,
+    });
+    expect(celoscanLink).toHaveAttribute(
+      "href",
+      "https://celoscan.io/address/0xf92759E5525763554515DD25E7650f72204a6739",
+    );
+    expect(celoscanLink).toHaveAttribute("target", "_blank");
+    expect(celoscanLink.getAttribute("rel") ?? "").toContain("noopener");
+    expect(celoscanLink.getAttribute("rel") ?? "").toContain("noreferrer");
+  });
+
+  it("External verification block sits after Methodology in DOM order", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    const methodology = screen.getByText("Methodology");
+    const externalVerification = screen.getByText("External verification");
+    const followsMethodology =
+      methodology.compareDocumentPosition(externalVerification) &
+      Node.DOCUMENT_POSITION_FOLLOWING;
+    expect(followsMethodology).toBeTruthy();
+  });
+
   it("disambiguates the cards whose source differs from Victories table", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
 
