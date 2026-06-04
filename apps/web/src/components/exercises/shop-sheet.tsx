@@ -49,6 +49,7 @@ type CatalogItem = {
   itemId: bigint;
   label: string;
   subtitle: string;
+  icon: string;
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;

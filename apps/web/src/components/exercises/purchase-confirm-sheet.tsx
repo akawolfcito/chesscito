@@ -1,14 +1,17 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { ContextualHeader } from "@/components/ui/contextual-header";
-import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { CHAIN_NAMES } from "@/lib/content/editorial";
 
 type SelectedItem = {
   label: string;
+  subtitle: string;
+  icon: string;
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
@@ -28,6 +31,24 @@ type PurchaseConfirmSheetProps = {
   onConfirm: () => void;
 };
 
+const FADE_MS = 300;
+
+/**
+ * Confirm Purchase modal (panel-mision shell — Register A).
+ *
+ * Replaces the earlier Radix bottom-Sheet that mixed cream
+ * ContextualHeader with a brown `game-solid` confirm CTA. Now
+ * adopts the same WARM UP vocabulary (`panel-mision-icon` frame,
+ * red ⊗ close, `fantasy-title` + `adorno-icon` divider, per-SKU
+ * icon at top-left, cream price pill with plant flanks, status
+ * + network info rows, green soft-gate primary, lock + shield
+ * trust footer).
+ *
+ * Same control surface as the previous implementation —
+ * `selectedItem`, `purchasePhase`, `onConfirm` all unchanged so
+ * callers don't migrate. Adds `selectedItem.icon` + `subtitle`
+ * which the catalog already carries via `SHOP_TILE_ASSETS`.
+ */
 export function PurchaseConfirmSheet({
   open,
   onOpenChange,
@@ -44,114 +65,276 @@ export function PurchaseConfirmSheet({
   const t = useTranslations("PURCHASE_CONFIRM_COPY");
   const tField = useTranslations("PURCHASE_FIELD_LABELS");
   const tShop = useTranslations("SHOP_SHEET_COPY");
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        hideClose
-        title={t("title")}
-        description={t("description")}
-        className="mission-shell sheet-bg-shop rounded-t-3xl border-0"
+
+  const [mounted, setMounted] = useState(open);
+  const [exiting, setExiting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      setExiting(false);
+      return;
+    }
+    if (!mounted) return;
+    setExiting(true);
+    const timer = window.setTimeout(() => {
+      setMounted(false);
+      setExiting(false);
+    }, FADE_MS);
+    return () => window.clearTimeout(timer);
+  }, [open, mounted]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && purchasePhase === "idle") onOpenChange(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mounted, onOpenChange, purchasePhase]);
+
+  if (!mounted || !selectedItem) return null;
+
+  const statusLabel = selectedItem.configured
+    ? selectedItem.enabled
+      ? tShop("status.available")
+      : tShop("status.unavailable")
+    : tShop("status.notConfigured");
+  const statusTone =
+    selectedItem.configured && selectedItem.enabled ? "active" : "inactive";
+  const networkLabel = chainId
+    ? (CHAIN_NAMES[chainId] ?? t("unknownNetwork"))
+    : "—";
+  const confirmDisabled =
+    isWriting ||
+    purchasePhase !== "idle" ||
+    !shopAddress ||
+    !paymentTokenSymbol ||
+    !isConnected ||
+    !isCorrectChain ||
+    !selectedItem.configured ||
+    !selectedItem.enabled;
+  const confirmLabel =
+    purchasePhase === "approving"
+      ? t("approving", { token: paymentTokenSymbol ?? "" })
+      : purchasePhase === "buying"
+        ? t("buying")
+        : t("confirmButton");
+
+  const modal = (
+    /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim transition-opacity duration-300 ${
+        exiting ? "opacity-0" : "animate-in fade-in duration-300"
+      }`}
+      aria-modal="true"
+      role="dialog"
+      aria-labelledby="purchase-confirm-modal-title"
+      onClick={() => {
+        if (purchasePhase === "idle") onOpenChange(false);
+      }}
+    >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div
+        className={`relative mx-4 w-full max-w-[340px] max-h-[92dvh] overflow-y-auto overscroll-contain transition-opacity duration-300 ${
+          exiting ? "opacity-0" : "animate-in fade-in duration-300"
+        }`}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
-          <ContextualHeader
-            variant="close-control"
-            iconSlot={<TileIconSlot src="/art/shop-menu" />}
-            title={t("title")}
-            close={{ onClick: () => onOpenChange(false), label: t("closeAriaLabel") }}
-          />
-        </div>
-        {selectedItem ? (
-          <div
-            className="mt-4 space-y-2 rounded-2xl border p-3 text-sm"
-            style={{
-              borderColor: "rgba(255, 255, 255, 0.45)",
-              background: "rgba(255, 255, 255, 0.15)",
-              color: "rgba(63, 34, 8, 0.95)",
-            }}
+        <div
+          className="relative w-full"
+          style={{
+            backgroundImage:
+              'image-set(url("/art/screen-mission/panel-mision-icon.avif") type("image/avif"), url("/art/screen-mission/panel-mision-icon.webp") type("image/webp"), url("/art/screen-mission/panel-mision-icon.png") type("image/png"))',
+            backgroundSize: "100% 100%",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {/* Red ⊗ close, suppressed while a transaction is in flight
+           *  so the user doesn't half-cancel a wallet signature. */}
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            aria-label={t("closeAriaLabel")}
+            disabled={purchasePhase !== "idle"}
+            className="candy-close-asset-button absolute right-[4%] top-[4%] z-10 disabled:opacity-50"
           >
-            {/* Hero: item name */}
+            <picture>
+              <source srcSet="/art/screen-mission/close-icon.avif" type="image/avif" />
+              <source srcSet="/art/screen-mission/close-icon.webp" type="image/webp" />
+              <img
+                src="/art/screen-mission/close-icon.png"
+                alt=""
+                aria-hidden="true"
+                className="h-10 w-10 object-contain"
+                draggable={false}
+              />
+            </picture>
+          </button>
+
+          {/* SKU icon — floats at top-left as a separate decorative
+           *  element so the centered title doesn't compete with the
+           *  close ⊗ for horizontal space. */}
+          <picture className="pointer-events-none absolute left-[6%] top-[5%] z-[1]">
+            <source srcSet={`${selectedItem.icon}.avif`} type="image/avif" />
+            <source srcSet={`${selectedItem.icon}.webp`} type="image/webp" />
+            <img
+              src={`${selectedItem.icon}.png`}
+              alt=""
+              aria-hidden="true"
+              className="h-14 w-14 object-contain drop-shadow-[0_3px_6px_rgba(120,65,5,0.35)]"
+              draggable={false}
+            />
+          </picture>
+
+          <div className="flex flex-col items-center px-[8%] pt-[6%] pb-[5%]">
+            {/* Centered small-caps title between adorno flanks. The
+             *  SKU icon (left) and close ⊗ (right) live as absolute
+             *  siblings so the title can sit symmetrically. */}
+            <h2
+              id="purchase-confirm-modal-title"
+              className="fantasy-title text-base font-extrabold uppercase tracking-wide"
+              style={{
+                color: "var(--popup-title-color)",
+                textShadow: "var(--popup-title-text-shadow)",
+              }}
+            >
+              {t("title")}
+            </h2>
+
+            {/* Item identity — name (h3) + subtitle. */}
             <p
-              className="text-base font-extrabold"
+              className="mt-3 text-center text-xl font-extrabold leading-tight"
               style={{
                 color: "rgba(63, 34, 8, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
               }}
             >
               {selectedItem.label}
             </p>
-            {/* Prominent price */}
             <p
-              className="text-lg font-extrabold"
+              className="mt-1 text-center text-xs font-medium leading-snug"
               style={{
-                color: "rgba(120, 65, 5, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                color: "rgba(110, 65, 15, 0.75)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
               }}
             >
-              {formatUsd(selectedItem.onChainPrice)}
+              {selectedItem.subtitle}
             </p>
-            <div className="my-1 border-t" style={{ borderColor: "rgba(110, 65, 15, 0.18)" }} />
-            {/* Secondary details */}
-            {paymentTokenSymbol ? (
-              <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-                {tField("payingWith")}:{" "}
-                <span className="font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-                  {paymentTokenSymbol}
+
+            {/* Adorno divider. */}
+            <picture>
+              <source srcSet="/art/screen-mission/adorno-icon.avif" type="image/avif" />
+              <source srcSet="/art/screen-mission/adorno-icon.webp" type="image/webp" />
+              <img
+                src="/art/screen-mission/adorno-icon.png"
+                alt=""
+                aria-hidden="true"
+                className="mt-3 h-3 w-32 object-contain"
+                draggable={false}
+              />
+            </picture>
+
+            {/* Price pill — cream with plant flanks. */}
+            <div className="purchase-confirm-price-pill mt-3">
+              <picture>
+                <source srcSet="/art/new-assets-chesscito/plant1.avif" type="image/avif" />
+                <source srcSet="/art/new-assets-chesscito/plant1.webp" type="image/webp" />
+                <img
+                  src="/art/new-assets-chesscito/plant1.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="purchase-confirm-price-flank"
+                  draggable={false}
+                />
+              </picture>
+              <span className="purchase-confirm-price-value">
+                {formatUsd(selectedItem.onChainPrice)}
+              </span>
+              <picture>
+                <source srcSet="/art/new-assets-chesscito/plant1.avif" type="image/avif" />
+                <source srcSet="/art/new-assets-chesscito/plant1.webp" type="image/webp" />
+                <img
+                  src="/art/new-assets-chesscito/plant1.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="purchase-confirm-price-flank purchase-confirm-price-flank--mirror"
+                  draggable={false}
+                />
+              </picture>
+            </div>
+
+            {/* Status + Network info block. */}
+            <div className="purchase-confirm-info mt-3 w-full">
+              <div className="purchase-confirm-info-row">
+                <span className="purchase-confirm-info-dot" data-tone={statusTone}>
+                  <CandyIcon name="check" className="h-3 w-3" />
                 </span>
-              </p>
-            ) : null}
-            <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {tField("status")}:{" "}
-              <span className="font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-                {selectedItem.configured
-                  ? selectedItem.enabled
-                    ? tShop("status.available")
-                    : tShop("status.unavailable")
-                  : tShop("status.notConfigured")}
-              </span>
-            </p>
-            <p className="text-xs" style={{ color: "rgba(110, 65, 15, 0.70)" }}>
-              {tField("network")}:{" "}
-              <span className="font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-                {chainId ? (CHAIN_NAMES[chainId] ?? t("unknownNetwork")) : "—"}
-              </span>
-            </p>
+                <span className="purchase-confirm-info-label">
+                  {tField("status")}:
+                </span>
+                <span
+                  className="purchase-confirm-info-value"
+                  style={{
+                    color:
+                      statusTone === "active"
+                        ? "rgb(21, 128, 61)"
+                        : "rgba(63, 34, 8, 0.95)",
+                  }}
+                >
+                  {statusLabel}
+                </span>
+              </div>
+              <div className="purchase-confirm-info-row">
+                <span className="purchase-confirm-info-dot" data-tone="celo">
+                  <CandyIcon name="wallet" className="h-3 w-3" />
+                </span>
+                <span className="purchase-confirm-info-label">
+                  {tField("network")}:
+                </span>
+                <span className="purchase-confirm-info-value">
+                  {networkLabel}
+                </span>
+              </div>
+            </div>
+
+            {/* Primary confirm CTA — soft-gate green pill. */}
             <button
               type="button"
-              className="arena-scaffold-soft-gate-primary mt-2 w-full disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={
-                isWriting ||
-                purchasePhase !== "idle" ||
-                !shopAddress ||
-                !paymentTokenSymbol ||
-                !isConnected ||
-                !isCorrectChain ||
-                !selectedItem.configured ||
-                !selectedItem.enabled
-              }
               onClick={onConfirm}
+              disabled={confirmDisabled}
+              className="arena-scaffold-soft-gate-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-60"
             >
               {(isWriting || purchasePhase !== "idle") && (
-                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               )}
-              {purchasePhase === "approving"
-                ? t("approving", { token: paymentTokenSymbol ?? "" })
-                : purchasePhase === "buying"
-                  ? t("buying")
-                  : t("confirmButton")}
+              {confirmLabel}
             </button>
-            <button
-              type="button"
-              className="mt-2 min-h-[44px] w-full py-3 text-center text-sm font-semibold transition-colors hover:opacity-80"
-              style={{ color: "rgba(110, 65, 15, 0.70)" }}
-              onClick={() => onOpenChange(false)}
-              disabled={isWriting || purchasePhase !== "idle"}
+
+            {/* MiniPay reassurance + lock. */}
+            <p
+              className="mt-3 flex items-center justify-center gap-1.5 text-center text-[0.7rem] font-semibold"
+              style={{ color: "rgba(110, 65, 15, 0.75)" }}
             >
-              {t("cancel")}
-            </button>
+              <CandyIcon name="lock" className="h-3 w-3" />
+              {t("minipayHint")}
+            </p>
+
+            {/* Secure payment footer. */}
+            <p
+              className="mt-2 flex items-center justify-center gap-1.5 text-center text-[0.65rem]"
+              style={{ color: "rgba(110, 65, 15, 0.6)" }}
+            >
+              <CandyIcon name="shield" className="h-3 w-3" />
+              {t("securePayment")}
+            </p>
           </div>
-        ) : null}
-      </SheetContent>
-    </Sheet>
+        </div>
+      </div>
+    </div>
   );
+
+  return typeof document !== "undefined"
+    ? createPortal(modal, document.body)
+    : null;
 }

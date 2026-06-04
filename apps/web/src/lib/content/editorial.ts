@@ -482,6 +482,14 @@ export const PURCHASE_CONFIRM_COPY = {
   cancel: "Cancel",
   closeAriaLabel: "Cancel purchase",
   unknownNetwork: "Unknown network",
+  /** Reassurance line shown above the secure-payment footer.
+   *  Reminds the user that the wallet sheet is the next step,
+   *  so the modal isn't doing the charge silently. */
+  minipayHint: "MiniPay will ask you to confirm the payment.",
+  /** Secure-payment tagline at the very bottom of the modal,
+   *  paired with a small shield icon. Static — no wallet/chain
+   *  details, on purpose. */
+  securePayment: "Secure payment · Your funds are safe",
 } as const;
 
 /** Copy for the "Saved" chip rendered on /exercises action row when

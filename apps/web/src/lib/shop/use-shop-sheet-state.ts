@@ -27,6 +27,7 @@ import {
   PRO_ITEM_ID,
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
+  SHOP_TILE_ASSETS,
 } from "@/lib/contracts/shop-catalog";
 import {
   ACCEPTED_TOKENS,
@@ -58,6 +59,7 @@ type CatalogItem = {
   itemId: bigint;
   label: string;
   subtitle: string;
+  icon: string;
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
@@ -253,6 +255,7 @@ export function useShopSheetState(
       SHOP_ITEMS.map((item, index) => {
         const label = tShopItem(`${item.copyKey}.label` as const);
         const subtitle = tShopItem(`${item.copyKey}.subtitle` as const);
+        const icon = SHOP_TILE_ASSETS[item.copyKey].icon;
         const onChain = onChainItems?.[index];
         if (onChain?.status === "success" && Array.isArray(onChain.result)) {
           const price = onChain.result[0] as bigint;
@@ -261,6 +264,7 @@ export function useShopSheetState(
             itemId: item.itemId,
             label,
             subtitle,
+            icon,
             configured: price > 0n,
             enabled: price > 0n && enabled,
             onChainPrice: price,
@@ -270,6 +274,7 @@ export function useShopSheetState(
           itemId: item.itemId,
           label,
           subtitle,
+          icon,
           configured: false,
           enabled: false,
           onChainPrice: 0n,

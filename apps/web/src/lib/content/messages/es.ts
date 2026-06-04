@@ -1363,6 +1363,8 @@ const messages = {
     cancel: "Cancelar",
     closeAriaLabel: "Cancelar compra",
     unknownNetwork: "Red desconocida",
+    minipayHint: "MiniPay te pedirá confirmar el pago.",
+    securePayment: "Pago seguro · Tus fondos están a salvo",
   },
   SAVED_CHIP_COPY: {
     label: "Guardado · {stars}★",

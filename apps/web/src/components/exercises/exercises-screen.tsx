@@ -75,6 +75,7 @@ import {
   PRO_PRICE_USD6,
   SHIELD_ITEM_ID,
   SHOP_ITEMS,
+  SHOP_TILE_ASSETS,
 } from "@/lib/contracts/shop-catalog";
 import {
   Sheet,
@@ -141,6 +142,11 @@ type CatalogItem = {
    *  telemetry logs) don't each need to thread the translator. */
   label: string;
   subtitle: string;
+  /** Asset basename from SHOP_TILE_ASSETS (e.g. "/art/shop/coach-pack-20").
+   *  PurchaseConfirmSheet renders the AVIF/WebP/PNG triplet from this
+   *  base so the modal header carries the same per-SKU icon the
+   *  shop tile already shows. */
+  icon: string;
   configured: boolean;
   enabled: boolean;
   onChainPrice: bigint;
@@ -939,6 +945,7 @@ export function ExercisesScreen({
       SHOP_ITEMS.map((item, index) => {
         const label = tShopItem(`${item.copyKey}.label` as const);
         const subtitle = tShopItem(`${item.copyKey}.subtitle` as const);
+        const icon = SHOP_TILE_ASSETS[item.copyKey].icon;
         const onChain = onChainItems?.[index];
         if (onChain?.status === "success" && Array.isArray(onChain.result)) {
           const price = onChain.result[0] as bigint;
@@ -947,6 +954,7 @@ export function ExercisesScreen({
             itemId: item.itemId,
             label,
             subtitle,
+            icon,
             configured: price > 0n,
             enabled: price > 0n && enabled,
             onChainPrice: price,
@@ -957,6 +965,7 @@ export function ExercisesScreen({
           itemId: item.itemId,
           label,
           subtitle,
+          icon,
           configured: false,
           enabled: false,
           onChainPrice: 0n,
