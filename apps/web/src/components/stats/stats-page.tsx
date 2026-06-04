@@ -9,16 +9,23 @@ type StatsPageProps = {
   stats: PublicStats;
 };
 
-const TREND_SESSIONS_ACCENT = "rgba(110, 65, 15, 0.55)";
-const TREND_MINTS_ACCENT = "rgba(217, 119, 6, 0.85)";
+// Sparkline accents — deep teal counterpoint for Sessions + warm
+// terracotta for Mints. Replaces the prior brown / amber pair which
+// blended into the cream scrim. Terracotta echoes the Anthropic /
+// Claude Status accent family and stays brand-warm without
+// competing with the page background.
+const TREND_SESSIONS_ACCENT = "rgba(58, 128, 148, 0.78)";
+const TREND_MINTS_ACCENT = "rgba(217, 119, 87, 0.9)";
 
-// Segment colors for the stacked difficulty bar. Reuses the existing
-// palette (mints amber + forest burgundy) and adds a soft forest
-// green for Easy. No new CSS variables introduced.
+// Segment colors for the stacked difficulty bar (Palette B —
+// "brand-tone evolutiva"): sage / mustard / terracotta. The prior
+// Easy forest-green + Medium amber clashed with the cream scrim;
+// these tones hold their own against the lighter background while
+// keeping the warm Chesscito palette.
 const DIFFICULTY_SEGMENT_COLORS: Record<"easy" | "medium" | "hard", string> = {
-  easy: "rgba(56, 142, 60, 0.75)",
-  medium: "rgba(217, 119, 6, 0.85)",
-  hard: "rgba(110, 65, 15, 0.7)",
+  easy: "rgba(124, 184, 143, 0.88)",
+  medium: "rgba(233, 177, 77, 0.92)",
+  hard: "rgba(217, 119, 87, 0.92)",
 };
 
 function nf(n: number): string {
@@ -98,7 +105,13 @@ function TrendPanel({
   rangeTo: string;
 }) {
   return (
-    <div className="paper-tray flex flex-col gap-2 px-4 py-3">
+    <div
+      className="flex flex-col gap-2 rounded-xl border px-4 py-3"
+      style={{
+        background: "rgba(255, 255, 255, 0.92)",
+        borderColor: "var(--paper-divider)",
+      }}
+    >
       <div className="flex items-baseline justify-between gap-2">
         <span
           className="text-[0.625rem] font-semibold uppercase tracking-wide"

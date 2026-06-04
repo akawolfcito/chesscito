@@ -2886,15 +2886,15 @@
   .stats-page-scrim {
     background:
       radial-gradient(ellipse 120% 40% at 50% 0%,
-        rgba(251, 191, 36, 0.12) 0%,
+        rgba(251, 191, 36, 0.06) 0%,
         rgba(251, 191, 36, 0.00) 60%),
       radial-gradient(ellipse 140% 50% at 50% 100%,
-        rgba(180, 110, 20, 0.08) 0%,
+        rgba(180, 110, 20, 0.04) 0%,
         rgba(180, 110, 20, 0.00) 65%),
       linear-gradient(180deg,
-        rgba(255, 244, 215, 0.92) 0%,
-        rgba(252, 232, 188, 0.88) 50%,
-        rgba(250, 224, 175, 0.92) 100%);
+        rgba(250, 246, 237, 0.96) 0%,
+        rgba(248, 244, 233, 0.94) 50%,
+        rgba(246, 242, 230, 0.96) 100%);
   }
 
   /* ── Panel tier system — material surfaces ── */
