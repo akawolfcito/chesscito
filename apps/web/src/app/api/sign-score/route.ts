@@ -72,7 +72,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not sign score submission";
-    console.error("[sign-score-debug]", message);
     const status = message === "Rate limit exceeded" ? 429 : message === "Forbidden" ? 403 : 400;
     return NextResponse.json({ error: message }, { status });
   }
