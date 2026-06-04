@@ -7,6 +7,7 @@ import {
   enforceOrigin,
   enforceRateLimit,
   getDemoConfig,
+  getLabyrinthBadgesAddress,
   getRequestIp,
   parseAddress,
 } from "@/lib/server/demo-signing";
@@ -78,7 +79,8 @@ export async function POST(request: Request) {
 
     const nonce = createNonce();
     const deadline = createDeadline();
-    const { chainId, labyrinthBadgesAddress, signer } = getDemoConfig();
+    const { chainId, signer } = getDemoConfig();
+    const labyrinthBadgesAddress = getLabyrinthBadgesAddress();
 
     const verifyingContract = labyrinthBadgesAddress;
 

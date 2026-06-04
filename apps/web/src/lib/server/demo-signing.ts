@@ -51,9 +51,6 @@ export function getDemoConfig() {
   const badgesAddress = ethers.getAddress(requireEnv("NEXT_PUBLIC_BADGES_ADDRESS"));
   const scoreboardAddress = ethers.getAddress(requireEnv("NEXT_PUBLIC_SCOREBOARD_ADDRESS"));
   const victoryNFTAddress = ethers.getAddress(requireEnv("NEXT_PUBLIC_VICTORY_NFT_ADDRESS"));
-  const labyrinthBadgesAddress = ethers.getAddress(
-    requireEnv("NEXT_PUBLIC_LABYRINTH_BADGES_ADDRESS")
-  );
   const signer = new ethers.Wallet(
     decryptSignerKey(requireEnv("TORRE_PRINCESA"), requireEnv("DRAGON"))
   );
@@ -63,9 +60,15 @@ export function getDemoConfig() {
     badgesAddress,
     scoreboardAddress,
     victoryNFTAddress,
-    labyrinthBadgesAddress,
     signer,
   };
+}
+
+// Scoped to /api/sign-labyrinth so score/victory/badge routes don't
+// crash when the Labyrinth contract isn't deployed on a given chain
+// (e.g. mainnet pre-D.2 promote — env var legitimately absent).
+export function getLabyrinthBadgesAddress() {
+  return ethers.getAddress(requireEnv("NEXT_PUBLIC_LABYRINTH_BADGES_ADDRESS"));
 }
 
 export async function enforceRateLimit(ip: string, playerAddress?: string) {
