@@ -98,7 +98,12 @@ function RewardTileButton({
         <CandyIcon name="trophy" className="reward-tile-piece reward-tile-piece--icon" />
       )}
       {tile.state === "claimed" ? (
-        <CandyIcon name="check" className="reward-tile-status reward-tile-status--claimed" />
+        <span
+          aria-hidden="true"
+          className="reward-tile-status reward-tile-status--claimed"
+        >
+          ✓
+        </span>
       ) : null}
       {tile.state === "claimable" ? (
         <picture className="reward-tile-notif">

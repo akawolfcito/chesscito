@@ -29,7 +29,7 @@ describe("RewardColumn", () => {
   });
 
   it("renders a claimed tile with a check status marker", () => {
-    const { container } = render(
+    render(
       <RewardColumn
         tiles={[{ id: "rook", state: "claimed" }]}
       />,
@@ -38,10 +38,9 @@ describe("RewardColumn", () => {
       name: REWARD_COPY.rook.ariaLabel("progress"),
     });
     expect(tile.className).toMatch(/is-claimed\b/);
-    const checkSources = container.querySelectorAll(
-      "source[srcset='/art/redesign/icons/check.avif']",
-    );
-    expect(checkSources.length).toBeGreaterThan(0);
+    const status = tile.querySelector(".reward-tile-status--claimed");
+    expect(status).not.toBeNull();
+    expect(status?.textContent).toBe("✓");
   });
 
   it("renders a locked tile with the locked modifier and a lock icon", () => {
