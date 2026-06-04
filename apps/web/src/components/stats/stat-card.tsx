@@ -7,8 +7,24 @@ type StatCardProps = {
   label: string;
   value: number | null;
   sublabel?: string;
-  /** Renders the value as smaller, secondary metric (less hero) */
-  variant?: "primary" | "secondary";
+  /**
+   * `hero` = vital-signs tile for the Executive Snapshot (largest
+   * number, more padding). `primary` = default headline tile.
+   * `secondary` = supporting Activity-windows-style smaller tile.
+   */
+  variant?: "hero" | "primary" | "secondary";
+};
+
+const VALUE_CLASS: Record<NonNullable<StatCardProps["variant"]>, string> = {
+  hero: "text-3xl md:text-4xl font-bold tabular-nums",
+  primary: "text-2xl font-bold",
+  secondary: "text-lg font-semibold",
+};
+
+const CONTAINER_PADDING: Record<NonNullable<StatCardProps["variant"]>, string> = {
+  hero: "px-5 py-4",
+  primary: "px-4 py-3",
+  secondary: "px-4 py-3",
 };
 
 export function StatCard({
@@ -22,14 +38,9 @@ export function StatCard({
       ? "—"
       : new Intl.NumberFormat("en-US").format(value);
 
-  const valueClass =
-    variant === "primary"
-      ? "text-2xl font-bold"
-      : "text-lg font-semibold";
-
   return (
     <div
-      className="paper-tray flex flex-col gap-1 px-4 py-3"
+      className={`paper-tray flex flex-col gap-1 ${CONTAINER_PADDING[variant]}`}
       style={{ color: "var(--paper-text)" }}
     >
       <span
@@ -38,7 +49,7 @@ export function StatCard({
       >
         {label}
       </span>
-      <span className={valueClass}>{displayValue}</span>
+      <span className={VALUE_CLASS[variant]}>{displayValue}</span>
       {sublabel ? (
         <span
           className="text-[0.6875rem] leading-tight"
