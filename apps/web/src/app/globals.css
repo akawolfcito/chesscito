@@ -4921,12 +4921,13 @@ button.hud-resource-chip:active:not(:disabled) {
 .account-status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.18rem 0.6rem;
+  max-width: 100%;
+  gap: 0.22rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 9999px;
-  font-size: 0.72rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: #ffffff;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
@@ -4934,6 +4935,8 @@ button.hud-resource-chip:active:not(:disabled) {
     0 1px 2px rgba(0, 0, 0, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .account-status-pill[data-tone="active"] {
@@ -4949,6 +4952,68 @@ button.hud-resource-chip:active:not(:disabled) {
       rgba(110, 65, 15, 0.45) 0%,
       rgba(63, 34, 8, 0.55) 100%);
   color: rgba(255, 245, 215, 0.85);
+}
+
+/* ── Account sheet tile grid ──
+   Replaces the legacy vertical row stack with a 3-column tile grid.
+   Each tile composes the cream secondary-cta tokens so the cards
+   read as siblings of `.arena-result-secondary-action`. Icon top,
+   bold label center, status pill (or LocaleSwitcher) bottom. */
+.account-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.account-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  min-height: 118px;
+  padding: 10px 6px 8px;
+  background: var(--cta-secondary-cream-grad);
+  border: 1px solid var(--cta-secondary-cream-border);
+  border-radius: 14px;
+  box-shadow: var(--cta-secondary-cream-bevel);
+  color: var(--cta-secondary-cream-color);
+  text-shadow: var(--cta-secondary-cream-text-shadow);
+  text-align: center;
+  cursor: pointer;
+  transition: transform var(--duration-snap) ease;
+}
+
+.account-tile:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.account-tile[aria-disabled="true"],
+.account-tile.is-static {
+  cursor: default;
+}
+
+.account-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+}
+
+.account-tile-icon img,
+.account-tile-icon picture {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.account-tile-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.05;
 }
 
 /* ── Account sheet Manage PRO CTA ──

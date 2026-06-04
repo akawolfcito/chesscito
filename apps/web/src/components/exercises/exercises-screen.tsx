@@ -17,7 +17,6 @@ import {
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { Board } from "@/components/board";
-import { AccountCoachRow } from "@/components/coach/account-coach-row";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
 import { useShieldsCount } from "@/lib/shop/use-shields-count";
 import { useFounderStatus } from "@/lib/founder/use-founder-status";
@@ -237,250 +236,229 @@ function AccountSheet({
           />
         </div>
 
-        <div className="mt-3 space-y-1.5">
-          {/* Wallet — info row + copy affordance */}
-          <div className="candy-tray flex items-center gap-2.5 !py-1.5 !px-2.5">
-            <picture className="h-8 w-8 shrink-0">
-              <source srcSet="/art/new-assets-chesscito/account/wallet-icon.avif" type="image/avif" />
-              <source srcSet="/art/new-assets-chesscito/account/wallet-icon.webp" type="image/webp" />
-              <img
-                src="/art/new-assets-chesscito/account/wallet-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-contain"
-                draggable={false}
-              />
-            </picture>
-            <span className="flex-1 text-sm font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-              {t("walletLabel")}
-            </span>
-            <span className="font-semibold tabular-nums text-xs" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-              {walletShort}
-            </span>
+        <div className="mt-3 flex flex-col gap-3">
+          <div className="account-tiles-grid">
+            {/* Wallet — tile click copies the full address */}
             <button
               type="button"
               onClick={() => void copyAddress()}
               aria-label={copied ? t("copiedAddress") : t("copyAddress")}
-              className="inline-flex items-center justify-center bg-transparent border-0 p-0 transition active:scale-90"
-              style={{ color: "rgba(63, 34, 8, 0.95)" }}
+              className="account-tile"
             >
-              <CandyIcon name={copied ? "check" : "copy"} className="h-4 w-4" />
+              <span className="account-tile-icon">
+                <picture>
+                  <source srcSet="/art/new-assets-chesscito/account/wallet-icon.avif" type="image/avif" />
+                  <source srcSet="/art/new-assets-chesscito/account/wallet-icon.webp" type="image/webp" />
+                  <img
+                    src="/art/new-assets-chesscito/account/wallet-icon.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                  />
+                </picture>
+              </span>
+              <span className="account-tile-label">{t("walletLabel")}</span>
+              <span className="account-status-pill" data-tone="celo">
+                {copied ? <CandyIcon name="check" className="h-3 w-3" /> : null}
+                {copied ? t("copiedAddress") : walletShort}
+              </span>
             </button>
-          </div>
 
-          {/* Network — read-only status */}
-          <div className="candy-tray flex items-center gap-2.5 !py-1.5 !px-2.5">
-            <picture className="h-8 w-8 shrink-0">
-              <source srcSet="/art/new-assets-chesscito/account/network-icon.avif" type="image/avif" />
-              <source srcSet="/art/new-assets-chesscito/account/network-icon.webp" type="image/webp" />
-              <img
-                src="/art/new-assets-chesscito/account/network-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-contain"
-                draggable={false}
-              />
-            </picture>
-            <span className="flex-1 text-sm font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-              {t("networkLabel")}
-            </span>
-            <span className="account-status-pill" data-tone="celo">
-              <CandyIcon name="check" className="h-3 w-3" />
-              {networkName(chainId, t("unknownNetwork"))}
-            </span>
-          </div>
+            {/* Network — read-only */}
+            <div className="account-tile is-static" role="group" aria-label={t("networkLabel")}>
+              <span className="account-tile-icon">
+                <picture>
+                  <source srcSet="/art/new-assets-chesscito/account/network-icon.avif" type="image/avif" />
+                  <source srcSet="/art/new-assets-chesscito/account/network-icon.webp" type="image/webp" />
+                  <img
+                    src="/art/new-assets-chesscito/account/network-icon.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                  />
+                </picture>
+              </span>
+              <span className="account-tile-label">{t("networkLabel")}</span>
+              <span className="account-status-pill" data-tone="celo">
+                <CandyIcon name="check" className="h-3 w-3" />
+                {networkName(chainId, t("unknownNetwork"))}
+              </span>
+            </div>
 
-          {/* Manage PRO — clickable row unifying status + CTA. Active
-           *  passes render a calm sub-line under the label with days
-           *  remaining (`PRO_COPY.statusActiveSuffix`), matching the
-           *  two-line shape of the Shields/Founder rows below. */}
-          <button
-            type="button"
-            onClick={onManagePro}
-            className="candy-tray flex w-full items-start gap-2.5 text-left transition active:scale-[0.98] !py-1.5 !px-2.5"
-          >
-            <picture className="h-8 w-8 shrink-0 mt-0.5">
-              <source srcSet="/art/screen-mission/corona-pro.avif" type="image/avif" />
-              <source srcSet="/art/screen-mission/corona-pro.webp" type="image/webp" />
-              <img
-                src="/art/screen-mission/corona-pro.png"
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-contain"
-                draggable={false}
-              />
-            </picture>
-            <span className="flex-1 min-w-0">
-              <span
-                className="block text-sm font-bold"
-                style={{ color: "rgba(63, 34, 8, 0.95)" }}
-              >
+            {/* Manage PRO */}
+            <button
+              type="button"
+              onClick={onManagePro}
+              className="account-tile"
+            >
+              <span className="account-tile-icon">
+                <picture>
+                  <source srcSet="/art/screen-mission/corona-pro.avif" type="image/avif" />
+                  <source srcSet="/art/screen-mission/corona-pro.webp" type="image/webp" />
+                  <img
+                    src="/art/screen-mission/corona-pro.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                  />
+                </picture>
+              </span>
+              <span className="account-tile-label">
                 {proActive ? t("managePro") : t("viewPro")}
               </span>
-              {proDaysLeft != null && (
-                <span
-                  className="block text-xs leading-tight"
-                  style={{ color: "rgba(63, 34, 8, 0.65)" }}
+              <span
+                className="account-status-pill"
+                data-tone={proActive ? "active" : "inactive"}
+              >
+                <span aria-hidden="true">★</span>
+                {proActive && proDaysLeft != null
+                  ? tPro("statusActiveSuffix", { daysLeft: proDaysLeft })
+                  : proActive
+                    ? t("activePro")
+                    : t("inactivePro")}
+              </span>
+            </button>
+
+            {/* Coach */}
+            {(() => {
+              const coachStatusKey = proActive
+                ? "coachStatusActive"
+                : coachCredits > 0
+                  ? "coachStatusFree"
+                  : "coachStatusEmpty";
+              const coachStatusLabel =
+                !proActive && coachCredits > 0
+                  ? t("coachStatusFreeWithCount", { count: coachCredits })
+                  : t(coachStatusKey);
+              const coachTone = proActive
+                ? "active"
+                : coachCredits > 0
+                  ? "celo"
+                  : "inactive";
+              return (
+                <button
+                  type="button"
+                  onClick={onOpenCoach}
+                  aria-label={t("coachRowLabel")}
+                  className="account-tile"
                 >
-                  {tPro("statusActiveSuffix", { daysLeft: proDaysLeft })}
-                </span>
-              )}
-            </span>
-            <span
-              className="account-status-pill shrink-0"
-              data-tone={proActive ? "active" : "inactive"}
+                  <span className="account-tile-icon">
+                    <picture>
+                      <source srcSet="/art/new-icons-chesscito/training.avif" type="image/avif" />
+                      <source srcSet="/art/new-icons-chesscito/training.webp" type="image/webp" />
+                      <img
+                        src="/art/new-icons-chesscito/training.png"
+                        alt=""
+                        aria-hidden="true"
+                        draggable={false}
+                      />
+                    </picture>
+                  </span>
+                  <span className="account-tile-label">{t("coachRowLabel")}</span>
+                  <span className="account-status-pill" data-tone={coachTone}>
+                    {coachStatusLabel}
+                  </span>
+                </button>
+              );
+            })()}
+
+            {/* Shields */}
+            <button
+              type="button"
+              onClick={onOpenShieldsHelp}
+              className="account-tile"
             >
-              <span aria-hidden="true">★</span>
-              {proActive ? t("activePro") : t("inactivePro")}
-            </span>
-          </button>
-
-          {/* Mi Coach — entry to /coach/history (Luz home surface) */}
-          <AccountCoachRow
-            isPro={proActive}
-            credits={coachCredits}
-            onPress={onOpenCoach}
-          />
-
-          {/* Streak Shields — inventory row (2026-05-30 shop oscuridad
-           *  fix). Surface where to USE the shields and the current
-           *  balance. Tap routes to /exercises (the only surface where
-           *  shields fire) so the user can verify they're real.
-           *  Subtitle teaches the trigger ("retry without losing
-           *  streak"). */}
-          <button
-            type="button"
-            onClick={onOpenShieldsHelp}
-            className="candy-tray flex w-full items-start gap-2.5 text-left transition active:scale-[0.98] !py-1.5 !px-2.5"
-          >
-            <picture className="h-8 w-8 shrink-0 mt-0.5">
-              <source srcSet="/art/shop/shield.avif" type="image/avif" />
-              <source srcSet="/art/shop/shield.webp" type="image/webp" />
-              <img
-                src="/art/shop/shield.png"
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-contain"
-                draggable={false}
-              />
-            </picture>
-            <span className="flex-1 min-w-0">
-              <span
-                className="block text-sm font-bold"
-                style={{ color: "rgba(63, 34, 8, 0.95)" }}
-              >
-                {t("shieldsRowLabel")}
+              <span className="account-tile-icon">
+                <picture>
+                  <source srcSet="/art/shop/shield.avif" type="image/avif" />
+                  <source srcSet="/art/shop/shield.webp" type="image/webp" />
+                  <img
+                    src="/art/shop/shield.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                  />
+                </picture>
               </span>
+              <span className="account-tile-label">{t("shieldsRowLabel")}</span>
               <span
-                className="block text-xs leading-tight"
-                style={{ color: "rgba(63, 34, 8, 0.65)" }}
+                className="account-status-pill"
+                data-tone={shieldsCount > 0 ? "celo" : "inactive"}
               >
-                {t("shieldsRowSubtitle")}
+                {shieldsCount > 0
+                  ? t("shieldsStatusAvailable", { count: shieldsCount })
+                  : t("shieldsStatusEmpty")}
               </span>
-            </span>
-            <span
-              className="account-status-pill shrink-0"
-              data-tone={shieldsCount > 0 ? "celo" : "inactive"}
+            </button>
+
+            {/* Founder Badge */}
+            <button
+              type="button"
+              onClick={founderOwned ? () => onOpenChange(false) : onOpenShop}
+              className="account-tile"
             >
-              {shieldsCount > 0
-                ? t("shieldsStatusAvailable", { count: shieldsCount })
-                : t("shieldsStatusEmpty")}
-            </span>
-          </button>
-
-          {/* Founder Badge — inventory row (2026-05-30 shop oscuridad
-           *  fix). Permanent collectible — surface the "yes, you have
-           *  it" recognition the SKU promised. Owned state is purely
-           *  decorative (no nav target); not-owned routes to the Shop
-           *  sheet so the user can complete the purchase. */}
-          <button
-            type="button"
-            onClick={founderOwned ? () => onOpenChange(false) : onOpenShop}
-            className="candy-tray flex w-full items-start gap-2.5 text-left transition active:scale-[0.98] !py-1.5 !px-2.5"
-          >
-            <picture className="h-8 w-8 shrink-0 mt-0.5">
-              <source srcSet="/art/shop/founder.avif" type="image/avif" />
-              <source srcSet="/art/shop/founder.webp" type="image/webp" />
-              <img
-                src="/art/shop/founder.png"
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-contain"
-                draggable={false}
-              />
-            </picture>
-            <span className="flex-1 min-w-0">
-              <span
-                className="block text-sm font-bold"
-                style={{ color: "rgba(63, 34, 8, 0.95)" }}
-              >
-                {t("founderRowLabel")}
+              <span className="account-tile-icon">
+                <picture>
+                  <source srcSet="/art/shop/founder.avif" type="image/avif" />
+                  <source srcSet="/art/shop/founder.webp" type="image/webp" />
+                  <img
+                    src="/art/shop/founder.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                  />
+                </picture>
               </span>
+              <span className="account-tile-label">{t("founderRowLabel")}</span>
               <span
-                className="block text-xs leading-tight"
-                style={{ color: "rgba(63, 34, 8, 0.65)" }}
+                className="account-status-pill"
+                data-tone={founderOwned ? "active" : "inactive"}
               >
-                {t("founderRowSubtitle")}
+                {founderOwned ? t("founderStatusOwned") : t("founderStatusNotYet")}
               </span>
-            </span>
-            <span
-              className="account-status-pill shrink-0"
-              data-tone={founderOwned ? "active" : "inactive"}
-            >
-              {founderOwned ? t("founderStatusOwned") : t("founderStatusNotYet")}
-            </span>
-          </button>
+            </button>
 
-          {/* Language — segmented switcher inline */}
-          <div className="candy-tray flex items-center gap-2.5 !py-1.5 !px-2.5">
-            <picture className="h-8 w-8 shrink-0">
-              <source srcSet="/art/new-assets-chesscito/account/language-icon.avif" type="image/avif" />
-              <source srcSet="/art/new-assets-chesscito/account/language-icon.webp" type="image/webp" />
-              <img
-                src="/art/new-assets-chesscito/account/language-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-contain"
-                draggable={false}
-              />
-            </picture>
-            <span className="flex-1 text-sm font-bold" style={{ color: "rgba(63, 34, 8, 0.95)" }}>
-              {t("languageLabel")}
-            </span>
-            <LocaleSwitcher />
+            {/* Language — segmented switcher inline at tile base */}
+            <div className="account-tile is-static" role="group" aria-label={t("languageLabel")}>
+              <span className="account-tile-icon">
+                <picture>
+                  <source srcSet="/art/new-assets-chesscito/account/language-icon.avif" type="image/avif" />
+                  <source srcSet="/art/new-assets-chesscito/account/language-icon.webp" type="image/webp" />
+                  <img
+                    src="/art/new-assets-chesscito/account/language-icon.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                  />
+                </picture>
+              </span>
+              <span className="account-tile-label">{t("languageLabel")}</span>
+              <LocaleSwitcher />
+            </div>
           </div>
 
-          {/* Disconnect — destructive row */}
+          {/* Disconnect — full-width secondary CTA */}
           <button
             type="button"
             onClick={onDisconnect}
-            className="candy-tray flex w-full items-center gap-2.5 text-left transition active:scale-[0.98] !py-1.5 !px-2.5"
+            className="arena-result-secondary-action w-full"
           >
-            <span
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-              style={{ background: "rgba(190, 18, 60, 0.15)" }}
-              aria-hidden="true"
-            >
-              <CandyIcon name="close" className="h-4 w-4" />
-            </span>
-            <span className="flex-1 text-sm font-bold" style={{ color: "rgba(159, 18, 57, 0.95)" }}>
-              {t("disconnect")}
-            </span>
+            <CandyIcon name="close" className="mr-2 h-4 w-4" />
+            {t("disconnect")}
           </button>
 
-          <p className="text-center pt-1" style={{ color: "rgba(110, 65, 15, 0.62)", fontSize: "0.65rem", lineHeight: "0.9rem" }}>
+          <p className="text-center" style={{ color: "rgba(110, 65, 15, 0.62)", fontSize: "0.65rem", lineHeight: "0.9rem" }}>
             {t("minipayDisconnectHint")}
           </p>
-          <div className="mt-2 flex justify-center">
-            <Link
-              href="/about"
-              onClick={() => onOpenChange(false)}
-              className="text-nano opacity-60 transition-colors hover:opacity-100"
-              style={{ color: "rgba(110, 65, 15, 0.65)" }}
-            >
-              {tAbout("label")}
-            </Link>
-          </div>
+
+          {/* About Chesscito — same secondary CTA template */}
+          <Link
+            href="/about"
+            onClick={() => onOpenChange(false)}
+            className="arena-result-secondary-action w-full"
+          >
+            {tAbout("label")}
+          </Link>
         </div>
       </SheetContent>
     </Sheet>
