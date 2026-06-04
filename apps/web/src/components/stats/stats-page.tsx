@@ -11,8 +11,15 @@ type StatsPageProps = {
 
 const TREND_SESSIONS_ACCENT = "rgba(110, 65, 15, 0.55)";
 const TREND_MINTS_ACCENT = "rgba(217, 119, 6, 0.85)";
-const DIFFICULTY_BAR_TRACK = "rgba(110, 65, 15, 0.10)";
-const DIFFICULTY_BAR_FILL = "rgba(217, 119, 6, 0.85)";
+
+// Segment colors for the stacked difficulty bar. Reuses the existing
+// palette (mints amber + forest burgundy) and adds a soft forest
+// green for Easy. No new CSS variables introduced.
+const DIFFICULTY_SEGMENT_COLORS: Record<"easy" | "medium" | "hard", string> = {
+  easy: "rgba(56, 142, 60, 0.75)",
+  medium: "rgba(217, 119, 6, 0.85)",
+  hard: "rgba(110, 65, 15, 0.7)",
+};
 
 function nf(n: number): string {
   return new Intl.NumberFormat("en-US").format(n);
@@ -124,6 +131,14 @@ function TrendPanel({
   );
 }
 
+/**
+ * Renders the difficulty distribution as a single horizontal stacked
+ * bar with a legend below. Replaces the prior 3-row treatment (one
+ * label+bar+value per band) so the visual reads "composition" at a
+ * glance instead of "three small comparisons". Each segment carries
+ * a native `title` for hover detail; the outer bar exposes a single
+ * `aria-label` summarising all three bands for screen readers.
+ */
 function DifficultyMixChart({ tally }: { tally: DifficultyTally }) {
   const total = tally.easy + tally.medium + tally.hard;
   if (total <= 0) return null;
@@ -132,42 +147,56 @@ function DifficultyMixChart({ tally }: { tally: DifficultyTally }) {
     { key: "medium", label: "Medium" },
     { key: "hard", label: "Hard" },
   ];
+  const pct = (n: number) => Math.round((n / total) * 100);
+  const ariaLabel =
+    "Difficulty mix: " +
+    bands.map((b) => `${b.label} ${pct(tally[b.key])}%`).join(", ");
   return (
-    <div className="paper-tray flex flex-col gap-2 px-4 py-3">
-      {bands.map((b) => {
-        const value = tally[b.key];
-        const pct = (value / total) * 100;
-        return (
-          <div key={b.key} className="flex items-center gap-3 text-xs">
+    <div className="paper-tray flex flex-col gap-3 px-4 py-3">
+      <div
+        className="flex h-5 w-full overflow-hidden rounded-full"
+        role="img"
+        aria-label={ariaLabel}
+      >
+        {bands.map((b) => {
+          const value = tally[b.key];
+          const percent = (value / total) * 100;
+          return (
+            <div
+              key={b.key}
+              className="h-full"
+              style={{
+                width: `${percent}%`,
+                background: DIFFICULTY_SEGMENT_COLORS[b.key],
+              }}
+              title={`${b.label}: ${nf(value)} of ${nf(total)} (${pct(value)}%)`}
+            />
+          );
+        })}
+      </div>
+      <ul className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+        {bands.map((b) => (
+          <li key={b.key} className="flex items-center gap-1.5">
             <span
-              className="w-16 shrink-0 font-semibold"
+              aria-hidden
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ background: DIFFICULTY_SEGMENT_COLORS[b.key] }}
+            />
+            <span
+              className="font-semibold"
               style={{ color: "var(--paper-text)" }}
             >
               {b.label}
             </span>
-            <div
-              className="flex-1 overflow-hidden rounded-full"
-              style={{ background: DIFFICULTY_BAR_TRACK, height: "0.625rem" }}
-              role="img"
-              aria-label={`${b.label}: ${value} of ${total} mints (${pct.toFixed(0)}%)`}
-            >
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${pct}%`,
-                  background: DIFFICULTY_BAR_FILL,
-                }}
-              />
-            </div>
             <span
-              className="w-12 shrink-0 text-right font-semibold tabular-nums"
-              style={{ color: "var(--paper-text)" }}
+              className="tabular-nums"
+              style={{ color: "var(--paper-text-muted)" }}
             >
-              {nf(value)}
+              {pct(tally[b.key])}%
             </span>
-          </div>
-        );
-      })}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -238,6 +238,25 @@ describe("StatsPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders the Victory difficulty mix as a single stacked bar with a complete aria-label", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    // SAMPLE_STATS: easy=500, medium=600, hard=134, total=1234.
+    // Percentages: 500/1234≈40.5→41, 600/1234≈48.6→49, 134/1234≈10.9→11.
+    const bar = screen.getByRole("img", { name: /Difficulty mix:/i });
+    expect(bar).toBeInTheDocument();
+    expect(bar.getAttribute("aria-label")).toBe(
+      "Difficulty mix: Easy 41%, Medium 49%, Hard 11%",
+    );
+  });
+
+  it("renders the Victory difficulty mix legend with percent per band", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    // Legend row sits below the stacked bar — one chip per band.
+    expect(screen.getByText("41%")).toBeInTheDocument();
+    expect(screen.getByText("49%")).toBeInTheDocument();
+    expect(screen.getByText("11%")).toBeInTheDocument();
+  });
+
   it("hides Victory difficulty mix when no difficulty data is available", () => {
     render(<StatsPage stats={EMPTY_PUBLIC_STATS} />);
     expect(screen.queryByText("Victory difficulty mix")).toBeNull();
