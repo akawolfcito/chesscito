@@ -69,13 +69,18 @@ Two surfaces, same message. Either the popup or the toast should fire — not bo
 
 **Fix**: keep the popup (it owns the recovery action). Suppress the toast when the popup is open. Single source of truth for the failure state.
 
-## 6. Modal close button — red gradient circle X (P2, vocabulary review)
+## 6. Modal close button — red gradient circle X (P2, vocabulary review) — **CLOSED 2026-06-05**
 
 **Captures**: every dialog screenshot.
 
-The close affordance is a deep red ⊗ disc with white X. Different palette from every other close in the app (the Account sheet, ContextualHeader, and dock sheets use a cream/pill close). It works as a signal, but the palette is the only place red appears in the kingdom.
+**Original concern**: The close affordance is a deep red ⊗ disc with white X. The audit read the Account sheet / ContextualHeader / dock sheets as using a cream/pill close, leaving popups as the only place red appeared.
 
-**Fix**: confirm with you whether you want close to stay red (destructive-coded) or align with the cream-pill family used by ContextualHeader. Either way — pick one and remove the other from popup surfaces.
+**Resolution (no code)**: re-audited against current source. The red ⊗ is the **single canonical close vocabulary** across the entire app — both popup shells AND every sheet that uses `<ContextualHeader variant="close-control">` resolve to `.candy-close-asset-button` rendering the same `/art/screen-mission/close-icon.{avif,webp,png}` sprite. Verified callsites:
+
+- Popup shells: `arena-end-state.tsx:369`, `victory-popup-shell.tsx`, `fail-rescue-modal.tsx`, `purchase-confirm-sheet.tsx`, `promotion-overlay.tsx`, `soft-gate-sheet.tsx`, `mission-briefing.tsx`, `mission-detail-sheet.tsx`, `pro-sheet.tsx`.
+- Sheets via `ContextualHeader.close-control`: `contextual-header.tsx:521` paints the same sprite. `CandyGlassShell` (`candy-glass-shell.tsx:69`) delegates to this variant, so every consumer (Account, Trophies, Shop, Daily, Coach paywall, etc.) inherits the red disc.
+
+The 2026-06-04 captures pre-dated the close unification. No vocabulary split remains. No code change.
 
 ## 7. Public Challenge landing — `/api/og` driven? (P1, drift)
 
