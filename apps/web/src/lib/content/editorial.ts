@@ -490,6 +490,16 @@ export const PURCHASE_CONFIRM_COPY = {
    *  paired with a small shield icon. Static — no wallet/chain
    *  details, on purpose. */
   securePayment: "Secure payment · Your funds are safe",
+  /** Surfaces below the Confirm button when it's disabled. One
+   *  reason renders at a time; the precedence is wired in
+   *  purchase-confirm-sheet.tsx. Copy avoids token names
+   *  ("USDC"/"USDT"/"cUSD") in favor of the "USD stablecoin"
+   *  umbrella established by VICTORY_RESULT_COPY.errorInsufficientBalance,
+   *  so the same language travels from save to purchase. */
+  disabledHintConnect: "Connect your wallet to continue.",
+  disabledHintNetwork: "Switch to Celo to continue.",
+  disabledHintBalance: "Add some USD stablecoin to continue.",
+  disabledHintUnavailable: "This item is not available right now.",
 } as const;
 
 /** Copy for the "Saved" chip rendered on /exercises action row when

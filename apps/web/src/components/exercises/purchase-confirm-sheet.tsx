@@ -114,6 +114,21 @@ export function PurchaseConfirmSheet({
     !isCorrectChain ||
     !selectedItem.configured ||
     !selectedItem.enabled;
+  /* Resolve the single reason the Confirm CTA is disabled so the
+   * modal can render a calm hint underneath instead of leaving the
+   * user guessing. Order matches the most actionable first: connect
+   * wallet > switch network > top up balance > item unavailable.
+   * In-flight states (writing / approving / buying) bypass the hint
+   * — the spinner + button label already communicate progress. */
+  const disabledHint = (() => {
+    if (isWriting || purchasePhase !== "idle") return null;
+    if (!isConnected) return t("disabledHintConnect");
+    if (!isCorrectChain) return t("disabledHintNetwork");
+    if (!paymentTokenSymbol) return t("disabledHintBalance");
+    if (!selectedItem.configured || !selectedItem.enabled)
+      return t("disabledHintUnavailable");
+    return null;
+  })();
   const confirmLabel =
     purchasePhase === "approving"
       ? t("approving", { token: paymentTokenSymbol ?? "" })
@@ -323,6 +338,18 @@ export function PurchaseConfirmSheet({
               )}
               {confirmLabel}
             </button>
+
+            {/* Disabled reason hint — rendered only when the CTA is
+             *  blocked and not in-flight, so the user knows WHAT to
+             *  do next instead of staring at a grey button. */}
+            {disabledHint ? (
+              <p
+                className="mt-2 text-center text-[0.7rem] font-semibold"
+                style={{ color: "rgba(159, 18, 57, 0.85)" }}
+              >
+                {disabledHint}
+              </p>
+            ) : null}
 
             {/* MiniPay reassurance + lock. */}
             <p

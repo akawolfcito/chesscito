@@ -1365,6 +1365,10 @@ const messages = {
     unknownNetwork: "Red desconocida",
     minipayHint: "MiniPay te pedirá confirmar el pago.",
     securePayment: "Pago seguro · Tus fondos están a salvo",
+    disabledHintConnect: "Conecta tu wallet para continuar.",
+    disabledHintNetwork: "Cambia a Celo para continuar.",
+    disabledHintBalance: "Agrega algo de stablecoin en USD para continuar.",
+    disabledHintUnavailable: "Este item no está disponible en este momento.",
   },
   SAVED_CHIP_COPY: {
     label: "Guardado · {stars}★",
