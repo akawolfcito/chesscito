@@ -354,7 +354,7 @@ export function ResultOverlay({
               {tResult("cta.continue")}
             </button>
 
-            <div className="mt-1 inline-flex flex-wrap items-center justify-center gap-2 px-2 text-center text-[11px]"
+            <div className="mt-1 flex flex-col items-center gap-1.5 px-2 text-center text-[11px]"
               style={{ color: "rgba(110, 65, 15, 0.75)" }}
             >
               <span>

@@ -147,29 +147,32 @@ export function LabyrinthCompleteOverlay({
           </p>
         ) : null}
 
-        {/* Coach-section avatar slot — avatar-feliz right, no body
-            text. Provides the same cross-balance as arena win popups. */}
-        <div className="arena-result-coach-section">
-          <div className="arena-result-coach-body">
-            <div className="arena-result-coach-text">
-              {/* Primary CTA lives inside coach-body so the avatar
-                  floats RIGHT in the same row. Mirrors victory-celebration. */}
-              <button
-                type="button"
-                onClick={() => handleAction(onRetry)}
-                className="arena-result-primary-cta arena-result-primary-cta--amber"
-              >
-                <CandyIcon name="refresh" className="inline h-4 w-4" />
-                <span className="arena-result-primary-cta-label">{t("retry")}</span>
-              </button>
-            </div>
-            <picture className="arena-result-coach-avatar">
-              <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
-              <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
-              <img src={`${AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} />
-            </picture>
-          </div>
+        {/* Avatar — floats right in its own slot above the CTA. Reserves
+            footprint via min-h so the absolutely-positioned wolf does not
+            collapse onto the green primary below. */}
+        <div className="relative min-h-[96px]">
+          <picture className="pointer-events-none absolute right-0 top-0 block h-24 w-24">
+            <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
+            <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
+            <img
+              src={`${AVATAR_BASE}.png`}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="h-full w-full object-contain"
+            />
+          </picture>
         </div>
+
+        {/* Primary — green retry pill (mirrors arena-result-primary-cta). */}
+        <button
+          type="button"
+          onClick={() => handleAction(onRetry)}
+          className="arena-result-primary-cta"
+        >
+          <CandyIcon name="refresh" className="inline h-4 w-4" />
+          <span className="arena-result-primary-cta-label">{t("retry")}</span>
+        </button>
 
         {/* Secondary — Back to Exercises cream pill. */}
         <button
