@@ -152,7 +152,7 @@ export function LabyrinthCompleteOverlay({
             Accept Challenge) + cream secondary. */}
         <div className="flex flex-col items-center gap-2">
           <PrincipalButton
-            size="large"
+            size="medium"
             onClick={() => handleAction(onRetry)}
             leadingIcon={<CandyIcon name="refresh" className="h-5 w-5" />}
           >

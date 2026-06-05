@@ -341,7 +341,7 @@ export function ResultOverlay({
 
             <div className="flex flex-col items-center gap-2">
               <PrincipalButton
-                size="large"
+                size="medium"
                 onClick={() => setShareOpen(true)}
               >
                 {tShare("button")}
@@ -755,8 +755,12 @@ export function PieceCompletePrompt({
         ariaLabel={tComplete("title")}
         closeLabel={tComplete("practiceAgain")}
       >
-        {/* TITLE — centered, fantasy-title brown. */}
-        <h1 className="arena-result-title text-center">{tComplete("title")}</h1>
+        {/* TITLE — centered hero (victory-popup-hero-solo clamps the
+            arena-result-title font down from 38-56px base to 26-36px so
+            it fits inside the panel safely). */}
+        <div className="victory-popup-hero-solo">
+          <h1 className="arena-result-title">{tComplete("title")}</h1>
+        </div>
 
         {/* IMAGE — piece icon centered below the title. */}
         <picture className="mx-auto block h-24 w-24">
@@ -802,7 +806,7 @@ export function PieceCompletePrompt({
             Coach review does not apply. */}
         <div className="flex flex-col items-center gap-2">
           <PrincipalButton
-            size="large"
+            size="medium"
             onClick={() => handleAction(primaryCTA.handler)}
           >
             {primaryCTA.label}
