@@ -38,6 +38,23 @@ export function getLabyrinthBest(piece: PieceId, labyrinthId: string): number | 
   return typeof value === "number" && value > 0 ? value : null;
 }
 
+/** True when every labyrinth id passed in has at least one recorded
+ *  completion for the given piece. Returns false on an empty list so
+ *  callers never accidentally trigger "all solved" flows without a
+ *  catalog. Used by exercises-screen to decide whether to swap the
+ *  labyrinth-solved primary CTA for "Enter Arena". */
+export function areAllLabyrinthsSolved(
+  piece: PieceId,
+  labyrinthIds: readonly string[],
+): boolean {
+  if (labyrinthIds.length === 0) return false;
+  const map = readMap(piece);
+  return labyrinthIds.every((id) => {
+    const value = map[id];
+    return typeof value === "number" && value > 0;
+  });
+}
+
 /** Records a completion. Returns true when the new score replaced
  *  the previous best (or this was the first completion). */
 export function recordLabyrinthBest(

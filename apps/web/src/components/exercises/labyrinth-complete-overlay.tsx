@@ -22,9 +22,10 @@ type Props = {
   onBack: () => void;
   /** When defined, replaces the "Try again" primary CTA with "Enter
    *  Arena" and routes the user into the full match flow. Wired by
-   *  exercises-screen when the labyrinth belongs to the final piece
-   *  (King) — at that point the natural next step is to face the AI,
-   *  not grind another lap of the same labyrinth. */
+   *  exercises-screen only when the player has just solved every King
+   *  labyrinth in the catalog. Before that the player is still
+   *  finishing the King training cascade and the natural next step is
+   *  another lap, not the Arena. */
   onEnterArena?: () => void;
 };
 

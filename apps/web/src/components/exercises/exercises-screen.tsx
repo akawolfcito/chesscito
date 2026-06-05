@@ -104,7 +104,11 @@ import { track } from "@/lib/telemetry";
 import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation, type TxErrorKind } from "@/lib/errors";
 import { getContextAction } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, EXERCISES, LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
-import { getLabyrinthBest, recordLabyrinthBest } from "@/lib/game/labyrinth-progress";
+import {
+  areAllLabyrinthsSolved,
+  getLabyrinthBest,
+  recordLabyrinthBest,
+} from "@/lib/game/labyrinth-progress";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
@@ -2380,7 +2384,11 @@ export function ExercisesScreen({
               setLabyrinthMoves(0);
             }}
             onEnterArena={
-              selectedPiece === "king"
+              selectedPiece === "king" &&
+              areAllLabyrinthsSolved(
+                "king",
+                LABYRINTHS.king.map((l) => l.id),
+              )
                 ? () => {
                     setLabyrinthCompleted(null);
                     router.push("/arena?fresh=1");
