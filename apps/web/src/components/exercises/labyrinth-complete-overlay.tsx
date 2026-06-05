@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { track } from "@/lib/telemetry";
 
 type Props = {
@@ -147,41 +148,33 @@ export function LabyrinthCompleteOverlay({
           </p>
         ) : null}
 
-        {/* Avatar — floats right in its own slot above the CTA. Reserves
-            footprint via min-h so the absolutely-positioned wolf does not
-            collapse onto the green primary below. */}
-        <div className="relative min-h-[96px]">
-          <picture className="pointer-events-none absolute right-0 top-0 block h-24 w-24">
-            <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
-            <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
-            <img
-              src={`${AVATAR_BASE}.png`}
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              className="h-full w-full object-contain"
-            />
-          </picture>
+        {/* BUTTONS — canonical PrincipalButton large (same green family as
+            Accept Challenge) + cream secondary. */}
+        <div className="flex flex-col items-center gap-2">
+          <PrincipalButton
+            size="large"
+            onClick={() => handleAction(onRetry)}
+            leadingIcon={<CandyIcon name="refresh" className="h-5 w-5" />}
+          >
+            {t("retry")}
+          </PrincipalButton>
+
+          <button
+            type="button"
+            onClick={() => handleAction(onBack)}
+            className="arena-result-secondary-action"
+          >
+            {t("back")}
+          </button>
         </div>
 
-        {/* Primary — green retry pill (mirrors arena-result-primary-cta). */}
-        <button
-          type="button"
-          onClick={() => handleAction(onRetry)}
-          className="arena-result-primary-cta"
-        >
-          <CandyIcon name="refresh" className="inline h-4 w-4" />
-          <span className="arena-result-primary-cta-label">{t("retry")}</span>
-        </button>
-
-        {/* Secondary — Back to Exercises cream pill. */}
-        <button
-          type="button"
-          onClick={() => handleAction(onBack)}
-          className="arena-result-secondary-action mx-auto"
-        >
-          {t("back")}
-        </button>
+        {/* AVATAR — Sally placement: bottom-right peek inside the panel's
+            foliage zone, no longer competing with the CTA stack. */}
+        <picture className="pointer-events-none absolute -right-2 bottom-12 h-24 w-24">
+          <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
+          <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
+          <img src={`${AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} className="h-full w-full object-contain" />
+        </picture>
       </VictoryPopupShell>
     </div>
   );

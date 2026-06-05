@@ -11,6 +11,7 @@ import { AddCashCta } from "@/components/minipay/add-cash-cta";
 import type { TxErrorKind } from "@/lib/errors";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { ShareModal } from "@/components/share/share-modal";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
 import { shareUrlForBadge, shareUrlForScore } from "@/lib/og/share-urls";
@@ -338,21 +339,22 @@ export function ResultOverlay({
               {subtitle}
             </p>
 
-            <button
-              type="button"
-              onClick={() => setShareOpen(true)}
-              className="arena-result-primary-cta"
-            >
-              {tShare("button")}
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              <PrincipalButton
+                size="large"
+                onClick={() => setShareOpen(true)}
+              >
+                {tShare("button")}
+              </PrincipalButton>
 
-            <button
-              type="button"
-              onClick={handleDismiss}
-              className="arena-result-secondary-action mx-auto"
-            >
-              {tResult("cta.continue")}
-            </button>
+              <button
+                type="button"
+                onClick={handleDismiss}
+                className="arena-result-secondary-action"
+              >
+                {tResult("cta.continue")}
+              </button>
+            </div>
 
             <div className="mt-1 flex flex-col items-center gap-1.5 px-2 text-center text-[11px]"
               style={{ color: "rgba(110, 65, 15, 0.75)" }}
@@ -753,23 +755,27 @@ export function PieceCompletePrompt({
         ariaLabel={tComplete("title")}
         closeLabel={tComplete("practiceAgain")}
       >
-        {/* Hero — piece icon LEFT + title RIGHT (mirrors arena-end-state loss/draw). */}
-        <div className="arena-result-hero-row">
-          <picture className="arena-result-hero-icon">
-            {pieceHasOptimized && (
-              <>
-                <source srcSet={pieceImg.replace(".png", ".avif")} type="image/avif" />
-                <source srcSet={pieceImg.replace(".png", ".webp")} type="image/webp" />
-              </>
-            )}
-            <img src={pieceImg} alt="" aria-hidden="true" draggable={false} />
-          </picture>
-          <div className="arena-result-hero-text">
-            <h1 className="arena-result-title">{tComplete("title")}</h1>
-          </div>
-        </div>
+        {/* TITLE — centered, fantasy-title brown. */}
+        <h1 className="arena-result-title text-center">{tComplete("title")}</h1>
 
-        {/* Stats — single ★ pill mirroring arena candy-stat-pill vocabulary. */}
+        {/* IMAGE — piece icon centered below the title. */}
+        <picture className="mx-auto block h-24 w-24">
+          {pieceHasOptimized && (
+            <>
+              <source srcSet={pieceImg.replace(".png", ".avif")} type="image/avif" />
+              <source srcSet={pieceImg.replace(".png", ".webp")} type="image/webp" />
+            </>
+          )}
+          <img
+            src={pieceImg}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className="h-full w-full object-contain drop-shadow-md"
+          />
+        </picture>
+
+        {/* STARS — single ★ pill. */}
         <div className="arena-result-stats-row arena-result-stats-row--missionpills">
           <span className="candy-stat-pill">
             <span className="candy-stat-pill-icon">
@@ -779,7 +785,7 @@ export function PieceCompletePrompt({
           </span>
         </div>
 
-        {/* Body — mastery narrative. */}
+        {/* MESSAGE — mastery narrative. */}
         <p
           className="px-2 text-center text-sm leading-snug"
           style={{
@@ -790,62 +796,53 @@ export function PieceCompletePrompt({
           {subtitle}
         </p>
 
-        {/* Primary CTA — green family, mirrors arena-end-state primary. */}
-        <button
-          type="button"
-          onClick={() => handleAction(primaryCTA.handler)}
-          className="arena-result-primary-cta"
-        >
-          {primaryCTA.label}
-        </button>
-
-        {/* Secondary — SAVE cream pill (only when score submission re-surface is wired). */}
-        {onSubmitScore && (
-          <button
-            type="button"
-            onClick={() => handleAction(onSubmitScore)}
-            className="arena-result-secondary-action mx-auto"
+        {/* BUTTONS — Primary green PrincipalButton + optional SAVE secondary +
+            Arena escape hatch. Coach hint removed: at piece-complete the
+            user is still learning, the "why did you win?" framing of
+            Coach review does not apply. */}
+        <div className="flex flex-col items-center gap-2">
+          <PrincipalButton
+            size="large"
+            onClick={() => handleAction(primaryCTA.handler)}
           >
-            {tComplete("submitScore")}
-          </button>
-        )}
+            {primaryCTA.label}
+          </PrincipalButton>
 
-        {/* Tertiary — Coach hint with avatar (only when primary == Start next piece). */}
-        {showCoachHint && (
-          <div className="arena-result-coach-section" aria-labelledby="piece-complete-coach-headline">
-            <div className="arena-result-coach-body">
-              <div className="arena-result-coach-text">
-                <button
-                  type="button"
-                  onClick={() => {
-                    track("coach_hint_click", { source: "piece-complete", piece: pieceType });
-                    handleAction(onArena);
-                  }}
-                  id="piece-complete-coach-headline"
-                  className="arena-result-back-link"
-                >
-                  {tComplete("coachHint")}
-                </button>
-              </div>
-              <picture className="arena-result-coach-avatar">
-                <source srcSet={`${PIECE_COMPLETE_AVATAR_BASE}.avif`} type="image/avif" />
-                <source srcSet={`${PIECE_COMPLETE_AVATAR_BASE}.webp`} type="image/webp" />
-                <img src={`${PIECE_COMPLETE_AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} />
-              </picture>
-            </div>
-          </div>
-        )}
+          {onSubmitScore && (
+            <button
+              type="button"
+              onClick={() => handleAction(onSubmitScore)}
+              className="arena-result-secondary-action"
+            >
+              {tComplete("submitScore")}
+            </button>
+          )}
 
-        {/* Arena escape hatch as tertiary text link (no nextPiece, no labyrinth, Arena not primary). */}
-        {showArenaSecondary && (
-          <button
-            type="button"
-            onClick={() => handleAction(onArena)}
-            className="arena-result-back-link mx-auto"
-          >
-            {tComplete("tryArenaSecondary")}
-          </button>
-        )}
+          {showArenaSecondary && (
+            <button
+              type="button"
+              onClick={() => handleAction(onArena)}
+              className="arena-result-back-link"
+            >
+              {tComplete("tryArenaSecondary")}
+            </button>
+          )}
+        </div>
+
+        {/* AVATAR — Sally placement: bottom-right "peek" inside the panel so
+            the celebration character is present without competing with the
+            primary CTA or the title. Transparent half-body crop. */}
+        <picture className="pointer-events-none absolute -right-2 bottom-12 h-24 w-24">
+          <source srcSet={`${PIECE_COMPLETE_AVATAR_BASE}.avif`} type="image/avif" />
+          <source srcSet={`${PIECE_COMPLETE_AVATAR_BASE}.webp`} type="image/webp" />
+          <img
+            src={`${PIECE_COMPLETE_AVATAR_BASE}.png`}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className="h-full w-full object-contain"
+          />
+        </picture>
       </VictoryPopupShell>
     </div>
   );
