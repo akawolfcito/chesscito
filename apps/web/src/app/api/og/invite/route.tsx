@@ -42,9 +42,16 @@ export async function GET(req: Request) {
 
   // PNG (RGBA). WebP rendered empty in Satori; PNGs work after the
   // colormap → RGBA re-encode in adb19ae4.
-  const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  // avatar-confiado (smirk challenger) addresses the visitor being
+  // invited to play — see feedback_avatar_emotion_selection.
+  const mascotUrl = new URL("/art/new-assets-chesscito/fun/avatar-confiado.png", req.url).toString();
   const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
-  const badgeUrl = new URL("/art/badge-chesscito.png", req.url).toString();
+  // Fallback hero (no fen, no piece): retire the heraldic blue/gold
+  // BADGE in favour of the candy-forest invite icon (envelope +
+  // knight card + pawn) — on-brand 3D scene that reads as
+  // "invitation to play" without drifting off the candy-forest art
+  // family. Triplet at /art/hub-new/invite-icon.{avif,webp,png}.
+  const fallbackHeroUrl = new URL("/art/hub-new/invite-icon.png", req.url).toString();
   const starUrl = new URL("/art/redesign/icons/star.png", req.url).toString();
   const origin = new URL(req.url).origin;
 
@@ -114,10 +121,13 @@ export async function GET(req: Request) {
       </div>
     );
   } else {
+    // Fallback hero — the candy-forest invite icon. The earlier
+    // amber radial-gradient halo was dropped: the icon already
+    // carries its own relief drop-shadow filter, and removing the
+    // extra layer keeps the @vercel/og render lean.
     heroSlot = (
       <div
         style={{
-          position: "relative",
           display: "flex",
           width: 860,
           height: 860,
@@ -125,26 +135,14 @@ export async function GET(req: Request) {
           justifyContent: "center",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            width: 860,
-            height: 860,
-            borderRadius: 9999,
-            background:
-              "radial-gradient(circle, rgba(245, 158, 11, 0.30) 0%, rgba(217, 180, 74, 0.12) 50%, transparent 80%)",
-            display: "flex",
-          }}
-        />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={badgeUrl}
+          src={fallbackHeroUrl}
           alt=""
-          width={680}
-          height={680}
+          width={620}
+          height={620}
           style={{
-            position: "relative",
-            filter: "drop-shadow(0 14px 28px rgba(120, 65, 5, 0.40))",
+            filter: "drop-shadow(0 16px 30px rgba(120, 65, 5, 0.45))",
           }}
         />
       </div>
@@ -160,6 +158,9 @@ export async function GET(req: Request) {
         chip={chip}
         footer={footer}
         useCinzel={useCinzel}
+        mascotMode="half-body"
+        mascotScale={0.55}
+        softenPanel
         heroSlot={heroSlot}
       />
     ),

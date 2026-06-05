@@ -252,17 +252,18 @@ export function CardShell({
         </div>
       )}
 
-      {/* Context chip — candy-paper styled, centered. Cream fill +
-          warm-brown text + amber border so it reads as part of the
-          same family as the in-app candy chips, not a chocolate
-          sticker pasted on. */}
+      {/* Context chip — styled as a secondary CTA button (solid cream
+          fill, taller padding, layered shadow with amber under-glow)
+          so it reads as a tappable invitation rather than a passive
+          label. Matches the in-app `.arena-result-secondary-action`
+          register used by Continue / Dismiss CTAs. */}
       {chip && (
         <div
           style={{
             position: "absolute",
             left: 0,
             right: 0,
-            top: 1085,
+            top: 1070,
             display: "flex",
             justifyContent: "center",
           }}
@@ -270,16 +271,16 @@ export function CardShell({
           <div
             style={{
               display: "flex",
-              padding: "12px 28px",
+              padding: "20px 44px",
               borderRadius: 999,
-              background: "rgba(255, 245, 215, 0.85)",
+              background: "rgb(255, 245, 215)",
               color: "rgba(63, 34, 8, 0.95)",
-              border: "2px solid rgba(245, 158, 11, 0.55)",
-              fontSize: 30,
-              fontWeight: 700,
+              border: "2px solid rgba(220, 165, 50, 0.75)",
+              fontSize: 34,
+              fontWeight: 800,
               letterSpacing: "0.04em",
               boxShadow:
-                "0 3px 8px rgba(120, 65, 5, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.55)",
+                "0 5px 0 rgba(200, 145, 35, 0.55), 0 10px 18px rgba(120, 65, 5, 0.30), inset 0 2px 0 rgba(255, 255, 255, 0.80)",
               textShadow: CREAM_SHADOW,
             }}
           >
@@ -288,11 +289,12 @@ export function CardShell({
         </div>
       )}
 
-      {/* Footer URL — subtle ownership signature. Centered by default
-          so it reads as the card's bottom-band caption; shifted
-          left-aligned when the half-body mascot occupies the
-          bottom-right corner (otherwise the avatar's outstretched paw
-          collides with the centered text). */}
+      {/* Footer URL — subtle ownership signature. Centered when the
+          CHESSCITO wordmark sits above it (the natural caption to the
+          brand cluster); shifted left-aligned when the wordmark is
+          hidden AND a half-body avatar dominates the bottom-right
+          corner (so the avatar's outstretched paw doesn't collide
+          with the centered text). */}
       {footer && (
         <div
           style={{
@@ -301,7 +303,10 @@ export function CardShell({
             right: 60,
             top: 1180,
             display: "flex",
-            justifyContent: mascotMode === "half-body" ? "flex-start" : "center",
+            justifyContent:
+              hideWordmark && mascotMode === "half-body"
+                ? "flex-start"
+                : "center",
             fontSize: 22,
             fontWeight: 600,
             color: WARM_MUTED,
