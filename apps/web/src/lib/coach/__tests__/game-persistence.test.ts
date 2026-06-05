@@ -384,13 +384,30 @@ describe("enforceGameCap — option overrides", () => {
 describe("getGameRecord", () => {
   const GAME_ID = "6b3890dd-635d-40dd-aa85-8fe016a5e8aa";
 
-  function makeGetRedis(value: unknown) {
-    return { get: vi.fn().mockResolvedValue(value) };
+  /** Mock factory that routes reads by key prefix so we can stub the
+   *  game record + analysis cache keys independently. As of 2026-06-05
+   *  `getGameRecord` reads both — the analysis merge inlines a
+   *  matching `coach:analysis:…` record into the returned record. */
+  function makeKeyAwareRedis(values: {
+    game?: unknown;
+    analysisEn?: unknown;
+    analysisEs?: unknown;
+    analysisLegacy?: unknown;
+  }) {
+    const get = vi.fn(async (key: string) => {
+      if (key.startsWith("coach:game:")) return values.game ?? null;
+      if (key.endsWith(":en")) return values.analysisEn ?? null;
+      if (key.endsWith(":es")) return values.analysisEs ?? null;
+      if (key.startsWith("coach:analysis:"))
+        return values.analysisLegacy ?? null;
+      return null;
+    });
+    return { get };
   }
 
-  it("reads the wallet-scoped key and returns the record", async () => {
+  it("reads the wallet-scoped key and returns the record (no analysis cached)", async () => {
     const record = { gameId: GAME_ID, result: "win" } as never;
-    const redis = makeGetRedis(record);
+    const redis = makeKeyAwareRedis({ game: record });
 
     const out = await getGameRecord(redis as never, WALLET, GAME_ID);
 
@@ -398,13 +415,47 @@ describe("getGameRecord", () => {
     expect(redis.get).toHaveBeenCalledWith(`coach:game:${WALLET}:${GAME_ID}`);
   });
 
+  it("inlines a cached EN analysis into the returned record", async () => {
+    const record = { gameId: GAME_ID, result: "win" } as never;
+    const analysis = {
+      gameId: GAME_ID,
+      provider: "server",
+      analysisVersion: "v1",
+      createdAt: 1700000000,
+      response: { kind: "full", summary: "ok", mistakes: [], lessons: [], praise: [] },
+    };
+    const redis = makeKeyAwareRedis({ game: record, analysisEn: analysis });
+
+    const out = await getGameRecord(redis as never, WALLET, GAME_ID, { locale: "en" });
+
+    expect(out).not.toBeNull();
+    expect(out!.analysis).toMatchObject({ provider: "server", locale: "en" });
+  });
+
+  it("falls back to the other locale when the requested one is missing", async () => {
+    const record = { gameId: GAME_ID, result: "win" } as never;
+    const esAnalysis = {
+      gameId: GAME_ID,
+      provider: "server",
+      analysisVersion: "v1",
+      createdAt: 1700000000,
+      response: { kind: "quick", summary: "ok", tips: [] },
+      locale: "es",
+    };
+    const redis = makeKeyAwareRedis({ game: record, analysisEs: esAnalysis });
+
+    const out = await getGameRecord(redis as never, WALLET, GAME_ID, { locale: "en" });
+
+    expect(out!.analysis?.locale).toBe("es");
+  });
+
   it("returns null when redis has no entry", async () => {
-    const redis = makeGetRedis(null);
+    const redis = makeKeyAwareRedis({ game: null });
     await expect(getGameRecord(redis as never, WALLET, GAME_ID)).resolves.toBeNull();
   });
 
   it("lowercases the wallet so checksum-cased callers hit the canonical key", async () => {
-    const redis = makeGetRedis(null);
+    const redis = makeKeyAwareRedis({ game: null });
     const checksumed = "0xCc4179A22b473Ea2eB2B9b9b210458d0F60Fc2dD";
 
     await getGameRecord(redis as never, checksumed, GAME_ID);

@@ -716,6 +716,46 @@ function ArenaPageInner() {
     router.prefetch(`/coach/${persistedGameId}?wallet=${address}`);
   }, [showEndOverlay, address, persistedGameId, router]);
 
+  /* Phase 2 — single coach surface (2026-06-05).
+   *
+   * The /arena inline analysis ("REVIEW" with CandyGlassShell title)
+   * was a duplicate of the persisted /coach/[gameId] page ("MATCH
+   * REVIEW") that this very arena flow ends up at when the user enters
+   * via /coach/history. Two surfaces, same data, different vocabulary
+   * — and the inline path was unreachable by URL, so refreshing or
+   * sharing the analysis lost it entirely.
+   *
+   * When the coach phase resolves to a renderable result (`full` or
+   * `fallback` quick review) AND the game is already persisted to
+   * Redis with a known wallet, push to /coach/[gameId]. The persisted
+   * `gameRecord.analysis` is now populated by `getGameRecord()` so
+   * the destination surface paints the same content the inline block
+   * would have rendered. The inline blocks below stay as a degraded
+   * fallback for edge cases where persistence fails or the user has
+   * no connected wallet (guest play). */
+  const arenaCoachRedirectFiredRef = useRef(false);
+  useEffect(() => {
+    if (!ENABLE_COACH) return;
+    if (arenaCoachRedirectFiredRef.current) return;
+    if (!address || !persistedGameId) return;
+    const renderable =
+      (coach.phase === "result" &&
+        coach.response &&
+        coach.response.kind === "full") ||
+      (coach.phase === "fallback" && coach.fallbackResponse);
+    if (!renderable) return;
+    arenaCoachRedirectFiredRef.current = true;
+    track("arena_coach_redirect", { phase: coach.phase, gameId: persistedGameId });
+    router.push(`/coach/${persistedGameId}?wallet=${address}`);
+  }, [
+    coach.phase,
+    coach.response,
+    coach.fallbackResponse,
+    address,
+    persistedGameId,
+    router,
+  ]);
+
 
   // arena_game_end — fires once per transition into a terminal state.
   // Dedupe key OMITS game.elapsedMs for the same reason the persist
@@ -1104,7 +1144,19 @@ function ArenaPageInner() {
     );
   }
 
-  if (ENABLE_COACH && coach.phase === "result" && coach.response && coach.response.kind === "full") {
+  /* When persistedGameId + address are present, the Phase 2 redirect
+   * useEffect above pushes the user to /coach/[gameId] instead. The
+   * inline block stays as a degraded fallback for sessions without a
+   * persisted record (persistence failed) or without a connected wallet
+   * (guest play), where the route push has nowhere to land. */
+  const willRedirectToCoachRoute = ENABLE_COACH && !!address && !!persistedGameId;
+  if (
+    ENABLE_COACH &&
+    coach.phase === "result" &&
+    coach.response &&
+    coach.response.kind === "full" &&
+    !willRedirectToCoachRoute
+  ) {
     return (
       <main className="arena-bg arena-scroll-screen h-[100dvh] [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto min-h-full w-full max-w-[var(--app-max-width,390px)]">
@@ -1139,7 +1191,12 @@ function ArenaPageInner() {
     );
   }
 
-  if (ENABLE_COACH && coach.phase === "fallback" && coach.fallbackResponse) {
+  if (
+    ENABLE_COACH &&
+    coach.phase === "fallback" &&
+    coach.fallbackResponse &&
+    !willRedirectToCoachRoute
+  ) {
     return (
       <main className="arena-bg min-h-[100dvh] overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
         <div className="mx-auto w-full max-w-[var(--app-max-width,390px)]">

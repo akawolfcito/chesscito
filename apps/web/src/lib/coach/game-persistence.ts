@@ -1,6 +1,7 @@
 import type { Redis } from "@upstash/redis";
 import type { GameRecord } from "./types";
 import { REDIS_KEYS } from "./redis-keys";
+import { getCachedAnalysisWithFallback } from "./cache-fallback";
 
 /**
  * Cluster E — unconditional GameRecord persistence.
@@ -225,6 +226,16 @@ export async function enforceGameCap(
 
 type GetGameRecordRedis = Pick<Redis, "get">;
 
+export type GetGameRecordOptions = {
+  /** Locale to merge the cached Coach analysis under. Defaults to "en".
+   *  When the requested locale isn't cached, the helper tries the
+   *  other locale (then the legacy locale-agnostic key — already
+   *  handled by `getCachedAnalysisWithFallback`) so a cold load of
+   *  `/coach/[gameId]` never silently drops an analysis just because
+   *  it was generated in the other language. */
+  locale?: "en" | "es";
+};
+
 /**
  * Single source of truth for "read one game record by wallet+id".
  *
@@ -234,15 +245,64 @@ type GetGameRecordRedis = Pick<Redis, "get">;
  * by Vercel Deployment Protection with a 401 because internal server-to-
  * server fetches don't carry the user's auth cookie.
  *
+ * 2026-06-05 — the helper also inlines the cached Coach analysis from
+ * the separate `coach:analysis:<wallet>:<gameId>:<locale>` key when one
+ * exists. Previously `GameRecord.analysis` was an aspirational field
+ * filled by a `/api/coach/check-analysis` route that was never built;
+ * `/coach/[gameId]` showed an empty viewer on cold load even when a
+ * full analysis was sitting in Redis. The merge fixes that: cold loads
+ * surface the same content the inline `/arena` flow showed at game-end,
+ * so the two surfaces converge.
+ *
  * Caller is responsible for input validation (`isAddress`, `UUID_RE`).
  * The wallet is normalized to lowercase to match the canonical Redis
  * key shape produced by `REDIS_KEYS.game`.
  */
 export async function getGameRecord(
-  redis: GetGameRecordRedis,
+  redis: GetGameRecordRedis & Pick<Redis, "get">,
   wallet: string,
   gameId: string,
+  options: GetGameRecordOptions = {},
 ): Promise<GameRecord | null> {
   const normalizedWallet = wallet.toLowerCase();
-  return redis.get<GameRecord>(REDIS_KEYS.game(normalizedWallet, gameId));
+  const record = await redis.get<GameRecord>(
+    REDIS_KEYS.game(normalizedWallet, gameId),
+  );
+  if (!record) return null;
+
+  // Skip the analysis merge when the persisted record already carries
+  // one (defensive — keep older write paths idempotent if they ever
+  // write an inline analysis). Otherwise pull from the dedicated
+  // analysis key, trying the requested locale first then the other.
+  if (record.analysis) return record;
+
+  const requestedLocale = options.locale ?? "en";
+  const otherLocale: "en" | "es" = requestedLocale === "en" ? "es" : "en";
+
+  // Cast to the cache-fallback signature — that helper takes the full
+  // Redis client but only calls `.get`, which is the same surface this
+  // helper already requires.
+  const fullRedis = redis as Redis;
+
+  const primary = await getCachedAnalysisWithFallback(
+    fullRedis,
+    normalizedWallet,
+    gameId,
+    requestedLocale,
+  );
+  if (primary) {
+    return { ...record, analysis: primary };
+  }
+
+  const secondary = await getCachedAnalysisWithFallback(
+    fullRedis,
+    normalizedWallet,
+    gameId,
+    otherLocale,
+  );
+  if (secondary) {
+    return { ...record, analysis: secondary };
+  }
+
+  return record;
 }

@@ -16,9 +16,10 @@ const redis = Redis.fromEnv();
 const log = createLogger({ route: "/coach/[gameId]" });
 
 export default async function CoachGamePage({ params, searchParams }: PageProps) {
-  const { gameId } = await params;
+  const { gameId, locale } = await params;
   const { wallet } = await searchParams;
   const t = await getTranslations("COACH_VIEWER_COPY");
+  const analysisLocale: "en" | "es" = locale === "es" ? "es" : "en";
 
   // No wallet -> render reconnect prompt path. Client wrapper handles the toast.
   if (!wallet) {
@@ -57,7 +58,9 @@ export default async function CoachGamePage({ params, searchParams }: PageProps)
   // legitimate client-side reads.
   let gameRecord;
   try {
-    gameRecord = await getGameRecord(redis, wallet, gameId);
+    gameRecord = await getGameRecord(redis, wallet, gameId, {
+      locale: analysisLocale,
+    });
   } catch (err) {
     log.error("game_fetch_error", {
       error: err instanceof Error ? err.message : "unknown",
