@@ -30,12 +30,7 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
   return (
     <main
       data-testid="dev-exercises-popups-root"
-      className="relative min-h-[100dvh] w-full"
-      style={{
-        backgroundImage: 'url("/art/bg-playhub-forest-mobile.png")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
+      className="arena-bg relative min-h-[100dvh] w-full"
     >
       {variant === "piece-complete-final" && (
         <PieceCompletePrompt
