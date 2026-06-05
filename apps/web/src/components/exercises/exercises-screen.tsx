@@ -1197,7 +1197,12 @@ export function ExercisesScreen({
     txHash: submitTxHash,
     doneAt: txDoneAt,
   });
-  const showTxToast = txToast.show;
+  // Suppress the floating tx-progress toast while the ResultOverlay is
+  // mounted. The popup owns the success/failure surface (incl. the
+  // CeloScan receipt chip), so the parallel "Step 2 of 2 — Confirming
+  // on-chain…" toast outside the dialog reads as "half attached, half
+  // floating" (2026-06-04 audit IMG_3145). One popup = one status owner.
+  const showTxToast = txToast.show && resultOverlay === null;
   const txCurrent = txToast.show ? txToast.current : "sign";
 
   const allExercisesAttempted = progress.stars.every(s => s > 0);

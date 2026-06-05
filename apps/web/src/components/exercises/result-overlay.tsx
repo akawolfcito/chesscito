@@ -349,23 +349,23 @@ export function ResultOverlay({
           }
           meta={
             !isError ? (
-              <>
-                <span className="fantasy-title">chesscito</span>
-                <span className="opacity-70"> · on Celo</span>
+              <span className="inline-flex flex-wrap items-center justify-center gap-2">
+                <span>
+                  <span className="fantasy-title">chesscito</span>
+                  <span className="opacity-70"> · on Celo</span>
+                </span>
                 {txHash && celoscanHref ? (
-                  <>
-                    <span className="opacity-40"> · </span>
-                    <Link
-                      href={celoscanHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline underline-offset-2 opacity-70"
-                    >
-                      {tResult("cta.receiptOnCeloscan")}
-                    </Link>
-                  </>
+                  <Link
+                    href={celoscanHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="account-status-pill"
+                    data-tone="celo"
+                  >
+                    {tResult("cta.receiptOnCeloscan")}
+                  </Link>
                 ) : null}
-              </>
+              </span>
             ) : null
           }
         >
