@@ -844,4 +844,56 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
       FIXTURE_OPTS,
     );
   });
+
+  // vr13 — Exercises completion popups (2026-06-05 vocabulary migration).
+  // Smaller successor to the 8-variant sweep reverted in `120a42e9`. Locks
+  // the three end-of-cascade surfaces that now read in the arena-end-state
+  // vocabulary: King "All Exercises Complete!" with Choose Piece primary,
+  // King labyrinth solved with Enter Arena swap (gated by the
+  // `areAllLabyrinthsSolved` helper), and the on-chain Score Saved
+  // receipt with the CeloScan chip.
+  test("vr13-piece-complete-final — King no-next-piece + Choose primary", async ({
+    page,
+  }) => {
+    await page.goto("/dev/exercises-popups?variant=piece-complete-final", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr13-piece-complete-final.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr13-labyrinth-king-solved — Enter Arena primary swap", async ({
+    page,
+  }) => {
+    await page.goto("/dev/exercises-popups?variant=labyrinth-king-solved", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr13-labyrinth-king-solved.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr13-score-saved — on-chain receipt + CeloScan chip", async ({
+    page,
+  }) => {
+    await page.goto("/dev/exercises-popups?variant=score-saved", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr13-score-saved.png",
+      FIXTURE_OPTS,
+    );
+  });
 });
