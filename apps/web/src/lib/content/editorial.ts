@@ -1103,6 +1103,11 @@ export const LABYRINTH_COPY = {
   yourBestFormat: "Your best: {previous} moves",
   retry: "Try again",
   back: "Back to Exercises",
+  /** Primary CTA shown when the user completes a labyrinth that closes the
+   *  full training cascade — i.e. the labyrinth belongs to the final piece
+   *  (King). Replaces "Try again" because at that point the natural next
+   *  step is to enter Arena, not grind another lap. */
+  enterArena: "Enter Arena",
   /** ARIA label for the L1/L2 layer toggle tablist on mission panel. */
   layerToggleAriaLabel: "Layer toggle",
 } as const;

@@ -1439,6 +1439,7 @@ const messages = {
     yourBestFormat: "Tu mejor: {previous} movimientos",
     retry: "Reintentar",
     back: "Volver a Ejercicios",
+    enterArena: "Ir a la Arena",
     layerToggleAriaLabel: "Alternar capa",
   },
   SHOP_ITEM_COPY: {

@@ -20,6 +20,12 @@ type Props = {
   isNewBest?: boolean;
   onRetry: () => void;
   onBack: () => void;
+  /** When defined, replaces the "Try again" primary CTA with "Enter
+   *  Arena" and routes the user into the full match flow. Wired by
+   *  exercises-screen when the labyrinth belongs to the final piece
+   *  (King) — at that point the natural next step is to face the AI,
+   *  not grind another lap of the same labyrinth. */
+  onEnterArena?: () => void;
 };
 
 const AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-feliz";
@@ -40,6 +46,7 @@ export function LabyrinthCompleteOverlay({
   isNewBest = false,
   onRetry,
   onBack,
+  onEnterArena,
 }: Props) {
   const t = useTranslations("LABYRINTH_COPY");
   const [exiting, setExiting] = useState(false);
@@ -148,14 +155,18 @@ export function LabyrinthCompleteOverlay({
           </p>
         ) : null}
 
-        {/* BUTTONS — canonical PrincipalButton large (same green family as
-            Accept Challenge) + cream secondary. */}
+        {/* BUTTONS — canonical PrincipalButton medium (popup-scope) + cream
+            secondary. When onEnterArena is provided the primary CTA shifts
+            from "Try again" to "Enter Arena" so the user lands in the
+            full match flow instead of grinding the same labyrinth. */}
         <div className="flex flex-col items-center gap-2">
           <PrincipalButton
             size="medium"
-            onClick={() => handleAction(onRetry)}
+            onClick={() =>
+              handleAction(onEnterArena ?? onRetry)
+            }
           >
-            {t("retry")}
+            {onEnterArena ? t("enterArena") : t("retry")}
           </PrincipalButton>
 
           <button

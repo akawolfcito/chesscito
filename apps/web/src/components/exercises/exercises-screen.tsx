@@ -2379,6 +2379,14 @@ export function ExercisesScreen({
               setLabyrinthMode(false);
               setLabyrinthMoves(0);
             }}
+            onEnterArena={
+              selectedPiece === "king"
+                ? () => {
+                    setLabyrinthCompleted(null);
+                    router.push("/arena?fresh=1");
+                  }
+                : undefined
+            }
           />
         ) : null}
 
