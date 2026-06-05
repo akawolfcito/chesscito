@@ -59,7 +59,14 @@ describe("GET /api/games/[id]", () => {
       elapsedMs: 12_000,
       timestamp: Date.now(),
     };
-    redisGet.mockResolvedValue(record);
+    // Phase 2 (commit 6f98ffd1) made getGameRecord inline a cached
+    // analysis from `coach:analysis:<wallet>:<gameId>:<locale>` when
+    // present. Scope this assertion to the record-only path by
+    // returning null for any analysis key; the analysis-inline contract
+    // belongs to a dedicated game-persistence test.
+    redisGet.mockImplementation((key: string) =>
+      Promise.resolve(key.includes("coach:analysis:") ? null : record),
+    );
     const req = new Request(`http://localhost/api/games/${gameId}?wallet=${wallet}`);
     const res = await GET(req, { params: Promise.resolve({ id: gameId }) });
     expect(res.status).toBe(200);
