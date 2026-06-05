@@ -50,7 +50,11 @@ export function VictoryPopupShell({
   return (
     /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
     <div
-      className="candy-modal-scrim pointer-events-auto fixed inset-0 z-50 flex items-center justify-center animate-in fade-in duration-300"
+      // z-[70] sits above the PersistentDock (z-60 in globals.css) so the
+      // scrim dims the dock and the modal panel is the only interactive
+      // surface. Earlier z-50 left the dock visually on top of the modal
+      // in exercises popups (piece-complete / labyrinth-solved / score-saved).
+      className="candy-modal-scrim pointer-events-auto fixed inset-0 z-[70] flex items-center justify-center animate-in fade-in duration-300"
       role={role}
       aria-modal="true"
       aria-label={ariaLabel}
