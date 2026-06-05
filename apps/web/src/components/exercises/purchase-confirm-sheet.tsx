@@ -121,12 +121,25 @@ export function PurchaseConfirmSheet({
         ? t("buying")
         : t("confirmButton");
 
+  /* Type-D system modal that blocks the dock for the wallet round-trip.
+   * The dock + its wrapper compose a stacking context at z-60 that
+   * Tailwind utilities at z-[60..65] don't reliably beat, so we
+   * commit to an inline `zIndex: 1000` here — high enough to win
+   * the body-level paint order while staying well below any
+   * future runtime debug overlay. `candy-modal-scrim` is duplicated
+   * as an inline `backgroundColor` because the class lives inside
+   * `@layer base` and a previous render order issue left the layer
+   * style intermittently un-applied; the inline declaration is the
+   * paint of last resort. createPortal mounts to document.body so
+   * the modal escapes the persistent-dock wrapper's z-60 stacking
+   * context entirely. */
   const modal = (
     /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center candy-modal-scrim transition-opacity duration-300 ${
-        exiting ? "opacity-0" : "animate-in fade-in duration-300"
+      className={`pointer-events-auto fixed inset-0 flex items-center justify-center transition-opacity duration-300 ${
+        exiting ? "opacity-0" : "opacity-100"
       }`}
+      style={{ backgroundColor: "rgba(0, 0, 0, 0.60)", zIndex: 1000 }}
       aria-modal="true"
       role="dialog"
       aria-labelledby="purchase-confirm-modal-title"

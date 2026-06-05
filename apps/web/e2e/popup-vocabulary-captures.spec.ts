@@ -142,7 +142,27 @@ test.describe("Exercises screen — sheets", () => {
       const sku = page.getByRole("button", { name: /coach credits|shield|founder/i }).first();
       if (await sku.isVisible().catch(() => false)) {
         await sku.click().catch(() => {});
-        await page.waitForTimeout(500);
+        // 500ms isn't enough — the SKU click closes the shop sheet AND
+        // mounts the confirm modal via state cascade; the scrim's bg
+        // paint only stabilizes after the modal's animation frame
+        // settles. Wait for the modal element then give the paint a
+        // generous buffer so the screenshot lands with the scrim
+        // applied.
+        await page
+          .waitForFunction(
+            () =>
+              !!document.querySelector(
+                '[aria-labelledby="purchase-confirm-modal-title"]',
+              ),
+            null,
+            { timeout: 5000 },
+          )
+          .catch(() => {});
+        // Wait the full Shop-sheet exit animation + Confirm modal
+        // fade-in: ~300ms each + paint buffer. Anything under 2s
+        // intermittently captures the modal before its scrim is
+        // opaque, so the dock leaks through.
+        await page.waitForTimeout(3000);
         await shot(page, "confirm-purchase-sheet");
       }
     }
