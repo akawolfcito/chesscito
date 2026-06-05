@@ -7,7 +7,7 @@ import { celo } from "viem/chains";
 import { victoryAbi } from "@/lib/contracts/victory";
 import { DIFFICULTY_LABELS } from "@/lib/content/editorial";
 import { formatTime } from "@/lib/game/arena-utils";
-import { VictoryTrophy } from "./victory-trophy";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { AcceptChallengeButton } from "./accept-challenge-button";
 
 /** Arena difficulty values (1–3) represent checkmate victories */
@@ -97,77 +97,114 @@ export default async function VictoryPage({ params }: { params: { id: string } }
   if (!v) notFound();
   const t = await getTranslations("VICTORY_PAGE_COPY");
 
+  const isCheckmate = ARENA_DIFFICULTIES.has(v.difficultyRaw);
+  const headline = isCheckmate
+    ? t("metaCheckmate", { moves: v.moves })
+    : t("metaComplete", { moves: v.moves });
+
   return (
     <main
-      className="mission-shell secondary-page-scrim flex min-h-[100dvh] justify-center animate-in fade-in duration-500"
+      className="arena-bg flex min-h-[100dvh] items-center justify-center px-4 py-6 animate-in fade-in duration-500"
     >
+      {/* Panel-mision card — same panel-bg1 background as arena-end-state
+          popups (forest-leaf corners + cream interior). No close button:
+          this is a destination route, not a modal. */}
       <div
-        className="candy-page-panel flex w-full max-w-[var(--app-max-width)] flex-col items-center rounded-t-3xl px-6 pb-8 pt-12 animate-in fade-in slide-in-from-bottom-4 duration-500"
-        style={{ background: "var(--paper-bg)" }}
+        className="relative w-full max-w-[340px] max-h-[92dvh] overflow-y-auto overscroll-contain"
+        style={{
+          backgroundImage:
+            'image-set(url("/art/new-assets-chesscito/paneles/panel-bg1.avif") type("image/avif"), url("/art/new-assets-chesscito/paneles/panel-bg1.webp") type("image/webp"), url("/art/new-assets-chesscito/paneles/panel-bg1.png") type("image/png"))',
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+        }}
       >
-        {/* Trophy spotlight — warm amber glow behind the trophy */}
         <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-48"
-          style={{
-            background:
-              "radial-gradient(ellipse 70% 100% at 50% 0%, rgba(245, 158, 11, 0.28) 0%, rgba(245, 158, 11, 0) 70%)",
-          }}
-        />
+          className="arena-result-popup-content"
+          style={{ paddingTop: "12%" }}
+        >
+          {/* Headline — Checkmate / Complete in N moves. Uses the same
+              arena-result-title family but at the hero-text-inside size
+              because the full label is long (matches the loss-popup
+              "Checkmate" + subtitle pattern). */}
+          <h1
+            className="arena-result-title text-center"
+            style={{ fontSize: "clamp(24px, 5dvh, 32px)" }}
+          >
+            {headline}
+          </h1>
 
-        <div className="relative z-10">
-          <VictoryTrophy />
+          {/* Stat pills — Difficulty / Moves / Time. Same .candy-stat-pill
+              vocabulary as arena-end-state stats row. */}
+          <div className="arena-result-stats-row arena-result-stats-row--missionpills mt-2">
+            <span className="candy-stat-pill">
+              <span className="candy-stat-pill-icon">
+                <CandyIcon name="star" className="h-4 w-4" />
+              </span>
+              {v.difficulty}
+            </span>
+            <span className="candy-stat-pill">
+              <span className="candy-stat-pill-icon">
+                <picture>
+                  <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                  <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                  <img
+                    src="/art/redesign/pieces/w-pawn.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    className="block h-full w-full object-contain"
+                  />
+                </picture>
+              </span>
+              {String(v.moves)}
+            </span>
+            <span className="candy-stat-pill">
+              <span className="candy-stat-pill-icon">
+                <CandyIcon name="time" className="h-4 w-4" />
+              </span>
+              {formatTime(v.timeMs)}
+            </span>
+          </div>
+
+          {/* Challenge block — coach-section pattern. challengeLine reads
+              as the focal headline ("Can you beat this?"), tagline as the
+              supporting body. Avatar-confiado floats RIGHT, addressing
+              the visitor: "Sí, alguien lo logró — ¿tú puedes?". */}
+          <div className="arena-result-coach-section mt-4">
+            <div className="arena-result-coach-body">
+              <div className="arena-result-coach-text">
+                <h2 className="arena-result-coach-headline">
+                  {t("challengeLine")}
+                </h2>
+                <p className="arena-result-coach-body-text">{t("tagline")}</p>
+              </div>
+              <picture className="arena-result-coach-avatar">
+                <source srcSet="/art/new-assets-chesscito/fun/avatar-confiado.avif" type="image/avif" />
+                <source srcSet="/art/new-assets-chesscito/fun/avatar-confiado.webp" type="image/webp" />
+                <img
+                  src="/art/new-assets-chesscito/fun/avatar-confiado.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                />
+              </picture>
+            </div>
+          </div>
+
+          {/* Primary action — Accept Challenge → /arena?fresh=1. */}
+          <div className="mt-4 flex w-full justify-center">
+            <AcceptChallengeButton />
+          </div>
+
+          {/* Back affordance — same .arena-result-back-link chip migrated
+              in Cluster 2 (2026-06-05, commit b04c4318). */}
+          <Link
+            href="/hub"
+            className="arena-result-back-link mt-3 inline-flex min-h-[44px] items-center justify-center"
+          >
+            {t("backToHub")}
+          </Link>
         </div>
-
-        <h1
-          className="fantasy-title relative z-10 mb-2 mt-2 text-3xl font-bold text-center"
-          style={{
-            color: "rgba(110, 65, 15, 0.98)",
-            textShadow:
-              "0 1px 0 rgba(255, 245, 215, 0.80), 0 2px 6px rgba(120, 65, 5, 0.35)",
-          }}
-        >
-          {ARENA_DIFFICULTIES.has(v.difficultyRaw)
-            ? t("metaCheckmate", { moves: v.moves })
-            : t("metaComplete", { moves: v.moves })}
-        </h1>
-
-        <div
-          className="relative z-10 mb-3 flex gap-3 text-sm font-semibold"
-          style={{ color: "rgba(110, 65, 15, 0.80)" }}
-        >
-          <span>{v.difficulty}</span>
-          <span>•</span>
-          <span>{formatTime(v.timeMs)}</span>
-        </div>
-
-        <p
-          className="relative z-10 mb-4 text-center text-xs"
-          style={{ color: "rgba(110, 65, 15, 0.65)" }}
-        >
-          {t("tagline")}
-        </p>
-
-        <p
-          className="relative z-10 mb-8 text-lg font-extrabold text-center"
-          style={{
-            color: "rgba(120, 65, 5, 0.95)",
-            textShadow: "0 1px 0 rgba(255, 245, 215, 0.70)",
-          }}
-        >
-          {t("challengeLine")}
-        </p>
-
-        <div className="relative z-10 flex w-full justify-center">
-          <AcceptChallengeButton />
-        </div>
-
-        <Link
-          href="/hub"
-          className="arena-result-back-link relative z-10 mt-3 inline-flex min-h-[44px] items-center justify-center"
-        >
-          {t("backToHub")}
-        </Link>
       </div>
     </main>
   );
