@@ -50,7 +50,11 @@ export async function GET(req: Request) {
 
   // PNG (RGBA). WebP rendered empty in Satori; PNGs work after the
   // colormap → RGBA re-encode in adb19ae4.
-  const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  // Swap from favicon-wolf to avatar-chesscito so the share card
+  // mascot matches the in-app Hub / popup avatar family. PRO version
+  // lives at /art/hub/chesscito-avatar-new-light but the share card
+  // is anonymous (no auth context at render time) → use the default.
+  const mascotUrl = new URL("/art/scene-rooted/avatar-chesscito.png", req.url).toString();
   const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
   const pieceFile = "w-" + piece + ".png";
   const pieceUrl = new URL(THEME_CONFIG.piecesBase + "/" + pieceFile, req.url).toString();
@@ -87,14 +91,16 @@ export async function GET(req: Request) {
     dailyOverlays = [{ rank: 7 - targetPos.rank, file: targetPos.file, iconUrl: starUrl }];
   }
 
-  /* Score badge — text-based, avoids star glyphs which rendered as
-     empty boxes. Clean "X / 15 STARS" with a golden pill treatment
-     that feels like a collectible card rarity marker. */
+  /* Score badge — golden pill with inline SVG star + "X / Y STARS".
+     Inline SVG (not emoji) because emoji glyphs render as empty boxes
+     in Satori. Mirrors the in-app candy-stat-pill family used by the
+     migrated badge popup. */
   const scoreBadge = (
     <div
       style={{
         display: "flex",
         alignItems: "center",
+        gap: 12,
         padding: "10px 28px",
         borderRadius: 999,
         background: "rgba(255, 245, 215, 0.88)",
@@ -102,6 +108,20 @@ export async function GET(req: Request) {
         boxShadow: "0 3px 10px rgba(120, 65, 5, 0.15)",
       }}
     >
+      <svg
+        width={28}
+        height={28}
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 2 L14.6 8.6 L21.6 9.1 L16.2 13.7 L17.8 20.6 L12 16.9 L6.2 20.6 L7.8 13.7 L2.4 9.1 L9.4 8.6 Z"
+          fill="rgb(245, 158, 11)"
+          stroke="rgb(180, 100, 5)"
+          strokeWidth="0.8"
+          strokeLinejoin="round"
+        />
+      </svg>
       <span
         style={{
           fontSize: 30,
@@ -116,6 +136,11 @@ export async function GET(req: Request) {
     </div>
   );
 
+  /* Tagline — mirrors the in-app subtitle ("Rook Ascendant is now yours
+     to keep") so the share card carries the same narrative beat as the
+     popup that triggered the share intent. */
+  const masteryTagline = `${PIECE_LABEL[piece]} Ascendant is now yours to keep`;
+
   const pngResponse = new ImageResponse(
     (
       <CardShell
@@ -124,6 +149,9 @@ export async function GET(req: Request) {
         mascotUrl={mascotUrl}
         footer={type === "daily" ? "Chesscito \u2022 Daily Tactic" : "Chesscito \u2022 saved on Celo"}
         useCinzel={useCinzel}
+        hideWordmark={type !== "daily"}
+        mascotMode={type !== "daily" ? "half-body" : "circle"}
+        softenPanel={type !== "daily"}
         heroSlot={
           type === "daily" && dailyFen ? (
             <div
@@ -322,6 +350,26 @@ export async function GET(req: Request) {
               </div>
 
               {scoreBadge}
+
+              {/* Tagline — mirrors the in-app popup subtitle so the share
+                  preview reads as a continuation of the celebration, not a
+                  separate branded card. */}
+              <div
+                style={{
+                  display: "flex",
+                  marginTop: 22,
+                  fontSize: 28,
+                  fontFamily: useCinzel ? "Cinzel" : "serif",
+                  fontWeight: 600,
+                  letterSpacing: "0.02em",
+                  color: "rgba(63, 34, 8, 0.85)",
+                  textShadow: "0 2px 0 rgba(255, 245, 215, 0.85)",
+                  maxWidth: 760,
+                  textAlign: "center",
+                }}
+              >
+                {masteryTagline}
+              </div>
             </div>
           )
         }

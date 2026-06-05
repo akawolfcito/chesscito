@@ -34,6 +34,23 @@ export type CardShellProps = {
   footer?: string;
   /** True when the Cinzel font was loaded; otherwise we fall back to serif. */
   useCinzel: boolean;
+  /** Drops the centered "CHESSCITO" wordmark + chip cluster, freeing
+   *  the lower band for the heroSlot's own content (tagline, score
+   *  pill, etc.). Footer stays as the subtle brand signature. Used by
+   *  the exercise share card where the wordmark was dominating the
+   *  composition and competing with the achievement headline. */
+  hideWordmark?: boolean;
+  /** Mascot crop mode. "circle" (default) renders the avatar as a
+   *  circular peek — the original wolf treatment. "half-body" anchors
+   *  a full-body avatar in the lower-right of the card (top edge at
+   *  y ≈ 950 so the character peeks up from below the achievement
+   *  cluster) — the in-app avatar pattern used by popups and the Hub. */
+  mascotMode?: "circle" | "half-body";
+  /** Drops a warm-cream wash on top of the panel asset so the baked-in
+   *  green leaf-frame reads as a softer sage tone instead of saturated
+   *  grass. Used by achievement cards where the heavy frame was
+   *  competing with the celebration content. */
+  softenPanel?: boolean;
 };
 
 /**
@@ -55,6 +72,9 @@ export function CardShell({
   chip,
   footer = "chesscito.com",
   useCinzel,
+  hideWordmark = false,
+  mascotMode = "circle",
+  softenPanel = false,
 }: CardShellProps) {
   const fontFamily = useCinzel ? "Cinzel" : "serif";
 
@@ -65,24 +85,37 @@ export function CardShell({
         height: CARD_HEIGHT,
         display: "flex",
         position: "relative",
-        /* Grass green fallback — fills the panel asset's curved,
-           transparent corners with a colour that blends into its baked
-           grass border instead of the legacy cream or a bare/black
-           alpha-flattened result. */
-        background: "#5fa329",
+        /* Background fallback. Grass green when a panel asset is
+           provided (fills the asset's transparent corners with a
+           colour that blends into its baked grass border). Softened
+           sage when softenPanel is on, so the fallback colour around
+           the leaf-frame corners matches the muted-green tone of the
+           cream wash. */
+        background: panelBgUrl
+          ? softenPanel
+            ? "#7da856"
+            : "#5fa329"
+          : "linear-gradient(180deg, rgb(255, 248, 220) 0%, rgb(248, 231, 184) 60%, rgb(243, 220, 162) 100%)",
       }}
     >
       {/* Panel bg — when provided, replaces the cream gradient entirely
           with a baked-in cream-wood + grass-border asset. Stretched to
-          fill the full 1080×1350 card. */}
+          fill the full 1080×1350 card. When softenPanel is on, the
+          asset is scaled 10% and re-centered so the outer green frame
+          falls outside the visible card bounds — only the inner cream
+          and grass-decoration band reads. */}
       {panelBgUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={panelBgUrl}
           alt=""
-          width={CARD_WIDTH}
-          height={CARD_HEIGHT}
-          style={{ position: "absolute", top: 0, left: 0 }}
+          width={softenPanel ? Math.round(CARD_WIDTH * 1.1) : CARD_WIDTH}
+          height={softenPanel ? Math.round(CARD_HEIGHT * 1.1) : CARD_HEIGHT}
+          style={{
+            position: "absolute",
+            top: softenPanel ? Math.round(-CARD_HEIGHT * 0.05) : 0,
+            left: softenPanel ? Math.round(-CARD_WIDTH * 0.05) : 0,
+          }}
         />
       )}
 
@@ -114,6 +147,22 @@ export function CardShell({
         />
       )}
 
+      {/* Soften wash — overlay applied on top of the panel asset to mute
+          the baked-in green leaf-frame to a softer sage. Cream interior
+          is barely affected (already low saturation); the saturated green
+          border drops a couple steps. */}
+      {panelBgUrl && softenPanel && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            background:
+              "linear-gradient(180deg, rgba(255, 245, 200, 0.32) 0%, rgba(245, 230, 175, 0.32) 100%)",
+          }}
+        />
+      )}
+
       {/* Hero slot — top-center, 860×860, the board fills the upper two-thirds */}
       {heroSlot && (
         <div
@@ -132,46 +181,70 @@ export function CardShell({
         </div>
       )}
 
-      {/* Mascot — smaller peek bottom-right so the brand cluster
-          breathes and the silhouette is fully visible. Explicit
-          borderRadius clips any square corners on the mascot asset
-          so it always reads as a circular avatar. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={mascotUrl}
-        alt=""
-        width={300}
-        height={300}
-        style={{
-          position: "absolute",
-          right: 30,
-          bottom: 30,
-          borderRadius: 999,
-          filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
-        }}
-      />
+      {/* Mascot — bottom-right peek. "circle" renders as a circular
+          avatar (legacy wolf treatment). "half-body" anchors a wider
+          frame at the same corner and clips the bottom half so only
+          head + torso show — the in-app avatar pattern. */}
+      {mascotMode === "half-body" ? (
+        // Full-body avatar peek anchored from the top so the character
+        // rises up from below the achievement cluster. Natural aspect
+        // (avatar PNG is 1012x1228 ≈ 0.82). Sized so feet stay inside
+        // the cream area (panel-mision-icon's bottom leaf-frame starts
+        // around y=1300, so bottom must be ≤ 1290).
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={mascotUrl}
+          alt=""
+          width={560}
+          height={680}
+          style={{
+            position: "absolute",
+            right: -100,
+            top: 800,
+            filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
+          }}
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={mascotUrl}
+          alt=""
+          width={300}
+          height={300}
+          style={{
+            position: "absolute",
+            right: 30,
+            bottom: 30,
+            borderRadius: 999,
+            filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
+          }}
+        />
+      )}
 
       {/* Brand wordmark — centered horizontally, sits above the chip
           cluster. Centered-cluster reads as the "card signature"
-          rather than a left-aligned footer. */}
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: 1000,
-          display: "flex",
-          justifyContent: "center",
-          fontSize: 56,
-          fontFamily,
-          fontWeight: 700,
-          letterSpacing: "0.22em",
-          color: WARM_MUTED,
-          textShadow: CREAM_SHADOW,
-        }}
-      >
-        CHESSCITO
-      </div>
+          rather than a left-aligned footer. Hidden when the route
+          opts out (hideWordmark) so the heroSlot owns the lower band. */}
+      {!hideWordmark && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 1000,
+            display: "flex",
+            justifyContent: "center",
+            fontSize: 56,
+            fontFamily,
+            fontWeight: 700,
+            letterSpacing: "0.22em",
+            color: WARM_MUTED,
+            textShadow: CREAM_SHADOW,
+          }}
+        >
+          CHESSCITO
+        </div>
+      )}
 
       {/* Context chip — candy-paper styled, centered. Cream fill +
           warm-brown text + amber border so it reads as part of the
@@ -209,17 +282,20 @@ export function CardShell({
         </div>
       )}
 
-      {/* Footer URL — subtle, centered, below the chip. Kept tiny so
-          it reads as ownership signature, not a placeholder. */}
+      {/* Footer URL — subtle ownership signature. Centered by default
+          so it reads as the card's bottom-band caption; shifted
+          left-aligned when the half-body mascot occupies the
+          bottom-right corner (otherwise the avatar's outstretched paw
+          collides with the centered text). */}
       {footer && (
         <div
           style={{
             position: "absolute",
-            left: 0,
-            right: 0,
+            left: 60,
+            right: 60,
             top: 1180,
             display: "flex",
-            justifyContent: "center",
+            justifyContent: mascotMode === "half-body" ? "flex-start" : "center",
             fontSize: 22,
             fontWeight: 600,
             color: WARM_MUTED,
