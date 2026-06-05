@@ -1144,7 +1144,6 @@ const messages = {
     switchNetwork: { label: "Cambiar Red", compactLabel: "Red", loading: null },
     shieldsLeft: "{n} restantes",
     submitCanceled: "Guardado cancelado",
-    submitFailed: "Falló el guardado. Reintenta.",
   },
   PIECE_RAIL_COPY: {
     comingSoon: "Pronto",

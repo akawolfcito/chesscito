@@ -1612,7 +1612,6 @@ export function ExercisesScreen({
         errorMessage: classifyTxError(error, tResult),
         retryAction: () => void handleSubmitScore(),
       });
-      showToast(tFooter("submitFailed"), 3000);
       console.warn("[MiniPayTx] error", { label: "submit-score", levelId: Number(levelId), error: message });
     } finally {
       submittingScoreRef.current = false;

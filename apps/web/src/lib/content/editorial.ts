@@ -50,7 +50,6 @@ export const FOOTER_CTA_COPY = {
   switchNetwork: { label: "Switch Network", compactLabel: "Network", loading: null },
   shieldsLeft: (n: number) => `${n} left`,
   submitCanceled: "Save canceled",
-  submitFailed: "Save failed. Try again.",
 } as const;
 
 /** ICU placeholders mirrored in messages/en.ts for the function helpers
