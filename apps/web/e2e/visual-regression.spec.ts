@@ -896,4 +896,47 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
       FIXTURE_OPTS,
     );
   });
+
+  // vr14 — ResultOverlay non-score variants (badge / shop / error). These
+  // still render through CandyGlassShell pre-migration. The baseline
+  // captures the pre-migration state so the upcoming arena-end-state
+  // vocabulary migration produces a diff PNG that reads as the before/after.
+  test("vr14-result-badge — badge claim celebration", async ({ page }) => {
+    await page.goto("/dev/exercises-popups?variant=result-badge", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr14-result-badge.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr14-result-shop — shop purchase confirmation", async ({ page }) => {
+    await page.goto("/dev/exercises-popups?variant=result-shop", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr14-result-shop.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr14-result-error — transaction error with retry", async ({ page }) => {
+    await page.goto("/dev/exercises-popups?variant=result-error", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr14-result-error.png",
+      FIXTURE_OPTS,
+    );
+  });
 });

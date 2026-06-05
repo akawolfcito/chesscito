@@ -2416,6 +2416,7 @@ export function ExercisesScreen({
             variant={resultOverlay.variant}
             pieceType={selectedPiece}
             itemLabel={selectedItem?.label}
+            itemAsset={selectedItem?.icon}
             txHash={resultOverlay.txHash}
             celoscanHref={resultOverlay.txHash ? txLink(chainId, resultOverlay.txHash) : undefined}
             errorMessage={resultOverlay.errorMessage}

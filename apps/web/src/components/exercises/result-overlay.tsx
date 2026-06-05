@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import { track } from "@/lib/telemetry";
 import { Button } from "@/components/ui/button";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { AddCashCta } from "@/components/minipay/add-cash-cta";
 import type { TxErrorKind } from "@/lib/errors";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
@@ -34,6 +33,11 @@ type ResultOverlayProps = {
   variant: Variant;
   pieceType?: PieceKey;
   itemLabel?: string;
+  /** Asset basename for the shop variant hero icon — points at the
+   *  `/art/shop/<sku>` triplet basename the catalog already exposes
+   *  via `selectedItem.icon`. Optional fallback to a generic shop
+   *  badge so legacy callers don't break. */
+  itemAsset?: string;
   txHash?: string;
   celoscanHref?: string;
   errorMessage?: string;
@@ -230,6 +234,7 @@ export function ResultOverlay({
   variant,
   pieceType,
   itemLabel,
+  itemAsset,
   txHash,
   celoscanHref,
   errorMessage,
@@ -388,139 +393,188 @@ export function ResultOverlay({
     );
   }
 
+  // badge / shop / error variants — migrated 2026-06-05 from
+  // CandyGlassShell to the arena-end-state vocabulary (VictoryPopupShell
+  // + panel-bg1 + arena-result-* tokens). Mirrors the score migration
+  // in `c2fba9d4`. Per-variant hero:
+  //   badge → piece sprite via getBadgeImg (placeholder until a real
+  //           badge artwork lands per SKU)
+  //   shop  → itemAsset triplet so the popup carries the exact icon
+  //           the shop tile showed
+  //   error → static warning SVG (no Lotties) + avatar-asombrado peek
   return (
-    <div
-      // pointer-events-auto explicitly defeats Radix's modal-mode body
-      // lock that lingers ~300ms during sheet exit animations. Without
-      // it, clicks on the scrim / X / CTA right after a transaction
-      // failure are silently swallowed and the user can't dismiss.
-      className={`pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      onClick={handleDismiss}
-    >
-      <div
-        className="pointer-events-auto relative w-full max-w-xs"
-        style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <CandyGlassShell
-          title={title}
+    <>
+      <div className={exiting ? "modal-exiting" : undefined}>
+        <VictoryPopupShell
           onClose={handleDismiss}
+          ariaLabel={title}
           closeLabel={tResult("cta.dismiss")}
-          cta={
-            isError && onRetry ? (
-              <div className="flex flex-col gap-1.5">
-                <button
-                  type="button"
-                  onClick={onRetry}
-                  className="arena-scaffold-soft-gate-primary w-full"
-                >
-                  {tResult("cta.tryAgain")}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDismiss}
-                  className="arena-result-back-link w-full"
-                >
-                  {tResult("cta.dismiss")}
-                </button>
-              </div>
-            ) : isError ? (
-              <button
-                type="button"
-                onClick={handleDismiss}
-                className="arena-scaffold-soft-gate-primary w-full"
-              >
-                {tResult("cta.dismiss")}
-              </button>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setShareOpen(true)}
-                  className="arena-scaffold-soft-gate-primary w-full"
-                >
-                  {tShare("button")}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDismiss}
-                  className="arena-scaffold-soft-gate-secondary w-full"
-                >
-                  {tResult("cta.continue")}
-                </button>
-              </div>
-            )
-          }
-          meta={
-            !isError ? (
-              <span className="inline-flex flex-wrap items-center justify-center gap-2">
-                <span>
-                  <span className="fantasy-title">chesscito</span>
-                  <span className="opacity-70"> · on Celo</span>
-                </span>
-                {txHash && celoscanHref ? (
-                  <Link
-                    href={celoscanHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="account-status-pill"
-                    data-tone="celo"
-                  >
-                    {tResult("cta.receiptOnCeloscan")}
-                  </Link>
-                ) : null}
-              </span>
-            ) : null
-          }
         >
-          <div className="flex flex-col items-center gap-2 text-center">
-            {isError ? (
-              <div className="h-16 w-16">
-                <LottieAnimation src="/animations/error-alert.lottie" loop className="h-full w-full" />
-              </div>
-            ) : (
+          {/* TITLE — centered hero. victory-popup-hero-solo clamps the
+              arena-result-title font down so longer headlines like
+              "Purchase Complete!" or "Couldn't buy" fit the panel. */}
+          <div className="victory-popup-hero-solo">
+            <h1 className="arena-result-title">{title}</h1>
+          </div>
+
+          {/* IMAGE — variant-specific hero centered below the title. */}
+          {isError ? (
+            <div className="mx-auto block h-20 w-20" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-full w-full"
+              >
+                <path
+                  d="M12 3 L22 21 H2 Z"
+                  fill="rgb(252, 211, 77)"
+                  stroke="rgb(159, 18, 57)"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+                <rect x="11" y="9" width="2" height="6" rx="1" fill="rgb(159, 18, 57)" />
+                <rect x="11" y="17" width="2" height="2" rx="1" fill="rgb(159, 18, 57)" />
+              </svg>
+            </div>
+          ) : variant === "shop" && itemAsset ? (
+            <picture className="mx-auto block h-24 w-24">
+              <source srcSet={`${itemAsset}.avif`} type="image/avif" />
+              <source srcSet={`${itemAsset}.webp`} type="image/webp" />
+              <img
+                src={`${itemAsset}.png`}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className="h-full w-full object-contain drop-shadow-md"
+              />
+            </picture>
+          ) : (
+            <div className="mx-auto block h-24 w-24">
               <SuccessImage
                 variant={variant}
                 pieceType={pieceType}
                 glowClass={variant === "badge" ? "reward-glow-achievement reward-glow-pulse" : "reward-glow-progress"}
                 size="sm"
               />
-            )}
+            </div>
+          )}
 
-            {!isError && variant === "badge" && totalStars != null ? (
-              <StarsRow totalStars={totalStars} staggered />
-            ) : null}
+          {!isError && variant === "badge" && totalStars != null ? (
+            <div className="arena-result-stats-row arena-result-stats-row--missionpills">
+              <span className="candy-stat-pill">
+                <span className="candy-stat-pill-icon">
+                  <CandyIcon name="star" className="h-4 w-4" />
+                </span>
+                {totalStars}/{EXERCISES_PER_PIECE * 3}
+              </span>
+            </div>
+          ) : null}
 
+          <p
+            className="px-2 text-center text-sm leading-snug"
+            style={{
+              color: isError
+                ? "rgba(159, 18, 57, 0.95)"
+                : "rgba(63, 34, 8, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+            }}
+          >
+            {subtitle}
+          </p>
+
+          {hint ? (
             <p
-              className="text-sm leading-snug"
+              className="px-2 text-center text-xs leading-snug"
+              style={{ color: "rgba(110, 65, 15, 0.65)" }}
+            >
+              {hint}
+            </p>
+          ) : null}
+
+          {isError && txErrorKind === "insufficientFunds" && (
+            <AddCashCta source="shop-buy" className="mt-1" />
+          )}
+
+          <div className="flex flex-col items-center gap-2">
+            {isError && onRetry ? (
+              <>
+                <PrincipalButton size="medium" onClick={onRetry}>
+                  {tResult("cta.tryAgain")}
+                </PrincipalButton>
+                <button
+                  type="button"
+                  onClick={handleDismiss}
+                  className="arena-result-secondary-action"
+                >
+                  {tResult("cta.dismiss")}
+                </button>
+              </>
+            ) : isError ? (
+              <PrincipalButton size="medium" onClick={handleDismiss}>
+                {tResult("cta.dismiss")}
+              </PrincipalButton>
+            ) : (
+              <>
+                <PrincipalButton size="medium" onClick={() => setShareOpen(true)}>
+                  {tShare("button")}
+                </PrincipalButton>
+                <button
+                  type="button"
+                  onClick={handleDismiss}
+                  className="arena-result-secondary-action"
+                >
+                  {tResult("cta.continue")}
+                </button>
+              </>
+            )}
+          </div>
+
+          {!isError ? (
+            <div
+              className="mt-1 flex flex-col items-center gap-1.5 px-2 text-center text-[11px]"
+              style={{ color: "rgba(110, 65, 15, 0.75)" }}
+            >
+              <span>
+                <span className="fantasy-title">chesscito</span>
+                <span className="opacity-70"> · on Celo</span>
+              </span>
+              {txHash && celoscanHref ? (
+                <Link
+                  href={celoscanHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="account-status-pill"
+                  data-tone="celo"
+                >
+                  {tResult("cta.receiptOnCeloscan")}
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+
+          {isError ? (
+            <picture
+              className="arena-result-coach-avatar"
+              aria-hidden="true"
               style={{
-                color: isError
-                  ? "rgba(159, 18, 57, 0.95)"
-                  : "rgba(63, 34, 8, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                position: "absolute",
+                right: "8%",
+                bottom: "18%",
+                width: "5.5rem",
+                pointerEvents: "none",
               }}
             >
-              {subtitle}
-            </p>
-
-            {hint ? (
-              <p
-                className="text-xs leading-snug"
-                style={{ color: "rgba(110, 65, 15, 0.65)" }}
-              >
-                {hint}
-              </p>
-            ) : null}
-
-            {isError && txErrorKind === "insufficientFunds" && (
-              <AddCashCta source="shop-buy" className="mt-2" />
-            )}
-
-          </div>
-        </CandyGlassShell>
+              <source srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.avif" type="image/avif" />
+              <source srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.webp" type="image/webp" />
+              <img
+                src="/art/new-assets-chesscito/fun/avatar-asombrado.png"
+                alt=""
+                draggable={false}
+              />
+            </picture>
+          ) : null}
+        </VictoryPopupShell>
       </div>
 
       {!isError && (
@@ -532,7 +586,7 @@ export function ResultOverlay({
           url={shareCanonicalUrl}
         />
       )}
-    </div>
+    </>
   );
 }
 

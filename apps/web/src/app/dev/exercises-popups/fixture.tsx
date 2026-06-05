@@ -6,7 +6,10 @@ import { PieceCompletePrompt, ResultOverlay } from "@/components/exercises/resul
 type Variant =
   | "piece-complete-final"
   | "labyrinth-king-solved"
-  | "score-saved";
+  | "score-saved"
+  | "result-badge"
+  | "result-shop"
+  | "result-error";
 
 const noop = () => {};
 
@@ -66,6 +69,38 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
           txHash="0xabc"
           celoscanHref="https://celoscan.io/tx/0xabc"
           onDismiss={noop}
+        />
+      )}
+
+      {variant === "result-badge" && (
+        <ResultOverlay
+          variant="badge"
+          pieceType="rook"
+          totalStars={12}
+          txHash="0xdef"
+          celoscanHref="https://celoscan.io/tx/0xdef"
+          onDismiss={noop}
+        />
+      )}
+
+      {variant === "result-shop" && (
+        <ResultOverlay
+          variant="shop"
+          itemLabel="20 Coach Credits"
+          itemAsset="/art/shop/coach-pack-20"
+          txHash="0x123"
+          celoscanHref="https://celoscan.io/tx/0x123"
+          onDismiss={noop}
+        />
+      )}
+
+      {variant === "result-error" && (
+        <ResultOverlay
+          variant="error"
+          errorKind="error"
+          errorMessage="Transaction rejected"
+          onDismiss={noop}
+          onRetry={noop}
         />
       )}
     </main>

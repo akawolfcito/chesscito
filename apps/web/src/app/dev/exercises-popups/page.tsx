@@ -10,6 +10,9 @@ const VARIANTS = new Set([
   "piece-complete-final",
   "labyrinth-king-solved",
   "score-saved",
+  "result-badge",
+  "result-shop",
+  "result-error",
 ]);
 
 export default function ExercisesPopupsDevPage({
