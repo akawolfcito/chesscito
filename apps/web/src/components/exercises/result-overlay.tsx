@@ -5,14 +5,18 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { track } from "@/lib/telemetry";
 import { Button } from "@/components/ui/button";
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { AddCashCta } from "@/components/minipay/add-cash-cta";
 import type { TxErrorKind } from "@/lib/errors";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { ShareModal } from "@/components/share/share-modal";
 import { EXERCISES_PER_PIECE } from "@/lib/game/exercises";
 import { shareUrlForBadge, shareUrlForScore } from "@/lib/og/share-urls";
 import { THEME_CONFIG } from "@/lib/theme";
+
+const PIECE_COMPLETE_AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-feliz";
 
 type PieceKey = "rook" | "bishop" | "knight" | "pawn" | "queen" | "king";
 type SuccessVariant = "badge" | "score" | "shop";
@@ -281,6 +285,107 @@ export function ResultOverlay({
     setTimeout(onDismiss, 250);
   }
 
+  // Score variant — on-chain save celebration. Migrated 2026-06-05
+  // from CandyGlassShell to the arena-end-state vocabulary
+  // (VictoryPopupShell + panel-bg1 + arena-result-stats-row +
+  // arena-result-primary-cta). CeloScan receipt chip inlined below
+  // the secondary action since VictoryPopupShell has no meta band.
+  if (variant === "score") {
+    const pieceImg = getBadgeImg(pieceType);
+    const pieceHasOptimized = THEME_CONFIG.hasOptimizedFormats;
+    const starsLabel = totalStars != null ? `${totalStars}/${MAX_STARS}` : null;
+    return (
+      <>
+        <div className={exiting ? "modal-exiting" : undefined}>
+          <VictoryPopupShell
+            onClose={handleDismiss}
+            ariaLabel={title}
+            closeLabel={tResult("cta.dismiss")}
+          >
+            <div className="arena-result-hero-row">
+              <picture className="arena-result-hero-icon">
+                {pieceHasOptimized && (
+                  <>
+                    <source srcSet={pieceImg.replace(".png", ".avif")} type="image/avif" />
+                    <source srcSet={pieceImg.replace(".png", ".webp")} type="image/webp" />
+                  </>
+                )}
+                <img src={pieceImg} alt="" aria-hidden="true" draggable={false} />
+              </picture>
+              <div className="arena-result-hero-text">
+                <h1 className="arena-result-title">{title}</h1>
+              </div>
+            </div>
+
+            {starsLabel && (
+              <div className="arena-result-stats-row arena-result-stats-row--missionpills">
+                <span className="candy-stat-pill">
+                  <span className="candy-stat-pill-icon">
+                    <CandyIcon name="star" className="h-4 w-4" />
+                  </span>
+                  {starsLabel}
+                </span>
+              </div>
+            )}
+
+            <p
+              className="px-2 text-center text-sm leading-snug"
+              style={{
+                color: "rgba(63, 34, 8, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
+            >
+              {subtitle}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setShareOpen(true)}
+              className="arena-result-primary-cta"
+            >
+              {tShare("button")}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDismiss}
+              className="arena-result-secondary-action mx-auto"
+            >
+              {tResult("cta.continue")}
+            </button>
+
+            <div className="mt-1 inline-flex flex-wrap items-center justify-center gap-2 px-2 text-center text-[11px]"
+              style={{ color: "rgba(110, 65, 15, 0.75)" }}
+            >
+              <span>
+                <span className="fantasy-title">chesscito</span>
+                <span className="opacity-70"> · on Celo</span>
+              </span>
+              {txHash && celoscanHref ? (
+                <Link
+                  href={celoscanHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="account-status-pill"
+                  data-tone="celo"
+                >
+                  {tResult("cta.receiptOnCeloscan")}
+                </Link>
+              ) : null}
+            </div>
+          </VictoryPopupShell>
+        </div>
+        <ShareModal
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          cardUrl={shareCardUrl}
+          text={shareText}
+          url={shareCanonicalUrl}
+        />
+      </>
+    );
+  }
+
   return (
     <div
       // pointer-events-auto explicitly defeats Radix's modal-mode body
@@ -379,11 +484,11 @@ export function ResultOverlay({
                 variant={variant}
                 pieceType={pieceType}
                 glowClass={variant === "badge" ? "reward-glow-achievement reward-glow-pulse" : "reward-glow-progress"}
-                size={variant === "score" ? "lg" : "sm"}
+                size="sm"
               />
             )}
 
-            {!isError && variant !== "shop" && totalStars != null ? (
+            {!isError && variant === "badge" && totalStars != null ? (
               <StarsRow totalStars={totalStars} staggered />
             ) : null}
 
@@ -637,101 +742,111 @@ export function PieceCompletePrompt({
   const showArenaSecondary = !nextPiece && !arenaIsPrimary;
   const showCoachHint = nextPiece != null;
 
+  const pieceImg = getBadgeImg(pieceType);
+  const pieceHasOptimized = THEME_CONFIG.hasOptimizedFormats;
+  const starsLabel = `${totalStars}/${MAX_STARS}`;
+
   return (
-    <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
-      role="dialog"
-      aria-modal="true"
-      aria-label={tComplete("title")}
-      onClick={() => handleAction(handleDismiss)}
-    >
-      <div
-        className="relative w-full max-w-xs"
-        style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
-        onClick={(e) => e.stopPropagation()}
+    <div className={exiting ? "modal-exiting" : undefined}>
+      <VictoryPopupShell
+        onClose={() => handleAction(handleDismiss)}
+        ariaLabel={tComplete("title")}
+        closeLabel={tComplete("practiceAgain")}
       >
-        <CandyGlassShell
-          title={tComplete("title")}
-          onClose={() => handleAction(handleDismiss)}
-          closeLabel={
-            nextPiece
-              ? tComplete("nextPiece", { piece: tPiece(nextPiece) })
-              : tComplete("practiceAgain")
-          }
-          cta={
-            /* CTA hierarchy is context-aware: primaryCTA encodes the
-               nextPiece → labyrinth → choose-piece → arena priority
-               cascade computed above. Arena demotes to a tertiary
-               text-link whenever it isn't primary, so it stays a valid
-               escape hatch but never dominates the completion moment
-               for pieces with no follow-up content yet. */
-            <div className="flex flex-col gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleAction(primaryCTA.handler)}
-                className="arena-scaffold-soft-gate-primary w-full"
-              >
-                {primaryCTA.label}
-              </button>
-              {onSubmitScore && (
-                <button
-                  type="button"
-                  onClick={() => handleAction(onSubmitScore)}
-                  className="arena-scaffold-soft-gate-secondary w-full"
-                >
-                  {tComplete("submitScore")}
-                </button>
-              )}
-              {showArenaSecondary && (
-                <button
-                  type="button"
-                  onClick={() => handleAction(onArena)}
-                  className="w-full py-1.5 text-xs font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
-                  style={{ color: "rgba(110, 65, 15, 0.70)" }}
-                >
-                  {tComplete("tryArenaSecondary")}
-                </button>
-              )}
-              {/* Tertiary Coach discovery — only when the primary CTA
-                  is "Start <next piece>" so we don't ship two Arena
-                  hops in the same overlay. */}
-              {showCoachHint && (
+        {/* Hero — piece icon LEFT + title RIGHT (mirrors arena-end-state loss/draw). */}
+        <div className="arena-result-hero-row">
+          <picture className="arena-result-hero-icon">
+            {pieceHasOptimized && (
+              <>
+                <source srcSet={pieceImg.replace(".png", ".avif")} type="image/avif" />
+                <source srcSet={pieceImg.replace(".png", ".webp")} type="image/webp" />
+              </>
+            )}
+            <img src={pieceImg} alt="" aria-hidden="true" draggable={false} />
+          </picture>
+          <div className="arena-result-hero-text">
+            <h1 className="arena-result-title">{tComplete("title")}</h1>
+          </div>
+        </div>
+
+        {/* Stats — single ★ pill mirroring arena candy-stat-pill vocabulary. */}
+        <div className="arena-result-stats-row arena-result-stats-row--missionpills">
+          <span className="candy-stat-pill">
+            <span className="candy-stat-pill-icon">
+              <CandyIcon name="star" className="h-4 w-4" />
+            </span>
+            {starsLabel}
+          </span>
+        </div>
+
+        {/* Body — mastery narrative. */}
+        <p
+          className="px-2 text-center text-sm leading-snug"
+          style={{
+            color: "rgba(63, 34, 8, 0.95)",
+            textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+          }}
+        >
+          {subtitle}
+        </p>
+
+        {/* Primary CTA — green family, mirrors arena-end-state primary. */}
+        <button
+          type="button"
+          onClick={() => handleAction(primaryCTA.handler)}
+          className="arena-result-primary-cta"
+        >
+          {primaryCTA.label}
+        </button>
+
+        {/* Secondary — SAVE cream pill (only when score submission re-surface is wired). */}
+        {onSubmitScore && (
+          <button
+            type="button"
+            onClick={() => handleAction(onSubmitScore)}
+            className="arena-result-secondary-action mx-auto"
+          >
+            {tComplete("submitScore")}
+          </button>
+        )}
+
+        {/* Tertiary — Coach hint with avatar (only when primary == Start next piece). */}
+        {showCoachHint && (
+          <div className="arena-result-coach-section" aria-labelledby="piece-complete-coach-headline">
+            <div className="arena-result-coach-body">
+              <div className="arena-result-coach-text">
                 <button
                   type="button"
                   onClick={() => {
                     track("coach_hint_click", { source: "piece-complete", piece: pieceType });
                     handleAction(onArena);
                   }}
-                  className="w-full py-1.5 text-xs font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
-                  style={{ color: "rgba(110, 65, 15, 0.70)" }}
+                  id="piece-complete-coach-headline"
+                  className="arena-result-back-link"
                 >
                   {tComplete("coachHint")}
                 </button>
-              )}
+              </div>
+              <picture className="arena-result-coach-avatar">
+                <source srcSet={`${PIECE_COMPLETE_AVATAR_BASE}.avif`} type="image/avif" />
+                <source srcSet={`${PIECE_COMPLETE_AVATAR_BASE}.webp`} type="image/webp" />
+                <img src={`${PIECE_COMPLETE_AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} />
+              </picture>
             </div>
-          }
-          meta={
-            <>
-              <span className="fantasy-title">chesscito</span>
-              <span className="opacity-70"> · on Celo</span>
-            </>
-          }
-        >
-          <div className="flex flex-col items-center gap-2 text-center">
-            <SuccessImage variant="badge" pieceType={pieceType} glowClass="reward-glow-progress" size="sm" />
-            <StarsRow totalStars={totalStars} staggered />
-            <p
-              className="text-sm leading-snug"
-              style={{
-                color: "rgba(63, 34, 8, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-              }}
-            >
-              {subtitle}
-            </p>
           </div>
-        </CandyGlassShell>
-      </div>
+        )}
+
+        {/* Arena escape hatch as tertiary text link (no nextPiece, no labyrinth, Arena not primary). */}
+        {showArenaSecondary && (
+          <button
+            type="button"
+            onClick={() => handleAction(onArena)}
+            className="arena-result-back-link mx-auto"
+          >
+            {tComplete("tryArenaSecondary")}
+          </button>
+        )}
+      </VictoryPopupShell>
     </div>
   );
 }
