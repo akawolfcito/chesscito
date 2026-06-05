@@ -154,7 +154,6 @@ export function LabyrinthCompleteOverlay({
           <PrincipalButton
             size="medium"
             onClick={() => handleAction(onRetry)}
-            leadingIcon={<CandyIcon name="refresh" className="h-5 w-5" />}
           >
             {t("retry")}
           </PrincipalButton>
