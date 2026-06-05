@@ -1628,7 +1628,7 @@ export const LEGAL_COPY = {
       },
       {
         heading: "Service Description",
-        body: "Chesscito is an educational pre-chess game experience on the Celo blockchain, accessible via MiniPay. The service provides interactive chess piece movement puzzles with on-chain collectibles.",
+        body: "Chesscito is an educational pre-chess game experience on the Celo blockchain, designed to be used with MiniPay-compatible wallets. The service provides interactive chess piece movement puzzles with on-chain collectibles.",
       },
       {
         heading: "Eligibility",

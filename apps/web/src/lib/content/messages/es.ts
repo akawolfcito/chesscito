@@ -140,7 +140,7 @@ const messages = {
         },
         {
           heading: "Descripción del servicio",
-          body: "Chesscito es una experiencia educativa de pre-ajedrez en la blockchain de Celo, accesible vía MiniPay. El servicio ofrece retos interactivos de movimientos de piezas de ajedrez con coleccionables on-chain.",
+          body: "Chesscito es una experiencia educativa de pre-ajedrez en la blockchain de Celo, diseñada para usarse con wallets compatibles con MiniPay. El servicio ofrece retos interactivos de movimientos de piezas de ajedrez con coleccionables on-chain.",
         },
         {
           heading: "Elegibilidad",
