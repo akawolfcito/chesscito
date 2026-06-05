@@ -164,14 +164,16 @@ official MiniPay recommendation of 90+ but above the red threshold of
 No code change this session — strategy is "submit with a note, escalate
 on reviewer push-back". Mitigation roadmap lives in the perf handoff.
 
-## 7. What still needs the user to act
+## 7. Manual action items — CLOSED 2026-06-05
 
-These cannot be auto-generated and require Wolfcito's hands:
+User confirmed all four resolved at packet close:
 
-1. **Screenshots ≥3 ≤500KB on real MiniPay Android** of `/hub`, `/arena`, `/coach/[gameId]` (and optionally `/exercises`, Account vitrine). DevTools emulation rejected — reviewer needs the real-runtime artifact.
-2. **Short description final approval** (drafts in `docs/audits/2026-06-03-minipay-submission-readiness-audit.md` §6.1, both EN and ES) — `MiniPay game` phrasing intentionally avoided per HARD RULE.
-3. **Confirm `hello@chesscito.com`** routes to a watched inbox (gate of the 48h SLA pledged in §3).
-4. **Send the 5 identity questions** to the MiniPay/Celo group if not already sent — content lives in `docs/design-patterns/minipay-identity-design.md`.
+1. ✅ **Screenshots ≥3 ≤500KB on real MiniPay Android** — captured and held aside for the form submit.
+2. ✅ **Short description final approval** EN+ES (drafts from `docs/audits/2026-06-03-minipay-submission-readiness-audit.md` §6.1 signed off).
+3. ✅ **`hello@chesscito.com` inbox routing** confirmed (gate of the 48h SLA pledged in §3 is live).
+4. ✅ **5 identity questions** delivered to the MiniPay/Celo group (Pattern A+C decision in `docs/design-patterns/minipay-identity-design.md`).
+
+Packet status: **ready to populate when MiniPay forwards the Stage 2 form**. No further packet-side work pending — the only remaining gate is reviewer turnaround time.
 
 ## 8. Cross-refs
 
