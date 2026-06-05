@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
 
 type Props = {
@@ -22,14 +21,15 @@ type Props = {
   onBack: () => void;
 };
 
+const AVATAR_BASE = "/art/new-assets-chesscito/fun/avatar-feliz";
+
 /**
- * LabyrinthCompleteOverlay — the L2 completion ceremony.
+ * LabyrinthCompleteOverlay — L2 completion ceremony.
  *
- * Rewards-first: leads with a celebratory headline + star count,
- * then the move-vs-optimal narrative, then the action row. Retry is
- * the primary CTA so the player can chase a higher star count
- * immediately. "Back to Exercises" returns to the L1 layer without
- * disturbing L1 progress.
+ * 2026-06-05: migrated from CandyGlassShell + emoji trophy to the
+ * arena-end-state vocabulary (VictoryPopupShell + panel-bg1 + stat
+ * pills + arena-result-primary-cta) so it reads as a member of the
+ * same celebration family as VictoryCelebration / arena-end-state-draw.
  */
 export function LabyrinthCompleteOverlay({
   moves,
@@ -58,123 +58,128 @@ export function LabyrinthCompleteOverlay({
   }
 
   const isOptimal = moves <= optimalMoves;
+  const starsLabel = `${stars}/3`;
+  const movesLabel = String(moves);
+  const bestLabel = previousBest != null ? String(previousBest) : String(optimalMoves);
 
   return (
-    <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
-      role="dialog"
-      aria-modal="true"
-      aria-label={t("completeTitle")}
-    >
-      <div
-        className="relative w-full max-w-xs animate-in zoom-in-95 slide-in-from-bottom-4 duration-400"
-        onClick={(e) => e.stopPropagation()}
+    <div className={exiting ? "modal-exiting" : undefined}>
+      <VictoryPopupShell
+        onClose={() => handleAction(onBack)}
+        ariaLabel={t("completeTitle")}
+        role="alert"
+        ariaLive="assertive"
+        closeLabel={t("back")}
       >
-        <CandyGlassShell
-          title={t("completeTitle")}
-          onClose={() => handleAction(onBack)}
-          closeLabel={t("back")}
-          cta={
-            <div className="flex w-full flex-col gap-2.5 animate-in fade-in duration-300 fill-mode-both [animation-delay:600ms]">
-              <Button
-                type="button"
-                variant="game-primary"
-                size="game"
-                onClick={() => handleAction(onRetry)}
-                className="w-full"
-              >
-                <CandyIcon name="refresh" className="inline h-4 w-4 -mt-0.5" />{" "}
-                {t("retry")}
-              </Button>
-              <Button
-                type="button"
-                variant="game-ghost"
-                size="game"
-                onClick={() => handleAction(onBack)}
-                className="w-full"
-              >
-                {t("back")}
-              </Button>
-            </div>
-          }
-        >
-          <div className="flex flex-col items-center gap-3 text-center">
-            {/* Trophy halo — same warm aesthetic as victory celebration */}
-            <div className="relative flex items-center justify-center">
-              <div
-                className="absolute h-24 w-24 rounded-full"
-                style={{
-                  background:
-                    "radial-gradient(circle, rgba(245, 158, 11, 0.32) 0%, rgba(217, 180, 74, 0.14) 50%, transparent 75%)",
-                }}
-              />
-              <CandyIcon name="trophy" className="relative h-16 w-16" />
-            </div>
+        {/* Hero — title centered (arena win-celebration vocabulary). */}
+        <div className="victory-popup-hero-solo">
+          <h1 className="arena-result-title">{t("completeTitle")}</h1>
+        </div>
 
-            {/* Stars row — 3 max, gold filled / muted empty */}
-            <div className="flex items-center gap-1.5">
-              {[0, 1, 2].map((i) => (
-                <CandyIcon
-                  key={i}
-                  name="star"
-                  className="h-7 w-7"
-                  style={{
-                    opacity: i < stars ? 1 : 0.25,
-                    filter: i < stars ? "drop-shadow(0 0 4px rgba(245, 158, 11, 0.55))" : "none",
-                  }}
+        {/* Stats — stars / moves / best (3 candy pills, mirrors arena win). */}
+        <div className="arena-result-stats-row arena-result-stats-row--missionpills">
+          <span className="candy-stat-pill">
+            <span className="candy-stat-pill-icon">
+              <CandyIcon name="star" className="h-4 w-4" />
+            </span>
+            {starsLabel}
+          </span>
+          <span className="candy-stat-pill">
+            <span className="candy-stat-pill-icon">
+              <picture>
+                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                <img
+                  src="/art/redesign/pieces/w-pawn.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="block h-full w-full object-contain"
                 />
-              ))}
+              </picture>
+            </span>
+            {movesLabel}
+          </span>
+          <span className="candy-stat-pill">
+            <span className="candy-stat-pill-icon">
+              <CandyIcon name="trophy" className="h-4 w-4" />
+            </span>
+            {bestLabel}
+          </span>
+        </div>
+
+        {/* Move narrative — Optimal! N moves OR N moves · optimal M. */}
+        <p
+          className="px-2 text-center text-sm font-semibold"
+          style={{
+            color: "rgba(63, 34, 8, 0.95)",
+            textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+          }}
+        >
+          {isOptimal
+            ? t("completeMovesOptimalFormat", { moves })
+            : t("completeMovesFormat", { moves, optimal: optimalMoves })}
+        </p>
+
+        {/* New best celebration pill OR perfect-path kicker. Personal
+            record beats the static perfect-path label when both fire. */}
+        {isNewBest ? (
+          <p
+            className="mx-auto inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-[0.10em]"
+            style={{
+              background: "rgba(245, 158, 11, 0.85)",
+              color: "rgba(63, 34, 8, 0.95)",
+              textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              boxShadow:
+                "0 0 12px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 245, 215, 0.45)",
+            }}
+          >
+            {previousBest != null
+              ? t("newBestFormat", { previous: previousBest, current: moves })
+              : t("firstCompletionFormat", { moves })}
+          </p>
+        ) : isOptimal ? (
+          <p
+            className="text-center text-xs"
+            style={{ color: "rgba(110, 65, 15, 0.75)" }}
+          >
+            {t("perfectPath")}
+          </p>
+        ) : null}
+
+        {/* Coach-section avatar slot — avatar-feliz right, no body
+            text. Provides the same cross-balance as arena win popups. */}
+        <div className="arena-result-coach-section">
+          <div className="arena-result-coach-body">
+            <div className="arena-result-coach-text">
+              {/* Primary CTA lives inside coach-body so the avatar
+                  floats RIGHT in the same row. Mirrors victory-celebration. */}
+              <button
+                type="button"
+                onClick={() => handleAction(onRetry)}
+                className="arena-result-primary-cta arena-result-primary-cta--amber"
+              >
+                <CandyIcon name="refresh" className="inline h-4 w-4" />
+                <span className="arena-result-primary-cta-label">{t("retry")}</span>
+              </button>
             </div>
-
-            {/* Move count narrative */}
-            <p
-              className="text-sm font-semibold animate-in fade-in duration-300 fill-mode-both [animation-delay:400ms]"
-              style={{
-                color: "rgba(63, 34, 8, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-              }}
-            >
-              {isOptimal
-                ? t("completeMovesOptimalFormat", { moves })
-                : t("completeMovesFormat", { moves, optimal: optimalMoves })}
-            </p>
-            {isOptimal && (
-              <p
-                className="text-xs"
-                style={{ color: "rgba(110, 65, 15, 0.75)" }}
-              >
-                {t("perfectPath")}
-              </p>
-            )}
-
-            {/* Personal record badge — celebrates a new best, or shows
-                the historical record so the player has a target. */}
-            {isNewBest ? (
-              <p
-                className="mt-1 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-[0.10em] animate-in fade-in zoom-in-95 duration-300 fill-mode-both [animation-delay:550ms]"
-                style={{
-                  background: "rgba(245, 158, 11, 0.85)",
-                  color: "rgba(63, 34, 8, 0.95)",
-                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                  boxShadow:
-                    "0 0 12px rgba(245, 158, 11, 0.55), inset 0 1px 0 rgba(255, 245, 215, 0.45)",
-                }}
-              >
-                {previousBest != null
-                  ? t("newBestFormat", { previous: previousBest, current: moves })
-                  : t("firstCompletionFormat", { moves })}
-              </p>
-            ) : previousBest != null ? (
-              <p
-                className="mt-1 text-xs"
-                style={{ color: "rgba(110, 65, 15, 0.65)" }}
-              >
-                {t("yourBestFormat", { previous: previousBest })}
-              </p>
-            ) : null}
+            <picture className="arena-result-coach-avatar">
+              <source srcSet={`${AVATAR_BASE}.avif`} type="image/avif" />
+              <source srcSet={`${AVATAR_BASE}.webp`} type="image/webp" />
+              <img src={`${AVATAR_BASE}.png`} alt="" aria-hidden="true" draggable={false} />
+            </picture>
           </div>
-        </CandyGlassShell>
-      </div>
+        </div>
+
+        {/* Secondary — Back to Exercises cream pill. */}
+        <button
+          type="button"
+          onClick={() => handleAction(onBack)}
+          className="arena-result-secondary-action mx-auto"
+        >
+          {t("back")}
+        </button>
+      </VictoryPopupShell>
     </div>
   );
 }
