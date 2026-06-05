@@ -25,6 +25,27 @@ const TITLE_LABEL = {
   loss: "GOOD FIGHT",
 } as const;
 
+/** Per-result hero icon — candy-forest 3D scenes that mirror the
+ *  in-app vocabulary. `loss` reuses the checkmate scene because the
+ *  event IS a checkmate (just from the other side); the title +
+ *  avatar emotion carry the loss framing. */
+const RESULT_ICON = {
+  win: "/art/new-assets-chesscito/games/checkmate-game001.png",
+  draw: "/art/new-assets-chesscito/games/stalemate-game001.png",
+  loss: "/art/new-assets-chesscito/games/checkmate-game001.png",
+} as const;
+
+/** Per-result avatar emotion (see feedback_avatar_emotion_selection).
+ *  Picked by who the surface addresses post-game:
+ *  win → sharer celebrates → feliz
+ *  draw → reflection → pensativo
+ *  loss → loss processing → triste */
+const RESULT_AVATAR = {
+  win: "/art/new-assets-chesscito/fun/avatar-feliz.png",
+  draw: "/art/new-assets-chesscito/fun/avatar-pensativo.png",
+  loss: "/art/new-assets-chesscito/fun/avatar-triste.png",
+} as const;
+
 const SUCCESS_HEADERS = {
   "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
   "CDN-Cache-Control": "public, s-maxage=3600",
@@ -42,7 +63,8 @@ export async function GET(req: Request) {
 
   // PNG (RGBA). WebP rendered empty in Satori on @vercel/og preview
   // runtime; PNGs work after the colormap → RGBA re-encode in adb19ae4.
-  const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  const mascotUrl = new URL(RESULT_AVATAR[result], req.url).toString();
+  const resultIconUrl = new URL(RESULT_ICON[result], req.url).toString();
   const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
   const origin = new URL(req.url).origin;
 
@@ -57,8 +79,12 @@ export async function GET(req: Request) {
         bgUrl={null}
         panelBgUrl={panelBgUrl}
         mascotUrl={mascotUrl}
-        footer="Chesscito \u2022 Arena match"
+        footer={"Chesscito \u2022 Arena match"}
         useCinzel={useCinzel}
+        hideWordmark
+        mascotMode="half-body"
+        mascotScale={0.6}
+        softenPanel
         heroSlot={
           <div
             style={{
@@ -102,6 +128,22 @@ export async function GET(req: Request) {
               {TITLE_LABEL[result]}
             </div>
 
+            {/* Result icon — candy-forest 3D scene (checkmate /
+                stalemate) that mirrors the in-app vocabulary. Acts as
+                the hero emblem when no fen is supplied; shrinks to a
+                small overlay when the board takes the focus. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={resultIconUrl}
+              alt=""
+              width={fen ? 200 : 460}
+              height={fen ? 200 : 460}
+              style={{
+                marginBottom: 22,
+                filter: "drop-shadow(0 10px 22px rgba(120, 65, 5, 0.35))",
+              }}
+            />
+
             {/* Board snapshot — compact but readable */}
             {fen ? (
               <div
@@ -113,7 +155,7 @@ export async function GET(req: Request) {
                 <BoardRender
                   fen={fen}
                   origin={origin}
-                  size={560}
+                  size={380}
                   flipped={flipped}
                 />
               </div>

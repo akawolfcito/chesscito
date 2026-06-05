@@ -46,6 +46,11 @@ export type CardShellProps = {
    *  y ≈ 950 so the character peeks up from below the achievement
    *  cluster) — the in-app avatar pattern used by popups and the Hub. */
   mascotMode?: "circle" | "half-body";
+  /** Multiplier applied to the half-body avatar's natural size
+   *  (default 1.0 → width 560 / height 680). Lower values (e.g. 0.65)
+   *  let the hero composition dominate when the avatar is supporting
+   *  cast rather than the main subject. Ignored for "circle". */
+  mascotScale?: number;
   /** Drops a warm-cream wash on top of the panel asset so the baked-in
    *  green leaf-frame reads as a softer sage tone instead of saturated
    *  grass. Used by achievement cards where the heavy frame was
@@ -74,6 +79,7 @@ export function CardShell({
   useCinzel,
   hideWordmark = false,
   mascotMode = "circle",
+  mascotScale = 1,
   softenPanel = false,
 }: CardShellProps) {
   const fontFamily = useCinzel ? "Cinzel" : "serif";
@@ -195,12 +201,12 @@ export function CardShell({
         <img
           src={mascotUrl}
           alt=""
-          width={560}
-          height={680}
+          width={Math.round(560 * mascotScale)}
+          height={Math.round(680 * mascotScale)}
           style={{
             position: "absolute",
-            right: -100,
-            top: 800,
+            right: Math.round(-100 * mascotScale),
+            top: Math.round(800 + (1 - mascotScale) * 240),
             filter: "drop-shadow(0 12px 22px rgba(120, 65, 5, 0.38))",
           }}
         />
