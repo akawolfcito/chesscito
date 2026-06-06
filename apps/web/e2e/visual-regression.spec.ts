@@ -939,4 +939,51 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
       FIXTURE_OPTS,
     );
   });
+
+  // vr15 — /victory/[id] public challenge landing. The production page
+  // is a server component that fetches from the Celo chain via viem at
+  // request time, so direct VR against the live route is flaky
+  // (network + token-id dependent). These baselines exercise the same
+  // <VictoryLandingCard> shell with static VictoryLandingInfo payloads
+  // for the three difficulty tiers, so the layout has CI regression
+  // coverage without requiring a live token. Backed by the
+  // /dev/victory-landing fixture.
+  test("vr15-victory-landing-easy — Complete in 18 moves", async ({ page }) => {
+    await page.goto("/dev/victory-landing?variant=easy", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr15-victory-landing-easy.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr15-victory-landing-medium — Checkmate in 24 moves", async ({ page }) => {
+    await page.goto("/dev/victory-landing?variant=medium", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr15-victory-landing-medium.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr15-victory-landing-hard — Checkmate in 51 moves", async ({ page }) => {
+    await page.goto("/dev/victory-landing?variant=hard", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr15-victory-landing-hard.png",
+      FIXTURE_OPTS,
+    );
+  });
 });
