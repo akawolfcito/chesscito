@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BADGE_THRESHOLD, EXERCISES, getExerciseCount } from "@/lib/game/exercises";
 import { computeStars, totalStars } from "@/lib/game/scoring";
+import { track } from "@/lib/telemetry";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
 
 /**
@@ -124,8 +125,21 @@ export function useExerciseProgress(piece: PieceId) {
     stars: emptyStars(piece),
   }));
 
+  /** Tracks whether the post-mount loadProgress effect has run yet.
+   *  Sprint 1 commit 6 (Training Economy Alpha 2026-06-05) — gates the
+   *  `training_exercise_started` emission so we don't fire on the SSR
+   *  default state and immediately re-fire when localStorage settles
+   *  to a different exerciseIndex. */
+  const [hydrated, setHydrated] = useState(false);
+
+  /** Last exerciseId we emitted `training_exercise_started` for. The
+   *  useEffect below fires once per unique id transition, so re-renders
+   *  without a slot change emit nothing. */
+  const lastStartedRef = useRef<string | null>(null);
+
   useEffect(() => {
     setProgress(loadProgress(piece));
+    setHydrated(true);
   }, [piece]);
 
   const count = getExerciseCount(piece);
@@ -136,18 +150,86 @@ export function useExerciseProgress(piece: PieceId) {
   const badgeEarned = total >= BADGE_THRESHOLD;
   const isReplay = progress.stars[progress.exerciseIndex] > 0;
 
+  useEffect(() => {
+    if (!hydrated) return;
+    const id = currentExercise.id;
+    if (lastStartedRef.current === id) return;
+    lastStartedRef.current = id;
+    track("training_exercise_started", {
+      piece,
+      exerciseId: id,
+      slotIndex: safeIndex,
+      isReplay,
+    });
+  }, [hydrated, currentExercise.id, piece, safeIndex, isReplay]);
+
   const completeExercise = useCallback(
     (movesUsed: number) => {
       setProgress((prev) => {
         const pieceCount = getExerciseCount(piece);
         const idx = Math.min(Math.max(0, prev.exerciseIndex), pieceCount - 1);
         const exercise = EXERCISES[piece][idx];
-        const stars = computeStars(movesUsed, exercise.optimalMoves);
+        const starsForAttempt = computeStars(movesUsed, exercise.optimalMoves);
         const newStars = [...prev.stars] as PieceProgress["stars"];
-        newStars[prev.exerciseIndex] = Math.max(
-          newStars[prev.exerciseIndex],
-          stars
+        const bestStarsBefore = newStars[idx] ?? 0;
+        const bestStarsAfter = Math.max(
+          bestStarsBefore,
+          starsForAttempt,
         ) as 0 | 1 | 2 | 3;
+        newStars[idx] = bestStarsAfter;
+
+        const prevTotal = totalStars(prev.stars);
+        const newTotal = totalStars(newStars);
+        const delta = newTotal - prevTotal;
+        const wasReplay = bestStarsBefore > 0;
+
+        // Telemetry — fire-and-forget per `track` contract; never blocks
+        // the state update. The order here is the chronological order a
+        // reviewer would expect when reading the event stream.
+        track("training_exercise_completed", {
+          piece,
+          exerciseId: exercise.id,
+          slotIndex: idx,
+          movesUsed,
+          optimalMoves: exercise.optimalMoves,
+          starsEarned: starsForAttempt,
+          isReplay: wasReplay,
+          bestStarsBefore,
+          bestStarsAfter,
+        });
+
+        if (delta > 0) {
+          track("training_stars_earned", {
+            piece,
+            exerciseId: exercise.id,
+            delta,
+            newPieceTotal: newTotal,
+          });
+        }
+
+        if (prevTotal < BADGE_THRESHOLD && newTotal >= BADGE_THRESHOLD) {
+          const exercisesCompleted = newStars.filter((s) => s > 0).length;
+          track("training_piece_badge_threshold_reached", {
+            piece,
+            totalStars: newTotal,
+            exercisesCompleted,
+          });
+        }
+
+        // Senda completion: every slot has ≥1★ AND at least one was 0
+        // before this update. The second clause is what prevents the
+        // event from re-firing on every replay after the senda already
+        // closed.
+        const sendaCompletedNow =
+          newStars.every((s) => s > 0) && prev.stars.some((s) => s === 0);
+        if (sendaCompletedNow) {
+          track("training_senda_completed", {
+            piece,
+            totalStars: newTotal,
+            exercisesCompleted: newStars.length,
+            exerciseCount: pieceCount,
+          });
+        }
 
         const next: PieceProgress = { ...prev, stars: newStars };
         saveProgress(next);
