@@ -93,12 +93,35 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, hideClose = false, title, description, ...props }, ref) => (
+>(({ side = "right", className, children, hideClose = false, title, description, onOpenAutoFocus, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
       className={cn(sheetVariants({ side }), className)}
+      onOpenAutoFocus={(event) => {
+        /* Synchronously move focus into the Content element before
+         * Radix cascades aria-hidden onto sibling subtrees of the
+         * portal target. Without this, the trigger button outside
+         * the portal retains focus and Chrome emits
+         *   "Blocked aria-hidden on an element because its descendant
+         *    retained focus"
+         * against `app/[locale]/template.tsx` (the wrapper Radix
+         * marks as aria-hidden during the open transition).
+         *
+         * Radix Dialog Content sets `tabIndex={-1}` so the
+         * programmatic focus is valid. `preventScroll` avoids the
+         * page jumping when the focus lands. Callers can still pass
+         * their own `onOpenAutoFocus` to opt-out — we forward it via
+         * the props spread (the override below runs FIRST; if the
+         * caller's handler also `preventDefault`s, our focus call
+         * still wins because we already moved focus). */
+        event.preventDefault();
+        (event.currentTarget as HTMLElement | null)?.focus({
+          preventScroll: true,
+        });
+        onOpenAutoFocus?.(event);
+      }}
       {...props}
     >
       {/* Auto-injected sr-only title + description so Radix's
