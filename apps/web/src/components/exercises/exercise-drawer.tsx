@@ -147,9 +147,18 @@ export function ExerciseDrawer({
         hideClose
         title={t("title")}
         description={tPiece(piece)}
-        className="mission-shell sheet-bg-hub rounded-t-3xl border-0 pb-[5rem]"
+        /* flex flex-col + max-h-[90dvh] + min-h-0 on the list:
+         * Sprint 1 commit 7 (Training Economy Alpha 2026-06-05) — King
+         * grew from 5 to 9 exercises and overflowed the sheet. Without
+         * a height bound the SheetContent grew past viewport top and
+         * the close-control header rendered offscreen. Bound the sheet
+         * at 90dvh, lay out as flex column with header + progress bar
+         * shrink-0 so only the middle list scrolls. `min-h-0` on the
+         * list is the canonical flex-overflow trick — children of
+         * flexboxes default to min-height: auto which inhibits overflow. */
+        className="mission-shell sheet-bg-hub flex max-h-[90dvh] flex-col rounded-t-3xl border-0 pb-[5rem]"
       >
-        <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
+        <div className="-mx-6 -mt-6 shrink-0 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src={PIECE_IMAGES[piece]} />}
@@ -159,7 +168,7 @@ export function ExerciseDrawer({
           />
         </div>
 
-        <div className="mt-4 space-y-2">
+        <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
           {exercises.map((exercise, index) => {
             const isActive = index === activeIndex;
             const isDone = stars[index] > 0;
@@ -249,8 +258,9 @@ export function ExerciseDrawer({
           })}
         </div>
 
-        {/* Progress summary */}
-        <div className="mt-4 space-y-1.5">
+        {/* Progress summary — shrink-0 keeps it anchored at the bottom of
+         *  the sheet next to the dock, even when the list scrolls. */}
+        <div className="mt-4 shrink-0 space-y-1.5">
           <div
             className="relative h-2 overflow-hidden rounded-full"
             style={{ background: "rgba(110, 65, 15, 0.18)" }}
