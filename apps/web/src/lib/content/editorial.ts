@@ -1069,6 +1069,10 @@ export const EXERCISE_DESCRIPTIONS: Record<string, string> = {
   "king-3": "Edge walk",
   "king-4": "Capture step",
   "king-5": "Corner shelter",
+  "king-6": "Long diagonal march",
+  "king-7": "Sidestep the obstacle",
+  "king-9": "Antidiagonal march",
+  "king-10": "Wall of obstacles",
 };
 
 export const PRACTICE_COPY = {

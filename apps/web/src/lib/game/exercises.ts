@@ -91,6 +91,57 @@ const KING_EXERCISES: Exercise[] = [
   { id: "king-4", startPos: pos(4, 0), targetPos: pos(3, 1), optimalMoves: 1, isCapture: true },
   // 5. Reach the shelter — three NE diagonal steps from e5 to h8 corner.
   { id: "king-5", startPos: pos(4, 4), targetPos: pos(7, 7), optimalMoves: 3 },
+
+  /* ── Post-badge progression (Sprint 1 commit 5, 2026-06-05) ─────────
+   * king-6..king-10 extienden la senda más allá del threshold 10★. El
+   * badge claim se mantiene en 10★ (alcanzable con los 4 primeros 3★);
+   * estos ejercicios son práctica avanzada para usuarios que ya
+   * reclamaron y quieren completar el 100% antes del Daily Tactic
+   * evolutivo (Sprint 2). king-8 queda parqueado hasta confirmar el
+   * modelo captureTargets vs obstacles — ver docs/product/chesscito-
+   * training-economy-alpha-decisions-2026-06-05.md §10.3. */
+
+  // 6. Diagonal noroeste completa: h8 → a1, 7 movimientos.
+  //    Endurance — el rey atraviesa la diagonal larga sin obstáculos.
+  //    Refuerza que cualquier esquina es alcanzable en 7 pasos máximo
+  //    desde otra esquina. BFS-verified.
+  { id: "king-6", startPos: pos(7, 7), targetPos: pos(0, 0), optimalMoves: 7 },
+
+  // 7. Detour alrededor de obstáculo lateral: e4 → e8 con obstacle e6.
+  //    Optimal 4 (chebyshev = 4 sin obstacle; el obstacle no agrega
+  //    distancia neta, solo fuerza un cuadro lateral). Path típico:
+  //    e4 → f5 → f6 → f7 → e8. BFS-verified.
+  {
+    id: "king-7",
+    startPos: pos(4, 3),
+    targetPos: pos(4, 7),
+    obstacles: [pos(4, 5)],
+    optimalMoves: 4,
+  },
+
+  // 8. PARKED — pendiente de re-spec (captureTargets vs obstacles).
+  //    Cuando se apruebe, se insertará aquí como king-8 mantiendo el
+  //    orden de IDs. EXERCISES.king tiene length 9 mientras tanto.
+
+  // 9. Antidiagonal completa: a8 → h1, 7 movimientos.
+  //    Mirror de king-6 — refuerza control de la diagonal SW desde NW.
+  //    Sin obstáculos. Pedagogía: cada esquina ↔ esquina en 7 pasos,
+  //    independiente de la dirección. BFS-verified.
+  { id: "king-9", startPos: pos(0, 7), targetPos: pos(7, 0), optimalMoves: 7 },
+
+  // 10. Muro de obstáculos hacia base rank: e4 → e1 con muro
+  //     {e3, e2, d2, f2}. Optimal 4 — los 4 obstacles bloquean los 3
+  //     vecinos del target en rank 1 (d2, e2, f2) más e3 directamente
+  //     sobre la línea SOUTH. Forza detour completo via d3 → c2 → d1.
+  //     Path típico: e4 → d3 → c2 → d1 → e1. Síntesis de king-7 (detour)
+  //     + planning de varios cuadros. BFS-verified.
+  {
+    id: "king-10",
+    startPos: pos(4, 3),
+    targetPos: pos(4, 0),
+    obstacles: [pos(4, 2), pos(4, 1), pos(3, 1), pos(5, 1)],
+    optimalMoves: 4,
+  },
 ];
 
 /** Pieces with exercises defined and playable */

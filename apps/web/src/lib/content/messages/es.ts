@@ -1694,6 +1694,10 @@ const messages = {
     "king-3": "Camino al borde",
     "king-4": "Captura corta",
     "king-5": "Refugio en esquina",
+    "king-6": "Marcha por la diagonal larga",
+    "king-7": "Esquiva el obstáculo",
+    "king-9": "Marcha por la antidiagonal",
+    "king-10": "Muro de obstáculos",
   },
   HUB_V2_DOCK_COPY: {
     playLabel: "ARENA",
