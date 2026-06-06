@@ -10,7 +10,7 @@ import {
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
-import { BADGE_THRESHOLD, EXERCISES_PER_PIECE } from "@/lib/game/exercises";
+import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import { PIECE_IMAGES } from "@/lib/content/editorial";
 
 type ExerciseDrawerProps = {
@@ -66,7 +66,7 @@ export function ExerciseDrawer({
   const descriptions = useTranslations("EXERCISE_DESCRIPTIONS");
   const maxStars = exercises.length * 3;
   const lastCompleted = stars.reduce((acc, s, i) => (s > 0 ? i : acc), -1);
-  const maxAllowed = Math.min(lastCompleted + 1, EXERCISES_PER_PIECE - 1);
+  const maxAllowed = Math.min(lastCompleted + 1, exercises.length - 1);
 
   function handleSelect(index: number) {
     if (index > maxAllowed) return;

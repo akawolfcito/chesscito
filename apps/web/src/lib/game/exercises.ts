@@ -99,6 +99,31 @@ export const EXERCISES: Record<PieceId, Exercise[]> = {
 };
 
 export const BADGE_THRESHOLD = 10; // de 15 estrellas posibles
+
+/**
+ * Returns the current pool count for a piece. Per-piece dynamic
+ * replacement for the legacy `EXERCISES_PER_PIECE` constant — needed
+ * when piece pools diverge from the original 5 (e.g., King senda 5→10
+ * planned for Sprint 2-3 of Training Economy Alpha 2026-06-05).
+ *
+ * Today every piece returns 5 so this is behavior-identical to the
+ * deprecated constant. Callsites migrate to `getExerciseCount(piece)`
+ * before any pool grows; once all consumers migrate, the deprecated
+ * export below is removed.
+ */
+export function getExerciseCount(piece: PieceId): number {
+  return EXERCISES[piece].length;
+}
+
+/**
+ * @deprecated Use {@link getExerciseCount} for per-piece dynamic count.
+ *
+ * Kept during Sprint 1 (2026-06-05) for callsites not yet migrated —
+ * result-overlay.tsx still imports it for its module-level `MAX_STARS`
+ * and the `StarsRow` component. Migration deferred to Sprint 3 when
+ * StarsRow takes a `piece` prop. Until then this constant returns 5
+ * to keep visual parity with current piece pools.
+ */
 export const EXERCISES_PER_PIECE = 5;
 
 /* ── L2 Labyrinths (POC) ──────────────────────────────────────────
