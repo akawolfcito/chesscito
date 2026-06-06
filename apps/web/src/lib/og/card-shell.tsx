@@ -44,8 +44,11 @@ export type CardShellProps = {
    *  circular peek — the original wolf treatment. "half-body" anchors
    *  a full-body avatar in the lower-right of the card (top edge at
    *  y ≈ 950 so the character peeks up from below the achievement
-   *  cluster) — the in-app avatar pattern used by popups and the Hub. */
-  mascotMode?: "circle" | "half-body";
+   *  cluster) — the in-app avatar pattern used by popups and the Hub.
+   *  "none" skips the shell mascot entirely — used by cards that
+   *  embed an avatar inside their own heroSlot composition (e.g. the
+   *  victory share card mirrors the in-app coach-section avatar). */
+  mascotMode?: "circle" | "half-body" | "none";
   /** Multiplier applied to the half-body avatar's natural size
    *  (default 1.0 → width 560 / height 680). Lower values (e.g. 0.65)
    *  let the hero composition dominate when the avatar is supporting
@@ -191,7 +194,7 @@ export function CardShell({
           avatar (legacy wolf treatment). "half-body" anchors a wider
           frame at the same corner and clips the bottom half so only
           head + torso show — the in-app avatar pattern. */}
-      {mascotMode === "half-body" ? (
+      {mascotMode === "none" ? null : mascotMode === "half-body" ? (
         // Full-body avatar peek anchored from the top so the character
         // rises up from below the achievement cluster. Natural aspect
         // (avatar PNG is 1012x1228 ≈ 0.82). Sized so feet stay inside
