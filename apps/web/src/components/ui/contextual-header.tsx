@@ -142,7 +142,7 @@ const MAX_TITLE = 22;
 const MAX_SUBTITLE = 32;
 const MAX_TAB_LABEL = 16;
 const MAX_BACK_LABEL = 16;
-const MAX_TRIGGER_WIDTH_PX = 44;
+const MAX_TRIGGER_WIDTH_PX = 128;
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -226,9 +226,12 @@ function checkFragmentEscape(element: React.ReactElement | undefined): void {
 }
 
 /**
- * Dev-mode soft cap on the trailing trigger's rendered width. Z2's
- * trailing slot is meant for one ≤44×44 trigger; anything wider is a
- * code smell (a sheet, a multi-control row, a chip with a long label).
+ * Dev-mode soft cap on the trailing trigger's rendered width. The cap
+ * is sized for the canonical HUD chip family (`candy-tray-pill
+ * hub-hud-pill`, ~86px with icon + short label) plus headroom. Anything
+ * beyond is a code smell: a sheet header, a multi-control row, a chip
+ * with a full sentence, or a trigger expanding past 1/3 of the
+ * 390px-wide envelope.
  *
  * Intentionally registered without a dependency array so it re-measures
  * on every render — CSS drift on a previously-OK trigger should still

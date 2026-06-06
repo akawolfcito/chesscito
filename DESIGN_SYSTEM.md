@@ -366,7 +366,7 @@ All wrapped in `process.env.NODE_ENV !== "production"`:
 - `TabOption.label.length > 16` → warn.
 - Duplicate `TabOption.key` → warn (last-wins).
 - `back.label.length > 16` → warn.
-- Trigger DOM width > 44px (measured via `getBoundingClientRect`) → warn.
+- Trigger DOM width > 128px (measured via `getBoundingClientRect`) → warn. (Sized for the canonical HUD chip family `candy-tray-pill hub-hud-pill` at ~86px plus headroom; bumped from 44px on 2026-06-05.)
 - Multi-child fragment in `trailingControl` (`React.Children.count > 1`) → warn.
 
 #### What `<ContextualHeader />` does NOT do

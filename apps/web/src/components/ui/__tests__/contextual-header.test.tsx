@@ -560,7 +560,7 @@ describe("compile-time contracts (documented)", () => {
     // but trigger a dev-mode console.warn at render. See the "warns when
     // trailingControl is a multi-child fragment" test above.
     //
-    // Wide trigger elements (>44px) compile, but trigger a warn after
+    // Wide trigger elements (>128px) compile, but trigger a warn after
     // layout measurement — not asserted here because jsdom does not
     // compute layout.
     expect(true).toBe(true);

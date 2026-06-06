@@ -148,7 +148,7 @@ export type ModeTabsProp = {
 - `subtitle.length > 32` → warn.
 - Any `TabOption.label.length > 16` → warn.
 - Duplicate `TabOption.key` values → warn (last-wins is the documented behavior).
-- `trailingControl`'s rendered DOM width > 44px → warn.
+- `trailingControl`'s rendered DOM width > 128px → warn. (Sized for the canonical HUD chip family `candy-tray-pill hub-hud-pill` at ~86px plus headroom. Bumped from 44px on 2026-06-05 — the original cap assumed a single 44×44 icon trigger, but chips with icon + short label are the canonical pattern.)
 - `trailingControl.type === Fragment` AND `React.Children.count(props.children) > 1` → warn (multi-child fragment escape hatch).
 
 ---
@@ -383,7 +383,7 @@ The primitive is "done" when **all** of the following hold:
 | **Caller bypasses the primitive** for "just this one screen" | Medium | Medium | Add ESLint rule (or grep CI check) that flags raw `<header>` and `<div className="...mission-shell-header...">` patterns inside `apps/web/src/app/**/page.tsx`. Discourage drift via review checklist. |
 | ~~Sticky behavior fights iOS rubber-band scroll~~ | — | — | **No longer applicable in v1.** `sticky` deferred to a future spec; v1 only supports `"scroll"`. See §9. |
 | **Z2 strip + Z1 strip together exceed 100dvh - dock - board** on small viewports (Pixel 4 = 854px) | Low | Medium | Both strips have hard height caps (40px Z1, 64px Z2 max). Combined ceiling is 104px; minus 72px dock = 932px / 200px header overhead leaves >600px for board even on 800px-tall devices. Visual QA at 360×640 confirms. |
-| **`trailingControl` slot accepts unintended children** (e.g. someone passes a `<Button>` with text + icon) | Low (down from Medium) | Low | v1 narrows to `ReactElement` (single element only — no fragments, no arrays). Dev-mode warning when rendered child width >44px. |
+| **`trailingControl` slot accepts unintended children** (e.g. someone passes a `<Button>` with text + icon) | Low (down from Medium) | Low | v1 narrows to `ReactElement` (single element only — no fragments, no arrays). Dev-mode warning when rendered child width >128px (chips with icon + short label are canonical at ~86px; warning bumped from 44px on 2026-06-05). |
 | **Reducing Z2 to a primitive ossifies the layout** before we know all the cases | Low | Medium | Spec is intentionally narrow — 4 variants, no animations, no scroll behaviors. Any pressure to expand goes through the variant-explosion mitigation above. |
 | **Migration churn** — moving every screen to the primitive is a 5+ commit PR | High | Low (mechanical) | Spec scopes implementation to play-hub canary only. Other screens migrate one-per-commit in follow-up PRs, never as a bulk drop-in replacement. |
 
@@ -465,7 +465,7 @@ The discriminated union enforces these at type-check time. Until the project ado
   - Missing `title` on `variant="title"` / `"title-control"` / `"back-control"`.
 - **NOT compile errors** (verified runtime warnings instead):
   - `trailingControl={<></>}` (fragment, even multi-child) — passes type check; runtime warning fires when `React.Children.count(fragment.props.children) > 1`.
-  - `trailingControl={<button>Submit</button>}` with width > 44px — passes type check; runtime warning fires after layout measurement.
+  - `trailingControl={<button>Submit</button>}` with width > 128px — passes type check; runtime warning fires after layout measurement.
   - Long `title` / `subtitle` / tab labels — pass type check; runtime warning fires.
 
 ### Integration / E2E (Playwright)
