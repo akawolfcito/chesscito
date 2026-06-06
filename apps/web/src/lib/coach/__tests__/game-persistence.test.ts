@@ -468,4 +468,119 @@ describe("getGameRecord", () => {
 
     await expect(getGameRecord(redis as never, WALLET, GAME_ID)).rejects.toThrow("conn refused");
   });
+
+  it("skips the analysis merge entirely when the record already carries an inline analysis", async () => {
+    // Defensive branch (game-persistence.ts:277): older write paths that
+    // ever wrote an inline analysis must remain idempotent. The helper
+    // must NOT clobber an existing `.analysis` with a stale cache read.
+    const inlineAnalysis = {
+      gameId: GAME_ID,
+      provider: "inline",
+      analysisVersion: "v0",
+      createdAt: 1600000000,
+      locale: "en",
+      response: { kind: "full", summary: "inline", mistakes: [], lessons: [], praise: [] },
+    };
+    const record = { gameId: GAME_ID, result: "win", analysis: inlineAnalysis } as never;
+    const cachedAnalysis = {
+      gameId: GAME_ID,
+      provider: "server",
+      analysisVersion: "v1",
+      createdAt: 1700000000,
+      response: { kind: "full", summary: "cached", mistakes: [], lessons: [], praise: [] },
+    };
+    const redis = makeKeyAwareRedis({ game: record, analysisEn: cachedAnalysis });
+
+    const out = await getGameRecord(redis as never, WALLET, GAME_ID, { locale: "en" });
+
+    expect(out!.analysis).toBe(inlineAnalysis);
+    // Only the game-record read fired; the cache keys were never touched.
+    expect(redis.get).toHaveBeenCalledTimes(1);
+  });
+
+  it("hits the legacy locale-agnostic cache key when no per-locale EN record exists", async () => {
+    // Records written before the 2026-05-24 per-locale migration live at
+    // `coach:analysis:<wallet>:<gameId>` (no locale segment). The fallback
+    // chain treats those as EN-by-convention.
+    const record = { gameId: GAME_ID, result: "win" } as never;
+    const legacyAnalysis = {
+      gameId: GAME_ID,
+      provider: "server",
+      analysisVersion: "v1",
+      createdAt: 1650000000,
+      response: { kind: "full", summary: "legacy", mistakes: [], lessons: [], praise: [] },
+    };
+    const redis = makeKeyAwareRedis({ game: record, analysisLegacy: legacyAnalysis });
+
+    const out = await getGameRecord(redis as never, WALLET, GAME_ID, { locale: "en" });
+
+    expect(out!.analysis).toMatchObject({ provider: "server", locale: "en" });
+  });
+
+  it("falls back to EN when ES is requested and only EN is cached (symmetric)", async () => {
+    // Mirror of the existing "EN requested, only ES cached" test. The
+    // helper must drop the requested locale before stranding the user
+    // on an empty viewer.
+    const record = { gameId: GAME_ID, result: "win" } as never;
+    const enAnalysis = {
+      gameId: GAME_ID,
+      provider: "server",
+      analysisVersion: "v1",
+      createdAt: 1700000000,
+      response: { kind: "quick", summary: "ok", tips: [] },
+    };
+    const redis = makeKeyAwareRedis({ game: record, analysisEn: enAnalysis });
+
+    const out = await getGameRecord(redis as never, WALLET, GAME_ID, { locale: "es" });
+
+    expect(out!.analysis?.locale).toBe("en");
+  });
+
+  it("prefers the requested locale when both EN and ES analyses are cached", async () => {
+    // Cache-priority contract: the requested locale is the primary read.
+    // Returning the other locale when the primary exists would silently
+    // mis-render the Coach viewer in the wrong language.
+    const record = { gameId: GAME_ID, result: "win" } as never;
+    const enAnalysis = {
+      gameId: GAME_ID,
+      provider: "server",
+      analysisVersion: "v1",
+      createdAt: 1700000000,
+      response: { kind: "full", summary: "english", mistakes: [], lessons: [], praise: [] },
+    };
+    const esAnalysis = {
+      gameId: GAME_ID,
+      provider: "server",
+      analysisVersion: "v1",
+      createdAt: 1700000000,
+      response: { kind: "full", summary: "spanish", mistakes: [], lessons: [], praise: [] },
+      locale: "es",
+    };
+    const redis = makeKeyAwareRedis({
+      game: record,
+      analysisEn: enAnalysis,
+      analysisEs: esAnalysis,
+    });
+
+    const out = await getGameRecord(redis as never, WALLET, GAME_ID, { locale: "es" });
+
+    expect(out!.analysis?.locale).toBe("es");
+    expect(out!.analysis?.response).toMatchObject({ summary: "spanish" });
+  });
+
+  it("returns the record without an analysis field when no cache hit lands", async () => {
+    // Neither locale nor the legacy key resolve — the record is still
+    // surfaced (cold load of a never-analyzed game must render), the
+    // caller is responsible for showing the "not yet analyzed" empty
+    // state. Crucially, the helper must NOT inject a falsy `.analysis`
+    // that confuses downstream "has analysis" checks.
+    const record = { gameId: GAME_ID, result: "win" } as never;
+    const redis = makeKeyAwareRedis({ game: record });
+
+    const out = await getGameRecord(redis as never, WALLET, GAME_ID, { locale: "en" });
+
+    expect(out).not.toBeNull();
+    expect(out).toBe(record);
+    expect(out!.analysis).toBeUndefined();
+  });
 });
