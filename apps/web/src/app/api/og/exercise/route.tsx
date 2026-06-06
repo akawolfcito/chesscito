@@ -151,7 +151,7 @@ export async function GET(req: Request) {
         useCinzel={useCinzel}
         hideWordmark={type !== "daily"}
         mascotMode={type !== "daily" ? "half-body" : "circle"}
-        softenPanel={type !== "daily"}
+        softenPanel
         heroSlot={
           type === "daily" && dailyFen ? (
             <div
@@ -190,7 +190,7 @@ export async function GET(req: Request) {
                 <BoardRender
                   fen={dailyFen}
                   origin={new URL(req.url).origin}
-                  size={560}
+                  size={680}
                   overlays={dailyOverlays}
                 />
               </div>
