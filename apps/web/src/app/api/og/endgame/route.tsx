@@ -67,7 +67,11 @@ export async function GET(req: Request) {
 
   // PNG (RGBA). WebP rendered empty in Satori; PNGs work after the
   // colormap → RGBA re-encode in adb19ae4.
-  const mascotUrl = new URL("/art/favicon-wolf.png", req.url).toString();
+  // avatar-confiado (smirk challenger) addresses the visitor being
+  // challenged to solve the endgame — see feedback_avatar_emotion_selection.
+  // Same emotion as the invite + victory share cards (visitor-facing
+  // challenge surfaces).
+  const mascotUrl = new URL("/art/new-assets-chesscito/fun/avatar-confiado.png", req.url).toString();
   const panelBgUrl = new URL("/art/screen-mission/panel-mision-icon.png", req.url).toString();
   const cinzelData = await loadCinzelFont(req.url);
   const useCinzel = Boolean(cinzelData);
@@ -117,7 +121,7 @@ export async function GET(req: Request) {
         <BoardRender
           fen={fen}
           origin={new URL(req.url).origin}
-          size={560}
+          size={640}
         />
       </div>
 
@@ -202,9 +206,12 @@ export async function GET(req: Request) {
         bgUrl={null}
         panelBgUrl={panelBgUrl}
         mascotUrl={mascotUrl}
-        chip="K+R vs K"
-        footer="Chesscito \u2022 Special Training"
+        footer={"Chesscito \u2022 Special Training"}
         useCinzel={useCinzel}
+        hideWordmark
+        mascotMode="half-body"
+        mascotScale={0.55}
+        softenPanel
         heroSlot={heroSlot}
       />
     ),
