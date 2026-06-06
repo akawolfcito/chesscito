@@ -42,8 +42,15 @@ const KNIGHT_EXERCISES: Exercise[] = [
   { id: "knight-3", startPos: pos(0, 0), targetPos: pos(2, 1), optimalMoves: 1 },
   // 4. Dos saltos — no alcanzable en 1
   { id: "knight-4", startPos: pos(0, 0), targetPos: pos(3, 1), optimalMoves: 2 },
-  // 5. Trayecto desde esquina a posición lejana
-  { id: "knight-5", startPos: pos(0, 0), targetPos: pos(4, 4), optimalMoves: 3 },
+  // 5. Trayecto desde esquina al centro estratégico (a1 → e4).
+  //    Path óptimo (3 hops): a1 → b3 → d2 → e4. BFS-verified 2026-06-05
+  //    (Sprint 1 commit 3) — corrige drift previo donde el target era e5
+  //    declarado como 3 movimientos pero el mínimo real de caballo a1→e5
+  //    es 4. Ajuste de target (Opción B) preserva la promesa pedagógica
+  //    "3★ alcanzable en 3 movidas" y mantiene la narrativa "esquina al
+  //    centro" — e4 es el square central canónico en teoría de ajedrez,
+  //    más limpio que e5 para el lesson final de caballo.
+  { id: "knight-5", startPos: pos(0, 0), targetPos: pos(4, 3), optimalMoves: 3 },
 ];
 
 const PAWN_EXERCISES: Exercise[] = [
