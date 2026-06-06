@@ -69,8 +69,16 @@ export type LabyrinthProgress = {
 
 export type PieceProgress = {
   piece: PieceId;
-  exerciseIndex: number;     // índice del ejercicio activo (0–4)
-  stars: [number, number, number, number, number]; // 0–3 por ejercicio
+  /** Índice del ejercicio activo. Rango válido: 0 .. getExerciseCount(piece) - 1.
+   *  Per-piece dinámico desde Sprint 1 commit 1 (Training Economy Alpha
+   *  2026-06-05) cuando piece pools dejaron de ser fijos en 5. */
+  exerciseIndex: number;
+  /** Estrellas (0..3) por ejercicio. La longitud del array matchea
+   *  getExerciseCount(piece) — relajado de tuple fijo de 5 a number[]
+   *  en Sprint 1 commit 4 para soportar piece pools de tamaño variable.
+   *  loadProgress migra legacy stars[5] a la longitud actual padding
+   *  con ceros al final, preservando todos los valores existentes. */
+  stars: number[];
 };
 
 /* ── Arena (full chess) types ── */
