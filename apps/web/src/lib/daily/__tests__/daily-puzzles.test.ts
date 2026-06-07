@@ -5,6 +5,7 @@ import { getBishopMoves } from "@/lib/game/rules/bishop";
 import { getKnightMoves } from "@/lib/game/rules/knight";
 import { getPawnMoves } from "@/lib/game/rules/pawn";
 import { getQueenMoves } from "@/lib/game/rules/queen";
+import { getKingMoves } from "@/lib/game/rules/king";
 import { getValidTargets } from "@/lib/game/board";
 import {
   DAILY_TACTIC_PUZZLES,
@@ -16,7 +17,7 @@ import {
 const VALID_DIFFICULTIES: PuzzleDifficulty[] = ["easy", "medium", "hard"];
 
 const pos = (file: number, rank: number): BoardPosition => ({ file, rank });
-const PIECE_ORDER: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen"];
+const PIECE_ORDER: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
 
 function posKey(p: BoardPosition): string {
   return `${p.file},${p.rank}`;
@@ -113,8 +114,8 @@ function bfsPawnDepth(
 /* ── Tests ─────────────────────────────────────────────── */
 
 describe("daily-tactic-puzzles — seed integrity", () => {
-  it("has exactly 14 puzzles", () => {
-    expect(DAILY_TACTIC_PUZZLES).toHaveLength(14);
+  it("has exactly 30 puzzles", () => {
+    expect(DAILY_TACTIC_PUZZLES).toHaveLength(30);
   });
 
   it("all IDs are unique", () => {
@@ -122,12 +123,29 @@ describe("daily-tactic-puzzles — seed integrity", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("piece distribution: rook=3, bishop=1, knight=3, pawn=4, queen=3", () => {
+  it("piece distribution: rook=5, bishop=4, knight=5, pawn=5, queen=5, king=6 (Sprint 2)", () => {
     const counts: Record<string, number> = {};
     for (const p of DAILY_TACTIC_PUZZLES) {
       counts[p.piece] = (counts[p.piece] ?? 0) + 1;
     }
-    expect(counts).toEqual({ rook: 3, bishop: 1, knight: 3, pawn: 4, queen: 3 });
+    expect(counts).toEqual({
+      rook: 5,
+      bishop: 4,
+      knight: 5,
+      pawn: 5,
+      queen: 5,
+      king: 6,
+    });
+  });
+
+  it("every piece has at least 4 Daily Tactic puzzles (Sprint 2 floor)", () => {
+    const counts: Record<string, number> = {};
+    for (const p of DAILY_TACTIC_PUZZLES) {
+      counts[p.piece] = (counts[p.piece] ?? 0) + 1;
+    }
+    for (const piece of PIECE_ORDER) {
+      expect(counts[piece] ?? 0, `${piece} has fewer than 4 puzzles`).toBeGreaterThanOrEqual(4);
+    }
   });
 
   it("start and target are distinct for every puzzle", () => {
@@ -178,6 +196,15 @@ describe("daily-tactic-puzzles — seed integrity", () => {
             exercise.startPos, exercise.targetPos, blockers, getQueenMoves, exercise.optimalMoves,
           );
           break;
+        case "king":
+          // King move generator shares the same (pos, blockers) signature
+          // as sliding pieces, so bfsSlidingDepth handles it directly.
+          // Added in Sprint 2 commit C (2026-06-06) for the King daily
+          // puzzles dt-king-1..6.
+          found = bfsSlidingDepth(
+            exercise.startPos, exercise.targetPos, blockers, getKingMoves, exercise.optimalMoves,
+          );
+          break;
         default:
           found = null;
       }
@@ -225,6 +252,11 @@ describe("daily-tactic-puzzles — seed integrity", () => {
         case "queen":
           found = bfsSlidingDepth(
             exercise.startPos, exercise.targetPos, blockers, getQueenMoves, subOptimal,
+          );
+          break;
+        case "king":
+          found = bfsSlidingDepth(
+            exercise.startPos, exercise.targetPos, blockers, getKingMoves, subOptimal,
           );
           break;
         default:
@@ -281,7 +313,7 @@ describe("daily-tactic-puzzles — difficulty", () => {
     expect(getPuzzleDifficulty({ difficulty: undefined })).toBe("easy");
   });
 
-  it("all 14 puzzles have a valid difficulty after Sprint 2 commit B", () => {
+  it("every puzzle resolves to a valid difficulty", () => {
     for (const puzzle of DAILY_TACTIC_PUZZLES) {
       const d = getPuzzleDifficulty(puzzle);
       expect(
@@ -291,7 +323,7 @@ describe("daily-tactic-puzzles — difficulty", () => {
     }
   });
 
-  it("all 14 puzzles declare difficulty explicitly (no implicit defaults left)", () => {
+  it("every puzzle declares difficulty explicitly (no implicit defaults left)", () => {
     // Stronger guard than the previous test — catches the case where a
     // new puzzle is added without setting `difficulty` and silently
     // falls through to the default. Authors must opt in.
@@ -303,11 +335,15 @@ describe("daily-tactic-puzzles — difficulty", () => {
     }
   });
 
-  it("Sprint 2 baseline distribution: 10 easy / 3 medium / 1 hard", () => {
+  it("Sprint 2 post-expansion distribution: 18 easy / 10 medium / 2 hard", () => {
+    // Baseline (commit B) was 10/3/1 across 14 puzzles. Commit C added
+    // 8 easy + 7 medium + 1 hard across the 16 new puzzles, biasing
+    // toward easy/medium because Daily Tactic prioritizes habit and
+    // clarity over difficulty per Wolfcito directive 2026-06-06.
     const counts: Record<PuzzleDifficulty, number> = { easy: 0, medium: 0, hard: 0 };
     for (const puzzle of DAILY_TACTIC_PUZZLES) {
       counts[getPuzzleDifficulty(puzzle)] += 1;
     }
-    expect(counts).toEqual({ easy: 10, medium: 3, hard: 1 });
+    expect(counts).toEqual({ easy: 18, medium: 10, hard: 2 });
   });
 });
