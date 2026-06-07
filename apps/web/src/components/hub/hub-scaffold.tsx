@@ -13,6 +13,7 @@ import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubArenaTile } from "@/components/hub/hub-arena-tile";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
+import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
@@ -189,6 +190,11 @@ export function HubScaffold({
               <CandyIcon name="trophy" className="candy-tray-pill-icon candy-tray-pill-icon--floating" />
               <span>{trophies}</span>
             </button>
+            {/* Sprint 3 commit G — Peones balance chip. Self-gates on
+             *  useAccount(): renders null for guests, the canonical
+             *  chip family for connected wallets. NO spend, NO top-up,
+             *  read-only surface backed by /api/peones/balance. */}
+            {wrap("PeonesBalanceChip", <PeonesBalanceChip />)}
           </div>
           <div className="hub-scaffold-hud-right">
             {!isWalletConnected && onConnectTap ? (
