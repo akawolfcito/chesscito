@@ -75,14 +75,19 @@ export function emitDailyTacticCompleted(args: {
   starsEarned: number;
   newStreak: number;
   isPro: boolean;
-  /** Sprint 2 commit E preview number — what the connected user sees
-   *  on the completion screen ("+3 Peones preview"). For guests this
-   *  must be 0; for connected users this is 3 today. The field is
-   *  cleanly distinct from `peonesEarned`, which stays at 0 until
-   *  Sprint 3 actually credits a balance. Downstream dashboards can
-   *  diff `rewardPreviewPeones` vs `peonesEarned` to measure the
-   *  preview-to-real conversion when Sprint 3 ships. */
+  /** Sprint 2 preview-overlap field. Connected users saw "+3 Peones
+   *  preview" on the sheet; guests saw 0. Sprint 3 commit E keeps
+   *  this field as overlap so downstream dashboards built against
+   *  the Sprint 2 schema do not break — but the SOURCE OF TRUTH for
+   *  real economy crediting is now `peonesEarned`. Plan to deprecate
+   *  in a follow-up sprint once dashboards migrate. */
   rewardPreviewPeones: number;
+  /** Sprint 3 commit E — REAL number credited to the ledger by
+   *  `/api/peones/earn`. Connected + earn ok → endpoint's `credited`
+   *  (0..3 after cap). Connected + earn failed → 0. Guest → 0.
+   *  Cap exhausted → 0 too (still completed locally; just no
+   *  Peones written). Replaces the Sprint 2 hard-coded zero. */
+  peonesEarned: number;
 }): void {
   track("daily_tactic_completed", {
     puzzleId: args.puzzle.id,
@@ -93,11 +98,7 @@ export function emitDailyTacticCompleted(args: {
     optimalMoves: args.puzzle.exercise.optimalMoves,
     starsEarned: args.starsEarned,
     newStreak: args.newStreak,
-    // Sprint 2 stub: the ledger lands in Sprint 3. NO real economy
-    // crediting happens here. The schema reserves the field so
-    // downstream consumers can build dashboards now and numbers
-    // become non-zero without a schema migration.
-    peonesEarned: 0,
+    peonesEarned: args.peonesEarned,
     rewardPreviewPeones: args.rewardPreviewPeones,
     isPro: args.isPro,
   });

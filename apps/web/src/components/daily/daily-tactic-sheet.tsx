@@ -36,12 +36,17 @@ type Props = {
    *  signature extended from `() => void` so the consumer can attach
    *  it to telemetry without re-deriving the count from board state. */
   onSolve: (movesUsed: number) => void;
-  /** Sprint 2 commit E — gates the reward preview block on the solved
-   *  screen. Connected users see "+3 Peones preview"; guests see a
-   *  connect CTA. NO real economy is credited either way; the ledger
-   *  ships in Sprint 3. Default `false` keeps every legacy consumer
-   *  on the guest branch. */
+  /** Gates the reward block branch (connected vs guest). Sprint 3
+   *  commit E — when true, the sheet renders state from `reward`
+   *  below; when false, only the guest CTA appears. Default `false`
+   *  keeps every legacy consumer on the guest branch. */
   isConnected?: boolean;
+  /** Sprint 3 commit E — state of the `/api/peones/earn` POST the
+   *  mount component fires after a Daily Tactic solve. Sheet renders
+   *  one of FOUR states from this; if undefined the sheet renders
+   *  the connected branch as if `pending` (a stale value would be
+   *  worse than "saving"). Ignored entirely when isConnected=false. */
+  reward?: import("@/lib/daily/peones-earn").DailyTacticRewardState;
   streakAfterSolve?: number;
   streakType?: StreakType;
   shareUrl?: string;
@@ -59,7 +64,7 @@ type Props = {
 const SOLVE_AUTO_CLOSE_MS = 3200;
 const RESET_AFTER_MS = 360;
 
-export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, streakAfterSolve, streakType, shareUrl, shareSolvedUrl, shareLinkUrl, shareSolvedLinkUrl, isConnected = false }: Props) {
+export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, streakAfterSolve, streakType, shareUrl, shareSolvedUrl, shareLinkUrl, shareSolvedLinkUrl, isConnected = false, reward }: Props) {
   const [status, setStatus] = useState<Status>("solving");
   const [showHint, setShowHint] = useState(false);
   const [boardKey, setBoardKey] = useState(0);
@@ -185,26 +190,59 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
               {streakType === "reset" && (
                 <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.newStreak}</span>
               )}
-              {/* Sprint 2 commit E — reward preview block. NO real
-               *  ledger crediting; copy must read as a preview, not a
-               *  balance update. Connected sees the +3 preview line +
-               *  the explainer; guests see only the connect CTA. */}
+              {/* Sprint 3 commit E — REAL reward block. The mount
+               *  component fires /api/peones/earn and passes the
+               *  resulting state via `reward`. The sheet renders
+               *  one of four connected states (pending/success/
+               *  cap_exhausted/error) or the guest CTA. Daily
+               *  completion + streak persist regardless of the
+               *  earn outcome — only this block reflects whether
+               *  Peones actually landed in the ledger. */}
               {isConnected ? (
                 <div
                   className="mt-1 flex flex-col items-center gap-0.5"
-                  data-testid="daily-reward-preview-connected"
+                  data-testid="daily-reward-connected"
+                  data-state={reward?.kind ?? "pending"}
                 >
-                  <span className="text-sm font-extrabold tabular-nums">
-                    {DAILY_SOLVE_COPY.rewardPreviewConnected}
-                  </span>
-                  <span className="text-[0.65rem] font-medium uppercase tracking-wide opacity-60">
-                    {DAILY_SOLVE_COPY.rewardPreviewExplain}
-                  </span>
+                  {(() => {
+                    const state = reward ?? { kind: "pending" as const };
+                    if (state.kind === "pending") {
+                      return (
+                        <span className="text-xs font-bold opacity-70">
+                          {DAILY_SOLVE_COPY.rewardSaving}
+                        </span>
+                      );
+                    }
+                    if (state.kind === "error") {
+                      return (
+                        <span className="text-xs font-bold opacity-70">
+                          {DAILY_SOLVE_COPY.rewardSaveFailed}
+                        </span>
+                      );
+                    }
+                    if (state.kind === "cap_exhausted") {
+                      return (
+                        <span className="text-xs font-bold opacity-70">
+                          {DAILY_SOLVE_COPY.rewardCapExhausted}
+                        </span>
+                      );
+                    }
+                    // success
+                    return state.capReached ? (
+                      <span className="text-sm font-extrabold tabular-nums">
+                        {DAILY_SOLVE_COPY.rewardCapPartialFormat(state.credited)}
+                      </span>
+                    ) : (
+                      <span className="text-sm font-extrabold tabular-nums">
+                        {DAILY_SOLVE_COPY.rewardEarnedFormat(state.credited)}
+                      </span>
+                    );
+                  })()}
                 </div>
               ) : (
                 <span
                   className="mt-1 text-xs font-bold opacity-70"
-                  data-testid="daily-reward-preview-guest"
+                  data-testid="daily-reward-guest"
                 >
                   {DAILY_SOLVE_COPY.rewardGuestCta}
                 </span>

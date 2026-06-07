@@ -167,7 +167,7 @@ describe("emitDailyTacticStarted", () => {
 });
 
 describe("emitDailyTacticCompleted", () => {
-  it("emits with the full payload, pins peonesEarned=0, carries rewardPreviewPeones (Sprint 2 stub + preview)", () => {
+  it("emits with the full payload, carries real peonesEarned + rewardPreviewPeones overlap (Sprint 3 commit E)", () => {
     emitDailyTacticCompleted({
       puzzle: FAKE_PUZZLE,
       puzzleDate: "2026-06-05",
@@ -176,6 +176,7 @@ describe("emitDailyTacticCompleted", () => {
       newStreak: 4,
       isPro: true,
       rewardPreviewPeones: 3,
+      peonesEarned: 3,
     });
     const calls = callsOf("daily_tactic_completed");
     expect(calls).toHaveLength(1);
@@ -188,7 +189,7 @@ describe("emitDailyTacticCompleted", () => {
       optimalMoves: 1,
       starsEarned: 3,
       newStreak: 4,
-      peonesEarned: 0,
+      peonesEarned: 3,
       rewardPreviewPeones: 3,
       isPro: true,
     });
@@ -203,6 +204,7 @@ describe("emitDailyTacticCompleted", () => {
       newStreak: 1,
       isPro: false,
       rewardPreviewPeones: 0,
+      peonesEarned: 0,
     });
     expect(callsOf("daily_tactic_completed")[0]![1]).toMatchObject({
       movesUsed: 3,
@@ -211,7 +213,7 @@ describe("emitDailyTacticCompleted", () => {
     });
   });
 
-  it("guest path: rewardPreviewPeones=0 distinguishes guest from connected in telemetry", () => {
+  it("guest path: both peonesEarned and rewardPreviewPeones are 0", () => {
     emitDailyTacticCompleted({
       puzzle: FAKE_PUZZLE,
       puzzleDate: "2026-06-05",
@@ -219,11 +221,28 @@ describe("emitDailyTacticCompleted", () => {
       starsEarned: 3,
       newStreak: 1,
       isPro: false,
-      rewardPreviewPeones: 0, // guest sees no number
+      rewardPreviewPeones: 0,
+      peonesEarned: 0,
     });
     expect(callsOf("daily_tactic_completed")[0]![1]).toMatchObject({
       peonesEarned: 0,
       rewardPreviewPeones: 0,
+    });
+  });
+
+  it("Sprint 3: when earn fails, peonesEarned=0 even if the user solved (degrades to guest-shape)", () => {
+    emitDailyTacticCompleted({
+      puzzle: FAKE_PUZZLE,
+      puzzleDate: "2026-06-05",
+      movesUsed: 1,
+      starsEarned: 3,
+      newStreak: 1,
+      isPro: false,
+      rewardPreviewPeones: 0,
+      peonesEarned: 0,
+    });
+    expect(callsOf("daily_tactic_completed")[0]![1]).toMatchObject({
+      peonesEarned: 0,
     });
   });
 });
@@ -245,8 +264,8 @@ describe("emitDailyStreakUpdated", () => {
   });
 });
 
-describe("Sprint 2 stub guarantees (no real Peones until Sprint 3)", () => {
-  it("never emits a peones_earned event from any Daily Tactic emitter (commit E preview included)", () => {
+describe("Sprint 3 telemetry guarantees", () => {
+  it("Daily Tactic telemetry module never emits a peones_earned event (reserved for commit H+)", () => {
     emitDailyTacticStarted({
       puzzle: FAKE_PUZZLE,
       puzzleDate: "2026-06-05",
@@ -261,17 +280,24 @@ describe("Sprint 2 stub guarantees (no real Peones until Sprint 3)", () => {
       newStreak: 1,
       isPro: false,
       rewardPreviewPeones: 3,
+      peonesEarned: 3,
     });
     emitDailyStreakUpdated({ newStreak: 1, streakType: "first" });
 
-    // peones_earned belongs to Sprint 3+ — must NOT appear in this
-    // commit's event surface even though commit E adds a visible
-    // "+3 Peones preview" UI block. The preview is intentionally a
-    // separate field on daily_tactic_completed, not a new event.
+    // Sprint 3 commit E credits the ledger via /api/peones/earn but
+    // does NOT add a `peones_earned` telemetry event in this module
+    // — that event ships in commit H once dashboards are ready.
     expect(callsOf("peones_earned")).toHaveLength(0);
   });
 
-  it("peonesEarned and bonusPeonesEarned remain 0 even when rewardPreviewPeones is positive", () => {
+  it("bonusPeonesEarned still pinned to 0 (streak bonus real lands in a later sub-commit)", () => {
+    emitDailyStreakUpdated({ newStreak: 1, streakType: "first" });
+    expect(callsOf("daily_streak_updated")[0]![1]).toMatchObject({
+      bonusPeonesEarned: 0,
+    });
+  });
+
+  it("rewardPreviewPeones overlap is preserved alongside peonesEarned in the completed payload", () => {
     emitDailyTacticCompleted({
       puzzle: FAKE_PUZZLE,
       puzzleDate: "2026-06-05",
@@ -280,16 +306,12 @@ describe("Sprint 2 stub guarantees (no real Peones until Sprint 3)", () => {
       newStreak: 1,
       isPro: true,
       rewardPreviewPeones: 3,
+      peonesEarned: 3,
     });
-    emitDailyStreakUpdated({ newStreak: 1, streakType: "first" });
-
     const completed = callsOf("daily_tactic_completed")[0]![1];
     expect(completed).toMatchObject({
-      peonesEarned: 0, // real ledger Sprint 3
-      rewardPreviewPeones: 3, // preview only
-    });
-    expect(callsOf("daily_streak_updated")[0]![1]).toMatchObject({
-      bonusPeonesEarned: 0,
+      peonesEarned: 3,
+      rewardPreviewPeones: 3,
     });
   });
 });

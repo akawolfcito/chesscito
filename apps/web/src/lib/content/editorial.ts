@@ -336,14 +336,25 @@ export const DAILY_SOLVE_COPY = {
   extendedStreak: "+1 day",
   newStreak: "New streak!",
   streakLabel: (n: number) => `Streak: ${n}`,
-  /* Sprint 2 commit E — reward preview copy. NO real ledger crediting
-   * happens this sprint; Sprint 3 wires the economy. Wording must NOT
-   * imply that Peones have been added to a balance:
-   *   - Connected sees "+3 Peones preview" + the explainer.
-   *   - Guest sees a connect CTA, never a number. */
-  rewardPreviewConnected: "+3 Peones preview",
-  rewardPreviewExplain: "Daily rewards unlock in the next economy sprint.",
-  rewardGuestCta: "Connect to earn Peones when rewards go live.",
+  /* Sprint 3 commit E — Daily Tactic real reward copy. Replaces the
+   * Sprint 2 preview wording now that /api/peones/earn credits the
+   * ledger for real. The connected branch renders one of FOUR states:
+   *   1. "Saving Peones…" while the POST is in flight.
+   *   2. rewardEarnedFormat(n) when credited > 0 and cap not reached.
+   *   3. rewardCapPartialFormat(n) when credited > 0 and cap reached
+   *      on this attempt (a partial credit).
+   *   4. rewardCapExhausted when credited === 0 because the cap was
+   *      already exhausted before this attempt.
+   * If the earn POST fails, rewardSaveFailed renders instead — the
+   * Daily completion + streak stay intact, only the Peones write
+   * is signalled as failed.
+   * Guest path renders only rewardGuestCta — never a number. */
+  rewardEarnedFormat: (n: number) => `+${n} Peones`,
+  rewardCapPartialFormat: (n: number) => `+${n} Peones · daily cap reached`,
+  rewardCapExhausted: "Daily cap reached. Come back tomorrow for more Peones.",
+  rewardSaveFailed: "Daily solved. Peones could not be saved right now.",
+  rewardSaving: "Saving Peones…",
+  rewardGuestCta: "Connect your wallet to save Peones rewards.",
 } as const;
 
 export const DAILY_SHARE_COPY = {

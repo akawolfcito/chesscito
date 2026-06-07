@@ -43,6 +43,11 @@ function renderSheet(
     streakAfterSolve?: number;
     streakType?: "first" | "extended" | "reset";
     isConnected?: boolean;
+    reward?:
+      | { kind: "pending" }
+      | { kind: "success"; credited: number; capReached: boolean; attestationHash: string | null; ledgerId: number | null; duplicate: boolean }
+      | { kind: "cap_exhausted" }
+      | { kind: "error" };
   } = {},
 ) {
   const onSolve = overrides.onSolve ?? vi.fn();
@@ -56,6 +61,7 @@ function renderSheet(
       streakAfterSolve={overrides.streakAfterSolve}
       streakType={overrides.streakType}
       isConnected={overrides.isConnected}
+      reward={overrides.reward}
     />,
   );
   return { onSolve, onOpenChange };
@@ -195,54 +201,110 @@ describe("DailyTacticSheet — 2-move puzzle", () => {
 });
 
 /**
- * Sprint 2 commit E — reward preview block on the solved screen.
- * NO real Peones credited; copy must read as preview only. Connected
- * users see the "+3 Peones preview" line; guests see only the connect
- * CTA. No number is shown to guests.
+ * Sprint 3 commit E — REAL reward block on the solved screen.
+ * The mount component fires /api/peones/earn and passes the result
+ * via the `reward` prop. The sheet renders one of four connected
+ * states + the guest CTA. NO number is shown to guests; the wording
+ * "preview" is GONE.
  */
-describe("DailyTacticSheet — reward preview (Sprint 2 commit E)", () => {
+describe("DailyTacticSheet — real reward (Sprint 3 commit E)", () => {
   function solveQuick(): void {
     fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
     fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
   }
 
-  it("shows the connected preview block when isConnected=true", () => {
+  it("renders pending copy when connected and reward.kind='pending'", () => {
+    renderSheet({ isConnected: true, reward: { kind: "pending" } });
+    solveQuick();
+    const block = screen.getByTestId("daily-reward-connected");
+    expect(block).toHaveAttribute("data-state", "pending");
+    expect(block).toHaveTextContent("Saving Peones");
+  });
+
+  it("renders +N Peones (no cap suffix) on success with capReached=false", () => {
+    renderSheet({
+      isConnected: true,
+      reward: {
+        kind: "success",
+        credited: 3,
+        capReached: false,
+        attestationHash: "sha256:aaa",
+        ledgerId: 1,
+        duplicate: false,
+      },
+    });
+    solveQuick();
+    const block = screen.getByTestId("daily-reward-connected");
+    expect(block).toHaveAttribute("data-state", "success");
+    expect(block).toHaveTextContent("+3 Peones");
+    expect(block).not.toHaveTextContent(/preview/i);
+    expect(block).not.toHaveTextContent("daily cap reached");
+  });
+
+  it("renders +N Peones · daily cap reached on partial-cap success", () => {
+    renderSheet({
+      isConnected: true,
+      reward: {
+        kind: "success",
+        credited: 2,
+        capReached: true,
+        attestationHash: "sha256:bbb",
+        ledgerId: 2,
+        duplicate: false,
+      },
+    });
+    solveQuick();
+    const block = screen.getByTestId("daily-reward-connected");
+    expect(block).toHaveTextContent("+2 Peones · daily cap reached");
+  });
+
+  it("renders cap-exhausted copy when reward.kind='cap_exhausted'", () => {
+    renderSheet({ isConnected: true, reward: { kind: "cap_exhausted" } });
+    solveQuick();
+    const block = screen.getByTestId("daily-reward-connected");
+    expect(block).toHaveAttribute("data-state", "cap_exhausted");
+    expect(block).toHaveTextContent(
+      "Daily cap reached. Come back tomorrow for more Peones.",
+    );
+    expect(block).not.toHaveTextContent("+");
+  });
+
+  it("renders save-failed copy when reward.kind='error'", () => {
+    renderSheet({ isConnected: true, reward: { kind: "error" } });
+    solveQuick();
+    const block = screen.getByTestId("daily-reward-connected");
+    expect(block).toHaveAttribute("data-state", "error");
+    expect(block).toHaveTextContent(
+      "Daily solved. Peones could not be saved right now.",
+    );
+  });
+
+  it("falls back to pending copy when connected and reward prop is omitted", () => {
     renderSheet({ isConnected: true });
     solveQuick();
-    const previewBlock = screen.getByTestId("daily-reward-preview-connected");
-    expect(previewBlock).toBeInTheDocument();
-    expect(previewBlock).toHaveTextContent("+3 Peones preview");
-    expect(previewBlock).toHaveTextContent(
-      "Daily rewards unlock in the next economy sprint.",
-    );
-    expect(
-      screen.queryByTestId("daily-reward-preview-guest"),
-    ).not.toBeInTheDocument();
+    const block = screen.getByTestId("daily-reward-connected");
+    expect(block).toHaveAttribute("data-state", "pending");
+    expect(block).toHaveTextContent("Saving Peones");
   });
 
   it("shows ONLY the connect CTA when isConnected=false (default)", () => {
     renderSheet({ isConnected: false });
     solveQuick();
-    const guestBlock = screen.getByTestId("daily-reward-preview-guest");
+    const guestBlock = screen.getByTestId("daily-reward-guest");
     expect(guestBlock).toBeInTheDocument();
     expect(guestBlock).toHaveTextContent(
-      "Connect to earn Peones when rewards go live.",
+      "Connect your wallet to save Peones rewards.",
     );
-    // Guests must NOT see any Peones number on the completion screen.
     expect(
-      screen.queryByTestId("daily-reward-preview-connected"),
+      screen.queryByTestId("daily-reward-connected"),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText(/\+3 Peones preview/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\+3 Peones/i)).not.toBeInTheDocument();
   });
 
   it("defaults to guest copy when isConnected prop is omitted", () => {
     renderSheet();
     solveQuick();
-    expect(
-      screen.getByTestId("daily-reward-preview-guest"),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByTestId("daily-reward-preview-connected"),
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("daily-reward-guest")).toBeInTheDocument();
+    expect(screen.queryByTestId("daily-reward-connected")).not.toBeInTheDocument();
   });
 });

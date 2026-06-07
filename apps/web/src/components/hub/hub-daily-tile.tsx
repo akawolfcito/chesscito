@@ -19,15 +19,13 @@ import {
   emitDailyTacticCompleted,
   emitDailyTacticStarted,
 } from "@/lib/daily/telemetry";
+import {
+  submitDailyTacticEarn,
+  type DailyTacticRewardState,
+} from "@/lib/daily/peones-earn";
 import { computeStars } from "@/lib/game/scoring";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { useAccount } from "wagmi";
-
-/** Sprint 2 commit E reward preview value for connected users. Guests
- *  see no number on the completion screen — only a connect CTA. The
- *  ledger lands in Sprint 3; until then this number is purely visual
- *  + telemetry-side, never written to any balance. */
-const SPRINT_2_DAILY_REWARD_PREVIEW = 3;
 
 const DEFAULT_PROGRESS: DailyProgress = {
   streak: 0,
@@ -64,12 +62,17 @@ export function HubDailyTile() {
     streakType: SolveStreakType;
   } | null>(null);
   const isPro = useIsProActive();
-  const { isConnected } = useAccount();
-  const rewardPreviewPeones = isConnected ? SPRINT_2_DAILY_REWARD_PREVIEW : 0;
+  const { isConnected, address } = useAccount();
   /** Sprint 2 commit D — guards `daily_tactic_started` against duplicate
    *  emission on re-render. Set when `open` flips true; cleared when
    *  it flips false. Re-renders with open already true do not re-emit. */
   const startedFiredRef = useRef(false);
+  /** Sprint 3 commit E — guards the /api/peones/earn POST against
+   *  double-fire if handleSolve is somehow re-entered. Cleared
+   *  when the sheet closes so the next open can submit again
+   *  (the server-side idempotency_key still collapses replays). */
+  const earnFiredRef = useRef(false);
+  const [reward, setReward] = useState<DailyTacticRewardState | null>(null);
 
   const puzzleData = getDailyTactic(today);
   const completed = isCompletedToday(today, progress);
@@ -94,12 +97,37 @@ export function HubDailyTile() {
     if (!open) startedFiredRef.current = false;
   }, [open, hydrated, puzzleData, today, progress.streak, isPro]);
 
-  function handleSolve(movesUsed: number) {
+  async function handleSolve(movesUsed: number) {
     const prev = progress;
     const next = recordDailyCompletion(today);
     setProgress(next);
 
     const starsEarned = computeStars(movesUsed, puzzleData.exercise.optimalMoves);
+
+    // Streak telemetry fires immediately — local state, no network.
+    const streakType = classifyStreakChange(prev, next);
+    if (streakType) {
+      emitDailyStreakUpdated({ newStreak: next.streak, streakType });
+      setSolveResult({ streak: next.streak, streakType });
+    } else {
+      setSolveResult(null);
+    }
+
+    // Sprint 3 commit E — earn POST only when connected. Daily
+    // completion + streak persist regardless of the earn outcome.
+    let peonesEarned = 0;
+    if (isConnected && address && !earnFiredRef.current) {
+      earnFiredRef.current = true;
+      setReward({ kind: "pending" });
+      const result = await submitDailyTacticEarn({
+        wallet: address,
+        dayUtc: today,
+        puzzle: puzzleData,
+      });
+      setReward(result);
+      if (result.kind === "success") peonesEarned = result.credited;
+    }
+
     emitDailyTacticCompleted({
       puzzle: puzzleData,
       puzzleDate: today,
@@ -107,18 +135,9 @@ export function HubDailyTile() {
       starsEarned,
       newStreak: next.streak,
       isPro,
-      rewardPreviewPeones,
+      rewardPreviewPeones: peonesEarned, // overlap field tracks credited
+      peonesEarned,
     });
-
-    const streakType = classifyStreakChange(prev, next);
-    if (streakType) {
-      emitDailyStreakUpdated({ newStreak: next.streak, streakType });
-      setSolveResult({ streak: next.streak, streakType });
-    } else {
-      // No-op classification (replay of already-completed day) —
-      // keep the previous UI badge state untouched.
-      setSolveResult(null);
-    }
   }
 
   const shareUrl = `/api/og/exercise?type=daily&piece=${puzzleData.piece}&name=${encodeURIComponent(puzzleData.name)}&start=${posToAlgebraic(puzzleData.exercise.startPos)}&target=${posToAlgebraic(puzzleData.exercise.targetPos)}`;
@@ -169,7 +188,11 @@ export function HubDailyTile() {
         open={open}
         onOpenChange={(nextOpen) => {
           setOpen(nextOpen);
-          if (!nextOpen) setSolveResult(null);
+          if (!nextOpen) {
+            setSolveResult(null);
+            setReward(null);
+            earnFiredRef.current = false;
+          }
         }}
         puzzleData={puzzleData}
         onSolve={handleSolve}
@@ -178,6 +201,7 @@ export function HubDailyTile() {
         shareUrl={shareUrl}
         shareSolvedUrl={shareSolvedUrl}
         isConnected={isConnected}
+        reward={reward ?? undefined}
       />
     </>
   );

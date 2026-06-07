@@ -17,12 +17,14 @@ import {
   emitDailyTacticCompleted,
   emitDailyTacticStarted,
 } from "@/lib/daily/telemetry";
+import {
+  submitDailyTacticEarn,
+  type DailyTacticRewardState,
+} from "@/lib/daily/peones-earn";
 import { computeStars } from "@/lib/game/scoring";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { shareUrlForDaily } from "@/lib/og/share-urls";
 import { useAccount } from "wagmi";
-
-const SPRINT_2_DAILY_REWARD_PREVIEW = 3;
 
 const DEFAULT_PROGRESS: DailyProgress = {
   streak: 0,
@@ -59,10 +61,12 @@ export function DailyTacticSlot() {
     streakType: SolveStreakType;
   } | null>(null);
   const isPro = useIsProActive();
-  const { isConnected } = useAccount();
-  const rewardPreviewPeones = isConnected ? SPRINT_2_DAILY_REWARD_PREVIEW : 0;
+  const { isConnected, address } = useAccount();
   /** Sprint 2 commit D — same dedup pattern as HubDailyTile. */
   const startedFiredRef = useRef(false);
+  /** Sprint 3 commit E — earn POST dedup, mirrors HubDailyTile. */
+  const earnFiredRef = useRef(false);
+  const [reward, setReward] = useState<DailyTacticRewardState | null>(null);
 
   const puzzleData = getDailyTactic(today);
   const completed = isCompletedToday(today, progress);
@@ -87,21 +91,12 @@ export function DailyTacticSlot() {
     if (!open) startedFiredRef.current = false;
   }, [open, hydrated, puzzleData, today, progress.streak, isPro]);
 
-  function handleSolve(movesUsed: number) {
+  async function handleSolve(movesUsed: number) {
     const prev = progress;
     const next = recordDailyCompletion(today);
     setProgress(next);
 
     const starsEarned = computeStars(movesUsed, puzzleData.exercise.optimalMoves);
-    emitDailyTacticCompleted({
-      puzzle: puzzleData,
-      puzzleDate: today,
-      movesUsed,
-      starsEarned,
-      newStreak: next.streak,
-      isPro,
-      rewardPreviewPeones,
-    });
 
     const streakType = classifyStreakChange(prev, next);
     if (streakType) {
@@ -110,6 +105,30 @@ export function DailyTacticSlot() {
     } else {
       setSolveResult(null);
     }
+
+    let peonesEarned = 0;
+    if (isConnected && address && !earnFiredRef.current) {
+      earnFiredRef.current = true;
+      setReward({ kind: "pending" });
+      const result = await submitDailyTacticEarn({
+        wallet: address,
+        dayUtc: today,
+        puzzle: puzzleData,
+      });
+      setReward(result);
+      if (result.kind === "success") peonesEarned = result.credited;
+    }
+
+    emitDailyTacticCompleted({
+      puzzle: puzzleData,
+      puzzleDate: today,
+      movesUsed,
+      starsEarned,
+      newStreak: next.streak,
+      isPro,
+      rewardPreviewPeones: peonesEarned,
+      peonesEarned,
+    });
   }
 
   const startAlg = posToAlgebraic(puzzleData.exercise.startPos);
@@ -155,7 +174,11 @@ export function DailyTacticSlot() {
         open={open}
         onOpenChange={(nextOpen) => {
           setOpen(nextOpen);
-          if (!nextOpen) setSolveResult(null);
+          if (!nextOpen) {
+            setSolveResult(null);
+            setReward(null);
+            earnFiredRef.current = false;
+          }
         }}
         puzzleData={puzzleData}
         onSolve={handleSolve}
@@ -166,6 +189,7 @@ export function DailyTacticSlot() {
         shareLinkUrl={shareLinkUrl}
         shareSolvedLinkUrl={shareSolvedLinkUrl}
         isConnected={isConnected}
+        reward={reward ?? undefined}
       />
     </>
   );
