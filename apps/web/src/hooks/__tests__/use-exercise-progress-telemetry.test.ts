@@ -28,6 +28,24 @@ vi.mock("@/lib/telemetry", () => ({
   track: vi.fn(),
 }));
 
+// Sprint 3 commit F — Peones earn is fire-and-forget inside the
+// hook. These tests focus on training_* events, so the earn helper
+// is mocked to a no-op success. wagmi mock defaults to guest so
+// the earn path is skipped entirely in this file.
+vi.mock("@/lib/peones/training-earn", () => ({
+  submitTrainingExerciseEarn: vi.fn().mockResolvedValue({
+    kind: "success",
+    credited: 0,
+    attestationHash: null,
+    ledgerId: null,
+    duplicate: false,
+  }),
+}));
+
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(() => ({ isConnected: false, address: undefined })),
+}));
+
 import { act, renderHook } from "@testing-library/react";
 import { track } from "@/lib/telemetry";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";

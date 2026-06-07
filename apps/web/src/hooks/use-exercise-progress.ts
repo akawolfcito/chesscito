@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAccount } from "wagmi";
 import { BADGE_THRESHOLD, EXERCISES, getExerciseCount } from "@/lib/game/exercises";
 import { computeStars, totalStars } from "@/lib/game/scoring";
+import { submitTrainingExerciseEarn } from "@/lib/peones/training-earn";
 import { track } from "@/lib/telemetry";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
 
@@ -115,6 +117,11 @@ function saveProgress(progress: PieceProgress) {
 }
 
 export function useExerciseProgress(piece: PieceId) {
+  /** Sprint 3 commit F — connected wallet drives the Peones earn POST
+   *  inside `completeExercise`. Guests skip the call entirely; their
+   *  local progress + telemetry stay intact. */
+  const { isConnected, address } = useAccount();
+
   // Inicializar siempre con defaults para que server y cliente rendericen igual
   // (evita hydration mismatch). localStorage se lee después del montaje.
   // Lazy initializer porque emptyStars depende del piece — evita recomputar
@@ -231,12 +238,31 @@ export function useExerciseProgress(piece: PieceId) {
           });
         }
 
+        // Sprint 3 commit F — Peones earn for the Senda exercise. Fire
+        // and forget. Local progress + persistence + telemetry already
+        // happened above; the earn POST is the LAST step and never
+        // blocks or reverts anything. Gates:
+        //   - connected wallet (guest path skipped)
+        //   - delta of best stars strictly positive (replay without
+        //     improvement, worse score, or untouched slot all skip)
+        // The helper itself short-circuits delta<=0 defensively too.
+        const deltaBestStars = bestStarsAfter - bestStarsBefore;
+        if (isConnected && address && deltaBestStars > 0) {
+          void submitTrainingExerciseEarn({
+            wallet: address,
+            piece,
+            exerciseId: exercise.id,
+            bestStarsBefore,
+            bestStarsAfter,
+          });
+        }
+
         const next: PieceProgress = { ...prev, stars: newStars };
         saveProgress(next);
         return next;
       });
     },
-    [piece]
+    [piece, isConnected, address]
   );
 
   const advanceExercise = useCallback(() => {

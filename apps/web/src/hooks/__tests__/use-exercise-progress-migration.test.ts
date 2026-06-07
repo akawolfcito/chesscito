@@ -13,6 +13,24 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// Sprint 3 commit F — the hook now imports wagmi + the training
+// earn helper. Migration tests don't exercise either, but the mocks
+// keep the renderHook calls from blowing up on missing providers.
+vi.mock("@/lib/peones/training-earn", () => ({
+  submitTrainingExerciseEarn: vi.fn().mockResolvedValue({
+    kind: "success",
+    credited: 0,
+    attestationHash: null,
+    ledgerId: null,
+    duplicate: false,
+  }),
+}));
+
+vi.mock("wagmi", () => ({
+  useAccount: vi.fn(() => ({ isConnected: false, address: undefined })),
+}));
+
 import { migrateStarsLength } from "@/hooks/use-exercise-progress";
 
 describe("migrateStarsLength (pure helper)", () => {
