@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DailyTacticCard } from "./daily-tactic-card";
 import { DailyTacticSheet } from "./daily-tactic-sheet";
 import {
@@ -8,10 +8,17 @@ import {
   isCompletedToday,
   recordDailyCompletion,
   todayUtc,
-  yesterdayUtc,
   type DailyProgress,
 } from "@/lib/daily/progress";
 import { getDailyTactic } from "@/lib/daily/daily-puzzles";
+import {
+  classifyStreakChange,
+  emitDailyStreakUpdated,
+  emitDailyTacticCompleted,
+  emitDailyTacticStarted,
+} from "@/lib/daily/telemetry";
+import { computeStars } from "@/lib/game/scoring";
+import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { shareUrlForDaily } from "@/lib/og/share-urls";
 
 const DEFAULT_PROGRESS: DailyProgress = {
@@ -48,6 +55,10 @@ export function DailyTacticSlot() {
     streak: number;
     streakType: SolveStreakType;
   } | null>(null);
+  const isPro = useIsProActive();
+  /** Sprint 2 commit D — same dedup pattern as HubDailyTile. */
+  const startedFiredRef = useRef(false);
+
   const puzzleData = getDailyTactic(today);
   const completed = isCompletedToday(today, progress);
 
@@ -57,17 +68,42 @@ export function DailyTacticSlot() {
     setToday(todayUtc());
   }, []);
 
-  function handleSolve() {
+  useEffect(() => {
+    if (!hydrated) return;
+    if (open && !startedFiredRef.current) {
+      startedFiredRef.current = true;
+      emitDailyTacticStarted({
+        puzzle: puzzleData,
+        puzzleDate: today,
+        currentStreak: progress.streak,
+        isPro,
+      });
+    }
+    if (!open) startedFiredRef.current = false;
+  }, [open, hydrated, puzzleData, today, progress.streak, isPro]);
+
+  function handleSolve(movesUsed: number) {
     const prev = progress;
     const next = recordDailyCompletion(today);
     setProgress(next);
-    let streakType: SolveStreakType = "extended";
-    if (prev.streak === 0 && next.streak === 1) {
-      streakType = "first";
-    } else if (prev.lastCompletedDate !== yesterdayUtc(today)) {
-      streakType = "reset";
+
+    const starsEarned = computeStars(movesUsed, puzzleData.exercise.optimalMoves);
+    emitDailyTacticCompleted({
+      puzzle: puzzleData,
+      puzzleDate: today,
+      movesUsed,
+      starsEarned,
+      newStreak: next.streak,
+      isPro,
+    });
+
+    const streakType = classifyStreakChange(prev, next);
+    if (streakType) {
+      emitDailyStreakUpdated({ newStreak: next.streak, streakType });
+      setSolveResult({ streak: next.streak, streakType });
+    } else {
+      setSolveResult(null);
     }
-    setSolveResult({ streak: next.streak, streakType });
   }
 
   const startAlg = posToAlgebraic(puzzleData.exercise.startPos);

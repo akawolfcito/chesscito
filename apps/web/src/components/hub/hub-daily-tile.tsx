@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useTranslations } from "next-intl";
 import { DailyTacticSheet } from "@/components/daily/daily-tactic-sheet";
@@ -11,9 +11,16 @@ import {
   isCompletedToday,
   recordDailyCompletion,
   todayUtc,
-  yesterdayUtc,
   type DailyProgress,
 } from "@/lib/daily/progress";
+import {
+  classifyStreakChange,
+  emitDailyStreakUpdated,
+  emitDailyTacticCompleted,
+  emitDailyTacticStarted,
+} from "@/lib/daily/telemetry";
+import { computeStars } from "@/lib/game/scoring";
+import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 
 const DEFAULT_PROGRESS: DailyProgress = {
   streak: 0,
@@ -49,6 +56,11 @@ export function HubDailyTile() {
     streak: number;
     streakType: SolveStreakType;
   } | null>(null);
+  const isPro = useIsProActive();
+  /** Sprint 2 commit D — guards `daily_tactic_started` against duplicate
+   *  emission on re-render. Set when `open` flips true; cleared when
+   *  it flips false. Re-renders with open already true do not re-emit. */
+  const startedFiredRef = useRef(false);
 
   const puzzleData = getDailyTactic(today);
   const completed = isCompletedToday(today, progress);
@@ -59,17 +71,44 @@ export function HubDailyTile() {
     setToday(todayUtc());
   }, []);
 
-  function handleSolve() {
+  useEffect(() => {
+    if (!hydrated) return;
+    if (open && !startedFiredRef.current) {
+      startedFiredRef.current = true;
+      emitDailyTacticStarted({
+        puzzle: puzzleData,
+        puzzleDate: today,
+        currentStreak: progress.streak,
+        isPro,
+      });
+    }
+    if (!open) startedFiredRef.current = false;
+  }, [open, hydrated, puzzleData, today, progress.streak, isPro]);
+
+  function handleSolve(movesUsed: number) {
     const prev = progress;
     const next = recordDailyCompletion(today);
     setProgress(next);
-    let streakType: SolveStreakType = "extended";
-    if (prev.streak === 0 && next.streak === 1) {
-      streakType = "first";
-    } else if (prev.lastCompletedDate !== yesterdayUtc(today)) {
-      streakType = "reset";
+
+    const starsEarned = computeStars(movesUsed, puzzleData.exercise.optimalMoves);
+    emitDailyTacticCompleted({
+      puzzle: puzzleData,
+      puzzleDate: today,
+      movesUsed,
+      starsEarned,
+      newStreak: next.streak,
+      isPro,
+    });
+
+    const streakType = classifyStreakChange(prev, next);
+    if (streakType) {
+      emitDailyStreakUpdated({ newStreak: next.streak, streakType });
+      setSolveResult({ streak: next.streak, streakType });
+    } else {
+      // No-op classification (replay of already-completed day) —
+      // keep the previous UI badge state untouched.
+      setSolveResult(null);
     }
-    setSolveResult({ streak: next.streak, streakType });
   }
 
   const shareUrl = `/api/og/exercise?type=daily&piece=${puzzleData.piece}&name=${encodeURIComponent(puzzleData.name)}&start=${posToAlgebraic(puzzleData.exercise.startPos)}&target=${posToAlgebraic(puzzleData.exercise.targetPos)}`;

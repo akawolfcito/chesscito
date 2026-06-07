@@ -31,7 +31,11 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   puzzleData: DailyTacticData;
-  onSolve: () => void;
+  /** Fires once when the user reaches targetPos with the move count
+   *  used. Sprint 2 commit D (Training Economy Alpha 2026-06-06) —
+   *  signature extended from `() => void` so the consumer can attach
+   *  it to telemetry without re-deriving the count from board state. */
+  onSolve: (movesUsed: number) => void;
   streakAfterSolve?: number;
   streakType?: StreakType;
   shareUrl?: string;
@@ -106,7 +110,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
     hapticSuccess();
     hapticImpact();
     setStatus("solved");
-    onSolve();
+    onSolve(movesCount);
     closeTimerRef.current = setTimeout(() => {
       onOpenChange(false);
     }, SOLVE_AUTO_CLOSE_MS);
