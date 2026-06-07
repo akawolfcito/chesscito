@@ -497,6 +497,96 @@ Las 12 decisiones default (§2) están listas para arrancar. Las 14 mitigaciones
 
 ---
 
+## Stablecoin direct payment fallback — MiniPay/Celo research
+
+**Fecha:** 2026-06-07. **Estado:** research, sin código. Insumo para decidir cómo paga el usuario los packs de Peones, PRO, Founder y las microacciones de fallback cuando no tiene saldo Peones.
+
+### A. Qué confirma la documentación oficial
+
+| # | Hecho | Fuente |
+|:--:|---|---|
+| A1 | El patrón recomendado para que un dApp Celo cobre un stablecoin es **`ERC20.transfer(to, amount)` directo, en UNA sola tx**. NO se requiere `approve + transferFrom` cuando el dApp es solo el destinatario del transfer. | [Using Fee Abstraction · Celo Docs](https://docs.celo.org/build-on-celo/fee-abstraction/using-fee-abstraction) |
+| A2 | Celo soporta fee abstraction nativo (sin paymasters ni relayers): el usuario paga gas en un ERC20 vía el campo `feeCurrency` del tx. CIP-64, tx type `0x7b`. | [Fee Abstraction · Celo Docs](https://docs.celo.org/developer/fee-abstraction), [ERC20 Transaction Fees](https://docs.celo.org/protocol/transaction/erc20-transaction-fees) |
+| A3 | `feeCurrency` y el token transferido pueden ser **distintos** en la misma tx: la tx llama `transfer(USDC)` y paga gas en `USDm` (por ejemplo). El protocolo hace `debitGasFees` → ejecuta → `creditGasFees`. | [Using Fee Abstraction · Celo Docs](https://docs.celo.org/build-on-celo/fee-abstraction/using-fee-abstraction) |
+| A4 | Para USDC y USDT, **se usa el `adapter address`, NO el token address** como `feeCurrency`, por la precisión de 6 decimales. Mainnet: USDC adapter `0x2F25deB3848C207fc8E0c34035B3Ba7fC157602B`, USDT adapter `0x0e2a3e05bc9a16f5292a6170456a710cb89c6f72`. | [Using Fee Abstraction · Celo Docs](https://docs.celo.org/build-on-celo/fee-abstraction/using-fee-abstraction) |
+| A5 | **Stablecoins que MiniPay soporta hoy para pagos de app: `USDm`, `USDC`, `USDT`**. cUSD ya **no** está en la lista actual de MiniPay. | [Build on MiniPay Quickstart](https://docs.celo.org/developer/build-on-minipay/quickstart) |
+| A6 | **En MiniPay, `feeCurrency` está limitado a `USDm` hoy.** Los pagos pueden ir en USDC/USDT/USDm, pero el gas se paga en USDm si la tx setea `feeCurrency`. | [Build on MiniPay Quickstart](https://docs.celo.org/developer/build-on-minipay/quickstart) |
+| A7 | Librería recomendada para MiniPay: **viem o wagmi** (no ethers — no soporta CIP-64 / `feeCurrency`). | [Build on MiniPay Quickstart](https://docs.celo.org/developer/build-on-minipay/quickstart) |
+| A8 | Pattern canonical (fuente directa): `sendTransaction({ to: TOKEN, data: encodeFunctionData(transfer, [recipient, adjustedAmount]), feeCurrency: ADAPTER, type: '0x7b' })`. **Hay que restar el fee estimado del `amount`** antes de transferir para no over-spend la wallet. | [Using Fee Abstraction · Celo Docs](https://docs.celo.org/build-on-celo/fee-abstraction/using-fee-abstraction) |
+
+### B. Qué requiere prueba en MiniPay real
+
+Las docs no responden estos puntos; smoke en device real es obligatorio antes de ship:
+
+| # | Pendiente |
+|:--:|---|
+| B1 | UX de MiniPay al recibir una tx encoded como `to: USDC_token, data: transfer(treasury, amount)`: ¿muestra el monto en formato amigable ("Pay $0.50 to Chesscito") o lo presenta como "contract call" críptico? |
+| B2 | Cross-token gas: ¿una tx que transfiere USDC con `feeCurrency=USDm_adapter` funciona en MiniPay (el usuario tiene USDC + USDm) o MiniPay obliga a pagar el gas en el mismo token del transfer? |
+| B3 | ¿MiniPay intercepta el primer `transfer` con algún pre-flight de approval o lo deja pasar como tx directa? |
+| B4 | Mínimo de fee abstraction: para una tx que cuesta `$0.001` o `$0.002`, ¿MiniPay surface ese costo al usuario o queda absorbido visualmente? |
+| B5 | Confirmar que USDm tiene liquidez/presencia real en wallets MiniPay del target geográfico (África / LatAm) — si los usuarios principalmente tienen USDC, hacerlos cargar USDm para gas es fricción. |
+| B6 | Confirmar el adapter address de USDm para gas en MiniPay. Las docs lo mencionan pero no listan dirección explícita en mainnet. |
+
+### C. Patrón técnico recomendado
+
+**Pattern P1 — Single-tx stablecoin payment (sin approve):**
+
+```ts
+import { encodeFunctionData, erc20Abi } from "viem";
+
+// Treasury address: la wallet/contract que recibe el pago.
+// adjustedAmount = amount - estimated_fee (cuando feeCurrency == payment token).
+const hash = await client.sendTransaction({
+  to: STABLECOIN_TOKEN_ADDRESS,                 // USDC/USDT/USDm token (no adapter)
+  data: encodeFunctionData({
+    abi: erc20Abi,
+    functionName: "transfer",
+    args: [TREASURY_ADDRESS, adjustedAmount],
+  }),
+  feeCurrency: USDM_ADAPTER_ADDRESS,            // gas en USDm
+  type: "0x7b",                                  // CIP-64
+});
+```
+
+- Cero approve. Cero contract custom. Cero `transferFrom`.
+- Single user confirmation in MiniPay.
+- Backend escucha el `Transfer` event del token, valida `to == TREASURY` + `amount`, y acredita Peones / activa PRO / mintea Founder via webhook.
+
+**Cuándo NO usar P1 (usar contract custom):**
+- VictoryNFT: ya tiene contract de mint con `buyItem`/`mint` que recibe el precio y emite el NFT atómicamente. **Mantener el flujo actual** — un transfer + mint separado introduce race conditions y arruina la garantía atómica.
+- Founder badge: si el contract de Badges asigna por levelId con verificación de pago en el mismo call, mantener. Si el "Founder" se implementa como una marca off-chain + un Transfer fee, sí puede usar P1 + webhook.
+
+### D. Decisión de producto para M1
+
+| Frente | Decisión | Justificación |
+|---|---|---|
+| **Peones** | Rail principal de microacciones. Sin cambio. | Sprint 3-4 ledger es la columna vertebral. |
+| **Pack de Peones (Buy 50/100/500)** | **Patrón P1** — single-tx USDm transfer → backend webhook acredita Peones al ledger. **Default token: USDm** (matches feeCurrency MiniPay). | 1 confirmación, 0 approve. Best UX MiniPay. |
+| **Fallback microacción** ("paga esta acción con stablecoin sin tener Peones") | **Patrón P1** opcional, **secundario** en la UI. Default copy = "Compra pack de Peones" o "Activa PRO". Stablecoin directo es link/CTA terciario. | Wolfcito directive: no dual-payment en cada acción. |
+| **PRO sub** | **Patrón P1** posible — single-tx transfer + webhook activa sub 30 días. Alternativa: mantener `buyItem` actual del Shop si ya es atómico. | Si el Shop contract ya hace approve+buyItem, evaluar migrar a P1 en cluster propio post-M1. |
+| **Founder badge** | Si se implementa como "$9.99 lifetime", **Patrón P1** + webhook que mintea el badge soulbound. | Founder NO requiere atomicidad on-chain (el badge se mintea server-side via signer). |
+| **VictoryNFT** | **NO migrar.** Mantener el flujo actual approve+buyItem por atomicidad. | Atomic mint con prize-pool split necesita el contract path. |
+| **Default stablecoin Chesscito** | **USDm** | Es el único token donde MiniPay soporta feeCurrency hoy → un solo stablecoin en el flow del usuario (paga acción + paga gas en USDm). USDC/USDT aceptables como secundarios si el usuario los tiene. |
+| **Approve flows** | **Evitar para microacciones.** Mantener solo en VictoryNFT mint (atomicidad). | UX MiniPay es brutalmente mejor en single-tx. |
+
+### E. Acción recomendada inmediata (post-Sprint 3)
+
+1. **Sprint 3 sigue como está** — el ledger Peones es agnóstico al payment rail. Pack purchase (commit que actualmente NO está en Sprint 3) puede llegar Sprint 4 o cluster propio.
+2. **Cluster "stablecoin-pack-purchase"** (post-Sprint 4, antes de M2): smoke real en MiniPay device del Patrón P1 (B1-B6), implementación de webhook backend + adapter address USDm verification, copy + UI del flow secundario "pay action with stablecoin".
+3. **Documentar `STABLECOIN_FALLBACK.md`** con las direcciones de los adapters (USDC, USDT, USDm) y el snippet de `sendTransaction` canónico cuando el cluster ship.
+4. **Decisión final del default token:** USDm preliminar — confirmar con smoke real (B5 — liquidez real en wallets MiniPay del target). Si USDm tiene <10% de presencia, fallback a USDC con gas en USDm (cross-token) — B2 pendiente.
+
+### F. Fuentes oficiales consultadas
+
+- [Build on MiniPay Quickstart · Celo Docs](https://docs.celo.org/developer/build-on-minipay/quickstart)
+- [Fee Abstraction · Celo Docs](https://docs.celo.org/developer/fee-abstraction)
+- [Paying for Gas with Tokens · Celo Docs](https://docs.celo.org/protocol/transaction/erc20-transaction-fees)
+- [Using Fee Abstraction implementation guide · Celo Docs](https://docs.celo.org/build-on-celo/fee-abstraction/using-fee-abstraction)
+- [Build on MiniPay overview · Celo Docs](https://docs.celo.org/developer/build-on-minipay)
+- [Celo Wallets · Celo Docs](https://docs.celo.org/wallet)
+
+---
+
 ## Cross-references
 
 - **Doc padre:** `docs/product/chesscito-training-economy-alpha-decisions-2026-06-05.md`
