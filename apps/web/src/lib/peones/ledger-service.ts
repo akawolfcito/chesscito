@@ -1,0 +1,238 @@
+/**
+ * Peones ledger — pure service helpers.
+ *
+ * Sprint 3 commit B of Training Economy Alpha 2026-06-07. Every export
+ * here is a pure function with NO Supabase client, NO DB call, NO
+ * endpoint glue, NO UI dependency, NO localStorage. The earn endpoint
+ * (commit D) and the spend endpoint (Sprint 4) wire these helpers
+ * inside the HTTP handler — the helpers themselves know nothing about
+ * the transport.
+ *
+ * Two correctness contracts the helpers anchor:
+ *  1. Balance is ALWAYS derived (never a mutable column).
+ *  2. Daily cap is enforced by `applyDailyCap` BEFORE the insert, so
+ *     the endpoint can decide truncate vs reject without holding a
+ *     SQL lock open.
+ *
+ * The idempotency-key builders are the single source of truth for the
+ * per-source key format documented in calibration §9. The unique
+ * index on `peones_ledger.idempotency_key` is the DB-level twin.
+ */
+
+import { createHash } from "node:crypto";
+
+import {
+  PEONES_DAILY_CAP_SOURCES,
+  type PeonesLedgerEventType,
+  type PeonesLedgerSource,
+  type PeonesLedgerRow,
+} from "./types";
+
+// ─────────────────────────────────────────────────────────────────
+// Wallet
+// ─────────────────────────────────────────────────────────────────
+
+const WALLET_REGEX = /^0x[0-9a-fA-F]{40}$/;
+
+/**
+ * Normalises and validates an EVM wallet address. Returns the
+ * lowercase, 0x-prefixed, 40-hex form ready for SQL writes. Throws
+ * `Error("invalid_wallet")` on malformed input — the calibration
+ * R9 mitigation lives here: every write/read path through the
+ * ledger service goes through this helper, so mixed-case drift
+ * cannot reach the DB.
+ */
+export function normalizeWallet(wallet: string): string {
+  if (typeof wallet !== "string" || !WALLET_REGEX.test(wallet)) {
+    throw new Error("invalid_wallet");
+  }
+  return wallet.toLowerCase();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Balance
+// ─────────────────────────────────────────────────────────────────
+
+/** Minimal shape consumed by `computeLedgerBalance`. Accepts any
+ *  superset of these fields so callers can pass full rows or just
+ *  the columns they have. */
+export type BalanceContributingEntry = Pick<
+  PeonesLedgerRow,
+  "event_type" | "amount"
+>;
+
+/**
+ * Computes the wallet balance from append-only entries. Mirrors the
+ * `peones_balances` SQL view exactly:
+ *  - `earn` and `adjustment` add `amount`.
+ *  - `spend` and `rollback` subtract `amount`.
+ *
+ * Unknown `event_type` values are ignored (the SQL CHECK constraint
+ * makes them impossible in practice; this helper stays defensive).
+ */
+export function computeLedgerBalance(
+  entries: readonly BalanceContributingEntry[],
+): number {
+  let balance = 0;
+  for (const e of entries) {
+    if (e.event_type === "earn" || e.event_type === "adjustment") {
+      balance += e.amount;
+    } else if (e.event_type === "spend" || e.event_type === "rollback") {
+      balance -= e.amount;
+    }
+  }
+  return balance;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Daily cap
+// ─────────────────────────────────────────────────────────────────
+
+export type DailyCapInput = {
+  /** What the caller wants to credit (e.g. 3 for a Daily Tactic
+   *  completion). Must be a positive integer. */
+  requestedAmount: number;
+  /** Total Peones already earned today from daily-family sources
+   *  for this wallet. Comes from `peones_balance_with_caps`. */
+  dailyEarnedCapped: number;
+  /** Cap value in effect for this UTC day. Sprint 3 ships at 10
+   *  (PEONES_DAILY_CAP). */
+  dailyCap: number;
+};
+
+export type DailyCapResult = {
+  /** What the endpoint should actually insert into the ledger. May
+   *  be 0 (full cap reached) or less than `requestedAmount` (partial
+   *  truncation). */
+  creditedAmount: number;
+  /** True iff the cap is met or exceeded AFTER this credit lands —
+   *  signals the endpoint to emit `peones_cap_reached`. */
+  capReached: boolean;
+  /** Headroom before this credit lands. Useful for telemetry. */
+  remainingBefore: number;
+  /** Headroom after this credit lands. */
+  remainingAfter: number;
+};
+
+/**
+ * Truncates an incoming earn against the daily cap. Pure math; the
+ * caller is responsible for actually applying the result.
+ *
+ * Behaviour:
+ *  - Headroom = max(0, cap - alreadyEarned).
+ *  - creditedAmount = min(requested, headroom).
+ *  - capReached = (alreadyEarned + credited) >= cap.
+ *
+ * Negative inputs throw `Error("invalid_cap_input")` — defensive
+ * because all three fields originate from server-trusted sources
+ * and a negative would be a logic bug, not a user-driven case.
+ */
+export function applyDailyCap(input: DailyCapInput): DailyCapResult {
+  const { requestedAmount, dailyEarnedCapped, dailyCap } = input;
+  if (
+    !Number.isFinite(requestedAmount) ||
+    !Number.isFinite(dailyEarnedCapped) ||
+    !Number.isFinite(dailyCap) ||
+    requestedAmount < 0 ||
+    dailyEarnedCapped < 0 ||
+    dailyCap < 0
+  ) {
+    throw new Error("invalid_cap_input");
+  }
+  const remainingBefore = Math.max(0, dailyCap - dailyEarnedCapped);
+  const creditedAmount = Math.min(requestedAmount, remainingBefore);
+  const remainingAfter = remainingBefore - creditedAmount;
+  const capReached = dailyEarnedCapped + creditedAmount >= dailyCap;
+  return { creditedAmount, capReached, remainingBefore, remainingAfter };
+}
+
+/**
+ * Returns true if the source is subject to the daily cap. Reuses the
+ * canonical TS constant — duplicating the list anywhere else would
+ * defeat the schema-sync guard test from commit A.
+ */
+export function isDailyCapSource(source: PeonesLedgerSource): boolean {
+  return (PEONES_DAILY_CAP_SOURCES as readonly string[]).includes(source);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Idempotency key builders
+// ─────────────────────────────────────────────────────────────────
+//
+// Format mirrors calibration §9 verbatim. Every builder normalises
+// the wallet via `normalizeWallet` so concurrent writes from
+// mixed-case clients still collapse onto a single key.
+//
+// Keep in lockstep with the SQL UNIQUE index on idempotency_key.
+
+export function buildDailyTacticIdempotencyKey(
+  wallet: string,
+  dayUtc: string,
+  puzzleId: string,
+): string {
+  return `daily_tactic:${normalizeWallet(wallet)}:${dayUtc}:${puzzleId}`;
+}
+
+export function buildDailyStreakBonusIdempotencyKey(
+  wallet: string,
+  dayUtc: string,
+  streak: number,
+): string {
+  return `daily_streak_bonus:${normalizeWallet(wallet)}:${dayUtc}:${streak}`;
+}
+
+export function buildTrainingExerciseIdempotencyKey(
+  wallet: string,
+  piece: string,
+  exerciseId: string,
+  bestStarsBefore: number,
+  bestStarsAfter: number,
+): string {
+  return `training:${normalizeWallet(wallet)}:${piece}:${exerciseId}:${bestStarsBefore}->${bestStarsAfter}`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Attestation hash
+// ─────────────────────────────────────────────────────────────────
+
+export type AttestationPayload = {
+  wallet: string;
+  event_type: PeonesLedgerEventType;
+  amount: number;
+  source: PeonesLedgerSource;
+  source_id: string | null;
+  day_utc: string;
+  idempotency_key: string;
+};
+
+/**
+ * Deterministic SHA-256 of the canonical economic payload. Returns
+ * `sha256:<hex>` so the audit dashboards can identify the algorithm
+ * by inspection (and we can rotate to a longer hash without breaking
+ * older rows).
+ *
+ * NOTE — `created_at` is NOT part of the hash. Including it would
+ * make retries with the same `idempotency_key` produce different
+ * hashes, defeating the audit story (calibration §10.2 + Wolfcito
+ * directive "no incluir campos que cambien entre retries").
+ *
+ * Pipe-delimited canonical string:
+ *   wallet | event_type | amount | source | source_id?? '' | day_utc | idempotency_key
+ *
+ * Wallet is normalised before hashing so two clients writing the same
+ * economic event with different casing produce the same attestation.
+ */
+export function buildAttestationHash(payload: AttestationPayload): string {
+  const normalized = normalizeWallet(payload.wallet);
+  const canonical = [
+    normalized,
+    payload.event_type,
+    payload.amount.toString(),
+    payload.source,
+    payload.source_id ?? "",
+    payload.day_utc,
+    payload.idempotency_key,
+  ].join("|");
+  const digest = createHash("sha256").update(canonical).digest("hex");
+  return `sha256:${digest}`;
+}
