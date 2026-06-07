@@ -15,6 +15,9 @@ import {
   emitPeonesBalanceViewed,
   emitPeonesCapReached,
   emitPeonesEarned,
+  emitPeonesSpendBlocked,
+  emitPeonesSpendFailed,
+  emitPeonesSpent,
 } from "@/lib/peones/telemetry";
 
 const mockTrack = vi.mocked(track);
@@ -164,4 +167,120 @@ describe("emitPeonesBalanceViewed", () => {
       );
     },
   );
+});
+
+describe("emitPeonesSpent — Sprint 4 commit D", () => {
+  it("emits peones_spent with the canonical payload", () => {
+    emitPeonesSpent({
+      target: "hint",
+      targetId: "rook:r-1:3",
+      requested: 1,
+      debited: 1,
+      newBalance: 9,
+      attestationHash: "sha256:abc",
+      duplicate: false,
+      proBypassApplied: false,
+    });
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledWith("peones_spent", {
+      target: "hint",
+      targetId: "rook:r-1:3",
+      requested: 1,
+      debited: 1,
+      newBalance: 9,
+      attestationHash: "sha256:abc",
+      duplicate: false,
+      proBypassApplied: false,
+    });
+  });
+
+  it("preserves duplicate flag verbatim", () => {
+    emitPeonesSpent({
+      target: "coach",
+      targetId: "game-42",
+      requested: 1,
+      debited: 1,
+      newBalance: 5,
+      attestationHash: "sha256:def",
+      duplicate: true,
+      proBypassApplied: false,
+    });
+    expect(mockTrack).toHaveBeenCalledWith(
+      "peones_spent",
+      expect.objectContaining({ duplicate: true }),
+    );
+  });
+
+  it("carries proBypassApplied through (commit G will set true)", () => {
+    emitPeonesSpent({
+      target: "retry",
+      targetId: "queen:q-2:7",
+      requested: 2,
+      debited: 0,
+      newBalance: 8,
+      attestationHash: "sha256:ghi",
+      duplicate: false,
+      proBypassApplied: true,
+    });
+    expect(mockTrack).toHaveBeenCalledWith(
+      "peones_spent",
+      expect.objectContaining({ proBypassApplied: true, debited: 0 }),
+    );
+  });
+});
+
+describe("emitPeonesSpendBlocked — Sprint 4 commit D", () => {
+  it("emits peones_spend_blocked with reason insufficient_balance", () => {
+    emitPeonesSpendBlocked({
+      target: "hint",
+      targetId: "rook:r-1:3",
+      requested: 1,
+      reason: "insufficient_balance",
+    });
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledWith("peones_spend_blocked", {
+      target: "hint",
+      targetId: "rook:r-1:3",
+      requested: 1,
+      reason: "insufficient_balance",
+    });
+  });
+});
+
+describe("emitPeonesSpendFailed — Sprint 4 commit D", () => {
+  it("emits peones_spend_failed with a freeform reason string", () => {
+    emitPeonesSpendFailed({
+      target: "coach",
+      targetId: "game-42",
+      requested: 1,
+      reason: "network",
+    });
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledWith("peones_spend_failed", {
+      target: "coach",
+      targetId: "game-42",
+      requested: 1,
+      reason: "network",
+    });
+  });
+
+  it.each([
+    "network",
+    "bad_response",
+    "ledger_write_failed",
+    "ledger_unavailable",
+    "rate_limited",
+    "invalid_input",
+  ] as const)("forwards reason=%s verbatim", (reason) => {
+    emitPeonesSpendFailed({
+      target: "hint",
+      targetId: "rook:r-1:3",
+      requested: 1,
+      reason,
+    });
+    expect(mockTrack).toHaveBeenLastCalledWith(
+      "peones_spend_failed",
+      expect.objectContaining({ reason }),
+    );
+  });
 });

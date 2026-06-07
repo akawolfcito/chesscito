@@ -21,6 +21,7 @@
  */
 
 import { track } from "@/lib/telemetry";
+import type { PeonesSpendTarget } from "./spend-service";
 import type { PeonesLedgerSource } from "./types";
 
 export type PeonesEarnedEventArgs = {
@@ -95,5 +96,86 @@ export function emitPeonesBalanceViewed(
     dailyEarnedCapped: args.dailyEarnedCapped,
     dailyCap: args.dailyCap,
     surface: args.surface,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Sprint 4 commit D — spend events
+// ─────────────────────────────────────────────────────────────────
+//
+// Three spend-side events fired by the FUTURE consumer (Hint button
+// in commit E, Coach integration in commit F). The submit helper
+// itself is pure — it returns the result and the consumer decides
+// which event to fire. This mirrors the earn-side pattern where
+// `submitTrainingExerciseEarn` / `submitDailyTacticEarn` do not emit.
+//
+// Why three events, not one with a status enum: dashboards prefer
+// non-conditional event names. Filtering by status in a single
+// `peones_spend` would hide the failure rate behind a downstream
+// query that may or may not be written.
+//
+// NOT emitted when `debited === 0` because of PRO bypass — that case
+// gets its own `peones_spend_bypassed` event in Sprint 4 commit G
+// where the PRO resolver lights up. Keeping it out of this commit
+// preserves the dashboard semantic "peones_spent always means real
+// Peones left the wallet".
+
+export type PeonesSpentEventArgs = {
+  target: PeonesSpendTarget;
+  targetId: string;
+  requested: number;
+  debited: number;
+  newBalance: number;
+  attestationHash: string;
+  duplicate: boolean;
+  proBypassApplied: boolean;
+};
+
+export function emitPeonesSpent(args: PeonesSpentEventArgs): void {
+  track("peones_spent", {
+    target: args.target,
+    targetId: args.targetId,
+    requested: args.requested,
+    debited: args.debited,
+    newBalance: args.newBalance,
+    attestationHash: args.attestationHash,
+    duplicate: args.duplicate,
+    proBypassApplied: args.proBypassApplied,
+  });
+}
+
+export type PeonesSpendBlockedEventArgs = {
+  target: PeonesSpendTarget;
+  targetId: string;
+  requested: number;
+  reason: "insufficient_balance";
+};
+
+export function emitPeonesSpendBlocked(
+  args: PeonesSpendBlockedEventArgs,
+): void {
+  track("peones_spend_blocked", {
+    target: args.target,
+    targetId: args.targetId,
+    requested: args.requested,
+    reason: args.reason,
+  });
+}
+
+export type PeonesSpendFailedEventArgs = {
+  target: PeonesSpendTarget;
+  targetId: string;
+  requested: number;
+  reason: string;
+};
+
+export function emitPeonesSpendFailed(
+  args: PeonesSpendFailedEventArgs,
+): void {
+  track("peones_spend_failed", {
+    target: args.target,
+    targetId: args.targetId,
+    requested: args.requested,
+    reason: args.reason,
   });
 }
