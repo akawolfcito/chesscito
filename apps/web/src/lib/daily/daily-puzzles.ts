@@ -508,3 +508,86 @@ export function getDailyTactic(today: string = todayUtc()): DailyTacticData {
   const idx = hashDate(today) % DAILY_TACTIC_PUZZLES.length;
   return DAILY_TACTIC_PUZZLES[idx];
 }
+
+/**
+ * Slot identifier for the PRO-exclusive Daily Tactic extras introduced
+ * in Sprint 2 commit F (Training Economy Alpha 2026-06-07). Two slots
+ * fire per week, on UTC Friday and UTC Sunday respectively. The slot
+ * id becomes part of telemetry + future UI label strings.
+ */
+export type ProExtraSlot = "friday_premium" | "sunday_showdown";
+
+export type ProExtraPuzzle = {
+  slot: ProExtraSlot;
+  puzzle: DailyTacticData;
+};
+
+/**
+ * Index of the canonical day puzzle. Exposed so callers (and the PRO
+ * extra collision check below) can compare against the same value
+ * getDailyTactic returns without re-hashing.
+ */
+function canonicalIndexForDay(today: string): number {
+  return hashDate(today) % DAILY_TACTIC_PUZZLES.length;
+}
+
+/**
+ * Picks a puzzle from the pool using a salted hash, then shifts to
+ * the next index modulo the pool length if the salted pick collides
+ * with the canonical daily puzzle. This guarantees a PRO user never
+ * sees the same puzzle as both their canonical daily and a same-day
+ * extra. Deterministic per (today, salt) so all PRO users on the
+ * same date see the same extras.
+ */
+function pickProExtra(today: string, salt: string): DailyTacticData {
+  const len = DAILY_TACTIC_PUZZLES.length;
+  const canonical = canonicalIndexForDay(today);
+  const salted = hashDate(`${today}|${salt}`) % len;
+  const idx = salted === canonical ? (salted + 1) % len : salted;
+  return DAILY_TACTIC_PUZZLES[idx];
+}
+
+/**
+ * Returns PRO-exclusive Daily Tactic extras for the given UTC date.
+ * Sprint 2 commit F — **plumbing only**. NO UI consumer renders these
+ * yet. The helper is the public contract Sprint 2.1 (or a later
+ * visual cluster) will wire into the HUB rail. Future consumers
+ * MUST gate the result with `useIsProActive()` at the callsite —
+ * this helper does not gate on PRO status itself so it stays
+ * testable as a pure function.
+ *
+ * Schedule:
+ *  - UTC Friday (dayOfWeek === 5): 1 extra with slot "friday_premium"
+ *  - UTC Sunday (dayOfWeek === 0): 1 extra with slot "sunday_showdown"
+ *  - Other days: empty array
+ *
+ * Total: 2 extras per week, both drawn from the existing 30-puzzle
+ * pool via a salted hash. NO new authoring committed for Sprint 2 —
+ * exclusive PRO content is a Sprint 4 (or later) decision once the
+ * hábit-formation KPI from Sprint 2 retrospective lands.
+ */
+export function getProDailyExtras(
+  today: string = todayUtc(),
+): ProExtraPuzzle[] {
+  const dow = utcDayOfWeek(today);
+  const extras: ProExtraPuzzle[] = [];
+  if (dow === 5) {
+    extras.push({
+      slot: "friday_premium",
+      puzzle: pickProExtra(today, "friday-premium"),
+    });
+  }
+  if (dow === 0) {
+    extras.push({
+      slot: "sunday_showdown",
+      puzzle: pickProExtra(today, "sunday-showdown"),
+    });
+  }
+  return extras;
+}
+
+function utcDayOfWeek(today: string): number {
+  // "YYYY-MM-DD" → 0..6 (Sunday=0, Saturday=6) in UTC, matching
+  // Date.prototype.getUTCDay().
+  return new Date(`${today}T00:00:00Z`).getUTCDay();
+}

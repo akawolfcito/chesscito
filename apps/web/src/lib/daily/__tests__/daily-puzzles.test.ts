@@ -10,7 +10,9 @@ import { getValidTargets } from "@/lib/game/board";
 import {
   DAILY_TACTIC_PUZZLES,
   getDailyTactic,
+  getProDailyExtras,
   getPuzzleDifficulty,
+  type ProExtraSlot,
   type PuzzleDifficulty,
 } from "@/lib/daily/daily-puzzles";
 
@@ -345,5 +347,111 @@ describe("daily-tactic-puzzles — difficulty", () => {
       counts[getPuzzleDifficulty(puzzle)] += 1;
     }
     expect(counts).toEqual({ easy: 18, medium: 10, hard: 2 });
+  });
+});
+
+/**
+ * Sprint 2 commit F — PRO extras Friday + Sunday. Plumbing-only
+ * helper; no UI consumer yet. These tests pin the contract so a
+ * future visual cluster can wire the helper without re-litigating
+ * the schedule, slot ids, or deterministic-per-date guarantee.
+ */
+describe("daily-tactic-puzzles — PRO extras", () => {
+  // 2026-06-07 is a UTC Sunday → 1 extra, slot "sunday_showdown".
+  // 2026-06-12 is a UTC Friday → 1 extra, slot "friday_premium".
+  // 2026-06-08..2026-06-11 (Mon-Thu) + 2026-06-13 (Sat) → no extras.
+  const KNOWN_FRIDAY = "2026-06-12";
+  const KNOWN_SUNDAY = "2026-06-07";
+  const KNOWN_MONDAY = "2026-06-08";
+  const KNOWN_SATURDAY = "2026-06-13";
+
+  it("returns 1 extra on UTC Friday with slot 'friday_premium'", () => {
+    const extras = getProDailyExtras(KNOWN_FRIDAY);
+    expect(extras).toHaveLength(1);
+    expect(extras[0]!.slot).toBe<ProExtraSlot>("friday_premium");
+  });
+
+  it("returns 1 extra on UTC Sunday with slot 'sunday_showdown'", () => {
+    const extras = getProDailyExtras(KNOWN_SUNDAY);
+    expect(extras).toHaveLength(1);
+    expect(extras[0]!.slot).toBe<ProExtraSlot>("sunday_showdown");
+  });
+
+  it("returns no extras on UTC Monday", () => {
+    expect(getProDailyExtras(KNOWN_MONDAY)).toEqual([]);
+  });
+
+  it("returns no extras on UTC Saturday", () => {
+    expect(getProDailyExtras(KNOWN_SATURDAY)).toEqual([]);
+  });
+
+  it("is deterministic — same date yields the same extra puzzle id", () => {
+    const a = getProDailyExtras(KNOWN_FRIDAY);
+    const b = getProDailyExtras(KNOWN_FRIDAY);
+    expect(a[0]!.puzzle.id).toBe(b[0]!.puzzle.id);
+  });
+
+  it("extra puzzle is always one of the 30 pool entries", () => {
+    const ids = new Set(DAILY_TACTIC_PUZZLES.map((p) => p.id));
+    const friday = getProDailyExtras(KNOWN_FRIDAY);
+    const sunday = getProDailyExtras(KNOWN_SUNDAY);
+    expect(ids.has(friday[0]!.puzzle.id)).toBe(true);
+    expect(ids.has(sunday[0]!.puzzle.id)).toBe(true);
+  });
+
+  it("never collides with the canonical daily puzzle on the same date", () => {
+    // Sweep an entire 4-week window (28 days) covering 4 Fridays + 4
+    // Sundays. For each one, the canonical daily and the PRO extra
+    // MUST differ. The salted-hash + (idx+1)%len shift is what
+    // guarantees this; the test pins the contract.
+    const start = new Date("2026-06-01T00:00:00Z");
+    for (let i = 0; i < 28; i++) {
+      const d = new Date(start);
+      d.setUTCDate(d.getUTCDate() + i);
+      const today = d.toISOString().slice(0, 10);
+      const canonical = getDailyTactic(today);
+      for (const extra of getProDailyExtras(today)) {
+        expect(
+          extra.puzzle.id,
+          `${today} (${extra.slot}) collided with canonical ${canonical.id}`,
+        ).not.toBe(canonical.id);
+      }
+    }
+  });
+
+  it("yields varied puzzles across consecutive Fridays (hash variance proof)", () => {
+    // 4 consecutive UTC Fridays starting 2026-06-12.
+    const fridays = ["2026-06-12", "2026-06-19", "2026-06-26", "2026-07-03"];
+    const ids = new Set<string>();
+    for (const f of fridays) ids.add(getProDailyExtras(f)[0]!.puzzle.id);
+    // 4 Fridays should not all collapse to the same puzzle. ≥2 is a
+    // soft signal that the salted hash is doing its job.
+    expect(ids.size).toBeGreaterThanOrEqual(2);
+  });
+
+  it("returns at most 1 entry per day (Friday OR Sunday, never both same UTC day)", () => {
+    // No UTC date is simultaneously Friday and Sunday, so the helper
+    // tops out at 1 extra. This test is a contract pin: if a future
+    // day type is added (e.g., a midweek bonus), this assertion is
+    // expected to be updated rather than silently broken.
+    const fridayExtras = getProDailyExtras(KNOWN_FRIDAY);
+    const sundayExtras = getProDailyExtras(KNOWN_SUNDAY);
+    expect(fridayExtras.length).toBeLessThanOrEqual(1);
+    expect(sundayExtras.length).toBeLessThanOrEqual(1);
+  });
+
+  it("delivers exactly 2 extras per UTC week (1 Friday + 1 Sunday)", () => {
+    // Pick any UTC week boundary, walk 7 days, sum extras. Total
+    // must be 2 — one for Friday, one for Sunday. This is the
+    // commitment that justifies the "2 extras per week" promise
+    // to Wolfcito + the PRO product copy in the decisions doc.
+    const start = new Date("2026-06-07T00:00:00Z"); // UTC Sunday
+    let total = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start);
+      d.setUTCDate(d.getUTCDate() + i);
+      total += getProDailyExtras(d.toISOString().slice(0, 10)).length;
+    }
+    expect(total).toBe(2);
   });
 });
