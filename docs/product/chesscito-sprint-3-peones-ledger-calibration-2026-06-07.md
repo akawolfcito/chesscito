@@ -71,9 +71,9 @@ Defaults oficiales — usar salvo bloqueo real:
 ```sql
 create table public.peones_ledger (
   id                bigserial primary key,
-  wallet            text        not null,
+  wallet            text        not null check (wallet ~ '^0x[0-9a-f]{40}$'),
   event_type        text        not null check (event_type in ('earn', 'spend', 'adjustment', 'rollback')),
-  amount            integer     not null check (amount <> 0),
+  amount            integer     not null check (amount > 0),
   source            text        not null,
   source_id         text,
   idempotency_key   text        not null,
@@ -85,8 +85,11 @@ create table public.peones_ledger (
 ```
 
 **Reglas:**
-- `wallet` se normaliza a **lowercase** en la app antes de write (evita conflictos checksum/EIP-55). Validador SQL extra opcional `check (wallet ~ '^0x[0-9a-f]{40}$')`.
-- `amount` para `earn` y `spend` es **positivo** (signo lo da `event_type`). `adjustment` y `rollback` permiten cualquier signo no-cero.
+- `wallet` se normaliza a **lowercase** en la app antes de write (evita conflictos checksum/EIP-55). El validador SQL `check (wallet ~ '^0x[0-9a-f]{40}$')` es el cinturón de seguridad — atrapa accidentes de write si algún path olvida normalizar.
+- **`amount` SIEMPRE es positivo en disco** (`check (amount > 0)`). El signo económico lo determina **únicamente `event_type`**:
+  - `earn` y `adjustment` → suman al balance
+  - `spend` y `rollback` → restan del balance
+  - Cero columna mutable de balance — siempre derivado por SUM
 - `source` enum lógico: `daily_tactic`, `daily_streak_bonus`, `daily_lab`, `exercise_completion`, `senda_milestone`, `pack_purchase`, `coach`, `hint`, `retry`, `save_game`, `labyrinth_key`, `admin_grant`.
 - `day_utc` se computa en el server al insert; necesario para cap diario.
 
@@ -383,23 +386,28 @@ Determinístico, computado en el cliente, validado en server:
 
 ### 10.1 Construcción
 
-Server-generated, determinístico desde el payload:
+Server-generated, determinístico desde el payload canónico **sin `created_at`**:
 
 ```ts
-attestation_hash = sha256(
-  `${wallet}|${event_type}|${amount}|${source}|${source_id ?? ''}|${day_utc}|${idempotency_key}|${created_at_iso}`
+attestation_hash = "sha256:" + sha256_hex(
+  `${normalize(wallet)}|${event_type}|${amount}|${source}|${source_id ?? ''}|${day_utc}|${idempotency_key}`
 )
 ```
 
 **Por qué cada componente:**
-- `wallet`: bind a la wallet específica (no transferible).
+- `wallet` (normalizada lowercase antes del hash): bind a la wallet específica, casing-agnóstico.
 - `event_type`, `amount`, `source`: payload económico canónico.
 - `source_id`: distingue dos earns idénticos en monto pero distinta fuente real.
 - `day_utc`: bind al día.
 - `idempotency_key`: garantía de uniqueness server-side.
-- `created_at_iso`: rompe colisiones cuando otras col coincidan (jamás dos rows con el mismo created_at exact).
 
-### 10.2 Determinismo vs server-generated
+### 10.2 Por qué `created_at` NO se incluye (decisión Sprint 3 commit B)
+
+- Retries con la **misma idempotency_key** deben producir el **mismo attestation hash**. Si `created_at` fuera parte del hash, dos retries que apuntan al mismo evento económico generarían hashes distintos por la diferencia de milisegundos del wall-clock — eso rompe la auditoría.
+- La unicidad de la row la garantiza el `unique index` sobre `idempotency_key` en DB, no el hash.
+- El prefijo `sha256:` permite rotar a un algoritmo más fuerte en el futuro sin romper rows viejos (audit dashboards leen el prefijo y eligen el verifier).
+
+### 10.3 Determinismo vs server-generated
 
 - **Server-generated** — el hash se calcula durante el INSERT, persistido en la row. Cliente recibe el hash en el response.
 - **Determinístico sobre el payload server-known.** Cliente NO computa attestation hash (no necesita). Sirve para auditoría server-side + future on-chain anclaje opcional.
