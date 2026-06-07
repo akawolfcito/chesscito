@@ -3056,6 +3056,21 @@ export const RESCUE_MODAL_COPY = {
  *  Forcing-Function-for-Catalog-Awareness anchor (see
  *  docs/design-patterns/game-economy-patterns.md). Pinning is
  *  non-negotiable. */
+
+/**
+ * Sprint 4 commit E — PeonesHintButton (piece exercises) i18n.
+ * Six short keys; no rich content. EN authoring source for the
+ * `PEONES_HINT_COPY` namespace consumed by `useTranslations`.
+ */
+export const PEONES_HINT_COPY = {
+  button: "Hint \u00b7 1 Peón",
+  guest: "Connect to use Peones hints",
+  insufficient: "Not enough Peones",
+  error: "Hint unavailable right now",
+  success: "Hint unlocked",
+  hint: "Try moving closer to the target.",
+} as const;
+
 export const WELCOME_PACK_COPY = {
   tile: {
     title: "Welcome gift",

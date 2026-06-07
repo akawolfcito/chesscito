@@ -29,6 +29,7 @@ import { useFailRescue } from "@/lib/exercises/use-fail-rescue";
 import { bumpStreak, resetStreak, useStreak } from "@/lib/exercises/use-streak";
 import { useWelcomePackClaim } from "@/lib/shop/use-welcome-pack-claim";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
+import { PeonesHintButton } from "@/components/peones/peones-hint-button";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
@@ -2131,7 +2132,23 @@ export function ExercisesScreen({
               />
             ) : null
           }
-          actionRowLeft={<DailyTacticSlot />}
+          actionRowLeft={
+            <div className="flex flex-col items-center gap-1">
+              {/* Sprint 4 commit E — first spend surface. The hint
+                  affordance lives next to the Daily slot so it stays
+                  bottom-anchored without restructuring the layout.
+                  attemptSeq is hard-coded to 1 in this commit; retry-
+                  attempt tracking lights it up in a later commit so
+                  the user can pay for a fresh hint per attempt. */}
+              <PeonesHintButton
+                piece={selectedPiece}
+                exerciseId={currentExercise.id}
+                attemptSeq={1}
+                disabled={Boolean(activeLabyrinth) || phase !== "ready"}
+              />
+              <DailyTacticSlot />
+            </div>
+          }
           actionRowRight={
             <MiniArenaBridgeSlot
               setup={MINI_ARENA_SETUPS[0]}
