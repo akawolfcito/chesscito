@@ -62,6 +62,7 @@ export type PeonesLedgerSource =
   | "exercise_completion"
   | "senda_milestone"
   | "pack_purchase"
+  | "welcome_pack"
   // Spend
   | "coach"
   | "hint"

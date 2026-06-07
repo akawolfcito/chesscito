@@ -29,16 +29,25 @@ vi.mock("@/lib/server/logger", () => ({
   }),
 }));
 
+// Sprint 4 commit J — welcome pack helper. Default = no-op (returns
+// false / "already seeded") so legacy Sprint 3 tests behave bit-
+// identically. Specific welcome-pack-seeded tests override per-test.
+vi.mock("@/lib/peones/welcome-pack-server", () => ({
+  ensurePeonesWelcomePack: vi.fn(async () => false),
+}));
+
 import { GET } from "../route";
 import {
   enforceOrigin,
   enforceReadRateLimit,
 } from "@/lib/server/demo-signing";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { ensurePeonesWelcomePack } from "@/lib/peones/welcome-pack-server";
 
 const mockedOrigin = vi.mocked(enforceOrigin);
 const mockedRate = vi.mocked(enforceReadRateLimit);
 const mockedSupabase = vi.mocked(getSupabaseServer);
+const mockedWelcomePack = vi.mocked(ensurePeonesWelcomePack);
 
 const VALID_WALLET = "0xabcdef0123456789abcdef0123456789abcdef01";
 const VALID_WALLET_UPPER = "0xABCDEF0123456789ABCDEF0123456789ABCDEF01";
@@ -310,5 +319,76 @@ describe("GET /api/peones/balance — read-only contract", () => {
     );
     expect(from).toHaveBeenCalledTimes(1);
     expect(from).toHaveBeenCalledWith("peones_balances");
+  });
+});
+
+describe("GET /api/peones/balance — welcome pack seed (Sprint 4 commit J)", () => {
+  beforeEach(() => {
+    mockedOrigin.mockReset();
+    mockedRate.mockReset();
+    mockedSupabase.mockReset();
+    mockedWelcomePack.mockReset();
+    mockedOrigin.mockImplementation(() => {});
+    mockedRate.mockResolvedValue(undefined);
+    mockedWelcomePack.mockResolvedValue(false);
+  });
+
+  it("calls ensurePeonesWelcomePack with the normalized wallet before reading balance", async () => {
+    mockedWelcomePack.mockResolvedValueOnce(true);
+    const { supabase } = buildSupabaseMock({
+      rpcResult: {
+        data: [{ balance: 1, daily_earned_capped: 0, daily_cap: 10 }],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(supabase as never);
+    const res = await GET(makeRequest(VALID_WALLET_UPPER));
+    expect(res.status).toBe(200);
+    expect(mockedWelcomePack).toHaveBeenCalledTimes(1);
+    expect(mockedWelcomePack).toHaveBeenCalledWith(supabase, VALID_WALLET);
+  });
+
+  it("fresh wallet → response carries balance:1 reflecting the seed", async () => {
+    mockedWelcomePack.mockResolvedValueOnce(true);
+    const { supabase } = buildSupabaseMock({
+      rpcResult: {
+        data: [{ balance: 1, daily_earned_capped: 0, daily_cap: 10 }],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(supabase as never);
+    const res = await GET(makeRequest(VALID_WALLET));
+    const body = await res.json();
+    expect(body.balance).toBe(1);
+  });
+
+  it("returning wallet (already seeded) → ensure called but no fresh insert observed", async () => {
+    mockedWelcomePack.mockResolvedValueOnce(false);
+    const { supabase } = buildSupabaseMock({
+      rpcResult: {
+        data: [{ balance: 12, daily_earned_capped: 3, daily_cap: 10 }],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(supabase as never);
+    const res = await GET(makeRequest(VALID_WALLET));
+    const body = await res.json();
+    expect(body.balance).toBe(12);
+    expect(mockedWelcomePack).toHaveBeenCalledTimes(1);
+  });
+
+  it("helper rejection does NOT block balance read (fail-soft defense-in-depth)", async () => {
+    mockedWelcomePack.mockRejectedValueOnce(new Error("transient"));
+    const { supabase } = buildSupabaseMock({
+      rpcResult: {
+        data: [{ balance: 0, daily_earned_capped: 0, daily_cap: 10 }],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(supabase as never);
+    const res = await GET(makeRequest(VALID_WALLET));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.balance).toBe(0);
   });
 });

@@ -32,7 +32,22 @@ const MIGRATION_PATH = join(
   "20260607000000_peones_ledger_init.sql",
 );
 
+/** Sprint 4 commit J added `welcome_pack` to the source CHECK via a
+ *  follow-up migration. The schema-sync guard merges that migration's
+ *  source list into the original one so the assertion captures the
+ *  effective DB state, not just the Sprint 3 snapshot. */
+const WELCOME_PACK_MIGRATION_PATH = join(
+  process.cwd(),
+  "supabase",
+  "migrations",
+  "20260608010000_peones_welcome_pack_source.sql",
+);
+
 const migration = readFileSync(MIGRATION_PATH, "utf-8");
+const welcomePackMigration = readFileSync(
+  WELCOME_PACK_MIGRATION_PATH,
+  "utf-8",
+);
 
 /**
  * Extracts the values inside `check (column in (...))` for the given
@@ -71,6 +86,7 @@ const TS_SOURCES: PeonesLedgerSource[] = [
   "exercise_completion",
   "senda_milestone",
   "pack_purchase",
+  "welcome_pack",
   "coach",
   "hint",
   "retry",
@@ -87,9 +103,22 @@ describe("peones_ledger — schema ↔ types sync", () => {
   });
 
   it("source SQL check matches the TypeScript PeonesLedgerSource union", () => {
-    const sql = new Set(extractCheckList("source"));
+    // Sprint 3 snapshot.
+    const sqlOriginal = new Set(extractCheckList("source"));
+    // Sprint 4 commit J follow-up — parses the welcome_pack migration
+    // and unions in its CHECK list so the test reflects the effective
+    // DB state after both migrations apply.
+    const wpMatch = welcomePackMigration.match(
+      /check\s*\(\s*source\s+in\s*\(([\s\S]*?)\)\s*\)/i,
+    );
+    expect(wpMatch, "welcome_pack migration must declare a CHECK list").not.toBeNull();
+    const wpSources = wpMatch![1]!
+      .split(",")
+      .map((t) => t.trim().replace(/^'(.*)'$/, "$1"))
+      .filter(Boolean);
+    const effective = new Set([...sqlOriginal, ...wpSources]);
     const ts = new Set(TS_SOURCES);
-    expect(sql).toEqual(ts);
+    expect(effective).toEqual(ts);
   });
 
   it("PEONES_DAILY_CAP_SOURCES is a subset of PeonesLedgerSource", () => {

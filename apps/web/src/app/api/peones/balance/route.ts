@@ -24,6 +24,7 @@ import { NextResponse } from "next/server";
 
 import { normalizeWallet } from "@/lib/peones/ledger-service";
 import { PEONES_DAILY_CAP } from "@/lib/peones/types";
+import { ensurePeonesWelcomePack } from "@/lib/peones/welcome-pack-server";
 import {
   enforceOrigin,
   enforceReadRateLimit,
@@ -72,6 +73,26 @@ export async function GET(req: Request) {
   }
 
   const today = todayUtcDate();
+
+  // Sprint 4 commit J — welcome pack seed. Runs BEFORE the balance
+  // read so the response reflects the +1 Peón when applicable.
+  // Idempotent forever via the unique index on idempotency_key, and
+  // fail-soft: any insert error (network / transient outage) is
+  // swallowed and the balance read still serves the user. The
+  // helper itself never throws, but we wrap in try/catch as
+  // defense-in-depth — a contract regression in the helper must
+  // never break the balance read for production users.
+  try {
+    const seeded = await ensurePeonesWelcomePack(supabase, wallet);
+    if (seeded) {
+      log.info("peones_welcome_pack_seeded", { wallet });
+    }
+  } catch (e) {
+    log.warn("peones_welcome_pack_threw", {
+      wallet,
+      reason: (e as Error)?.message,
+    });
+  }
 
   // Cap + balance in one round-trip. The SQL function returns a TABLE
   // (single row) per the migration in commit A.
