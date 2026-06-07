@@ -18,13 +18,14 @@
  *
  * Visual family: reuses the canonical `candy-tray-pill hub-hud-pill`
  * chip class shared by the trophies chip and the connect chip in
- * `hub-scaffold.tsx`. The CandyIcon "star" matches the Peones =
- * Estrellas thesis from the engagement direction doc.
+ * `hub-scaffold.tsx`. The icon is the white pawn sprite reused from
+ * Training Path (`/art/redesign/pieces/w-pawn.*`) so the chip reads
+ * as "Peones currency" instead of clashing visually with the stars
+ * chip. TODO(post-Sprint 4): swap for a dedicated Peón-moneda icon
+ * once design ships one — keep the AVIF/WebP/PNG fallback chain.
  */
 
 import { useEffect, useRef } from "react";
-
-import { CandyIcon } from "@/components/redesign/candy-icon";
 
 import {
   emitPeonesBalanceViewed,
@@ -82,10 +83,16 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
       data-testid="peones-balance-chip"
       data-state={state.kind}
     >
-      <CandyIcon
-        name="star"
-        className="candy-tray-pill-icon candy-tray-pill-icon--floating"
-      />
+      <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
+        <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+        <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+        <img
+          src="/art/redesign/pieces/w-pawn.png"
+          alt=""
+          aria-hidden="true"
+          className="block h-full w-full object-contain"
+        />
+      </picture>
       <span className="tabular-nums">{label}</span>
     </div>
   );
