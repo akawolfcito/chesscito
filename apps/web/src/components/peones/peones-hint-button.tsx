@@ -40,6 +40,7 @@ import { useAccount } from "wagmi";
 import { submitPeonesSpend } from "@/lib/peones/spend-client";
 import {
   emitPeonesSpendBlocked,
+  emitPeonesSpendBypassed,
   emitPeonesSpendFailed,
   emitPeonesSpent,
 } from "@/lib/peones/telemetry";
@@ -117,11 +118,26 @@ export function PeonesHintButton({
     });
 
     if (result.kind === "success") {
-      // duplicate=true means the user already paid earlier this
-      // attempt; reveal again without re-emitting peones_spent for a
-      // zero-delta debit. The endpoint already returned debited > 0
-      // on the FIRST call, which is when the event fired.
-      if (result.debited > 0) {
+      // Sprint 4 commit G — emit precedence:
+      //   1. PRO bypass applied  → peones_spend_bypassed
+      //   2. real debit (debited>0) → peones_spent
+      //   3. duplicate fresh row (debited=0, no bypass) → no emit
+      if (
+        result.proBypassApplied &&
+        result.quotaLimit != null &&
+        result.quotaUsed != null
+      ) {
+        emitPeonesSpendBypassed({
+          target: "hint",
+          targetId,
+          requested: 1,
+          debited: 0,
+          newBalance: result.newBalance,
+          attestationHash: result.attestationHash,
+          quotaUsed: result.quotaUsed,
+          quotaLimit: result.quotaLimit,
+        });
+      } else if (result.debited > 0) {
         emitPeonesSpent({
           target: "hint",
           targetId,

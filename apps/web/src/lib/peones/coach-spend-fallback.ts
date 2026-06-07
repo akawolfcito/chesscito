@@ -26,6 +26,7 @@
 import { submitPeonesSpend } from "@/lib/peones/spend-client";
 import {
   emitPeonesSpendBlocked,
+  emitPeonesSpendBypassed,
   emitPeonesSpendFailed,
   emitPeonesSpent,
 } from "@/lib/peones/telemetry";
@@ -95,10 +96,23 @@ export async function attemptCoachSpendWithPeones(
   });
 
   if (result.kind === "success") {
-    // duplicate=true → no fresh debit happened (the original row
-    // covered it). Skip the `peones_spent` emit so dashboards keep
-    // "spent" === "real Peones left the wallet".
-    if (result.debited > 0) {
+    // Sprint 4 commit G — emit precedence:
+    //   1. PRO bypass applied  → `peones_spend_bypassed`
+    //   2. Real debit (debited>0) → `peones_spent`
+    //   3. duplicate fresh row (debited=0, no bypass) → no emit
+    //      (the original `peones_spent` already fired)
+    if (result.proBypassApplied && result.quotaLimit != null && result.quotaUsed != null) {
+      emitPeonesSpendBypassed({
+        target: "coach",
+        targetId,
+        requested: 1,
+        debited: 0,
+        newBalance: result.newBalance,
+        attestationHash: result.attestationHash,
+        quotaUsed: result.quotaUsed,
+        quotaLimit: result.quotaLimit,
+      });
+    } else if (result.debited > 0) {
       emitPeonesSpent({
         target: "coach",
         targetId,

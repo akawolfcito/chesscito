@@ -17,6 +17,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/peones/telemetry", () => ({
   emitPeonesSpent: vi.fn(),
   emitPeonesSpendBlocked: vi.fn(),
+  emitPeonesSpendBypassed: vi.fn(),
   emitPeonesSpendFailed: vi.fn(),
 }));
 
@@ -26,6 +27,7 @@ import {
 } from "@/lib/peones/coach-spend-fallback";
 import {
   emitPeonesSpendBlocked,
+  emitPeonesSpendBypassed,
   emitPeonesSpendFailed,
   emitPeonesSpent,
 } from "@/lib/peones/telemetry";
@@ -33,6 +35,7 @@ import type { PeonesSpendResult } from "@/lib/peones/spend-client";
 
 const mockedSpent = vi.mocked(emitPeonesSpent);
 const mockedBlocked = vi.mocked(emitPeonesSpendBlocked);
+const mockedBypassed = vi.mocked(emitPeonesSpendBypassed);
 const mockedFailed = vi.mocked(emitPeonesSpendFailed);
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
@@ -41,6 +44,7 @@ const G = "550e8400-e29b-41d4-a716-446655440000";
 beforeEach(() => {
   mockedSpent.mockReset();
   mockedBlocked.mockReset();
+  mockedBypassed.mockReset();
   mockedFailed.mockReset();
 });
 afterEach(() => {
@@ -72,6 +76,8 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
       ledgerId: 99,
       duplicate: false,
       proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
     } satisfies PeonesSpendResult);
 
     const result = await attemptCoachSpendWithPeones({
@@ -112,6 +118,8 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
       ledgerId: 99,
       duplicate: false,
       proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
     } satisfies PeonesSpendResult);
 
     await attemptCoachSpendWithPeones({
@@ -143,6 +151,8 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
       ledgerId: 99,
       duplicate: true,
       proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
     } satisfies PeonesSpendResult);
 
     const result = await attemptCoachSpendWithPeones({
@@ -207,5 +217,79 @@ describe("attemptCoachSpendWithPeones — failure paths", () => {
     });
     expect(mockedSpent).not.toHaveBeenCalled();
     expect(mockedBlocked).not.toHaveBeenCalled();
+  });
+});
+
+describe("attemptCoachSpendWithPeones — PRO bypass (Sprint 4 commit G)", () => {
+  it("proBypassApplied=true + quota fields: emits peones_spend_bypassed, NOT peones_spent", async () => {
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "success",
+      wallet: W,
+      target: "coach",
+      targetId: G,
+      requested: 1,
+      debited: 0,
+      newBalance: 4,
+      attestationHash: "sha256:bypass-1",
+      ledgerId: 101,
+      duplicate: false,
+      proBypassApplied: true,
+      quotaUsed: 3,
+      quotaLimit: 5,
+    } satisfies PeonesSpendResult);
+
+    const result = await attemptCoachSpendWithPeones({
+      wallet: W,
+      gameId: G,
+      submitImpl,
+    });
+
+    expect(result.kind).toBe("paid");
+    if (result.kind === "paid") {
+      expect(result.debited).toBe(0);
+      expect(result.proBypassApplied).toBe(true);
+    }
+    expect(mockedBypassed).toHaveBeenCalledTimes(1);
+    expect(mockedBypassed).toHaveBeenCalledWith({
+      target: "coach",
+      targetId: G,
+      requested: 1,
+      debited: 0,
+      newBalance: 4,
+      attestationHash: "sha256:bypass-1",
+      quotaUsed: 3,
+      quotaLimit: 5,
+    });
+    expect(mockedSpent).not.toHaveBeenCalled();
+  });
+
+  it("proBypassApplied=true but quota fields missing: falls back to spent emit gate (defensive)", async () => {
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "success",
+      wallet: W,
+      target: "coach",
+      targetId: G,
+      requested: 1,
+      debited: 0,
+      newBalance: 4,
+      attestationHash: "sha256:bypass-1",
+      ledgerId: 101,
+      duplicate: false,
+      proBypassApplied: true,
+      quotaUsed: null,
+      quotaLimit: null,
+    } satisfies PeonesSpendResult);
+
+    await attemptCoachSpendWithPeones({
+      wallet: W,
+      gameId: G,
+      submitImpl,
+    });
+
+    // Neither event fires — spent gated on debited>0, bypassed gated
+    // on quota fields. Safe silence is preferable to emitting an
+    // event with null props.
+    expect(mockedBypassed).not.toHaveBeenCalled();
+    expect(mockedSpent).not.toHaveBeenCalled();
   });
 });

@@ -30,10 +30,23 @@ vi.mock("@/lib/server/logger", () => ({
   }),
 }));
 
+// Sprint 4 commit G — PRO bypass resolver mock. Default: free user
+// (apply=false, reason=not_pro) so every legacy test from commit C
+// keeps its bit-identical behaviour.
+vi.mock("@/lib/peones/pro-bypass", () => ({
+  resolveProBypass: vi.fn(async () => ({
+    apply: false,
+    proActive: false,
+    reason: "not_pro",
+  })),
+}));
+
 import { POST } from "../route";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { resolveProBypass } from "@/lib/peones/pro-bypass";
 
 const mockedSupabase = vi.mocked(getSupabaseServer);
+const mockedResolveBypass = vi.mocked(resolveProBypass);
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
 
@@ -316,5 +329,131 @@ describe("POST /api/peones/spend — RPC error mapping", () => {
     const res = await POST(makeRequest(baseBody()));
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ error: "ledger_write_failed" });
+  });
+});
+
+describe("POST /api/peones/spend — PRO bypass (Sprint 4 commit G)", () => {
+  it("free user (default mock): p_apply_pro_bypass=false, no quota in response", async () => {
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_apply_pro_bypass).toBe(false);
+    const body = await res.json();
+    expect(body.quotaUsed).toBeNull();
+    expect(body.quotaLimit).toBeNull();
+  });
+
+  it("PRO under quota: p_apply_pro_bypass=true, quotaUsed=before+1, quotaLimit forwarded", async () => {
+    mockedResolveBypass.mockResolvedValueOnce({
+      apply: true,
+      proActive: true,
+      quotaLimit: 20,
+      quotaUsedBefore: 4,
+      quotaRemainingBefore: 16,
+    });
+    const { client, captured } = buildSupabaseMock({
+      rpcResult: {
+        data: [
+          {
+            ledger_id: 77,
+            debited: 0,
+            new_balance: 5,
+            duplicate: false,
+            pro_bypass_applied: true,
+          },
+        ],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_apply_pro_bypass).toBe(true);
+
+    const body = await res.json();
+    expect(body.proBypassApplied).toBe(true);
+    expect(body.debited).toBe(0);
+    expect(body.quotaUsed).toBe(5);
+    expect(body.quotaLimit).toBe(20);
+  });
+
+  it("PRO quota exhausted: p_apply_pro_bypass=false, quotaUsed=before, quotaLimit forwarded", async () => {
+    mockedResolveBypass.mockResolvedValueOnce({
+      apply: false,
+      proActive: true,
+      reason: "quota_exhausted",
+      quotaLimit: 5,
+      quotaUsedBefore: 5,
+    });
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(makeRequest(baseBody()));
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_apply_pro_bypass).toBe(false);
+
+    const body = await res.json();
+    expect(body.proBypassApplied).toBe(false);
+    expect(body.quotaUsed).toBe(5);
+    expect(body.quotaLimit).toBe(5);
+  });
+
+  it("PRO unlimited target (save_game): p_apply_pro_bypass=true, quotaLimit=null in response", async () => {
+    mockedResolveBypass.mockResolvedValueOnce({
+      apply: true,
+      proActive: true,
+      quotaLimit: Number.POSITIVE_INFINITY,
+      quotaUsedBefore: 0,
+      quotaRemainingBefore: Number.POSITIVE_INFINITY,
+    });
+    const { client, captured } = buildSupabaseMock({
+      rpcResult: {
+        data: [
+          {
+            ledger_id: 80,
+            debited: 0,
+            new_balance: 5,
+            duplicate: false,
+            pro_bypass_applied: true,
+          },
+        ],
+        error: null,
+      },
+    });
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          target: "save_game",
+          targetId: "game-99",
+          idempotencyKey: `spend:save_game:${W}:game-99`,
+        }),
+      ),
+    );
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_apply_pro_bypass).toBe(true);
+
+    const body = await res.json();
+    // Infinity is JSON-non-encodable; the route turns it into null so
+    // dashboards don't choke.
+    expect(body.quotaLimit).toBeNull();
+  });
+
+  it("client CANNOT force bypass: body field is ignored, resolver decides", async () => {
+    // The default mock keeps the user as free. Even if the body
+    // carried an "applyProBypass:true" attempt, the server does NOT
+    // read it.
+    const { client, captured } = buildSupabaseMock({});
+    mockedSupabase.mockReturnValue(client);
+
+    const res = await POST(
+      makeRequest(baseBody({ applyProBypass: true } as never)),
+    );
+    expect(res.status).toBe(200);
+    expect(captured[0]?.p_apply_pro_bypass).toBe(false);
   });
 });

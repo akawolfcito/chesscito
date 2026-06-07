@@ -27,6 +27,7 @@ import { NextResponse } from "next/server";
 
 import { normalizeWallet } from "@/lib/peones/ledger-service";
 import { buildAttestationHash } from "@/lib/peones/ledger-service-server";
+import { resolveProBypass } from "@/lib/peones/pro-bypass";
 import {
   hasSpendIdempotencyPrefix,
   isPeonesSpendTarget,
@@ -188,8 +189,14 @@ export async function POST(req: Request) {
     idempotency_key: idempotencyKey,
   });
 
-  // 11. RPC. `p_apply_pro_bypass` is HARD-CODED to false in Sprint 4
-  //     commit C — PRO resolver lights up in commit G.
+  // 10b. Sprint 4 commit G — PRO bypass resolution. The client NEVER
+  //      decides bypass; we evaluate exclusively server-side. Most
+  //      users are free → `resolveProBypass` short-circuits on the
+  //      isProActive Redis read without touching Supabase.
+  const bypassEvaluation = await resolveProBypass(wallet, target, today);
+  const applyProBypass = bypassEvaluation.apply;
+
+  // 11. RPC with server-resolved bypass flag.
   const { data: rpcRows, error: rpcError } = await supabase.rpc(
     "peones_spend",
     {
@@ -200,7 +207,7 @@ export async function POST(req: Request) {
       p_idempotency_key: idempotencyKey,
       p_attestation_hash: attestationHash,
       p_metadata: metadata,
-      p_apply_pro_bypass: false,
+      p_apply_pro_bypass: applyProBypass,
     },
   );
 
@@ -241,6 +248,25 @@ export async function POST(req: Request) {
     );
   }
 
+  // Sprint 4 commit G — surface quota info for telemetry.
+  //   - quotaLimit: hard cap for this target (Infinity for save_game)
+  //   - quotaUsed: rows consumed today AFTER this call. When bypass
+  //     was applied, this is `quotaUsedBefore + 1`. When bypass did
+  //     not apply, it's unchanged from the pre-evaluation count.
+  //     `null` when not applicable (free user) or lookup failed.
+  let quotaLimit: number | null = null;
+  let quotaUsed: number | null = null;
+  if (bypassEvaluation.proActive) {
+    quotaLimit = Number.isFinite(bypassEvaluation.quotaLimit)
+      ? bypassEvaluation.quotaLimit
+      : null;
+    if (bypassEvaluation.apply) {
+      quotaUsed = bypassEvaluation.quotaUsedBefore + 1;
+    } else if (bypassEvaluation.reason === "quota_exhausted") {
+      quotaUsed = bypassEvaluation.quotaUsedBefore;
+    }
+  }
+
   return NextResponse.json({
     wallet,
     target,
@@ -252,5 +278,7 @@ export async function POST(req: Request) {
     ledgerId: row.ledger_id ?? null,
     duplicate: Boolean(row.duplicate),
     proBypassApplied: Boolean(row.pro_bypass_applied),
+    quotaUsed,
+    quotaLimit,
   });
 }

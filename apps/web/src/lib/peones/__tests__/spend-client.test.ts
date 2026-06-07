@@ -86,6 +86,8 @@ describe("submitPeonesSpend — happy path", () => {
       ledgerId: 42,
       duplicate: false,
       proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
     });
   });
 

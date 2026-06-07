@@ -179,3 +179,49 @@ export function emitPeonesSpendFailed(
     reason: args.reason,
   });
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Sprint 4 commit G — PRO bypass usage
+// ─────────────────────────────────────────────────────────────────
+//
+// Fires when the server's PRO bypass evaluation lit up: the user is
+// PRO + within the daily quota for this target. The ledger row is
+// audit-only (debited=0, balance unchanged); this event is the
+// dashboard signal "PRO actually saved this user a Peón today".
+//
+// `peones_spent` is NOT fired alongside this — the dashboard rule
+// stays "spent === real Peones left the wallet". Bypass usage is a
+// distinct semantic.
+
+export type PeonesSpendBypassedEventArgs = {
+  target: PeonesSpendTarget;
+  targetId: string;
+  requested: number;
+  /** Always 0 by definition of bypass — kept in the event for
+   *  symmetry with `peones_spent` so dashboards can join the two. */
+  debited: 0;
+  newBalance: number;
+  /** Mirrors `peones_spent.attestationHash` — the bypass row is in
+   *  the ledger so the audit trail is queryable by hash. */
+  attestationHash: string;
+  /** PRO bypass daily-quota state AFTER this call.
+   *  quotaUsed counts the row that just landed. */
+  quotaUsed: number;
+  quotaLimit: number;
+};
+
+export function emitPeonesSpendBypassed(
+  args: PeonesSpendBypassedEventArgs,
+): void {
+  track("peones_spend_bypassed", {
+    target: args.target,
+    targetId: args.targetId,
+    requested: args.requested,
+    debited: args.debited,
+    newBalance: args.newBalance,
+    attestationHash: args.attestationHash,
+    proBypassApplied: true,
+    quotaUsed: args.quotaUsed,
+    quotaLimit: args.quotaLimit,
+  });
+}

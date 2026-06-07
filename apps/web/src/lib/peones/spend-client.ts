@@ -35,6 +35,11 @@ export type PeonesSpendResult =
       ledgerId: number;
       duplicate: boolean;
       proBypassApplied: boolean;
+      /** Sprint 4 commit G — PRO bypass quota state surfaced by
+       *  `/api/peones/spend`. `null` for free users / lookup
+       *  failures (when bypass did not enter the picture). */
+      quotaUsed: number | null;
+      quotaLimit: number | null;
     }
   | {
       kind: "insufficient_balance";
@@ -76,6 +81,8 @@ type SpendResponse = {
   ledgerId?: number | null;
   duplicate?: boolean;
   proBypassApplied?: boolean;
+  quotaUsed?: number | null;
+  quotaLimit?: number | null;
 };
 
 type SpendErrorResponse = {
@@ -176,5 +183,7 @@ export async function submitPeonesSpend(
     ledgerId: json.ledgerId,
     duplicate: Boolean(json.duplicate),
     proBypassApplied: Boolean(json.proBypassApplied),
+    quotaUsed: typeof json.quotaUsed === "number" ? json.quotaUsed : null,
+    quotaLimit: typeof json.quotaLimit === "number" ? json.quotaLimit : null,
   };
 }

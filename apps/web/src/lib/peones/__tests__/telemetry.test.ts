@@ -16,6 +16,7 @@ import {
   emitPeonesCapReached,
   emitPeonesEarned,
   emitPeonesSpendBlocked,
+  emitPeonesSpendBypassed,
   emitPeonesSpendFailed,
   emitPeonesSpent,
 } from "@/lib/peones/telemetry";
@@ -283,4 +284,55 @@ describe("emitPeonesSpendFailed — Sprint 4 commit D", () => {
       expect.objectContaining({ reason }),
     );
   });
+});
+
+describe("emitPeonesSpendBypassed — Sprint 4 commit G", () => {
+  it("emits peones_spend_bypassed with the canonical payload", () => {
+    emitPeonesSpendBypassed({
+      target: "coach",
+      targetId: "game-42",
+      requested: 1,
+      debited: 0,
+      newBalance: 7,
+      attestationHash: "sha256:bypass-1",
+      quotaUsed: 3,
+      quotaLimit: 5,
+    });
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+    expect(mockTrack).toHaveBeenCalledWith("peones_spend_bypassed", {
+      target: "coach",
+      targetId: "game-42",
+      requested: 1,
+      debited: 0,
+      newBalance: 7,
+      attestationHash: "sha256:bypass-1",
+      proBypassApplied: true,
+      quotaUsed: 3,
+      quotaLimit: 5,
+    });
+  });
+
+  it.each([
+    ["coach", 5],
+    ["hint", 20],
+    ["retry", 10],
+  ] as const)(
+    "forwards target=%s with quotaLimit=%i",
+    (target, quotaLimit) => {
+      emitPeonesSpendBypassed({
+        target,
+        targetId: "id",
+        requested: 1,
+        debited: 0,
+        newBalance: 0,
+        attestationHash: "sha256:x",
+        quotaUsed: 1,
+        quotaLimit,
+      });
+      expect(mockTrack).toHaveBeenLastCalledWith(
+        "peones_spend_bypassed",
+        expect.objectContaining({ target, quotaLimit }),
+      );
+    },
+  );
 });

@@ -23,6 +23,7 @@ vi.mock("wagmi", () => ({
 vi.mock("@/lib/peones/telemetry", () => ({
   emitPeonesSpent: vi.fn(),
   emitPeonesSpendBlocked: vi.fn(),
+  emitPeonesSpendBypassed: vi.fn(),
   emitPeonesSpendFailed: vi.fn(),
 }));
 
@@ -48,6 +49,7 @@ vi.mock("next-intl", () => ({
 import { useAccount } from "wagmi";
 import {
   emitPeonesSpendBlocked,
+  emitPeonesSpendBypassed,
   emitPeonesSpendFailed,
   emitPeonesSpent,
 } from "@/lib/peones/telemetry";
@@ -57,6 +59,7 @@ import type { PeonesSpendResult } from "@/lib/peones/spend-client";
 const mockedAccount = vi.mocked(useAccount);
 const mockedSpent = vi.mocked(emitPeonesSpent);
 const mockedBlocked = vi.mocked(emitPeonesSpendBlocked);
+const mockedBypassed = vi.mocked(emitPeonesSpendBypassed);
 const mockedFailed = vi.mocked(emitPeonesSpendFailed);
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
@@ -68,6 +71,7 @@ beforeEach(() => {
   } as never);
   mockedSpent.mockReset();
   mockedBlocked.mockReset();
+  mockedBypassed.mockReset();
   mockedFailed.mockReset();
 });
 afterEach(() => {
@@ -138,6 +142,8 @@ describe("PeonesHintButton — connected happy path", () => {
       ledgerId: 42,
       duplicate: false,
       proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
     } satisfies PeonesSpendResult);
 
     render(
@@ -181,6 +187,8 @@ describe("PeonesHintButton — connected happy path", () => {
       ledgerId: 42,
       duplicate: false,
       proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
     } satisfies PeonesSpendResult);
 
     render(
@@ -226,6 +234,8 @@ describe("PeonesHintButton — connected happy path", () => {
       ledgerId: 42,
       duplicate: true,
       proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
     } satisfies PeonesSpendResult);
 
     render(
@@ -357,6 +367,8 @@ describe("PeonesHintButton — side-effect tripwires", () => {
       ledgerId: 42,
       duplicate: false,
       proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
     } satisfies PeonesSpendResult);
 
     render(
@@ -369,5 +381,59 @@ describe("PeonesHintButton — side-effect tripwires", () => {
     fireEvent.click(screen.getByRole("button"));
     expect(getSpy).not.toHaveBeenCalled();
     expect(setSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("PeonesHintButton — PRO bypass (Sprint 4 commit G)", () => {
+  function connectWallet() {
+    mockedAccount.mockReturnValue({
+      isConnected: true,
+      address: W,
+    } as never);
+  }
+
+  it("proBypassApplied + quota: reveals hint, emits peones_spend_bypassed, NOT peones_spent", async () => {
+    connectWallet();
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "success",
+      wallet: W,
+      target: "hint",
+      targetId: "rook:r-1:1",
+      requested: 1,
+      debited: 0,
+      newBalance: 7,
+      attestationHash: "sha256:bypass-x",
+      ledgerId: 200,
+      duplicate: false,
+      proBypassApplied: true,
+      quotaUsed: 6,
+      quotaLimit: 20,
+    } satisfies PeonesSpendResult);
+
+    render(
+      <PeonesHintButton
+        piece="rook"
+        exerciseId="r-1"
+        submitImpl={submitImpl}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button"));
+
+    await waitFor(() =>
+      expect(screen.getByText("Hint unlocked")).toBeInTheDocument(),
+    );
+    expect(mockedBypassed).toHaveBeenCalledTimes(1);
+    expect(mockedBypassed).toHaveBeenCalledWith({
+      target: "hint",
+      targetId: "rook:r-1:1",
+      requested: 1,
+      debited: 0,
+      newBalance: 7,
+      attestationHash: "sha256:bypass-x",
+      quotaUsed: 6,
+      quotaLimit: 20,
+    });
+    expect(mockedSpent).not.toHaveBeenCalled();
   });
 });
