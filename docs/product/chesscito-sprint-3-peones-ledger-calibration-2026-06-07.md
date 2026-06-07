@@ -306,12 +306,12 @@ Hoy NO existe un flujo de autenticación server-side que pruebe ownership de la 
 | `daily_tactic` | Completar Daily Tactic | **3** | Sólo connected. Cap diario aplica. Idempotency: una vez por (wallet, day, puzzleId). |
 | `daily_streak_bonus` | Racha cumple 7 días consecutivos | **+1 bonus** | Solo connected. NO se repite hasta romper + alcanzar 14d (siguiente milestone). |
 | `exercise_completion` | Completar ejercicio de Senda con delta positivo de estrellas | **delta** (1-3) | Solo connected. Sin cap diario. Replay sin mejora = 0. |
-| `senda_milestone` | Cerrar senda de una pieza (todas las estrellas) | **+5 bonus** | Solo connected. Una vez por pieza, vida. Idempotency: `senda_milestone:{wallet}:{piece}`. |
 
 **Reglas explícitas:**
 - **NO retroactive Peones** para progreso senda viejo. Solo earn forward — un usuario con stars[5] preexistente no recibe Peones por esas estrellas viejas.
 - **Daily Tactic Sprint 3 mapping:** `peonesEarned` deja de ser `0` y pasa a ser `credited` (lo que el endpoint devolvió, 0-3 según cap). `rewardPreviewPeones` puede deprecarse o mantenerse como redundancia con el nuevo valor.
 - **Daily Lab (PRO Friday/Sunday):** Sprint 3 NO lo conecta — depende de que el UI consumer monte `getProDailyExtras()`. Documentado como Sprint 2.1 o post-Sprint-4.
+- **`senda_milestone` PARQUEADO (decisión Wolfcito 2026-06-07):** el bonus +5 por pieza completa NO entra en Sprint 3. Razón: evitar inflar la economía y evitar agregar una reward nueva antes de tener ledger estable. Re-evaluación post-Sprint 4 retrospective o en Milestone B. El enum del schema (§3.1) preserva `senda_milestone` como source válido para evitar migration cuando se active.
 
 ---
 
@@ -468,21 +468,20 @@ attestation_hash = sha256(
 
 ---
 
-## 14. Preguntas bloqueantes reales
+## 14. Preguntas bloqueantes — RESUELTAS
 
-Solo bloqueantes — no preguntas de polish:
+Las dos preguntas que requerían input de Wolfcito antes del commit A quedaron cerradas el 2026-06-07:
 
-1. **¿Usamos Supabase o seguimos el patrón Redis del Coach credits?** Recomendación: **Supabase** por queryability (cap diario, reconciliation) y append-only natural. Redis está bien para counters simples; el ledger no es un counter.
+1. **Backend del ledger:** ✅ **Supabase confirmado.** Motivo: queryability, auditabilidad, cap diario, reconciliation y ledger append-only. Redis NO se usa para Peones en Sprint 3.
 
-2. **¿Aceptamos la deuda de "trust-but-rate-limit" sin SIWC en Sprint 3?** Recomendación: **sí**, documentar como R7. SIWC es un cluster propio que no queremos meter en el mismo sprint que el ledger.
+2. **`senda_milestone` +5 bonus por pieza completa:** ❌ **Fuera de scope Sprint 3.** Parqueado para post-Sprint 4 retrospective o Milestone B. Sprint 3 solo acredita Peones por delta positivo de estrellas en ejercicios, no por bonus de pieza completa.
 
-3. **¿`rewardPreviewPeones` se deprecia inmediatamente en commit E o se mantiene 1 sprint para dashboards downstream?** Recomendación: **mantener overlap** un sprint, deprecar en Sprint 4. Cero riesgo de breakage.
+Defaults menores ya confirmados implícitamente:
+- Trust-but-rate-limit sin SIWC en Sprint 3 (R7 mitigado por cap diario).
+- `rewardPreviewPeones` se mantiene un sprint adicional como overlap para downstream consumers; se deprecará en Sprint 4 commit final.
+- Coach credits (`coach:credits:{wallet}` en Redis) conviven con Peones — NO se unifica en Sprint 3. Sprint 4 evalúa migración como decisión de producto.
 
-4. **¿Senda milestone (+5 bonus por pieza completa) entra en Sprint 3 o se difiere?** Esto NO está en el plan original M1 — es propuesta nueva. Si Wolfcito no lo quiere, lo saco del scope §6 y queda como item parqueado.
-
-5. **¿Coach credits y Peones conviven o Sprint 4 los unifica?** Recomendación: **conviven en Sprint 3** (zero break del Coach pre-existente), Sprint 4 evalúa migración. Esto es decisión de producto, no técnica.
-
-Las preguntas 4 y 5 son las únicas que requieren tu input antes de arrancar el commit A. El resto son confirmaciones de defaults.
+Cero preguntas bloqueantes vivas. **Commit A es safe to start.**
 
 ---
 
@@ -490,13 +489,11 @@ Las preguntas 4 y 5 son las únicas que requieren tu input antes de arrancar el 
 
 **Sprint 3 = ledger Peones append-only en Supabase + earn endpoint + UI básica de saldo.** Cero coordinación con on-chain. Spend real se difiere a Sprint 4.
 
+**Backend confirmado: Supabase** (Wolfcito 2026-06-07). **`senda_milestone` parqueado** para post-Sprint 4 retrospective. Estas dos decisiones cierran las preguntas bloqueantes; el resto de defaults documentados quedan firmes.
+
 Las 12 decisiones default (§2) están listas para arrancar. Las 14 mitigaciones de riesgos (§13) cubren los modos de falla conocidos (race, double earn, casing, RLS). El schema (§3) es estándar append-only ledger con view derivada para balance + función SQL para cap diario.
 
-**Dos preguntas bloqueantes reales** antes del commit A:
-1. ¿Senda milestone +5 bonus entra en scope o se difiere?
-2. ¿Confirmas Supabase como backend del ledger (vs Redis)?
-
-Todo lo demás opera con defaults documentados.
+**Commit A safe to start.**
 
 ---
 
