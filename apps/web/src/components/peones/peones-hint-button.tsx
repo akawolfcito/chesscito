@@ -1,39 +1,34 @@
 "use client";
 
 /**
- * PeonesHintButton — Sprint 4 commit E of Training Economy Alpha
- * 2026-06-08. First REAL spend surface. Wires the piece-exercise
- * Hint affordance to `submitPeonesSpend` + the spend-side telemetry
- * emitters added in commit D.
+ * PeonesHintButton — paid Hint affordance for piece exercises.
  *
- * Visibility:
- *  - guest    : muted chip with "Connect to use Peones hints" copy.
- *               No network call, no telemetry. Pure presentational.
- *  - disabled : parent passes `disabled` for labyrinth / non-playing
- *               phases. Component hides itself (returns null).
- *  - idle     : primary chip "Hint · 1 Peón".
- *  - loading  : same chip with `aria-busy=true` + disabled while
- *               the spend fetch is in flight.
- *  - revealed : reveal banner "Hint unlocked · {hint copy}".
- *  - insufficient / error : returns chip + transient label below
- *               with the short copy from PEONES_HINT_COPY. The
- *               exercise stays fully playable in all error paths.
+ * Sprint 4 commit E originally landed with a textual reveal banner.
+ * Sprint 4 commit I (founder visual-first directive 2026-06-08)
+ * REPLACES the banner with a board-cell glow: the consumer passes
+ * `firstStep` (optimal first move computed via BFS) and an
+ * `onReveal(square | null)` callback. This component owns the spend
+ * orchestration + auto-fade timer; rendering of the hint lives on
+ * the board itself, not in the button's footprint. Resolves the
+ * layout regression where the banner overflowed the action row.
  *
- * Spend contract:
- *  - target = "hint", amount = 1
- *  - idempotencyKey = `spend:hint:{wallet}:{piece}:{exerciseId}:{attemptSeq}`
- *  - metadata = { piece, exerciseId, attemptSeq, surface: "exercises" }
- *  - duplicate=true on the RPC returns the same hint with no debit
- *    (user already paid this attempt). Sprint 4 commit E ships with
- *    `attemptSeq = 1` always — retry-attempt tracking lights up in a
- *    later commit (see TODO in exercises-screen wire-up).
+ * Visibility states:
+ *  - guest        : muted chip "Connect to use Peones hints".
+ *  - disabled     : returns null (labyrinth / non-playing phase).
+ *  - idle         : pill "Hint · 1 Peón".
+ *  - loading      : same pill, aria-busy + disabled.
+ *  - revealed     : same pill at slightly muted opacity for ~4s
+ *                   while the board glow is up. Hint is on the
+ *                   board, NOT in this component.
+ *  - insufficient : pill + small "Not enough Peones" sublabel.
+ *  - error        : pill + small "Hint unavailable right now"
+ *                   sublabel.
  *
- * NEVER throws. NEVER reads / writes localStorage. NEVER mutates the
- * global balance cache. NEVER calls /api/peones/earn. NEVER touches
- * Coach / Retry / Save game / PRO / Stablecoin paths.
+ * NEVER throws. NEVER touches localStorage. NEVER mutates global
+ * balance cache. NEVER calls /api/peones/earn.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAccount } from "wagmi";
 
@@ -44,7 +39,12 @@ import {
   emitPeonesSpendFailed,
   emitPeonesSpent,
 } from "@/lib/peones/telemetry";
-import type { PieceId } from "@/lib/game/types";
+import type { BoardPosition, PieceId } from "@/lib/game/types";
+
+/** How long the board glow stays after a successful reveal before the
+ *  parent is told to clear it. Matches the candy-style consumable
+ *  toast feel — long enough to read, short enough to not block UX. */
+const REVEAL_TTL_MS = 4000;
 
 type HintState =
   | { kind: "idle" }
@@ -57,12 +57,20 @@ type Props = {
   piece: PieceId;
   exerciseId: string;
   /** Per-attempt counter. Sprint 4 commit E hard-codes to 1 from the
-   *  parent; later commits will increment on user-initiated retries
-   *  so a fresh hint can be paid for in a new attempt. */
+   *  parent; retry-attempt tracking lights up in a later commit so a
+   *  fresh hint can be paid for in a new attempt. */
   attemptSeq?: number;
   /** Parent's signal that the button should not render — labyrinth
    *  mode, non-playing phase, or any other "no hint right now" state. */
   disabled?: boolean;
+  /** Sprint 4 commit I — square to glow when the hint is paid.
+   *  Computed by the parent via `computeExerciseBfs(piece, exercise)`
+   *  so this component stays free of game-logic knowledge. */
+  firstStep?: BoardPosition | null;
+  /** Called when the hint reveal state changes:
+   *   - with `firstStep` → glow the cell
+   *   - with `null`      → clear the glow (TTL elapsed) */
+  onReveal?: (square: BoardPosition | null) => void;
   /** Test seam — production code passes nothing. */
   submitImpl?: typeof submitPeonesSpend;
 };
@@ -72,11 +80,24 @@ export function PeonesHintButton({
   exerciseId,
   attemptSeq = 1,
   disabled = false,
+  firstStep = null,
+  onReveal,
   submitImpl,
 }: Props) {
   const t = useTranslations("PEONES_HINT_COPY");
   const { address, isConnected } = useAccount();
   const [state, setState] = useState<HintState>({ kind: "idle" });
+  /** Track the active TTL timer so navigation + remount cleans up
+   *  reliably — otherwise a stale setTimeout could fire `onReveal(null)`
+   *  on a new exercise. */
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
 
   if (disabled) return null;
 
@@ -98,6 +119,15 @@ export function PeonesHintButton({
   const idempotencyKey = `spend:hint:${wallet}:${piece}:${exerciseId}:${attemptSeq}`;
   const targetId = `${piece}:${exerciseId}:${attemptSeq}`;
   const submit = submitImpl ?? submitPeonesSpend;
+
+  function scheduleClear() {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onReveal?.(null);
+      setState({ kind: "idle" });
+      timerRef.current = null;
+    }, REVEAL_TTL_MS);
+  }
 
   async function handleClick() {
     if (state.kind === "loading" || state.kind === "revealed") return;
@@ -149,7 +179,13 @@ export function PeonesHintButton({
           proBypassApplied: result.proBypassApplied,
         });
       }
+      // Glow the board cell + schedule the clear. If firstStep is
+      // null (BFS failed / unsolvable) we still credit the spend and
+      // surface the revealed state — the player just doesn't get a
+      // visual cue, which is rare enough to not warrant a refund flow.
+      onReveal?.(firstStep ?? null);
       setState({ kind: "revealed" });
+      scheduleClear();
       return;
     }
 
@@ -173,24 +209,8 @@ export function PeonesHintButton({
     setState({ kind: "error" });
   }
 
-  if (state.kind === "revealed") {
-    return (
-      <div
-        className="inline-flex max-w-[18rem] flex-col items-start gap-0.5 rounded-2xl bg-amber-100/90 px-3 py-1.5 text-amber-900 shadow-sm ring-1 ring-amber-700/20"
-        role="status"
-        aria-live="polite"
-        data-testid="peones-hint-button"
-        data-state="revealed"
-      >
-        <span className="text-[11px] font-bold uppercase tracking-wide text-amber-700">
-          {t("success")}
-        </span>
-        <span className="text-xs font-medium leading-tight">{t("hint")}</span>
-      </div>
-    );
-  }
-
   const isLoading = state.kind === "loading";
+  const isRevealed = state.kind === "revealed";
   const subLabel =
     state.kind === "insufficient"
       ? t("insufficient")
@@ -206,10 +226,14 @@ export function PeonesHintButton({
     >
       <button
         type="button"
-        className="inline-flex items-center rounded-full bg-amber-300 px-3 py-1 text-xs font-bold text-amber-950 shadow-sm ring-1 ring-amber-700/30 hover:bg-amber-200 disabled:opacity-60"
+        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold shadow-sm ring-1 hover:bg-amber-200 disabled:opacity-60 ${
+          isRevealed
+            ? "bg-amber-200 text-amber-950/70 ring-amber-700/20"
+            : "bg-amber-300 text-amber-950 ring-amber-700/30"
+        }`}
         aria-busy={isLoading}
-        aria-disabled={isLoading}
-        disabled={isLoading}
+        aria-disabled={isLoading || isRevealed}
+        disabled={isLoading || isRevealed}
         onClick={() => void handleClick()}
       >
         {t("button")}

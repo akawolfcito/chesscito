@@ -3058,17 +3058,18 @@ export const RESCUE_MODAL_COPY = {
  *  non-negotiable. */
 
 /**
- * Sprint 4 commit E — PeonesHintButton (piece exercises) i18n.
- * Six short keys; no rich content. EN authoring source for the
- * `PEONES_HINT_COPY` namespace consumed by `useTranslations`.
+ * PeonesHintButton (piece exercises) i18n.
+ * Sprint 4 commit E original / commit I (2026-06-08) trimmed to
+ * 4 keys after the visual-first principle landed (founder
+ * directive — see `project_chesscito_visual_first_principle.md`).
+ * The hint is now revealed as a board-cell glow, NOT a textual
+ * banner, so `success` + `hint` keys are intentionally gone.
  */
 export const PEONES_HINT_COPY = {
   button: "Hint \u00b7 1 Peón",
   guest: "Connect to use Peones hints",
   insufficient: "Not enough Peones",
   error: "Hint unavailable right now",
-  success: "Hint unlocked",
-  hint: "Try moving closer to the target.",
 } as const;
 
 export const WELCOME_PACK_COPY = {

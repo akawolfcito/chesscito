@@ -30,6 +30,7 @@ import { bumpStreak, resetStreak, useStreak } from "@/lib/exercises/use-streak";
 import { useWelcomePackClaim } from "@/lib/shop/use-welcome-pack-claim";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { PeonesHintButton } from "@/components/peones/peones-hint-button";
+import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
@@ -861,6 +862,24 @@ export function ExercisesScreen({
     advanceExercise,
     goToExercise,
   } = useExerciseProgress(selectedPiece);
+
+  /** Sprint 4 commit I — Peones Hint visual reveal. Parent owns the
+   *  highlighted square so the Board can render the glow without the
+   *  button needing to know about the board's geometry. Cleared by
+   *  the button after a ~4s TTL or by switching exercise. */
+  const [peonesHintSquare, setPeonesHintSquare] = useState<BoardPosition | null>(null);
+  /** First step of the optimal path for the current exercise. Computed
+   *  once per exercise via the same BFS protocol used by the verifier
+   *  test (`computeExerciseBfs`). */
+  const peonesHintFirstStep = useMemo(() => {
+    const result = computeExerciseBfs(selectedPiece, currentExercise);
+    return result?.firstStep ?? null;
+  }, [selectedPiece, currentExercise]);
+  /** Clear any stale glow when the user navigates to a new exercise,
+   *  changes piece, or enters labyrinth mode. */
+  useEffect(() => {
+    setPeonesHintSquare(null);
+  }, [selectedPiece, currentExercise.id]);
 
   const timerStart = useRef<number>(0);
   /** Synchronous concurrency guard for handleSubmitScore. The async
@@ -2145,6 +2164,8 @@ export function ExercisesScreen({
                 exerciseId={currentExercise.id}
                 attemptSeq={1}
                 disabled={Boolean(activeLabyrinth) || phase !== "ready"}
+                firstStep={peonesHintFirstStep}
+                onReveal={setPeonesHintSquare}
               />
               <DailyTacticSlot />
             </div>
@@ -2213,6 +2234,7 @@ export function ExercisesScreen({
               onMove={activeLabyrinth ? handleLabyrinthMove : handleMove}
               isCapture={activeExercise.isCapture ?? false}
               tutorialHints={activeLabyrinth ? undefined : tutorialHints}
+              peonesHint={activeLabyrinth ? null : peonesHintSquare}
             />
           }
           exerciseDrawer={

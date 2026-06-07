@@ -73,6 +73,12 @@ type BoardProps = {
   isCapture?: boolean;
   onMove?: (position: BoardPosition, movesCount: number) => void;
   tutorialHints?: Set<string>;
+  /** Sprint 4 commit I — paid Peones Hint reveal. When set, the cell
+   *  matching this position gets the `.is-peones-hint` class so CSS
+   *  can render a golden pulse ring + ✨ on the optimal first move.
+   *  Cleared by the parent after a short timer (~4s) so the hint
+   *  doesn't linger forever. `null` = no active hint. */
+  peonesHint?: BoardPosition | null;
 };
 
 export function Board({
@@ -86,6 +92,7 @@ export function Board({
   isCapture = false,
   onMove,
   tutorialHints,
+  peonesHint = null,
 }: BoardProps) {
   const [piece, setPiece] = useState(() => makePiece(pieceType, startPosition));
   const [selectedPosition, setSelectedPosition] = useState<BoardPosition | null>(
@@ -253,12 +260,24 @@ export function Board({
                           square.isEndpoint ? "is-endpoint" : "",
                           square.isSelected ? "is-selected" : "",
                           tutorialHints?.has(square.label) ? "is-tutorial-hint" : "",
+                          peonesHint &&
+                          peonesHint.file === square.file &&
+                          peonesHint.rank === square.rank
+                            ? "is-peones-hint"
+                            : "",
                         ].join(" ")}
                       >
                         <span className="playhub-board-label">{square.label}</span>
                         {square.isHighlighted ? <span className="playhub-board-dot" /> : null}
                         {square.isTarget && !square.piece && !isCapture ? (
                           <span className="playhub-board-target" />
+                        ) : null}
+                        {peonesHint &&
+                        peonesHint.file === square.file &&
+                        peonesHint.rank === square.rank ? (
+                          <span className="playhub-board-peones-hint" aria-hidden="true">
+                            ✨
+                          </span>
                         ) : null}
                         {/* Piece rendered as floating layer below */}
                       </button>

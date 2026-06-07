@@ -2077,8 +2077,6 @@ const messages = {
     guest: "Conecta tu wallet para usar pistas con Peones",
     insufficient: "No tienes suficientes Peones",
     error: "La pista no está disponible ahora",
-    success: "Pista desbloqueada",
-    hint: "Intenta acercarte al objetivo.",
   },
 };
 

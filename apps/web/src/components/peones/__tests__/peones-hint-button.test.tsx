@@ -33,8 +33,6 @@ const messages = {
     guest: "Connect to use Peones hints",
     insufficient: "Not enough Peones",
     error: "Hint unavailable right now",
-    success: "Hint unlocked",
-    hint: "Try moving closer to the target.",
   },
 };
 
@@ -173,7 +171,7 @@ describe("PeonesHintButton — connected happy path", () => {
     });
   });
 
-  it("reveals the hint and emits peones_spent on success (debited > 0)", async () => {
+  it("on success (debited > 0): calls onReveal with firstStep + emits peones_spent + transitions state to revealed", async () => {
     connectWallet();
     const submitImpl = vi.fn().mockResolvedValue({
       kind: "success",
@@ -191,10 +189,15 @@ describe("PeonesHintButton — connected happy path", () => {
       quotaLimit: null,
     } satisfies PeonesSpendResult);
 
+    const firstStep = { file: 0, rank: 7 };
+    const onReveal = vi.fn();
+
     render(
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={firstStep}
+        onReveal={onReveal}
         submitImpl={submitImpl}
       />,
     );
@@ -202,25 +205,18 @@ describe("PeonesHintButton — connected happy path", () => {
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() =>
-      expect(screen.getByText("Hint unlocked")).toBeInTheDocument(),
+      expect(screen.getByTestId("peones-hint-button")).toHaveAttribute(
+        "data-state",
+        "revealed",
+      ),
     );
-    expect(
-      screen.getByText("Try moving closer to the target."),
-    ).toBeInTheDocument();
+    // Hint is on the board, NOT in the button — no textual banner.
+    expect(screen.queryByText("Hint unlocked")).not.toBeInTheDocument();
+    expect(onReveal).toHaveBeenCalledWith(firstStep);
     expect(mockedSpent).toHaveBeenCalledTimes(1);
-    expect(mockedSpent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        target: "hint",
-        targetId: "rook:r-1:1",
-        requested: 1,
-        debited: 1,
-        duplicate: false,
-        proBypassApplied: false,
-      }),
-    );
   });
 
-  it("duplicate success: reveals WITHOUT re-emitting peones_spent (debited = 0)", async () => {
+  it("duplicate success (debited=0): still calls onReveal but skips peones_spent emit", async () => {
     connectWallet();
     const submitImpl = vi.fn().mockResolvedValue({
       kind: "success",
@@ -238,10 +234,15 @@ describe("PeonesHintButton — connected happy path", () => {
       quotaLimit: null,
     } satisfies PeonesSpendResult);
 
+    const firstStep = { file: 0, rank: 7 };
+    const onReveal = vi.fn();
+
     render(
       <PeonesHintButton
         piece="rook"
         exerciseId="r-1"
+        firstStep={firstStep}
+        onReveal={onReveal}
         submitImpl={submitImpl}
       />,
     );
@@ -249,11 +250,55 @@ describe("PeonesHintButton — connected happy path", () => {
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() =>
-      expect(screen.getByText("Hint unlocked")).toBeInTheDocument(),
+      expect(screen.getByTestId("peones-hint-button")).toHaveAttribute(
+        "data-state",
+        "revealed",
+      ),
     );
+    expect(onReveal).toHaveBeenCalledWith(firstStep);
     expect(mockedSpent).not.toHaveBeenCalled();
     expect(mockedBlocked).not.toHaveBeenCalled();
     expect(mockedFailed).not.toHaveBeenCalled();
+  });
+
+  it("success without firstStep prop: still reveals + onReveal called with null", async () => {
+    connectWallet();
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "success",
+      wallet: W,
+      target: "hint",
+      targetId: "rook:r-1:1",
+      requested: 1,
+      debited: 1,
+      newBalance: 9,
+      attestationHash: "sha256:abc",
+      ledgerId: 42,
+      duplicate: false,
+      proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
+    } satisfies PeonesSpendResult);
+
+    const onReveal = vi.fn();
+
+    render(
+      <PeonesHintButton
+        piece="rook"
+        exerciseId="r-1"
+        onReveal={onReveal}
+        submitImpl={submitImpl}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("peones-hint-button")).toHaveAttribute(
+        "data-state",
+        "revealed",
+      ),
+    );
+    expect(onReveal).toHaveBeenCalledWith(null);
   });
 });
 
@@ -421,7 +466,10 @@ describe("PeonesHintButton — PRO bypass (Sprint 4 commit G)", () => {
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() =>
-      expect(screen.getByText("Hint unlocked")).toBeInTheDocument(),
+      expect(screen.getByTestId("peones-hint-button")).toHaveAttribute(
+        "data-state",
+        "revealed",
+      ),
     );
     expect(mockedBypassed).toHaveBeenCalledTimes(1);
     expect(mockedBypassed).toHaveBeenCalledWith({
