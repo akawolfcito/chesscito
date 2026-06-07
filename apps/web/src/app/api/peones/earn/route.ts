@@ -31,10 +31,10 @@ import { NextResponse } from "next/server";
 
 import {
   applyDailyCap,
-  buildAttestationHash,
   isDailyCapSource,
   normalizeWallet,
 } from "@/lib/peones/ledger-service";
+import { buildAttestationHash } from "@/lib/peones/ledger-service-server";
 import { PEONES_DAILY_CAP } from "@/lib/peones/types";
 import type { PeonesLedgerSource } from "@/lib/peones/types";
 import {

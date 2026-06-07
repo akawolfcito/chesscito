@@ -13,7 +13,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyDailyCap,
-  buildAttestationHash,
   buildDailyStreakBonusIdempotencyKey,
   buildDailyTacticIdempotencyKey,
   buildTrainingExerciseIdempotencyKey,
@@ -22,6 +21,7 @@ import {
   normalizeWallet,
   type BalanceContributingEntry,
 } from "@/lib/peones/ledger-service";
+import { buildAttestationHash } from "@/lib/peones/ledger-service-server";
 
 const W_LOWER = "0xabcdef0123456789abcdef0123456789abcdef01";
 const W_UPPER = "0xABCDEF0123456789ABCDEF0123456789ABCDEF01";
