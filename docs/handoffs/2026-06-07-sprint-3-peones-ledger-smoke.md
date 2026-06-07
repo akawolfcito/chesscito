@@ -77,7 +77,92 @@ Telemetry observable when `NEXT_PUBLIC_ENABLE_LOCAL_TELEMETRY=1`:
 
 ---
 
-## 5. Checklist antes de push (verified before commit I)
+## 4.5 Post-apply update (2026-06-07)
+
+The §4 caveat described the pre-migration state. This section
+documents what actually happened when the migration was applied and
+the hosted environment smoked. The §4 text is left untouched for
+historical context, but the live state of the system is what §4.5
+describes.
+
+### Hosted environment
+
+- **Supabase project:** `chesscito`, ref `brsbdzpuvotxsadmcxyj`, region East US (North Virginia).
+- Only one Supabase project is linked to this repo, so the apply targets the same database that production code reads from. This is safe because the migration is purely additive (CREATE TABLE / VIEW / FUNCTION / POLICY) and `origin/production` does not reference the new objects yet — they sit dormant until production promotes.
+
+### Migration apply
+
+- Executed `supabase db push` from `apps/web`. Dry-run reported a single pending migration `20260607000000_peones_ledger_init.sql`. The actual push applied it without errors.
+- `supabase migration list` confirms the row `20260607000000 | 20260607000000 | 2026-06-07 00:00:00` in both Local and Remote columns.
+
+### DB smoke 13/13 ✅
+
+Run via `apps/web/scripts/peones-smoke.mjs` (service-role, smoke wallet generated fresh per run, cleanup at the end). Verified:
+
+- `peones_ledger` table reachable.
+- `peones_balances` view reachable.
+- `peones_balance_with_caps(p_wallet, p_day_utc)` function reachable.
+- Fresh wallet returns balance=0, daily_earned_capped=0, daily_cap=10.
+- INSERT `earn daily_tactic +3` succeeds.
+- INSERT with duplicate `idempotency_key` is rejected by the UNIQUE index (Postgres error code 23505).
+- INSERT with `amount=0` is rejected by the CHECK constraint (23514).
+- INSERT with uppercase wallet is rejected by the wallet regex CHECK (23514).
+- `peones_balance_with_caps` reflects the +3 earn at balance=3, daily_earned_capped=3.
+- `peones_balances` view shows balance=3, event_count=1 for the smoke wallet.
+- INSERT `earn exercise_completion +2` succeeds and lifts balance to 5 without bumping daily_earned_capped (non-daily source bypasses the cap).
+- Cleanup deletes the smoke rows so analytics aren't polluted.
+
+### API smoke 10/10 ✅
+
+Run via `apps/web/scripts/peones-api-smoke.mjs` against the local dev server pointing at hosted Supabase. Verified:
+
+- `GET /api/peones/balance?wallet=<fresh>` → 200 with `balance:0 dailyCap:10`.
+- `POST /api/peones/earn` daily_tactic +3 → 200 with `credited:3 capReached:false`.
+- Same `idempotencyKey` again → 200 with `duplicate:true credited:3` (no second row written).
+- `GET /api/peones/balance` after the earn → `balance:3 dailyEarnedCapped:3`.
+- Two more earns drive `dailyEarnedCapped` to 8.
+- Request +3 with 2 of headroom → `credited:2 capReached:true` (partial cap, one row inserted with truncated amount).
+- Request more after cap exhausted → `credited:0 capReached:true ledgerId:null` (no row inserted).
+- `POST exercise_completion +1` → `credited:1 capReached:false` (cap ignored for non-daily source).
+- `GET /api/peones/balance?wallet=<EIP-55-cased>` (lowercase `0x` prefix + uppercase hex) → 200 with the response carrying the lowercase wallet.
+
+### `/hub` and SSR
+
+- `curl -sLf http://localhost:3000/en/hub` → HTTP 200 after the bundle fix described below. Before the fix, /hub returned 500.
+- `PeonesBalanceChip` is mounted in the SSR HTML (via `hub-scaffold.tsx`). The chip self-gates on `useAccount()`, so under an SSR request without a connected wallet it renders the guest branch (null). Client-side hydration with a connected wallet flips it to the loading → success path.
+
+### Bug encountered + fix
+
+**P0 client-bundle crash** surfaced when hitting `/hub` after the migration was applied:
+
+- The error chain: `PeonesBalanceChip` → `usePeonesBalance` → `normalizeWallet` → `ledger-service.ts` → `import { createHash } from "node:crypto"`. Webpack refuses the `node:` scheme when bundling for the client, so the page returned 500.
+- Fix in `fix(peones): split node:crypto out of client bundle` (commit `da6a1dd3`):
+  - Extracted `buildAttestationHash` + the `node:crypto` import into a new `apps/web/src/lib/peones/ledger-service-server.ts`.
+  - `apps/web/src/lib/peones/ledger-service.ts` is now strictly client-safe (no Node-only imports).
+  - The earn route imports `buildAttestationHash` from the server-side module.
+  - The test file imports from the same server-side module (Node runtime, no bundling concern).
+  - All 40 `ledger-service.test.ts` assertions pass unchanged.
+  - Full vitest suite: 2848/2848.
+
+The migration is unchanged. Endpoint contracts are unchanged. Helper signatures are unchanged. The client bundle is now smaller because `node:crypto` no longer flows into client code paths that never used it.
+
+### Wallet-connected smoke pending (Wolfcito)
+
+The automated smoke covered DB, endpoint, and SSR-without-wallet paths. The wallet-connected flow still needs human eyes:
+
+1. Open `/hub` in a browser with a wallet (MiniPay or MetaMask) and connect.
+2. Confirm the HUD chip renders `0 Peones` for a fresh wallet (or the persisted balance if the wallet has prior rows).
+3. Open Daily Tactic → solve. Confirm the reward block reads `+3 Peones` (not the failure copy that used to appear pre-migration).
+4. Close + reopen the sheet. Confirm the streak persists and a re-solve attempt is gated by the sheet state machine.
+5. Go to `/exercises?piece=king` (or any piece). Complete an exercise with `delta > 0`. Refresh `/hub` and confirm the chip number went up.
+6. With `NEXT_PUBLIC_ENABLE_LOCAL_TELEMETRY=1` set in the local env, watch the Network panel filtered to `/api/telemetry` and confirm three event names land at the expected moments:
+   - `peones_earned` after Daily Tactic solve and after Training exercise completion.
+   - `peones_cap_reached` after the day's daily-family earns sum to 10 (or partial cap kicks in).
+   - `peones_balance_viewed` once per chip mount when the underlying balance reads success.
+
+Only after these 6 checks pass should production promote even be on the table.
+
+
 
 - [x] TypeScript noEmit: clean
 - [x] Full vitest `--max-workers=2`: **2848/2848 ✅** in 89s
