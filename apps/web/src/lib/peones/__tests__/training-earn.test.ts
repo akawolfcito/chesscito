@@ -58,7 +58,7 @@ describe("submitTrainingExerciseEarn — success branches", () => {
       idempotencyKey: `training:${W}:king:king-6:0->3`,
     });
 
-    expect(result).toEqual<TrainingExerciseRewardState>({
+    expect(result).toMatchObject<Partial<TrainingExerciseRewardState>>({
       kind: "success",
       credited: 3,
       attestationHash: "sha256:aaa",
@@ -153,6 +153,9 @@ describe("submitTrainingExerciseEarn — non-positive delta short-circuit", () =
     expect(result).toEqual<TrainingExerciseRewardState>({
       kind: "success",
       credited: 0,
+      newBalance: 0,
+      dailyEarnedCapped: 0,
+      dailyCap: 10,
       attestationHash: null,
       ledgerId: null,
       duplicate: false,

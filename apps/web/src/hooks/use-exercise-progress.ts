@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 import { BADGE_THRESHOLD, EXERCISES, getExerciseCount } from "@/lib/game/exercises";
 import { computeStars, totalStars } from "@/lib/game/scoring";
 import { submitTrainingExerciseEarn } from "@/lib/peones/training-earn";
+import { emitPeonesEarned } from "@/lib/peones/telemetry";
 import { track } from "@/lib/telemetry";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
 
@@ -248,13 +249,38 @@ export function useExerciseProgress(piece: PieceId) {
         // The helper itself short-circuits delta<=0 defensively too.
         const deltaBestStars = bestStarsAfter - bestStarsBefore;
         if (isConnected && address && deltaBestStars > 0) {
-          void submitTrainingExerciseEarn({
+          // Sprint 3 commit H — capture the result so we can emit
+          // `peones_earned`. Errors stay swallowed (fire-and-forget);
+          // exercise_completion is NOT a daily-family source so
+          // capReached is always false and peones_cap_reached
+          // never fires from this surface.
+          submitTrainingExerciseEarn({
             wallet: address,
             piece,
             exerciseId: exercise.id,
             bestStarsBefore,
             bestStarsAfter,
-          });
+          })
+            .then((result) => {
+              if (result.kind === "success" && result.credited > 0) {
+                emitPeonesEarned({
+                  source: "exercise_completion",
+                  sourceId: `${piece}:${exercise.id}`,
+                  requested: deltaBestStars,
+                  credited: result.credited,
+                  capReached: false,
+                  newBalance: result.newBalance,
+                  dailyEarnedCapped: result.dailyEarnedCapped,
+                  dailyCap: result.dailyCap,
+                  attestationHash: result.attestationHash,
+                  duplicate: result.duplicate,
+                });
+              }
+            })
+            .catch(() => {
+              /* swallow — earn helper already never throws, but
+               * defensive in case a future refactor changes that. */
+            });
         }
 
         const next: PieceProgress = { ...prev, stars: newStars };

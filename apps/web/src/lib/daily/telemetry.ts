@@ -75,12 +75,14 @@ export function emitDailyTacticCompleted(args: {
   starsEarned: number;
   newStreak: number;
   isPro: boolean;
-  /** Sprint 2 preview-overlap field. Connected users saw "+3 Peones
-   *  preview" on the sheet; guests saw 0. Sprint 3 commit E keeps
-   *  this field as overlap so downstream dashboards built against
-   *  the Sprint 2 schema do not break — but the SOURCE OF TRUTH for
-   *  real economy crediting is now `peonesEarned`. Plan to deprecate
-   *  in a follow-up sprint once dashboards migrate. */
+  /** @deprecated Sprint 3 commit H — legacy overlap field. Sprint 2
+   *  commit E used this as the preview-to-real bridge while
+   *  `peonesEarned` was hard-coded to 0. From Sprint 3 commit E
+   *  onwards `peonesEarned` carries the real credited number and
+   *  `rewardPreviewPeones` is purely vestigial. Kept here so
+   *  Sprint 2-era dashboards don't break in the same release. Will
+   *  be REMOVED in Sprint 4 once downstream consumers migrate to
+   *  `peonesEarned`. New code MUST NOT read this field. */
   rewardPreviewPeones: number;
   /** Sprint 3 commit E — REAL number credited to the ledger by
    *  `/api/peones/earn`. Connected + earn ok → endpoint's `credited`

@@ -45,8 +45,23 @@ function renderSheet(
     isConnected?: boolean;
     reward?:
       | { kind: "pending" }
-      | { kind: "success"; credited: number; capReached: boolean; attestationHash: string | null; ledgerId: number | null; duplicate: boolean }
-      | { kind: "cap_exhausted" }
+      | {
+          kind: "success";
+          credited: number;
+          capReached: boolean;
+          newBalance: number;
+          dailyEarnedCapped: number;
+          dailyCap: number;
+          attestationHash: string | null;
+          ledgerId: number | null;
+          duplicate: boolean;
+        }
+      | {
+          kind: "cap_exhausted";
+          newBalance: number;
+          dailyEarnedCapped: number;
+          dailyCap: number;
+        }
       | { kind: "error" };
   } = {},
 ) {
@@ -228,6 +243,9 @@ describe("DailyTacticSheet — real reward (Sprint 3 commit E)", () => {
         kind: "success",
         credited: 3,
         capReached: false,
+        newBalance: 3,
+        dailyEarnedCapped: 3,
+        dailyCap: 10,
         attestationHash: "sha256:aaa",
         ledgerId: 1,
         duplicate: false,
@@ -248,6 +266,9 @@ describe("DailyTacticSheet — real reward (Sprint 3 commit E)", () => {
         kind: "success",
         credited: 2,
         capReached: true,
+        newBalance: 10,
+        dailyEarnedCapped: 10,
+        dailyCap: 10,
         attestationHash: "sha256:bbb",
         ledgerId: 2,
         duplicate: false,
@@ -259,7 +280,15 @@ describe("DailyTacticSheet — real reward (Sprint 3 commit E)", () => {
   });
 
   it("renders cap-exhausted copy when reward.kind='cap_exhausted'", () => {
-    renderSheet({ isConnected: true, reward: { kind: "cap_exhausted" } });
+    renderSheet({
+      isConnected: true,
+      reward: {
+        kind: "cap_exhausted",
+        newBalance: 10,
+        dailyEarnedCapped: 10,
+        dailyCap: 10,
+      },
+    });
     solveQuick();
     const block = screen.getByTestId("daily-reward-connected");
     expect(block).toHaveAttribute("data-state", "cap_exhausted");

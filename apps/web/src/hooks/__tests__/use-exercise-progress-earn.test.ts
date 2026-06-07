@@ -20,8 +20,9 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const trackMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/telemetry", () => ({
-  track: vi.fn(),
+  track: trackMock,
 }));
 
 const submitMock = vi.hoisted(() => vi.fn());
@@ -53,11 +54,15 @@ beforeEach(() => {
   submitMock.mockResolvedValue({
     kind: "success",
     credited: 3,
+    newBalance: 3,
+    dailyEarnedCapped: 0,
+    dailyCap: 10,
     attestationHash: "sha256:aaa",
     ledgerId: 1,
     duplicate: false,
   });
   useAccountMock.mockReset();
+  trackMock.mockClear();
   setGuest();
 });
 
@@ -204,6 +209,9 @@ describe("useExerciseProgress.completeExercise — Peones earn wireup", () => {
     submitMock.mockResolvedValueOnce({
       kind: "success",
       credited: 3,
+      newBalance: 3,
+      dailyEarnedCapped: 0,
+      dailyCap: 10,
       attestationHash: "sha256:aaa",
       ledgerId: 99,
       duplicate: true,
@@ -218,5 +226,60 @@ describe("useExerciseProgress.completeExercise — Peones earn wireup", () => {
 
     expect(submitMock).toHaveBeenCalledTimes(1);
     expect(result.current.progress.stars[0]).toBe(3);
+  });
+
+  it("emits peones_earned after a successful credited>0 earn (Sprint 3 commit H)", async () => {
+    submitMock.mockResolvedValueOnce({
+      kind: "success",
+      credited: 3,
+      newBalance: 7,
+      dailyEarnedCapped: 0,
+      dailyCap: 10,
+      attestationHash: "sha256:abc",
+      ledgerId: 12,
+      duplicate: false,
+    });
+    setConnected();
+    const { result } = renderHook(() => useExerciseProgress("rook"));
+    await Promise.resolve();
+
+    act(() => {
+      result.current.completeExercise(1);
+    });
+    // Let the .then() chain land.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const earnedCalls = trackMock.mock.calls.filter(
+      (c) => c[0] === "peones_earned",
+    );
+    expect(earnedCalls).toHaveLength(1);
+    expect(earnedCalls[0]![1]).toMatchObject({
+      source: "exercise_completion",
+      sourceId: "rook:rook-1",
+      requested: 3,
+      credited: 3,
+      capReached: false,
+      newBalance: 7,
+      attestationHash: "sha256:abc",
+      duplicate: false,
+    });
+  });
+
+  it("does NOT emit peones_earned when earn returns kind:error", async () => {
+    submitMock.mockResolvedValueOnce({ kind: "error" });
+    setConnected();
+    const { result } = renderHook(() => useExerciseProgress("rook"));
+    await Promise.resolve();
+
+    act(() => {
+      result.current.completeExercise(1);
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(
+      trackMock.mock.calls.filter((c) => c[0] === "peones_earned"),
+    ).toHaveLength(0);
   });
 });

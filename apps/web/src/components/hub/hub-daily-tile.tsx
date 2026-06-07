@@ -23,6 +23,10 @@ import {
   submitDailyTacticEarn,
   type DailyTacticRewardState,
 } from "@/lib/daily/peones-earn";
+import {
+  emitPeonesCapReached,
+  emitPeonesEarned,
+} from "@/lib/peones/telemetry";
 import { computeStars } from "@/lib/game/scoring";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { useAccount } from "wagmi";
@@ -72,6 +76,11 @@ export function HubDailyTile() {
    *  when the sheet closes so the next open can submit again
    *  (the server-side idempotency_key still collapses replays). */
   const earnFiredRef = useRef(false);
+  /** Sprint 3 commit H — dedup key for `peones_cap_reached` per
+   *  (wallet, day_utc, source). Re-renders or sheet reopens within
+   *  the same component instance NEVER re-emit; a process restart
+   *  or new wallet does. Daily-only — Training never caps. */
+  const capReachedFiredKeyRef = useRef<string | null>(null);
   const [reward, setReward] = useState<DailyTacticRewardState | null>(null);
 
   const puzzleData = getDailyTactic(today);
@@ -115,6 +124,9 @@ export function HubDailyTile() {
 
     // Sprint 3 commit E — earn POST only when connected. Daily
     // completion + streak persist regardless of the earn outcome.
+    // Sprint 3 commit H — emit peones_earned / peones_cap_reached
+    // from the result. Both events are best-effort; failures inside
+    // track() are swallowed by the existing telemetry contract.
     let peonesEarned = 0;
     if (isConnected && address && !earnFiredRef.current) {
       earnFiredRef.current = true;
@@ -125,7 +137,49 @@ export function HubDailyTile() {
         puzzle: puzzleData,
       });
       setReward(result);
-      if (result.kind === "success") peonesEarned = result.credited;
+
+      if (result.kind === "success") {
+        peonesEarned = result.credited;
+        if (result.credited > 0) {
+          emitPeonesEarned({
+            source: "daily_tactic",
+            sourceId: puzzleData.id,
+            requested: 3,
+            credited: result.credited,
+            capReached: result.capReached,
+            newBalance: result.newBalance,
+            dailyEarnedCapped: result.dailyEarnedCapped,
+            dailyCap: result.dailyCap,
+            attestationHash: result.attestationHash,
+            duplicate: result.duplicate,
+          });
+        }
+      }
+
+      const capReached =
+        result.kind === "cap_exhausted" ||
+        (result.kind === "success" && result.capReached);
+      if (capReached) {
+        const dedupKey = `${address}|${today}|daily_tactic`;
+        if (capReachedFiredKeyRef.current !== dedupKey) {
+          capReachedFiredKeyRef.current = dedupKey;
+          const earnedToday =
+            result.kind === "cap_exhausted"
+              ? result.dailyEarnedCapped
+              : result.dailyEarnedCapped;
+          const dailyCap =
+            result.kind === "cap_exhausted" ? result.dailyCap : result.dailyCap;
+          const credited = result.kind === "cap_exhausted" ? 0 : result.credited;
+          emitPeonesCapReached({
+            source: "daily_tactic",
+            sourceId: puzzleData.id,
+            requested: 3,
+            credited,
+            dailyEarnedCapped: earnedToday,
+            dailyCap,
+          });
+        }
+      }
     }
 
     emitDailyTacticCompleted({

@@ -38,8 +38,27 @@ export const DAILY_TACTIC_EARN_AMOUNT = 3;
  */
 export type DailyTacticRewardState =
   | { kind: "pending" }
-  | { kind: "success"; credited: number; capReached: boolean; attestationHash: string | null; ledgerId: number | null; duplicate: boolean }
-  | { kind: "cap_exhausted" }
+  | {
+      kind: "success";
+      credited: number;
+      capReached: boolean;
+      /** Post-credit balance the endpoint computed optimistically. */
+      newBalance: number;
+      dailyEarnedCapped: number;
+      dailyCap: number;
+      attestationHash: string | null;
+      ledgerId: number | null;
+      duplicate: boolean;
+    }
+  | {
+      kind: "cap_exhausted";
+      /** Balance + cap snapshot from the endpoint at the moment the
+       *  cap-exhausted decision was made. Powers `peones_cap_reached`
+       *  telemetry without a second round-trip. */
+      newBalance: number;
+      dailyEarnedCapped: number;
+      dailyCap: number;
+    }
   | { kind: "error" };
 
 export type SubmitDailyTacticEarnArgs = {
@@ -54,6 +73,9 @@ type EarnResponse = {
   wallet?: string;
   credited?: number;
   capReached?: boolean;
+  newBalance?: number;
+  dailyEarnedCapped?: number;
+  dailyCap?: number;
   attestationHash?: string | null;
   ledgerId?: number | null;
   duplicate?: boolean;
@@ -121,19 +143,27 @@ export async function submitDailyTacticEarn(
 
   const credited = Number(json.credited ?? 0);
   const capReached = Boolean(json.capReached);
+  const newBalance = Number(json.newBalance ?? 0);
+  const dailyEarnedCapped = Number(json.dailyEarnedCapped ?? 0);
+  const dailyCap = Number(json.dailyCap ?? 10);
 
   if (credited === 0) {
     // Server returned credited:0. Per the endpoint contract this
     // means the cap was already exhausted (no row written). Sheet
     // renders rewardCapExhausted. Treat as success-with-zero — NOT
-    // as an error — so streak still counts as solved.
-    return { kind: "cap_exhausted" };
+    // as an error — so streak still counts as solved. Carry the
+    // cap snapshot so the consumer can emit `peones_cap_reached`
+    // telemetry without a second round-trip.
+    return { kind: "cap_exhausted", newBalance, dailyEarnedCapped, dailyCap };
   }
 
   return {
     kind: "success",
     credited,
     capReached,
+    newBalance,
+    dailyEarnedCapped,
+    dailyCap,
     attestationHash: json.attestationHash ?? null,
     ledgerId: json.ledgerId ?? null,
     duplicate: Boolean(json.duplicate),

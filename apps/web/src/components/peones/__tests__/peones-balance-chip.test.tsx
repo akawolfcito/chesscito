@@ -5,7 +5,7 @@
  * success / error) without firing /api/peones/balance.
  */
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 
 const usePeonesBalanceMock = vi.hoisted(() => vi.fn());
@@ -13,7 +13,16 @@ vi.mock("@/lib/peones/use-peones-balance", () => ({
   usePeonesBalance: usePeonesBalanceMock,
 }));
 
+const trackMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/telemetry", () => ({
+  track: trackMock,
+}));
+
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
+
+beforeEach(() => {
+  trackMock.mockClear();
+});
 
 afterEach(() => {
   usePeonesBalanceMock.mockReset();
@@ -100,6 +109,63 @@ describe("PeonesBalanceChip — error (non-aggressive fallback)", () => {
     // No alert / banner / modal element appears.
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+});
+
+describe("PeonesBalanceChip — peones_balance_viewed telemetry (Sprint 3 commit H)", () => {
+  it("emits once on success with the balance + surface=hub by default", () => {
+    usePeonesBalanceMock.mockReturnValue({
+      state: {
+        kind: "success",
+        balance: 7,
+        dailyEarnedCapped: 3,
+        dailyCap: 10,
+        lastEventAt: null,
+      },
+      refetch: vi.fn(),
+    });
+    render(<PeonesBalanceChip />);
+    expect(trackMock).toHaveBeenCalledWith("peones_balance_viewed", {
+      balance: 7,
+      dailyEarnedCapped: 3,
+      dailyCap: 10,
+      surface: "hub",
+    });
+    expect(
+      trackMock.mock.calls.filter((c) => c[0] === "peones_balance_viewed"),
+    ).toHaveLength(1);
+  });
+
+  it("does NOT emit for guest / loading / error states", () => {
+    usePeonesBalanceMock.mockReturnValue({ state: { kind: "guest" }, refetch: vi.fn() });
+    render(<PeonesBalanceChip />);
+    expect(trackMock).not.toHaveBeenCalled();
+
+    usePeonesBalanceMock.mockReturnValue({ state: { kind: "loading" }, refetch: vi.fn() });
+    render(<PeonesBalanceChip />);
+    expect(trackMock).not.toHaveBeenCalled();
+
+    usePeonesBalanceMock.mockReturnValue({ state: { kind: "error" }, refetch: vi.fn() });
+    render(<PeonesBalanceChip />);
+    expect(trackMock).not.toHaveBeenCalled();
+  });
+
+  it("supports a custom surface prop (future cluster mount)", () => {
+    usePeonesBalanceMock.mockReturnValue({
+      state: {
+        kind: "success",
+        balance: 7,
+        dailyEarnedCapped: 3,
+        dailyCap: 10,
+        lastEventAt: null,
+      },
+      refetch: vi.fn(),
+    });
+    render(<PeonesBalanceChip surface="arena" />);
+    expect(trackMock).toHaveBeenCalledWith(
+      "peones_balance_viewed",
+      expect.objectContaining({ surface: "arena" }),
+    );
   });
 });
 

@@ -22,12 +22,42 @@
  * Estrellas thesis from the engagement direction doc.
  */
 
+import { useEffect, useRef } from "react";
+
 import { CandyIcon } from "@/components/redesign/candy-icon";
 
+import {
+  emitPeonesBalanceViewed,
+  type PeonesBalanceViewSurface,
+} from "@/lib/peones/telemetry";
 import { usePeonesBalance } from "@/lib/peones/use-peones-balance";
 
-export function PeonesBalanceChip() {
+type Props = {
+  /** Sprint 3 commit G mounts the chip only on `/hub`; the prop keeps
+   *  the surface label out of the chip so a future cluster can mount
+   *  it on `/exercises`, `/coach`, or `/arena` without code surgery. */
+  surface?: PeonesBalanceViewSurface;
+};
+
+export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
   const { state } = usePeonesBalance();
+  /** Sprint 3 commit H — last balance we emitted `peones_balance_viewed`
+   *  for. Re-renders with the same number do not re-emit; a real
+   *  balance change does. Cleared implicitly when the component
+   *  unmounts. */
+  const lastEmittedBalanceRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (state.kind !== "success") return;
+    if (lastEmittedBalanceRef.current === state.balance) return;
+    lastEmittedBalanceRef.current = state.balance;
+    emitPeonesBalanceViewed({
+      balance: state.balance,
+      dailyEarnedCapped: state.dailyEarnedCapped,
+      dailyCap: state.dailyCap,
+      surface,
+    });
+  }, [state, surface]);
 
   if (state.kind === "guest") return null;
 

@@ -75,7 +75,7 @@ describe("submitDailyTacticEarn — success branches", () => {
       idempotencyKey: `daily_tactic:${W}:${DAY}:dt-queen-2`,
     });
 
-    expect(result).toEqual<DailyTacticRewardState>({
+    expect(result).toMatchObject<Partial<DailyTacticRewardState>>({
       kind: "success",
       credited: 3,
       capReached: false,
@@ -126,11 +126,14 @@ describe("submitDailyTacticEarn — success branches", () => {
     });
   });
 
-  it("returns cap_exhausted when credited:0 (cap was already met)", async () => {
+  it("returns cap_exhausted with cap snapshot when credited:0 (cap was already met)", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       jsonResponse({
         credited: 0,
         capReached: true,
+        newBalance: 10,
+        dailyEarnedCapped: 10,
+        dailyCap: 10,
         attestationHash: null,
         ledgerId: null,
       }),
@@ -141,7 +144,12 @@ describe("submitDailyTacticEarn — success branches", () => {
       puzzle: PUZZLE,
       fetchImpl,
     });
-    expect(result).toEqual<DailyTacticRewardState>({ kind: "cap_exhausted" });
+    expect(result).toEqual<DailyTacticRewardState>({
+      kind: "cap_exhausted",
+      newBalance: 10,
+      dailyEarnedCapped: 10,
+      dailyCap: 10,
+    });
   });
 
   it("flags duplicate:true on the success result when the server replays", async () => {

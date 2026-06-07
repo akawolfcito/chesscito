@@ -27,6 +27,12 @@ export type TrainingExerciseRewardState =
   | {
       kind: "success";
       credited: number;
+      /** Post-credit balance the endpoint computed optimistically.
+       *  Sprint 3 commit H — powers `peones_earned` telemetry without
+       *  a second round-trip. */
+      newBalance: number;
+      dailyEarnedCapped: number;
+      dailyCap: number;
       attestationHash: string | null;
       ledgerId: number | null;
       duplicate: boolean;
@@ -45,6 +51,9 @@ export type SubmitTrainingExerciseEarnArgs = {
 
 type EarnResponse = {
   credited?: number;
+  newBalance?: number;
+  dailyEarnedCapped?: number;
+  dailyCap?: number;
   attestationHash?: string | null;
   ledgerId?: number | null;
   duplicate?: boolean;
@@ -82,10 +91,14 @@ export async function submitTrainingExerciseEarn(
     // Defensive short-circuit. The hook gates on delta > 0; if the
     // gate ever fails, we return a no-op success instead of a
     // 400/error from the endpoint. Keeps the calling code's happy
-    // path symmetric.
+    // path symmetric. Cap fields zeroed because we never spoke
+    // to the server.
     return {
       kind: "success",
       credited: 0,
+      newBalance: 0,
+      dailyEarnedCapped: 0,
+      dailyCap: 10,
       attestationHash: null,
       ledgerId: null,
       duplicate: false,
@@ -138,6 +151,9 @@ export async function submitTrainingExerciseEarn(
   return {
     kind: "success",
     credited: Number(json.credited ?? 0),
+    newBalance: Number(json.newBalance ?? 0),
+    dailyEarnedCapped: Number(json.dailyEarnedCapped ?? 0),
+    dailyCap: Number(json.dailyCap ?? 10),
     attestationHash: json.attestationHash ?? null,
     ledgerId: json.ledgerId ?? null,
     duplicate: Boolean(json.duplicate),

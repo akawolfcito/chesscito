@@ -21,6 +21,10 @@ import {
   submitDailyTacticEarn,
   type DailyTacticRewardState,
 } from "@/lib/daily/peones-earn";
+import {
+  emitPeonesCapReached,
+  emitPeonesEarned,
+} from "@/lib/peones/telemetry";
 import { computeStars } from "@/lib/game/scoring";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { shareUrlForDaily } from "@/lib/og/share-urls";
@@ -66,6 +70,8 @@ export function DailyTacticSlot() {
   const startedFiredRef = useRef(false);
   /** Sprint 3 commit E — earn POST dedup, mirrors HubDailyTile. */
   const earnFiredRef = useRef(false);
+  /** Sprint 3 commit H — cap_reached dedup, mirrors HubDailyTile. */
+  const capReachedFiredKeyRef = useRef<string | null>(null);
   const [reward, setReward] = useState<DailyTacticRewardState | null>(null);
 
   const puzzleData = getDailyTactic(today);
@@ -116,7 +122,43 @@ export function DailyTacticSlot() {
         puzzle: puzzleData,
       });
       setReward(result);
-      if (result.kind === "success") peonesEarned = result.credited;
+
+      if (result.kind === "success") {
+        peonesEarned = result.credited;
+        if (result.credited > 0) {
+          emitPeonesEarned({
+            source: "daily_tactic",
+            sourceId: puzzleData.id,
+            requested: 3,
+            credited: result.credited,
+            capReached: result.capReached,
+            newBalance: result.newBalance,
+            dailyEarnedCapped: result.dailyEarnedCapped,
+            dailyCap: result.dailyCap,
+            attestationHash: result.attestationHash,
+            duplicate: result.duplicate,
+          });
+        }
+      }
+
+      const capReached =
+        result.kind === "cap_exhausted" ||
+        (result.kind === "success" && result.capReached);
+      if (capReached) {
+        const dedupKey = `${address}|${today}|daily_tactic`;
+        if (capReachedFiredKeyRef.current !== dedupKey) {
+          capReachedFiredKeyRef.current = dedupKey;
+          const credited = result.kind === "cap_exhausted" ? 0 : result.credited;
+          emitPeonesCapReached({
+            source: "daily_tactic",
+            sourceId: puzzleData.id,
+            requested: 3,
+            credited,
+            dailyEarnedCapped: result.dailyEarnedCapped,
+            dailyCap: result.dailyCap,
+          });
+        }
+      }
     }
 
     emitDailyTacticCompleted({
