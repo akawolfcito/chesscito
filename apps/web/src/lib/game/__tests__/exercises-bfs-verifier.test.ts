@@ -6,17 +6,18 @@ import { getValidTargets } from "@/lib/game/board";
 /**
  * BFS verifier for exercise `optimalMoves` declarations.
  *
- * Sprint 1 commit 2 of Training Economy Alpha 2026-06-05 — runs in
- * **warning mode**: mismatches are collected and reported via a single
- * console.table at the end, but the test suite does NOT fail. The goal
- * here is to surface pre-existing drift between authored `optimalMoves`
- * and what the actual move rules support, WITHOUT blocking Sprint 1
- * delivery on legacy entries we don't want to touch yet.
+ * Sprint 2 commit A (Training Economy Alpha 2026-06-06) — promoted
+ * from warning mode to **hard fail**. Sprint 1 cleared every legacy
+ * mismatch (knight-5 a1→e5 → a1→e4 fix in commit 25fdfbee) and the
+ * Sprint 1 closure run was 34/34 green, so the warning collector is
+ * removed and each exercise's optimalMoves is now a hard assertion.
  *
- * Promotion to hard fail is scheduled for Sprint 2 (once any mismatches
- * found here are resolved or explicitly waived in spec).
+ * From this point forward, ANY new authored exercise whose declared
+ * `optimalMoves` disagrees with the BFS minimum breaks the suite. The
+ * test name is the exercise ID, so vitest output points the author
+ * directly at the offending entry.
  *
- * BFS protocol:
+ * BFS protocol (unchanged from Sprint 1):
  * - Treat each `getValidTargets` result as the expansion function.
  * - Position alone is the BFS state (no per-step metadata) — pawn rules
  *   already encode rank-dependent behavior internally, so the same
@@ -69,73 +70,31 @@ function bfsOptimal(
   return null;
 }
 
-type Mismatch = {
-  piece: PieceId;
-  exerciseId: string;
-  declared: number;
-  bfs: number | "unreachable";
-  possibleCause: string;
-};
-
-const mismatches: Mismatch[] = [];
-
-function classifyCause(declared: number, bfs: number | null, ex: Exercise): string {
-  if (bfs === null) {
-    return "BFS could not reach targetPos — verify startPos/targetPos/obstacles authoring.";
-  }
-  if (bfs < declared) {
-    return "Declared optimalMoves too HIGH — a shorter path exists per BFS. Update declaration or add obstacles to forbid the shortcut.";
-  }
-  if (bfs > declared) {
-    const hasObstacles = (ex.obstacles?.length ?? 0) > 0;
-    const hasCaptureTargets = (ex.captureTargets?.length ?? 0) > 0;
-    if (hasObstacles || hasCaptureTargets) {
-      return "Declared optimalMoves too LOW — obstacles/captureTargets force a longer path per BFS. Likely an authoring error.";
-    }
-    return "Declared optimalMoves too LOW — BFS finds longer path. Re-check rule semantics for this piece.";
-  }
-  return "No mismatch (should not reach this branch).";
-}
+let allPassed = true;
 
 describe("BFS verifier — exercise optimalMoves", () => {
   for (const piece of PLAYABLE_PIECES) {
     describe(`piece: ${piece}`, () => {
       EXERCISES[piece].forEach((ex) => {
-        it(`${ex.id} is reachable per BFS (warning mode for optimalMoves drift)`, () => {
+        it(`${ex.id} optimalMoves matches BFS`, () => {
           const bfs = bfsOptimal(piece, ex);
-          // Hard expectation: every exercise must be reachable. If BFS
-          // returns null, the exercise is broken authoring — fail loud.
-          expect(bfs).not.toBeNull();
-
-          // Soft expectation: optimalMoves should equal BFS optimum.
-          // Sprint 1 warning mode — collect but do not fail.
-          if (bfs !== null && bfs !== ex.optimalMoves) {
-            mismatches.push({
-              piece,
-              exerciseId: ex.id,
-              declared: ex.optimalMoves,
-              bfs,
-              possibleCause: classifyCause(ex.optimalMoves, bfs, ex),
-            });
-          }
+          // Reachability: every exercise must be solvable from the
+          // declared startPos under the declared obstacles/captureTargets.
+          expect(bfs, `${ex.id} unreachable per BFS`).not.toBeNull();
+          // Optimality: the declared optimalMoves MUST equal the BFS
+          // minimum. Hard fail mode — any drift breaks the suite.
+          if (bfs !== ex.optimalMoves) allPassed = false;
+          expect(bfs).toBe(ex.optimalMoves);
         });
       });
     });
   }
 
   afterAll(() => {
-    if (mismatches.length === 0) {
-      // eslint-disable-next-line no-console
-      console.log(
-        "[BFS verifier] All exercises pass optimalMoves verification ✅",
-      );
-      return;
-    }
+    if (!allPassed) return;
     // eslint-disable-next-line no-console
-    console.warn(
-      `[BFS verifier] Found ${mismatches.length} optimalMoves mismatch(es) — Sprint 1 warning mode, not failing.`,
+    console.log(
+      "[BFS verifier] All exercises pass optimalMoves verification ✅",
     );
-    // eslint-disable-next-line no-console
-    console.table(mismatches);
   });
 });
