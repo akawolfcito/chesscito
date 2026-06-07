@@ -9,7 +9,11 @@ import { getValidTargets } from "@/lib/game/board";
 import {
   DAILY_TACTIC_PUZZLES,
   getDailyTactic,
+  getPuzzleDifficulty,
+  type PuzzleDifficulty,
 } from "@/lib/daily/daily-puzzles";
+
+const VALID_DIFFICULTIES: PuzzleDifficulty[] = ["easy", "medium", "hard"];
 
 const pos = (file: number, rank: number): BoardPosition => ({ file, rank });
 const PIECE_ORDER: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen"];
@@ -251,5 +255,59 @@ describe("daily-tactic-puzzles — rotation", () => {
       seen.add(getDailyTactic(d.toISOString().slice(0, 10)).id);
     }
     expect(seen.size).toBeGreaterThanOrEqual(3);
+  });
+
+  it("rotation result shape is unchanged — still returns a DailyTacticData with id/name/piece/exercise/hint", () => {
+    const puzzle = getDailyTactic("2026-05-15");
+    expect(puzzle).toHaveProperty("id");
+    expect(puzzle).toHaveProperty("name");
+    expect(puzzle).toHaveProperty("piece");
+    expect(puzzle).toHaveProperty("exercise");
+    expect(puzzle).toHaveProperty("hint");
+    // difficulty is now part of the shape but accessed through the helper
+    expect(VALID_DIFFICULTIES).toContain(getPuzzleDifficulty(puzzle));
+  });
+});
+
+describe("daily-tactic-puzzles — difficulty", () => {
+  it("getPuzzleDifficulty returns the explicit value when present", () => {
+    expect(getPuzzleDifficulty({ difficulty: "easy" })).toBe("easy");
+    expect(getPuzzleDifficulty({ difficulty: "medium" })).toBe("medium");
+    expect(getPuzzleDifficulty({ difficulty: "hard" })).toBe("hard");
+  });
+
+  it("getPuzzleDifficulty returns the default (easy) when difficulty is missing", () => {
+    expect(getPuzzleDifficulty({})).toBe("easy");
+    expect(getPuzzleDifficulty({ difficulty: undefined })).toBe("easy");
+  });
+
+  it("all 14 puzzles have a valid difficulty after Sprint 2 commit B", () => {
+    for (const puzzle of DAILY_TACTIC_PUZZLES) {
+      const d = getPuzzleDifficulty(puzzle);
+      expect(
+        VALID_DIFFICULTIES,
+        `${puzzle.id} resolved to invalid difficulty "${d}"`,
+      ).toContain(d);
+    }
+  });
+
+  it("all 14 puzzles declare difficulty explicitly (no implicit defaults left)", () => {
+    // Stronger guard than the previous test — catches the case where a
+    // new puzzle is added without setting `difficulty` and silently
+    // falls through to the default. Authors must opt in.
+    for (const puzzle of DAILY_TACTIC_PUZZLES) {
+      expect(
+        puzzle.difficulty,
+        `${puzzle.id} is missing an explicit difficulty`,
+      ).toBeDefined();
+    }
+  });
+
+  it("Sprint 2 baseline distribution: 10 easy / 3 medium / 1 hard", () => {
+    const counts: Record<PuzzleDifficulty, number> = { easy: 0, medium: 0, hard: 0 };
+    for (const puzzle of DAILY_TACTIC_PUZZLES) {
+      counts[getPuzzleDifficulty(puzzle)] += 1;
+    }
+    expect(counts).toEqual({ easy: 10, medium: 3, hard: 1 });
   });
 });

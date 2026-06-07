@@ -2,13 +2,48 @@ import { todayUtc } from "./progress";
 import type { Exercise, PieceId } from "@/lib/game/types";
 import { defineLabyrinth, sq } from "@/lib/game/notation";
 
+/**
+ * Difficulty tag for Daily Tactic puzzles. Sprint 2 commit B
+ * (Training Economy Alpha 2026-06-06) — pure data, no UI render
+ * yet. Consumers can use this to tier rewards, filter the pool,
+ * or show a chip in a future visual cluster.
+ *
+ * Calibration heuristic (Wolfcito 2026-06-06):
+ *  - easy:   1-move puzzles or direct captures
+ *  - medium: 2-3 moves with non-immediate route or several stars
+ *  - hard:   reserved for puzzles with obstacles, captureTargets,
+ *            or compound tactical decisions
+ */
+export type PuzzleDifficulty = "easy" | "medium" | "hard";
+
+/** Default applied when a puzzle was authored before the field
+ *  existed. Conservative: assume easy so legacy puzzles never look
+ *  retroactively hard in any future filter UI. */
+const DEFAULT_PUZZLE_DIFFICULTY: PuzzleDifficulty = "easy";
+
 export type DailyTacticData = {
   id: string;
   name: string;
   piece: PieceId;
   exercise: Exercise;
   hint: string;
+  /** Optional difficulty tag (Sprint 2 commit B). Backward-compatible:
+   *  consumers must go through `getPuzzleDifficulty()` so missing
+   *  values resolve to the default. */
+  difficulty?: PuzzleDifficulty;
 };
+
+/**
+ * Returns the puzzle's difficulty tag, falling back to the default
+ * ("easy") when the field is absent. Use this everywhere instead of
+ * reading `puzzle.difficulty` directly so legacy puzzles never crash
+ * a consumer that wants a non-optional tag.
+ */
+export function getPuzzleDifficulty(
+  puzzle: Pick<DailyTacticData, "difficulty">,
+): PuzzleDifficulty {
+  return puzzle.difficulty ?? DEFAULT_PUZZLE_DIFFICULTY;
+}
 
 /**
  * 14 exercise-based daily puzzles for the Daily Tactic feature.
@@ -23,6 +58,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-rook-1",
     name: "Rook — horizontal slide",
     piece: "rook",
+    difficulty: "easy",
     exercise: {
       id: "dt-rook-1",
       startPos: sq("a1"),
@@ -35,6 +71,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-rook-2",
     name: "Rook — vertical climb",
     piece: "rook",
+    difficulty: "easy",
     exercise: {
       id: "dt-rook-2",
       startPos: sq("a1"),
@@ -47,6 +84,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-rook-3",
     name: "Rook — two-corner path",
     piece: "rook",
+    difficulty: "medium",
     exercise: {
       id: "dt-rook-3",
       startPos: sq("a1"),
@@ -60,6 +98,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-bishop-1",
     name: "Bishop — long diagonal",
     piece: "bishop",
+    difficulty: "easy",
     exercise: {
       id: "dt-bishop-1",
       startPos: sq("a1"),
@@ -73,6 +112,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-knight-1",
     name: "Knight — first L",
     piece: "knight",
+    difficulty: "easy",
     exercise: {
       id: "dt-knight-1",
       startPos: sq("b1"),
@@ -85,6 +125,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-knight-2",
     name: "Knight — corner hop",
     piece: "knight",
+    difficulty: "easy",
     exercise: {
       id: "dt-knight-2",
       startPos: sq("a1"),
@@ -97,6 +138,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-knight-3",
     name: "Knight — two jumps",
     piece: "knight",
+    difficulty: "medium",
     exercise: {
       id: "dt-knight-3",
       startPos: sq("a1"),
@@ -110,6 +152,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-pawn-1",
     name: "Pawn — one step",
     piece: "pawn",
+    difficulty: "easy",
     exercise: {
       id: "dt-pawn-1",
       startPos: sq("a2"),
@@ -122,6 +165,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-pawn-2",
     name: "Pawn — double step",
     piece: "pawn",
+    difficulty: "easy",
     exercise: {
       id: "dt-pawn-2",
       startPos: sq("a2"),
@@ -134,6 +178,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-pawn-3",
     name: "Pawn — diagonal capture",
     piece: "pawn",
+    difficulty: "easy",
     exercise: {
       id: "dt-pawn-3",
       startPos: sq("b2"),
@@ -147,6 +192,10 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-pawn-4",
     name: "Pawn — capture then advance",
     piece: "pawn",
+    // Hard: compound tactic — captureTargets + 2 moves + sequenced
+    // capture-then-advance. The only Sprint 2-baseline puzzle that
+    // combines an allowlist constraint with multi-move planning.
+    difficulty: "hard",
     exercise: defineLabyrinth({
       id: "dt-pawn-4",
       start: "a2",
@@ -162,6 +211,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-queen-1",
     name: "Queen — diagonal sweep",
     piece: "queen",
+    difficulty: "easy",
     exercise: {
       id: "dt-queen-1",
       startPos: sq("a1"),
@@ -174,6 +224,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-queen-2",
     name: "Queen — file ride",
     piece: "queen",
+    difficulty: "easy",
     exercise: {
       id: "dt-queen-2",
       startPos: sq("a1"),
@@ -186,6 +237,7 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     id: "dt-queen-3",
     name: "Queen — two-move reach",
     piece: "queen",
+    difficulty: "medium",
     exercise: {
       id: "dt-queen-3",
       startPos: sq("a1"),
