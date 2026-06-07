@@ -18,6 +18,13 @@ vi.mock("@/lib/pro/use-is-pro-active", () => ({
   useIsProActive: () => false,
 }));
 
+// Sprint 4 commit F — Peones fallback mock. Per-test override via
+// mockResolvedValueOnce. Default = NOT installed so existing tests
+// behave bit-identically.
+vi.mock("@/lib/peones/coach-spend-fallback", () => ({
+  attemptCoachSpendWithPeones: vi.fn(),
+}));
+
 describe("useCoachAnalysis (skeleton)", () => {
   const baseInput = {
     surface: "coach_viewer" as const,
@@ -234,6 +241,223 @@ describe("useCoachAnalysis (skeleton)", () => {
     await act(async () => { await result.current.claimWelcome(); });
 
     expect(localStorage.getItem("chesscito:coach-welcomed")).toBeTruthy();
+    vi.unstubAllGlobals();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Sprint 4 commit F — Peones fallback integration
+// ─────────────────────────────────────────────────────────────────
+
+import { attemptCoachSpendWithPeones } from "@/lib/peones/coach-spend-fallback";
+
+const mockedAttemptCoach = vi.mocked(attemptCoachSpendWithPeones);
+const PEONES_WALLET = "0x2222222222222222222222222222222222222222";
+const PEONES_GAME = "550e8400-e29b-41d4-a716-446655440099";
+
+describe("useCoachAnalysis — Peones fallback (Sprint 4 commit F)", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+    localStorage.setItem("chesscito:coach-welcomed", "1");
+    Object.defineProperty(window.navigator, "onLine", {
+      value: true,
+      configurable: true,
+    });
+    mockedAttemptCoach.mockReset();
+  });
+
+  function stubFetch(opts: {
+    credits: number;
+    captureAnalyzeBody: (body: unknown) => void;
+  }) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+        if (typeof url === "string" && url.includes("/api/coach/credits")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ credits: opts.credits }),
+          });
+        }
+        if (typeof url === "string" && url.includes("/api/coach/analyze")) {
+          opts.captureAnalyzeBody(JSON.parse(String(init?.body ?? "{}")));
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({
+              status: "ready",
+              response: {
+                kind: "full",
+                summary: "ok",
+                mistakes: [],
+                lessons: [],
+                praise: [],
+              },
+              idempotent: false,
+            }),
+          });
+        }
+        // pro/status default no
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ active: false }),
+        });
+      }),
+    );
+  }
+
+  function inputForFree(extra: Partial<Parameters<typeof useCoachAnalysis>[0]> = {}) {
+    return {
+      surface: "coach_viewer" as const,
+      gameId: PEONES_GAME,
+      walletAddress: PEONES_WALLET as `0x${string}`,
+      result: "win" as const,
+      difficulty: "easy" as const,
+      moves: ["e4"],
+      elapsedMs: 5000,
+      isConnected: true,
+      injected: {
+        address: PEONES_WALLET as `0x${string}`,
+        proActive: false,
+        activeLocale: "en" as const,
+      },
+      ...extra,
+    };
+  }
+
+  it("credits>0 path: Peones helper NOT called, analyze body has NO peonesIdempotencyKey", async () => {
+    let captured: unknown = null;
+    stubFetch({
+      credits: 3,
+      captureAnalyzeBody: (b) => {
+        captured = b;
+      },
+    });
+
+    const { result } = renderHook(() => useCoachAnalysis(inputForFree()));
+    act(() => {
+      result.current.askCoach("immediate");
+    });
+
+    await waitFor(() => expect(result.current.phase).toBe("result"));
+    expect(mockedAttemptCoach).not.toHaveBeenCalled();
+    expect(captured).not.toHaveProperty("peonesIdempotencyKey");
+
+    vi.unstubAllGlobals();
+  });
+
+  it("credits=0 + Peones paid: analyze body carries peonesIdempotencyKey + phase reaches result", async () => {
+    let captured: Record<string, unknown> = {};
+    stubFetch({
+      credits: 0,
+      captureAnalyzeBody: (b) => {
+        captured = b as Record<string, unknown>;
+      },
+    });
+    mockedAttemptCoach.mockResolvedValueOnce({
+      kind: "paid",
+      peonesIdempotencyKey: `spend:coach:${PEONES_WALLET}:${PEONES_GAME}`,
+      debited: 1,
+      duplicate: false,
+      proBypassApplied: false,
+      newBalance: 4,
+      attestationHash: "sha256:abc",
+    });
+
+    const { result } = renderHook(() => useCoachAnalysis(inputForFree()));
+    act(() => {
+      result.current.askCoach("immediate");
+    });
+
+    await waitFor(() => expect(result.current.phase).toBe("result"));
+    expect(mockedAttemptCoach).toHaveBeenCalledTimes(1);
+    expect(mockedAttemptCoach).toHaveBeenCalledWith({
+      wallet: PEONES_WALLET,
+      gameId: PEONES_GAME,
+    });
+    expect(captured.peonesIdempotencyKey).toBe(
+      `spend:coach:${PEONES_WALLET}:${PEONES_GAME}`,
+    );
+
+    vi.unstubAllGlobals();
+  });
+
+  it("credits=0 + Peones duplicate paid: still proceeds to result", async () => {
+    let captured: Record<string, unknown> = {};
+    stubFetch({
+      credits: 0,
+      captureAnalyzeBody: (b) => {
+        captured = b as Record<string, unknown>;
+      },
+    });
+    mockedAttemptCoach.mockResolvedValueOnce({
+      kind: "paid",
+      peonesIdempotencyKey: `spend:coach:${PEONES_WALLET}:${PEONES_GAME}`,
+      debited: 0, // duplicate
+      duplicate: true,
+      proBypassApplied: false,
+      newBalance: 4,
+      attestationHash: "sha256:abc",
+    });
+
+    const { result } = renderHook(() => useCoachAnalysis(inputForFree()));
+    act(() => {
+      result.current.askCoach("immediate");
+    });
+
+    await waitFor(() => expect(result.current.phase).toBe("result"));
+    expect(captured.peonesIdempotencyKey).toBe(
+      `spend:coach:${PEONES_WALLET}:${PEONES_GAME}`,
+    );
+
+    vi.unstubAllGlobals();
+  });
+
+  it("credits=0 + Peones insufficient: phase=paywall, analyze NOT called", async () => {
+    let analyzeCalled = false;
+    stubFetch({
+      credits: 0,
+      captureAnalyzeBody: () => {
+        analyzeCalled = true;
+      },
+    });
+    mockedAttemptCoach.mockResolvedValueOnce({ kind: "insufficient" });
+
+    const { result } = renderHook(() => useCoachAnalysis(inputForFree()));
+    act(() => {
+      result.current.askCoach("immediate");
+    });
+
+    await waitFor(() => expect(result.current.phase).toBe("paywall"));
+    expect(analyzeCalled).toBe(false);
+
+    vi.unstubAllGlobals();
+  });
+
+  it("credits=0 + Peones error: phase=paywall, analyze NOT called", async () => {
+    let analyzeCalled = false;
+    stubFetch({
+      credits: 0,
+      captureAnalyzeBody: () => {
+        analyzeCalled = true;
+      },
+    });
+    mockedAttemptCoach.mockResolvedValueOnce({
+      kind: "error",
+      reason: "network",
+    });
+
+    const { result } = renderHook(() => useCoachAnalysis(inputForFree()));
+    act(() => {
+      result.current.askCoach("immediate");
+    });
+
+    await waitFor(() => expect(result.current.phase).toBe("paywall"));
+    expect(analyzeCalled).toBe(false);
+
     vi.unstubAllGlobals();
   });
 });

@@ -69,6 +69,22 @@ vi.mock("@/lib/coach/persistence", () => ({
   persistAnalysis: persistAnalysisMock,
 }));
 
+// Sprint 4 commit F — Supabase ledger lookup for Peones fallback.
+// Per-test override via supabaseLedgerRow.mockReturnValueOnce; default
+// = `null` so all existing tests keep their pre-commit behaviour.
+const supabaseMaybeSingle = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/supabase/server", () => ({
+  getSupabaseServer: () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: supabaseMaybeSingle,
+        }),
+      }),
+    }),
+  }),
+}));
+
 import { POST } from "../route";
 import { enforceOrigin, enforceRateLimit } from "@/lib/server/demo-signing";
 
@@ -140,6 +156,11 @@ describe("POST /api/coach/analyze", () => {
     isProActiveMock.mockResolvedValue({ active: false });
     aggregateHistoryMock.mockResolvedValue(null);
     backfillMock.mockResolvedValue({ copied: 0, waited: false });
+
+    // Sprint 4 commit F — default to "no Peones receipt found" so
+    // every legacy test continues exercising the credit path.
+    supabaseMaybeSingle.mockReset();
+    supabaseMaybeSingle.mockResolvedValue({ data: null, error: null });
   });
 
   it("returns {status:ready,response} on the happy LLM path", async () => {
@@ -653,5 +674,210 @@ describe("POST /api/coach/analyze — PRO write path", () => {
     const res = await POST(makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }));
     expect(res.status).toEqual(200);
     expect(persistAnalysisMock).not.toHaveBeenCalled();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Sprint 4 commit F — Peones fallback path
+// ─────────────────────────────────────────────────────────────────
+
+describe("POST /api/coach/analyze — Peones fallback (Sprint 4 commit F)", () => {
+  const PEONES_KEY = `spend:coach:${VALID_WALLET}:${VALID_GAME_ID}`;
+
+  beforeEach(() => {
+    mockedOrigin.mockReset();
+    mockedRate.mockReset();
+    redisMock.get.mockReset();
+    redisMock.set.mockReset();
+    redisMock.eval.mockReset();
+    redisMock.lpush.mockReset();
+    redisMock.decr.mockReset();
+    redisMock.del.mockReset();
+    openaiCreate.mockReset();
+    validateMock.mockReset();
+    normalizeMock.mockReset();
+    aggregateHistoryMock.mockReset();
+    backfillMock.mockReset();
+    isProActiveMock.mockReset();
+    persistAnalysisMock.mockReset();
+    supabaseMaybeSingle.mockReset();
+
+    mockedOrigin.mockImplementation(() => {});
+    mockedRate.mockResolvedValue(undefined);
+    redisMock.set.mockResolvedValue("OK");
+    redisMock.eval.mockResolvedValue(1);
+    redisMock.lpush.mockResolvedValue(1);
+    redisMock.decr.mockResolvedValue(0);
+    redisMock.del.mockResolvedValue(1);
+    validateMock.mockReturnValue({
+      valid: true,
+      computedResult: "win",
+      totalMoves: 2,
+    });
+    normalizeMock.mockReturnValue({
+      success: true,
+      data: { summary: "nice play" },
+    });
+    persistAnalysisMock.mockResolvedValue({});
+    aggregateHistoryMock.mockResolvedValue(null);
+    backfillMock.mockResolvedValue({ copied: 0, waited: false });
+    isProActiveMock.mockResolvedValue({ active: false });
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: '{"summary":"nice play"}' } }],
+    });
+  });
+
+  function setupPeonesPathRedis(credits: number) {
+    redisMock.get.mockImplementation((key: string) => {
+      if (key === `coach:analysis:${VALID_WALLET}:${VALID_GAME_ID}`)
+        return Promise.resolve(null);
+      if (key === `coach:job-ref:${VALID_WALLET}:${VALID_GAME_ID}`)
+        return Promise.resolve(null);
+      if (key === `coach:pending:${VALID_WALLET}`)
+        return Promise.resolve(null);
+      if (key === `coach:credits:${VALID_WALLET}`)
+        return Promise.resolve(credits);
+      if (key === `coach:game:${VALID_WALLET}:${VALID_GAME_ID}`) {
+        return Promise.resolve({
+          gameId: VALID_GAME_ID,
+          moves: ["e4", "e5"],
+          result: "win",
+          difficulty: "easy",
+          totalMoves: 2,
+        });
+      }
+      return Promise.resolve(null);
+    });
+  }
+
+  it("valid peonesIdempotencyKey + credits=0: returns 200 + does NOT decrement credit", async () => {
+    setupPeonesPathRedis(0);
+    supabaseMaybeSingle.mockResolvedValueOnce({
+      data: {
+        wallet: VALID_WALLET,
+        event_type: "spend",
+        source: "coach",
+        source_id: VALID_GAME_ID,
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      makeRequest({
+        gameId: VALID_GAME_ID,
+        walletAddress: VALID_WALLET,
+        peonesIdempotencyKey: PEONES_KEY,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { status?: string };
+    expect(body.status).toBe("ready");
+    expect(redisMock.decr).not.toHaveBeenCalledWith(
+      `coach:credits:${VALID_WALLET}`,
+    );
+  });
+
+  it("forged peonesIdempotencyKey (no ledger row) + credits=0: returns 402 no_credits", async () => {
+    setupPeonesPathRedis(0);
+    // default supabase mock returns { data: null } — no row found.
+
+    const res = await POST(
+      makeRequest({
+        gameId: VALID_GAME_ID,
+        walletAddress: VALID_WALLET,
+        peonesIdempotencyKey: PEONES_KEY,
+      }),
+    );
+
+    expect(res.status).toBe(402);
+    expect(redisMock.decr).not.toHaveBeenCalledWith(
+      `coach:credits:${VALID_WALLET}`,
+    );
+  });
+
+  it("peonesIdempotencyKey wallet mismatch: returns 402 (fail-closed)", async () => {
+    setupPeonesPathRedis(0);
+    supabaseMaybeSingle.mockResolvedValueOnce({
+      data: {
+        wallet: "0xffffffffffffffffffffffffffffffffffffffff",
+        event_type: "spend",
+        source: "coach",
+        source_id: VALID_GAME_ID,
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      makeRequest({
+        gameId: VALID_GAME_ID,
+        walletAddress: VALID_WALLET,
+        peonesIdempotencyKey: PEONES_KEY,
+      }),
+    );
+
+    expect(res.status).toBe(402);
+  });
+
+  it("peonesIdempotencyKey format mismatch: skips verification + falls through to credit gate", async () => {
+    setupPeonesPathRedis(0);
+    supabaseMaybeSingle.mockResolvedValueOnce({
+      data: {
+        wallet: VALID_WALLET,
+        event_type: "spend",
+        source: "coach",
+        source_id: VALID_GAME_ID,
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      makeRequest({
+        gameId: VALID_GAME_ID,
+        walletAddress: VALID_WALLET,
+        peonesIdempotencyKey: "spend:coach:wrong-format",
+      }),
+    );
+
+    expect(res.status).toBe(402);
+  });
+
+  it("no peonesIdempotencyKey provided: existing credit path unchanged", async () => {
+    setupPeonesPathRedis(5);
+
+    const res = await POST(
+      makeRequest({ gameId: VALID_GAME_ID, walletAddress: VALID_WALLET }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(redisMock.decr).toHaveBeenCalledWith(
+      `coach:credits:${VALID_WALLET}`,
+    );
+  });
+
+  it("valid peonesIdempotencyKey + credits>0: still bypasses credit decrement", async () => {
+    setupPeonesPathRedis(5);
+    supabaseMaybeSingle.mockResolvedValueOnce({
+      data: {
+        wallet: VALID_WALLET,
+        event_type: "spend",
+        source: "coach",
+        source_id: VALID_GAME_ID,
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      makeRequest({
+        gameId: VALID_GAME_ID,
+        walletAddress: VALID_WALLET,
+        peonesIdempotencyKey: PEONES_KEY,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(redisMock.decr).not.toHaveBeenCalledWith(
+      `coach:credits:${VALID_WALLET}`,
+    );
   });
 });

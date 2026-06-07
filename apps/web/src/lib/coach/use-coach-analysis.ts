@@ -14,6 +14,7 @@ import {
   type AnalyzeSource,
 } from "./analyze-telemetry";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
+import { attemptCoachSpendWithPeones } from "@/lib/peones/coach-spend-fallback";
 import type { CoachLocale } from "./prompt-template";
 
 export type CoachPhase =
@@ -177,9 +178,36 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
       const credits = creditsData.credits ?? 0;
       setCoachCredits(credits);
 
+      // Sprint 4 commit F — Peones fallback. Order of consumption
+      // (calibration §7, founder sign-off 2026-06-08):
+      //   1. Redis Coach credits  (existing — credits>0 short-circuits)
+      //   2. PRO bypass           (TODO commit G — slot intentionally
+      //                            deferred; `applyProBypass` stays
+      //                            false everywhere in this commit)
+      //   3. Peones spend         (NEW — when credits=0 and !PRO)
+      //   4. Upsell / paywall     (existing — fall-through)
+      //
+      // PRO short-circuits credits today, so the actual order this
+      // commit ships is Redis → Peones → Paywall when PRO is absent.
+      let peonesIdempotencyKey: string | null = null;
       if (shouldShowPaywall({ proActive: resolvedProActive, credits })) {
-        setPhaseState("paywall");
-        return;
+        const attempt = await attemptCoachSpendWithPeones({
+          wallet: address.toLowerCase(),
+          gameId: analyzeGameId ?? "",
+        });
+        if (attempt.kind === "paid") {
+          peonesIdempotencyKey = attempt.peonesIdempotencyKey;
+          // Reflect the unlock in the local credits state so any UI
+          // gated on `credits > 0` (e.g. paywall guards) transitions
+          // immediately. The server is the source of truth — we do
+          // NOT decrement again after the analyze response.
+          setCoachCredits(1);
+        } else {
+          // insufficient | error — fall back to the paywall surface;
+          // telemetry already fired inside attemptCoachSpendWithPeones.
+          setPhaseState("paywall");
+          return;
+        }
       }
 
       if (!analyzeGameId) {
@@ -220,6 +248,10 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
           gameId: analyzeGameId,
           walletAddress: address,
           locale: activeLocale,
+          // Sprint 4 commit F — forward the Peones receipt so the
+          // server skips the Redis credit check + decrement when
+          // verified.
+          ...(peonesIdempotencyKey ? { peonesIdempotencyKey } : {}),
         }),
         signal,
       });

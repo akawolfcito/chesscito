@@ -15,7 +15,43 @@ import { UUID_RE } from "@/lib/coach/game-persistence";
 import { ANALYSIS_LIST_LPUSH_LUA } from "@/lib/coach/analysis-list-write";
 import { createLogger, hashWallet } from "@/lib/server/logger";
 import { enforceOrigin, enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { getSupabaseServer } from "@/lib/supabase/server";
 import type { GameRecord, CoachAnalysisRecord, PlayerSummary, HistoryDigest } from "@/lib/coach/types";
+
+/**
+ * Sprint 4 commit F — Peones fallback verification. When the client
+ * forwards a `peonesIdempotencyKey` it claims to have paid 1 Peón
+ * for this gameId. We verify by reading the ledger row server-side:
+ * the row must exist, belong to this wallet, target Coach, and point
+ * at this gameId. If verification passes the credit check is skipped
+ * AND the credit decrement is skipped (the Peón already paid).
+ *
+ * Fail-closed: any Supabase failure / shape mismatch returns false so
+ * a forged client cannot bypass the Redis credit gate. Telemetry
+ * logged at the call site.
+ */
+async function verifyPeonesCoachPayment(
+  peonesIdempotencyKey: string,
+  wallet: string,
+  gameId: string,
+): Promise<boolean> {
+  const expected = `spend:coach:${wallet}:${gameId}`;
+  if (peonesIdempotencyKey !== expected) return false;
+  const supabase = getSupabaseServer();
+  if (!supabase) return false;
+  const { data, error } = await supabase
+    .from("peones_ledger")
+    .select("wallet, event_type, source, source_id")
+    .eq("idempotency_key", peonesIdempotencyKey)
+    .maybeSingle();
+  if (error || !data) return false;
+  return (
+    data.wallet === wallet &&
+    data.event_type === "spend" &&
+    data.source === "coach" &&
+    data.source_id === gameId
+  );
+}
 
 const redis = Redis.fromEnv();
 
@@ -41,11 +77,16 @@ export async function POST(req: Request) {
       walletAddress,
       locale: rawLocale,
       forceLocale: rawForceLocale,
+      peonesIdempotencyKey: rawPeonesIdempotencyKey,
     } = body as {
       gameId?: string;
       walletAddress?: string;
       locale?: string;
       forceLocale?: unknown;
+      /** Sprint 4 commit F — Peones fallback receipt. When present and
+       *  verifiable against the ledger, the Redis credit check + the
+       *  credit decrement are both skipped (the Peón already paid). */
+      peonesIdempotencyKey?: string;
     };
     // H-4: locale param drives the LLM prompt language. Optional + defaults
     // to "en" so legacy MiniPay clients (deployed before this change) keep
@@ -150,8 +191,35 @@ export async function POST(req: Request) {
       }
     }
 
-    // --- Credit check (skipped for PRO) ---
-    if (!proStatus.active) {
+    // --- Sprint 4 commit F: Peones fallback verification ---
+    // If the client claims a Peones payment, verify it against the
+    // ledger. Valid receipt → skip both the credit check below AND
+    // the credit decrement at insert time. Invalid receipt → fall
+    // through to the normal credit gate (fail-closed).
+    let peonesPaid = false;
+    if (rawPeonesIdempotencyKey && typeof rawPeonesIdempotencyKey === "string") {
+      try {
+        peonesPaid = await verifyPeonesCoachPayment(
+          rawPeonesIdempotencyKey,
+          wallet,
+          gameId,
+        );
+        log.info("coach_peones_fallback", {
+          wallet_hash: hashWallet(wallet),
+          verified: peonesPaid,
+        });
+      } catch (err) {
+        // Fail-closed — any verification error counts as no receipt.
+        log.warn("coach_peones_fallback_error", {
+          wallet_hash: hashWallet(wallet),
+          err: err instanceof Error ? err.message : String(err),
+        });
+        peonesPaid = false;
+      }
+    }
+
+    // --- Credit check (skipped for PRO and for verified Peones payment) ---
+    if (!proStatus.active && !peonesPaid) {
       const credits = (await redis.get<number>(REDIS_KEYS.credits(wallet))) ?? 0;
       if (credits <= 0) {
         // Diagnostic for the 2026-05-07 PRO mismatch report: log the
@@ -166,7 +234,7 @@ export async function POST(req: Request) {
         });
         return NextResponse.json({ error: "No credits available" }, { status: 402 });
       }
-    } else {
+    } else if (proStatus.active) {
       // Server-side telemetry — Vercel logs only for now. No PII: we
       // emit the expiresAt timestamp (already client-visible) and skip
       // the wallet entirely. TODO: replace with a real
@@ -283,7 +351,11 @@ export async function POST(req: Request) {
           [REDIS_KEYS.analysisList(wallet)],
           [gameId],
         ),
-        ...(proStatus.active ? [] : [redis.decr(REDIS_KEYS.credits(wallet))]),
+        // Sprint 4 commit F — skip Redis credit decrement when the
+        // Peón already paid for this analysis (peonesPaid=true).
+        ...(proStatus.active || peonesPaid
+          ? []
+          : [redis.decr(REDIS_KEYS.credits(wallet))]),
         redis.set(REDIS_KEYS.job(jobId), { status: "ready", response: normalized.data }, { ex: 30 * 24 * 60 * 60 }),
         redis.del(REDIS_KEYS.pendingJob(wallet)),
       ]);
