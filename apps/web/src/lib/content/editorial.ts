@@ -336,6 +336,14 @@ export const DAILY_SOLVE_COPY = {
   extendedStreak: "+1 day",
   newStreak: "New streak!",
   streakLabel: (n: number) => `Streak: ${n}`,
+  /* Sprint 2 commit E — reward preview copy. NO real ledger crediting
+   * happens this sprint; Sprint 3 wires the economy. Wording must NOT
+   * imply that Peones have been added to a balance:
+   *   - Connected sees "+3 Peones preview" + the explainer.
+   *   - Guest sees a connect CTA, never a number. */
+  rewardPreviewConnected: "+3 Peones preview",
+  rewardPreviewExplain: "Daily rewards unlock in the next economy sprint.",
+  rewardGuestCta: "Connect to earn Peones when rewards go live.",
 } as const;
 
 export const DAILY_SHARE_COPY = {

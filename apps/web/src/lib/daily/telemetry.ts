@@ -75,6 +75,14 @@ export function emitDailyTacticCompleted(args: {
   starsEarned: number;
   newStreak: number;
   isPro: boolean;
+  /** Sprint 2 commit E preview number — what the connected user sees
+   *  on the completion screen ("+3 Peones preview"). For guests this
+   *  must be 0; for connected users this is 3 today. The field is
+   *  cleanly distinct from `peonesEarned`, which stays at 0 until
+   *  Sprint 3 actually credits a balance. Downstream dashboards can
+   *  diff `rewardPreviewPeones` vs `peonesEarned` to measure the
+   *  preview-to-real conversion when Sprint 3 ships. */
+  rewardPreviewPeones: number;
 }): void {
   track("daily_tactic_completed", {
     puzzleId: args.puzzle.id,
@@ -85,11 +93,12 @@ export function emitDailyTacticCompleted(args: {
     optimalMoves: args.puzzle.exercise.optimalMoves,
     starsEarned: args.starsEarned,
     newStreak: args.newStreak,
-    // Sprint 2 stub: the ledger lands in Sprint 3 (commit E preview
-    // → commit F real economy). Field reserved in the event schema
-    // so downstream consumers can build dashboards now and the
-    // numbers become non-zero without a schema migration.
+    // Sprint 2 stub: the ledger lands in Sprint 3. NO real economy
+    // crediting happens here. The schema reserves the field so
+    // downstream consumers can build dashboards now and numbers
+    // become non-zero without a schema migration.
     peonesEarned: 0,
+    rewardPreviewPeones: args.rewardPreviewPeones,
     isPro: args.isPro,
   });
 }

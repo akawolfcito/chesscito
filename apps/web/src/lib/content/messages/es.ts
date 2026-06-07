@@ -1287,6 +1287,9 @@ const messages = {
     extendedStreak: "+1 día",
     newStreak: "¡Nueva racha!",
     streakLabel: "Racha: {n}",
+    rewardPreviewConnected: "+3 Peones preview",
+    rewardPreviewExplain: "Las recompensas reales llegan en el próximo sprint de economía.",
+    rewardGuestCta: "Conecta tu wallet para ganar Peones cuando las recompensas estén activas.",
   },
   STATUS_STRIP_COPY: {
     walletNotConnected: "Conecta tu wallet para jugar",

@@ -36,6 +36,12 @@ type Props = {
    *  signature extended from `() => void` so the consumer can attach
    *  it to telemetry without re-deriving the count from board state. */
   onSolve: (movesUsed: number) => void;
+  /** Sprint 2 commit E — gates the reward preview block on the solved
+   *  screen. Connected users see "+3 Peones preview"; guests see a
+   *  connect CTA. NO real economy is credited either way; the ledger
+   *  ships in Sprint 3. Default `false` keeps every legacy consumer
+   *  on the guest branch. */
+  isConnected?: boolean;
   streakAfterSolve?: number;
   streakType?: StreakType;
   shareUrl?: string;
@@ -53,7 +59,7 @@ type Props = {
 const SOLVE_AUTO_CLOSE_MS = 3200;
 const RESET_AFTER_MS = 360;
 
-export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, streakAfterSolve, streakType, shareUrl, shareSolvedUrl, shareLinkUrl, shareSolvedLinkUrl }: Props) {
+export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, streakAfterSolve, streakType, shareUrl, shareSolvedUrl, shareLinkUrl, shareSolvedLinkUrl, isConnected = false }: Props) {
   const [status, setStatus] = useState<Status>("solving");
   const [showHint, setShowHint] = useState(false);
   const [boardKey, setBoardKey] = useState(0);
@@ -178,6 +184,30 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
               )}
               {streakType === "reset" && (
                 <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.newStreak}</span>
+              )}
+              {/* Sprint 2 commit E — reward preview block. NO real
+               *  ledger crediting; copy must read as a preview, not a
+               *  balance update. Connected sees the +3 preview line +
+               *  the explainer; guests see only the connect CTA. */}
+              {isConnected ? (
+                <div
+                  className="mt-1 flex flex-col items-center gap-0.5"
+                  data-testid="daily-reward-preview-connected"
+                >
+                  <span className="text-sm font-extrabold tabular-nums">
+                    {DAILY_SOLVE_COPY.rewardPreviewConnected}
+                  </span>
+                  <span className="text-[0.65rem] font-medium uppercase tracking-wide opacity-60">
+                    {DAILY_SOLVE_COPY.rewardPreviewExplain}
+                  </span>
+                </div>
+              ) : (
+                <span
+                  className="mt-1 text-xs font-bold opacity-70"
+                  data-testid="daily-reward-preview-guest"
+                >
+                  {DAILY_SOLVE_COPY.rewardGuestCta}
+                </span>
               )}
               {isShareUrlValid(shareSolvedUrl) && (
                 <button

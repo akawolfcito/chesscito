@@ -20,6 +20,9 @@ import {
 import { computeStars } from "@/lib/game/scoring";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { shareUrlForDaily } from "@/lib/og/share-urls";
+import { useAccount } from "wagmi";
+
+const SPRINT_2_DAILY_REWARD_PREVIEW = 3;
 
 const DEFAULT_PROGRESS: DailyProgress = {
   streak: 0,
@@ -56,6 +59,8 @@ export function DailyTacticSlot() {
     streakType: SolveStreakType;
   } | null>(null);
   const isPro = useIsProActive();
+  const { isConnected } = useAccount();
+  const rewardPreviewPeones = isConnected ? SPRINT_2_DAILY_REWARD_PREVIEW : 0;
   /** Sprint 2 commit D — same dedup pattern as HubDailyTile. */
   const startedFiredRef = useRef(false);
 
@@ -95,6 +100,7 @@ export function DailyTacticSlot() {
       starsEarned,
       newStreak: next.streak,
       isPro,
+      rewardPreviewPeones,
     });
 
     const streakType = classifyStreakChange(prev, next);
@@ -159,6 +165,7 @@ export function DailyTacticSlot() {
         shareSolvedUrl={shareSolvedUrl}
         shareLinkUrl={shareLinkUrl}
         shareSolvedLinkUrl={shareSolvedLinkUrl}
+        isConnected={isConnected}
       />
     </>
   );

@@ -37,11 +37,12 @@ afterEach(() => {
 function renderSheet(
   overrides: {
     open?: boolean;
-    onSolve?: () => void;
+    onSolve?: (movesUsed: number) => void;
     onOpenChange?: (open: boolean) => void;
     puzzleData?: DailyTacticData;
     streakAfterSolve?: number;
     streakType?: "first" | "extended" | "reset";
+    isConnected?: boolean;
   } = {},
 ) {
   const onSolve = overrides.onSolve ?? vi.fn();
@@ -54,6 +55,7 @@ function renderSheet(
       onSolve={onSolve}
       streakAfterSolve={overrides.streakAfterSolve}
       streakType={overrides.streakType}
+      isConnected={overrides.isConnected}
     />,
   );
   return { onSolve, onOpenChange };
@@ -189,5 +191,58 @@ describe("DailyTacticSheet — 2-move puzzle", () => {
     fireEvent.click(screen.getByRole("gridcell", { name: "Square h8" }));
     expect(onSolve).toHaveBeenCalledOnce();
     expect(screen.getByTestId("daily-status-solved")).toBeInTheDocument();
+  });
+});
+
+/**
+ * Sprint 2 commit E — reward preview block on the solved screen.
+ * NO real Peones credited; copy must read as preview only. Connected
+ * users see the "+3 Peones preview" line; guests see only the connect
+ * CTA. No number is shown to guests.
+ */
+describe("DailyTacticSheet — reward preview (Sprint 2 commit E)", () => {
+  function solveQuick(): void {
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
+    fireEvent.click(screen.getByRole("gridcell", { name: "Square h1" }));
+  }
+
+  it("shows the connected preview block when isConnected=true", () => {
+    renderSheet({ isConnected: true });
+    solveQuick();
+    const previewBlock = screen.getByTestId("daily-reward-preview-connected");
+    expect(previewBlock).toBeInTheDocument();
+    expect(previewBlock).toHaveTextContent("+3 Peones preview");
+    expect(previewBlock).toHaveTextContent(
+      "Daily rewards unlock in the next economy sprint.",
+    );
+    expect(
+      screen.queryByTestId("daily-reward-preview-guest"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows ONLY the connect CTA when isConnected=false (default)", () => {
+    renderSheet({ isConnected: false });
+    solveQuick();
+    const guestBlock = screen.getByTestId("daily-reward-preview-guest");
+    expect(guestBlock).toBeInTheDocument();
+    expect(guestBlock).toHaveTextContent(
+      "Connect to earn Peones when rewards go live.",
+    );
+    // Guests must NOT see any Peones number on the completion screen.
+    expect(
+      screen.queryByTestId("daily-reward-preview-connected"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/\+3 Peones preview/i)).not.toBeInTheDocument();
+  });
+
+  it("defaults to guest copy when isConnected prop is omitted", () => {
+    renderSheet();
+    solveQuick();
+    expect(
+      screen.getByTestId("daily-reward-preview-guest"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("daily-reward-preview-connected"),
+    ).not.toBeInTheDocument();
   });
 });

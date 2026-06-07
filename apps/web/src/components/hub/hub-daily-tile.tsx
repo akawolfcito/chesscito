@@ -21,6 +21,13 @@ import {
 } from "@/lib/daily/telemetry";
 import { computeStars } from "@/lib/game/scoring";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
+import { useAccount } from "wagmi";
+
+/** Sprint 2 commit E reward preview value for connected users. Guests
+ *  see no number on the completion screen — only a connect CTA. The
+ *  ledger lands in Sprint 3; until then this number is purely visual
+ *  + telemetry-side, never written to any balance. */
+const SPRINT_2_DAILY_REWARD_PREVIEW = 3;
 
 const DEFAULT_PROGRESS: DailyProgress = {
   streak: 0,
@@ -57,6 +64,8 @@ export function HubDailyTile() {
     streakType: SolveStreakType;
   } | null>(null);
   const isPro = useIsProActive();
+  const { isConnected } = useAccount();
+  const rewardPreviewPeones = isConnected ? SPRINT_2_DAILY_REWARD_PREVIEW : 0;
   /** Sprint 2 commit D — guards `daily_tactic_started` against duplicate
    *  emission on re-render. Set when `open` flips true; cleared when
    *  it flips false. Re-renders with open already true do not re-emit. */
@@ -98,6 +107,7 @@ export function HubDailyTile() {
       starsEarned,
       newStreak: next.streak,
       isPro,
+      rewardPreviewPeones,
     });
 
     const streakType = classifyStreakChange(prev, next);
@@ -167,6 +177,7 @@ export function HubDailyTile() {
         streakType={solveResult?.streakType}
         shareUrl={shareUrl}
         shareSolvedUrl={shareSolvedUrl}
+        isConnected={isConnected}
       />
     </>
   );
