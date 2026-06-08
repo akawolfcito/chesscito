@@ -616,11 +616,14 @@ export function MissionPanelCandy({
           board image floats directly on the grass field bg. */}
       <div className="board-stage-focus relative min-h-0 flex-1 mx-2 mt-1">
         {board}
-        {/* Sprint 4 commit K — floating overlay anchored to top-right
-            of the board zone. Out-of-flow so state changes never
-            push the bottom action row. */}
+        {/* Sprint 4 commit L — floating overlay anchored to the
+            bottom-right of the board zone (grass strip between the
+            board and the action row). Founder UX call 2026-06-08:
+            top-right was occluding pieces that start in h7/h8/g8.
+            Bottom-right keeps the chip near the board for context
+            but moves it out of the playable area entirely. */}
         {floatingActionSlot && (
-          <div className="pointer-events-none absolute right-2 top-2 z-30 flex max-w-[55%] justify-end">
+          <div className="pointer-events-none absolute bottom-2 right-2 z-30 flex max-w-[55%] justify-end">
             {floatingActionSlot}
           </div>
         )}
