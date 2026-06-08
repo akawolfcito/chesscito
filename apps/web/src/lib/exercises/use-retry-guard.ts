@@ -37,12 +37,22 @@ export type UseRetryGuardArgs = {
    *  so any consumer reading the new attemptSeq is reading a value
    *  for a board that is already in its fresh state. */
   incrementAttemptSeq: () => void;
+  /** Sprint 5 commit F — optional post-transition hook. Fires INSIDE
+   *  the dedup gate, AFTER reset + increment have run, so it is
+   *  guaranteed to fire exactly once per applied retry. The exercise
+   *  screen uses this to emit `training_retry_completed` without
+   *  having to re-derive whether the transition actually applied.
+   *  Receives the attemptSeq that was just closed (i.e. the value the
+   *  guard read BEFORE incrementing) so the event payload describes
+   *  the attempt the user paid for, not the new in-flight one. */
+  onApplied?: (closedAttemptSeq: number) => void;
 };
 
 export function useRetryGuard({
   attemptSeq,
   resetBoard,
   incrementAttemptSeq,
+  onApplied,
 }: UseRetryGuardArgs): () => void {
   /** The last attemptSeq we successfully transitioned. When the
    *  same value comes through again (double-tap / duplicate / re-
@@ -55,5 +65,6 @@ export function useRetryGuard({
     lastAppliedRef.current = attemptSeq;
     resetBoard();
     incrementAttemptSeq();
-  }, [attemptSeq, resetBoard, incrementAttemptSeq]);
+    onApplied?.(attemptSeq);
+  }, [attemptSeq, resetBoard, incrementAttemptSeq, onApplied]);
 }

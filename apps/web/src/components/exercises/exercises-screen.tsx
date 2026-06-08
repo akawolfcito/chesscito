@@ -870,11 +870,23 @@ export function ExercisesScreen({
   /** Sprint 5 commit D — Retry guard. Owns the dedup + reset +
    *  attemptSeq-advance chain so duplicate idempotent responses and
    *  double-taps collapse to a single deterministic transition.
-   *  See `lib/exercises/use-retry-guard.ts`. */
+   *  Sprint 5 commit F — also emits `training_retry_completed` from
+   *  INSIDE the dedup gate so the event count matches the real
+   *  number of attempt resets (never inflated by double-tap, never
+   *  fired on insufficient/error). See `lib/exercises/use-retry-
+   *  guard.ts`. */
   const handlePeonesRetryUnlocked = useRetryGuard({
     attemptSeq,
     resetBoard: () => resetBoard(),
     incrementAttemptSeq,
+    onApplied: (closedAttemptSeq) => {
+      track("training_retry_completed", {
+        piece: selectedPiece,
+        exerciseId: currentExercise.id,
+        attemptSeq: closedAttemptSeq,
+        source: "result_overlay",
+      });
+    },
   });
 
   /** Sprint 4 commit I — Peones Hint visual reveal. Parent owns the
