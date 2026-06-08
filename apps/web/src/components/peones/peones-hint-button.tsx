@@ -46,6 +46,11 @@ import type { BoardPosition, PieceId } from "@/lib/game/types";
  *  toast feel — long enough to read, short enough to not block UX. */
 const REVEAL_TTL_MS = 4000;
 
+/** How long the insufficient / error sublabel stays before the button
+ *  returns to its idle state. Shorter than REVEAL_TTL_MS because the
+ *  sublabel is text-only feedback, not a paid reveal. */
+const FEEDBACK_TTL_MS = 2500;
+
 type HintState =
   | { kind: "idle" }
   | { kind: "loading" }
@@ -105,7 +110,7 @@ export function PeonesHintButton({
   if (!isConnected || !address) {
     return (
       <div
-        className="inline-flex items-center rounded-full bg-white/70 px-3 py-1 text-[11px] font-semibold text-amber-900/70 ring-1 ring-amber-800/15"
+        className="pointer-events-auto inline-flex max-w-full items-center truncate rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-semibold text-amber-900/80 shadow-sm ring-1 ring-amber-800/15"
         role="status"
         data-testid="peones-hint-button"
         data-state="guest"
@@ -127,6 +132,14 @@ export function PeonesHintButton({
       setState({ kind: "idle" });
       timerRef.current = null;
     }, REVEAL_TTL_MS);
+  }
+
+  function scheduleFeedbackClear() {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setState({ kind: "idle" });
+      timerRef.current = null;
+    }, FEEDBACK_TTL_MS);
   }
 
   async function handleClick() {
@@ -197,6 +210,7 @@ export function PeonesHintButton({
         reason: "insufficient_balance",
       });
       setState({ kind: "insufficient" });
+      scheduleFeedbackClear();
       return;
     }
 
@@ -207,6 +221,7 @@ export function PeonesHintButton({
       reason: result.error,
     });
     setState({ kind: "error" });
+    scheduleFeedbackClear();
   }
 
   const isLoading = state.kind === "loading";
@@ -220,7 +235,7 @@ export function PeonesHintButton({
 
   return (
     <div
-      className="inline-flex flex-col items-center gap-1"
+      className="pointer-events-auto inline-flex flex-col items-end gap-1"
       data-testid="peones-hint-button"
       data-state={state.kind}
     >
@@ -240,7 +255,7 @@ export function PeonesHintButton({
       </button>
       {subLabel ? (
         <span
-          className="text-[10px] font-medium text-amber-900/80"
+          className="max-w-[10rem] truncate rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-semibold text-amber-900/85 shadow-sm ring-1 ring-amber-800/15"
           role="status"
           aria-live="polite"
         >

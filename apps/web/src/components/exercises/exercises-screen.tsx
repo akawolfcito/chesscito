@@ -2151,24 +2151,16 @@ export function ExercisesScreen({
               />
             ) : null
           }
-          actionRowLeft={
-            <div className="flex flex-col items-center gap-1">
-              {/* Sprint 4 commit E — first spend surface. The hint
-                  affordance lives next to the Daily slot so it stays
-                  bottom-anchored without restructuring the layout.
-                  attemptSeq is hard-coded to 1 in this commit; retry-
-                  attempt tracking lights it up in a later commit so
-                  the user can pay for a fresh hint per attempt. */}
-              <PeonesHintButton
-                piece={selectedPiece}
-                exerciseId={currentExercise.id}
-                attemptSeq={1}
-                disabled={Boolean(activeLabyrinth) || phase !== "ready"}
-                firstStep={peonesHintFirstStep}
-                onReveal={setPeonesHintSquare}
-              />
-              <DailyTacticSlot />
-            </div>
+          actionRowLeft={<DailyTacticSlot />}
+          floatingActionSlot={
+            <PeonesHintButton
+              piece={selectedPiece}
+              exerciseId={currentExercise.id}
+              attemptSeq={1}
+              disabled={Boolean(activeLabyrinth) || phase !== "ready"}
+              firstStep={peonesHintFirstStep}
+              onReveal={setPeonesHintSquare}
+            />
           }
           actionRowRight={
             <MiniArenaBridgeSlot

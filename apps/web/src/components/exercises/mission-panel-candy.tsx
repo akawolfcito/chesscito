@@ -76,6 +76,14 @@ type MissionPanelProps = {
    *  bridge) that shouldn't push the board down. */
   actionRowLeft?: ReactNode
   actionRowRight?: ReactNode
+  /** Sprint 4 commit K — floating overlay anchored to the top-right
+   *  of the board zone. Used by the Peones Hint affordance so the
+   *  button can grow / shrink across states (idle / loading /
+   *  revealed / insufficient / error) WITHOUT pushing the bottom
+   *  action row. Wrapper uses pointer-events-none so the slot
+   *  itself doesn't intercept board taps; consumers opt back in on
+   *  the actual control. */
+  floatingActionSlot?: ReactNode
   /** Optional fail-rescue overlay (FailRescueModal). When supplied and
    *  phase === 'failure', PhaseFlash holds open without autodismiss
    *  and mounts the slot below the wolf after 1800ms. When omitted
@@ -418,6 +426,7 @@ export function MissionPanelCandy({
   headerSlot,
   actionRowLeft,
   actionRowRight,
+  floatingActionSlot,
   shieldCount,
   streakCount,
   lastEarnedStars,
@@ -605,8 +614,16 @@ export function MissionPanelCandy({
 
       {/* Zone B: Board Stage — flex-1, maximum space. No panel frame so the
           board image floats directly on the grass field bg. */}
-      <div className="board-stage-focus min-h-0 flex-1 mx-2 mt-1">
+      <div className="board-stage-focus relative min-h-0 flex-1 mx-2 mt-1">
         {board}
+        {/* Sprint 4 commit K — floating overlay anchored to top-right
+            of the board zone. Out-of-flow so state changes never
+            push the bottom action row. */}
+        {floatingActionSlot && (
+          <div className="pointer-events-none absolute right-2 top-2 z-30 flex max-w-[55%] justify-end">
+            {floatingActionSlot}
+          </div>
+        )}
       </div>
 
       {/* Zone C: action row — contextual action pin in the center, with
