@@ -587,10 +587,22 @@ export function Board({
                       // from elementFromPoint to find the [data-square]
                       // attribute (covers cases where the actual hit was
                       // a child span / icon inside the cell button).
+                      //
+                      // Critical: the piece itself sits transformed under
+                      // the finger (CSS transform participates in hit
+                      // testing), so an unfiltered elementFromPoint would
+                      // return the piece — which has no data-square — and
+                      // every drop would snap back. Temporarily disable
+                      // pointer-events on the piece so the query falls
+                      // through to the cell underneath, then restore.
+                      const pieceEl = e.currentTarget as HTMLElement;
+                      const prevPointerEvents = pieceEl.style.pointerEvents;
+                      pieceEl.style.pointerEvents = "none";
                       const hitEl = document.elementFromPoint(
                         e.clientX,
                         e.clientY,
                       ) as HTMLElement | null;
+                      pieceEl.style.pointerEvents = prevPointerEvents;
                       const cellEl = hitEl?.closest("[data-square]") as
                         | HTMLElement
                         | null;
