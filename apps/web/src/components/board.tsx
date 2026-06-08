@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   arePositionsEqual,
   buildBoardSquares,
+  getPositionLabel,
   getValidTargets,
   makePiece,
   movePiece,
@@ -17,6 +18,16 @@ import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { BOARD_HINT_COPY } from "@/lib/content/editorial";
 
 const SELECT_HINT_DURATION_MS = 2200;
+
+/** Pointer distance (px) below which a pointerdown→pointerup is
+ *  treated as a tap instead of a drag. Tuned for touch precision —
+ *  finger jitter on a tap is typically < 4px even on small screens. */
+const DRAG_START_THRESHOLD_PX = 6;
+
+/** Snap-back animation duration. Matches the CSS transition on
+ *  `.is-snap-back` so the JS clears `dragOffset` after the visual
+ *  returns to (0,0). */
+const SNAP_BACK_MS = 200;
 
 type HintPlacement = "top" | "bottom" | "left" | "right";
 
@@ -109,9 +120,43 @@ export function Board({
   const mountedRef = useRef(false);
   useEffect(() => { mountedRef.current = true; }, []);
 
+  // Drag-to-move state — Sprint 4 commit N (2026-06-08). Coexists with
+  // the tap-to-select tap-to-move flow: a pointerdown that releases
+  // before crossing DRAG_START_THRESHOLD_PX is forwarded to
+  // `handleSquarePress` exactly like a tap. Crossing the threshold
+  // promotes the gesture to a drag — the piece visually follows the
+  // pointer, valid-target highlights light up, and pointerup resolves
+  // the drop either to a move (valid cell) or a snap-back animation
+  // (invalid cell or off-board release).
+  const dragStateRef = useRef<{
+    active: boolean;
+    startX: number;
+    startY: number;
+    pointerId: number;
+  } | null>(null);
+  const [dragOffset, setDragOffset] = useState<{ dx: number; dy: number } | null>(
+    null,
+  );
+  const [isSnappingBack, setIsSnappingBack] = useState(false);
+  const snapBackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => () => {
     if (selectHintTimerRef.current) clearTimeout(selectHintTimerRef.current);
+    if (snapBackTimerRef.current) clearTimeout(snapBackTimerRef.current);
   }, []);
+
+  /** Reverts an in-flight drag visual to the piece's home cell with
+   *  the CSS .is-snap-back transition. Called on invalid drops and
+   *  pointercancel. Cleared by the timer or by a fresh drag start. */
+  function triggerSnapBack() {
+    if (snapBackTimerRef.current) clearTimeout(snapBackTimerRef.current);
+    setIsSnappingBack(true);
+    setDragOffset(null);
+    snapBackTimerRef.current = setTimeout(() => {
+      setIsSnappingBack(false);
+      snapBackTimerRef.current = null;
+    }, SNAP_BACK_MS);
+  }
 
   // Sync internal state when exercise changes (e.g. localStorage loads progress after board mounts,
   // or the user navigates exercises via the stars bar). Without this, the piece stays at the
@@ -230,6 +275,10 @@ export function Board({
                         type="button"
                         role="gridcell"
                         aria-label={`Square ${square.label}`}
+                        // Sprint 4 commit N — drag-to-move drop resolution.
+                        // The piece's pointerup reads document.elementFromPoint
+                        // and walks up to find the [data-square] attribute.
+                        data-square={square.label}
                         disabled={isLocked}
                         onClick={() => handleSquarePress(square.label)}
                         style={{
@@ -437,24 +486,144 @@ export function Board({
                 );
               })()}
 
-              {/* Floating piece layer — same element moves with transition */}
+              {/* Floating piece layer — same element moves with transition.
+                  Sprint 4 commit N — also the drag handle. Pointer events
+                  enabled so the piece can capture pointerdown; the cell
+                  buttons underneath still receive their own clicks via
+                  the gridcell <button>. */}
               {(() => {
                 const center = cellCenter(piece.position.file, piece.position.rank);
                 const pw = pieceWidth();
                 const isPieceSelected =
                   selectedPosition !== null &&
                   arePositionsEqual(selectedPosition, piece.position);
+                const isDragging = dragOffset !== null;
+                const dragStyle = isDragging
+                  ? ({
+                      ["--drag-dx" as string]: `${dragOffset.dx}px`,
+                      ["--drag-dy" as string]: `${dragOffset.dy}px`,
+                    } as Record<string, string>)
+                  : undefined;
                 return (
                   <picture
                     className={[
                       "playhub-board-piece-float",
                       isPieceSelected ? "is-selected" : "",
                       isRejecting ? "piece-reject" : "",
+                      isDragging ? "is-dragging" : "",
+                      isSnappingBack ? "is-snap-back" : "",
                     ].filter(Boolean).join(" ")}
                     style={{
                       left: `${center.x}%`,
                       top: `${center.y}%`,
                       width: `${pw}%`,
+                      pointerEvents: isLocked ? "none" : "auto",
+                      touchAction: "none",
+                      ...dragStyle,
+                    }}
+                    onPointerDown={(e) => {
+                      if (isLocked || !mountedRef.current) return;
+                      // Capture so subsequent move/up events come to us
+                      // even if the finger leaves the piece bounds.
+                      try {
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                      } catch {
+                        /* iOS Safari quirk — capture not always available */
+                      }
+                      if (snapBackTimerRef.current) {
+                        clearTimeout(snapBackTimerRef.current);
+                        snapBackTimerRef.current = null;
+                      }
+                      setIsSnappingBack(false);
+                      dragStateRef.current = {
+                        active: false,
+                        startX: e.clientX,
+                        startY: e.clientY,
+                        pointerId: e.pointerId,
+                      };
+                    }}
+                    onPointerMove={(e) => {
+                      const state = dragStateRef.current;
+                      if (!state || state.pointerId !== e.pointerId) return;
+                      const dx = e.clientX - state.startX;
+                      const dy = e.clientY - state.startY;
+                      if (!state.active) {
+                        if (Math.hypot(dx, dy) < DRAG_START_THRESHOLD_PX) return;
+                        state.active = true;
+                        // Auto-select the piece so validTargets light up.
+                        if (
+                          !selectedPosition ||
+                          !arePositionsEqual(selectedPosition, piece.position)
+                        ) {
+                          setSelectedPosition(piece.position);
+                        }
+                        if (selectHintTimerRef.current) {
+                          clearTimeout(selectHintTimerRef.current);
+                          selectHintTimerRef.current = null;
+                        }
+                        setShowSelectHint(false);
+                      }
+                      setDragOffset({ dx, dy });
+                    }}
+                    onPointerUp={(e) => {
+                      const state = dragStateRef.current;
+                      if (!state || state.pointerId !== e.pointerId) return;
+                      dragStateRef.current = null;
+                      try {
+                        e.currentTarget.releasePointerCapture(e.pointerId);
+                      } catch {
+                        /* ignore */
+                      }
+
+                      if (!state.active) {
+                        // No drag — treat as a tap on the piece's home
+                        // cell. Same flow as before the drag was added.
+                        setDragOffset(null);
+                        handleSquarePress(getPositionLabel(piece.position));
+                        return;
+                      }
+
+                      // Resolve the cell under the release point. Walk up
+                      // from elementFromPoint to find the [data-square]
+                      // attribute (covers cases where the actual hit was
+                      // a child span / icon inside the cell button).
+                      const hitEl = document.elementFromPoint(
+                        e.clientX,
+                        e.clientY,
+                      ) as HTMLElement | null;
+                      const cellEl = hitEl?.closest("[data-square]") as
+                        | HTMLElement
+                        | null;
+                      const label = cellEl?.dataset.square ?? null;
+
+                      if (!label) {
+                        // Released off-board → snap back.
+                        triggerSnapBack();
+                        return;
+                      }
+
+                      const target = parseLabel(label);
+                      const isValid = validTargets.some((t) =>
+                        arePositionsEqual(t, target),
+                      );
+
+                      if (isValid) {
+                        // Successful drop. Clear the visual offset
+                        // BEFORE the move so the piece transition starts
+                        // from the home cell (avoids a one-frame
+                        // teleport when the new center kicks in).
+                        setDragOffset(null);
+                        handleSquarePress(label);
+                      } else {
+                        triggerSnapBack();
+                      }
+                    }}
+                    onPointerCancel={() => {
+                      if (!dragStateRef.current) return;
+                      const wasActive = dragStateRef.current.active;
+                      dragStateRef.current = null;
+                      if (wasActive) triggerSnapBack();
+                      else setDragOffset(null);
                     }}
                   >
                     {THEME_CONFIG.hasOptimizedFormats && (

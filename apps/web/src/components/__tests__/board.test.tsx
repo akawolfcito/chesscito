@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent, screen } from "@testing-library/react";
 import { Board } from "../board";
 
@@ -123,6 +123,147 @@ describe("<Board>", () => {
       fireEvent.click(screen.getByRole("gridcell", { name: "Square h8" }));
       const hint = container.querySelector(".playhub-board-select-hint");
       expect(hint?.getAttribute("data-placement")).toBe("top");
+    });
+  });
+
+  // ─── Drag-to-move (Sprint 4 commit N — 2026-06-08) ──────────────────
+  describe("drag-to-move", () => {
+    /** Helper to find the piece <picture> element so we can target it
+     *  with pointer events directly. */
+    function getPiece(container: HTMLElement): HTMLElement {
+      const el = container.querySelector(
+        ".playhub-board-piece-float",
+      ) as HTMLElement | null;
+      if (!el) throw new Error("piece float not found");
+      return el;
+    }
+
+    function getCell(label: string): HTMLElement {
+      const el = document.querySelector(
+        `[data-square="${label}"]`,
+      ) as HTMLElement | null;
+      if (!el) throw new Error(`cell ${label} not found`);
+      return el;
+    }
+
+    /** jsdom doesn't implement document.elementFromPoint by default —
+     *  we stub it to return whatever the test points at via the
+     *  current call's clientX/Y. The helper threads a (label) → cell
+     *  override so the drag-end resolution lands on the expected cell. */
+    function stubElementFromPoint(targetLabel: string | null) {
+      const fn = vi.fn(() =>
+        targetLabel ? getCell(targetLabel) : null,
+      );
+      (document as unknown as { elementFromPoint: typeof fn }).elementFromPoint = fn;
+      return fn;
+    }
+
+    it("drag onto a valid target executes the move via onMove", () => {
+      const onMove = vi.fn();
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          onMove={onMove}
+        />,
+      );
+      const piece = getPiece(container);
+      stubElementFromPoint("a8"); // rook a1 → a8 is a valid vertical move
+
+      // pointerdown at (100, 200), move beyond threshold, pointerup
+      // lands on a8 via the elementFromPoint stub.
+      fireEvent.pointerDown(piece, { pointerId: 1, clientX: 100, clientY: 200 });
+      fireEvent.pointerMove(piece, { pointerId: 1, clientX: 100, clientY: 80 });
+      fireEvent.pointerUp(piece, { pointerId: 1, clientX: 100, clientY: 80 });
+
+      expect(onMove).toHaveBeenCalledTimes(1);
+      expect(onMove).toHaveBeenCalledWith({ file: 0, rank: 7 }, 1);
+    });
+
+    it("drag onto an invalid square does NOT move and snaps back", () => {
+      const onMove = vi.fn();
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          onMove={onMove}
+        />,
+      );
+      const piece = getPiece(container);
+      // b2 is NOT reachable by a rook starting at a1 (diagonal).
+      stubElementFromPoint("b2");
+
+      fireEvent.pointerDown(piece, { pointerId: 1, clientX: 100, clientY: 200 });
+      fireEvent.pointerMove(piece, { pointerId: 1, clientX: 130, clientY: 170 });
+      fireEvent.pointerUp(piece, { pointerId: 1, clientX: 130, clientY: 170 });
+
+      expect(onMove).not.toHaveBeenCalled();
+      expect(piece.className).toContain("is-snap-back");
+    });
+
+    it("pointerdown+up below threshold is treated as a tap (legacy flow)", () => {
+      const onMove = vi.fn();
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          onMove={onMove}
+        />,
+      );
+      const piece = getPiece(container);
+      stubElementFromPoint("a1"); // wouldn't matter — no drag
+
+      // 3px move = below the 6px threshold → no drag promoted.
+      fireEvent.pointerDown(piece, { pointerId: 1, clientX: 100, clientY: 200 });
+      fireEvent.pointerMove(piece, { pointerId: 1, clientX: 102, clientY: 202 });
+      fireEvent.pointerUp(piece, { pointerId: 1, clientX: 102, clientY: 202 });
+
+      // Tap-as-piece selects the piece — the existing select shimmer
+      // class is the proof. No onMove because tap-on-own-cell only
+      // selects.
+      expect(onMove).not.toHaveBeenCalled();
+      expect(piece.className).toContain("is-selected");
+    });
+
+    it("drag is a no-op when isLocked is true", () => {
+      const onMove = vi.fn();
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          isLocked
+          onMove={onMove}
+        />,
+      );
+      const piece = getPiece(container);
+      stubElementFromPoint("a8");
+
+      fireEvent.pointerDown(piece, { pointerId: 1, clientX: 100, clientY: 200 });
+      fireEvent.pointerMove(piece, { pointerId: 1, clientX: 100, clientY: 80 });
+      fireEvent.pointerUp(piece, { pointerId: 1, clientX: 100, clientY: 80 });
+
+      expect(onMove).not.toHaveBeenCalled();
+      expect(piece.className).not.toContain("is-dragging");
+    });
+
+    it("drag released off-board snaps back (elementFromPoint returns null)", () => {
+      const onMove = vi.fn();
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          onMove={onMove}
+        />,
+      );
+      const piece = getPiece(container);
+      stubElementFromPoint(null);
+
+      fireEvent.pointerDown(piece, { pointerId: 1, clientX: 100, clientY: 200 });
+      fireEvent.pointerMove(piece, { pointerId: 1, clientX: 500, clientY: 600 });
+      fireEvent.pointerUp(piece, { pointerId: 1, clientX: 500, clientY: 600 });
+
+      expect(onMove).not.toHaveBeenCalled();
+      expect(piece.className).toContain("is-snap-back");
     });
   });
 });

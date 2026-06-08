@@ -2947,6 +2947,33 @@
     z-index: 11;
   }
 
+  /* Sprint 4 commit N — drag-to-move. The piece follows the pointer
+     via --drag-dx / --drag-dy custom props set inline by the JS.
+     Transition disabled during drag so the piece tracks the finger
+     frame-perfect; re-enabled on .is-snap-back so an invalid drop
+     animates back to (0,0). */
+  .playhub-board-piece-float.is-dragging {
+    transform: translate(
+        calc(-50% + var(--drag-dx, 0px)),
+        calc(-55% + var(--drag-dy, 0px))
+      )
+      scale(1.18) rotate(-1deg);
+    transition:
+      left 0s,
+      top 0s,
+      transform 0s;
+    z-index: 12;
+    cursor: grabbing;
+    filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.35));
+  }
+
+  .playhub-board-piece-float.is-snap-back {
+    transition:
+      left 200ms ease-out,
+      top 200ms ease-out,
+      transform 200ms ease-out;
+  }
+
   .playhub-board-piece-img {
     height: auto;
     object-fit: contain;
