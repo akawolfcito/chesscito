@@ -2177,7 +2177,12 @@ export function ExercisesScreen({
               <PeonesHintButton
                 piece={selectedPiece}
                 exerciseId={currentExercise.id}
-                attemptSeq={1}
+                // Sprint 5 commit E — consume the live attemptSeq from
+                // useExerciseProgress instead of the Sprint 4 hardcoded
+                // 1. Same attempt → same idempotency key → RPC returns
+                // duplicate=true (re-view free). Fresh attempt after a
+                // Retry → fresh key → real debit possible.
+                attemptSeq={attemptSeq}
                 disabled={false}
                 firstStep={peonesHintFirstStep}
                 onReveal={setPeonesHintSquare}

@@ -171,6 +171,92 @@ describe("PeonesHintButton — connected happy path", () => {
     });
   });
 
+  it("Sprint 5 commit E — attemptSeq prop threads into targetId, idempotencyKey, and metadata", async () => {
+    connectWallet();
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "success",
+      wallet: W,
+      target: "hint",
+      targetId: "rook:r-1:3",
+      requested: 1,
+      debited: 1,
+      newBalance: 9,
+      attestationHash: "sha256:abc",
+      ledgerId: 99,
+      duplicate: false,
+      proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
+    } satisfies PeonesSpendResult);
+
+    render(
+      <PeonesHintButton
+        piece="rook"
+        exerciseId="r-1"
+        attemptSeq={3}
+        submitImpl={submitImpl}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button"));
+
+    await waitFor(() => expect(submitImpl).toHaveBeenCalledTimes(1));
+    expect(submitImpl).toHaveBeenCalledWith({
+      wallet: W,
+      amount: 1,
+      target: "hint",
+      // attemptSeq=3 must appear in BOTH the targetId tail and the
+      // idempotency-key tail, otherwise two attempts on the same
+      // exercise collapse onto a single ledger row (the bug Sprint 4
+      // shipped with).
+      targetId: "rook:r-1:3",
+      idempotencyKey: `spend:hint:${W}:rook:r-1:3`,
+      metadata: {
+        piece: "rook",
+        exerciseId: "r-1",
+        attemptSeq: 3,
+        surface: "exercises",
+      },
+    });
+  });
+
+  it("Sprint 5 commit E — default attemptSeq stays 1 when prop omitted (back-compat)", async () => {
+    connectWallet();
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "success",
+      wallet: W,
+      target: "hint",
+      targetId: "rook:r-1:1",
+      requested: 1,
+      debited: 1,
+      newBalance: 9,
+      attestationHash: "sha256:abc",
+      ledgerId: 99,
+      duplicate: false,
+      proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
+    } satisfies PeonesSpendResult);
+
+    render(
+      <PeonesHintButton
+        piece="rook"
+        exerciseId="r-1"
+        submitImpl={submitImpl}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button"));
+
+    await waitFor(() => expect(submitImpl).toHaveBeenCalledTimes(1));
+    const payload = submitImpl.mock.calls[0]![0] as {
+      idempotencyKey: string;
+      metadata: { attemptSeq: number };
+    };
+    expect(payload.idempotencyKey).toBe(`spend:hint:${W}:rook:r-1:1`);
+    expect(payload.metadata.attemptSeq).toBe(1);
+  });
+
   it("on success (debited > 0): calls onReveal with firstStep + emits peones_spent + transitions state to revealed", async () => {
     connectWallet();
     const submitImpl = vi.fn().mockResolvedValue({
