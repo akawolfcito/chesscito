@@ -491,6 +491,18 @@
     user-select: none;
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
+    /* Sprint 4 commit O — game gesture hygiene. `manipulation` is
+       a documented browser-controlled fast-path that disables
+       double-tap-to-zoom and the 300ms tap delay legacy while
+       keeping single-tap, scroll, pinch (already killed at the
+       viewport meta layer). Net effect: tap-piece + tap-target
+       fires INSTANTLY without iOS interpreting it as a double-
+       tap-zoom gesture, and the drag-to-move pointer flow has
+       no native gesture competing for two-finger events. Cero
+       impacto en input/scroll/legitimate selection.
+       Future opt-out per surface: `touch-action: pinch-zoom`
+       on a specific container. */
+    touch-action: manipulation;
   }
 
   /* All images are decorative game art — never draggable, never

@@ -75,6 +75,28 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#0b1220',
+  // Sprint 4 commit O (2026-06-08) — disable browser-level zoom
+  // globally for game-UX hygiene. Rationale:
+  //   - The drag-to-move gesture (commit N) competes with pinch-zoom
+  //     when the user uses two fingers; disabling pinch prevents
+  //     accidental zooms mid-drag.
+  //   - Double-tap-zoom on iOS Safari fires when the user does
+  //     tap-piece-then-tap-target in rapid succession — the legacy
+  //     tap flow becomes janky. Removing it cleans the gesture model.
+  //   - Chesscito is visual-first (project memory rule); legibility
+  //     does not depend on text zoom because hit-targets are ≥44px
+  //     and chips/labels are candy-large by design.
+  //   - Accessibility note: low-vision users retain OS-level zoom
+  //     (iOS Settings → Accessibility → Zoom, Android equivalent),
+  //     which applies above the browser and still works. We trade
+  //     in-browser zoom (which we never benefited from) for game
+  //     gesture stability.
+  // If a future route needs pinch-zoom (e.g. lore reading mode), the
+  // container can opt back in with `touch-action: pinch-zoom`.
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export function generateStaticParams() {
