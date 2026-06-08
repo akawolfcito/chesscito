@@ -3075,6 +3075,19 @@ export const PEONES_HINT_COPY = {
   error: "Hint unavailable",
 } as const;
 
+/**
+ * Sprint 5 commit C — PeonesRetryButton (result overlay) i18n.
+ * Mirrors PEONES_HINT_COPY shape so the morphing-chip pattern stays
+ * consistent across surfaces. Copy fits one line in roughly the
+ * idle-button width — no stacked sublabel.
+ */
+export const PEONES_RETRY_COPY = {
+  button: "Retry \u00b7 2 Peones",
+  guest: "Connect to use Peones retries",
+  insufficient: "Not enough Peones",
+  error: "Retry unavailable",
+} as const;
+
 export const WELCOME_PACK_COPY = {
   tile: {
     title: "Welcome gift",

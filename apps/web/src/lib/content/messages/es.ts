@@ -2078,6 +2078,12 @@ const messages = {
     insufficient: "Sin Peones suficientes",
     error: "Pista no disponible",
   },
+  PEONES_RETRY_COPY: {
+    button: "Reintentar \u00b7 2 Peones",
+    guest: "Conecta tu wallet para usar reintentos con Peones",
+    insufficient: "Sin Peones suficientes",
+    error: "Reintento no disponible",
+  },
 };
 
 export default messages;
