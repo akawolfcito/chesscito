@@ -29,7 +29,19 @@
 import { createHash } from "node:crypto";
 
 import { normalizeWallet } from "./ledger-service";
-import type { SupabaseClient } from "@supabase/supabase-js";
+
+/** Minimal structural typing for the Supabase client surface this
+ *  helper actually uses. Avoids dragging the full `SupabaseClient`
+ *  generic ladder (or an `any` cast) into the public signature.
+ *  Exported so tests can mock with the same shape and TypeScript
+ *  accepts the structural match. */
+export type WelcomePackSupabase = {
+  from: (table: string) => {
+    insert: (row: Record<string, unknown>) => PromiseLike<{
+      error: { code?: string; message?: string } | null;
+    }>;
+  };
+};
 
 export const PEONES_WELCOME_PACK_AMOUNT = 1;
 
@@ -71,8 +83,7 @@ function buildAttestation(payload: {
  * conflict resolution — no preliminary SELECT round-trip.
  */
 export async function ensurePeonesWelcomePack(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: SupabaseClient<any, any, any>,
+  supabase: WelcomePackSupabase,
   rawWallet: string,
 ): Promise<boolean> {
   let wallet: string;
