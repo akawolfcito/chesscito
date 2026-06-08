@@ -139,6 +139,32 @@ git checkout main
 
 Esperado: `origin/production` avanza de `63949bed` a `<HEAD-of-main>` (Sprint 5 commits B-F).
 
+## 7.5. Known limitation — autoReset path bypasses the guard (deferred)
+
+Discovered durante el smoke 2026-06-08 right before promote. NOT a blocker per founder decision; recorded so a future iteration doesn't have to re-investigate.
+
+**The flow** (newbie wallet, no rescue context):
+1. Player fails exercise → `setPhase("failure")`
+2. PhaseFlash overlay (TRY AGAIN + wolf) covers the bottom action row
+3. After 1.5s, `autoReset.schedule(() => resetBoard(), 1500)` fires — bypasses `handleRetryApplied`
+4. `attemptSeq` does NOT advance, `training_retry_completed` does NOT emit
+5. Next Hint uses the SAME idempotency key as attempt 1 → `duplicate=true` from RPC → reveal works (UX fine), but `peones_spent` does NOT fire (commit M.1 gate) and the dashboard count is under-reported
+
+**Impact**:
+- UX: zero (hint still reveals, balance unchanged on duplicate)
+- Economics: user effectively pays 1 Peón per exercise instead of per attempt (more generous than designed — fits the "economy is generous" memo)
+- Dashboards: `training_retry_completed` under-reports the real retry rate; `peones_spent` undercounts repeat-hint intent. Acceptable while production is personal staging.
+
+**Fix when needed** (one line):
+```ts
+// apps/web/src/components/exercises/exercises-screen.tsx ~line 1492
+autoReset.schedule(() => handleRetryApplied(), 1500);
+```
+
+Same change applies to the FailRescueModal `onRetryAnyway` / `onUseShield` paths if/when we want them to advance attemptSeq too.
+
+**Why deferred**: founder explicitly chose to accept the limitation 2026-06-08 ("como realmente no nos molesta podemos dejarlo ahí, y avanzar"). Bug surface is observability-only with the production-as-personal-staging context.
+
 ## 8. Open questions
 
 1. ¿Failure phase tiene UI surface dedicado o solo PhaseFlash? Si solo flash, considerar dedicated overlay para próximo cluster.
