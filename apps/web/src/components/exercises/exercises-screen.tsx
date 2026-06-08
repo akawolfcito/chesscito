@@ -30,7 +30,9 @@ import { bumpStreak, resetStreak, useStreak } from "@/lib/exercises/use-streak";
 import { useWelcomePackClaim } from "@/lib/shop/use-welcome-pack-claim";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { PeonesHintButton } from "@/components/peones/peones-hint-button";
+import { PeonesRetryButton } from "@/components/peones/peones-retry-button";
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
+import { useRetryGuard } from "@/lib/exercises/use-retry-guard";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
@@ -861,7 +863,19 @@ export function ExercisesScreen({
     completeExercise,
     advanceExercise,
     goToExercise,
+    attemptSeq,
+    incrementAttemptSeq,
   } = useExerciseProgress(selectedPiece);
+
+  /** Sprint 5 commit D — Retry guard. Owns the dedup + reset +
+   *  attemptSeq-advance chain so duplicate idempotent responses and
+   *  double-taps collapse to a single deterministic transition.
+   *  See `lib/exercises/use-retry-guard.ts`. */
+  const handlePeonesRetryUnlocked = useRetryGuard({
+    attemptSeq,
+    resetBoard: () => resetBoard(),
+    incrementAttemptSeq,
+  });
 
   /** Sprint 4 commit I — Peones Hint visual reveal. Parent owns the
    *  highlighted square so the Board can render the glow without the
@@ -2153,14 +2167,29 @@ export function ExercisesScreen({
           }
           actionRowLeft={<DailyTacticSlot />}
           floatingActionSlot={
-            <PeonesHintButton
-              piece={selectedPiece}
-              exerciseId={currentExercise.id}
-              attemptSeq={1}
-              disabled={Boolean(activeLabyrinth) || phase !== "ready"}
-              firstStep={peonesHintFirstStep}
-              onReveal={setPeonesHintSquare}
-            />
+            // Sprint 5 commit D — phase-gated swap. Hint surfaces
+            // during active play (phase=ready); Retry surfaces in the
+            // failure aftermath as the result-overlay affordance.
+            // Mutually exclusive so the slot never shows two CTAs.
+            // Labyrinth mode hides both (its own L2 loop owns the
+            // bottom-right anchor when active).
+            activeLabyrinth ? null : phase === "ready" ? (
+              <PeonesHintButton
+                piece={selectedPiece}
+                exerciseId={currentExercise.id}
+                attemptSeq={1}
+                disabled={false}
+                firstStep={peonesHintFirstStep}
+                onReveal={setPeonesHintSquare}
+              />
+            ) : phase === "failure" ? (
+              <PeonesRetryButton
+                piece={selectedPiece}
+                exerciseId={currentExercise.id}
+                attemptSeq={attemptSeq}
+                onRetryUnlocked={handlePeonesRetryUnlocked}
+              />
+            ) : null
           }
           actionRowRight={
             <MiniArenaBridgeSlot
