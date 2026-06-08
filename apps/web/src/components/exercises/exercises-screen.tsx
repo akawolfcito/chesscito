@@ -30,7 +30,10 @@ import { bumpStreak, resetStreak, useStreak } from "@/lib/exercises/use-streak";
 import { useWelcomePackClaim } from "@/lib/shop/use-welcome-pack-claim";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { PeonesHintButton } from "@/components/peones/peones-hint-button";
-import { PeonesRetryButton } from "@/components/peones/peones-retry-button";
+// PeonesRetryButton intentionally NOT imported — Sprint 5 commit G
+// unmounted the paid Retry chip pending differential-value
+// calibration. The component + tests + spend endpoint support stay
+// as dormant infrastructure (see Sprint 5 handoff §1).
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { useRetryGuard } from "@/lib/exercises/use-retry-guard";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
@@ -867,15 +870,21 @@ export function ExercisesScreen({
     incrementAttemptSeq,
   } = useExerciseProgress(selectedPiece);
 
-  /** Sprint 5 commit D — Retry guard. Owns the dedup + reset +
-   *  attemptSeq-advance chain so duplicate idempotent responses and
-   *  double-taps collapse to a single deterministic transition.
-   *  Sprint 5 commit F — also emits `training_retry_completed` from
-   *  INSIDE the dedup gate so the event count matches the real
-   *  number of attempt resets (never inflated by double-tap, never
-   *  fired on insufficient/error). See `lib/exercises/use-retry-
-   *  guard.ts`. */
-  const handlePeonesRetryUnlocked = useRetryGuard({
+  /** Sprint 5 commits D / F — Retry guard. Owns the dedup + reset +
+   *  attemptSeq-advance chain so duplicate retry triggers (double-
+   *  taps, repeated callbacks) collapse to a single deterministic
+   *  transition. Emits `training_retry_completed` INSIDE the gate so
+   *  the event count matches real attempt resets.
+   *
+   *  Sprint 5 commit G (2026-06-08) — repurposed from the paid
+   *  Peones-retry surface (which is now unmounted, see below) to the
+   *  LEGACY free Retry triggered via ContextualActionSlot. Cost: 0.
+   *  The component, telemetry shape, and guard contract stay
+   *  identical; only the trigger source changed. The PeonesRetry
+   *  surface is dormant infrastructure for a future calibration
+   *  where it adds differential value (Streak Shield, Deep Hint
+   *  tier, etc.). */
+  const handleRetryApplied = useRetryGuard({
     attemptSeq,
     resetBoard: () => resetBoard(),
     incrementAttemptSeq,
@@ -884,7 +893,12 @@ export function ExercisesScreen({
         piece: selectedPiece,
         exerciseId: currentExercise.id,
         attemptSeq: closedAttemptSeq,
-        source: "result_overlay",
+        // 2026-06-08 — source was "result_overlay" while the paid
+        // chip was mounted. Now that the legacy ContextualActionSlot
+        // Retry is the trigger, the surface label reflects the real
+        // affordance the user tapped. Keeps dashboards honest if a
+        // future paid Retry surface ships under a different label.
+        source: "contextual_action_slot",
       });
     },
   });
@@ -2179,34 +2193,29 @@ export function ExercisesScreen({
           }
           actionRowLeft={<DailyTacticSlot />}
           floatingActionSlot={
-            // Sprint 5 commit D — phase-gated swap. Hint surfaces
-            // during active play (phase=ready); Retry surfaces in the
-            // failure aftermath as the result-overlay affordance.
-            // Mutually exclusive so the slot never shows two CTAs.
-            // Labyrinth mode hides both (its own L2 loop owns the
-            // bottom-right anchor when active).
-            activeLabyrinth ? null : phase === "ready" ? (
+            // Sprint 5 commit G — paid Retry chip unmounted. Smoke
+            // 2026-06-08 found it redundant with the legacy free
+            // Retry already living in ContextualActionSlot, so two
+            // identical affordances stacked at the bottom of the
+            // failure overlay confused the player. The chip is
+            // dormant infrastructure now (component + helper +
+            // tests preserved) until a calibration ships a
+            // differential value-add. The floating slot reverts to
+            // Hint-only during phase=ready.
+            activeLabyrinth || phase !== "ready" ? null : (
               <PeonesHintButton
                 piece={selectedPiece}
                 exerciseId={currentExercise.id}
                 // Sprint 5 commit E — consume the live attemptSeq from
-                // useExerciseProgress instead of the Sprint 4 hardcoded
-                // 1. Same attempt → same idempotency key → RPC returns
+                // useExerciseProgress. Same attempt → same key →
                 // duplicate=true (re-view free). Fresh attempt after a
-                // Retry → fresh key → real debit possible.
+                // legacy Retry → fresh key → real debit possible.
                 attemptSeq={attemptSeq}
                 disabled={false}
                 firstStep={peonesHintFirstStep}
                 onReveal={setPeonesHintSquare}
               />
-            ) : phase === "failure" ? (
-              <PeonesRetryButton
-                piece={selectedPiece}
-                exerciseId={currentExercise.id}
-                attemptSeq={attemptSeq}
-                onRetryUnlocked={handlePeonesRetryUnlocked}
-              />
-            ) : null
+            )
           }
           actionRowRight={
             <MiniArenaBridgeSlot
@@ -2251,7 +2260,14 @@ export function ExercisesScreen({
                 onSubmitScore={() => void handleSubmitScore()}
                 onUseShield={handleUseShield}
                 onClaimBadge={() => void handleClaimBadge()}
-                onRetry={() => resetBoard()}
+                // Sprint 5 commit G — route the legacy free Retry
+                // through the same guard the paid chip would have
+                // used. This reset the board, advances attemptSeq
+                // (so the next Hint gets a fresh idempotency key),
+                // and emits `training_retry_completed` exactly once
+                // per applied retry. Double-tap protection lives
+                // inside the guard.
+                onRetry={handleRetryApplied}
                 onConnectWallet={() => openConnectModal?.()}
                 onSwitchNetwork={() => configuredChainId != null && switchChain({ chainId: configuredChainId })}
                 compact
