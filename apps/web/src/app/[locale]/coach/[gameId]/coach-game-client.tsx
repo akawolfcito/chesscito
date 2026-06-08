@@ -280,6 +280,37 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     });
   }, [gameRecord, walletAddress]);
 
+  /**
+   * Auto-load the cached analysis when arriving with `gameRecord.analysis`
+   * still null. Race-condition fix 2026-06-08:
+   *
+   * Arena Save flow:
+   *   arena.askCoach() → /api/coach/analyze fires → SSR navigation to
+   *   /coach/[gameId] CAN beat the Redis cache write, so the server-
+   *   loaded gameRecord ships without analysis attached. The cold-load
+   *   render path stays silent and the user sees the Match Review with
+   *   no Coach panel until they tap Ask Coach again.
+   *
+   * Journal entry flow:
+   *   user enters cold → SSR reads the populated cache → cold-load
+   *   path renders. Works fine.
+   *
+   * Fix: when the viewer mounts with no cold-load analysis AND the
+   * hook is idle AND we have a wallet, fire askCoach exactly once.
+   * The endpoint short-circuits to the cached result instantly (no
+   * credit consumed) when the cache is populated; otherwise it runs
+   * the analyze fresh, which is the correct behavior anyway.
+   */
+  const autoLoadAnalysisRef = useRef(false);
+  useEffect(() => {
+    if (autoLoadAnalysisRef.current) return;
+    if (!gameRecord || !walletAddress) return;
+    if (gameRecord.analysis) return;
+    if (coach.phase !== "idle") return;
+    autoLoadAnalysisRef.current = true;
+    coach.askCoach("viewer");
+  }, [gameRecord, walletAddress, coach]);
+
   // Branch 1: no wallet
   if (!walletAddress) {
     return (
