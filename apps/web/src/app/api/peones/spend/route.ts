@@ -248,6 +248,21 @@ export async function POST(req: Request) {
     );
   }
 
+  // Sprint 4 commit M.1 — server-side observability for duplicate
+  // idempotent hits. NOT an error: the RPC retry contract guarantees
+  // idempotent re-reads succeed even when the current balance no
+  // longer reaches. Logged at `info` level so ops can monitor
+  // duplicate frequency (e.g. retry storms, surface bugs that
+  // re-call spend on every render) without alerting on errors.
+  if (row.duplicate) {
+    log.info("peones_spend_duplicate_hit", {
+      wallet,
+      target,
+      target_id: targetId,
+      ledger_id: row.ledger_id,
+    });
+  }
+
   // Sprint 4 commit G — surface quota info for telemetry.
   //   - quotaLimit: hard cap for this target (Infinity for save_game)
   //   - quotaUsed: rows consumed today AFTER this call. When bypass

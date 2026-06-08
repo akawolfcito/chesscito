@@ -261,6 +261,53 @@ describe("PeonesHintButton — connected happy path", () => {
     expect(mockedFailed).not.toHaveBeenCalled();
   });
 
+  it("duplicate idempotent (debited > 0 + duplicate=true): reveals WITHOUT emitting peones_spent", async () => {
+    connectWallet();
+    // Sprint 4 commit M.1 — RPC returns the ORIGINAL row's debited
+    // amount (positive) on idempotent retry. The client must NOT
+    // re-emit peones_spent because no fresh Peones left the wallet.
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "success",
+      wallet: W,
+      target: "hint",
+      targetId: "rook:r-1:1",
+      requested: 1,
+      debited: 1,
+      newBalance: 0,
+      attestationHash: "sha256:abc",
+      ledgerId: 40,
+      duplicate: true,
+      proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
+    } satisfies PeonesSpendResult);
+
+    const onReveal = vi.fn();
+    render(
+      <PeonesHintButton
+        piece="rook"
+        exerciseId="r-1"
+        firstStep={{ file: 0, rank: 7 }}
+        onReveal={onReveal}
+        submitImpl={submitImpl}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("peones-hint-button")).toHaveAttribute(
+        "data-state",
+        "revealed",
+      ),
+    );
+    expect(onReveal).toHaveBeenCalled();
+    expect(mockedSpent).not.toHaveBeenCalled();
+    expect(mockedBypassed).not.toHaveBeenCalled();
+    expect(mockedBlocked).not.toHaveBeenCalled();
+    expect(mockedFailed).not.toHaveBeenCalled();
+  });
+
   it("success without firstStep prop: still reveals + onReveal called with null", async () => {
     connectWallet();
     const submitImpl = vi.fn().mockResolvedValue({

@@ -180,7 +180,15 @@ export function PeonesHintButton({
           quotaUsed: result.quotaUsed,
           quotaLimit: result.quotaLimit,
         });
-      } else if (result.debited > 0) {
+      } else if (result.debited > 0 && !result.duplicate) {
+        // Sprint 4 commit M.1 — emit gate tightened. Duplicate
+        // idempotent retries return debited>0 in the response (the
+        // ORIGINAL row's amount, not a new debit) but no fresh
+        // Peones leave the wallet, so emitting `peones_spent` on
+        // duplicate would double-count. Dashboard rule "spent ===
+        // real Peones left the wallet" stays intact. Server-side
+        // log.info("peones_spend_duplicate_hit") tracks duplicate
+        // frequency for ops without polluting client telemetry.
         emitPeonesSpent({
           target: "hint",
           targetId,

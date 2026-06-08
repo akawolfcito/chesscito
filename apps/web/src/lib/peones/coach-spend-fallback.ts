@@ -112,7 +112,12 @@ export async function attemptCoachSpendWithPeones(
         quotaUsed: result.quotaUsed,
         quotaLimit: result.quotaLimit,
       });
-    } else if (result.debited > 0) {
+    } else if (result.debited > 0 && !result.duplicate) {
+      // Sprint 4 commit M.1 — emit gate tightened. See peones-hint-
+      // button for full rationale; dashboard rule "spent === real
+      // Peones left the wallet" must hold. Duplicate Coach hits log
+      // server-side via /api/peones/spend route (info level, not
+      // error) so ops can monitor without polluting telemetry.
       emitPeonesSpent({
         target: "coach",
         targetId,

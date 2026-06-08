@@ -138,6 +138,42 @@ describe("attemptCoachSpendWithPeones — paid path", () => {
     );
   });
 
+  it("duplicate idempotent (debited > 0 + duplicate=true): paid result but NO peones_spent emit", async () => {
+    // Sprint 4 commit M.1 — RPC returns the ORIGINAL row's debited
+    // amount (positive) on idempotent retry. Client must skip the
+    // emit to keep dashboard rule "spent === real Peones left wallet".
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "success",
+      wallet: W,
+      target: "coach",
+      targetId: G,
+      requested: 1,
+      debited: 1,
+      newBalance: 0,
+      attestationHash: "sha256:original",
+      ledgerId: 99,
+      duplicate: true,
+      proBypassApplied: false,
+      quotaUsed: null,
+      quotaLimit: null,
+    } satisfies PeonesSpendResult);
+
+    const result = await attemptCoachSpendWithPeones({
+      wallet: W,
+      gameId: G,
+      submitImpl,
+    });
+
+    expect(result.kind).toBe("paid");
+    if (result.kind === "paid") {
+      expect(result.duplicate).toBe(true);
+    }
+    expect(mockedSpent).not.toHaveBeenCalled();
+    expect(mockedBypassed).not.toHaveBeenCalled();
+    expect(mockedBlocked).not.toHaveBeenCalled();
+    expect(mockedFailed).not.toHaveBeenCalled();
+  });
+
   it("duplicate success (debited=0): kind:'paid' WITHOUT re-emitting peones_spent", async () => {
     const submitImpl = vi.fn().mockResolvedValue({
       kind: "success",
