@@ -32,7 +32,7 @@ const messages = {
     button: "Hint \u00b7 1 Peón",
     guest: "Connect to use Peones hints",
     insufficient: "Not enough Peones",
-    error: "Hint unavailable right now",
+    error: "Hint unavailable",
   },
 };
 
@@ -359,9 +359,7 @@ describe("PeonesHintButton — connected failure paths", () => {
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() =>
-      expect(
-        screen.getByText("Hint unavailable right now"),
-      ).toBeInTheDocument(),
+      expect(screen.getByText("Hint unavailable")).toBeInTheDocument(),
     );
     expect(screen.queryByText("Hint unlocked")).not.toBeInTheDocument();
     expect(mockedFailed).toHaveBeenCalledTimes(1);

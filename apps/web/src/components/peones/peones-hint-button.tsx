@@ -226,42 +226,43 @@ export function PeonesHintButton({
 
   const isLoading = state.kind === "loading";
   const isRevealed = state.kind === "revealed";
-  const subLabel =
+  const isFeedback = state.kind === "insufficient" || state.kind === "error";
+
+  // Sprint 4 commit M — single morphing chip. The chip itself swaps
+  // its content based on state instead of stacking a sublabel below.
+  // Eliminates the "appears, grows, shrinks again" jitter the user
+  // saw with the previous two-line layout.
+  const label =
     state.kind === "insufficient"
       ? t("insufficient")
       : state.kind === "error"
         ? t("error")
-        : null;
+        : t("button");
 
   return (
     <div
-      className="pointer-events-auto inline-flex flex-col items-end gap-1"
+      className="pointer-events-auto inline-flex"
       data-testid="peones-hint-button"
       data-state={state.kind}
     >
       <button
         type="button"
-        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold shadow-sm ring-1 hover:bg-amber-200 disabled:opacity-60 ${
-          isRevealed
-            ? "bg-amber-200 text-amber-950/70 ring-amber-700/20"
-            : "bg-amber-300 text-amber-950 ring-amber-700/30"
+        className={`inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold shadow-sm ring-1 transition-colors hover:bg-amber-200 disabled:opacity-80 disabled:hover:bg-white ${
+          isFeedback
+            ? "bg-white text-amber-900/90 ring-amber-800/15"
+            : isRevealed
+              ? "bg-amber-200 text-amber-950/70 ring-amber-700/20"
+              : "bg-amber-300 text-amber-950 ring-amber-700/30"
         }`}
         aria-busy={isLoading}
-        aria-disabled={isLoading || isRevealed}
-        disabled={isLoading || isRevealed}
+        aria-disabled={isLoading || isRevealed || isFeedback}
+        disabled={isLoading || isRevealed || isFeedback}
+        role={isFeedback ? "status" : undefined}
+        aria-live={isFeedback ? "polite" : undefined}
         onClick={() => void handleClick()}
       >
-        {t("button")}
+        {label}
       </button>
-      {subLabel ? (
-        <span
-          className="max-w-[10rem] truncate rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-semibold text-amber-900/85 shadow-sm ring-1 ring-amber-800/15"
-          role="status"
-          aria-live="polite"
-        >
-          {subLabel}
-        </span>
-      ) : null}
     </div>
   );
 }

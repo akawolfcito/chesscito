@@ -3068,8 +3068,11 @@ export const RESCUE_MODAL_COPY = {
 export const PEONES_HINT_COPY = {
   button: "Hint \u00b7 1 Peón",
   guest: "Connect to use Peones hints",
+  /** Short feedback copy. Sprint 4 commit M — collapsed the stacked
+   *  chip+sublabel into a single morphing chip; copy must fit one
+   *  line in roughly the same width as the idle button. */
   insufficient: "Not enough Peones",
-  error: "Hint unavailable right now",
+  error: "Hint unavailable",
 } as const;
 
 export const WELCOME_PACK_COPY = {

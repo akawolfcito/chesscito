@@ -2075,8 +2075,8 @@ const messages = {
   PEONES_HINT_COPY: {
     button: "Pista \u00b7 1 Peón",
     guest: "Conecta tu wallet para usar pistas con Peones",
-    insufficient: "No tienes suficientes Peones",
-    error: "La pista no está disponible ahora",
+    insufficient: "Sin Peones suficientes",
+    error: "Pista no disponible",
   },
 };
 
