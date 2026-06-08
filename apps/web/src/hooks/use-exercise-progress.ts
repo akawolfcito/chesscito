@@ -145,6 +145,40 @@ export function useExerciseProgress(piece: PieceId) {
    *  without a slot change emit nothing. */
   const lastStartedRef = useRef<string | null>(null);
 
+  /**
+   * Sprint 5 commit B (2026-06-08) — Retry surface support.
+   *
+   * `attemptSeq` is the in-memory per-attempt counter that:
+   *   - starts at 1 when the hook mounts;
+   *   - is incremented by ONE per successful Retry spend (commit D);
+   *   - resets to 1 whenever `currentExercise.id` changes (piece swap
+   *     OR slot navigation OR completion-advance).
+   *
+   * Persistence: NONE. Reset on reload, reset on navigation. By
+   * design — attempts are session-scoped, the ledger uses the
+   * idempotency-key chain to guarantee server-side correctness across
+   * client state loss.
+   *
+   * Consumers (commits C/D/E):
+   *   - PeonesHintButton will replace its hardcoded `1` with this
+   *     value (commit E);
+   *   - PeonesRetryButton (commit C/D) will read it to build its
+   *     idempotency key and call `incrementAttemptSeq()` on success.
+   *
+   * This commit is the passive plumbing only — no caller wires up
+   * yet, so the runtime behaviour stays bit-identical to Sprint 4.
+   */
+  const [attemptSeq, setAttemptSeq] = useState(1);
+  const incrementAttemptSeq = useCallback(
+    () => setAttemptSeq((n) => n + 1),
+    [],
+  );
+  const resetAttemptSeq = useCallback(() => setAttemptSeq(1), []);
+  /** Mirrors `lastStartedRef` — track the last exerciseId we reset
+   *  the counter for so we don't bounce it on unrelated re-renders
+   *  (e.g. an unrelated dep changing in the started-emit effect).  */
+  const lastResetExerciseIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     setProgress(loadProgress(piece));
     setHydrated(true);
@@ -170,6 +204,23 @@ export function useExerciseProgress(piece: PieceId) {
       isReplay,
     });
   }, [hydrated, currentExercise.id, piece, safeIndex, isReplay]);
+
+  /**
+   * Sprint 5 commit B — reset `attemptSeq` on every exerciseId
+   * transition. Independent of the started-emit effect above so
+   * either can change without affecting the other (counter never
+   * leaks across slots; emit never fires twice for the same id).
+   *
+   * Fires on initial mount too (initial id transitions from `null`
+   * to the first slot's id), which is a no-op when attemptSeq is
+   * already at its initial value of 1.
+   */
+  useEffect(() => {
+    const id = currentExercise.id;
+    if (lastResetExerciseIdRef.current === id) return;
+    lastResetExerciseIdRef.current = id;
+    setAttemptSeq(1);
+  }, [currentExercise.id]);
 
   const completeExercise = useCallback(
     (movesUsed: number) => {
@@ -328,5 +379,11 @@ export function useExerciseProgress(piece: PieceId) {
     completeExercise,
     advanceExercise,
     goToExercise,
+    // Sprint 5 commit B — Retry surface plumbing. Passive in this
+    // commit; commit E will swap PeonesHintButton's hardcoded 1 for
+    // this value and commit D will call incrementAttemptSeq().
+    attemptSeq,
+    incrementAttemptSeq,
+    resetAttemptSeq,
   };
 }
