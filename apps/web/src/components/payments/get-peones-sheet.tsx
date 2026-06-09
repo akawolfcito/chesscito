@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+
+import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { getPeonesPack } from "@/lib/payments/rail-config";
@@ -73,6 +76,7 @@ function PawnSprite({ className }: { className: string }) {
  */
 export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheetProps) {
   const selection = useGetPeonesTokenSelection(SKU);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const tokenSymbol = selection.selectedSymbol ?? FALLBACK_TOKEN;
   const rail = usePaymentRail({ sku: SKU, tokenSymbol, onVerified: onSuccess });
   const pack = getPeonesPack(SKU);
@@ -197,43 +201,97 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
               ) : (
                 /* ---- PAY ---- */
                 <div className="flex w-full flex-col items-center gap-3">
-                  {/* Token pills — candy selector, not a raw <select> */}
-                  <div
-                    data-testid="get-peones-token-picker"
-                    role="radiogroup"
-                    aria-label="Pay with"
-                    className="flex flex-wrap items-center justify-center gap-2"
-                  >
-                    {selection.tokens.map((t) => {
-                      const selected = t.symbol === tokenSymbol;
-                      return (
-                        <button
-                          key={t.symbol}
-                          type="button"
-                          role="radio"
-                          aria-checked={selected}
-                          data-testid={`get-peones-token-${t.symbol}`}
-                          data-selected={selected ? "true" : "false"}
-                          onClick={() => selection.setSelectedSymbol(t.symbol)}
-                          disabled={busy}
-                          className={`candy-stat-pill text-[0.82rem] transition disabled:opacity-60 ${
-                            selected
-                              ? "ring-2 ring-amber-500/80 ring-offset-1 ring-offset-amber-100"
-                              : "opacity-80"
-                          }`}
-                        >
-                          <span className="font-extrabold">{t.symbol}</span>
-                          <span className="tabular-nums opacity-70">
-                            {fmtBalance(t)}
+                  {/* "Pay with" header + adorno flourish (reused from the
+                   *  purchase-confirm sheet). */}
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-sm font-bold uppercase tracking-wide text-amber-800/80">
+                      Pay with
+                    </span>
+                    <picture>
+                      <source srcSet="/art/screen-mission/adorno-icon.avif" type="image/avif" />
+                      <source srcSet="/art/screen-mission/adorno-icon.webp" type="image/webp" />
+                      <img
+                        src="/art/screen-mission/adorno-icon.png"
+                        alt=""
+                        aria-hidden="true"
+                        className="h-2.5 w-24 object-contain"
+                        draggable={false}
+                      />
+                    </picture>
+                  </div>
+
+                  {/* Token selector — collapsible candy dropdown. Collapsed:
+                   *  selected token + balance + chevron. Expanded: a list of
+                   *  candy-tray-pill rows with a check on the selected one and
+                   *  a Low badge on insufficient balances. */}
+                  <div data-testid="get-peones-token-picker" className="w-full">
+                    <button
+                      type="button"
+                      data-testid="get-peones-token-trigger"
+                      onClick={() => setPickerOpen((o) => !o)}
+                      disabled={busy}
+                      aria-haspopup="listbox"
+                      aria-expanded={pickerOpen}
+                      className="candy-tray-pill justify-between px-4 disabled:opacity-60"
+                    >
+                      <span className="flex items-baseline gap-2">
+                        <span className="font-extrabold">{tokenSymbol}</span>
+                        {selection.selected ? (
+                          <span className="tabular-nums text-[0.78rem] opacity-70">
+                            {fmtBalance(selection.selected)}
                           </span>
-                          {!t.payable ? (
-                            <span className="text-[0.62rem] font-bold uppercase tracking-wide text-amber-700/80">
-                              low
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
+                        ) : null}
+                      </span>
+                      <CandyIcon
+                        name="chevron-down"
+                        aria-hidden="true"
+                        className={`h-3.5 w-3.5 transition-transform ${pickerOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {pickerOpen ? (
+                      <div
+                        role="listbox"
+                        aria-label="Pay with"
+                        className="mt-1.5 flex w-full flex-col gap-1.5"
+                      >
+                        {selection.tokens.map((t) => {
+                          const selected = t.symbol === tokenSymbol;
+                          return (
+                            <button
+                              key={t.symbol}
+                              type="button"
+                              role="option"
+                              aria-selected={selected}
+                              data-testid={`get-peones-token-${t.symbol}`}
+                              data-selected={selected ? "true" : "false"}
+                              onClick={() => {
+                                selection.setSelectedSymbol(t.symbol);
+                                setPickerOpen(false);
+                              }}
+                              disabled={busy}
+                              className={`candy-tray-pill justify-between px-4 disabled:opacity-60 ${
+                                selected ? "ring-2 ring-amber-500/80" : ""
+                              }`}
+                            >
+                              <span className="font-extrabold">{t.symbol}</span>
+                              <span className="flex items-center gap-2">
+                                <span className="tabular-nums text-[0.78rem] opacity-70">
+                                  {fmtBalance(t)}
+                                </span>
+                                {selected ? (
+                                  <CandyIcon name="check" aria-hidden="true" className="h-4 w-4" />
+                                ) : !t.payable ? (
+                                  <span className="rounded-md border border-amber-500/50 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-amber-700/90">
+                                    Low
+                                  </span>
+                                ) : null}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
                   </div>
 
                   <button
@@ -254,11 +312,7 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                     >
                       Not enough {tokenSymbol} balance.
                     </p>
-                  ) : (
-                    <p className="text-[0.68rem] uppercase tracking-wide text-amber-700/55">
-                      1 transaction, no approve
-                    </p>
-                  )}
+                  ) : null}
 
                   {rail.phase === "error" ? (
                     <div

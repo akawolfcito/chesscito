@@ -61,20 +61,26 @@ describe("GetPeonesSheet", () => {
     expect(screen.getAllByText("$0.50").length).toBeGreaterThan(0);
   });
 
-  it("renders the auto-selected token pill (aria-checked) and pay label", () => {
+  it("trigger shows the auto-selected token; opening reveals aria-selected options", () => {
     mockedRail.mockReturnValue(railState());
     mockedSel.mockReturnValue(selState());
     renderSheet();
-    expect(screen.getByTestId("get-peones-token-USDT")).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByTestId("get-peones-token-USDC")).toHaveAttribute("aria-checked", "false");
+    // Collapsed: the trigger surfaces the selected token + the pay label.
+    expect(screen.getByTestId("get-peones-token-trigger")).toHaveTextContent("USDT");
     expect(screen.getByTestId("get-peones-pay")).toHaveTextContent("Pay 0.50 USDT");
+    // Options only exist once the dropdown is open.
+    expect(screen.queryByTestId("get-peones-token-USDC")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("get-peones-token-trigger"));
+    expect(screen.getByTestId("get-peones-token-USDT")).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("get-peones-token-USDC")).toHaveAttribute("aria-selected", "false");
   });
 
-  it("tapping a token pill calls setSelectedSymbol", () => {
+  it("tapping a token option calls setSelectedSymbol", () => {
     const setSelectedSymbol = vi.fn();
     mockedRail.mockReturnValue(railState());
     mockedSel.mockReturnValue(selState({ setSelectedSymbol }));
     renderSheet();
+    fireEvent.click(screen.getByTestId("get-peones-token-trigger")); // open dropdown
     fireEvent.click(screen.getByTestId("get-peones-token-USDC"));
     expect(setSelectedSymbol).toHaveBeenCalledWith("USDC");
   });
@@ -160,11 +166,13 @@ describe("GetPeonesSheet", () => {
     );
   });
 
-  it("shows the no-approve promise and never an approve action", () => {
+  it("never shows the technical no-approve line nor an approve action", () => {
     mockedRail.mockReturnValue(railState());
     mockedSel.mockReturnValue(selState());
     renderSheet();
-    expect(screen.getByText(/1 transaction, no approve/i)).toBeInTheDocument();
+    // The "1 transaction, no approve" microcopy was removed (founder call);
+    // the single-tx rail must still never expose an approve action.
+    expect(screen.queryByText(/no approve/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^approve$/i })).not.toBeInTheDocument();
   });
 });
