@@ -2737,22 +2737,6 @@
     50%      { transform: scale(1.1) rotate(8deg);  opacity: 1; }
   }
 
-  /* Sprint 6 commit B — CoachLoading icon pulse. Replaces the
-     Lottie sandy-loading animation that violated the no-Lotties
-     memory rule. Pure CSS so the loading surface stays lively at
-     authoring-time-zero cost. */
-  .coach-loading-icon-wrap {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    animation: coach-loading-pulse 1.4s ease-in-out infinite;
-    filter: drop-shadow(0 4px 6px rgba(2, 132, 199, 0.35));
-  }
-
-  @keyframes coach-loading-pulse {
-    0%, 100% { transform: scale(0.95) translateY(0); opacity: 0.92; }
-    50%      { transform: scale(1.05) translateY(-2px); opacity: 1; }
-  }
 
   .playhub-board-label {
     /* Hidden for candy aesthetic — clean tiles without per-cell overlay.

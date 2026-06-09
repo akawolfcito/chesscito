@@ -11,9 +11,11 @@
  *   - swaps the headline copy at fixed message ticks
  *   - resolves to onReady / onFailed
  *
- * Lottie removed per memory rule `feedback_no_lotties.md` — replaced
- * with a pure-CSS pulsing CandyIcon "coach" so the surface stays
- * lively without authoring new animation assets. Visual tone shifts
+ * Lottie hourglass (`sandy-loading.lottie`) RESTORED 2026-06-08 after
+ * founder clarification: continuous-motion hourglass carries the
+ * "actively working" feel better than a CSS pulse for the 5-10s the
+ * LLM takes. The memory rule about Lotties is case-by-case, not a
+ * hard ban (see `feedback_no_lotties.md`). Visual tone still shifts
  * from forest-green to candy-sky so Coach reads as cool/premium and
  * stops fighting the warm-amber HUD.
  *
@@ -29,7 +31,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { CandyModalFrame } from "@/components/ui/candy-modal-frame";
 import type { CoachResponse } from "@/lib/coach/types";
 
@@ -116,11 +118,12 @@ export function CoachLoading({ jobId, wallet, onReady, onFailed }: Props) {
     <CandyModalFrame
       tone="sky"
       iconSlot={
-        <span
-          className="coach-loading-icon-wrap"
-          aria-hidden="true"
-        >
-          <CandyIcon name="coach" className="h-12 w-12" />
+        <span className="block h-16 w-16" aria-hidden="true">
+          <LottieAnimation
+            src="/animations/sandy-loading.lottie"
+            loop
+            className="h-full w-full"
+          />
         </span>
       }
       title={`${mainMessage}${dots}`}
