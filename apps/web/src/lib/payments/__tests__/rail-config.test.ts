@@ -22,16 +22,20 @@ describe("rail-config — treasury", () => {
   const original = {
     client: process.env.NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS,
     server: process.env.CHESSCITO_TREASURY_ADDRESS,
+    legacy: process.env.TREASURY_ADDRESS,
   };
   beforeEach(() => {
     delete process.env.NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS;
     delete process.env.CHESSCITO_TREASURY_ADDRESS;
+    delete process.env.TREASURY_ADDRESS;
   });
   afterEach(() => {
     if (original.client === undefined) delete process.env.NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS;
     else process.env.NEXT_PUBLIC_CHESSCITO_TREASURY_ADDRESS = original.client;
     if (original.server === undefined) delete process.env.CHESSCITO_TREASURY_ADDRESS;
     else process.env.CHESSCITO_TREASURY_ADDRESS = original.server;
+    if (original.legacy === undefined) delete process.env.TREASURY_ADDRESS;
+    else process.env.TREASURY_ADDRESS = original.legacy;
   });
 
   it("validates a well-formed address", () => {
@@ -53,6 +57,17 @@ describe("rail-config — treasury", () => {
     process.env.CHESSCITO_TREASURY_ADDRESS = "0xAbCdEf1234567890ABCDEF1234567890abcdef12";
     expect(getTreasuryAddressServer()).toBe("0xAbCdEf1234567890ABCDEF1234567890abcdef12");
     expect(getTreasuryAddressServerLower()).toBe("0xabcdef1234567890abcdef1234567890abcdef12");
+  });
+
+  it("falls back to TREASURY_ADDRESS when CHESSCITO_TREASURY_ADDRESS is unset", () => {
+    process.env.TREASURY_ADDRESS = VALID;
+    expect(getTreasuryAddressServer()).toBe(VALID);
+  });
+
+  it("prefers CHESSCITO_TREASURY_ADDRESS over TREASURY_ADDRESS", () => {
+    process.env.CHESSCITO_TREASURY_ADDRESS = VALID;
+    process.env.TREASURY_ADDRESS = "0x0000000000000000000000000000000000000001";
+    expect(getTreasuryAddressServer()).toBe(VALID);
   });
 
   it("rejects an invalid/unset treasury (null, no throw)", () => {

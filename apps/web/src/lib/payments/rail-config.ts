@@ -36,9 +36,13 @@ export function getTreasuryAddressClient(): `0x${string}` | null {
   return isValidAddress(raw) ? raw : null;
 }
 
-/** Backend treasury (server-only env). `null` when unset/invalid. */
+/** Backend treasury (server-only env). Reads CHESSCITO_TREASURY_ADDRESS,
+ *  falling back to the existing TREASURY_ADDRESS (the Shop's payment
+ *  recipient — the rail reuses the same treasury). `null` when both are
+ *  unset/invalid → fail closed. */
 export function getTreasuryAddressServer(): `0x${string}` | null {
-  const raw = process.env.CHESSCITO_TREASURY_ADDRESS;
+  const raw =
+    process.env.CHESSCITO_TREASURY_ADDRESS ?? process.env.TREASURY_ADDRESS;
   return isValidAddress(raw) ? raw : null;
 }
 

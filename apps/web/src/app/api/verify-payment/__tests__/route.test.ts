@@ -47,8 +47,10 @@ function transferLog(token: string, from: string, to: string, value: bigint, log
   return { address: token, topics, data, logIndex };
 }
 
-function receiptWith(logs: unknown[]) {
-  return { status: "success", logs };
+function receiptWith(logs: unknown[], to: string = USDC) {
+  // `to` defaults to the payment token (a direct transfer). The route's
+  // anti-replay guard requires receipt.to == the declared token.
+  return { status: "success", to, logs };
 }
 
 function makeRequest(body: Record<string, unknown> | string): Request {
@@ -163,6 +165,17 @@ describe("transfer verification", () => {
     mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, EXPECTED - 1n, 0)]));
     const res = await POST(makeRequest(baseBody()));
     expect((await res.json()).error).toBe("amount_too_low");
+  });
+
+  it("anti-replay: a Shop-style tx (receipt.to != token) → not_direct_transfer", async () => {
+    // Same Transfer(buyer→treasury) event, but the tx went to the Shop
+    // contract, not the token — must be rejected to stop cross-rail replay.
+    const SHOP = "0x5555666677778888999900001111222233334444";
+    mockGetReceipt.mockResolvedValue(
+      receiptWith([transferLog(USDC, WALLET, TREASURY, EXPECTED, 0)], SHOP),
+    );
+    const res = await POST(makeRequest(baseBody()));
+    expect((await res.json()).error).toBe("not_direct_transfer");
   });
 });
 

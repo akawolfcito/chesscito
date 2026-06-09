@@ -145,6 +145,16 @@ export async function POST(req: Request) {
   }
   if (!receipt || receipt.status !== "success") return err("receipt_not_found", 400);
 
+  // Anti-replay: the rail is a DIRECT `token.transfer(treasury, amount)`,
+  // so the tx recipient MUST be the payment token contract. The Shop's
+  // buyItem does `safeTransferFrom(buyer, treasury, ...)` to the SAME
+  // treasury and emits an identical Transfer event — requiring tx.to ==
+  // token excludes Shop (and any other contract-mediated) payments from
+  // being replayed here to double-credit Peones.
+  if (!receipt.to || receipt.to.toLowerCase() !== token) {
+    return err("not_direct_transfer", 400);
+  }
+
   const verdict = verifyStablecoinTransfer({
     logs: receipt.logs.map((l) => ({
       address: l.address,
