@@ -107,3 +107,16 @@ export function calculateTotalStarsFromIdMap(
 ): number {
   return getPieceMasteryStars(piece, normalizeStarsById(piece, starsById));
 }
+
+/** Across-pool mastery from a legacy positional stars array — the
+ *  array-input sibling of {@link calculateTotalStarsFromIdMap}. Bridges
+ *  the legacy `stars: number[]` to the id-map mastery helper so callers
+ *  that still hold the array (e.g. the progress hook's badge gate) make
+ *  the across-pool semantics explicit. Equivalent to summing valid
+ *  in-range stars; values are clamped to [0,3] per id via the adapter. */
+export function calculatePoolMasteryFromArray(
+  piece: PieceId,
+  starsArray: readonly number[],
+): number {
+  return getPieceMasteryStars(piece, migrateStarsArrayToIdMap(piece, starsArray));
+}

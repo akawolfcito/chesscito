@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { BADGE_THRESHOLD, EXERCISES, getExerciseCount } from "@/lib/game/exercises";
-import { computeStars, totalStars } from "@/lib/game/scoring";
+import { computeStars } from "@/lib/game/scoring";
+import { calculatePoolMasteryFromArray } from "@/lib/game/progress-adapter";
 import { computeVisibleExerciseIds } from "@/lib/exercises/visible-set";
 import { submitTrainingExerciseEarn } from "@/lib/peones/training-earn";
 import { emitPeonesEarned } from "@/lib/peones/telemetry";
@@ -204,7 +205,11 @@ export function useExerciseProgress(
   const safeIndex = Math.min(Math.max(0, progress.exerciseIndex), count - 1);
   const currentExercise: Exercise = EXERCISES[piece][safeIndex];
   const isLastExercise = progress.exerciseIndex === count - 1;
-  const total = totalStars(progress.stars);
+  // Badge mastery is the across-pool sum of best stars (each exercise
+  // counts ≤3★ once; replays never double-count). Routed through the
+  // id-map mastery helper to make that semantics explicit in code —
+  // behaviour is identical to the legacy `totalStars(stars[])` sum.
+  const total = calculatePoolMasteryFromArray(piece, progress.stars);
   const badgeEarned = total >= BADGE_THRESHOLD;
   const isReplay = progress.stars[progress.exerciseIndex] > 0;
 
@@ -280,8 +285,8 @@ export function useExerciseProgress(
         ) as 0 | 1 | 2 | 3;
         newStars[idx] = bestStarsAfter;
 
-        const prevTotal = totalStars(prev.stars);
-        const newTotal = totalStars(newStars);
+        const prevTotal = calculatePoolMasteryFromArray(piece, prev.stars);
+        const newTotal = calculatePoolMasteryFromArray(piece, newStars);
         const delta = newTotal - prevTotal;
         const wasReplay = bestStarsBefore > 0;
 
