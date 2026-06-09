@@ -277,14 +277,55 @@ const BISHOP_EXERCISES: Exercise[] = [
 ];
 
 const KNIGHT_EXERCISES: Exercise[] = [
+  // ── Easy (4/15): single + double L-jumps. Knight is the first
+  //    non-linear piece; these teach the L shape and corner escape. ──
   // 1. Un salto en L desde el centro
-  { id: "knight-1", startPos: pos(3, 3), targetPos: pos(4, 5), optimalMoves: 1 },
+  {
+    id: "knight-1",
+    startPos: pos(3, 3),
+    targetPos: pos(4, 5),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Make a single L-jump from the centre (the knight's signature move).",
+    tags: ["knight-l-shape", "center-control"],
+  },
   // 2. Un salto desde esquina
-  { id: "knight-2", startPos: pos(0, 0), targetPos: pos(1, 2), optimalMoves: 1 },
+  {
+    id: "knight-2",
+    startPos: pos(0, 0),
+    targetPos: pos(1, 2),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Jump out of the corner with one L-move.",
+    tags: ["knight-l-shape", "corner-escape"],
+  },
   // 3. Un salto horizontal
-  { id: "knight-3", startPos: pos(0, 0), targetPos: pos(2, 1), optimalMoves: 1 },
+  {
+    id: "knight-3",
+    startPos: pos(0, 0),
+    targetPos: pos(2, 1),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Make the flatter L-jump (two across, one up) from the corner.",
+    tags: ["knight-l-shape", "corner-escape"],
+  },
   // 4. Dos saltos — no alcanzable en 1
-  { id: "knight-4", startPos: pos(0, 0), targetPos: pos(3, 1), optimalMoves: 2 },
+  {
+    id: "knight-4",
+    startPos: pos(0, 0),
+    targetPos: pos(3, 1),
+    optimalMoves: 2,
+    tier: "easy",
+    objective: "Reach a square that needs two L-jumps, not one.",
+    tags: ["knight-l-shape"],
+  },
+
+  // ── Medium (6/15): 3-5 hop journeys. knight-5 already runs 3 hops, so
+  //    it is reclassified Medium (corner to centre). Rotation +
+  //    Labyrinths content wave 1 (2026-06-08). All BFS-verified. Knight
+  //    needs no walls for multi-hop routes; obstacles appear only where
+  //    they teach a visible "hop over the cluster" pattern (knight-8).
+  //    Hard tier (knight-11..15) PENDING wave 2.
   // 5. Trayecto desde esquina al centro estratégico (a1 → e4).
   //    Path óptimo (3 hops): a1 → b3 → d2 → e4. BFS-verified 2026-06-05
   //    (Sprint 1 commit 3) — corrige drift previo donde el target era e5
@@ -293,7 +334,72 @@ const KNIGHT_EXERCISES: Exercise[] = [
   //    "3★ alcanzable en 3 movidas" y mantiene la narrativa "esquina al
   //    centro" — e4 es el square central canónico en teoría de ajedrez,
   //    más limpio que e5 para el lesson final de caballo.
-  { id: "knight-5", startPos: pos(0, 0), targetPos: pos(4, 3), optimalMoves: 3 },
+  {
+    id: "knight-5",
+    startPos: pos(0, 0),
+    targetPos: pos(4, 3),
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "Travel from the corner to a central square in three L-jumps.",
+    tags: ["corner-escape", "center-control", "knight-l-shape"],
+  },
+  // 6. L larga al flanco: a1 → g4, 3 saltos. Termina en color opuesto
+  //    al de salida (número impar de saltos cambia el color de casilla).
+  {
+    id: "knight-6",
+    startPos: pos(0, 0),
+    targetPos: pos(6, 3),
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "Travel a long L-route to the far flank; an odd number of hops flips the square colour.",
+    tags: ["knight-l-shape", "long-route"],
+  },
+  // 7. De borde a borde: b1 → g6, 4 saltos. Cruza el tablero entero.
+  {
+    id: "knight-7",
+    startPos: pos(1, 0),
+    targetPos: pos(6, 5),
+    optimalMoves: 4,
+    tier: "medium",
+    objective: "Cross the board edge to edge in four L-jumps.",
+    tags: ["knight-l-shape", "long-route"],
+  },
+  // 8. Saltar el grupo: b2 → d4 con obstáculos en c4, d2, b4, d3. Las
+  //    casillas de aterrizaje cercanas al centro están ocupadas; el
+  //    caballo salta por encima hasta el cuadro custodiado.
+  {
+    id: "knight-8",
+    startPos: pos(1, 1),
+    targetPos: pos(3, 3),
+    obstacles: [pos(2, 3), pos(3, 1), pos(1, 3), pos(3, 2)],
+    optimalMoves: 4,
+    tier: "medium",
+    objective: "The landing squares near the centre are occupied; hop the knight over the cluster to the guarded square.",
+    tags: ["jump-over", "center-control"],
+  },
+  // 9. Captura en ruta L: a1 → f6 (captura), 4 saltos. Sale de la esquina
+  //    hacia una captura en campo profundo.
+  {
+    id: "knight-9",
+    startPos: pos(0, 0),
+    targetPos: pos(5, 5),
+    optimalMoves: 4,
+    isCapture: true,
+    tier: "medium",
+    objective: "Ride the L-route from the corner to a capture deep in enemy ground.",
+    tags: ["capture", "long-route"],
+  },
+  // 10. El viaje largo: a8 → h6, 5 saltos. Esquina superior al flanco
+  //     opuesto — la ruta más larga de la ola.
+  {
+    id: "knight-10",
+    startPos: pos(0, 7),
+    targetPos: pos(7, 5),
+    optimalMoves: 5,
+    tier: "medium",
+    objective: "The long journey: top corner to the far flank in five L-jumps.",
+    tags: ["knight-l-shape", "long-route", "corner-escape"],
+  },
 ];
 
 const PAWN_EXERCISES: Exercise[] = [
