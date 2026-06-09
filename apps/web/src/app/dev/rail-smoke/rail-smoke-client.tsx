@@ -9,6 +9,7 @@ import { getMiniPayFeeCurrency } from "@/lib/contracts/chains";
 import {
   getPeonesPack,
   getTreasuryAddressClient,
+  RAIL_ACCEPTED_STABLECOINS,
 } from "@/lib/payments/rail-config";
 import { buildPeonesPackTransfer } from "@/lib/payments/transfer-builder";
 
@@ -35,6 +36,9 @@ export function RailSmokeClient() {
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [result, setResult] = useState<unknown>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // Pay with whatever stablecoin the wallet holds (default USDC). The
+  // verify endpoint + builder accept any allowlisted token.
+  const [tokenSymbol, setTokenSymbol] = useState<string>("USDC");
 
   const treasury = getTreasuryAddressClient();
   const pack = getPeonesPack(SKU);
@@ -51,7 +55,7 @@ export function RailSmokeClient() {
     );
   }
 
-  const tx = buildPeonesPackTransfer({ sku: SKU, treasury });
+  const tx = buildPeonesPackTransfer({ sku: SKU, treasury, tokenSymbol });
   const onWrongChain = chainId !== CELO_MAINNET;
 
   async function verify(hash: `0x${string}`) {
@@ -118,6 +122,22 @@ export function RailSmokeClient() {
         <dt>Amount</dt><dd>{tx.expectedAmount.toString()} ({tx.token.decimals} dec)</dd>
         <dt>tx.to == token</dt><dd>yes (direct transfer — anti-replay guardrail)</dd>
       </dl>
+
+      <label style={{ display: "block", marginTop: 12 }}>
+        Pay with:{" "}
+        <select
+          value={tokenSymbol}
+          onChange={(e) => setTokenSymbol(e.target.value)}
+          disabled={phase === "paying" || phase === "verifying"}
+        >
+          {RAIL_ACCEPTED_STABLECOINS.map((t) => (
+            <option key={t.symbol} value={t.symbol}>
+              {t.symbol}
+            </option>
+          ))}
+        </select>{" "}
+        <span style={{ color: "#6b7280" }}>(elegí el token que tengas en la wallet)</span>
+      </label>
 
       {!isConnected ? (
         <button type="button" onClick={() => openConnectModal?.()} style={btn}>
