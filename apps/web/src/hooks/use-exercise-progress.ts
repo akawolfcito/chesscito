@@ -6,6 +6,10 @@ import { BADGE_THRESHOLD, EXERCISES, getExerciseCount } from "@/lib/game/exercis
 import { computeStars } from "@/lib/game/scoring";
 import { calculatePoolMasteryFromArray } from "@/lib/game/progress-adapter";
 import { computeVisibleExerciseIds } from "@/lib/exercises/visible-set";
+import {
+  getOrCreateGuestSessionId,
+  isGuestGraduated,
+} from "@/lib/exercises/guest-session";
 import { submitTrainingExerciseEarn } from "@/lib/peones/training-earn";
 import { emitPeonesEarned } from "@/lib/peones/telemetry";
 import { track } from "@/lib/telemetry";
@@ -219,18 +223,37 @@ export function useExerciseProgress(
    *  keyed by pool index / exerciseId — never by a daily slot position. */
   const rotationEnabled = rotation?.enabled ?? false;
   const rotationDateUtc = rotation?.dateUtc ?? "";
-  const rotationSessionSeed = rotation?.sessionSeed ?? null;
+
+  /** Guest rotation seed. Derived POST-MOUNT (never during the initial,
+   *  SSR-matching render) so reading/creating the localStorage uuid can't
+   *  cause a hydration mismatch. Null when rotation is off, a wallet is
+   *  connected (wallet always wins), or the guest hasn't yet completed
+   *  the canonical 5 — in those cases the selector falls back to canonical
+   *  / wallet. Otherwise the persistent per-device guest session id. */
+  const [guestSessionSeed, setGuestSessionSeed] = useState<string | null>(null);
+  useEffect(() => {
+    if (!rotationEnabled || address || !isGuestGraduated(progress.stars)) {
+      setGuestSessionSeed(null);
+      return;
+    }
+    setGuestSessionSeed(getOrCreateGuestSessionId());
+  }, [rotationEnabled, address, progress.stars]);
+
+  // `rotation.sessionSeed` is a test override; real callers rely on the
+  // derived guest seed above. A connected wallet still wins inside
+  // computeVisibleExerciseIds (`address ?? sessionSeed`).
+  const effectiveSessionSeed = rotation?.sessionSeed ?? guestSessionSeed;
   const visibleExerciseIds = useMemo(
     () =>
       computeVisibleExerciseIds({
         piece,
         enabled: rotationEnabled,
         address: address ?? null,
-        sessionSeed: rotationSessionSeed,
+        sessionSeed: effectiveSessionSeed,
         dateUtc: rotationDateUtc,
         starsArray: progress.stars,
       }),
-    [rotationEnabled, piece, address, rotationSessionSeed, rotationDateUtc, progress.stars],
+    [rotationEnabled, piece, address, effectiveSessionSeed, rotationDateUtc, progress.stars],
   );
   /** Mirror into a ref so `goToExercise` can read the current visible set
    *  without taking it as a dependency (keeps the callback identity
