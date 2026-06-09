@@ -5,17 +5,148 @@ function pos(file: number, rank: number) {
   return { file, rank };
 }
 
+/* ── TIER CRITERIA (authoring guide, Rotation + Labyrinths cluster) ──
+ * Compact rubric for the optional `tier` field. Keep authoring guidance
+ * here, not in a long separate doc. Spec: docs/product/chesscito-
+ * rotation-and-labyrinths-2026-06-08.md.
+ *
+ *  easy   — 1–2 optimal moves. Few or zero obstructions. Teaches the
+ *           piece's basic movement (and the simplest capture).
+ *  medium — 3–5 optimal moves. May include obstacles, detours, or a
+ *           controlled capture. Requires a simple plan, not just a
+ *           direct line.
+ *  hard   — 6+ optimal moves OR several stacked restrictions. Wave 2,
+ *           authored later (PENDING per piece until the Hard tier lands).
+ *
+ * `optimalMoves` is BFS-verified hard-fail (exercises-bfs-verifier.test).
+ * --------------------------------------------------------------- */
+
 const ROOK_EXERCISES: Exercise[] = [
+  // ── Easy (5/15): basic rook movement + simplest captures ──
   // 1. Mover a lo largo de la fila (horizontal puro)
-  { id: "rook-1", startPos: pos(0, 0), targetPos: pos(7, 0), optimalMoves: 1 },
+  {
+    id: "rook-1",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 0),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Slide the rook straight along a rank (pure horizontal move).",
+    tags: ["straight-line"],
+  },
   // 2. Mover a lo largo de la columna (vertical puro)
-  { id: "rook-2", startPos: pos(0, 0), targetPos: pos(0, 7), optimalMoves: 1 },
+  {
+    id: "rook-2",
+    startPos: pos(0, 0),
+    targetPos: pos(0, 7),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Slide the rook straight along a file (pure vertical move).",
+    tags: ["straight-line"],
+  },
   // 3. Desde el centro hacia arriba
-  { id: "rook-3", startPos: pos(3, 3), targetPos: pos(3, 7), optimalMoves: 1 },
+  {
+    id: "rook-3",
+    startPos: pos(3, 3),
+    targetPos: pos(3, 7),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Advance the rook up a file from the centre.",
+    tags: ["straight-line"],
+  },
   // 4. Captura — esquina a esquina diagonal
-  { id: "rook-4", startPos: pos(0, 0), targetPos: pos(7, 7), optimalMoves: 2, isCapture: true },
+  {
+    id: "rook-4",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 7),
+    optimalMoves: 2,
+    isCapture: true,
+    tier: "easy",
+    objective: "Capture across the board in two straight moves (turn one corner).",
+    tags: ["capture", "corner-turn"],
+  },
   // 5. Captura — esquina a posición compleja
-  { id: "rook-5", startPos: pos(7, 7), targetPos: pos(1, 2), optimalMoves: 2, isCapture: true },
+  {
+    id: "rook-5",
+    startPos: pos(7, 7),
+    targetPos: pos(1, 2),
+    optimalMoves: 2,
+    isCapture: true,
+    tier: "easy",
+    objective: "Capture from a corner to an off-line target in two moves.",
+    tags: ["capture", "corner-turn"],
+  },
+
+  /* ── Medium (5/15): obstacles + detours, 3–4 optimal moves ──────────
+   * Rotation + Labyrinths content wave 1 (2026-06-08). All BFS-verified.
+   * Obstacles follow the same shipped pattern as king-7 / king-10
+   * (friendly blockers in a standard EXERCISES entry — sliding pieces
+   * stop one square before a blocker). Hard tier (rook-11..15) PENDING. */
+
+  // 6. Rodear un bloqueo en la fila: a1 → c1 con obstáculo en b1.
+  //    Optimal 3. La línea directa está cortada, fuerza subir/cruzar/bajar.
+  {
+    id: "rook-6",
+    startPos: pos(0, 0),
+    targetPos: pos(2, 0),
+    obstacles: [pos(1, 0)],
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "Route around a single blocker on your rank to reach the square behind it.",
+    tags: ["detour", "blocked-rank"],
+  },
+  // 7. Esquivar un archivo bloqueado: a1 → a3 con obstáculo en a2.
+  //    Optimal 3. Mirror vertical de rook-6 (eje de archivo).
+  {
+    id: "rook-7",
+    startPos: pos(0, 0),
+    targetPos: pos(0, 2),
+    obstacles: [pos(0, 1)],
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "Sidestep off a blocked file, climb, and return to the target.",
+    tags: ["detour", "blocked-file"],
+  },
+  // 8. Casilla central encajonada: d4 → e5 con obstáculos en d5 y e4.
+  //    Optimal 4. Los dos accesos cortos (rank + file del target) están
+  //    bloqueados; hay que aproximar por el lado abierto.
+  {
+    id: "rook-8",
+    startPos: pos(3, 3),
+    targetPos: pos(4, 4),
+    obstacles: [pos(3, 4), pos(4, 3)],
+    optimalMoves: 4,
+    tier: "medium",
+    objective: "Approach a boxed-in central square from its open side (four moves).",
+    tags: ["detour", "boxed-target"],
+  },
+  // 9. Captura con desvío: a1 → c3 (captura) con obstáculos en c1 y a3.
+  //    Optimal 3. Las dos rutas L de 2 movidas (vía c1 o a3) están
+  //    cortadas; la captura sólo se alcanza por el camino largo.
+  {
+    id: "rook-9",
+    startPos: pos(0, 0),
+    targetPos: pos(2, 2),
+    obstacles: [pos(2, 0), pos(0, 2)],
+    optimalMoves: 3,
+    isCapture: true,
+    tier: "medium",
+    objective: "Reach a capture the direct two-move L-paths can't make, using a detour.",
+    tags: ["capture", "detour"],
+  },
+  // 10. Escape de archivo + aproximación lejana: d1 → d5 con muro
+  //     {d2, d4, c5, e5}. Optimal 4. El archivo d está bloqueado arriba
+  //     (d2) y el target sólo se aproxima desde arriba (d4/c5/e5 cierran
+  //     los otros accesos). Síntesis: salir de lado, subir, cruzar, bajar.
+  {
+    id: "rook-10",
+    startPos: pos(3, 0),
+    targetPos: pos(3, 4),
+    obstacles: [pos(3, 1), pos(3, 3), pos(2, 4), pos(4, 4)],
+    optimalMoves: 4,
+    tier: "medium",
+    objective: "Escape a blocked file and approach the target from the far end (four moves).",
+    tags: ["detour", "blocked-file", "rook-lift"],
+  },
 ];
 
 const BISHOP_EXERCISES: Exercise[] = [

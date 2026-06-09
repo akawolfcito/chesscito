@@ -129,7 +129,27 @@ describe("useExerciseProgress — legacy stars[5] preservation (real catalog tod
     expect(persisted.exerciseIndex).toBe(4);
   });
 
-  it("preserves Rook [3,3,3,3,0] verbatim when pool count is 5", async () => {
+  // Verbatim preservation when the stored length already equals the pool
+  // count. Uses Bishop (still 5) — Rook grew to 10 in the Rotation +
+  // Labyrinths wave, so its legacy stars[5] now PADS to 10 (covered by the
+  // King real-catalog case above + the getExerciseCount-mock block below).
+  it("preserves Bishop [3,3,3,3,0] verbatim when pool count is 5", async () => {
+    localStorage.setItem(
+      "chesscito:progress:bishop",
+      JSON.stringify({ piece: "bishop", exerciseIndex: 4, stars: [3, 3, 3, 3, 0] }),
+    );
+
+    const { renderHook, act } = await import("@testing-library/react");
+    const { useExerciseProgress } = await import("@/hooks/use-exercise-progress");
+
+    const { result } = renderHook(() => useExerciseProgress("bishop"));
+    act(() => {});
+
+    expect(result.current.progress.stars).toEqual([3, 3, 3, 3, 0]);
+    expect(result.current.totalStars).toBe(12);
+  });
+
+  it("pads Rook legacy stars[5] to 10 (pool grew in Rotation wave)", async () => {
     localStorage.setItem(
       "chesscito:progress:rook",
       JSON.stringify({ piece: "rook", exerciseIndex: 4, stars: [3, 3, 3, 3, 0] }),
@@ -141,7 +161,9 @@ describe("useExerciseProgress — legacy stars[5] preservation (real catalog tod
     const { result } = renderHook(() => useExerciseProgress("rook"));
     act(() => {});
 
-    expect(result.current.progress.stars).toEqual([3, 3, 3, 3, 0]);
+    // Values preserved, padded with zeros to the current pool count (10).
+    expect(result.current.progress.stars).toEqual([3, 3, 3, 3, 0, 0, 0, 0, 0, 0]);
+    expect(result.current.progress.stars.length).toBe(10);
     expect(result.current.totalStars).toBe(12);
   });
 });

@@ -23,12 +23,31 @@ export type SquareState = {
   piece: BoardPiece | null;
 };
 
+/** Authoring difficulty tier for an exercise. Drives tier-gated daily
+ *  rotation (future rotation engine) and pedagogical bias toward less
+ *  completed exercises. Optional + additive — legacy entries without a
+ *  tier are treated as untiered until classified. Criteria live next to
+ *  the catalog in `exercises.ts` (TIER CRITERIA block). */
+export type ExerciseTier = "easy" | "medium" | "hard";
+
 export type Exercise = {
   id: string;
   startPos: BoardPosition;   // posición inicial de la pieza
   targetPos: BoardPosition;  // casilla objetivo
   optimalMoves: number;      // mínimo teórico de movimientos
   isCapture?: boolean;
+  /** Difficulty tier (rotation + progression metadata). Optional during
+   *  the content-authoring rollout; consumed by the future rotation
+   *  engine, NOT by current UI. See `ExerciseTier`. */
+  tier?: ExerciseTier;
+  /** Authoring-only pedagogical objective, EN. NOT user-facing copy yet
+   *  — if surfaced later it gets EN/ES i18n in a separate commit. Plain
+   *  guidance for content reviewers on what the exercise teaches. */
+  objective?: string;
+  /** Lowercase kebab-case content tags (e.g. "straight-line",
+   *  "blocked-file", "detour", "capture", "edge-control", "rook-lift").
+   *  Used for authoring organization + future rotation variety bias. */
+  tags?: string[];
   /** L2 labyrinth obstacles — friendly blocker pieces that the player's
    *  piece cannot move through or capture. Sliding pieces (rook, bishop,
    *  queen) stop one square before an obstacle in the line of attack.

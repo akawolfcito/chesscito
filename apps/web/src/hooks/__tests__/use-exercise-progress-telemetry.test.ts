@@ -288,13 +288,16 @@ describe("useExerciseProgress — telemetry", () => {
   });
 
   describe("training_senda_completed", () => {
-    it("fires for Rook when the last 0★ slot becomes ≥1★ (count = 5)", async () => {
+    it("fires for Rook when the last 0★ slot becomes ≥1★ (count = 10)", async () => {
+      // Rook pool grew to 10 (5 Easy + 5 Medium) in the Rotation +
+      // Labyrinths content wave. Senda closes only when all 10 slots
+      // are ≥1★ — uses getExerciseCount, not a hardcoded 5.
       localStorage.setItem(
         "chesscito:progress:rook",
         JSON.stringify({
           piece: "rook",
-          exerciseIndex: 4,
-          stars: [3, 3, 2, 1, 0],
+          exerciseIndex: 9,
+          stars: [3, 3, 2, 1, 1, 1, 1, 1, 1, 0],
         }),
       );
 
@@ -302,15 +305,15 @@ describe("useExerciseProgress — telemetry", () => {
       await Promise.resolve();
 
       act(() => {
-        result.current.completeExercise(2); // rook-5 optimal 2 → ≥1★
+        result.current.completeExercise(4); // rook-10 optimal 4 → 3★
       });
 
       const senda = callsOf("training_senda_completed");
       expect(senda).toHaveLength(1);
       expect(senda[0]![1]).toMatchObject({
         piece: "rook",
-        exerciseCount: 5,
-        exercisesCompleted: 5,
+        exerciseCount: 10,
+        exercisesCompleted: 10,
       });
     });
 
