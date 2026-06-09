@@ -888,17 +888,20 @@ export function ExercisesScreen({
     attemptSeq,
     resetBoard: () => resetBoard(),
     incrementAttemptSeq,
-    onApplied: (closedAttemptSeq) => {
+    onApplied: (closedAttemptSeq, source) => {
+      // Sprint 6 commit C (2026-06-08) — `source` arrives from the
+      // trigger callsite so dashboards can distinguish the legacy
+      // RETRY tap ("contextual_action_slot") from the failure-phase
+      // auto-reset firing on its own ("auto_reset"). The dedup ref
+      // inside the guard is SHARED across both paths, so if both
+      // happen for the same attemptSeq (race or rapid tap before
+      // the 1.5s auto-reset fires) only ONE training_retry_completed
+      // event lands — whichever trigger crossed the gate first wins.
       track("training_retry_completed", {
         piece: selectedPiece,
         exerciseId: currentExercise.id,
         attemptSeq: closedAttemptSeq,
-        // 2026-06-08 — source was "result_overlay" while the paid
-        // chip was mounted. Now that the legacy ContextualActionSlot
-        // Retry is the trigger, the surface label reflects the real
-        // affordance the user tapped. Keeps dashboards honest if a
-        // future paid Retry surface ships under a different label.
-        source: "contextual_action_slot",
+        source,
       });
     },
   });
@@ -1489,7 +1492,14 @@ export function ExercisesScreen({
         shieldCount >= 1 ||
         welcomePack.state === "claimed";
       if (!hasRescueContext) {
-        autoReset.schedule(() => resetBoard(), 1500);
+        // Sprint 6 commit C (2026-06-08) — route through the same
+        // guard that the legacy manual RETRY uses. The auto-reset
+        // path now advances attemptSeq + fires the
+        // training_retry_completed telemetry that Sprint 5 §7.5
+        // documented as a known gap. If the user beats the 1.5s
+        // timer by tapping RETRY manually, the dedup ref ensures
+        // the auto-reset fire is a no-op (same attemptSeq).
+        autoReset.schedule(() => handleRetryApplied("auto_reset"), 1500);
       }
       // else: modal handles the dwell; no autoReset.
     }

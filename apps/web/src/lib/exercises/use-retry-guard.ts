@@ -44,27 +44,43 @@ export type UseRetryGuardArgs = {
    *  having to re-derive whether the transition actually applied.
    *  Receives the attemptSeq that was just closed (i.e. the value the
    *  guard read BEFORE incrementing) so the event payload describes
-   *  the attempt the user paid for, not the new in-flight one. */
-  onApplied?: (closedAttemptSeq: number) => void;
+   *  the attempt the user paid for, not the new in-flight one.
+   *
+   *  Sprint 6 commit C (2026-06-08) — also receives the `source`
+   *  string the caller passed when invoking the returned callback,
+   *  so the consumer can distinguish trigger origins (manual RETRY
+   *  tap vs failure-phase auto-reset) without holding two parallel
+   *  guards with two dedup refs. */
+  onApplied?: (closedAttemptSeq: number, source: string) => void;
 };
+
+/** Default source label when the consumer invokes the returned
+ *  callback without arguments. Kept stable so the existing manual-
+ *  retry-tap callsite continues to emit the same telemetry shape
+ *  it has since Sprint 5 commit G. */
+const DEFAULT_RETRY_SOURCE = "contextual_action_slot";
 
 export function useRetryGuard({
   attemptSeq,
   resetBoard,
   incrementAttemptSeq,
   onApplied,
-}: UseRetryGuardArgs): () => void {
+}: UseRetryGuardArgs): (source?: string) => void {
   /** The last attemptSeq we successfully transitioned. When the
    *  same value comes through again (double-tap / duplicate / re-
-   *  render) we no-op; when a different value arrives (legitimate
-   *  fresh attempt) we run the transition. */
+   *  render / auto-reset-after-manual-tap or vice versa) we no-op;
+   *  when a different value arrives (legitimate fresh attempt) we
+   *  run the transition. */
   const lastAppliedRef = useRef<number | null>(null);
 
-  return useCallback(() => {
-    if (lastAppliedRef.current === attemptSeq) return;
-    lastAppliedRef.current = attemptSeq;
-    resetBoard();
-    incrementAttemptSeq();
-    onApplied?.(attemptSeq);
-  }, [attemptSeq, resetBoard, incrementAttemptSeq, onApplied]);
+  return useCallback(
+    (source: string = DEFAULT_RETRY_SOURCE) => {
+      if (lastAppliedRef.current === attemptSeq) return;
+      lastAppliedRef.current = attemptSeq;
+      resetBoard();
+      incrementAttemptSeq();
+      onApplied?.(attemptSeq, source);
+    },
+    [attemptSeq, resetBoard, incrementAttemptSeq, onApplied],
+  );
 }

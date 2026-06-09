@@ -125,7 +125,7 @@ describe("useRetryGuard", () => {
   });
 
   describe("onApplied (Sprint 5 commit F)", () => {
-    it("fires INSIDE the dedup gate with the CLOSED attemptSeq (the one paid for, not the new one)", () => {
+    it("fires INSIDE the dedup gate with the CLOSED attemptSeq + default source", () => {
       const resetBoard = vi.fn();
       const incrementAttemptSeq = vi.fn();
       const onApplied = vi.fn();
@@ -144,9 +144,56 @@ describe("useRetryGuard", () => {
 
       expect(onApplied).toHaveBeenCalledTimes(1);
       // Receives the attemptSeq value that the guard read BEFORE
-      // incrementing — the event payload describes the attempt the
-      // user just paid to close.
-      expect(onApplied).toHaveBeenCalledWith(7);
+      // incrementing + the default source label.
+      expect(onApplied).toHaveBeenCalledWith(7, "contextual_action_slot");
+    });
+
+    it("Sprint 6 commit C — forwards the source argument when caller supplies one", () => {
+      const onApplied = vi.fn();
+      const { result } = renderHook(() =>
+        useRetryGuard({
+          attemptSeq: 3,
+          resetBoard: vi.fn(),
+          incrementAttemptSeq: vi.fn(),
+          onApplied,
+        }),
+      );
+
+      act(() => {
+        result.current("auto_reset");
+      });
+
+      expect(onApplied).toHaveBeenCalledTimes(1);
+      expect(onApplied).toHaveBeenCalledWith(3, "auto_reset");
+    });
+
+    it("Sprint 6 commit C — same attemptSeq deduped regardless of source label (auto_reset + manual collapse)", () => {
+      const resetBoard = vi.fn();
+      const incrementAttemptSeq = vi.fn();
+      const onApplied = vi.fn();
+      const { result } = renderHook(() =>
+        useRetryGuard({
+          attemptSeq: 1,
+          resetBoard,
+          incrementAttemptSeq,
+          onApplied,
+        }),
+      );
+
+      act(() => {
+        result.current("auto_reset");
+        // User taps RETRY immediately after auto-reset fires —
+        // same attemptSeq, MUST collapse to a single transition.
+        result.current("contextual_action_slot");
+        result.current("contextual_action_slot");
+      });
+
+      expect(resetBoard).toHaveBeenCalledTimes(1);
+      expect(incrementAttemptSeq).toHaveBeenCalledTimes(1);
+      expect(onApplied).toHaveBeenCalledTimes(1);
+      // The first invocation wins, so the source on the emit
+      // describes which trigger actually crossed the gate.
+      expect(onApplied).toHaveBeenCalledWith(1, "auto_reset");
     });
 
     it("does NOT fire on duplicate / double-tap (same attemptSeq)", () => {
@@ -207,14 +254,14 @@ describe("useRetryGuard", () => {
       act(() => {
         result.current();
       });
-      expect(onApplied).toHaveBeenCalledWith(1);
+      expect(onApplied).toHaveBeenCalledWith(1, "contextual_action_slot");
 
       rerender({ attemptSeq: 2 });
       act(() => {
         result.current();
       });
       expect(onApplied).toHaveBeenCalledTimes(2);
-      expect(onApplied).toHaveBeenLastCalledWith(2);
+      expect(onApplied).toHaveBeenLastCalledWith(2, "contextual_action_slot");
     });
 
     it("is optional — guard works WITHOUT onApplied", () => {
