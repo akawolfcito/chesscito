@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
+import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { getPeonesPack } from "@/lib/payments/rail-config";
 import {
@@ -106,20 +106,25 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
 
   const isSuccess = rail.phase === "success" && rail.result;
 
+  if (!open) return null;
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        title="Get Peones"
-        description={`${pack.peonesReward} Peones for ${priceLabel}`}
-        className="sheet-bg-hub rounded-t-3xl border-0"
+    /* Centered forest-frame popup (panel-bg1 + green border + red X close),
+     *  the canonical celebratory modal shell shared with the arena end-state
+     *  and "All Exercises Complete". Backdrop dismissal is blocked while a tx
+     *  is in flight so an accidental tap cannot drop the verify state. */
+    <VictoryPopupShell
+      onClose={() => onOpenChange(false)}
+      disableBackdropClose={busy}
+      ariaLabel="Get Peones"
+      closeLabel="Close"
+    >
+      <div
+        className="flex flex-col items-center gap-4 text-center"
+        data-testid="get-peones-sheet"
       >
-        <div
-          className="flex flex-col items-center gap-4 px-1 pb-2 pt-1 text-center"
-          data-testid="get-peones-sheet"
-        >
-          {isSuccess && rail.result ? (
-            /* ---- SUCCESS: celebratory credit ---- */
+        {isSuccess && rail.result ? (
+          /* ---- SUCCESS: celebratory credit ---- */
             <div
               data-testid="get-peones-success"
               className="flex flex-col items-center gap-3"
@@ -338,8 +343,7 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
               )}
             </>
           )}
-        </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+    </VictoryPopupShell>
   );
 }
