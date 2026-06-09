@@ -130,14 +130,19 @@ describe("useExerciseProgress — legacy stars[5] preservation (real catalog tod
   });
 
   // Verbatim preservation when the stored length already equals the pool
-  // count. Uses Pawn (still 5) — Rook, Bishop, Queen and Knight grew to
-  // 10 in the Rotation + Labyrinths wave, so their legacy stars[5] now
-  // PADS to 10 (covered by the King real-catalog case above, the Rook
-  // case below, and the getExerciseCount-mock block further down).
-  it("preserves Pawn [3,3,3,3,0] verbatim when pool count is 5", async () => {
+  // count. After the Rotation + Labyrinths wave every piece pool is 10,
+  // so this exercises the equal-length branch with a length-10 input on a
+  // real 10-piece (Pawn): no padding, no truncation. (Legacy stars[5]
+  // padding to 10 is covered by the King case above and the Rook case
+  // below; the getExerciseCount-mock block further down covers count>5.)
+  it("preserves a length-10 stars array verbatim when it equals the pool count (10)", async () => {
     localStorage.setItem(
       "chesscito:progress:pawn",
-      JSON.stringify({ piece: "pawn", exerciseIndex: 4, stars: [3, 3, 3, 3, 0] }),
+      JSON.stringify({
+        piece: "pawn",
+        exerciseIndex: 9,
+        stars: [3, 3, 3, 3, 0, 0, 0, 0, 0, 0],
+      }),
     );
 
     const { renderHook, act } = await import("@testing-library/react");
@@ -146,7 +151,8 @@ describe("useExerciseProgress — legacy stars[5] preservation (real catalog tod
     const { result } = renderHook(() => useExerciseProgress("pawn"));
     act(() => {});
 
-    expect(result.current.progress.stars).toEqual([3, 3, 3, 3, 0]);
+    expect(result.current.progress.stars).toEqual([3, 3, 3, 3, 0, 0, 0, 0, 0, 0]);
+    expect(result.current.progress.stars.length).toBe(10);
     expect(result.current.totalStars).toBe(12);
   });
 

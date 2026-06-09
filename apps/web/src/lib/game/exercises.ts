@@ -403,17 +403,139 @@ const KNIGHT_EXERCISES: Exercise[] = [
 ];
 
 const PAWN_EXERCISES: Exercise[] = [
+  // ── Easy (4/15): basic forward advance + basic diagonal capture. The
+  //    pawn looks simple but only moves forward and captures diagonally;
+  //    these teach those two core rules in one move each. ──
   // 1. Forward one — simplest possible pawn move
-  { id: "pawn-1", startPos: pos(4, 1), targetPos: pos(4, 2), optimalMoves: 1 },
+  {
+    id: "pawn-1",
+    startPos: pos(4, 1),
+    targetPos: pos(4, 2),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Advance the pawn one square forward (its only non-capture move).",
+    tags: ["forward-move"],
+  },
   // 2. Forward march — advance two from starting rank, then one more
-  { id: "pawn-2", startPos: pos(3, 1), targetPos: pos(3, 4), optimalMoves: 2 },
+  {
+    id: "pawn-2",
+    startPos: pos(3, 1),
+    targetPos: pos(3, 4),
+    optimalMoves: 2,
+    tier: "easy",
+    objective: "Use the two-square first step, then a single step, to march forward.",
+    tags: ["forward-move", "slow-advance"],
+  },
   // 3. Diagonal capture — one step diagonally forward
-  { id: "pawn-3", startPos: pos(2, 4), targetPos: pos(3, 5), optimalMoves: 1, isCapture: true },
+  {
+    id: "pawn-3",
+    startPos: pos(2, 4),
+    targetPos: pos(3, 5),
+    optimalMoves: 1,
+    isCapture: true,
+    tier: "easy",
+    objective: "Capture one square diagonally forward (pawns only move sideways to capture).",
+    tags: ["diagonal-capture"],
+  },
   // 4. Capture decision — must choose diagonal, not forward
-  { id: "pawn-4", startPos: pos(5, 3), targetPos: pos(6, 4), optimalMoves: 1, isCapture: true },
+  {
+    id: "pawn-4",
+    startPos: pos(5, 3),
+    targetPos: pos(6, 4),
+    optimalMoves: 1,
+    isCapture: true,
+    tier: "easy",
+    objective: "Take the diagonal capture rather than advancing straight.",
+    tags: ["diagonal-capture", "directional-move"],
+  },
+
+  /* ── Medium (6/15): 2-5 move routes. pawn-5 already runs a 3-move
+   * advance-then-capture plan, so it is reclassified Medium. The pawn
+   * advances slowly, so its difficulty comes from restrictions, not
+   * mobility. Rotation + Labyrinths content wave 1 (2026-06-08). All
+   * BFS-verified using ONLY the engine's existing rules: forward 1,
+   * forward 2 from the starting rank, diagonal capture onto captureTargets
+   * or targetPos, and simple obstacles. No en passant, no promotion
+   * mechanic, no check rules, no engine changes. Hard tier
+   * (pawn-11..15) PENDING wave 2. */
   // 5. Mixed path — advance then capture (forward + forward + diagonal)
   //    d2(3,1) → d4(3,3) fwd2, → d5(3,4) fwd1, → e6(4,5) diagonal capture = 3 moves
-  { id: "pawn-5", startPos: pos(3, 1), targetPos: pos(4, 5), optimalMoves: 3, isCapture: true },
+  {
+    id: "pawn-5",
+    startPos: pos(3, 1),
+    targetPos: pos(4, 5),
+    optimalMoves: 3,
+    isCapture: true,
+    tier: "medium",
+    objective: "Advance twice, then finish with a diagonal capture (a short plan).",
+    tags: ["slow-advance", "diagonal-capture", "capture-route"],
+  },
+  // 6. Marcha lenta a la última fila: a2 → a8, 5 avances (doble paso
+  //    inicial + 3). Camino hacia la octava fila, sin coronación real.
+  {
+    id: "pawn-6",
+    startPos: pos(0, 1),
+    targetPos: pos(0, 7),
+    optimalMoves: 5,
+    tier: "medium",
+    objective: "March all the way up the file to the last rank (path toward promotion, no promotion mechanic).",
+    tags: ["forward-move", "slow-advance", "promotion-path"],
+  },
+  // 7. Bloqueado de frente, capturar para rodear: e2 → f5 con obstáculo
+  //    en e3 (corta el avance) y captureTarget en f3. El peón no puede
+  //    avanzar, así que captura en diagonal y luego sigue recto.
+  {
+    id: "pawn-7",
+    startPos: pos(4, 1),
+    targetPos: pos(5, 4),
+    obstacles: [pos(4, 2)],
+    captureTargets: [pos(5, 2)],
+    optimalMoves: 3,
+    isCapture: true,
+    tier: "medium",
+    objective: "The square ahead is blocked, so capture diagonally to get around it, then advance.",
+    tags: ["blocked-forward", "diagonal-capture", "capture-route"],
+  },
+  // 8. Ruta de capturas en zigzag: c2 → f5 con captureTargets en d3, e4.
+  //    El peón sube cambiando de columna sólo mediante capturas diagonales.
+  {
+    id: "pawn-8",
+    startPos: pos(2, 1),
+    targetPos: pos(5, 4),
+    captureTargets: [pos(3, 2), pos(4, 3)],
+    optimalMoves: 3,
+    isCapture: true,
+    tier: "medium",
+    objective: "Climb by a chain of diagonal captures, changing file each time you take.",
+    tags: ["capture-route", "diagonal-capture", "directional-move"],
+  },
+  // 9. Doble paso + captura: d2 → e5. Avanza dos desde la fila inicial y
+  //    remata con una captura diagonal (lectura de dirección del peón).
+  {
+    id: "pawn-9",
+    startPos: pos(3, 1),
+    targetPos: pos(4, 4),
+    optimalMoves: 2,
+    isCapture: true,
+    tier: "medium",
+    objective: "Take the two-square first step, then capture diagonally to finish.",
+    tags: ["slow-advance", "diagonal-capture", "directional-move"],
+  },
+  // 10. Última fila capturando el bloqueo final: e6 → f8 con obstáculo en
+  //     e7 y captureTarget en f7. El avance recto a la octava está cortado;
+  //     el peón captura en diagonal y llega a la última fila.
+  {
+    id: "pawn-10",
+    startPos: pos(4, 5),
+    targetPos: pos(5, 7),
+    obstacles: [pos(4, 6)],
+    captureTargets: [pos(5, 6)],
+    optimalMoves: 2,
+    isCapture: true,
+    tier: "medium",
+    objective: "The straight path to the last rank is blocked; capture around the final blocker to reach it.",
+    tags: ["promotion-path", "blocked-forward", "diagonal-capture"],
+  },
 ];
 
 const QUEEN_EXERCISES: Exercise[] = [
