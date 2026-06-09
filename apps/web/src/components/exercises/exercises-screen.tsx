@@ -36,6 +36,7 @@ import { PeonesHintButton } from "@/components/peones/peones-hint-button";
 // as dormant infrastructure (see Sprint 5 handoff §1).
 import { computeExerciseBfs } from "@/lib/game/exercise-bfs";
 import { useRetryGuard } from "@/lib/exercises/use-retry-guard";
+import { ENABLE_EXERCISE_ROTATION } from "@/lib/exercises/rotation-flag";
 import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-slot";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
@@ -856,6 +857,18 @@ export function ExercisesScreen({
    *  can pace themselves against the optimal target in real time. */
   const [labyrinthMoves, setLabyrinthMoves] = useState(0);
 
+  // Rotation Engine (slice E) — flag-gated. UTC date is memoized once per
+  // mount so the daily seed is stable for the session (rolls over on
+  // reload after the UTC day changes). Caller-provided so the hook stays
+  // clock-free + testable.
+  const rotationDateUtc = useMemo(
+    () => new Date().toISOString().slice(0, 10),
+    [],
+  );
+  const rotationOptions = useMemo(
+    () => ({ enabled: ENABLE_EXERCISE_ROTATION, dateUtc: rotationDateUtc }),
+    [rotationDateUtc],
+  );
   const {
     progress,
     currentExercise,
@@ -863,12 +876,34 @@ export function ExercisesScreen({
     totalStars,
     badgeEarned,
     isReplay,
+    visibleExerciseIds,
     completeExercise,
     advanceExercise,
     goToExercise,
     attemptSeq,
     incrementAttemptSeq,
-  } = useExerciseProgress(selectedPiece);
+  } = useExerciseProgress(selectedPiece, rotationOptions);
+
+  // Steer the active board exercise into today's visible set when rotation
+  // is on and the persisted exerciseIndex points outside it (e.g. a
+  // returning player whose last slot isn't in today's set). Targets the
+  // first incomplete visible exercise, else the first visible one. Uses
+  // the rotation-relaxed goToExercise, so it can only land on visible-set
+  // members. No-op when the current exercise is already visible.
+  useEffect(() => {
+    if (!ENABLE_EXERCISE_ROTATION || !visibleExerciseIds) return;
+    if (visibleExerciseIds.size === 0) return;
+    if (visibleExerciseIds.has(currentExercise.id)) return;
+    const pool = EXERCISES[selectedPiece];
+    const firstIncomplete = pool.findIndex(
+      (ex, i) => visibleExerciseIds.has(ex.id) && (progress.stars[i] ?? 0) === 0,
+    );
+    const target =
+      firstIncomplete >= 0
+        ? firstIncomplete
+        : pool.findIndex((ex) => visibleExerciseIds.has(ex.id));
+    if (target >= 0) goToExercise(target);
+  }, [visibleExerciseIds, currentExercise.id, selectedPiece, progress.stars, goToExercise]);
 
   /** Sprint 5 commits D / F — Retry guard. Owns the dedup + reset +
    *  attemptSeq-advance chain so duplicate retry triggers (double-
@@ -2313,6 +2348,7 @@ export function ExercisesScreen({
               onNavigate={handleExerciseNavigate}
               shieldCount={shieldCount}
               streakCount={streakCount}
+              visibleExerciseIds={visibleExerciseIds}
             />
           }
           isReplay={isReplay}

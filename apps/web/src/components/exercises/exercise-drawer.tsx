@@ -33,6 +33,12 @@ type ExerciseDrawerProps = {
    *  it's omitted to avoid mounting "1" right after the first
    *  success of a session (visual noise). */
   streakCount?: number;
+  /** Rotation Engine (slice E). When provided (non-null), the drawer
+   *  shows ONLY today's visible set and treats those exercises as
+   *  playable (tier-unlocked), bypassing the legacy linear-senda lock.
+   *  Rows keep their real pool index so stars / onNavigate stay correct.
+   *  Null/undefined → legacy full list with linear lock. */
+  visibleExerciseIds?: ReadonlySet<string> | null;
 };
 
 function StarDisplay({ count }: { count: number }) {
@@ -60,6 +66,7 @@ export function ExerciseDrawer({
   onNavigate,
   shieldCount,
   streakCount,
+  visibleExerciseIds,
 }: ExerciseDrawerProps) {
   const t = useTranslations("EXERCISE_DRAWER_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -67,12 +74,28 @@ export function ExerciseDrawer({
   const maxStars = exercises.length * 3;
   const lastCompleted = stars.reduce((acc, s, i) => (s > 0 ? i : acc), -1);
   const maxAllowed = Math.min(lastCompleted + 1, exercises.length - 1);
+  const rotationOn = visibleExerciseIds != null;
 
-  function handleSelect(index: number) {
-    if (index > maxAllowed) return;
+  /** Lock rule. Rotation: anything in today's visible set is playable
+   *  (the selector only surfaces tier-unlocked exercises). Legacy: the
+   *  linear senda gate. `index` is always the real pool index. */
+  function lockedFor(exercise: Exercise, index: number): boolean {
+    if (rotationOn) return !visibleExerciseIds!.has(exercise.id);
+    return index > maxAllowed;
+  }
+
+  function handleSelect(exercise: Exercise, index: number) {
+    if (lockedFor(exercise, index)) return;
     onOpenChange(false);
     onNavigate(index);
   }
+
+  // Rotation shows only today's visible set; legacy shows the full pool.
+  // Either way each row carries its REAL pool index so stars[index],
+  // activeIndex, and onNavigate(index) stay correct.
+  const rows = exercises
+    .map((exercise, index) => ({ exercise, index }))
+    .filter(({ exercise }) => !rotationOn || visibleExerciseIds!.has(exercise.id));
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -169,10 +192,10 @@ export function ExerciseDrawer({
         </div>
 
         <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
-          {exercises.map((exercise, index) => {
+          {rows.map(({ exercise, index }) => {
             const isActive = index === activeIndex;
             const isDone = stars[index] > 0;
-            const isLocked = index > maxAllowed;
+            const isLocked = lockedFor(exercise, index);
             // EXERCISE_DESCRIPTIONS keys are not statically known to the
             // translator; fall back to `Exercise N` when the key is missing.
             let description: string;
@@ -187,7 +210,7 @@ export function ExerciseDrawer({
                 key={exercise.id}
                 type="button"
                 disabled={isLocked}
-                onClick={() => handleSelect(index)}
+                onClick={() => handleSelect(exercise, index)}
                 style={{
                   animationDelay: `${index * 50}ms`,
                   background: "rgba(255, 255, 255, 0.15)",

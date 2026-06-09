@@ -1,13 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { BADGE_THRESHOLD, EXERCISES, getExerciseCount } from "@/lib/game/exercises";
 import { computeStars, totalStars } from "@/lib/game/scoring";
+import { computeVisibleExerciseIds } from "@/lib/exercises/visible-set";
 import { submitTrainingExerciseEarn } from "@/lib/peones/training-earn";
 import { emitPeonesEarned } from "@/lib/peones/telemetry";
 import { track } from "@/lib/telemetry";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
+
+/** Optional rotation context (slice E). When omitted or `enabled: false`,
+ *  the hook behaves bit-identically to the legacy linear senda. */
+export type ExerciseRotationOptions = {
+  enabled: boolean;
+  /** UTC date string "YYYY-MM-DD" (provided by the caller for
+   *  determinism / testability — the hook never reads the clock). */
+  dateUtc: string;
+  /** Guest session seed when there is no wallet; falls back to the
+   *  canonical 5 when both wallet and session seed are absent. */
+  sessionSeed?: string | null;
+};
 
 /**
  * Returns a zero-filled stars array matching the piece's current pool
@@ -117,7 +130,10 @@ function saveProgress(progress: PieceProgress) {
   }
 }
 
-export function useExerciseProgress(piece: PieceId) {
+export function useExerciseProgress(
+  piece: PieceId,
+  rotation?: ExerciseRotationOptions,
+) {
   /** Sprint 3 commit F — connected wallet drives the Peones earn POST
    *  inside `completeExercise`. Guests skip the call entirely; their
    *  local progress + telemetry stay intact. */
@@ -191,6 +207,33 @@ export function useExerciseProgress(piece: PieceId) {
   const total = totalStars(progress.stars);
   const badgeEarned = total >= BADGE_THRESHOLD;
   const isReplay = progress.stars[progress.exerciseIndex] > 0;
+
+  /** Rotation Engine (slice E) — the set of exerciseIds to surface today,
+   *  or `null` when rotation is disabled (legacy: full pool navigable).
+   *  Gates `goToExercise` and is surfaced to the drawer. Progress stays
+   *  keyed by pool index / exerciseId — never by a daily slot position. */
+  const rotationEnabled = rotation?.enabled ?? false;
+  const rotationDateUtc = rotation?.dateUtc ?? "";
+  const rotationSessionSeed = rotation?.sessionSeed ?? null;
+  const visibleExerciseIds = useMemo(
+    () =>
+      computeVisibleExerciseIds({
+        piece,
+        enabled: rotationEnabled,
+        address: address ?? null,
+        sessionSeed: rotationSessionSeed,
+        dateUtc: rotationDateUtc,
+        starsArray: progress.stars,
+      }),
+    [rotationEnabled, piece, address, rotationSessionSeed, rotationDateUtc, progress.stars],
+  );
+  /** Mirror into a ref so `goToExercise` can read the current visible set
+   *  without taking it as a dependency (keeps the callback identity
+   *  stable — see hook-ref-stability discipline). */
+  const visibleIdsRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    visibleIdsRef.current = visibleExerciseIds;
+  }, [visibleExerciseIds]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -359,10 +402,19 @@ export function useExerciseProgress(piece: PieceId) {
     setProgress((prev) => {
       const pieceCount = getExerciseCount(piece);
       const clamped = Math.max(0, Math.min(index, pieceCount - 1));
-      // Allow navigating to any completed exercise or one past the last completed
-      const lastCompleted = prev.stars.reduce((acc, s, i) => (s > 0 ? i : acc), -1);
-      const maxAllowed = Math.min(lastCompleted + 1, pieceCount - 1);
-      if (clamped > maxAllowed) return prev;
+      const visibleIds = visibleIdsRef.current;
+      if (visibleIds) {
+        // Rotation mode: gate by today's visible (tier-unlocked) set, not
+        // the legacy linear senda. The clamped value is always a real pool
+        // index, so progress writes still target the correct exerciseId.
+        const targetId = EXERCISES[piece][clamped]?.id;
+        if (!targetId || !visibleIds.has(targetId)) return prev;
+      } else {
+        // Legacy: navigate to any completed exercise or one past the last.
+        const lastCompleted = prev.stars.reduce((acc, s, i) => (s > 0 ? i : acc), -1);
+        const maxAllowed = Math.min(lastCompleted + 1, pieceCount - 1);
+        if (clamped > maxAllowed) return prev;
+      }
       const next: PieceProgress = { ...prev, exerciseIndex: clamped };
       saveProgress(next);
       return next;
@@ -376,6 +428,9 @@ export function useExerciseProgress(piece: PieceId) {
     totalStars: total,
     badgeEarned,
     isReplay,
+    /** Rotation Engine (slice E) — exerciseIds to surface today, or null
+     *  when rotation is disabled (legacy full-pool navigation). */
+    visibleExerciseIds,
     completeExercise,
     advanceExercise,
     goToExercise,
