@@ -97,13 +97,13 @@ describe("useExerciseProgress — legacy stars[5] preservation (real catalog tod
   });
 
   /** Sprint 1 commit 5 (2026-06-05): King pool extended from 5 to 9
-   *  (king-1..5 + king-6, king-7, king-9, king-10). king-8 parked.
-   *  Legacy users with stars[5] in King MUST migrate to stars[9]
+   *  (king-1..7, king-9, king-10, then king-8 appended in the Rotation
+   *  wave). Legacy users with stars[5] in King MUST migrate to stars[10]
    *  preserving every original value and padding with zeros. Total
    *  star count and exerciseIndex must remain unchanged. The migrated
    *  shape is written back to localStorage so subsequent loads are
    *  idempotent. */
-  it("expands legacy King [3,3,2,1,0] to length 9 after king-6..10 catalog extension", async () => {
+  it("expands legacy King [3,3,2,1,0] to length 10 after king-6..10 + king-8 catalog extension", async () => {
     localStorage.setItem(
       "chesscito:progress:king",
       JSON.stringify({ piece: "king", exerciseIndex: 4, stars: [3, 3, 2, 1, 0] }),
@@ -115,8 +115,8 @@ describe("useExerciseProgress — legacy stars[5] preservation (real catalog tod
     const { result } = renderHook(() => useExerciseProgress("king"));
     act(() => {});
 
-    expect(result.current.progress.stars).toEqual([3, 3, 2, 1, 0, 0, 0, 0, 0]);
-    expect(result.current.progress.stars.length).toBe(9);
+    expect(result.current.progress.stars).toEqual([3, 3, 2, 1, 0, 0, 0, 0, 0, 0]);
+    expect(result.current.progress.stars.length).toBe(10);
     expect(result.current.progress.exerciseIndex).toBe(4);
     // totalStars unchanged: 3 + 3 + 2 + 1 + 0 = 9.
     expect(result.current.totalStars).toBe(9);
@@ -125,7 +125,7 @@ describe("useExerciseProgress — legacy stars[5] preservation (real catalog tod
     const persisted = JSON.parse(
       localStorage.getItem("chesscito:progress:king") ?? "null",
     );
-    expect(persisted.stars).toEqual([3, 3, 2, 1, 0, 0, 0, 0, 0]);
+    expect(persisted.stars).toEqual([3, 3, 2, 1, 0, 0, 0, 0, 0, 0]);
     expect(persisted.exerciseIndex).toBe(4);
   });
 

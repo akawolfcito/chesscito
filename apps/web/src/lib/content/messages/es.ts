@@ -1727,6 +1727,7 @@ const messages = {
     "king-5": "Refugio en esquina",
     "king-6": "Marcha por la diagonal larga",
     "king-7": "Esquiva el obstáculo",
+    "king-8": "Lee la diagonal bloqueada",
     "king-9": "Marcha por la antidiagonal",
     "king-10": "Muro de obstáculos",
   },

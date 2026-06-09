@@ -663,33 +663,87 @@ const QUEEN_EXERCISES: Exercise[] = [
 ];
 
 const KING_EXERCISES: Exercise[] = [
-  // 1. One-square move — simplest king step (forward one).
-  { id: "king-1", startPos: pos(4, 0), targetPos: pos(4, 1), optimalMoves: 1 },
-  // 2. Safe square — one-square diagonal step, introduces 8-direction reach.
-  { id: "king-2", startPos: pos(4, 0), targetPos: pos(5, 1), optimalMoves: 1 },
-  // 3. Avoid danger — walk two squares away from the centre toward the edge.
-  { id: "king-3", startPos: pos(3, 3), targetPos: pos(1, 5), optimalMoves: 2 },
-  // 4. King capture — diagonal one-square capture.
-  { id: "king-4", startPos: pos(4, 0), targetPos: pos(3, 1), optimalMoves: 1, isCapture: true },
-  // 5. Reach the shelter — three NE diagonal steps from e5 to h8 corner.
-  { id: "king-5", startPos: pos(4, 4), targetPos: pos(7, 7), optimalMoves: 3 },
+  /* ── Movement training only — the king as a one-square-any-direction
+   * piece. NO check, attacked squares, castling, opposition, or
+   * checkmate logic (those are full-chess concepts, not movement
+   * training). Tiers assigned by BFS-verified optimalMoves per the
+   * shared TIER CRITERIA.
+   *
+   * ORDER IS POSITIONAL AND FROZEN: PieceProgress.stars maps to this
+   * array by index, so existing entries keep their original positions
+   * (king-1..7, king-9, king-10) and king-8 is APPENDED last to avoid
+   * remapping any live King progress. Do not reorder.
+   *
+   * Tier mix: 4 Easy (king-1..4), 4 Medium (king-5, king-7, king-10,
+   * king-8), 2 Hard (king-6, king-9 — 7-move endurance walks, 6+ band).
+   * King therefore already carries 2 Hard; the remaining Hard slots
+   * (king-11..15) are PENDING wave 2. */
 
-  /* ── Post-badge progression (Sprint 1 commit 5, 2026-06-05) ─────────
-   * king-6..king-10 extienden la senda más allá del threshold 10★. El
-   * badge claim se mantiene en 10★ (alcanzable con los 4 primeros 3★);
-   * estos ejercicios son práctica avanzada para usuarios que ya
-   * reclamaron y quieren completar el 100% antes del Daily Tactic
-   * evolutivo (Sprint 2). king-8 queda parqueado hasta confirmar el
-   * modelo captureTargets vs obstacles — ver docs/product/chesscito-
-   * training-economy-alpha-decisions-2026-06-05.md §10.3. */
-
-  // 6. Diagonal noroeste completa: h8 → a1, 7 movimientos.
+  // 1. One-square move — simplest king step (forward one). [Easy]
+  {
+    id: "king-1",
+    startPos: pos(4, 0),
+    targetPos: pos(4, 1),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Take one step straight forward (the king's simplest move).",
+    tags: ["one-step", "orthogonal-step"],
+  },
+  // 2. Safe square — one-square diagonal step, introduces 8-direction reach. [Easy]
+  {
+    id: "king-2",
+    startPos: pos(4, 0),
+    targetPos: pos(5, 1),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Take one diagonal step; the king reaches all eight neighbours.",
+    tags: ["one-step", "diagonal-step"],
+  },
+  // 3. Avoid danger — walk two squares away from the centre toward the edge. [Easy]
+  {
+    id: "king-3",
+    startPos: pos(3, 3),
+    targetPos: pos(1, 5),
+    optimalMoves: 2,
+    tier: "easy",
+    objective: "Walk two single steps from the centre toward the edge.",
+    tags: ["one-step", "short-route"],
+  },
+  // 4. King capture — diagonal one-square capture. [Easy]
+  {
+    id: "king-4",
+    startPos: pos(4, 0),
+    targetPos: pos(3, 1),
+    optimalMoves: 1,
+    isCapture: true,
+    tier: "easy",
+    objective: "Capture one square diagonally with the king.",
+    tags: ["one-step", "diagonal-step"],
+  },
+  // 5. Reach the shelter — three NE diagonal steps from e5 to h8 corner. [Medium]
+  {
+    id: "king-5",
+    startPos: pos(4, 4),
+    targetPos: pos(7, 7),
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "Climb three diagonal steps to the corner shelter.",
+    tags: ["diagonal-step", "short-route", "edge-control"],
+  },
+  // 6. Diagonal noroeste completa: h8 → a1, 7 movimientos. [Hard, 6+ band]
   //    Endurance — el rey atraviesa la diagonal larga sin obstáculos.
   //    Refuerza que cualquier esquina es alcanzable en 7 pasos máximo
   //    desde otra esquina. BFS-verified.
-  { id: "king-6", startPos: pos(7, 7), targetPos: pos(0, 0), optimalMoves: 7 },
-
-  // 7. Detour alrededor de obstáculo lateral: e4 → e8 con obstacle e6.
+  {
+    id: "king-6",
+    startPos: pos(7, 7),
+    targetPos: pos(0, 0),
+    optimalMoves: 7,
+    tier: "hard",
+    objective: "Endurance walk: cross the full long diagonal, corner to corner, in seven steps.",
+    tags: ["diagonal-step", "edge-control"],
+  },
+  // 7. Detour alrededor de obstáculo lateral: e4 → e8 con obstacle e6. [Medium]
   //    Optimal 4 (chebyshev = 4 sin obstacle; el obstacle no agrega
   //    distancia neta, solo fuerza un cuadro lateral). Path típico:
   //    e4 → f5 → f6 → f7 → e8. BFS-verified.
@@ -699,30 +753,56 @@ const KING_EXERCISES: Exercise[] = [
     targetPos: pos(4, 7),
     obstacles: [pos(4, 5)],
     optimalMoves: 4,
+    tier: "medium",
+    objective: "Detour one square around a blocker to continue straight up.",
+    tags: ["orthogonal-step", "detour", "blocked-square"],
   },
-
-  // 8. PARKED — pendiente de re-spec (captureTargets vs obstacles).
-  //    Cuando se apruebe, se insertará aquí como king-8 mantiendo el
-  //    orden de IDs. EXERCISES.king tiene length 9 mientras tanto.
-
-  // 9. Antidiagonal completa: a8 → h1, 7 movimientos.
+  // 9. Antidiagonal completa: a8 → h1, 7 movimientos. [Hard, 6+ band]
   //    Mirror de king-6 — refuerza control de la diagonal SW desde NW.
   //    Sin obstáculos. Pedagogía: cada esquina ↔ esquina en 7 pasos,
   //    independiente de la dirección. BFS-verified.
-  { id: "king-9", startPos: pos(0, 7), targetPos: pos(7, 0), optimalMoves: 7 },
-
+  {
+    id: "king-9",
+    startPos: pos(0, 7),
+    targetPos: pos(7, 0),
+    optimalMoves: 7,
+    tier: "hard",
+    objective: "Endurance walk: cross the full anti-diagonal, corner to corner, in seven steps.",
+    tags: ["diagonal-step", "edge-control"],
+  },
   // 10. Muro de obstáculos hacia base rank: e4 → e1 con muro
   //     {e3, e2, d2, f2}. Optimal 4 — los 4 obstacles bloquean los 3
   //     vecinos del target en rank 1 (d2, e2, f2) más e3 directamente
   //     sobre la línea SOUTH. Forza detour completo via d3 → c2 → d1.
   //     Path típico: e4 → d3 → c2 → d1 → e1. Síntesis de king-7 (detour)
-  //     + planning de varios cuadros. BFS-verified.
+  //     + planning de varios cuadros. BFS-verified. [Medium]
   {
     id: "king-10",
     startPos: pos(4, 3),
     targetPos: pos(4, 0),
     obstacles: [pos(4, 2), pos(4, 1), pos(3, 1), pos(5, 1)],
     optimalMoves: 4,
+    tier: "medium",
+    objective: "Plan a multi-square detour around a wall to reach the back rank.",
+    tags: ["orthogonal-step", "detour", "blocked-square"],
+  },
+  // 8. RESOLVED (was parked) — APPENDED at index 9 to preserve the
+  //    positional progress map (do not move into numeric order).
+  //    Lectura de diagonal con cuadro bloqueado: a1 → c3 con obstáculo en
+  //    b2 — el cuadro diagonal directo está bloqueado, así que el rey lo
+  //    rodea (a1 → b1 → c2 → c3, u a1 → a2 → b3 → c3). Optimal 3. Sin
+  //    captura: el obstáculo es un bloqueador, nunca una pieza capturable
+  //    (resuelve la ambigüedad captureTargets-vs-obstacles que lo tenía
+  //    parqueado). BFS-verified. [Medium]
+  {
+    id: "king-8",
+    startPos: pos(0, 0),
+    targetPos: pos(2, 2),
+    obstacles: [pos(1, 1)],
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "The diagonal square ahead is blocked; step around it to reach the target.",
+    tags: ["diagonal-step", "detour", "blocked-square"],
   },
 ];
 

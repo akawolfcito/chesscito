@@ -317,15 +317,16 @@ describe("useExerciseProgress — telemetry", () => {
       });
     });
 
-    it("uses getExerciseCount, NOT hardcoded 5: King (9 today) does not fire until slot 8 closes", async () => {
-      // Stars[0..4] all 3, slots 5..8 all 0. User has "done 5/9" by old logic
-      // but senda is NOT complete — 4 slots remain at 0.
+    it("uses getExerciseCount, NOT hardcoded 5: King (10 today) does not fire until the last slot closes", async () => {
+      // King grew to 10 (king-8 appended) in the Rotation wave. Stars[0..4]
+      // all 3, slots 5..9 all 0. User has "done 5/10" but senda is NOT
+      // complete — five slots remain at 0.
       localStorage.setItem(
         "chesscito:progress:king",
         JSON.stringify({
           piece: "king",
           exerciseIndex: 5,
-          stars: [3, 3, 3, 3, 3, 0, 0, 0, 0],
+          stars: [3, 3, 3, 3, 3, 0, 0, 0, 0, 0],
         }),
       );
 
@@ -336,17 +337,19 @@ describe("useExerciseProgress — telemetry", () => {
         result.current.completeExercise(7); // king-6 optimal 7 → 3★
       });
 
-      // Still 3 slots at 0 — no senda yet.
+      // Still slots at 0 — no senda yet.
       expect(callsOf("training_senda_completed")).toHaveLength(0);
     });
 
-    it("fires for King exactly when the 9th slot crosses to ≥1★", async () => {
+    it("fires for King exactly when the 10th slot crosses to ≥1★", async () => {
+      // Index 9 is the appended king-8 (optimal 3); the first 9 slots are
+      // already mastered. Closing the last slot completes the senda.
       localStorage.setItem(
         "chesscito:progress:king",
         JSON.stringify({
           piece: "king",
-          exerciseIndex: 8, // last King slot (king-10 in catalog terms)
-          stars: [3, 3, 3, 3, 3, 3, 3, 3, 0],
+          exerciseIndex: 9, // last King slot (king-8, appended at index 9)
+          stars: [3, 3, 3, 3, 3, 3, 3, 3, 3, 0],
         }),
       );
 
@@ -354,15 +357,15 @@ describe("useExerciseProgress — telemetry", () => {
       await Promise.resolve();
 
       act(() => {
-        result.current.completeExercise(7); // king-10 optimal 4, 7 = optimal+3 → 1★
+        result.current.completeExercise(3); // king-8 optimal 3 → 3★
       });
 
       const senda = callsOf("training_senda_completed");
       expect(senda).toHaveLength(1);
       expect(senda[0]![1]).toMatchObject({
         piece: "king",
-        exerciseCount: 9,
-        exercisesCompleted: 9,
+        exerciseCount: 10,
+        exercisesCompleted: 10,
       });
     });
 
