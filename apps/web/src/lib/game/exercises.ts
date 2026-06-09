@@ -150,18 +150,130 @@ const ROOK_EXERCISES: Exercise[] = [
 ];
 
 const BISHOP_EXERCISES: Exercise[] = [
+  // ── Easy (5/15): basic diagonal movement + same-colour reroute ──
   // 1. Diagonal principal larga (a1→h8)
-  { id: "bishop-1", startPos: pos(0, 0), targetPos: pos(7, 7), optimalMoves: 1 },
+  {
+    id: "bishop-1",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 7),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Slide the bishop along the main diagonal (corner to corner).",
+    tags: ["straight-line", "long-diagonal"],
+  },
   // 2. Diagonal anti-principal (h1→a8)
-  { id: "bishop-2", startPos: pos(7, 0), targetPos: pos(0, 7), optimalMoves: 1 },
+  {
+    id: "bishop-2",
+    startPos: pos(7, 0),
+    targetPos: pos(0, 7),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Slide the bishop along the anti-diagonal (corner to corner).",
+    tags: ["straight-line", "long-diagonal"],
+  },
   // 3. Diagonal corta desde el centro
-  { id: "bishop-3", startPos: pos(3, 3), targetPos: pos(6, 6), optimalMoves: 1 },
+  {
+    id: "bishop-3",
+    startPos: pos(3, 3),
+    targetPos: pos(6, 6),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Make a short diagonal step out from the centre.",
+    tags: ["straight-line"],
+  },
   // 4. Mismo color, distinta diagonal — necesita 2 movimientos
   //    a1(0,0) → g1(6,0): via (3,3)→(6,0) ✓
-  { id: "bishop-4", startPos: pos(0, 0), targetPos: pos(6, 0), optimalMoves: 2 },
+  {
+    id: "bishop-4",
+    startPos: pos(0, 0),
+    targetPos: pos(6, 0),
+    optimalMoves: 2,
+    tier: "easy",
+    objective: "Reach a same-colour square on another diagonal in two moves.",
+    tags: ["pivot"],
+  },
   // 5. Mismo color, ruta no obvia
   //    c3(2,2) → g3(6,2): via e5(4,4)→g3 ✓
-  { id: "bishop-5", startPos: pos(2, 2), targetPos: pos(6, 2), optimalMoves: 2 },
+  {
+    id: "bishop-5",
+    startPos: pos(2, 2),
+    targetPos: pos(6, 2),
+    optimalMoves: 2,
+    tier: "easy",
+    objective: "Find the non-obvious two-move pivot to a same-colour target.",
+    tags: ["pivot"],
+  },
+
+  /* ── Medium (5/15): blocked pivots + diagonal detours, 3–5 moves ────
+   * Rotation + Labyrinths content wave 1 (2026-06-08). All BFS-verified.
+   * The bishop never changes square colour, so every start/target pair
+   * shares colour and obstacles block the short pivot(s) to force a
+   * longer diagonal route. Same shipped obstacle pattern as king-7/10.
+   * Hard tier (bishop-11..15) PENDING wave 2. */
+
+  // 6. Pivote bloqueado: b2 → f2 con obstáculo en d4 (el único pivote de
+  //    2 movidas). Optimal 3. Fuerza un rodeo diagonal para volver a la fila.
+  {
+    id: "bishop-6",
+    startPos: pos(1, 1),
+    targetPos: pos(5, 1),
+    obstacles: [pos(3, 3)],
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "Your two-move pivot is blocked, so loop around to land back on the same rank.",
+    tags: ["detour", "blocked-diagonal"],
+  },
+  // 7. Doble pivote bloqueado: c3 → g3 con obstáculos en e1 y e5 (ambos
+  //    pivotes de 2 movidas). Optimal 3. Obliga la ruta diagonal larga.
+  {
+    id: "bishop-7",
+    startPos: pos(2, 2),
+    targetPos: pos(6, 2),
+    obstacles: [pos(4, 0), pos(4, 4)],
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "Both two-move pivots are blocked; take the longer diagonal path across.",
+    tags: ["detour", "blocked-diagonal"],
+  },
+  // 8. Desvío en diagonal larga: a1 → g7 con obstáculo en d4. Optimal 4.
+  //    El bloqueo parte la diagonal principal y fuerza tejer alrededor.
+  {
+    id: "bishop-8",
+    startPos: pos(0, 0),
+    targetPos: pos(6, 6),
+    obstacles: [pos(3, 3)],
+    optimalMoves: 4,
+    tier: "medium",
+    objective: "A blocker sits on your long diagonal; weave around it to the target.",
+    tags: ["detour", "long-diagonal"],
+  },
+  // 9. Captura con desvío: a1 → g7 (captura) con obstáculos en d4 y f6.
+  //    Optimal 4. La diagonal recta está amurallada dos veces antes del
+  //    target; la captura sólo se alcanza rodeando.
+  {
+    id: "bishop-9",
+    startPos: pos(0, 0),
+    targetPos: pos(6, 6),
+    obstacles: [pos(3, 3), pos(5, 5)],
+    optimalMoves: 4,
+    isCapture: true,
+    tier: "medium",
+    objective: "Reach the capture when the straight diagonal is walled twice.",
+    tags: ["capture", "detour"],
+  },
+  // 10. Muro en la diagonal principal: a1 → h8 con obstáculo en e5.
+  //     Optimal 5. La diagonal larga está cortada a la mitad; síntesis
+  //     del tier — el rodeo más largo de la ola.
+  {
+    id: "bishop-10",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 7),
+    obstacles: [pos(4, 4)],
+    optimalMoves: 5,
+    tier: "medium",
+    objective: "The main diagonal is cut in the middle; find the five-move way around.",
+    tags: ["detour", "long-diagonal"],
+  },
 ];
 
 const KNIGHT_EXERCISES: Exercise[] = [
