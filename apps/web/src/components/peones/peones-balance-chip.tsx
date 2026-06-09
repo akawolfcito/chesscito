@@ -25,8 +25,9 @@
  * once design ships one — keep the AVIF/WebP/PNG fallback chain.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { GetPeonesSheet } from "@/components/payments/get-peones-sheet";
 import {
   emitPeonesBalanceViewed,
   type PeonesBalanceViewSurface,
@@ -41,7 +42,11 @@ type Props = {
 };
 
 export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
-  const { state } = usePeonesBalance();
+  const { state, refetch } = usePeonesBalance();
+  /** Get Peones entry point (payment rail slice E). Tapping the chip opens
+   *  the GetPeonesSheet. Guests never see the chip, so there is no guest
+   *  entry. The sheet is mounted only while open. */
+  const [sheetOpen, setSheetOpen] = useState(false);
   /** Sprint 3 commit H — last balance we emitted `peones_balance_viewed`
    *  for. Re-renders with the same number do not re-emit; a real
    *  balance change does. Cleared implicitly when the component
@@ -71,29 +76,55 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
 
   const ariaLabel =
     state.kind === "success"
-      ? `Peones balance: ${state.balance}`
-      : "Peones balance";
+      ? `Get Peones. Balance: ${state.balance}`
+      : "Get Peones";
+
+  const openSheet = () => setSheetOpen(true);
 
   return (
-    <div
-      className="candy-tray-pill hub-hud-pill"
-      role="status"
-      aria-live="polite"
-      aria-label={ariaLabel}
-      data-testid="peones-balance-chip"
-      data-state={state.kind}
-    >
-      <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
-        <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-        <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-        <img
-          src="/art/redesign/pieces/w-pawn.png"
-          alt=""
-          aria-hidden="true"
-          className="block h-full w-full object-contain"
+    <>
+      {/* Kept as a <div> (not a <button>) so the chip's pixels are
+       *  unchanged — interactivity is added via role/tabIndex/handlers so
+       *  no VR baseline drifts. Balance changes still announce via the
+       *  inner span's aria-live. */}
+      <div
+        className="candy-tray-pill hub-hud-pill"
+        role="button"
+        tabIndex={0}
+        onClick={openSheet}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openSheet();
+          }
+        }}
+        aria-label={ariaLabel}
+        data-testid="peones-balance-chip"
+        data-state={state.kind}
+        style={{ cursor: "pointer" }}
+      >
+        <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
+          <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+          <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+          <img
+            src="/art/redesign/pieces/w-pawn.png"
+            alt=""
+            aria-hidden="true"
+            className="block h-full w-full object-contain"
+          />
+        </picture>
+        <span className="tabular-nums" aria-live="polite">
+          {label}
+        </span>
+      </div>
+
+      {sheetOpen ? (
+        <GetPeonesSheet
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          onSuccess={() => void refetch()}
         />
-      </picture>
-      <span className="tabular-nums">{label}</span>
-    </div>
+      ) : null}
+    </>
   );
 }

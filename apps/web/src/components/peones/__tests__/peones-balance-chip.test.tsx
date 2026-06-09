@@ -6,7 +6,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 const usePeonesBalanceMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/peones/use-peones-balance", () => ({
@@ -16,6 +16,13 @@ vi.mock("@/lib/peones/use-peones-balance", () => ({
 const trackMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/telemetry", () => ({
   track: trackMock,
+}));
+
+// Stub the GetPeonesSheet so the chip test stays isolated from the rail
+// hooks (wagmi/verify). The stub renders a marker only when open.
+vi.mock("@/components/payments/get-peones-sheet", () => ({
+  GetPeonesSheet: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="get-peones-sheet-stub">sheet</div> : null,
 }));
 
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
@@ -73,7 +80,7 @@ describe("PeonesBalanceChip — success", () => {
     const chip = screen.getByTestId("peones-balance-chip");
     expect(chip).toHaveAttribute("data-state", "success");
     expect(chip).toHaveTextContent("12 Peones");
-    expect(chip).toHaveAttribute("aria-label", "Peones balance: 12");
+    expect(chip).toHaveAttribute("aria-label", "Get Peones. Balance: 12");
   });
 
   it("renders balance=0 as '0 Peones' (not hidden)", () => {
@@ -169,23 +176,46 @@ describe("PeonesBalanceChip — peones_balance_viewed telemetry (Sprint 3 commit
   });
 });
 
-describe("PeonesBalanceChip — read-only contract (no spend/top-up)", () => {
-  it("renders NO spend, top-up, or top-up buttons in any state", () => {
+describe("PeonesBalanceChip — Get Peones entry point (payment rail)", () => {
+  function successState() {
     usePeonesBalanceMock.mockReturnValue({
-      state: {
-        kind: "success",
-        balance: 12,
-        dailyEarnedCapped: 6,
-        dailyCap: 10,
-        lastEventAt: null,
-      },
+      state: { kind: "success", balance: 12, dailyEarnedCapped: 6, dailyCap: 10, lastEventAt: null },
       refetch: vi.fn(),
     });
+  }
 
+  it("does not show the sheet until the chip is tapped", () => {
+    successState();
     render(<PeonesBalanceChip />);
+    expect(screen.queryByTestId("get-peones-sheet-stub")).not.toBeInTheDocument();
+  });
+
+  it("tapping the chip opens the GetPeonesSheet", () => {
+    successState();
+    render(<PeonesBalanceChip />);
+    fireEvent.click(screen.getByTestId("peones-balance-chip"));
+    expect(screen.getByTestId("get-peones-sheet-stub")).toBeInTheDocument();
+  });
+
+  it("Enter / Space on the chip opens the sheet (keyboard)", () => {
+    successState();
+    render(<PeonesBalanceChip />);
+    fireEvent.keyDown(screen.getByTestId("peones-balance-chip"), { key: "Enter" });
+    expect(screen.getByTestId("get-peones-sheet-stub")).toBeInTheDocument();
+  });
+
+  it("the chip is reachable as a button and shows no spend action", () => {
+    successState();
+    render(<PeonesBalanceChip />);
+    const chip = screen.getByTestId("peones-balance-chip");
+    expect(chip).toHaveAttribute("role", "button");
     expect(screen.queryByRole("button", { name: /spend/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /top.?up/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /buy/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /purchase/i })).not.toBeInTheDocument();
+  });
+
+  it("guest never gets an entry point (chip hidden → no sheet)", () => {
+    usePeonesBalanceMock.mockReturnValue({ state: { kind: "guest" }, refetch: vi.fn() });
+    render(<PeonesBalanceChip />);
+    expect(screen.queryByTestId("peones-balance-chip")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("get-peones-sheet-stub")).not.toBeInTheDocument();
   });
 });
