@@ -61,20 +61,21 @@ describe("GetPeonesSheet", () => {
     expect(screen.getAllByText("$0.50").length).toBeGreaterThan(0);
   });
 
-  it("renders the auto-selected token in the picker and pay label", () => {
+  it("renders the auto-selected token pill (aria-checked) and pay label", () => {
     mockedRail.mockReturnValue(railState());
     mockedSel.mockReturnValue(selState());
     renderSheet();
-    expect(screen.getByTestId("get-peones-token-picker")).toHaveValue("USDT");
+    expect(screen.getByTestId("get-peones-token-USDT")).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByTestId("get-peones-token-USDC")).toHaveAttribute("aria-checked", "false");
     expect(screen.getByTestId("get-peones-pay")).toHaveTextContent("Pay 0.50 USDT");
   });
 
-  it("changing the picker calls setSelectedSymbol", () => {
+  it("tapping a token pill calls setSelectedSymbol", () => {
     const setSelectedSymbol = vi.fn();
     mockedRail.mockReturnValue(railState());
     mockedSel.mockReturnValue(selState({ setSelectedSymbol }));
     renderSheet();
-    fireEvent.change(screen.getByTestId("get-peones-token-picker"), { target: { value: "USDC" } });
+    fireEvent.click(screen.getByTestId("get-peones-token-USDC"));
     expect(setSelectedSymbol).toHaveBeenCalledWith("USDC");
   });
 
