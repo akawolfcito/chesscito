@@ -132,8 +132,8 @@ describe("Queen movement — integration via getValidTargets", () => {
 describe("Queen L1 exercises — data integrity", () => {
   const queenExercises = EXERCISES.queen;
 
-  it("has exactly 5 exercises", () => {
-    expect(queenExercises.length).toBe(5);
+  it("has exactly 10 exercises (5 Easy + 5 Medium, Rotation wave 1)", () => {
+    expect(queenExercises.length).toBe(10);
   });
 
   it("every exercise has a unique id", () => {

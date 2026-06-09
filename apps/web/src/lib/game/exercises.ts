@@ -311,16 +311,127 @@ const PAWN_EXERCISES: Exercise[] = [
 ];
 
 const QUEEN_EXERCISES: Exercise[] = [
+  // ── Easy (5/15): the queen as rook + bishop, simple 1-2 move lines ──
   // 1. Long diagonal (a1→h8)
-  { id: "queen-1", startPos: pos(0, 0), targetPos: pos(7, 7), optimalMoves: 1 },
+  {
+    id: "queen-1",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 7),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Use the bishop half of the queen: one slide down the long diagonal.",
+    tags: ["straight-line", "diagonal-line"],
+  },
   // 2. Vertical file (a1→a8)
-  { id: "queen-2", startPos: pos(0, 0), targetPos: pos(0, 7), optimalMoves: 1 },
+  {
+    id: "queen-2",
+    startPos: pos(0, 0),
+    targetPos: pos(0, 7),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Use the rook half of the queen: one slide up the file.",
+    tags: ["straight-line"],
+  },
   // 3. Short diagonal (d4→e5)
-  { id: "queen-3", startPos: pos(3, 3), targetPos: pos(4, 4), optimalMoves: 1 },
+  {
+    id: "queen-3",
+    startPos: pos(3, 3),
+    targetPos: pos(4, 4),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Make a single short diagonal step from the centre.",
+    tags: ["diagonal-line"],
+  },
   // 4. Horizontal rank (a1→h1)
-  { id: "queen-4", startPos: pos(0, 0), targetPos: pos(7, 0), optimalMoves: 1 },
+  {
+    id: "queen-4",
+    startPos: pos(0, 0),
+    targetPos: pos(7, 0),
+    optimalMoves: 1,
+    tier: "easy",
+    objective: "Slide straight across the rank (rook line).",
+    tags: ["straight-line"],
+  },
   // 5. Two-move path: e4(4,3) → b8(1,7) — not reachable in 1 (no shared rank/file/diagonal)
-  { id: "queen-5", startPos: pos(4, 3), targetPos: pos(1, 7), optimalMoves: 2 },
+  {
+    id: "queen-5",
+    startPos: pos(4, 3),
+    targetPos: pos(1, 7),
+    optimalMoves: 2,
+    tier: "easy",
+    objective: "Combine a straight move and a diagonal to reach an off-line square.",
+    tags: ["rook-bishop-combo", "pivot"],
+  },
+
+  /* ── Medium (5/15): blocked lines force rook+bishop combinations, 3
+   * optimal moves. Rotation + Labyrinths content wave 1 (2026-06-08).
+   * All BFS-verified. The queen is so mobile that clean, readable mazes
+   * top out near 3 moves — denser walls quickly become artificial, so
+   * the wave 1 Medium set stays at 3 (still inside the 3-5 band) and
+   * leans on the rook+bishop-combo lesson. Same shipped obstacle
+   * pattern as king-7/king-10. Hard tier (queen-11..15) PENDING. */
+
+  // 6. Recta y diagonal cortadas: a1 → c1 con obstáculos en b1, b2. El
+  //    salto recto (rank) y el diagonal están bloqueados; hay que combinar.
+  {
+    id: "queen-6",
+    startPos: pos(0, 0),
+    targetPos: pos(2, 0),
+    obstacles: [pos(1, 0), pos(1, 1)],
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "Both the straight and the diagonal shortcut are blocked; combine moves to slip behind the wall.",
+    tags: ["rook-bishop-combo", "detour", "blocked-line"],
+  },
+  // 7. Fila central tapada: d4 → f4 con obstáculos en e4, e3, e5. La
+  //    recta está tapada de frente y los pivotes diagonales también.
+  {
+    id: "queen-7",
+    startPos: pos(3, 3),
+    targetPos: pos(5, 3),
+    obstacles: [pos(4, 3), pos(4, 2), pos(4, 4)],
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "The rank ahead is plugged head-on; loop off the line and rejoin it past the wall.",
+    tags: ["straight-line", "detour", "blocked-line"],
+  },
+  // 8. Diagonal larga + recta: a1 → e5 con obstáculos en d5, e4, d4. El
+  //    target está sellado del lado cercano; combinar largo alcance.
+  {
+    id: "queen-8",
+    startPos: pos(0, 0),
+    targetPos: pos(4, 4),
+    obstacles: [pos(3, 4), pos(4, 3), pos(3, 3)],
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "Ride a long diagonal, then finish straight, to reach a target sealed on its near side.",
+    tags: ["rook-bishop-combo", "long-range", "detour"],
+  },
+  // 9. Corredor de fila: a1 → d1 con obstáculos en b1, b2, c2. La fila
+  //    base está tapada; desviar por arriba y volver a bajar.
+  {
+    id: "queen-9",
+    startPos: pos(0, 0),
+    targetPos: pos(3, 0),
+    obstacles: [pos(1, 0), pos(1, 1), pos(2, 1)],
+    optimalMoves: 3,
+    tier: "medium",
+    objective: "Detour off a blocked rank and come back down to it past the wall.",
+    tags: ["straight-line", "detour", "blocked-line"],
+  },
+  // 10. Captura en la fila trasera: a8 → c8 (captura) con obstáculos en
+  //     b8, b7. El deslizamiento directo está amurallado; rodear.
+  {
+    id: "queen-10",
+    startPos: pos(0, 7),
+    targetPos: pos(2, 7),
+    obstacles: [pos(1, 7), pos(1, 6)],
+    optimalMoves: 3,
+    isCapture: true,
+    tier: "medium",
+    objective: "Capture along the back rank when the direct slide is walled (go around).",
+    tags: ["capture", "detour", "blocked-line"],
+  },
 ];
 
 const KING_EXERCISES: Exercise[] = [
