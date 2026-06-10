@@ -25,6 +25,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { FREE_SCORE_SAVE_LIMIT } from "../save-service";
+
 const MIGRATION_PATH = join(
   process.cwd(),
   "supabase",
@@ -32,7 +34,21 @@ const MIGRATION_PATH = join(
   "20260609000000_score_saves_init.sql",
 );
 
+/** Economy recalibration 2026-06-10 (Slice C3) CREATE OR REPLACEs
+ *  save_basic_score with c_free_limit 5 → 3. The lockstep guard below
+ *  reads this forward migration so TS ↔ SQL can't drift. */
+const QUOTA_RECALIBRATION_MIGRATION_PATH = join(
+  process.cwd(),
+  "supabase",
+  "migrations",
+  "20260610020000_savescore_quota_recalibration.sql",
+);
+
 const migration = readFileSync(MIGRATION_PATH, "utf-8");
+const quotaRecalibrationMigration = readFileSync(
+  QUOTA_RECALIBRATION_MIGRATION_PATH,
+  "utf-8",
+);
 
 /** Isolate the body of the save_basic_score function for scoped asserts. */
 function rpcBody(): string {
@@ -157,5 +173,27 @@ describe("save_basic_score migration — isolation guarantees", () => {
 
   it("does NOT alter the leaderboard_v view", () => {
     expect(migration).not.toMatch(/leaderboard_v/i);
+  });
+});
+
+describe("save_basic_score quota recalibration (Slice C3) — TS↔SQL lockstep", () => {
+  it("the recalibration migration re-creates save_basic_score", () => {
+    expect(quotaRecalibrationMigration).toMatch(
+      /create or replace function public\.save_basic_score/i,
+    );
+  });
+
+  it("c_free_limit in the recalibration migration matches FREE_SCORE_SAVE_LIMIT", () => {
+    const m = quotaRecalibrationMigration.match(
+      /c_free_limit\s+constant\s+int\s*:=\s*(\d+)/i,
+    );
+    expect(m, "Could not find c_free_limit in the recalibration migration").not.toBeNull();
+    expect(Number(m![1])).toBe(FREE_SCORE_SAVE_LIMIT);
+    expect(Number(m![1])).toBe(3);
+  });
+
+  it("reuses peones_spend (no raw ledger insert) — same atomic contract", () => {
+    expect(quotaRecalibrationMigration).toMatch(/public\.peones_spend\(/i);
+    expect(quotaRecalibrationMigration).not.toMatch(/insert into public\.peones_ledger/i);
   });
 });

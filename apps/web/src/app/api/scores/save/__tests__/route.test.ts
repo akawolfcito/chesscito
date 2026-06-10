@@ -175,7 +175,7 @@ describe("POST /api/scores/save", () => {
     expect(json.status).toBe("saved");
     expect(json.mode).toBe("free");
     expect(json.quota.freeUsed).toBe(1);
-    expect(json.quota.freeRemaining).toBe(4);
+    expect(json.quota.freeRemaining).toBe(2); // limit 3 - used 1
     expect(json.quota.requiresPeones).toBe(false);
   });
 

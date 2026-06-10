@@ -17,31 +17,31 @@ import {
 import { SPEND_COST_BY_TARGET } from "../../peones/spend-service";
 
 describe("computeScoreSaveQuota", () => {
-  it("freeUsed 0 → 5 remaining, no Peones required", () => {
+  it("freeUsed 0 → 3 remaining, no Peones required", () => {
     const q = computeScoreSaveQuota("0xABC", 0);
-    expect(q.freeLimit).toBe(5);
+    expect(q.freeLimit).toBe(3);
     expect(q.freeUsed).toBe(0);
-    expect(q.freeRemaining).toBe(5);
+    expect(q.freeRemaining).toBe(3);
     expect(q.requiresPeones).toBe(false);
     expect(q.costPeones).toBe(0);
   });
 
-  it("freeUsed 4 → 1 remaining, no Peones required", () => {
-    const q = computeScoreSaveQuota("0xabc", 4);
+  it("freeUsed 2 → 1 remaining, no Peones required", () => {
+    const q = computeScoreSaveQuota("0xabc", 2);
     expect(q.freeRemaining).toBe(1);
     expect(q.requiresPeones).toBe(false);
     expect(q.costPeones).toBe(0);
   });
 
-  it("freeUsed 5 → 0 remaining, requiresPeones, cost 1", () => {
-    const q = computeScoreSaveQuota("0xabc", 5);
+  it("freeUsed 3 → 0 remaining, requiresPeones, cost 1", () => {
+    const q = computeScoreSaveQuota("0xabc", 3);
     expect(q.freeRemaining).toBe(0);
     expect(q.requiresPeones).toBe(true);
     expect(q.costPeones).toBe(SCORE_SAVE_COST_PEONES);
     expect(q.costPeones).toBe(1);
   });
 
-  it("freeUsed > 5 → still requiresPeones, remaining clamped at 0, cost 1", () => {
+  it("freeUsed > 3 → still requiresPeones, remaining clamped at 0, cost 1", () => {
     const q = computeScoreSaveQuota("0xabc", 9);
     expect(q.freeRemaining).toBe(0);
     expect(q.requiresPeones).toBe(true);
@@ -51,19 +51,19 @@ describe("computeScoreSaveQuota", () => {
   it("negative freeUsed clamps to 0", () => {
     const q = computeScoreSaveQuota("0xabc", -3);
     expect(q.freeUsed).toBe(0);
-    expect(q.freeRemaining).toBe(5);
+    expect(q.freeRemaining).toBe(3);
     expect(q.requiresPeones).toBe(false);
   });
 
   it("NaN freeUsed clamps to 0", () => {
     const q = computeScoreSaveQuota("0xabc", Number.NaN);
     expect(q.freeUsed).toBe(0);
-    expect(q.freeRemaining).toBe(5);
+    expect(q.freeRemaining).toBe(3);
   });
 
   it("fractional freeUsed is truncated", () => {
-    const q = computeScoreSaveQuota("0xabc", 4.9);
-    expect(q.freeUsed).toBe(4);
+    const q = computeScoreSaveQuota("0xabc", 2.9);
+    expect(q.freeUsed).toBe(2);
     expect(q.freeRemaining).toBe(1);
   });
 
@@ -77,7 +77,7 @@ describe("computeScoreSaveQuota", () => {
     const without = computeScoreSaveQuota("0xabc", 5, false);
     expect(withPro).toEqual(without);
     expect(withPro.requiresPeones).toBe(true);
-    expect(withPro.freeLimit).toBe(5);
+    expect(withPro.freeLimit).toBe(3);
   });
 });
 
@@ -114,7 +114,7 @@ describe("constant lockstep", () => {
     expect(SCORE_SAVE_COST_PEONES).toBe(SPEND_COST_BY_TARGET.save_game);
   });
 
-  it("FREE_SCORE_SAVE_LIMIT is 5", () => {
-    expect(FREE_SCORE_SAVE_LIMIT).toBe(5);
+  it("FREE_SCORE_SAVE_LIMIT is 3", () => {
+    expect(FREE_SCORE_SAVE_LIMIT).toBe(3);
   });
 });

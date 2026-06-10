@@ -37,8 +37,8 @@ begin
     v_scores_before := -1;  -- legacy table absent locally; isolation still holds
   end;
 
-  -- ── Case 1: 5 free saves for wallet A ────────────────────────────
-  for i in 1..5 loop
+  -- ── Case 1: 3 free saves for wallet A (quota recalibrated 5→3) ───
+  for i in 1..3 loop
     r := public.save_basic_score(
       'A:1:game-' || i, w_a, 1, 100 + i, 5000, 'game-' || i, 'att-a-' || i, null);
     if r->>'status' <> 'saved' or r->>'mode' <> 'free' then
@@ -46,27 +46,27 @@ begin
     end if;
   end loop;
   v_cnt := (select count(*) from public.score_saves where wallet = w_a);
-  if v_cnt <> 5 then raise exception 'Case1 expected 5 rows, got %', v_cnt; end if;
+  if v_cnt <> 3 then raise exception 'Case1 expected 3 rows, got %', v_cnt; end if;
   if (r->>'freeRemaining')::int <> 0 or (r->>'requiresPeones')::boolean <> true then
-    raise exception 'Case1 5th save should exhaust the quota, got %', r;
+    raise exception 'Case1 3rd save should exhaust the quota, got %', r;
   end if;
 
-  -- ── Case 2: 6th save, balance 0 → insufficient, NO new row ───────
-  r := public.save_basic_score('A:1:game-6', w_a, 1, 200, 5000, 'game-6', 'att-a-6', null);
+  -- ── Case 2: 4th save, balance 0 → insufficient, NO new row ───────
+  r := public.save_basic_score('A:1:game-4', w_a, 1, 200, 5000, 'game-4', 'att-a-4', null);
   if r->>'status' <> 'insufficient_peones' then
     raise exception 'Case2 expected insufficient_peones, got %', r;
   end if;
   v_cnt := (select count(*) from public.score_saves where wallet = w_a);
-  if v_cnt <> 5 then raise exception 'Case2 must NOT insert a row, count=%', v_cnt; end if;
+  if v_cnt <> 3 then raise exception 'Case2 must NOT insert a row, count=%', v_cnt; end if;
 
-  -- ── Case 3: fund 2 Peones, 6th save → paid, 1 spent ─────────────
+  -- ── Case 3: fund 2 Peones, 4th save → paid, 1 spent ─────────────
   insert into public.peones_ledger
     (wallet, event_type, amount, source, source_id, idempotency_key, attestation_hash, day_utc)
   values
     (w_a, 'earn', 2, 'admin_grant', 'smoke', 'smoke:earn:a', 'att-earn-a',
      (now() at time zone 'utc')::date);
 
-  r := public.save_basic_score('A:1:game-6', w_a, 1, 200, 5000, 'game-6', 'att-a-6', null);
+  r := public.save_basic_score('A:1:game-4', w_a, 1, 200, 5000, 'game-4', 'att-a-4', null);
   if r->>'status' <> 'saved' or r->>'mode' <> 'peones' or (r->>'spent')::int <> 1 then
     raise exception 'Case3 expected saved/peones/spent=1, got %', r;
   end if;
@@ -74,13 +74,13 @@ begin
     raise exception 'Case3 expected balance 1 after spend, got %', r->>'balance';
   end if;
   v_cnt := (select count(*) from public.score_saves where wallet = w_a);
-  if v_cnt <> 6 then raise exception 'Case3 expected 6 rows, got %', v_cnt; end if;
+  if v_cnt <> 4 then raise exception 'Case3 expected 4 rows, got %', v_cnt; end if;
 
   -- ── Case 4: replay same save_id → duplicate, no 2nd row/charge ──
-  r := public.save_basic_score('A:1:game-6', w_a, 1, 200, 5000, 'game-6', 'att-a-6', null);
+  r := public.save_basic_score('A:1:game-4', w_a, 1, 200, 5000, 'game-4', 'att-a-4', null);
   if r->>'status' <> 'duplicate' then raise exception 'Case4 expected duplicate, got %', r; end if;
   v_cnt := (select count(*) from public.score_saves where wallet = w_a);
-  if v_cnt <> 6 then raise exception 'Case4 must NOT add a row, count=%', v_cnt; end if;
+  if v_cnt <> 4 then raise exception 'Case4 must NOT add a row, count=%', v_cnt; end if;
   v_bal := coalesce((select balance from public.peones_balances where wallet = w_a), 0);
   if v_bal <> 1 then raise exception 'Case4 must NOT double-charge, balance=%', v_bal; end if;
 

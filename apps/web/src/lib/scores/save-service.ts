@@ -24,9 +24,10 @@ import type { PeonesSpendTarget } from "../peones/spend-service";
 // ─────────────────────────────────────────────────────────────────
 
 /** Free basic saves per wallet (lifetime, MVP). Mirrors the SQL
- *  constant `c_free_limit` in 20260609000000_score_saves_init.sql.
- *  Calibrable — change in lockstep with the migration. */
-export const FREE_SCORE_SAVE_LIMIT = 5;
+ *  constant `c_free_limit`. Economy recalibration 2026-06-10: 5 → 3
+ *  (tighter sink). Lockstep with the latest CREATE OR REPLACE of
+ *  `save_basic_score` (20260610020000_savescore_quota_recalibration.sql). */
+export const FREE_SCORE_SAVE_LIMIT = 3;
 
 /** Peones cost per basic save beyond the free quota. Pinned to the
  *  server-trusted `save_game` cost by a lockstep test so the two can
