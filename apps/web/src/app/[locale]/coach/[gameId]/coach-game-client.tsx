@@ -281,35 +281,19 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
   }, [gameRecord, walletAddress]);
 
   /**
-   * Auto-load the cached analysis when arriving with `gameRecord.analysis`
-   * still null. Race-condition fix 2026-06-08:
+   * NO auto-run of the real Coach API on mount. Audit 2026-06-09
+   * confirmed the previous mount effect (askCoach("viewer") when
+   * analysis was null + idle + wallet) silently consumed credits /
+   * Peones / PRO bypass on cold-load, post-Victory-cancel navigation
+   * and bookmark entries — none of them an explicit user action.
    *
-   * Arena Save flow:
-   *   arena.askCoach() → /api/coach/analyze fires → SSR navigation to
-   *   /coach/[gameId] CAN beat the Redis cache write, so the server-
-   *   loaded gameRecord ships without analysis attached. The cold-load
-   *   render path stays silent and the user sees the Match Review with
-   *   no Coach panel until they tap Ask Coach again.
-   *
-   * Journal entry flow:
-   *   user enters cold → SSR reads the populated cache → cold-load
-   *   path renders. Works fine.
-   *
-   * Fix: when the viewer mounts with no cold-load analysis AND the
-   * hook is idle AND we have a wallet, fire askCoach exactly once.
-   * The endpoint short-circuits to the cached result instantly (no
-   * credit consumed) when the cache is populated; otherwise it runs
-   * the analyze fresh, which is the correct behavior anyway.
+   * Product rule: the real analysis MUST be user-triggered. Cached
+   * analysis (`gameRecord.analysis`) still renders inline below with
+   * no API call. When there is no cached analysis the viewer shows the
+   * Match Review with the explicit "Ask Coach" tile (GameActionsBar);
+   * tapping it runs the gated flow (Free → Peones/paywall, PRO →
+   * included). Do NOT reintroduce a mount-time analyze call here.
    */
-  const autoLoadAnalysisRef = useRef(false);
-  useEffect(() => {
-    if (autoLoadAnalysisRef.current) return;
-    if (!gameRecord || !walletAddress) return;
-    if (gameRecord.analysis) return;
-    if (coach.phase !== "idle") return;
-    autoLoadAnalysisRef.current = true;
-    coach.askCoach("viewer");
-  }, [gameRecord, walletAddress, coach]);
 
   // Branch 1: no wallet
   if (!walletAddress) {
