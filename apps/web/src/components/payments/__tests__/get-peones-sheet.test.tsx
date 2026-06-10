@@ -156,6 +156,15 @@ describe("GetPeonesSheet", () => {
     expect(verifyAgain).toHaveBeenCalledTimes(1);
   });
 
+  it("user_rejected shows a friendly cancelled message, no raw reason, no verify", () => {
+    mockedRail.mockReturnValue(railState({ phase: "error", errorReason: "user_rejected", txHash: null }));
+    mockedSel.mockReturnValue(selState());
+    renderSheet();
+    expect(screen.getByText(/cancelled/i)).toBeInTheDocument();
+    expect(screen.queryByText(/user_rejected/)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("get-peones-verify-again")).not.toBeInTheDocument();
+  });
+
   it("passes onSuccess to usePaymentRail as onVerified", () => {
     const onSuccess = vi.fn();
     mockedRail.mockReturnValue(railState());

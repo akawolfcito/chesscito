@@ -3,7 +3,9 @@
 import { useState } from "react";
 
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
+import { AddCashCta } from "@/components/minipay/add-cash-cta";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { formatUsd } from "@/lib/contracts/tokens";
 import { getPeonesPack } from "@/lib/payments/rail-config";
 import {
@@ -202,6 +204,8 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                   <p className="max-w-[15rem] text-xs text-amber-700/90">
                     Add some stablecoins to your wallet, then try again.
                   </p>
+                  {/* MiniPay-only deeplink to add cash (renders null on web). */}
+                  <AddCashCta source="get-peones" className="mt-1" />
                 </div>
               ) : (
                 /* ---- PAY ---- */
@@ -299,16 +303,14 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                     ) : null}
                   </div>
 
-                  <button
-                    type="button"
+                  <PrincipalButton
                     onClick={() => void rail.pay()}
                     disabled={busy || !payable}
-                    aria-busy={busy}
-                    className="arena-result-primary-cta--amber"
+                    loading={busy}
                     data-testid="get-peones-pay"
                   >
                     {payLabel}
-                  </button>
+                  </PrincipalButton>
 
                   {!payable ? (
                     <p
@@ -324,19 +326,29 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                       data-testid="get-peones-error"
                       className="flex flex-col items-center gap-2"
                     >
-                      <p className="max-w-[16rem] text-xs font-semibold text-red-700">
-                        Something went wrong: {rail.errorReason}
-                      </p>
-                      {rail.txHash ? (
-                        <button
-                          type="button"
-                          onClick={() => void rail.verifyAgain()}
-                          className="arena-result-secondary-action"
-                          data-testid="get-peones-verify-again"
-                        >
-                          Verify again
-                        </button>
-                      ) : null}
+                      {rail.errorReason === "user_rejected" ? (
+                        /* Friendly cancellation — no raw reason, no verify.
+                         *  The Pay button above is the retry affordance. */
+                        <p className="text-xs font-semibold text-amber-700">
+                          Payment cancelled. You can try again.
+                        </p>
+                      ) : (
+                        <>
+                          <p className="max-w-[16rem] text-xs font-semibold text-red-700">
+                            Something went wrong: {rail.errorReason}
+                          </p>
+                          {rail.txHash ? (
+                            <button
+                              type="button"
+                              onClick={() => void rail.verifyAgain()}
+                              className="arena-result-secondary-action"
+                              data-testid="get-peones-verify-again"
+                            >
+                              Verify again
+                            </button>
+                          ) : null}
+                        </>
+                      )}
                     </div>
                   ) : null}
                 </div>

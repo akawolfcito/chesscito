@@ -8,7 +8,7 @@ import { track } from "@/lib/telemetry";
 
 const ADD_CASH_DEEPLINK = "https://minipay.opera.com/add_cash";
 
-type Source = "mint-victory" | "shop-buy" | "coach-credits";
+type Source = "mint-victory" | "shop-buy" | "coach-credits" | "get-peones";
 
 type Props = {
   /** Telemetry tag identifying which error surface rendered the CTA. */
