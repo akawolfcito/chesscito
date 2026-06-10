@@ -2,12 +2,14 @@
 
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { PieceCompletePrompt, ResultOverlay } from "@/components/exercises/result-overlay";
+import { SavedChip } from "@/components/exercises/saved-chip";
 
 type Variant =
   | "piece-complete-final"
   | "labyrinth-king-solved"
   | "score-saved"
   | "score-saved-peones"
+  | "saved-chip"
   | "result-badge"
   | "result-shop"
   | "result-error";
@@ -81,6 +83,12 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
           spentPeones={1}
           onDismiss={noop}
         />
+      )}
+
+      {variant === "saved-chip" && (
+        <div className="flex min-h-[100dvh] items-center justify-center">
+          <SavedChip stars={12} total={15} />
+        </div>
       )}
 
       {variant === "result-badge" && (

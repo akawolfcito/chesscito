@@ -4,44 +4,63 @@ import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
 
+/** Cofre-check seal art (triplet). Static asset (not theme-swappable), so
+ *  the optimized sources always render. */
+const SAVED_SEAL_ICON = "/art/new-icons-chesscito/score-saved";
+
 type SavedChipProps = {
-  /** Stars currently saved on chain (denominator is total exercises per
-   *  piece, fixed at 15 per the existing scoring rule). */
+  /** Stars currently saved for the active piece (denominator is total
+   *  exercises per piece, fixed at 15 per the existing scoring rule). */
   stars: number;
   /** Maximum possible stars for the piece (5 exercises × 3 stars). */
   total: number;
-  /** Optional Celoscan URL of the last successful save. When present the
-   *  chip becomes a link the player can tap to open the on-chain receipt
-   *  in a new tab — gives the saved-state agency instead of feeling
-   *  terminal. Omit when no tx hash is known (legacy local state). */
+  /** Optional Celoscan URL of a legacy on-chain save. When present the
+   *  seal becomes a link to the receipt (those rows ARE on-chain, so the
+   *  CeloScan affordance is correct). Off-chain saves omit it. */
   receiptUrl?: string;
 };
 
+/** Visual seal: the cofre-check icon + a calm star stat-pill. Reads as a
+ *  confirmation badge, not a button. */
+function SavedSeal({ stars }: { stars: number }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <picture>
+        <source srcSet={`${SAVED_SEAL_ICON}.avif`} type="image/avif" />
+        <source srcSet={`${SAVED_SEAL_ICON}.webp`} type="image/webp" />
+        <img
+          src={`${SAVED_SEAL_ICON}.png`}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="h-9 w-9 object-contain drop-shadow-sm"
+        />
+      </picture>
+      <span className="candy-stat-pill" data-testid="saved-chip-stars">
+        <span className="candy-stat-pill-icon">
+          <CandyIcon name="star" className="h-4 w-4" />
+        </span>
+        {stars}
+      </span>
+    </span>
+  );
+}
+
 /**
- * Saved chip rendered on `/exercises` when the player's local progress
- * matches the last-confirmed on-chain score for the active piece.
+ * Saved seal rendered on `/exercises` when the player's local progress
+ * matches the last saved score for the active piece (`isSavedAtParity`).
  *
- * Tappable when a receipt URL is available (opens Celoscan in a new
- * tab); otherwise renders as a passive status badge. A small hint sits
- * below the chip explaining that beating the saved score reopens the
- * SAVE action — addresses the perception that the chip "removes" the
- * ability to save.
+ * Visual-first: the cofre-check icon carries the "saved" meaning, the
+ * star pill carries the score, and a small hint below explains that
+ * beating the score reopens the SAVE action. It is a passive status
+ * (NOT a button); only the legacy on-chain receipt case is a tappable
+ * link to CeloScan.
  */
 export function SavedChip({ stars, total, receiptUrl }: SavedChipProps) {
   const t = useTranslations("SAVED_CHIP_COPY");
-  const label = t("label", { stars });
   const ariaLabel = receiptUrl
     ? t("ariaLabelWithReceipt", { stars, total })
     : t("ariaLabel", { stars, total });
-
-  const chipStyle = {
-    background: "rgba(220, 252, 231, 0.85)",
-    color: "rgba(6, 95, 70, 0.95)",
-    border: "1px solid rgba(6, 95, 70, 0.28)",
-    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.10)",
-  } as const;
-  const chipClass =
-    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-nano font-extrabold uppercase tracking-wider transition-transform active:scale-[0.97]";
 
   return (
     <div
@@ -54,22 +73,18 @@ export function SavedChip({ stars, total, receiptUrl }: SavedChipProps) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={ariaLabel}
-          className={chipClass}
-          style={chipStyle}
+          className="inline-flex items-center gap-1.5 transition-transform active:scale-[0.97]"
         >
-          <CandyIcon name="check" className="h-3 w-3" />
-          <span aria-hidden="true">{label}</span>
-          <CandyIcon name="chevron-down" className="h-3 w-3 -rotate-90" />
+          <SavedSeal stars={stars} />
+          <CandyIcon
+            name="chevron-down"
+            className="h-3 w-3 -rotate-90"
+            style={{ color: "rgba(110, 65, 15, 0.6)" }}
+          />
         </a>
       ) : (
-        <span
-          role="status"
-          aria-label={ariaLabel}
-          className={chipClass}
-          style={chipStyle}
-        >
-          <CandyIcon name="check" className="h-3 w-3" />
-          <span aria-hidden="true">{label}</span>
+        <span role="status" aria-label={ariaLabel}>
+          <SavedSeal stars={stars} />
         </span>
       )}
       <span

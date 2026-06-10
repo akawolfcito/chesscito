@@ -11,6 +11,7 @@ const VARIANTS = new Set([
   "labyrinth-king-solved",
   "score-saved",
   "score-saved-peones",
+  "saved-chip",
   "result-badge",
   "result-shop",
   "result-error",
