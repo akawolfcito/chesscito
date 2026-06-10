@@ -112,7 +112,12 @@ const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
 };
 
 const ACTION_CUSTOM_ICON_SRC: Partial<Record<ActionPinAction, string>> = {
-  submitScore: "/art/new-icons-chesscito/save.png",
+  // Slice B.2: the Save-available CTA uses the reward pedestal art
+  // (shield + gold star) so it reads as an active "claim/save" action,
+  // distinct from the calm cofre-check `score-saved` seal of the saved
+  // state. Coach (game-actions-bar) and Victory (victory-celebration)
+  // keep their own `save.png` reference, untouched.
+  submitScore: "/art/new-icons-chesscito/badge-save-icon.png",
 };
 
 const PIN_BADGE_CLASSES =

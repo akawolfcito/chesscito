@@ -3,6 +3,7 @@
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { PieceCompletePrompt, ResultOverlay } from "@/components/exercises/result-overlay";
 import { SavedChip } from "@/components/exercises/saved-chip";
+import { ActionPin } from "@/components/redesign/action-pin";
 
 type Variant =
   | "piece-complete-final"
@@ -10,6 +11,7 @@ type Variant =
   | "score-saved"
   | "score-saved-peones"
   | "saved-chip"
+  | "save-cta"
   | "result-badge"
   | "result-shop"
   | "result-error";
@@ -88,6 +90,20 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
       {variant === "saved-chip" && (
         <div className="flex min-h-[100dvh] items-center justify-center">
           <SavedChip stars={12} total={15} />
+        </div>
+      )}
+
+      {variant === "save-cta" && (
+        <div className="flex min-h-[100dvh] items-center justify-center px-6">
+          <div className="w-full max-w-[var(--app-max-width)]">
+            <ActionPin
+              action="submitScore"
+              size="full"
+              label="SAVE SCORE"
+              ariaLabel="Save score"
+              onPress={noop}
+            />
+          </div>
         </div>
       )}
 

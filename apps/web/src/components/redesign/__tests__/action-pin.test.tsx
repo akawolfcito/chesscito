@@ -24,7 +24,7 @@ const ACTIONS: readonly ActionPinAction[] = [
 ] as const;
 
 const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
-  submitScore: "save",
+  submitScore: "badge-save-icon",
   useShield: "shield",
   claimBadge: "trophy",
   retry: "refresh",
@@ -33,7 +33,7 @@ const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
 };
 
 const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
-  submitScore: "save",
+  submitScore: "badge-save-icon",
   useShield: "shield-king",
   claimBadge: "trofeo-epico",
   retry: "refresh",
