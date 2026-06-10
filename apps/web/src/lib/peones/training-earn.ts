@@ -2,24 +2,28 @@
  * Training exercise completion → Peones earn submission.
  *
  * Sprint 3 commit F of Training Economy Alpha 2026-06-07. Mirror of
- * `lib/daily/peones-earn.ts` for the Senda training surface. The
- * exercise completion source is NOT in the daily-family cap list
- * (see PEONES_DAILY_CAP_SOURCES), so the response will never carry
- * a `cap_exhausted` semantic — the helper's state union is one
- * branch smaller than the Daily one.
+ * `lib/daily/peones-earn.ts` for the Senda training surface.
+ *
+ * Economy recalibration 2026-06-10: the reward is now a flat +1 Peón on
+ * the FIRST completion of an exercise (bestStarsBefore === 0 &&
+ * bestStarsAfter > 0), NOT the star delta. Re-completing or improving
+ * stars never earns again (no farming). Stars stay the progress/mastery
+ * signal; Peones are a controlled currency. The source
+ * (`exercise_completion`) is now in the daily cap (PEONES_DAILY_CAP_SOURCES),
+ * so the endpoint can truncate the +1 to remaining headroom and the
+ * response CAN carry the cap semantics.
  *
  * Pure async wrapper around `POST /api/peones/earn`. NEVER throws —
- * every error path collapses to `{kind:"error"}`. The caller MUST
- * gate on `delta > 0` before invoking; the helper is defensive and
- * returns a success-with-zero short-circuit if a non-positive delta
- * slips through (so the caller can drop into the same "success"
- * branch without a network call).
+ * every error path collapses to `{kind:"error"}`. Returns a
+ * success-with-zero short-circuit (no network call) when the completion
+ * is not a fresh first completion.
  */
 
 import {
   buildTrainingExerciseIdempotencyKey,
   normalizeWallet,
 } from "@/lib/peones/ledger-service";
+import { PEONES_DAILY_CAP } from "@/lib/peones/types";
 import type { PieceId } from "@/lib/game/types";
 
 export type TrainingExerciseRewardState =
@@ -62,11 +66,11 @@ type EarnResponse = {
 /**
  * POST /api/peones/earn for a Senda exercise completion.
  *
- *  - Amount = bestStarsAfter - bestStarsBefore. Caller MUST already
- *    have checked `delta > 0`; defensive zero-credit short-circuit
- *    returns success-with-zero if a non-positive delta slips through.
- *  - Source = `exercise_completion`. NOT a daily-family source —
- *    cap never applies; the endpoint will not truncate the amount.
+ *  - Amount = flat 1 (economy recalibration 2026-06-10). NOT the star
+ *    delta. Earns only on the FIRST completion (bestStarsBefore === 0 &&
+ *    bestStarsAfter > 0); any later improvement / re-completion is a no-op.
+ *  - Source = `exercise_completion`. Now a daily-cap source, so the
+ *    endpoint may truncate the +1 to the remaining daily headroom.
  *  - sourceId = `${piece}:${exerciseId}` so the audit / dashboard
  *    can pivot by piece without parsing the idempotency key.
  *  - idempotencyKey = buildTrainingExerciseIdempotencyKey(...)
@@ -86,24 +90,27 @@ export async function submitTrainingExerciseEarn(
   } = args;
   const doFetch = fetchImpl ?? fetch;
 
-  const delta = bestStarsAfter - bestStarsBefore;
-  if (delta <= 0) {
-    // Defensive short-circuit. The hook gates on delta > 0; if the
-    // gate ever fails, we return a no-op success instead of a
-    // 400/error from the endpoint. Keeps the calling code's happy
-    // path symmetric. Cap fields zeroed because we never spoke
-    // to the server.
+  // Flat reward, first-completion only. bestStarsBefore > 0 means the
+  // exercise was already completed → no second earn (anti-farm). A
+  // non-positive after also short-circuits defensively.
+  const isFreshCompletion = bestStarsBefore === 0 && bestStarsAfter > 0;
+  if (!isFreshCompletion) {
+    // No-op success (no network call). Cap fields zeroed because we never
+    // spoke to the server. Keeps the caller's happy path symmetric.
     return {
       kind: "success",
       credited: 0,
       newBalance: 0,
       dailyEarnedCapped: 0,
-      dailyCap: 10,
+      dailyCap: PEONES_DAILY_CAP,
       attestationHash: null,
       ledgerId: null,
       duplicate: false,
     };
   }
+
+  // Flat +1 (not the star delta).
+  const amount = 1;
 
   let wallet: string;
   try {
@@ -127,7 +134,7 @@ export async function submitTrainingExerciseEarn(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         wallet,
-        amount: delta,
+        amount,
         source: "exercise_completion",
         sourceId: `${piece}:${exerciseId}`,
         idempotencyKey,
@@ -153,7 +160,7 @@ export async function submitTrainingExerciseEarn(
     credited: Number(json.credited ?? 0),
     newBalance: Number(json.newBalance ?? 0),
     dailyEarnedCapped: Number(json.dailyEarnedCapped ?? 0),
-    dailyCap: Number(json.dailyCap ?? 10),
+    dailyCap: Number(json.dailyCap ?? PEONES_DAILY_CAP),
     attestationHash: json.attestationHash ?? null,
     ledgerId: json.ledgerId ?? null,
     duplicate: Boolean(json.duplicate),

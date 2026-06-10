@@ -29,7 +29,7 @@ describe("submitTrainingExerciseEarn — success branches", () => {
   it("posts to /api/peones/earn with the canonical training payload", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       jsonResponse({
-        credited: 3,
+        credited: 1,
         attestationHash: "sha256:aaa",
         ledgerId: 11,
         duplicate: false,
@@ -52,7 +52,7 @@ describe("submitTrainingExerciseEarn — success branches", () => {
     const body = JSON.parse(init.body as string);
     expect(body).toEqual({
       wallet: W,
-      amount: 3, // delta
+      amount: 1, // flat +1, NOT the star delta (0->3)
       source: "exercise_completion",
       sourceId: "king:king-6",
       idempotencyKey: `training:${W}:king:king-6:0->3`,
@@ -60,30 +60,27 @@ describe("submitTrainingExerciseEarn — success branches", () => {
 
     expect(result).toMatchObject<Partial<TrainingExerciseRewardState>>({
       kind: "success",
-      credited: 3,
+      credited: 1,
       attestationHash: "sha256:aaa",
       ledgerId: 11,
       duplicate: false,
     });
   });
 
-  it("amount=delta when the user improves an existing star count", async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
-      jsonResponse({ credited: 1, attestationHash: "sha256:bbb", ledgerId: 22 }),
-    );
+  it("does NOT earn (no-op) when improving an already-completed exercise", async () => {
+    const fetchImpl = vi.fn();
 
-    await submitTrainingExerciseEarn({
+    const result = await submitTrainingExerciseEarn({
       wallet: W,
       piece: "rook",
       exerciseId: "rook-4",
-      bestStarsBefore: 1,
+      bestStarsBefore: 1, // already completed -> no second earn (anti-farm)
       bestStarsAfter: 2,
       fetchImpl,
     });
 
-    const body = JSON.parse(fetchImpl.mock.calls[0]![1].body as string);
-    expect(body.amount).toBe(1);
-    expect(body.idempotencyKey).toBe(`training:${W}:rook:rook-4:1->2`);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ kind: "success", credited: 0 });
   });
 
   it("normalises an uppercase wallet before posting", async () => {
@@ -119,7 +116,7 @@ describe("submitTrainingExerciseEarn — success branches", () => {
       wallet: W,
       piece: "rook",
       exerciseId: "rook-4",
-      bestStarsBefore: 1,
+      bestStarsBefore: 0, // fresh completion -> posts -> server replays
       bestStarsAfter: 3,
       fetchImpl,
     });
@@ -132,11 +129,12 @@ describe("submitTrainingExerciseEarn — success branches", () => {
   });
 });
 
-describe("submitTrainingExerciseEarn — non-positive delta short-circuit", () => {
+describe("submitTrainingExerciseEarn — non-fresh-completion short-circuit", () => {
   it.each([
-    { before: 3, after: 3, label: "delta=0 (replay no improvement)" },
-    { before: 2, after: 1, label: "delta<0 (worse score than best)" },
-    { before: 0, after: 0, label: "delta=0 (never touched)" },
+    { before: 3, after: 3, label: "already mastered, replay" },
+    { before: 2, after: 1, label: "worse score than best" },
+    { before: 0, after: 0, label: "never completed" },
+    { before: 1, after: 3, label: "improvement on an already-completed exercise" },
   ])("returns success-with-zero without posting when $label", async ({ before, after }) => {
     const fetchImpl = vi.fn();
 
@@ -155,7 +153,7 @@ describe("submitTrainingExerciseEarn — non-positive delta short-circuit", () =
       credited: 0,
       newBalance: 0,
       dailyEarnedCapped: 0,
-      dailyCap: 10,
+      dailyCap: 6,
       attestationHash: null,
       ledgerId: null,
       duplicate: false,
