@@ -81,6 +81,8 @@ import {
 import { getLevelId } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
 import { postScoreSave } from "@/lib/scores/save-client";
+import { deriveScoreSaveId } from "@/lib/scores/save-service";
+import { emitScoreSaveTelemetry } from "@/lib/scores/save-telemetry";
 import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
@@ -1665,14 +1667,28 @@ export function ExercisesScreen({
     setLastError(null);
     const scoreNum = Number(score);
     const levelNum = Number(levelId);
-    track("score_submit_tx", { stage: "start", piece: selectedPiece });
+    const timeMsNum = Number(timeMs);
+    const gameId = String(scoreNum);
+    const saveId = deriveScoreSaveId(address, levelNum, gameId);
 
     try {
       const result = await postScoreSave({
         player: address,
         levelId: levelNum,
         score: scoreNum,
-        timeMs: Number(timeMs),
+        timeMs: timeMsNum,
+      });
+
+      // Slice 6: exactly one telemetry event per response, fired only
+      // after the result is known. The pure mapper picks
+      // score_save_{free,paid,duplicate,insufficient,failed}.
+      emitScoreSaveTelemetry(result, {
+        piece: selectedPiece,
+        levelId: levelNum,
+        score: scoreNum,
+        timeMs: timeMsNum,
+        saveId,
+        source: "exercises",
       });
 
       switch (result.status) {
@@ -1690,7 +1706,6 @@ export function ExercisesScreen({
               ? result.spent
               : undefined;
 
-          track("score_submit_tx", { stage: "success", piece: selectedPiece });
           setResultOverlay({ variant: "score", spentPeones });
 
           // Optimistic leaderboard entry (same key the leaderboard sheet
@@ -1714,7 +1729,6 @@ export function ExercisesScreen({
           // No retryAction -> no "Try again" loop. Directs to the Peones
           // balance chip (Get Peones) via copy; we do not open or modify
           // the Get Peones surface here.
-          track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: "insufficient_peones" });
           setResultOverlay({
             variant: "error",
             errorMessage: tResult("error.notEnoughPeones"),
@@ -1727,7 +1741,6 @@ export function ExercisesScreen({
           // wait in whole seconds; the SAVE button stays available so the
           // user can retry once the window passes.
           const seconds = Math.max(1, Math.ceil(result.retryAfterMs / 1000));
-          track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: "rate_limited" });
           showToast(`${tResult("error.rateLimitedPrefix")} ${seconds}s`, 3000);
           break;
         }
@@ -1737,7 +1750,6 @@ export function ExercisesScreen({
         default: {
           // Controlled error overlay. A single user-initiated retry is
           // allowed (Try again button), which is not a loop.
-          track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: "save_failed" });
           setResultOverlay({
             variant: "error",
             errorMessage: tResult("error.unknown"),
