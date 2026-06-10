@@ -32,7 +32,9 @@ export async function generateMetadata({
   const origin = getShareOrigin();
   const title = tScore("metaTitleFormat", { stars });
   const description = tShare("score", { stars });
-  const ogImage = `${origin}/api/og/exercise?piece=${piece}&stars=${stars}&type=piece-complete`;
+  // Slice A: leaderboard-first score card (was type=piece-complete, which
+  // rendered the "{Piece} Mastered" art on a score share).
+  const ogImage = `${origin}/api/og/exercise?piece=${piece}&stars=${stars}&type=score-saved`;
   const canonical = `${origin}/share/score?piece=${piece}&stars=${stars}`;
 
   return {

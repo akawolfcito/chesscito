@@ -334,7 +334,7 @@ export const SHARE_COPY = {
   badge: (piece: string, stars: number) =>
     `I earned the ${piece} Ascendant badge on Chesscito! ${stars}/15 stars. Saved on Celo forever.`,
   score: (stars: number) =>
-    `I just saved my Chesscito score on Celo! ${stars}/15 stars. Kept forever.`,
+    `I just landed ${stars}★ on the Chesscito leaderboard. Can you beat it?`,
   shop: (item: string) =>
     `I just got ${item} on Chesscito!`,
   fallbackCopied: "Copied to clipboard!",
@@ -421,7 +421,8 @@ export const BADGE_SHARE_COPY = {
 /** `/share/score` page chrome. */
 export const SCORE_SHARE_COPY = {
   metaTitleFormat: "{stars}/15 stars on Chesscito",
-  kickerFormat: "{piece} mastered",
+  // Slice A: a score save is a leaderboard entry, not piece mastery.
+  kickerFormat: "Saved to the leaderboard",
   headlineFormat: "{stars} / 15 stars",
 } as const;
 
@@ -551,7 +552,7 @@ export const SAVED_CHIP_COPY = {
   receiptHint: "Tap to view receipt",
   /** Screen-reader full label. */
   ariaLabel: (stars: number, total: number) =>
-    `Score saved on chain: ${stars} of ${total} stars. Beat your score to save again.`,
+    `Score saved: ${stars} of ${total} stars. Beat your score to save again.`,
   /** Aria label when the chip is a link to the on-chain receipt. */
   ariaLabelWithReceipt: (stars: number, total: number) =>
     `Score saved on chain: ${stars} of ${total} stars. Tap to view receipt on Celoscan.`,

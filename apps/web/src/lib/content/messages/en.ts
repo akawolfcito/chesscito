@@ -77,7 +77,7 @@ m.TX_PROGRESS_COPY.stepCounter = "Step {current} of {total}";
 m.SHARE_COPY.badge =
   "I earned the {piece} Ascendant badge on Chesscito! {stars}/15 stars. Saved on Celo forever.";
 m.SHARE_COPY.score =
-  "I just saved my Chesscito score on Celo! {stars}/15 stars. Kept forever.";
+  "I just landed {stars}★ on the Chesscito leaderboard. Can you beat it?";
 m.SHARE_COPY.shop = "I just got {item} on Chesscito!";
 m.VICTORY_PAGE_COPY.metaCheckmate = "Checkmate in {moves} moves";
 m.VICTORY_PAGE_COPY.metaComplete = "Complete in {moves} moves";
@@ -135,7 +135,7 @@ m.VICTORY_CLAIM_COPY.card.byLine = "by {player}";
 m.PIECE_RAIL_COPY.triggerAriaFormat = "Switch piece (current: {piece})";
 m.SAVED_CHIP_COPY.label = "Saved · {stars}★";
 m.SAVED_CHIP_COPY.ariaLabel =
-  "Score saved on chain: {stars} of {total} stars. Beat your score to save again.";
+  "Score saved: {stars} of {total} stars. Beat your score to save again.";
 m.SAVED_CHIP_COPY.ariaLabelWithReceipt =
   "Score saved on chain: {stars} of {total} stars. Tap to view receipt on Celoscan.";
 m.MISSION_DETAIL_COPY.closeLabelFormat = "Close {title}";

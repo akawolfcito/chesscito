@@ -810,7 +810,7 @@ const messages = {
     badge:
       "¡Gané la insignia Ascendente de {piece} en Chesscito! {stars}/15 estrellas. Guardado en Celo para siempre.",
     score:
-      "¡Acabo de guardar mi puntaje de Chesscito en Celo! {stars}/15 estrellas, para siempre.",
+      "¡Acabo de llegar a {stars}★ en la tabla de líderes de Chesscito! ¿Puedes superarme?",
     shop: "¡Acabo de obtener {item} en Chesscito!",
     fallbackCopied: "¡Copiado!",
     playCta: "Jugar Chesscito",
@@ -1384,7 +1384,7 @@ const messages = {
     hint: "Supera tu puntaje para guardar de nuevo",
     receiptHint: "Toca para ver recibo",
     ariaLabel:
-      "Puntaje guardado en cadena: {stars} de {total} estrellas. Supera tu puntaje para guardar de nuevo.",
+      "Puntaje guardado: {stars} de {total} estrellas. Supera tu puntaje para guardar de nuevo.",
     ariaLabelWithReceipt:
       "Puntaje guardado en cadena: {stars} de {total} estrellas. Toca para ver recibo en Celoscan.",
   },

@@ -17,7 +17,7 @@ describe("SavedChip", () => {
     const status = container.querySelector('[role="status"]');
     expect(status).not.toBeNull();
     expect(status?.getAttribute("aria-label")).toBe(
-      "Score saved on chain: 5 of 15 stars. Beat your score to save again.",
+      "Score saved: 5 of 15 stars. Beat your score to save again.",
     );
   });
 

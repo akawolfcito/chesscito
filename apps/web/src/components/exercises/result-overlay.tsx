@@ -185,7 +185,9 @@ function getCardUrl(variant: SuccessVariant, pieceType?: PieceKey, totalStars?: 
   if (variant === "score") {
     const piece = pieceType ?? "rook";
     const stars = Math.min(totalStars ?? 0, 15);
-    return `/api/og/exercise?piece=${piece}&stars=${stars}&type=piece-complete`;
+    // Slice A: score share gets its own leaderboard-first OG card. Was
+    // type=piece-complete, which wrongly rendered "{Piece} Mastered".
+    return `/api/og/exercise?piece=${piece}&stars=${stars}&type=score-saved`;
   }
   return "/api/og/invite";
 }

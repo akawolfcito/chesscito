@@ -11,6 +11,10 @@ import {
   parseSquare,
 } from "@/lib/og/validators";
 import { buildExerciseFen, toAlgebraic } from "@/lib/og/exercise-fen";
+import {
+  ogExerciseCardCopy,
+  type OgExerciseAchievementType,
+} from "@/lib/og/exercise-card-copy";
 import { THEME_CONFIG } from "@/lib/theme";
 
 export const runtime = "nodejs";
@@ -22,11 +26,6 @@ const PIECE_LABEL = {
   pawn: "Pawn",
   queen: "Queen",
   king: "King",
-} as const;
-
-const TYPE_TITLE = {
-  "piece-complete": "PIECE COMPLETE",
-  "badge-earned": "BADGE UNLOCKED",
 } as const;
 
 const SUCCESS_HEADERS = {
@@ -45,8 +44,16 @@ export async function GET(req: Request) {
   const maxStars = 15;
   const type = parseEnumParam(
     qs.get("type"),
-    ["piece-complete", "badge-earned", "daily"] as const,
+    ["piece-complete", "badge-earned", "score-saved", "daily"] as const,
   );
+
+  // Non-daily card copy (eyebrow / title / tagline / footer). score-saved
+  // is the leaderboard-first lane that no longer borrows the piece-mastered
+  // template. Daily keeps its own bespoke layout below.
+  const card =
+    type !== "daily"
+      ? ogExerciseCardCopy(type as OgExerciseAchievementType, PIECE_LABEL[piece], stars)
+      : null;
 
   // PNG (RGBA). WebP rendered empty in Satori; PNGs work after the
   // colormap → RGBA re-encode in adb19ae4.
@@ -72,16 +79,6 @@ export async function GET(req: Request) {
 
   const startPos = type === "daily" && startRaw ? parseSquare(startRaw) : null;
   const targetPos = type === "daily" && targetRaw ? parseSquare(targetRaw) : null;
-
-  /* Main title — centered, uses the chip-label pattern from before but
-     moved into the hero area where it reads as a proper card title
-     rather than a small pill. */
-  const chipLabel =
-    type === "daily"
-      ? "Daily Tactic"
-      : type === "badge-earned"
-        ? `${PIECE_LABEL[piece]} Ascendant`
-        : `${PIECE_LABEL[piece]} Mastered`;
 
   let dailyOverlays: BoardOverlay[] = [];
   let dailyFen: string | null = null;
@@ -136,18 +133,13 @@ export async function GET(req: Request) {
     </div>
   );
 
-  /* Tagline — mirrors the in-app subtitle ("Rook Ascendant is now yours
-     to keep") so the share card carries the same narrative beat as the
-     popup that triggered the share intent. */
-  const masteryTagline = `${PIECE_LABEL[piece]} Ascendant is now yours to keep`;
-
   const pngResponse = new ImageResponse(
     (
       <CardShell
         bgUrl={null}
         panelBgUrl={panelBgUrl}
         mascotUrl={mascotUrl}
-        footer={type === "daily" ? "Chesscito \u2022 Daily Tactic" : "Chesscito \u2022 saved on Celo"}
+        footer={type === "daily" ? "Chesscito \u2022 Daily Tactic" : (card?.footer ?? "Chesscito")}
         useCinzel={useCinzel}
         hideWordmark={type !== "daily"}
         mascotMode={type !== "daily" ? "half-body" : "circle"}
@@ -295,7 +287,7 @@ export async function GET(req: Request) {
                   marginBottom: 14,
                 }}
               >
-                {TYPE_TITLE[type as keyof typeof TYPE_TITLE]}
+                {card?.eyebrow ?? ""}
               </div>
 
               {/* Main title — piece name + mastery level */}
@@ -311,7 +303,7 @@ export async function GET(req: Request) {
                   marginBottom: 30,
                 }}
               >
-                {chipLabel}
+                {card?.title ?? ""}
               </div>
 
               {/* Piece with contained glow — reduced from 420px */}
@@ -368,7 +360,7 @@ export async function GET(req: Request) {
                   textAlign: "center",
                 }}
               >
-                {masteryTagline}
+                {card?.tagline ?? ""}
               </div>
             </div>
           )
