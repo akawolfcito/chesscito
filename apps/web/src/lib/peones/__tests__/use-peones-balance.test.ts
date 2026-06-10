@@ -88,7 +88,7 @@ describe("usePeonesBalance — connected success", () => {
     });
   });
 
-  it("falls back to dailyCap=10 when the response omits it", async () => {
+  it("falls back to dailyCap=6 when the response omits it", async () => {
     useAccountMock.mockReturnValue({ isConnected: true, address: W });
     const fetchImpl = vi.fn().mockResolvedValue(
       jsonResponse({ balance: 0, dailyEarnedCapped: 0 }),
@@ -100,7 +100,7 @@ describe("usePeonesBalance — connected success", () => {
     expect(result.current.state).toMatchObject({
       kind: "success",
       balance: 0,
-      dailyCap: 10,
+      dailyCap: 6,
       lastEventAt: null,
     });
   });

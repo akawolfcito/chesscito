@@ -349,10 +349,15 @@ describe("POST /api/peones/earn — daily cap", () => {
     expect(mock.insertSpy).not.toHaveBeenCalled();
   });
 
-  it("ignores the cap for non-daily sources (exercise_completion)", async () => {
+  // Economy recalibration 2026-06-10: every accepted earn source is now
+  // capped (the 3 daily-family + exercise_completion), so the endpoint no
+  // longer has an accepted non-capped source to exercise the passthrough
+  // branch — the former "ignores the cap for exercise_completion" test was
+  // removed. exercise_completion now respects the cap (truncates).
+  it("truncates exercise_completion to the daily cap (now capped)", async () => {
     const mock = buildSupabaseMock({
-      capRow: { balance: 5, daily_earned_capped: 9, daily_cap: 10 },
-      insertResult: { data: { id: 33 }, error: null },
+      capRow: { balance: 5, daily_earned_capped: 5, daily_cap: 6 },
+      insertResult: { data: { id: 34 }, error: null },
     });
     mockedSupabase.mockReturnValue(mock.supabase);
 
@@ -360,8 +365,8 @@ describe("POST /api/peones/earn — daily cap", () => {
       makeRequest(
         baseBody({
           source: "exercise_completion",
-          idempotencyKey: `training:${W}:rook:rook-4:1->3`,
-          sourceId: "rook-4:1->3",
+          idempotencyKey: `training:${W}:rook:rook-4:0->3`,
+          sourceId: "rook-4:0->3",
           amount: 2,
         }),
       ),
@@ -369,10 +374,8 @@ describe("POST /api/peones/earn — daily cap", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toMatchObject({
-      credited: 2,
-      capReached: false,
-      newBalance: 7,
-      dailyEarnedCapped: 9, // unchanged — non-daily doesn't touch the cap
+      credited: 1, // 6 cap - 5 already earned = 1 headroom
+      capReached: true,
     });
     expect(mock.insertSpy).toHaveBeenCalledTimes(1);
   });

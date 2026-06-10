@@ -43,9 +43,24 @@ const WELCOME_PACK_MIGRATION_PATH = join(
   "20260608010000_peones_welcome_pack_source.sql",
 );
 
+/** Economy recalibration 2026-06-10 (Slice C1) CREATE OR REPLACEs
+ *  `peones_balance_with_caps` (cap 10→6, +exercise_completion). The cap +
+ *  daily-source assertions below read this forward migration so they
+ *  reflect the effective DB state, not the Sprint 3 snapshot. */
+const CAP_RECALIBRATION_MIGRATION_PATH = join(
+  process.cwd(),
+  "supabase",
+  "migrations",
+  "20260610010000_peones_daily_cap_recalibration.sql",
+);
+
 const migration = readFileSync(MIGRATION_PATH, "utf-8");
 const welcomePackMigration = readFileSync(
   WELCOME_PACK_MIGRATION_PATH,
+  "utf-8",
+);
+const capRecalibrationMigration = readFileSync(
+  CAP_RECALIBRATION_MIGRATION_PATH,
   "utf-8",
 );
 
@@ -132,8 +147,9 @@ describe("peones_ledger — schema ↔ types sync", () => {
 
   it("the cap-aware SQL helper uses the same set of daily sources as PEONES_DAILY_CAP_SOURCES", () => {
     // The helper hard-codes the daily-family list in its filter. Pull
-    // it back out and assert it matches the TS constant.
-    const helperMatch = migration.match(
+    // it back out and assert it matches the TS constant. Reads the
+    // recalibration migration (the effective CREATE OR REPLACE).
+    const helperMatch = capRecalibrationMigration.match(
       /and\s+source\s+in\s*\(\s*([\s\S]*?)\)\s*\n\s*and\s+day_utc\s+=\s+p_day_utc/i,
     );
     expect(
@@ -151,10 +167,10 @@ describe("peones_ledger — schema ↔ types sync", () => {
   });
 
   it("PEONES_DAILY_CAP matches the magic number in peones_balance_with_caps", () => {
-    // The helper hard-codes `10::integer as daily_cap`. If product
-    // changes the cap, both this constant AND the SQL helper must
-    // move together.
-    const capMatch = migration.match(
+    // The helper hard-codes `N::integer as daily_cap`. If product changes
+    // the cap, both this constant AND the SQL helper must move together.
+    // Reads the recalibration migration (the effective CREATE OR REPLACE).
+    const capMatch = capRecalibrationMigration.match(
       /(\d+)\s*::\s*integer\s+as\s+daily_cap/i,
     );
     expect(capMatch, "Could not find daily_cap value in SQL helper").not.toBeNull();

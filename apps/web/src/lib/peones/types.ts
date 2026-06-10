@@ -73,17 +73,22 @@ export type PeonesLedgerSource =
   | "admin_grant";
 
 /** Sources subject to the cap (calibration §8). Other sources earn
- *  without limit. Used by the pure capper in Sprint 3 commit B. */
+ *  without limit. Used by the pure capper in Sprint 3 commit B.
+ *  Economy recalibration 2026-06-10: `exercise_completion` joins the cap
+ *  so training earn no longer scales uncapped with content. Keep in
+ *  lockstep with the SQL helper `peones_balance_with_caps`. */
 export const PEONES_DAILY_CAP_SOURCES: readonly PeonesLedgerSource[] = [
   "daily_tactic",
   "daily_streak_bonus",
   "daily_lab",
+  "exercise_completion",
 ] as const;
 
-/** Sprint 3 cap value — same magic number as the SQL helper
- *  `peones_balance_with_caps`. Co-located here so the TypeScript
- *  callers don't have to roundtrip to the DB just to know the cap. */
-export const PEONES_DAILY_CAP = 10;
+/** Daily earn cap — same magic number as the SQL helper
+ *  `peones_balance_with_caps`. Co-located here so the TypeScript callers
+ *  don't have to roundtrip to the DB just to know the cap.
+ *  Economy recalibration 2026-06-10: 10 → 6 (tighter sink pressure). */
+export const PEONES_DAILY_CAP = 6;
 
 /**
  * A row in `public.peones_ledger`. `id` is server-assigned; metadata

@@ -211,14 +211,15 @@ describe("applyDailyCap", () => {
 });
 
 describe("isDailyCapSource", () => {
-  it("returns true for the three daily-family sources", () => {
+  it("returns true for the capped earn sources (incl. exercise_completion)", () => {
     expect(isDailyCapSource("daily_tactic")).toBe(true);
     expect(isDailyCapSource("daily_streak_bonus")).toBe(true);
     expect(isDailyCapSource("daily_lab")).toBe(true);
+    // Economy recalibration 2026-06-10: training earn joins the cap.
+    expect(isDailyCapSource("exercise_completion")).toBe(true);
   });
 
-  it("returns false for non-daily earn sources", () => {
-    expect(isDailyCapSource("exercise_completion")).toBe(false);
+  it("returns false for non-capped earn sources", () => {
     expect(isDailyCapSource("senda_milestone")).toBe(false);
     expect(isDailyCapSource("pack_purchase")).toBe(false);
     expect(isDailyCapSource("admin_grant")).toBe(false);
