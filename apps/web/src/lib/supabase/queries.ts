@@ -98,7 +98,8 @@ export async function upsertVictoryAuthoritative(
 // ---------------------------------------------------------------------------
 
 /**
- * Fetch the full leaderboard from the `leaderboard_v` materialized view.
+ * Fetch the full leaderboard from the `leaderboard_combined_v` view
+ * (legacy on-chain `scores` + off-chain `score_saves`).
  */
 export async function fetchLeaderboardFromDb(): Promise<LeaderboardRow[]> {
   const supabase = getSupabaseServer();
@@ -109,9 +110,11 @@ export async function fetchLeaderboardFromDb(): Promise<LeaderboardRow[]> {
   const { data, error } = await supabase.rpc("get_leaderboard");
 
   if (error) {
-    // Fallback: try direct view access
+    // Fallback: direct view access. Must hit the SAME source the RPC
+    // reads (`leaderboard_combined_v`) so the two never diverge
+    // (Slice 4 — P1 leaderboard-view-undefined).
     const { data: viewData } = await supabase
-      .from("leaderboard_v")
+      .from("leaderboard_combined_v")
       .select("rank, player, total_score, is_verified");
     return (viewData as LeaderboardRow[]) ?? [];
   }
