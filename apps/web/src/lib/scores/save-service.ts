@@ -63,6 +63,17 @@ export type ScoreSaveQuota = {
   costPeones: number;
 };
 
+/** Discriminated result of POST /api/scores/save — the endpoint maps the
+ *  `save_basic_score` jsonb onto this union. */
+export type BasicScoreSaveResult =
+  | { status: "saved"; mode: "free"; quota: ScoreSaveQuota }
+  | { status: "saved"; mode: "peones"; spent: number; quota: ScoreSaveQuota }
+  | { status: "duplicate"; quota: ScoreSaveQuota }
+  | { status: "insufficient_peones"; required: number; balance: number; quota: ScoreSaveQuota }
+  | { status: "invalid"; reason: string }
+  | { status: "rate_limited"; retryAfterMs: number }
+  | { status: "error"; reason: string };
+
 // ─────────────────────────────────────────────────────────────────
 // Pure helpers
 // ─────────────────────────────────────────────────────────────────

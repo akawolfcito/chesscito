@@ -36,6 +36,21 @@ const readIpLimiter = new Ratelimit({
   prefix: "rl:read:ip",
 });
 
+/** Soft per-IP limit for the off-chain SaveScore endpoint
+ *  (POST /api/scores/save). DEDICATED bucket (prefix rl:score:ip) so it
+ *  never cross-contaminates the strict signing bucket (5/min, the one
+ *  that produced the 429 loop) nor the 60/min read bucket. Sized for
+ *  normal play: a user finishes an exercise every few seconds at most,
+ *  so 30/min/IP is comfortably above real usage while still capping
+ *  write-spam against the DB + Peones ledger. */
+const MAX_SCORE_SAVE_REQUESTS_PER_IP = 30;
+
+const scoreSaveIpLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(MAX_SCORE_SAVE_REQUESTS_PER_IP, "60s"),
+  prefix: "rl:score:ip",
+});
+
 function requireEnv(name: string) {
   const value = process.env[name];
 
@@ -87,6 +102,15 @@ export async function enforceRateLimit(ip: string, playerAddress?: string) {
  *  cross-contaminate. */
 export async function enforceReadRateLimit(ip: string) {
   const { success: ok } = await readIpLimiter.limit(ip);
+  if (!ok) throw new Error("Rate limit exceeded");
+}
+
+/** Soft IP-only limiter for the off-chain SaveScore endpoint. Throws
+ *  "Rate limit exceeded" on overflow; the route maps that to a 429
+ *  `rate_limited` with a retry hint. Dedicated bucket — see
+ *  `scoreSaveIpLimiter`. */
+export async function enforceScoreSaveRateLimit(ip: string) {
+  const { success: ok } = await scoreSaveIpLimiter.limit(ip);
   if (!ok) throw new Error("Rate limit exceeded");
 }
 
