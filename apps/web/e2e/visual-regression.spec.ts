@@ -882,7 +882,10 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     );
   });
 
-  test("vr13-score-saved — on-chain receipt + CeloScan chip", async ({
+  // vr13 — SaveScore off-chain (Slice 5). The base save now POSTs
+  // /api/scores/save: no tx, no CeloScan chip. Two states: a free save and
+  // a paid save (1 Peón past the 5 free saves, cost pill beside the stars).
+  test("vr13-score-saved — off-chain free save (no receipt)", async ({
     page,
   }) => {
     await page.goto("/dev/exercises-popups?variant=score-saved", {
@@ -893,6 +896,21 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     await settle(page, 800);
     await expect(page).toHaveScreenshot(
       "vr13-score-saved.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr13-score-saved-peones — off-chain paid save (1 Peón pill)", async ({
+    page,
+  }) => {
+    await page.goto("/dev/exercises-popups?variant=score-saved-peones", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr13-score-saved-peones.png",
       FIXTURE_OPTS,
     );
   });

@@ -10,6 +10,7 @@ const VARIANTS = new Set([
   "piece-complete-final",
   "labyrinth-king-solved",
   "score-saved",
+  "score-saved-peones",
   "result-badge",
   "result-shop",
   "result-error",

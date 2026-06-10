@@ -71,11 +71,16 @@ import {
   getBadgesAddress,
   getConfiguredChainId,
   getMiniPayFeeCurrency,
-  getScoreboardAddress,
   getShopAddress,
 } from "@/lib/contracts/chains";
-import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
+// SaveScore off-chain (Slice 5): the base save path no longer touches the
+// Scoreboard contract. `getLevelId` stays (it maps piece -> level id used
+// by the off-chain save + leaderboard); `scoreboardAbi` /
+// `getScoreboardAddress` are gone from this surface. The on-chain helpers
+// remain in @/lib/contracts/scoreboard for the future Leaderboard Proof lane.
+import { getLevelId } from "@/lib/contracts/scoreboard";
 import { shopAbi } from "@/lib/contracts/shop";
+import { postScoreSave } from "@/lib/scores/save-client";
 import {
   FOUNDER_BADGE_CELO_ITEM_ID,
   FOUNDER_BADGE_ITEM_ID,
@@ -720,7 +725,15 @@ export function ExercisesScreen({
      *  insufficient-funds errors. Only the shop-buy caller sets this. */
     txErrorKind?: TxErrorKind | null;
     retryAction?: () => void;
+    /** SaveScore off-chain (Slice 5): Peones spent on a paid save. Passed
+     *  to the score overlay so the player sees the 1-Peón charge. */
+    spentPeones?: number;
   } | null>(null);
+
+  // SaveScore off-chain (Slice 5): in-flight flag for the /api/scores/save
+  // request. Replaces the wagmi `isScoreWriting`/`isSubmitConfirming` busy
+  // signal for the base save path (now off-chain, no tx to confirm).
+  const [isSavingScore, setIsSavingScore] = useState(false);
 
   // Pointer-events lock release: as soon as a result overlay appears,
   // any open dock sheet must be closed or its Radix modal portal
@@ -1009,7 +1022,6 @@ export function ExercisesScreen({
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain = configuredChainId != null && chainId === configuredChainId;
   const badgesAddress = useMemo(() => getBadgesAddress(chainId), [chainId]);
-  const scoreboardAddress = useMemo(() => getScoreboardAddress(chainId), [chainId]);
   const shopAddress = useMemo(() => getShopAddress(chainId), [chainId]);
   type PaymentToken = (typeof ACCEPTED_TOKENS)[number] | typeof CELO_TOKEN;
   const [paymentToken, setPaymentToken] = useState<PaymentToken | null>(null);
@@ -1220,7 +1232,7 @@ export function ExercisesScreen({
   const canSaveScore =
     Boolean(address) && isConnected && isCorrectChain && levelId > 0n;
   const isClaimBusy = isBadgeWriting || isClaimConfirming;
-  const isSubmitBusy = isScoreWriting || isSubmitConfirming;
+  const isSubmitBusy = isScoreWriting || isSubmitConfirming || isSavingScore;
   const isShopBusy = isShopWriting || isShopConfirming;
 
   // Cluster C — local-first save state. `lastSavedScore` is the last
@@ -1630,105 +1642,113 @@ export function ExercisesScreen({
   }
 
   async function handleSubmitScore() {
-    // Cluster C patch (post-review): score path uses `canSaveScore` (no
-    // badgeEarned requirement), per addendum AC-2.2.1. The legacy
-    // `canSendOnChain` guard still applies to the claim-badge path.
-    if (!canSaveScore || !address || !scoreboardAddress || isSubmitBusy) {
+    // SaveScore off-chain (Slice 5): the base save no longer signs
+    // (/api/sign-score), never broadcasts `submitScoreSigned`, never
+    // prompts approve/send, and never enters the signer 429 loop. It POSTs
+    // /api/scores/save (5 free saves per wallet, then 1 Peón) and renders
+    // exactly what the server returns. The retained on-chain path lives in
+    // @/lib/contracts/scoreboard for the future Leaderboard Proof lane.
+    //
+    // `canSaveScore` (no badgeEarned requirement) gates the surface; the
+    // scoreboard address is no longer a precondition.
+    if (!canSaveScore || !address || isSubmitBusy) {
       return;
     }
-    // Sync guard closes the await-the-signature-fetch race window the
-    // wagmi-derived isSubmitBusy flag can't cover.
+    // Sync guard closes the await-the-POST race the React state flag
+    // (isSavingScore) can't cover within the same tick.
     if (submittingScoreRef.current) {
       return;
     }
     submittingScoreRef.current = true;
+    setIsSavingScore(true);
 
     setLastError(null);
-    // Cluster C SAVE residue defer #1 — clear the previous tx's hash so a
-    // retry after revert shows "Signing…" immediately instead of lingering
-    // on "Failed" until the new hash lands. Safe because the receipt
-    // watcher is gated on `enabled: Boolean(submitTxHash)`.
-    setSubmitTxHash(null);
+    const scoreNum = Number(score);
+    const levelNum = Number(levelId);
     track("score_submit_tx", { stage: "start", piece: selectedPiece });
 
     try {
-      const signed = await requestSignature("/api/sign-score", {
+      const result = await postScoreSave({
         player: address,
-        levelId: Number(levelId),
-        score: Number(score),
+        levelId: levelNum,
+        score: scoreNum,
         timeMs: Number(timeMs),
       });
 
-      const txHash = await writeWithOptionalFeeCurrency(writeScoreAsync, {
-        address: scoreboardAddress,
-        abi: scoreboardAbi,
-        functionName: "submitScoreSigned" as const,
-        args: [levelId, score, timeMs, BigInt(signed.nonce), BigInt(signed.deadline), signed.signature] as const,
-        chainId,
-        account: address,
-      });
+      switch (result.status) {
+        case "saved":
+        case "duplicate": {
+          hapticSuccess();
+          // Local-first save state. Empty txHash: off-chain saves have no
+          // receipt, so `savedReceiptUrl` stays undefined (no CeloScan
+          // link). Persisting under `selectedPiece` flips the SAVE button
+          // to its saved-parity state, same as the on-chain path did.
+          recordSaveFor(selectedPiece, scoreNum, "");
 
-      hapticSuccess();
-      setSubmitTxHash(txHash);
-      // Cluster C — capture (piece, score, txHash) at broadcast time so
-      // the receipt-success effect persists the SUBMITTED score under
-      // the CORRECT piece (the user may switch pieces before the
-      // receipt arrives — the saved score still belongs to the original
-      // piece, not the new selection).
-      pendingSubmitRef.current = {
-        piece: selectedPiece,
-        score: Number(score),
-        txHash,
-      };
-      track("score_submit_tx", { stage: "success", piece: selectedPiece });
-      setResultOverlay({
-        variant: "score",
-        txHash,
-      });
-      console.info("[MiniPayTx] result", { label: "submit-score", txHash, levelId: Number(levelId) });
+          const spentPeones =
+            result.status === "saved" && result.mode === "peones"
+              ? result.spent
+              : undefined;
 
-      // Write-through to Supabase (fire-and-forget)
-      void fetch("/api/cache-score", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          player: address,
-          levelId: Number(levelId),
-          score: Number(score),
-          timeMs: Number(timeMs),
-          txHash: txHash,
-        }),
-      }).catch(() => {});
+          track("score_submit_tx", { stage: "success", piece: selectedPiece });
+          setResultOverlay({ variant: "score", spentPeones });
 
-      // Optimistic entry for leaderboard
-      try {
-        sessionStorage.setItem(
-          "chesscito:optimistic-score",
-          JSON.stringify({
-            player: address.toLowerCase(),
-            score: Number(score),
-            levelId: Number(levelId),
-            ts: Date.now(),
-          }),
-        );
-      } catch { /* storage unavailable */ }
-    } catch (error) {
-      if (isUserCancellation(error)) {
-        track("score_submit_tx", { stage: "cancelled", piece: selectedPiece });
-        showToast(tFooter("submitCanceled"), 2000);
-        return;
+          // Optimistic leaderboard entry (same key the leaderboard sheet
+          // reads on open). The combined view (Slice 4) already includes
+          // off-chain saves once the row lands.
+          try {
+            sessionStorage.setItem(
+              "chesscito:optimistic-score",
+              JSON.stringify({
+                player: address.toLowerCase(),
+                score: scoreNum,
+                levelId: levelNum,
+                ts: Date.now(),
+              }),
+            );
+          } catch { /* storage unavailable */ }
+          break;
+        }
+
+        case "insufficient_peones": {
+          // No retryAction -> no "Try again" loop. Directs to the Peones
+          // balance chip (Get Peones) via copy; we do not open or modify
+          // the Get Peones surface here.
+          track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: "insufficient_peones" });
+          setResultOverlay({
+            variant: "error",
+            errorMessage: tResult("error.notEnoughPeones"),
+          });
+          break;
+        }
+
+        case "rate_limited": {
+          // Clear backoff, never an immediate retry loop. Toast shows the
+          // wait in whole seconds; the SAVE button stays available so the
+          // user can retry once the window passes.
+          const seconds = Math.max(1, Math.ceil(result.retryAfterMs / 1000));
+          track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: "rate_limited" });
+          showToast(`${tResult("error.rateLimitedPrefix")} ${seconds}s`, 3000);
+          break;
+        }
+
+        case "invalid":
+        case "error":
+        default: {
+          // Controlled error overlay. A single user-initiated retry is
+          // allowed (Try again button), which is not a loop.
+          track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: "save_failed" });
+          setResultOverlay({
+            variant: "error",
+            errorMessage: tResult("error.unknown"),
+            retryAction: () => void handleSubmitScore(),
+          });
+          break;
+        }
       }
-      const message = toErrorMessage(error);
-      setLastError(message);
-      track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: classifyTxErrorKind(error) });
-      setResultOverlay({
-        variant: "error",
-        errorMessage: classifyTxError(error, tResult),
-        retryAction: () => void handleSubmitScore(),
-      });
-      console.warn("[MiniPayTx] error", { label: "submit-score", levelId: Number(levelId), error: message });
     } finally {
       submittingScoreRef.current = false;
+      setIsSavingScore(false);
     }
   }
 
@@ -2301,7 +2321,7 @@ export function ExercisesScreen({
               <ContextualActionSlot
                 action={contextAction}
                 shieldsAvailable={shieldCount}
-                isBusy={isScoreWriting || isBadgeWriting || isSubmitConfirming || isClaimConfirming}
+                isBusy={isSavingScore || isBadgeWriting || isClaimConfirming}
                 onSubmitScore={() => void handleSubmitScore()}
                 onUseShield={handleUseShield}
                 onClaimBadge={() => void handleClaimBadge()}
@@ -2562,6 +2582,7 @@ export function ExercisesScreen({
             errorKind={resultOverlay.errorKind}
             txErrorKind={resultOverlay.txErrorKind}
             totalStars={totalStars}
+            spentPeones={resultOverlay.spentPeones}
             onDismiss={() => setResultOverlay(null)}
             onRetry={resultOverlay.retryAction}
           />

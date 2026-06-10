@@ -1176,7 +1176,8 @@ const messages = {
     },
     score: {
       title: "¡Puntaje guardado!",
-      subtitle: "Guardado en Celo. Listo para compartir.",
+      subtitle: "Guardado y visible en la tabla de líderes. Listo para compartir.",
+      peonesSpentLabel: "Peón gastado",
     },
     shop: {
       title: "¡Compra lista!",
@@ -1195,6 +1196,9 @@ const messages = {
       badgeAlreadyClaimed: "¡Ya tienes esta insignia!",
       signingUnavailable: "Servicio de firma no disponible. Reintenta en un momento.",
       signatureExpired: "La firma expiró. Toca para obtener una nueva.",
+      notEnoughPeones:
+        "Usaste tus 5 guardados gratis. Toca tu saldo de Peones para conseguir más y seguir guardando.",
+      rateLimitedPrefix: "Puedes guardar de nuevo en",
       purchaseKindCopy: {
         error: {
           title: "No se pudo comprar",

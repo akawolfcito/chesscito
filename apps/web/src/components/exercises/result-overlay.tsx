@@ -53,6 +53,11 @@ type ResultOverlayProps = {
   onDismiss: () => void;
   onRetry?: () => void;
   totalStars?: number;
+  /** SaveScore off-chain (Slice 5): Peones spent on this save (past the 5
+   *  free saves). When > 0 on the score variant, a small cost pill renders
+   *  beside the stars so the player sees the 1-Peón charge. Omitted/0 for
+   *  free saves. */
+  spentPeones?: number;
 };
 
 const VARIANT_IMG: Record<SuccessVariant, string> = {
@@ -243,6 +248,7 @@ export function ResultOverlay({
   onDismiss,
   onRetry,
   totalStars,
+  spentPeones,
 }: ResultOverlayProps) {
   const tResult = useTranslations("RESULT_OVERLAY_COPY");
   const tShare = useTranslations("SHARE_COPY");
@@ -323,14 +329,21 @@ export function ResultOverlay({
               </div>
             </div>
 
-            {starsLabel && (
+            {(starsLabel || (spentPeones != null && spentPeones > 0)) && (
               <div className="arena-result-stats-row arena-result-stats-row--missionpills">
-                <span className="candy-stat-pill">
-                  <span className="candy-stat-pill-icon">
-                    <CandyIcon name="star" className="h-4 w-4" />
+                {starsLabel && (
+                  <span className="candy-stat-pill">
+                    <span className="candy-stat-pill-icon">
+                      <CandyIcon name="star" className="h-4 w-4" />
+                    </span>
+                    {starsLabel}
                   </span>
-                  {starsLabel}
-                </span>
+                )}
+                {spentPeones != null && spentPeones > 0 && (
+                  <span className="candy-stat-pill" data-testid="score-peones-spent">
+                    {spentPeones} {tResult("score.peonesSpentLabel")}
+                  </span>
+                )}
               </div>
             )}
 

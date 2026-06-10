@@ -7,6 +7,7 @@ type Variant =
   | "piece-complete-final"
   | "labyrinth-king-solved"
   | "score-saved"
+  | "score-saved-peones"
   | "result-badge"
   | "result-shop"
   | "result-error";
@@ -26,8 +27,10 @@ const noop = () => {};
  *   2. labyrinth-king-solved   — King labyrinth solved + Enter Arena
  *      primary CTA (the cascade-closing surface gated by
  *      `areAllLabyrinthsSolved("king", …)` in exercises-screen).
- *   3. score-saved             — ResultOverlay on-chain receipt with
- *      CeloScan chip.
+ *   3. score-saved             — ResultOverlay off-chain save (Slice 5):
+ *      no tx, no CeloScan chip. The base save is now /api/scores/save.
+ *   4. score-saved-peones      — same, but the save cost 1 Peón (past the
+ *      5 free saves) so the cost pill renders beside the stars.
  */
 export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
   return (
@@ -66,8 +69,16 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
           variant="score"
           pieceType="bishop"
           totalStars={15}
-          txHash="0xabc"
-          celoscanHref="https://celoscan.io/tx/0xabc"
+          onDismiss={noop}
+        />
+      )}
+
+      {variant === "score-saved-peones" && (
+        <ResultOverlay
+          variant="score"
+          pieceType="bishop"
+          totalStars={15}
+          spentPeones={1}
           onDismiss={noop}
         />
       )}

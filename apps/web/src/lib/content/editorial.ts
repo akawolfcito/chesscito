@@ -143,7 +143,11 @@ export const RESULT_OVERLAY_COPY = {
   },
   score: {
     title: "Score Saved!",
-    subtitle: "Saved on Celo. Ready to share.",
+    subtitle: "Saved and live on the leaderboard. Ready to share.",
+    /** Label shown beside the count pill when the save cost a Peón (past
+     *  the 5 free saves). The numeral is rendered in JSX (always 1 in
+     *  MVP); this is just the trailing word, kept out of ICU. */
+    peonesSpentLabel: "Peón spent",
   },
   shop: {
     title: "Purchase Complete!",
@@ -181,6 +185,15 @@ export const RESULT_OVERLAY_COPY = {
      *  Distinct from the generic `revert` so the user understands a
      *  fresh signature will fix it. */
     signatureExpired: "Signature expired. Tap to get a fresh one.",
+    /** SaveScore off-chain (Slice 5): the wallet used its 5 free saves and
+     *  has no Peones left for the paid save. Directs to the Peones balance
+     *  chip (Get Peones) without prompting any on-chain action here. */
+    notEnoughPeones:
+      "You've used your 5 free saves. Tap your Peones balance to get more and keep saving.",
+    /** SaveScore off-chain (Slice 5): soft rate limit hit. The toast
+     *  appends the wait in seconds, e.g. "You can save again in 12s" — a
+     *  clear backoff, never an immediate Try again loop. */
+    rateLimitedPrefix: "You can save again in",
     /** Per-kind copy for purchase end states (Buy Item Shop, Buy Coach
      *  Credits). Mirrors the cancelled/timeout/error split that
      *  VictoryClaimError.errorKindCopy already uses for Mint Victory,
