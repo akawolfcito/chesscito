@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ActionRowIcon } from "@/components/action-row/action-row-icon";
+import { PinStatusMarker, type PinStatus } from "@/components/redesign/pin-status-marker";
 import { StonePedestal } from "@/components/scene-rooted/stone-pedestal";
 import { MiniArenaSheet } from "./mini-arena-sheet";
+import { getMiniArenaBest } from "@/lib/game/mini-arena-progress";
 import type { MiniArenaSetup } from "@/lib/game/mini-arena";
 
 type Props = {
@@ -30,11 +32,22 @@ type Props = {
 export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: Props) {
   const t = useTranslations("HUB_ACTION_RAIL_COPY");
   const [open, setOpen] = useState(false);
+  // Check/dot system (2026-06-11): done = bridge beaten at least once
+  // (best result recorded), pending dot = unlocked but never beaten.
+  // Hydrated post-mount so SSR markup stays marker-free (localStorage).
+  const [status, setStatus] = useState<PinStatus | null>(null);
+  useEffect(() => {
+    if (!unlocked) {
+      setStatus(null);
+      return;
+    }
+    setStatus(getMiniArenaBest(setup.id) != null ? "done" : "pending");
+  }, [unlocked, setup.id, open]);
   if (!unlocked && !renderLocked) return null;
 
   return (
     <>
-      <span data-testid="mini-arena-bridge" className="inline-flex">
+      <span data-testid="mini-arena-bridge" className="relative inline-flex">
         <StonePedestal
           stone={4}
           size="large"
@@ -48,6 +61,7 @@ export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: P
               : t("arenaLockedAriaFormat", { name: setup.name })
           }
         />
+        <PinStatusMarker status={status} />
       </span>
       {unlocked ? (
         <MiniArenaSheet open={open} onOpenChange={setOpen} setup={setup} />

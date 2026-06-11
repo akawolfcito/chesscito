@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
+import { PinStatusMarker } from "@/components/redesign/pin-status-marker";
 import {
   ActionRowIcon,
   type ActionRowIconName,
@@ -319,22 +320,7 @@ export function ActionPin({
       >
         {iconNode}
         {size === "full" ? <span>{label}</span> : null}
-        {size === "pin" && status === "done" ? (
-          <span aria-hidden="true" className="action-pin-status action-pin-status--done">
-            ✓
-          </span>
-        ) : null}
-        {size === "pin" && status === "pending" ? (
-          <picture className="action-pin-notif">
-            <source srcSet="/art/scene-rooted/punto-alerta-notificacion.avif" type="image/avif" />
-            <source srcSet="/art/scene-rooted/punto-alerta-notificacion.webp" type="image/webp" />
-            <img
-              src="/art/scene-rooted/punto-alerta-notificacion.png"
-              alt=""
-              aria-hidden="true"
-            />
-          </picture>
-        ) : null}
+        {size === "pin" ? <PinStatusMarker status={status} /> : null}
         {size === "pin" && badge?.pin != null ? (
           <span aria-hidden="true" className={PIN_BADGE_CLASSES}>
             {badge.pin}

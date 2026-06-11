@@ -65,6 +65,12 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
   // Slot keeps its entrance-animation wrapper (compact pin vs full
   // bottom-slide). ActionPin owns visual atom + label rendering +
   // state animations.
+  // Check/dot system (2026-06-11): SAVE and CLAIM pins only mount
+  // while their action is actually takeable, so they carry the
+  // pending dot — the row reads "these are waiting for you".
+  const status =
+    action === "submitScore" || action === "claimBadge" ? "pending" : null;
+
   if (compact) {
     return (
       <div className="animate-in fade-in zoom-in-95 duration-200">
@@ -76,6 +82,7 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
           ariaLabel={fullLabel}
           badge={badge}
           isBusy={isBusy}
+          status={status}
           onPress={handler}
         />
       </div>

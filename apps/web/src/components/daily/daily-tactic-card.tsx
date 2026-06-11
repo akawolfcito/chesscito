@@ -1,6 +1,7 @@
 "use client";
 
 import { ActionRowIcon } from "@/components/action-row/action-row-icon";
+import { PinStatusMarker } from "@/components/redesign/pin-status-marker";
 import { StonePedestal } from "@/components/scene-rooted/stone-pedestal";
 
 export type DailyTacticCardProps = {
@@ -55,7 +56,7 @@ export function DailyTacticCard({
     <span
       data-testid="daily-tactic-card"
       data-state={isCompletedToday ? "completed" : "pending"}
-      className="inline-flex"
+      className="relative inline-flex"
     >
       <StonePedestal
         stone={2}
@@ -72,6 +73,9 @@ export function DailyTacticCard({
         disabled={isCompletedToday}
         aria-label={ariaLabel}
       />
+      {/* Check/dot system (2026-06-11): done = played today, pending
+          dot = today's tactic still waiting. */}
+      <PinStatusMarker status={isCompletedToday ? "done" : "pending"} />
     </span>
   );
 }
