@@ -124,6 +124,7 @@ import {
   getLabyrinthBest,
   recordLabyrinthBest,
 } from "@/lib/game/labyrinth-progress";
+import { buildTrainingPath } from "@/lib/training/path";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
@@ -2091,6 +2092,23 @@ export function ExercisesScreen({
   const activeLabyrinth = effectiveLabyrinthMode ? labyrinthList[0] : null;
   const activeExercise = activeLabyrinth ?? currentExercise;
 
+  /** Integrated training path (Slice 2 — read-only display in the
+   *  mission detail sheet). Bests live in localStorage, so
+   *  `labyrinthCompleted` acts as a refresh signal to re-read them
+   *  after each completion. */
+  const trainingPath = useMemo(() => {
+    void labyrinthCompleted;
+    return buildTrainingPath({
+      piece: selectedPiece,
+      progress,
+      labyrinthBests: Object.fromEntries(
+        labyrinthList.map((lab) => [lab.id, getLabyrinthBest(selectedPiece, lab.id)]),
+      ),
+      badgeClaimed: badgesClaimed[selectedPiece] === true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPiece, progress, badgesClaimed, labyrinthCompleted]);
+
   /** Labyrinth move handler — fires the completion overlay when the
    *  player reaches the target. The Board's internal counter is the
    *  source of truth for move count. */
@@ -2268,6 +2286,8 @@ export function ExercisesScreen({
           timeMs={timeMs.toString()}
           currentStars={totalStars}
           claimedBadges={badgesClaimed}
+          trainingPath={trainingPath}
+          walletConnected={isConnected}
           shieldCount={shieldCount}
           streakCount={streakCount}
           lastEarnedStars={lastEarnedStars}

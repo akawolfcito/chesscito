@@ -10,6 +10,7 @@ import { LottieAnimation } from '@/components/ui/lottie-animation'
 import { PiecePickerSheet } from '@/components/exercises/piece-picker-sheet'
 import { PiecePickerTrigger } from '@/components/exercises/piece-picker-trigger'
 import { MissionDetailSheet } from '@/components/exercises/mission-detail-sheet'
+import type { TrainingNode } from '@/lib/training/path'
 
 type PieceOption = {
   key: 'rook' | 'bishop' | 'knight' | 'pawn' | 'queen' | 'king'
@@ -55,6 +56,11 @@ type MissionPanelProps = {
   /** On-chain badge claim status per piece. Feeds the journey rail
    *  unlock/locked tiers. */
   claimedBadges: Partial<Record<PieceOption['key'], boolean>>
+  /** Integrated per-piece path, forwarded read-only to the mission
+   *  detail sheet (training path Slice 2). */
+  trainingPath?: TrainingNode[]
+  /** Wallet connection, forwarded for milestone copy only. */
+  walletConnected?: boolean
   /** Signal from the parent that a dock destination sheet is open.
    *  When true, we close piece-picker and mission-detail so the user
    *  never sees a picker stacked behind a badge/shop/leaderboard
@@ -423,6 +429,8 @@ export function MissionPanelCandy({
   isCapture = false,
   currentStars,
   claimedBadges,
+  trainingPath,
+  walletConnected = false,
   isDockSheetOpen,
   labyrinthAvailable = false,
   labyrinthMode = false,
@@ -545,6 +553,8 @@ export function MissionPanelCandy({
               timeMs={timeMs}
               currentStars={currentStars}
               claimedBadges={claimedBadges}
+              trainingPath={trainingPath}
+              walletConnected={walletConnected}
               trigger={missionPeek}
             />
           </div>

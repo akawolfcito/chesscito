@@ -12,8 +12,10 @@ import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { JourneyRail } from "@/components/redesign/journey-rail";
+import { TrainingPathRail } from "@/components/exercises/training-path-rail";
 import { SCORE_UNIT } from "@/lib/content/editorial";
 import type { PieceId } from "@/lib/game/types";
+import type { TrainingNode } from "@/lib/training/path";
 
 type Props = {
   /** Controlled open state — parent closes it when a dock sheet opens,
@@ -31,6 +33,11 @@ type Props = {
   /** On-chain badge claim status per piece. Drives the journey rail
    *  unlock/locked states. */
   claimedBadges: Partial<Record<PieceId, boolean>>;
+  /** Integrated per-piece path (Slice 2, read-only display). Absent →
+   *  the section is not rendered, keeping legacy callers unchanged. */
+  trainingPath?: TrainingNode[];
+  /** Gates milestone copy only ("Badge ready" vs "Connect to claim"). */
+  walletConnected?: boolean;
   /** The peek-card element that opens the modal. Cloned with an
    *  injected onClick that flips `open` true; any pre-existing
    *  handler on the trigger is preserved. */
@@ -49,11 +56,14 @@ export function MissionDetailSheet({
   timeMs,
   currentStars,
   claimedBadges,
+  trainingPath,
+  walletConnected = false,
   trigger,
 }: Props) {
   const tBriefing = useTranslations("MISSION_BRIEFING_COPY");
   const tDetail = useTranslations("MISSION_DETAIL_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
+  const tPath = useTranslations("TRAINING_PATH_COPY");
   // Two-stage open/close so the fade-out animation completes before
   // unmounting. `mounted` controls DOM presence; `exiting` flips the
   // panel opacity for the closing transition.
@@ -267,6 +277,26 @@ export function MissionDetailSheet({
                     draggable={false}
                   />
                 </picture>
+
+                {trainingPath && trainingPath.length > 0 ? (
+                  <>
+                    <h3
+                      className="mt-2 text-center text-base font-extrabold tracking-tight"
+                      style={{
+                        color: "rgba(63, 34, 8, 0.95)",
+                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
+                      }}
+                    >
+                      {tPath("title")}
+                    </h3>
+                    <div className="mt-2 w-full">
+                      <TrainingPathRail
+                        path={trainingPath}
+                        connected={walletConnected}
+                      />
+                    </div>
+                  </>
+                ) : null}
 
                 <h3
                   className="mt-2 text-center text-base font-extrabold tracking-tight"
