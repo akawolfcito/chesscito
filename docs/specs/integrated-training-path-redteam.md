@@ -8,7 +8,7 @@
 
 ### P0 — Must address before implementation
 
-- [dormant-content] **11 of 14 catalog labyrinths have never been playable** (every lab
+- [dormant-content] **12 of 18 catalog labyrinths have never been playable** (every lab
   except each piece's index 0: rook-lab-2/3, bishop-lab-4, knight-lab-2/3/4/5,
   pawn-lab-3/4/5, queen-lab-2/3)
   (`exercises-screen.tsx:2091` hardcodes `labyrinthList[0]`). They were authored but never

@@ -9,7 +9,7 @@
 Exercises and Labyrinths live as two disconnected surfaces. Labyrinths hide behind an
 EXERCISES/LABYRINTHS pill toggle in `MissionPanelCandy` that (a) only appears after the
 badge threshold (`totalStars >= 10`, `exercises-screen.tsx:2089`) and (b) only ever plays
-`labyrinthList[0]` (`exercises-screen.tsx:2091`) — so 11 of the 14 catalog labyrinths
+`labyrinthList[0]` (`exercises-screen.tsx:2091`) — so 12 of the 18 catalog labyrinths
 (everything except each piece's first: rook-lab-2/3, bishop-lab-4, knight-lab-2/3/4/5,
 pawn-lab-3/4/5, queen-lab-2/3) are shipped but **unreachable**. The product goal is one training path per
 piece where labyrinths feel like the natural continuation of exercises, not a separate tab.
@@ -19,7 +19,7 @@ piece where labyrinths feel like the natural continuation of exercises, not a se
 | Surface | Catalog | Progress store | Economy | Proof |
 |---|---|---|---|---|
 | Exercises | `EXERCISES[piece]` (5–10/piece, tiers easy/medium, hard pending) | `chesscito:progress:{piece}` stars array (0–3 each) | +1 Peón first completion (wallet), Hint 1 Peón, SaveScore | Badge claim at 10★ (`/api/sign-badge`) |
-| Labyrinths | `LABYRINTHS[piece]` (1–5/piece, 14 total, same `Exercise` type) | `chesscito:labyrinth-best:{piece}` best-moves map; stars derived from moves | none | LabyrinthBadge mint (`/api/sign-labyrinth`, minStars 1) |
+| Labyrinths | `LABYRINTHS[piece]` (1–5/piece, 18 total, same `Exercise` type) | `chesscito:labyrinth-best:{piece}` best-moves map; stars derived from moves | none | LabyrinthBadge mint (`/api/sign-labyrinth`, minStars 1) |
 
 Rotation engine: flag off by default (`rotation-flag.ts`); filters exercises to a daily
 5-subset; steering effect at `exercises-screen.tsx:914-927`.
