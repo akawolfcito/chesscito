@@ -54,3 +54,32 @@ bucket actually starves spends in practice.
    custom design, per ux-pattern-references.
 4. Backlog: rotation-aware `advanceExercise` spec (flag stays OFF),
    spend bucket split (see above).
+
+---
+
+## Addendum — founder feedback cluster (same day, 2nd pass)
+
+7 items from the founder's MiniPay pass. 6 shipped on `main` (LOCAL):
+
+| Commit | What |
+|---|---|
+| `feat` ActionPin status marker | green check / pulsing red dot primitive (`.action-pin-status` / `.action-pin-notif`, mirrors kingdom reward rail) |
+| `feat` HINT → action row pin | floating chip removed; row = DAILY · HINT · SAVE · CLAIM · SPECIAL; cost in aria-label; reveal shows check |
+| `feat` SavedChip → pin+check | no star pill / no "BEAT YOUR SCORE" caption; aria-label keeps guidance |
+| `feat` check/dot across row | DAILY (dot until played → check), SAVE/CLAIM (dot while takeable), SPECIAL TRAINING (dot unlocked-unbeaten → check via getMiniArenaBest; `<PinStatusMarker>` shared) |
+| `fix` error overlay composition | warning triangle removed; text + avatar share one in-flow row |
+| `style` GetPeonesSheet | pawn+title row, price below, text+avatar row on insufficient |
+| `style` BadgeEarnedPrompt + mini-arena ceremony | both migrated CandyGlassShell → VictoryPopupShell (panel-bg1) + PrincipalButton CTAs |
+
+Suite 3502/3502 after each slice; tsc + eslint clean.
+
+### OPEN — item 7: SAVE/CLAIM pins vanish after SAVE (transient)
+
+Repro (founder): piece-complete → SAVE (0 Peones) → pins gone →
+navigate /hub → back to /exercises → pins return. Investigated:
+`getRewardActions` only excludes phase=failure; BadgeEarnedPrompt SAVE
+clears autoReset + closes prompt; insufficient path mounts error
+overlay only. No read branch conclusively hides BOTH pins. Next: re-smoke
+on the new build (slices changed this surface), watch
+`score_save_{insufficient,duplicate}` telemetry to identify the branch,
+then trace `contextAction`/`isSavedAtParity` state at that moment.
