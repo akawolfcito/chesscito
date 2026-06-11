@@ -39,30 +39,19 @@ export function LanguageChip() {
 
   return (
     <>
+      {/* Bare flag button (founder 2026-06-11): no pill, no medallion,
+          no locale code — the flag alone is the affordance, sized to
+          match the chip sprites. The confirm card still gates the
+          switch. */}
       <button
         type="button"
         onClick={() => setConfirmOpen(true)}
         aria-label={t("ariaLabel")}
         data-testid="language-chip"
-        className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
+        className="flex h-9 w-9 items-center justify-center text-[1.75rem] leading-none transition-transform active:scale-95"
+        style={{ filter: "drop-shadow(0 2px 3px rgba(120, 65, 5, 0.35))" }}
       >
-        <span
-          aria-hidden="true"
-          // Circular cream medallion behind the emoji: gives the flat
-          // flag the same toy-volume language as the trophy/pawn
-          // sprites AND fixes the per-platform emoji size drift
-          // (Sally pass 2026-06-11).
-          className="candy-tray-pill-icon candy-tray-pill-icon--floating flex items-center justify-center rounded-full text-[1.05rem] leading-none ring-1 ring-amber-800/30"
-          style={{
-            background:
-              "linear-gradient(180deg, #fff8e8 0%, #f7e3b8 100%)",
-            boxShadow:
-              "0 2px 3px rgba(120, 65, 5, 0.35), inset 0 1px 0 rgba(255,255,255,0.8)",
-          }}
-        >
-          {current.flag}
-        </span>
-        <span>{current.code}</span>
+        <span aria-hidden="true">{current.flag}</span>
       </button>
 
       {confirmOpen ? (

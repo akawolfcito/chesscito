@@ -19,11 +19,12 @@ beforeEach(() => {
 });
 
 describe("LanguageChip", () => {
-  it("shows the current locale code on the canonical chip family", () => {
+  it("renders the bare flag button (no pill, no locale code)", () => {
     render(<LanguageChip />);
     const chip = screen.getByTestId("language-chip");
-    expect(chip).toHaveTextContent("EN");
-    expect(chip.className).toMatch(/hub-hud-pill--anchored-left/);
+    expect(chip).toHaveTextContent("\u{1F1FA}\u{1F1F8}");
+    expect(chip).not.toHaveTextContent("EN");
+    expect(chip.className).not.toMatch(/candy-tray-pill/);
   });
 
   it("tap opens the confirm card and does NOT switch by itself", () => {
