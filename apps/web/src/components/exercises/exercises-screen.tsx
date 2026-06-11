@@ -479,10 +479,6 @@ function AccountSheet({
             {t("disconnect")}
           </button>
 
-          <p className="text-center" style={{ color: "rgba(110, 65, 15, 0.62)", fontSize: "0.65rem", lineHeight: "0.9rem" }}>
-            {t("minipayDisconnectHint")}
-          </p>
-
           {/* About Chesscito — same secondary CTA template */}
           <Link
             href="/about"
