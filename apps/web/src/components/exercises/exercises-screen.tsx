@@ -2288,32 +2288,28 @@ export function ExercisesScreen({
               />
             ) : null
           }
-          actionRowLeft={
-            // Founder action-row pass (2026-06-11): HINT left the
-            // floating board overlay and sits in the dock action row
-            // as a pin, right after Daily — DAILY · HINT · SAVE ·
-            // CLAIM · SPECIAL TRAINING. Fragment (not a wrapper div)
-            // so each pin is a direct flex item of the single centered
-            // row in MissionPanelCandy Zone C. Hidden (not
-            // row-shifting empty space) outside phase=ready / in
-            // labyrinth mode.
-            <>
-              <DailyTacticSlot />
-              {activeLabyrinth || phase !== "ready" ? null : (
-                <PeonesHintButton
-                  piece={selectedPiece}
-                  exerciseId={currentExercise.id}
-                  // Sprint 5 commit E — consume the live attemptSeq from
-                  // useExerciseProgress. Same attempt → same key →
-                  // duplicate=true (re-view free). Fresh attempt after a
-                  // legacy Retry → fresh key → real debit possible.
-                  attemptSeq={attemptSeq}
-                  disabled={false}
-                  firstStep={peonesHintFirstStep}
-                  onReveal={setPeonesHintSquare}
-                />
-              )}
-            </>
+          actionRowLeft={<DailyTacticSlot />}
+          actionRowCenter={
+            // Sally composition pass (2026-06-11): HINT is an
+            // in-context action, so it joins the centered group next
+            // to SAVE/CLAIM; the edges stay reserved for the
+            // persistent entry points (Daily / Special Training).
+            // Hidden (not row-shifting empty space) outside
+            // phase=ready / in labyrinth mode.
+            activeLabyrinth || phase !== "ready" ? null : (
+              <PeonesHintButton
+                piece={selectedPiece}
+                exerciseId={currentExercise.id}
+                // Sprint 5 commit E — consume the live attemptSeq from
+                // useExerciseProgress. Same attempt → same key →
+                // duplicate=true (re-view free). Fresh attempt after a
+                // legacy Retry → fresh key → real debit possible.
+                attemptSeq={attemptSeq}
+                disabled={false}
+                firstStep={peonesHintFirstStep}
+                onReveal={setPeonesHintSquare}
+              />
+            )
           }
           actionRowRight={
             <MiniArenaBridgeSlot

@@ -76,6 +76,11 @@ type MissionPanelProps = {
    *  bridge) that shouldn't push the board down. */
   actionRowLeft?: ReactNode
   actionRowRight?: ReactNode
+  /** Contextual pins that join the centered group alongside
+   *  `contextualAction` (e.g. the Peones Hint pin). Founder action-row
+   *  composition 2026-06-11: edges = persistent entry points, center =
+   *  in-context actions distributed without holes. */
+  actionRowCenter?: ReactNode
   /** Sprint 4 commit K — floating overlay anchored to the top-right
    *  of the board zone. Used by the Peones Hint affordance so the
    *  button can grow / shrink across states (idle / loading /
@@ -426,6 +431,7 @@ export function MissionPanelCandy({
   headerSlot,
   actionRowLeft,
   actionRowRight,
+  actionRowCenter,
   floatingActionSlot,
   shieldCount,
   streakCount,
@@ -629,20 +635,26 @@ export function MissionPanelCandy({
         )}
       </div>
 
-      {/* Zone C: action row — ONE centered flex row (founder 2026-06-11).
-          The previous layout pinned the flanks absolutely at the edges,
-          which left a hole on one side whenever a slot was empty and
-          misaligned mixed pedestal/pin heights. A plain centered row
-          redistributes naturally: 1 icon = centered, 2-3 icons = grouped
-          at the center with even gaps. Slots render in reading order:
-          Daily · Hint (left), SAVE/CLAIM (center), Special (right). */}
+      {/* Zone C: action row — 3-column grid (Sally composition pass
+          2026-06-11). Edges host the PERSISTENT entry points (Daily
+          left, Special Training right) so they keep their muscle-memory
+          anchors; the middle column groups the IN-CONTEXT actions
+          (Hint + SAVE/CLAIM) centered with even gaps — 1 pin sits at
+          the exact geometric center, 2-3 group around it, never a
+          one-sided hole. `1fr auto 1fr` keeps the center group at the
+          true screen center even when only one edge slot is mounted.
+          All columns align by vertical center (pedestals have no label,
+          pins do — bottom-alignment is what knocked Daily askew). */}
       <div
-        className="mx-2 flex min-h-[4.75rem] shrink-0 items-center justify-center gap-3"
+        className="mx-2 grid min-h-[4.75rem] shrink-0 grid-cols-[1fr_auto_1fr] items-center"
         style={{ marginTop: 'var(--shell-gap-xs)' }}
       >
-        {actionRowLeft}
-        {contextualAction}
-        {actionRowRight}
+        <div className="flex items-center justify-start">{actionRowLeft}</div>
+        <div className="flex items-center justify-center gap-3">
+          {actionRowCenter}
+          {contextualAction}
+        </div>
+        <div className="flex items-center justify-end">{actionRowRight}</div>
       </div>
 
       {/* Dock — persistent navigation.
