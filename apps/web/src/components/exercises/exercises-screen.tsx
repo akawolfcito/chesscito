@@ -2329,11 +2329,11 @@ export function ExercisesScreen({
           onExitLabyrinth={handleExitLabyrinth}
           onLabyrinthSelect={handleLabyrinthSelect}
           score={score.toString()}
-          timeMs={timeMs.toString()}
-          currentStars={totalStars}
           claimedBadges={badgesClaimed}
           trainingPath={trainingPath}
-          walletConnected={isConnected}
+          canSaveScore={scorePendingNew}
+          onSaveScore={() => void handleSubmitScore()}
+          isSavingScore={isSubmitBusy}
           shieldCount={shieldCount}
           streakCount={streakCount}
           lastEarnedStars={lastEarnedStars}

@@ -1182,6 +1182,9 @@ const messages = {
     timeLabel: "Tiempo",
     preFirstMoveHint: "Haz tu primer movimiento para empezar",
     journeyTitle: "Tu viaje",
+    nowLabyrinthFormat: "Ahora: Laberinto {number}",
+    nowLabyrinthAriaFormat: "Empezar Laberinto {number}",
+    saveScoreCta: "Guardar puntaje",
     closeLabelFormat: "Cerrar {title}",
   },
   BADGE_TITLES: {

@@ -10,12 +10,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
-import { CandyIcon } from "@/components/redesign/candy-icon";
-import { JourneyRail } from "@/components/redesign/journey-rail";
-import { TrainingPathRail } from "@/components/exercises/training-path-rail";
-import { SCORE_UNIT } from "@/lib/content/editorial";
+import { getNextChallenge, type TrainingNode } from "@/lib/training/path";
 import type { PieceId } from "@/lib/game/types";
-import type { TrainingNode } from "@/lib/training/path";
 
 type Props = {
   /** Controlled open state — parent closes it when a dock sheet opens,
@@ -25,23 +21,22 @@ type Props = {
   selectedPiece: PieceId;
   targetLabel: string;
   isCapture: boolean;
+  /** Local score, surfaced on the save-score button so the player
+   *  knows what they're saving. */
   score: string;
-  timeMs: string;
-  /** Total stars earned on the current piece (0–15). Powers the journey
-   *  rail "badge" tier progress. */
-  currentStars: number;
-  /** On-chain badge claim status per piece. Drives the journey rail
-   *  unlock/locked states. */
-  claimedBadges: Partial<Record<PieceId, boolean>>;
-  /** Integrated per-piece path (Slice 2, read-only display). Absent →
-   *  the section is not rendered, keeping legacy callers unchanged. */
+  /** Integrated per-piece path. Surface redistribution D1: Mission no
+   *  longer renders the path — it only derives the one live "Now: X"
+   *  line via `getNextChallenge()`. Absent → no line. */
   trainingPath?: TrainingNode[];
-  /** Gates milestone copy only ("Badge ready" vs "Connect to claim"). */
-  walletConnected?: boolean;
-  /** Slice 3C: tap on an unlocked labyrinth node. The sheet closes
-   *  itself before reporting so the player lands straight on the
-   *  board. Absent → the rail stays read-only. */
+  /** Tap on the "Now: Labyrinth N" line. The sheet closes itself
+   *  before reporting so the player lands straight on the board.
+   *  Absent → the line renders nothing. */
   onLabyrinthSelect?: (labyrinthId: string) => void;
+  /** D5 — save-score affordance below the objective. Button renders
+   *  only when `canSaveScore` AND the handler are provided. */
+  canSaveScore?: boolean;
+  onSaveScore?: () => void;
+  isSavingScore?: boolean;
   /** The peek-card element that opens the modal. Cloned with an
    *  injected onClick that flips `open` true; any pre-existing
    *  handler on the trigger is preserved. */
@@ -57,18 +52,16 @@ export function MissionDetailSheet({
   targetLabel,
   isCapture,
   score,
-  timeMs,
-  currentStars,
-  claimedBadges,
   trainingPath,
-  walletConnected = false,
   onLabyrinthSelect,
+  canSaveScore = false,
+  onSaveScore,
+  isSavingScore = false,
   trigger,
 }: Props) {
   const tBriefing = useTranslations("MISSION_BRIEFING_COPY");
   const tDetail = useTranslations("MISSION_DETAIL_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
-  const tPath = useTranslations("TRAINING_PATH_COPY");
   // Two-stage open/close so the fade-out animation completes before
   // unmounting. `mounted` controls DOM presence; `exiting` flips the
   // panel opacity for the closing transition.
@@ -100,7 +93,16 @@ export function MissionDetailSheet({
     return () => window.removeEventListener("keydown", onKey);
   }, [mounted, onOpenChange]);
 
-  const hasStats = Number(score) > 0 || Number(timeMs) > 0;
+  // Surface redistribution D1: the one live "what now" line. Number is
+  // the node's 1-based position within the path's labyrinth leg.
+  const nextChallenge = trainingPath ? getNextChallenge(trainingPath) : null;
+  const nextChallengeNumber = nextChallenge
+    ? trainingPath!
+        .filter((node) => node.kind === "labyrinth")
+        .findIndex((node) => node.id === nextChallenge.id) + 1
+    : 0;
+  const showNowLine = Boolean(nextChallenge && onLabyrinthSelect);
+  const showSaveScore = Boolean(canSaveScore && onSaveScore);
   const pieceName = (() => {
     try {
       return tPiece(selectedPiece);
@@ -241,93 +243,72 @@ export function MissionDetailSheet({
                   </div>
                 </div>
 
-                {hasStats ? (
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
-                    <span className="candy-stat-pill">
-                      <span className="candy-stat-pill-icon">
-                        <CandyIcon name="star" className="h-4 w-4" />
-                      </span>
-                      {`${score} ${SCORE_UNIT}`}
-                    </span>
-                    <span className="candy-stat-pill">
-                      <span className="candy-stat-pill-icon">
-                        <CandyIcon name="time" className="h-4 w-4" />
-                      </span>
-                      {`${Number(timeMs) / 1000}s`}
-                    </span>
-                  </div>
-                ) : (
-                  <p
-                    className="mt-3 text-center text-xs"
-                    style={{ color: "rgba(110, 65, 15, 0.65)" }}
-                  >
-                    {tDetail("preFirstMoveHint")}
-                  </p>
+                {(showNowLine || showSaveScore) && (
+                  <picture>
+                    <source
+                      srcSet="/art/screen-mission/adorno-icon.avif"
+                      type="image/avif"
+                    />
+                    <source
+                      srcSet="/art/screen-mission/adorno-icon.webp"
+                      type="image/webp"
+                    />
+                    <img
+                      src="/art/screen-mission/adorno-icon.png"
+                      alt=""
+                      aria-hidden="true"
+                      className="mt-3 h-4 w-44 object-contain"
+                      draggable={false}
+                    />
+                  </picture>
                 )}
 
-                <picture>
-                  <source
-                    srcSet="/art/screen-mission/adorno-icon.avif"
-                    type="image/avif"
-                  />
-                  <source
-                    srcSet="/art/screen-mission/adorno-icon.webp"
-                    type="image/webp"
-                  />
-                  <img
-                    src="/art/screen-mission/adorno-icon.png"
-                    alt=""
-                    aria-hidden="true"
-                    className="mt-3 h-4 w-44 object-contain"
-                    draggable={false}
-                  />
-                </picture>
-
-                {trainingPath && trainingPath.length > 0 ? (
-                  <>
-                    <h3
-                      className="mt-2 text-center text-base font-extrabold tracking-tight"
-                      style={{
-                        color: "rgba(63, 34, 8, 0.95)",
-                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
-                      }}
-                    >
-                      {tPath("title")}
-                    </h3>
-                    <div className="mt-2 w-full">
-                      <TrainingPathRail
-                        path={trainingPath}
-                        connected={walletConnected}
-                        onLabyrinthSelect={
-                          onLabyrinthSelect
-                            ? (labyrinthId) => {
-                                onOpenChange(false);
-                                onLabyrinthSelect(labyrinthId);
-                              }
-                            : undefined
-                        }
-                      />
-                    </div>
-                  </>
+                {/* D1 — the one live "what do I do now" line. Tap closes
+                    the sheet first so the player lands on the board. */}
+                {showNowLine ? (
+                  <button
+                    type="button"
+                    aria-label={tDetail("nowLabyrinthAriaFormat", {
+                      number: nextChallengeNumber,
+                    })}
+                    onClick={() => {
+                      onOpenChange(false);
+                      onLabyrinthSelect!(nextChallenge!.id);
+                    }}
+                    className="candy-tray-pill mt-3 w-full justify-center text-sm font-extrabold"
+                    style={{
+                      color: "rgba(63, 34, 8, 0.95)",
+                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                    }}
+                  >
+                    {tDetail("nowLabyrinthFormat", {
+                      number: nextChallengeNumber,
+                    })}
+                  </button>
                 ) : null}
 
-                <h3
-                  className="mt-2 text-center text-base font-extrabold tracking-tight"
-                  style={{
-                    color: "rgba(63, 34, 8, 0.95)",
-                    textShadow: "0 1px 0 rgba(255, 245, 215, 0.7)",
-                  }}
-                >
-                  {tDetail("journeyTitle")}
-                </h3>
-
-                <div className="mt-2 w-full">
-                  <JourneyRail
-                    currentPiece={selectedPiece}
-                    currentStars={currentStars}
-                    claimedBadges={claimedBadges}
-                  />
-                </div>
+                {/* D5 — save score, below the objective block. Same
+                    handler the contextual SAVE pin uses; the parent owns
+                    gating and busy state. */}
+                {showSaveScore ? (
+                  <button
+                    type="button"
+                    aria-label={tDetail("saveScoreCta")}
+                    onClick={onSaveScore}
+                    disabled={isSavingScore}
+                    aria-busy={isSavingScore}
+                    className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--green mt-3"
+                  >
+                    {isSavingScore ? (
+                      <span
+                        aria-hidden="true"
+                        className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                      />
+                    ) : (
+                      `${tDetail("saveScoreCta")} · ${score}`
+                    )}
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>

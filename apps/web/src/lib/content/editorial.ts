@@ -135,6 +135,13 @@ export const MISSION_DETAIL_COPY = {
   timeLabel: "Time",
   preFirstMoveHint: "Make your first move to start tracking",
   journeyTitle: "Your journey",
+  /** Surface redistribution D1 (spec 2026-06-11): the one live "what
+   *  do I do now" line. Only labyrinth recommendations render it; when
+   *  the path has nothing pending, the objective above IS the answer. */
+  nowLabyrinthFormat: "Now: Labyrinth {number}",
+  nowLabyrinthAriaFormat: "Start Labyrinth {number}",
+  /** D5: save score affordance inside Mission, below the objective. */
+  saveScoreCta: "Save score",
   /** Generic close-affordance ARIA label used by `<MissionHeaderCandy />`
    *  for every sheet that adopts it (mission detail, daily picker, mate
    *  picker, …). `{title}` is the surface's own sheet title. */

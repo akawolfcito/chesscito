@@ -25,7 +25,6 @@ type MissionPanelProps = {
   phase: 'ready' | 'success' | 'failure'
   targetLabel: string
   score: string
-  timeMs: string
   board: ReactNode
   exerciseDrawer: ReactNode
   isReplay: boolean
@@ -49,18 +48,17 @@ type MissionPanelProps = {
    *  "+N STAR" pill in the WELL DONE flash. Only consumed when
    *  phase === 'success'. */
   lastEarnedStars?: number
-  /** Total stars earned on the current piece (0–15). Feeds the
-   *  mission-detail journey rail so the user sees how close they are
-   *  to claiming the badge. */
-  currentStars: number
-  /** On-chain badge claim status per piece. Feeds the journey rail
-   *  unlock/locked tiers. */
+  /** On-chain badge claim status per piece. Feeds the piece picker
+   *  switch gate. */
   claimedBadges: Partial<Record<PieceOption['key'], boolean>>
-  /** Integrated per-piece path, forwarded read-only to the mission
-   *  detail sheet (training path Slice 2). */
+  /** Integrated per-piece path, forwarded to the mission detail sheet
+   *  for its "Now: X" line (surface redistribution D1). */
   trainingPath?: TrainingNode[]
-  /** Wallet connection, forwarded for milestone copy only. */
-  walletConnected?: boolean
+  /** D5 — save-score affordance inside the mission detail sheet.
+   *  Forwarded untouched; the host owns gating and busy state. */
+  canSaveScore?: boolean
+  onSaveScore?: () => void
+  isSavingScore?: boolean
   /** Signal from the parent that a dock destination sheet is open.
    *  When true, we close piece-picker and mission-detail so the user
    *  never sees a picker stacked behind a badge/shop/leaderboard
@@ -424,16 +422,16 @@ export function MissionPanelCandy({
   phase,
   targetLabel,
   score,
-  timeMs,
   board,
   exerciseDrawer,
   contextualAction,
   persistentDock,
   isCapture = false,
-  currentStars,
   claimedBadges,
   trainingPath,
-  walletConnected = false,
+  canSaveScore,
+  onSaveScore,
+  isSavingScore,
   isDockSheetOpen,
   labyrinthMode = false,
   labyrinthOptimalMoves,
@@ -552,12 +550,11 @@ export function MissionPanelCandy({
               targetLabel={targetLabel}
               isCapture={isCapture}
               score={score}
-              timeMs={timeMs}
-              currentStars={currentStars}
-              claimedBadges={claimedBadges}
               trainingPath={trainingPath}
-              walletConnected={walletConnected}
               onLabyrinthSelect={onLabyrinthSelect}
+              canSaveScore={canSaveScore}
+              onSaveScore={onSaveScore}
+              isSavingScore={isSavingScore}
               trigger={missionPeek}
             />
           </div>
