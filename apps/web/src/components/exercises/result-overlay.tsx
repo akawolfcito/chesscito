@@ -450,27 +450,11 @@ export function ResultOverlay({
             <h1 className="arena-result-title">{title}</h1>
           </div>
 
-          {/* IMAGE — variant-specific hero centered below the title. */}
-          {isError ? (
-            <div className="mx-auto block h-20 w-20" aria-hidden="true">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-full w-full"
-              >
-                <path
-                  d="M12 3 L22 21 H2 Z"
-                  fill="rgb(252, 211, 77)"
-                  stroke="rgb(159, 18, 57)"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-                <rect x="11" y="9" width="2" height="6" rx="1" fill="rgb(159, 18, 57)" />
-                <rect x="11" y="17" width="2" height="2" rx="1" fill="rgb(159, 18, 57)" />
-              </svg>
-            </div>
-          ) : variant === "shop" && itemAsset ? (
+          {/* IMAGE — variant-specific hero centered below the title.
+              Error variant has NO hero (founder 2026-06-11: the warning
+              triangle read as system-alert, off the candy vocabulary);
+              the avatar carries the emotion inline next to the text. */}
+          {isError ? null : variant === "shop" && itemAsset ? (
             <picture className="mx-auto block h-24 w-24">
               <source srcSet={`${itemAsset}.avif`} type="image/avif" />
               <source srcSet={`${itemAsset}.webp`} type="image/webp" />
@@ -504,17 +488,42 @@ export function ResultOverlay({
             </div>
           ) : null}
 
-          <p
-            className="px-2 text-center text-sm leading-snug"
-            style={{
-              color: isError
-                ? "rgba(159, 18, 57, 0.95)"
-                : "rgba(63, 34, 8, 0.95)",
-              textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-            }}
-          >
-            {subtitle}
-          </p>
+          {isError ? (
+            /* Error composition (founder 2026-06-11): text + avatar
+               share one in-flow row, instead of an absolutely
+               positioned avatar overlapping the message. */
+            <div className="flex items-center justify-center gap-2 px-2">
+              <p
+                className="text-center text-sm leading-snug"
+                style={{
+                  color: "rgba(159, 18, 57, 0.95)",
+                  textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                }}
+              >
+                {subtitle}
+              </p>
+              <picture className="w-20 shrink-0">
+                <source srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.avif" type="image/avif" />
+                <source srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.webp" type="image/webp" />
+                <img
+                  src="/art/new-assets-chesscito/fun/avatar-asombrado.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                />
+              </picture>
+            </div>
+          ) : (
+            <p
+              className="px-2 text-center text-sm leading-snug"
+              style={{
+                color: "rgba(63, 34, 8, 0.95)",
+                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+              }}
+            >
+              {subtitle}
+            </p>
+          )}
 
           {hint ? (
             <p
@@ -599,27 +608,6 @@ export function ResultOverlay({
             </div>
           ) : null}
 
-          {isError ? (
-            <picture
-              className="arena-result-coach-avatar"
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                right: "8%",
-                bottom: "18%",
-                width: "5.5rem",
-                pointerEvents: "none",
-              }}
-            >
-              <source srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.avif" type="image/avif" />
-              <source srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.webp" type="image/webp" />
-              <img
-                src="/art/new-assets-chesscito/fun/avatar-asombrado.png"
-                alt=""
-                draggable={false}
-              />
-            </picture>
-          ) : null}
         </VictoryPopupShell>
       </div>
 
