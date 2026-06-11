@@ -63,7 +63,8 @@ describe("BadgeSheet — claim action presentation", () => {
 
     const claim = screen.getByRole("button", { name: "Claim Badge" });
     expect(claim).toHaveTextContent("Claim");
-    expect(claim).toHaveClass("badge-card-claim-btn");
+    // Shop buy-pill treatment (founder 2026-06-11).
+    expect(claim).toHaveClass("shop-item-tile-buy-pill--green");
     expect(screen.getByText("Claimable")).toBeInTheDocument();
   });
 

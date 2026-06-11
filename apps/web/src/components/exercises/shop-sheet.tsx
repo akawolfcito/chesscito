@@ -367,7 +367,11 @@ export function ShopSheet({
          *  allow it. Cards re-pad inward via `px-6` so layout looks
          *  identical — the only difference is icons can now visibly
          *  float past the card's left edge. */}
-        <div className="mt-4 -mx-6 px-6 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-6">
+        {/* pt-2 (with mt-2 keeping the visual offset) reserves room
+            inside the scroll clip box for the FEATURED ribbon's -8px
+            top overhang on the first card — without it the ribbon
+            renders decapitated (founder 2026-06-11). */}
+        <div className="mt-2 pt-2 -mx-6 px-6 flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pb-6">
           {items.length === 0 && (
             <p
               className="text-center text-sm"

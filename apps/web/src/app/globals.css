@@ -9683,7 +9683,7 @@ button.hud-resource-chip:active:not(:disabled) {
   /* Default tone: amber — overridden by `[data-tone="..."]` below. */
   --shop-tile-accent-base: #fff5d7;
   --shop-tile-accent-mid: #f8db78;
-  --shop-tile-accent-border: rgba(180, 120, 35, 0.55);
+  --shop-tile-accent-border: rgba(180, 120, 35, 0.25);
 
   position: relative;
   display: grid;
@@ -9718,19 +9718,19 @@ button.hud-resource-chip:active:not(:disabled) {
 .shop-item-tile[data-tone="purple"] {
   --shop-tile-accent-base: #f0e2ff;
   --shop-tile-accent-mid: #c8a9ed;
-  --shop-tile-accent-border: rgba(112, 65, 175, 0.55);
+  --shop-tile-accent-border: rgba(112, 65, 175, 0.25);
 }
 
 .shop-item-tile[data-tone="orange"] {
   --shop-tile-accent-base: #ffe7c8;
   --shop-tile-accent-mid: #f7b46a;
-  --shop-tile-accent-border: rgba(180, 95, 25, 0.55);
+  --shop-tile-accent-border: rgba(180, 95, 25, 0.25);
 }
 
 .shop-item-tile[data-tone="blue"] {
   --shop-tile-accent-base: #dde9ff;
   --shop-tile-accent-mid: #9fbcec;
-  --shop-tile-accent-border: rgba(55, 95, 175, 0.55);
+  --shop-tile-accent-border: rgba(55, 95, 175, 0.25);
 }
 
 /* Green tone — celebratory cream-to-leaf gradient. Reassigned
@@ -9739,7 +9739,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .shop-item-tile[data-tone="green"] {
   --shop-tile-accent-base: #e0f1d4;
   --shop-tile-accent-mid: #95c66a;
-  --shop-tile-accent-border: rgba(70, 130, 30, 0.55);
+  --shop-tile-accent-border: rgba(70, 130, 30, 0.25);
 }
 
 /* Compact variant — half-width mini-card used inside the 2-col
@@ -9890,7 +9890,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .welcome-pack-tile[data-tone="welcome"] {
   --shop-tile-accent-base: #fff1c8;
   --shop-tile-accent-mid: #f5c44b;
-  --shop-tile-accent-border: rgba(190, 120, 25, 0.65);
+  --shop-tile-accent-border: rgba(190, 120, 25, 0.30);
 }
 
 .shop-item-tile:active {
@@ -10016,7 +10016,7 @@ button.hud-resource-chip:active:not(:disabled) {
   padding: 0.18rem 0.55rem;
   border-radius: 9999px;
   background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
-  border: 1px solid rgba(120, 53, 15, 0.80);
+  border: 1px solid rgba(120, 53, 15, 0.35);
   color: #3f2208;
   font-size: 0.62rem;
   font-weight: 900;
@@ -10165,7 +10165,7 @@ button.hud-resource-chip:active:not(:disabled) {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, transparent 32%),
     linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
-  border-color: rgba(20, 83, 45, 0.85);
+  border-color: rgba(20, 83, 45, 0.35);
   color: #f0fdf4;
   text-shadow:
     0 1px 0 rgba(20, 83, 45, 0.65),
@@ -10355,21 +10355,6 @@ button.hud-resource-chip:active:not(:disabled) {
   align-items: center;
   justify-content: flex-end;
   min-width: 72px;
-}
-
-.badge-card-claim-btn {
-  min-width: 72px !important;
-  width: auto !important;
-  height: 34px !important;
-  min-height: 34px !important;
-  padding: 0 13px !important;
-  border-radius: 13px !important;
-  font-size: 0.82rem !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-  box-shadow:
-    0 3px 8px rgba(5, 150, 105, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.40) !important;
 }
 
 /* ── Trophy Case (trophies-body.tsx) ──────────────────────────────────────

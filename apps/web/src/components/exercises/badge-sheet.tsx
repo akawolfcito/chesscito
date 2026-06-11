@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { PieceId } from "@/lib/game/types";
@@ -121,16 +120,27 @@ function BadgeCard({
             {t("owned")}
           </CandyChip>
         ) : isClaimable ? (
-          <PrincipalButton
-            size="medium"
-            className="badge-card-claim-btn"
+          // Shop buy-pill style (founder 2026-06-11): same lush green
+          // pill as the SHOP price buttons. nowrap auto-width also
+          // kills the "Clai…" truncation the gold-carved sprite had
+          // at this size.
+          <button
+            type="button"
+            className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--green"
             onClick={onClaim}
-            loading={isThisBusy}
-            disabled={isClaimBusy && !isThisBusy}
+            disabled={isClaimBusy}
+            aria-busy={isThisBusy}
             aria-label={t("claimBadge")}
           >
-            {t("claim")}
-          </PrincipalButton>
+            {isThisBusy ? (
+              <span
+                aria-hidden="true"
+                className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+              />
+            ) : (
+              t("claim")
+            )}
+          </button>
         ) : (
           <CandyChip variant="warm" tone="subtle">
             <CandyIcon name="lock" className="mr-0.5 h-2.5 w-2.5" />
