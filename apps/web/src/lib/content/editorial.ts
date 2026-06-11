@@ -3114,6 +3114,10 @@ export const RESCUE_MODAL_COPY = {
  */
 export const PEONES_HINT_COPY = {
   button: "Hint \u00b7 1 Peón",
+  /** Nano label under the action-row pin (founder 2026-06-11: HINT
+   *  sits in the dock action row like SAVE/CLAIM). Cost detail stays
+   *  in `button`, which becomes the aria-label. */
+  pinLabel: "Hint",
   guest: "Connect to use Peones hints",
   /** Short feedback copy. Sprint 4 commit M — collapsed the stacked
    *  chip+sublabel into a single morphing chip; copy must fit one

@@ -119,16 +119,30 @@ export function PeonesHintButton({
 
   if (disabled) return null;
 
-  // Guest path — muted, no fetch.
+  // Guest path — muted pin, no fetch. Founder action-row pass
+  // (2026-06-11): the pin keeps its sprite so the row stays uniform;
+  // the connect nudge lives in the aria-label, not a long chip.
   if (!isConnected || !address) {
     return (
       <div
-        className="pointer-events-auto inline-flex max-w-full items-center truncate rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-semibold text-amber-900/80 shadow-sm ring-1 ring-amber-800/15"
+        className="action-pin action-pin--pin flex flex-col items-center gap-1 opacity-50"
         role="status"
+        aria-label={t("guest")}
         data-testid="peones-hint-button"
         data-state="guest"
       >
-        {t("guest")}
+        <span className="action-pin-submit-pedestal relative flex shrink-0 items-center justify-center">
+          <img
+            src={HINT_ICON_SRC}
+            alt=""
+            aria-hidden="true"
+            className="object-contain"
+            draggable={false}
+          />
+        </span>
+        <span className="action-pin-label game-label text-nano font-bold uppercase tracking-[0.12em] text-[rgba(63,34,8,0.85)]">
+          {t("pinLabel")}
+        </span>
       </div>
     );
   }
@@ -256,10 +270,11 @@ export function PeonesHintButton({
     state.kind === "rate_limited" ||
     state.kind === "error";
 
-  // Sprint 4 commit M — single morphing chip. The chip itself swaps
-  // its content based on state instead of stacking a sublabel below.
-  // Eliminates the "appears, grows, shrinks again" jitter the user
-  // saw with the previous two-line layout.
+  // Founder action-row pass (2026-06-11) — the chip became a PIN so
+  // HINT sits in the dock action row like SAVE/CLAIM: bare sprite +
+  // nano label below. The label is the morphing surface (idle shows
+  // the pin name; feedback states swap it), and a successful reveal
+  // gets the green check marker from the check/dot system.
   const label =
     state.kind === "insufficient"
       ? t("insufficient")
@@ -267,39 +282,53 @@ export function PeonesHintButton({
         ? t("rateLimited")
         : state.kind === "error"
           ? t("error")
-          : t("button");
+          : t("pinLabel");
 
   return (
     <div
-      className="pointer-events-auto inline-flex"
+      className="action-pin action-pin--pin pointer-events-auto flex flex-col items-center gap-1"
       data-testid="peones-hint-button"
       data-state={state.kind}
     >
       <button
         type="button"
-        className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full py-1 pl-2 pr-3 text-xs font-bold shadow-sm ring-1 transition-colors hover:bg-amber-200 disabled:opacity-80 disabled:hover:bg-white ${
-          isFeedback
-            ? "bg-white text-amber-900/90 ring-amber-800/15"
-            : isRevealed
-              ? "bg-amber-200 text-amber-950/70 ring-amber-700/20"
-              : "bg-amber-300 text-amber-950 ring-amber-700/30"
-        }`}
+        className="action-pin-submit-pedestal relative flex shrink-0 items-center justify-center disabled:opacity-70"
+        aria-label={t("button")}
         aria-busy={isLoading}
         aria-disabled={isLoading || isRevealed || isFeedback}
         disabled={isLoading || isRevealed || isFeedback}
-        role={isFeedback ? "status" : undefined}
-        aria-live={isFeedback ? "polite" : undefined}
         onClick={() => void handleClick()}
       >
-        <img
-          src={HINT_ICON_SRC}
-          alt=""
-          aria-hidden="true"
-          className="h-5 w-5 shrink-0 object-contain"
-          draggable={false}
-        />
-        {label}
+        {isLoading ? (
+          <span
+            aria-hidden="true"
+            className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+          />
+        ) : (
+          <img
+            src={HINT_ICON_SRC}
+            alt=""
+            aria-hidden="true"
+            className="object-contain"
+            draggable={false}
+          />
+        )}
+        {isRevealed ? (
+          <span
+            aria-hidden="true"
+            className="action-pin-status action-pin-status--done"
+          >
+            ✓
+          </span>
+        ) : null}
       </button>
+      <span
+        className="action-pin-label game-label text-nano font-bold uppercase tracking-[0.12em] text-[rgba(63,34,8,0.85)]"
+        role={isFeedback ? "status" : undefined}
+        aria-live={isFeedback ? "polite" : undefined}
+      >
+        {label}
+      </span>
     </div>
   );
 }

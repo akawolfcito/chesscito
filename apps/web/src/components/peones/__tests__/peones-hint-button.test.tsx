@@ -30,6 +30,7 @@ vi.mock("@/lib/peones/telemetry", () => ({
 const messages = {
   PEONES_HINT_COPY: {
     button: "Hint \u00b7 1 Peón",
+    pinLabel: "Hint",
     guest: "Connect to use Peones hints",
     insufficient: "Need 1 Peón",
     error: "Hint unavailable",
@@ -93,9 +94,12 @@ describe("PeonesHintButton — guest", () => {
         submitImpl={submitImpl}
       />,
     );
+    // Pin form (2026-06-11): connect nudge lives in the aria-label,
+    // the visible nano label stays the pin name.
     expect(
-      screen.getByText("Connect to use Peones hints"),
+      screen.getByLabelText("Connect to use Peones hints"),
     ).toBeInTheDocument();
+    expect(screen.getByText("Hint")).toBeInTheDocument();
     expect(submitImpl).not.toHaveBeenCalled();
     expect(mockedSpent).not.toHaveBeenCalled();
     expect(mockedBlocked).not.toHaveBeenCalled();
@@ -635,7 +639,10 @@ describe("PeonesHintButton — icon+label (founder D3 follow-up)", () => {
       "/art/new-icons-chesscito/hint-icon.png",
     );
     expect(icon).toHaveAttribute("aria-hidden", "true");
-    expect(button).toHaveTextContent("Hint · 1 Peón");
+    // Pin form: cost detail is the aria-label; the nano label below
+    // shows the pin name.
+    expect(button).toHaveAttribute("aria-label", "Hint · 1 Peón");
+    expect(screen.getByText("Hint")).toBeInTheDocument();
   });
 
   it("icon survives the insufficient morph (no layout-jump text-only chip)", async () => {
@@ -658,15 +665,15 @@ describe("PeonesHintButton — icon+label (founder D3 follow-up)", () => {
       ),
     );
     expect(
-      screen.getByRole("status").querySelector("img"),
+      screen.getByTestId("peones-hint-button").querySelector("img"),
     ).not.toBeNull();
   });
 
-  it("guest chip stays text-only (no spend affordance to advertise)", () => {
+  it("guest pin keeps the sprite (uniform action row) but is non-interactive", () => {
     render(<PeonesHintButton piece="rook" exerciseId="r-1" />);
-    expect(
-      screen.getByTestId("peones-hint-button").querySelector("img"),
-    ).toBeNull();
+    const root = screen.getByTestId("peones-hint-button");
+    expect(root.querySelector("img")).not.toBeNull();
+    expect(root.querySelector("button")).toBeNull();
   });
 });
 

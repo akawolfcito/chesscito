@@ -2107,6 +2107,7 @@ const messages = {
   },
   PEONES_HINT_COPY: {
     button: "Pista \u00b7 1 Peón",
+    pinLabel: "Pista",
     guest: "Conecta tu wallet para usar pistas con Peones",
     insufficient: "Te falta 1 Peón",
     error: "Pista no disponible",
