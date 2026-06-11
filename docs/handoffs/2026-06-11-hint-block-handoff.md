@@ -141,3 +141,43 @@ Founder direction: the HUD streak should ideally be a DAILY streak
 row shows the session one. Migration = own slice when prioritized:
 swap the HUD source + decide shield interaction. Nothing changed in
 this block.
+
+---
+
+## Addendum 4 — HUB polish session close (2026-06-11, all pushed)
+
+Everything through `4c763b8f` is on `origin/main` (user pushes as we
+go). Suite baseline **3519/3519**.
+
+HUB micro-block follow-ups shipped after addendum 3:
+- Rail labels: Fredoka 400 0.68rem nowrap (Rowdies has no light cut —
+  weight changes alone were invisible). Status caption = dark
+  translucent capsule (cream pill read as duplicated label; bare text
+  was illegible over the forest).
+- Mate tile → "Training" (EN+ES both, matches the hardcoded
+  exercises pin; translate together when pin labels get i18n).
+- Peones HUD chip: visual-first (number only, word in aria-label),
+  peon-piece-v1 triplet with p-1 (tight crop dwarfed the trophy),
+  anchored-left (square left corners).
+- CSS alert dot everywhere on /hub: action row + LEARN rail
+  (reward-column span, punto-alerta PNG no longer fetched on /hub).
+- LanguageChip final form: BARE FLAG emoji 1.75rem (no pill, no
+  medallion, no EN/ES code), tap → confirm card → next-intl
+  router.replace(pathname, {locale}). Copy LANGUAGE_CHIP_COPY
+  (editorial + es). Sally verdict: keep in HUD during pre-launch
+  (LATAM wrong-locale rescue); revisit moving to settings when
+  onboarding asks language.
+
+## NEXT SESSION — start here
+
+1. **Deep Hint (3 Peones) spec** — next economy-v2 sink. Cite 2-3
+   proven patterns (Candy Crush boosters, Duolingo gem hints) BEFORE
+   custom design. NO earn tightening.
+2. **Bug item 7 (SAVE/CLAIM pins vanish post-save)** — re-smoke on
+   current build (surface changed a lot); telemetry `score_save_*`
+   identifies the branch if it persists.
+3. Backlog: dock icons (Shop→money pouch, Leaders→podium; founder
+   signals), rotation-aware advanceExercise (flag OFF),
+   `rl:spend:ip` bucket split (needs log evidence), daily-streak
+   migration for HUD streak chip (note in addendum 3), possible
+   punto-alerta PNG retirement audit (non-hub consumers may remain).
