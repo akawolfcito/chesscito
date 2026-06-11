@@ -153,15 +153,20 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
             </div>
           ) : (
             <>
-              {/* ---- REWARD HERO (always reward-first) ---- */}
-              <span className="relative inline-flex h-24 w-24 items-center justify-center">
-                <RewardGlow />
-                <PawnSprite className="h-[5.5rem] w-[5.5rem]" />
-              </span>
+              {/* ---- REWARD HERO (always reward-first) ----
+                  Founder composition pass 2026-06-11: pawn + title share
+                  one row, price below — tighter vertical rhythm than the
+                  former full-height pawn stack. */}
               <div className="flex flex-col items-center gap-1.5">
-                <p className="arena-result-title leading-none">
-                  {pack.peonesReward} Peones
-                </p>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="relative inline-flex h-16 w-16 items-center justify-center">
+                    <RewardGlow />
+                    <PawnSprite className="h-14 w-14" />
+                  </span>
+                  <p className="arena-result-title leading-none">
+                    {pack.peonesReward} Peones
+                  </p>
+                </div>
                 <span className="candy-stat-pill text-[0.92rem] font-extrabold">
                   {priceLabel}
                 </span>
@@ -182,28 +187,34 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                   data-testid="get-peones-insufficient"
                   className="flex flex-col items-center gap-2"
                 >
-                  <picture className="h-16 w-16 opacity-90">
-                    <source
-                      srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.avif"
-                      type="image/avif"
-                    />
-                    <source
-                      srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.webp"
-                      type="image/webp"
-                    />
-                    <img
-                      src="/art/new-assets-chesscito/fun/avatar-asombrado.png"
-                      alt=""
-                      aria-hidden="true"
-                      className="block h-full w-full object-contain"
-                    />
-                  </picture>
-                  <p className="text-sm font-bold text-amber-800">
-                    Not enough balance
-                  </p>
-                  <p className="max-w-[15rem] text-xs text-amber-700/90">
-                    Add some stablecoins to your wallet, then try again.
-                  </p>
+                  {/* Founder composition pass 2026-06-11: message and
+                      avatar share one row instead of a vertical stack. */}
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="flex flex-col items-start gap-1 text-left">
+                      <p className="text-sm font-bold text-amber-800">
+                        Not enough balance
+                      </p>
+                      <p className="max-w-[12rem] text-xs text-amber-700/90">
+                        Add some stablecoins to your wallet, then try again.
+                      </p>
+                    </div>
+                    <picture className="h-16 w-16 shrink-0 opacity-90">
+                      <source
+                        srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.avif"
+                        type="image/avif"
+                      />
+                      <source
+                        srcSet="/art/new-assets-chesscito/fun/avatar-asombrado.webp"
+                        type="image/webp"
+                      />
+                      <img
+                        src="/art/new-assets-chesscito/fun/avatar-asombrado.png"
+                        alt=""
+                        aria-hidden="true"
+                        className="block h-full w-full object-contain"
+                      />
+                    </picture>
+                  </div>
                   {/* MiniPay-only deeplink to add cash (renders null on web). */}
                   <AddCashCta source="get-peones" className="mt-1" />
                 </div>
