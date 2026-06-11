@@ -108,6 +108,7 @@ export const TRAINING_PATH_COPY = {
   exercisesLabel: "Exercises",
   exerciseChipFormat: "Exercise {number}: {stars} of 3 stars",
   labyrinthLabelFormat: "Labyrinth {number}",
+  labyrinthOpenAriaFormat: "Open Labyrinth {number}",
   labyrinthLockedStarsFormat: "Unlocks at {stars}★",
   labyrinthLockedChain: "Beat previous lab",
   ready: "Ready",
@@ -1180,6 +1181,9 @@ export const PRACTICE_COPY = {
 export const LABYRINTH_COPY = {
   toggleExercises: "Exercises",
   toggleLabyrinths: "Labyrinths",
+  /** Single exit pill shown while the labyrinth layer is active —
+   *  replaced the EXERCISES/LABYRINTHS toggle in Slice 3C. */
+  backToExercises: "Back to exercises",
   tryLabyrinth: "Try Labyrinth",
   /** Demoted text-link variant of tryLabyrinth — used when the action
    *  is offered alongside more important CTAs (e.g. PieceComplete) and

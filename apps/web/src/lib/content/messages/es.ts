@@ -792,6 +792,7 @@ const messages = {
     exercisesLabel: "Ejercicios",
     exerciseChipFormat: "Ejercicio {number}: {stars} de 3 estrellas",
     labyrinthLabelFormat: "Laberinto {number}",
+    labyrinthOpenAriaFormat: "Abrir Laberinto {number}",
     labyrinthLockedStarsFormat: "Se abre con {stars}★",
     labyrinthLockedChain: "Supera el anterior",
     ready: "Listo",
@@ -1459,6 +1460,7 @@ const messages = {
   LABYRINTH_COPY: {
     toggleExercises: "Ejercicios",
     toggleLabyrinths: "Laberintos",
+    backToExercises: "Volver a ejercicios",
     tryLabyrinth: "Probar Laberinto",
     orTryLabyrinth: "o prueba Laberinto →",
     missionTitle: "Laberinto",

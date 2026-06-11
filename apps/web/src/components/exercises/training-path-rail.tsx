@@ -12,6 +12,9 @@ type Props = {
   /** Wallet connection state — gates milestone copy only ("Connect to
    *  claim" vs "Badge ready"), never unlock math. */
   connected: boolean;
+  /** Slice 3C: when present, unlocked labyrinth rows become tappable
+   *  and report their labyrinthId. Absent → fully read-only rail. */
+  onLabyrinthSelect?: (labyrinthId: string) => void;
 };
 
 /** Right-hand status cell for labyrinth + milestone rows. Pills follow
@@ -36,7 +39,7 @@ function StatusCell({
   );
 }
 
-export function TrainingPathRail({ path, connected }: Props) {
+export function TrainingPathRail({ path, connected, onLabyrinthSelect }: Props) {
   const t = useTranslations("TRAINING_PATH_COPY");
 
   const exercises = path.filter((node) => node.kind === "exercise");
@@ -75,40 +78,63 @@ export function TrainingPathRail({ path, connected }: Props) {
           exact rule (stars vs previous lab) so a locked row explains
           itself instead of looking broken. */}
       <div className="paper-tray mt-2">
-        {labyrinths.map((node, index) => (
-          <div
-            key={node.id}
-            className="paper-row journey-row"
-            data-status={node.status === "complete" ? "done" : node.status === "available" ? "active" : "locked"}
-          >
-            <span className="journey-row-icon">
-              <CandyIcon
-                name={node.status === "locked" ? "lock" : node.status === "complete" ? "check" : "crosshair"}
-                className="h-5 w-5"
-              />
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="journey-row-label">
-                {t("labyrinthLabelFormat", { number: index + 1 })}
-              </p>
+        {labyrinths.map((node, index) => {
+          const rowStatus =
+            node.status === "complete" ? "done" : node.status === "available" ? "active" : "locked";
+          const rowContent = (
+            <>
+              <span className="journey-row-icon">
+                <CandyIcon
+                  name={node.status === "locked" ? "lock" : node.status === "complete" ? "check" : "crosshair"}
+                  className="h-5 w-5"
+                />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="journey-row-label">
+                  {t("labyrinthLabelFormat", { number: index + 1 })}
+                </p>
+              </div>
+              {node.status === "complete" ? (
+                <StatusCell pill tone="done" text={t("starsFormat", { stars: node.stars ?? 0 })} />
+              ) : node.status === "available" ? (
+                <StatusCell pill tone="ready" text={t("ready")} />
+              ) : (
+                <StatusCell
+                  pill={false}
+                  tone="neutral"
+                  text={
+                    node.unlock.type === "stars"
+                      ? t("labyrinthLockedStarsFormat", { stars: node.unlock.min })
+                      : t("labyrinthLockedChain")
+                  }
+                />
+              )}
+            </>
+          );
+          // Unlocked labs become buttons ONLY when the parent wires a
+          // select handler (Slice 3C). Locked rows stay plain divs —
+          // locked must feel locked, not like a broken disabled button.
+          return onLabyrinthSelect && node.status !== "locked" ? (
+            <button
+              key={node.id}
+              type="button"
+              onClick={() => onLabyrinthSelect(node.id)}
+              aria-label={t("labyrinthOpenAriaFormat", { number: index + 1 })}
+              className="paper-row journey-row w-full text-left"
+              data-status={rowStatus}
+            >
+              {rowContent}
+            </button>
+          ) : (
+            <div
+              key={node.id}
+              className="paper-row journey-row"
+              data-status={rowStatus}
+            >
+              {rowContent}
             </div>
-            {node.status === "complete" ? (
-              <StatusCell pill tone="done" text={t("starsFormat", { stars: node.stars ?? 0 })} />
-            ) : node.status === "available" ? (
-              <StatusCell pill tone="ready" text={t("ready")} />
-            ) : (
-              <StatusCell
-                pill={false}
-                tone="neutral"
-                text={
-                  node.unlock.type === "stars"
-                    ? t("labyrinthLockedStarsFormat", { stars: node.unlock.min })
-                    : t("labyrinthLockedChain")
-                }
-              />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Milestones — a separate group on purpose (red-team P0-3).

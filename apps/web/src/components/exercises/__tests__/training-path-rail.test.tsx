@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { screen } from "@testing-library/react";
 
 import { renderWithIntl } from "@/test-utils/render-with-intl";
@@ -115,7 +116,7 @@ describe("<TrainingPathRail> — read-only path", () => {
     expect(screen.getByText("Mastered")).toBeInTheDocument();
   });
 
-  it("is strictly read-only: renders no interactive elements", () => {
+  it("is strictly read-only WITHOUT a select handler: no interactive elements", () => {
     renderWithIntl(
       <TrainingPathRail
         path={knightPath({
@@ -128,5 +129,106 @@ describe("<TrainingPathRail> — read-only path", () => {
     expect(screen.queryAllByRole("button")).toHaveLength(0);
     expect(screen.queryAllByRole("link")).toHaveLength(0);
     expect(screen.queryAllByRole("tab")).toHaveLength(0);
+  });
+});
+
+describe("<TrainingPathRail> — interactive labyrinth nodes (Slice 3C)", () => {
+  it("available lab is a button and tap reports its labyrinthId", async () => {
+    const onLabyrinthSelect = vi.fn();
+    const path = knightPath({
+      progress: makeProgress("knight", starsTotaling("knight", 6)),
+    });
+    const user = userEvent.setup();
+    renderWithIntl(
+      <TrainingPathRail
+        path={path}
+        connected={false}
+        onLabyrinthSelect={onLabyrinthSelect}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "Open Labyrinth 1" }),
+    );
+    expect(onLabyrinthSelect).toHaveBeenCalledTimes(1);
+    expect(onLabyrinthSelect).toHaveBeenCalledWith("knight-lab-1");
+  });
+
+  it("locked labs render no button and cannot fire the handler", () => {
+    const onLabyrinthSelect = vi.fn();
+    renderWithIntl(
+      <TrainingPathRail
+        path={knightPath()} // 0★ — every lab locked
+        connected={false}
+        onLabyrinthSelect={onLabyrinthSelect}
+      />,
+    );
+
+    expect(
+      screen.queryAllByRole("button", { name: /Open Labyrinth/ }),
+    ).toHaveLength(0);
+    expect(onLabyrinthSelect).not.toHaveBeenCalled();
+  });
+
+  it("completed labs stay tappable for replay", async () => {
+    const onLabyrinthSelect = vi.fn();
+    const path = knightPath({
+      progress: makeProgress("knight", starsTotaling("knight", 6)),
+      labyrinthBests: { "knight-lab-1": 3 },
+    });
+    const user = userEvent.setup();
+    renderWithIntl(
+      <TrainingPathRail
+        path={path}
+        connected={false}
+        onLabyrinthSelect={onLabyrinthSelect}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open Labyrinth 1" }));
+    expect(onLabyrinthSelect).toHaveBeenCalledWith("knight-lab-1");
+  });
+
+  it("a dormant lab (knight-lab-3, last in path order) opens once its chain is complete", async () => {
+    const onLabyrinthSelect = vi.fn();
+    // Path order: lab-1(3) → lab-2(4) → lab-4(4) → lab-5(5) → lab-3(6).
+    // Completing the first four unlocks knight-lab-3, dormant until 3C.
+    const path = knightPath({
+      progress: makeProgress("knight", starsTotaling("knight", 6)),
+      labyrinthBests: {
+        "knight-lab-1": 3,
+        "knight-lab-2": 4,
+        "knight-lab-4": 4,
+        "knight-lab-5": 5,
+      },
+    });
+    const user = userEvent.setup();
+    renderWithIntl(
+      <TrainingPathRail
+        path={path}
+        connected={false}
+        onLabyrinthSelect={onLabyrinthSelect}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open Labyrinth 5" }));
+    expect(onLabyrinthSelect).toHaveBeenCalledWith("knight-lab-3");
+  });
+
+  it("milestones and exercise chips never become buttons", () => {
+    renderWithIntl(
+      <TrainingPathRail
+        path={knightPath({
+          progress: makeProgress("knight", starsTotaling("knight", 10)),
+        })}
+        connected={true}
+        onLabyrinthSelect={vi.fn()}
+      />,
+    );
+
+    const buttons = screen.getAllByRole("button");
+    for (const button of buttons) {
+      expect(button).toHaveAccessibleName(/Open Labyrinth \d+/);
+    }
   });
 });
