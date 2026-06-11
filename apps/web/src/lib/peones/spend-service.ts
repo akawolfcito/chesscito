@@ -41,11 +41,19 @@ export type PeonesSpendTarget = Extract<
 
 /** M1 default costs per calibration §5. Server is the SOLE source of
  *  truth; clients echo `amount` for symmetry but the endpoint
- *  validates against this table. */
+ *  validates against this table.
+ *
+ *  Economy v2 (2026-06-10): `retry` is DEPRECATED as an active sink. The
+ *  paid `PeonesRetryButton` is not mounted anywhere; the live retry path
+ *  (`handleRetryApplied` / useRetryGuard) is FREE and never charges. An
+ *  automatic/invisible charge is not a real consumable and feels punitive
+ *  in a learning product. The cost stays here only to keep the
+ *  target/enum/SQL-CHECK lockstep intact; it is NOT charged. Retry may
+ *  return later as a manual, visible "Second Chance"-style consumable. */
 export const SPEND_COST_BY_TARGET: Readonly<Record<PeonesSpendTarget, number>> = {
   coach: 1,
   hint: 1,
-  retry: 2,
+  retry: 2, // DEPRECATED sink — never charged (see note above)
   save_game: 1,
 };
 
