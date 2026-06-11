@@ -818,7 +818,7 @@ export const EXERCISES: Record<PieceId, Exercise[]> = {
   king:   KING_EXERCISES,
 };
 
-export const BADGE_THRESHOLD = 10; // de 15 estrellas posibles
+export const BADGE_THRESHOLD = 10; // stars; pools vary (5-10 exercises → 15-30★ max per piece)
 
 /**
  * Returns the current pool count for a piece. Per-piece dynamic
