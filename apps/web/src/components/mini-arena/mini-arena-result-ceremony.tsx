@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { THEME_CONFIG } from "@/lib/theme";
-import { Button } from "@/components/ui/button";
-import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 
 type TerminalResult = {
   status: "won" | "drawn";
@@ -45,67 +45,16 @@ export function MiniArenaResultCeremony({
     setPortalRoot(document.body);
   }, []);
 
+  // Founder vocabulary pass 2026-06-11: migrated from CandyGlassShell
+  // (plain green glass + ui/Button variants) to VictoryPopupShell so
+  // the ceremony carries panel-bg1 + the ceremonial CTA set like every
+  // other end-state modal.
   const ceremony = (
-    <div
-      data-testid="mini-arena-result-overlay"
-      className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      onClick={onClose}
-    >
-      <div
-        className="pointer-events-auto relative w-[calc(100vw-2rem)] max-w-[340px]"
-        style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <CandyGlassShell
-          title={title}
-          onClose={onClose}
-          closeLabel="Close"
-          cta={
-            <div className="flex flex-col gap-1.5">
-              {status === "won" ? (
-                <>
-                  <Button
-                    type="button"
-                    variant="game-primary"
-                    size="game"
-                    onClick={onShare}
-                    className="w-full"
-                  >
-                    Share Result
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="game-ghost"
-                    size="game"
-                    onClick={onRetry}
-                    className="w-full"
-                  >
-                    Retry
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  type="button"
-                  variant="game-solid"
-                  size="game"
-                  onClick={onRetry}
-                  className="w-full"
-                >
-                  Retry
-                </Button>
-              )}
-            </div>
-          }
-          meta={
-            <>
-              <span className="fantasy-title">chesscito</span>
-              <span className="opacity-70"> · Endgame Trainer</span>
-            </>
-          }
-        >
+    <div data-testid="mini-arena-result-overlay">
+      <VictoryPopupShell onClose={onClose} ariaLabel={title} closeLabel="Close">
+        <div className="victory-popup-hero-solo">
+          <h1 className="arena-result-title">{title}</h1>
+        </div>
           <div className="flex flex-col items-center gap-2 text-center">
             <picture
               className="reward-icon-showcase relative z-10"
@@ -193,8 +142,38 @@ export function MiniArenaResultCeremony({
               </p>
             ) : null}
           </div>
-        </CandyGlassShell>
-      </div>
+
+          <div className="flex flex-col items-center gap-2">
+            {status === "won" ? (
+              <>
+                <PrincipalButton size="medium" onClick={onShare}>
+                  Share Result
+                </PrincipalButton>
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="arena-result-secondary-action"
+                >
+                  Retry
+                </button>
+              </>
+            ) : (
+              <PrincipalButton size="medium" onClick={onRetry}>
+                Retry
+              </PrincipalButton>
+            )}
+          </div>
+
+          <div
+            className="mt-1 flex flex-col items-center gap-1.5 px-2 text-center text-[11px]"
+            style={{ color: "rgba(110, 65, 15, 0.75)" }}
+          >
+            <span>
+              <span className="fantasy-title">chesscito</span>
+              <span className="opacity-70"> · Endgame Trainer</span>
+            </span>
+          </div>
+      </VictoryPopupShell>
     </div>
   );
 
