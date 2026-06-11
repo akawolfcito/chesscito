@@ -1,7 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
-import type { BoardPosition, Exercise, PieceId } from "@/lib/game/types";
 import { EXERCISES, PLAYABLE_PIECES } from "@/lib/game/exercises";
-import { getValidTargets } from "@/lib/game/board";
+import { bfsOptimal } from "@/test-utils/bfs-optimal";
 
 /**
  * BFS verifier for exercise `optimalMoves` declarations.
@@ -17,58 +16,10 @@ import { getValidTargets } from "@/lib/game/board";
  * test name is the exercise ID, so vitest output points the author
  * directly at the offending entry.
  *
- * BFS protocol (unchanged from Sprint 1):
- * - Treat each `getValidTargets` result as the expansion function.
- * - Position alone is the BFS state (no per-step metadata) — pawn rules
- *   already encode rank-dependent behavior internally, so the same
- *   square always yields the same move set.
- * - `targetPos` is passed on every call so pawn capture exercises
- *   resolve the `captureSquares` allowlist consistently (per
- *   board.ts:50-66 semantics).
- * - Max search depth = 32 (defensive cap; board has 64 cells so any
- *   reachable target is found in ≤63 moves).
+ * BFS protocol: see `@/test-utils/bfs-optimal` — extracted to a shared
+ * helper in Slice 3A so the labyrinths verifier
+ * (labyrinths-bfs-verifier.test.ts) runs the exact same solver.
  */
-function bfsOptimal(
-  piece: PieceId,
-  exercise: Exercise,
-  maxDepth = 32,
-): number | null {
-  const key = (p: BoardPosition) => `${p.file},${p.rank}`;
-  const start = exercise.startPos;
-  const target = exercise.targetPos;
-  const blockers = exercise.obstacles ?? [];
-  const isCapture = exercise.isCapture ?? false;
-  const captureTargets = exercise.captureTargets;
-
-  if (key(start) === key(target)) return 0;
-
-  const visited = new Set<string>([key(start)]);
-  const queue: Array<{ pos: BoardPosition; depth: number }> = [
-    { pos: start, depth: 0 },
-  ];
-
-  while (queue.length > 0) {
-    const { pos, depth } = queue.shift()!;
-    if (depth >= maxDepth) continue;
-    const moves = getValidTargets(
-      piece,
-      pos,
-      blockers,
-      isCapture,
-      captureTargets,
-      target,
-    );
-    for (const m of moves) {
-      const k = key(m);
-      if (k === key(target)) return depth + 1;
-      if (!visited.has(k)) {
-        visited.add(k);
-        queue.push({ pos: m, depth: depth + 1 });
-      }
-    }
-  }
-  return null;
-}
 
 let allPassed = true;
 
