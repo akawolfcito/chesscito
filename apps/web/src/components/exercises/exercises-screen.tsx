@@ -129,6 +129,7 @@ import {
   recordLabyrinthBest,
 } from "@/lib/game/labyrinth-progress";
 import { buildTrainingPath, getNextChallenge } from "@/lib/training/path";
+import { submitLabyrinthCompletionEarn } from "@/lib/peones/labyrinth-earn";
 import { ActionPin } from "@/components/redesign/action-pin";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
@@ -2189,8 +2190,20 @@ export function ExercisesScreen({
         is_new_best: isNewBest,
         previous_best: previousBest ?? null,
       });
+      // Slice 4: flat +1 Peón on the FIRST completion only
+      // (previousBest === null), wallet-connected only. Fire-and-forget
+      // like training-earn: the local best + overlay never wait on (or
+      // fail with) the ledger write. Guests skip the call entirely.
+      if (isConnected && address && previousBest === null) {
+        void submitLabyrinthCompletionEarn({
+          wallet: address,
+          piece: selectedPiece,
+          labyrinthId: activeLabyrinth.id,
+          bestBefore: previousBest,
+        });
+      }
     },
-    [activeLabyrinth, selectedPiece],
+    [activeLabyrinth, selectedPiece, isConnected, address],
   );
 
   const targetLabel = activeLabyrinth
