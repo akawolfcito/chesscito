@@ -3232,13 +3232,16 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
-  .action-pin-notif img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+  /* Pure-CSS alert dot (2026-06-11): replaces the
+     punto-alerta-notificacion PNG. Glossy red sphere + cream ring,
+     same 18px geometry and pulse as the asset it mirrors. */
+  .action-pin-notif {
     border-radius: 999px;
-    filter: drop-shadow(0 2px 2px rgba(78, 44, 5, 0.25));
+    background:
+      radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 30%),
+      linear-gradient(180deg, #f87171 0%, #dc2626 55%, #991b1b 100%);
+    border: 2px solid rgba(255, 247, 230, 0.95);
+    box-shadow: 0 2px 3px rgba(78, 44, 5, 0.3);
     animation: reward-tile-notif-pulse 1.6s ease-out infinite;
   }
 

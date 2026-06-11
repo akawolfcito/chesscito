@@ -597,12 +597,11 @@ describe("ActionPin — status marker (founder check/dot system 2026-06-11)", ()
         onPress={() => {}}
       />,
     );
-    const dot = container.querySelector(".action-pin-notif img");
+    // Pure-CSS dot (2026-06-11): a styled span, no PNG request.
+    const dot = container.querySelector(".action-pin-notif");
     expect(dot).not.toBeNull();
-    expect(dot).toHaveAttribute(
-      "src",
-      "/art/scene-rooted/punto-alerta-notificacion.png",
-    );
+    expect(dot?.tagName).toBe("SPAN");
+    expect(dot?.querySelector("img")).toBeNull();
   });
 
   it("no status prop renders no marker (back-compat default)", () => {

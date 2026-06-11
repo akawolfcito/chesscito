@@ -58,9 +58,11 @@ export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: P
           size="large"
           className="action-row-pedestal action-row-pedestal-arena"
           icon={
+            // Sizing on the IMG, not the inline <picture> — see
+            // DailyTacticCard note (44px uniform action-row height).
             <ActionRowIcon
               name="training-icon-v1"
-              className="flex h-11 w-11 items-center justify-center object-contain [&>img]:max-h-full [&>img]:w-auto"
+              className="[&>img]:h-11 [&>img]:w-auto [&>img]:max-w-none"
             />
           }
           onClick={() => setOpen(true)}

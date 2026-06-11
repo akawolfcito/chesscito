@@ -13,8 +13,6 @@
 
 export type PinStatus = "done" | "pending";
 
-const NOTIF_DOT_SRC = "/art/scene-rooted/punto-alerta-notificacion";
-
 export function PinStatusMarker({ status }: { status: PinStatus | null }) {
   if (status === "done") {
     return (
@@ -27,17 +25,11 @@ export function PinStatusMarker({ status }: { status: PinStatus | null }) {
     );
   }
   if (status === "pending") {
-    return (
-      <picture className="action-pin-notif">
-        <source srcSet={`${NOTIF_DOT_SRC}.avif`} type="image/avif" />
-        <source srcSet={`${NOTIF_DOT_SRC}.webp`} type="image/webp" />
-        <img
-          src={`${NOTIF_DOT_SRC}.png`}
-          alt=""
-          aria-hidden="true"
-        />
-      </picture>
-    );
+    // Pure-CSS dot (founder 2026-06-11): replaces the
+    // punto-alerta-notificacion PNG so the marker costs zero network
+    // and scales crisply at any DPR. Glossy red + cream ring lives in
+    // `.action-pin-notif`.
+    return <span aria-hidden="true" className="action-pin-notif" />;
   }
   return null;
 }
