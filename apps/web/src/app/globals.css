@@ -8735,6 +8735,44 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 2px 3px rgba(50, 30, 8, 0.20));
 }
 
+/* Hub right-rail availability signals (2026-06-11). STATIC — no
+   animation, no timers; computed once when /hub mounts. */
+.hub-tile-status-dot {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 14px;
+  height: 14px;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 30%),
+    linear-gradient(180deg, #4ade80 0%, #16a34a 55%, #15803d 100%);
+  border: 2px solid rgba(255, 247, 230, 0.95);
+  box-shadow: 0 1px 2px rgba(78, 44, 5, 0.3);
+}
+
+.hub-tile-status-chip {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 1px 6px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(63, 34, 8, 0.9);
+  background: rgba(255, 247, 230, 0.95);
+  border: 1px solid rgba(120, 70, 20, 0.25);
+  box-shadow: 0 1px 2px rgba(78, 44, 5, 0.25);
+}
+
 .stone-pedestal-badge {
   position: absolute;
   top: -6px;

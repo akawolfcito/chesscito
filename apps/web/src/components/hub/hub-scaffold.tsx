@@ -10,6 +10,7 @@ import { MissionRibbon } from "@/components/pro-mission/mission-ribbon";
 import { PremiumSlot } from "@/components/pro-mission/premium-slot";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
+import { HubTileStatusChip } from "@/components/hub/hub-tile-status-chip";
 import { HubArenaTile } from "@/components/hub/hub-arena-tile";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
@@ -335,6 +336,16 @@ export function HubScaffold({
                   label={tRail("coachLabel")}
                   ariaLabel={tHud("coachAriaLabel")}
                   onClick={onCoachTap}
+                  // Static signal only (founder micro-block
+                  // 2026-06-11): Coach is not a daily — PRO members
+                  // see their membership, everyone else a calm "Ask".
+                  // Never auto-triggers analysis (gate untouched).
+                  badge={
+                    <HubTileStatusChip
+                      kind="label"
+                      text={pro.active ? "PRO" : "Ask"}
+                    />
+                  }
                 />
               ) : null}
             </div>,

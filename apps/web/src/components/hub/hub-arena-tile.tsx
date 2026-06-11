@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { HubActionTile } from "@/components/hub/hub-action-tile";
+import { HubTileStatusChip } from "@/components/hub/hub-tile-status-chip";
 import { MiniArenaSheet } from "@/components/mini-arena/mini-arena-sheet";
 import type { MiniArenaSetup } from "@/lib/game/mini-arena";
 
@@ -30,10 +31,13 @@ export function HubArenaTile({ setup, unlocked }: Props) {
     <>
       <div data-testid="mini-arena-trigger" className="contents">
         <HubActionTile
-          iconSrc="/art/hub/mate-icon.png"
+          iconSrc="/art/new-icons-chesscito/training-icon-v1.png"
           label={t("mateLabel")}
           ariaLabel={t("arenaUnlockedAriaFormat", { name: setup.name })}
           onClick={() => setOpen(true)}
+          // Mate has no real cooldown yet — static "ready" dot only,
+          // no invented logic (founder micro-block 2026-06-11).
+          badge={<HubTileStatusChip kind="ready" />}
         />
       </div>
       <MiniArenaSheet open={open} onOpenChange={setOpen} setup={setup} />

@@ -5,6 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { DailyTacticSheet } from "@/components/daily/daily-tactic-sheet";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
+import { HubTileStatusChip } from "@/components/hub/hub-tile-status-chip";
+import {
+  cooldownLabel,
+  dailyAvailability,
+} from "@/lib/hub/tile-availability";
 import { getDailyTactic } from "@/lib/daily/daily-puzzles";
 import {
   getDailyProgress,
@@ -225,18 +230,36 @@ export function HubDailyTile() {
       </span>
     ) : null;
 
+  // Availability signal (founder micro-block 2026-06-11): computed
+  // once per render from mount-hydrated state — STATIC approximate
+  // label, no live countdown, no setInterval. Re-entering /hub
+  // remounts and recomputes.
+  const availability = dailyAvailability(completed);
+  const waitLabel = cooldownLabel(availability);
+  const statusChip =
+    availability.state === "ready" ? (
+      <HubTileStatusChip kind="ready" />
+    ) : waitLabel ? (
+      <HubTileStatusChip kind="label" text={waitLabel} />
+    ) : null;
+
   return (
     <>
       <HubActionTile
-        iconSrc="/art/new-icons-chesscito/ejercicio-diario-chess.png"
+        iconSrc="/art/new-icons-chesscito/daily-icon-v1.png"
         label={t("dailyLabel")}
         ariaLabel={ariaLabel}
         onClick={() => setOpen(true)}
         disabled={completed}
-        badge={badge}
+        badge={
+          <>
+            {badge}
+            {statusChip}
+          </>
+        }
         priority
-        iconWidth={256}
-        iconHeight={273}
+        iconWidth={228}
+        iconHeight={256}
       />
       <DailyTacticSheet
         open={open}
