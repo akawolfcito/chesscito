@@ -144,10 +144,12 @@ export const RESULT_OVERLAY_COPY = {
   score: {
     title: "Score Saved!",
     subtitle: "Saved and live on the leaderboard. Ready to share.",
-    /** Label shown beside the count pill when the save cost a Peón (past
-     *  the 5 free saves). The numeral is rendered in JSX (always 1 in
-     *  MVP); this is just the trailing word, kept out of ICU. */
+    /** Label beside the count pill when the save cost a Peón (past the
+     *  free quota). Numeral rendered in JSX; trailing word only. */
     peonesSpentLabel: "Peón spent",
+    /** Trailing label for the free-save quota pill on a free save, e.g.
+     *  "2 free saves left". Numeral rendered in JSX. */
+    freeSavesLeftLabel: "free saves left",
   },
   shop: {
     title: "Purchase Complete!",
@@ -185,11 +187,12 @@ export const RESULT_OVERLAY_COPY = {
      *  Distinct from the generic `revert` so the user understands a
      *  fresh signature will fix it. */
     signatureExpired: "Signature expired. Tap to get a fresh one.",
-    /** SaveScore off-chain (Slice 5): the wallet used its 5 free saves and
-     *  has no Peones left for the paid save. Directs to the Peones balance
-     *  chip (Get Peones) without prompting any on-chain action here. */
+    /** SaveScore off-chain: the wallet used its free saves and has no
+     *  Peones left for the paid save. No hardcoded count (the free quota
+     *  is calibrated via FREE_SCORE_SAVE_LIMIT). The overlay surfaces a
+     *  Get Peones CTA + a "Not now" secondary. */
     notEnoughPeones:
-      "You've used your 5 free saves. Tap your Peones balance to get more and keep saving.",
+      "You're out of free saves. You need 1 Peón to save this score.",
     /** SaveScore off-chain (Slice 5): soft rate limit hit. The toast
      *  appends the wait in seconds, e.g. "You can save again in 12s" — a
      *  clear backoff, never an immediate Try again loop. */
@@ -224,6 +227,10 @@ export const RESULT_OVERLAY_COPY = {
     tryAgain: "Try again",
     dismiss: "Dismiss",
     receiptOnCeloscan: "Receipt on CeloScan",
+    /** Recovery CTA when a save is blocked on Peones — opens Get Peones. */
+    getPeones: "Get Peones",
+    /** Secondary on the recovery overlay — calmer than "Dismiss". */
+    notNow: "Not now",
   },
 } as const;
 

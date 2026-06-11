@@ -111,6 +111,7 @@ import { LottieAnimation } from "@/components/ui/lottie-animation";
 import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
 import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/components/exercises/result-overlay";
+import { GetPeonesSheet } from "@/components/payments/get-peones-sheet";
 import { BadgeSheet } from "@/components/exercises/badge-sheet";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -730,12 +731,18 @@ export function ExercisesScreen({
     /** SaveScore off-chain (Slice 5): Peones spent on a paid save. Passed
      *  to the score overlay so the player sees the 1-Peón charge. */
     spentPeones?: number;
+    /** SaveScore: free saves remaining after this save (free/duplicate). */
+    freeSavesLeft?: number;
+    /** Recovery CTA (insufficient Peones → Get Peones). */
+    recoveryCta?: { label: string; onPress: () => void };
   } | null>(null);
 
   // SaveScore off-chain (Slice 5): in-flight flag for the /api/scores/save
   // request. Replaces the wagmi `isScoreWriting`/`isSubmitConfirming` busy
   // signal for the base save path (now off-chain, no tx to confirm).
   const [isSavingScore, setIsSavingScore] = useState(false);
+  // Get Peones recovery sheet — opened from the insufficient-save overlay.
+  const [getPeonesOpen, setGetPeonesOpen] = useState(false);
 
   // Pointer-events lock release: as soon as a result overlay appears,
   // any open dock sheet must be closed or its Radix modal portal
@@ -1706,12 +1713,14 @@ export function ExercisesScreen({
           // to its saved-parity state, same as the on-chain path did.
           recordSaveFor(selectedPiece, scoreNum, "");
 
-          const spentPeones =
-            result.status === "saved" && result.mode === "peones"
-              ? result.spent
-              : undefined;
+          const paid = result.status === "saved" && result.mode === "peones";
+          const spentPeones = paid ? result.spent : undefined;
+          // Communicate the free-save quota progressively: on a free save
+          // (or idempotent duplicate) show how many free saves remain so
+          // the wall never arrives as a surprise.
+          const freeSavesLeft = paid ? undefined : result.quota.freeRemaining;
 
-          setResultOverlay({ variant: "score", spentPeones });
+          setResultOverlay({ variant: "score", spentPeones, freeSavesLeft });
 
           // Optimistic leaderboard entry (same key the leaderboard sheet
           // reads on open). The combined view (Slice 4) already includes
@@ -1731,12 +1740,18 @@ export function ExercisesScreen({
         }
 
         case "insufficient_peones": {
-          // No retryAction -> no "Try again" loop. Directs to the Peones
-          // balance chip (Get Peones) via copy; we do not open or modify
-          // the Get Peones surface here.
+          // Recovery, not a dead end: primary CTA opens Get Peones, the
+          // secondary is a calm "Not now". No "Try again" loop.
           setResultOverlay({
             variant: "error",
             errorMessage: tResult("error.notEnoughPeones"),
+            recoveryCta: {
+              label: tResult("cta.getPeones"),
+              onPress: () => {
+                setResultOverlay(null);
+                setGetPeonesOpen(true);
+              },
+            },
           });
           break;
         }
@@ -2626,8 +2641,17 @@ export function ExercisesScreen({
             txErrorKind={resultOverlay.txErrorKind}
             totalStars={totalStars}
             spentPeones={resultOverlay.spentPeones}
+            freeSavesLeft={resultOverlay.freeSavesLeft}
+            recoveryCta={resultOverlay.recoveryCta}
             onDismiss={() => setResultOverlay(null)}
             onRetry={resultOverlay.retryAction}
+          />
+        ) : null}
+
+        {getPeonesOpen ? (
+          <GetPeonesSheet
+            open={getPeonesOpen}
+            onOpenChange={setGetPeonesOpen}
           />
         ) : null}
 

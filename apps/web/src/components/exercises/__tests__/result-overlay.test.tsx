@@ -97,3 +97,40 @@ describe("ResultOverlay — Add Cash deeplink CTA", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe("ResultOverlay — SaveScore recovery + quota communication", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("insufficient save: recoveryCta becomes the primary button (Get Peones)", () => {
+    const onPress = vi.fn();
+    renderWithIntl(
+      <ResultOverlay
+        variant="error"
+        errorMessage="You're out of free saves."
+        recoveryCta={{ label: "Get Peones", onPress }}
+        onDismiss={vi.fn()}
+      />,
+    );
+    const cta = screen.getByRole("button", { name: /Get Peones/i });
+    cta.click();
+    expect(onPress).toHaveBeenCalledTimes(1);
+    // Secondary is the calm "Not now", not "Try again".
+    expect(screen.getByText(/Not now/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Try again/i)).not.toBeInTheDocument();
+  });
+
+  it("free save: shows the remaining-free-saves quota pill", () => {
+    renderWithIntl(
+      <ResultOverlay
+        variant="score"
+        pieceType="rook"
+        totalStars={9}
+        freeSavesLeft={2}
+        onDismiss={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByTestId("score-free-saves-left").textContent,
+    ).toContain("2");
+  });
+});

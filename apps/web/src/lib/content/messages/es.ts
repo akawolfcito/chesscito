@@ -1178,6 +1178,7 @@ const messages = {
       title: "¡Puntaje guardado!",
       subtitle: "Guardado y visible en la tabla de líderes. Listo para compartir.",
       peonesSpentLabel: "Peón gastado",
+      freeSavesLeftLabel: "guardados gratis",
     },
     shop: {
       title: "¡Compra lista!",
@@ -1197,7 +1198,7 @@ const messages = {
       signingUnavailable: "Servicio de firma no disponible. Reintenta en un momento.",
       signatureExpired: "La firma expiró. Toca para obtener una nueva.",
       notEnoughPeones:
-        "Usaste tus 5 guardados gratis. Toca tu saldo de Peones para conseguir más y seguir guardando.",
+        "Te quedaste sin guardados gratis. Necesitas 1 Peón para guardar este puntaje.",
       rateLimitedPrefix: "Puedes guardar de nuevo en",
       purchaseKindCopy: {
         error: {
@@ -1223,6 +1224,8 @@ const messages = {
       tryAgain: "Reintentar",
       dismiss: "Descartar",
       receiptOnCeloscan: "Recibo en CeloScan",
+      getPeones: "Conseguir Peones",
+      notNow: "Ahora no",
     },
   },
   PIECE_COMPLETE_COPY: {
