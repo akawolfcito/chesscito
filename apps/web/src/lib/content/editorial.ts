@@ -3117,9 +3117,16 @@ export const PEONES_HINT_COPY = {
   guest: "Connect to use Peones hints",
   /** Short feedback copy. Sprint 4 commit M — collapsed the stacked
    *  chip+sublabel into a single morphing chip; copy must fit one
-   *  line in roughly the same width as the idle button. */
-  insufficient: "Not enough Peones",
+   *  line in roughly the same width as the idle button.
+   *  Cost-explicit per the D1 quota-comms direction (2026-06-11):
+   *  tells the player WHAT is missing, not just that something is. */
+  insufficient: "Need 1 Peón",
   error: "Hint unavailable",
+  /** Transient 429 from the spend endpoint. Distinct from `error`
+   *  because the condition self-heals in seconds; the generic
+   *  "unavailable" read as broken-until-later (founder hint-race
+   *  report 2026-06-10). */
+  rateLimited: "One sec, try again",
 } as const;
 
 /**

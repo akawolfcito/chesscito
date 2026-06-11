@@ -31,8 +31,9 @@ const messages = {
   PEONES_HINT_COPY: {
     button: "Hint \u00b7 1 Peón",
     guest: "Connect to use Peones hints",
-    insufficient: "Not enough Peones",
+    insufficient: "Need 1 Peón",
     error: "Hint unavailable",
+    rateLimited: "One sec, try again",
   },
 };
 
@@ -460,7 +461,7 @@ describe("PeonesHintButton — connected failure paths", () => {
     fireEvent.click(screen.getByRole("button"));
 
     await waitFor(() =>
-      expect(screen.getByText("Not enough Peones")).toBeInTheDocument(),
+      expect(screen.getByText("Need 1 Peón")).toBeInTheDocument(),
     );
     expect(screen.queryByText("Hint unlocked")).not.toBeInTheDocument();
     expect(mockedBlocked).toHaveBeenCalledTimes(1);
@@ -666,5 +667,78 @@ describe("PeonesHintButton — icon+label (founder D3 follow-up)", () => {
     expect(
       screen.getByTestId("peones-hint-button").querySelector("img"),
     ).toBeNull();
+  });
+});
+
+describe("PeonesHintButton — rate-limited gets its own transient copy (hint race fix)", () => {
+  beforeEach(() => {
+    mockedAccount.mockReturnValue({
+      isConnected: true,
+      address: W,
+    } as never);
+  });
+
+  it("error=rate_limited: distinct state + retry copy, NOT the generic unavailable", async () => {
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "error",
+      error: "rate_limited",
+    } satisfies PeonesSpendResult);
+    const onReveal = vi.fn();
+    render(
+      <PeonesHintButton
+        piece="rook"
+        exerciseId="r-1"
+        firstStep={{ file: 7, rank: 0 }}
+        onReveal={onReveal}
+        submitImpl={submitImpl}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button"));
+    await waitFor(() =>
+      expect(screen.getByTestId("peones-hint-button")).toHaveAttribute(
+        "data-state",
+        "rate_limited",
+      ),
+    );
+    expect(screen.getByText("One sec, try again")).toBeInTheDocument();
+    expect(onReveal).not.toHaveBeenCalled();
+    expect(mockedFailed).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "rate_limited" }),
+    );
+  });
+
+  it("other technical errors keep the generic unavailable copy", async () => {
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "error",
+      error: "ledger_unavailable",
+    } satisfies PeonesSpendResult);
+    render(
+      <PeonesHintButton piece="rook" exerciseId="r-1" submitImpl={submitImpl} />,
+    );
+    fireEvent.click(screen.getByRole("button"));
+    await waitFor(() =>
+      expect(screen.getByTestId("peones-hint-button")).toHaveAttribute(
+        "data-state",
+        "error",
+      ),
+    );
+    expect(screen.getByText("Hint unavailable")).toBeInTheDocument();
+  });
+
+  it("insufficient copy states the cost (D1 alignment): Need 1 Peón", async () => {
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "insufficient_balance",
+    } satisfies PeonesSpendResult);
+    render(
+      <PeonesHintButton piece="rook" exerciseId="r-1" submitImpl={submitImpl} />,
+    );
+    fireEvent.click(screen.getByRole("button"));
+    await waitFor(() =>
+      expect(screen.getByTestId("peones-hint-button")).toHaveAttribute(
+        "data-state",
+        "insufficient",
+      ),
+    );
+    expect(screen.getByText("Need 1 Peón")).toBeInTheDocument();
   });
 });

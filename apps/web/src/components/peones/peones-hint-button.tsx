@@ -64,6 +64,11 @@ type HintState =
   | { kind: "loading" }
   | { kind: "revealed" }
   | { kind: "insufficient" }
+  /** Transient 429 — separate from `error` so the chip can say
+   *  "try again in a moment" instead of reading as broken (founder
+   *  hint-race report 2026-06-10: the spend worked after a delay,
+   *  but the generic copy made it look unavailable). */
+  | { kind: "rate_limited" }
   | { kind: "error" };
 
 type Props = {
@@ -236,13 +241,20 @@ export function PeonesHintButton({
       requested: 1,
       reason: result.error,
     });
-    setState({ kind: "error" });
+    setState(
+      result.error === "rate_limited"
+        ? { kind: "rate_limited" }
+        : { kind: "error" },
+    );
     scheduleFeedbackClear();
   }
 
   const isLoading = state.kind === "loading";
   const isRevealed = state.kind === "revealed";
-  const isFeedback = state.kind === "insufficient" || state.kind === "error";
+  const isFeedback =
+    state.kind === "insufficient" ||
+    state.kind === "rate_limited" ||
+    state.kind === "error";
 
   // Sprint 4 commit M — single morphing chip. The chip itself swaps
   // its content based on state instead of stacking a sublabel below.
@@ -251,9 +263,11 @@ export function PeonesHintButton({
   const label =
     state.kind === "insufficient"
       ? t("insufficient")
-      : state.kind === "error"
-        ? t("error")
-        : t("button");
+      : state.kind === "rate_limited"
+        ? t("rateLimited")
+        : state.kind === "error"
+          ? t("error")
+          : t("button");
 
   return (
     <div
