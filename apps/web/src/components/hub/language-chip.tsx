@@ -48,7 +48,7 @@ export function LanguageChip() {
       >
         <span
           aria-hidden="true"
-          className="candy-tray-pill-icon candy-tray-pill-icon--floating flex items-center justify-center text-base"
+          className="candy-tray-pill-icon candy-tray-pill-icon--floating flex items-center justify-center text-[1.5rem] leading-none"
         >
           {current.flag}
         </span>
