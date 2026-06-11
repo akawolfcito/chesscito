@@ -339,6 +339,10 @@ export const BADGE_SHEET_COPY = {
   firstStepHint: "Master the Rook. Claim your first digital collectible.",
   /** HERO BAND piece counter label — short, fits beside the slash count. */
   heroPiecesLabel: "PIECES",
+  /** Unified Piece Sheet (surface redistribution D2/D3): section title
+   *  for the active-piece journey rail that migrated here from the
+   *  Mission detail sheet. */
+  journeyTitle: "Your journey",
 } as const;
 
 export const TUTORIAL_COPY = {

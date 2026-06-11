@@ -7,21 +7,18 @@ import { CandyIcon } from '@/components/redesign/candy-icon'
 import { HudResourceChip } from '@/components/hud/hud-resource-chip'
 import type { PIECE_LABELS } from '@/lib/content/editorial'
 import { LottieAnimation } from '@/components/ui/lottie-animation'
-import { PiecePickerSheet } from '@/components/exercises/piece-picker-sheet'
 import { PiecePickerTrigger } from '@/components/exercises/piece-picker-trigger'
 import { MissionDetailSheet } from '@/components/exercises/mission-detail-sheet'
 import type { TrainingNode } from '@/lib/training/path'
 
-type PieceOption = {
-  key: 'rook' | 'bishop' | 'knight' | 'pawn' | 'queen' | 'king'
-  label: string
-  enabled: boolean
-}
+type PieceKey = 'rook' | 'bishop' | 'knight' | 'pawn' | 'queen' | 'king'
 
 type MissionPanelProps = {
-  selectedPiece: PieceOption['key']
-  onSelectPiece: (piece: PieceOption['key']) => void
-  pieces: readonly PieceOption[]
+  selectedPiece: PieceKey
+  /** Unified Piece Sheet (surface redistribution D3): the TORRE chip
+   *  no longer opens a local picker — it asks the host to open the
+   *  badges sheet, which owns the journey + switch grid. */
+  onOpenPieceSheet: () => void
   phase: 'ready' | 'success' | 'failure'
   targetLabel: string
   score: string
@@ -48,9 +45,6 @@ type MissionPanelProps = {
    *  "+N STAR" pill in the WELL DONE flash. Only consumed when
    *  phase === 'success'. */
   lastEarnedStars?: number
-  /** On-chain badge claim status per piece. Feeds the piece picker
-   *  switch gate. */
-  claimedBadges: Partial<Record<PieceOption['key'], boolean>>
   /** Integrated per-piece path, forwarded to the mission detail sheet
    *  for its "Now: X" line (surface redistribution D1). */
   trainingPath?: TrainingNode[]
@@ -60,9 +54,8 @@ type MissionPanelProps = {
   onSaveScore?: () => void
   isSavingScore?: boolean
   /** Signal from the parent that a dock destination sheet is open.
-   *  When true, we close piece-picker and mission-detail so the user
-   *  never sees a picker stacked behind a badge/shop/leaderboard
-   *  sheet. */
+   *  When true, we close mission-detail so the user never sees it
+   *  stacked behind a badge/shop/leaderboard sheet. */
   isDockSheetOpen: boolean
   /** L2 labyrinth layer state. Entry happens via training path node
    *  taps (onLabyrinthSelect); while active, a single exit pill
@@ -102,13 +95,6 @@ type MissionPanelProps = {
    *  (no rescue host wired), failure behavior stays byte-identical to
    *  pre-cluster. */
   failureRescueSlot?: ReactNode
-  /** Imperative open-signal for the PiecePickerSheet. The parent
-   *  increments this number to request the picker open (e.g. from the
-   *  PieceComplete "Choose another piece" CTA when no labyrinth /
-   *  next piece is available). Initial value (0 or undefined) is a
-   *  no-op; only subsequent increments fire the open. Picker state
-   *  itself stays owned here. */
-  openPickerSignal?: number
 }
 
 type FlashConfig = { textKey: 'success' | 'failure'; accent: string; stroke: string }
@@ -417,8 +403,7 @@ function PhaseFlash({
 
 export function MissionPanelCandy({
   selectedPiece,
-  onSelectPiece,
-  pieces,
+  onOpenPieceSheet,
   phase,
   targetLabel,
   score,
@@ -427,7 +412,6 @@ export function MissionPanelCandy({
   contextualAction,
   persistentDock,
   isCapture = false,
-  claimedBadges,
   trainingPath,
   canSaveScore,
   onSaveScore,
@@ -447,26 +431,16 @@ export function MissionPanelCandy({
   lastEarnedStars,
   pieceHint,
   failureRescueSlot,
-  openPickerSignal,
 }: MissionPanelProps) {
   const tMission = useTranslations('MISSION_BRIEFING_COPY')
   const tLab = useTranslations('LABYRINTH_COPY')
   const tHud = useTranslations('HUD_COPY')
-  // Quick-picker (Type C) open state — owned here so we can auto-close
-  // them when the parent signals a dock destination sheet is opening.
-  const [piecePickerOpen, setPiecePickerOpen] = useState(false)
+  // Mission-detail open state — owned here so we can auto-close it
+  // when the parent signals a dock destination sheet is opening.
   const [missionDetailOpen, setMissionDetailOpen] = useState(false)
-
-  // Parent-requested open-signal: increment to request the picker.
-  // Skip the first sync to avoid auto-opening on mount.
-  useEffect(() => {
-    if (openPickerSignal === undefined || openPickerSignal === 0) return
-    setPiecePickerOpen(true)
-  }, [openPickerSignal])
 
   useEffect(() => {
     if (isDockSheetOpen) {
-      setPiecePickerOpen(false)
       setMissionDetailOpen(false)
     }
   }, [isDockSheetOpen])
@@ -538,7 +512,7 @@ export function MissionPanelCandy({
           <div className="flex-1 min-w-0">
             <PiecePickerTrigger
               selectedPiece={selectedPiece as keyof typeof PIECE_LABELS}
-              onClick={() => setPiecePickerOpen(true)}
+              onClick={onOpenPieceSheet}
               showLabel
             />
           </div>
@@ -587,17 +561,6 @@ export function MissionPanelCandy({
             ExerciseDrawer trigger). One row, not two — consistent
             with the rest of the candy-tray-pill HUD family. */}
       </div>
-
-      {/* PiecePickerSheet rendered as a sibling of the canopy. Open state
-          is owned here; trigger is inside the canopy's piece cluster. */}
-      <PiecePickerSheet
-        open={piecePickerOpen}
-        onOpenChange={setPiecePickerOpen}
-        selectedPiece={selectedPiece}
-        pieces={pieces}
-        onSelectPiece={onSelectPiece}
-        claimedBadges={claimedBadges}
-      />
 
       {/* Optional header slot (e.g., Daily Tactic card). Rendered between
           the chip row and the board so it's the first thing the player

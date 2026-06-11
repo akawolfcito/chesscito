@@ -1293,6 +1293,7 @@ const messages = {
     starsProgressFormat: "{collected} de {total} estrellas",
     firstStepHint: "Domina la Torre, reclama tu primer coleccionable digital.",
     heroPiecesLabel: "PIEZAS",
+    journeyTitle: "Tu viaje",
   },
   TUTORIAL_COPY: {
     rook: "La Torre se mueve en líneas rectas, horizontal o vertical",

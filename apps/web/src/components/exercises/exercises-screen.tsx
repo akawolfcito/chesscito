@@ -757,12 +757,6 @@ export function ExercisesScreen({
   }, [resultOverlay]);
   const [showBadgeEarned, setShowBadgeEarned] = useState(false);
   const [showPieceComplete, setShowPieceComplete] = useState(false);
-  /** Imperative open-signal for the PiecePickerSheet (owned by
-   *  MissionPanelCandy). Incremented by the PieceComplete "Choose
-   *  another piece" CTA when the player has no labyrinth / next piece
-   *  to advance to and we want them to land on the picker rather than
-   *  Arena. Starts at 0 so the panel ignores the initial sync. */
-  const [pickerOpenSignal, setPickerOpenSignal] = useState(0);
   const badgeSheetOpen = activeDockTab === "badge";
   const setBadgeSheetOpen = (v: boolean) => {
     if (v) setActiveDockTab("badge");
@@ -2300,25 +2294,7 @@ export function ExercisesScreen({
         </div>
         <MissionPanelCandy
           selectedPiece={selectedPiece}
-          openPickerSignal={pickerOpenSignal}
-          onSelectPiece={(piece) => {
-            autoReset.invalidate();
-            setSelectedPiece(piece);
-            setResultOverlay(null);
-            setClaimTxHash(null);
-            setSubmitTxHash(null);
-            setShowBadgeEarned(false);
-            setShowPieceComplete(false);
-            resetBoard();
-          }}
-          pieces={[
-            { key: "rook", label: tPiece("rook"), enabled: true },
-            { key: "bishop", label: tPiece("bishop"), enabled: true },
-            { key: "knight", label: tPiece("knight"), enabled: true },
-            { key: "pawn", label: tPiece("pawn"), enabled: true },
-            { key: "queen", label: tPiece("queen"), enabled: true },
-            { key: "king", label: tPiece("king"), enabled: true },
-          ]}
+          onOpenPieceSheet={() => setBadgeSheetOpen(true)}
           phase={storeOpen ? "ready" : phase}
           targetLabel={targetLabel}
           pieceHint={pieceHint}
@@ -2329,7 +2305,6 @@ export function ExercisesScreen({
           onExitLabyrinth={handleExitLabyrinth}
           onLabyrinthSelect={handleLabyrinthSelect}
           score={score.toString()}
-          claimedBadges={badgesClaimed}
           trainingPath={trainingPath}
           canSaveScore={scorePendingNew}
           onSaveScore={() => void handleSubmitScore()}
@@ -2659,7 +2634,9 @@ export function ExercisesScreen({
             }
             onChoosePiece={() => {
               setShowPieceComplete(false);
-              setPickerOpenSignal((n) => n + 1);
+              // Unified Piece Sheet (D3): "Choose another piece" lands
+              // on the badges sheet, which now owns the switch grid.
+              setBadgeSheetOpen(true);
             }}
             onSubmitScore={
               canSaveScore
@@ -2838,6 +2815,25 @@ export function ExercisesScreen({
           claimingPiece={claimingPiece}
           showNotification={canSendOnChain && !Boolean(hasClaimedBadge)}
           showTrigger={false}
+          selectedPiece={selectedPiece}
+          pieces={[
+            { key: "rook", label: tPiece("rook"), enabled: true },
+            { key: "bishop", label: tPiece("bishop"), enabled: true },
+            { key: "knight", label: tPiece("knight"), enabled: true },
+            { key: "pawn", label: tPiece("pawn"), enabled: true },
+            { key: "queen", label: tPiece("queen"), enabled: true },
+            { key: "king", label: tPiece("king"), enabled: true },
+          ]}
+          onSelectPiece={(piece) => {
+            autoReset.invalidate();
+            setSelectedPiece(piece);
+            setResultOverlay(null);
+            setClaimTxHash(null);
+            setSubmitTxHash(null);
+            setShowBadgeEarned(false);
+            setShowPieceComplete(false);
+            resetBoard();
+          }}
         />
         <ShopSheet
           open={storeOpen}
