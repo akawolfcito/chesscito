@@ -57,6 +57,7 @@ import {
   subscribeToShieldChanges,
 } from "@/lib/shop/shield-events";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
+import { useRotationSteering } from "@/hooks/use-rotation-steering";
 import { useSaveScoreState } from "@/hooks/use-save-score-state";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
 import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
@@ -906,26 +907,22 @@ export function ExercisesScreen({
     incrementAttemptSeq,
   } = useExerciseProgress(selectedPiece, rotationOptions);
 
-  // Steer the active board exercise into today's visible set when rotation
-  // is on and the persisted exerciseIndex points outside it (e.g. a
-  // returning player whose last slot isn't in today's set). Targets the
-  // first incomplete visible exercise, else the first visible one. Uses
-  // the rotation-relaxed goToExercise, so it can only land on visible-set
-  // members. No-op when the current exercise is already visible.
-  useEffect(() => {
-    if (!ENABLE_EXERCISE_ROTATION || !visibleExerciseIds) return;
-    if (visibleExerciseIds.size === 0) return;
-    if (visibleExerciseIds.has(currentExercise.id)) return;
-    const pool = EXERCISES[selectedPiece];
-    const firstIncomplete = pool.findIndex(
-      (ex, i) => visibleExerciseIds.has(ex.id) && (progress.stars[i] ?? 0) === 0,
-    );
-    const target =
-      firstIncomplete >= 0
-        ? firstIncomplete
-        : pool.findIndex((ex) => visibleExerciseIds.has(ex.id));
-    if (target >= 0) goToExercise(target);
-  }, [visibleExerciseIds, currentExercise.id, selectedPiece, progress.stars, goToExercise]);
+  // Rotation steering, extracted to a unit-tested hook in Slice 3B.
+  // Suspended while the labyrinth layer is on (spec B8 / red-team
+  // P0-2): steering must never yank the player back to an exercise
+  // mid-labyrinth. `labyrinthMode` (raw state, not the derived
+  // effectiveLabyrinthMode) is deliberate — it is a superset, so
+  // suspension can only be MORE conservative, and it is in scope
+  // before the labyrinth list derivations below.
+  useRotationSteering({
+    enabled: ENABLE_EXERCISE_ROTATION,
+    visibleExerciseIds,
+    currentExerciseId: currentExercise.id,
+    piece: selectedPiece,
+    stars: progress.stars,
+    goToExercise,
+    suspended: labyrinthMode,
+  });
 
   /** Sprint 5 commits D / F — Retry guard. Owns the dedup + reset +
    *  attemptSeq-advance chain so duplicate retry triggers (double-
