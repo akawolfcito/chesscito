@@ -158,6 +158,12 @@ const CEREMONIAL_FULL_ACTIONS: readonly ActionPinAction[] = [
 
 const PIN_BUTTON_LAYOUT =
   "relative flex h-11 w-11 shrink-0 items-center justify-center disabled:opacity-70";
+/** Pedestal pins size via `.action-pin-submit-pedestal` (64px button,
+ *  56px sprite) — no Tailwind h/w here or the two size systems fight
+ *  and the center pins render visibly smaller than the Hint pin
+ *  (founder consistency pass 2026-06-11). */
+const PEDESTAL_PIN_LAYOUT =
+  "relative flex shrink-0 items-center justify-center disabled:opacity-70";
 const FULL_BUTTON_LAYOUT =
   "flex h-[52px] w-full items-center justify-center gap-2 text-sm font-extrabold uppercase tracking-wide disabled:opacity-70";
 
@@ -205,7 +211,12 @@ export function ActionPin({
   // shows its badge sprite bare, like SAVE, instead of a framed trophy).
   const isPedestalPin =
     size === "pin" && (action === "submitScore" || action === "claimBadge");
-  const baseLayout = size === "pin" ? PIN_BUTTON_LAYOUT : FULL_BUTTON_LAYOUT;
+  const baseLayout =
+    size === "pin"
+      ? isPedestalPin
+        ? PEDESTAL_PIN_LAYOUT
+        : PIN_BUTTON_LAYOUT
+      : FULL_BUTTON_LAYOUT;
   const shape = size === "pin" ? "rounded-full" : "rounded-2xl";
 
   const toneClasses =
@@ -241,7 +252,15 @@ export function ActionPin({
       src={customIconSrc}
       alt=""
       aria-hidden="true"
-      className={size === "pin" ? "h-8 w-8 object-contain" : "h-5 w-5 object-contain"}
+      // Pedestal pins: no Tailwind size — `.action-pin-submit-pedestal
+      // img` owns the 56px sprite so SAVE/CLAIM match the Hint pin.
+      className={
+        isPedestalPin
+          ? "object-contain"
+          : size === "pin"
+            ? "h-8 w-8 object-contain"
+            : "h-5 w-5 object-contain"
+      }
       draggable={false}
     />
   ) : size === "pin" ? (
