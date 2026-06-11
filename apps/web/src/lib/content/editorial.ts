@@ -97,6 +97,33 @@ export const JOURNEY_RAIL_COPY = {
   masteredCountFormat: "{count} / {total}",
 } as const;
 
+/** `<TrainingPathRail />` copy — read-only per-piece path inside the
+ *  mission detail sheet (exercises → labyrinths → badge → mastery).
+ *  Badge and Mastery are milestone rows with their OWN unlock copy so
+ *  a claimable badge above locked labyrinths never reads as a skipped
+ *  or broken step (spec integrated-training-path, red-team P0-3). */
+export const TRAINING_PATH_COPY = {
+  title: "Training path",
+  ariaLabel: "Training path for this piece",
+  exercisesLabel: "Exercises",
+  exerciseChipFormat: "Exercise {number}: {stars} of 3 stars",
+  labyrinthLabelFormat: "Labyrinth {number}",
+  labyrinthLockedStarsFormat: "Unlocks at {stars}★",
+  labyrinthLockedChain: "Beat previous lab",
+  ready: "Ready",
+  starsFormat: "{stars}★",
+  milestonesLabel: "Milestones",
+  badgeLabel: "Badge",
+  badgeLockedFormat: "Badge at {stars}★",
+  badgeReady: "Badge ready",
+  badgeConnect: "Connect to claim",
+  badgeClaimed: "Claimed",
+  masteryLabel: "Mastery",
+  masteryLocked: "Badge + labyrinths",
+  masteryAlmost: "Labyrinths left",
+  masteryComplete: "Mastered",
+} as const;
+
 export const MISSION_DETAIL_COPY = {
   title: "Mission",
   scoreLabel: "Score",
