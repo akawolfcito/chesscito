@@ -2292,9 +2292,12 @@ export function ExercisesScreen({
             // Founder action-row pass (2026-06-11): HINT left the
             // floating board overlay and sits in the dock action row
             // as a pin, right after Daily — DAILY · HINT · SAVE ·
-            // CLAIM · SPECIAL TRAINING. Hidden (not row-shifting
-            // empty space) outside phase=ready / in labyrinth mode.
-            <div className="flex items-end gap-2">
+            // CLAIM · SPECIAL TRAINING. Fragment (not a wrapper div)
+            // so each pin is a direct flex item of the single centered
+            // row in MissionPanelCandy Zone C. Hidden (not
+            // row-shifting empty space) outside phase=ready / in
+            // labyrinth mode.
+            <>
               <DailyTacticSlot />
               {activeLabyrinth || phase !== "ready" ? null : (
                 <PeonesHintButton
@@ -2310,7 +2313,7 @@ export function ExercisesScreen({
                   onReveal={setPeonesHintSquare}
                 />
               )}
-            </div>
+            </>
           }
           actionRowRight={
             <MiniArenaBridgeSlot

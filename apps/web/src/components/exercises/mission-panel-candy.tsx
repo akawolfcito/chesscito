@@ -629,26 +629,20 @@ export function MissionPanelCandy({
         )}
       </div>
 
-      {/* Zone C: action row — contextual action pin in the center, with
-          optional flanking slots on each side for compact entry points
-          (Daily Tactic, Mini-Arena bridge). The pin stays visually
-          anchored because the flanks are absolutely positioned at the
-          edges, leaving the centerline untouched. */}
+      {/* Zone C: action row — ONE centered flex row (founder 2026-06-11).
+          The previous layout pinned the flanks absolutely at the edges,
+          which left a hole on one side whenever a slot was empty and
+          misaligned mixed pedestal/pin heights. A plain centered row
+          redistributes naturally: 1 icon = centered, 2-3 icons = grouped
+          at the center with even gaps. Slots render in reading order:
+          Daily · Hint (left), SAVE/CLAIM (center), Special (right). */}
       <div
-        className="relative mx-2 flex min-h-[4.75rem] shrink-0 items-center justify-center"
+        className="mx-2 flex min-h-[4.75rem] shrink-0 items-center justify-center gap-3"
         style={{ marginTop: 'var(--shell-gap-xs)' }}
       >
-        {actionRowLeft && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2">
-            {actionRowLeft}
-          </div>
-        )}
+        {actionRowLeft}
         {contextualAction}
-        {actionRowRight && (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2">
-            {actionRowRight}
-          </div>
-        )}
+        {actionRowRight}
       </div>
 
       {/* Dock — persistent navigation.
