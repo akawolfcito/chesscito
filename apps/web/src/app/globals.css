@@ -8761,15 +8761,18 @@ button.hud-resource-chip:active:not(:disabled) {
   z-index: 3;
   pointer-events: none;
   white-space: nowrap;
-  /* Caption, not pill (founder 2026-06-11, 2nd pass): the cream pill
-     directly under the label read as a duplicated second label. A
-     small muted caption reads as metadata. */
+  /* Caption on a dark scrim capsule (founder 2026-06-11, 3rd pass):
+     the cream PILL read as a duplicated label; the bare caption was
+     illegible over the forest. Dark translucent capsule + cream text
+     = legible AND clearly metadata, the standard game-HUD treatment. */
   font-family: var(--font-game-display), system-ui, sans-serif;
   font-size: 0.55rem;
   font-weight: 400;
   letter-spacing: 0.02em;
-  color: rgba(255, 247, 230, 0.92);
-  text-shadow: 0 1px 2px rgba(40, 24, 6, 0.65);
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: rgba(255, 247, 230, 0.95);
+  background: rgba(40, 24, 6, 0.55);
 }
 
 /* Right-rail tile labels swap Rowdies (the shared .reward-tile font,

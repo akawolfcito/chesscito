@@ -59,12 +59,12 @@ describe("PeonesBalanceChip — loading", () => {
     const chip = screen.getByTestId("peones-balance-chip");
     expect(chip).toBeInTheDocument();
     expect(chip).toHaveAttribute("data-state", "loading");
-    expect(chip).toHaveTextContent("Peones …");
+    expect(chip).toHaveTextContent("…");
   });
 });
 
 describe("PeonesBalanceChip — success", () => {
-  it("renders the balance count followed by 'Peones'", () => {
+  it("renders the balance count, number only (visual-first)", () => {
     usePeonesBalanceMock.mockReturnValue({
       state: {
         kind: "success",
@@ -79,11 +79,11 @@ describe("PeonesBalanceChip — success", () => {
     render(<PeonesBalanceChip />);
     const chip = screen.getByTestId("peones-balance-chip");
     expect(chip).toHaveAttribute("data-state", "success");
-    expect(chip).toHaveTextContent("12 Peones");
+    expect(chip).toHaveTextContent("12");
     expect(chip).toHaveAttribute("aria-label", "Get Peones. Balance: 12");
   });
 
-  it("renders balance=0 as '0 Peones' (not hidden)", () => {
+  it("renders balance=0 as '0' (not hidden)", () => {
     usePeonesBalanceMock.mockReturnValue({
       state: {
         kind: "success",
@@ -97,13 +97,13 @@ describe("PeonesBalanceChip — success", () => {
 
     render(<PeonesBalanceChip />);
     expect(screen.getByTestId("peones-balance-chip")).toHaveTextContent(
-      "0 Peones",
+      "0",
     );
   });
 });
 
 describe("PeonesBalanceChip — error (non-aggressive fallback)", () => {
-  it("renders 'Peones --' without any banner or modal", () => {
+  it("renders '--' without any banner or modal", () => {
     usePeonesBalanceMock.mockReturnValue({
       state: { kind: "error" },
       refetch: vi.fn(),
@@ -112,7 +112,7 @@ describe("PeonesBalanceChip — error (non-aggressive fallback)", () => {
     render(<PeonesBalanceChip />);
     const chip = screen.getByTestId("peones-balance-chip");
     expect(chip).toHaveAttribute("data-state", "error");
-    expect(chip).toHaveTextContent("Peones --");
+    expect(chip).toHaveTextContent("--");
     // No alert / banner / modal element appears.
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

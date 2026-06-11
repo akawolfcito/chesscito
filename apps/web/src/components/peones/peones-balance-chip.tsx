@@ -67,12 +67,15 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
 
   if (state.kind === "guest") return null;
 
+  // Visual-first (founder 2026-06-11): the pawn sprite IS the
+  // currency; the chip shows the number only, like the trophy chip.
+  // The word lives in the aria-label.
   const label =
     state.kind === "success"
-      ? `${state.balance} Peones`
+      ? `${state.balance}`
       : state.kind === "loading"
-        ? "Peones …"
-        : "Peones --";
+        ? "…"
+        : "--";
 
   const ariaLabel =
     state.kind === "success"
@@ -104,10 +107,10 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
         style={{ cursor: "pointer" }}
       >
         <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
-          <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-          <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+          <source srcSet="/art/new-icons-chesscito/peon-piece-v1.avif" type="image/avif" />
+          <source srcSet="/art/new-icons-chesscito/peon-piece-v1.webp" type="image/webp" />
           <img
-            src="/art/redesign/pieces/w-pawn.png"
+            src="/art/new-icons-chesscito/peon-piece-v1.png"
             alt=""
             aria-hidden="true"
             className="block h-full w-full object-contain"
