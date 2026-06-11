@@ -2696,45 +2696,48 @@
     box-shadow: inset 0 0 0 1px rgba(103, 232, 249, 0.15);
   }
 
-  /* Sprint 4 commit I — paid Peones Hint reveal. Golden pulsing
-     ring on the optimal first-move cell + ✨ sparkle. Visual-first
-     replacement for the textual "Hint unlocked" banner that broke
-     the action row layout. Auto-cleared by the consumer after ~4s. */
-  .playhub-board-cell.is-peones-hint {
-    background: rgba(252, 211, 77, 0.22);
-    box-shadow:
-      inset 0 0 0 2px rgba(217, 119, 6, 0.85),
-      inset 0 0 14px rgba(252, 211, 77, 0.55);
-    animation: peones-hint-pulse 1.1s ease-in-out infinite;
-  }
-
-  @keyframes peones-hint-pulse {
-    0%, 100% {
-      box-shadow:
-        inset 0 0 0 2px rgba(217, 119, 6, 0.85),
-        inset 0 0 14px rgba(252, 211, 77, 0.55);
-    }
-    50% {
-      box-shadow:
-        inset 0 0 0 3px rgba(217, 119, 6, 1),
-        inset 0 0 22px rgba(252, 211, 77, 0.85);
-    }
-  }
-
+  /* Sprint 4 commit I — paid Peones Hint reveal. Founder D4 follow-up
+     (2026-06-11): the reveal is a golden PULSING CIRCLE centered on
+     the optimal first-move cell, so it reads as an overlay cue, not a
+     repainted square tile (the previous inset box-shadow followed the
+     cell shape and looked like a mismatched board square). The circle
+     lives on the `.playhub-board-peones-hint` span; the cell keeps
+     its `is-peones-hint` class as a state marker only (the cell is
+     already the positioning context). Auto-cleared by the consumer
+     after ~4s. */
   .playhub-board-peones-hint {
     position: absolute;
-    top: 6%;
-    right: 6%;
-    font-size: 0.85rem;
-    line-height: 1;
+    inset: 0;
+    margin: auto;
+    width: 72%;
+    aspect-ratio: 1;
+    border-radius: 50%;
     pointer-events: none;
-    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
-    animation: peones-hint-sparkle 1.6s ease-in-out infinite;
+    background: radial-gradient(
+      circle,
+      rgba(252, 211, 77, 0.38) 0%,
+      rgba(252, 211, 77, 0.16) 55%,
+      rgba(252, 211, 77, 0) 72%
+    );
+    box-shadow:
+      0 0 0 2.5px rgba(217, 119, 6, 0.9),
+      0 0 12px rgba(252, 211, 77, 0.65);
+    animation: peones-hint-circle-pulse 1.1s ease-in-out infinite;
   }
 
-  @keyframes peones-hint-sparkle {
-    0%, 100% { transform: scale(0.9) rotate(-8deg); opacity: 0.85; }
-    50%      { transform: scale(1.1) rotate(8deg);  opacity: 1; }
+  @keyframes peones-hint-circle-pulse {
+    0%, 100% {
+      transform: scale(0.92);
+      box-shadow:
+        0 0 0 2.5px rgba(217, 119, 6, 0.9),
+        0 0 12px rgba(252, 211, 77, 0.65);
+    }
+    50% {
+      transform: scale(1.04);
+      box-shadow:
+        0 0 0 3px rgba(217, 119, 6, 1),
+        0 0 20px rgba(252, 211, 77, 0.9);
+    }
   }
 
 

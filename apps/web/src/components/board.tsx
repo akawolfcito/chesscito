@@ -324,9 +324,7 @@ export function Board({
                         {peonesHint &&
                         peonesHint.file === square.file &&
                         peonesHint.rank === square.rank ? (
-                          <span className="playhub-board-peones-hint" aria-hidden="true">
-                            ✨
-                          </span>
+                          <span className="playhub-board-peones-hint" aria-hidden="true" />
                         ) : null}
                         {/* Piece rendered as floating layer below */}
                       </button>
