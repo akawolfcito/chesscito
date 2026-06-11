@@ -1571,7 +1571,7 @@ const messages = {
   },
   HUB_ACTION_RAIL_COPY: {
     dailyLabel: "Diario",
-    mateLabel: "Mate",
+    mateLabel: "Training", // matches the hardcoded exercises action-row pin; translate both together when pin labels get i18n
     coachLabel: "Coach",
     proDiscoveryTitle: "PRO",
     proDiscoverySubtitle: "Desbloquea la experiencia completa",

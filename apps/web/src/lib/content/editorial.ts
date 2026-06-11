@@ -2943,7 +2943,7 @@ export const DAILY_BADGE_COPY = {
  *  LEARN rail tile labels ("Rook", "Bishop", …). */
 export const HUB_ACTION_RAIL_COPY = {
   dailyLabel: "Daily",
-  mateLabel: "Mate",
+  mateLabel: "Training",
   coachLabel: "Coach",
   /** PRO discovery panel — sits above the right rail when the user does
    *  NOT have an active subscription. The asset `panel-pro.png` is just
