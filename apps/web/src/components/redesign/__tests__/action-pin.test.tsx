@@ -24,22 +24,26 @@ const ACTIONS: readonly ActionPinAction[] = [
 ] as const;
 
 const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
-  submitScore: "badge-save-icon",
+  submitScore: "score-saved",
   useShield: "shield",
-  claimBadge: "trophy",
+  claimBadge: "badge-save-icon",
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
 };
 
 const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
-  submitScore: "badge-save-icon",
+  submitScore: "score-saved",
   useShield: "shield-king",
-  claimBadge: "trofeo-epico",
+  claimBadge: "badge-save-icon",
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
 };
+
+/** Actions that render a custom reward sprite from /art/new-icons-chesscito
+ *  (pedestal pin, no candy-frame) instead of the action-row/CandyIcon set. */
+const CUSTOM_ICON_ACTIONS = new Set<ActionPinAction>(["submitScore", "claimBadge"]);
 
 function getRoot(): HTMLElement {
   const root = document.querySelector('[data-component="action-pin"]');
@@ -72,10 +76,9 @@ describe("ActionPin — render matrix (6 actions × 2 sizes)", () => {
 
         if (size === "pin") {
           const icon = button.querySelector("img");
-          const expectedBase =
-            action === "submitScore"
-              ? "/art/new-icons-chesscito"
-              : "/art/action-row";
+          const expectedBase = CUSTOM_ICON_ACTIONS.has(action)
+            ? "/art/new-icons-chesscito"
+            : "/art/action-row";
           expect(icon).toHaveAttribute(
             "src",
             `${expectedBase}/${ACTION_ROW_ICON_FILE[action]}.png`,
@@ -89,7 +92,7 @@ describe("ActionPin — render matrix (6 actions × 2 sizes)", () => {
           expect(button.contains(externalLabel as Node)).toBe(false);
         } else {
           const expectedIcon = ACTION_ICON_FILE[action];
-          if (action === "submitScore") {
+          if (CUSTOM_ICON_ACTIONS.has(action)) {
             const icon = button.querySelector("img");
             expect(icon).toHaveAttribute(
               "src",
@@ -110,7 +113,9 @@ describe("ActionPin — render matrix (6 actions × 2 sizes)", () => {
 });
 
 describe("ActionPin — tone", () => {
-  it('applies "candy-frame candy-frame-gold" classes when tone="claim"', () => {
+  it('claimBadge pin renders the bare badge sprite on a pedestal (no candy-frame tile)', () => {
+    // Icon-mapping fix 2026-06-10: CLAIM shows its badge-save-icon sprite
+    // bare (like SAVE), NOT inside the gold candy-frame trophy tile.
     render(
       <ActionPin
         action="claimBadge"
@@ -122,8 +127,12 @@ describe("ActionPin — tone", () => {
       />,
     );
     const button = screen.getByRole("button", { name: "Claim badge" });
-    expect(button.className).toMatch(/\bcandy-frame\b/);
-    expect(button.className).toMatch(/\bcandy-frame-gold\b/);
+    expect(button.className).toMatch(/\baction-pin-submit-pedestal\b/);
+    expect(button.className).not.toMatch(/\bcandy-frame-gold\b/);
+    expect(button.querySelector("img")).toHaveAttribute(
+      "src",
+      "/art/new-icons-chesscito/badge-save-icon.png",
+    );
   });
 
   it('applies the per-action gradient class when tone="default" (parameterized: connectWallet — utility action stays candy-frame)', () => {

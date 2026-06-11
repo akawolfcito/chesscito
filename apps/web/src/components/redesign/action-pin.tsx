@@ -112,12 +112,15 @@ const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
 };
 
 const ACTION_CUSTOM_ICON_SRC: Partial<Record<ActionPinAction, string>> = {
-  // Slice B.2: the Save-available CTA uses the reward pedestal art
-  // (shield + gold star) so it reads as an active "claim/save" action,
-  // distinct from the calm cofre-check `score-saved` seal of the saved
-  // state. Coach (game-actions-bar) and Victory (victory-celebration)
-  // keep their own `save.png` reference, untouched.
-  submitScore: "/art/new-icons-chesscito/badge-save-icon.png",
+  // Icon mapping fix 2026-06-10 (founder): semantics drive the art.
+  //   SAVE SCORE → score-saved (chest + check = "saved").
+  //   CLAIM BADGE → badge-save-icon (pedestal + shield + star = "badge").
+  // (Previously swapped: SAVE used the pedestal, CLAIM a generic trophy.)
+  // Both render WITHOUT the gold candy-frame tile in pin size (see
+  // isPedestalPin) so CLAIM looks like SAVE, not a framed trophy. Coach
+  // (game-actions-bar) + Victory (victory-celebration) keep save.png.
+  submitScore: "/art/new-icons-chesscito/score-saved.png",
+  claimBadge: "/art/new-icons-chesscito/badge-save-icon.png",
 };
 
 const PIN_BADGE_CLASSES =
@@ -185,12 +188,16 @@ export function ActionPin({
     .filter(Boolean)
     .join(" ");
 
-  const isSubmitPedestalPin = size === "pin" && action === "submitScore";
+  // Pedestal pin = a custom reward sprite floating with no candy-frame
+  // tile (2026-06-10: extended from submitScore to claimBadge so CLAIM
+  // shows its badge sprite bare, like SAVE, instead of a framed trophy).
+  const isPedestalPin =
+    size === "pin" && (action === "submitScore" || action === "claimBadge");
   const baseLayout = size === "pin" ? PIN_BUTTON_LAYOUT : FULL_BUTTON_LAYOUT;
   const shape = size === "pin" ? "rounded-full" : "rounded-2xl";
 
   const toneClasses =
-    isSubmitPedestalPin
+    isPedestalPin
       ? "action-pin-submit-pedestal"
       : tone === "claim"
         ? "candy-frame candy-frame-gold action-pin-attention"
