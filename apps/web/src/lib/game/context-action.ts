@@ -16,6 +16,24 @@ export type ContextActionState = {
   isCorrectChain: boolean;
 };
 
+/** Reward-area actions (2026-06-10): SAVE and CLAIM are distinct functions
+ *  and must NOT fight for one slot (hiding the SaveScore Peones sink behind
+ *  the badge claim was losing a monetization touchpoint). Returns the
+ *  reward actions that apply, ordered SAVE (primary) → CLAIM (secondary),
+ *  so the UI renders one or both side by side without either hiding the
+ *  other. Wallet-blocked + failure states are intentionally NOT handled
+ *  here — those keep a single resolutive CTA via getContextAction. */
+export type RewardAction = Extract<ContextAction, "submitScore" | "claimBadge">;
+
+export function getRewardActions(state: ContextActionState): RewardAction[] {
+  if (state.phase === "failure") return [];
+  if (!state.isConnected || !state.isCorrectChain) return [];
+  const actions: RewardAction[] = [];
+  if (state.scorePending) actions.push("submitScore"); // SAVE first (primary)
+  if (state.badgeClaimable) actions.push("claimBadge");
+  return actions;
+}
+
 export function getContextAction(state: ContextActionState): ContextAction {
   // Failure recovery always takes priority
   if (state.phase === "failure") {

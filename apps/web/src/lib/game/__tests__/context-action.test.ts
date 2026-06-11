@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { getContextAction } from "../context-action.js";
+import { getContextAction, getRewardActions } from "../context-action.js";
 import type { ContextActionState } from "../context-action.js";
 
 const BASE: ContextActionState = {
@@ -11,6 +11,45 @@ const BASE: ContextActionState = {
   isConnected: true,
   isCorrectChain: true,
 };
+
+describe("getRewardActions — SAVE and CLAIM are independent (no slot fight)", () => {
+  it("scorePending only → [submitScore]", () => {
+    expect(getRewardActions({ ...BASE, scorePending: true })).toEqual([
+      "submitScore",
+    ]);
+  });
+
+  it("badgeClaimable only → [claimBadge]", () => {
+    expect(getRewardActions({ ...BASE, badgeClaimable: true })).toEqual([
+      "claimBadge",
+    ]);
+  });
+
+  it("both → [submitScore, claimBadge] (SAVE primary, first)", () => {
+    expect(
+      getRewardActions({ ...BASE, scorePending: true, badgeClaimable: true }),
+    ).toEqual(["submitScore", "claimBadge"]);
+  });
+
+  it("neither → []", () => {
+    expect(getRewardActions(BASE)).toEqual([]);
+  });
+
+  it("returns [] in the failure phase (failure has its own single CTA)", () => {
+    expect(
+      getRewardActions({ ...BASE, phase: "failure", scorePending: true, badgeClaimable: true }),
+    ).toEqual([]);
+  });
+
+  it("returns [] when wallet-blocked (single connect/switch CTA path owns it)", () => {
+    expect(
+      getRewardActions({ ...BASE, isConnected: false, scorePending: true, badgeClaimable: true }),
+    ).toEqual([]);
+    expect(
+      getRewardActions({ ...BASE, isCorrectChain: false, scorePending: true }),
+    ).toEqual([]);
+  });
+});
 
 describe("getContextAction", () => {
   // ── Wallet guards ──────────────────────────────────────

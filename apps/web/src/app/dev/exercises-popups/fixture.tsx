@@ -4,6 +4,7 @@ import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-compl
 import { PieceCompletePrompt, ResultOverlay } from "@/components/exercises/result-overlay";
 import { SavedChip } from "@/components/exercises/saved-chip";
 import { ActionPin } from "@/components/redesign/action-pin";
+import { ContextualActionSlot } from "@/components/exercises/contextual-action-slot";
 
 type Variant =
   | "piece-complete-final"
@@ -12,6 +13,7 @@ type Variant =
   | "score-saved-peones"
   | "saved-chip"
   | "save-cta"
+  | "reward-dual"
   | "result-badge"
   | "result-shop"
   | "result-error";
@@ -103,6 +105,28 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
               ariaLabel="Save score"
               onPress={noop}
             />
+          </div>
+        </div>
+      )}
+
+      {variant === "reward-dual" && (
+        <div className="flex min-h-[100dvh] items-center justify-center">
+          <div className="flex items-center justify-center gap-3">
+            {(["submitScore", "claimBadge"] as const).map((a) => (
+              <ContextualActionSlot
+                key={a}
+                action={a}
+                shieldsAvailable={0}
+                isBusy={false}
+                onSubmitScore={noop}
+                onUseShield={noop}
+                onClaimBadge={noop}
+                onRetry={noop}
+                onConnectWallet={noop}
+                onSwitchNetwork={noop}
+                compact
+              />
+            ))}
           </div>
         </div>
       )}

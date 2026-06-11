@@ -117,7 +117,7 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
 import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation, type TxErrorKind } from "@/lib/errors";
-import { getContextAction } from "@/lib/game/context-action";
+import { getContextAction, getRewardActions } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, EXERCISES, LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
 import {
   areAllLabyrinthsSolved,
@@ -1323,14 +1323,19 @@ export function ExercisesScreen({
 
   const allExercisesAttempted = progress.stars.every(s => s > 0);
 
-  const contextAction = getContextAction({
+  const contextActionState = {
     phase,
     shieldsAvailable: shieldCount,
     scorePending: scorePendingNew,
     badgeClaimable: badgeEarned && !hasClaimedBadge && !justClaimed[selectedPiece],
     isConnected,
     isCorrectChain,
-  });
+  };
+  const contextAction = getContextAction(contextActionState);
+  // SAVE and CLAIM are independent reward actions — they must not fight for
+  // one slot (hiding the SaveScore Peones sink behind the badge claim lost a
+  // monetization touchpoint). When both apply, render both side by side.
+  const rewardActions = getRewardActions(contextActionState);
 
   // Suppress unused-var lint for the legacy heuristic — preserved so
   // any downstream consumer that still references it doesn't break.
@@ -2329,6 +2334,32 @@ export function ExercisesScreen({
                 }}
                 onDismiss={starsConnectPrompt.dismiss}
               />
+            ) : rewardActions.length >= 1 ? (
+              // Reward area: SAVE (sink) + CLAIM (badge) shown independently,
+              // side by side, neither hiding the other. Each pin gets its own
+              // busy flag so a save in flight doesn't grey out claim and vice
+              // versa.
+              <div className="flex items-center justify-center gap-3">
+                {rewardActions.map((a) => (
+                  <ContextualActionSlot
+                    key={a}
+                    action={a}
+                    shieldsAvailable={shieldCount}
+                    isBusy={
+                      a === "submitScore"
+                        ? isSavingScore
+                        : isBadgeWriting || isClaimConfirming
+                    }
+                    onSubmitScore={() => void handleSubmitScore()}
+                    onUseShield={handleUseShield}
+                    onClaimBadge={() => void handleClaimBadge()}
+                    onRetry={handleRetryApplied}
+                    onConnectWallet={() => openConnectModal?.()}
+                    onSwitchNetwork={() => configuredChainId != null && switchChain({ chainId: configuredChainId })}
+                    compact
+                  />
+                ))}
+              </div>
             ) : (
               <ContextualActionSlot
                 action={contextAction}

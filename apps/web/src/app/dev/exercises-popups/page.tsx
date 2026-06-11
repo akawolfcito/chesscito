@@ -13,6 +13,7 @@ const VARIANTS = new Set([
   "score-saved-peones",
   "saved-chip",
   "save-cta",
+  "reward-dual",
   "result-badge",
   "result-shop",
   "result-error",
