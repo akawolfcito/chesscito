@@ -181,3 +181,20 @@ HUB micro-block follow-ups shipped after addendum 3:
    `rl:spend:ip` bucket split (needs log evidence), daily-streak
    migration for HUD streak chip (note in addendum 3), possible
    punto-alerta PNG retirement audit (non-hub consumers may remain).
+
+---
+
+## Addendum 5 — SHOP + BADGES polish (session tail)
+
+Commit `style(shop+badges)` (founder-approved "se ve mucho mejor"):
+- FEATURED ribbon unclipped (scroll container pt-2, mt-4 → mt-2).
+- Shop borders softened: tile tones 0.55→0.25 (compact 0.65→0.30),
+  FEATURED ribbon 0.80→0.35, green buy pill 0.85→0.35.
+- YOUR BADGES Claim = shop buy-pill (`candy-tray-pill
+  shop-item-tile-buy-pill shop-item-tile-buy-pill--green`); fixes the
+  "Clai…" truncation; spinner while claim in flight; dead
+  `.badge-card-claim-btn` CSS removed (note: dev button-gallery page
+  still mentions that class in prose — harmless, clean up whenever).
+
+Suite 3519/3519. NEXT SESSION order unchanged (addendum 4): Deep Hint
+spec → re-smoke bug SAVE/CLAIM → backlog.
