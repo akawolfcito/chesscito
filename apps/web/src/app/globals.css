@@ -3234,8 +3234,11 @@
 
   /* Pure-CSS alert dot (2026-06-11): replaces the
      punto-alerta-notificacion PNG. Glossy red sphere + cream ring,
-     same 18px geometry and pulse as the asset it mirrors. */
+     same pulse as the asset it mirrors. 16px (vs the 18px check):
+     founder tune, the dot whispers, the check confirms. */
   .action-pin-notif {
+    width: 16px;
+    height: 16px;
     border-radius: 999px;
     background:
       radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 30%),
