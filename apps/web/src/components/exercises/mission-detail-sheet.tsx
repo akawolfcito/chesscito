@@ -38,6 +38,10 @@ type Props = {
   trainingPath?: TrainingNode[];
   /** Gates milestone copy only ("Badge ready" vs "Connect to claim"). */
   walletConnected?: boolean;
+  /** Slice 3C: tap on an unlocked labyrinth node. The sheet closes
+   *  itself before reporting so the player lands straight on the
+   *  board. Absent → the rail stays read-only. */
+  onLabyrinthSelect?: (labyrinthId: string) => void;
   /** The peek-card element that opens the modal. Cloned with an
    *  injected onClick that flips `open` true; any pre-existing
    *  handler on the trigger is preserved. */
@@ -58,6 +62,7 @@ export function MissionDetailSheet({
   claimedBadges,
   trainingPath,
   walletConnected = false,
+  onLabyrinthSelect,
   trigger,
 }: Props) {
   const tBriefing = useTranslations("MISSION_BRIEFING_COPY");
@@ -293,6 +298,14 @@ export function MissionDetailSheet({
                       <TrainingPathRail
                         path={trainingPath}
                         connected={walletConnected}
+                        onLabyrinthSelect={
+                          onLabyrinthSelect
+                            ? (labyrinthId) => {
+                                onOpenChange(false);
+                                onLabyrinthSelect(labyrinthId);
+                              }
+                            : undefined
+                        }
                       />
                     </div>
                   </>

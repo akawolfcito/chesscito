@@ -66,12 +66,15 @@ type MissionPanelProps = {
    *  never sees a picker stacked behind a badge/shop/leaderboard
    *  sheet. */
   isDockSheetOpen: boolean
-  /** L2 layer toggle. Visible only when labyrinthAvailable. Lets the
-   *  player switch between L1 exercises and L2 labyrinths inline. */
-  labyrinthAvailable?: boolean
+  /** L2 labyrinth layer state. Entry happens via training path node
+   *  taps (onLabyrinthSelect); while active, a single exit pill
+   *  replaces the old EXERCISES/LABYRINTHS toggle (Slice 3C). */
   labyrinthMode?: boolean
   labyrinthOptimalMoves?: number
-  onToggleLabyrinth?: (next: boolean) => void
+  onExitLabyrinth?: () => void
+  /** Tap on an unlocked labyrinth node in the mission detail sheet's
+   *  training path. Forwarded down; absent → read-only rail. */
+  onLabyrinthSelect?: (labyrinthId: string) => void
   /** Optional slot rendered between the chip row and the board.
    *  Used by the Hub to surface the Daily Tactic card without
    *  pulling daily-feature concerns into this presentational
@@ -432,10 +435,10 @@ export function MissionPanelCandy({
   trainingPath,
   walletConnected = false,
   isDockSheetOpen,
-  labyrinthAvailable = false,
   labyrinthMode = false,
   labyrinthOptimalMoves,
-  onToggleLabyrinth,
+  onExitLabyrinth,
+  onLabyrinthSelect,
   headerSlot,
   actionRowLeft,
   actionRowRight,
@@ -492,7 +495,6 @@ export function MissionPanelCandy({
       : isCapture
         ? tMission('openDetailsCaptureAriaLabel')
         : tMission('openDetailsTargetAriaFormat', { target: targetLabel })
-  const showLayerTabs = Boolean(onToggleLabyrinth)
 
   const missionPeek = (
     <button
@@ -555,6 +557,7 @@ export function MissionPanelCandy({
               claimedBadges={claimedBadges}
               trainingPath={trainingPath}
               walletConnected={walletConnected}
+              onLabyrinthSelect={onLabyrinthSelect}
               trigger={missionPeek}
             />
           </div>
@@ -563,45 +566,21 @@ export function MissionPanelCandy({
           </div>
         </div>
 
-        {showLayerTabs && onToggleLabyrinth && (
+        {/* Slice 3C: the EXERCISES/LABYRINTHS layer toggle is gone —
+            labyrinth entry now happens through training path node taps
+            (MissionDetailSheet). What remains is the single exit
+            affordance, shown only while the labyrinth layer is on, so
+            a player can abandon a labyrinth mid-run. */}
+        {labyrinthMode && onExitLabyrinth && (
           <div className="mt-1 flex justify-center">
-            <div
-              className="quest-tray-tabs grid w-full grid-cols-2 overflow-hidden rounded-2xl border p-0.5"
-              role="tablist"
-              aria-label={tLab('layerToggleAriaLabel')}
-            >
-              {[
-                {
-                  active: !labyrinthMode,
-                  value: false,
-                  label: tLab('toggleExercises'),
-                  disabled: false,
-                },
-                {
-                  active: labyrinthMode,
-                  value: true,
-                  label: tLab('toggleLabyrinths'),
-                  disabled: !labyrinthAvailable,
-                },
-              ].map(({ active, value, label, disabled }) => (
-                <button
-                  key={label}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  aria-disabled={disabled}
-                  disabled={disabled}
-                  onClick={() => onToggleLabyrinth(value)}
-                  className={[
-                    'rounded-xl px-2 py-1.5 transition-all active:scale-[0.98]',
-                    'fantasy-title text-[0.65rem] font-black uppercase tracking-[0.08em]',
-                    active ? 'quest-tray-tab-active' : '',
-                    disabled ? 'cursor-not-allowed opacity-30' : '',
-                  ].join(' ')}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className="quest-tray-tabs grid w-full grid-cols-1 overflow-hidden rounded-2xl border p-0.5">
+              <button
+                type="button"
+                onClick={() => onExitLabyrinth()}
+                className="quest-tray-tab-active rounded-xl px-2 py-1.5 transition-all active:scale-[0.98] fantasy-title text-[0.65rem] font-black uppercase tracking-[0.08em]"
+              >
+                {tLab('backToExercises')}
+              </button>
             </div>
           </div>
         )}

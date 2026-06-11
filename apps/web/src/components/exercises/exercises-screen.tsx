@@ -843,10 +843,12 @@ export function ExercisesScreen({
   });
   const [unlockedPiece, setUnlockedPiece] = useState<PieceKey | null>(null);
 
-  /** L2 layer toggle. When true, the board renders the active piece's
-   *  labyrinth instead of the L1 exercise. Resets to false on piece
-   *  switch — labyrinth state does not survive across pieces. */
+  /** L2 layer state. When true, the board renders the SELECTED
+   *  labyrinth instead of the L1 exercise. Entry happens via training
+   *  path node taps (Slice 3C); resets on piece switch — labyrinth
+   *  state does not survive across pieces. */
   const [labyrinthMode, setLabyrinthMode] = useState(false);
+  const [selectedLabyrinthId, setSelectedLabyrinthId] = useState<string | null>(null);
 
   /** Modal trap fix: when the global ResultOverlay opens (success OR
    *  error) while a Radix dock sheet is still mounted, Radix's modal
@@ -856,6 +858,7 @@ export function ExercisesScreen({
    *  modal becomes the sole foreground and stays dismissable. */
   useEffect(() => {
     setLabyrinthMode(false);
+    setSelectedLabyrinthId(null);
     setLabyrinthCompleted(null);
     setLabyrinthMoves(0);
   }, [selectedPiece]);
@@ -2080,13 +2083,17 @@ export function ExercisesScreen({
     }
   }
 
-  /** Active exercise — switches to the labyrinth when L2 layer is on
-   *  and the piece has at least one labyrinth defined. Falls back to
-   *  the L1 currentExercise otherwise. */
+  /** Active exercise — switches to the SELECTED labyrinth when the L2
+   *  layer is on. Slice 3C: selection comes from training path node
+   *  taps (the old `labyrinthList[0]` hardcode and the 10★
+   *  labyrinthAvailable gate are gone — unlock now lives in the path
+   *  node statuses: first lab at 6★, then chain by completion). */
   const labyrinthList = LABYRINTHS[selectedPiece] ?? [];
-  const labyrinthAvailable = labyrinthList.length > 0 && (badgeEarned || totalStars >= BADGE_THRESHOLD);
-  const effectiveLabyrinthMode = labyrinthMode && labyrinthAvailable;
-  const activeLabyrinth = effectiveLabyrinthMode ? labyrinthList[0] : null;
+  const activeLabyrinth =
+    labyrinthMode && selectedLabyrinthId
+      ? labyrinthList.find((lab) => lab.id === selectedLabyrinthId) ?? null
+      : null;
+  const effectiveLabyrinthMode = activeLabyrinth !== null;
   const activeExercise = activeLabyrinth ?? currentExercise;
 
   /** Integrated training path (Slice 2 — read-only display in the
@@ -2105,6 +2112,33 @@ export function ExercisesScreen({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPiece, progress, badgesClaimed, labyrinthCompleted]);
+
+  /** Slice 3C: enter the labyrinth layer with a specific lab. Defense
+   *  in depth — locked nodes are not tappable in the rail, but the
+   *  handler validates against the path anyway so a stale tap can
+   *  never open a locked lab. labyrinthKey bump remounts the board so
+   *  switching labs always starts clean. */
+  const handleLabyrinthSelect = useCallback(
+    (labyrinthId: string) => {
+      const node = trainingPath.find(
+        (n) => n.kind === "labyrinth" && n.id === labyrinthId,
+      );
+      if (!node || node.status === "locked") return;
+      setSelectedLabyrinthId(labyrinthId);
+      setLabyrinthMode(true);
+      setLabyrinthCompleted(null);
+      setLabyrinthMoves(0);
+      setLabyrinthKey((k) => k + 1);
+    },
+    [trainingPath],
+  );
+
+  const handleExitLabyrinth = useCallback(() => {
+    setLabyrinthMode(false);
+    setSelectedLabyrinthId(null);
+    setLabyrinthCompleted(null);
+    setLabyrinthMoves(0);
+  }, []);
 
   /** Labyrinth move handler — fires the completion overlay when the
    *  player reaches the target. The Board's internal counter is the
@@ -2271,14 +2305,10 @@ export function ExercisesScreen({
           pieceHint={pieceHint}
           isCapture={Boolean(currentExercise.isCapture)}
           isDockSheetOpen={activeDockTab !== null}
-          labyrinthAvailable={labyrinthAvailable}
           labyrinthMode={effectiveLabyrinthMode}
           labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
-          onToggleLabyrinth={(next) => {
-            if (next && !labyrinthAvailable) return;
-            setLabyrinthMode(next);
-            setLabyrinthMoves(0);
-          }}
+          onExitLabyrinth={handleExitLabyrinth}
+          onLabyrinthSelect={handleLabyrinthSelect}
           score={score.toString()}
           timeMs={timeMs.toString()}
           currentStars={totalStars}
@@ -2564,15 +2594,23 @@ export function ExercisesScreen({
               setShowPieceComplete(false);
               resetBoard();
             }}
-            onTryLabyrinth={
-              labyrinthList.length > 0
+            onTryLabyrinth={(() => {
+              // Slice 3C: route through the path — offer the CTA only
+              // when at least one lab is unlocked, and open THAT lab
+              // (the old setLabyrinthMode(true) relied on the [0]
+              // hardcode and could enter a non-effective mode below
+              // the unlock threshold).
+              const firstOpenLab = trainingPath.find(
+                (n) => n.kind === "labyrinth" && n.status !== "locked",
+              );
+              return firstOpenLab
                 ? () => {
                     setShowPieceComplete(false);
-                    setLabyrinthMode(true);
+                    handleLabyrinthSelect(firstOpenLab.id);
                     resetBoard();
                   }
-                : undefined
-            }
+                : undefined;
+            })()}
             onChoosePiece={() => {
               setShowPieceComplete(false);
               setPickerOpenSignal((n) => n + 1);
@@ -2610,11 +2648,7 @@ export function ExercisesScreen({
               setLabyrinthKey((k) => k + 1);
               setLabyrinthMoves(0);
             }}
-            onBack={() => {
-              setLabyrinthCompleted(null);
-              setLabyrinthMode(false);
-              setLabyrinthMoves(0);
-            }}
+            onBack={handleExitLabyrinth}
             onEnterArena={
               selectedPiece === "king" &&
               areAllLabyrinthsSolved(
