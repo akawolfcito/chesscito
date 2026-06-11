@@ -65,11 +65,12 @@ export function ContextualActionSlot(props: ContextualActionSlotProps) {
   // Slot keeps its entrance-animation wrapper (compact pin vs full
   // bottom-slide). ActionPin owns visual atom + label rendering +
   // state animations.
-  // Check/dot system (2026-06-11): SAVE and CLAIM pins only mount
-  // while their action is actually takeable, so they carry the
-  // pending dot — the row reads "these are waiting for you".
-  const status =
-    action === "submitScore" || action === "claimBadge" ? "pending" : null;
+  // Signal hierarchy (Sally pass 2026-06-11): the red dot is reserved
+  // for NEW VALUE waiting for the player. CLAIM qualifies (an earned
+  // badge sits unclaimed); SAVE does not — it's a player decision, and
+  // its presence in the row already communicates availability. Keeping
+  // both dotted produced the "alarm carpet" the founder flagged.
+  const status = action === "claimBadge" ? "pending" : null;
 
   if (compact) {
     return (

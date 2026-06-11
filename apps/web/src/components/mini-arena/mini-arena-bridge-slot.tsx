@@ -32,22 +32,27 @@ type Props = {
 export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: Props) {
   const t = useTranslations("HUB_ACTION_RAIL_COPY");
   const [open, setOpen] = useState(false);
-  // Check/dot system (2026-06-11): done = bridge beaten at least once
-  // (best result recorded), pending dot = unlocked but never beaten.
-  // Hydrated post-mount so SSR markup stays marker-free (localStorage).
+  // Signal hierarchy (Sally pass 2026-06-11): the dot marks NEW
+  // content — unlocked but never beaten. Once beaten the marker clears
+  // entirely (no done-check): the bridge is a permanent replayable
+  // door, not a task. Hydrated post-mount (localStorage).
   const [status, setStatus] = useState<PinStatus | null>(null);
   useEffect(() => {
     if (!unlocked) {
       setStatus(null);
       return;
     }
-    setStatus(getMiniArenaBest(setup.id) != null ? "done" : "pending");
+    setStatus(getMiniArenaBest(setup.id) != null ? null : "pending");
   }, [unlocked, setup.id, open]);
   if (!unlocked && !renderLocked) return null;
 
   return (
     <>
-      <span data-testid="mini-arena-bridge" className="relative inline-flex">
+      <span
+        data-testid="mini-arena-bridge"
+        className="flex flex-col items-center gap-1"
+      >
+        <span className="relative inline-flex">
         <StonePedestal
           stone={4}
           size="large"
@@ -61,7 +66,14 @@ export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: P
               : t("arenaLockedAriaFormat", { name: setup.name })
           }
         />
-        <PinStatusMarker status={status} />
+          <PinStatusMarker status={status} />
+        </span>
+        <span
+          aria-hidden="true"
+          className="action-pin-label game-label text-nano font-bold uppercase tracking-[0.12em] text-[rgba(63,34,8,0.85)]"
+        >
+          Training
+        </span>
       </span>
       {unlocked ? (
         <MiniArenaSheet open={open} onOpenChange={setOpen} setup={setup} />

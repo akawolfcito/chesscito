@@ -205,13 +205,21 @@ export function DailyTacticSlot() {
 
   return (
     <>
-      <DailyTacticCard
-        puzzleName={puzzleData.name}
-        streak={progress.streak}
-        isCompletedToday={completed}
-        hoursUntilNext={hoursUntilNextUtcDay()}
-        onPlay={() => setOpen(true)}
-      />
+      {/* Retire-when-done (Sally pass 2026-06-11): a completed daily is
+          dead weight until tomorrow (tap is already suppressed), so the
+          card leaves the action row instead of sitting there checked —
+          less noise, the row reads "what's alive now". Kept mounted
+          while the sheet is open so the solve ceremony finishes before
+          the card disappears. */}
+      {completed && !open ? null : (
+        <DailyTacticCard
+          puzzleName={puzzleData.name}
+          streak={progress.streak}
+          isCompletedToday={completed}
+          hoursUntilNext={hoursUntilNextUtcDay()}
+          onPlay={() => setOpen(true)}
+        />
+      )}
       <DailyTacticSheet
         open={open}
         onOpenChange={(nextOpen) => {

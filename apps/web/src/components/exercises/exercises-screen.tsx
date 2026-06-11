@@ -58,7 +58,6 @@ import {
 } from "@/lib/shop/shield-events";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
 import { useSaveScoreState } from "@/hooks/use-save-score-state";
-import { SavedChip } from "@/components/exercises/saved-chip";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
 import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
@@ -1250,8 +1249,9 @@ export function ExercisesScreen({
   // of the old `allExercisesAttempted` heuristic.
   const { lastSavedScore, lastSavedTxHash, recordSaveFor } =
     useSaveScoreState(selectedPiece);
-  const savedReceiptUrl =
-    lastSavedTxHash && chainId ? txLink(chainId, lastSavedTxHash) : undefined;
+  // savedReceiptUrl removed with the retired SavedChip (Sally pass
+  // 2026-06-11); legacy on-chain receipts remain reachable from the
+  // leaderboard surfaces.
   const localScoreNum = Number(score);
   const scorePendingNew =
     canSaveScore && totalStars >= 1 && localScoreNum > lastSavedScore;
@@ -2332,11 +2332,12 @@ export function ExercisesScreen({
                 current={txCurrent}
               />
             ) : isSavedAtParity && contextAction === null ? (
-              <SavedChip
-                stars={Math.floor(lastSavedScore / Number(POINTS_PER_STAR))}
-                total={BADGE_THRESHOLD}
-                receiptUrl={savedReceiptUrl}
-              />
+              // Retire-when-done (Sally pass 2026-06-11): a saved-at-
+              // parity score renders NOTHING — the SAVE pin reappears
+              // on its own when the player beats the score. The
+              // SavedChip status seal read as a sixth dock icon and
+              // fed the "two docks" noise the founder flagged.
+              null
             ) : starsConnectPrompt.isVisible ? (
               <ConnectPromptToast
                 milestone="stars"

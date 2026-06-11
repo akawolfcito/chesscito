@@ -56,26 +56,35 @@ export function DailyTacticCard({
     <span
       data-testid="daily-tactic-card"
       data-state={isCompletedToday ? "completed" : "pending"}
-      className="relative inline-flex"
+      className="flex flex-col items-center gap-1"
     >
-      <StonePedestal
-        stone={2}
-        size="large"
-        className="action-row-pedestal action-row-pedestal-daily"
-        icon={
-          <ActionRowIcon
-            name="ejercicio-diario-chess"
-            className="h-14 w-14 object-contain"
-          />
-        }
-        badge={badge}
-        onClick={onPlay}
-        disabled={isCompletedToday}
-        aria-label={ariaLabel}
-      />
-      {/* Check/dot system (2026-06-11): done = played today, pending
-          dot = today's tactic still waiting. */}
-      <PinStatusMarker status={isCompletedToday ? "done" : "pending"} />
+      <span className="relative inline-flex">
+        <StonePedestal
+          stone={2}
+          size="large"
+          className="action-row-pedestal action-row-pedestal-daily"
+          icon={
+            <ActionRowIcon
+              name="ejercicio-diario-chess"
+              className="h-14 w-14 object-contain"
+            />
+          }
+          badge={badge}
+          onClick={onPlay}
+          disabled={isCompletedToday}
+          aria-label={ariaLabel}
+        />
+        {/* Signal hierarchy (Sally pass 2026-06-11): the dot marks an
+            unopened daily gift. A completed daily retires from the row
+            (see DailyTacticSlot), so no done-check is needed here. */}
+        {isCompletedToday ? null : <PinStatusMarker status="pending" />}
+      </span>
+      <span
+        aria-hidden="true"
+        className="action-pin-label game-label text-nano font-bold uppercase tracking-[0.12em] text-[rgba(63,34,8,0.85)]"
+      >
+        Daily
+      </span>
     </span>
   );
 }
