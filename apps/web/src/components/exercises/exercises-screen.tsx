@@ -22,7 +22,10 @@ import { useShieldsCount } from "@/lib/shop/use-shields-count";
 import { useFounderStatus } from "@/lib/founder/use-founder-status";
 import { ExerciseDrawer } from "@/components/exercises/exercise-drawer";
 import { LeaderboardSheet } from "@/components/exercises/leaderboard-sheet";
-import { MissionBriefing } from "@/components/exercises/mission-briefing";
+import {
+  MissionBriefing,
+  shouldShowMissionBriefing,
+} from "@/components/exercises/mission-briefing";
 import { MissionPanelCandy } from "@/components/exercises/mission-panel-candy";
 import { FailRescueModal } from "@/components/exercises/fail-rescue-modal";
 import { useFailRescue } from "@/lib/exercises/use-fail-rescue";
@@ -2594,7 +2597,16 @@ export function ExercisesScreen({
          *  the dialog will appear naturally once the user is back at
          *  the root view. Prevents the visual stack collapse flagged
          *  by visual-qa-2026-04-30 (Issue #1). */}
-        {showBriefing && activeDockTab === null && !proSheetOpen && !accountSheetOpen ? (
+        {shouldShowMissionBriefing({
+          showBriefing,
+          dockSheetOpen: activeDockTab !== null,
+          proSheetOpen,
+          accountSheetOpen,
+          // Micro-fix 2026-06-11: never mount the exercise briefing
+          // over a labyrinth — its objective copy would interpolate
+          // the live move counter. Defers until back on exercises.
+          labyrinthActive: effectiveLabyrinthMode,
+        }) ? (
           <MissionBriefing
             pieceType={selectedPiece}
             targetLabel={targetLabel}

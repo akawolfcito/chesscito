@@ -14,6 +14,28 @@ type MissionBriefingProps = {
   onPlay: () => void;
 };
 
+/** Mount guard for the first-visit briefing. The briefing DEFERS (stays
+ *  pending, `showBriefing` keeps true) while any covering surface is
+ *  open — dock/PRO/account sheets — AND while the labyrinth layer is
+ *  active: the exercise objective copy would interpolate the live
+ *  labyrinth move counter ("Move your Rook to 0 / 3 moves"). It mounts
+ *  naturally once the player is back on a clear exercise view. */
+export function shouldShowMissionBriefing(args: {
+  showBriefing: boolean;
+  dockSheetOpen: boolean;
+  proSheetOpen: boolean;
+  accountSheetOpen: boolean;
+  labyrinthActive: boolean;
+}): boolean {
+  return (
+    args.showBriefing &&
+    !args.dockSheetOpen &&
+    !args.proSheetOpen &&
+    !args.accountSheetOpen &&
+    !args.labyrinthActive
+  );
+}
+
 export function MissionBriefing({
   pieceType,
   targetLabel,
