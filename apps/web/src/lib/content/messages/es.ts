@@ -1383,6 +1383,7 @@ const messages = {
     disabledHintUnavailable: "Este item no está disponible en este momento.",
   },
   SAVED_CHIP_COPY: {
+    pinLabel: "Guardado",
     label: "Guardado · {stars}★",
     hint: "Supera tu puntaje para guardar de nuevo",
     receiptHint: "Toca para ver recibo",

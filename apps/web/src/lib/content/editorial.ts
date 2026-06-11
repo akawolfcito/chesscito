@@ -548,6 +548,8 @@ export const PURCHASE_CONFIRM_COPY = {
  *  The SAVE pin automatically reappears once the player earns more
  *  stars, so the chip communicates "synced — improve to save again". */
 export const SAVED_CHIP_COPY = {
+  /** Nano label under the pin (check/dot system 2026-06-11). */
+  pinLabel: "Saved",
   /** Compact label, e.g. "✓ Saved · 12★". Stars-only (no denominator)
    *  to keep the chip short and avoid the misread "I scored 10/15 and
    *  lost 5". */

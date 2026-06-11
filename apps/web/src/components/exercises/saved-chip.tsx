@@ -2,8 +2,6 @@
 
 import { useTranslations } from "next-intl";
 
-import { CandyIcon } from "@/components/redesign/candy-icon";
-
 /** Cofre-check seal art (triplet). Static asset (not theme-swappable), so
  *  the optimized sources always render. */
 const SAVED_SEAL_ICON = "/art/new-icons-chesscito/score-saved";
@@ -20,11 +18,13 @@ type SavedChipProps = {
   receiptUrl?: string;
 };
 
-/** Visual seal: the cofre-check icon + a calm star stat-pill. Reads as a
- *  confirmation badge, not a button. */
-function SavedSeal({ stars }: { stars: number }) {
+/** Visual seal: the cofre icon with the green check marker from the
+ *  check/dot system. Founder pass 2026-06-11: no star pill, no long
+ *  hint text — the icon + check carry "saved"; the score and the
+ *  beat-it-to-resave guidance live in the aria-label. */
+function SavedSeal() {
   return (
-    <span className="inline-flex items-center gap-1.5">
+    <span className="action-pin-submit-pedestal relative flex shrink-0 items-center justify-center">
       <picture>
         <source srcSet={`${SAVED_SEAL_ICON}.avif`} type="image/avif" />
         <source srcSet={`${SAVED_SEAL_ICON}.webp`} type="image/webp" />
@@ -33,14 +33,14 @@ function SavedSeal({ stars }: { stars: number }) {
           alt=""
           aria-hidden="true"
           draggable={false}
-          className="h-9 w-9 object-contain drop-shadow-sm"
+          className="object-contain"
         />
       </picture>
-      <span className="candy-stat-pill" data-testid="saved-chip-stars">
-        <span className="candy-stat-pill-icon">
-          <CandyIcon name="star" className="h-4 w-4" />
-        </span>
-        {stars}
+      <span
+        aria-hidden="true"
+        className="action-pin-status action-pin-status--done"
+      >
+        ✓
       </span>
     </span>
   );
@@ -50,11 +50,10 @@ function SavedSeal({ stars }: { stars: number }) {
  * Saved seal rendered on `/exercises` when the player's local progress
  * matches the last saved score for the active piece (`isSavedAtParity`).
  *
- * Visual-first: the cofre-check icon carries the "saved" meaning, the
- * star pill carries the score, and a small hint below explains that
- * beating the score reopens the SAVE action. It is a passive status
- * (NOT a button); only the legacy on-chain receipt case is a tappable
- * link to CeloScan.
+ * Pin form (founder check/dot system 2026-06-11): bare icon + green
+ * check + nano label, matching the SAVE/CLAIM pins. It is a passive
+ * status (NOT a button); only the legacy on-chain receipt case is a
+ * tappable link to CeloScan.
  */
 export function SavedChip({ stars, total, receiptUrl }: SavedChipProps) {
   const t = useTranslations("SAVED_CHIP_COPY");
@@ -65,7 +64,7 @@ export function SavedChip({ stars, total, receiptUrl }: SavedChipProps) {
   return (
     <div
       data-component="saved-chip"
-      className="flex flex-col items-center gap-1"
+      className="action-pin action-pin--pin flex flex-col items-center gap-1"
     >
       {receiptUrl ? (
         <a
@@ -73,26 +72,20 @@ export function SavedChip({ stars, total, receiptUrl }: SavedChipProps) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={ariaLabel}
-          className="inline-flex items-center gap-1.5 transition-transform active:scale-[0.97]"
+          className="inline-flex transition-transform active:scale-[0.97]"
         >
-          <SavedSeal stars={stars} />
-          <CandyIcon
-            name="chevron-down"
-            className="h-3 w-3 -rotate-90"
-            style={{ color: "rgba(110, 65, 15, 0.6)" }}
-          />
+          <SavedSeal />
         </a>
       ) : (
         <span role="status" aria-label={ariaLabel}>
-          <SavedSeal stars={stars} />
+          <SavedSeal />
         </span>
       )}
       <span
         aria-hidden="true"
-        className="text-nano font-semibold uppercase tracking-wider"
-        style={{ color: "rgba(63, 34, 8, 0.65)" }}
+        className="action-pin-label game-label text-nano font-bold uppercase tracking-[0.12em] text-[rgba(63,34,8,0.85)]"
       >
-        {t("hint")}
+        {t("pinLabel")}
       </span>
     </div>
   );
