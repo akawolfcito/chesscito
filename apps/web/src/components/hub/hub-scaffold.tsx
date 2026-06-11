@@ -11,6 +11,7 @@ import { PremiumSlot } from "@/components/pro-mission/premium-slot";
 import { PrimitiveBoundary } from "@/components/error/primitive-boundary";
 import { HubActionTile } from "@/components/hub/hub-action-tile";
 import { HubTileStatusChip } from "@/components/hub/hub-tile-status-chip";
+import { LanguageChip } from "@/components/hub/language-chip";
 import { HubArenaTile } from "@/components/hub/hub-arena-tile";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
@@ -196,6 +197,9 @@ export function HubScaffold({
              *  chip family for connected wallets. NO spend, NO top-up,
              *  read-only surface backed by /api/peones/balance. */}
             {wrap("PeonesBalanceChip", <PeonesBalanceChip />)}
+            {/* Language chip (founder 2026-06-11): flag + locale code,
+             *  tap → confirm card to switch EN ↔ ES. */}
+            {wrap("LanguageChip", <LanguageChip />)}
           </div>
           <div className="hub-scaffold-hud-right">
             {!isWalletConnected && onConnectTap ? (

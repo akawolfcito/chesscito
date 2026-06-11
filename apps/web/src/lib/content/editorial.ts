@@ -3114,6 +3114,17 @@ export const RESCUE_MODAL_COPY = {
  * The hint is now revealed as a board-cell glow, NOT a textual
  * banner, so `success` + `hint` keys are intentionally gone.
  */
+export const LANGUAGE_CHIP_COPY = {
+  ariaLabel: "Change language",
+  dialogAriaLabel: "Change language",
+  /** ICU param {language} = flag + display name of the target. */
+  question: "Switch the app to {language}?",
+  confirm: "Switch",
+  cancel: "Not now",
+  en: "English",
+  es: "Español",
+} as const;
+
 export const PEONES_HINT_COPY = {
   button: "Hint \u00b7 1 Peón",
   /** Nano label under the action-row pin (founder 2026-06-11: HINT

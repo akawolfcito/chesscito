@@ -91,7 +91,7 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
        *  no VR baseline drifts. Balance changes still announce via the
        *  inner span's aria-live. */}
       <div
-        className="candy-tray-pill hub-hud-pill"
+        className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
         role="button"
         tabIndex={0}
         onClick={openSheet}

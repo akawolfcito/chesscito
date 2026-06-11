@@ -2106,6 +2106,15 @@ const messages = {
       error: "Falló. Reintenta.",
     },
   },
+  LANGUAGE_CHIP_COPY: {
+    ariaLabel: "Cambiar idioma",
+    dialogAriaLabel: "Cambiar idioma",
+    question: "¿Cambiar la app a {language}?",
+    confirm: "Cambiar",
+    cancel: "Ahora no",
+    en: "English",
+    es: "Español",
+  },
   PEONES_HINT_COPY: {
     button: "Pista \u00b7 1 Peón",
     pinLabel: "Pista",
