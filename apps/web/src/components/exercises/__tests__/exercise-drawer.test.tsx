@@ -3,6 +3,7 @@ import { fireEvent } from "@testing-library/react";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 import { ExerciseDrawer } from "../exercise-drawer";
 import { EXERCISES } from "@/lib/game/exercises";
+import { buildTrainingPath } from "@/lib/training/path";
 
 const baseProps = {
   open: true,
@@ -84,5 +85,92 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
     // "Boxed-in square" = rook-8 = pool index 7 (the 3rd visible row).
     clickRow("Boxed-in square");
     expect(onNavigate).toHaveBeenCalledWith(7);
+  });
+});
+
+describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
+  const zeros = new Array(10).fill(0);
+  const sixStars = [3, 3, ...new Array(8).fill(0)];
+
+  function rookLabNodes(stars: number[], bests: Record<string, number> = {}) {
+    return buildTrainingPath({
+      piece: "rook",
+      progress: { piece: "rook", exerciseIndex: 0, stars },
+      labyrinthBests: bests,
+      badgeClaimed: false,
+    }).filter((node) => node.kind === "labyrinth");
+  }
+
+  it("renders labyrinth rows in the main selector", () => {
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        onNavigate={vi.fn()}
+        labyrinthNodes={rookLabNodes(zeros)}
+        onLabyrinthSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Labyrinth 1")).toBeInTheDocument();
+    expect(screen.getByText("Labyrinth 3")).toBeInTheDocument();
+  });
+
+  it("locked labs are disabled with rule copy and never fire the handler", () => {
+    const onLabyrinthSelect = vi.fn();
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        onNavigate={vi.fn()}
+        labyrinthNodes={rookLabNodes(zeros)}
+        onLabyrinthSelect={onLabyrinthSelect}
+      />,
+    );
+    expect(screen.getByText("Unlocks at 6★")).toBeInTheDocument();
+    const locked = screen.getByText("Labyrinth 1").closest("button");
+    expect(locked).toBeDisabled();
+    if (locked) fireEvent.click(locked);
+    expect(onLabyrinthSelect).not.toHaveBeenCalled();
+  });
+
+  it("available lab fires onLabyrinthSelect with its id and closes the drawer", () => {
+    const onLabyrinthSelect = vi.fn();
+    const onOpenChange = vi.fn();
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={sixStars}
+        totalStars={6}
+        onOpenChange={onOpenChange}
+        onNavigate={vi.fn()}
+        labyrinthNodes={rookLabNodes(sixStars)}
+        onLabyrinthSelect={onLabyrinthSelect}
+      />,
+    );
+    const row = screen.getByText("Labyrinth 1").closest("button");
+    expect(row).toBeEnabled();
+    if (row) fireEvent.click(row);
+    expect(onLabyrinthSelect).toHaveBeenCalledWith("rook-lab-1");
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("completed lab shows stars and stays tappable for replay", () => {
+    const onLabyrinthSelect = vi.fn();
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={sixStars}
+        totalStars={6}
+        onNavigate={vi.fn()}
+        labyrinthNodes={rookLabNodes(sixStars, { "rook-lab-1": 3 })}
+        onLabyrinthSelect={onLabyrinthSelect}
+      />,
+    );
+    const row = screen.getByText("Labyrinth 1").closest("button");
+    if (row) fireEvent.click(row);
+    expect(onLabyrinthSelect).toHaveBeenCalledWith("rook-lab-1");
+  });
+
+  it("without labyrinthNodes the drawer stays exercise-only (legacy)", () => {
+    render(<ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />);
+    expect(screen.queryByText(/Labyrinth \d/)).not.toBeInTheDocument();
   });
 });
