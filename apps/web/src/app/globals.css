@@ -3202,6 +3202,46 @@
     transform: translateY(1px) scale(0.97);
   }
 
+  /* Founder check/dot system (2026-06-11) — status markers for the
+     pins above the dock. Geometry + visuals mirror the kingdom
+     reward rail (.reward-tile-status / .reward-tile-notif) so the
+     vocabulary reads as one system: green check = done, pulsing red
+     dot = action waiting. Standalone classes because the reward-tile
+     selectors are scoped to their own parent. */
+  .action-pin-status,
+  .action-pin-notif {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 18px;
+    height: 18px;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .action-pin-status--done {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  .action-pin-notif img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 999px;
+    filter: drop-shadow(0 2px 2px rgba(78, 44, 5, 0.25));
+    animation: reward-tile-notif-pulse 1.6s ease-out infinite;
+  }
+
   .action-pin-submit-pedestal img {
     width: 56px;
     height: 56px;

@@ -20,6 +20,13 @@ export type ActionPinAction =
 
 export type ActionPinSize = "pin" | "full";
 export type ActionPinTone = "default" | "claim";
+/** Founder check/dot system (2026-06-11): every pin above the dock can
+ *  carry a status marker borrowed from the kingdom reward rail —
+ *  `"done"` = green check (action completed: saved, claimed, daily
+ *  played), `"pending"` = pulsing red dot (action waiting for the
+ *  player). Pin size only; the full-size ceremonial CTA carries its
+ *  state in the label. */
+export type ActionPinStatus = "done" | "pending";
 export type Atmosphere = "adventure" | "scholarly";
 
 export type ActionPinBadgeContent = {
@@ -53,6 +60,9 @@ type Props = {
   /** Disabled flag. Sets the button `disabled` attribute and applies
    *  `is-disabled`. Does NOT set `aria-busy`. Blocks `onPress`. */
   disabled?: boolean;
+  /** Status marker (pin size only): green check / pulsing red dot at
+   *  the button's top-right corner. See `ActionPinStatus`. */
+  status?: ActionPinStatus | null;
   onPress: () => void;
   className?: string;
 };
@@ -165,6 +175,7 @@ export function ActionPin({
   atmosphere = "adventure",
   isBusy = false,
   disabled = false,
+  status = null,
   onPress,
   className = "",
 }: Props) {
@@ -308,6 +319,22 @@ export function ActionPin({
       >
         {iconNode}
         {size === "full" ? <span>{label}</span> : null}
+        {size === "pin" && status === "done" ? (
+          <span aria-hidden="true" className="action-pin-status action-pin-status--done">
+            ✓
+          </span>
+        ) : null}
+        {size === "pin" && status === "pending" ? (
+          <picture className="action-pin-notif">
+            <source srcSet="/art/scene-rooted/punto-alerta-notificacion.avif" type="image/avif" />
+            <source srcSet="/art/scene-rooted/punto-alerta-notificacion.webp" type="image/webp" />
+            <img
+              src="/art/scene-rooted/punto-alerta-notificacion.png"
+              alt=""
+              aria-hidden="true"
+            />
+          </picture>
+        ) : null}
         {size === "pin" && badge?.pin != null ? (
           <span aria-hidden="true" className={PIN_BADGE_CLASSES}>
             {badge.pin}

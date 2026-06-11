@@ -568,3 +568,68 @@ describe("ActionPin — accessibility (decorative icons)", () => {
     });
   });
 });
+
+describe("ActionPin — status marker (founder check/dot system 2026-06-11)", () => {
+  it("status='done' renders the green check marker on pin size", () => {
+    const { container } = render(
+      <ActionPin
+        action="submitScore"
+        size="pin"
+        label="Save"
+        ariaLabel="Save"
+        status="done"
+        onPress={() => {}}
+      />,
+    );
+    const marker = container.querySelector(".action-pin-status--done");
+    expect(marker).not.toBeNull();
+    expect(marker).toHaveTextContent("✓");
+  });
+
+  it("status='pending' renders the pulsing red notification dot", () => {
+    const { container } = render(
+      <ActionPin
+        action="claimBadge"
+        size="pin"
+        label="Claim"
+        ariaLabel="Claim"
+        status="pending"
+        onPress={() => {}}
+      />,
+    );
+    const dot = container.querySelector(".action-pin-notif img");
+    expect(dot).not.toBeNull();
+    expect(dot).toHaveAttribute(
+      "src",
+      "/art/scene-rooted/punto-alerta-notificacion.png",
+    );
+  });
+
+  it("no status prop renders no marker (back-compat default)", () => {
+    const { container } = render(
+      <ActionPin
+        action="submitScore"
+        size="pin"
+        label="Save"
+        ariaLabel="Save"
+        onPress={() => {}}
+      />,
+    );
+    expect(container.querySelector(".action-pin-status--done")).toBeNull();
+    expect(container.querySelector(".action-pin-notif")).toBeNull();
+  });
+
+  it("status markers do not render on size='full' (pin-only affordance)", () => {
+    const { container } = render(
+      <ActionPin
+        action="submitScore"
+        size="full"
+        label="Save"
+        ariaLabel="Save"
+        status="done"
+        onPress={() => {}}
+      />,
+    );
+    expect(container.querySelector(".action-pin-status--done")).toBeNull();
+  });
+});
