@@ -83,3 +83,36 @@ overlay only. No read branch conclusively hides BOTH pins. Next: re-smoke
 on the new build (slices changed this surface), watch
 `score_save_{insufficient,duplicate}` telemetry to identify the branch,
 then trace `contextAction`/`isSavedAtParity` state at that moment.
+
+---
+
+## Addendum 2 — action-row polish + v1 icon set (same day, 3rd pass)
+
+All pushed to `origin/main`. Sally (UX) drove composition decisions.
+
+- Action row layout: 3-col grid `1fr auto 1fr` — edges = persistent
+  entry points (Daily left, Training right), center = contextual
+  group (Hint + SAVE/CLAIM) distributed without holes.
+- Signal hierarchy: red dot ONLY for new value (Daily unopened, CLAIM
+  unclaimed, Training never-beaten). SAVE/HINT never dotted.
+- Retire-when-done: completed Daily leaves the row; saved-at-parity
+  renders nothing (SavedChip retired from slot); Training clears its
+  marker once beaten.
+- v1 universal icon set wired (gift+1 / lightbulb / open chest /
+  badge-claim showcase / crossed swords), 44px uniform sprite height
+  (sizing on the img — inline <picture> ignores height utilities),
+  64px touch targets. CLAIM uses `badge-claim-icon` triplet.
+- Alert dot = pure CSS (16px glossy sphere), PNG dropped in action
+  row scope (kingdom rail keeps it).
+- Design principle recorded: "the screen communicates the world, the
+  icon communicates the action" — no chess decoration inside 56px
+  action icons.
+
+Suite 3502/3502 throughout. ~10 commits `a43852bc..2eb57887`.
+
+### Dock iconography — analyzed, NOT executed (founder will signal)
+
+Sally verdict: Badges/Arena/Trophies keep; Shop → money pouch,
+Leaders → stepped 2-1-3 podium. Specs: 256px master, 24px grayscale
+silhouette test, warm palette against the dark stone. Waiting on
+`shop-icon-v1.png` / `leaderboard-icon-v1.png` in `design/iconsx/`.
