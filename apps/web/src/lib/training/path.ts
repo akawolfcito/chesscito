@@ -145,6 +145,20 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
   return [...exerciseNodes, ...labyrinthNodes, badgeNode, masteryNode];
 }
 
+/** Slice 3D: the next challenge the path recommends — the first
+ *  labyrinth that is unlocked but not yet completed. Null means the
+ *  player should just continue the normal exercise flow. Pure: the
+ *  caller decides how to surface it (drawer row, contextual CTA).
+ *  Guiding rule: the next challenge comes to the player, the player
+ *  never searches for it. */
+export function getNextChallenge(path: TrainingNode[]): TrainingNode | null {
+  return (
+    path.find(
+      (node) => node.kind === "labyrinth" && node.status === "available",
+    ) ?? null
+  );
+}
+
 export function getPieceMastery(path: TrainingNode[]): PieceMastery {
   const mastery = path.find((node) => node.kind === "mastery");
   if (mastery?.status === "complete") return "mastered";

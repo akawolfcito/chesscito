@@ -12,6 +12,7 @@ import {
 import type { PieceId, PieceProgress } from "@/lib/game/types";
 import {
   buildTrainingPath,
+  getNextChallenge,
   getPieceMastery,
   LABYRINTH_UNLOCK_THRESHOLD,
   type TrainingNode,
@@ -249,6 +250,54 @@ describe("buildTrainingPath — catalog coverage and ordering", () => {
       "rook-lab-2",
       "rook-lab-3",
     ]);
+  });
+});
+
+describe("getNextChallenge — next-node recommendation (Slice 3D)", () => {
+  function pathFor(piece: PieceId, input: Partial<TrainingPathInput> = {}) {
+    return buildTrainingPath({
+      piece,
+      progress: makeProgress(piece, EXERCISES[piece].map(() => 0)),
+      labyrinthBests: {},
+      badgeClaimed: false,
+      ...input,
+    });
+  }
+
+  it("returns null while every labyrinth is locked (keep exercise flow)", () => {
+    expect(getNextChallenge(pathFor("knight"))).toBeNull();
+  });
+
+  it("recommends the first available labyrinth once 6★ unlocks it", () => {
+    const next = getNextChallenge(
+      pathFor("knight", {
+        progress: makeProgress("knight", starsTotaling("knight", 6)),
+      }),
+    );
+    expect(next?.id).toBe("knight-lab-1");
+    expect(next?.kind).toBe("labyrinth");
+  });
+
+  it("skips completed labyrinths and recommends the next available in the chain", () => {
+    const next = getNextChallenge(
+      pathFor("knight", {
+        progress: makeProgress("knight", starsTotaling("knight", 6)),
+        labyrinthBests: { "knight-lab-1": 3 },
+      }),
+    );
+    expect(next?.id).toBe("knight-lab-2");
+  });
+
+  it("returns null when every labyrinth is complete (nothing pending)", () => {
+    const next = getNextChallenge(
+      pathFor("knight", {
+        progress: makeProgress("knight", starsTotaling("knight", 6)),
+        labyrinthBests: Object.fromEntries(
+          LABYRINTHS.knight.map((lab) => [lab.id, lab.optimalMoves]),
+        ),
+      }),
+    );
+    expect(next).toBeNull();
   });
 });
 
