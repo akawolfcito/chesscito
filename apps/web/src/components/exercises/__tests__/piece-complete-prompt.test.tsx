@@ -36,6 +36,49 @@ describe("PieceCompletePrompt — CTA hierarchy", () => {
     vi.clearAllMocks();
   });
 
+  it("primary = Try Labyrinth even when nextPiece exists (Slice 3E sequence fix)", () => {
+    // The blocker this fixes: players finished the exercises, tapped the
+    // big "Start {next}" button and NEVER saw the labyrinths. A pending
+    // labyrinth IS the natural continuation of the piece — it outranks
+    // the next piece.
+    const onTryLabyrinth = vi.fn();
+    render(
+      <PieceCompletePrompt
+        {...baseProps}
+        pieceType="rook"
+        nextPiece="bishop"
+        onTryLabyrinth={onTryLabyrinth}
+      />,
+    );
+    expect(
+      screen.getAllByRole("button", { name: "Try Labyrinth" }).length,
+    ).toBeGreaterThanOrEqual(1);
+    // Next piece survives as a secondary text-link, never disappears.
+    expect(
+      screen.getByRole("button", { name: "Start Bishop" }),
+    ).toBeInTheDocument();
+  });
+
+  it("dismiss with a pending labyrinth stays on the piece (no silent piece jump)", () => {
+    const onTryLabyrinth = vi.fn();
+    const onNextPiece = vi.fn();
+    const onPracticeAgain = vi.fn();
+    render(
+      <PieceCompletePrompt
+        {...baseProps}
+        pieceType="rook"
+        nextPiece="bishop"
+        onNextPiece={onNextPiece}
+        onPracticeAgain={onPracticeAgain}
+        onTryLabyrinth={onTryLabyrinth}
+      />,
+    );
+    // The shell's close affordance carries the closeLabel aria-label
+    // ("Practice Again" for this prompt).
+    screen.getByRole("button", { name: /Practice Again/i }).click();
+    expect(onNextPiece).not.toHaveBeenCalled();
+  });
+
   it("primary = Start {nextPiece} when nextPiece exists", () => {
     render(
       <PieceCompletePrompt

@@ -2647,23 +2647,20 @@ export function ExercisesScreen({
               setShowPieceComplete(false);
               resetBoard();
             }}
-            onTryLabyrinth={(() => {
-              // Slice 3C: route through the path — offer the CTA only
-              // when at least one lab is unlocked, and open THAT lab
-              // (the old setLabyrinthMode(true) relied on the [0]
-              // hardcode and could enter a non-effective mode below
-              // the unlock threshold).
-              const firstOpenLab = trainingPath.find(
-                (n) => n.kind === "labyrinth" && n.status !== "locked",
-              );
-              return firstOpenLab
+            onTryLabyrinth={
+              // Slice 3E: only a PENDING labyrinth (unlocked, not yet
+              // completed — getNextChallenge semantics) takes the CTA.
+              // A fully-completed labyrinth leg falls through to the
+              // nextPiece primary. Routes through the path, never the
+              // old [0] hardcode.
+              nextChallenge
                 ? () => {
                     setShowPieceComplete(false);
-                    handleLabyrinthSelect(firstOpenLab.id);
+                    handleLabyrinthSelect(nextChallenge.id);
                     resetBoard();
                   }
-                : undefined;
-            })()}
+                : undefined
+            }
             onChoosePiece={() => {
               setShowPieceComplete(false);
               setPickerOpenSignal((n) => n + 1);

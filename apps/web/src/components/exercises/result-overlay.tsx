@@ -780,43 +780,49 @@ export function PieceCompletePrompt({
     setTimeout(cb, 250);
   }
 
-  // Dismissing the popup (X close OR scrim tap) used to fire
-  // `onPracticeAgain`, which kept the user on the SAME piece at the
-  // same last exercise — players reported this as "stuck on the last
-  // level" after completing a piece. New mapping: close advances to
-  // the next piece when one exists (the primary CTA's natural
-  // destination); on the final piece, close still falls back to
-  // practice-again so the player isn't dropped out of the surface
-  // they're choosing to dismiss.
-  const handleDismiss = nextPiece ? onNextPiece : onPracticeAgain;
+  // Dismissing the popup (X close OR scrim tap): with a pending
+  // labyrinth the player STAYS on the piece (Slice 3E) — jumping pieces
+  // here was exactly how players never met the labyrinths; the "Enter
+  // Labyrinth" contextual pin guides them after dismissal. Without a
+  // pending lab, close advances to the next piece when one exists
+  // (avoids the "stuck on the last level" report); on the final piece
+  // it falls back to practice-again.
+  const handleDismiss = onTryLabyrinth
+    ? onPracticeAgain
+    : nextPiece
+      ? onNextPiece
+      : onPracticeAgain;
 
-  /* Primary CTA priority (drives both label and handler):
-   *   1. nextPiece exists       → "Start {nextPiece}"
-   *   2. onTryLabyrinth defined → "Try Labyrinth"   (current piece has
-   *                                                  ≥1 labyrinth)
+  /* Primary CTA priority (drives both label and handler) — Slice 3E
+   * sequence fix: a pending labyrinth is the natural continuation of
+   * the CURRENT piece, so it outranks the next piece (the old
+   * nextPiece-first order meant players finished the exercises and
+   * never saw a labyrinth):
+   *   1. onTryLabyrinth defined → "Try Labyrinth"  (unlocked, pending)
+   *   2. nextPiece exists       → "Start {nextPiece}"
    *   3. onChoosePiece defined  → "Choose another piece"
    *   4. fallback (no other path) → "ARENA"
    *
-   * Arena keeps the defensive 4th slot so a misconfigured callsite
-   * never lands the user on an inert button. When Arena is NOT primary
-   * AND there is no next piece, surface it as a secondary text-link
-   * (`tryArenaSecondary`) — Arena stays a valid escape hatch but stops
-   * dominating the moment for pieces that still have no follow-up
-   * content (King v0.1). */
+   * When the labyrinth takes the primary slot, nextPiece survives as a
+   * secondary text-link (never disappears). Arena keeps the defensive
+   * 4th slot so a misconfigured callsite never lands the user on an
+   * inert button; when Arena is NOT primary AND there is no next
+   * piece, it surfaces as the `tryArenaSecondary` text-link. */
   type CTA = { label: string; handler: () => void };
-  const primaryCTA: CTA = nextPiece
-    ? {
-        label: tComplete("nextPiece", { piece: tPiece(nextPiece) }),
-        handler: onNextPiece,
-      }
-    : onTryLabyrinth
-      ? { label: tLab("tryLabyrinth"), handler: onTryLabyrinth }
+  const primaryCTA: CTA = onTryLabyrinth
+    ? { label: tLab("tryLabyrinth"), handler: onTryLabyrinth }
+    : nextPiece
+      ? {
+          label: tComplete("nextPiece", { piece: tPiece(nextPiece) }),
+          handler: onNextPiece,
+        }
       : onChoosePiece
         ? { label: tComplete("choosePiece"), handler: onChoosePiece }
         : { label: tComplete("tryArena"), handler: onArena };
 
   const arenaIsPrimary = primaryCTA.handler === onArena;
   const showArenaSecondary = !nextPiece && !arenaIsPrimary;
+  const showNextPieceSecondary = Boolean(onTryLabyrinth && nextPiece);
   const showCoachHint = nextPiece != null;
 
   const pieceImg = getBadgeImg(pieceType);
@@ -886,6 +892,16 @@ export function PieceCompletePrompt({
           >
             {primaryCTA.label}
           </PrincipalButton>
+
+          {showNextPieceSecondary && nextPiece && (
+            <button
+              type="button"
+              onClick={() => handleAction(onNextPiece)}
+              className="arena-result-secondary-action"
+            >
+              {tComplete("nextPiece", { piece: tPiece(nextPiece) })}
+            </button>
+          )}
 
           {onSubmitScore && (
             <button
