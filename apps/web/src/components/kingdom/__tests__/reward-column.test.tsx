@@ -18,12 +18,11 @@ describe("RewardColumn", () => {
     });
     expect(tile.className).toMatch(/reward-tile\b/);
     expect(tile.className).toMatch(/is-claimable\b/);
+    // Pure-CSS dot (2026-06-11): styled span, no PNG request.
     const badge = within(tile).getByTestId("reward-tile-notif");
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveAttribute(
-      "src",
-      "/art/scene-rooted/punto-alerta-notificacion.png",
-    );
+    expect(badge.tagName).toBe("SPAN");
+    expect(badge.className).toMatch(/action-pin-notif\b/);
     expect(tile.textContent).toContain("Rook");
     expect(tile.textContent).not.toContain("mastery");
   });

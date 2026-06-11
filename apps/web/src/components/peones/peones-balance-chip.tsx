@@ -113,7 +113,10 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
             src="/art/new-icons-chesscito/peon-piece-v1.png"
             alt=""
             aria-hidden="true"
-            className="block h-full w-full object-contain"
+            // p-1 visually matches the trophy sprite: peon-piece-v1 is a
+            // tight crop (no canvas air) so unpadded it dwarfs its
+            // neighbor chip icon (founder size pass 2026-06-11).
+            className="block h-full w-full object-contain p-1"
           />
         </picture>
         <span className="tabular-nums" aria-live="polite">

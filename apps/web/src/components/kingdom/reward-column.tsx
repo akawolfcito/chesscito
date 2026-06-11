@@ -106,16 +106,14 @@ function RewardTileButton({
         </span>
       ) : null}
       {tile.state === "claimable" ? (
-        <picture className="reward-tile-notif">
-          <source srcSet="/art/scene-rooted/punto-alerta-notificacion.avif" type="image/avif" />
-          <source srcSet="/art/scene-rooted/punto-alerta-notificacion.webp" type="image/webp" />
-          <img
-            src="/art/scene-rooted/punto-alerta-notificacion.png"
-            alt=""
-            aria-hidden="true"
-            data-testid="reward-tile-notif"
-          />
-        </picture>
+        // Pure-CSS dot (founder 2026-06-11): same glossy sphere as the
+        // action-row markers — the punto-alerta-notificacion PNG is no
+        // longer fetched here.
+        <span
+          aria-hidden="true"
+          data-testid="reward-tile-notif"
+          className="reward-tile-notif action-pin-notif"
+        />
       ) : null}
       {tile.state === "locked" ? (
         <CandyIcon name="lock" className="reward-tile-lock" />
