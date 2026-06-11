@@ -116,3 +116,28 @@ Sally verdict: Badges/Arena/Trophies keep; Shop → money pouch,
 Leaders → stepped 2-1-3 podium. Specs: 256px master, 24px grayscale
 silhouette test, warm palette against the dark stone. Waiting on
 `shop-icon-v1.png` / `leaderboard-icon-v1.png` in `design/iconsx/`.
+
+---
+
+## Addendum 3 — HUB right-rail availability micro-block
+
+Commit `feat(hub)` (pushed pending). Files: `lib/hub/tile-availability.ts`
+(+tests), `hub-tile-status-chip.tsx`, `hub-daily-tile.tsx`,
+`hub-arena-tile.tsx`, `hub-scaffold.tsx`, `globals.css`,
+`hub-tile-availability.test.tsx`.
+
+- Daily → ready dot / "Next Xh" (≤12h) / "Tomorrow". Mount-time only.
+- Mate → static ready dot (no cooldown invented). Coach → "PRO"/"Ask",
+  never auto-fires analysis. Daily+Mate adopt v1 icons (gift/swords).
+- NO live countdown, NO setInterval (tests filter the testing-library
+  heartbeat and assert zero app intervals). Suite 3515/3515.
+
+### Follow-up note — streak semantics (NOT migrated)
+
+Founder direction: the HUD streak should ideally be a DAILY streak
+(consecutive days, like the Daily Tactic streak in
+`lib/daily/progress.ts`), not the in-session exercise run streak
+(`lib/exercises/use-streak.ts`). Both exist today; the HUD secondary
+row shows the session one. Migration = own slice when prioritized:
+swap the HUD source + decide shield interaction. Nothing changed in
+this block.
