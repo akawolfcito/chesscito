@@ -5,6 +5,21 @@
 > communicated, insufficient = dead end, icons mismapped, hint loop.
 > Focus per founder: **exercises + labyrinth first**, then chess + coach.
 
+## NEXT SESSION — start here
+
+1. **User pushes the D commits to `main`** → fresh preview build (I do NOT
+   push unless asked).
+2. **Re-smoke** the preview, validate-before-adding:
+   - Exercises **numbered contiguous 1,2,3,4…** = rotation OFF confirmed
+     (the #1 check; preview is OFF only if the env was false BEFORE the build).
+   - Complete a piece → **SAVE + CLAIM both visible** (SAVE=chest score-saved,
+     CLAIM=badge-save-icon, no bg).
+   - 4th save w/o Peones → **"Get Peones" + "Not now"** (not just Dismiss),
+     copy with no "5".
+   - Free save → **"X free saves left"** pill.
+3. **If green** → do the Remaining (HINT icon+label, hint circle, hint race)
+   and build **Deep Hint (3 Peones)** as the next economy-v2 sink.
+
 ## Done this block (commits on `main`, LOCAL — not pushed yet)
 
 | Commit | What |
