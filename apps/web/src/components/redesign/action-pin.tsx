@@ -123,15 +123,15 @@ const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
 };
 
 const ACTION_CUSTOM_ICON_SRC: Partial<Record<ActionPinAction, string>> = {
-  // Icon mapping fix 2026-06-10 (founder): semantics drive the art.
-  //   SAVE SCORE → score-saved (chest + check = "saved").
-  //   CLAIM BADGE → badge-save-icon (pedestal + shield + star = "badge").
-  // (Previously swapped: SAVE used the pedestal, CLAIM a generic trophy.)
+  // v1 icon set (Sally iconography brief 2026-06-11): universal
+  // action metaphors, no chess-context tax at 56px.
+  //   SAVE SCORE → open chest receiving a star (storing value).
+  //   CLAIM BADGE → medal with ribbon (it's yours, take it).
   // Both render WITHOUT the gold candy-frame tile in pin size (see
-  // isPedestalPin) so CLAIM looks like SAVE, not a framed trophy. Coach
-  // (game-actions-bar) + Victory (victory-celebration) keep save.png.
-  submitScore: "/art/new-icons-chesscito/score-saved.png",
-  claimBadge: "/art/new-icons-chesscito/badge-save-icon.png",
+  // isPedestalPin). Coach (game-actions-bar) + Victory
+  // (victory-celebration) keep save.png.
+  submitScore: "/art/new-icons-chesscito/save-score-icon-v1.png",
+  claimBadge: "/art/new-icons-chesscito/claim-icon-v1.png",
 };
 
 const PIN_BADGE_CLASSES =

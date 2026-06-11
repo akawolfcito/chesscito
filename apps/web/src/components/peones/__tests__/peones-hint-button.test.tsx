@@ -636,7 +636,7 @@ describe("PeonesHintButton — icon+label (founder D3 follow-up)", () => {
     expect(icon).not.toBeNull();
     expect(icon).toHaveAttribute(
       "src",
-      "/art/new-icons-chesscito/hint-icon.png",
+      "/art/new-icons-chesscito/hint-icon-v1.png",
     );
     expect(icon).toHaveAttribute("aria-hidden", "true");
     // Pin form: cost detail is the aria-label; the nano label below

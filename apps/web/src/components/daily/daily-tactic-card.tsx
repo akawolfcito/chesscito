@@ -65,7 +65,7 @@ export function DailyTacticCard({
           className="action-row-pedestal action-row-pedestal-daily"
           icon={
             <ActionRowIcon
-              name="ejercicio-diario-chess"
+              name="daily-icon-v1"
               className="h-14 w-14 object-contain"
             />
           }

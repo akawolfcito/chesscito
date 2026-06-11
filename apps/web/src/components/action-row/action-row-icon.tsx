@@ -2,6 +2,7 @@
 
 export type ActionRowIconName =
   | "battle-espadas"
+  | "daily-icon-v1"
   | "ejercicio-diario-chess"
   | "estrella"
   | "learning"
@@ -12,6 +13,7 @@ export type ActionRowIconName =
   | "refresh"
   | "save"
   | "shield-king"
+  | "training-icon-v1"
   | "trofeo-epico"
   | "wallet";
 
@@ -24,7 +26,15 @@ type Props = {
 function resolveIconBase(name: ActionRowIconName): string {
   if (name === "mate-icon") return "/art/hub";
   if (
-    ["ejercicio-diario-chess", "learning", "play-chess", "practice-pieces", "save"].includes(name)
+    [
+      "daily-icon-v1",
+      "ejercicio-diario-chess",
+      "learning",
+      "play-chess",
+      "practice-pieces",
+      "save",
+      "training-icon-v1",
+    ].includes(name)
   ) {
     return "/art/new-icons-chesscito";
   }

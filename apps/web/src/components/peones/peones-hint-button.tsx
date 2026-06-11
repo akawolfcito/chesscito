@@ -57,7 +57,7 @@ const FEEDBACK_TTL_MS = 2500;
  *  loading, revealed, feedback) so the morphing chip never jumps
  *  between icon+text and text-only layouts. Guest chip stays
  *  text-only: it advertises connecting, not spending. */
-const HINT_ICON_SRC = "/art/new-icons-chesscito/hint-icon.png";
+const HINT_ICON_SRC = "/art/new-icons-chesscito/hint-icon-v1.png";
 
 type HintState =
   | { kind: "idle" }
