@@ -97,11 +97,11 @@ export const JOURNEY_RAIL_COPY = {
   masteredCountFormat: "{count} / {total}",
 } as const;
 
-/** `<TrainingPathRail />` copy — read-only per-piece path inside the
- *  mission detail sheet (exercises → labyrinths → badge → mastery).
- *  Badge and Mastery are milestone rows with their OWN unlock copy so
- *  a claimable badge above locked labyrinths never reads as a skipped
- *  or broken step (spec integrated-training-path, red-team P0-3). */
+/** Training-path copy. The labyrinth keys feed the ExerciseDrawer's
+ *  labyrinth leg and the contextual Enter Labyrinth pin. The exercise
+ *  chip / milestone keys are orphans since the surface-redistribution
+ *  spec (2026-06-11) deleted `<TrainingPathRail />`; preserved for a
+ *  separate orphan-strings chore (M1 precedent). */
 export const TRAINING_PATH_COPY = {
   title: "Training path",
   ariaLabel: "Training path for this piece",
