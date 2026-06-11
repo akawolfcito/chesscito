@@ -48,7 +48,7 @@ export function LanguageChip() {
         onClick={() => setConfirmOpen(true)}
         aria-label={t("ariaLabel")}
         data-testid="language-chip"
-        className="flex h-9 w-9 items-center justify-center text-[1.75rem] leading-none transition-transform active:scale-95"
+        className="flex h-11 w-11 items-center justify-center text-[2.25rem] leading-none transition-transform active:scale-95"
         style={{ filter: "drop-shadow(0 2px 3px rgba(120, 65, 5, 0.35))" }}
       >
         <span aria-hidden="true">{current.flag}</span>
