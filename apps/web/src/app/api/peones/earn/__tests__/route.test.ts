@@ -242,6 +242,39 @@ describe("POST /api/peones/earn — input validation", () => {
     expect(await res.json()).toEqual({ error: "invalid_idempotency_key" });
   });
 
+  it("accepts labyrinth_completion with its documented key prefix (Slice 4)", async () => {
+    mockedSupabase.mockReturnValue(
+      buildSupabaseMock({ insertResult: { data: { id: 77 }, error: null } }).supabase,
+    );
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          source: "labyrinth_completion",
+          idempotencyKey: `labyrinth_completion:${W}:knight:knight-lab-3`,
+          sourceId: "knight:knight-lab-3",
+          amount: 1,
+        }),
+      ),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects labyrinth_completion with a foreign key prefix", async () => {
+    mockedSupabase.mockReturnValue(buildSupabaseMock({}).supabase);
+    const res = await POST(
+      makeRequest(
+        baseBody({
+          source: "labyrinth_completion",
+          idempotencyKey: `training:${W}:knight:knight-lab-3`,
+          sourceId: "knight:knight-lab-3",
+          amount: 1,
+        }),
+      ),
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "invalid_idempotency_key" });
+  });
+
   it("accepts admin_grant with any idempotency key prefix", async () => {
     mockedSupabase.mockReturnValue(
       buildSupabaseMock({ insertResult: { data: { id: 42 }, error: null } }).supabase,

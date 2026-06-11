@@ -61,6 +61,9 @@ const SPRINT_3_EARN_SOURCES = new Set<PeonesLedgerSource>([
   "daily_streak_bonus",
   "daily_lab",
   "exercise_completion",
+  // Training Path Slice 4 (2026-06-11): +1 flat on first labyrinth
+  // completion. Daily-capped; supply bounded by the catalog.
+  "labyrinth_completion",
   "admin_grant",
 ]);
 
@@ -73,6 +76,7 @@ const IDEMPOTENCY_PREFIX_BY_SOURCE: Partial<Record<PeonesLedgerSource, string>> 
   daily_streak_bonus: "daily_streak_bonus:",
   daily_lab: "daily_lab:",
   exercise_completion: "training:",
+  labyrinth_completion: "labyrinth_completion:",
 };
 
 function todayUtcDate(): string {
