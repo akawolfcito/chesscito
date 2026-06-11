@@ -125,7 +125,8 @@ import {
   getLabyrinthBest,
   recordLabyrinthBest,
 } from "@/lib/game/labyrinth-progress";
-import { buildTrainingPath } from "@/lib/training/path";
+import { buildTrainingPath, getNextChallenge } from "@/lib/training/path";
+import { ActionPin } from "@/components/redesign/action-pin";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
 import { computeStars } from "@/lib/game/scoring";
 import { hapticReject, hapticSuccess } from "@/lib/haptics";
@@ -574,6 +575,7 @@ export function ExercisesScreen({
   const tShopItem = useTranslations("SHOP_ITEM_COPY");
   const tCapture = useTranslations("CAPTURE_COPY");
   const tLab = useTranslations("LABYRINTH_COPY");
+  const tPath = useTranslations("TRAINING_PATH_COPY");
   const tMission = useTranslations("MISSION_BRIEFING_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
   const tPro = useTranslations("PRO_COPY");
@@ -2133,6 +2135,11 @@ export function ExercisesScreen({
     [trainingPath],
   );
 
+  /** Slice 3D: the path's recommended next challenge (first unlocked,
+   *  uncompleted labyrinth). Drives the contextual "Enter Labyrinth"
+   *  pin and nothing else — exercise flow is untouched when null. */
+  const nextChallenge = getNextChallenge(trainingPath);
+
   const handleExitLabyrinth = useCallback(() => {
     setLabyrinthMode(false);
     setSelectedLabyrinthId(null);
@@ -2420,6 +2427,25 @@ export function ExercisesScreen({
                   />
                 ))}
               </div>
+            ) : contextAction === null &&
+              nextChallenge &&
+              !effectiveLabyrinthMode ? (
+              // Slice 3D — the next challenge comes to the player: when
+              // the slot is otherwise idle and the path recommends an
+              // unlocked, uncompleted labyrinth, surface it right here.
+              // Hidden while already inside a labyrinth. contextAction
+              // === null also rules out every failure state (those
+              // always resolve to retry/useShield).
+              <div className="animate-in fade-in zoom-in-95 duration-200">
+                <ActionPin
+                  action="enterLabyrinth"
+                  size="pin"
+                  tone="default"
+                  label={tPath("nextChallengeCta")}
+                  ariaLabel={tPath("nextChallengeCta")}
+                  onPress={() => handleLabyrinthSelect(nextChallenge.id)}
+                />
+              </div>
             ) : (
               <ContextualActionSlot
                 action={contextAction}
@@ -2472,6 +2498,8 @@ export function ExercisesScreen({
               shieldCount={shieldCount}
               streakCount={streakCount}
               visibleExerciseIds={visibleExerciseIds}
+              labyrinthNodes={trainingPath.filter((n) => n.kind === "labyrinth")}
+              onLabyrinthSelect={handleLabyrinthSelect}
             />
           }
           isReplay={isReplay}

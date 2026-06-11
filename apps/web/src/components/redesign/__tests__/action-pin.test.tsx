@@ -21,6 +21,7 @@ const ACTIONS: readonly ActionPinAction[] = [
   "retry",
   "connectWallet",
   "switchNetwork",
+  "enterLabyrinth",
 ] as const;
 
 const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
@@ -30,6 +31,7 @@ const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
+  enterLabyrinth: "crosshair",
 };
 
 const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
@@ -39,6 +41,7 @@ const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
+  enterLabyrinth: "practice-pieces",
 };
 
 /** Actions that render a custom reward sprite from /art/new-icons-chesscito
@@ -76,9 +79,12 @@ describe("ActionPin — render matrix (6 actions × 2 sizes)", () => {
 
         if (size === "pin") {
           const icon = button.querySelector("img");
-          const expectedBase = CUSTOM_ICON_ACTIONS.has(action)
-            ? "/art/new-icons-chesscito"
-            : "/art/action-row";
+          // practice-pieces (enterLabyrinth) ships in the v1 icon set
+          // dir per ActionRowIcon's own resolveIconBase, not action-row.
+          const expectedBase =
+            CUSTOM_ICON_ACTIONS.has(action) || action === "enterLabyrinth"
+              ? "/art/new-icons-chesscito"
+              : "/art/action-row";
           expect(icon).toHaveAttribute(
             "src",
             `${expectedBase}/${ACTION_ROW_ICON_FILE[action]}.png`,

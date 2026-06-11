@@ -807,6 +807,7 @@ const messages = {
     masteryLocked: "Insignia + laberintos",
     masteryAlmost: "Faltan laberintos",
     masteryComplete: "Dominada",
+    nextChallengeCta: "Entrar al Laberinto",
   },
   TX_PROGRESS_COPY: {
     pillsPrepare: "PREPARAR",

@@ -123,6 +123,10 @@ export const TRAINING_PATH_COPY = {
   masteryLocked: "Badge + labyrinths",
   masteryAlmost: "Labyrinths left",
   masteryComplete: "Mastered",
+  /** Contextual pin shown when the path's next challenge is an
+   *  unlocked, uncompleted labyrinth — the challenge comes to the
+   *  player instead of hiding in the Mission sheet (Slice 3D). */
+  nextChallengeCta: "Enter Labyrinth",
 } as const;
 
 export const MISSION_DETAIL_COPY = {

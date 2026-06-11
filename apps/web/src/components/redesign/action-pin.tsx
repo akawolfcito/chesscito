@@ -17,7 +17,8 @@ export type ActionPinAction =
   | "claimBadge"
   | "retry"
   | "connectWallet"
-  | "switchNetwork";
+  | "switchNetwork"
+  | "enterLabyrinth";
 
 export type ActionPinSize = "pin" | "full";
 export type ActionPinTone = "default" | "claim";
@@ -102,6 +103,13 @@ const ACTION_STYLES: Record<
     glow: "shadow-[var(--cta-reward-glow)]",
     text: "text-[var(--cta-reward-text)]",
   },
+  // Next-challenge pin (Slice 3D) — brand family: it's a primary
+  // "continue your path" action, same weight as connectWallet.
+  enterLabyrinth: {
+    bg: "bg-gradient-to-b from-[var(--cta-brand-from)] to-[var(--cta-brand-to)]",
+    glow: "shadow-[var(--cta-brand-glow)]",
+    text: "text-white",
+  },
 };
 
 const ACTION_ICON: Record<ActionPinAction, CandyIconName> = {
@@ -111,6 +119,7 @@ const ACTION_ICON: Record<ActionPinAction, CandyIconName> = {
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
+  enterLabyrinth: "crosshair",
 };
 
 const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
@@ -120,6 +129,7 @@ const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
+  enterLabyrinth: "practice-pieces",
 };
 
 const ACTION_CUSTOM_ICON_SRC: Partial<Record<ActionPinAction, string>> = {
