@@ -26,7 +26,7 @@ const ACTIONS: readonly ActionPinAction[] = [
 const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
   submitScore: "save-score-icon-v1",
   useShield: "shield",
-  claimBadge: "claim-icon-v1",
+  claimBadge: "badge-claim-icon",
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
@@ -35,7 +35,7 @@ const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
 const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
   submitScore: "save-score-icon-v1",
   useShield: "shield-king",
-  claimBadge: "claim-icon-v1",
+  claimBadge: "badge-claim-icon",
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
@@ -131,7 +131,7 @@ describe("ActionPin — tone", () => {
     expect(button.className).not.toMatch(/\bcandy-frame-gold\b/);
     expect(button.querySelector("img")).toHaveAttribute(
       "src",
-      "/art/new-icons-chesscito/claim-icon-v1.png",
+      "/art/new-icons-chesscito/badge-claim-icon.png",
     );
   });
 

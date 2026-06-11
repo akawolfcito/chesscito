@@ -131,7 +131,7 @@ const ACTION_CUSTOM_ICON_SRC: Partial<Record<ActionPinAction, string>> = {
   // isPedestalPin). Coach (game-actions-bar) + Victory
   // (victory-celebration) keep save.png.
   submitScore: "/art/new-icons-chesscito/save-score-icon-v1.png",
-  claimBadge: "/art/new-icons-chesscito/claim-icon-v1.png",
+  claimBadge: "/art/new-icons-chesscito/badge-claim-icon.png",
 };
 
 const PIN_BADGE_CLASSES =

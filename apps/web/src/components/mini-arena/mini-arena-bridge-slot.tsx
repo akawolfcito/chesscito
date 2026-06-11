@@ -57,7 +57,12 @@ export function MiniArenaBridgeSlot({ setup, unlocked, renderLocked = false }: P
           stone={4}
           size="large"
           className="action-row-pedestal action-row-pedestal-arena"
-          icon={<ActionRowIcon name="training-icon-v1" className="h-14 w-14 object-contain" />}
+          icon={
+            <ActionRowIcon
+              name="training-icon-v1"
+              className="flex h-11 w-11 items-center justify-center object-contain [&>img]:max-h-full [&>img]:w-auto"
+            />
+          }
           onClick={() => setOpen(true)}
           disabled={!unlocked}
           aria-label={

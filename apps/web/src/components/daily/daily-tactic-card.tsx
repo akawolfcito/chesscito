@@ -64,9 +64,11 @@ export function DailyTacticCard({
           size="large"
           className="action-row-pedestal action-row-pedestal-daily"
           icon={
+            // h-11 = 44px uniform sprite height across the action row
+            // (founder size pass 2026-06-11).
             <ActionRowIcon
               name="daily-icon-v1"
-              className="h-14 w-14 object-contain"
+              className="flex h-11 w-11 items-center justify-center object-contain [&>img]:max-h-full [&>img]:w-auto"
             />
           }
           badge={badge}

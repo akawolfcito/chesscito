@@ -3243,8 +3243,12 @@
   }
 
   .action-pin-submit-pedestal img {
-    width: 56px;
-    height: 56px;
+    /* Founder size pass 2026-06-11: 44px uniform HEIGHT (width auto)
+       so the action-row sprites sit a step below the dock's ~48px
+       icons and all five share one visual height regardless of each
+       source's aspect ratio. Touch target stays 64px on the button. */
+    width: auto;
+    height: 44px;
     transform: none;
     filter: drop-shadow(0 3px 3px rgba(99, 47, 5, 0.24));
     animation: save-pulse-cycle 300s linear infinite;
