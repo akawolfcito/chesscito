@@ -108,11 +108,16 @@ export function JourneyRail({ currentPiece, currentStars, claimedBadges = {} }: 
     <div className="paper-tray" aria-label={t("ariaLabel")}>
       {tiers.map((tier) => (
         <div key={tier.id} className="paper-row journey-row" data-status={tier.status}>
-          <span className="journey-row-icon">
-            <CandyIcon
-              name={tier.status === "locked" ? "lock" : tier.icon}
-              className="h-5 w-5"
-            />
+          {/* D4 (surface redistribution 2026-06-11): the icon always
+              carries the milestone identity; COLOR carries completion.
+              Pending tiers render grayscale instead of swapping to a
+              generic lock glyph. */}
+          <span
+            className={`journey-row-icon${
+              tier.status === "done" ? "" : " journey-row-icon--pending"
+            }`}
+          >
+            <CandyIcon name={tier.icon} className="h-5 w-5" />
           </span>
           <div className="flex-1 min-w-0">
             <p className="journey-row-label">{tier.label}</p>

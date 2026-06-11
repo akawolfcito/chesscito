@@ -1969,6 +1969,14 @@
     opacity: 0.65;
   }
 
+  /* D4 (surface redistribution 2026-06-11): pending milestones keep
+     their real icon, drained to grayscale; completion restores full
+     color. Same vocabulary as .badge-vitrine-hero-piece silhouettes. */
+  .journey-row-icon--pending {
+    filter: grayscale(1);
+    opacity: 0.6;
+  }
+
   .journey-row-label {
     font-weight: 700;
     font-size: 0.82rem;
