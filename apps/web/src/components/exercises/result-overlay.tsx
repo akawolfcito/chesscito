@@ -653,82 +653,69 @@ export function BadgeEarnedPrompt({
     setTimeout(onLater, 250);
   }
 
+  // Founder vocabulary pass 2026-06-11: migrated from CandyGlassShell
+  // (plain green glass) to VictoryPopupShell so the prompt carries the
+  // panel-bg1 forest frame like every other app modal. CTAs follow the
+  // ceremonial vocabulary: SAVE = PrincipalButton, Later = secondary
+  // text action.
   return (
-    <div
-      className={`fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim p-4 animate-in fade-in duration-250 ${exiting ? "modal-exiting" : ""}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="badge-earned-title"
-      onClick={handleLater}
-    >
-      <div
-        className="relative w-full max-w-xs"
-        style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
-        onClick={(e) => e.stopPropagation()}
+    <div className={exiting ? "modal-exiting" : undefined}>
+      <VictoryPopupShell
+        onClose={handleLater}
+        ariaLabel={tBadge("headerLabel")}
+        closeLabel={tBadge("later")}
       >
-        {/* Auto-dismiss countdown bar — sits above the glass card so it reads
-            as a "timer on the modal" rather than a card element. */}
-        <div className="absolute left-1/2 top-[-0.6rem] z-10 h-1 w-[60%] -translate-x-1/2 overflow-hidden rounded-full bg-amber-900/15">
+        {/* Auto-dismiss countdown bar — first element inside the panel
+            so it reads as a "timer on the modal". */}
+        <div className="mx-auto h-1 w-[60%] overflow-hidden rounded-full bg-amber-900/15">
           <div
             className="h-full rounded-full bg-amber-500/70"
             style={{ animation: `badge-countdown ${BADGE_AUTO_DISMISS_MS}ms linear forwards` }}
           />
         </div>
 
-        <CandyGlassShell
-          title={tBadge("headerLabel")}
-          onClose={handleLater}
-          closeLabel={tBadge("later")}
-          cta={
-            <div className="flex flex-col gap-1.5">
-              <button
-                type="button"
-                onClick={onSubmitScore}
-                className="arena-scaffold-soft-gate-primary w-full"
-              >
-                {tBadge("submitScore")}
-              </button>
-              <button
-                type="button"
-                onClick={handleLater}
-                className="arena-result-back-link w-full"
-              >
-                {tBadge("later")}
-              </button>
-            </div>
-          }
-          meta={
-            <>
-              <span className="fantasy-title">chesscito</span>
-              <span className="opacity-70"> · on Celo</span>
-            </>
-          }
+        <div className="victory-popup-hero-solo">
+          <h1 className="arena-result-title" id="badge-earned-title">
+            {title}
+          </h1>
+        </div>
+
+        <div className="flex flex-col items-center gap-2 text-center">
+          <SuccessImage
+            variant="badge"
+            pieceType={pieceType}
+            glowClass="reward-glow-achievement reward-glow-pulse"
+            size="sm"
+          />
+
+          <StarsRow totalStars={totalStars} staggered />
+
+          <ShareRow variant="badge" pieceType={pieceType} totalStars={totalStars} />
+        </div>
+
+        <div className="flex flex-col items-center gap-2">
+          <PrincipalButton size="medium" onClick={onSubmitScore}>
+            {tBadge("submitScore")}
+          </PrincipalButton>
+          <button
+            type="button"
+            onClick={handleLater}
+            className="arena-result-secondary-action"
+          >
+            {tBadge("later")}
+          </button>
+        </div>
+
+        <div
+          className="mt-1 flex flex-col items-center gap-1.5 px-2 text-center text-[11px]"
+          style={{ color: "rgba(110, 65, 15, 0.75)" }}
         >
-          <div className="flex flex-col items-center gap-2 text-center">
-            <SuccessImage
-              variant="badge"
-              pieceType={pieceType}
-              glowClass="reward-glow-achievement reward-glow-pulse"
-              size="sm"
-            />
-
-            <StarsRow totalStars={totalStars} staggered />
-
-            <h2
-              id="badge-earned-title"
-              className="fantasy-title text-base font-bold leading-tight"
-              style={{
-                color: "rgba(63, 34, 8, 0.95)",
-                textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-              }}
-            >
-              {title}
-            </h2>
-
-            <ShareRow variant="badge" pieceType={pieceType} totalStars={totalStars} />
-          </div>
-        </CandyGlassShell>
-      </div>
+          <span>
+            <span className="fantasy-title">chesscito</span>
+            <span className="opacity-70"> · on Celo</span>
+          </span>
+        </div>
+      </VictoryPopupShell>
     </div>
   );
 }
