@@ -54,6 +54,17 @@ const CAP_RECALIBRATION_MIGRATION_PATH = join(
   "20260610010000_peones_daily_cap_recalibration.sql",
 );
 
+/** Training Path Slice 4 (2026-06-11) adds `labyrinth_completion` to the
+ *  source CHECK and CREATE OR REPLACEs `peones_balance_with_caps` again
+ *  (+labyrinth_completion in the capped set, cap stays 6). This is now
+ *  the EFFECTIVE helper definition, so the cap assertions read it. */
+const LABYRINTH_MIGRATION_PATH = join(
+  process.cwd(),
+  "supabase",
+  "migrations",
+  "20260611010000_peones_labyrinth_completion_source.sql",
+);
+
 const migration = readFileSync(MIGRATION_PATH, "utf-8");
 const welcomePackMigration = readFileSync(
   WELCOME_PACK_MIGRATION_PATH,
@@ -63,6 +74,8 @@ const capRecalibrationMigration = readFileSync(
   CAP_RECALIBRATION_MIGRATION_PATH,
   "utf-8",
 );
+const labyrinthMigration = readFileSync(LABYRINTH_MIGRATION_PATH, "utf-8");
+void capRecalibrationMigration; // superseded by labyrinthMigration's CREATE OR REPLACE
 
 /**
  * Extracts the values inside `check (column in (...))` for the given
@@ -99,6 +112,7 @@ const TS_SOURCES: PeonesLedgerSource[] = [
   "daily_streak_bonus",
   "daily_lab",
   "exercise_completion",
+  "labyrinth_completion",
   "senda_milestone",
   "pack_purchase",
   "welcome_pack",
@@ -131,7 +145,17 @@ describe("peones_ledger — schema ↔ types sync", () => {
       .split(",")
       .map((t) => t.trim().replace(/^'(.*)'$/, "$1"))
       .filter(Boolean);
-    const effective = new Set([...sqlOriginal, ...wpSources]);
+    // Slice 4 follow-up: the labyrinth_completion migration swaps the
+    // constraint again — its CHECK list is the latest full snapshot.
+    const labMatch = labyrinthMigration.match(
+      /check\s*\(\s*source\s+in\s*\(([\s\S]*?)\)\s*\)/i,
+    );
+    expect(labMatch, "labyrinth migration must declare a CHECK list").not.toBeNull();
+    const labSources = labMatch![1]!
+      .split(",")
+      .map((t) => t.trim().replace(/^'(.*)'$/, "$1"))
+      .filter(Boolean);
+    const effective = new Set([...sqlOriginal, ...wpSources, ...labSources]);
     const ts = new Set(TS_SOURCES);
     expect(effective).toEqual(ts);
   });
@@ -149,7 +173,7 @@ describe("peones_ledger — schema ↔ types sync", () => {
     // The helper hard-codes the daily-family list in its filter. Pull
     // it back out and assert it matches the TS constant. Reads the
     // recalibration migration (the effective CREATE OR REPLACE).
-    const helperMatch = capRecalibrationMigration.match(
+    const helperMatch = labyrinthMigration.match(
       /and\s+source\s+in\s*\(\s*([\s\S]*?)\)\s*\n\s*and\s+day_utc\s+=\s+p_day_utc/i,
     );
     expect(
@@ -170,7 +194,7 @@ describe("peones_ledger — schema ↔ types sync", () => {
     // The helper hard-codes `N::integer as daily_cap`. If product changes
     // the cap, both this constant AND the SQL helper must move together.
     // Reads the recalibration migration (the effective CREATE OR REPLACE).
-    const capMatch = capRecalibrationMigration.match(
+    const capMatch = labyrinthMigration.match(
       /(\d+)\s*::\s*integer\s+as\s+daily_cap/i,
     );
     expect(capMatch, "Could not find daily_cap value in SQL helper").not.toBeNull();

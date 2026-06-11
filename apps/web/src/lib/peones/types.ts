@@ -60,6 +60,9 @@ export type PeonesLedgerSource =
   | "daily_lab"
   // Earn — non-daily
   | "exercise_completion"
+  // First completion of a training-path labyrinth (Slice 4, 2026-06-11).
+  // Daily-capped; lifetime supply bounded by the catalog (18 labs).
+  | "labyrinth_completion"
   | "senda_milestone"
   | "pack_purchase"
   | "welcome_pack"
@@ -82,6 +85,7 @@ export const PEONES_DAILY_CAP_SOURCES: readonly PeonesLedgerSource[] = [
   "daily_streak_bonus",
   "daily_lab",
   "exercise_completion",
+  "labyrinth_completion",
 ] as const;
 
 /** Daily earn cap — same magic number as the SQL helper
