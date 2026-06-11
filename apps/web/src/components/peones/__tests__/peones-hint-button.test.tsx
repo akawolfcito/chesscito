@@ -616,3 +616,55 @@ describe("PeonesHintButton — PRO bypass (Sprint 4 commit G)", () => {
     expect(mockedSpent).not.toHaveBeenCalled();
   });
 });
+
+describe("PeonesHintButton — icon+label (founder D3 follow-up)", () => {
+  it("connected chip renders the hint-icon sprite next to the label", () => {
+    mockedAccount.mockReturnValue({
+      isConnected: true,
+      address: W,
+    } as never);
+    render(
+      <PeonesHintButton piece="rook" exerciseId="r-1" submitImpl={vi.fn()} />,
+    );
+    const button = screen.getByRole("button");
+    const icon = button.querySelector("img");
+    expect(icon).not.toBeNull();
+    expect(icon).toHaveAttribute(
+      "src",
+      "/art/new-icons-chesscito/hint-icon.png",
+    );
+    expect(icon).toHaveAttribute("aria-hidden", "true");
+    expect(button).toHaveTextContent("Hint · 1 Peón");
+  });
+
+  it("icon survives the insufficient morph (no layout-jump text-only chip)", async () => {
+    mockedAccount.mockReturnValue({
+      isConnected: true,
+      address: W,
+    } as never);
+    const submitImpl = vi.fn().mockResolvedValue({
+      kind: "insufficient_balance",
+      error: "insufficient_balance",
+    });
+    render(
+      <PeonesHintButton piece="rook" exerciseId="r-1" submitImpl={submitImpl} />,
+    );
+    fireEvent.click(screen.getByRole("button"));
+    await waitFor(() =>
+      expect(screen.getByTestId("peones-hint-button")).toHaveAttribute(
+        "data-state",
+        "insufficient",
+      ),
+    );
+    expect(
+      screen.getByRole("status").querySelector("img"),
+    ).not.toBeNull();
+  });
+
+  it("guest chip stays text-only (no spend affordance to advertise)", () => {
+    render(<PeonesHintButton piece="rook" exerciseId="r-1" />);
+    expect(
+      screen.getByTestId("peones-hint-button").querySelector("img"),
+    ).toBeNull();
+  });
+});

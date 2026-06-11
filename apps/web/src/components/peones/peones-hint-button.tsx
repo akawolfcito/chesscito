@@ -51,6 +51,14 @@ const REVEAL_TTL_MS = 4000;
  *  sublabel is text-only feedback, not a paid reveal. */
 const FEEDBACK_TTL_MS = 2500;
 
+/** Founder D3 follow-up (2026-06-11) — the HINT chip carries its own
+ *  sprite so it reads as an action icon, consistent with the SAVE /
+ *  CLAIM reward pins. Kept across every connected state (idle,
+ *  loading, revealed, feedback) so the morphing chip never jumps
+ *  between icon+text and text-only layouts. Guest chip stays
+ *  text-only: it advertises connecting, not spending. */
+const HINT_ICON_SRC = "/art/new-icons-chesscito/hint-icon.png";
+
 type HintState =
   | { kind: "idle" }
   | { kind: "loading" }
@@ -255,7 +263,7 @@ export function PeonesHintButton({
     >
       <button
         type="button"
-        className={`inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold shadow-sm ring-1 transition-colors hover:bg-amber-200 disabled:opacity-80 disabled:hover:bg-white ${
+        className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full py-1 pl-2 pr-3 text-xs font-bold shadow-sm ring-1 transition-colors hover:bg-amber-200 disabled:opacity-80 disabled:hover:bg-white ${
           isFeedback
             ? "bg-white text-amber-900/90 ring-amber-800/15"
             : isRevealed
@@ -269,6 +277,13 @@ export function PeonesHintButton({
         aria-live={isFeedback ? "polite" : undefined}
         onClick={() => void handleClick()}
       >
+        <img
+          src={HINT_ICON_SRC}
+          alt=""
+          aria-hidden="true"
+          className="h-5 w-5 shrink-0 object-contain"
+          draggable={false}
+        />
         {label}
       </button>
     </div>
