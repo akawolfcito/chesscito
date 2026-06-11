@@ -12,7 +12,10 @@ import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import { PIECE_IMAGES } from "@/lib/content/editorial";
-import type { TrainingNode } from "@/lib/training/path";
+import {
+  interleaveTrainingRows,
+  type TrainingNode,
+} from "@/lib/training/path";
 
 type ExerciseDrawerProps = {
   open: boolean;
@@ -82,7 +85,6 @@ export function ExerciseDrawer({
   const t = useTranslations("EXERCISE_DRAWER_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
   const tPath = useTranslations("TRAINING_PATH_COPY");
-  const tLab = useTranslations("LABYRINTH_COPY");
   const descriptions = useTranslations("EXERCISE_DESCRIPTIONS");
   const maxStars = exercises.length * 3;
   const lastCompleted = stars.reduce((acc, s, i) => (s > 0 ? i : acc), -1);
@@ -109,6 +111,11 @@ export function ExerciseDrawer({
   const rows = exercises
     .map((exercise, index) => ({ exercise, index }))
     .filter(({ exercise }) => !rotationOn || visibleExerciseIds!.has(exercise.id));
+
+  // D6 (surface redistribution): ONE continuous path — labyrinths
+  // interleave between exercises by unlock order instead of pooling in
+  // a trailing section. Presentation-only; unlock math untouched.
+  const orderedRows = interleaveTrainingRows(rows, labyrinthNodes ?? []);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -205,7 +212,84 @@ export function ExerciseDrawer({
         </div>
 
         <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
-          {rows.map(({ exercise, index }) => {
+          {orderedRows.map((row, position) => {
+            if (row.kind === "labyrinth") {
+              const node = row.value;
+              const labIndex = (labyrinthNodes ?? []).indexOf(node);
+              const isLabLocked = node.status === "locked";
+              const isLabDone = node.status === "complete";
+              return (
+                <button
+                  key={node.id}
+                  type="button"
+                  disabled={isLabLocked || !onLabyrinthSelect}
+                  onClick={() => {
+                    if (isLabLocked || !onLabyrinthSelect) return;
+                    onOpenChange(false);
+                    onLabyrinthSelect(node.id);
+                  }}
+                  style={{
+                    animationDelay: `${position * 50}ms`,
+                    background: "rgba(255, 255, 255, 0.15)",
+                    border: "1px solid rgba(255, 255, 255, 0.45)",
+                  }}
+                  className={[
+                    "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-backwards",
+                    isLabLocked ? "opacity-45 cursor-not-allowed" : "cursor-pointer",
+                  ].join(" ")}
+                >
+                  <span
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                    style={{
+                      background: isLabDone
+                        ? "rgba(245, 158, 11, 0.25)"
+                        : "rgba(110, 65, 15, 0.15)",
+                      color: isLabDone
+                        ? "rgba(120, 65, 5, 0.95)"
+                        : "rgba(110, 65, 15, 0.55)",
+                    }}
+                  >
+                    <CandyIcon
+                      name={isLabLocked ? "lock" : "crosshair"}
+                      className="h-3 w-3"
+                    />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-sm font-semibold"
+                      style={{
+                        color: isLabLocked ? "rgba(110, 65, 15, 0.55)" : "rgba(63, 34, 8, 0.95)",
+                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                      }}
+                    >
+                      {tPath("labyrinthLabelFormat", { number: labIndex + 1 })}
+                    </p>
+                    {isLabLocked ? (
+                      <p
+                        className="text-xs"
+                        style={{ color: "rgba(110, 65, 15, 0.70)" }}
+                      >
+                        {node.unlock.type === "stars"
+                          ? tPath("labyrinthLockedStarsFormat", { stars: node.unlock.min })
+                          : tPath("labyrinthLockedChain")}
+                      </p>
+                    ) : null}
+                  </div>
+                  {isLabDone ? (
+                    <StarDisplay count={node.stars ?? 0} />
+                  ) : !isLabLocked ? (
+                    <span
+                      className="text-xs font-bold uppercase"
+                      style={{ color: "rgba(120, 65, 5, 0.85)" }}
+                    >
+                      {tPath("ready")}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            }
+
+            const { exercise, index } = row.value;
             const isActive = index === activeIndex;
             const isDone = stars[index] > 0;
             const isLocked = lockedFor(exercise, index);
@@ -225,7 +309,7 @@ export function ExerciseDrawer({
                 disabled={isLocked}
                 onClick={() => handleSelect(exercise, index)}
                 style={{
-                  animationDelay: `${index * 50}ms`,
+                  animationDelay: `${position * 50}ms`,
                   background: "rgba(255, 255, 255, 0.15)",
                   border: isActive
                     ? "1px solid rgba(245, 158, 11, 0.55)"
@@ -293,91 +377,6 @@ export function ExerciseDrawer({
             );
           })}
 
-          {/* Labyrinth leg — same section, same visual language. The
-              player meets the next challenge HERE, in the selector they
-              already use, not buried inside Mission (Slice 3D). */}
-          {labyrinthNodes && labyrinthNodes.length > 0 ? (
-            <>
-              <p
-                className="pt-2 text-xs font-bold uppercase tracking-[0.08em]"
-                style={{ color: "rgba(110, 65, 15, 0.70)" }}
-              >
-                {tLab("toggleLabyrinths")}
-              </p>
-              {labyrinthNodes.map((node, labIndex) => {
-                const isLocked = node.status === "locked";
-                const isDone = node.status === "complete";
-                return (
-                  <button
-                    key={node.id}
-                    type="button"
-                    disabled={isLocked || !onLabyrinthSelect}
-                    onClick={() => {
-                      if (isLocked || !onLabyrinthSelect) return;
-                      onOpenChange(false);
-                      onLabyrinthSelect(node.id);
-                    }}
-                    style={{
-                      background: "rgba(255, 255, 255, 0.15)",
-                      border: "1px solid rgba(255, 255, 255, 0.45)",
-                    }}
-                    className={[
-                      "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition",
-                      isLocked ? "opacity-45 cursor-not-allowed" : "cursor-pointer",
-                    ].join(" ")}
-                  >
-                    <span
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                      style={{
-                        background: isDone
-                          ? "rgba(245, 158, 11, 0.25)"
-                          : "rgba(110, 65, 15, 0.15)",
-                        color: isDone
-                          ? "rgba(120, 65, 5, 0.95)"
-                          : "rgba(110, 65, 15, 0.55)",
-                      }}
-                    >
-                      <CandyIcon
-                        name={isLocked ? "lock" : "crosshair"}
-                        className="h-3 w-3"
-                      />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className="text-sm font-semibold"
-                        style={{
-                          color: isLocked ? "rgba(110, 65, 15, 0.55)" : "rgba(63, 34, 8, 0.95)",
-                          textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                        }}
-                      >
-                        {tPath("labyrinthLabelFormat", { number: labIndex + 1 })}
-                      </p>
-                      {isLocked ? (
-                        <p
-                          className="text-xs"
-                          style={{ color: "rgba(110, 65, 15, 0.70)" }}
-                        >
-                          {node.unlock.type === "stars"
-                            ? tPath("labyrinthLockedStarsFormat", { stars: node.unlock.min })
-                            : tPath("labyrinthLockedChain")}
-                        </p>
-                      ) : null}
-                    </div>
-                    {isDone ? (
-                      <StarDisplay count={node.stars ?? 0} />
-                    ) : !isLocked ? (
-                      <span
-                        className="text-xs font-bold uppercase"
-                        style={{ color: "rgba(120, 65, 5, 0.85)" }}
-                      >
-                        {tPath("ready")}
-                      </span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </>
-          ) : null}
         </div>
 
         {/* Progress summary — shrink-0 keeps it anchored at the bottom of

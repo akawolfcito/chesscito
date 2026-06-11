@@ -173,4 +173,29 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     render(<ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />);
     expect(screen.queryByText(/Labyrinth \d/)).not.toBeInTheDocument();
   });
+
+  it("interleaves labyrinths into the exercise list — no separate section (D6)", () => {
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        onNavigate={vi.fn()}
+        labyrinthNodes={rookLabNodes(zeros)}
+        onLabyrinthSelect={vi.fn()}
+      />,
+    );
+    // Section header is gone — one continuous path.
+    expect(screen.queryByText("Labyrinths")).not.toBeInTheDocument();
+    // Labyrinth 1 (unlocks at 6★ → after 2 exercises) renders BEFORE
+    // the third exercise ("Center to edge", rook-3).
+    const texts = screen
+      .getAllByRole("button", { hidden: true })
+      .map((b) => b.textContent ?? "");
+    const labAt = texts.findIndex((t) => t.includes("Labyrinth 1"));
+    const thirdExerciseAt = texts.findIndex((t) =>
+      t.includes("Center to edge"),
+    );
+    expect(labAt).toBeGreaterThan(-1);
+    expect(thirdExerciseAt).toBeGreaterThan(-1);
+    expect(labAt).toBeLessThan(thirdExerciseAt);
+  });
 });

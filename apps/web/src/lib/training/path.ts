@@ -159,6 +159,42 @@ export function getNextChallenge(path: TrainingNode[]): TrainingNode | null {
   );
 }
 
+export type InterleavedRow<E> =
+  | { kind: "exercise"; value: E }
+  | { kind: "labyrinth"; value: TrainingNode };
+
+/** Surface redistribution D6 (presentation-only): merge the drawer's
+ *  exercise rows and labyrinth nodes into ONE continuous path. The
+ *  first labyrinth lands after the earliest exercises that can reach
+ *  its stars unlock (ceil(min/3) at 3★ each); each subsequent lab sits
+ *  one exercise later, so the list alternates Ex → Lab → Ex → Lab.
+ *  Labs left over past the last exercise append at the tail. The
+ *  unlock MODEL is untouched — this orders rows, it never gates them. */
+export function interleaveTrainingRows<E>(
+  exercises: readonly E[],
+  labyrinths: readonly TrainingNode[],
+): InterleavedRow<E>[] {
+  const firstUnlock = labyrinths[0]?.unlock;
+  const anchor =
+    firstUnlock && firstUnlock.type === "stars"
+      ? Math.ceil(firstUnlock.min / 3)
+      : exercises.length;
+  const rows: InterleavedRow<E>[] = [];
+  let labCursor = 0;
+  exercises.forEach((exercise, index) => {
+    // Lab i belongs after exercise position (anchor + i).
+    while (labCursor < labyrinths.length && anchor + labCursor <= index) {
+      rows.push({ kind: "labyrinth", value: labyrinths[labCursor] });
+      labCursor += 1;
+    }
+    rows.push({ kind: "exercise", value: exercise });
+  });
+  for (; labCursor < labyrinths.length; labCursor += 1) {
+    rows.push({ kind: "labyrinth", value: labyrinths[labCursor] });
+  }
+  return rows;
+}
+
 export function getPieceMastery(path: TrainingNode[]): PieceMastery {
   const mastery = path.find((node) => node.kind === "mastery");
   if (mastery?.status === "complete") return "mastered";
