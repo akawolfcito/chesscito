@@ -36,7 +36,7 @@ Real-Chrome (sin throttle): LCP /hub ≈ 1.78s.
 - Imagen LCP client-rendered ⇒ SIEMPRE `preload()` en la page server (patrón daily-icon, ahora portal).
 - Verificación LCP real sin Lighthouse: probe PerformanceObserver vía Playwright (script en este handoff's session).
 
-## OPEN QUESTION (P1): NO_LCP intermitente en prod
+## OPEN QUESTION (P1): NO_LCP intermitente en prod — CERRADO (`0e821c18`, fade-in-5; validado 5/5 corridas, scores 67-90 mediana ~80)
 
 ~50% de corridas Lighthouse contra prod devuelven Score 0 / NO_LCP desde el deploy `1cefe9e9`.
 Localhost NUNCA lo reproduce; cuando registra, da 79-89. Hipótesis principal: cuando el portal
@@ -48,7 +48,7 @@ Afecta la óptica del packet MiniPay (un PSI de Google podría dar error).
 
 ## NEXT (en orden)
 
-1. **NO_LCP fix** (arriba) — es 1 línea de CSS/clase en `template.tsx`, pero medir 5x antes/después.
+1. ~~NO_LCP fix~~ HECHO (`0e821c18`).
 2. **PSI con API key en prod** (cuota anónima agotada) + screenshot para el §8 packet appendix
    (`docs/submission/2026-06-05-minipay-stage-2-packet.md`) → devolver el form MiniPay.
 3. **/arena 75**: LCP con Load Delay 4s (contenido client-rendered) — aplicar la misma medicina
