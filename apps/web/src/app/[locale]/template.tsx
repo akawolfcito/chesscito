@@ -9,7 +9,13 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const showBuildPill = process.env.VERCEL_ENV !== "production";
 
   return (
-    <div className="animate-in fade-in duration-200">
+    /* fade-in-5 (enter from opacity 0.05), NOT bare fade-in (opacity 0):
+       paints at opacity 0 are not LCP-eligible and the opacity ramp is
+       compositor-only, so with fast assets the page intermittently
+       emitted NO LCP candidate at all (Lighthouse Score 0 on prod,
+       2026-06-12). 0.05 is visually indistinguishable from 0 while
+       keeping the first paint contentful. */
+    <div className="animate-in fade-in-5 duration-200">
       {children}
       {showBuildPill && (
         /* Tiny build chip — bottom-right, low opacity, zero layout impact.
