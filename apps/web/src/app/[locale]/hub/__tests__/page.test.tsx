@@ -76,6 +76,17 @@ describe("/hub page (server)", () => {
       );
     });
 
+    it("preloads the kingdom portal AVIF (the /hub LCP element)", () => {
+      // 2026-06-12: the portal became the LCP after the q35 bg re-encode;
+      // KingdomAnchor is client-rendered so without a preload the URL is
+      // only discovered post-hydration.
+      renderPage({});
+      expect(preloadMock).toHaveBeenCalledWith(
+        "/art/hub/portal-chesscito-normal.avif",
+        { as: "image", type: "image/avif", fetchPriority: "high" },
+      );
+    });
+
     it("does NOT preload WebP fallbacks (AVIF-only for MiniPay Chromium)", () => {
       renderPage({});
       const calls = preloadMock.mock.calls.map((args) => args[0] as string);

@@ -121,5 +121,16 @@ export default function HubPage({
     fetchPriority: "high",
   });
 
+  // The kingdom portal became the /hub LCP element after the q35
+  // bg-new-hub re-encode dropped the background out of LCP candidacy
+  // (2026-06-12). KingdomAnchor is client-rendered, so the browser only
+  // discovers the portal URL post-hydration — same failure mode as the
+  // daily icon above. Preload closes that Load Delay window.
+  preload("/art/hub/portal-chesscito-normal.avif", {
+    as: "image",
+    type: "image/avif",
+    fetchPriority: "high",
+  });
+
   return <HubScaffoldClient initialSheet={initialSheet} />;
 }
