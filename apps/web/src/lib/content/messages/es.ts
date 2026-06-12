@@ -1184,7 +1184,7 @@ const messages = {
     journeyTitle: "Tu viaje",
     nowLabyrinthFormat: "Ahora: Laberinto {number}",
     nowLabyrinthAriaFormat: "Empezar Laberinto {number}",
-    saveScorePromise: "Guarda este puntaje para siempre",
+    saveScorePromise: "Sube en la tabla de líderes",
     saveScoreCta: "Guardar puntaje",
     closeLabelFormat: "Cerrar {title}",
   },

@@ -141,11 +141,11 @@ export const MISSION_DETAIL_COPY = {
   nowLabyrinthFormat: "Now: Labyrinth {number}",
   nowLabyrinthAriaFormat: "Start Labyrinth {number}",
   /** D5: save score affordance inside Mission, below the objective.
-   *  The promise line leads with the reward (QA F5 2026-06-11,
-   *  promise-first rule); the button stays an explicit action. The
-   *  on-chain TX save joins as a second action when the Leaderboard
-   *  Proof lane ships (economy spec). */
-  saveScorePromise: "Keep this score for life",
+   *  The promise line leads with the reward (QA F5 promise-first) and
+   *  must describe what the OFF-CHAIN save actually delivers — a
+   *  leaderboard spot. "For life" wording is reserved for the future
+   *  on-chain Leaderboard Proof action (QA G3 2026-06-11). */
+  saveScorePromise: "Climb the leaderboard",
   saveScoreCta: "Save score",
   /** Generic close-affordance ARIA label used by `<MissionHeaderCandy />`
    *  for every sheet that adopts it (mission detail, daily picker, mate

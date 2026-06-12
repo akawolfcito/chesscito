@@ -103,10 +103,9 @@ describe("<MissionDetailSheet> — save score affordance (D5)", () => {
     const user = userEvent.setup();
     renderSheet({ canSaveScore: true, onSaveScore, score: "120" });
 
-    // Promise-first narrative (QA F5): reward line above the action.
-    expect(
-      screen.getByText("Keep this score for life"),
-    ).toBeInTheDocument();
+    // Promise-first narrative (QA F5/G3): the off-chain save promises
+    // the leaderboard, never on-chain permanence.
+    expect(screen.getByText("Climb the leaderboard")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Save score" }));
     expect(onSaveScore).toHaveBeenCalledTimes(1);
   });
