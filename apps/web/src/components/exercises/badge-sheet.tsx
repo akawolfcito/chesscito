@@ -307,12 +307,16 @@ export function BadgeSheet({
             aria-label={t("ariaLabel")}
             className="relative flex shrink-0 items-center justify-center"
           >
-            <img
-              src="/art/badge-menu.png"
-              alt=""
-              aria-hidden="true"
-              className="h-full w-full object-contain"
-            />
+            <picture>
+              <source srcSet="/art/badge-menu.avif" type="image/avif" />
+              <source srcSet="/art/badge-menu.webp" type="image/webp" />
+              <img
+                src="/art/badge-menu.png"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+              />
+            </picture>
             {showNotification ? (
               <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />

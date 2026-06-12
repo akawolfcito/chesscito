@@ -140,12 +140,16 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
             aria-label={tDock("leaderboard")}
             className="relative flex shrink-0 items-center justify-center"
           >
-            <img
-              src="/art/leaderboard-menu.png"
-              alt=""
-              aria-hidden="true"
-              className="h-full w-full object-contain"
-            />
+            <picture>
+              <source srcSet="/art/leaderboard-menu.avif" type="image/avif" />
+              <source srcSet="/art/leaderboard-menu.webp" type="image/webp" />
+              <img
+                src="/art/leaderboard-menu.png"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+              />
+            </picture>
           </button>
         </SheetTrigger>
       ) : null}

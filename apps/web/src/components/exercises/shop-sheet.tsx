@@ -285,12 +285,16 @@ export function ShopSheet({
             aria-label={t("ariaLabel")}
             className="relative flex shrink-0 items-center justify-center"
           >
-            <img
-              src="/art/shop-menu.png"
-              alt=""
-              aria-hidden="true"
-              className="h-full w-full object-contain"
-            />
+            <picture>
+              <source srcSet="/art/shop-menu.avif" type="image/avif" />
+              <source srcSet="/art/shop-menu.webp" type="image/webp" />
+              <img
+                src="/art/shop-menu.png"
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-contain"
+              />
+            </picture>
             <span className="sr-only">{t("ariaLabel")}</span>
           </button>
         </SheetTrigger>
