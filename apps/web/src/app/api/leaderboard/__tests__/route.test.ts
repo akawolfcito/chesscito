@@ -2,32 +2,67 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/server/leaderboard", () => ({
   fetchLeaderboard: vi.fn(),
+  fetchPlayerRank: vi.fn(),
 }));
 
 import { GET } from "../route";
-import { fetchLeaderboard } from "@/lib/server/leaderboard";
+import { fetchLeaderboard, fetchPlayerRank } from "@/lib/server/leaderboard";
 
 const mocked = vi.mocked(fetchLeaderboard);
+const mockedPlayer = vi.mocked(fetchPlayerRank);
+
+function makeRequest(url = "http://localhost/api/leaderboard") {
+  return new Request(url);
+}
 
 describe("GET /api/leaderboard", () => {
   beforeEach(() => {
     mocked.mockReset();
+    mockedPlayer.mockReset();
   });
 
-  it("returns 200 with the leaderboard JSON on success", async () => {
-    const rows = [{ rank: 1, player: "0xcc41...c2dd", score: 3000, isVerified: false }];
+  it("returns 200 with the leaderboard JSON array on success (legacy shape)", async () => {
+    const rows = [
+      { rank: 1, player: "0xcc41...c2dd", score: 3000, isVerified: false, hasOnchain: true },
+    ];
     mocked.mockResolvedValue(rows);
 
-    const res = await GET();
+    const res = await GET(makeRequest());
     expect(res.status).toEqual(200);
     expect(await res.json()).toEqual(rows);
+    expect(mockedPlayer).not.toHaveBeenCalled();
+  });
+
+  it("with ?player= returns { rows, player } including the caller's own rank", async () => {
+    const rows = [
+      { rank: 1, player: "0xcc41...c2dd", score: 3000, isVerified: false, hasOnchain: true },
+    ];
+    const own = { rank: 42, player: "0xabcd...ef01", score: 120, isVerified: false, hasOnchain: false };
+    mocked.mockResolvedValue(rows);
+    mockedPlayer.mockResolvedValue(own);
+
+    const res = await GET(
+      makeRequest("http://localhost/api/leaderboard?player=0xABCD000000000000000000000000000000-EF01"),
+    );
+    expect(res.status).toEqual(200);
+    expect(await res.json()).toEqual({ rows, player: own });
+  });
+
+  it("with ?player= and no saves yet, player is null", async () => {
+    mocked.mockResolvedValue([]);
+    mockedPlayer.mockResolvedValue(null);
+
+    const res = await GET(
+      makeRequest("http://localhost/api/leaderboard?player=0xabc"),
+    );
+    expect(await res.json()).toEqual({ rows: [], player: null });
   });
 
   it("returns 500 with a sanitized error message when the service throws", async () => {
     mocked.mockRejectedValue(new Error("supabase connection refused"));
 
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const res = await GET();
+    const res = await GET(makeRequest());
     expect(res.status).toEqual(500);
     const body = await res.json();
     expect(body.error).toEqual("Failed to fetch leaderboard");

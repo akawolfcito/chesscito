@@ -27,6 +27,10 @@ export type LeaderboardRow = {
   player: string;
   total_score: number;
   is_verified: boolean;
+  /** Player has at least one ON-CHAIN score (`scores` table). Appended
+   *  2026-06-11 (leaderboard on-chain marker); older deployments may
+   *  omit it, so consumers treat absence as false. */
+  has_onchain?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -115,11 +119,41 @@ export async function fetchLeaderboardFromDb(): Promise<LeaderboardRow[]> {
     // (Slice 4 — P1 leaderboard-view-undefined).
     const { data: viewData } = await supabase
       .from("leaderboard_combined_v")
-      .select("rank, player, total_score, is_verified");
+      .select("rank, player, total_score, is_verified, has_onchain");
     return (viewData as LeaderboardRow[]) ?? [];
   }
 
   return (data as LeaderboardRow[]) ?? [];
+}
+
+/**
+ * Fetch the player's own combined-leaderboard row with its REAL rank
+ * over the full ranking (`get_player_rank` / `leaderboard_full_v`) —
+ * visible even outside the top-10 cut (QA G4 2026-06-11). Null when
+ * the player has no saves yet or Supabase is unconfigured.
+ */
+export async function fetchPlayerRankFromDb(
+  player: string,
+): Promise<LeaderboardRow | null> {
+  const supabase = getSupabaseServer();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase.rpc("get_player_rank", {
+    p_player: player.toLowerCase(),
+  });
+
+  if (error) {
+    // Same divergence rule as fetchLeaderboardFromDb: the fallback
+    // reads the SAME view the RPC reads.
+    const { data: viewData } = await supabase
+      .from("leaderboard_full_v")
+      .select("rank, player, total_score, is_verified, has_onchain")
+      .eq("player", player.toLowerCase())
+      .limit(1);
+    return ((viewData as LeaderboardRow[]) ?? [])[0] ?? null;
+  }
+
+  return ((data as LeaderboardRow[]) ?? [])[0] ?? null;
 }
 
 /**

@@ -46,6 +46,8 @@ describe("fetchLeaderboard", () => {
       player: "0xabcd...ef01",
       score: 1500,
       isVerified: true,
+      // has_onchain absent from older deployments → defaults false.
+      hasOnchain: false,
     });
   });
 
