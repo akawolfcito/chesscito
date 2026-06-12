@@ -39,6 +39,10 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 - `bg-playhub-forest-mobile.png` — fondo del play-hub móvil
 - `panel-frame-rune.png`, `shop-slot-frame.png` — marcos UI
 
+### Reglas de assets
+- **Reusar assets canónicos existentes** (`apps/web/public/art/**`) antes de crear iconos/SVGs nuevos — auditar lo que ya existe primero
+- **NUNCA upscalear** sprites/imágenes low-res (causa pixelación); pedir el asset en resolución correcta
+
 ## Seguridad — Reglas Duras
 - **NUNCA** commitear ni mostrar en pantalla: `.env`, private keys, API keys, seeds, credenciales, datos personales, ni nada dentro de `private/`
 - **NUNCA** imprimir, loguear ni mostrar en output de terminal: tokens, service role keys, connection strings, passwords, ni cualquier secreto — ni siquiera parcialmente
@@ -53,6 +57,23 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 - Firma de commit: `Wolfcito 🐾 @akawolfcito`
 - Tests: Vitest + RTL (unit) + Playwright (E2E + VR); 1727 passing baseline (2026-05-21)
 - Idioma de UI: English (ver `lib/content/editorial.ts`)
+- **Git staging**: stagear paths explícitos en `git add`; NUNCA pathspecs con brackets/globs (zsh los interpreta y deja archivos fuera — ya rompió main una vez)
+
+## Specs de features con UI
+
+Antes de implementar cualquier feature con flujo interactivo, el spec DEBE enumerar:
+
+- Todos los estados de UI y sus transiciones (locked/unlocked, completed/incomplete, progresión)
+- Edge cases por estado (¿qué pasa si tap en elemento locked? ¿qué pasa al completar el último item?)
+- Sin esta enumeración, los bugs de flujo aparecen en QA post-entrega y cuestan rondas extra
+
+## Verificación de deploys
+
+Después de cada deploy (Vercel preview o prod):
+
+1. Confirmar que el build nuevo propagó (poll a la URL de producción hasta ver el deploy live)
+2. Correr smoke test contra la URL live y reportar pass/fail
+3. No cerrar la sesión con un deploy sin confirmar
 
 ## Cluster Closure Protocol
 
