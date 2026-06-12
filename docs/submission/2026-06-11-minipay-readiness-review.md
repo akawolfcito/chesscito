@@ -18,14 +18,13 @@ Their server-side ownership verification (EIP-191 `verifyMessage` / `recoverMess
 
 ---
 
-## P0 — Blocking (must address before forwarding the form)
+## P0 — §8 Analytics — IMPLEMENTED 2026-06-12 (on-chain block shipped)
 
-### 1. §8 Analytics — `/stats` exists but is missing most required metrics
-The checklist (§8) is a **hard requirement**: a public `/stats` page (no wallet) surfacing DAU, MAU, D1/D7/D30 retention, top countries, and on-chain metrics (tx/day·week·month·lifetime per contract method, unique on-chain users, volume per stablecoin, network fees paid, protocol fees/revenue, failed-tx rate).
+`/stats` now renders an **On-chain Activity** section (spec `docs/specs/stats-onchain-metrics-minipay-s8.md`, shipped via TDD): per-method tx counts (Victory mints / Get Peones / on-chain score saves / Welcome packs × lifetime/30d/7d), **unique on-chain wallets**, and **Get Peones stablecoin volume** per USDC/USDT/cUSD — all derived from existing Supabase mirror tables (no indexer, no new schema). Window captions map to §8's day/week/month ask. Public, no wallet, hourly-cached, em-dash on any failed query. Data layer + UI: 63/63 tests, tsc + eslint clean.
 
-`/stats` exists (`apps/web/src/app/[locale]/stats/page.tsx`, public, hourly revalidate) and shows: Victory mints (7d/30d/lifetime), approx app sessions (7d/30d), unique minter wallets, welcome packs, leaderboard, difficulty split. **Present:** DAU/MAU (as sessions), partial lifetime tx (victories only). **Missing:** retention cohorts, top countries, per-method tx breakdown (Shop/Badges/Scoreboard), stablecoin volume (USDT/USDC/USDm), network fees, protocol revenue, failed-tx rate. The page already self-discloses these as "Coming next."
+**Still disclosed as "Coming next"** (honest, need infra we don't have): network fees paid + failed-tx rate (need a chain indexer), retention D1/D7/D30 + top countries (need a web-analytics layer — note Vercel Analytics is already collecting visitor/country data and could feed top-countries via its API; tracked as a follow-up spike).
 
-**Fix direction:** either (a) extend `/stats` to cover the missing groups (the on-chain ones are indexable from the 4 mainnet contracts), or (b) at minimum, present them transparently in the form with a credible roadmap. MiniPay uses these for promotion/featuring decisions, so partial is acceptable *only if disclosed*; silent omission reads as "not measured."
+**For the form:** screenshot the live `/stats` On-chain Activity section + state the present/coming split explicitly. MiniPay accepts partial coverage when disclosed; this page discloses it.
 
 ---
 
@@ -71,6 +70,6 @@ It pre-dates `/stats` and never covers §8 analytics or the strict copy table as
 ## Summary
 
 - **Message-signing: RESOLVED (not a blocker).** On-device probe in MiniPay (2026-06-12) confirmed `personal_sign` works; the celopedia "no message signing" rule is stale. Welcome Pack + Coach delete keep their signature auth.
-- **1 P0 blocker:** `/stats` is missing most §8 analytics metrics (retention, countries, per-method tx, stablecoin volume, fees, failed-tx) — extend it or disclose the gap with a roadmap in the form.
-- **3 P1:** mobile PageSpeed 72 vs 90+ (re-run after perf work), board/avatar PNGs lack webp/avif, 2026-06-05 packet doesn't cover §8.
-- **Everything else passes:** zero-click connect, no-CELO token scope, AddCash deeplink, support + legal links, strict copy, contract verification, 360×640. With signing cleared, **§8 analytics is the single thing standing between this and returning the form.**
+- **P0 §8 analytics: IMPLEMENTED 2026-06-12.** `/stats` now ships the On-chain Activity block (per-method tx, unique on-chain wallets, Get Peones volume); network fees / failed-tx / retention / countries honestly disclosed as Coming-next. 63/63 tests.
+- **3 P1 remain:** mobile PageSpeed ~70–80 vs 90+ (re-run with PSI key after perf work), board/avatar PNGs lack webp/avif, append a §8 screenshot + present/coming split to the submission packet.
+- **Everything else passes:** zero-click connect, no-CELO token scope, AddCash deeplink, support + legal links, strict copy, contract verification, 360×640. **With signing cleared and §8 shipped, the form is returnable** once the P1 polish (PSI re-run + packet §8 appendix) is done.
