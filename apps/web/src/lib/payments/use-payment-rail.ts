@@ -30,6 +30,23 @@ import { buildPeonesPackTransfer } from "@/lib/payments/transfer-builder";
 
 const CELO_MAINNET_CHAIN_ID = 42220;
 
+/** Backoff schedule (ms) for auto-retrying a transient verify failure once
+ *  the tx has already settled on-chain. One entry per retry attempt. */
+const DEFAULT_VERIFY_RETRY_DELAYS_MS = [1000, 3000, 8000];
+
+/** Verify errors worth retrying — the on-chain payment landed, only the
+ *  off-chain confirmation hiccupped (rate limit, ledger blip, RPC lag).
+ *  Deterministic business rejections (amount_too_low, transfer_not_found, …)
+ *  are NOT here: retrying can't change the verdict. */
+const RETRIABLE_VERIFY_ERRORS = new Set([
+  "rate_limited",
+  "ledger_unavailable",
+  "ledger_write_failed",
+  "receipt_not_found",
+]);
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 export type PaymentRailPhase =
   | "idle"
   | "preparing"
@@ -59,9 +76,17 @@ export type UsePaymentRailArgs = {
   /** Stablecoin symbol to pay with (USDC | USDT | cUSD). */
   tokenSymbol: string;
   onVerified?: (result: PaymentRailResult) => void;
+  /** Backoff schedule (ms) for auto-retrying a transient verify failure.
+   *  One entry per retry attempt; defaults to [1000, 3000, 8000]. */
+  retryDelaysMs?: number[];
 };
 
-export function usePaymentRail({ sku, tokenSymbol, onVerified }: UsePaymentRailArgs) {
+export function usePaymentRail({
+  sku,
+  tokenSymbol,
+  onVerified,
+  retryDelaysMs = DEFAULT_VERIFY_RETRY_DELAYS_MS,
+}: UsePaymentRailArgs) {
   const { address } = useAccount();
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
@@ -96,53 +121,71 @@ export function usePaymentRail({ sku, tokenSymbol, onVerified }: UsePaymentRailA
     async (hash: `0x${string}`) => {
       if (!tokenEntry) return;
       setPhase("verifying");
-      try {
-        const res = await fetch("/api/verify-payment", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            chainId: CELO_MAINNET_CHAIN_ID,
-            txHash: hash,
-            wallet: address,
-            token: tokenEntry.address,
-            sku,
-          }),
-        });
-        const json = (await res.json()) as {
-          ok?: boolean;
-          error?: string;
-          duplicate?: boolean;
-          peonesCredited?: number;
-          newBalance?: number;
-          token?: string;
-          amountPaid?: string;
-          overpaid?: boolean;
-        };
-        // duplicate:true is still ok:true → an idempotent success, never an error.
-        if (json.ok) {
-          const railResult: PaymentRailResult = {
-            txHash: hash,
-            duplicate: Boolean(json.duplicate),
-            peonesCredited: Number(json.peonesCredited ?? 0),
-            newBalance: json.newBalance,
-            token: json.token ?? tokenEntry.address,
-            amountPaid: json.amountPaid ?? "",
-            overpaid: Boolean(json.overpaid),
+      // The tx has settled on-chain by the time we get here. A transient
+      // verify failure (network blip, rate limit, ledger hiccup) must NOT
+      // strand the user's payment — auto-retry with backoff before giving up.
+      for (let attempt = 0; ; attempt++) {
+        try {
+          const res = await fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              chainId: CELO_MAINNET_CHAIN_ID,
+              txHash: hash,
+              wallet: address,
+              token: tokenEntry.address,
+              sku,
+            }),
+          });
+          const json = (await res.json()) as {
+            ok?: boolean;
+            error?: string;
+            duplicate?: boolean;
+            peonesCredited?: number;
+            newBalance?: number;
+            token?: string;
+            amountPaid?: string;
+            overpaid?: boolean;
           };
-          setResult(railResult);
-          setPhase("success");
-          onVerified?.(railResult);
-        } else {
-          // Verify failed — KEEP txHash so the caller can re-verify.
+          // duplicate:true is still ok:true → an idempotent success, never an error.
+          if (json.ok) {
+            const railResult: PaymentRailResult = {
+              txHash: hash,
+              duplicate: Boolean(json.duplicate),
+              peonesCredited: Number(json.peonesCredited ?? 0),
+              newBalance: json.newBalance,
+              token: json.token ?? tokenEntry.address,
+              amountPaid: json.amountPaid ?? "",
+              overpaid: Boolean(json.overpaid),
+            };
+            setResult(railResult);
+            setPhase("success");
+            onVerified?.(railResult);
+            return;
+          }
+          // A retriable error with budget left → wait and re-POST.
+          if (RETRIABLE_VERIFY_ERRORS.has(json.error ?? "") && attempt < retryDelaysMs.length) {
+            await sleep(retryDelaysMs[attempt]);
+            continue;
+          }
+          // Deterministic failure (or budget exhausted) — KEEP txHash so the
+          // caller can still re-verify manually.
           setErrorReason(json.error ?? "verify_failed");
           setPhase("error");
+          return;
+        } catch (e) {
+          // Network/transport error — always retriable while budget remains.
+          if (attempt < retryDelaysMs.length) {
+            await sleep(retryDelaysMs[attempt]);
+            continue;
+          }
+          setErrorReason(e instanceof Error ? e.message : "verify_request_failed");
+          setPhase("error");
+          return;
         }
-      } catch (e) {
-        setErrorReason(e instanceof Error ? e.message : "verify_request_failed");
-        setPhase("error");
       }
     },
-    [address, sku, tokenEntry, onVerified],
+    [address, sku, tokenEntry, onVerified, retryDelaysMs],
   );
 
   const pay = useCallback(async () => {

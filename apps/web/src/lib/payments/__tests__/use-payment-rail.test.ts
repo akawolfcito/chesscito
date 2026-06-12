@@ -114,6 +114,53 @@ describe("usePaymentRail — errors", () => {
     expect(result.current.result?.duplicate).toBe(true);
   });
 
+  it("transient network failure after tx confirms → auto-retries verify → success", async () => {
+    // tx already settled on-chain; the first verify POST throws (network blip).
+    // With a retry budget the hook re-POSTs without user action and recovers.
+    const okBody = { ok: true, peonesCredited: 50, duplicate: false, token: USDC, amountPaid: "500000" };
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network down"))
+      .mockResolvedValueOnce({ json: () => Promise.resolve(okBody) });
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(() => usePaymentRail({ ...args, retryDelaysMs: [0] }));
+    await act(async () => { await result.current.pay(); });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.current.phase).toBe("success");
+    expect(result.current.result?.peonesCredited).toBe(50);
+  });
+
+  it("network failure with no retry budget → error, keeps txHash", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
+    const { result } = renderHook(() => usePaymentRail({ ...args, retryDelaysMs: [] }));
+    await act(async () => { await result.current.pay(); });
+    expect(result.current.phase).toBe("error");
+    expect(result.current.txHash).toBe(HASH);
+  });
+
+  it("retriable verify error (ledger_write_failed) → retries → success", async () => {
+    const okBody = { ok: true, peonesCredited: 50, duplicate: true, token: USDC, amountPaid: "500000" };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ ok: false, error: "ledger_write_failed" }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve(okBody) });
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(() => usePaymentRail({ ...args, retryDelaysMs: [0] }));
+    await act(async () => { await result.current.pay(); });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.current.phase).toBe("success");
+  });
+
+  it("deterministic verify error (amount_too_low) → NOT retried, terminal", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ json: () => Promise.resolve({ ok: false, error: "amount_too_low" }) });
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(() => usePaymentRail({ ...args, retryDelaysMs: [0, 0, 0] }));
+    await act(async () => { await result.current.pay(); });
+    expect(fetchMock).toHaveBeenCalledTimes(1); // no retry on a deterministic error
+    expect(result.current.phase).toBe("error");
+    expect(result.current.errorReason).toBe("amount_too_low");
+  });
+
   it("write rejected by user → error, no double-write", async () => {
     writeMock.mockReset();
     writeMock.mockRejectedValue({ cancelled: true });
