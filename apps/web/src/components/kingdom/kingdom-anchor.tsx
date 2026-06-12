@@ -146,11 +146,11 @@ export function KingdomAnchor({
               alt=""
               aria-hidden="true"
               className="kingdom-anchor-img"
-              // The hub portal is the visual anchor of the hub —
-              // browsers should treat it as high-priority over the
-              // surrounding decorative assets so it lands before the
-              // hub-scaffold-center-stack hydrates and shifts.
-              fetchPriority="high"
+              // 2026-06-12: dropped fetchPriority="high" — the portal
+              // competed head-to-head with the /hub LCP background
+              // (bg-new-hub) for bandwidth, inflating LCP Load Time.
+              // Only the LCP image keeps high priority; the portal's
+              // layout space is CSS-reserved so CLS stays 0.
               decoding="async"
             />
           </picture>

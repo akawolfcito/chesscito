@@ -34,6 +34,11 @@ describe("KingdomAnchor", () => {
       "src",
       "/art/hub/portal-chesscito-normal.png",
     );
+    // Perf 2026-06-12: the portal must NOT carry fetchpriority="high" —
+    // it competed head-to-head with the /hub LCP background download
+    // (bg-new-hub), inflating LCP Load Time. Browser default priority
+    // is enough; layout space is CSS-reserved so CLS stays 0.
+    expect(img).not.toHaveAttribute("fetchpriority", "high");
   });
 
   it("overlays the inactive avatar on top of the portal background", () => {
