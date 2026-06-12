@@ -233,12 +233,29 @@ describe("ledger errors", () => {
     expect((await res.json()).error).toBe("ledger_unavailable");
   });
 
-  it("insert error → ledger_write_failed", async () => {
+  it("insert error, row absent on re-check → ledger_write_failed", async () => {
     mockedSupabase.mockReturnValue(
       buildSupabaseMock({ insertResult: { data: null, error: { code: "XXXXX", message: "boom" } } }).supabase,
     );
     const res = await POST(makeRequest(baseBody()));
     expect(res.status).toBe(500);
     expect((await res.json()).error).toBe("ledger_write_failed");
+  });
+
+  it("transient insert error but row landed → success duplicate, not 500", async () => {
+    // The on-chain transfer already settled; a non-23505 insert error (timeout,
+    // 503) whose write actually committed must NOT surface as a failed payment.
+    // The idempotency re-check finds the row → idempotent success.
+    const mock = buildSupabaseMock({
+      insertResult: { data: null, error: { code: "08006", message: "timeout" } },
+      raceRow: { id: 42, amount: 50 },
+    });
+    mockedSupabase.mockReturnValue(mock.supabase);
+    const res = await POST(makeRequest(baseBody()));
+    const json = await res.json();
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(json.duplicate).toBe(true);
+    expect(json.peonesCredited).toBe(50);
   });
 });

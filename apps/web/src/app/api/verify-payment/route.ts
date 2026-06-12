@@ -259,28 +259,31 @@ export async function POST(req: Request) {
     .maybeSingle();
 
   if (insertError) {
-    // Race: another in-flight request inserted the same idempotency_key.
-    if (insertError.code === "23505") {
-      const { data: raceRow } = await supabase
-        .from("peones_ledger")
-        .select("id, amount")
-        .eq("idempotency_key", idempotencyKey)
-        .maybeSingle();
-      if (raceRow) {
-        return NextResponse.json({
-          ok: true,
-          sku,
-          wallet: walletNorm,
-          peonesCredited: Number(raceRow.amount ?? peonesCredited),
-          amountPaid,
-          token,
-          txHash,
-          logIndex: verdict.logIndex,
-          idempotencyKey,
-          duplicate: true,
-          overpaid: verdict.overpaid,
-        });
-      }
+    // The on-chain transfer has already settled. Before surfacing a 500 —
+    // which the client reads as "payment failed" — re-check the ledger by
+    // idempotency_key. The row may exist because a concurrent request won the
+    // unique constraint (23505), OR because THIS insert committed server-side
+    // but its ACK was lost to a transient error (timeout/503). If the credit
+    // is on the ledger, the payment succeeded; return idempotent success.
+    const { data: raceRow } = await supabase
+      .from("peones_ledger")
+      .select("id, amount")
+      .eq("idempotency_key", idempotencyKey)
+      .maybeSingle();
+    if (raceRow) {
+      return NextResponse.json({
+        ok: true,
+        sku,
+        wallet: walletNorm,
+        peonesCredited: Number(raceRow.amount ?? peonesCredited),
+        amountPaid,
+        token,
+        txHash,
+        logIndex: verdict.logIndex,
+        idempotencyKey,
+        duplicate: true,
+        overpaid: verdict.overpaid,
+      });
     }
     log.error("insert_failed", { code: insertError.code, message: insertError.message });
     return err("ledger_write_failed", 500);
