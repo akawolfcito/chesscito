@@ -146,11 +146,11 @@ export function KingdomAnchor({
               alt=""
               aria-hidden="true"
               className="kingdom-anchor-img"
-              // 2026-06-12: dropped fetchPriority="high" — the portal
-              // competed head-to-head with the /hub LCP background
-              // (bg-new-hub) for bandwidth, inflating LCP Load Time.
-              // Only the LCP image keeps high priority; the portal's
-              // layout space is CSS-reserved so CLS stays 0.
+              // 2026-06-12: the portal IS the /hub LCP element since the
+              // q35 bg-new-hub re-encode dropped the background out of
+              // LCP candidacy (prod LH: LCP = kingdom-anchor-picture).
+              // High priority belongs to the LCP image — this is now it.
+              fetchPriority="high"
               decoding="async"
             />
           </picture>
