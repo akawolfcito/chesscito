@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
 import { dispatchShieldChange } from "@/lib/shop/shield-events";
 import type { WelcomePackTileState } from "@/components/exercises/welcome-pack-tile";
@@ -94,7 +94,7 @@ export function useWelcomePackClaim(
 ): UseWelcomePackClaimReturn {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const { openConnectModal } = useConnectModal();
+  const { connectWallet } = useConnectWallet();
   const walletLower = address?.toLowerCase();
 
   const initialCache = readCache(walletLower);
@@ -161,8 +161,8 @@ export function useWelcomePackClaim(
   }, [walletLower]);
 
   const onConnect = useCallback(() => {
-    if (openConnectModal) openConnectModal();
-  }, [openConnectModal]);
+    connectWallet();
+  }, [connectWallet]);
 
   const onClaim = useCallback(() => {
     if (!address || !walletLower || claimed || inFlight) return;

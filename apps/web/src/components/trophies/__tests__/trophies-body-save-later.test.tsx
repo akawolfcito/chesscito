@@ -19,8 +19,8 @@ vi.mock("wagmi", () => ({
   useAccount: () => ({ address: WALLET, isConnected: true }),
 }));
 
-vi.mock("@rainbow-me/rainbowkit", () => ({
-  useConnectModal: () => ({ openConnectModal: vi.fn() }),
+vi.mock("@/lib/wallet/use-connect-wallet", () => ({
+  useConnectWallet: () => ({ connectWallet: vi.fn(), isConnecting: false }),
 }));
 
 vi.mock("@/lib/game/victory-events", () => ({

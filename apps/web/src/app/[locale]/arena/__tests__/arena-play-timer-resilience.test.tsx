@@ -108,8 +108,8 @@ vi.mock("next/navigation", () => ({
 // ---------------------------------------------------------------------------
 // RainbowKit — connect modal not needed
 // ---------------------------------------------------------------------------
-vi.mock("@rainbow-me/rainbowkit", () => ({
-  useConnectModal: () => ({ openConnectModal: vi.fn() }),
+vi.mock("@/lib/wallet/use-connect-wallet", () => ({
+  useConnectWallet: () => ({ connectWallet: vi.fn(), isConnecting: false }),
 }));
 
 // ---------------------------------------------------------------------------

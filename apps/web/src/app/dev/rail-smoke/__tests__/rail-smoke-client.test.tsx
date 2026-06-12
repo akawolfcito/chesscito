@@ -9,8 +9,8 @@ vi.mock("wagmi", () => ({
   usePublicClient: () => ({ waitForTransactionReceipt: vi.fn() }),
   useWriteContract: () => ({ writeContractAsync: vi.fn() }),
 }));
-vi.mock("@rainbow-me/rainbowkit", () => ({
-  useConnectModal: () => ({ openConnectModal: vi.fn() }),
+vi.mock("@/lib/wallet/use-connect-wallet", () => ({
+  useConnectWallet: () => ({ connectWallet: vi.fn(), isConnecting: false }),
 }));
 
 import { RailSmokeClient } from "../rail-smoke-client";

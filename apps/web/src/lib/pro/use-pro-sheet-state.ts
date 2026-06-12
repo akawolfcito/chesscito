@@ -9,7 +9,7 @@ import {
   useSwitchChain,
   useWriteContract,
 } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { useTranslations } from "next-intl";
 import {
   getConfiguredChainId,
@@ -89,7 +89,7 @@ export function useProSheetState(
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
   const { switchChain } = useSwitchChain();
-  const { openConnectModal } = useConnectModal();
+  const { connectWallet } = useConnectWallet();
 
   const configuredChainId = useMemo(() => getConfiguredChainId(), []);
   const isCorrectChain =
@@ -310,7 +310,7 @@ export function useProSheetState(
     verifyFailedTxHash,
     isRetryingVerify,
     onRetryVerify: () => void handleRetryVerify(),
-    onConnectWallet: () => openConnectModal?.(),
+    onConnectWallet: () => connectWallet(),
     onSwitchNetwork: () =>
       configuredChainId != null && switchChain({ chainId: configuredChainId }),
     onPurchase: () => void handlePurchase(),

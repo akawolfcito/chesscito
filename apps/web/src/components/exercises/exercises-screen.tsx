@@ -14,7 +14,7 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
 import { Board } from "@/components/board";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
@@ -597,7 +597,7 @@ export function ExercisesScreen({
   const starsConnectPrompt = useConnectPrompt("stars");
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
-  const { openConnectModal } = useConnectModal();
+  const { connectWallet } = useConnectWallet();
   const { disconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
   const { isMiniPay } = useMiniPay();
@@ -2405,7 +2405,7 @@ export function ExercisesScreen({
               !address ? (
                 <button
                   type="button"
-                  onClick={() => openConnectModal?.()}
+                  onClick={() => connectWallet()}
                   aria-label={tHud("connectAriaLabel")}
                   className="candy-tray-pill hub-hud-pill"
                 >
@@ -2553,7 +2553,7 @@ export function ExercisesScreen({
                 milestone="stars"
                 onConnect={() => {
                   starsConnectPrompt.dismiss();
-                  openConnectModal?.();
+                  connectWallet();
                 }}
                 onDismiss={starsConnectPrompt.dismiss}
               />
@@ -2577,7 +2577,7 @@ export function ExercisesScreen({
                     onUseShield={handleUseShield}
                     onClaimBadge={() => void handleClaimBadge()}
                     onRetry={handleRetryApplied}
-                    onConnectWallet={() => openConnectModal?.()}
+                    onConnectWallet={() => connectWallet()}
                     onSwitchNetwork={() => configuredChainId != null && switchChain({ chainId: configuredChainId })}
                     compact
                   />
@@ -2618,7 +2618,7 @@ export function ExercisesScreen({
                 // per applied retry. Double-tap protection lives
                 // inside the guard.
                 onRetry={handleRetryApplied}
-                onConnectWallet={() => openConnectModal?.()}
+                onConnectWallet={() => connectWallet()}
                 onSwitchNetwork={() => configuredChainId != null && switchChain({ chainId: configuredChainId })}
                 compact
               />
@@ -2703,7 +2703,7 @@ export function ExercisesScreen({
           verifyFailedTxHash={verifyFailedTxHash}
           isRetryingVerify={isRetryingVerify}
           onRetryVerify={() => void handleRetryVerify()}
-          onConnectWallet={() => openConnectModal?.()}
+          onConnectWallet={() => connectWallet()}
           onSwitchNetwork={() =>
             configuredChainId != null && switchChain({ chainId: configuredChainId })
           }

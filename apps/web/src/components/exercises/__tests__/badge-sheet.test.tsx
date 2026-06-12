@@ -13,8 +13,8 @@ vi.mock("wagmi", () => ({
   useAccount: () => ({ address: undefined, isConnected: false }),
 }));
 
-vi.mock("@rainbow-me/rainbowkit", () => ({
-  useConnectModal: () => ({ openConnectModal: vi.fn() }),
+vi.mock("@/lib/wallet/use-connect-wallet", () => ({
+  useConnectWallet: () => ({ connectWallet: vi.fn(), isConnecting: false }),
 }));
 
 function setStars(piece: PieceId, stars: number[]) {

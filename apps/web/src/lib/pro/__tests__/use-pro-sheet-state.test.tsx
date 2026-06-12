@@ -27,7 +27,7 @@ const switchChainMock = vi.hoisted(() => vi.fn());
 const useSwitchChainMock = vi.hoisted(() =>
   vi.fn(() => ({ switchChain: switchChainMock })),
 );
-const openConnectModalMock = vi.hoisted(() => vi.fn());
+const connectWalletMock = vi.hoisted(() => vi.fn());
 const refetchProStatusMock = vi.hoisted(() => vi.fn());
 const useProStatusMock = vi.hoisted(() =>
   vi.fn(() => ({
@@ -49,8 +49,8 @@ vi.mock("wagmi", () => ({
   useWriteContract: () => useWriteContractMock(),
 }));
 
-vi.mock("@rainbow-me/rainbowkit", () => ({
-  useConnectModal: () => ({ openConnectModal: openConnectModalMock }),
+vi.mock("@/lib/wallet/use-connect-wallet", () => ({
+  useConnectWallet: () => ({ connectWallet: connectWalletMock, isConnecting: false }),
 }));
 
 vi.mock("@/lib/pro/use-pro-status", () => ({
@@ -122,7 +122,7 @@ beforeEach(() => {
   useWriteContractMock.mockReset();
   switchChainMock.mockReset();
   useSwitchChainMock.mockReset();
-  openConnectModalMock.mockReset();
+  connectWalletMock.mockReset();
   refetchProStatusMock.mockReset();
   useProStatusMock.mockReset();
   trackMock.mockReset();

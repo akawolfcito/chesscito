@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
 import { isMiniPayEnv } from "@/lib/minipay";
 
@@ -23,7 +23,7 @@ type Outcome =
  */
 export function SignProbeClient() {
   const { address, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connectWallet } = useConnectWallet();
   const { signMessageAsync } = useSignMessage();
 
   const [inMiniPay, setInMiniPay] = useState<boolean | null>(null);
@@ -80,7 +80,7 @@ export function SignProbeClient() {
       {!isConnected ? (
         <button
           type="button"
-          onClick={() => openConnectModal?.()}
+          onClick={() => connectWallet()}
           style={btnStyle("#2563eb")}
         >
           Connect wallet

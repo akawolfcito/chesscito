@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useAccount, useChainId, useReadContracts } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
 import { HubScaffold } from "@/components/hub/hub-scaffold";
 const BadgeSheet = dynamic(
@@ -163,10 +163,10 @@ export function HubScaffoldClient({
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const badgesAddress = useMemo(() => getBadgesAddress(chainId), [chainId]);
-  // RainbowKit's connect modal — `openConnectModal` is undefined until
-  // the provider mounts (RainbowKitProvider is dynamically imported in
-  // `<WalletProvider>`). Optional-chained call covers that race.
-  const { openConnectModal } = useConnectModal();
+  // Direct injected connect (RainbowKit removed, P2 2026-06-12). In
+  // MiniPay the auto-connect in <WalletProvider> wins before this CTA
+  // ever renders; on desktop it triggers the extension prompt.
+  const { connectWallet } = useConnectWallet();
 
   // PRO sheet orchestration. Owns its own status fetch internally so
   // we don't double-fetch /api/pro/status from this surface.
@@ -390,7 +390,7 @@ export function HubScaffoldClient({
         isWalletConnected={isConnected}
         onConnectTap={() => {
           track("hub_connect_chip_tap");
-          openConnectModal?.();
+          connectWallet();
         }}
         rewardTiles={rewardTiles}
         premiumKicker={tScaffold("premiumKicker")}

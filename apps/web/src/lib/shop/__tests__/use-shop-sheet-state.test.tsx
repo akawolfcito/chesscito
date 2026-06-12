@@ -107,8 +107,8 @@ const usePublicClientMock = vi.hoisted(() =>
   })),
 );
 const useSwitchChainMock = vi.hoisted(() => vi.fn(() => ({ switchChain: vi.fn() })));
-const useConnectModalMock = vi.hoisted(() =>
-  vi.fn(() => ({ openConnectModal: vi.fn() })),
+const useConnectWalletMock = vi.hoisted(() =>
+  vi.fn(() => ({ connectWallet: vi.fn(), isConnecting: false })),
 );
 const useMiniPayMock = vi.hoisted(() =>
   vi.fn(() => ({ hasProvider: false, isMiniPay: false, isReady: true })),
@@ -129,8 +129,8 @@ vi.mock("wagmi", () => ({
   useSwitchChain: () => useSwitchChainMock(),
 }));
 
-vi.mock("@rainbow-me/rainbowkit", () => ({
-  useConnectModal: () => useConnectModalMock(),
+vi.mock("@/lib/wallet/use-connect-wallet", () => ({
+  useConnectWallet: () => useConnectWalletMock(),
 }));
 
 // Welcome Pack hook is wired into useShopSheetState; mock it here so

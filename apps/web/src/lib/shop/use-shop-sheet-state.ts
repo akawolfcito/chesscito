@@ -11,7 +11,7 @@ import {
   useSwitchChain,
   useWriteContract,
 } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
 import { useMiniPay } from "@/hooks/use-minipay";
 import {
@@ -158,7 +158,7 @@ export function useShopSheetState(
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
   const { switchChain } = useSwitchChain();
-  const { openConnectModal } = useConnectModal();
+  const { connectWallet } = useConnectWallet();
   const { isMiniPay } = useMiniPay();
   // Welcome Pack hook accepts an `onClaimedFresh` callback to stage
   // the post-claim auto-close (600ms celebration window: HUD chip
@@ -672,7 +672,7 @@ export function useShopSheetState(
     confirmProps,
     isCorrectChain,
     isConnected,
-    onConnectWallet: () => openConnectModal?.(),
+    onConnectWallet: () => connectWallet(),
     onSwitchNetwork: () =>
       configuredChainId != null && switchChain({ chainId: configuredChainId }),
   };

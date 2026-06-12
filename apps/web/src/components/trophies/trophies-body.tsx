@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useAccount } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
 import { PageSection } from "@/components/redesign/page-section";
@@ -107,7 +107,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
   const tAch = useTranslations("ACHIEVEMENTS_COPY");
   const tRoad = useTranslations("ROADMAP_COPY");
   const { address, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connectWallet } = useConnectWallet();
   // Save Later (2026-05-31): empty-state secondary CTA "Or save a past
   // victory" only renders when the user has at least one match in
   // history. Gating prevents a brand-new user from being routed to an
@@ -218,7 +218,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
           </p>
           <PrincipalButton
             size="medium"
-            onClick={() => openConnectModal?.()}
+            onClick={() => connectWallet()}
           >
             {t("connectWalletButton")}
           </PrincipalButton>

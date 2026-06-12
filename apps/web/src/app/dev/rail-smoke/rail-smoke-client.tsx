@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAccount, useChainId, usePublicClient, useWriteContract } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
 import { erc20Abi } from "@/lib/contracts/tokens";
 import { getMiniPayFeeCurrency } from "@/lib/contracts/chains";
@@ -30,7 +30,7 @@ export function RailSmokeClient() {
   const chainId = useChainId();
   const publicClient = usePublicClient({ chainId });
   const { writeContractAsync } = useWriteContract();
-  const { openConnectModal } = useConnectModal();
+  const { connectWallet } = useConnectWallet();
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
@@ -140,7 +140,7 @@ export function RailSmokeClient() {
       </label>
 
       {!isConnected ? (
-        <button type="button" onClick={() => openConnectModal?.()} style={btn}>
+        <button type="button" onClick={() => connectWallet()} style={btn}>
           Connect wallet
         </button>
       ) : onWrongChain ? (

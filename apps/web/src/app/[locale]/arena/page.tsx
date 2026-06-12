@@ -7,7 +7,7 @@ import {
   useAccount,
   useChainId,
 } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
 import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
 import { useChessGame } from "@/lib/game/use-chess-game";
@@ -143,7 +143,7 @@ function ArenaPageInner() {
   const game = useChessGame();
 
   const { address, isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connectWallet } = useConnectWallet();
   const victoryConnectPrompt = useConnectPrompt("victory");
   // Same hook the /hub PRO chip uses — single source of truth across
   // the app so the chip and the Coach gate never disagree.
@@ -1401,7 +1401,7 @@ function ArenaPageInner() {
                 milestone="victory"
                 onConnect={() => {
                   victoryConnectPrompt.dismiss();
-                  openConnectModal?.();
+                  connectWallet();
                 }}
                 onDismiss={victoryConnectPrompt.dismiss}
               />

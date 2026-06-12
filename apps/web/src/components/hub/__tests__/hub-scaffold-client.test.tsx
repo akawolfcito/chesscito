@@ -14,7 +14,7 @@ const useAccountMock = vi.hoisted(() =>
       },
   ),
 );
-const openConnectModalMock = vi.hoisted(() => vi.fn());
+const connectWalletMock = vi.hoisted(() => vi.fn());
 const trackMock = vi.hoisted(() => vi.fn());
 const useChainIdMock = vi.hoisted(() => vi.fn(() => 42220));
 const useReadContractsMock = vi.hoisted(() =>
@@ -90,8 +90,8 @@ vi.mock("@/lib/shop/shield-events", () => ({
   subscribeToShieldChanges: () => () => {},
 }));
 
-vi.mock("@rainbow-me/rainbowkit", () => ({
-  useConnectModal: () => ({ openConnectModal: openConnectModalMock }),
+vi.mock("@/lib/wallet/use-connect-wallet", () => ({
+  useConnectWallet: () => ({ connectWallet: connectWalletMock, isConnecting: false }),
 }));
 
 // Welcome Pack hook wires into useShopSheetState (commit 6 of shield-
@@ -180,7 +180,7 @@ beforeEach(() => {
   useProStatusMock.mockReset();
 
   useAccountMock.mockReturnValue({ address: undefined, isConnected: false });
-  openConnectModalMock.mockReset();
+  connectWalletMock.mockReset();
   trackMock.mockReset();
   useChainIdMock.mockReturnValue(42220);
   useReadContractsMock.mockReturnValue({ data: undefined });
@@ -470,7 +470,7 @@ describe("HubScaffoldClient — connect affordance", () => {
       screen.getByLabelText("Connect wallet to see your stats"),
     );
 
-    expect(openConnectModalMock).toHaveBeenCalledTimes(1);
+    expect(connectWalletMock).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -597,7 +597,7 @@ describe("HubScaffoldClient — telemetry", () => {
     const trackOrder = trackMock.mock.invocationCallOrder[
       trackMock.mock.calls.findIndex((c) => c[0] === "hub_connect_chip_tap")
     ];
-    const modalOrder = openConnectModalMock.mock.invocationCallOrder[0];
+    const modalOrder = connectWalletMock.mock.invocationCallOrder[0];
     expect(trackOrder).toBeLessThan(modalOrder);
   });
 

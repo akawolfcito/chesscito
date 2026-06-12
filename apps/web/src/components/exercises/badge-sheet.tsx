@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
@@ -287,7 +287,7 @@ export function BadgeSheet({
   // than the whole hook object to avoid re-running the effect on every
   // render (cf. /arena PLAY-button regression fix).
   const { isConnected } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { connectWallet } = useConnectWallet();
   const badgesConnectPrompt = useConnectPrompt("badges");
   const hasClaimable = badges.some((b) => b.state === "claimable");
   const showBadgesPrompt = badgesConnectPrompt.show;
@@ -352,7 +352,7 @@ export function BadgeSheet({
               milestone="badges"
               onConnect={() => {
                 badgesConnectPrompt.dismiss();
-                openConnectModal?.();
+                connectWallet();
               }}
               onDismiss={badgesConnectPrompt.dismiss}
             />
