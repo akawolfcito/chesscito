@@ -1,7 +1,7 @@
 <div align="center">
   <img src="apps/web/public/art/favicon-wolf.png" alt="Chesscito" width="180" />
 
-  <h3>Pre-chess puzzles, full chess vs AI, and AI Coach — on Celo, inside MiniPay</h3>
+  <h3>Pre-chess puzzles, full chess vs AI, and AI Coach — on Celo, designed with MiniPay in mind</h3>
 
   <p>
     <a href="https://celo.org"><img src="https://img.shields.io/badge/Celo-Mainnet-FCFF52?style=flat-square&labelColor=1A1A2E" alt="Celo Mainnet" /></a>
@@ -16,30 +16,34 @@
 
 ## What is Chesscito?
 
-Chesscito is an educational MiniApp distributed via **MiniPay on Celo**. Players solve short pre-chess puzzles — moving a single piece to a target square in the fewest moves possible — earning on-chain badges and scores as proof of progress.
+Chesscito is an educational MiniApp on **Celo**, designed to be used with MiniPay-compatible wallets. Players solve short pre-chess puzzles — moving a single piece to a target square in the fewest moves possible — earning on-chain badges and scores as proof of progress.
 
-- **Learn** how chess pieces move through interactive puzzles
-- **Earn** on-chain badges and leaderboard scores on Celo Mainnet
-- **Play** directly inside MiniPay — no wallet setup required
+- **Learn** how all six chess pieces move through interactive puzzles and labyrinths
+- **Earn** Peones (in-game currency), on-chain badges, and leaderboard scores on Celo Mainnet
+- **Play** with MiniPay-compatible wallets or MetaMask — no setup friction
 - **Battle** full chess vs AI in Arena and mint your Victory as an on-chain NFT
 - **Improve** with the AI Coach analyzing your games (LLM-powered)
 
 ## Gameplay
 
-Three pieces. Five puzzles each. Stars awarded by precision.
+All six pieces. 78 exercises plus labyrinth challenges. Stars awarded by precision.
 
-| Piece | Trials | Badge |
-|-------|--------|-------|
-| Rook (Torre) | 5 | Rook Ascendant |
-| Bishop (Alfil) | 5 | Bishop Ascendant |
-| Knight (Caballo) | 5 | Knight Ascendant |
+| Piece | Training |
+|-------|----------|
+| Rook (Torre) | Exercises + labyrinths |
+| Bishop (Alfil) | Exercises + labyrinths |
+| Knight (Caballo) | Exercises + labyrinths |
+| Pawn (Peón) | Exercises + labyrinths |
+| Queen (Dama) | Exercises + labyrinths |
+| King (Rey) | Exercises + labyrinths |
 
 Stars are awarded based on move efficiency:
+
 - **3 stars** — solved in the optimal number of moves
 - **2 stars** — one extra move used
 - **1 star** — two extra moves used
 
-Earn ≥ 10/15 stars per piece to unlock your on-chain badge.
+Earn ≥ 10 stars per piece to unlock its on-chain badge. Completing exercises and labyrinths also earns **Peones**, the in-game soft currency, which can additionally be purchased with stablecoins (cUSD / USDT / USDC) via a direct payment — no token approvals.
 
 ### Arena — Full Chess vs AI
 
@@ -51,7 +55,11 @@ Beat the AI in a complete chess game and mint your Victory as an on-chain NFT.
 
 ### Chesscito Coach
 
-Post-game analysis powered by an LLM that identifies tactical and positional patterns in your play so you know what to train next.
+Post-game analysis powered by an LLM that identifies tactical and positional patterns in your play so you know what to train next. User-triggered per game; included with PRO.
+
+### Leaderboard
+
+DB-backed global leaderboard (Supabase read layer) with an optional on-chain score save to the Scoreboard contract as permanent proof.
 
 ## On-chain Contracts (Celo Mainnet)
 
@@ -62,6 +70,8 @@ Post-game analysis powered by an LLM that identifies tactical and positional pat
 | Shop (proxy) | [`0x24846C77...`](https://celoscan.io/address/0x24846C772af7233ADfD98b9A96273120f3a1f74b) |
 | Victory NFT (proxy) | [`0x0eE22F83...`](https://celoscan.io/address/0x0eE22F830a99e7a67079018670711C0F94Abeeb0) |
 
+> LabyrinthBadges (ERC-1155 soulbound) is live on Celo Sepolia; mainnet deploy is queued.
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -69,7 +79,8 @@ Post-game analysis powered by an LLM that identifies tactical and positional pat
 | Frontend | Next.js 14 App Router + TypeScript |
 | Styling | Tailwind CSS |
 | Blockchain | Celo Mainnet (chain ID 42220) |
-| Wallet | MiniPay via wagmi + viem |
+| Wallet | MiniPay-compatible + MetaMask via wagmi + viem |
+| Payments | Stablecoin direct transfer rail (cUSD / USDT / USDC, no approvals) |
 | Monorepo | Turborepo + pnpm |
 | Contracts | Solidity + Hardhat + OpenZeppelin v5 |
 | AI Engine | `js-chess-engine` (pure JS, no WASM) |
