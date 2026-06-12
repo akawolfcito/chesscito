@@ -33,13 +33,8 @@ Their server-side ownership verification (EIP-191 `verifyMessage` / `recoverMess
 ### 3. Mobile PageSpeed ~70–80 vs 90+ target
 Re-measured 2026-06-12 (`docs/pagespeed-report-2026-06-12.md`): `/hub` mobile **70–80** (desktop **93**), CLS now 0–0.12 (the prior 0.187 was an outlier). Flat vs the 2026-06-03 baseline — no perf work shipped since. Gap is **LCP-bound** (5–7 s on throttled mobile). Roadmap unchanged (dynamic-import wagmi/RainbowKit, critical CSS, Tailwind purge, responsive images). **Action:** land the perf work, then re-run with a PSI API key against the production URL right before submitting.
 
-### 4. Asset optimization gaps
-Triplet rule (.png+.webp+.avif) holds for 19/23 large images, but:
-- `chesscito-board.png` (268 KB) — **the game board, mission-critical UI** — has NO webp/avif variant and is referenced directly (`components/board.tsx`, `board-thumbnail.tsx`).
-- `avatar-fun.png` (68 KB) — no variants. `shop-magic-chesscito.png` (2.0 MB) — webp but no avif.
-- Several user-facing surfaces reference `.png` directly (landing `pre-chess-exercise.png`, board `board-ch.png`), bypassing format negotiation.
-
-**Action:** generate webp/avif for the board + avatar via `scripts/optimize-art-assets.sh`; switch hot direct-PNG refs to the optimized variant or `<picture>`/`next/image`.
+### 4. Asset optimization — DONE 2026-06-12 (red-team finding was a false positive)
+Cross-checked against the repo: the triplet rule (.png+.webp+.avif) is **fully satisfied** — `0` of all `public/art/**` PNGs lack variants, and the heavy hero surfaces (board via `image-set`/`<picture>`, avatars) already negotiate. The red-team's "board/avatar lack variants" claim was wrong (`chesscito-board`, `avatar-fun`, `board-ch`, `shop-magic` all have avif+webp). The only genuine gap was **3 menu icons** loading raw PNG despite having variants — `leaderboard-menu` (74KB), `shop-menu` (57KB), `badge-menu` (55KB) — now wrapped in `<picture>` (avif+webp sources). Remaining raw `<img>` are small icons (<10KB) where PNG↔webp is negligible. **VR:** run `pnpm test:e2e:visual` for the 3 sheets before the next push (img→picture; rendered pixels should match the existing board precedent).
 
 ### 5. 2026-06-05 packet is stale
 It pre-dates `/stats` and never covers §8 analytics or the strict copy table as currently worded. **Action:** append a §8 section (live `/stats` URL + screenshot + explicit present/missing metric list) before returning the form.
@@ -71,5 +66,5 @@ It pre-dates `/stats` and never covers §8 analytics or the strict copy table as
 
 - **Message-signing: RESOLVED (not a blocker).** On-device probe in MiniPay (2026-06-12) confirmed `personal_sign` works; the celopedia "no message signing" rule is stale. Welcome Pack + Coach delete keep their signature auth.
 - **P0 §8 analytics: IMPLEMENTED 2026-06-12.** `/stats` now ships the On-chain Activity block (per-method tx, unique on-chain wallets, Get Peones volume); network fees / failed-tx / retention / countries honestly disclosed as Coming-next. 63/63 tests.
-- **3 P1 remain:** mobile PageSpeed ~70–80 vs 90+ (re-run with PSI key after perf work), board/avatar PNGs lack webp/avif, append a §8 screenshot + present/coming split to the submission packet.
+- **P1 status:** assets DONE (triplet complete; 3 raw menu icons converted to `<picture>` — red-team finding was a false positive). Remaining: mobile PageSpeed ~70–80 vs 90+ (re-run with PSI key after the bundle/LCP perf work), and append a §8 screenshot + present/coming split to the submission packet.
 - **Everything else passes:** zero-click connect, no-CELO token scope, AddCash deeplink, support + legal links, strict copy, contract verification, 360×640. **With signing cleared and §8 shipped, the form is returnable** once the P1 polish (PSI re-run + packet §8 appendix) is done.
