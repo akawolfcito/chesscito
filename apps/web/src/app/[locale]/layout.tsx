@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Fredoka, Rowdies } from 'next/font/google';
-import { Analytics } from '@vercel/analytics/next';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
@@ -143,7 +142,6 @@ export default async function LocaleLayout({
               </WalletProvider>
             </div>
           </div>
-          <Analytics />
         </NextIntlClientProvider>
       </body>
     </html>
