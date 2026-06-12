@@ -3,9 +3,25 @@ import { describe, expect, it } from "vitest";
 import {
   buildTrainingPath,
   interleaveTrainingRows,
+  nextPendingLabyrinthAfterExercise,
   LABYRINTH_UNLOCK_THRESHOLD,
 } from "@/lib/training/path";
 import { EXERCISES } from "@/lib/game/exercises";
+
+function rookPath(totalStars: number, bests: Record<string, number> = {}) {
+  let remaining = totalStars;
+  const stars = EXERCISES.rook.map(() => {
+    const take = Math.min(3, remaining);
+    remaining -= take;
+    return take;
+  });
+  return buildTrainingPath({
+    piece: "rook",
+    progress: { piece: "rook", exerciseIndex: 0, stars },
+    labyrinthBests: bests,
+    badgeClaimed: false,
+  });
+}
 
 function rookLabs() {
   return buildTrainingPath({
@@ -70,5 +86,51 @@ describe("interleaveTrainingRows — presentation-only interleave (D6)", () => {
     const rows = interleaveTrainingRows([], labs);
     expect(rows.every((r) => r.kind === "labyrinth")).toBe(true);
     expect(rows).toHaveLength(labs.length);
+  });
+});
+
+describe("nextPendingLabyrinthAfterExercise — the path flows THROUGH labs (QA G1)", () => {
+  const anchor = Math.ceil(LABYRINTH_UNLOCK_THRESHOLD / 3);
+  const anchorExerciseId = EXERCISES.rook[anchor - 1].id;
+
+  it("returns the available lab when it is the immediate next interleaved row", () => {
+    // 6★ → lab 1 unlocked; the anchor exercise is the one right before it.
+    const next = nextPendingLabyrinthAfterExercise(
+      rookPath(LABYRINTH_UNLOCK_THRESHOLD),
+      anchorExerciseId,
+    );
+    expect(next).not.toBeNull();
+    expect(next!.kind).toBe("labyrinth");
+    expect(next!.status).toBe("available");
+  });
+
+  it("returns null when the next row is another exercise", () => {
+    const next = nextPendingLabyrinthAfterExercise(
+      rookPath(LABYRINTH_UNLOCK_THRESHOLD),
+      EXERCISES.rook[0].id,
+    );
+    expect(next).toBeNull();
+  });
+
+  it("returns null when the adjacent lab is still locked (stars short)", () => {
+    const next = nextPendingLabyrinthAfterExercise(
+      rookPath(3), // below the unlock threshold
+      anchorExerciseId,
+    );
+    expect(next).toBeNull();
+  });
+
+  it("returns null when the adjacent lab is already complete", () => {
+    const path = rookPath(LABYRINTH_UNLOCK_THRESHOLD, { "rook-lab-1": 3 });
+    const labAfterAnchor = path.filter((n) => n.kind === "labyrinth")[0];
+    expect(labAfterAnchor.status).toBe("complete");
+    const next = nextPendingLabyrinthAfterExercise(path, anchorExerciseId);
+    expect(next).toBeNull();
+  });
+
+  it("returns null for an unknown exercise id", () => {
+    expect(
+      nextPendingLabyrinthAfterExercise(rookPath(6), "no-such-id"),
+    ).toBeNull();
   });
 });

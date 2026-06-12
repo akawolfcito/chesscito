@@ -128,7 +128,11 @@ import {
   getLabyrinthBest,
   recordLabyrinthBest,
 } from "@/lib/game/labyrinth-progress";
-import { buildTrainingPath, getNextChallenge } from "@/lib/training/path";
+import {
+  buildTrainingPath,
+  getNextChallenge,
+  nextPendingLabyrinthAfterExercise,
+} from "@/lib/training/path";
 import { submitLabyrinthCompletionEarn } from "@/lib/peones/labyrinth-earn";
 import { ActionPin } from "@/components/redesign/action-pin";
 import { LabyrinthCompleteOverlay } from "@/components/exercises/labyrinth-complete-overlay";
@@ -1514,7 +1518,23 @@ export function ExercisesScreen({
         }
       }
 
+      const completedExerciseId = currentExercise.id;
       autoReset.schedule(() => {
+        // QA G1 (2026-06-11): the senda flows THROUGH the labyrinths.
+        // When the interleaved path places an available lab right after
+        // the exercise the player just finished, enter it — the next
+        // challenge comes to the player. Reads the path ref so the
+        // post-completion unlock (e.g. 6★ reached on this very
+        // exercise) is visible at fire time.
+        const pendingLab = nextPendingLabyrinthAfterExercise(
+          trainingPathRef.current,
+          completedExerciseId,
+        );
+        if (pendingLab) {
+          handleLabyrinthSelect(pendingLab.id);
+          resetBoard();
+          return;
+        }
         if (!isLastExercise) {
           advanceExercise();
           resetBoard();
@@ -2109,25 +2129,33 @@ export function ExercisesScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPiece, progress, badgesClaimed, labyrinthCompleted]);
 
+  /** Always-fresh mirror of the path for callbacks that fire from
+   *  timers (success auto-advance) — the 1500ms closure would
+   *  otherwise see the pre-completion path where the just-unlocked
+   *  labyrinth still reads as locked (QA G1). */
+  const trainingPathRef = useRef(trainingPath);
+  useEffect(() => {
+    trainingPathRef.current = trainingPath;
+  }, [trainingPath]);
+
   /** Slice 3C: enter the labyrinth layer with a specific lab. Defense
    *  in depth — locked nodes are not tappable in the rail, but the
    *  handler validates against the path anyway so a stale tap can
-   *  never open a locked lab. labyrinthKey bump remounts the board so
-   *  switching labs always starts clean. */
-  const handleLabyrinthSelect = useCallback(
-    (labyrinthId: string) => {
-      const node = trainingPath.find(
-        (n) => n.kind === "labyrinth" && n.id === labyrinthId,
-      );
-      if (!node || node.status === "locked") return;
-      setSelectedLabyrinthId(labyrinthId);
-      setLabyrinthMode(true);
-      setLabyrinthCompleted(null);
-      setLabyrinthMoves(0);
-      setLabyrinthKey((k) => k + 1);
-    },
-    [trainingPath],
-  );
+   *  never open a locked lab. Validation reads the ref so timer-fired
+   *  callers (QA G1 auto-advance) see post-completion unlocks.
+   *  labyrinthKey bump remounts the board so switching labs always
+   *  starts clean. */
+  const handleLabyrinthSelect = useCallback((labyrinthId: string) => {
+    const node = trainingPathRef.current.find(
+      (n) => n.kind === "labyrinth" && n.id === labyrinthId,
+    );
+    if (!node || node.status === "locked") return;
+    setSelectedLabyrinthId(labyrinthId);
+    setLabyrinthMode(true);
+    setLabyrinthCompleted(null);
+    setLabyrinthMoves(0);
+    setLabyrinthKey((k) => k + 1);
+  }, []);
 
   /** Slice 3D: the path's recommended next challenge (first unlocked,
    *  uncompleted labyrinth). Drives the contextual "Enter Labyrinth"

@@ -195,6 +195,29 @@ export function interleaveTrainingRows<E>(
   return rows;
 }
 
+/** QA G1 (2026-06-11): after completing an exercise, the path flows
+ *  THROUGH the labyrinths. Returns the labyrinth node when it is the
+ *  immediate next interleaved row after the given exercise AND it is
+ *  available (unlocked, not yet completed) — the host then enters it
+ *  instead of advancing to the next exercise. Locked or completed
+ *  neighbors return null and the exercise flow continues untouched. */
+export function nextPendingLabyrinthAfterExercise(
+  path: TrainingNode[],
+  exerciseId: string,
+): TrainingNode | null {
+  const exercises = path.filter((node) => node.kind === "exercise");
+  const labyrinths = path.filter((node) => node.kind === "labyrinth");
+  const rows = interleaveTrainingRows(exercises, labyrinths);
+  const position = rows.findIndex(
+    (row) => row.kind === "exercise" && row.value.id === exerciseId,
+  );
+  if (position < 0) return null;
+  const next = rows[position + 1];
+  return next?.kind === "labyrinth" && next.value.status === "available"
+    ? next.value
+    : null;
+}
+
 export function getPieceMastery(path: TrainingNode[]): PieceMastery {
   const mastery = path.find((node) => node.kind === "mastery");
   if (mastery?.status === "complete") return "mastered";
