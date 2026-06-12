@@ -137,13 +137,36 @@ export function PrimaryPlayCta({
       </picture>
       {pieceIconSrc ? (
         <span className="primary-play-cta-piece-icon">
-          <img
-            src={pieceIconSrc}
-            alt=""
-            aria-hidden="true"
-            className="primary-play-cta-piece-icon-img"
-            draggable={false}
-          />
+          {pieceIconSrc.endsWith(".png") ? (
+            /* Callers pass the .png path; its avif/webp siblings are ~10x
+             * smaller (train-pieces 53KB→5KB), so negotiate them and keep
+             * the png as fallback — same chain as the pieceIcon branch. */
+            <picture>
+              <source
+                srcSet={pieceIconSrc.replace(/\.png$/, ".avif")}
+                type="image/avif"
+              />
+              <source
+                srcSet={pieceIconSrc.replace(/\.png$/, ".webp")}
+                type="image/webp"
+              />
+              <img
+                src={pieceIconSrc}
+                alt=""
+                aria-hidden="true"
+                className="primary-play-cta-piece-icon-img"
+                draggable={false}
+              />
+            </picture>
+          ) : (
+            <img
+              src={pieceIconSrc}
+              alt=""
+              aria-hidden="true"
+              className="primary-play-cta-piece-icon-img"
+              draggable={false}
+            />
+          )}
         </span>
       ) : pieceIcon ? (
         <picture className="primary-play-cta-piece-icon">

@@ -226,6 +226,51 @@ describe("PrimaryPlayCta", () => {
     expect(cta.className).not.toMatch(/is-atmosphere-adventure\b/);
   });
 
+  it("negotiates avif/webp for pieceIconSrc instead of shipping the raw PNG", () => {
+    // Perf 2026-06-12: the three hub callsites pass `.png` paths whose
+    // avif siblings are ~10x smaller (train-pieces 53KB→5KB). The
+    // pieceIconSrc branch must render a <picture> with avif/webp
+    // sources derived from the png path, keeping the png as fallback.
+    const { container } = render(
+      <PrimaryPlayCta
+        surface="playhub"
+        label="PLAY"
+        ariaLabel="Play"
+        pieceIconSrc="/art/hub/train-pieces.png"
+      />,
+    );
+    const srcsets = Array.from(container.querySelectorAll("source")).map((s) =>
+      s.getAttribute("srcset"),
+    );
+    expect(srcsets).toContain("/art/hub/train-pieces.avif");
+    expect(srcsets).toContain("/art/hub/train-pieces.webp");
+    const fallback = container.querySelector(
+      ".primary-play-cta-piece-icon-img",
+    );
+    expect(fallback).toHaveAttribute("src", "/art/hub/train-pieces.png");
+    expect(fallback).toHaveAttribute("aria-hidden", "true");
+    expect(fallback).toHaveAttribute("draggable", "false");
+  });
+
+  it("keeps a non-png pieceIconSrc as a plain <img> (no bogus negotiation)", () => {
+    const { container } = render(
+      <PrimaryPlayCta
+        surface="playhub"
+        label="PLAY"
+        ariaLabel="Play"
+        pieceIconSrc="/art/hub/already-optimized.svg"
+      />,
+    );
+    const srcsets = Array.from(container.querySelectorAll("source")).map((s) =>
+      s.getAttribute("srcset"),
+    );
+    expect(srcsets).not.toContain("/art/hub/already-optimized.avif");
+    const fallback = container.querySelector(
+      ".primary-play-cta-piece-icon-img",
+    );
+    expect(fallback).toHaveAttribute("src", "/art/hub/already-optimized.svg");
+  });
+
   it("hides the inner banner <img> elements from assistive tech (button name owns the label)", () => {
     const { container } = render(
       <PrimaryPlayCta surface="playhub" label="PLAY" ariaLabel="Play" />,
