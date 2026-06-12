@@ -333,18 +333,36 @@ function computePlatformSignals(stats: PublicStats): string[] {
 
 const TRACKED_TODAY: ReadonlyArray<string> = [
   "App sessions",
-  "Victory mints",
-  "Welcome pack claims",
+  "On-chain tx by method (mints, Get Peones, score saves, welcome packs)",
+  "Unique wallets transacting on-chain",
+  "Get Peones stablecoin volume (USDC / USDT / cUSD)",
   "Leaderboard scores",
 ];
 
 const COMING_NEXT: ReadonlyArray<string> = [
-  "Connected wallets",
-  "Stablecoin volume",
-  "Purchase conversion",
-  "Failed transaction rate",
-  "Retention cohorts",
+  "Network fees paid (needs indexer)",
+  "Failed transaction rate (needs indexer)",
+  "Retention cohorts · D1 / D7 / D30 (needs web analytics)",
+  "Top countries (needs web analytics)",
 ];
+
+/** §8 method-tx rows: label + the OnchainMethodTx key it reads. Column
+ *  captions map our windows to MiniPay's day/week/month/lifetime ask
+ *  (7d ≈ week, 30d ≈ month). */
+const ONCHAIN_METHODS: ReadonlyArray<{
+  label: string;
+  key: "victoryMints" | "packPurchases" | "scoreSaves" | "welcomePackClaims";
+}> = [
+  { label: "Victory mints", key: "victoryMints" },
+  { label: "Get Peones", key: "packPurchases" },
+  { label: "Score saves (on-chain)", key: "scoreSaves" },
+  { label: "Welcome packs", key: "welcomePackClaims" },
+];
+
+/** null → em-dash (a failed query, never "0"); number → grouped. */
+function formatStat(n: number | null): string {
+  return n === null ? "—" : new Intl.NumberFormat("en-US").format(n);
+}
 
 export function StatsPage({ stats }: StatsPageProps) {
   const diff = stats.victoriesByDifficulty;
@@ -675,6 +693,87 @@ export function StatsPage({ stats }: StatsPageProps) {
             ))}
           </ol>
         )}
+      </section>
+
+      {/* §8 On-chain Activity (MiniPay Stage-2). Per-method tx counts +
+          unique on-chain wallets + Get Peones stablecoin volume, all
+          derived from the Supabase mirror tables. Network fees + failed-
+          tx stay in the Coming-next lane (need an indexer). */}
+      <section>
+        <h3
+          className="mb-2 text-base font-bold md:text-lg"
+          style={{ color: "var(--paper-text)" }}
+        >
+          On-chain Activity
+        </h3>
+        <p
+          className="mb-3 text-[0.6875rem]"
+          style={{ color: "var(--paper-text-subtle)" }}
+        >
+          Transactions settled on Celo, by contract method. 7d ≈ this week,
+          30d ≈ this month, lifetime = all-time.
+        </p>
+
+        {/* Per-method tx table. */}
+        <div
+          className="border-t"
+          style={{ borderColor: "var(--paper-divider)" }}
+        >
+          <div
+            className="grid grid-cols-[1.6fr_1fr_1fr_1fr] gap-2 border-b py-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+            style={{
+              color: "var(--paper-text-subtle)",
+              borderColor: "var(--paper-divider)",
+            }}
+          >
+            <span>Method</span>
+            <span className="text-right">Lifetime</span>
+            <span className="text-right">30d</span>
+            <span className="text-right">7d</span>
+          </div>
+          {ONCHAIN_METHODS.map(({ label, key }) => {
+            const row = stats.onchain.methodTx[key];
+            return (
+              <div
+                key={key}
+                className="grid grid-cols-[1.6fr_1fr_1fr_1fr] gap-2 border-b py-2 text-xs"
+                style={{
+                  color: "var(--paper-text)",
+                  borderColor: "var(--paper-divider)",
+                }}
+              >
+                <span>{label}</span>
+                <span className="text-right tabular-nums">{formatStat(row.lifetime)}</span>
+                <span className="text-right tabular-nums">{formatStat(row.last30d)}</span>
+                <span className="text-right tabular-nums">{formatStat(row.last7d)}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Unique wallets + Get Peones volume. */}
+        <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+          <StatCard
+            label="Unique on-chain wallets"
+            value={stats.onchain.uniqueOnchainUsersLifetime}
+            variant="bare"
+            sublabel="Distinct wallets across mints, Get Peones & score saves"
+          />
+        </div>
+
+        <div className="mt-3">
+          <p
+            className="mb-2 text-[0.625rem] font-semibold uppercase tracking-wide"
+            style={{ color: "var(--paper-text-subtle)" }}
+          >
+            Get Peones volume
+          </p>
+          <div className="grid grid-cols-3 gap-x-4 gap-y-2">
+            <StatCard label="USDC" value={stats.onchain.getPeonesVolume.usdc} variant="bare" />
+            <StatCard label="USDT" value={stats.onchain.getPeonesVolume.usdt} variant="bare" />
+            <StatCard label="cUSD" value={stats.onchain.getPeonesVolume.cusd} variant="bare" />
+          </div>
+        </div>
       </section>
 
       {/* Tracked today / Coming next — bifurcated scope so the page

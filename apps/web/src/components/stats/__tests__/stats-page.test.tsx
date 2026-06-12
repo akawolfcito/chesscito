@@ -52,15 +52,17 @@ const SAMPLE_STATS: PublicStats = {
     mints: i % 3,
   })),
   generatedAt: new Date().toISOString(),
+  // Values chosen distinct from the non-onchain fixture numbers above
+  // so single-match getByText assertions stay unambiguous.
   onchain: {
     methodTx: {
-      victoryMints: { lifetime: 1234, last30d: 250, last7d: 56 },
-      packPurchases: { lifetime: 320, last30d: 80, last7d: 18 },
-      scoreSaves: { lifetime: 540, last30d: 120, last7d: 30 },
-      welcomePackClaims: { lifetime: 880, last30d: 140, last7d: 22 },
+      victoryMints: { lifetime: 1201, last30d: 261, last7d: 71 },
+      packPurchases: { lifetime: 322, last30d: 82, last7d: 19 },
+      scoreSaves: { lifetime: 543, last30d: 123, last7d: 33 },
+      welcomePackClaims: { lifetime: 884, last30d: 144, last7d: 24 },
     },
-    uniqueOnchainUsersLifetime: 410,
-    getPeonesVolume: { usdc: 120.5, usdt: 44, cusd: 8.25 },
+    uniqueOnchainUsersLifetime: 477,
+    getPeonesVolume: { usdc: 123.45, usdt: 45.5, cusd: 9.75 },
     networkFeesPaidUsd: null,
     failedTxRate: null,
   },
@@ -124,6 +126,53 @@ describe("StatsPage", () => {
     expect(screen.getByText("#2")).toBeInTheDocument();
     expect(screen.getByText("9,999")).toBeInTheDocument();
     expect(screen.getByText("8,888")).toBeInTheDocument();
+  });
+
+  it("renders the §8 on-chain activity section: per-method tx, unique wallets, Get Peones volume", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+
+    // Section heading.
+    expect(screen.getByText("On-chain Activity")).toBeInTheDocument();
+
+    // Per-method lifetime counts (distinct fixture values).
+    expect(screen.getByText("1,201")).toBeInTheDocument(); // victory mints lifetime
+    expect(screen.getByText("322")).toBeInTheDocument(); // get peones lifetime
+    expect(screen.getByText("543")).toBeInTheDocument(); // score saves lifetime
+    expect(screen.getByText("884")).toBeInTheDocument(); // welcome packs lifetime
+
+    // Unique on-chain wallets.
+    expect(screen.getByText("Unique on-chain wallets")).toBeInTheDocument();
+    expect(screen.getByText("477")).toBeInTheDocument();
+
+    // Get Peones volume per stablecoin.
+    expect(screen.getByText(/Get Peones volume/i)).toBeInTheDocument();
+    expect(screen.getByText("123.45")).toBeInTheDocument(); // USDC
+    expect(screen.getByText("45.5")).toBeInTheDocument(); // USDT
+    expect(screen.getByText("9.75")).toBeInTheDocument(); // cUSD
+  });
+
+  it("keeps network fees + failed-tx + retention + countries in the Coming next lane", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+    const comingNext = screen.getByText("Coming next").closest("div");
+    expect(comingNext).not.toBeNull();
+    expect(comingNext).toHaveTextContent(/network fees/i);
+    expect(comingNext).toHaveTextContent(/failed transaction rate/i);
+    expect(comingNext).toHaveTextContent(/retention/i);
+    expect(comingNext).toHaveTextContent(/countries/i);
+  });
+
+  it("renders an em-dash for a null on-chain metric (failed query)", () => {
+    const withNull: PublicStats = {
+      ...SAMPLE_STATS,
+      onchain: {
+        ...SAMPLE_STATS.onchain,
+        uniqueOnchainUsersLifetime: null,
+      },
+    };
+    render(<StatsPage stats={withNull} />);
+    // The unique-wallets card now renders the em-dash placeholder.
+    expect(screen.getByText("Unique on-chain wallets")).toBeInTheDocument();
+    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders em-dash placeholders for null fields without crashing", () => {
@@ -275,11 +324,12 @@ describe("StatsPage", () => {
     ).toBeInTheDocument();
     // Tracked today bullets (sample)
     expect(screen.getByText("App sessions")).toBeInTheDocument();
-    expect(screen.getByText("Welcome pack claims")).toBeInTheDocument();
-    // Coming next bullets (sample)
-    expect(screen.getByText("Connected wallets")).toBeInTheDocument();
-    expect(screen.getByText("Retention cohorts")).toBeInTheDocument();
-    expect(screen.getByText("Purchase conversion")).toBeInTheDocument();
+    expect(screen.getByText("Leaderboard scores")).toBeInTheDocument();
+    // Coming next bullets (sample) — network fees + failed-tx + retention
+    // + countries are the deliberately-deferred §8 metrics.
+    expect(screen.getByText(/Network fees paid/)).toBeInTheDocument();
+    expect(screen.getByText(/Retention cohorts/)).toBeInTheDocument();
+    expect(screen.getByText(/Top countries/)).toBeInTheDocument();
   });
 
   it("renders sections in visual-momentum order (Snapshot → Trend → Mix → Signals → Windows → Recent → Leaderboard → Tracked → Methodology)", () => {
