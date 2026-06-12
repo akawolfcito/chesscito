@@ -287,9 +287,21 @@ export function MissionDetailSheet({
                   </button>
                 ) : null}
 
-                {/* D5 — save score, below the objective block. Same
-                    handler the contextual SAVE pin uses; the parent owns
-                    gating and busy state. */}
+                {/* D5 + QA F5 — save score, below the objective block.
+                    Promise line leads with the reward; the button stays
+                    an explicit action. Same handler the contextual SAVE
+                    pin uses; the parent owns gating and busy state. */}
+                {showSaveScore ? (
+                  <p
+                    className="mt-3 text-center text-xs font-semibold"
+                    style={{
+                      color: "rgba(110, 65, 15, 0.78)",
+                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                    }}
+                  >
+                    {tDetail("saveScorePromise")}
+                  </p>
+                ) : null}
                 {showSaveScore ? (
                   <button
                     type="button"
@@ -297,7 +309,7 @@ export function MissionDetailSheet({
                     onClick={onSaveScore}
                     disabled={isSavingScore}
                     aria-busy={isSavingScore}
-                    className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--green mt-3"
+                    className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--green mt-1.5"
                   >
                     {isSavingScore ? (
                       <span

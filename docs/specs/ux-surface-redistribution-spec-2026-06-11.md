@@ -128,6 +128,33 @@ P3 (guide and showcase never share a panel).
       `buildTrainingPath()` model is untouched. Closes handoff open
       question (2026-06-11 §Open questions).
 
+## 4b. QA amendments — founder review round (2026-06-11, same day)
+
+Founder QA on device produced 5 findings; these AMEND the frozen log:
+
+- **F2 (amends labyrinth exit)** — the full-width BACK TO EXERCISES
+  band visually resurrected the retired tab strip. Exit is now a muted
+  `exitLabyrinth` ActionPin in the contextual action row.
+- **F3 (new)** — LabyrinthCompleteOverlay is continue-first: primary
+  "Continue" exits the lab and lands on the next pending exercise
+  (rotation-aware); "Try again" demoted to secondary; the shell X
+  shares the Continue intent. King finale keeps Enter Arena.
+- **F4 (amends D2 + D3)** — JourneyRail is DELETED, not migrated (its
+  info duplicated the hero band + badge cards). The SWITCH PIECE grid
+  is gone: the badge cards themselves are the switch (tap → that
+  piece's exercises; nested Claim never switches). Pedagogy gate
+  unchanged. The B/W→color vocabulary (D4) lives on in the hero
+  silhouettes; the rail instance died with the rail.
+- **F5 (extends D5)** — Mission save block gains a promise-first line
+  ("Keep this score for life") above the explicit "Save score · N"
+  action. The "save via TX" second action is DEFERRED: the on-chain
+  lane was retired by SaveScore Slice 5 (audit 2026-06-09 §2,
+  Leaderboard Proof lane) and ships with the economy narrative spec —
+  no dead button before then (fail-closed).
+- **F1 (minor)** — PieceComplete "SAVE" → "Save score" (sentence case,
+  matches sibling pills). Hierarchy (Try Labyrinth > Start next >
+  save) confirmed as-is.
+
 ## 5. Next steps (not started)
 
 1. Implementation plan: slice the redistribution into atomic commits

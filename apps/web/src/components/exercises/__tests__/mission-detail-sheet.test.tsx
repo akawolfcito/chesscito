@@ -98,11 +98,15 @@ describe("<MissionDetailSheet> — guide-only surface (redistribution D1)", () =
 });
 
 describe("<MissionDetailSheet> — save score affordance (D5)", () => {
-  it("renders the save button when a save is available and fires the handler", async () => {
+  it("renders the promise line + save button and fires the handler", async () => {
     const onSaveScore = vi.fn();
     const user = userEvent.setup();
     renderSheet({ canSaveScore: true, onSaveScore, score: "120" });
 
+    // Promise-first narrative (QA F5): reward line above the action.
+    expect(
+      screen.getByText("Keep this score for life"),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Save score" }));
     expect(onSaveScore).toHaveBeenCalledTimes(1);
   });

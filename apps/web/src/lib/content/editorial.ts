@@ -140,7 +140,12 @@ export const MISSION_DETAIL_COPY = {
    *  the path has nothing pending, the objective above IS the answer. */
   nowLabyrinthFormat: "Now: Labyrinth {number}",
   nowLabyrinthAriaFormat: "Start Labyrinth {number}",
-  /** D5: save score affordance inside Mission, below the objective. */
+  /** D5: save score affordance inside Mission, below the objective.
+   *  The promise line leads with the reward (QA F5 2026-06-11,
+   *  promise-first rule); the button stays an explicit action. The
+   *  on-chain TX save joins as a second action when the Leaderboard
+   *  Proof lane ships (economy spec). */
+  saveScorePromise: "Keep this score for life",
   saveScoreCta: "Save score",
   /** Generic close-affordance ARIA label used by `<MissionHeaderCandy />`
    *  for every sheet that adopts it (mission detail, daily picker, mate
@@ -285,8 +290,9 @@ export const PIECE_COMPLETE_COPY = {
   nextPiece: (piece: string) => `Start ${piece}`,
   practiceAgain: "Practice Again",
   /** Re-surface of the save-score transactional moment from
-   *  BadgeEarnedPrompt. Same wording so the player recognizes it. */
-  submitScore: "SAVE",
+   *  BadgeEarnedPrompt. Sentence case (QA F1 2026-06-11) to match the
+   *  sibling secondary pills (Start Bishop, Practice Again). */
+  submitScore: "Save score",
   /** Tertiary discovery link for the Coach feature. Only rendered when
    *  the primary CTA is "Start <next piece>" — when the primary is
    *  already "Try Arena" we skip it to avoid a duplicate Arena hop. */
