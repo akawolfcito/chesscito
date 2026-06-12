@@ -164,6 +164,34 @@ official MiniPay recommendation of 90+ but above the red threshold of
 No code change this session — strategy is "submit with a note, escalate
 on reviewer push-back". Mitigation roadmap lives in the perf handoff.
 
+### 6.1 Update 2026-06-12 — official PSI re-run (perf cluster shipped)
+
+Founder-run PageSpeed Insights (pagespeed.web.dev, Lighthouse 13.3.0,
+Moto G Power emulation, Slow 4G) against `https://www.chesscito.com/hub`:
+
+| Category | Score |
+|---|---|
+| **Performance** | **85** (was 76 at session start; orange→high-orange) |
+| Accessibility | 93 |
+| Best Practices | 96 (→ expected ~100 after `b28033db` removed the dead analytics 404) |
+| SEO | 63 — **intentional**: `/hub` is `noindex` by design (app shell); `/` is the indexable SEO target |
+
+Metrics: FCP 1.2s · LCP 4.4s · TBT 60ms · CLS 0 · SI 2.5s.
+
+Shipped levers (2026-06-12, commits `d8258d55..b28033db`): format
+negotiation for raw-PNG sprites, q28–q42 avif re-encodes (bg-new-hub,
+bg-ch, splash, portals), stale LCP preload fix, portal preload + high
+priority, `fade-in-5` LCP-measurability fix, dead `@vercel/analytics`
+mount removed. `/exercises` moved 55→83 in the same push. Remaining
+gap to 90+: JS bundle (wagmi/RainbowKit on critical path, ~107KB
+unused) — dedicated high-risk cluster, documented in
+`docs/handoffs/2026-06-12-perf-image-levers-handoff.md`.
+
+A11y note for the form: the `user-scalable=no` flag is a deliberate
+game-gesture decision (pinch-zoom conflicts with drag-to-move; OS-level
+zoom remains available) — rationale documented in
+`apps/web/src/app/[locale]/layout.tsx` viewport comment.
+
 ## 7. Manual action items — CLOSED 2026-06-05
 
 User confirmed all four resolved at packet close:
