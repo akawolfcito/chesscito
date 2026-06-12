@@ -75,15 +75,22 @@ Suite final 3623/3623 · pusheado a origin/main por el founder.
 - El smoke manual MiniPay/390px del path completo (NEXT-4 del handoff
   anterior) ahora incluye estas superficies nuevas.
 
-## NEXT (hereda el orden del handoff anterior, ajustado)
+## NEXT — entry point para la próxima sesión ("continuemos")
 
-1. Spec economía narrativa + monetización visible (NEXT-2 anterior).
-2. Smoke earn real en hosted (lab + wallet → ledger row + replay
-   duplicate) — NEXT-3 anterior, sin cambios.
-3. Re-smoke manual MiniPay/390px del path + superficies redistribuidas.
-4. Slice 5 mastery + telemetría `training.path_*`.
-5. Laberintos ricos + casilla oscura.
-6. Promote a producción cuando 2-3 estén verdes.
+0. **Smoke en hosted (founder, en curso al cierre)**: (a) Save
+   on-chain real → sello huella en LEADERS + fila "Your rank";
+   (b) laberinto con wallet → +1 Peón + replay duplicate. **Preguntar
+   el resultado ANTES de arrancar lo demás** — si algo falló, eso es
+   lo primero.
+1. Spec economía narrativa + monetización visible (sesión de spec
+   corta + red-team): welcome pack ENTREGADO al primer ingreso, banner
+   PRO en el flujo, tx visibles (gate de listing MiniPay).
+2. Re-smoke manual MiniPay/390px del path + superficies redistribuidas
+   (senda fluida Ex→Lab→Ex, Piece Sheet, Mission doble save, exit pin).
+3. Slice 5 mastery + telemetría `training.path_*`.
+4. Laberintos ricos + casilla oscura (render en `board.tsx`, autoría
+   en `lib/game/exercises.ts`, BFS verifier en CI).
+5. Promote a producción (release process) cuando 0-2 estén verdes.
 
 ## Open questions
 
