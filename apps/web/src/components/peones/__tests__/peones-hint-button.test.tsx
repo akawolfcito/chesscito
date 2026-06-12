@@ -639,6 +639,13 @@ describe("PeonesHintButton — icon+label (founder D3 follow-up)", () => {
       "/art/new-icons-chesscito/hint-icon-v1.png",
     );
     expect(icon).toHaveAttribute("aria-hidden", "true");
+    // Perf 2026-06-12: the raw PNG is 52KB while the avif sibling is
+    // 8KB — the sprite must negotiate formats via <picture>.
+    const srcsets = Array.from(button.querySelectorAll("source")).map((s) =>
+      s.getAttribute("srcset"),
+    );
+    expect(srcsets).toContain("/art/new-icons-chesscito/hint-icon-v1.avif");
+    expect(srcsets).toContain("/art/new-icons-chesscito/hint-icon-v1.webp");
     // Pin form: cost detail is the aria-label; the nano label below
     // shows the pin name.
     expect(button).toHaveAttribute("aria-label", "Hint · 1 Peón");

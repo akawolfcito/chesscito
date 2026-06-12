@@ -59,6 +59,30 @@ const FEEDBACK_TTL_MS = 2500;
  *  text-only: it advertises connecting, not spending. */
 const HINT_ICON_SRC = "/art/new-icons-chesscito/hint-icon-v1.png";
 
+/** Format-negotiated hint sprite — the raw PNG is 52KB while the avif
+ *  sibling is 8KB, and /exercises is the slowest route of the app. */
+function HintIcon() {
+  return (
+    <picture>
+      <source
+        srcSet={HINT_ICON_SRC.replace(/\.png$/, ".avif")}
+        type="image/avif"
+      />
+      <source
+        srcSet={HINT_ICON_SRC.replace(/\.png$/, ".webp")}
+        type="image/webp"
+      />
+      <img
+        src={HINT_ICON_SRC}
+        alt=""
+        aria-hidden="true"
+        className="object-contain"
+        draggable={false}
+      />
+    </picture>
+  );
+}
+
 type HintState =
   | { kind: "idle" }
   | { kind: "loading" }
@@ -132,13 +156,7 @@ export function PeonesHintButton({
         data-state="guest"
       >
         <span className="action-pin-submit-pedestal relative flex shrink-0 items-center justify-center">
-          <img
-            src={HINT_ICON_SRC}
-            alt=""
-            aria-hidden="true"
-            className="object-contain"
-            draggable={false}
-          />
+          <HintIcon />
         </span>
         <span className="action-pin-label game-label text-nano font-bold uppercase tracking-[0.12em] text-[rgba(63,34,8,0.85)]">
           {t("pinLabel")}
@@ -305,13 +323,7 @@ export function PeonesHintButton({
             className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
           />
         ) : (
-          <img
-            src={HINT_ICON_SRC}
-            alt=""
-            aria-hidden="true"
-            className="object-contain"
-            draggable={false}
-          />
+          <HintIcon />
         )}
         {isRevealed ? (
           <span
