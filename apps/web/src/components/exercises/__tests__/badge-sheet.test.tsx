@@ -132,6 +132,25 @@ describe("BadgeSheet — unified Piece Sheet, cards ARE the switch (QA F4)", () 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("pieces beyond the unlock frontier stay inert (QA G2)", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const onSelectPiece = vi.fn();
+    const user = userEvent.setup();
+    // Default fixture: only bishop claimed → unlocked = rook (first),
+    // bishop (claimed), knight (next after a claimed piece). Pawn,
+    // queen, king sit beyond the frontier.
+    renderBadgeSheet({ selectedPiece: "rook", onSelectPiece });
+
+    expect(
+      screen.getByRole("button", { name: "Knight Ascendant" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Queen Ascendant" }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByText("Queen Ascendant"));
+    expect(onSelectPiece).not.toHaveBeenCalled();
+  });
+
   it("the claim CTA inside a card never triggers a piece switch", async () => {
     const { default: userEvent } = await import("@testing-library/user-event");
     const onSelectPiece = vi.fn();

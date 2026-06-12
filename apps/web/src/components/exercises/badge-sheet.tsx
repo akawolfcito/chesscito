@@ -270,6 +270,16 @@ export function BadgeSheet({
   const hasClaimedAnyBadge = Object.values(badgesClaimed).some(Boolean);
   const cardsSelectable = Boolean(onSelectPiece && hasClaimedAnyBadge);
 
+  /** QA G2 (2026-06-11): linear unlock frontier. A piece is reachable
+   *  when it is the first piece, already claimed (revisit), or comes
+   *  right after a claimed piece (the next one to train). Pieces
+   *  beyond the frontier stay inert vitrine cards. */
+  function isPieceUnlocked(index: number): boolean {
+    if (index === 0) return true;
+    if (badgesClaimed[PIECES[index]]) return true;
+    return Boolean(badgesClaimed[PIECES[index - 1]]);
+  }
+
   // Phase 2 nudge: when a disconnected user opens the sheet AND has at
   // least one claimable badge (= local stars cross threshold but no
   // wallet on record), fire the one-shot prompt. Idempotent — the hook
@@ -432,7 +442,7 @@ export function BadgeSheet({
         {/* Badge grid — in unified Piece Sheet mode (QA F4) each card
             doubles as the piece switch once the pedagogy gate opens. */}
         <div className="flex-1 overflow-y-auto mt-4 space-y-3 pb-6">
-          {badges.map((badge) => (
+          {badges.map((badge, index) => (
             <BadgeCard
               key={badge.piece}
               badge={badge}
@@ -441,7 +451,7 @@ export function BadgeSheet({
               claimingPiece={claimingPiece}
               isActive={badge.piece === selectedPiece}
               onSelect={
-                cardsSelectable
+                cardsSelectable && isPieceUnlocked(index)
                   ? () => {
                       onOpenChange(false);
                       onSelectPiece!(badge.piece);
