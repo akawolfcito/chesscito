@@ -37,6 +37,16 @@
 - **Milestones gris→color**: vocabulario de la vitrine hero extendido a
   JourneyRail vía `.journey-row-icon--pending` (grayscale CSS).
 
+## Ronda QA del founder (misma sesión) — spec §4b
+
+| Commit | Qué |
+|---|---|
+| `73e1c474` | F2/F3 — overlay solved continue-first (X incluida) + pin de salida muted reemplaza la banda BACK TO EXERCISES |
+| `fb2bb4c6` | F4 — cards de badges SON el switch; JourneyRail + SWITCH PIECE grid eliminados (enmienda D2/D3) |
+| `995d77d2` | F1/F5 — línea promesa "Keep this score for life" + Save score sentence case; TX save diferido al Leaderboard Proof lane |
+
+Suite final 3610/3610 · VR sanity 4/4 (hub-clean + vr14).
+
 ## Deferred / notas
 
 - **VR fixtures nuevas pendientes**: no existe baseline del interior de
