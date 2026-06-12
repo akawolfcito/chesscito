@@ -267,7 +267,15 @@ export function HubScaffold({
               <picture className="hub-scaffold-guide-sequence">
                 <source srcSet="/art/scene-rooted/guide-secuencia.avif" type="image/avif" />
                 <source srcSet="/art/scene-rooted/guide-secuencia.webp" type="image/webp" />
-                <img src="/art/scene-rooted/guide-secuencia.png" alt="" />
+                {/* Intrinsic dims so the browser reserves layout space
+                    pre-load (PSI CLS audit 2026-06-12); CSS still owns
+                    the rendered size. */}
+                <img
+                  src="/art/scene-rooted/guide-secuencia.png"
+                  alt=""
+                  width={289}
+                  height={121}
+                />
               </picture>
               <picture className="hub-scaffold-guide-piece">
                 <source srcSet="/art/redesign/pieces/w-king.avif" type="image/avif" />
