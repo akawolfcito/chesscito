@@ -165,3 +165,137 @@ export function unionDistinctOrNull(sources: (string[] | null)[]): number | null
   }
   return set.size;
 }
+
+// ── Query layer ────────────────────────────────────────────────────
+// fetchOnchainStats owns the Supabase reads for the §8 block. It runs
+// every query under Promise.allSettled so one failure nulls only its
+// own metric (mirrors public-aggregator.ts). Self-contained: it does
+// NOT reuse the main aggregator's victory/welcome counts, trading a few
+// extra cached-hourly COUNT queries for full isolation + independent
+// testability.
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Range bound to dodge PostgREST's silent 1000-row default cap on the
+ *  distinct/volume row scans (matches public-aggregator.ts). */
+const ONCHAIN_QUERY_MAX_ROWS = 9_999;
+
+/** Minimal structural shape of the Supabase client this module needs.
+ *  Kept loose (the query builder is heavily overloaded) — resolution is
+ *  validated at the test boundary, same pattern as the main aggregator.
+ *  Exported so callers can cast the real client (`as unknown as StatsDb`)
+ *  instead of forcing TS to structurally match the client's deep
+ *  generics — which trips "type instantiation excessively deep". */
+export type StatsDb = {
+  from: (table: string) => {
+    select: (
+      cols: string,
+      opts?: { count?: "exact"; head?: boolean },
+    ) => StatsQuery;
+  };
+};
+type StatsQuery = {
+  eq: (col: string, val: string) => StatsQuery;
+  gte: (col: string, val: string) => StatsQuery;
+  range: (from: number, to: number) => StatsQuery;
+} & PromiseLike<{ count?: number | null; data?: unknown[] | null; error?: unknown }>;
+
+type Settled<T> = PromiseSettledResult<T>;
+type CountRes = { count?: number | null; error?: unknown };
+type RowsRes = { data?: unknown[] | null; error?: unknown };
+
+function count(res: Settled<CountRes>): number | null {
+  if (res.status !== "fulfilled" || res.value?.error) return null;
+  return typeof res.value?.count === "number" ? res.value.count : null;
+}
+
+/** Rows as a typed array, or `null` if the query failed (so the union
+ *  helper can propagate the failure to a null count). */
+function rowsOrNull<T>(res: Settled<RowsRes>): T[] | null {
+  if (res.status !== "fulfilled" || res.value?.error) return null;
+  return Array.isArray(res.value?.data) ? (res.value.data as T[]) : null;
+}
+
+function pluckWallets(rows: Record<string, unknown>[] | null, key: string): string[] | null {
+  if (rows === null) return null;
+  return rows.map((r) => (typeof r[key] === "string" ? (r[key] as string) : "")).filter(Boolean);
+}
+
+export async function fetchOnchainStats(supabase: StatsDb): Promise<OnchainStats> {
+  const now = Date.now();
+  const since7d = new Date(now - 7 * DAY_MS).toISOString();
+  const since30d = new Date(now - 30 * DAY_MS).toISOString();
+  const HEAD = { count: "exact" as const, head: true };
+
+  const results = await Promise.allSettled([
+    // 0-2 victory mints (victories.minted_at)
+    supabase.from("victories").select("*", HEAD),
+    supabase.from("victories").select("*", HEAD).gte("minted_at", since30d),
+    supabase.from("victories").select("*", HEAD).gte("minted_at", since7d),
+    // 3 victory players (union source A)
+    supabase.from("victories").select("player").range(0, ONCHAIN_QUERY_MAX_ROWS),
+    // 4-6 Get Peones pack purchases (peones_ledger source=pack_purchase, created_at)
+    supabase.from("peones_ledger").select("*", HEAD).eq("source", "pack_purchase"),
+    supabase
+      .from("peones_ledger")
+      .select("*", HEAD)
+      .eq("source", "pack_purchase")
+      .gte("created_at", since30d),
+    supabase
+      .from("peones_ledger")
+      .select("*", HEAD)
+      .eq("source", "pack_purchase")
+      .gte("created_at", since7d),
+    // 7 pack rows: wallet + metadata (volume + union source B)
+    supabase
+      .from("peones_ledger")
+      .select("wallet, metadata")
+      .eq("source", "pack_purchase")
+      .range(0, ONCHAIN_QUERY_MAX_ROWS),
+    // 8-10 on-chain score saves (public.scores.created_at)
+    supabase.from("scores").select("*", HEAD),
+    supabase.from("scores").select("*", HEAD).gte("created_at", since30d),
+    supabase.from("scores").select("*", HEAD).gte("created_at", since7d),
+    // 11 score players (union source C)
+    supabase.from("scores").select("player").range(0, ONCHAIN_QUERY_MAX_ROWS),
+    // 12-14 welcome pack claims (welcome_pack_claims.claimed_at)
+    supabase.from("welcome_pack_claims").select("*", HEAD),
+    supabase.from("welcome_pack_claims").select("*", HEAD).gte("claimed_at", since30d),
+    supabase.from("welcome_pack_claims").select("*", HEAD).gte("claimed_at", since7d),
+  ]) as Settled<CountRes & RowsRes>[];
+
+  const [
+    vLife, v30, v7, vPlayers,
+    pLife, p30, p7, pRows,
+    sLife, s30, s7, sPlayers,
+    wLife, w30, w7,
+  ] = results;
+
+  const packRows = rowsOrNull<{ wallet?: string; metadata?: { token?: string; amountPaid?: string } }>(
+    pRows,
+  );
+  const volume = normalizeGetPeonesVolume(
+    packRows === null
+      ? null
+      : packRows.map((r) => ({
+          token: r.metadata?.token ?? null,
+          amountPaid: r.metadata?.amountPaid ?? null,
+        })),
+  );
+
+  const unionA = pluckWallets(rowsOrNull<Record<string, unknown>>(vPlayers), "player");
+  const unionB = packRows === null ? null : packRows.map((r) => r.wallet ?? "").filter(Boolean);
+  const unionC = pluckWallets(rowsOrNull<Record<string, unknown>>(sPlayers), "player");
+
+  return {
+    methodTx: {
+      victoryMints: { lifetime: count(vLife), last30d: count(v30), last7d: count(v7) },
+      packPurchases: { lifetime: count(pLife), last30d: count(p30), last7d: count(p7) },
+      scoreSaves: { lifetime: count(sLife), last30d: count(s30), last7d: count(s7) },
+      welcomePackClaims: { lifetime: count(wLife), last30d: count(w30), last7d: count(w7) },
+    },
+    uniqueOnchainUsersLifetime: unionDistinctOrNull([unionA, unionB, unionC]),
+    getPeonesVolume: volume,
+    networkFeesPaidUsd: null,
+    failedTxRate: null,
+  };
+}

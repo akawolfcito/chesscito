@@ -52,6 +52,18 @@ const SAMPLE_STATS: PublicStats = {
     mints: i % 3,
   })),
   generatedAt: new Date().toISOString(),
+  onchain: {
+    methodTx: {
+      victoryMints: { lifetime: 1234, last30d: 250, last7d: 56 },
+      packPurchases: { lifetime: 320, last30d: 80, last7d: 18 },
+      scoreSaves: { lifetime: 540, last30d: 120, last7d: 30 },
+      welcomePackClaims: { lifetime: 880, last30d: 140, last7d: 22 },
+    },
+    uniqueOnchainUsersLifetime: 410,
+    getPeonesVolume: { usdc: 120.5, usdt: 44, cusd: 8.25 },
+    networkFeesPaidUsd: null,
+    failedTxRate: null,
+  },
 };
 
 describe("StatsPage", () => {

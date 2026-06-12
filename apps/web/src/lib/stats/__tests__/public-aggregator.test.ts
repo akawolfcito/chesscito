@@ -20,6 +20,7 @@ import {
   EMPTY_PUBLIC_STATS,
   getPublicStats,
 } from "../public-aggregator";
+import { EMPTY_ONCHAIN_STATS } from "../onchain";
 
 /**
  * Builds a thenable mock that resolves to `value` and supports the
@@ -32,6 +33,7 @@ import {
 function thenable<T>(value: T) {
   const obj: Record<string, unknown> = {
     then: (resolve: (v: T) => unknown) => Promise.resolve(value).then(resolve),
+    eq: () => obj,
     gte: () => obj,
     order: () => obj,
     limit: () => obj,
@@ -102,6 +104,8 @@ describe("getPublicStats", () => {
     expect(stats.leaderboardTop10).toEqual([]);
     expect(Date.parse(stats.generatedAt)).toBeGreaterThan(0);
     expect(stats.generatedAt).not.toBe(EMPTY_PUBLIC_STATS.generatedAt);
+    // §8 on-chain block present even on the no-Supabase path.
+    expect(stats.onchain).toEqual(EMPTY_ONCHAIN_STATS);
   });
 
   it("aggregates happy-path counts and rows from Supabase + leaderboard helper", async () => {

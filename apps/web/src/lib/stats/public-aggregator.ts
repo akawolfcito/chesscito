@@ -4,6 +4,12 @@ import {
   type LeaderboardRow,
   type VictoryRow,
 } from "@/lib/supabase/queries";
+import {
+  EMPTY_ONCHAIN_STATS,
+  fetchOnchainStats,
+  type OnchainStats,
+  type StatsDb,
+} from "./onchain";
 
 /**
  * Read-only aggregator that powers the public `/stats` page.
@@ -64,6 +70,9 @@ export type PublicStats = {
   /** ISO timestamp at aggregation time. Used by the page as the
    *  "as of" label so a stale CDN snapshot is identifiable. */
   generatedAt: string;
+  /** §8 on-chain block (MiniPay Stage-2). Per-method tx counts, unique
+   *  on-chain users, Get Peones volume; roadmap fields stay null. */
+  onchain: OnchainStats;
 };
 
 export const EMPTY_PUBLIC_STATS: PublicStats = {
@@ -82,6 +91,7 @@ export const EMPTY_PUBLIC_STATS: PublicStats = {
   leaderboardTop10: [],
   activityTrend30d: [],
   generatedAt: new Date(0).toISOString(),
+  onchain: EMPTY_ONCHAIN_STATS,
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -339,6 +349,16 @@ export async function getPublicStats(): Promise<PublicStats> {
       ? []
       : computeActivityTrend(sessionTrendRows, mintTrendRows);
 
+  // §8 on-chain block. Computed as its own statement (NOT inline in the
+  // return literal — that tips TS over "type instantiation excessively
+  // deep" given the 14-element allSettled above). Run after the main
+  // reads; the page is cached hourly so the sequential cost is moot. It
+  // owns its own Promise.allSettled and never rejects — worst case the
+  // block is all-null em-dashes.
+  const onchain: OnchainStats = await fetchOnchainStats(
+    supabase as unknown as StatsDb,
+  ).catch(() => EMPTY_ONCHAIN_STATS);
+
   return {
     totalVictories: extractCount(totalVictoriesRes as PromiseSettledResult<CountResult>),
     victories7d: extractCount(victories7dRes as PromiseSettledResult<CountResult>),
@@ -381,5 +401,6 @@ export async function getPublicStats(): Promise<PublicStats> {
         : [],
     activityTrend30d,
     generatedAt,
+    onchain,
   };
 }
