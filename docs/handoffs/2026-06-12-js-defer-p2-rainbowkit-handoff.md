@@ -1,5 +1,17 @@
 # Handoff — P2 RainbowKit removal SHIPPED TO PROD (2026-06-12)
 
+## Resume entry point
+
+> **On "continuemos": la siguiente sesión es P4 — CSS split.** Paso 0: preguntar si el
+> founder ya corrió el PSI oficial post-P2 de /arena y /exercises (si no, pedirlo o correr
+> API si la cuota diaria ya reseteó). Luego P4 en dos fases: (1) ANÁLISIS del split de
+> `globals.css` (12k líneas, 46.6KB transfer, 40KB unused, 510ms render-blocking) — mapear
+> prefijos `.arena-*`/`.playhub-*`/`.coach-*` por superficie, elegir mecanismo (CSS imports
+> por componente vs `experimental.optimizeCss`), estimar red VR; (2) implementar con go.
+> En el camino: identificar chunk `3620` (42KB unused JS) con bundle-analyzer temporal
+> (receta en `docs/audits/2026-06-12-arena-js-cluster-analysis.md` §Method).
+> Housekeeping pendiente: borrar `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` de Vercel env.
+
 ## State
 
 `main` = `production` = `05bb1a5a`, live on www.chesscito.com. Branch
