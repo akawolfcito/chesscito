@@ -2,23 +2,25 @@
 
 Re-audit of Chesscito (commit `33361d2c`+) against the **official MiniPay Stage 2 checklist** (Opera MiniPay "Build for MiniPay: Developer Requirements", via celopedia `minipay-requirements.md`, updated 2026-05-13). The 2026-06-05 packet is partly **stale** — the checklist now includes §8 Analytics, which the packet never addressed.
 
-**Verdict: NOT yet ready to return the Stage 2 readiness form.** One hard blocker (user message-signing that *breaks inside MiniPay*), one new-requirement gap (§8 analytics incomplete), perf below target. Everything else is solid.
+**Verdict (updated 2026-06-12): NOT yet ready to return the Stage 2 readiness form.** The §8 analytics gap is the main remaining blocker; perf is below target. The earlier "message-signing breaks in MiniPay" blocker was **disproven on-device** — see the RESOLVED note below.
 
 ---
 
-## P0 — Blocking (must fix before forwarding the form)
+## RESOLVED — message-signing is NOT a blocker (verified on-device 2026-06-12)
 
-### 1. User-side `signMessage` breaks inside MiniPay
-MiniPay does **not** support `personal_sign` / `eth_signTypedData` — those methods are rejected by the wallet, so any flow that calls them **fails for MiniPay users** (not just a policy issue, a functional break). Two flows do this with no MiniPay gate:
+The 2026-06-11 draft flagged user-side `signMessage` as a P0 because the celopedia Stage-2 checklist (2026-05-13) lists "no message signing." That rule is **stale**: the live MiniPay/Celo docs no longer state it, and an on-device probe (`/dev/sign-probe`, run inside MiniPay 2026-06-12) returned a **successful signature** — MiniPay supports `personal_sign`.
 
-- `apps/web/src/lib/shop/use-welcome-pack-claim.ts:175` — Welcome Pack claim (`signMessageAsync({ message })`). This is an **onboarding/monetization surface reachable in MiniPay** → the claim would fail there.
-- `apps/web/src/components/coach/coach-history-delete-panel.tsx:61` — Coach history deletion (`signMessageAsync({ message })`).
+**Implication:** the two flows below work in MiniPay; no fix required.
+- `apps/web/src/lib/shop/use-welcome-pack-claim.ts:175` — Welcome Pack claim (`signMessageAsync`).
+- `apps/web/src/components/coach/coach-history-delete-panel.tsx:61` — Coach history deletion (`signMessageAsync`).
 
-**Why it matters:** the rest of the app correctly uses a **server-side EIP-712 signer** (`demo-signing` lib) and has the user sign only *transactions*. These two flows are the exception.
+Their server-side ownership verification (EIP-191 `verifyMessage` / `recoverMessageAddress`) is actually *stronger* auth than the address-only model used elsewhere — keep it. This also unlocks a SIWE-style single onboarding signature (login + nickname claim + welcome pack) as a product direction.
 
-**Fix direction:** replace the `personal_sign`-based proof with a non-signing server verification — e.g. a server-issued nonce + the existing wallet session, or move the action behind a transaction the user already signs. Do NOT ship a `signMessage` path that MiniPay users hit.
+---
 
-### 2. §8 Analytics — `/stats` exists but is missing most required metrics
+## P0 — Blocking (must address before forwarding the form)
+
+### 1. §8 Analytics — `/stats` exists but is missing most required metrics
 The checklist (§8) is a **hard requirement**: a public `/stats` page (no wallet) surfacing DAU, MAU, D1/D7/D30 retention, top countries, and on-chain metrics (tx/day·week·month·lifetime per contract method, unique on-chain users, volume per stablecoin, network fees paid, protocol fees/revenue, failed-tx rate).
 
 `/stats` exists (`apps/web/src/app/[locale]/stats/page.tsx`, public, hourly revalidate) and shows: Victory mints (7d/30d/lifetime), approx app sessions (7d/30d), unique minter wallets, welcome packs, leaderboard, difficulty split. **Present:** DAU/MAU (as sessions), partial lifetime tx (victories only). **Missing:** retention cohorts, top countries, per-method tx breakdown (Shop/Badges/Scoreboard), stablecoin volume (USDT/USDC/USDm), network fees, protocol revenue, failed-tx rate. The page already self-discloses these as "Coming next."
@@ -68,6 +70,7 @@ It pre-dates `/stats` and never covers §8 analytics or the strict copy table as
 
 ## Summary
 
-- **2 P0 blockers:** (1) Welcome Pack claim + Coach history delete use `personal_sign`, which **breaks in MiniPay** — must move to server-side verification; (2) `/stats` is missing most §8 analytics metrics (retention, countries, per-method tx, stablecoin volume, fees, failed-tx).
+- **Message-signing: RESOLVED (not a blocker).** On-device probe in MiniPay (2026-06-12) confirmed `personal_sign` works; the celopedia "no message signing" rule is stale. Welcome Pack + Coach delete keep their signature auth.
+- **1 P0 blocker:** `/stats` is missing most §8 analytics metrics (retention, countries, per-method tx, stablecoin volume, fees, failed-tx) — extend it or disclose the gap with a roadmap in the form.
 - **3 P1:** mobile PageSpeed 72 vs 90+ (re-run after perf work), board/avatar PNGs lack webp/avif, 2026-06-05 packet doesn't cover §8.
-- **Everything else passes:** zero-click connect, no-CELO token scope, AddCash deeplink, support + legal links, strict copy, contract verification, 360×640. The app is close — the message-signing break is the one item that would actually fail a MiniPay-side test.
+- **Everything else passes:** zero-click connect, no-CELO token scope, AddCash deeplink, support + legal links, strict copy, contract verification, 360×640. With signing cleared, **§8 analytics is the single thing standing between this and returning the form.**
