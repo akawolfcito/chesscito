@@ -47,6 +47,19 @@
 
 Suite final 3610/3610 · VR sanity 4/4 (hub-clean + vr14).
 
+## Ronda QA 2 + on-chain SAVE (misma sesión) — spec §4c
+
+| Commit | Qué |
+|---|---|
+| `68d1ed23` | G1 — auto-advance fluye POR los laberintos (`nextPendingLabyrinthAfterExercise`) |
+| `14c2713e` | G2 — cards respetan frontera lineal de desbloqueo |
+| `225800a4` | G3 — promesa off-chain = leaderboard; "for life" → on-chain |
+| `fc6f42ad` | Migración `20260611120000`: `leaderboard_full_v` + `has_onchain` + `get_player_rank` — **APLICADA en hosted por el founder** |
+| `e2ef5594` | API `?player=` own-rank lane + hasOnchain |
+| `56353a31` | On-chain SAVE revivido en Mission + sello LEADERS + "Your rank" (cierra G4) |
+
+Suite final 3623/3623 · pusheado a origin/main por el founder.
+
 ## Deferred / notas
 
 - **VR fixtures nuevas pendientes**: no existe baseline del interior de
