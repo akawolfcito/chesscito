@@ -60,11 +60,19 @@ describe("/hub page (server)", () => {
       );
     });
 
-    it("preloads the daily-exercise icon AVIF (LCP candidate post-hydration)", () => {
+    it("preloads the daily tile icon AVIF (LCP candidate post-hydration)", () => {
+      // 2026-06-12: the tile asset is daily-icon-v1 (hub-daily-tile.tsx);
+      // the old ejercicio-diario-chess preload was stale — it fetched an
+      // icon only used inside the daily sheet, while the real tile icon
+      // waited for hydration (LCP Load Delay ~5s on prod).
       renderPage({});
       expect(preloadMock).toHaveBeenCalledWith(
-        "/art/new-icons-chesscito/ejercicio-diario-chess.avif",
+        "/art/new-icons-chesscito/daily-icon-v1.avif",
         { as: "image", type: "image/avif", fetchPriority: "high" },
+      );
+      const calls = preloadMock.mock.calls.map((args) => args[0] as string);
+      expect(calls).not.toContain(
+        "/art/new-icons-chesscito/ejercicio-diario-chess.avif",
       );
     });
 
@@ -73,7 +81,7 @@ describe("/hub page (server)", () => {
       const calls = preloadMock.mock.calls.map((args) => args[0] as string);
       expect(calls).not.toContain("/art/redesign/bg/bg-new-hub.webp");
       expect(calls).not.toContain(
-        "/art/new-icons-chesscito/ejercicio-diario-chess.webp",
+        "/art/new-icons-chesscito/daily-icon-v1.webp",
       );
     });
 

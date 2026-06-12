@@ -111,7 +111,11 @@ export default function HubPage({
   // the new LCP candidate post the bg-new-hub preload. AVIF-only for the
   // same MiniPay-first reason as above. See
   // docs/audits/2026-06-03-hub-reward-rail-lcp-audit.md.
-  preload("/art/new-icons-chesscito/ejercicio-diario-chess.avif", {
+  // 2026-06-12: the tile asset is daily-icon-v1 (hub-daily-tile.tsx:249);
+  // the previous ejercicio-diario-chess preload went stale when the tile
+  // art was swapped — it fetched 21KB never shown above the fold while
+  // the real icon still hydration-waited (prod LCP Load Delay ~5s).
+  preload("/art/new-icons-chesscito/daily-icon-v1.avif", {
     as: "image",
     type: "image/avif",
     fetchPriority: "high",
