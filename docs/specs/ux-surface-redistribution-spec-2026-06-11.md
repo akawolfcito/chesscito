@@ -155,6 +155,24 @@ Founder QA on device produced 5 findings; these AMEND the frozen log:
   matches sibling pills). Hierarchy (Try Labyrinth > Start next >
   save) confirmed as-is.
 
+## 4c. QA round 2 + on-chain SAVE revival (2026-06-11, same day)
+
+- **G1** — success auto-advance flows THROUGH the labyrinths:
+  `nextPendingLabyrinthAfterExercise()` enters the adjacent available
+  lab instead of the next exercise (fresh path ref at timer fire).
+- **G2** — Piece Sheet cards respect the linear unlock frontier
+  (first piece, claimed pieces, and the one right after a claimed).
+- **G3** — off-chain save promise is "Climb the leaderboard"; "for
+  life" moved to the on-chain action.
+- **G4** — root cause: top-10 LIMIT + 2-min optimistic TTL. Fixed via
+  `get_player_rank()` + the LEADERS "Your rank" row.
+- **On-chain SAVE revived (founder override of the F5 deferral)** —
+  the original gas-only submitScoreSigned flow returns as Mission's
+  second action ("Save on-chain" / "Yours for life"); LEADERS marks
+  on-chain players (fingerprint seal) via `leaderboard_full_v.has_onchain`.
+  Migration `20260611120000` (commit-only; founder applies via
+  `supabase db push` from `apps/web`).
+
 ## 5. Next steps (not started)
 
 1. Implementation plan: slice the redistribution into atomic commits
