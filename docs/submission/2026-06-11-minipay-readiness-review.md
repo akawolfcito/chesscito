@@ -31,8 +31,8 @@ The checklist (§8) is a **hard requirement**: a public `/stats` page (no wallet
 
 ## P1 — Should-fix before listing
 
-### 3. Mobile PageSpeed 72 vs 90+ target (and stale)
-Last Lighthouse run `docs/pagespeed-report-2026-06-03.md`: `/hub` mobile **72** (desktop 95), mobile **CLS 0.187** (poor, regressed from 0.126). Target is 90+. Report is 8 days old. Roadmap exists (dynamic-import wagmi/RainbowKit, critical CSS, Tailwind purge, responsive images). **Action:** land the perf work, then re-run against the production URL right before submitting.
+### 3. Mobile PageSpeed ~70–80 vs 90+ target
+Re-measured 2026-06-12 (`docs/pagespeed-report-2026-06-12.md`): `/hub` mobile **70–80** (desktop **93**), CLS now 0–0.12 (the prior 0.187 was an outlier). Flat vs the 2026-06-03 baseline — no perf work shipped since. Gap is **LCP-bound** (5–7 s on throttled mobile). Roadmap unchanged (dynamic-import wagmi/RainbowKit, critical CSS, Tailwind purge, responsive images). **Action:** land the perf work, then re-run with a PSI API key against the production URL right before submitting.
 
 ### 4. Asset optimization gaps
 Triplet rule (.png+.webp+.avif) holds for 19/23 large images, but:
