@@ -158,7 +158,7 @@ Only one external script is loaded at runtime:
 
 - **`va.vercel-scripts.com`** — Vercel Analytics script (anonymous pageview tracking), loaded via `@vercel/analytics/next` v2.0.1.
 
-All other dependencies (RainbowKit, wagmi, viem, ethers, Supabase JS, OpenAI SDK, chess.js, etc.) are bundled with the app and served from `chesscito.com`. RPC calls to `forno.celo.org` and Supabase REST endpoints are JSON data fetches, not JavaScript sources.
+All other dependencies (wagmi, viem, ethers, Supabase JS, OpenAI SDK, chess.js, etc.) are bundled with the app and served from `chesscito.com`. RPC calls to `forno.celo.org` and Supabase REST endpoints are JSON data fetches, not JavaScript sources.
 
 ### Form-ready paste
 
