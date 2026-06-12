@@ -1943,71 +1943,7 @@
     border-top: 1px dashed var(--paper-divider);
   }
 
-  .journey-row {
-    /* Tighter than the base .paper-row so the candy mission sheet
-       lists three tiers without bloating the panel height. */
-    padding-block: 0.3rem;
-  }
-
-  .journey-row-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 9999px;
-    background: rgba(251, 191, 36, 0.18);
-    flex-shrink: 0;
-  }
-
-  .journey-row[data-status="done"] .journey-row-icon {
-    background: rgba(34, 197, 94, 0.25);
-  }
-
-  .journey-row[data-status="locked"] .journey-row-icon {
-    background: rgba(110, 65, 15, 0.10);
-    opacity: 0.65;
-  }
-
-  /* D4 (surface redistribution 2026-06-11): pending milestones keep
-     their real icon, drained to grayscale; completion restores full
-     color. Same vocabulary as .badge-vitrine-hero-piece silhouettes. */
-  .journey-row-icon--pending {
-    filter: grayscale(1);
-    opacity: 0.6;
-  }
-
-  .journey-row-label {
-    font-weight: 700;
-    font-size: 0.82rem;
-    color: var(--paper-text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .journey-row[data-status="locked"] .journey-row-label {
-    color: var(--paper-text-muted);
-  }
-
-  .journey-row-progress {
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--paper-text-muted);
-    flex-shrink: 0;
-  }
-
-  .journey-row-progress[data-status="active"] {
-    color: rgba(180, 83, 9, 0.95);
-  }
-
-  .journey-row-progress[data-status="done"] {
-    color: rgba(21, 128, 61, 0.95);
-  }
-
-  /* ── Candy stat pill ──
+    /* ── Candy stat pill ──
      Cream parchment pill with soft inset shadow; carries an icon +
      dynamic value (e.g. score, elapsed time). Built to live inside the
      candy panel-mision-icon surface so the background warmth bleeds
@@ -2042,44 +1978,7 @@
     flex-shrink: 0;
   }
 
-  /* ── Journey status pill ──
-     Compact pill used by JourneyRail when a tier's progress is a status
-     word ("Claimed", "Ready"). Tone is set via `data-tone`. Numeric
-     progress (e.g. "1 / 5") keeps the plain .journey-row-progress text
-     style — no pill. */
-  .journey-status-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.25rem 0.7rem;
-    border-radius: 9999px;
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #ffffff;
-    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(0, 0, 0, 0.10);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.18),
-      0 1px 2px rgba(0, 0, 0, 0.18);
-    white-space: nowrap;
-  }
-
-  .journey-status-pill[data-tone="done"] {
-    background: linear-gradient(180deg,
-        rgba(74, 222, 128, 0.95) 0%,
-        rgba(22, 163, 74, 0.95) 100%);
-  }
-
-  .journey-status-pill[data-tone="ready"] {
-    background: linear-gradient(180deg,
-        rgba(96, 165, 250, 0.95) 0%,
-        rgba(37, 99, 235, 0.95) 100%);
-  }
-
-  /* ── Candy tray pill ──
+    /* ── Candy tray pill ──
      Block variant of the candy pill vocabulary used by the /exercises
      top row (piece picker, mission peek, exercise drawer trigger).
      Shares the cream gradient + amber border + soft inset shadow with

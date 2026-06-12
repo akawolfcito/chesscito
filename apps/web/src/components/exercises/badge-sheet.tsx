@@ -15,19 +15,11 @@ import {
 } from "@/components/ui/sheet";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
-import { JourneyRail } from "@/components/redesign/journey-rail";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { PieceId } from "@/lib/game/types";
 
 const PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
-
-/** Switch-grid option — same shape the retired PiecePickerSheet used. */
-export type PieceOption = {
-  key: PieceId;
-  label: string;
-  enabled: boolean;
-};
 
 const BADGE_ART: Record<PieceId, string> = {
   rook: `${THEME_CONFIG.piecesBase}/w-rook.png`,
@@ -64,11 +56,18 @@ function BadgeCard({
   onClaim,
   isClaimBusy,
   claimingPiece,
+  onSelect,
+  isActive = false,
 }: {
   badge: BadgeInfo;
   onClaim: () => void;
   isClaimBusy: boolean;
   claimingPiece: PieceId | null;
+  /** QA F4 (2026-06-11): the card itself IS the piece switch — tap
+   *  lands on that piece's exercises. Absent → inert vitrine card
+   *  (hub mode, or pedagogy gate closed). */
+  onSelect?: () => void;
+  isActive?: boolean;
 }) {
   const t = useTranslations("BADGE_SHEET_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -79,12 +78,33 @@ function BadgeCard({
   const isLocked = badge.state === "locked";
   const isThisBusy = claimingPiece === badge.piece;
 
+  // The card hosts a nested Claim <button>, so the selectable card is
+  // a div with button semantics instead of a real <button> (invalid
+  // nesting). Claim taps stop propagation and never switch pieces.
+  const selectableProps = onSelect
+    ? {
+        role: "button" as const,
+        tabIndex: 0,
+        "aria-label": title,
+        "aria-pressed": isActive,
+        onClick: onSelect,
+        onKeyDown: (e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect();
+          }
+        },
+      }
+    : {};
+
   return (
     <div
+      {...selectableProps}
       className={[
         "badge-card",
         isLocked ? "badge-card--locked" : "",
         isClaimed ? "badge-card--owned" : "",
+        onSelect ? "cursor-pointer transition-transform active:scale-[0.985]" : "",
       ].join(" ")}
     >
       {/* Horizontal icon wrap */}
@@ -135,7 +155,10 @@ function BadgeCard({
           <button
             type="button"
             className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--green"
-            onClick={onClaim}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClaim();
+            }}
             disabled={isClaimBusy}
             aria-busy={isThisBusy}
             aria-label={t("claimBadge")}
@@ -181,18 +204,13 @@ type BadgeSheetProps = {
    *  layout tree. Without this gate, Radix renders the button as a real
    *  DOM node sibling of the scaffold — invisible only by accident. */
   showTrigger?: boolean;
-  /** Unified Piece Sheet (surface redistribution D3). When provided,
-   *  the sheet gains the active-piece journey section (migrated from
-   *  Mission, D2) and — once at least one badge is claimed — the
-   *  switch-piece grid. Hub callers omit these and keep the pure
-   *  vitrine. */
+  /** Unified Piece Sheet (D3 + QA F4 2026-06-11): the badge cards
+   *  themselves are the piece switch — tap a card to land on that
+   *  piece's exercises. Cards stay inert until at least one badge is
+   *  claimed (pedagogy gate, founder 2026-05-31) or when the handler
+   *  is omitted (hub mode = pure vitrine). `selectedPiece` marks the
+   *  active card. */
   selectedPiece?: PieceId;
-  pieces?: readonly PieceOption[];
-  /** Tap on an enabled piece in the switch grid. The sheet closes
-   *  itself before reporting. The grid renders ONLY when this handler
-   *  AND a claimed badge exist (pedagogy gate, founder 2026-05-31:
-   *  a fresh player learning their first piece is never offered a
-   *  distraction to other pieces). */
   onSelectPiece?: (piece: PieceId) => void;
 };
 
@@ -207,12 +225,10 @@ export function BadgeSheet({
   showNotification,
   showTrigger = true,
   selectedPiece,
-  pieces,
   onSelectPiece,
 }: BadgeSheetProps) {
   const t = useTranslations("BADGE_SHEET_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
-  const tRail = useTranslations("PIECE_RAIL_COPY");
   // Initialize synchronously from localStorage to avoid progress bar flashing from 0%
   const [starsByPiece, setStarsByPiece] = useState<Record<PieceId, number[]>>(() =>
     Object.fromEntries(
@@ -249,17 +265,10 @@ export function BadgeSheet({
   const piecesClaimed = badges.filter((b) => b.state === "claimed").length;
   const progressPct = totalAvailableStars === 0 ? 0 : (totalCollectedStars / totalAvailableStars) * 100;
 
-  // Unified Piece Sheet (D3) derived state. Journey needs the active
-  // piece's star total (already read from storage above); the switch
-  // grid stays behind the claimed-badge pedagogy gate.
-  const selectedPieceStars = selectedPiece
-    ? (starsByPiece[selectedPiece] ?? []).reduce((sum, s) => sum + s, 0)
-    : 0;
+  // QA F4: cards become tappable switches only behind the claimed-badge
+  // pedagogy gate; hub mode (no handler) keeps them inert.
   const hasClaimedAnyBadge = Object.values(badgesClaimed).some(Boolean);
-  const showJourney = Boolean(selectedPiece);
-  const showSwitchGrid = Boolean(
-    selectedPiece && pieces && onSelectPiece && hasClaimedAnyBadge,
-  );
+  const cardsSelectable = Boolean(onSelectPiece && hasClaimedAnyBadge);
 
   // Phase 2 nudge: when a disconnected user opens the sheet AND has at
   // least one claimable badge (= local stars cross threshold but no
@@ -420,26 +429,9 @@ export function BadgeSheet({
           </p>
         ) : null}
 
-        {/* Scrollable body: journey (active piece) → badge grid →
-            switch grid. Journey and switch only mount in unified
-            Piece Sheet mode (selectedPiece provided, D3). */}
+        {/* Badge grid — in unified Piece Sheet mode (QA F4) each card
+            doubles as the piece switch once the pedagogy gate opens. */}
         <div className="flex-1 overflow-y-auto mt-4 space-y-3 pb-6">
-          {showJourney && selectedPiece ? (
-            <section aria-label={t("journeyTitle")}>
-              <p
-                className="mb-1 text-xs font-bold uppercase tracking-[0.08em]"
-                style={{ color: "rgba(110, 65, 15, 0.70)" }}
-              >
-                {t("journeyTitle")}
-              </p>
-              <JourneyRail
-                currentPiece={selectedPiece}
-                currentStars={selectedPieceStars}
-                claimedBadges={badgesClaimed}
-              />
-            </section>
-          ) : null}
-
           {badges.map((badge) => (
             <BadgeCard
               key={badge.piece}
@@ -447,83 +439,17 @@ export function BadgeSheet({
               onClaim={() => onClaim(badge.piece)}
               isClaimBusy={isClaimBusy}
               claimingPiece={claimingPiece}
+              isActive={badge.piece === selectedPiece}
+              onSelect={
+                cardsSelectable
+                  ? () => {
+                      onOpenChange(false);
+                      onSelectPiece!(badge.piece);
+                    }
+                  : undefined
+              }
             />
           ))}
-
-          {showSwitchGrid && pieces && onSelectPiece ? (
-            <section aria-label={tRail("switchSectionLabel")}>
-              <p
-                className="mb-1 pt-2 text-center text-[0.7rem] font-extrabold uppercase tracking-[0.16em]"
-                style={{ color: "rgba(110, 65, 15, 0.65)" }}
-              >
-                {tRail("switchSectionLabel")}
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                {pieces.map((piece) => {
-                  const isActive = selectedPiece === piece.key;
-                  const isLocked = !piece.enabled;
-                  const src = `${THEME_CONFIG.piecesBase}/w-${piece.key}`;
-                  return (
-                    <button
-                      key={piece.key}
-                      type="button"
-                      disabled={isLocked}
-                      onClick={() => {
-                        onOpenChange(false);
-                        onSelectPiece(piece.key);
-                      }}
-                      className={[
-                        "flex min-h-[88px] flex-col items-center gap-1.5 rounded-2xl border px-2 py-3 transition-all",
-                        isActive
-                          ? "border-amber-400/75 bg-amber-400/15 ring-2 ring-amber-400/40"
-                          : isLocked
-                            ? "cursor-not-allowed border-[rgba(255,255,255,0.25)] bg-white/10 opacity-55"
-                            : "border-[rgba(255,255,255,0.45)] bg-white/15 hover:bg-white/25 active:scale-[0.97]",
-                      ].join(" ")}
-                      aria-label={piece.label}
-                      aria-pressed={isActive}
-                    >
-                      <picture className="h-10 w-10 shrink-0">
-                        {THEME_CONFIG.hasOptimizedFormats && (
-                          <>
-                            <source srcSet={`${src}.avif`} type="image/avif" />
-                            <source srcSet={`${src}.webp`} type="image/webp" />
-                          </>
-                        )}
-                        <img
-                          src={`${src}.png`}
-                          alt=""
-                          aria-hidden="true"
-                          className="h-full w-full object-contain"
-                        />
-                      </picture>
-                      <span
-                        className="fantasy-title text-xs font-extrabold uppercase tracking-[0.10em]"
-                        style={{
-                          color: "rgba(63, 34, 8, 0.95)",
-                          textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                        }}
-                      >
-                        {tPiece(piece.key)}
-                      </span>
-                      {isLocked ? (
-                        <span
-                          className="text-nano inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-extrabold uppercase tracking-[0.12em]"
-                          style={{
-                            background: "rgba(120, 65, 5, 0.85)",
-                            color: "rgba(255, 240, 180, 0.98)",
-                          }}
-                        >
-                          <CandyIcon name="lock" className="h-2.5 w-2.5" />
-                          {tRail("comingSoon")}
-                        </span>
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          ) : null}
         </div>
       </SheetContent>
     </Sheet>

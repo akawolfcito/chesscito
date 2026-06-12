@@ -2841,14 +2841,6 @@ export function ExercisesScreen({
           showNotification={canSendOnChain && !Boolean(hasClaimedBadge)}
           showTrigger={false}
           selectedPiece={selectedPiece}
-          pieces={[
-            { key: "rook", label: tPiece("rook"), enabled: true },
-            { key: "bishop", label: tPiece("bishop"), enabled: true },
-            { key: "knight", label: tPiece("knight"), enabled: true },
-            { key: "pawn", label: tPiece("pawn"), enabled: true },
-            { key: "queen", label: tPiece("queen"), enabled: true },
-            { key: "king", label: tPiece("king"), enabled: true },
-          ]}
           onSelectPiece={(piece) => {
             autoReset.invalidate();
             setSelectedPiece(piece);

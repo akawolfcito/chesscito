@@ -52,11 +52,6 @@ function renderBadgeSheet({
   );
 }
 
-const PIECE_OPTIONS = pieces.map((key) => ({
-  key,
-  label: key.charAt(0).toUpperCase() + key.slice(1),
-  enabled: true,
-}));
 
 describe("BadgeSheet — claim action presentation", () => {
   beforeEach(() => {
@@ -84,76 +79,78 @@ describe("BadgeSheet — claim action presentation", () => {
   });
 });
 
-describe("BadgeSheet — unified Piece Sheet (surface redistribution D3)", () => {
+describe("BadgeSheet — unified Piece Sheet, cards ARE the switch (QA F4)", () => {
   beforeEach(() => {
     localStorage.clear();
     pieces.forEach((piece) => setStars(piece, [0, 0, 0, 0, 0]));
   });
 
-  it("renders the active-piece journey section when selectedPiece is provided", () => {
-    renderBadgeSheet({
-      selectedPiece: "rook",
-      pieces: PIECE_OPTIONS,
-      onSelectPiece: vi.fn(),
-      badgesClaimed: {
-        rook: false,
-        bishop: false,
-        knight: false,
-        pawn: false,
-        queen: false,
-        king: false,
-      },
-    });
+  const NO_CLAIMS = {
+    rook: false,
+    bishop: false,
+    knight: false,
+    pawn: false,
+    queen: false,
+    king: false,
+  };
 
-    expect(screen.getByText("Your journey")).toBeInTheDocument();
-  });
+  it("never renders the journey tray nor a separate switch grid", () => {
+    renderBadgeSheet({ selectedPiece: "rook", onSelectPiece: vi.fn() });
 
-  it("hides the switch grid until the first badge is claimed (pedagogy gate)", () => {
-    renderBadgeSheet({
-      selectedPiece: "rook",
-      pieces: PIECE_OPTIONS,
-      onSelectPiece: vi.fn(),
-      badgesClaimed: {
-        rook: false,
-        bishop: false,
-        knight: false,
-        pawn: false,
-        queen: false,
-        king: false,
-      },
-    });
-
+    expect(screen.queryByText("Your journey")).not.toBeInTheDocument();
     expect(screen.queryByText("Switch piece")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Knight" }),
-    ).not.toBeInTheDocument();
   });
 
-  it("shows the switch grid after a claimed badge; tap selects and closes", async () => {
-    const { default: userEvent } = await import(
-      "@testing-library/user-event"
-    );
+  it("cards stay inert until the first badge is claimed (pedagogy gate)", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
     const onSelectPiece = vi.fn();
-    const onOpenChange = vi.fn();
     const user = userEvent.setup();
     renderBadgeSheet({
       selectedPiece: "rook",
-      pieces: PIECE_OPTIONS,
       onSelectPiece,
-      onOpenChange,
+      badgesClaimed: NO_CLAIMS,
     });
 
-    expect(screen.getByText("Switch piece")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Knight" }));
+    expect(
+      screen.queryByRole("button", { name: "Knight Ascendant" }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByText("Knight Ascendant"));
+    expect(onSelectPiece).not.toHaveBeenCalled();
+  });
+
+  it("after a claimed badge, tapping a card selects that piece and closes", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const onSelectPiece = vi.fn();
+    const onOpenChange = vi.fn();
+    const user = userEvent.setup();
+    renderBadgeSheet({ selectedPiece: "rook", onSelectPiece, onOpenChange });
+
+    await user.click(
+      screen.getByRole("button", { name: "Knight Ascendant" }),
+    );
     expect(onSelectPiece).toHaveBeenCalledWith("knight");
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it("stays a pure vitrine without selectedPiece (hub mode, legacy contract)", () => {
+  it("the claim CTA inside a card never triggers a piece switch", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    const onSelectPiece = vi.fn();
+    const user = userEvent.setup();
+    // rook is claimable (12★ fixture below) and bishop claimed (gate open).
+    setStars("rook", [3, 3, 3, 3, 0]);
+    renderBadgeSheet({ selectedPiece: "rook", onSelectPiece });
+
+    await user.click(screen.getByRole("button", { name: "Claim Badge" }));
+    expect(onSelectPiece).not.toHaveBeenCalled();
+  });
+
+  it("stays a pure vitrine without onSelectPiece (hub mode, legacy contract)", () => {
     renderBadgeSheet();
 
     expect(screen.queryByText("Your journey")).not.toBeInTheDocument();
-    expect(screen.queryByText("Switch piece")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Knight Ascendant" }),
+    ).not.toBeInTheDocument();
   });
 });
 
