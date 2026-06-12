@@ -53,6 +53,10 @@ type MissionPanelProps = {
   canSaveScore?: boolean
   onSaveScore?: () => void
   isSavingScore?: boolean
+  /** QA round 2 — on-chain SAVE trio, forwarded untouched. */
+  canSaveOnChain?: boolean
+  onSaveOnChain?: () => void
+  isSavingOnChain?: boolean
   /** Signal from the parent that a dock destination sheet is open.
    *  When true, we close mission-detail so the user never sees it
    *  stacked behind a badge/shop/leaderboard sheet. */
@@ -416,6 +420,9 @@ export function MissionPanelCandy({
   canSaveScore,
   onSaveScore,
   isSavingScore,
+  canSaveOnChain,
+  onSaveOnChain,
+  isSavingOnChain,
   isDockSheetOpen,
   labyrinthMode = false,
   labyrinthOptimalMoves,
@@ -527,6 +534,9 @@ export function MissionPanelCandy({
               canSaveScore={canSaveScore}
               onSaveScore={onSaveScore}
               isSavingScore={isSavingScore}
+              canSaveOnChain={canSaveOnChain}
+              onSaveOnChain={onSaveOnChain}
+              isSavingOnChain={isSavingOnChain}
               trigger={missionPeek}
             />
           </div>

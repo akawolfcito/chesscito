@@ -147,6 +147,11 @@ export const MISSION_DETAIL_COPY = {
    *  on-chain Leaderboard Proof action (QA G3 2026-06-11). */
   saveScorePromise: "Climb the leaderboard",
   saveScoreCta: "Save score",
+  /** QA round 2 (2026-06-11): the revived on-chain SAVE — the original
+   *  free (gas-only) submitScoreSigned flow. "For life" belongs HERE:
+   *  the on-chain record is the permanent one. */
+  saveOnChainPromise: "Yours for life",
+  saveOnChainCta: "Save on-chain",
   /** Generic close-affordance ARIA label used by `<MissionHeaderCandy />`
    *  for every sheet that adopts it (mission detail, daily picker, mate
    *  picker, …). `{title}` is the surface's own sheet title. */
@@ -555,6 +560,9 @@ export const LEADERBOARD_SHEET_COPY = {
   heroChampionStatsFormat: "{score} pts · {count} players",
   heroEmptyHeadline: "No ranking yet",
   heroEmptyHint: "Be the first to climb the board.",
+  /** QA round 2026-06-11: on-chain marker + always-visible own rank. */
+  onchainMarkerAria: "Saved on-chain",
+  yourRankLabel: "Your rank",
 } as const;
 
 export const PURCHASE_CONFIRM_COPY = {

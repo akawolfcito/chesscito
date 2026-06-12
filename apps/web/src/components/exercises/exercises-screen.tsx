@@ -81,7 +81,8 @@ import {
 // by the off-chain save + leaderboard); `scoreboardAbi` /
 // `getScoreboardAddress` are gone from this surface. The on-chain helpers
 // remain in @/lib/contracts/scoreboard for the future Leaderboard Proof lane.
-import { getLevelId } from "@/lib/contracts/scoreboard";
+import { getLevelId, scoreboardAbi } from "@/lib/contracts/scoreboard";
+import { getScoreboardAddress } from "@/lib/contracts/chains";
 import { shopAbi } from "@/lib/contracts/shop";
 import { postScoreSave } from "@/lib/scores/save-client";
 import { deriveScoreSaveId } from "@/lib/scores/save-service";
@@ -1240,6 +1241,13 @@ export function ExercisesScreen({
     badgeEarned;
   const canSaveScore =
     Boolean(address) && isConnected && isCorrectChain && levelId > 0n;
+  // QA round 2 (2026-06-11): the on-chain SAVE is back (gas-only
+  // submitScoreSigned). Address resolution is chain-specific; null →
+  // the surface never renders the button (fail-closed, no dead CTA).
+  const scoreboardAddress = useMemo(
+    () => getScoreboardAddress(chainId),
+    [chainId],
+  );
   const isClaimBusy = isBadgeWriting || isClaimConfirming;
   const isSubmitBusy = isScoreWriting || isSubmitConfirming || isSavingScore;
   const isShopBusy = isShopWriting || isShopConfirming;
@@ -1801,6 +1809,111 @@ export function ExercisesScreen({
     }
   }
 
+  /** QA round 2 (2026-06-11): the ORIGINAL on-chain SAVE, revived as an
+   *  explicit second action (gas-only, no Peones). Faithful to the
+   *  pre-Slice-5 flow: sign-score → submitScoreSigned → receipt watcher
+   *  (recordSaveFor via pendingSubmitRef) → cache-score write-through →
+   *  optimistic leaderboard entry. The leaderboard marks these rows via
+   *  leaderboard_full_v.has_onchain. */
+  async function handleSaveScoreOnChain() {
+    if (!canSaveScore || !address || !scoreboardAddress || isSubmitBusy) {
+      return;
+    }
+    // Sync guard closes the await-the-signature-fetch race window the
+    // wagmi-derived isSubmitBusy flag can't cover.
+    if (submittingScoreRef.current) {
+      return;
+    }
+    submittingScoreRef.current = true;
+
+    setLastError(null);
+    // Clear the previous tx's hash so a retry after revert shows
+    // "Signing…" immediately instead of lingering on "Failed" until the
+    // new hash lands (Cluster C SAVE residue defer #1).
+    setSubmitTxHash(null);
+    track("score_submit_tx", { stage: "start", piece: selectedPiece });
+
+    try {
+      const signed = await requestSignature("/api/sign-score", {
+        player: address,
+        levelId: Number(levelId),
+        score: Number(score),
+        timeMs: Number(timeMs),
+      });
+
+      const txHash = await writeWithOptionalFeeCurrency(writeScoreAsync, {
+        address: scoreboardAddress,
+        abi: scoreboardAbi,
+        functionName: "submitScoreSigned" as const,
+        args: [levelId, score, timeMs, BigInt(signed.nonce), BigInt(signed.deadline), signed.signature] as const,
+        chainId,
+        account: address,
+      });
+
+      hapticSuccess();
+      setSubmitTxHash(txHash);
+      // Capture (piece, score, txHash) at broadcast time so the
+      // receipt-success effect persists the SUBMITTED score under the
+      // CORRECT piece even if the user switches pieces before the
+      // receipt arrives.
+      pendingSubmitRef.current = {
+        piece: selectedPiece,
+        score: Number(score),
+        txHash,
+      };
+      track("score_submit_tx", { stage: "success", piece: selectedPiece });
+      setResultOverlay({
+        variant: "score",
+        txHash,
+      });
+      console.info("[MiniPayTx] result", { label: "submit-score", txHash, levelId: Number(levelId) });
+
+      // Write-through to Supabase (fire-and-forget) — this is what the
+      // combined leaderboard reads as the on-chain `scores` source.
+      void fetch("/api/cache-score", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          player: address,
+          levelId: Number(levelId),
+          score: Number(score),
+          timeMs: Number(timeMs),
+          txHash: txHash,
+        }),
+      }).catch(() => {});
+
+      // Optimistic entry for leaderboard
+      try {
+        sessionStorage.setItem(
+          "chesscito:optimistic-score",
+          JSON.stringify({
+            player: address.toLowerCase(),
+            score: Number(score),
+            levelId: Number(levelId),
+            ts: Date.now(),
+          }),
+        );
+      } catch { /* storage unavailable */ }
+    } catch (error) {
+      if (isUserCancellation(error)) {
+        track("score_submit_tx", { stage: "cancelled", piece: selectedPiece });
+        showToast(tFooter("submitCanceled"), 2000);
+        return;
+      }
+      const message = toErrorMessage(error);
+      setLastError(message);
+      track("score_submit_tx", { stage: "error", piece: selectedPiece, error_kind: classifyTxErrorKind(error) });
+      setResultOverlay({
+        variant: "error",
+        errorMessage: classifyTxError(error, tResult),
+        retryAction: () => void handleSaveScoreOnChain(),
+      });
+      console.warn("[MiniPayTx] error", { label: "submit-score", levelId: Number(levelId), error: message });
+    } finally {
+      submittingScoreRef.current = false;
+    }
+  }
+
   async function handleProPurchase() {
     if (!address || !shopAddress || !publicClient || !isCorrectChain) return;
     setProPurchaseError(null);
@@ -2351,6 +2464,9 @@ export function ExercisesScreen({
           canSaveScore={scorePendingNew}
           onSaveScore={() => void handleSubmitScore()}
           isSavingScore={isSubmitBusy}
+          canSaveOnChain={scorePendingNew && scoreboardAddress != null}
+          onSaveOnChain={() => void handleSaveScoreOnChain()}
+          isSavingOnChain={isScoreWriting || isSubmitConfirming}
           shieldCount={shieldCount}
           streakCount={streakCount}
           lastEarnedStars={lastEarnedStars}

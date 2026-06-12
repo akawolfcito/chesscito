@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAccount } from "wagmi";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -60,13 +61,27 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
   // See the disabled JSX block below for the revival point.
   // const tPassport = useTranslations("PASSPORT_COPY");
   const tDock = useTranslations("DOCK_LABELS");
+  const { address } = useAccount();
   const [rows, setRows] = useState<LeaderboardRow[]>(prefetchedRows ?? []);
+  /** The caller's own row with its REAL rank over the full ranking —
+   *  visible even outside the top-10 cut (QA G4 2026-06-11). */
+  const [ownRow, setOwnRow] = useState<LeaderboardRow | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasFetched = useRef(prefetchedRows !== null);
 
   const applyRows = useCallback((data: unknown) => {
-    const apiRows = Array.isArray(data) ? (data as LeaderboardRow[]) : [];
+    // Two response shapes: legacy array (no player param) or
+    // { rows, player } when the caller's wallet was sent along.
+    const payload = data as
+      | LeaderboardRow[]
+      | { rows: LeaderboardRow[]; player: LeaderboardRow | null };
+    const apiRows = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.rows)
+        ? payload.rows
+        : [];
+    setOwnRow(Array.isArray(payload) ? null : payload?.player ?? null);
     const optimistic = getOptimisticScore();
     if (optimistic) {
       const found = apiRows.some(
@@ -90,7 +105,10 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
   const fetchLeaderboard = useCallback((showLoading = true) => {
     if (showLoading) setLoading(true);
     setError(null);
-    fetch("/api/leaderboard")
+    const url = address
+      ? `/api/leaderboard?player=${address}`
+      : "/api/leaderboard";
+    fetch(url)
       .then((r) => {
         if (!r.ok) throw new Error("fetch failed");
         return r.json();
@@ -98,7 +116,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
       .then(applyRows)
       .catch(() => setError(t("error")))
       .finally(() => setLoading(false));
-  }, [applyRows, t]);
+  }, [applyRows, t, address]);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -301,6 +319,16 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
                       {row.isVerified && (
                         <CandyIcon name="check" className="ml-1.5 inline-block h-3 w-3 text-emerald-600" />
                       )}
+                      {row.hasOnchain && (
+                        // QA 2026-06-11: on-chain seal — this player has
+                        // at least one score written through the
+                        // Scoreboard contract.
+                        <CandyIcon
+                          name="fingerprint"
+                          label={t("onchainMarkerAria")}
+                          className="ml-1.5 inline-block h-3 w-3 opacity-80"
+                        />
+                      )}
                     </p>
                   </div>
                   <p className="text-sm font-black tabular-nums text-[rgba(63,34,8,0.95)]">
@@ -310,6 +338,39 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
               ))}
             </div>
           )}
+
+          {/* Your rank — always visible when connected with at least one
+              save, even outside the top-10 cut (QA G4 2026-06-11). */}
+          {ownRow ? (
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center justify-between px-2 mb-1">
+                <span className="text-nano font-black uppercase tracking-[0.2em] opacity-30">
+                  {t("yourRankLabel")}
+                </span>
+              </div>
+              <div
+                data-testid="leaderboard-own-row"
+                className="leaderboard-row-compact leaderboard-row-compact--top2"
+              >
+                <div className="leaderboard-rank-pill">{ownRow.rank}</div>
+                <div className="flex-1 min-width-0">
+                  <p className="truncate text-xs font-black text-[rgba(63,34,8,0.90)]">
+                    {ownRow.player}
+                    {ownRow.hasOnchain && (
+                      <CandyIcon
+                        name="fingerprint"
+                        label={t("onchainMarkerAria")}
+                        className="ml-1.5 inline-block h-3 w-3 opacity-80"
+                      />
+                    )}
+                  </p>
+                </div>
+                <p className="text-sm font-black tabular-nums text-[rgba(63,34,8,0.95)]">
+                  {ownRow.score}
+                </p>
+              </div>
+            </div>
+          ) : null}
         </div>
       </SheetContent>
     </Sheet>

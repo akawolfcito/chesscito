@@ -1186,6 +1186,8 @@ const messages = {
     nowLabyrinthAriaFormat: "Empezar Laberinto {number}",
     saveScorePromise: "Sube en la tabla de líderes",
     saveScoreCta: "Guardar puntaje",
+    saveOnChainPromise: "Tuyo para siempre",
+    saveOnChainCta: "Guardar on-chain",
     closeLabelFormat: "Cerrar {title}",
   },
   BADGE_TITLES: {
@@ -1392,6 +1394,8 @@ const messages = {
     heroChampionStatsFormat: "{score} pts · {count} jugadores",
     heroEmptyHeadline: "Aún sin ranking",
     heroEmptyHint: "Sé el primero en sumar puntos.",
+    onchainMarkerAria: "Guardado on-chain",
+    yourRankLabel: "Tu posición",
   },
   PURCHASE_CONFIRM_COPY: {
     title: "Confirmar compra",

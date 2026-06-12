@@ -37,6 +37,12 @@ type Props = {
   canSaveScore?: boolean;
   onSaveScore?: () => void;
   isSavingScore?: boolean;
+  /** QA round 2 (2026-06-11) — the revived on-chain SAVE (gas-only
+   *  submitScoreSigned flow). Renders only when available: no dead
+   *  buttons (fail-closed). */
+  canSaveOnChain?: boolean;
+  onSaveOnChain?: () => void;
+  isSavingOnChain?: boolean;
   /** The peek-card element that opens the modal. Cloned with an
    *  injected onClick that flips `open` true; any pre-existing
    *  handler on the trigger is preserved. */
@@ -57,6 +63,9 @@ export function MissionDetailSheet({
   canSaveScore = false,
   onSaveScore,
   isSavingScore = false,
+  canSaveOnChain = false,
+  onSaveOnChain,
+  isSavingOnChain = false,
   trigger,
 }: Props) {
   const tBriefing = useTranslations("MISSION_BRIEFING_COPY");
@@ -103,6 +112,7 @@ export function MissionDetailSheet({
     : 0;
   const showNowLine = Boolean(nextChallenge && onLabyrinthSelect);
   const showSaveScore = Boolean(canSaveScore && onSaveScore);
+  const showSaveOnChain = Boolean(canSaveOnChain && onSaveOnChain);
   const pieceName = (() => {
     try {
       return tPiece(selectedPiece);
@@ -243,7 +253,7 @@ export function MissionDetailSheet({
                   </div>
                 </div>
 
-                {(showNowLine || showSaveScore) && (
+                {(showNowLine || showSaveScore || showSaveOnChain) && (
                   <picture>
                     <source
                       srcSet="/art/screen-mission/adorno-icon.avif"
@@ -320,6 +330,44 @@ export function MissionDetailSheet({
                       `${tDetail("saveScoreCta")} · ${score}`
                     )}
                   </button>
+                ) : null}
+
+                {/* QA round 2 — the revived on-chain SAVE: the original
+                    gas-only submitScoreSigned flow. "For life" lives
+                    here, never on the off-chain action. */}
+                {showSaveOnChain ? (
+                  <>
+                    <p
+                      className="mt-3 text-center text-xs font-semibold"
+                      style={{
+                        color: "rgba(110, 65, 15, 0.78)",
+                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                      }}
+                    >
+                      {tDetail("saveOnChainPromise")}
+                    </p>
+                    <button
+                      type="button"
+                      aria-label={tDetail("saveOnChainCta")}
+                      onClick={onSaveOnChain}
+                      disabled={isSavingOnChain}
+                      aria-busy={isSavingOnChain}
+                      className="candy-tray-pill mt-1.5"
+                      style={{
+                        color: "rgba(63, 34, 8, 0.95)",
+                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
+                      }}
+                    >
+                      {isSavingOnChain ? (
+                        <span
+                          aria-hidden="true"
+                          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                        />
+                      ) : (
+                        tDetail("saveOnChainCta")
+                      )}
+                    </button>
+                  </>
                 ) : null}
               </div>
             </div>

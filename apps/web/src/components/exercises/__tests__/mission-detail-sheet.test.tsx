@@ -128,4 +128,34 @@ describe("<MissionDetailSheet> — save score affordance (D5)", () => {
       screen.queryByRole("button", { name: "Save score" }),
     ).not.toBeInTheDocument();
   });
+
+  it("renders the on-chain save action when available and fires its handler", async () => {
+    const onSaveOnChain = vi.fn();
+    const user = userEvent.setup();
+    renderSheet({
+      canSaveScore: true,
+      onSaveScore: vi.fn(),
+      canSaveOnChain: true,
+      onSaveOnChain,
+      score: "120",
+    });
+
+    // Its own promise line, distinct from the leaderboard one.
+    expect(screen.getByText("Yours for life")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Save on-chain" }));
+    expect(onSaveOnChain).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the on-chain action when unavailable (no dead buttons)", () => {
+    renderSheet({
+      canSaveScore: true,
+      onSaveScore: vi.fn(),
+      canSaveOnChain: false,
+      onSaveOnChain: vi.fn(),
+    });
+
+    expect(
+      screen.queryByRole("button", { name: "Save on-chain" }),
+    ).not.toBeInTheDocument();
+  });
 });
