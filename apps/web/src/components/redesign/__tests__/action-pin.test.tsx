@@ -22,6 +22,7 @@ const ACTIONS: readonly ActionPinAction[] = [
   "connectWallet",
   "switchNetwork",
   "enterLabyrinth",
+  "exitLabyrinth",
 ] as const;
 
 const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
@@ -32,6 +33,7 @@ const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
   connectWallet: "wallet",
   switchNetwork: "refresh",
   enterLabyrinth: "crosshair",
+  exitLabyrinth: "close",
 };
 
 const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
@@ -42,6 +44,7 @@ const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
   connectWallet: "wallet",
   switchNetwork: "refresh",
   enterLabyrinth: "practice-pieces",
+  exitLabyrinth: "practice-pieces",
 };
 
 /** Actions that render a custom reward sprite from /art/new-icons-chesscito
@@ -82,7 +85,9 @@ describe("ActionPin — render matrix (6 actions × 2 sizes)", () => {
           // practice-pieces (enterLabyrinth) ships in the v1 icon set
           // dir per ActionRowIcon's own resolveIconBase, not action-row.
           const expectedBase =
-            CUSTOM_ICON_ACTIONS.has(action) || action === "enterLabyrinth"
+            CUSTOM_ICON_ACTIONS.has(action) ||
+            action === "enterLabyrinth" ||
+            action === "exitLabyrinth"
               ? "/art/new-icons-chesscito"
               : "/art/action-row";
           expect(icon).toHaveAttribute(

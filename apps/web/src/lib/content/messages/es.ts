@@ -1481,6 +1481,8 @@ const messages = {
     yourBestFormat: "Tu mejor: {previous} movimientos",
     retry: "Reintentar",
     back: "Volver a Ejercicios",
+    continue: "Continuar",
+    exitLabyrinth: "Salir del Laberinto",
     enterArena: "Ir a la Arena",
     layerToggleAriaLabel: "Alternar capa",
   },

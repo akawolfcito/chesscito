@@ -18,7 +18,8 @@ export type ActionPinAction =
   | "retry"
   | "connectWallet"
   | "switchNetwork"
-  | "enterLabyrinth";
+  | "enterLabyrinth"
+  | "exitLabyrinth";
 
 export type ActionPinSize = "pin" | "full";
 export type ActionPinTone = "default" | "claim";
@@ -110,6 +111,13 @@ const ACTION_STYLES: Record<
     glow: "shadow-[var(--cta-brand-glow)]",
     text: "text-white",
   },
+  // QA F2 (2026-06-11) — escape hatch, muted like retry: leaving the
+  // lab is a quiet affordance, never competing with the board.
+  exitLabyrinth: {
+    bg: "bg-[var(--cta-muted-bg)]",
+    glow: "",
+    text: "text-[var(--cta-muted-text)]",
+  },
 };
 
 const ACTION_ICON: Record<ActionPinAction, CandyIconName> = {
@@ -120,6 +128,7 @@ const ACTION_ICON: Record<ActionPinAction, CandyIconName> = {
   connectWallet: "wallet",
   switchNetwork: "refresh",
   enterLabyrinth: "crosshair",
+  exitLabyrinth: "close",
 };
 
 const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
@@ -130,6 +139,9 @@ const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
   connectWallet: "wallet",
   switchNetwork: "refresh",
   enterLabyrinth: "practice-pieces",
+  // QA F2 (2026-06-11): leaving the lab returns to practice — same
+  // pieces icon as the entry pin so enter/exit read as one family.
+  exitLabyrinth: "practice-pieces",
 };
 
 const ACTION_CUSTOM_ICON_SRC: Partial<Record<ActionPinAction, string>> = {

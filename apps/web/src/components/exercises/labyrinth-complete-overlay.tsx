@@ -18,9 +18,13 @@ type Props = {
   previousBest?: number | null;
   /** True when this attempt set a new personal record. */
   isNewBest?: boolean;
+  /** QA F3 (2026-06-11): primary action — exit the labyrinth and
+   *  advance to the next pending step of the path. The shell X shares
+   *  this intent so closing never strands the player in the lab. */
+  onContinue: () => void;
+  /** Replay for a better star count — demoted to the secondary slot. */
   onRetry: () => void;
-  onBack: () => void;
-  /** When defined, replaces the "Try again" primary CTA with "Enter
+  /** When defined, replaces the "Continue" primary CTA with "Enter
    *  Arena" and routes the user into the full match flow. Wired by
    *  exercises-screen only when the player has just solved every King
    *  labyrinth in the catalog. Before that the player is still
@@ -45,8 +49,8 @@ export function LabyrinthCompleteOverlay({
   stars,
   previousBest = null,
   isNewBest = false,
+  onContinue,
   onRetry,
-  onBack,
   onEnterArena,
 }: Props) {
   const t = useTranslations("LABYRINTH_COPY");
@@ -74,11 +78,11 @@ export function LabyrinthCompleteOverlay({
   return (
     <div className={exiting ? "modal-exiting" : undefined}>
       <VictoryPopupShell
-        onClose={() => handleAction(onBack)}
+        onClose={() => handleAction(onContinue)}
         ariaLabel={t("completeTitle")}
         role="alert"
         ariaLive="assertive"
-        closeLabel={t("back")}
+        closeLabel={t("continue")}
       >
         {/* Hero — title centered (arena win-celebration vocabulary). */}
         <div className="victory-popup-hero-solo">
@@ -157,25 +161,25 @@ export function LabyrinthCompleteOverlay({
         ) : null}
 
         {/* BUTTONS — canonical PrincipalButton medium (popup-scope) + cream
-            secondary. When onEnterArena is provided the primary CTA shifts
-            from "Try again" to "Enter Arena" so the user lands in the
-            full match flow instead of grinding the same labyrinth. */}
+            secondary. Continue-first (QA F3): the path advances by
+            default; replay is the opt-in. When onEnterArena is provided
+            the primary shifts to "Enter Arena" (King finale). */}
         <div className="flex flex-col items-center gap-2">
           <PrincipalButton
             size="medium"
             onClick={() =>
-              handleAction(onEnterArena ?? onRetry)
+              handleAction(onEnterArena ?? onContinue)
             }
           >
-            {onEnterArena ? t("enterArena") : t("retry")}
+            {onEnterArena ? t("enterArena") : t("continue")}
           </PrincipalButton>
 
           <button
             type="button"
-            onClick={() => handleAction(onBack)}
+            onClick={() => handleAction(onRetry)}
             className="arena-result-secondary-action"
           >
-            {t("back")}
+            {t("retry")}
           </button>
         </div>
 

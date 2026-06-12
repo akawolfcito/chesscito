@@ -64,8 +64,8 @@ export function ExercisesPopupsFixture({ variant }: { variant: Variant }) {
           stars={2}
           previousBest={6}
           isNewBest={true}
+          onContinue={noop}
           onRetry={noop}
-          onBack={noop}
           onEnterArena={noop}
         />
       )}

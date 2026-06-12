@@ -1221,6 +1221,15 @@ export const LABYRINTH_COPY = {
   yourBestFormat: "Your best: {previous} moves",
   retry: "Try again",
   back: "Back to Exercises",
+  /** QA F3 (2026-06-11): primary CTA on the solved overlay. Continue
+   *  exits the labyrinth and lands on the next pending exercise; the
+   *  shell X shares the same intent so closing never strands the
+   *  player inside the lab. */
+  continue: "Continue",
+  /** QA F2 (2026-06-11): muted exit pin in the contextual action row
+   *  while the labyrinth layer is on. Replaces the full-width BACK TO
+   *  EXERCISES band, which visually resurrected the retired tab strip. */
+  exitLabyrinth: "Exit Labyrinth",
   /** Primary CTA shown when the user completes a labyrinth that closes the
    *  full training cascade — i.e. the labyrinth belongs to the final piece
    *  (King). Replaces "Try again" because at that point the natural next

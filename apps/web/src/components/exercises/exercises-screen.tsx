@@ -2141,6 +2141,21 @@ export function ExercisesScreen({
     setLabyrinthMoves(0);
   }, []);
 
+  /** QA F3 (2026-06-11): Continue from the solved overlay — exit the
+   *  labyrinth and land on the next pending exercise (first 0★ within
+   *  today's visible set when rotation is on). Nothing pending → plain
+   *  exit; the PieceComplete cascade owns what happens next. */
+  function handleLabyrinthContinue() {
+    handleExitLabyrinth();
+    const pool = EXERCISES[selectedPiece];
+    const nextIdx = progress.stars.findIndex(
+      (starCount, index) =>
+        starCount === 0 &&
+        (!visibleExerciseIds || visibleExerciseIds.has(pool[index]?.id)),
+    );
+    if (nextIdx >= 0) handleExerciseNavigate(nextIdx);
+  }
+
   /** Labyrinth move handler — fires the completion overlay when the
    *  player reaches the target. The Board's internal counter is the
    *  source of truth for move count. */
@@ -2302,7 +2317,6 @@ export function ExercisesScreen({
           isDockSheetOpen={activeDockTab !== null}
           labyrinthMode={effectiveLabyrinthMode}
           labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
-          onExitLabyrinth={handleExitLabyrinth}
           onLabyrinthSelect={handleLabyrinthSelect}
           score={score.toString()}
           trainingPath={trainingPath}
@@ -2371,6 +2385,17 @@ export function ExercisesScreen({
                 flow="save-score"
                 steps={[{ code: "sign" }, { code: "wait" }]}
                 current={txCurrent}
+              />
+            ) : effectiveLabyrinthMode ? (
+              // QA F2 (2026-06-11): mid-labyrinth the contextual slot is
+              // owned by the muted exit pin — the full-width BACK TO
+              // EXERCISES band above the board is gone.
+              <ActionPin
+                action="exitLabyrinth"
+                size="pin"
+                label={tLab("exitLabyrinth")}
+                ariaLabel={tLab("exitLabyrinth")}
+                onPress={handleExitLabyrinth}
               />
             ) : isSavedAtParity && contextAction === null ? (
               // Retire-when-done (Sally pass 2026-06-11): a saved-at-
@@ -2666,12 +2691,12 @@ export function ExercisesScreen({
             stars={labyrinthCompleted.stars}
             previousBest={labyrinthCompleted.previousBest}
             isNewBest={labyrinthCompleted.isNewBest}
+            onContinue={handleLabyrinthContinue}
             onRetry={() => {
               setLabyrinthCompleted(null);
               setLabyrinthKey((k) => k + 1);
               setLabyrinthMoves(0);
             }}
-            onBack={handleExitLabyrinth}
             onEnterArena={
               selectedPiece === "king" &&
               areAllLabyrinthsSolved(

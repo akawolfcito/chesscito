@@ -58,11 +58,11 @@ type MissionPanelProps = {
    *  stacked behind a badge/shop/leaderboard sheet. */
   isDockSheetOpen: boolean
   /** L2 labyrinth layer state. Entry happens via training path node
-   *  taps (onLabyrinthSelect); while active, a single exit pill
-   *  replaces the old EXERCISES/LABYRINTHS toggle (Slice 3C). */
+   *  taps (onLabyrinthSelect); the exit affordance lives in the host's
+   *  contextual action row (QA F2 2026-06-11). These two only shape
+   *  the mission peek chip label. */
   labyrinthMode?: boolean
   labyrinthOptimalMoves?: number
-  onExitLabyrinth?: () => void
   /** Tap on an unlocked labyrinth node in the mission detail sheet's
    *  training path. Forwarded down; absent → read-only rail. */
   onLabyrinthSelect?: (labyrinthId: string) => void
@@ -419,7 +419,6 @@ export function MissionPanelCandy({
   isDockSheetOpen,
   labyrinthMode = false,
   labyrinthOptimalMoves,
-  onExitLabyrinth,
   onLabyrinthSelect,
   headerSlot,
   actionRowLeft,
@@ -433,7 +432,6 @@ export function MissionPanelCandy({
   failureRescueSlot,
 }: MissionPanelProps) {
   const tMission = useTranslations('MISSION_BRIEFING_COPY')
-  const tLab = useTranslations('LABYRINTH_COPY')
   const tHud = useTranslations('HUD_COPY')
   // Mission-detail open state — owned here so we can auto-close it
   // when the parent signals a dock destination sheet is opening.
@@ -537,24 +535,10 @@ export function MissionPanelCandy({
           </div>
         </div>
 
-        {/* Slice 3C: the EXERCISES/LABYRINTHS layer toggle is gone —
-            labyrinth entry now happens through training path node taps
-            (MissionDetailSheet). What remains is the single exit
-            affordance, shown only while the labyrinth layer is on, so
-            a player can abandon a labyrinth mid-run. */}
-        {labyrinthMode && onExitLabyrinth && (
-          <div className="mt-1 flex justify-center">
-            <div className="quest-tray-tabs grid w-full grid-cols-1 overflow-hidden rounded-2xl border p-0.5">
-              <button
-                type="button"
-                onClick={() => onExitLabyrinth()}
-                className="quest-tray-tab-active rounded-xl px-2 py-1.5 transition-all active:scale-[0.98] fantasy-title text-[0.65rem] font-black uppercase tracking-[0.08em]"
-              >
-                {tLab('backToExercises')}
-              </button>
-            </div>
-          </div>
-        )}
+        {/* QA F2 (2026-06-11): the full-width BACK TO EXERCISES band is
+            gone — it resurrected the retired tab strip visually. The
+            exit affordance now lives as a muted ActionPin in the host's
+            contextual action row. */}
 
         {/* Shield chip standalone row removed 2026-05-31: shield count
             now lives INSIDE the candy-tray-pill stars trigger (see
