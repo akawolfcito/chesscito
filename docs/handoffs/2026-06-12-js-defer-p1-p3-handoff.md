@@ -49,3 +49,11 @@ Analysis doc (evidence + full lever plan): `docs/audits/2026-06-12-arena-js-clus
   first paint (none today), that surface must NOT rely on the renderer being synchronous.
 - Memories honored: `arena-play-timer-fragility` (arena/page.tsx untouched),
   `arena-fresh-param` (untouched), `vr-baseline-discipline` (VR run pre-push, zero refresh).
+
+## PSI post-promote (2026-06-12, production = `12ec5c6c`, deploy `175dz7nmu`)
+
+- **/arena 72 → 77 oficial (PSI founder)** — lever Lottie confirmada. SEO /arena 100.
+- **/hub 76-78 oficial vs 85 previo → NO es regresión.** A/B Lighthouse mismo-día,
+  misma red, deployment URLs: pre-cluster `i57stizco` = 82/75, cluster `175dz7nmu` = 81/74.
+  El código viejo tampoco da 85 hoy: el delta es entorno/día (LCP ~5s vive en zona de
+  jitter donde ±0.5s mueve varios puntos). Sin rollback. Palanca real para /hub 85+ = P2.
