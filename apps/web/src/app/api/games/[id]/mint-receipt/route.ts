@@ -104,15 +104,15 @@ export async function POST(
   }
 
   // Idempotency: same tokenId re-write is a 200 no-op. Different
-  // tokenId on the same gameId is a 409 to surface contract bugs.
+  // tokenId on the same gameId is a re-save (unlimited re-save, latest wins).
   if (existing.mintedTokenId && existing.mintedTokenId !== body.tokenId) {
-    log.warn("mint_receipt_token_mismatch", {
+    log.info("mint_receipt_resave", {
       wallet_hash: hashWallet(wallet),
       game_id_prefix: gameId.slice(0, 8),
-      existing_token: existing.mintedTokenId,
-      submitted_token: body.tokenId,
+      prev_token: existing.mintedTokenId,
+      new_token: body.tokenId,
     });
-    return NextResponse.json({ error: "Token mismatch" }, { status: 409 });
+    // fall through to overwrite with the new tokenId
   }
   if (existing.mintedTokenId === body.tokenId) {
     return NextResponse.json({ ok: true, idempotent: true });

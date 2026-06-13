@@ -189,13 +189,32 @@ describe("POST /api/games/[id]/mint-receipt", () => {
     expect(redisSet).not.toHaveBeenCalled();
   });
 
-  it("returns 409 on tokenId mismatch (record already has a DIFFERENT tokenId)", async () => {
+  it("re-save with a new tokenId overwrites with the latest (no 409)", async () => {
+    const newTxHash = "0x" + "cd".repeat(32);
+    redisGet.mockResolvedValue({ ...baseRecord, mintedTokenId: "1", claimTxHash: txHash,
+      shareCardUrl: "https://chesscito.com/og/1", shareLinkUrl: "https://chesscito.com/v/1" });
+    redisSet.mockResolvedValue("OK");
+    const res = await POST(makeReq({
+      wallet, tokenId: "2", claimTxHash: newTxHash,
+      shareCardUrl: "https://chesscito.com/og/2", shareLinkUrl: "https://chesscito.com/v/2",
+    }), { params: Promise.resolve({ id: gameId }) });
+    expect(res.status).toBe(200);
+    expect(redisSet).toHaveBeenCalledOnce();
+    const [, written] = redisSet.mock.calls[0];
+    expect(written).toMatchObject({
+      gameId, mintedTokenId: "2", claimTxHash: newTxHash,
+      shareCardUrl: "https://chesscito.com/og/2", shareLinkUrl: "https://chesscito.com/v/2",
+    });
+  });
+
+  it("latest-wins re-save does NOT return 409 on tokenId mismatch (unlimited re-save)", async () => {
     redisGet.mockResolvedValue({ ...baseRecord, mintedTokenId: "100" });
+    redisSet.mockResolvedValue("OK");
     const res = await POST(makeReq({
       wallet, tokenId: "42", claimTxHash: txHash,
       shareCardUrl: "https://chesscito.com/og/42", shareLinkUrl: "https://chesscito.com/v/42",
     }), { params: Promise.resolve({ id: gameId }) });
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(200);
   });
 
   it("returns 403 when enforceOrigin rejects", async () => {
