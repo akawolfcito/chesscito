@@ -17,6 +17,8 @@ type Props = {
   moves: number;
   elapsedMs: number;
   difficulty: string;
+  fen?: string;
+  playerColor?: string;
   onPlayAgain: () => void;
   onBackToHub: () => void;
   /** Optional dismiss-without-navigate handler (Sally retention loop). */
@@ -24,6 +26,8 @@ type Props = {
   claimData: ClaimData;
   shareStatus: ShareStatus;
   onAskCoach?: () => void;
+  /** Re-invoke the mint from the post-mint popup (unlimited re-save). */
+  onSaveAgain?: () => void;
   /** Coach CTA gating — mirrors VictoryCelebration so post-mint shares
    *  the same coach-section vocabulary (#115). */
   coachCtaDisabled?: boolean;
@@ -50,12 +54,15 @@ export function VictoryClaimSuccess({
   moves,
   elapsedMs,
   difficulty,
+  fen,
+  playerColor,
   onPlayAgain,
   onBackToHub,
   onClose,
   claimData,
   shareStatus,
   onAskCoach,
+  onSaveAgain,
   coachCtaDisabled = false,
   coachCtaBusy = false,
   coachTooShort = false,
@@ -80,11 +87,24 @@ export function VictoryClaimSuccess({
     track("monetization.save_victory_success", { context: "endgame_win" });
   }, [difficulty, moves]);
 
+  // Share card: use the on-chain victory OG when available, else fall
+  // back to a match card built from game params (mirrors victory-celebration.tsx
+  // lines ~100-108) so Share is always present regardless of mint status.
+  const fallbackCardParams = new URLSearchParams({
+    moves: String(moves),
+    time: String(elapsedMs),
+    diff: difficulty,
+    result: "win",
+  });
+  if (fen) fallbackCardParams.set("fen", fen);
+  if (playerColor) fallbackCardParams.set("color", playerColor);
+  const fallbackCardUrl = `/api/og/match?${fallbackCardParams.toString()}`;
+  const effectiveCardUrl = claimData.shareCardUrl ?? fallbackCardUrl;
   const shareUrl = claimData.shareLinkUrl ?? SHARE_COPY.url;
   const challengeText = tClaim("challengeText", { moves, url: shareUrl });
-  const isShareReady = shareStatus === "ready";
   const playAgainLabel = tArena("playAgain");
   const difficultyKey = difficulty as "easy" | "medium" | "hard";
+  // (isShareReady removed — Share is now always present regardless of shareStatus)
   const difficultyLabel = ["easy", "medium", "hard"].includes(difficultyKey)
     ? tArena(`difficulty.${difficultyKey}`)
     : difficulty;
@@ -219,9 +239,11 @@ export function VictoryClaimSuccess({
           </div>
         )}
 
-        {/* TERTIARY — Play again + Share cream mini-pills. Matches the
-            VictoryCelebration tertiary row so both pre- and post-mint
-            share the same closing footprint. */}
+        {/* TERTIARY — Play again + Share + Save cream mini-pills. Share is
+            always present: uses the on-chain victory card when ready, else
+            falls back to a match card from game params so the user can
+            always share regardless of mint status. Save Again re-invokes
+            the mint for unlimited re-save (founder spec 2026-06-13). */}
         <div className="victory-popup-secondary-row">
           <button
             type="button"
@@ -231,13 +253,21 @@ export function VictoryClaimSuccess({
           >
             <span>{tCelebration("playAgainShort")}</span>
           </button>
-          {isShareReady && (
+          <button
+            type="button"
+            onClick={() => setShareOpen(true)}
+            className="arena-result-secondary-action"
+          >
+            <span>{SHARE_COPY.button}</span>
+          </button>
+          {onSaveAgain && (
             <button
               type="button"
-              onClick={() => setShareOpen(true)}
+              onClick={onSaveAgain}
               className="arena-result-secondary-action"
+              aria-label={tCelebration("primaryLabel")}
             >
-              <span>{SHARE_COPY.button}</span>
+              <span>{tCelebration("primaryLabel")}</span>
             </button>
           )}
         </div>
@@ -246,7 +276,7 @@ export function VictoryClaimSuccess({
       <ShareModal
         open={shareOpen}
         onOpenChange={setShareOpen}
-        cardUrl={claimData.shareCardUrl}
+        cardUrl={effectiveCardUrl}
         text={challengeText}
         url={shareUrl}
       />

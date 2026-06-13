@@ -235,13 +235,19 @@ export function ArenaEndState({
         // the `onAskCoach` prop. The `coachPreview` slot is intentionally
         // omitted to avoid double-rendering — the prop was removed from
         // VictoryClaimSuccess so a future regression can't slip back in.
+        // `onSaveAgain` re-invokes the mint for unlimited re-save (founder
+        // spec 2026-06-13). `fen`/`playerColor` enable the share card
+        // fallback before the on-chain victory OG is available.
         return (
           <>
             <VictoryClaimSuccess
               {...sharedProps}
+              fen={fen}
+              playerColor={playerColor}
               claimData={claimData}
               shareStatus={shareStatus}
               onAskCoach={onAskCoachFromVictory ?? onAskCoach}
+              onSaveAgain={onClaimVictory}
               coachCtaDisabled={coachCtaDisabled}
               coachCtaBusy={isPersistBusy}
               coachTooShort={isTooShort}
