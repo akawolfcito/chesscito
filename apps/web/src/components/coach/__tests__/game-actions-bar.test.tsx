@@ -24,38 +24,54 @@ const baseProps = {
 };
 
 describe("GameActionsBar", () => {
-  it("win + unminted: shows Save Victory primary, Ask Coach + Play Again secondaries", () => {
-    // 2026-05-29 (Cluster C, commit 3b): the Mint primary is now the
-    // treasure-sprite Save Victory CTA. Aria-label uses the new
-    // `saveVictory` / `saveVictoryAriaLabel` keys; the price ribbon
-    // appears when `claimPrice` is provided.
+  it("win + unminted: shows Save Victory, Share, Ask Coach + Play Again (4-tile row)", () => {
+    // 2026-06-13 (feat/coach-analysis-value): win always shows all 4 tiles.
+    // Before minting, Share label is the "share" key (not "shareTrophy").
+    // No View on Celoscan tertiary until minted.
     render(<GameActionsBar {...baseProps} claimPrice="$0.005" />);
     expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /viewNft/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^share$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /viewOnCeloscan/ })).toBeNull();
   });
 
-  it("win + minted: Mint gone, Share trophy tile present, View on Celoscan tertiary", () => {
-    // 2026-05-29 (Cluster C, M3): post-mint, the actions row renders
-    // 3 tiles — Play Again + Share trophy + Ask Coach — with View on
-    // Celoscan as the tertiary text link below. Save Victory is gone
-    // (already claimed); Share is the "shareTrophy" key (distinct
-    // from arena's legacy "share").
+  it("win + minted: Save Victory STILL present (unlimited re-save), Share trophy, View on Celoscan tertiary", () => {
+    // 2026-06-13 (feat/coach-analysis-value): Save Victory is now unconditional
+    // on win — isMinted no longer hides it (unlimited re-save model).
+    // Share label switches to "shareTrophy" once minted. View on Celoscan
+    // tertiary remains as a text link below the tile row.
     render(
       <GameActionsBar
         {...baseProps}
         mintedTokenId="42"
         shareLinkUrl="https://chesscito.com/v/42"
+        claimPrice="$0.005"
       />,
     );
     expect(screen.queryByRole("button", { name: /^mintVictory$/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^saveVictory$/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /shareTrophy/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /viewOnCeloscan/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^askCoach$/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^playAgain$/ })).toBeInTheDocument();
+  });
+
+  it("win + minted: STILL shows Save Victory (unlimited re-save) plus Share + Ask Coach + Play Again", () => {
+    render(
+      <GameActionsBar
+        {...baseProps}
+        result="win"
+        mintedTokenId="42"
+        shareLinkUrl="https://www.chesscito.com/victory/42"
+        claimPrice="$0.005"
+      />,
+    );
+    expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /shareTrophy|share/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
   });
 
   it("loss: no Mint, no Share, Ask Coach + Play Again", () => {

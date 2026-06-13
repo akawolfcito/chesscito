@@ -169,7 +169,7 @@ export function GameActionsBar({
         {t("backToHub")}
       </button>
     );
-  } else if (isWin && !isMinted) {
+  } else if (isWin) {
     tiles = [
       playAgainTile,
       {
@@ -181,32 +181,25 @@ export function GameActionsBar({
         onClick: onMint,
         priceRibbon: claimPrice ?? undefined,
       },
+      {
+        kind: "share",
+        label: isMinted ? t("shareTrophy") : t("share"),
+        onClick: onShare,
+      },
       askCoachTile,
     ];
-  } else if (isWin && isMinted) {
-    tiles = [
-      playAgainTile,
-      ...(shareLinkUrl
-        ? [
-            {
-              kind: "share" as const,
-              label: t("shareTrophy"),
-              onClick: onShare,
-            },
-          ]
-        : []),
-      askCoachTile,
-    ];
-    tertiary = (
-      <button
-        type="button"
-        onClick={onViewNft}
-        className="coach-viewer__actions-tertiary"
-        aria-label={t("viewOnCeloscan")}
-      >
-        {t("viewOnCeloscan")}
-      </button>
-    );
+    if (isMinted) {
+      tertiary = (
+        <button
+          type="button"
+          onClick={onViewNft}
+          className="coach-viewer__actions-tertiary"
+          aria-label={t("viewOnCeloscan")}
+        >
+          {t("viewOnCeloscan")}
+        </button>
+      );
+    }
   } else {
     // loss / draw / resigned / replay-errored
     tiles = [playAgainTile, askCoachTile];
