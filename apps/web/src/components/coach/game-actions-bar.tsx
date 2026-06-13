@@ -96,7 +96,7 @@ const TILE_ICON: Record<TileKind, { avif: string; webp: string; png: string }> =
  *   - replay-errored     → [Play Again, Ask Coach(off)] + Back to Hub
  *   - win (any)          → [Play Again, Save Victory($), Share, Ask Coach]
  *                          + View on Celoscan (only when minted)
- *   - loss/draw/resigned → [Play Again, Ask Coach]      + Back to Hub
+ *   - loss/draw/resigned → [Play Again, Share, Ask Coach] + Back to Hub
  */
 export function GameActionsBar({
   result,
@@ -201,7 +201,11 @@ export function GameActionsBar({
     }
   } else {
     // loss / draw / resigned / replay-errored
-    tiles = [playAgainTile, askCoachTile];
+    tiles = [
+      playAgainTile,
+      { kind: "share", label: t("share"), onClick: onShare },
+      askCoachTile,
+    ];
     tertiary = (
       <button
         type="button"

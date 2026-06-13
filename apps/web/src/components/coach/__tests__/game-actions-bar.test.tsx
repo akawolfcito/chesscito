@@ -58,23 +58,34 @@ describe("GameActionsBar", () => {
     expect(screen.getByRole("button", { name: /^playAgain$/ })).toBeInTheDocument();
   });
 
-  it("loss: no Mint, no Share, Ask Coach + Play Again", () => {
+  it("loss: no Mint/saveVictory, has Share, Ask Coach + Play Again", () => {
     render(<GameActionsBar {...baseProps} result="lose" />);
     expect(screen.queryByRole("button", { name: /mintVictory/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^share$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
   });
 
-  it("draw: no Mint, no Share, Ask Coach + Play Again", () => {
-    render(<GameActionsBar {...baseProps} result="draw" />);
-    expect(screen.queryByRole("button", { name: /mintVictory/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^share$/ })).toBeNull();
+  it("loss: shows Play Again + Share + Ask Coach (no Save)", () => {
+    render(<GameActionsBar {...baseProps} result="lose" />);
+    expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
   });
 
-  it("resigned: no Mint, no Share", () => {
+  it("draw: no Mint, no saveVictory, has Share, Ask Coach + Play Again", () => {
+    render(<GameActionsBar {...baseProps} result="draw" />);
+    expect(screen.queryByRole("button", { name: /mintVictory/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
+  });
+
+  it("resigned: no Mint, no Save", () => {
     render(<GameActionsBar {...baseProps} result="resigned" />);
     expect(screen.queryByRole("button", { name: /mintVictory/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
   });
 
   it("Ask Coach disabled when partial-replay error", () => {
