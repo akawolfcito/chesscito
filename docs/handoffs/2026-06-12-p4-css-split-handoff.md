@@ -97,6 +97,20 @@ Founder reportó 5 cosas tras el promote. Triaje por causa (no por síntoma):
    +1 request render-blocking en Slow 4G: antes 2 stylesheets, ahora 3).
 5. **"Ingreso tarda más"** — subjetivo, sin medir; consistente con (4).
 
+## DESENLACE: split REVERTIDO (2026-06-12 sesión 2, tarde)
+
+El founder pidió volver al máximo de cobertura conocido (hub 87 / arena 86 pre-split).
+El split se revirtió (`git revert d535d212`) — globals.css vuelve a monolítico, los 4
+CSS de superficie y los layouts coach/exercises borrados. **El fix del borde azul
+(`70a0b1c0`, pro-sheet.tsx) se CONSERVA** (archivo ortogonal). Validado: tsc clean,
+build 80/80, suite gem/stone 43/43, VR 49/49 no-refresh. Promovido a prod.
+
+Por qué se revirtió y no se parcheó: el split optimizó BYTES cuando el cuello es
+RENDER-BLOCKING. Los stylesheets ya bajan en paralelo (HTTP/2 multiplexing); dividir no
+quita el bloqueo (el navegador espera TODOS los `<link>` antes del primer paint) y suma
+un request de descubrimiento. Net: −14-18% bytes pero +1 request render-blocking → score
+plano-a-peor. No pagaba su complejidad.
+
 ## Conclusión estratégica: el split NO fue la palanca de las métricas
 
 PSI hub treemap/insights post-promote: **LCP 4.9s (rojo), render-blocking 550ms
@@ -109,10 +123,13 @@ siendo UN stylesheet render-blocking; muchas clases custom (paneles con `image-s
 backgrounds, marcos, animaciones, gradientes) no se expresan como utilidades → conversión
 masiva, bajo retorno; y el unused 32KB es del CSS custom, no de Tailwind (que ya purga).
 
-**Palancas reales, en orden (próxima sesión de perf):**
+**Palancas reales, en orden (próxima sesión de perf — NEXT):**
 1. **Render-blocking 550ms → critical-CSS inline** (`experimental.optimizeCss`/critters):
-   inline el above-the-fold, defer el resto. Ataca LCP 4.9s directo. (Antes lo rechacé
-   por "no reduce payload", pero el insight #1 ahora es render-blocking, no payload.)
+   inline el above-the-fold, defer el resto. Es el "modo de prioridad" correcto (el
+   crítico llega con el HTML sin request; el resto no bloquea). Ataca LCP 4.9s directo.
+   RIESGO: critters a veces difiere de más y rompe estilos → **VR completo obligatorio
+   antes de prod**. Probar en branch sobre la base monolítica ya restaurada. Founder dio
+   interés explícito en arrancar esto como siguiente paso.
 2. **Unused CSS 32KB** → purga del custom no usado en el core.
 3. **Chunk 3620 wagmi (42KB unused JS)** → lazy-load del wagmi provider hasta primer
    wallet intent (spec propia).
