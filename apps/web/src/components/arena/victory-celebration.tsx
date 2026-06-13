@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
 import { track } from "@/lib/telemetry";
 import { SHARE_COPY } from "@/lib/content/editorial";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -279,6 +280,7 @@ export function VictoryCelebration({
                 >
                   <CandyIcon name="coach" className="h-5 w-5 shrink-0" />
                   <span className="arena-result-primary-cta-label">{coachLabel}</span>
+                  <CoachCostRibbon proActive={proActive} variant="cta" />
                 </button>
               </div>
               <picture className="arena-result-coach-avatar">
