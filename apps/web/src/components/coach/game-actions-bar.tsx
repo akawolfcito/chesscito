@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
+import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
+
 type Props = {
   gameId: string;
   result: "win" | "lose" | "draw" | "resigned";
@@ -53,6 +55,9 @@ type Tile = {
   /** Optional price ribbon on the tile's top-right corner. Reserved
    *  for the Save Victory tile in the win + !claimed state. */
   priceRibbon?: string;
+  /** Plan 3 — render the coach cost ribbon (crown "PRO" / "♟ 1") above
+   *  the icon. Reserved for the Ask Coach tile when it is reachable. */
+  costRibbon?: boolean;
   /** 2026-05-30 (Bug #2 fix): render a spinner overlay on the tile icon.
    *  Drives `data-loading="true"` on the button — the CSS handles the
    *  spinning ring + dimming. Only the Ask Coach tile uses it today. */
@@ -137,11 +142,20 @@ export function GameActionsBar({
     !proActive &&
     typeof coachCredits === "number" &&
     coachCredits > 0;
+  // Plan 3 — outcome-specific invitation before any analysis exists.
+  // Once analyzed it stays "Ask Coach again"; while running, "Analyzing…".
+  // Resigned reuses the lose copy.
+  const initialAskCoachKey =
+    result === "win"
+      ? "askCoachWin"
+      : result === "draw"
+        ? "askCoachDraw"
+        : "askCoachLose";
   const askCoachLabel = askCoachPending
     ? t("analysisPending")
     : hasAnalysis
       ? t("askCoachAgain")
-      : t("askCoach");
+      : t(initialAskCoachKey);
 
   const playAgainTile: Tile = {
     kind: "play-again",
@@ -154,6 +168,9 @@ export function GameActionsBar({
     onClick: onAskCoach,
     disabled: askCoachDisabled,
     pending: !!askCoachPending,
+    // Cost cue mirrors the Save Victory price ribbon — shown whenever the
+    // tile is tappable (a re-ask also costs a Peón unless PRO).
+    costRibbon: askCoachReachable,
   };
 
   let tiles: Tile[];
@@ -250,6 +267,9 @@ export function GameActionsBar({
                 >
                   {tile.priceRibbon}
                 </span>
+              )}
+              {tile.costRibbon && (
+                <CoachCostRibbon variant="tile" proActive={!!proActive} />
               )}
               <picture className="coach-viewer__tile-icon">
                 <source srcSet={icon.avif} type="image/avif" />

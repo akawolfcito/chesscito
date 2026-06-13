@@ -54,7 +54,7 @@ describe("GameActionsBar", () => {
     expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /shareTrophy/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /viewOnCeloscan/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^askCoach$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^askCoachWin$/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^playAgain$/ })).toBeInTheDocument();
   });
 
@@ -263,5 +263,54 @@ describe("GameActionsBar", () => {
       />,
     );
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  // Plan 3 — outcome-specific Ask Coach invitation (pre-analysis).
+  it("uses outcome-specific Ask Coach copy per result before any analysis", () => {
+    const { rerender } = render(<GameActionsBar {...baseProps} result="win" />);
+    expect(screen.getByRole("button", { name: /^askCoachWin$/ })).toBeInTheDocument();
+    rerender(<GameActionsBar {...baseProps} result="lose" />);
+    expect(screen.getByRole("button", { name: /^askCoachLose$/ })).toBeInTheDocument();
+    rerender(<GameActionsBar {...baseProps} result="draw" />);
+    expect(screen.getByRole("button", { name: /^askCoachDraw$/ })).toBeInTheDocument();
+    rerender(<GameActionsBar {...baseProps} result="resigned" />);
+    // Resigned reuses the lose copy.
+    expect(screen.getByRole("button", { name: /^askCoachLose$/ })).toBeInTheDocument();
+  });
+
+  it("falls back to askCoachAgain once analysis exists (not outcome copy)", () => {
+    render(<GameActionsBar {...baseProps} result="win" hasAnalysis />);
+    expect(screen.getByRole("button", { name: /^askCoachAgain$/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /askCoachWin/ })).toBeNull();
+  });
+
+  // Plan 3 — cost ribbon on the Ask Coach tile.
+  it("renders the Peón cost ribbon on the reachable Ask Coach tile (free)", () => {
+    const { container } = render(<GameActionsBar {...baseProps} result="lose" />);
+    const ribbon = container.querySelector(".coach-cost-ribbon--tile.coach-cost-ribbon--peon");
+    expect(ribbon).toBeTruthy();
+  });
+
+  it("renders the PRO cost ribbon when proActive", () => {
+    const { container } = render(
+      <GameActionsBar {...baseProps} result="lose" proActive />,
+    );
+    expect(
+      container.querySelector(".coach-cost-ribbon--tile.coach-cost-ribbon--pro"),
+    ).toBeTruthy();
+  });
+
+  it("hides the cost ribbon while Ask Coach is pending", () => {
+    const { container } = render(
+      <GameActionsBar {...baseProps} result="lose" askCoachPending />,
+    );
+    expect(container.querySelector(".coach-cost-ribbon")).toBeNull();
+  });
+
+  it("renders no cost ribbon when the match is too short (Ask Coach absent)", () => {
+    const { container } = render(
+      <GameActionsBar {...baseProps} totalMoves={0} />,
+    );
+    expect(container.querySelector(".coach-cost-ribbon")).toBeNull();
   });
 });
