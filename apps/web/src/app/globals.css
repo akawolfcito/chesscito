@@ -1078,6 +1078,86 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Plan 3 (2026-06-13) — coach cost ribbon. Same gold-pill language as
+     the treasure price ribbon, reused on the Ask Coach CTA so the coach
+     cost (Peón) reads as a sibling of the Save Victory price. PRO swaps
+     to a crown "PRO" (covered). Two placements: corner on the full-width
+     arena buttons (--cta), centered above the icon on the viewer tile
+     (--tile). Decorative (aria-hidden in markup). */
+  .coach-cost-ribbon {
+    position: absolute;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+    border: 1px solid rgba(120, 53, 15, 0.85);
+    color: #3f2208;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(120, 53, 15, 0.3),
+      0 3px 6px rgba(120, 53, 15, 0.4);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* PRO variant — warm gold leaf gradient + crown, signals "covered". */
+  .coach-cost-ribbon--pro {
+    background: linear-gradient(180deg, #ffe9a3 0%, #f6c945 55%, #d99b1e 100%);
+    border-color: rgba(120, 53, 15, 0.9);
+  }
+
+  .coach-cost-ribbon__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+
+  .coach-cost-ribbon__icon img,
+  .coach-cost-ribbon__icon picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    -webkit-user-drag: none;
+  }
+
+  /* Corner placement on the full-width arena coach buttons. */
+  .coach-cost-ribbon--cta {
+    top: -10px;
+    right: 8px;
+    padding: 4px 10px;
+    font-size: 0.74rem;
+  }
+
+  .coach-cost-ribbon--cta .coach-cost-ribbon__icon {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  /* Centered-above-icon placement on the viewer action tile. Matches the
+     Save Victory price ribbon offset so both paid tiles read alike. */
+  .coach-cost-ribbon--tile {
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 7px;
+    font-size: 0.65rem;
+    gap: 2px;
+  }
+
+  .coach-cost-ribbon--tile .coach-cost-ribbon__icon {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
   /* Sticker-style icon slot — 52px reserved width, scale 1.25 so the
      icon visually grows to ~65px and feels like it's sitting ON the
      pill rather than baked into the gradient. Mirrors the hub
