@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import type { ArenaStatus } from "@/lib/game/types";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
 import { TxProgressSteps } from "@/components/redesign/tx-progress-steps";
 import { formatTime } from "@/lib/game/arena-utils";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
@@ -455,6 +456,7 @@ export function ArenaEndState({
                     <p className="arena-result-coach-body-text">{reviewBody}</p>
                     <CoachAnalysisCta
                       position="primary-on-lose"
+                      proActive={proActive}
                       onClick={() => {
                         if (isCoachPrimaryVariant && endgameContext) {
                           track("monetization.coach_review_tap", {
@@ -570,6 +572,7 @@ export function CoachAnalysisCta({
   ariaBusy,
   tooShort,
   label: labelOverride,
+  proActive = false,
 }: {
   position: "primary-on-lose" | "secondary-on-win";
   onClick: () => void;
@@ -580,6 +583,9 @@ export function CoachAnalysisCta({
    *  to surface a context-specific copy on the loss/resign popup
    *  without affecting the shared win-secondary slot. */
   label?: string;
+  /** Plan 3 — drives the coach cost ribbon (crown "PRO" vs "♟ 1") on the
+   *  primary-on-lose CTA. */
+  proActive?: boolean;
 }) {
   const t = useTranslations("COACH_ENTRY_COPY");
   const describedById = t("victorySecondaryDescribedById");
@@ -605,6 +611,7 @@ export function CoachAnalysisCta({
       >
         <CandyIcon name="coach" className="h-5 w-5 shrink-0" />
         <span className="arena-result-primary-cta-label">{label}</span>
+        <CoachCostRibbon proActive={proActive} variant="cta" />
       </button>
     );
   }
