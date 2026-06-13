@@ -86,17 +86,19 @@ const TILE_ICON: Record<TileKind, { avif: string; webp: string; png: string }> =
  * State-driven CTA tiles for the coach viewer (Cluster C, M3).
  *
  * Replaces the previous primary-secondary-tertiary stack with a flat
- * row of 1–3 equal-width tiles (icon canvas + label below). Save
+ * row of 1–4 equal-width tiles (icon canvas + label below). Save
  * Victory keeps its corner price ribbon so the cost signal survives
  * the visual flatten. Tertiaries (Back to Hub, View on Celoscan) stay
  * as text links underneath the row.
  *
  * Per-state slate:
  *   - too-short          → [Play Again]                 + Back to Hub
- *   - replay-errored     → [Play Again, Ask Coach(off)] + Back to Hub
  *   - win (any)          → [Play Again, Save Victory($), Share, Ask Coach]
  *                          + View on Celoscan (only when minted)
+ *                          (a win with a replay error keeps these 4 tiles,
+ *                           with Ask Coach disabled)
  *   - loss/draw/resigned → [Play Again, Share, Ask Coach] + Back to Hub
+ *     (non-win replay-errored also lands here, Ask Coach disabled)
  */
 export function GameActionsBar({
   result,
