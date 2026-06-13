@@ -1,19 +1,23 @@
-# Handoff — P4 CSS split SHIPPED TO MAIN (2026-06-12, sesión 2)
+# Handoff — P4 CSS split SHIPPED TO PROD (2026-06-12, sesión 2)
 
 ## Resume entry point
 
-> **On "continuemos": paso 0 = promote P4 a prod.** `main` = `8d8b2d15` tiene el CSS
-> split mergeado y validado (suite + VR + E2E + preview smoke), pero `production` sigue
-> en `05bb1a5a`. Antes del promote: founder device smoke en MiniPay del preview
-> (`chesscito-jn7tejp2m-goodwolf.vercel.app` — hub/arena/exercises/coach, mirando
-> estilos rotos, no funcionalidad). Tras promote: PSI oficial de las 3 rutas.
-> Luego elegir siguiente lever (ver §Next levers).
+> **On "continuemos": P4 YA está en prod.** Paso 0 = **PSI oficial 3 rutas**
+> (hub/arena/exercises) en pagespeed.web.dev para medir el delta vs baseline
+> (hub 87 / arena 86 / exercises 81) — la cuota de la API PSI se agotó el 2026-06-12,
+> correrla cuando resetee o pedir al founder. Paso 1 = **registrar los "detalles de
+> flujo a pulir"** que el founder vio en el smoke de preview (PENDIENTE de detallar —
+> ver §Open questions). Luego elegir siguiente lever (ver §Next levers).
 
 ## State
 
-- `main` = `8d8b2d15` (P4 CSS split + docs). `production` = `05bb1a5a` (P2, pre-split).
+- `production` = `main` = `83e4f6c7` (P4 CSS split SHIPPED). Era `05bb1a5a` (P2).
+- FF promote limpio (production era ancestro de main); 5 commits promovidos.
+- Prod deploy `chesscito-aoqy1lj01` Ready; **www smoke PASSED**: cada ruta sirve
+  core + su CSS de superficie, ninguna arrastra las otras 3; landing solo core.
+- Founder validó preview `preview.chesscito.com` en device: "se ve bastante bien",
+  detalles menores que atribuye a flujos (no al split) — pendientes de detallar.
 - Branch `feat/p4-css-split` mergeada FF y borrada.
-- Preview validado: `https://chesscito-jn7tejp2m-goodwolf.vercel.app` (Ready, smoke PASSED).
 
 ## What shipped (2 commits)
 
@@ -59,7 +63,7 @@ reproducible desde el audit doc.
 
 ## Next levers (en orden de valor)
 
-1. **Promote P4 a prod** + PSI oficial 3 rutas (paso 0 arriba).
+1. **PSI oficial 3 rutas** post-promote (paso 0 arriba) + registrar detalles de flujo.
 2. Responsive images portal/avatar (~31KB): re-check `sizes`/`srcset` una vez antes de
    cerrar permanente (prior triage dijo DPR false-positive).
 3. Lazy wagmi provider (chunk 3620, 42KB unused en first load): spec propia si los
