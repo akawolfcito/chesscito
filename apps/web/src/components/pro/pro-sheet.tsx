@@ -204,7 +204,11 @@ export function ProSheet(props: ProSheetProps) {
         hideClose
         title={label}
         description={t("tagline")}
-        className="flex max-h-[95dvh] flex-col overflow-visible rounded-none border-0 bg-transparent p-0 pb-0 shadow-none"
+        /* border-t-0 suppresses the border-t the side="bottom" variant adds —
+           it tints a stray blue-grey --border line over the transparent PRO
+           panel; tailwind-merge keeps border-0 and border-t in separate groups
+           so border-0 alone does not cancel it. */
+        className="flex max-h-[95dvh] flex-col overflow-visible rounded-none border-0 border-t-0 bg-transparent p-0 pb-0 shadow-none"
       >
         {/* Candy hero panel — bottom-sheet container becomes a
          *  transparent shell so the panel-suscription-pro.png asset
