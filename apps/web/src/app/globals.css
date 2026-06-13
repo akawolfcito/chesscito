@@ -11313,6 +11313,10 @@ button.hud-resource-chip:active:not(:disabled) {
   --coach-viewer-tile-count: 3;
 }
 
+.coach-viewer__tiles-row[data-count="4"] {
+  --coach-viewer-tile-count: 4;
+}
+
 .coach-viewer__tile {
   /* Sally pass 4 — purple canvas dropped. The crafted icon assets
    * carry their own painted bgs (refresh shield, save disk, coach

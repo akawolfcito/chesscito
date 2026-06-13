@@ -1732,6 +1732,7 @@ export const COACH_VIEWER_COPY = {
   // distinct from the legacy `share` key (which arena re-uses) so
   // the tile copy can evolve without coupling.
   shareTrophy: "Share trophy",
+  share: "Share",
   // 2026-05-30: pending banner shown inline while the coach hook is
   // running an analysis request. Replaces the silent wait that left
   // the visor visually identical for ~20-30s (cf. project_coach_viewer_cluster_c).
