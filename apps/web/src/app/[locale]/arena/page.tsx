@@ -43,6 +43,7 @@ import { CoachPaywall } from "@/components/coach/coach-paywall";
 import { LuzOnboardingPanel } from "@/components/coach/luz-onboarding-panel";
 import { gameStatusToOnboardingOutcome } from "@/lib/coach/onboarding-outcome";
 import { routeCoachPreviewCta } from "@/lib/coach/coach-preview-route";
+import { shouldRedirectToCoachViewer } from "@/lib/coach/coach-redirect";
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { track } from "@/lib/telemetry";
@@ -725,32 +726,26 @@ function ArenaPageInner() {
    * — and the inline path was unreachable by URL, so refreshing or
    * sharing the analysis lost it entirely.
    *
-   * When the coach phase resolves to a renderable result (`full` or
-   * `fallback` quick review) AND the game is already persisted to
-   * Redis with a known wallet, push to /coach/[gameId]. The persisted
-   * `gameRecord.analysis` is now populated by `getGameRecord()` so
-   * the destination surface paints the same content the inline block
-   * would have rendered. The inline blocks below stay as a degraded
-   * fallback for edge cases where persistence fails or the user has
-   * no connected wallet (guest play). */
+   * Plan 2 (Render-A, 2026-06-13): redirect ONLY on a persisted `full`
+   * result (phase "result"). `/api/coach/analyze` persists the analysis
+   * key before returning `status:"ready"`, so the destination viewer cold-
+   * loads the same content via `getGameRecord()`. The client-only quick
+   * review (phase "fallback") is NEVER persisted — redirecting on it landed
+   * the user on an empty Match Review (founder bug). Fallback now renders
+   * inline in the arena popup below; only `result` navigates. The inline
+   * blocks also cover persistence failure and guest play (no wallet). */
   const arenaCoachRedirectFiredRef = useRef(false);
   useEffect(() => {
     if (!ENABLE_COACH) return;
     if (arenaCoachRedirectFiredRef.current) return;
     if (!address || !persistedGameId) return;
-    const renderable =
-      (coach.phase === "result" &&
-        coach.response &&
-        coach.response.kind === "full") ||
-      (coach.phase === "fallback" && coach.fallbackResponse);
-    if (!renderable) return;
+    if (!shouldRedirectToCoachViewer(coach.phase, coach.response)) return;
     arenaCoachRedirectFiredRef.current = true;
     track("arena_coach_redirect", { phase: coach.phase, gameId: persistedGameId });
     router.push(`/coach/${persistedGameId}?wallet=${address}`);
   }, [
     coach.phase,
     coach.response,
-    coach.fallbackResponse,
     address,
     persistedGameId,
     router,
