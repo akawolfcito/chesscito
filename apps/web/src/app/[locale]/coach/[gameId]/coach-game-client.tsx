@@ -335,27 +335,6 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     mint.data.tokenId != null
       ? String(mint.data.tokenId)
       : (gameRecord.mintedTokenId ?? null);
-  // Build a match card URL from gameRecord fields — mirrors VictoryCelebration's
-  // cardParams pattern exactly. Used as the last-resort card fallback when the
-  // game was never minted (no mint receipt, no persisted shareCardUrl).
-  const matchCardUrl = (() => {
-    const p = new URLSearchParams({
-      moves: String(gameRecord.totalMoves),
-      time: String(gameRecord.elapsedMs),
-      diff: gameRecord.difficulty,
-      result:
-        gameRecord.result === "win"
-          ? "win"
-          : gameRecord.result === "draw"
-            ? "draw"
-            : "loss",
-    });
-    if (gameRecord.startingFen) p.set("fen", gameRecord.startingFen);
-    if (safePlayerColor) p.set("color", safePlayerColor);
-    return `/api/og/match?${p.toString()}`;
-  })();
-  const shareCardEffective =
-    mint.data.shareCardUrl ?? gameRecord.shareCardUrl ?? matchCardUrl;
   const shareLinkEffective =
     mint.data.shareLinkUrl ?? gameRecord.shareLinkUrl ?? SHARE_COPY.url;
 
