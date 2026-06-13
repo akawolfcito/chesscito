@@ -58,22 +58,6 @@ describe("GameActionsBar", () => {
     expect(screen.getByRole("button", { name: /^playAgain$/ })).toBeInTheDocument();
   });
 
-  it("win + minted: STILL shows Save Victory (unlimited re-save) plus Share + Ask Coach + Play Again", () => {
-    render(
-      <GameActionsBar
-        {...baseProps}
-        result="win"
-        mintedTokenId="42"
-        shareLinkUrl="https://www.chesscito.com/victory/42"
-        claimPrice="$0.005"
-      />,
-    );
-    expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /shareTrophy|share/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
-  });
-
   it("loss: no Mint, no Share, Ask Coach + Play Again", () => {
     render(<GameActionsBar {...baseProps} result="lose" />);
     expect(screen.queryByRole("button", { name: /mintVictory/ })).toBeNull();

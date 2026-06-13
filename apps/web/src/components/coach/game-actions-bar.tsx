@@ -94,9 +94,8 @@ const TILE_ICON: Record<TileKind, { avif: string; webp: string; png: string }> =
  * Per-state slate:
  *   - too-short          → [Play Again]                 + Back to Hub
  *   - replay-errored     → [Play Again, Ask Coach(off)] + Back to Hub
- *   - win + !claimed     → [Play Again, Save Victory($), Ask Coach]
- *   - win + claimed      → [Play Again, Share trophy, Ask Coach]
- *                                                       + View on Celoscan
+ *   - win (any)          → [Play Again, Save Victory($), Share, Ask Coach]
+ *                          + View on Celoscan (only when minted)
  *   - loss/draw/resigned → [Play Again, Ask Coach]      + Back to Hub
  */
 export function GameActionsBar({
