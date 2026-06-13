@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 
-import "@/styles/hub.css";
-
 /**
  * `/hub` is the kingdom launcher (the redesigned scaffold) — entry
  * point to PLAY (/arena), Practice pieces (/exercises), Trophies,

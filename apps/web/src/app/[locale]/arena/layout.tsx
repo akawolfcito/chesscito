@@ -1,7 +1,5 @@
 import { preload } from "react-dom";
 
-import "@/styles/arena.css";
-
 /**
  * Server layout for /arena. The page itself is a (fragile) client
  * component — see memory `arena-play-timer-fragility` — so resource

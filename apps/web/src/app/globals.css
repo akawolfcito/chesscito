@@ -4171,6 +4171,37 @@
 
 }
 
+.playhub-intro-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  /* Fallback for the half-second before splash-loading.png loads — cream
+     paper instead of dark slate, so a slow connection never flashes
+     dark between navigation and splash image (#103 sweep). */
+  background-color: var(--paper-bg, #f6e6b8);
+  background-image: image-set(url("/art/redesign/bg/splash-loading.avif") type("image/avif"),
+      url("/art/redesign/bg/splash-loading.webp") type("image/webp"),
+      url("/art/redesign/bg/splash-loading.png") type("image/png"));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 3rem);
+  gap: 0.5rem;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.playhub-intro-overlay.is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
 @keyframes confirm-countdown {
   from {
     transform: scaleX(1);
@@ -4198,6 +4229,19 @@
   }
 }
 
+/* ── Modal exit animation — shared across all custom overlays ── */
+@keyframes modal-exit {
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.modal-exiting {
+  animation: modal-exit 250ms ease-out forwards;
+  pointer-events: none;
+}
+
 @keyframes hero-plop {
   0% {
     transform: scale(0.95);
@@ -4217,28 +4261,24 @@
    ═══════════════════════════════════════════════════ */
 
 /* ── 1. Dock Icons (persistent navigation) ── */
-
 .dock-treat-base {
   filter: var(--dock-treat-warm);
   box-shadow: var(--treat-carved-lo);
 }
 
 /* Reserved — consumed when route-aware dock state is wired */
-
 .dock-treat-active {
   filter: sepia(0.10) brightness(1.0) saturate(1.15) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.5));
   box-shadow: var(--treat-carved-hi), var(--treat-carved-lo), var(--treat-depth-outer);
 }
 
 /* Reserved — consumed when interaction states are wired */
-
 .dock-treat-pressed {
   filter: brightness(0.65) saturate(0.6);
   box-shadow: var(--treat-carved-lo);
 }
 
 /* ── 3. Badge Images ── */
-
 .badge-treat-owned {
   filter: var(--treat-warm-tint);
   box-shadow: var(--treat-carved-hi), var(--treat-carved-lo), var(--treat-warm-glow);
@@ -4264,7 +4304,6 @@
    Color filters + drop-shadow defined together in Task 6. */
 
 /* ── 5. Decorative Frames — aligned to panel tier material ── */
-
 .frame-structural {
   filter: var(--treat-neutral-tint);
   /* panel-base material language */
@@ -4286,7 +4325,6 @@
 /* ═══════════════════════════════════════════════════
    Reduced Motion — disable scale transitions
    ═══════════════════════════════════════════════════ */
-
 @media (prefers-reduced-motion: reduce) {
 
   /* Disable the "float up" lift for users who opted out of motion.
@@ -4307,11 +4345,190 @@
   }
 }
 
-/* ── Arena action bar (below board) ── */
+.wooden-banner {
+  display: block;
+  line-height: 0;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
+}
 
+.wooden-banner-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.wooden-banner-chess {
+  width: min(100%, 18rem);
+}
+
+.wooden-banner-your-turn {
+  width: min(100%, 18rem);
+}
+
+.wooden-banner-vs {
+  width: 3rem;
+}
+
+.player-card {
+  display: block;
+  line-height: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.player-card-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.player-card-you,
+.player-card-bot {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.player-card.player-card--new-icon {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.player-card--new-icon .player-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Amber glow on the player avatar so "you" reads as protagonist,
+   not symmetric with the enemy avatar. */
+.player-card-you {
+  filter:
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) drop-shadow(0 0 8px rgba(251, 191, 36, 0.35));
+}
+
+/* PRO ornament frame around player + bot avatars in /arena. Marco
+ * asset is roughly square with a decorative gem + leaves below the
+ * inner cutout — composed as two layers:
+ *   1. `.player-card-pro-frame`: the marco itself, scaled 145% of the
+ *      avatar container so its inner cutout is wider than the avatar.
+ *   2. `.player-card-img` (when parent has `.player-card--pro`):
+ *      scaled down so the avatar sits comfortably inside the cutout
+ *      without its edges clipping against the frame's interior curve.
+ * Drop shadow already applied to `.player-card` carries through. */
+.player-card--pro {
+  position: relative;
+}
+
+.player-card-pro-frame {
+  position: absolute;
+  /* Marco is sized so its interior cutout (~60% of outer w) is
+   * slightly LARGER than the avatar at its target scale (0.88 →
+   * ~88% of parent). That gives the avatar a hairline of breathing
+   * room inside the frame without the avatar's own square edges
+   * leaking past the cutout's curved border. */
+  width: 152%;
+  height: auto;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  /* The marco's interior cutout sits at ~42% of the asset's height
+   * (above the bottom gem/leaves decoration). With width 152% +
+   * native ~1:1.05 aspect → marco height ≈ 160% of parent. To align
+   * the cutout's center with the avatar's center (50% of parent),
+   * marco_top = avatar_center_y − 0.42 × marco_height
+   *           = 50% − 0.42 × 160% = −17% of parent_h.
+   * Expressed as `top: 50%` anchor + translate(-Y), we need
+   *   marco_top = 50% − Y × marco_height
+   * solving for Y: Y = (50% − (−17%)) / 160% ≈ 42%. */
+  transform: translate(-50%, -42%);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* The avatar is wrapped, not replaced — shrink it just enough so its
+ * square edges (the rounded blue/red badge art) sit inside the marco's
+ * interior cutout. Default transform-origin (50% 50%) keeps the avatar's
+ * center pinned to the parent's center, which now matches the marco's
+ * cutout center (computed in the rule above). */
+.player-card--pro .player-card-img {
+  transform: scale(0.88);
+}
+
+.arena-hud-chess-banner {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 14rem;
+  margin-inline: auto;
+}
+
+.arena-hud-matchup {
+  min-height: 0;
+}
+
+/* ── Arena action bar (below board) ── */
 .arena-action-bar {
   /* Keep the row compact so it doesn't eat into board real estate */
   min-height: 4.75rem;
+}
+
+/* Resign + Undo — icon dominant, label below. The carved-art assets
+ * (`resign-game.png`, `undo-move.png`) carry the visual weight on
+ * their own; the previous circular plate read as noise around them.
+ * Pressed feedback is a subtle scale-down so the icon is the only
+ * thing the user looks at. */
+.arena-action-button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.arena-action-button:active:not(:disabled) {
+  transform: scale(0.93);
+}
+
+.arena-action-button:disabled {
+  opacity: 0.4;
+  filter: grayscale(0.6);
+  cursor: not-allowed;
+}
+
+.arena-action-button-icon {
+  display: block;
+  width: 3rem;
+  height: 3rem;
+  /* Shadow stripped 2026-05-25 — the carved icons already carry
+   * their own painted shadows in the asset, the extra CSS drop-
+   * shadows on top read as a halo rather than depth. */
+}
+
+.arena-action-button-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.arena-action-button-label {
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.45),
+    0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 .arena-action-pill {
@@ -4380,12 +4597,30 @@
   transform-origin: left;
 }
 
+/* ── Arena HUD controls (pure CSS) ── */
+.arena-hud-btn,
+.arena-hud-chip,
+/* Legacy green `.arena-difficulty-pill` background / `.arena-hud-btn` /
+ * `.arena-hud-chip` blocks retired 2026-05-25 — the difficulty chip
+ * now reuses `.candy-tray-pill + .hub-hud-pill +
+ * .hub-hud-pill--anchored-left` so it matches the Hub trophy/connect
+ * chips + the Arena timer (refactor pass 009c8789). Only the
+ * label + trailing-check helpers survive because the warm-brown text
+ * + check tint are difficulty-specific. */
+
+.arena-difficulty-pill-label {
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 0.85rem;
+  font-weight: 900;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
 .arena-action-banner {
   width: min(100%, 11rem);
 }
 
 /* ── Candy frame — sculpted wooden/scroll surface for peek cards + CTAs ── */
-
 .candy-frame {
   background: linear-gradient(180deg, var(--candy-frame-from, #f6cf63) 0%, var(--candy-frame-to, #d4a836) 100%);
   border: 2px solid var(--candy-frame-border, rgba(110, 65, 15, 0.55));
@@ -4410,7 +4645,6 @@
 }
 
 /* Variant: amber (warm peek card) */
-
 .candy-frame-amber {
   --candy-frame-from: #f6cf63;
   --candy-frame-to: #d4a836;
@@ -4420,7 +4654,6 @@
 }
 
 /* Variant: gold (claim CTA — brighter, more saturated) */
-
 .candy-frame-gold {
   --candy-frame-from: #ffe066;
   --candy-frame-to: #f6a400;
@@ -4434,7 +4667,6 @@
    Tokens at :root §"Shell Cohesion". Atmosphere=hub uses sheet-bg-hub
    painting (modal-shell sibling); atmosphere=amber/gold composes
    .candy-frame-{tone} for wooden-scroll painting. */
-
 .candy-card {
   position: relative;
   display: flex;
@@ -4459,7 +4691,6 @@
 
 /* atmosphere=hub paints border + shadow itself.
    atmosphere=amber/gold inherits .candy-frame's painting. */
-
 .candy-card[data-atmosphere="hub"] {
   border: var(--candy-card-border-resting);
   box-shadow: var(--candy-card-shadow-resting);
@@ -4468,7 +4699,6 @@
 /* Neutralize .candy-frame:active press animation when the frame is
    composed into a presentational <CandyCard> container (no onPress).
    Spec: M2 v1.2 AC10 + redteam-v2 P0-A. */
-
 .candy-card.candy-frame:active:not(:disabled) {
   transform: none;
   box-shadow:
@@ -4543,7 +4773,6 @@
    _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §1.
    Tokens consumed: --gold-leaf-base, --gold-leaf-highlight,
    --gold-leaf-shadow, --kingdom-warm-glow, --kingdom-deep-shadow. */
-
 .kingdom-anchor {
   position: relative;
   display: block;
@@ -4559,6 +4788,159 @@
     0 12px 32px var(--kingdom-deep-shadow);
 }
 
+.kingdom-anchor--playhub::after {
+  content: none;
+}
+
+/* Playhub variant — the portal asset already carries its own carved-wood
+ * scroll frame inside the PNG. Stripping the CSS gold-leaf frame avoids
+ * the double-frame "poster taped on a wall" effect and lets the artwork
+ * sit cleanly on the kingdom backdrop. The warm-glow halo is moved from
+ * box-shadow (rectangular) to drop-shadow on the image (follows the
+ * scroll silhouette via alpha channel). */
+.kingdom-anchor--playhub {
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* Halo follows the carved-wood scroll silhouette via alpha channel.
+ * Safe to apply now that the parent's idle scale animation is gone
+ * — without per-frame transforms the filter is rasterised once and
+ * cached, no paint storm. */
+.kingdom-anchor--playhub .kingdom-anchor-img {
+  filter:
+    drop-shadow(0 0 18px var(--kingdom-warm-glow)) drop-shadow(0 12px 22px var(--kingdom-deep-shadow));
+}
+
+/* Tagline overlay rendered inside the playhub portal asset, anchored
+ * to the bottom of the carved-wood frame where the asset reserves a
+ * blank scroll band for copy. Two-line stack — lead-in on top in a
+ * lighter weight, highlight closer bolded below. The percentages
+ * match the visible scroll band in `chesscito-normal-portal.png` /
+ * `chesscito-pro-portal.png` (both share the same frame geometry). */
+.kingdom-anchor--playhub .kingdom-anchor-tagline {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 6%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  text-align: center;
+  pointer-events: none;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.65);
+}
+
+/* Lead — explicit `font-weight: 400` so it reads as regular against
+ * the bold closer. Fredoka loads 400/500/600/700 weights; the
+ * fallback system-ui inherits its own regular cut so the contrast
+ * survives even if the variable font hasn't loaded yet. */
+.kingdom-anchor-tagline-lead {
+  font-family: var(--font-fredoka), system-ui, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.kingdom-anchor-tagline-highlight {
+  font-family: var(--font-fredoka), system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.kingdom-anchor-picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Avatar overlay rendered on top of the playhub portal background.
+   Centered both axes; sized to ~64% of the portal width so the figure
+   sits inside the framed area without crowding the tagline band at
+   the bottom. Pointer-events off — the anchor is decorative; sibling
+   CTAs capture taps. */
+.kingdom-anchor-avatar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 64%;
+  transform: translate(-50%, -40%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.kingdom-anchor-avatar img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 10px rgba(20, 12, 5, 0.4));
+}
+
+.kingdom-anchor-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Arena-preview variant — square chess board centered in the wider 1.3:1
+   frame, overlaid with the standard starting position. The frame stays
+   gold-leafed; only the inner picture is letterboxed (object-fit: contain). */
+.kingdom-anchor--arena-preview .kingdom-anchor-img {
+  object-fit: contain;
+}
+
+.kingdom-anchor-board-frame {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kingdom-anchor-board-inner {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.kingdom-anchor-board-inner>.kingdom-anchor-picture {
+  position: absolute;
+  inset: 0;
+}
+
+.kingdom-anchor-board-pieces {
+  position: absolute;
+  inset: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.kingdom-anchor-board-piece {
+  position: absolute;
+  width: 12.5%;
+  height: 12.5%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kingdom-anchor-board-piece img {
+  display: block;
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+
 /* Ambient idle scale animation removed — combined with the
  * filter:drop-shadow on the inner <img> below it caused a per-frame
  * re-rasterisation paint storm on a 669×1040 PNG. Static anchor
@@ -4569,7 +4951,6 @@
    _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §2.
    Tokens consumed: --hud-chip-elevation, --gold-leaf-base,
    --gold-leaf-highlight, --gold-leaf-shadow, --kingdom-warm-glow. */
-
 .hud-resource-chip {
   display: inline-flex;
   align-items: center;
@@ -4622,7 +5003,6 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Tone modifier: trophy — default Adventure cream pill (no override). */
 
 /* Tone modifier: PRO — amber gradient + gold-shadow border. */
-
 .hud-resource-chip--pro {
   min-width: 118px;
   justify-content: center;
@@ -4654,7 +5034,6 @@ button.hud-resource-chip:active:not(:disabled) {
    pill band on purpose; the chip's outer height stays locked. The
    override is more specific than the legacy .hud-resource-chip--compact
    rule so the 15px squashed-icon size never wins. */
-
 .hud-resource-chip--pro .hud-resource-chip-icon,
 .hud-resource-chip--pro.hud-resource-chip--compact .hud-resource-chip-icon {
   width: 2.2rem;
@@ -4668,7 +5047,6 @@ button.hud-resource-chip:active:not(:disabled) {
    .candy-tray-pill so the /exercises trailing slot reads as a punchy
    accent (not a peer). The purple palette + warm-gold text stay as
    PRO-specific identity. */
-
 .hud-resource-chip--pro.hud-resource-chip--compact {
   min-height: 28px;
   padding: 2px 10px 2px 4px;
@@ -4682,7 +5060,6 @@ button.hud-resource-chip:active:not(:disabled) {
    and PRO trays. Same shape vocabulary as ProActiveBadge so the two
    surfaces stay visually consistent; data-tone swaps the gradient
    to differentiate connected-chain vs membership state. */
-
 .account-status-pill {
   display: inline-flex;
   align-items: center;
@@ -4719,12 +5096,73 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(255, 245, 215, 0.85);
 }
 
+/* ── Account sheet tile grid ──
+   Replaces the legacy vertical row stack with a 3-column tile grid.
+   Each tile composes the cream secondary-cta tokens so the cards
+   read as siblings of `.arena-result-secondary-action`. Icon top,
+   bold label center, status pill (or LocaleSwitcher) bottom. */
+.account-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.account-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  min-height: 118px;
+  padding: 10px 6px 8px;
+  background: var(--cta-secondary-cream-grad);
+  border: 1px solid var(--cta-secondary-cream-border);
+  border-radius: 14px;
+  box-shadow: var(--cta-secondary-cream-bevel);
+  color: var(--cta-secondary-cream-color);
+  text-shadow: var(--cta-secondary-cream-text-shadow);
+  text-align: center;
+  cursor: pointer;
+  transition: transform var(--duration-snap) ease;
+}
+
+.account-tile:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.account-tile[aria-disabled="true"],
+.account-tile.is-static {
+  cursor: default;
+}
+
+.account-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+}
+
+.account-tile-icon img,
+.account-tile-icon picture {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.account-tile-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
 /* ── Account sheet Manage PRO CTA ──
    Purple "PRO" identity carried into the primary CTA inside the
    Account sheet. Mirrors the .hud-resource-chip--pro palette + the
    corona-pro icon used by the top-row PRO chip, so the user reads a
    continuous PRO surface from chip to sheet to CTA. */
-
 .account-manage-pro-cta {
   position: relative;
   display: inline-flex;
@@ -4776,7 +5214,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* Size modifier: compact — secondary HUD row chips. */
-
 .hud-resource-chip--compact {
   gap: 5px;
   min-width: 62px;
@@ -4791,9 +5228,58 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* Pulse — 240ms warm flash on value change. */
-
 .hud-resource-chip.is-pulse {
   animation: hud-resource-chip-pulse 240ms ease-out;
+}
+
+/* Arena timer chip — purpose-built variant for the per-second elapsed
+   timer in arena-hud. Mirrors the amber HudResourceChip aesthetic but
+   never pulses (would flicker every tick) and reserves a fixed-width
+   slot for the value via tabular-nums so the chip doesn't jitter as
+   digits change. The clock icon is bumped up (36px) and positioned
+   absolutely on the left edge so it reads as a floating badge attached
+   to the pill instead of an inline glyph competing with the digits. */
+/* Legacy `.arena-timer-chip` + `.arena-timer-chip-icon` blocks were
+ * retired 2026-05-25 — the Arena timer now reuses
+ * `.candy-tray-pill + .hub-hud-pill + .hub-hud-pill--anchored-left`
+ * so the visual matches the Hub trophy/connect chips. Only the
+ * value-span helper survives because the monospace + tabular-nums
+ * rule is timer-specific (it would be wrong on the trophy count). */
+/* Inline secondary icon for the arena timer chip — used by the
+   shield slot when both time + shield render in the same pill.
+   MUST NOT use .candy-tray-pill-icon--floating; that class is
+   re-anchored to position:absolute left:-1.3rem inside
+   .hub-hud-pill--anchored-left, which would stack the shield ON
+   TOP of the time icon (user-reported bug 2026-06-01: "icon +
+   text | text" — shield invisible because behind clock). */
+.arena-timer-chip-inline-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: -0.3rem 0;
+  filter: drop-shadow(0 1px 2px rgba(110, 65, 15, 0.35));
+}
+
+.arena-timer-chip-inline-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.arena-timer-chip-value {
+  display: inline-block;
+  /* Monospace stack — guarantees fixed digit width even on fonts that
+     don't honour `tabular-nums`, so the chip stays rock-solid as
+     seconds tick (1s and 7s otherwise had visibly different advances
+     in the project's display fonts). */
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 @keyframes hud-resource-chip-pulse {
@@ -4828,7 +5314,6 @@ button.hud-resource-chip:active:not(:disabled) {
    "shield used" when the shields chip decrements (spec section 3.5).
    Static sprite-swap analogue until the damaged-shield art lands.
    Caller opts in per chip via the `pulseDamageOnDecrement` prop. */
-
 .hud-resource-chip.is-pulse-damage {
   animation: hud-resource-chip-pulse-damage 250ms ease-out;
 }
@@ -4864,8 +5349,271 @@ button.hud-resource-chip:active:not(:disabled) {
   }
 }
 
-/* Overflow indicator — single ellipsis under the visible tiles. */
+/* ── HUD Secondary Row — conditional power-user resource row ──
+   Spec: docs/product/visual-language-minimum-2026-05-03.md §4.7 +
+   _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §3.
+   Renders ONLY when ≥ 1 chip has content; the data-driven collapse keeps
+   new-player Hubs uncluttered. Layout is a horizontal flex of compact
+   <HudResourceChip> instances. */
+.hud-secondary-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
 
+/* ── Reward Column — left-edge reward stack (Adventure atmosphere) ──
+   Spec: docs/product/visual-language-minimum-2026-05-03.md §4.8 +
+   _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §4.
+   Vertical stack of up to 3 tiles + overflow indicator. Tiles surface
+   claimable badges / Arena victories / future PRO daily challenges. */
+.reward-column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 22px 5px 14px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(33, 18, 6, 0.62) 0%, rgba(20, 11, 4, 0.55) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 240, 200, 0.08),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.45),
+    0 4px 10px rgba(0, 0, 0, 0.28);
+}
+
+/* Connector dot between consecutive piece tiles. Sits inside the gap
+ * (gap = 14px, dot = 6px → top: -10px centers it). The last tile
+ * never gets a dot below it because the dot is owned by its
+ * successor — no successor, no dot. */
+.reward-column>.reward-tile {
+  position: relative;
+  z-index: 1;
+}
+
+.reward-column>.reward-tile+.reward-tile::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #fff6c2 0 30%, #f0c447 60%, #a47410 100%);
+  box-shadow:
+    0 0 6px rgba(255, 216, 120, 0.7),
+    inset 0 0 2px rgba(80, 50, 10, 0.35);
+  transform: translateX(-50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+
+.reward-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  padding: 6px 7px 7px;
+  border-radius: 14px;
+  border: 0;
+  background: linear-gradient(180deg, #fbd64a 0%, #f5a623 60%, #d97f0a 100%);
+  box-shadow: none;
+  color: rgba(50, 25, 5, 0.95);
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 241, 169, 0.74);
+  cursor: pointer;
+  transition: transform var(--duration-snap), box-shadow var(--duration-snap);
+}
+
+.reward-tile:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.reward-tile.is-active-piece {
+  box-shadow: none;
+}
+
+.reward-tile-label {
+  display: block;
+  order: 2;
+  width: 100%;
+  min-height: 1rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.reward-tile-piece {
+  order: 1;
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 38px;
+  height: 42px;
+  align-self: center;
+  margin: -5px auto 2px;
+  filter: drop-shadow(0 4px 2px rgba(61, 37, 7, 0.35));
+}
+
+.reward-tile-piece img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.reward-tile-piece--icon {
+  width: 33px;
+  height: 33px;
+  margin-top: 2px;
+}
+
+/* State: claimable — full opacity + pulsing notif badge. */
+.reward-tile.is-claimable .reward-tile-notif,
+.reward-tile-status {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 18px;
+  height: 18px;
+  z-index: 3;
+}
+
+.reward-tile.is-claimable .reward-tile-notif {
+  display: block;
+  object-fit: contain;
+  /* PNG is circular; clipping the box to a circle makes the
+   * pulse box-shadow follow the silhouette instead of the
+   * default rectangular bounding box. */
+  border-radius: 999px;
+  filter: drop-shadow(0 2px 2px rgba(78, 44, 5, 0.25));
+  animation: reward-tile-notif-pulse 1.6s ease-out infinite;
+}
+
+.reward-tile-status--claimed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes reward-tile-notif-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  60% {
+    transform: scale(1.18);
+    opacity: 0.85;
+  }
+}
+
+/* State: progress — same gold backplate, no badge, no lock. */
+
+/* State: locked — pure-CSS stone backplate. Flat gray gradient with a
+   subtle top highlight + bottom shade. No external bevel/drop shadow
+   per design ref (the tile reads as a sealed slab, not a 3D button). */
+.reward-tile.is-locked {
+  opacity: 1;
+  filter: none;
+  background: linear-gradient(180deg, #a8acb0 0%, #74787c 55%, #494c50 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -3px 0 rgba(40, 44, 48, 0.4);
+  color: #fff8e9;
+  text-shadow:
+    0 2px 0 rgba(35, 42, 45, 0.72),
+    0 0 5px rgba(20, 24, 27, 0.28);
+}
+
+.reward-tile.is-locked .reward-tile-piece {
+  filter:
+    grayscale(0.22) drop-shadow(0 4px 2px rgba(28, 31, 31, 0.34));
+}
+
+.reward-tile-lock {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 17px;
+  height: 17px;
+  z-index: 2;
+}
+
+/* Compact variant — opt-in via `<RewardColumn compact>`. Shrinks tiles
+   to 48×48 with mini-labels and a tighter rail gap. Lock / notif / status
+   badges scale down proportionally so the corner overlays stay readable
+   without spilling outside the smaller tile box. */
+.reward-column.is-compact {
+  gap: 8px;
+  padding: 14px 4px 10px;
+}
+
+.reward-column.is-compact>.reward-tile+.reward-tile::before {
+  top: -7px;
+  width: 5px;
+  height: 5px;
+}
+
+.reward-tile.is-compact {
+  width: 48px;
+  height: 48px;
+  padding: 4px 4px 5px;
+  border-radius: 13px;
+  font-size: 0.55rem;
+}
+
+.reward-tile.is-compact .reward-tile-label {
+  min-height: auto;
+  letter-spacing: 0;
+}
+
+.reward-tile.is-compact .reward-tile-piece {
+  width: 28px;
+  height: 30px;
+  margin: -3px auto 1px;
+}
+
+.reward-tile.is-compact .reward-tile-piece--icon {
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+}
+
+.reward-tile.is-compact.is-claimable .reward-tile-notif,
+.reward-tile.is-compact .reward-tile-status {
+  top: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+}
+
+.reward-tile.is-compact .reward-tile-lock {
+  top: 3px;
+  right: 3px;
+  width: 13px;
+  height: 13px;
+}
+
+/* Overflow indicator — single ellipsis under the visible tiles. */
 .reward-column-overflow {
   display: block;
   text-align: center;
@@ -4875,8 +5623,97 @@ button.hud-resource-chip:active:not(:disabled) {
   user-select: none;
 }
 
-/* ── Coach PRO Card — compact Hub training entrypoint ── */
+@media (prefers-reduced-motion: reduce) {
 
+  .reward-tile.is-claimable .reward-tile-notif {
+    animation: none;
+  }
+}
+
+/* ── Premium Slot — right-edge Training Pass affordance (Adventure) ──
+   Spec: docs/product/visual-language-minimum-2026-05-03.md §4.9 +
+   _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §5.
+   Tokens consumed: --gold-leaf-base, --gold-leaf-highlight,
+   --gold-leaf-shadow, --kingdom-warm-glow. The kicker copy is supplied
+   by the caller so the primitive stays decoupled from PRO_COPY during
+   the PRO Phase 0 baseline freeze. */
+.premium-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 78px;
+  min-height: 94px;
+  padding: 26px 8px 10px;
+  border: 0;
+  border-radius: 16px;
+  background:
+    url("/art/scene-rooted/panel-pro.png") center / 100% 100% no-repeat,
+    linear-gradient(180deg, #7d47b5 0%, #4f268a 100%);
+  box-shadow:
+    0 8px 12px rgba(25, 28, 50, 0.24);
+  color: #ffe66e;
+  text-shadow:
+    0 2px 0 rgba(62, 28, 108, 0.80),
+    0 0 8px rgba(255, 225, 86, 0.35);
+  cursor: pointer;
+  transition: transform var(--duration-snap), box-shadow var(--duration-snap);
+}
+
+.premium-slot:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.premium-slot-kicker {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  /* white-space: nowrap; */
+}
+
+.premium-slot-progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(63, 34, 8, 0.20);
+  overflow: hidden;
+}
+
+.premium-slot-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold-leaf-highlight) 0%, #fff5d7 100%);
+  transition: width var(--duration-enter) var(--ease-spring);
+}
+
+.premium-slot-progress-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.premium-slot-cta {
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+}
+
+/* State: inactive — desaturated amber to read as "muted entry-point". */
+.premium-slot.is-inactive {
+  background:
+    url("/art/scene-rooted/panel-pro.png") center / 100% 100% no-repeat,
+    linear-gradient(180deg, #7d47b5 0%, #4f268a 100%);
+  color: #ffe66e;
+}
+
+/* ── Coach PRO Card — compact Hub training entrypoint ── */
 .coach-pro-card {
   position: relative;
   isolation: isolate;
@@ -5010,7 +5847,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* ── Arena Coach Monetization Loop ── */
-
 .coach-review-signal {
   position: relative;
   isolation: isolate;
@@ -5099,13 +5935,217 @@ button.hud-resource-chip:active:not(:disabled) {
   white-space: nowrap;
 }
 
+
+.coach-preview-card {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(139, 92, 24, 0.12);
+  border-radius: 12px;
+  background: rgba(139, 92, 24, 0.04);
+  box-shadow: none;
+  color: #4c2a10;
+}
+
+.coach-preview-card {
+  min-height: 122px;
+  padding: 11px 10px 11px 12px;
+  text-align: left;
+}
+
+.coach-preview-card::after {
+  content: "COACH";
+  position: absolute;
+  right: -5px;
+  bottom: -2px;
+  z-index: -1;
+  color: rgba(139, 92, 24, 0.04);
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  line-height: 1;
+  transform: rotate(-3deg);
+}
+
+.coach-preview-card.is-active {
+  background: rgba(139, 92, 24, 0.06);
+  border-color: rgba(139, 92, 24, 0.18);
+}
+
+.coach-preview-card-copy {
+  min-width: 0;
+}
+
+.coach-preview-card-kicker {
+  display: inline-flex;
+  margin-bottom: 3px;
+  color: rgba(72, 45, 10, 0.68);
+  font-size: 0.56rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.coach-preview-card-title {
+  margin: 0;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-weight: 900;
+  line-height: 0.98;
+}
+
+.coach-preview-card-title {
+  font-size: 1.18rem;
+}
+
+.coach-preview-card-body {
+  margin: 4px 0 0;
+  max-width: 190px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.coach-preview-card-body {
+  max-width: 200px;
+  font-size: 0.74rem;
+}
+
+.coach-preview-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.coach-preview-card-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 16px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(255, 248, 194, 0.50);
+  color: #315f1d;
+  font-size: 0.56rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.coach-preview-card-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(139, 92, 24, 0.2);
+  border-radius: 8px;
+  background: rgba(139, 92, 24, 0.08);
+  color: #764207;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-weight: 900;
+  line-height: 1.02;
+  text-align: center;
+  box-shadow: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.coach-preview-card.is-compact {
+  min-height: 94px;
+  padding: 8px 10px 8px 12px;
+}
+
+.coach-preview-card.is-compact .coach-preview-card-title {
+  font-size: 1.05rem;
+}
+
+.coach-preview-card.is-compact .coach-preview-card-body {
+  margin: 2px 0 0;
+  font-size: 0.68rem;
+}
+
+.coach-preview-card.is-compact .coach-preview-card-cta {
+  width: 90px;
+  min-height: 48px;
+  padding: 6px 8px;
+  font-size: 0.7rem;
+}
+
+.coach-preview-card-cta:active {
+  transform: translateY(1px);
+}
+
+/* State: expiring — subtle amber pulse, NO FOMO copy added. */
+.premium-slot.is-expiring {
+  animation: premium-slot-expiring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes premium-slot-expiring-pulse {
+
+  0%,
+  100% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.50) inset,
+      0 0 0 1px var(--gold-leaf-highlight) inset,
+      0 2px 4px rgba(63, 34, 8, 0.30);
+  }
+
+  50% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.50) inset,
+      0 0 0 1px var(--gold-leaf-highlight) inset,
+      0 2px 4px rgba(63, 34, 8, 0.30),
+      0 0 14px 2px var(--kingdom-warm-glow);
+  }
+}
+
+/* State: recently-renewed — 3s gold shimmer; the parent owns the timing. */
+.premium-slot.is-recently-renewed {
+  animation: premium-slot-renewed-shimmer 3s ease-out 1;
+}
+
+@keyframes premium-slot-renewed-shimmer {
+
+  0% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.50) inset,
+      0 0 0 1px var(--gold-leaf-highlight) inset,
+      0 0 0 0 var(--kingdom-warm-glow);
+  }
+
+  40% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.50) inset,
+      0 0 0 1px var(--gold-leaf-highlight) inset,
+      0 0 18px 4px var(--kingdom-warm-glow);
+  }
+
+  100% {
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.50) inset,
+      0 0 0 1px var(--gold-leaf-highlight) inset,
+      0 2px 4px rgba(63, 34, 8, 0.30);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .premium-slot.is-expiring,
+  .premium-slot.is-recently-renewed {
+    animation: none;
+  }
+}
+
 /* ── Mission Ribbon — per-surface tagline (Adventure / Scholarly hybrid) ──
    Spec: docs/product/visual-language-minimum-2026-05-03.md §4.10 +
    _bmad-output/planning-artifacts/ux-design-specification.md Step 11 §6.
    Canon rule (§11): rendered ABOVE the CTA on every payment surface. The
    pro-sheet variant is the single Scholarly + Adventure hybrid surface;
    landing-cta-bar stays in Spanish per LANDING_COPY v0.5 lock. */
-
 .mission-ribbon {
   display: block;
   margin: 0;
@@ -5151,7 +6191,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* Tone: emphatic — heavier weight + larger size for pro-sheet/payment surfaces. */
-
 .mission-ribbon--tone-emphatic {
   padding: 10px 16px;
   font-size: 0.875rem;
@@ -5162,7 +6201,6 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* Surface-specific subtle adjustments — kept minimal so canon rule §11
    stays surface-agnostic. */
-
 .mission-ribbon--landing-cta-bar {
   font-size: 0.75rem;
 }
@@ -5180,7 +6218,6 @@ button.hud-resource-chip:active:not(:disabled) {
    Anatomy: stone backplate (btn-stone-bg) + surface-specific icon overlay
    + warm-amber label. Press translateY + ambient pulse handled here so
    the React component stays presentational. */
-
 .primary-play-cta {
   position: relative;
   display: inline-flex;
@@ -5272,7 +6309,6 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Green CSS variant — shared --cta-primary-green-* token family
    (gradient + bevel + border + text-shadow). Canonical primary action
    button across /arena entry, popups, and <PrincipalButton>. */
-
 .primary-play-cta--green-css {
   background: var(--cta-primary-green-grad);
   border: 2px solid var(--cta-primary-green-border);
@@ -5317,13 +6353,146 @@ button.hud-resource-chip:active:not(:disabled) {
   padding-left: 54px;
 }
 
+/* HUB CTAs use dedicated glossy pill plates (orange/blue) shipped in
+ * /art/hub/. Both share the playhub primitive but swap the background
+ * image so the action stack reads as a sibling pair. They render side
+ * by side inside `.hub-scaffold-cta-row` so `flex: 1 1 0` and the
+ * overflow guard override the legacy `width: min(100%, 236px)` from
+ * `.primary-play-cta--playhub`. */
+.hub-scaffold-cta-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Side-by-side pills at the root footer. `flex: 0 0 auto` shrinks
+   each pill to its content width so the PNG background hugs the
+   icon+label group instead of leaving empty padding-edge area. */
+/* Wrapper around the Train Pieces CTA — anchors the START HERE ribbon
+   in the top-left corner. `overflow: visible` lets the ribbon overhang
+   the pill outline, and the soft yellow halo broadcasts the recommended
+   first step in the Train Pieces > Enter Arena sequence. */
+.hub-scaffold-practice-cta-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px rgba(255, 213, 74, 0.85));
+}
+
+.hub-scaffold-practice-cta {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+  min-height: 78px;
+  font-size: 0.85rem;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 239, 100, 0.9), transparent 28%),
+    radial-gradient(circle at 75% 75%, rgba(180, 105, 0, 0.35), transparent 35%),
+    linear-gradient(145deg, #fbe04b 0%, #fcc00a 28%, #f3aa04 55%, #d38804 100%);
+  border: none;
+  border-radius: 22px;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -5px 0 rgba(142, 78, 0, 0.35),
+    0 6px 0 #9a5a00,
+    0 0 0 2px rgba(255, 216, 74, 0.7),
+    0 6px 0 2px rgba(255, 216, 74, 0.7),
+    0 0 6px 2px rgba(255, 200, 40, 0.75),
+    0 8px 6px 2px rgba(255, 200, 40, 0.6),
+    0 12px 20px rgba(0, 0, 0, 0.35);
+  text-shadow:
+    -1px -1px 0 #6b3a06,
+    1px -1px 0 #6b3a06,
+    -1px 1px 0 #6b3a06,
+    1px 1px 0 #6b3a06,
+    0 2px 2px rgba(0, 0, 0, 0.5);
+  filter: none;
+  color: #ffffff;
+}
+
+.hub-scaffold-practice-cta:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -3px 0 rgba(142, 78, 0, 0.4),
+    0 3px 0 #9a5a00,
+    0 5px 10px rgba(0, 0, 0, 0.3);
+  filter: none;
+}
+
+/* Red ribbon overlay anchored to the top-left of the practice CTA.
+   Rotated slightly so it reads as a paper banner pinned to the corner.
+   Decorative only — aria-hidden in markup. */
+.hub-scaffold-start-here-ribbon {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  z-index: 2;
+  padding: 1px 5px;
+  background: linear-gradient(180deg, #e94d3c, #b71f1f);
+  border: 1px solid rgba(120, 18, 18, 0.9);
+  border-radius: 3px;
+  color: #fff8ed;
+  font-size: 0.4rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(80, 10, 10, 0.6);
+  box-shadow:
+    0 1px 0 rgba(80, 10, 10, 0.5),
+    0 2px 3px rgba(0, 0, 0, 0.25);
+  transform: rotate(-8deg);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Sequence chevron between Train Pieces and Enter Arena. SVG polyline
+   with rounded line-cap + line-join so corners read soft instead of
+   sharp. drop-shadow layers produce the chunky 3D feel that
+   text-shadow could not deliver on the bare glyph. Decorative only. */
+.hub-scaffold-cta-chevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-self: center;
+  width: 18px;
+  height: 26px;
+  color: #8a5a2a;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+  pointer-events: none;
+  user-select: none;
+}
+
+.hub-scaffold-arena-cta {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+  min-height: 78px;
+  font-size: 0.85rem;
+  background: var(--cta-primary-blue-grad);
+  border: 2px solid var(--cta-primary-blue-border);
+  border-radius: 22px;
+  box-shadow: var(--cta-primary-blue-bevel);
+  text-shadow: var(--cta-primary-blue-text-shadow);
+  filter: none;
+  color: #f4f8ff;
+}
+
+.hub-scaffold-arena-cta:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: var(--cta-primary-blue-bevel-pressed);
+  filter: none;
+}
+
 /* Shrink-to-content layout inside each pill — icon + label form a tight
    group centered horizontally. `width: min-content` on the label makes
    it collapse to the widest word ("PIECES" / "ARENA"), so the second
    word wraps naturally below without leaving empty space around the
    centered text. Asymmetric vertical padding compensates for the PNG's
    bottom lip (the darker rim isn't part of the pill's usable face). */
-
 .hub-scaffold-cta-row .primary-play-cta {
   display: flex;
   flex-direction: row;
@@ -5351,7 +6520,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* Overrides the `translateY(-5px)` from `.primary-play-cta--playhub`. */
-
 .hub-scaffold-cta-row .primary-play-cta-label {
   flex: 0 0 auto;
   width: min-content;
@@ -5368,7 +6536,6 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Compact size for the Arena entry surface — smaller dominant CTA that
    coexists with the difficulty selector + kingdom anchor preview. Keeps
    gold-leaf treatment, ambient pulse, and pressed state. */
-
 .primary-play-cta--arena-entry {
   width: auto;
   min-height: 52px;
@@ -5393,7 +6560,6 @@ button.hud-resource-chip:active:not(:disabled) {
    3-zone "floating HUD" composition gated behind `?hub=new`. The legacy
    <ExercisesScreen> stays mounted at /hub when the flag is absent. Mobile-
    first 390px viewport; no desktop-specific tuning yet. */
-
 .hub-scaffold {
   display: flex;
   flex-direction: column;
@@ -5422,13 +6588,47 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(255, 245, 215, 0.95);
 }
 
+.hub-scaffold-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hub-scaffold-hud-top {
+  display: flex;
+  /* `flex-start` (not `center`) — the trophy chip (~36px) and the PRO
+   * badge (~94px) have very different heights. Centering pulled the
+   * trophy halfway down the row; align-start keeps both pinned to the
+   * top so the HUD reads as a single top edge. */
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  /* Asymmetric horizontal insets — the trophy on the left has a
+   * floating-icon overhang that needs ~20px of clearance from the
+   * device frame, while the PRO badge on the right is a
+   * self-contained panel that reads better tucked closer to the
+   * edge (~8px). */
+  padding-left: 20px;
+  padding-right: 8px;
+  padding-top: 4px;
+}
+
+/* Hub HUD top — left + right cluster wrappers. Group chips so the PRO
+ * badge sits flush against the right edge regardless of how many
+ * companion chips (wallet connect, etc.) render alongside it. */
+.hub-scaffold-hud-left,
+.hub-scaffold-hud-right {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 /* `.candy-tray-pill` defaults to `width: 100%` because it's authored
  * for tray rows that fill their container. In the HUD the chips need
  * to size to their content (the gold pill should hug the trophy icon
  * + value, not stretch across the row). Border 0 strips the dimmer
  * brown outline so the chip matches the floating-pill style used by
  * the candy-tray-pill icon family in `/exercises`. */
-
 .hub-hud-pill {
   width: auto;
   /* `.candy-tray-pill` defines a `1px solid rgba(180, 120, 35, 0.45)`
@@ -5475,7 +6675,6 @@ button.hud-resource-chip:active:not(:disabled) {
  * The icon's right edge meets the chip's left rounded edge (~0.2rem
  * overlap so they don't appear detached), and the chip flows from
  * there with its text. */
-
 .hub-hud-pill .candy-tray-pill-icon--floating {
   position: absolute;
   left: -1.6rem;
@@ -5497,7 +6696,6 @@ button.hud-resource-chip:active:not(:disabled) {
  * and tucks behind the icon at its midpoint, reading as "the chip
  * emerges from the icon" instead of being a separate element next
  * to it. Used by the trophy chip on the left HUD cluster. */
-
 .hub-hud-pill--anchored-left {
   /* Chip starts EXACTLY at the icon's midpoint — the icon's right
    * half overlaps the chip's left edge. */
@@ -5516,6 +6714,181 @@ button.hud-resource-chip:active:not(:disabled) {
    * its center sits exactly on the chip's left edge — half outside,
    * half overlapping. */
   left: -1.3rem;
+}
+
+/* `--pro` modifier — same shape/size as the cream candy chip, but
+ * the cream gradient is replaced by the PRO purple palette so PRO
+ * subscribers get a visual distinction without changing the chip
+ * family. Palette + text colors mirror the legacy
+ * `.hud-resource-chip--pro` so the recognition cue (purple pill +
+ * warm-yellow label) carries over. Used by the Account chip in
+ * /exercises when PRO is active. */
+.hub-hud-pill--pro {
+  background:
+    linear-gradient(180deg, rgba(255, 229, 114, 0.26) 0%, transparent 28%),
+    linear-gradient(180deg, #7c4ab5 0%, #5d3197 52%, #3f1e73 100%);
+  border-color: rgba(63, 27, 102, 0.85);
+  color: #ffe66e;
+  text-shadow:
+    0 2px 0 rgba(61, 27, 102, 0.82),
+    0 0 8px rgba(255, 224, 89, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 229, 114, 0.30),
+    inset 0 -1px 0 rgba(40, 15, 80, 0.55),
+    0 1px 2px rgba(40, 15, 80, 0.35);
+}
+
+.hub-scaffold-hud-right {
+  justify-content: flex-end;
+}
+
+/* HubProBadge — top-right PRO entry point.
+ *
+ * Same purple panel art (panel-pro.png — frame + crown) the old wide
+ * right-rail discovery panel used; rendered at HUD-corner scale.
+ * Title "PRO" + a subline that swaps between the inactive promo
+ * kicker and the active days-remaining count.
+ *
+ * Mirrors the structure of `.hub-pro-discovery`/`.hub-pro-discovery-*`
+ * (kept for legacy callers / tests) but with tuned typography +
+ * sizing for the top-right corner. */
+.hub-pro-badge {
+  position: relative;
+  display: block;
+  width: 72px;
+  aspect-ratio: 225 / 272;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+  filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.32));
+  flex-shrink: 0;
+  /* The crown asset extends above the purple frame by ~20% of the
+   * image height. Lifting the whole badge by that amount makes the
+   * FRAME (not the crown's tip) align with the trophy + connect
+   * chips' top edge — the crown reads as decoration above the row
+   * instead of pushing the row down. */
+  margin-top: -8px;
+}
+
+.hub-pro-badge:hover {
+  transform: translateY(-1px);
+}
+
+.hub-pro-badge:active {
+  transform: scale(0.97);
+}
+
+.hub-pro-badge-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hub-pro-badge-bg,
+.hub-pro-badge-bg img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hub-pro-badge-content {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30% 6% 12%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.hub-pro-badge-title {
+  font-family: var(--font-fredoka), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: #ffd56b;
+  text-shadow:
+    0 2px 0 rgba(98, 38, 0, 0.85),
+    0 0 6px rgba(255, 200, 80, 0.45);
+  letter-spacing: 0.02em;
+}
+
+/* Inactive subline — small promo kicker ("Unlock the full…").
+ * Two-line clamp so longer ES copy doesn't break the panel. */
+.hub-pro-badge--inactive .hub-pro-badge-sub {
+  font-size: 0.42rem;
+  line-height: 1.1;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Active subline — days remaining ("7d"). Large + bold to match
+ * the value at-a-glance design. */
+.hub-pro-badge--active .hub-pro-badge-sub {
+  font-family: var(--font-fredoka), system-ui, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 2px;
+  text-shadow:
+    0 1px 0 rgba(98, 38, 0, 0.85),
+    0 0 4px rgba(255, 220, 130, 0.5);
+  letter-spacing: 0.02em;
+}
+
+.hub-scaffold-body {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr) 78px;
+  align-items: center;
+  /* gap: 8px; */
+  flex: 0 0 auto;
+  min-height: 0;
+  /* padding-top: 8px; */
+}
+
+.hub-scaffold-side {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.hub-scaffold-side--left {
+  position: relative;
+  align-items: stretch;
+  gap: 6px;
+  padding: 12px 5px 5px;
+}
+
+.hub-scaffold-side--right {
+  position: relative;
+  align-items: center;
+  padding: 12px 5px 5px;
+  gap: 10px;
+}
+
+/* Wraps the LEARN pill + RewardColumn so the pill can be centered on
+ * the column's top edge (not the rail's), and the column gets the
+ * same outer inset as its inner padding. */
+.hub-scaffold-rail-stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
 }
 
 .hub-scaffold-mastery-title {
@@ -5558,6 +6931,377 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #ffe35f;
   font-size: 0.4rem;
   white-space: nowrap;
+}
+
+/* Right-rail action stack (Daily Tactics / Special Training / Coach).
+ * Mirrors `.reward-column` (LEARN rail) — same dark wooden panel +
+ * gold connector dots so both rails read as one visual family. */
+
+/* PRO discovery panel — sits above the right rail when the user is NOT
+ * subscribed. The asset `panel-pro.png` is just the purple frame +
+ * crown; the title + subtitle are layered text so we can re-style or
+ * localize without re-exporting the asset. When PRO is active the
+ * button unmounts and the HUD chip ("PRO 7d") becomes the only
+ * recognition surface (zero duplication). */
+.hub-pro-discovery {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 110px;
+  aspect-ratio: 225 / 272;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 120ms ease-out;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
+}
+
+.hub-pro-discovery:hover {
+  transform: translateY(-2px);
+}
+
+.hub-pro-discovery:active {
+  transform: scale(0.97);
+}
+
+.hub-pro-discovery-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hub-pro-discovery-bg,
+.hub-pro-discovery-bg img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hub-pro-discovery-content {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28% 8% 12%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.hub-pro-discovery-title {
+  font-family: var(--font-fredoka), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.65rem;
+  line-height: 1;
+  color: #ffd56b;
+  text-shadow:
+    0 2px 0 rgba(98, 38, 0, 0.85),
+    0 0 8px rgba(255, 200, 80, 0.45);
+  letter-spacing: 0.02em;
+}
+
+.hub-pro-discovery-sub {
+  font-size: 0.5625rem;
+  line-height: 1.15;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.hub-action-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 5px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(33, 18, 6, 0.62) 0%, rgba(20, 11, 4, 0.55) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 240, 200, 0.08),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.45),
+    0 4px 10px rgba(0, 0, 0, 0.28);
+}
+
+.hub-action-rail>* {
+  position: relative;
+  z-index: 1;
+}
+
+.hub-action-rail>*+*::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #fff6c2 0 30%, #f0c447 60%, #a47410 100%);
+  box-shadow:
+    0 0 6px rgba(255, 216, 120, 0.7),
+    inset 0 0 2px rgba(80, 50, 10, 0.35);
+  transform: translateX(-50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Streak badge for the Daily Tactic tile — small rounded pill in the
+ * top-right corner, mirroring how the LEARN tile renders its notif/
+ * lock badges. Color tracks completion state (green = solved today,
+ * brown = streak pending). */
+.reward-tile-notif-streak {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(63, 34, 8, 0.92);
+  color: #fff5d7;
+  font-family: var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.reward-tile-notif-streak[data-state="completed"] {
+  background: rgba(34, 197, 94, 0.92);
+  color: #fff;
+}
+
+/* SPEC 1 D1 — Rail headers (LEARN / UNLOCK). Promoted to a carved
+   forest-green stamp (Sally F5) so the rails carry the same
+   personality as the legacy 'Practice Pieces · Train & Master'
+   badge — readable from across the kingdom instead of reading as
+   a small amber pellet. Stays a marker (no click handler) but
+   commands more visual real estate to match the wizard portal's
+   presence. */
+.hub-scaffold-rail-header {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #7fc94a 0%, #4e9a23 55%, #3a7a18 100%);
+  border: 2px solid rgba(34, 92, 7, 0.85);
+  color: #fff8d4;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow:
+    0 1px 0 rgba(34, 92, 7, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 2px 0 rgba(34, 92, 7, 0.65),
+    0 3px 8px rgba(0, 0, 0, 0.32),
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 0 rgba(34, 92, 7, 0.45);
+}
+
+/* TRAINING PATH header — purple variant for the left rail (LEARN
+   stack). Top-rounded only so it reads as a banner cap sitting on top
+   of the rail column rather than a floating pill. No bottom bevel
+   (flat base) per design ref. Two-line label wraps via white-space
+   normal + max-width. */
+.hub-scaffold-rail-header[data-rail="left"] {
+  top: -2px;
+  padding: 4px 8px 5px;
+  max-width: 78px;
+  border-radius: 12px 12px 0 0;
+  background: linear-gradient(180deg, #7b4cd6 0%, #5a3aa0 55%, #422680 100%);
+  border: 2px solid rgba(48, 22, 92, 0.9);
+  border-bottom: none;
+  color: #fff;
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  text-align: center;
+  white-space: normal;
+  text-shadow:
+    0 1px 0 rgba(48, 22, 92, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.32),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* SPEC 1 D2 — Contextual Hero CTA. Polished to the candy-frame
+   sculpt (Phase 9): wooden border + warm-brown text + depressed
+   press feel. Two variants — amber (default/onboarding) and blue
+   (daily-pending). Same shape as the legacy peek-card CTAs so the
+   Hero reads as the top of a single material vocabulary rather
+   than a separate "button system". */
+.hub-scaffold-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 18px;
+  border: 2px solid rgba(110, 65, 15, 0.55);
+  border-radius: 18px;
+  font-family: var(--font-game-action), var(--font-game-display), system-ui, sans-serif;
+  color: rgba(63, 34, 8, 0.95);
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.30);
+  box-shadow:
+    0 4px 0 rgba(110, 65, 15, 0.45),
+    0 6px 14px rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.30),
+    inset 0 -2px 0 rgba(110, 65, 15, 0.20);
+  transition: transform var(--duration-snap, 120ms), box-shadow var(--duration-snap, 120ms);
+}
+
+.hub-scaffold-hero:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 rgba(110, 65, 15, 0.45),
+    0 3px 8px rgba(0, 0, 0, 0.30),
+    inset 0 2px 0 rgba(255, 255, 255, 0.20),
+    inset 0 -1px 0 rgba(110, 65, 15, 0.18);
+}
+
+.hub-scaffold-hero--amber {
+  background: linear-gradient(180deg, #ffe066 0%, #f6a400 100%);
+}
+
+/* Blue variant overrides the wooden brown with a cool sky→deep-blue
+   ramp + lighter cream copy. Border + shadow stay warm so the
+   "wooden frame around the screen" feel survives the palette flip. */
+.hub-scaffold-hero--blue {
+  background: linear-gradient(180deg, #9fd0ff 0%, #5b9be0 50%, #2c6db5 100%);
+  color: #f4f8ff;
+  text-shadow: 0 1px 0 rgba(8, 30, 60, 0.45);
+  border-color: rgba(15, 55, 100, 0.65);
+  box-shadow:
+    0 4px 0 rgba(15, 55, 100, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.30),
+    inset 0 -2px 0 rgba(15, 55, 100, 0.25);
+}
+
+.hub-scaffold-hero--blue:active {
+  box-shadow:
+    0 2px 0 rgba(15, 55, 100, 0.55),
+    0 3px 8px rgba(0, 0, 0, 0.30),
+    inset 0 2px 0 rgba(255, 255, 255, 0.20),
+    inset 0 -1px 0 rgba(15, 55, 100, 0.20);
+}
+
+/* Single-line modifier (Sally F2) — when the Hero card renders only
+ * the label (no sub), tighten the box so it stops looking like a
+ * banner. Color/sculpt variants stay the same. */
+.hub-scaffold-hero--single {
+  gap: 0;
+  min-height: 48px;
+  padding: 12px 18px;
+}
+
+.hub-scaffold-hero-label {
+  /* Sally P0.2 — Hero CTA is a single word-of-power, never wraps.
+   * Editorial keeps copy to two short words; if a longer variant
+   * lands later we'll bump the container width instead of breaking. */
+  white-space: nowrap;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.hub-scaffold-hero-sub {
+  font-size: 0.65rem;
+  font-weight: 600;
+  opacity: 0.85;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.hub-scaffold-anchor {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.hub-scaffold-center {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Inner stack inside `.hub-scaffold-center`. Holds MissionRibbon,
+   guide sequence, and (optional) heroCta. Previously named
+   `.hub-scaffold-footer` — renamed to free that class for the new
+   root-level footer that hosts the CTA row. */
+.hub-scaffold-center-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  padding-top: 0;
+  /* Reserve vertical space equal to the contents this stack will
+   * settle on (~46px guide + 15px gap + ~64px CTA). Prevents the
+   * column from collapsing to 0px while the conditional hero CTA
+   * hasn't hydrated yet, which used to bounce the LEARN column
+   * and reward rail when the page first painted. */
+  min-height: 100px;
+}
+
+/* Root-level CTA footer — sibling of `.hub-scaffold-body`. Sits at
+   the bottom of the viewport (body has `flex: 1`, so the footer
+   stays anchored at the bottom of the 100dvh column). Horizontal
+   padding gives the CTA pills breathing room from the viewport edge. */
+.hub-scaffold-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: 0px 0px 50px;
+}
+
+.hub-scaffold-guide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 46px;
+  padding: 6px 10px;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #a8acb0 0%, #74787c 55%, #494c50 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -3px 0 rgba(40, 44, 48, 0.4);
+  filter: none;
 }
 
 .quest-tray-slot,
@@ -5607,8 +7351,26 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: 0 1px 0 rgba(95, 49, 9, 0.6) !important;
 }
 
-/* ── Hub V2 impact pass — candy forest game UI behind ?hub=v2 ── */
+.hub-scaffold-guide-piece {
+  display: block;
+  width: 31px;
+  height: 28px;
+}
 
+.hub-scaffold-guide-piece img,
+.hub-scaffold-guide-sequence {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hub-scaffold-guide-sequence {
+  width: 78px;
+  height: 25px;
+}
+
+/* ── Hub V2 impact pass — candy forest game UI behind ?hub=v2 ── */
 .hub-v2-root {
   position: relative;
   isolation: isolate;
@@ -6184,6 +7946,53 @@ button.hud-resource-chip:active:not(:disabled) {
   }
 }
 
+/* Arena selecting-state scaffold — mirrors hub-scaffold rules but reuses
+   the `bg-app` texture and tightens the body for the picker UX (no
+   side rail, picker stacks under the kingdom anchor). */
+.arena-scaffold {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  min-height: 0;
+  padding: 14px 14px 24px;
+  gap: 10px;
+  background-color: #f7f1de;
+  background-image:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 245, 215, 0.32) 42%,
+      rgba(246, 230, 184, 0.50) 100%),
+    var(--playhub-game-bg);
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  color: #4a2b11;
+  /* The scrollable region moved down to .arena-scaffold-body so the
+     hud + footer stay pinned. On older Android (Brave-tested) the
+     scaffold-level scroll combined with the play CTA's transform-based
+     pulse animation produced rendering glitches where the CTA appeared
+     mid-list. Pinning the footer with body-owned overflow keeps the
+     PLAY button anchored above the dock at all times. */
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.arena-select-dock-shell {
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+}
+
+.arena-scaffold-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .arena-scaffold-hud-top {
   display: flex;
   align-items: center;
@@ -6213,6 +8022,26 @@ button.hud-resource-chip:active:not(:disabled) {
   margin: 0;
 }
 
+.arena-scaffold-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* Body now owns the vertical scroll so the footer (PLAY CTA +
+     mission ribbon) can stay pinned at the scaffold's bottom edge.
+     flex:1 1 0 + min-height:0 lets it shrink below natural content
+     height and reveal an internal scrollbar when difficulty cards
+     overflow on short viewports. */
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Selection check badges on color + difficulty pills overhang by 7px
+     (top/right: -7px). overflow-y:auto promotes overflow-x to auto in
+     spec, which would clip those badges. Inline padding gives them
+     clearance without restructuring the markup. */
+  padding-inline: 8px;
+}
+
 .arena-scaffold-soft-gate-primary,
 .arena-scaffold-soft-gate-secondary {
   display: inline-flex;
@@ -6235,9 +8064,265 @@ button.hud-resource-chip:active:not(:disabled) {
   text-shadow: var(--cta-primary-green-text-shadow);
 }
 
+.arena-scaffold-soft-gate-secondary {
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  background: var(--cta-secondary-cream-grad);
+  color: var(--cta-secondary-cream-color);
+  border: 1px solid var(--cta-secondary-cream-border);
+  box-shadow: var(--cta-secondary-cream-bevel);
+  text-shadow: var(--cta-secondary-cream-text-shadow);
+}
+
 .arena-scaffold-soft-gate-primary:active {
   transform: translateY(2px);
   box-shadow: var(--cta-primary-green-bevel-pressed);
+}
+
+.arena-scaffold-soft-gate-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Color picker — refactored 2026-05-25 from a 2-column grid of two
+ * standalone pills into a single track (segmented control / switch).
+ * Both halves live on one cream-amber backplate; the active half
+ * gets a brighter gradient + subtle inset to read as the selected
+ * "thumb". Reads as one control with two states instead of two
+ * separate buttons sitting next to each other. */
+.arena-scaffold-color-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(247, 226, 175, 0.55) 0%, rgba(232, 197, 117, 0.55) 100%);
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  padding: 4px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.arena-scaffold-color-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 9999px;
+  background: transparent;
+  color: rgba(74, 43, 17, 0.62);
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 0.68rem;
+  /* Light base — matches the difficulty-score row's lighter
+   * register. The strong-tag inside the copy carries the visual
+   * weight (semi-bold) so "White" / "Black" still pops. */
+  font-weight: 400;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, transform 120ms ease;
+  /* No box-shadow on the resting state — the track carries the
+   * affordance, the thumb (pressed state below) carries the focus. */
+}
+
+.arena-scaffold-color-pill[aria-pressed="true"] {
+  background: linear-gradient(180deg, #fff7dc 0%, #f7d064 100%);
+  color: #4a2b11;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -1px 0 rgba(150, 90, 20, 0.18),
+    0 1px 2px rgba(110, 65, 15, 0.18);
+}
+
+.arena-scaffold-color-pill:not([aria-pressed="true"]):active {
+  transform: scale(0.97);
+}
+
+.arena-scaffold-color-piece {
+  width: 36px;
+  height: 40px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 3px 2px rgba(61, 37, 7, 0.28));
+}
+
+.arena-scaffold-color-piece img {
+  display: block;
+  width: 80%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.arena-scaffold-color-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.arena-scaffold-color-copy strong {
+  font-size: 0.82rem;
+  line-height: 0.85;
+  font-weight: 600;
+}
+
+.arena-scaffold-difficulty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.arena-scaffold-difficulty-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #87db28 0%, #4aaa16 100%);
+  padding: 4px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 120ms ease;
+  /* Shadows trimmed 2026-05-25 — the 4px solid drop + 8px ambient
+   * blob + inset rim added depth that read as noise rather than
+   * affordance. Keep only the inner top highlight (sells the gloss
+   * on the candy plate) and a tiny ambient. */
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.48),
+    0 2px 4px rgba(68, 45, 8, 0.16);
+}
+
+/* The hardest tier (Hard, red) sits against the bottom of the
+ * difficulty stack with no following item to absorb the click
+ * target's bottom margin. On shorter phones the lower rounded
+ * edge clipped the viewport. 2px of extra bottom padding gives
+ * the touch target breathing room without changing the apparent
+ * pill height. */
+.arena-scaffold-difficulty li:nth-child(3) .arena-scaffold-difficulty-pill {
+  padding-bottom: 6px;
+}
+
+.arena-scaffold-difficulty li:nth-child(2) .arena-scaffold-difficulty-pill {
+  background: linear-gradient(180deg, #ffd451 0%, #f2a70f 100%);
+}
+
+.arena-scaffold-difficulty li:nth-child(3) .arena-scaffold-difficulty-pill {
+  background: linear-gradient(180deg, #ff6b63 0%, #df3f37 100%);
+}
+
+.arena-scaffold-difficulty-pill[aria-pressed="true"] {
+  border-color: #ffd84a;
+  /* box-shadow:
+    0 0 0 3px rgba(119, 73, 6, 0.56),
+    0 0 18px rgba(255, 216, 74, 0.66),
+    0 5px 0 rgba(70, 83, 10, 0.50),
+    0 10px 16px rgba(68, 45, 8, 0.20),
+    inset 0 2px 0 rgba(255, 255, 255, 0.56),
+    inset 0 -4px 0 rgba(80, 49, 8, 0.18); */
+}
+
+.arena-scaffold-difficulty-pill:not([aria-pressed="true"]):active {
+  transform: scale(0.98);
+}
+
+.arena-scaffold-selected-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+}
+
+.arena-scaffold-difficulty-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.arena-scaffold-difficulty-label {
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 0.95rem;
+  font-weight: 950;
+  color: #fff8e9;
+  line-height: 1;
+  text-shadow:
+    0 2px 0 rgba(82, 43, 8, 0.52),
+    0 0 6px rgba(47, 26, 7, 0.28);
+}
+
+.arena-scaffold-difficulty-desc {
+  margin-top: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(63, 34, 8, 0.88);
+  line-height: 1.1;
+}
+
+.arena-scaffold-difficulty-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: #3f2208;
+}
+
+.arena-scaffold-difficulty-trophy {
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 2px 1px rgba(72, 42, 8, 0.32));
+}
+
+.arena-scaffold-difficulty-piece {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 56px;
+  filter: drop-shadow(0 4px 3px rgba(61, 37, 7, 0.32));
+}
+
+.arena-scaffold-difficulty-piece img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.arena-scaffold-error {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(190, 18, 60, 0.35);
+  color: rgba(159, 18, 57, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+}
+
+.arena-scaffold-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Compact footer — the PLAY CTA + mission-ribbon sub-line read
+   * as a single unit; the previous 12px gap + 12px top padding
+   * left a visible band between them. Tightened so the ribbon
+   * sits close under the plank. */
+  gap: 4px;
+  padding-top: 0;
+  /* Footer is pinned to the scaffold's bottom (body owns the scroll).
+     flex-shrink:0 + position:relative keep the PLAY CTA in flow and
+     out of the body's overflow window, avoiding the older-Android
+     glitch where transform/filter on the CTA pulled it mid-list. */
+  flex-shrink: 0;
+  position: relative;
 }
 
 .arena-scaffold-footer .mission-ribbon--arena {
@@ -6249,7 +8334,6 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* Ambient pulse — kicks in 4s after mount and loops. CSS-driven so the
    React component stays free of timers; `motion-safe` honored. */
-
 @media (prefers-reduced-motion: no-preference) {
 
   .primary-play-cta {
@@ -6270,7 +8354,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* States: loading + disabled — read as "muted, non-interactive". */
-
 .primary-play-cta.is-loading,
 .primary-play-cta.is-disabled,
 .primary-play-cta:disabled {
@@ -6316,7 +8399,6 @@ button.hud-resource-chip:active:not(:disabled) {
    the primitive is composed inside a Scholarly surface (/about, legal
    pages, settings) or the PRO sheet hybrid. Tokens consumed:
    --paper-bg, --paper-divider, --paper-text, --paper-text-muted. */
-
 .kingdom-anchor.is-atmosphere-scholarly {
   border-color: var(--paper-divider);
   background-color: var(--paper-bg);
@@ -6368,7 +8450,6 @@ button.hud-resource-chip:active:not(:disabled) {
    Spec: docs/superpowers/specs/(none — Story 1.11 minimal). Reads as a
    small note, never as an alarm. Tokens consumed: --paper-bg,
    --paper-text-muted, --paper-divider. */
-
 .primitive-boundary-fallback {
   display: block;
   padding: 8px 12px;
@@ -6385,8 +8466,8 @@ button.hud-resource-chip:active:not(:disabled) {
   display: block;
 }
 
-/* ── Mission shell candy variant ── */
 
+/* ── Mission shell candy variant ── */
 .mission-shell-candy .panel-base {
   background: linear-gradient(180deg,
       rgba(253, 210, 87, 0.14) 0%,
@@ -6409,8 +8490,260 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 -2px 0 rgba(110, 65, 15, 0.28);
 }
 
-/* ── <TreasureTile> — chest with iconStack + value-chip + ribbon (M3.5) ── */
+/* ── <StonePedestal> — round tap target rooted on a piedra asset (M3.5) ── */
+.stone-pedestal {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  cursor: pointer;
+  transition:
+    transform var(--duration-snap, 120ms) var(--ease-spring, ease-out),
+    box-shadow var(--duration-snap, 120ms) ease-out,
+    border-color 200ms ease-out;
+  /* No outline ring; press lift creates the affordance. */
+  outline: none;
+}
 
+.stone-pedestal-small {
+  width: 40px;
+  height: 40px;
+}
+
+.stone-pedestal-medium {
+  width: 48px;
+  height: 48px;
+}
+
+.stone-pedestal-large {
+  width: 64px;
+  height: 64px;
+}
+
+.stone-pedestal-stone-1 {
+  background-image: var(--stone-pedestal-bg-1);
+}
+
+.stone-pedestal-stone-2 {
+  background-image: var(--stone-pedestal-bg-2);
+}
+
+.stone-pedestal-stone-3 {
+  background-image: var(--stone-pedestal-bg-3);
+}
+
+.stone-pedestal-stone-4 {
+  background-image: var(--stone-pedestal-bg-4);
+}
+
+.stone-pedestal-stone-5 {
+  background-image: var(--stone-pedestal-bg-5);
+}
+
+.stone-pedestal-stone-6 {
+  background-image: var(--stone-pedestal-bg-6);
+}
+
+.stone-pedestal-stone-7 {
+  background-image: var(--stone-pedestal-bg-7);
+}
+
+.stone-pedestal-stone-8 {
+  background-image: var(--stone-pedestal-bg-8);
+}
+
+.stone-pedestal-stone-9 {
+  background-image: var(--stone-pedestal-bg-9);
+}
+
+.stone-pedestal-stone-10 {
+  background-image: var(--stone-pedestal-bg-10);
+}
+
+.stone-pedestal:active:not(:disabled) {
+  transform: scale(0.96);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+}
+
+.stone-pedestal:focus-visible {
+  outline: 2px solid rgba(245, 200, 100, 0.85);
+  outline-offset: 3px;
+}
+
+.stone-pedestal:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.stone-pedestal.is-loading {
+  opacity: 0.85;
+  cursor: progress;
+}
+
+.stone-pedestal.is-loading .stone-pedestal-icon {
+  opacity: 0.3;
+}
+
+.stone-pedestal.is-placeholder {
+  background-image: linear-gradient(135deg,
+      rgba(245, 200, 100, 0.55) 0%,
+      rgba(180, 130, 60, 0.65) 100%);
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.stone-pedestal-icon {
+  /* Anchored to the upper third of the pedestal so the glyph reads as
+     "trophy resting on the plate" rather than embedded in the stone's
+     centre — flex centering left the icon visually sitting on the
+     base. Absolute positioning gives deterministic placement; the
+     stone asset takes the full button bounds, the icon overlays on
+     top, horizontally centered, vertically biased high. */
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.action-row-pedestal-daily,
+.action-row-pedestal-arena {
+  background-image: none;
+  border: 0;
+  border-radius: 0;
+  filter: drop-shadow(0 3px 6px var(--shadow-warm-wood));
+}
+
+/* Neutralize the StonePedestal is-placeholder fallback in action-row
+   context — we own a candy-light look here, not the gradient fallback
+   painted by .stone-pedestal.is-placeholder (2-class specificity 0,2,0).
+   Compound 3-class selector (0,3,0) guarantees the override without
+   relying on source order — survives external stylesheet reordering. */
+.stone-pedestal.action-row-pedestal.is-placeholder {
+  background-image: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.action-row-pedestal .stone-pedestal-icon {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 2px 3px rgba(50, 30, 8, 0.20));
+}
+
+/* Hub right-rail availability signals (2026-06-11). STATIC — no
+   animation, no timers; computed once when /hub mounts. */
+.hub-tile-status-dot {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 14px;
+  height: 14px;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 30%),
+    linear-gradient(180deg, #4ade80 0%, #16a34a 55%, #15803d 100%);
+  border: 2px solid rgba(255, 247, 230, 0.95);
+  box-shadow: 0 1px 2px rgba(78, 44, 5, 0.3);
+}
+
+.hub-tile-status-chip {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+  white-space: nowrap;
+  /* Caption on a dark scrim capsule (founder 2026-06-11, 3rd pass):
+     the cream PILL read as a duplicated label; the bare caption was
+     illegible over the forest. Dark translucent capsule + cream text
+     = legible AND clearly metadata, the standard game-HUD treatment. */
+  font-family: var(--font-game-display), system-ui, sans-serif;
+  font-size: 0.55rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  color: rgba(255, 247, 230, 0.95);
+  background: rgba(40, 24, 6, 0.55);
+}
+
+/* Right-rail tile labels swap Rowdies (the shared .reward-tile font,
+   whose lightest cut still reads bold) for Fredoka at 500 — true
+   light letterforms over the busy forest bg. nowrap stops the
+   mid-word "Trainin/g" break the anywhere-wrap base rule produced.
+   Scoped to the action rail so the LEARN rail keeps its canon
+   (founder legibility pass 2026-06-11). */
+.hub-action-rail .reward-tile {
+  font-family: var(--font-game-display), system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 0.68rem;
+}
+
+.hub-action-rail .reward-tile-label {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.stone-pedestal-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 2;
+  max-width: 32px;
+  pointer-events: none;
+}
+
+.stone-pedestal-spinner {
+  position: absolute;
+  inset: 25%;
+  z-index: 3;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  animation: stone-pedestal-spin 700ms linear infinite;
+}
+
+@keyframes stone-pedestal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Reduced-motion fallback: keep the affordance via border-color flash
+ * instead of scale. Spec Behavior #7 requires NEVER full silence. */
+@media (prefers-reduced-motion: reduce) {
+  .stone-pedestal {
+    transition: border-color 200ms ease-out;
+  }
+
+  .stone-pedestal:active:not(:disabled) {
+    transform: none;
+    border: 2px solid rgba(245, 200, 100, 0.95);
+    box-shadow: none;
+  }
+
+  .stone-pedestal-spinner {
+    animation-duration: 1400ms;
+  }
+}
+
+/* ── <TreasureTile> — chest with iconStack + value-chip + ribbon (M3.5) ── */
 .treasure-tile {
   position: relative;
   display: inline-flex;
@@ -6534,7 +8867,6 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* Achievement signal — emerald gradient paired with GemBadge
    tone="success". Sprint 3 (vocabulary unification spec §G3). */
-
 .treasure-tile-ribbon[data-ribbon="EARNED"] {
   background: linear-gradient(180deg, #10b981 0%, #047857 100%);
 }
@@ -6576,7 +8908,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* ── <PrincipalButton> — primary CTA backed by --cta-primary-green-grad ── */
-
 .principal-button {
   position: relative;
   display: inline-flex;
@@ -6704,7 +9035,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* ── <WoodBanner> — presentational title/state ribbon (M3.5) ── */
-
 .wood-banner {
   position: relative;
   display: inline-flex;
@@ -6770,8 +9100,171 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-shrink: 0;
 }
 
-/* ── Loading ─── */
+/* ── <GemBadge> + <GemButton> — metric pill split (M3.5) ──
+ * Sibling primitives sharing the gem-pill-base.webp asset.
+ * GemBadge = presentational <span>; GemButton = pressable <button>.
+ * Split locked by red-team P1 to remove dual-mode ambiguity. */
+.gem-badge,
+.gem-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 100px;
+  height: 32px;
+  padding: 0 12px;
+  background-color: transparent;
+  background-image: var(--gem-pill-bg);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  color: #fff8ed;
+  font-family: var(--font-game-action, system-ui, sans-serif);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-shadow: 0 1px 0 rgba(40, 20, 60, 0.5);
+}
 
+.gem-button {
+  border: 0;
+  cursor: pointer;
+  outline: none;
+  transition:
+    transform var(--duration-snap, 120ms) var(--ease-spring, ease-out),
+    box-shadow var(--duration-snap, 120ms) ease-out,
+    border-color 200ms ease-out;
+}
+
+.gem-button:active:not(:disabled) {
+  transform: scale(0.96);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.gem-button:focus-visible {
+  outline: 2px solid rgba(245, 200, 100, 0.95);
+  outline-offset: 3px;
+  border-radius: 999px;
+}
+
+.gem-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.gem-badge.is-placeholder,
+.gem-button.is-placeholder {
+  background-image: linear-gradient(180deg,
+      rgba(155, 89, 255, 0.85) 0%,
+      rgba(90, 50, 180, 0.95) 100%);
+  border-radius: 999px;
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Gem tone variants — single asset, runtime hue rotation ───────────
+   Sprint 2 (vocabulary unification spec §G2). The base gem asset
+   ships in a violet hue (kingdom canon "default"). Tones rotate the
+   hue + tweak saturation/brightness so the gem reads as ACTIVE,
+   EXPIRING, or LOCKED without shipping new assets. The placeholder
+   fallback above uses the same color as `default` so a missing asset
+   still hue-rotates correctly under tone variants. */
+.gem-badge[data-tone="success"],
+.gem-button[data-tone="success"] {
+  filter: hue-rotate(120deg) saturate(0.95);
+}
+
+.gem-badge[data-tone="warning"],
+.gem-button[data-tone="warning"] {
+  filter: hue-rotate(-110deg) saturate(1.1);
+}
+
+.gem-badge[data-tone="locked"],
+.gem-button[data-tone="locked"] {
+  filter: grayscale(0.85) brightness(0.6);
+}
+
+.gem-badge-icon,
+.gem-button-icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.gem-badge-value,
+.gem-button-value {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gem-button {
+    transition: border-color 200ms ease-out;
+  }
+
+  .gem-button:active:not(:disabled) {
+    transform: none;
+    border: 2px solid rgba(245, 200, 100, 0.95);
+    box-shadow: none;
+  }
+}
+
+/* ── Training Journal (/coach/history) ─────────────────────────────────────
+   Game-native training log for PRO users. Adventure atmosphere (warm amber/
+   green palette matching Arena). All tj-* classes are scoped to this screen.
+   Touch targets enforce ≥ 44px. No horizontal scroll. 390px viewport. */
+
+/* Root layout — green field background matching the game */
+.tj-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: var(--app-max-width, 390px);
+  margin: 0 auto;
+  background-color: #f7f1de;
+  background-image:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 245, 215, 0.32) 42%,
+      rgba(246, 230, 184, 0.50) 100%),
+    var(--playhub-game-bg);
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  color: #4a2b11;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* `.tj-page-header*` removed (Sally pass 9, 2026-05-20) — the
+   /coach/history page now composes <ContextualHeader> for its header
+   strip, and the bespoke yellow-cream gradient + 1.5px golden divider
+   + drop shadow that lived in `.tj-page-header` no longer match the
+   rest of the app's chrome. The page-header title-group + title +
+   subtitle classes were carrier styling for the legacy markup;
+   ContextualHeader owns those rules now. */
+
+/* Content area */
+.tj-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 16px 32px;
+}
+
+/* No-wallet state */
+.tj-no-wallet-text {
+  padding: 16px;
+  font-size: 0.875rem;
+  color: rgba(110, 65, 15, 0.75);
+}
+
+/* ── Loading ─── */
 .tj-loading {
   display: flex;
   flex-direction: column;
@@ -6787,7 +9280,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* ── Empty state ─── */
-
 .tj-empty-state {
   display: flex;
   flex-direction: column;
@@ -6854,7 +9346,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* ── Latest review card ─── */
-
 .tj-latest-card {
   position: relative;
   display: flex;
@@ -6910,7 +9401,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* ── Older reviews list ─── */
-
 .tj-older-list {
   display: flex;
   flex-direction: column;
@@ -6960,7 +9450,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* ── Progress card ─── */
-
 .tj-progress-card {
   padding: 12px 14px;
   border-radius: 16px;
@@ -6986,7 +9475,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* Stat blocks inside the progress card */
-
 .tj-stat-block {
   display: flex;
   flex-direction: column;
@@ -7018,6 +9506,57 @@ button.hud-resource-chip:active:not(:disabled) {
   margin-top: 3px;
 }
 
+/* ── Manage history (delete panel wrapper) ─── */
+.tj-manage-history-section {
+  margin-top: 8px;
+  border-top: 1px solid rgba(110, 65, 15, 0.12);
+  padding-top: 12px;
+}
+
+.tj-manage-history-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(110, 65, 15, 0.55);
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: color 120ms ease;
+  min-height: 44px;
+}
+
+.tj-manage-history-toggle:hover {
+  color: rgba(110, 65, 15, 0.80);
+}
+
+.tj-manage-history-toggle-chevron {
+  font-size: 0.55rem;
+  opacity: 0.65;
+}
+
+.tj-manage-history-body {
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tj-manage-history-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(159, 18, 57, 0.85);
+}
+
+.tj-manage-history-body-text {
+  font-size: 0.72rem;
+  color: rgba(110, 65, 15, 0.65);
+  line-height: 1.4;
+}
+
+
 /* ── Shop item tiles (shop-sheet.tsx) ──────────────────────────────────────
    Compact premium game-shop layout. Horizontal tiles for scannability.
    shop-item-tile-* namespace is scoped to ShopSheet only. */
@@ -7037,7 +9576,6 @@ button.hud-resource-chip:active:not(:disabled) {
    texture is contained by the bg-image painting which stops at the
    border-radius, so the visual card stays crisp while the figure
    floats free. */
-
 /* 2026-05-30: cards migrated from dark texture PNG + scrim to the
    vitrine-hero panel treatment used in Badges/Trophies/Leaderboard
    (cream-amber gradient + inset cream highlight + soft drop shadow).
@@ -7048,7 +9586,6 @@ button.hud-resource-chip:active:not(:disabled) {
    approach Badges/Trophies use. The dark scrim `::before` is no
    longer needed and was removed; identity row + footer no longer
    need their own z-index stacking. */
-
 .shop-item-tile {
   /* Default tone: amber — overridden by `[data-tone="..."]` below. */
   --shop-tile-accent-base: #fff5d7;
@@ -7085,7 +9622,6 @@ button.hud-resource-chip:active:not(:disabled) {
    the orange/peach slate; Streak Shield + Coach 5-pack the blue
    slate. Border tracks the accent so the panel edge reads as one
    coherent material instead of a generic cream-amber outline. */
-
 .shop-item-tile[data-tone="purple"] {
   --shop-tile-accent-base: #f0e2ff;
   --shop-tile-accent-mid: #c8a9ed;
@@ -7107,7 +9643,6 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Green tone — celebratory cream-to-leaf gradient. Reassigned
    2026-06-01 (user correction) to the 20 Coach Credits mini-card
    so the "best value" tier reads against a green/upgrade accent. */
-
 .shop-item-tile[data-tone="green"] {
   --shop-tile-accent-base: #e0f1d4;
   --shop-tile-accent-mid: #95c66a;
@@ -7120,7 +9655,6 @@ button.hud-resource-chip:active:not(:disabled) {
    condensed identity. The icon sits inside the card bounds (no
    overhang) at a fixed size so two tiles share a row cleanly at
    390px viewport. */
-
 .shop-item-tile--compact {
   display: flex;
   flex-direction: column;
@@ -7216,7 +9750,6 @@ button.hud-resource-chip:active:not(:disabled) {
 
 /* Featured ribbon doesn't render in compact mode (no room) — hide
    defensively in case the prop ever lands on a compact tile. */
-
 .shop-item-tile--compact .shop-item-tile-featured-ribbon {
   display: none;
 }
@@ -7230,7 +9763,6 @@ button.hud-resource-chip:active:not(:disabled) {
    above their titles. Match `.shop-item-tile--compact
    .shop-item-tile-icon-figure` math exactly so the four cards
    read as a coherent grid. */
-
 .welcome-pack-tile--compact .welcome-pack-tile-sticker {
   position: static;
   display: block;
@@ -7251,7 +9783,6 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Drop the extra body line so the Welcome mini-card matches the
    rhythm of the other SKU tiles (name + subtitle + CTA). The body
    copy remains available in the full-width mode. */
-
 .welcome-pack-tile--compact .welcome-pack-tile-body {
   display: none;
 }
@@ -7262,7 +9793,6 @@ button.hud-resource-chip:active:not(:disabled) {
    "gift / celebratory" without competing with the featured ribbon's
    gold halo). See spec ux-shield-rescue-and-welcome-pack-2026-05-31
    §4.1. */
-
 .shop-item-tile[data-tone="welcome"],
 .welcome-pack-tile[data-tone="welcome"] {
   --shop-tile-accent-base: #fff1c8;
@@ -7279,7 +9809,6 @@ button.hud-resource-chip:active:not(:disabled) {
    (tile.body), reserves a sticker overhang slot on the left, and
    slightly bumps the border weight so the pinned tile reads as
    "this is the offer" without needing the Featured ribbon. */
-
 .welcome-pack-tile {
   border-width: 1.5px;
   box-shadow:
@@ -7298,7 +9827,6 @@ button.hud-resource-chip:active:not(:disabled) {
    parent .shop-item-tile inherits overflow:visible from the shop
    sheet container so the sprite can spill past the tile bounds and
    read as a "this is special" callout. */
-
 .welcome-pack-tile-sticker {
   position: absolute;
   top: -0.6rem;
@@ -7338,7 +9866,6 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Post-claim collapsed state — replaces the full tile with a compact
    single-line confirmation row. Preserves the tone accent so the
    user can still locate "where the welcome pack used to be". */
-
 .welcome-pack-tile--claimed {
   display: flex;
   align-items: center;
@@ -7369,7 +9896,6 @@ button.hud-resource-chip:active:not(:disabled) {
    with a thin gold outline". Pairs with the explicit ribbon badge
    below to give the featured slot two reinforcing cues (frame +
    ribbon) instead of one whispered one. */
-
 .shop-item-tile--featured {
   border: 1.5px solid rgba(255, 215, 120, 0.90);
   box-shadow:
@@ -7386,7 +9912,6 @@ button.hud-resource-chip:active:not(:disabled) {
    weight that "this is the hero SKU" deserves. The `-8px` top
    offset is what makes it feel like a sticker pinned ONTO the
    card rather than rendered inside it. */
-
 .shop-item-tile-featured-ribbon {
   position: absolute;
   top: -8px;
@@ -7432,7 +9957,6 @@ button.hud-resource-chip:active:not(:disabled) {
    2026-05-30: bumped from -18px → -24px so the floating effect
    actually reads on device (previous value was too timid + got
    clipped by the scroll container per CSS spec). */
-
 .shop-item-tile-icon-figure {
   position: absolute;
   /* 2026-06-01 (user feedback iteration 3): pull the icon
@@ -7464,7 +9988,6 @@ button.hud-resource-chip:active:not(:disabled) {
    absolute). Identity sits in row 1, footer in row 2. The
    `padding-left: 108px` on the tile keeps both clear of the icon
    on the left. */
-
 .shop-item-tile-identity {
   grid-row: 1;
   display: flex;
@@ -7479,7 +10002,6 @@ button.hud-resource-chip:active:not(:disabled) {
    migrated to pastel gradients. Cream highlight on text-shadow
    gives a subtle embossed lift instead of the previous neon-on-dark
    approach. */
-
 .shop-item-tile-name {
   font-family: var(--font-game-action, system-ui, sans-serif);
   font-size: 1.12rem;
@@ -7494,7 +10016,6 @@ button.hud-resource-chip:active:not(:disabled) {
    plays second fiddle to the name and never competes. Slightly
    roomier line-height for legibility when copy wraps to two
    lines (e.g. PRO's "Unlimited Coach analyses · 30-day pass."). */
-
 .shop-item-tile-subtitle {
   font-size: 0.76rem;
   font-weight: 500;
@@ -7507,7 +10028,6 @@ button.hud-resource-chip:active:not(:disabled) {
    with gap between the (optional) CELO twin and the primary buy
    pill. Grid row-gap (10px) handles vertical separation from the
    identity above. */
-
 .shop-item-tile-footer {
   grid-row: 2;
   display: flex;
@@ -7528,7 +10048,6 @@ button.hud-resource-chip:active:not(:disabled) {
    broken layout. If a label is too long for the available width,
    we tighten font-size on the longer-label modifier (see
    `--yellow` below) instead of allowing wrap. */
-
 .shop-item-tile-buy-pill {
   width: auto;
   min-width: 0;
@@ -7549,7 +10068,6 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Green tint — USD price route. Lush emerald gradient with a deep
    forest border + cream text so the chip reads as "confirm purchase"
    against any of the per-tile bg textures (purple / orange / blue). */
-
 .shop-item-tile-buy-pill--green {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, transparent 32%),
@@ -7571,7 +10089,6 @@ button.hud-resource-chip:active:not(:disabled) {
    coming soon" instead of "broken item". Centered glyph + 2-line
    text bands sized smaller than the real cards so it doesn't
    compete for the buy intent. */
-
 .shop-item-tile-coming {
   display: flex;
   align-items: center;
@@ -7628,7 +10145,6 @@ button.hud-resource-chip:active:not(:disabled) {
    never wrap (see base rule). Tighter side padding for the same
    reason — gives the label more horizontal room without bloating
    the pill. */
-
 .shop-item-tile-buy-pill--yellow {
   font-size: 0.74rem;
   padding: 0.25rem 0.8rem;
@@ -7977,7 +10493,6 @@ button.hud-resource-chip:active:not(:disabled) {
  *    or border eating into content space). The page renders inside
  *    exactly as it would on mobile — same bg, same dock placement.
  */
-
 .desktop-app-frame-shell,
 .desktop-app-frame,
 .desktop-app-frame-inner {
@@ -8065,7 +10580,6 @@ button.hud-resource-chip:active:not(:disabled) {
  * + a glance-able preview row of the 6 pieces + unified counters.
  * Pattern is intended to propagate to Trophies + Leaderboard sheets.
  * ─────────────────────────────────────────────────────────────────── */
-
 .badge-vitrine-hero {
   position: relative;
   display: flex;
@@ -8196,7 +10710,6 @@ button.hud-resource-chip:active:not(:disabled) {
  * but anchored by the gold-trophy character (trofeo-épico) and tuned
  * to the Trophies surface (victories + achievements progress).
  * ─────────────────────────────────────────────────────────────────── */
-
 .trophy-vitrine-hero {
   position: relative;
   display: flex;
@@ -8306,7 +10819,6 @@ button.hud-resource-chip:active:not(:disabled) {
  * column carries champion identity + total-player count. No progress
  * bar — leaderboard isn't a "fill" metric; the value is the rank.
  * ─────────────────────────────────────────────────────────────────── */
-
 .leaderboard-vitrine-hero {
   position: relative;
   display: flex;
@@ -8381,6 +10893,977 @@ button.hud-resource-chip:active:not(:disabled) {
   line-height: 1.25;
 }
 
+/* ==========================================================================
+ * COACH VIEWER — /coach/[gameId] post-game match review surface (Cluster C)
+ *
+ * Foundation classes for the rebuilt visor. Layout precedence:
+ *   .coach-viewer            (outer mobile-first shell)
+ *     .coach-viewer__header  (sticky-ish band: back · title · meta)
+ *     .coach-viewer__board-card  (cream-amber panel → square board frame)
+ *
+ * Later commits in Cluster C add:
+ *   .coach-viewer__replay   (slider + arrows + ply counter — commit 2)
+ *   .coach-viewer__move-list (collapsible 2-col grid — commit 2)
+ *   .coach-viewer__actions  (state-driven CTA stack — commits 3a/3b/3c)
+ *   .coach-viewer__trophy-ribbon (win+claimed corner badge — commit 3c)
+ *
+ * Visual language reused from existing tokens: warm-brown text
+ * (rgba(63,34,8,*)), cream highlights (rgba(255,245,215,0.55) shadow),
+ * amber borders (rgba(180,120,35,0.45)). No new CSS variables. No new
+ * art assets — board uses BoardThumbnail at responsive size="100%".
+ * ========================================================================== */
+
+.coach-viewer {
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  /* Sally pass 10 — bottom padding bumped to safe-area-aware floor
+   * so tile labels don't clip against the viewport edge. The
+   * `.coach-viewer__controls` bottom-anchors via `margin-top: auto`;
+   * without enough bottom room here, "Play again / Save Victory /
+   * Ask Coach" labels were getting cropped. */
+  min-height: calc(100dvh - 60px);
+  /* header reserve */
+  padding: 0.5rem 0.85rem max(1.6rem, env(safe-area-inset-bottom, 1.6rem));
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-x: clip;
+}
+
+.coach-viewer__board-frame {
+  /* Sally pass 3 — outer card dropped + board ~22% larger so it
+   * unambiguously owns the visor as the hero. Multi-layer shadow
+   * (sharp + key + ambient) gives it real atmospheric depth so it
+   * feels lifted off the green grass rather than pasted on top. */
+  position: relative;
+  width: 100%;
+  max-width: 46vh;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 1rem;
+  overflow: visible;
+  filter:
+    drop-shadow(0 1px 2px rgba(63, 34, 8, 0.28)) drop-shadow(0 8px 16px rgba(63, 34, 8, 0.22)) drop-shadow(0 20px 32px rgba(63, 34, 8, 0.12));
+}
+
+/* Chapter break (pass 10) — the adorno-icon asset is already a
+ * complete ornament with painted gold rules + crown. The flanking
+ * CSS rule spans were duplicating the artwork. Now we render just
+ * the painted asset centered between board and the MOVES panel. */
+.coach-viewer__chapter-break {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  padding: 0.1rem 0;
+  user-select: none;
+}
+
+.coach-viewer__chapter-break-glyph {
+  display: inline-block;
+  width: 220px;
+  height: auto;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 245, 215, 0.7)) drop-shadow(0 2px 4px rgba(63, 34, 8, 0.28)) drop-shadow(0 6px 10px rgba(63, 34, 8, 0.16));
+}
+
+.coach-viewer__chapter-break-glyph img {
+  display: block;
+  width: 100%;
+  height: auto;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.coach-viewer__board-frame>[role="img"] {
+  /* BoardThumbnail renders its outer wrapper with inline `position:
+   * relative`. Anchor it into our frame so percentages resolve against
+   * the square box, not the surrounding panel padding. */
+  position: absolute;
+  inset: 0;
+}
+
+/* Trophy ribbon (commit 3c) — only shows when `mintedTokenId` is
+ * truthy. Overhangs the board card's top-right corner with the same
+ * featured-pill language the arena popup + Save Victory price ribbon
+ * use, so the player reads "this game is saved" without us spelling
+ * it out. */
+.coach-viewer__trophy-ribbon {
+  position: absolute;
+  top: -10px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+  border: 1px solid rgba(120, 53, 15, 0.85);
+  color: #3f2208;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(120, 53, 15, 0.3),
+    0 3px 6px rgba(120, 53, 15, 0.4);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  /* Cap on hypothetical 7+ digit tokenIds so the ribbon doesn't run
+   * off the board edge. Captured in red-team P1-3 as not-an-issue at
+   * current mint volume — the cap is defense-in-depth. */
+  max-width: 38%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Replay error banner (commit 2). Surfaces useGameReplay's mid-game
+ * decode error in plain language without breaking the visual stack. */
+.coach-viewer__replay-error {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(225, 175, 30, 0.55);
+  background: rgba(255, 245, 215, 0.78);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: rgba(120, 70, 15, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+}
+
+/* `.coach-viewer__action-deck` removed in Sally pass 7 — its content
+ * (replay row + tiles row + tertiary) lives directly under
+ * `.coach-viewer__page` now. */
+
+/* Replay row — inside the action deck. Sally pass 5 adds a thin
+ * recessed channel under the slider so it reads as "tallado en el
+ * deck" rather than floating bar. The arrows stand above the channel
+ * (their own background stays transparent — the channel only wraps
+ * the slider itself, see .coach-viewer__replay-slider rule). */
+.coach-viewer__replay {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0.1rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.coach-viewer__replay-arrow {
+  /* Asset-driven arrow buttons — the chip background was dropped so
+   * the play.png illustration reads as the dominant affordance. The
+   * `<button>` is sized to the icon directly + a small hit-target
+   * inset for thumb-friendly taps. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform var(--duration-snap) ease, filter var(--duration-snap) ease;
+}
+
+.coach-viewer__replay-arrow picture,
+.coach-viewer__replay-arrow img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.coach-viewer__replay-arrow--prev img {
+  /* The `play.png` source faces right. Flip horizontally for the
+   * back-arrow position so we ship one asset for both directions. */
+  transform: scaleX(-1);
+}
+
+.coach-viewer__replay-arrow:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.coach-viewer__replay-arrow:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.coach-viewer__replay-arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+
+.coach-viewer__replay-slider {
+  /* Sally pass 5 — slider track now reads as a channel TALLADO INTO
+   * the deck rather than a bar lying on top of it. Inset shadow
+   * stack: dark inner top edge (depth) + light inner bottom edge
+   * (highlight catching from below) + thin gold rim. */
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(110, 65, 15, 0.28) 0%, rgba(180, 120, 35, 0.18) 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(63, 34, 8, 0.4),
+    inset 0 -1px 0 rgba(255, 245, 215, 0.5),
+    inset 0 0 0 1px rgba(232, 193, 96, 0.4);
+  border: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.coach-viewer__replay-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgb(168, 85, 247) 0%, rgb(126, 34, 206) 100%);
+  border: 2px solid rgba(255, 245, 215, 0.95);
+  box-shadow: 0 1px 2px rgba(63, 34, 8, 0.32);
+  cursor: pointer;
+}
+
+.coach-viewer__replay-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgb(168, 85, 247) 0%, rgb(126, 34, 206) 100%);
+  border: 2px solid rgba(255, 245, 215, 0.95);
+  box-shadow: 0 1px 2px rgba(63, 34, 8, 0.32);
+  cursor: pointer;
+}
+
+/* Floating controls (Sally pass 8) — replay row + action tiles
+ * live OPEN on the visor's page background, no panel chrome.
+ * Density contrast against the MOVES table above: data-heavy box +
+ * action-airy floating row. Bottom-anchored via `margin-top: auto`
+ * so the controls glue to the viewport floor on short games. */
+.coach-viewer__controls {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.4rem 0.25rem 0.5rem;
+}
+
+/* MOVES section restored to its own badge-vitrine panel — data
+ * tables benefit from a container that defines the scroll boundary
+ * + creates intentional visual density contrast against the open
+ * controls floating below. Pass 9: bg alpha softened so the green
+ * grass page background filters through subtly. */
+.coach-viewer__move-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.25rem;
+  background: linear-gradient(160deg, rgba(255, 245, 215, 0.78) 0%, rgba(252, 211, 77, 0.45) 100%);
+  border: 1px solid rgba(180, 120, 35, 0.55);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 245, 215, 0.5),
+    0 6px 14px -8px rgba(110, 65, 15, 0.35);
+  padding: 0.4rem 0.6rem 0.45rem;
+  overflow: hidden;
+}
+
+/* Pass 5 corner accents removed — the canonical badge-vitrine
+ * treatment carries enough material signature on its own; corner
+ * gold leaves felt additive in a way the production design system
+ * doesn't. Cleaner without them. */
+
+.coach-viewer__move-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.1rem 0.5rem 0.35rem;
+  border-bottom: 1px solid rgba(110, 65, 15, 0.25);
+}
+
+.coach-viewer__move-list-header-title {
+  /* Sally pass 2 — flourishes dropped. The plain centered uppercase
+   * label reads as an editorial divider rather than a scrapbook
+   * heading at MiniPay scale. Muted color demotes it below the
+   * title row in the visual hierarchy. */
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(63, 34, 8, 0.55);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+}
+
+.coach-viewer__move-list-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem 0.1rem 0.1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* Pass 3 — tight column gap, rowgap via a sibling divider effect
+   * (1px warm-brown rule on each row's btn-bottom) instead of true
+   * gap so the layout reads as a real chess journal entry table. */
+  column-gap: 0.5rem;
+  row-gap: 0;
+  max-height: 100px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.coach-viewer__move-item {
+  list-style: none;
+}
+
+.coach-viewer__move-item-btn {
+  /* Sally pass 3 — compact rows. Thin warm-brown bottom rule per row
+   * acts as a chess-journal table divider; rowgap 0 in the parent
+   * grid lets the rules align across columns. */
+  display: grid;
+  grid-template-columns: 1.15rem 1fr;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 28px;
+  padding: 0.2rem 0.35rem;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(110, 65, 15, 0.18);
+  background: transparent;
+  color: rgba(63, 34, 8, 0.92);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--duration-snap) ease;
+}
+
+.coach-viewer__move-item:last-child .coach-viewer__move-item-btn,
+.coach-viewer__move-item:nth-last-child(2):nth-child(odd)~.coach-viewer__move-item .coach-viewer__move-item-btn {
+  border-bottom: 0;
+}
+
+.coach-viewer__move-item-san-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.coach-viewer__move-item-btn:hover {
+  background: rgba(255, 245, 215, 0.65);
+}
+
+.coach-viewer__move-item-btn[aria-pressed="true"] {
+  /* Active row — amber-cream wash mirroring the mockup's highlighted
+   * mate row. Slightly darker text + bolder weight reinforces the
+   * "you are here" cue. Rounded corners + suppressed bottom rule
+   * so the highlight reads as a soft pill, not a rectangle on top
+   * of a divider line (pass 9). */
+  background: rgba(245, 195, 110, 0.45);
+  color: rgba(63, 34, 8, 1);
+  font-weight: 900;
+  border-bottom-color: transparent;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.35);
+}
+
+.coach-viewer__move-item-num {
+  /* Pass 3 — green badge stays (user loved it from M1) but smaller
+   * to fit the compact 28px row + tighter typography. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #2d8c3f 0%, #1f6a2e 100%);
+  border: 1px solid rgba(15, 60, 25, 0.55);
+  color: rgba(255, 250, 220, 1);
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 1px 2px rgba(15, 60, 25, 0.35);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.coach-viewer__move-item-san {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: inherit;
+}
+
+.coach-viewer__move-item-annotation {
+  /* Sally pass 2 — inline badge next to the SAN. Smaller + transparent
+   * bg + thin border so it reads as "tag on the move", not as a
+   * separate floating chip. */
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05rem 0.4rem;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid rgba(180, 83, 9, 0.35);
+  color: rgba(180, 83, 9, 0.85);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Actions block (M3) — flat row of 1–3 icon tiles + optional tertiary
+ * text link underneath. Replaces the hierarchical primary/secondary
+ * stack from commits 3a/3b/3c. Each tile is icon-on-canvas + label
+ * below; Save Victory keeps its corner price ribbon so the cost
+ * signal survives the visual flatten. State-driven rendering lives in
+ * <GameActionsBar>. */
+.coach-viewer__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.coach-viewer__tiles-row {
+  display: grid;
+  grid-template-columns: repeat(var(--coach-viewer-tile-count, 3), 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.coach-viewer__tiles-row[data-count="1"] {
+  --coach-viewer-tile-count: 1;
+  /* Center the lone tile so the row doesn't render as a left-aligned
+   * stub. ~60% of the row width is enough breathing room. */
+  max-width: 60%;
+  margin-inline: auto;
+}
+
+.coach-viewer__tiles-row[data-count="2"] {
+  --coach-viewer-tile-count: 2;
+}
+
+.coach-viewer__tiles-row[data-count="3"] {
+  --coach-viewer-tile-count: 3;
+}
+
+.coach-viewer__tile {
+  /* Sally pass 4 — purple canvas dropped. The crafted icon assets
+   * carry their own painted bgs (refresh shield, save disk, coach
+   * book); stacking them inside a purple square was visual stutter
+   * and competed with the board for hero hierarchy. Each icon now
+   * sits directly on the deck's cream-amber surface like a figurine
+   * on a journal table. Touch target is preserved via padding so the
+   * button still hits 44×44+ even though the icon is smaller. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.25rem 0.3rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  max-width: 96px;
+  margin-inline: auto;
+  transition: transform var(--duration-snap) ease, filter var(--duration-snap) ease;
+}
+
+.coach-viewer__tile:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.coach-viewer__tile:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.coach-viewer__tile:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.55) brightness(0.92);
+  opacity: 0.7;
+}
+
+/* Save Later focus pulse (2026-05-31). Applied via `data-focused="true"`
+ * by the coach-game-client effect when the visor is opened from
+ * /coach/history with `?focus=save`. 3s self-removing — informational
+ * highlight only; the tap still belongs to the user. */
+.coach-viewer__tile[data-focused="true"] {
+  animation: coach-viewer-tile-focus-pulse 1.2s ease-in-out 2;
+}
+
+@keyframes coach-viewer-tile-focus-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(95, 163, 41, 0));
+  }
+
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 14px rgba(95, 163, 41, 0.85));
+  }
+}
+
+/* Pending state overrides the disabled grayscale — the user shouldn't
+ * read "broken" while a request is in flight. Spinner overlays the
+ * icon, label switches to "Analyzing…" via the React layer. */
+.coach-viewer__tile[data-loading="true"] {
+  cursor: progress;
+  filter: none;
+  opacity: 0.95;
+}
+
+.coach-viewer__tile[data-loading="true"] .coach-viewer__tile-icon {
+  opacity: 0.35;
+}
+
+.coach-viewer__tile-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  border: 3px solid rgba(110, 65, 15, 0.22);
+  border-top-color: rgba(110, 65, 15, 0.92);
+  animation: coach-viewer-tile-spin 0.85s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes coach-viewer-tile-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-viewer__tile-spinner {
+    animation: none;
+    border-top-color: rgba(110, 65, 15, 0.55);
+  }
+}
+
+.coach-viewer__tile-icon {
+  /* Icon stands alone — generous size + atmospheric drop-shadow so
+   * it reads as a physical object resting on the deck. The asset's
+   * own painted edges + shadows do the rest. */
+  display: block;
+  width: 56px;
+  height: 56px;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 1px 1px rgba(63, 34, 8, 0.28)) drop-shadow(0 4px 8px rgba(63, 34, 8, 0.22)) drop-shadow(0 10px 16px rgba(63, 34, 8, 0.12));
+}
+
+.coach-viewer__tile-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.coach-viewer__tile-price-ribbon {
+  /* Save Victory cost cue — small chip floating above the icon
+   * center. Same featured-pill (gold gradient + warm-brown border)
+   * language as the board's trophy ribbon, but centered above the
+   * icon rather than corner-offset (the canvas anchor it used to
+   * hang on is gone). */
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+  border: 1px solid rgba(120, 53, 15, 0.85);
+  color: #3f2208;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(120, 53, 15, 0.3),
+    0 2px 4px rgba(120, 53, 15, 0.32);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.coach-viewer__tile-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  color: rgba(63, 34, 8, 0.92);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.coach-viewer__actions-tertiary {
+  /* Plain text link — no chrome, no border, no background. Underline
+   * tells the user it's tappable; warm-brown muted color demotes it
+   * below the candy-pill secondaries. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  min-height: 36px;
+  padding: 0.25rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: rgba(110, 65, 15, 0.78);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(110, 65, 15, 0.4);
+  cursor: pointer;
+  transition: color var(--duration-snap) ease;
+}
+
+.coach-viewer__actions-tertiary:hover {
+  color: rgba(63, 34, 8, 0.95);
+}
+
+/* Phase 2 shop oscuridad (2026-05-30) — point-of-use credits readout
+ * rendered below the action tiles when the wallet holds paid coach
+ * credits. Mirrors the tertiary link typography but stays passive
+ * (no underline, no hover) so it reads as a static fact, not a CTA. */
+.coach-viewer__credits-hint {
+  align-self: center;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(110, 65, 15, 0.78);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  text-align: center;
+  margin-block-end: 0;
+}
+
+/* PRO variant — emerald to mirror the PRO badge identity across the
+ * app. Slightly bolder weight + uppercase letter-spacing so the
+ * "Unlimited" signal reads as a status, not a hint. */
+.coach-viewer__credits-hint--pro {
+  color: rgba(15, 90, 60, 0.92);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(220, 250, 235, 0.55);
+}
+
+/* Inline analysis slot wrapper — scroll target for the loading →
+ * result transition (2026-05-30, Bug #2 fix). No chrome of its own;
+ * exists so coach-game-client can ref the surface and call
+ * scrollIntoView on completion. `scroll-margin-top` keeps the
+ * persistent header from clipping the first line. */
+.coach-viewer__analysis-slot {
+  scroll-margin-top: 4.5rem;
+}
+
+/* Pending analysis banner (2026-05-30 — Bug #2 fix).
+ * Renders in place of the cached analysis panel while `coach.phase ===
+ * "loading"`. Same cream-amber badge-vitrine treatment so the surface
+ * doesn't feel like a different page; the spinner + copy are the
+ * only signal the user is waiting on the coach. */
+.coach-viewer__analysis-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding: 1.25rem 1rem 1.4rem;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #fff6dd 0%, #ffe2a8 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 248, 220, 0.95),
+    0 12px 24px -16px rgba(80, 40, 8, 0.45);
+  color: rgba(63, 34, 8, 0.92);
+  text-align: center;
+}
+
+.coach-viewer__analysis-pending-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(110, 65, 15, 0.18);
+  border-top-color: rgba(110, 65, 15, 0.85);
+  animation: coach-viewer-pending-spin 0.9s linear infinite;
+}
+
+@keyframes coach-viewer-pending-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.coach-viewer__analysis-pending-label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.coach-viewer__analysis-pending-hint {
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(110, 65, 15, 0.78);
+  max-width: 28ch;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-viewer__analysis-pending-spinner {
+    animation: none;
+    border-top-color: rgba(110, 65, 15, 0.45);
+  }
+}
+
+/* Fallback states reused from the old surface: no-wallet branch is
+ * owned by ConnectPromptToast; no-record branch is the load-error
+ * card. Both get foundation-level polish here; richer treatment lands
+ * with the actions stack in commit 3a. */
+
+.coach-game-client {
+  /* Bridge: the legacy outer wrapper still wraps the no-wallet and
+   * no-record branches. Centering + padding keep them from rendering
+   * flush against the viewport edge. */
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.coach-game-client--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  padding-top: 3rem;
+}
+
+.coach-game-client__error-message {
+  font-size: 1rem;
+  font-weight: 800;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+}
+
+.coach-game-client__error-subtitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(110, 65, 15, 0.78);
+  max-width: 28ch;
+}
+
+.coach-game-client__cta {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(180, 120, 35, 0.55);
+  background: rgba(255, 245, 215, 0.92);
+  color: rgba(63, 34, 8, 0.95);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55), 0 2px 4px rgba(63, 34, 8, 0.16);
+  transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+}
+
+.coach-game-client__cta:active {
+  transform: scale(0.97);
+}
+
+/* ─── Fail Rescue Modal ─────────────────────────────────────────────
+   Spec section 3.5. Mounts inside the existing PhaseFlash failure
+   scrim AFTER the 1800ms banner entry animation — the wolf + Try
+   again banner stay in place, CTAs slide-up underneath.
+
+   This is NOT a free-floating modal: it shares the PhaseFlash z-
+   stack and scrim (commit 8 wires that). Standalone in commit 7
+   for dev fixtures + VR baselines.
+   ──────────────────────────────────────────────────────────────────── */
+
+/* Rescue modal panel — uses the panel-bg1 forest-cream frame
+   (same asset as VictoryPopupShell) so the player reads the rescue
+   as a sibling of the win/loss popups in the same visual family.
+   Aspect-ratio gives the frame room to breathe without forcing a
+   tall popup on short viewports; padding scales to match the leafy
+   border insets. */
+
+.fail-rescue-modal-panel {
+  aspect-ratio: 3 / 4.4;
+  min-height: 480px;
+}
+
+.fail-rescue-modal-content {
+  position: relative;
+  padding: 11% 10% 7% 10%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-height: 100%;
+}
+
+.fail-rescue-modal-kicker {
+  margin: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: rgba(110, 65, 15, 0.78);
+  text-transform: uppercase;
+}
+
+.fail-rescue-modal-heading {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-game-action);
+  font-size: 2.1rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: var(--popup-title-color);
+  line-height: 1;
+  text-shadow: var(--popup-title-text-shadow);
+}
+
+.fail-rescue-modal-body {
+  margin: 0;
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: rgba(110, 65, 15, 0.85);
+  line-height: 1.35;
+  padding: 0 0.25rem;
+}
+
+.fail-rescue-modal-stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+  /* Reserve right-side airspace for the absolute-positioned wolf. */
+  padding-right: 38%;
+}
+
+.fail-rescue-modal-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
+  background: linear-gradient(180deg,
+      rgba(255, 248, 222, 0.95) 0%,
+      rgba(247, 226, 175, 0.95) 100%);
+  border: 1px solid rgba(180, 120, 35, 0.45);
+  border-radius: 999px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(150, 90, 20, 0.18),
+    0 1px 2px rgba(110, 65, 15, 0.18);
+  white-space: nowrap;
+}
+
+.fail-rescue-modal-stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Floating sprite: bigger than the pill's text band, anchored by a
+     negative vertical margin so the pill min-height stays put. Mirrors
+     the .candy-tray-pill-icon--floating recipe from the HUD chip
+     family so the icon visually "sits on top of" the pill rather than
+     being inline. */
+  width: 2.1rem;
+  height: 2.1rem;
+  margin: -0.55rem 0 -0.55rem -0.35rem;
+  filter: drop-shadow(0 2px 3px rgba(120, 65, 5, 0.35));
+}
+
+.fail-rescue-modal-stat-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fail-rescue-modal-stat-icon-glyph {
+  font-size: 1.85rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(120, 65, 5, 0.35));
+}
+
+.fail-rescue-modal-wolf {
+  position: absolute;
+  right: 3%;
+  /* Pulled DOWN so the wolf sits in the lower-right corner near the
+     stats row, NOT overlapping the body text above OR the primary CTA
+     below. User feedback 2026-06-01: previous top:22% had the
+     mascot's head obscuring the body line "rescue this streak". */
+  top: 38%;
+  width: 32%;
+  /* Hard clamp so the wolf never reaches down into the CTA stack
+     regardless of natural sprite aspect ratio. */
+  max-height: 30%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.fail-rescue-modal-wolf img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(120, 65, 5, 0.35));
+}
+
+.fail-rescue-modal-cta-stack {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1.25rem;
+}
+
 .fail-rescue-modal-primary {
   display: inline-flex;
   align-items: center;
@@ -8405,4 +11888,211 @@ button.hud-resource-chip:active:not(:disabled) {
 .fail-rescue-modal-primary:active {
   transform: translateY(2px);
   box-shadow: var(--cta-primary-green-bevel-pressed);
+}
+
+.fail-rescue-modal-primary-label {
+  white-space: nowrap;
+}
+
+.fail-rescue-modal-primary-chip {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.18rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(63, 34, 8, 0.32);
+  color: rgba(255, 250, 220, 0.98);
+  text-shadow: none;
+  letter-spacing: 0;
+}
+
+.fail-rescue-modal-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--cta-secondary-cream-color);
+  text-shadow: var(--cta-secondary-cream-text-shadow);
+  background: var(--cta-secondary-cream-grad);
+  border: 1px solid var(--cta-secondary-cream-border);
+  border-radius: 1.1rem;
+  box-shadow: var(--cta-secondary-cream-bevel);
+  cursor: pointer;
+  transition: transform var(--duration-snap) ease;
+}
+
+.fail-rescue-modal-secondary:active {
+  transform: scale(0.98);
+}
+
+.fail-rescue-modal-footer {
+  margin: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(110, 65, 15, 0.65);
+  letter-spacing: 0.02em;
+}
+
+/* ─── Promotion overlay (arena pawn promotion picker) ──────────────
+   Shares the panel-bg1 forest-frame visual family with
+   VictoryPopupShell + FailRescueModal so the player reads it as a
+   sibling popup. Visual ref: user Image #27 (2026-06-01). */
+
+.promotion-overlay-panel {
+  /* Slightly wider than the rescue modal because we fit 4 piece
+     cards across instead of stacked CTAs. */
+  aspect-ratio: 5 / 3.4;
+  min-height: 320px;
+}
+
+.promotion-overlay-content {
+  position: relative;
+  padding: 7% 8% 8% 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+}
+
+.promotion-overlay-title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-game-action);
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--popup-title-color);
+  text-shadow: var(--popup-title-text-shadow);
+  padding: 0 2rem;
+}
+
+.promotion-overlay-adorno {
+  display: block;
+  margin: 0.1rem auto 0.35rem;
+  width: 7.5rem;
+  height: auto;
+  filter: drop-shadow(0 1px 2px rgba(120, 65, 5, 0.25));
+}
+
+.promotion-overlay-adorno img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.promotion-overlay-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+/* Cream paper card with rounded corners. Each card holds a piece
+   sprite + label below. The default-choice card (queen) gets a
+   gold ring + small crown floating above. */
+.promotion-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  padding: 0.6rem 0.4rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg,
+      rgba(255, 251, 232, 0.95) 0%,
+      rgba(247, 232, 187, 0.95) 100%);
+  border: 1.5px solid rgba(180, 120, 35, 0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.70),
+    0 2px 4px rgba(110, 65, 15, 0.18);
+  cursor: pointer;
+  transition: transform var(--duration-snap) ease;
+}
+
+.promotion-card:active {
+  transform: scale(0.96);
+}
+
+.promotion-card-piece {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 4.5rem;
+}
+
+.promotion-card-piece img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(40, 20, 5, 0.45));
+}
+
+.promotion-card-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: rgba(63, 34, 8, 0.92);
+  letter-spacing: 0.01em;
+}
+
+/* ─── WELL DONE reward pills ──────────────────────────────────────
+   Surfaced inside PhaseFlash success path. +1 STAR (always) +
+   STREAK ×N (when N >= 2). Matches the visual language of the
+   candy-tray-pill family but with a stronger gold halo so it reads
+   as "you just gained this", not as a passive HUD element. */
+
+.fail-rescue-reward-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  /* Slightly delayed entry vs the wolf/banner so the eye lands on
+     the mascot first, then sees the reward chips arrive. */
+  animation:
+    reward-icon-enter 360ms cubic-bezier(0.34, 1.56, 0.64, 1) 220ms both;
+}
+
+.fail-rescue-reward-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff5d7 0%, #f7c64a 100%);
+  border: 1.5px solid rgba(180, 120, 35, 0.70);
+  color: rgba(63, 34, 8, 0.95);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 4px 10px rgba(120, 65, 5, 0.32),
+    0 0 0 1px rgba(255, 215, 120, 0.45);
+}
+
+.fail-rescue-reward-pill picture,
+.fail-rescue-reward-pill img {
+  display: inline-block;
+  width: 1.4rem;
+  height: 1.4rem;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(120, 65, 5, 0.35));
+}
+
+/* Streak pill: same gold base but tighter to differentiate the
+   chips when both show side-by-side. The ×N reads first (like a
+   multiplier) then the STREAK label. */
+.fail-rescue-reward-pill--streak {
+  letter-spacing: 0.05em;
+}
+
+.fail-rescue-reward-pill--streak>span:first-child {
+  font-size: 1.05rem;
+  color: rgba(180, 60, 25, 0.95);
 }
