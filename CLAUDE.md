@@ -7,7 +7,10 @@ Enseña movimientos de piezas de ajedrez con mecánicas gamificadas on-chain.
 ## Stack
 - **Monorepo**: Turborepo + pnpm
 - **App principal**: `apps/web` — Next.js 14 App Router + TypeScript
-- **Estilos**: Tailwind CSS + clases custom en `globals.css`
+- **Estilos**: Tailwind CSS + clases custom en `globals.css` (compartidas) y
+  `apps/web/src/styles/{arena,hub,coach,exercises}.css` (exclusivas por superficie,
+  cargadas via route layouts — P4 CSS split 2026-06-12). Una clase nueva va a su
+  archivo de superficie solo si NINGUNA otra ruta la consume; en duda → `globals.css`
 - **Blockchain**: Celo / MiniPay
 
 ## Distribución: Mobile-First via MiniPay
