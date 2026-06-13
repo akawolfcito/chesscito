@@ -1,23 +1,27 @@
-# Handoff — P4 CSS split SHIPPED TO PROD (2026-06-12, sesión 2)
+# Handoff — CSS perf cluster CERRADO (2026-06-12/13, sesión 2)
 
 ## Resume entry point
 
-> **On "continuemos": P4 YA está en prod.** Paso 0 = **PSI oficial 3 rutas**
-> (hub/arena/exercises) en pagespeed.web.dev para medir el delta vs baseline
-> (hub 87 / arena 86 / exercises 81) — la cuota de la API PSI se agotó el 2026-06-12,
-> correrla cuando resetee o pedir al founder. Paso 1 = **registrar los "detalles de
-> flujo a pulir"** que el founder vio en el smoke de preview (PENDIENTE de detallar —
-> ver §Open questions). Luego elegir siguiente lever (ver §Next levers).
+> **CLUSTER CSS CERRADO. `production` = `main` = `04dfb1a5`** (sincronizados,
+> sin pendientes). El CSS quedó descartado como palanca de performance — split
+> revertido, critical-CSS no viable en App Router, dead-CSS mínimo (1.2KB). El fix
+> del borde azul de la PRO sheet SÍ quedó en prod.
+>
+> **NEXT cuando el founder retome perf: la palanca real es JS, no CSS** — armar
+> spec de **lazy-load wagmi** (chunk 3620, 42KB unused JS) hasta primer wallet
+> intent (riesgo: zero-click MiniPay → spec obligatoria). Antes/aparte: PSI oficial
+> 3 rutas cuando resetee la cuota; bug FLUJO botón morado (founder debe decir pantalla);
+> Sally UX (arena vs persona) post-perf. Ver §Backlog + §Conclusión estratégica.
 
-## State
+## State final (cluster cerrado)
 
-- `production` = `main` = `83e4f6c7` (P4 CSS split SHIPPED). Era `05bb1a5a` (P2).
-- FF promote limpio (production era ancestro de main); 5 commits promovidos.
-- Prod deploy `chesscito-aoqy1lj01` Ready; **www smoke PASSED**: cada ruta sirve
-  core + su CSS de superficie, ninguna arrastra las otras 3; landing solo core.
-- Founder validó preview `preview.chesscito.com` en device: "se ve bastante bien",
-  detalles menores que atribuye a flujos (no al split) — pendientes de detallar.
-- Branch `feat/p4-css-split` mergeada FF y borrada.
+- `production` = `main` = `04dfb1a5`, sincronizados. Branches `feat/p4-css-split` y
+  `feat/perf-critical-css` mergeadas FF y borradas (local + origin).
+- Recorrido del cluster: split SHIPPED (`83e4f6c7`) → REVERTIDO (`babcd019`) por no
+  mover métricas → fix borde azul pro-sheet (`70a0b1c0`, preexistente, CONSERVADO en
+  prod) → critical-CSS probado y descartado (App Router) → dead-CSS 1.2KB (`04dfb1a5`).
+- Neto que sobrevive en prod vs pre-cluster (`05bb1a5a`): **fix borde azul + 1.2KB
+  dead-CSS borrado**. El CSS estructural quedó idéntico al pre-split (monolítico).
 
 ## What shipped (2 commits)
 
