@@ -1,0 +1,943 @@
+/* =====================================================================
+ * Coach surface — loaded only under /[locale]/coach (see coach/layout.tsx)
+ *
+ * Split from globals.css (P4 CSS split, 2026-06-12). Rules here are
+ * consumed EXCLUSIVELY by this surface (verified by import-graph
+ * classification). Shared/system rules stay in globals.css.
+ * Plain CSS — intentionally outside the Tailwind @layer pipeline,
+ * mirroring its original position after the @layer components block.
+ * ===================================================================== */
+
+/* ── Training Journal (/coach/history) ─────────────────────────────────────
+   Game-native training log for PRO users. Adventure atmosphere (warm amber/
+   green palette matching Arena). All tj-* classes are scoped to this screen.
+   Touch targets enforce ≥ 44px. No horizontal scroll. 390px viewport. */
+
+/* Root layout — green field background matching the game */
+
+.tj-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: var(--app-max-width, 390px);
+  margin: 0 auto;
+  background-color: #f7f1de;
+  background-image:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 245, 215, 0.32) 42%,
+      rgba(246, 230, 184, 0.50) 100%),
+    var(--playhub-game-bg);
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  color: #4a2b11;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* `.tj-page-header*` removed (Sally pass 9, 2026-05-20) — the
+   /coach/history page now composes <ContextualHeader> for its header
+   strip, and the bespoke yellow-cream gradient + 1.5px golden divider
+   + drop shadow that lived in `.tj-page-header` no longer match the
+   rest of the app's chrome. The page-header title-group + title +
+   subtitle classes were carrier styling for the legacy markup;
+   ContextualHeader owns those rules now. */
+
+/* Content area */
+
+.tj-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 16px 32px;
+}
+
+/* No-wallet state */
+
+.tj-no-wallet-text {
+  padding: 16px;
+  font-size: 0.875rem;
+  color: rgba(110, 65, 15, 0.75);
+}
+
+/* ── Manage history (delete panel wrapper) ─── */
+
+.tj-manage-history-section {
+  margin-top: 8px;
+  border-top: 1px solid rgba(110, 65, 15, 0.12);
+  padding-top: 12px;
+}
+
+.tj-manage-history-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(110, 65, 15, 0.55);
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: color 120ms ease;
+  min-height: 44px;
+}
+
+.tj-manage-history-toggle:hover {
+  color: rgba(110, 65, 15, 0.80);
+}
+
+.tj-manage-history-toggle-chevron {
+  font-size: 0.55rem;
+  opacity: 0.65;
+}
+
+.tj-manage-history-body {
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tj-manage-history-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(159, 18, 57, 0.85);
+}
+
+.tj-manage-history-body-text {
+  font-size: 0.72rem;
+  color: rgba(110, 65, 15, 0.65);
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+ * COACH VIEWER — /coach/[gameId] post-game match review surface (Cluster C)
+ *
+ * Foundation classes for the rebuilt visor. Layout precedence:
+ *   .coach-viewer            (outer mobile-first shell)
+ *     .coach-viewer__header  (sticky-ish band: back · title · meta)
+ *     .coach-viewer__board-card  (cream-amber panel → square board frame)
+ *
+ * Later commits in Cluster C add:
+ *   .coach-viewer__replay   (slider + arrows + ply counter — commit 2)
+ *   .coach-viewer__move-list (collapsible 2-col grid — commit 2)
+ *   .coach-viewer__actions  (state-driven CTA stack — commits 3a/3b/3c)
+ *   .coach-viewer__trophy-ribbon (win+claimed corner badge — commit 3c)
+ *
+ * Visual language reused from existing tokens: warm-brown text
+ * (rgba(63,34,8,*)), cream highlights (rgba(255,245,215,0.55) shadow),
+ * amber borders (rgba(180,120,35,0.45)). No new CSS variables. No new
+ * art assets — board uses BoardThumbnail at responsive size="100%".
+ * ========================================================================== */
+
+.coach-viewer {
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  /* Sally pass 10 — bottom padding bumped to safe-area-aware floor
+   * so tile labels don't clip against the viewport edge. The
+   * `.coach-viewer__controls` bottom-anchors via `margin-top: auto`;
+   * without enough bottom room here, "Play again / Save Victory /
+   * Ask Coach" labels were getting cropped. */
+  min-height: calc(100dvh - 60px);
+  /* header reserve */
+  padding: 0.5rem 0.85rem max(1.6rem, env(safe-area-inset-bottom, 1.6rem));
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-x: clip;
+}
+
+.coach-viewer__board-frame {
+  /* Sally pass 3 — outer card dropped + board ~22% larger so it
+   * unambiguously owns the visor as the hero. Multi-layer shadow
+   * (sharp + key + ambient) gives it real atmospheric depth so it
+   * feels lifted off the green grass rather than pasted on top. */
+  position: relative;
+  width: 100%;
+  max-width: 46vh;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 1rem;
+  overflow: visible;
+  filter:
+    drop-shadow(0 1px 2px rgba(63, 34, 8, 0.28)) drop-shadow(0 8px 16px rgba(63, 34, 8, 0.22)) drop-shadow(0 20px 32px rgba(63, 34, 8, 0.12));
+}
+
+/* Chapter break (pass 10) — the adorno-icon asset is already a
+ * complete ornament with painted gold rules + crown. The flanking
+ * CSS rule spans were duplicating the artwork. Now we render just
+ * the painted asset centered between board and the MOVES panel. */
+
+.coach-viewer__chapter-break {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  padding: 0.1rem 0;
+  user-select: none;
+}
+
+.coach-viewer__chapter-break-glyph {
+  display: inline-block;
+  width: 220px;
+  height: auto;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 245, 215, 0.7)) drop-shadow(0 2px 4px rgba(63, 34, 8, 0.28)) drop-shadow(0 6px 10px rgba(63, 34, 8, 0.16));
+}
+
+.coach-viewer__chapter-break-glyph img {
+  display: block;
+  width: 100%;
+  height: auto;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.coach-viewer__board-frame>[role="img"] {
+  /* BoardThumbnail renders its outer wrapper with inline `position:
+   * relative`. Anchor it into our frame so percentages resolve against
+   * the square box, not the surrounding panel padding. */
+  position: absolute;
+  inset: 0;
+}
+
+/* Trophy ribbon (commit 3c) — only shows when `mintedTokenId` is
+ * truthy. Overhangs the board card's top-right corner with the same
+ * featured-pill language the arena popup + Save Victory price ribbon
+ * use, so the player reads "this game is saved" without us spelling
+ * it out. */
+
+.coach-viewer__trophy-ribbon {
+  position: absolute;
+  top: -10px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+  border: 1px solid rgba(120, 53, 15, 0.85);
+  color: #3f2208;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(120, 53, 15, 0.3),
+    0 3px 6px rgba(120, 53, 15, 0.4);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  /* Cap on hypothetical 7+ digit tokenIds so the ribbon doesn't run
+   * off the board edge. Captured in red-team P1-3 as not-an-issue at
+   * current mint volume — the cap is defense-in-depth. */
+  max-width: 38%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Replay error banner (commit 2). Surfaces useGameReplay's mid-game
+ * decode error in plain language without breaking the visual stack. */
+
+.coach-viewer__replay-error {
+  border-radius: 0.75rem;
+  border: 1px solid rgba(225, 175, 30, 0.55);
+  background: rgba(255, 245, 215, 0.78);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: rgba(120, 70, 15, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+}
+
+/* `.coach-viewer__action-deck` removed in Sally pass 7 — its content
+ * (replay row + tiles row + tertiary) lives directly under
+ * `.coach-viewer__page` now. */
+
+/* Replay row — inside the action deck. Sally pass 5 adds a thin
+ * recessed channel under the slider so it reads as "tallado en el
+ * deck" rather than floating bar. The arrows stand above the channel
+ * (their own background stays transparent — the channel only wraps
+ * the slider itself, see .coach-viewer__replay-slider rule). */
+
+.coach-viewer__replay {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0.1rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.coach-viewer__replay-arrow {
+  /* Asset-driven arrow buttons — the chip background was dropped so
+   * the play.png illustration reads as the dominant affordance. The
+   * `<button>` is sized to the icon directly + a small hit-target
+   * inset for thumb-friendly taps. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform var(--duration-snap) ease, filter var(--duration-snap) ease;
+}
+
+.coach-viewer__replay-arrow picture,
+.coach-viewer__replay-arrow img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.coach-viewer__replay-arrow--prev img {
+  /* The `play.png` source faces right. Flip horizontally for the
+   * back-arrow position so we ship one asset for both directions. */
+  transform: scaleX(-1);
+}
+
+.coach-viewer__replay-arrow:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.coach-viewer__replay-arrow:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.coach-viewer__replay-arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+
+.coach-viewer__replay-slider {
+  /* Sally pass 5 — slider track now reads as a channel TALLADO INTO
+   * the deck rather than a bar lying on top of it. Inset shadow
+   * stack: dark inner top edge (depth) + light inner bottom edge
+   * (highlight catching from below) + thin gold rim. */
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(110, 65, 15, 0.28) 0%, rgba(180, 120, 35, 0.18) 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(63, 34, 8, 0.4),
+    inset 0 -1px 0 rgba(255, 245, 215, 0.5),
+    inset 0 0 0 1px rgba(232, 193, 96, 0.4);
+  border: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.coach-viewer__replay-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgb(168, 85, 247) 0%, rgb(126, 34, 206) 100%);
+  border: 2px solid rgba(255, 245, 215, 0.95);
+  box-shadow: 0 1px 2px rgba(63, 34, 8, 0.32);
+  cursor: pointer;
+}
+
+.coach-viewer__replay-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgb(168, 85, 247) 0%, rgb(126, 34, 206) 100%);
+  border: 2px solid rgba(255, 245, 215, 0.95);
+  box-shadow: 0 1px 2px rgba(63, 34, 8, 0.32);
+  cursor: pointer;
+}
+
+/* Floating controls (Sally pass 8) — replay row + action tiles
+ * live OPEN on the visor's page background, no panel chrome.
+ * Density contrast against the MOVES table above: data-heavy box +
+ * action-airy floating row. Bottom-anchored via `margin-top: auto`
+ * so the controls glue to the viewport floor on short games. */
+
+.coach-viewer__controls {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.4rem 0.25rem 0.5rem;
+}
+
+/* MOVES section restored to its own badge-vitrine panel — data
+ * tables benefit from a container that defines the scroll boundary
+ * + creates intentional visual density contrast against the open
+ * controls floating below. Pass 9: bg alpha softened so the green
+ * grass page background filters through subtly. */
+
+.coach-viewer__move-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.25rem;
+  background: linear-gradient(160deg, rgba(255, 245, 215, 0.78) 0%, rgba(252, 211, 77, 0.45) 100%);
+  border: 1px solid rgba(180, 120, 35, 0.55);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 245, 215, 0.5),
+    0 6px 14px -8px rgba(110, 65, 15, 0.35);
+  padding: 0.4rem 0.6rem 0.45rem;
+  overflow: hidden;
+}
+
+/* Pass 5 corner accents removed — the canonical badge-vitrine
+ * treatment carries enough material signature on its own; corner
+ * gold leaves felt additive in a way the production design system
+ * doesn't. Cleaner without them. */
+
+.coach-viewer__move-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.1rem 0.5rem 0.35rem;
+  border-bottom: 1px solid rgba(110, 65, 15, 0.25);
+}
+
+.coach-viewer__move-list-header-title {
+  /* Sally pass 2 — flourishes dropped. The plain centered uppercase
+   * label reads as an editorial divider rather than a scrapbook
+   * heading at MiniPay scale. Muted color demotes it below the
+   * title row in the visual hierarchy. */
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(63, 34, 8, 0.55);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+}
+
+.coach-viewer__move-list-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem 0.1rem 0.1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* Pass 3 — tight column gap, rowgap via a sibling divider effect
+   * (1px warm-brown rule on each row's btn-bottom) instead of true
+   * gap so the layout reads as a real chess journal entry table. */
+  column-gap: 0.5rem;
+  row-gap: 0;
+  max-height: 100px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.coach-viewer__move-item {
+  list-style: none;
+}
+
+.coach-viewer__move-item-btn {
+  /* Sally pass 3 — compact rows. Thin warm-brown bottom rule per row
+   * acts as a chess-journal table divider; rowgap 0 in the parent
+   * grid lets the rules align across columns. */
+  display: grid;
+  grid-template-columns: 1.15rem 1fr;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 28px;
+  padding: 0.2rem 0.35rem;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(110, 65, 15, 0.18);
+  background: transparent;
+  color: rgba(63, 34, 8, 0.92);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--duration-snap) ease;
+}
+
+.coach-viewer__move-item:last-child .coach-viewer__move-item-btn,
+.coach-viewer__move-item:nth-last-child(2):nth-child(odd)~.coach-viewer__move-item .coach-viewer__move-item-btn {
+  border-bottom: 0;
+}
+
+.coach-viewer__move-item-san-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.coach-viewer__move-item-btn:hover {
+  background: rgba(255, 245, 215, 0.65);
+}
+
+.coach-viewer__move-item-btn[aria-pressed="true"] {
+  /* Active row — amber-cream wash mirroring the mockup's highlighted
+   * mate row. Slightly darker text + bolder weight reinforces the
+   * "you are here" cue. Rounded corners + suppressed bottom rule
+   * so the highlight reads as a soft pill, not a rectangle on top
+   * of a divider line (pass 9). */
+  background: rgba(245, 195, 110, 0.45);
+  color: rgba(63, 34, 8, 1);
+  font-weight: 900;
+  border-bottom-color: transparent;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(180, 83, 9, 0.35);
+}
+
+.coach-viewer__move-item-num {
+  /* Pass 3 — green badge stays (user loved it from M1) but smaller
+   * to fit the compact 28px row + tighter typography. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #2d8c3f 0%, #1f6a2e 100%);
+  border: 1px solid rgba(15, 60, 25, 0.55);
+  color: rgba(255, 250, 220, 1);
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 1px 2px rgba(15, 60, 25, 0.35);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.coach-viewer__move-item-san {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: inherit;
+}
+
+.coach-viewer__move-item-annotation {
+  /* Sally pass 2 — inline badge next to the SAN. Smaller + transparent
+   * bg + thin border so it reads as "tag on the move", not as a
+   * separate floating chip. */
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05rem 0.4rem;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid rgba(180, 83, 9, 0.35);
+  color: rgba(180, 83, 9, 0.85);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Actions block (M3) — flat row of 1–3 icon tiles + optional tertiary
+ * text link underneath. Replaces the hierarchical primary/secondary
+ * stack from commits 3a/3b/3c. Each tile is icon-on-canvas + label
+ * below; Save Victory keeps its corner price ribbon so the cost
+ * signal survives the visual flatten. State-driven rendering lives in
+ * <GameActionsBar>. */
+
+.coach-viewer__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.coach-viewer__tiles-row {
+  display: grid;
+  grid-template-columns: repeat(var(--coach-viewer-tile-count, 3), 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.coach-viewer__tiles-row[data-count="1"] {
+  --coach-viewer-tile-count: 1;
+  /* Center the lone tile so the row doesn't render as a left-aligned
+   * stub. ~60% of the row width is enough breathing room. */
+  max-width: 60%;
+  margin-inline: auto;
+}
+
+.coach-viewer__tiles-row[data-count="2"] {
+  --coach-viewer-tile-count: 2;
+}
+
+.coach-viewer__tiles-row[data-count="3"] {
+  --coach-viewer-tile-count: 3;
+}
+
+.coach-viewer__tile {
+  /* Sally pass 4 — purple canvas dropped. The crafted icon assets
+   * carry their own painted bgs (refresh shield, save disk, coach
+   * book); stacking them inside a purple square was visual stutter
+   * and competed with the board for hero hierarchy. Each icon now
+   * sits directly on the deck's cream-amber surface like a figurine
+   * on a journal table. Touch target is preserved via padding so the
+   * button still hits 44×44+ even though the icon is smaller. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.25rem 0.3rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  max-width: 96px;
+  margin-inline: auto;
+  transition: transform var(--duration-snap) ease, filter var(--duration-snap) ease;
+}
+
+.coach-viewer__tile:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.coach-viewer__tile:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.coach-viewer__tile:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.55) brightness(0.92);
+  opacity: 0.7;
+}
+
+/* Save Later focus pulse (2026-05-31). Applied via `data-focused="true"`
+ * by the coach-game-client effect when the visor is opened from
+ * /coach/history with `?focus=save`. 3s self-removing — informational
+ * highlight only; the tap still belongs to the user. */
+
+.coach-viewer__tile[data-focused="true"] {
+  animation: coach-viewer-tile-focus-pulse 1.2s ease-in-out 2;
+}
+
+@keyframes coach-viewer-tile-focus-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(95, 163, 41, 0));
+  }
+
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 14px rgba(95, 163, 41, 0.85));
+  }
+}
+
+/* Pending state overrides the disabled grayscale — the user shouldn't
+ * read "broken" while a request is in flight. Spinner overlays the
+ * icon, label switches to "Analyzing…" via the React layer. */
+
+.coach-viewer__tile[data-loading="true"] {
+  cursor: progress;
+  filter: none;
+  opacity: 0.95;
+}
+
+.coach-viewer__tile[data-loading="true"] .coach-viewer__tile-icon {
+  opacity: 0.35;
+}
+
+.coach-viewer__tile-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  border: 3px solid rgba(110, 65, 15, 0.22);
+  border-top-color: rgba(110, 65, 15, 0.92);
+  animation: coach-viewer-tile-spin 0.85s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes coach-viewer-tile-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-viewer__tile-spinner {
+    animation: none;
+    border-top-color: rgba(110, 65, 15, 0.55);
+  }
+}
+
+.coach-viewer__tile-icon {
+  /* Icon stands alone — generous size + atmospheric drop-shadow so
+   * it reads as a physical object resting on the deck. The asset's
+   * own painted edges + shadows do the rest. */
+  display: block;
+  width: 56px;
+  height: 56px;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 1px 1px rgba(63, 34, 8, 0.28)) drop-shadow(0 4px 8px rgba(63, 34, 8, 0.22)) drop-shadow(0 10px 16px rgba(63, 34, 8, 0.12));
+}
+
+.coach-viewer__tile-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.coach-viewer__tile-price-ribbon {
+  /* Save Victory cost cue — small chip floating above the icon
+   * center. Same featured-pill (gold gradient + warm-brown border)
+   * language as the board's trophy ribbon, but centered above the
+   * icon rather than corner-offset (the canvas anchor it used to
+   * hang on is gone). */
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%);
+  border: 1px solid rgba(120, 53, 15, 0.85);
+  color: #3f2208;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 240, 175, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(120, 53, 15, 0.3),
+    0 2px 4px rgba(120, 53, 15, 0.32);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.coach-viewer__tile-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  color: rgba(63, 34, 8, 0.92);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.coach-viewer__actions-tertiary {
+  /* Plain text link — no chrome, no border, no background. Underline
+   * tells the user it's tappable; warm-brown muted color demotes it
+   * below the candy-pill secondaries. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  min-height: 36px;
+  padding: 0.25rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: rgba(110, 65, 15, 0.78);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: rgba(110, 65, 15, 0.4);
+  cursor: pointer;
+  transition: color var(--duration-snap) ease;
+}
+
+.coach-viewer__actions-tertiary:hover {
+  color: rgba(63, 34, 8, 0.95);
+}
+
+/* Phase 2 shop oscuridad (2026-05-30) — point-of-use credits readout
+ * rendered below the action tiles when the wallet holds paid coach
+ * credits. Mirrors the tertiary link typography but stays passive
+ * (no underline, no hover) so it reads as a static fact, not a CTA. */
+
+.coach-viewer__credits-hint {
+  align-self: center;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(110, 65, 15, 0.78);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+  text-align: center;
+  margin-block-end: 0;
+}
+
+/* PRO variant — emerald to mirror the PRO badge identity across the
+ * app. Slightly bolder weight + uppercase letter-spacing so the
+ * "Unlimited" signal reads as a status, not a hint. */
+
+.coach-viewer__credits-hint--pro {
+  color: rgba(15, 90, 60, 0.92);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(220, 250, 235, 0.55);
+}
+
+/* Inline analysis slot wrapper — scroll target for the loading →
+ * result transition (2026-05-30, Bug #2 fix). No chrome of its own;
+ * exists so coach-game-client can ref the surface and call
+ * scrollIntoView on completion. `scroll-margin-top` keeps the
+ * persistent header from clipping the first line. */
+
+.coach-viewer__analysis-slot {
+  scroll-margin-top: 4.5rem;
+}
+
+/* Pending analysis banner (2026-05-30 — Bug #2 fix).
+ * Renders in place of the cached analysis panel while `coach.phase ===
+ * "loading"`. Same cream-amber badge-vitrine treatment so the surface
+ * doesn't feel like a different page; the spinner + copy are the
+ * only signal the user is waiting on the coach. */
+
+.coach-viewer__analysis-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding: 1.25rem 1rem 1.4rem;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #fff6dd 0%, #ffe2a8 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 248, 220, 0.95),
+    0 12px 24px -16px rgba(80, 40, 8, 0.45);
+  color: rgba(63, 34, 8, 0.92);
+  text-align: center;
+}
+
+.coach-viewer__analysis-pending-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(110, 65, 15, 0.18);
+  border-top-color: rgba(110, 65, 15, 0.85);
+  animation: coach-viewer-pending-spin 0.9s linear infinite;
+}
+
+@keyframes coach-viewer-pending-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.coach-viewer__analysis-pending-label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.coach-viewer__analysis-pending-hint {
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(110, 65, 15, 0.78);
+  max-width: 28ch;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-viewer__analysis-pending-spinner {
+    animation: none;
+    border-top-color: rgba(110, 65, 15, 0.45);
+  }
+}
+
+/* Fallback states reused from the old surface: no-wallet branch is
+ * owned by ConnectPromptToast; no-record branch is the load-error
+ * card. Both get foundation-level polish here; richer treatment lands
+ * with the actions stack in commit 3a. */
+
+.coach-game-client {
+  /* Bridge: the legacy outer wrapper still wraps the no-wallet and
+   * no-record branches. Centering + padding keep them from rendering
+   * flush against the viewport edge. */
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.coach-game-client--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  padding-top: 3rem;
+}
+
+.coach-game-client__error-message {
+  font-size: 1rem;
+  font-weight: 800;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+}
+
+.coach-game-client__error-subtitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(110, 65, 15, 0.78);
+  max-width: 28ch;
+}
+
+.coach-game-client__cta {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(180, 120, 35, 0.55);
+  background: rgba(255, 245, 215, 0.92);
+  color: rgba(63, 34, 8, 0.95);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(255, 245, 215, 0.55), 0 2px 4px rgba(63, 34, 8, 0.16);
+  transition: transform var(--duration-snap) ease, background-color var(--duration-snap) ease;
+}
+
+.coach-game-client__cta:active {
+  transform: scale(0.97);
+}

@@ -7,7 +7,13 @@
 // need a NextIntlClientProvider too — otherwise primitives like
 // <TxProgressSteps>, <GlobalStatusBar>, etc. throw at mount. EN bundle
 // only; fixtures are locale-agnostic by design.
+// Fixtures render surfaces from every route, so the dev root loads the
+// full split set (P4 CSS split) — prod routes load only their own file.
 import '../globals.css'
+import '@/styles/arena.css'
+import '@/styles/hub.css'
+import '@/styles/coach.css'
+import '@/styles/exercises.css'
 import { NextIntlClientProvider } from 'next-intl'
 import enMessages from '@/lib/content/messages/en'
 

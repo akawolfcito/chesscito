@@ -116,28 +116,39 @@ describe("GemButton — markup contract (pressable sibling)", () => {
   });
 });
 
-describe("Gem (Badge + Button) — globals.css contract", () => {
-  it("globals.css declares --gem-pill-bg var", async () => {
+describe("Gem (Badge + Button) — app CSS contract", () => {
+  // Gem rules live in the arena surface stylesheet since the P4 CSS
+  // split (2026-06-12); the contract is "shipped in the app CSS", so
+  // scan globals + every split surface file.
+  const readAppCss = async () => {
     const fs = await import("node:fs");
     const path = await import("node:path");
-    const cssPath = path.resolve(__dirname, "../../../app/globals.css");
-    const css = fs.readFileSync(cssPath, "utf8");
+    const stylesDir = path.resolve(__dirname, "../../../styles");
+    const surfaces = fs
+      .readdirSync(stylesDir)
+      .filter((f) => f.endsWith(".css"))
+      .map((f) => fs.readFileSync(path.join(stylesDir, f), "utf8"));
+    return [
+      fs.readFileSync(
+        path.resolve(__dirname, "../../../app/globals.css"),
+        "utf8",
+      ),
+      ...surfaces,
+    ].join("\n");
+  };
+
+  it("app CSS declares --gem-pill-bg var", async () => {
+    const css = await readAppCss();
     expect(css).toMatch(/--gem-pill-bg\s*:\s*url\(/);
   });
 
-  it("globals.css defines press feedback rule for .gem-button:active", async () => {
-    const fs = await import("node:fs");
-    const path = await import("node:path");
-    const cssPath = path.resolve(__dirname, "../../../app/globals.css");
-    const css = fs.readFileSync(cssPath, "utf8");
+  it("app CSS defines press feedback rule for .gem-button:active", async () => {
+    const css = await readAppCss();
     expect(css).toMatch(/\.gem-button:active(?::not\(:disabled\))?/);
   });
 
-  it("globals.css defines a prefers-reduced-motion fallback for .gem-button", async () => {
-    const fs = await import("node:fs");
-    const path = await import("node:path");
-    const cssPath = path.resolve(__dirname, "../../../app/globals.css");
-    const css = fs.readFileSync(cssPath, "utf8");
+  it("app CSS defines a prefers-reduced-motion fallback for .gem-button", async () => {
+    const css = await readAppCss();
     expect(css).toMatch(
       /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]{0,2000}\.gem-button/,
     );
@@ -187,10 +198,11 @@ describe("Gem — tone prop (sprint 2 / G2)", () => {
     },
   );
 
-  it("globals.css defines tone filter rules for success / warning / locked", async () => {
+  it("app CSS defines tone filter rules for success / warning / locked", async () => {
     const fs = await import("node:fs");
     const path = await import("node:path");
-    const cssPath = path.resolve(__dirname, "../../../app/globals.css");
+    // Tone rules moved to the arena surface stylesheet (P4 CSS split).
+    const cssPath = path.resolve(__dirname, "../../../styles/arena.css");
     const css = fs.readFileSync(cssPath, "utf8");
     expect(css).toMatch(/\[data-tone="success"\][\s\S]{0,200}filter:/);
     expect(css).toMatch(/\[data-tone="warning"\][\s\S]{0,200}filter:/);

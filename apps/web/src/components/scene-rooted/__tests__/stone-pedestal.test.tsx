@@ -191,23 +191,25 @@ describe("StonePedestal — globals.css contract (spec check)", () => {
     }
   });
 
-  it("globals.css defines a press-feedback rule for .stone-pedestal:active", async () => {
+  // Pedestal rules moved to the exercises surface stylesheet
+  // (P4 CSS split, 2026-06-12).
+  it("app CSS defines a press-feedback rule for .stone-pedestal:active", async () => {
     const fs = await import("node:fs");
     const path = await import("node:path");
     const cssPath = path.resolve(
       __dirname,
-      "../../../app/globals.css",
+      "../../../styles/exercises.css",
     );
     const css = fs.readFileSync(cssPath, "utf8");
     expect(css).toMatch(/\.stone-pedestal:active(?::not\(:disabled\))?/);
   });
 
-  it("globals.css defines a prefers-reduced-motion fallback for .stone-pedestal", async () => {
+  it("app CSS defines a prefers-reduced-motion fallback for .stone-pedestal", async () => {
     const fs = await import("node:fs");
     const path = await import("node:path");
     const cssPath = path.resolve(
       __dirname,
-      "../../../app/globals.css",
+      "../../../styles/exercises.css",
     );
     const css = fs.readFileSync(cssPath, "utf8");
     expect(css).toMatch(
