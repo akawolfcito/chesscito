@@ -247,7 +247,7 @@ export function ArenaEndState({
               claimData={claimData}
               shareStatus={shareStatus}
               onAskCoach={onAskCoachFromVictory ?? onAskCoach}
-              onSaveAgain={onClaimVictory}
+              onSaveAgain={guardedOnClaim}
               coachCtaDisabled={coachCtaDisabled}
               coachCtaBusy={isPersistBusy}
               coachTooShort={isTooShort}
