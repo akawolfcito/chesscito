@@ -637,7 +637,7 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     );
   });
 
-  test("vr10-coach-viewer-loss — Ask Coach + Play Again (no mint surface)", async ({
+  test("vr10-coach-viewer-loss — Play Again + Save match + Share + Ask Coach (F8)", async ({
     page,
   }) => {
     await page.goto("/dev/coach-viewer?variant=viewer-loss", {
