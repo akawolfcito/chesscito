@@ -145,13 +145,13 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                   {t("duplicate")}
                 </span>
               ) : null}
-              <button
-                type="button"
+              <PrincipalButton
                 onClick={() => onOpenChange(false)}
-                className="arena-result-secondary-action mt-1"
+                className="mt-1"
+                data-testid="get-peones-done"
               >
                 {t("done")}
-              </button>
+              </PrincipalButton>
             </div>
           ) : (
             <>
