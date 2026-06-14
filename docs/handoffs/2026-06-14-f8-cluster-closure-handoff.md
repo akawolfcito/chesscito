@@ -44,31 +44,25 @@ Cluster closure:
    #104 (M14 Treasure hunt), #101 (M13 Prize pool v2), #67 (M13 Exercise world map).
 2. **README sync** — ✅ done (`6d03bdf5`).
 3. **MEMORY.md sync** — ✅ updated (F8 → shipped/closed).
-4. **Branch hygiene** — ⚠️ **DEFERRED, needs founder OK.** ~20 stale remote
-   branches predate F8 (board-renderer, rook-*, scoreboard-contract, sprint-ui-*,
-   etc.). None belong to F8. Deleting remote branches on the shared origin is
-   semi-destructive → not mass-deleting without confirmation + per-branch
-   `git log origin/main..origin/<branch>` merge verification. See "Next tasks".
+4. **Branch hygiene** — ✅ remote already clean. `git ls-remote --heads origin`
+   shows only `main` + `production`. The ~20 "stale branches" first seen were
+   stale local remote-tracking refs (branches long-deleted on GitHub); a
+   `git fetch --prune` purged them. Nothing to delete on origin.
 5. **Handoff doc** — ✅ this file + `SESSION.md`.
 
 ## Next tasks
-1. **Branch hygiene decision** (founder): approve a sweep of the ~20 stale
-   remote branches. Procedure per branch: `git log origin/main..origin/<branch>`
-   — if no unique commits (fully merged), `git push origin --delete <branch>`;
-   if unique commits exist, keep or archive. List them with
-   `git branch -r | grep -vE 'origin/(main|production|HEAD)'`.
-2. **Remaining ux-review minors** (lower value / more care): AddCashCta null
+1. **Remaining ux-review minors** (lower value / more care): AddCashCta null
    off-MiniPay has no web recovery (#93, touches fail-closed rail); CoachPaywall
    `h-[100dvh]` empty gap (#94, is it an intentional takeover?); hub-splash
    dashed placeholder (#97, needs art asset); dock locked 44px (#95, already the
    a11y minimum).
-3. **Deferred Majors** (own specs): sheet-framing unification (4 shells =
+2. **Deferred Majors** (own specs): sheet-framing unification (4 shells =
    redesign); coin-emoji credits→Peón (blocked on backend credits→Peón unify).
-4. **VR coverage** for the ClaimSuccess `--triple` state (add fixture variant).
+3. **VR coverage** for the ClaimSuccess `--triple` state (add fixture variant).
 
 ## Blockers / open questions
-- Branch hygiene needs founder sign-off (semi-destructive on shared remote).
 - 2 pre-existing `tsc` errors in `use-mint-victory.test.ts` (chore, not F8).
+- None blocking the cluster — it is fully closed.
 
 ## Notes
 - `origin/main` = `6d03bdf5`; `production` intentionally untouched (pre-launch
