@@ -1757,6 +1757,9 @@ export const COACH_VIEWER_COPY = {
   // running an analysis request. Replaces the silent wait that left
   // the visor visually identical for ~20-30s (cf. project_coach_viewer_cluster_c).
   analysisPending: "Analyzing your match…",
+  // Short variant for the ~85px Ask Coach tile, where the full banner copy
+  // truncates. The long string stays on the inline banner title.
+  analysisPendingTile: "Analyzing…",
   analysisPendingHint: "Stay here. The analysis appears below as soon as it's ready.",
   // 2026-05-30 (Phase 2 shop oscuridad): point-of-use credits readout
   // rendered under the Ask Coach tile when the wallet has paid credits.

@@ -147,7 +147,7 @@ export function GameActionsBar({
   // the outcome-specific question read worse in Match Review than the plain
   // action). Outcome-specific copy stays on the arena end-state popups only.
   const askCoachLabel = askCoachPending
-    ? t("analysisPending")
+    ? t("analysisPendingTile")
     : hasAnalysis
       ? t("askCoachAgain")
       : t("askCoach");

@@ -594,6 +594,7 @@ const messages = {
     viewOnCeloscan: "Ver recibo",
     shareTrophy: "Compartir trofeo",
     analysisPending: "Analizando tu partida…",
+    analysisPendingTile: "Analizando…",
     analysisPendingHint: "Quédate aquí. El análisis aparece debajo apenas esté listo.",
     creditsHint: "Usa 1 crédito · te quedan {count}",
     creditsHintPro: "Ilimitado · PRO activo",
