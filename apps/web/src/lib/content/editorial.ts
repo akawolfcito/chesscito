@@ -1723,6 +1723,8 @@ export const COACH_VIEWER_COPY = {
   // arena context. ES override in messages/es.ts.
   saveVictory: "Save Victory",
   saveVictoryAriaLabel: "Save Victory for {price}",
+  // F8 — neutral Save label for non-win outcomes (draw/lose/resign).
+  saveMatch: "Save match",
   // 2026-05-29 (Cluster C, commit 3c): trophy ribbon + Celoscan
   // tertiary. ES overrides in messages/es.ts. `viewNft` (legacy key)
   // stays around because the dev fixture + existing tests still

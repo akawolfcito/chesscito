@@ -133,6 +133,53 @@ describe("useMintVictory", () => {
     expect(waitReceipt).toHaveBeenCalledWith(txHash);
   });
 
+  // F8 — non-win outcomes are saveable. The canClaim guard no longer
+  // requires result === "win"; a loss reaches claiming/success like a win.
+  it("start with a non-win result (lose) reaches claiming/success", async () => {
+    const txHash = ("0x" + "ce".repeat(32)) as `0x${string}`;
+    const sendApprove = vi.fn().mockResolvedValue(("0x" + "01".repeat(32)) as `0x${string}`);
+    const sendMint = vi.fn().mockResolvedValue(txHash);
+    const waitReceipt = vi.fn().mockResolvedValue({ status: "success", logs: [] });
+
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          nonce: "42",
+          deadline: String(Math.floor(Date.now() / 1000) + 300),
+          signature: ("0x" + "ab".repeat(65)) as `0x${string}`,
+        }),
+      })
+      .mockResolvedValue({ ok: true, json: async () => ({}) });
+
+    const { result } = renderHook(() =>
+      useMintVictory({
+        gameId: "550e8400-e29b-41d4-a716-446655440000",
+        walletAddress: "0x1111111111111111111111111111111111111111",
+        difficulty: "easy",
+        result: "lose",
+        totalMoves: 18,
+        elapsedMs: 90_000,
+        injected: {
+          address: "0x1111111111111111111111111111111111111111",
+          chainId: 42220,
+          sendApprove,
+          sendMint,
+          waitReceipt,
+        },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.start();
+    });
+
+    await waitFor(() =>
+      expect(["success", "claiming"]).toContain(result.current.phase),
+    );
+    expect(sendMint).toHaveBeenCalledTimes(1);
+  });
+
   it("sig rejection → cancelled phase + claimingRef released", async () => {
     const sendSig = vi.fn().mockRejectedValue(new Error("user rejected"));
 

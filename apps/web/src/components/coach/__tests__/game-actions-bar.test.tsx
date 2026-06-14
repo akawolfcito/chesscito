@@ -278,6 +278,31 @@ describe("GameActionsBar", () => {
     expect(screen.getByRole("button", { name: /^askCoachAgain$/ })).toBeInTheDocument();
   });
 
+  // F8 — Save is available on every outcome (not just win); the label is
+  // "saveVictory" on win, "saveMatch" otherwise (saveCtaLabelKey helper).
+  it("renders the Save tile on lose/draw/resigned with the saveMatch label", () => {
+    const { rerender } = render(<GameActionsBar {...baseProps} result="lose" claimPrice="$0.005" />);
+    expect(screen.getByRole("button", { name: /saveMatch/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
+    rerender(<GameActionsBar {...baseProps} result="draw" claimPrice="$0.005" />);
+    expect(screen.getByRole("button", { name: /saveMatch/ })).toBeInTheDocument();
+    rerender(<GameActionsBar {...baseProps} result="resigned" claimPrice="$0.005" />);
+    expect(screen.getByRole("button", { name: /saveMatch/ })).toBeInTheDocument();
+  });
+
+  it("keeps the saveVictory label on win", () => {
+    render(<GameActionsBar {...baseProps} result="win" claimPrice="$0.005" />);
+    expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /saveMatch/ })).toBeNull();
+  });
+
+  it("Save tile fires onMint on a non-win outcome", () => {
+    const onMint = vi.fn();
+    render(<GameActionsBar {...baseProps} result="lose" claimPrice="$0.005" onMint={onMint} />);
+    fireEvent.click(screen.getByRole("button", { name: /saveMatch/ }));
+    expect(onMint).toHaveBeenCalledTimes(1);
+  });
+
   // Plan 3 — cost ribbon on the Ask Coach tile.
   it("renders the Peón cost ribbon on the reachable Ask Coach tile (free)", () => {
     const { container } = render(<GameActionsBar {...baseProps} result="lose" />);

@@ -588,6 +588,7 @@ const messages = {
     backToHub: "Volver al Hub",
     saveVictory: "Guardar Victoria",
     saveVictoryAriaLabel: "Guardar Victoria por {price}",
+    saveMatch: "Guardar partida",
     // trophyRibbon: "#{tokenId}" — formato sin localizar.
     trophyRibbonAriaLabel: "Trofeo #{tokenId} guardado en cadena",
     viewOnCeloscan: "Ver en Celoscan",

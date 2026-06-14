@@ -35,6 +35,7 @@ import {
   isUserCancellation,
   type TxErrorKind,
 } from "@/lib/errors";
+import type { CoachGameResult } from "@/lib/coach/types";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,8 @@ export type MintVictoryInput = {
   gameId?: string;
   walletAddress?: `0x${string}`;
   difficulty?: "easy" | "medium" | "hard";
-  result?: "win";
+  /** F8: any outcome is saveable (was "win" only). */
+  result?: CoachGameResult;
   totalMoves?: number;
   elapsedMs?: number;
   /** SAN move history — passed to /api/sign-victory for server-side replay. */
@@ -310,14 +312,15 @@ export function useMintVictory(input: MintVictoryInput): MintVictoryState {
       writeContractAsync: writeAsync,
     } = liveRef.current;
 
-    // Guard: injected tests bypass normal canClaim; real path requires
-    // address + victoryNFT + win result.
+    // Guard: injected tests bypass normal canClaim; real path requires a
+    // known outcome + address + victoryNFT. F8: any result is saveable, so
+    // the gate is "result is set" (not "result === win").
     const isInjected = inp.injected?.address != null;
     const effectiveAddr = inp.injected?.address ?? addr;
     const effectiveNFT = nftAddr ?? (isInjected ? ("0xDEAD" as `0x${string}`) : null);
 
     const canClaim =
-      inp.result === "win" &&
+      inp.result != null &&
       effectiveAddr != null &&
       (isInjected || effectiveNFT != null);
 

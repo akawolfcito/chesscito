@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
+import { saveCtaLabelKey } from "@/lib/coach/save-cta-label";
 
 type Props = {
   gameId: string;
@@ -167,6 +168,22 @@ export function GameActionsBar({
     costRibbon: askCoachReachable,
   };
 
+  // F8 — Save is available on every outcome. Label comes from the single
+  // saveCtaLabelKey helper (win → "Save Victory", else → "Save match"); win
+  // keeps its richer aria copy unchanged. Same price ribbon for all.
+  const saveLabel = t(saveCtaLabelKey(result));
+  const saveTile: Tile = {
+    kind: "save-victory",
+    label: saveLabel,
+    ariaLabel: claimPrice
+      ? isWin
+        ? t("saveVictoryAriaLabel", { price: claimPrice })
+        : `${saveLabel} · ${claimPrice}`
+      : saveLabel,
+    onClick: onMint,
+    priceRibbon: claimPrice ?? undefined,
+  };
+
   let tiles: Tile[];
   let tertiary: React.ReactNode = null;
 
@@ -184,15 +201,7 @@ export function GameActionsBar({
   } else if (isWin) {
     tiles = [
       playAgainTile,
-      {
-        kind: "save-victory",
-        label: t("saveVictory"),
-        ariaLabel: claimPrice
-          ? t("saveVictoryAriaLabel", { price: claimPrice })
-          : t("saveVictory"),
-        onClick: onMint,
-        priceRibbon: claimPrice ?? undefined,
-      },
+      saveTile,
       {
         kind: "share",
         label: isMinted ? t("shareTrophy") : t("share"),
@@ -213,9 +222,11 @@ export function GameActionsBar({
       );
     }
   } else {
-    // loss / draw / resigned / replay-errored
+    // loss / draw / resigned / replay-errored — F8: Save is now present here
+    // too (neutral "Save match" label), matching the win 4-tile row.
     tiles = [
       playAgainTile,
+      saveTile,
       { kind: "share", label: t("share"), onClick: onShare },
       askCoachTile,
     ];

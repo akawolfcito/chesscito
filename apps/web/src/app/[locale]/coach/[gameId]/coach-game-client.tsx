@@ -100,7 +100,8 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     gameId: gameRecord?.gameId,
     walletAddress,
     difficulty: gameRecord?.difficulty,
-    result: "win",
+    // F8: save the ACTUAL outcome, not a hardcoded win.
+    result: mapResult(gameRecord?.result),
     totalMoves: gameRecord?.totalMoves ?? 0,
     elapsedMs: gameRecord?.elapsedMs ?? 0,
     // 2026-05-30 (Bug from MiniPay smoke): without moveHistory the
@@ -149,7 +150,12 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
 
   const handleMint = useCallback(() => {
     if (!gameRecord) return;
-    track("coach_viewer_mint_tap", { gameId: gameRecord.gameId, difficulty: gameRecord.difficulty });
+    // F8 — carry the outcome so the funnel can split win vs non-win saves.
+    track("coach_viewer_mint_tap", {
+      gameId: gameRecord.gameId,
+      difficulty: gameRecord.difficulty,
+      result: mapResult(gameRecord.result),
+    });
     void mint.start();
   }, [mint, gameRecord]);
 
