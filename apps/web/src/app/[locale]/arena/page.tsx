@@ -706,17 +706,15 @@ function ArenaPageInner() {
     }
   }, [persistState, persistedGameId, address, router]);
 
-  // #116 — Prefetch /coach/[gameId] while the end-state popup is visible
-  // so the X-close transition feels instant. The route's RSC payload +
-  // first /api/games hop are warm by the time the user taps the X.
-  // router.prefetch is idempotent and de-dupes on the Next.js side; safe
-  // to re-fire on each terminal-state churn. Guest pathway (no wallet) is
-  // skipped — those users route to /arena?fresh=1, not the coach surface.
-  useEffect(() => {
-    if (!showEndOverlay) return;
-    if (!address || !persistedGameId) return;
-    router.prefetch(`/coach/${persistedGameId}?wallet=${address}`);
-  }, [showEndOverlay, address, persistedGameId, router]);
+  // #116 prefetch REMOVED 2026-06-13 (review F4). Prefetching
+  // /coach/[gameId] while the popup is visible warmed the Router Cache with
+  // a PRE-analysis RSC snapshot (gameRecord.analysis === null). The
+  // analysis-redirect path (Ask Coach → result → push) then reused that
+  // stale entry, so the viewer cold-loaded with no analysis until the user
+  // exited and re-entered. Dropping the prefetch makes every push fetch the
+  // route fresh (Redis read), so the just-persisted analysis renders on the
+  // first land. The X-close transition loses its warm cache but stays
+  // correct (a fast wallet-scoped Redis read).
 
   /* Phase 2 — single coach surface (2026-06-05).
    *
