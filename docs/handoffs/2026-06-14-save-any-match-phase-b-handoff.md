@@ -70,6 +70,15 @@ which previously had Play Again + Coach only — no mint state machine.
 - OG match card still byte-identical for win/lose/resigned (outcome-specific OG
   art = backlog). Dead props `shareLinkUrl`/`shareStatus`. Anti-cheat cosmetic
   (session-binding deferred unless collectibles feed rewards).
+- **30s re-save cooldown edge (founder-found 2026-06-14, low noise):** after a
+  save the tile re-arms (unlimited re-save), but `VictoryNFTUpgradeable` has a
+  30s per-player `mintCooldown` (`:117`). An immediate re-save of the same match
+  reverts (`MintCooldown`) and shows the generic "Transaction failed … may not
+  be available right now" retry row — occasionally after the ERC20 approve
+  already landed. NOT phase-(b)-specific (the win `onSaveAgain` path has it
+  too). Documented in code (`arena-end-state.tsx` SAVE comment). Future polish:
+  cool the Save button / relabel "Saved" for ~30s post-success instead of
+  re-arming immediately, on BOTH win and loss paths.
 
 ## VR gotcha (if you touch baselines again)
 `test:e2e:visual` reuses an existing :3000 dev server + stale `.next`. This

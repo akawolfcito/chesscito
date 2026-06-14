@@ -577,7 +577,16 @@ export function ArenaEndState({
               an on-chain collectible. Inline lifecycle: busy while minting,
               a retry row on failure, and the neutral MintSuccessToast on
               success (rendered at modal level). Hidden for guests / 0-move
-              games (parent passes no `onClaimVictory`). */}
+              games (parent passes no `onClaimVictory`).
+
+              Known edge (low noise, documented 2026-06-14): after a save the
+              tile stays tappable (unlimited re-save), but the contract enforces
+              a 30s per-player mintCooldown (VictoryNFTUpgradeable:117). A
+              re-save within that window reverts (MintCooldown) and surfaces the
+              generic "Transaction failed" retry row — sometimes after the ERC20
+              approve already landed. Pre-existing on the win re-save path too.
+              Future polish: cool the button down / relabel "Saved" for ~30s
+              after success instead of re-arming Save immediately. */}
           {guardedOnClaim && !isTooShort && (
             <div className="arena-result-save-section">
               {isSaveFailed ? (
