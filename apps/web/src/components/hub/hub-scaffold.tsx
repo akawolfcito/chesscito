@@ -380,10 +380,7 @@ export function HubScaffold({
                       className="hub-scaffold-practice-cta"
                       pieceIconSrc="/art/hub/train-pieces.png"
                     />
-                    <span
-                      className="hub-scaffold-start-here-ribbon"
-                      aria-hidden="true"
-                    >
+                    <span className="hub-scaffold-start-here-ribbon">
                       {tScaffold("startHereLabel")}
                     </span>
                   </div>,
