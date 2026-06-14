@@ -46,6 +46,7 @@ import { routeCoachPreviewCta } from "@/lib/coach/coach-preview-route";
 import { shouldRedirectToCoachViewer } from "@/lib/coach/coach-redirect";
 import { CoachHistory } from "@/components/coach/coach-history";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
+import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { track } from "@/lib/telemetry";
 import type { GameRecord } from "@/lib/coach/types";
 import { getConfiguredChainId, getVictoryNFTAddress } from "@/lib/contracts/chains";
@@ -1426,28 +1427,27 @@ function ArenaPageInner() {
             </div>
           )}
           {coach.phase === "loading" && (
-            <div className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center candy-modal-scrim animate-in fade-in duration-300 px-4">
-              <div className="relative z-10 w-full max-w-[340px] animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
-                <CandyGlassShell
-                  title="Coach"
-                >
-                  <CoachLoading
-                    jobId={coach.jobId ?? undefined}
-                    wallet={address?.toLowerCase()}
-                    onReady={(response) => {
-                      // Polling completes mid-job — the hook sets response
-                      // and transitions phase to "result" internally once
-                      // we call setPhase. Pass the polled response back.
-                      coach.setPhase("result");
-                      void response; // hook-internal; kept for API compat
-                    }}
-                    onFailed={() => {
-                      coach.setPhase("fallback");
-                    }}
-                  />
-                </CandyGlassShell>
-              </div>
-            </div>
+            // Founder feedback 2026-06-13: the loading state now wears the
+            // same forest-cream panel-bg1 shell (green border) as the rest of
+            // the arena end-state popups — drops the odd cream CandyGlassShell
+            // frame. Content (the sky CoachLoading card) is unchanged. No X /
+            // backdrop close: the state is transient and resolves itself.
+            <VictoryPopupShell ariaLabel="Coach" role="dialog" ariaLive="polite">
+              <CoachLoading
+                jobId={coach.jobId ?? undefined}
+                wallet={address?.toLowerCase()}
+                onReady={(response) => {
+                  // Polling completes mid-job — the hook sets response
+                  // and transitions phase to "result" internally once
+                  // we call setPhase. Pass the polled response back.
+                  coach.setPhase("result");
+                  void response; // hook-internal; kept for API compat
+                }}
+                onFailed={() => {
+                  coach.setPhase("fallback");
+                }}
+              />
+            </VictoryPopupShell>
           )}
           {coach.phase === "paywall" && (
             <CoachPaywall
