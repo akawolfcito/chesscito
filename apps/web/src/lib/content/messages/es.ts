@@ -1198,6 +1198,7 @@ const messages = {
     saveScoreCta: "Guardar puntaje",
     saveOnChainPromise: "Tuyo para siempre",
     saveOnChainCta: "Guardar",
+    saving: "Guardando…",
     closeLabelFormat: "Cerrar {title}",
   },
   BADGE_TITLES: {

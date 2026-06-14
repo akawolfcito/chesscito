@@ -322,10 +322,13 @@ export function MissionDetailSheet({
                     className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--green mt-1.5"
                   >
                     {isSavingScore ? (
-                      <span
-                        aria-hidden="true"
-                        className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-                      />
+                      <>
+                        <span
+                          aria-hidden="true"
+                          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                        />
+                        <span>{tDetail("saving")}</span>
+                      </>
                     ) : (
                       `${tDetail("saveScoreCta")} · ${score}`
                     )}
@@ -359,10 +362,13 @@ export function MissionDetailSheet({
                       }}
                     >
                       {isSavingOnChain ? (
-                        <span
-                          aria-hidden="true"
-                          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-                        />
+                        <>
+                          <span
+                            aria-hidden="true"
+                            className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                          />
+                          <span>{tDetail("saving")}</span>
+                        </>
                       ) : (
                         tDetail("saveOnChainCta")
                       )}

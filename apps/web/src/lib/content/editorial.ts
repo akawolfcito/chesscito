@@ -152,6 +152,9 @@ export const MISSION_DETAIL_COPY = {
    *  the on-chain record is the permanent one. */
   saveOnChainPromise: "Yours for life",
   saveOnChainCta: "Save",
+  /** Busy label kept beside the spinner so the Save buttons never collapse
+   *  to a bare spinner while saving (UX audit Minor 2026-06-14). */
+  saving: "Saving…",
   /** Generic close-affordance ARIA label used by `<MissionHeaderCandy />`
    *  for every sheet that adopts it (mission detail, daily picker, mate
    *  picker, …). `{title}` is the surface's own sheet title. */
