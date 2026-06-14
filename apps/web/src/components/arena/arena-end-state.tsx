@@ -1,9 +1,12 @@
 "use client";
 
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import type { ArenaStatus } from "@/lib/game/types";
+import { mapArenaResult } from "@/lib/coach/game-result";
+import { saveCtaLabelKey } from "@/lib/coach/save-cta-label";
+import { MintSuccessToast } from "@/components/coach/mint-success-toast";
 import { PaperStatCard } from "@/components/arena/paper-stat-card";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
@@ -212,6 +215,33 @@ export function ArenaEndState({
     track("monetization.coach_review_offered", { context: endgameContext });
   }, [text, isPlayerWin, isCoachPrimaryVariant, endgameContext]);
 
+  // F8 phase (b) — inline Save (mint) lifecycle for the loss/draw/resign
+  // popup. Unlike the win path (full-screen VictoryClaiming/Success/Error),
+  // a non-win Save stays INLINE: the button goes busy, success raises the
+  // neutral MintSuccessToast, and a failure swaps in a retry row. The real
+  // outcome drives both the label (via saveCtaLabelKey → "Save match") and
+  // the funnel `result` dimension. Hooks run unconditionally (the win branch
+  // returns below), guarded by `isPlayerWin` so wins are untouched.
+  const saveResult = mapArenaResult(status, isPlayerWin);
+  const [saveToastDismissed, setSaveToastDismissed] = useState(false);
+  const saveSuccessFiredRef = useRef(false);
+  useEffect(() => {
+    if (isPlayerWin) return;
+    if (claimPhase === "success") {
+      if (!saveSuccessFiredRef.current) {
+        saveSuccessFiredRef.current = true;
+        track("monetization.save_victory_success", {
+          context: endgameContext ?? undefined,
+          result: saveResult,
+        });
+      }
+    } else {
+      // Reset so a re-save re-announces and re-fires the funnel event.
+      saveSuccessFiredRef.current = false;
+      if (saveToastDismissed) setSaveToastDismissed(false);
+    }
+  }, [claimPhase, isPlayerWin, endgameContext, saveResult, saveToastDismissed]);
+
   if (isPlayerWin) {
     const sharedProps = {
       moves,
@@ -340,6 +370,22 @@ export function ArenaEndState({
   // parent doesn't wire `onClose`, fall back to the legacy hub
   // navigation so callers like /coach/history keep working.
   const handleClose = onClose ?? onBackToHub;
+
+  // F8 phase (b) — Save affordance (only when the parent wired a claimable,
+  // persisted mint; guests / 0-move games get `undefined` and no tile).
+  const saveLabel = tArena(saveCtaLabelKey(saveResult));
+  const saveAriaLabel = tArena("saveMatchAriaLabel", { price: claimPrice ?? "" });
+  const isSaveBusy = claimPhase === "claiming";
+  const isSaveFailed =
+    claimPhase === "error" || claimPhase === "cancelled" || claimPhase === "timeout";
+  const handleSaveClick = () => {
+    if (!guardedOnClaim || isSaveBusy) return;
+    track("monetization.save_victory_tap", {
+      context: endgameContext ?? undefined,
+      result: saveResult,
+    });
+    guardedOnClaim();
+  };
 
   return (
     /* Canonical candy modal pattern — same vocabulary as MissionDetailSheet
@@ -526,6 +572,62 @@ export function ArenaEndState({
             </span>
           </div>
 
+          {/* SAVE — F8 phase (b). Secondary affordance below Coach (which
+              stays primary on a loss); lets the player keep ANY outcome as
+              an on-chain collectible. Inline lifecycle: busy while minting,
+              a retry row on failure, and the neutral MintSuccessToast on
+              success (rendered at modal level). Hidden for guests / 0-move
+              games (parent passes no `onClaimVictory`). */}
+          {guardedOnClaim && !isTooShort && (
+            <div className="arena-result-save-section">
+              {isSaveFailed ? (
+                <div
+                  role="alert"
+                  className="flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-semibold"
+                  style={{
+                    background: "rgba(255, 228, 230, 0.92)",
+                    color: "rgba(159, 18, 57, 0.95)",
+                    border: "1px solid rgba(159, 18, 57, 0.4)",
+                  }}
+                >
+                  <span aria-hidden="true">!</span>
+                  <span className="flex-1">{claimError ?? tArena("saveError")}</span>
+                  <button
+                    type="button"
+                    onClick={handleSaveClick}
+                    className="rounded-full px-2 py-1 text-nano font-extrabold uppercase tracking-wider"
+                    style={{ background: "rgba(159, 18, 57, 0.15)" }}
+                  >
+                    {tArena("saveRetry")}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={isSaveBusy}
+                  aria-busy={isSaveBusy || undefined}
+                  aria-label={saveAriaLabel}
+                  className="arena-result-secondary-action arena-result-save-cta disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <picture className="arena-result-save-cta-icon">
+                    <source srcSet="/art/new-icons-chesscito/save.avif" type="image/avif" />
+                    <source srcSet="/art/new-icons-chesscito/save.webp" type="image/webp" />
+                    <img src="/art/new-icons-chesscito/save.png" alt="" draggable={false} />
+                  </picture>
+                  <span className="arena-result-primary-cta-label">
+                    {isSaveBusy ? tEntry("savingMatch") : saveLabel}
+                  </span>
+                  {claimPrice && !isSaveBusy && (
+                    <span className="arena-result-treasure-price-ribbon" aria-hidden="true">
+                      {claimPrice}
+                    </span>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+
           {/* PLAY button — M1 funnel (Commit 2 + Commit 4): demoted to
               secondary cream when Coach Review owns the primary slot
               (loss/resign + draw/stalemate). Wins use the dedicated
@@ -551,6 +653,15 @@ export function ArenaEndState({
         </div>
       </div>
       {persistOverlay}
+      {/* F8 phase (b) — neutral save confirmation. Keyed on the token id so a
+          re-save re-mounts and re-announces. */}
+      {claimPhase === "success" && !saveToastDismissed && claimData.tokenId != null && (
+        <MintSuccessToast
+          key={String(claimData.tokenId)}
+          tokenId={String(claimData.tokenId)}
+          onDismiss={() => setSaveToastDismissed(true)}
+        />
+      )}
     </div>
   );
 }
