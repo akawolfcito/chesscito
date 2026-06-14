@@ -376,6 +376,7 @@ export function ArenaEndState({
   const saveLabel = tArena(saveCtaLabelKey(saveResult));
   const saveAriaLabel = tArena("saveMatchAriaLabel", { price: claimPrice ?? "" });
   const isSaveBusy = claimPhase === "claiming";
+  const isSaved = claimPhase === "success";
   const isSaveFailed =
     claimPhase === "error" || claimPhase === "cancelled" || claimPhase === "timeout";
   const handleSaveClick = () => {
@@ -579,14 +580,13 @@ export function ArenaEndState({
               success (rendered at modal level). Hidden for guests / 0-move
               games (parent passes no `onClaimVictory`).
 
-              Known edge (low noise, documented 2026-06-14): after a save the
-              tile stays tappable (unlimited re-save), but the contract enforces
-              a 30s per-player mintCooldown (VictoryNFTUpgradeable:117). A
-              re-save within that window reverts (MintCooldown) and surfaces the
-              generic "Transaction failed" retry row — sometimes after the ERC20
-              approve already landed. Pre-existing on the win re-save path too.
-              Future polish: cool the button down / relabel "Saved" for ~30s
-              after success instead of re-arming Save immediately. */}
+              Re-save cooldown (resolved 2026-06-14): the contract enforces a 30s
+              per-player mintCooldown (VictoryNFTUpgradeable:117). Rather than
+              re-arm Save after success (an immediate re-tap would revert with a
+              generic "Transaction failed"), the tile becomes a non-tappable
+              "Saved" confirmation (`isSaved` branch). The win re-save path
+              (VictoryClaimSuccess "Save again") still re-arms — parity is a
+              follow-up. */}
           {guardedOnClaim && !isTooShort && (
             <div className="arena-result-save-section">
               {isSaveFailed ? (
@@ -609,6 +609,19 @@ export function ArenaEndState({
                   >
                     {tArena("saveRetry")}
                   </button>
+                </div>
+              ) : isSaved ? (
+                /* Post-success: a non-tappable "Saved" confirmation replaces the
+                   Save button so an immediate re-tap can't hit the 30s contract
+                   mintCooldown (founder request 2026-06-14). The toast also
+                   confirms. The collectible is already saved; re-save is dropped
+                   here by design. */
+                <div
+                  className="arena-result-secondary-action arena-result-save-cta arena-result-save-cta--done"
+                  aria-label={tArena("saved")}
+                >
+                  <span aria-hidden="true">✓</span>
+                  <span className="arena-result-primary-cta-label">{tArena("saved")}</span>
                 </div>
               ) : (
                 <button

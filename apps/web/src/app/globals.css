@@ -1282,6 +1282,20 @@
     object-fit: contain;
   }
 
+  /* Post-success "Saved" confirmation — non-tappable, muted, with a success
+     tick. Replaces the Save button after a save lands (avoids the 30s
+     mintCooldown re-tap). Not a <button>, so no hover/active affordance. */
+  .arena-result-save-cta--done {
+    cursor: default;
+    opacity: 0.72;
+    color: var(--cta-secondary-cream-color, rgba(110, 65, 15, 0.95));
+  }
+
+  .arena-result-save-cta--done > span[aria-hidden] {
+    color: #2e7d32;
+    font-weight: 900;
+  }
+
   .arena-result-primary-cta-label {
     display: inline-block;
     max-width: 100%;

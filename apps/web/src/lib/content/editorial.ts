@@ -1050,6 +1050,10 @@ export const ARENA_COPY = {
    *  reuses COACH_ENTRY_COPY.savingMatch; these cover the error row. */
   saveError: "Couldn't save",
   saveRetry: "Retry",
+  /** Post-success confirmation label. Once a save lands, the Save tile becomes
+   *  a disabled "Saved" state instead of re-arming — avoids the 30s contract
+   *  mintCooldown that an immediate re-tap would revert on. */
+  saved: "Saved",
   /** Soft-gate banner shown only on direct /arena entry when the player
    *  has no recorded piece-path progress. Intent: guide rookies into the
    *  tutorial without gatekeeping. Two decisive CTAs replace the old

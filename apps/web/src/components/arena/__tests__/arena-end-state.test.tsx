@@ -102,6 +102,18 @@ describe("ArenaEndState — F8 phase (b) Save on loss/draw/resign", () => {
     );
   });
 
+  it("after success, swaps Save for a non-tappable 'Saved' state (no re-tap → no cooldown revert)", () => {
+    renderLoss({
+      claimPhase: "success",
+      claimData: { ...baseClaimData, tokenId: 42n },
+    });
+    // The tappable Save button is gone…
+    expect(screen.queryByRole("button", { name: "saveMatchAriaLabel" })).not.toBeInTheDocument();
+    // …replaced by a "Saved" confirmation that is not a button.
+    expect(screen.getByText("saved")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "saved" })).not.toBeInTheDocument();
+  });
+
   it("renders an inline retry row on failure and retries on tap", () => {
     const { props } = renderLoss({ claimPhase: "error", claimError: "boom" });
     expect(screen.getByRole("alert")).toHaveTextContent("boom");
