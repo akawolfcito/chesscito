@@ -449,7 +449,12 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
   // meta surface uses (trophies, journal, legal). Subtitle carries the
   // match meta (difficulty · moves · time) so the row stays scan-able
   // without the trailing chip the previous custom band tried to fit.
-  const headerSubtitle = `${difficultyLabel} · ${movesLabel} · ${timeLabel}`;
+  // Founder feedback 2026-06-13: the on-chain token "#N" read as a stray
+  // chip floating over the board. Fold it into the meta subtitle instead,
+  // where it sits as proof-of-collectible alongside the match stats.
+  const headerSubtitle = tokenIdEffective
+    ? `${difficultyLabel} · ${movesLabel} · ${timeLabel} · #${tokenIdEffective}`
+    : `${difficultyLabel} · ${movesLabel} · ${timeLabel}`;
 
   return (
     <>
@@ -463,14 +468,6 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
 
       <div className="coach-viewer">
         <div className="coach-viewer__board-frame">
-          {tokenIdEffective && (
-            <span
-              className="coach-viewer__trophy-ribbon"
-              aria-label={t("trophyRibbonAriaLabel", { tokenId: tokenIdEffective })}
-            >
-              {t("trophyRibbon", { tokenId: tokenIdEffective })}
-            </span>
-          )}
           <BoardThumbnail
             fen={replay.currentFen}
             size="100%"
