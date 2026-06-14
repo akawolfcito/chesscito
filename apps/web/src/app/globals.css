@@ -1337,16 +1337,6 @@
     white-space: nowrap;
   }
 
-  .arena-result-coach-wrap {
-    width: 100%;
-    max-width: 334px;
-    margin-inline: auto;
-  }
-
-  .arena-result-coach-wrap>* {
-    max-width: 100%;
-  }
-
   .arena-result-secondary-actions {
     display: grid;
     width: 100%;

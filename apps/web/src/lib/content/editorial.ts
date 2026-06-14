@@ -1632,9 +1632,6 @@ export const COACH_ENTRY_COPY = {
   analyzeChipLabel: "Review",
   historyAnalyzeAriaLabel: (timestamp: string, difficulty: string, result: string): string =>
     `Review match from ${timestamp}, ${difficulty}, ${result}`,
-  victorySecondaryDescribedById: "victory-coach-cta-desc",
-  victorySecondaryDescription:
-    "Secondary action. Save Victory above is the primary action.",
   offlineToAnalyze: "You need to be online to analyze",
   /** Dismiss control on the persist-error toast. */
   persistDismissLabel: "Dismiss",

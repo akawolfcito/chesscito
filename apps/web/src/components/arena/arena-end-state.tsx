@@ -701,14 +701,14 @@ export function ArenaEndState({
 }
 
 /**
- * Cluster E — Coach analysis CTA. Dual-position:
- *   - `primary-on-lose`: amber primary candy on loss/draw/resigned screens
- *   - `secondary-on-win`: muted secondary under the Mint Victory CTA
+ * Cluster E — Coach analysis CTA. Amber primary candy on the
+ * loss/draw/resigned end-state screens. (The win flow renders its own
+ * coach CTA inside VictoryCelebration / VictoryClaimSuccess, so the old
+ * `secondary-on-win` position was dead and has been removed.)
  *
  * Disabled when the underlying game record hasn't persisted (CTA mounts
  * with `aria-busy="true"`) or the match is too short to analyze
- * (`moves === 0`). On secondary mode the `aria-describedby` hidden span
- * clarifies the Mint relationship per spec §0.4.
+ * (`moves === 0`).
  */
 export function CoachAnalysisCta({
   position,
@@ -719,7 +719,7 @@ export function CoachAnalysisCta({
   label: labelOverride,
   proActive = false,
 }: {
-  position: "primary-on-lose" | "secondary-on-win";
+  position: "primary-on-lose";
   onClick: () => void;
   disabled: boolean;
   ariaBusy: boolean;
@@ -733,7 +733,6 @@ export function CoachAnalysisCta({
   proActive?: boolean;
 }) {
   const t = useTranslations("COACH_ENTRY_COPY");
-  const describedById = t("victorySecondaryDescribedById");
   const label = labelOverride ?? t("getCoachAnalysis");
   const tooltip = tooShort ? t("matchTooShort") : undefined;
 
@@ -743,49 +742,20 @@ export function CoachAnalysisCta({
     onClick();
   };
 
-  if (position === "primary-on-lose") {
-    return (
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={disabled}
-        aria-busy={ariaBusy || undefined}
-        aria-disabled={disabled || undefined}
-        title={tooltip}
-        className="arena-result-primary-cta arena-result-primary-cta--amber mt-3 disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        <CandyIcon name="coach" className="h-5 w-5 shrink-0" />
-        <span className="arena-result-primary-cta-label">{label}</span>
-        {!disabled && <CoachCostRibbon proActive={proActive} variant="cta" />}
-      </button>
-    );
-  }
-
   return (
-    <div className="arena-result-coach-wrap">
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={disabled}
-        aria-busy={ariaBusy || undefined}
-        aria-disabled={disabled || undefined}
-        aria-describedby={describedById}
-        title={tooltip}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
-        style={{
-          background: "rgba(255, 245, 215, 0.65)",
-          color: "rgba(110, 65, 15, 0.95)",
-          border: "1px solid rgba(110, 65, 15, 0.25)",
-          textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-        }}
-      >
-        <CandyIcon name="coach" className="h-4 w-4 shrink-0" />
-        <span>{label}</span>
-      </button>
-      <span id={describedById} className="sr-only">
-        {t("victorySecondaryDescription")}
-      </span>
-    </div>
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled}
+      aria-busy={ariaBusy || undefined}
+      aria-disabled={disabled || undefined}
+      title={tooltip}
+      className="arena-result-primary-cta arena-result-primary-cta--amber mt-3 disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      <CandyIcon name="coach" className="h-5 w-5 shrink-0" />
+      <span className="arena-result-primary-cta-label">{label}</span>
+      {!disabled && <CoachCostRibbon proActive={proActive} variant="cta" />}
+    </button>
   );
 }
 
