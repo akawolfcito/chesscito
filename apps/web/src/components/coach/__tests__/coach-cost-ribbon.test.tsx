@@ -13,12 +13,12 @@ describe("CoachCostRibbon", () => {
     expect(container.querySelector(".coach-cost-ribbon--pro")).toBeNull();
   });
 
-  it("renders the PRO crown ribbon for subscribers", () => {
+  it("renders a text-only PRO ribbon for subscribers (no icon)", () => {
     const { container } = render(<CoachCostRibbon proActive />);
     expect(screen.getByText("PRO")).toBeInTheDocument();
-    // Crown sprite from the CandyIcon set.
-    const img = container.querySelector("img");
-    expect(img).toHaveAttribute("src", "/art/redesign/icons/crown.png");
+    // PRO chip is text-only — no sprite/icon (founder feedback 2026-06-13).
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector(".coach-cost-ribbon__icon")).toBeNull();
     expect(container.querySelector(".coach-cost-ribbon--pro")).toBeTruthy();
   });
 

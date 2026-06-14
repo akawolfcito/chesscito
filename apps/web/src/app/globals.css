@@ -990,6 +990,10 @@
   }
 
   .arena-result-primary-cta--amber {
+    /* position context for the corner cost ribbon (Plan 3) — without this
+       the absolute ribbon escapes to the nearest positioned ancestor and
+       floats off to the panel's right edge (founder feedback 2026-06-13). */
+    position: relative;
     width: auto;
     align-self: center;
     margin-inline: auto;

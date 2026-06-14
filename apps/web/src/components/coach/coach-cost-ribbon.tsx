@@ -1,7 +1,5 @@
 "use client";
 
-import { CandyIcon } from "@/components/redesign/candy-icon";
-
 type Props = {
   /** PRO subscribers see a crown "PRO" ribbon (covered/included). Free
    *  users see the Peón cost "♟ 1". Guests render no ribbon — the caller
@@ -37,9 +35,7 @@ export function CoachCostRibbon({ proActive = false, variant = "cta" }: Props) {
       ].join(" ")}
       aria-hidden="true"
     >
-      {proActive ? (
-        <CandyIcon name="crown" className="coach-cost-ribbon__icon" />
-      ) : (
+      {!proActive && (
         <picture className="coach-cost-ribbon__icon">
           <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
           <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
