@@ -604,7 +604,7 @@ export function ArenaEndState({
                   <button
                     type="button"
                     onClick={handleSaveClick}
-                    className="rounded-full px-2 py-1 text-nano font-extrabold uppercase tracking-wider"
+                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-3 text-nano font-extrabold uppercase tracking-wider"
                     style={{ background: "rgba(159, 18, 57, 0.15)" }}
                   >
                     {tArena("saveRetry")}
@@ -832,7 +832,7 @@ export function PersistOverlay({
             <button
               type="button"
               onClick={onRetry}
-              className="rounded-full px-2 py-1 text-nano font-extrabold uppercase tracking-wider"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-3 text-nano font-extrabold uppercase tracking-wider"
               style={{ background: "rgba(159, 18, 57, 0.15)" }}
             >
               {matchNotSavedRetry}
@@ -843,7 +843,7 @@ export function PersistOverlay({
               type="button"
               onClick={onDismiss}
               aria-label={dismissLabel}
-              className="rounded-full px-2 py-1 text-nano font-extrabold uppercase tracking-wider opacity-70"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-3 text-nano font-extrabold uppercase tracking-wider opacity-70"
             >
               ✕
             </button>

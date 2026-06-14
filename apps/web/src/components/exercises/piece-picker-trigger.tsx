@@ -41,7 +41,7 @@ export function PiecePickerTrigger({
       className={
         showLabel
           ? 'candy-tray-pill'
-          : 'flex h-9 w-9 items-center justify-center rounded-full border transition-all active:scale-[0.97]'
+          : 'flex h-11 w-11 items-center justify-center rounded-full border transition-all active:scale-[0.97]'
       }
       style={
         showLabel

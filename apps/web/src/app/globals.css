@@ -2162,7 +2162,11 @@
     gap: 0.4rem;
     width: 100%;
     min-width: 0;
-    min-height: 38px;
+    /* 44px touch-target minimum (UX audit T5, 2026-06-14). The HUD chip
+       family overrides this to `min-height: 0` via `.hub-hud-pill` (chips
+       hug their text), so this bump only grows the /exercises + economy
+       tray pills it was designed for, not the HUD. */
+    min-height: 44px;
     padding: 0.3rem 0.75rem;
     border-radius: 9999px;
     font-size: 0.82rem;
