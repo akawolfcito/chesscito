@@ -142,20 +142,14 @@ export function GameActionsBar({
     !proActive &&
     typeof coachCredits === "number" &&
     coachCredits > 0;
-  // Plan 3 — outcome-specific invitation before any analysis exists.
-  // Once analyzed it stays "Ask Coach again"; while running, "Analyzing…".
-  // Resigned reuses the lose copy.
-  const initialAskCoachKey =
-    result === "win"
-      ? "askCoachWin"
-      : result === "draw"
-        ? "askCoachDraw"
-        : "askCoachLose";
+  // Viewer keeps the neutral "Ask Coach" label (founder feedback 2026-06-13:
+  // the outcome-specific question read worse in Match Review than the plain
+  // action). Outcome-specific copy stays on the arena end-state popups only.
   const askCoachLabel = askCoachPending
     ? t("analysisPending")
     : hasAnalysis
       ? t("askCoachAgain")
-      : t(initialAskCoachKey);
+      : t("askCoach");
 
   const playAgainTile: Tile = {
     kind: "play-again",

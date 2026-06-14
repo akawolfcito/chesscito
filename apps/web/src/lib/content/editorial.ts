@@ -1691,12 +1691,6 @@ export const COACH_VIEWER_COPY = {
   actionsAriaLabel: "Match actions",
   askCoach: "Ask Coach",
   askCoachAgain: "Ask Coach again",
-  // Plan 3 — outcome-specific invitation on the viewer's Ask Coach tile
-  // (pre-analysis). Mirrors the arena popups' curiosity framing so the
-  // viewer speaks the same voice. Resigned reuses the lose copy.
-  askCoachWin: "Why did you win?",
-  askCoachLose: "Let's see what happened.",
-  askCoachDraw: "How did this end?",
   mintVictory: "Mint Victory",
   viewNft: "View NFT",
   share: "Share",
