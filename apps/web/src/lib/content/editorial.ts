@@ -1050,6 +1050,9 @@ export const ARENA_COPY = {
    *  reuses COACH_ENTRY_COPY.savingMatch; these cover the error row. */
   saveError: "Couldn't save",
   saveRetry: "Retry",
+  /** T4 reassurance — the match record is kept regardless of the mint
+   *  outcome, so a failed Save never loses the game. */
+  saveErrorHint: "Your progress is safe.",
   /** Post-success confirmation label. Once a save lands, the Save tile becomes
    *  a disabled "Saved" state instead of re-arming — avoids the 30s contract
    *  mintCooldown that an immediate re-tap would revert on. */

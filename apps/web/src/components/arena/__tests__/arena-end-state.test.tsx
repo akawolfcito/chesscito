@@ -114,9 +114,12 @@ describe("ArenaEndState — F8 phase (b) Save on loss/draw/resign", () => {
     expect(screen.queryByRole("button", { name: "saved" })).not.toBeInTheDocument();
   });
 
-  it("renders an inline retry row on failure and retries on tap", () => {
+  it("renders an inline retry row on failure (with reassurance) and retries on tap", () => {
     const { props } = renderLoss({ claimPhase: "error", claimError: "boom" });
-    expect(screen.getByRole("alert")).toHaveTextContent("boom");
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("boom");
+    // T4 reassurance line so a failed save never reads as a lost game.
+    expect(alert).toHaveTextContent("saveErrorHint");
     fireEvent.click(screen.getByRole("button", { name: "saveRetry" }));
     expect(props.onClaimVictory).toHaveBeenCalledTimes(1);
   });

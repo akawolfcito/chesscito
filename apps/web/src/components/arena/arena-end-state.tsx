@@ -592,23 +592,31 @@ export function ArenaEndState({
               {isSaveFailed ? (
                 <div
                   role="alert"
-                  className="flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-semibold"
+                  className="flex flex-col gap-1 rounded-2xl px-3 py-2 text-xs font-semibold"
                   style={{
                     background: "rgba(255, 228, 230, 0.92)",
                     color: "rgba(159, 18, 57, 0.95)",
                     border: "1px solid rgba(159, 18, 57, 0.4)",
                   }}
                 >
-                  <span aria-hidden="true">!</span>
-                  <span className="flex-1">{claimError ?? tArena("saveError")}</span>
-                  <button
-                    type="button"
-                    onClick={handleSaveClick}
-                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-3 text-nano font-extrabold uppercase tracking-wider"
-                    style={{ background: "rgba(159, 18, 57, 0.15)" }}
-                  >
-                    {tArena("saveRetry")}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <span aria-hidden="true">!</span>
+                    <span className="flex-1">{claimError ?? tArena("saveError")}</span>
+                    <button
+                      type="button"
+                      onClick={handleSaveClick}
+                      className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-3 text-nano font-extrabold uppercase tracking-wider"
+                      style={{ background: "rgba(159, 18, 57, 0.15)" }}
+                    >
+                      {tArena("saveRetry")}
+                    </button>
+                  </div>
+                  {/* T4 — reassurance line (parity with the win error popup's
+                      "Your progress is safe" copy); the match record persists
+                      regardless of the mint outcome. */}
+                  <span className="text-[0.7rem] font-medium opacity-80">
+                    {tArena("saveErrorHint")}
+                  </span>
                 </div>
               ) : isSaved ? (
                 /* Post-success: a non-tappable "Saved" confirmation replaces the
@@ -617,7 +625,7 @@ export function ArenaEndState({
                    confirms. The collectible is already saved; re-save is dropped
                    here by design. */
                 <div
-                  className="arena-result-secondary-action arena-result-save-cta arena-result-save-cta--done"
+                  className="arena-result-save-cta arena-result-save-cta--done"
                   aria-label={tArena("saved")}
                 >
                   <span aria-hidden="true">✓</span>
@@ -630,13 +638,17 @@ export function ArenaEndState({
                   disabled={isSaveBusy}
                   aria-busy={isSaveBusy || undefined}
                   aria-label={saveAriaLabel}
-                  className="arena-result-secondary-action arena-result-save-cta disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="arena-result-save-cta disabled:cursor-not-allowed"
                 >
-                  <picture className="arena-result-save-cta-icon">
-                    <source srcSet="/art/new-icons-chesscito/save.avif" type="image/avif" />
-                    <source srcSet="/art/new-icons-chesscito/save.webp" type="image/webp" />
-                    <img src="/art/new-icons-chesscito/save.png" alt="" draggable={false} />
-                  </picture>
+                  {isSaveBusy ? (
+                    <span className="arena-result-save-cta-spinner" aria-hidden="true" />
+                  ) : (
+                    <picture className="arena-result-save-cta-icon">
+                      <source srcSet="/art/new-icons-chesscito/save.avif" type="image/avif" />
+                      <source srcSet="/art/new-icons-chesscito/save.webp" type="image/webp" />
+                      <img src="/art/new-icons-chesscito/save.png" alt="" draggable={false} />
+                    </picture>
+                  )}
                   <span className="arena-result-primary-cta-label">
                     {isSaveBusy ? tEntry("savingMatch") : saveLabel}
                   </span>

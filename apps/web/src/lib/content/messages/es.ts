@@ -641,6 +641,7 @@ const messages = {
     saveMatchAriaLabel: "Guardar partida por {price}",
     saveError: "No se pudo guardar",
     saveRetry: "Reintentar",
+    saveErrorHint: "Tu progreso está a salvo.",
     saved: "Guardado",
     softGateModalTitle: "Calienta",
     softGateTitle: "¿Calentamos antes?",

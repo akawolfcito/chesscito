@@ -1259,14 +1259,36 @@
     max-width: 28ch;
   }
 
-  /* F8 phase (b) — inline Save CTA on the loss/draw/resign popup. Secondary
-     cream button (Coach stays primary) carrying the save icon + label and an
-     optional corner price ribbon (needs position:relative to anchor it). */
+  /* F8 phase (b) + T3 (UX audit 2026-06-14) — inline Save CTA on the
+     loss/draw/resign popup. Self-contained GOLD/treasure accent (same
+     visual family as the win Save hero) at COMPACT secondary scale, so the
+     Save action reads consistently across surfaces while Coach stays the
+     primary on a loss (Coach is the taller amber CTA above). Carries the
+     save sticker + optional corner price ribbon. */
   .arena-result-save-cta {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     width: 100%;
     max-width: 334px;
-    gap: 8px;
+    padding: 0.6rem 1rem;
+    border-radius: 1.1rem;
+    font-family: var(--font-game-action);
+    font-size: 0.95rem;
+    font-weight: 800;
+    background: var(--cta-primary-gold-grad);
+    border: 2px solid var(--cta-primary-gold-border);
+    box-shadow: var(--cta-primary-gold-bevel);
+    color: var(--cta-primary-gold-color);
+    text-shadow: var(--cta-primary-gold-text-shadow);
+    cursor: pointer;
+    transition: transform var(--duration-snap) ease;
+  }
+
+  .arena-result-save-cta:active {
+    transform: scale(0.98);
   }
 
   .arena-result-save-cta-icon {
@@ -1282,13 +1304,26 @@
     object-fit: contain;
   }
 
-  /* Post-success "Saved" confirmation — non-tappable, muted, with a success
-     tick. Replaces the Save button after a save lands (avoids the 30s
-     mintCooldown re-tap). Not a <button>, so no hover/active affordance. */
+  /* T4 — inline busy spinner next to the "Saving…" label (the win path uses
+     a full claiming popup with progress dots; the loss path stays inline per
+     founder, so a small spinner replaces the otherwise-static label). */
+  .arena-result-save-cta-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    border: 2px solid rgba(63, 34, 8, 0.25);
+    border-top-color: rgba(63, 34, 8, 0.85);
+    border-radius: 50%;
+    animation: principal-button-spin 700ms linear infinite;
+  }
+
+  /* Post-success "Saved" confirmation — non-tappable, muted gold, with a
+     success tick. Replaces the Save button after a save lands (avoids the
+     30s mintCooldown re-tap). Not a <button>, so no hover/active affordance. */
   .arena-result-save-cta--done {
     cursor: default;
-    opacity: 0.72;
-    color: var(--cta-secondary-cream-color, rgba(110, 65, 15, 0.95));
+    opacity: 0.66;
   }
 
   .arena-result-save-cta--done > span[aria-hidden] {
@@ -11606,6 +11641,16 @@ button.hud-resource-chip:active:not(:disabled) {
   object-fit: contain;
   -webkit-user-drag: none;
   user-select: none;
+}
+
+/* T3 (UX audit 2026-06-14) — the Save tile is the keepsake/money action, so
+   give its icon a soft gold halo to read as special among the equal-width
+   tiles, WITHOUT a background box (the viewer renders icons as figurines on
+   the cream surface by design, Sally pass 4). Matches the gold Save accent
+   now used on the arena loss popup. */
+.coach-viewer__tile[data-kind="save-victory"] .coach-viewer__tile-icon img {
+  filter: drop-shadow(0 0 5px rgba(245, 190, 70, 1))
+    drop-shadow(0 0 13px rgba(245, 190, 70, 0.8));
 }
 
 .coach-viewer__tile-price-ribbon {
