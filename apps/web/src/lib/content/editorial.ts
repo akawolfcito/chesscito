@@ -2949,6 +2949,7 @@ export const PROFILE_COPY = {
   generalStatsHeader: "General stats",
   walletLabel: "Wallet",
   networkLabel: "Network",
+  networkValue: "Celo",
   disconnect: "Disconnect wallet",
   manage: "Manage",
   refreshAria: "Refresh pending claims",

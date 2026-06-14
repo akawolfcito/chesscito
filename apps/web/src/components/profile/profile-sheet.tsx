@@ -412,7 +412,7 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
           </div>
           <div className="profile-utility-card">
             <span>{t("networkLabel")}</span>
-            <span>Celo</span>
+            <span>{t("networkValue")}</span>
           </div>
         </div>
 

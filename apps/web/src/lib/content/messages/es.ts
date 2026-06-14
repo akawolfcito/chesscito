@@ -1009,6 +1009,7 @@ const messages = {
     generalStatsHeader: "Estadísticas generales",
     walletLabel: "Wallet",
     networkLabel: "Red",
+    networkValue: "Celo",
     disconnect: "Desconectar wallet",
     manage: "Gestionar",
     refreshAria: "Actualizar pendientes",
