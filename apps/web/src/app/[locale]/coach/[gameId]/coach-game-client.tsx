@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import type { GameRecord } from "@/lib/coach/types";
 import { GameViewer } from "@/components/coach/game-viewer";
 import { GameActionsBar } from "@/components/coach/game-actions-bar";
+import { MintSuccessToast } from "@/components/coach/mint-success-toast";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
 import { CoachPanel } from "@/components/coach/coach-panel";
 import { CoachFallback } from "@/components/coach/coach-fallback";
@@ -127,6 +128,15 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
       surface: "coach_viewer",
     });
   }, [mint.phase, mint.data, gameRecord, walletAddress]);
+
+  // Plan 3 review (F7) — surface a save confirmation toast on every
+  // successful mint (first save + unlimited re-saves). Keyed on the token
+  // so a re-save re-announces; the toast auto-dismisses after a few seconds.
+  const [justMintedToken, setJustMintedToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (mint.phase !== "success" || mint.data.tokenId == null) return;
+    setJustMintedToken(String(mint.data.tokenId));
+  }, [mint.phase, mint.data.tokenId]);
 
   const handleAskCoach = useCallback(() => {
     if (!gameRecord) return;
@@ -590,6 +600,13 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
           {inlineAnalysisNode}
         </div>
       </div>
+
+      {justMintedToken && (
+        <MintSuccessToast
+          tokenId={justMintedToken}
+          onDismiss={() => setJustMintedToken(null)}
+        />
+      )}
     </>
   );
 }

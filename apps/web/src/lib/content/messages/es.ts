@@ -568,6 +568,7 @@ const messages = {
     askCoach: "Preguntar al Coach",
     askCoachAgain: "Preguntar al Coach otra vez",
     mintVictory: "Acuñar Victoria",
+    mintSavedToast: "Guardado en cadena · #{tokenId}",
     viewNft: "Ver NFT",
     share: "Compartir",
     playAgain: "Jugar otra vez",

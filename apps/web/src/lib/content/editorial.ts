@@ -1692,6 +1692,8 @@ export const COACH_VIEWER_COPY = {
   askCoach: "Ask Coach",
   askCoachAgain: "Ask Coach again",
   mintVictory: "Mint Victory",
+  // Plan 3 review (F7) — save/re-save confirmation toast in the viewer.
+  mintSavedToast: "Saved on-chain · #{tokenId}",
   viewNft: "View NFT",
   share: "Share",
   playAgain: "Play again",

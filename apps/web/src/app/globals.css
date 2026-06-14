@@ -1111,6 +1111,54 @@
     white-space: nowrap;
   }
 
+  /* Plan 3 review (F7) — save confirmation toast (Match Review viewer).
+     Fixed bottom-center candy pill, green so it reads as "done / saved".
+     Auto-dismisses (timer lives in the component). */
+  .coach-mint-toast {
+    position: fixed;
+    left: 50%;
+    bottom: max(18px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 80;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(var(--app-max-width) - 32px);
+    padding: 10px 16px;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, #b7fb38 0%, #76d51e 48%, #2d921b 100%);
+    border: 1px solid rgba(45, 90, 18, 0.7);
+    color: #fff8ed;
+    font-weight: 800;
+    font-size: 0.86rem;
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 0 rgba(45, 90, 18, 0.55);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      0 6px 16px rgba(45, 90, 18, 0.4);
+    pointer-events: none;
+    animation: coach-mint-toast-in 220ms ease-out;
+  }
+
+  .coach-mint-toast__check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #2d921b;
+    font-size: 0.7rem;
+    font-weight: 900;
+    flex: 0 0 auto;
+  }
+
+  @keyframes coach-mint-toast-in {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+
   /* PRO variant — warm gold leaf gradient + crown, signals "covered". */
   .coach-cost-ribbon--pro {
     background: linear-gradient(180deg, #ffe9a3 0%, #f6c945 55%, #d99b1e 100%);
