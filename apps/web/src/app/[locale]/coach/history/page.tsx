@@ -9,6 +9,7 @@ import { CoachHistory } from "@/components/coach/coach-history";
 import { CoachHistoryDeletePanel } from "@/components/coach/coach-history-delete-panel";
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import type { CoachAnalysisRecord, GameRecord } from "@/lib/coach/types";
 import { useCoachCredits } from "@/lib/coach/use-coach-credits";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
@@ -91,6 +92,16 @@ export default function CoachHistoryPage() {
     <main className="tj-root">
       <PageHeader onBack={() => router.push("/hub")} />
       <div className="tj-content">
+        {/* Review F6 (2026-06-13): a PLAY shortcut so the Journal is a fluid
+            jumping-off point — especially after a 0-move game now lands here
+            instead of an empty board. */}
+        <PrincipalButton
+          onClick={() => router.push("/arena?fresh=1")}
+          className="w-full"
+          aria-label={t("playCta")}
+        >
+          {t("playCta")}
+        </PrincipalButton>
         {showAskLuzBanner && (
           <AskLuzBanner onPress={() => router.push("/arena?fresh=1")} />
         )}

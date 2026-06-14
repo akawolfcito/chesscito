@@ -13,6 +13,10 @@ export type XCloseInput = {
   claimPhase: "ready" | "claiming" | "success" | "error" | "cancelled" | "timeout";
   walletAddress?: `0x${string}`;
   gameId?: string;
+  /** Review F6 (2026-06-13): a 0-move game (e.g. instant resign) has nothing
+   *  to review — routing it to /coach/[gameId] lands on an empty board. When
+   *  true, a persisted close goes to the Training Journal instead. */
+  tooShort?: boolean;
 };
 
 export type XCloseEffect =
@@ -26,6 +30,7 @@ export type XCloseEffect =
  * State machine table:
  *  claimPhase === "claiming"   → noop   (X locked while mint is in flight)
  *  no walletAddress            → push /arena?fresh=1
+ *  persisted + tooShort        → push /coach/history (Journal — nothing to review)
  *  persistState === "persisted" + gameId → push /coach/[gameId]
  *  persistState === "persisting"          → set-pending (deferred nav)
  *  failed / dismissed / idle             → push /arena?fresh=1
@@ -41,6 +46,15 @@ export function evaluateXClose(input: XCloseInput): XCloseEffect {
   }
   switch (input.persistState) {
     case "persisted":
+      // Review F6: a 0-move game has no review surface — send the player to
+      // the Training Journal (with its PLAY shortcut) instead of an empty
+      // /coach/[gameId] board.
+      if (input.tooShort) {
+        return {
+          type: "push",
+          href: `/coach/history?wallet=${input.walletAddress}`,
+        };
+      }
       if (input.gameId) {
         return {
           type: "push",

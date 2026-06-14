@@ -660,6 +660,7 @@ function ArenaPageInner() {
       claimPhase: mint.phase,
       walletAddress: address,
       gameId: persistedGameId ?? undefined,
+      tooShort: game.moveHistory.length === 0,
     });
     // Bug 2 telemetry — surface every X-close decision so a stray push to
     // /coach/[id] during a fresh-entry flow is traceable in Vercel logs.
@@ -676,7 +677,7 @@ function ArenaPageInner() {
       pendingNavRef.current = true;
     }
     setShowEndOverlay(false);
-  }, [persistState, mint.phase, address, persistedGameId, router]);
+  }, [persistState, mint.phase, address, persistedGameId, router, game.moveHistory.length]);
 
   // T10 — pendingNavRef consumer: fires deferred navigation once persist
   // reaches a terminal state (persisted / failed / dismissed).
@@ -684,11 +685,18 @@ function ArenaPageInner() {
     if (!pendingNavRef.current) return;
     if (persistState === "persisted" && persistedGameId && address) {
       pendingNavRef.current = false;
+      // Review F6: a 0-move game routes to the Journal (with PLAY shortcut),
+      // never to an empty /coach/[gameId] board.
+      const tooShort = game.moveHistory.length === 0;
       track("arena_pending_nav_consumed", {
         resolved: "persisted",
-        target: "coach",
+        target: tooShort ? "journal" : "coach",
       });
-      router.push(`/coach/${persistedGameId}?wallet=${address}`);
+      router.push(
+        tooShort
+          ? `/coach/history?wallet=${address}`
+          : `/coach/${persistedGameId}?wallet=${address}`,
+      );
     } else if (persistState === "failed") {
       pendingNavRef.current = false;
       track("arena_pending_nav_consumed", {
@@ -704,7 +712,7 @@ function ArenaPageInner() {
         target: "stay",
       });
     }
-  }, [persistState, persistedGameId, address, router]);
+  }, [persistState, persistedGameId, address, router, game.moveHistory.length]);
 
   // #116 prefetch REMOVED 2026-06-13 (review F4). Prefetching
   // /coach/[gameId] while the popup is visible warmed the Router Cache with

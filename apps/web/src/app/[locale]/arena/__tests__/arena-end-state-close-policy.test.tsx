@@ -25,6 +25,32 @@ describe("evaluateXClose state machine", () => {
     });
   });
 
+  it("persisted + tooShort → push /coach/history (Journal, not empty board) [F6]", () => {
+    expect(evaluateXClose({
+      persistState: "persisted",
+      claimPhase: "ready",
+      walletAddress: wallet,
+      gameId,
+      tooShort: true,
+    })).toEqual({
+      type: "push",
+      href: `/coach/history?wallet=${wallet}`,
+    });
+  });
+
+  it("persisted + NOT tooShort → still push /coach/[gameId] [F6]", () => {
+    expect(evaluateXClose({
+      persistState: "persisted",
+      claimPhase: "ready",
+      walletAddress: wallet,
+      gameId,
+      tooShort: false,
+    })).toEqual({
+      type: "push",
+      href: `/coach/${gameId}?wallet=${wallet}`,
+    });
+  });
+
   it("guest (no wallet) → push /arena?fresh=1", () => {
     expect(evaluateXClose({
       persistState: "idle",
