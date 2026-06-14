@@ -313,7 +313,10 @@ function ArenaPageInner() {
   const mint = useMintVictory({
     gameId: persistedGameId ?? undefined,
     difficulty: game.difficulty,
-    result: isPlayerWin ? "win" : undefined,
+    // F8 phase (b): any terminal outcome is saveable, so feed the real
+    // mapped result (win/lose/draw/resigned), not the win-only literal.
+    // `undefined` while still selecting/playing — mint never starts there.
+    result: isEndState ? mapArenaResult(game.status, isPlayerWin) : undefined,
     totalMoves: game.moveHistory.length,
     elapsedMs: game.elapsedMs,
     moveHistory: game.moveHistory,
@@ -414,7 +417,12 @@ function ArenaPageInner() {
   const mintPriceUsd6 = VICTORY_PRICES[chainDifficulty] ?? 0n;
   const claimPriceLabel = formatUsd(mintPriceUsd6);
 
-  const canClaim = isConnected && isCorrectChain && isPlayerWin && victoryNFTAddress != null;
+  // F8 phase (b): Save is no longer win-only. Any terminal match with at
+  // least one move can mint (the contract reverts on totalMoves==0, and the
+  // UI also hides Save then). Dropped the `isPlayerWin` requirement; added
+  // the 0-move guard so an instant resign never offers a revert-bound Save.
+  const canClaim =
+    isConnected && isCorrectChain && victoryNFTAddress != null && game.moveCount > 0;
 
   // Reset all arena state — delegates to extracted hooks (T13).
   // coach.abort() cancels any in-flight analysis but does NOT reset the
