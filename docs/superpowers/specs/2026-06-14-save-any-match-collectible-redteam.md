@@ -115,14 +115,22 @@
   simply persist, which is harmless).
 - Logging: the route already logs errors; add no PII.
 
-## Verdict
-**NEEDS REVISION** — address P0s in the spec before `/tdd`:
-1. State explicitly the anti-cheat posture (collectible = "legal submitted game",
-   cosmetic; difficulty unverifiable) and accept it, OR add session-binding.
-2. Read the full `mintSigned` body + any post-mint hooks and record in the spec
-   that the contract is outcome-agnostic (or adjust if not).
+## Verdict — UPDATED 2026-06-14 (post-revision)
+**READY for /tdd (phase a).** Both P0s resolved in the spec:
+1. P0-1 (contract) — verified outcome-agnostic by reading `mintSigned:122-166`;
+   recorded in spec "Contract verification".
+2. P0-2 (anti-cheat) — founder-approved cosmetic posture + cheap timing
+   heuristic (#1); session-binding deferred (no reward tied to the token).
 
-Then fold the P1 UI/funnel/copy decisions into the spec's Behavior section so
-`/tdd` has an unambiguous build target. P1 "mint lifecycle for non-win popups"
-in particular may warrant splitting F8 into: (a) backend gate + viewer Save
-(small), (b) arena loss/draw/resign Save UI + mint lifecycle (larger).
+P1s folded into the spec:
+- UI hierarchy + mint-lifecycle concern → handled by the **phase split**: phase
+  (a) ships via the Match Review viewer (which already owns the full mint
+  lifecycle + F7 toast), so no new lifecycle UI is needed for the MVP. Phase (b)
+  (arena loss/draw/resign Save) explicitly owns the lifecycle-wiring work.
+- Copy → single `saveCtaLabelKey(result)` helper (Behavior 10).
+- Funnel → `result` property on existing events (Behavior 11).
+
+**Recommendation:** run `/tdd` on **phase (a)** only. Re-scope/review phase (b)
+(arena popup Save + lifecycle) as its own pass after (a) is verified green.
+
+~~NEEDS REVISION~~ (original verdict; superseded above).

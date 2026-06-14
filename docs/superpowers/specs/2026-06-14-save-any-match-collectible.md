@@ -35,17 +35,37 @@ write or win branch. Reverts only on: difficulty∉[1,3], `totalMoves==0`,
 unset, bad signature. ⇒ Losses/draws/resigns will NOT revert (given
 `totalMoves>0`). No contract change needed — confirmed, not assumed.
 
-## Anti-cheat posture (red-team P0 — DECISION NEEDED, founder)
-Removing the checkmate assertion means `sign-victory` signs ANY legal transcript
-for the requesting address. Legality-replay proves the moves are legal chess,
-NOT that the user played them against the AI in a real session. **This delta
-already exists for wins** (a hand-crafted legal checkmate would sign today), so
-non-wins do not open a new class of forgery — they just extend it. The token
-encodes no outcome and difficulty/moves/time are self-reported-but-legal.
-**Proposed posture:** accept the collectible as "a legal game I submitted"
-(cosmetic; difficulty/moves unverifiable beyond legality). Session-binding
-(tying the transcript to a real arena game id) is OUT of scope for F8 and
-tracked as future hardening. → Confirm with founder before `/tdd`.
+## Anti-cheat posture (red-team P0 — RESOLVED, founder approved 2026-06-14)
+Because the AI/game runs client-side, the server never witnessed the game
+(`sign-victory` replays the client-submitted transcript — proof it didn't hold
+it). So no save-time check can prove authorship; that needs the server in the
+loop DURING play (session-authoritative AI or move-by-move attestation) — a
+re-architecture, OUT of scope for F8.
+
+**Approved posture: cosmetic.** The collectible = "a legal game I submitted".
+Difficulty/moves/time are self-reported-but-legal; the token encodes no outcome
+and is NOT tied to any ranking or reward (the contract stores no score), so
+forging one costs the attacker the same micro-fee for pure vanity — no economic
+exploit. This delta already exists for wins (a hand-crafted legal checkmate
+signs today); non-wins only extend it.
+
+**Cheap red added (heuristic #1):** `sign-victory` rejects implausible cadence —
+require `timeMs >= totalMoves * MIN_MS_PER_MOVE` (tune `MIN_MS_PER_MOVE`, e.g.
+~250ms) so an instant bulk-submitted transcript is refused. Raises forgery cost
+without server-in-the-loop. Session-binding (#2) and move attestation (#3) are
+future hardening, reopened ONLY if collectibles ever feed rankings/rewards.
+
+## Phasing (red-team P1 — split to de-risk)
+- **Phase (a) — core, small:** backend gate relaxation + timing heuristic +
+  Match Review viewer Save for non-wins (`game-actions-bar` Save tile + viewer
+  passes real `result`) + copy helper. The viewer ALREADY has the full mint
+  lifecycle (`use-mint-victory` + `postMintReceipt` + F7 toast), so this ships a
+  complete "save any match" path on its own (any saved game is reachable via the
+  redirect / Journal). **This is the F8 MVP.**
+- **Phase (b) — reach/convenience, larger:** add Save directly to the arena
+  loss/draw/resign popup (`arena-end-state`). These popups have NO mint state
+  machine today (only the win `VictoryCelebration` path does), so (b) must wire
+  claiming/success/error UI there. Ships after (a) is verified.
 
 ## Founder decisions (this session)
 | Decision | Choice |
@@ -118,6 +138,17 @@ type UseMintVictoryInput = {
 8. Given an OG share card for a saved non-win, then the card renders with the
    correct `result` (the `/api/og/match` route already accepts win/lose/draw;
    confirm `resigned` maps to the lose visual).
+9. Given any non-empty transcript, when `sign-victory` runs, then it rejects an
+   implausible cadence (`timeMs < totalMoves * MIN_MS_PER_MOVE`) with a 400
+   before signing (heuristic #1).
+10. Given the Save CTA label across surfaces, then it derives from a single
+    helper `saveCtaLabelKey(result)` → `"saveVictory"` on win, `"saveMatch"` on
+    non-win — no per-callsite string branching. Phase (a) callsites:
+    `game-actions-bar`; phase (b): `arena-end-state` loss/draw/resign.
+11. Given a non-win save tap/success, then the existing `monetization.save_
+    victory_tap` / `save_victory_success` events fire WITH a `result` property
+    (win|lose|draw|resigned) — events keep their names (dashboard continuity),
+    gain a dimension. No new event names.
 
 ## Edge cases
 - **0-move game (instant resign):** Save is HIDDEN (UI `tooShort` gate) and the
@@ -149,7 +180,20 @@ type UseMintVictoryInput = {
 - [ ] 0-move games never show Save (UI) — regression test.
 - [ ] VR baselines refreshed for the new Save affordance on loss/draw/resign
       popups + viewer non-win slates.
+- [ ] `sign-victory` rejects `timeMs < totalMoves * MIN_MS_PER_MOVE` (400) and
+      accepts plausible cadence (heuristic #1).
+- [ ] A single `saveCtaLabelKey(result)` helper drives every Save label; no
+      inline result→string branching at callsites.
+- [ ] `monetization.save_victory_tap`/`_success` carry a `result` property on
+      non-win saves; event names unchanged.
 - [ ] Full unit suite green; em-dash gate green.
+
+## Acceptance criteria — phase split
+- **Phase (a):** sign-victory relax + timing heuristic + viewer Save (non-win) +
+  real `result` passthrough + `saveCtaLabelKey` helper + copy keys + funnel
+  `result` property + tests. Shippable alone.
+- **Phase (b):** Save affordance + full mint lifecycle (claiming/success/error)
+  on `arena-end-state` loss/draw/resign + VR + tests.
 
 ## Out of scope / future
 - Per-outcome pricing (kept uniform this round).
@@ -157,11 +201,15 @@ type UseMintVictoryInput = {
 - OG card copy that explicitly celebrates a "saved loss" (uses existing result art).
 - Renaming `VictoryNFT` / `VictoryMinted` on-chain.
 
-## Open questions
-- **Q1:** Drop `playerColor` from the `sign-victory` body, or keep it for API
-  compat (now unused)? Recommend KEEP (avoids client/caller churn; harmless).
-- **Q2:** Does `/api/og/match` already have a `resigned` result mapping, or does
-  `resigned` need to alias to the lose visual? (Verify during TDD.)
-- **Q3:** Any analytics/funnel events keyed on "victory save" that should now
-  fire for non-win saves (e.g. `monetization.save_victory_*`)? Confirm naming
-  stays or a neutral event is added.
+## Resolved decisions
+- **Q1 (playerColor):** KEEP it in the `sign-victory` body, intentionally inert
+  (it only fed the removed mate-by-player check). Add a comment so a future
+  reader does not "fix" it by re-adding a result check.
+- **Q3 (funnel):** Keep `monetization.save_victory_*` event names; add a
+  `result` property (Behavior 11). No new event names.
+
+## Open questions (verify during TDD, non-blocking)
+- **Q2:** Confirm `/api/og/match` renders `resigned` (alias to lose visual) vs
+  blank — fix in the Save/share path if it 404s.
+- **MIN_MS_PER_MOVE** exact value — start ~250ms, tune against real arena timing
+  data so legitimate fast games are never rejected (err generous).
