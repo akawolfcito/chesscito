@@ -1040,6 +1040,16 @@ export const ARENA_COPY = {
    *  subtitle in 2026-05-26 — this one frames learning, not retry). */
   lossPlayAgainCta: "Try again.",
   lossSubtitle: "Each match teaches something.",
+  /** F8 phase (b) — Save (on-chain collectible) on loss/draw/resign popups.
+   *  Neutral label per the founder branding split: win keeps "Save Victory"
+   *  (VICTORY_CELEBRATION_COPY), every other outcome reads "Save match".
+   *  Driven by `saveCtaLabelKey(result)` → the `saveMatch` key. */
+  saveMatch: "Save match",
+  saveMatchAriaLabel: "Save match for {price}",
+  /** Inline save (mint) lifecycle on the loss/draw/resign popup — busy label
+   *  reuses COACH_ENTRY_COPY.savingMatch; these cover the error row. */
+  saveError: "Couldn't save",
+  saveRetry: "Retry",
   /** Soft-gate banner shown only on direct /arena entry when the player
    *  has no recorded piece-path progress. Intent: guide rookies into the
    *  tutorial without gatekeeping. Two decisive CTAs replace the old

@@ -637,6 +637,10 @@ const messages = {
     playAgain: "JUGAR",
     lossPlayAgainCta: "Otra vez.",
     lossSubtitle: "Cada partida enseña algo.",
+    saveMatch: "Guardar partida",
+    saveMatchAriaLabel: "Guardar partida por {price}",
+    saveError: "No se pudo guardar",
+    saveRetry: "Reintentar",
     softGateModalTitle: "Calienta",
     softGateTitle: "¿Calentamos antes?",
     softGateBody:
