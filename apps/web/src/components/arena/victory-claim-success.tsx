@@ -248,7 +248,9 @@ export function VictoryClaimSuccess({
             falls back to a match card from game params so the user can
             always share regardless of mint status. Save Again re-invokes
             the mint for unlimited re-save (founder spec 2026-06-13). */}
-        <div className="victory-popup-secondary-row">
+        <div
+          className={`victory-popup-secondary-row${onSaveAgain ? " victory-popup-secondary-row--triple" : ""}`}
+        >
           <button
             type="button"
             onClick={onPlayAgain}

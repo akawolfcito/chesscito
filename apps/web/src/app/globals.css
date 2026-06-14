@@ -1732,6 +1732,13 @@
     width: 100%;
   }
 
+  /* Triple-action variant (Play Again / Share / Save again): the 3rd action
+     would otherwise orphan in row-2 col-1. Span it across both columns so the
+     row reads as an intentional 2+1 stack instead of a lopsided grid. */
+  .victory-popup-secondary-row--triple>.arena-result-secondary-action:last-child {
+    grid-column: 1 / -1;
+  }
+
   /* ── Redesign 2026-05-27 (Sally) ──
      Cleaner 5-zone hierarchy: hero / stats / primary / coach pill /
      tertiary micro-pills. Avatar moves INTO the hero row (no longer
