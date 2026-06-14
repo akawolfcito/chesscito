@@ -21,6 +21,11 @@ const MAX_MOVE_HISTORY = 300;
 /** Conservative SAN upper bound — castling ("O-O-O") fits in 5,
  *  promotion + capture + check ("exd8=Q+") in 8. 12 is generous. */
 const MAX_SAN_LENGTH = 12;
+/** F8 anti-cheat heuristic #1 — minimum plausible ms per move. A real game
+ *  can't be played faster than this; a hand-crafted transcript submitted in
+ *  one shot would report a tiny timeMs for many moves. Generous floor so
+ *  legitimate fast games are never rejected (tune against real arena data). */
+const MIN_MS_PER_MOVE = 250;
 
 function parseMoveHistory(raw: unknown): string[] {
   if (!Array.isArray(raw)) {
@@ -45,12 +50,17 @@ function parsePlayerColor(raw: unknown): "w" | "b" {
   throw new Error("playerColor must be 'w' or 'b'");
 }
 
-/** Replays the SAN transcript from the standard starting position and
- *  asserts a checkmate delivered by `playerColor`. Returns the move
- *  count derived from the verified array — never trust the client's
- *  totalMoves. Throws on any illegal move, non-mate ending, or mate
- *  delivered by the wrong side. */
-function replayAndValidate(moveHistory: string[], playerColor: "w" | "b"): number {
+/** Replays the SAN transcript from the standard starting position to assert
+ *  the moves are LEGAL chess, and returns the server-derived move count —
+ *  never trust the client's totalMoves. Throws only on an illegal move.
+ *
+ *  F8 (2026-06-14): the checkmate / mate-by-player asserts were removed so
+ *  ANY outcome (win/draw/lose/resign) can be saved as a collectible — the
+ *  VictoryNFT contract encodes no result, and forging buys only vanity (no
+ *  reward is tied to the token). Anti-cheat posture is "legal submitted game"
+ *  + the timing heuristic in POST. See spec
+ *  docs/superpowers/specs/2026-06-14-save-any-match-collectible.md. */
+function replayForLegality(moveHistory: string[]): number {
   const chess = new Chess();
   for (const san of moveHistory) {
     try {
@@ -58,13 +68,6 @@ function replayAndValidate(moveHistory: string[], playerColor: "w" | "b"): numbe
     } catch {
       throw new Error("Illegal move in transcript");
     }
-  }
-  if (!chess.isCheckmate()) {
-    throw new Error("Transcript does not end in checkmate");
-  }
-  const opponentColor = playerColor === "w" ? "b" : "w";
-  if (chess.turn() !== opponentColor) {
-    throw new Error("Player did not deliver the mating move");
   }
   return moveHistory.length;
 }
@@ -87,10 +90,20 @@ export async function POST(request: Request) {
     const difficulty = parseInteger(body.difficulty, "difficulty", 1, 3);
     const timeMs = parseInteger(body.timeMs, "timeMs", 1, 3_600_000);
     const moveHistory = parseMoveHistory(body.moveHistory);
-    const playerColor = parsePlayerColor(body.playerColor);
+    // playerColor is still validated (rejects missing/invalid) but is now
+    // inert — F8 removed the mate-by-player check, so do NOT re-add a result
+    // assertion here without revisiting the spec.
+    parsePlayerColor(body.playerColor);
 
-    const derivedTotalMoves = replayAndValidate(moveHistory, playerColor);
+    const derivedTotalMoves = replayForLegality(moveHistory);
     const totalMoves = parseInteger(derivedTotalMoves, "totalMoves", 1, 10_000);
+
+    // F8 heuristic #1 — reject an implausibly fast cadence (a one-shot forged
+    // transcript reports a tiny timeMs for many moves). Number() coerces the
+    // parseInteger return (bigint|number) uniformly.
+    if (Number(timeMs) < Number(totalMoves) * MIN_MS_PER_MOVE) {
+      throw new Error("Implausible move cadence");
+    }
 
     const nonce = createNonce();
     const deadline = createDeadline();

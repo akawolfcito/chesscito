@@ -145,6 +145,48 @@ describe("POST /api/sign-victory", () => {
     });
   });
 
+  // F8 phase (a) — any legal outcome is saveable, not just wins. The route
+  // replays for LEGALITY only; the checkmate / mate-by-player asserts are gone.
+  describe("F8 — any-outcome saving", () => {
+    const LEGAL_NON_MATE = ["e4", "e5", "Nf3", "Nc6"]; // legal, no checkmate
+
+    it("signs a legal NON-checkmate transcript (draw/lose/resign games)", async () => {
+      const signFn = goodConfig();
+      const res = await POST(makeRequest(validBody({ moveHistory: LEGAL_NON_MATE })));
+      expect(res.status).toEqual(200);
+      expect((await res.json()).totalMoves).toBe("4");
+      expect(signFn).toHaveBeenCalledOnce();
+    });
+
+    it("still rejects an illegal move in a non-win transcript", async () => {
+      goodConfig();
+      const res = await POST(
+        makeRequest(validBody({ moveHistory: ["e4", "e5", "ZZZ"] })),
+      );
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toEqual("Illegal move in transcript");
+    });
+
+    it("rejects an implausibly fast cadence (heuristic #1)", async () => {
+      goodConfig();
+      // 4 moves in 500ms → < 4 * 250ms floor → refused before signing.
+      const res = await POST(
+        makeRequest(validBody({ moveHistory: LEGAL_NON_MATE, timeMs: 500 })),
+      );
+      expect(res.status).toEqual(400);
+      expect((await res.json()).error).toMatch(/cadence/i);
+    });
+
+    it("accepts a plausible cadence at the floor", async () => {
+      goodConfig();
+      // 4 moves, 4 * 250 = 1000ms is exactly the floor → allowed.
+      const res = await POST(
+        makeRequest(validBody({ moveHistory: LEGAL_NON_MATE, timeMs: 1000 })),
+      );
+      expect(res.status).toEqual(200);
+    });
+  });
+
   describe("transcript validation", () => {
     it("returns 400 when moveHistory contains an illegal SAN", async () => {
       goodConfig();
@@ -155,23 +197,24 @@ describe("POST /api/sign-victory", () => {
       expect((await res.json()).error).toEqual("Illegal move in transcript");
     });
 
-    it("returns 400 when the transcript does not end in checkmate", async () => {
+    // F8 (2026-06-14): the checkmate requirement was removed — a legal
+    // non-mate transcript now signs (was 400 "does not end in checkmate").
+    it("signs a legal non-mate transcript (no longer requires checkmate)", async () => {
       goodConfig();
       const res = await POST(
-        makeRequest(validBody({ moveHistory: ["e4"] })),
+        makeRequest(validBody({ moveHistory: ["e4", "e5"], timeMs: 11583 })),
       );
-      expect(res.status).toEqual(400);
-      expect((await res.json()).error).toEqual("Transcript does not end in checkmate");
+      expect(res.status).toEqual(200);
+      expect((await res.json()).totalMoves).toBe("2");
     });
 
-    it("returns 400 when the player did not deliver the mating move (wrong color claim)", async () => {
+    // F8: playerColor is no longer asserted against the mating side (it stays
+    // in the body for API compat). Scholar's mate by white with a "b" claim
+    // now signs — the token encodes no outcome, so the mismatch is moot.
+    it("signs regardless of the playerColor claim (mate-by-player check removed)", async () => {
       goodConfig();
-      // Scholar's mate is delivered by white, but client claims they were black.
-      const res = await POST(
-        makeRequest(validBody({ playerColor: "b" })),
-      );
-      expect(res.status).toEqual(400);
-      expect((await res.json()).error).toEqual("Player did not deliver the mating move");
+      const res = await POST(makeRequest(validBody({ playerColor: "b" })));
+      expect(res.status).toEqual(200);
     });
 
     it("returns 400 when moveHistory exceeds the 300-move cap", async () => {
