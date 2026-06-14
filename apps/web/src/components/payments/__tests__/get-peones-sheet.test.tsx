@@ -151,7 +151,9 @@ describe("GetPeonesSheet", () => {
     mockedRail.mockReturnValue(railState({ phase: "error", errorReason: "amount_too_low", txHash: HASH as `0x${string}`, verifyAgain }));
     mockedSel.mockReturnValue(selState());
     renderSheet();
-    expect(screen.getByText(/amount_too_low/)).toBeInTheDocument();
+    // CRITICAL (UX audit): the raw rail errorReason must NEVER reach the user.
+    expect(screen.queryByText(/amount_too_low/)).not.toBeInTheDocument();
+    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("get-peones-verify-again"));
     expect(verifyAgain).toHaveBeenCalledTimes(1);
   });

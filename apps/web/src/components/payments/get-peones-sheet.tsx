@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { AddCashCta } from "@/components/minipay/add-cash-cta";
@@ -77,12 +78,14 @@ function PawnSprite({ className }: { className: string }) {
  * (`arena-result-primary-cta--amber`). No raw HTML controls; copy trimmed.
  */
 export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheetProps) {
+  const t = useTranslations("GET_PEONES_COPY");
   const selection = useGetPeonesTokenSelection(SKU);
   const [pickerOpen, setPickerOpen] = useState(false);
   const tokenSymbol = selection.selectedSymbol ?? FALLBACK_TOKEN;
   const rail = usePaymentRail({ sku: SKU, tokenSymbol, onVerified: onSuccess });
   const pack = getPeonesPack(SKU);
   const priceLabel = formatUsd(pack.priceUsd6); // "$0.50"
+  const payAmount = (Number(pack.priceUsd6) / 1e6).toFixed(2); // "0.50"
 
   const payable = selection.selected?.payable ?? false;
   const busy =
@@ -93,17 +96,17 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
 
   const payLabel =
     rail.phase === "awaiting_signature"
-      ? "Confirm in your wallet…"
+      ? t("confirmInWallet")
       : rail.phase === "pending_tx"
-        ? "Sending…"
+        ? t("sending")
         : rail.phase === "verifying"
-          ? "Verifying…"
-          : `Pay 0.50 ${tokenSymbol}`;
+          ? t("verifying")
+          : t("pay", { amount: payAmount, token: tokenSymbol });
 
   const unavailableCopy: Record<string, string> = {
-    no_treasury: "Payments are not available right now.",
-    wrong_chain: "Switch your wallet to Celo to continue.",
-    unsupported_token: "This token is not supported.",
+    no_treasury: t("unavailable"),
+    wrong_chain: t("wrongChain"),
+    unsupported_token: t("unsupportedToken"),
   };
 
   const isSuccess = rail.phase === "success" && rail.result;
@@ -118,8 +121,8 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
     <VictoryPopupShell
       onClose={() => onOpenChange(false)}
       disableBackdropClose={busy}
-      ariaLabel="Get Peones"
-      closeLabel="Close"
+      ariaLabel={t("title")}
+      closeLabel={t("close")}
     >
       <div
         className="flex flex-col items-center gap-4 text-center"
@@ -136,11 +139,11 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                 <PawnSprite className="h-20 w-20" />
               </span>
               <p className="arena-result-title">
-                +{rail.result.peonesCredited} Peones credited
+                {t("credited", { count: rail.result.peonesCredited })}
               </p>
               {rail.result.duplicate ? (
                 <span className="candy-stat-pill text-[0.78rem]">
-                  Already credited (no double charge)
+                  {t("duplicate")}
                 </span>
               ) : null}
               <button
@@ -148,7 +151,7 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                 onClick={() => onOpenChange(false)}
                 className="arena-result-secondary-action mt-1"
               >
-                Done
+                {t("done")}
               </button>
             </div>
           ) : (
@@ -164,7 +167,7 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                     <PawnSprite className="h-14 w-14" />
                   </span>
                   <p className="arena-result-title leading-none">
-                    {pack.peonesReward} Peones
+                    {t("reward", { count: pack.peonesReward })}
                   </p>
                 </div>
                 <span className="candy-stat-pill text-[0.92rem] font-extrabold">
@@ -178,8 +181,7 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                   data-testid="get-peones-unavailable"
                   className="max-w-[16rem] text-sm font-semibold text-amber-800"
                 >
-                  {unavailableCopy[rail.unavailableReason ?? ""] ??
-                    "Payments are not available right now."}
+                  {unavailableCopy[rail.unavailableReason ?? ""] ?? t("unavailable")}
                 </p>
               ) : selection.noPayableToken ? (
                 /* ---- INSUFFICIENT (empty-state) ---- */
@@ -192,10 +194,10 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                   <div className="flex items-center justify-center gap-2">
                     <div className="flex flex-col items-start gap-1 text-left">
                       <p className="text-sm font-bold text-amber-800">
-                        Not enough balance
+                        {t("insufficientTitle")}
                       </p>
                       <p className="max-w-[12rem] text-xs text-amber-700/90">
-                        Add some stablecoins to your wallet, then try again.
+                        {t("insufficientBody")}
                       </p>
                     </div>
                     <picture className="h-16 w-16 shrink-0 opacity-90">
@@ -225,7 +227,7 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                    *  purchase-confirm sheet). */}
                   <div className="flex flex-col items-center gap-0.5">
                     <span className="text-sm font-bold uppercase tracking-wide text-amber-800/80">
-                      Pay with
+                      {t("payWith")}
                     </span>
                     <picture>
                       <source srcSet="/art/screen-mission/adorno-icon.avif" type="image/avif" />
@@ -272,21 +274,21 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                     {pickerOpen ? (
                       <div
                         role="listbox"
-                        aria-label="Pay with"
+                        aria-label={t("payWith")}
                         className="mt-1.5 flex w-full flex-col gap-1.5"
                       >
-                        {selection.tokens.map((t) => {
-                          const selected = t.symbol === tokenSymbol;
+                        {selection.tokens.map((tok) => {
+                          const selected = tok.symbol === tokenSymbol;
                           return (
                             <button
-                              key={t.symbol}
+                              key={tok.symbol}
                               type="button"
                               role="option"
                               aria-selected={selected}
-                              data-testid={`get-peones-token-${t.symbol}`}
+                              data-testid={`get-peones-token-${tok.symbol}`}
                               data-selected={selected ? "true" : "false"}
                               onClick={() => {
-                                selection.setSelectedSymbol(t.symbol);
+                                selection.setSelectedSymbol(tok.symbol);
                                 setPickerOpen(false);
                               }}
                               disabled={busy}
@@ -294,16 +296,16 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                                 selected ? "ring-2 ring-amber-500/80" : ""
                               }`}
                             >
-                              <span className="font-extrabold">{t.symbol}</span>
+                              <span className="font-extrabold">{tok.symbol}</span>
                               <span className="flex items-center gap-2">
                                 <span className="tabular-nums text-[0.78rem] opacity-70">
-                                  {fmtBalance(t)}
+                                  {fmtBalance(tok)}
                                 </span>
                                 {selected ? (
                                   <CandyIcon name="check" aria-hidden="true" className="h-4 w-4" />
-                                ) : !t.payable ? (
+                                ) : !tok.payable ? (
                                   <span className="rounded-md border border-amber-500/50 px-1.5 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-amber-700/90">
-                                    Low
+                                    {t("lowBadge")}
                                   </span>
                                 ) : null}
                               </span>
@@ -328,7 +330,7 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                       className="text-xs font-semibold text-amber-700"
                       data-testid="get-peones-token-low"
                     >
-                      Not enough {tokenSymbol} balance.
+                      {t("lowBalance", { token: tokenSymbol })}
                     </p>
                   ) : null}
 
@@ -341,12 +343,15 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                         /* Friendly cancellation — no raw reason, no verify.
                          *  The Pay button above is the retry affordance. */
                         <p className="text-xs font-semibold text-amber-700">
-                          Payment cancelled. You can try again.
+                          {t("cancelled")}
                         </p>
                       ) : (
+                        /* Generic failure — the raw `rail.errorReason` is NEVER
+                         *  rendered (it can be a revert/RPC string). It stays in
+                         *  telemetry only; the user sees a fixed friendly line. */
                         <>
                           <p className="max-w-[16rem] text-xs font-semibold text-red-700">
-                            Something went wrong: {rail.errorReason}
+                            {t("errorGeneric")}
                           </p>
                           {rail.txHash ? (
                             <button
@@ -355,7 +360,7 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
                               className="arena-result-secondary-action"
                               data-testid="get-peones-verify-again"
                             >
-                              Verify again
+                              {t("verifyAgain")}
                             </button>
                           ) : null}
                         </>

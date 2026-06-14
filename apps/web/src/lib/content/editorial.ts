@@ -3242,6 +3242,37 @@ export const PEONES_RETRY_COPY = {
   error: "Retry unavailable",
 } as const;
 
+/**
+ * GetPeonesSheet (buy-Peones surface) i18n. Migrated out of the component
+ * 2026-06-14 (UX audit T2 \u2014 it was the only economy sheet still 100%
+ * hardcoded English). `errorGeneric` intentionally drops the raw rail
+ * `errorReason` that used to leak to the user (audit CRITICAL); the raw
+ * reason stays in telemetry only.
+ */
+export const GET_PEONES_COPY = {
+  title: "Get Peones",
+  close: "Close",
+  payWith: "Pay with",
+  reward: "{count} Peones",
+  credited: "+{count} Peones credited",
+  duplicate: "Already credited (no double charge)",
+  done: "Done",
+  pay: "Pay {amount} {token}",
+  confirmInWallet: "Confirm in your wallet\u2026",
+  sending: "Sending\u2026",
+  verifying: "Verifying\u2026",
+  unavailable: "Payments are not available right now.",
+  wrongChain: "Switch your wallet to Celo to continue.",
+  unsupportedToken: "This token is not supported.",
+  insufficientTitle: "Not enough balance",
+  insufficientBody: "Add some stablecoins to your wallet, then try again.",
+  lowBalance: "Not enough {token} balance.",
+  lowBadge: "Low",
+  cancelled: "Payment cancelled. You can try again.",
+  errorGeneric: "Something went wrong. Please try again.",
+  verifyAgain: "Verify again",
+} as const;
+
 export const WELCOME_PACK_COPY = {
   tile: {
     title: "Welcome gift",
