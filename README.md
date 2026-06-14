@@ -21,7 +21,7 @@ Chesscito is an educational MiniApp on **Celo**, designed to be used with MiniPa
 - **Learn** how all six chess pieces move through interactive puzzles and labyrinths
 - **Earn** Peones (in-game currency), on-chain badges, and leaderboard scores on Celo Mainnet
 - **Play** with MiniPay-compatible wallets or MetaMask — no setup friction
-- **Battle** full chess vs AI in Arena and mint your Victory as an on-chain NFT
+- **Battle** full chess vs AI in Arena and save any finished match as an on-chain NFT
 - **Improve** with the AI Coach analyzing your games (LLM-powered)
 
 ## Gameplay
@@ -47,7 +47,7 @@ Earn ≥ 10 stars per piece to unlock its on-chain badge. Completing exercises a
 
 ### Arena — Full Chess vs AI
 
-Beat the AI in a complete chess game and mint your Victory as an on-chain NFT.
+Play a complete chess game vs AI and save the result as an on-chain NFT — any outcome (win, loss, draw, or resign), not just victories.
 
 - Three difficulty levels: **Easy**, **Medium**, **Hard**
 - Powered by `js-chess-engine` (pure JS, runs natively in the MiniPay WebView)
