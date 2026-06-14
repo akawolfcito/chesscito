@@ -70,10 +70,10 @@ describe("LeaderboardSheet — on-chain marker + own rank (QA 2026-06-11)", () =
 
     await waitFor(() => {
       // Rank 2 row (competitor) carries the on-chain seal; rank 3 does not.
-      expect(screen.getAllByAltText("Saved on-chain").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByAltText("Saved on Celo").length).toBeGreaterThanOrEqual(1);
     });
     const row3 = screen.getByText("0x3333...cccc").closest("div");
-    expect(row3?.querySelector('img[alt="Saved on-chain"]')).toBeNull();
+    expect(row3?.querySelector('img[alt="Saved on Celo"]')).toBeNull();
   });
 
   it("requests the caller's own rank when connected and renders the Your-rank row", async () => {

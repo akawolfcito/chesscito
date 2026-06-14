@@ -142,7 +142,7 @@ describe("<MissionDetailSheet> — save score affordance (D5)", () => {
 
     // Its own promise line, distinct from the leaderboard one.
     expect(screen.getByText("Yours for life")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Save on-chain" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
     expect(onSaveOnChain).toHaveBeenCalledTimes(1);
   });
 
@@ -155,7 +155,7 @@ describe("<MissionDetailSheet> — save score affordance (D5)", () => {
     });
 
     expect(
-      screen.queryByRole("button", { name: "Save on-chain" }),
+      screen.queryByRole("button", { name: "Save" }),
     ).not.toBeInTheDocument();
   });
 });

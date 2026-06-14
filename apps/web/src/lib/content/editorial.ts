@@ -151,7 +151,7 @@ export const MISSION_DETAIL_COPY = {
    *  free (gas-only) submitScoreSigned flow. "For life" belongs HERE:
    *  the on-chain record is the permanent one. */
   saveOnChainPromise: "Yours for life",
-  saveOnChainCta: "Save on-chain",
+  saveOnChainCta: "Save",
   /** Generic close-affordance ARIA label used by `<MissionHeaderCandy />`
    *  for every sheet that adopts it (mission detail, daily picker, mate
    *  picker, …). `{title}` is the surface's own sheet title. */
@@ -275,7 +275,7 @@ export const RESULT_OVERLAY_COPY = {
     continue: "CONTINUE",
     tryAgain: "Try again",
     dismiss: "Dismiss",
-    receiptOnCeloscan: "Receipt on CeloScan",
+    receiptOnCeloscan: "View receipt",
     /** Recovery CTA when a save is blocked on Peones — opens Get Peones. */
     getPeones: "Get Peones",
     /** Secondary on the recovery overlay — calmer than "Dismiss". */
@@ -561,7 +561,7 @@ export const LEADERBOARD_SHEET_COPY = {
   heroEmptyHeadline: "No ranking yet",
   heroEmptyHint: "Be the first to climb the board.",
   /** QA round 2026-06-11: on-chain marker + always-visible own rank. */
-  onchainMarkerAria: "Saved on-chain",
+  onchainMarkerAria: "Saved on Celo",
   yourRankLabel: "Your rank",
 } as const;
 
@@ -617,7 +617,7 @@ export const SAVED_CHIP_COPY = {
     `Score saved: ${stars} of ${total} stars. Beat your score to save again.`,
   /** Aria label when the chip is a link to the on-chain receipt. */
   ariaLabelWithReceipt: (stars: number, total: number) =>
-    `Score saved on chain: ${stars} of ${total} stars. Tap to view receipt on Celoscan.`,
+    `Score saved: ${stars} of ${total} stars. Tap to view receipt.`,
 } as const;
 
 /** Copy keys for <TxProgressSteps> primitive. Pills variant uses
@@ -639,7 +639,7 @@ export const TX_PROGRESS_COPY = {
   toastPrepare: "Preparing…",
   toastSign: "Sign in your wallet…",
   toastSend: "Sending transaction…",
-  toastWait: "Confirming on-chain…",
+  toastWait: "Confirming…",
   toastVerify: "Verifying with server…",
   toastDoneSuccess: "Done",
   toastDoneFailed: "Failed",
@@ -1705,10 +1705,10 @@ export const COACH_VIEWER_COPY = {
   actionsAriaLabel: "Match actions",
   askCoach: "Ask Coach",
   askCoachAgain: "Ask Coach again",
-  mintVictory: "Mint Victory",
+  mintVictory: "Save Victory",
   // Plan 3 review (F7) — save/re-save confirmation toast in the viewer.
-  mintSavedToast: "Saved on-chain · #{tokenId}",
-  viewNft: "View NFT",
+  mintSavedToast: "Saved on Celo · #{tokenId}",
+  viewNft: "View collectible",
   share: "Share",
   playAgain: "Play again",
   title: "Match review",
@@ -1744,8 +1744,8 @@ export const COACH_VIEWER_COPY = {
   // stays around because the dev fixture + existing tests still
   // resolve it; the visor renders `viewOnCeloscan` exclusively.
   trophyRibbon: "#{tokenId}",
-  trophyRibbonAriaLabel: "Trophy #{tokenId} saved on-chain",
-  viewOnCeloscan: "View on Celoscan",
+  trophyRibbonAriaLabel: "Trophy #{tokenId} saved on Celo",
+  viewOnCeloscan: "View receipt",
   // 2026-05-29 (Cluster C, M3): post-mint Share tile label —
   // distinct from the legacy `share` key (which arena re-uses) so
   // the tile copy can evolve without coupling.
@@ -2220,14 +2220,14 @@ export const GLOBAL_STATUS_BAR_COPY = {
  *
  *  Phase 2 of plan 2026-05-25-account-chip-and-local-progress.md. */
 export const CONNECT_PROMPT_COPY = {
-  title: "Save your progress on-chain",
+  title: "Save your progress",
   starsSubline: "You earned 3 stars. Connect your wallet to keep them safe.",
-  victorySubline: "You won. Connect your wallet to mint and keep your victory.",
+  victorySubline: "You won. Connect your wallet to keep your victory.",
   badgesSubline: "Badges are ready to claim. Connect your wallet to keep them.",
   connectCta: "Connect to save",
   dismissCta: "Maybe later",
   dismissAriaLabel: "Dismiss connect reminder",
-  successAfterConnect: "Your progress is now saved on-chain.",
+  successAfterConnect: "Your progress is now saved on Celo.",
 } as const;
 
 export const ACCOUNT_SHEET_COPY = {
