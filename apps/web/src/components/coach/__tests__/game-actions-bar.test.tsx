@@ -24,57 +24,68 @@ const baseProps = {
 };
 
 describe("GameActionsBar", () => {
-  it("win + unminted: shows Save Victory primary, Ask Coach + Play Again secondaries", () => {
-    // 2026-05-29 (Cluster C, commit 3b): the Mint primary is now the
-    // treasure-sprite Save Victory CTA. Aria-label uses the new
-    // `saveVictory` / `saveVictoryAriaLabel` keys; the price ribbon
-    // appears when `claimPrice` is provided.
+  it("win + unminted: shows Save Victory, Share, Ask Coach + Play Again (4-tile row)", () => {
+    // 2026-06-13 (feat/coach-analysis-value): win always shows all 4 tiles.
+    // Before minting, Share label is the "share" key (not "shareTrophy").
+    // No View on Celoscan tertiary until minted.
     render(<GameActionsBar {...baseProps} claimPrice="$0.005" />);
     expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /viewNft/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^share$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /viewOnCeloscan/ })).toBeNull();
   });
 
-  it("win + minted: Mint gone, Share trophy tile present, View on Celoscan tertiary", () => {
-    // 2026-05-29 (Cluster C, M3): post-mint, the actions row renders
-    // 3 tiles — Play Again + Share trophy + Ask Coach — with View on
-    // Celoscan as the tertiary text link below. Save Victory is gone
-    // (already claimed); Share is the "shareTrophy" key (distinct
-    // from arena's legacy "share").
+  it("win + minted: Save Victory STILL present (unlimited re-save), Share trophy, View on Celoscan tertiary", () => {
+    // 2026-06-13 (feat/coach-analysis-value): Save Victory is now unconditional
+    // on win — isMinted no longer hides it (unlimited re-save model).
+    // Share label switches to "shareTrophy" once minted. View on Celoscan
+    // tertiary remains as a text link below the tile row.
     render(
       <GameActionsBar
         {...baseProps}
         mintedTokenId="42"
         shareLinkUrl="https://chesscito.com/v/42"
+        claimPrice="$0.005"
       />,
     );
     expect(screen.queryByRole("button", { name: /^mintVictory$/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^saveVictory$/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /saveVictory/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /shareTrophy/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /viewOnCeloscan/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^askCoach$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^askCoachWin$/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^playAgain$/ })).toBeInTheDocument();
   });
 
-  it("loss: no Mint, no Share, Ask Coach + Play Again", () => {
+  it("loss: no Mint/saveVictory, has Share, Ask Coach + Play Again", () => {
     render(<GameActionsBar {...baseProps} result="lose" />);
     expect(screen.queryByRole("button", { name: /mintVictory/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^share$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
   });
 
-  it("draw: no Mint, no Share, Ask Coach + Play Again", () => {
-    render(<GameActionsBar {...baseProps} result="draw" />);
-    expect(screen.queryByRole("button", { name: /mintVictory/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^share$/ })).toBeNull();
+  it("loss: shows Play Again + Share + Ask Coach (no Save)", () => {
+    render(<GameActionsBar {...baseProps} result="lose" />);
+    expect(screen.getByRole("button", { name: /playAgain/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /askCoach/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
   });
 
-  it("resigned: no Mint, no Share", () => {
+  it("draw: no Mint, no saveVictory, has Share, Ask Coach + Play Again", () => {
+    render(<GameActionsBar {...baseProps} result="draw" />);
+    expect(screen.queryByRole("button", { name: /mintVictory/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /^share$/ })).toBeInTheDocument();
+  });
+
+  it("resigned: no Mint, no Save", () => {
     render(<GameActionsBar {...baseProps} result="resigned" />);
     expect(screen.queryByRole("button", { name: /mintVictory/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /saveVictory/ })).toBeNull();
   });
 
   it("Ask Coach disabled when partial-replay error", () => {
@@ -252,5 +263,54 @@ describe("GameActionsBar", () => {
       />,
     );
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  // Plan 3 — outcome-specific Ask Coach invitation (pre-analysis).
+  it("uses outcome-specific Ask Coach copy per result before any analysis", () => {
+    const { rerender } = render(<GameActionsBar {...baseProps} result="win" />);
+    expect(screen.getByRole("button", { name: /^askCoachWin$/ })).toBeInTheDocument();
+    rerender(<GameActionsBar {...baseProps} result="lose" />);
+    expect(screen.getByRole("button", { name: /^askCoachLose$/ })).toBeInTheDocument();
+    rerender(<GameActionsBar {...baseProps} result="draw" />);
+    expect(screen.getByRole("button", { name: /^askCoachDraw$/ })).toBeInTheDocument();
+    rerender(<GameActionsBar {...baseProps} result="resigned" />);
+    // Resigned reuses the lose copy.
+    expect(screen.getByRole("button", { name: /^askCoachLose$/ })).toBeInTheDocument();
+  });
+
+  it("falls back to askCoachAgain once analysis exists (not outcome copy)", () => {
+    render(<GameActionsBar {...baseProps} result="win" hasAnalysis />);
+    expect(screen.getByRole("button", { name: /^askCoachAgain$/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /askCoachWin/ })).toBeNull();
+  });
+
+  // Plan 3 — cost ribbon on the Ask Coach tile.
+  it("renders the Peón cost ribbon on the reachable Ask Coach tile (free)", () => {
+    const { container } = render(<GameActionsBar {...baseProps} result="lose" />);
+    const ribbon = container.querySelector(".coach-cost-ribbon--tile.coach-cost-ribbon--peon");
+    expect(ribbon).toBeTruthy();
+  });
+
+  it("renders the PRO cost ribbon when proActive", () => {
+    const { container } = render(
+      <GameActionsBar {...baseProps} result="lose" proActive />,
+    );
+    expect(
+      container.querySelector(".coach-cost-ribbon--tile.coach-cost-ribbon--pro"),
+    ).toBeTruthy();
+  });
+
+  it("hides the cost ribbon while Ask Coach is pending", () => {
+    const { container } = render(
+      <GameActionsBar {...baseProps} result="lose" askCoachPending />,
+    );
+    expect(container.querySelector(".coach-cost-ribbon")).toBeNull();
+  });
+
+  it("renders no cost ribbon when the match is too short (Ask Coach absent)", () => {
+    const { container } = render(
+      <GameActionsBar {...baseProps} totalMoves={0} />,
+    );
+    expect(container.querySelector(".coach-cost-ribbon")).toBeNull();
   });
 });

@@ -247,4 +247,117 @@ describe("useMintVictory", () => {
     expect(result.current.data.claimTxHash).toBe("0xabc");
     expect(result.current.shareStatus).toBe("ready");
   });
+
+  // ── claimingRef idempotency guard ──────────────────────────────────────────
+  // Regression-lock: verifies that two rapid start() calls from a single tap
+  // only reach the first irreversible side-effect (/api/sign-victory fetch)
+  // ONCE. The guard is `if (claimingRef.current) return; claimingRef.current = true;`
+  // (use-mint-victory.ts ~lines 326-327). If that guard is removed, fetch fires
+  // twice and this test fails.
+
+  it("claimingRef guard: double start() fires sign-victory fetch exactly once", async () => {
+    // Keep the first call in-flight by never resolving it — this holds
+    // claimingRef.current = true while the second start() races in.
+    let resolveFirst!: (v: unknown) => void;
+    const inflight = new Promise((res) => { resolveFirst = res; });
+
+    mockFetch.mockReturnValueOnce(inflight);
+
+    const injectedInput = {
+      gameId: "idempotency-test",
+      result: "win" as const,
+      difficulty: "easy" as const,
+      totalMoves: 8,
+      elapsedMs: 30_000,
+      injected: {
+        address: "0x2222222222222222222222222222222222222222" as `0x${string}`,
+        chainId: 42220,
+      },
+    };
+
+    const { result } = renderHook(() => useMintVictory(injectedInput));
+
+    await act(async () => {
+      // Fire both calls without awaiting between them — simulates a
+      // double-tap or a re-render that re-invokes the handler.
+      const first = result.current.start();
+      const second = result.current.start();
+
+      // Unblock the first call so the hook can settle
+      resolveFirst({
+        ok: false,
+        json: async () => ({ error: "unblocked" }),
+      });
+
+      await Promise.all([first, second]);
+    });
+
+    // sign-victory must have been called EXACTLY once, not twice.
+    const signCalls = mockFetch.mock.calls.filter(
+      ([url]: [string]) => url === "/api/sign-victory",
+    );
+    expect(signCalls).toHaveLength(1);
+  });
+
+  it("claimingRef guard: resets after completion, allowing a deliberate second start()", async () => {
+    // After the first complete start() cycle, the guard must release so a
+    // user who intentionally tries again (e.g. after an error + reset) is
+    // NOT blocked.
+    const txHash = ("0x" + "dd".repeat(32)) as `0x${string}`;
+    // sendApprove bypasses the publicClient.readContract allowance check
+    // (which would crash because wagmi mock returns null for publicClient).
+    const sendApprove = vi.fn().mockResolvedValue(("0x" + "00".repeat(32)) as `0x${string}`);
+    const sendMint = vi.fn().mockResolvedValue(txHash);
+    const waitReceipt = vi.fn().mockResolvedValue({ logs: [] });
+
+    // Two sequential successful sign-victory fetches
+    const makeSignResponse = () => ({
+      ok: true,
+      json: async () => ({
+        nonce: "99",
+        deadline: String(Math.floor(Date.now() / 1000) + 300),
+        signature: ("0x" + "ab".repeat(65)) as `0x${string}`,
+      }),
+    });
+    // sign-victory × 2, then cache-victory × 2 (fire-and-forget)
+    mockFetch
+      .mockResolvedValueOnce(makeSignResponse())
+      .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+      .mockResolvedValueOnce(makeSignResponse())
+      .mockResolvedValue({ ok: true, json: async () => ({}) });
+
+    const { result } = renderHook(() =>
+      useMintVictory({
+        gameId: "guard-reset-test",
+        result: "win",
+        difficulty: "easy",
+        totalMoves: 5,
+        elapsedMs: 10_000,
+        injected: {
+          address: "0x3333333333333333333333333333333333333333" as `0x${string}`,
+          chainId: 42220,
+          sendApprove,
+          sendMint,
+          waitReceipt,
+        },
+      }),
+    );
+
+    // First complete cycle
+    await act(async () => { await result.current.start(); });
+    await waitFor(() => expect(result.current.phase).toBe("success"));
+
+    // Reset so the hook is in "ready" again
+    act(() => result.current.reset());
+    await waitFor(() => expect(result.current.phase).toBe("ready"));
+
+    // Deliberate second start() — must NOT be blocked by claimingRef
+    await act(async () => { await result.current.start(); });
+
+    const signCalls = mockFetch.mock.calls.filter(
+      ([url]: [string]) => url === "/api/sign-victory",
+    );
+    // Two complete cycles → two sign calls
+    expect(signCalls).toHaveLength(2);
+  });
 });

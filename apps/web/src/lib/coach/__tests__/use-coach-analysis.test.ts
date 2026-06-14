@@ -460,4 +460,41 @@ describe("useCoachAnalysis — Peones fallback (Sprint 4 commit F)", () => {
 
     vi.unstubAllGlobals();
   });
+
+  // Plan 2 (P2 guard) — a tap with no persisted gameId must NEVER debit a
+  // Peón/credit. The not-persisted check now runs BEFORE the spend block, so
+  // the helper is never called and the hook degrades to the inline fallback.
+  it("no gameId + credits=0: Peones helper NOT called, phase=fallback (no debit)", async () => {
+    let analyzeCalled = false;
+    stubFetch({
+      credits: 0,
+      captureAnalyzeBody: () => {
+        analyzeCalled = true;
+      },
+    });
+    // Even if the helper were reachable it would report paid — proving the
+    // guard (not the helper outcome) is what keeps the spend from firing.
+    mockedAttemptCoach.mockResolvedValueOnce({
+      kind: "paid",
+      peonesIdempotencyKey: "spend:coach:x:",
+      debited: 1,
+      duplicate: false,
+      proBypassApplied: false,
+      newBalance: 4,
+      attestationHash: "sha256:abc",
+    });
+
+    const { result } = renderHook(() =>
+      useCoachAnalysis(inputForFree({ gameId: undefined })),
+    );
+    act(() => {
+      result.current.askCoach("immediate");
+    });
+
+    await waitFor(() => expect(result.current.phase).toBe("fallback"));
+    expect(mockedAttemptCoach).not.toHaveBeenCalled();
+    expect(analyzeCalled).toBe(false);
+
+    vi.unstubAllGlobals();
+  });
 });

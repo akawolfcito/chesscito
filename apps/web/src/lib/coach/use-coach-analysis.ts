@@ -173,6 +173,23 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
         } catch { /* keep resolvedProActive false */ }
       }
 
+      // Plan 2 (P2 guard) — a tap with no persisted gameId can never reach a
+      // renderable viewer, so it must NEVER debit a Peón/credit. Bail to the
+      // inline quick-review fallback BEFORE the spend block below. (This check
+      // is repeated after the spend for the offline/error paths.)
+      if (!analyzeGameId) {
+        setCoachServerError("not_persisted");
+        const quick = generateQuickReview({
+          result: gameResult,
+          difficulty,
+          totalMoves: movesArr.length,
+          elapsedMs,
+        });
+        setCoachFallbackResponse(quick);
+        setPhaseState("fallback");
+        return;
+      }
+
       const creditsRes = await fetch(`/api/coach/credits?wallet=${address}`, { signal });
       const creditsData = await creditsRes.json() as { credits?: number };
       const credits = creditsData.credits ?? 0;
@@ -208,19 +225,6 @@ export function useCoachAnalysis(input: CoachAnalysisInput): CoachAnalysisState 
           setPhaseState("paywall");
           return;
         }
-      }
-
-      if (!analyzeGameId) {
-        setCoachServerError("not_persisted");
-        const quick = generateQuickReview({
-          result: gameResult,
-          difficulty,
-          totalMoves: movesArr.length,
-          elapsedMs,
-        });
-        setCoachFallbackResponse(quick);
-        setPhaseState("fallback");
-        return;
       }
 
       // Offline guard. #118: serverError is a semantic flag, not copy

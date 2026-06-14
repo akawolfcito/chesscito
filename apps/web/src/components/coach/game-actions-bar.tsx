@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
+import { CoachCostRibbon } from "@/components/coach/coach-cost-ribbon";
+
 type Props = {
   gameId: string;
   result: "win" | "lose" | "draw" | "resigned";
@@ -53,6 +55,9 @@ type Tile = {
   /** Optional price ribbon on the tile's top-right corner. Reserved
    *  for the Save Victory tile in the win + !claimed state. */
   priceRibbon?: string;
+  /** Plan 3 — render the coach cost ribbon (crown "PRO" / "♟ 1") above
+   *  the icon. Reserved for the Ask Coach tile when it is reachable. */
+  costRibbon?: boolean;
   /** 2026-05-30 (Bug #2 fix): render a spinner overlay on the tile icon.
    *  Drives `data-loading="true"` on the button — the CSS handles the
    *  spinning ring + dimming. Only the Ask Coach tile uses it today. */
@@ -86,18 +91,19 @@ const TILE_ICON: Record<TileKind, { avif: string; webp: string; png: string }> =
  * State-driven CTA tiles for the coach viewer (Cluster C, M3).
  *
  * Replaces the previous primary-secondary-tertiary stack with a flat
- * row of 1–3 equal-width tiles (icon canvas + label below). Save
+ * row of 1–4 equal-width tiles (icon canvas + label below). Save
  * Victory keeps its corner price ribbon so the cost signal survives
  * the visual flatten. Tertiaries (Back to Hub, View on Celoscan) stay
  * as text links underneath the row.
  *
  * Per-state slate:
  *   - too-short          → [Play Again]                 + Back to Hub
- *   - replay-errored     → [Play Again, Ask Coach(off)] + Back to Hub
- *   - win + !claimed     → [Play Again, Save Victory($), Ask Coach]
- *   - win + claimed      → [Play Again, Share trophy, Ask Coach]
- *                                                       + View on Celoscan
- *   - loss/draw/resigned → [Play Again, Ask Coach]      + Back to Hub
+ *   - win (any)          → [Play Again, Save Victory($), Share, Ask Coach]
+ *                          + View on Celoscan (only when minted)
+ *                          (a win with a replay error keeps these 4 tiles,
+ *                           with Ask Coach disabled)
+ *   - loss/draw/resigned → [Play Again, Share, Ask Coach] + Back to Hub
+ *     (non-win replay-errored also lands here, Ask Coach disabled)
  */
 export function GameActionsBar({
   result,
@@ -136,11 +142,20 @@ export function GameActionsBar({
     !proActive &&
     typeof coachCredits === "number" &&
     coachCredits > 0;
+  // Plan 3 — outcome-specific invitation before any analysis exists.
+  // Once analyzed it stays "Ask Coach again"; while running, "Analyzing…".
+  // Resigned reuses the lose copy.
+  const initialAskCoachKey =
+    result === "win"
+      ? "askCoachWin"
+      : result === "draw"
+        ? "askCoachDraw"
+        : "askCoachLose";
   const askCoachLabel = askCoachPending
     ? t("analysisPending")
     : hasAnalysis
       ? t("askCoachAgain")
-      : t("askCoach");
+      : t(initialAskCoachKey);
 
   const playAgainTile: Tile = {
     kind: "play-again",
@@ -153,6 +168,9 @@ export function GameActionsBar({
     onClick: onAskCoach,
     disabled: askCoachDisabled,
     pending: !!askCoachPending,
+    // Cost cue mirrors the Save Victory price ribbon — shown whenever the
+    // tile is tappable (a re-ask also costs a Peón unless PRO).
+    costRibbon: askCoachReachable,
   };
 
   let tiles: Tile[];
@@ -169,7 +187,7 @@ export function GameActionsBar({
         {t("backToHub")}
       </button>
     );
-  } else if (isWin && !isMinted) {
+  } else if (isWin) {
     tiles = [
       playAgainTile,
       {
@@ -181,35 +199,32 @@ export function GameActionsBar({
         onClick: onMint,
         priceRibbon: claimPrice ?? undefined,
       },
+      {
+        kind: "share",
+        label: isMinted ? t("shareTrophy") : t("share"),
+        onClick: onShare,
+      },
       askCoachTile,
     ];
-  } else if (isWin && isMinted) {
-    tiles = [
-      playAgainTile,
-      ...(shareLinkUrl
-        ? [
-            {
-              kind: "share" as const,
-              label: t("shareTrophy"),
-              onClick: onShare,
-            },
-          ]
-        : []),
-      askCoachTile,
-    ];
-    tertiary = (
-      <button
-        type="button"
-        onClick={onViewNft}
-        className="coach-viewer__actions-tertiary"
-        aria-label={t("viewOnCeloscan")}
-      >
-        {t("viewOnCeloscan")}
-      </button>
-    );
+    if (isMinted) {
+      tertiary = (
+        <button
+          type="button"
+          onClick={onViewNft}
+          className="coach-viewer__actions-tertiary"
+          aria-label={t("viewOnCeloscan")}
+        >
+          {t("viewOnCeloscan")}
+        </button>
+      );
+    }
   } else {
     // loss / draw / resigned / replay-errored
-    tiles = [playAgainTile, askCoachTile];
+    tiles = [
+      playAgainTile,
+      { kind: "share", label: t("share"), onClick: onShare },
+      askCoachTile,
+    ];
     tertiary = (
       <button
         type="button"
@@ -252,6 +267,9 @@ export function GameActionsBar({
                 >
                   {tile.priceRibbon}
                 </span>
+              )}
+              {tile.costRibbon && (
+                <CoachCostRibbon variant="tile" proActive={!!proActive} />
               )}
               <picture className="coach-viewer__tile-icon">
                 <source srcSet={icon.avif} type="image/avif" />
