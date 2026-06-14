@@ -12,7 +12,6 @@ type Props = {
   hasAnalysis: boolean;
   hasPartialReplayError: boolean;
   mintedTokenId: string | null;
-  shareLinkUrl: string | null;
   onAskCoach: () => void;
   onMint: () => void;
   onShare: () => void;
@@ -112,7 +111,6 @@ export function GameActionsBar({
   hasAnalysis,
   hasPartialReplayError,
   mintedTokenId,
-  shareLinkUrl,
   onAskCoach,
   onMint,
   onShare,

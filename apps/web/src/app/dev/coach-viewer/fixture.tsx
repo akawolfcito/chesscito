@@ -58,7 +58,6 @@ export function CoachViewerFixture({ variant }: { variant: Variant }) {
           hasAnalysis={isMinted}
           hasPartialReplayError={isPartial}
           mintedTokenId={isMinted ? "42" : null}
-          shareLinkUrl={isMinted ? "https://chesscito.com/m/test" : null}
           coachCredits={coachCredits}
           proActive={proActive}
           onAskCoach={() => {}}

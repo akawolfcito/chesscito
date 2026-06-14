@@ -14,7 +14,6 @@ const baseProps = {
   hasAnalysis: false,
   hasPartialReplayError: false,
   mintedTokenId: null as string | null,
-  shareLinkUrl: null as string | null,
   onAskCoach: vi.fn(),
   onMint: vi.fn(),
   onShare: vi.fn(),
@@ -46,7 +45,6 @@ describe("GameActionsBar", () => {
       <GameActionsBar
         {...baseProps}
         mintedTokenId="42"
-        shareLinkUrl="https://chesscito.com/v/42"
         claimPrice="$0.005"
       />,
     );
@@ -132,7 +130,6 @@ describe("GameActionsBar", () => {
       <GameActionsBar
         {...baseProps}
         mintedTokenId="42"
-        shareLinkUrl="https://x"
         onViewNft={onViewNft}
       />,
     );

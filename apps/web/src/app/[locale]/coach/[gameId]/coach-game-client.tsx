@@ -163,8 +163,8 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     if (!gameRecord) return;
     const tokenId =
       mint.data.tokenId != null ? String(mint.data.tokenId) : (gameRecord.mintedTokenId ?? null);
-    // Mirror `shareLinkEffective` below: fall back to the canonical share URL
-    // so Share is never a silent no-op on loss / win-unminted (the 4-button
+    // Fall back to the canonical share URL so Share is never a silent no-op
+    // on loss / win-unminted (the 4-button
     // model always renders Share). Match-specific unminted share page is a
     // backlog follow-up; sharing the canonical URL is the current behavior.
     const shareLink = mint.data.shareLinkUrl ?? gameRecord.shareLinkUrl ?? SHARE_COPY.url;
@@ -355,8 +355,6 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     mint.data.tokenId != null
       ? String(mint.data.tokenId)
       : (gameRecord.mintedTokenId ?? null);
-  const shareLinkEffective =
-    mint.data.shareLinkUrl ?? gameRecord.shareLinkUrl ?? SHARE_COPY.url;
 
   // Inline analysis surface.
   // 2026-05-29 (Cluster C, commit 1): `embedded` hides the panel's own
@@ -588,7 +586,6 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
             hasAnalysis={!!gameRecord.analysis || coach.phase === "result"}
             hasPartialReplayError={!!replay.error}
             mintedTokenId={tokenIdEffective}
-            shareLinkUrl={shareLinkEffective}
             onAskCoach={handleAskCoach}
             onMint={handleMint}
             onShare={handleShare}
