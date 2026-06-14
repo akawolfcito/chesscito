@@ -595,6 +595,61 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     );
   });
 
+  // F8 phase (b) — Save (mint) on the loss/draw/resign popup. A resign with
+  // moves>0 surfaces the inline Save tile + its lifecycle (ready / claiming /
+  // success toast / error retry row). Coach stays the primary CTA.
+  test("vr9-arena-end-state-loss-save — Save match tile on a loss", async ({ page }) => {
+    await page.goto("/dev/arena-end-state?variant=loss-save", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-loss-save.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-loss-save-claiming — Save TX in flight", async ({ page }) => {
+    await page.goto("/dev/arena-end-state?variant=loss-save-claiming", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-loss-save-claiming.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-loss-save-success — neutral Saved toast", async ({ page }) => {
+    await page.goto("/dev/arena-end-state?variant=loss-save-success", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-loss-save-success.png",
+      FIXTURE_OPTS,
+    );
+  });
+
+  test("vr9-arena-end-state-loss-save-error — inline retry row", async ({ page }) => {
+    await page.goto("/dev/arena-end-state?variant=loss-save-error", {
+      waitUntil: "load",
+      timeout: 45_000,
+    });
+    await page.evaluate(() => document.fonts.ready);
+    await settle(page, 800);
+    await expect(page).toHaveScreenshot(
+      "vr9-arena-end-state-loss-save-error.png",
+      FIXTURE_OPTS,
+    );
+  });
+
   // ──────────────────────────────────────────────────────────────────────────
   // #119 — VR10 coach-viewer surface (`/coach/[gameId]` post-game review).
   //

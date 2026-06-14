@@ -5,7 +5,11 @@ import type { ArenaStatus } from "@/lib/game/types";
 
 type CoachVariant = "coach-cta-enabled" | "coach-cta-disabled-short" | "coach-cta-disabled-persisting";
 type WinVariant = "win-celebration" | "win-claiming" | "win-success" | "win-error" | "win-cancelled" | "win-timeout";
-type Variant = ArenaStatus | CoachVariant | WinVariant;
+// F8 phase (b) — Save on a non-win popup (a resign with moves > 0 so the
+// inline Save tile + its lifecycle surfaces; the bare loss variants keep
+// moves=0 and stay Save-less).
+type SaveVariant = "loss-save" | "loss-save-claiming" | "loss-save-success" | "loss-save-error";
+type Variant = ArenaStatus | CoachVariant | WinVariant | SaveVariant;
 
 const WIN_PHASES: Record<WinVariant, ClaimPhase> = {
   "win-celebration": "ready",
@@ -14,6 +18,13 @@ const WIN_PHASES: Record<WinVariant, ClaimPhase> = {
   "win-error": "error",
   "win-cancelled": "cancelled",
   "win-timeout": "timeout",
+};
+
+const SAVE_PHASES: Record<SaveVariant, ClaimPhase> = {
+  "loss-save": "ready",
+  "loss-save-claiming": "claiming",
+  "loss-save-success": "success",
+  "loss-save-error": "error",
 };
 
 export function ArenaEndStateFixture({ variant }: { variant: Variant }) {
@@ -37,8 +48,16 @@ export function ArenaEndStateFixture({ variant }: { variant: Variant }) {
   }
 
   const isWin = variant.startsWith("win-");
-  const claimPhase: ClaimPhase = isWin ? WIN_PHASES[variant as WinVariant] : "ready";
-  const status: ArenaStatus = isWin ? "checkmate" : (variant as ArenaStatus);
+  const isSave = variant.startsWith("loss-save");
+  const claimPhase: ClaimPhase = isWin
+    ? WIN_PHASES[variant as WinVariant]
+    : isSave
+      ? SAVE_PHASES[variant as SaveVariant]
+      : "ready";
+  // Save variants render a resign with real moves so the inline Save tile +
+  // lifecycle is visible; bare loss variants stay at moves=0 (Save-less).
+  const status: ArenaStatus = isWin ? "checkmate" : isSave ? "resigned" : (variant as ArenaStatus);
+  const moves = isWin ? 24 : isSave ? 22 : 0;
 
   return (
     <main
@@ -59,11 +78,11 @@ export function ArenaEndStateFixture({ variant }: { variant: Variant }) {
           shareCardUrl: claimPhase === "success" ? "/api/og/match?moves=24&time=180000&diff=easy&result=win" : null,
           shareLinkUrl: claimPhase === "success" ? "https://chesscito.com/m/test" : null,
         }}
-        onClaimVictory={isWin && claimPhase === "ready" ? () => {} : undefined}
-        claimPrice={isWin ? "$0.005" : undefined}
+        onClaimVictory={(isWin && claimPhase === "ready") || isSave ? () => {} : undefined}
+        claimPrice={isWin || isSave ? "$0.005" : undefined}
         claimError={claimPhase === "error" ? "Insufficient gas. Top up your wallet and try again." : null}
-        moves={isWin ? 24 : 0}
-        elapsedMs={isWin ? 184_000 : 16_000}
+        moves={moves}
+        elapsedMs={isWin ? 184_000 : isSave ? 142_000 : 16_000}
         difficulty="easy"
         playerColor="w"
         onAskCoach={() => {}}

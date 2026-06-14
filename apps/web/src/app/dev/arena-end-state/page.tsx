@@ -20,6 +20,10 @@ const VARIANTS = new Set([
   "win-error",
   "win-cancelled",
   "win-timeout",
+  "loss-save",
+  "loss-save-claiming",
+  "loss-save-success",
+  "loss-save-error",
 ]);
 
 export default function ArenaEndStateDevPage({
