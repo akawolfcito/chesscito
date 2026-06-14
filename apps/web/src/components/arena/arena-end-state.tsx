@@ -611,7 +611,7 @@ export function CoachAnalysisCta({
       >
         <CandyIcon name="coach" className="h-5 w-5 shrink-0" />
         <span className="arena-result-primary-cta-label">{label}</span>
-        <CoachCostRibbon proActive={proActive} variant="cta" />
+        {!disabled && <CoachCostRibbon proActive={proActive} variant="cta" />}
       </button>
     );
   }

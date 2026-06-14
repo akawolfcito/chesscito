@@ -280,7 +280,9 @@ export function VictoryCelebration({
                 >
                   <CandyIcon name="coach" className="h-5 w-5 shrink-0" />
                   <span className="arena-result-primary-cta-label">{coachLabel}</span>
-                  <CoachCostRibbon proActive={proActive} variant="cta" />
+                  {!coachCtaDisabled && (
+                    <CoachCostRibbon proActive={proActive} variant="cta" />
+                  )}
                 </button>
               </div>
               <picture className="arena-result-coach-avatar">
