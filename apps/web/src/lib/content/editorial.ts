@@ -3260,7 +3260,7 @@ export const GET_PEONES_COPY = {
   credited: "+{count} Peones credited",
   duplicate: "Already credited (no double charge)",
   done: "Done",
-  pay: "Pay {amount} {token}",
+  pay: "Pay {price}",
   confirmInWallet: "Confirm in your wallet\u2026",
   sending: "Sending\u2026",
   verifying: "Verifying\u2026",

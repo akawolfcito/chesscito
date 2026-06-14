@@ -67,7 +67,7 @@ describe("GetPeonesSheet", () => {
     renderSheet();
     // Collapsed: the trigger surfaces the selected token + the pay label.
     expect(screen.getByTestId("get-peones-token-trigger")).toHaveTextContent("USDT");
-    expect(screen.getByTestId("get-peones-pay")).toHaveTextContent("Pay 0.50 USDT");
+    expect(screen.getByTestId("get-peones-pay")).toHaveTextContent("Pay $0.50");
     // Options only exist once the dropdown is open.
     expect(screen.queryByTestId("get-peones-token-USDC")).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId("get-peones-token-trigger"));

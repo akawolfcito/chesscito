@@ -85,7 +85,6 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
   const rail = usePaymentRail({ sku: SKU, tokenSymbol, onVerified: onSuccess });
   const pack = getPeonesPack(SKU);
   const priceLabel = formatUsd(pack.priceUsd6); // "$0.50"
-  const payAmount = (Number(pack.priceUsd6) / 1e6).toFixed(2); // "0.50"
 
   const payable = selection.selected?.payable ?? false;
   const busy =
@@ -101,7 +100,7 @@ export function GetPeonesSheet({ open, onOpenChange, onSuccess }: GetPeonesSheet
         ? t("sending")
         : rail.phase === "verifying"
           ? t("verifying")
-          : t("pay", { amount: payAmount, token: tokenSymbol });
+          : t("pay", { price: priceLabel });
 
   const unavailableCopy: Record<string, string> = {
     no_treasury: t("unavailable"),

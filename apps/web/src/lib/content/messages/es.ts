@@ -1414,7 +1414,7 @@ const messages = {
     credited: "+{count} Peones acreditados",
     duplicate: "Ya acreditado (sin cobro doble)",
     done: "Listo",
-    pay: "Pagar {amount} {token}",
+    pay: "Pagar {price}",
     confirmInWallet: "Confirma en tu wallet…",
     sending: "Enviando…",
     verifying: "Verificando…",
