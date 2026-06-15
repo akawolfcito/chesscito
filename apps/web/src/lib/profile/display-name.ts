@@ -10,11 +10,18 @@ export type ResolveDisplayNameArgs = {
   address: `0x${string}` | undefined;
   customName?: string;
   talentProtocolName?: string;
+  /**
+   * Identity Lite generated nickname (e.g. "Golden Knight #4821"). When present
+   * it replaces the truncated wallet as the wallet-backed default. Omitting it
+   * preserves the legacy truncate-wallet behavior. Spec: identity-lite-pr1.
+   */
+  generatedNickname?: string;
 };
 
 /**
  * Resolves a display name from (in order of precedence): custom name >
- * Talent Protocol name > truncated wallet > localized visitor fallback.
+ * Talent Protocol name > generated nickname > truncated wallet > localized
+ * visitor fallback.
  *
  * `visitorLabel` is parameterized so callers can pass the locale-aware
  * value from the i18n bundle (next-intl `t("visitor")`). Default keeps
@@ -30,6 +37,8 @@ export function resolveDisplayName(
   if (trimmedCustom) return trimmedCustom;
   const trimmedTalent = args.talentProtocolName?.trim();
   if (trimmedTalent) return trimmedTalent;
+  const trimmedGenerated = args.generatedNickname?.trim();
+  if (trimmedGenerated) return trimmedGenerated;
   return truncateWallet(args.address);
 }
 

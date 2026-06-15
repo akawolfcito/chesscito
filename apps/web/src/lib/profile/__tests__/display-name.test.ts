@@ -41,6 +41,35 @@ describe("resolveDisplayName", () => {
     expect(resolveDisplayName({ address: wallet })).toBe("0x0924…eba4");
   });
 
+  it("uses generatedNickname over truncated wallet when present", () => {
+    expect(
+      resolveDisplayName({ address: wallet, generatedNickname: "Golden Knight #4821" }),
+    ).toBe("Golden Knight #4821");
+  });
+
+  it("custom name and Talent still win over generatedNickname", () => {
+    expect(
+      resolveDisplayName({
+        address: wallet,
+        customName: "Akawolf",
+        generatedNickname: "Golden Knight #4821",
+      }),
+    ).toBe("Akawolf");
+    expect(
+      resolveDisplayName({
+        address: wallet,
+        talentProtocolName: "wolfcito.eth",
+        generatedNickname: "Golden Knight #4821",
+      }),
+    ).toBe("wolfcito.eth");
+  });
+
+  it("ignores an empty generatedNickname and falls back to wallet", () => {
+    expect(
+      resolveDisplayName({ address: wallet, generatedNickname: "  " }),
+    ).toBe("0x0924…eba4");
+  });
+
   it("returns default Visitor label when address is undefined", () => {
     expect(resolveDisplayName({ address: undefined })).toBe("Visitor");
   });
