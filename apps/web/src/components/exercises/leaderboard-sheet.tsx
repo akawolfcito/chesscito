@@ -13,6 +13,14 @@ import {
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import type { LeaderboardRow } from "@/lib/server/leaderboard";
+import { PlayerIdentityPill } from "@/components/identity/player-identity-pill";
+import { useNicknameTokens } from "@/lib/identity/use-nickname-tokens";
+import { useDisplayName } from "@/hooks/use-display-name";
+import {
+  deriveAvatarVariant,
+  deriveRowId,
+  formatNickname,
+} from "@/lib/identity/identity-lite";
 
 const OPTIMISTIC_TTL_MS = 2 * 60 * 1000;
 
@@ -62,6 +70,8 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
   // const tPassport = useTranslations("PASSPORT_COPY");
   const tDock = useTranslations("DOCK_LABELS");
   const { address } = useAccount();
+  const nicknameTokens = useNicknameTokens();
+  const { customName } = useDisplayName(address);
   const [rows, setRows] = useState<LeaderboardRow[]>(prefetchedRows ?? []);
   /** The caller's own row with its REAL rank over the full ranking —
    *  visible even outside the top-10 cut (QA G4 2026-06-11). */
@@ -84,18 +94,22 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
     setOwnRow(Array.isArray(payload) ? null : payload?.player ?? null);
     const optimistic = getOptimisticScore();
     if (optimistic) {
-      const found = apiRows.some(
-        (r) => r.player.includes(optimistic.player.slice(2, 6)),
-      );
+      const optimisticRowId = deriveRowId(optimistic.player.toLowerCase());
+      const found = apiRows.some((r) => r.rowId === optimisticRowId);
       if (found) {
         clearOptimisticScore();
         setRows(apiRows);
         return;
       }
-      const truncated = optimistic.player.slice(0, 6) + "..." + optimistic.player.slice(-4);
       setRows([
         ...apiRows,
-        { rank: apiRows.length + 1, player: truncated, score: optimistic.score, isVerified: false },
+        {
+          rank: apiRows.length + 1,
+          rowId: optimisticRowId,
+          variant: deriveAvatarVariant(optimistic.player.toLowerCase()),
+          score: optimistic.score,
+          isVerified: false,
+        },
       ]);
     } else {
       setRows(apiRows);
@@ -129,7 +143,22 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
   }, [open, fetchLeaderboard]);
 
   const champion = rows.find(r => r.rank === 1);
-  const competitors = rows.filter(r => r.rank > 1);
+  // Exclude the caller's own row from the competitors list so it never appears
+  // twice (it is pinned in the footer). Dedupe by the opaque rowId — never a
+  // wallet (Identity Lite P0-2).
+  const competitors = rows.filter(
+    (r) => r.rank > 1 && (!ownRow || r.rowId !== ownRow.rowId),
+  );
+
+  // Resolve a row's display name from its server-derived variant. The own row
+  // is overridden by the user's explicit custom name when set.
+  const rowName = (row: LeaderboardRow, isOwn = false): string => {
+    if (isOwn) {
+      const trimmed = customName?.trim();
+      if (trimmed) return trimmed;
+    }
+    return formatNickname(row.variant, nicknameTokens);
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -198,7 +227,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
               {champion ? (
                 <>
                   <p className="leaderboard-vitrine-hero-stats">
-                    {t("heroChampionLabelFormat", { player: champion.player })}
+                    {t("heroChampionLabelFormat", { player: rowName(champion) })}
                   </p>
                   <p className="leaderboard-vitrine-hero-sub">
                     {t("heroChampionStatsFormat", { score: champion.score, count: rows.length })}
@@ -307,7 +336,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
               </div>
               {competitors.map((row) => (
                 <div
-                  key={`${row.rank}-${row.player}`}
+                  key={`${row.rank}-${row.rowId}`}
                   className={`leaderboard-row-compact ${
                     row.rank === 2 ? "leaderboard-row-compact--top2"
                     : row.rank === 3 ? "leaderboard-row-compact--top3"
@@ -317,23 +346,25 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
                   <div className="leaderboard-rank-pill">
                     {row.rank}
                   </div>
-                  <div className="flex-1 min-width-0">
-                    <p className="truncate text-xs font-black text-[rgba(63,34,8,0.90)]">
-                      {row.player}
-                      {row.isVerified && (
-                        <CandyIcon name="check" className="ml-1.5 inline-block h-3 w-3 text-emerald-600" />
-                      )}
-                      {row.hasOnchain && (
-                        // QA 2026-06-11: on-chain seal — this player has
-                        // at least one score written through the
-                        // Scoreboard contract.
-                        <CandyIcon
-                          name="fingerprint"
-                          label={t("onchainMarkerAria")}
-                          className="ml-1.5 inline-block h-3 w-3 opacity-80"
-                        />
-                      )}
-                    </p>
+                  <div className="flex flex-1 min-width-0 items-center gap-1.5">
+                    <PlayerIdentityPill
+                      variant={row.variant}
+                      name={rowName(row)}
+                      size="sm"
+                      className="text-xs font-black text-[rgba(63,34,8,0.90)]"
+                    />
+                    {row.isVerified && (
+                      <CandyIcon name="check" className="inline-block h-3 w-3 text-emerald-600" />
+                    )}
+                    {row.hasOnchain && (
+                      // QA 2026-06-11: on-chain seal — this player has at least
+                      // one score written through the Scoreboard contract.
+                      <CandyIcon
+                        name="fingerprint"
+                        label={t("onchainMarkerAria")}
+                        className="inline-block h-3 w-3 opacity-80"
+                      />
+                    )}
                   </div>
                   <p className="text-sm font-black tabular-nums text-[rgba(63,34,8,0.95)]">
                     {row.score}
@@ -362,17 +393,20 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
                 className="leaderboard-row-compact leaderboard-row-compact--top2"
               >
                 <div className="leaderboard-rank-pill">{ownRow.rank}</div>
-                <div className="flex-1 min-width-0">
-                  <p className="truncate text-xs font-black text-[rgba(63,34,8,0.90)]">
-                    {ownRow.player}
-                    {ownRow.hasOnchain && (
-                      <CandyIcon
-                        name="fingerprint"
-                        label={t("onchainMarkerAria")}
-                        className="ml-1.5 inline-block h-3 w-3 opacity-80"
-                      />
-                    )}
-                  </p>
+                <div className="flex flex-1 min-width-0 items-center gap-1.5">
+                  <PlayerIdentityPill
+                    variant={ownRow.variant}
+                    name={rowName(ownRow, true)}
+                    size="sm"
+                    className="text-xs font-black text-[rgba(63,34,8,0.90)]"
+                  />
+                  {ownRow.hasOnchain && (
+                    <CandyIcon
+                      name="fingerprint"
+                      label={t("onchainMarkerAria")}
+                      className="inline-block h-3 w-3 opacity-80"
+                    />
+                  )}
                 </div>
                 <p className="text-sm font-black tabular-nums text-[rgba(63,34,8,0.95)]">
                   {ownRow.score}

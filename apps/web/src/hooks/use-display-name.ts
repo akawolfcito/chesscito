@@ -51,5 +51,9 @@ export function useDisplayName(address: `0x${string}` | undefined) {
     // Boolean sentinel — use this instead of `name === "Visitor"` so
     // the check survives locale switches.
     isVisitor: isVisitor({ address, customName }),
+    // Raw explicit custom name (undefined when none set). Consumers that
+    // resolve their own fallback (e.g. Identity Lite generated nickname on
+    // the leaderboard own-row) use this to know whether to override.
+    customName,
   };
 }

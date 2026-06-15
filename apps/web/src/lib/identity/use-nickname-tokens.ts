@@ -20,7 +20,10 @@ export function useNicknameTokens(): NicknameTokens {
       pieces,
       styles,
       guestPrefix: t("guestPrefix"),
-      template: t("template"),
+      // `t.raw` bypasses ICU parsing — the template contains literal
+      // `{style}`/`{piece}`/`{number}` braces that formatNickname fills itself,
+      // which next-intl would otherwise try to resolve as ICU arguments.
+      template: t.raw("template") as string,
     };
     // `t` is stable per locale in next-intl.
   }, [t]);

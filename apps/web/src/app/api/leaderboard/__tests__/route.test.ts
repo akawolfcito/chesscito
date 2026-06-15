@@ -21,23 +21,36 @@ describe("GET /api/leaderboard", () => {
     mockedPlayer.mockReset();
   });
 
-  it("returns 200 with the leaderboard JSON array on success (legacy shape)", async () => {
+  const variant = { piece: "knight", style: "golden", number: 1 } as const;
+
+  it("returns 200 with the leaderboard JSON array on success (no wallet leaked)", async () => {
     const rows = [
-      { rank: 1, player: "0xcc41...c2dd", score: 3000, isVerified: false, hasOnchain: true },
+      { rank: 1, rowId: "id_abc", variant, score: 3000, isVerified: false, hasOnchain: true },
     ];
     mocked.mockResolvedValue(rows);
 
     const res = await GET(makeRequest());
     expect(res.status).toEqual(200);
-    expect(await res.json()).toEqual(rows);
+    const body = await res.json();
+    expect(body).toEqual(rows);
+    // Foreign rows carry NO wallet substring (Identity Lite P0-1).
+    expect(JSON.stringify(body)).not.toContain("0x");
     expect(mockedPlayer).not.toHaveBeenCalled();
   });
 
   it("with ?player= returns { rows, player } including the caller's own rank", async () => {
     const rows = [
-      { rank: 1, player: "0xcc41...c2dd", score: 3000, isVerified: false, hasOnchain: true },
+      { rank: 1, rowId: "id_abc", variant, score: 3000, isVerified: false, hasOnchain: true },
     ];
-    const own = { rank: 42, player: "0xabcd...ef01", score: 120, isVerified: false, hasOnchain: false };
+    const own = {
+      rank: 42,
+      rowId: "id_own",
+      variant,
+      score: 120,
+      isVerified: false,
+      hasOnchain: false,
+      walletShort: "0xabcd…ef01",
+    };
     mocked.mockResolvedValue(rows);
     mockedPlayer.mockResolvedValue(own);
 
