@@ -180,15 +180,15 @@ export function ArenaSelectScaffold({
                   {difficulty === key ? <SelectedCheck /> : null}
                   <picture className="arena-scaffold-difficulty-piece">
                     <source
-                      srcSet={`/art/redesign/pieces/w-${rival.piece}.avif`}
+                      srcSet={`/art/rivals/${rival.avatar}-avatar.avif`}
                       type="image/avif"
                     />
                     <source
-                      srcSet={`/art/redesign/pieces/w-${rival.piece}.webp`}
+                      srcSet={`/art/rivals/${rival.avatar}-avatar.webp`}
                       type="image/webp"
                     />
                     <img
-                      src={`/art/redesign/pieces/w-${rival.piece}.png`}
+                      src={`/art/rivals/${rival.avatar}-avatar.png`}
                       alt=""
                     />
                   </picture>

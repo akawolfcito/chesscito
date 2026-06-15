@@ -20,6 +20,12 @@ describe("rivals config", () => {
     expect(rivalFor("hard").piece).toBe("bishop");
   });
 
+  it("gives each rival a character avatar slug matching its name", () => {
+    expect(rivalFor("easy").avatar).toBe("pipo");
+    expect(rivalFor("medium").avatar).toBe("mara");
+    expect(rivalFor("hard").avatar).toBe("kairo");
+  });
+
   it("gives every rival a distinct, non-empty persona name (not 'AI'/'Bot')", () => {
     const names = DIFFS.map((d) => rivalFor(d).name);
     expect(new Set(names).size).toBe(DIFFS.length);

@@ -7,9 +7,11 @@ export type Rival = {
   /** Display name — a humanized rival persona, NOT an "AI" label
    *  (founder 2026-06-15). Proper noun, identical across locales. */
   name: string;
-  /** Piece sprite used as the placeholder avatar until a custom
-   *  character avatar ships. */
+  /** Piece sprite — legacy placeholder, retained for metadata/tests. */
   piece: RivalPiece;
+  /** Character avatar slug → `/art/rivals/<avatar>-avatar.{avif,webp,png}`
+   *  (custom rival art shipped 2026-06-15). */
+  avatar: string;
   eloMin: number;
   eloMax: number;
 };
@@ -18,9 +20,9 @@ export type Rival = {
  *  arena reads as "challenge a rival", not "play the AI". Names are
  *  founder-approved placeholders (Sally pass 2026-06-15). */
 export const RIVALS: Record<ArenaDifficulty, Rival> = {
-  easy: { difficulty: "easy", name: "Pipo", piece: "pawn", eloMin: 0, eloMax: 800 },
-  medium: { difficulty: "medium", name: "Mara", piece: "knight", eloMin: 801, eloMax: 1500 },
-  hard: { difficulty: "hard", name: "Kairo", piece: "bishop", eloMin: 1501, eloMax: 2200 },
+  easy: { difficulty: "easy", name: "Pipo", piece: "pawn", avatar: "pipo", eloMin: 0, eloMax: 800 },
+  medium: { difficulty: "medium", name: "Mara", piece: "knight", avatar: "mara", eloMin: 801, eloMax: 1500 },
+  hard: { difficulty: "hard", name: "Kairo", piece: "bishop", avatar: "kairo", eloMin: 1501, eloMax: 2200 },
 };
 
 export function rivalFor(difficulty: ArenaDifficulty): Rival {
