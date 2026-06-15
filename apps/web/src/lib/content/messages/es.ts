@@ -1686,7 +1686,6 @@ const messages = {
     premiumInactiveAriaLabel: "Pase de entrenamiento: toca para desbloquear",
     premiumActiveAriaFormat:
       "Pase de entrenamiento: {used} de {total} sesiones usadas, {days} días restantes",
-    startHereLabel: "EMPIEZA AQUÍ",
   },
   HUB_RAIL_COPY: {
     ...en.HUB_RAIL_COPY,

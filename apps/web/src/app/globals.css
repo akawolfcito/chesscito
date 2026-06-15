@@ -6576,10 +6576,8 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Side-by-side pills at the root footer. `flex: 0 0 auto` shrinks
    each pill to its content width so the PNG background hugs the
    icon+label group instead of leaving empty padding-edge area. */
-/* Wrapper around the Train Pieces CTA — anchors the START HERE ribbon
-   in the top-left corner. `overflow: visible` lets the ribbon overhang
-   the pill outline, and the soft yellow halo broadcasts the recommended
-   first step in the Train Pieces > Enter Arena sequence. */
+/* Wrapper around the Train Pieces CTA — the soft yellow halo broadcasts
+   the recommended first step in the Train Pieces > Enter Arena sequence. */
 .hub-scaffold-practice-cta-wrap {
   position: relative;
   display: inline-flex;
@@ -6627,32 +6625,6 @@ button.hud-resource-chip:active:not(:disabled) {
     0 3px 0 #9a5a00,
     0 5px 10px rgba(0, 0, 0, 0.3);
   filter: none;
-}
-
-/* Red ribbon overlay anchored to the top-left of the practice CTA.
-   Rotated slightly so it reads as a paper banner pinned to the corner.
-   Decorative only — aria-hidden in markup. */
-.hub-scaffold-start-here-ribbon {
-  position: absolute;
-  top: -4px;
-  left: -4px;
-  z-index: 2;
-  padding: 1px 5px;
-  background: linear-gradient(180deg, #e94d3c, #b71f1f);
-  border: 1px solid rgba(120, 18, 18, 0.9);
-  border-radius: 3px;
-  color: #fff8ed;
-  font-size: 0.4rem;
-  font-weight: 900;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 0 rgba(80, 10, 10, 0.6);
-  box-shadow:
-    0 1px 0 rgba(80, 10, 10, 0.5),
-    0 2px 3px rgba(0, 0, 0, 0.25);
-  transform: rotate(-8deg);
-  pointer-events: none;
-  white-space: nowrap;
 }
 
 /* Sequence chevron between Train Pieces and Enter Arena. SVG polyline
