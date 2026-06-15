@@ -16,6 +16,7 @@ import { DisplayNameDialog } from "@/components/profile/display-name-dialog";
 import { useProfileStats } from "@/hooks/use-profile-stats";
 import { useClaimQueue, type PerformClaimFn } from "@/hooks/use-claim-queue";
 import { useDisplayName } from "@/hooks/use-display-name";
+import { useGuestIdentity } from "@/lib/identity/use-guest-identity";
 import { computeTier } from "@/lib/profile/compute-tier";
 import { truncateWallet } from "@/lib/profile/display-name";
 import { track } from "@/lib/telemetry";
@@ -69,6 +70,10 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
   const chainId = useChainId();
   const { writeContractAsync } = useWriteContract();
   const { name, setName, isVisitor, variant } = useDisplayName(address);
+  // No wallet → deterministic local guest identity (client-gated for hydration).
+  const guest = useGuestIdentity();
+  const bannerName = address ? name : guest?.name ?? name;
+  const bannerVariant = address ? variant : guest?.variant;
   const tTier = useTranslations("TIER_LABELS");
   const { stats, refetch } = useProfileStats(address);
   // M1 funnel (Commit 6) — Profile-owned ProSheet instance. The Hub
@@ -293,8 +298,8 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
         </div>
 
         <ProfileBanner
-          displayName={name}
-          variant={variant}
+          displayName={bannerName}
+          variant={bannerVariant}
           tierTitle={tTier(tier.tier)}
           tierKey={tier.tier}
           xp={tier.xp}
