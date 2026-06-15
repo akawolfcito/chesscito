@@ -1016,6 +1016,11 @@ export const ARENA_COPY = {
   startMatch: "PLAY",
   backToHub: "HUB",
   backToHubAria: "Back to Hub",
+  /** ARIA label for the end-state popup close (X). NOT "Back to Hub": the
+   *  destination is state-dependent (evaluateXClose routes to the Arena
+   *  selector, Coach viewer, or Training Journal, never /hub), so the label
+   *  must describe the affordance honestly. UX audit Minor 2026-06-14. */
+  closeResultAria: "Close",
   playAsWhite: "Play as White",
   playAsBlack: "Play as Black",
   resign: "Resign",

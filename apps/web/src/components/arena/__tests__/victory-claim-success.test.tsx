@@ -22,7 +22,7 @@ vi.mock("@/components/share/share-modal", () => ({
 vi.mock("../victory-popup-shell", () => ({
   VictoryPopupShell: ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
     <div>
-      <button type="button" onClick={onClose} aria-label="backToHubAria">close</button>
+      <button type="button" onClick={onClose} aria-label="closeResultAria">close</button>
       {children}
     </div>
   ),

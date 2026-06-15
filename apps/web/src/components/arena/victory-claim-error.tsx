@@ -85,7 +85,7 @@ export function VictoryClaimError({
       ariaLabel={statusHeadline}
       role={isCancelled ? "dialog" : "alert"}
       ariaLive={isCancelled ? "polite" : "assertive"}
-      closeLabel={tArena("backToHubAria")}
+      closeLabel={tArena("closeResultAria")}
     >
       <div className="victory-popup-sparkles" aria-hidden="true">
         <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-15" />

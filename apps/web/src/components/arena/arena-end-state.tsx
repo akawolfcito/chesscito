@@ -419,7 +419,7 @@ export function ArenaEndState({
         <button
           type="button"
           onClick={handleClose}
-          aria-label={tArena("backToHubAria")}
+          aria-label={tArena("closeResultAria")}
           className="candy-close-asset-button absolute right-[4%] top-[4%] z-10"
         >
           <picture>

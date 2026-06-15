@@ -163,7 +163,7 @@ export function VictoryCelebration({
         ariaLabel={headline}
         role="alert"
         ariaLive="assertive"
-        closeLabel={tArena("backToHubAria")}
+        closeLabel={tArena("closeResultAria")}
       >
         {/* Sparkles lottie behind the panel content. */}
         <div className="victory-popup-sparkles" aria-hidden="true">

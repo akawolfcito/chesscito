@@ -59,7 +59,7 @@ export function VictoryClaiming({
       ariaLabel={title}
       role="alert"
       ariaLive="assertive"
-      closeLabel={tArena("backToHubAria")}
+      closeLabel={tArena("closeResultAria")}
     >
       <div className="victory-popup-sparkles" aria-hidden="true">
         <LottieAnimation animationData={sparklesData} className="h-full w-full opacity-30" />
