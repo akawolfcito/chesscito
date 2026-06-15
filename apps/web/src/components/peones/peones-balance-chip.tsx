@@ -119,7 +119,14 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
             className="block h-full w-full object-contain p-1"
           />
         </picture>
-        <span className="tabular-nums" aria-live="polite">
+        {/* Fixed-width value slot — reserves room for a ~3-digit balance
+         *  so the chip keeps a stable width across loading ("…") →
+         *  success ("116") → error ("--") and never visually jumps as
+         *  the balance resolves (founder 2026-06-15). */}
+        <span
+          className="peones-balance-chip-value tabular-nums"
+          aria-live="polite"
+        >
           {label}
         </span>
       </div>

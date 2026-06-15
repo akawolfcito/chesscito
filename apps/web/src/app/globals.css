@@ -6893,6 +6893,17 @@ button.hud-resource-chip:active:not(:disabled) {
   margin-left: 0;
 }
 
+/* Peones balance value slot — reserve a prudent fixed width (~3 tabular
+ * digits) so the chip stays the same size across loading ("…") →
+ * success ("116") → error ("--"). Centered so the placeholder and the
+ * number share the same footprint and the chip never jumps as the
+ * balance resolves (founder 2026-06-15). */
+.peones-balance-chip-value {
+  display: inline-block;
+  min-width: 3ch;
+  text-align: center;
+}
+
 /* ── Language switch modal (2026-06-15) ──
  * Rendered inside the canonical VictoryPopupShell (forest panel-bg1 +
  * red X). Visual-first: two flag tiles act as a radiogroup; the active
