@@ -1,8 +1,10 @@
 # Handoff — Identity Lite PR1 (avatar + nickname)
 
-**Date**: 2026-06-15 (updated — session 2)
-**Branch**: `feat/identity-lite-pr1` (8 commits ahead of `main`, NOT pushed)
-**Suite**: 3769/3769 passing · `tsc --noEmit` clean (apps/web)
+**Date**: 2026-06-15 (updated — session 3)
+**Branch**: `feat/identity-lite-pr1` (9 commits ahead of `main`, NOT pushed)
+**Suite**: 3770/3770 passing · `tsc --noEmit` clean (apps/web)
+**Status**: visible DoD MET — leaderboard + profile + stats no longer show raw
+wallet. Remaining: guest wiring (optional), VR refresh, header sr-only (optional).
 **Spec**: `docs/specs/identity-lite-pr1.md` (+ `-redteam.md`, verdict READY, 3 P0 folded)
 
 ## Goal
@@ -31,57 +33,37 @@ DB + cross-device persistence + PATCH API is **PR2** (out of scope).
 | 4 | `8f3cd8d3` | `IDENTITY_COPY` EN(editorial)/ES(es.ts) + `useNicknameTokens` + `PlayerAvatar` + `PlayerIdentityPill` + globals.css + tests |
 | 5 | `d14a3d9c` | Leaderboard end-to-end: server `LeaderboardRow` → `rowId`+`variant` (no wallet), sheet renders pills + own-row dedup + custom-name override; `useDisplayName` exposes raw `customName`; `useNicknameTokens` uses `t.raw` for the brace template |
 | 6 | `81a9d61e` | **Global hook swap + Profile**: `useDisplayName` now computes the generated nickname (replaces truncateWallet as default `name`) + returns avatar `variant`; only 2 consumers (profile-sheet visible, leaderboard-sheet customName-only). `profile-banner` renders `<PlayerAvatar>` from the variant (emoji = visitor fallback). |
+| 7 | `30e753d1` | **Stats (server-side)**: `public-aggregator` now ships identity-only `topMinters` + `leaderboardTop10` (variant/rowId, **no wallet** — closes a pre-existing payload gap); `stats/page.tsx` builds tokens via `getTranslations`; `stats-page` renders `PlayerIdentityPill`. New shared `nickname-tokens.ts` (`nicknameTokensFromTranslator`, isomorphic). |
 
-**Leaderboard (privacy-critical) + Profile are fully shipped + green.**
+**Leaderboard + Profile + Stats are fully shipped + green. Visible DoD MET.**
 
-## REMAINING for PR1 Definition of Done (next block)
+## REMAINING (finishing touches — DoD visible part is done)
 
-Resolved this session: **Profile** ✅ (banner avatar + nickname), and the
-**global `useDisplayName` swap** ✅ (low blast radius — only 2 consumers — done
-deliberately, suite green, no VR red surfaced by unit tests).
+Resolved this session: **Profile** ✅, **global `useDisplayName` swap** ✅,
+**Stats** ✅ (server-side, wallet dropped from the /stats payload).
 
-### Header — NOT a visible offender (re-scoped)
+### Header — NOT a visible offender (re-scoped, optional)
 `global-status-bar.tsx` `ConnectedBar` renders `walletShort` ONLY in an
-`sr-only` span — the visible chip is the PRO cluster, no wallet on screen. So the
-header is NOT a DoD blocker. **Optional a11y nicety**: have the caller
-(`exercises-screen.tsx` / `mission-panel-candy.tsx`) pass `handle` = nickname so
-the sr-only text reads the nickname instead of the wallet. Zero visible/VR change.
+`sr-only` span — the visible chip is the PRO cluster, no wallet on screen. NOT a
+DoD blocker. **Optional a11y nicety**: have the caller (`exercises-screen.tsx` /
+`mission-panel-candy.tsx`, which now can read `useDisplayName(address).name`)
+pass `handle` = nickname so the sr-only text reads the nickname. Zero visible/VR
+change.
 
-### 1. Stats — the remaining VISIBLE offender (server-side refactor)
-`components/stats/stats-page.tsx` is a **SERVER component** (no "use client", no
-hooks), rendered by async `app/[locale]/stats/page.tsx`, cached hourly. It shows
-`truncateWallet(row.player)` for top-minters (L~623) + top-10 (L~687). Data is
-`PublicStats` from `lib/stats/public-aggregator.ts`, which currently SHIPS FULL
-WALLETS to the client (`hallOfFame: VictoryRow[]`, `leaderboardTop10:
-LeaderboardRow[]` — both carry raw `player`). This is a **pre-existing** privacy
-gap, not introduced by Identity Lite.
-
-Recommended approach (boundary-correct, also closes the payload gap):
-- **Aggregator** (`public-aggregator.ts`, locale-agnostic, cached): add new
-  identity-enriched display arrays — e.g. `topMinters: { rowId, variant,
-  mintCount, lastMintedAt }[]` (move `aggregateTopMinters` server-side) and
-  `leaderboardTop10Identity: { rank, rowId, variant, total_score }[]`. Derive
-  `variant`/`rowId` from the full wallet, then **drop the wallet** from these.
-- **page.tsx** (async server, per-locale): `const tId = await
-  getTranslations("IDENTITY_COPY")`; build `NicknameTokens`; format each
-  nickname; pass `{ variant, name }[]` display arrays into `<StatsPage>`.
-- **StatsPage** (server, pure render): render `<PlayerAvatar>` + name text (no
-  hook needed). Drop the local `truncateWallet` (L217) + the two usages.
-- Keep `VictoryRow`/`LeaderboardRow` shared types untouched (don't ripple into
-  `trophies-body.tsx`); just stop forwarding `player` into the new arrays.
-
-### 2. Guest identity wiring
+### 1. Guest identity wiring (optional — DoD criterion #3)
 `getOrCreateGuestId` + `deriveAvatarVariant` exist but no surface consumes them
 for the no-wallet case (profile shows the emoji, header shows "Visitor"). If
 desired, derive a guest variant from `guestSeed(getOrCreateGuestId())` and feed
 the profile/header avatar when `!address`. **Client-gate** to avoid SSR hydration
 mismatch (spec edge case + AC). Low priority — guests have few surfaces.
 
-### 3. VR baselines — deferred
-Leaderboard sheet (avatars added) + profile banner (emoji → PlayerAvatar) changed
-visually, so `vr*-leaderboard*` / `vr*-profile*` baselines will drift. Refresh
+### 2. VR baselines — deferred (do before opening the PR)
+Three surfaces changed visually: leaderboard sheet (avatars added), profile
+banner (emoji → PlayerAvatar), and `/stats` (avatar+nickname rows). So
+`vr*-leaderboard*` / `vr*-profile*` / `vr*-stats*` baselines will drift. Refresh
 with the project recipe: clean `.next` + `PORT=3947 pnpm dev` + `BASE_URL` +
-`--update-snapshots` (`feedback_vr_baseline_discipline`). Unit suite is green;
+`--update-snapshots` (`feedback_vr_baseline_discipline`). Heavy + disk-sensitive
+(`disk-telemetry` notes) — run deliberately, reboot after. Unit suite is green;
 VR not yet run — **deferred**.
 
 ## Open questions / notes
@@ -96,7 +78,11 @@ VR not yet run — **deferred**.
 
 ## How to resume
 
-1. Read this handoff + `docs/specs/identity-lite-pr1.md`.
-2. Pick up at "Header" (#1) — highest-visibility remaining surface.
-3. TDD per surface; run full suite before each commit; refresh VR at the end.
-4. When all four surfaces render identity → PR1 DoD met → push branch + open PR.
+The three visible surfaces (leaderboard, profile, stats) are DONE. What's left
+is finishing/polish, in order of value:
+
+1. **VR refresh** (do before the PR) — heavy + disk-sensitive; run deliberately.
+2. **Guest wiring** (optional, DoD #3) — show a guest avatar/nickname for the
+   no-wallet case; client-gate for hydration.
+3. **Header sr-only** (optional a11y) — pass nickname as `handle`.
+4. Then push branch + open the PR (PR2 = DB persistence + PATCH API).
