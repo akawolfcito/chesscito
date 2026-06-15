@@ -285,11 +285,7 @@ export function MissionDetailSheet({
                       onOpenChange(false);
                       onLabyrinthSelect!(nextChallenge!.id);
                     }}
-                    className="candy-tray-pill mt-3 w-full justify-center text-sm font-extrabold"
-                    style={{
-                      color: "rgba(63, 34, 8, 0.95)",
-                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                    }}
+                    className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--blue mt-3"
                   >
                     {tDetail("nowLabyrinthFormat", {
                       number: nextChallengeNumber,
@@ -355,11 +351,7 @@ export function MissionDetailSheet({
                       onClick={onSaveOnChain}
                       disabled={isSavingOnChain}
                       aria-busy={isSavingOnChain}
-                      className="candy-tray-pill mt-1.5"
-                      style={{
-                        color: "rgba(63, 34, 8, 0.95)",
-                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.65)",
-                      }}
+                      className="candy-tray-pill shop-item-tile-buy-pill shop-item-tile-buy-pill--gold mt-1.5"
                     >
                       {isSavingOnChain ? (
                         <>

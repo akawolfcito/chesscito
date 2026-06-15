@@ -10241,6 +10241,45 @@ button.hud-resource-chip:active:not(:disabled) {
     0 2px 4px rgba(20, 83, 45, 0.30);
 }
 
+/* Blue tint — navigation/"play now" route. Sky-to-deep-blue gradient
+   (canonical --cta-primary-blue hue) with cream text. Used by the
+   mission-detail "Play next labyrinth" CTA so the action stack reads
+   blue (go play) / green (save) / gold (save for life) instead of the
+   old cream-amber pills (UX audit #91, 2026-06-14). */
+.shop-item-tile-buy-pill--blue {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, transparent 32%),
+    linear-gradient(180deg, #2bb5f0 0%, #0e5a99 100%);
+  border-color: rgba(10, 60, 110, 0.45);
+  color: #eff8ff;
+  text-shadow:
+    0 1px 0 rgba(10, 55, 90, 0.65),
+    0 0 6px rgba(10, 55, 90, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(10, 55, 90, 0.30),
+    0 2px 4px rgba(10, 55, 90, 0.30);
+}
+
+/* Gold tint — premium "save on-chain for life" route. Sunny amber
+   gradient with dark-brown ink (white-on-gold is illegible). Mirrors
+   the --green sibling's sizing so the stacked action pills stay
+   visually consistent; the CELO-specific --yellow variant tunes its
+   own font-size and is NOT reused here (UX audit #91, 2026-06-14). */
+.shop-item-tile-buy-pill--gold {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, transparent 32%),
+    linear-gradient(180deg, #fde047 0%, #eab308 100%);
+  border-color: rgba(133, 77, 14, 0.45);
+  color: #422006;
+  text-shadow:
+    0 1px 0 rgba(255, 240, 175, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(133, 77, 14, 0.28),
+    0 2px 4px rgba(133, 77, 14, 0.30);
+}
+
 /* Ghost "more coming" placeholder — a roadmap card at the tail of
    the catalog list. Dashed border + lower opacity + no bg texture
    set it apart from the live tiles so users read it as "wishlist /
