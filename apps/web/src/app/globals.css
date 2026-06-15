@@ -6893,6 +6893,89 @@ button.hud-resource-chip:active:not(:disabled) {
   margin-left: 0;
 }
 
+/* ── Language switch modal (2026-06-15) ──
+ * Rendered inside the canonical VictoryPopupShell (forest panel-bg1 +
+ * red X). Visual-first: two flag tiles act as a radiogroup; the active
+ * tile carries a bright gold border + glow (mirrors the selected-state
+ * treatment in the founder reference). The Apply CTA (PrincipalButton)
+ * commits the staged locale. */
+.language-modal-title {
+  text-align: center;
+  /* Canonical popup typography — same game-action face + popup-title
+   * color/shadow tokens as `.arena-result-title`, scaled down for this
+   * compact picker so it doesn't dominate the panel. */
+  font-family: var(--font-game-action);
+  font-size: clamp(22px, 3.6dvh, 28px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: var(--popup-title-color);
+  text-shadow: var(--popup-title-text-shadow);
+  margin-bottom: 0.25rem;
+}
+
+.language-tile-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0.5rem 0 1rem;
+}
+
+.language-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.9rem 0.5rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg,
+      rgba(255, 248, 222, 0.95) 0%,
+      rgba(247, 226, 175, 0.95) 100%);
+  border: 2px solid rgba(180, 120, 35, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 2px 4px rgba(110, 65, 15, 0.2);
+  transition: transform 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.language-tile:active {
+  transform: scale(0.97);
+}
+
+.language-tile.is-selected {
+  border-color: #f5b922;
+  border-width: 3px;
+  /* Pull the 1px-thicker border back out of the layout so the tile
+   * doesn't shift its siblings when selected. */
+  margin: -1px;
+  background: linear-gradient(180deg,
+      rgba(255, 244, 198, 0.98) 0%,
+      rgba(248, 213, 130, 0.98) 100%);
+  box-shadow:
+    0 0 0 4px rgba(245, 185, 34, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 3px 14px rgba(190, 130, 20, 0.55);
+}
+
+.language-tile-flag {
+  font-size: 2.6rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(120, 65, 5, 0.35));
+}
+
+.language-tile-name {
+  /* Same game-action face as the popup title so the tile labels read as
+   * part of the screen vocabulary (founder 2026-06-15). */
+  font-family: var(--font-game-action);
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  color: rgba(63, 34, 8, 0.95);
+  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
+}
+
 /* `--pro` modifier — same shape/size as the cream candy chip, but
  * the cream gradient is replaced by the PRO purple palette so PRO
  * subscribers get a visual distinction without changing the chip

@@ -28,24 +28,34 @@ describe("LanguageChip", () => {
     expect(chip.className).toMatch(/hub-hud-pill/);
   });
 
-  it("tap opens the confirm card and does NOT switch by itself", () => {
+  it("tap opens the picker card and does NOT switch by itself", () => {
     render(<LanguageChip />);
     fireEvent.click(screen.getByTestId("language-chip"));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(replaceMock).not.toHaveBeenCalled();
   });
 
-  it("confirm switches to the other locale on the same pathname", () => {
+  it("selecting the other flag + Apply switches locale on the same pathname", () => {
     render(<LanguageChip />);
     fireEvent.click(screen.getByTestId("language-chip"));
+    fireEvent.click(screen.getByTestId("language-tile-es"));
     fireEvent.click(screen.getByTestId("language-chip-confirm"));
     expect(replaceMock).toHaveBeenCalledWith("/hub", { locale: "es" });
   });
 
-  it("cancel closes the card without navigation", () => {
+  it("Apply with the active locale selected closes without navigation", () => {
     render(<LanguageChip />);
     fireEvent.click(screen.getByTestId("language-chip"));
-    fireEvent.click(screen.getByText("Not now"));
+    // English (active) stays selected → Apply is a no-op close.
+    fireEvent.click(screen.getByTestId("language-chip-confirm"));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it("red X closes the card without navigation", () => {
+    render(<LanguageChip />);
+    fireEvent.click(screen.getByTestId("language-chip"));
+    fireEvent.click(screen.getByLabelText("Close"));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(replaceMock).not.toHaveBeenCalled();
   });

@@ -2177,9 +2177,10 @@ const messages = {
   LANGUAGE_CHIP_COPY: {
     ariaLabel: "Cambiar idioma",
     dialogAriaLabel: "Cambiar idioma",
-    question: "¿Cambiar la app a {language}?",
-    confirm: "Cambiar",
-    cancel: "Ahora no",
+    title: "Idioma",
+    apply: "Aplicar",
+    closeLabel: "Cerrar",
+    selectAriaFormat: "Seleccionar {language}",
     en: "English",
     es: "Español",
   },

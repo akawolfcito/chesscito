@@ -3214,10 +3214,11 @@ export const RESCUE_MODAL_COPY = {
 export const LANGUAGE_CHIP_COPY = {
   ariaLabel: "Change language",
   dialogAriaLabel: "Change language",
-  /** ICU param {language} = flag + display name of the target. */
-  question: "Switch the app to {language}?",
-  confirm: "Switch",
-  cancel: "Not now",
+  title: "Language",
+  apply: "Apply",
+  closeLabel: "Close",
+  /** ICU param {language} = display name; per-tile select label. */
+  selectAriaFormat: "Select {language}",
   en: "English",
   es: "Español",
 } as const;

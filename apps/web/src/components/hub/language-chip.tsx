@@ -15,11 +15,17 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 
-const LOCALE_META: Record<string, { flag: string; code: string }> = {
+type LocaleKey = "en" | "es";
+
+const LOCALE_META: Record<LocaleKey, { flag: string; code: string }> = {
   en: { flag: "🇺🇸", code: "EN" },
   es: { flag: "🇪🇸", code: "ES" },
 };
+
+const LOCALES: readonly LocaleKey[] = ["en", "es"];
 
 export function LanguageChip() {
   const t = useTranslations("LANGUAGE_CHIP_COPY");
@@ -27,14 +33,25 @@ export function LanguageChip() {
   const router = useRouter();
   const pathname = usePathname();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // Locale staged by tapping a flag tile; committed by the Apply CTA.
+  // Resets to the active locale every time the card opens.
+  const [selected, setSelected] = useState<LocaleKey>(
+    (locale as LocaleKey) in LOCALE_META ? (locale as LocaleKey) : "en",
+  );
 
-  const current = LOCALE_META[locale] ?? LOCALE_META.en;
-  const otherLocale = locale === "es" ? "en" : "es";
-  const other = LOCALE_META[otherLocale];
+  const current = LOCALE_META[(locale as LocaleKey)] ?? LOCALE_META.en;
 
-  function handleSwitch() {
+  function openCard() {
+    setSelected((locale as LocaleKey) in LOCALE_META ? (locale as LocaleKey) : "en");
+    setConfirmOpen(true);
+  }
+
+  function handleApply() {
     setConfirmOpen(false);
-    router.replace(pathname, { locale: otherLocale });
+    // No-op when the staged locale matches the active one — avoids a
+    // redundant hard navigation / reload.
+    if (selected === locale) return;
+    router.replace(pathname, { locale: selected });
   }
 
   return (
@@ -47,7 +64,7 @@ export function LanguageChip() {
           card still gates the switch. */}
       <button
         type="button"
-        onClick={() => setConfirmOpen(true)}
+        onClick={openCard}
         aria-label={t("ariaLabel")}
         data-testid="language-chip"
         className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
@@ -63,41 +80,47 @@ export function LanguageChip() {
       </button>
 
       {confirmOpen ? (
-        <div
-          className="candy-modal-scrim fixed inset-0 z-[70] flex items-center justify-center animate-in fade-in duration-200"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t("dialogAriaLabel")}
-          onClick={() => setConfirmOpen(false)}
+        <VictoryPopupShell
+          onClose={() => setConfirmOpen(false)}
+          ariaLabel={t("dialogAriaLabel")}
+          closeLabel={t("closeLabel")}
         >
+          <h2 className="language-modal-title">{t("title")}</h2>
           <div
-            className="mx-6 flex w-full max-w-[280px] flex-col items-center gap-3 rounded-2xl border border-amber-800/20 bg-[rgba(255,247,230,0.98)] p-4 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+            className="language-tile-row"
+            role="radiogroup"
+            aria-label={t("dialogAriaLabel")}
           >
-            <p
-              className="text-center text-sm font-bold"
-              style={{ color: "rgba(63, 34, 8, 0.95)" }}
-            >
-              {t("question", { language: other.flag + " " + t(otherLocale) })}
-            </p>
-            <button
-              type="button"
-              onClick={handleSwitch}
-              data-testid="language-chip-confirm"
-              className="candy-tray-pill w-full justify-center py-2 text-sm font-bold"
-              style={{ color: "rgba(63, 34, 8, 0.95)" }}
-            >
-              {other.flag} {t("confirm")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmOpen(false)}
-              className="arena-result-secondary-action"
-            >
-              {t("cancel")}
-            </button>
+            {LOCALES.map((loc) => {
+              const isSelected = loc === selected;
+              return (
+                <button
+                  key={loc}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  aria-label={t("selectAriaFormat", { language: t(loc) })}
+                  data-testid={`language-tile-${loc}`}
+                  onClick={() => setSelected(loc)}
+                  className={`language-tile${isSelected ? " is-selected" : ""}`}
+                >
+                  <span aria-hidden="true" className="language-tile-flag">
+                    {LOCALE_META[loc].flag}
+                  </span>
+                  <span className="language-tile-name">{t(loc)}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
+          <PrincipalButton
+            onClick={handleApply}
+            data-testid="language-chip-confirm"
+            aria-label={t("apply")}
+            className="self-center"
+          >
+            {t("apply")}
+          </PrincipalButton>
+        </VictoryPopupShell>
       ) : null}
     </>
   );
