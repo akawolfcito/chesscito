@@ -91,7 +91,7 @@ describe("LeaderboardSheet — on-chain marker + own rank (QA 2026-06-11)", () =
     render(<LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} />);
 
     await waitFor(() => {
-      expect(screen.getByText("Your rank")).toBeInTheDocument();
+      expect(screen.getByTestId("leaderboard-own-row")).toBeInTheDocument();
       // Own row shows the generated nickname (no custom name set in test).
       expect(screen.getByText("Coral Queen #42")).toBeInTheDocument();
       expect(screen.getByText("42")).toBeInTheDocument();
@@ -134,6 +134,6 @@ describe("LeaderboardSheet — on-chain marker + own rank (QA 2026-06-11)", () =
       expect(screen.getByText("Blue Rook #22")).toBeInTheDocument();
     });
     expect(String(fetchMock.mock.calls[0][0])).not.toContain("player=");
-    expect(screen.queryByText("Your rank")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("leaderboard-own-row")).not.toBeInTheDocument();
   });
 });

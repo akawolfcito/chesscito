@@ -247,7 +247,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto mt-6 space-y-6 pb-6">
+        <div className="flex-1 overflow-y-auto space-y-6 pb-6">
           {/* Verification Banner — DISABLED 2026-05-25.
            *
            *  Passport (Gitcoin) verification lives on a different chain
@@ -326,14 +326,6 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
 
           {competitors.length > 0 && (
             <div className="flex flex-col gap-2.5">
-              <div className="flex items-center justify-between px-2 mb-1">
-                <span className="text-nano font-black uppercase tracking-[0.2em] opacity-30">
-                  {t("topCompetitors")}
-                </span>
-                <span className="text-nano font-black opacity-30">
-                  {t("columnScore")}
-                </span>
-              </div>
               {competitors.map((row) => (
                 <div
                   key={`${row.rank}-${row.rowId}`}
@@ -383,11 +375,6 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
         {ownRow ? (
           <div className="leaderboard-own-rank-footer shrink-0">
             <div className="flex flex-col gap-2.5">
-              <div className="flex items-center justify-between px-2 mb-1">
-                <span className="text-nano font-black uppercase tracking-[0.2em] opacity-30">
-                  {t("yourRankLabel")}
-                </span>
-              </div>
               <div
                 data-testid="leaderboard-own-row"
                 className="leaderboard-row-compact leaderboard-row-compact--top2"
