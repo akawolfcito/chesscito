@@ -49,6 +49,14 @@ Generated from `grep -nE 'track\(\s*[\"\\']monetization\\.' apps/web/src` (audit
 
 ### 2.2 Coach paywall events
 
+> **⚠️ RETIRED 2026-06-14 (UX audit #94).** The standalone `CoachPaywall`
+> surface (`coach-paywall.tsx`) was removed — the SHOP already sells the
+> identical coach packs, so the "out of credits" path now funnels there.
+> **None of the `monetization.coach_paywall_*` events below fire anymore.**
+> The section is kept as a historical record of what M1 shipped; do not
+> wire new code to these events. Shop-side purchase telemetry is the
+> successor surface.
+
 #### `monetization.coach_paywall_view`
 
 | Field | Value |

@@ -6,10 +6,10 @@
  * Any useEffect with unstable refs in ArenaPageInner can collapse the
  * render gap and prevent PLAY from reaching the board.
  *
- * This test verifies that the T5a skeleton (unconditional useCoachAnalysis +
- * useCoachCreditsPurchase hook calls wired in arena/page.tsx) does NOT break
- * the page render. The full PLAY → playing assertion lands in T5b once
- * useCoachAnalysis carries real logic.
+ * This test verifies that the T5a skeleton (unconditional useCoachAnalysis
+ * hook call wired in arena/page.tsx) does NOT break the page render. The
+ * full PLAY → playing assertion lands in T5b once useCoachAnalysis carries
+ * real logic.
  */
 
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
