@@ -39,19 +39,27 @@ export function LanguageChip() {
 
   return (
     <>
-      {/* Bare flag button (founder 2026-06-11): no pill, no medallion,
-          no locale code — the flag alone is the affordance, sized to
-          match the chip sprites. The confirm card still gates the
-          switch. */}
+      {/* Flag + locale code chip (founder 2026-06-15): the bare-flag
+          treatment is retired so the language affordance reads as a peer
+          of the trophy / Peones chips. Same canonical HUD pill family
+          (candy-tray-pill + hub-hud-pill + anchored-left): flag in the
+          floating-icon slot, locale code in the value slot. The confirm
+          card still gates the switch. */}
       <button
         type="button"
         onClick={() => setConfirmOpen(true)}
         aria-label={t("ariaLabel")}
         data-testid="language-chip"
-        className="flex h-11 w-11 items-center justify-center text-[2.25rem] leading-none transition-transform active:scale-95"
-        style={{ filter: "drop-shadow(0 2px 3px rgba(120, 65, 5, 0.35))" }}
+        className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left"
       >
-        <span aria-hidden="true">{current.flag}</span>
+        <span
+          aria-hidden="true"
+          className="candy-tray-pill-icon candy-tray-pill-icon--floating"
+          style={{ fontSize: "1.5rem", lineHeight: 1 }}
+        >
+          {current.flag}
+        </span>
+        <span>{current.code}</span>
       </button>
 
       {confirmOpen ? (
