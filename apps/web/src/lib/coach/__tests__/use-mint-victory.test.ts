@@ -341,7 +341,7 @@ describe("useMintVictory", () => {
 
     // sign-victory must have been called EXACTLY once, not twice.
     const signCalls = mockFetch.mock.calls.filter(
-      ([url]: [string]) => url === "/api/sign-victory",
+      ([url]) => url === "/api/sign-victory",
     );
     expect(signCalls).toHaveLength(1);
   });
@@ -402,7 +402,7 @@ describe("useMintVictory", () => {
     await act(async () => { await result.current.start(); });
 
     const signCalls = mockFetch.mock.calls.filter(
-      ([url]: [string]) => url === "/api/sign-victory",
+      ([url]) => url === "/api/sign-victory",
     );
     // Two complete cycles → two sign calls
     expect(signCalls).toHaveLength(2);
