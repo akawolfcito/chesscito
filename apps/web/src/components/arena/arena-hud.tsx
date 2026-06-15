@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 
+import { ArenaConfirmModal } from "@/components/arena/arena-confirm-modal";
 import { CandyBanner } from "@/components/redesign/candy-banner";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LottieAnimation } from "@/components/ui/lottie-animation";
@@ -29,14 +30,11 @@ type Props = {
   vsBelowSlot?: ReactNode;
 };
 
-const CONFIRM_TIMEOUT_MS = 3000;
-
-/** Back chip with a tap-to-confirm QUIT? state. Styled with the
- *  canonical `candy-nav-button` envelope so it matches every other
- *  back affordance in the app — the previous arena-themed
- *  green-gradient + yellow-border skin felt inconsistent (user
- *  feedback Sally pass 7, 2026-05-20). The QUIT? interaction (3-second
- *  countdown before second tap confirms) is preserved. */
+/** Back chip in the canonical `candy-nav-button` envelope. During an
+ *  active match, tapping it opens a clear "leave the match?" modal
+ *  (VictoryPopupShell vocabulary) instead of the old inline 3s-countdown
+ *  QUIT? affordance (2026-06-15). On end-state (needsConfirm=false) it
+ *  fires onBack immediately. */
 function ArenaBackChip({
   onBack,
   needsConfirm,
@@ -45,75 +43,41 @@ function ArenaBackChip({
   needsConfirm: boolean;
 }) {
   const t = useTranslations("ARENA_COPY");
-  const [confirmingBack, setConfirmingBack] = useState(false);
-  const backTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (backTimerRef.current) clearTimeout(backTimerRef.current);
-    };
-  }, []);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   function handleClick() {
     if (!needsConfirm) {
       onBack();
       return;
     }
-    if (confirmingBack) {
-      if (backTimerRef.current) clearTimeout(backTimerRef.current);
-      setConfirmingBack(false);
-      onBack();
-    } else {
-      setConfirmingBack(true);
-      backTimerRef.current = setTimeout(
-        () => setConfirmingBack(false),
-        CONFIRM_TIMEOUT_MS,
-      );
-    }
-  }
-
-  if (confirmingBack) {
-    return (
-      <button
-        type="button"
-        onClick={handleClick}
-        aria-label={t("confirmQuitAriaLabel")}
-        className="candy-nav-button relative w-auto px-3 overflow-hidden"
-      >
-        <span className="flex items-center gap-1.5 whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
-          <CandyIcon
-            name="close"
-            className="h-4 w-4"
-            style={{ color: "rgba(159, 18, 57, 0.95)" }}
-          />
-          <span
-            className="text-[0.7rem] font-black uppercase tracking-[0.15em]"
-            style={{ color: "rgba(159, 18, 57, 0.95)" }}
-          >
-            {t("confirmQuitLabel")}
-          </span>
-        </span>
-        <span
-          aria-hidden="true"
-          className="absolute bottom-0 left-0 h-1 w-full origin-left"
-          style={{
-            background: "rgba(159, 18, 57, 0.40)",
-            animation: `confirm-countdown ${CONFIRM_TIMEOUT_MS}ms linear forwards`,
-          }}
-        />
-      </button>
-    );
+    setConfirmOpen(true);
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      aria-label={t("backToHubAria")}
-      className="candy-nav-button"
-    >
-      <CandyBanner name="btn-back" className="h-8 w-8" />
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleClick}
+        aria-label={t("backToHubAria")}
+        className="candy-nav-button"
+      >
+        <CandyBanner name="btn-back" className="h-8 w-8" />
+      </button>
+      <ArenaConfirmModal
+        open={confirmOpen}
+        title={t("quitModalTitle")}
+        body={t("quitModalBody")}
+        confirmLabel={t("quitModalConfirm")}
+        cancelLabel={t("quitModalCancel")}
+        closeAriaLabel={t("confirmModalCloseAria")}
+        confirmTestId="arena-quit-confirm"
+        onConfirm={() => {
+          setConfirmOpen(false);
+          onBack();
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   );
 }
 

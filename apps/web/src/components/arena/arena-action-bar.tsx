@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
+
+import { ArenaConfirmModal } from "@/components/arena/arena-confirm-modal";
 
 type Props = {
   onResign: () => void;
@@ -9,8 +11,6 @@ type Props = {
   canUndo: boolean;
   isEndState: boolean;
 };
-
-const CONFIRM_TIMEOUT_MS = 3000;
 
 const RESIGN_ICON_BASE = "/art/new-assets-chesscito/arena/resign-game";
 const UNDO_ICON_BASE = "/art/new-assets-chesscito/arena/undo-move";
@@ -62,33 +62,9 @@ export function ArenaActionBar({
   isEndState,
 }: Props) {
   const t = useTranslations("ARENA_COPY");
-  const [confirmingResign, setConfirmingResign] = useState(false);
-  const resignTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (resignTimerRef.current) clearTimeout(resignTimerRef.current);
-    };
-  }, []);
-
-  function handleResignClick() {
-    if (confirmingResign) {
-      if (resignTimerRef.current) clearTimeout(resignTimerRef.current);
-      setConfirmingResign(false);
-      onResign();
-      return;
-    }
-
-    setConfirmingResign(true);
-    resignTimerRef.current = setTimeout(
-      () => setConfirmingResign(false),
-      CONFIRM_TIMEOUT_MS,
-    );
-  }
+  const [resignModalOpen, setResignModalOpen] = useState(false);
 
   const resignLabel = t("resign");
-  const resignConfirmLabel = t("resignConfirm");
-  const confirmResignLabel = t("confirmResignLabel");
 
   /* When the match ends we still RENDER the action bar (same DOM
    * structure + size) but hide it visually. Returning null would
@@ -106,12 +82,11 @@ export function ArenaActionBar({
       aria-hidden={isHidden || undefined}
     >
       <ArenaActionButton
-        onClick={isHidden ? undefined : handleResignClick}
+        onClick={isHidden ? undefined : () => setResignModalOpen(true)}
         disabled={isHidden}
-        ariaLabel={confirmingResign ? resignConfirmLabel : resignLabel}
-        ariaPressed={confirmingResign}
+        ariaLabel={resignLabel}
         iconBase={RESIGN_ICON_BASE}
-        label={confirmingResign ? confirmResignLabel : resignLabel}
+        label={resignLabel}
       />
 
       <ArenaActionButton
@@ -120,6 +95,21 @@ export function ArenaActionBar({
         ariaLabel={t("undo")}
         iconBase={UNDO_ICON_BASE}
         label={t("undo")}
+      />
+
+      <ArenaConfirmModal
+        open={resignModalOpen}
+        title={t("resignModalTitle")}
+        body={t("resignModalBody")}
+        confirmLabel={t("resignModalConfirm")}
+        cancelLabel={t("resignModalCancel")}
+        closeAriaLabel={t("confirmModalCloseAria")}
+        confirmTestId="arena-resign-confirm"
+        onConfirm={() => {
+          setResignModalOpen(false);
+          onResign();
+        }}
+        onCancel={() => setResignModalOpen(false)}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, fireEvent } from "@testing-library/react";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
 // Stub Lottie wrapper — its dotlottie/lottie-web deps require canvas
@@ -66,6 +66,29 @@ describe("ArenaHud — coach hint signpost", () => {
   it("defaults to hidden when showCoachHint prop is omitted", () => {
     renderHud();
     expect(screen.queryByTestId("arena-coach-hint")).not.toBeInTheDocument();
+  });
+});
+
+describe("ArenaHud — back/quit confirmation modal", () => {
+  it("tapping BACK during an active match opens the quit modal (not immediate)", () => {
+    const { onBack } = renderHud({ isEndState: false });
+    fireEvent.click(screen.getByRole("button", { name: /back to hub/i }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(onBack).not.toHaveBeenCalled();
+  });
+
+  it("confirming the quit modal fires onBack once", () => {
+    const { onBack } = renderHud({ isEndState: false });
+    fireEvent.click(screen.getByRole("button", { name: /back to hub/i }));
+    fireEvent.click(screen.getByTestId("arena-quit-confirm"));
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("end-state BACK fires onBack immediately with no modal", () => {
+    const { onBack } = renderHud({ isEndState: true });
+    fireEvent.click(screen.getByRole("button", { name: /back to hub/i }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });
 

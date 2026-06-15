@@ -1021,6 +1021,17 @@ export const ARENA_COPY = {
    *  selector, Coach viewer, or Training Journal, never /hub), so the label
    *  must describe the affordance honestly. UX audit Minor 2026-06-14. */
   closeResultAria: "Close",
+  // Quit + resign confirmation modals (2026-06-15) — replace the inline
+  // 3s-countdown affordances with clear VictoryPopupShell modals.
+  quitModalTitle: "Leave the match?",
+  quitModalBody: "Your progress in this match will be lost.",
+  quitModalConfirm: "Leave",
+  quitModalCancel: "Keep playing",
+  resignModalTitle: "Resign this match?",
+  resignModalBody: "This counts as a loss.",
+  resignModalConfirm: "Resign",
+  resignModalCancel: "Keep playing",
+  confirmModalCloseAria: "Close",
   playAsWhite: "Play as White",
   playAsBlack: "Play as Black",
   resign: "Resign",
