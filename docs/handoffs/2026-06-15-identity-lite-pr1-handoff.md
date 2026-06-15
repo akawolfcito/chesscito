@@ -1,10 +1,12 @@
 # Handoff — Identity Lite PR1 (avatar + nickname)
 
-**Date**: 2026-06-15 (updated — session 3)
-**Branch**: `feat/identity-lite-pr1` (9 commits ahead of `main`, NOT pushed)
-**Suite**: 3770/3770 passing · `tsc --noEmit` clean (apps/web)
-**Status**: visible DoD MET — leaderboard + profile + stats no longer show raw
-wallet. Remaining: guest wiring (optional), VR refresh, header sr-only (optional).
+**Date**: 2026-06-15 (updated — session 4)
+**Branch**: `feat/identity-lite-pr1` (13 commits ahead of `main`, NOT pushed)
+**Suite**: 3771/3771 passing · `tsc --noEmit` clean (apps/web)
+**Status**: DoD essentially MET. All identity surfaces done (leaderboard, profile,
+stats, **trophies**), **guest wiring done** (DoD #3), LEADERS de-cluttered, and the
+**VR refresh is verified NOT needed** (see below). Only optional header sr-only
+remains. Branch is PR-ready.
 **Spec**: `docs/specs/identity-lite-pr1.md` (+ `-redteam.md`, verdict READY, 3 P0 folded)
 
 ## Goal
@@ -34,8 +36,21 @@ DB + cross-device persistence + PATCH API is **PR2** (out of scope).
 | 5 | `d14a3d9c` | Leaderboard end-to-end: server `LeaderboardRow` → `rowId`+`variant` (no wallet), sheet renders pills + own-row dedup + custom-name override; `useDisplayName` exposes raw `customName`; `useNicknameTokens` uses `t.raw` for the brace template |
 | 6 | `81a9d61e` | **Global hook swap + Profile**: `useDisplayName` now computes the generated nickname (replaces truncateWallet as default `name`) + returns avatar `variant`; only 2 consumers (profile-sheet visible, leaderboard-sheet customName-only). `profile-banner` renders `<PlayerAvatar>` from the variant (emoji = visitor fallback). |
 | 7 | `30e753d1` | **Stats (server-side)**: `public-aggregator` now ships identity-only `topMinters` + `leaderboardTop10` (variant/rowId, **no wallet** — closes a pre-existing payload gap); `stats/page.tsx` builds tokens via `getTranslations`; `stats-page` renders `PlayerIdentityPill`. New shared `nickname-tokens.ts` (`nicknameTokensFromTranslator`, isomorphic). |
+| 8 | `c0b865a7` | **LEADERS de-clutter**: removed "Top Competitors"/"Score" + "Your rank" labels + scroll `mt-6` (founder). |
+| 9 | `0efa4fb4` | **Trophies surface**: `TrophyCard` renders avatar + nickname (both spots) from `deriveAvatarVariant(entry.player)`. |
+| 10 | `b19de827` | **Guest wiring (DoD #3)**: `useGuestIdentity` (client-gated) → profile banner shows guest avatar + "Guest <Piece> #NNNN" when no wallet. |
 
-**Leaderboard + Profile + Stats are fully shipped + green. Visible DoD MET.**
+**Leaderboard + Profile + Stats + Trophies shipped + green. Guest wired. DoD MET.**
+
+### VR refresh — VERIFIED NOT NEEDED (session 4)
+Checked every VR baseline: the changed surfaces (leaderboard/profile/stats/
+trophies sheets) have **no `toHaveScreenshot` baselines** (only manual
+`page.screenshot` captures in `lf-sweep-captures`/`ux-review`, which don't
+assert). `vr15-victory-landing` uses the `/dev/victory-landing` fixture, NOT
+`TrophyCard`. The global `useDisplayName` swap only touches profile-sheet (no
+baseline); arena/coach use their own name mechanism. So no existing VR baseline
+drifts from this work — nothing to refresh. (Disk was 16Gi free; skipping the
+heavy run was also the safe call.)
 
 ## REMAINING (finishing touches — DoD visible part is done)
 
