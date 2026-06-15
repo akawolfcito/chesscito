@@ -1,8 +1,8 @@
 # Handoff — Identity Lite PR1 (avatar + nickname)
 
-**Date**: 2026-06-15
-**Branch**: `feat/identity-lite-pr1` (6 commits ahead of `main`, NOT pushed)
-**Suite**: 3765/3765 passing · `tsc --noEmit` clean (apps/web)
+**Date**: 2026-06-15 (updated — session 2)
+**Branch**: `feat/identity-lite-pr1` (8 commits ahead of `main`, NOT pushed)
+**Suite**: 3769/3769 passing · `tsc --noEmit` clean (apps/web)
 **Spec**: `docs/specs/identity-lite-pr1.md` (+ `-redteam.md`, verdict READY, 3 P0 folded)
 
 ## Goal
@@ -30,48 +30,59 @@ DB + cross-device persistence + PATCH API is **PR2** (out of scope).
 | 3 | `08e6cdf8` | `resolveDisplayName` — optional `generatedNickname` precedence (custom > talent > generated > truncateWallet), backward compatible |
 | 4 | `8f3cd8d3` | `IDENTITY_COPY` EN(editorial)/ES(es.ts) + `useNicknameTokens` + `PlayerAvatar` + `PlayerIdentityPill` + globals.css + tests |
 | 5 | `d14a3d9c` | Leaderboard end-to-end: server `LeaderboardRow` → `rowId`+`variant` (no wallet), sheet renders pills + own-row dedup + custom-name override; `useDisplayName` exposes raw `customName`; `useNicknameTokens` uses `t.raw` for the brace template |
+| 6 | `81a9d61e` | **Global hook swap + Profile**: `useDisplayName` now computes the generated nickname (replaces truncateWallet as default `name`) + returns avatar `variant`; only 2 consumers (profile-sheet visible, leaderboard-sheet customName-only). `profile-banner` renders `<PlayerAvatar>` from the variant (emoji = visitor fallback). |
 
-**Privacy-critical leaderboard is fully shipped + green.**
+**Leaderboard (privacy-critical) + Profile are fully shipped + green.**
 
 ## REMAINING for PR1 Definition of Done (next block)
 
-The DoD ("no main screen shows raw wallet as primary identity") is **not yet
-met** — three surfaces still render `truncateWallet`:
+Resolved this session: **Profile** ✅ (banner avatar + nickname), and the
+**global `useDisplayName` swap** ✅ (low blast radius — only 2 consumers — done
+deliberately, suite green, no VR red surfaced by unit tests).
 
-1. **Header** — `components/ui/global-status-bar.tsx` connected chip uses
-   `identity.walletShort`. It already has optional `handle` (≤14 chars) + a
-   future `avatarUrl` slot. Plan: extend `ConnectedIdentity` with optional
-   `variant?: AvatarVariant`; render `PlayerAvatar` + pass nickname as `handle`
-   (use `formatNicknameCompact` when full > 14 chars). Note the §5 growth-rule
-   comment — this is a data-slot addition (allowed), not a new variant.
-   Find the caller that builds `ConnectedIdentity` (hub scaffold) and feed it.
+### Header — NOT a visible offender (re-scoped)
+`global-status-bar.tsx` `ConnectedBar` renders `walletShort` ONLY in an
+`sr-only` span — the visible chip is the PRO cluster, no wallet on screen. So the
+header is NOT a DoD blocker. **Optional a11y nicety**: have the caller
+(`exercises-screen.tsx` / `mission-panel-candy.tsx`) pass `handle` = nickname so
+the sr-only text reads the nickname instead of the wallet. Zero visible/VR change.
 
-2. **Profile** — `components/profile/profile-banner.tsx` renders
-   `truncatedWallet` (prop from `profile-sheet.tsx`). Add `PlayerAvatar` + show
-   the resolved name; keep wallet as a small secondary line (own surface, OK).
+### 1. Stats — the remaining VISIBLE offender (server-side refactor)
+`components/stats/stats-page.tsx` is a **SERVER component** (no "use client", no
+hooks), rendered by async `app/[locale]/stats/page.tsx`, cached hourly. It shows
+`truncateWallet(row.player)` for top-minters (L~623) + top-10 (L~687). Data is
+`PublicStats` from `lib/stats/public-aggregator.ts`, which currently SHIPS FULL
+WALLETS to the client (`hallOfFame: VictoryRow[]`, `leaderboardTop10:
+LeaderboardRow[]` — both carry raw `player`). This is a **pre-existing** privacy
+gap, not introduced by Identity Lite.
 
-3. **Stats** — `components/stats/stats-page.tsx` (top minters L~623 + top-10
-   L~687) uses a local `truncateWallet`. Its data is `PublicStats`
-   (hall-of-fame `player` strings + `leaderboardTop10`). **Confirm OQ3**:
-   `PublicStats` must be built server-side so it can carry `variant` (derive in
-   the stats server builder, same as leaderboard). If any part is client-derived
-   from `player` strings, derive `variant` there instead.
+Recommended approach (boundary-correct, also closes the payload gap):
+- **Aggregator** (`public-aggregator.ts`, locale-agnostic, cached): add new
+  identity-enriched display arrays — e.g. `topMinters: { rowId, variant,
+  mintCount, lastMintedAt }[]` (move `aggregateTopMinters` server-side) and
+  `leaderboardTop10Identity: { rank, rowId, variant, total_score }[]`. Derive
+  `variant`/`rowId` from the full wallet, then **drop the wallet** from these.
+- **page.tsx** (async server, per-locale): `const tId = await
+  getTranslations("IDENTITY_COPY")`; build `NicknameTokens`; format each
+  nickname; pass `{ variant, name }[]` display arrays into `<StatsPage>`.
+- **StatsPage** (server, pure render): render `<PlayerAvatar>` + name text (no
+  hook needed). Drop the local `truncateWallet` (L217) + the two usages.
+- Keep `VictoryRow`/`LeaderboardRow` shared types untouched (don't ripple into
+  `trophies-body.tsx`); just stop forwarding `player` into the new arrays.
 
-4. **Guest identity wiring** — `getOrCreateGuestId` + `deriveAvatarVariant` are
-   built but not yet consumed by any surface for the no-wallet case. Header /
-   profile should show the guest avatar+nickname when `!address`. Client-gate to
-   avoid SSR hydration mismatch (spec edge case + AC).
+### 2. Guest identity wiring
+`getOrCreateGuestId` + `deriveAvatarVariant` exist but no surface consumes them
+for the no-wallet case (profile shows the emoji, header shows "Visitor"). If
+desired, derive a guest variant from `guestSeed(getOrCreateGuestId())` and feed
+the profile/header avatar when `!address`. **Client-gate** to avoid SSR hydration
+mismatch (spec edge case + AC). Low priority — guests have few surfaces.
 
-5. **Optional clean integration**: instead of per-surface, consider extending
-   `useDisplayName` to compute `generatedNickname` (from address+tokens) and
-   return `variant` — then header/profile/arena names all swap at once. **High
-   VR blast radius** (every name display changes) — do it deliberately with a
-   full VR refresh, not at session end.
-
-6. **VR baselines** — the leaderboard sheet markup changed (avatars added), so
-   `vr*-leaderboard*` baselines will drift. Refresh with the project recipe:
-   clean `.next` + `PORT=3947 pnpm dev` + `BASE_URL` + `--update-snapshots`
-   (`feedback_vr_baseline_discipline`). Not yet done — **deferred**.
+### 3. VR baselines — deferred
+Leaderboard sheet (avatars added) + profile banner (emoji → PlayerAvatar) changed
+visually, so `vr*-leaderboard*` / `vr*-profile*` baselines will drift. Refresh
+with the project recipe: clean `.next` + `PORT=3947 pnpm dev` + `BASE_URL` +
+`--update-snapshots` (`feedback_vr_baseline_discipline`). Unit suite is green;
+VR not yet run — **deferred**.
 
 ## Open questions / notes
 
