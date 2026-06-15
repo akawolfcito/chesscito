@@ -10862,6 +10862,21 @@ button.hud-resource-chip:active:not(:disabled) {
   transition: transform 0.2s ease-out, background 0.2s ease-out;
 }
 
+/* Pinned "Your Rank" footer (2026-06-15) — sits below the scrolling
+ * competitors list and stays anchored to the bottom of the sheet so the
+ * player's own row is always visible. Opaque cream wash + top divider
+ * separate it from the list scrolling above; safe-area padding keeps it
+ * clear of the home indicator. */
+.leaderboard-own-rank-footer {
+  padding-top: 0.5rem;
+  /* The persistent dock (.chesscito-dock, z-60, ~68px) paints OVER the
+   * sheet's bottom, so the pinned footer reserves dock height + the home
+   * indicator below itself to stay fully visible (mirrors the old
+   * pb-[8rem] scroll clearance). No background/border: it shares the
+   * sheet surface, it just no longer scrolls with the list. */
+  margin-bottom: calc(env(safe-area-inset-bottom) + 4.75rem);
+}
+
 .leaderboard-row-compact:active {
   transform: scale(0.98);
   background: rgba(255, 255, 255, 0.45);

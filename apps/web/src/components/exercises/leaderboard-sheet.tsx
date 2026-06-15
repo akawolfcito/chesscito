@@ -218,7 +218,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto mt-6 space-y-6 pb-[8rem]">
+        <div className="flex-1 overflow-y-auto mt-6 space-y-6 pb-6">
           {/* Verification Banner — DISABLED 2026-05-25.
            *
            *  Passport (Gitcoin) verification lives on a different chain
@@ -343,9 +343,14 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
             </div>
           )}
 
-          {/* Your rank — always visible when connected with at least one
-              save, even outside the top-10 cut (QA G4 2026-06-11). */}
-          {ownRow ? (
+        </div>
+
+        {/* Your Rank — PINNED footer (founder 2026-06-15). Lives OUTSIDE
+            the scroll container so it stays anchored at the bottom and
+            is always visible while the Top Competitors list scrolls,
+            whenever the caller has a ranked row (QA G4 2026-06-11). */}
+        {ownRow ? (
+          <div className="leaderboard-own-rank-footer shrink-0">
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between px-2 mb-1">
                 <span className="text-nano font-black uppercase tracking-[0.2em] opacity-30">
@@ -374,8 +379,8 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
                 </p>
               </div>
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </SheetContent>
     </Sheet>
   );

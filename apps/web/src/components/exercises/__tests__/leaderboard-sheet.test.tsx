@@ -98,6 +98,26 @@ describe("LeaderboardSheet — on-chain marker + own rank (QA 2026-06-11)", () =
     );
   });
 
+  it("pins the Your-rank row in a footer OUTSIDE the scrolling list (anchored)", async () => {
+    accountState.address = "0xABCD000000000000000000000000000000001234";
+    accountState.isConnected = true;
+    const own = { rank: 42, player: "0xabcd...1234", score: 120, isVerified: false, hasOnchain: true };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ rows, player: own }),
+    }) as unknown as typeof fetch;
+
+    render(<LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("leaderboard-own-row")).toBeInTheDocument();
+    });
+    const ownRow = screen.getByTestId("leaderboard-own-row");
+    // Anchored footer, NOT inside the competitors scroll container.
+    expect(ownRow.closest(".leaderboard-own-rank-footer")).not.toBeNull();
+    expect(ownRow.closest(".overflow-y-auto")).toBeNull();
+  });
+
   it("disconnected: legacy array request, no Your-rank row", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
