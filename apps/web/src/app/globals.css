@@ -2195,9 +2195,9 @@
     width: 100%;
     min-width: 0;
     /* 44px touch-target minimum (UX audit T5, 2026-06-14). The HUD chip
-       family overrides this to `min-height: 0` via `.hub-hud-pill` (chips
-       hug their text), so this bump only grows the /exercises + economy
-       tray pills it was designed for, not the HUD. */
+       family overrides this to a tighter 2.25rem via `.hub-hud-pill`
+       (compact top-row band that still contains its inline icon), so this
+       bump only grows the /exercises + economy tray pills, not the HUD. */
     min-height: 44px;
     padding: 0.3rem 0.75rem;
     border-radius: 9999px;
@@ -6842,83 +6842,55 @@ button.hud-resource-chip:active:not(:disabled) {
    * the design system shares). Earlier override stripped it; that
    * regressed parity. */
   cursor: pointer;
-  /* Allow the floating icon to escape the chip's bounding box without
-   * growing the chip. Combined with the absolute-positioned icon
-   * below, the pill sizes purely to its text content. */
+  /* Icon now lives INSIDE the pill (2026-06-15 unification — matches the
+   * /exercises piece-picker treatment). `overflow: visible` is retained
+   * only so the icon's drop-shadow isn't clipped; the icon no longer
+   * escapes the bounding box. */
   position: relative;
   overflow: visible;
-  /* Tight horizontal padding — the icon lives OUTSIDE the pill now
-   * (large negative `left` below), so the chip only reserves a small
-   * leading offset so the value glyph doesn't sit flush against the
-   * pill's rounded inner edge. The leading value (1.05rem) gives
-   * dense raster icons (account-icon.png shield art) enough breathing
-   * room without pushing the wallet/CandyIcon variants out of balance. */
-  padding-left: 1.05rem;
+  /* Symmetric horizontal padding — the icon is inline in the leading
+   * slot and the flex `gap` (0.4rem) handles its spacing from the value,
+   * so we no longer reserve a large leading offset for an external icon. */
+  padding-left: 0.6rem;
   padding-right: 0.9rem;
-  /* Push the button to the right so the icon's negative overhang
-   * still falls inside the HUD frame (top-row padding is 8px, the
-   * icon claims ~1.6rem of overhang). Same value applied to both
-   * left + right clusters — keeps the trophy and wallet chips
-   * spaced symmetrically from their respective edges. */
-  margin-left: 1.6rem;
-  /* Tighten the vertical band — the default `.candy-tray-pill` rules
-   * use 0.3rem y-padding + 38px min-height for tray rows; in the HUD
-   * the chip just hugs its text, so ~2px (0.15rem) of breathing room
-   * is enough. */
-  padding-top: 0.15rem;
-  padding-bottom: 0.15rem;
-  min-height: 0;
+  /* No overhang to clear anymore, so the chip sits flush with the HUD
+   * cluster's own gap/padding instead of being pushed in. */
+  margin-left: 0;
+  /* Vertical band tall enough to contain the 1.8rem inline icon (the
+   * /exercises pills use 44px; the HUD stays a touch more compact). */
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  min-height: 2.25rem;
   /* Floor for the chip's body width so single-digit values (e.g.
-   * "0" trophies) don't shrink to a tiny stub next to a 2.6rem icon.
-   * The wallet/Connect chip sets its own width via the longer label;
-   * this guarantees parity for short-value chips. */
+   * "0" trophies) don't shrink to a tiny stub next to the icon. */
   min-width: 3.25rem;
 }
 
-/* HUD floating icon — pulled OUT of the chip entirely so the icon
- * reads as the dominant element with the pill emerging to its right.
- * The icon's right edge meets the chip's left rounded edge (~0.2rem
- * overlap so they don't appear detached), and the chip flows from
- * there with its text. */
+/* HUD floating icon — now inline INSIDE the pill (2026-06-15
+ * unification). Matches the base `.candy-tray-pill-icon--floating`
+ * recipe used by the /exercises piece-picker: 1.8rem sprite with a
+ * slight negative vertical margin so it reads as "sitting on" the
+ * pill while staying within the chip body. */
 .hub-hud-pill .candy-tray-pill-icon--floating {
-  position: absolute;
-  left: -1.6rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 2.6rem;
-  height: 2.6rem;
-  margin: 0;
-  /* Two-layer drop-shadow — the larger 2.6rem sprite needs more
-   * presence than the default `.candy-tray-pill-icon--floating`
-   * shadow (0 2px 3px) provides. Bottom layer is a tight contact
-   * shadow, top layer is a soft warm glow that lifts the icon off
-   * the candy pill / blue sky background. */
+  position: static;
+  transform: none;
+  left: auto;
+  top: auto;
+  width: 1.8rem;
+  height: 1.8rem;
+  margin: -0.15rem 0;
+  /* Two-layer drop-shadow lifts the sprite off the candy pill / blue
+   * sky background without it needing to overhang the chip. */
   filter:
     drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32)) drop-shadow(0 1px 0 rgba(110, 65, 15, 0.45));
 }
 
-/* `--anchored-left` modifier — the chip's left edge is squared off
- * and tucks behind the icon at its midpoint, reading as "the chip
- * emerges from the icon" instead of being a separate element next
- * to it. Used by the trophy chip on the left HUD cluster. */
+/* `--anchored-left` modifier — retained as a no-op alias now that the
+ * icon sits inside the pill. The squared-corner / external-overhang
+ * treatment was removed in the 2026-06-15 chip unification; the chip
+ * renders as a normal rounded pill with an inline leading icon. */
 .hub-hud-pill--anchored-left {
-  /* Chip starts EXACTLY at the icon's midpoint — the icon's right
-   * half overlaps the chip's left edge. */
-  margin-left: 0.3rem;
-  /* Square left corners so the chip looks like a tab sliding out of
-   * the icon rather than a pill sitting next to it. */
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  /* Extra leading padding so the value glyph clears the icon's
-   * right half that now overlaps the chip body. */
-  padding-left: 1.9rem;
-}
-
-.hub-hud-pill--anchored-left .candy-tray-pill-icon--floating {
-  /* Re-anchor the icon: `-1.3rem` is half its width (2.6rem / 2), so
-   * its center sits exactly on the chip's left edge — half outside,
-   * half overlapping. */
-  left: -1.3rem;
+  margin-left: 0;
 }
 
 /* `--pro` modifier — same shape/size as the cream candy chip, but
