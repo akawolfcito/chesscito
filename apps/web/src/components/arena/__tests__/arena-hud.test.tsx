@@ -69,6 +69,26 @@ describe("ArenaHud — coach hint signpost", () => {
   });
 });
 
+describe("ArenaHud — matchup identity labels", () => {
+  it("renders You + rival names with their piece-color tags", () => {
+    renderHud({
+      youName: "You",
+      youColorLabel: "White",
+      rivalName: "Kairo",
+      rivalColorLabel: "Black",
+    });
+    expect(screen.getByText("You")).toBeInTheDocument();
+    expect(screen.getByText("White")).toBeInTheDocument();
+    expect(screen.getByText("Kairo")).toBeInTheDocument();
+    expect(screen.getByText("Black")).toBeInTheDocument();
+  });
+
+  it("omits the labels when names are not supplied", () => {
+    renderHud();
+    expect(document.querySelector(".arena-matchup-label")).toBeNull();
+  });
+});
+
 describe("ArenaHud — back/quit confirmation modal", () => {
   it("tapping BACK during an active match opens the quit modal (not immediate)", () => {
     const { onBack } = renderHud({ isEndState: false });

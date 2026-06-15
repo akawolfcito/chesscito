@@ -1157,6 +1157,8 @@ export const ARENA_COPY = {
   playAsPrefix: "Play as",
   playAsWhiteName: "White",
   playAsBlackName: "Black",
+  /** Gameplay HUD matchup label for the local player (2026-06-15). */
+  youLabel: "You",
   /** Non-win end-state overlay (loss/draw/resigned/stalemate) header. */
   matchEndedLabel: "Another round?",
   matchEndedHint: "Try again when ready.",

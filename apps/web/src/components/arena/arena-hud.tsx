@@ -28,7 +28,26 @@ type Props = {
    *  difficulty selector pill so it visually anchors the matchup
    *  axis rather than floating below the avatar row. */
   vsBelowSlot?: ReactNode;
+  /** Matchup identity labels above each avatar (2026-06-15): the local
+   *  player on the left, the named rival on the right, each tagged with
+   *  the piece color they play. Omitted → labels are not rendered. */
+  youName?: string;
+  youColorLabel?: string;
+  rivalName?: string;
+  rivalColorLabel?: string;
 };
+
+/** Name + piece-color label that sits above a matchup avatar. */
+function MatchupLabel({ name, color }: { name: string; color?: string }) {
+  return (
+    <span className="arena-matchup-label">
+      <span className="arena-matchup-label-name">{name}</span>
+      {color ? (
+        <span className="arena-matchup-label-color">{color}</span>
+      ) : null}
+    </span>
+  );
+}
 
 /** Back chip in the canonical `candy-nav-button` envelope. During an
  *  active match, tapping it opens a clear "leave the match?" modal
@@ -185,6 +204,10 @@ export function ArenaHud({
   isEndState,
   elapsedMs,
   vsBelowSlot,
+  youName,
+  youColorLabel,
+  rivalName,
+  rivalColorLabel,
 }: Props) {
   const t = useTranslations("ARENA_COPY");
   const needsBackConfirm = !isEndState;
@@ -221,8 +244,11 @@ export function ArenaHud({
        *  /dev/arena-shields-chip fixture. */}
 
       {/* Row 2: Matchup art (Heads) — Symmetric Battle Header */}
-      <div className="arena-hud-matchup relative flex items-center justify-between px-2 pt-2">
-        <div className="flex flex-1 justify-center">
+      <div className="arena-hud-matchup relative flex items-end justify-between px-2 pt-2">
+        <div className="flex flex-1 flex-col items-center justify-end gap-1">
+          {youName ? (
+            <MatchupLabel name={youName} color={youColorLabel} />
+          ) : null}
           <PlayerAvatar
             variant="you"
             pro={isProActive}
@@ -230,26 +256,31 @@ export function ArenaHud({
           />
         </div>
 
-        <div className="flex shrink-0 flex-col items-center justify-center gap-2">
+        <div className="flex shrink-0 flex-col items-center justify-center gap-2 self-center">
           <WoodenBanner variant="vs" className="scale-90 drop-shadow-lg" />
           {vsBelowSlot}
         </div>
 
-        <div className="relative flex flex-1 justify-center">
-          <PlayerAvatar
-            variant="bot"
-            pro={isProActive}
-            className="h-24 w-24 drop-shadow-xl"
-          />
-          {isThinking && (
-            <span className="pointer-events-none absolute -top-2 -right-2 flex h-8 w-12">
-              <LottieAnimation
-                src="/animations/sandy-loading.lottie"
-                loop
-                className="h-full w-full"
-              />
-            </span>
-          )}
+        <div className="flex flex-1 flex-col items-center justify-end gap-1">
+          {rivalName ? (
+            <MatchupLabel name={rivalName} color={rivalColorLabel} />
+          ) : null}
+          <div className="relative">
+            <PlayerAvatar
+              variant="bot"
+              pro={isProActive}
+              className="h-24 w-24 drop-shadow-xl"
+            />
+            {isThinking && (
+              <span className="pointer-events-none absolute -top-2 -right-2 flex h-8 w-12">
+                <LottieAnimation
+                  src="/animations/sandy-loading.lottie"
+                  loop
+                  className="h-full w-full"
+                />
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

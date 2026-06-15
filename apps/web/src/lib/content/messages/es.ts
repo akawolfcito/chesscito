@@ -611,6 +611,7 @@ const messages = {
     resignModalConfirm: "Rendirme",
     resignModalCancel: "Seguir jugando",
     confirmModalCloseAria: "Cerrar",
+    youLabel: "Tú",
     difficulty: {
       easy: "Fácil",
       medium: "Medio",

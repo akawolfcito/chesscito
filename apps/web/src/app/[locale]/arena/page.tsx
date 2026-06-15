@@ -11,6 +11,7 @@ import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
 import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
 import { useChessGame } from "@/lib/game/use-chess-game";
+import { rivalFor, randomEloForDifficulty } from "@/lib/game/rivals";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
 import { ArenaSelectScaffold } from "@/components/arena/arena-select-scaffold";
@@ -286,6 +287,23 @@ function ArenaPageInner() {
   // (i.e. the opponent is the one who got mated).
   const opponentColor = game.playerColor === "w" ? "b" : "w";
   const isPlayerWin = game.status === "checkmate" && game.fen.includes(` ${opponentColor} `);
+
+  // Rival identity for the gameplay HUD (2026-06-15). The ELO is picked
+  // once per match — keyed on gameStartedAt so it stays stable for the
+  // whole game and refreshes when a new match begins.
+  const rival = rivalFor(game.difficulty);
+  const rivalElo = useMemo(
+    () => randomEloForDifficulty(game.difficulty),
+    [game.difficulty, game.gameStartedAt],
+  );
+  const youColorLabel =
+    game.playerColor === "w"
+      ? tArena("playAsWhiteName")
+      : tArena("playAsBlackName");
+  const rivalColorLabel =
+    game.playerColor === "w"
+      ? tArena("playAsBlackName")
+      : tArena("playAsWhiteName");
 
   // T13: extracted hooks — now the sole source of truth.
   // Hooks read all live values from liveRef internally; pass current game
@@ -1278,20 +1296,27 @@ function ArenaPageInner() {
           isEndState={isEndState}
           elapsedMs={game.elapsedMs}
           showCoachHint={ENABLE_COACH}
+          youName={tArena("youLabel")}
+          youColorLabel={youColorLabel}
+          rivalName={rival.name}
+          rivalColorLabel={rivalColorLabel}
           vsBelowSlot={
             !isEndState ? (
               <button
                 type="button"
                 onClick={handleChangeDifficulty}
-                className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-difficulty-pill"
-                aria-label={`Difficulty: ${difficultyLabel(game.difficulty)}. Tap to change.`}
+                className="candy-tray-pill hub-hud-pill hub-hud-pill--anchored-left arena-difficulty-pill arena-rival-chip"
+                aria-label={`${rival.name}, ${difficultyLabel(game.difficulty)}, ${rivalElo} ELO. Tap to change.`}
               >
                 <CandyIcon
                   name="shield"
                   className="candy-tray-pill-icon candy-tray-pill-icon--floating"
                 />
-                <span className="arena-difficulty-pill-label">
-                  {difficultyLabel(game.difficulty)}
+                <span className="arena-rival-chip-label">
+                  {rival.name}
+                  <span className="arena-rival-chip-meta">
+                    {difficultyLabel(game.difficulty)} · {rivalElo} ELO
+                  </span>
                 </span>
               </button>
             ) : null
