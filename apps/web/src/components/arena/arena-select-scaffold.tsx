@@ -11,6 +11,7 @@ import { MissionRibbon } from '@/components/pro-mission/mission-ribbon'
 import { SoftGateSheet } from '@/components/arena/soft-gate-sheet'
 import type { ArenaDifficulty } from '@/lib/game/types'
 import type { PlayerColor } from '@/lib/game/use-chess-game'
+import { rivalFor, eloRangeLabel } from '@/lib/game/rivals'
 
 /* Green check pill — clones the PRO sheet perk badge styling
    (pro-sheet.tsx:389-399) so selection feedback across PRO and the
@@ -29,18 +30,6 @@ function SelectedCheck() {
       ✓
     </span>
   )
-}
-
-const DIFFICULTY_CARD: Record<
-  ArenaDifficulty,
-  {
-    piece: 'pawn' | 'knight' | 'bishop'
-    score: string
-  }
-> = {
-  easy: { piece: 'pawn', score: '0 - 800 ELO' },
-  medium: { piece: 'knight', score: '801 - 1500 ELO' },
-  hard: { piece: 'bishop', score: '1501 - 2200 ELO' },
 }
 
 const DIFFICULTY_ORDER: ArenaDifficulty[] = ['easy', 'medium', 'hard']
@@ -171,49 +160,64 @@ export function ArenaSelectScaffold({
           ))}
         </div>
 
+        <p className="arena-scaffold-rival-header" aria-hidden="true">
+          <span className="arena-scaffold-rival-header-icon">⚔️</span>
+          {t('chooseRivalHeader')}
+        </p>
+
         <ul className="arena-scaffold-difficulty">
-          {DIFFICULTY_ORDER.map((key) => (
-            <li key={key}>
-              <button
-                type="button"
-                aria-pressed={difficulty === key}
-                onClick={() => onSelectDifficulty(key)}
-                className="arena-scaffold-difficulty-pill"
-              >
-                {difficulty === key ? <SelectedCheck /> : null}
-                <picture className="arena-scaffold-difficulty-piece">
-                  <source
-                    srcSet={`/art/redesign/pieces/w-${DIFFICULTY_CARD[key].piece}.avif`}
-                    type="image/avif"
-                  />
-                  <source
-                    srcSet={`/art/redesign/pieces/w-${DIFFICULTY_CARD[key].piece}.webp`}
-                    type="image/webp"
-                  />
-                  <img
-                    src={`/art/redesign/pieces/w-${DIFFICULTY_CARD[key].piece}.png`}
-                    alt=""
-                  />
-                </picture>
-                <span className="arena-scaffold-difficulty-text">
-                  <span className="arena-scaffold-difficulty-label">
+          {DIFFICULTY_ORDER.map((key) => {
+            const rival = rivalFor(key)
+            return (
+              <li key={key}>
+                <button
+                  type="button"
+                  aria-pressed={difficulty === key}
+                  aria-label={`${rival.name}. ${t(`difficulty.${key}`)}. ${eloRangeLabel(key)}`}
+                  onClick={() => onSelectDifficulty(key)}
+                  className="arena-scaffold-difficulty-pill"
+                >
+                  {difficulty === key ? <SelectedCheck /> : null}
+                  <picture className="arena-scaffold-difficulty-piece">
+                    <source
+                      srcSet={`/art/redesign/pieces/w-${rival.piece}.avif`}
+                      type="image/avif"
+                    />
+                    <source
+                      srcSet={`/art/redesign/pieces/w-${rival.piece}.webp`}
+                      type="image/webp"
+                    />
+                    <img
+                      src={`/art/redesign/pieces/w-${rival.piece}.png`}
+                      alt=""
+                    />
+                  </picture>
+                  <span className="arena-scaffold-difficulty-text">
+                    <span className="arena-scaffold-rival-name">
+                      {rival.name}
+                    </span>
+                    <span className="arena-scaffold-difficulty-desc">
+                      {t(`difficultyDesc.${key}`)}
+                    </span>
+                    <span className="arena-scaffold-difficulty-score">
+                      <CandyIcon
+                        name="trophy"
+                        className="arena-scaffold-difficulty-trophy"
+                        aria-hidden="true"
+                      />
+                      {eloRangeLabel(key)}
+                    </span>
+                  </span>
+                  <span
+                    className="arena-scaffold-difficulty-badge"
+                    aria-hidden="true"
+                  >
                     {t(`difficulty.${key}`)}
                   </span>
-                  <span className="arena-scaffold-difficulty-desc">
-                    {t(`difficultyDesc.${key}`)}
-                  </span>
-                  <span className="arena-scaffold-difficulty-score">
-                    <CandyIcon
-                      name="trophy"
-                      className="arena-scaffold-difficulty-trophy"
-                      aria-hidden="true"
-                    />
-                    {DIFFICULTY_CARD[key].score}
-                  </span>
-                </span>
-              </button>
-            </li>
-          ))}
+                </button>
+              </li>
+            )
+          })}
         </ul>
 
         {errorMessage ? (

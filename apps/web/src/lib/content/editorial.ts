@@ -1008,11 +1008,15 @@ export const ARENA_COPY = {
     medium: "Medium",
     hard: "Hard",
   },
+  /** Rival taglines (2026-06-15) — de-AI'd: the opponent is a named
+   *  rival persona, never "the AI". See lib/game/rivals.ts. */
   difficultyDesc: {
-    easy: "Friendly AI, makes mistakes often",
-    medium: "Solid player, a fair challenge",
-    hard: "Expert, plays to win",
+    easy: "Friendly rival, learns with you",
+    medium: "Calm rival, finds solid moves",
+    hard: "Sharp rival, plays to win",
   },
+  /** Selector section header (image #7) above the rival cards. */
+  chooseRivalHeader: "Choose your rival",
   startMatch: "PLAY",
   backToHub: "HUB",
   backToHubAria: "Back to Hub",

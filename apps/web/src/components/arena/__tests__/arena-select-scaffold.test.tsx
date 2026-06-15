@@ -127,4 +127,35 @@ describe("ArenaSelectScaffold", () => {
     const black = screen.getByRole("button", { name: /Play as Black/i });
     expect(black).toHaveAttribute("aria-pressed", "true");
   });
+
+  it("leads each card with the rival persona name (not the difficulty word)", () => {
+    const { container } = render(<ArenaSelectScaffold {...baseProps} />);
+    const names = Array.from(
+      container.querySelectorAll(".arena-scaffold-rival-name"),
+    ).map((n) => n.textContent);
+    expect(names).toEqual(["Pipo", "Mara", "Kairo"]);
+  });
+
+  it("renders the 'Choose your rival' section header", () => {
+    render(<ArenaSelectScaffold {...baseProps} />);
+    expect(screen.getByText(/Choose your rival/i)).toBeInTheDocument();
+  });
+
+  it("keeps the difficulty as a secondary badge on every card", () => {
+    const { container } = render(<ArenaSelectScaffold {...baseProps} />);
+    const badges = Array.from(
+      container.querySelectorAll(".arena-scaffold-difficulty-badge"),
+    ).map((n) => n.textContent);
+    expect(badges).toEqual(["Easy", "Medium", "Hard"]);
+  });
+
+  it("never surfaces the word 'AI' in a rival tagline", () => {
+    const { container } = render(<ArenaSelectScaffold {...baseProps} />);
+    const taglines = Array.from(
+      container.querySelectorAll(".arena-scaffold-difficulty-desc"),
+    )
+      .map((n) => n.textContent ?? "")
+      .join(" ");
+    expect(taglines).not.toMatch(/\bAI\b/);
+  });
 });
