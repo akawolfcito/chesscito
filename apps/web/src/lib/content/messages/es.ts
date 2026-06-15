@@ -1040,6 +1040,27 @@ const messages = {
     cancel: "Cancelar",
     visitor: "Visitante",
   },
+  IDENTITY_COPY: {
+    pieces: {
+      pawn: "Peón",
+      knight: "Caballo",
+      rook: "Torre",
+      bishop: "Alfil",
+      queen: "Reina",
+      king: "Rey",
+    },
+    styles: {
+      golden: "Dorado",
+      green: "Verde",
+      blue: "Azul",
+      coral: "Coral",
+      tropical: "Tropical",
+      bright: "Brillante",
+    },
+    guestPrefix: "Invitado",
+    // Tokens: {piece} {style} {number}. Noun-first (ES).
+    template: "{piece} {style} #{number}",
+  },
   TIER_LABELS: {
     visitor: "Visitante",
     apprentice: "Aprendiz",

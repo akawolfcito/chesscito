@@ -12525,3 +12525,34 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 1.05rem;
   color: rgba(180, 60, 25, 0.95);
 }
+/* ─── Identity Lite — avatar + nickname pill (cross-surface) ─────────────── */
+.player-avatar-disc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  overflow: hidden;
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.player-avatar-piece {
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+.player-identity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.player-identity-pill-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

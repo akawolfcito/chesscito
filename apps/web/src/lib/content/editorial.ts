@@ -2998,6 +2998,34 @@ export const DISPLAY_NAME_COPY = {
   visitor: "Visitor",
 } as const;
 
+/**
+ * Identity Lite — localized tokens for the deterministic player nickname.
+ * The generator picks indices from a seed; this supplies the words + per-locale
+ * order. EN is adjective-first; ES (messages/es.ts) is noun-first.
+ * Spec: docs/specs/identity-lite-pr1.md
+ */
+export const IDENTITY_COPY = {
+  pieces: {
+    pawn: "Pawn",
+    knight: "Knight",
+    rook: "Rook",
+    bishop: "Bishop",
+    queen: "Queen",
+    king: "King",
+  },
+  styles: {
+    golden: "Golden",
+    green: "Green",
+    blue: "Blue",
+    coral: "Coral",
+    tropical: "Tropical",
+    bright: "Bright",
+  },
+  guestPrefix: "Guest",
+  /** Tokens: {piece} {style} {number}. */
+  template: "{style} {piece} #{number}",
+} as const;
+
 export const TIER_LABELS = {
   visitor: "Visitor",
   apprentice: "Apprentice",
