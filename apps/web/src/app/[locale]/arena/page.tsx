@@ -39,7 +39,6 @@ import { ProSheet } from "@/components/pro/pro-sheet";
 import { CoachLoading } from "@/components/coach/coach-loading";
 import { CoachPanel } from "@/components/coach/coach-panel";
 import { CoachFallback } from "@/components/coach/coach-fallback";
-import { CoachPaywall } from "@/components/coach/coach-paywall";
 import { LuzOnboardingPanel } from "@/components/coach/luz-onboarding-panel";
 import { gameStatusToOnboardingOutcome } from "@/lib/coach/onboarding-outcome";
 import { routeCoachPreviewCta } from "@/lib/coach/coach-preview-route";
@@ -64,7 +63,6 @@ import {
   formatUsd,
 } from "@/lib/contracts/tokens";
 import { useCoachAnalysis } from "@/lib/coach/use-coach-analysis";
-import { useCoachCreditsPurchase } from "@/lib/coach/use-coach-credits-purchase";
 import { useMintVictory } from "@/lib/coach/use-mint-victory";
 import { postMintReceipt } from "@/lib/coach/post-mint-receipt";
 
@@ -302,14 +300,6 @@ function ArenaPageInner() {
     isConnected,
   });
 
-  const credits = useCoachCreditsPurchase({
-    onPurchaseSuccess: () => {
-      // Credits acquired — trigger analysis automatically (mirrors legacy handleBuyCredits)
-      coach.setPhase("idle");
-      coach.askCoach("immediate");
-    },
-  });
-
   const mint = useMintVictory({
     gameId: persistedGameId ?? undefined,
     difficulty: game.difficulty,
@@ -436,6 +426,20 @@ function ArenaPageInner() {
     coach.setPhase("idle");
     mint.reset();
   }, [coach, mint]);
+
+  // UX audit #94 — the standalone coach-credits paywall is retired. The
+  // SHOP already sells the same coach packs (catalog itemId 3/4), so any
+  // path that reaches the "paywall" phase (the explicit "Get full
+  // analysis" tap on the quick review, or a 402 from the coach API when
+  // credits run out mid-analysis) funnels to the SHOP instead. We reset
+  // the coach phase first so the end-state renders cleanly behind the
+  // shop sheet. Guarded on `coach.phase` so the prepare-timer render gap
+  // is never touched (see arena-play-timer-fragility memory).
+  useEffect(() => {
+    if (coach.phase !== "paywall") return;
+    coach.setPhase("idle");
+    handleOpenShopSheet();
+  }, [coach.phase, coach, handleOpenShopSheet]);
 
   const handlePlayAgain = () => {
     resetArenaState();
@@ -1223,7 +1227,7 @@ function ArenaPageInner() {
               totalMoves={game.moveCount}
               elapsedMs={game.elapsedMs}
               result={mapArenaResult(game.status, isPlayerWin)}
-              onGetFullAnalysis={() => coach.setPhase(isConnected ? "paywall" : "idle")}
+              onGetFullAnalysis={() => coach.setPhase("paywall")}
               onPlayAgain={handlePlayAgain}
               onBackToHub={handleBackToHub}
               onRetry={address ? () => { coach.askCoach("immediate"); } : undefined}
@@ -1463,36 +1467,17 @@ function ArenaPageInner() {
               />
             </VictoryPopupShell>
           )}
-          {coach.phase === "paywall" && (
-            <CoachPaywall
-              open
-              onOpenChange={() => coach.setPhase("idle")}
-              onBuy={(pack) => void credits.buyCredits(Number(pack))}
-              error={credits.error}
-              errorKind={credits.errorKind}
-              onSeePro={() => {
-                coach.setPhase("idle");
-                proSheet.openSheet();
-              }}
-              context={
-                // M1 funnel (Commit 3 + Commit 4) — covers all four
-                // endgame outcomes. The paywall only mounts when
-                // shouldShowPaywall returns true (free user + 0 credits),
-                // and on win it only reaches that gate after the user
-                // explicitly taps Coach Review — Save Victory routes to
-                // the mint flow, never to the paywall.
-                game.status === "resigned"
-                  ? "endgame_resign"
-                  : game.status === "checkmate" && !isPlayerWin
-                    ? "endgame_loss"
-                    : game.status === "checkmate" && isPlayerWin
-                      ? "endgame_win"
-                      : game.status === "draw" || game.status === "stalemate"
-                        ? "endgame_draw"
-                        : undefined
-              }
-            />
-          )}
+          {/* UX audit #94 — the coach-credits paywall is retired; the
+              "paywall" phase funnels to the SHOP via the effect above.
+              The shop sheet (+ its purchase-confirm step) mounts here so
+              the end-state render branch can surface it, same as the
+              active-game branches. */}
+          <ShopSheet
+            {...shopSheet.sheetProps}
+            onOpenChange={handleShopSheetOpenChange}
+            showTrigger={false}
+          />
+          <PurchaseConfirmSheet {...shopSheet.confirmProps} />
           <ProSheet {...proSheet.sheetProps} />
         </>
       )}

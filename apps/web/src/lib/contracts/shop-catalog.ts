@@ -74,10 +74,9 @@ export const SHOP_ITEMS: readonly ShopCatalogEntry[] = [
   { itemId: FOUNDER_BADGE_ITEM_ID, copyKey: "founderBadge" },
   { itemId: SHIELD_ITEM_ID, copyKey: "retryShield" },
   // Coach packs (A2 cluster). itemIds 3n + 4n already configured
-  // on-chain — the existing CoachPaywall surface buys them today via
-  // `arena/page.tsx:handleBuyCredits`. Mounting them here exposes the
-  // packs as regular shop tiles so users can discover Coach without
-  // hitting a paywall first. Verified by /api/coach/verify-purchase
+  // on-chain. As of UX audit #94 the SHOP is the ONLY buy surface for
+  // coach packs — the standalone CoachPaywall was retired and its
+  // "out of credits" path now funnels here. Verified by /api/coach/verify-purchase
   // post-receipt (mirrors the PRO_ITEM_ID branch in
   // `useShopSheetState`). Hardcoded ids — `COACH_PACK_ITEMS` declared
   // after SHOP_ITEMS, so referencing it here would TDZ.

@@ -150,7 +150,6 @@ vi.mock("@/components/pro/pro-sheet", () => ({ ProSheet: () => null }));
 vi.mock("@/components/coach/coach-loading", () => ({ CoachLoading: () => null }));
 vi.mock("@/components/coach/coach-panel", () => ({ CoachPanel: () => null }));
 vi.mock("@/components/coach/coach-fallback", () => ({ CoachFallback: () => null }));
-vi.mock("@/components/coach/coach-paywall", () => ({ CoachPaywall: () => null }));
 vi.mock("@/components/coach/luz-onboarding-panel", () => ({ LuzOnboardingPanel: () => null }));
 vi.mock("@/components/coach/coach-history", () => ({ CoachHistory: () => null }));
 vi.mock("@/components/connect-prompt/connect-prompt-toast", () => ({ ConnectPromptToast: () => null }));
