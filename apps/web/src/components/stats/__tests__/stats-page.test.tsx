@@ -2,13 +2,22 @@ import { describe, it, expect, afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 
-import { StatsPage } from "../stats-page";
+import { StatsPage as StatsPageBase } from "../stats-page";
 import { EMPTY_PUBLIC_STATS } from "@/lib/stats/public-aggregator";
 import type { PublicStats } from "@/lib/stats/public-aggregator";
+import { IDENTITY_COPY } from "@/lib/content/editorial";
+import type { NicknameTokens } from "@/lib/identity/identity-lite";
 
 afterEach(() => {
   cleanup();
 });
+
+// EN tokens (the test renders the default-locale bundle). Wrapper injects them
+// so the 28 existing call sites stay unchanged.
+const TOKENS = IDENTITY_COPY as unknown as NicknameTokens;
+function StatsPage({ stats }: { stats: PublicStats }) {
+  return <StatsPageBase stats={stats} nicknameTokens={TOKENS} />;
+}
 
 const SAMPLE_STATS: PublicStats = {
   totalVictories: 1234,
@@ -22,29 +31,23 @@ const SAMPLE_STATS: PublicStats = {
   activeSessions30d: 1402,
   coachAnalysesLifetime: 77,
   coachAnalyses7d: 9,
-  hallOfFame: [
+  topMinters: [
     {
-      token_id: 42,
-      player: "0xabcdef0000000000000000000000000000001234",
-      difficulty: 3,
-      total_moves: 45,
-      time_ms: 90_000,
-      tx_hash: "0xtxhash-hof-1",
-      minted_at: new Date(Date.now() - 60 * 1000).toISOString(),
+      rowId: "id_m1",
+      variant: { piece: "knight", style: "golden", number: 12 },
+      mintCount: 1,
+      lastMintedAt: new Date(Date.now() - 60 * 1000).toISOString(),
     },
     {
-      token_id: 41,
-      player: "0x0000abcdef000000000000000000000000005678",
-      difficulty: 1,
-      total_moves: 22,
-      time_ms: 30_000,
-      tx_hash: "0xtxhash-hof-2",
-      minted_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+      rowId: "id_m2",
+      variant: { piece: "pawn", style: "green", number: 34 },
+      mintCount: 1,
+      lastMintedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
     },
   ],
   leaderboardTop10: [
-    { rank: 1, player: "0xabc1230000000000000000000000000000009999", total_score: 9999, is_verified: true },
-    { rank: 2, player: "0xdef4560000000000000000000000000000008888", total_score: 8888, is_verified: false },
+    { rank: 1, rowId: "id_l1", variant: { piece: "queen", style: "blue", number: 99 }, totalScore: 9999, isVerified: true, hasOnchain: false },
+    { rank: 2, rowId: "id_l2", variant: { piece: "rook", style: "coral", number: 88 }, totalScore: 8888, isVerified: false, hasOnchain: false },
   ],
   activityTrend30d: Array.from({ length: 30 }, (_, i) => ({
     date: `2026-05-${String(i + 1).padStart(2, "0")}`,
@@ -109,11 +112,13 @@ describe("StatsPage", () => {
     expect(screen.getByText("880")).toBeInTheDocument();
   });
 
-  it("aggregates Hall of Fame into per-wallet rollups (Top Minting Wallets)", () => {
+  it("renders top minters as avatar + nickname (no raw wallet)", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
 
-    expect(screen.getByText("0xabcd…1234")).toBeInTheDocument();
-    expect(screen.getByText("0x0000…5678")).toBeInTheDocument();
+    expect(screen.getByText("Golden Knight #12")).toBeInTheDocument();
+    expect(screen.getByText("Green Pawn #34")).toBeInTheDocument();
+    // No raw wallet leaks into the rendered DOM.
+    expect(document.body.textContent ?? "").not.toMatch(/0x[a-fA-F0-9]{6}/);
     // Section now shows total mints + last-mint relative time instead
     // of per-event difficulty badges. Each sample wallet has 1 mint.
     expect(screen.getAllByText("1 mint").length).toBeGreaterThanOrEqual(2);

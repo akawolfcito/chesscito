@@ -1,9 +1,13 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
 import {
   fetchLeaderboardFromDb,
-  type LeaderboardRow,
   type VictoryRow,
 } from "@/lib/supabase/queries";
+import {
+  deriveAvatarVariant,
+  deriveRowId,
+  type AvatarVariant,
+} from "@/lib/identity/identity-lite";
 import {
   EMPTY_ONCHAIN_STATS,
   fetchOnchainStats,
@@ -31,6 +35,62 @@ export type DifficultyTally = {
   medium: number;
   hard: number;
 };
+
+/** Identity Lite: a top-minter rollup with NO wallet. `rowId` is an opaque
+ *  dedupe/key; `variant` drives the avatar + (client-formatted) nickname. */
+export type MinterIdentityRow = {
+  rowId: string;
+  variant: AvatarVariant;
+  mintCount: number;
+  lastMintedAt: string;
+};
+
+/** Identity Lite: a leaderboard row with NO wallet. */
+export type LeaderboardIdentityRow = {
+  rank: number;
+  rowId: string;
+  variant: AvatarVariant;
+  totalScore: number;
+  isVerified: boolean;
+  hasOnchain: boolean;
+};
+
+/**
+ * Roll up the recent-mints feed into per-minter counts, deriving the Identity
+ * Lite `variant` + opaque `rowId` from each wallet and DISCARDING the wallet.
+ * Sort by mint count desc, tiebreak by most-recent mint. Server-side so no raw
+ * wallet ever reaches the /stats client payload.
+ */
+export function aggregateTopMinters(
+  rows: Array<{ player: string; minted_at: string }>,
+  limit = 10,
+): MinterIdentityRow[] {
+  const byRow = new Map<string, MinterIdentityRow>();
+  for (const row of rows) {
+    const wallet = row.player.toLowerCase();
+    const rowId = deriveRowId(wallet);
+    const existing = byRow.get(rowId);
+    if (existing) {
+      existing.mintCount += 1;
+      if (Date.parse(row.minted_at) > Date.parse(existing.lastMintedAt)) {
+        existing.lastMintedAt = row.minted_at;
+      }
+    } else {
+      byRow.set(rowId, {
+        rowId,
+        variant: deriveAvatarVariant(wallet),
+        mintCount: 1,
+        lastMintedAt: row.minted_at,
+      });
+    }
+  }
+  return Array.from(byRow.values())
+    .sort((a, b) => {
+      if (b.mintCount !== a.mintCount) return b.mintCount - a.mintCount;
+      return Date.parse(b.lastMintedAt) - Date.parse(a.lastMintedAt);
+    })
+    .slice(0, limit);
+}
 
 /** Per-day aggregate for the trailing 30-day activity chart. `date`
  *  is a `YYYY-MM-DD` UTC string; `sessions` is the distinct
@@ -61,8 +121,11 @@ export type PublicStats = {
    *  follow-up commit can wire it in without touching the aggregator. */
   coachAnalysesLifetime: number | null;
   coachAnalyses7d: number | null;
-  hallOfFame: VictoryRow[];
-  leaderboardTop10: LeaderboardRow[];
+  /** Top minters, identity-only (no wallet). Aggregated server-side from the
+   *  recent-mints feed. Identity Lite. */
+  topMinters: MinterIdentityRow[];
+  /** Top-10 leaderboard, identity-only (no wallet). Identity Lite. */
+  leaderboardTop10: LeaderboardIdentityRow[];
   /** 30 entries, oldest day first. Empty array if either underlying
    *  query fails — the consumer hides the chart entirely rather than
    *  rendering a misleading flat line. */
@@ -87,7 +150,7 @@ export const EMPTY_PUBLIC_STATS: PublicStats = {
   activeSessions30d: null,
   coachAnalysesLifetime: null,
   coachAnalyses7d: null,
-  hallOfFame: [],
+  topMinters: [],
   leaderboardTop10: [],
   activityTrend30d: [],
   generatedAt: new Date(0).toISOString(),
@@ -392,12 +455,22 @@ export async function getPublicStats(): Promise<PublicStats> {
       coachLifetimeRes as PromiseSettledResult<CountResult>,
     ),
     coachAnalyses7d: extractCount(coach7dRes as PromiseSettledResult<CountResult>),
-    hallOfFame: extractRows(
-      hallOfFameRes as PromiseSettledResult<DataResult<VictoryRow>>,
+    topMinters: aggregateTopMinters(
+      extractRows(hallOfFameRes as PromiseSettledResult<DataResult<VictoryRow>>),
     ),
     leaderboardTop10:
       leaderboardRes.status === "fulfilled"
-        ? leaderboardRes.value.slice(0, 10)
+        ? leaderboardRes.value.slice(0, 10).map((r) => {
+            const wallet = r.player.toLowerCase();
+            return {
+              rank: r.rank,
+              rowId: deriveRowId(wallet),
+              variant: deriveAvatarVariant(wallet),
+              totalScore: r.total_score,
+              isVerified: r.is_verified,
+              hasOnchain: r.has_onchain ?? false,
+            };
+          })
         : [],
     activityTrend30d,
     generatedAt,

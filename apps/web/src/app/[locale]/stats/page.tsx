@@ -1,5 +1,10 @@
+import { getTranslations } from "next-intl/server";
 import { StatsPage } from "@/components/stats/stats-page";
 import { getPublicStats } from "@/lib/stats/public-aggregator";
+import {
+  nicknameTokensFromTranslator,
+  type NicknameTranslator,
+} from "@/lib/identity/nickname-tokens";
 
 export const metadata = {
   title: "Platform Stats — Chesscito",
@@ -16,6 +21,12 @@ export const revalidate = 3600;
 
 export default async function StatsRoute() {
   const stats = await getPublicStats();
+  // Build the locale-aware nickname tokens server-side (the aggregator is
+  // locale-agnostic + cached); StatsPage formats names from the row variants.
+  const tIdentity = await getTranslations("IDENTITY_COPY");
+  const nicknameTokens = nicknameTokensFromTranslator(
+    tIdentity as unknown as NicknameTranslator,
+  );
 
   // Dropped LegalPageShell (locked to var(--app-max-width) = 390px) in
   // favor of a landing-aligned full-width shell. /stats is a public
@@ -32,7 +43,7 @@ export default async function StatsRoute() {
       style={{ color: "var(--paper-text)" }}
     >
       <div className="mx-auto w-full max-w-[1200px] px-5 py-8 md:px-10 md:py-12">
-        <StatsPage stats={stats} />
+        <StatsPage stats={stats} nicknameTokens={nicknameTokens} />
       </div>
     </main>
   );

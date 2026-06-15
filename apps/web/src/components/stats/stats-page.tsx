@@ -4,9 +4,14 @@ import type {
   PublicStats,
 } from "@/lib/stats/public-aggregator";
 import { StatCard } from "./stat-card";
+import { PlayerIdentityPill } from "@/components/identity/player-identity-pill";
+import { formatNickname, type NicknameTokens } from "@/lib/identity/identity-lite";
 
 type StatsPageProps = {
   stats: PublicStats;
+  /** Locale-aware tokens built server-side in the route; used to format each
+   *  row's nickname from its variant. */
+  nicknameTokens: NicknameTokens;
 };
 
 // Sparkline accents — deep teal counterpoint for Sessions + warm
@@ -214,11 +219,6 @@ function DifficultyMixChart({ tally }: { tally: DifficultyTally }) {
   );
 }
 
-function truncateWallet(address: string): string {
-  if (!address || address.length < 10) return address;
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
-
 function difficultyName(d: number): string {
   if (d === 1) return "Easy";
   if (d === 2) return "Medium";
@@ -234,44 +234,6 @@ function formatRelative(iso: string): string {
   if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
   if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
   return `${Math.floor(diffSec / 86400)}d ago`;
-}
-
-/** Aggregates the hallOfFame feed into per-wallet rollups so the page
- *  surfaces "Top Minting Wallets" instead of a flat event stream that
- *  visually repeats the same wallet for every mint. Sort by total
- *  mints desc, tiebreak by most-recent mint. */
-type TopMinterRow = {
-  player: string;
-  mintCount: number;
-  lastMintedAt: string;
-};
-
-function aggregateTopMinters(
-  rows: Array<{ player: string; minted_at: string }>,
-  limit = 10,
-): TopMinterRow[] {
-  const byPlayer = new Map<string, TopMinterRow>();
-  for (const row of rows) {
-    const existing = byPlayer.get(row.player);
-    if (existing) {
-      existing.mintCount += 1;
-      if (Date.parse(row.minted_at) > Date.parse(existing.lastMintedAt)) {
-        existing.lastMintedAt = row.minted_at;
-      }
-    } else {
-      byPlayer.set(row.player, {
-        player: row.player,
-        mintCount: 1,
-        lastMintedAt: row.minted_at,
-      });
-    }
-  }
-  return Array.from(byPlayer.values())
-    .sort((a, b) => {
-      if (b.mintCount !== a.mintCount) return b.mintCount - a.mintCount;
-      return Date.parse(b.lastMintedAt) - Date.parse(a.lastMintedAt);
-    })
-    .slice(0, limit);
 }
 
 function formatGeneratedAt(iso: string): string {
@@ -364,7 +326,7 @@ function formatStat(n: number | null): string {
   return n === null ? "—" : new Intl.NumberFormat("en-US").format(n);
 }
 
-export function StatsPage({ stats }: StatsPageProps) {
+export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
   const diff = stats.victoriesByDifficulty;
   const platformSignals = computePlatformSignals(stats);
 
@@ -599,7 +561,7 @@ export function StatsPage({ stats }: StatsPageProps) {
         >
           Top Minting Wallets
         </h3>
-        {stats.hallOfFame.length === 0 ? (
+        {stats.topMinters.length === 0 ? (
           <p
             className="text-xs"
             style={{ color: "var(--paper-text-subtle)" }}
@@ -611,16 +573,20 @@ export function StatsPage({ stats }: StatsPageProps) {
             className="border-t"
             style={{ borderColor: "var(--paper-divider)" }}
           >
-            {aggregateTopMinters(stats.hallOfFame).map((row) => (
+            {stats.topMinters.map((row) => (
               <li
-                key={row.player}
+                key={row.rowId}
                 className="flex items-center justify-between gap-2 border-b py-2 text-xs"
                 style={{
                   color: "var(--paper-text)",
                   borderColor: "var(--paper-divider)",
                 }}
               >
-                <span className="font-mono">{truncateWallet(row.player)}</span>
+                <PlayerIdentityPill
+                  variant={row.variant}
+                  name={formatNickname(row.variant, nicknameTokens)}
+                  size="sm"
+                />
                 <span
                   className="text-[0.625rem] uppercase tracking-wide tabular-nums"
                   style={{ color: "var(--paper-text-subtle)" }}
@@ -670,7 +636,7 @@ export function StatsPage({ stats }: StatsPageProps) {
           >
             {stats.leaderboardTop10.map((row) => (
               <li
-                key={`${row.rank}-${row.player}`}
+                key={`${row.rank}-${row.rowId}`}
                 className="flex items-center justify-between gap-2 border-b py-2 text-xs"
                 style={{
                   color: "var(--paper-text)",
@@ -683,11 +649,14 @@ export function StatsPage({ stats }: StatsPageProps) {
                 >
                   #{row.rank}
                 </span>
-                <span className="flex-1 font-mono">
-                  {truncateWallet(row.player)}
-                </span>
+                <PlayerIdentityPill
+                  variant={row.variant}
+                  name={formatNickname(row.variant, nicknameTokens)}
+                  size="sm"
+                  className="flex-1"
+                />
                 <span className="font-semibold">
-                  {new Intl.NumberFormat("en-US").format(row.total_score)}
+                  {new Intl.NumberFormat("en-US").format(row.totalScore)}
                 </span>
               </li>
             ))}

@@ -21,6 +21,7 @@ import {
   getPublicStats,
 } from "../public-aggregator";
 import { EMPTY_ONCHAIN_STATS } from "../onchain";
+import { deriveAvatarVariant, deriveRowId } from "@/lib/identity/identity-lite";
 
 /**
  * Builds a thenable mock that resolves to `value` and supports the
@@ -100,7 +101,7 @@ describe("getPublicStats", () => {
     // generatedAt MUST be a fresh ISO string, not the epoch sentinel,
     // so a stale CDN snapshot is identifiable.
     expect(stats.totalVictories).toBe(EMPTY_PUBLIC_STATS.totalVictories);
-    expect(stats.hallOfFame).toEqual([]);
+    expect(stats.topMinters).toEqual([]);
     expect(stats.leaderboardTop10).toEqual([]);
     expect(Date.parse(stats.generatedAt)).toBeGreaterThan(0);
     expect(stats.generatedAt).not.toBe(EMPTY_PUBLIC_STATS.generatedAt);
@@ -156,10 +157,15 @@ describe("getPublicStats", () => {
     expect(stats.activeSessions30d).toBe(4);
     expect(stats.coachAnalysesLifetime).toBe(33);
     expect(stats.coachAnalyses7d).toBe(5);
-    expect(stats.hallOfFame).toHaveLength(1);
-    expect(stats.hallOfFame[0].token_id).toBe(1);
+    // Identity-only rollups — no wallet, derived variant + opaque rowId.
+    expect(stats.topMinters).toHaveLength(1);
+    expect(stats.topMinters[0].mintCount).toBe(1);
+    expect(stats.topMinters[0].rowId).toBe(deriveRowId("0xabc"));
+    expect(stats.topMinters[0].variant).toEqual(deriveAvatarVariant("0xabc"));
     expect(stats.leaderboardTop10).toHaveLength(2);
-    expect(stats.leaderboardTop10[0].player).toBe("0xabc");
+    expect(stats.leaderboardTop10[0].rowId).toBe(deriveRowId("0xabc"));
+    expect(stats.leaderboardTop10[0].totalScore).toBe(999);
+    expect(JSON.stringify(stats.leaderboardTop10)).not.toContain("0x");
   });
 
   it("renders null for failed count queries while keeping siblings intact", async () => {
@@ -185,7 +191,7 @@ describe("getPublicStats", () => {
     expect(stats.totalVictories).toBeNull();
     expect(stats.victories7d).toBe(1);
     expect(stats.victoriesByDifficulty).toEqual({ easy: 1, medium: 0, hard: 0 });
-    expect(stats.hallOfFame).toEqual([]);
+    expect(stats.topMinters).toEqual([]);
   });
 
   it("returns [] for hallOfFame and leaderboardTop10 when their sources fail", async () => {
@@ -199,7 +205,7 @@ describe("getPublicStats", () => {
 
     const stats = await getPublicStats();
 
-    expect(stats.hallOfFame).toEqual([]);
+    expect(stats.topMinters).toEqual([]);
     expect(stats.leaderboardTop10).toEqual([]);
   });
 
