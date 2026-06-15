@@ -1417,6 +1417,9 @@ export const HUB_V2_DOCK_COPY = {
 
 export const COACH_COPY = {
   askCoach: "ASK",
+  /** JOURNAL (coach/history) PLAY shortcut. Was missing, so the button
+   *  rendered the raw key "COACH_COPY.playCta" (2026-06-15 fix). */
+  playCta: "PLAY",
   loading: "Loading...",
   quickReviewTitle: "REVIEW",
   coachAnalysisTitle: "REVIEW",

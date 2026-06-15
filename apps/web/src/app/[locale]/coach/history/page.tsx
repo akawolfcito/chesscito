@@ -97,7 +97,7 @@ export default function CoachHistoryPage() {
             instead of an empty board. */}
         <PrincipalButton
           onClick={() => router.push("/arena?fresh=1")}
-          className="w-full"
+          className="self-center"
           aria-label={t("playCta")}
         >
           {t("playCta")}

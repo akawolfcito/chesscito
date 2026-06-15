@@ -85,6 +85,21 @@ vi.mock("@/components/coach/coach-history", () => ({
 }));
 
 import CoachHistoryPage from "../page";
+import { COACH_COPY } from "@/lib/content/editorial";
+
+describe("/coach/history JOURNAL play CTA", () => {
+  it("COACH_COPY.playCta resolves (regression: key was missing → raw key showed)", () => {
+    expect(COACH_COPY.playCta).toBe("PLAY");
+  });
+
+  it("renders a horizontally-centered PLAY shortcut (not full-width)", () => {
+    render(<CoachHistoryPage />);
+    const btn = screen.getByRole("button", { name: "playCta" });
+    expect(btn).toBeInTheDocument();
+    expect(btn.className).toContain("self-center");
+    expect(btn.className).not.toContain("w-full");
+  });
+});
 
 describe("/coach/history tap-entry routing", () => {
   it("tap loss entry → push /coach/[gameId] with wallet query (no focus)", () => {

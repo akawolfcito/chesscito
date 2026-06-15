@@ -363,6 +363,7 @@ const messages = {
   COACH_COPY: {
     ...en.COACH_COPY,
     askCoach: "COACH",
+    playCta: "JUGAR",
     loading: "Cargando…",
     quickReviewTitle: "ANÁLISIS",
     coachAnalysisTitle: "ANÁLISIS",
