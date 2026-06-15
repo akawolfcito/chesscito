@@ -6,6 +6,9 @@ import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
 import { DIFFICULTY_LABELS } from "@/lib/content/editorial";
 import type { VictoryEntry } from "@/lib/game/victory-events";
+import { PlayerIdentityPill } from "@/components/identity/player-identity-pill";
+import { useNicknameTokens } from "@/lib/identity/use-nickname-tokens";
+import { deriveAvatarVariant, formatNickname } from "@/lib/identity/identity-lite";
 
 const DIFFICULTY_VARIANT: Record<number, "success" | "warm" | "danger"> = {
   1: "success",
@@ -28,10 +31,6 @@ function formatDate(unix: number): string {
   });
 }
 
-function truncateAddress(addr: string): string {
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-}
-
 type Props = {
   entry: VictoryEntry;
   variant: "victory" | "hall-of-fame";
@@ -43,6 +42,12 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
   const t = useTranslations("TROPHY_VITRINE_COPY");
   const tClaim = useTranslations("VICTORY_CLAIM_COPY");
   const [toast, setToast] = useState<string | null>(null);
+
+  // Identity Lite: deterministic avatar + nickname for the victory owner,
+  // replacing the raw truncated wallet. Derived from entry.player.
+  const nicknameTokens = useNicknameTokens();
+  const playerVariant = deriveAvatarVariant(entry.player.toLowerCase());
+  const playerName = formatNickname(playerVariant, nicknameTokens);
   const difficultyLabel = DIFFICULTY_LABELS[entry.difficulty] ?? "???";
   const chipVariant = DIFFICULTY_VARIANT[entry.difficulty] ?? "warm";
   const isHoF = variant === "hall-of-fame";
@@ -113,9 +118,14 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
           </div>
 
           <div className="mt-6 flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1">
               <span className="text-nano font-bold uppercase text-[rgba(63,34,8,0.40)] tracking-wider">{t("playerStatLabel")}</span>
-              <span className="text-xs font-mono text-[rgba(63,34,8,0.70)]">{truncateAddress(entry.player)}</span>
+              <PlayerIdentityPill
+                variant={playerVariant}
+                name={playerName}
+                size="sm"
+                className="text-xs font-bold text-[rgba(63,34,8,0.70)]"
+              />
             </div>
             <button
               type="button"
@@ -146,9 +156,12 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
             {difficultyLabel}
           </CandyChip>
           {isHoF && (
-            <span className="text-xs text-[rgba(63,34,8,0.60)] font-mono">
-              {truncateAddress(entry.player)}
-            </span>
+            <PlayerIdentityPill
+              variant={playerVariant}
+              name={playerName}
+              size="sm"
+              className="text-xs text-[rgba(63,34,8,0.60)]"
+            />
           )}
         </div>
         <div className="flex items-center gap-3">
