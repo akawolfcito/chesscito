@@ -72,7 +72,7 @@ describe("useProStatus", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("treats non-ok responses as inactive without throwing", async () => {
+  it("leaves status null on a first-load non-ok response (cache layer decides)", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 403,
@@ -82,14 +82,94 @@ describe("useProStatus", () => {
     const { result } = renderHook(() => useProStatus(VALID_WALLET));
 
     await waitFor(() => {
-      expect(result.current.status).toEqual({ active: false, expiresAt: null });
+      expect(result.current.isLoading).toBe(false);
     });
+    expect(result.current.status).toBeNull();
   });
 
-  it("treats network errors as inactive without throwing", async () => {
+  it("leaves status null on a first-load network error (cache layer decides)", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("network down"));
 
     const { result } = renderHook(() => useProStatus(VALID_WALLET));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+    expect(result.current.status).toBeNull();
+  });
+
+  it("preserves an active status when a refetch hits a non-ok response (no false PRO demotion)", async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ active: true, expiresAt: 9_999_999_999_999 }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: async () => ({ error: "Forbidden" }),
+      });
+
+    const { result } = renderHook(() => useProStatus(VALID_WALLET));
+
+    await waitFor(() => {
+      expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
+    });
+
+    act(() => {
+      result.current.refetch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+    expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
+  });
+
+  it("preserves an active status when a refetch throws a network error", async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ active: true, expiresAt: 9_999_999_999_999 }),
+      })
+      .mockRejectedValueOnce(new TypeError("network down"));
+
+    const { result } = renderHook(() => useProStatus(VALID_WALLET));
+
+    await waitFor(() => {
+      expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
+    });
+
+    act(() => {
+      result.current.refetch();
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+    expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
+  });
+
+  it("downgrades to inactive when an OK response reports active:false (real lapse)", async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ active: true, expiresAt: 9_999_999_999_999 }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ active: false, expiresAt: null }),
+      });
+
+    const { result } = renderHook(() => useProStatus(VALID_WALLET));
+
+    await waitFor(() => {
+      expect(result.current.status).toEqual({ active: true, expiresAt: 9_999_999_999_999 });
+    });
+
+    act(() => {
+      result.current.refetch();
+    });
 
     await waitFor(() => {
       expect(result.current.status).toEqual({ active: false, expiresAt: null });

@@ -22,8 +22,11 @@ export type UseProStatusReturn = {
  *    /api/verify-pro response (so the chip flips to active immediately).
  *  - No automatic polling. Single-tab tabs that bought from another
  *    device will only update on next mount or manual refetch.
- *  - Network / 4xx / 5xx are treated as "inactive" so a flaky API never
- *    forces the UI into an error state. */
+ *  - Network / 4xx / 5xx PRESERVE the last-known status (they do not
+ *    overwrite it). A transient failure must never demote an active PRO
+ *    user to inactive; the value self-heals on the next OK fetch. On a
+ *    first-load failure status stays null so useIsProActive can fall
+ *    back to its localStorage cache. */
 export function useProStatus(wallet?: string): UseProStatusReturn {
   const [status, setStatus] = useState<ProStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,15 +46,26 @@ export function useProStatus(wallet?: string): UseProStatusReturn {
     setIsLoading(true);
 
     fetch(`/api/pro/status?wallet=${wallet}`, { signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : { active: false, expiresAt: null }))
-      .then((data: ProStatus) => {
+      .then(async (res) => {
         if (controller.signal.aborted) return;
-        setStatus(data);
+        // Only an authoritative OK body mutates status. A transient
+        // non-ok (403 rate-limit, 500, cold function) must NOT demote a
+        // PRO user: we PRESERVE the last-known status so a single blip
+        // while navigating the hub never flips the PRO chip to inactive.
+        // The status self-heals on the next successful fetch. On a
+        // first-load failure status stays null, letting useIsProActive
+        // fall back to its localStorage cache.
+        if (res.ok) {
+          const data: ProStatus = await res.json();
+          if (controller.signal.aborted) return;
+          setStatus(data);
+        }
         setIsLoading(false);
       })
       .catch((err: unknown) => {
         if (err instanceof Error && err.name === "AbortError") return;
-        setStatus({ active: false, expiresAt: null });
+        // Network error / malformed body — preserve last-known status
+        // for the same reason as a non-ok response above.
         setIsLoading(false);
       });
 
