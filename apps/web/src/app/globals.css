@@ -7027,7 +7027,7 @@ button.hud-resource-chip:active:not(:disabled) {
   position: relative;
   display: block;
   width: 72px;
-  aspect-ratio: 225 / 272;
+  aspect-ratio: 300 / 289;
   padding: 0;
   border: 0;
   background: transparent;
@@ -7112,12 +7112,19 @@ button.hud-resource-chip:active:not(:disabled) {
   font-size: 0.95rem;
   line-height: 1;
   font-weight: 700;
-  color: #fff;
+  /* Dark warm-brown ink on the all-gold active panel (founder
+   * 2026-06-15) — the previous white/gold text vanished on gold. */
+  color: rgba(86, 44, 6, 0.95);
   margin-top: 2px;
-  text-shadow:
-    0 1px 0 rgba(98, 38, 0, 0.85),
-    0 0 4px rgba(255, 220, 130, 0.5);
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.65);
   letter-spacing: 0.02em;
+}
+
+/* Active title — same dark-on-gold contrast swap as the subline. The
+ * inactive (purple) panel keeps the gold `.hub-pro-badge-title` ink. */
+.hub-pro-badge--active .hub-pro-badge-title {
+  color: rgba(86, 44, 6, 0.98);
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.7);
 }
 
 .hub-scaffold-body {

@@ -68,13 +68,24 @@ describe("<HubProBadge>", () => {
     );
   });
 
-  it("renders the panel-pro background image (visual identity preserved)", () => {
+  it("renders the purple bg-suscription frame when inactive", () => {
     const { container } = render(
       <HubProBadge active={false} sublineInactive="x" ariaLabel="x" />,
     );
     const img = container.querySelector(".hub-pro-badge-bg img");
     expect(img).not.toBeNull();
-    expect(img?.getAttribute("src")).toContain("/art/hub/panel-pro.png");
+    expect(img?.getAttribute("src")).toContain("/art/hub/bg-suscription.png");
+  });
+
+  it("swaps to the gold bg-suscription-pro frame when active", () => {
+    const { container } = render(
+      <HubProBadge active daysRemaining={7} daysLabel="7d" ariaLabel="x" />,
+    );
+    const img = container.querySelector(".hub-pro-badge-bg img");
+    expect(img).not.toBeNull();
+    expect(img?.getAttribute("src")).toContain(
+      "/art/hub/bg-suscription-pro.png",
+    );
   });
 
   it("renders as a <button> when onClick is provided", () => {

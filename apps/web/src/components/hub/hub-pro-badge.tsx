@@ -1,9 +1,10 @@
 "use client";
 
 type Props = {
-  /** PRO subscription state. Both variants render the SAME panel
-   *  art (purple frame + crown from `panel-pro.png`) — only the
-   *  layered sub-text below the "PRO" title swaps:
+  /** PRO subscription state. The panel art swaps with the state
+   *  (purple `bg-suscription` when inactive, all-gold
+   *  `bg-suscription-pro` when active) and so does the sub-text below
+   *  the "PRO" title:
    *    - inactive: short promotional kicker ("Unlock the full
    *      experience"-style, supplied by `sublineInactive`).
    *    - active:   the days-remaining label in large type so the
@@ -24,10 +25,10 @@ type Props = {
 };
 
 /**
- * Top-right Hub PRO entry point — same purple panel art (`panel-pro.png`,
- * frame + crown) the old wide right-rail discovery panel used, just
- * rendered at HUD-corner scale. The art stays consistent across states
- * so PRO is recognizable; only the sub-text below the "PRO" title
+ * Top-right Hub PRO entry point — a crowned subscription panel rendered
+ * at HUD-corner scale. The frame art swaps with PRO state (purple
+ * `bg-suscription` for the upsell, all-gold `bg-suscription-pro` once
+ * active, founder 2026-06-15) and the sub-text below the "PRO" title
  * swaps between the inactive promo kicker and the active days-remaining
  * count.
  *
@@ -59,12 +60,17 @@ export function HubProBadge({
       ? daysLabel
       : sublineInactive;
 
+  // Subscription frame art (founder 2026-06-15): the panel now swaps with
+  // PRO state — purple `bg-suscription` for the discovery/upsell state,
+  // all-gold `bg-suscription-pro` once the subscription is active.
+  const bgAsset = active ? "bg-suscription-pro" : "bg-suscription";
+
   const content = (
     <>
       <picture className="hub-pro-badge-bg">
-        <source srcSet="/art/hub/panel-pro.avif" type="image/avif" />
-        <source srcSet="/art/hub/panel-pro.webp" type="image/webp" />
-        <img src="/art/hub/panel-pro.png" alt="" width={225} height={272} />
+        <source srcSet={`/art/hub/${bgAsset}.avif`} type="image/avif" />
+        <source srcSet={`/art/hub/${bgAsset}.webp`} type="image/webp" />
+        <img src={`/art/hub/${bgAsset}.png`} alt="" width={300} height={289} />
       </picture>
       <span className="hub-pro-badge-content" aria-hidden="true">
         <span className="hub-pro-badge-title">PRO</span>
