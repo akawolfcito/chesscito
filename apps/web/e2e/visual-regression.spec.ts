@@ -539,6 +539,9 @@ test.describe("visual regression — Step 3 fixture-driven baselines", () => {
     );
   });
 
+  // Covers the `--triple` secondary row (Play again + Share + full-width
+  // Save again) — the real post-save layout, since production always re-arms
+  // `onSaveAgain` for unlimited re-save (#71).
   test("vr9-arena-end-state-win-success — Victory Saved", async ({ page }) => {
     await page.goto("/dev/arena-end-state?variant=win-success", {
       waitUntil: "load",

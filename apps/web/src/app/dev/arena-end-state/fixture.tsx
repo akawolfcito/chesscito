@@ -78,7 +78,15 @@ export function ArenaEndStateFixture({ variant }: { variant: Variant }) {
           shareCardUrl: claimPhase === "success" ? "/api/og/match?moves=24&time=180000&diff=easy&result=win" : null,
           shareLinkUrl: claimPhase === "success" ? "https://chesscito.com/m/test" : null,
         }}
-        onClaimVictory={(isWin && claimPhase === "ready") || isSave ? () => {} : undefined}
+        onClaimVictory={
+          // Production always passes the mint handler, including post-save,
+          // so the success popup re-arms `onSaveAgain` and renders the
+          // `--triple` secondary row. Mirror that here (ready + success) so
+          // the win-success baseline covers the real 3-button state.
+          (isWin && (claimPhase === "ready" || claimPhase === "success")) || isSave
+            ? () => {}
+            : undefined
+        }
         claimPrice={isWin || isSave ? "$0.005" : undefined}
         claimError={claimPhase === "error" ? "Insufficient gas. Top up your wallet and try again." : null}
         moves={moves}
