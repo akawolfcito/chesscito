@@ -2,9 +2,14 @@
 import { useTranslations } from "next-intl";
 import { TierBadge } from "@/components/profile/tier-badge";
 import type { TierKey } from "@/lib/profile/compute-tier";
+import { PlayerAvatar } from "@/components/identity/player-avatar";
+import type { AvatarVariant } from "@/lib/identity/identity-lite";
 
 type Props = {
   displayName: string;
+  /** Identity Lite avatar variant for the connected wallet. Omitted for the
+   *  visitor/no-wallet case → falls back to the wizard emoji. */
+  variant?: AvatarVariant;
   tierTitle: string;
   tierKey: TierKey;
   xp: number;
@@ -14,6 +19,7 @@ type Props = {
 
 export function ProfileBanner({
   displayName,
+  variant,
   tierTitle,
   tierKey,
   xp,
@@ -24,9 +30,13 @@ export function ProfileBanner({
   return (
     <header className="profile-banner">
       <div className="profile-banner-avatar-wrap">
-        <span className="profile-banner-avatar" aria-hidden="true">
-          🧙
-        </span>
+        {variant ? (
+          <PlayerAvatar variant={variant} size="lg" />
+        ) : (
+          <span className="profile-banner-avatar" aria-hidden="true">
+            🧙
+          </span>
+        )}
       </div>
       <div className="profile-banner-meta">
         <div className="profile-banner-name-row">

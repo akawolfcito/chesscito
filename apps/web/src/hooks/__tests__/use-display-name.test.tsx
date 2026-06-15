@@ -6,8 +6,18 @@ import type { ReactNode } from "react";
 import enMessages from "@/lib/content/messages/en";
 import esMessages from "@/lib/content/messages/es";
 import { useDisplayName, displayNameStorageKey } from "@/hooks/use-display-name";
+import { deriveAvatarVariant, formatNickname } from "@/lib/identity/identity-lite";
+import { IDENTITY_COPY } from "@/lib/content/editorial";
 
 beforeEach(() => { window.localStorage.clear(); });
+
+// Identity Lite generated nickname expected for the test wallet (EN bundle).
+const WALLET = "0x0924abcdef1234567890abcdef1234567890eba4" as const;
+const EXPECTED_VARIANT = deriveAvatarVariant(WALLET);
+const EXPECTED_NICK_EN = formatNickname(
+  EXPECTED_VARIANT,
+  IDENTITY_COPY as unknown as Parameters<typeof formatNickname>[1],
+);
 
 function wrapperFor(locale: "en" | "es" = "en") {
   const messages = locale === "es" ? esMessages : enMessages;
@@ -30,11 +40,26 @@ function wrapperFor(locale: "en" | "es" = "en") {
 describe("useDisplayName", () => {
   const wallet = "0x0924abcdef1234567890abcdef1234567890eba4" as const;
 
-  it("falls back to truncated wallet", () => {
+  it("falls back to the generated nickname (not the raw wallet)", () => {
     const { result } = renderHook(() => useDisplayName(wallet), {
       wrapper: wrapperFor("en"),
     });
-    expect(result.current.name).toBe("0x0924…eba4");
+    expect(result.current.name).toBe(EXPECTED_NICK_EN);
+    expect(result.current.name).not.toMatch(/0x/);
+  });
+
+  it("exposes the avatar variant for a connected wallet", () => {
+    const { result } = renderHook(() => useDisplayName(wallet), {
+      wrapper: wrapperFor("en"),
+    });
+    expect(result.current.variant).toEqual(EXPECTED_VARIANT);
+  });
+
+  it("variant is undefined when no wallet is connected", () => {
+    const { result } = renderHook(() => useDisplayName(undefined), {
+      wrapper: wrapperFor("en"),
+    });
+    expect(result.current.variant).toBeUndefined();
   });
 
   it("returns persisted custom name", () => {
@@ -60,7 +85,7 @@ describe("useDisplayName", () => {
       wrapper: wrapperFor("en"),
     });
     act(() => result.current.setName(""));
-    expect(result.current.name).toBe("0x0924…eba4");
+    expect(result.current.name).toBe(EXPECTED_NICK_EN);
   });
 
   it("returns localized Visitor label when wallet is undefined (EN)", () => {

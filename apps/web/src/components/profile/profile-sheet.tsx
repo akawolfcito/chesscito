@@ -68,7 +68,7 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { writeContractAsync } = useWriteContract();
-  const { name, setName, isVisitor } = useDisplayName(address);
+  const { name, setName, isVisitor, variant } = useDisplayName(address);
   const tTier = useTranslations("TIER_LABELS");
   const { stats, refetch } = useProfileStats(address);
   // M1 funnel (Commit 6) — Profile-owned ProSheet instance. The Hub
@@ -294,6 +294,7 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
 
         <ProfileBanner
           displayName={name}
+          variant={variant}
           tierTitle={tTier(tier.tier)}
           tierKey={tier.tier}
           xp={tier.xp}
