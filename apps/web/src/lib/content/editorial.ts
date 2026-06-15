@@ -1055,8 +1055,10 @@ export const ARENA_COPY = {
   saveMatch: "Save match",
   saveMatchAriaLabel: "Save match for {price}",
   /** Inline save (mint) lifecycle on the loss/draw/resign popup — busy label
-   *  reuses COACH_ENTRY_COPY.savingMatch; these cover the error row. */
-  saveError: "Couldn't save",
+   *  reuses COACH_ENTRY_COPY.savingMatch; these cover the error row. Names the
+   *  collectible so this failure reads distinctly from the off-chain
+   *  "Match not saved" persist error (UX audit Minor 2026-06-14). */
+  saveError: "Couldn't save your collectible",
   saveRetry: "Retry",
   /** T4 reassurance — the match record is kept regardless of the mint
    *  outcome, so a failed Save never loses the game. */

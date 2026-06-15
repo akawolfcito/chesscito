@@ -639,7 +639,7 @@ const messages = {
     lossSubtitle: "Cada partida enseña algo.",
     saveMatch: "Guardar partida",
     saveMatchAriaLabel: "Guardar partida por {price}",
-    saveError: "No se pudo guardar",
+    saveError: "No se pudo guardar tu coleccionable",
     saveRetry: "Reintentar",
     saveErrorHint: "Tu progreso está a salvo.",
     saved: "Guardado",
