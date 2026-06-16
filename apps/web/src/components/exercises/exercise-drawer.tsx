@@ -10,7 +10,7 @@ import {
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
-import { BADGE_THRESHOLD } from "@/lib/game/exercises";
+import { BADGE_THRESHOLD, resolveExerciseDescription } from "@/lib/game/exercises";
 import { PIECE_IMAGES } from "@/lib/content/editorial";
 import {
   interleaveTrainingRows,
@@ -293,14 +293,16 @@ export function ExerciseDrawer({
             const isActive = index === activeIndex;
             const isDone = stars[index] > 0;
             const isLocked = lockedFor(exercise, index);
-            // EXERCISE_DESCRIPTIONS keys are not statically known to the
-            // translator; fall back to `Exercise N` when the key is missing.
-            let description: string;
-            try {
-              description = descriptions(exercise.id);
-            } catch {
-              description = t("exerciseFallbackFormat", { n: index + 1 });
-            }
+            // Generated puzzles carry their own description map; hand-
+            // authored rows resolve via EXERCISE_DESCRIPTIONS i18n keys
+            // (not statically known to the translator), falling back to
+            // `Exercise N` when neither source has the id.
+            const description = resolveExerciseDescription(
+              exercise.id,
+              index,
+              (eid) => descriptions(eid),
+              (n) => t("exerciseFallbackFormat", { n }),
+            );
 
             return (
               <button

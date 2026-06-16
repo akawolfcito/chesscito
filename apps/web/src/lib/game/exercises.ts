@@ -1,5 +1,10 @@
 import type { Exercise, PieceId } from "@/lib/game/types";
 import { defineLabyrinth } from "@/lib/game/notation";
+import {
+  GENERATED_EXERCISES,
+  GENERATED_EXERCISE_DESCRIPTIONS,
+  GENERATED_LABYRINTHS,
+} from "@/lib/game/generated/puzzles.generated";
 
 function pos(file: number, rank: number) {
   return { file, rank };
@@ -809,13 +814,24 @@ const KING_EXERCISES: Exercise[] = [
 /** Pieces with exercises defined and playable */
 export const PLAYABLE_PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
 
-export const EXERCISES: Record<PieceId, Exercise[]> = {
+/** Hand-authored exercise pools, keyed by piece. Generated entries are
+ *  APPENDED after these (never reordered/removed) when building EXERCISES. */
+const HAND_AUTHORED_EXERCISES: Record<PieceId, Exercise[]> = {
   rook:   ROOK_EXERCISES,
   bishop: BISHOP_EXERCISES,
   knight: KNIGHT_EXERCISES,
   pawn:   PAWN_EXERCISES,
   queen:  QUEEN_EXERCISES,
   king:   KING_EXERCISES,
+};
+
+export const EXERCISES: Record<PieceId, Exercise[]> = {
+  rook:   [...HAND_AUTHORED_EXERCISES.rook, ...GENERATED_EXERCISES.rook],
+  bishop: [...HAND_AUTHORED_EXERCISES.bishop, ...GENERATED_EXERCISES.bishop],
+  knight: [...HAND_AUTHORED_EXERCISES.knight, ...GENERATED_EXERCISES.knight],
+  pawn:   [...HAND_AUTHORED_EXERCISES.pawn, ...GENERATED_EXERCISES.pawn],
+  queen:  [...HAND_AUTHORED_EXERCISES.queen, ...GENERATED_EXERCISES.queen],
+  king:   [...HAND_AUTHORED_EXERCISES.king, ...GENERATED_EXERCISES.king],
 };
 
 export const BADGE_THRESHOLD = 10; // stars; pools vary (5-10 exercises → 15-30★ max per piece)
@@ -1100,7 +1116,9 @@ const KING_LABYRINTHS: Exercise[] = [
   }),
 ];
 
-export const LABYRINTHS: Record<PieceId, Exercise[]> = {
+/** Hand-authored labyrinth pools, keyed by piece. Generated entries are
+ *  APPENDED after these (never reordered/removed) when building LABYRINTHS. */
+const HAND_AUTHORED_LABYRINTHS: Record<PieceId, Exercise[]> = {
   rook:   ROOK_LABYRINTHS,
   bishop: BISHOP_LABYRINTHS,
   knight: KNIGHT_LABYRINTHS,
@@ -1108,6 +1126,37 @@ export const LABYRINTHS: Record<PieceId, Exercise[]> = {
   queen:  QUEEN_LABYRINTHS,
   king:   KING_LABYRINTHS,
 };
+
+export const LABYRINTHS: Record<PieceId, Exercise[]> = {
+  rook:   [...HAND_AUTHORED_LABYRINTHS.rook, ...GENERATED_LABYRINTHS.rook],
+  bishop: [...HAND_AUTHORED_LABYRINTHS.bishop, ...GENERATED_LABYRINTHS.bishop],
+  knight: [...HAND_AUTHORED_LABYRINTHS.knight, ...GENERATED_LABYRINTHS.knight],
+  pawn:   [...HAND_AUTHORED_LABYRINTHS.pawn, ...GENERATED_LABYRINTHS.pawn],
+  queen:  [...HAND_AUTHORED_LABYRINTHS.queen, ...GENERATED_LABYRINTHS.queen],
+  king:   [...HAND_AUTHORED_LABYRINTHS.king, ...GENERATED_LABYRINTHS.king],
+};
+
+/**
+ * Resolve the human-readable description for an exercise row. Generated
+ * ids carry their own description map (disjoint from the hand-authored
+ * i18n keys), so prefer it; else fall back to the i18n lookup; else the
+ * generic "Exercise N" fallback. Pure — `i18n`/`fallback` are injected so
+ * this is unit-testable without a translator context.
+ */
+export function resolveExerciseDescription(
+  id: string,
+  index: number,
+  i18n: (id: string) => string,
+  fallback: (n: number) => string,
+): string {
+  const gen = GENERATED_EXERCISE_DESCRIPTIONS[id];
+  if (gen) return gen;
+  try {
+    return i18n(id);
+  } catch {
+    return fallback(index + 1);
+  }
+}
 
 /** Compute stars earned in a labyrinth. */
 export function labyrinthStars(moves: number, optimal: number): number {

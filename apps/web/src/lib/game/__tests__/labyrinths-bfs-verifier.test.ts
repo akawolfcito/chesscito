@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { LABYRINTHS, PLAYABLE_PIECES } from "@/lib/game/exercises";
+import { GENERATED_LABYRINTHS } from "@/lib/game/generated/puzzles.generated";
 import { bfsOptimal } from "@/test-utils/bfs-optimal";
 
 /**
@@ -64,17 +65,21 @@ describe("BFS verifier — labyrinth solvability + optimalMoves", () => {
     });
   }
 
-  // Inventory guard: matches the per-piece regression guards in
-  // labyrinths-catalog.test.ts (rook 3 + bishop 2 + knight 5 + pawn 4 +
-  // queen 3 + king 1). A new labyrinth must bump this count so it can
-  // never ship outside the verifier's coverage.
-  it("covers the full catalog (18 labyrinths)", () => {
+  // Inventory guard: the verifier runs over the FULL merged catalog
+  // (hand-authored 18 + appended GENERATED_LABYRINTHS). Every entry —
+  // hand-authored or generated — must be covered, so the count tracks the
+  // live LABYRINTHS map rather than a frozen literal.
+  it("covers the full merged catalog (every labyrinth verified)", () => {
     const total = PLAYABLE_PIECES.reduce(
       (sum, piece) => sum + LABYRINTHS[piece].length,
       0,
     );
-    expect(total).toBe(18);
-    expect(rows.length).toBeGreaterThan(0);
+    const generated = PLAYABLE_PIECES.reduce(
+      (sum, piece) => sum + GENERATED_LABYRINTHS[piece].length,
+      0,
+    );
+    expect(total).toBe(18 + generated);
+    expect(rows.length).toBe(total); // every entry produced a verifier row
   });
 
   afterAll(() => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { LABYRINTHS } from "@/lib/game/exercises";
+import { GENERATED_LABYRINTHS } from "@/lib/game/generated/puzzles.generated";
 import type { PieceId } from "@/lib/game/types";
 
 const PIECES: PieceId[] = [
@@ -50,25 +51,28 @@ describe("LABYRINTHS catalog — invariants", () => {
   });
 });
 
+// Regression guards pin the HAND-AUTHORED floor per piece; generated
+// puzzles are appended (augment, never replace), so the merged total is
+// `hand-authored + GENERATED_LABYRINTHS[piece].length`.
 describe("LABYRINTHS catalog — per-piece counts (regression guards)", () => {
-  it("Rook keeps its 3 labyrinths", () => {
-    expect(LABYRINTHS.rook.length).toBe(3);
+  it("Rook keeps its 3 hand-authored labyrinths", () => {
+    expect(LABYRINTHS.rook.length).toBe(3 + GENERATED_LABYRINTHS.rook.length);
   });
 
-  it("Bishop keeps its 2 labyrinths", () => {
-    expect(LABYRINTHS.bishop.length).toBe(2);
+  it("Bishop keeps its 2 hand-authored labyrinths", () => {
+    expect(LABYRINTHS.bishop.length).toBe(2 + GENERATED_LABYRINTHS.bishop.length);
   });
 
-  it("Knight keeps its 5 labyrinths", () => {
-    expect(LABYRINTHS.knight.length).toBe(5);
+  it("Knight keeps its 5 hand-authored labyrinths", () => {
+    expect(LABYRINTHS.knight.length).toBe(5 + GENERATED_LABYRINTHS.knight.length);
   });
 
-  it("Pawn keeps its 4 labyrinths", () => {
-    expect(LABYRINTHS.pawn.length).toBe(4);
+  it("Pawn keeps its 4 hand-authored labyrinths", () => {
+    expect(LABYRINTHS.pawn.length).toBe(4 + GENERATED_LABYRINTHS.pawn.length);
   });
 
-  it("Queen keeps its 3 labyrinths", () => {
-    expect(LABYRINTHS.queen.length).toBe(3);
+  it("Queen keeps its 3 hand-authored labyrinths", () => {
+    expect(LABYRINTHS.queen.length).toBe(3 + GENERATED_LABYRINTHS.queen.length);
   });
 
   it("King now has at least 1 labyrinth (was empty pre-Phase B.2)", () => {

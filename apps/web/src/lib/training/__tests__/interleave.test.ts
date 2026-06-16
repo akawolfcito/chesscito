@@ -121,7 +121,11 @@ describe("nextPendingLabyrinthAfterExercise — the path flows THROUGH labs (QA 
   });
 
   it("returns null when the adjacent lab is already complete", () => {
-    const path = rookPath(LABYRINTH_UNLOCK_THRESHOLD, { "rook-lab-1": 3 });
+    // The first lab node (by buildTrainingPath ordering) may be a generated
+    // puzzle appended after the hand-authored set; derive its id rather than
+    // hardcode rook-lab-1 so the "adjacent lab complete" case stays accurate.
+    const firstLabId = rookLabs()[0].id;
+    const path = rookPath(LABYRINTH_UNLOCK_THRESHOLD, { [firstLabId]: 3 });
     const labAfterAnchor = path.filter((n) => n.kind === "labyrinth")[0];
     expect(labAfterAnchor.status).toBe("complete");
     const next = nextPendingLabyrinthAfterExercise(path, anchorExerciseId);

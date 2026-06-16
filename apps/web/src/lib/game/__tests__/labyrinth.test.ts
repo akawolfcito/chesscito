@@ -6,9 +6,20 @@ import { getKnightMoves } from "@/lib/game/rules/knight";
 import { getPawnMoves } from "@/lib/game/rules/pawn";
 import { getQueenMoves } from "@/lib/game/rules/queen";
 import { LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
+import { GENERATED_LABYRINTHS } from "@/lib/game/generated/puzzles.generated";
 import { getValidTargets } from "@/lib/game/board";
 
 const pos = (file: number, rank: number) => ({ file, rank });
+
+/** Hand-authored labyrinths only (generated entries appended by the
+ *  importer are excluded). Some design-bar invariants — e.g. the
+ *  `optimalMoves >= 2` "must require a real path" rule — apply to the
+ *  hand-authored design set; generated puzzles carry their own honest-
+ *  optimalMoves gate in labyrinths-bfs-verifier.test.ts instead. */
+function handAuthoredLabs(piece: PieceId) {
+  const generatedIds = new Set(GENERATED_LABYRINTHS[piece].map((l) => l.id));
+  return LABYRINTHS[piece].filter((l) => !generatedIds.has(l.id));
+}
 
 const PIECES_WITH_LABYRINTHS: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen"];
 
@@ -218,9 +229,12 @@ describe("L2 labyrinth — seeded data integrity (all pieces)", () => {
   );
 
   it.each(PIECES_WITH_LABYRINTHS)(
-    "%s: every labyrinth has optimalMoves >= 2",
+    "%s: every hand-authored labyrinth has optimalMoves >= 2",
     (piece) => {
-      for (const lab of LABYRINTHS[piece]) {
+      // Design-bar rule for the hand-authored set: a labyrinth must
+      // require a real path. Generated puzzles may legitimately be
+      // 1-move (their honesty is gated by the BFS verifier instead).
+      for (const lab of handAuthoredLabs(piece)) {
         expect(lab.optimalMoves).toBeGreaterThanOrEqual(2);
       }
     },

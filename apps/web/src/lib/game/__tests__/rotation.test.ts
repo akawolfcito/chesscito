@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EXERCISES, PLAYABLE_PIECES } from "@/lib/game/exercises";
+import { GENERATED_EXERCISES } from "@/lib/game/generated/puzzles.generated";
 import {
   CANONICAL_FIVE_COUNT,
   DAILY_VISIBLE_LIMIT,
@@ -27,9 +28,9 @@ function masteryMap(piece: PieceId, totalStars: number): ExerciseStarsById {
 }
 
 describe("rotation — getExercisePool", () => {
-  it("returns the full 10-exercise pool for every piece", () => {
+  it("returns the full pool (10 hand-authored + any generated) for every piece", () => {
     for (const piece of PLAYABLE_PIECES) {
-      expect(getExercisePool(piece)).toHaveLength(10);
+      expect(getExercisePool(piece)).toHaveLength(10 + GENERATED_EXERCISES[piece].length);
     }
   });
 

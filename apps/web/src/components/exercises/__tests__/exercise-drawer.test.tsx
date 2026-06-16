@@ -134,6 +134,11 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
   it("available lab fires onLabyrinthSelect with its id and closes the drawer", () => {
     const onLabyrinthSelect = vi.fn();
     const onOpenChange = vi.fn();
+    const nodes = rookLabNodes(sixStars);
+    // "Labyrinth 1" is the first lab node as buildTrainingPath orders them
+    // (ascending optimalMoves, then catalog index) — derive the id rather
+    // than hardcode it, so the test survives generated-puzzle appends.
+    const firstLabId = nodes[0]?.id;
     render(
       <ExerciseDrawer
         {...baseProps}
@@ -141,32 +146,34 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
         totalStars={6}
         onOpenChange={onOpenChange}
         onNavigate={vi.fn()}
-        labyrinthNodes={rookLabNodes(sixStars)}
+        labyrinthNodes={nodes}
         onLabyrinthSelect={onLabyrinthSelect}
       />,
     );
     const row = screen.getByText("Labyrinth 1").closest("button");
     expect(row).toBeEnabled();
     if (row) fireEvent.click(row);
-    expect(onLabyrinthSelect).toHaveBeenCalledWith("rook-lab-1");
+    expect(onLabyrinthSelect).toHaveBeenCalledWith(firstLabId);
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it("completed lab shows stars and stays tappable for replay", () => {
     const onLabyrinthSelect = vi.fn();
+    const nodes = rookLabNodes(sixStars);
+    const firstLabId = nodes[0]?.id ?? "";
     render(
       <ExerciseDrawer
         {...baseProps}
         stars={sixStars}
         totalStars={6}
         onNavigate={vi.fn()}
-        labyrinthNodes={rookLabNodes(sixStars, { "rook-lab-1": 3 })}
+        labyrinthNodes={rookLabNodes(sixStars, { [firstLabId]: 3 })}
         onLabyrinthSelect={onLabyrinthSelect}
       />,
     );
     const row = screen.getByText("Labyrinth 1").closest("button");
     if (row) fireEvent.click(row);
-    expect(onLabyrinthSelect).toHaveBeenCalledWith("rook-lab-1");
+    expect(onLabyrinthSelect).toHaveBeenCalledWith(firstLabId);
   });
 
   it("without labyrinthNodes the drawer stays exercise-only (legacy)", () => {
