@@ -12,12 +12,623 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
 };
 
 export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
-  "rook": [],
-  "bishop": [],
-  "knight": [],
-  "pawn": [],
-  "queen": [],
-  "king": []
+  "rook": [
+    {
+      "id": "rook-gen-00q06dtn",
+      "optimalMoves": 5,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 7
+        },
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 5
+        },
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 6,
+          "rank": 4
+        },
+        {
+          "file": 0,
+          "rank": 3
+        },
+        {
+          "file": 1,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 3
+        },
+        {
+          "file": 4,
+          "rank": 3
+        },
+        {
+          "file": 5,
+          "rank": 3
+        },
+        {
+          "file": 6,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 2
+        },
+        {
+          "file": 0,
+          "rank": 1
+        },
+        {
+          "file": 1,
+          "rank": 1
+        },
+        {
+          "file": 5,
+          "rank": 1
+        },
+        {
+          "file": 3,
+          "rank": 0
+        },
+        {
+          "file": 7,
+          "rank": 0
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "rook-lab-1",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 3,
+          "rank": 7
+        },
+        {
+          "file": 7,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 0
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "rook-lab-2",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 0
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 0
+        },
+        {
+          "file": 5,
+          "rank": 0
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "rook-lab-3",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 7,
+          "rank": 4
+        },
+        {
+          "file": 0,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 0
+        }
+      ],
+      "tier": "medium"
+    }
+  ],
+  "bishop": [
+    {
+      "id": "bishop-lab-3",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 2,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 5
+      },
+      "obstacles": [
+        {
+          "file": 6,
+          "rank": 4
+        },
+        {
+          "file": 4,
+          "rank": 2
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "bishop-lab-4",
+      "optimalMoves": 5,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 4,
+          "rank": 4
+        },
+        {
+          "file": 2,
+          "rank": 2
+        }
+      ],
+      "tier": "medium"
+    }
+  ],
+  "knight": [
+    {
+      "id": "knight-lab-1",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 4,
+        "rank": 3
+      },
+      "obstacles": [
+        {
+          "file": 3,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 1
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "knight-lab-2",
+      "optimalMoves": 4,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 4,
+        "rank": 4
+      },
+      "obstacles": [
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 1,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 2
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "knight-lab-3",
+      "optimalMoves": 6,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 6,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 4
+        },
+        {
+          "file": 3,
+          "rank": 0
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "knight-lab-4",
+      "optimalMoves": 4,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 5,
+        "rank": 5
+      },
+      "obstacles": [
+        {
+          "file": 3,
+          "rank": 3
+        },
+        {
+          "file": 4,
+          "rank": 2
+        },
+        {
+          "file": 2,
+          "rank": 1
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "knight-lab-5",
+      "optimalMoves": 5,
+      "startPos": {
+        "file": 1,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 6,
+        "rank": 6
+      },
+      "obstacles": [
+        {
+          "file": 4,
+          "rank": 5
+        },
+        {
+          "file": 6,
+          "rank": 4
+        },
+        {
+          "file": 2,
+          "rank": 3
+        }
+      ],
+      "tier": "medium"
+    }
+  ],
+  "pawn": [
+    {
+      "id": "pawn-lab-1",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 3,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 4,
+        "rank": 4
+      },
+      "obstacles": [
+        {
+          "file": 3,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 2
+        }
+      ],
+      "captureTargets": [
+        {
+          "file": 4,
+          "rank": 2
+        }
+      ],
+      "isCapture": true,
+      "tier": "medium"
+    },
+    {
+      "id": "pawn-lab-3",
+      "optimalMoves": 5,
+      "startPos": {
+        "file": 0,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 3,
+        "rank": 6
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 3
+        },
+        {
+          "file": 0,
+          "rank": 2
+        }
+      ],
+      "captureTargets": [
+        {
+          "file": 3,
+          "rank": 4
+        },
+        {
+          "file": 2,
+          "rank": 3
+        },
+        {
+          "file": 1,
+          "rank": 2
+        }
+      ],
+      "isCapture": true,
+      "tier": "medium"
+    },
+    {
+      "id": "pawn-lab-4",
+      "optimalMoves": 4,
+      "startPos": {
+        "file": 0,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 2,
+        "rank": 5
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 2
+        }
+      ],
+      "captureTargets": [
+        {
+          "file": 2,
+          "rank": 3
+        },
+        {
+          "file": 1,
+          "rank": 2
+        }
+      ],
+      "isCapture": true,
+      "tier": "medium"
+    },
+    {
+      "id": "pawn-lab-5",
+      "optimalMoves": 5,
+      "startPos": {
+        "file": 6,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 2,
+        "rank": 6
+      },
+      "obstacles": [
+        {
+          "file": 6,
+          "rank": 2
+        }
+      ],
+      "captureTargets": [
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 4
+        },
+        {
+          "file": 4,
+          "rank": 3
+        },
+        {
+          "file": 5,
+          "rank": 2
+        }
+      ],
+      "isCapture": true,
+      "tier": "medium"
+    }
+  ],
+  "queen": [
+    {
+      "id": "queen-lab-1",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 4
+        },
+        {
+          "file": 7,
+          "rank": 3
+        },
+        {
+          "file": 1,
+          "rank": 1
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "queen-lab-2",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 0
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 3
+        },
+        {
+          "file": 7,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
+          "file": 4,
+          "rank": 1
+        },
+        {
+          "file": 3,
+          "rank": 0
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "queen-lab-3",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 3,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 3,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 3,
+          "rank": 4
+        },
+        {
+          "file": 3,
+          "rank": 2
+        }
+      ],
+      "tier": "medium"
+    }
+  ],
+  "king": [
+    {
+      "id": "king-lab-1",
+      "optimalMoves": 4,
+      "startPos": {
+        "file": 4,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "obstacles": [
+        {
+          "file": 2,
+          "rank": 0
+        }
+      ],
+      "tier": "medium"
+    }
+  ]
 };
 
 export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {};

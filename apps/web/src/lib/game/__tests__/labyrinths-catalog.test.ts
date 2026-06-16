@@ -51,28 +51,45 @@ describe("LABYRINTHS catalog — invariants", () => {
   });
 });
 
-// Regression guards pin the HAND-AUTHORED floor per piece; generated
-// puzzles are appended (augment, never replace), so the merged total is
-// `hand-authored + GENERATED_LABYRINTHS[piece].length`.
+// Regression guards pin the per-piece floor. The 18 originally hand-authored
+// labs were migrated into content/labyrinths.json (2026-06-16,
+// scripts/migrate-labyrinths.ts), so `LABYRINTHS[piece]` now sources entirely
+// from GENERATED_LABYRINTHS[piece]. Each guard checks the migrated labs are
+// still present by id (the floor) and that the pool === the generated pool.
 describe("LABYRINTHS catalog — per-piece counts (regression guards)", () => {
-  it("Rook keeps its 3 hand-authored labyrinths", () => {
-    expect(LABYRINTHS.rook.length).toBe(3 + GENERATED_LABYRINTHS.rook.length);
+  const hasAll = (piece: PieceId, ids: string[]) => {
+    const present = new Set(LABYRINTHS[piece].map((e) => e.id));
+    for (const id of ids) expect(present.has(id)).toBe(true);
+    // Catalog is generated-sourced — no extra hand-authored layer remains.
+    expect(LABYRINTHS[piece].map((e) => e.id)).toEqual(
+      GENERATED_LABYRINTHS[piece].map((e) => e.id),
+    );
+  };
+
+  it("Rook keeps its 3 migrated labyrinths", () => {
+    hasAll("rook", ["rook-lab-1", "rook-lab-2", "rook-lab-3"]);
   });
 
-  it("Bishop keeps its 2 hand-authored labyrinths", () => {
-    expect(LABYRINTHS.bishop.length).toBe(2 + GENERATED_LABYRINTHS.bishop.length);
+  it("Bishop keeps its 2 migrated labyrinths", () => {
+    hasAll("bishop", ["bishop-lab-3", "bishop-lab-4"]);
   });
 
-  it("Knight keeps its 5 hand-authored labyrinths", () => {
-    expect(LABYRINTHS.knight.length).toBe(5 + GENERATED_LABYRINTHS.knight.length);
+  it("Knight keeps its 5 migrated labyrinths", () => {
+    hasAll("knight", [
+      "knight-lab-1",
+      "knight-lab-2",
+      "knight-lab-3",
+      "knight-lab-4",
+      "knight-lab-5",
+    ]);
   });
 
-  it("Pawn keeps its 4 hand-authored labyrinths", () => {
-    expect(LABYRINTHS.pawn.length).toBe(4 + GENERATED_LABYRINTHS.pawn.length);
+  it("Pawn keeps its 4 migrated labyrinths", () => {
+    hasAll("pawn", ["pawn-lab-1", "pawn-lab-3", "pawn-lab-4", "pawn-lab-5"]);
   });
 
-  it("Queen keeps its 3 hand-authored labyrinths", () => {
-    expect(LABYRINTHS.queen.length).toBe(3 + GENERATED_LABYRINTHS.queen.length);
+  it("Queen keeps its 3 migrated labyrinths", () => {
+    hasAll("queen", ["queen-lab-1", "queen-lab-2", "queen-lab-3"]);
   });
 
   it("King now has at least 1 labyrinth (was empty pre-Phase B.2)", () => {

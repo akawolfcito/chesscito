@@ -1,1 +1,153 @@
-[]
+[
+  {
+    "piece": "rook",
+    "fen": "NN6/3N2N1/1NNNN3/6N1/NN1NNNN1/3N2N1/NN3N2/R2N3N w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "order": 0
+  },
+  {
+    "id": "rook-lab-1",
+    "piece": "rook",
+    "fen": "3N4/8/8/8/7N/8/8/R2N4 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "order": 0
+  },
+  {
+    "id": "rook-lab-2",
+    "piece": "rook",
+    "fen": "8/8/8/8/N7/8/8/R1N2N2 w - - 0 1",
+    "target": "h1",
+    "mover": "a1",
+    "order": 1
+  },
+  {
+    "id": "rook-lab-3",
+    "piece": "rook",
+    "fen": "8/8/8/7N/N7/8/8/R2N4 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "order": 2
+  },
+  {
+    "id": "bishop-lab-3",
+    "piece": "bishop",
+    "fen": "8/8/8/6N1/8/4N3/8/2B5 w - - 0 1",
+    "target": "h6",
+    "mover": "c1",
+    "order": 0
+  },
+  {
+    "id": "bishop-lab-4",
+    "piece": "bishop",
+    "fen": "8/8/8/4N3/8/2N5/8/B7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "order": 1
+  },
+  {
+    "id": "knight-lab-1",
+    "piece": "knight",
+    "fen": "8/8/8/8/3N4/8/2N5/N7 w - - 0 1",
+    "target": "e4",
+    "mover": "a1",
+    "order": 0
+  },
+  {
+    "id": "knight-lab-2",
+    "piece": "knight",
+    "fen": "8/8/2N5/8/8/1N1N4/8/N7 w - - 0 1",
+    "target": "e5",
+    "mover": "a1",
+    "order": 1
+  },
+  {
+    "id": "knight-lab-3",
+    "piece": "knight",
+    "fen": "8/8/6N1/2N5/8/8/8/N2N4 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "order": 2
+  },
+  {
+    "id": "knight-lab-4",
+    "piece": "knight",
+    "fen": "8/8/8/8/3N4/4N3/2N5/N7 w - - 0 1",
+    "target": "f6",
+    "mover": "a1",
+    "order": 3
+  },
+  {
+    "id": "knight-lab-5",
+    "piece": "knight",
+    "fen": "8/8/4N3/6N1/2N5/8/8/1N6 w - - 0 1",
+    "target": "g7",
+    "mover": "b1",
+    "order": 4
+  },
+  {
+    "id": "pawn-lab-1",
+    "piece": "pawn",
+    "fen": "8/8/8/8/3N4/3Np3/3P4/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d2",
+    "order": 0
+  },
+  {
+    "id": "pawn-lab-3",
+    "piece": "pawn",
+    "fen": "8/8/8/3p4/N1p5/Np6/P7/8 w - - 0 1",
+    "target": "d7",
+    "mover": "a2",
+    "order": 1
+  },
+  {
+    "id": "pawn-lab-4",
+    "piece": "pawn",
+    "fen": "8/8/8/8/2p5/Np6/P7/8 w - - 0 1",
+    "target": "c6",
+    "mover": "a2",
+    "order": 2
+  },
+  {
+    "id": "pawn-lab-5",
+    "piece": "pawn",
+    "fen": "8/8/2p5/3p4/4p3/5pN1/6P1/8 w - - 0 1",
+    "target": "c7",
+    "mover": "g2",
+    "order": 3
+  },
+  {
+    "id": "queen-lab-1",
+    "piece": "queen",
+    "fen": "8/8/8/N7/7N/8/1N6/Q7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "order": 0
+  },
+  {
+    "id": "queen-lab-2",
+    "piece": "queen",
+    "fen": "8/8/8/8/N6N/3N4/4N3/Q2N4 w - - 0 1",
+    "target": "h1",
+    "mover": "a1",
+    "order": 1
+  },
+  {
+    "id": "queen-lab-3",
+    "piece": "queen",
+    "fen": "8/3N4/8/3N4/8/3N4/8/3Q4 w - - 0 1",
+    "target": "d8",
+    "mover": "d1",
+    "order": 2
+  },
+  {
+    "id": "king-lab-1",
+    "piece": "king",
+    "fen": "8/8/8/8/8/8/8/2N1K3 w - - 0 1",
+    "target": "a1",
+    "mover": "e1",
+    "order": 0
+  }
+]

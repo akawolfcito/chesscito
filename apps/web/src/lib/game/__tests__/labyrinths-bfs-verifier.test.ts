@@ -65,10 +65,13 @@ describe("BFS verifier — labyrinth solvability + optimalMoves", () => {
     });
   }
 
-  // Inventory guard: the verifier runs over the FULL merged catalog
-  // (hand-authored 18 + appended GENERATED_LABYRINTHS). Every entry —
-  // hand-authored or generated — must be covered, so the count tracks the
-  // live LABYRINTHS map rather than a frozen literal.
+  // Inventory guard: the verifier runs over the FULL catalog. Since the 18
+  // originally hand-authored labs were migrated into content/labyrinths.json
+  // (2026-06-16, scripts/migrate-labyrinths.ts), `LABYRINTHS[piece]` now sources
+  // entirely from GENERATED_LABYRINTHS[piece] — so the live map and the
+  // generated pool are identical. The real guard is that every catalog entry
+  // produced a verifier row (nothing skipped). The floor of 18 migrated labs is
+  // pinned too.
   it("covers the full merged catalog (every labyrinth verified)", () => {
     const total = PLAYABLE_PIECES.reduce(
       (sum, piece) => sum + LABYRINTHS[piece].length,
@@ -78,7 +81,8 @@ describe("BFS verifier — labyrinth solvability + optimalMoves", () => {
       (sum, piece) => sum + GENERATED_LABYRINTHS[piece].length,
       0,
     );
-    expect(total).toBe(18 + generated);
+    expect(total).toBe(generated); // catalog is generated-sourced
+    expect(total).toBeGreaterThanOrEqual(18); // 18 migrated labs floor
     expect(rows.length).toBe(total); // every entry produced a verifier row
   });
 

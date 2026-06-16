@@ -244,13 +244,14 @@ describe("buildTrainingPath — catalog coverage and ordering", () => {
     ]);
 
     const rook = buildTrainingPath(makeInput("rook"));
-    // The 3 hand-authored rook labs share optimalMoves=3 → pure catalog order.
-    // (No generated labs ship by default; the builder adds real ones later,
-    // which the ascending-optimalMoves rule will then interleave.)
+    // The 3 migrated rook labs share optimalMoves=3 → they hold catalog order
+    // ahead of the higher-cost builder test record (rook-gen-…, optimalMoves
+    // 5), which the ascending-optimalMoves rule places last.
     expect(byKind(rook, "labyrinth").map((n) => n.id)).toEqual([
       "rook-lab-1", // 3
       "rook-lab-2", // 3
       "rook-lab-3", // 3
+      "rook-gen-00q06dtn", // 5 (builder test record)
     ]);
   });
 });

@@ -1,5 +1,4 @@
 import type { Exercise, PieceId } from "@/lib/game/types";
-import { defineLabyrinth } from "@/lib/game/notation";
 import {
   GENERATED_EXERCISES,
   GENERATED_EXERCISE_DESCRIPTIONS,
@@ -871,269 +870,23 @@ export const EXERCISES_PER_PIECE = 5;
  *   moves <= optimal + 2       → 2 stars
  *   moves <= optimal + 4       → 1 star
  *   else                       → 0 stars (allowed, no fail)
+ *
+ * The labyrinth catalog is fully content-sourced: the builder edits
+ * content/labyrinths.json, `pnpm import-puzzles` regenerates
+ * GENERATED_LABYRINTHS (FEN-decoded + BFS-verified optimalMoves), and
+ * LABYRINTHS below sources straight from it. ids and relative order are
+ * preserved through the FEN round-trip. (The 18 hand-authored labs were
+ * migrated out of TS literals 2026-06-16 via
+ * scripts/migrate-labyrinths.ts.)
  * --------------------------------------------------------------- */
 
-const ROOK_LABYRINTHS: Exercise[] = [
-  {
-    id: "rook-lab-1",
-    startPos: pos(0, 0),
-    targetPos: pos(7, 7),
-    optimalMoves: 3,
-    obstacles: [
-      pos(3, 0), // d1
-      pos(3, 7), // d8
-      pos(7, 3), // h4
-    ],
-  },
-  {
-    id: "rook-lab-2",
-    startPos: pos(0, 0),
-    targetPos: pos(7, 0),
-    optimalMoves: 3,
-    obstacles: [
-      pos(2, 0), // c1
-      pos(5, 0), // f1
-      pos(0, 3), // a4
-    ],
-  },
-  defineLabyrinth({
-    id: "rook-lab-3",
-    start: "a1",
-    target: "h8",
-    obstacles: ["d1", "a4", "h5"],
-    optimalMoves: 3,
-  }),
-];
-
-const BISHOP_LABYRINTHS: Exercise[] = [
-  defineLabyrinth({
-    id: "bishop-lab-3",
-    start: "c1",
-    target: "h6",
-    obstacles: ["e3", "g5"],
-    optimalMoves: 3,
-  }),
-  defineLabyrinth({
-    id: "bishop-lab-4",
-    start: "a1",
-    target: "h8",
-    obstacles: ["c3", "e5"],
-    optimalMoves: 5,
-  }),
-];
-
-const KNIGHT_LABYRINTHS: Exercise[] = [
-  /**
-   * knight-lab-1 — "The Clipped Jump"
-   * From a1 to e4. c2 blocks the natural first move, forcing the
-   * knight out through b3. d4 pinches the centre so the knight
-   * must hook around via d2 or c5.
-   *
-   *  8 . . . . . . . .
-   *  7 . . . . . . . .
-   *  6 . . . . . . . .
-   *  5 . . . . . . . .
-   *  4 . . . . X ★ . .
-   *  3 . . . . . . . .
-   *  2 . . X . . . . .
-   *  1 ♘ . . . . . . .
-   *    a b c d e f g h
-   */
-  {
-    id: "knight-lab-1",
-    startPos: pos(0, 0),
-    targetPos: pos(4, 3),
-    optimalMoves: 3,
-    obstacles: [
-      pos(2, 1), // c2
-      pos(3, 3), // d4
-    ],
-  },
-  /**
-   * knight-lab-2 — "The Zigzag"
-   * From a1 to e5. b3 and d3 choke two early squares; c6 blocks
-   * the far side. The knight must weave a 4-jump through narrow
-   * gaps.
-   *
-   *  8 . . . . . . . .
-   *  7 . . . . . . . .
-   *  6 . . X . . . . .
-   *  5 . . . . ★ . . .
-   *  4 . . . . . . . .
-   *  3 . . X . . . . .
-   *  2 . . . . . . . .
-   *  1 ♘ . . . . . . .
-   *    a b c d e f g h
-   */
-  {
-    id: "knight-lab-2",
-    startPos: pos(0, 0),
-    targetPos: pos(4, 4),
-    optimalMoves: 4,
-    obstacles: [
-      pos(1, 2), // b3
-      pos(3, 2), // d3
-      pos(2, 5), // c6
-    ],
-  },
-  defineLabyrinth({
-    id: "knight-lab-3",
-    start: "a1",
-    target: "h8",
-    obstacles: ["d1", "c5", "g6"],
-    optimalMoves: 6,
-  }),
-  defineLabyrinth({
-    id: "knight-lab-4",
-    start: "a1",
-    target: "f6",
-    obstacles: ["c2", "d4", "e3"],
-    optimalMoves: 4,
-  }),
-  defineLabyrinth({
-    id: "knight-lab-5",
-    start: "b1",
-    target: "g7",
-    obstacles: ["c4", "e6", "g5"],
-    optimalMoves: 5,
-  }),
-];
-
-const PAWN_LABYRINTHS: Exercise[] = [
-  /**
-   * pawn-lab-1 — "First Capture" (Easy)
-   * Forward path is sealed by d3 (and d4 backs it up so forward-2 from rank 1
-   * also fails). The only legal first move is the diagonal capture to e3.
-   * After the capture, every subsequent step has exactly one legal move
-   * (e3 → e4 → e5), so there is no dead-state branch: a beginner cannot
-   * stray off the rails by going forward where a capture was expected.
-   *
-   *   8 . . . . . . . .
-   *   7 . . . . . . . .
-   *   6 . . . . . . . .
-   *   5 . . . . ★ . . .
-   *   4 . . . X . . . .
-   *   3 . . . X ✸ . . .
-   *   2 . . . ♙ . . . .
-   *   1 . . . . . . . .
-   *     a b c d e f g h
-   */
-  defineLabyrinth({
-    id: "pawn-lab-1",
-    start: "d2",
-    target: "e5",
-    obstacles: ["d3", "d4"],
-    captureTargets: ["e3"],
-    isCapture: true,
-    optimalMoves: 3,
-  }),
-  defineLabyrinth({
-    id: "pawn-lab-3",
-    start: "a2",
-    target: "d7",
-    obstacles: ["a3", "a4"],
-    captureTargets: ["b3", "c4", "d5"],
-    isCapture: true,
-    optimalMoves: 5,
-  }),
-  defineLabyrinth({
-    id: "pawn-lab-4",
-    start: "a2",
-    target: "c6",
-    obstacles: ["a3"],
-    captureTargets: ["b3", "c4"],
-    isCapture: true,
-    optimalMoves: 4,
-  }),
-  defineLabyrinth({
-    id: "pawn-lab-5",
-    start: "g2",
-    target: "c7",
-    obstacles: ["g3"],
-    captureTargets: ["f3", "e4", "d5", "c6"],
-    isCapture: true,
-    optimalMoves: 5,
-  }),
-];
-
-const QUEEN_LABYRINTHS: Exercise[] = [
-  {
-    id: "queen-lab-1",
-    startPos: pos(0, 0),
-    targetPos: pos(7, 7),
-    optimalMoves: 3,
-    obstacles: [
-      pos(1, 1), // b2
-      pos(0, 4), // a5
-      pos(7, 3), // h4
-    ],
-  },
-  defineLabyrinth({
-    id: "queen-lab-2",
-    start: "a1",
-    target: "h1",
-    obstacles: ["d1", "e2", "d3", "a4", "h4"],
-    optimalMoves: 3,
-  }),
-  defineLabyrinth({
-    id: "queen-lab-3",
-    start: "d1",
-    target: "d8",
-    obstacles: ["d3", "d5", "d7"],
-    optimalMoves: 3,
-  }),
-];
-
-const KING_LABYRINTHS: Exercise[] = [
-  /**
-   * king-lab-1 — "King Shelter I" (Easy)
-   * From e1 to the a1 corner shelter. c1 blocks the direct rank-walk,
-   * so the king must step one square N and detour via the second rank
-   * before returning to a1. Showcases that the king's 8-direction
-   * one-square reach lets it sidestep a blocker without losing optimal
-   * distance.
-   *
-   *   8 . . . . . . . .
-   *   7 . . . . . . . .
-   *   6 . . . . . . . .
-   *   5 . . . . . . . .
-   *   4 . . . . . . . .
-   *   3 . . . . . . . .
-   *   2 . . . . . . . .
-   *   1 ★ . X . ♔ . . .
-   *     a b c d e f g h
-   *
-   * Threats are NOT modeled in v0.1 — see training-content-v0.1.md §7
-   * + §12. Real "avoid danger" mechanics come with attackedSquares in
-   * v0.2.
-   */
-  defineLabyrinth({
-    id: "king-lab-1",
-    start: "e1",
-    target: "a1",
-    obstacles: ["c1"],
-    optimalMoves: 4,
-  }),
-];
-
-/** Hand-authored labyrinth pools, keyed by piece. Generated entries are
- *  APPENDED after these (never reordered/removed) when building LABYRINTHS. */
-const HAND_AUTHORED_LABYRINTHS: Record<PieceId, Exercise[]> = {
-  rook:   ROOK_LABYRINTHS,
-  bishop: BISHOP_LABYRINTHS,
-  knight: KNIGHT_LABYRINTHS,
-  pawn:   PAWN_LABYRINTHS,
-  queen:  QUEEN_LABYRINTHS,
-  king:   KING_LABYRINTHS,
-};
-
 export const LABYRINTHS: Record<PieceId, Exercise[]> = {
-  rook:   [...HAND_AUTHORED_LABYRINTHS.rook, ...GENERATED_LABYRINTHS.rook],
-  bishop: [...HAND_AUTHORED_LABYRINTHS.bishop, ...GENERATED_LABYRINTHS.bishop],
-  knight: [...HAND_AUTHORED_LABYRINTHS.knight, ...GENERATED_LABYRINTHS.knight],
-  pawn:   [...HAND_AUTHORED_LABYRINTHS.pawn, ...GENERATED_LABYRINTHS.pawn],
-  queen:  [...HAND_AUTHORED_LABYRINTHS.queen, ...GENERATED_LABYRINTHS.queen],
-  king:   [...HAND_AUTHORED_LABYRINTHS.king, ...GENERATED_LABYRINTHS.king],
+  rook:   GENERATED_LABYRINTHS.rook,
+  bishop: GENERATED_LABYRINTHS.bishop,
+  knight: GENERATED_LABYRINTHS.knight,
+  pawn:   GENERATED_LABYRINTHS.pawn,
+  queen:  GENERATED_LABYRINTHS.queen,
+  king:   GENERATED_LABYRINTHS.king,
 };
 
 /**
