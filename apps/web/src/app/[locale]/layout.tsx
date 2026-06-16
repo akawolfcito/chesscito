@@ -58,14 +58,16 @@ export const metadata: Metadata = {
     title: 'chesscito',
     description: 'Learn chess piece movements with gamified on-chain challenges on Celo.',
     url: BASE_URL,
-    images: [{ url: '/art/og-home.jpg', width: 1200, height: 630, type: 'image/jpeg' }],
+    // Candy-branded OG rendered via Satori (replaces the stale v1 dark-wizard
+    // /art/og-home.jpg). Portrait 1080×1350, same CardShell as the share cards.
+    images: [{ url: '/api/og/home', width: 1080, height: 1350, type: 'image/jpeg' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'chesscito',
     description: 'Learn chess piece movements with gamified on-chain challenges on Celo.',
-    images: ['/art/og-home.jpg'],
+    images: ['/api/og/home'],
   },
   other: {
     'talentapp:project_verification': '24912a54c2fbb019a7fd89ea904c1355dc572b6f955d4146c3078576fb4c77513b57c9f59e765b9fc63400005bcb9948f88b266c8862be94aef6d2adbf8473ee',
