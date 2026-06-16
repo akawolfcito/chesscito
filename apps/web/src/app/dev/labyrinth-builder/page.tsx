@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { notFound } from "next/navigation";
 import {
   buildFenBlock,
   emptyState,
   type BuilderState,
 } from "@/lib/labyrinth-builder/state";
+import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 import { validateBuilder } from "@/lib/labyrinth-builder/validate";
 import {
   parseFenBoard,
@@ -29,6 +30,61 @@ function posKey(p: BoardPosition): string {
   return posToSquare(p);
 }
 
+type FenLoadResult =
+  | { ok: true; start: string; walls: string[]; captures: string[]; notes: string[] }
+  | { ok: false; error: string };
+
+/**
+ * Shared FEN → builder-state derivation used by both "Load from FEN" and
+ * "Edit existing". Resolves the mover square (explicit or the sole white piece
+ * of `piece` type), then maps remaining whites → walls and blacks → captures.
+ */
+function deriveStateFromFen(
+  fen: string,
+  piece: PieceId,
+  mover: string,
+): FenLoadResult {
+  let board: ReturnType<typeof parseFenBoard>;
+  try {
+    board = parseFenBoard(fen);
+  } catch (e) {
+    return { ok: false, error: `FEN parse error: ${(e as Error).message}` };
+  }
+
+  let moverSq = mover.trim();
+  if (moverSq) {
+    const p = board.get(moverSq);
+    if (!p || p.color !== "w" || p.type !== piece) {
+      return { ok: false, error: `mover ${moverSq} is not a white ${piece} in this FEN.` };
+    }
+  } else {
+    const matches = [...board.entries()].filter(
+      ([, p]) => p.color === "w" && p.type === piece,
+    );
+    if (matches.length === 1) {
+      moverSq = matches[0][0];
+    } else if (matches.length === 0) {
+      return { ok: false, error: `No white ${piece} found — set mover or change piece.` };
+    } else {
+      return { ok: false, error: `Ambiguous: ${matches.length} white ${piece}s — set mover.` };
+    }
+  }
+
+  const walls: string[] = [];
+  const captures: string[] = [];
+  for (const [sq, p] of board) {
+    if (sq === moverSq) continue;
+    if (p.color === "w") walls.push(sq);
+    else captures.push(sq); // black squares → captures (pawn only downstream)
+  }
+
+  const notes: string[] = [];
+  if (piece !== "pawn" && captures.length)
+    notes.push(`${captures.length} black square(s) ignored (captures only for pawn)`);
+
+  return { ok: true, start: moverSq, walls, captures, notes };
+}
+
 export default function LabyrinthBuilderPage() {
   if (process.env.NODE_ENV === "production") notFound();
 
@@ -39,9 +95,24 @@ export default function LabyrinthBuilderPage() {
   const [targetInput, setTargetInput] = useState("");
   const [moverInput, setMoverInput] = useState("");
   const [loadNote, setLoadNote] = useState<string | null>(null);
+  const [records, setRecords] = useState<LabyrinthRecord[]>([]);
   const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(
     null,
   );
+
+  const refreshRecords = useCallback(async () => {
+    try {
+      const res = await fetch("/api/dev/labyrinth");
+      const data = (await res.json()) as { ok?: boolean; records?: LabyrinthRecord[] };
+      if (data?.ok && Array.isArray(data.records)) setRecords(data.records);
+    } catch {
+      /* dev-only tool — silently ignore fetch failures */
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshRecords();
+  }, [refreshRecords]);
 
   const result = useMemo(
     () => validateBuilder(state, tracedPath.length ? tracedPath : undefined),
@@ -65,6 +136,11 @@ export default function LabyrinthBuilderPage() {
     tracedPath.forEach((sq, i) => m.set(sq, i + 1));
     return m;
   }, [tracedPath]);
+
+  const pieceRecords = useMemo(
+    () => records.filter((r) => r.piece === state.piece),
+    [records, state.piece],
+  );
 
   function update(patch: Partial<BuilderState>) {
     setState((prev) => ({ ...prev, ...patch }));
@@ -115,64 +191,54 @@ export default function LabyrinthBuilderPage() {
       setLoadNote("Enter a FEN placement first.");
       return;
     }
-    let board: ReturnType<typeof parseFenBoard>;
-    try {
-      board = parseFenBoard(fen);
-    } catch (e) {
-      setLoadNote(`FEN parse error: ${(e as Error).message}`);
+    const derived = deriveStateFromFen(fen, state.piece, moverInput);
+    if (!derived.ok) {
+      setLoadNote(derived.error);
       return;
     }
-
     const piece = state.piece;
-    // Determine the mover square.
-    let moverSq = moverInput.trim();
-    if (moverSq) {
-      const p = board.get(moverSq);
-      if (!p || p.color !== "w" || p.type !== piece) {
-        setLoadNote(`mover ${moverSq} is not a white ${piece} in this FEN.`);
-        return;
-      }
-    } else {
-      const matches = [...board.entries()].filter(
-        ([, p]) => p.color === "w" && p.type === piece,
-      );
-      if (matches.length === 1) {
-        moverSq = matches[0][0];
-      } else if (matches.length === 0) {
-        setLoadNote(`No white ${piece} found — set mover or change piece.`);
-        return;
-      } else {
-        setLoadNote(`Ambiguous: ${matches.length} white ${piece}s — set mover.`);
-        return;
-      }
-    }
-
-    const walls: string[] = [];
-    const captures: string[] = [];
-    for (const [sq, p] of board) {
-      if (sq === moverSq) continue;
-      if (p.color === "w") walls.push(sq);
-      else captures.push(sq); // black squares → captures (pawn only downstream)
-    }
-
     setState((prev) => ({
       ...prev,
-      start: moverSq,
+      start: derived.start,
       goal: target || prev.goal,
-      walls,
-      captures: piece === "pawn" ? captures : [],
+      walls: derived.walls,
+      captures: piece === "pawn" ? derived.captures : [],
     }));
     setTracedPath([]);
-    const notes: string[] = [];
+    const notes = [...derived.notes];
     if (!target) notes.push("no target given — kept previous goal");
-    if (piece !== "pawn" && captures.length)
-      notes.push(
-        `${captures.length} black square(s) ignored (captures only for pawn)`,
-      );
     setLoadNote(
-      `Loaded: start=${moverSq}, ${walls.length} wall(s)` +
+      `Loaded: start=${derived.start}, ${derived.walls.length} wall(s)` +
         (notes.length ? ` — ${notes.join("; ")}` : ""),
     );
+  }
+
+  function handleEditRecord(rec: LabyrinthRecord) {
+    const derived = deriveStateFromFen(rec.fen, rec.piece, rec.mover ?? "");
+    if (!derived.ok) {
+      setToast({ kind: "err", text: `Cannot edit ${rec.id ?? "record"}: ${derived.error}` });
+      return;
+    }
+    setState({
+      piece: rec.piece,
+      start: derived.start,
+      goal: rec.target,
+      walls: derived.walls,
+      captures: rec.piece === "pawn" ? derived.captures : [],
+      order: rec.order,
+      explanation: rec.explanation,
+      id: rec.id,
+    });
+    setTracedPath([]);
+    setLoadNote(null);
+    setToast({ kind: "ok", text: `Editing ${rec.id ?? "(no id)"}` });
+  }
+
+  function handleNew() {
+    setState(emptyState(state.piece));
+    setTracedPath([]);
+    setLoadNote(null);
+    setToast(null);
   }
 
   async function handleSave() {
@@ -192,6 +258,7 @@ export default function LabyrinthBuilderPage() {
       const data = await res.json();
       if (data?.ok) {
         setToast({ kind: "ok", text: "Saved — reload /exercises to see it" });
+        void refreshRecords();
       } else {
         const errs = Array.isArray(data?.errors)
           ? data.errors.join("; ")
@@ -338,6 +405,22 @@ export default function LabyrinthBuilderPage() {
             ))}
           </div>
 
+          {/* Edit-mode banner */}
+          {state.id ? (
+            <div className="flex items-center justify-between rounded border border-sky-700 bg-sky-950/60 px-3 py-2 text-sm">
+              <span className="text-sky-300">
+                Editing <span className="font-mono font-semibold">{state.id}</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleNew}
+                className="rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600"
+              >
+                New (clear)
+              </button>
+            </div>
+          ) : null}
+
           {/* Save */}
           <div className="flex items-center gap-3">
             <button
@@ -421,10 +504,45 @@ mover=${fenBlock.mover}`}
             {loadNote && <p className="mt-2 text-slate-400">{loadNote}</p>}
           </div>
 
-          {/* Existing labyrinths */}
+          {/* Existing labyrinths — load one to edit */}
+          <div className="rounded border border-slate-800 bg-slate-900 p-3 text-sm">
+            <p className="mb-2 font-semibold text-slate-300">
+              Existing {state.piece} labyrinths (load to edit)
+            </p>
+            {pieceRecords.length ? (
+              <ul className="flex flex-col gap-1">
+                {pieceRecords.map((rec, i) => {
+                  const active = !!rec.id && rec.id === state.id;
+                  return (
+                    <li
+                      key={rec.id ?? `${rec.piece}-${rec.order}-${i}`}
+                      className={`flex items-center justify-between gap-2 rounded px-2 py-1 ${
+                        active ? "bg-sky-950/60" : "bg-slate-800/60"
+                      }`}
+                    >
+                      <span className="truncate font-mono text-xs text-slate-300">
+                        {rec.id ?? "(no id)"} · target {rec.target} · order {rec.order}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleEditRecord(rec)}
+                        className="shrink-0 rounded bg-sky-600 px-2 py-0.5 text-xs font-semibold text-white hover:bg-sky-500"
+                      >
+                        Edit
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-slate-500">None saved for this piece yet.</p>
+            )}
+          </div>
+
+          {/* Generated catalog reference */}
           <div className="rounded border border-slate-800 bg-slate-900 p-3 text-sm">
             <p className="mb-1 font-semibold text-slate-300">
-              Existing {state.piece} labyrinths (pick a non-colliding order)
+              Generated {state.piece} catalog (pick a non-colliding order)
             </p>
             {existing.length ? (
               <ul className="font-mono text-xs text-slate-400">

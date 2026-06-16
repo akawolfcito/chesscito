@@ -11,6 +11,16 @@ const JSON_PATH = resolve(ROOT, "content/labyrinths.json");
 const CSV_PATH = resolve(ROOT, "content/puzzles.csv");
 const GEN_PATH = resolve(ROOT, "src/lib/game/generated/puzzles.generated.ts");
 
+export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return new NextResponse("Not found", { status: 404 });
+  }
+  const records: LabyrinthRecord[] = existsSync(JSON_PATH)
+    ? (JSON.parse(readFileSync(JSON_PATH, "utf8")) as LabyrinthRecord[])
+    : [];
+  return NextResponse.json({ ok: true, records });
+}
+
 export async function POST(req: Request) {
   if (process.env.NODE_ENV === "production") {
     return new NextResponse("Not found", { status: 404 });

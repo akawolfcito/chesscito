@@ -11,7 +11,7 @@ const fsMocks = vi.hoisted(() => ({
 
 vi.mock("node:fs", () => ({ ...fsMocks, default: fsMocks }));
 
-import { POST } from "../route";
+import { GET, POST } from "../route";
 
 const VALID_ROOK = {
   piece: "rook",
@@ -88,5 +88,47 @@ describe("POST /api/dev/labyrinth", () => {
     const res = await POST(postRequest("{not json"));
     expect(res.status).toBe(400);
     expect(fsMocks.writeFileSync).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /api/dev/labyrinth", () => {
+  beforeEach(() => {
+    fsMocks.readFileSync.mockReset();
+    fsMocks.writeFileSync.mockReset();
+    fsMocks.existsSync.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("returns 404 in production and never reads", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const res = await GET();
+    expect(res.status).toBe(404);
+    expect(fsMocks.readFileSync).not.toHaveBeenCalled();
+  });
+
+  it("returns the existing records when the file exists", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    fsMocks.existsSync.mockReturnValue(true);
+    fsMocks.readFileSync.mockReturnValue(JSON.stringify([VALID_ROOK]));
+    const res = await GET();
+    const json = (await res.json()) as { ok: boolean; records: unknown[] };
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(json.records).toEqual([VALID_ROOK]);
+    expect(fsMocks.writeFileSync).not.toHaveBeenCalled();
+  });
+
+  it("returns an empty array when the file is missing", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    fsMocks.existsSync.mockReturnValue(false);
+    const res = await GET();
+    const json = (await res.json()) as { ok: boolean; records: unknown[] };
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(json.records).toEqual([]);
+    expect(fsMocks.readFileSync).not.toHaveBeenCalled();
   });
 });
