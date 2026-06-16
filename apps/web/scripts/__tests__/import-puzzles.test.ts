@@ -106,6 +106,54 @@ describe("buildCatalog — labyrinths.json", () => {
     expect(cat.labyrinths.rook.map((e) => e.id)).toEqual(["earlier", "later"]);
   });
 
+  it("warns (non-fatally) on a duplicate position and still keeps both puzzles", () => {
+    const records: LabyrinthRecord[] = [
+      {
+        id: "dup-a",
+        piece: "rook",
+        fen: "8/8/8/8/8/8/8/R6R w - - 0 1",
+        target: "a8",
+        mover: "a1",
+        order: 0,
+      },
+      {
+        id: "dup-b",
+        piece: "rook",
+        fen: "8/8/8/8/8/8/8/R6R w - - 0 1",
+        target: "a8",
+        mover: "a1",
+        order: 1,
+      },
+    ];
+    const cat = buildCatalog([], records);
+    expect(cat.errors).toEqual([]);
+    expect(cat.labyrinths.rook.map((e) => e.id)).toEqual(["dup-a", "dup-b"]);
+    expect(cat.warnings.some((w) => w.includes("duplicate position"))).toBe(true);
+  });
+
+  it("is reorder-invariant: array order never changes the output id sequence", () => {
+    const a: LabyrinthRecord = {
+      id: "lab-a",
+      piece: "rook",
+      fen: "8/8/8/8/8/8/8/R6R w - - 0 1",
+      target: "a8",
+      mover: "a1",
+      order: 10,
+    };
+    const b: LabyrinthRecord = {
+      id: "lab-b",
+      piece: "rook",
+      fen: "8/8/8/8/8/8/8/R6R w - - 0 1",
+      target: "h8",
+      mover: "h1",
+      order: 20,
+    };
+    const forward = buildCatalog([], [a, b]).labyrinths.rook.map((e) => e.id);
+    const reversed = buildCatalog([], [b, a]).labyrinths.rook.map((e) => e.id);
+    expect(forward).toEqual(reversed);
+    expect(forward).toEqual(["lab-a", "lab-b"]);
+  });
+
   it("rejects a record with a bad piece", () => {
     const cat = buildCatalog([], [
       {

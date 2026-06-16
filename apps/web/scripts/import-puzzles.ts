@@ -34,6 +34,7 @@ export type BuiltCatalog = {
   labyrinths: Record<PieceId, Exercise[]>;
   descriptions: Record<string, string>;
   errors: string[];
+  warnings: string[];
 };
 
 function emptyByPiece(): Record<PieceId, Exercise[]> {
@@ -48,17 +49,19 @@ function toExerciseFields(m: MappedPuzzle) {
 
 export function buildCatalog(rows: string[][], labRecords: LabyrinthRecord[] = []): BuiltCatalog {
   const errors: string[] = [];
+  const warnings: string[] = [];
   const exercises = emptyByPiece();
   const labyrinths = emptyByPiece();
   const descriptions: Record<string, string> = {};
   const seenIds = new Set<string>();
+  const seenPositions = new Set<string>();
 
   const [header = [], ...body] = rows;
   const col = (name: string) => header.indexOf(name);
   for (const n of ["kind", "piece", "fen", "target", "tier"]) {
     if (header.length && col(n) < 0) errors.push(`missing required column '${n}'`);
   }
-  if (errors.length) return { exercises, labyrinths, descriptions, errors };
+  if (errors.length) return { exercises, labyrinths, descriptions, errors, warnings };
 
   const addPuzzle = (
     input: PuzzleInput, label: string, idOverride: string | undefined, order: number,
@@ -71,6 +74,11 @@ export function buildCatalog(rows: string[][], labRecords: LabyrinthRecord[] = [
     const id = idOverride || puzzleId(input.piece, `${input.kind}|${input.fen}|${input.target}|${input.mover ?? ""}`);
     if (seenIds.has(id)) { errors.push(`${label}: duplicate id '${id}'`); return; }
     seenIds.add(id);
+    const positionKey = `${input.piece.trim()}|${input.fen.trim()}|${input.target.trim()}`;
+    if (seenPositions.has(positionKey)) {
+      warnings.push(`${label}: duplicate position (same piece+fen+target as an earlier puzzle)`);
+    }
+    seenPositions.add(positionKey);
     const exercise = { id, optimalMoves: bfs.optimalMoves, ...toExerciseFields(mapped) } as Exercise & { __order?: number };
     if (input.kind === "labyrinth") { exercise.__order = order; labyrinths[input.piece].push(exercise); }
     else exercises[input.piece].push(exercise);
@@ -107,7 +115,7 @@ export function buildCatalog(rows: string[][], labRecords: LabyrinthRecord[] = [
     );
     for (const e of labyrinths[p] as (Exercise & { __order?: number })[]) delete e.__order;
   }
-  return { exercises, labyrinths, descriptions, errors };
+  return { exercises, labyrinths, descriptions, errors, warnings };
 }
 
 export function renderGeneratedModule(cat: BuiltCatalog): string {
@@ -137,6 +145,10 @@ async function main() {
     console.error(`import-puzzles: ${cat.errors.length} error(s):`);
     for (const e of cat.errors) console.error("  - " + e);
     process.exit(1);
+  }
+  if (cat.warnings.length) {
+    console.warn(`import-puzzles: ${cat.warnings.length} warning(s):`);
+    for (const w of cat.warnings) console.warn("  - " + w);
   }
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, renderGeneratedModule(cat));

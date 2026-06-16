@@ -35,5 +35,5 @@ export async function POST(req: Request) {
   mkdirSync(dirname(GEN_PATH), { recursive: true });
   writeFileSync(JSON_PATH, JSON.stringify(next, null, 2) + "\n");
   writeFileSync(GEN_PATH, renderGeneratedModule(cat));
-  return NextResponse.json({ ok: true, saved: rec });
+  return NextResponse.json({ ok: true, saved: rec, warnings: cat.warnings });
 }
