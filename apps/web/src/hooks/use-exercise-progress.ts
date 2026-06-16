@@ -260,9 +260,8 @@ export function useExerciseProgress(
         address: address ?? null,
         sessionSeed: effectiveSessionSeed,
         dateUtc: rotationDateUtc,
-        // The visible-set selector still takes a positional stars array;
-        // bridge the id-map → array in current catalog order.
-        starsArray: starsIdMapToArray(piece, progress.stars),
+        // The visible-set selector reads the native id-map directly.
+        starsById: progress.stars,
       }),
     [rotationEnabled, piece, address, effectiveSessionSeed, rotationDateUtc, progress.stars],
   );

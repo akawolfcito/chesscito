@@ -11,8 +11,15 @@ import {
 } from "@/lib/training/path";
 import { MissionDetailSheet } from "@/components/exercises/mission-detail-sheet";
 
+/** Convert a positional star array (legacy fixture shape) into the id-map
+ *  PieceProgress reads, keyed by catalog order. Sparse: zero entries are
+ *  dropped (absent id = not played). */
 function makeProgress(piece: PieceId, stars: number[]): PieceProgress {
-  return { piece, exerciseIndex: 0, stars };
+  const map: Record<string, number> = {};
+  EXERCISES[piece].forEach((ex, i) => {
+    if ((stars[i] ?? 0) > 0) map[ex.id] = stars[i];
+  });
+  return { piece, currentId: null, stars: map };
 }
 
 function starsTotaling(piece: PieceId, total: number): number[] {

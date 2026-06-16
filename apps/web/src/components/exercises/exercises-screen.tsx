@@ -916,6 +916,15 @@ export function ExercisesScreen({
     incrementAttemptSeq,
   } = useExerciseProgress(selectedPiece, rotationOptions);
 
+  // Progress is keyed by exerciseId (currentId). Derive the pool index for
+  // the index-based affordances (drawer activeIndex, tutorial-hint gate,
+  // badge-on-last-exercise math). A null/stale id falls back to the first
+  // pool exercise (index 0), mirroring the hook's own derivation.
+  const currentExerciseIndex = Math.max(
+    0,
+    EXERCISES[selectedPiece].findIndex((ex) => ex.id === currentExercise.id),
+  );
+
   // Rotation steering, extracted to a unit-tested hook in Slice 3B.
   // Suspended while the labyrinth layer is on (spec B8 / red-team
   // P0-2): steering must never yank the player back to an exercise
@@ -1342,7 +1351,9 @@ export function ExercisesScreen({
   const showTxToast = txToast.show && resultOverlay === null;
   const txCurrent = txToast.show ? txToast.current : "sign";
 
-  const allExercisesAttempted = progress.stars.every(s => s > 0);
+  const allExercisesAttempted = EXERCISES[selectedPiece].every(
+    (ex) => (progress.stars[ex.id] ?? 0) > 0,
+  );
 
   const contextActionState = {
     phase,
@@ -1513,9 +1524,9 @@ export function ExercisesScreen({
 
       // On last exercise: check if badge is earned (including this completion)
       if (isLastExercise && !isReplay) {
-        const exercise = EXERCISES[selectedPiece][progress.exerciseIndex];
+        const exercise = currentExercise;
         const newStars = computeStars(movesCount, exercise.optimalMoves);
-        const prevStarValue = progress.stars[progress.exerciseIndex];
+        const prevStarValue = progress.stars[exercise.id] ?? 0;
         const starDelta = Math.max(0, newStars - prevStarValue);
         const newTotal = totalStars + starDelta;
 
@@ -2294,10 +2305,12 @@ export function ExercisesScreen({
   function handleLabyrinthContinue() {
     handleExitLabyrinth();
     const pool = EXERCISES[selectedPiece];
-    const nextIdx = progress.stars.findIndex(
-      (starCount, index) =>
-        starCount === 0 &&
-        (!visibleExerciseIds || visibleExerciseIds.has(pool[index]?.id)),
+    // First pool slot with 0★ (id-map; absent id = not played) that is
+    // also in today's visible set when rotation is on.
+    const nextIdx = pool.findIndex(
+      (exercise) =>
+        (progress.stars[exercise.id] ?? 0) === 0 &&
+        (!visibleExerciseIds || visibleExerciseIds.has(exercise.id)),
     );
     if (nextIdx >= 0) handleExerciseNavigate(nextIdx);
   }
@@ -2374,10 +2387,15 @@ export function ExercisesScreen({
 
   // Show movement lane hints on the first exercise of each piece (until the player earns stars)
   const tutorialHints = useMemo(() => {
-    if (progress.exerciseIndex !== 0 || progress.stars[0] > 0) return undefined;
+    const firstExerciseId = EXERCISES[selectedPiece][0]?.id;
+    if (
+      currentExerciseIndex !== 0 ||
+      (firstExerciseId ? (progress.stars[firstExerciseId] ?? 0) : 0) > 0
+    )
+      return undefined;
     const targets = getValidTargets(selectedPiece, currentExercise.startPos);
     return new Set(targets.map(getPositionLabel));
-  }, [selectedPiece, progress.exerciseIndex, progress.stars, currentExercise.startPos]);
+  }, [selectedPiece, currentExerciseIndex, progress.stars, currentExercise.startPos]);
 
   return (
     <div className="relative w-full overflow-x-hidden">
@@ -2653,7 +2671,7 @@ export function ExercisesScreen({
               piece={selectedPiece}
               exercises={EXERCISES[selectedPiece]}
               stars={progress.stars}
-              activeIndex={progress.exerciseIndex}
+              activeIndex={currentExerciseIndex}
               totalStars={totalStars}
               onNavigate={handleExerciseNavigate}
               shieldCount={shieldCount}

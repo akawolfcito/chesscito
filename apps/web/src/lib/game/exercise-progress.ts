@@ -4,9 +4,11 @@
  * piece) or "default" (has touched the practice flow at least once).
  *
  * The piece-progress storage shape — `chesscito:progress:{piece}` →
- * `{ stars: number[] }` — is also read by `loadStarsPerPiece` in
- * `hub-scaffold-client.tsx`. This helper intentionally keeps a tiny
- * surface so the Hero CTA derivation never has to know storage keys.
+ * `{ stars: Record<exerciseId, number> }` (legacy entries may still hold
+ * `{ stars: number[] }` until migrated on next load) — is also read by
+ * `loadStarsPerPiece` in `hub-scaffold-client.tsx`. This helper
+ * intentionally keeps a tiny surface so the Hero CTA derivation never has
+ * to know storage keys, and tolerates both shapes.
  */
 
 const STORAGE_PREFIX = "chesscito:progress:";
@@ -23,10 +25,15 @@ export function getExercisesCompletedCount(): number {
       const raw = window.localStorage.getItem(`${STORAGE_PREFIX}${piece}`);
       if (!raw) continue;
       const parsed = JSON.parse(raw) as { stars?: unknown };
-      if (Array.isArray(parsed.stars)) {
-        for (const s of parsed.stars) {
-          if (typeof s === "number" && Number.isFinite(s) && s > 0) total += 1;
-        }
+      // Tolerate both the legacy positional array and the id-keyed map:
+      // iterate the values either way and count the positive entries.
+      const values = Array.isArray(parsed.stars)
+        ? parsed.stars
+        : parsed.stars && typeof parsed.stars === "object"
+          ? Object.values(parsed.stars)
+          : [];
+      for (const s of values) {
+        if (typeof s === "number" && Number.isFinite(s) && s > 0) total += 1;
       }
     } catch {
       // ignore corrupt entries; treat as zero.

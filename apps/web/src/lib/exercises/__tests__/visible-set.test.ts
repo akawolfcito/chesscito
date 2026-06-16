@@ -14,7 +14,7 @@ describe("computeVisibleExerciseIds", () => {
       address: "0xABC",
       sessionSeed: null,
       dateUtc: DATE,
-      starsArray: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      starsById: {},
     });
     expect(result).toBeNull();
   });
@@ -26,7 +26,7 @@ describe("computeVisibleExerciseIds", () => {
       address: null,
       sessionSeed: null,
       dateUtc: DATE,
-      starsArray: [],
+      starsById: {},
     });
     expect(result).not.toBeNull();
     expect([...result!].sort()).toEqual(firstFive("rook").sort());
@@ -39,7 +39,7 @@ describe("computeVisibleExerciseIds", () => {
       address: "0xWALLET",
       sessionSeed: null,
       dateUtc: DATE,
-      starsArray: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      starsById: {},
     };
     const a = computeVisibleExerciseIds(opts);
     const b = computeVisibleExerciseIds(opts);
@@ -60,7 +60,7 @@ describe("computeVisibleExerciseIds", () => {
       address: null,
       sessionSeed: "session_8f3a-guest-uuid",
       dateUtc: DATE,
-      starsArray: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      starsById: {},
     });
     expect(result).not.toBeNull();
     expect(result!.size).toBeLessThanOrEqual(5);

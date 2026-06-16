@@ -27,7 +27,8 @@ function makeOptions(
     visibleExerciseIds: new Set(ROOK_IDS.slice(1, 6)),
     currentExerciseId: ROOK_IDS[0],
     piece: "rook",
-    stars: EXERCISES.rook.map(() => 0),
+    // Sparse id-keyed best-stars map: absent id = not played (→ 0).
+    stars: {},
     goToExercise: vi.fn(),
     suspended: false,
     ...overrides,
@@ -42,8 +43,8 @@ describe("useRotationSteering", () => {
   });
 
   it("prefers the first INCOMPLETE visible exercise over the first visible", () => {
-    const stars = EXERCISES.rook.map(() => 0);
-    stars[1] = 3; // first visible already complete → jump to index 2
+    // First visible exercise (pool index 1) already complete → jump to index 2.
+    const stars = { [ROOK_IDS[1]]: 3 };
     const options = makeOptions({ stars });
     renderHook(() => useRotationSteering(options));
     expect(options.goToExercise).toHaveBeenCalledWith(2);

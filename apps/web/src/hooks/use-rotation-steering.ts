@@ -12,8 +12,9 @@ export type RotationSteeringOptions = {
   visibleExerciseIds: Set<string> | null;
   currentExerciseId: string;
   piece: PieceId;
-  /** Positional stars array for the piece (PieceProgress.stars). */
-  stars: number[];
+  /** id-keyed best-stars map for the piece (PieceProgress.stars). Sparse:
+   *  an absent id means "not played yet" (read as `?? 0`). */
+  stars: Record<string, number>;
   /** Rotation-relaxed navigation from useExerciseProgress. */
   goToExercise: (index: number) => void;
   /** Spec B8 / red-team P0-2: while the labyrinth layer is active,
@@ -53,7 +54,7 @@ export function useRotationSteering({
     if (visibleExerciseIds.has(currentExerciseId)) return;
     const pool = EXERCISES[piece];
     const firstIncomplete = pool.findIndex(
-      (ex, i) => visibleExerciseIds.has(ex.id) && (stars[i] ?? 0) === 0,
+      (ex) => visibleExerciseIds.has(ex.id) && (stars[ex.id] ?? 0) === 0,
     );
     const target =
       firstIncomplete >= 0
