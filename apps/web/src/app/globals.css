@@ -3907,9 +3907,10 @@
   .chesscito-dock-item-label {
     /* Floats below the icon without pushing the flex column height —
        keeps the dock bg + siblings perfectly still when an item
-       activates / deactivates. Hidden by default (opacity 0) so the
-       dock reads as icon-only at rest; revealed on active/hover/press
-       via the shared selector group below. */
+       activates / deactivates. Always visible now (founder 2026-06-15):
+       every dock item shows its label at rest; activating an item only
+       lifts + lights the icon (scale + halo on the parent), it no longer
+       toggles the label. */
     position: absolute;
     left: 50%;
     bottom: -2px;
@@ -3920,13 +3921,6 @@
     pointer-events: none;
     font-family: var(--font-game-display);
     line-height: 1;
-    opacity: 0;
-    transition: opacity var(--duration-snap, 120ms) ease;
-  }
-
-  .chesscito-dock-item.is-active .chesscito-dock-item-label,
-  .chesscito-dock-item:has(:focus-visible) .chesscito-dock-item-label,
-  .chesscito-dock-item:has(> button:active) .chesscito-dock-item-label {
     opacity: 1;
   }
 
@@ -3936,13 +3930,6 @@
     left: 50%;
     bottom: -2px;
     transform: translateX(-50%);
-    opacity: 0;
-    transition: opacity var(--duration-snap, 120ms) ease;
-  }
-
-  .chesscito-dock-center.is-active .game-label,
-  .chesscito-dock-center:has(:focus-visible) .game-label,
-  .chesscito-dock-center:has(> button:active) .game-label {
     opacity: 1;
   }
 
