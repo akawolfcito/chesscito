@@ -262,7 +262,7 @@ function AccountSheet({
         hideClose
         title={t("title")}
         description={t("description")}
-        className="sheet-bg-hub rounded-t-3xl border-0 pb-[calc(env(safe-area-inset-bottom,0px)+6rem)]"
+        className="sheet-bg-hub rounded-t-3xl border-0 max-h-[92dvh] overflow-y-auto overscroll-contain pb-[calc(env(safe-area-inset-bottom,0px)+6rem)]"
       >
         <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
