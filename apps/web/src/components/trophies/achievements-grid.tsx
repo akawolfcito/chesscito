@@ -2,12 +2,25 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CandyIcon, type CandyIconName } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
 import type { Achievement } from "@/lib/achievements/compute";
 import { AchievementDetailSheet } from "./achievement-detail-sheet";
 
 type AchievementCopy = { title: string; description: string };
+
+/** Thematic icon per achievement so locked tiles read as a dimmed PREVIEW of
+ *  the reward (with a small lock badge), not a wall of identical padlocks
+ *  (founder 2026-06-16). Falls back to trophy for any unmapped id. */
+const ACHIEVEMENT_ICONS: Record<string, CandyIconName> = {
+  "first-victory": "trophy",
+  "solid-player": "shield",
+  "arena-champion": "crown",
+  speedrunner: "time",
+  "rapid-finish": "crosshair",
+  "five-crowns": "star",
+  dedication: "refresh",
+};
 
 type Props = {
   achievements: Achievement[];
@@ -95,6 +108,7 @@ function AchievementTile({
   if (!copy) return null;
 
   const { earned, progress } = achievement;
+  const icon = ACHIEVEMENT_ICONS[achievement.id] ?? "trophy";
 
   return (
     <button
@@ -103,13 +117,19 @@ function AchievementTile({
       className={`achievement-tile ${!earned ? "achievement-tile--locked" : ""} active:scale-95`}
     >
       <div className="achievement-tile-icon-wrap">
+        {/* Thematic icon: full color + glow when earned, dimmed preview when
+            locked (with a small lock badge), never a generic padlock. */}
         <CandyIcon
-          name={earned ? "trophy" : "lock"}
-          className={`h-8 w-8 ${earned ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.40)]" : "text-[rgba(63,34,8,0.35)] grayscale"}`}
+          name={icon}
+          className={`h-8 w-8 ${earned ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.45)]" : "text-[rgba(63,34,8,0.30)] grayscale opacity-70"}`}
         />
-        {earned && (
+        {earned ? (
           <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 border-2 border-white/20">
             <CandyIcon name="check" className="h-3 w-3 text-white" />
+          </div>
+        ) : (
+          <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white/30 bg-[rgba(63,34,8,0.55)]">
+            <CandyIcon name="lock" className="h-2.5 w-2.5 text-white" />
           </div>
         )}
       </div>

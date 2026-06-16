@@ -11014,7 +11014,9 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .achievement-tile-grid {
   display: grid;
-  grid-template-cols: repeat(2, 1fr);
+  /* was 'grid-template-cols' (invalid prop) → rendered 1 full-width column.
+   * Fixed to a real 2-col grid (founder 2026-06-16). */
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 
