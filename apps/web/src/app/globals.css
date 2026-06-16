@@ -3808,7 +3808,10 @@
     display: block;
   }
 
-  /* Center tab — route-aware glow pill */
+  /* Center tab — route-aware glow pill. Sized to MATCH the side icons
+     (2.75rem) so the dock reads as one even row (founder 2026-06-16); the
+     center keeps its prominence through the contextual swords art + warm
+     active glow, not through a larger footprint. */
   .chesscito-dock-center {
     position: relative;
     isolation: isolate;
@@ -3817,14 +3820,27 @@
     align-items: center;
     justify-content: center;
     gap: 1px;
-    width: 3.5rem;
-    height: 3rem;
+    width: 2.75rem;
+    height: 2.75rem;
     background: transparent;
     border: 0;
     color: var(--redesign-cyan-dim);
     box-shadow: none;
     transition: transform var(--duration-snap, 120ms);
     font-family: var(--font-game-action);
+  }
+
+  /* Match the side trigger footprint exactly (sides use 2.75rem !important
+     on `.chesscito-dock-item > button`). Without this the center icon fills
+     its container at the art's intrinsic size and reads larger than the
+     siblings. */
+  .chesscito-dock-center > button {
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    border-radius: 14px !important;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
   }
 
   /* All "looks active" states (route-match, hover, press, keyboard
@@ -3924,12 +3940,20 @@
     opacity: 1;
   }
 
-  /* Same treatment for the center tab label (Arena "Free Play"). */
+  /* Center tab label (Arena). Matches the side labels exactly so the dock
+     reads as one consistent row at rest — same cream color, display font,
+     and shadow (without this it inherited the center button's cyan-dim color
+     and the game-action font, so ARENA looked off-color + off-size). */
   .chesscito-dock-center .game-label {
     position: absolute;
     left: 50%;
     bottom: -2px;
     transform: translateX(-50%);
+    color: rgba(255, 240, 180, 0.95);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    font-family: var(--font-game-display);
+    line-height: 1;
+    white-space: nowrap;
     opacity: 1;
   }
 
