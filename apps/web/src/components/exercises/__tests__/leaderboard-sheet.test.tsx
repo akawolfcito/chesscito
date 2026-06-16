@@ -78,6 +78,25 @@ describe("LeaderboardSheet — on-chain marker + own rank (QA 2026-06-11)", () =
     expect(row3?.querySelector('img[alt="Saved on Celo"]')).toBeNull();
   });
 
+  // Founder 2026-06-16: the list is the FULL board. #1 used to be lifted into
+  // the banner only, so the list mysteriously started at #2/#3. It must now
+  // also appear as a row in the list.
+  it("renders the champion (#1) as a row in the full list, not just the banner", async () => {
+    accountState.address = undefined as unknown as string;
+    accountState.isConnected = false;
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ rows, player: null }),
+    }) as unknown as typeof fetch;
+
+    render(<LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} />);
+
+    await waitFor(() => {
+      const champRow = screen.getByText("Golden King #1").closest(".leaderboard-row-compact");
+      expect(champRow).not.toBeNull();
+    });
+  });
+
   it("requests the caller's own rank when connected and renders the Your-rank row", async () => {
     accountState.address = "0xABCD000000000000000000000000000000001234";
     accountState.isConnected = true;

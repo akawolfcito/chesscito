@@ -11083,12 +11083,28 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(63, 34, 8, 0.7);
 }
 
+.leaderboard-row-compact--top1 .leaderboard-rank-pill {
+  color: #b45309;
+}
+
 .leaderboard-row-compact--top2 .leaderboard-rank-pill {
   color: #334155;
 }
 
 .leaderboard-row-compact--top3 .leaderboard-rank-pill {
   color: #92400e;
+}
+
+/* The caller's own row, highlighted IN the full list (founder 2026-06-16) so
+ * they can spot themselves among everyone — a blue wash + accent border that
+ * matches the "you" identity, distinct from the gold/silver/bronze top ranks. */
+.leaderboard-row-compact--own {
+  background: rgba(96, 165, 250, 0.20);
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+.leaderboard-row-compact--own .leaderboard-rank-pill {
+  color: #1d4ed8;
 }
 
 .leaderboard-verify-banner {

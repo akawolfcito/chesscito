@@ -143,12 +143,13 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
   }, [open, fetchLeaderboard]);
 
   const champion = rows.find(r => r.rank === 1);
-  // Exclude the caller's own row from the competitors list so it never appears
-  // twice (it is pinned in the footer). Dedupe by the opaque rowId — never a
-  // wallet (Identity Lite P0-2).
-  const competitors = rows.filter(
-    (r) => r.rank > 1 && (!ownRow || r.rowId !== ownRow.rowId),
-  );
+  // The list is the FULL board — every player including #1 and the caller
+  // (founder 2026-06-16). The "THE RANKING" banner is just a podium highlight
+  // for the champion, and the pinned YOUR RANK footer is a shortcut so a
+  // far-down player (e.g. #1234567) can see their position without an endless
+  // scroll. The caller's row is highlighted in-list (see `--own`) AND mirrored
+  // in the footer on purpose, so the list no longer mysteriously starts at #3.
+  const competitors = rows;
 
   // Resolve a row's display name from its server-derived variant. The own row
   // is overridden by the user's explicit custom name when set.
@@ -326,11 +327,15 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
 
           {competitors.length > 0 && (
             <div className="flex flex-col gap-2.5">
-              {competitors.map((row) => (
+              {competitors.map((row) => {
+                const isOwn = !!ownRow && row.rowId === ownRow.rowId;
+                return (
                 <div
                   key={`${row.rank}-${row.rowId}`}
                   className={`leaderboard-row-compact ${
-                    row.rank === 2 ? "leaderboard-row-compact--top2"
+                    isOwn ? "leaderboard-row-compact--own"
+                    : row.rank === 1 ? "leaderboard-row-compact--top1"
+                    : row.rank === 2 ? "leaderboard-row-compact--top2"
                     : row.rank === 3 ? "leaderboard-row-compact--top3"
                     : ""
                   }`}
@@ -341,7 +346,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
                   <div className="flex flex-1 min-width-0 items-center gap-1.5">
                     <PlayerIdentityPill
                       variant={row.variant}
-                      name={rowName(row)}
+                      name={rowName(row, isOwn)}
                       size="sm"
                       className="text-xs font-black text-[rgba(63,34,8,0.90)]"
                     />
@@ -362,7 +367,8 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
                     {row.score}
                   </p>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
