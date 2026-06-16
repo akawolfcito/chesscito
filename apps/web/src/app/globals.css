@@ -2753,6 +2753,26 @@
     background-color: transparent;
   }
 
+  /* Labyrinth wall — a stone tile painted ON the cell so a blocked square
+     reads instantly as "impasable", replacing the old chained-rook+lock
+     sprite (founder 2026-06-16). Non-target by the rules layer; cursor
+     signals it's not a move. */
+  .playhub-board-cell.is-wall {
+    background:
+      radial-gradient(120% 120% at 30% 22%, rgba(255, 255, 255, 0.18), transparent 55%),
+      linear-gradient(165deg, #9aa0a8 0%, #6b7178 55%, #4e545b 100%);
+    border-radius: 12%;
+    box-shadow:
+      inset 0 2px 2px rgba(255, 255, 255, 0.22),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.40),
+      0 1px 2px rgba(0, 0, 0, 0.30);
+    cursor: default;
+  }
+
+  .playhub-board-cell.is-wall .playhub-board-label {
+    opacity: 0.25;
+  }
+
   .playhub-board-cell:active {
     transform: scale(0.98);
   }

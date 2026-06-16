@@ -12,7 +12,6 @@ import {
 } from "@/lib/game/board";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
-import { CandyIcon } from "@/components/redesign/candy-icon";
 import { hapticTap, hapticReject, hapticSuccess } from "@/lib/haptics";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { BOARD_HINT_COPY } from "@/lib/content/editorial";
@@ -175,6 +174,13 @@ export function Board({
     return getValidTargets(pieceType, selectedPosition, obstacles ?? [], isCapture, captureTargets, targetPosition ?? undefined);
   }, [pieceType, selectedPosition, obstacles, isCapture, captureTargets, targetPosition]);
 
+  // Labyrinth walls render AS the cell (stone tile), not as a chained piece —
+  // a blocked square reads clearer than a locked rook (founder 2026-06-16).
+  const obstacleKeySet = useMemo(
+    () => new Set((obstacles ?? []).map((o) => `${o.file},${o.rank}`)),
+    [obstacles],
+  );
+
   const squares = useMemo(
     () =>
       buildBoardSquares({
@@ -308,6 +314,7 @@ export function Board({
                           square.isHighlighted ? "is-highlighted" : "",
                           square.isEndpoint ? "is-endpoint" : "",
                           square.isSelected ? "is-selected" : "",
+                          mode === "labyrinth" && obstacleKeySet.has(`${square.file},${square.rank}`) ? "is-wall" : "",
                           tutorialHints?.has(square.label) ? "is-tutorial-hint" : "",
                           peonesHint &&
                           peonesHint.file === square.file &&
@@ -361,71 +368,11 @@ export function Board({
                 );
               })()}
 
-              {/* Labyrinth obstacles — "chained" friendly pieces. Rendered
-                  at full opacity with a desaturated grey tint so they read
-                  as solid in-world objects (not ghosts), then a lock
-                  CandyIcon overlay communicates "intocable, no se mueve".
-                  Non-interactive: hit-grid buttons remain the only click
-                  targets, and the rules layer already excludes obstacle
-                  squares from valid targets. */}
-              {mode === "labyrinth" && obstacles && obstacles.length > 0 && obstacles.map((ob) => {
-                const oc = cellCenter(ob.file, ob.rank);
-                const ow = pieceWidth();
-                const obstacleImg = PIECE_IMG[pieceType];
-                const key = `obstacle-${ob.file}-${ob.rank}`;
-                return (
-                  <div
-                    key={key}
-                    aria-hidden="true"
-                    className="playhub-board-piece-float"
-                    style={{
-                      left: `${oc.x}%`,
-                      top: `${oc.y}%`,
-                      width: `${ow}%`,
-                      pointerEvents: "none",
-                    }}
-                  >
-                    <picture
-                      style={{
-                        display: "block",
-                        filter: "saturate(0.35) brightness(0.85) drop-shadow(0 0 6px rgba(80, 50, 20, 0.35))",
-                      }}
-                    >
-                      {THEME_CONFIG.hasOptimizedFormats && (
-                        <>
-                          <source srcSet={obstacleImg.replace(".png", ".avif")} type="image/avif" />
-                          <source srcSet={obstacleImg.replace(".png", ".webp")} type="image/webp" />
-                        </>
-                      )}
-                      <img
-                        src={obstacleImg}
-                        alt=""
-                        className={PIECE_IMG_CLASS}
-                        style={{ width: "100%" }}
-                      />
-                    </picture>
-                    {/* Lock badge — bottom-right of the piece sprite.
-                        Communicates "chained / cannot pass". */}
-                    <span
-                      className="absolute"
-                      style={{
-                        right: "10%",
-                        bottom: "8%",
-                        width: "38%",
-                        height: "38%",
-                        background: "rgba(63, 34, 8, 0.92)",
-                        borderRadius: "9999px",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255, 245, 215, 0.20)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <CandyIcon name="lock" className="h-[60%] w-[60%]" />
-                    </span>
-                  </div>
-                );
-              })}
+              {/* Labyrinth walls render AS the cell via the .is-wall class on
+                  the hit-grid button (stone tile) — see board.tsx className +
+                  globals.css .playhub-board-cell.is-wall. No floating piece /
+                  lock overlay: a stone-blocked square reads clearer for a
+                  beginner than a chained rook (founder 2026-06-16). */}
 
               {/* Capture targets — capturable pickup markers. Rendered as
                   small glowing amber circles to indicate "land here to
