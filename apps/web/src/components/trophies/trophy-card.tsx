@@ -147,8 +147,20 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
     );
   }
 
+  const medalTone =
+    rank === 1 ? "is-gold" : rank === 2 ? "is-silver" : rank === 3 ? "is-bronze" : "";
+
   return (
-    <div className="victory-card-compact relative">
+    <div
+      className={`victory-card-compact relative ${
+        isHoF && rank === 1 ? "victory-card-compact--champion" : ""
+      }`}
+    >
+      {isHoF && rank ? (
+        <span className={`victory-card-medal ${medalTone}`} aria-label={`Rank ${rank}`}>
+          {rank}
+        </span>
+      ) : null}
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex items-center gap-2">
           <span className="victory-card-id">#{String(entry.tokenId)}</span>
@@ -188,9 +200,6 @@ export function TrophyCard({ entry, variant, featured = false, rank }: Props) {
           >
             <CandyIcon name="share" className="h-3.5 w-3.5 text-[rgba(63,34,8,0.60)]" />
           </button>
-        )}
-        {isHoF && rank && (
-          <span className="text-sm font-black italic text-[rgba(63,34,8,0.15)]">#{rank}</span>
         )}
       </div>
 
