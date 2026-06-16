@@ -37,8 +37,10 @@ vi.mock("wagmi", () => ({
 
 import { act, renderHook } from "@testing-library/react";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
+import { EXERCISES } from "@/lib/game/exercises";
 
 const W = "0xabcdef0123456789abcdef0123456789abcdef01";
+const ROOK_1 = EXERCISES.rook[0].id;
 
 function setConnected(address = W): void {
   useAccountMock.mockReturnValue({ isConnected: true, address });
@@ -197,12 +199,12 @@ describe("useExerciseProgress.completeExercise — Peones earn wireup", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(result.current.progress.stars[0]).toBe(3);
+    expect(result.current.progress.stars[ROOK_1]).toBe(3);
     expect(result.current.totalStars).toBe(3);
     const persisted = JSON.parse(
       localStorage.getItem("chesscito:progress:rook") ?? "null",
     );
-    expect(persisted.stars[0]).toBe(3);
+    expect(persisted.stars[ROOK_1]).toBe(3);
   });
 
   it("treats a duplicate:true response as success — no error surface", async () => {
@@ -225,7 +227,7 @@ describe("useExerciseProgress.completeExercise — Peones earn wireup", () => {
     });
 
     expect(submitMock).toHaveBeenCalledTimes(1);
-    expect(result.current.progress.stars[0]).toBe(3);
+    expect(result.current.progress.stars[ROOK_1]).toBe(3);
   });
 
   it("emits peones_earned after a successful credited>0 earn (Sprint 3 commit H)", async () => {

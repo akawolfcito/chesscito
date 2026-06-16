@@ -88,16 +88,18 @@ export type LabyrinthProgress = {
 
 export type PieceProgress = {
   piece: PieceId;
-  /** Índice del ejercicio activo. Rango válido: 0 .. getExerciseCount(piece) - 1.
-   *  Per-piece dinámico desde Sprint 1 commit 1 (Training Economy Alpha
-   *  2026-06-05) cuando piece pools dejaron de ser fijos en 5. */
-  exerciseIndex: number;
-  /** Estrellas (0..3) por ejercicio. La longitud del array matchea
-   *  getExerciseCount(piece) — relajado de tuple fijo de 5 a number[]
-   *  en Sprint 1 commit 4 para soportar piece pools de tamaño variable.
-   *  loadProgress migra legacy stars[5] a la longitud actual padding
-   *  con ceros al final, preservando todos los valores existentes. */
-  stars: number[];
+  /** Active exercise, keyed by exerciseId (not a pool index). `null`
+   *  means "no exercise selected yet" → consumers fall back to the first
+   *  pool exercise. Replaces the legacy positional `exerciseIndex` in the
+   *  Exercises-Builder cluster (2026-06-16) so the catalog can be
+   *  reordered/edited without remapping live progress. */
+  currentId: string | null;
+  /** Best stars (0..3) per exercise, keyed by exerciseId. Sparse: an id
+   *  absent from the map means "not played yet" (read as `?? 0`). Order-
+   *  independent — immune to catalog reordering. `loadProgress` migrates
+   *  the legacy positional `number[]` shape to this map by current catalog
+   *  order, dropping ids not in the pool and clamping values to [0,3]. */
+  stars: Record<string, number>;
 };
 
 /* ── Arena (full chess) types ── */

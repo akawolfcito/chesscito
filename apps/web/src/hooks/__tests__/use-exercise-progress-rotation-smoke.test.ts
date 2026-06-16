@@ -97,15 +97,17 @@ describe("smoke — non-linear navigation + progress mapping", () => {
     expect(nonLinearIndex).toBeGreaterThan(2);
 
     act(() => result.current.goToExercise(nonLinearIndex!));
-    expect(result.current.progress.exerciseIndex).toBe(nonLinearIndex);
+    expect(result.current.progress.currentId).toBe(
+      EXERCISES.rook[nonLinearIndex!].id,
+    );
 
     const optimal = EXERCISES.rook[nonLinearIndex!].optimalMoves;
     act(() => result.current.completeExercise(optimal)); // 3★
 
-    // Progress written to the REAL pool index, seeded values preserved.
-    expect(result.current.progress.stars[nonLinearIndex!]).toBe(3);
-    expect(result.current.progress.stars[0]).toBe(3);
-    expect(result.current.progress.stars[1]).toBe(2);
+    // Progress written under the REAL exerciseId, seeded values preserved.
+    expect(result.current.progress.stars[EXERCISES.rook[nonLinearIndex!].id]).toBe(3);
+    expect(result.current.progress.stars[EXERCISES.rook[0].id]).toBe(3);
+    expect(result.current.progress.stars[EXERCISES.rook[1].id]).toBe(2);
   });
 
   it("blocks navigation to an exercise outside today's set", async () => {
@@ -114,9 +116,9 @@ describe("smoke — non-linear navigation + progress mapping", () => {
     const visible = result.current.visibleExerciseIds!;
     const outIndex = EXERCISES.rook.findIndex((e) => !visible.has(e.id));
     expect(outIndex).toBeGreaterThanOrEqual(0);
-    const before = result.current.progress.exerciseIndex;
+    const before = result.current.progress.currentId;
     act(() => result.current.goToExercise(outIndex));
-    expect(result.current.progress.exerciseIndex).toBe(before); // unchanged
+    expect(result.current.progress.currentId).toBe(before); // unchanged
   });
 });
 
