@@ -10889,27 +10889,26 @@ button.hud-resource-chip:active:not(:disabled) {
   background: rgba(255, 255, 255, 0.45);
 }
 
+/* Bare rank number — no enclosing circle. The pill/circumference cramped the
+ * Rowdies numerals and hurt legibility (founder feedback 2026-06-15); we keep
+ * a min-width so the column stays aligned and let the digits read plainly. */
 .leaderboard-rank-pill {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
+  min-width: 28px;
   height: 24px;
-  border-radius: 99px;
-  background: rgba(63, 34, 8, 0.08);
   font-family: var(--font-game-action, system-ui, sans-serif);
-  font-size: 0.75rem;
-  font-weight: 900;
-  color: rgba(63, 34, 8, 0.65);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: rgba(63, 34, 8, 0.7);
 }
 
 .leaderboard-row-compact--top2 .leaderboard-rank-pill {
-  background: rgba(71, 85, 105, 0.15);
   color: #334155;
 }
 
 .leaderboard-row-compact--top3 .leaderboard-rank-pill {
-  background: rgba(146, 64, 14, 0.15);
   color: #92400e;
 }
 
