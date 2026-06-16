@@ -7014,11 +7014,14 @@ button.hud-resource-chip:active:not(:disabled) {
   position: absolute;
   right: 6px;
   bottom: 0;
-  width: 42%;
-  max-width: 170px;
+  width: 40%;
+  max-width: 164px;
   display: block;
   pointer-events: none;
-  filter: drop-shadow(0 6px 10px rgba(63, 34, 8, 0.28));
+  /* Warm the flat white peón sprite toward the mockup's ivory so it reads as
+   * part of the cream card instead of a stark cut-out. */
+  filter: sepia(0.18) saturate(1.2) brightness(0.98)
+    drop-shadow(0 6px 10px rgba(63, 34, 8, 0.28));
 }
 
 .chesito-card-art img {
