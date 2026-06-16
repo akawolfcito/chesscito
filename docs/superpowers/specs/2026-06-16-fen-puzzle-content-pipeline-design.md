@@ -1,7 +1,8 @@
 # Design — FEN puzzle content pipeline (curated, spreadsheet-authored)
 
 **Date:** 2026-06-16
-**Status:** Approved (architecture + augment-not-replace), ready for implementation plan.
+**Status:** Approved (architecture + augment-not-replace), red-teamed against
+code (F1-F6 resolved), ready for implementation plan.
 **Author:** Wolfcito 🐾 @akawolfcito
 
 ## Problem
@@ -23,11 +24,19 @@ procedural/infinite, not DB-backed — a low-friction authoring pipeline.
 - **Authoring format:** **FEN** for the board position + a separate `target`
   square + optional EN `explanation`. FEN chosen so positions can be built in
   any board editor (lichess, etc.), pasted, and shared.
-- **Role convention (in the FEN):** **white = the mover + obstacles**, **black
-  = capturable pickups**. The mover is the single white piece whose type equals
-  the row's `piece` (the lesson). All other white pieces are obstacles (friendly
-  blockers, impassable, non-capturable). Black pieces are `captureTargets`.
-- **target:** a separate field (FEN cannot mark a goal square).
+- **Role convention (in the FEN):** **white = the mover + obstacles.** The
+  mover is the white piece whose type equals the row's `piece` (the lesson);
+  when more than one white piece of that type exists, an explicit `mover`
+  column (a square) disambiguates. All other white pieces are obstacles
+  (friendly blockers, impassable, non-capturable).
+  **Black pieces = capturable pickups (`captureTargets`) ONLY for `pawn`
+  movers.** RED-TEAM F1 (verified in `board.ts:46-71`): the engine + BFS only
+  honor `captureTargets` for pawns — rook/bishop/knight/queen/king ignore them.
+  So for NON-pawn movers, black pieces are rejected by the importer (clear
+  error: "captures unsupported for {piece}; model as obstacles"). v1 keeps the
+  engine as the source of truth rather than silently mis-modeling captures.
+- **target:** a separate field (FEN cannot mark a goal square). For pawn capture
+  drills the target may be a capturable square; otherwise it is an empty goal.
 - **Transport:** Google Sheet / Excel exported to **CSV**.
 - **explanation:** **EN only** for now (ES falls back to EN); optional.
 - **Architecture:** CSV → an import script → a **committed generated catalog**
@@ -45,23 +54,28 @@ One row per puzzle. Header row required. Columns:
 |--------|----------|----------------|
 | `kind` | yes | `exercise` \| `labyrinth` |
 | `piece` | yes | `rook` \| `bishop` \| `knight` \| `pawn` \| `queen` \| `king` — the lesson the puzzle belongs to; also identifies the mover in the FEN |
-| `fen` | yes | standard FEN. White = mover + obstacles; black = capturable pickups |
+| `fen` | yes | standard FEN. White = mover + obstacles; black = pawn-only capturable pickups |
 | `target` | yes | algebraic goal square, e.g. `h8` |
+| `mover` | no | square of the player's piece; REQUIRED only when >1 white piece of type `piece` is present (disambiguation — RED-TEAM F2) |
 | `tier` | yes | `easy` \| `medium` \| `hard` |
 | `tags` | no | comma-separated kebab-case tags (e.g. `straight-line,detour`) |
-| `explanation` | no | EN pedagogical note; surfaced as the exercise objective/description |
-| `id` | no | stable id override; if blank, auto-generated `{piece}-gen-{NNN}` (deterministic by import order within piece, offset past existing hand-authored ids) |
+| `explanation` | no | EN pedagogical note; emitted to the descriptions map AND `objective` (see Component 2) |
+| `id` | no | stable id override; if blank, auto-generated `{piece}-gen-{hash8}` where `hash8` is a short content hash of `kind+piece+fen+target+mover` (RED-TEAM F4: hash, NOT row order, so reordering the sheet never changes ids) |
 
-**Mover resolution:** the mover = the unique white piece of type `piece`. If
-zero or more than one white piece of that type exists, the row is rejected with
-a clear error (ambiguous mover). `isCapture` is inferred true when the target
-square holds a black piece or any `captureTargets` exist for a pawn.
+**Mover resolution:** if `mover` is set, the mover is the white piece on that
+square (must match type `piece`). Otherwise the mover = the unique white piece
+of type `piece`; if zero or >1 exist and `mover` is blank, the row is rejected
+(ambiguous mover). For non-pawn movers, any black piece in the FEN is rejected
+(F1: captures unsupported). `isCapture` is set true only for pawn movers whose
+target/`captureTargets` are capturable squares.
 
-**Example row (rook detour labyrinth):**
-`labyrinth,rook,"7R/8/8/8/8/8/8/R6r w - - 0 1",h1,medium,"detour,blocked-file","Go around the blocker to reach h1.",`
-(here the white rook on a1 is the mover, the white rook on h8 is an obstacle,
-the black rook on h1 is the capturable goal — illustrative; real rows validated
-by BFS.)
+**Example row (rook detour labyrinth, knight obstacle so the mover is
+unambiguous):**
+`labyrinth,rook,"8/8/8/8/4N3/8/8/R6R w - - 0 1",h1,a1,medium,"detour,blocked-file","Slide around the knight to reach h1.",`
+Here the FEN has two white rooks (a1, h1) + a white knight (e4). `mover=a1`
+selects the a1 rook; the h1 rook and e4 knight are obstacles; `target=h1`. No
+black pieces (non-pawn → captures unsupported). `optimalMoves` is computed by
+BFS at import.
 
 ## Components
 
@@ -80,16 +94,30 @@ mover, target off-board, target on the mover's own square.
   Reject unsolvable puzzles and report row number + reason.
 - Detect collisions: **fail** on duplicate ids (generated + hand-authored);
   **warn** (non-fatal) on duplicate identical positions (same fen+target).
-- Emit `apps/web/src/lib/game/generated/puzzles.generated.ts` — a typed export
-  (`GENERATED_EXERCISES`, `GENERATED_LABYRINTHS`) grouped by piece. File header
-  marks it generated ("do not edit by hand").
-- Idempotent: same CSV → same output (stable ordering + ids).
+- Emit `apps/web/src/lib/game/generated/puzzles.generated.ts` — typed exports
+  (`GENERATED_EXERCISES`, `GENERATED_LABYRINTHS`) grouped by piece, **sorted by
+  stable id** (RED-TEAM F4) so sheet row order never changes output order or
+  array indices. File header marks it generated ("do not edit by hand").
+- Also emit `GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string>` (id → EN
+  `explanation`) in the same file (RED-TEAM F3 — see Component 3).
+- Idempotent: same CSV → byte-identical output (stable sort + content-hash ids).
 
-### 3. Catalog merge (`apps/web/src/lib/game/exercises.ts`)
-Merge generated arrays into the per-piece exported catalogs AFTER the existing
-hand-authored entries (augment). Existing ids and ordering are untouched, so
-`use-exercise-progress` migration keeps padding new entries with 0★ and the
-daily rotation engine (`rotation.ts`) picks them up with no change.
+### 3. Catalog merge + description wiring
+- **Catalog (`apps/web/src/lib/game/exercises.ts`):** append the stable-sorted
+  generated arrays AFTER the hand-authored entries (augment). Existing ids and
+  positions are untouched, so `use-exercise-progress` migration keeps padding
+  new entries with 0★ and `rotation.ts` picks them up unchanged. Because
+  exercise progress is **index-keyed** (RED-TEAM F4, verified in
+  `use-exercise-progress.ts`), generated entries are append-only and stably
+  sorted — never reordered between imports — so saved stars never drift.
+  Labyrinth progress is **id-keyed** (`labyrinth-progress.ts`), already safe.
+- **Descriptions (RED-TEAM F3):** the exercise drawer renders
+  `EXERCISE_DESCRIPTIONS[id]` (verified in `exercise-drawer.tsx:300`), NOT
+  `exercise.objective`. So the per-exercise description lookup must merge
+  `GENERATED_EXERCISE_DESCRIPTIONS` on top of the hand-authored
+  `EXERCISE_DESCRIPTIONS`. Generated explanations are EN-only; ES falls back to
+  EN (acceptable per the EN-only decision). Rows without `explanation` fall back
+  to the existing "Exercise N" generic label (no regression).
 
 ### 4. Validation / CI
 - The existing BFS verifiers (`exercises-bfs-verifier.test.ts`,
@@ -107,15 +135,30 @@ Sheet (author) → export CSV → `pnpm import-puzzles` → mapper + BFS validat
 → CI BFS re-verifies. Author workflow: edit sheet → export → run script →
 review diff → commit.
 
+## Red-team review (verified against code, resolved)
+
+| # | Finding | Status | Resolution |
+|---|---------|--------|-----------|
+| F1 | `captureTargets` honored ONLY for pawns (`board.ts:46-71`); other movers ignore them | DENIED original assumption | Black pieces = capturable for `pawn` only; rejected for non-pawn movers (model as obstacles) |
+| F2 | Same-type white obstacle makes the mover ambiguous (the first draft's own example was invalid) | Fixed | Optional `mover` square column; required when >1 white piece of the type |
+| F3 | Drawer reads `EXERCISE_DESCRIPTIONS[id]`, not `objective` (`exercise-drawer.tsx:300`) → generated explanation would show "Exercise N" | Fixed | Emit `GENERATED_EXERCISE_DESCRIPTIONS`, merged into the descriptions lookup |
+| F4 | Exercise progress is index-keyed (`use-exercise-progress.ts`) → reordering drifts saved stars; labyrinths are id-keyed (safe) | Fixed | Content-hash ids + stable sort + append-only; never reorder generated exercises |
+| F5 | optimalMoves BFS vs in-game solver could diverge | CONFIRMED SAFE | BFS uses the same `getValidTargets` (`board.ts`) the game uses — single source of truth |
+| F6 | CSV must be committed; FEN contains spaces (quote in CSV); target-on-capture handling | Noted | CSV committed at `apps/web/content/puzzles.csv`; importer requires quoted `fen`; pawn target-capture handled per F1 |
+
 ## Testing
 
-- `fen-puzzle.test.ts`: mapper correctness per the color=role convention
-  (mover detection, obstacles, captureTargets, target), and each error case
-  (invalid FEN, ambiguous mover, off-board/own-square target).
-- `import-puzzles.test.ts`: CSV parsing (quoted fields), BFS optimalMoves
-  computation, rejection of an unsolvable puzzle, duplicate-id detection,
-  deterministic output.
-- Existing BFS verifiers extended to cover the generated catalog.
+- `fen-puzzle.test.ts`: mapper correctness per the convention (mover detection,
+  `mover` override, obstacles, pawn `captureTargets`, target), and each error
+  case (invalid FEN, ambiguous mover with no `mover` column, **black piece with
+  a non-pawn mover**, off-board/own-square target).
+- `import-puzzles.test.ts`: CSV parsing (quoted FEN + commas in tags), BFS
+  optimalMoves computation, rejection of an unsolvable puzzle, duplicate-id
+  **fail** + duplicate-position **warn**, content-hash id stability, and
+  **byte-identical output when sheet rows are reordered** (F4 guard).
+- `import-descriptions` test: `GENERATED_EXERCISE_DESCRIPTIONS` surfaces in the
+  drawer lookup for a generated id (F3 guard).
+- Existing BFS verifiers extended to cover the combined catalog.
 
 ## Out of scope (explicit)
 
