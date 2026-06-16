@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import type { AvatarVariant } from "@/lib/identity/identity-lite";
+import { THEME_CONFIG } from "@/lib/theme";
 import { AVATAR_PX, STYLE_DISC_COLOR, type AvatarSize } from "./avatar-style";
 
 export type PlayerAvatarProps = {
@@ -13,10 +14,11 @@ export type PlayerAvatarProps = {
 };
 
 /**
- * Deterministic player avatar: a style-colored disc with a white piece sprite.
+ * Deterministic player avatar: a style-colored disc with a piece sprite.
  * Pure presentational — derives nothing; the caller passes the variant. Reuses
- * the existing `/art/pieces/w-<piece>` sprite set (no new assets, no remote
- * images). Spec: docs/specs/identity-lite-pr1.md
+ * the ACTIVE THEME's `w-<piece>` sprite set (THEME_CONFIG.piecesBase) so the
+ * pieces match the ones rendered on the game board instead of the legacy
+ * classical set. Spec: docs/specs/identity-lite-pr1.md
  */
 export function PlayerAvatar({
   variant,
@@ -26,7 +28,7 @@ export function PlayerAvatar({
 }: PlayerAvatarProps): React.JSX.Element {
   const px = AVATAR_PX[size];
   const color = STYLE_DISC_COLOR[variant.style];
-  const base = `/art/pieces/w-${variant.piece}`;
+  const base = `${THEME_CONFIG.piecesBase}/w-${variant.piece}`;
   return (
     <span
       data-avatar-disc
