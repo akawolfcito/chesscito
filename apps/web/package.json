@@ -23,7 +23,8 @@
     "art:optimize": "bash scripts/optimize-art-assets.sh",
     "encrypt-key": "tsx scripts/encrypt-key.ts",
     "grant-pro": "tsx scripts/grant-pro.ts",
-    "rail:smoke": "tsx scripts/rail-smoke.ts"
+    "rail:smoke": "tsx scripts/rail-smoke.ts",
+    "import-puzzles": "tsx scripts/import-puzzles.ts"
   },
   "comments": {
     "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."

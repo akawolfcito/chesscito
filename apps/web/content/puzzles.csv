@@ -1,0 +1,3 @@
+kind,piece,fen,target,mover,tier,tags,explanation,id
+labyrinth,rook,"8/8/8/8/8/8/8/R6R w - - 0 1",a8,a1,easy,straight-line,"Slide straight up the a-file.",
+exercise,bishop,"8/8/8/8/8/8/8/2B5 w - - 0 1",h6,,easy,diagonal,"Take the long diagonal to h6.",
