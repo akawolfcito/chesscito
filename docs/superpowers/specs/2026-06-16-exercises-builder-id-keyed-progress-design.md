@@ -1,6 +1,6 @@
 # Design — Exercises in the Builder + id-keyed exercise progress
 
-**Date:** 2026-06-16 · **Status:** Draft for review + red-team. · Author: Wolfcito 🐾 @akawolfcito
+**Date:** 2026-06-16 · **Status:** Red-teamed vs code (scope reduced — id-map infra already exists). DB-future noted. Ready for plan. · Author: Wolfcito 🐾 @akawolfcito
 
 **Extends** the Labyrinth Builder (`2026-06-16-labyrinth-builder-design.md`) +
 FEN pipeline (`2026-06-16-fen-puzzle-content-pipeline-design.md`). Goal: author /
@@ -90,7 +90,25 @@ exercises the builder's edit/reorder flow without first making exercise progress
   id-map lands — retarget, don't stack.
 - Mastery milestones (roadmap) will build on the id-map → this unblocks them.
 
-## Out of scope
+## Red-team review (verified vs code — scope is SMALLER than first drafted)
+| # | Finding | Status | Resolution |
+|---|---------|--------|-----------|
+| F1 | The id-map model ALREADY EXISTS: `rotation.ts` reads stars by id (`progress?.[ex.id]`) and `progress-adapter.ts` already converts positional→id-map (slice C, 2026-06-08). So rotation + mastery are ALREADY id-keyed. | Scope reduced | The change is NOT from scratch: make PERSISTENCE native id-map + flip only the remaining POSITIONAL readers (path `stars[index]`, exercises-screen `stars[exerciseIndex]`/`findIndex`/`every`/`stars[0]`, scoring, drawer). Reuse `migrateStarsArrayToIdMap` as the one-shot migrator. |
+| F2 | `migrateStarsArrayToIdMap` maps by CURRENT catalog order. If the catalog is reordered before the one-shot migration runs, positional→id mapping is WRONG. | Constraint | Ship id-keying + the exercises backfill TOGETHER with `order = original index` (same order). The on-load migration maps correctly on the unchanged order; reordering happens only AFTER, when progress is already id-keyed. |
+| F3 | Double-conversion: `use-exercise-progress` (`calculatePoolMasteryFromArray`) + `visible-set` (`migrateStarsArrayToIdMap`) convert FROM the positional array today. | Must retarget | Once persistence is native id-map, those callers read the id-map DIRECTLY — do not re-convert an already-id-map. Retarget/retire the array-input adapters; keep one as the legacy-load migrator only. |
+| F4 | `exerciseIndex` (positional cursor) drives the screen's "current / next exercise" nav (`findIndex`, `stars[exerciseIndex]`). | Trickiest part | Replace with `currentId` + catalog-order traversal by id. This is the highest-care UI edit. |
+| F5 | Many tests build positional `stars: number[]` (`makeProgress(piece, EXERCISES[piece].map(()=>0))`). | Test churn | Update test helpers + assertions to the id-map shape, preserving intent. Full suite is the gate. |
+| F6 | Backfill exercises (incl. pawn capture drills) → FEN must round-trip; BFS optimalMoves must equal the originals. | Same as labyrinths | Mirror `migrate-labyrinths.ts`; assert optimalMoves match; combined catalog BFS-verified. |
+
+## Future (post-MVP, out of scope now)
+- **DB-backed content for live updates (founder wish):** replace the committed
+  `*.json` source + `pnpm import-puzzles` + deploy cycle with a Supabase table the
+  builder writes to and the app reads, so authored exercises/labyrinths appear
+  LIVE without a commit/deploy. Bigger (infra + read path + auth + offline
+  story); a dedicated phase AFTER the file-based builder is solid. The current
+  file-based pipeline is the stepping stone (same record shape ports to a row).
+
+## Out of scope (now)
 - The roadmap tiers (multi-piece, multi-star) — this only makes exercises
   builder-authorable + id-keyed; tiers are a later spec.
 - ES copy for exercise explanations (EN-only, per the pipeline spec).
