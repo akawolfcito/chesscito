@@ -14,6 +14,9 @@ Session shipped 1 visual feature (Chesito Card) and 4 polish/bug fixes, all on
 | `bab54cae` | Dock #5 | Every dock item shows its label by default; activate only zooms the icon |
 | `e6564aa5` | Card #6 | Chesito Card — rechargeable Peones wallet surface |
 | `d99d1e84` | Card polish | /dev/chesito-card VR fixture + warm peón tint |
+| `1888e2f6` | Dock polish | Center ARENA label → cream/display font + center icon equalized to 2.75rem (founder review) |
+| `2f81f7ea` | Account fix | Account sheet scrollable (max-h 92dvh + overflow) — card had pushed lower rows off-screen |
+| `6664796f` | VR | Refresh hub-clean baseline (only drift from the dock work) |
 
 ## What changed, by item
 
@@ -75,18 +78,31 @@ scope = minimal (mockup 1); Recargar → GetPeonesSheet; art = existing
   Card matches mockup 1; balance reads "--" in the fixture (no wallet) — in-app
   it shows the real number.
 
-## Pending before push / promote
+## Founder review follow-ups (same session)
+- **Dock evened out** (`1888e2f6`): with labels always on, the center ARENA
+  label read cyan-dim + wrong font (it only had `game-label`, not the side
+  `chesscito-dock-item-label`); now cream + display font. The center icon also
+  rendered larger (its button had no explicit size); constrained to 2.75rem so
+  all five icons share one footprint. Verified at 390px.
+- **Account sheet scroll** (`2f81f7ea`): the Chesito Card hero pushed the sheet
+  past the viewport and the bottom Sheet variant has no max-height/overflow, so
+  lower rows were unreachable. Capped at 92dvh + overflow-y-auto.
 
-1. **VR baseline refresh (REQUIRED, not yet run).** These surfaces will drift:
-   dock (labels always on), leaderboard (pieces + rank numbers), arena HUD
-   (rival avatar), + new card fixture. Run on a clean server with a
-   reboot-friendly window:
-   `rm -rf .next && PORT=3947 pnpm dev` then
-   `BASE_URL=http://localhost:3947 pnpm test:e2e:visual -g "<surface>" --update-snapshots`.
-   Filter by surface to keep blast radius small (disk-pressure memory).
-2. **Push + (later) promote.** All commits are local on `main`; nothing pushed.
-3. **MiniPay / 390px smoke** of: arena leave→selector, rival avatar in match,
-   leaders pieces+numbers, dock labels, Account card + chip modal + Top up.
+## VR — DONE (scoped)
+Ran `--update-snapshots` against a clean server, scoped `-g "hub-|vr13-|vr9-"`.
+**Only `hub-clean-minipay-darwin.png` drifted** and was refreshed (`6664796f`).
+Why nothing else: other hub captures have overlays covering the dock; vr13
+exercise fixtures don't render the full PersistentDock; vr9 arena end-states
+cover the HUD matchup row, so the rival-avatar change (#2) is live-gameplay
+only and has no VR baseline. Leaderboard has no VR baseline either, so #3/#4
+don't drift. Did NOT re-run full VR to verify (per disk-pressure memory).
+
+## Pending before push / promote
+1. **Push + (later) promote.** All commits are local on `main`; nothing pushed.
+2. **MiniPay / 390px smoke** of: arena leave→selector, rival avatar in match,
+   leaders pieces+numbers, dock row, Account card + scroll + chip modal + Top up.
+3. **(optional) Card VR baseline.** `/dev/chesito-card` fixture exists; add a
+   spec entry + `--update-snapshots` to lock it if desired.
 
 ## Open questions
 - **Card ES copy.** `CHESITO_CARD_COPY` is EN-only (imported from editorial,
