@@ -46,3 +46,23 @@ export function randomEloForDifficulty(difficulty: ArenaDifficulty): number {
   const { eloMin, eloMax } = RIVALS[difficulty];
   return eloMin + Math.floor(Math.random() * (eloMax - eloMin + 1));
 }
+
+/** Per-difficulty "thinking" delay window [minMs, maxMs] before the rival
+ *  plays. The engine has the move almost instantly; this pause gives the
+ *  sensation that the rival is actually thinking. Harder rivals "think"
+ *  slightly longer. */
+export const AI_THINK_TIME_MS: Record<ArenaDifficulty, [number, number]> = {
+  easy: [500, 1300],
+  medium: [700, 1700],
+  hard: [900, 2100],
+};
+
+/** A randomized think delay (ms) for the rival's next move. `rng` is injectable
+ *  for tests; defaults to Math.random (allowed in app code). */
+export function aiThinkTimeMs(
+  difficulty: ArenaDifficulty,
+  rng: () => number = Math.random,
+): number {
+  const [min, max] = AI_THINK_TIME_MS[difficulty];
+  return Math.round(min + rng() * (max - min));
+}

@@ -5,6 +5,7 @@ import {
   rivalFor,
   eloRangeLabel,
   randomEloForDifficulty,
+  aiThinkTimeMs,
 } from "../rivals";
 import type { ArenaDifficulty } from "@/lib/game/types";
 
@@ -30,6 +31,22 @@ describe("rivals config", () => {
     expect(rivalFor("easy").frame).toBe("blue");
     expect(rivalFor("medium").frame).toBe("silver");
     expect(rivalFor("hard").frame).toBe("gold");
+  });
+
+  it("aiThinkTimeMs returns the window bounds and scales by difficulty", () => {
+    // rng=0 → min, rng→1 → max (per difficulty).
+    expect(aiThinkTimeMs("easy", () => 0)).toBe(500);
+    expect(aiThinkTimeMs("easy", () => 1)).toBe(1300);
+    expect(aiThinkTimeMs("medium", () => 0)).toBe(700);
+    expect(aiThinkTimeMs("hard", () => 1)).toBe(2100);
+    // Mid value lands inside the window.
+    const mid = aiThinkTimeMs("medium", () => 0.5);
+    expect(mid).toBeGreaterThanOrEqual(700);
+    expect(mid).toBeLessThanOrEqual(1700);
+    // Harder rivals think at least as long at the same rng draw.
+    expect(aiThinkTimeMs("hard", () => 0.5)).toBeGreaterThan(
+      aiThinkTimeMs("easy", () => 0.5),
+    );
   });
 
   it("gives every rival a distinct, non-empty persona name (not 'AI'/'Bot')", () => {

@@ -6,6 +6,7 @@ import type { Square } from "chess.js";
 import { aiMove } from "js-chess-engine";
 import type { ArenaDifficulty, ArenaStatus, ChessBoardPiece } from "./types";
 import { fenToPieces } from "./arena-utils";
+import { aiThinkTimeMs } from "./rivals";
 import { clearArenaGame, loadArenaGame, saveArenaGame } from "./arena-persistence";
 import { hapticTap, hapticReject, hapticSuccess, hapticImpact } from "@/lib/haptics";
 import { sfxCapture, sfxCheck, sfxMove, sfxVictory } from "@/lib/sfx";
@@ -209,7 +210,9 @@ export function useChessGame(): ChessGameState {
 
     setIsThinking(true);
 
-    // Use setTimeout to yield to the UI before computing
+    // Randomized "thinking" delay (~0.5–2.1s, scaled by difficulty) so the
+    // rival feels like it deliberates, even though the engine has the move
+    // almost instantly. The timeout is cancelled on reset/resign/unmount.
     aiTimeoutRef.current = setTimeout(() => {
       aiTimeoutRef.current = null;
       if (game.isGameOver()) { setIsThinking(false); return; }
@@ -251,7 +254,7 @@ export function useChessGame(): ChessGameState {
         setIsThinking(false);
         setErrorMessage("Engine error — please restart the match");
       }
-    }, 50);
+    }, aiThinkTimeMs(currentDifficulty));
   }, []);
 
   const selectSquare = useCallback((square: string) => {
