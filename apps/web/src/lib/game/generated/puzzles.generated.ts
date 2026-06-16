@@ -4,57 +4,6 @@ import type { Exercise, PieceId } from "@/lib/game/types";
 
 export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
   "rook": [],
-  "bishop": [
-    {
-      "id": "bishop-gen-01xm28nm",
-      "optimalMoves": 1,
-      "startPos": {
-        "file": 2,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 7,
-        "rank": 5
-      },
-      "tier": "easy",
-      "tags": [
-        "diagonal"
-      ],
-      "objective": "Take the long diagonal to h6."
-    }
-  ],
-  "knight": [],
-  "pawn": [],
-  "queen": [],
-  "king": []
-};
-
-export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
-  "rook": [
-    {
-      "id": "rook-gen-008bsx5x",
-      "optimalMoves": 1,
-      "startPos": {
-        "file": 0,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 0,
-        "rank": 7
-      },
-      "obstacles": [
-        {
-          "file": 7,
-          "rank": 0
-        }
-      ],
-      "tier": "easy",
-      "tags": [
-        "straight-line"
-      ],
-      "objective": "Slide straight up the a-file."
-    }
-  ],
   "bishop": [],
   "knight": [],
   "pawn": [],
@@ -62,7 +11,13 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
   "king": []
 };
 
-export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {
-  "rook-gen-008bsx5x": "Slide straight up the a-file.",
-  "bishop-gen-01xm28nm": "Take the long diagonal to h6."
+export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
+  "rook": [],
+  "bishop": [],
+  "knight": [],
+  "pawn": [],
+  "queen": [],
+  "king": []
 };
+
+export const GENERATED_EXERCISE_DESCRIPTIONS: Record<string, string> = {};
