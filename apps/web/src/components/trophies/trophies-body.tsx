@@ -25,6 +25,11 @@ import {
 
 type RoadmapItem = { title: string; description: string };
 
+/** "Coming later" roadmap (Tournaments / VIP Passes / Seasonal Rewards) is
+ *  hidden until further notice (founder 2026-06-16): show what exists, don't
+ *  promise. Flip to true to bring it back. */
+const SHOW_ROADMAP = false;
+
 /** Compact time formatter used inside the HERO BAND's "Your best" line.
  *  Mirrors trophy-card.tsx#formatTimeMs but kept local so the hero
  *  doesn't pull a sibling-card private helper. */
@@ -163,7 +168,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
 
   if (!configured) {
     return (
-      <div className="candy-frame candy-frame-amber flex flex-col items-center gap-3 p-6 text-center">
+      <div className="trophy-empty-card flex flex-col items-center gap-3 p-6 text-center">
         <div
           className="flex h-12 w-12 items-center justify-center rounded-full"
           style={{ background: "rgba(110, 65, 15, 0.18)" }}
@@ -203,7 +208,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
       title={t("myVictories")}
     >
       {!isConnected ? (
-        <div className="candy-frame candy-frame-amber flex flex-col items-center gap-4 p-6 text-center">
+        <div className="trophy-empty-card flex flex-col items-center gap-4 p-6 text-center">
           <div
             className="flex h-14 w-14 items-center justify-center rounded-full"
             style={{ background: "rgba(110, 65, 15, 0.18)" }}
@@ -224,7 +229,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
           </PrincipalButton>
         </div>
       ) : isEmptyConnected ? (
-        <div className="candy-frame candy-frame-amber flex flex-col items-center gap-5 p-8 text-center">
+        <div className="trophy-empty-card flex flex-col items-center gap-5 p-8 text-center">
           <div className="relative flex h-16 w-16 items-center justify-center">
             <div
               className="absolute inset-0 rounded-full animate-pulse"
@@ -384,7 +389,8 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
 
       {ordered}
 
-      {/* Roadmap — Footer */}
+      {/* Roadmap — Footer (hidden until further notice, see SHOW_ROADMAP) */}
+      {SHOW_ROADMAP && (
       <footer className="mt-4 border-t border-[rgba(110,65,15,0.15)] pt-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[rgba(110,65,15,0.15)]" />
@@ -413,6 +419,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
           ))}
         </ul>
       </footer>
+      )}
     </div>
   );
 }
