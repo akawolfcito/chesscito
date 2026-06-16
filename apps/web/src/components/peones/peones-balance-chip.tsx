@@ -27,7 +27,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { GetPeonesSheet } from "@/components/payments/get-peones-sheet";
+import { ChesitoCard } from "@/components/peones/chesito-card";
+import { CHESITO_CARD_COPY } from "@/lib/content/editorial";
 import {
   emitPeonesBalanceViewed,
   type PeonesBalanceViewSurface,
@@ -43,10 +44,10 @@ type Props = {
 
 export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
   const { state, refetch } = usePeonesBalance();
-  /** Get Peones entry point (payment rail slice E). Tapping the chip opens
-   *  the GetPeonesSheet. Guests never see the chip, so there is no guest
-   *  entry. The sheet is mounted only while open. */
-  const [sheetOpen, setSheetOpen] = useState(false);
+  /** Chesito Card entry point. Tapping the chip opens the rechargeable card
+   *  (its own Top up CTA routes into the Get Peones rail). Guests never see
+   *  the chip, so there is no guest entry. Mounted only while open. */
+  const [cardOpen, setCardOpen] = useState(false);
   /** Sprint 3 commit H — last balance we emitted `peones_balance_viewed`
    *  for. Re-renders with the same number do not re-emit; a real
    *  balance change does. Cleared implicitly when the component
@@ -65,6 +66,20 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
     });
   }, [state, surface]);
 
+  // Escape closes the card modal (the scrim handles backdrop + the X handles
+  // an explicit tap; this covers keyboard users).
+  useEffect(() => {
+    if (!cardOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setCardOpen(false);
+        void refetch();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [cardOpen, refetch]);
+
   if (state.kind === "guest") return null;
 
   // Visual-first (founder 2026-06-11): the pawn sprite IS the
@@ -82,7 +97,13 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
       ? `Get Peones. Balance: ${state.balance}`
       : "Get Peones";
 
-  const openSheet = () => setSheetOpen(true);
+  const openSheet = () => setCardOpen(true);
+  // Closing the card refetches so the chip reflects a balance the user may
+  // have topped up from inside the card.
+  const closeCard = () => {
+    setCardOpen(false);
+    void refetch();
+  };
 
   return (
     <>
@@ -131,12 +152,43 @@ export function PeonesBalanceChip({ surface = "hub" }: Props = {}) {
         </span>
       </div>
 
-      {sheetOpen ? (
-        <GetPeonesSheet
-          open={sheetOpen}
-          onOpenChange={setSheetOpen}
-          onSuccess={() => void refetch()}
-        />
+      {cardOpen ? (
+        // Lightweight centered modal so the Chesito Card "floats" on the
+        // scrim (no extra panel frame around the already-framed card).
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+        <div
+          className="candy-modal-scrim pointer-events-auto fixed inset-0 z-[70] flex items-center justify-center animate-in fade-in duration-300"
+          role="dialog"
+          aria-modal="true"
+          aria-label={CHESITO_CARD_COPY.title}
+          onClick={closeCard}
+        >
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+          <div
+            className="relative mx-4 w-full max-w-[360px]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={closeCard}
+              aria-label="Close"
+              className="candy-close-asset-button absolute -right-2 -top-4 z-10"
+            >
+              <picture>
+                <source srcSet="/art/screen-mission/close-icon.avif" type="image/avif" />
+                <source srcSet="/art/screen-mission/close-icon.webp" type="image/webp" />
+                <img
+                  src="/art/screen-mission/close-icon.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-9 w-9 object-contain"
+                  draggable={false}
+                />
+              </picture>
+            </button>
+            <ChesitoCard />
+          </div>
+        </div>
       ) : null}
     </>
   );

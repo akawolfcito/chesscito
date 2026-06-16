@@ -184,24 +184,24 @@ describe("PeonesBalanceChip — Get Peones entry point (payment rail)", () => {
     });
   }
 
-  it("does not show the sheet until the chip is tapped", () => {
+  it("does not show the card until the chip is tapped", () => {
     successState();
     render(<PeonesBalanceChip />);
-    expect(screen.queryByTestId("get-peones-sheet-stub")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("chesito-card")).not.toBeInTheDocument();
   });
 
-  it("tapping the chip opens the GetPeonesSheet", () => {
+  it("tapping the chip opens the Chesito Card", () => {
     successState();
     render(<PeonesBalanceChip />);
     fireEvent.click(screen.getByTestId("peones-balance-chip"));
-    expect(screen.getByTestId("get-peones-sheet-stub")).toBeInTheDocument();
+    expect(screen.getByTestId("chesito-card")).toBeInTheDocument();
   });
 
-  it("Enter / Space on the chip opens the sheet (keyboard)", () => {
+  it("Enter / Space on the chip opens the card (keyboard)", () => {
     successState();
     render(<PeonesBalanceChip />);
     fireEvent.keyDown(screen.getByTestId("peones-balance-chip"), { key: "Enter" });
-    expect(screen.getByTestId("get-peones-sheet-stub")).toBeInTheDocument();
+    expect(screen.getByTestId("chesito-card")).toBeInTheDocument();
   });
 
   it("the chip is reachable as a button and shows no spend action", () => {
@@ -212,10 +212,10 @@ describe("PeonesBalanceChip — Get Peones entry point (payment rail)", () => {
     expect(screen.queryByRole("button", { name: /spend/i })).not.toBeInTheDocument();
   });
 
-  it("guest never gets an entry point (chip hidden → no sheet)", () => {
+  it("guest never gets an entry point (chip hidden → no card)", () => {
     usePeonesBalanceMock.mockReturnValue({ state: { kind: "guest" }, refetch: vi.fn() });
     render(<PeonesBalanceChip />);
     expect(screen.queryByTestId("peones-balance-chip")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("get-peones-sheet-stub")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("chesito-card")).not.toBeInTheDocument();
   });
 });

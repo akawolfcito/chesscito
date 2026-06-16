@@ -33,6 +33,7 @@ import { bumpStreak, resetStreak, useStreak } from "@/lib/exercises/use-streak";
 import { useWelcomePackClaim } from "@/lib/shop/use-welcome-pack-claim";
 import { DailyTacticSlot } from "@/components/daily/daily-tactic-slot";
 import { PeonesHintButton } from "@/components/peones/peones-hint-button";
+import { ChesitoCard } from "@/components/peones/chesito-card";
 // PeonesRetryButton intentionally NOT imported — Sprint 5 commit G
 // unmounted the paid Retry chip pending differential-value
 // calibration. The component + tests + spend endpoint support stay
@@ -274,6 +275,10 @@ function AccountSheet({
         </div>
 
         <div className="mt-3 flex flex-col gap-3">
+          {/* Chesito Card — the rechargeable Peones "wallet" hero. Visual-first
+           *  spend-economy anchor; its Top up CTA opens the Get Peones rail. */}
+          <ChesitoCard />
+
           <div className="account-tiles-grid">
             {/* Wallet — tile click copies the full address */}
             <button

@@ -6863,6 +6863,171 @@ button.hud-resource-chip:active:not(:disabled) {
   text-align: center;
 }
 
+/* ── Chesito Card (2026-06-15) ──
+ * Rechargeable "wallet" card framing the Peones balance like a debit card.
+ * Hero of the Account sheet + behind the Peones HUD chip. Visual-only; the
+ * Top up CTA opens the existing Get Peones rail. Cream/parchment chassis with
+ * a gold rim, navy title, green balance, and the peón sprite anchored right. */
+.chesito-card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 150px;
+  padding: 16px 18px;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 2px solid #d8b24a;
+  background:
+    radial-gradient(120% 90% at 85% 20%, rgba(255, 255, 255, 0.55), transparent 60%),
+    linear-gradient(155deg, #fbf4e2 0%, #f4e9d0 100%);
+  box-shadow:
+    0 6px 18px rgba(63, 34, 8, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.chesito-card-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 64%;
+}
+
+.chesito-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chesito-card-crown {
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: 0 0 auto;
+}
+
+.chesito-card-title {
+  font-family: var(--font-game-display, var(--font-game-action));
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #1f2d50;
+}
+
+.chesito-card-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0;
+}
+
+.chesito-card-divider::before,
+.chesito-card-divider::after {
+  content: "";
+  height: 2px;
+  flex: 1 1 auto;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(216, 178, 74, 0.7), transparent);
+}
+
+.chesito-card-spark {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: 0 0 auto;
+}
+
+.chesito-card-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.chesito-card-balance-num {
+  font-family: var(--font-game-display, var(--font-game-action));
+  font-size: 2.7rem;
+  font-weight: 900;
+  line-height: 0.9;
+  color: #1f8a4d;
+}
+
+.chesito-card-balance-unit {
+  font-family: var(--font-game-action);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1f8a4d;
+}
+
+.chesito-card-caption {
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.15;
+  color: rgba(90, 60, 20, 0.72);
+}
+
+.chesito-card-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 9px 18px 9px 14px;
+  border-radius: 13px;
+  border: 0;
+  font-family: var(--font-game-action);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(180deg, #45b65d 0%, #2e8c41 100%);
+  box-shadow:
+    0 4px 0 #246c33,
+    0 6px 12px rgba(36, 108, 51, 0.4);
+  cursor: pointer;
+  transition: transform var(--duration-snap, 120ms) ease, box-shadow var(--duration-snap, 120ms) ease;
+}
+
+.chesito-card-cta:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 #246c33,
+    0 3px 8px rgba(36, 108, 51, 0.4);
+}
+
+.chesito-card-cta-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Peón sprite anchored bottom-right as the card's hero. Sized off the card
+ * width so it scales with the 390px app frame without upscaling the source. */
+.chesito-card-art {
+  position: absolute;
+  right: 6px;
+  bottom: 0;
+  width: 42%;
+  max-width: 170px;
+  display: block;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(63, 34, 8, 0.28));
+}
+
+.chesito-card-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
 /* ── Arena confirm modal (2026-06-15) ──
  * Quit / resign confirmation rendered inside VictoryPopupShell. Canonical
  * popup typography for the title; a danger-red primary CTA + neutral

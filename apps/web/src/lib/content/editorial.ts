@@ -2313,6 +2313,21 @@ export const ACCOUNT_SHEET_COPY = {
   languageSwitchAriaFormat: "Switch language to {name}",
 } as const;
 
+/** Chesito Card — the rechargeable "wallet" surface that frames the
+ *  player's Peones balance like a debit/credit card. Lives as the hero of
+ *  the Account sheet and behind the Peones HUD chip. Visual-first: the card
+ *  IS the balance, the Top up CTA routes into the existing Get Peones rail. */
+export const CHESITO_CARD_COPY = {
+  title: "Chesito Card",
+  /** Currency unit shown next to the big balance number. */
+  unit: "Peones",
+  /** One-line promise under the balance, plain language, no web3 jargon. */
+  caption: "Your balance to play and unlock",
+  /** Primary CTA — opens the Get Peones rail to recharge. */
+  topUp: "Top up",
+  topUpAria: "Top up your Peones balance",
+} as const;
+
 /** /why public landing page copy. Spanish-only in v1 by product
  *  decision (English version is a follow-up sprint). All strings are
  *  centralized here per the no-inline-copy rule of the codebase.
