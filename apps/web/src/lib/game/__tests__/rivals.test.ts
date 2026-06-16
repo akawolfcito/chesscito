@@ -26,6 +26,12 @@ describe("rivals config", () => {
     expect(rivalFor("hard").avatar).toBe("kairo");
   });
 
+  it("maps difficulty to a frame color (blue/silver/gold)", () => {
+    expect(rivalFor("easy").frame).toBe("blue");
+    expect(rivalFor("medium").frame).toBe("silver");
+    expect(rivalFor("hard").frame).toBe("gold");
+  });
+
   it("gives every rival a distinct, non-empty persona name (not 'AI'/'Bot')", () => {
     const names = DIFFS.map((d) => rivalFor(d).name);
     expect(new Set(names).size).toBe(DIFFS.length);
