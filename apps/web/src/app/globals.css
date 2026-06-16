@@ -3301,6 +3301,13 @@
   .action-pin-submit-pedestal {
     width: 64px;
     height: 64px;
+    /* Drop the 44px icon to the BOTTOM of the 64px touch target so it sits a
+       consistent ~4px above its label instead of leaving ~20px of dead space
+       (founder 2026-06-16: unify icon+text spacing with the dock). Touch
+       target stays 64px; only the icon's resting position changes. */
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
     border: 0;
     border-radius: 0;
     background: transparent;
