@@ -89,3 +89,42 @@ export function computeExerciseBfs(
   }
   return null;
 }
+
+export type ExerciseBfsPathResult = { optimalMoves: number; path: BoardPosition[] } | null;
+
+/** Like computeExerciseBfs but reconstructs the full optimal path
+ *  (start..target inclusive) via parent tracking. Same getValidTargets
+ *  expansion, so it agrees with gameplay. */
+export function computeExerciseBfsPath(
+  piece: PieceId,
+  exercise: Exercise,
+  maxDepth = 32,
+): ExerciseBfsPathResult {
+  const start = exercise.startPos;
+  const target = exercise.targetPos;
+  const blockers = exercise.obstacles ?? [];
+  const isCapture = exercise.isCapture ?? false;
+  const captureTargets = exercise.captureTargets;
+  if (key(start) === key(target)) return { optimalMoves: 0, path: [start] };
+
+  const parent = new Map<string, BoardPosition | null>([[key(start), null]]);
+  const queue: Array<{ pos: BoardPosition; depth: number }> = [{ pos: start, depth: 0 }];
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    if (node.depth >= maxDepth) continue;
+    const moves = getValidTargets(piece, node.pos, blockers, isCapture, captureTargets, target);
+    for (const m of moves) {
+      const k = key(m);
+      if (parent.has(k)) continue;
+      parent.set(k, node.pos);
+      if (k === key(target)) {
+        const path: BoardPosition[] = [];
+        let cur: BoardPosition | null = m;
+        while (cur) { path.unshift(cur); cur = parent.get(key(cur)) ?? null; }
+        return { optimalMoves: node.depth + 1, path };
+      }
+      queue.push({ pos: m, depth: node.depth + 1 });
+    }
+  }
+  return null;
+}
