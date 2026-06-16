@@ -21,6 +21,17 @@ describe("ShareGrid", () => {
     expect(tg.href).toContain(`text=${encodeURIComponent(TEXT)}`);
   });
 
+  it("strips an embedded URL from the message so the link is not duplicated", () => {
+    // text already carries the link; every tile also adds the url separately,
+    // so the message portion must NOT contain the url (founder 2026-06-16).
+    render(<ShareGrid text={`Beat me! 👉 ${URL}`} url={URL} />);
+    const tg = screen.getByRole("link", { name: /telegram/i }) as HTMLAnchorElement;
+    // the url appears once (the url= param), and the text= param has it stripped.
+    const textParam = decodeURIComponent(tg.href.split("&text=")[1] ?? "");
+    expect(textParam).not.toContain("http");
+    expect(textParam).toContain("Beat me!");
+  });
+
   it("WhatsApp / X / Facebook tiles still present", () => {
     render(<ShareGrid text={TEXT} url={URL} />);
     expect(screen.getByRole("link", { name: /whatsapp/i })).toBeTruthy();

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { track } from "@/lib/telemetry";
+import { isMiniPayEnv } from "@/lib/minipay";
 
 type Props = {
   /** Text to share (typically a challenge/achievement sentence). */
@@ -44,9 +45,20 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
   const tGrid = useTranslations("SHARE_GRID_COPY");
   const tShare = useTranslations("SHARE_COPY");
   const shareUrl = url ?? tShare("url");
-  const payload = `${text}\n${shareUrl}`;
+  // `text` (e.g. challengeText) may already embed the share URL. Every path
+  // below ALSO adds the URL (payload, service params, navigator.share url), so
+  // strip any URL from the message first to avoid the duplicated-link bug
+  // (founder 2026-06-16); the URL is then re-added exactly once per path.
+  const textNoUrl = text.replace(/https?:\/\/\S+/gi, "").replace(/\s*👉\s*$/u, "").trimEnd();
+  const payload = `${textNoUrl}\n${shareUrl}`;
   const [copied, setCopied] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  // Hide the Download/Save tile inside MiniPay: its in-app image viewer renders
+  // the card deformed (founder 2026-06-16). Set post-mount to avoid SSR mismatch.
+  const [inMiniPay, setInMiniPay] = useState(false);
+  useEffect(() => {
+    setInMiniPay(isMiniPayEnv());
+  }, []);
 
   async function handleCopy() {
     try {
@@ -140,7 +152,7 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
       const file = await fetchCardFile();
       if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          await navigator.share({ files: [file], text, url: shareUrl });
+          await navigator.share({ files: [file], text: textNoUrl, url: shareUrl });
           track("share_tile_tap", { tile: "more", path: "native_files" });
           return;
         } catch {
@@ -150,7 +162,7 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
       }
     }
     try {
-      await navigator.share({ text, url: shareUrl });
+      await navigator.share({ text: textNoUrl, url: shareUrl });
       track("share_tile_tap", { tile: "more", path: "native_text_only" });
     } catch {
       track("share_tile_tap", { tile: "more", path: "native_text_cancelled" });
@@ -185,7 +197,7 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
       key: "telegram",
       label: "Telegram",
       background: "linear-gradient(135deg, #37AEE2 0%, #1E96C8 100%)",
-      href: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`,
+      href: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(textNoUrl)}`,
       icon: (
         <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white" aria-hidden="true">
           <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z" />
@@ -196,7 +208,7 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
       key: "facebook",
       label: "Facebook",
       background: "#1877F2",
-      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(text)}`,
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(textNoUrl)}`,
       icon: (
         <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white" aria-hidden="true">
           <path d="M24 12.073c0-6.627-5.373-12-12-12S0 5.446 0 12.073c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073" />
@@ -207,14 +219,14 @@ export function ShareGrid({ text, url, cardUrl }: Props) {
       key: "x",
       label: "X",
       background: "#0f0f0f",
-      href: `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`,
+      href: `https://x.com/intent/tweet?text=${encodeURIComponent(textNoUrl)}&url=${encodeURIComponent(shareUrl)}`,
       icon: (
         <svg viewBox="0 0 24 24" className="h-4 w-4 fill-white" aria-hidden="true">
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
         </svg>
       ),
     },
-    cardUrl
+    cardUrl && !inMiniPay
       ? {
           key: "save",
           label: saveLabel,
