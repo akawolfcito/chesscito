@@ -73,16 +73,10 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
     },
   );
 
-  // Easy → hard ordering by optimalMoves; catalog index breaks ties so
-  // the order is stable across builds (red-team P2 lab-ordering).
-  const orderedLabyrinths = LABYRINTHS[piece]
-    .map((labyrinth, catalogIndex) => ({ labyrinth, catalogIndex }))
-    .sort(
-      (a, b) =>
-        a.labyrinth.optimalMoves - b.labyrinth.optimalMoves ||
-        a.catalogIndex - b.catalogIndex,
-    )
-    .map((entry) => entry.labyrinth);
+  // The in-game sequence follows the authored catalog `order` (NOT
+  // difficulty). LABYRINTHS[piece] is already sorted by (order, id) at
+  // import time, so we consume it as-is — the author controls the order.
+  const orderedLabyrinths = LABYRINTHS[piece];
 
   const labyrinthNodes: TrainingNode[] = [];
   for (const [index, labyrinth] of orderedLabyrinths.entries()) {

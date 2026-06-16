@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { upsertRecord, type LabyrinthRecord } from "@/lib/labyrinth-builder/store";
+import { puzzleId } from "@/lib/game/fen-puzzle";
 import { parseCsv, buildCatalog, renderGeneratedModule } from "../../../../../scripts/import-puzzles";
 
 export const runtime = "nodejs";
@@ -30,6 +31,13 @@ export async function POST(req: Request) {
     rec = (await req.json()) as LabyrinthRecord;
   } catch {
     return NextResponse.json({ ok: false, errors: ["invalid JSON"] }, { status: 400 });
+  }
+  // Auto-assign a stable, content-addressed id when none is supplied so the
+  // record can be overwritten on future saves (no duplicate "(no id)" rows).
+  // Uses the SAME scheme as the build, so the assigned id equals the
+  // generated id.
+  if (!rec.id) {
+    rec.id = puzzleId(rec.piece, `labyrinth|${rec.fen}|${rec.target}|${rec.mover ?? ""}`);
   }
   const recs: LabyrinthRecord[] = existsSync(JSON_PATH)
     ? (JSON.parse(readFileSync(JSON_PATH, "utf8")) as LabyrinthRecord[])

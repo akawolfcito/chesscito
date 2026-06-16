@@ -138,7 +138,14 @@ export default function LabyrinthBuilderPage() {
   }, [tracedPath]);
 
   const pieceRecords = useMemo(
-    () => records.filter((r) => r.piece === state.piece),
+    () =>
+      records
+        .filter((r) => r.piece === state.piece)
+        // Show the real in-game sequence: authored order, id as tie-break.
+        .sort(
+          (a, b) =>
+            a.order - b.order || (a.id ?? "").localeCompare(b.id ?? ""),
+        ),
     [records, state.piece],
   );
 
@@ -414,9 +421,10 @@ export default function LabyrinthBuilderPage() {
               <button
                 type="button"
                 onClick={handleNew}
+                title="Start a fresh labyrinth (discard current edit)"
                 className="rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600"
               >
-                New (clear)
+                + New labyrinth
               </button>
             </div>
           ) : null}

@@ -102,10 +102,10 @@ describe("buildTrainingPath — labyrinth unlocks", () => {
     }
   });
 
-  it("chains each labyrinth on completion of the previous one (knight ordered chain)", () => {
+  it("chains each labyrinth on completion of the previous one (knight authored chain)", () => {
     const progress = makeProgress("knight", starsTotaling("knight", 6));
-    // Ordered by optimalMoves asc + catalog tie-break:
-    // lab-1(3) → lab-2(4) → lab-4(4) → lab-5(5) → lab-3(6)
+    // Authored catalog order (order 0..4):
+    // lab-1 → lab-2 → lab-3 → lab-4 → lab-5
     const afterFirst = buildTrainingPath(
       makeInput("knight", { progress, labyrinthBests: { "knight-lab-1": 3 } }),
     );
@@ -113,9 +113,9 @@ describe("buildTrainingPath — labyrinth unlocks", () => {
     expect(ids).toEqual([
       ["knight-lab-1", "complete"],
       ["knight-lab-2", "available"],
+      ["knight-lab-3", "locked"],
       ["knight-lab-4", "locked"],
       ["knight-lab-5", "locked"],
-      ["knight-lab-3", "locked"],
     ]);
 
     const afterSecond = buildTrainingPath(
@@ -125,8 +125,8 @@ describe("buildTrainingPath — labyrinth unlocks", () => {
       }),
     );
     const labs = byKind(afterSecond, "labyrinth");
-    expect(labs[2]).toMatchObject({ id: "knight-lab-4", status: "available" });
-    expect(labs[3]).toMatchObject({ id: "knight-lab-5", status: "locked" });
+    expect(labs[2]).toMatchObject({ id: "knight-lab-3", status: "available" });
+    expect(labs[3]).toMatchObject({ id: "knight-lab-4", status: "locked" });
   });
 
   it("derives labyrinth stars from the recorded best via labyrinthStars", () => {
@@ -233,25 +233,33 @@ describe("buildTrainingPath — catalog coverage and ordering", () => {
     }
   });
 
-  it("orders labyrinths by optimalMoves asc with catalog-index tie-break", () => {
+  it("orders labyrinths by authored catalog order (the in-game sequence)", () => {
+    // The path now consumes LABYRINTHS[piece] as-is; the catalog is already
+    // sorted by (order, id) at import time, so the author's `order` controls
+    // the sequence (not difficulty / optimalMoves).
     const knight = buildTrainingPath(makeInput("knight"));
+    expect(byKind(knight, "labyrinth").map((n) => n.id)).toEqual(
+      LABYRINTHS.knight.map((lab) => lab.id),
+    );
     expect(byKind(knight, "labyrinth").map((n) => n.id)).toEqual([
-      "knight-lab-1", // 3
-      "knight-lab-2", // 4 (catalog index beats knight-lab-4)
-      "knight-lab-4", // 4
-      "knight-lab-5", // 5
-      "knight-lab-3", // 6
+      "knight-lab-1", // order 0
+      "knight-lab-2", // order 1
+      "knight-lab-3", // order 2
+      "knight-lab-4", // order 3
+      "knight-lab-5", // order 4
     ]);
 
     const rook = buildTrainingPath(makeInput("rook"));
-    // The 3 migrated rook labs share optimalMoves=3 → they hold catalog order
-    // ahead of the higher-cost builder test record (rook-gen-…, optimalMoves
-    // 5), which the ascending-optimalMoves rule places last.
+    expect(byKind(rook, "labyrinth").map((n) => n.id)).toEqual(
+      LABYRINTHS.rook.map((lab) => lab.id),
+    );
+    // rook-gen-… and rook-lab-1 both carry order 0 → id breaks the tie, so the
+    // builder test record sorts ahead of rook-lab-1.
     expect(byKind(rook, "labyrinth").map((n) => n.id)).toEqual([
-      "rook-lab-1", // 3
-      "rook-lab-2", // 3
-      "rook-lab-3", // 3
-      "rook-gen-00q06dtn", // 5 (builder test record)
+      "rook-gen-00q06dtn", // order 0 (id tie-break < rook-lab-1)
+      "rook-lab-1", // order 0
+      "rook-lab-2", // order 1
+      "rook-lab-3", // order 2
     ]);
   });
 });

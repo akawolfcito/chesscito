@@ -73,6 +73,23 @@ describe("POST /api/dev/labyrinth", () => {
     ).toBe(true);
   });
 
+  it("auto-assigns a stable generated id when the record has none", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const { id: _omit, ...noId } = VALID_ROOK;
+    const res = await POST(postRequest(JSON.stringify(noId)));
+    const json = (await res.json()) as { ok: boolean; saved: { id?: string } };
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    // The assigned id uses the build's content-addressed scheme.
+    expect(json.saved.id).toMatch(/^rook-gen-/);
+    // The persisted labyrinths.json payload carries the same id (no "(no id)").
+    const jsonWrite = fsMocks.writeFileSync.mock.calls.find((c) =>
+      String(c[0]).endsWith("content/labyrinths.json"),
+    );
+    expect(jsonWrite).toBeDefined();
+    expect(String(jsonWrite?.[1])).toContain(json.saved.id);
+  });
+
   it("rejects an unsolvable record with 400 and never writes", async () => {
     vi.stubEnv("NODE_ENV", "development");
     const res = await POST(postRequest(JSON.stringify(UNSOLVABLE_ROOK)));
