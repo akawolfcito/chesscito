@@ -1,9 +1,17 @@
 # UX feedback backlog — queued tactical items (2026-06-16)
 
-Items the founder queued ("para la cola") while we worked other threads. Not
-yet started. Captured here so nothing drops across the session.
+Items the founder queued ("para la cola") while we worked other threads.
 
-## Trophies sheet polish (needs Sally pass)
+**STATUS 2026-06-16: both clusters DONE.**
+- Trophies polish: `ec0275f7` (hide COMING LATER + cream MY VICTORIES),
+  `63450fe7` (achievements 2-col grid + thematic icons).
+- Share/preview: `285236bb` (de-dupe link + hide Download in MiniPay),
+  `8c319252` (candy home OG via Satori).
+- Open follow-up: normalize share URLs to `www.chesscito.com` (apex `chesscito.com`
+  still used in `editorial.ts:388/401/1970`) — NOT changed (founder confirm; the
+  recalled www rule may be stale, verify the domain is set up before flipping).
+
+## Trophies sheet polish (needs Sally pass) — ✅ DONE
 Founder screenshots reviewed 2026-06-16.
 1. **Hide the "COMING LATER" zone** (Tournaments / VIP Passes / Seasonal
    Rewards faded rows). Show what exists, don't promise. — clear, low-risk.
@@ -16,7 +24,7 @@ Founder screenshots reviewed 2026-06-16.
    progress ring for locked, full color + glow for earned. Founder may still
    send a reference image.
 
-## Share / preview cleanup
+## Share / preview cleanup — ✅ DONE
 Founder feedback 2026-06-16.
 1. **Share output inconsistent** — sometimes an image, sometimes a link; some
    shared links look DUPLICATED, sometimes a normal single link. Investigate
