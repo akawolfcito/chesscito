@@ -6,18 +6,17 @@ import {
 } from "@/lib/game/generated/puzzles.generated";
 
 /**
- * Augment guard.
+ * Content-source guard.
  *
- * EXERCISES are still hand-authored + appended generated (drills were NOT
- * migrated), so that half keeps the original append-after invariant.
- *
- * LABYRINTHS are now FULLY content-sourced: the 18 hand-authored labs were
- * migrated into content/labyrinths.json (2026-06-16,
- * scripts/migrate-labyrinths.ts), so `LABYRINTHS[piece]` === the generated
- * pool. The guard for labyrinths therefore checks that every generated id is
- * present and that the migrated labs keep their authored relative order.
+ * Both EXERCISES and LABYRINTHS are now FULLY content-sourced: the 60
+ * hand-authored exercises (2026-06-16, scripts/migrate-exercises.ts) and the
+ * 18 hand-authored labs (scripts/migrate-labyrinths.ts) were migrated into
+ * content/exercises.json + content/labyrinths.json, so `EXERCISES[piece]` ===
+ * the generated exercise pool and `LABYRINTHS[piece]` === the generated lab
+ * pool. The guard checks that every generated id is present and that the
+ * migrated entries keep their authored relative order (order = original index).
  */
-describe("generated catalog merge — append after hand-authored", () => {
+describe("generated catalog — fully content-sourced", () => {
   it("LABYRINTHS.rook sources entirely from GENERATED_LABYRINTHS.rook", () => {
     expect(LABYRINTHS.rook.map((e) => e.id)).toEqual(
       GENERATED_LABYRINTHS.rook.map((e) => e.id),
@@ -34,18 +33,17 @@ describe("generated catalog merge — append after hand-authored", () => {
     expect(i2).toBeLessThan(i3);
   });
 
-  it("appends GENERATED_EXERCISES.bishop after the hand-authored bishop exercises", () => {
-    const generated = GENERATED_EXERCISES.bishop;
-    if (generated.length === 0) return; // no-op when nothing generated
-    const ids = EXERCISES.bishop.map((e) => e.id);
-    for (const gen of generated) {
-      expect(ids).toContain(gen.id);
-      expect(ids.indexOf(gen.id)).toBeGreaterThan(0);
-    }
+  it("EXERCISES.bishop sources entirely from GENERATED_EXERCISES.bishop", () => {
+    expect(EXERCISES.bishop.map((e) => e.id)).toEqual(
+      GENERATED_EXERCISES.bishop.map((e) => e.id),
+    );
   });
 
-  it("preserves every hand-authored exercise id ahead of any generated id", () => {
-    // First hand-authored bishop exercise id is still first in the merged pool.
-    expect(EXERCISES.bishop[0]?.id).toBe("bishop-1");
+  it("keeps the migrated bishop exercises in authored relative order", () => {
+    // order = original catalog index, so the wave-1 ids stay in sequence.
+    const ids = EXERCISES.bishop.map((e) => e.id);
+    expect(ids[0]).toBe("bishop-1");
+    expect(ids.indexOf("bishop-1")).toBeLessThan(ids.indexOf("bishop-2"));
+    expect(ids.indexOf("bishop-9")).toBeLessThan(ids.indexOf("bishop-10"));
   });
 });

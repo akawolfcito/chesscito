@@ -28,9 +28,13 @@ function masteryMap(piece: PieceId, totalStars: number): ExerciseStarsById {
 }
 
 describe("rotation — getExercisePool", () => {
-  it("returns the full pool (10 hand-authored + any generated) for every piece", () => {
+  it("returns the full pool (content-sourced from GENERATED_EXERCISES) for every piece", () => {
     for (const piece of PLAYABLE_PIECES) {
-      expect(getExercisePool(piece)).toHaveLength(10 + GENERATED_EXERCISES[piece].length);
+      // Exercises are now fully content-sourced (migrated into
+      // content/exercises.json 2026-06-16), so EXERCISES[piece] ===
+      // GENERATED_EXERCISES[piece] (10 per piece in wave 1).
+      expect(getExercisePool(piece)).toHaveLength(GENERATED_EXERCISES[piece].length);
+      expect(GENERATED_EXERCISES[piece]).toHaveLength(10);
     }
   });
 

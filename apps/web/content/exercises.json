@@ -1,0 +1,788 @@
+[
+  {
+    "id": "rook-1",
+    "piece": "rook",
+    "fen": "8/8/8/8/8/8/8/R7 w - - 0 1",
+    "target": "h1",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "order": 0
+  },
+  {
+    "id": "rook-2",
+    "piece": "rook",
+    "fen": "8/8/8/8/8/8/8/R7 w - - 0 1",
+    "target": "a8",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "order": 1
+  },
+  {
+    "id": "rook-3",
+    "piece": "rook",
+    "fen": "8/8/8/8/3R4/8/8/8 w - - 0 1",
+    "target": "d8",
+    "mover": "d4",
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "order": 2
+  },
+  {
+    "id": "rook-4",
+    "piece": "rook",
+    "fen": "8/8/8/8/8/8/8/R7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "capture",
+      "corner-turn"
+    ],
+    "order": 3
+  },
+  {
+    "id": "rook-5",
+    "piece": "rook",
+    "fen": "7R/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "b3",
+    "mover": "h8",
+    "tier": "easy",
+    "tags": [
+      "capture",
+      "corner-turn"
+    ],
+    "order": 4
+  },
+  {
+    "id": "rook-6",
+    "piece": "rook",
+    "fen": "8/8/8/8/8/8/8/RN6 w - - 0 1",
+    "target": "c1",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "blocked-rank"
+    ],
+    "order": 5
+  },
+  {
+    "id": "rook-7",
+    "piece": "rook",
+    "fen": "8/8/8/8/8/8/N7/R7 w - - 0 1",
+    "target": "a3",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "blocked-file"
+    ],
+    "order": 6
+  },
+  {
+    "id": "rook-8",
+    "piece": "rook",
+    "fen": "8/8/8/3N4/3RN3/8/8/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d4",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "boxed-target"
+    ],
+    "order": 7
+  },
+  {
+    "id": "rook-9",
+    "piece": "rook",
+    "fen": "8/8/8/8/8/N7/8/R1N5 w - - 0 1",
+    "target": "c3",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "capture",
+      "detour"
+    ],
+    "order": 8
+  },
+  {
+    "id": "rook-10",
+    "piece": "rook",
+    "fen": "8/8/8/2N1N3/3N4/8/3N4/3R4 w - - 0 1",
+    "target": "d5",
+    "mover": "d1",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "blocked-file",
+      "rook-lift"
+    ],
+    "order": 9
+  },
+  {
+    "id": "bishop-1",
+    "piece": "bishop",
+    "fen": "8/8/8/8/8/8/8/B7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "straight-line",
+      "long-diagonal"
+    ],
+    "order": 0
+  },
+  {
+    "id": "bishop-2",
+    "piece": "bishop",
+    "fen": "8/8/8/8/8/8/8/7B w - - 0 1",
+    "target": "a8",
+    "mover": "h1",
+    "tier": "easy",
+    "tags": [
+      "straight-line",
+      "long-diagonal"
+    ],
+    "order": 1
+  },
+  {
+    "id": "bishop-3",
+    "piece": "bishop",
+    "fen": "8/8/8/8/3B4/8/8/8 w - - 0 1",
+    "target": "g7",
+    "mover": "d4",
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "order": 2
+  },
+  {
+    "id": "bishop-4",
+    "piece": "bishop",
+    "fen": "8/8/8/8/8/8/8/B7 w - - 0 1",
+    "target": "g1",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "pivot"
+    ],
+    "order": 3
+  },
+  {
+    "id": "bishop-5",
+    "piece": "bishop",
+    "fen": "8/8/8/8/8/2B5/8/8 w - - 0 1",
+    "target": "g3",
+    "mover": "c3",
+    "tier": "easy",
+    "tags": [
+      "pivot"
+    ],
+    "order": 4
+  },
+  {
+    "id": "bishop-6",
+    "piece": "bishop",
+    "fen": "8/8/8/8/3N4/8/1B6/8 w - - 0 1",
+    "target": "f2",
+    "mover": "b2",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "blocked-diagonal"
+    ],
+    "order": 5
+  },
+  {
+    "id": "bishop-7",
+    "piece": "bishop",
+    "fen": "8/8/8/4N3/8/2B5/8/4N3 w - - 0 1",
+    "target": "g3",
+    "mover": "c3",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "blocked-diagonal"
+    ],
+    "order": 6
+  },
+  {
+    "id": "bishop-8",
+    "piece": "bishop",
+    "fen": "8/8/8/8/3N4/8/8/B7 w - - 0 1",
+    "target": "g7",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "long-diagonal"
+    ],
+    "order": 7
+  },
+  {
+    "id": "bishop-9",
+    "piece": "bishop",
+    "fen": "8/8/5N2/8/3N4/8/8/B7 w - - 0 1",
+    "target": "g7",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "capture",
+      "detour"
+    ],
+    "order": 8
+  },
+  {
+    "id": "bishop-10",
+    "piece": "bishop",
+    "fen": "8/8/8/4N3/8/8/8/B7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "detour",
+      "long-diagonal"
+    ],
+    "order": 9
+  },
+  {
+    "id": "knight-1",
+    "piece": "knight",
+    "fen": "8/8/8/8/3N4/8/8/8 w - - 0 1",
+    "target": "e6",
+    "mover": "d4",
+    "tier": "easy",
+    "tags": [
+      "knight-l-shape",
+      "center-control"
+    ],
+    "order": 0
+  },
+  {
+    "id": "knight-2",
+    "piece": "knight",
+    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
+    "target": "b3",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "knight-l-shape",
+      "corner-escape"
+    ],
+    "order": 1
+  },
+  {
+    "id": "knight-3",
+    "piece": "knight",
+    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
+    "target": "c2",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "knight-l-shape",
+      "corner-escape"
+    ],
+    "order": 2
+  },
+  {
+    "id": "knight-4",
+    "piece": "knight",
+    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
+    "target": "d2",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "knight-l-shape"
+    ],
+    "order": 3
+  },
+  {
+    "id": "knight-5",
+    "piece": "knight",
+    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
+    "target": "e4",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "corner-escape",
+      "center-control",
+      "knight-l-shape"
+    ],
+    "order": 4
+  },
+  {
+    "id": "knight-6",
+    "piece": "knight",
+    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
+    "target": "g4",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "knight-l-shape",
+      "long-route"
+    ],
+    "order": 5
+  },
+  {
+    "id": "knight-7",
+    "piece": "knight",
+    "fen": "8/8/8/8/8/8/8/1N6 w - - 0 1",
+    "target": "g6",
+    "mover": "b1",
+    "tier": "medium",
+    "tags": [
+      "knight-l-shape",
+      "long-route"
+    ],
+    "order": 6
+  },
+  {
+    "id": "knight-8",
+    "piece": "knight",
+    "fen": "8/8/8/8/1NN5/3N4/1N1N4/8 w - - 0 1",
+    "target": "d4",
+    "mover": "b2",
+    "tier": "medium",
+    "tags": [
+      "jump-over",
+      "center-control"
+    ],
+    "order": 7
+  },
+  {
+    "id": "knight-9",
+    "piece": "knight",
+    "fen": "8/8/8/8/8/8/8/N7 w - - 0 1",
+    "target": "f6",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "capture",
+      "long-route"
+    ],
+    "order": 8
+  },
+  {
+    "id": "knight-10",
+    "piece": "knight",
+    "fen": "N7/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "h6",
+    "mover": "a8",
+    "tier": "medium",
+    "tags": [
+      "knight-l-shape",
+      "long-route",
+      "corner-escape"
+    ],
+    "order": 9
+  },
+  {
+    "id": "pawn-1",
+    "piece": "pawn",
+    "fen": "8/8/8/8/8/8/4P3/8 w - - 0 1",
+    "target": "e3",
+    "mover": "e2",
+    "tier": "easy",
+    "tags": [
+      "forward-move"
+    ],
+    "order": 0
+  },
+  {
+    "id": "pawn-2",
+    "piece": "pawn",
+    "fen": "8/8/8/8/8/8/3P4/8 w - - 0 1",
+    "target": "d5",
+    "mover": "d2",
+    "tier": "easy",
+    "tags": [
+      "forward-move",
+      "slow-advance"
+    ],
+    "order": 1
+  },
+  {
+    "id": "pawn-3",
+    "piece": "pawn",
+    "fen": "8/8/3p4/2P5/8/8/8/8 w - - 0 1",
+    "target": "d6",
+    "mover": "c5",
+    "tier": "easy",
+    "tags": [
+      "diagonal-capture"
+    ],
+    "order": 2
+  },
+  {
+    "id": "pawn-4",
+    "piece": "pawn",
+    "fen": "8/8/8/6p1/5P2/8/8/8 w - - 0 1",
+    "target": "g5",
+    "mover": "f4",
+    "tier": "easy",
+    "tags": [
+      "diagonal-capture",
+      "directional-move"
+    ],
+    "order": 3
+  },
+  {
+    "id": "pawn-5",
+    "piece": "pawn",
+    "fen": "8/8/4p3/8/8/8/3P4/8 w - - 0 1",
+    "target": "e6",
+    "mover": "d2",
+    "tier": "medium",
+    "tags": [
+      "slow-advance",
+      "diagonal-capture",
+      "capture-route"
+    ],
+    "order": 4
+  },
+  {
+    "id": "pawn-6",
+    "piece": "pawn",
+    "fen": "8/8/8/8/8/8/P7/8 w - - 0 1",
+    "target": "a8",
+    "mover": "a2",
+    "tier": "medium",
+    "tags": [
+      "forward-move",
+      "slow-advance",
+      "promotion-path"
+    ],
+    "order": 5
+  },
+  {
+    "id": "pawn-7",
+    "piece": "pawn",
+    "fen": "8/8/8/8/8/4Np2/4P3/8 w - - 0 1",
+    "target": "f5",
+    "mover": "e2",
+    "tier": "medium",
+    "tags": [
+      "blocked-forward",
+      "diagonal-capture",
+      "capture-route"
+    ],
+    "order": 6
+  },
+  {
+    "id": "pawn-8",
+    "piece": "pawn",
+    "fen": "8/8/8/8/4p3/3p4/2P5/8 w - - 0 1",
+    "target": "f5",
+    "mover": "c2",
+    "tier": "medium",
+    "tags": [
+      "capture-route",
+      "diagonal-capture",
+      "directional-move"
+    ],
+    "order": 7
+  },
+  {
+    "id": "pawn-9",
+    "piece": "pawn",
+    "fen": "8/8/8/4p3/8/8/3P4/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d2",
+    "tier": "medium",
+    "tags": [
+      "slow-advance",
+      "diagonal-capture",
+      "directional-move"
+    ],
+    "order": 8
+  },
+  {
+    "id": "pawn-10",
+    "piece": "pawn",
+    "fen": "8/4Np2/4P3/8/8/8/8/8 w - - 0 1",
+    "target": "f8",
+    "mover": "e6",
+    "tier": "medium",
+    "tags": [
+      "promotion-path",
+      "blocked-forward",
+      "diagonal-capture"
+    ],
+    "order": 9
+  },
+  {
+    "id": "queen-1",
+    "piece": "queen",
+    "fen": "8/8/8/8/8/8/8/Q7 w - - 0 1",
+    "target": "h8",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "straight-line",
+      "diagonal-line"
+    ],
+    "order": 0
+  },
+  {
+    "id": "queen-2",
+    "piece": "queen",
+    "fen": "8/8/8/8/8/8/8/Q7 w - - 0 1",
+    "target": "a8",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "order": 1
+  },
+  {
+    "id": "queen-3",
+    "piece": "queen",
+    "fen": "8/8/8/8/3Q4/8/8/8 w - - 0 1",
+    "target": "e5",
+    "mover": "d4",
+    "tier": "easy",
+    "tags": [
+      "diagonal-line"
+    ],
+    "order": 2
+  },
+  {
+    "id": "queen-4",
+    "piece": "queen",
+    "fen": "8/8/8/8/8/8/8/Q7 w - - 0 1",
+    "target": "h1",
+    "mover": "a1",
+    "tier": "easy",
+    "tags": [
+      "straight-line"
+    ],
+    "order": 3
+  },
+  {
+    "id": "queen-5",
+    "piece": "queen",
+    "fen": "8/8/8/8/4Q3/8/8/8 w - - 0 1",
+    "target": "b8",
+    "mover": "e4",
+    "tier": "easy",
+    "tags": [
+      "rook-bishop-combo",
+      "pivot"
+    ],
+    "order": 4
+  },
+  {
+    "id": "queen-6",
+    "piece": "queen",
+    "fen": "8/8/8/8/8/8/1N6/QN6 w - - 0 1",
+    "target": "c1",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "rook-bishop-combo",
+      "detour",
+      "blocked-line"
+    ],
+    "order": 5
+  },
+  {
+    "id": "queen-7",
+    "piece": "queen",
+    "fen": "8/8/8/4N3/3QN3/4N3/8/8 w - - 0 1",
+    "target": "f4",
+    "mover": "d4",
+    "tier": "medium",
+    "tags": [
+      "straight-line",
+      "detour",
+      "blocked-line"
+    ],
+    "order": 6
+  },
+  {
+    "id": "queen-8",
+    "piece": "queen",
+    "fen": "8/8/8/3N4/3NN3/8/8/Q7 w - - 0 1",
+    "target": "e5",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "rook-bishop-combo",
+      "long-range",
+      "detour"
+    ],
+    "order": 7
+  },
+  {
+    "id": "queen-9",
+    "piece": "queen",
+    "fen": "8/8/8/8/8/8/1NN5/QN6 w - - 0 1",
+    "target": "d1",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "straight-line",
+      "detour",
+      "blocked-line"
+    ],
+    "order": 8
+  },
+  {
+    "id": "queen-10",
+    "piece": "queen",
+    "fen": "QN6/1N6/8/8/8/8/8/8 w - - 0 1",
+    "target": "c8",
+    "mover": "a8",
+    "tier": "medium",
+    "tags": [
+      "capture",
+      "detour",
+      "blocked-line"
+    ],
+    "order": 9
+  },
+  {
+    "id": "king-1",
+    "piece": "king",
+    "fen": "8/8/8/8/8/8/8/4K3 w - - 0 1",
+    "target": "e2",
+    "mover": "e1",
+    "tier": "easy",
+    "tags": [
+      "one-step",
+      "orthogonal-step"
+    ],
+    "order": 0
+  },
+  {
+    "id": "king-2",
+    "piece": "king",
+    "fen": "8/8/8/8/8/8/8/4K3 w - - 0 1",
+    "target": "f2",
+    "mover": "e1",
+    "tier": "easy",
+    "tags": [
+      "one-step",
+      "diagonal-step"
+    ],
+    "order": 1
+  },
+  {
+    "id": "king-3",
+    "piece": "king",
+    "fen": "8/8/8/8/3K4/8/8/8 w - - 0 1",
+    "target": "b6",
+    "mover": "d4",
+    "tier": "easy",
+    "tags": [
+      "one-step",
+      "short-route"
+    ],
+    "order": 2
+  },
+  {
+    "id": "king-4",
+    "piece": "king",
+    "fen": "8/8/8/8/8/8/8/4K3 w - - 0 1",
+    "target": "d2",
+    "mover": "e1",
+    "tier": "easy",
+    "tags": [
+      "one-step",
+      "diagonal-step"
+    ],
+    "order": 3
+  },
+  {
+    "id": "king-5",
+    "piece": "king",
+    "fen": "8/8/8/4K3/8/8/8/8 w - - 0 1",
+    "target": "h8",
+    "mover": "e5",
+    "tier": "medium",
+    "tags": [
+      "diagonal-step",
+      "short-route",
+      "edge-control"
+    ],
+    "order": 4
+  },
+  {
+    "id": "king-6",
+    "piece": "king",
+    "fen": "7K/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "a1",
+    "mover": "h8",
+    "tier": "hard",
+    "tags": [
+      "diagonal-step",
+      "edge-control"
+    ],
+    "order": 5
+  },
+  {
+    "id": "king-7",
+    "piece": "king",
+    "fen": "8/8/4N3/8/4K3/8/8/8 w - - 0 1",
+    "target": "e8",
+    "mover": "e4",
+    "tier": "medium",
+    "tags": [
+      "orthogonal-step",
+      "detour",
+      "blocked-square"
+    ],
+    "order": 6
+  },
+  {
+    "id": "king-9",
+    "piece": "king",
+    "fen": "K7/8/8/8/8/8/8/8 w - - 0 1",
+    "target": "h1",
+    "mover": "a8",
+    "tier": "hard",
+    "tags": [
+      "diagonal-step",
+      "edge-control"
+    ],
+    "order": 7
+  },
+  {
+    "id": "king-10",
+    "piece": "king",
+    "fen": "8/8/8/8/4K3/4N3/3NNN2/8 w - - 0 1",
+    "target": "e1",
+    "mover": "e4",
+    "tier": "medium",
+    "tags": [
+      "orthogonal-step",
+      "detour",
+      "blocked-square"
+    ],
+    "order": 8
+  },
+  {
+    "id": "king-8",
+    "piece": "king",
+    "fen": "8/8/8/8/8/8/1N6/K7 w - - 0 1",
+    "target": "c3",
+    "mover": "a1",
+    "tier": "medium",
+    "tags": [
+      "diagonal-step",
+      "detour",
+      "blocked-square"
+    ],
+    "order": 9
+  }
+]
