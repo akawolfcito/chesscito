@@ -14,7 +14,10 @@ import {
   posToSquare,
   squareToPos,
 } from "@/lib/game/fen-puzzle";
-import { GENERATED_LABYRINTHS } from "@/lib/game/generated/puzzles.generated";
+import {
+  GENERATED_EXERCISES,
+  GENERATED_LABYRINTHS,
+} from "@/lib/game/generated/puzzles.generated";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +28,28 @@ const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = [8, 7, 6, 5, 4, 3, 2, 1];
 
 type Brush = "start" | "goal" | "wall" | "capture" | "trace";
+type Kind = "exercise" | "labyrinth";
+
+// Fields the builder UI cannot (yet) express but that live on a record. We
+// carry them through verbatim on an EDIT so a read-modify-write never drops
+// exercise-only data (tier, tags, …).
+const BUILDER_FIELDS = new Set([
+  "id",
+  "kind",
+  "piece",
+  "fen",
+  "target",
+  "mover",
+  "order",
+  "explanation",
+]);
+function extraFields(rec: LabyrinthRecord): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(rec)) {
+    if (!BUILDER_FIELDS.has(k)) out[k] = v;
+  }
+  return out;
+}
 
 function posKey(p: BoardPosition): string {
   return posToSquare(p);
@@ -88,7 +113,11 @@ function deriveStateFromFen(
 export default function LabyrinthBuilderPage() {
   if (process.env.NODE_ENV === "production") notFound();
 
+  const [kind, setKind] = useState<Kind>("exercise");
   const [state, setState] = useState<BuilderState>(() => emptyState("rook"));
+  // Exercise-only (or otherwise non-UI) fields of the record being edited, so
+  // a save round-trips them instead of dropping them.
+  const [editExtras, setEditExtras] = useState<Record<string, unknown>>({});
   const [brush, setBrush] = useState<Brush>("start");
   const [tracedPath, setTracedPath] = useState<string[]>([]);
   const [fenInput, setFenInput] = useState("");
@@ -102,13 +131,13 @@ export default function LabyrinthBuilderPage() {
 
   const refreshRecords = useCallback(async () => {
     try {
-      const res = await fetch("/api/dev/labyrinth");
+      const res = await fetch(`/api/dev/labyrinth?kind=${kind}`);
       const data = (await res.json()) as { ok?: boolean; records?: LabyrinthRecord[] };
       if (data?.ok && Array.isArray(data.records)) setRecords(data.records);
     } catch {
       /* dev-only tool — silently ignore fetch failures */
     }
-  }, []);
+  }, [kind]);
 
   useEffect(() => {
     void refreshRecords();
@@ -236,6 +265,7 @@ export default function LabyrinthBuilderPage() {
       explanation: rec.explanation,
       id: rec.id,
     });
+    setEditExtras(extraFields(rec));
     setTracedPath([]);
     setLoadNote(null);
     setToast({ kind: "ok", text: `Editing ${rec.id ?? "(no id)"}` });
@@ -243,6 +273,19 @@ export default function LabyrinthBuilderPage() {
 
   function handleNew() {
     setState(emptyState(state.piece));
+    setEditExtras({});
+    setTracedPath([]);
+    setLoadNote(null);
+    setToast(null);
+  }
+
+  function handleKindChange(next: Kind) {
+    if (next === kind) return;
+    setKind(next);
+    // Switching surfaces discards any in-progress edit so we never save a
+    // record into the wrong bucket.
+    setState(emptyState(state.piece));
+    setEditExtras({});
     setTracedPath([]);
     setLoadNote(null);
     setToast(null);
@@ -255,6 +298,10 @@ export default function LabyrinthBuilderPage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          // Preserved exercise-only / unknown fields (tier, tags, …) first, so
+          // an edit never drops them; explicit fields below win on conflict.
+          ...editExtras,
+          kind,
           id: state.id || undefined,
           piece: state.piece,
           ...fenBlock,
@@ -277,14 +324,36 @@ export default function LabyrinthBuilderPage() {
     }
   }
 
-  const existing = GENERATED_LABYRINTHS[state.piece] ?? [];
+  const generatedByKind =
+    kind === "exercise" ? GENERATED_EXERCISES : GENERATED_LABYRINTHS;
+  const existing = generatedByKind[state.piece] ?? [];
 
   return (
     <main className="min-h-screen bg-slate-950 p-4 text-slate-100">
       <div className="mx-auto flex max-w-5xl flex-col gap-4 lg:flex-row">
         {/* ── Board column ── */}
         <section className="flex flex-col gap-3">
-          <h1 className="text-lg font-bold">Labyrinth Builder (dev)</h1>
+          <h1 className="text-lg font-bold">
+            {kind === "exercise" ? "Exercise" : "Labyrinth"} Builder (dev)
+          </h1>
+
+          {/* Kind toggle — same editor authors both surfaces. */}
+          <div className="flex gap-2" role="group" aria-label="Puzzle kind">
+            {(["exercise", "labyrinth"] as Kind[]).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => handleKindChange(k)}
+                className={`rounded px-3 py-1 text-sm capitalize ${
+                  kind === k
+                    ? "bg-indigo-500 text-white"
+                    : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                }`}
+              >
+                {k}
+              </button>
+            ))}
+          </div>
 
           <div className="inline-grid grid-cols-[1.25rem_repeat(8,2.5rem)] gap-0">
             {/* file labels (top) */}
@@ -421,10 +490,10 @@ export default function LabyrinthBuilderPage() {
               <button
                 type="button"
                 onClick={handleNew}
-                title="Start a fresh labyrinth (discard current edit)"
+                title={`Start a fresh ${kind} (discard current edit)`}
                 className="rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600"
               >
-                + New labyrinth
+                + New {kind}
               </button>
             </div>
           ) : null}
@@ -515,7 +584,7 @@ mover=${fenBlock.mover}`}
           {/* Existing labyrinths — load one to edit */}
           <div className="rounded border border-slate-800 bg-slate-900 p-3 text-sm">
             <p className="mb-2 font-semibold text-slate-300">
-              Existing {state.piece} labyrinths (load to edit)
+              Existing {state.piece} {kind === "exercise" ? "exercises" : "labyrinths"} (load to edit)
             </p>
             {pieceRecords.length ? (
               <ul className="flex flex-col gap-1">
