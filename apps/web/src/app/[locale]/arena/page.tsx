@@ -12,6 +12,7 @@ import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-t
 import { useConnectPrompt } from "@/lib/connect-prompt/use-connect-prompt";
 import { useChessGame } from "@/lib/game/use-chess-game";
 import { rivalFor, randomEloForDifficulty } from "@/lib/game/rivals";
+import { clearArenaGame } from "@/lib/game/arena-persistence";
 import { ArenaBoard } from "@/components/arena/arena-board";
 import { ArenaEntryPanel } from "@/components/arena/arena-entry-panel";
 import { ArenaSelectScaffold } from "@/components/arena/arena-select-scaffold";
@@ -472,7 +473,13 @@ function ArenaPageInner() {
   // implicitly. Calling game.reset() BEFORE router.push() caused the
   // status to flip to "selecting" for one render frame, producing a
   // visible selector flash (2026-05-27 fix).
+  //
+  // Leaving an in-progress match terminates it like a resign: we drop the
+  // persisted save so re-entering /arena lands on the rival selector instead
+  // of resuming at the exact second the user walked away. clearArenaGame()
+  // only touches localStorage (no React state), so it adds no selector flash.
   const handleBack = () => {
+    clearArenaGame();
     handleBackToHub();
   };
 
@@ -1300,6 +1307,7 @@ function ArenaPageInner() {
           youColorLabel={youColorLabel}
           rivalName={rival.name}
           rivalColorLabel={rivalColorLabel}
+          rivalAvatarSrc={`/art/rivals/${rival.avatar}-avatar.png`}
           vsBelowSlot={
             !isEndState ? (
               <button

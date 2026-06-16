@@ -33,6 +33,11 @@ type Props = {
    *  behind the avatar (blue marco for "you", red marco for "bot").
    *  The frame is purely decorative and aria-hidden. */
   pro?: boolean;
+  /** Override the avatar art with a custom sprite (full `.png` path).
+   *  Used by the arena bot slot to show the SELECTED rival's character
+   *  (Pipo/Mara/Kairo) instead of the generic red avatar. Triplet
+   *  avif/webp/png siblings are derived from the `.png` path. */
+  customSrc?: string;
 };
 
 export function PlayerAvatar({
@@ -40,8 +45,10 @@ export function PlayerAvatar({
   alt,
   className = "",
   pro = false,
+  customSrc,
 }: Props) {
   const { src, defaultAlt, proFrameSrc } = VARIANTS[variant];
+  const avatarSrc = customSrc ?? src;
   return (
     <span
       className={`player-card player-card--new-icon player-card-${variant}${
@@ -61,12 +68,16 @@ export function PlayerAvatar({
           />
         </picture>
       )}
-      <img
-        src={src}
-        alt={alt ?? defaultAlt}
-        className="player-card-img"
-        draggable={false}
-      />
+      <picture>
+        <source srcSet={avatarSrc.replace(/\.png$/, ".avif")} type="image/avif" />
+        <source srcSet={avatarSrc.replace(/\.png$/, ".webp")} type="image/webp" />
+        <img
+          src={avatarSrc}
+          alt={alt ?? defaultAlt}
+          className="player-card-img"
+          draggable={false}
+        />
+      </picture>
     </span>
   );
 }

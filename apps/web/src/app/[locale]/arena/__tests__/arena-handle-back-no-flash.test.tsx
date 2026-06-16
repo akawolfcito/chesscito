@@ -228,11 +228,13 @@ vi.mock("@/lib/contracts/select-payment-token", () => ({
 // ---------------------------------------------------------------------------
 
 import ArenaPage from "../page";
+import { ARENA_GAME_KEY } from "@/lib/game/arena-persistence";
 
 describe("arena/handleBack — no selector flash (regression for 2026-05-27 fix)", () => {
   beforeEach(() => {
     pushMock.mockReset();
     resetMock.mockReset();
+    window.localStorage.clear();
   });
 
   it("BACK during isEndState navigates to /hub WITHOUT mounting DifficultySelector first and without calling game.reset", async () => {
@@ -248,5 +250,19 @@ describe("arena/handleBack — no selector flash (regression for 2026-05-27 fix)
     expect(pushMock).toHaveBeenCalledWith("/hub");
     expect(screen.queryByTestId("arena-difficulty-selector")).toBeNull();
     expect(resetMock).not.toHaveBeenCalled();
+  });
+
+  // Leaving terminates the match like a resign: the persisted save is dropped
+  // so re-entering /arena starts fresh instead of resuming at the exact second
+  // the user walked away (2026-06-15 fix).
+  it("BACK clears the persisted arena save so the match does not resume", async () => {
+    window.localStorage.setItem(ARENA_GAME_KEY, JSON.stringify({ fen: "x", savedAt: 1 }));
+    render(<ArenaPage />);
+
+    const backBtn = await screen.findByRole("button", { name: /backToHubAria/i });
+    act(() => fireEvent.click(backBtn));
+
+    expect(window.localStorage.getItem(ARENA_GAME_KEY)).toBeNull();
+    expect(pushMock).toHaveBeenCalledWith("/hub");
   });
 });

@@ -35,6 +35,10 @@ type Props = {
   youColorLabel?: string;
   rivalName?: string;
   rivalColorLabel?: string;
+  /** Custom rival avatar sprite (full `.png` path) for the bot slot, so the
+   *  gameplay HUD shows the SELECTED rival (Pipo/Mara/Kairo) instead of the
+   *  generic red avatar. Omitted → falls back to the red bot art. */
+  rivalAvatarSrc?: string;
 };
 
 /** Name + piece-color label that sits above a matchup avatar. */
@@ -208,6 +212,7 @@ export function ArenaHud({
   youColorLabel,
   rivalName,
   rivalColorLabel,
+  rivalAvatarSrc,
 }: Props) {
   const t = useTranslations("ARENA_COPY");
   const needsBackConfirm = !isEndState;
@@ -269,6 +274,8 @@ export function ArenaHud({
             <PlayerAvatar
               variant="bot"
               pro={isProActive}
+              customSrc={rivalAvatarSrc}
+              alt={rivalName}
               className="h-24 w-24 drop-shadow-xl"
             />
             {isThinking && (
