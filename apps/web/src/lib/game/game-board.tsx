@@ -20,6 +20,8 @@
  */
 import type { CSSProperties, ReactNode } from "react";
 
+import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
+
 export const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 export const RANKS = [8, 7, 6, 5, 4, 3, 2, 1]; // top → bottom
 
@@ -58,9 +60,32 @@ export function isDarkSquare(file: number, rank: number): boolean {
   return (file + (8 - rank)) % 2 === 0;
 }
 
+/** Per-surface overlay inset (red-team P0 piece-drift). The overlay region is
+ *  NOT one global inset — each surface passes its own so pieces don't drift when
+ *  its framing differs (the thumbnail inset is asymmetric today). Defaults to the
+ *  frame opening BOARD_INSET. */
+export type OverlayInset = { top: number; right: number; bottom: number; left: number };
+
+export interface BoardOverlayGeometry {
+  /** Center of a logical cell as % of the OVERLAY region. file 0–7, rank 1–8
+   *  (chess rank). Mirrors the existing `cellCenter(file, rank - 1)` contract so
+   *  pieces/floats positioned via this helper land on the same cell as today. */
+  center(file: number, rank: number): { leftPct: number; topPct: number };
+  /** Cell edge length as % of the region (uniform 12.5% grid). */
+  cellSizePct: number;
+  /** Piece width as % of the region (from board-geometry, not re-hardcoded). */
+  pieceWidthPct: number;
+}
+
 export interface GameBoardProps {
   /** Overlay content for a cell (markers, sprites). file 0–7, rank 1–8. */
   renderCell?: (file: number, rank: number, square: string) => ReactNode;
+  /** Absolute overlay layer (pieces, capture floats, select hints) positioned
+   *  via the supplied geometry against the frame-opening inset region. Renders
+   *  above the tiles, below the candy frame. */
+  renderOverlay?: (geo: BoardOverlayGeometry) => ReactNode;
+  /** Inset for the overlay region (default BOARD_INSET = frame opening). */
+  overlayInset?: OverlayInset;
   /** Click handler — when set, cells become buttons. */
   onCellClick?: (file: number, rank: number, square: string) => void;
   showCoordinates?: boolean;
@@ -72,6 +97,8 @@ export interface GameBoardProps {
 
 export function GameBoard({
   renderCell,
+  renderOverlay,
+  overlayInset = BOARD_INSET,
   onCellClick,
   showCoordinates = true,
   darkColor = "#7fb24a",
@@ -79,6 +106,16 @@ export function GameBoard({
   maxWidth = "23.5rem",
 }: GameBoardProps) {
   const clickable = !!onCellClick;
+  const overlayGeometry: BoardOverlayGeometry = {
+    // rank is the chess rank (1–8); reuse cellCenter(file, rank - 1) so pieces
+    // resolve identically to today's image-board overlay.
+    center(file, rank) {
+      const { x, y } = cellCenter(file, rank - 1);
+      return { leftPct: x, topPct: y };
+    },
+    cellSizePct: 12.5,
+    pieceWidthPct: pieceWidth(),
+  };
   return (
     <div
       style={{
@@ -124,18 +161,47 @@ export function GameBoard({
                 onClick={() => onCellClick!(col, rank, sq)}
                 aria-label={sq}
                 title={sq}
+                // Drag-to-move drop resolution walks up from elementFromPoint to
+                // the nearest [data-square]; expose it so overlay pieces resolve.
+                data-square={sq}
                 style={cellStyle}
               >
                 {content}
               </button>
             ) : (
-              <div key={sq} role="gridcell" aria-label={sq} title={sq} style={cellStyle}>
+              <div
+                key={sq}
+                role="gridcell"
+                aria-label={sq}
+                title={sq}
+                data-square={sq}
+                style={cellStyle}
+              >
                 {content}
               </div>
             );
           }),
         )}
       </div>
+
+      {/* Absolute overlay layer (pieces, capture floats, select hints) — inset
+          to the same frame opening as the grid so cellCenter percentages
+          resolve identically. Above the tiles (z1), below the frame (z3). */}
+      {renderOverlay && (
+        <div
+          style={{
+            position: "absolute",
+            top: `${overlayInset.top}%`,
+            right: `${overlayInset.right}%`,
+            bottom: `${overlayInset.bottom}%`,
+            left: `${overlayInset.left}%`,
+            zIndex: 2,
+            pointerEvents: "none",
+          }}
+        >
+          {renderOverlay(overlayGeometry)}
+        </div>
+      )}
 
       {/* Candy frame — supplied PNG (transparent center), on top */}
       <picture>
@@ -150,7 +216,7 @@ export function GameBoard({
             inset: 0,
             width: "100%",
             height: "100%",
-            zIndex: 2,
+            zIndex: 3,
             pointerEvents: "none",
           }}
         />
@@ -181,7 +247,7 @@ export function GameBoard({
               left: `${BOARD_INSET.left + (BOARD_INNER_W * (col + 0.5)) / 8}%`,
               top: `${100 - BOARD_INSET.bottom / 2}%`,
               transform: "translate(-50%, -50%)",
-              zIndex: 3,
+              zIndex: 4,
             }}
           >
             {file}

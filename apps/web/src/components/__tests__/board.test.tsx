@@ -266,4 +266,90 @@ describe("<Board>", () => {
       expect(piece.className).toContain("is-snap-back");
     });
   });
+
+  // ─── Procedural board flag (migration Phase 1, per-surface, default off) ──
+  const FRAME_SRC = "/art/board/borde-tablero";
+
+  describe("procedural board flag", () => {
+    it("defaults to the image board (flag off) — byte-identical substrate", () => {
+      const { container } = render(
+        <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} />,
+      );
+      // Image substrate present, procedural frame absent.
+      expect(container.querySelector(".playhub-board-img")).toBeInTheDocument();
+      expect(
+        container.querySelector(`img[src*="${FRAME_SRC}"]`),
+      ).toBeNull();
+    });
+
+    it("renders the GameBoard substrate when proceduralBoard is on", () => {
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          proceduralBoard
+        />,
+      );
+      // Procedural frame present, image substrate gone.
+      expect(
+        container.querySelector(`img[src*="${FRAME_SRC}"]`),
+      ).toBeInTheDocument();
+      expect(container.querySelector(".playhub-board-img")).toBeNull();
+      // Still 64 interactive cells.
+      expect(screen.getAllByRole("button", { name: /^[a-h][1-8]$/ })).toHaveLength(64);
+    });
+
+    it("places the floating piece on the procedural board", () => {
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          proceduralBoard
+        />,
+      );
+      const piece = container.querySelector(".playhub-board-piece-float");
+      expect(piece).toBeInTheDocument();
+      expect(piece?.querySelector("img")?.getAttribute("src")).toContain("rook");
+    });
+
+    it("highlights valid targets after the piece is selected (procedural)", () => {
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          proceduralBoard
+        />,
+      );
+      // No dots before selection.
+      expect(container.querySelector(".playhub-board-dot")).toBeNull();
+      // Select the rook (GameBoard cell aria-label is the bare square id).
+      fireEvent.click(screen.getByRole("button", { name: "a1" }));
+      expect(container.querySelectorAll(".playhub-board-dot").length).toBeGreaterThan(0);
+    });
+
+    it("renders the target star marker on the procedural board", () => {
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          targetPosition={{ file: 7, rank: 0 }}
+          proceduralBoard
+        />,
+      );
+      expect(container.querySelector(".playhub-board-target")).toBeInTheDocument();
+    });
+
+    it("paints labyrinth walls per cell on the procedural board", () => {
+      const { container } = render(
+        <Board
+          pieceType="rook"
+          startPosition={{ file: 0, rank: 0 }}
+          mode="labyrinth"
+          obstacles={[{ file: 3, rank: 3 }]}
+          proceduralBoard
+        />,
+      );
+      expect(container.querySelector(".playhub-board-cell.is-wall")).toBeInTheDocument();
+    });
+  });
 });
