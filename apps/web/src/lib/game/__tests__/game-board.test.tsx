@@ -120,4 +120,67 @@ describe("GameBoard (promoted procedural board)", () => {
       expect(screen.queryByTestId("overlay-child")).not.toBeInTheDocument();
     });
   });
+
+  describe("orientation (red-team P0 — logical→view for tiles AND overlay)", () => {
+    it("renders white view by default: top-left cell is a8, bottom-right is h1", () => {
+      render(<GameBoard onCellClick={() => {}} />);
+      const buttons = screen.getAllByRole("button");
+      // DOM order = grid order = top→bottom, left→right.
+      expect(buttons[0]).toHaveAttribute("aria-label", "a8");
+      expect(buttons[63]).toHaveAttribute("aria-label", "h1");
+    });
+
+    it("flips tiles under orientation=black: top-left is h1, bottom-right is a8", () => {
+      render(<GameBoard orientation="black" onCellClick={() => {}} />);
+      const buttons = screen.getAllByRole("button");
+      expect(buttons[0]).toHaveAttribute("aria-label", "h1");
+      expect(buttons[63]).toHaveAttribute("aria-label", "a8");
+    });
+
+    it("passes LOGICAL (file,rank,square) to renderCell/onCellClick regardless of orientation", () => {
+      const onCellClick = vi.fn();
+      render(<GameBoard orientation="black" onCellClick={onCellClick} />);
+      // The visual top-left cell is logical h1 → file 7, rank 1.
+      screen.getAllByRole("button")[0].click();
+      expect(onCellClick).toHaveBeenCalledWith(7, 1, "h1");
+    });
+
+    it("flips overlay center under orientation=black (matches the arena vf/vr flip)", () => {
+      let captured: BoardOverlayGeometry | null = null;
+      render(
+        <GameBoard
+          orientation="black"
+          renderOverlay={(geo) => {
+            captured = geo;
+            return null;
+          }}
+        />,
+      );
+      const geo = captured as unknown as BoardOverlayGeometry;
+      expect(geo).not.toBeNull();
+      // Black view: view coords are the flipped logical coords. Center must
+      // equal cellCenter(7 - file, 7 - (rank - 1)) — the same flip arena does.
+      for (const [file, rank] of [
+        [0, 1],
+        [7, 8],
+        [3, 5],
+        [4, 2],
+      ] as const) {
+        const c = geo.center(file, rank);
+        const expected = cellCenter(7 - file, 7 - (rank - 1));
+        expect(c.leftPct).toBeCloseTo(expected.x, 5);
+        expect(c.topPct).toBeCloseTo(expected.y, 5);
+      }
+    });
+
+    it("flips coordinate labels under orientation=black (rank 1 top-left band, file h leftmost)", () => {
+      const { container } = render(<GameBoard orientation="black" />);
+      const spans = Array.from(container.querySelectorAll("span")).map(
+        (s) => s.textContent,
+      );
+      // Both axis label sets are present (8 ranks + 8 files), just reordered.
+      for (const r of ["1", "2", "8"]) expect(spans).toContain(r);
+      for (const f of ["a", "h"]) expect(spans).toContain(f);
+    });
+  });
 });
