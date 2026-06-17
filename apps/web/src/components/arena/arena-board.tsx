@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 import { ARENA_PIECE_IMG, squareToFileRank } from "@/lib/game/arena-utils";
+import { GameBoard } from "@/lib/game/game-board";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { ChessBoardPiece } from "@/lib/game/types";
 import type { PlayerColor } from "@/lib/game/use-chess-game";
@@ -42,6 +43,11 @@ type ArenaBoardProps = {
    *  (h-file on the left, rank 8 at the bottom). Square labels stay
    *  logical — click handlers still receive "a1" for the a1 square. */
   playerColor?: PlayerColor;
+  /** Board migration Phase 2 (per-surface, default off). When true, the board
+   *  renders on the procedural `<GameBoard>` substrate (tile grid + candy frame,
+   *  orientation-aware) instead of the background-image board. Flag stays off
+   *  until final art + human sign-off (founder 2026-06-17). */
+  proceduralBoard?: boolean;
 };
 
 function buildArenaSquares(
@@ -86,6 +92,7 @@ export function ArenaBoard({
   onSquareClick,
   isCheckmatePause = false,
   playerColor = "w",
+  proceduralBoard = false,
 }: ArenaBoardProps) {
   const t = useTranslations("ARENA_COPY");
   const flipped = playerColor === "b";
@@ -99,6 +106,12 @@ export function ArenaBoard({
     for (const p of pieces) map.set(p.square, p);
     return map;
   }, [pieces]);
+
+  const squareByLabel = useMemo(() => {
+    const map = new Map<string, ArenaSquareState>();
+    for (const s of squares) map.set(s.label, s);
+    return map;
+  }, [squares]);
 
   /** Pieces that were on the board last render but are no longer present —
    *  rendered for CAPTURE_FADE_MS so the player sees the capture instead
@@ -128,6 +141,149 @@ export function ArenaBoard({
         <div className="playhub-game-stage">
           <div className="flex items-center justify-center aspect-square w-full">
             <p className="text-sm text-rose-400">{t("boardError")}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Live + dying piece layer. `pos(file, rank)` (rank 0–7) resolves the cell
+  // center as % of the parent region — supplied by the image board (manual
+  // vf/vr flip, % of the hit-grid) or the procedural board (GameBoard's
+  // orientation-aware overlay geometry, % of the frame opening). Shared verbatim
+  // so the two substrates can't drift apart.
+  const renderPieceLayer = (
+    pos: (file: number, rank: number) => { x: number; y: number },
+  ) => (
+    <>
+      {pieces.map((p) => {
+        const { file, rank } = squareToFileRank(p.square);
+        const center = pos(file, rank);
+        const pw = pieceWidth();
+        const src = ARENA_PIECE_IMG[p.color][p.type];
+        const isPieceSelected = p.square === selectedSquare;
+        const isPieceInCheck = p.square === checkSquare;
+        const isPieceRejecting = p.square === rejectingSquare;
+        return (
+          <picture
+            key={p.id}
+            className={`arena-piece-float${isPieceSelected ? " is-selected" : ""}${isPieceInCheck ? " is-check" : ""}${isPieceRejecting ? " is-rejecting" : ""}`}
+            style={{
+              left: `${center.x}%`,
+              top: `${center.y}%`,
+              width: `${pw}%`,
+            }}
+          >
+            {THEME_CONFIG.hasOptimizedFormats && (
+              <>
+                <source srcSet={src.replace(".png", ".avif")} type="image/avif" />
+                <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
+              </>
+            )}
+            <img
+              src={src}
+              alt={`${p.color === "w" ? "White" : "Black"} ${p.type}`}
+              className={`arena-piece-img ${THEME_CONFIG.pieceTintClass[p.color]}`}
+              style={{ width: "100%" }}
+            />
+          </picture>
+        );
+      })}
+
+      {/* Captured pieces — rendered for CAPTURE_FADE_MS with the
+          is-dying animation so the kill registers visually. */}
+      {dyingPieces.map((p) => {
+        const { file, rank } = squareToFileRank(p.square);
+        const center = pos(file, rank);
+        const pw = pieceWidth();
+        const src = ARENA_PIECE_IMG[p.color][p.type];
+        return (
+          <picture
+            key={`dying-${p.id}`}
+            className="arena-piece-float is-dying"
+            style={{
+              left: `${center.x}%`,
+              top: `${center.y}%`,
+              width: `${pw}%`,
+            }}
+          >
+            {THEME_CONFIG.hasOptimizedFormats && (
+              <>
+                <source srcSet={src.replace(".png", ".avif")} type="image/avif" />
+                <source srcSet={src.replace(".png", ".webp")} type="image/webp" />
+              </>
+            )}
+            <img
+              src={src}
+              alt=""
+              className={`arena-piece-img ${THEME_CONFIG.pieceTintClass[p.color]}`}
+              style={{ width: "100%" }}
+            />
+          </picture>
+        );
+      })}
+    </>
+  );
+
+  // Per-cell substrate overlay for the procedural board: the arena cell's state
+  // visuals (highlight / capturable / selected / last-move / check / capture-
+  // flash) as a full-cell child reusing `.arena-board-cell` CSS. GameBoard owns
+  // the cell <button> (click); this paints the glow + dot inside it.
+  const renderArenaCell = (_file: number, _rank: number, sq: string) => {
+    const s = squareByLabel.get(sq);
+    if (!s) return null;
+    const occupied = pieceMap.has(sq);
+    return (
+      <span
+        aria-hidden="true"
+        className={[
+          "arena-board-cell",
+          s.isDark ? "is-dark" : "is-light",
+          s.isHighlighted ? "is-highlighted" : "",
+          s.isHighlighted && occupied ? "is-capturable" : "",
+          s.isSelected ? "is-selected" : "",
+          s.isLastMove ? "is-last-move" : "",
+          s.isCheck ? "is-check" : "",
+          sq === captureFlashSquare ? "is-capture-flash" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        style={{ position: "absolute", inset: 0 }}
+      >
+        {s.isHighlighted && !occupied ? (
+          <span className="playhub-board-dot" />
+        ) : null}
+      </span>
+    );
+  };
+
+  if (proceduralBoard) {
+    return (
+      <div className="playhub-stage-shell w-full">
+        <div className="playhub-game-stage">
+          <div className="playhub-game-grid">
+            <div
+              className="playhub-board-canvas arena-board-canvas relative"
+              data-checkmate={isCheckmatePause ? "true" : undefined}
+            >
+              {isThinking && (
+                <div className="pointer-events-none absolute inset-0 z-10 animate-pulse rounded-2xl ring-2 ring-amber-400/20" />
+              )}
+              <GameBoard
+                orientation={flipped ? "black" : "white"}
+                maxWidth="100%"
+                onCellClick={(_file, _rank, sq) => {
+                  if (!isLocked) onSquareClick(sq);
+                }}
+                renderCell={renderArenaCell}
+                renderOverlay={(geo) =>
+                  renderPieceLayer((file, rank) => {
+                    const c = geo.center(file, rank + 1);
+                    return { x: c.leftPct, y: c.topPct };
+                  })
+                }
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -188,87 +344,10 @@ export function ArenaBoard({
                 );
               })}
 
-              {pieces.map((p) => {
-                const { file, rank } = squareToFileRank(p.square);
+              {renderPieceLayer((file, rank) => {
                 const vf = flipped ? 7 - file : file;
                 const vr = flipped ? 7 - rank : rank;
-                const center = cellCenter(vf, vr);
-                const pw = pieceWidth();
-                const src = ARENA_PIECE_IMG[p.color][p.type];
-                const isPieceSelected = p.square === selectedSquare;
-                const isPieceInCheck = p.square === checkSquare;
-                const isPieceRejecting = p.square === rejectingSquare;
-                return (
-                  <picture
-                    key={p.id}
-                    className={`arena-piece-float${isPieceSelected ? " is-selected" : ""}${isPieceInCheck ? " is-check" : ""}${isPieceRejecting ? " is-rejecting" : ""}`}
-                    style={{
-                      left: `${center.x}%`,
-                      top: `${center.y}%`,
-                      width: `${pw}%`,
-                    }}
-                  >
-                    {THEME_CONFIG.hasOptimizedFormats && (
-                      <>
-                        <source
-                          srcSet={src.replace(".png", ".avif")}
-                          type="image/avif"
-                        />
-                        <source
-                          srcSet={src.replace(".png", ".webp")}
-                          type="image/webp"
-                        />
-                      </>
-                    )}
-                    <img
-                      src={src}
-                      alt={`${p.color === "w" ? "White" : "Black"} ${p.type}`}
-                      className={`arena-piece-img ${THEME_CONFIG.pieceTintClass[p.color]}`}
-                      style={{ width: "100%" }}
-                    />
-                  </picture>
-                );
-              })}
-
-              {/* Captured pieces — rendered for CAPTURE_FADE_MS with the
-                  is-dying animation so the kill registers visually. */}
-              {dyingPieces.map((p) => {
-                const { file, rank } = squareToFileRank(p.square);
-                const vf = flipped ? 7 - file : file;
-                const vr = flipped ? 7 - rank : rank;
-                const center = cellCenter(vf, vr);
-                const pw = pieceWidth();
-                const src = ARENA_PIECE_IMG[p.color][p.type];
-                return (
-                  <picture
-                    key={`dying-${p.id}`}
-                    className="arena-piece-float is-dying"
-                    style={{
-                      left: `${center.x}%`,
-                      top: `${center.y}%`,
-                      width: `${pw}%`,
-                    }}
-                  >
-                    {THEME_CONFIG.hasOptimizedFormats && (
-                      <>
-                        <source
-                          srcSet={src.replace(".png", ".avif")}
-                          type="image/avif"
-                        />
-                        <source
-                          srcSet={src.replace(".png", ".webp")}
-                          type="image/webp"
-                        />
-                      </>
-                    )}
-                    <img
-                      src={src}
-                      alt=""
-                      className={`arena-piece-img ${THEME_CONFIG.pieceTintClass[p.color]}`}
-                      style={{ width: "100%" }}
-                    />
-                  </picture>
-                );
+                return cellCenter(vf, vr);
               })}
             </div>
           </div>

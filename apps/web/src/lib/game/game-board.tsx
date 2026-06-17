@@ -78,6 +78,10 @@ export interface BoardOverlayGeometry {
 }
 
 export interface GameBoardProps {
+  /** Board orientation. "white" = a8 top-left / h1 bottom-right (default);
+   *  "black" flips both axes (arena, when the player is black). renderCell /
+   *  onCellClick still receive LOGICAL (file, rank) regardless. */
+  orientation?: "white" | "black";
   /** Overlay content for a cell (markers, sprites). file 0–7, rank 1–8. */
   renderCell?: (file: number, rank: number, square: string) => ReactNode;
   /** Absolute overlay layer (pieces, capture floats, select hints) positioned
@@ -100,17 +104,30 @@ export function GameBoard({
   renderOverlay,
   overlayInset = BOARD_INSET,
   onCellClick,
+  orientation = "white",
   showCoordinates = true,
   darkColor = "#7fb24a",
   lightColor = "#efe6c4",
   maxWidth = "23.5rem",
 }: GameBoardProps) {
   const clickable = !!onCellClick;
+  const black = orientation === "black";
+
+  // View order (what the grid draws), in LOGICAL terms. White: a8 top-left,
+  // h1 bottom-right. Black flips both axes (h1 top-left, a8 bottom-right) —
+  // parity with the arena `vf = 7 - file` / `vr = 7 - rank` flip. renderCell /
+  // onCellClick still receive LOGICAL (file, rank); only the layout changes.
+  const fileOrder = black ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7]; // left → right
+  const rankOrder = black ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1]; // top → bottom
+
   const overlayGeometry: BoardOverlayGeometry = {
-    // rank is the chess rank (1–8); reuse cellCenter(file, rank - 1) so pieces
-    // resolve identically to today's image-board overlay.
+    // rank is the chess rank (1–8). White reuses cellCenter(file, rank - 1);
+    // black flips view coords (7 - file, 7 - rankIdx) so pieces track the tiles.
     center(file, rank) {
-      const { x, y } = cellCenter(file, rank - 1);
+      const rankIdx = rank - 1;
+      const vf = black ? 7 - file : file;
+      const vr = black ? 7 - rankIdx : rankIdx;
+      const { x, y } = cellCenter(vf, vr);
       return { leftPct: x, topPct: y };
     },
     cellSizePct: 12.5,
@@ -140,10 +157,10 @@ export function GameBoard({
           zIndex: 1,
         }}
       >
-        {RANKS.map((rank) =>
-          FILES.map((file, col) => {
-            const sq = `${file}${rank}`;
-            const dark = isDarkSquare(col, rank);
+        {rankOrder.map((rank) =>
+          fileOrder.map((file) => {
+            const sq = `${FILES[file]}${rank}`;
+            const dark = isDarkSquare(file, rank);
             const cellStyle: CSSProperties = {
               position: "relative",
               padding: 0,
@@ -153,12 +170,12 @@ export function GameBoard({
               backgroundSize: "100% 100%",
               cursor: clickable ? "pointer" : "default",
             };
-            const content = renderCell?.(col, rank, sq);
+            const content = renderCell?.(file, rank, sq);
             return clickable ? (
               <button
                 key={sq}
                 type="button"
-                onClick={() => onCellClick!(col, rank, sq)}
+                onClick={() => onCellClick!(file, rank, sq)}
                 aria-label={sq}
                 title={sq}
                 // Drag-to-move drop resolution walks up from elementFromPoint to
@@ -222,9 +239,10 @@ export function GameBoard({
         />
       </picture>
 
-      {/* Coordinate labels ON the frame band */}
+      {/* Coordinate labels ON the frame band — follow the view order so they
+          flip with the board under orientation="black". */}
       {showCoordinates &&
-        RANKS.map((rank, row) => (
+        rankOrder.map((rank, row) => (
           <span
             key={`rank-${rank}`}
             style={{
@@ -239,9 +257,9 @@ export function GameBoard({
           </span>
         ))}
       {showCoordinates &&
-        FILES.map((file, col) => (
+        fileOrder.map((file, col) => (
           <span
-            key={`file-${file}`}
+            key={`file-${FILES[file]}`}
             style={{
               ...LABEL_STYLE,
               left: `${BOARD_INSET.left + (BOARD_INNER_W * (col + 0.5)) / 8}%`,
@@ -250,7 +268,7 @@ export function GameBoard({
               zIndex: 4,
             }}
           >
-            {file}
+            {FILES[file]}
           </span>
         ))}
     </div>
