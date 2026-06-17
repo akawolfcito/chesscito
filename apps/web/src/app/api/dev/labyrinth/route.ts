@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { upsertRecord, type LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 import { puzzleId } from "@/lib/game/fen-puzzle";
-import { parseCsv, buildCatalog, renderGeneratedModule } from "../../../../../scripts/import-puzzles";
+import { parseCsv, buildCatalog, renderGeneratedModule } from "@/lib/content/catalog";
 
 export const runtime = "nodejs";
 
