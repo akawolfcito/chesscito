@@ -18,7 +18,11 @@
  */
 
 import { EXERCISES } from "@/lib/game/exercises";
-import { getPieceMasteryStars, type ExerciseStarsById } from "@/lib/game/rotation";
+import {
+  getPieceMasteryStars,
+  type ExerciseCatalog,
+  type ExerciseStarsById,
+} from "@/lib/game/rotation";
 import type { PieceId } from "@/lib/game/types";
 
 export type { ExerciseStarsById } from "@/lib/game/rotation";
@@ -43,8 +47,9 @@ function clampStars(value: unknown): number {
 export function migrateStarsArrayToIdMap(
   piece: PieceId,
   starsArray: readonly number[],
+  catalog: ExerciseCatalog = EXERCISES,
 ): ExerciseStarsById {
-  const pool = EXERCISES[piece];
+  const pool = catalog[piece];
   const out: ExerciseStarsById = {};
   for (let i = 0; i < pool.length; i += 1) {
     out[pool[i].id] = clampStars(starsArray[i]);
@@ -60,8 +65,9 @@ export function migrateStarsArrayToIdMap(
 export function starsIdMapToArray(
   piece: PieceId,
   starsById: ExerciseStarsById,
+  catalog: ExerciseCatalog = EXERCISES,
 ): number[] {
-  return EXERCISES[piece].map((ex) => clampStars(starsById[ex.id]));
+  return catalog[piece].map((ex) => clampStars(starsById[ex.id]));
 }
 
 /**
@@ -72,9 +78,10 @@ export function starsIdMapToArray(
 export function normalizeStarsById(
   piece: PieceId,
   starsById: ExerciseStarsById,
+  catalog: ExerciseCatalog = EXERCISES,
 ): ExerciseStarsById {
   const out: ExerciseStarsById = {};
-  for (const ex of EXERCISES[piece]) {
+  for (const ex of catalog[piece]) {
     out[ex.id] = clampStars(starsById[ex.id]);
   }
   return out;
@@ -104,8 +111,13 @@ export function setStarsForExercise(
 export function calculateTotalStarsFromIdMap(
   piece: PieceId,
   starsById: ExerciseStarsById,
+  catalog: ExerciseCatalog = EXERCISES,
 ): number {
-  return getPieceMasteryStars(piece, normalizeStarsById(piece, starsById));
+  return getPieceMasteryStars(
+    piece,
+    normalizeStarsById(piece, starsById, catalog),
+    catalog,
+  );
 }
 
 /** Across-pool mastery from a legacy positional stars array — the
@@ -117,6 +129,11 @@ export function calculateTotalStarsFromIdMap(
 export function calculatePoolMasteryFromArray(
   piece: PieceId,
   starsArray: readonly number[],
+  catalog: ExerciseCatalog = EXERCISES,
 ): number {
-  return getPieceMasteryStars(piece, migrateStarsArrayToIdMap(piece, starsArray));
+  return getPieceMasteryStars(
+    piece,
+    migrateStarsArrayToIdMap(piece, starsArray, catalog),
+    catalog,
+  );
 }

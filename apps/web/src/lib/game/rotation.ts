@@ -32,16 +32,26 @@ export const CANONICAL_FIVE_COUNT = 5;
 /** Max exercises surfaced per piece per day. */
 export const DAILY_VISIBLE_LIMIT = 5;
 
+/** A by-piece catalog the read path can inject. Defaults to the baseline
+ *  `EXERCISES`; Phase 2c passes the merged (baseline ⊕ overlay) catalog. */
+export type ExerciseCatalog = Record<PieceId, Exercise[]>;
+
 /** Full pool for a piece. Returns a shallow copy so callers can never
  *  mutate the catalog array. */
-export function getExercisePool(piece: PieceId): Exercise[] {
-  return [...EXERCISES[piece]];
+export function getExercisePool(
+  piece: PieceId,
+  catalog: ExerciseCatalog = EXERCISES,
+): Exercise[] {
+  return [...catalog[piece]];
 }
 
 /** The canonical first-touch set: the first 5 exercises of the pool.
  *  (Caveat accepted: Knight/Pawn include one Medium among their first 5.) */
-export function getCanonicalFive(piece: PieceId): Exercise[] {
-  return EXERCISES[piece].slice(0, CANONICAL_FIVE_COUNT);
+export function getCanonicalFive(
+  piece: PieceId,
+  catalog: ExerciseCatalog = EXERCISES,
+): Exercise[] {
+  return catalog[piece].slice(0, CANONICAL_FIVE_COUNT);
 }
 
 /** Mastery = sum of best stars across the whole pool (each ≤3). Mirrors
@@ -50,9 +60,10 @@ export function getCanonicalFive(piece: PieceId): Exercise[] {
 export function getPieceMasteryStars(
   piece: PieceId,
   progress?: ExerciseStarsById,
+  catalog: ExerciseCatalog = EXERCISES,
 ): number {
   if (!progress) return 0;
-  return EXERCISES[piece].reduce((sum, ex) => {
+  return catalog[piece].reduce((sum, ex) => {
     const raw = progress[ex.id] ?? 0;
     const clamped = raw < 0 ? 0 : raw > 3 ? 3 : raw;
     return sum + clamped;
@@ -111,15 +122,17 @@ export function getVisibleExercisesForToday(opts: {
   dateUtc: string;
   progress?: ExerciseStarsById;
   limit?: number;
+  catalog?: ExerciseCatalog;
 }): Exercise[] {
   const { piece, walletOrSessionSeed, dateUtc, progress } = opts;
   const limit = opts.limit ?? DAILY_VISIBLE_LIMIT;
+  const catalog = opts.catalog ?? EXERCISES;
 
-  const mastery = getPieceMasteryStars(piece, progress);
+  const mastery = getPieceMasteryStars(piece, progress, catalog);
   const unlocked = new Set(getUnlockedTiers(mastery));
   const seed = buildRotationSeed({ piece, walletOrSessionSeed, dateUtc });
 
-  return EXERCISES[piece]
+  return catalog[piece]
     .filter((ex) => unlocked.has(ex.tier ?? "easy"))
     .map((ex) => ({
       ex,

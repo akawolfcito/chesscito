@@ -1,5 +1,6 @@
 import type { RewardTile } from "@/components/kingdom/reward-column";
 import { EXERCISES } from "@/lib/game/exercises";
+import type { ExerciseCatalog } from "@/lib/game/rotation";
 import type { PieceId } from "@/lib/game/types";
 
 /** Narrative unlock order surfaced in the Hub reward column. Mirrors the
@@ -28,6 +29,9 @@ export type RewardDerivationInput = {
   /** Tap handler forwarded onto each tile. The container decides routing
    *  per `(piece, state)`. */
   onTileTap?: (piece: PieceId) => void;
+  /** Injected catalog (default = baseline EXERCISES) — gates the `hasExercises`
+   *  check so a live overlay addition can flip a "soon" piece on. */
+  catalog?: ExerciseCatalog;
 };
 
 const DEFAULT_THRESHOLD = 10;
@@ -51,6 +55,7 @@ export function deriveRewardTiles(input: RewardDerivationInput): RewardTile[] {
     starsPerPiece,
     threshold = DEFAULT_THRESHOLD,
     onTileTap,
+    catalog = EXERCISES,
   } = input;
 
   const tiles: RewardTile[] = [];
@@ -72,7 +77,7 @@ export function deriveRewardTiles(input: RewardDerivationInput): RewardTile[] {
       continue;
     }
 
-    const hasExercises = EXERCISES[piece].length > 0;
+    const hasExercises = catalog[piece].length > 0;
 
     let state: RewardTile["state"];
     if (!hasExercises) {
