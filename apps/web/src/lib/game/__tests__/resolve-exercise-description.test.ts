@@ -56,4 +56,19 @@ describe("resolveExerciseDescription", () => {
     const out = resolveExerciseDescription("blank-id", 0, i18n, fallback);
     expect(out).toBe("Exercise 1");
   });
+
+  it("prefers an injected descriptions map over the baseline generated map", () => {
+    const i18n = vi.fn(() => "should-not-be-called");
+    const injected = { "rook-1": "Overlay text for rook-1" };
+    const out = resolveExerciseDescription("rook-1", 0, i18n, fallback, injected);
+    expect(out).toBe("Overlay text for rook-1");
+    expect(i18n).not.toHaveBeenCalled();
+  });
+
+  it("with an injected map, an absent id falls through to i18n then fallback", () => {
+    const injected = { "rook-1": "x" };
+    const i18n = (id: string) => `i18n:${id}`;
+    const out = resolveExerciseDescription("rook-2", 1, i18n, fallback, injected);
+    expect(out).toBe("i18n:rook-2");
+  });
 });

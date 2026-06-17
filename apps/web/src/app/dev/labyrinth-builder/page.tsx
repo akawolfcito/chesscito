@@ -10,6 +10,10 @@ import {
 import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
 import { validateBuilder } from "@/lib/labyrinth-builder/validate";
 import {
+  formatPublishResult,
+  type PublishResultLike,
+} from "@/lib/labyrinth-builder/publish-toast";
+import {
   parseFenBoard,
   posToSquare,
   squareToPos,
@@ -203,9 +207,13 @@ export default function LabyrinthBuilderPage() {
   const [moverInput, setMoverInput] = useState("");
   const [loadNote, setLoadNote] = useState<string | null>(null);
   const [records, setRecords] = useState<LabyrinthRecord[]>([]);
-  const [toast, setToast] = useState<{ kind: "ok" | "err"; text: string } | null>(
-    null,
-  );
+  const [toast, setToast] = useState<{
+    kind: "ok" | "warn" | "err";
+    text: string;
+  } | null>(null);
+  /** Debounce: block re-entrant Save while a publish round-trip is in flight
+   *  (a double-click would otherwise race two read-modify-write passes). */
+  const [isSaving, setIsSaving] = useState(false);
 
   const refreshRecords = useCallback(async () => {
     try {
@@ -372,37 +380,38 @@ export default function LabyrinthBuilderPage() {
   }
 
   async function handleSave() {
-    if (!result.ok || !fenBlock) return;
+    if (!result.ok || !fenBlock || isSaving) return;
+    setIsSaving(true);
     try {
-      const res = await fetch("/api/dev/labyrinth", {
+      // "Todo en 1": the publish proxy writes the baseline content/*.json AND
+      // publishes to the live overlay in one call (the ADMIN_TOKEN stays
+      // server-side). It returns a partial-aware { ok, baseline, overlay }.
+      const res = await fetch("/api/dev/publish", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          // Preserved exercise-only / unknown fields (tier, tags, …) first, so
-          // an edit never drops them; explicit fields below win on conflict.
-          ...editExtras,
           kind,
-          id: state.id || undefined,
-          piece: state.piece,
-          ...fenBlock,
-          explanation: state.explanation || undefined,
-          tier: state.tier || undefined,
-          tags: state.tags && state.tags.length ? state.tags : undefined,
-          order: state.order,
+          record: {
+            // Preserved exercise-only / unknown fields (tier, tags, …) first,
+            // so an edit never drops them; explicit fields below win.
+            ...editExtras,
+            id: state.id || undefined,
+            piece: state.piece,
+            ...fenBlock,
+            explanation: state.explanation || undefined,
+            tier: state.tier || undefined,
+            tags: state.tags && state.tags.length ? state.tags : undefined,
+            order: state.order,
+          },
         }),
       });
-      const data = await res.json();
-      if (data?.ok) {
-        setToast({ kind: "ok", text: "Saved — reload /exercises to see it" });
-        void refreshRecords();
-      } else {
-        const errs = Array.isArray(data?.errors)
-          ? data.errors.join("; ")
-          : "Save failed";
-        setToast({ kind: "err", text: errs });
-      }
+      const data = (await res.json()) as PublishResultLike;
+      setToast(formatPublishResult(data));
+      if (data?.baseline?.ok) void refreshRecords();
     } catch (e) {
       setToast({ kind: "err", text: (e as Error).message });
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -412,24 +421,29 @@ export default function LabyrinthBuilderPage() {
   // the list row directly so it never disturbs the current edit.
   async function handleToggleDisabled(rec: LabyrinthRecord) {
     try {
-      const res = await fetch("/api/dev/labyrinth", {
+      // Toggle through the publish proxy so the enable/disable also propagates
+      // live (baseline + overlay), same "todo en 1" path as Save.
+      const res = await fetch("/api/dev/publish", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...rec, kind, disabled: !rec.disabled }),
+        body: JSON.stringify({ kind, record: { ...rec, disabled: !rec.disabled } }),
       });
-      const data = await res.json();
-      if (data?.ok) {
-        setToast({
-          kind: "ok",
-          text: `${rec.id ?? "record"} ${rec.disabled ? "enabled" : "disabled"}`,
-        });
-        void refreshRecords();
-      } else {
-        const errs = Array.isArray(data?.errors)
-          ? data.errors.join("; ")
-          : "Toggle failed";
-        setToast({ kind: "err", text: errs });
+      const data = (await res.json()) as PublishResultLike;
+      if (!data?.baseline?.ok) {
+        setToast(formatPublishResult(data));
+        return;
       }
+      const verb = rec.disabled ? "enabled" : "disabled";
+      const id = rec.id ?? "record";
+      setToast(
+        data.overlay?.ok
+          ? { kind: "ok", text: `${id} ${verb} (live). Remember to commit content/*.json.` }
+          : {
+              kind: "warn",
+              text: `${id} ${verb} in baseline; live update failed: ${(data.overlay?.errors ?? ["unknown"]).join("; ")}. Remember to commit content/*.json.`,
+            },
+      );
+      void refreshRecords();
     } catch (e) {
       setToast({ kind: "err", text: (e as Error).message });
     }
@@ -670,15 +684,19 @@ export default function LabyrinthBuilderPage() {
             <button
               type="button"
               onClick={handleSave}
-              disabled={!result.ok}
+              disabled={!result.ok || isSaving}
               className="rounded bg-emerald-600 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
             >
-              Save
+              {isSaving ? "Publishing…" : "Save"}
             </button>
             {toast && (
               <span
                 className={
-                  toast.kind === "ok" ? "text-emerald-400" : "text-red-400"
+                  toast.kind === "ok"
+                    ? "text-emerald-400"
+                    : toast.kind === "warn"
+                      ? "text-amber-400"
+                      : "text-red-400"
                 }
               >
                 {toast.text}

@@ -1,0 +1,136 @@
+/**
+ * POST /api/dev/publish — db-content overlay-full (Stage 6).
+ *
+ * Dev-only "todo en 1" publish: writes the baseline `content/*.json` (so the
+ * puzzle is versioned in git) AND publishes it to the live overlay (so it is
+ * live without a redeploy), in one action. The ADMIN_TOKEN is read server-side
+ * and forwarded to the overlay write route — it NEVER reaches the browser.
+ *
+ * Fail-closed + partial-failure aware:
+ *  - 404 in production (NODE_ENV guard) — same as /api/dev/labyrinth.
+ *  - Baseline write first (local, reliable). If it fails (e.g. unsolvable),
+ *    NOTHING is published and the overlay step is skipped.
+ *  - Overlay second (network). A baseline success + overlay failure is a
+ *    PARTIAL result, not fatal — the founder can retry publish or commit json.
+ *  - Overlay errors are sanitized (curated by status) — the raw upstream body
+ *    (which may carry DB connection strings) and the token are never echoed.
+ */
+import { NextResponse } from "next/server";
+import type { LabyrinthRecord } from "@/lib/labyrinth-builder/store";
+import type { ContentKind } from "@/lib/content/overlay-types";
+import { writeBaselineRecord } from "@/lib/content/baseline-write";
+
+export const runtime = "nodejs";
+
+type PublishBody = { kind?: ContentKind; record?: LabyrinthRecord };
+
+type OverlayResult = { ok: boolean; revalidated?: boolean; errors: string[] };
+
+/** Curated, leak-free message per upstream status. We never echo the raw
+ *  admin-route body (it may include DB error detail) or the token. */
+function overlayErrorForStatus(status: number): string {
+  switch (status) {
+    case 403:
+      return "overlay publish rejected: admin token rejected (403)";
+    case 429:
+      return "overlay publish rejected: rate limited (429)";
+    case 400:
+      return "overlay publish rejected: record rejected by validation (400)";
+    case 503:
+      return "overlay publish unavailable: store or admin writes disabled (503)";
+    case 500:
+      return "overlay publish failed: server error (500)";
+    default:
+      return `overlay publish failed: HTTP ${status}`;
+  }
+}
+
+async function publishToOverlay(
+  kind: ContentKind,
+  record: LabyrinthRecord,
+): Promise<OverlayResult> {
+  const token = process.env.ADMIN_TOKEN;
+  const base = process.env.OVERLAY_PUBLISH_BASE_URL?.replace(/\/+$/, "");
+  if (!token || !base) {
+    return { ok: false, errors: ["overlay target not configured (set OVERLAY_PUBLISH_BASE_URL + ADMIN_TOKEN)"] };
+  }
+  try {
+    const res = await fetch(`${base}/api/admin/content`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-token": token },
+      body: JSON.stringify({ kind, record }),
+    });
+    if (!res.ok) return { ok: false, errors: [overlayErrorForStatus(res.status)] };
+    const data = (await res.json().catch(() => null)) as
+      | { ok?: boolean; revalidated?: boolean }
+      | null;
+    if (!data?.ok) return { ok: false, errors: [overlayErrorForStatus(res.status)] };
+    return { ok: true, revalidated: Boolean(data.revalidated), errors: [] };
+  } catch {
+    // Network/abort — never surface the underlying error object.
+    return { ok: false, errors: ["overlay publish failed: network error reaching the target"] };
+  }
+}
+
+export async function POST(req: Request) {
+  if (process.env.NODE_ENV === "production") {
+    return new NextResponse("Not found", { status: 404 });
+  }
+
+  let body: PublishBody;
+  try {
+    body = (await req.json()) as PublishBody;
+  } catch {
+    return NextResponse.json(
+      {
+        ok: false,
+        baseline: { ok: false, errors: ["invalid JSON"] },
+        overlay: { ok: false, errors: ["skipped: invalid request"] },
+      },
+      { status: 400 },
+    );
+  }
+
+  const kind: ContentKind = body.kind === "exercise" ? "exercise" : "labyrinth";
+  const record = body.record;
+  if (!record || typeof record !== "object") {
+    return NextResponse.json(
+      {
+        ok: false,
+        baseline: { ok: false, errors: ["missing record"] },
+        overlay: { ok: false, errors: ["skipped: no record"] },
+      },
+      { status: 400 },
+    );
+  }
+
+  // Step 1 — baseline (local, reliable). On failure, do NOT publish.
+  const baseline = writeBaselineRecord(kind, record);
+  if (!baseline.ok) {
+    return NextResponse.json(
+      {
+        ok: false,
+        baseline: { ok: false, errors: baseline.errors },
+        overlay: { ok: false, errors: ["skipped: baseline write failed"] },
+      },
+      { status: 400 },
+    );
+  }
+
+  // Step 2 — overlay (network). `record` now carries the resolved id.
+  const overlay = await publishToOverlay(kind, { ...record, id: baseline.id });
+
+  // Audit — never log the token.
+  console.info("[dev/publish]", {
+    id: baseline.id,
+    kind,
+    baseline: baseline.ok,
+    overlay: overlay.ok,
+  });
+
+  return NextResponse.json({
+    ok: overlay.ok,
+    baseline: { ok: true, id: baseline.id, warnings: baseline.warnings },
+    overlay,
+  });
+}

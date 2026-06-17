@@ -1,46 +1,91 @@
 "use client";
 
 /**
- * ExerciseCatalogContext — db-backed-content Phase 2b-2 (client seam).
+ * ContentCatalogContext — db-backed-content (Phase 2b-2 seam + overlay-full).
  *
- * Carries the by-piece exercise pools (`ExerciseCatalog`) that the client
- * surfaces read. The default value is the compiled baseline `EXERCISES`,
- * so a consumer rendered WITHOUT a provider behaves byte-identically to a
- * direct `EXERCISES` import — this is what keeps the flag-off read path
- * unchanged in Phase 2b.
+ * Carries the full read catalog the client surfaces consume: by-piece
+ * exercise pools, labyrinth pools, and the descriptions map. The default
+ * value is the compiled baseline, so a consumer rendered WITHOUT a provider
+ * behaves byte-identically to a direct baseline import — this is what keeps
+ * the flag-off read path unchanged.
  *
- * Phase 2c mounts `<ExerciseCatalogProvider>` at the /exercises server
- * boundary with the merged (baseline ⊕ overlay) pools, behind
+ * The /exercises server boundary mounts `<ContentCatalogProvider>` with the
+ * merged (baseline ⊕ overlay) catalog from `getMergedCatalog()`, behind
  * `CONTENT_OVERLAY_ENABLED`. Until then no provider is mounted and every
- * consumer falls through to the baseline default.
+ * selector falls through to the baseline default.
  *
- * Note: unlike most context hooks here, `useExerciseCatalog` does NOT
- * throw when consumed outside a provider — the baseline default is the
- * intended fallback, not a misuse.
+ * Note: unlike most context hooks here, the selectors do NOT throw when
+ * consumed outside a provider — the baseline default is the intended
+ * fallback, not a misuse.
  */
 
 import { createContext, useContext, type ReactNode } from "react";
-import { EXERCISES } from "@/lib/game/exercises";
-import type { ExerciseCatalog } from "@/lib/game/rotation";
+import { EXERCISES, LABYRINTHS } from "@/lib/game/exercises";
+import { GENERATED_EXERCISE_DESCRIPTIONS } from "@/lib/game/generated/puzzles.generated";
+import type { Exercise, PieceId } from "@/lib/game/types";
 
-const ExerciseCatalogContext = createContext<ExerciseCatalog>(EXERCISES);
+/** The full read catalog (same fields the merged loader exposes). */
+export interface ContentCatalog {
+  exercises: Record<PieceId, Exercise[]>;
+  labyrinths: Record<PieceId, Exercise[]>;
+  descriptions: Record<string, string>;
+}
 
+const DEFAULT_CATALOG: ContentCatalog = {
+  exercises: EXERCISES,
+  labyrinths: LABYRINTHS,
+  descriptions: GENERATED_EXERCISE_DESCRIPTIONS,
+};
+
+const ContentCatalogContext = createContext<ContentCatalog>(DEFAULT_CATALOG);
+
+export function ContentCatalogProvider({
+  value,
+  children,
+}: {
+  value: ContentCatalog;
+  children: ReactNode;
+}) {
+  return (
+    <ContentCatalogContext.Provider value={value}>
+      {children}
+    </ContentCatalogContext.Provider>
+  );
+}
+
+/** Active by-piece exercise pools. Baseline `EXERCISES` with no provider.
+ *  Return shape unchanged from the Phase 2b-2 seam (back-compat). */
+export function useExerciseCatalog(): Record<PieceId, Exercise[]> {
+  return useContext(ContentCatalogContext).exercises;
+}
+
+/** Active by-piece labyrinth pools. Baseline `LABYRINTHS` with no provider. */
+export function useLabyrinthCatalog(): Record<PieceId, Exercise[]> {
+  return useContext(ContentCatalogContext).labyrinths;
+}
+
+/** Active exercise descriptions map. Baseline generated map with no provider. */
+export function useExerciseDescriptions(): Record<string, string> {
+  return useContext(ContentCatalogContext).descriptions;
+}
+
+/**
+ * Back-compat provider for the Phase 2c exercises-only mount. Wraps the full
+ * `ContentCatalogProvider`, supplying the given exercise pools while leaving
+ * labyrinths + descriptions at baseline. Kept so the read path stays green
+ * across stages; the /exercises boundary moves to `ContentCatalogProvider`
+ * with the full merged catalog in the overlay-full follow-up.
+ */
 export function ExerciseCatalogProvider({
   value,
   children,
 }: {
-  value: ExerciseCatalog;
+  value: Record<PieceId, Exercise[]>;
   children: ReactNode;
 }) {
   return (
-    <ExerciseCatalogContext.Provider value={value}>
+    <ContentCatalogProvider value={{ ...DEFAULT_CATALOG, exercises: value }}>
       {children}
-    </ExerciseCatalogContext.Provider>
+    </ContentCatalogProvider>
   );
-}
-
-/** Returns the active by-piece exercise pools. Baseline `EXERCISES` when
- *  no provider is mounted (Phase 2b flag-off path). */
-export function useExerciseCatalog(): ExerciseCatalog {
-  return useContext(ExerciseCatalogContext);
 }

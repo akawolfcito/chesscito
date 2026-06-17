@@ -61,7 +61,7 @@ import {
   subscribeToShieldChanges,
 } from "@/lib/shop/shield-events";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
-import { useExerciseCatalog } from "@/lib/content/catalog-context";
+import { useExerciseCatalog, useLabyrinthCatalog } from "@/lib/content/catalog-context";
 import { useRotationSteering } from "@/hooks/use-rotation-steering";
 import { useSaveScoreState } from "@/hooks/use-save-score-state";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
@@ -125,7 +125,7 @@ import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
 import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation, type TxErrorKind } from "@/lib/errors";
 import { getContextAction, getRewardActions } from "@/lib/game/context-action";
-import { BADGE_THRESHOLD, LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
+import { BADGE_THRESHOLD, labyrinthStars } from "@/lib/game/exercises";
 import {
   areAllLabyrinthsSolved,
   getLabyrinthBest,
@@ -922,6 +922,10 @@ export function ExercisesScreen({
   // this screen's pool reads agree with the hook's. Phase 2c mounts the
   // provider with merged pools at the /exercises server boundary.
   const catalog = useExerciseCatalog();
+  // Labyrinth pools from the same provider, so the screen's labyrinth reads
+  // (list, king-gate, training path) agree with the merged catalog under the
+  // flag — and stay baseline (byte-identical) when no provider is mounted.
+  const labyrinthCatalog = useLabyrinthCatalog();
 
   // Progress is keyed by exerciseId (currentId). Derive the pool index for
   // the index-based affordances (drawer activeIndex, tutorial-hint gate,
@@ -2240,7 +2244,7 @@ export function ExercisesScreen({
    *  taps (the old `labyrinthList[0]` hardcode and the 10★
    *  labyrinthAvailable gate are gone — unlock now lives in the path
    *  node statuses: first lab at 6★, then chain by completion). */
-  const labyrinthList = LABYRINTHS[selectedPiece] ?? [];
+  const labyrinthList = labyrinthCatalog[selectedPiece] ?? [];
   const activeLabyrinth =
     labyrinthMode && selectedLabyrinthId
       ? labyrinthList.find((lab) => lab.id === selectedLabyrinthId) ?? null
@@ -2261,9 +2265,10 @@ export function ExercisesScreen({
         labyrinthList.map((lab) => [lab.id, getLabyrinthBest(selectedPiece, lab.id)]),
       ),
       badgeClaimed: badgesClaimed[selectedPiece] === true,
+      catalog: { exercises: catalog, labyrinths: labyrinthCatalog },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPiece, progress, badgesClaimed, labyrinthCompleted]);
+  }, [selectedPiece, progress, badgesClaimed, labyrinthCompleted, catalog, labyrinthCatalog]);
 
   /** Always-fresh mirror of the path for callbacks that fire from
    *  timers (success auto-advance) — the 1500ms closure would
@@ -2875,7 +2880,7 @@ export function ExercisesScreen({
               selectedPiece === "king" &&
               areAllLabyrinthsSolved(
                 "king",
-                LABYRINTHS.king.map((l) => l.id),
+                labyrinthCatalog.king.map((l) => l.id),
               )
                 ? () => {
                     setLabyrinthCompleted(null);

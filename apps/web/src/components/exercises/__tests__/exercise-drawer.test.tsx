@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent } from "@testing-library/react";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
 import { ExerciseDrawer } from "../exercise-drawer";
-import { EXERCISES } from "@/lib/game/exercises";
+import { EXERCISES, LABYRINTHS } from "@/lib/game/exercises";
+import { GENERATED_EXERCISE_DESCRIPTIONS } from "@/lib/game/generated/puzzles.generated";
+import { ContentCatalogProvider } from "@/lib/content/catalog-context";
 import { buildTrainingPath } from "@/lib/training/path";
 
 /** Build an id-keyed best-stars map from a positional star count per pool
@@ -219,5 +221,33 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     expect(labAt).toBeGreaterThan(-1);
     expect(thirdExerciseAt).toBeGreaterThan(-1);
     expect(labAt).toBeLessThan(thirdExerciseAt);
+  });
+});
+
+describe("ExerciseDrawer — overlay descriptions (db-content)", () => {
+  it("renders an overlay description from ContentCatalogProvider over the baseline text", () => {
+    // rook-1 resolves to "Horizontal move" from the baseline generated map.
+    // An overlay description for rook-1 must win when the drawer threads the
+    // injected descriptions map from context.
+    const overlay = {
+      exercises: EXERCISES,
+      labyrinths: LABYRINTHS,
+      descriptions: {
+        ...GENERATED_EXERCISE_DESCRIPTIONS,
+        "rook-1": "Overlay rook description",
+      },
+    };
+    render(
+      <ContentCatalogProvider value={overlay}>
+        <ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />
+      </ContentCatalogProvider>,
+    );
+    expect(screen.getByText("Overlay rook description")).toBeInTheDocument();
+    expect(screen.queryByText("Horizontal move")).not.toBeInTheDocument();
+  });
+
+  it("falls back to the baseline description with no provider", () => {
+    render(<ExerciseDrawer {...baseProps} onNavigate={vi.fn()} />);
+    expect(screen.getByText("Horizontal move")).toBeInTheDocument();
   });
 });

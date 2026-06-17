@@ -11,6 +11,7 @@ import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
 import { BADGE_THRESHOLD, resolveExerciseDescription } from "@/lib/game/exercises";
+import { useExerciseDescriptions } from "@/lib/content/catalog-context";
 import { PIECE_IMAGES } from "@/lib/content/editorial";
 import {
   interleaveTrainingRows,
@@ -86,6 +87,9 @@ export function ExerciseDrawer({
   const tPiece = useTranslations("PIECE_LABELS");
   const tPath = useTranslations("TRAINING_PATH_COPY");
   const descriptions = useTranslations("EXERCISE_DESCRIPTIONS");
+  // Overlay-aware descriptions map (baseline default with no provider). An
+  // overlay-edited `explanation` overrides the baseline generated text.
+  const overlayDescriptions = useExerciseDescriptions();
   const maxStars = exercises.length * 3;
   // Stars are an id-map (sparse; absent id = not played → 0). The senda
   // lock is positional, so resolve each pool slot's best by exercise id.
@@ -312,6 +316,7 @@ export function ExerciseDrawer({
               // missing-message console warning.
               (eid) => (descriptions.has(eid) ? descriptions(eid) : null),
               (n) => t("exerciseFallbackFormat", { n }),
+              overlayDescriptions,
             );
 
             return (
