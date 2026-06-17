@@ -88,6 +88,11 @@ export const LABYRINTHS: Record<PieceId, Exercise[]> = {
  * "Exercise N" fallback. Pure — `i18n`/`fallback` are injected so this is
  * unit-testable without a translator context.
  *
+ * `descriptions` defaults to the compiled baseline map but is injectable so
+ * the overlay read path can pass the merged (baseline ⊕ overlay) descriptions
+ * — an overlay-edited `explanation` then overrides the baseline text. With the
+ * default it is byte-identical to the pre-overlay resolver.
+ *
  * `i18n` returns `null` (or an empty string) when the id has no
  * translation. The caller is expected to guard the translator (e.g.
  * `descriptions.has(id)`) and pass `null` for unknown ids, so a builder-
@@ -100,8 +105,9 @@ export function resolveExerciseDescription(
   index: number,
   i18n: (id: string) => string | null,
   fallback: (n: number) => string,
+  descriptions: Record<string, string> = GENERATED_EXERCISE_DESCRIPTIONS,
 ): string {
-  const gen = GENERATED_EXERCISE_DESCRIPTIONS[id];
+  const gen = descriptions[id];
   if (gen) return gen;
   const translated = i18n(id);
   if (translated) return translated;
