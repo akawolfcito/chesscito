@@ -148,7 +148,9 @@ export type OverlayInset = { top: number; right: number; bottom: number; left: n
       walls, coordinates all align; a VR baseline is added and green.
 - [ ] Arena board (flag ON): white AND black orientation align (tiles + pieces +
       coords flip together); capture floats + checkmate pause intact; VR green.
-- [ ] Thumbnail (flag ON): FEN snapshot renders aligned, read-only; VR green.
+- [ ] Thumbnail: stays image-based (no `GameBoard`); when final art lands, its
+      board `<img>` swaps to the flat composite + piece inset recalibrated to
+      `BOARD_INSET`; FEN snapshot still renders aligned, read-only; VR green.
 - [ ] Labyrinth walls render the `wall.*` art per cell on the new board.
 - [ ] No measurable first-paint regression: tiles use ONE `background-image:
       image-set(...)` rule per color (2 cached requests), NOT 64 `<picture>` tiles
@@ -170,13 +172,25 @@ export type OverlayInset = { top: number; right: number; bottom: number; left: n
 - Drag-to-move (tap-to-move parity only).
 
 ## Phases
-- **Phase 0** — promote `ProceduralBoard` → `src/lib/game/game-board.tsx`
+- **Phase 0** ✅ — promote `ProceduralBoard` → `src/lib/game/game-board.tsx`
   (generalized: orientation + overlay layer), relocate assets to `/public/art/board`.
   `/dev` consumers import the promoted component. No surface flip yet.
-- **Phase 1** — migrate **board.tsx** (exercises/labyrinth) behind the flag; VR.
-- **Phase 2** — migrate **arena-board.tsx** (orientation, captures); VR.
-- **Phase 3** — migrate **board-thumbnail.tsx**; VR.
-- **Phase 4** — default the flag on, then retire the image substrate + dead CSS.
+- **Phase 1** ✅ (PR #135) — migrate **board.tsx** (exercises/labyrinth) behind
+  the `proceduralBoard` flag (default off); overlay layer + per-surface inset; VR pending.
+- **Phase 2** ✅ (PR #136) — migrate **arena-board.tsx** behind the flag
+  (`orientation` white/black on tiles + overlay; live + dying capture pieces); VR pending.
+- **Phase 3** — **board-thumbnail.tsx stays image-based** (founder 2026-06-17,
+  see Open Q #5). NOT migrated to `GameBoard`: it is read-only (no interaction /
+  per-cell markers / walls), so the procedural benefits don't apply, and it
+  renders in lists (JOURNAL) where 64 tile divs per thumb is the wrong trade
+  (red-team P2). Work, gated on final art: swap its board `<img>` to a **flat
+  composite PNG of the final tiles+frame** and recalibrate the piece inset from
+  the hit-grid values (`5.25/9.25/12.75/10.25%`) to the final art's opening
+  (`BOARD_INSET`). No `GameBoard`, no flag.
+- **Phase 4** — default the board.tsx + arena flags on (gated on final art +
+  sign-off), then retire `board-ch.png` from those two surfaces + dead CSS +
+  `/dev/board-calibration`. The thumbnail keeps ONE flat board image (the P3
+  composite), so a board image survives the migration by design.
 
 ## Open questions
 1. ~~Coordinate model~~ — **RESOLVED (founder 2026-06-17)**: adopt the
@@ -189,6 +203,13 @@ export type OverlayInset = { top: number; right: number; bottom: number; left: n
 3. **Asset scope**: are the dev tiles (`casilla-clara/oscura`, candy frame) the
    FINAL prod art, or placeholders pending a designer pass? If placeholders, Phase
    0 still relocates them but flags stay off until final art lands.
+   — **PLACEHOLDERS confirmed (founder 2026-06-17)**: build P1–P3 with flags off;
+   no flip-on for players until final art + human sign-off at 390px.
+5. ~~Thumbnail migration~~ — **RESOLVED (founder 2026-06-17)**: the read-only
+   thumbnail does **not** migrate to `GameBoard`. A flat board image is enough
+   (no interaction / per-cell markers); 64 tile divs per thumb in lists is the
+   wrong trade. P3 = art swap + inset recalibration when final art lands. See
+   Phase 3.
 4. ~~board-geometry corners / perspective~~ — **RESOLVED**: grep confirms no
    `interpolateQuad`/`BOARD_V_GAMMA` consumers remain; `board-geometry.ts` is a
    uniform 12.5% grid used by board.tsx, arena-board, board-thumbnail (+ dev
