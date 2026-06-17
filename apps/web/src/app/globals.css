@@ -2753,19 +2753,27 @@
     background-color: transparent;
   }
 
-  /* Labyrinth wall — a stone tile painted ON the cell so a blocked square
+  /* Labyrinth wall — the wall1 art painted ON the cell so a blocked square
      reads instantly as "impasable", replacing the old chained-rook+lock
-     sprite (founder 2026-06-16). Non-target by the rules layer; cursor
-     signals it's not a move. */
+     sprite (founder 2026-06-16) and the interim stone gradient (2026-06-17).
+     Non-target by the rules layer; cursor signals it's not a move. */
   .playhub-board-cell.is-wall {
-    background:
-      radial-gradient(120% 120% at 30% 22%, rgba(255, 255, 255, 0.18), transparent 55%),
-      linear-gradient(165deg, #9aa0a8 0%, #6b7178 55%, #4e545b 100%);
+    background-color: #6b7178; /* tint while the image loads */
+    background-image: url("/art/labyrinths/wall.png");
+    background-image: -webkit-image-set(
+      url("/art/labyrinths/wall.avif") type("image/avif"),
+      url("/art/labyrinths/wall.webp") type("image/webp"),
+      url("/art/labyrinths/wall.png") type("image/png")
+    );
+    background-image: image-set(
+      url("/art/labyrinths/wall.avif") type("image/avif"),
+      url("/art/labyrinths/wall.webp") type("image/webp"),
+      url("/art/labyrinths/wall.png") type("image/png")
+    );
+    background-size: cover;
+    background-position: center;
     border-radius: 12%;
-    box-shadow:
-      inset 0 2px 2px rgba(255, 255, 255, 0.22),
-      inset 0 -3px 6px rgba(0, 0, 0, 0.40),
-      0 1px 2px rgba(0, 0, 0, 0.30);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.30);
     cursor: default;
   }
 

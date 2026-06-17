@@ -48,8 +48,10 @@ const CELL_OVERLAY: Record<string, CSSProperties> = {
   wall: {
     position: "absolute",
     inset: 0,
-    background: "rgba(15, 23, 42, 0.62)",
-    boxShadow: "inset 0 0 0 2px rgba(15,23,42,0.5)",
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    borderRadius: "12%",
     pointerEvents: "none",
   },
   capture: {
@@ -492,7 +494,8 @@ export default function LabyrinthBuilderPage() {
               return (
                 <>
                   {isWall && !isStart && !isGoal && (
-                    <span style={CELL_OVERLAY.wall} />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src="/art/labyrinths/wall.png" alt="" style={CELL_OVERLAY.wall} />
                   )}
                   {isCapture && !isStart && (
                     <span style={CELL_OVERLAY.capture} />
