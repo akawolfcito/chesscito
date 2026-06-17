@@ -7,13 +7,20 @@
  * the path comes out. TrainingNode is a view-model, never stored.
  * ----------------------------------------------------------------- */
 
-import type { PieceId, PieceProgress } from "@/lib/game/types";
+import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
 import {
   BADGE_THRESHOLD,
   EXERCISES,
   LABYRINTHS,
   labyrinthStars,
 } from "@/lib/game/exercises";
+
+/** Injected catalog for the training path (default = baseline). Phase 2c
+ *  passes the merged (baseline ⊕ overlay) catalog. */
+export type TrainingCatalog = {
+  exercises: Record<PieceId, Exercise[]>;
+  labyrinths: Record<PieceId, Exercise[]>;
+};
 
 export type TrainingNodeKind = "exercise" | "labyrinth" | "badge" | "mastery";
 
@@ -48,6 +55,8 @@ export type TrainingPathInput = {
   /** On-chain claim state. Always false for guests — mastery stays
    *  gated behind the wallet claim by design (founder decision 2026-06-11). */
   badgeClaimed: boolean;
+  /** Injected catalog (default = baseline EXERCISES/LABYRINTHS). */
+  catalog?: TrainingCatalog;
 };
 
 export type PieceMastery = "none" | "badge" | "mastered";
@@ -58,6 +67,8 @@ export const LABYRINTH_UNLOCK_THRESHOLD = 6;
 
 export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
   const { piece, progress, labyrinthBests, badgeClaimed } = input;
+  const exercisesCatalog = input.catalog?.exercises ?? EXERCISES;
+  const labyrinthsCatalog = input.catalog?.labyrinths ?? LABYRINTHS;
   // Across-pool exercise mastery: sum the best stars in the id-map. Sparse
   // map → unset ids contribute 0. Labyrinth stars never count here.
   const totalStars = Object.values(progress.stars).reduce(
@@ -68,7 +79,7 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
   // Exercise nodes follow the authored catalog `order` (EXERCISES[piece] is
   // order-sorted at import time). Stars are read by exerciseId — immune to
   // catalog reordering.
-  const exerciseNodes: TrainingNode[] = EXERCISES[piece].map((exercise) => {
+  const exerciseNodes: TrainingNode[] = exercisesCatalog[piece].map((exercise) => {
     const stars = progress.stars[exercise.id] ?? 0;
     return {
       id: exercise.id,
@@ -83,7 +94,7 @@ export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
   // The in-game sequence follows the authored catalog `order` (NOT
   // difficulty). LABYRINTHS[piece] is already sorted by (order, id) at
   // import time, so we consume it as-is — the author controls the order.
-  const orderedLabyrinths = LABYRINTHS[piece];
+  const orderedLabyrinths = labyrinthsCatalog[piece];
 
   const labyrinthNodes: TrainingNode[] = [];
   for (const [index, labyrinth] of orderedLabyrinths.entries()) {
