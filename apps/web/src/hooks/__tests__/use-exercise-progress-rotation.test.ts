@@ -28,8 +28,10 @@ vi.mock("wagmi", () => ({
 
 import { act, renderHook } from "@testing-library/react";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
+import { EXERCISES } from "@/lib/game/exercises";
 
 const ROTATION = { enabled: true, dateUtc: "2026-06-08" };
+const rookId = (i: number) => EXERCISES.rook[i].id;
 
 async function mount(piece: "rook", rotation?: typeof ROTATION) {
   const view = renderHook(() => useExerciseProgress(piece, rotation));
@@ -46,7 +48,10 @@ describe("flag OFF — legacy linear senda", () => {
     const { result } = await mount("rook"); // no rotation arg
     expect(result.current.visibleExerciseIds).toBeNull();
     act(() => result.current.goToExercise(3)); // maxAllowed = 0 when fresh
-    expect(result.current.progress.exerciseIndex).toBe(0);
+    // Blocked → currentId stays null (no navigation); currentExercise
+    // falls back to the first pool exercise.
+    expect(result.current.progress.currentId).toBeNull();
+    expect(result.current.currentExercise.id).toBe(rookId(0));
   });
 });
 
@@ -63,21 +68,23 @@ describe("flag ON — rotation visible set (guest canonical = rook-1..5)", () =>
   it("navigates to a visible exercise beyond the linear senda", async () => {
     const { result } = await mount("rook", ROTATION);
     act(() => result.current.goToExercise(3)); // rook-4, in the visible set
-    expect(result.current.progress.exerciseIndex).toBe(3);
+    expect(result.current.progress.currentId).toBe(rookId(3));
   });
 
   it("blocks navigation to an exercise outside the visible set", async () => {
     const { result } = await mount("rook", ROTATION);
     act(() => result.current.goToExercise(7)); // rook-8, NOT canonical
-    expect(result.current.progress.exerciseIndex).toBe(0);
+    // Blocked → currentId stays null; currentExercise stays at rook-1.
+    expect(result.current.progress.currentId).toBeNull();
+    expect(result.current.currentExercise.id).toBe(rookId(0));
   });
 
   it("writes stars to the real pool index, not a visible slot index", async () => {
     const { result } = await mount("rook", ROTATION);
     act(() => result.current.goToExercise(2)); // rook-3 (pool index 2)
     act(() => result.current.completeExercise(1)); // rook-3 optimal 1 → 3★
-    expect(result.current.progress.stars[2]).toBe(3);
-    expect(result.current.progress.stars[0]).toBe(0);
-    expect(result.current.progress.stars[1]).toBe(0);
+    expect(result.current.progress.stars[rookId(2)]).toBe(3);
+    expect(result.current.progress.stars[rookId(0)] ?? 0).toBe(0);
+    expect(result.current.progress.stars[rookId(1)] ?? 0).toBe(0);
   });
 });

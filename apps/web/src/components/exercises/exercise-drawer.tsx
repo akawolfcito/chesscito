@@ -87,7 +87,12 @@ export function ExerciseDrawer({
   const tPath = useTranslations("TRAINING_PATH_COPY");
   const descriptions = useTranslations("EXERCISE_DESCRIPTIONS");
   const maxStars = exercises.length * 3;
-  const lastCompleted = stars.reduce((acc, s, i) => (s > 0 ? i : acc), -1);
+  // Stars are an id-map (sparse; absent id = not played → 0). The senda
+  // lock is positional, so resolve each pool slot's best by exercise id.
+  const lastCompleted = exercises.reduce(
+    (acc, exercise, i) => ((stars[exercise.id] ?? 0) > 0 ? i : acc),
+    -1,
+  );
   const maxAllowed = Math.min(lastCompleted + 1, exercises.length - 1);
   const rotationOn = visibleExerciseIds != null;
 
@@ -291,7 +296,8 @@ export function ExerciseDrawer({
 
             const { exercise, index } = row.value;
             const isActive = index === activeIndex;
-            const isDone = stars[index] > 0;
+            const starCount = stars[exercise.id] ?? 0;
+            const isDone = starCount > 0;
             const isLocked = lockedFor(exercise, index);
             // Generated puzzles carry their own description map; hand-
             // authored rows resolve via EXERCISE_DESCRIPTIONS i18n keys
@@ -300,7 +306,11 @@ export function ExerciseDrawer({
             const description = resolveExerciseDescription(
               exercise.id,
               index,
-              (eid) => descriptions(eid),
+              // Guard with `has` so an id without an EXERCISE_DESCRIPTIONS
+              // key (e.g. a builder-authored exercise) resolves to the
+              // generic fallback instead of triggering next-intl's
+              // missing-message console warning.
+              (eid) => (descriptions.has(eid) ? descriptions(eid) : null),
               (n) => t("exerciseFallbackFormat", { n }),
             );
 
@@ -369,7 +379,7 @@ export function ExerciseDrawer({
 
                 {/* Stars */}
                 {isDone ? (
-                  <StarDisplay count={stars[index]} />
+                  <StarDisplay count={starCount} />
                 ) : isLocked ? (
                   <span className="text-xs" style={{ color: "rgba(110, 65, 15, 0.55)" }}>
                     {t("locked")}

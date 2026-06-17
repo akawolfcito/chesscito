@@ -103,9 +103,9 @@ describe("connect after playing as guest", () => {
     useAccountMock.mockReturnValue({ isConnected: true, address: WALLET });
     const { result } = await mount(ROTATION);
     // Local progress (device-local) is untouched by connecting.
-    expect(result.current.progress.stars[0]).toBe(3);
-    expect(result.current.progress.stars[1]).toBe(2);
-    expect(result.current.progress.stars[2]).toBe(1);
+    expect(result.current.progress.stars[EXERCISES.rook[0].id]).toBe(3);
+    expect(result.current.progress.stars[EXERCISES.rook[1].id]).toBe(2);
+    expect(result.current.progress.stars[EXERCISES.rook[2].id]).toBe(1);
     expect(result.current.totalStars).toBe(6);
   });
 });

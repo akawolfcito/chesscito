@@ -4,7 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import { BADGE_THRESHOLD, EXERCISES, getExerciseCount } from "@/lib/game/exercises";
 import { computeStars } from "@/lib/game/scoring";
-import { calculatePoolMasteryFromArray } from "@/lib/game/progress-adapter";
+import {
+  calculateTotalStarsFromIdMap,
+  starsIdMapToArray,
+} from "@/lib/game/progress-adapter";
 import { computeVisibleExerciseIds } from "@/lib/exercises/visible-set";
 import {
   getOrCreateGuestSessionId,
@@ -27,103 +30,101 @@ export type ExerciseRotationOptions = {
   sessionSeed?: string | null;
 };
 
-/**
- * Returns a zero-filled stars array matching the piece's current pool
- * length. Replaces the legacy module-level `EMPTY_STARS = [0,0,0,0,0]`
- * constant — per-piece dynamic since Sprint 1 of Training Economy
- * Alpha (2026-06-05) when piece pools became variable-length.
- */
-function emptyStars(piece: PieceId): number[] {
-  return new Array(getExerciseCount(piece)).fill(0);
-}
-
-/**
- * Migrate a persisted `stars` array to match the current piece pool
- * length. Pure function — no localStorage, no piece coupling. Exported
- * to enable focused testing of the migration logic.
- *
- * Three cases:
- *  - `stars.length === count` → no-op, no mutation flag.
- *  - `stars.length < count`   → pad RIGHT with zeros, preserving every
- *    legacy value. The new exercises (those added to the pool after
- *    the user's last persist) are simply "not played yet".
- *  - `stars.length > count`   → preserve the FIRST `count` values and
- *    truncate the rest. Signals `truncated: true` so the caller can
- *    log a console warning. This case happens when a piece pool shrunk
- *    (rare in production; mostly a dev/migration accident). We do NOT
- *    silently reset to fresh because that throws away all progress.
- *
- * Returns a NEW array even when no mutation happens, so callers don't
- * accidentally mutate the persisted shape.
- */
-export function migrateStarsLength(
-  stars: readonly number[],
-  count: number,
-): { stars: number[]; mutated: boolean; truncated: boolean } {
-  if (stars.length === count) {
-    return { stars: [...stars], mutated: false, truncated: false };
-  }
-  if (stars.length < count) {
-    const padded = [
-      ...stars,
-      ...new Array(count - stars.length).fill(0),
-    ];
-    return { stars: padded, mutated: true, truncated: false };
-  }
-  return {
-    stars: stars.slice(0, count),
-    mutated: true,
-    truncated: true,
-  };
-}
-
 function storageKey(piece: PieceId) {
   return `chesscito:progress:${piece}`;
 }
 
+/** Fresh, empty id-keyed progress for a piece (SSR default + corrupt-data
+ *  fallback). Sparse `stars` map: absent id means "not played yet". */
+function emptyProgress(piece: PieceId): PieceProgress {
+  return { piece, currentId: null, stars: {} };
+}
+
+/** Coerce any value into a valid star count: non-numbers/NaN → 0,
+ *  clamp to [0, 3], round fractional values. Mirrors the adapter's
+ *  internal clamp so the persisted map can never hold an out-of-range
+ *  value even if localStorage was hand-edited. */
+function clampStars(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  if (value <= 0) return 0;
+  if (value >= 3) return 3;
+  return Math.round(value);
+}
+
+/** Build a sparse id-map from an arbitrary parsed `stars` object: keeps
+ *  only ids present in the current pool, drops zero/absent values (sparse
+ *  shape — readers use `?? 0`), and clamps the rest to [0,3]. Unknown ids
+ *  are discarded. */
+function sanitizeStarsById(
+  piece: PieceId,
+  raw: Record<string, unknown>,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const ex of EXERCISES[piece]) {
+    const stars = clampStars(raw[ex.id]);
+    if (stars > 0) out[ex.id] = stars;
+  }
+  return out;
+}
+
+/**
+ * Load + migrate persisted progress to the id-keyed shape.
+ *
+ * Three input shapes are tolerated:
+ *  - Legacy positional `{ exerciseIndex: number, stars: number[] }` —
+ *    migrated by CURRENT catalog order: `stars[i]` → `stars[pool[i].id]`,
+ *    `currentId = pool[exerciseIndex]?.id`. The migrated id-map shape is
+ *    written back so subsequent loads are idempotent (no array left).
+ *  - Already id-keyed `{ currentId, stars: Record<id, number> }` —
+ *    sanitized (unknown ids dropped, values clamped, sparse). `currentId`
+ *    is kept only if it still names a pool exercise, else null.
+ *  - Anything missing/corrupt → empty progress.
+ */
 function loadProgress(piece: PieceId): PieceProgress {
   if (typeof window === "undefined") {
-    return { piece, exerciseIndex: 0, stars: emptyStars(piece) };
+    return emptyProgress(piece);
   }
 
-  const count = getExerciseCount(piece);
   try {
     const raw = localStorage.getItem(storageKey(piece));
     if (!raw) {
-      return { piece, exerciseIndex: 0, stars: emptyStars(piece) };
+      return emptyProgress(piece);
     }
-    const parsed = JSON.parse(raw) as PieceProgress;
-    if (
-      !Array.isArray(parsed.stars) ||
-      typeof parsed.exerciseIndex !== "number"
-    ) {
-      return { piece, exerciseIndex: 0, stars: emptyStars(piece) };
-    }
-    const validStars = parsed.stars.every(
-      (s: unknown) => typeof s === "number" && s >= 0 && s <= 3,
-    );
-    if (!validStars) {
-      return { piece, exerciseIndex: 0, stars: emptyStars(piece) };
-    }
-    const migration = migrateStarsLength(parsed.stars, count);
-    if (migration.truncated) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        `[useExerciseProgress] stars length for piece "${piece}" exceeds current pool (got ${parsed.stars.length}, count ${count}). Preserving first ${count} entries; entries beyond have been discarded.`,
-      );
-    }
-    const clampedIndex = Math.max(0, Math.min(parsed.exerciseIndex, count - 1));
-    const result: PieceProgress = {
-      piece,
-      exerciseIndex: clampedIndex,
-      stars: migration.stars,
-    };
-    if (migration.mutated || clampedIndex !== parsed.exerciseIndex) {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+    // Legacy positional shape: stars is an array. Migrate by catalog order.
+    if (Array.isArray(parsed.stars)) {
+      const legacyStars = parsed.stars as unknown[];
+      const stars: Record<string, number> = {};
+      const pool = EXERCISES[piece];
+      for (let i = 0; i < pool.length; i += 1) {
+        const value = clampStars(legacyStars[i]);
+        if (value > 0) stars[pool[i].id] = value;
+      }
+      const legacyIndex =
+        typeof parsed.exerciseIndex === "number" ? parsed.exerciseIndex : 0;
+      const currentId = pool[legacyIndex]?.id ?? null;
+      const result: PieceProgress = { piece, currentId, stars };
+      // Persist the migrated id-map shape (drops the legacy array).
       saveProgress(result);
+      return result;
     }
-    return result;
+
+    // Already id-keyed: sanitize. A non-object `stars` is treated as empty.
+    const starsObj =
+      parsed.stars && typeof parsed.stars === "object"
+        ? (parsed.stars as Record<string, unknown>)
+        : {};
+    const stars = sanitizeStarsById(piece, starsObj);
+    const rawCurrentId =
+      typeof parsed.currentId === "string" ? parsed.currentId : null;
+    const currentId =
+      rawCurrentId && EXERCISES[piece].some((ex) => ex.id === rawCurrentId)
+        ? rawCurrentId
+        : null;
+    return { piece, currentId, stars };
   } catch {
-    return { piece, exerciseIndex: 0, stars: emptyStars(piece) };
+    return emptyProgress(piece);
   }
 }
 
@@ -146,13 +147,11 @@ export function useExerciseProgress(
 
   // Inicializar siempre con defaults para que server y cliente rendericen igual
   // (evita hydration mismatch). localStorage se lee después del montaje.
-  // Lazy initializer porque emptyStars depende del piece — evita recomputar
-  // en cada render y mantiene compatibilidad SSR/CSR.
-  const [progress, setProgress] = useState<PieceProgress>(() => ({
-    piece,
-    exerciseIndex: 0,
-    stars: emptyStars(piece),
-  }));
+  // Lazy initializer para no recomputar el default en cada render y
+  // mantener compatibilidad SSR/CSR.
+  const [progress, setProgress] = useState<PieceProgress>(() =>
+    emptyProgress(piece),
+  );
 
   /** Tracks whether the post-mount loadProgress effect has run yet.
    *  Sprint 1 commit 6 (Training Economy Alpha 2026-06-05) — gates the
@@ -206,16 +205,23 @@ export function useExerciseProgress(
   }, [piece]);
 
   const count = getExerciseCount(piece);
-  const safeIndex = Math.min(Math.max(0, progress.exerciseIndex), count - 1);
+  // `currentId` (an exerciseId) drives navigation; derive the pool index
+  // from it so the index-based affordances (telemetry slotIndex,
+  // currentExercise, isLastExercise, nav guards) keep working. A null or
+  // stale id resolves to the first pool exercise (index 0).
+  const currentIdIndex = progress.currentId
+    ? EXERCISES[piece].findIndex((ex) => ex.id === progress.currentId)
+    : -1;
+  const safeIndex = currentIdIndex >= 0 ? currentIdIndex : 0;
   const currentExercise: Exercise = EXERCISES[piece][safeIndex];
-  const isLastExercise = progress.exerciseIndex === count - 1;
+  const isLastExercise = safeIndex === count - 1;
   // Badge mastery is the across-pool sum of best stars (each exercise
-  // counts ≤3★ once; replays never double-count). Routed through the
-  // id-map mastery helper to make that semantics explicit in code —
-  // behaviour is identical to the legacy `totalStars(stars[])` sum.
-  const total = calculatePoolMasteryFromArray(piece, progress.stars);
+  // counts ≤3★ once; replays never double-count). The id-map mastery
+  // helper makes the across-pool semantics explicit; sparse map → unset
+  // ids contribute 0.
+  const total = calculateTotalStarsFromIdMap(piece, progress.stars);
   const badgeEarned = total >= BADGE_THRESHOLD;
-  const isReplay = progress.stars[progress.exerciseIndex] > 0;
+  const isReplay = (progress.stars[currentExercise.id] ?? 0) > 0;
 
   /** Rotation Engine (slice E) — the set of exerciseIds to surface today,
    *  or `null` when rotation is disabled (legacy: full pool navigable).
@@ -232,12 +238,15 @@ export function useExerciseProgress(
    *  / wallet. Otherwise the persistent per-device guest session id. */
   const [guestSessionSeed, setGuestSessionSeed] = useState<string | null>(null);
   useEffect(() => {
-    if (!rotationEnabled || address || !isGuestGraduated(progress.stars)) {
+    // `isGuestGraduated` + the rotation selector still consume the
+    // positional stars array; bridge the id-map → array (catalog order).
+    const starsArray = starsIdMapToArray(piece, progress.stars);
+    if (!rotationEnabled || address || !isGuestGraduated(starsArray)) {
       setGuestSessionSeed(null);
       return;
     }
     setGuestSessionSeed(getOrCreateGuestSessionId());
-  }, [rotationEnabled, address, progress.stars]);
+  }, [rotationEnabled, address, piece, progress.stars]);
 
   // `rotation.sessionSeed` is a test override; real callers rely on the
   // derived guest seed above. A connected wallet still wins inside
@@ -251,7 +260,8 @@ export function useExerciseProgress(
         address: address ?? null,
         sessionSeed: effectiveSessionSeed,
         dateUtc: rotationDateUtc,
-        starsArray: progress.stars,
+        // The visible-set selector reads the native id-map directly.
+        starsById: progress.stars,
       }),
     [rotationEnabled, piece, address, effectiveSessionSeed, rotationDateUtc, progress.stars],
   );
@@ -297,19 +307,27 @@ export function useExerciseProgress(
     (movesUsed: number) => {
       setProgress((prev) => {
         const pieceCount = getExerciseCount(piece);
-        const idx = Math.min(Math.max(0, prev.exerciseIndex), pieceCount - 1);
+        // Resolve the active exercise from currentId (fallback: first pool
+        // exercise). `idx` is kept for telemetry slotIndex parity.
+        const idx = prev.currentId
+          ? Math.max(
+              0,
+              EXERCISES[piece].findIndex((ex) => ex.id === prev.currentId),
+            )
+          : 0;
         const exercise = EXERCISES[piece][idx];
         const starsForAttempt = computeStars(movesUsed, exercise.optimalMoves);
-        const newStars = [...prev.stars] as PieceProgress["stars"];
-        const bestStarsBefore = newStars[idx] ?? 0;
+        const bestStarsBefore = prev.stars[exercise.id] ?? 0;
         const bestStarsAfter = Math.max(
           bestStarsBefore,
           starsForAttempt,
         ) as 0 | 1 | 2 | 3;
-        newStars[idx] = bestStarsAfter;
+        // Write best stars by exerciseId. Sparse map: only set when >0.
+        const newStars: Record<string, number> = { ...prev.stars };
+        if (bestStarsAfter > 0) newStars[exercise.id] = bestStarsAfter;
 
-        const prevTotal = calculatePoolMasteryFromArray(piece, prev.stars);
-        const newTotal = calculatePoolMasteryFromArray(piece, newStars);
+        const prevTotal = calculateTotalStarsFromIdMap(piece, prev.stars);
+        const newTotal = calculateTotalStarsFromIdMap(piece, newStars);
         const delta = newTotal - prevTotal;
         const wasReplay = bestStarsBefore > 0;
 
@@ -338,7 +356,9 @@ export function useExerciseProgress(
         }
 
         if (prevTotal < BADGE_THRESHOLD && newTotal >= BADGE_THRESHOLD) {
-          const exercisesCompleted = newStars.filter((s) => s > 0).length;
+          const exercisesCompleted = EXERCISES[piece].filter(
+            (ex) => (newStars[ex.id] ?? 0) > 0,
+          ).length;
           track("training_piece_badge_threshold_reached", {
             piece,
             totalStars: newTotal,
@@ -346,17 +366,21 @@ export function useExerciseProgress(
           });
         }
 
-        // Senda completion: every slot has ≥1★ AND at least one was 0
-        // before this update. The second clause is what prevents the
-        // event from re-firing on every replay after the senda already
-        // closed.
-        const sendaCompletedNow =
-          newStars.every((s) => s > 0) && prev.stars.some((s) => s === 0);
-        if (sendaCompletedNow) {
+        // Senda completion: every pool exercise has ≥1★ AND at least one
+        // was 0 before this update. The second clause is what prevents
+        // the event from re-firing on every replay after the senda
+        // already closed.
+        const allDoneNow = EXERCISES[piece].every(
+          (ex) => (newStars[ex.id] ?? 0) > 0,
+        );
+        const hadZeroBefore = EXERCISES[piece].some(
+          (ex) => (prev.stars[ex.id] ?? 0) === 0,
+        );
+        if (allDoneNow && hadZeroBefore) {
           track("training_senda_completed", {
             piece,
             totalStars: newTotal,
-            exercisesCompleted: newStars.length,
+            exercisesCompleted: pieceCount,
             exerciseCount: pieceCount,
           });
         }
@@ -415,12 +439,13 @@ export function useExerciseProgress(
 
   const advanceExercise = useCallback(() => {
     setProgress((prev) => {
-      const pieceCount = getExerciseCount(piece);
-      if (prev.exerciseIndex >= pieceCount - 1) return prev;
-      const next: PieceProgress = {
-        ...prev,
-        exerciseIndex: prev.exerciseIndex + 1,
-      };
+      const pool = EXERCISES[piece];
+      const curIdx = prev.currentId
+        ? pool.findIndex((ex) => ex.id === prev.currentId)
+        : 0;
+      const idx = curIdx >= 0 ? curIdx : 0;
+      if (idx >= pool.length - 1) return prev;
+      const next: PieceProgress = { ...prev, currentId: pool[idx + 1].id };
       saveProgress(next);
       return next;
     });
@@ -428,22 +453,27 @@ export function useExerciseProgress(
 
   const goToExercise = useCallback((index: number) => {
     setProgress((prev) => {
-      const pieceCount = getExerciseCount(piece);
-      const clamped = Math.max(0, Math.min(index, pieceCount - 1));
+      const pool = EXERCISES[piece];
+      const clamped = Math.max(0, Math.min(index, pool.length - 1));
+      const targetId = pool[clamped]?.id;
+      if (!targetId) return prev;
       const visibleIds = visibleIdsRef.current;
       if (visibleIds) {
         // Rotation mode: gate by today's visible (tier-unlocked) set, not
         // the legacy linear senda. The clamped value is always a real pool
         // index, so progress writes still target the correct exerciseId.
-        const targetId = EXERCISES[piece][clamped]?.id;
-        if (!targetId || !visibleIds.has(targetId)) return prev;
+        if (!visibleIds.has(targetId)) return prev;
       } else {
         // Legacy: navigate to any completed exercise or one past the last.
-        const lastCompleted = prev.stars.reduce((acc, s, i) => (s > 0 ? i : acc), -1);
-        const maxAllowed = Math.min(lastCompleted + 1, pieceCount - 1);
+        // "Completed" = the highest pool index with ≥1★ in the id-map.
+        const lastCompleted = pool.reduce(
+          (acc, ex, i) => ((prev.stars[ex.id] ?? 0) > 0 ? i : acc),
+          -1,
+        );
+        const maxAllowed = Math.min(lastCompleted + 1, pool.length - 1);
         if (clamped > maxAllowed) return prev;
       }
-      const next: PieceProgress = { ...prev, exerciseIndex: clamped };
+      const next: PieceProgress = { ...prev, currentId: targetId };
       saveProgress(next);
       return next;
     });

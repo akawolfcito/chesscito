@@ -13,8 +13,9 @@
 import {
   getCanonicalFive,
   getVisibleExercisesForToday,
+  type ExerciseStarsById,
 } from "@/lib/game/rotation";
-import { migrateStarsArrayToIdMap } from "@/lib/game/progress-adapter";
+import { normalizeStarsById } from "@/lib/game/progress-adapter";
 import type { PieceId } from "@/lib/game/types";
 
 export function computeVisibleExerciseIds(args: {
@@ -27,8 +28,8 @@ export function computeVisibleExerciseIds(args: {
   sessionSeed: string | null;
   /** UTC date string "YYYY-MM-DD". */
   dateUtc: string;
-  /** Legacy positional stars array for the piece. */
-  starsArray: readonly number[];
+  /** id-keyed stars map for the piece (sparse; absent id = not played). */
+  starsById: ExerciseStarsById;
 }): Set<string> | null {
   if (!args.enabled) return null;
 
@@ -38,7 +39,9 @@ export function computeVisibleExerciseIds(args: {
     return new Set(getCanonicalFive(args.piece).map((ex) => ex.id));
   }
 
-  const progress = migrateStarsArrayToIdMap(args.piece, args.starsArray);
+  // Normalize the sparse id-map to one clamped entry per pool exercise so
+  // the rotation selector reads a complete, in-range progress map.
+  const progress = normalizeStarsById(args.piece, args.starsById);
   const visible = getVisibleExercisesForToday({
     piece: args.piece,
     walletOrSessionSeed: seed,

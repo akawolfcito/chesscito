@@ -110,8 +110,16 @@ function loadStarsPerPiece(): Partial<Record<PieceId, number>> {
       const raw = window.localStorage.getItem(`${PROGRESS_STORAGE_PREFIX}${piece}`);
       if (!raw) continue;
       const parsed = JSON.parse(raw) as { stars?: unknown };
-      if (Array.isArray(parsed.stars)) {
-        const total = parsed.stars.reduce<number>((acc, s) => {
+      // Tolerate both the legacy positional `stars: number[]` and the
+      // id-keyed `stars: Record<id, number>` shape (post-2026-06-16
+      // migration). Sum the in-range values either way.
+      const values = Array.isArray(parsed.stars)
+        ? parsed.stars
+        : parsed.stars && typeof parsed.stars === "object"
+          ? Object.values(parsed.stars)
+          : null;
+      if (values) {
+        const total = values.reduce<number>((acc, s) => {
           if (typeof s === "number" && Number.isFinite(s) && s >= 0 && s <= 3) {
             return acc + s;
           }

@@ -19,8 +19,16 @@ import {
   type TrainingPathInput,
 } from "@/lib/training/path";
 
+/** Convert a positional star array (legacy fixture shape) into the id-map
+ *  PieceProgress reads, keyed by catalog order. Sparse: zero entries are
+ *  dropped (absent id = not played). Preserves both the total and the
+ *  per-slot completion the fixtures express. */
 function makeProgress(piece: PieceId, stars: number[]): PieceProgress {
-  return { piece, exerciseIndex: 0, stars };
+  const map: Record<string, number> = {};
+  EXERCISES[piece].forEach((ex, i) => {
+    if ((stars[i] ?? 0) > 0) map[ex.id] = stars[i];
+  });
+  return { piece, currentId: null, stars: map };
 }
 
 function makeInput(

@@ -8,16 +8,23 @@ import {
 } from "@/lib/training/path";
 import { EXERCISES } from "@/lib/game/exercises";
 
-function rookPath(totalStars: number, bests: Record<string, number> = {}) {
+/** Spread `totalStars` across the pool (3★ per exercise, in catalog order)
+ *  and return the id-keyed best-stars map. Sparse: zero entries dropped. */
+function rookStarsTotaling(totalStars: number): Record<string, number> {
   let remaining = totalStars;
-  const stars = EXERCISES.rook.map(() => {
+  const map: Record<string, number> = {};
+  for (const ex of EXERCISES.rook) {
     const take = Math.min(3, remaining);
     remaining -= take;
-    return take;
-  });
+    if (take > 0) map[ex.id] = take;
+  }
+  return map;
+}
+
+function rookPath(totalStars: number, bests: Record<string, number> = {}) {
   return buildTrainingPath({
     piece: "rook",
-    progress: { piece: "rook", exerciseIndex: 0, stars },
+    progress: { piece: "rook", currentId: null, stars: rookStarsTotaling(totalStars) },
     labyrinthBests: bests,
     badgeClaimed: false,
   });
@@ -26,11 +33,7 @@ function rookPath(totalStars: number, bests: Record<string, number> = {}) {
 function rookLabs() {
   return buildTrainingPath({
     piece: "rook",
-    progress: {
-      piece: "rook",
-      exerciseIndex: 0,
-      stars: new Array(EXERCISES.rook.length).fill(0),
-    },
+    progress: { piece: "rook", currentId: null, stars: {} },
     labyrinthBests: {},
     badgeClaimed: false,
   }).filter((node) => node.kind === "labyrinth");

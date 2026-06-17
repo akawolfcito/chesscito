@@ -5,12 +5,24 @@ import { ExerciseDrawer } from "../exercise-drawer";
 import { EXERCISES } from "@/lib/game/exercises";
 import { buildTrainingPath } from "@/lib/training/path";
 
+/** Build an id-keyed best-stars map from a positional star count per pool
+ *  slot (the legacy fixture shape) so each test keeps expressing intent by
+ *  position while the component reads by exerciseId. Sparse: zero entries
+ *  are dropped (absent id = not played). */
+function starsById(...counts: number[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  EXERCISES.rook.forEach((ex, i) => {
+    if ((counts[i] ?? 0) > 0) map[ex.id] = counts[i];
+  });
+  return map;
+}
+
 const baseProps = {
   open: true,
   onOpenChange: vi.fn(),
   piece: "rook" as const,
   exercises: EXERCISES.rook,
-  stars: new Array(10).fill(0),
+  stars: starsById(),
   activeIndex: 0,
   totalStars: 0,
 };
@@ -89,13 +101,16 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
 });
 
 describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
-  const zeros = new Array(10).fill(0);
-  const sixStars = [3, 3, ...new Array(8).fill(0)];
+  const zeros = starsById();
+  const sixStars = starsById(3, 3); // rook-1 + rook-2 at 3★ each → 6★
 
-  function rookLabNodes(stars: number[], bests: Record<string, number> = {}) {
+  function rookLabNodes(
+    stars: Record<string, number>,
+    bests: Record<string, number> = {},
+  ) {
     return buildTrainingPath({
       piece: "rook",
-      progress: { piece: "rook", exerciseIndex: 0, stars },
+      progress: { piece: "rook", currentId: null, stars },
       labyrinthBests: bests,
       badgeClaimed: false,
     }).filter((node) => node.kind === "labyrinth");

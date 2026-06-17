@@ -39,7 +39,8 @@ export type TrainingNode = {
 
 export type TrainingPathInput = {
   piece: PieceId;
-  /** Existing positional stars array (chesscito:progress:{piece}). */
+  /** Existing id-keyed progress (chesscito:progress:{piece}). Stars are
+   *  read by exerciseId (sparse map; absent id = not played → 0). */
   progress: PieceProgress;
   /** Existing best-moves map (chesscito:labyrinth-best:{piece}).
    *  Absent/null entry = labyrinth never completed. */
@@ -57,21 +58,27 @@ export const LABYRINTH_UNLOCK_THRESHOLD = 6;
 
 export function buildTrainingPath(input: TrainingPathInput): TrainingNode[] {
   const { piece, progress, labyrinthBests, badgeClaimed } = input;
-  const totalStars = progress.stars.reduce((sum, value) => sum + value, 0);
-
-  const exerciseNodes: TrainingNode[] = EXERCISES[piece].map(
-    (exercise, index) => {
-      const stars = progress.stars[index] ?? 0;
-      return {
-        id: exercise.id,
-        kind: "exercise" as const,
-        piece,
-        unlock: { type: "always" as const },
-        status: stars > 0 ? ("complete" as const) : ("available" as const),
-        stars,
-      };
-    },
+  // Across-pool exercise mastery: sum the best stars in the id-map. Sparse
+  // map → unset ids contribute 0. Labyrinth stars never count here.
+  const totalStars = Object.values(progress.stars).reduce(
+    (sum, value) => sum + value,
+    0,
   );
+
+  // Exercise nodes follow the authored catalog `order` (EXERCISES[piece] is
+  // order-sorted at import time). Stars are read by exerciseId — immune to
+  // catalog reordering.
+  const exerciseNodes: TrainingNode[] = EXERCISES[piece].map((exercise) => {
+    const stars = progress.stars[exercise.id] ?? 0;
+    return {
+      id: exercise.id,
+      kind: "exercise" as const,
+      piece,
+      unlock: { type: "always" as const },
+      status: stars > 0 ? ("complete" as const) : ("available" as const),
+      stars,
+    };
+  });
 
   // The in-game sequence follows the authored catalog `order` (NOT
   // difficulty). LABYRINTHS[piece] is already sorted by (order, id) at

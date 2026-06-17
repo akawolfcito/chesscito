@@ -20,8 +20,9 @@ describe("buildTrainingPath — piece without labyrinths", () => {
       piece: "king",
       progress: {
         piece: "king",
-        exerciseIndex: 0,
-        stars: EXERCISES.king.map(() => 3),
+        currentId: null,
+        // Every king exercise at 3★ (id-keyed, full mastery).
+        stars: Object.fromEntries(EXERCISES.king.map((ex) => [ex.id, 3])),
       },
       labyrinthBests: {},
       badgeClaimed: true,
