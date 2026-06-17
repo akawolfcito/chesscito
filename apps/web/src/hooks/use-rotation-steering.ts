@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { EXERCISES } from "@/lib/game/exercises";
+import { useExerciseCatalog } from "@/lib/content/catalog-context";
 import type { PieceId } from "@/lib/game/types";
 
 export type RotationSteeringOptions = {
@@ -47,12 +47,15 @@ export function useRotationSteering({
   goToExercise,
   suspended,
 }: RotationSteeringOptions): void {
+  // Phase 2b-2: read the active pool from the catalog context (baseline
+  // EXERCISES when no provider is mounted → byte-identical flag-off).
+  const catalog = useExerciseCatalog();
   useEffect(() => {
     if (suspended) return;
     if (!enabled || !visibleExerciseIds) return;
     if (visibleExerciseIds.size === 0) return;
     if (visibleExerciseIds.has(currentExerciseId)) return;
-    const pool = EXERCISES[piece];
+    const pool = catalog[piece];
     const firstIncomplete = pool.findIndex(
       (ex) => visibleExerciseIds.has(ex.id) && (stars[ex.id] ?? 0) === 0,
     );
@@ -69,5 +72,6 @@ export function useRotationSteering({
     piece,
     stars,
     goToExercise,
+    catalog,
   ]);
 }

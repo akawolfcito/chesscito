@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
+import type { ReactNode } from "react";
 
 import { EXERCISES } from "@/lib/game/exercises";
+import { ExerciseCatalogProvider } from "@/lib/content/catalog-context";
+import type { ExerciseCatalog } from "@/lib/game/rotation";
 import {
   useRotationSteering,
   type RotationSteeringOptions,
@@ -109,5 +112,28 @@ describe("useRotationSteering", () => {
     expect(goToExercise).not.toHaveBeenCalled();
     rerender(makeOptions({ suspended: false, goToExercise }));
     expect(goToExercise).toHaveBeenCalledWith(1);
+  });
+
+  // ── Phase 2b-2: catalog injection seam ──────────────────────────
+  // The steering index is resolved against the INJECTED pool, not the
+  // baseline import. Swapping the first two rook exercises moves
+  // ROOK_IDS[1] to pool index 0, so the steering target shifts from 1
+  // (baseline) to 0 — proving the hook reads the context catalog.
+  it("resolves the steering target against the injected catalog", () => {
+    const injected: ExerciseCatalog = {
+      ...EXERCISES,
+      rook: [EXERCISES.rook[1], EXERCISES.rook[0], ...EXERCISES.rook.slice(2)],
+    };
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <ExerciseCatalogProvider value={injected}>
+        {children}
+      </ExerciseCatalogProvider>
+    );
+    const options = makeOptions({
+      visibleExerciseIds: new Set([ROOK_IDS[1]]),
+      currentExerciseId: ROOK_IDS[0],
+    });
+    renderHook(() => useRotationSteering(options), { wrapper });
+    expect(options.goToExercise).toHaveBeenCalledWith(0);
   });
 });
