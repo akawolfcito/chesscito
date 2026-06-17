@@ -12,6 +12,7 @@ import {
 } from "@/lib/game/board";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
 import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
+import { GameBoard } from "@/lib/game/game-board";
 import { hapticTap, hapticReject, hapticSuccess } from "@/lib/haptics";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { BOARD_HINT_COPY } from "@/lib/content/editorial";
@@ -89,6 +90,11 @@ type BoardProps = {
    *  Cleared by the parent after a short timer (~4s) so the hint
    *  doesn't linger forever. `null` = no active hint. */
   peonesHint?: BoardPosition | null;
+  /** Board migration Phase 1 (per-surface, default off). When true, the board
+   *  renders on the procedural `<GameBoard>` substrate (tile grid + candy frame)
+   *  instead of the background-image board. Flag stays off until final art +
+   *  human sign-off (founder 2026-06-17). */
+  proceduralBoard?: boolean;
 };
 
 export function Board({
@@ -103,6 +109,7 @@ export function Board({
   onMove,
   tutorialHints,
   peonesHint = null,
+  proceduralBoard = false,
 }: BoardProps) {
   const [piece, setPiece] = useState(() => makePiece(pieceType, startPosition));
   const [selectedPosition, setSelectedPosition] = useState<BoardPosition | null>(
@@ -192,6 +199,13 @@ export function Board({
     [piece, selectedPosition, targetPosition, validTargets]
   );
 
+  // Keyed lookup for the procedural board's renderCell (file,rank → square).
+  const squareByKey = useMemo(() => {
+    const map = new Map<string, (typeof squares)[number]>();
+    for (const s of squares) map.set(`${s.file},${s.rank}`, s);
+    return map;
+  }, [squares]);
+
   const handleSquarePress = (label: string) => {
     const isInteractive = mode === "practice" || mode === "labyrinth";
     if (!isInteractive || isLocked || !mountedRef.current) {
@@ -253,6 +267,343 @@ export function Board({
 
     setSelectedPosition(null);
   };
+
+  // Absolute overlay layer — capture marker, capture pickups, select hint, and
+  // the draggable floating piece. Positioned via cellCenter (% of the parent
+  // inset region). Shared verbatim between the image board (mounted in the
+  // hit-grid) and the procedural board (mounted in GameBoard's overlay region,
+  // inset to the frame opening). cellCenter resolves against whichever region
+  // wraps it, so each board stays aligned to its own grid.
+  const overlayLayer = (
+    <>
+      {/* Target piece — visible enemy piece for capture exercises */}
+      {isCapture && targetPosition && !(piece.position.file === targetPosition.file && piece.position.rank === targetPosition.rank) && (() => {
+        const tc = cellCenter(targetPosition.file, targetPosition.rank);
+        const tw = pieceWidth();
+        const targetImg = TARGET_MARKER_SRC;
+        return (
+          <picture
+            className="playhub-board-target-piece"
+            style={{
+              left: `${tc.x}%`,
+              top: `${tc.y}%`,
+              width: `${tw * 1.0}%`,
+            }}
+          >
+            {THEME_CONFIG.hasOptimizedFormats && (
+              <>
+                <source srcSet={targetImg.replace(".png", ".avif")} type="image/avif" />
+                <source srcSet={targetImg.replace(".png", ".webp")} type="image/webp" />
+              </>
+            )}
+            <img
+              src={targetImg}
+              alt="Capture target"
+              className="playhub-board-target-piece-img"
+              style={{ width: "100%" }}
+            />
+          </picture>
+        );
+      })()}
+
+      {/* Capture targets — capturable pickup markers. Rendered as
+          small glowing amber circles to indicate "land here to
+          capture". No lock icon; visually distinct from obstacles
+          which are desaturated pieces with a lock badge. */}
+      {mode === "labyrinth" && captureTargets && captureTargets.length > 0 && captureTargets.map((ct) => {
+        const cc = cellCenter(ct.file, ct.rank);
+        const cw = pieceWidth();
+        const key = `capture-${ct.file}-${ct.rank}`;
+        return (
+          <div
+            key={key}
+            aria-hidden="true"
+            className="playhub-board-piece-float"
+            style={{
+              left: `${cc.x}%`,
+              top: `${cc.y}%`,
+              width: `${cw}%`,
+              pointerEvents: "none",
+            }}
+          >
+            <span
+              className="block rounded-full"
+              style={{
+                width: "100%",
+                height: "100%",
+                background: "radial-gradient(circle, rgba(255, 200, 50, 0.35) 0%, rgba(255, 160, 20, 0.15) 70%, transparent 100%)",
+                boxShadow: "0 0 14px 4px rgba(255, 180, 40, 0.45), inset 0 0 8px 2px rgba(255, 200, 80, 0.25)",
+              }}
+            />
+          </div>
+        );
+      })}
+
+      {/* Contextual hint — appears next to the piece when the user
+          taps an empty cell without first selecting the piece.
+          Placement flips per piece location so the pill never
+          clips against the board edge. Pointer events disabled so
+          it never intercepts taps. */}
+      {showSelectHint && (() => {
+        const center = cellCenter(piece.position.file, piece.position.rank);
+        const placement = pickHintPlacement(piece.position.file, piece.position.rank);
+        return (
+          <div
+            role="status"
+            aria-live="polite"
+            className="playhub-board-select-hint"
+            data-placement={placement}
+            style={{
+              left: `${center.x}%`,
+              top: `${center.y}%`,
+            }}
+          >
+            {BOARD_HINT_COPY.selectPieceFirst}
+          </div>
+        );
+      })()}
+
+      {/* Floating piece layer — same element moves with transition.
+          Sprint 4 commit N — also the drag handle. Pointer events
+          enabled so the piece can capture pointerdown; the cell
+          buttons underneath still receive their own clicks via
+          the gridcell <button>. */}
+      {(() => {
+        const center = cellCenter(piece.position.file, piece.position.rank);
+        const pw = pieceWidth();
+        const isPieceSelected =
+          selectedPosition !== null &&
+          arePositionsEqual(selectedPosition, piece.position);
+        const isDragging = dragOffset !== null;
+        const dragStyle = isDragging
+          ? ({
+              ["--drag-dx" as string]: `${dragOffset.dx}px`,
+              ["--drag-dy" as string]: `${dragOffset.dy}px`,
+            } as Record<string, string>)
+          : undefined;
+        return (
+          <picture
+            className={[
+              "playhub-board-piece-float",
+              isPieceSelected ? "is-selected" : "",
+              isRejecting ? "piece-reject" : "",
+              isDragging ? "is-dragging" : "",
+              isSnappingBack ? "is-snap-back" : "",
+            ].filter(Boolean).join(" ")}
+            style={{
+              left: `${center.x}%`,
+              top: `${center.y}%`,
+              width: `${pw}%`,
+              pointerEvents: isLocked ? "none" : "auto",
+              touchAction: "none",
+              ...dragStyle,
+            }}
+            onPointerDown={(e) => {
+              if (isLocked || !mountedRef.current) return;
+              // Capture so subsequent move/up events come to us
+              // even if the finger leaves the piece bounds.
+              try {
+                e.currentTarget.setPointerCapture(e.pointerId);
+              } catch {
+                /* iOS Safari quirk — capture not always available */
+              }
+              if (snapBackTimerRef.current) {
+                clearTimeout(snapBackTimerRef.current);
+                snapBackTimerRef.current = null;
+              }
+              setIsSnappingBack(false);
+              dragStateRef.current = {
+                active: false,
+                startX: e.clientX,
+                startY: e.clientY,
+                pointerId: e.pointerId,
+              };
+            }}
+            onPointerMove={(e) => {
+              const state = dragStateRef.current;
+              if (!state || state.pointerId !== e.pointerId) return;
+              const dx = e.clientX - state.startX;
+              const dy = e.clientY - state.startY;
+              if (!state.active) {
+                if (Math.hypot(dx, dy) < DRAG_START_THRESHOLD_PX) return;
+                state.active = true;
+                // Auto-select the piece so validTargets light up.
+                if (
+                  !selectedPosition ||
+                  !arePositionsEqual(selectedPosition, piece.position)
+                ) {
+                  setSelectedPosition(piece.position);
+                }
+                if (selectHintTimerRef.current) {
+                  clearTimeout(selectHintTimerRef.current);
+                  selectHintTimerRef.current = null;
+                }
+                setShowSelectHint(false);
+              }
+              setDragOffset({ dx, dy });
+            }}
+            onPointerUp={(e) => {
+              const state = dragStateRef.current;
+              if (!state || state.pointerId !== e.pointerId) return;
+              dragStateRef.current = null;
+              try {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+              } catch {
+                /* ignore */
+              }
+
+              if (!state.active) {
+                // No drag — treat as a tap on the piece's home
+                // cell. Same flow as before the drag was added.
+                setDragOffset(null);
+                handleSquarePress(getPositionLabel(piece.position));
+                return;
+              }
+
+              // Resolve the cell under the release point. Walk up
+              // from elementFromPoint to find the [data-square]
+              // attribute (covers cases where the actual hit was
+              // a child span / icon inside the cell button).
+              //
+              // Critical: the piece itself sits transformed under
+              // the finger (CSS transform participates in hit
+              // testing), so an unfiltered elementFromPoint would
+              // return the piece — which has no data-square — and
+              // every drop would snap back. Temporarily disable
+              // pointer-events on the piece so the query falls
+              // through to the cell underneath, then restore.
+              const pieceEl = e.currentTarget as HTMLElement;
+              const prevPointerEvents = pieceEl.style.pointerEvents;
+              pieceEl.style.pointerEvents = "none";
+              const hitEl = document.elementFromPoint(
+                e.clientX,
+                e.clientY,
+              ) as HTMLElement | null;
+              pieceEl.style.pointerEvents = prevPointerEvents;
+              const cellEl = hitEl?.closest("[data-square]") as
+                | HTMLElement
+                | null;
+              const label = cellEl?.dataset.square ?? null;
+
+              if (!label) {
+                // Released off-board → snap back.
+                triggerSnapBack();
+                return;
+              }
+
+              const target = parseLabel(label);
+              const isValid = validTargets.some((t) =>
+                arePositionsEqual(t, target),
+              );
+
+              if (isValid) {
+                // Successful drop. Clear the visual offset
+                // BEFORE the move so the piece transition starts
+                // from the home cell (avoids a one-frame
+                // teleport when the new center kicks in).
+                setDragOffset(null);
+                handleSquarePress(label);
+              } else {
+                triggerSnapBack();
+              }
+            }}
+            onPointerCancel={() => {
+              if (!dragStateRef.current) return;
+              const wasActive = dragStateRef.current.active;
+              dragStateRef.current = null;
+              if (wasActive) triggerSnapBack();
+              else setDragOffset(null);
+            }}
+          >
+            {THEME_CONFIG.hasOptimizedFormats && (
+              <>
+                <source srcSet={PIECE_IMG[piece.type].replace(".png", ".avif")} type="image/avif" />
+                <source srcSet={PIECE_IMG[piece.type].replace(".png", ".webp")} type="image/webp" />
+              </>
+            )}
+            <img
+              src={PIECE_IMG[piece.type]}
+              alt={`White ${piece.type}`}
+              className={PIECE_IMG_CLASS}
+              style={{ width: "100%" }}
+            />
+          </picture>
+        );
+      })()}
+    </>
+  );
+
+  // Per-cell substrate overlay for the procedural board: re-expresses the
+  // hit-grid cell's state visuals (highlight / selected / endpoint / wall /
+  // tutorial hint / peones hint) as a full-cell child so the existing
+  // `.playhub-board-cell` CSS applies without the absolute geometry. GameBoard
+  // owns the cell <button> (click + data-square for drag resolution); this only
+  // paints the glow + dot + target + peones marker inside it. (file 0–7, rank
+  // 1–8 chess rank → rankIdx = rank - 1.)
+  const renderProceduralCell = (file: number, rank: number) => {
+    const rankIdx = rank - 1;
+    const square = squareByKey.get(`${file},${rankIdx}`);
+    if (!square) return null;
+    const isWall =
+      mode === "labyrinth" && obstacleKeySet.has(`${file},${rankIdx}`);
+    const isPeones =
+      !!peonesHint && peonesHint.file === file && peonesHint.rank === rankIdx;
+    return (
+      <span
+        aria-hidden="true"
+        className={[
+          "playhub-board-cell",
+          square.isDark ? "is-dark" : "is-light",
+          square.isHighlighted ? "is-highlighted" : "",
+          square.isEndpoint ? "is-endpoint" : "",
+          square.isSelected ? "is-selected" : "",
+          isWall ? "is-wall" : "",
+          tutorialHints?.has(square.label) ? "is-tutorial-hint" : "",
+          isPeones ? "is-peones-hint" : "",
+        ].filter(Boolean).join(" ")}
+        style={{
+          position: "absolute",
+          inset: 0,
+          ...(square.isHighlighted && selectedPosition
+            ? {
+                ["--cell-stagger" as string]:
+                  Math.max(
+                    Math.abs(square.file - selectedPosition.file),
+                    Math.abs(square.rank - selectedPosition.rank),
+                  ) - 1,
+              }
+            : null),
+        }}
+      >
+        {square.isHighlighted ? <span className="playhub-board-dot" /> : null}
+        {square.isTarget && !square.piece && !isCapture ? (
+          <span className="playhub-board-target" />
+        ) : null}
+        {isPeones ? (
+          <span className="playhub-board-peones-hint" aria-hidden="true" />
+        ) : null}
+      </span>
+    );
+  };
+
+  if (proceduralBoard) {
+    return (
+      <div className="playhub-stage-shell w-full">
+        <div className="playhub-game-stage">
+          <div className="playhub-game-grid">
+            <div className="playhub-board-canvas">
+              <GameBoard
+                maxWidth="100%"
+                onCellClick={(_file, _rank, sq) => handleSquarePress(sq)}
+                renderCell={renderProceduralCell}
+                renderOverlay={() => overlayLayer}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="playhub-stage-shell w-full">
@@ -338,266 +689,7 @@ export function Board({
                     );
                   })()
                 )}
-              {/* Target piece — visible enemy piece for capture exercises */}
-              {isCapture && targetPosition && !(piece.position.file === targetPosition.file && piece.position.rank === targetPosition.rank) && (() => {
-                const tc = cellCenter(targetPosition.file, targetPosition.rank);
-                const tw = pieceWidth();
-                const targetImg = TARGET_MARKER_SRC;
-                return (
-                  <picture
-                    className="playhub-board-target-piece"
-                    style={{
-                      left: `${tc.x}%`,
-                      top: `${tc.y}%`,
-                      width: `${tw * 1.0}%`,
-                    }}
-                  >
-                    {THEME_CONFIG.hasOptimizedFormats && (
-                      <>
-                        <source srcSet={targetImg.replace(".png", ".avif")} type="image/avif" />
-                        <source srcSet={targetImg.replace(".png", ".webp")} type="image/webp" />
-                      </>
-                    )}
-                    <img
-                      src={targetImg}
-                      alt="Capture target"
-                      className="playhub-board-target-piece-img"
-                      style={{ width: "100%" }}
-                    />
-                  </picture>
-                );
-              })()}
-
-              {/* Labyrinth walls render AS the cell via the .is-wall class on
-                  the hit-grid button (stone tile) — see board.tsx className +
-                  globals.css .playhub-board-cell.is-wall. No floating piece /
-                  lock overlay: a stone-blocked square reads clearer for a
-                  beginner than a chained rook (founder 2026-06-16). */}
-
-              {/* Capture targets — capturable pickup markers. Rendered as
-                  small glowing amber circles to indicate "land here to
-                  capture". No lock icon; visually distinct from obstacles
-                  which are desaturated pieces with a lock badge. */}
-              {mode === "labyrinth" && captureTargets && captureTargets.length > 0 && captureTargets.map((ct) => {
-                const cc = cellCenter(ct.file, ct.rank);
-                const cw = pieceWidth();
-                const key = `capture-${ct.file}-${ct.rank}`;
-                return (
-                  <div
-                    key={key}
-                    aria-hidden="true"
-                    className="playhub-board-piece-float"
-                    style={{
-                      left: `${cc.x}%`,
-                      top: `${cc.y}%`,
-                      width: `${cw}%`,
-                      pointerEvents: "none",
-                    }}
-                  >
-                    <span
-                      className="block rounded-full"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        background: "radial-gradient(circle, rgba(255, 200, 50, 0.35) 0%, rgba(255, 160, 20, 0.15) 70%, transparent 100%)",
-                        boxShadow: "0 0 14px 4px rgba(255, 180, 40, 0.45), inset 0 0 8px 2px rgba(255, 200, 80, 0.25)",
-                      }}
-                    />
-                  </div>
-                );
-              })}
-
-              {/* Contextual hint — appears next to the piece when the user
-                  taps an empty cell without first selecting the piece.
-                  Placement flips per piece location so the pill never
-                  clips against the board edge. Pointer events disabled so
-                  it never intercepts taps. */}
-              {showSelectHint && (() => {
-                const center = cellCenter(piece.position.file, piece.position.rank);
-                const placement = pickHintPlacement(piece.position.file, piece.position.rank);
-                return (
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="playhub-board-select-hint"
-                    data-placement={placement}
-                    style={{
-                      left: `${center.x}%`,
-                      top: `${center.y}%`,
-                    }}
-                  >
-                    {BOARD_HINT_COPY.selectPieceFirst}
-                  </div>
-                );
-              })()}
-
-              {/* Floating piece layer — same element moves with transition.
-                  Sprint 4 commit N — also the drag handle. Pointer events
-                  enabled so the piece can capture pointerdown; the cell
-                  buttons underneath still receive their own clicks via
-                  the gridcell <button>. */}
-              {(() => {
-                const center = cellCenter(piece.position.file, piece.position.rank);
-                const pw = pieceWidth();
-                const isPieceSelected =
-                  selectedPosition !== null &&
-                  arePositionsEqual(selectedPosition, piece.position);
-                const isDragging = dragOffset !== null;
-                const dragStyle = isDragging
-                  ? ({
-                      ["--drag-dx" as string]: `${dragOffset.dx}px`,
-                      ["--drag-dy" as string]: `${dragOffset.dy}px`,
-                    } as Record<string, string>)
-                  : undefined;
-                return (
-                  <picture
-                    className={[
-                      "playhub-board-piece-float",
-                      isPieceSelected ? "is-selected" : "",
-                      isRejecting ? "piece-reject" : "",
-                      isDragging ? "is-dragging" : "",
-                      isSnappingBack ? "is-snap-back" : "",
-                    ].filter(Boolean).join(" ")}
-                    style={{
-                      left: `${center.x}%`,
-                      top: `${center.y}%`,
-                      width: `${pw}%`,
-                      pointerEvents: isLocked ? "none" : "auto",
-                      touchAction: "none",
-                      ...dragStyle,
-                    }}
-                    onPointerDown={(e) => {
-                      if (isLocked || !mountedRef.current) return;
-                      // Capture so subsequent move/up events come to us
-                      // even if the finger leaves the piece bounds.
-                      try {
-                        e.currentTarget.setPointerCapture(e.pointerId);
-                      } catch {
-                        /* iOS Safari quirk — capture not always available */
-                      }
-                      if (snapBackTimerRef.current) {
-                        clearTimeout(snapBackTimerRef.current);
-                        snapBackTimerRef.current = null;
-                      }
-                      setIsSnappingBack(false);
-                      dragStateRef.current = {
-                        active: false,
-                        startX: e.clientX,
-                        startY: e.clientY,
-                        pointerId: e.pointerId,
-                      };
-                    }}
-                    onPointerMove={(e) => {
-                      const state = dragStateRef.current;
-                      if (!state || state.pointerId !== e.pointerId) return;
-                      const dx = e.clientX - state.startX;
-                      const dy = e.clientY - state.startY;
-                      if (!state.active) {
-                        if (Math.hypot(dx, dy) < DRAG_START_THRESHOLD_PX) return;
-                        state.active = true;
-                        // Auto-select the piece so validTargets light up.
-                        if (
-                          !selectedPosition ||
-                          !arePositionsEqual(selectedPosition, piece.position)
-                        ) {
-                          setSelectedPosition(piece.position);
-                        }
-                        if (selectHintTimerRef.current) {
-                          clearTimeout(selectHintTimerRef.current);
-                          selectHintTimerRef.current = null;
-                        }
-                        setShowSelectHint(false);
-                      }
-                      setDragOffset({ dx, dy });
-                    }}
-                    onPointerUp={(e) => {
-                      const state = dragStateRef.current;
-                      if (!state || state.pointerId !== e.pointerId) return;
-                      dragStateRef.current = null;
-                      try {
-                        e.currentTarget.releasePointerCapture(e.pointerId);
-                      } catch {
-                        /* ignore */
-                      }
-
-                      if (!state.active) {
-                        // No drag — treat as a tap on the piece's home
-                        // cell. Same flow as before the drag was added.
-                        setDragOffset(null);
-                        handleSquarePress(getPositionLabel(piece.position));
-                        return;
-                      }
-
-                      // Resolve the cell under the release point. Walk up
-                      // from elementFromPoint to find the [data-square]
-                      // attribute (covers cases where the actual hit was
-                      // a child span / icon inside the cell button).
-                      //
-                      // Critical: the piece itself sits transformed under
-                      // the finger (CSS transform participates in hit
-                      // testing), so an unfiltered elementFromPoint would
-                      // return the piece — which has no data-square — and
-                      // every drop would snap back. Temporarily disable
-                      // pointer-events on the piece so the query falls
-                      // through to the cell underneath, then restore.
-                      const pieceEl = e.currentTarget as HTMLElement;
-                      const prevPointerEvents = pieceEl.style.pointerEvents;
-                      pieceEl.style.pointerEvents = "none";
-                      const hitEl = document.elementFromPoint(
-                        e.clientX,
-                        e.clientY,
-                      ) as HTMLElement | null;
-                      pieceEl.style.pointerEvents = prevPointerEvents;
-                      const cellEl = hitEl?.closest("[data-square]") as
-                        | HTMLElement
-                        | null;
-                      const label = cellEl?.dataset.square ?? null;
-
-                      if (!label) {
-                        // Released off-board → snap back.
-                        triggerSnapBack();
-                        return;
-                      }
-
-                      const target = parseLabel(label);
-                      const isValid = validTargets.some((t) =>
-                        arePositionsEqual(t, target),
-                      );
-
-                      if (isValid) {
-                        // Successful drop. Clear the visual offset
-                        // BEFORE the move so the piece transition starts
-                        // from the home cell (avoids a one-frame
-                        // teleport when the new center kicks in).
-                        setDragOffset(null);
-                        handleSquarePress(label);
-                      } else {
-                        triggerSnapBack();
-                      }
-                    }}
-                    onPointerCancel={() => {
-                      if (!dragStateRef.current) return;
-                      const wasActive = dragStateRef.current.active;
-                      dragStateRef.current = null;
-                      if (wasActive) triggerSnapBack();
-                      else setDragOffset(null);
-                    }}
-                  >
-                    {THEME_CONFIG.hasOptimizedFormats && (
-                      <>
-                        <source srcSet={PIECE_IMG[piece.type].replace(".png", ".avif")} type="image/avif" />
-                        <source srcSet={PIECE_IMG[piece.type].replace(".png", ".webp")} type="image/webp" />
-                      </>
-                    )}
-                    <img
-                      src={PIECE_IMG[piece.type]}
-                      alt={`White ${piece.type}`}
-                      className={PIECE_IMG_CLASS}
-                      style={{ width: "100%" }}
-                    />
-                  </picture>
-                );
-              })()}
+              {overlayLayer}
               </div>
             </div>
           </div>

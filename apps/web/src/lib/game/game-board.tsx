@@ -161,12 +161,22 @@ export function GameBoard({
                 onClick={() => onCellClick!(col, rank, sq)}
                 aria-label={sq}
                 title={sq}
+                // Drag-to-move drop resolution walks up from elementFromPoint to
+                // the nearest [data-square]; expose it so overlay pieces resolve.
+                data-square={sq}
                 style={cellStyle}
               >
                 {content}
               </button>
             ) : (
-              <div key={sq} role="gridcell" aria-label={sq} title={sq} style={cellStyle}>
+              <div
+                key={sq}
+                role="gridcell"
+                aria-label={sq}
+                title={sq}
+                data-square={sq}
+                style={cellStyle}
+              >
                 {content}
               </div>
             );
