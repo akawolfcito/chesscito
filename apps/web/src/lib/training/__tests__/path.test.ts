@@ -272,6 +272,31 @@ describe("buildTrainingPath — catalog coverage and ordering", () => {
   });
 });
 
+describe("buildTrainingPath — injected overlay catalog (db-content)", () => {
+  // Regression lock for the overlay-full read path: the screen passes the
+  // merged catalog through `input.catalog`, so labyrinth nodes (and their
+  // unlock gate) must derive from `catalog.labyrinths`, never the baseline.
+  it("derives labyrinth nodes from catalog.labyrinths, not the baseline", () => {
+    const overlayLab = { ...LABYRINTHS.rook[0], id: "rook-overlay-lab" };
+    const allStars = Object.fromEntries(EXERCISES.rook.map((e) => [e.id, 3]));
+    const path = buildTrainingPath({
+      piece: "rook",
+      progress: { piece: "rook", currentId: null, stars: allStars },
+      labyrinthBests: {},
+      badgeClaimed: false,
+      catalog: {
+        exercises: EXERCISES,
+        labyrinths: { ...LABYRINTHS, rook: [overlayLab] },
+      },
+    });
+    const labs = path.filter((n) => n.kind === "labyrinth");
+    expect(labs).toHaveLength(1);
+    expect(labs[0].id).toBe("rook-overlay-lab");
+    // 24★ (all rook exercises at 3★) ≥ 6★ → list AND gate agree: "available".
+    expect(labs[0].status).toBe("available");
+  });
+});
+
 describe("getNextChallenge — next-node recommendation (Slice 3D)", () => {
   function pathFor(piece: PieceId, input: Partial<TrainingPathInput> = {}) {
     return buildTrainingPath({
