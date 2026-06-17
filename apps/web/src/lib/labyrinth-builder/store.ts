@@ -1,4 +1,4 @@
-import type { LabyrinthRecord } from "../../../scripts/import-puzzles";
+import type { LabyrinthRecord } from "@/lib/content/catalog";
 export type { LabyrinthRecord };
 
 /** Replace a record by id; otherwise append. */
