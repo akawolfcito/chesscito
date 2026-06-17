@@ -159,6 +159,24 @@ describe("POST /api/dev/labyrinth", () => {
     expect(payload[0].target).toBe("a8");
   });
 
+  it("persists a soft-disabled record but excludes it from the generated catalog", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const disabled = { ...VALID_ROOK_EXERCISE, disabled: true };
+    const res = await POST(postRequest(JSON.stringify(disabled)));
+    expect(res.status).toBe(200);
+    // The record is still written to exercises.json (so it can be re-enabled)…
+    const exWrite = fsMocks.writeFileSync.mock.calls.find((c) =>
+      String(c[0]).endsWith("content/exercises.json"),
+    );
+    const payload = JSON.parse(String(exWrite?.[1])) as Array<Record<string, unknown>>;
+    expect(payload.find((r) => r.id === "rook-ex")?.disabled).toBe(true);
+    // …but the regenerated catalog module does NOT carry its id.
+    const genWrite = fsMocks.writeFileSync.mock.calls.find((c) =>
+      String(c[0]).endsWith("src/lib/game/generated/puzzles.generated.ts"),
+    );
+    expect(String(genWrite?.[1])).not.toContain("rook-ex");
+  });
+
   it("auto-assigns a stable generated id when the record has none", async () => {
     vi.stubEnv("NODE_ENV", "development");
     const { id: _omit, ...noId } = VALID_ROOK;

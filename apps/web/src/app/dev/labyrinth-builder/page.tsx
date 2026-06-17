@@ -332,6 +332,35 @@ export default function LabyrinthBuilderPage() {
     }
   }
 
+  // Soft-delete toggle: flips a record's `disabled` flag via the normal Save
+  // path (no destructive removal). A disabled record stays in content/*.json
+  // for re-enabling but is excluded from the generated catalog. Operates on
+  // the list row directly so it never disturbs the current edit.
+  async function handleToggleDisabled(rec: LabyrinthRecord) {
+    try {
+      const res = await fetch("/api/dev/labyrinth", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...rec, kind, disabled: !rec.disabled }),
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        setToast({
+          kind: "ok",
+          text: `${rec.id ?? "record"} ${rec.disabled ? "enabled" : "disabled"}`,
+        });
+        void refreshRecords();
+      } else {
+        const errs = Array.isArray(data?.errors)
+          ? data.errors.join("; ")
+          : "Toggle failed";
+        setToast({ kind: "err", text: errs });
+      }
+    } catch (e) {
+      setToast({ kind: "err", text: (e as Error).message });
+    }
+  }
+
   const generatedByKind =
     kind === "exercise" ? GENERATED_EXERCISES : GENERATED_LABYRINTHS;
   const existing = generatedByKind[state.piece] ?? [];
@@ -642,23 +671,47 @@ mover=${fenBlock.mover}`}
               <ul className="flex flex-col gap-1">
                 {pieceRecords.map((rec, i) => {
                   const active = !!rec.id && rec.id === state.id;
+                  const isDisabled = !!rec.disabled;
                   return (
                     <li
                       key={rec.id ?? `${rec.piece}-${rec.order}-${i}`}
                       className={`flex items-center justify-between gap-2 rounded px-2 py-1 ${
                         active ? "bg-sky-950/60" : "bg-slate-800/60"
-                      }`}
+                      } ${isDisabled ? "opacity-50" : ""}`}
                     >
                       <span className="truncate font-mono text-xs text-slate-300">
                         {rec.id ?? "(no id)"} · target {rec.target} · order {rec.order}
+                        {isDisabled ? (
+                          <span className="ml-1 rounded bg-amber-900/70 px-1 text-amber-300">
+                            disabled
+                          </span>
+                        ) : null}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => handleEditRecord(rec)}
-                        className="shrink-0 rounded bg-sky-600 px-2 py-0.5 text-xs font-semibold text-white hover:bg-sky-500"
-                      >
-                        Edit
-                      </button>
+                      <div className="flex shrink-0 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleDisabled(rec)}
+                          title={
+                            isDisabled
+                              ? "Re-enable (show in-game again)"
+                              : "Soft-delete (hide from the game, keep the record)"
+                          }
+                          className={`rounded px-2 py-0.5 text-xs font-semibold text-white ${
+                            isDisabled
+                              ? "bg-emerald-600 hover:bg-emerald-500"
+                              : "bg-amber-700 hover:bg-amber-600"
+                          }`}
+                        >
+                          {isDisabled ? "Enable" : "Disable"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditRecord(rec)}
+                          className="rounded bg-sky-600 px-2 py-0.5 text-xs font-semibold text-white hover:bg-sky-500"
+                        >
+                          Edit
+                        </button>
+                      </div>
                     </li>
                   );
                 })}

@@ -154,6 +154,47 @@ describe("buildCatalog — labyrinths.json", () => {
     expect(forward).toEqual(["lab-a", "lab-b"]);
   });
 
+  it("excludes a soft-disabled record from the built catalog (both buckets)", () => {
+    const labs: LabyrinthRecord[] = [
+      {
+        id: "lab-live",
+        piece: "rook",
+        fen: "8/8/8/8/8/8/8/R6R w - - 0 1",
+        target: "a8",
+        mover: "a1",
+        order: 0,
+      },
+      {
+        id: "lab-off",
+        piece: "rook",
+        fen: "8/8/8/8/8/8/8/R6R w - - 0 1",
+        target: "h8",
+        mover: "h1",
+        order: 1,
+        disabled: true,
+      },
+    ];
+    const exercises: LabyrinthRecord[] = [
+      {
+        id: "ex-off",
+        piece: "bishop",
+        fen: "8/8/8/8/8/8/8/2B5 w - - 0 1",
+        target: "h6",
+        mover: "c1",
+        order: 0,
+        disabled: true,
+        explanation: "should not appear",
+      },
+    ];
+    const cat = buildCatalog([], labs, exercises);
+    expect(cat.errors).toEqual([]);
+    // Disabled records are absent from the generated catalog…
+    expect(cat.labyrinths.rook.map((e) => e.id)).toEqual(["lab-live"]);
+    expect(cat.exercises.bishop).toEqual([]);
+    // …and so is a disabled record's description.
+    expect(cat.descriptions["ex-off"]).toBeUndefined();
+  });
+
   it("rejects a record with a bad piece", () => {
     const cat = buildCatalog([], [
       {

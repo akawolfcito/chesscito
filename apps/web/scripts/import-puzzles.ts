@@ -27,6 +27,10 @@ const TIERS: ExerciseTier[] = ["easy", "medium", "hard"];
 export type LabyrinthRecord = {
   id?: string; piece: PieceId; fen: string; target: string; mover?: string;
   tier?: ExerciseTier; tags?: string[]; explanation?: string; order: number;
+  /** Soft-delete flag. A disabled record stays in content/*.json (so it can
+   *  be re-enabled from the builder) but is excluded from the generated
+   *  catalog, so the game never surfaces it. Absent/false → live. */
+  disabled?: boolean;
 };
 
 // content/exercises.json shares the labyrinth record shape; the only
@@ -109,6 +113,7 @@ export function buildCatalog(
   });
 
   for (const rec of labRecords) {
+    if (rec.disabled) continue; // soft-deleted → excluded from the catalog
     if (!PIECES.includes(rec.piece)) { errors.push(`labyrinths.json '${rec.id ?? rec.fen}': bad piece`); continue; }
     addPuzzle({
       kind: "labyrinth", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
@@ -117,6 +122,7 @@ export function buildCatalog(
   }
 
   for (const rec of exerciseRecords) {
+    if (rec.disabled) continue; // soft-deleted → excluded from the catalog
     if (!PIECES.includes(rec.piece)) { errors.push(`exercises.json '${rec.id ?? rec.fen}': bad piece`); continue; }
     addPuzzle({
       kind: "exercise", piece: rec.piece, tier: rec.tier ?? "medium", fen: rec.fen,
