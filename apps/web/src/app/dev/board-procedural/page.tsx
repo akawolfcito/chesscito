@@ -9,14 +9,14 @@
 import { useState } from 'react'
 import { notFound } from 'next/navigation'
 import {
-  ProceduralBoard,
+  GameBoard as ProceduralBoard,
   FILES,
   RANKS,
   BOARD_INSET,
   BOARD_INNER_W,
   BOARD_INNER_H,
   isDarkSquare,
-} from '../_components/procedural-board'
+} from '@/lib/game/game-board'
 
 export const dynamic = 'force-dynamic'
 

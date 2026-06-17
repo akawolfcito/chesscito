@@ -1,15 +1,22 @@
 "use client";
 
 /**
- * ProceduralBoard — dev-only programmatic chess board (no bg image).
+ * GameBoard — programmatic chess board (no background image).
  *
- * The 8×8 textured tiles ARE the board, so cell alignment is guaranteed by
- * construction. The candy frame PNG (transparent center) overlays on top with
- * the grid inset to its measured opening. Coordinates ride the frame band.
+ * Promoted from the dev PoC (`app/dev/_components/procedural-board.tsx`) into
+ * the prod path (db-content board-procedural-migration, Phase 0). The 8×8
+ * textured tiles ARE the board (CSS grid), so cell alignment is guaranteed by
+ * construction; a candy-frame PNG (transparent center) overlays on top with the
+ * grid inset to its measured opening; coordinates ride the frame band.
  *
- * Reused by /dev/board-procedural (PoC) and /dev/labyrinth-builder (preview).
- * Consumers overlay per-cell content (piece sprite, goal star, walls…) via the
- * `renderCell` render-prop and handle clicks via `onCellClick`.
+ * Phase 0 is a behavior-preserving move + a11y (role=grid) + asset relocation to
+ * `/art/board` (png+webp+avif via image-set). No surface consumes it yet — the
+ * exercise/arena/thumbnail boards migrate per-surface, flag-gated, in later
+ * phases (orientation + an absolute overlay layer land with their first real
+ * consumer). The dev PoC + labyrinth-builder import it today.
+ *
+ * NOTE (placeholders): the tiles + frame are dev-grade placeholders; surfaces
+ * stay on the image board until final art lands (founder 2026-06-17).
  */
 import type { CSSProperties, ReactNode } from "react";
 
@@ -21,9 +28,18 @@ export const BOARD_INSET = { top: 3.4, right: 3.56, bottom: 3.99, left: 3.65 };
 export const BOARD_INNER_W = 100 - BOARD_INSET.left - BOARD_INSET.right; // 92.79
 export const BOARD_INNER_H = 100 - BOARD_INSET.top - BOARD_INSET.bottom; // 92.61
 
-const TILE_LIGHT = "/dev/tablero/casilla-clara.png";
-const TILE_DARK = "/dev/tablero/casilla-oscura.png";
-const BORDER = "/dev/tablero/borde-tablero-chesscito1.png";
+const ASSET = "/art/board";
+
+/** One cached image-set per tile color (avif → webp → png), not 64 requests. */
+function tileImageSet(name: string): string {
+  return [
+    `url("${ASSET}/${name}.avif") type("image/avif")`,
+    `url("${ASSET}/${name}.webp") type("image/webp")`,
+    `url("${ASSET}/${name}.png") type("image/png")`,
+  ].join(", ");
+}
+const TILE_LIGHT = tileImageSet("casilla-clara");
+const TILE_DARK = tileImageSet("casilla-oscura");
 
 const LABEL_STYLE: CSSProperties = {
   position: "absolute",
@@ -42,7 +58,7 @@ export function isDarkSquare(file: number, rank: number): boolean {
   return (file + (8 - rank)) % 2 === 0;
 }
 
-export interface ProceduralBoardProps {
+export interface GameBoardProps {
   /** Overlay content for a cell (markers, sprites). file 0–7, rank 1–8. */
   renderCell?: (file: number, rank: number, square: string) => ReactNode;
   /** Click handler — when set, cells become buttons. */
@@ -54,14 +70,14 @@ export interface ProceduralBoardProps {
   maxWidth?: string;
 }
 
-export function ProceduralBoard({
+export function GameBoard({
   renderCell,
   onCellClick,
   showCoordinates = true,
   darkColor = "#7fb24a",
   lightColor = "#efe6c4",
   maxWidth = "23.5rem",
-}: ProceduralBoardProps) {
+}: GameBoardProps) {
   const clickable = !!onCellClick;
   return (
     <div
@@ -73,6 +89,8 @@ export function ProceduralBoard({
     >
       {/* 8×8 textured grid, inset to the frame opening (below the border) */}
       <div
+        role="grid"
+        aria-label="Chess board"
         style={{
           position: "absolute",
           top: `${BOARD_INSET.top}%`,
@@ -94,7 +112,7 @@ export function ProceduralBoard({
               padding: 0,
               border: "none",
               backgroundColor: dark ? darkColor : lightColor,
-              backgroundImage: `url(${dark ? TILE_DARK : TILE_LIGHT})`,
+              backgroundImage: dark ? TILE_DARK : TILE_LIGHT,
               backgroundSize: "100% 100%",
               cursor: clickable ? "pointer" : "default",
             };
@@ -104,13 +122,14 @@ export function ProceduralBoard({
                 key={sq}
                 type="button"
                 onClick={() => onCellClick!(col, rank, sq)}
+                aria-label={sq}
                 title={sq}
                 style={cellStyle}
               >
                 {content}
               </button>
             ) : (
-              <div key={sq} title={sq} style={cellStyle}>
+              <div key={sq} role="gridcell" aria-label={sq} title={sq} style={cellStyle}>
                 {content}
               </div>
             );
@@ -118,20 +137,24 @@ export function ProceduralBoard({
         )}
       </div>
 
-      {/* Candy frame — supplied PNG, transparent center, on top */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={BORDER}
-        alt=""
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: 2,
-          pointerEvents: "none",
-        }}
-      />
+      {/* Candy frame — supplied PNG (transparent center), on top */}
+      <picture>
+        <source srcSet={`${ASSET}/borde-tablero-chesscito1.avif`} type="image/avif" />
+        <source srcSet={`${ASSET}/borde-tablero-chesscito1.webp`} type="image/webp" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`${ASSET}/borde-tablero-chesscito1.png`}
+          alt=""
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 2,
+            pointerEvents: "none",
+          }}
+        />
+      </picture>
 
       {/* Coordinate labels ON the frame band */}
       {showCoordinates &&
