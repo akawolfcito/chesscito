@@ -157,8 +157,36 @@ game fully playable. No action needed.
 
 ---
 
-## Out of scope (future, not this flip)
-- Descriptions + LABYRINTHS overlay injection (context carries exercise pools only).
+## Overlay-full addendum (shipped 2026-06-17, PR #132)
+
+The follow-up landed, so the overlay is no longer exercises-only:
+- **Labyrinths** and **exercise descriptions** now flow live too (same flag).
+- The **builder publishes in one click** instead of hand-running curl.
+
+### Extra env (LOCAL builder machine only — for the publish button)
+| Variable | Where | Value |
+|---|---|---|
+| `OVERLAY_PUBLISH_BASE_URL` | local `.env` | publish target, e.g. `https://preview.chesscito.com` (no trailing slash needed) |
+| `ADMIN_TOKEN` | local `.env` | must match the **target** env's token (preview token to publish to preview) |
+
+These are read **server-side** by `/api/dev/publish`; the token never reaches the
+browser. Not needed in Vercel (that's the read side); only on the founder's
+machine running the local builder.
+
+### Publish via the builder (replaces the manual curl)
+1. Run the builder locally: `http://localhost:3000/dev/labyrinth-builder`.
+2. Author/edit an exercise or labyrinth, click **Save**.
+   - Green toast = published live + saved to baseline json.
+   - Amber toast = saved to baseline but live publish failed (check token/URL).
+   - Red toast = validation error (nothing written).
+3. **Commit `content/*.json`** afterward (the toast reminds you) so the change is
+   versioned in git and folds into the baseline on the next deploy.
+
+The curl path (Step 3) still works as a fallback / CI smoke.
+
+## Out of scope (future)
+- Click-time preview-vs-prod target picker in the builder (env-config only).
 - VR baselines for the exercises surface (none exist yet).
+- `wall1.png` builder wall asset (queued separately).
 
 Wolfcito 🐾 @akawolfcito
