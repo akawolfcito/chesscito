@@ -179,12 +179,13 @@ export type OverlayInset = { top: number; right: number; bottom: number; left: n
 - **Phase 4** — default the flag on, then retire the image substrate + dead CSS.
 
 ## Open questions
-1. **Coordinate model**: per-cell labels (today, themeable per cell) vs frame-band
-   labels (procedural default)? Recommend frame-band for the new board, with a
-   `showCoordinates` toggle per surface (exercises on, arena off) — confirm.
-2. **Flag granularity**: one global `PROCEDURAL_BOARD_ENABLED` vs per-surface
-   props. Recommend per-surface props (a surface flips only when its VR is green)
-   + no env flag — confirm.
+1. ~~Coordinate model~~ — **RESOLVED (founder 2026-06-17)**: adopt the
+   reconstructed board exactly as built — tiles + frame + **frame-band labels** +
+   wall art. No per-cell labels. `showCoordinates` stays a per-surface toggle
+   (e.g. thumbnail may hide them) but the model is the frame band.
+2. ~~Flag granularity~~ — **RESOLVED (founder 2026-06-17)**: **per-surface** props
+   (each board flips independently when its visual sign-off is green; doesn't force
+   staggering — they can still be flipped together). No global env flag.
 3. **Asset scope**: are the dev tiles (`casilla-clara/oscura`, candy frame) the
    FINAL prod art, or placeholders pending a designer pass? If placeholders, Phase
    0 still relocates them but flags stay off until final art lands.
