@@ -24,7 +24,7 @@ import {
 } from "@/lib/game/generated/puzzles.generated";
 import type { BoardPosition, ExerciseTier, PieceId } from "@/lib/game/types";
 import { THEME_CONFIG } from "@/lib/theme";
-import { ProceduralBoard } from "../_components/procedural-board";
+import { GameBoard as ProceduralBoard } from "@/lib/game/game-board";
 
 export const dynamic = "force-dynamic";
 
