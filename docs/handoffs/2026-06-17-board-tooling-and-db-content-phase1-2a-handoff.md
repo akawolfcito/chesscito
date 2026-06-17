@@ -1,6 +1,6 @@
-# Handoff — Board tooling + db-content Phase 1 & 2a (2026-06-17)
+# Handoff — Board tooling + db-content Phase 1, 2a & 2b-1 (2026-06-17)
 
-## State: all merged to `main` (= `origin/main` = `a6de9721`)
+## State: all merged to `main` (= `origin/main`, head `12d6b6cc`, PRs #123–#128)
 Solo-on-main convention: PRs are traceability-only, auto-merged. `production` is
 a separate snapshot — none of this is promoted to prod.
 
@@ -35,15 +35,35 @@ a separate snapshot — none of this is promoted to prod.
      (move /dev into `apps/tech`). All /dev are local-only (`NODE_ENV` → 404 on
      Vercel).
 
-## NEXT (entry point) — db-content Phase 2b then 2c
-- **2b — per-consumer injection seam (~8 files)**: thread an injected catalog
-  with **default arg = the baseline import** so flag-off is byte-identical.
-  Files (spec §Read-path integration table): `lib/game/exercises.ts`,
-  `lib/game/rotation.ts`, `lib/training/path.ts`, `lib/game/progress-adapter.ts`,
-  `lib/hub/derive-reward-tiles.ts`, `hooks/use-exercise-progress.ts`,
+## Phase 2b-1 ✅ DONE (PR #128) — injection seam in the PURE helpers
+Optional `catalog` param (default = baseline) added to the pure read-path
+helpers, so a merged catalog can be threaded without behaviour change:
+- `rotation.ts` — new `ExerciseCatalog` type; `getExercisePool`,
+  `getCanonicalFive`, `getPieceMasteryStars` take `catalog = EXERCISES`;
+  `getVisibleExercisesForToday` gains `opts.catalog`.
+- `training/path.ts` — new `TrainingCatalog`; `buildTrainingPath` gains
+  `input.catalog` (exercises + labyrinths).
+- `progress-adapter.ts` — all 5 helpers take `catalog = EXERCISES`.
+- `derive-reward-tiles.ts` — `input.catalog` gates `hasExercises`.
+- 6 injection tests (`src/lib/game/__tests__/catalog-injection.test.ts`);
+  game+training+hub 631/631; tsc + eslint clean. Flag-off byte-identical.
+
+## NEXT (entry point) — db-content Phase 2b-2 then 2c
+- **2b-2 — client half (CatalogContext)**: add a `CatalogContext` + `useCatalog`
+  (default = baseline when no provider) and make the CLIENT consumers read pools
+  from it and pass them to the now-injectable pure helpers:
+  `hooks/use-exercise-progress.ts` (⚠️ **8 dependent test files**),
   `hooks/use-rotation-steering.ts`, `components/exercises/exercises-screen.tsx`.
-  **Proof obligation:** full suite green + `tsc` clean with no provider (flag
-  off) before enabling.
+  `result-overlay.tsx` (only `EXERCISES_PER_PIECE`) and `mission-panel-candy.tsx`
+  (no pool reads) need NO change. No provider mounted yet → baseline
+  (byte-identical). **Proof:** full suite green + `tsc` clean, flag off.
+- **2c — hydration + flag**: mount `CatalogProvider` at the `/exercises` server
+  boundary with `getMergedCatalog()` pools (passed as a prop), gate with
+  `CONTENT_OVERLAY_ENABLED` (default off). **Cache-bust integration test** lands
+  here (write → revalidateTag → next read reflects it; warm cache = 0 DB hits).
+  Also: `app/[locale]/exercises/page.tsx` + `hub/page.tsx` (server validators)
+  and `api/sign-labyrinth/route.ts` (server validator) still read baseline —
+  decide in 2c whether they consume the merged catalog too.
 - **2c — hydration contract + flag**: `/exercises` server boundary calls
   `getMergedCatalog()` and passes `pools` as a prop into a `CatalogProvider`;
   client renders only from the prop. Gate with `CONTENT_OVERLAY_ENABLED`
