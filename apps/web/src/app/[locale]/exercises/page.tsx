@@ -2,7 +2,7 @@ import {
   ExercisesScreen,
   type ExercisesInitialSheet,
 } from "@/components/exercises/exercises-screen";
-import { ExerciseCatalogProvider } from "@/lib/content/catalog-context";
+import { ContentCatalogProvider } from "@/lib/content/catalog-context";
 import { getMergedCatalog } from "@/lib/content/merged-catalog";
 import { CONTENT_OVERLAY_ENABLED } from "@/lib/content/overlay-flag";
 import { EXERCISES } from "@/lib/game/exercises";
@@ -59,15 +59,15 @@ function parseInitialSheet(raw: string | undefined): ExercisesInitialSheet | und
  * Server component on purpose: reading `searchParams` from props avoids
  * `useSearchParams()` + Suspense overhead.
  *
- * db-backed-content Phase 2c (the server boundary / hydration contract):
- * when `CONTENT_OVERLAY_ENABLED` is on, this boundary is the single source
- * of the catalog — it calls the cached `getMergedCatalog()` (baseline ⊕
- * overlay, tagged `"content"`) and mounts `<ExerciseCatalogProvider>` with
- * the merged exercise pools serialized into the client boundary, so SSR and
- * the first client render read the SAME pools (no hydration mismatch, no
- * client re-fetch). With the flag off no provider is mounted and every
- * consumer falls through to the baseline `EXERCISES` default — byte-identical
- * to the pre-2c read path, with zero DB hits.
+ * db-backed-content (server boundary / hydration contract): when
+ * `CONTENT_OVERLAY_ENABLED` is on, this boundary is the single source of the
+ * catalog — it calls the cached `getMergedCatalog()` (baseline ⊕ overlay,
+ * tagged `"content"`) and mounts `<ContentCatalogProvider>` with the full
+ * merged read catalog (exercises + labyrinths + descriptions) serialized into
+ * the client boundary, so SSR and the first client render read the SAME
+ * catalog (no hydration mismatch, no client re-fetch). With the flag off no
+ * provider is mounted and every consumer falls through to the baseline default
+ * — byte-identical to the pre-overlay read path, with zero DB hits.
  */
 export default async function ExercisesPage({
   searchParams,
@@ -92,8 +92,14 @@ export default async function ExercisesPage({
   if (!merged) return screen;
 
   return (
-    <ExerciseCatalogProvider value={merged.exercises}>
+    <ContentCatalogProvider
+      value={{
+        exercises: merged.exercises,
+        labyrinths: merged.labyrinths,
+        descriptions: merged.descriptions,
+      }}
+    >
       {screen}
-    </ExerciseCatalogProvider>
+    </ContentCatalogProvider>
   );
 }

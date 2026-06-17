@@ -12,8 +12,8 @@ vi.mock("@/components/exercises/exercises-screen", () => ({
   ExercisesScreen: (props: unknown) => ({ type: "ExercisesScreen", props }),
 }));
 vi.mock("@/lib/content/catalog-context", () => ({
-  ExerciseCatalogProvider: (props: unknown) => ({
-    type: "ExerciseCatalogProvider",
+  ContentCatalogProvider: (props: unknown) => ({
+    type: "ContentCatalogProvider",
     props,
   }),
 }));
@@ -116,10 +116,17 @@ describe("/exercises page (server) — flag ON (overlay)", () => {
     getMergedCatalog.mockResolvedValue(mergedPools);
   });
 
-  it("mounts ExerciseCatalogProvider with the merged exercise pools", async () => {
+  it("mounts ContentCatalogProvider with the full merged read catalog", async () => {
     const el = await renderPage({});
-    expect((el.type as { name: string }).name).toBe("ExerciseCatalogProvider");
-    expect(el.props.value).toBe(mergedPools.exercises);
+    expect((el.type as { name: string }).name).toBe("ContentCatalogProvider");
+    const value = el.props.value as {
+      exercises: unknown;
+      labyrinths: unknown;
+      descriptions: unknown;
+    };
+    expect(value.exercises).toBe(mergedPools.exercises);
+    expect(value.labyrinths).toBe(mergedPools.labyrinths);
+    expect(value.descriptions).toBe(mergedPools.descriptions);
     expect(getMergedCatalog).toHaveBeenCalledTimes(1);
   });
 
