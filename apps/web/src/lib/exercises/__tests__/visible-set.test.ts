@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EXERCISES } from "@/lib/game/exercises";
+import type { ExerciseCatalog } from "@/lib/game/rotation";
 import { computeVisibleExerciseIds } from "@/lib/exercises/visible-set";
 
 const DATE = "2026-06-08";
@@ -65,5 +66,27 @@ describe("computeVisibleExerciseIds", () => {
     expect(result).not.toBeNull();
     expect(result!.size).toBeLessThanOrEqual(5);
     expect(result!.size).toBeGreaterThan(0);
+  });
+
+  // ── Phase 2b-2: catalog injection seam ──────────────────────────
+  it("computes the visible set against the injected catalog", () => {
+    // Single-exercise rook pool → the guest canonical set holds exactly
+    // that one id, not the baseline first-five.
+    const injected: ExerciseCatalog = {
+      ...EXERCISES,
+      rook: [EXERCISES.rook[0]],
+    };
+    const result = computeVisibleExerciseIds(
+      {
+        piece: "rook",
+        enabled: true,
+        address: null,
+        sessionSeed: null,
+        dateUtc: DATE,
+        starsById: {},
+      },
+      injected,
+    );
+    expect([...result!]).toEqual([EXERCISES.rook[0].id]);
   });
 });
