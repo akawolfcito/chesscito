@@ -61,6 +61,7 @@ import {
   subscribeToShieldChanges,
 } from "@/lib/shop/shield-events";
 import { useExerciseProgress } from "@/hooks/use-exercise-progress";
+import { useExerciseCatalog } from "@/lib/content/catalog-context";
 import { useRotationSteering } from "@/hooks/use-rotation-steering";
 import { useSaveScoreState } from "@/hooks/use-save-score-state";
 import { ConnectPromptToast } from "@/components/connect-prompt/connect-prompt-toast";
@@ -124,7 +125,7 @@ import { Button } from "@/components/ui/button";
 import { track } from "@/lib/telemetry";
 import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation, type TxErrorKind } from "@/lib/errors";
 import { getContextAction, getRewardActions } from "@/lib/game/context-action";
-import { BADGE_THRESHOLD, EXERCISES, LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
+import { BADGE_THRESHOLD, LABYRINTHS, labyrinthStars } from "@/lib/game/exercises";
 import {
   areAllLabyrinthsSolved,
   getLabyrinthBest,
@@ -916,13 +917,19 @@ export function ExercisesScreen({
     incrementAttemptSeq,
   } = useExerciseProgress(selectedPiece, rotationOptions);
 
+  // Phase 2b-2: read the active pools from the catalog context (baseline
+  // EXERCISES when no provider is mounted → byte-identical flag-off), so
+  // this screen's pool reads agree with the hook's. Phase 2c mounts the
+  // provider with merged pools at the /exercises server boundary.
+  const catalog = useExerciseCatalog();
+
   // Progress is keyed by exerciseId (currentId). Derive the pool index for
   // the index-based affordances (drawer activeIndex, tutorial-hint gate,
   // badge-on-last-exercise math). A null/stale id falls back to the first
   // pool exercise (index 0), mirroring the hook's own derivation.
   const currentExerciseIndex = Math.max(
     0,
-    EXERCISES[selectedPiece].findIndex((ex) => ex.id === currentExercise.id),
+    catalog[selectedPiece].findIndex((ex) => ex.id === currentExercise.id),
   );
 
   // Rotation steering, extracted to a unit-tested hook in Slice 3B.
@@ -1351,7 +1358,7 @@ export function ExercisesScreen({
   const showTxToast = txToast.show && resultOverlay === null;
   const txCurrent = txToast.show ? txToast.current : "sign";
 
-  const allExercisesAttempted = EXERCISES[selectedPiece].every(
+  const allExercisesAttempted = catalog[selectedPiece].every(
     (ex) => (progress.stars[ex.id] ?? 0) > 0,
   );
 
@@ -2304,7 +2311,7 @@ export function ExercisesScreen({
    *  exit; the PieceComplete cascade owns what happens next. */
   function handleLabyrinthContinue() {
     handleExitLabyrinth();
-    const pool = EXERCISES[selectedPiece];
+    const pool = catalog[selectedPiece];
     // First pool slot with 0★ (id-map; absent id = not played) that is
     // also in today's visible set when rotation is on.
     const nextIdx = pool.findIndex(
@@ -2387,7 +2394,7 @@ export function ExercisesScreen({
 
   // Show movement lane hints on the first exercise of each piece (until the player earns stars)
   const tutorialHints = useMemo(() => {
-    const firstExerciseId = EXERCISES[selectedPiece][0]?.id;
+    const firstExerciseId = catalog[selectedPiece][0]?.id;
     if (
       currentExerciseIndex !== 0 ||
       (firstExerciseId ? (progress.stars[firstExerciseId] ?? 0) : 0) > 0
@@ -2395,7 +2402,7 @@ export function ExercisesScreen({
       return undefined;
     const targets = getValidTargets(selectedPiece, currentExercise.startPos);
     return new Set(targets.map(getPositionLabel));
-  }, [selectedPiece, currentExerciseIndex, progress.stars, currentExercise.startPos]);
+  }, [selectedPiece, currentExerciseIndex, progress.stars, currentExercise.startPos, catalog]);
 
   return (
     <div className="relative w-full overflow-x-hidden">
@@ -2669,7 +2676,7 @@ export function ExercisesScreen({
               open={exerciseDrawerOpen}
               onOpenChange={setExerciseDrawerOpen}
               piece={selectedPiece}
-              exercises={EXERCISES[selectedPiece]}
+              exercises={catalog[selectedPiece]}
               stars={progress.stars}
               activeIndex={currentExerciseIndex}
               totalStars={totalStars}

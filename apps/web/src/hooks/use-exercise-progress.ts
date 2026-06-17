@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
-import { BADGE_THRESHOLD, EXERCISES, getExerciseCount } from "@/lib/game/exercises";
+import { BADGE_THRESHOLD } from "@/lib/game/exercises";
+import { useExerciseCatalog } from "@/lib/content/catalog-context";
 import { computeStars } from "@/lib/game/scoring";
 import {
   calculateTotalStarsFromIdMap,
@@ -56,11 +57,11 @@ function clampStars(value: unknown): number {
  *  shape — readers use `?? 0`), and clamps the rest to [0,3]. Unknown ids
  *  are discarded. */
 function sanitizeStarsById(
-  piece: PieceId,
+  pool: Exercise[],
   raw: Record<string, unknown>,
 ): Record<string, number> {
   const out: Record<string, number> = {};
-  for (const ex of EXERCISES[piece]) {
+  for (const ex of pool) {
     const stars = clampStars(raw[ex.id]);
     if (stars > 0) out[ex.id] = stars;
   }
@@ -80,7 +81,7 @@ function sanitizeStarsById(
  *    is kept only if it still names a pool exercise, else null.
  *  - Anything missing/corrupt → empty progress.
  */
-function loadProgress(piece: PieceId): PieceProgress {
+function loadProgress(piece: PieceId, pool: Exercise[]): PieceProgress {
   if (typeof window === "undefined") {
     return emptyProgress(piece);
   }
@@ -96,7 +97,6 @@ function loadProgress(piece: PieceId): PieceProgress {
     if (Array.isArray(parsed.stars)) {
       const legacyStars = parsed.stars as unknown[];
       const stars: Record<string, number> = {};
-      const pool = EXERCISES[piece];
       for (let i = 0; i < pool.length; i += 1) {
         const value = clampStars(legacyStars[i]);
         if (value > 0) stars[pool[i].id] = value;
@@ -115,11 +115,11 @@ function loadProgress(piece: PieceId): PieceProgress {
       parsed.stars && typeof parsed.stars === "object"
         ? (parsed.stars as Record<string, unknown>)
         : {};
-    const stars = sanitizeStarsById(piece, starsObj);
+    const stars = sanitizeStarsById(pool, starsObj);
     const rawCurrentId =
       typeof parsed.currentId === "string" ? parsed.currentId : null;
     const currentId =
-      rawCurrentId && EXERCISES[piece].some((ex) => ex.id === rawCurrentId)
+      rawCurrentId && pool.some((ex) => ex.id === rawCurrentId)
         ? rawCurrentId
         : null;
     return { piece, currentId, stars };
@@ -144,6 +144,13 @@ export function useExerciseProgress(
    *  inside `completeExercise`. Guests skip the call entirely; their
    *  local progress + telemetry stay intact. */
   const { isConnected, address } = useAccount();
+
+  // Phase 2b-2: the active pool comes from the catalog context (baseline
+  // EXERCISES when no provider is mounted → byte-identical flag-off). The
+  // pure helpers (loadProgress, progress-adapter, visible-set) all accept
+  // it so every pool read in this hook resolves against the same catalog.
+  const catalog = useExerciseCatalog();
+  const pool = catalog[piece];
 
   // Inicializar siempre con defaults para que server y cliente rendericen igual
   // (evita hydration mismatch). localStorage se lee después del montaje.
@@ -200,26 +207,26 @@ export function useExerciseProgress(
   const lastResetExerciseIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setProgress(loadProgress(piece));
+    setProgress(loadProgress(piece, pool));
     setHydrated(true);
-  }, [piece]);
+  }, [piece, pool]);
 
-  const count = getExerciseCount(piece);
+  const count = pool.length;
   // `currentId` (an exerciseId) drives navigation; derive the pool index
   // from it so the index-based affordances (telemetry slotIndex,
   // currentExercise, isLastExercise, nav guards) keep working. A null or
   // stale id resolves to the first pool exercise (index 0).
   const currentIdIndex = progress.currentId
-    ? EXERCISES[piece].findIndex((ex) => ex.id === progress.currentId)
+    ? pool.findIndex((ex) => ex.id === progress.currentId)
     : -1;
   const safeIndex = currentIdIndex >= 0 ? currentIdIndex : 0;
-  const currentExercise: Exercise = EXERCISES[piece][safeIndex];
+  const currentExercise: Exercise = pool[safeIndex];
   const isLastExercise = safeIndex === count - 1;
   // Badge mastery is the across-pool sum of best stars (each exercise
   // counts ≤3★ once; replays never double-count). The id-map mastery
   // helper makes the across-pool semantics explicit; sparse map → unset
   // ids contribute 0.
-  const total = calculateTotalStarsFromIdMap(piece, progress.stars);
+  const total = calculateTotalStarsFromIdMap(piece, progress.stars, catalog);
   const badgeEarned = total >= BADGE_THRESHOLD;
   const isReplay = (progress.stars[currentExercise.id] ?? 0) > 0;
 
@@ -240,13 +247,13 @@ export function useExerciseProgress(
   useEffect(() => {
     // `isGuestGraduated` + the rotation selector still consume the
     // positional stars array; bridge the id-map → array (catalog order).
-    const starsArray = starsIdMapToArray(piece, progress.stars);
+    const starsArray = starsIdMapToArray(piece, progress.stars, catalog);
     if (!rotationEnabled || address || !isGuestGraduated(starsArray)) {
       setGuestSessionSeed(null);
       return;
     }
     setGuestSessionSeed(getOrCreateGuestSessionId());
-  }, [rotationEnabled, address, piece, progress.stars]);
+  }, [rotationEnabled, address, piece, progress.stars, catalog]);
 
   // `rotation.sessionSeed` is a test override; real callers rely on the
   // derived guest seed above. A connected wallet still wins inside
@@ -254,16 +261,19 @@ export function useExerciseProgress(
   const effectiveSessionSeed = rotation?.sessionSeed ?? guestSessionSeed;
   const visibleExerciseIds = useMemo(
     () =>
-      computeVisibleExerciseIds({
-        piece,
-        enabled: rotationEnabled,
-        address: address ?? null,
-        sessionSeed: effectiveSessionSeed,
-        dateUtc: rotationDateUtc,
-        // The visible-set selector reads the native id-map directly.
-        starsById: progress.stars,
-      }),
-    [rotationEnabled, piece, address, effectiveSessionSeed, rotationDateUtc, progress.stars],
+      computeVisibleExerciseIds(
+        {
+          piece,
+          enabled: rotationEnabled,
+          address: address ?? null,
+          sessionSeed: effectiveSessionSeed,
+          dateUtc: rotationDateUtc,
+          // The visible-set selector reads the native id-map directly.
+          starsById: progress.stars,
+        },
+        catalog,
+      ),
+    [rotationEnabled, piece, address, effectiveSessionSeed, rotationDateUtc, progress.stars, catalog],
   );
   /** Mirror into a ref so `goToExercise` can read the current visible set
    *  without taking it as a dependency (keeps the callback identity
@@ -306,16 +316,16 @@ export function useExerciseProgress(
   const completeExercise = useCallback(
     (movesUsed: number) => {
       setProgress((prev) => {
-        const pieceCount = getExerciseCount(piece);
+        const pieceCount = pool.length;
         // Resolve the active exercise from currentId (fallback: first pool
         // exercise). `idx` is kept for telemetry slotIndex parity.
         const idx = prev.currentId
           ? Math.max(
               0,
-              EXERCISES[piece].findIndex((ex) => ex.id === prev.currentId),
+              pool.findIndex((ex) => ex.id === prev.currentId),
             )
           : 0;
-        const exercise = EXERCISES[piece][idx];
+        const exercise = pool[idx];
         const starsForAttempt = computeStars(movesUsed, exercise.optimalMoves);
         const bestStarsBefore = prev.stars[exercise.id] ?? 0;
         const bestStarsAfter = Math.max(
@@ -326,8 +336,8 @@ export function useExerciseProgress(
         const newStars: Record<string, number> = { ...prev.stars };
         if (bestStarsAfter > 0) newStars[exercise.id] = bestStarsAfter;
 
-        const prevTotal = calculateTotalStarsFromIdMap(piece, prev.stars);
-        const newTotal = calculateTotalStarsFromIdMap(piece, newStars);
+        const prevTotal = calculateTotalStarsFromIdMap(piece, prev.stars, catalog);
+        const newTotal = calculateTotalStarsFromIdMap(piece, newStars, catalog);
         const delta = newTotal - prevTotal;
         const wasReplay = bestStarsBefore > 0;
 
@@ -356,7 +366,7 @@ export function useExerciseProgress(
         }
 
         if (prevTotal < BADGE_THRESHOLD && newTotal >= BADGE_THRESHOLD) {
-          const exercisesCompleted = EXERCISES[piece].filter(
+          const exercisesCompleted = pool.filter(
             (ex) => (newStars[ex.id] ?? 0) > 0,
           ).length;
           track("training_piece_badge_threshold_reached", {
@@ -370,10 +380,10 @@ export function useExerciseProgress(
         // was 0 before this update. The second clause is what prevents
         // the event from re-firing on every replay after the senda
         // already closed.
-        const allDoneNow = EXERCISES[piece].every(
+        const allDoneNow = pool.every(
           (ex) => (newStars[ex.id] ?? 0) > 0,
         );
-        const hadZeroBefore = EXERCISES[piece].some(
+        const hadZeroBefore = pool.some(
           (ex) => (prev.stars[ex.id] ?? 0) === 0,
         );
         if (allDoneNow && hadZeroBefore) {
@@ -434,12 +444,11 @@ export function useExerciseProgress(
         return next;
       });
     },
-    [piece, isConnected, address]
+    [piece, isConnected, address, pool, catalog]
   );
 
   const advanceExercise = useCallback(() => {
     setProgress((prev) => {
-      const pool = EXERCISES[piece];
       const curIdx = prev.currentId
         ? pool.findIndex((ex) => ex.id === prev.currentId)
         : 0;
@@ -449,11 +458,10 @@ export function useExerciseProgress(
       saveProgress(next);
       return next;
     });
-  }, [piece]);
+  }, [pool]);
 
   const goToExercise = useCallback((index: number) => {
     setProgress((prev) => {
-      const pool = EXERCISES[piece];
       const clamped = Math.max(0, Math.min(index, pool.length - 1));
       const targetId = pool[clamped]?.id;
       if (!targetId) return prev;
@@ -477,7 +485,7 @@ export function useExerciseProgress(
       saveProgress(next);
       return next;
     });
-  }, [piece]);
+  }, [pool]);
 
   return {
     progress,
