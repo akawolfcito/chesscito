@@ -1,4 +1,4 @@
-import type { PieceId } from "@/lib/game/types";
+import type { ExerciseTier, PieceId } from "@/lib/game/types";
 import { squareToPos, type PuzzleInput } from "@/lib/game/fen-puzzle";
 
 export type BuilderState = {
@@ -9,6 +9,11 @@ export type BuilderState = {
   captures: string[]; // pawn only
   order: number;
   explanation?: string;
+  /** Difficulty tier — drives the rotation engine's gating. Defaults to
+   *  "medium" downstream when unset. Author-editable for exercises. */
+  tier?: ExerciseTier;
+  /** Freeform authoring tags (e.g. "straight-line"). Persisted verbatim. */
+  tags?: string[];
   id?: string;
 };
 

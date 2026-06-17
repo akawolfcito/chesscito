@@ -306,7 +306,11 @@ export function ExerciseDrawer({
             const description = resolveExerciseDescription(
               exercise.id,
               index,
-              (eid) => descriptions(eid),
+              // Guard with `has` so an id without an EXERCISE_DESCRIPTIONS
+              // key (e.g. a builder-authored exercise) resolves to the
+              // generic fallback instead of triggering next-intl's
+              // missing-message console warning.
+              (eid) => (descriptions.has(eid) ? descriptions(eid) : null),
               (n) => t("exerciseFallbackFormat", { n }),
             );
 

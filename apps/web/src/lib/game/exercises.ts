@@ -84,23 +84,28 @@ export const LABYRINTHS: Record<PieceId, Exercise[]> = {
 /**
  * Resolve the human-readable description for an exercise row. Generated
  * ids carry their own description map (disjoint from the hand-authored
- * i18n keys), so prefer it; else fall back to the i18n lookup; else the
- * generic "Exercise N" fallback. Pure — `i18n`/`fallback` are injected so
- * this is unit-testable without a translator context.
+ * i18n keys), so prefer it; else use the i18n lookup; else the generic
+ * "Exercise N" fallback. Pure — `i18n`/`fallback` are injected so this is
+ * unit-testable without a translator context.
+ *
+ * `i18n` returns `null` (or an empty string) when the id has no
+ * translation. The caller is expected to guard the translator (e.g.
+ * `descriptions.has(id)`) and pass `null` for unknown ids, so a builder-
+ * authored exercise with neither a generated description nor an editorial
+ * key resolves to the generic fallback WITHOUT emitting a missing-message
+ * console warning.
  */
 export function resolveExerciseDescription(
   id: string,
   index: number,
-  i18n: (id: string) => string,
+  i18n: (id: string) => string | null,
   fallback: (n: number) => string,
 ): string {
   const gen = GENERATED_EXERCISE_DESCRIPTIONS[id];
   if (gen) return gen;
-  try {
-    return i18n(id);
-  } catch {
-    return fallback(index + 1);
-  }
+  const translated = i18n(id);
+  if (translated) return translated;
+  return fallback(index + 1);
 }
 
 /** Compute stars earned in a labyrinth. */

@@ -117,6 +117,24 @@ describe("POST /api/dev/labyrinth", () => {
     expect(saved?.tags).toEqual(["straight-line"]);
   });
 
+  it("flows a builder-authored explanation into the generated description map", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const withExplanation = {
+      ...VALID_ROOK_EXERCISE,
+      explanation: "Glide your Rook straight to h1.",
+    };
+    const res = await POST(postRequest(JSON.stringify(withExplanation)));
+    expect(res.status).toBe(200);
+    // The 2nd write is the regenerated module; its GENERATED_EXERCISE_
+    // DESCRIPTIONS map must carry the authored copy keyed by the id, so the
+    // in-game drawer resolves it WITHOUT an i18n missing-message fallback.
+    const genWrite = fsMocks.writeFileSync.mock.calls.find((c) =>
+      String(c[0]).endsWith("src/lib/game/generated/puzzles.generated.ts"),
+    );
+    expect(genWrite).toBeDefined();
+    expect(String(genWrite?.[1])).toContain("Glide your Rook straight to h1.");
+  });
+
   it("merges an exercise edit into existing exercises.json, preserving unknown fields", async () => {
     vi.stubEnv("NODE_ENV", "development");
     // exercises.json exists with one record that carries extra fields.

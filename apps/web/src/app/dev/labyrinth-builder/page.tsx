@@ -18,7 +18,7 @@ import {
   GENERATED_EXERCISES,
   GENERATED_LABYRINTHS,
 } from "@/lib/game/generated/puzzles.generated";
-import type { BoardPosition, PieceId } from "@/lib/game/types";
+import type { BoardPosition, ExerciseTier, PieceId } from "@/lib/game/types";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +42,11 @@ const BUILDER_FIELDS = new Set([
   "mover",
   "order",
   "explanation",
+  "tier",
+  "tags",
 ]);
+
+const TIERS: ExerciseTier[] = ["easy", "medium", "hard"];
 function extraFields(rec: LabyrinthRecord): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(rec)) {
@@ -263,6 +267,8 @@ export default function LabyrinthBuilderPage() {
       captures: rec.piece === "pawn" ? derived.captures : [],
       order: rec.order,
       explanation: rec.explanation,
+      tier: rec.tier,
+      tags: rec.tags,
       id: rec.id,
     });
     setEditExtras(extraFields(rec));
@@ -306,6 +312,8 @@ export default function LabyrinthBuilderPage() {
           piece: state.piece,
           ...fenBlock,
           explanation: state.explanation || undefined,
+          tier: state.tier || undefined,
+          tags: state.tags && state.tags.length ? state.tags : undefined,
           order: state.order,
         }),
       });
@@ -448,16 +456,60 @@ export default function LabyrinthBuilderPage() {
                 className="rounded bg-slate-800 px-2 py-1"
               />
             </label>
+            <label className="flex flex-col text-sm">
+              <span className="text-slate-400">tier</span>
+              <select
+                value={state.tier ?? "medium"}
+                onChange={(e) =>
+                  update({ tier: e.target.value as ExerciseTier })
+                }
+                className="rounded bg-slate-800 px-2 py-1 capitalize"
+              >
+                {TIERS.map((tr) => (
+                  <option key={tr} value={tr}>
+                    {tr}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col text-sm">
+              <span className="text-slate-400">tags (comma-sep)</span>
+              <input
+                type="text"
+                value={(state.tags ?? []).join(", ")}
+                onChange={(e) => {
+                  const tags = e.target.value
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                  update({ tags: tags.length ? tags : undefined });
+                }}
+                placeholder="straight-line"
+                className="rounded bg-slate-800 px-2 py-1"
+              />
+            </label>
             <label className="col-span-2 flex flex-col text-sm">
-              <span className="text-slate-400">explanation</span>
+              <span className="text-slate-400">
+                description (shown in-game)
+              </span>
               <input
                 type="text"
                 value={state.explanation ?? ""}
                 onChange={(e) =>
                   update({ explanation: e.target.value || undefined })
                 }
+                placeholder={
+                  kind === "exercise"
+                    ? "e.g. Move your Rook straight to h8"
+                    : undefined
+                }
                 className="rounded bg-slate-800 px-2 py-1"
               />
+              {kind === "exercise" && !state.explanation ? (
+                <span className="mt-1 text-xs text-amber-400/80">
+                  Empty → shows the generic “Exercise N” label in-game.
+                </span>
+              ) : null}
             </label>
           </div>
 

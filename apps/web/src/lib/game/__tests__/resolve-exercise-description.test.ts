@@ -42,11 +42,18 @@ describe("resolveExerciseDescription", () => {
     expect(out).toBe("i18n:rook-1");
   });
 
-  it("returns the generic fallback when i18n throws for an unknown id", () => {
-    const i18n = () => {
-      throw new Error("missing key");
-    };
+  it("returns the generic fallback when i18n returns null for an unknown id", () => {
+    // The drawer guards with `descriptions.has(id)` and passes null when the
+    // id has no translation, so no missing-message warning is ever emitted.
+    const i18n = vi.fn(() => null);
     const out = resolveExerciseDescription("unknown-id", 4, i18n, fallback);
     expect(out).toBe("Exercise 5"); // index + 1
+    expect(i18n).toHaveBeenCalledWith("unknown-id");
+  });
+
+  it("treats an empty i18n string as absent and uses the fallback", () => {
+    const i18n = () => "";
+    const out = resolveExerciseDescription("blank-id", 0, i18n, fallback);
+    expect(out).toBe("Exercise 1");
   });
 });
