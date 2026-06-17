@@ -7,9 +7,26 @@
  * write side only (this contract + the migration + the admin write route); the
  * read path still serves the baseline. See docs/specs/db-backed-content.md.
  */
-import type { ExerciseTier, PieceId } from "@/lib/game/types";
+import type { Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
 
 export type ContentKind = "exercise" | "labyrinth";
+
+/** The compiled baseline catalog shape (mirrors the generated module). Input to
+ *  the overlay merge; also the fallback when the overlay is unavailable. */
+export interface BaselineCatalog {
+  exercises: Record<PieceId, Exercise[]>;
+  labyrinths: Record<PieceId, Exercise[]>;
+  descriptions: Record<string, string>;
+}
+
+/** The merged, ready-to-serve catalog (same shape the generated module exports,
+ *  plus observability fields). Returned by getMergedCatalog(). */
+export interface MergedCatalog extends BaselineCatalog {
+  /** "baseline-only" when the overlay was unavailable/empty (fallback path). */
+  source: "baseline+overlay" | "baseline-only";
+  /** How many overlay rows were actually applied (post-validation). */
+  overlayCount: number;
+}
 
 /**
  * One overlay row = one puzzle delta. Mirrors the builder/import record shape
