@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { notFound } from "next/navigation";
 import {
   buildFenBlock,
@@ -19,13 +19,87 @@ import {
   GENERATED_LABYRINTHS,
 } from "@/lib/game/generated/puzzles.generated";
 import type { BoardPosition, ExerciseTier, PieceId } from "@/lib/game/types";
+import { THEME_CONFIG } from "@/lib/theme";
+import { ProceduralBoard } from "../_components/procedural-board";
 
 export const dynamic = "force-dynamic";
 
 const PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
-const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-// Ranks 8 (top) → 1 (bottom) so a1 renders bottom-left.
-const RANKS = [8, 7, 6, 5, 4, 3, 2, 1];
+
+// Real in-game sprites so the builder previews puzzles on a board that matches
+// /exercises. White pieces; star marks the goal (same as board.tsx).
+const PIECE_SRC: Record<PieceId, string> = {
+  rook: `${THEME_CONFIG.piecesBase}/w-rook.png`,
+  bishop: `${THEME_CONFIG.piecesBase}/w-bishop.png`,
+  knight: `${THEME_CONFIG.piecesBase}/w-knight.png`,
+  pawn: `${THEME_CONFIG.piecesBase}/w-pawn.png`,
+  queen: `${THEME_CONFIG.piecesBase}/w-queen.png`,
+  king: `${THEME_CONFIG.piecesBase}/w-king.png`,
+};
+const STAR_SRC = "/art/redesign/icons/star.png";
+
+// Per-cell marker overlays drawn on the textured ProceduralBoard cells. All are
+// pointer-events:none so taps pass through to the cell button (brush logic).
+const CELL_OVERLAY: Record<string, CSSProperties> = {
+  wall: {
+    position: "absolute",
+    inset: 0,
+    background: "rgba(15, 23, 42, 0.62)",
+    boxShadow: "inset 0 0 0 2px rgba(15,23,42,0.5)",
+    pointerEvents: "none",
+  },
+  capture: {
+    position: "absolute",
+    left: "16%",
+    top: "16%",
+    width: "68%",
+    height: "68%",
+    borderRadius: "50%",
+    border: "3px solid rgba(248, 113, 113, 0.95)",
+    boxShadow: "0 0 8px rgba(248,113,113,0.7)",
+    pointerEvents: "none",
+  },
+  sprite: {
+    position: "absolute",
+    left: "9%",
+    top: "9%",
+    width: "82%",
+    height: "82%",
+    objectFit: "contain",
+    pointerEvents: "none",
+  },
+  star: {
+    position: "absolute",
+    left: "18%",
+    top: "18%",
+    width: "64%",
+    height: "64%",
+    objectFit: "contain",
+    pointerEvents: "none",
+  },
+  dot: {
+    position: "absolute",
+    left: "39%",
+    top: "39%",
+    width: "22%",
+    height: "22%",
+    borderRadius: "50%",
+    background: "rgba(125, 211, 252, 0.95)",
+    boxShadow: "0 0 4px rgba(56,189,248,0.8)",
+    pointerEvents: "none",
+  },
+  trace: {
+    position: "absolute",
+    top: "2px",
+    right: "3px",
+    fontSize: "0.55rem",
+    fontWeight: 800,
+    lineHeight: 1,
+    color: "#fff",
+    textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+    pointerEvents: "none",
+  },
+};
 
 type Brush = "start" | "goal" | "wall" | "capture" | "trace";
 type Kind = "exercise" | "labyrinth";
@@ -392,28 +466,40 @@ export default function LabyrinthBuilderPage() {
             ))}
           </div>
 
-          <div className="inline-grid grid-cols-[1.25rem_repeat(8,2.5rem)] gap-0">
-            {/* file labels (top) */}
-            <div />
-            {FILES.map((f) => (
-              <div
-                key={`top-${f}`}
-                className="flex h-5 items-center justify-center text-xs text-slate-400"
-              >
-                {f}
-              </div>
-            ))}
-            {RANKS.map((rank) => (
-              <RankRow
-                key={`r-${rank}`}
-                rank={rank}
-                state={state}
-                pathSquares={pathSquares}
-                traceIndex={traceIndex}
-                onCell={handleCell}
-              />
-            ))}
-          </div>
+          <ProceduralBoard
+            onCellClick={(_file, _rank, sq) => handleCell(sq)}
+            renderCell={(_file, _rank, sq) => {
+              const isStart = state.start === sq;
+              const isGoal = state.goal === sq;
+              const isWall = state.walls.includes(sq);
+              const isCapture = state.captures.includes(sq);
+              const inPath = pathSquares.has(sq);
+              const traceOrder = traceIndex.get(sq);
+              return (
+                <>
+                  {isWall && !isStart && !isGoal && (
+                    <span style={CELL_OVERLAY.wall} />
+                  )}
+                  {isCapture && !isStart && (
+                    <span style={CELL_OVERLAY.capture} />
+                  )}
+                  {isStart ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={PIECE_SRC[state.piece]} alt="" style={CELL_OVERLAY.sprite} />
+                  ) : isGoal ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={STAR_SRC} alt="" style={CELL_OVERLAY.star} />
+                  ) : null}
+                  {inPath && !isStart && !isGoal && !isWall && (
+                    <span style={CELL_OVERLAY.dot} />
+                  )}
+                  {traceOrder !== undefined && (
+                    <span style={CELL_OVERLAY.trace}>{traceOrder}</span>
+                  )}
+                </>
+              );
+            }}
+          />
 
           {/* Brushes */}
           <div className="flex flex-wrap gap-2">
@@ -444,8 +530,8 @@ export default function LabyrinthBuilderPage() {
             </button>
           </div>
           <p className="text-xs text-slate-500">
-            green=start · amber★=goal · slate=wall · red=capture · dot=BFS path ·
-            number=traced order
+            piece=start · ★=goal · dark tile=wall · red ring=capture · blue
+            dot=BFS path · number=traced order
           </p>
         </section>
 
@@ -741,66 +827,5 @@ mover=${fenBlock.mover}`}
         </section>
       </div>
     </main>
-  );
-}
-
-function RankRow({
-  rank,
-  state,
-  pathSquares,
-  traceIndex,
-  onCell,
-}: {
-  rank: number;
-  state: BuilderState;
-  pathSquares: Set<string>;
-  traceIndex: Map<string, number>;
-  onCell: (sq: string) => void;
-}) {
-  return (
-    <>
-      <div className="flex w-5 items-center justify-center text-xs text-slate-400">
-        {rank}
-      </div>
-      {FILES.map((f) => {
-        const sq = `${f}${rank}`;
-        const isStart = state.start === sq;
-        const isGoal = state.goal === sq;
-        const isWall = state.walls.includes(sq);
-        const isCapture = state.captures.includes(sq);
-        const inPath = pathSquares.has(sq);
-        const traceOrder = traceIndex.get(sq);
-        // Checker background for empty squares.
-        const fileIdx = f.charCodeAt(0) - 97;
-        const isDark = (fileIdx + rank) % 2 === 0;
-
-        let bg = isDark ? "bg-slate-800/60" : "bg-slate-700/40";
-        if (isWall) bg = "bg-slate-500";
-        if (isCapture) bg = "bg-red-600";
-        if (isGoal) bg = "bg-amber-500";
-        if (isStart) bg = "bg-emerald-500";
-
-        return (
-          <button
-            key={sq}
-            type="button"
-            onClick={() => onCell(sq)}
-            className={`relative flex h-10 w-10 items-center justify-center border border-slate-900 text-sm font-bold ${bg}`}
-            title={sq}
-          >
-            {isStart && "●"}
-            {isGoal && !isStart && "★"}
-            {inPath && !isStart && !isGoal && (
-              <span className="absolute h-2 w-2 rounded-full bg-sky-300" />
-            )}
-            {traceOrder !== undefined && (
-              <span className="absolute right-0.5 top-0.5 text-[9px] leading-none text-white/90">
-                {traceOrder}
-              </span>
-            )}
-          </button>
-        );
-      })}
-    </>
   );
 }
