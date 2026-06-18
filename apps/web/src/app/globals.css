@@ -2698,6 +2698,46 @@
     box-shadow: none;
   }
 
+  /* Procedural board tiles (GameBoard). The textured square art is referenced
+     via the dual `-webkit-image-set` + `image-set` pattern (same as `.is-wall`)
+     because an inline React `background-image` can only hold ONE value — it
+     can't carry both the prefixed and unprefixed forms, and a bare
+     `url() type()` list (no `image-set(...)` wrapper) is invalid CSS, which is
+     why the tiles previously fell back to the flat fill. The cell's inline
+     `background-color` stays as the load/fallback tint. */
+  .game-board-tile-light,
+  .game-board-tile-dark {
+    background-size: 100% 100%;
+    background-position: center;
+  }
+
+  .game-board-tile-light {
+    background-image: url("/art/board/casilla-clara.png");
+    background-image: -webkit-image-set(
+      url("/art/board/casilla-clara.avif") type("image/avif"),
+      url("/art/board/casilla-clara.webp") type("image/webp"),
+      url("/art/board/casilla-clara.png") type("image/png")
+    );
+    background-image: image-set(
+      url("/art/board/casilla-clara.avif") type("image/avif"),
+      url("/art/board/casilla-clara.webp") type("image/webp"),
+      url("/art/board/casilla-clara.png") type("image/png")
+    );
+  }
+
+  .game-board-tile-dark {
+    background-image: url("/art/board/casilla-oscura.png");
+    background-image: -webkit-image-set(
+      url("/art/board/casilla-oscura.avif") type("image/avif"),
+      url("/art/board/casilla-oscura.webp") type("image/webp"),
+      url("/art/board/casilla-oscura.png") type("image/png")
+    );
+    background-image: image-set(
+      url("/art/board/casilla-oscura.avif") type("image/avif"),
+      url("/art/board/casilla-oscura.webp") type("image/webp"),
+      url("/art/board/casilla-oscura.png") type("image/png")
+    );
+  }
 
   .playhub-board-cell {
     position: absolute;

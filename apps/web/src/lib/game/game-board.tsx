@@ -32,17 +32,6 @@ export const BOARD_INNER_H = 100 - BOARD_INSET.top - BOARD_INSET.bottom; // 92.6
 
 const ASSET = "/art/board";
 
-/** One cached image-set per tile color (avif → webp → png), not 64 requests. */
-function tileImageSet(name: string): string {
-  return [
-    `url("${ASSET}/${name}.avif") type("image/avif")`,
-    `url("${ASSET}/${name}.webp") type("image/webp")`,
-    `url("${ASSET}/${name}.png") type("image/png")`,
-  ].join(", ");
-}
-const TILE_LIGHT = tileImageSet("casilla-clara");
-const TILE_DARK = tileImageSet("casilla-oscura");
-
 const LABEL_STYLE: CSSProperties = {
   position: "absolute",
   fontSize: "1rem",
@@ -161,13 +150,15 @@ export function GameBoard({
           fileOrder.map((file) => {
             const sq = `${FILES[file]}${rank}`;
             const dark = isDarkSquare(file, rank);
+            // Texture comes from `.game-board-tile-{light,dark}` (dual image-set
+            // in CSS — inline can't carry the -webkit- + unprefixed pair). The
+            // inline background-color is the load/fallback tint underneath.
+            const tileClass = dark ? "game-board-tile-dark" : "game-board-tile-light";
             const cellStyle: CSSProperties = {
               position: "relative",
               padding: 0,
               border: "none",
               backgroundColor: dark ? darkColor : lightColor,
-              backgroundImage: dark ? TILE_DARK : TILE_LIGHT,
-              backgroundSize: "100% 100%",
               cursor: clickable ? "pointer" : "default",
             };
             const content = renderCell?.(file, rank, sq);
@@ -180,6 +171,7 @@ export function GameBoard({
                 key={sq}
                 type="button"
                 role="gridcell"
+                className={tileClass}
                 onClick={() => onCellClick!(file, rank, sq)}
                 aria-label={cellLabel}
                 title={sq}
@@ -194,6 +186,7 @@ export function GameBoard({
               <div
                 key={sq}
                 role="gridcell"
+                className={tileClass}
                 aria-label={cellLabel}
                 title={sq}
                 data-square={sq}
