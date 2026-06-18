@@ -492,7 +492,6 @@ export function MiniArenaSheet({ open, onOpenChange, setup, onWin }: Props) {
                   isThinking={status === "thinking"}
                   onSquareClick={selectSquare}
                   playerColor="w"
-                  proceduralBoard
                 />
               </div>
             </div>

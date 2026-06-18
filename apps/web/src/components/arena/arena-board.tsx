@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
+import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 import { ARENA_PIECE_IMG, squareToFileRank } from "@/lib/game/arena-utils";
 import { GameBoard } from "@/lib/game/game-board";
 import { THEME_CONFIG } from "@/lib/theme";
@@ -43,11 +43,6 @@ type ArenaBoardProps = {
    *  (h-file on the left, rank 8 at the bottom). Square labels stay
    *  logical — click handlers still receive "a1" for the a1 square. */
   playerColor?: PlayerColor;
-  /** Board migration Phase 2 (per-surface, default off). When true, the board
-   *  renders on the procedural `<GameBoard>` substrate (tile grid + candy frame,
-   *  orientation-aware) instead of the background-image board. Flag stays off
-   *  until final art + human sign-off (founder 2026-06-17). */
-  proceduralBoard?: boolean;
 };
 
 function buildArenaSquares(
@@ -92,7 +87,6 @@ export function ArenaBoard({
   onSquareClick,
   isCheckmatePause = false,
   playerColor = "w",
-  proceduralBoard = false,
 }: ArenaBoardProps) {
   const t = useTranslations("ARENA_COPY");
   const flipped = playerColor === "b";
@@ -257,111 +251,41 @@ export function ArenaBoard({
     );
   };
 
-  if (proceduralBoard) {
-    return (
-      <div className="playhub-stage-shell w-full">
-        <div className="playhub-game-stage">
-          <div className="playhub-game-grid">
-            <div
-              className="playhub-board-canvas arena-board-canvas relative"
-              data-checkmate={isCheckmatePause ? "true" : undefined}
-              // GameBoard is a rigid square; unlike the image board it can't
-              // squish to a height-clamped rectangle. Size the canvas to the
-              // SMALLER of the available width and height so the board stays
-              // square AND never overflows `.playhub-game-stage` (overflow:hidden
-              // would clip rank 8 / rank 1). Mirrors the image board's
-              // `calc(100dvh - 22rem)` chrome budget.
-              style={{
-                width: "min(100%, 23.5rem, calc(100dvh - 22rem))",
-                aspectRatio: "1 / 1",
-                maxHeight: "none",
-                margin: "0 auto",
-              }}
-            >
-              {isThinking && (
-                <div className="pointer-events-none absolute inset-0 z-10 animate-pulse rounded-2xl ring-2 ring-amber-400/20" />
-              )}
-              <GameBoard
-                orientation={flipped ? "black" : "white"}
-                maxWidth="100%"
-                onCellClick={(_file, _rank, sq) => {
-                  if (!isLocked) onSquareClick(sq);
-                }}
-                renderCell={renderArenaCell}
-                renderOverlay={(geo) =>
-                  renderPieceLayer((file, rank) => {
-                    const c = geo.center(file, rank + 1);
-                    return { x: c.leftPct, y: c.topPct };
-                  })
-                }
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="playhub-stage-shell w-full">
       <div className="playhub-game-stage">
         <div className="playhub-game-grid">
-          <div className="playhub-board-canvas arena-board-canvas relative" data-checkmate={isCheckmatePause ? "true" : undefined}>
-            {/* Same <picture>/<img> pattern as the exercise board to avoid
-                the iOS WebKit rendering bug around CSS ::before + filter
-                + negative z-index. */}
-            <picture className="playhub-board-img">
-              <source srcSet="/art/redesign/board/board-ch.avif" type="image/avif" />
-              <source srcSet="/art/redesign/board/board-ch.webp" type="image/webp" />
-              <img src="/art/redesign/board/board-ch.png" alt="" />
-            </picture>
+          <div
+            className="playhub-board-canvas arena-board-canvas relative"
+            data-checkmate={isCheckmatePause ? "true" : undefined}
+            // GameBoard is a rigid square; size the canvas to the SMALLER of the
+            // available width and height so the board stays square AND never
+            // overflows `.playhub-game-stage` (overflow:hidden would clip rank 8
+            // / rank 1). Mirrors the image board's `calc(100dvh - 22rem)` budget.
+            style={{
+              width: "min(100%, 23.5rem, calc(100dvh - 22rem))",
+              aspectRatio: "1 / 1",
+              maxHeight: "none",
+              margin: "0 auto",
+            }}
+          >
             {isThinking && (
-              <div className="pointer-events-none absolute inset-0 animate-pulse rounded-2xl ring-2 ring-amber-400/20" />
+              <div className="pointer-events-none absolute inset-0 z-10 animate-pulse rounded-2xl ring-2 ring-amber-400/20" />
             )}
-            <div className="playhub-board-hitgrid" role="grid" aria-label="Chess board">
-              {squares.map((sq) => {
-                const vf = flipped ? 7 - sq.file : sq.file;
-                const vr = flipped ? 7 - sq.rank : sq.rank;
-                const geo = cellGeometry(vf, vr);
-                return (
-                  <button
-                    key={sq.label}
-                    type="button"
-                    role="gridcell"
-                    aria-label={`Square ${sq.label}`}
-                    disabled={isLocked}
-                    onClick={() => onSquareClick(sq.label)}
-                    style={{
-                      left: `${geo.left}%`,
-                      top: `${geo.top}%`,
-                      width: `${geo.width}%`,
-                      height: `${geo.height}%`,
-                    }}
-                    className={[
-                      "arena-board-cell",
-                      sq.isDark ? "is-dark" : "is-light",
-                      sq.isHighlighted ? "is-highlighted" : "",
-                      sq.isHighlighted && pieceMap.has(sq.label) ? "is-capturable" : "",
-                      sq.isSelected ? "is-selected" : "",
-                      sq.isLastMove ? "is-last-move" : "",
-                      sq.isCheck ? "is-check" : "",
-                      sq.label === captureFlashSquare ? "is-capture-flash" : "",
-                    ].join(" ")}
-                  >
-                    <span className="playhub-board-label">{sq.label}</span>
-                    {sq.isHighlighted && !pieceMap.has(sq.label) ? (
-                      <span className="playhub-board-dot" />
-                    ) : null}
-                  </button>
-                );
-              })}
-
-              {renderPieceLayer((file, rank) => {
-                const vf = flipped ? 7 - file : file;
-                const vr = flipped ? 7 - rank : rank;
-                return cellCenter(vf, vr);
-              })}
-            </div>
+            <GameBoard
+              orientation={flipped ? "black" : "white"}
+              maxWidth="100%"
+              onCellClick={(_file, _rank, sq) => {
+                if (!isLocked) onSquareClick(sq);
+              }}
+              renderCell={renderArenaCell}
+              renderOverlay={(geo) =>
+                renderPieceLayer((file, rank) => {
+                  const c = geo.center(file, rank + 1);
+                  return { x: c.leftPct, y: c.topPct };
+                })
+              }
+            />
           </div>
         </div>
       </div>

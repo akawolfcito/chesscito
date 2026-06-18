@@ -267,88 +267,60 @@ describe("<Board>", () => {
     });
   });
 
-  // ─── Procedural board flag (migration Phase 1, per-surface, default off) ──
+  // ─── Procedural board substrate (P4b: now the only board, no flag) ──────
   const FRAME_SRC = "/art/board/borde-tablero";
 
-  describe("procedural board flag", () => {
-    it("defaults to the image board (flag off) — byte-identical substrate", () => {
+  describe("procedural board substrate", () => {
+    it("renders the GameBoard substrate (candy frame, no background image)", () => {
       const { container } = render(
         <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} />,
       );
-      // Image substrate present, procedural frame absent.
-      expect(container.querySelector(".playhub-board-img")).toBeInTheDocument();
-      expect(
-        container.querySelector(`img[src*="${FRAME_SRC}"]`),
-      ).toBeNull();
-    });
-
-    it("renders the GameBoard substrate when proceduralBoard is on", () => {
-      const { container } = render(
-        <Board
-          pieceType="rook"
-          startPosition={{ file: 0, rank: 0 }}
-          proceduralBoard
-        />,
-      );
-      // Procedural frame present, image substrate gone.
       expect(
         container.querySelector(`img[src*="${FRAME_SRC}"]`),
       ).toBeInTheDocument();
       expect(container.querySelector(".playhub-board-img")).toBeNull();
-      // Still 64 interactive cells (a11y parity: gridcells named "Square a1").
+      // 64 interactive cells (a11y parity: gridcells named "Square a1").
       expect(
         screen.getAllByRole("gridcell", { name: /^Square [a-h][1-8]$/ }),
       ).toHaveLength(64);
     });
 
-    it("places the floating piece on the procedural board", () => {
+    it("places the floating piece on the board", () => {
       const { container } = render(
-        <Board
-          pieceType="rook"
-          startPosition={{ file: 0, rank: 0 }}
-          proceduralBoard
-        />,
+        <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} />,
       );
       const piece = container.querySelector(".playhub-board-piece-float");
       expect(piece).toBeInTheDocument();
       expect(piece?.querySelector("img")?.getAttribute("src")).toContain("rook");
     });
 
-    it("highlights valid targets after the piece is selected (procedural)", () => {
+    it("highlights valid targets after the piece is selected", () => {
       const { container } = render(
-        <Board
-          pieceType="rook"
-          startPosition={{ file: 0, rank: 0 }}
-          proceduralBoard
-        />,
+        <Board pieceType="rook" startPosition={{ file: 0, rank: 0 }} />,
       );
-      // No dots before selection.
       expect(container.querySelector(".playhub-board-dot")).toBeNull();
-      // Select the rook (gridcell named "Square a1", a11y parity).
       fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
       expect(container.querySelectorAll(".playhub-board-dot").length).toBeGreaterThan(0);
     });
 
-    it("renders the target star marker on the procedural board", () => {
+    it("renders the target star marker", () => {
       const { container } = render(
         <Board
           pieceType="rook"
           startPosition={{ file: 0, rank: 0 }}
           targetPosition={{ file: 7, rank: 0 }}
-          proceduralBoard
         />,
       );
       expect(container.querySelector(".playhub-board-target")).toBeInTheDocument();
     });
 
-    it("paints labyrinth walls per cell on the procedural board", () => {
+    it("paints labyrinth walls per cell", () => {
       const { container } = render(
         <Board
           pieceType="rook"
           startPosition={{ file: 0, rank: 0 }}
           mode="labyrinth"
           obstacles={[{ file: 3, rank: 3 }]}
-          proceduralBoard
         />,
       );
       expect(container.querySelector(".playhub-board-cell.is-wall")).toBeInTheDocument();
