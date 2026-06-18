@@ -48,11 +48,14 @@
   promote UI (out of scope here) must land close behind — confirm the follow-up
   is scheduled, not indefinitely deferred.
 
-- **[fan-out over-busts prod] Behavior 5 fans out to ALL targets on every stage
-  change**, so a `draft→preview` promote busts prod's cache too, forcing a prod
-  DB re-read though prod's `published` view didn't change. Risk: needless prod
-  cache churn / latency under traffic. Fix: scope fan-out to the **affected**
-  envs (those whose `resolveVisibleRows` output could change = stages between
+- **[fan-out over-busts prod] — DISSOLVED (founder 2026-06-17).** The whole
+  cross-deployment fan-out is dropped in favor of a short cache TTL (each env
+  self-refreshes within 60s). This also removes the partial-fan-out-failure edge
+  case, the `/api/admin/revalidate` endpoint, and the SSRF/token-leak surface
+  below. _Original finding, for the record:_ fan-out to ALL targets busted prod's
+  cache on a preview-only promote — needless churn. Fix would have been to scope
+  to **affected** envs (those whose `resolveVisibleRows` output could change =
+  stages between
   rank(from) and rank(to)); keep "all" only if simplicity is judged worth the
   churn (fine in pre-launch).
 
@@ -132,8 +135,9 @@ spec:
    (new "Rollout (operational)" section).
 3. ✅ `disabled` × stage × env truth table + per-row tests (new section + criterion).
 
-**Now READY for /tdd**, gated only on the 3 founder open questions in the spec
-(targets config shape, maxAge value, allow skip-stage). P1s (Save-as-draft
-labeling, fan-out scoping to affected envs, cache key includes stage floor,
-`from` mismatch error) are documented and should be handled during /tdd but do
-not block starting.
+**READY for /tdd.** All 3 founder open questions are resolved (2026-06-17):
+cross-deployment **fan-out dropped → cache TTL** (60s, each env self-refreshes),
+which also dissolves the fan-out P1, the partial-failure edge case, the SSRF/token
+surface, and the targets-shape P2. Skip-stage promotes allowed. Remaining P1s
+(Save-as-draft labeling, cache key includes the stage floor, `from` mismatch
+error) are documented and handled during /tdd; none block starting.
