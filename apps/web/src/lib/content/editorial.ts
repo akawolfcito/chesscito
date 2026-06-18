@@ -2318,7 +2318,7 @@ export const ACCOUNT_SHEET_COPY = {
  *  the Account sheet and behind the Peones HUD chip. Visual-first: the card
  *  IS the balance, the Top up CTA routes into the existing Get Peones rail. */
 export const CHESITO_CARD_COPY = {
-  title: "Chesito Card",
+  title: "Chesscito Card",
   /** Currency unit shown next to the big balance number. */
   unit: "Peones",
   /** One-line promise under the balance, plain language, no web3 jargon. */
