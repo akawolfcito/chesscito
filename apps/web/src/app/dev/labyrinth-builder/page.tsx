@@ -386,8 +386,9 @@ export default function LabyrinthBuilderPage() {
     setIsSaving(true);
     try {
       // "Todo en 1": the publish proxy writes the baseline content/*.json AND
-      // publishes to the live overlay in one call (the ADMIN_TOKEN stays
-      // server-side). It returns a partial-aware { ok, baseline, overlay }.
+      // writes the overlay at stage='draft' in one call (the ADMIN_TOKEN stays
+      // server-side). A draft is NOT live to players — promote it to publish.
+      // Returns a partial-aware { ok, baseline, overlay }.
       const res = await fetch("/api/dev/publish", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -423,8 +424,8 @@ export default function LabyrinthBuilderPage() {
   // the list row directly so it never disturbs the current edit.
   async function handleToggleDisabled(rec: LabyrinthRecord) {
     try {
-      // Toggle through the publish proxy so the enable/disable also propagates
-      // live (baseline + overlay), same "todo en 1" path as Save.
+      // Toggle through the publish proxy so the enable/disable also lands in the
+      // draft overlay (baseline + overlay), same "todo en 1" path as Save.
       const res = await fetch("/api/dev/publish", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -439,10 +440,10 @@ export default function LabyrinthBuilderPage() {
       const id = rec.id ?? "record";
       setToast(
         data.overlay?.ok
-          ? { kind: "ok", text: `${id} ${verb} (live). Remember to commit content/*.json.` }
+          ? { kind: "ok", text: `${id} ${verb} as draft. Promote to publish. Remember to commit content/*.json.` }
           : {
               kind: "warn",
-              text: `${id} ${verb} in baseline; live update failed: ${(data.overlay?.errors ?? ["unknown"]).join("; ")}. Remember to commit content/*.json.`,
+              text: `${id} ${verb} in baseline; draft overlay update failed: ${(data.overlay?.errors ?? ["unknown"]).join("; ")}. Remember to commit content/*.json.`,
             },
       );
       void refreshRecords();
@@ -690,7 +691,7 @@ export default function LabyrinthBuilderPage() {
               disabled={!result.ok || isSaving}
               className="rounded bg-emerald-600 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
             >
-              {isSaving ? "Publishing…" : "Save"}
+              {isSaving ? "Saving draft…" : "Save draft"}
             </button>
             {toast && (
               <span
