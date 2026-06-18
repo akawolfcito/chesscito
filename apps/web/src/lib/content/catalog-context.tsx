@@ -10,9 +10,9 @@
  * the flag-off read path unchanged.
  *
  * The /exercises server boundary mounts `<ContentCatalogProvider>` with the
- * merged (baseline ⊕ overlay) catalog from `getMergedCatalog()`, behind
- * `CONTENT_OVERLAY_ENABLED`. Until then no provider is mounted and every
- * selector falls through to the baseline default.
+ * merged (baseline ⊕ stage-filtered overlay) catalog from `getMergedCatalog()`,
+ * when this deployment has a `CONTENT_STAGE` floor. With it unset no provider is
+ * mounted and every selector falls through to the baseline default.
  *
  * Note: unlike most context hooks here, the selectors do NOT throw when
  * consumed outside a provider — the baseline default is the intended

@@ -9,7 +9,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const supabaseMock = vi.hoisted(() => ({ from: vi.fn(), select: vi.fn() }));
+const supabaseMock = vi.hoisted(() => ({
+  from: vi.fn(),
+  select: vi.fn(),
+  in: vi.fn(),
+}));
 vi.mock("@/lib/supabase/server", () => ({
   getSupabaseServer: vi.fn(() => supabaseMock),
 }));
@@ -101,13 +105,48 @@ describe("mergeOverlay", () => {
   });
 });
 
-describe("loadMergedCatalog (fetch + fallback)", () => {
+describe("loadMergedCatalog (stage-aware fetch + fallback)", () => {
+  const originalStage = process.env.CONTENT_STAGE;
   beforeEach(() => {
     vi.clearAllMocks();
+    // Chain: from(...).select("*").in("stage", visibleStages(floor))
     supabaseMock.from.mockReturnValue({ select: supabaseMock.select });
+    supabaseMock.select.mockReturnValue({ in: supabaseMock.in });
     mockedSupabase.mockReturnValue(supabaseMock as never);
+    process.env.CONTENT_STAGE = "draft"; // dev floor: sees all stages
   });
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    vi.clearAllMocks();
+    if (originalStage === undefined) delete process.env.CONTENT_STAGE;
+    else process.env.CONTENT_STAGE = originalStage;
+  });
+
+  it("serves baseline-only with ZERO DB hits when CONTENT_STAGE is unset (kill-switch)", async () => {
+    delete process.env.CONTENT_STAGE;
+    const m = await loadMergedCatalog();
+    expect(m.source).toBe("baseline-only");
+    expect(m.overlayCount).toBe(0);
+    expect(supabaseMock.from).not.toHaveBeenCalled();
+  });
+
+  it("filters the query to the env's visible stages (published floor → published only)", async () => {
+    process.env.CONTENT_STAGE = "published";
+    supabaseMock.in.mockResolvedValue({ data: [], error: null });
+    await loadMergedCatalog();
+    expect(supabaseMock.in).toHaveBeenCalledWith("stage", ["published"]);
+  });
+
+  it("a draft row is invisible to prod (published floor resolves it away)", async () => {
+    process.env.CONTENT_STAGE = "published";
+    // The query itself would exclude drafts, but assert resolution is safe even
+    // if a draft leaked into the result set.
+    supabaseMock.in.mockResolvedValue({
+      data: [row({ id: "rook-draft", target: "a8", stage: "draft" })],
+      error: null,
+    });
+    const m = await loadMergedCatalog();
+    expect(m.exercises.rook.some((e) => e.id === "rook-draft")).toBe(false);
+  });
 
   it("falls back to baseline-only when Supabase is unconfigured", async () => {
     mockedSupabase.mockReturnValue(null as never);
@@ -118,19 +157,22 @@ describe("loadMergedCatalog (fetch + fallback)", () => {
   });
 
   it("falls back to baseline-only when the query errors", async () => {
-    supabaseMock.select.mockResolvedValue({ data: null, error: { message: "paused" } });
+    supabaseMock.in.mockResolvedValue({ data: null, error: { message: "paused" } });
     const m = await loadMergedCatalog();
     expect(m.source).toBe("baseline-only");
   });
 
   it("falls back to baseline-only when the query throws", async () => {
-    supabaseMock.select.mockRejectedValue(new Error("network"));
+    supabaseMock.in.mockRejectedValue(new Error("network"));
     const m = await loadMergedCatalog();
     expect(m.source).toBe("baseline-only");
   });
 
-  it("merges overlay rows when the query succeeds", async () => {
-    supabaseMock.select.mockResolvedValue({ data: [row({ id: "rook-ovl-live", target: "a8" })], error: null });
+  it("merges visible overlay rows when the query succeeds", async () => {
+    supabaseMock.in.mockResolvedValue({
+      data: [row({ id: "rook-ovl-live", target: "a8", stage: "published" })],
+      error: null,
+    });
     const m = await loadMergedCatalog();
     expect(m.source).toBe("baseline+overlay");
     expect(m.overlayCount).toBe(1);

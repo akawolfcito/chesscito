@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 
-// db-backed-content Phase 2c: the page mounts an ExerciseCatalogProvider with
-// the merged (baseline ⊕ overlay) pools ONLY when CONTENT_OVERLAY_ENABLED is
-// on. With the flag off it renders <ExercisesScreen /> directly — byte-identical
-// to the pre-2c behavior, and never calls getMergedCatalog (no DB hit).
+// content-staging-model: the page mounts an ExerciseCatalogProvider with the
+// merged (baseline ⊕ stage-filtered overlay) pools ONLY when this deployment has
+// a CONTENT_STAGE floor (envStageFloor() non-null). With it unset it renders
+// <ExercisesScreen /> directly — baseline, and never calls getMergedCatalog.
 
-let overlayEnabled = false;
+let stageFloor: "draft" | "preview" | "published" | null = null;
 const getMergedCatalog = vi.fn();
 
 vi.mock("@/components/exercises/exercises-screen", () => ({
@@ -20,10 +20,8 @@ vi.mock("@/lib/content/catalog-context", () => ({
 vi.mock("@/lib/content/merged-catalog", () => ({
   getMergedCatalog: () => getMergedCatalog(),
 }));
-vi.mock("@/lib/content/overlay-flag", () => ({
-  get CONTENT_OVERLAY_ENABLED() {
-    return overlayEnabled;
-  },
+vi.mock("@/lib/content/stage", () => ({
+  envStageFloor: () => stageFloor,
 }));
 
 import ExercisesPage from "../page";
@@ -44,7 +42,7 @@ async function renderPage(
 }
 
 beforeEach(() => {
-  overlayEnabled = false;
+  stageFloor = null;
   getMergedCatalog.mockReset();
 });
 
@@ -52,7 +50,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe("/exercises page (server) — flag OFF (baseline)", () => {
+describe("/exercises page (server) — CONTENT_STAGE unset (baseline)", () => {
   it("renders <ExercisesScreen /> with no initialPiece when `piece` is missing", async () => {
     const el = await renderPage({});
     expect((el.type as { name: string }).name).toBe("ExercisesScreen");
@@ -95,7 +93,7 @@ describe("/exercises page (server) — flag OFF (baseline)", () => {
   });
 });
 
-describe("/exercises page (server) — flag ON (overlay)", () => {
+describe("/exercises page (server) — CONTENT_STAGE set (overlay)", () => {
   const mergedPools = {
     exercises: {
       rook: [{ id: "rook-overlay-1" }],
@@ -112,7 +110,7 @@ describe("/exercises page (server) — flag ON (overlay)", () => {
   };
 
   beforeEach(() => {
-    overlayEnabled = true;
+    stageFloor = "published";
     getMergedCatalog.mockResolvedValue(mergedPools);
   });
 
