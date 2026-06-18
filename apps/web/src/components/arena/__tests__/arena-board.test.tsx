@@ -23,15 +23,9 @@ const BASE = {
 
 const FRAME_SRC = "/art/board/borde-tablero";
 
-describe("<ArenaBoard> procedural board flag", () => {
-  it("defaults to the image board (flag off) — byte-identical substrate", () => {
+describe("<ArenaBoard> procedural board substrate", () => {
+  it("renders the GameBoard substrate (candy frame, no background image)", () => {
     const { container } = renderWithIntl(<ArenaBoard {...BASE} />);
-    expect(container.querySelector(".playhub-board-img")).toBeInTheDocument();
-    expect(container.querySelector(`img[src*="${FRAME_SRC}"]`)).toBeNull();
-  });
-
-  it("renders the GameBoard substrate when proceduralBoard is on", () => {
-    const { container } = renderWithIntl(<ArenaBoard {...BASE} proceduralBoard />);
     expect(container.querySelector(`img[src*="${FRAME_SRC}"]`)).toBeInTheDocument();
     expect(container.querySelector(".playhub-board-img")).toBeNull();
     expect(
@@ -39,25 +33,20 @@ describe("<ArenaBoard> procedural board flag", () => {
     ).toHaveLength(64);
   });
 
-  it("renders all pieces on the procedural board", () => {
-    const { container } = renderWithIntl(<ArenaBoard {...BASE} proceduralBoard />);
+  it("renders all pieces on the board", () => {
+    const { container } = renderWithIntl(<ArenaBoard {...BASE} />);
     expect(container.querySelectorAll(".arena-piece-float")).toHaveLength(PIECES.length);
   });
 
   it("flips the board for black (GameBoard orientation): top-left cell is h1", () => {
-    renderWithIntl(<ArenaBoard {...BASE} playerColor="b" proceduralBoard />);
+    renderWithIntl(<ArenaBoard {...BASE} playerColor="b" />);
     expect(screen.getAllByRole("gridcell")[0]).toHaveAttribute("aria-label", "Square h1");
   });
 
   it("clicks pass the LOGICAL square label regardless of orientation", () => {
     const onSquareClick = vi.fn();
     renderWithIntl(
-      <ArenaBoard
-        {...BASE}
-        playerColor="b"
-        proceduralBoard
-        onSquareClick={onSquareClick}
-      />,
+      <ArenaBoard {...BASE} playerColor="b" onSquareClick={onSquareClick} />,
     );
     // Visual top-left under black is logical h1.
     screen.getAllByRole("gridcell")[0].click();
@@ -70,7 +59,6 @@ describe("<ArenaBoard> procedural board flag", () => {
         {...BASE}
         selectedSquare="a1"
         legalMoves={["a4", "e8"]} // a4 empty, e8 has the black king
-        proceduralBoard
       />,
     );
     expect(container.querySelector(".playhub-board-dot")).toBeInTheDocument();

@@ -2698,36 +2698,6 @@
     box-shadow: none;
   }
 
-  /* Board sprite — real <picture>/<img> instead of a CSS ::before. iOS
-     WebKit never reliably painted the old pseudo pattern (pseudo +
-     isolation: isolate + z-index: -1 + filter: drop-shadow), which is
-     why the board was invisible on iPhone browsers since the candy
-     redesign. A real <img> element avoids all four of those moving
-     parts and paints everywhere. The filter stays — on an <img>, drop-
-     shadow still follows the sprite's rounded silhouette. */
-  .playhub-board-img {
-    position: absolute;
-    inset: 0;
-    display: block;
-    pointer-events: none;
-    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
-  }
-
-  .playhub-board-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: fill;
-    display: block;
-  }
-
-  .playhub-board-hitgrid {
-    position: absolute;
-    /* Align with the 8x8 playable area baked into the board image.
-       Measured from 1024x1024 source: grid occupies (105,68) -> (927,910).
-       Inset: top right bottom left — slightly loosened from measured values
-       to account for the candy-style image's rounded tile edges. */
-    inset: 5.25% 9.25% 12.75% 10.25%;
-  }
 
   .playhub-board-cell {
     position: absolute;
@@ -2775,10 +2745,6 @@
     border-radius: 12%;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.30);
     cursor: default;
-  }
-
-  .playhub-board-cell.is-wall .playhub-board-label {
-    opacity: 0.25;
   }
 
   .playhub-board-cell:active {
@@ -2880,14 +2846,6 @@
     }
   }
 
-
-  .playhub-board-label {
-    /* Hidden for candy aesthetic — clean tiles without per-cell overlay.
-       Board coordinates remain accessible via the gridcell aria-label on
-       each <button>. Edge labels (outside the 8x8 grid) can be introduced
-       later as a separate sprite/CSS layer. */
-    display: none;
-  }
 
   .playhub-board-dot {
     position: absolute;

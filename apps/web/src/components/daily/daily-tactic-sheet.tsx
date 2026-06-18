@@ -158,7 +158,6 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
               isCapture={puzzleData.exercise.isCapture ?? false}
               isLocked={status !== "solving"}
               onMove={handleMove}
-              proceduralBoard
             />
           </div>
         </div>

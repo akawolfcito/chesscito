@@ -2674,7 +2674,6 @@ export function ExercisesScreen({
               isCapture={activeExercise.isCapture ?? false}
               tutorialHints={activeLabyrinth ? undefined : tutorialHints}
               peonesHint={activeLabyrinth ? null : peonesHintSquare}
-              proceduralBoard
             />
           }
           exerciseDrawer={

@@ -11,7 +11,7 @@ import {
   movePiece,
 } from "@/lib/game/board";
 import type { BoardPosition, PieceId } from "@/lib/game/types";
-import { cellGeometry, cellCenter, pieceWidth } from "@/lib/game/board-geometry";
+import { cellCenter, pieceWidth } from "@/lib/game/board-geometry";
 import { GameBoard } from "@/lib/game/game-board";
 import { hapticTap, hapticReject, hapticSuccess } from "@/lib/haptics";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
@@ -90,11 +90,6 @@ type BoardProps = {
    *  Cleared by the parent after a short timer (~4s) so the hint
    *  doesn't linger forever. `null` = no active hint. */
   peonesHint?: BoardPosition | null;
-  /** Board migration Phase 1 (per-surface, default off). When true, the board
-   *  renders on the procedural `<GameBoard>` substrate (tile grid + candy frame)
-   *  instead of the background-image board. Flag stays off until final art +
-   *  human sign-off (founder 2026-06-17). */
-  proceduralBoard?: boolean;
 };
 
 export function Board({
@@ -109,7 +104,6 @@ export function Board({
   onMove,
   tutorialHints,
   peonesHint = null,
-  proceduralBoard = false,
 }: BoardProps) {
   const [piece, setPiece] = useState(() => makePiece(pieceType, startPosition));
   const [selectedPosition, setSelectedPosition] = useState<BoardPosition | null>(
@@ -586,127 +580,33 @@ export function Board({
     );
   };
 
-  if (proceduralBoard) {
-    return (
-      <div className="playhub-stage-shell w-full">
-        <div className="playhub-game-stage">
-          <div className="playhub-game-grid">
-            {/* GameBoard is a rigid square; size the canvas to the SMALLER of the
-                available width and height so it stays square AND never overflows
-                `.playhub-game-stage` (overflow:hidden would clip the edge ranks
-                on shorter viewports / the daily-tactic sheet). Mirrors the arena
-                fit + the image board's `calc(100dvh - 22rem)` chrome budget. */}
-            <div
-              className="playhub-board-canvas"
-              style={{
-                width: "min(100%, 23.5rem, calc(100dvh - 22rem))",
-                aspectRatio: "1 / 1",
-                maxHeight: "none",
-                margin: "0 auto",
-              }}
-            >
-              <GameBoard
-                maxWidth="100%"
-                onCellClick={(_file, _rank, sq) => handleSquarePress(sq)}
-                renderCell={renderProceduralCell}
-                renderOverlay={() => overlayLayer}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="playhub-stage-shell w-full">
       <div className="playhub-game-stage">
         <div className="playhub-game-grid">
-          <div className="playhub-board-canvas">
-            {/* Board sprite rendered as a real <picture>/<img> instead of a
-                CSS ::before pseudo. iOS WebKit has rendering bugs with the
-                combo pseudo + z-index: -1 + isolation: isolate + filter,
-                which was hiding the entire board on iPhone Safari/Chrome/
-                Brave since the candy redesign. <img> paints reliably
-                everywhere and supports drop-shadow via filter. */}
-            <picture className="playhub-board-img">
-              <source srcSet="/art/redesign/board/board-ch.avif" type="image/avif" />
-              <source srcSet="/art/redesign/board/board-ch.webp" type="image/webp" />
-              <img src="/art/redesign/board/board-ch.png" alt="" />
-            </picture>
-            <div className="playhub-board-hitgrid" role="grid" aria-label="Chess board">
-              {squares.map((square) =>
-                (() => {
-                    const geo = cellGeometry(square.file, square.rank);
-
-                    return (
-                      <button
-                        key={square.label}
-                        type="button"
-                        role="gridcell"
-                        aria-label={`Square ${square.label}`}
-                        // Sprint 4 commit N — drag-to-move drop resolution.
-                        // The piece's pointerup reads document.elementFromPoint
-                        // and walks up to find the [data-square] attribute.
-                        data-square={square.label}
-                        disabled={isLocked}
-                        onClick={() => handleSquarePress(square.label)}
-                        style={{
-                          left: `${geo.left}%`,
-                          top: `${geo.top}%`,
-                          width: `${geo.width}%`,
-                          height: `${geo.height}%`,
-                          // Chebyshev distance from the selected piece drives
-                          // the highlight stagger reveal: cells closer to the
-                          // piece light up first, then ripples outward at
-                          // 40ms intervals. The CSS rule on
-                          // .playhub-board-cell.is-highlighted picks up the
-                          // --cell-stagger custom property as transition-delay.
-                          ...(square.isHighlighted && selectedPosition
-                            ? {
-                                ["--cell-stagger" as string]:
-                                  Math.max(
-                                    Math.abs(square.file - selectedPosition.file),
-                                    Math.abs(square.rank - selectedPosition.rank),
-                                  ) - 1,
-                              }
-                            : null),
-                        }}
-                        className={[
-                          "playhub-board-cell",
-                          square.isDark ? "is-dark" : "is-light",
-                          square.isHighlighted ? "is-highlighted" : "",
-                          square.isEndpoint ? "is-endpoint" : "",
-                          square.isSelected ? "is-selected" : "",
-                          mode === "labyrinth" && obstacleKeySet.has(`${square.file},${square.rank}`) ? "is-wall" : "",
-                          tutorialHints?.has(square.label) ? "is-tutorial-hint" : "",
-                          peonesHint &&
-                          peonesHint.file === square.file &&
-                          peonesHint.rank === square.rank
-                            ? "is-peones-hint"
-                            : "",
-                        ].join(" ")}
-                      >
-                        <span className="playhub-board-label">{square.label}</span>
-                        {square.isHighlighted ? <span className="playhub-board-dot" /> : null}
-                        {square.isTarget && !square.piece && !isCapture ? (
-                          <span className="playhub-board-target" />
-                        ) : null}
-                        {peonesHint &&
-                        peonesHint.file === square.file &&
-                        peonesHint.rank === square.rank ? (
-                          <span className="playhub-board-peones-hint" aria-hidden="true" />
-                        ) : null}
-                        {/* Piece rendered as floating layer below */}
-                      </button>
-                    );
-                  })()
-                )}
-              {overlayLayer}
-              </div>
-            </div>
+          {/* GameBoard is a rigid square; size the canvas to the SMALLER of the
+              available width and height so it stays square AND never overflows
+              `.playhub-game-stage` (overflow:hidden would clip the edge ranks
+              on shorter viewports / the daily-tactic sheet). Mirrors the arena
+              fit + the image board's `calc(100dvh - 22rem)` chrome budget. */}
+          <div
+            className="playhub-board-canvas"
+            style={{
+              width: "min(100%, 23.5rem, calc(100dvh - 22rem))",
+              aspectRatio: "1 / 1",
+              maxHeight: "none",
+              margin: "0 auto",
+            }}
+          >
+            <GameBoard
+              maxWidth="100%"
+              onCellClick={(_file, _rank, sq) => handleSquarePress(sq)}
+              renderCell={renderProceduralCell}
+              renderOverlay={() => overlayLayer}
+            />
           </div>
         </div>
       </div>
+    </div>
   );
 }
