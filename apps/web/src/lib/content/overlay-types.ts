@@ -94,7 +94,8 @@ export type ContentWriteResult =
 export interface ContentStageRequest {
   kind: ContentKind;
   id: string;
-  from: ContentStage;
+  /** Optional — omit to auto-detect the freshest existing version ("set to `to`"). */
+  from?: ContentStage;
   to: ContentStage;
 }
 
