@@ -14,6 +14,11 @@ import {
   type PublishResultLike,
 } from "@/lib/labyrinth-builder/publish-toast";
 import {
+  formatPromoteResult,
+  type PromoteResultLike,
+} from "@/lib/labyrinth-builder/promote-toast";
+import type { ContentStage } from "@/lib/content/overlay-types";
+import {
   parseFenBoard,
   posToSquare,
   squareToPos,
@@ -216,6 +221,8 @@ export default function LabyrinthBuilderPage() {
   /** Debounce: block re-entrant Save while a publish round-trip is in flight
    *  (a double-click would otherwise race two read-modify-write passes). */
   const [isSaving, setIsSaving] = useState(false);
+  /** Target stage for the "Set stage" control (content-staging-model). */
+  const [stageTarget, setStageTarget] = useState<ContentStage>("published");
 
   const refreshRecords = useCallback(async () => {
     try {
@@ -415,6 +422,31 @@ export default function LabyrinthBuilderPage() {
       setToast({ kind: "err", text: (e as Error).message });
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  // Set the current record's stage (content-staging-model). Save lands content
+  // at `draft`; this moves it to the chosen stage — the route auto-detects the
+  // current version, so you just pick the target. Goes through the dev proxy so
+  // the ADMIN_TOKEN stays server-side. draft (local) / preview
+  // (preview.chesscito.com) / published (chesscito.com).
+  async function handleSetStage(to: ContentStage) {
+    const id = state.id?.trim();
+    if (!id) {
+      setToast({ kind: "err", text: "Load or enter a record id first." });
+      return;
+    }
+    try {
+      const res = await fetch("/api/dev/promote", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kind, id, to }),
+      });
+      const data = (await res.json()) as PromoteResultLike;
+      setToast(formatPromoteResult(data, id));
+      void refreshRecords();
+    } catch (e) {
+      setToast({ kind: "err", text: (e as Error).message });
     }
   }
 
@@ -706,6 +738,34 @@ export default function LabyrinthBuilderPage() {
                 {toast.text}
               </span>
             )}
+          </div>
+
+          {/* Set the current record's stage. Save lands it at draft; pick where
+              it should live and "Set stage" moves it there (the route detects the
+              current version automatically). draft = localhost · preview =
+              preview.chesscito.com · published = chesscito.com (players). */}
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="font-semibold text-slate-400">
+              Stage {state.id ? `for ${state.id}` : "(load a record)"} →
+            </span>
+            <select
+              value={stageTarget}
+              onChange={(e) => setStageTarget(e.target.value as ContentStage)}
+              disabled={!state.id}
+              className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200 disabled:text-slate-600"
+            >
+              <option value="draft">draft (localhost)</option>
+              <option value="preview">preview (preview.chesscito.com)</option>
+              <option value="published">published (chesscito.com)</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => handleSetStage(stageTarget)}
+              disabled={!state.id}
+              className="rounded border border-slate-700 px-3 py-1 font-semibold text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:text-slate-600"
+            >
+              Set stage
+            </button>
           </div>
 
           {/* Export (read-only FEN block) */}

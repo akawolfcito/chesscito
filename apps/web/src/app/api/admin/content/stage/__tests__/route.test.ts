@@ -13,10 +13,19 @@ vi.mock("@/lib/server/demo-signing", () => ({
   getRequestIp: vi.fn(() => "127.0.0.1"),
 }));
 
-const supabaseMock = vi.hoisted(() => ({ rpc: vi.fn() }));
+const supabaseMock = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({
   getSupabaseServer: vi.fn(() => supabaseMock),
 }));
+
+/** Thenable .from().select().eq().eq() chain that resolves to a stages result. */
+function stageQuery(result: { data: unknown; error: unknown }) {
+  const chain: Record<string, unknown> = {};
+  chain.select = () => chain;
+  chain.eq = () => chain;
+  chain.then = (resolve: (v: unknown) => void) => resolve(result);
+  return chain;
+}
 
 import { POST } from "../route";
 import { revalidateTag } from "next/cache";
@@ -81,9 +90,29 @@ describe("POST /api/admin/content/stage", () => {
     expect(supabaseMock.rpc).not.toHaveBeenCalled();
   });
 
-  it("400 when from === to (no-op rejected)", async () => {
+  it("from === to → friendly no-op (200, no RPC)", async () => {
     const res = await POST(authed({ ...VALID, from: "draft", to: "draft" }));
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    expect(supabaseMock.rpc).not.toHaveBeenCalled();
+  });
+
+  it("auto-detects `from` (freshest version) when omitted, then promotes", async () => {
+    // id has a draft + published; freshest = draft → promote draft→published.
+    supabaseMock.from.mockReturnValue(
+      stageQuery({ data: [{ stage: "published" }, { stage: "draft" }], error: null }),
+    );
+    const res = await POST(authed({ kind: "exercise", id: "rook-1", to: "published" }));
+    expect(res.status).toBe(200);
+    expect(supabaseMock.rpc).toHaveBeenCalledWith(
+      "promote_content",
+      expect.objectContaining({ p_from: "draft", p_to: "published" }),
+    );
+  });
+
+  it("404 when omitting `from` and the id has no overlay version", async () => {
+    supabaseMock.from.mockReturnValue(stageQuery({ data: [], error: null }));
+    const res = await POST(authed({ kind: "exercise", id: "ghost", to: "published" }));
+    expect(res.status).toBe(404);
     expect(supabaseMock.rpc).not.toHaveBeenCalled();
   });
 

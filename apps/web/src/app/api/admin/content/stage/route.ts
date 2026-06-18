@@ -16,6 +16,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { revalidateTag } from "next/cache";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { enforceRateLimit, getRequestIp } from "@/lib/server/demo-signing";
+import { STAGE_RANK } from "@/lib/content/overlay-types";
 import type {
   ContentKind,
   ContentStage,
@@ -63,14 +64,36 @@ export async function POST(request: Request) {
 
   const kind: ContentKind = body?.kind === "labyrinth" ? "labyrinth" : "exercise";
   const id = body?.id;
-  const from = body?.from;
+  let from = body?.from; // optional: auto-detected from the freshest version
   const to = body?.to;
   if (!id || typeof id !== "string") return err(["missing id"], 400);
-  if (!isStage(from) || !isStage(to)) return err(["invalid stage"], 400);
-  if (from === to) return err(["from and to are the same stage (no-op)"], 400);
+  if (!isStage(to)) return err(["invalid target stage"], 400);
+  if (from !== undefined && !isStage(from)) return err(["invalid from stage"], 400);
 
   const supabase = getSupabaseServer();
   if (!supabase) return err(["content store unavailable"], 503);
+
+  // Auto-detect `from` = the freshest (lowest-rank) existing version of this id,
+  // so a caller can just say "set to X" without tracking the current stage.
+  if (from === undefined) {
+    const { data: rows, error: selErr } = await supabase
+      .from("content_overlay")
+      .select("stage")
+      .eq("kind", kind)
+      .eq("id", id);
+    if (selErr) return err([selErr.message], 500);
+    const stages = ((rows ?? []) as { stage?: unknown }[])
+      .map((r) => r.stage)
+      .filter(isStage);
+    if (stages.length === 0) {
+      return err([`no overlay version of ${kind} ${id} to move`], 404);
+    }
+    from = stages.reduce((a, b) => (STAGE_RANK[b] < STAGE_RANK[a] ? b : a));
+  }
+
+  // Already at the target → friendly no-op (not an error), so the dropdown can
+  // re-select the current stage without surprising the user.
+  if (from === to) return NextResponse.json({ ok: true, from, to });
 
   // The whole move is one transaction inside the RPC; it returns 1 when a version
   // was moved, 0 when `from` was absent (and in that case nothing was deleted).
