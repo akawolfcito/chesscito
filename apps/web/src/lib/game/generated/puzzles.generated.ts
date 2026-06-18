@@ -8,7 +8,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "id": "rook-1",
       "optimalMoves": 1,
       "startPos": {
-        "file": 0,
+        "file": 1,
         "rank": 0
       },
       "targetPos": {
@@ -1333,7 +1333,15 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
           "rank": 6
         },
         {
+          "file": 4,
+          "rank": 6
+        },
+        {
           "file": 6,
+          "rank": 6
+        },
+        {
+          "file": 7,
           "rank": 6
         },
         {
@@ -1349,11 +1357,11 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
           "rank": 5
         },
         {
-          "file": 4,
-          "rank": 5
+          "file": 6,
+          "rank": 4
         },
         {
-          "file": 6,
+          "file": 7,
           "rank": 4
         },
         {
