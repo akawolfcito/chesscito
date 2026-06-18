@@ -1,8 +1,8 @@
 # Spec — content-staging-model
 
 **Date**: 2026-06-17
-**Status**: draft (red-team P0s folded — see `-redteam.md`; ready for /tdd once the
-3 founder open questions are answered)
+**Status**: READY for /tdd — red-team P0s folded (see `-redteam.md`); all 3 founder
+open questions resolved (TTL-only refresh, 60s, skip-stage allowed)
 
 ## Problem
 Today the db-backed-content overlay is gated by a per-deployment on/off flag
@@ -77,9 +77,7 @@ export interface ContentStageRequest {
 }
 
 export type ContentStageResult =
-  | { ok: true; from: ContentStage; to: ContentStage;
-      /** Per-target revalidate outcome, keyed by deployment label. */
-      revalidated: Record<string, boolean> }
+  | { ok: true; from: ContentStage; to: ContentStage }
   | { ok: false; errors: string[] };
 ```
 
@@ -106,10 +104,14 @@ export function resolveVisibleRows(
 ```
 
 ```ts
-// Revalidate fan-out config (server env, JSON; label → deployment base URL).
-// On ANY stage change the promote endpoint POSTs each target's
-// /api/admin/revalidate with the shared ADMIN_TOKEN.
-// CONTENT_REVALIDATE_TARGETS='{"preview":"https://preview.chesscito.com","prod":"https://www.chesscito.com"}'
+// Cache refresh = a SHORT TTL, not cross-deployment fan-out (founder 2026-06-17).
+// `getMergedCatalog` is cached with `revalidate: 60`, so every deployment
+// re-reads the shared overlay on its OWN within ~60s of any change — no targets
+// list, no revalidate endpoint, no cross-deployment HTTP. The write/promote route
+// additionally revalidates ITS OWN deployment's tag for instant local feedback
+// (the author sees their own edit immediately). Trade-off: a promote takes up to
+// the TTL to surface on other envs — fine for founder-authored content.
+const CONTENT_TTL_SECONDS = 60;
 ```
 
 ## Behavior
@@ -136,11 +138,11 @@ export function resolveVisibleRows(
      from_stage, to_stage)` invoked via `rpc(...)`. Doing it as two Supabase
      client calls risks deleting the live `published` row and leaving the new
      version un-promoted on a partial failure → the puzzle vanishes from prod.
-5. **Fan-out (stage change only)** — promote/demote fans out
-   `revalidateTag('content')` to **all** `CONTENT_REVALIDATE_TARGETS` (cheap;
-   guarantees both the source env, e.g. on demotion, and the destination env are
-   busted). A plain Save (draft upsert, no stage change) triggers **no** fan-out —
-   only the writer's local revalidate so the author sees their draft.
+5. **Cache refresh (TTL)** — there is NO cross-deployment fan-out. Every write
+   (Save or promote) revalidates the writer's OWN deployment tag for instant local
+   feedback; all other deployments re-read the shared overlay on their own within
+   `CONTENT_TTL_SECONDS` (60s). A promote therefore surfaces on preview/prod
+   within ~60s, not instantly.
 6. **Read filter by env** — prod (`CONTENT_STAGE=published`) queries
    `stage='published'`; preview queries `('preview','published')`; dev queries
    all three; then `resolveVisibleRows` collapses to one row per id.
@@ -148,7 +150,7 @@ export function resolveVisibleRows(
    no `ExerciseCatalogProvider` mounted), byte-identical to the compiled baseline.
 8. **Demote / un-publish a single item** — `stage {to:'draft'}` from `published`
    moves the live version back to draft (replacing any existing draft); prod loses
-   it on the fan-out and falls back to baseline (baseline-origin) or drops it
+   it within the TTL and falls back to baseline (baseline-origin) or drops it
    (overlay-only). Removal-while-keeping-published uses the existing `disabled`
    flag riding a promoted row.
 9. **Pre-existing rows** default to `draft` on migration → invisible above dev
@@ -184,19 +186,15 @@ a live item requires promoting the `disabled` flag to `published`.
 - **Invalid `CONTENT_STAGE`** (typo `prod`): kill-switch (baseline-only) — drops
   ALL overlay content on that env. Must `console.warn` loudly so the outage is
   visible (red-team P0).
-- **Partial fan-out failure**: a target's `/api/admin/revalidate` is non-200 /
-  times out. The stage change already committed; return `ok:true` with that
-  target `false`. DB is the source of truth; operator re-triggers.
 - **Concurrent stage change of same id** from two writers: last write wins; the
   supersede-delete (Behavior 4) runs in a single transaction so an id never ends
   with two rows at the same stage.
 - **`disabled` across versions**: a row's `disabled` flag rides its stage. To
   remove a published item, promote a `disabled` draft to published (it supersedes
   the live row and removes the puzzle from prod's pool).
-- **Fan-out token / SSRF**: targets come from a server env; the `ADMIN_TOKEN`
-  header is sent only to the configured https hosts. Never echo the token.
-- **Stale-cache backstop**: a missed fan-out must self-heal — `getMergedCatalog`
-  keeps a `revalidate` maxAge backstop.
+- **Propagation delay**: a promote is not instant on other envs — they refresh on
+  the `CONTENT_TTL_SECONDS` cadence. Acceptable for founder-authored content; the
+  writer's own deployment is instant.
 - **Migration on the shared DB**: applied once; PK changes `(kind,id)` →
   `(kind,id,stage)`; `stage … default 'draft'` backfills existing rows (no PK
   collision — each id had one row).
@@ -212,9 +210,9 @@ Ordered runbook:
 2. **Apply** the migration to the shared hosted Supabase (commit-only in dev;
    `supabase db push` is the deploy step).
 3. **Set envs** per deployment BEFORE shipping the code: `CONTENT_STAGE`
-   (prod=`published`, preview=`preview`, local=`draft`), `ADMIN_TOKEN` (same secret
-   everywhere — fan-out reuses it), `CONTENT_REVALIDATE_TARGETS`,
-   `OVERLAY_PUBLISH_BASE_URL` (local).
+   (prod=`published`, preview=`preview`, local=`draft`), `ADMIN_TOKEN` (write
+   auth), `OVERLAY_PUBLISH_BASE_URL` (local — where the builder publishes). No
+   targets/fan-out env: cache refresh is the TTL.
 4. **Deploy** the new code. With `CONTENT_STAGE` set, each env reads its tier; with
    it unset, an env is baseline-only (safe).
 5. **Drop** `CONTENT_OVERLAY_ENABLED` from code + Vercel only after the above is
@@ -237,24 +235,20 @@ redeploy. The migration ships a down-script (PK narrow + drop column).
 - [ ] `CONTENT_OVERLAY_ENABLED` fully removed (code + env docs); `/exercises`
       boundary gates on `envStageFloor()`.
 - [ ] Save defaults `stage='draft'`, leaves any published/preview row intact, and
-      triggers **no** fan-out (mock asserts zero target calls).
+      revalidates only the writer's own deployment (no cross-deployment call).
 - [ ] Promote is a `plpgsql` RPC `promote_content(...)` running delete+update in
       ONE transaction; an integration test (local Supabase) asserts a partial
       failure / concurrent promote never leaves the id with a deleted-published +
       un-promoted-new state.
-- [ ] `POST /api/admin/content/stage` (ADMIN_TOKEN-gated) calls the RPC and fans
-      out to **all** targets; returns a per-target `revalidated` map. Tests:
+- [ ] `POST /api/admin/content/stage` (ADMIN_TOKEN-gated) calls the RPC. Tests:
       promote draft→published replaces the live row; draft→published with a stale
       preview deletes the preview; demote; `from===to` rejected; 404; bad token.
 - [ ] `disabled` × stage × env truth table holds — one test per row of the table
       (notably: a `disabled` draft never affects prod; removing a live item needs a
       `disabled` row promoted to published).
 - [ ] Migration ships a down-script (PK narrow to `(kind,id)` + drop `stage`).
-- [ ] Partial fan-out failure → `ok:true`, failed target `false`, change still
-      committed. Test.
-- [ ] `/api/admin/revalidate` (ADMIN_TOKEN-gated, rate-limited) busts the
-      `content` tag; 503 token-unset, 403 bad-token. Test.
-- [ ] `getMergedCatalog` has a `revalidate` maxAge backstop.
+- [ ] `getMergedCatalog` is cached with `revalidate: CONTENT_TTL_SECONDS` (60s) —
+      every env self-refreshes; no `/api/admin/revalidate` endpoint exists.
 - [ ] Re-BFS drop behavior unchanged for a published row failing validation. Test.
 
 ## Out of scope / future
@@ -264,10 +258,11 @@ redeploy. The migration ships a down-script (PK narrow + drop column).
 - Scheduled publishing.
 
 ## Open questions
-1. **Targets config shape**: one `CONTENT_REVALIDATE_TARGETS` JSON env (chosen)
-   vs discrete `…_PREVIEW_URL` / `…_PROD_URL` (simpler in the Vercel UI). Confirm.
-2. **maxAge backstop value**: 300s? Long enough to lean on fan-out, short enough
-   to self-heal a missed bust. Confirm.
-3. **Skip-stage promotes**: allow `draft→published` directly (Behavior 4 cleans up
-   any preview), or force the linear `draft→preview→published`? (Recommended:
-   allow; the supersede rule keeps it safe.)
+_All resolved (founder 2026-06-17):_
+1. ~~Targets config shape~~ — **RESOLVED**: no targets. Cross-deployment fan-out
+   dropped entirely in favor of a short cache TTL (each env self-refreshes). One
+   fewer env, no revalidate endpoint, no SSRF/partial-failure surface.
+2. ~~maxAge value~~ — **RESOLVED**: `CONTENT_TTL_SECONDS = 60` (now the PRIMARY
+   refresh, not a backstop, so 60s not 300s — content surfaces within a minute).
+3. ~~Skip-stage promotes~~ — **RESOLVED**: allow `draft→published` directly; the
+   supersede rule (Behavior 4) cleans up any stale `preview`.
