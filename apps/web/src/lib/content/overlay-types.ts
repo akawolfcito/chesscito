@@ -11,6 +11,20 @@ import type { Exercise, ExerciseTier, PieceId } from "@/lib/game/types";
 
 export type ContentKind = "exercise" | "labyrinth";
 
+/**
+ * Content maturity ladder (content-staging-model). Lower rank = less mature
+ * (closer to "being edited"). A puzzle can hold one version per stage, e.g. a
+ * live `published` + an in-progress `draft` of the same id.
+ */
+export type ContentStage = "draft" | "preview" | "published";
+
+/** Total order for the visibility ladder. */
+export const STAGE_RANK: Record<ContentStage, number> = {
+  draft: 0,
+  preview: 1,
+  published: 2,
+};
+
 /** The compiled baseline catalog shape (mirrors the generated module). Input to
  *  the overlay merge; also the fallback when the overlay is unavailable. */
 export interface BaselineCatalog {
@@ -52,6 +66,8 @@ export interface ContentOverlayRow {
   optimal_moves: number;
   /** ISO timestamp; audit + cache-key hint. Server-assigned on upsert. */
   updated_at: string;
+  /** Maturity of THIS version. Part of the PK `(kind, id, stage)`. */
+  stage: ContentStage;
 }
 
 /**
@@ -61,9 +77,27 @@ export interface ContentOverlayRow {
  */
 export interface ContentWriteRequest {
   kind: ContentKind;
-  record: Omit<ContentOverlayRow, "optimal_moves" | "updated_at">;
+  /** Save always lands at `draft`; the server assigns stage, so the client never
+   *  supplies it (nor the BFS-derived / audit fields). */
+  record: Omit<ContentOverlayRow, "optimal_moves" | "updated_at" | "stage">;
 }
 
 export type ContentWriteResult =
   | { ok: true; saved: ContentOverlayRow; revalidated: boolean }
+  | { ok: false; errors: string[] };
+
+/**
+ * Promote (from < to) or demote (from > to) one puzzle version. Moves the
+ * `from`-stage row to `to`, replacing + superseding anything at stage-rank ≤ `to`
+ * for that id (content-staging-model Behavior 4). Runs as one transaction.
+ */
+export interface ContentStageRequest {
+  kind: ContentKind;
+  id: string;
+  from: ContentStage;
+  to: ContentStage;
+}
+
+export type ContentStageResult =
+  | { ok: true; from: ContentStage; to: ContentStage }
   | { ok: false; errors: string[] };

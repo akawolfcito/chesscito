@@ -45,6 +45,7 @@ function row(over: Partial<ContentOverlayRow> = {}): ContentOverlayRow {
     disabled: false,
     optimal_moves: 1, // a1 → a8 (or h1) is one rook move
     updated_at: "2026-06-17T00:00:00Z",
+    stage: "published",
     ...over,
   };
 }

@@ -108,6 +108,9 @@ export async function POST(request: Request) {
     disabled: Boolean(record.disabled),
     optimal_moves: built.optimalMoves,
     updated_at,
+    // Save always lands at `draft` (content-staging-model Behavior 1); promotion
+    // is a separate step on /api/admin/content/stage.
+    stage: "draft",
   };
 
   const supabase = getSupabaseServer();
