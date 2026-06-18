@@ -2,24 +2,27 @@ import { describe, expect, it } from "vitest";
 import { formatPublishResult } from "../publish-toast";
 
 describe("formatPublishResult", () => {
-  it("ok + revalidated → success toast with commit nudge", () => {
+  it("ok + revalidated → 'saved as draft' toast (NOT live) + commit + promote nudge", () => {
     const t = formatPublishResult({
       ok: true,
       baseline: { ok: true, id: "rook-1" },
       overlay: { ok: true, revalidated: true },
     });
     expect(t.kind).toBe("ok");
-    expect(t.text).toMatch(/live/i);
+    expect(t.text).toMatch(/draft/i);
+    expect(t.text).not.toMatch(/\blive\b/i); // staging: Save ≠ live to players
+    expect(t.text).toMatch(/promote/i);
     expect(t.text).toMatch(/commit/i);
   });
 
-  it("ok but not yet revalidated → success toast notes propagation", () => {
+  it("ok but not yet revalidated → draft toast notes propagation", () => {
     const t = formatPublishResult({
       ok: true,
       baseline: { ok: true, id: "rook-1" },
       overlay: { ok: true, revalidated: false },
     });
     expect(t.kind).toBe("ok");
+    expect(t.text).toMatch(/draft/i);
     expect(t.text).toMatch(/propagat/i);
   });
 

@@ -1,11 +1,12 @@
 /**
  * Maps a /api/dev/publish result to a builder toast — db-content overlay-full
- * (Stage 7). Pure so the success / partial-failure / error copy is unit-tested
- * without rendering the builder page.
+ * (Stage 7), updated for the content-staging-model: a Save lands the overlay at
+ * `stage='draft'`, NOT live to players. Pure so the copy is unit-tested without
+ * rendering the builder page.
  *
- * - baseline fail            → "err"  (nothing published; show validation errors)
- * - baseline ok + overlay ok → "ok"   (live; remind to commit the json)
- * - baseline ok + overlay !ok→ "warn" (partial: saved to baseline, live failed)
+ * - baseline fail            → "err"  (nothing saved; show validation errors)
+ * - baseline ok + overlay ok → "ok"   (saved as draft; promote to publish)
+ * - baseline ok + overlay !ok→ "warn" (partial: saved to baseline, draft failed)
  */
 export type PublishToast = { kind: "ok" | "warn" | "err"; text: string };
 
@@ -23,12 +24,15 @@ export function formatPublishResult(r: PublishResultLike): PublishToast {
     return { kind: "err", text: `Save failed: ${errs}` };
   }
   if (r.overlay.ok) {
-    const note = r.overlay.revalidated ? "live now" : "saved, propagating";
-    return { kind: "ok", text: `Published (${note}) + saved to baseline. ${COMMIT_NUDGE}` };
+    const note = r.overlay.revalidated ? "visible in dev now" : "propagating";
+    return {
+      kind: "ok",
+      text: `Saved as draft (${note}) + baseline. Promote to publish for players. ${COMMIT_NUDGE}`,
+    };
   }
   const errs = (r.overlay.errors ?? ["unknown error"]).join("; ");
   return {
     kind: "warn",
-    text: `Saved to baseline, but live publish failed: ${errs}. ${COMMIT_NUDGE}`,
+    text: `Saved to baseline, but the draft overlay save failed: ${errs}. ${COMMIT_NUDGE}`,
   };
 }
