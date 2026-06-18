@@ -32,8 +32,11 @@ describe("GameBoard (promoted procedural board)", () => {
   it("makes cells interactive buttons when onCellClick is set", () => {
     const onCellClick = vi.fn();
     render(<GameBoard onCellClick={onCellClick} />);
-    const buttons = screen.getAllByRole("button");
-    expect(buttons).toHaveLength(64);
+    // Clickable cells are <button role="gridcell"> (a11y parity with the image
+    // board). They are still real buttons (tag name) even with the role.
+    const cells = screen.getAllByRole("gridcell");
+    expect(cells).toHaveLength(64);
+    expect(cells.every((c) => c.tagName === "BUTTON")).toBe(true);
   });
 
   describe("overlay layer (renderOverlay + BoardOverlayGeometry)", () => {
@@ -124,24 +127,24 @@ describe("GameBoard (promoted procedural board)", () => {
   describe("orientation (red-team P0 — logical→view for tiles AND overlay)", () => {
     it("renders white view by default: top-left cell is a8, bottom-right is h1", () => {
       render(<GameBoard onCellClick={() => {}} />);
-      const buttons = screen.getAllByRole("button");
+      const cells = screen.getAllByRole("gridcell");
       // DOM order = grid order = top→bottom, left→right.
-      expect(buttons[0]).toHaveAttribute("aria-label", "a8");
-      expect(buttons[63]).toHaveAttribute("aria-label", "h1");
+      expect(cells[0]).toHaveAttribute("aria-label", "Square a8");
+      expect(cells[63]).toHaveAttribute("aria-label", "Square h1");
     });
 
     it("flips tiles under orientation=black: top-left is h1, bottom-right is a8", () => {
       render(<GameBoard orientation="black" onCellClick={() => {}} />);
-      const buttons = screen.getAllByRole("button");
-      expect(buttons[0]).toHaveAttribute("aria-label", "h1");
-      expect(buttons[63]).toHaveAttribute("aria-label", "a8");
+      const cells = screen.getAllByRole("gridcell");
+      expect(cells[0]).toHaveAttribute("aria-label", "Square h1");
+      expect(cells[63]).toHaveAttribute("aria-label", "Square a8");
     });
 
     it("passes LOGICAL (file,rank,square) to renderCell/onCellClick regardless of orientation", () => {
       const onCellClick = vi.fn();
       render(<GameBoard orientation="black" onCellClick={onCellClick} />);
       // The visual top-left cell is logical h1 → file 7, rank 1.
-      screen.getAllByRole("button")[0].click();
+      screen.getAllByRole("gridcell")[0].click();
       expect(onCellClick).toHaveBeenCalledWith(7, 1, "h1");
     });
 
