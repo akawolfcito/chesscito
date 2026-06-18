@@ -171,12 +171,17 @@ export function GameBoard({
               cursor: clickable ? "pointer" : "default",
             };
             const content = renderCell?.(file, rank, sq);
+            // a11y parity with the image board: cells are gridcells named
+            // "Square a1" (not bare "a1") so screen readers + consumer tests
+            // see no regression when a surface flips onto this substrate.
+            const cellLabel = `Square ${sq}`;
             return clickable ? (
               <button
                 key={sq}
                 type="button"
+                role="gridcell"
                 onClick={() => onCellClick!(file, rank, sq)}
-                aria-label={sq}
+                aria-label={cellLabel}
                 title={sq}
                 // Drag-to-move drop resolution walks up from elementFromPoint to
                 // the nearest [data-square]; expose it so overlay pieces resolve.
@@ -189,7 +194,7 @@ export function GameBoard({
               <div
                 key={sq}
                 role="gridcell"
-                aria-label={sq}
+                aria-label={cellLabel}
                 title={sq}
                 data-square={sq}
                 style={cellStyle}

@@ -34,7 +34,9 @@ describe("<ArenaBoard> procedural board flag", () => {
     const { container } = renderWithIntl(<ArenaBoard {...BASE} proceduralBoard />);
     expect(container.querySelector(`img[src*="${FRAME_SRC}"]`)).toBeInTheDocument();
     expect(container.querySelector(".playhub-board-img")).toBeNull();
-    expect(screen.getAllByRole("button", { name: /^[a-h][1-8]$/ })).toHaveLength(64);
+    expect(
+      screen.getAllByRole("gridcell", { name: /^Square [a-h][1-8]$/ }),
+    ).toHaveLength(64);
   });
 
   it("renders all pieces on the procedural board", () => {
@@ -44,7 +46,7 @@ describe("<ArenaBoard> procedural board flag", () => {
 
   it("flips the board for black (GameBoard orientation): top-left cell is h1", () => {
     renderWithIntl(<ArenaBoard {...BASE} playerColor="b" proceduralBoard />);
-    expect(screen.getAllByRole("button")[0]).toHaveAttribute("aria-label", "h1");
+    expect(screen.getAllByRole("gridcell")[0]).toHaveAttribute("aria-label", "Square h1");
   });
 
   it("clicks pass the LOGICAL square label regardless of orientation", () => {
@@ -58,7 +60,7 @@ describe("<ArenaBoard> procedural board flag", () => {
       />,
     );
     // Visual top-left under black is logical h1.
-    screen.getAllByRole("button")[0].click();
+    screen.getAllByRole("gridcell")[0].click();
     expect(onSquareClick).toHaveBeenCalledWith("h1");
   });
 

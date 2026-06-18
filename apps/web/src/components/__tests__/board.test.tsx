@@ -295,8 +295,10 @@ describe("<Board>", () => {
         container.querySelector(`img[src*="${FRAME_SRC}"]`),
       ).toBeInTheDocument();
       expect(container.querySelector(".playhub-board-img")).toBeNull();
-      // Still 64 interactive cells.
-      expect(screen.getAllByRole("button", { name: /^[a-h][1-8]$/ })).toHaveLength(64);
+      // Still 64 interactive cells (a11y parity: gridcells named "Square a1").
+      expect(
+        screen.getAllByRole("gridcell", { name: /^Square [a-h][1-8]$/ }),
+      ).toHaveLength(64);
     });
 
     it("places the floating piece on the procedural board", () => {
@@ -322,8 +324,8 @@ describe("<Board>", () => {
       );
       // No dots before selection.
       expect(container.querySelector(".playhub-board-dot")).toBeNull();
-      // Select the rook (GameBoard cell aria-label is the bare square id).
-      fireEvent.click(screen.getByRole("button", { name: "a1" }));
+      // Select the rook (gridcell named "Square a1", a11y parity).
+      fireEvent.click(screen.getByRole("gridcell", { name: "Square a1" }));
       expect(container.querySelectorAll(".playhub-board-dot").length).toBeGreaterThan(0);
     });
 

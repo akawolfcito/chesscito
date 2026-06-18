@@ -1346,6 +1346,7 @@ function ArenaPageInner() {
               onSquareClick={game.selectSquare}
               isCheckmatePause={isEndState && !showEndOverlay}
               playerColor={game.playerColor}
+              proceduralBoard
             />
           </div>
           {game.pendingPromotion && (

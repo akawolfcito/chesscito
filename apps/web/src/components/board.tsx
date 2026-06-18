@@ -591,7 +591,20 @@ export function Board({
       <div className="playhub-stage-shell w-full">
         <div className="playhub-game-stage">
           <div className="playhub-game-grid">
-            <div className="playhub-board-canvas">
+            {/* GameBoard is a rigid square; size the canvas to the SMALLER of the
+                available width and height so it stays square AND never overflows
+                `.playhub-game-stage` (overflow:hidden would clip the edge ranks
+                on shorter viewports / the daily-tactic sheet). Mirrors the arena
+                fit + the image board's `calc(100dvh - 22rem)` chrome budget. */}
+            <div
+              className="playhub-board-canvas"
+              style={{
+                width: "min(100%, 23.5rem, calc(100dvh - 22rem))",
+                aspectRatio: "1 / 1",
+                maxHeight: "none",
+                margin: "0 auto",
+              }}
+            >
               <GameBoard
                 maxWidth="100%"
                 onCellClick={(_file, _rank, sq) => handleSquarePress(sq)}
