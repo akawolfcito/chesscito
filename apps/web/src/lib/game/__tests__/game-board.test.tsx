@@ -103,7 +103,7 @@ describe("GameBoard (promoted procedural board)", () => {
       }
     });
 
-    it("layers the overlay above the tile grid but below the candy frame", () => {
+    it("layers the overlay above the tile grid AND the candy frame (pieces never clipped by the border)", () => {
       const { container } = render(
         <GameBoard renderOverlay={() => <div data-testid="overlay-child" />} />,
       );
@@ -111,8 +111,8 @@ describe("GameBoard (promoted procedural board)", () => {
       const grid = screen.getByRole("grid", { name: /chess board/i });
       const frame = container.querySelector("img") as HTMLElement;
       const z = (el: HTMLElement) => Number(el.style.zIndex);
-      expect(z(grid)).toBeLessThan(z(region));
-      expect(z(region)).toBeLessThan(z(frame));
+      expect(z(grid)).toBeLessThan(z(frame));
+      expect(z(frame)).toBeLessThan(z(region));
     });
 
     it("renders no overlay region when renderOverlay is omitted", () => {

@@ -201,26 +201,10 @@ export function GameBoard({
         )}
       </div>
 
-      {/* Absolute overlay layer (pieces, capture floats, select hints) — inset
-          to the same frame opening as the grid so cellCenter percentages
-          resolve identically. Above the tiles (z1), below the frame (z3). */}
-      {renderOverlay && (
-        <div
-          style={{
-            position: "absolute",
-            top: `${overlayInset.top}%`,
-            right: `${overlayInset.right}%`,
-            bottom: `${overlayInset.bottom}%`,
-            left: `${overlayInset.left}%`,
-            zIndex: 2,
-            pointerEvents: "none",
-          }}
-        >
-          {renderOverlay(overlayGeometry)}
-        </div>
-      )}
-
-      {/* Candy frame — supplied PNG (transparent center), on top */}
+      {/* Candy frame — supplied PNG (transparent center). Sits ABOVE the tiles
+          (z1) but BELOW the overlay pieces (z4), mirroring the old image board
+          where pieces painted on top of the (baked-in) frame — so a piece on an
+          edge rank/file overhangs the border instead of being clipped by it. */}
       <picture>
         <source srcSet={`${ASSET}/borde-tablero-chesscito1.avif`} type="image/avif" />
         <source srcSet={`${ASSET}/borde-tablero-chesscito1.webp`} type="image/webp" />
@@ -233,11 +217,31 @@ export function GameBoard({
             inset: 0,
             width: "100%",
             height: "100%",
-            zIndex: 3,
+            zIndex: 2,
             pointerEvents: "none",
           }}
         />
       </picture>
+
+      {/* Absolute overlay layer (pieces, capture floats, select hints) — inset
+          to the same frame opening as the grid so cellCenter percentages
+          resolve identically. ABOVE the tiles, frame, and labels (z4) so pieces
+          are never clipped by the border. */}
+      {renderOverlay && (
+        <div
+          style={{
+            position: "absolute",
+            top: `${overlayInset.top}%`,
+            right: `${overlayInset.right}%`,
+            bottom: `${overlayInset.bottom}%`,
+            left: `${overlayInset.left}%`,
+            zIndex: 4,
+            pointerEvents: "none",
+          }}
+        >
+          {renderOverlay(overlayGeometry)}
+        </div>
+      )}
 
       {/* Coordinate labels ON the frame band — follow the view order so they
           flip with the board under orientation="black". */}
@@ -265,7 +269,7 @@ export function GameBoard({
               left: `${BOARD_INSET.left + (BOARD_INNER_W * (col + 0.5)) / 8}%`,
               top: `${100 - BOARD_INSET.bottom / 2}%`,
               transform: "translate(-50%, -50%)",
-              zIndex: 4,
+              zIndex: 3,
             }}
           >
             {FILES[file]}
