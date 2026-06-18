@@ -489,12 +489,15 @@ export default function LabyrinthBuilderPage() {
   const existing = generatedByKind[state.piece] ?? [];
 
   return (
-    <main className="min-h-screen bg-slate-950 p-4 text-slate-100">
+    <main className="min-h-screen bg-black p-4 text-neutral-100">
       <div className="mx-auto flex max-w-5xl flex-col gap-4 lg:flex-row">
         {/* ── Board column ── */}
         <section className="flex flex-col gap-3">
-          <h1 className="text-lg font-bold">
-            {kind === "exercise" ? "Exercise" : "Labyrinth"} Builder (dev)
+          <h1 className="text-lg font-bold tracking-tight text-neutral-100">
+            {kind === "exercise" ? "Exercise" : "Labyrinth"} Builder{" "}
+            <span className="text-xs font-medium uppercase tracking-widest text-neutral-500">
+              dev
+            </span>
           </h1>
 
           {/* Kind toggle — same editor authors both surfaces. */}
@@ -504,10 +507,10 @@ export default function LabyrinthBuilderPage() {
                 key={k}
                 type="button"
                 onClick={() => handleKindChange(k)}
-                className={`rounded px-3 py-1 text-sm capitalize ${
+                className={`rounded px-3 py-1 text-sm capitalize transition-colors ${
                   kind === k
-                    ? "bg-indigo-500 text-white"
-                    : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    ? "bg-neutral-100 font-semibold text-black"
+                    : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800"
                 }`}
               >
                 {k}
@@ -563,8 +566,8 @@ export default function LabyrinthBuilderPage() {
                   onClick={() => setBrush(b)}
                   className={`rounded px-3 py-1 text-sm capitalize ${
                     brush === b
-                      ? "bg-sky-500 text-white"
-                      : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                      ? "bg-neutral-100 text-black"
+                      : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
                   }`}
                 >
                   {b}
@@ -574,12 +577,12 @@ export default function LabyrinthBuilderPage() {
             <button
               type="button"
               onClick={() => setTracedPath([])}
-              className="rounded bg-slate-800 px-3 py-1 text-sm text-slate-300 hover:bg-slate-700"
+              className="rounded bg-neutral-800 px-3 py-1 text-sm text-neutral-300 hover:bg-neutral-700"
             >
               clear trace
             </button>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-neutral-500">
             piece=start · ★=goal · dark tile=wall · red ring=capture · blue
             dot=BFS path · number=traced order
           </p>
@@ -589,11 +592,11 @@ export default function LabyrinthBuilderPage() {
         <section className="flex flex-1 flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col text-sm">
-              <span className="text-slate-400">Piece</span>
+              <span className="text-neutral-400">Piece</span>
               <select
                 value={state.piece}
                 onChange={(e) => handlePieceChange(e.target.value as PieceId)}
-                className="rounded bg-slate-800 px-2 py-1"
+                className="rounded bg-neutral-800 px-2 py-1"
               >
                 {PIECES.map((p) => (
                   <option key={p} value={p}>
@@ -603,32 +606,32 @@ export default function LabyrinthBuilderPage() {
               </select>
             </label>
             <label className="flex flex-col text-sm">
-              <span className="text-slate-400">Order</span>
+              <span className="text-neutral-400">Order</span>
               <input
                 type="number"
                 value={state.order}
                 onChange={(e) => update({ order: Number(e.target.value) || 0 })}
-                className="rounded bg-slate-800 px-2 py-1"
+                className="rounded bg-neutral-800 px-2 py-1"
               />
             </label>
             <label className="col-span-2 flex flex-col text-sm">
-              <span className="text-slate-400">id (optional)</span>
+              <span className="text-neutral-400">id (optional)</span>
               <input
                 type="text"
                 value={state.id ?? ""}
                 onChange={(e) => update({ id: e.target.value || undefined })}
                 placeholder="auto if blank"
-                className="rounded bg-slate-800 px-2 py-1"
+                className="rounded bg-neutral-800 px-2 py-1"
               />
             </label>
             <label className="flex flex-col text-sm">
-              <span className="text-slate-400">tier</span>
+              <span className="text-neutral-400">tier</span>
               <select
                 value={state.tier ?? "medium"}
                 onChange={(e) =>
                   update({ tier: e.target.value as ExerciseTier })
                 }
-                className="rounded bg-slate-800 px-2 py-1 capitalize"
+                className="rounded bg-neutral-800 px-2 py-1 capitalize"
               >
                 {TIERS.map((tr) => (
                   <option key={tr} value={tr}>
@@ -638,7 +641,7 @@ export default function LabyrinthBuilderPage() {
               </select>
             </label>
             <label className="flex flex-col text-sm">
-              <span className="text-slate-400">tags (comma-sep)</span>
+              <span className="text-neutral-400">tags (comma-sep)</span>
               <input
                 type="text"
                 value={(state.tags ?? []).join(", ")}
@@ -650,11 +653,11 @@ export default function LabyrinthBuilderPage() {
                   update({ tags: tags.length ? tags : undefined });
                 }}
                 placeholder="straight-line"
-                className="rounded bg-slate-800 px-2 py-1"
+                className="rounded bg-neutral-800 px-2 py-1"
               />
             </label>
             <label className="col-span-2 flex flex-col text-sm">
-              <span className="text-slate-400">
+              <span className="text-neutral-400">
                 description (shown in-game)
               </span>
               <input
@@ -668,7 +671,7 @@ export default function LabyrinthBuilderPage() {
                     ? "e.g. Move your Rook straight to h8"
                     : undefined
                 }
-                className="rounded bg-slate-800 px-2 py-1"
+                className="rounded bg-neutral-800 px-2 py-1"
               />
               {kind === "exercise" && !state.explanation ? (
                 <span className="mt-1 text-xs text-amber-400/80">
@@ -679,9 +682,9 @@ export default function LabyrinthBuilderPage() {
           </div>
 
           {/* Validation */}
-          <div className="rounded border border-slate-800 bg-slate-900 p-3 text-sm">
+          <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">Optimal moves</span>
+              <span className="text-neutral-400">Optimal moves</span>
               <span className="font-mono text-base">
                 {result.optimalMoves ?? "—"}
               </span>
@@ -700,15 +703,15 @@ export default function LabyrinthBuilderPage() {
 
           {/* Edit-mode banner */}
           {state.id ? (
-            <div className="flex items-center justify-between rounded border border-sky-700 bg-sky-950/60 px-3 py-2 text-sm">
-              <span className="text-sky-300">
-                Editing <span className="font-mono font-semibold">{state.id}</span>
+            <div className="flex items-center justify-between rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm">
+              <span className="text-neutral-300">
+                Editing <span className="font-mono font-semibold text-neutral-100">{state.id}</span>
               </span>
               <button
                 type="button"
                 onClick={handleNew}
                 title={`Start a fresh ${kind} (discard current edit)`}
-                className="rounded bg-slate-700 px-3 py-1 text-xs hover:bg-slate-600"
+                className="rounded bg-neutral-700 px-3 py-1 text-xs hover:bg-neutral-600"
               >
                 + New {kind}
               </button>
@@ -721,7 +724,7 @@ export default function LabyrinthBuilderPage() {
               type="button"
               onClick={handleSave}
               disabled={!result.ok || isSaving}
-              className="rounded bg-emerald-600 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+              className="rounded bg-emerald-600 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-500"
             >
               {isSaving ? "Saving draft…" : "Save draft"}
             </button>
@@ -745,14 +748,14 @@ export default function LabyrinthBuilderPage() {
               current version automatically). draft = localhost · preview =
               preview.chesscito.com · published = chesscito.com (players). */}
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-semibold text-slate-400">
+            <span className="font-semibold text-neutral-400">
               Stage {state.id ? `for ${state.id}` : "(load a record)"} →
             </span>
             <select
               value={stageTarget}
               onChange={(e) => setStageTarget(e.target.value as ContentStage)}
               disabled={!state.id}
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200 disabled:text-slate-600"
+              className="rounded border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-200 disabled:text-neutral-600"
             >
               <option value="draft">draft (localhost)</option>
               <option value="preview">preview (preview.chesscito.com)</option>
@@ -762,77 +765,77 @@ export default function LabyrinthBuilderPage() {
               type="button"
               onClick={() => handleSetStage(stageTarget)}
               disabled={!state.id}
-              className="rounded border border-slate-700 px-3 py-1 font-semibold text-slate-200 hover:border-slate-500 disabled:cursor-not-allowed disabled:text-slate-600"
+              className="rounded border border-neutral-700 px-3 py-1 font-semibold text-neutral-100 transition-colors hover:border-neutral-500 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-800 disabled:text-neutral-600"
             >
               Set stage
             </button>
           </div>
 
           {/* Export (read-only FEN block) */}
-          <div className="rounded border border-slate-800 bg-slate-900 p-3 text-sm">
-            <p className="mb-1 font-semibold text-slate-300">Export (copy)</p>
+          <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
+            <p className="mb-1 font-semibold text-neutral-300">Export (copy)</p>
             {fenBlock ? (
-              <pre className="overflow-x-auto whitespace-pre-wrap break-all font-mono text-xs text-slate-200" data-allow-select="true">
+              <pre className="overflow-x-auto whitespace-pre-wrap break-all font-mono text-xs text-neutral-200" data-allow-select="true">
 {`fen=${fenBlock.fen}
 target=${fenBlock.target}
 mover=${fenBlock.mover}`}
               </pre>
             ) : (
-              <p className="text-slate-500">Set start + goal to generate FEN.</p>
+              <p className="text-neutral-500">Set start + goal to generate FEN.</p>
             )}
           </div>
 
           {/* Import (best-effort) */}
-          <div className="rounded border border-slate-800 bg-slate-900 p-3 text-sm">
-            <p className="mb-2 font-semibold text-slate-300">
+          <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
+            <p className="mb-2 font-semibold text-neutral-300">
               Load from FEN (best-effort)
             </p>
             <label className="mb-2 flex flex-col">
-              <span className="text-slate-400">FEN</span>
+              <span className="text-neutral-400">FEN</span>
               <textarea
                 value={fenInput}
                 onChange={(e) => setFenInput(e.target.value)}
                 rows={2}
                 placeholder="8/8/8/8/8/8/8/R7 w - - 0 1"
-                className="rounded bg-slate-800 px-2 py-1 font-mono text-xs"
+                className="rounded bg-neutral-800 px-2 py-1 font-mono text-xs"
                 data-allow-select="true"
               />
             </label>
             <div className="mb-2 grid grid-cols-2 gap-2">
               <label className="flex flex-col">
-                <span className="text-slate-400">target</span>
+                <span className="text-neutral-400">target</span>
                 <input
                   type="text"
                   value={targetInput}
                   onChange={(e) => setTargetInput(e.target.value)}
                   placeholder="e4"
-                  className="rounded bg-slate-800 px-2 py-1"
+                  className="rounded bg-neutral-800 px-2 py-1"
                 />
               </label>
               <label className="flex flex-col">
-                <span className="text-slate-400">mover (optional)</span>
+                <span className="text-neutral-400">mover (optional)</span>
                 <input
                   type="text"
                   value={moverInput}
                   onChange={(e) => setMoverInput(e.target.value)}
                   placeholder="a1"
-                  className="rounded bg-slate-800 px-2 py-1"
+                  className="rounded bg-neutral-800 px-2 py-1"
                 />
               </label>
             </div>
             <button
               type="button"
               onClick={handleLoadFromFen}
-              className="rounded bg-slate-700 px-3 py-1 text-sm hover:bg-slate-600"
+              className="rounded bg-neutral-700 px-3 py-1 text-sm hover:bg-neutral-600"
             >
               Load
             </button>
-            {loadNote && <p className="mt-2 text-slate-400">{loadNote}</p>}
+            {loadNote && <p className="mt-2 text-neutral-400">{loadNote}</p>}
           </div>
 
           {/* Existing labyrinths — load one to edit */}
-          <div className="rounded border border-slate-800 bg-slate-900 p-3 text-sm">
-            <p className="mb-2 font-semibold text-slate-300">
+          <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
+            <p className="mb-2 font-semibold text-neutral-300">
               Existing {state.piece} {kind === "exercise" ? "exercises" : "labyrinths"} (load to edit)
             </p>
             {pieceRecords.length ? (
@@ -844,10 +847,10 @@ mover=${fenBlock.mover}`}
                     <li
                       key={rec.id ?? `${rec.piece}-${rec.order}-${i}`}
                       className={`flex items-center justify-between gap-2 rounded px-2 py-1 ${
-                        active ? "bg-sky-950/60" : "bg-slate-800/60"
+                        active ? "bg-neutral-800" : "bg-neutral-900/60"
                       } ${isDisabled ? "opacity-50" : ""}`}
                     >
-                      <span className="truncate font-mono text-xs text-slate-300">
+                      <span className="truncate font-mono text-xs text-neutral-300">
                         {rec.id ?? "(no id)"} · target {rec.target} · order {rec.order}
                         {isDisabled ? (
                           <span className="ml-1 rounded bg-amber-900/70 px-1 text-amber-300">
@@ -875,7 +878,7 @@ mover=${fenBlock.mover}`}
                         <button
                           type="button"
                           onClick={() => handleEditRecord(rec)}
-                          className="rounded bg-sky-600 px-2 py-0.5 text-xs font-semibold text-white hover:bg-sky-500"
+                          className="rounded border border-neutral-700 bg-neutral-800 px-2 py-0.5 text-xs font-semibold text-neutral-100 hover:bg-neutral-700"
                         >
                           Edit
                         </button>
@@ -885,17 +888,17 @@ mover=${fenBlock.mover}`}
                 })}
               </ul>
             ) : (
-              <p className="text-slate-500">None saved for this piece yet.</p>
+              <p className="text-neutral-500">None saved for this piece yet.</p>
             )}
           </div>
 
           {/* Generated catalog reference */}
-          <div className="rounded border border-slate-800 bg-slate-900 p-3 text-sm">
-            <p className="mb-1 font-semibold text-slate-300">
+          <div className="rounded border border-neutral-800 bg-neutral-900 p-3 text-sm">
+            <p className="mb-1 font-semibold text-neutral-300">
               Generated {state.piece} catalog (pick a non-colliding order)
             </p>
             {existing.length ? (
-              <ul className="font-mono text-xs text-slate-400">
+              <ul className="font-mono text-xs text-neutral-400">
                 {existing.map((e) => (
                   <li key={e.id}>
                     {e.id} (opt {e.optimalMoves})
@@ -903,7 +906,7 @@ mover=${fenBlock.mover}`}
                 ))}
               </ul>
             ) : (
-              <p className="text-slate-500">None yet.</p>
+              <p className="text-neutral-500">None yet.</p>
             )}
           </div>
         </section>
