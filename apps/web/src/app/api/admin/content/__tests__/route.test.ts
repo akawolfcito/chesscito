@@ -117,7 +117,7 @@ describe("POST /api/admin/content", () => {
     expect(supabaseMock.upsert).not.toHaveBeenCalled();
   });
 
-  it("upserts (kind,id), revalidates the content tag, and returns the saved row", async () => {
+  it("upserts (kind,id,stage), revalidates the content tag, and returns the saved row", async () => {
     const res = await POST(authed(validRecord()));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -132,7 +132,8 @@ describe("POST /api/admin/content", () => {
     expect(supabaseMock.from).toHaveBeenCalledWith("content_overlay");
     const [row, opts] = supabaseMock.upsert.mock.calls[0];
     expect(row).toMatchObject({ id: "rook-overlay-1", kind: "exercise", optimal_moves: 1 });
-    expect(opts).toMatchObject({ onConflict: "kind,id" });
+    expect(opts).toMatchObject({ onConflict: "kind,id,stage" });
+    expect(row).toMatchObject({ stage: "draft" }); // Save lands at draft
     expect(mockedRevalidate).toHaveBeenCalledWith("content");
   });
 });
