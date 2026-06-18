@@ -36,23 +36,31 @@ promote. Cache refresh = a **60s TTL** (no cross-deployment fan-out). PK widens 
   (`visibleStages`, `envStageFloor` kill-switch, `resolveVisibleRows`
   two-version resolution), 12 TDD tests. Write route now sets `stage:'draft'`.
 
-## Next: remaining content-staging slices (resume here)
-Continue the `/tdd` cycle, one slice per PR:
-1. **Slice 2 — migration + RPC**: alter `content_overlay`: PK → `(kind,id,stage)`,
-   add `stage text not null default 'draft' check (...)`, down-script; add the
-   `promote_content(kind,id,from,to)` `plpgsql` RPC (delete rows ≤ rank(to) except
-   the moved one + update stage, in ONE transaction). Commit-only (hosted apply =
-   deploy). Integration test on local Supabase (`npx supabase start`).
-2. **Slice 3 — read path**: `merged-catalog.ts` `fetchOverlayRows` filters by
-   `visibleStages(envStageFloor())` then `resolveVisibleRows`; cache with
-   `revalidate: 60`; `/exercises` boundary gates on `envStageFloor()` (not the old
-   flag). Per-env-tier tests.
-3. **Slice 4 — promote route**: `POST /api/admin/content/stage` → calls the RPC,
-   revalidates own tag (no fan-out). Tests: promote/demote/skip-stage/404/bad-token.
-4. **Slice 5 — retire flag + UX**: remove `CONTENT_OVERLAY_ENABLED` /
-   `overlay-flag.ts`; builder Save labels "Saved as draft" (promote UI = later
-   follow-up). Fold remaining red-team P1s (cache key includes stage floor,
-   `from` mismatch error message).
+## Content-staging model — COMPLETE (slices 1–5, all merged)
+- **S1** (#144) stage types + pure helpers (`visibleStages`/`envStageFloor`/
+  `resolveVisibleRows`).
+- **S2** (#145) migration `20260617130000` (PK → `(kind,id,stage)`, `stage`
+  column) + transactional `promote_content` RPC. Write route `onConflict` widened.
+- **S3** (#146) stage-aware read path: `loadMergedCatalog` filters by
+  `visibleStages(floor)` + `resolveVisibleRows`, `revalidate: 60` TTL, cache key
+  includes the floor; `/exercises` gates on `envStageFloor()`;
+  `CONTENT_OVERLAY_ENABLED` / `overlay-flag.ts` removed.
+- **S4** (#147) `POST /api/admin/content/stage` promote/demote via the RPC,
+  revalidates own tag (no fan-out).
+- **S5** (#148) builder "Saved as draft" copy (Save ≠ live to players).
+
+### Remaining (NOT code — founder-ops + deferred)
+1. **Rollout runbook** (spec §"Rollout (operational)") to actually turn it on in
+   hosted: **verify current `CONTENT_OVERLAY_ENABLED` in preview AND prod first**,
+   `supabase db push` the migration, set `CONTENT_STAGE` per env (prod=published,
+   preview=preview, local=draft) + `ADMIN_TOKEN` + local `OVERLAY_PUBLISH_BASE_URL`,
+   deploy. Rollback = unset `CONTENT_STAGE` (baseline-only, no redeploy).
+2. **RPC integration test** — deferred (needs Docker / `npx supabase start`):
+   assert `promote_content` atomicity (partial-failure / concurrent), supersede,
+   skip-stage. Route + helpers are unit-tested; only the SQL transaction is uncovered.
+3. **Builder promote/demote UI** — out of scope of the spec (data+API only). The
+   promote API works; buttons + the from-mismatch 404-lists-stages refinement are a
+   follow-up.
 
 ## Open / founder-ops (not code)
 - **db-content Phase 3 rollout** is now superseded by the staging model. When
