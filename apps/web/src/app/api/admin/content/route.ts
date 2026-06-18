@@ -117,7 +117,7 @@ export async function POST(request: Request) {
   if (!supabase) return err(["content store unavailable"], 503);
   const { error } = await supabase
     .from("content_overlay")
-    .upsert(row, { onConflict: "kind,id" });
+    .upsert(row, { onConflict: "kind,id,stage" });
   if (error) return err([error.message], 500);
 
   // 7. On-demand revalidation so players see the change without a redeploy.
