@@ -4,7 +4,7 @@ import {
 } from "@/components/exercises/exercises-screen";
 import { ContentCatalogProvider } from "@/lib/content/catalog-context";
 import { getMergedCatalog } from "@/lib/content/merged-catalog";
-import { CONTENT_OVERLAY_ENABLED } from "@/lib/content/overlay-flag";
+import { envStageFloor } from "@/lib/content/stage";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { ExerciseCatalog } from "@/lib/game/rotation";
 import type { PieceId } from "@/lib/game/types";
@@ -59,25 +59,26 @@ function parseInitialSheet(raw: string | undefined): ExercisesInitialSheet | und
  * Server component on purpose: reading `searchParams` from props avoids
  * `useSearchParams()` + Suspense overhead.
  *
- * db-backed-content (server boundary / hydration contract): when
- * `CONTENT_OVERLAY_ENABLED` is on, this boundary is the single source of the
- * catalog — it calls the cached `getMergedCatalog()` (baseline ⊕ overlay,
- * tagged `"content"`) and mounts `<ContentCatalogProvider>` with the full
- * merged read catalog (exercises + labyrinths + descriptions) serialized into
- * the client boundary, so SSR and the first client render read the SAME
- * catalog (no hydration mismatch, no client re-fetch). With the flag off no
- * provider is mounted and every consumer falls through to the baseline default
- * — byte-identical to the pre-overlay read path, with zero DB hits.
+ * content-staging-model (server boundary / hydration contract): when this
+ * deployment has a `CONTENT_STAGE` floor (`envStageFloor()` non-null), this
+ * boundary is the single source of the catalog — it calls the cached
+ * `getMergedCatalog()` (baseline ⊕ stage-filtered overlay, tagged `"content"`)
+ * and mounts `<ContentCatalogProvider>` with the full merged read catalog
+ * (exercises + labyrinths + descriptions) serialized into the client boundary,
+ * so SSR and the first client render read the SAME catalog (no hydration
+ * mismatch, no client re-fetch). With CONTENT_STAGE unset/invalid no provider is
+ * mounted and every consumer falls through to the baseline default —
+ * byte-identical to the pre-overlay read path, with zero DB hits (kill-switch).
  */
 export default async function ExercisesPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const merged = CONTENT_OVERLAY_ENABLED ? await getMergedCatalog() : null;
+  const merged = envStageFloor() ? await getMergedCatalog() : null;
   // The piece-validity check must read the SAME pools the screen will render
   // from, so an overlay-added piece is accepted (and an overlay-emptied piece
-  // rejected) under the flag — and baseline when the flag is off.
+  // rejected) when staged — and baseline when CONTENT_STAGE is unset.
   const catalog: ExerciseCatalog = merged ? merged.exercises : EXERCISES;
 
   const piece = firstParam(searchParams.piece);

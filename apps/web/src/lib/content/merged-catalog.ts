@@ -25,9 +25,11 @@ import {
 } from "@/lib/game/generated/puzzles.generated";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { buildCatalog, type LabyrinthRecord } from "./catalog";
+import { envStageFloor, resolveVisibleRows, visibleStages } from "./stage";
 import type {
   BaselineCatalog,
   ContentOverlayRow,
+  ContentStage,
   MergedCatalog,
 } from "./overlay-types";
 
@@ -35,6 +37,9 @@ import type {
 export const CONTENT_TAG = "content";
 /** Degrade to baseline fast if the (possibly paused free-tier) DB is slow. */
 const OVERLAY_TIMEOUT_MS = 2000;
+/** Primary cache-refresh cadence (content-staging-model): every deployment
+ *  re-reads the shared overlay on its own within this window — no fan-out. */
+const CONTENT_TTL_SECONDS = 60;
 
 const PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
 
@@ -180,11 +185,16 @@ function withTimeout<T>(p: PromiseLike<T>, ms: number): Promise<T | null> {
  * Fetch overlay rows. Returns `null` (→ baseline-only fallback) when the client
  * is unconfigured, the query errors, times out, or returns a non-array.
  */
-async function fetchOverlayRows(): Promise<ContentOverlayRow[] | null> {
+async function fetchOverlayRows(
+  floor: ContentStage,
+): Promise<ContentOverlayRow[] | null> {
   const client = getSupabaseServer();
   if (!client) return null;
   const res = await withTimeout(
-    client.from("content_overlay").select("*"),
+    client
+      .from("content_overlay")
+      .select("*")
+      .in("stage", visibleStages(floor)),
     OVERLAY_TIMEOUT_MS,
   );
   const row = res as { data?: unknown; error?: unknown } | null;
@@ -198,11 +208,18 @@ async function fetchOverlayRows(): Promise<ContentOverlayRow[] | null> {
  */
 export async function loadMergedCatalog(): Promise<MergedCatalog> {
   const baseline = getBaseline();
-  const rows = await fetchOverlayRows();
+  const floor = envStageFloor();
+  // Kill-switch: no/invalid CONTENT_STAGE → baseline-only, ZERO DB hits.
+  if (!floor) {
+    return { ...baseline, source: "baseline-only", overlayCount: 0 };
+  }
+  const rows = await fetchOverlayRows(floor);
   if (rows === null) {
     return { ...baseline, source: "baseline-only", overlayCount: 0 };
   }
-  return mergeOverlay(baseline, rows);
+  // Two-version: collapse to ONE row per id (the freshest that reached this env)
+  // before merging, so the per-request BFS cost stays one-row-per-id.
+  return mergeOverlay(baseline, resolveVisibleRows(rows, floor));
 }
 
 /**
@@ -212,6 +229,10 @@ export async function loadMergedCatalog(): Promise<MergedCatalog> {
  */
 export const getMergedCatalog = unstable_cache(
   loadMergedCatalog,
-  ["content-merged-catalog"],
-  { tags: [CONTENT_TAG] },
+  // Stage floor is fixed per deployment (env) — include it in the key so two
+  // deployments at different stages never share a cache entry (red-team P1).
+  ["content-merged-catalog", envStageFloor() ?? "baseline"],
+  // Tag for on-save local revalidation + a TTL so every env self-refreshes
+  // within the window (no cross-deployment fan-out).
+  { tags: [CONTENT_TAG], revalidate: CONTENT_TTL_SECONDS },
 );
