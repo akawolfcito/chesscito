@@ -265,6 +265,18 @@ export function ArenaBoard({
             <div
               className="playhub-board-canvas arena-board-canvas relative"
               data-checkmate={isCheckmatePause ? "true" : undefined}
+              // GameBoard is a rigid square; unlike the image board it can't
+              // squish to a height-clamped rectangle. Size the canvas to the
+              // SMALLER of the available width and height so the board stays
+              // square AND never overflows `.playhub-game-stage` (overflow:hidden
+              // would clip rank 8 / rank 1). Mirrors the image board's
+              // `calc(100dvh - 22rem)` chrome budget.
+              style={{
+                width: "min(100%, 23.5rem, calc(100dvh - 22rem))",
+                aspectRatio: "1 / 1",
+                maxHeight: "none",
+                margin: "0 auto",
+              }}
             >
               {isThinking && (
                 <div className="pointer-events-none absolute inset-0 z-10 animate-pulse rounded-2xl ring-2 ring-amber-400/20" />
