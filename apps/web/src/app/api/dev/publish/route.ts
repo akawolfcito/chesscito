@@ -48,14 +48,14 @@ function overlayErrorForStatus(status: number): string {
 async function publishToOverlay(
   kind: ContentKind,
   record: LabyrinthRecord,
+  origin: string,
 ): Promise<OverlayResult> {
   const token = process.env.ADMIN_TOKEN;
-  const base = process.env.OVERLAY_PUBLISH_BASE_URL?.replace(/\/+$/, "");
-  if (!token || !base) {
-    return { ok: false, errors: ["overlay target not configured (set OVERLAY_PUBLISH_BASE_URL + ADMIN_TOKEN)"] };
+  if (!token) {
+    return { ok: false, errors: ["overlay target not configured (set ADMIN_TOKEN)"] };
   }
   try {
-    const res = await fetch(`${base}/api/admin/content`, {
+    const res = await fetch(`${origin}/api/admin/content`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-admin-token": token },
       body: JSON.stringify({ kind, record }),
@@ -118,7 +118,8 @@ export async function POST(req: Request) {
   }
 
   // Step 2 — overlay (network). `record` now carries the resolved id.
-  const overlay = await publishToOverlay(kind, { ...record, id: baseline.id });
+  const origin = new URL(req.url).origin;
+  const overlay = await publishToOverlay(kind, { ...record, id: baseline.id }, origin);
 
   // Audit — never log the token.
   console.info("[dev/publish]", {

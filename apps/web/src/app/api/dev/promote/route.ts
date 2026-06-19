@@ -5,10 +5,13 @@
  * overlay's /api/admin/content/stage (so the builder can promote/demote without
  * the token ever reaching the browser). Mirrors /api/dev/publish.
  *
+ * After a successful move, fans out revalidateTag("content") to all remote envs
+ * (www, lite, preview, lite-preview) via /api/admin/content/revalidate so players
+ * see the change without waiting for the 60s TTL.
+ *
  * Fail-closed: 404 in production (NODE_ENV guard); 400 on a malformed move;
- * "not configured" when ADMIN_TOKEN / OVERLAY_PUBLISH_BASE_URL are unset. Upstream
- * errors are sanitized by status — the raw body (which may carry DB detail) and
- * the token are never echoed.
+ * "not configured" when ADMIN_TOKEN is unset. Upstream errors are sanitized by
+ * status — the raw body (which may carry DB detail) and the token are never echoed.
  */
 import { NextResponse } from "next/server";
 import type { ContentKind, ContentStage } from "@/lib/content/overlay-types";
@@ -45,6 +48,14 @@ function stageErrorForStatus(status: number): string {
   }
 }
 
+/** All remote deployments that need cache invalidation after a stage move. */
+const REMOTE_REVALIDATE_URLS = [
+  "https://www.chesscito.com",
+  "https://lite.chesscito.com",
+  "https://preview.chesscito.com",
+  "https://lite-preview.chesscito.com",
+];
+
 export async function POST(req: Request) {
   if (process.env.NODE_ENV === "production") {
     return new NextResponse("Not found", { status: 404 });
@@ -65,23 +76,21 @@ export async function POST(req: Request) {
   if (!isStage(to)) {
     return NextResponse.json({ ok: false, errors: ["invalid target stage"] }, { status: 400 });
   }
-  // `from` is optional — when omitted the overlay route auto-detects the freshest
-  // version ("set to `to`"). When present it must be a valid stage.
   if (from !== undefined && !isStage(from)) {
     return NextResponse.json({ ok: false, errors: ["invalid from stage"] }, { status: 400 });
   }
 
   const token = process.env.ADMIN_TOKEN;
-  const base = process.env.OVERLAY_PUBLISH_BASE_URL?.replace(/\/+$/, "");
-  if (!token || !base) {
+  if (!token) {
     return NextResponse.json(
-      { ok: false, errors: ["overlay target not configured (set OVERLAY_PUBLISH_BASE_URL + ADMIN_TOKEN)"] },
+      { ok: false, errors: ["overlay target not configured (set ADMIN_TOKEN)"] },
       { status: 200 },
     );
   }
 
+  const origin = new URL(req.url).origin;
   try {
-    const res = await fetch(`${base}/api/admin/content/stage`, {
+    const res = await fetch(`${origin}/api/admin/content/stage`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-admin-token": token },
       body: JSON.stringify({ kind, id, from, to }),
@@ -95,6 +104,17 @@ export async function POST(req: Request) {
     if (!data?.ok) {
       return NextResponse.json({ ok: false, errors: [stageErrorForStatus(res.status)] });
     }
+
+    // Fan-out cache invalidation to all remote deployments.
+    await Promise.allSettled(
+      REMOTE_REVALIDATE_URLS.map((url) =>
+        fetch(`${url}/api/admin/content/revalidate`, {
+          method: "POST",
+          headers: { "x-admin-token": token },
+        }).catch(() => undefined),
+      ),
+    );
+
     console.info("[dev/promote]", { id, kind, from, to });
     return NextResponse.json({ ok: true, from: data.from ?? from, to: data.to ?? to });
   } catch {

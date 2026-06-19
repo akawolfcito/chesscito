@@ -16,7 +16,6 @@ beforeEach(() => {
   fetchMock.mockReset();
   vi.stubEnv("NODE_ENV", "test");
   process.env.ADMIN_TOKEN = "tkn";
-  process.env.OVERLAY_PUBLISH_BASE_URL = "https://preview.example.com";
 });
 
 afterEach(() => {
@@ -62,8 +61,8 @@ describe("POST /api/dev/promote", () => {
     expect(sent.from).toBeUndefined();
   });
 
-  it("reports not-configured when ADMIN_TOKEN / base URL are unset", async () => {
-    delete process.env.OVERLAY_PUBLISH_BASE_URL;
+  it("reports not-configured when ADMIN_TOKEN is unset", async () => {
+    delete process.env.ADMIN_TOKEN;
     const res = await POST(body(VALID));
     const data = await res.json();
     expect(data.ok).toBe(false);
@@ -71,7 +70,7 @@ describe("POST /api/dev/promote", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("forwards to /api/admin/content/stage with the token + body and returns ok", async () => {
+  it("forwards to /api/admin/content/stage on same origin with token + body, fans out revalidation", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -80,10 +79,19 @@ describe("POST /api/dev/promote", () => {
     const res = await POST(body(VALID));
     const data = await res.json();
     expect(data).toMatchObject({ ok: true, from: "draft", to: "published" });
+    // First call = stage move on same origin (localhost)
     const [url, opts] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://preview.example.com/api/admin/content/stage");
+    expect(url).toBe("http://localhost/api/admin/content/stage");
     expect(opts.headers["x-admin-token"]).toBe("tkn");
     expect(JSON.parse(opts.body)).toMatchObject(VALID);
+    // Remaining calls = revalidation fan-out to 4 remote envs
+    const revalidateCalls = fetchMock.mock.calls.slice(1).map((c: [string, ...unknown[]]) => c[0]);
+    expect(revalidateCalls).toEqual(expect.arrayContaining([
+      "https://www.chesscito.com/api/admin/content/revalidate",
+      "https://lite.chesscito.com/api/admin/content/revalidate",
+      "https://preview.chesscito.com/api/admin/content/revalidate",
+      "https://lite-preview.chesscito.com/api/admin/content/revalidate",
+    ]));
   });
 
   it("sanitizes an upstream 404 (absent from-version) without echoing the raw body", async () => {

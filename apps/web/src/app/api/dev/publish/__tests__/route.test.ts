@@ -50,7 +50,6 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   vi.stubEnv("NODE_ENV", "development");
   vi.stubEnv("ADMIN_TOKEN", "secret-token");
-  vi.stubEnv("OVERLAY_PUBLISH_BASE_URL", "https://preview.chesscito.com/");
 });
 
 afterEach(() => {
@@ -84,14 +83,14 @@ describe("POST /api/dev/publish", () => {
     expect(body.overlay.ok).toBe(true);
     expect(body.overlay.revalidated).toBe(true);
     expect(body.ok).toBe(true);
-    // Trailing slash normalized, correct path + token header.
+    // Uses request origin (localhost in dev), correct path + token header.
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://preview.chesscito.com/api/admin/content");
+    expect(url).toBe("http://x/api/admin/content");
     expect((init.headers as Record<string, string>)["x-admin-token"]).toBe("secret-token");
   });
 
-  it("baseline succeeds but overlay is skipped when the target is not configured", async () => {
-    vi.stubEnv("OVERLAY_PUBLISH_BASE_URL", "");
+  it("baseline succeeds but overlay is skipped when ADMIN_TOKEN is unset", async () => {
+    vi.stubEnv("ADMIN_TOKEN", "");
     const res = await POST(req({ kind: "exercise", record: SOLVABLE_EXERCISE }));
     const body = (await res.json()) as {
       ok: boolean;
