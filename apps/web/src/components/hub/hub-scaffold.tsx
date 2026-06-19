@@ -17,6 +17,7 @@ import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
  *  `color` drives the visual tint (amber = default/onboarding, blue =
@@ -213,7 +214,7 @@ export function HubScaffold({
                 <span>{tHud("connectLabel")}</span>
               </button>
             ) : null}
-            {wrap(
+            {!CHESSCITO_LITE_MODE && wrap(
               "HubProBadge",
               <HubProBadge
                 active={pro.active}

@@ -280,7 +280,7 @@ function AccountSheet({
         <div className="mt-3 flex flex-col gap-3">
           {/* Chesito Card — the rechargeable Peones "wallet" hero. Visual-first
            *  spend-economy anchor; its Top up CTA opens the Get Peones rail. */}
-          <ChesitoCard />
+          {!CHESSCITO_LITE_MODE && <ChesitoCard />}
 
           <div className="account-tiles-grid">
             {/* Wallet — tile click copies the full address */}
@@ -330,7 +330,8 @@ function AccountSheet({
               </span>
             </div>
 
-            {/* Manage PRO */}
+            {/* Manage PRO — hidden in Lite (no Shop/PRO monetization surface) */}
+            {!CHESSCITO_LITE_MODE && (
             <button
               type="button"
               onClick={onManagePro}
@@ -363,9 +364,10 @@ function AccountSheet({
                     : t("inactivePro")}
               </span>
             </button>
+            )}
 
-            {/* Coach */}
-            {(() => {
+            {/* Coach — hidden in Lite */}
+            {!CHESSCITO_LITE_MODE && (() => {
               const coachStatusKey = proActive
                 ? "coachStatusActive"
                 : coachCredits > 0
@@ -407,7 +409,8 @@ function AccountSheet({
               );
             })()}
 
-            {/* Shields */}
+            {/* Shields — hidden in Lite */}
+            {!CHESSCITO_LITE_MODE && (
             <button
               type="button"
               onClick={onOpenShieldsHelp}
@@ -435,8 +438,10 @@ function AccountSheet({
                   : t("shieldsStatusEmpty")}
               </span>
             </button>
+            )}
 
-            {/* Founder Badge */}
+            {/* Founder Badge — hidden in Lite */}
+            {!CHESSCITO_LITE_MODE && (
             <button
               type="button"
               onClick={founderOwned ? () => onOpenChange(false) : onOpenShop}
@@ -462,6 +467,7 @@ function AccountSheet({
                 {founderOwned ? t("founderStatusOwned") : t("founderStatusNotYet")}
               </span>
             </button>
+            )}
 
             {/* Language — segmented switcher inline at tile base */}
             <div className="account-tile is-static" role="group" aria-label={t("languageLabel")}>

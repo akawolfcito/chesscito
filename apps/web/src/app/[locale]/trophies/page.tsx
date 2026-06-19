@@ -2,6 +2,7 @@
 
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
 import { ContextualHeader } from "@/components/ui/contextual-header";
 import { TileIconSlot } from "@/components/ui/tile-icon-slot";
@@ -29,7 +30,7 @@ export default function TrophiesPage() {
             variant="back-control"
             iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
             title={t("pageTitle")}
-            subtitle={t("pageDescription")}
+            subtitle={t(CHESSCITO_LITE_MODE ? "pageDescriptionLite" : "pageDescription")}
             back={{ onClick: () => router.push("/hub"), label: t("backLabel") }}
           />
         </header>

@@ -247,13 +247,13 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
               className="text-base font-extrabold leading-tight"
               style={{ color: "rgba(63, 34, 8, 0.95)" }}
             >
-              {t("firstVictoryHeadline")}
+              {t(CHESSCITO_LITE_MODE ? "firstVictoryHeadlineLite" : "firstVictoryHeadline")}
             </p>
             <p
               className="text-sm font-semibold leading-relaxed"
               style={{ color: "rgba(63, 34, 8, 0.75)" }}
             >
-              {t("firstVictorySub")}
+              {t(CHESSCITO_LITE_MODE ? "firstVictorySubLite" : "firstVictorySub")}
             </p>
           </div>
           {CHESSCITO_LITE_MODE ? (
@@ -332,7 +332,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
     <PageSection
       key="hall-of-fame"
       icon={<CandyIcon name="trophy" className="h-4 w-4" />}
-      title={t("hallOfFame")}
+      title={t(CHESSCITO_LITE_MODE ? "hallOfFameLite" : "hallOfFame")}
     >
       <TrophyList
         victories={hallOfFame}

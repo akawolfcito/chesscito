@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import {
   Sheet,
   SheetContent,
@@ -52,7 +53,7 @@ export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: Trophi
         side="bottom"
         hideClose
         title={t("pageTitle")}
-        description={t("pageDescription")}
+        description={t(CHESSCITO_LITE_MODE ? "pageDescriptionLite" : "pageDescription")}
         className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         <div className="shrink-0 -mx-6 -mt-6 border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]">
@@ -60,7 +61,7 @@ export function TrophiesSheet({ open, onOpenChange, showTrigger = true }: Trophi
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
             title={t("pageTitle")}
-            subtitle={t("pageDescription")}
+            subtitle={t(CHESSCITO_LITE_MODE ? "pageDescriptionLite" : "pageDescription")}
             close={{ onClick: () => onOpenChange(false), label: t("closeSheetLabel") }}
           />
         </div>
