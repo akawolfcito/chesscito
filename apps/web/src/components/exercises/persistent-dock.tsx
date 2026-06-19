@@ -213,7 +213,9 @@ export function PersistentDock() {
   // glow would mislead ("looks like you're in Pieces while standing
   // in Arena"). Visual prominence already comes from being larger +
   // warmer than the sides. Lift only on hover/press (CSS handles it).
-  const isCenterActive = false;
+  // Exception: Lite Mode pins center to PIECES, so it IS the current
+  // route on /exercises and should glow as active.
+  const isCenterActive = CHESSCITO_LITE_MODE && pathname.startsWith("/exercises");
   const displayLabel = t(display.labelKey);
 
   return (
