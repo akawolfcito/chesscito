@@ -9,6 +9,7 @@ import {
   requestOpenDockSheet,
   useDockSheet,
 } from "@/lib/ui/dock-sheet-store";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
 /**
  * Locale-aware navigation primitives. Critical for the i18n migration:
@@ -110,8 +111,10 @@ const MODE_DESCRIPTORS: Record<"exercises" | "arena", ModeDescriptor> = {
 
 /** Contextual center slot. From /arena → routes to /exercises (Pieces).
  *  From anywhere else → routes to /arena (Arena). Mirrors the pre-SPEC-1
- *  dock's center contextual swap. */
+ *  dock's center contextual swap.
+ *  In Lite Mode Arena is hidden — always show PIECES. */
 function resolveCenter(pathname: string): ModeDescriptor {
+  if (CHESSCITO_LITE_MODE) return MODE_DESCRIPTORS.exercises;
   const isArena = pathname.startsWith("/arena");
   return isArena ? MODE_DESCRIPTORS.exercises : MODE_DESCRIPTORS.arena;
 }
