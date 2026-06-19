@@ -263,9 +263,9 @@ function AccountSheet({
         hideClose
         title={t("title")}
         description={t("description")}
-        className="sheet-bg-hub rounded-t-3xl border-0 max-h-[92dvh] overflow-y-auto overscroll-contain focus:outline-none focus-visible:outline-none pb-[calc(env(safe-area-inset-bottom,0px)+6rem)]"
+        className="sheet-bg-hub rounded-t-3xl border-0 max-h-[92dvh] flex flex-col focus:outline-none focus-visible:outline-none"
       >
-        <div className="-mx-6 -mt-6 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
+        <div className="-mx-6 -mt-6 shrink-0 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/screen-mission/account-icon" />}
@@ -275,6 +275,7 @@ function AccountSheet({
           />
         </div>
 
+        <div className="overflow-y-auto overscroll-contain flex-1 pb-[calc(env(safe-area-inset-bottom,0px)+6rem)]">
         <div className="mt-3 flex flex-col gap-3">
           {/* Chesito Card — the rechargeable Peones "wallet" hero. Visual-first
            *  spend-economy anchor; its Top up CTA opens the Get Peones rail. */}
@@ -490,14 +491,16 @@ function AccountSheet({
             {t("disconnect")}
           </button>
 
-          {/* About Chesscito — same secondary CTA template */}
+          {/* About Chesscito — ghost link, secondary to Disconnect */}
           <Link
             href="/about"
             onClick={() => onOpenChange(false)}
-            className="arena-result-secondary-action w-full"
+            className="flex w-full items-center justify-center py-2 text-sm font-bold opacity-50 transition-opacity active:opacity-100"
+            style={{ color: "rgba(110,65,15,0.9)", fontFamily: "var(--font-game-display)" }}
           >
             {tAbout("label")}
           </Link>
+        </div>
         </div>
       </SheetContent>
     </Sheet>

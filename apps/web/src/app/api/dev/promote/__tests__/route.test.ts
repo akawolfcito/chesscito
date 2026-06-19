@@ -85,7 +85,7 @@ describe("POST /api/dev/promote", () => {
     expect(opts.headers["x-admin-token"]).toBe("tkn");
     expect(JSON.parse(opts.body)).toMatchObject(VALID);
     // Remaining calls = revalidation fan-out to 4 remote envs
-    const revalidateCalls = fetchMock.mock.calls.slice(1).map((c: [string, ...unknown[]]) => c[0]);
+    const revalidateCalls = fetchMock.mock.calls.slice(1).map((c: unknown[]) => c[0]);
     expect(revalidateCalls).toEqual(expect.arrayContaining([
       "https://www.chesscito.com/api/admin/content/revalidate",
       "https://lite.chesscito.com/api/admin/content/revalidate",
