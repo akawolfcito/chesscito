@@ -470,7 +470,7 @@ export function HubScaffoldClient({
             router.push("/exercises");
           },
         }}
-        onArenaPress={handleArenaPress}
+        onArenaPress={CHESSCITO_LITE_MODE ? undefined : handleArenaPress}
         miniArenaUnlocked={(starsPerPiece.rook ?? 0) >= 12}
       />
       {!CHESSCITO_LITE_MODE && <ProSheet {...proSheet.sheetProps} />}
