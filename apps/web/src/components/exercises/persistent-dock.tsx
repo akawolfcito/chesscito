@@ -128,10 +128,12 @@ function resolveBase(pathname: string): ModeDescriptor {
   return isArena ? MODE_DESCRIPTORS.arena : MODE_DESCRIPTORS.exercises;
 }
 
-const SIDE_LEFT: ReadonlyArray<Item> = [
-  { id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/hub?sheet=badges" },
-  { id: "shop", labelKey: "shop", icon: "shop", iconSrc: "/art/shop-menu", sheet: "shop", fallback: "/hub?sheet=shop" },
-];
+const SIDE_LEFT: ReadonlyArray<Item> = CHESSCITO_LITE_MODE
+  ? [{ id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/hub?sheet=badges" }]
+  : [
+      { id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/hub?sheet=badges" },
+      { id: "shop", labelKey: "shop", icon: "shop", iconSrc: "/art/shop-menu", sheet: "shop", fallback: "/hub?sheet=shop" },
+    ];
 
 const SIDE_RIGHT: ReadonlyArray<Item> = [
   { id: "trophies", labelKey: "trophies", icon: "trophy", iconSrc: "/art/action-row/trofeo-epico", sheet: "trophies", fallback: "/trophies", activeWhen: "/trophies" },

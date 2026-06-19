@@ -146,6 +146,7 @@ import {
   registerDockSheetOpener,
   setDockSheet,
 } from "@/lib/ui/dock-sheet-store";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
 // SHOP_ITEMS, SHIELD_ITEM_ID, SHIELDS_PER_PURCHASE now live in
 // lib/contracts/shop-catalog.ts so they're testable in isolation. The
@@ -712,11 +713,11 @@ export function ExercisesScreen({
     if (typeof window === "undefined") return;
     const sp = new URLSearchParams(window.location.search);
     const slug = sp.get("sheet");
-    if (slug === "shop") setActiveDockTab("shop");
+    if (slug === "shop" && !CHESSCITO_LITE_MODE) setActiveDockTab("shop");
     else if (slug === "badges") setActiveDockTab("badge");
     else if (slug === "trophies") setActiveDockTab("trophies");
     else if (slug === "leaderboard") setActiveDockTab("leaderboard");
-    else if (slug === "pro") setProSheetOpen(true);
+    else if (slug === "pro" && !CHESSCITO_LITE_MODE) setProSheetOpen(true);
     if (slug) {
       sp.delete("sheet");
       const qs = sp.toString();
@@ -2699,7 +2700,7 @@ export function ExercisesScreen({
           isReplay={isReplay}
         />
 
-        <PurchaseConfirmSheet
+        {!CHESSCITO_LITE_MODE && <PurchaseConfirmSheet
           open={confirmOpen}
           onOpenChange={(open) => {
             if (!open && purchasePhase !== "idle") return;
@@ -2717,9 +2718,9 @@ export function ExercisesScreen({
           isWriting={isShopWriting}
           purchasePhase={purchasePhase}
           onConfirm={() => void handleConfirmPurchase()}
-        />
+        />}
 
-        <ProSheet
+        {!CHESSCITO_LITE_MODE && <ProSheet
           open={proSheetOpen}
           onOpenChange={(open) => {
             // Block close while a tx is in-flight to prevent the user
@@ -2746,7 +2747,7 @@ export function ExercisesScreen({
             configuredChainId != null && switchChain({ chainId: configuredChainId })
           }
           onPurchase={() => void handleProPurchase()}
-        />
+        />}
         {address ? (
           <AccountSheet
             open={accountSheetOpen}
@@ -3034,7 +3035,7 @@ export function ExercisesScreen({
             resetBoard();
           }}
         />
-        <ShopSheet
+        {!CHESSCITO_LITE_MODE && <ShopSheet
           open={storeOpen}
           onOpenChange={setStoreOpen}
           items={displayShopCatalog}
@@ -3047,7 +3048,7 @@ export function ExercisesScreen({
           }}
           showTrigger={false}
           welcomePack={welcomePack}
-        />
+        />}
         <TrophiesSheet
           open={trophiesSheetOpen}
           onOpenChange={setTrophiesSheetOpen}
