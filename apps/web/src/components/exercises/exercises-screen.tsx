@@ -263,9 +263,9 @@ function AccountSheet({
         hideClose
         title={t("title")}
         description={t("description")}
-        className="sheet-bg-hub rounded-t-3xl border-0 max-h-[92dvh] flex flex-col focus:outline-none focus-visible:outline-none"
+        className="sheet-bg-hub rounded-none border-0 h-[100dvh] flex flex-col focus:outline-none focus-visible:outline-none"
       >
-        <div className="-mx-6 -mt-6 shrink-0 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
+        <div className="-mx-6 -mt-6 shrink-0 border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src="/art/screen-mission/account-icon" />}
