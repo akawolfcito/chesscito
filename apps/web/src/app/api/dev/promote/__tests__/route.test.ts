@@ -36,7 +36,7 @@ const VALID = { kind: "exercise", id: "rook-1", from: "draft", to: "published" }
 
 describe("POST /api/dev/promote", () => {
   it("404 in production (never proxies)", async () => {
-    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "production");
     const res = await POST(body(VALID));
     expect(res.status).toBe(404);
     expect(fetchMock).not.toHaveBeenCalled();

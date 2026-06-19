@@ -73,7 +73,7 @@ async function publishToOverlay(
 }
 
 export async function POST(req: Request) {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.VERCEL_ENV === "production") {
     return new NextResponse("Not found", { status: 404 });
   }
 

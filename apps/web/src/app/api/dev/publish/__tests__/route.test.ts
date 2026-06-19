@@ -59,7 +59,7 @@ afterEach(() => {
 
 describe("POST /api/dev/publish", () => {
   it("404s in production and never writes or fetches", async () => {
-    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "production");
     const res = await POST(req({ kind: "exercise", record: SOLVABLE_EXERCISE }));
     expect(res.status).toBe(404);
     expect(fsMocks.writeFileSync).not.toHaveBeenCalled();
