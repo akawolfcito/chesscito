@@ -13,7 +13,7 @@ import { routing } from "@/i18n/routing";
  *
  * Spec: https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap
  */
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.chesscito.com";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.chesscito.com";
 
 /** Static, indexable paths. Under `localePrefix: "as-needed"` the
  *  default locale (EN) serves at the bare path and non-default
