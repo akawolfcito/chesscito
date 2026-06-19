@@ -15,6 +15,7 @@ import { getVictoryAddress } from "@/lib/game/victory-events";
 import { computeAchievements } from "@/lib/achievements/compute";
 import { useCoachHistoryCount } from "@/lib/coach/use-coach-history-count";
 import type { VictoryEntry } from "@/lib/game/victory-events";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import {
   clearOptimisticVictory,
   getOptimisticVictory,
@@ -255,22 +256,35 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
               {t("firstVictorySub")}
             </p>
           </div>
-          <Link
-            href="/arena?fresh=1"
-            className="principal-button principal-button-medium inline-flex w-full items-center justify-center text-center"
-          >
-            <span className="principal-button-label">
-              {t("arenaLink")}
-            </span>
-          </Link>
-          {hasPastMatches && (
+          {CHESSCITO_LITE_MODE ? (
             <Link
-              href="/coach/history"
-              className="text-sm font-semibold underline decoration-dotted underline-offset-4"
-              style={{ color: "rgba(63, 34, 8, 0.78)" }}
+              href="/exercises"
+              className="principal-button principal-button-medium inline-flex w-full items-center justify-center text-center"
             >
-              {t("saveLaterFromHistoryLink")}
+              <span className="principal-button-label">
+                {t("practiceLink")}
+              </span>
             </Link>
+          ) : (
+            <>
+              <Link
+                href="/arena?fresh=1"
+                className="principal-button principal-button-medium inline-flex w-full items-center justify-center text-center"
+              >
+                <span className="principal-button-label">
+                  {t("arenaLink")}
+                </span>
+              </Link>
+              {hasPastMatches && (
+                <Link
+                  href="/coach/history"
+                  className="text-sm font-semibold underline decoration-dotted underline-offset-4"
+                  style={{ color: "rgba(63, 34, 8, 0.78)" }}
+                >
+                  {t("saveLaterFromHistoryLink")}
+                </Link>
+              )}
+            </>
           )}
         </div>
       ) : (

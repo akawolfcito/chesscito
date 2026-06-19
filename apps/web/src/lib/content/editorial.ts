@@ -905,6 +905,7 @@ export const TROPHY_VITRINE_COPY = {
   configError: "Trophies are offline",
   roadmap: "Coming later: Tournaments • VIP Passes • Seasonal Rewards",
   arenaLink: "ARENA",
+  practiceLink: "PRACTICE PIECES",
   /** Save Later secondary affordance (2026-05-31) — appears beneath the
    *  Arena CTA in the empty trophies state ONLY when the user has at
    *  least one match in their Coach history. A brand-new user (0 matches)

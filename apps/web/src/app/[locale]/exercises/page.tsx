@@ -8,6 +8,7 @@ import { envStageFloor } from "@/lib/content/stage";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { ExerciseCatalog } from "@/lib/game/rotation";
 import type { PieceId } from "@/lib/game/types";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
 type SearchParams = {
   /** Pre-select a piece on first render. Pieces without defined
@@ -40,11 +41,14 @@ function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
+const LITE_BLOCKED_SHEETS = new Set<ExercisesInitialSheet>(["shop", "pro"]);
+
 function parseInitialSheet(raw: string | undefined): ExercisesInitialSheet | undefined {
   if (!raw) return undefined;
-  return SUPPORTED_SHEETS.has(raw as ExercisesInitialSheet)
-    ? (raw as ExercisesInitialSheet)
-    : undefined;
+  if (!SUPPORTED_SHEETS.has(raw as ExercisesInitialSheet)) return undefined;
+  const sheet = raw as ExercisesInitialSheet;
+  if (CHESSCITO_LITE_MODE && LITE_BLOCKED_SHEETS.has(sheet)) return undefined;
+  return sheet;
 }
 
 /**

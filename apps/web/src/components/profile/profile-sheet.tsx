@@ -30,6 +30,7 @@ import {
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { ProSheet } from "@/components/pro/pro-sheet";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import type { Claim } from "@/lib/claims/queue";
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void };
@@ -343,10 +344,11 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
 
         {/* M1 funnel (Commit 6, 2026-06-02) — Account PRO row.
          *  - Hidden when the user has never held PRO.
+         *  - Hidden entirely in Lite Mode (no PRO flows exposed).
          *  - Active: days left + renew CTA. CTA gains emphasis when
          *    expiring (≤ 7 days).
          *  - Expired: post-expire copy + renew CTA. */}
-        {proRowState.kind !== "hidden" && (
+        {!CHESSCITO_LITE_MODE && proRowState.kind !== "hidden" && (
           <section
             aria-label={tPro("label")}
             className="mt-3 rounded-2xl border px-3 py-3"
@@ -447,8 +449,9 @@ export function ProfileSheet({ open, onOpenChange }: Props) {
 
     {/* M1 funnel (Commit 6) — Profile-owned ProSheet, rendered as a
      *  sibling so it survives the parent profile sheet closing.
-     *  handleProRenewTap closes profile first then opens this. */}
-    <ProSheet {...proSheet.sheetProps} />
+     *  handleProRenewTap closes profile first then opens this.
+     *  Not mounted in Lite Mode — no PRO flows exposed. */}
+    {!CHESSCITO_LITE_MODE && <ProSheet {...proSheet.sheetProps} />}
     </>
   );
 }

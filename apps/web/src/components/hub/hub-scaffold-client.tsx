@@ -201,7 +201,8 @@ export function HubScaffoldClient({
   const proTrainingCardViewedRef = useRef(false);
 
   // SPEC 1 D9/D10 wiring — Profile sheet, Settings stub.
-  const [profileOpen, setProfileOpen] = useState(initialSheet === "profile");
+  // Lite Mode: deep-link ?sheet=profile must not open ProfileSheet (it mounts ProSheet).
+  const [profileOpen, setProfileOpen] = useState(!CHESSCITO_LITE_MODE && initialSheet === "profile");
   const [settingsOpen, setSettingsOpen] = useState(initialSheet === "settings");
   // `useClaimQueue` reads pending claims out of localStorage on mount;
   // the unread count drives the avatar notif-dot once the HUD slot
