@@ -620,3 +620,149 @@ describe("HubScaffoldClient — telemetry", () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Lite Mode tests
+// `vi.mock` is hoisted — module state is shared across the file. We use
+// `vi.doMock` inside beforeEach (not hoisted) to swap the feature-flags
+// value per-describe, paired with a dynamic import of the component.
+// Because the module registry is reset per describe via vi.resetModules(),
+// we cannot reuse the statically imported HubScaffoldClient from above.
+// ---------------------------------------------------------------------------
+describe("HubScaffoldClient — Lite Mode", () => {
+  let HubScaffoldClientLite: typeof import("../hub-scaffold-client").HubScaffoldClient;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/feature-flags", () => ({ CHESSCITO_LITE_MODE: true }));
+    // Re-apply all stubs after resetModules so the freshly-loaded component
+    // finds them. vi.mock calls at the top of the file are hoisted into the
+    // original module graph; after resetModules we need vi.doMock for each.
+    vi.doMock("next/navigation", () => ({
+      useRouter: () => ({ push: pushMock }),
+      usePathname: () => "/hub",
+    }));
+    vi.doMock("wagmi", () => ({
+      useAccount: () => useAccountMock(),
+      useChainId: () => useChainIdMock(),
+      useReadContracts: () => useReadContractsMock(),
+      useReadContract: () => ({ data: 0n }),
+      useWaitForTransactionReceipt: () => ({ isLoading: false, isSuccess: false }),
+      usePublicClient: () => ({}),
+      useWriteContract: () => ({ writeContractAsync: vi.fn(), isPending: false }),
+      useSwitchChain: () => ({ switchChain: vi.fn() }),
+    }));
+    vi.doMock("@/hooks/use-minipay", () => ({
+      useMiniPay: () => ({ hasProvider: false, isMiniPay: false, isReady: true }),
+    }));
+    vi.doMock("@/lib/contracts/shop", () => ({ shopAbi: [] as const }));
+    vi.doMock("@/lib/contracts/transaction-helpers", () => ({
+      waitForReceiptWithTimeout: vi.fn().mockResolvedValue(undefined),
+    }));
+    vi.doMock("@/lib/errors", () => ({
+      classifyTxError: () => "error",
+      classifyTxErrorKind: () => "unknown",
+      isTransactionTimeout: () => false,
+      isUserCancellation: () => false,
+    }));
+    vi.doMock("@/lib/shop/shield-events", () => ({
+      dispatchShieldChange: vi.fn(),
+      subscribeToShieldChanges: () => () => {},
+    }));
+    vi.doMock("@/lib/wallet/use-connect-wallet", () => ({
+      useConnectWallet: () => ({ connectWallet: connectWalletMock, isConnecting: false }),
+    }));
+    vi.doMock("@/lib/shop/use-welcome-pack-claim", () => ({
+      useWelcomePackClaim: () => ({
+        state: "connect",
+        claimedAt: null,
+        onClaim: vi.fn(),
+        onConnect: vi.fn(),
+      }),
+    }));
+    vi.doMock("@/components/profile/profile-sheet", () => ({
+      ProfileSheet: () => null,
+    }));
+    vi.doMock("@/hooks/use-claim-queue", () => ({
+      useClaimQueue: () => ({
+        claims: [],
+        isLoading: false,
+        isClaiming: false,
+        inFlight: new Set<string>(),
+        error: null,
+        claim: vi.fn(),
+      }),
+    }));
+    vi.doMock("@/lib/telemetry", () => ({
+      track: (...args: unknown[]) => trackMock(...args),
+    }));
+    vi.doMock("@/lib/pro/use-pro-status", () => ({
+      useProStatus: () => useProStatusMock(),
+    }));
+    vi.doMock("@/lib/pro/purchase", () => ({
+      executeProPurchase: vi.fn(),
+    }));
+    vi.doMock("@/lib/contracts/chains", () => ({
+      getBadgesAddress: () => "0xBadgesContractAddress00000000000000000000",
+      getShopAddress: () => "0xShopContractAddress00000000000000000000aa",
+      getConfiguredChainId: () => 42220,
+      getMiniPayFeeCurrency: () => undefined,
+    }));
+    vi.doMock("@/lib/contracts/badges", () => ({ badgesAbi: [] as const }));
+    vi.doMock("@/lib/contracts/scoreboard", () => ({ getLevelId: () => 0n }));
+
+    const mod = await import("../hub-scaffold-client");
+    HubScaffoldClientLite = mod.HubScaffoldClient;
+
+    pushMock.mockReset();
+    trackMock.mockReset();
+    useAccountMock.mockReturnValue({ address: undefined, isConnected: false });
+    useChainIdMock.mockReturnValue(42220);
+    useReadContractsMock.mockReturnValue({ data: undefined });
+    useProStatusMock.mockReturnValue({ status: null, isLoading: false, refetch: vi.fn() });
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.resetModules();
+  });
+
+  it("does not navigate to /arena when arena CTA is pressed in Lite Mode", async () => {
+    const user = userEvent.setup();
+    render(<HubScaffoldClientLite />);
+
+    const arenaButton = screen.queryByRole("button", { name: /enter arena/i });
+    if (arenaButton) {
+      await user.click(arenaButton);
+      expect(pushMock).not.toHaveBeenCalledWith(expect.stringContaining("/arena"));
+    }
+    // If the button is not rendered at all in Lite, the test passes trivially —
+    // that's also valid (hidden > no-op).
+  });
+
+  it("does not navigate to /coach when coach CTA is pressed in Lite Mode", async () => {
+    const user = userEvent.setup();
+    useAccountMock.mockReturnValue({ address: TEST_WALLET, isConnected: true });
+    useProStatusMock.mockReturnValue({
+      status: { active: true, expiresAt: Date.now() + 7 * 86_400_000 },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    render(<HubScaffoldClientLite />);
+
+    const coachButton = screen.queryByRole("button", { name: /coach/i });
+    if (coachButton) {
+      await user.click(coachButton);
+      expect(pushMock).not.toHaveBeenCalledWith(expect.stringContaining("/coach"));
+    }
+  });
+
+  it("does not fire monetization telemetry for PRO in Lite Mode", () => {
+    render(<HubScaffoldClientLite />);
+    const monEvents = trackMock.mock.calls
+      .map((args: unknown[]) => args[0] as string)
+      .filter((e: string) => e.startsWith("monetization."));
+    expect(monEvents).toHaveLength(0);
+  });
+});

@@ -2,6 +2,8 @@ import createMiddleware from "next-intl/middleware";
 import { defineRouting } from "next-intl/routing";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "@/i18n/routing";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { isFullOnlyPath, getLiteHubTarget } from "@/lib/lite-mode-routing";
 
 /**
  * `/es` is gated behind a server-side env flag during the migration:
@@ -37,8 +39,9 @@ const intlMiddleware = ES_READY
     );
 
 export default function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
   if (!ES_READY) {
-    const { pathname } = request.nextUrl;
     if (pathname === "/es" || pathname.startsWith("/es/")) {
       // Under `localePrefix: "as-needed"` the EN canonical lives at
       // the bare path (no `/en/` prefix), so redirect `/es/<path>`
@@ -50,6 +53,18 @@ export default function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl, 307);
     }
   }
+
+  if (CHESSCITO_LITE_MODE) {
+    if (isFullOnlyPath(pathname, routing.locales, routing.defaultLocale)) {
+      const targetPath = getLiteHubTarget(
+        pathname,
+        routing.locales,
+        routing.defaultLocale,
+      );
+      return NextResponse.redirect(new URL(targetPath, request.url), 307);
+    }
+  }
+
   return intlMiddleware(request);
 }
 

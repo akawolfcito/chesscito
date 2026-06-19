@@ -53,6 +53,7 @@ import {
   REWARD_TILE_ORDER,
   deriveRewardTiles,
 } from "@/lib/hub/derive-reward-tiles";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
 /** On-chain badge IDs in slot order — matches `exercises-screen.tsx`'s
  *  `BADGE_LEVEL_IDS` enumeration. Index 0 = id 1 = rook, index 1 = id 2
@@ -210,13 +211,16 @@ export function HubScaffoldClient({
   useEffect(() => {
     if (!initialSheet || initialSheetOpenedRef.current) return;
     initialSheetOpenedRef.current = true;
-    if (initialSheet === "shop") {
-      openShopSheet();
-    } else if (initialSheet === "pro") {
-      openProSheet();
-    } else if (initialSheet === "badges") {
-      openBadgeSheet();
-    } else if (initialSheet === "trophies") {
+    if (!CHESSCITO_LITE_MODE) {
+      if (initialSheet === "shop") {
+        openShopSheet();
+      } else if (initialSheet === "pro") {
+        openProSheet();
+      } else if (initialSheet === "badges") {
+        openBadgeSheet();
+      }
+    }
+    if (initialSheet === "trophies") {
       // External deep-link → the standalone /trophies page (SPEC 1 D8).
       router.push("/trophies");
     }
@@ -306,6 +310,7 @@ export function HubScaffoldClient({
   );
 
   const handleArenaPress = useCallback(() => {
+    if (CHESSCITO_LITE_MODE) return;
     track("secondary_arena_clicked");
     // `?fresh=1` forces the arena page to show the difficulty + color
     // selector. Without it the route auto-resumes the previous match
@@ -324,6 +329,7 @@ export function HubScaffoldClient({
   }, []);
 
   useEffect(() => {
+    if (CHESSCITO_LITE_MODE) return;
     if (proTrainingCardViewedRef.current) return;
     if (isConnected && proStatus === null) return;
     proTrainingCardViewedRef.current = true;
@@ -417,7 +423,7 @@ export function HubScaffoldClient({
           // Same TrophiesBody renders, no bounce loop, deep-linkable.
           router.push("/trophies");
         }}
-        onProTap={() => {
+        onProTap={CHESSCITO_LITE_MODE ? undefined : () => {
           track("hub_pro_chip_tap", { pro_active: pro.active });
           // M1 funnel (Commit 6) — monetization-namespaced tap with
           // daysRemaining payload, parallel to the legacy event.
@@ -430,7 +436,7 @@ export function HubScaffoldClient({
           // bounce caused; sheet renders directly above the scaffold.
           proSheet.openSheet();
         }}
-        onCoachTap={() => {
+        onCoachTap={CHESSCITO_LITE_MODE ? undefined : () => {
           track("hub_coach_chip_tap", { pro_active: pro.active });
           if (pro.active) {
             router.push("/coach/history");
@@ -438,15 +444,15 @@ export function HubScaffoldClient({
             proSheet.openSheet();
           }
         }}
-        onProTilePress={() => {
+        onProTilePress={CHESSCITO_LITE_MODE ? undefined : () => {
           track("hub_pro_tile_tap", { pro_active: pro.active });
           proSheet.openSheet();
         }}
-        onPremiumTap={() => {
+        onPremiumTap={CHESSCITO_LITE_MODE ? undefined : () => {
           track("hub_premium_slot_tap", { pro_active: pro.active });
           proSheet.openSheet();
         }}
-        onShieldsTap={() => {
+        onShieldsTap={CHESSCITO_LITE_MODE ? undefined : () => {
           // KEY conversion event: validates the monetization-as-default
           // hypothesis behind the scaffold redesign. Shield count carried
           // as a dim so we can correlate tap rate with depletion state.
@@ -467,10 +473,10 @@ export function HubScaffoldClient({
         onArenaPress={handleArenaPress}
         miniArenaUnlocked={(starsPerPiece.rook ?? 0) >= 12}
       />
-      <ProSheet {...proSheet.sheetProps} />
-      <BadgeSheet {...badgeSheet.sheetProps} />
-      <ShopSheet {...shopSheet.sheetProps} />
-      <PurchaseConfirmSheet {...shopSheet.confirmProps} />
+      {!CHESSCITO_LITE_MODE && <ProSheet {...proSheet.sheetProps} />}
+      {!CHESSCITO_LITE_MODE && <BadgeSheet {...badgeSheet.sheetProps} />}
+      {!CHESSCITO_LITE_MODE && <ShopSheet {...shopSheet.sheetProps} />}
+      {!CHESSCITO_LITE_MODE && <PurchaseConfirmSheet {...shopSheet.confirmProps} />}
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
         <SheetContent
