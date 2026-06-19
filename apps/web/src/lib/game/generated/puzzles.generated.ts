@@ -25,7 +25,7 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "optimalMoves": 1,
       "startPos": {
         "file": 0,
-        "rank": 2
+        "rank": 1
       },
       "targetPos": {
         "file": 0,

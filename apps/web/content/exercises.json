@@ -14,9 +14,9 @@
   {
     "id": "rook-2",
     "piece": "rook",
-    "fen": "8/8/8/8/8/R7/8/8 w - - 0 1",
+    "fen": "8/8/8/8/8/8/R7/8 w - - 0 1",
     "target": "a8",
-    "mover": "a3",
+    "mover": "a2",
     "tier": "easy",
     "tags": [
       "straight-line"
