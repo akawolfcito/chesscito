@@ -2470,9 +2470,7 @@ export function ExercisesScreen({
                       : tStatus("accountLabel")
                   }
                   data-testid="account-trigger"
-                  className={`candy-tray-pill hub-hud-pill${
-                    proStatus?.active ? " hub-hud-pill--pro" : ""
-                  }`}
+                  className="candy-tray-pill hub-hud-pill"
                 >
                   <picture>
                     <source srcSet="/art/screen-mission/account-icon.avif" type="image/avif" />

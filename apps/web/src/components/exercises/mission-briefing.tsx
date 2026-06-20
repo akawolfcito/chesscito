@@ -101,6 +101,7 @@ export function MissionBriefing({
               'image-set(url("/art/screen-mission/panel-mision-icon.avif") type("image/avif"), url("/art/screen-mission/panel-mision-icon.webp") type("image/webp"), url("/art/screen-mission/panel-mision-icon.png") type("image/png"))',
             backgroundSize: "100% 100%",
             backgroundRepeat: "no-repeat",
+            minHeight: "280px",
           }}
         >
           {/* Close button is positioned absolutely against the panel

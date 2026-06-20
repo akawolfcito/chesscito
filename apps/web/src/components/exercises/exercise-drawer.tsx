@@ -208,7 +208,7 @@ export function ExerciseDrawer({
          * shrink-0 so only the middle list scrolls. `min-h-0` on the
          * list is the canonical flex-overflow trick — children of
          * flexboxes default to min-height: auto which inhibits overflow. */
-        className="mission-shell sheet-bg-hub flex max-h-[90dvh] flex-col rounded-t-3xl border-0 pb-[5rem]"
+        className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         <div className="-mx-6 -mt-6 shrink-0 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
           <ContextualHeader
