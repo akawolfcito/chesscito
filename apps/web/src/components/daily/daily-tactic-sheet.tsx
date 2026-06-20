@@ -136,7 +136,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
         title="Daily Tactic"
         description={puzzleData.name}
         data-testid="daily-tactic-sheet"
-        className="mission-shell sheet-bg-hub relative flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
+        className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         <MissionHeaderCandy
           title="Daily Tactic"
@@ -295,7 +295,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
          *  so no separate dismiss timer is needed here. */}
         {CHESSCITO_LITE_MODE && status === "solved" && (
           <div
-            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center candy-modal-scrim"
+            className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center candy-modal-scrim"
             aria-hidden="true"
           >
             <div className="flex flex-col items-center gap-3 px-4">
