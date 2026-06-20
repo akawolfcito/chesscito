@@ -64,4 +64,40 @@ describe("<FocusPassport>", () => {
     );
     expect(container.textContent ?? "").not.toMatch(FORBIDDEN);
   });
+
+  it("renders flame variants: blue past + color current + gray pending (streak 3, todayDone)", () => {
+    render(
+      <FocusPassport streak={3} totalCompleted={3} todayDone={true} isLoading={false} />,
+    );
+    const kinds = screen
+      .getAllByTestId("focus-passport-slot")
+      .map((el) => el.getAttribute("data-kind"));
+    expect(kinds).toEqual(["blue", "blue", "color", "gray", "gray", "gray", "gray"]);
+  });
+
+  it("glows the next-pending flame when today is not yet done", () => {
+    render(
+      <FocusPassport streak={3} totalCompleted={3} todayDone={false} isLoading={false} />,
+    );
+    const slots = screen.getAllByTestId("focus-passport-slot");
+    expect(slots.map((el) => el.getAttribute("data-kind"))).toEqual([
+      "blue",
+      "blue",
+      "blue",
+      "gray",
+      "gray",
+      "gray",
+      "gray",
+    ]);
+    expect(slots[3].getAttribute("data-glow")).toBe("true");
+  });
+
+  it("loading renders all gray flames with no glow", () => {
+    render(
+      <FocusPassport streak={5} totalCompleted={9} todayDone={true} isLoading={true} />,
+    );
+    const slots = screen.getAllByTestId("focus-passport-slot");
+    expect(slots.every((el) => el.getAttribute("data-kind") === "gray")).toBe(true);
+    expect(slots.every((el) => el.getAttribute("data-glow") === null)).toBe(true);
+  });
 });

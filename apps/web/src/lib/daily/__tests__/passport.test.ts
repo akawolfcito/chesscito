@@ -5,6 +5,7 @@ import {
   PASSPORT_TOTAL_SLOTS,
   derivePassportView,
   passportFilledSlots,
+  passportSlots,
   passportTier,
 } from "@/lib/daily/passport";
 
@@ -80,5 +81,66 @@ describe("derivePassportView", () => {
       ).todayDone,
     ).toBe(false);
     expect(derivePassportView(progress({ streak: 0 }), TODAY).todayDone).toBe(false);
+  });
+
+  it("includes 7 slot descriptors", () => {
+    expect(derivePassportView(progress({ streak: 3 }), TODAY).slots).toHaveLength(7);
+  });
+});
+
+describe("passportSlots", () => {
+  const kinds = (filled: number, todayDone: boolean) =>
+    passportSlots(filled, todayDone).map((s) => s.kind);
+
+  it("streak 0, today pending → all gray, first slot glows (active)", () => {
+    const slots = passportSlots(0, false);
+    expect(slots.map((s) => s.kind)).toEqual(Array(7).fill("gray"));
+    expect(slots[0].glow).toBe(true);
+    expect(slots.slice(1).every((s) => !s.glow)).toBe(true);
+  });
+
+  it("streak 1, todayDone → 1 color flame, rest gray, no glow", () => {
+    const slots = passportSlots(1, true);
+    expect(slots[0].kind).toBe("color");
+    expect(slots.slice(1).map((s) => s.kind)).toEqual(Array(6).fill("gray"));
+    expect(slots.every((s) => !s.glow)).toBe(true);
+  });
+
+  it("streak 3, todayDone → 2 blue + current color + 4 gray", () => {
+    expect(kinds(3, true)).toEqual([
+      "blue",
+      "blue",
+      "color",
+      "gray",
+      "gray",
+      "gray",
+      "gray",
+    ]);
+  });
+
+  it("streak 3, today pending → 3 blue + next gray(glow) + rest gray", () => {
+    const slots = passportSlots(3, false);
+    expect(slots.map((s) => s.kind)).toEqual([
+      "blue",
+      "blue",
+      "blue",
+      "gray",
+      "gray",
+      "gray",
+      "gray",
+    ]);
+    expect(slots[3].glow).toBe(true);
+  });
+
+  it("streak 7+, todayDone → 6 blue + last color (caps at 7)", () => {
+    expect(kinds(7, true)).toEqual([
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+      "color",
+    ]);
   });
 });
