@@ -3,8 +3,8 @@
 import { useTranslations } from "next-intl";
 
 import {
-  PASSPORT_TOTAL_SLOTS,
-  passportFilledSlots,
+  type PassportSlotKind,
+  passportSlots,
   passportTier,
 } from "@/lib/daily/passport";
 
@@ -17,12 +17,21 @@ export type FocusPassportProps = {
   /** True when today's focus is already solved. */
   todayDone: boolean;
   /** While the parent hydrates localStorage, render the safe empty shell
-   *  (no filled slots) to avoid hydration flicker / false days. */
+   *  (all-gray flames) to avoid hydration flicker / false days. */
   isLoading: boolean;
 };
 
-/** Focus Passport card (Chesscito Lite P1). Presentational only: streak +
- *  7 slots derived from the streak count (NOT calendar dates). No
+/** Flame sprite basenames in `public/art/focus-passport/`. */
+const FLAME_ASSET: Record<PassportSlotKind, string> = {
+  color: "flame-color",
+  blue: "flame-blue",
+  gray: "flame-gray",
+};
+
+/** Focus Passport card (Chesscito Lite, P1.1 visual iteration).
+ *  Compact, icon-first: 7 flames read as a streak (frozen-blue = earlier
+ *  day done, orange-gold = today/active done, gray = pending). Slots are
+ *  derived purely from the streak count (NOT calendar dates). No
  *  localStorage access here — the parent hydrates and passes props. Copy
  *  avoids verified/on-chain/proof/NFT/mint and any health claim. */
 export function FocusPassport({
@@ -33,37 +42,21 @@ export function FocusPassport({
 }: FocusPassportProps) {
   const t = useTranslations("FOCUS_PASSPORT_COPY");
 
-  const filledSlots = isLoading ? 0 : passportFilledSlots(streak);
+  // While loading, force the safe empty shell (all gray, no glow, no
+  // dynamic title) so the server + first client render never paint false
+  // filled days.
+  const slots = isLoading
+    ? passportSlots(0, false).map((s) => ({ ...s, glow: false }))
+    : passportSlots(streak < 0 ? 0 : streak, todayDone);
   const tier = isLoading ? "empty" : passportTier(streak);
 
-  let title: string;
-  let sub: string;
-  if (isLoading) {
-    title = t("heading");
-    sub = t("loading");
-  } else if (tier === "empty") {
-    title = t("emptyTitle");
-    sub = t("emptySub");
-  } else if (tier === "day1") {
-    title = t("day1Title");
-    sub = t("day1Sub");
-  } else if (tier === "week") {
-    title = t("weekTitle");
-    sub = t("weekSub");
-  } else {
-    title = t("buildingTitle", { count: streak });
-    sub = t("buildingSub");
+  let title = "";
+  if (!isLoading) {
+    if (tier === "empty") title = t("emptyTitle");
+    else if (tier === "day1") title = t("day1Title");
+    else if (tier === "week") title = t("weekTitle");
+    else title = t("buildingTitle", { count: streak });
   }
-
-  // The slot representing "today": the most recent filled slot when today
-  // is done, otherwise the next slot is the still-pending one (only when a
-  // streak is live, not in the empty state).
-  const todaySlotIndex =
-    !isLoading && todayDone && filledSlots > 0
-      ? filledSlots - 1
-      : !isLoading && !todayDone && tier !== "empty" && filledSlots < PASSPORT_TOTAL_SLOTS
-        ? filledSlots
-        : -1;
 
   return (
     <section
@@ -73,37 +66,44 @@ export function FocusPassport({
       data-total-completed={totalCompleted}
       data-testid="focus-passport"
     >
-      <div className="focus-passport-head">
-        <p className="focus-passport-title" data-testid="focus-passport-title">
-          {title}
-        </p>
-        <p className="focus-passport-sub">{sub}</p>
-      </div>
+      <p className="focus-passport-kicker">{t("heading")}</p>
       <div className="focus-passport-slots" role="list">
-        {Array.from({ length: PASSPORT_TOTAL_SLOTS }, (_, i) => {
-          const filled = i < filledSlots;
-          const isToday = i === todaySlotIndex;
+        {slots.map((slot, i) => {
+          const filled = slot.kind !== "gray";
+          const asset = FLAME_ASSET[slot.kind];
           const dayLabel = i + 1;
           return (
-            <span
+            <picture
               key={i}
               role="listitem"
               data-testid="focus-passport-slot"
+              data-kind={slot.kind}
               data-filled={filled || undefined}
-              data-today={isToday || undefined}
-              aria-label={
-                filled
-                  ? t("slotFilledAria", { index: dayLabel })
-                  : t("slotEmptyAria", { index: dayLabel })
-              }
-              className={`focus-passport-slot${filled ? " is-filled" : ""}${
-                isToday ? " is-today" : ""
+              data-glow={slot.glow || undefined}
+              className={`focus-passport-slot focus-passport-slot--${slot.kind}${
+                slot.glow ? " is-glow" : ""
               }`}
-            />
+            >
+              <source srcSet={`/art/focus-passport/${asset}.avif`} type="image/avif" />
+              <source srcSet={`/art/focus-passport/${asset}.webp`} type="image/webp" />
+              <img
+                src={`/art/focus-passport/${asset}.png`}
+                alt={
+                  filled
+                    ? t("slotFilledAria", { index: dayLabel })
+                    : t("slotEmptyAria", { index: dayLabel })
+                }
+                draggable={false}
+              />
+            </picture>
           );
         })}
       </div>
-      <p className="focus-passport-foot">{t("currentStreak")}</p>
+      {title ? (
+        <p className="focus-passport-title" data-testid="focus-passport-title">
+          {title}
+        </p>
+      ) : null}
     </section>
   );
 }

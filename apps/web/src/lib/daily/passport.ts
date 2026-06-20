@@ -20,6 +20,18 @@ export const PASSPORT_TOTAL_SLOTS = 7 as const;
 /** Copy/state buckets: 0 → empty, 1 → day1, 2-6 → building, 7+ → week. */
 export type PassportTier = "empty" | "day1" | "building" | "week";
 
+/** Flame colorway per slot (P1.1 visual iteration):
+ *  - `blue`  → a completed earlier day in the streak (frozen flame).
+ *  - `color` → today completed / the active completed day (orange-gold).
+ *  - `gray`  → pending / future day. */
+export type PassportSlotKind = "blue" | "color" | "gray";
+
+export type PassportSlot = {
+  kind: PassportSlotKind;
+  /** Subtle highlight on the single "next, still-pending today" slot. */
+  glow: boolean;
+};
+
 export type PassportView = {
   /** Filled slots = streak clamped to [0, 7]. */
   filledSlots: number;
@@ -31,6 +43,8 @@ export type PassportView = {
   tier: PassportTier;
   /** Normalized streak (floored, non-negative). */
   streak: number;
+  /** 7 flame descriptors derived purely from filledSlots + todayDone. */
+  slots: PassportSlot[];
 };
 
 /** Clamps a raw streak to the [0, 7] slot range (floor + cap). */
@@ -48,14 +62,34 @@ export function passportTier(streak: number): PassportTier {
   return "building";
 }
 
+/** Derives the 7 flame slots from the filled count + whether today is done.
+ *  Pure, no data mutation. When `todayDone`, the last filled slot is the
+ *  current (color) flame and earlier filled slots are frozen (blue). When
+ *  today is still pending, all filled slots are frozen and the next slot
+ *  gets a subtle glow to signal "this is today, go solve it". */
+export function passportSlots(filledSlots: number, todayDone: boolean): PassportSlot[] {
+  const filled = Math.min(Math.max(0, Math.floor(filledSlots)), PASSPORT_TOTAL_SLOTS);
+  const currentIndex = todayDone ? filled - 1 : -1;
+  const nextPendingIndex = !todayDone ? filled : -1;
+  return Array.from({ length: PASSPORT_TOTAL_SLOTS }, (_, i) => {
+    if (i < filled) {
+      return { kind: i === currentIndex ? "color" : "blue", glow: false };
+    }
+    return { kind: "gray", glow: i === nextPendingIndex && i < PASSPORT_TOTAL_SLOTS };
+  });
+}
+
 /** Derives the full presentational view from persisted progress. Pure. */
 export function derivePassportView(progress: DailyProgress, today: string): PassportView {
   const streak = Math.max(0, Math.floor(progress.streak));
+  const filledSlots = passportFilledSlots(streak);
+  const todayDone = progress.lastCompletedDate === today;
   return {
-    filledSlots: passportFilledSlots(streak),
+    filledSlots,
     totalSlots: PASSPORT_TOTAL_SLOTS,
-    todayDone: progress.lastCompletedDate === today,
+    todayDone,
     tier: passportTier(streak),
     streak,
+    slots: passportSlots(filledSlots, todayDone),
   };
 }
