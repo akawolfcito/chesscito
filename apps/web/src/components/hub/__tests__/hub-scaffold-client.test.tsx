@@ -765,4 +765,9 @@ describe("HubScaffoldClient — Lite Mode", () => {
       .filter((e: string) => e.startsWith("monetization."));
     expect(monEvents).toHaveLength(0);
   });
+
+  it("renders the Focus Passport in Lite Mode", async () => {
+    render(<HubScaffoldClientLite />);
+    expect(await screen.findByTestId("focus-passport")).toBeInTheDocument();
+  });
 });
