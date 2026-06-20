@@ -6895,7 +6895,6 @@ button.hud-resource-chip:active:not(:disabled) {
  * pill while staying within the chip body. */
 .hub-hud-pill .candy-tray-pill-icon--floating {
   position: static;
-  transform: none;
   left: auto;
   top: auto;
   width: 1.8rem;
@@ -6905,6 +6904,16 @@ button.hud-resource-chip:active:not(:disabled) {
    * sky background without it needing to overhang the chip. */
   filter:
     drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32)) drop-shadow(0 1px 0 rgba(110, 65, 15, 0.45));
+  /* MiniPay WebView anti-flicker: promote the icon to its own GPU
+   * compositing layer so the stacked drop-shadow rasterizes ONCE and
+   * composites, instead of re-rasterizing every frame against the
+   * surface that repaints behind the /exercises header (which made the
+   * CONNECT + ACCOUNT icons titilate rapidly). `translateZ(0)` replaces
+   * the former `transform: none` reset (the icon is inline now, so no
+   * overhang transform to undo). `backface-visibility: hidden` keeps the
+   * layer stable on Android WebView. */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* `--anchored-left` modifier — retained as a no-op alias now that the
