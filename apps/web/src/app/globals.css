@@ -12911,20 +12911,14 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* ── Focus Passport (Chesscito Lite — P1.1 visual iteration) ──────────
- * Compact, icon-first streak tracker mounted high in the Lite hub (return
- * anchor). 7 flame sprites read as a streak: frozen-blue = earlier day done,
- * orange-gold = today/active done, gray = pending (next-pending gets a glow).
- * Slots reflect the CURRENT streak count (not calendar dates). Cream-amber
- * shell consistent with `.candy-tray-pill`. Lite-only; surface-split CSS
- * files don't exist in this repo, so it lives in globals.
- * See docs/specs/2026-06-20-focus-passport-p1*.md. */
-.hub-scaffold-passport {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 0.4rem 0.75rem 0;
-}
-
+ * Compact, icon-first streak tracker. In Lite it replaces the decorative
+ * pawn+guide+king strip inside `.hub-scaffold-center-stack`, so it lives in
+ * the portal scene itself. 7 flame sprites read as a streak: frozen-blue =
+ * earlier day done, orange-gold = today/active done, gray = pending
+ * (next-pending gets a glow). Slots reflect the CURRENT streak count (not
+ * calendar dates). Cream-amber shell consistent with `.candy-tray-pill`.
+ * Lite-only; surface-split CSS files don't exist in this repo, so it lives
+ * in globals. See docs/specs/2026-06-20-focus-passport-p1*.md. */
 .focus-passport {
   width: 100%;
   max-width: 19rem;

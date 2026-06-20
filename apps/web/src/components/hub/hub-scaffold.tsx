@@ -256,18 +256,6 @@ export function HubScaffold({
         )}
       </header>
 
-      {/* Focus Passport (Chesscito Lite P1) — return anchor high in the
-          hub, just below the HUD. Lite-only via build flag; Full never
-          renders it. */}
-      {CHESSCITO_LITE_MODE && focusPassport
-        ? wrap(
-            "FocusPassport",
-            <div className="hub-scaffold-passport">
-              <FocusPassport {...focusPassport} />
-            </div>,
-          )
-        : null}
-
       <section className="hub-scaffold-body">
         <div className="hub-scaffold-side hub-scaffold-side--left">
           <div className="hub-scaffold-rail-stack">
@@ -283,31 +271,39 @@ export function HubScaffold({
           </div>
           <div className="hub-scaffold-center-stack">
             {wrap("MissionRibbon", <MissionRibbon surface="hub" />)}
-            <div className="hub-scaffold-guide" aria-hidden="true">
-              <picture className="hub-scaffold-guide-piece">
-                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-                <img src="/art/redesign/pieces/w-pawn.png" alt="" />
-              </picture>
-              <picture className="hub-scaffold-guide-sequence">
-                <source srcSet="/art/scene-rooted/guide-secuencia.avif" type="image/avif" />
-                <source srcSet="/art/scene-rooted/guide-secuencia.webp" type="image/webp" />
-                {/* Intrinsic dims so the browser reserves layout space
-                    pre-load (PSI CLS audit 2026-06-12); CSS still owns
-                    the rendered size. */}
-                <img
-                  src="/art/scene-rooted/guide-secuencia.png"
-                  alt=""
-                  width={289}
-                  height={121}
-                />
-              </picture>
-              <picture className="hub-scaffold-guide-piece">
-                <source srcSet="/art/redesign/pieces/w-king.avif" type="image/avif" />
-                <source srcSet="/art/redesign/pieces/w-king.webp" type="image/webp" />
-                <img src="/art/redesign/pieces/w-king.png" alt="" />
-              </picture>
-            </div>
+            {/* In Lite, the decorative pawn+guide+king strip is replaced by
+                the compact Focus Passport (return anchor) so the habit
+                tracker lives in the portal scene itself. Full keeps the
+                guide art. Lite-only via build flag. */}
+            {CHESSCITO_LITE_MODE && focusPassport ? (
+              wrap("FocusPassport", <FocusPassport {...focusPassport} />)
+            ) : (
+              <div className="hub-scaffold-guide" aria-hidden="true">
+                <picture className="hub-scaffold-guide-piece">
+                  <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                  <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                  <img src="/art/redesign/pieces/w-pawn.png" alt="" />
+                </picture>
+                <picture className="hub-scaffold-guide-sequence">
+                  <source srcSet="/art/scene-rooted/guide-secuencia.avif" type="image/avif" />
+                  <source srcSet="/art/scene-rooted/guide-secuencia.webp" type="image/webp" />
+                  {/* Intrinsic dims so the browser reserves layout space
+                      pre-load (PSI CLS audit 2026-06-12); CSS still owns
+                      the rendered size. */}
+                  <img
+                    src="/art/scene-rooted/guide-secuencia.png"
+                    alt=""
+                    width={289}
+                    height={121}
+                  />
+                </picture>
+                <picture className="hub-scaffold-guide-piece">
+                  <source srcSet="/art/redesign/pieces/w-king.avif" type="image/avif" />
+                  <source srcSet="/art/redesign/pieces/w-king.webp" type="image/webp" />
+                  <img src="/art/redesign/pieces/w-king.png" alt="" />
+                </picture>
+              </div>
+            )}
             {heroCta ? (
               wrap(
                 "HubHeroCta",
