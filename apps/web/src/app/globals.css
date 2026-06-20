@@ -7263,12 +7263,38 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* Gold text only — no purple bg. For surfaces where the pill keeps its
-   cream background but the label should reflect PRO membership. */
+   cream background but the label should reflect PRO membership.
+   The glossy metallic-gold fill lives on the label span below; this
+   button-level rule just clears the base cream ink + text-shadow so the
+   span's gradient reads cleanly (no pale-yellow bleed for any non-span
+   text). Replaces the prior flat #ffe66e + purple offset shadow, which
+   looked cheap on the cream pill. */
 .hub-hud-pill--pro-text {
-  color: #ffe66e;
-  text-shadow:
-    0 2px 0 rgba(61, 27, 102, 0.82),
-    0 0 8px rgba(255, 224, 89, 0.38);
+  color: transparent;
+  text-shadow: none;
+}
+
+/* Glossy metallic-gold PRO label. A vertical gradient clipped to the
+   glyphs gives the highlight → gold → amber → bottom-reflection band of
+   a polished gold; a thin darker-amber stroke defines the letter edges
+   and a two-layer drop-shadow lifts the text off the cream pill. */
+.hub-hud-pill--pro-text > span {
+  background: linear-gradient(
+    180deg,
+    #fff3c4 0%,
+    #ffd95e 20%,
+    #f3b63a 46%,
+    #e69a26 64%,
+    #f6bf4a 84%,
+    #ffe48c 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0.4px rgba(150, 85, 12, 0.55);
+  filter:
+    drop-shadow(0 1px 0 rgba(110, 64, 10, 0.5)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.22));
 }
 
 .hub-scaffold-hud-right {
