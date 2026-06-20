@@ -94,13 +94,13 @@ describe("StatsPage", () => {
   it("renders the three platform-level primary headline metrics", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
 
-    expect(screen.getByText("Victory NFTs Minted")).toBeInTheDocument();
+    expect(screen.getByText("Verified Progress Saves")).toBeInTheDocument();
     expect(screen.getByText("1,234")).toBeInTheDocument();
 
     expect(screen.getByText("Approx. App Sessions (7d)")).toBeInTheDocument();
     expect(screen.getByText("410")).toBeInTheDocument();
 
-    expect(screen.getByText("Victory Mints (30d)")).toBeInTheDocument();
+    expect(screen.getByText("Progress Saves (30d)")).toBeInTheDocument();
     expect(screen.getByText("250")).toBeInTheDocument();
   });
 
@@ -119,10 +119,10 @@ describe("StatsPage", () => {
     expect(screen.getByText("Green Pawn #34")).toBeInTheDocument();
     // No raw wallet leaks into the rendered DOM.
     expect(document.body.textContent ?? "").not.toMatch(/0x[a-fA-F0-9]{6}/);
-    // Section now shows total mints + last-mint relative time instead
-    // of per-event difficulty badges. Each sample wallet has 1 mint.
-    expect(screen.getAllByText("1 mint").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText(/last mint/i).length).toBeGreaterThanOrEqual(2);
+    // Section now shows total saves + last-save relative time instead
+    // of per-event difficulty badges. Each sample wallet has 1 save.
+    expect(screen.getAllByText("1 save").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText(/last save/i).length).toBeGreaterThanOrEqual(2);
   });
 
   it("renders Leaderboard top entries with rank, wallet, score", () => {
@@ -188,7 +188,7 @@ describe("StatsPage", () => {
     expect(placeholders.length).toBeGreaterThanOrEqual(3);
 
     // Empty lists show "no data" copy, not crashes
-    expect(screen.getByText("No mints yet.")).toBeInTheDocument();
+    expect(screen.getByText("No saves yet.")).toBeInTheDocument();
     expect(
       screen.getByText("Leaderboard is currently unavailable."),
     ).toBeInTheDocument();
@@ -205,7 +205,7 @@ describe("StatsPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /Leaderboard entries are based on game scores and may include players who have not minted a Victory NFT/,
+        /Leaderboard entries are based on game scores and may include players who have not saved progress on-chain/,
       ),
     ).toBeInTheDocument();
   });
@@ -235,15 +235,15 @@ describe("StatsPage", () => {
     // diff easy=500 medium=600 hard=134 → Medium is the max band.
     expect(
       screen.getByText(
-        "250 of 1234 Victory mints happened in the last 30 days.",
+        "250 of 1234 progress saves happened in the last 30 days.",
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("56 Victory mints happened in the last 7 days."),
+      screen.getByText("56 progress saves happened in the last 7 days."),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Most minted victories are Medium difficulty, showing steady mid-skill engagement.",
+        "Most progress saves are Medium difficulty, showing steady mid-skill engagement.",
       ),
     ).toBeInTheDocument();
   });
@@ -269,14 +269,14 @@ describe("StatsPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /Approx\. app sessions and Victory mints over the last 30 days\./,
+        /Approx\. app sessions and progress saves over the last 30 days\./,
       ),
     ).toBeInTheDocument();
     // "Approx. app sessions" is unique to the trend panel label.
     expect(screen.getByText("Approx. app sessions")).toBeInTheDocument();
-    // "Victory mints" appears in the trend panel label AND in the
+    // "Progress saves" appears in the trend panel label AND in the
     // Tracked today bullet — getAllByText keeps both meanings legal.
-    expect(screen.getAllByText("Victory mints").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("Progress saves").length).toBeGreaterThanOrEqual(2);
     // Totals from SAMPLE_STATS: sessions = sum(i%5 for i in 0..29) = 60,
     // mints = sum(i%3 for i in 0..29) = 30.
     expect(screen.getByText("60")).toBeInTheDocument();
@@ -294,7 +294,7 @@ describe("StatsPage", () => {
     // SAMPLE_STATS difficulty: easy=500, medium=600, hard=134 →
     // medium is the max band, so caption is the mid-skill variant.
     expect(
-      screen.getByText("Most current mints are mid-skill activity."),
+      screen.getByText("Most current saves are mid-skill activity."),
     ).toBeInTheDocument();
   });
 
@@ -340,12 +340,12 @@ describe("StatsPage", () => {
   it("renders sections in visual-momentum order (Snapshot → Trend → Mix → Signals → Windows → Recent → Leaderboard → Tracked → Methodology)", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
     const order = [
-      "Victory NFTs Minted",
+      "Verified Progress Saves",
       "Activity trend, last 30 days",
       "Victory difficulty mix",
       "Platform signals",
       "Activity windows",
-      "Top Minting Wallets",
+      "Top Active Wallets",
       "Community Leaderboard",
       "Tracked today / Coming next",
       "Methodology",
@@ -370,9 +370,9 @@ describe("StatsPage", () => {
     expect(valueEl.className).toContain("md:text-4xl");
   });
 
-  it("Top Minting Wallets heading uses the demoted appendix style (uppercase small caps, not bold lg)", () => {
+  it("Top Active Wallets heading uses the demoted appendix style (uppercase small caps, not bold lg)", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
-    const heading = screen.getByText("Top Minting Wallets");
+    const heading = screen.getByText("Top Active Wallets");
     expect(heading.className).toContain("uppercase");
     expect(heading.className).not.toContain("font-bold");
   });
@@ -416,7 +416,7 @@ describe("StatsPage", () => {
     expect(celoscanLink.getAttribute("rel") ?? "").toContain("noreferrer");
 
     const victoryLink = screen.getByRole("link", {
-      name: /Victory NFT contract on Celoscan/i,
+      name: /Progress saves contract on Celoscan/i,
     });
     expect(victoryLink).toHaveAttribute(
       "href",
@@ -442,10 +442,10 @@ describe("StatsPage", () => {
     // the sublabel restates the source explicitly so a reader does not
     // assume it tracks the broader leaderboard population.
     expect(
-      screen.getByText("Unique minter wallets"),
+      screen.getByText("Unique active wallets"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Distinct wallets that minted a Victory"),
+      screen.getByText("Distinct wallets that saved progress"),
     ).toBeInTheDocument();
 
     // Welcome Packs ledger started post-launch — sublabel signals the
@@ -459,7 +459,7 @@ describe("StatsPage", () => {
     // the rank list against the Unique Minter Wallets card.
     expect(
       screen.getByText(
-        "Based on game scores, not only minted victories.",
+        "Based on game scores, not only saved progress.",
       ),
     ).toBeInTheDocument();
   });

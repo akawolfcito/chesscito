@@ -10,7 +10,7 @@ export const metadata = {
   title: "Platform Stats — Chesscito",
   description:
     "Public activity metrics for Chesscito on Celo — sessions, " +
-    "mints, onboarding, and community activity.",
+    "focus training, progress saves, and MiniPay usage.",
 };
 
 // Snapshot refreshed by Next.js every hour. Falls back to stale data

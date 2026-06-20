@@ -197,7 +197,7 @@ export function HubScaffold({
              *  useAccount(): renders null for guests, the canonical
              *  chip family for connected wallets. NO spend, NO top-up,
              *  read-only surface backed by /api/peones/balance. */}
-            {wrap("PeonesBalanceChip", <PeonesBalanceChip />)}
+            {!CHESSCITO_LITE_MODE && wrap("PeonesBalanceChip", <PeonesBalanceChip />)}
             {/* Language chip (founder 2026-06-11): flag + locale code,
              *  tap → confirm card to switch EN ↔ ES. */}
             {wrap("LanguageChip", <LanguageChip />)}

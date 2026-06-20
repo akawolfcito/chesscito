@@ -350,7 +350,7 @@ export const BADGE_SHEET_COPY = {
   /** Onboarding hint shown above the badge grid when the user has zero
    *  stars collected. Lead with the reward (collectible for life), not
    *  the action — the audience scans and skips jargon. */
-  firstStepHint: "Master the Rook. Claim your first digital collectible.",
+  firstStepHint: "Master the Rook. Claim your first training badge.",
   /** HERO BAND piece counter label — short, fits beside the slash count. */
   heroPiecesLabel: "PIECES",
 } as const;

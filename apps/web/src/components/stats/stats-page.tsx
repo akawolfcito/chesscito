@@ -39,9 +39,9 @@ function nf(n: number): string {
 
 function difficultyMixCaption(tally: DifficultyTally): string {
   const max = Math.max(tally.easy, tally.medium, tally.hard);
-  if (tally.easy === max) return "Most current mints are beginner/onboarding activity.";
-  if (tally.medium === max) return "Most current mints are mid-skill activity.";
-  return "Most current mints are advanced/expert activity.";
+  if (tally.easy === max) return "Most current saves are beginner/onboarding activity.";
+  if (tally.medium === max) return "Most current saves are mid-skill activity.";
+  return "Most current saves are advanced/expert activity.";
 }
 
 /**
@@ -257,13 +257,13 @@ function computePlatformSignals(stats: PublicStats): string[] {
     stats.totalVictories > 0
   ) {
     signals.push(
-      `${stats.victories30d} of ${stats.totalVictories} Victory mints happened in the last 30 days.`,
+      `${stats.victories30d} of ${stats.totalVictories} progress saves happened in the last 30 days.`,
     );
   }
 
   if (stats.victories7d != null) {
     signals.push(
-      `${stats.victories7d} Victory mints happened in the last 7 days.`,
+      `${stats.victories7d} progress saves happened in the last 7 days.`,
     );
   }
 
@@ -285,7 +285,7 @@ function computePlatformSignals(stats: PublicStats): string[] {
         context = "showing strong advanced engagement";
       }
       signals.push(
-        `Most minted victories are ${label} difficulty, ${context}.`,
+        `Most progress saves are ${label} difficulty, ${context}.`,
       );
     }
   }
@@ -295,7 +295,7 @@ function computePlatformSignals(stats: PublicStats): string[] {
 
 const TRACKED_TODAY: ReadonlyArray<string> = [
   "App sessions",
-  "On-chain tx by method (mints, Get Peones, score saves, welcome packs)",
+  "On-chain tx by method (progress saves, Get Peones, score saves, welcome packs)",
   "Unique wallets transacting on-chain",
   "Get Peones stablecoin volume (USDC / USDT / cUSD)",
   "Leaderboard scores",
@@ -315,7 +315,7 @@ const ONCHAIN_METHODS: ReadonlyArray<{
   label: string;
   key: "victoryMints" | "packPurchases" | "scoreSaves" | "welcomePackClaims";
 }> = [
-  { label: "Victory mints", key: "victoryMints" },
+  { label: "Progress saves", key: "victoryMints" },
   { label: "Get Peones", key: "packPurchases" },
   { label: "Score saves (on-chain)", key: "scoreSaves" },
   { label: "Welcome packs", key: "welcomePackClaims" },
@@ -347,7 +347,7 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
           style={{ color: "var(--paper-text-muted)" }}
         >
           Public activity metrics for Chesscito as a mini app: sessions,
-          Victory mints, onboarding, and community activity.
+          focus training, progress saves, and community activity.
         </p>
         <p
           className="text-xs md:text-sm leading-snug"
@@ -375,9 +375,9 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
           break visual momentum before the first chart). */}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard
-          label="Victory NFTs Minted"
+          label="Verified Progress Saves"
           value={stats.totalVictories}
-          sublabel="Saved victories on Celo mainnet"
+          sublabel="Progress saves on Celo mainnet"
           variant="hero"
         />
         <StatCard
@@ -387,9 +387,9 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
           variant="hero"
         />
         <StatCard
-          label="Victory Mints (30d)"
+          label="Progress Saves (30d)"
           value={stats.victories30d}
-          sublabel="Mints in the last 30 days"
+          sublabel="Saves in the last 30 days"
           variant="hero"
         />
       </section>
@@ -418,7 +418,7 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
               className="mb-3 text-[0.6875rem] leading-tight"
               style={{ color: "var(--paper-text-subtle)" }}
             >
-              Approx. app sessions and Victory mints over the last 30 days.
+              Approx. app sessions and progress saves over the last 30 days.
             </p>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <TrendPanel
@@ -430,7 +430,7 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
                 rangeTo={last}
               />
               <TrendPanel
-                label="Victory mints"
+                label="Progress saves"
                 total={mintsTotal}
                 values={mints}
                 accent={TREND_MINTS_ACCENT}
@@ -521,15 +521,15 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
         </h3>
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
           <StatCard
-            label="Victory Mints (7d)"
+            label="Progress Saves (7d)"
             value={stats.victories7d}
             variant="bare"
           />
           <StatCard
-            label="Unique minter wallets"
+            label="Unique active wallets"
             value={stats.uniqueMintersLifetime}
             variant="bare"
-            sublabel="Distinct wallets that minted a Victory"
+            sublabel="Distinct wallets that saved progress"
           />
           <StatCard
             label="Approx. App Sessions (30d)"
@@ -559,14 +559,14 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
           className="mb-2 text-[0.6875rem] font-semibold uppercase tracking-wide"
           style={{ color: "var(--paper-text-subtle)" }}
         >
-          Top Minting Wallets
+          Top Active Wallets
         </h3>
         {stats.topMinters.length === 0 ? (
           <p
             className="text-xs"
             style={{ color: "var(--paper-text-subtle)" }}
           >
-            No mints yet.
+            No saves yet.
           </p>
         ) : (
           <ul
@@ -591,13 +591,13 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
                   className="text-[0.625rem] uppercase tracking-wide tabular-nums"
                   style={{ color: "var(--paper-text-subtle)" }}
                 >
-                  {row.mintCount === 1 ? "1 mint" : `${row.mintCount} mints`}
+                  {row.mintCount === 1 ? "1 save" : `${row.mintCount} saves`}
                 </span>
                 <span
                   className="text-[0.6875rem] tabular-nums"
                   style={{ color: "var(--paper-text-muted)" }}
                 >
-                  last mint {formatRelative(row.lastMintedAt)}
+                  last save {formatRelative(row.lastMintedAt)}
                 </span>
               </li>
             ))}
@@ -620,7 +620,7 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
           className="mb-2 text-[0.6875rem] leading-tight"
           style={{ color: "var(--paper-text-subtle)" }}
         >
-          Based on game scores, not only minted victories.
+          Based on game scores, not only saved progress.
         </p>
         {stats.leaderboardTop10.length === 0 ? (
           <p
@@ -835,9 +835,9 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
         </p>
         <p>
           Active sessions are anonymous app sessions, not connected
-          wallets. Victory mints count saved on-chain victories.
+          wallets. Progress saves count verified on-chain saves.
           Leaderboard entries are based on game scores and may include
-          players who have not minted a Victory NFT.
+          players who have not saved progress on-chain.
         </p>
       </section>
 
@@ -905,7 +905,7 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
               style={{ color: "var(--paper-text-muted)" }}
             >
               <span aria-hidden>→</span>
-              <span>Victory NFT contract on Celoscan</span>
+              <span>Progress saves contract on Celoscan</span>
             </a>
           </li>
         </ul>
