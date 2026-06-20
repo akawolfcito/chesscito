@@ -179,27 +179,25 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
                 </span>
               </div>
               <span className="text-xs font-bold opacity-60">{puzzleData.name}</span>
-              {streakAfterSolve != null && streakAfterSolve > 0 && (
-                <span className="text-sm font-extrabold">{DAILY_SOLVE_COPY.streakLabel(streakAfterSolve)}</span>
+              {/* Lite: streak/focus info lives in the overlay pills — bottom stays minimal. */}
+              {!CHESSCITO_LITE_MODE && (
+                <>
+                  {streakAfterSolve != null && streakAfterSolve > 0 && (
+                    <span className="text-sm font-extrabold">{DAILY_SOLVE_COPY.streakLabel(streakAfterSolve)}</span>
+                  )}
+                  {streakType === "first" && (
+                    <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.firstStreak}</span>
+                  )}
+                  {streakType === "extended" && (
+                    <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.extendedStreak}</span>
+                  )}
+                  {streakType === "reset" && (
+                    <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.newStreak}</span>
+                  )}
+                </>
               )}
-              {streakType === "first" && (
-                <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.firstStreak}</span>
-              )}
-              {streakType === "extended" && (
-                <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.extendedStreak}</span>
-              )}
-              {streakType === "reset" && (
-                <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.newStreak}</span>
-              )}
-              {/* Lite mode: no Peones — show neutral focus-complete chip. */}
-              {CHESSCITO_LITE_MODE ? (
-                <span
-                  className="mt-1 text-xs font-bold opacity-70"
-                  data-testid="daily-reward-lite"
-                >
-                  {DAILY_SOLVE_COPY.rewardFocusComplete}
-                </span>
-              ) : (
+              {/* Lite: no Peones block. Full: connected/guest reward. */}
+              {!CHESSCITO_LITE_MODE && (
                 <>
                   {/* Sprint 3 commit E — REAL reward block (Full mode only).
                    *  /api/peones/earn passes state via `reward`. Four states:
@@ -327,6 +325,23 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
                     />
                   </picture>
                 </div>
+              </div>
+              {/* Reward pills — same pattern as PhaseFlash(success) */}
+              <div className="fail-rescue-reward-row">
+                {streakAfterSolve != null && streakAfterSolve >= 1 && (
+                  <span className="fail-rescue-reward-pill fail-rescue-reward-pill--streak">
+                    <span aria-hidden="true">×{streakAfterSolve}</span>
+                    <span>STREAK</span>
+                  </span>
+                )}
+                <span className="fail-rescue-reward-pill">
+                  <picture>
+                    <source srcSet="/art/redesign/icons/star.avif" type="image/avif" />
+                    <source srcSet="/art/redesign/icons/star.webp" type="image/webp" />
+                    <img src="/art/redesign/icons/star.png" alt="" aria-hidden="true" />
+                  </picture>
+                  <span>FOCUS</span>
+                </span>
               </div>
             </div>
           </div>
