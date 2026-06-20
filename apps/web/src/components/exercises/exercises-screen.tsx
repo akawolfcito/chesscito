@@ -2472,7 +2472,7 @@ export function ExercisesScreen({
                   data-testid="account-trigger"
                   className={`candy-tray-pill hub-hud-pill${proStatus?.active ? " hub-hud-pill--pro-text" : ""}`}
                 >
-                  <picture>
+                  <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
                     <source srcSet="/art/screen-mission/account-icon.avif" type="image/avif" />
                     <source srcSet="/art/screen-mission/account-icon.webp" type="image/webp" />
                     <img
@@ -2480,7 +2480,6 @@ export function ExercisesScreen({
                       alt=""
                       aria-hidden="true"
                       draggable={false}
-                      className="candy-tray-pill-icon candy-tray-pill-icon--floating"
                     />
                   </picture>
                   <span>{tStatus("accountChipLabel")}</span>
