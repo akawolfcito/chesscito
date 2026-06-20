@@ -221,7 +221,7 @@ export function PersistentDock() {
   const displayLabel = t(display.labelKey);
 
   return (
-    <nav className="chesscito-dock" aria-label={t("navAriaLabel")}>
+    <nav className={`chesscito-dock${CHESSCITO_LITE_MODE ? " chesscito-dock--lite" : ""}`} aria-label={t("navAriaLabel")}>
       {SIDE_LEFT.map((item) => (
         <SideItem key={item.id} item={item} pathname={pathname} router={router} openSheet={openSheet} label={t(item.labelKey)} />
       ))}

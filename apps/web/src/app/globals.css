@@ -3796,6 +3796,12 @@
     box-shadow: none;
   }
 
+  .chesscito-dock--lite {
+    background-image: image-set(url("/art/redesign/bg/dock-4slots.avif") type("image/avif"),
+        url("/art/redesign/bg/dock-4slots.webp") type("image/webp"),
+        url("/art/redesign/bg/dock-4slots.png") type("image/png"));
+  }
+
   .chesscito-dock-item {
     position: relative;
     display: flex;
