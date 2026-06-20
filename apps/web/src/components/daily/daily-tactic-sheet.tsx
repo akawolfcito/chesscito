@@ -136,7 +136,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
         title="Daily Tactic"
         description={puzzleData.name}
         data-testid="daily-tactic-sheet"
-        className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
+        className="mission-shell sheet-bg-hub relative flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem] overflow-hidden"
       >
         <MissionHeaderCandy
           title="Daily Tactic"
@@ -173,11 +173,10 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
               style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
             >
               <div className="flex items-center gap-2">
-                <CandyIcon name="star" className={CHESSCITO_LITE_MODE ? "h-6 w-6" : "h-5 w-5"} />
-                <span className={`font-extrabold uppercase tracking-tight ${CHESSCITO_LITE_MODE ? "text-lg" : "text-base"}`} data-testid="daily-status-solved">
-                  {CHESSCITO_LITE_MODE ? "WELL DONE!" : DAILY_SOLVE_COPY.solved}
+                <CandyIcon name="star" className="h-5 w-5" />
+                <span className="text-base font-extrabold uppercase tracking-tight" data-testid="daily-status-solved">
+                  {DAILY_SOLVE_COPY.solved}
                 </span>
-                {CHESSCITO_LITE_MODE && <CandyIcon name="star" className="h-6 w-6" />}
               </div>
               <span className="text-xs font-bold opacity-60">{puzzleData.name}</span>
               {streakAfterSolve != null && streakAfterSolve > 0 && (
@@ -289,6 +288,49 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
             </div>
           )}
         </div>
+
+        {/* Lite mode: PhaseFlash-style celebration overlay — reuses
+         *  welldone-sms + avatar-fun assets from mission-panel-candy's
+         *  PhaseFlash(success). Sheet auto-closes at SOLVE_AUTO_CLOSE_MS
+         *  so no separate dismiss timer is needed here. */}
+        {CHESSCITO_LITE_MODE && status === "solved" && (
+          <div
+            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center candy-modal-scrim"
+            aria-hidden="true"
+          >
+            <div className="flex flex-col items-center gap-3 px-4">
+              <div className="relative animate-in zoom-in-90 duration-300">
+                <picture className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2">
+                  <source srcSet="/art/welldone-sms.avif" type="image/avif" />
+                  <source srcSet="/art/welldone-sms.webp" type="image/webp" />
+                  <img
+                    src="/art/welldone-sms.png"
+                    alt="WELL DONE"
+                    className="h-auto w-[260px] max-w-[78vw] drop-shadow-[0_6px_14px_rgba(120,65,5,0.45)]"
+                    style={{ animation: "reward-icon-enter 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
+                  />
+                </picture>
+                <div className="relative flex h-80 w-80 items-center justify-center">
+                  <div
+                    className="pointer-events-none absolute h-72 w-72 rounded-full"
+                    style={{ background: "radial-gradient(circle, rgba(245,158,11,0.32) 0%, rgba(245,158,11,0.10) 55%, transparent 80%)" }}
+                  />
+                  <picture className="relative z-10">
+                    <source srcSet="/art/avatar-fun.avif" type="image/avif" />
+                    <source srcSet="/art/avatar-fun.webp" type="image/webp" />
+                    <img
+                      src="/art/avatar-fun.png"
+                      alt=""
+                      aria-hidden="true"
+                      className="h-80 w-80 object-contain drop-shadow-[0_6px_22px_rgba(255,245,215,0.95)]"
+                      style={{ animation: "reward-icon-enter 320ms cubic-bezier(0.34, 1.56, 0.64, 1) 120ms both" }}
+                    />
+                  </picture>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </SheetContent>
 
       {shareOpen && (
