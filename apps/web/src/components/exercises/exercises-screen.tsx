@@ -2460,7 +2460,7 @@ export function ExercisesScreen({
                   />
                   <span>{tHud("connectLabel")}</span>
                 </button>
-              ) : !proLoading ? (
+              ) : (
                 <button
                   type="button"
                   onClick={() => setAccountSheetOpen(true)}
@@ -2470,7 +2470,7 @@ export function ExercisesScreen({
                       : tStatus("accountLabel")
                   }
                   data-testid="account-trigger"
-                  className="candy-tray-pill hub-hud-pill"
+                  className={`candy-tray-pill hub-hud-pill${proStatus?.active ? " hub-hud-pill--pro-text" : ""}`}
                 >
                   <picture>
                     <source srcSet="/art/screen-mission/account-icon.avif" type="image/avif" />
@@ -2485,8 +2485,6 @@ export function ExercisesScreen({
                   </picture>
                   <span>{tStatus("accountChipLabel")}</span>
                 </button>
-              ) : (
-                <span aria-hidden="true" className="block h-6 w-6" />
               )
             }
           />

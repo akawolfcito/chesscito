@@ -306,19 +306,21 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
       icon={<CandyIcon name="star" className="h-4 w-4" />}
       title={tAch("sectionTitle")}
     >
-      <div className="mb-4 flex items-center justify-center gap-2">
-        <span className="text-nano font-black uppercase tracking-[0.18em] opacity-30">
-          {tAch("progressEyebrow")}
-        </span>
-        <CandyChip variant="warm" tone="subtle">
-          {tAch("sectionDescription", {
-            earned: summary.earnedCount,
-            total: summary.total,
-          })}
-        </CandyChip>
-      </div>
+      {(!CHESSCITO_LITE_MODE || summary.earnedCount > 0) && (
+        <div className="mb-4 flex items-center justify-center gap-2">
+          <span className="text-nano font-black uppercase tracking-[0.18em] opacity-30">
+            {tAch("progressEyebrow")}
+          </span>
+          <CandyChip variant="warm" tone="subtle">
+            {tAch("sectionDescription", {
+              earned: summary.earnedCount,
+              total: summary.total,
+            })}
+          </CandyChip>
+        </div>
+      )}
 
-      <AchievementsGrid achievements={summary.list} />
+      <AchievementsGrid achievements={CHESSCITO_LITE_MODE ? summary.list.filter((a) => a.earned) : summary.list} />
 
       {summary.earnedCount === 0 && (
         <p className="mt-6 text-center text-xs font-bold uppercase tracking-widest opacity-40">
