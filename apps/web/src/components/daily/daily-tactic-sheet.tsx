@@ -136,7 +136,7 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
         title="Daily Tactic"
         description={puzzleData.name}
         data-testid="daily-tactic-sheet"
-        className="mission-shell sheet-bg-hub relative flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem] overflow-hidden"
+        className="mission-shell sheet-bg-hub relative flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         <MissionHeaderCandy
           title="Daily Tactic"
