@@ -20,6 +20,7 @@ import {
   hapticTap,
 } from "@/lib/haptics";
 import { DAILY_SOLVE_COPY, DAILY_SHARE_COPY } from "@/lib/content/editorial";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import type { DailyTacticData } from "@/lib/daily/daily-puzzles";
 import type { BoardPosition } from "@/lib/game/types";
 
@@ -172,10 +173,11 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
               style={{ animation: "reward-panel-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
             >
               <div className="flex items-center gap-2">
-                <CandyIcon name="star" className="h-5 w-5" />
-                <span className="text-base font-extrabold uppercase tracking-tight" data-testid="daily-status-solved">
-                  {DAILY_SOLVE_COPY.solved}
+                <CandyIcon name="star" className={CHESSCITO_LITE_MODE ? "h-6 w-6" : "h-5 w-5"} />
+                <span className={`font-extrabold uppercase tracking-tight ${CHESSCITO_LITE_MODE ? "text-lg" : "text-base"}`} data-testid="daily-status-solved">
+                  {CHESSCITO_LITE_MODE ? "WELL DONE!" : DAILY_SOLVE_COPY.solved}
                 </span>
+                {CHESSCITO_LITE_MODE && <CandyIcon name="star" className="h-6 w-6" />}
               </div>
               <span className="text-xs font-bold opacity-60">{puzzleData.name}</span>
               {streakAfterSolve != null && streakAfterSolve > 0 && (
@@ -190,62 +192,68 @@ export function DailyTacticSheet({ open, onOpenChange, puzzleData, onSolve, stre
               {streakType === "reset" && (
                 <span className="text-xs font-bold opacity-70">{DAILY_SOLVE_COPY.newStreak}</span>
               )}
-              {/* Sprint 3 commit E — REAL reward block. The mount
-               *  component fires /api/peones/earn and passes the
-               *  resulting state via `reward`. The sheet renders
-               *  one of four connected states (pending/success/
-               *  cap_exhausted/error) or the guest CTA. Daily
-               *  completion + streak persist regardless of the
-               *  earn outcome — only this block reflects whether
-               *  Peones actually landed in the ledger. */}
-              {isConnected ? (
-                <div
-                  className="mt-1 flex flex-col items-center gap-0.5"
-                  data-testid="daily-reward-connected"
-                  data-state={reward?.kind ?? "pending"}
-                >
-                  {(() => {
-                    const state = reward ?? { kind: "pending" as const };
-                    if (state.kind === "pending") {
-                      return (
-                        <span className="text-xs font-bold opacity-70">
-                          {DAILY_SOLVE_COPY.rewardSaving}
-                        </span>
-                      );
-                    }
-                    if (state.kind === "error") {
-                      return (
-                        <span className="text-xs font-bold opacity-70">
-                          {DAILY_SOLVE_COPY.rewardSaveFailed}
-                        </span>
-                      );
-                    }
-                    if (state.kind === "cap_exhausted") {
-                      return (
-                        <span className="text-xs font-bold opacity-70">
-                          {DAILY_SOLVE_COPY.rewardCapExhausted}
-                        </span>
-                      );
-                    }
-                    // success
-                    return state.capReached ? (
-                      <span className="text-sm font-extrabold tabular-nums">
-                        {DAILY_SOLVE_COPY.rewardCapPartialFormat(state.credited)}
-                      </span>
-                    ) : (
-                      <span className="text-sm font-extrabold tabular-nums">
-                        {DAILY_SOLVE_COPY.rewardEarnedFormat(state.credited)}
-                      </span>
-                    );
-                  })()}
-                </div>
-              ) : (
+              {/* Lite mode: no Peones — show neutral focus-complete chip. */}
+              {CHESSCITO_LITE_MODE ? (
                 <span
                   className="mt-1 text-xs font-bold opacity-70"
-                  data-testid="daily-reward-guest"
+                  data-testid="daily-reward-lite"
                 >
-                  {DAILY_SOLVE_COPY.rewardGuestCta}
+                  {DAILY_SOLVE_COPY.rewardFocusComplete}
                 </span>
+              ) : (
+                <>
+                  {/* Sprint 3 commit E — REAL reward block (Full mode only).
+                   *  /api/peones/earn passes state via `reward`. Four states:
+                   *  pending / success / cap_exhausted / error. */}
+                  {isConnected ? (
+                    <div
+                      className="mt-1 flex flex-col items-center gap-0.5"
+                      data-testid="daily-reward-connected"
+                      data-state={reward?.kind ?? "pending"}
+                    >
+                      {(() => {
+                        const state = reward ?? { kind: "pending" as const };
+                        if (state.kind === "pending") {
+                          return (
+                            <span className="text-xs font-bold opacity-70">
+                              {DAILY_SOLVE_COPY.rewardSaving}
+                            </span>
+                          );
+                        }
+                        if (state.kind === "error") {
+                          return (
+                            <span className="text-xs font-bold opacity-70">
+                              {DAILY_SOLVE_COPY.rewardSaveFailed}
+                            </span>
+                          );
+                        }
+                        if (state.kind === "cap_exhausted") {
+                          return (
+                            <span className="text-xs font-bold opacity-70">
+                              {DAILY_SOLVE_COPY.rewardCapExhausted}
+                            </span>
+                          );
+                        }
+                        return state.capReached ? (
+                          <span className="text-sm font-extrabold tabular-nums">
+                            {DAILY_SOLVE_COPY.rewardCapPartialFormat(state.credited)}
+                          </span>
+                        ) : (
+                          <span className="text-sm font-extrabold tabular-nums">
+                            {DAILY_SOLVE_COPY.rewardEarnedFormat(state.credited)}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <span
+                      className="mt-1 text-xs font-bold opacity-70"
+                      data-testid="daily-reward-guest"
+                    >
+                      {DAILY_SOLVE_COPY.rewardGuestCta}
+                    </span>
+                  )}
+                </>
               )}
               {isShareUrlValid(shareSolvedUrl) && (
                 <button

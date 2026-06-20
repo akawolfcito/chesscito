@@ -428,6 +428,8 @@ export const DAILY_SOLVE_COPY = {
   rewardSaveFailed: "Daily solved. Peones could not be saved right now.",
   rewardSaving: "Saving Peones…",
   rewardGuestCta: "Connect your wallet to save Peones rewards.",
+  /** Lite mode — replaces the Peones reward block entirely. */
+  rewardFocusComplete: "Focus complete",
 } as const;
 
 export const DAILY_SHARE_COPY = {
@@ -899,6 +901,10 @@ export const TROPHY_VITRINE_COPY = {
   heroAchievementsLabel: "ACHIEVEMENTS",
   heroBestLabelFormat: "Your best: {moves} moves · {time}",
   heroEmptyHint: "Your first victory awaits.",
+  /** Lite-mode hero band overrides — training/focus vocabulary. */
+  heroEyebrowLite: "YOUR PROGRESS",
+  heroVictoriesLabelLite: "SESSIONS",
+  heroEmptyHintLite: "Complete daily focus sessions to build your progress.",
   noGlobalVictories: "No victories recorded yet",
   loadError: "Could not load victories",
   tapToRetry: "Tap to retry",
@@ -935,6 +941,8 @@ export const ACHIEVEMENTS_COPY = {
   sectionTitle: "Achievements",
   sectionDescription: (earned: number, total: number) => `${earned} of ${total} unlocked`,
   emptyHint: "Win in Arena to unlock achievements",
+  /** Lite mode — replaces Arena reference with focus/exercise vocabulary. */
+  emptyHintLite: "Complete focus challenges to unlock achievements.",
   lockedLabel: "Locked",
   earnedLabel: "Earned",
   progressLabel: (current: number, goal: number) => `${current}/${goal}`,

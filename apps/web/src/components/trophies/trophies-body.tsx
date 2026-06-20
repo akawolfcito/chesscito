@@ -79,10 +79,10 @@ export function TrophiesHeroBand() {
         />
       </picture>
       <div className="trophy-vitrine-hero-content">
-        <p className="trophy-vitrine-hero-eyebrow">{t("heroEyebrow")}</p>
+        <p className="trophy-vitrine-hero-eyebrow">{t(CHESSCITO_LITE_MODE ? "heroEyebrowLite" : "heroEyebrow")}</p>
         <p className="trophy-vitrine-hero-stats">
           <span className="trophy-vitrine-hero-stats-victory">
-            {victoryCount} {t("heroVictoriesLabel")}
+            {victoryCount} {t(CHESSCITO_LITE_MODE ? "heroVictoriesLabelLite" : "heroVictoriesLabel")}
           </span>
           <span className="trophy-vitrine-hero-stats-sep" aria-hidden="true">·</span>
           <span className="trophy-vitrine-hero-stats-ach">
@@ -95,7 +95,7 @@ export function TrophiesHeroBand() {
                 moves: bestVictory.totalMoves,
                 time: formatTimeMs(bestVictory.timeMs),
               })
-            : t("heroEmptyHint")}
+            : t(CHESSCITO_LITE_MODE ? "heroEmptyHintLite" : "heroEmptyHint")}
         </p>
         <div className="trophy-vitrine-hero-progress">
           <div
@@ -322,7 +322,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
 
       {summary.earnedCount === 0 && (
         <p className="mt-6 text-center text-xs font-bold uppercase tracking-widest opacity-40">
-          {tAch("emptyHint")}
+          {tAch(CHESSCITO_LITE_MODE ? "emptyHintLite" : "emptyHint")}
         </p>
       )}
     </PageSection>
@@ -345,9 +345,13 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
     </PageSection>
   );
 
-  const ordered = isChampion
-    ? [myVictoriesSection, achievementsSection, hallOfFameSection]
-    : [hallOfFameSection, myVictoriesSection, achievementsSection];
+  // In Lite: My Victories requires Arena NFTs (unavailable) and Community
+  // duplicates the existing Leaders surface — show only achievements.
+  const ordered = CHESSCITO_LITE_MODE
+    ? [achievementsSection]
+    : isChampion
+      ? [myVictoriesSection, achievementsSection, hallOfFameSection]
+      : [hallOfFameSection, myVictoriesSection, achievementsSection];
 
   return (
     <div className="flex flex-col gap-10 pb-10">
@@ -373,10 +377,10 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
           />
         </picture>
         <div className="trophy-vitrine-hero-content">
-          <p className="trophy-vitrine-hero-eyebrow">{t("heroEyebrow")}</p>
+          <p className="trophy-vitrine-hero-eyebrow">{t(CHESSCITO_LITE_MODE ? "heroEyebrowLite" : "heroEyebrow")}</p>
           <p className="trophy-vitrine-hero-stats">
             <span className="trophy-vitrine-hero-stats-victory">
-              {victoryCount} {t("heroVictoriesLabel")}
+              {victoryCount} {t(CHESSCITO_LITE_MODE ? "heroVictoriesLabelLite" : "heroVictoriesLabel")}
             </span>
             <span className="trophy-vitrine-hero-stats-sep" aria-hidden="true">·</span>
             <span className="trophy-vitrine-hero-stats-ach">
@@ -389,7 +393,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
                   moves: bestVictory.totalMoves,
                   time: formatTimeMs(bestVictory.timeMs),
                 })
-              : t("heroEmptyHint")}
+              : t(CHESSCITO_LITE_MODE ? "heroEmptyHintLite" : "heroEmptyHint")}
           </p>
           <div className="trophy-vitrine-hero-progress">
             <div
