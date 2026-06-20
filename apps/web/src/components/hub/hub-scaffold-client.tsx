@@ -39,7 +39,13 @@ import {
   type HeroContextState,
 } from "@/lib/hub/hero-cta";
 import { getExercisesCompletedCount } from "@/lib/game/exercise-progress";
-import { getDailyHistoryCount, isCompletedToday } from "@/lib/daily/progress";
+import {
+  type DailyProgress,
+  getDailyHistoryCount,
+  getDailyProgress,
+  isCompletedToday,
+  todayUtc,
+} from "@/lib/daily/progress";
 import { badgesAbi } from "@/lib/contracts/badges";
 import { getBadgesAddress } from "@/lib/contracts/chains";
 import type { PieceId } from "@/lib/game/types";
@@ -310,6 +316,30 @@ export function HubScaffoldClient({
     [heroSignals],
   );
 
+  // Focus Passport (Lite-only, P1). Defer the localStorage read to
+  // client-mount (same anti-hydration pattern as heroSignals): `null`
+  // means "loading", so the card paints its safe empty shell on the
+  // server + first client render and never shows false filled days.
+  const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
+  useEffect(() => {
+    if (!CHESSCITO_LITE_MODE) return;
+    setDailyProgress(getDailyProgress());
+  }, []);
+  const focusPassport = useMemo(
+    () =>
+      CHESSCITO_LITE_MODE
+        ? {
+            streak: dailyProgress?.streak ?? 0,
+            totalCompleted: dailyProgress?.totalCompleted ?? 0,
+            todayDone: dailyProgress
+              ? dailyProgress.lastCompletedDate === todayUtc()
+              : false,
+            isLoading: dailyProgress === null,
+          }
+        : null,
+    [dailyProgress],
+  );
+
   const handleArenaPress = useCallback(() => {
     if (CHESSCITO_LITE_MODE) return;
     track("secondary_arena_clicked");
@@ -402,6 +432,7 @@ export function HubScaffoldClient({
         trophies={trophies}
         pro={pro}
         shields={null}
+        focusPassport={focusPassport}
         isWalletConnected={isConnected}
         onConnectTap={() => {
           track("hub_connect_chip_tap");

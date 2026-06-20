@@ -14,6 +14,7 @@ import { HubTileStatusChip } from "@/components/hub/hub-tile-status-chip";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { HubArenaTile } from "@/components/hub/hub-arena-tile";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
+import { FocusPassport } from "@/components/hub/focus-passport";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
@@ -38,6 +39,16 @@ type HubScaffoldProps = {
    *  when inactive the chip collapses (parent decides to show a secondary
    *  PRO entry — e.g. <PremiumSlot inactive>). */
   pro: { active: true; daysRemaining: number } | { active: false };
+  /** Focus Passport data (Chesscito Lite P1, Lite-only). When provided AND
+   *  the build is Lite, the scaffold renders <FocusPassport> high in the
+   *  hub. `isLoading` paints the safe empty shell while the parent hydrates
+   *  localStorage. Full builds never pass this and never render it. */
+  focusPassport?: {
+    streak: number;
+    totalCompleted: number;
+    todayDone: boolean;
+    isLoading: boolean;
+  } | null;
   /** Optional secondary HUD row content. Each field is independently
    *  optional and the row collapses when all are null. */
   streak?: number | null;
@@ -126,6 +137,7 @@ const ATMOSPHERE = "adventure";
 export function HubScaffold({
   trophies,
   pro,
+  focusPassport = null,
   streak = null,
   stars = null,
   shields = null,
@@ -243,6 +255,18 @@ export function HubScaffold({
           />,
         )}
       </header>
+
+      {/* Focus Passport (Chesscito Lite P1) — return anchor high in the
+          hub, just below the HUD. Lite-only via build flag; Full never
+          renders it. */}
+      {CHESSCITO_LITE_MODE && focusPassport
+        ? wrap(
+            "FocusPassport",
+            <div className="hub-scaffold-passport">
+              <FocusPassport {...focusPassport} />
+            </div>,
+          )
+        : null}
 
       <section className="hub-scaffold-body">
         <div className="hub-scaffold-side hub-scaffold-side--left">

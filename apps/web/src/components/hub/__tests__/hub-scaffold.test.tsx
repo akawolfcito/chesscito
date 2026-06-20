@@ -48,6 +48,16 @@ describe("HubScaffold", () => {
     expect(container.querySelector(".hub-scaffold-footer")).not.toBeNull();
   });
 
+  it("does NOT render the Focus Passport in Full (CHESSCITO_LITE_MODE=false), even when data is passed", () => {
+    render(
+      <HubScaffold
+        {...baseProps}
+        focusPassport={{ streak: 5, totalCompleted: 9, todayDone: true, isLoading: false }}
+      />,
+    );
+    expect(screen.queryByTestId("focus-passport")).toBeNull();
+  });
+
   it("mounts the trophy and PRO HUD chips with values from HUD_COPY formatters", () => {
     render(<HubScaffold {...baseProps} />);
     expect(screen.getByLabelText("Trophies: 12")).toBeInTheDocument();

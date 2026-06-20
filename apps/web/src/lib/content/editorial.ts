@@ -3143,6 +3143,28 @@ export const SECONDARY_CTA_COPY = {
   },
 } as const;
 
+/** Focus Passport (Chesscito Lite P1) — streak-based daily-focus card.
+ *  Local-only; copy deliberately avoids any "verified", "on-chain",
+ *  "proof", NFT/mint, or health/medical claims (it reflects a local
+ *  streak, not a server- or chain-backed record). `{count}` is the
+ *  current streak. */
+export const FOCUS_PASSPORT_COPY = {
+  heading: "Focus Passport",
+  rootAriaLabel: "Focus Passport: your daily focus streak",
+  currentStreak: "Current streak",
+  loading: "Focus progress",
+  emptyTitle: "Start your streak",
+  emptySub: "Solve today's focus to begin",
+  day1Title: "Day 1",
+  day1Sub: "Come back tomorrow",
+  buildingTitle: "{count} day streak",
+  buildingSub: "Keep going",
+  weekTitle: "7-day focus",
+  weekSub: "Nice",
+  slotFilledAria: "Day {index} done",
+  slotEmptyAria: "Day {index}",
+} as const;
+
 export const LEADERBOARD_TABS_COPY = {
   tabs: {
     puzzlesWeek: "Puzzles this week",
