@@ -53,6 +53,9 @@ type MissionPanelProps = {
   canSaveScore?: boolean
   onSaveScore?: () => void
   isSavingScore?: boolean
+  /** Score transparency breakdown. Forwarded to MissionDetailSheet. */
+  totalStars?: number
+  maxPossibleStars?: number
   /** QA round 2 — on-chain SAVE trio, forwarded untouched. */
   canSaveOnChain?: boolean
   onSaveOnChain?: () => void
@@ -420,6 +423,8 @@ export function MissionPanelCandy({
   canSaveScore,
   onSaveScore,
   isSavingScore,
+  totalStars,
+  maxPossibleStars,
   canSaveOnChain,
   onSaveOnChain,
   isSavingOnChain,
@@ -534,6 +539,8 @@ export function MissionPanelCandy({
               canSaveScore={canSaveScore}
               onSaveScore={onSaveScore}
               isSavingScore={isSavingScore}
+              totalStars={totalStars}
+              maxPossibleStars={maxPossibleStars}
               canSaveOnChain={canSaveOnChain}
               onSaveOnChain={onSaveOnChain}
               isSavingOnChain={isSavingOnChain}

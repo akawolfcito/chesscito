@@ -131,6 +131,7 @@ import { track } from "@/lib/telemetry";
 import { classifyTxError, classifyTxErrorKind, isTransactionTimeout, isUserCancellation, type TxErrorKind } from "@/lib/errors";
 import { getContextAction, getRewardActions } from "@/lib/game/context-action";
 import { BADGE_THRESHOLD, labyrinthStars } from "@/lib/game/exercises";
+import { getMaxPossibleStars } from "@/lib/game/progress-adapter";
 import {
   areAllLabyrinthsSolved,
   getLabyrinthBest,
@@ -1083,6 +1084,7 @@ export function ExercisesScreen({
   const feeCurrency = useMemo(() => getMiniPayFeeCurrency(chainId), [chainId]);
   const levelId = useMemo(() => getLevelId(selectedPiece), [selectedPiece]);
   const score = useMemo(() => BigInt(Math.max(1, totalStars)) * POINTS_PER_STAR, [totalStars]);
+  const maxPossibleStars = useMemo(() => getMaxPossibleStars(selectedPiece), [selectedPiece]);
 
   // v1: tracks last-exercise time only. 1000n fallback after board reset
   // is safe — on-chain time is informational, not used for scoring.
@@ -2526,6 +2528,8 @@ export function ExercisesScreen({
           labyrinthOptimalMoves={activeLabyrinth?.optimalMoves}
           onLabyrinthSelect={handleLabyrinthSelect}
           score={score.toString()}
+          totalStars={totalStars}
+          maxPossibleStars={maxPossibleStars}
           trainingPath={trainingPath}
           canSaveScore={scorePendingNew}
           onSaveScore={() => void handleSubmitScore()}
