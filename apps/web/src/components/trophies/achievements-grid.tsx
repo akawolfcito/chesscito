@@ -20,6 +20,9 @@ const ACHIEVEMENT_ICONS: Record<string, CandyIconName> = {
   "rapid-finish": "crosshair",
   "five-crowns": "star",
   dedication: "refresh",
+  "first-focus-day": "star",
+  "three-day-rhythm": "refresh",
+  "seven-day-focus": "crown",
 };
 
 type Props = {
