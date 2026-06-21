@@ -42,7 +42,7 @@ describe("<WelcomePackageModal>", () => {
   it("copy contains no prohibited terms", () => {
     render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} />);
     const text = document.body.textContent ?? "";
-    const prohibited = ["mint", "nft", "on-chain", "proof", "verified", "blockchain", "brain health", "improves memory", "improves focus"];
+    const prohibited = ["mint", "nft", "on-chain", "proof", "verified", "blockchain", "brain health", "cure", "improves memory", "improves focus"];
     for (const term of prohibited) {
       expect(text.toLowerCase()).not.toContain(term);
     }

@@ -45,7 +45,7 @@ describe("<AchievementsGrid> Lite achievements", () => {
     render(<AchievementsGrid achievements={achievements} />);
     const container = screen.getByRole("button", { name: /first focus day/i }).closest(".flex");
     const text = container?.textContent ?? document.body.textContent ?? "";
-    const prohibited = ["verified", "on-chain", "proof", "nft", "mint", "brain health", "improves memory", "improves focus"];
+    const prohibited = ["verified", "on-chain", "proof", "nft", "mint", "blockchain", "brain health", "cure", "improves memory", "improves focus"];
     for (const term of prohibited) {
       expect(text.toLowerCase()).not.toContain(term);
     }

@@ -105,6 +105,7 @@ describe("TrophiesHeroBand — Lite hero achievement count", () => {
     mockProgress = { streak: 1, lastCompletedDate: null, totalCompleted: 1 };
     render(<TrophiesHeroBand />);
     expect(await screen.findByText("1/3 ACHIEVEMENTS")).toBeInTheDocument();
+    expect(screen.getByText("1 SESSIONS")).toBeInTheDocument();
   });
 
   it("shows '2/3 ACHIEVEMENTS' when streak=3 (first + rhythm done)", async () => {
@@ -117,5 +118,12 @@ describe("TrophiesHeroBand — Lite hero achievement count", () => {
     mockProgress = { streak: 7, lastCompletedDate: null, totalCompleted: 7 };
     render(<TrophiesHeroBand />);
     expect(await screen.findByText("3/3 ACHIEVEMENTS")).toBeInTheDocument();
+  });
+
+  it("uses the Lite hero copy from the Spanish bundle", async () => {
+    render(<TrophiesHeroBand />, { locale: "es" });
+    expect(await screen.findByText("TU PROGRESO")).toBeInTheDocument();
+    expect(screen.getByText("0/3 LOGROS")).toBeInTheDocument();
+    expect(screen.getByText("Completa sesiones diarias de enfoque para avanzar.")).toBeInTheDocument();
   });
 });

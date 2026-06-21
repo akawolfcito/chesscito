@@ -11,6 +11,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useAccount } from "wagmi";
 import { getVictoryAddress } from "@/lib/game/victory-events";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 
 export type ApiVictoryRow = {
@@ -93,7 +94,7 @@ const TrophiesDataContext = createContext<TrophiesDataContextValue | null>(null)
 export function TrophiesDataProvider({ children }: { children: ReactNode }) {
   const t = useTranslations("TROPHY_VITRINE_COPY");
   const { address, isConnected } = useAccount();
-  const configured = getVictoryAddress() !== null;
+  const configured = !CHESSCITO_LITE_MODE && getVictoryAddress() !== null;
 
   const [victories, setVictories] = useState<VictoryEntry[] | undefined>();
   const [loading, setLoading] = useState(false);

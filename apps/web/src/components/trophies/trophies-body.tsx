@@ -74,8 +74,10 @@ export function TrophiesHeroBand() {
         total: liteAchievements.length,
       }
     : computeAchievements(victories);
-  const victoryCount = victories?.length ?? 0;
-  const hasVictories = victoryCount > 0;
+  const victoryCount = CHESSCITO_LITE_MODE
+    ? dailyProgress.totalCompleted
+    : (victories?.length ?? 0);
+  const hasVictories = !CHESSCITO_LITE_MODE && victoryCount > 0;
   const bestVictory = hasVictories
     ? [...(victories ?? [])].sort(
         (a, b) => a.totalMoves - b.totalMoves || a.timeMs - b.timeMs,
@@ -161,7 +163,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
   const configured = getVictoryAddress() !== null;
 
   const loadHallOfFame = useCallback(async () => {
-    if (!configured) {
+    if (CHESSCITO_LITE_MODE || !configured) {
       setHofLoading(false);
       return;
     }
@@ -225,11 +227,13 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
         total: liteAchievements.length,
       }
     : computeAchievements(myVictories);
-  const victoryCount = myVictories?.length ?? 0;
+  const victoryCount = CHESSCITO_LITE_MODE
+    ? dailyProgress.totalCompleted
+    : (myVictories?.length ?? 0);
   /** Best run = fewest moves, ties broken by shortest time. Drives the
    *  HERO BAND's "Your best" line. Stays null when the user has no
    *  victories yet so the empty hint shows in its place. */
-  const bestVictory = hasVictories
+  const bestVictory = !CHESSCITO_LITE_MODE && hasVictories
     ? [...(myVictories ?? [])].sort(
         (a, b) => a.totalMoves - b.totalMoves || a.timeMs - b.timeMs,
       )[0]
