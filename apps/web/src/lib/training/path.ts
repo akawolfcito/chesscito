@@ -171,6 +171,29 @@ export function getNextChallenge(path: TrainingNode[]): TrainingNode | null {
   );
 }
 
+/** Post-lab routing: resolves what the "Continue" action should do after
+ *  a labyrinth is completed (or replayed). Pure — caller owns all effects.
+ *
+ *  Priority order:
+ *   1. Uncompleted exercise is visible and navigable → next-exercise.
+ *   2. Another labyrinth is available in the path → next-labyrinth.
+ *   3. Nothing left → piece-complete (caller shows PieceCompletePrompt).
+ *
+ *  `hasAvailableNextExercise` reflects whether the caller found a 0★
+ *  visible exercise (i.e. `nextIdx >= 0` in the pool scan). */
+export function resolvePostLabContinue(
+  path: TrainingNode[],
+  hasAvailableNextExercise: boolean,
+):
+  | { action: "next-exercise" }
+  | { action: "next-labyrinth"; labyrinthId: string }
+  | { action: "piece-complete" } {
+  if (hasAvailableNextExercise) return { action: "next-exercise" };
+  const nextLab = getNextChallenge(path);
+  if (nextLab) return { action: "next-labyrinth", labyrinthId: nextLab.id };
+  return { action: "piece-complete" };
+}
+
 export type InterleavedRow<E> =
   | { kind: "exercise"; value: E }
   | { kind: "labyrinth"; value: TrainingNode };

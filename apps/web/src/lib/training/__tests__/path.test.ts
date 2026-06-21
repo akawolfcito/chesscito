@@ -15,6 +15,7 @@ import {
   getNextChallenge,
   getPieceMastery,
   LABYRINTH_UNLOCK_THRESHOLD,
+  resolvePostLabContinue,
   type TrainingNode,
   type TrainingPathInput,
 } from "@/lib/training/path";
@@ -361,5 +362,53 @@ describe("path module purity (no IO)", () => {
     ]) {
       expect(source).not.toContain(forbidden);
     }
+  });
+});
+
+describe("resolvePostLabContinue — post-lab routing", () => {
+  const progress6 = makeProgress("knight", starsTotaling("knight", 6));
+  const pathWithNextLab = buildTrainingPath(
+    makeInput("knight", {
+      progress: progress6,
+      labyrinthBests: { "knight-lab-1": 3 }, // lab-1 complete, lab-2 available
+    }),
+  );
+  const pathNoMoreLabs = buildTrainingPath(
+    makeInput("knight", {
+      progress: progress6,
+      labyrinthBests: allLabBests("knight"), // all labs complete
+    }),
+  );
+
+  it("returns next-exercise when there is a visible 0★ exercise", () => {
+    expect(resolvePostLabContinue(pathWithNextLab, true)).toEqual({
+      action: "next-exercise",
+    });
+  });
+
+  it("returns next-labyrinth when no 0★ exercise but next lab is available", () => {
+    const result = resolvePostLabContinue(pathWithNextLab, false);
+    expect(result.action).toBe("next-labyrinth");
+    // lab-1 is complete; lab-2 becomes available via chain unlock
+    expect((result as { action: "next-labyrinth"; labyrinthId: string }).labyrinthId).toBe(
+      "knight-lab-2",
+    );
+  });
+
+  it("returns piece-complete when no 0★ exercise and no available lab remains", () => {
+    expect(resolvePostLabContinue(pathNoMoreLabs, false)).toEqual({
+      action: "piece-complete",
+    });
+  });
+
+  it("replay of already-completed lab with no next available lab → piece-complete", () => {
+    // Replaying lab-5 (last): all labs complete, no new unlock triggered
+    expect(resolvePostLabContinue(pathNoMoreLabs, false)).toEqual({
+      action: "piece-complete",
+    });
+  });
+
+  it("empty path falls back to piece-complete", () => {
+    expect(resolvePostLabContinue([], false)).toEqual({ action: "piece-complete" });
   });
 });

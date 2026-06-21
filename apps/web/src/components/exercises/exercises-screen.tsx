@@ -141,6 +141,7 @@ import {
   buildTrainingPath,
   getLabyrinthForAutoAdvance,
   getNextChallenge,
+  resolvePostLabContinue,
 } from "@/lib/training/path";
 import { submitLabyrinthCompletionEarn } from "@/lib/peones/labyrinth-earn";
 import { ActionPin } from "@/components/redesign/action-pin";
@@ -2348,10 +2349,9 @@ export function ExercisesScreen({
     setLabyrinthMoves(0);
   }, []);
 
-  /** QA F3 (2026-06-11): Continue from the solved overlay — exit the
-   *  labyrinth and land on the next pending exercise (first 0★ within
-   *  today's visible set when rotation is on). Nothing pending → plain
-   *  exit; the PieceComplete cascade owns what happens next. */
+  /** Continue from the solved overlay — routes to the next step after a
+   *  labyrinth completion. Priority: pending exercise → next available lab
+   *  → piece-complete. Never leaves the player on a dead screen. */
   function handleLabyrinthContinue() {
     handleExitLabyrinth();
     const pool = catalog[selectedPiece];
@@ -2362,7 +2362,14 @@ export function ExercisesScreen({
         (progress.stars[exercise.id] ?? 0) === 0 &&
         (!visibleExerciseIds || visibleExerciseIds.has(exercise.id)),
     );
-    if (nextIdx >= 0) handleExerciseNavigate(nextIdx);
+    const route = resolvePostLabContinue(trainingPath, nextIdx >= 0);
+    if (route.action === "next-exercise") {
+      handleExerciseNavigate(nextIdx);
+    } else if (route.action === "next-labyrinth") {
+      handleLabyrinthSelect(route.labyrinthId);
+    } else {
+      setShowPieceComplete(true);
+    }
   }
 
   /** Labyrinth move handler — fires the completion overlay when the
