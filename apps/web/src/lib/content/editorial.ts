@@ -989,6 +989,18 @@ export const ACHIEVEMENTS_COPY = {
       title: "Dedication",
       description: "Win 25 Arena matches.",
     },
+    "first-focus-day": {
+      title: "First Focus Day",
+      description: "Complete your first Daily Focus.",
+    },
+    "three-day-rhythm": {
+      title: "3-Day Rhythm",
+      description: "Keep your focus streak for 3 days.",
+    },
+    "seven-day-focus": {
+      title: "7-Day Focus",
+      description: "Complete a 7-day focus streak.",
+    },
   },
 } as const;
 

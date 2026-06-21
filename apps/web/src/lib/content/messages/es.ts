@@ -1013,6 +1013,18 @@ const messages = {
         title: "Dedicación",
         description: "Gana 25 partidas en Arena.",
       },
+      "first-focus-day": {
+        title: "Primer Focus Day",
+        description: "Completa tu primer Daily Focus.",
+      },
+      "three-day-rhythm": {
+        title: "Ritmo de 3 días",
+        description: "Mantén tu racha de foco por 3 días.",
+      },
+      "seven-day-focus": {
+        title: "Foco de 7 días",
+        description: "Completa una racha de foco de 7 días.",
+      },
     },
   },
   PROFILE_COPY: {
