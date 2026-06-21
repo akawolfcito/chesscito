@@ -30,7 +30,7 @@ const ACTION_ICON_FILE: Record<ActionPinAction, string> = {
   submitScore: "save-score-icon-v1",
   useShield: "shield",
   claimBadge: "badge-claim-icon",
-  claimWelcomePack: "shield",
+  claimWelcomePack: "claim-icon-v1",
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
@@ -42,7 +42,7 @@ const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
   submitScore: "save-score-icon-v1",
   useShield: "shield-king",
   claimBadge: "badge-claim-icon",
-  claimWelcomePack: "shield-king",
+  claimWelcomePack: "claim-icon-v1",
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
@@ -52,7 +52,7 @@ const ACTION_ROW_ICON_FILE: Record<ActionPinAction, string> = {
 
 /** Actions that render a custom reward sprite from /art/new-icons-chesscito
  *  (pedestal pin, no candy-frame) instead of the action-row/CandyIcon set. */
-const CUSTOM_ICON_ACTIONS = new Set<ActionPinAction>(["submitScore", "claimBadge"]);
+const CUSTOM_ICON_ACTIONS = new Set<ActionPinAction>(["submitScore", "claimBadge", "claimWelcomePack"]);
 
 function getRoot(): HTMLElement {
   const root = document.querySelector('[data-component="action-pin"]');

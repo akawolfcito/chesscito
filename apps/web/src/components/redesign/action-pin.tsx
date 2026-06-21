@@ -162,6 +162,7 @@ const ACTION_CUSTOM_ICON_SRC: Partial<Record<ActionPinAction, string>> = {
   // (victory-celebration) keep save.png.
   submitScore: "/art/new-icons-chesscito/save-score-icon-v1.png",
   claimBadge: "/art/new-icons-chesscito/badge-claim-icon.png",
+  claimWelcomePack: "/art/new-icons-chesscito/claim-icon-v1.png",
 };
 
 const PIN_BADGE_CLASSES =
@@ -238,9 +239,11 @@ export function ActionPin({
 
   // Pedestal pin = a custom reward sprite floating with no candy-frame
   // tile (2026-06-10: extended from submitScore to claimBadge so CLAIM
-  // shows its badge sprite bare, like SAVE, instead of a framed trophy).
+  // shows its badge sprite bare, like SAVE, instead of a framed trophy;
+  // 2026-06-21: extended to claimWelcomePack — same bare-sprite treatment).
   const isPedestalPin =
-    size === "pin" && (action === "submitScore" || action === "claimBadge");
+    size === "pin" &&
+    (action === "submitScore" || action === "claimBadge" || action === "claimWelcomePack");
   const baseLayout =
     size === "pin"
       ? isPedestalPin

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { CandyChip } from "@/components/redesign/candy-chip";
@@ -12,12 +13,16 @@ export function WelcomePackageStamp() {
   const t = useTranslations("WELCOME_PACKAGE_COPY");
   const welcomePackage = useWelcomePackage();
   const [showModal, setShowModal] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => { setHydrated(true); }, []);
 
   if (!welcomePackage.isPending && !welcomePackage.isClaimed) return null;
 
   return (
     <>
-      {showModal && (
+      {/* Portal escapes Radix sheet stacking context — prevents overlay
+          clipping in MiniPay WebView (same pattern as daily-tactic-slot). */}
+      {hydrated && showModal && createPortal(
         <WelcomePackageModal
           onClaim={() => {
             welcomePackage.claim();
@@ -26,7 +31,8 @@ export function WelcomePackageStamp() {
           onDismiss={() => {
             setShowModal(false);
           }}
-        />
+        />,
+        document.body,
       )}
 
       <div className="achievement-tile-grid mb-3" data-testid="welcome-package-stamp">
