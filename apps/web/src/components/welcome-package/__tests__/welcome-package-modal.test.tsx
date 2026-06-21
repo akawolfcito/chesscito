@@ -49,6 +49,19 @@ describe("<WelcomePackageModal>", () => {
   });
 });
 
+describe("<WelcomePackageModal> claimed state", () => {
+  it("shows claimed confirmation message when claimed=true", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} claimed />);
+    expect(screen.getByText(/focus stamp.*day 1.*saved/i)).toBeInTheDocument();
+  });
+
+  it("does not show claim/dismiss buttons when claimed=true", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} claimed />);
+    expect(screen.queryByRole("button", { name: /keep it/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /later/i })).toBeNull();
+  });
+});
+
 describe("<WelcomePackageModal> ES locale", () => {
   it("renders ES title and CTA", () => {
     render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} />, { locale: "es" });

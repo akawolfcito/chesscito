@@ -2264,6 +2264,12 @@ const messages = {
     insufficient: "Sin Peones suficientes",
     error: "Reintento no disponible",
   },
+  FIRST_FOCUS_DAY_OVERLAY_COPY: {
+    eyebrow: "Logro Desbloqueado",
+    title: "Primer Focus Day",
+    description: "Completaste tu primera sesión diaria de enfoque en ajedrez.",
+    continueCta: "Continuar",
+  },
   WELCOME_PACKAGE_COPY: {
     title: "Lo lograste.",
     subtitle: "Completaste tu primer Focus Day.",
@@ -2275,6 +2281,7 @@ const messages = {
     trophiesPendingHint: "Toca para reclamar tu reward",
     trophiesClaimedLabel: "Focus Stamp: Day 1",
     trophiesClaimedDescription: "Guardado en este dispositivo. Ganado en tu primer Focus Day.",
+    claimedConfirmation: "Focus Stamp: Day 1 guardado en este dispositivo.",
   },
 };
 

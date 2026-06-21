@@ -3416,6 +3416,14 @@ export const WELCOME_PACK_COPY = {
   },
 } as const;
 
+/** Lite-mode First Focus Day achievement unlock overlay. */
+export const FIRST_FOCUS_DAY_OVERLAY_COPY = {
+  eyebrow: "Achievement Unlocked",
+  title: "First Focus Day",
+  description: "You completed your first daily chess focus session.",
+  continueCta: "Continue",
+} as const;
+
 /** Lite-mode Welcome Package overlay — shown once after First Focus Day achievement. */
 export const WELCOME_PACKAGE_COPY = {
   title: "You did it.",
@@ -3428,4 +3436,5 @@ export const WELCOME_PACKAGE_COPY = {
   trophiesPendingHint: "Tap to claim your reward",
   trophiesClaimedLabel: "Focus Stamp: Day 1",
   trophiesClaimedDescription: "Saved on this device. Earned on your first Focus Day.",
+  claimedConfirmation: "Focus Stamp: Day 1 saved on this device.",
 } as const;

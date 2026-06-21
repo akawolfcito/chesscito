@@ -38,6 +38,7 @@ import { useAccount } from "wagmi";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
 import { WelcomePackageModal } from "@/components/welcome-package/welcome-package-modal";
+import { FirstFocusDayOverlay } from "@/components/welcome-package/first-focus-day-overlay";
 
 const DEFAULT_PROGRESS: DailyProgress = {
   streak: 0,
@@ -76,7 +77,10 @@ export function HubDailyTile() {
   const isPro = useIsProActive();
   const { isConnected, address } = useAccount();
   const welcomePackage = useWelcomePackage();
+  const [showAchievement, setShowAchievement] = useState(false);
   const [showWelcomePackage, setShowWelcomePackage] = useState(false);
+  const [wpClaimConfirm, setWpClaimConfirm] = useState(false);
+  const wpClaimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Set when handleSolve detects this is the first Focus Day (prev.totalCompleted === 0)
   const firstFocusDayJustEarned = useRef(false);
   /** Sprint 2 commit D — guards `daily_tactic_started` against duplicate
@@ -102,6 +106,24 @@ export function HubDailyTile() {
     setHydrated(true);
     setProgress(getDailyProgress());
     setToday(todayUtc());
+  }, []);
+
+  // Cleanup claim animation timer on unmount
+  useEffect(() => {
+    return () => {
+      if (wpClaimTimerRef.current) clearTimeout(wpClaimTimerRef.current);
+    };
+  }, []);
+
+  // Re-show Welcome Package on Hub mount if user dismissed it in a previous session
+  // (firstFocusDayJustEarned is false here — that case is handled by onOpenChange)
+  useEffect(() => {
+    if (!CHESSCITO_LITE_MODE) return;
+    if (welcomePackage.shouldAutoShow && !firstFocusDayJustEarned.current) {
+      welcomePackage.markShown();
+      setShowWelcomePackage(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -273,11 +295,28 @@ export function HubDailyTile() {
         iconWidth={228}
         iconHeight={256}
       />
+      {showAchievement && (
+        <FirstFocusDayOverlay
+          onContinue={() => {
+            setShowAchievement(false);
+            // After achievement overlay, show Welcome Package if eligible
+            if (welcomePackage.shouldAutoShow) {
+              welcomePackage.markShown();
+              setShowWelcomePackage(true);
+            }
+          }}
+        />
+      )}
       {showWelcomePackage && (
         <WelcomePackageModal
+          claimed={wpClaimConfirm}
           onClaim={() => {
             welcomePackage.claim();
-            setShowWelcomePackage(false);
+            setWpClaimConfirm(true);
+            wpClaimTimerRef.current = setTimeout(() => {
+              setShowWelcomePackage(false);
+              setWpClaimConfirm(false);
+            }, 1200);
           }}
           onDismiss={() => {
             welcomePackage.dismiss();
@@ -290,10 +329,10 @@ export function HubDailyTile() {
         onOpenChange={(nextOpen) => {
           setOpen(nextOpen);
           if (!nextOpen) {
-            // After sheet closes: show Welcome Package if first Focus Day just earned
-            if (firstFocusDayJustEarned.current && welcomePackage.shouldAutoShow) {
-              welcomePackage.markShown();
-              setShowWelcomePackage(true);
+            // After sheet closes: if first Focus Day just earned, show achievement overlay
+            // The achievement overlay's "Continue" then shows the Welcome Package
+            if (firstFocusDayJustEarned.current) {
+              setShowAchievement(true);
             }
             firstFocusDayJustEarned.current = false;
             setSolveResult(null);

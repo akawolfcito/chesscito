@@ -6,9 +6,10 @@ import { WELCOME_PACKAGE_REWARD } from "@/lib/welcome-package/types";
 type Props = {
   onClaim: () => void;
   onDismiss: () => void;
+  claimed?: boolean;
 };
 
-export function WelcomePackageModal({ onClaim, onDismiss }: Props) {
+export function WelcomePackageModal({ onClaim, onDismiss, claimed = false }: Props) {
   const t = useTranslations("WELCOME_PACKAGE_COPY");
 
   return (
@@ -67,24 +68,34 @@ export function WelcomePackageModal({ onClaim, onDismiss }: Props) {
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-2 pt-1">
-          <button
-            type="button"
-            onClick={onClaim}
-            className="principal-button principal-button-medium w-full"
+        {claimed ? (
+          <p
+            className="text-sm font-semibold"
+            style={{ color: "rgba(63, 34, 8, 0.70)" }}
+            data-testid="wp-claimed-confirmation"
           >
-            <span className="principal-button-label">{t("claimCta")}</span>
-          </button>
+            {t("claimedConfirmation")}
+          </p>
+        ) : (
+          <div className="flex w-full flex-col gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClaim}
+              className="principal-button principal-button-medium w-full"
+            >
+              <span className="principal-button-label">{t("claimCta")}</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="text-sm font-semibold underline underline-offset-4"
-            style={{ color: "rgba(63, 34, 8, 0.50)" }}
-          >
-            {t("dismissCta")}
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="text-sm font-semibold underline underline-offset-4"
+              style={{ color: "rgba(63, 34, 8, 0.50)" }}
+            >
+              {t("dismissCta")}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
