@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { WELCOME_PACKAGE_REWARD } from "@/lib/welcome-package/types";
+import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 
 type Props = {
   onClaim: () => void;
@@ -13,56 +15,49 @@ export function WelcomePackageModal({ onClaim, onDismiss, claimed = false }: Pro
   const t = useTranslations("WELCOME_PACKAGE_COPY");
 
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-center justify-center"
-      style={{ background: "rgba(30, 15, 5, 0.72)" }}
-      data-testid="welcome-package-modal"
-    >
-      <div
-        className="relative mx-4 flex w-full max-w-[340px] flex-col items-center gap-4 rounded-2xl px-6 py-8 text-center shadow-2xl"
-        style={{ background: "rgba(255, 248, 235, 0.98)" }}
+    <div data-testid="welcome-package-modal">
+      <VictoryPopupShell
+        onClose={claimed ? undefined : onDismiss}
+        ariaLabel={t("title")}
+        closeLabel="Close"
       >
         {/* Focus Stamp visual — falls back to text label if asset is absent */}
-        <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-amber-400/40 bg-amber-50">
-          <picture>
-            <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.avif`} type="image/avif" />
-            <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.webp`} type="image/webp" />
-            <img
-              src={`${WELCOME_PACKAGE_REWARD.assetBase}.png`}
-              alt={t("stampLabel")}
-              className="h-14 w-14 object-contain"
-              onError={(e) => {
-                const target = e.currentTarget;
-                target.style.display = "none";
-                target.parentElement?.classList.add("wp-stamp-fallback");
-              }}
-            />
-          </picture>
-          {/* Always-rendered fallback text — visible when image fails to load */}
-          <span
-            className="wp-stamp-text text-xs font-extrabold text-amber-700"
-            aria-label={t("stampLabel")}
-          >
-            {t("stampLabel")}
-          </span>
+        <div className="flex justify-center">
+          <div className="relative flex h-28 w-28 items-center justify-center">
+            <picture>
+              <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.avif`} type="image/avif" />
+              <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.webp`} type="image/webp" />
+              <img
+                src={`${WELCOME_PACKAGE_REWARD.assetBase}.png`}
+                alt={t("stampLabel")}
+                className="h-28 w-28 object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            </picture>
+            {/* Fallback text — shows when image fails to load */}
+            <span
+              className="wp-stamp-text absolute text-xs font-extrabold"
+              style={{ color: "rgba(110, 65, 15, 0.80)" }}
+              aria-label={t("stampLabel")}
+            >
+              {t("stampLabel")}
+            </span>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <h2
-            className="text-xl font-extrabold leading-tight"
-            style={{ color: "rgba(63, 34, 8, 0.95)" }}
-          >
-            {t("title")}
-          </h2>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <h2 className="language-modal-title">{t("title")}</h2>
           <p
             className="text-sm font-semibold"
-            style={{ color: "rgba(63, 34, 8, 0.75)" }}
+            style={{ color: "rgba(110, 65, 15, 0.75)" }}
           >
             {t("subtitle")}
           </p>
           <p
             className="text-xs font-medium"
-            style={{ color: "rgba(63, 34, 8, 0.55)" }}
+            style={{ color: "rgba(110, 65, 15, 0.55)" }}
           >
             {t("body")}
           </p>
@@ -70,33 +65,28 @@ export function WelcomePackageModal({ onClaim, onDismiss, claimed = false }: Pro
 
         {claimed ? (
           <p
-            className="text-sm font-semibold"
-            style={{ color: "rgba(63, 34, 8, 0.70)" }}
+            className="text-center text-sm font-semibold"
+            style={{ color: "rgba(110, 65, 15, 0.70)" }}
             data-testid="wp-claimed-confirmation"
           >
             {t("claimedConfirmation")}
           </p>
         ) : (
-          <div className="flex w-full flex-col gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClaim}
-              className="principal-button principal-button-medium w-full"
-            >
-              <span className="principal-button-label">{t("claimCta")}</span>
-            </button>
-
+          <div className="flex w-full flex-col gap-2">
+            <PrincipalButton onClick={onClaim} className="w-full">
+              {t("claimCta")}
+            </PrincipalButton>
             <button
               type="button"
               onClick={onDismiss}
               className="text-sm font-semibold underline underline-offset-4"
-              style={{ color: "rgba(63, 34, 8, 0.50)" }}
+              style={{ color: "rgba(110, 65, 15, 0.50)" }}
             >
               {t("dismissCta")}
             </button>
           </div>
         )}
-      </div>
+      </VictoryPopupShell>
     </div>
   );
 }

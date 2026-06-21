@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CandyIcon } from "@/components/redesign/candy-icon";
+import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
+import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 
 type Props = {
   onContinue: () => void;
@@ -11,55 +12,44 @@ export function FirstFocusDayOverlay({ onContinue }: Props) {
   const t = useTranslations("FIRST_FOCUS_DAY_OVERLAY_COPY");
 
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-center justify-center"
-      style={{ background: "rgba(30, 15, 5, 0.78)" }}
-      data-testid="first-focus-day-overlay"
-    >
-      <div
-        className="relative mx-4 flex w-full max-w-[340px] flex-col items-center gap-4 rounded-2xl px-6 py-8 text-center shadow-2xl"
-        style={{ background: "rgba(255, 248, 235, 0.98)" }}
+    <div data-testid="first-focus-day-overlay">
+      <VictoryPopupShell
+        ariaLabel={t("title")}
       >
-        {/* Achievement icon */}
-        <div
-          className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-amber-400/50"
-          style={{ background: "rgba(245, 158, 11, 0.12)" }}
-        >
-          <CandyIcon
-            name="star"
-            className="h-8 w-8 text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]"
-          />
+        {/* Achievement badge image */}
+        <div className="flex justify-center">
+          <picture>
+            <source srcSet="/art/achievements/1day-focus.avif" type="image/avif" />
+            <source srcSet="/art/achievements/1day-focus.webp" type="image/webp" />
+            <img
+              src="/art/achievements/1day-focus.png"
+              alt={t("title")}
+              className="h-28 w-28 object-contain"
+              draggable={false}
+            />
+          </picture>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col items-center gap-1 text-center">
           <p
             className="text-xs font-black uppercase tracking-[0.18em]"
-            style={{ color: "rgba(63, 34, 8, 0.45)" }}
+            style={{ color: "var(--popup-title-color)", opacity: 0.5 }}
           >
             {t("eyebrow")}
           </p>
-          <h2
-            className="text-2xl font-extrabold leading-tight"
-            style={{ color: "rgba(63, 34, 8, 0.95)" }}
-          >
-            {t("title")}
-          </h2>
+          <h2 className="language-modal-title">{t("title")}</h2>
           <p
             className="text-sm font-medium leading-relaxed"
-            style={{ color: "rgba(63, 34, 8, 0.60)" }}
+            style={{ color: "rgba(110, 65, 15, 0.70)" }}
           >
             {t("description")}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onContinue}
-          className="principal-button principal-button-medium w-full"
-        >
-          <span className="principal-button-label">{t("continueCta")}</span>
-        </button>
-      </div>
+        <PrincipalButton onClick={onContinue} className="w-full">
+          {t("continueCta")}
+        </PrincipalButton>
+      </VictoryPopupShell>
     </div>
   );
 }
