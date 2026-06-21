@@ -1229,6 +1229,8 @@ const messages = {
     switchNetwork: { label: "Cambiar Red", compactLabel: "Red", loading: null },
     shieldsLeft: "{n} restantes",
     submitCanceled: "Guardado cancelado",
+    localSaved: "Guardado",
+    claimWelcomePack: "Reclamar regalo",
   },
   PIECE_RAIL_COPY: {
     comingSoon: "Pronto",

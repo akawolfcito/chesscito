@@ -859,6 +859,7 @@ export function ExercisesScreen({
     rook: false, bishop: false, knight: false, pawn: false, queen: false, king: false,
   });
   const [unlockedPiece, setUnlockedPiece] = useState<PieceKey | null>(null);
+  const [wpMounted, setWpMounted] = useState(false);
 
   /** L2 layer state. When true, the board renders the SELECTED
    *  labyrinth instead of the L1 exercise. Entry happens via training
@@ -866,6 +867,9 @@ export function ExercisesScreen({
    *  state does not survive across pieces. */
   const [labyrinthMode, setLabyrinthMode] = useState(false);
   const [selectedLabyrinthId, setSelectedLabyrinthId] = useState<string | null>(null);
+
+  // SSR hydration guard for WP CTA (spec P0-4)
+  useEffect(() => { setWpMounted(true); }, []);
 
   /** Modal trap fix: when the global ResultOverlay opens (success OR
    *  error) while a Radix dock sheet is still mounted, Radix's modal
@@ -1384,11 +1388,12 @@ export function ExercisesScreen({
     isConnected,
     isCorrectChain,
   };
-  const contextAction = getContextAction(contextActionState);
+  const contextAction = getContextAction(contextActionState, { liteMode: CHESSCITO_LITE_MODE });
   // SAVE and CLAIM are independent reward actions — they must not fight for
   // one slot (hiding the SaveScore Peones sink behind the badge claim lost a
   // monetization touchpoint). When both apply, render both side by side.
-  const rewardActions = getRewardActions(contextActionState);
+  // In Lite, submitScore is suppressed via liteMode flag.
+  const rewardActions = getRewardActions(contextActionState, { liteMode: CHESSCITO_LITE_MODE });
 
   // Suppress unused-var lint for the legacy heuristic — preserved so
   // any downstream consumer that still references it doesn't break.
@@ -1523,11 +1528,12 @@ export function ExercisesScreen({
       completeExercise(movesCount);
 
       // Phase 2 nudge: first ★★★ on any exercise while disconnected
-      // triggers the one-shot "Connect to save" prompt. Hook is idempotent —
-      // calling show() after the flag is set is a no-op, so this branch
-      // runs cheaply on every perfect.
+      // triggers the one-shot "Connect to save" prompt. Suppressed in
+      // Lite — no on-chain save path exists there, so the prompt would
+      // imply a capability that doesn't exist (spec P0-1).
       if (
         !isConnected &&
+        !CHESSCITO_LITE_MODE &&
         computeStars(movesCount, currentExercise.optimalMoves) === 3
       ) {
         starsConnectPrompt.show();
@@ -1565,6 +1571,12 @@ export function ExercisesScreen({
 
       const completedExerciseId = currentExercise.id;
       autoReset.schedule(() => {
+        // Local-save feedback (spec P0-2/P0-3): fires here (t=1500ms)
+        // AFTER the WELL DONE phase-flash, not at completeExercise time.
+        // Guard: not in labyrinth mode — labyrinths have their own overlay.
+        if (!labyrinthMode) {
+          showToast(tFooter("localSaved"), 1200);
+        }
         // QA G1 (2026-06-11): the senda flows THROUGH the labyrinths.
         // When the interleaved path places an available lab right after
         // the exercise the player just finished, enter it — the next
@@ -2640,6 +2652,29 @@ export function ExercisesScreen({
                   label={tPath("nextChallengeCta")}
                   ariaLabel={tPath("nextChallengeCta")}
                   onPress={() => handleLabyrinthSelect(nextChallenge.id)}
+                />
+              </div>
+            ) : CHESSCITO_LITE_MODE &&
+              contextAction === null &&
+              !effectiveLabyrinthMode &&
+              !nextChallenge &&
+              wpMounted &&
+              welcomePack.state !== "claimed" ? (
+              // Spec P0-4: WP inline CTA in Lite when slot is idle and
+              // pack not yet claimed. Badge claim takes priority (guarded
+              // by contextAction === null above). Hydration-safe via wpMounted.
+              <div className="animate-in fade-in zoom-in-95 duration-200">
+                <ActionPin
+                  action="claimWelcomePack"
+                  size="pin"
+                  label={tFooter("claimWelcomePack")}
+                  ariaLabel={tFooter("claimWelcomePack")}
+                  onPress={
+                    welcomePack.state === "connect"
+                      ? welcomePack.onConnect
+                      : welcomePack.onClaim
+                  }
+                  isBusy={welcomePack.state === "claiming"}
                 />
               </div>
             ) : (

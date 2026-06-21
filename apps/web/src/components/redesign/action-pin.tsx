@@ -15,6 +15,7 @@ export type ActionPinAction =
   | "submitScore"
   | "useShield"
   | "claimBadge"
+  | "claimWelcomePack"
   | "retry"
   | "connectWallet"
   | "switchNetwork"
@@ -89,6 +90,11 @@ const ACTION_STYLES: Record<
     glow: "shadow-[var(--cta-special-glow)]",
     text: "text-white",
   },
+  claimWelcomePack: {
+    bg: "bg-gradient-to-b from-[var(--cta-special-from)] to-[var(--cta-special-to)]",
+    glow: "shadow-[var(--cta-special-glow)]",
+    text: "text-white",
+  },
   retry: {
     bg: "bg-[var(--cta-muted-bg)]",
     glow: "",
@@ -124,6 +130,7 @@ const ACTION_ICON: Record<ActionPinAction, CandyIconName> = {
   submitScore: "check",
   useShield: "shield",
   claimBadge: "trophy",
+  claimWelcomePack: "shield",
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",
@@ -135,6 +142,7 @@ const ACTION_ROW_ICON: Record<ActionPinAction, ActionRowIconName> = {
   submitScore: "save",
   useShield: "shield-king",
   claimBadge: "trofeo-epico",
+  claimWelcomePack: "shield-king",
   retry: "refresh",
   connectWallet: "wallet",
   switchNetwork: "refresh",

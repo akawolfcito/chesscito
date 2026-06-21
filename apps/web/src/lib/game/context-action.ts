@@ -16,39 +16,67 @@ export type ContextActionState = {
   isCorrectChain: boolean;
 };
 
+export type ContextActionOptions = {
+  /** When true, score save actions are suppressed (submitScore, and
+   *  connectWallet/switchNetwork triggered solely by a pending score).
+   *  Badge claim path (claimBadge, connectWallet for badge, switchNetwork
+   *  for badge) is preserved — badge claim is valid in Lite.
+   *  Default false → Full behavior unchanged. */
+  liteMode?: boolean;
+};
+
 /** Reward-area actions (2026-06-10): SAVE and CLAIM are distinct functions
- *  and must NOT fight for one slot (hiding the SaveScore Peones sink behind
- *  the badge claim was losing a monetization touchpoint). Returns the
- *  reward actions that apply, ordered SAVE (primary) → CLAIM (secondary),
- *  so the UI renders one or both side by side without either hiding the
- *  other. Wallet-blocked + failure states are intentionally NOT handled
- *  here — those keep a single resolutive CTA via getContextAction. */
+ *  and must NOT fight for one slot. In liteMode, submitScore is suppressed;
+ *  claimBadge remains valid. */
 export type RewardAction = Extract<ContextAction, "submitScore" | "claimBadge">;
 
-export function getRewardActions(state: ContextActionState): RewardAction[] {
+export function getRewardActions(
+  state: ContextActionState,
+  options?: ContextActionOptions,
+): RewardAction[] {
   if (state.phase === "failure") return [];
   if (!state.isConnected || !state.isCorrectChain) return [];
   const actions: RewardAction[] = [];
-  if (state.scorePending) actions.push("submitScore"); // SAVE first (primary)
+  if (state.scorePending && !options?.liteMode) actions.push("submitScore");
   if (state.badgeClaimable) actions.push("claimBadge");
   return actions;
 }
 
-export function getContextAction(state: ContextActionState): ContextAction {
-  // Failure recovery always takes priority
+export function getContextAction(
+  state: ContextActionState,
+  options?: ContextActionOptions,
+): ContextAction {
+  const liteMode = options?.liteMode ?? false;
+
+  // Failure recovery always takes priority — unchanged in liteMode
   if (state.phase === "failure") {
     if (state.isConnected && state.isCorrectChain && state.shieldsAvailable > 0) return "useShield";
     return "retry";
   }
 
-  // Badge > Score when both available (reward before record)
+  // In liteMode: badge path is the only on-chain action.
+  // Score save (submitScore / connectWallet for score / switchNetwork for score)
+  // is suppressed. connectWallet/switchNetwork are preserved ONLY when badge is pending.
+  if (liteMode) {
+    if (state.isConnected && state.isCorrectChain) {
+      if (state.badgeClaimable) return "claimBadge";
+      return null; // submitScore suppressed
+    }
+    // Wallet-state actions only when badge is pending
+    if (state.badgeClaimable) {
+      if (!state.isConnected) return "connectWallet";
+      if (!state.isCorrectChain) return "switchNetwork";
+    }
+    return null; // scorePendingOnly → null in Lite
+  }
+
+  // Full behavior (liteMode=false)
   if (state.isConnected && state.isCorrectChain) {
     if (state.badgeClaimable) return "claimBadge";
     if (state.scorePending) return "submitScore";
     return null;
   }
 
-  // Wallet-state actions: show resolutive CTA when score is pending but wallet blocks
   if (state.scorePending || state.badgeClaimable) {
     if (!state.isConnected) return "connectWallet";
     if (!state.isCorrectChain) return "switchNetwork";

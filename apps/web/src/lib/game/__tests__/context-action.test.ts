@@ -51,6 +51,109 @@ describe("getRewardActions — SAVE and CLAIM are independent (no slot fight)", 
   });
 });
 
+// ── liteMode tests ────────────────────────────────────────────────────────
+
+describe("getRewardActions — liteMode=true", () => {
+  it("never returns submitScore when liteMode=true (scorePendingOnly)", () => {
+    expect(getRewardActions({ ...BASE, scorePending: true }, { liteMode: true })).toEqual([]);
+  });
+
+  it("never returns submitScore when liteMode=true (both scorePending + badge)", () => {
+    expect(
+      getRewardActions({ ...BASE, scorePending: true, badgeClaimable: true }, { liteMode: true }),
+    ).toEqual(["claimBadge"]);
+  });
+
+  it("still returns claimBadge when liteMode=true and badge claimable", () => {
+    expect(getRewardActions({ ...BASE, badgeClaimable: true }, { liteMode: true })).toEqual([
+      "claimBadge",
+    ]);
+  });
+
+  it("returns [] when liteMode=true and nothing pending", () => {
+    expect(getRewardActions(BASE, { liteMode: true })).toEqual([]);
+  });
+
+  it("Full behavior unchanged when liteMode=false (scorePendingOnly → [submitScore])", () => {
+    expect(getRewardActions({ ...BASE, scorePending: true }, { liteMode: false })).toEqual([
+      "submitScore",
+    ]);
+  });
+});
+
+describe("getContextAction — liteMode=true", () => {
+  it("returns null when scorePendingOnly + disconnected (no connectWallet for score in Lite)", () => {
+    expect(
+      getContextAction({ ...BASE, isConnected: false, scorePending: true }, { liteMode: true }),
+    ).toEqual(null);
+  });
+
+  it("returns null when scorePendingOnly + connected (no submitScore in Lite)", () => {
+    expect(
+      getContextAction({ ...BASE, scorePending: true }, { liteMode: true }),
+    ).toEqual(null);
+  });
+
+  it("returns connectWallet when badgeClaimable + disconnected (badge needs wallet)", () => {
+    expect(
+      getContextAction({ ...BASE, isConnected: false, badgeClaimable: true }, { liteMode: true }),
+    ).toEqual("connectWallet");
+  });
+
+  it("returns switchNetwork when badgeClaimable + wrongChain (badge needs chain)", () => {
+    expect(
+      getContextAction(
+        { ...BASE, isConnected: true, isCorrectChain: false, badgeClaimable: true },
+        { liteMode: true },
+      ),
+    ).toEqual("switchNetwork");
+  });
+
+  it("returns claimBadge when badgeClaimable + connected + correctChain", () => {
+    expect(
+      getContextAction({ ...BASE, badgeClaimable: true }, { liteMode: true }),
+    ).toEqual("claimBadge");
+  });
+
+  it("badge path wins over score when both pending in Lite", () => {
+    expect(
+      getContextAction({ ...BASE, scorePending: true, badgeClaimable: true }, { liteMode: true }),
+    ).toEqual("claimBadge");
+  });
+
+  it("returns null when badgeClaimable + scorePendingNew but disconnected AND only score pending (no badge)", () => {
+    expect(
+      getContextAction(
+        { ...BASE, isConnected: false, scorePending: true, badgeClaimable: false },
+        { liteMode: true },
+      ),
+    ).toEqual(null);
+  });
+
+  it("failure phase: retry/useShield unchanged in liteMode", () => {
+    expect(
+      getContextAction({ ...BASE, phase: "failure", shieldsAvailable: 2 }, { liteMode: true }),
+    ).toEqual("useShield");
+    expect(
+      getContextAction({ ...BASE, phase: "failure", shieldsAvailable: 0 }, { liteMode: true }),
+    ).toEqual("retry");
+  });
+
+  it("Full behavior unchanged when liteMode=false — submitScore returns normally", () => {
+    expect(
+      getContextAction({ ...BASE, scorePending: true }, { liteMode: false }),
+    ).toEqual("submitScore");
+  });
+
+  it("Full behavior unchanged — connectWallet for score when disconnected", () => {
+    expect(
+      getContextAction({ ...BASE, isConnected: false, scorePending: true }, { liteMode: false }),
+    ).toEqual("connectWallet");
+  });
+});
+
+// ── Original tests ────────────────────────────────────────────────────────
+
 describe("getContextAction", () => {
   // ── Wallet guards ──────────────────────────────────────
   it("returns null when disconnected and nothing pending", () => {
