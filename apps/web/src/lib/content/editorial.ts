@@ -161,8 +161,8 @@ export const MISSION_DETAIL_COPY = {
    *  `{stars}` = total exercise stars for the selected piece.
    *  Labyrinths are excluded from this count. */
   scoreBreakdown: "{stars}★ × 100 pts",
-  /** Appended to the breakdown when totalStars === maxPossibleStars. */
-  scoreAtMax: "Max",
+  /** Full breakdown when totalStars === maxPossibleStars. */
+  scoreAtMax: "{stars}★ / {maxStars}★ · Max",
   /** Generic close-affordance ARIA label used by `<MissionHeaderCandy />`
    *  for every sheet that adopts it (mission detail, daily picker, mate
    *  picker, …). `{title}` is the surface's own sheet title. */

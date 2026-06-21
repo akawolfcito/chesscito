@@ -1253,6 +1253,8 @@ const messages = {
     saveOnChainPromise: "Tuyo para siempre",
     saveOnChainCta: "Guardar",
     saving: "Guardando…",
+    scoreBreakdown: "{stars}★ × 100 pts",
+    scoreAtMax: "{stars}★ / {maxStars}★ · Máximo",
     closeLabelFormat: "Cerrar {title}",
   },
   BADGE_TITLES: {

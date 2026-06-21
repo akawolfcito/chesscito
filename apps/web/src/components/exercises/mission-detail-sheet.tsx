@@ -327,7 +327,10 @@ export function MissionDetailSheet({
                     }}
                   >
                     {totalStars >= maxPossibleStars
-                      ? `${totalStars}★ / ${maxPossibleStars}★ · ${tDetail("scoreAtMax")}`
+                      ? tDetail("scoreAtMax", {
+                          stars: totalStars,
+                          maxStars: maxPossibleStars,
+                        })
                       : tDetail("scoreBreakdown", { stars: totalStars })}
                   </p>
                 ) : null}

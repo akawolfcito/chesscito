@@ -193,6 +193,30 @@ describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
     expect(screen.getByTestId("score-breakdown")).toHaveTextContent("Max");
   });
 
+  it("uses the Spanish localized breakdown with both star interpolations", () => {
+    const onOpenChange = vi.fn();
+    renderWithIntl(
+      <MissionDetailSheet
+        open
+        onOpenChange={onOpenChange}
+        selectedPiece="knight"
+        targetLabel="e5"
+        isCapture={false}
+        score="3000"
+        canSaveScore
+        onSaveScore={vi.fn()}
+        totalStars={30}
+        maxPossibleStars={30}
+        trigger={<button type="button">peek</button>}
+      />,
+      { locale: "es" },
+    );
+
+    expect(screen.getByTestId("score-breakdown")).toHaveTextContent(
+      "30★ / 30★ · Máximo",
+    );
+  });
+
   it("does NOT show breakdown when totalStars is absent", () => {
     renderSheet({
       canSaveScore: true,
