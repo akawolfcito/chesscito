@@ -87,171 +87,6 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       ]
     },
     {
-      "id": "rook-8",
-      "optimalMoves": 4,
-      "startPos": {
-        "file": 3,
-        "rank": 3
-      },
-      "targetPos": {
-        "file": 4,
-        "rank": 4
-      },
-      "obstacles": [
-        {
-          "file": 3,
-          "rank": 4
-        },
-        {
-          "file": 4,
-          "rank": 3
-        }
-      ],
-      "tier": "medium",
-      "tags": [
-        "detour",
-        "boxed-target"
-      ]
-    },
-    {
-      "id": "rook-9",
-      "optimalMoves": 3,
-      "startPos": {
-        "file": 0,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 2,
-        "rank": 2
-      },
-      "obstacles": [
-        {
-          "file": 0,
-          "rank": 2
-        },
-        {
-          "file": 2,
-          "rank": 0
-        }
-      ],
-      "tier": "medium",
-      "tags": [
-        "capture",
-        "detour"
-      ]
-    },
-    {
-      "id": "rook-10",
-      "optimalMoves": 4,
-      "startPos": {
-        "file": 3,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 3,
-        "rank": 4
-      },
-      "obstacles": [
-        {
-          "file": 2,
-          "rank": 4
-        },
-        {
-          "file": 4,
-          "rank": 4
-        },
-        {
-          "file": 3,
-          "rank": 3
-        },
-        {
-          "file": 3,
-          "rank": 1
-        }
-      ],
-      "tier": "medium",
-      "tags": [
-        "detour",
-        "blocked-file",
-        "rook-lift"
-      ]
-    },
-    {
-      "id": "rook-7",
-      "optimalMoves": 4,
-      "startPos": {
-        "file": 0,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 3,
-        "rank": 4
-      },
-      "obstacles": [
-        {
-          "file": 1,
-          "rank": 6
-        },
-        {
-          "file": 2,
-          "rank": 6
-        },
-        {
-          "file": 3,
-          "rank": 6
-        },
-        {
-          "file": 5,
-          "rank": 6
-        },
-        {
-          "file": 1,
-          "rank": 5
-        },
-        {
-          "file": 5,
-          "rank": 5
-        },
-        {
-          "file": 1,
-          "rank": 4
-        },
-        {
-          "file": 5,
-          "rank": 4
-        },
-        {
-          "file": 1,
-          "rank": 3
-        },
-        {
-          "file": 2,
-          "rank": 2
-        },
-        {
-          "file": 3,
-          "rank": 2
-        },
-        {
-          "file": 4,
-          "rank": 2
-        },
-        {
-          "file": 5,
-          "rank": 2
-        },
-        {
-          "file": 1,
-          "rank": 1
-        }
-      ],
-      "tier": "medium",
-      "tags": [
-        "detour",
-        "blocked-file"
-      ]
-    },
-    {
       "id": "rook-6",
       "optimalMoves": 3,
       "startPos": {
@@ -352,6 +187,171 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
       "tags": [
         "detour",
         "blocked-rank"
+      ]
+    },
+    {
+      "id": "rook-7",
+      "optimalMoves": 4,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 3,
+        "rank": 4
+      },
+      "obstacles": [
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 2,
+          "rank": 6
+        },
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 5,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 5
+        },
+        {
+          "file": 5,
+          "rank": 5
+        },
+        {
+          "file": 1,
+          "rank": 4
+        },
+        {
+          "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 1,
+          "rank": 3
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
+          "file": 4,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 1,
+          "rank": 1
+        }
+      ],
+      "tier": "medium",
+      "tags": [
+        "detour",
+        "blocked-file"
+      ]
+    },
+    {
+      "id": "rook-8",
+      "optimalMoves": 4,
+      "startPos": {
+        "file": 3,
+        "rank": 3
+      },
+      "targetPos": {
+        "file": 4,
+        "rank": 4
+      },
+      "obstacles": [
+        {
+          "file": 3,
+          "rank": 4
+        },
+        {
+          "file": 4,
+          "rank": 3
+        }
+      ],
+      "tier": "medium",
+      "tags": [
+        "detour",
+        "boxed-target"
+      ]
+    },
+    {
+      "id": "rook-9",
+      "optimalMoves": 3,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 2,
+        "rank": 2
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 2
+        },
+        {
+          "file": 2,
+          "rank": 0
+        }
+      ],
+      "tier": "medium",
+      "tags": [
+        "capture",
+        "detour"
+      ]
+    },
+    {
+      "id": "rook-10",
+      "optimalMoves": 4,
+      "startPos": {
+        "file": 3,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 3,
+        "rank": 4
+      },
+      "obstacles": [
+        {
+          "file": 2,
+          "rank": 4
+        },
+        {
+          "file": 4,
+          "rank": 4
+        },
+        {
+          "file": 3,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 1
+        }
+      ],
+      "tier": "medium",
+      "tags": [
+        "detour",
+        "blocked-file",
+        "rook-lift"
       ]
     }
   ],
@@ -1441,6 +1441,208 @@ export const GENERATED_EXERCISES: Record<PieceId, Exercise[]> = {
 export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
   "rook": [
     {
+      "id": "rook-gen-00q06dtn",
+      "optimalMoves": 5,
+      "startPos": {
+        "file": 0,
+        "rank": 0
+      },
+      "targetPos": {
+        "file": 7,
+        "rank": 7
+      },
+      "obstacles": [
+        {
+          "file": 0,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 7
+        },
+        {
+          "file": 3,
+          "rank": 6
+        },
+        {
+          "file": 4,
+          "rank": 6
+        },
+        {
+          "file": 6,
+          "rank": 6
+        },
+        {
+          "file": 7,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 5
+        },
+        {
+          "file": 2,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 5
+        },
+        {
+          "file": 6,
+          "rank": 4
+        },
+        {
+          "file": 7,
+          "rank": 4
+        },
+        {
+          "file": 0,
+          "rank": 3
+        },
+        {
+          "file": 1,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 3
+        },
+        {
+          "file": 4,
+          "rank": 3
+        },
+        {
+          "file": 5,
+          "rank": 3
+        },
+        {
+          "file": 6,
+          "rank": 3
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
+          "file": 6,
+          "rank": 2
+        },
+        {
+          "file": 0,
+          "rank": 1
+        },
+        {
+          "file": 1,
+          "rank": 1
+        },
+        {
+          "file": 5,
+          "rank": 1
+        },
+        {
+          "file": 3,
+          "rank": 0
+        },
+        {
+          "file": 7,
+          "rank": 0
+        }
+      ],
+      "tier": "medium"
+    },
+    {
+      "id": "rook-lab-1",
+      "optimalMoves": 6,
+      "startPos": {
+        "file": 2,
+        "rank": 1
+      },
+      "targetPos": {
+        "file": 4,
+        "rank": 2
+      },
+      "obstacles": [
+        {
+          "file": 3,
+          "rank": 7
+        },
+        {
+          "file": 5,
+          "rank": 7
+        },
+        {
+          "file": 7,
+          "rank": 7
+        },
+        {
+          "file": 1,
+          "rank": 6
+        },
+        {
+          "file": 1,
+          "rank": 5
+        },
+        {
+          "file": 3,
+          "rank": 5
+        },
+        {
+          "file": 1,
+          "rank": 4
+        },
+        {
+          "file": 5,
+          "rank": 4
+        },
+        {
+          "file": 7,
+          "rank": 4
+        },
+        {
+          "file": 3,
+          "rank": 3
+        },
+        {
+          "file": 1,
+          "rank": 2
+        },
+        {
+          "file": 2,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 2
+        },
+        {
+          "file": 5,
+          "rank": 2
+        },
+        {
+          "file": 3,
+          "rank": 1
+        },
+        {
+          "file": 4,
+          "rank": 1
+        },
+        {
+          "file": 0,
+          "rank": 0
+        },
+        {
+          "file": 6,
+          "rank": 0
+        },
+        {
+          "file": 7,
+          "rank": 0
+        }
+      ],
+      "tier": "medium"
+    },
+    {
       "id": "rook-lab-2",
       "optimalMoves": 6,
       "startPos": {
@@ -1592,117 +1794,6 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
       "tier": "medium"
     },
     {
-      "id": "rook-gen-00q06dtn",
-      "optimalMoves": 5,
-      "startPos": {
-        "file": 0,
-        "rank": 0
-      },
-      "targetPos": {
-        "file": 7,
-        "rank": 7
-      },
-      "obstacles": [
-        {
-          "file": 0,
-          "rank": 7
-        },
-        {
-          "file": 1,
-          "rank": 7
-        },
-        {
-          "file": 3,
-          "rank": 6
-        },
-        {
-          "file": 4,
-          "rank": 6
-        },
-        {
-          "file": 6,
-          "rank": 6
-        },
-        {
-          "file": 7,
-          "rank": 6
-        },
-        {
-          "file": 1,
-          "rank": 5
-        },
-        {
-          "file": 2,
-          "rank": 5
-        },
-        {
-          "file": 3,
-          "rank": 5
-        },
-        {
-          "file": 6,
-          "rank": 4
-        },
-        {
-          "file": 7,
-          "rank": 4
-        },
-        {
-          "file": 0,
-          "rank": 3
-        },
-        {
-          "file": 1,
-          "rank": 3
-        },
-        {
-          "file": 3,
-          "rank": 3
-        },
-        {
-          "file": 4,
-          "rank": 3
-        },
-        {
-          "file": 5,
-          "rank": 3
-        },
-        {
-          "file": 6,
-          "rank": 3
-        },
-        {
-          "file": 3,
-          "rank": 2
-        },
-        {
-          "file": 6,
-          "rank": 2
-        },
-        {
-          "file": 0,
-          "rank": 1
-        },
-        {
-          "file": 1,
-          "rank": 1
-        },
-        {
-          "file": 5,
-          "rank": 1
-        },
-        {
-          "file": 3,
-          "rank": 0
-        },
-        {
-          "file": 7,
-          "rank": 0
-        }
-      ],
-      "tier": "medium"
-    },
-    {
       "id": "rook-lab-3",
       "optimalMoves": 7,
       "startPos": {
@@ -1793,97 +1884,6 @@ export const GENERATED_LABYRINTHS: Record<PieceId, Exercise[]> = {
         {
           "file": 4,
           "rank": 1
-        }
-      ],
-      "tier": "medium"
-    },
-    {
-      "id": "rook-lab-1",
-      "optimalMoves": 6,
-      "startPos": {
-        "file": 2,
-        "rank": 1
-      },
-      "targetPos": {
-        "file": 4,
-        "rank": 2
-      },
-      "obstacles": [
-        {
-          "file": 3,
-          "rank": 7
-        },
-        {
-          "file": 5,
-          "rank": 7
-        },
-        {
-          "file": 7,
-          "rank": 7
-        },
-        {
-          "file": 1,
-          "rank": 6
-        },
-        {
-          "file": 1,
-          "rank": 5
-        },
-        {
-          "file": 3,
-          "rank": 5
-        },
-        {
-          "file": 1,
-          "rank": 4
-        },
-        {
-          "file": 5,
-          "rank": 4
-        },
-        {
-          "file": 7,
-          "rank": 4
-        },
-        {
-          "file": 3,
-          "rank": 3
-        },
-        {
-          "file": 1,
-          "rank": 2
-        },
-        {
-          "file": 2,
-          "rank": 2
-        },
-        {
-          "file": 3,
-          "rank": 2
-        },
-        {
-          "file": 5,
-          "rank": 2
-        },
-        {
-          "file": 3,
-          "rank": 1
-        },
-        {
-          "file": 4,
-          "rank": 1
-        },
-        {
-          "file": 0,
-          "rank": 0
-        },
-        {
-          "file": 6,
-          "rank": 0
-        },
-        {
-          "file": 7,
-          "rank": 0
         }
       ],
       "tier": "medium"

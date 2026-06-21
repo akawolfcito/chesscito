@@ -72,7 +72,7 @@
       "detour",
       "blocked-rank"
     ],
-    "order": 9
+    "order": 5
   },
   {
     "id": "rook-7",
@@ -85,7 +85,7 @@
       "detour",
       "blocked-file"
     ],
-    "order": 8
+    "order": 6
   },
   {
     "id": "rook-8",
@@ -98,7 +98,7 @@
       "detour",
       "boxed-target"
     ],
-    "order": 5
+    "order": 7
   },
   {
     "id": "rook-9",
@@ -111,7 +111,7 @@
       "capture",
       "detour"
     ],
-    "order": 6
+    "order": 8
   },
   {
     "id": "rook-10",
@@ -125,7 +125,7 @@
       "blocked-file",
       "rook-lift"
     ],
-    "order": 7
+    "order": 9
   },
   {
     "id": "bishop-1",
