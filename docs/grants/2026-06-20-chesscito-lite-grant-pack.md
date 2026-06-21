@@ -42,19 +42,27 @@
 | Recognition | Lite Achievements (First Focus Day / 3-Day Rhythm / 7-Day Focus) | Shipped |
 | Reward | Welcome Package (pending to claim) | Shipped |
 | Progress | Trophies / YOUR PROGRESS hero band | Shipped |
+| Training continuity | Exercise Path Sequencing (auto-advance through interleaved exercises + labyrinths) | Shipped |
 
 ---
 
 ## Key screenshots (to attach)
 
-- Hub Lite (focus-first, no monetization surfaces)
-- Daily Focus — playable challenge
-- Daily solved — celebratory overlay (no Peones)
-- Focus Passport — 7-slot streak visual
-- Trophies/Progress — Achievements + YOUR PROGRESS hero band
-- Account — Wallet / Network / Language only (no Arena Wins / no Saved Victories)
+See full checklist and capture notes in [`docs/grants/assets/README.md`](assets/README.md).
 
-> Capture pending. Store under `docs/grants/assets/`.
+| # | File | Surface |
+|---|------|---------|
+| 1 | `assets/01-hub-lite.png` | Hub Lite — focus-first, no monetization surfaces |
+| 2 | `assets/02-daily-focus.png` | Daily Focus — playable challenge, mid-solve |
+| 3 | `assets/03-focus-passport.png` | Focus Passport — 7-slot streak visual |
+| 4 | `assets/04-lite-achievements.png` | Trophies — Lite Achievements + YOUR PROGRESS hero band |
+| 5 | `assets/05-claim-gift.png` | Welcome Package — Claim Gift overlay on Hub |
+| 6 | `assets/06-exercises-path.png` | Exercises — interleaved path (exercise + labyrinth rows) |
+| 7 | `assets/07-labyrinth-active.png` | Labyrinth — challenge in progress |
+| 8 | `assets/08-account-lite.png` | Account Lite — Wallet / Network / Language only |
+| 9 | `assets/09-stats-public.png` | /stats — public metrics page |
+
+> Captures pending. See [`docs/grants/assets/README.md`](assets/README.md) for status checklist.
 
 ---
 
@@ -87,7 +95,7 @@
 
 ### Platform-level (Supabase — verifiable at `/stats`)
 
-- Total Progress Saves (on-chain, from `victories` table)
+- Total Victories Saved on Celo (Full mode only, from `victories` table — Lite progress is local-only)
 - Approx. App Sessions (7d / 30d — anonymous, from `analytics_events`)
 - Welcome Packs Claimed (lifetime + 7d, from `welcome_pack_claims`)
 - On-chain transaction counts by method (progress saves, score saves, Get Peones)
