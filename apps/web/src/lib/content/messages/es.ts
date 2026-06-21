@@ -2264,6 +2264,18 @@ const messages = {
     insufficient: "Sin Peones suficientes",
     error: "Reintento no disponible",
   },
+  WELCOME_PACKAGE_COPY: {
+    title: "Lo lograste.",
+    subtitle: "Completaste tu primer Focus Day.",
+    body: "Esto es tuyo para recordar el momento.",
+    stampLabel: "Focus Stamp: Day 1",
+    claimCta: "Es tuyo",
+    dismissCta: "Despu\u00e9s",
+    trophiesPendingLabel: "Welcome Package",
+    trophiesPendingHint: "Toca para reclamar tu reward",
+    trophiesClaimedLabel: "Focus Stamp: Day 1",
+    trophiesClaimedDescription: "Guardado en este dispositivo. Ganado en tu primer Focus Day.",
+  },
 };
 
 export default messages;

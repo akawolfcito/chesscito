@@ -3415,3 +3415,17 @@ export const WELCOME_PACK_COPY = {
     error: "Claim failed. Try again.",
   },
 } as const;
+
+/** Lite-mode Welcome Package overlay — shown once after First Focus Day achievement. */
+export const WELCOME_PACKAGE_COPY = {
+  title: "You did it.",
+  subtitle: "Your first Focus Day is complete.",
+  body: "Here's something to mark the moment.",
+  stampLabel: "Focus Stamp: Day 1",
+  claimCta: "Keep it",
+  dismissCta: "Later",
+  trophiesPendingLabel: "Welcome Package",
+  trophiesPendingHint: "Tap to claim your reward",
+  trophiesClaimedLabel: "Focus Stamp: Day 1",
+  trophiesClaimedDescription: "Saved on this device. Earned on your first Focus Day.",
+} as const;

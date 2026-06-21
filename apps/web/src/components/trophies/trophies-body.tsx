@@ -18,6 +18,7 @@ import { getDailyProgress, type DailyProgress } from "@/lib/daily/progress";
 import { useCoachHistoryCount } from "@/lib/coach/use-coach-history-count";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { WelcomePackageStamp } from "@/components/welcome-package/welcome-package-stamp";
 import {
   clearOptimisticVictory,
   getOptimisticVictory,
@@ -354,6 +355,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
         </div>
       )}
 
+      {CHESSCITO_LITE_MODE && <WelcomePackageStamp />}
       <AchievementsGrid achievements={summary.list} />
 
       {!CHESSCITO_LITE_MODE && summary.earnedCount === 0 && (

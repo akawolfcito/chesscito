@@ -35,6 +35,9 @@ import {
 import { computeStars } from "@/lib/game/scoring";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { useAccount } from "wagmi";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
+import { WelcomePackageModal } from "@/components/welcome-package/welcome-package-modal";
 
 const DEFAULT_PROGRESS: DailyProgress = {
   streak: 0,
@@ -72,6 +75,10 @@ export function HubDailyTile() {
   } | null>(null);
   const isPro = useIsProActive();
   const { isConnected, address } = useAccount();
+  const welcomePackage = useWelcomePackage();
+  const [showWelcomePackage, setShowWelcomePackage] = useState(false);
+  // Set when handleSolve detects this is the first Focus Day (prev.totalCompleted === 0)
+  const firstFocusDayJustEarned = useRef(false);
   /** Sprint 2 commit D — guards `daily_tactic_started` against duplicate
    *  emission on re-render. Set when `open` flips true; cleared when
    *  it flips false. Re-renders with open already true do not re-emit. */
@@ -113,6 +120,11 @@ export function HubDailyTile() {
 
   async function handleSolve(movesUsed: number) {
     const prev = progress;
+    // Detect first Focus Day before recording completion
+    if (CHESSCITO_LITE_MODE && prev.totalCompleted === 0) {
+      firstFocusDayJustEarned.current = true;
+      welcomePackage.unlock();
+    }
     const next = recordDailyCompletion(today);
     setProgress(next);
 
@@ -261,11 +273,29 @@ export function HubDailyTile() {
         iconWidth={228}
         iconHeight={256}
       />
+      {showWelcomePackage && (
+        <WelcomePackageModal
+          onClaim={() => {
+            welcomePackage.claim();
+            setShowWelcomePackage(false);
+          }}
+          onDismiss={() => {
+            welcomePackage.dismiss();
+            setShowWelcomePackage(false);
+          }}
+        />
+      )}
       <DailyTacticSheet
         open={open}
         onOpenChange={(nextOpen) => {
           setOpen(nextOpen);
           if (!nextOpen) {
+            // After sheet closes: show Welcome Package if first Focus Day just earned
+            if (firstFocusDayJustEarned.current && welcomePackage.shouldAutoShow) {
+              welcomePackage.markShown();
+              setShowWelcomePackage(true);
+            }
+            firstFocusDayJustEarned.current = false;
             setSolveResult(null);
             setReward(null);
             earnFiredRef.current = false;
