@@ -288,9 +288,9 @@ describe("StatsPage", () => {
     expect(screen.queryByText("Activity trend, last 30 days")).toBeNull();
   });
 
-  it("renders the Victory difficulty mix chart with a band-aware caption", () => {
+  it("renders the Progress difficulty mix chart with a band-aware caption", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
-    expect(screen.getByText("Victory difficulty mix")).toBeInTheDocument();
+    expect(screen.getByText("Progress difficulty mix")).toBeInTheDocument();
     // SAMPLE_STATS difficulty: easy=500, medium=600, hard=134 →
     // medium is the max band, so caption is the mid-skill variant.
     expect(
@@ -298,7 +298,7 @@ describe("StatsPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the Victory difficulty mix as a single stacked bar with a complete aria-label", () => {
+  it("renders the Progress difficulty mix as a single stacked bar with a complete aria-label", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
     // SAMPLE_STATS: easy=500, medium=600, hard=134, total=1234.
     // Percentages: 500/1234≈40.5→41, 600/1234≈48.6→49, 134/1234≈10.9→11.
@@ -309,7 +309,7 @@ describe("StatsPage", () => {
     );
   });
 
-  it("renders the Victory difficulty mix legend with percent per band", () => {
+  it("renders the Progress difficulty mix legend with percent per band", () => {
     render(<StatsPage stats={SAMPLE_STATS} />);
     // Legend row sits below the stacked bar — one chip per band.
     expect(screen.getByText("41%")).toBeInTheDocument();
@@ -317,9 +317,9 @@ describe("StatsPage", () => {
     expect(screen.getByText("11%")).toBeInTheDocument();
   });
 
-  it("hides Victory difficulty mix when no difficulty data is available", () => {
+  it("hides Progress difficulty mix when no difficulty data is available", () => {
     render(<StatsPage stats={EMPTY_PUBLIC_STATS} />);
-    expect(screen.queryByText("Victory difficulty mix")).toBeNull();
+    expect(screen.queryByText("Progress difficulty mix")).toBeNull();
   });
 
   it("renders 'Tracked today / Coming next' bifurcation", () => {
@@ -342,7 +342,7 @@ describe("StatsPage", () => {
     const order = [
       "Verified Progress Saves",
       "Activity trend, last 30 days",
-      "Victory difficulty mix",
+      "Progress difficulty mix",
       "Platform signals",
       "Activity windows",
       "Top Active Wallets",

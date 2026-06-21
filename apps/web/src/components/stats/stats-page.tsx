@@ -453,7 +453,7 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
             className="mb-1 text-base font-bold md:text-lg"
             style={{ color: "var(--paper-text)" }}
           >
-            Victory difficulty mix
+            Progress difficulty mix
           </h3>
           <p
             className="mb-3 text-[0.6875rem] leading-tight"

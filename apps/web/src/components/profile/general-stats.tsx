@@ -1,5 +1,6 @@
 "use client";
 import { useTranslations } from "next-intl";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
 type Props = {
   piecesMastered: number;
@@ -13,14 +14,15 @@ type Props = {
 
 export function GeneralStats(p: Props) {
   const t = useTranslations("PROFILE_COPY");
-  const cells = [
-    { ico: "♟️", label: t("statLabels.piecesMastered"), value: `${p.piecesMastered} / ${p.piecesTotal}` },
-    { ico: "🔥", label: t("statLabels.dailyStreak"), value: String(p.dailyStreak) },
-    { ico: "🧩", label: t("statLabels.puzzlesSolved"), value: String(p.puzzlesSolved) },
-    { ico: "⚔️", label: t("statLabels.arenaWins"), value: String(p.arenaWins) },
-    { ico: "🏆", label: t("statLabels.trophies"), value: String(p.trophies) },
-    { ico: "💎", label: t("statLabels.nftsMinted"), value: String(p.nftsMinted) },
+  const allCells = [
+    { ico: "♟️", label: t("statLabels.piecesMastered"), value: `${p.piecesMastered} / ${p.piecesTotal}`, fullOnly: false },
+    { ico: "🔥", label: t("statLabels.dailyStreak"), value: String(p.dailyStreak), fullOnly: false },
+    { ico: "🧩", label: t("statLabels.puzzlesSolved"), value: String(p.puzzlesSolved), fullOnly: false },
+    { ico: "⚔️", label: t("statLabels.arenaWins"), value: String(p.arenaWins), fullOnly: true },
+    { ico: "🏆", label: t("statLabels.trophies"), value: String(p.trophies), fullOnly: false },
+    { ico: "💎", label: t("statLabels.nftsMinted"), value: String(p.nftsMinted), fullOnly: true },
   ];
+  const cells = CHESSCITO_LITE_MODE ? allCells.filter((c) => !c.fullOnly) : allCells;
 
   return (
     <section className="profile-stats" aria-label={t("generalStatsHeader")}>
