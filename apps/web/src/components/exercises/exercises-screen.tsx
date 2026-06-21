@@ -138,8 +138,8 @@ import {
 } from "@/lib/game/labyrinth-progress";
 import {
   buildTrainingPath,
+  getLabyrinthForAutoAdvance,
   getNextChallenge,
-  nextPendingLabyrinthAfterExercise,
 } from "@/lib/training/path";
 import { submitLabyrinthCompletionEarn } from "@/lib/peones/labyrinth-earn";
 import { ActionPin } from "@/components/redesign/action-pin";
@@ -1587,13 +1587,14 @@ export function ExercisesScreen({
         if (shouldFireLocalSavedToast({ labyrinthMode })) {
           showToast(tFooter("localSaved"), 1200);
         }
-        // QA G1 (2026-06-11): the senda flows THROUGH the labyrinths.
-        // When the interleaved path places an available lab right after
-        // the exercise the player just finished, enter it — the next
-        // challenge comes to the player. Reads the path ref so the
-        // post-completion unlock (e.g. 6★ reached on this very
-        // exercise) is visible at fire time.
-        const pendingLab = nextPendingLabyrinthAfterExercise(
+        // Path sequencing: enter the next available labyrinth instead of
+        // advancing to the next exercise. Handles two cases:
+        //   1. Happy path — lab is the immediate next interleaved row.
+        //   2. Late unlock — lab unlocked while player was past its anchor;
+        //      it sits at an earlier interleaved position but is now available.
+        // Reads the path ref so post-completion unlocks (e.g. 6★ reached on
+        // this very exercise) are visible at fire time.
+        const pendingLab = getLabyrinthForAutoAdvance(
           trainingPathRef.current,
           completedExerciseId,
         );

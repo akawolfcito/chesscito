@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildTrainingPath,
+  getLabyrinthForAutoAdvance,
   interleaveTrainingRows,
   nextPendingLabyrinthAfterExercise,
   LABYRINTH_UNLOCK_THRESHOLD,
@@ -138,6 +139,118 @@ describe("nextPendingLabyrinthAfterExercise — the path flows THROUGH labs (QA 
   it("returns null for an unknown exercise id", () => {
     expect(
       nextPendingLabyrinthAfterExercise(rookPath(6), "no-such-id"),
+    ).toBeNull();
+  });
+});
+
+describe("getLabyrinthForAutoAdvance — path sequencing with late-unlock (Exercise Path Sequencing)", () => {
+  const anchor = Math.ceil(LABYRINTH_UNLOCK_THRESHOLD / 3);
+  // Exercise right before the first lab in the interleaved path (happy path anchor)
+  const anchorExerciseId = EXERCISES.rook[anchor - 1].id;
+  // Exercise AFTER the anchor (player already passed the lab slot)
+  const postAnchorExerciseId = EXERCISES.rook[anchor + 1].id;
+
+  // Test 1: Exercise → next unlocked Labyrinth (happy path, same as nextPendingLabyrinthAfterExercise)
+  it("returns the immediate next lab when it is available (happy path)", () => {
+    const next = getLabyrinthForAutoAdvance(
+      rookPath(LABYRINTH_UNLOCK_THRESHOLD),
+      anchorExerciseId,
+    );
+    expect(next).not.toBeNull();
+    expect(next!.kind).toBe("labyrinth");
+    expect(next!.status).toBe("available");
+  });
+
+  // Test 2: Exercise → next Exercise (no lab immediately next, no late unlock)
+  it("returns null when next row is an exercise and no earlier lab is available", () => {
+    // Below unlock threshold: no lab available anywhere
+    const next = getLabyrinthForAutoAdvance(
+      rookPath(3),
+      EXERCISES.rook[0].id,
+    );
+    expect(next).toBeNull();
+  });
+
+  // Test 3: Exercise → locked Labyrinth (next row is locked lab, no earlier available lab)
+  it("returns null when next row is a locked lab and no earlier lab is available", () => {
+    // 3★ total: lab is still locked; this exercise is the anchor but stars are short
+    const next = getLabyrinthForAutoAdvance(
+      rookPath(3),
+      anchorExerciseId,
+    );
+    expect(next).toBeNull();
+  });
+
+  // Test 4: Late unlock — player past anchor, lab now available
+  it("returns available lab when player is past its anchor (late unlock)", () => {
+    // Player is at postAnchorExerciseId (past the lab's interleaved slot) but
+    // has just accumulated enough stars to unlock it.
+    const next = getLabyrinthForAutoAdvance(
+      rookPath(LABYRINTH_UNLOCK_THRESHOLD),
+      postAnchorExerciseId,
+    );
+    expect(next).not.toBeNull();
+    expect(next!.kind).toBe("labyrinth");
+    expect(next!.status).toBe("available");
+  });
+
+  // Test 5: No salta labyrinth desbloqueado — the lab is always entered if available
+  it("does not skip an available lab regardless of player position", () => {
+    // Player far past the anchor, lab still available
+    const lastExerciseId = EXERCISES.rook[EXERCISES.rook.length - 1].id;
+    const next = getLabyrinthForAutoAdvance(
+      rookPath(LABYRINTH_UNLOCK_THRESHOLD),
+      lastExerciseId,
+    );
+    expect(next).not.toBeNull();
+    expect(next!.kind).toBe("labyrinth");
+    expect(next!.status).toBe("available");
+  });
+
+  // Test 6: Missing item → safe fallback
+  it("returns null for an unknown exercise id", () => {
+    expect(
+      getLabyrinthForAutoAdvance(rookPath(LABYRINTH_UNLOCK_THRESHOLD), "no-such-id"),
+    ).toBeNull();
+  });
+
+  // Test 7: Last item → null/completion (all labs done, no pending challenge)
+  it("returns null when all labs are complete", () => {
+    const firstLabId = rookLabs()[0].id;
+    // Mark first lab complete (others stay locked in chain) — still no available labs
+    const path = rookPath(LABYRINTH_UNLOCK_THRESHOLD, { [firstLabId]: 3 });
+    // With first lab complete, second lab unlocks. Mark it complete too, etc.
+    // Simplest: mark first lab complete and verify second is now available (not null).
+    // Then mark both complete so none are available.
+    const allLabIds = rookLabs().map((l) => l.id);
+    const allBests = Object.fromEntries(allLabIds.map((id) => [id, 3]));
+    const fullPath = rookPath(LABYRINTH_UNLOCK_THRESHOLD * 4, allBests);
+    expect(
+      getLabyrinthForAutoAdvance(fullPath, anchorExerciseId),
+    ).toBeNull();
+  });
+
+  // Test 8: Path with multiple interleaved labyrinths
+  it("returns the first available lab in a multi-lab interleaved path", () => {
+    // First lab available, rest chained-locked
+    const path = rookPath(LABYRINTH_UNLOCK_THRESHOLD);
+    const labs = path.filter((n) => n.kind === "labyrinth");
+    expect(labs[0].status).toBe("available");
+    expect(labs.slice(1).every((l) => l.status === "locked")).toBe(true);
+
+    // From any position past the anchor, the first available lab is returned
+    const next = getLabyrinthForAutoAdvance(path, postAnchorExerciseId);
+    expect(next?.id).toBe(labs[0].id);
+  });
+
+  // Test 9: No labyrinths in path — safe, returns null without crash
+  it("returns null safely when path has no labyrinths", () => {
+    // Use a piece with no labs (king mocked in path-empty-catalog.test.ts);
+    // here we test with a path that has no available labs due to locking.
+    // A piece with ALL labs locked is equivalent — no null crash.
+    const pathNoLabs = rookPath(0); // 0★ → all labs locked
+    expect(
+      getLabyrinthForAutoAdvance(pathNoLabs, EXERCISES.rook[0].id),
     ).toBeNull();
   });
 });

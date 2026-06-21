@@ -230,6 +230,44 @@ export function nextPendingLabyrinthAfterExercise(
     : null;
 }
 
+/** Exercise Path Sequencing: returns the labyrinth to auto-enter after an
+ *  exercise completes, covering both the happy path and the late-unlock gap.
+ *
+ * Case 1 — happy path: the immediate next interleaved row is an available lab
+ *   (delegates to nextPendingLabyrinthAfterExercise, QA G1 preserved).
+ *
+ * Case 2 — late unlock: the player accumulated stars past the lab's anchor
+ *   exercise so the lab was locked when they passed its position. The lab is
+ *   now available but sits at an earlier interleaved-path position than the
+ *   current exercise. Scan backwards from currentPos to find it.
+ *
+ * In the chained unlock model at most one lab is available at a time, so the
+ * scan always returns at most one result. Null → continue exercise flow. */
+export function getLabyrinthForAutoAdvance(
+  path: TrainingNode[],
+  completedExerciseId: string,
+): TrainingNode | null {
+  // Case 1: immediate next interleaved item is an available lab
+  const immediate = nextPendingLabyrinthAfterExercise(path, completedExerciseId);
+  if (immediate) return immediate;
+
+  // Case 2: late-unlock — available lab before the player's current position
+  const exercises = path.filter((n) => n.kind === "exercise");
+  const labyrinths = path.filter((n) => n.kind === "labyrinth");
+  const rows = interleaveTrainingRows(exercises, labyrinths);
+  const currentPos = rows.findIndex(
+    (r) => r.kind === "exercise" && r.value.id === completedExerciseId,
+  );
+  if (currentPos < 0) return null;
+  for (let i = 0; i < currentPos; i++) {
+    const row = rows[i];
+    if (row.kind === "labyrinth" && row.value.status === "available") {
+      return row.value;
+    }
+  }
+  return null;
+}
+
 export function getPieceMastery(path: TrainingNode[]): PieceMastery {
   const mastery = path.find((node) => node.kind === "mastery");
   if (mastery?.status === "complete") return "mastered";
