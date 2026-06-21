@@ -50,12 +50,14 @@ export function FocusPassport({
     : passportSlots(streak < 0 ? 0 : streak, todayDone);
   const tier = isLoading ? "empty" : passportTier(streak);
 
+  // No title in the empty/loading state — "Start your streak" added noise
+  // in the center-stack placement, so the empty passport is flames-only
+  // under the subtle kicker. Day1/building/week keep their streak title.
   let title = "";
   if (!isLoading) {
-    if (tier === "empty") title = t("emptyTitle");
-    else if (tier === "day1") title = t("day1Title");
+    if (tier === "day1") title = t("day1Title");
     else if (tier === "week") title = t("weekTitle");
-    else title = t("buildingTitle", { count: streak });
+    else if (tier === "building") title = t("buildingTitle", { count: streak });
   }
 
   return (

@@ -26,12 +26,12 @@ describe("<FocusPassport>", () => {
     expect(screen.getByTestId("focus-passport")).toHaveAttribute("aria-busy", "true");
   });
 
-  it("empty (streak 0): 0 filled + start-your-streak copy", () => {
+  it("empty (streak 0): 0 filled flames, no title (start-your-streak removed)", () => {
     render(
       <FocusPassport streak={0} totalCompleted={0} todayDone={false} isLoading={false} />,
     );
     expect(filledCount()).toBe(0);
-    expect(screen.getByTestId("focus-passport-title").textContent).toMatch(/start your streak/i);
+    expect(screen.queryByTestId("focus-passport-title")).toBeNull();
   });
 
   it("day1 (streak 1): 1 filled + day 1 copy", () => {

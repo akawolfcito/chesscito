@@ -12911,53 +12911,58 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 /* ── Focus Passport (Chesscito Lite — P1.1 visual iteration) ──────────
- * Compact, icon-first streak tracker mounted high in the Lite hub (return
- * anchor). 7 flame sprites read as a streak: frozen-blue = earlier day done,
- * orange-gold = today/active done, gray = pending (next-pending gets a glow).
- * Slots reflect the CURRENT streak count (not calendar dates). Cream-amber
- * shell consistent with `.candy-tray-pill`. Lite-only; surface-split CSS
- * files don't exist in this repo, so it lives in globals.
- * See docs/specs/2026-06-20-focus-passport-p1*.md. */
-.hub-scaffold-passport {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 0.4rem 0.75rem 0;
-}
-
+ * Compact, icon-first streak tracker. In Lite it replaces the decorative
+ * pawn+guide+king strip inside `.hub-scaffold-center-stack`, so it lives in
+ * the portal scene itself. 7 flame sprites read as a streak: frozen-blue =
+ * earlier day done, orange-gold = today/active done, gray = pending
+ * (next-pending gets a glow). Slots reflect the CURRENT streak count (not
+ * calendar dates). Cream-amber shell consistent with `.candy-tray-pill`.
+ * Lite-only; surface-split CSS files don't exist in this repo, so it lives
+ * in globals. See docs/specs/2026-06-20-focus-passport-p1*.md. */
+/* The gold `panel-streak` art is the frame; content is positioned into
+   its zones: subtle kicker in the top band, flames across the upper cream
+   area (inset to clear the side gems), streak title in the bottom pill.
+   `image-set` serves avif/webp with a png fallback. */
 .focus-passport {
+  position: relative;
   width: 100%;
   max-width: 19rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.4rem 0.85rem 0.5rem;
-  border-radius: 0.9rem;
-  background: linear-gradient(180deg,
-      rgba(255, 248, 222, 0.96) 0%,
-      rgba(247, 226, 175, 0.96) 100%);
-  border: 1px solid rgba(180, 120, 35, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    inset 0 -1px 0 rgba(150, 90, 20, 0.18),
-    0 2px 6px rgba(110, 65, 15, 0.18);
+  aspect-ratio: 2133 / 685;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  background-image: url("/art/focus-passport/panel-streak.png");
+  background-image: image-set(
+    url("/art/focus-passport/panel-streak.avif") type("image/avif"),
+    url("/art/focus-passport/panel-streak.webp") type("image/webp"),
+    url("/art/focus-passport/panel-streak.png") type("image/png")
+  );
 }
 
 .focus-passport-kicker {
+  position: absolute;
+  top: 8%;
+  left: 0;
+  right: 0;
   margin: 0;
-  font-size: 0.62rem;
+  text-align: center;
+  font-size: 0.5rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(63, 34, 8, 0.6);
+  color: rgba(120, 70, 20, 0.5);
 }
 
+/* Flames sit in the upper cream area; left/right inset clears the gems. */
 .focus-passport-slots {
+  position: absolute;
+  top: 24%;
+  left: 17%;
+  right: 17%;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 /* Each slot is a <picture> wrapping a flame sprite. Fixed height, auto
@@ -12965,7 +12970,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .focus-passport-slot {
   display: inline-flex;
   align-items: flex-end;
-  height: 1.7rem;
+  height: 1.5rem;
   flex-shrink: 0;
   line-height: 0;
 }
@@ -12988,11 +12993,16 @@ button.hud-resource-chip:active:not(:disabled) {
   filter: drop-shadow(0 0 5px rgba(255, 176, 60, 0.7));
 }
 
+/* Streak title lands in the art's bottom pill slot. */
 .focus-passport-title {
+  position: absolute;
+  bottom: 4%;
+  left: 0;
+  right: 0;
   margin: 0;
-  font-size: 0.9rem;
+  text-align: center;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0;
-  color: rgba(180, 83, 9, 0.95);
-  text-shadow: 0 1px 0 rgba(255, 245, 215, 0.7);
+  color: rgba(95, 45, 10, 0.95);
 }
