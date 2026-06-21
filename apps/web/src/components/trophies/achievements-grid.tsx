@@ -9,9 +9,7 @@ import { AchievementDetailSheet } from "./achievement-detail-sheet";
 
 type AchievementCopy = { title: string; description: string };
 
-/** Thematic icon per achievement so locked tiles read as a dimmed PREVIEW of
- *  the reward (with a small lock badge), not a wall of identical padlocks
- *  (founder 2026-06-16). Falls back to trophy for any unmapped id. */
+/** Fallback SVG icon for achievements without a badge image asset. */
 const ACHIEVEMENT_ICONS: Record<string, CandyIconName> = {
   "first-victory": "trophy",
   "solid-player": "shield",
@@ -25,6 +23,13 @@ const ACHIEVEMENT_ICONS: Record<string, CandyIconName> = {
   "seven-day-focus": "crown",
 };
 
+/** Real badge art assets — used when available, falling back to ACHIEVEMENT_ICONS. */
+const ACHIEVEMENT_ASSETS: Partial<Record<string, string>> = {
+  "first-focus-day": "/art/achievements/1day-focus",
+  "three-day-rhythm": "/art/achievements/3day-focus",
+  "seven-day-focus": "/art/achievements/7day-focus",
+};
+
 type Props = {
   achievements: Achievement[];
 };
@@ -33,7 +38,6 @@ export function AchievementsGrid({ achievements }: Props) {
   const t = useTranslations("ACHIEVEMENTS_COPY");
   const [selected, setSelected] = useState<Achievement | null>(null);
 
-  // Group by earned status but display in a single grid or logical sections
   const earned = achievements.filter((a) => a.earned);
   const locked = achievements.filter((a) => !a.earned);
 
@@ -112,55 +116,74 @@ function AchievementTile({
 
   const { earned, progress } = achievement;
   const icon = ACHIEVEMENT_ICONS[achievement.id] ?? "trophy";
+  const assetBase = ACHIEVEMENT_ASSETS[achievement.id];
 
   return (
     <button
       type="button"
       onClick={() => onSelect(achievement)}
-      className={`achievement-tile ${!earned ? "achievement-tile--locked" : ""} active:scale-95`}
+      className={`achievement-tile ${earned ? "achievement-tile--earned" : "achievement-tile--locked"} active:scale-95`}
     >
-      <div className="achievement-tile-icon-wrap">
-        {/* Thematic icon: full color + glow when earned, dimmed preview when
-            locked (with a small lock badge), never a generic padlock. */}
-        <CandyIcon
-          name={icon}
-          className={`h-8 w-8 ${earned ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.45)]" : "text-[rgba(63,34,8,0.30)] grayscale opacity-70"}`}
-        />
+      {/* Badge visual — image asset when available, SVG icon fallback for Full */}
+      <div className="achievement-tile-badge-wrap">
+        {assetBase ? (
+          <picture>
+            <source srcSet={`${assetBase}.avif`} type="image/avif" />
+            <source srcSet={`${assetBase}.webp`} type="image/webp" />
+            <img
+              src={`${assetBase}.png`}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className={`achievement-tile-badge-img${!earned ? " achievement-tile-badge-img--locked" : ""}`}
+            />
+          </picture>
+        ) : (
+          <div className="achievement-tile-icon-wrap">
+            <CandyIcon
+              name={icon}
+              className={`h-10 w-10 ${earned ? "text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.45)]" : "text-[rgba(63,34,8,0.30)] grayscale opacity-70"}`}
+            />
+          </div>
+        )}
+
+        {/* State badge — top-right corner of the badge area */}
         {earned ? (
-          <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 border-2 border-white/20">
+          <div className="achievement-tile-state-badge achievement-tile-state-badge--earned" aria-hidden="true">
             <CandyIcon name="check" className="h-3 w-3 text-white" />
           </div>
         ) : (
-          <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white/30 bg-[rgba(63,34,8,0.55)]">
+          <div className="achievement-tile-state-badge achievement-tile-state-badge--locked" aria-hidden="true">
             <CandyIcon name="lock" className="h-2.5 w-2.5 text-white" />
           </div>
         )}
       </div>
 
+      {/* Title only — description lives in the detail sheet */}
       <h4 className="achievement-tile-title">{copy.title}</h4>
-      <p className="achievement-tile-objective">{copy.description}</p>
-      
+
+      {/* Bottom state: progress bar, earned chip, or locked chip */}
       {!earned && progress ? (
-        <div className="mt-3 w-full">
-          <div className="flex items-center justify-between px-1 mb-1 text-nano font-black text-[rgba(63,34,8,0.50)]">
+        <div className="mt-2 w-full">
+          <div className="mb-1 flex items-center justify-between px-0.5 text-nano font-black text-[rgba(63,34,8,0.50)]">
             <span>{t("progressEyebrow")}</span>
             <span>{progress.current}/{progress.goal}</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-[rgba(63,34,8,0.06)] overflow-hidden">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[rgba(63,34,8,0.06)]">
             <div
-              className="h-full bg-amber-500 rounded-full transition-all duration-500"
+              className="h-full rounded-full bg-amber-500 transition-all duration-500"
               style={{ width: `${(progress.current / progress.goal) * 100}%` }}
             />
           </div>
         </div>
       ) : earned ? (
-        <div className="mt-3">
+        <div className="mt-2">
           <CandyChip variant="success" tone="subtle">
             {t("earnedLabel")}
           </CandyChip>
         </div>
       ) : (
-        <div className="mt-3">
+        <div className="mt-2">
           <CandyChip variant="warm" tone="subtle">
             {t("lockedLabel")}
           </CandyChip>

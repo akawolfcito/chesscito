@@ -11065,8 +11065,6 @@ button.hud-resource-chip:active:not(:disabled) {
 
 .achievement-tile-grid {
   display: grid;
-  /* was 'grid-template-cols' (invalid prop) → rendered 1 full-width column.
-   * Fixed to a real 2-col grid (founder 2026-06-16). */
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
@@ -11075,40 +11073,106 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 12px;
+  padding: 14px 10px 12px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.40);
-  border: 1px solid rgba(255, 255, 255, 0.60);
+  border: 1.5px solid rgba(255, 255, 255, 0.60);
   box-shadow: inset 0 1px 0 rgba(255, 245, 215, 0.60);
   text-align: center;
   transition: all 0.2s ease-out;
 }
 
-.achievement-tile--locked {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.40);
+/* Earned: warm golden border + soft glow */
+.achievement-tile--earned {
+  background: rgba(255, 224, 102, 0.18);
+  border-color: rgba(251, 191, 36, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 245, 215, 0.75),
+    0 0 0 1px rgba(251, 191, 36, 0.18),
+    0 2px 10px rgba(245, 158, 11, 0.18);
 }
 
-.achievement-tile-icon-wrap {
+/* Locked: muted */
+.achievement-tile--locked {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.38);
+}
+
+/* Pending (WP reward unclaimed): amber pulse border */
+.achievement-tile--pending {
+  background: rgba(255, 248, 220, 0.35);
+  border-color: rgba(251, 191, 36, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 245, 215, 0.65),
+    0 0 0 1px rgba(251, 191, 36, 0.15);
+}
+
+/* Badge image container — sits above the title */
+.achievement-tile-badge-wrap {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
+}
+
+/* The badge image itself */
+.achievement-tile-badge-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.14));
+}
+
+/* Locked treatment — grayscale + dimmed */
+.achievement-tile-badge-img--locked {
+  filter: grayscale(1) opacity(0.38);
+}
+
+/* State badge chip — check (earned) or lock (locked), top-right of badge */
+.achievement-tile-state-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.65);
+}
+
+.achievement-tile-state-badge--earned {
+  background: #10b981;
+}
+
+.achievement-tile-state-badge--locked {
+  background: rgba(63, 34, 8, 0.50);
+}
+
+/* SVG icon fallback wrap (Full mode achievements without badge art) */
+.achievement-tile-icon-wrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.30);
   border: 1px solid rgba(110, 65, 15, 0.10);
-  margin-bottom: 10px;
 }
 
 .achievement-tile--locked .achievement-tile-icon-wrap {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .achievement-tile-title {
   font-family: var(--font-game-action, system-ui, sans-serif);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 900;
   color: rgba(63, 34, 8, 0.95);
   text-transform: uppercase;
@@ -11116,11 +11180,15 @@ button.hud-resource-chip:active:not(:disabled) {
   line-height: 1.1;
 }
 
+.achievement-tile--locked .achievement-tile-title {
+  color: rgba(63, 34, 8, 0.55);
+}
+
 .achievement-tile-objective {
-  margin-top: 4px;
-  font-size: 0.65rem;
+  margin-top: 3px;
+  font-size: 0.62rem;
   font-weight: 600;
-  color: rgba(63, 34, 8, 0.75);
+  color: rgba(63, 34, 8, 0.65);
   line-height: 1.2;
 }
 

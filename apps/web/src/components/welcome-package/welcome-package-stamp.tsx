@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { CandyIcon } from "@/components/redesign/candy-icon";
+import { CandyChip } from "@/components/redesign/candy-chip";
 import { WELCOME_PACKAGE_REWARD } from "@/lib/welcome-package/types";
 import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
 import { WelcomePackageModal } from "./welcome-package-modal";
@@ -27,23 +29,25 @@ export function WelcomePackageStamp() {
         />
       )}
 
-      <div
-        className="achievement-tile-grid"
-        data-testid="welcome-package-stamp"
-      >
+      <div className="achievement-tile-grid mb-3" data-testid="welcome-package-stamp">
         {welcomePackage.isClaimed ? (
-          <div className="achievement-tile">
-            <div className="achievement-tile-icon-wrap">
+          <div className="achievement-tile achievement-tile--earned">
+            <div className="achievement-tile-badge-wrap">
               <picture>
                 <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.avif`} type="image/avif" />
                 <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.webp`} type="image/webp" />
                 <img
                   src={`${WELCOME_PACKAGE_REWARD.assetBase}.png`}
-                  alt={t("stampLabel")}
-                  className="h-8 w-8 object-contain"
+                  alt=""
+                  aria-hidden="true"
+                  className="achievement-tile-badge-img"
+                  draggable={false}
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
                 />
               </picture>
+              <div className="achievement-tile-state-badge achievement-tile-state-badge--earned" aria-hidden="true">
+                <CandyIcon name="check" className="h-3 w-3 text-white" />
+              </div>
             </div>
             <h4 className="achievement-tile-title">{t("trophiesClaimedLabel")}</h4>
             <p className="achievement-tile-objective">{t("trophiesClaimedDescription")}</p>
@@ -52,14 +56,24 @@ export function WelcomePackageStamp() {
           <button
             type="button"
             onClick={() => setShowModal(true)}
-            className="achievement-tile active:scale-95"
+            className="achievement-tile achievement-tile--pending active:scale-95"
             data-testid="welcome-package-pending"
           >
-            <div className="achievement-tile-icon-wrap">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-amber-400/50 bg-amber-50">
-                <span className="text-[10px] font-black text-amber-700">D1</span>
-              </div>
-              <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" aria-hidden="true" />
+            <div className="achievement-tile-badge-wrap">
+              <picture>
+                <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.avif`} type="image/avif" />
+                <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.webp`} type="image/webp" />
+                <img
+                  src={`${WELCOME_PACKAGE_REWARD.assetBase}.png`}
+                  alt=""
+                  aria-hidden="true"
+                  className="achievement-tile-badge-img"
+                  draggable={false}
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                />
+              </picture>
+              {/* Amber notification dot — reward waiting to be claimed */}
+              <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-400 ring-2 ring-white/60 animate-pulse" aria-hidden="true" />
             </div>
             <h4 className="achievement-tile-title">{t("trophiesPendingLabel")}</h4>
             <p className="achievement-tile-objective">{t("trophiesPendingHint")}</p>
