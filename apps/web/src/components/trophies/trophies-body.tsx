@@ -13,6 +13,8 @@ import { TrophyList } from "@/components/trophies/trophy-list";
 import { AchievementsGrid } from "@/components/trophies/achievements-grid";
 import { getVictoryAddress } from "@/lib/game/victory-events";
 import { computeAchievements } from "@/lib/achievements/compute";
+import { deriveLiteAchievements } from "@/lib/achievements/lite";
+import { getDailyProgress, type DailyProgress } from "@/lib/daily/progress";
 import { useCoachHistoryCount } from "@/lib/coach/use-coach-history-count";
 import type { VictoryEntry } from "@/lib/game/victory-events";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
@@ -55,7 +57,22 @@ function formatTimeMs(ms: number): string {
 export function TrophiesHeroBand() {
   const t = useTranslations("TROPHY_VITRINE_COPY");
   const { victories } = useTrophiesData();
-  const summary = computeAchievements(victories);
+  const [dailyProgress, setDailyProgress] = useState<DailyProgress>({
+    streak: 0,
+    lastCompletedDate: null,
+    totalCompleted: 0,
+  });
+  useEffect(() => {
+    if (CHESSCITO_LITE_MODE) setDailyProgress(getDailyProgress());
+  }, []);
+  const liteAchievements = CHESSCITO_LITE_MODE ? deriveLiteAchievements(dailyProgress) : [];
+  const summary = CHESSCITO_LITE_MODE
+    ? {
+        list: liteAchievements,
+        earnedCount: liteAchievements.filter((a) => a.earned).length,
+        total: liteAchievements.length,
+      }
+    : computeAchievements(victories);
   const victoryCount = victories?.length ?? 0;
   const hasVictories = victoryCount > 0;
   const bestVictory = hasVictories
@@ -131,6 +148,14 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
   const [hallOfFame, setHallOfFame] = useState<VictoryEntry[]>();
   const [hofLoading, setHofLoading] = useState(true);
   const [hofError, setHofError] = useState<string | null>(null);
+  const [dailyProgress, setDailyProgress] = useState<DailyProgress>({
+    streak: 0,
+    lastCompletedDate: null,
+    totalCompleted: 0,
+  });
+  useEffect(() => {
+    if (CHESSCITO_LITE_MODE) setDailyProgress(getDailyProgress());
+  }, []);
 
   const configured = getVictoryAddress() !== null;
 
@@ -189,7 +214,14 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
   const hasVictories = (myVictories?.length ?? 0) > 0;
   const isChampion = isConnected && hasVictories;
   const isEmptyConnected = isConnected && myVictories?.length === 0 && !myLoading && !myError;
-  const summary = computeAchievements(myVictories);
+  const liteAchievements = CHESSCITO_LITE_MODE ? deriveLiteAchievements(dailyProgress) : [];
+  const summary = CHESSCITO_LITE_MODE
+    ? {
+        list: liteAchievements,
+        earnedCount: liteAchievements.filter((a) => a.earned).length,
+        total: liteAchievements.length,
+      }
+    : computeAchievements(myVictories);
   const victoryCount = myVictories?.length ?? 0;
   /** Best run = fewest moves, ties broken by shortest time. Drives the
    *  HERO BAND's "Your best" line. Stays null when the user has no
@@ -306,7 +338,7 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
       icon={<CandyIcon name="star" className="h-4 w-4" />}
       title={tAch("sectionTitle")}
     >
-      {(!CHESSCITO_LITE_MODE || summary.earnedCount > 0) && (
+      {(CHESSCITO_LITE_MODE || summary.earnedCount > 0) && (
         <div className="mb-4 flex items-center justify-center gap-2">
           <span className="text-nano font-black uppercase tracking-[0.18em] opacity-30">
             {tAch("progressEyebrow")}
@@ -320,11 +352,11 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
         </div>
       )}
 
-      <AchievementsGrid achievements={CHESSCITO_LITE_MODE ? summary.list.filter((a) => a.earned) : summary.list} />
+      <AchievementsGrid achievements={summary.list} />
 
-      {summary.earnedCount === 0 && (
+      {!CHESSCITO_LITE_MODE && summary.earnedCount === 0 && (
         <p className="mt-6 text-center text-xs font-bold uppercase tracking-widest opacity-40">
-          {tAch(CHESSCITO_LITE_MODE ? "emptyHintLite" : "emptyHint")}
+          {tAch("emptyHint")}
         </p>
       )}
     </PageSection>
