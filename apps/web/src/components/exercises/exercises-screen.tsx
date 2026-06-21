@@ -45,6 +45,11 @@ import { MiniArenaBridgeSlot } from "@/components/mini-arena/mini-arena-bridge-s
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { ASSET_THEME, THEME_CONFIG } from "@/lib/theme";
 import { ContextualActionSlot } from "@/components/exercises/contextual-action-slot";
+import {
+  shouldFireStarsConnectPrompt,
+  shouldFireLocalSavedToast,
+  shouldShowWPCtaInSlot,
+} from "@/components/exercises/exercises-save-flow-logic";
 import { PersistentDock } from "@/components/exercises/persistent-dock";
 import { TrophiesSheet } from "@/components/exercises/trophies-sheet";
 import { PurchaseConfirmSheet } from "@/components/exercises/purchase-confirm-sheet";
@@ -1527,14 +1532,14 @@ export function ExercisesScreen({
       setElapsedMs(elapsed);
       completeExercise(movesCount);
 
-      // Phase 2 nudge: first ★★★ on any exercise while disconnected
-      // triggers the one-shot "Connect to save" prompt. Suppressed in
-      // Lite — no on-chain save path exists there, so the prompt would
-      // imply a capability that doesn't exist (spec P0-1).
+      // Phase 2 nudge: first ★★★ while disconnected → "Connect to save".
+      // Suppressed in Lite (spec P0-1): no on-chain save path exists there.
       if (
-        !isConnected &&
-        !CHESSCITO_LITE_MODE &&
-        computeStars(movesCount, currentExercise.optimalMoves) === 3
+        shouldFireStarsConnectPrompt({
+          isConnected,
+          liteMode: CHESSCITO_LITE_MODE,
+          stars: computeStars(movesCount, currentExercise.optimalMoves),
+        })
       ) {
         starsConnectPrompt.show();
       }
@@ -1559,12 +1564,18 @@ export function ExercisesScreen({
 
         if (newTotal >= BADGE_THRESHOLD && !hasClaimedBadge) {
           setShowBadgeEarned(true);
-          // Safety-net: auto-dismiss badge prompt and reset board if user
-          // doesn't interact within 15 seconds (prevents phase stuck forever)
+          // Spec: local-save toast fires at t=1500ms (same window as normal path),
+          // AFTER the WELL DONE flash. Safety-net schedules 13.5s later so the
+          // total auto-dismiss delay from exercise completion stays ~15s.
           autoReset.schedule(() => {
-            setShowBadgeEarned(false);
-            setShowPieceComplete(true);
-          }, 15_000);
+            if (shouldFireLocalSavedToast({ labyrinthMode })) {
+              showToast(tFooter("localSaved"), 1200);
+            }
+            autoReset.schedule(() => {
+              setShowBadgeEarned(false);
+              setShowPieceComplete(true);
+            }, 13_500);
+          }, 1500);
           return;
         }
       }
@@ -1573,8 +1584,7 @@ export function ExercisesScreen({
       autoReset.schedule(() => {
         // Local-save feedback (spec P0-2/P0-3): fires here (t=1500ms)
         // AFTER the WELL DONE phase-flash, not at completeExercise time.
-        // Guard: not in labyrinth mode — labyrinths have their own overlay.
-        if (!labyrinthMode) {
+        if (shouldFireLocalSavedToast({ labyrinthMode })) {
           showToast(tFooter("localSaved"), 1200);
         }
         // QA G1 (2026-06-11): the senda flows THROUGH the labyrinths.
@@ -2593,6 +2603,29 @@ export function ExercisesScreen({
                 ariaLabel={tLab("exitLabyrinth")}
                 onPress={handleExitLabyrinth}
               />
+            ) : shouldShowWPCtaInSlot({
+              liteMode: CHESSCITO_LITE_MODE,
+              contextAction,
+              wpMounted,
+              wpState: welcomePack.state,
+            }) ? (
+              // Lite only: the unclaimed pack owns an otherwise-idle
+              // contextual slot. Ahead of score-parity and path affordances;
+              // badge actions excluded via contextAction (spec P0-4).
+              <div className="animate-in fade-in zoom-in-95 duration-200">
+                <ActionPin
+                  action="claimWelcomePack"
+                  size="pin"
+                  label={tFooter("claimWelcomePack")}
+                  ariaLabel={tFooter("claimWelcomePack")}
+                  onPress={
+                    welcomePack.state === "connect"
+                      ? welcomePack.onConnect
+                      : welcomePack.onClaim
+                  }
+                  isBusy={welcomePack.state === "claiming"}
+                />
+              </div>
             ) : isSavedAtParity && contextAction === null ? (
               // Retire-when-done (Sally pass 2026-06-11): a saved-at-
               // parity score renders NOTHING — the SAVE pin reappears
@@ -2652,29 +2685,6 @@ export function ExercisesScreen({
                   label={tPath("nextChallengeCta")}
                   ariaLabel={tPath("nextChallengeCta")}
                   onPress={() => handleLabyrinthSelect(nextChallenge.id)}
-                />
-              </div>
-            ) : CHESSCITO_LITE_MODE &&
-              contextAction === null &&
-              !effectiveLabyrinthMode &&
-              !nextChallenge &&
-              wpMounted &&
-              welcomePack.state !== "claimed" ? (
-              // Spec P0-4: WP inline CTA in Lite when slot is idle and
-              // pack not yet claimed. Badge claim takes priority (guarded
-              // by contextAction === null above). Hydration-safe via wpMounted.
-              <div className="animate-in fade-in zoom-in-95 duration-200">
-                <ActionPin
-                  action="claimWelcomePack"
-                  size="pin"
-                  label={tFooter("claimWelcomePack")}
-                  ariaLabel={tFooter("claimWelcomePack")}
-                  onPress={
-                    welcomePack.state === "connect"
-                      ? welcomePack.onConnect
-                      : welcomePack.onClaim
-                  }
-                  isBusy={welcomePack.state === "claiming"}
                 />
               </div>
             ) : (
