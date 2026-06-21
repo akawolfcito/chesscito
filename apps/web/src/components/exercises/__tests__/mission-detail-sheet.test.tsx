@@ -166,3 +166,65 @@ describe("<MissionDetailSheet> — save score affordance (D5)", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe("<MissionDetailSheet> — score breakdown (transparency)", () => {
+  it("shows stars × 100 breakdown when canSaveScore + totalStars provided", () => {
+    renderSheet({
+      canSaveScore: true,
+      onSaveScore: vi.fn(),
+      score: "1200",
+      totalStars: 12,
+      maxPossibleStars: 30,
+    });
+
+    expect(screen.getByTestId("score-breakdown")).toBeInTheDocument();
+    expect(screen.getByTestId("score-breakdown")).toHaveTextContent("12★ × 100");
+  });
+
+  it("shows Max indicator when totalStars equals maxPossibleStars", () => {
+    renderSheet({
+      canSaveScore: true,
+      onSaveScore: vi.fn(),
+      score: "3000",
+      totalStars: 30,
+      maxPossibleStars: 30,
+    });
+
+    expect(screen.getByTestId("score-breakdown")).toHaveTextContent("Max");
+  });
+
+  it("does NOT show breakdown when totalStars is absent", () => {
+    renderSheet({
+      canSaveScore: true,
+      onSaveScore: vi.fn(),
+      score: "1200",
+    });
+
+    expect(screen.queryByTestId("score-breakdown")).not.toBeInTheDocument();
+  });
+
+  it("does NOT include labyrinths in the breakdown text", () => {
+    renderSheet({
+      canSaveScore: true,
+      onSaveScore: vi.fn(),
+      score: "1200",
+      totalStars: 12,
+      maxPossibleStars: 30,
+    });
+
+    const breakdown = screen.getByTestId("score-breakdown");
+    expect(breakdown.textContent).not.toMatch(/labyrinth/i);
+    expect(breakdown.textContent).not.toMatch(/maze/i);
+  });
+
+  it("scorePendingNew gate unchanged: breakdown does not appear when canSaveScore is false", () => {
+    renderSheet({
+      canSaveScore: false,
+      score: "1200",
+      totalStars: 12,
+      maxPossibleStars: 30,
+    });
+
+    expect(screen.queryByTestId("score-breakdown")).not.toBeInTheDocument();
+  });
+});

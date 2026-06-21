@@ -37,6 +37,13 @@ type Props = {
   canSaveScore?: boolean;
   onSaveScore?: () => void;
   isSavingScore?: boolean;
+  /** Score transparency: total exercise stars for the selected piece.
+   *  When provided alongside maxPossibleStars, renders the breakdown
+   *  line "12★ × 100 pts" (or "Max" indicator when at cap).
+   *  Labyrinths are NOT counted here. */
+  totalStars?: number;
+  /** Maximum achievable stars for the piece (pool size × 3). */
+  maxPossibleStars?: number;
   /** QA round 2 (2026-06-11) — the revived on-chain SAVE (gas-only
    *  submitScoreSigned flow). Renders only when available: no dead
    *  buttons (fail-closed). */
@@ -66,6 +73,8 @@ export function MissionDetailSheet({
   canSaveOnChain = false,
   onSaveOnChain,
   isSavingOnChain = false,
+  totalStars,
+  maxPossibleStars,
   trigger,
 }: Props) {
   const tBriefing = useTranslations("MISSION_BRIEFING_COPY");
@@ -306,6 +315,20 @@ export function MissionDetailSheet({
                     }}
                   >
                     {tDetail("saveScorePromise")}
+                  </p>
+                ) : null}
+                {showSaveScore && totalStars !== undefined && maxPossibleStars !== undefined ? (
+                  <p
+                    data-testid="score-breakdown"
+                    className="mt-1 text-center text-xs font-medium"
+                    style={{
+                      color: "rgba(110, 65, 15, 0.55)",
+                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.4)",
+                    }}
+                  >
+                    {totalStars >= maxPossibleStars
+                      ? `${totalStars}★ / ${maxPossibleStars}★ · ${tDetail("scoreAtMax")}`
+                      : tDetail("scoreBreakdown", { stars: totalStars })}
                   </p>
                 ) : null}
                 {showSaveScore ? (
