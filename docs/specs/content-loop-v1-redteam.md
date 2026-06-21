@@ -14,7 +14,7 @@
 — **Fix**: el spec debe requerir que `NextStepCard` solo renderice cuando los tres inputs estén hidratados. Agregar `isHydrated: boolean` a `ContentLoopInput` o que el componente reciba un `isHydrated` prop y retorne `null` hasta entonces.
 
 **[Pieza primaria hardcodeada sin contrato]** El spec dice "primaryPiece = rook always" pero no define quién provee este valor ni dónde vive la constante. Si mañana el founder activa una segunda pieza en Lite, el caller necesita saber cuál es la "primaria".
-— **Por qué bloquea**: sin un contrato explícito, el caller probablemente hardcodea `"rook"` inline, lo que crea deuda de mantenimiento inmediata. 
+— **Por qué bloquea**: sin un contrato explícito, el caller probablemente hardcodea `"rook"` inline, lo que crea deuda de mantenimiento inmediata.
 — **Fix**: definir `LITE_PRIMARY_PIECE = "rook" as const` en `lib/hub/content-loop.ts` como parte del contrato del módulo, no como comentario del spec.
 
 ---
