@@ -18,12 +18,14 @@ Export: PNG + WebP pair, no browser chrome, dark system UI.
 
 ## Status
 
-- [ ] `01-hub-lite.png`
-- [ ] `02-daily-focus.png`
-- [ ] `03-focus-passport.png`
-- [ ] `04-lite-achievements.png`
-- [ ] `05-claim-gift.png`
-- [ ] `06-exercises-path.png`
-- [ ] `07-labyrinth-active.png`
-- [ ] `08-account-lite.png`
-- [ ] `09-stats-public.png`
+- [x] `01-hub-lite.png`
+- [x] `02-daily-focus.png`
+- [x] `03-focus-passport.png`
+- [x] `04-lite-achievements.png`
+- [x] `05-claim-gift.png`
+- [x] `06-exercises-path.png`
+- [x] `07-labyrinth-active.png`
+- [x] `08-account-lite.png`
+- [x] `09-stats-public.png`
+
+All 9 screenshots captured (2026-06-21). Grant pack ready for review.
