@@ -3402,12 +3402,15 @@
     height: 44px;
     transform: none;
     filter: drop-shadow(0 3px 3px rgba(99, 47, 5, 0.24));
-    animation: save-pulse-cycle 300s linear infinite;
   }
 
   /* Sutil destello cada 5 min (~1.5s de halo ámbar sobre 300s).
-     Fuera del pulso el filtro queda fijo en la sombra base, así el
-     navegador no repinta el resto del ciclo. */
+     Scoped to submitScore so enterLabyrinth / exitLabyrinth / hint
+     pedestal sprites don't inherit the amber glow. */
+  [data-action="submitScore"] .action-pin-submit-pedestal img {
+    animation: save-pulse-cycle 300s linear infinite;
+  }
+
   @keyframes save-pulse-cycle {
 
     0%,
@@ -3422,7 +3425,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .action-pin-submit-pedestal img {
+    [data-action="submitScore"] .action-pin-submit-pedestal img {
       animation: none;
     }
   }

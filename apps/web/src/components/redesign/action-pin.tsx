@@ -243,7 +243,8 @@ export function ActionPin({
   // 2026-06-21: extended to claimWelcomePack — same bare-sprite treatment).
   const isPedestalPin =
     size === "pin" &&
-    (action === "submitScore" || action === "claimBadge" || action === "claimWelcomePack");
+    (action === "submitScore" || action === "claimBadge" || action === "claimWelcomePack" ||
+     action === "enterLabyrinth" || action === "exitLabyrinth");
   const baseLayout =
     size === "pin"
       ? isPedestalPin
