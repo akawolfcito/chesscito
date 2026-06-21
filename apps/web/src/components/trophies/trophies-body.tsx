@@ -192,7 +192,9 @@ export function TrophiesBody({ hideHero }: { hideHero?: boolean } = {}) {
     void loadHallOfFame();
   }, [loadHallOfFame]);
 
-  if (!configured) {
+  // Lite achievements are local Daily Focus progress and do not depend on
+  // the legacy victory-contract configuration. Preserve the Full fallback.
+  if (!configured && !CHESSCITO_LITE_MODE) {
     return (
       <div className="trophy-empty-card flex flex-col items-center gap-3 p-6 text-center">
         <div
