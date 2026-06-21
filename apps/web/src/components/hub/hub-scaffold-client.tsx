@@ -38,7 +38,16 @@ import {
   getHeroContextAction,
   type HeroContextState,
 } from "@/lib/hub/hero-cta";
-import { getExercisesCompletedCount } from "@/lib/game/exercise-progress";
+import {
+  deriveContentLoopAction,
+  LITE_PRIMARY_PIECE,
+  type ContentLoopAction,
+} from "@/lib/hub/content-loop";
+import { buildTrainingPath } from "@/lib/training/path";
+import { getLabyrinthBestsMap } from "@/lib/game/labyrinth-progress";
+import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
+import { getExercisesCompletedCount, readPieceStars } from "@/lib/game/exercise-progress";
+import { EXERCISES, LABYRINTHS } from "@/lib/game/exercises";
 import {
   type DailyProgress,
   getDailyHistoryCount,
@@ -340,6 +349,46 @@ export function HubScaffoldClient({
     [dailyProgress],
   );
 
+  // Content Loop v1 (Lite-only). Derives the Next Best Action from existing
+  // localStorage data: DailyProgress (already hydrated above via dailyProgress
+  // state), WelcomePackage, and the primary piece training path.
+  // isContentLoopHydrated gates rendering to prevent flash of wrong variant.
+  const welcomePackage = useWelcomePackage();
+  const [contentLoopAction, setContentLoopAction] = useState<ContentLoopAction | null>(null);
+  const [isContentLoopHydrated, setIsContentLoopHydrated] = useState(false);
+  useEffect(() => {
+    if (!CHESSCITO_LITE_MODE) return;
+    // Wait for dailyProgress to be hydrated first (see focusPassport state above).
+    if (dailyProgress === null) return;
+
+    const piece = LITE_PRIMARY_PIECE;
+    const stars = readPieceStars(piece);
+    const progress = { piece, currentId: null as string | null, stars };
+    const labyrinthBests = getLabyrinthBestsMap(piece);
+    const primaryPath = buildTrainingPath({
+      piece,
+      progress,
+      labyrinthBests,
+      badgeClaimed: false,
+      catalog: { exercises: EXERCISES, labyrinths: LABYRINTHS },
+    });
+
+    const action = deriveContentLoopAction({
+      daily: dailyProgress,
+      today: todayUtc(),
+      welcomePackage: {
+        unlocked: welcomePackage.isUnlocked,
+        claimed: welcomePackage.isClaimed,
+      },
+      primaryPiece: piece,
+      primaryPath,
+      nextAvailablePiece: null,
+    });
+
+    setContentLoopAction(action);
+    setIsContentLoopHydrated(true);
+  }, [dailyProgress, welcomePackage.isUnlocked, welcomePackage.isClaimed]);
+
   const handleArenaPress = useCallback(() => {
     if (CHESSCITO_LITE_MODE) return;
     track("secondary_arena_clicked");
@@ -504,6 +553,11 @@ export function HubScaffoldClient({
         }}
         onArenaPress={CHESSCITO_LITE_MODE ? undefined : handleArenaPress}
         miniArenaUnlocked={(starsPerPiece.rook ?? 0) >= 12}
+        nextStepCard={
+          CHESSCITO_LITE_MODE && contentLoopAction
+            ? { action: contentLoopAction, isHydrated: isContentLoopHydrated }
+            : null
+        }
       />
       {!CHESSCITO_LITE_MODE && <ProSheet {...proSheet.sheetProps} />}
       {!CHESSCITO_LITE_MODE && <BadgeSheet {...badgeSheet.sheetProps} />}

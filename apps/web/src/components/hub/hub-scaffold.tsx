@@ -15,6 +15,8 @@ import { LanguageChip } from "@/components/hub/language-chip";
 import { HubArenaTile } from "@/components/hub/hub-arena-tile";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
 import { FocusPassport } from "@/components/hub/focus-passport";
+import { NextStepCard } from "@/components/hub/next-step-card";
+import type { ContentLoopAction } from "@/lib/hub/content-loop";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
@@ -117,6 +119,13 @@ type HubScaffoldProps = {
    *  active (K+R vs K mini-arena). Caller derives from rook stars ≥12
    *  so the threshold lives at the source of truth, not the scaffold. */
   miniArenaUnlocked?: boolean;
+  /** Content Loop v1 (Chesscito Lite only). When provided AND the build
+   *  is Lite, renders <NextStepCard> below the Hero CTA in center-stack.
+   *  Full builds never pass this prop and the card never renders. */
+  nextStepCard?: {
+    action: ContentLoopAction;
+    isHydrated: boolean;
+  } | null;
   onError?: (
     context: import("@/components/error/primitive-boundary").PrimitiveBoundaryErrorContext,
   ) => void;
@@ -166,6 +175,7 @@ export function HubScaffold({
   heroCta,
   onArenaPress,
   miniArenaUnlocked = false,
+  nextStepCard = null,
   onError,
 }: HubScaffoldProps) {
   const tHud = useTranslations("HUD_COPY");
@@ -325,6 +335,15 @@ export function HubScaffold({
                   ariaLabel={playAriaLabel}
                   onPress={onPlayPress}
                   pieceIconSrc="/art/new-icons-chesscito/play-chess.png"
+                />,
+              )
+            ) : null}
+            {CHESSCITO_LITE_MODE && nextStepCard ? (
+              wrap(
+                "NextStepCard",
+                <NextStepCard
+                  action={nextStepCard.action}
+                  isHydrated={nextStepCard.isHydrated}
                 />,
               )
             ) : null}

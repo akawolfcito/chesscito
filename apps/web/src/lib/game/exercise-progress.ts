@@ -11,9 +11,45 @@
  * to know storage keys, and tolerates both shapes.
  */
 
+import type { PieceId } from "@/lib/game/types";
+
 const STORAGE_PREFIX = "chesscito:progress:";
 
 const PIECES = ["rook", "bishop", "knight", "pawn", "queen", "king"] as const;
+
+/**
+ * Reads the id-keyed stars map for a single piece without the exercise pool.
+ * Returns a sparse Record<exerciseId, stars> suitable for passing to
+ * buildTrainingPath as `progress.stars`.
+ *
+ * Conservative fallback: legacy positional arrays return `{}` (exercises
+ * will appear unplayed → Content Loop shows "continue-path"). The exercises
+ * page migrates the legacy format on first load, after which this reads correctly.
+ */
+export function readPieceStars(piece: PieceId): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(`${STORAGE_PREFIX}${piece}`);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as { stars?: unknown };
+    if (
+      parsed.stars &&
+      typeof parsed.stars === "object" &&
+      !Array.isArray(parsed.stars)
+    ) {
+      const out: Record<string, number> = {};
+      for (const [k, v] of Object.entries(parsed.stars as Record<string, unknown>)) {
+        if (typeof v === "number" && Number.isFinite(v) && v > 0 && v <= 3) {
+          out[k] = v;
+        }
+      }
+      return out;
+    }
+  } catch {
+    // ignore corrupt entry
+  }
+  return {};
+}
 
 /** Returns the count of exercises with stars > 0 across every piece.
  *  Zero = brand-new player (Hero CTA flips to "START WITH PIECES"). */

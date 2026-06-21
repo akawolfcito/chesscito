@@ -30,6 +30,15 @@ function readMap(piece: PieceId): Record<string, number> {
   return {};
 }
 
+/**
+ * Full best-scores map for a piece, safe to pass directly to buildTrainingPath()
+ * as `labyrinthBests`. Absent keys map to null inside buildTrainingPath via `?? null`.
+ * Returns {} on SSR or missing data (all labyrinths stay "locked" — correct default).
+ */
+export function getLabyrinthBestsMap(piece: PieceId): Record<string, number> {
+  return readMap(piece);
+}
+
 /** Best (minimum) move count recorded for the given labyrinth, or
  *  null if the player hasn't completed it yet. */
 export function getLabyrinthBest(piece: PieceId, labyrinthId: string): number | null {

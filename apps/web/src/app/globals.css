@@ -13075,6 +13075,45 @@ button.hud-resource-chip:active:not(:disabled) {
   color: rgba(95, 45, 10, 0.95);
 }
 
+/* ── Next Step Card (Content Loop v1, Lite-only) ────────────────────────────
+ * Lightweight "Next Best Action" suggestion below the Focus Passport.
+ * Intentionally subtle — must not compete visually with Daily Focus or
+ * the Focus Passport. Spec: docs/specs/content-loop-v1.md §7. */
+.next-step-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.5rem 1rem;
+  margin-top: 0.25rem;
+  text-align: center;
+}
+
+.next-step-card-sub {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.01em;
+}
+
+.next-step-card-cta {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+}
+
+.next-step-card-cta--static {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+}
+
+/* view-progress micro-card is visually subdued — it's a fallback, not a primary CTA */
+.next-step-card--micro .next-step-card-cta {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+
 /* Welcome Package stamp fallback — hidden while asset loads; visible only
    when the parent gains .wp-stamp-fallback (set by the img onError handler). */
 .wp-stamp-text {
