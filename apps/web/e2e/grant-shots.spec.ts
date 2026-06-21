@@ -51,14 +51,15 @@ const ROOK_PROGRESS_RICH = {
   },
 };
 
-// 3-day streak, completed today
+// 3-day streak — last completed YESTERDAY so today is still playable and
+// no completion-triggered achievement overlay fires on mount.
 const DAILY_3DAY_STREAK = {
   streak: 3,
-  lastCompletedDate: TODAY,
+  lastCompletedDate: YESTERDAY,
   totalCompleted: 3,
 };
 
-// Welcome package: unlocked + not yet claimed (shows Claim Gift pedestal pin)
+// WP for hub/passport shots: modal suppressed (count ≥ 2), clean hub surface.
 const WP_PENDING = {
   version: 1,
   unlocked: true,
@@ -68,7 +69,13 @@ const WP_PENDING = {
   dismissed: false,
   dismissedAt: null,
   dismissCount: 0,
-  autoShowCount: 1,
+  autoShowCount: 99,
+};
+
+// WP for claim-gift shot: autoShowCount < 2 → shouldAutoShow=true → modal opens on mount.
+const WP_PENDING_AUTOSHOW = {
+  ...WP_PENDING,
+  autoShowCount: 0,
 };
 
 async function seedBase(page: Page) {
@@ -124,28 +131,32 @@ test.describe("Grant shots — Lite mode", () => {
   // 01 — Hub Lite: focus-first, no monetization surfaces
   test("01-hub-lite", async ({ page }) => {
     await seedFull(page);
-    await page.goto("/", { waitUntil: "load" });
-    // Wait for hub to be visible and WP dismissed so it's focus-first
+    await page.goto("/hub", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(1000);
     await screenshot(page, "01-hub-lite.png");
   });
 
-  // 02 — Daily Focus: board ready to solve
+  // 02 — Daily Focus: open sheet from hub, board ready to solve
   test("02-daily-focus", async ({ page }) => {
     await seedBase(page);
-    await page.goto("/daily", { waitUntil: "load" });
+    await page.goto("/hub", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(800);
+    // Click the Daily Tactic tile — aria-label starts with "Play today's Daily Tactic"
+    const dailyBtn = page.getByRole("button", { name: /play today.*daily tactic/i });
+    await dailyBtn.click({ timeout: 8_000 });
+    // Wait for the sheet to animate in
+    await expect(page.locator('[role="dialog"][data-state="open"]').first()).toBeVisible({ timeout: 8_000 });
+    await page.waitForTimeout(800);
     await screenshot(page, "02-daily-focus.png");
   });
 
-  // 03 — Focus Passport: 3-slot filled (3-day streak)
+  // 03 — Focus Passport: 3-slot filled (3-day streak), lives on Hub
   test("03-focus-passport", async ({ page }) => {
     await seedFull(page);
-    await page.goto("/", { waitUntil: "load" });
+    await page.goto("/hub", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
-    // Scroll to or wait for passport slots
     const passport = page.locator("[data-testid='focus-passport'], .focus-passport").first();
     if (await passport.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await passport.scrollIntoViewIfNeeded();
@@ -160,22 +171,38 @@ test.describe("Grant shots — Lite mode", () => {
     await page.goto("/trophies", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(800);
+    // Dismiss Next.js dev error toast if visible
+    const errorClose = page.locator("nextjs-portal").getByRole("button").first();
+    if (await errorClose.isVisible({ timeout: 1_000 }).catch(() => false)) {
+      await errorClose.click();
+      await page.waitForTimeout(300);
+    }
     await screenshot(page, "04-lite-achievements.png");
   });
 
-  // 05 — Welcome Package: Claim Gift pedestal pin visible on Hub
+  // 05 — Welcome Package: Claim Gift modal auto-opens (autoShowCount=0 → shouldAutoShow)
   test("05-claim-gift", async ({ page }) => {
-    await seedFull(page);
-    await page.goto("/", { waitUntil: "load" });
+    await page.goto("/hub", { waitUntil: "domcontentloaded" });
+    await page.evaluate(
+      ({ streak, wp, rookProgress }) => {
+        localStorage.setItem("chesscito:onboarded", "true");
+        localStorage.setItem("chesscito:welcome-dismissed", "1");
+        localStorage.setItem("chesscito:daily-progress", JSON.stringify(streak));
+        localStorage.setItem("chesscito:welcome-package", JSON.stringify(wp));
+        localStorage.setItem("chesscito:progress:rook", JSON.stringify(rookProgress));
+      },
+      { streak: DAILY_3DAY_STREAK, wp: WP_PENDING_AUTOSHOW, rookProgress: ROOK_PROGRESS_WITH_LAB },
+    );
+    await page.goto("/hub", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
-    // WP pending → pedestal pin should auto-appear
-    await page.waitForTimeout(1200);
+    // shouldAutoShow=true → WelcomePackageModal renders on mount
+    await page.waitForTimeout(1800);
     await screenshot(page, "05-claim-gift.png");
   });
 
-  // 06 — Exercises path: interleaved exercise + labyrinth rows
+  // 06 — Exercises path: open drawer to show interleaved exercise + labyrinth rows
   test("06-exercises-path", async ({ page }) => {
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.goto("/exercises", { waitUntil: "domcontentloaded" });
     await page.evaluate((rookProgress) => {
       localStorage.setItem("chesscito:onboarded", "true");
       localStorage.setItem("chesscito:welcome-dismissed", "1");
@@ -183,7 +210,13 @@ test.describe("Grant shots — Lite mode", () => {
     }, ROOK_PROGRESS_WITH_LAB);
     await page.goto("/exercises", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(800);
+    // Open the exercise drawer (stars pill button aria-label="Exercises")
+    const drawerTrigger = page.getByRole("button", { name: "Exercises" }).first();
+    await drawerTrigger.click({ timeout: 8_000 });
+    // Wait for Radix sheet to animate in
+    await expect(page.locator('[role="dialog"][data-state="open"]').first()).toBeVisible({ timeout: 8_000 });
+    await page.waitForTimeout(800);
     await screenshot(page, "06-exercises-path.png");
   });
 
@@ -212,12 +245,13 @@ test.describe("Grant shots — Lite mode", () => {
     await screenshot(page, "07-labyrinth-active.png");
   });
 
-  // 08 — Account Lite: wallet / network / language only
+  // 08 — Account Lite: /exercises is the account surface in Lite (Network + Language tiles,
+  //      no Arena Wins / no Saved Victories, Connect HUD pill)
   test("08-account-lite", async ({ page }) => {
     await seedBase(page);
-    await page.goto("/account", { waitUntil: "load" });
+    await page.goto("/exercises", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(1000);
     await screenshot(page, "08-account-lite.png");
   });
 
