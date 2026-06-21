@@ -634,6 +634,7 @@ export function ExercisesScreen({
   // a different tab auto-closes the current one rather than stacking.
   // Per-sheet `open` + `onOpenChange` are derived below so the sheet
   // components don't need to know about this refactor.
+  const [leaderboardRefreshTrigger, setLeaderboardRefreshTrigger] = useState(0);
   const [activeDockTab, setActiveDockTab] = useState<"badge" | "shop" | "trophies" | "leaderboard" | "arena" | null>(
     initialAction === "shop"
       ? "shop"
@@ -1821,6 +1822,7 @@ export function ExercisesScreen({
               }),
             );
           } catch { /* storage unavailable */ }
+          setLeaderboardRefreshTrigger((n) => n + 1);
           break;
         }
 
@@ -1954,6 +1956,7 @@ export function ExercisesScreen({
           }),
         );
       } catch { /* storage unavailable */ }
+      setLeaderboardRefreshTrigger((n) => n + 1);
     } catch (error) {
       if (isUserCancellation(error)) {
         track("score_submit_tx", { stage: "cancelled", piece: selectedPiece });
@@ -3105,6 +3108,7 @@ export function ExercisesScreen({
           open={leaderboardOpen}
           onOpenChange={setLeaderboardOpen}
           showTrigger={false}
+          refreshTrigger={leaderboardRefreshTrigger}
         />
       </main>
     </div>

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { act } from "@testing-library/react";
 import { waitFor } from "@testing-library/react";
 import { LeaderboardSheet } from "../leaderboard-sheet";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
@@ -154,5 +155,67 @@ describe("LeaderboardSheet — on-chain marker + own rank (QA 2026-06-11)", () =
     });
     expect(String(fetchMock.mock.calls[0][0])).not.toContain("player=");
     expect(screen.queryByTestId("leaderboard-own-row")).not.toBeInTheDocument();
+  });
+});
+
+describe("LeaderboardSheet — refreshTrigger (post-save invalidation)", () => {
+  it("triggers an extra fetch when refreshTrigger increments while open", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [],
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const { rerender } = render(
+      <LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} refreshTrigger={0} />,
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const callsBefore = fetchMock.mock.calls.length;
+
+    // Simulate save success: increment refreshTrigger while sheet is open
+    await act(async () => {
+      rerender(
+        <LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} refreshTrigger={1} />,
+      );
+    });
+
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.length).toBeGreaterThan(callsBefore);
+    });
+  });
+
+  it("renders latest data when sheet is opened after save (refreshTrigger wired)", async () => {
+    const initialRows = [
+      { rank: 1, rowId: "id_a", variant: { piece: "king", style: "golden", number: 1 }, score: 100, isVerified: false },
+    ];
+    const updatedRows = [
+      { rank: 1, rowId: "id_a", variant: { piece: "king", style: "golden", number: 1 }, score: 200, isVerified: false },
+    ];
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => initialRows })
+      .mockResolvedValue({ ok: true, json: async () => updatedRows });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const { rerender } = render(
+      <LeaderboardSheet open={false} onOpenChange={() => {}} showTrigger={false} refreshTrigger={0} />,
+    );
+
+    // Open the sheet: shows initial data
+    await act(async () => {
+      rerender(<LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} refreshTrigger={0} />);
+    });
+    await waitFor(() => expect(screen.getByText("Golden King #1")).toBeInTheDocument());
+
+    // Simulate save success and sheet-open re-fetch
+    await act(async () => {
+      rerender(<LeaderboardSheet open onOpenChange={() => {}} showTrigger={false} refreshTrigger={1} />);
+    });
+
+    // After trigger, updated score should appear
+    await waitFor(() => {
+      expect(screen.getByText("200")).toBeInTheDocument();
+    });
   });
 });

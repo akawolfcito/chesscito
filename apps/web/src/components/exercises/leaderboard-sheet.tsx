@@ -61,9 +61,13 @@ type LeaderboardSheetProps = {
    *  this gate, Radix renders the button as a real DOM node sibling
    *  of the host and its `h-full w-full` image invades the layout. */
   showTrigger?: boolean;
+  /** Increment to force a silent refetch while the sheet is open.
+   *  Wired from exercises-screen after a successful score save so the
+   *  leaderboard reflects the new row without requiring close/reopen. */
+  refreshTrigger?: number;
 };
 
-export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: LeaderboardSheetProps) {
+export function LeaderboardSheet({ open, onOpenChange, showTrigger = true, refreshTrigger }: LeaderboardSheetProps) {
   const t = useTranslations("LEADERBOARD_SHEET_COPY");
   // Passport verify banner is hidden until we ship Celo-native verification.
   // See the disabled JSX block below for the revival point.
@@ -140,7 +144,7 @@ export function LeaderboardSheet({ open, onOpenChange, showTrigger = true }: Lea
   useEffect(() => {
     if (!open || !hasFetched.current) return;
     fetchLeaderboard(false);
-  }, [open, fetchLeaderboard]);
+  }, [open, fetchLeaderboard, refreshTrigger]);
 
   const champion = rows.find(r => r.rank === 1);
   // The list is the FULL board — every player including #1 and the caller
