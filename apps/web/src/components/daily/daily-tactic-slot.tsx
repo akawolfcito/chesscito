@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { DailyTacticCard } from "./daily-tactic-card";
 import { DailyTacticSheet } from "./daily-tactic-sheet";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
+import { WelcomePackageModal } from "@/components/welcome-package/welcome-package-modal";
+import { FirstFocusDayOverlay } from "@/components/welcome-package/first-focus-day-overlay";
 import {
   getDailyProgress,
   isCompletedToday,
@@ -66,6 +71,12 @@ export function DailyTacticSlot() {
   } | null>(null);
   const isPro = useIsProActive();
   const { isConnected, address } = useAccount();
+  const welcomePackage = useWelcomePackage();
+  const [showAchievement, setShowAchievement] = useState(false);
+  const [showWelcomePackage, setShowWelcomePackage] = useState(false);
+  const [wpClaimConfirm, setWpClaimConfirm] = useState(false);
+  const wpClaimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const firstFocusDayJustEarned = useRef(false);
   /** Sprint 2 commit D — same dedup pattern as HubDailyTile. */
   const startedFiredRef = useRef(false);
   /** Sprint 3 commit E — earn POST dedup, mirrors HubDailyTile. */
@@ -84,6 +95,10 @@ export function DailyTacticSlot() {
   }, []);
 
   useEffect(() => {
+    return () => { if (wpClaimTimerRef.current) clearTimeout(wpClaimTimerRef.current); };
+  }, []);
+
+  useEffect(() => {
     if (!hydrated) return;
     if (open && !startedFiredRef.current) {
       startedFiredRef.current = true;
@@ -99,6 +114,10 @@ export function DailyTacticSlot() {
 
   async function handleSolve(movesUsed: number) {
     const prev = progress;
+    if (CHESSCITO_LITE_MODE && prev.totalCompleted === 0) {
+      firstFocusDayJustEarned.current = true;
+      welcomePackage.unlock();
+    }
     const next = recordDailyCompletion(today);
     setProgress(next);
 
@@ -225,6 +244,10 @@ export function DailyTacticSlot() {
         onOpenChange={(nextOpen) => {
           setOpen(nextOpen);
           if (!nextOpen) {
+            if (firstFocusDayJustEarned.current) {
+              setShowAchievement(true);
+            }
+            firstFocusDayJustEarned.current = false;
             setSolveResult(null);
             setReward(null);
             earnFiredRef.current = false;
@@ -241,6 +264,36 @@ export function DailyTacticSlot() {
         isConnected={isConnected}
         reward={reward ?? undefined}
       />
+      {hydrated && showAchievement && createPortal(
+        <FirstFocusDayOverlay
+          onContinue={() => {
+            setShowAchievement(false);
+            if (welcomePackage.shouldAutoShow) {
+              welcomePackage.markShown();
+              setShowWelcomePackage(true);
+            }
+          }}
+        />,
+        document.body
+      )}
+      {hydrated && showWelcomePackage && createPortal(
+        <WelcomePackageModal
+          claimed={wpClaimConfirm}
+          onClaim={() => {
+            welcomePackage.claim();
+            setWpClaimConfirm(true);
+            wpClaimTimerRef.current = setTimeout(() => {
+              setShowWelcomePackage(false);
+              setWpClaimConfirm(false);
+            }, 1200);
+          }}
+          onDismiss={() => {
+            welcomePackage.dismiss();
+            setShowWelcomePackage(false);
+          }}
+        />,
+        document.body
+      )}
     </>
   );
 }

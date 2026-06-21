@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { useTranslations } from "next-intl";
 import { DailyTacticSheet } from "@/components/daily/daily-tactic-sheet";
@@ -295,19 +296,19 @@ export function HubDailyTile() {
         iconWidth={228}
         iconHeight={256}
       />
-      {showAchievement && (
+      {hydrated && showAchievement && createPortal(
         <FirstFocusDayOverlay
           onContinue={() => {
             setShowAchievement(false);
-            // After achievement overlay, show Welcome Package if eligible
             if (welcomePackage.shouldAutoShow) {
               welcomePackage.markShown();
               setShowWelcomePackage(true);
             }
           }}
-        />
+        />,
+        document.body
       )}
-      {showWelcomePackage && (
+      {hydrated && showWelcomePackage && createPortal(
         <WelcomePackageModal
           claimed={wpClaimConfirm}
           onClaim={() => {
@@ -322,7 +323,8 @@ export function HubDailyTile() {
             welcomePackage.dismiss();
             setShowWelcomePackage(false);
           }}
-        />
+        />,
+        document.body
       )}
       <DailyTacticSheet
         open={open}

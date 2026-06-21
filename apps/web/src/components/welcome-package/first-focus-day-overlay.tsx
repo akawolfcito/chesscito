@@ -44,7 +44,7 @@ export function FirstFocusDayOverlay({ onContinue }: Props) {
           </p>
         </div>
 
-        <PrincipalButton onClick={onContinue} className="w-full">
+        <PrincipalButton onClick={onContinue} className="self-center">
           {t("continueCta")}
         </PrincipalButton>
       </VictoryPopupShell>

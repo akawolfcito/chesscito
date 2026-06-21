@@ -65,7 +65,7 @@ export function WelcomePackageModal({ onClaim, onDismiss, claimed = false }: Pro
           </p>
         ) : (
           <div className="flex w-full flex-col items-center gap-2">
-            <PrincipalButton onClick={onClaim} className="w-full">
+            <PrincipalButton onClick={onClaim} className="self-center">
               {t("claimCta")}
             </PrincipalButton>
             <button
