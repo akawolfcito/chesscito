@@ -236,10 +236,9 @@ export function nextPendingLabyrinthAfterExercise(
  * Case 1 — happy path: the immediate next interleaved row is an available lab
  *   (delegates to nextPendingLabyrinthAfterExercise, QA G1 preserved).
  *
- * Case 2 — late unlock: the player accumulated stars past the lab's anchor
- *   exercise so the lab was locked when they passed its position. The lab is
- *   now available but sits at an earlier interleaved-path position than the
- *   current exercise. Scan backwards from currentPos to find it.
+ * Case 2 — late unlock/manual selection: the player can be either side of a
+ *   lab's anchor when it becomes available. Find it anywhere in the
+ *   interleaved path, without changing that path's presentation order.
  *
  * In the chained unlock model at most one lab is available at a time, so the
  * scan always returns at most one result. Null → continue exercise flow. */
@@ -251,7 +250,8 @@ export function getLabyrinthForAutoAdvance(
   const immediate = nextPendingLabyrinthAfterExercise(path, completedExerciseId);
   if (immediate) return immediate;
 
-  // Case 2: late-unlock — available lab before the player's current position
+  // Case 2: available lab elsewhere in the path. This covers a late unlock
+  // behind the player and manual selection/replay before its visual anchor.
   const exercises = path.filter((n) => n.kind === "exercise");
   const labyrinths = path.filter((n) => n.kind === "labyrinth");
   const rows = interleaveTrainingRows(exercises, labyrinths);
@@ -259,8 +259,7 @@ export function getLabyrinthForAutoAdvance(
     (r) => r.kind === "exercise" && r.value.id === completedExerciseId,
   );
   if (currentPos < 0) return null;
-  for (let i = 0; i < currentPos; i++) {
-    const row = rows[i];
+  for (const row of rows) {
     if (row.kind === "labyrinth" && row.value.status === "available") {
       return row.value;
     }

@@ -1590,8 +1590,8 @@ export function ExercisesScreen({
         // Path sequencing: enter the next available labyrinth instead of
         // advancing to the next exercise. Handles two cases:
         //   1. Happy path — lab is the immediate next interleaved row.
-        //   2. Late unlock — lab unlocked while player was past its anchor;
-        //      it sits at an earlier interleaved position but is now available.
+        //   2. Late unlock/manual selection — an available lab can sit on
+        //      either side of the completed exercise's visual position.
         // Reads the path ref so post-completion unlocks (e.g. 6★ reached on
         // this very exercise) are visible at fire time.
         const pendingLab = getLabyrinthForAutoAdvance(

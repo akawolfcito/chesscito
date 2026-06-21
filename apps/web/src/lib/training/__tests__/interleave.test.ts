@@ -194,6 +194,18 @@ describe("getLabyrinthForAutoAdvance — path sequencing with late-unlock (Exerc
     expect(next!.status).toBe("available");
   });
 
+  it("returns an available lab after a manually selected early exercise", () => {
+    // Stars can have been earned in later exercises through manual path
+    // selection; the pending labyrinth is then after this exercise's row.
+    const next = getLabyrinthForAutoAdvance(
+      rookPath(LABYRINTH_UNLOCK_THRESHOLD),
+      EXERCISES.rook[0].id,
+    );
+    expect(next).not.toBeNull();
+    expect(next!.kind).toBe("labyrinth");
+    expect(next!.status).toBe("available");
+  });
+
   // Test 5: No salta labyrinth desbloqueado — the lab is always entered if available
   it("does not skip an available lab regardless of player position", () => {
     // Player far past the anchor, lab still available
@@ -245,10 +257,7 @@ describe("getLabyrinthForAutoAdvance — path sequencing with late-unlock (Exerc
 
   // Test 9: No labyrinths in path — safe, returns null without crash
   it("returns null safely when path has no labyrinths", () => {
-    // Use a piece with no labs (king mocked in path-empty-catalog.test.ts);
-    // here we test with a path that has no available labs due to locking.
-    // A piece with ALL labs locked is equivalent — no null crash.
-    const pathNoLabs = rookPath(0); // 0★ → all labs locked
+    const pathNoLabs = rookPath(0).filter((node) => node.kind !== "labyrinth");
     expect(
       getLabyrinthForAutoAdvance(pathNoLabs, EXERCISES.rook[0].id),
     ).toBeNull();
