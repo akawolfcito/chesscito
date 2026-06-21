@@ -17,20 +17,18 @@ export function FirstFocusDayOverlay({ onContinue }: Props) {
         ariaLabel={t("title")}
       >
         {/* Achievement badge image */}
-        <div className="flex justify-center">
-          <picture>
-            <source srcSet="/art/achievements/1day-focus.avif" type="image/avif" />
-            <source srcSet="/art/achievements/1day-focus.webp" type="image/webp" />
-            <img
-              src="/art/achievements/1day-focus.png"
-              alt={t("title")}
-              className="h-28 w-28 object-contain"
-              draggable={false}
-            />
-          </picture>
-        </div>
+        <picture className="mx-auto block">
+          <source srcSet="/art/achievements/1day-focus.avif" type="image/avif" />
+          <source srcSet="/art/achievements/1day-focus.webp" type="image/webp" />
+          <img
+            src="/art/achievements/1day-focus.png"
+            alt={t("title")}
+            className="mx-auto h-28 w-28 object-contain"
+            draggable={false}
+          />
+        </picture>
 
-        <div className="flex flex-col items-center gap-1 text-center">
+        <div className="flex w-full flex-col items-center gap-1 text-center">
           <p
             className="text-xs font-black uppercase tracking-[0.18em]"
             style={{ color: "var(--popup-title-color)", opacity: 0.5 }}

@@ -21,33 +21,25 @@ export function WelcomePackageModal({ onClaim, onDismiss, claimed = false }: Pro
         ariaLabel={t("title")}
         closeLabel="Close"
       >
-        {/* Focus Stamp visual — falls back to text label if asset is absent */}
-        <div className="flex justify-center">
-          <div className="relative flex h-28 w-28 items-center justify-center">
-            <picture>
-              <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.avif`} type="image/avif" />
-              <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.webp`} type="image/webp" />
-              <img
-                src={`${WELCOME_PACKAGE_REWARD.assetBase}.png`}
-                alt={t("stampLabel")}
-                className="h-28 w-28 object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-              />
-            </picture>
-            {/* Fallback text — shows when image fails to load */}
-            <span
-              className="wp-stamp-text absolute text-xs font-extrabold"
-              style={{ color: "rgba(110, 65, 15, 0.80)" }}
-              aria-label={t("stampLabel")}
-            >
-              {t("stampLabel")}
-            </span>
-          </div>
+        {/* Focus Stamp visual — .wp-stamp-text hidden by CSS; onError reveals it */}
+        <div className="wp-stamp-container mx-auto flex flex-col items-center gap-1">
+          <picture>
+            <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.avif`} type="image/avif" />
+            <source srcSet={`${WELCOME_PACKAGE_REWARD.assetBase}.webp`} type="image/webp" />
+            <img
+              src={`${WELCOME_PACKAGE_REWARD.assetBase}.png`}
+              alt={t("stampLabel")}
+              className="h-28 w-28 object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+                e.currentTarget.closest(".wp-stamp-container")?.classList.add("wp-stamp-fallback");
+              }}
+            />
+          </picture>
+          <span className="wp-stamp-text">{t("stampLabel")}</span>
         </div>
 
-        <div className="flex flex-col items-center gap-1 text-center">
+        <div className="flex w-full flex-col items-center gap-1 text-center">
           <h2 className="language-modal-title">{t("title")}</h2>
           <p
             className="text-sm font-semibold"
@@ -65,14 +57,14 @@ export function WelcomePackageModal({ onClaim, onDismiss, claimed = false }: Pro
 
         {claimed ? (
           <p
-            className="text-center text-sm font-semibold"
+            className="w-full text-center text-sm font-semibold"
             style={{ color: "rgba(110, 65, 15, 0.70)" }}
             data-testid="wp-claimed-confirmation"
           >
             {t("claimedConfirmation")}
           </p>
         ) : (
-          <div className="flex w-full flex-col gap-2">
+          <div className="flex w-full flex-col items-center gap-2">
             <PrincipalButton onClick={onClaim} className="w-full">
               {t("claimCta")}
             </PrincipalButton>

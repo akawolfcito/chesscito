@@ -13006,3 +13006,16 @@ button.hud-resource-chip:active:not(:disabled) {
   letter-spacing: 0;
   color: rgba(95, 45, 10, 0.95);
 }
+
+/* Welcome Package stamp fallback — hidden while asset loads; visible only
+   when the parent gains .wp-stamp-fallback (set by the img onError handler). */
+.wp-stamp-text {
+  display: none;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: rgba(110, 65, 15, 0.80);
+}
+.wp-stamp-fallback .wp-stamp-text {
+  display: block;
+}
