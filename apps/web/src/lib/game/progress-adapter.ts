@@ -120,6 +120,15 @@ export function calculateTotalStarsFromIdMap(
   );
 }
 
+/** Maximum stars achievable for a piece: pool size × 3 (each exercise caps at 3★).
+ *  Labyrinths are NOT included — they have a separate tracking system. */
+export function getMaxPossibleStars(
+  piece: PieceId,
+  catalog: ExerciseCatalog = EXERCISES,
+): number {
+  return catalog[piece].length * 3;
+}
+
 /** Across-pool mastery from a legacy positional stars array — the
  *  array-input sibling of {@link calculateTotalStarsFromIdMap}. Bridges
  *  the legacy `stars: number[]` to the id-map mastery helper so callers

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EXERCISES, PLAYABLE_PIECES } from "@/lib/game/exercises";
 import {
   calculateTotalStarsFromIdMap,
+  getMaxPossibleStars,
   getStarsForExercise,
   migrateStarsArrayToIdMap,
   normalizeStarsById,
@@ -144,6 +145,39 @@ describe("progress-adapter — idempotency", () => {
     const map = normalizeStarsById("king", { "king-1": 3, "king-8": 2, "king-10": 1 });
     const roundTrip = migrateStarsArrayToIdMap("king", starsIdMapToArray("king", map));
     expect(roundTrip).toEqual(map);
+  });
+});
+
+describe("progress-adapter — getMaxPossibleStars", () => {
+  it("returns pool length × 3 for rook (10 exercises → 30★)", () => {
+    expect(getMaxPossibleStars("rook")).toBe(EXERCISES["rook"].length * 3);
+  });
+
+  it("returns 30 for every piece when pool is 10 exercises each", () => {
+    for (const piece of PLAYABLE_PIECES) {
+      expect(getMaxPossibleStars(piece)).toBe(EXERCISES[piece].length * 3);
+    }
+  });
+
+  it("labyrinths do not affect the result (only exercises count)", () => {
+    // getMaxPossibleStars only reads catalog[piece] length; no labyrinth param.
+    const withoutLabyrinth = getMaxPossibleStars("rook");
+    expect(typeof withoutLabyrinth).toBe("number");
+    expect(withoutLabyrinth).toBeGreaterThan(0);
+  });
+
+  it("accepts a custom catalog for test isolation", () => {
+    const tiny = { rook: [{ id: "r-1" }, { id: "r-2" }] } as Parameters<typeof getMaxPossibleStars>[1];
+    expect(getMaxPossibleStars("rook", tiny)).toBe(6);
+  });
+
+  it("12 stars → 1200 pts; max stars → max score (100 pts/star)", () => {
+    const maxStars = getMaxPossibleStars("rook");
+    const maxScore = maxStars * 100;
+    const currentStars = 12;
+    const currentScore = currentStars * 100;
+    expect(currentScore).toBe(1200);
+    expect(maxScore).toBe(EXERCISES["rook"].length * 3 * 100);
   });
 });
 
