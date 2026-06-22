@@ -38,6 +38,13 @@ function req(params = "", headers: Record<string, string> = {}) {
 beforeEach(() => {
   vi.stubEnv("ADMIN_TOKEN", TOKEN);
   vi.clearAllMocks();
+  // Restore getSupabaseServer after any test that calls mockReturnValue(null).
+  // vi.clearAllMocks() resets call history but NOT implementations, so a
+  // previous mockReturnValue(null) would bleed into subsequent tests.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  vi.mocked(getSupabaseServer).mockImplementation(
+    () => ({ from: vi.fn(() => selectMock) }) as any,
+  );
   mockSelectChain([]);
 });
 
@@ -155,6 +162,15 @@ describe("response shape is stable", () => {
       "exercise_completions",
       "labyrinth_completions",
       "passport_updates",
+      // B2.1 challenge funnel
+      "challenge_link_opens",
+      "challenge_starts",
+      "challenge_completions",
+      "challenge_shares",
+      "challenge_continue_to_lite",
+      "challenge_completion_rate",
+      "challenge_share_rate",
+      "challenge_continue_rate",
     ];
     for (const key of expectedKeys) {
       expect(body).toHaveProperty(key);
@@ -165,5 +181,91 @@ describe("response shape is stable", () => {
     vi.mocked(getSupabaseServer).mockReturnValue(null);
     const res = await GET(req("?from=2026-06-21&to=2026-06-22", { "x-admin-token": TOKEN }));
     expect(res.status).toBe(503);
+  });
+});
+
+describe("challenge funnel counts", () => {
+  it("counts each challenge event with isLite: true", async () => {
+    mockSelectChain([
+      { event: "challenge_link_opened", props: { isLite: true } },
+      { event: "challenge_link_opened", props: { isLite: true } },
+      { event: "challenge_started", props: { isLite: true } },
+      { event: "challenge_started", props: { isLite: true } },
+      { event: "challenge_completed", props: { isLite: true } },
+      { event: "challenge_shared", props: { isLite: true } },
+      { event: "challenge_continue_to_lite", props: { isLite: true } },
+    ]);
+    const res = await GET(req("?from=2026-06-21&to=2026-06-22", { "x-admin-token": TOKEN }));
+    const body = await res.json() as Record<string, unknown>;
+    expect(body["challenge_link_opens"]).toBe(2);
+    expect(body["challenge_starts"]).toBe(2);
+    expect(body["challenge_completions"]).toBe(1);
+    expect(body["challenge_shares"]).toBe(1);
+    expect(body["challenge_continue_to_lite"]).toBe(1);
+  });
+
+  it("does not count challenge events without isLite: true", async () => {
+    mockSelectChain([
+      { event: "challenge_link_opened", props: { source: "challenge_link" } },
+      { event: "challenge_started", props: null },
+      { event: "challenge_completed", props: { isLite: false } },
+    ]);
+    const res = await GET(req("?from=2026-06-21&to=2026-06-22", { "x-admin-token": TOKEN }));
+    const body = await res.json() as Record<string, unknown>;
+    expect(body["challenge_link_opens"]).toBe(0);
+    expect(body["challenge_starts"]).toBe(0);
+    expect(body["challenge_completions"]).toBe(0);
+  });
+
+  it("computes challenge_completion_rate = completions / starts", async () => {
+    mockSelectChain([
+      { event: "challenge_started", props: { isLite: true } },
+      { event: "challenge_started", props: { isLite: true } },
+      { event: "challenge_started", props: { isLite: true } },
+      { event: "challenge_started", props: { isLite: true } },
+      { event: "challenge_completed", props: { isLite: true } },
+      { event: "challenge_completed", props: { isLite: true } },
+      { event: "challenge_completed", props: { isLite: true } },
+    ]);
+    const res = await GET(req("?from=2026-06-21&to=2026-06-22", { "x-admin-token": TOKEN }));
+    const body = await res.json() as Record<string, unknown>;
+    expect(body["challenge_completion_rate"]).toBeCloseTo(3 / 4);
+  });
+
+  it("challenge_completion_rate is null when starts === 0", async () => {
+    mockSelectChain([]);
+    const res = await GET(req("?from=2026-06-21&to=2026-06-22", { "x-admin-token": TOKEN }));
+    const body = await res.json() as Record<string, unknown>;
+    expect(body["challenge_completion_rate"]).toBeNull();
+  });
+
+  it("challenge_share_rate is null when completions === 0", async () => {
+    mockSelectChain([
+      { event: "challenge_started", props: { isLite: true } },
+    ]);
+    const res = await GET(req("?from=2026-06-21&to=2026-06-22", { "x-admin-token": TOKEN }));
+    const body = await res.json() as Record<string, unknown>;
+    expect(body["challenge_share_rate"]).toBeNull();
+  });
+
+  it("challenge_continue_rate is null when completions === 0", async () => {
+    mockSelectChain([]);
+    const res = await GET(req("?from=2026-06-21&to=2026-06-22", { "x-admin-token": TOKEN }));
+    const body = await res.json() as Record<string, unknown>;
+    expect(body["challenge_continue_rate"]).toBeNull();
+  });
+
+  it("computes share_rate and continue_rate against completions", async () => {
+    mockSelectChain([
+      { event: "challenge_completed", props: { isLite: true } },
+      { event: "challenge_completed", props: { isLite: true } },
+      { event: "challenge_shared", props: { isLite: true } },
+      { event: "challenge_continue_to_lite", props: { isLite: true } },
+      { event: "challenge_continue_to_lite", props: { isLite: true } },
+    ]);
+    const res = await GET(req("?from=2026-06-21&to=2026-06-22", { "x-admin-token": TOKEN }));
+    const body = await res.json() as Record<string, unknown>;
+    expect(body["challenge_share_rate"]).toBeCloseTo(1 / 2);
+    expect(body["challenge_continue_rate"]).toBeCloseTo(2 / 2);
   });
 });

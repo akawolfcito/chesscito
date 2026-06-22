@@ -104,6 +104,16 @@ export type DailyBucket = {
   mints: number;
 };
 
+/** B2.1 — challenge link funnel counts for the public /stats page.
+ *  Rates are intentionally excluded (misleading at early-stage volume). */
+export type ChallengeFunnel = {
+  opens: number | null;
+  starts: number | null;
+  completions: number | null;
+  shares: number | null;
+  continueToLite: number | null;
+};
+
 export type PublicStats = {
   totalVictories: number | null;
   victories7d: number | null;
@@ -136,6 +146,9 @@ export type PublicStats = {
   /** §8 on-chain block (MiniPay Stage-2). Per-method tx counts, unique
    *  on-chain users, Get Peones volume; roadmap fields stay null. */
   onchain: OnchainStats;
+  /** B2.1 — challenge link funnel (last 30d, isLite events only).
+   *  null when the underlying query fails. */
+  challengeFunnel: ChallengeFunnel | null;
 };
 
 export const EMPTY_PUBLIC_STATS: PublicStats = {
@@ -155,6 +168,7 @@ export const EMPTY_PUBLIC_STATS: PublicStats = {
   activityTrend30d: [],
   generatedAt: new Date(0).toISOString(),
   onchain: EMPTY_ONCHAIN_STATS,
+  challengeFunnel: null,
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -265,6 +279,49 @@ function tallyDifficulty(
     // tally documents only the canonical difficulty bands.
   }
   return tally;
+}
+
+const CHALLENGE_EVENTS = [
+  "challenge_link_opened",
+  "challenge_started",
+  "challenge_completed",
+  "challenge_shared",
+  "challenge_continue_to_lite",
+] as const;
+
+type ChallengeEvent = (typeof CHALLENGE_EVENTS)[number];
+
+function extractChallengeFunnel(res: {
+  data: Array<{ event: string; props: unknown }> | null;
+  error: unknown;
+}): ChallengeFunnel | null {
+  if (res.error || !Array.isArray(res.data)) return null;
+  const counts: Record<ChallengeEvent, number> = {
+    challenge_link_opened: 0,
+    challenge_started: 0,
+    challenge_completed: 0,
+    challenge_shared: 0,
+    challenge_continue_to_lite: 0,
+  };
+  for (const row of res.data) {
+    const p = row.props;
+    if (
+      p === null ||
+      typeof p !== "object" ||
+      Array.isArray(p) ||
+      (p as Record<string, unknown>)["isLite"] !== true
+    )
+      continue;
+    const ev = row.event as ChallengeEvent;
+    if (ev in counts) counts[ev]++;
+  }
+  return {
+    opens: counts["challenge_link_opened"],
+    starts: counts["challenge_started"],
+    completions: counts["challenge_completed"],
+    shares: counts["challenge_shared"],
+    continueToLite: counts["challenge_continue_to_lite"],
+  };
 }
 
 export async function getPublicStats(): Promise<PublicStats> {
@@ -422,6 +479,18 @@ export async function getPublicStats(): Promise<PublicStats> {
     supabase as unknown as StatsDb,
   ).catch(() => EMPTY_ONCHAIN_STATS);
 
+  // B2.1 challenge funnel — separate await (outside the 13-element allSettled
+  // above) to avoid TS "type instantiation excessively deep" on the tuple.
+  const challengeFunnel: ChallengeFunnel | null = await (supabase
+    .from("analytics_events")
+    .select("event, props")
+    .in("event", [...CHALLENGE_EVENTS])
+    .gte("created_at", since30d)
+    .range(0, DISTINCT_QUERY_MAX_ROWS) as unknown as Promise<{
+    data: Array<{ event: string; props: unknown }> | null;
+    error: unknown;
+  }>).then(extractChallengeFunnel, () => null);
+
   return {
     totalVictories: extractCount(totalVictoriesRes as PromiseSettledResult<CountResult>),
     victories7d: extractCount(victories7dRes as PromiseSettledResult<CountResult>),
@@ -475,5 +544,6 @@ export async function getPublicStats(): Promise<PublicStats> {
     activityTrend30d,
     generatedAt,
     onchain,
+    challengeFunnel,
   };
 }

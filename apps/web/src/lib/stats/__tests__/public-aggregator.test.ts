@@ -16,6 +16,18 @@ vi.mock("@/lib/supabase/queries", async () => {
   };
 });
 
+// fetchOnchainStats calls supabase.from() 15 times. Mock it so the
+// position-based buildSupabaseStub fixture array is not consumed by the
+// on-chain block, leaving fixture[13] available for the challenge funnel query.
+const fetchOnchainStatsMock = vi.hoisted(() => vi.fn());
+vi.mock("../onchain", async () => {
+  const actual = await vi.importActual<typeof import("../onchain")>("../onchain");
+  return {
+    ...actual,
+    fetchOnchainStats: fetchOnchainStatsMock,
+  };
+});
+
 import {
   EMPTY_PUBLIC_STATS,
   getPublicStats,
@@ -36,6 +48,7 @@ function thenable<T>(value: T) {
     then: (resolve: (v: T) => unknown) => Promise.resolve(value).then(resolve),
     eq: () => obj,
     gte: () => obj,
+    in: () => obj,
     order: () => obj,
     limit: () => obj,
     range: () => obj,
@@ -52,7 +65,7 @@ type QueryFixture = {
 /**
  * Sequencer for `supabase.from(...)`: returns one fixture per call,
  * matched to the aggregator's invocation order. The aggregator calls
- * `.from(...)` 13 times (the leaderboard promise bypasses `from`
+ * `.from(...)` 14 times (the leaderboard promise bypasses `from`
  * via fetchLeaderboardFromDb mock):
  *   0-2  victories count queries (total, 7d, 30d)
  *   3    victories.player rows (distinct minters)
@@ -62,6 +75,7 @@ type QueryFixture = {
  *   9-10 coach_analyses count queries (lifetime, 7d)
  *   11   victories HoF rows (top 10 by minted_at)
  *   12   victories.minted_at rows (trend chart mint series)
+ *   13   analytics_events challenge funnel rows (B2.1, last 30d)
  */
 function buildSupabaseStub(fixtures: QueryFixture[]) {
   const calls = [...fixtures];
@@ -81,7 +95,7 @@ function buildSupabaseStub(fixtures: QueryFixture[]) {
   };
 }
 
-const EMPTY_FIXTURES: QueryFixture[] = Array.from({ length: 13 }, () => ({
+const EMPTY_FIXTURES: QueryFixture[] = Array.from({ length: 14 }, () => ({
   count: 0,
   data: [],
 }));
@@ -90,6 +104,10 @@ describe("getPublicStats", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     fetchLeaderboardFromDbMock.mockResolvedValue([]);
+    // Prevent fetchOnchainStats from consuming from() fixtures —
+    // it makes 15 from() calls which would displace the challenge
+    // funnel fixture at index 13.
+    fetchOnchainStatsMock.mockResolvedValue(EMPTY_ONCHAIN_STATS);
   });
 
   it("returns EMPTY_PUBLIC_STATS shape when Supabase env vars are missing", async () => {
@@ -300,10 +318,69 @@ describe("getPublicStats", () => {
       { count: null, data: null, error: new Error("sessions fail") }, // 8 sessions30d FAILS
       ...Array.from({ length: 3 }, () => ({ count: 0, data: [] })), // 9-11
       { count: null, data: null, error: new Error("mints fail") }, // 12 mints trend FAILS
+      { count: 0, data: [] }, // 13 challenge funnel
     ];
     getSupabaseServerMock.mockReturnValue(buildSupabaseStub(fixtures));
 
     const stats = await getPublicStats();
     expect(stats.activityTrend30d).toEqual([]);
+  });
+
+  describe("challengeFunnel (B2.1)", () => {
+    it("counts challenge events with isLite: true", async () => {
+      const challengeRows = [
+        { event: "challenge_link_opened", props: { isLite: true } },
+        { event: "challenge_link_opened", props: { isLite: true } },
+        { event: "challenge_started", props: { isLite: true } },
+        { event: "challenge_completed", props: { isLite: true } },
+        { event: "challenge_shared", props: { isLite: true } },
+        { event: "challenge_continue_to_lite", props: { isLite: true } },
+      ];
+      const fixtures: QueryFixture[] = [
+        ...Array.from({ length: 13 }, () => ({ count: 0, data: [] })),
+        { count: null, data: challengeRows }, // 13 challenge funnel
+      ];
+      getSupabaseServerMock.mockReturnValue(buildSupabaseStub(fixtures));
+      fetchLeaderboardFromDbMock.mockResolvedValue([]);
+
+      const stats = await getPublicStats();
+      expect(stats.challengeFunnel).not.toBeNull();
+      expect(stats.challengeFunnel?.opens).toBe(2);
+      expect(stats.challengeFunnel?.starts).toBe(1);
+      expect(stats.challengeFunnel?.completions).toBe(1);
+      expect(stats.challengeFunnel?.shares).toBe(1);
+      expect(stats.challengeFunnel?.continueToLite).toBe(1);
+    });
+
+    it("returns challengeFunnel: null when the query fails", async () => {
+      const fixtures: QueryFixture[] = [
+        ...Array.from({ length: 13 }, () => ({ count: 0, data: [] })),
+        { count: null, data: null, error: new Error("funnel fail") }, // 13 FAILS
+      ];
+      getSupabaseServerMock.mockReturnValue(buildSupabaseStub(fixtures));
+      fetchLeaderboardFromDbMock.mockResolvedValue([]);
+
+      const stats = await getPublicStats();
+      expect(stats.challengeFunnel).toBeNull();
+    });
+
+    it("does not count challenge events without isLite: true", async () => {
+      const challengeRows = [
+        { event: "challenge_link_opened", props: { source: "challenge_link" } },
+        { event: "challenge_started", props: null },
+        { event: "challenge_completed", props: { isLite: false } },
+      ];
+      const fixtures: QueryFixture[] = [
+        ...Array.from({ length: 13 }, () => ({ count: 0, data: [] })),
+        { count: null, data: challengeRows }, // 13 challenge funnel — no isLite rows
+      ];
+      getSupabaseServerMock.mockReturnValue(buildSupabaseStub(fixtures));
+      fetchLeaderboardFromDbMock.mockResolvedValue([]);
+
+      const stats = await getPublicStats();
+      expect(stats.challengeFunnel?.opens).toBe(0);
+      expect(stats.challengeFunnel?.starts).toBe(0);
+      expect(stats.challengeFunnel?.completions).toBe(0);
+    });
   });
 });

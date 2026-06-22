@@ -69,6 +69,13 @@ const SAMPLE_STATS: PublicStats = {
     networkFeesPaidUsd: null,
     failedTxRate: null,
   },
+  challengeFunnel: {
+    opens: 42,
+    starts: 38,
+    completions: 29,
+    shares: 14,
+    continueToLite: 11,
+  },
 };
 
 describe("StatsPage", () => {
@@ -462,5 +469,27 @@ describe("StatsPage", () => {
         "Based on game scores, not only saved progress.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("renders Challenge Funnel section when challengeFunnel is present", () => {
+    render(<StatsPage stats={SAMPLE_STATS} />);
+
+    expect(screen.getByText("Challenge Funnel")).toBeInTheDocument();
+    expect(screen.getByText("Opens")).toBeInTheDocument();
+    expect(screen.getByText("Starts")).toBeInTheDocument();
+    expect(screen.getByText("Completed")).toBeInTheDocument();
+    expect(screen.getByText("Shares")).toBeInTheDocument();
+    expect(screen.getByText("Continued to Lite")).toBeInTheDocument();
+    // Numeric values from SAMPLE_STATS.challengeFunnel
+    expect(screen.getByText("42")).toBeInTheDocument();
+    expect(screen.getByText("38")).toBeInTheDocument();
+    expect(screen.getByText("29")).toBeInTheDocument();
+    expect(screen.getByText("14")).toBeInTheDocument();
+    expect(screen.getByText("11")).toBeInTheDocument();
+  });
+
+  it("does not render Challenge Funnel section when challengeFunnel is null", () => {
+    render(<StatsPage stats={{ ...SAMPLE_STATS, challengeFunnel: null }} />);
+    expect(screen.queryByText("Challenge Funnel")).not.toBeInTheDocument();
   });
 });

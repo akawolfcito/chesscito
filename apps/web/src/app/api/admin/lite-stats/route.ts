@@ -52,6 +52,12 @@ const LITE_EVENTS = [
   "exercise_complete",
   "labyrinth_complete",
   "passport_slots_updated",
+  // B2.1 challenge funnel
+  "challenge_link_opened",
+  "challenge_started",
+  "challenge_completed",
+  "challenge_shared",
+  "challenge_continue_to_lite",
 ] as const;
 
 type LiteEvent = (typeof LITE_EVENTS)[number];
@@ -142,12 +148,29 @@ export async function GET(request: Request) {
     exercise_complete: 0,
     labyrinth_complete: 0,
     passport_slots_updated: 0,
+    challenge_link_opened: 0,
+    challenge_started: 0,
+    challenge_completed: 0,
+    challenge_shared: 0,
+    challenge_continue_to_lite: 0,
   };
 
   for (const row of liteRows) {
     const ev = row.event as LiteEvent;
     if (ev in counts) counts[ev]++;
   }
+
+  const challengeStarts = counts["challenge_started"];
+  const challengeCompletions = counts["challenge_completed"];
+
+  const challengeCompletionRate =
+    challengeStarts > 0 ? challengeCompletions / challengeStarts : null;
+  const challengeShareRate =
+    challengeCompletions > 0 ? counts["challenge_shared"] / challengeCompletions : null;
+  const challengeContinueRate =
+    challengeCompletions > 0
+      ? counts["challenge_continue_to_lite"] / challengeCompletions
+      : null;
 
   return NextResponse.json({
     period: { from, to },
@@ -162,5 +185,14 @@ export async function GET(request: Request) {
     exercise_completions: counts["exercise_complete"],
     labyrinth_completions: counts["labyrinth_complete"],
     passport_updates: counts["passport_slots_updated"],
+    // B2.1 challenge funnel
+    challenge_link_opens: counts["challenge_link_opened"],
+    challenge_starts: challengeStarts,
+    challenge_completions: challengeCompletions,
+    challenge_shares: counts["challenge_shared"],
+    challenge_continue_to_lite: counts["challenge_continue_to_lite"],
+    challenge_completion_rate: challengeCompletionRate,
+    challenge_share_rate: challengeShareRate,
+    challenge_continue_rate: challengeContinueRate,
   });
 }

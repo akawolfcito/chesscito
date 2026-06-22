@@ -841,6 +841,53 @@ export function StatsPage({ stats, nicknameTokens }: StatsPageProps) {
         </p>
       </section>
 
+      {/* Challenge Funnel — B2.1. Only rendered when data is present
+          (null = DB unavailable). Rates excluded intentionally:
+          at early-stage volume a single share can read as 100%. */}
+      {stats.challengeFunnel && (
+        <section className="space-y-3">
+          <h2
+            className="text-sm font-semibold uppercase tracking-wide"
+            style={{ color: "var(--paper-text-muted)" }}
+          >
+            Challenge Funnel
+          </h2>
+          <p
+            className="text-xs"
+            style={{ color: "var(--paper-text-subtle)" }}
+          >
+            Activity from shared challenge links (last 30 days).
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <StatCard
+              label="Opens"
+              value={stats.challengeFunnel.opens}
+              sublabel="Challenge link opened"
+            />
+            <StatCard
+              label="Starts"
+              value={stats.challengeFunnel.starts}
+              sublabel="Puzzle interaction begun"
+            />
+            <StatCard
+              label="Completed"
+              value={stats.challengeFunnel.completions}
+              sublabel="Puzzle solved"
+            />
+            <StatCard
+              label="Shares"
+              value={stats.challengeFunnel.shares}
+              sublabel="Shared after completing"
+            />
+            <StatCard
+              label="Continued to Lite"
+              value={stats.challengeFunnel.continueToLite}
+              sublabel="Tapped continue to app"
+            />
+          </div>
+        </section>
+      )}
+
       {/* External verification — third-party credibility footer. Two
           outbound links let a reviewer cross-reference our self-
           reported numbers against an independent source (Talent
