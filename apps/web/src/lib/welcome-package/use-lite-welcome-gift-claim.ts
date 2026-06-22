@@ -3,6 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
 import type { ClaimPhase } from "@/components/welcome-package/welcome-package-modal";
+import { isUserCancellation } from "@/lib/errors";
+import {
+  emitClaimGiftFailed,
+  emitClaimGiftRejected,
+  emitClaimGiftSigning,
+  emitClaimGiftSuccess,
+  emitClaimGiftTap,
+} from "./telemetry";
 
 export type UseLiteWelcomeGiftClaimReturn = {
   claimPhase: ClaimPhase;
@@ -37,13 +45,17 @@ export function useLiteWelcomeGiftClaim(): UseLiteWelcomeGiftClaimReturn {
     (onClaimed: () => void) => {
       if (claimPhase !== "idle") return;
 
+      emitClaimGiftTap();
+
       // No wallet: skip signature, treat as immediate success.
       if (!address) {
         onClaimed();
         setClaimPhase("success");
+        emitClaimGiftSuccess(false);
         return;
       }
 
+      emitClaimGiftSigning();
       setClaimPhase("signing");
       const isoTimestamp = new Date().toISOString();
       const message = buildConfirmMessage(address, isoTimestamp);
@@ -53,10 +65,16 @@ export function useLiteWelcomeGiftClaim(): UseLiteWelcomeGiftClaimReturn {
           if (!isMountedRef.current) return;
           onClaimed();
           setClaimPhase("success");
+          emitClaimGiftSuccess(true);
         })
-        .catch(() => {
+        .catch((e: unknown) => {
           if (!isMountedRef.current) return;
           setClaimPhase("error");
+          if (isUserCancellation(e)) {
+            emitClaimGiftRejected();
+          } else {
+            emitClaimGiftFailed("sign_failed");
+          }
         });
     },
     [address, claimPhase, signMessageAsync],
