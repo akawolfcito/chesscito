@@ -19,6 +19,7 @@ vi.mock("@/lib/pro/use-is-pro-active", () => ({
 }));
 vi.mock("wagmi", () => ({
   useAccount: () => ({ isConnected: false, address: undefined }),
+  useSignMessage: () => ({ signMessageAsync: vi.fn() }),
 }));
 
 import { HubDailyTile } from "../hub-daily-tile";

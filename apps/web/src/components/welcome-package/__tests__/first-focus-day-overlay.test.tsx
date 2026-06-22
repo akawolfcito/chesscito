@@ -10,15 +10,15 @@ describe("<FirstFocusDayOverlay>", () => {
     expect(screen.getByText(/completed your first daily/i)).toBeInTheDocument();
   });
 
-  it("renders Continue button", () => {
+  it("renders Claim button", () => {
     render(<FirstFocusDayOverlay onContinue={vi.fn()} />);
-    expect(screen.getByRole("button", { name: /continue/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^claim$/i })).toBeInTheDocument();
   });
 
   it("calls onContinue when button is tapped", () => {
     const onContinue = vi.fn();
     render(<FirstFocusDayOverlay onContinue={onContinue} />);
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^claim$/i }));
     expect(onContinue).toHaveBeenCalledOnce();
   });
 
@@ -37,6 +37,6 @@ describe("<FirstFocusDayOverlay> ES locale", () => {
     render(<FirstFocusDayOverlay onContinue={vi.fn()} />, { locale: "es" });
     expect(screen.getByText("Logro Desbloqueado")).toBeInTheDocument();
     expect(screen.getByText("Primer Focus Day")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /continuar/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /reclamar/i })).toBeInTheDocument();
   });
 });

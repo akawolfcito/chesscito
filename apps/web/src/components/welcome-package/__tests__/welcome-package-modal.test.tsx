@@ -12,7 +12,7 @@ describe("<WelcomePackageModal>", () => {
 
   it("renders claim CTA button", () => {
     render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} />);
-    expect(screen.getByRole("button", { name: /keep it/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^claim$/i })).toBeInTheDocument();
   });
 
   it("renders dismiss button", () => {
@@ -23,7 +23,7 @@ describe("<WelcomePackageModal>", () => {
   it("calls onClaim when claim button is tapped", () => {
     const onClaim = vi.fn();
     render(<WelcomePackageModal onClaim={onClaim} onDismiss={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: /keep it/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^claim$/i }));
     expect(onClaim).toHaveBeenCalledOnce();
   });
 
@@ -57,7 +57,7 @@ describe("<WelcomePackageModal> claimed state", () => {
 
   it("does not show claim/dismiss buttons when claimed=true", () => {
     render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} claimed />);
-    expect(screen.queryByRole("button", { name: /keep it/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^claim$/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /later/i })).toBeNull();
   });
 });
@@ -71,7 +71,7 @@ describe("<WelcomePackageModal> phase=signing", () => {
 
   it("does not show claim or dismiss buttons while signing", () => {
     render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="signing" />);
-    expect(screen.queryByRole("button", { name: /keep it/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^claim$/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /later/i })).toBeNull();
   });
 
@@ -152,7 +152,7 @@ describe("<WelcomePackageModal> ES locale", () => {
   it("renders ES title and CTA", () => {
     render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} />, { locale: "es" });
     expect(screen.getByText("Lo lograste.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /es tuyo/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /reclamar/i })).toBeInTheDocument();
   });
 
   it("renders ES success title", () => {

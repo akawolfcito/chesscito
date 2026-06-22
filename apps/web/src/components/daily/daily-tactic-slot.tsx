@@ -6,6 +6,7 @@ import { DailyTacticCard } from "./daily-tactic-card";
 import { DailyTacticSheet } from "./daily-tactic-sheet";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
+import { useLiteWelcomeGiftClaim } from "@/lib/welcome-package/use-lite-welcome-gift-claim";
 import { WelcomePackageModal } from "@/components/welcome-package/welcome-package-modal";
 import { FirstFocusDayOverlay } from "@/components/welcome-package/first-focus-day-overlay";
 import {
@@ -74,8 +75,7 @@ export function DailyTacticSlot() {
   const welcomePackage = useWelcomePackage();
   const [showAchievement, setShowAchievement] = useState(false);
   const [showWelcomePackage, setShowWelcomePackage] = useState(false);
-  const [wpClaimConfirm, setWpClaimConfirm] = useState(false);
-  const wpClaimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { claimPhase, handleClaim, handleRetry, handleSuccess } = useLiteWelcomeGiftClaim();
   const firstFocusDayJustEarned = useRef(false);
   /** Sprint 2 commit D — same dedup pattern as HubDailyTile. */
   const startedFiredRef = useRef(false);
@@ -92,10 +92,6 @@ export function DailyTacticSlot() {
     setHydrated(true);
     setProgress(getDailyProgress());
     setToday(todayUtc());
-  }, []);
-
-  useEffect(() => {
-    return () => { if (wpClaimTimerRef.current) clearTimeout(wpClaimTimerRef.current); };
   }, []);
 
   useEffect(() => {
@@ -278,19 +274,24 @@ export function DailyTacticSlot() {
       )}
       {hydrated && showWelcomePackage && createPortal(
         <WelcomePackageModal
-          claimed={wpClaimConfirm}
-          onClaim={() => {
-            welcomePackage.claim();
-            setWpClaimConfirm(true);
-            wpClaimTimerRef.current = setTimeout(() => {
-              setShowWelcomePackage(false);
-              setWpClaimConfirm(false);
-            }, 1200);
-          }}
+          phase={claimPhase}
+          onClaim={() => handleClaim(() => { welcomePackage.claim(); })}
           onDismiss={() => {
+            if (claimPhase === "signing") return;
+            if (claimPhase === "success") {
+              handleSuccess();
+              setShowWelcomePackage(false);
+              return;
+            }
             welcomePackage.dismiss();
+            handleSuccess();
             setShowWelcomePackage(false);
           }}
+          onSuccess={() => {
+            handleSuccess();
+            setShowWelcomePackage(false);
+          }}
+          onRetry={handleRetry}
         />,
         document.body
       )}

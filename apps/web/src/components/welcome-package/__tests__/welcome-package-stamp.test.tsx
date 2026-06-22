@@ -67,7 +67,7 @@ describe("<WelcomePackageStamp> claim flow with wallet", () => {
 
     render(<WelcomePackageStamp />);
     fireEvent.click(screen.getByTestId("welcome-package-pending"));
-    fireEvent.click(screen.getByRole("button", { name: /keep it/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^claim$/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("wp-signing-title")).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe("<WelcomePackageStamp> claim flow with wallet", () => {
 
     render(<WelcomePackageStamp />);
     fireEvent.click(screen.getByTestId("welcome-package-pending"));
-    fireEvent.click(screen.getByRole("button", { name: /keep it/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^claim$/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("wp-success-title")).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe("<WelcomePackageStamp> claim flow with wallet", () => {
 
     render(<WelcomePackageStamp />);
     fireEvent.click(screen.getByTestId("welcome-package-pending"));
-    fireEvent.click(screen.getByRole("button", { name: /keep it/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^claim$/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("wp-error-body")).toBeInTheDocument();
@@ -107,13 +107,13 @@ describe("<WelcomePackageStamp> claim flow with wallet", () => {
 
     render(<WelcomePackageStamp />);
     fireEvent.click(screen.getByTestId("welcome-package-pending"));
-    fireEvent.click(screen.getByRole("button", { name: /keep it/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^claim$/i }));
 
     await waitFor(() => screen.getByTestId("wp-retry-cta"));
     fireEvent.click(screen.getByTestId("wp-retry-cta"));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /keep it/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^claim$/i })).toBeInTheDocument();
     });
   });
 });
@@ -125,7 +125,7 @@ describe("<WelcomePackageStamp> claim flow without wallet", () => {
 
     render(<WelcomePackageStamp />);
     fireEvent.click(screen.getByTestId("welcome-package-pending"));
-    fireEvent.click(screen.getByRole("button", { name: /keep it/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^claim$/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("wp-success-title")).toBeInTheDocument();

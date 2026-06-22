@@ -55,6 +55,7 @@ vi.mock("wagmi", () => ({
   usePublicClient: () => ({}),
   useWriteContract: () => ({ writeContractAsync: vi.fn(), isPending: false }),
   useSwitchChain: () => ({ switchChain: vi.fn() }),
+  useSignMessage: () => ({ signMessageAsync: vi.fn() }),
 }));
 
 // `useMiniPay` is consumed by `useShopSheetState` for the CELO sibling
@@ -659,6 +660,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
       usePublicClient: () => ({}),
       useWriteContract: () => ({ writeContractAsync: vi.fn(), isPending: false }),
       useSwitchChain: () => ({ switchChain: vi.fn() }),
+      useSignMessage: () => ({ signMessageAsync: vi.fn() }),
     }));
     vi.doMock("@/hooks/use-minipay", () => ({
       useMiniPay: () => ({ hasProvider: false, isMiniPay: false, isReady: true }),

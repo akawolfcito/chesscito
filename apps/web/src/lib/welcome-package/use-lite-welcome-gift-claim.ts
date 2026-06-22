@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
 import type { ClaimPhase } from "@/components/welcome-package/welcome-package-modal";
 
@@ -31,6 +31,7 @@ export function useLiteWelcomeGiftClaim(): UseLiteWelcomeGiftClaimReturn {
   const { signMessageAsync } = useSignMessage();
   const [claimPhase, setClaimPhase] = useState<ClaimPhase>("idle");
   const isMountedRef = useRef(true);
+  useEffect(() => () => { isMountedRef.current = false; }, []);
 
   const handleClaim = useCallback(
     (onClaimed: () => void) => {
