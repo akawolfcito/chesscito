@@ -830,7 +830,7 @@ export function LandingPage() {
             </a>
             <span style={{ color: "rgba(110, 65, 15, 0.35)" }}>·</span>
             <a
-              href={`${LEGAL_URL}/stats`}
+              href="/stats"
               className="font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
               style={{ color: "rgba(110, 65, 15, 0.75)" }}
             >
