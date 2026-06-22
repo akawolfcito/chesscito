@@ -12,8 +12,7 @@
  */
 
 import type { PieceId } from "@/lib/game/types";
-
-const STORAGE_PREFIX = "chesscito:progress:";
+import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
 
 const PIECES = ["rook", "bishop", "knight", "pawn", "queen", "king"] as const;
 
@@ -29,7 +28,7 @@ const PIECES = ["rook", "bishop", "knight", "pawn", "queen", "king"] as const;
 export function readPieceStars(piece: PieceId): Record<string, number> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = window.localStorage.getItem(`${STORAGE_PREFIX}${piece}`);
+    const raw = window.localStorage.getItem(pieceProgressStorageKey(piece));
     if (!raw) return {};
     const parsed = JSON.parse(raw) as { stars?: unknown };
     if (
@@ -58,7 +57,7 @@ export function getExercisesCompletedCount(): number {
   let total = 0;
   for (const piece of PIECES) {
     try {
-      const raw = window.localStorage.getItem(`${STORAGE_PREFIX}${piece}`);
+      const raw = window.localStorage.getItem(pieceProgressStorageKey(piece));
       if (!raw) continue;
       const parsed = JSON.parse(raw) as { stars?: unknown };
       // Tolerate both the legacy positional array and the id-keyed map:

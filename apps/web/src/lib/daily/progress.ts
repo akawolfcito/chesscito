@@ -12,8 +12,8 @@
  */
 
 import { dispatchDailyProgressChanged } from "./events";
+import { dailyProgressStorageKey } from "@/lib/lite-progress-storage";
 
-const STORAGE_KEY = "chesscito:daily-progress";
 
 export type DailyProgress = {
   streak: number;
@@ -59,7 +59,7 @@ function parseProgress(raw: unknown): DailyProgress {
 export function getDailyProgress(): DailyProgress {
   if (typeof window === "undefined") return { ...DEFAULT_PROGRESS };
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(dailyProgressStorageKey());
     if (!raw) return { ...DEFAULT_PROGRESS };
     return parseProgress(JSON.parse(raw));
   } catch {
@@ -86,7 +86,7 @@ export function recordDailyCompletion(today: string = todayUtc()): DailyProgress
   if (next === prev) return prev;
   if (typeof window !== "undefined") {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(dailyProgressStorageKey(), JSON.stringify(next));
     } catch {
       // Quota or privacy mode — keep returning the in-memory next state
       // so the UI still reflects the completion for this session.

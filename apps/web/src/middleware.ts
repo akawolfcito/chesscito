@@ -70,10 +70,11 @@ export default function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclude API routes, Next internals, dev/VR fixtures (kept
-    // locale-agnostic so VR baseline paths stay stable), and any path
+    // Exclude API routes, Next internals, dev/VR fixtures and hidden Lite QA
+    // tools (kept locale-agnostic so their explicit paths remain stable), and
+    // any path
     // with a file extension (static assets). Anything else gets
     // locale routing.
-    "/((?!api|_next|_vercel|dev|.*\\..*).*)",
+    "/((?!api|_next|_vercel|dev|lite-debug|.*\\..*).*)",
   ],
 };

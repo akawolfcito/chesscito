@@ -1,4 +1,5 @@
 import type { PieceId } from "@/lib/game/types";
+import { labyrinthBestStorageKey } from "@/lib/lite-progress-storage";
 
 /**
  * Labyrinth best-score persistence — stores the minimum move count
@@ -9,10 +10,8 @@ import type { PieceId } from "@/lib/game/types";
  *   "chesscito:labyrinth-best:rook" → { "rook-lab-1": 4, "rook-lab-2": 6 }
  */
 
-const STORAGE_PREFIX = "chesscito:labyrinth-best";
-
 function storageKey(piece: PieceId): string {
-  return `${STORAGE_PREFIX}:${piece}`;
+  return labyrinthBestStorageKey(piece);
 }
 
 function readMap(piece: PieceId): Record<string, number> {

@@ -18,6 +18,7 @@ import { TileIconSlot } from "@/components/ui/tile-icon-slot";
 import { BADGE_THRESHOLD } from "@/lib/game/exercises";
 import { THEME_CONFIG } from "@/lib/theme";
 import type { PieceId } from "@/lib/game/types";
+import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
 
 const PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
 
@@ -42,7 +43,7 @@ type BadgeInfo = {
 function readStarsFromStorage(piece: PieceId): number[] {
   if (typeof window === "undefined") return [0, 0, 0, 0, 0];
   try {
-    const raw = localStorage.getItem(`chesscito:progress:${piece}`);
+    const raw = localStorage.getItem(pieceProgressStorageKey(piece));
     if (!raw) return [0, 0, 0, 0, 0];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed.stars) ? parsed.stars : [0, 0, 0, 0, 0];

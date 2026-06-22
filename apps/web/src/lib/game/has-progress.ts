@@ -1,9 +1,10 @@
 import type { PieceId } from "@/lib/game/types";
+import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
 
 const PIECES: PieceId[] = ["rook", "bishop", "knight", "pawn", "queen", "king"];
 
 function storageKey(piece: PieceId) {
-  return `chesscito:progress:${piece}`;
+  return pieceProgressStorageKey(piece);
 }
 
 /** True when any persisted `stars` value is a positive number, across

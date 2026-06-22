@@ -70,6 +70,7 @@ import {
   deriveRewardTiles,
 } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
 
 /** On-chain badge IDs in slot order — matches `exercises-screen.tsx`'s
  *  `BADGE_LEVEL_IDS` enumeration. Index 0 = id 1 = rook, index 1 = id 2
@@ -85,8 +86,6 @@ const BADGE_PIECE_BY_INDEX: readonly PieceId[] = [
 ] as const;
 
 const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
-
-const PROGRESS_STORAGE_PREFIX = "chesscito:progress:";
 
 export type HubInitialSheet =
   | "shop"
@@ -124,7 +123,7 @@ function loadStarsPerPiece(): Partial<Record<PieceId, number>> {
   const stars: Partial<Record<PieceId, number>> = {};
   for (const piece of REWARD_TILE_ORDER) {
     try {
-      const raw = window.localStorage.getItem(`${PROGRESS_STORAGE_PREFIX}${piece}`);
+      const raw = window.localStorage.getItem(pieceProgressStorageKey(piece));
       if (!raw) continue;
       const parsed = JSON.parse(raw) as { stars?: unknown };
       // Tolerate both the legacy positional `stars: number[]` and the

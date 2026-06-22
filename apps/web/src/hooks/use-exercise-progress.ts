@@ -17,6 +17,7 @@ import {
 import { submitTrainingExerciseEarn } from "@/lib/peones/training-earn";
 import { emitPeonesEarned } from "@/lib/peones/telemetry";
 import { track } from "@/lib/telemetry";
+import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
 import type { Exercise, PieceId, PieceProgress } from "@/lib/game/types";
 
 /** Optional rotation context (slice E). When omitted or `enabled: false`,
@@ -32,7 +33,7 @@ export type ExerciseRotationOptions = {
 };
 
 function storageKey(piece: PieceId) {
-  return `chesscito:progress:${piece}`;
+  return pieceProgressStorageKey(piece);
 }
 
 /** Fresh, empty id-keyed progress for a piece (SSR default + corrupt-data
