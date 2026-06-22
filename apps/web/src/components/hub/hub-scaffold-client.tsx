@@ -552,7 +552,7 @@ export function HubScaffoldClient({
           },
         }}
         onArenaPress={CHESSCITO_LITE_MODE ? undefined : handleArenaPress}
-        miniArenaUnlocked={(starsPerPiece.rook ?? 0) >= 12}
+        miniArenaUnlocked={!CHESSCITO_LITE_MODE && (starsPerPiece.rook ?? 0) >= 12}
         nextStepCard={
           CHESSCITO_LITE_MODE && contentLoopAction
             ? { action: contentLoopAction, isHydrated: isContentLoopHydrated }

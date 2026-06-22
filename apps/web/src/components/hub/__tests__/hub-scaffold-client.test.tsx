@@ -770,4 +770,26 @@ describe("HubScaffoldClient — Lite Mode", () => {
     render(<HubScaffoldClientLite />);
     expect(await screen.findByTestId("focus-passport")).toBeInTheDocument();
   });
+
+  it("does not show MiniArena tile in Lite even when rook stars >= 12", async () => {
+    localStorage.setItem(
+      "chesscito:progress:rook",
+      JSON.stringify({ piece: "rook", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
+    );
+    render(<HubScaffoldClientLite />);
+    // Give the component a chance to hydrate localStorage
+    await screen.findByTestId("focus-passport");
+    expect(screen.queryByTestId("mini-arena-trigger")).not.toBeInTheDocument();
+  });
+});
+
+describe("HubScaffoldClient — MiniArena tile (Full Mode)", () => {
+  it("shows MiniArena tile in Full when rook stars >= 12", async () => {
+    localStorage.setItem(
+      "chesscito:progress:rook",
+      JSON.stringify({ piece: "rook", exerciseIndex: 0, stars: [3, 3, 3, 3, 0] }),
+    );
+    render(<HubScaffoldClient />);
+    expect(await screen.findByTestId("mini-arena-trigger")).toBeInTheDocument();
+  });
 });
