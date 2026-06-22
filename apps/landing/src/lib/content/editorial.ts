@@ -92,7 +92,7 @@ export const LANDING_COPY = {
   meta: {
     title: "Chesscito: Small plays. Big mental habits.",
     description:
-      "Chesscito turns chess into short visual challenges to exercise attention, memory, planning, and decision-making from an early age.",
+      "Chesscito turns chess into short visual challenges to build attention, memory, planning, and decision-making. Lite is your free daily habit. Full is the complete chess experience.",
   },
 
   disclaimer:
@@ -107,9 +107,9 @@ export const LANDING_COPY = {
     eyebrow: "PLAYFUL COGNITIVE WELLNESS",
     headline: "Small plays. Big mental habits.",
     subcopy:
-      "Chesscito turns chess into short visual challenges to exercise attention, memory, planning, and decision-making from an early age.",
+      "Chesscito turns chess into short visual challenges to build attention, memory, planning, and decision-making. Lite is your free daily habit. Full is the complete chess experience.",
     primaryCta: "Start free",
-    secondaryCta: "Learn the why",
+    secondaryCta: "Play Full",
   },
 
   problem: {
@@ -302,7 +302,7 @@ export const LANDING_COPY = {
     subcopy:
       "No downloads. No long signup. Just the board, you, and your next move.",
     primaryCta: "Start free",
-    secondaryCta: "Talk to the team",
+    secondaryCta: "Play Full",
   },
 
   footer: {

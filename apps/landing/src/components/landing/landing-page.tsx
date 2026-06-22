@@ -5,6 +5,7 @@ import { PhoneStack } from "@/components/landing/phone-stack";
 import { LANDING_COPY, WHY_PAGE_COPY } from "@/lib/content/editorial";
 
 const PLAY_URL = process.env.NEXT_PUBLIC_PLAY_URL ?? "https://lite.chesscito.com";
+const FULL_URL = process.env.NEXT_PUBLIC_FULL_URL ?? "https://play.chesscito.com";
 const LEGAL_URL = process.env.NEXT_PUBLIC_LEGAL_URL ?? PLAY_URL;
 
 const GHOST_CTA_CLASS =
@@ -104,7 +105,7 @@ export function LandingPage() {
             >
               {LANDING_COPY.hero.primaryCta}
             </LandingGreenCtaLink>
-            <a href="#problem" className={GHOST_CTA_CLASS}>
+            <a href={`${FULL_URL}/hub`} className={GHOST_CTA_CLASS}>
               {LANDING_COPY.hero.secondaryCta}
             </a>
           </div>
@@ -777,14 +778,9 @@ export function LandingPage() {
           >
             {LANDING_COPY.finalCta.primaryCta}
           </LandingGreenCtaLink>
-          {process.env.NEXT_PUBLIC_SUPPORT_EMAIL && (
-            <a
-              href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL}?subject=${encodeURIComponent("Chesscito · Hablar con el equipo")}`}
-              className={GHOST_CTA_CLASS}
-            >
-              {LANDING_COPY.finalCta.secondaryCta}
-            </a>
-          )}
+          <a href={`${FULL_URL}/hub`} className={GHOST_CTA_CLASS}>
+            {LANDING_COPY.finalCta.secondaryCta}
+          </a>
         </div>
       </section>
 
