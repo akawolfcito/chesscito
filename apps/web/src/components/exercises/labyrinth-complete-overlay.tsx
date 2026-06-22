@@ -6,6 +6,7 @@ import { VictoryPopupShell } from "@/components/arena/victory-popup-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { PrincipalButton } from "@/components/scene-rooted/principal-button";
 import { track } from "@/lib/telemetry";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
 type Props = {
   /** Number of moves the player took to reach the target. */
@@ -63,7 +64,14 @@ export function LabyrinthCompleteOverlay({
       optimal: optimalMoves,
       stars,
     });
-  }, [moves, optimalMoves, stars]);
+    track("labyrinth_complete", {
+      isLite: CHESSCITO_LITE_MODE,
+      moves,
+      optimalMoves,
+      stars,
+      isNewBest: isNewBest ?? false,
+    });
+  }, [moves, optimalMoves, stars, isNewBest]);
 
   function handleAction(cb: () => void) {
     setExiting(true);
