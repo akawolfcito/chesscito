@@ -693,6 +693,12 @@ export const ERROR_PAGE_COPY = {
   reloadGame: "Reload game",
 } as const;
 
+export const NOT_FOUND_PAGE_COPY = {
+  title: "Page not found",
+  message: "This path does not exist.",
+  backToHub: "Back to Hub",
+} as const;
+
 export const CONNECT_BUTTON_COPY = {
   miniPayDetected: "MiniPay detected",
   openInMiniPay: "Open in MiniPay",
