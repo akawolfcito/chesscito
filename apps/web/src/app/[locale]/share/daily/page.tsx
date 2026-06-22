@@ -158,7 +158,7 @@ export default async function ShareDailyPage({
           {subhead}
         </p>
         <Link
-          href="/play-hub"
+          href="/challenge/daily"
           className="mt-2 inline-flex min-h-[44px] items-center justify-center rounded-full px-6 text-sm font-bold"
           style={{
             background: "rgba(245, 158, 11, 0.95)",
@@ -166,7 +166,7 @@ export default async function ShareDailyPage({
             boxShadow: "0 4px 12px rgba(120, 65, 5, 0.32)",
           }}
         >
-          {tShare("playCta")}
+          Play today&apos;s challenge
         </Link>
       </div>
     </main>
