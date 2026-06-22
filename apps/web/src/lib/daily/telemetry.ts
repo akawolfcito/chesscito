@@ -57,6 +57,7 @@ export function emitDailyTacticStarted(args: {
   puzzleDate: string;
   currentStreak: number;
   isPro: boolean;
+  isLite?: boolean;
 }): void {
   track("daily_tactic_started", {
     puzzleId: args.puzzle.id,
@@ -65,6 +66,7 @@ export function emitDailyTacticStarted(args: {
     pieceShown: args.puzzle.piece,
     currentStreak: args.currentStreak,
     isPro: args.isPro,
+    isLite: args.isLite ?? false,
   });
 }
 
@@ -90,6 +92,7 @@ export function emitDailyTacticCompleted(args: {
    *  Cap exhausted → 0 too (still completed locally; just no
    *  Peones written). Replaces the Sprint 2 hard-coded zero. */
   peonesEarned: number;
+  isLite?: boolean;
 }): void {
   track("daily_tactic_completed", {
     puzzleId: args.puzzle.id,
@@ -103,16 +106,33 @@ export function emitDailyTacticCompleted(args: {
     peonesEarned: args.peonesEarned,
     rewardPreviewPeones: args.rewardPreviewPeones,
     isPro: args.isPro,
+    isLite: args.isLite ?? false,
   });
 }
 
 export function emitDailyStreakUpdated(args: {
   newStreak: number;
   streakType: StreakType;
+  isLite?: boolean;
 }): void {
   track("daily_streak_updated", {
     newStreak: args.newStreak,
     streakType: args.streakType,
     bonusPeonesEarned: 0, // Sprint 2 stub — see emitDailyTacticCompleted.
+    isLite: args.isLite ?? false,
+  });
+}
+
+/** Fires after daily completion updates the Focus Passport slots (Lite only).
+ *  `filledSlots` = streak clamped to [0, 7]. */
+export function emitPassportSlotsUpdated(args: {
+  newStreak: number;
+  filledSlots: number;
+}): void {
+  track("passport_slots_updated", {
+    isLite: true,
+    newStreak: args.newStreak,
+    filledSlots: args.filledSlots,
+    totalSlots: 7,
   });
 }

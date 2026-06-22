@@ -147,6 +147,7 @@ describe("emitDailyTacticStarted", () => {
       pieceShown: "rook",
       currentStreak: 3,
       isPro: false,
+      isLite: false,
     });
   });
 
@@ -192,6 +193,7 @@ describe("emitDailyTacticCompleted", () => {
       peonesEarned: 3,
       rewardPreviewPeones: 3,
       isPro: true,
+      isLite: false,
     });
   });
 
@@ -260,6 +262,7 @@ describe("emitDailyStreakUpdated", () => {
       newStreak: 5,
       streakType: type,
       bonusPeonesEarned: 0,
+      isLite: false,
     });
   });
 });
@@ -313,5 +316,94 @@ describe("Sprint 3 telemetry guarantees", () => {
       peonesEarned: 3,
       rewardPreviewPeones: 3,
     });
+  });
+});
+
+import { emitPassportSlotsUpdated } from "@/lib/daily/telemetry";
+
+describe("Lite B1.2 — isLite dimension on daily tactic events", () => {
+  it("daily_tactic_started carries isLite: true when passed", () => {
+    emitDailyTacticStarted({
+      puzzle: FAKE_PUZZLE,
+      puzzleDate: "2026-06-22",
+      currentStreak: 1,
+      isPro: false,
+      isLite: true,
+    });
+    expect(callsOf("daily_tactic_started")[0]![1]).toMatchObject({ isLite: true });
+  });
+
+  it("daily_tactic_started defaults isLite to false when omitted", () => {
+    emitDailyTacticStarted({
+      puzzle: FAKE_PUZZLE,
+      puzzleDate: "2026-06-22",
+      currentStreak: 0,
+      isPro: false,
+    });
+    expect(callsOf("daily_tactic_started")[0]![1]).toMatchObject({ isLite: false });
+  });
+
+  it("daily_tactic_completed carries isLite: true when passed", () => {
+    emitDailyTacticCompleted({
+      puzzle: FAKE_PUZZLE,
+      puzzleDate: "2026-06-22",
+      movesUsed: 1,
+      starsEarned: 3,
+      newStreak: 2,
+      isPro: false,
+      rewardPreviewPeones: 0,
+      peonesEarned: 0,
+      isLite: true,
+    });
+    expect(callsOf("daily_tactic_completed")[0]![1]).toMatchObject({ isLite: true });
+  });
+
+  it("daily_tactic_completed defaults isLite to false when omitted", () => {
+    emitDailyTacticCompleted({
+      puzzle: FAKE_PUZZLE,
+      puzzleDate: "2026-06-22",
+      movesUsed: 1,
+      starsEarned: 3,
+      newStreak: 1,
+      isPro: false,
+      rewardPreviewPeones: 0,
+      peonesEarned: 0,
+    });
+    expect(callsOf("daily_tactic_completed")[0]![1]).toMatchObject({ isLite: false });
+  });
+
+  it("daily_streak_updated carries isLite: true when passed", () => {
+    emitDailyStreakUpdated({ newStreak: 3, streakType: "extended", isLite: true });
+    expect(callsOf("daily_streak_updated")[0]![1]).toMatchObject({ isLite: true });
+  });
+
+  it("daily_streak_updated defaults isLite to false when omitted", () => {
+    emitDailyStreakUpdated({ newStreak: 1, streakType: "first" });
+    expect(callsOf("daily_streak_updated")[0]![1]).toMatchObject({ isLite: false });
+  });
+});
+
+describe("Lite B1.2 — emitPassportSlotsUpdated", () => {
+  it("emits passport_slots_updated with isLite: true, filledSlots, newStreak, totalSlots: 7", () => {
+    emitPassportSlotsUpdated({ newStreak: 3, filledSlots: 3 });
+    const calls = callsOf("passport_slots_updated");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]![1]).toEqual({
+      isLite: true,
+      newStreak: 3,
+      filledSlots: 3,
+      totalSlots: 7,
+    });
+  });
+
+  it("clamps filledSlots at 7 (caller responsibility — verified here as documentation)", () => {
+    emitPassportSlotsUpdated({ newStreak: 10, filledSlots: 7 });
+    expect(callsOf("passport_slots_updated")[0]![1]).toMatchObject({ filledSlots: 7, totalSlots: 7 });
+  });
+
+  it("never emits Full-mode daily_tactic events alongside passport_slots_updated", () => {
+    emitPassportSlotsUpdated({ newStreak: 1, filledSlots: 1 });
+    const wrongEvents = mockTrack.mock.calls.filter((c) => c[0].startsWith("daily_tactic_"));
+    expect(wrongEvents).toHaveLength(0);
   });
 });
