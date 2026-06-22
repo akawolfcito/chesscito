@@ -334,6 +334,24 @@ export function HubScaffoldClient({
     if (!CHESSCITO_LITE_MODE) return;
     setDailyProgress(getDailyProgress());
   }, []);
+
+  // Lite B1.2 — one-per-tab session start event for grant dashboard.
+  // sessionStorage dedupe ensures refresh doesn't double-count.
+  useEffect(() => {
+    if (!CHESSCITO_LITE_MODE) return;
+    const SESSION_KEY = "chesscito:lite-session-started";
+    try {
+      if (!sessionStorage.getItem(SESSION_KEY)) {
+        sessionStorage.setItem(SESSION_KEY, "1");
+        track("lite_session_started", { isLite: true });
+      }
+    } catch {
+      // sessionStorage unavailable (private mode / WebView) — skip dedupe, emit once.
+      track("lite_session_started", { isLite: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Re-read daily progress when HubDailyTile (or DailyTacticSlot) records
   // a completion in the same tab. The native `storage` event only fires
   // cross-tab; this in-tab bus covers the same-tab path so Focus Passport
