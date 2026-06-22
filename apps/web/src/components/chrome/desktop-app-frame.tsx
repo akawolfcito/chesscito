@@ -21,6 +21,7 @@ const APP_ROUTE_PREFIXES = [
   "/exercises",
   "/arena",
   "/coach",
+  "/challenge",
   "/trophies",
   "/victory",
   "/about",
