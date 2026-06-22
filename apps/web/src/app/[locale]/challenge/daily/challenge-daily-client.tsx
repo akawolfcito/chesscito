@@ -184,7 +184,7 @@ export function ChallengeDailyClient({ puzzleData, today }: Props) {
       </div>
 
       <div
-        className="shrink-0 px-5 pb-safe-or-4 pt-2 text-center"
+        className="shrink-0 px-5 pb-6 pt-2 text-center"
         style={{ color: "rgba(63, 34, 8, 0.95)" }}
       >
         {status === "solved" ? (
@@ -201,9 +201,7 @@ export function ChallengeDailyClient({ puzzleData, today }: Props) {
                 className="text-base font-extrabold uppercase tracking-tight"
                 data-testid="challenge-status-solved"
               >
-                {DAILY_SHARE_COPY.shareChallenge === "Share Challenge"
-                  ? "Solved!"
-                  : "Solved!"}
+                Solved!
               </span>
             </div>
             {streakAfterSolve > 0 && (
@@ -215,7 +213,7 @@ export function ChallengeDailyClient({ puzzleData, today }: Props) {
               type="button"
               onClick={handleContinue}
               data-testid="challenge-continue-cta"
-              className="mt-1 inline-flex min-h-[44px] items-center justify-center rounded-full px-6 text-sm font-bold"
+              className="w-full inline-flex min-h-[44px] items-center justify-center rounded-full px-6 text-sm font-bold"
               style={{
                 background: "rgba(245, 158, 11, 0.95)",
                 color: "rgba(63, 34, 8, 0.95)",
@@ -227,8 +225,12 @@ export function ChallengeDailyClient({ puzzleData, today }: Props) {
             <button
               type="button"
               onClick={handleShareOpen}
-              className="text-xs font-bold underline underline-offset-2"
-              style={{ color: "rgba(110, 65, 15, 0.70)" }}
+              className="w-full inline-flex min-h-[44px] items-center justify-center rounded-full border px-6 text-sm font-bold"
+              style={{
+                borderColor: "rgba(110, 65, 15, 0.35)",
+                color: "rgba(110, 65, 15, 0.85)",
+                background: "rgba(110, 65, 15, 0.06)",
+              }}
             >
               {DAILY_SHARE_COPY.shareResult}
             </button>
@@ -241,15 +243,19 @@ export function ChallengeDailyClient({ puzzleData, today }: Props) {
             {puzzleData.hint}
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-2">
             <p className="text-xs font-bold uppercase tracking-widest opacity-60">
               Find the move
             </p>
             <button
               type="button"
               onClick={handleShareOpen}
-              className="text-xs font-semibold underline underline-offset-2"
-              style={{ color: "rgba(110, 65, 15, 0.50)" }}
+              className="inline-flex min-h-[40px] items-center justify-center rounded-full border px-5 text-xs font-bold"
+              style={{
+                borderColor: "rgba(110, 65, 15, 0.30)",
+                color: "rgba(110, 65, 15, 0.75)",
+                background: "rgba(110, 65, 15, 0.05)",
+              }}
             >
               {DAILY_SHARE_COPY.shareChallenge}
             </button>
