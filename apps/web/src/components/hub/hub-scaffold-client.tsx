@@ -61,6 +61,7 @@ import type { PieceId } from "@/lib/game/types";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { daysRemaining } from "@/lib/pro/days-remaining";
 import { subscribeToShieldChanges } from "@/lib/shop/shield-events";
+import { subscribeToDailyProgressChanges } from "@/lib/daily/events";
 import { readDisplayedShields } from "@/lib/shop/shield-storage";
 import { useShieldSync } from "@/lib/shop/use-shield-sync";
 import { track } from "@/lib/telemetry";
@@ -333,6 +334,16 @@ export function HubScaffoldClient({
   useEffect(() => {
     if (!CHESSCITO_LITE_MODE) return;
     setDailyProgress(getDailyProgress());
+  }, []);
+  // Re-read daily progress when HubDailyTile (or DailyTacticSlot) records
+  // a completion in the same tab. The native `storage` event only fires
+  // cross-tab; this in-tab bus covers the same-tab path so Focus Passport
+  // and Content Loop update immediately without requiring navigation.
+  useEffect(() => {
+    if (!CHESSCITO_LITE_MODE) return;
+    return subscribeToDailyProgressChanges(() => {
+      setDailyProgress(getDailyProgress());
+    });
   }, []);
   const focusPassport = useMemo(
     () =>

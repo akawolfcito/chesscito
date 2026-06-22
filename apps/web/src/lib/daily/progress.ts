@@ -11,6 +11,8 @@
  * explicit `today` argument so tests can pin the clock.
  */
 
+import { dispatchDailyProgressChanged } from "./events";
+
 const STORAGE_KEY = "chesscito:daily-progress";
 
 export type DailyProgress = {
@@ -89,6 +91,7 @@ export function recordDailyCompletion(today: string = todayUtc()): DailyProgress
       // Quota or privacy mode — keep returning the in-memory next state
       // so the UI still reflects the completion for this session.
     }
+    dispatchDailyProgressChanged();
   }
   return next;
 }

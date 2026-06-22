@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl as render } from "@/test-utils/render-with-intl";
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const pushMock = vi.hoisted(() => vi.fn());
@@ -88,6 +88,14 @@ vi.mock("@/lib/errors", () => ({
 vi.mock("@/lib/shop/shield-events", () => ({
   dispatchShieldChange: vi.fn(),
   subscribeToShieldChanges: () => () => {},
+}));
+
+// Daily-progress event bus. Stub in Full Mode tests so the real window
+// subscription is not registered. Lite Mode tests (vi.resetModules) load
+// the real implementation and dispatch CustomEvents directly.
+vi.mock("@/lib/daily/events", () => ({
+  dispatchDailyProgressChanged: vi.fn(),
+  subscribeToDailyProgressChanges: () => () => {},
 }));
 
 vi.mock("@/lib/wallet/use-connect-wallet", () => ({
@@ -669,6 +677,14 @@ describe("HubScaffoldClient — Lite Mode", () => {
       dispatchShieldChange: vi.fn(),
       subscribeToShieldChanges: () => () => {},
     }));
+    // Use real-like implementation so window CustomEvents actually reach the subscriber.
+    vi.doMock("@/lib/daily/events", () => ({
+      dispatchDailyProgressChanged: vi.fn(),
+      subscribeToDailyProgressChanges: (handler: () => void) => {
+        window.addEventListener("chesscito:daily-progress-changed", handler);
+        return () => window.removeEventListener("chesscito:daily-progress-changed", handler);
+      },
+    }));
     vi.doMock("@/lib/wallet/use-connect-wallet", () => ({
       useConnectWallet: () => ({ connectWallet: connectWalletMock, isConnecting: false }),
     }));
@@ -780,6 +796,49 @@ describe("HubScaffoldClient — Lite Mode", () => {
     // Give the component a chance to hydrate localStorage
     await screen.findByTestId("focus-passport");
     expect(screen.queryByTestId("mini-arena-trigger")).not.toBeInTheDocument();
+  });
+
+  it("Focus Passport immediately shows today's flame after daily completion event fires (no navigation)", async () => {
+    // Start with empty progress — all 7 slots should be gray
+    render(<HubScaffoldClientLite />);
+    await screen.findByTestId("focus-passport");
+
+    const initialSlots = screen.getAllByTestId("focus-passport-slot");
+    expect(initialSlots.every((s) => s.getAttribute("data-kind") === "gray")).toBe(true);
+
+    // Simulate daily completion: write updated progress then fire the in-tab event
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem(
+      "chesscito:daily-progress",
+      JSON.stringify({ streak: 1, lastCompletedDate: today, totalCompleted: 1 }),
+    );
+    window.dispatchEvent(new CustomEvent("chesscito:daily-progress-changed"));
+
+    // Focus Passport must reflect the new streak immediately — no navigation required
+    await waitFor(() => {
+      const slots = screen.getAllByTestId("focus-passport-slot");
+      const colorSlots = slots.filter((s) => s.getAttribute("data-kind") === "color");
+      expect(colorSlots).toHaveLength(1);
+    });
+  });
+
+  it("Content Loop transitions from daily-pending to next action after daily completion event fires (no navigation)", async () => {
+    // Start with empty progress — Content Loop should show daily-pending ("Today's Focus")
+    render(<HubScaffoldClientLite />);
+    expect(await screen.findByText("Today's Focus")).toBeInTheDocument();
+
+    // Simulate daily completion
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem(
+      "chesscito:daily-progress",
+      JSON.stringify({ streak: 1, lastCompletedDate: today, totalCompleted: 1 }),
+    );
+    window.dispatchEvent(new CustomEvent("chesscito:daily-progress-changed"));
+
+    // daily-pending CTA must disappear without any navigation
+    await waitFor(() => {
+      expect(screen.queryByText("Today's Focus")).not.toBeInTheDocument();
+    });
   });
 });
 
