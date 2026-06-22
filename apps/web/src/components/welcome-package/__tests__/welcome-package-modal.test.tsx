@@ -62,10 +62,101 @@ describe("<WelcomePackageModal> claimed state", () => {
   });
 });
 
+describe("<WelcomePackageModal> phase=signing", () => {
+  it("shows signing title", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="signing" />);
+    expect(screen.getByTestId("wp-signing-title")).toBeInTheDocument();
+    expect(screen.getByText("Saving your gift...")).toBeInTheDocument();
+  });
+
+  it("does not show claim or dismiss buttons while signing", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="signing" />);
+    expect(screen.queryByRole("button", { name: /keep it/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /later/i })).toBeNull();
+  });
+
+  it("signing copy contains no prohibited terms", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="signing" />);
+    const text = document.body.textContent ?? "";
+    const prohibited = ["on-chain", "nft", "mint", "tx hash", "ledger", "smart contract"];
+    for (const term of prohibited) {
+      expect(text.toLowerCase()).not.toContain(term);
+    }
+  });
+});
+
+describe("<WelcomePackageModal> phase=success", () => {
+  it("shows success title and body", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="success" />);
+    expect(screen.getByTestId("wp-success-title")).toBeInTheDocument();
+    expect(screen.getByText("Welcome Gift Claimed")).toBeInTheDocument();
+    expect(screen.getByText(/your first chesscito reward is ready/i)).toBeInTheDocument();
+  });
+
+  it("shows Continue CTA", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="success" />);
+    expect(screen.getByTestId("wp-success-cta")).toBeInTheDocument();
+    expect(screen.getByText("Continue")).toBeInTheDocument();
+  });
+
+  it("calls onSuccess when Continue is tapped", () => {
+    const onSuccess = vi.fn();
+    render(
+      <WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="success" onSuccess={onSuccess} />,
+    );
+    fireEvent.click(screen.getByTestId("wp-success-cta"));
+    expect(onSuccess).toHaveBeenCalledOnce();
+  });
+
+  it("success copy contains no prohibited terms", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="success" />);
+    const text = document.body.textContent ?? "";
+    const prohibited = ["on-chain", "nft", "mint", "tx hash", "ledger", "smart contract", "proof"];
+    for (const term of prohibited) {
+      expect(text.toLowerCase()).not.toContain(term);
+    }
+  });
+});
+
+describe("<WelcomePackageModal> phase=error", () => {
+  it("shows error body and retry CTA", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="error" />);
+    expect(screen.getByTestId("wp-error-body")).toBeInTheDocument();
+    expect(screen.getByTestId("wp-retry-cta")).toBeInTheDocument();
+    expect(screen.getByText("Try again")).toBeInTheDocument();
+  });
+
+  it("shows dismiss link in error state", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="error" />);
+    expect(screen.getByRole("button", { name: /later/i })).toBeInTheDocument();
+  });
+
+  it("calls onRetry when Try again is tapped", () => {
+    const onRetry = vi.fn();
+    render(
+      <WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="error" onRetry={onRetry} />,
+    );
+    fireEvent.click(screen.getByTestId("wp-retry-cta"));
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it("calls onDismiss when Later is tapped in error state", () => {
+    const onDismiss = vi.fn();
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={onDismiss} phase="error" />);
+    fireEvent.click(screen.getByRole("button", { name: /later/i }));
+    expect(onDismiss).toHaveBeenCalledOnce();
+  });
+});
+
 describe("<WelcomePackageModal> ES locale", () => {
   it("renders ES title and CTA", () => {
     render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} />, { locale: "es" });
     expect(screen.getByText("Lo lograste.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /es tuyo/i })).toBeInTheDocument();
+  });
+
+  it("renders ES success title", () => {
+    render(<WelcomePackageModal onClaim={vi.fn()} onDismiss={vi.fn()} phase="success" />, { locale: "es" });
+    expect(screen.getByText("Welcome Gift recibido")).toBeInTheDocument();
   });
 });

@@ -4,19 +4,37 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
-import { CandyChip } from "@/components/redesign/candy-chip";
 import { WELCOME_PACKAGE_REWARD } from "@/lib/welcome-package/types";
 import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
+import { useLiteWelcomeGiftClaim } from "@/lib/welcome-package/use-lite-welcome-gift-claim";
 import { WelcomePackageModal } from "./welcome-package-modal";
 
 export function WelcomePackageStamp() {
   const t = useTranslations("WELCOME_PACKAGE_COPY");
   const welcomePackage = useWelcomePackage();
+  const { claimPhase, handleClaim, handleRetry, handleSuccess } = useLiteWelcomeGiftClaim();
   const [showModal, setShowModal] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => { setHydrated(true); }, []);
 
   if (!welcomePackage.isPending && !welcomePackage.isClaimed) return null;
+
+  function handleModalClaim() {
+    handleClaim(() => {
+      welcomePackage.claim();
+    });
+  }
+
+  function handleModalDismiss() {
+    // Never dismiss mid-signing.
+    if (claimPhase === "signing") return;
+    setShowModal(false);
+  }
+
+  function handleModalSuccess() {
+    handleSuccess();
+    setShowModal(false);
+  }
 
   return (
     <>
@@ -24,13 +42,11 @@ export function WelcomePackageStamp() {
           clipping in MiniPay WebView (same pattern as daily-tactic-slot). */}
       {hydrated && showModal && createPortal(
         <WelcomePackageModal
-          onClaim={() => {
-            welcomePackage.claim();
-            setShowModal(false);
-          }}
-          onDismiss={() => {
-            setShowModal(false);
-          }}
+          phase={claimPhase}
+          onClaim={handleModalClaim}
+          onDismiss={handleModalDismiss}
+          onSuccess={handleModalSuccess}
+          onRetry={handleRetry}
         />,
         document.body,
       )}

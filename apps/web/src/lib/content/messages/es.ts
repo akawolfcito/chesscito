@@ -2289,6 +2289,12 @@ const messages = {
     trophiesClaimedLabel: "Focus Stamp: Day 1",
     trophiesClaimedDescription: "Guardado en este dispositivo. Ganado en tu primer Focus Day.",
     claimedConfirmation: "Focus Stamp: Day 1 guardado en este dispositivo.",
+    signingTitle: "Guardando tu regalo...",
+    successTitle: "Welcome Gift recibido",
+    successBody: "Tu primer reward de Chesscito está listo. Tu pasaporte tiene su primer sello.",
+    successCta: "Continuar",
+    errorBody: "Algo salió mal. Toca para intentar de nuevo.",
+    retryCta: "Intentar de nuevo",
   },
 };
 

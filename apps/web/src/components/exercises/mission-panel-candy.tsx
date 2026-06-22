@@ -374,7 +374,7 @@ function PhaseFlash({
         {showStreakPill ? (
           <span className="fail-rescue-reward-pill fail-rescue-reward-pill--streak">
             <span aria-hidden="true">×{streakCount}</span>
-            <span>STREAK</span>
+            <span>COMBO</span>
           </span>
         ) : null}
       </div>

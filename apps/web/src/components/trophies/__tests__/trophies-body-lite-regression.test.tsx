@@ -29,6 +29,7 @@ vi.mock("@/lib/game/victory-events", () => ({
 
 vi.mock("wagmi", () => ({
   useAccount: () => ({ address: undefined, isConnected: false }),
+  useSignMessage: () => ({ signMessageAsync: vi.fn() }),
 }));
 
 vi.mock("@/lib/wallet/use-connect-wallet", () => ({

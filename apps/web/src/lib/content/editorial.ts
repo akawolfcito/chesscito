@@ -3445,4 +3445,10 @@ export const WELCOME_PACKAGE_COPY = {
   trophiesClaimedLabel: "Focus Stamp: Day 1",
   trophiesClaimedDescription: "Saved on this device. Earned on your first Focus Day.",
   claimedConfirmation: "Focus Stamp: Day 1 saved on this device.",
+  signingTitle: "Saving your gift...",
+  successTitle: "Welcome Gift Claimed",
+  successBody: "Your first Chesscito reward is ready. Your passport has its first stamp.",
+  successCta: "Continue",
+  errorBody: "Something went wrong. Tap to try again.",
+  retryCta: "Try again",
 } as const;
