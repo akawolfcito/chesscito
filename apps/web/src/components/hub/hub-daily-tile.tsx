@@ -24,6 +24,7 @@ import {
   emitDailyStreakUpdated,
   emitDailyTacticCompleted,
   emitDailyTacticStarted,
+  emitPassportSlotsUpdated,
 } from "@/lib/daily/telemetry";
 import {
   submitDailyTacticEarn,
@@ -129,6 +130,7 @@ export function HubDailyTile() {
         puzzleDate: today,
         currentStreak: progress.streak,
         isPro,
+        isLite: CHESSCITO_LITE_MODE,
       });
     }
     if (!open) startedFiredRef.current = false;
@@ -149,7 +151,7 @@ export function HubDailyTile() {
     // Streak telemetry fires immediately — local state, no network.
     const streakType = classifyStreakChange(prev, next);
     if (streakType) {
-      emitDailyStreakUpdated({ newStreak: next.streak, streakType });
+      emitDailyStreakUpdated({ newStreak: next.streak, streakType, isLite: CHESSCITO_LITE_MODE });
       setSolveResult({ streak: next.streak, streakType });
     } else {
       setSolveResult(null);
@@ -224,7 +226,15 @@ export function HubDailyTile() {
       isPro,
       rewardPreviewPeones: peonesEarned, // overlap field tracks credited
       peonesEarned,
+      isLite: CHESSCITO_LITE_MODE,
     });
+
+    if (CHESSCITO_LITE_MODE) {
+      emitPassportSlotsUpdated({
+        newStreak: next.streak,
+        filledSlots: Math.min(next.streak, 7),
+      });
+    }
   }
 
   const shareUrl = `/api/og/exercise?type=daily&piece=${puzzleData.piece}&name=${encodeURIComponent(puzzleData.name)}&start=${posToAlgebraic(puzzleData.exercise.startPos)}&target=${posToAlgebraic(puzzleData.exercise.targetPos)}`;
