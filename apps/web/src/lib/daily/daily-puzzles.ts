@@ -493,6 +493,146 @@ export const DAILY_TACTIC_PUZZLES: DailyTacticData[] = [
     },
     hint: "d5 is blocked. Go through d4 or e5, then capture on c6.",
   },
+  // ── B2.2b Pack 01 ────────────────────────────────────────────────
+  // 10 puzzles (rook+2 / bishop+2 / knight+2 / pawn+2 / queen+2).
+  // Pool grows 30→40. Links stay stable via resolveDailyPuzzle(date, id).
+  // Difficulty: 6 easy + 4 medium. No new hard puzzles in this pack.
+  // ── Rook (2) ────────────────────────────────────────────────────
+  {
+    id: "dt-rook-6",
+    name: "Rook — rank slide",
+    piece: "rook",
+    difficulty: "easy",
+    exercise: {
+      id: "dt-rook-6",
+      startPos: sq("h8"),
+      targetPos: sq("a8"),
+      optimalMoves: 1,
+    },
+    hint: "Slide the eighth rank from corner to corner. One straight move.",
+  },
+  {
+    id: "dt-rook-7",
+    name: "Rook — long L",
+    piece: "rook",
+    difficulty: "medium",
+    exercise: {
+      id: "dt-rook-7",
+      startPos: sq("h1"),
+      targetPos: sq("a7"),
+      optimalMoves: 2,
+    },
+    hint: "h1 and a7 share neither rank nor file. Take the elbow route through h7.",
+  },
+  // ── Bishop (2) ──────────────────────────────────────────────────
+  {
+    id: "dt-bishop-5",
+    name: "Bishop — short diagonal",
+    piece: "bishop",
+    difficulty: "easy",
+    exercise: {
+      id: "dt-bishop-5",
+      startPos: sq("e1"),
+      targetPos: sq("h4"),
+      optimalMoves: 1,
+    },
+    hint: "Three squares NE along the diagonal. One sweep does it.",
+  },
+  {
+    id: "dt-bishop-6",
+    name: "Bishop — parallel diagonals",
+    piece: "bishop",
+    difficulty: "medium",
+    exercise: {
+      id: "dt-bishop-6",
+      startPos: sq("b2"),
+      targetPos: sq("h2"),
+      optimalMoves: 2,
+    },
+    hint: "b2 and h2 share a color but not a diagonal. Pivot through e5.",
+  },
+  // ── Knight (2) ──────────────────────────────────────────────────
+  {
+    id: "dt-knight-6",
+    name: "Knight — center leap",
+    piece: "knight",
+    difficulty: "easy",
+    exercise: {
+      id: "dt-knight-6",
+      startPos: sq("e4"),
+      targetPos: sq("f6"),
+      optimalMoves: 1,
+    },
+    hint: "From the center: forward two, sideways one. Classic L.",
+  },
+  {
+    id: "dt-knight-7",
+    name: "Knight — corner retreat",
+    piece: "knight",
+    difficulty: "medium",
+    exercise: {
+      id: "dt-knight-7",
+      startPos: sq("h8"),
+      targetPos: sq("e5"),
+      optimalMoves: 2,
+    },
+    hint: "h8 to e5 is three steps diagonally — no single L covers it. Try h8→g6→e5.",
+  },
+  // ── Pawn (2) ────────────────────────────────────────────────────
+  {
+    id: "dt-pawn-6",
+    name: "Pawn — mid-board push",
+    piece: "pawn",
+    difficulty: "easy",
+    exercise: {
+      id: "dt-pawn-6",
+      startPos: sq("g5"),
+      targetPos: sq("g6"),
+      optimalMoves: 1,
+    },
+    hint: "Advanced pawns push one square at a time. No double-step past the starting rank.",
+  },
+  {
+    id: "dt-pawn-7",
+    name: "Pawn — flank capture",
+    piece: "pawn",
+    difficulty: "easy",
+    exercise: {
+      id: "dt-pawn-7",
+      startPos: sq("f4"),
+      targetPos: sq("g5"),
+      optimalMoves: 1,
+      isCapture: true,
+    },
+    hint: "Pawns capture diagonally. One step forward and to the right.",
+  },
+  // ── Queen (2) ───────────────────────────────────────────────────
+  {
+    id: "dt-queen-6",
+    name: "Queen — diagonal from center",
+    piece: "queen",
+    difficulty: "easy",
+    exercise: {
+      id: "dt-queen-6",
+      startPos: sq("a4"),
+      targetPos: sq("e8"),
+      optimalMoves: 1,
+    },
+    hint: "The queen fires along the diagonal. Four squares NE in one move.",
+  },
+  {
+    id: "dt-queen-7",
+    name: "Queen — the knight's gap",
+    piece: "queen",
+    difficulty: "medium",
+    exercise: {
+      id: "dt-queen-7",
+      startPos: sq("e1"),
+      targetPos: sq("f3"),
+      optimalMoves: 2,
+    },
+    hint: "f3 sits at a knight's distance from e1 — not on any rank, file, or diagonal. Two steps: e1→e3→f3.",
+  },
 ];
 
 function hashDate(date: string): number {

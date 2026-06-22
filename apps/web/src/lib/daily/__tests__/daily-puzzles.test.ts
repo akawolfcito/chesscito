@@ -118,8 +118,8 @@ function bfsPawnDepth(
 /* ── Tests ─────────────────────────────────────────────── */
 
 describe("daily-tactic-puzzles — seed integrity", () => {
-  it("has exactly 30 puzzles", () => {
-    expect(DAILY_TACTIC_PUZZLES).toHaveLength(30);
+  it("has exactly 40 puzzles", () => {
+    expect(DAILY_TACTIC_PUZZLES).toHaveLength(40);
   });
 
   it("all IDs are unique", () => {
@@ -127,17 +127,17 @@ describe("daily-tactic-puzzles — seed integrity", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("piece distribution: rook=5, bishop=4, knight=5, pawn=5, queen=5, king=6 (Sprint 2)", () => {
+  it("piece distribution: rook=7, bishop=6, knight=7, pawn=7, queen=7, king=6 (B2.2b Pack 01)", () => {
     const counts: Record<string, number> = {};
     for (const p of DAILY_TACTIC_PUZZLES) {
       counts[p.piece] = (counts[p.piece] ?? 0) + 1;
     }
     expect(counts).toEqual({
-      rook: 5,
-      bishop: 4,
-      knight: 5,
-      pawn: 5,
-      queen: 5,
+      rook: 7,
+      bishop: 6,
+      knight: 7,
+      pawn: 7,
+      queen: 7,
       king: 6,
     });
   });
@@ -339,16 +339,14 @@ describe("daily-tactic-puzzles — difficulty", () => {
     }
   });
 
-  it("Sprint 2 post-expansion distribution: 18 easy / 10 medium / 2 hard", () => {
-    // Baseline (commit B) was 10/3/1 across 14 puzzles. Commit C added
-    // 8 easy + 7 medium + 1 hard across the 16 new puzzles, biasing
-    // toward easy/medium because Daily Tactic prioritizes habit and
-    // clarity over difficulty per Wolfcito directive 2026-06-06.
+  it("B2.2b Pack 01 distribution: 24 easy / 14 medium / 2 hard", () => {
+    // Sprint 2 commit C baseline: 18 easy / 10 medium / 2 hard (30 puzzles).
+    // B2.2b Pack 01 adds 10 puzzles (6 easy + 4 medium, 0 hard) → 40 total.
     const counts: Record<PuzzleDifficulty, number> = { easy: 0, medium: 0, hard: 0 };
     for (const puzzle of DAILY_TACTIC_PUZZLES) {
       counts[getPuzzleDifficulty(puzzle)] += 1;
     }
-    expect(counts).toEqual({ easy: 18, medium: 10, hard: 2 });
+    expect(counts).toEqual({ easy: 24, medium: 14, hard: 2 });
   });
 });
 
