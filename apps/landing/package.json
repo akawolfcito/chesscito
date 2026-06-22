@@ -1,0 +1,33 @@
+{
+  "name": "landing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Public landing page for Chesscito — www.chesscito.com",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "next lint",
+    "start": "next start",
+    "type-check": "tsc --noEmit"
+  },
+  "comments": {
+    "versions": "Team convention — exact pins (no ^ or ~) for every dependency to harden against malicious version-range hijacks. See feedback_exact_version_pins memory."
+  },
+  "dependencies": {
+    "next": "14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "sharp": "0.34.5"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.35",
+    "@types/react": "18.3.28",
+    "@types/react-dom": "18.3.7",
+    "autoprefixer": "10.4.27",
+    "eslint": "8.57.1",
+    "eslint-config-next": "14.2.35",
+    "postcss": "8.5.8",
+    "tailwindcss": "3.4.19",
+    "typescript": "5.9.3"
+  }
+}

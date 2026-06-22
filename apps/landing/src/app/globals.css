@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --paper-bg: #f6e6b8;
+    --paper-bg-inner-tray: #eed59a;
+    --paper-text: rgba(63, 34, 8, 0.95);
+    --paper-text-muted: rgba(110, 65, 15, 0.70);
+    --paper-text-subtle: rgba(110, 65, 15, 0.45);
+    --paper-divider: rgba(110, 65, 15, 0.20);
+    --paper-accent: rgba(251, 191, 36, 0.95);
+    --shadow-warm-wood: rgba(63, 34, 8, 0.25);
+
+    --landing-accent: rgba(217, 130, 30, 0.85);
+    --landing-accent-bg: rgba(245, 158, 11, 0.10);
+    --landing-accent-bg-strong: rgba(245, 158, 11, 0.16);
+    --landing-accent-border: rgba(217, 130, 30, 0.30);
+    --landing-accent-border-strong: rgba(217, 130, 30, 0.42);
+    --landing-card-bg: rgba(255, 248, 230, 0.62);
+    --landing-card-border: rgba(110, 65, 15, 0.16);
+    --landing-card-shadow-inner: rgba(255, 245, 215, 0.45);
+    --landing-text: rgba(63, 34, 8, 0.92);
+    --landing-text-soft: rgba(63, 34, 8, 0.72);
+    --landing-text-shadow: 0 1px 0 rgba(255, 245, 215, 0.55);
+    --landing-text-shadow-soft: 0 1px 0 rgba(255, 245, 215, 0.45);
+    --landing-title-glow: 0 1px 0 rgba(255, 245, 215, 0.85),
+      0 2px 6px rgba(245, 158, 11, 0.12);
+    --landing-cta-green: #21a957;
+    --landing-cta-green-hover: #188c45;
+    --landing-cta-green-dark: #0f6f35;
+    --landing-cta-green-ring: rgba(33, 169, 87, 0.28);
+
+    --cta-primary-green-grad: linear-gradient(180deg, #87db28, #4aaa16);
+    --cta-primary-green-border: rgba(70, 130, 30, 0.85);
+    --cta-primary-green-bevel:
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(50, 100, 25, 0.55),
+      0 4px 0 rgba(40, 90, 20, 0.55),
+      0 6px 14px rgba(40, 90, 20, 0.35);
+    --cta-primary-green-bevel-pressed:
+      inset 0 2px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -3px 0 rgba(50, 100, 25, 0.55),
+      0 2px 0 rgba(40, 90, 20, 0.55),
+      0 4px 8px rgba(40, 90, 20, 0.30);
+    --cta-primary-green-text-shadow: 0 2px 0 rgba(40, 90, 20, 0.65);
+
+    --font-game-display: var(--font-fredoka), "Fredoka One", sans-serif;
+    --font-game-action: var(--font-rowdies), "Rowdies", system-ui, sans-serif;
+  }
+
+  html {
+    font-family: "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+    overflow-x: hidden;
+    background-color: var(--paper-bg);
+  }
+
+  body {
+    background-color: var(--paper-bg);
+    color: var(--paper-text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .fantasy-title {
+    font-family: var(--font-game-action);
+    letter-spacing: 0.01em;
+  }
+
+  .paper-tray {
+    border-radius: 0.875rem;
+    background: var(--paper-bg-inner-tray);
+    border: 1px solid var(--paper-divider);
+    padding: 0.5rem 0.75rem;
+    box-shadow: inset 0 1px 2px rgba(120, 65, 5, 0.08);
+  }
+
+  .landing-green-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    border: 2px solid var(--cta-primary-green-border);
+    border-radius: 14px;
+    background: var(--cta-primary-green-grad);
+    box-shadow: var(--cta-primary-green-bevel);
+    color: #fff8ed;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: var(--cta-primary-green-text-shadow);
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      transform 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .landing-green-cta:hover {
+    filter: brightness(1.04);
+  }
+
+  .landing-green-cta:active {
+    transform: translateY(2px);
+    box-shadow: var(--cta-primary-green-bevel-pressed);
+    filter: none;
+  }
+
+  .landing-green-cta:focus-visible {
+    outline: 3px solid var(--landing-cta-green-ring);
+    outline-offset: 3px;
+  }
+
+  .landing-green-cta--medium {
+    height: 42px;
+    min-height: 42px;
+    min-width: 150px;
+    padding: 0 18px;
+    font-size: 0.9rem;
+  }
+
+  .landing-green-cta--large {
+    height: 56px;
+    min-height: 56px;
+    min-width: 260px;
+    padding: 0 32px;
+    border-radius: 14px;
+    font-size: 1.1rem;
+  }
+}
