@@ -1,13 +1,7 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { NOT_FOUND_PAGE_COPY } from "@/lib/content/editorial";
 
 export default function NotFound() {
-  if (CHESSCITO_LITE_MODE) {
-    redirect("/hub");
-  }
-
   return (
     <div
       className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-6 text-center"
