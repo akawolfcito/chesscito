@@ -34,14 +34,14 @@ export const metadata: Metadata = {
     title: LANDING_COPY.meta.title,
     description: LANDING_COPY.meta.description,
     url: BASE_URL,
-    images: [{ url: "/api/og/home", width: 1080, height: 1350, type: "image/jpeg" }],
+    images: [{ url: "/og/chesscito-landing.jpg", width: 1200, height: 630, type: "image/jpeg" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: LANDING_COPY.meta.title,
     description: LANDING_COPY.meta.description,
-    images: ["/api/og/home"],
+    images: ["/og/chesscito-landing.jpg"],
   },
   other: {
     "talentapp:project_verification":
