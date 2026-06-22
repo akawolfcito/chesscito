@@ -1556,6 +1556,7 @@ export function ExercisesScreen({
         elapsed_ms: elapsed,
         is_capture: Boolean(currentExercise.isCapture),
         is_replay: isReplay,
+        isLite: CHESSCITO_LITE_MODE,
       });
 
       // On last exercise: check if badge is earned (including this completion)
@@ -1628,6 +1629,7 @@ export function ExercisesScreen({
         exercise_id: currentExercise.id,
         moves: movesCount,
         is_capture: Boolean(currentExercise.isCapture),
+        isLite: CHESSCITO_LITE_MODE,
       });
       // FTUX gating (user feedback 2026-06-01): the rescue modal
       // pitches "save your streak" + "claim free shields" — concepts
