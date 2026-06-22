@@ -1,6 +1,32 @@
 import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
 import { createElement, type AnchorHTMLAttributes, type ReactNode } from "react";
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
+
+const testRouter = {
+  back: vi.fn(),
+  forward: vi.fn(),
+  push: vi.fn(),
+  replace: vi.fn(),
+  refresh: vi.fn(),
+  prefetch: vi.fn(),
+};
+
+/** Default App Router contract for component tests without a Next runtime. */
+vi.mock("next/navigation", () => ({
+  useRouter: () => testRouter,
+  usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(),
+  redirect: (path: string) => path,
+  notFound: () => undefined,
+}));
+
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+  sessionStorage.clear();
+  Object.values(testRouter).forEach((mock) => mock.mockReset());
+});
 
 // `@/i18n/navigation` wraps next-intl's `createNavigation()` so internal
 // `<Link>` calls are locale-aware in the live app. In the unit suite

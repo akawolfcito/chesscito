@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderWithIntl as render } from "@/test-utils/render-with-intl";
+import { renderWithAppProviders as render } from "@/test-utils/render-with-app-providers";
 import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
