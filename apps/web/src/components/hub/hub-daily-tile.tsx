@@ -35,6 +35,7 @@ import {
   emitPeonesEarned,
 } from "@/lib/peones/telemetry";
 import { computeStars } from "@/lib/game/scoring";
+import { getShareOrigin } from "@/lib/og/share-urls";
 import { useIsProActive } from "@/lib/pro/use-is-pro-active";
 import { useAccount } from "wagmi";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
@@ -242,6 +243,7 @@ export function HubDailyTile() {
     progress.streak > 0
       ? `${shareUrl}&solved=true&streak=${progress.streak}`
       : `${shareUrl}&solved=true`;
+  const shareLinkUrl = `${getShareOrigin()}/challenge/daily?date=${today}&puzzle=${puzzleData.id}`;
 
   if (!hydrated) {
     return (
@@ -356,6 +358,7 @@ export function HubDailyTile() {
         streakType={solveResult?.streakType}
         shareUrl={shareUrl}
         shareSolvedUrl={shareSolvedUrl}
+        shareLinkUrl={shareLinkUrl}
         isConnected={isConnected}
         reward={reward ?? undefined}
       />

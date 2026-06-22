@@ -46,7 +46,7 @@ export function ChallengeDailyClient({ puzzleData, today }: Props) {
   const hasStartedRef = useRef(false);
 
   const origin = getShareOrigin();
-  const challengeUrl = `${origin}/challenge/daily?date=${today}`;
+  const challengeUrl = `${origin}/challenge/daily?date=${today}&puzzle=${puzzleData.id}`;
   const ogCardUrl = buildOgCardUrl(origin, puzzleData);
   const ogCardSolvedUrl = buildOgCardUrl(origin, puzzleData, solveStreak, true);
 

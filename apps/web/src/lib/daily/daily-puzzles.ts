@@ -510,6 +510,36 @@ export function getDailyTactic(today: string = todayUtc()): DailyTacticData {
 }
 
 /**
+ * Returns the puzzle with the given id, or `undefined` if not found.
+ * Used by `resolveDailyPuzzle` to support stable challenge links (B2.2a).
+ */
+export function getPuzzleById(id: string): DailyTacticData | undefined {
+  return DAILY_TACTIC_PUZZLES.find((p) => p.id === id);
+}
+
+/**
+ * Resolves the puzzle for a given date + optional pinned puzzle id.
+ *
+ * Rules (B2.2a — Stable Challenge Links):
+ *  1. `puzzleId` present and valid  → return that exact puzzle (pool-size agnostic)
+ *  2. `puzzleId` present and invalid → fallback to getDailyTactic(date) silently
+ *  3. `puzzleId` absent             → getDailyTactic(date) (backwards compat)
+ *
+ * Consumers must pass `searchParams.puzzle` from the URL; this function
+ * never throws — invalid ids fall through cleanly.
+ */
+export function resolveDailyPuzzle(
+  date: string,
+  puzzleId?: string,
+): DailyTacticData {
+  if (puzzleId) {
+    const byId = getPuzzleById(puzzleId);
+    if (byId) return byId;
+  }
+  return getDailyTactic(date);
+}
+
+/**
  * Slot identifier for the PRO-exclusive Daily Tactic extras introduced
  * in Sprint 2 commit F (Training Economy Alpha 2026-06-07). Two slots
  * fire per week, on UTC Friday and UTC Sunday respectively. The slot

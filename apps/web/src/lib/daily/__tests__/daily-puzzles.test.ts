@@ -11,7 +11,9 @@ import {
   DAILY_TACTIC_PUZZLES,
   getDailyTactic,
   getProDailyExtras,
+  getPuzzleById,
   getPuzzleDifficulty,
+  resolveDailyPuzzle,
   type ProExtraSlot,
   type PuzzleDifficulty,
 } from "@/lib/daily/daily-puzzles";
@@ -453,5 +455,80 @@ describe("daily-tactic-puzzles — PRO extras", () => {
       total += getProDailyExtras(d.toISOString().slice(0, 10)).length;
     }
     expect(total).toBe(2);
+  });
+});
+
+describe("daily-tactic-puzzles — stable challenge links (B2.2a)", () => {
+  const KNOWN_ID = DAILY_TACTIC_PUZZLES[0]!.id;
+  const KNOWN_PUZZLE = DAILY_TACTIC_PUZZLES[0]!;
+  const DATE = "2026-06-22";
+
+  describe("getPuzzleById", () => {
+    it("returns the correct puzzle for a known id", () => {
+      const result = getPuzzleById(KNOWN_ID);
+      expect(result).toBeDefined();
+      expect(result!.id).toBe(KNOWN_ID);
+    });
+
+    it("returns undefined for an unknown id", () => {
+      expect(getPuzzleById("dt-invalid-99")).toBeUndefined();
+      expect(getPuzzleById("")).toBeUndefined();
+    });
+
+    it("finds every puzzle by its own id", () => {
+      for (const puzzle of DAILY_TACTIC_PUZZLES) {
+        expect(getPuzzleById(puzzle.id)?.id).toBe(puzzle.id);
+      }
+    });
+  });
+
+  describe("resolveDailyPuzzle", () => {
+    it("returns the exact puzzle when given a valid puzzleId", () => {
+      const result = resolveDailyPuzzle(DATE, KNOWN_ID);
+      expect(result.id).toBe(KNOWN_ID);
+      expect(result).toEqual(KNOWN_PUZZLE);
+    });
+
+    it("falls back to getDailyTactic(date) when puzzleId is invalid", () => {
+      const fallback = getDailyTactic(DATE);
+      const result = resolveDailyPuzzle(DATE, "dt-nonexistent-999");
+      expect(result.id).toBe(fallback.id);
+    });
+
+    it("behaves identically to getDailyTactic(date) when puzzleId is undefined", () => {
+      const expected = getDailyTactic(DATE);
+      expect(resolveDailyPuzzle(DATE, undefined).id).toBe(expected.id);
+      expect(resolveDailyPuzzle(DATE).id).toBe(expected.id);
+    });
+
+    it("is pool-size-agnostic: same puzzleId resolves to same puzzle on any date", () => {
+      // The key guarantee: a link with puzzle=ID always loads that puzzle
+      // regardless of what date-based hash would have returned.
+      const dates = ["2026-06-22", "2025-01-01", "2024-12-31", "2026-01-01"];
+      for (const date of dates) {
+        expect(resolveDailyPuzzle(date, KNOWN_ID).id).toBe(KNOWN_ID);
+      }
+    });
+
+    it("puzzleId from one date resolves correctly even if date hash maps elsewhere", () => {
+      // Find a date whose daily tactic is NOT the first puzzle.
+      const dateForDifferentPuzzle = (() => {
+        for (let i = 1; i <= 365; i++) {
+          const d = new Date("2026-01-01T00:00:00Z");
+          d.setUTCDate(d.getUTCDate() + i);
+          const s = d.toISOString().slice(0, 10);
+          if (getDailyTactic(s).id !== KNOWN_ID) return s;
+        }
+        return "2026-03-15";
+      })();
+
+      // On that date the normal daily is a different puzzle.
+      const normalDaily = getDailyTactic(dateForDifferentPuzzle);
+      expect(normalDaily.id).not.toBe(KNOWN_ID);
+
+      // But if we pass puzzle=KNOWN_ID, we still get KNOWN_ID.
+      const pinned = resolveDailyPuzzle(dateForDifferentPuzzle, KNOWN_ID);
+      expect(pinned.id).toBe(KNOWN_ID);
+    });
   });
 });

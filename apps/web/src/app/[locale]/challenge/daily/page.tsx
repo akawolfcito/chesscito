@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { getDailyTactic } from "@/lib/daily/daily-puzzles";
+import { resolveDailyPuzzle } from "@/lib/daily/daily-puzzles";
 import { todayUtc } from "@/lib/daily/progress";
 import { getShareOrigin } from "@/lib/og/share-urls";
 import { posToString } from "@/lib/game/notation";
 import { ChallengeDailyClient } from "./challenge-daily-client";
 
-type SearchParams = { date?: string };
+type SearchParams = { date?: string; puzzle?: string };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -15,7 +15,7 @@ function resolveDate(raw: string | undefined): string {
 
 function buildOgImageUrl(
   origin: string,
-  puzzle: ReturnType<typeof getDailyTactic>,
+  puzzle: ReturnType<typeof resolveDailyPuzzle>,
   startAlg: string,
   targetAlg: string,
 ): string {
@@ -35,7 +35,7 @@ export async function generateMetadata({
   searchParams: SearchParams;
 }): Promise<Metadata> {
   const date = resolveDate(searchParams.date);
-  const puzzle = getDailyTactic(date);
+  const puzzle = resolveDailyPuzzle(date, searchParams.puzzle);
   const origin = getShareOrigin();
   const startAlg = posToString(puzzle.exercise.startPos);
   const targetAlg = posToString(puzzle.exercise.targetPos);
@@ -43,7 +43,7 @@ export async function generateMetadata({
   const title = "Daily Challenge · Chesscito";
   const description = `Can you solve today's ${puzzle.piece} puzzle? ${puzzle.name}`;
   const ogImage = buildOgImageUrl(origin, puzzle, startAlg, targetAlg);
-  const canonical = `${origin}/challenge/daily?date=${date}`;
+  const canonical = `${origin}/challenge/daily?date=${date}&puzzle=${puzzle.id}`;
 
   return {
     title,
@@ -79,6 +79,6 @@ export default function ChallengeDailyPage({
   searchParams: SearchParams;
 }) {
   const today = resolveDate(searchParams.date);
-  const puzzle = getDailyTactic(today);
+  const puzzle = resolveDailyPuzzle(today, searchParams.puzzle);
   return <ChallengeDailyClient puzzleData={puzzle} today={today} />;
 }
