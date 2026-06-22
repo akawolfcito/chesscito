@@ -2,50 +2,67 @@
 
 ## Completed
 
-### B1.1.1 — Route Hardening
-- `aeb9a830` — `[locale]/not-found.tsx` + `NOT_FOUND_PAGE_COPY` editorial
-- `7d49ffbe` — `[locale]/[...slug]/page.tsx` catch-all fix: Lite → `redirect("/hub")`, Full → `notFound()` → styled 404 UI
-  - Root cause: `redirect()` dentro de `not-found.tsx` no es confiable; catch-all intercepta ANTES del error boundary
-  - 4310/4310 tests passing, tsc limpio
+- `0d997c2c` fix(b1.3): landing P0 assets — static OG image, favicon, apple-icon
+- `cf3707ba` chore(assets): brand icons y OG images en apps/landing y apps/web
+- `baf42a39` feat(b1.3): landing P1 narrative — Lite/Full CTAs, remove "from an early age"
+- `de16b44b` feat(b1.3): landing /stats page — Lite + Full cards; footer Stats → /stats
 
-### B1.3 — Domain Architecture (`apps/landing`)
-- `f75402de` — `apps/landing` standalone Next.js 14 app para `www.chesscito.com`
-  - Server Component LandingPage: sin hooks, sin next-intl, sin wallet deps
-  - CTAs como `<a href>` apuntando a `NEXT_PUBLIC_PLAY_URL` (default: `lite.chesscito.com`)
-  - `globals.css` mínimo: `--paper-*`, `--landing-*`, CTA green vars + clases
-  - `layout.tsx` + `robots.ts` + `sitemap.ts` para canonical `www.chesscito.com`
-  - Assets copiados: 9 landing art + 60 candy icons (avif/webp/png triplets)
-  - `apps/web [locale]/page.tsx` → `redirect("/hub")` — game app es hub-only
-  - `apps/landing` build: static 138B JS · `apps/web` 4310/4310 · tsc clean en ambos
+All 4 commits pushed to `origin/main`. Confirmed in production.
 
 ## Current State
 
-- **Branch**: `main` (`f75402de`, pushed)
-- **Build**: 4310/4310 tests ✅ · tsc clean ✅ · `apps/landing` build ✅
-- **Uncommitted work**: `SESSION.md` (este archivo) · `docs/testing/` (untracked, sin relación)
+- **Branch**: main (`de16b44b`)
+- **Build**: landing 7/7 static pages ✅ — tsc clean ✅
+- **Uncommitted work**: none
+- **Open PRs**: none
+
+## apps/landing Routes (B1.3)
+
+| Route | State |
+|---|---|
+| `/` | ✅ Landing homepage |
+| `/stats` | ✅ Lite + Full cards |
+| `/robots.txt` | ✅ |
+| `/sitemap.xml` | ✅ |
+| `/favicon.ico` | ✅ new brand asset |
+| `/apple-icon.png` | ✅ new brand asset |
+| `/og/chesscito-landing.jpg` | ✅ 1200×630 new brand |
+
+## Env Vars (landing project in Vercel)
+
+| Var | Value |
+|---|---|
+| `NEXT_PUBLIC_APP_URL` | `https://www.chesscito.com` |
+| `NEXT_PUBLIC_PLAY_URL` | `https://lite.chesscito.com` |
+| `NEXT_PUBLIC_FULL_URL` | `https://play.chesscito.com` ← confirmed set |
+| `NEXT_PUBLIC_LEGAL_URL` | `https://lite.chesscito.com` (explicit recommended) |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | set in Vercel |
+
+## Footer Links — Smoke Risk
+
+Footer Privacy / Terms / Support / About → `lite.chesscito.com/{path}`.
+Must exist as routes in apps/web Lite. Not yet verified.
 
 ## Next Tasks
 
-1. **Vercel — crear proyecto `apps/landing`** (manual, founder):
-   - New Vercel project → Root Directory: `apps/landing`
-   - Domains: `chesscito.com` + `www.chesscito.com`
-   - Env vars: `NEXT_PUBLIC_APP_URL=https://www.chesscito.com`, `NEXT_PUBLIC_PLAY_URL=https://lite.chesscito.com`, `NEXT_PUBLIC_SUPPORT_EMAIL=<actual>`
-2. **Vercel — actualizar proyectos existentes** (manual):
-   - Lite project: `NEXT_PUBLIC_APP_URL` → `https://lite.chesscito.com`
-   - Full project: `NEXT_PUBLIC_APP_URL` → `https://play.chesscito.com`
-   - Transferir dominio `www.chesscito.com` del proyecto Full → proyecto Landing
-3. **Smoke `apps/landing`** tras deploy: hero carga, CTA → `lite.chesscito.com/hub`, footer links, OG, robots/sitemap
-4. **Smoke `apps/web`** tras transferencia: `/` → 307 a `/hub`, rutas de juego sin regresión
-5. **Cleanup diferido** (post-verificación landing live): borrar `apps/web/src/components/landing/` y `apps/web/src/lib/server/wallet-detection.ts` si sin otros usos
+1. **Smoke /stats** — `https://www.chesscito.com/stats` debe mostrar las dos cards post-deploy
+2. **Verify footer legal links** — `lite.chesscito.com/privacy`, `/terms`, `/support`, `/about` responden 200
+3. **Cluster Closure Protocol (B1.3)** — per CLAUDE.md:
+   - Cerrar GitHub issues/milestone B1.3
+   - Actualizar README "What's live"
+   - Actualizar MEMORY.md con B1.3 cerrado
+   - Escribir `docs/handoffs/2026-06-22-b1.3-landing-closure-handoff.md`
+4. **Welcome Package spec** (`docs/specs/welcome-package-lite.md`) — ready for TDD post-aprobación
+5. **Exercises Save Flow spec** (`docs/specs/exercises-save-flow-simplification.md`) — ready for TDD post-aprobación
 
 ## Blockers
 
-- Vercel project setup es 100% manual — requiere acción del founder (pasos 1–2)
-- Dominio `www.chesscito.com` debe transferirse al proyecto Landing antes del smoke final
+- None blocking. Footer legal links son smoke risk, no build risk.
 
 ## Notes
 
-- `NEXT_PUBLIC_LEGAL_URL` es opcional en landing: sin él, footer links caen a `NEXT_PUBLIC_PLAY_URL`
-- `apps/landing` es EN-only (no next-intl) — i18n diferido, fuera del scope B1.3
-- Cleanup de `components/landing/` en `apps/web` va en PR separado tras confirmar landing live
-- `docs/testing/` untracked — carpeta nueva, no es trabajo de esta sesión
+- `apps/landing` standalone — sin coupling con apps/web en runtime
+- CTAs con fallbacks: PLAY_URL → lite, FULL_URL → play
+- `favicon-wolf` en apps/web/public/art/ actualizado con nuevo brand (512×512)
+- Audit en `docs/testing/landing-audit-2026-06-22.md`
+- Contexto al ~60% — seguro continuar o /clear para próximo cluster
