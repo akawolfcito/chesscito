@@ -2,6 +2,7 @@ import {
   ExercisesScreen,
   type ExercisesInitialSheet,
 } from "@/components/exercises/exercises-screen";
+import { DailyLimitGuard } from "@/components/daily/daily-limit-guard";
 import { ContentCatalogProvider } from "@/lib/content/catalog-context";
 import { getMergedCatalog } from "@/lib/content/merged-catalog";
 import { envStageFloor } from "@/lib/content/stage";
@@ -9,6 +10,9 @@ import { EXERCISES } from "@/lib/game/exercises";
 import type { ExerciseCatalog } from "@/lib/game/rotation";
 import type { PieceId } from "@/lib/game/types";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+
+/** Slots that are always free and bypass the daily limit gate. */
+const FREE_SLOTS = new Set(["daily", "challenge"]);
 
 type SearchParams = {
   /** Pre-select a piece on first render. Pieces without defined
@@ -19,6 +23,9 @@ type SearchParams = {
    *  (`/exercises?sheet=shop|badges|trophies|leaderboard|pro`). Unknown
    *  values are silently dropped — the screen renders without a sheet. */
   sheet?: string | string[];
+  /** Content slot discriminator. "daily" and "challenge" bypass the Lite
+   *  daily quota gate. Unknown/absent values → gated in Lite mode. */
+  slot?: string | string[];
 };
 
 const SUPPORTED_SHEETS = new Set<ExercisesInitialSheet>([
@@ -86,6 +93,7 @@ export default async function ExercisesPage({
   const catalog: ExerciseCatalog = merged ? merged.exercises : EXERCISES;
 
   const piece = firstParam(searchParams.piece);
+  const slot = firstParam(searchParams.slot);
   const initialPiece =
     piece && pieceHasExercises(piece, catalog) ? piece : undefined;
   const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
@@ -94,7 +102,11 @@ export default async function ExercisesPage({
     <ExercisesScreen initialPiece={initialPiece} initialSheet={initialSheet} />
   );
 
-  if (!merged) return screen;
+  // B2.3a: Lite-only daily quota gate. Free slots (daily, challenge) bypass it.
+  const isLiteExtra = CHESSCITO_LITE_MODE && (!slot || !FREE_SLOTS.has(slot));
+  const guarded = isLiteExtra ? <DailyLimitGuard>{screen}</DailyLimitGuard> : screen;
+
+  if (!merged) return guarded;
 
   return (
     <ContentCatalogProvider
@@ -104,7 +116,7 @@ export default async function ExercisesPage({
         descriptions: merged.descriptions,
       }}
     >
-      {screen}
+      {guarded}
     </ContentCatalogProvider>
   );
 }

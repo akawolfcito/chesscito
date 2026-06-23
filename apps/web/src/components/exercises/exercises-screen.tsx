@@ -154,6 +154,7 @@ import {
   setDockSheet,
 } from "@/lib/ui/dock-sheet-store";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { buildContentId, recordExtraConsumed } from "@/lib/daily/session-quota";
 
 // SHOP_ITEMS, SHIELD_ITEM_ID, SHIELDS_PER_PURCHASE now live in
 // lib/contracts/shop-catalog.ts so they're testable in isolation. The
@@ -1536,6 +1537,11 @@ export function ExercisesScreen({
       setElapsedMs(elapsed);
       completeExercise(movesCount);
 
+      // B2.3a: track extra content consumption (Lite-only; idempotent).
+      if (CHESSCITO_LITE_MODE) {
+        recordExtraConsumed(buildContentId("exercise", selectedPiece, currentExercise.id));
+      }
+
       // Phase 2 nudge: first ★★★ while disconnected → "Connect to save".
       // Suppressed in Lite (spec P0-1): no on-chain save path exists there.
       if (
@@ -2404,6 +2410,12 @@ export function ExercisesScreen({
         previousBest,
         isNewBest,
       });
+
+      // B2.3a: track extra content consumption (Lite-only; idempotent).
+      if (CHESSCITO_LITE_MODE) {
+        recordExtraConsumed(buildContentId("labyrinth", selectedPiece, activeLabyrinth.id));
+      }
+
       track("labyrinth_complete", {
         labyrinth_id: activeLabyrinth.id,
         piece: selectedPiece,
