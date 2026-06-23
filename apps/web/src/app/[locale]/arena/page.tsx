@@ -293,9 +293,10 @@ function ArenaPageInner() {
   // once per match — keyed on gameStartedAt so it stays stable for the
   // whole game and refreshes when a new match begins.
   const rival = rivalFor(game.difficulty);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const rivalElo = useMemo(
     () => randomEloForDifficulty(game.difficulty),
-    [game.difficulty, game.gameStartedAt],
+    [game.difficulty, game.gameStartedAt], // gameStartedAt forces re-roll on new match
   );
   const youColorLabel =
     game.playerColor === "w"

@@ -255,7 +255,7 @@ export function useChessGame(): ChessGameState {
         setErrorMessage("Engine error — please restart the match");
       }
     }, aiThinkTimeMs(currentDifficulty));
-  }, []);
+  }, [fireCaptureFlash]);
 
   const selectSquare = useCallback((square: string) => {
     try {
@@ -324,7 +324,7 @@ export function useChessGame(): ChessGameState {
       setSelectedSquare(null);
       setLegalMoves([]);
     }
-  }, [status, isThinking, selectedSquare, legalMoves, triggerAiMove, difficulty, playerColor]);
+  }, [status, isThinking, selectedSquare, legalMoves, triggerAiMove, difficulty, playerColor, fireCaptureFlash]);
 
   const promoteWith = useCallback((piece: "q" | "r" | "b" | "n") => {
     if (!pendingPromotion || isThinking) return;
