@@ -151,7 +151,6 @@ export function ExerciseDrawer({
                 className="candy-tray-pill-divider"
               />
               <picture
-                aria-hidden="true"
                 className="candy-tray-pill-icon candy-tray-pill-icon--floating"
               >
                 <source srcSet="/art/redesign/icons/shield.avif" type="image/avif" />

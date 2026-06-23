@@ -79,7 +79,7 @@ export function ChesitoCard({ className = "" }: Props) {
           </button>
         </div>
 
-        <picture className="chesito-card-art" aria-hidden="true">
+        <picture className="chesito-card-art">
           <source srcSet="/art/new-icons-chesscito/peon-piece-v1.avif" type="image/avif" />
           <source srcSet="/art/new-icons-chesscito/peon-piece-v1.webp" type="image/webp" />
           <img

@@ -92,7 +92,6 @@ export function PromotionOverlay({ onSelect, onCancel }: Props) {
               the earlier line + crown composite. User feedback
               2026-06-01. */}
           <picture
-            aria-hidden="true"
             className="promotion-overlay-adorno"
           >
             <source

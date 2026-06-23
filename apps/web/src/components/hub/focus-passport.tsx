@@ -75,6 +75,7 @@ export function FocusPassport({
           const asset = FLAME_ASSET[slot.kind];
           const dayLabel = i + 1;
           return (
+            // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
             <picture
               key={i}
               role="listitem"

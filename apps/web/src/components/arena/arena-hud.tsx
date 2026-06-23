@@ -151,7 +151,6 @@ function ArenaTimerChip({
            *  icon class below renders inline at 1.4rem so the chip
            *  reads "clock 0:25 | shield 7" left-to-right. */}
           <picture
-            aria-hidden="true"
             className="arena-timer-chip-inline-icon"
           >
             <source srcSet="/art/redesign/icons/shield.avif" type="image/avif" />

@@ -120,7 +120,6 @@ export function WelcomePackTile({
        *  tile via the existing slot reserved earlier in the cluster.
        *  Triplet under /art/shop/welcome-gift. */}
       <picture
-        aria-hidden="true"
         className="welcome-pack-tile-sticker-slot welcome-pack-tile-sticker"
       >
         <source srcSet="/art/shop/welcome-gift.avif" type="image/avif" />
