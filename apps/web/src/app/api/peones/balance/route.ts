@@ -20,6 +20,8 @@
  * documented in calibration §3.4.
  */
 
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 
 import { normalizeWallet } from "@/lib/peones/ledger-service";
