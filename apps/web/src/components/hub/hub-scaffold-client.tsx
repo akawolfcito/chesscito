@@ -63,6 +63,13 @@ import { daysRemaining } from "@/lib/pro/days-remaining";
 import { subscribeToShieldChanges } from "@/lib/shop/shield-events";
 import { subscribeToDailyProgressChanges } from "@/lib/daily/events";
 import { readDisplayedShields } from "@/lib/shop/shield-storage";
+import {
+  getDailySession,
+  isAtFreeLimit,
+  isAtHardMax,
+  applyDevUnlock,
+} from "@/lib/daily/session-quota";
+import { subscribeToDailySessionChanges } from "@/lib/daily/session-events";
 import { useShieldSync } from "@/lib/shop/use-shield-sync";
 import { track } from "@/lib/telemetry";
 import {
@@ -377,6 +384,31 @@ export function HubScaffoldClient({
     [dailyProgress],
   );
 
+  // B2.3a: Daily session quota state (Lite-only). Hydrated on mount, re-read
+  // on same-tab session events (after recordExtraConsumed) and on tab focus
+  // (visibilitychange) for eventual cross-tab consistency.
+  const [sessionQuotaState, setSessionQuotaState] = useState<{
+    isAtFreeLimit: boolean;
+    isAtHardMax: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (!CHESSCITO_LITE_MODE) return;
+    const read = () => {
+      const s = getDailySession();
+      setSessionQuotaState({ isAtFreeLimit: isAtFreeLimit(s), isAtHardMax: isAtHardMax(s) });
+    };
+    read();
+    const unsub = subscribeToDailySessionChanges(read);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") read();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      unsub();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
   // Content Loop v1 (Lite-only). Derives the Next Best Action from existing
   // localStorage data: DailyProgress (already hydrated above via dailyProgress
   // state), WelcomePackage, and the primary piece training path.
@@ -411,11 +443,12 @@ export function HubScaffoldClient({
       primaryPiece: piece,
       primaryPath,
       nextAvailablePiece: null,
+      sessionQuota: sessionQuotaState,
     });
 
     setContentLoopAction(action);
     setIsContentLoopHydrated(true);
-  }, [dailyProgress, welcomePackage.isUnlocked, welcomePackage.isClaimed]);
+  }, [dailyProgress, welcomePackage.isUnlocked, welcomePackage.isClaimed, sessionQuotaState]);
 
   const handleArenaPress = useCallback(() => {
     if (CHESSCITO_LITE_MODE) return;
@@ -587,6 +620,29 @@ export function HubScaffoldClient({
             : null
         }
       />
+      {process.env.NODE_ENV === "development" &&
+        CHESSCITO_LITE_MODE &&
+        sessionQuotaState?.isAtFreeLimit &&
+        !sessionQuotaState.isAtHardMax ? (
+          <button
+            type="button"
+            onClick={() => { applyDevUnlock(); }}
+            style={{
+              position: "fixed",
+              bottom: "calc(env(safe-area-inset-bottom, 0px) + 72px)",
+              right: 16,
+              background: "rgba(180,0,180,0.9)",
+              color: "#fff",
+              padding: "8px 14px",
+              borderRadius: 20,
+              fontSize: 12,
+              fontWeight: 700,
+              zIndex: 9999,
+            }}
+          >
+            Dev: +5 mock unlock
+          </button>
+        ) : null}
       {!CHESSCITO_LITE_MODE && <ProSheet {...proSheet.sheetProps} />}
       {!CHESSCITO_LITE_MODE && <BadgeSheet {...badgeSheet.sheetProps} />}
       {!CHESSCITO_LITE_MODE && <ShopSheet {...shopSheet.sheetProps} />}
