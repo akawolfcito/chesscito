@@ -27,6 +27,10 @@ export function labyrinthBestStorageKey(piece: PieceId): string {
   return `${progressPrefix()}labyrinth-best:${piece}`;
 }
 
+export function dailySessionStorageKey(): string {
+  return `${progressPrefix()}daily-session`;
+}
+
 /** Only application-owned values are eligible for the hidden QA reset. */
 export function isChesscitoStorageKey(key: string | null): boolean {
   return key?.startsWith(LEGACY_PREFIX) ?? false;
