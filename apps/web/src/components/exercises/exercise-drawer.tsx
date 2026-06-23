@@ -17,6 +17,13 @@ import {
   interleaveTrainingRows,
   type TrainingNode,
 } from "@/lib/training/path";
+import { buildContentId } from "@/lib/daily/session-quota";
+
+type QuotaState = {
+  isAtLimit: boolean;
+  consumedContentIds: string[];
+  piece: string;
+};
 
 type ExerciseDrawerProps = {
   open: boolean;
@@ -52,6 +59,9 @@ type ExerciseDrawerProps = {
   labyrinthNodes?: TrainingNode[];
   /** Tap on an unlocked labyrinth row. Closes the drawer first. */
   onLabyrinthSelect?: (labyrinthId: string) => void;
+  /** B2.3b: when set and isAtLimit=true, only replayable content stays
+   *  enabled; new content gets quota-locked. Omit to disable gate. */
+  quotaState?: QuotaState | null;
 };
 
 function StarDisplay({ count }: { count: number }) {
@@ -82,6 +92,7 @@ export function ExerciseDrawer({
   visibleExerciseIds,
   labyrinthNodes,
   onLabyrinthSelect,
+  quotaState,
 }: ExerciseDrawerProps) {
   const t = useTranslations("EXERCISE_DRAWER_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -99,6 +110,26 @@ export function ExerciseDrawer({
   );
   const maxAllowed = Math.min(lastCompleted + 1, exercises.length - 1);
   const rotationOn = visibleExerciseIds != null;
+
+  function isExerciseReplayable(exercise: Exercise): boolean {
+    if (!quotaState?.isAtLimit) return true;
+    return (
+      (stars[exercise.id] ?? 0) > 0 ||
+      quotaState.consumedContentIds.includes(
+        buildContentId("exercise", quotaState.piece, exercise.id),
+      )
+    );
+  }
+
+  function isLabReplayable(node: TrainingNode): boolean {
+    if (!quotaState?.isAtLimit) return true;
+    return (
+      node.status === "complete" ||
+      quotaState.consumedContentIds.includes(
+        buildContentId("labyrinth", quotaState.piece, node.id),
+      )
+    );
+  }
 
   /** Lock rule. Rotation: anything in today's visible set is playable
    *  (the selector only surfaces tier-unlocked exercises). Legacy: the
@@ -225,13 +256,16 @@ export function ExerciseDrawer({
               const labIndex = (labyrinthNodes ?? []).indexOf(node);
               const isLabLocked = node.status === "locked";
               const isLabDone = node.status === "complete";
+              const isLabQuotaLocked = !isLabLocked && !isLabReplayable(node);
+              const isLabDisabled = isLabLocked || isLabQuotaLocked || !onLabyrinthSelect;
               return (
                 <button
                   key={node.id}
                   type="button"
-                  disabled={isLabLocked || !onLabyrinthSelect}
+                  disabled={isLabDisabled}
+                  data-quota-locked={isLabQuotaLocked ? "true" : undefined}
                   onClick={() => {
-                    if (isLabLocked || !onLabyrinthSelect) return;
+                    if (isLabDisabled || !onLabyrinthSelect) return;
                     onOpenChange(false);
                     onLabyrinthSelect(node.id);
                   }}
@@ -242,7 +276,7 @@ export function ExerciseDrawer({
                   }}
                   className={[
                     "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-backwards",
-                    isLabLocked ? "opacity-45 cursor-not-allowed" : "cursor-pointer",
+                    isLabLocked || isLabQuotaLocked ? "opacity-45 cursor-not-allowed" : "cursor-pointer",
                   ].join(" ")}
                 >
                   <span
@@ -301,6 +335,7 @@ export function ExerciseDrawer({
             const starCount = stars[exercise.id] ?? 0;
             const isDone = starCount > 0;
             const isLocked = lockedFor(exercise, index);
+            const isQuotaLocked = !isLocked && !isExerciseReplayable(exercise);
             // Generated puzzles carry their own description map; hand-
             // authored rows resolve via EXERCISE_DESCRIPTIONS i18n keys
             // (not statically known to the translator), falling back to
@@ -321,7 +356,8 @@ export function ExerciseDrawer({
               <button
                 key={exercise.id}
                 type="button"
-                disabled={isLocked}
+                disabled={isLocked || isQuotaLocked}
+                data-quota-locked={isQuotaLocked ? "true" : undefined}
                 onClick={() => handleSelect(exercise, index)}
                 style={{
                   animationDelay: `${position * 50}ms`,
@@ -335,7 +371,7 @@ export function ExerciseDrawer({
                 }}
                 className={[
                   "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-backwards",
-                  isLocked ? "opacity-45 cursor-not-allowed" : "cursor-pointer",
+                  isLocked || isQuotaLocked ? "opacity-45 cursor-not-allowed" : "cursor-pointer",
                 ].join(" ")}
               >
                 {/* Exercise number */}

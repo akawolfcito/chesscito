@@ -2,7 +2,6 @@ import {
   ExercisesScreen,
   type ExercisesInitialSheet,
 } from "@/components/exercises/exercises-screen";
-import { DailyLimitGuard } from "@/components/daily/daily-limit-guard";
 import { ContentCatalogProvider } from "@/lib/content/catalog-context";
 import { getMergedCatalog } from "@/lib/content/merged-catalog";
 import { envStageFloor } from "@/lib/content/stage";
@@ -10,9 +9,6 @@ import { EXERCISES } from "@/lib/game/exercises";
 import type { ExerciseCatalog } from "@/lib/game/rotation";
 import type { PieceId } from "@/lib/game/types";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
-
-/** Slots that are always free and bypass the daily limit gate. */
-const FREE_SLOTS = new Set(["daily", "challenge"]);
 
 type SearchParams = {
   /** Pre-select a piece on first render. Pieces without defined
@@ -24,7 +20,7 @@ type SearchParams = {
    *  values are silently dropped — the screen renders without a sheet. */
   sheet?: string | string[];
   /** Content slot discriminator. "daily" and "challenge" bypass the Lite
-   *  daily quota gate. Unknown/absent values → gated in Lite mode. */
+   *  daily quota banner. Unknown/absent values → gated in Lite mode. */
   slot?: string | string[];
 };
 
@@ -80,6 +76,10 @@ function parseInitialSheet(raw: string | undefined): ExercisesInitialSheet | und
  * mismatch, no client re-fetch). With CONTENT_STAGE unset/invalid no provider is
  * mounted and every consumer falls through to the baseline default —
  * byte-identical to the pre-overlay read path, with zero DB hits (kill-switch).
+ *
+ * B2.3b: DailyLimitGuard removed — soft gate now lives inside ExercisesScreen
+ * via DailyLimitBanner + ExerciseDrawer quotaState. The `slot` param is
+ * forwarded to ExercisesScreen so it can bypass the banner for free slots.
  */
 export default async function ExercisesPage({
   searchParams,
@@ -99,14 +99,10 @@ export default async function ExercisesPage({
   const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
 
   const screen = (
-    <ExercisesScreen initialPiece={initialPiece} initialSheet={initialSheet} />
+    <ExercisesScreen initialPiece={initialPiece} initialSheet={initialSheet} slot={slot} />
   );
 
-  // B2.3a: Lite-only daily quota gate. Free slots (daily, challenge) bypass it.
-  const isLiteExtra = CHESSCITO_LITE_MODE && (!slot || !FREE_SLOTS.has(slot));
-  const guarded = isLiteExtra ? <DailyLimitGuard>{screen}</DailyLimitGuard> : screen;
-
-  if (!merged) return guarded;
+  if (!merged) return screen;
 
   return (
     <ContentCatalogProvider
@@ -116,7 +112,7 @@ export default async function ExercisesPage({
         descriptions: merged.descriptions,
       }}
     >
-      {guarded}
+      {screen}
     </ContentCatalogProvider>
   );
 }

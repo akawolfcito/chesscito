@@ -251,3 +251,177 @@ describe("ExerciseDrawer — overlay descriptions (db-content)", () => {
     expect(screen.getByText("Horizontal move")).toBeInTheDocument();
   });
 });
+
+// ─── B2.3b: Quota soft gate ───────────────────────────────────────────────────
+
+describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
+  const rook1Id = EXERCISES.rook[0].id; // "rook-1"
+  const rook2Id = EXERCISES.rook[1].id; // "rook-2"
+
+  const quotaAtLimit = {
+    isAtLimit: true,
+    consumedContentIds: [`exercise:rook:${rook1Id}`], // rook-1 consumed today
+    piece: "rook",
+  };
+
+  it("exercise with stars > 0 is clickable at quota limit", () => {
+    const onNavigate = vi.fn();
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={{ [rook1Id]: 3 }} // played with stars
+        onNavigate={onNavigate}
+        quotaState={quotaAtLimit}
+      />,
+    );
+    const row = screen.getByText("Horizontal move").closest("button");
+    expect(row).toBeEnabled();
+  });
+
+  it("exercise consumed today (in consumedContentIds, no stars) is clickable at limit", () => {
+    const onNavigate = vi.fn();
+    // rook-1 in consumedContentIds but stars=0 (e.g. interrupted session)
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={{}} // no stars
+        onNavigate={onNavigate}
+        quotaState={quotaAtLimit}
+      />,
+    );
+    // rook-1 should be enabled (consumed today)
+    const row = screen.getByText("Horizontal move").closest("button");
+    expect(row).toBeEnabled();
+  });
+
+  it("new exercise (no stars, not consumed today) is quota-locked at limit", () => {
+    // rook-2 is not in consumedContentIds, no stars
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={{}}
+        onNavigate={vi.fn()}
+        quotaState={quotaAtLimit}
+      />,
+    );
+    const row = screen.getByText("Vertical move").closest("button"); // rook-2
+    expect(row).toBeDisabled();
+  });
+
+  it("new exercise shows quota-locked indicator", () => {
+    // rook-1 has stars (path-unlocks rook-2); rook-2 has no stars and is
+    // NOT in consumedContentIds → isQuotaLocked=true, data-quota-locked set
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={{ [rook1Id]: 3 }}
+        onNavigate={vi.fn()}
+        quotaState={quotaAtLimit}
+      />,
+    );
+    const row = screen.getByText("Vertical move").closest("button"); // rook-2
+    expect(row).toHaveAttribute("data-quota-locked", "true");
+  });
+
+  it("no quotaState prop = no quota gate (backward compatible)", () => {
+    render(
+      <ExerciseDrawer
+        {...baseProps}
+        stars={{}}
+        onNavigate={vi.fn()}
+        // no quotaState
+      />,
+    );
+    // rook-1 (index 0) is always unlocked in legacy mode
+    const row = screen.getByText("Horizontal move").closest("button");
+    expect(row).toBeEnabled();
+  });
+
+  describe("labyrinth quota behavior", () => {
+    const sixStars = { [rook1Id]: 3, [rook2Id]: 3 };
+    function rookLabNodes(starsMap: Record<string, number>, bests: Record<string, number> = {}) {
+      return buildTrainingPath({
+        piece: "rook",
+        progress: { piece: "rook", currentId: null, stars: starsMap },
+        labyrinthBests: bests,
+        badgeClaimed: false,
+      }).filter((node) => node.kind === "labyrinth");
+    }
+
+    it("completed labyrinth is clickable at quota limit", () => {
+      const onLabyrinthSelect = vi.fn();
+      const nodes = rookLabNodes(sixStars);
+      const firstLabId = nodes[0]?.id ?? "";
+      render(
+        <ExerciseDrawer
+          {...baseProps}
+          stars={sixStars}
+          totalStars={6}
+          onNavigate={vi.fn()}
+          labyrinthNodes={rookLabNodes(sixStars, { [firstLabId]: 3 })}
+          onLabyrinthSelect={onLabyrinthSelect}
+          quotaState={{ isAtLimit: true, consumedContentIds: [], piece: "rook" }}
+        />,
+      );
+      const row = screen.getByText("Labyrinth 1").closest("button");
+      expect(row).toBeEnabled();
+    });
+
+    it("labyrinth consumed today is clickable at quota limit", () => {
+      const onLabyrinthSelect = vi.fn();
+      const nodes = rookLabNodes(sixStars);
+      const firstLabId = nodes[0]?.id ?? "";
+      render(
+        <ExerciseDrawer
+          {...baseProps}
+          stars={sixStars}
+          totalStars={6}
+          onNavigate={vi.fn()}
+          labyrinthNodes={nodes}
+          onLabyrinthSelect={onLabyrinthSelect}
+          quotaState={{
+            isAtLimit: true,
+            consumedContentIds: [`labyrinth:rook:${firstLabId}`],
+            piece: "rook",
+          }}
+        />,
+      );
+      const row = screen.getByText("Labyrinth 1").closest("button");
+      expect(row).toBeEnabled();
+    });
+
+    it("available labyrinth (not consumed today) is quota-locked at limit", () => {
+      const nodes = rookLabNodes(sixStars);
+      render(
+        <ExerciseDrawer
+          {...baseProps}
+          stars={sixStars}
+          totalStars={6}
+          onNavigate={vi.fn()}
+          labyrinthNodes={nodes}
+          onLabyrinthSelect={vi.fn()}
+          quotaState={{ isAtLimit: true, consumedContentIds: [], piece: "rook" }}
+        />,
+      );
+      const row = screen.getByText("Labyrinth 1").closest("button");
+      expect(row).toBeDisabled();
+    });
+
+    it("path-locked labyrinth stays locked regardless of quota", () => {
+      const nodes = rookLabNodes({}); // no stars → first lab is path-locked
+      render(
+        <ExerciseDrawer
+          {...baseProps}
+          stars={{}}
+          totalStars={0}
+          onNavigate={vi.fn()}
+          labyrinthNodes={nodes}
+          onLabyrinthSelect={vi.fn()}
+          // no quotaState — path lock only
+        />,
+      );
+      const row = screen.getByText("Labyrinth 1").closest("button");
+      expect(row).toBeDisabled();
+    });
+  });
+});

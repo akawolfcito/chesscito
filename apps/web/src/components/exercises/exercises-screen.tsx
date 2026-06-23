@@ -154,7 +154,15 @@ import {
   setDockSheet,
 } from "@/lib/ui/dock-sheet-store";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
-import { buildContentId, recordExtraConsumed } from "@/lib/daily/session-quota";
+import {
+  buildContentId,
+  recordExtraConsumed,
+  getDailySession,
+  isAtFreeLimit,
+  isAtHardMax,
+} from "@/lib/daily/session-quota";
+import { subscribeToDailySessionChanges } from "@/lib/daily/session-events";
+import { DailyLimitBanner } from "@/components/daily/daily-limit-banner";
 
 // SHOP_ITEMS, SHIELD_ITEM_ID, SHIELDS_PER_PURCHASE now live in
 // lib/contracts/shop-catalog.ts so they're testable in isolation. The
@@ -585,6 +593,9 @@ export type ExercisesScreenProps = {
    *  on mount so it does not trigger the `initialAction` bounce-to-hub
    *  behavior. */
   initialSheet?: ExercisesInitialSheet;
+  /** B2.3b: content slot discriminator. "daily" and "challenge" bypass
+   *  the Lite daily quota banner. Absent/other values → gated in Lite mode. */
+  slot?: string;
 };
 
 /**
@@ -600,7 +611,9 @@ export function ExercisesScreen({
   initialPiece = "rook",
   initialAction,
   initialSheet,
+  slot,
 }: ExercisesScreenProps = {}) {
+  const isFreeSlot = slot === "daily" || slot === "challenge";
   const tShopItem = useTranslations("SHOP_ITEM_COPY");
   const tCapture = useTranslations("CAPTURE_COPY");
   const tLab = useTranslations("LABYRINTH_COPY");
@@ -879,6 +892,28 @@ export function ExercisesScreen({
 
   // SSR hydration guard for WP CTA (spec P0-4)
   useEffect(() => { setWpMounted(true); }, []);
+
+  type QuotaDisplayState = {
+    isAtLimit: boolean;
+    isHardMax: boolean;
+    consumedContentIds: string[];
+  } | null;
+  const [quotaDisplayState, setQuotaDisplayState] = useState<QuotaDisplayState>(null);
+  useEffect(() => {
+    if (!CHESSCITO_LITE_MODE || isFreeSlot) return;
+    function read() {
+      const s = getDailySession();
+      const atFreeLimit = isAtFreeLimit(s);
+      const atHardMax = isAtHardMax(s);
+      setQuotaDisplayState(
+        atFreeLimit || atHardMax
+          ? { isAtLimit: true, isHardMax: atHardMax, consumedContentIds: s.consumedContentIds }
+          : null,
+      );
+    }
+    read();
+    return subscribeToDailySessionChanges(read);
+  }, [isFreeSlot]);
 
   /** Modal trap fix: when the global ResultOverlay opens (success OR
    *  error) while a Radix dock sheet is still mounted, Radix's modal
@@ -2537,6 +2572,12 @@ export function ExercisesScreen({
             }
           />
         </div>
+        {quotaDisplayState?.isAtLimit && (
+          <DailyLimitBanner
+            isHardMax={quotaDisplayState.isHardMax}
+            onBack={() => router.push("/hub")}
+          />
+        )}
         <MissionPanelCandy
           selectedPiece={selectedPiece}
           onOpenPieceSheet={() => setBadgeSheetOpen(true)}
@@ -2770,6 +2811,15 @@ export function ExercisesScreen({
               visibleExerciseIds={visibleExerciseIds}
               labyrinthNodes={trainingPath.filter((n) => n.kind === "labyrinth")}
               onLabyrinthSelect={handleLabyrinthSelect}
+              quotaState={
+                quotaDisplayState?.isAtLimit
+                  ? {
+                      isAtLimit: true,
+                      consumedContentIds: quotaDisplayState.consumedContentIds,
+                      piece: selectedPiece,
+                    }
+                  : null
+              }
             />
           }
           isReplay={isReplay}
