@@ -18,12 +18,14 @@ export const LITE_PRIMARY_PIECE = "rook" as const;
 export type LitePrimaryPiece = typeof LITE_PRIMARY_PIECE;
 
 /**
- * 8 variants in strict priority order (highest → lowest).
+ * 10 variants in strict priority order (highest → lowest).
  * deriveContentLoopAction returns exactly ONE — the most urgent.
  */
 export type ContentLoopVariant =
   | "daily-pending"       // Daily Focus not done today — highest priority
   | "claim-pending"       // Welcome Package unlocked but not claimed
+  | "daily-limit-reached" // Lite: free quota exhausted, more content available (B2.3a)
+  | "daily-max-reached"   // Lite: hard max reached, more content available (B2.3a)
   | "continue-path"       // Exercises with no stars yet (first visit)
   | "labyrinth-ready"     // Labyrinth unlocked and not yet completed
   | "improve-stars"       // All exercises played but some < 3★
@@ -78,9 +80,18 @@ export type ContentLoopInput = {
    * Caller derives this from the catalog — do not hardcode.
    */
   nextAvailablePiece: string | null;
+  /**
+   * B2.3a: Daily session quota state (Lite-only).
+   * Omit or pass null in Full mode — quota gate is never applied.
+   * Caller hydrates from getDailySession() + isAtFreeLimit/isAtHardMax helpers.
+   */
+  sessionQuota?: {
+    isAtFreeLimit: boolean;
+    isAtHardMax: boolean;
+  } | null;
 };
 
-// ─── Static action table (copy frozen per spec §8) ───────────────────────────
+// ─── Static action table ──────────────────────────────────────────────────────
 
 const ACTIONS: Record<ContentLoopVariant, ContentLoopAction> = {
   "daily-pending": {
@@ -98,6 +109,22 @@ const ACTIONS: Record<ContentLoopVariant, ContentLoopAction> = {
     ctaES: "Reclama tu regalo",
     subEN: "A reward is waiting for you",
     subES: "Tienes una recompensa esperando",
+  },
+  "daily-limit-reached": {
+    variant: "daily-limit-reached",
+    destination: null,
+    ctaEN: "Come back tomorrow",
+    ctaES: "Vuelve mañana",
+    subEN: "Great focus today.",
+    subES: "Gran enfoque hoy.",
+  },
+  "daily-max-reached": {
+    variant: "daily-max-reached",
+    destination: null,
+    ctaEN: "Come back tomorrow",
+    ctaES: "Vuelve mañana",
+    subEN: "That's enough focus for today.",
+    subES: "Eso es suficiente enfoque por hoy.",
   },
   "continue-path": {
     variant: "continue-path",
@@ -191,6 +218,18 @@ export function isPieceFullyComplete(path: TrainingNode[]): boolean {
   );
 }
 
+/** True when there is meaningful consumable content still available in the path
+ *  or another piece is unlocked. Used by the daily-limit variants to avoid
+ *  gating a player who has already finished everything. */
+export function hasMoreContent(path: TrainingNode[], nextAvailablePiece: string | null): boolean {
+  return (
+    hasAvailableExercise(path) ||
+    hasReadyLabyrinth(path) ||
+    hasImprovableExercise(path) ||
+    (isPieceFullyComplete(path) && nextAvailablePiece !== null)
+  );
+}
+
 // ─── Main derivation ──────────────────────────────────────────────────────────
 
 /**
@@ -200,7 +239,7 @@ export function isPieceFullyComplete(path: TrainingNode[]): boolean {
  * Same inputs always produce the same output (pure, deterministic).
  */
 export function deriveContentLoopAction(input: ContentLoopInput): ContentLoopAction {
-  const { daily, today, welcomePackage, primaryPath, nextAvailablePiece } = input;
+  const { daily, today, welcomePackage, primaryPath, nextAvailablePiece, sessionQuota } = input;
 
   // 1. Daily Focus not yet done today — highest priority regardless of anything else.
   if (!isCompletedToday(today, daily)) {
@@ -212,22 +251,33 @@ export function deriveContentLoopAction(input: ContentLoopInput): ContentLoopAct
     return ACTIONS["claim-pending"];
   }
 
-  // 3. Exercises waiting to be played (stars = 0).
+  // 3–4. B2.3a daily quota gate (Lite-only; sessionQuota === null in Full mode).
+  //      Only fires when there IS more consumable content — never gate a finished path.
+  if (sessionQuota && hasMoreContent(primaryPath, nextAvailablePiece)) {
+    if (sessionQuota.isAtHardMax) {
+      return ACTIONS["daily-max-reached"];
+    }
+    if (sessionQuota.isAtFreeLimit) {
+      return ACTIONS["daily-limit-reached"];
+    }
+  }
+
+  // 5. Exercises waiting to be played (stars = 0).
   if (hasAvailableExercise(primaryPath)) {
     return ACTIONS["continue-path"];
   }
 
-  // 4. Labyrinth unlocked and pending.
+  // 6. Labyrinth unlocked and pending.
   if (hasReadyLabyrinth(primaryPath)) {
     return ACTIONS["labyrinth-ready"];
   }
 
-  // 5. All exercises played but improvement possible (stars < 3★).
+  // 7. All exercises played but improvement possible (stars < 3★).
   if (hasImprovableExercise(primaryPath)) {
     return ACTIONS["improve-stars"];
   }
 
-  // 6. Piece fully done and another piece is available.
+  // 8. Piece fully done and another piece is available.
   if (isPieceFullyComplete(primaryPath) && nextAvailablePiece !== null) {
     return {
       ...ACTIONS["next-piece"],
@@ -235,13 +285,13 @@ export function deriveContentLoopAction(input: ContentLoopInput): ContentLoopAct
     };
   }
 
-  // 7. Daily done, content exists, nothing urgent left — come back tomorrow.
+  // 9. Daily done, content exists, nothing urgent left — come back tomorrow.
   //    Only fires when the path has exercise nodes (meaningful content exists).
   if (primaryPath.some((n) => n.kind === "exercise")) {
     return ACTIONS["come-back-tomorrow"];
   }
 
-  // 8. view-progress: ultimate fallback (empty path / catalog not yet loaded).
-  //    Never a dead screen — destination /trophies always available.
+  // 10. view-progress: ultimate fallback (empty path / catalog not yet loaded).
+  //     Never a dead screen — destination /trophies always available.
   return ACTIONS["view-progress"];
 }

@@ -4,6 +4,7 @@ import {
   deriveContentLoopAction,
   hasAvailableExercise,
   hasImprovableExercise,
+  hasMoreContent,
   hasReadyLabyrinth,
   isPieceFullyComplete,
   LITE_PRIMARY_PIECE,
@@ -376,5 +377,118 @@ describe("isPieceFullyComplete", () => {
 
   it("returns false for an empty path", () => {
     expect(isPieceFullyComplete([])).toBe(false);
+  });
+});
+
+// ─── hasMoreContent ───────────────────────────────────────────────────────────
+
+describe("hasMoreContent", () => {
+  it("true when exercises are available", () => {
+    expect(hasMoreContent(PATH_ALL_AVAILABLE, null)).toBe(true);
+  });
+  it("true when labyrinth is ready", () => {
+    expect(hasMoreContent(PATH_LABYRINTH_READY, null)).toBe(true);
+  });
+  it("true when exercises improvable", () => {
+    expect(hasMoreContent(PATH_ALL_DONE_IMPROVABLE, null)).toBe(true);
+  });
+  it("true when piece fully complete but nextAvailablePiece exists", () => {
+    expect(hasMoreContent(PATH_FULLY_COMPLETE, "bishop")).toBe(true);
+  });
+  it("false when piece fully complete and no next piece", () => {
+    expect(hasMoreContent(PATH_FULLY_COMPLETE, null)).toBe(false);
+  });
+  it("false for empty path", () => {
+    expect(hasMoreContent([], null)).toBe(false);
+  });
+});
+
+// ─── B2.3a daily quota variants ───────────────────────────────────────────────
+
+const AT_FREE_LIMIT = { isAtFreeLimit: true, isAtHardMax: false };
+const AT_HARD_MAX = { isAtFreeLimit: false, isAtHardMax: true };
+const WITHIN_QUOTA = { isAtFreeLimit: false, isAtHardMax: false };
+
+describe("deriveContentLoopAction — B2.3a quota variants", () => {
+  it("sessionQuota null (Full mode) → never returns daily-limit-reached", () => {
+    const result = deriveContentLoopAction(
+      baseInput({ sessionQuota: null, primaryPath: PATH_ALL_AVAILABLE }),
+    );
+    expect(result.variant).not.toBe("daily-limit-reached");
+    expect(result.variant).toBe("continue-path");
+  });
+
+  it("sessionQuota undefined (default) → no gate applied", () => {
+    const result = deriveContentLoopAction(
+      baseInput({ primaryPath: PATH_ALL_AVAILABLE }),
+    );
+    expect(result.variant).toBe("continue-path");
+  });
+
+  it("isAtFreeLimit + content available → daily-limit-reached", () => {
+    const result = deriveContentLoopAction(
+      baseInput({ sessionQuota: AT_FREE_LIMIT, primaryPath: PATH_ALL_AVAILABLE }),
+    );
+    expect(result.variant).toBe("daily-limit-reached");
+    expect(result.destination).toBeNull();
+  });
+
+  it("isAtHardMax + content available → daily-max-reached", () => {
+    const result = deriveContentLoopAction(
+      baseInput({ sessionQuota: AT_HARD_MAX, primaryPath: PATH_ALL_AVAILABLE }),
+    );
+    expect(result.variant).toBe("daily-max-reached");
+    expect(result.destination).toBeNull();
+  });
+
+  it("isAtHardMax takes priority over isAtFreeLimit", () => {
+    const both = { isAtFreeLimit: true, isAtHardMax: true };
+    const result = deriveContentLoopAction(
+      baseInput({ sessionQuota: both, primaryPath: PATH_ALL_AVAILABLE }),
+    );
+    expect(result.variant).toBe("daily-max-reached");
+  });
+
+  it("isAtFreeLimit but no more content → falls through to come-back-tomorrow", () => {
+    const result = deriveContentLoopAction(
+      baseInput({ sessionQuota: AT_FREE_LIMIT, primaryPath: PATH_FULLY_COMPLETE, nextAvailablePiece: null }),
+    );
+    expect(result.variant).toBe("come-back-tomorrow");
+  });
+
+  it("within quota → continues normally (continue-path)", () => {
+    const result = deriveContentLoopAction(
+      baseInput({ sessionQuota: WITHIN_QUOTA, primaryPath: PATH_ALL_AVAILABLE }),
+    );
+    expect(result.variant).toBe("continue-path");
+  });
+
+  it("daily-pending is still priority 1 — quota gate cannot block it", () => {
+    const result = deriveContentLoopAction(
+      baseInput({ daily: dailyPending(), sessionQuota: AT_FREE_LIMIT }),
+    );
+    expect(result.variant).toBe("daily-pending");
+  });
+
+  it("claim-pending is still priority 2 — quota gate cannot block it", () => {
+    const result = deriveContentLoopAction(
+      baseInput({ welcomePackage: pendingClaim(), sessionQuota: AT_FREE_LIMIT }),
+    );
+    expect(result.variant).toBe("claim-pending");
+  });
+
+  it("daily-limit-reached copy: ctaEN is 'Come back tomorrow'", () => {
+    const result = deriveContentLoopAction(
+      baseInput({ sessionQuota: AT_FREE_LIMIT, primaryPath: PATH_ALL_AVAILABLE }),
+    );
+    expect(result.ctaEN).toBe("Come back tomorrow");
+    expect(result.subEN).toBe("Great focus today.");
+  });
+
+  it("daily-max-reached copy: subEN mentions enough focus", () => {
+    const result = deriveContentLoopAction(
+      baseInput({ sessionQuota: AT_HARD_MAX, primaryPath: PATH_ALL_AVAILABLE }),
+    );
+    expect(result.subEN).toContain("enough focus");
   });
 });
