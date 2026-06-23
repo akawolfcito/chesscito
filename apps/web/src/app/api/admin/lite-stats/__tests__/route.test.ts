@@ -41,7 +41,6 @@ beforeEach(() => {
   // Restore getSupabaseServer after any test that calls mockReturnValue(null).
   // vi.clearAllMocks() resets call history but NOT implementations, so a
   // previous mockReturnValue(null) would bleed into subsequent tests.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(getSupabaseServer).mockImplementation(
     () => ({ from: vi.fn(() => selectMock) }) as any,
   );
