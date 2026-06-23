@@ -174,7 +174,6 @@ export function ExerciseDrawer({
                 className="candy-tray-pill-divider"
               />
               <picture
-                aria-hidden="true"
                 className="candy-tray-pill-icon candy-tray-pill-icon--floating candy-tray-pill-icon--streak"
               >
                 <source srcSet="/art/redesign/icons/streak.avif" type="image/avif" />
