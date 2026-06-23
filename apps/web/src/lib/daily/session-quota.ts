@@ -18,10 +18,10 @@ import { dispatchDailySessionChanged } from "@/lib/daily/session-events";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-export const FREE_EXTRA_QUOTA = 3;
+export const FREE_EXTRA_QUOTA = 5;
 export const PACK_EXTRA_SLOTS = 5;
 export const MAX_PAID_PACKS = 2;
-export const HARD_MAX_EXTRAS = FREE_EXTRA_QUOTA + PACK_EXTRA_SLOTS * MAX_PAID_PACKS; // 13
+export const HARD_MAX_EXTRAS = FREE_EXTRA_QUOTA + PACK_EXTRA_SLOTS * MAX_PAID_PACKS; // 15
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

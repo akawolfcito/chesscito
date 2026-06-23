@@ -130,12 +130,16 @@ describe("isAtFreeLimit", () => {
   it("false when only 2 consumed", () => {
     expect(isAtFreeLimit(sessionWith(["exercise:rook:rook-1", "exercise:rook:rook-2"]))).toBe(false);
   });
-  it("true when 3 consumed and no paid packs", () => {
+  it("false when only 3 consumed (free quota is now 5)", () => {
     const ids = ["exercise:rook:rook-1", "exercise:rook:rook-2", "exercise:rook:rook-3"];
+    expect(isAtFreeLimit(sessionWith(ids, 0))).toBe(false);
+  });
+  it("true when 5 consumed and no paid packs", () => {
+    const ids = Array.from({ length: 5 }, (_, i) => `exercise:rook:rook-${i + 1}`);
     expect(isAtFreeLimit(sessionWith(ids, 0))).toBe(true);
   });
-  it("false when 3 consumed but has paid pack (remaining slots available)", () => {
-    const ids = ["exercise:rook:rook-1", "exercise:rook:rook-2", "exercise:rook:rook-3"];
+  it("false when 5 consumed but has paid pack (remaining slots available)", () => {
+    const ids = Array.from({ length: 5 }, (_, i) => `exercise:rook:rook-${i + 1}`);
     expect(isAtFreeLimit(sessionWith(ids, 1))).toBe(false);
   });
   it("false when at hard max (uses isAtHardMax instead)", () => {
@@ -155,7 +159,7 @@ describe("isAtHardMax", () => {
     const ids = Array.from({ length: HARD_MAX_EXTRAS - 1 }, (_, i) => `exercise:rook:rook-${i}`);
     expect(isAtHardMax(sessionWith(ids, 2))).toBe(false);
   });
-  it("true when 13 consumed", () => {
+  it("true when 15 consumed", () => {
     const ids = Array.from({ length: HARD_MAX_EXTRAS }, (_, i) => `exercise:rook:rook-${i}`);
     expect(isAtHardMax(sessionWith(ids, 2))).toBe(true);
   });
@@ -220,7 +224,7 @@ describe("computeApplyDevUnlock", () => {
 // ─── CONSTANTS sanity check ───────────────────────────────────────────────────
 
 describe("constants", () => {
-  it("FREE_EXTRA_QUOTA is 3", () => expect(FREE_EXTRA_QUOTA).toBe(3));
+  it("FREE_EXTRA_QUOTA is 5", () => expect(FREE_EXTRA_QUOTA).toBe(5));
   it("PACK_EXTRA_SLOTS is 5", () => expect(PACK_EXTRA_SLOTS).toBe(5));
-  it("HARD_MAX_EXTRAS equals free + 2 packs = 13", () => expect(HARD_MAX_EXTRAS).toBe(13));
+  it("HARD_MAX_EXTRAS equals free + 2 packs = 15", () => expect(HARD_MAX_EXTRAS).toBe(15));
 });
