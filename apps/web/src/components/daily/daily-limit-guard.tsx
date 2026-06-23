@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getDailySession, isAtFreeLimit } from "@/lib/daily/session-quota";
+import { getDailySession, isAtFreeLimit, isAtHardMax } from "@/lib/daily/session-quota";
 import { subscribeToDailySessionChanges } from "@/lib/daily/session-events";
 import type { DailySessionState } from "@/lib/daily/session-quota";
 
@@ -26,7 +26,7 @@ function readSession(): DailySessionState {
 }
 
 function isBlocked(session: DailySessionState): boolean {
-  return isAtFreeLimit(session) && session.paidUnlocked === 0;
+  return (isAtFreeLimit(session) && session.paidUnlocked === 0) || isAtHardMax(session);
 }
 
 export function DailyLimitGuard({ children }: { children: React.ReactNode }) {
