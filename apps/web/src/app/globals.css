@@ -419,9 +419,9 @@
     --playhub-slot-frame: image-set(url("/art/shop-slot-frame.avif") type("image/avif"),
         url("/art/shop-slot-frame.webp") type("image/webp"),
         url("/art/shop-slot-frame.png") type("image/png"));
-    --playhub-game-bg: image-set(url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
-        url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
-        url("/art/redesign/bg/bg-ch.png") type("image/png"));
+    --playhub-game-bg: image-set(url("/art/redesign/bg/wallpaper-exercises.avif") type("image/avif"),
+        url("/art/redesign/bg/wallpaper-exercises.webp") type("image/webp"),
+        url("/art/redesign/bg/wallpaper-exercises.png") type("image/png"));
     --playhub-board-bg: image-set(url("/art/chesscito-board.avif") type("image/avif"),
         url("/art/chesscito-board.webp") type("image/webp"),
         url("/art/chesscito-board.png") type("image/png"));
@@ -848,9 +848,9 @@
     position: absolute;
     inset: -12px;
     z-index: 0;
-    background-image: image-set(url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
-        url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
-        url("/art/redesign/bg/bg-ch.png") type("image/png"));
+    background-image: image-set(url("/art/redesign/bg/wallpaper-exercises.avif") type("image/avif"),
+        url("/art/redesign/bg/wallpaper-exercises.webp") type("image/webp"),
+        url("/art/redesign/bg/wallpaper-exercises.png") type("image/png"));
     background-size: cover;
     background-position: top center;
     background-repeat: no-repeat;
@@ -1999,9 +1999,9 @@
     background-size: cover;
     background-position: top center;
     background-repeat: no-repeat;
-    background-image: image-set(url("/art/redesign/bg/bg-ch.avif") type("image/avif"),
-        url("/art/redesign/bg/bg-ch.webp") type("image/webp"),
-        url("/art/redesign/bg/bg-ch.png") type("image/png"));
+    background-image: image-set(url("/art/redesign/bg/wallpaper-exercises.avif") type("image/avif"),
+        url("/art/redesign/bg/wallpaper-exercises.webp") type("image/webp"),
+        url("/art/redesign/bg/wallpaper-exercises.png") type("image/png"));
     z-index: 0;
   }
 

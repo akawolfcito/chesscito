@@ -19,7 +19,7 @@ describe("/arena layout (server)", () => {
     // CSS-gated discovery cost ~1s of LCP Load Delay on mobile Slow-4G.
     // Same recipe as /hub: AVIF-only preload (MiniPay Chromium).
     ArenaLayout({ children: null });
-    expect(preloadMock).toHaveBeenCalledWith("/art/redesign/bg/bg-ch.avif", {
+    expect(preloadMock).toHaveBeenCalledWith("/art/redesign/bg/wallpaper-exercises.avif", {
       as: "image",
       type: "image/avif",
       fetchPriority: "high",
@@ -34,7 +34,7 @@ describe("/arena layout (server)", () => {
   it("does NOT preload the WebP/PNG fallbacks", () => {
     ArenaLayout({ children: null });
     const calls = preloadMock.mock.calls.map((args) => args[0] as string);
-    expect(calls).not.toContain("/art/redesign/bg/bg-ch.webp");
-    expect(calls).not.toContain("/art/redesign/bg/bg-ch.png");
+    expect(calls).not.toContain("/art/redesign/bg/wallpaper-exercises.webp");
+    expect(calls).not.toContain("/art/redesign/bg/wallpaper-exercises.png");
   });
 });

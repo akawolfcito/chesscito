@@ -16,7 +16,7 @@ export default function ArenaLayout({
 }: {
   children: React.ReactNode;
 }) {
-  preload("/art/redesign/bg/bg-ch.avif", {
+  preload("/art/redesign/bg/wallpaper-exercises.avif", {
     as: "image",
     type: "image/avif",
     fetchPriority: "high",

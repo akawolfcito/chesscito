@@ -11,7 +11,7 @@ const ONBOARDED_KEY = "chesscito:onboarded";
  *  only ever served to legacy browsers and would waste bandwidth here. */
 const PRELOAD_ASSETS = [
   "/art/redesign/board/board-ch.avif",
-  "/art/redesign/bg/bg-ch.avif",
+  "/art/redesign/bg/wallpaper-exercises.avif",
 ];
 
 /** Max time (ms) to wait before revealing anyway. */
