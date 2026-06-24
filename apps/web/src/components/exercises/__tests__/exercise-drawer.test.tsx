@@ -43,9 +43,9 @@ describe("ExerciseDrawer — legacy (no visibleExerciseIds)", () => {
     // Full list present.
     expect(screen.getByText("Horizontal move")).toBeInTheDocument(); // rook-1
     expect(screen.getByText("Boxed-in square")).toBeInTheDocument(); // rook-8
-    // Fresh progress → only index 0 unlocked; a later one is disabled.
+    // Fresh progress → only index 0 unlocked; a later one is path-locked.
     const locked = screen.getByText("Cross capture").closest("button"); // rook-5
-    expect(locked).toBeDisabled();
+    expect(locked).toHaveAttribute("data-locked", "true");
   });
 
   it("navigates by pool index for an unlocked row", () => {
@@ -143,7 +143,7 @@ describe("ExerciseDrawer — labyrinth nodes (Slice 3D)", () => {
     );
     expect(screen.getByText("Unlocks at 6★")).toBeInTheDocument();
     const locked = screen.getByText("Labyrinth 1").closest("button");
-    expect(locked).toBeDisabled();
+    expect(locked).toHaveAttribute("data-locked", "true");
     if (locked) fireEvent.click(locked);
     expect(onLabyrinthSelect).not.toHaveBeenCalled();
   });
@@ -305,7 +305,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
       />,
     );
     const row = screen.getByText("Vertical move").closest("button"); // rook-2
-    expect(row).toBeDisabled();
+    expect(row).toHaveAttribute("data-locked", "true");
   });
 
   it("new exercise shows quota-locked indicator", () => {
@@ -404,7 +404,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
         />,
       );
       const row = screen.getByText("Labyrinth 1").closest("button");
-      expect(row).toBeDisabled();
+      expect(row).toHaveAttribute("data-quota-locked", "true");
     });
 
     it("path-locked labyrinth stays locked regardless of quota", () => {
@@ -421,7 +421,7 @@ describe("ExerciseDrawer — quotaState (B2.3b soft gate)", () => {
         />,
       );
       const row = screen.getByText("Labyrinth 1").closest("button");
-      expect(row).toBeDisabled();
+      expect(row).toHaveAttribute("data-locked", "true");
     });
   });
 });

@@ -2044,6 +2044,30 @@
         rgba(244, 63, 94, 0.00) 70%);
   }
 
+  /* ── Path-map sheet background (exercises drawer) ── */
+  .sheet-bg-exercises {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sheet-bg-exercises::before {
+    content: "";
+    position: absolute;
+    inset: -12px;
+    background-size: cover;
+    background-position: top center;
+    background-repeat: no-repeat;
+    background-image: image-set(url("/art/redesign/bg/path-map.avif") type("image/avif"),
+        url("/art/redesign/bg/path-map.webp") type("image/webp"),
+        url("/art/redesign/bg/path-map.png") type("image/png"));
+    z-index: 0;
+  }
+
+  .sheet-bg-exercises > * {
+    position: relative;
+    z-index: 1;
+  }
+
   /* Inner tray: a slightly darker cream rectangle for rows/lists. */
   .paper-tray {
     border-radius: 0.875rem;

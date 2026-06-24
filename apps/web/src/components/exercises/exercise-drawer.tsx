@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
@@ -34,44 +35,22 @@ type ExerciseDrawerProps = {
   activeIndex: number;
   totalStars: number;
   onNavigate: (index: number) => void;
-  /** Live shield count. When provided AND > 0, the trigger pill
-   *  renders an inline divider + shield count next to the stars so
-   *  the HUD collapses two chips into one. Omit (or pass 0) to
-   *  preserve the legacy single-stars trigger. */
   shieldCount?: number;
-  /** Live consecutive-success streak. When provided AND >= 2, the
-   *  trigger pill renders an inline divider + flame icon + count
-   *  so the player always sees what they're protecting. Below 2
-   *  it's omitted to avoid mounting "1" right after the first
-   *  success of a session (visual noise). */
   streakCount?: number;
-  /** Rotation Engine (slice E). When provided (non-null), the drawer
-   *  shows ONLY today's visible set and treats those exercises as
-   *  playable (tier-unlocked), bypassing the legacy linear-senda lock.
-   *  Rows keep their real pool index so stars / onNavigate stay correct.
-   *  Null/undefined → legacy full list with linear lock. */
   visibleExerciseIds?: ReadonlySet<string> | null;
-  /** Slice 3D — the drawer is the PRIMARY training selector, so the
-   *  labyrinth leg of the path renders here as a section after the
-   *  exercises (the next challenge comes to the player, it is never
-   *  searched for inside Mission). Nodes arrive pre-ordered from
-   *  buildTrainingPath. Absent → legacy exercise-only drawer. */
   labyrinthNodes?: TrainingNode[];
-  /** Tap on an unlocked labyrinth row. Closes the drawer first. */
   onLabyrinthSelect?: (labyrinthId: string) => void;
-  /** B2.3b: when set and isAtLimit=true, only replayable content stays
-   *  enabled; new content gets quota-locked. Omit to disable gate. */
   quotaState?: QuotaState | null;
 };
 
 function StarDisplay({ count }: { count: number }) {
   return (
-    <span className="flex gap-1">
+    <span className="flex gap-0.5">
       {[1, 2, 3].map((i) => (
         <CandyIcon
           key={i}
           name="star"
-          className={`h-4 w-4 ${i <= count ? "opacity-100" : "opacity-25"}`}
+          className={`h-3.5 w-3.5 ${i <= count ? "opacity-100" : "opacity-25"}`}
         />
       ))}
     </span>
@@ -98,18 +77,25 @@ export function ExerciseDrawer({
   const tPiece = useTranslations("PIECE_LABELS");
   const tPath = useTranslations("TRAINING_PATH_COPY");
   const descriptions = useTranslations("EXERCISE_DESCRIPTIONS");
-  // Overlay-aware descriptions map (baseline default with no provider). An
-  // overlay-edited `explanation` overrides the baseline generated text.
   const overlayDescriptions = useExerciseDescriptions();
   const maxStars = exercises.length * 3;
-  // Stars are an id-map (sparse; absent id = not played → 0). The senda
-  // lock is positional, so resolve each pool slot's best by exercise id.
+
   const lastCompleted = exercises.reduce(
     (acc, exercise, i) => ((stars[exercise.id] ?? 0) > 0 ? i : acc),
     -1,
   );
   const maxAllowed = Math.min(lastCompleted + 1, exercises.length - 1);
   const rotationOn = visibleExerciseIds != null;
+
+  // Tooltip for locked nodes
+  const [lockedTooltip, setLockedTooltip] = useState<string | null>(null);
+  const tooltipTimer = useRef<number | undefined>(undefined);
+
+  function showLockedTooltip(text: string) {
+    window.clearTimeout(tooltipTimer.current);
+    setLockedTooltip(text);
+    tooltipTimer.current = window.setTimeout(() => setLockedTooltip(null), 2000);
+  }
 
   function isExerciseReplayable(exercise: Exercise): boolean {
     if (!quotaState?.isAtLimit) return true;
@@ -131,9 +117,6 @@ export function ExerciseDrawer({
     );
   }
 
-  /** Lock rule. Rotation: anything in today's visible set is playable
-   *  (the selector only surfaces tier-unlocked exercises). Legacy: the
-   *  linear senda gate. `index` is always the real pool index. */
   function lockedFor(exercise: Exercise, index: number): boolean {
     if (rotationOn) return !visibleExerciseIds!.has(exercise.id);
     return index > maxAllowed;
@@ -145,16 +128,10 @@ export function ExerciseDrawer({
     onNavigate(index);
   }
 
-  // Rotation shows only today's visible set; legacy shows the full pool.
-  // Either way each row carries its REAL pool index so stars[index],
-  // activeIndex, and onNavigate(index) stay correct.
   const rows = exercises
     .map((exercise, index) => ({ exercise, index }))
     .filter(({ exercise }) => !rotationOn || visibleExerciseIds!.has(exercise.id));
 
-  // D6 (surface redistribution): ONE continuous path — labyrinths
-  // interleave between exercises by unlock order instead of pooling in
-  // a trailing section. Presentation-only; unlock math untouched.
   const orderedRows = interleaveTrainingRows(rows, labyrinthNodes ?? []);
 
   return (
@@ -177,69 +154,51 @@ export function ExerciseDrawer({
           </span>
           {typeof shieldCount === "number" && shieldCount > 0 ? (
             <>
-              <span
-                aria-hidden="true"
-                className="candy-tray-pill-divider"
-              />
-              <picture
-                className="candy-tray-pill-icon candy-tray-pill-icon--floating"
-              >
+              <span aria-hidden="true" className="candy-tray-pill-divider" />
+              <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating">
                 <source srcSet="/art/redesign/icons/shield.avif" type="image/avif" />
                 <source srcSet="/art/redesign/icons/shield.webp" type="image/webp" />
-                <img
-                  src="/art/redesign/icons/shield.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                />
+                <img src="/art/redesign/icons/shield.png" alt="" aria-hidden={true} draggable={false} />
               </picture>
-              <span className="tabular-nums text-sm font-extrabold">
-                {shieldCount}
-              </span>
+              <span className="tabular-nums text-sm font-extrabold">{shieldCount}</span>
             </>
           ) : null}
           {typeof streakCount === "number" && streakCount >= 2 ? (
             <>
-              <span
-                aria-hidden="true"
-                className="candy-tray-pill-divider"
-              />
-              <picture
-                className="candy-tray-pill-icon candy-tray-pill-icon--floating candy-tray-pill-icon--streak"
-              >
+              <span aria-hidden="true" className="candy-tray-pill-divider" />
+              <picture className="candy-tray-pill-icon candy-tray-pill-icon--floating candy-tray-pill-icon--streak">
                 <source srcSet="/art/redesign/icons/streak.avif" type="image/avif" />
                 <source srcSet="/art/redesign/icons/streak.webp" type="image/webp" />
-                <img
-                  src="/art/redesign/icons/streak.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable={false}
-                />
+                <img src="/art/redesign/icons/streak.png" alt="" aria-hidden={true} draggable={false} />
               </picture>
-              <span className="tabular-nums text-sm font-extrabold">
-                {streakCount}
-              </span>
+              <span className="tabular-nums text-sm font-extrabold">{streakCount}</span>
             </>
           ) : null}
         </button>
       </SheetTrigger>
+
       <SheetContent
         side="bottom"
         hideClose
         title={t("title")}
         description={tPiece(piece)}
-        /* flex flex-col + max-h-[90dvh] + min-h-0 on the list:
-         * Sprint 1 commit 7 (Training Economy Alpha 2026-06-05) — King
-         * grew from 5 to 9 exercises and overflowed the sheet. Without
-         * a height bound the SheetContent grew past viewport top and
-         * the close-control header rendered offscreen. Bound the sheet
-         * at 90dvh, lay out as flex column with header + progress bar
-         * shrink-0 so only the middle list scrolls. `min-h-0` on the
-         * list is the canonical flex-overflow trick — children of
-         * flexboxes default to min-height: auto which inhibits overflow. */
-        className="mission-shell sheet-bg-hub flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
+        className="sheet-bg-exercises flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
-        <div className="-mx-6 -mt-6 shrink-0 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]">
+        {/* Locked tooltip — fixed so it floats above the scroll container */}
+        {lockedTooltip ? (
+          <div
+            role="alert"
+            aria-live="polite"
+            className="pointer-events-none fixed left-1/2 top-[18%] z-[200] -translate-x-1/2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-xl"
+            style={{ background: "rgba(30,20,10,0.92)", whiteSpace: "nowrap" }}
+          >
+            {lockedTooltip}
+          </div>
+        ) : null}
+
+        <div className="-mx-6 -mt-6 shrink-0 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]"
+          style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(8px)" }}
+        >
           <ContextualHeader
             variant="close-control"
             iconSlot={<TileIconSlot src={PIECE_IMAGES[piece]} />}
@@ -249,190 +208,205 @@ export function ExerciseDrawer({
           />
         </div>
 
-        <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
-          {orderedRows.map((row, position) => {
-            if (row.kind === "labyrinth") {
-              const node = row.value;
-              const labIndex = (labyrinthNodes ?? []).indexOf(node);
-              const isLabLocked = node.status === "locked";
-              const isLabDone = node.status === "complete";
-              const isLabQuotaLocked = !isLabLocked && !isLabReplayable(node);
-              const isLabDisabled = isLabLocked || isLabQuotaLocked || !onLabyrinthSelect;
-              return (
-                <button
-                  key={node.id}
-                  type="button"
-                  disabled={isLabDisabled}
-                  data-quota-locked={isLabQuotaLocked ? "true" : undefined}
-                  onClick={() => {
-                    if (isLabDisabled || !onLabyrinthSelect) return;
-                    onOpenChange(false);
-                    onLabyrinthSelect(node.id);
-                  }}
-                  style={{
-                    animationDelay: `${position * 50}ms`,
-                    background: "rgba(255, 255, 255, 0.15)",
-                    border: "1px solid rgba(255, 255, 255, 0.45)",
-                  }}
-                  className={[
-                    "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-backwards",
-                    isLabLocked || isLabQuotaLocked ? "opacity-45 cursor-not-allowed" : "cursor-pointer",
-                  ].join(" ")}
-                >
-                  <span
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                    style={{
-                      background: isLabDone
-                        ? "rgba(245, 158, 11, 0.25)"
-                        : "rgba(110, 65, 15, 0.15)",
-                      color: isLabDone
-                        ? "rgba(120, 65, 5, 0.95)"
-                        : "rgba(110, 65, 15, 0.55)",
-                    }}
+        {/* Path map — flex-col-reverse so orderedRows[0] (exercise 1) sits at visual bottom */}
+        <div className="relative mt-4 min-h-0 flex-1 overflow-y-auto">
+          {/* Vertical spine */}
+          <div
+            className="pointer-events-none absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2"
+            style={{ borderLeft: "2px dashed rgba(110,65,15,0.22)" }}
+          />
+
+          <div className="flex flex-col-reverse gap-8 px-4 py-6">
+            {orderedRows.map((row, originalIndex) => {
+              // originalIndex 0 = exercise 1 (visual bottom). Even → left, odd → right.
+              const isRight = originalIndex % 2 !== 0;
+
+              if (row.kind === "labyrinth") {
+                const node = row.value;
+                const labIndex = (labyrinthNodes ?? []).indexOf(node);
+                const isLocked = node.status === "locked";
+                const isQuotaLocked = !isLocked && !isLabReplayable(node);
+                const isDone = node.status === "complete";
+                const effectiveLocked = isLocked || isQuotaLocked || !onLabyrinthSelect;
+                const tooltipText = isLocked
+                  ? node.unlock.type === "stars"
+                    ? tPath("labyrinthLockedStarsFormat", { stars: node.unlock.min })
+                    : tPath("labyrinthLockedChain")
+                  : tPath("labyrinthLabelFormat", { number: labIndex + 1 });
+
+                return (
+                  <div
+                    key={node.id}
+                    className={`flex items-center ${isRight ? "justify-end" : "justify-start"}`}
                   >
-                    <CandyIcon
-                      name={isLabLocked ? "lock" : "crosshair"}
-                      className="h-3 w-3"
-                    />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="text-sm font-semibold"
+                    <div className="relative flex flex-col items-center gap-1.5">
+                      {/* Number badge */}
+                      <span
+                        className="absolute -top-2 left-1/2 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full text-[10px] font-bold text-white shadow"
+                        style={{ background: isDone ? "rgba(245,158,11,0.95)" : "rgba(63,34,8,0.80)" }}
+                      >
+                        {labIndex + 1}
+                      </span>
+
+                      {/* Labyrint icon node */}
+                      <button
+                        type="button"
+                        aria-label={tPath("labyrinthLabelFormat", { number: labIndex + 1 })}
+                        data-locked={effectiveLocked ? "true" : undefined}
+                        data-quota-locked={isQuotaLocked ? "true" : undefined}
+                        onClick={() => {
+                          if (effectiveLocked) {
+                            showLockedTooltip(tooltipText);
+                            return;
+                          }
+                          onOpenChange(false);
+                          onLabyrinthSelect!(node.id);
+                        }}
+                        className="relative"
+                        style={{ filter: effectiveLocked ? "grayscale(1) brightness(0.85)" : undefined }}
+                      >
+                        <picture className="block h-20 w-20 drop-shadow-md">
+                          <source srcSet="/art/redesign/bg/labyrint-icon.avif" type="image/avif" />
+                          <source srcSet="/art/redesign/bg/labyrint-icon.webp" type="image/webp" />
+                          <img
+                            src="/art/redesign/bg/labyrint-icon.png"
+                            alt=""
+                            aria-hidden={true}
+                            draggable={false}
+                            className="h-full w-full object-contain"
+                          />
+                        </picture>
+                        {effectiveLocked && (
+                          <span className="absolute inset-0 flex items-center justify-center">
+                            <CandyIcon name="lock" className="h-7 w-7 drop-shadow" />
+                          </span>
+                        )}
+                        {/* Accessible text for screen readers and tests */}
+                        <span className="sr-only">
+                          {tPath("labyrinthLabelFormat", { number: labIndex + 1 })}
+                        </span>
+                        {isLocked ? (
+                          <span className="sr-only">
+                            {node.unlock.type === "stars"
+                              ? tPath("labyrinthLockedStarsFormat", { stars: node.unlock.min })
+                              : tPath("labyrinthLockedChain")}
+                          </span>
+                        ) : null}
+                      </button>
+
+                      {/* Stars */}
+                      {isDone ? <StarDisplay count={node.stars ?? 0} /> : null}
+                    </div>
+                  </div>
+                );
+              }
+
+              // Exercise node
+              const { exercise, index } = row.value;
+              const isActive = index === activeIndex;
+              const starCount = stars[exercise.id] ?? 0;
+              const isDone = starCount > 0;
+              const isLocked = lockedFor(exercise, index);
+              const isQuotaLocked = !isLocked && !isExerciseReplayable(exercise);
+              const effectiveLocked = isLocked || isQuotaLocked;
+              const description = resolveExerciseDescription(
+                exercise.id,
+                index,
+                (eid) => (descriptions.has(eid) ? descriptions(eid) : null),
+                (n) => t("exerciseFallbackFormat", { n }),
+                overlayDescriptions,
+              );
+
+              return (
+                <div
+                  key={exercise.id}
+                  className={`flex items-center ${isRight ? "justify-end" : "justify-start"}`}
+                >
+                  <div className="relative flex flex-col items-center gap-1.5">
+                    {/* Number badge */}
+                    <span
+                      className="absolute -top-2 left-1/2 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full text-[10px] font-bold text-white shadow"
                       style={{
-                        color: isLabLocked ? "rgba(110, 65, 15, 0.55)" : "rgba(63, 34, 8, 0.95)",
-                        textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
+                        background: isActive
+                          ? "rgba(245,158,11,0.95)"
+                          : isDone
+                            ? "rgba(90,140,60,0.90)"
+                            : "rgba(63,34,8,0.80)",
                       }}
                     >
-                      {tPath("labyrinthLabelFormat", { number: labIndex + 1 })}
-                    </p>
-                    {isLabLocked ? (
-                      <p
-                        className="text-xs"
-                        style={{ color: "rgba(110, 65, 15, 0.70)" }}
-                      >
-                        {node.unlock.type === "stars"
-                          ? tPath("labyrinthLockedStarsFormat", { stars: node.unlock.min })
-                          : tPath("labyrinthLockedChain")}
-                      </p>
-                    ) : null}
-                  </div>
-                  {isLabDone ? (
-                    <StarDisplay count={node.stars ?? 0} />
-                  ) : !isLabLocked ? (
-                    <span
-                      className="text-xs font-bold uppercase"
-                      style={{ color: "rgba(120, 65, 5, 0.85)" }}
-                    >
-                      {tPath("ready")}
+                      {index + 1}
                     </span>
-                  ) : null}
-                </button>
-              );
-            }
 
-            const { exercise, index } = row.value;
-            const isActive = index === activeIndex;
-            const starCount = stars[exercise.id] ?? 0;
-            const isDone = starCount > 0;
-            const isLocked = lockedFor(exercise, index);
-            const isQuotaLocked = !isLocked && !isExerciseReplayable(exercise);
-            // Generated puzzles carry their own description map; hand-
-            // authored rows resolve via EXERCISE_DESCRIPTIONS i18n keys
-            // (not statically known to the translator), falling back to
-            // `Exercise N` when neither source has the id.
-            const description = resolveExerciseDescription(
-              exercise.id,
-              index,
-              // Guard with `has` so an id without an EXERCISE_DESCRIPTIONS
-              // key (e.g. a builder-authored exercise) resolves to the
-              // generic fallback instead of triggering next-intl's
-              // missing-message console warning.
-              (eid) => (descriptions.has(eid) ? descriptions(eid) : null),
-              (n) => t("exerciseFallbackFormat", { n }),
-              overlayDescriptions,
-            );
+                    {/* btn-nodo + piece on top */}
+                    <button
+                      type="button"
+                      aria-label={description}
+                      data-locked={effectiveLocked ? "true" : undefined}
+                      data-quota-locked={isQuotaLocked ? "true" : undefined}
+                      onClick={() => {
+                        if (effectiveLocked) {
+                          showLockedTooltip(description);
+                          return;
+                        }
+                        handleSelect(exercise, index);
+                      }}
+                      className="relative"
+                      style={{
+                        filter: effectiveLocked
+                          ? "grayscale(1) brightness(0.85)"
+                          : undefined,
+                      }}
+                    >
+                      {/* Active glow ring */}
+                      {isActive ? (
+                        <span
+                          className="pointer-events-none absolute inset-0 rounded-full"
+                          style={{ boxShadow: "0 0 0 4px rgba(245,158,11,0.55), 0 0 16px rgba(245,158,11,0.45)" }}
+                        />
+                      ) : null}
 
-            return (
-              <button
-                key={exercise.id}
-                type="button"
-                disabled={isLocked || isQuotaLocked}
-                data-quota-locked={isQuotaLocked ? "true" : undefined}
-                onClick={() => handleSelect(exercise, index)}
-                style={{
-                  animationDelay: `${position * 50}ms`,
-                  background: "rgba(255, 255, 255, 0.15)",
-                  border: isActive
-                    ? "1px solid rgba(245, 158, 11, 0.55)"
-                    : "1px solid rgba(255, 255, 255, 0.45)",
-                  boxShadow: isActive
-                    ? "inset 0 0 12px rgba(245, 158, 11, 0.15), 0 0 0 2px rgba(245, 158, 11, 0.25)"
-                    : undefined,
-                }}
-                className={[
-                  "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-backwards",
-                  isLocked || isQuotaLocked ? "opacity-45 cursor-not-allowed" : "cursor-pointer",
-                ].join(" ")}
-              >
-                {/* Exercise number */}
-                <span
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                  style={{
-                    background: isActive
-                      ? "rgba(245, 158, 11, 0.85)"
-                      : isDone
-                        ? "rgba(245, 158, 11, 0.25)"
-                        : "rgba(110, 65, 15, 0.15)",
-                    color: isActive
-                      ? "rgba(255, 240, 180, 0.98)"
-                      : isDone
-                        ? "rgba(120, 65, 5, 0.95)"
-                        : "rgba(110, 65, 15, 0.55)",
-                  }}
-                >
-                  {isLocked ? <CandyIcon name="lock" className="h-3 w-3" /> : index + 1}
-                </span>
+                      {/* Node button image */}
+                      <picture className="block h-20 w-20 drop-shadow-md">
+                        <source srcSet="/art/redesign/bg/btn-nodo.avif" type="image/avif" />
+                        <source srcSet="/art/redesign/bg/btn-nodo.webp" type="image/webp" />
+                        <img
+                          src="/art/redesign/bg/btn-nodo.png"
+                          alt=""
+                          aria-hidden={true}
+                          draggable={false}
+                          className="h-full w-full object-contain"
+                        />
+                      </picture>
 
-                {/* Description + type */}
-                <div className="flex-1 min-w-0">
-                  <p
-                    className="text-sm font-semibold"
-                    style={{
-                      color: isLocked ? "rgba(110, 65, 15, 0.55)" : "rgba(63, 34, 8, 0.95)",
-                      textShadow: "0 1px 0 rgba(255, 245, 215, 0.55)",
-                    }}
-                  >
-                    {description}
-                  </p>
-                  <p
-                    className="flex items-center gap-1 text-xs"
-                    style={{ color: "rgba(110, 65, 15, 0.70)" }}
-                  >
-                    {exercise.isCapture ? (
-                      <><CandyIcon name="crosshair" className="h-2.5 w-2.5" /> {t("captureLabel")}</>
-                    ) : (
-                      <><CandyIcon name="move" className="h-2.5 w-2.5" /> {t("movementLabel")}</>
-                    )}
-                  </p>
+                      {/* Chess piece centered on the button */}
+                      <span className="absolute inset-0 flex items-center justify-center pb-1">
+                        <TileIconSlot src={PIECE_IMAGES[piece]} className="h-11 w-11" />
+                      </span>
+
+                      {/* Lock overlay */}
+                      {effectiveLocked ? (
+                        <span className="absolute inset-0 flex items-end justify-center pb-1">
+                          <CandyIcon name="lock" className="h-5 w-5 opacity-90 drop-shadow" />
+                        </span>
+                      ) : null}
+                      {/* Accessible text for screen readers and tests */}
+                      <span className="sr-only">{description}</span>
+                    </button>
+
+                    {/* Stars */}
+                    {isDone ? <StarDisplay count={starCount} /> : null}
+                  </div>
                 </div>
-
-                {/* Stars */}
-                {isDone ? (
-                  <StarDisplay count={starCount} />
-                ) : isLocked ? (
-                  <span className="text-xs" style={{ color: "rgba(110, 65, 15, 0.55)" }}>
-                    {t("locked")}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-
+              );
+            })}
+          </div>
         </div>
 
-        {/* Progress summary — shrink-0 keeps it anchored at the bottom of
-         *  the sheet next to the dock, even when the list scrolls. */}
-        <div className="mt-4 shrink-0 space-y-1.5">
+        {/* Progress summary */}
+        <div
+          className="mt-4 shrink-0 space-y-1.5 rounded-2xl px-4 py-3"
+          style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(6px)" }}
+        >
           <div
             className="relative h-2 overflow-hidden rounded-full"
             style={{ background: "rgba(110, 65, 15, 0.18)" }}
