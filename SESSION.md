@@ -1,43 +1,35 @@
-# Session Handoff — 2026-06-23
+# Session Handoff — 2026-06-24
 
 ## Completed
 
-- `8048e53` feat(daily): B2.3b soft gate progress surface — DailyLimitBanner + ExerciseDrawer quotaState + exercises-screen integration + page.tsx DailyLimitGuard removal. 4417/4417 tests · tsc clean.
-- `7058dad` feat(daily): B2.3b update quota constants FREE=5 HARD_MAX=15
-- `5f33ca4` fix(daily): DailyLimitGuard also blocks at hard max
+- `cddfc13` — drawer UX: auto-scroll al nodo activo al abrir, pieza pb-8, quitar spine line
+- `87275fa` — path-map node polish: badge check verde/número, glow dorado (estilo TRAIN PIECES), `isActive && !isDone` solo
+- `30ac4c9` — Claim Badge CTA en drawer (reemplaza hint cuando `badgeClaimable`), estrellas 2x más grandes (`h-6`), flush al nodo (`gap-0`)
+- `40b8441` — icono streak → combo triplet (`icons/combo.{avif,webp,png}`)
+- `3fc3969` — **bug fix crítico**: `lockedFor()` aplica la senda SIEMPRE aunque `rotationOn=true`; rotation solo filtra cuáles aparecen, la senda sigue gateando acceso
+- `4e16f79` — revert safe-area-inset-top (añadía demasiado espacio al header)
+- `e36c621` — rediseño completo drawer: path-map `path-map.png`, `btn-nodo.png` + pieza encima, `labyrint-icon.png` para laberintos, zigzag, grayscale+lock en bloqueados, tooltip al tap
 
 ## Current State
 
-- **Branch**: main
-- **Build**: passing — 4417/4417 · tsc clean
-- **Uncommitted work**: `.claude/TODO.md`, `SESSION.md`, `skills-lock.json` (non-code), `docs/testing/analytics-test-patterns.md` (untracked doc, no impact)
+- **Branch**: `main` — sincronizado con `origin/main` (`63bb4ae9`)
+- **Build**: passing — tsc clean, 22/22 exercise-drawer tests
+- **Uncommitted work**: solo `docs/testing/analytics-test-patterns.md` (untracked, no urgente)
 
 ## Next Tasks
 
-1. **B2.3b.1 — Soft Gate Enforcement + Banner Polish** (founder smoke reveló dos bugs):
-   - **Banner visual broken**: texto sin estilo, botones concatenados `Back to HubUnlock 5 more today`, texto plano encima del board — necesita styling candy panel de Chesscito
-   - **No real enforcement**: al límite el usuario sigue jugando contenido nuevo, stars/combo siguen subiendo — banner decorativo, no regla de sesión
-   - Plan presentado al founder, pendiente go/no-go para ejecutar
-
-2. **Enforcement checklist B2.3b.1** (una vez aprobado):
-   - Helper `isContentReplayable(kind, id)` en `exercises-screen.tsx`
-   - Guard en `handleExerciseNavigate` — no seleccionar ejercicio nuevo al límite
-   - Guard en `handleLabyrinthSelect` — no entrar a lab nuevo al límite
-   - Guard en `handleLabyrinthContinue` — post-lab no navegar a contenido nuevo bloqueado
-   - Banner CSS: `candy-glass-shell` / `panel-frame` pattern, botones separados
-   - Tests: at-limit navegación bloqueada / replayables habilitados / full-mode sin gate
-
-3. **Smoke manual B2.3b.1** — 13 items (ver spec en último mensaje del founder)
+1. **B2.2a — Stable Challenge Links**: pinear puzzleId en URL `/challenge/daily?date=...&puzzle=dt-xxx-N` — spec completo en `.claude/TODO.md`; `resolveDailyPuzzle()` + actualizar `page.tsx`, `challenge-daily-client.tsx`, `hub-daily-tile.tsx`, 5 tests TDD
+2. **B2.2b — Daily Content Pack**: expandir pool 30→40 (+2 puzzles por pieza excepto king) — bloqueado por B2.2a
+3. **Smoke del drawer en device real**: verificar que el auto-scroll al nodo activo funciona en MiniPay WebView (el `scrollIntoView` a 250ms puede necesitar ajuste)
+4. **VR baseline update**: el drawer cambió visualmente — refrescar snapshots Playwright con `--update-snapshots` antes del próximo ship a prod
 
 ## Blockers
 
-- B2.3b.1 pendiente de go/no-go del founder (plan presentado al final de esta sesión)
+- Ninguno
 
 ## Notes
 
-- `isFreeSlot = slot === "daily" || slot === "challenge"` — free slots bypasan el quota banner en exercises-screen (ya implementado)
-- `quotaDisplayState` se actualiza vía `subscribeToDailySessionChanges` al completar cada exercise/lab — el banner aparece automáticamente al llegar al límite
-- `DailyLimitGuard` fue eliminado de `page.tsx`; el componente `components/daily/daily-limit-guard.tsx` sigue en repo como código inactivo — puede eliminarse en B2.3b.1 cleanup
-- `recordExtraConsumed` es idempotente: misma contentId dos veces = 1 slot, no hay riesgo de doble-count en replays
-- `FREE_EXTRA_QUOTA = 5`, `HARD_MAX_EXTRAS = 15` — confirmados en esta sesión
-- Suite base: 4417/4417 (pre-B2.3b.1)
+- Bug de ejercicios todos unlocked: causado por `ENABLE_EXERCISE_ROTATION=true` en preview env + `getCanonicalFive` (primeros 5) con `lockedFor` que bypasseaba la senda. Fix `3fc3969`.
+- El drawer usa `flex-col-reverse` para renderizar exercise 1 en la base visual; auto-scroll usa `scrollIntoView({ block: "center", behavior: "smooth" })` con 250ms delay.
+- `scripts/gen-triplet.sh` funciona en macOS bash 3 — usar para cualquier asset nuevo.
+- B2.2a spec detallado en `.claude/TODO.md` (implementation order + smoke manual incluidos).
