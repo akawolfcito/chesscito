@@ -244,13 +244,24 @@ export function ExerciseDrawer({
                     className={`flex items-center ${isRight ? "justify-end" : "justify-start"}`}
                   >
                     <div className="relative flex flex-col items-center gap-1.5">
-                      {/* Number badge */}
-                      <span
-                        className="absolute -top-2 left-1/2 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full text-[10px] font-bold text-white shadow"
-                        style={{ background: isDone ? "rgba(245,158,11,0.95)" : "rgba(63,34,8,0.80)" }}
-                      >
-                        {labIndex + 1}
-                      </span>
+                      {/* Badge: green check if done, number otherwise */}
+                      {isDone ? (
+                        <span
+                          className="absolute -top-2 left-1/2 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full shadow"
+                          style={{ background: "rgba(60,140,60,0.95)" }}
+                        >
+                          <svg viewBox="0 0 12 10" className="h-3 w-3" fill="none">
+                            <polyline points="1,5 4.5,8.5 11,1" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </span>
+                      ) : (
+                        <span
+                          className="absolute -top-2 left-1/2 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full text-[10px] font-bold text-white shadow"
+                          style={{ background: isLocked ? "rgba(63,34,8,0.80)" : "rgba(245,158,11,0.95)" }}
+                        >
+                          {labIndex + 1}
+                        </span>
+                      )}
 
                       {/* Labyrint icon node */}
                       <button
@@ -267,7 +278,13 @@ export function ExerciseDrawer({
                           onLabyrinthSelect!(node.id);
                         }}
                         className="relative"
-                        style={{ filter: effectiveLocked ? "grayscale(1) brightness(0.85)" : undefined }}
+                        style={{
+                          filter: effectiveLocked
+                            ? "grayscale(1) brightness(0.85)"
+                            : !isDone
+                              ? "drop-shadow(0 0 6px rgba(255,213,74,0.85)) drop-shadow(0 0 14px rgba(255,200,40,0.55))"
+                              : undefined,
+                        }}
                       >
                         <picture className="block h-20 w-20 drop-shadow-md">
                           <source srcSet="/art/redesign/bg/labyrint-icon.avif" type="image/avif" />
@@ -328,19 +345,24 @@ export function ExerciseDrawer({
                   className={`flex items-center ${isRight ? "justify-end" : "justify-start"}`}
                 >
                   <div className="relative flex flex-col items-center gap-1.5">
-                    {/* Number badge */}
-                    <span
-                      className="absolute -top-2 left-1/2 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full text-[10px] font-bold text-white shadow"
-                      style={{
-                        background: isActive
-                          ? "rgba(245,158,11,0.95)"
-                          : isDone
-                            ? "rgba(90,140,60,0.90)"
-                            : "rgba(63,34,8,0.80)",
-                      }}
-                    >
-                      {index + 1}
-                    </span>
+                    {/* Badge: green check if done, number otherwise */}
+                    {isDone ? (
+                      <span
+                        className="absolute -top-2 left-1/2 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full shadow"
+                        style={{ background: "rgba(60,140,60,0.95)" }}
+                      >
+                        <svg viewBox="0 0 12 10" className="h-3 w-3" fill="none">
+                          <polyline points="1,5 4.5,8.5 11,1" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    ) : (
+                      <span
+                        className="absolute -top-2 left-1/2 z-10 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full text-[10px] font-bold text-white shadow"
+                        style={{ background: effectiveLocked ? "rgba(63,34,8,0.80)" : "rgba(245,158,11,0.95)" }}
+                      >
+                        {index + 1}
+                      </span>
+                    )}
 
                     {/* btn-nodo + piece on top */}
                     <button
@@ -359,17 +381,11 @@ export function ExerciseDrawer({
                       style={{
                         filter: effectiveLocked
                           ? "grayscale(1) brightness(0.85)"
-                          : undefined,
+                          : (isActive && !isDone)
+                            ? "drop-shadow(0 0 6px rgba(255,213,74,0.85)) drop-shadow(0 0 14px rgba(255,200,40,0.55))"
+                            : undefined,
                       }}
                     >
-                      {/* Active glow ring */}
-                      {isActive ? (
-                        <span
-                          className="pointer-events-none absolute inset-0 rounded-full"
-                          style={{ boxShadow: "0 0 0 4px rgba(245,158,11,0.55), 0 0 16px rgba(245,158,11,0.45)" }}
-                        />
-                      ) : null}
-
                       {/* Node button image */}
                       <picture className="block h-20 w-20 drop-shadow-md">
                         <source srcSet="/art/redesign/bg/btn-nodo.avif" type="image/avif" />
@@ -384,7 +400,7 @@ export function ExerciseDrawer({
                       </picture>
 
                       {/* Chess piece centered on the button */}
-                      <span className="absolute inset-0 flex items-center justify-center pb-4">
+                      <span className="absolute inset-0 flex items-center justify-center pb-8">
                         <TileIconSlot src={PIECE_IMAGES[piece]} className="h-11 w-11" />
                       </span>
 
