@@ -210,7 +210,7 @@ export function ExerciseDrawer({
           </div>
         ) : null}
 
-        <div className="-mx-6 -mt-6 shrink-0 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)]"
+        <div className="-mx-6 -mt-3 shrink-0 rounded-t-3xl border-b border-[rgba(110,65,15,0.30)] pt-[calc(env(safe-area-inset-top)+0.25rem)]"
           style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(8px)" }}
         >
           <ContextualHeader
