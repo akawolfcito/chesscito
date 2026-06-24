@@ -75,7 +75,9 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
     expect(screen.queryByText("Vertical move")).not.toBeInTheDocument(); // rook-2
   });
 
-  it("treats visible-set exercises as playable (not senda-locked)", () => {
+  it("visible-set exercises are still gated by the linear senda", () => {
+    // rook-8 (pool index 7) is in the visible set but senda still applies:
+    // with stars={} maxAllowed=0, so index 7 > 0 → locked.
     render(
       <ExerciseDrawer
         {...baseProps}
@@ -83,15 +85,17 @@ describe("ExerciseDrawer — rotation (visibleExerciseIds set)", () => {
         visibleExerciseIds={visible}
       />,
     );
-    // rook-8 is pool index 7 — legacy would lock it; rotation keeps it open.
-    expect(screen.getByText("Boxed-in square").closest("button")).not.toBeDisabled();
+    expect(screen.getByText("Boxed-in square").closest("button")).toHaveAttribute("data-locked", "true");
   });
 
   it("navigates with the REAL pool index, not the visible-slot index", () => {
     const onNavigate = vi.fn();
+    // Give enough stars to unlock rook-8 (index 7): need indices 0-6 completed.
+    const enoughStars = starsById(3, 3, 3, 3, 3, 3, 3);
     render(
       <ExerciseDrawer
         {...baseProps}
+        stars={enoughStars}
         onNavigate={onNavigate}
         visibleExerciseIds={visible}
       />,

@@ -132,7 +132,7 @@ export function ExerciseDrawer({
   }
 
   function lockedFor(exercise: Exercise, index: number): boolean {
-    if (rotationOn) return !visibleExerciseIds!.has(exercise.id);
+    if (rotationOn && !visibleExerciseIds!.has(exercise.id)) return true;
     return index > maxAllowed;
   }
 
@@ -196,7 +196,7 @@ export function ExerciseDrawer({
         hideClose
         title={t("title")}
         description={tPiece(piece)}
-        className="sheet-bg-exercises flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
+        className="sheet-bg-exercises flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem] [padding-top:max(1rem,env(safe-area-inset-top))]"
       >
         {/* Locked tooltip — fixed so it floats above the scroll container */}
         {lockedTooltip ? (
