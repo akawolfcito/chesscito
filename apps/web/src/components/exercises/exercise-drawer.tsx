@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import {
@@ -86,6 +86,16 @@ export function ExerciseDrawer({
   );
   const maxAllowed = Math.min(lastCompleted + 1, exercises.length - 1);
   const rotationOn = visibleExerciseIds != null;
+
+  // Auto-scroll to active node when drawer opens
+  const activeNodeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => {
+      activeNodeRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 250);
+    return () => window.clearTimeout(t);
+  }, [open]);
 
   // Tooltip for locked nodes
   const [lockedTooltip, setLockedTooltip] = useState<string | null>(null);
@@ -210,12 +220,6 @@ export function ExerciseDrawer({
 
         {/* Path map — flex-col-reverse so orderedRows[0] (exercise 1) sits at visual bottom */}
         <div className="relative mt-4 min-h-0 flex-1 overflow-y-auto">
-          {/* Vertical spine */}
-          <div
-            className="pointer-events-none absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2"
-            style={{ borderLeft: "2px dashed rgba(110,65,15,0.22)" }}
-          />
-
           <div className="flex flex-col-reverse gap-8 px-4 py-6">
             {orderedRows.map((row, originalIndex) => {
               // originalIndex 0 = exercise 1 (visual bottom). Even → left, odd → right.
@@ -320,6 +324,7 @@ export function ExerciseDrawer({
               return (
                 <div
                   key={exercise.id}
+                  ref={isActive ? activeNodeRef : undefined}
                   className={`flex items-center ${isRight ? "justify-end" : "justify-start"}`}
                 >
                   <div className="relative flex flex-col items-center gap-1.5">
@@ -379,7 +384,7 @@ export function ExerciseDrawer({
                       </picture>
 
                       {/* Chess piece centered on the button */}
-                      <span className="absolute inset-0 flex items-center justify-center pb-1">
+                      <span className="absolute inset-0 flex items-center justify-center pb-4">
                         <TileIconSlot src={PIECE_IMAGES[piece]} className="h-11 w-11" />
                       </span>
 
