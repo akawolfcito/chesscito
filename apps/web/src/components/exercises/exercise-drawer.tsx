@@ -196,7 +196,7 @@ export function ExerciseDrawer({
         hideClose
         title={t("title")}
         description={tPiece(piece)}
-        className="sheet-bg-exercises flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem] [padding-top:max(1rem,env(safe-area-inset-top))]"
+        className="sheet-bg-exercises flex h-[100dvh] flex-col rounded-none border-0 pb-[5rem]"
       >
         {/* Locked tooltip — fixed so it floats above the scroll container */}
         {lockedTooltip ? (
