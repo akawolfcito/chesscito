@@ -41,6 +41,8 @@ type ExerciseDrawerProps = {
   labyrinthNodes?: TrainingNode[];
   onLabyrinthSelect?: (labyrinthId: string) => void;
   quotaState?: QuotaState | null;
+  badgeClaimable?: boolean;
+  onClaimBadge?: () => void;
 };
 
 function StarDisplay({ count }: { count: number }) {
@@ -50,7 +52,7 @@ function StarDisplay({ count }: { count: number }) {
         <CandyIcon
           key={i}
           name="star"
-          className={`h-3.5 w-3.5 ${i <= count ? "opacity-100" : "opacity-25"}`}
+          className={`h-6 w-6 ${i <= count ? "opacity-100" : "opacity-25"}`}
         />
       ))}
     </span>
@@ -72,6 +74,8 @@ export function ExerciseDrawer({
   labyrinthNodes,
   onLabyrinthSelect,
   quotaState,
+  badgeClaimable,
+  onClaimBadge,
 }: ExerciseDrawerProps) {
   const t = useTranslations("EXERCISE_DRAWER_COPY");
   const tPiece = useTranslations("PIECE_LABELS");
@@ -243,7 +247,7 @@ export function ExerciseDrawer({
                     key={node.id}
                     className={`flex items-center ${isRight ? "justify-end" : "justify-start"}`}
                   >
-                    <div className="relative flex flex-col items-center gap-1.5">
+                    <div className="relative flex flex-col items-center gap-0">
                       {/* Badge: green check if done, number otherwise */}
                       {isDone ? (
                         <span
@@ -344,7 +348,7 @@ export function ExerciseDrawer({
                   ref={isActive ? activeNodeRef : undefined}
                   className={`flex items-center ${isRight ? "justify-end" : "justify-start"}`}
                 >
-                  <div className="relative flex flex-col items-center gap-1.5">
+                  <div className="relative flex flex-col items-center gap-0">
                     {/* Badge: green check if done, number otherwise */}
                     {isDone ? (
                       <span
@@ -447,12 +451,27 @@ export function ExerciseDrawer({
               }}
             />
           </div>
-          <p
-            className="text-center text-xs"
-            style={{ color: "rgba(110, 65, 15, 0.65)" }}
-          >
-            {t("badgeThresholdHint", { threshold: BADGE_THRESHOLD })}
-          </p>
+          {badgeClaimable && onClaimBadge ? (
+            <button
+              type="button"
+              onClick={() => { onOpenChange(false); onClaimBadge(); }}
+              className="mt-1 w-full rounded-xl py-2 text-sm font-bold text-white transition-opacity active:opacity-80"
+              style={{
+                background: "linear-gradient(145deg, #fbe04b 0%, #fcc00a 40%, #d38804 100%)",
+                boxShadow: "0 0 0 2px rgba(255,216,74,0.7), 0 0 8px 2px rgba(255,200,40,0.6), inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -4px 0 rgba(142,78,0,0.3)",
+                textShadow: "0 1px 2px rgba(0,0,0,0.4)",
+              }}
+            >
+              {t("claimBadgeCta")}
+            </button>
+          ) : (
+            <p
+              className="text-center text-xs"
+              style={{ color: "rgba(110, 65, 15, 0.65)" }}
+            >
+              {t("badgeThresholdHint", { threshold: BADGE_THRESHOLD })}
+            </p>
+          )}
         </div>
       </SheetContent>
     </Sheet>

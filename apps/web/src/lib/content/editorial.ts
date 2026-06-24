@@ -1207,6 +1207,7 @@ export const EXERCISE_DRAWER_COPY = {
   title: "Exercises",
   progressLabel: (earned: number, max: number) => `${earned}/${max}`,
   badgeThresholdHint: (threshold: number) => `Badge at ${threshold} stars`,
+  claimBadgeCta: "Claim Badge",
   locked: "Locked",
   ariaLabel: "Exercises",
   closeAriaLabel: "Close exercises",

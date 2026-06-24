@@ -2820,6 +2820,8 @@ export function ExercisesScreen({
                     }
                   : null
               }
+              badgeClaimable={badgeEarned && !hasClaimedBadge && !justClaimed[selectedPiece]}
+              onClaimBadge={() => void handleClaimBadge()}
             />
           }
           isReplay={isReplay}
