@@ -1,415 +1,335 @@
-## Session Plan — 2026-03-28: Systems & Content Expansion (continued)
+## Session Plan — 2026-06-22 · B2.2a Stable Challenge Links
 
-### Phase
-Systems & Content Expansion — progression loop now closed.
-Re-Architecture + UI Pro Phase 1 formally closed earlier.
+### Contexto del problema
 
-### Completed This Session (28 commits across 2 sessions)
-
-**Re-Architecture + UI Pro Phase 1 (session 1):**
-- Practice Hub re-architecture (PR1-PR4 bundled)
-- Semantic cleanup (?, About, Arena CTA)
-- Flow hardening (double-claim, score gating, prompt)
-- Coach in VictoryClaimSuccess
-- P0 UI Pro blockers (exit animations, shield off, Lv removed)
-- UI Pro Phase 1 (PR-A stats/CTA/board, PR-B victory surfaces, PR-C microinteractions)
-- Phase closure (touch targets, press feedback)
-
-**Systems & Content Expansion (session 2):**
-- PR-1 ✅ 6-piece foundation (types, editorial, images for all 6 pieces)
-- PR-2 ✅ Supabase bootstrap (5 tables, server client, migration SQL)
-- PR-3 ✅ Pawn exercises (5 exercises + forward-only validation + teaching correction)
-- PR-4 ✅ Score re-submission (removed markCompleted lock, score always re-submittable)
-- PR-5 ✅ Unlock gating (done in previous session)
-- PR-6 ✅ Queen exercises (done in previous session)
-- PR-7 ✅ Practice move logging (done in previous session)
-- PR-8 ✅ Hall performance (done in previous session)
-- PR-9 ✅ King exercises (done in previous session)
-- PR-11 ✅ Global progress + unlock celebration + ? button removed
-
-**Visual/UX polish (session 2):**
-- Cell inset glow system (movement highlights v1 + v2 with endpoint hierarchy)
-- Target piece v1 (visible enemy piece for capture exercises)
-- Practice clarity (center dots, mission card, no deselection)
-- Mission card typewriter + capture differentiation
-- dotLottie support + 4 animations integrated
-- Security rules hardened
-
-### Current State
-- ✅ **Completed**: All PRs except PR-10
-- 🚧 **Next**: PR-10 Coach for Practice (LLM analysis of logged moves)
-- ⚠️ **Blocker for PR-10**: needs real practice session data in Supabase before prompt design
-
-### Remaining Roadmap
-1. **PR-10: Coach for Practice** — L — LLM analysis of practice_move_logs
-   - Needs: variety of real sessions in Supabase before building prompt
-   - Depends on: PR-7 (done) generating real data
-
-### Should-fix backlog (not blocking)
-- Victory CTA reorder (Claim above Play Again)
-- VictoryClaimSuccess CTA reduction (View Trophies → text link)
-- active:scale unification global
-- Arena overlay exit animations
-- Arena highlight reduction (center dots only)
-- Attempt budget + auto-advance (learning loop v2)
-- Progressive hints system
-
-### Key Decisions Made
-- Supabase = derived data only, on-chain remains source of truth
-- Score re-submission allowed (contract has no blocker)
-- Pawn diagonals only on isCapture exercises (pedagogically correct)
-- ? button removed (mission card replaced it)
-- dotLottie format supported alongside JSON
-- Wolf mascot stays static PNG until custom Lottie created
+`/challenge/daily?date=YYYY-MM-DD` resuelve el puzzle con `hashDate(date) % pool.length`.
+Si el pool crece de 30→40, la misma fecha mapea a un puzzle diferente. Los links ya compartidos
+se rompen. La promesa "the shared link is the game" deja de cumplirse.
 
 ---
 
-## Session Plan — 2026-03-26: Practice Hub Re-Architecture
+### Auditoría de puntos de generación de URL (callsites exactos)
 
-### Summary
-Re-architecture of the main play-hub screen based on approved v2 UX proposal.
-Full spec: `docs/superpowers/plans/2026-03-26-practice-hub-rearchitecture.md`
+**URLs `/challenge/daily` que se generan hoy** (los únicos afectados):
 
-### Current State
-- ✅ **Completed**: UX diagnosis, v1 proposal, v2 "approved with adjustments", implementation spec written
-- 🚧 **In Progress**: Ready to begin PR1
-- ⚠️ **Blockers**: None
-- 🔧 **Tech Debt**: 9 hardcoded `#0a1424` values, 48 raw `<button>` elements (out of scope)
+| Archivo | Línea | URL generada |
+|---------|-------|-------------|
+| `challenge-daily-client.tsx` | 49 | `` `${origin}/challenge/daily?date=${today}` `` — falta `puzzle` |
+| `challenge/daily/page.tsx` | 46 | `` `${origin}/challenge/daily?date=${date}` `` — falta `puzzle` (en canonical de OG) |
 
-### Next Steps (Prioritized)
+**URLs de OG card** (`/share/daily?piece=...&start=...&target=...`): ya son estables porque
+encodean posición directamente, NO usan `hashDate % N`. No se tocan.
 
-#### Priority 1: Critical (P0)
-1. **PR1: Dock semantics + active routing** — S
-   - Files: `editorial.ts`, `persistent-dock.tsx`
-   - Acceptance: Dock reads "Practice", links to `/`, active state wired
-2. **PR2: Eliminate utility band + redistribute** — M
-   - Files: `mission-panel.tsx`, `page.tsx`, `exercise-drawer.tsx`
-   - Acceptance: No utility band, Lv beside rail, stars in stats bar, HelpCircle icon
-
-#### Priority 2: High (P1)
-3. **PR3: Piece selector state simplification** — S
-   - Files: `globals.css`
-   - Acceptance: No border/border-radius on `.piece-hero`, subtler glow
-4. **PR4: Opacity + spacing tuning** — S
-   - Files: `globals.css`, `mission-panel.tsx`
-   - Acceptance: Dock 0.55, inactive tabs 0.45, board mt-1, label h-auto
-
-#### Priority 3: Validation
-5. **PR5: MiniPay QA** — S
-   - 7 states screenshotted, before/after comparison
-   - Decides whether dock slot reorder is needed in future pass
-
-### Key Decisions (Locked)
-- Screen = Practice Hub (not Home/Arena)
-- Dock center = "Practice" (new `DOCK_LABELS` constant, NOT `ARENA_COPY.title` mutation)
-- Zero new assets — CSS/layout only
-- Dock slots: no reorder in this pass
+**`HubDailyTile`** (hub-daily-tile.tsx): no genera `shareLinkUrl` en absoluto —
+pasa `shareUrl` + `shareSolvedUrl` (OG card) pero NO `shareLinkUrl` a `DailyTacticSheet`.
+El spec requiere que el Hub también comparta el challenge link con puzzleId.
 
 ---
 
-## Session Plan — 2026-03-18: Victory Screen Refactor (Claim → Share)
+### Solución — Diseño
 
-### Spec Summary
-Refactor the victory modal from the current 3-phase mint-oriented flow (`idle → minting → minted`)
-to a 4-state claim-oriented flow (`ready → claiming → success → error`) + `shareStatus` track.
+#### Regla de resolución en `/challenge/daily/page.tsx`
 
-**Core mental model**: `I won → I claim my victory onchain → my share card is unlocked`
-
-### Current Architecture (what exists)
 ```
-ArenaEndState (orchestrator)
-├─ VictoryCelebration  (idle + win)     → trophy, stats, Play Again, Mint Victory, Share, Back
-├─ VictoryMinting      (minting)        → sparkles loading, "Minting your victory..."
-└─ VictoryReceipt      (minted)         → wolf icon, "Victory #N Minted!", Share, Play Again, Back
+searchParams.puzzle presente y válido  →  ese puzzle exacto (pool-size agnostic)
+searchParams.puzzle presente e inválido  →  fallback a getDailyTactic(date)
+sin searchParams.puzzle  →  getDailyTactic(date)  (backwards compat — links viejos)
 ```
-- State: `MintPhase = "idle" | "minting" | "minted"` (3 states, no error state)
-- Mint logic: monolithic `handleMintVictory()` in `arena/page.tsx` (~90 lines)
-- Copy: `VICTORY_MINT_COPY` + `VICTORY_CELEBRATION_COPY` in `editorial.ts`
-- Share: `ShareButton` component (navigator.share → clipboard fallback), shown in all states
 
-### Target Architecture (what we're building)
+#### URL canónica después de B2.2a
+
 ```
-ArenaEndState (orchestrator, same file)
-├─ VictoryCelebration  (WIN_READY)      → trophy, stats, Play Again, Claim Victory, helper text, Back
-├─ VictoryClaiming     (CLAIMING)       → same card layout, claiming animation, progress text
-├─ VictoryClaimSuccess (CLAIM_SUCCESS)  → "Victory Recorded", share card area unlocked, social row
-└─ VictoryClaimError   (CLAIM_ERROR)    → error message, Try Again, Back
+/challenge/daily?date=2026-06-22&puzzle=dt-rook-3
 ```
-- State: `ClaimPhase = "WIN_READY" | "CLAIMING" | "CLAIM_SUCCESS" | "CLAIM_ERROR"`
-- Rename: "Mint" → "Claim" everywhere in UX (contract call stays the same)
-- Share: ONLY unlocked after successful claim (not before)
-- Social row: Share Card (primary), Share to X, Share to WhatsApp, Copy Link, Download Card
-- Victory Card: placeholder system for future social OG card
 
-### Implementation Plan — 7 Steps
+---
 
-#### Step 1: Types & Copy (SDD) — S
-**Files**: `editorial.ts`, `arena-end-state.tsx`
-**Changes**:
-- Replace `MintPhase` type with `ClaimPhase = "WIN_READY" | "CLAIMING" | "CLAIM_SUCCESS" | "CLAIM_ERROR"`
-- Replace `VICTORY_MINT_COPY` with `VICTORY_CLAIM_COPY`:
-  ```
-  claimButton: "Claim Victory"
-  claimHelper: "Record this win onchain to unlock your share card"
-  claiming: "Claiming Victory..."
-  claimProgress1: "Recording your result onchain"
-  claimProgress2: "Preparing your victory card"
-  claimSuccessTitle: "Victory Recorded"
-  claimSuccessSubtitle: "Your onchain result is live. Your share card is ready."
-  claimErrorTitle: "Couldn't record victory"
-  claimErrorSubtitle: "Something went wrong while saving your result onchain."
-  tryAgain: "Try Again"
-  shareCard: "Share Card"
-  shareToX: "Share to X"
-  shareToWhatsApp: "Share to WhatsApp"
-  copyLink: "Copy Link"
-  downloadCard: "Download Card"
-  ```
-- Update `VICTORY_CELEBRATION_COPY`: remove `shareVictory`, `mintingMessage`, `mintedTitle/Subtitle`
-- Add placeholder data type:
-  ```ts
-  type VictoryClaimData = {
-    tokenId: bigint | null;
-    claimTxHash: string | null;
-    // Future placeholders:
-    // shareCardUrl: string | null;
-    // shareLinkUrl: string | null;
-    // ogImageUrl: string | null;
+### Files to Change — 4 archivos, 1 test file
+
+#### 1. `apps/web/src/lib/daily/daily-puzzles.ts`
+
+Agregar dos funciones puras:
+
+```ts
+export function getPuzzleById(id: string): DailyTacticData | undefined {
+  return DAILY_TACTIC_PUZZLES.find((p) => p.id === id);
+}
+
+export function resolveDailyPuzzle(date: string, puzzleId?: string): DailyTacticData {
+  if (puzzleId) {
+    const byId = getPuzzleById(puzzleId);
+    if (byId) return byId;
   }
-  ```
-**Acceptance**: Types compile, copy constants defined, no UI changes yet
+  return getDailyTactic(date);
+}
+```
 
-#### Step 2: ArenaEndState orchestrator refactor — S
-**Files**: `arena-end-state.tsx`
-**Changes**:
-- Replace `MintPhase` with `ClaimPhase` in Props type
-- Add `claimTxHash?: string | null` to Props
-- Route to 4 components based on `claimPhase`:
-  - `WIN_READY` → `VictoryCelebration` (renamed props: `onClaimVictory` instead of `onMintVictory`)
-  - `CLAIMING` → `VictoryClaiming` (new component, replaces `VictoryMinting`)
-  - `CLAIM_SUCCESS` → `VictoryClaimSuccess` (new component, replaces `VictoryReceipt`)
-  - `CLAIM_ERROR` → `VictoryClaimError` (new component)
-- Loss modal stays unchanged
-**Acceptance**: Orchestrator routes correctly, old components still render temporarily
+No se cambia `getDailyTactic`. No se rompe nada existente.
 
-#### Step 3: VictoryCelebration (WIN_READY) — M
-**Files**: `victory-celebration.tsx`
-**Changes**:
-- Remove `ShareButton` — no share before claim
-- Rename `onMintVictory` → `onClaimVictory`, `mintPrice` → `claimPrice`, `mintError` removed
-- Button hierarchy:
-  1. **Play Again** (primary, cyan gradient — unchanged)
-  2. **Claim Victory — $X.XX** (secondary, important but below primary)
-     - Style: filled muted teal/emerald, NOT amber (amber = minted state)
-     - Must NOT look disabled — communicates value
-  3. **Helper text**: "Record this win onchain to unlock your share card"
-  4. **Back to Hub** (tertiary, text button, centered, horizontal, clean)
-- Keep: trophy Lottie, title "Victory", performance line, 3 stat cards
-**Acceptance**: No share button visible, claim button prominent, helper text clear
+---
 
-#### Step 4: VictoryClaiming (CLAIMING) — S
-**Files**: `victory-claiming.tsx` (new, replaces `victory-minting.tsx`)
-**Changes**:
-- Same card layout as WIN_READY (not a totally different modal)
-- Keep trophy + stats visible (don't reset the layout)
-- Replace CTA area with:
-  - **Claiming Victory...** (disabled button with spinner/pulse)
-  - Progress text lines:
-    - "Recording your result onchain"
-    - "Preparing your victory card"
-  - Play Again hidden or disabled
-  - Back to Hub optionally visible (only if cancel doesn't break flow)
-- Delete `victory-minting.tsx` after
-**Acceptance**: Smooth transition from WIN_READY, no layout jump, progress feedback visible
+#### 2. `apps/web/src/app/[locale]/challenge/daily/page.tsx`
 
-#### Step 5: VictoryClaimSuccess (CLAIM_SUCCESS) — M
-**Files**: `victory-claim-success.tsx` (new, replaces `victory-receipt.tsx`)
-**Changes**:
-- Title: "Victory Recorded"
-- Subtitle: "Your onchain result is live. Your share card is ready."
-- Trophy/stats stay visible (reward state, not reset)
-- Share area (unlocked reward block):
-  1. **Share Card** (primary, amber gradient — this is THE reward)
-  2. Social actions row:
-     - Share to X
-     - Share to WhatsApp
-     - Copy Link
-     - Download Card
-  3. **Play Again** (secondary, cyan)
-  4. **Back to Hub** (tertiary text)
-- `ShareButton` component: extend with platform-specific share targets (X, WhatsApp, generic)
-- Placeholder: victory card URL derivation from `tokenId` + `claimTxHash`
-- Delete `victory-receipt.tsx` after
-**Acceptance**: Share unlocked only here, social row visible, feels like reward state
+Cambios mínimos:
 
-#### Step 6: VictoryClaimError (CLAIM_ERROR) — S
-**Files**: `victory-claim-error.tsx` (new)
-**Changes**:
-- Title: "Couldn't record victory"
-- Subtitle: "Something went wrong while saving your result onchain."
-- CTAs:
-  1. **Try Again** (primary, cyan)
-  2. **Back to Hub** (secondary)
-  3. Play Again (optional tertiary)
-- Keep trophy + stats visible (context retention)
-**Acceptance**: Error state reachable, Try Again works, Back to Hub works
+```diff
+- type SearchParams = { date?: string };
++ type SearchParams = { date?: string; puzzle?: string };
 
-#### Step 7: arena/page.tsx state migration — M
-**Files**: `arena/page.tsx`
-**Changes**:
-- Replace `mintPhase` state with `claimPhase: ClaimPhase` (init: `"WIN_READY"`)
-- Add `claimTxHash` state
-- Rename `handleMintVictory` → `handleClaimVictory`:
-  - On start: `setClaimPhase("CLAIMING")`
-  - On success: `setClaimPhase("CLAIM_SUCCESS")`, save `claimTxHash` from receipt
-  - On error: `setClaimPhase("CLAIM_ERROR")` (NOT back to WIN_READY)
-  - On user reject: back to `WIN_READY` (cancel, not error)
-- `handlePlayAgain`: reset to `WIN_READY`
-- Wire `onRetry` from CLAIM_ERROR → re-call `handleClaimVictory`
-- Pass new props to `ArenaEndState`
-**Acceptance**: Full flow works: WIN_READY → CLAIMING → CLAIM_SUCCESS, error recovery works
+  export default function ChallengeDailyPage({ searchParams }) {
+    const today = resolveDate(searchParams.date);
+-   const puzzle = getDailyTactic(today);
++   const puzzle = resolveDailyPuzzle(today, searchParams.puzzle);
+    return <ChallengeDailyClient puzzleData={puzzle} today={today} />;
+  }
+```
 
-### Files Modified (summary)
-| File | Action |
-|---|---|
-| `lib/content/editorial.ts` | Replace copy constants |
-| `components/arena/arena-end-state.tsx` | New type + routing |
-| `components/arena/victory-celebration.tsx` | Remove share, rename mint→claim |
-| `components/arena/victory-minting.tsx` | **DELETE** |
-| `components/arena/victory-claiming.tsx` | **NEW** |
-| `components/arena/victory-receipt.tsx` | **DELETE** |
-| `components/arena/victory-claim-success.tsx` | **NEW** |
-| `components/arena/victory-claim-error.tsx` | **NEW** |
-| `app/arena/page.tsx` | State migration mint→claim |
+En `generateMetadata` — actualizar canonical con puzzleId:
+```diff
+- const canonical = `${origin}/challenge/daily?date=${date}`;
++ const canonical = `${origin}/challenge/daily?date=${date}&puzzle=${puzzle.id}`;
+```
 
-### Out of Scope (future)
-- Victory Card image generation (backend/canvas)
-- OG meta tags for share links
-- Social platform API integrations
-- Download Card as image export
-- `shareCardUrl`, `shareLinkUrl`, `ogImageUrl` resolution
-- These all get **placeholders** now, implementation later
+---
+
+#### 3. `apps/web/src/app/[locale]/challenge/daily/challenge-daily-client.tsx`
+
+```diff
+- const challengeUrl = `${origin}/challenge/daily?date=${today}`;
++ const challengeUrl = `${origin}/challenge/daily?date=${today}&puzzle=${puzzleData.id}`;
+```
+
+Una sola línea. `puzzleData` ya llega como prop — no hay nueva dependencia.
+
+---
+
+#### 4. `apps/web/src/components/hub/hub-daily-tile.tsx`
+
+Agregar `shareLinkUrl` al `<DailyTacticSheet>`:
+
+```diff
++ const origin = getShareOrigin();
++ const shareLinkUrl = `${origin}/challenge/daily?date=${today}&puzzle=${puzzleData.id}`;
+
+  <DailyTacticSheet
+    ...
+    shareUrl={shareUrl}
+    shareSolvedUrl={shareSolvedUrl}
++   shareLinkUrl={shareLinkUrl}
+    isConnected={isConnected}
+  />
+```
+
+`getShareOrigin` ya se importa en otros componentes del mismo folder.
+
+---
+
+#### 5. `apps/web/src/lib/daily/__tests__/daily-puzzles.test.ts`
+
+Agregar `describe("resolveDailyPuzzle")`:
+
+```ts
+describe("resolveDailyPuzzle", () => {
+  it("getPuzzleById returns the correct puzzle for a known id", () => { ... });
+  it("getPuzzleById returns undefined for an unknown id", () => { ... });
+  it("resolveDailyPuzzle(date, validId) returns that exact puzzle", () => { ... });
+  it("resolveDailyPuzzle(date, invalidId) falls back to getDailyTactic(date)", () => { ... });
+  it("resolveDailyPuzzle(date) behaves identically to getDailyTactic(date)", () => { ... });
+  it("pool expansion does not affect resolution when puzzleId is provided", () => {
+    // El pool tiene 30 puzzles. Si el mismo `date` mapea a un índice diferente
+    // tras expansión, el link con puzzle=ID sigue devolviendo el mismo puzzle.
+    const knownId = DAILY_TACTIC_PUZZLES[0].id;
+    const date = "2026-06-22";
+    expect(resolveDailyPuzzle(date, knownId).id).toBe(knownId);
+    // Simulación: no hay forma de cambiar el pool en runtime en el test,
+    // pero el test prueba la propiedad: el resultado depende de id, no de date%N.
+    expect(resolveDailyPuzzle("2025-01-01", knownId).id).toBe(knownId);
+  });
+});
+```
+
+---
+
+### Tests a NO tocar
+
+- BFS reachability `it.each` — no se tocó el pool
+- Conteo de 30 puzzles — no se agregaron puzzles aún (eso es B2.2b)
+- PRO extras — no se tocaron
+- Rotación — sigue siendo correcta
+
+---
 
 ### Risks
-- **Low**: Contract call is the same (`mintSigned`), only UX naming changes
-- **Low**: No new dependencies needed
-- **Medium**: Social share row needs careful mobile layout testing at 390px
-- **None**: Loss modal is untouched
 
-### Key Decisions
-- **"Claim Victory" over "Record Victory"**: game-native, more valuable feeling
-- **Amber = success/reward state only**: WIN_READY uses teal/emerald for claim button
-- **Share blocked pre-claim**: intentional friction → makes claim feel valuable
-- **CLAIM_ERROR as explicit state**: no silent fallback to WIN_READY on errors
-- **Same card layout across states**: no violent layout shifts, just bottom section changes
+| Riesgo | Severidad | Mitigación |
+|--------|-----------|-----------|
+| Links antiguos (sin `puzzle=`) siguen funcionando | Ninguno — fallback a `getDailyTactic(date)` explícito | Test "sin puzzleId → comportamiento actual" |
+| `searchParams.puzzle` con un id de otro surface (ej. `dt-rook-1` del exercises) | Bajo — el id existe en el pool → resuelve correctamente | Mismos IDs en `DAILY_TACTIC_PUZZLES` |
+| `getShareOrigin()` sin import en `hub-daily-tile.tsx` | Bajo — función ya existe en `lib/og/share-urls`; verificar import | Typecheck lo detecta |
+| `generateMetadata` en `page.tsx` necesita el puzzle para construir canonical | Ya se tiene — `puzzle` se resuelve antes del OG call | Sin riesgo |
 
 ---
 
-## Session Plan — 2026-03-17
+### Out of Scope
+
+- Los 10 puzzles nuevos (eso es B2.2b, se hace DESPUÉS)
+- `/share/daily` — ya es estable por diseño (encoda posición)
+- `DailyTacticSlot.shareLinkUrl` → apunta a `/share/daily` (OG landing), no a `/challenge/daily` — comportamiento diferente al del challenge, no se toca aquí
+- Rediseño, rewards, economy, Content Loop v2
+
+---
+
+### Implementation Order (TDD)
+
+1. **Red**: Agregar `describe("resolveDailyPuzzle")` en test file → fallan (función no existe)
+2. **Green**: Agregar `getPuzzleById` + `resolveDailyPuzzle` en `daily-puzzles.ts` → tests verdes
+3. Actualizar `page.tsx` — usar `resolveDailyPuzzle` + tipo `SearchParams` + canonical con puzzleId
+4. Actualizar `challenge-daily-client.tsx` — una línea
+5. Actualizar `hub-daily-tile.tsx` — agregar `shareLinkUrl`
+6. `pnpm --filter web type-check` → 0 errores
+7. `pnpm --filter web test` → suite completa verde
+8. Commit: `feat(b2.2a): stable challenge links — puzzle param pins exact puzzle`
+9. PR + auto-merge → main
+10. Smoke manual (ver abajo)
+11. Después: aprobar B2.2b (Content Pack)
+
+---
+
+### Smoke Manual
+
+1. Resolver puzzle del día desde Hub (`/hub` → Daily Tile)
+2. Tap "Share" — verificar que la URL copiada incluye `?date=...&puzzle=dt-xxx-N`
+3. Abrir `/challenge/daily?date=2026-06-22&puzzle=dt-rook-1` → carga rook-1 exacto (no el puzzle de hoy)
+4. Abrir `/challenge/daily?date=2026-06-22&puzzle=invalid-xxx` → carga el puzzle de hoy (fallback silencioso)
+5. Abrir `/challenge/daily?date=2026-06-22` (sin puzzle) → carga el puzzle de hoy (backwards compat)
+6. Confirmar que la URL en OG meta (`canonical`) incluye `puzzle=`
+7. Confirmar que `/stats` sigue cargando sin error
+
+---
 
 ### Current State
-- ✅ **Completed**: Victory NFT full pipeline (contract + API + frontend + deploy mainnet), engine migration (Stockfish→js-chess-engine), 8 audit fixes, PR #52 merged
-- 🚧 **In Progress**: Nothing uncommitted — clean working tree
-- ⚠️ **Blockers**: None
-- 🔧 **Tech Debt**: Rate limiter in-memory (needs Redis), game stats self-reported (needs session proof for v2)
+- ✅ **B2.1**: suite 4327/4327, `408f30e6`
+- ⏳ **B2.2a**: plan listo — esperando aprobación
+- 🔒 **B2.2b**: bloqueado por B2.2a
 
-### Project Context
-- **Type**: Web + Smart Contracts (monorepo)
-- **Stack**: Next.js 14, TypeScript, Tailwind, Hardhat, Solidity, wagmi/viem, chess.js, js-chess-engine
-- **Testing**: 114 tests passing (30 contract + 42 web + game tests)
-- **Deploy**: Celo Mainnet + Sepolia, MiniPay distribution
+---
 
-### Next Steps (Prioritized)
+## Session Plan — 2026-06-22 · B2.2 Daily Challenge Content Pack
 
-#### Priority 1: Critical
-1. **QA Victory NFT mint flow on mainnet** — S
-   - **Why**: Contract is deployed but never manually tested end-to-end in browser
-   - **Acceptance**: Win arena game → mint button appears → approve ERC-20 → mint tx succeeds → NFT visible
-   - **Notes**: Requires wallet with CELO + stablecoin on mainnet; set `NEXT_PUBLIC_VICTORY_NFT_ADDRESS` in `.env`
+### Existing Daily Content Inventory
 
-#### Priority 2: High
-2. **Add `NEXT_PUBLIC_VICTORY_NFT_ADDRESS` to `.env.mainnet`** — S
-   - **Why**: Mainnet env isn't configured for Victory NFT yet
-   - **Acceptance**: `0x0eE22F830a99e7a67079018670711C0F94Abeeb0` present in `.env.mainnet`
+**Pool activo** (`lib/daily/daily-puzzles.ts`): **30 puzzles** — `DAILY_TACTIC_PUZZLES`
 
-3. **Migrate rate limiter to Upstash Redis** — M
-   - **Why**: In-memory rate limiter resets on serverless cold starts, defeating its purpose
-   - **Acceptance**: `/api/sign-victory` rate limits persist across deploys
-   - **Notes**: Consider Upstash SDK (serverless-friendly, free tier)
+| Pieza   | Cantidad | Dificultades                       |
+|---------|----------|------------------------------------|
+| rook    | 5        | easy×3, medium×2                   |
+| bishop  | 4        | easy×3, medium×1  ← mínimo del pool |
+| knight  | 5        | easy×3, medium×2                   |
+| pawn    | 5        | easy×4, hard×1                     |
+| queen   | 5        | easy×3, medium×2                   |
+| king    | 6        | easy×2, medium×3, hard×1           |
+| **Total** | **30** | easy×18, medium×10, hard×2        |
 
-#### Priority 3: Medium
-4. **#23 Achievements + VIP roadmap** — L
-   - **Description**: Achievement system with VIP passes for CELO events
-   - **Dependencies**: Victory NFT QA should be done first
-   - **Notes**: P2 issue, open since 2026-03-04
+**Pool legacy** (`lib/daily/puzzles.ts`): 7 puzzles FEN (mate-in-1) — **NO conectado** a `/challenge/daily`.
 
-5. **Game session proof (v2 security)** — L
-   - **Description**: Server-side game session verification to prevent self-reported stats
-   - **Why**: Required before prize pool distribution can be trusted
-   - **Notes**: Could use commit-reveal or signed game state
+---
 
-#### Priority 4: Low
-6. **Timer mode** — M
-   - **Description**: Timed chess games in arena
-7. **Play-as-black** — M
-   - **Description**: Option to play black pieces in arena
-8. **Move animations** — S
-   - **Description**: Animate piece movement on the board
-9. **Game persistence** — M
-   - **Description**: Save/resume incomplete games
-10. **Owner key → multisig** — S
-    - **Description**: Upgrade contract owner to Safe multisig before high-value ops
+### Puzzle Schema (campos reales)
 
-### Key Decisions
-- **Engine**: js-chess-engine (30KB JS) over Stockfish WASM (2.5MB) — MiniPay compatibility wins
-- **Victory NFT pricing**: Micro-fees ($0.005–$0.02) make self-reported stats acceptable for v1
-- **Fee split**: 80/20 treasury/prize hardcoded in contract — simple, transparent
+`DailyTacticData`:
+```ts
+{
+  id: string
+  name: string
+  piece: PieceId
+  exercise: Exercise
+  hint: string
+  difficulty?: PuzzleDifficulty  // "easy" | "medium" | "hard" — REQUERIDO (test lo pina)
+}
+```
 
-### Notes for Next Session
-- `SESSION.md` (untracked) has full handoff notes from 2026-03-17
-- `deployments/celo.json` exists locally only (gitignored) with all mainnet addresses
-- 114 tests passing — run `pnpm test` in apps/web and `npx hardhat test` in apps/contracts
+Helpers: `sq("a1")`, `defineLabyrinth({ id, start, target, obstacles?, captureTargets?, isCapture?, optimalMoves })`
+
+---
+
+### Behavior de fechas — ya correcto post-B2.2a
+
+Tras B2.2a, `page.tsx` usará `resolveDailyPuzzle(today, searchParams.puzzle)`.
+Con `puzzle` presente en el link → puzzle exacto siempre. Sin `puzzle` → `getDailyTactic(date)`.
+
+---
+
+### Content Pack — Pack 01 (10 puzzles nuevos → pool 40)
+
+| Pieza   | +  | Total |
+|---------|----|-------|
+| rook    | +2 | 7     |
+| bishop  | +2 | 6     |
+| knight  | +2 | 7     |
+| pawn    | +2 | 7     |
+| queen   | +2 | 7     |
+| king    | 0  | 6     |
+
+Dificultad nuevos 10: 6 easy + 4 medium → totales: easy×24 / medium×14 / hard×2
+
+Tests a actualizar: "has exactly 30 puzzles" → 40, distribución, dificultad.
+BFS `it.each` auto-cubre los nuevos puzzles.
+
+**IDs de continuación**: `dt-rook-6/7`, `dt-bishop-5/6`, `dt-knight-6/7`, `dt-pawn-6/7`, `dt-queen-6/7`
+
+---
+
+## Session Plan — 2026-06-22 · B2.1 Challenge Funnel Metrics
+
+### Current State
+
+- ✅ **Completado**: B2.0 Challenge Link en prod (`b0a044aa`). 5 eventos en `challenge-telemetry.ts`.
+- ✅ **Completado**: B2.1 Challenge Funnel Metrics en main (`408f30e6`). Suite 4327/4327.
+
+---
+
+## Session Plan — 2026-03-28: Systems & Content Expansion (continued)
+
+### Completed This Session
+
+- PR-1 ✅ 6-piece foundation
+- PR-2 ✅ Supabase bootstrap
+- PR-3 ✅ Pawn exercises
+- PR-4 ✅ Score re-submission
+- PR-5 ✅ Unlock gating
+- PR-6 ✅ Queen exercises
+- PR-7 ✅ Practice move logging
+- PR-8 ✅ Hall performance
+- PR-9 ✅ King exercises
+- PR-11 ✅ Global progress + unlock celebration + ? button removed
 
 ---
 
 ## Session — 2026-03-13
 
-### Completed This Session
-- ✅ #19 Passport gating — closed (works on web; chain limitation in MiniPay accepted)
-- ✅ Share Card — confirmed already implemented
-- ✅ Demo Video — Remotion promo video implemented (apps/video, 7 commits, 20.5s MP4)
-  - 4 scenes: Splash, Pieces Showcase, Board+Badge, CTA Outro
-  - TransitionSeries with fade transitions
-  - Output: `apps/video/out/chesscito-promo.mp4` (7.7 MB, 1080x1920)
-
-### Open Issues
-- #23 Achievements + VIP roadmap (P2) — not started
+- ✅ #19 Passport gating
+- ✅ Share Card
+- ✅ Demo Video — Remotion promo video
 
 ---
 
 ## Session Plan — 2026-03-10 (session 2)
 
-### Completed
-- ✅ #7 Cinematica Torre — first-visit rook tutorial with lane highlights + frosted banner (4 commits)
-- ✅ #8 Captura con Torres — capture exercises for rook 4-5 with warm target indicator (4 commits)
-- ✅ #20 Shop v1: Retry Shield — consumable (3 uses/purchase), PhaseFlash shield button (6 commits)
-- ✅ Closed issues #7, #8, #20
-- ✅ #19 Passport gating — design approved, design doc committed
+- ✅ #7 Cinematica Torre
+- ✅ #8 Captura con Torres
+- ✅ #20 Shop v1: Retry Shield
 
 ---
 
 ## Session Plan — 2026-03-10 (session 1)
 
-### Completed
-- ✅ UX overhaul: 3-zone floating HUD layout (pushed)
-- ✅ BadgeSheet collection component with batched reads (pushed)
-- ✅ BadgeAlreadyClaimed error handling
-- ✅ On-chain verification: rook badge confirmed claimed for MiniPay wallet
+- ✅ UX overhaul: 3-zone floating HUD layout
+- ✅ BadgeSheet collection component
+- ✅ On-chain verification: rook badge confirmed
 
 ---
 
 ## Session — 2026-03-09
 
-### Completed
 - ✅ GitHub housekeeping: closed #22, #21, #14, #13, #10, #9, #4, #3
-- ✅ Visual polish fixes (stars bar, time format, sheet overlay, leaderboard i18n)
+- ✅ Visual polish fixes
