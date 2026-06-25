@@ -123,6 +123,7 @@ import { getPositionLabel, getValidTargets } from "@/lib/game/board";
 import type { BoardPosition } from "@/lib/game/types";
 import { BadgeEarnedPrompt, PieceCompletePrompt, ResultOverlay } from "@/components/exercises/result-overlay";
 import { GetPeonesSheet } from "@/components/payments/get-peones-sheet";
+import { SeasonPassSheet } from "@/components/payments/season-pass-sheet";
 import { BadgeSheet } from "@/components/exercises/badge-sheet";
 import { CandyGlassShell } from "@/components/redesign/candy-glass-shell";
 import { CandyIcon } from "@/components/redesign/candy-icon";
@@ -789,6 +790,8 @@ export function ExercisesScreen({
   const [isSavingScore, setIsSavingScore] = useState(false);
   // Get Peones recovery sheet — opened from the insufficient-save overlay.
   const [getPeonesOpen, setGetPeonesOpen] = useState(false);
+  // Season Pass sheet — opened from insufficient-save overlay in Lite mode.
+  const [seasonPassSheetOpen, setSeasonPassSheetOpen] = useState(false);
 
   // Pointer-events lock release: as soon as a result overlay appears,
   // any open dock sheet must be closed or its Radix modal portal
@@ -1879,10 +1882,14 @@ export function ExercisesScreen({
             variant: "error",
             errorMessage: tResult("error.notEnoughPeones"),
             recoveryCta: {
-              label: tResult("cta.getPeones"),
+              label: CHESSCITO_LITE_MODE ? "Get Season Pass" : tResult("cta.getPeones"),
               onPress: () => {
                 setResultOverlay(null);
-                setGetPeonesOpen(true);
+                if (CHESSCITO_LITE_MODE) {
+                  setSeasonPassSheetOpen(true);
+                } else {
+                  setGetPeonesOpen(true);
+                }
               },
             },
           });
@@ -3059,6 +3066,13 @@ export function ExercisesScreen({
           <GetPeonesSheet
             open={getPeonesOpen}
             onOpenChange={setGetPeonesOpen}
+          />
+        ) : null}
+
+        {seasonPassSheetOpen ? (
+          <SeasonPassSheet
+            open={seasonPassSheetOpen}
+            onOpenChange={setSeasonPassSheetOpen}
           />
         ) : null}
 

@@ -7845,6 +7845,24 @@ button.hud-resource-chip:active:not(:disabled) {
   min-height: 100px;
 }
 
+/* Lite Season Pass entry point — subtle link-style CTA below NextStepCard. */
+.hub-scaffold-season-pass-cta {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 20px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.hub-scaffold-season-pass-cta:hover,
+.hub-scaffold-season-pass-cta:focus-visible {
+  background: rgba(59, 130, 246, 0.28);
+  color: #fff;
+}
+
 /* Root-level CTA footer — sibling of `.hub-scaffold-body`. Sits at
    the bottom of the viewport (body has `flex: 1`, so the footer
    stays anchored at the bottom of the 100dvh column). Horizontal

@@ -126,6 +126,8 @@ type HubScaffoldProps = {
     action: ContentLoopAction;
     isHydrated: boolean;
   } | null;
+  /** Season Pass CTA (Chesscito Lite only). Opens the SeasonPassSheet when tapped. */
+  onSeasonPassPress?: () => void;
   onError?: (
     context: import("@/components/error/primitive-boundary").PrimitiveBoundaryErrorContext,
   ) => void;
@@ -176,6 +178,7 @@ export function HubScaffold({
   onArenaPress,
   miniArenaUnlocked = false,
   nextStepCard = null,
+  onSeasonPassPress,
   onError,
 }: HubScaffoldProps) {
   const tHud = useTranslations("HUD_COPY");
@@ -346,6 +349,16 @@ export function HubScaffold({
                   isHydrated={nextStepCard.isHydrated}
                 />,
               )
+            ) : null}
+            {CHESSCITO_LITE_MODE && onSeasonPassPress ? (
+              <button
+                type="button"
+                onClick={onSeasonPassPress}
+                className="hub-scaffold-season-pass-cta"
+                aria-label="Get 21-Day Mind Challenge Season Pass"
+              >
+                🛡️ 21-Day Pass — $1.99
+              </button>
             ) : null}
           </div>
         </div>

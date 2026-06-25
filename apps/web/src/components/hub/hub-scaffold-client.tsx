@@ -78,6 +78,13 @@ import {
 } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
+import { useSeasonPassStatus } from "@/lib/season-pass/use-season-pass-status";
+const SeasonPassSheet = CHESSCITO_LITE_MODE
+  ? dynamic(
+      () => import("@/components/payments/season-pass-sheet").then((m) => m.SeasonPassSheet),
+      { ssr: false },
+    )
+  : () => null;
 
 /** On-chain badge IDs in slot order — matches `exercises-screen.tsx`'s
  *  `BADGE_LEVEL_IDS` enumeration. Index 0 = id 1 = rook, index 1 = id 2
@@ -226,6 +233,8 @@ export function HubScaffoldClient({
   // Lite Mode: deep-link ?sheet=profile must not open ProfileSheet (it mounts ProSheet).
   const [profileOpen, setProfileOpen] = useState(!CHESSCITO_LITE_MODE && initialSheet === "profile");
   const [settingsOpen, setSettingsOpen] = useState(initialSheet === "settings");
+  const [seasonPassSheetOpen, setSeasonPassSheetOpen] = useState(false);
+  const seasonPassStatus = useSeasonPassStatus(address);
   // `useClaimQueue` reads pending claims out of localStorage on mount;
   // the unread count drives the avatar notif-dot once the HUD slot
   // exists (deferred — see project note).
@@ -619,6 +628,11 @@ export function HubScaffoldClient({
             ? { action: contentLoopAction, isHydrated: isContentLoopHydrated }
             : null
         }
+        onSeasonPassPress={
+          CHESSCITO_LITE_MODE && !seasonPassStatus.active
+            ? () => setSeasonPassSheetOpen(true)
+            : undefined
+        }
       />
       {process.env.NODE_ENV === "development" &&
         CHESSCITO_LITE_MODE &&
@@ -647,6 +661,16 @@ export function HubScaffoldClient({
       {!CHESSCITO_LITE_MODE && <BadgeSheet {...badgeSheet.sheetProps} />}
       {!CHESSCITO_LITE_MODE && <ShopSheet {...shopSheet.sheetProps} />}
       {!CHESSCITO_LITE_MODE && <PurchaseConfirmSheet {...shopSheet.confirmProps} />}
+      {CHESSCITO_LITE_MODE && (
+        <SeasonPassSheet
+          open={seasonPassSheetOpen}
+          onOpenChange={setSeasonPassSheetOpen}
+          onSuccess={() => {
+            setSeasonPassSheetOpen(false);
+            void seasonPassStatus.refresh();
+          }}
+        />
+      )}
       <ProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
         <SheetContent
