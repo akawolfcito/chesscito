@@ -20,7 +20,10 @@ import {
   PACK_PURCHASE_SOURCE,
   PEONES_PACKS,
   RAIL_ACCEPTED_STABLECOINS,
+  SEASON_PASSES,
+  SEASON_PASS_SOURCE,
   type PeonesPackSku,
+  type SeasonPassSku,
 } from "@/lib/payments/rail-config";
 
 export type DirectTransferTx = {
@@ -95,5 +98,49 @@ export function buildPeonesPackTransfer(args: {
     priceUsd6: pack.priceUsd6,
     sku: pack.sku,
     source: pack.source,
+  };
+}
+
+export type SeasonPassTransferTx = {
+  to: `0x${string}`;
+  data: `0x${string}`;
+  value: bigint;
+  token: { symbol: string; address: `0x${string}`; decimals: number };
+  treasury: `0x${string}`;
+  expectedAmount: bigint;
+  priceUsd6: bigint;
+  sku: SeasonPassSku;
+  source: typeof SEASON_PASS_SOURCE;
+};
+
+export function buildSeasonPassTransfer(args: {
+  sku: SeasonPassSku;
+  treasury: string;
+  tokenSymbol?: string;
+}): SeasonPassTransferTx {
+  if (!isValidAddress(args.treasury)) {
+    throw new Error(`Invalid treasury address: ${String(args.treasury)}`);
+  }
+  const pass = SEASON_PASSES[args.sku];
+  if (!pass) {
+    throw new Error(`Unknown season pass SKU: ${String(args.sku)}`);
+  }
+  const token = resolveToken(args.tokenSymbol);
+  const expectedAmount = normalizePrice(pass.priceUsd6, token.decimals);
+  const data = encodeFunctionData({
+    abi: erc20Abi,
+    functionName: "transfer",
+    args: [args.treasury, expectedAmount],
+  });
+  return {
+    to: token.address,
+    data,
+    value: 0n,
+    token: { symbol: token.symbol, address: token.address, decimals: token.decimals },
+    treasury: args.treasury,
+    expectedAmount,
+    priceUsd6: pass.priceUsd6,
+    sku: pass.sku,
+    source: pass.source,
   };
 }

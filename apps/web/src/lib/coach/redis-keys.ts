@@ -54,4 +54,8 @@ export const REDIS_KEYS = {
    *  bounded. */
   shieldProcessedTx: (txHash: string) =>
     `coach:shields:processed-tx:${txHash}`,
+  /** Lite Season Pass active flag (TTL = pass duration in ms). Value is
+   *  the ISO string of `expires_at`. Set at purchase; auto-expires so
+   *  status checks fall back to Supabase after the Redis key purges. */
+  seasonPass: (wallet: string) => `lite:season-pass:${wallet.toLowerCase()}`,
 } as const;
