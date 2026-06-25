@@ -68,14 +68,18 @@ function getShopDeployBlock(): bigint {
 
 const redis = Redis.fromEnv();
 
-// `CELO_RPC_URL` lets us swap Forno for a higher-capacity provider
-// (dRPC / Alchemy / QuickNode) when the unbounded historical scan
-// stresses the public endpoint. Undefined falls back to the chain's
-// default (Forno) inside viem's `http()`.
+// This route does a historical getLogs scan from SHOP_DEPLOY_BLOCK to
+// latest — a range Alchemy free tier rejects (10-block cap). We use
+// FOUNDER_STATUS_RPC_URL when set; otherwise fall back to Forno, which
+// has no block-range restriction. CELO_RPC_URL (used by other routes)
+// is intentionally NOT used here as a default.
+const FOUNDER_RPC_URL =
+  process.env.FOUNDER_STATUS_RPC_URL || "https://forno.celo.org";
+
 const client = SHOP_ADDRESS
   ? createPublicClient({
       chain: celo,
-      transport: http(process.env.CELO_RPC_URL || undefined),
+      transport: http(FOUNDER_RPC_URL),
     })
   : null;
 
