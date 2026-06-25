@@ -129,34 +129,54 @@ export async function GET(req: Request) {
   }
 
   try {
-    const logs = await client.getLogs({
-      address: SHOP_ADDRESS,
-      event: ITEM_PURCHASED_EVENT,
-      args: {
-        buyer: wallet as `0x${string}`,
-        itemId: [FOUNDER_BADGE_ITEM_ID, FOUNDER_BADGE_CELO_ITEM_ID],
-      },
-      fromBlock: getShopDeployBlock(),
-      toBlock: "latest",
-    });
+    // RPCs cap eth_getLogs at 5000 blocks. We paginate backwards from
+    // the latest block so recent purchases resolve in the first chunk.
+    // MAX_CHUNKS caps total scan time (~300ms × chunk × sequential) so
+    // the function never exhausts its 300s limit.
+    const CHUNK = 5000n;
+    const MAX_CHUNKS = 200; // ~1M blocks backwards ≈ 23 days at 2s/block
 
-    if (logs.length === 0) {
+    const latestBlock = await client.getBlockNumber();
+    const deployBlock = getShopDeployBlock();
+    const scanFrom = latestBlock > deployBlock + CHUNK * BigInt(MAX_CHUNKS)
+      ? latestBlock - CHUNK * BigInt(MAX_CHUNKS)
+      : deployBlock;
+
+    let foundBlock: bigint | null = null;
+    let toBlock = latestBlock;
+
+    while (toBlock >= scanFrom) {
+      const fromBlock = toBlock >= CHUNK ? toBlock - CHUNK + 1n : 0n;
+      const chunk = await client.getLogs({
+        address: SHOP_ADDRESS,
+        event: ITEM_PURCHASED_EVENT,
+        args: {
+          buyer: wallet as `0x${string}`,
+          itemId: [FOUNDER_BADGE_ITEM_ID, FOUNDER_BADGE_CELO_ITEM_ID],
+        },
+        fromBlock: fromBlock < deployBlock ? deployBlock : fromBlock,
+        toBlock,
+      });
+      if (chunk.length > 0) {
+        foundBlock = chunk.reduce(
+          (acc, log) => (log.blockNumber < acc ? log.blockNumber : acc),
+          chunk[0].blockNumber,
+        );
+        break;
+      }
+      if (fromBlock <= deployBlock) break;
+      toBlock = fromBlock - 1n;
+    }
+
+    if (foundBlock === null) {
       const status: FounderStatus = { ownsFounder: false, since: null };
       await safeSetCache(cacheKey, status);
       return NextResponse.json(status);
     }
 
-    // Earliest block among the matching logs → approximate "since" timestamp.
-    // We avoid an extra getBlock call here: the block number is enough for
-    // the v1 signal. Future spec can promote to a real timestamp.
-    const earliestBlock = logs.reduce(
-      (acc, log) => (log.blockNumber < acc ? log.blockNumber : acc),
-      logs[0].blockNumber,
-    );
-
     const status: FounderStatus = {
       ownsFounder: true,
-      since: Number(earliestBlock),
+      since: Number(foundBlock),
     };
     await safeSetCache(cacheKey, status);
     return NextResponse.json(status);

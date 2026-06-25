@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
+import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
 const STORAGE_PREFIX = "chesscito:founder-active:";
 /** Founder ownership is permanent — once true it never flips back.
@@ -57,10 +58,13 @@ export function useFounderStatus(): boolean {
   const { address } = useAccount();
   const wallet = address?.toLowerCase();
 
-  const [active, setActive] = useState<boolean>(() => readCache(wallet));
+  // Founder Badge is Full-only. In Lite builds the API is never called.
+  const [active, setActive] = useState<boolean>(() =>
+    CHESSCITO_LITE_MODE ? false : readCache(wallet),
+  );
 
   useEffect(() => {
-    if (!wallet) {
+    if (CHESSCITO_LITE_MODE || !wallet) {
       setActive(false);
       return;
     }
