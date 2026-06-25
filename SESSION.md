@@ -1,35 +1,45 @@
-# Session Handoff — 2026-06-24
+# Session Handoff — 2026-06-25
 
-## Completed
+## Completed This Session
 
-- `cddfc13` — drawer UX: auto-scroll al nodo activo al abrir, pieza pb-8, quitar spine line
-- `87275fa` — path-map node polish: badge check verde/número, glow dorado (estilo TRAIN PIECES), `isActive && !isDone` solo
-- `30ac4c9` — Claim Badge CTA en drawer (reemplaza hint cuando `badgeClaimable`), estrellas 2x más grandes (`h-6`), flush al nodo (`gap-0`)
-- `40b8441` — icono streak → combo triplet (`icons/combo.{avif,webp,png}`)
-- `3fc3969` — **bug fix crítico**: `lockedFor()` aplica la senda SIEMPRE aunque `rotationOn=true`; rotation solo filtra cuáles aparecen, la senda sigue gateando acceso
-- `4e16f79` — revert safe-area-inset-top (añadía demasiado espacio al header)
-- `e36c621` — rediseño completo drawer: path-map `path-map.png`, `btn-nodo.png` + pieza encima, `labyrint-icon.png` para laberintos, zigzag, grayscale+lock en bloqueados, tooltip al tap
+### Lite Season Pass MVP — 10 fases atómicas (4438/4438 tests, tsc clean)
+
+| Commit | Fase | Descripción |
+|--------|------|-------------|
+| `570b010` | 1 | `rail-config.ts`: tipos + config `lite_season_pass_21` ($1.99, 21d, +3 shields) |
+| `98c56a0` | 2 | Migración SQL `lite_season_passes` (RLS deny-all, idempotency UNIQUE, índices) |
+| `3b5a19c` | 3+4 | `transfer-builder.ts`: `buildSeasonPassTransfer`; `redis-keys.ts`: `seasonPass()` TTL key |
+| `562adda` | 5 | `verify-payment/route.ts`: branch Season Pass + Redis shields + 21 tests |
+| `b1076fa` | 6 | `GET /api/season-pass/status` (Redis fast path + Supabase fallback) + 7 tests |
+| `0c0ce50` | 7 | `useSeasonPassStatus` hook (Lite-only, AbortController cleanup) |
+| `bb85206` | 8 | `useSeasonPassRail` hook (type-safe, sep. de `usePaymentRail`) |
+| `1bb0833` | 9 | `SeasonPassSheet` component (`VictoryPopupShell`, Lite gate, success/error states) |
+| `7ffac67` | 10 | Integración exercises + hub (exercises: recoveryCta override; hub: CTA + dynamic import) |
 
 ## Current State
-
-- **Branch**: `main` — sincronizado con `origin/main` (`63bb4ae9`)
-- **Build**: passing — tsc clean, 22/22 exercise-drawer tests
-- **Uncommitted work**: solo `docs/testing/analytics-test-patterns.md` (untracked, no urgente)
+- **Branch**: main — 9 commits ahead of `origin/main` (no pusheado aún)
+- **Build**: 4438/4438 tests · tsc clean
+- **Treasury confirmada**: `0x917497b64eeB85859edcf2e4ca64059eDfeC1923` (Safe wallet)
+- **SKU**: `lite_season_pass_21` · $1.99 · 21 días · +3 shields
+- **Season ID**: `21day-mind-challenge-2026-q3`
 
 ## Next Tasks
+1. **Aplicar migración en Supabase hosted**: `apps/web/supabase/migrations/20260625120000_lite_season_passes.sql`
+2. **Env vars en Vercel** (Preview + Prod ya comparten env): `CHESSCITO_TREASURY_ADDRESS` confirmada. No hay nuevas vars — rail usa las mismas de Peones.
+3. **Smoke test manual**: Hub Lite → botón 🛡️ → SeasonPassSheet → pago USDC on-device.
+4. **Opcional**: Welcome Package spec + Exercises Save Flow spec (backlog previo — ver MEMORY.md).
 
-1. **B2.2a — Stable Challenge Links**: pinear puzzleId en URL `/challenge/daily?date=...&puzzle=dt-xxx-N` — spec completo en `.claude/TODO.md`; `resolveDailyPuzzle()` + actualizar `page.tsx`, `challenge-daily-client.tsx`, `hub-daily-tile.tsx`, 5 tests TDD
-2. **B2.2b — Daily Content Pack**: expandir pool 30→40 (+2 puzzles por pieza excepto king) — bloqueado por B2.2a
-3. **Smoke del drawer en device real**: verificar que el auto-scroll al nodo activo funciona en MiniPay WebView (el `scrollIntoView` a 250ms puede necesitar ajuste)
-4. **VR baseline update**: el drawer cambió visualmente — refrescar snapshots Playwright con `--update-snapshots` antes del próximo ship a prod
+## Smoke Checklist (local)
+```
+CHESSCITO_LITE_MODE=true CHESSCITO_TREASURY_ADDRESS=0x917497... pnpm dev
+```
+1. Hub → ver botón "🛡️ 21-Day Pass — $1.99" (solo si no hay pass activo)
+2. Tap → `SeasonPassSheet` abre con precio, descripción, 21 días
+3. Exercises → falla ejercicio sin shields → overlay muestra "Get Season Pass" (no "Get Peones")
+4. Tap → `SeasonPassSheet`
+5. Con wallet Celo mainnet + USDC: pagar → success state → +3 shields confirmado
+6. Botón hub desaparece (pass activo)
+7. `GET /api/season-pass/status?wallet=0x...` → `{ active: true, expiresAt, seasonId }`
 
 ## Blockers
-
-- Ninguno
-
-## Notes
-
-- Bug de ejercicios todos unlocked: causado por `ENABLE_EXERCISE_ROTATION=true` en preview env + `getCanonicalFive` (primeros 5) con `lockedFor` que bypasseaba la senda. Fix `3fc3969`.
-- El drawer usa `flex-col-reverse` para renderizar exercise 1 en la base visual; auto-scroll usa `scrollIntoView({ block: "center", behavior: "smooth" })` con 250ms delay.
-- `scripts/gen-triplet.sh` funciona en macOS bash 3 — usar para cualquier asset nuevo.
-- B2.2a spec detallado en `.claude/TODO.md` (implementation order + smoke manual incluidos).
+- Migración SQL pendiente de aplicar en hosted (no bloquea dev, sí bloquea smoke en staging).
