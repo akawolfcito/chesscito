@@ -122,6 +122,42 @@ export function getPeonesPack(sku: PeonesPackSku): PeonesPack {
   return PEONES_PACKS[sku];
 }
 
+/* ── Lite Season Pass ────────────────────────────────────────────────
+ * A time-gated entitlement for Chesscito Lite. Same direct-transfer
+ * rail (`ERC20.transfer(treasury, amount)`) — different SKU, different
+ * DB table, different reward (entitlement TTL + 3 Streak Shields).
+ * No contracts, no PRO, no Coach, no Shop. Lite-only. */
+
+export type SeasonPassSku = "lite_season_pass_21";
+
+export const SEASON_PASS_SOURCE = "season_pass" as const;
+
+export type SeasonPass = {
+  sku: SeasonPassSku;
+  priceUsd6: bigint;
+  durationDays: number;
+  shieldsOnPurchase: number;
+  seasonId: string;
+  supporterStatus: string;
+  source: typeof SEASON_PASS_SOURCE;
+};
+
+export const SEASON_PASSES: Record<SeasonPassSku, SeasonPass> = {
+  lite_season_pass_21: {
+    sku: "lite_season_pass_21",
+    priceUsd6: 1_990_000n, // $1.99
+    durationDays: 21,
+    shieldsOnPurchase: 3,
+    seasonId: "21day-mind-challenge-2026-q3",
+    supporterStatus: "challenger",
+    source: SEASON_PASS_SOURCE,
+  },
+};
+
+export function getSeasonPass(sku: SeasonPassSku): SeasonPass {
+  return SEASON_PASSES[sku];
+}
+
 /* ── Idempotency ────────────────────────────────────────────────────
  * One stable key per on-chain transfer log so a re-submitted txHash
  * never double-credits. Slots into the ledger's UNIQUE idempotency_key.
