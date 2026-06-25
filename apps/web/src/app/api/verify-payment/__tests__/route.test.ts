@@ -14,6 +14,12 @@ vi.mock("viem", async (importOriginal) => {
   };
 });
 
+const mockRedisIncrby = vi.hoisted(() => vi.fn().mockResolvedValue(3));
+const mockRedisSet = vi.hoisted(() => vi.fn().mockResolvedValue("OK"));
+vi.mock("@upstash/redis", () => ({
+  Redis: { fromEnv: vi.fn(() => ({ incrby: mockRedisIncrby, set: mockRedisSet })) },
+}));
+
 vi.mock("@/lib/server/demo-signing", () => ({
   enforceOrigin: vi.fn(),
   enforceReadRateLimit: vi.fn(),
@@ -222,6 +228,116 @@ describe("crediting", () => {
     const json = await res.json();
     expect(json.wallet).toBe(WALLET);
     expect(json.token).toBe(USDC.toLowerCase());
+  });
+});
+
+// ── Season Pass tests ───────────────────────────────────────────────────────
+
+const SP_PRICE = 1_990_000n; // $1.99 in USD6 → 1_990_000 USDC-6-decimals units
+const SP_SKU = "lite_season_pass_21";
+const SEASON_ID = "21day-mind-challenge-2026-q3";
+
+function spBody(over: Record<string, unknown> = {}) {
+  return { chainId: 42220, txHash: TX, wallet: WALLET, token: USDC, sku: SP_SKU, ...over };
+}
+
+/** Supabase mock for the lite_season_passes table. */
+function buildSeasonPassSupabaseMock(opts: {
+  existingPass?: Record<string, unknown> | null;
+  insertError?: { code?: string; message?: string } | null;
+  raceRow?: Record<string, unknown> | null;
+} = {}) {
+  const insertSpy = vi.fn();
+  let selectIdx = 0;
+  const from = vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        maybeSingle: vi.fn().mockImplementation(() => {
+          const idx = selectIdx++;
+          if (idx === 0) return Promise.resolve({ data: opts.existingPass ?? null, error: null });
+          return Promise.resolve({ data: opts.raceRow ?? null, error: null });
+        }),
+      })),
+    })),
+    insert: insertSpy.mockReturnValue({
+      select: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: { id: 1 }, error: null }) })),
+      then: (cb: (v: { error: null | { code?: string; message?: string } }) => unknown) =>
+        Promise.resolve({ error: opts.insertError ?? null }).then(cb),
+    }),
+  }));
+  // The season pass branch calls .insert() directly (no .select chain).
+  // Patch insertSpy to resolve with the configured error.
+  insertSpy.mockResolvedValue({ error: opts.insertError ?? null });
+  return { supabase: { from, rpc: vi.fn() } as never, insertSpy };
+}
+
+describe("season pass", () => {
+  beforeEach(() => {
+    mockRedisIncrby.mockReset().mockResolvedValue(3);
+    mockRedisSet.mockReset().mockResolvedValue("OK");
+  });
+
+  it("valid $1.99 payment → issues season pass, credits 3 shields", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0)]));
+    mockedSupabase.mockReturnValue(buildSeasonPassSupabaseMock().supabase);
+    const res = await POST(makeRequest(spBody()));
+    const json = await res.json();
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(json.sku).toBe(SP_SKU);
+    expect(json.seasonId).toBe(SEASON_ID);
+    expect(json.shieldsCredited).toBe(3);
+    expect(json.supporterStatus).toBe("challenger");
+    expect(json.duplicate).toBe(false);
+    expect(json.expiresAt).toBeTruthy();
+    expect(mockRedisIncrby).toHaveBeenCalledWith(expect.stringContaining("shields:credited"), 3);
+    expect(mockRedisSet).toHaveBeenCalledWith(
+      expect.stringContaining("lite:season-pass:"),
+      expect.any(String),
+      expect.objectContaining({ px: expect.any(Number) }),
+    );
+  });
+
+  it("duplicate season pass tx → ok, duplicate true, no insert, no redis", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0)]));
+    const existingPass = {
+      id: "uuid-1", expires_at: "2026-07-16T00:00:00.000Z",
+      season_id: SEASON_ID, supporter_status: "challenger", shields_credited: 3,
+    };
+    const mock = buildSeasonPassSupabaseMock({ existingPass });
+    mockedSupabase.mockReturnValue(mock.supabase);
+    const res = await POST(makeRequest(spBody()));
+    const json = await res.json();
+    expect(json.ok).toBe(true);
+    expect(json.duplicate).toBe(true);
+    expect(json.shieldsCredited).toBe(3);
+    expect(mock.insertSpy).not.toHaveBeenCalled();
+    expect(mockRedisIncrby).not.toHaveBeenCalled();
+  });
+
+  it("redis failure after insert → ok, shieldsPending true, shieldsCredited 0", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0)]));
+    mockRedisIncrby.mockRejectedValue(new Error("redis down"));
+    mockedSupabase.mockReturnValue(buildSeasonPassSupabaseMock().supabase);
+    const res = await POST(makeRequest(spBody()));
+    const json = await res.json();
+    expect(json.ok).toBe(true);
+    expect(json.shieldsCredited).toBe(0);
+    expect(json.shieldsPending).toBe(true);
+  });
+
+  it("supabase unavailable for season pass → 503 ledger_unavailable", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE, 0)]));
+    mockedSupabase.mockReturnValue(null as never);
+    const res = await POST(makeRequest(spBody()));
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe("ledger_unavailable");
+  });
+
+  it("amount too low for season pass → amount_too_low", async () => {
+    mockGetReceipt.mockResolvedValue(receiptWith([transferLog(USDC, WALLET, TREASURY, SP_PRICE - 1n, 0)]));
+    const res = await POST(makeRequest(spBody()));
+    expect((await res.json()).error).toBe("amount_too_low");
   });
 });
 

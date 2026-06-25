@@ -21,16 +21,21 @@
 import { NextResponse } from "next/server";
 import { createPublicClient, http } from "viem";
 import { celo } from "viem/chains";
+import { Redis } from "@upstash/redis";
 
 import { ACCEPTED_TOKENS, normalizePrice } from "@/lib/contracts/tokens";
 import {
   buildPaymentIdempotencyKey,
   getPeonesPack,
+  getSeasonPass,
   getTreasuryAddressServer,
   PEONES_PACKS,
   RAIL_ACCEPTED_STABLECOIN_ADDRESSES_LOWER,
   RAIL_OVERPAY_ACCEPTED,
+  SEASON_PASSES,
+  SEASON_PASS_SOURCE,
   type PeonesPackSku,
+  type SeasonPassSku,
 } from "@/lib/payments/rail-config";
 import { verifyStablecoinTransfer } from "@/lib/payments/verify-transfer";
 import { normalizeWallet } from "@/lib/peones/ledger-service";
@@ -42,6 +47,9 @@ import {
 } from "@/lib/server/demo-signing";
 import { createLogger } from "@/lib/server/logger";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { REDIS_KEYS } from "@/lib/coach/redis-keys";
+
+const redis = Redis.fromEnv();
 
 const log = createLogger({ route: "/api/verify-payment" });
 
@@ -67,7 +75,7 @@ type ParsedInput = {
   txHash: `0x${string}`;
   wallet: string;
   token: string;
-  sku: PeonesPackSku;
+  sku: string; // widened — semantic SKU type check happens post-treasury gate
 };
 
 /** Basic shape only — semantic checks (chain/token/sku) come after the
@@ -127,14 +135,20 @@ export async function POST(req: Request) {
 
   // ── Semantic validation (server-decided) ───────────────────────
   if (chainId !== CELO_MAINNET_CHAIN_ID) return err("unsupported_chain", 400);
-  if (!(sku in PEONES_PACKS)) return err("unknown_sku", 400);
+
+  const isSeasonPass = sku in SEASON_PASSES;
+  const isPeonesPack = sku in PEONES_PACKS;
+  if (!isSeasonPass && !isPeonesPack) return err("unknown_sku", 400);
+
   if (!RAIL_ACCEPTED_STABLECOIN_ADDRESSES_LOWER.includes(token)) {
     return err("unsupported_token", 400);
   }
-  const pack = getPeonesPack(sku);
+  const priceUsd6 = isSeasonPass
+    ? getSeasonPass(sku as SeasonPassSku).priceUsd6
+    : getPeonesPack(sku as PeonesPackSku).priceUsd6;
   const tokenEntry = ACCEPTED_TOKENS.find((t) => t.address.toLowerCase() === token);
   if (!tokenEntry) return err("unsupported_token", 400); // defensive
-  const expectedAmount = normalizePrice(pack.priceUsd6, tokenEntry.decimals);
+  const expectedAmount = normalizePrice(priceUsd6, tokenEntry.decimals);
 
   // ── Receipt fetch + Transfer verification ──────────────────────
   let receipt: Awaited<ReturnType<typeof client.getTransactionReceipt>>;
@@ -177,7 +191,112 @@ export async function POST(req: Request) {
     return err("transfer_not_found", 400);
   }
 
+  // ── Season Pass branch (Chesscito Lite only) ───────────────────
+  if (isSeasonPass) {
+    const pass = getSeasonPass(sku as SeasonPassSku);
+    const idempotencyKey = `${SEASON_PASS_SOURCE}:${chainId}:${txHash.toLowerCase()}:${verdict.logIndex}`;
+    const walletNorm = normalizeWallet(wallet);
+    const amountPaid = verdict.amount.toString();
+
+    const supabase = getSupabaseServer();
+    if (!supabase) {
+      log.error("supabase_unavailable_season_pass", { wallet: walletNorm, sku });
+      return err("ledger_unavailable", 503);
+    }
+
+    // Idempotency pre-check — same tx never double-credits.
+    const { data: existingPass } = await supabase
+      .from("lite_season_passes")
+      .select("id, expires_at, season_id, supporter_status, shields_credited")
+      .eq("idempotency_key", idempotencyKey)
+      .maybeSingle();
+
+    if (existingPass) {
+      return NextResponse.json({
+        ok: true,
+        sku,
+        wallet: walletNorm,
+        seasonId: existingPass.season_id,
+        expiresAt: existingPass.expires_at,
+        shieldsCredited: Number(existingPass.shields_credited ?? pass.shieldsOnPurchase),
+        supporterStatus: existingPass.supporter_status ?? pass.supporterStatus,
+        amountPaid,
+        token,
+        txHash,
+        duplicate: true,
+        overpaid: verdict.overpaid,
+      });
+    }
+
+    const expiresAt = new Date(Date.now() + pass.durationDays * 86_400_000).toISOString();
+    const { error: insertError } = await supabase.from("lite_season_passes").insert({
+      wallet: walletNorm,
+      season_id: pass.seasonId,
+      sku: pass.sku,
+      tx_hash: txHash,
+      log_index: verdict.logIndex,
+      chain_id: chainId,
+      token_address: token,
+      amount_paid: amountPaid,
+      idempotency_key: idempotencyKey,
+      shields_credited: pass.shieldsOnPurchase,
+      supporter_status: pass.supporterStatus,
+      expires_at: expiresAt,
+      metadata: { rail: "stablecoin_single_tx", overpaid: verdict.overpaid },
+    });
+
+    if (insertError) {
+      // Race-condition check: concurrent request may have won the UNIQUE constraint.
+      const { data: raceRow } = await supabase
+        .from("lite_season_passes")
+        .select("id, expires_at, shields_credited")
+        .eq("idempotency_key", idempotencyKey)
+        .maybeSingle();
+      if (raceRow) {
+        return NextResponse.json({
+          ok: true, sku, wallet: walletNorm, seasonId: pass.seasonId,
+          expiresAt: raceRow.expires_at,
+          shieldsCredited: Number(raceRow.shields_credited ?? pass.shieldsOnPurchase),
+          supporterStatus: pass.supporterStatus, amountPaid, token, txHash, duplicate: true,
+          overpaid: verdict.overpaid,
+        });
+      }
+      log.error("season_pass_insert_failed", { code: insertError.code });
+      return err("ledger_write_failed", 500);
+    }
+
+    // Credit shields + set Redis TTL key — fail-safe (pass already recorded).
+    let shieldsCredited = pass.shieldsOnPurchase;
+    let shieldsPending = false;
+    try {
+      await redis.incrby(REDIS_KEYS.shieldsCredited(walletNorm), pass.shieldsOnPurchase);
+      const ttlMs = pass.durationDays * 86_400_000;
+      await redis.set(REDIS_KEYS.seasonPass(walletNorm), expiresAt, { px: ttlMs });
+    } catch (redisErr) {
+      log.error("season_pass_redis_failed_after_insert", { wallet: walletNorm, err: String(redisErr) });
+      shieldsCredited = 0;
+      shieldsPending = true;
+    }
+
+    return NextResponse.json({
+      ok: true,
+      sku,
+      wallet: walletNorm,
+      seasonId: pass.seasonId,
+      expiresAt,
+      shieldsCredited,
+      shieldsPending: shieldsPending || undefined,
+      supporterStatus: pass.supporterStatus,
+      amountPaid,
+      token,
+      txHash,
+      duplicate: false,
+      overpaid: verdict.overpaid,
+    });
+  }
+
   // ── Credit Peones (idempotent, server-decided amount) ──────────
+  const pack = getPeonesPack(sku as PeonesPackSku);
   const idempotencyKey = buildPaymentIdempotencyKey({
     source: pack.source,
     chainId,
