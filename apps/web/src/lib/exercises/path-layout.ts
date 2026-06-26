@@ -30,6 +30,19 @@ export const TILE_PADS: readonly PathPoint[] = [
   { x: 63.2, y: 28.4 }, // top pad (upper-right)
 ];
 
+/**
+ * Manual fine-tune for seating the node art on the painted pad.
+ *
+ * `TILE_PADS` are the geometric centers of the wallpaper's sandy pads, but
+ * the node sprites (btn-nodo, labyrinth) read off-center against the pads'
+ * isometric perspective. These pixel nudges shift every node by a constant
+ * amount (mobile 390px width). EDIT THESE BY HAND until the icons sit on the
+ * pads: `+x` = right, `+y` = down. Labyrinth art can need its own nudge, so
+ * it has a separate knob.
+ */
+export const NODE_PIXEL_OFFSET = { x: 17, y: -10 } as const;
+export const LABYRINTH_PIXEL_OFFSET = { x: -15, y: -15 } as const;
+
 /** Tiles needed to host `nodeCount` nodes (≥ 1). */
 export function tileCount(nodeCount: number): number {
   if (nodeCount <= 0) return 1;

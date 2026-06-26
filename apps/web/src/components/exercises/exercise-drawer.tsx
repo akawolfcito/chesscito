@@ -15,7 +15,12 @@ import { useExerciseDescriptions } from '@/lib/content/catalog-context'
 import { PIECE_IMAGES } from '@/lib/content/editorial'
 import { interleaveTrainingRows, type TrainingNode } from '@/lib/training/path'
 import { buildContentId } from '@/lib/daily/session-quota'
-import { tileCount, tileNodePositions } from '@/lib/exercises/path-layout'
+import {
+  LABYRINTH_PIXEL_OFFSET,
+  NODE_PIXEL_OFFSET,
+  tileCount,
+  tileNodePositions,
+} from '@/lib/exercises/path-layout'
 
 type QuotaState = {
   isAtLimit: boolean
@@ -281,7 +286,6 @@ export function ExerciseDrawer({
           >
             {orderedRows.map((row, originalIndex) => {
               const pos = nodePositions[originalIndex] ?? { x: 50, y: 50 }
-              const posStyle = { left: `${pos.x}%`, top: `${pos.y}%` }
 
               if (row.kind === 'labyrinth') {
                 const node = row.value
@@ -302,8 +306,12 @@ export function ExerciseDrawer({
                 return (
                   <div
                     key={node.id}
-                    className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
-                    style={posStyle}
+                    className="absolute flex flex-col items-center"
+                    style={{
+                      left: `${pos.x}%`,
+                      top: `${pos.y}%`,
+                      transform: `translate(calc(-50% + ${LABYRINTH_PIXEL_OFFSET.x}px), calc(-50% + ${LABYRINTH_PIXEL_OFFSET.y}px))`,
+                    }}
                   >
                     <div className="relative flex flex-col items-center gap-0">
                       {/* Badge: green check if done, number otherwise */}
@@ -407,7 +415,11 @@ export function ExerciseDrawer({
                       </button>
 
                       {/* Stars */}
-                      {isDone ? <StarDisplay count={node.stars ?? 0} /> : null}
+                      {isDone ? (
+                        <div className="absolute left-1/2 top-full -translate-x-1/2 pt-0.5">
+                          <StarDisplay count={node.stars ?? 0} />
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 )
@@ -433,8 +445,12 @@ export function ExerciseDrawer({
                 <div
                   key={exercise.id}
                   ref={isActive ? activeNodeRef : undefined}
-                  className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
-                  style={posStyle}
+                  className="absolute flex flex-col items-center"
+                  style={{
+                    left: `${pos.x}%`,
+                    top: `${pos.y}%`,
+                    transform: `translate(calc(-50% + ${NODE_PIXEL_OFFSET.x}px), calc(-50% + ${NODE_PIXEL_OFFSET.y}px))`,
+                  }}
                 >
                   <div className="relative flex flex-col items-center gap-0">
                     {/* Badge: green check if done, number otherwise */}
@@ -533,7 +549,11 @@ export function ExerciseDrawer({
                     </button>
 
                     {/* Stars */}
-                    {isDone ? <StarDisplay count={starCount} /> : null}
+                    {isDone ? (
+                      <div className="absolute left-1/2 top-full -translate-x-1/2 pt-0.5">
+                        <StarDisplay count={starCount} />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               )
@@ -541,11 +561,11 @@ export function ExerciseDrawer({
           </div>
         </div>
 
-        {/* Progress summary — floats over the map, above the dock */}
+        {/* Progress summary — flush bottom bar over the map */}
         <div
-          className="absolute left-3 right-3 z-20 space-y-1.5 rounded-2xl px-4 py-3"
+          className="absolute inset-x-0 bottom-0 z-20 space-y-1.5 rounded-t-2xl px-4 pt-3"
           style={{
-            bottom: 'calc(env(safe-area-inset-bottom) + 5.25rem)',
+            paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.85rem)',
             background: 'rgba(255,255,255,0.62)',
             backdropFilter: 'blur(6px)',
           }}
