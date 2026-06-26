@@ -40,6 +40,7 @@ Phase 2 (visible Season Pass UX) is intentionally deferred.
 - `tsc --noEmit` → clean
 - `vitest run` verify-payment + season-pass/status + rail-config + transfer-builder + map-season-pass-error → 60/60
 - `vitest run` exercises + hub + payments + season-pass → 332/332 (no regressions)
+- `vitest run` (full apps/web suite) → **4449/4449 passing, 353 files, 0 failures**
 
 ## 5. Type-check result
 
