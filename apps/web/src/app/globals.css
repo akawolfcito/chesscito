@@ -2019,28 +2019,29 @@
     z-index: 1;
   }
 
-  /* ── Path-map sheet background (exercises drawer) ── */
+  /* ── Path-map drawer ──
+     The wallpaper now lives on a scrollable canvas (.exercise-path-canvas)
+     so the nodes pinned to it travel WITH the trail on scroll. The sheet
+     only paints a grass base for the thin gutter above/below the canvas. */
   .sheet-bg-exercises {
     position: relative;
     overflow: hidden;
+    background: #5fa83f;
   }
 
-  .sheet-bg-exercises::before {
-    content: "";
-    position: absolute;
-    inset: -12px;
-    background-size: cover;
+  /* Positioned box whose background is the seamless 1024×1536 tile repeated
+     vertically. `aspect-ratio` (1024 / 1536·tiles) and `background-size`
+     (100% / tiles) are set inline per node count so the trail repeats and
+     the % node coordinates map 1:1 onto the painted pads. Taller than the
+     viewport → it scrolls. */
+  .exercise-path-canvas {
+    position: relative;
+    width: 100%;
+    background-repeat: repeat-y;
     background-position: top center;
-    background-repeat: no-repeat;
     background-image: image-set(url("/art/redesign/bg/path-map.avif") type("image/avif"),
         url("/art/redesign/bg/path-map.webp") type("image/webp"),
         url("/art/redesign/bg/path-map.png") type("image/png"));
-    z-index: 0;
-  }
-
-  .sheet-bg-exercises > * {
-    position: relative;
-    z-index: 1;
   }
 
   /* Inner tray: a slightly darker cream rectangle for rows/lists. */
