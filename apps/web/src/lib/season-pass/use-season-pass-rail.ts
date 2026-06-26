@@ -152,40 +152,73 @@ export function useSeasonPassRail({
   );
 
   const pay = useCallback(async () => {
-    if (!treasury || !tokenEntry || !address || !publicClient) return;
-    if (chainId !== CELO_MAINNET_CHAIN_ID) {
-      setErrorReason("wrong_chain");
+    if (!available || !treasury || !tokenEntry) {
+      setErrorReason("unavailable");
       setPhase("error");
       return;
     }
+    if (!address) {
+      setErrorReason("not_connected");
+      setPhase("error");
+      return;
+    }
+    setErrorReason(null);
+    setResult(null);
+    setTxHash(null);
+    setPhase("preparing");
+
+    const tx = buildSeasonPassTransfer({ sku, treasury, tokenSymbol });
+    const feeCurrency = getMiniPayFeeCurrency(chainId);
+    const base = {
+      address: tx.token.address,
+      abi: erc20Abi,
+      functionName: "transfer" as const,
+      args: [treasury, tx.expectedAmount] as const,
+      chainId: CELO_MAINNET_CHAIN_ID,
+      account: address,
+    };
+
     try {
-      setPhase("preparing");
-      const tx = buildSeasonPassTransfer({ sku, treasury, tokenSymbol });
-      const feeCurrency = getMiniPayFeeCurrency(chainId);
-
       setPhase("awaiting_signature");
-      const hash = await writeContractAsync({
-        address: tokenEntry.address,
-        abi: erc20Abi,
-        functionName: "transfer",
-        args: [treasury as `0x${string}`, tx.expectedAmount],
-        ...(feeCurrency ? { feeCurrency } : {}),
-      });
+      let hash: `0x${string}`;
+      try {
+        hash = await writeContractAsync(
+          (feeCurrency ? { ...base, feeCurrency } : base) as Parameters<
+            typeof writeContractAsync
+          >[0],
+        );
+      } catch (e) {
+        // User rejected → real error, do NOT re-prompt. Otherwise feeCurrency
+        // may be unsupported (MetaMask) → retry without it.
+        if (isUserCancellation(e) || !feeCurrency) throw e;
+        hash = await writeContractAsync(base as Parameters<typeof writeContractAsync>[0]);
+      }
       setTxHash(hash);
-
       setPhase("pending_tx");
-      await publicClient.waitForTransactionReceipt({ hash });
-
+      await publicClient?.waitForTransactionReceipt({ hash });
       await verify(hash);
     } catch (e) {
-      if (isUserCancellation(e)) {
-        setPhase("idle");
-      } else {
-        setErrorReason((e as Error)?.message ?? "unknown_error");
-        setPhase("error");
-      }
+      setErrorReason(
+        isUserCancellation(e)
+          ? "user_rejected"
+          : e instanceof Error
+            ? e.message
+            : "tx_failed",
+      );
+      setPhase("error");
     }
-  }, [address, chainId, publicClient, treasury, tokenEntry, sku, tokenSymbol, writeContractAsync, verify]);
+  }, [
+    available,
+    treasury,
+    tokenEntry,
+    address,
+    sku,
+    tokenSymbol,
+    chainId,
+    publicClient,
+    writeContractAsync,
+    verify,
+  ]);
 
   return {
     phase,
