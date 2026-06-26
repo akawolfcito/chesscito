@@ -18,10 +18,22 @@ import { dispatchDailySessionChanged } from "@/lib/daily/session-events";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-export const FREE_EXTRA_QUOTA = 5;
+/** Single source of truth for how many exercises a daily session grants
+ *  before it ends ("Great focus today!"). Tune it with ONE env var,
+ *  `NEXT_PUBLIC_CHESSCITO_SESSION_LIMIT` (defaults to 5). */
+export function parseSessionLimit(raw: string | undefined): number {
+  const n = raw ? Number.parseInt(raw, 10) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : 5;
+}
+
+export const SESSION_EXERCISE_LIMIT = parseSessionLimit(
+  process.env.NEXT_PUBLIC_CHESSCITO_SESSION_LIMIT,
+);
+
+export const FREE_EXTRA_QUOTA = SESSION_EXERCISE_LIMIT;
 export const PACK_EXTRA_SLOTS = 5;
 export const MAX_PAID_PACKS = 2;
-export const HARD_MAX_EXTRAS = FREE_EXTRA_QUOTA + PACK_EXTRA_SLOTS * MAX_PAID_PACKS; // 15
+export const HARD_MAX_EXTRAS = FREE_EXTRA_QUOTA + PACK_EXTRA_SLOTS * MAX_PAID_PACKS; // 15 by default
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -89,6 +101,24 @@ export function isAtFreeLimit(state: DailySessionState): boolean {
  *  No further unlock (paid or free) is possible today. */
 export function isAtHardMax(state: DailySessionState): boolean {
   return getUsedCount(state) >= HARD_MAX_EXTRAS;
+}
+
+/** True when the daily session has ended — no slots remain (free limit hit
+ *  with no paid room, or hard max). This is the moment the "Great focus
+ *  today!" card appears: the player may keep practicing completed exercises
+ *  but earns no further stars. */
+export function isSessionOver(state: DailySessionState): boolean {
+  return isAtFreeLimit(state) || isAtHardMax(state);
+}
+
+/** Whether star/progress writes should be frozen for this completion.
+ *  Lite-only: once the session is over, replays are practice and must not
+ *  add stars or improve recorded bests. */
+export function shouldFreezeScoring(
+  liteMode: boolean,
+  state: DailySessionState,
+): boolean {
+  return liteMode && isSessionOver(state);
 }
 
 // ─── Pure state transitions ──────────────────────────────────────────────────

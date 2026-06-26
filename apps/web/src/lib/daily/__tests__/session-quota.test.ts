@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   FREE_EXTRA_QUOTA,
+  SESSION_EXERCISE_LIMIT,
   HARD_MAX_EXTRAS,
   PACK_EXTRA_SLOTS,
   buildContentId,
@@ -10,6 +11,9 @@ import {
   getRemainingSlots,
   isAtFreeLimit,
   isAtHardMax,
+  isSessionOver,
+  shouldFreezeScoring,
+  parseSessionLimit,
   parseDailySession,
   computeRecordExtra,
   computeApplyDevUnlock,
@@ -227,4 +231,61 @@ describe("constants", () => {
   it("FREE_EXTRA_QUOTA is 5", () => expect(FREE_EXTRA_QUOTA).toBe(5));
   it("PACK_EXTRA_SLOTS is 5", () => expect(PACK_EXTRA_SLOTS).toBe(5));
   it("HARD_MAX_EXTRAS equals free + 2 packs = 15", () => expect(HARD_MAX_EXTRAS).toBe(15));
+});
+
+// ─── parseSessionLimit (single env-backed knob) ──────────────────────────────
+
+describe("parseSessionLimit", () => {
+  it("defaults to 5 when unset", () => {
+    expect(parseSessionLimit(undefined)).toBe(5);
+  });
+  it("parses a positive integer string", () => {
+    expect(parseSessionLimit("8")).toBe(8);
+  });
+  it("falls back to 5 for non-numeric values", () => {
+    expect(parseSessionLimit("abc")).toBe(5);
+  });
+  it("falls back to 5 for zero or negative values", () => {
+    expect(parseSessionLimit("0")).toBe(5);
+    expect(parseSessionLimit("-3")).toBe(5);
+  });
+  it("SESSION_EXERCISE_LIMIT is the source of FREE_EXTRA_QUOTA", () => {
+    expect(FREE_EXTRA_QUOTA).toBe(SESSION_EXERCISE_LIMIT);
+  });
+});
+
+// ─── isSessionOver ───────────────────────────────────────────────────────────
+
+describe("isSessionOver", () => {
+  it("false for a fresh session", () => {
+    expect(isSessionOver(freshSession())).toBe(false);
+  });
+  it("true at the free limit (no paid packs)", () => {
+    const ids = Array.from({ length: FREE_EXTRA_QUOTA }, (_, i) => `exercise:rook:rook-${i + 1}`);
+    expect(isSessionOver(sessionWith(ids, 0))).toBe(true);
+  });
+  it("false at the free count when a paid pack adds room", () => {
+    const ids = Array.from({ length: FREE_EXTRA_QUOTA }, (_, i) => `exercise:rook:rook-${i + 1}`);
+    expect(isSessionOver(sessionWith(ids, 1))).toBe(false);
+  });
+  it("true at hard max", () => {
+    const ids = Array.from({ length: HARD_MAX_EXTRAS }, (_, i) => `exercise:rook:rook-${i}`);
+    expect(isSessionOver(sessionWith(ids, 2))).toBe(true);
+  });
+});
+
+// ─── shouldFreezeScoring ─────────────────────────────────────────────────────
+
+describe("shouldFreezeScoring", () => {
+  it("never freezes when not in Lite mode", () => {
+    const ids = Array.from({ length: FREE_EXTRA_QUOTA }, (_, i) => `exercise:rook:rook-${i + 1}`);
+    expect(shouldFreezeScoring(false, sessionWith(ids, 0))).toBe(false);
+  });
+  it("does not freeze in Lite before the limit", () => {
+    expect(shouldFreezeScoring(true, sessionWith(["exercise:rook:rook-1"]))).toBe(false);
+  });
+  it("freezes in Lite once the session is over", () => {
+    const ids = Array.from({ length: FREE_EXTRA_QUOTA }, (_, i) => `exercise:rook:rook-${i + 1}`);
+    expect(shouldFreezeScoring(true, sessionWith(ids, 0))).toBe(true);
+  });
 });
