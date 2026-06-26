@@ -2005,23 +2005,9 @@
     z-index: 0;
   }
 
-  .sheet-bg-hub::after,
-  .sheet-bg-badges::after,
-  .sheet-bg-shop::after,
-  .sheet-bg-leaderboard::after,
-  .sheet-bg-danger::after,
-  .trophies-candy-page::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    /* Cream wash — subtle enough that trees stay visible, strong enough
-       that warm-brown text + translucent cards read cleanly on top. */
-    background: linear-gradient(to bottom,
-        rgba(255, 255, 255, 0.15) 0%,
-        rgba(255, 245, 215, 0.30) 40%,
-        rgba(246, 230, 184, 0.45) 100%);
-  }
+  /* Cream-wash ::after removed 2026-06-25 (founder): aux sheets now show
+     the forest wallpaper at full saturation. Text legibility relies on
+     each surface's own translucent cards/chips, not a global wash. */
 
   .sheet-bg-hub>*,
   .sheet-bg-badges>*,
@@ -2031,17 +2017,6 @@
   .trophies-candy-page>* {
     position: relative;
     z-index: 1;
-  }
-
-  .sheet-bg-danger::after {
-    background:
-      linear-gradient(to bottom,
-        rgba(255, 255, 255, 0.18) 0%,
-        rgba(255, 245, 215, 0.36) 46%,
-        rgba(255, 230, 220, 0.54) 100%),
-      radial-gradient(ellipse 100% 50% at 50% 100%,
-        rgba(244, 63, 94, 0.10) 0%,
-        rgba(244, 63, 94, 0.00) 70%);
   }
 
   /* ── Path-map sheet background (exercises drawer) ── */
