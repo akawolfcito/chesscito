@@ -2029,19 +2029,39 @@
     background: #5fa83f;
   }
 
-  /* Positioned box whose background is the seamless 1024×1536 tile repeated
-     vertically. `aspect-ratio` (1024 / 1536·tiles) and `background-size`
-     (100% / tiles) are set inline per node count so the trail repeats and
-     the % node coordinates map 1:1 onto the painted pads. Taller than the
-     viewport → it scrolls. */
+  /* Scrollable canvas: a fixed base cap pinned to the bottom + the seamless
+     tile repeated above it. `aspect-ratio`, the two layers' heights and the
+     tile `background-size` are set inline per node count so the trail grows
+     and the % node coordinates map 1:1 onto the painted pads. Taller than
+     the viewport → it scrolls. */
   .exercise-path-canvas {
     position: relative;
     width: 100%;
+  }
+
+  .path-tiles {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
     background-repeat: repeat-y;
     background-position: top center;
     background-image: image-set(url("/art/redesign/bg/path-map.avif") type("image/avif"),
         url("/art/redesign/bg/path-map.webp") type("image/webp"),
         url("/art/redesign/bg/path-map.png") type("image/png"));
+  }
+
+  .path-base {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    background-size: 100% 100%;
+    background-image: image-set(url("/art/redesign/bg/path-map-base.avif") type("image/avif"),
+        url("/art/redesign/bg/path-map-base.webp") type("image/webp"),
+        url("/art/redesign/bg/path-map-base.png") type("image/png"));
   }
 
   /* Inner tray: a slightly darker cream rectangle for rows/lists. */

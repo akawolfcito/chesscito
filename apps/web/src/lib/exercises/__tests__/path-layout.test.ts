@@ -1,84 +1,83 @@
 import { describe, expect, it } from "vitest";
 import {
+  BASE_ASPECT,
+  BASE_PAD,
+  TILE_ASPECT,
   TILE_PADS,
-  tileCount,
-  tileNodePositions,
+  pathLayout,
 } from "@/lib/exercises/path-layout";
 
-describe("tileCount", () => {
-  it("needs one tile for an empty or single-pad load", () => {
-    expect(tileCount(0)).toBe(1);
-    expect(tileCount(1)).toBe(1);
-    expect(tileCount(2)).toBe(1);
-  });
+const BASE_AR = BASE_ASPECT.h / BASE_ASPECT.w;
+const TILE_AR = TILE_ASPECT.h / TILE_ASPECT.w;
 
-  it("adds a tile every `padsPerTile` nodes", () => {
-    expect(tileCount(3)).toBe(2);
-    expect(tileCount(4)).toBe(2);
-    expect(tileCount(10)).toBe(5);
-    expect(tileCount(15)).toBe(8);
-    expect(tileCount(31)).toBe(16);
+describe("pathLayout — tiles above the base", () => {
+  it("grows one tile per 2 nodes after the first (base) node", () => {
+    expect(pathLayout(1).tilesAbove).toBe(0); // base only
+    expect(pathLayout(2).tilesAbove).toBe(1);
+    expect(pathLayout(3).tilesAbove).toBe(1);
+    expect(pathLayout(4).tilesAbove).toBe(2);
+    expect(pathLayout(11).tilesAbove).toBe(5);
+    expect(pathLayout(15).tilesAbove).toBe(7);
   });
 });
 
-describe("tileNodePositions", () => {
-  it("returns [] for non-positive counts", () => {
-    expect(tileNodePositions(0)).toEqual([]);
-    expect(tileNodePositions(-2)).toEqual([]);
+describe("pathLayout — node positions", () => {
+  it("returns nothing for non-positive counts", () => {
+    const l = pathLayout(0);
+    expect(l.positions).toEqual([]);
+    expect(l.baseFrac).toBe(1);
+    expect(l.tilesAbove).toBe(0);
   });
 
-  it("places the two pads of a single tile bottom→top", () => {
-    const pts = tileNodePositions(2);
-    expect(pts).toHaveLength(2);
-    // node 0 = bottom pad, node 1 = top pad (single tile → tile %=canvas %).
-    expect(pts[0]).toEqual({ x: TILE_PADS[0].x, y: TILE_PADS[0].y });
-    expect(pts[1]).toEqual({ x: TILE_PADS[1].x, y: TILE_PADS[1].y });
+  it("seats node 0 on the base pad", () => {
+    const l = pathLayout(1);
+    expect(l.positions).toHaveLength(1);
+    // single node → whole canvas is the base, so the pad %coords pass through.
+    expect(l.positions[0]).toEqual({ x: BASE_PAD.x, y: BASE_PAD.y });
+    expect(l.tilesAbove).toBe(0);
   });
 
-  it("keeps node 0 at the visual bottom regardless of total count", () => {
-    for (const n of [2, 5, 10, 15]) {
-      const pts = tileNodePositions(n);
-      const maxY = Math.max(...pts.map((p) => p.y));
-      expect(pts[0].y).toBe(maxY); // bottom = largest y
+  it("keeps node 0 (base) at the visual bottom for any count", () => {
+    for (const n of [1, 2, 3, 10, 15]) {
+      const { positions } = pathLayout(n);
+      const maxY = Math.max(...positions.map((p) => p.y));
+      expect(positions[0].y).toBe(maxY);
+      expect(positions[0].x).toBe(BASE_PAD.x);
     }
   });
 
-  it("spreads nodes monotonically bottom→top", () => {
-    const pts = tileNodePositions(10);
-    expect(pts).toHaveLength(10);
-    for (let i = 1; i < pts.length; i++) {
-      expect(pts[i].y).toBeLessThan(pts[i - 1].y);
+  it("spreads nodes monotonically bottom → top", () => {
+    const { positions } = pathLayout(10);
+    expect(positions).toHaveLength(10);
+    for (let i = 1; i < positions.length; i++) {
+      expect(positions[i].y).toBeLessThan(positions[i - 1].y);
     }
   });
 
-  it("alternates pad x across the trail (zigzag)", () => {
-    const pts = tileNodePositions(6);
-    // even indices → bottom pad x, odd → top pad x
-    for (let i = 0; i < pts.length; i++) {
-      expect(pts[i].x).toBe(TILE_PADS[i % 2].x);
-    }
-  });
-
-  it("maps each node onto a real pad (every y is a tile pad position)", () => {
-    const tiles = tileCount(7);
-    const pts = tileNodePositions(7);
-    for (const p of pts) {
-      // recover the within-tile y and assert it matches a known pad
-      const within = ((p.y / 100) * tiles) % 1;
-      const closeToPad = TILE_PADS.some(
-        (pad) => Math.abs(within * 100 - pad.y) < 0.001,
-      );
-      expect(closeToPad).toBe(true);
+  it("alternates tile-node x across the trail (zigzag)", () => {
+    const { positions } = pathLayout(5);
+    // nodes 1.. use the tile pads, alternating bottom/top pad x.
+    for (let i = 1; i < positions.length; i++) {
+      expect(positions[i].x).toBe(TILE_PADS[(i - 1) % 2].x);
     }
   });
 
   it("stays within the canvas bounds", () => {
-    const pts = tileNodePositions(15);
-    for (const p of pts) {
+    for (const p of pathLayout(15).positions) {
       expect(p.x).toBeGreaterThanOrEqual(0);
       expect(p.x).toBeLessThanOrEqual(100);
       expect(p.y).toBeGreaterThanOrEqual(0);
       expect(p.y).toBeLessThanOrEqual(100);
     }
+  });
+
+  it("sizes the base as a shrinking fraction as tiles are added", () => {
+    expect(pathLayout(1).baseFrac).toBe(1);
+    // 3 nodes → 1 tile above the base.
+    const total3 = BASE_AR + TILE_AR;
+    expect(pathLayout(3).totalUnits).toBeCloseTo(total3, 5);
+    expect(pathLayout(3).baseFrac).toBeCloseTo(BASE_AR / total3, 5);
+    // more tiles → smaller base fraction
+    expect(pathLayout(11).baseFrac).toBeLessThan(pathLayout(3).baseFrac);
   });
 });

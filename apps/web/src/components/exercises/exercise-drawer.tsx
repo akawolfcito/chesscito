@@ -16,10 +16,11 @@ import { PIECE_IMAGES } from '@/lib/content/editorial'
 import { interleaveTrainingRows, type TrainingNode } from '@/lib/training/path'
 import { buildContentId } from '@/lib/daily/session-quota'
 import {
+  BASE_PIXEL_OFFSET,
+  BASE_SEAM_OFFSET_Y,
   LABYRINTH_PIXEL_OFFSET,
   NODE_PIXEL_OFFSET,
-  tileCount,
-  tileNodePositions,
+  pathLayout,
 } from '@/lib/exercises/path-layout'
 
 type QuotaState = {
@@ -155,10 +156,11 @@ export function ExerciseDrawer({
 
   const orderedRows = interleaveTrainingRows(rows, labyrinthNodes ?? [])
 
-  // Infinite tiling: the seamless 2-pad tile repeats `tiles` times so any
-  // node count lands on a pad. node 0 (exercise 1) = visual bottom.
-  const tiles = tileCount(orderedRows.length)
-  const nodePositions = tileNodePositions(orderedRows.length)
+  // Fixed base cap (node 0 = exercise 1) + seamless tiles repeated above it,
+  // so any node count grows the trail. `layout.positions` are %coords over
+  // the composite canvas, node 0 = visual bottom.
+  const layout = pathLayout(orderedRows.length)
+  const nodePositions = layout.positions
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -271,21 +273,34 @@ export function ExerciseDrawer({
           />
         </div>
 
-        {/* Path map — one scrollable canvas. The wallpaper and the nodes
-            share a single positioned box (aspect-ratio locked to the
-            724×2172 art), so the icons travel WITH the trail on scroll.
-            Nodes sit at fixed %coords spread evenly by arc length along
-            the painted path (nodePositions), bottom → top. */}
+        {/* Path map — one scrollable canvas: a fixed base cap pinned to the
+            bottom + the seamless tile repeated above it. Nodes are pinned to
+            %coords so map and icons scroll together; node 0 sits on the base
+            pad, the rest on the tiles. */}
         <div className="absolute inset-0 overflow-y-auto overscroll-contain">
           <div
             className="exercise-path-canvas"
-            style={{
-              aspectRatio: `1024 / ${1536 * tiles}`,
-              backgroundSize: `100% ${100 / tiles}%`,
-            }}
+            style={{ aspectRatio: `1 / ${layout.totalUnits}` }}
           >
+            {layout.tilesAbove > 0 && (
+              <div
+                className="path-tiles"
+                style={{
+                  height: `${(1 - layout.baseFrac) * 100}%`,
+                  backgroundSize: `100% ${100 / layout.tilesAbove}%`,
+                  backgroundPosition: `center ${BASE_SEAM_OFFSET_Y}px`,
+                }}
+              />
+            )}
+            <div
+              className="path-base"
+              style={{ height: `${layout.baseFrac * 100}%` }}
+            />
             {orderedRows.map((row, originalIndex) => {
               const pos = nodePositions[originalIndex] ?? { x: 50, y: 50 }
+              // Seam slides the tile nodes with the tile trail; the base
+              // node (0) stays anchored to the pinned base cap.
+              const seamY = originalIndex === 0 ? 0 : BASE_SEAM_OFFSET_Y
 
               if (row.kind === 'labyrinth') {
                 const node = row.value
@@ -310,7 +325,7 @@ export function ExerciseDrawer({
                     style={{
                       left: `${pos.x}%`,
                       top: `${pos.y}%`,
-                      transform: `translate(calc(-50% + ${LABYRINTH_PIXEL_OFFSET.x}px), calc(-50% + ${LABYRINTH_PIXEL_OFFSET.y}px))`,
+                      transform: `translate(calc(-50% + ${LABYRINTH_PIXEL_OFFSET.x}px), calc(-50% + ${LABYRINTH_PIXEL_OFFSET.y + seamY}px))`,
                     }}
                   >
                     <div className="relative flex flex-col items-center gap-0">
@@ -440,6 +455,10 @@ export function ExerciseDrawer({
                 (n) => t('exerciseFallbackFormat', { n }),
                 overlayDescriptions,
               )
+              // node 0 (exercise 1) sits on the base cap pad → its own knob.
+              const exOffset =
+                originalIndex === 0 ? BASE_PIXEL_OFFSET : NODE_PIXEL_OFFSET
+              const exOffsetY = exOffset.y + seamY
 
               return (
                 <div
@@ -449,7 +468,7 @@ export function ExerciseDrawer({
                   style={{
                     left: `${pos.x}%`,
                     top: `${pos.y}%`,
-                    transform: `translate(calc(-50% + ${NODE_PIXEL_OFFSET.x}px), calc(-50% + ${NODE_PIXEL_OFFSET.y}px))`,
+                    transform: `translate(calc(-50% + ${exOffset.x}px), calc(-50% + ${exOffsetY}px))`,
                   }}
                 >
                   <div className="relative flex flex-col items-center gap-0">
