@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DailyLimitBanner } from "@/components/daily/daily-limit-banner";
 
@@ -10,44 +10,39 @@ vi.mock("@/lib/hub/tile-availability", () => ({
 import { hoursUntilNextUtcDay } from "@/lib/hub/tile-availability";
 const mockHours = hoursUntilNextUtcDay as ReturnType<typeof vi.fn>;
 
-// Mock navigation
-vi.mock("@/i18n/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
-}));
-
 describe("DailyLimitBanner", () => {
   const onBack = vi.fn();
 
   beforeEach(() => {
     onBack.mockReset();
+    window.localStorage.clear();
   });
 
   describe("soft limit (isHardMax=false)", () => {
-    it("renders 'Great focus today.' heading", () => {
+    it("renders 'Great focus today!' heading", () => {
       mockHours.mockReturnValue(3);
       render(<DailyLimitBanner isHardMax={false} onBack={onBack} />);
-      expect(screen.getByText("Great focus today.")).toBeInTheDocument();
+      expect(screen.getByText("Great focus today!")).toBeInTheDocument();
     });
 
-    it("renders countdown when < 12h remaining", () => {
+    it("renders countdown as plain reminder text when < 12h remaining", () => {
       mockHours.mockReturnValue(5.5);
       render(<DailyLimitBanner isHardMax={false} onBack={onBack} />);
-      expect(screen.getByText(/More opens in/)).toBeInTheDocument();
-      expect(screen.getByText(/5h 30m/)).toBeInTheDocument();
+      expect(screen.getByText("More in 5h 30m")).toBeInTheDocument();
     });
 
-    it("renders 'Tomorrow' when >= 12h remaining", () => {
+    it("renders 'More tomorrow' when >= 12h remaining", () => {
       mockHours.mockReturnValue(14);
       render(<DailyLimitBanner isHardMax={false} onBack={onBack} />);
-      expect(screen.getByText(/More opens/)).toBeInTheDocument();
-      expect(screen.getByText(/Tomorrow/)).toBeInTheDocument();
+      expect(screen.getByText("More tomorrow")).toBeInTheDocument();
     });
 
-    it("renders disabled paid CTA", () => {
+    it("does not render the removed paid CTA", () => {
       mockHours.mockReturnValue(3);
       render(<DailyLimitBanner isHardMax={false} onBack={onBack} />);
-      const unlockBtn = screen.getByRole("button", { name: /Unlock 5 more today/i });
-      expect(unlockBtn).toBeDisabled();
+      expect(
+        screen.queryByRole("button", { name: /Unlock 5 more today/i }),
+      ).not.toBeInTheDocument();
     });
 
     it("calls onBack when 'Back to Hub' is clicked", () => {
@@ -55,6 +50,34 @@ describe("DailyLimitBanner", () => {
       render(<DailyLimitBanner isHardMax={false} onBack={onBack} />);
       screen.getByRole("button", { name: /Back to Hub/i }).click();
       expect(onBack).toHaveBeenCalledOnce();
+    });
+
+    it("close (X) dismisses without navigating to Hub", () => {
+      mockHours.mockReturnValue(3);
+      render(<DailyLimitBanner isHardMax={false} onBack={onBack} />);
+      fireEvent.click(screen.getByRole("button", { name: /Close/i }));
+      expect(onBack).not.toHaveBeenCalled();
+      expect(screen.queryByText("Great focus today!")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("show-once per UTC day", () => {
+    it("renders nothing when already acknowledged today", () => {
+      mockHours.mockReturnValue(3);
+      const dayKey = new Date().toISOString().slice(0, 10);
+      window.localStorage.setItem(`chesscito:daily-limit-ack:${dayKey}`, "1");
+      render(<DailyLimitBanner isHardMax={false} onBack={onBack} />);
+      expect(screen.queryByText("Great focus today!")).not.toBeInTheDocument();
+    });
+
+    it("persists acknowledgement after the close button", () => {
+      mockHours.mockReturnValue(3);
+      const dayKey = new Date().toISOString().slice(0, 10);
+      render(<DailyLimitBanner isHardMax={false} onBack={onBack} />);
+      screen.getByRole("button", { name: /Close/i }).click();
+      expect(
+        window.localStorage.getItem(`chesscito:daily-limit-ack:${dayKey}`),
+      ).toBe("1");
     });
   });
 
