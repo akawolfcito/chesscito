@@ -14,6 +14,7 @@ import {
   type PayableToken,
 } from "@/lib/payments/use-get-peones-token-selection";
 import {
+  mapSeasonPassError,
   useSeasonPassRail,
   type SeasonPassRailResult,
 } from "@/lib/season-pass/use-season-pass-rail";
@@ -229,11 +230,7 @@ function SeasonPassSheetInner({
 
                 {rail.phase === "error" && rail.errorReason ? (
                   <p className="text-xs text-red-400" data-testid="season-pass-error">
-                    {rail.errorReason === "wrong_chain"
-                      ? "Switch to Celo mainnet"
-                      : rail.errorReason === "user_rejected"
-                        ? "Payment cancelled."
-                        : "Payment failed. Try again."}
+                    {mapSeasonPassError(rail.errorReason)}
                   </p>
                 ) : null}
 

@@ -24,6 +24,40 @@ const RETRIABLE_VERIFY_ERRORS = new Set([
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Map a raw rail/verify error reason to a user-facing message. Groups the
+ * concrete error strings the rail + /api/verify-payment emit into the few
+ * buckets a buyer can act on; anything unrecognized falls back to a generic
+ * retry message. Pure + exported so it is unit-testable.
+ */
+export function mapSeasonPassError(reason: string | null | undefined): string {
+  switch (reason) {
+    case "rail_not_configured":
+    case "no_treasury":
+    case "unavailable":
+      return "Payments are not configured yet.";
+    case "unsupported_chain":
+    case "wrong_chain":
+      return "Switch to Celo Mainnet.";
+    case "unsupported_token":
+      return "Choose USDC, USDT or cUSD.";
+    case "tx_rejected":
+    case "user_rejected":
+      return "Transaction was cancelled.";
+    case "verification_failed":
+    case "verify_failed":
+    case "transfer_not_found":
+    case "not_direct_transfer":
+    case "amount_too_low":
+    case "receipt_not_found":
+    case "ledger_unavailable":
+    case "ledger_write_failed":
+      return "We could not verify the payment yet.";
+    default:
+      return "Payment failed. Try again.";
+  }
+}
+
 export type SeasonPassRailPhase =
   | "idle"
   | "preparing"
