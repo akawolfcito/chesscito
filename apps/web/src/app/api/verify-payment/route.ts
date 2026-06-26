@@ -38,6 +38,7 @@ import {
   type SeasonPassSku,
 } from "@/lib/payments/rail-config";
 import { verifyStablecoinTransfer } from "@/lib/payments/verify-transfer";
+import { isLiteModeServer } from "@/lib/feature-flags";
 import { normalizeWallet } from "@/lib/peones/ledger-service";
 import { buildAttestationHash } from "@/lib/peones/ledger-service-server";
 import {
@@ -140,6 +141,13 @@ export async function POST(req: Request) {
   const isPeonesPack = sku in PEONES_PACKS;
   if (!isSeasonPass && !isPeonesPack) return err("unknown_sku", 400);
 
+  // Lite-only entitlement: the Season Pass SKU is rejected in Full builds so
+  // it can never be credited outside Chesscito Lite. Peones packs unaffected.
+  if (isSeasonPass && !isLiteModeServer()) {
+    log.warn("season_pass_unavailable_full_mode", { sku, chainId });
+    return err("season_pass_unavailable", 404);
+  }
+
   if (!RAIL_ACCEPTED_STABLECOIN_ADDRESSES_LOWER.includes(token)) {
     return err("unsupported_token", 400);
   }
@@ -207,18 +215,50 @@ export async function POST(req: Request) {
     // Idempotency pre-check — same tx never double-credits.
     const { data: existingPass } = await supabase
       .from("lite_season_passes")
-      .select("id, expires_at, season_id, supporter_status, shields_credited")
+      .select("id, expires_at, season_id, supporter_status, shields_credited, metadata")
       .eq("idempotency_key", idempotencyKey)
       .maybeSingle();
 
     if (existingPass) {
+      // Reconcile: a prior verification inserted the pass but Redis failed,
+      // so shields were never credited (shields_credited = 0 / metadata
+      // shieldsPending). Retry the credit now, exactly once. If shields were
+      // already credited we return as-is and NEVER touch Redis (no double).
+      const creditedSoFar = Number(existingPass.shields_credited ?? 0);
+      const meta = isPlainObject(existingPass.metadata) ? existingPass.metadata : {};
+      const needsReconcile = creditedSoFar < pass.shieldsOnPurchase || meta.shieldsPending === true;
+
+      let shieldsCredited = creditedSoFar;
+      let shieldsPending = needsReconcile;
+      if (needsReconcile) {
+        try {
+          await redis.incrby(REDIS_KEYS.shieldsCredited(walletNorm), pass.shieldsOnPurchase);
+          const ttlMs = pass.durationDays * 86_400_000;
+          await redis.set(REDIS_KEYS.seasonPass(walletNorm), existingPass.expires_at, { px: ttlMs });
+          await supabase
+            .from("lite_season_passes")
+            .update({
+              shields_credited: pass.shieldsOnPurchase,
+              metadata: { ...meta, shieldsPending: false },
+            })
+            .eq("idempotency_key", idempotencyKey);
+          shieldsCredited = pass.shieldsOnPurchase;
+          shieldsPending = false;
+        } catch (redisErr) {
+          log.error("season_pass_redis_reconcile_failed", { wallet: walletNorm, err: String(redisErr) });
+          shieldsCredited = 0;
+          shieldsPending = true;
+        }
+      }
+
       return NextResponse.json({
         ok: true,
         sku,
         wallet: walletNorm,
         seasonId: existingPass.season_id,
         expiresAt: existingPass.expires_at,
-        shieldsCredited: Number(existingPass.shields_credited ?? pass.shieldsOnPurchase),
+        shieldsCredited,
+        shieldsPending: shieldsPending || undefined,
         supporterStatus: existingPass.supporter_status ?? pass.supporterStatus,
         amountPaid,
         token,
@@ -276,6 +316,18 @@ export async function POST(req: Request) {
       log.error("season_pass_redis_failed_after_insert", { wallet: walletNorm, err: String(redisErr) });
       shieldsCredited = 0;
       shieldsPending = true;
+      // Persist the pending state so a later verification of the SAME tx can
+      // detect it (reconcile branch above) and retry the shield credit.
+      await supabase
+        .from("lite_season_passes")
+        .update({
+          shields_credited: 0,
+          metadata: { rail: "stablecoin_single_tx", overpaid: verdict.overpaid, shieldsPending: true },
+        })
+        .eq("idempotency_key", idempotencyKey)
+        .then(undefined, (e: unknown) =>
+          log.error("season_pass_pending_persist_failed", { err: String(e) }),
+        );
     }
 
     return NextResponse.json({
