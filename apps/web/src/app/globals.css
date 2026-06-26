@@ -13167,3 +13167,46 @@ button.hud-resource-chip:active:not(:disabled) {
 .wp-stamp-fallback .wp-stamp-text {
   display: block;
 }
+
+/* ── Aux-sheet enter/exit: fade instead of the default bottom slide ──
+   The slide translates the whole sheet while the MiniPay WebView
+   re-composites its backdrop-filter + wallpaper layers every frame, so the
+   sheet visibly stalls mid-slide ("a medio gas"). A fade keeps the sheet
+   pinned at its final position (no half-open frame) and feels calmer when
+   switching between aux sheets.
+
+   Rather than zero-out tailwindcss-animate's internal translate vars (which
+   is fragile — the `data-[state=open]:slide-in-from-bottom` utility compiles
+   to `.slide-in-from-bottom[data-state="open"]`, a class+attribute selector
+   that ties/raises specificity), we swap the whole `animation-name` to a
+   dedicated fade keyframe with `!important`, which wins unconditionally.
+   tailwindcss-animate's `animate-in` still supplies duration/fill. Radix
+   always sets `data-state` on the sheet content; non-sheet uses of
+   `.sheet-bg-hub` (cards, dev pages) never carry it, so they're unaffected.
+   Fade rollout 2026-06-26. */
+@keyframes aux-sheet-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes aux-sheet-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+.sheet-bg-hub[data-state="open"],
+.sheet-bg-badges[data-state="open"],
+.sheet-bg-shop[data-state="open"],
+.sheet-bg-leaderboard[data-state="open"],
+.sheet-bg-danger[data-state="open"],
+.sheet-bg-exercises[data-state="open"] {
+  animation-name: aux-sheet-fade-in !important;
+}
+.sheet-bg-hub[data-state="closed"],
+.sheet-bg-badges[data-state="closed"],
+.sheet-bg-shop[data-state="closed"],
+.sheet-bg-leaderboard[data-state="closed"],
+.sheet-bg-danger[data-state="closed"],
+.sheet-bg-exercises[data-state="closed"] {
+  animation-name: aux-sheet-fade-out !important;
+}
