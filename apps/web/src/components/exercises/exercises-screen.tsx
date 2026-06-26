@@ -2634,7 +2634,10 @@ export function ExercisesScreen({
             // persistent entry points (Daily / Special Training).
             // Hidden (not row-shifting empty space) outside
             // phase=ready / in labyrinth mode.
-            activeLabyrinth || phase !== "ready" ? null : (
+            // Lite isolation: the hint is a Peones spend, so it never mounts
+            // in Chesscito Lite (no Peones surfaces in Lite). Season Pass is
+            // the only entitlement and is reachable via the Hub + Lite CTAs.
+            activeLabyrinth || phase !== "ready" || CHESSCITO_LITE_MODE ? null : (
               <PeonesHintButton
                 piece={selectedPiece}
                 exerciseId={currentExercise.id}
