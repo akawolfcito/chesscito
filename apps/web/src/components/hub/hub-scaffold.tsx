@@ -21,6 +21,12 @@ import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
+import { getSeasonPass } from "@/lib/payments/rail-config";
+import { formatUsd } from "@/lib/contracts/tokens";
+
+// Season Pass CTA copy is derived from config — never hardcode the price.
+const SEASON_PASS = getSeasonPass("lite_season_pass_21");
+const SEASON_PASS_CTA_LABEL = `🛡️ ${SEASON_PASS.durationDays}-Day Pass · +${SEASON_PASS.shieldsOnPurchase} Shields · ${formatUsd(SEASON_PASS.priceUsd6)}`;
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
  *  `color` drives the visual tint (amber = default/onboarding, blue =
@@ -357,7 +363,7 @@ export function HubScaffold({
                 className="hub-scaffold-season-pass-cta"
                 aria-label="Get 21-Day Mind Challenge Season Pass"
               >
-                🛡️ 21-Day Pass — $1.99
+                {SEASON_PASS_CTA_LABEL}
               </button>
             ) : null}
           </div>
