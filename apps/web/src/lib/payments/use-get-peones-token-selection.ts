@@ -59,10 +59,17 @@ export function selectPayableToken(
   return { tokens, autoSelected: tokens.find((t) => t.payable)?.symbol ?? null };
 }
 
-export function useGetPeonesTokenSelection(sku: PeonesPackSku) {
+/**
+ * Generic stablecoin balance read + payable auto-selection for ANY
+ * single-tx purchase priced in USD6 (Peones packs, Season Pass, …).
+ * Reads balances for all RAIL_ACCEPTED_STABLECOINS and auto-selects the
+ * first payable one in USDC→USDT→cUSD preference order. This is what
+ * prevents the "USDC default with 0 balance → transfer reverts" smoke
+ * bug across every rail surface.
+ */
+export function useStablecoinTokenSelection(priceUsd6: bigint) {
   const { address } = useAccount();
   const chainId = useChainId();
-  const pack = getPeonesPack(sku);
   // Manual override; null = follow the auto-selection.
   const [override, setOverride] = useState<string | null>(null);
 
@@ -86,8 +93,8 @@ export function useGetPeonesTokenSelection(sku: PeonesPackSku) {
         r && r.status === "success" && typeof r.result === "bigint" ? r.result : 0n;
       return { symbol: t.symbol, address: t.address, decimals: t.decimals, balance };
     });
-    return selectPayableToken(pack.priceUsd6, balances);
-  }, [data, pack.priceUsd6]);
+    return selectPayableToken(priceUsd6, balances);
+  }, [data, priceUsd6]);
 
   const selectedSymbol = override ?? autoSelected;
   const selected = tokens.find((t) => t.symbol === selectedSymbol) ?? null;
@@ -103,4 +110,8 @@ export function useGetPeonesTokenSelection(sku: PeonesPackSku) {
     selected,
     noPayableToken,
   };
+}
+
+export function useGetPeonesTokenSelection(sku: PeonesPackSku) {
+  return useStablecoinTokenSelection(getPeonesPack(sku).priceUsd6);
 }
