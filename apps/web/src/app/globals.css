@@ -7945,8 +7945,8 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 14px 12px;
+  gap: 4px;
+  padding: 8px 12px 10px;
   border-radius: 20px;
   background: linear-gradient(180deg, #fdf2cf 0%, #f6e4b0 100%);
   border: 2px solid #e3b85a;
@@ -7961,7 +7961,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 .challenge-card-title {
   margin: 0;
-  font-size: 1.18rem;
+  font-size: 1.02rem;
   font-weight: 800;
   color: #4a2f12;
 }
@@ -7978,13 +7978,13 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 .challenge-card-day {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: #9a5b1e;
 }
 .challenge-card-passport-label {
   margin: 0;
-  font-size: 0.6rem;
+  font-size: 0.52rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -7996,12 +7996,12 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
 }
 .challenge-card-flame {
   display: inline-flex;
   align-items: flex-end;
-  height: 1.7rem;
+  height: 1.4rem;
   flex-shrink: 0;
   line-height: 0;
 }
@@ -8022,25 +8022,25 @@ button.hud-resource-chip:active:not(:disabled) {
 .challenge-card-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 .challenge-card-stat {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  padding: 8px 4px;
+  gap: 0;
+  padding: 5px 3px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(200, 150, 60, 0.4);
 }
 .challenge-card-stat-value {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #4a2f12;
 }
 .challenge-card-stat-label {
-  font-size: 0.6rem;
+  font-size: 0.52rem;
   font-weight: 600;
   color: #9a6a2e;
   text-transform: uppercase;
@@ -8053,12 +8053,12 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 6px;
 }
 .challenge-card-shields-count {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: #b8860b;
 }
 .challenge-card-shields-label {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: #9a6a2e;
   text-transform: uppercase;
@@ -8066,14 +8066,14 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Join Challenge — verde token + GPU-safe halo (opacity/transform only). */
 .challenge-card-join {
   position: relative;
-  margin-top: 4px;
-  min-height: 48px;
+  margin-top: 2px;
+  min-height: 42px;
   border-radius: 14px;
   background: var(--cta-primary-green-grad);
   border: 2px solid var(--cta-primary-green-border);
   box-shadow: var(--cta-primary-green-bevel);
   color: #fff;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 800;
   text-shadow: var(--cta-primary-green-text-shadow);
   cursor: pointer;
