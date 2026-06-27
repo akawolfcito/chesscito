@@ -1747,6 +1747,15 @@ const messages = {
     dotFilledAria: "Día {index} hecho",
     dotEmptyAria: "Día {index}",
   },
+  HUB_LITE_COPY: {
+    ...en.HUB_LITE_COPY,
+    rootAriaLabel: "Inicio de Chesscito Lite",
+    startFocus: "Comenzar foco",
+    continue: "Continuar",
+    practice: "Practicar",
+    startFocusAriaLabel: "Comienza el foco de hoy",
+    trainingPathLabel: "Ruta de entrenamiento",
+  },
   SETTINGS_STUB_COPY: {
     title: "Ajustes",
     comingSoonTooltip: "Próximamente",

@@ -3209,6 +3209,16 @@ export const CHALLENGE_CARD_COPY = {
   dotEmptyAria: "Day {index}",
 } as const;
 
+export const HUB_LITE_COPY = {
+  rootAriaLabel: "Chesscito Lite home",
+  // Start Focus label intents (keyed by start-focus-label.ts).
+  startFocus: "Start Focus",
+  continue: "Continue",
+  practice: "Practice",
+  startFocusAriaLabel: "Start today's focus",
+  trainingPathLabel: "Training Path",
+} as const;
+
 export const LEADERBOARD_TABS_COPY = {
   tabs: {
     puzzlesWeek: "Puzzles this week",
