@@ -7907,10 +7907,15 @@ button.hud-resource-chip:active:not(:disabled) {
    asset (avatar-lite-hub) is the only new art; the frame is pure CSS. Capped
    so the mascot zone stays under ~34% viewport height (P1-A). */
 .hub-lite-mascot {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0;
+  /* Intentional overlap onto the card below — the avatar layers on top for a
+     depth-y, stacked look (founder: overlap reads as better design). */
+  margin-bottom: -26px;
 }
 .hub-lite-title {
   display: block;
@@ -7927,7 +7932,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .hub-lite-avatar {
   display: block;
   width: clamp(140px, 41vw, 158px);
-  margin-top: -18px;
+  margin-top: -52px;
 }
 .hub-lite-avatar img {
   display: block;
