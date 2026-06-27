@@ -8161,25 +8161,31 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 8px 8px 6px;
+  gap: 4px;
+  padding: 4px 4px 3px;
   border-radius: 16px;
   background: rgba(60, 120, 40, 0.32);
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 .hub-lite-training-path-label {
   margin: 0;
-  font-size: 0.66rem;
+  font-size: 0.55rem;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #f3e6c4;
 }
+/* Drop the inner dark wooden panel from RewardColumn — the lighter outer
+   container is the only backdrop; force a tight horizontal row. */
 .reward-column.hub-lite-training-path-tiles {
   flex-direction: row;
   flex-wrap: nowrap;
   gap: 4px;
   width: 100%;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   justify-content: space-between;
 }
 
