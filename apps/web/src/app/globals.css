@@ -8118,7 +8118,8 @@ button.hud-resource-chip:active:not(:disabled) {
   width: auto;
   min-height: 60px;
   padding: 0 46px;
-  margin-bottom: 4px;
+  /* Natural breathing room above (21-Day card) and below (Training Path). */
+  margin: 12px 0 14px;
   border: none;
   border-radius: 20px;
   background:
