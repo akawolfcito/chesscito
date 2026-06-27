@@ -41,6 +41,7 @@ import { track } from "@/lib/telemetry";
 import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 import { useHubData } from "@/components/hub/use-hub-data";
+import { HubLiteScaffold } from "@/components/hub/hub-lite-scaffold";
 const SeasonPassSheet = CHESSCITO_LITE_MODE
   ? dynamic(
       () => import("@/components/payments/season-pass-sheet").then((m) => m.SeasonPassSheet),
@@ -285,8 +286,57 @@ export function HubScaffoldClient({
   // a depleted "Shield ×0" is the strongest replenishment cue.
   const shieldsValue = shieldCount;
 
+  // <ChallengeCard> requires a non-null passport; Lite always hydrates one
+  // (useHubData), but fall back to the loading shell defensively so the card
+  // never receives undefined.
+  const liteFocusPassport = focusPassport ?? {
+    streak: 0,
+    totalCompleted: 0,
+    todayDone: false,
+    isLoading: true,
+  };
+
   return (
     <>
+      {CHESSCITO_LITE_MODE ? (
+        <HubLiteScaffold
+          trophies={trophies}
+          isWalletConnected={isConnected}
+          onConnectTap={
+            isConnected
+              ? null
+              : () => {
+                  track("hub_connect_chip_tap");
+                  connectWallet();
+                }
+          }
+          onTrophyTap={() => {
+            track("hub_trophy_tap", { count: trophies });
+            router.push("/trophies");
+          }}
+          focusPassport={liteFocusPassport}
+          challenge={lite.challenge}
+          seasonPass={lite.challengeSeasonPass}
+          onJoinChallenge={
+            // Same gate as the legacy season-pass CTA: never offer the buy
+            // flow while status resolves or to an existing pass holder.
+            !seasonPassStatus.loading && !seasonPassStatus.active
+              ? () => setSeasonPassSheetOpen(true)
+              : null
+          }
+          primaryFocus={{
+            // Start Focus always routes to /exercises; the screen gates
+            // fresh-vs-replay by quota (spec destination matrix, option A).
+            onPress: () => {
+              track("hub_start_focus_tap");
+              router.push("/exercises");
+            },
+            contentLoop: contentLoopAction,
+            isHydrated: isContentLoopHydrated,
+          }}
+          rewardTiles={rewardTiles}
+        />
+      ) : (
       <HubScaffold
         trophies={trophies}
         pro={pro}
@@ -377,6 +427,7 @@ export function HubScaffoldClient({
             : undefined
         }
       />
+      )}
       {process.env.NODE_ENV === "development" &&
         CHESSCITO_LITE_MODE &&
         sessionQuotaState?.isAtFreeLimit &&

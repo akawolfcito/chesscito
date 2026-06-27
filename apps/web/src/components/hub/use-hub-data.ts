@@ -39,6 +39,8 @@ import { subscribeToShieldChanges } from "@/lib/shop/shield-events";
 import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
 import { getSeasonPass } from "@/lib/payments/rail-config";
 import { useSeasonPassStatus } from "@/lib/season-pass/use-season-pass-status";
+import { challengeDayFromExpiry } from "@/lib/season-pass/challenge-day";
+import type { ChallengeCardSeasonPass } from "@/components/hub/challenge-card";
 import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 
@@ -142,6 +144,8 @@ export type HubLiteData = {
   contentLoop: { action: ContentLoopAction | null; isHydrated: boolean };
   sessionQuota: HubSessionQuota;
   seasonPass: { active: boolean; loading: boolean; refresh: () => void | Promise<void> };
+  /** Discriminated slice for <ChallengeCard> (active → day + shields). */
+  challengeSeasonPass: ChallengeCardSeasonPass;
   challenge: SeasonChallengeMeta;
 };
 
@@ -325,6 +329,23 @@ export function useHubData(): HubData {
     };
   }, []);
 
+  // Discriminated season-pass slice for <ChallengeCard>. Active → derive the
+  // 1-based challenge day from the pass expiry (Day X/21) + carry the credited
+  // shields. Offer → just the loading flag (gates the buy CTA against FOUC).
+  const challengeSeasonPass = useMemo<ChallengeCardSeasonPass>(() => {
+    if (seasonPassStatus.active) {
+      return {
+        active: true,
+        dayOfChallenge: challengeDayFromExpiry(
+          seasonPassStatus.expiresAt,
+          challenge.durationDays,
+        ),
+        shieldsCredited: seasonPassStatus.shieldsCredited ?? challenge.shieldBonus,
+      };
+    }
+    return { active: false, isLoading: seasonPassStatus.loading };
+  }, [seasonPassStatus, challenge.durationDays, challenge.shieldBonus]);
+
   return {
     shared: {
       address,
@@ -344,6 +365,7 @@ export function useHubData(): HubData {
         loading: seasonPassStatus.loading,
         refresh: seasonPassStatus.refresh,
       },
+      challengeSeasonPass,
       challenge,
     },
   };
