@@ -84,23 +84,12 @@ export function ChallengeCard({
         </picture>
         <div className="challenge-card-top-main">
           <header className="challenge-card-head">
-        <h2 className="challenge-card-title">
-          {isActive ? t("joinedTitle") : t("notJoinedTitle")}
-        </h2>
-        {isActive ? (
-          <span className="challenge-card-active-badge" data-testid="challenge-active-badge">
-            {t("activeBadge")}
-          </span>
-        ) : null}
-      </header>
+            <h2 className="challenge-card-title">
+              {isActive ? t("joinedTitle") : t("notJoinedTitle")}
+            </h2>
+          </header>
 
-      {isActive ? (
-        <p className="challenge-card-day" data-testid="challenge-day">
-          {t("dayProgress", { day: seasonPass.dayOfChallenge, total: durationDays })}
-        </p>
-      ) : null}
-
-      <p className="challenge-card-passport-label">{t("passportLabel")}</p>
+          <p className="challenge-card-passport-label">{t("passportLabel")}</p>
       <div className="challenge-card-flames" role="list" aria-label={t("passportLabel")}>
         {slots.map((slot, i) => {
           const filled = slot.kind !== "gray";
@@ -134,42 +123,51 @@ export function ChallengeCard({
         </div>
       </div>
 
-      {isActive ? (
-        <div className="challenge-card-shields" data-testid="challenge-shields">
-          <span className="challenge-card-shields-count">
-            {t("shieldsCount", { count: seasonPass.shieldsCredited })}
-          </span>
-          <span className="challenge-card-shields-label">{t("shieldsStat")}</span>
+      {/* Lower section — ALWAYS rendered with a fixed structure so the panel
+          height never changes across loading / offer / active (no flash). The
+          stat values are static config; only the CTA slot swaps. */}
+      <div className="challenge-card-stats" data-testid="challenge-stats">
+        <div className="challenge-card-stat">
+          <span className="challenge-card-stat-value">{durationDays}</span>
+          <span className="challenge-card-stat-label">{t("daysStat")}</span>
         </div>
-      ) : isLoading ? null : (
-        <>
-          <div className="challenge-card-stats" data-testid="challenge-stats">
-            <div className="challenge-card-stat">
-              <span className="challenge-card-stat-value">{durationDays}</span>
-              <span className="challenge-card-stat-label">{t("daysStat")}</span>
-            </div>
-            <div className="challenge-card-stat">
-              <span className="challenge-card-stat-value">
-                {t("shieldsBonus", { count: challenge.shieldBonus })}
+        <div className="challenge-card-stat">
+          <span className="challenge-card-stat-value">
+            {t("shieldsBonus", { count: challenge.shieldBonus })}
+          </span>
+          <span className="challenge-card-stat-label">{t("shieldsStat")}</span>
+        </div>
+        <div className="challenge-card-stat">
+          {isActive ? (
+            <>
+              <span className="challenge-card-stat-value" data-testid="challenge-day">
+                {`${seasonPass.dayOfChallenge}/${durationDays}`}
               </span>
-              <span className="challenge-card-stat-label">{t("shieldsStat")}</span>
-            </div>
-            <div className="challenge-card-stat">
-              <span className="challenge-card-stat-value">{challenge.priceLabel}</span>
-            </div>
-          </div>
-          {onJoinChallenge ? (
-            <button
-              type="button"
-              className="challenge-card-join"
-              data-testid="challenge-join-cta"
-              aria-label={t("joinAriaLabel", { price: challenge.priceLabel })}
-              onClick={onJoinChallenge}
-            >
-              {t("joinCta")}
-            </button>
-          ) : null}
-        </>
+              <span className="challenge-card-stat-label">{t("dayStat")}</span>
+            </>
+          ) : (
+            <span className="challenge-card-stat-value">{challenge.priceLabel}</span>
+          )}
+        </div>
+      </div>
+      {isActive ? (
+        <div
+          className="challenge-card-join challenge-card-active-pill"
+          data-testid="challenge-active-badge"
+        >
+          {t("activeBadge")}
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="challenge-card-join"
+          data-testid="challenge-join-cta"
+          aria-label={t("joinAriaLabel", { price: challenge.priceLabel })}
+          onClick={onJoinChallenge ?? undefined}
+          disabled={!onJoinChallenge}
+        >
+          {t("joinCta")}
+        </button>
       )}
     </section>
   );

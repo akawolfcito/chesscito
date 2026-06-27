@@ -7988,23 +7988,6 @@ button.hud-resource-chip:active:not(:disabled) {
   font-weight: 800;
   color: #4a2f12;
 }
-.challenge-card-active-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #5bd16a, #2f9d43);
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-}
-.challenge-card-day {
-  margin: 0;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #9a5b1e;
-}
 .challenge-card-passport-label {
   margin: 0;
   font-size: 0.52rem;
@@ -8069,23 +8052,6 @@ button.hud-resource-chip:active:not(:disabled) {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.challenge-card-shields {
-  display: flex;
-  align-items: baseline;
-  justify-content: flex-end;
-  gap: 6px;
-}
-.challenge-card-shields-count {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #b8860b;
-}
-.challenge-card-shields-label {
-  font-size: 0.6rem;
-  font-weight: 700;
-  color: #9a6a2e;
-  text-transform: uppercase;
-}
 /* Join Challenge — verde token + GPU-safe halo (opacity/transform only). */
 .challenge-card-join {
   position: relative;
@@ -8125,6 +8091,22 @@ button.hud-resource-chip:active:not(:disabled) {
 .challenge-card-join:active {
   transform: translateY(2px);
   box-shadow: var(--cta-primary-green-bevel-pressed);
+}
+/* While the pass status resolves, the CTA is briefly non-interactive but keeps
+   its size + look (no flash / layout shift). */
+.challenge-card-join:disabled {
+  cursor: default;
+}
+/* Active-pass status pill — same slot/size as Join, no buy glow, not a button. */
+.challenge-card-active-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.06em;
+  cursor: default;
+}
+.challenge-card-active-pill::after {
+  display: none;
 }
 
 /* Start Focus — the flashy glossy gold of the TRAIN PIECES button

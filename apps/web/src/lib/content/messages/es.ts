@@ -1739,6 +1739,7 @@ const messages = {
     activeBadge: "ACTIVO",
     dayProgress: "Día {day} / {total}",
     daysStat: "días",
+    dayStat: "día",
     shieldsBonus: "+{count}",
     shieldsStat: "Escudos",
     shieldsCount: "{count}",

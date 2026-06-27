@@ -3200,6 +3200,7 @@ export const CHALLENGE_CARD_COPY = {
   activeBadge: "ACTIVE",
   dayProgress: "Day {day} / {total}",
   daysStat: "days",
+  dayStat: "day",
   shieldsBonus: "+{count}",
   shieldsStat: "Shields",
   shieldsCount: "{count}",

@@ -43,7 +43,9 @@ describe("<ChallengeCard>", () => {
     );
     expect(screen.getAllByTestId("focus-passport-slot")).toHaveLength(7);
     expect(filledDots()).toBe(0);
-    expect(screen.queryByTestId("challenge-join-cta")).toBeNull();
+    // Stable structure: stats + CTA render during loading too (no height flash).
+    expect(screen.getByTestId("challenge-stats")).toBeInTheDocument();
+    expect(screen.getByTestId("challenge-join-cta")).toBeInTheDocument();
     expect(screen.getByTestId("challenge-card")).toHaveAttribute("aria-busy", "true");
   });
 
@@ -93,9 +95,10 @@ describe("<ChallengeCard>", () => {
     );
     expect(screen.getByTestId("challenge-active-badge")).toBeInTheDocument();
     const card = screen.getByTestId("challenge-card");
-    expect(card.textContent).toMatch(/Day 1 \/ 21/i);
-    expect(card.textContent).toMatch(/3/);
-    expect(screen.getByTestId("challenge-card").textContent).toMatch(/Mind Challenge/i);
+    // Day fraction renders in the third stat tile (1/21); shields as +3.
+    expect(screen.getByTestId("challenge-day").textContent).toMatch(/1\/21/);
+    expect(card.textContent).toMatch(/\+3/);
+    expect(card.textContent).toMatch(/Mind Challenge/i);
     expect(screen.queryByTestId("challenge-join-cta")).toBeNull();
   });
 
