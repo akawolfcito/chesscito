@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { useAccount, useChainId, useReadContracts } from "wagmi";
 import { useConnectWallet } from "@/lib/wallet/use-connect-wallet";
 
 import { HubScaffold } from "@/components/hub/hub-scaffold";
@@ -34,72 +33,20 @@ import { ContextualHeader } from "@/components/ui/contextual-header";
 import { useBadgeSheetState } from "@/lib/badges/use-badge-sheet-state";
 import { useShopSheetState } from "@/lib/shop/use-shop-sheet-state";
 import { useClaimQueue } from "@/hooks/use-claim-queue";
-import {
-  getHeroContextAction,
-  type HeroContextState,
-} from "@/lib/hub/hero-cta";
-import {
-  deriveContentLoopAction,
-  LITE_PRIMARY_PIECE,
-  type ContentLoopAction,
-} from "@/lib/hub/content-loop";
-import { buildTrainingPath } from "@/lib/training/path";
-import { getLabyrinthBestsMap } from "@/lib/game/labyrinth-progress";
-import { useWelcomePackage } from "@/lib/welcome-package/use-welcome-package";
-import { getExercisesCompletedCount, readPieceStars } from "@/lib/game/exercise-progress";
-import { EXERCISES, LABYRINTHS } from "@/lib/game/exercises";
-import {
-  type DailyProgress,
-  getDailyHistoryCount,
-  getDailyProgress,
-  isCompletedToday,
-  todayUtc,
-} from "@/lib/daily/progress";
-import { badgesAbi } from "@/lib/contracts/badges";
-import { getBadgesAddress } from "@/lib/contracts/chains";
-import type { PieceId } from "@/lib/game/types";
 import { useProSheetState } from "@/lib/pro/use-pro-sheet-state";
 import { daysRemaining } from "@/lib/pro/days-remaining";
-import { subscribeToShieldChanges } from "@/lib/shop/shield-events";
-import { subscribeToDailyProgressChanges } from "@/lib/daily/events";
-import { readDisplayedShields } from "@/lib/shop/shield-storage";
-import {
-  getDailySession,
-  isAtFreeLimit,
-  isAtHardMax,
-  applyDevUnlock,
-} from "@/lib/daily/session-quota";
-import { subscribeToDailySessionChanges } from "@/lib/daily/session-events";
+import { applyDevUnlock } from "@/lib/daily/session-quota";
 import { useShieldSync } from "@/lib/shop/use-shield-sync";
 import { track } from "@/lib/telemetry";
-import {
-  REWARD_TILE_ORDER,
-  deriveRewardTiles,
-} from "@/lib/hub/derive-reward-tiles";
+import { deriveRewardTiles } from "@/lib/hub/derive-reward-tiles";
 import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
-import { pieceProgressStorageKey } from "@/lib/lite-progress-storage";
-import { useSeasonPassStatus } from "@/lib/season-pass/use-season-pass-status";
+import { useHubData } from "@/components/hub/use-hub-data";
 const SeasonPassSheet = CHESSCITO_LITE_MODE
   ? dynamic(
       () => import("@/components/payments/season-pass-sheet").then((m) => m.SeasonPassSheet),
       { ssr: false },
     )
   : () => null;
-
-/** On-chain badge IDs in slot order — matches `exercises-screen.tsx`'s
- *  `BADGE_LEVEL_IDS` enumeration. Index 0 = id 1 = rook, index 1 = id 2
- *  = bishop, etc. Distinct from `REWARD_TILE_ORDER` (the *narrative*
- *  unlock order surfaced in the column). */
-const BADGE_PIECE_BY_INDEX: readonly PieceId[] = [
-  "rook",
-  "bishop",
-  "knight",
-  "pawn",
-  "queen",
-  "king",
-] as const;
-
-const BADGE_LEVEL_IDS = [1n, 2n, 3n, 4n, 5n, 6n] as const;
 
 export type HubInitialSheet =
   | "shop"
@@ -123,46 +70,6 @@ function premiumAriaLabel(
     total,
     days: pro.daysRemaining,
   });
-}
-
-function loadShieldCount(): number {
-  return readDisplayedShields();
-}
-
-function loadStarsPerPiece(): Partial<Record<PieceId, number>> {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  const stars: Partial<Record<PieceId, number>> = {};
-  for (const piece of REWARD_TILE_ORDER) {
-    try {
-      const raw = window.localStorage.getItem(pieceProgressStorageKey(piece));
-      if (!raw) continue;
-      const parsed = JSON.parse(raw) as { stars?: unknown };
-      // Tolerate both the legacy positional `stars: number[]` and the
-      // id-keyed `stars: Record<id, number>` shape (post-2026-06-16
-      // migration). Sum the in-range values either way.
-      const values = Array.isArray(parsed.stars)
-        ? parsed.stars
-        : parsed.stars && typeof parsed.stars === "object"
-          ? Object.values(parsed.stars)
-          : null;
-      if (values) {
-        const total = values.reduce<number>((acc, s) => {
-          if (typeof s === "number" && Number.isFinite(s) && s >= 0 && s <= 3) {
-            return acc + s;
-          }
-          return acc;
-        }, 0);
-        stars[piece] = total;
-      }
-    } catch {
-      // ignore corrupt entries; fall through to 0 (no progress).
-    }
-  }
-
-  return stars;
 }
 
 type ProShape =
@@ -198,9 +105,18 @@ export function HubScaffoldClient({
   const tScaffold = useTranslations("HUB_SCAFFOLD_COPY");
   const tSettings = useTranslations("SETTINGS_STUB_COPY");
   const router = useRouter();
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
-  const badgesAddress = useMemo(() => getBadgesAddress(chainId), [chainId]);
+  // Read-only hub data (wallet, trophies, stars/shields, Lite
+  // passport/content-loop/quota/season) is hydrated by useHubData and
+  // destructured into the original local names so the handlers + JSX below
+  // are unchanged. `shared.hero` / `lite.challenge` are produced for the Lite
+  // presenter (PR B) and intentionally not consumed by the Full render here.
+  const { shared, lite } = useHubData();
+  const { address, isConnected, trophies, badgesClaimed, starsPerPiece, shieldCount } = shared;
+  const { focusPassport, contentLoop, sessionQuota } = lite;
+  const seasonPassStatus = lite.seasonPass;
+  const contentLoopAction = contentLoop.action;
+  const isContentLoopHydrated = contentLoop.isHydrated;
+  const sessionQuotaState = sessionQuota;
   // Direct injected connect (RainbowKit removed, P2 2026-06-12). In
   // MiniPay the auto-connect in <WalletProvider> wins before this CTA
   // ever renders; on desktop it triggers the extension prompt.
@@ -234,7 +150,6 @@ export function HubScaffoldClient({
   const [profileOpen, setProfileOpen] = useState(!CHESSCITO_LITE_MODE && initialSheet === "profile");
   const [settingsOpen, setSettingsOpen] = useState(initialSheet === "settings");
   const [seasonPassSheetOpen, setSeasonPassSheetOpen] = useState(false);
-  const seasonPassStatus = useSeasonPassStatus(address);
   // `useClaimQueue` reads pending claims out of localStorage on mount;
   // the unread count drives the avatar notif-dot once the HUD slot
   // exists (deferred — see project note).
@@ -265,91 +180,7 @@ export function HubScaffoldClient({
   // so the chip sees server-confirmed state on every connect.
   useShieldSync();
 
-  const { data: badgesData } = useReadContracts({
-    contracts: BADGE_LEVEL_IDS.map((lid) => ({
-      address: badgesAddress ?? undefined,
-      abi: badgesAbi,
-      functionName: "hasClaimedBadge" as const,
-      args: address ? ([address, lid] as const) : undefined,
-      chainId,
-    })),
-    query: {
-      enabled: Boolean(address && badgesAddress),
-      staleTime: 2 * 60_000,
-    },
-  });
-
-  const badgesClaimed = useMemo<Partial<Record<PieceId, boolean>>>(() => {
-    const map: Partial<Record<PieceId, boolean>> = {};
-    BADGE_PIECE_BY_INDEX.forEach((piece, idx) => {
-      const result = badgesData?.[idx]?.result;
-      if (typeof result === "boolean") {
-        map[piece] = result;
-      }
-    });
-    return map;
-  }, [badgesData]);
-
-  // localStorage is browser-only — defer to mount to keep SSR + first
-  // paint identical (no hydration mismatch).
-  const [starsPerPiece, setStarsPerPiece] = useState<Partial<Record<PieceId, number>>>({});
-  const [shieldCount, setShieldCount] = useState<number>(0);
-  useEffect(() => {
-    setStarsPerPiece(loadStarsPerPiece());
-    setShieldCount(loadShieldCount());
-  }, []);
-
-  // Re-read shields from localStorage every time the shop hook bumps the
-  // count after `buyItem` confirms. Native `storage` events only fire
-  // cross-tab, so we use an in-tab CustomEvent bus. Without this the
-  // chip stayed stuck at the pre-purchase value until full reload — the
-  // exact P0-2 from the 2026-05-08 red team.
-  useEffect(() => {
-    return subscribeToShieldChanges(() => {
-      setShieldCount(loadShieldCount());
-    });
-  }, []);
-
-  const trophies = useMemo(
-    () => Object.values(badgesClaimed).filter((v) => v === true).length,
-    [badgesClaimed],
-  );
-
   const pro = useMemo(() => deriveProShape(proStatus, Date.now()), [proStatus]);
-
-  // Hero CTA signals are read from localStorage, so defer the read to
-  // client-mount to avoid SSR/CSR hydration mismatch. While null, the
-  // hero falls back to the safe default ("CONTINUE TRAINING" amber).
-  const [heroSignals, setHeroSignals] = useState<
-    Omit<HeroContextState, "isLoading"> | null
-  >(null);
-  useEffect(() => {
-    setHeroSignals({
-      exercisesCompletedCount: getExercisesCompletedCount(),
-      dailyHistoryCount: getDailyHistoryCount(),
-      isDailyCompletedToday: isCompletedToday(),
-    });
-  }, []);
-  const hero = useMemo(
-    () =>
-      getHeroContextAction({
-        isLoading: heroSignals === null,
-        exercisesCompletedCount: heroSignals?.exercisesCompletedCount ?? 0,
-        dailyHistoryCount: heroSignals?.dailyHistoryCount ?? 0,
-        isDailyCompletedToday: heroSignals?.isDailyCompletedToday ?? false,
-      }),
-    [heroSignals],
-  );
-
-  // Focus Passport (Lite-only, P1). Defer the localStorage read to
-  // client-mount (same anti-hydration pattern as heroSignals): `null`
-  // means "loading", so the card paints its safe empty shell on the
-  // server + first client render and never shows false filled days.
-  const [dailyProgress, setDailyProgress] = useState<DailyProgress | null>(null);
-  useEffect(() => {
-    if (!CHESSCITO_LITE_MODE) return;
-    setDailyProgress(getDailyProgress());
-  }, []);
 
   // Lite B1.2 — one-per-tab session start event for grant dashboard.
   // sessionStorage dedupe ensures refresh doesn't double-count.
@@ -367,97 +198,6 @@ export function HubScaffoldClient({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Re-read daily progress when HubDailyTile (or DailyTacticSlot) records
-  // a completion in the same tab. The native `storage` event only fires
-  // cross-tab; this in-tab bus covers the same-tab path so Focus Passport
-  // and Content Loop update immediately without requiring navigation.
-  useEffect(() => {
-    if (!CHESSCITO_LITE_MODE) return;
-    return subscribeToDailyProgressChanges(() => {
-      setDailyProgress(getDailyProgress());
-    });
-  }, []);
-  const focusPassport = useMemo(
-    () =>
-      CHESSCITO_LITE_MODE
-        ? {
-            streak: dailyProgress?.streak ?? 0,
-            totalCompleted: dailyProgress?.totalCompleted ?? 0,
-            todayDone: dailyProgress
-              ? dailyProgress.lastCompletedDate === todayUtc()
-              : false,
-            isLoading: dailyProgress === null,
-          }
-        : null,
-    [dailyProgress],
-  );
-
-  // B2.3a: Daily session quota state (Lite-only). Hydrated on mount, re-read
-  // on same-tab session events (after recordExtraConsumed) and on tab focus
-  // (visibilitychange) for eventual cross-tab consistency.
-  const [sessionQuotaState, setSessionQuotaState] = useState<{
-    isAtFreeLimit: boolean;
-    isAtHardMax: boolean;
-  } | null>(null);
-  useEffect(() => {
-    if (!CHESSCITO_LITE_MODE) return;
-    const read = () => {
-      const s = getDailySession();
-      setSessionQuotaState({ isAtFreeLimit: isAtFreeLimit(s), isAtHardMax: isAtHardMax(s) });
-    };
-    read();
-    const unsub = subscribeToDailySessionChanges(read);
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") read();
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      unsub();
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, []);
-
-  // Content Loop v1 (Lite-only). Derives the Next Best Action from existing
-  // localStorage data: DailyProgress (already hydrated above via dailyProgress
-  // state), WelcomePackage, and the primary piece training path.
-  // isContentLoopHydrated gates rendering to prevent flash of wrong variant.
-  const welcomePackage = useWelcomePackage();
-  const [contentLoopAction, setContentLoopAction] = useState<ContentLoopAction | null>(null);
-  const [isContentLoopHydrated, setIsContentLoopHydrated] = useState(false);
-  useEffect(() => {
-    if (!CHESSCITO_LITE_MODE) return;
-    // Wait for dailyProgress to be hydrated first (see focusPassport state above).
-    if (dailyProgress === null) return;
-
-    const piece = LITE_PRIMARY_PIECE;
-    const stars = readPieceStars(piece);
-    const progress = { piece, currentId: null as string | null, stars };
-    const labyrinthBests = getLabyrinthBestsMap(piece);
-    const primaryPath = buildTrainingPath({
-      piece,
-      progress,
-      labyrinthBests,
-      badgeClaimed: false,
-      catalog: { exercises: EXERCISES, labyrinths: LABYRINTHS },
-    });
-
-    const action = deriveContentLoopAction({
-      daily: dailyProgress,
-      today: todayUtc(),
-      welcomePackage: {
-        unlocked: welcomePackage.isUnlocked,
-        claimed: welcomePackage.isClaimed,
-      },
-      primaryPiece: piece,
-      primaryPath,
-      nextAvailablePiece: null,
-      sessionQuota: sessionQuotaState,
-    });
-
-    setContentLoopAction(action);
-    setIsContentLoopHydrated(true);
-  }, [dailyProgress, welcomePackage.isUnlocked, welcomePackage.isClaimed, sessionQuotaState]);
 
   const handleArenaPress = useCallback(() => {
     if (CHESSCITO_LITE_MODE) return;
@@ -629,7 +369,10 @@ export function HubScaffoldClient({
             : null
         }
         onSeasonPassPress={
-          CHESSCITO_LITE_MODE && !seasonPassStatus.active
+          // Gate on `loading` so the buy-CTA never flashes before the
+          // season-pass status resolves (FOUC: it briefly showed to pass
+          // holders, then vanished once `active` arrived).
+          CHESSCITO_LITE_MODE && !seasonPassStatus.loading && !seasonPassStatus.active
             ? () => setSeasonPassSheetOpen(true)
             : undefined
         }
