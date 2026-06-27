@@ -5,7 +5,10 @@ import { createPortal } from "react-dom";
 
 import { useTranslations } from "next-intl";
 import { DailyTacticSheet } from "@/components/daily/daily-tactic-sheet";
-import { HubActionTile } from "@/components/hub/hub-action-tile";
+import {
+  HubDailyTrigger,
+  type HubDailyTriggerVariant,
+} from "@/components/hub/hub-daily-trigger";
 import { HubTileStatusChip } from "@/components/hub/hub-tile-status-chip";
 import {
   cooldownLabel,
@@ -68,7 +71,14 @@ type SolveStreakType = "first" | "extended" | "reset";
  *  rendered as a `.reward-tile.is-locked` so the right rail matches
  *  the LEARN rail's tile structure. Suppresses replay when already
  *  completed today, mirrors streak count as the floating badge. */
-export function HubDailyTile() {
+export function HubDailyTile({
+  variant = "tile",
+}: {
+  /** `tile` (Full right-rail, default) or `corner-icon` (Lite top-right gift,
+   *  P1-B). Only the trigger presentation changes; the sheet + overlays + state
+   *  machine are identical across variants. */
+  variant?: HubDailyTriggerVariant;
+} = {}) {
   const t = useTranslations("HUB_ACTION_RAIL_COPY");
   const [hydrated, setHydrated] = useState(false);
   const [progress, setProgress] = useState<DailyProgress>(DEFAULT_PROGRESS);
@@ -285,7 +295,8 @@ export function HubDailyTile() {
 
   return (
     <>
-      <HubActionTile
+      <HubDailyTrigger
+        variant={variant}
         iconSrc="/art/new-icons-chesscito/daily-icon-v1.png"
         label={t("dailyLabel")}
         ariaLabel={ariaLabel}
@@ -297,9 +308,6 @@ export function HubDailyTile() {
             {statusChip}
           </>
         }
-        priority
-        iconWidth={228}
-        iconHeight={256}
       />
       {hydrated && showAchievement && createPortal(
         <FirstFocusDayOverlay
