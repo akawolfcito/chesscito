@@ -7984,7 +7984,8 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 .challenge-card-title {
   margin: 0;
-  font-size: 1.02rem;
+  font-family: var(--font-game-action);
+  font-size: 1.05rem;
   font-weight: 800;
   color: #4a2f12;
 }
@@ -7995,7 +7996,7 @@ button.hud-resource-chip:active:not(:disabled) {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(120, 70, 20, 0.5);
-  text-align: left;
+  text-align: center;
 }
 /* 7 flame sprites, flat (no panel art) — reuses the FocusPassport assets. */
 .challenge-card-flames {
@@ -8055,6 +8056,9 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Join Challenge — verde token + GPU-safe halo (opacity/transform only). */
 .challenge-card-join {
   position: relative;
+  align-self: center;
+  width: auto;
+  padding: 0 34px;
   margin-top: 2px;
   min-height: 42px;
   border-radius: 14px;
