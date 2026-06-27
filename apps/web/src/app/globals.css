@@ -8038,8 +8038,8 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 0;
   padding: 5px 3px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(200, 150, 60, 0.4);
+  /* No fill / solid border — just a soft drop to the right + bottom. */
+  box-shadow: 2px 3px 3px rgba(110, 65, 15, 0.2);
 }
 .challenge-card-stat-value {
   font-size: 0.95rem;
@@ -8117,6 +8117,11 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 .challenge-card-passport-bottom {
   margin-top: 2px;
+}
+/* Active flames group tighter (centered) instead of spreading full width. */
+.challenge-card-passport-bottom .challenge-card-flames {
+  justify-content: center;
+  gap: 6px;
 }
 
 /* Start Focus — the flashy glossy gold of the TRAIN PIECES button
