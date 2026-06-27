@@ -8114,8 +8114,10 @@ button.hud-resource-chip:active:not(:disabled) {
    (.hub-scaffold-practice-cta): multi-layer gold gradient + 3D bottom edge +
    gold glow halo. Full-width, the user's familiar solid primary. */
 .hub-lite-start-focus {
-  width: 100%;
+  align-self: center;
+  width: auto;
   min-height: 60px;
+  padding: 0 46px;
   margin-bottom: 4px;
   border: none;
   border-radius: 20px;
