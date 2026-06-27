@@ -7899,7 +7899,7 @@ button.hud-resource-chip:active:not(:disabled) {
 .hub-lite-hud-left,
 .hub-lite-hud-right {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
 }
 
