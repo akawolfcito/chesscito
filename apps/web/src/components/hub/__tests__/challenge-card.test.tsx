@@ -21,10 +21,10 @@ function passport(
   return { streak: 0, totalCompleted: 0, todayDone: false, isLoading: false, ...over };
 }
 
-function filledDots(): number {
-  return screen
-    .getAllByTestId("focus-passport-slot")
-    .filter((el) => el.getAttribute("data-filled") === "true").length;
+function focusDays(): number {
+  return Number(
+    screen.getByTestId("challenge-progress").getAttribute("data-done"),
+  );
 }
 
 afterEach(() => {
@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 describe("<ChallengeCard>", () => {
-  it("loading: empty dot shell, no Join CTA, aria-busy", () => {
+  it("loading: empty progress, stable structure (stats + CTA), aria-busy", () => {
     render(
       <ChallengeCard
         focusPassport={passport({ streak: 5, isLoading: true })}
@@ -41,15 +41,14 @@ describe("<ChallengeCard>", () => {
         onJoinChallenge={() => {}}
       />,
     );
-    expect(screen.getAllByTestId("focus-passport-slot")).toHaveLength(7);
-    expect(filledDots()).toBe(0);
+    expect(focusDays()).toBe(0);
     // Stable structure: stats + CTA render during loading too (no height flash).
     expect(screen.getByTestId("challenge-stats")).toBeInTheDocument();
     expect(screen.getByTestId("challenge-join-cta")).toBeInTheDocument();
     expect(screen.getByTestId("challenge-card")).toHaveAttribute("aria-busy", "true");
   });
 
-  it("offer (not joined): stat tiles + Join CTA, dots lit = streak", () => {
+  it("offer (not joined): inline stats + Join CTA, progress = streak", () => {
     const onJoin = vi.fn();
     render(
       <ChallengeCard
@@ -59,9 +58,9 @@ describe("<ChallengeCard>", () => {
         onJoinChallenge={onJoin}
       />,
     );
-    expect(filledDots()).toBe(3);
+    expect(focusDays()).toBe(3);
     const card = screen.getByTestId("challenge-card");
-    expect(card.textContent).toMatch(/21/);
+    expect(card.textContent).toMatch(/3\/21 focus days/i);
     expect(card.textContent).toMatch(/\+3/);
     expect(card.textContent).toMatch(/\$1\.99/);
     expect(card.textContent).toMatch(/21-Day Mind Challenge/i);
@@ -72,7 +71,7 @@ describe("<ChallengeCard>", () => {
     expect(screen.queryByTestId("challenge-active-badge")).toBeNull();
   });
 
-  it("offer with a long streak caps lit flames at 7 (FocusPassport window)", () => {
+  it("offer with a long streak caps progress at durationDays (21)", () => {
     render(
       <ChallengeCard
         focusPassport={passport({ streak: 40, todayDone: true })}
@@ -81,7 +80,7 @@ describe("<ChallengeCard>", () => {
         onJoinChallenge={() => {}}
       />,
     );
-    expect(filledDots()).toBe(7);
+    expect(focusDays()).toBe(21);
   });
 
   it("active (joined): ACTIVE badge, Day X/21, shields count, no Join CTA", () => {

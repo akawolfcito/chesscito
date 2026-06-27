@@ -789,7 +789,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
   it("renders the 21-Day Challenge card with passport dots in Lite Mode", async () => {
     render(<HubScaffoldClientLite />);
     expect(await screen.findByTestId("challenge-card")).toBeInTheDocument();
-    expect(screen.getAllByTestId("focus-passport-slot").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("challenge-progress")).toBeInTheDocument();
   });
 
   it("does not show MiniArena tile in Lite even when rook stars >= 12", async () => {
@@ -803,15 +803,12 @@ describe("HubScaffoldClient — Lite Mode", () => {
     expect(screen.queryByTestId("mini-arena-trigger")).not.toBeInTheDocument();
   });
 
-  it("Challenge card fills a passport dot after daily completion event fires (no navigation)", async () => {
+  it("Challenge progress advances after daily completion event fires (no navigation)", async () => {
     render(<HubScaffoldClientLite />);
-    await screen.findByTestId("challenge-card");
-    const filled = () =>
-      screen
-        .getAllByTestId("focus-passport-slot")
-        .filter((d) => d.getAttribute("data-filled") === "true").length;
-    // Empty progress → no lit flames.
-    await waitFor(() => expect(filled()).toBe(0));
+    const progress = await screen.findByTestId("challenge-progress");
+    const done = () => Number(progress.getAttribute("data-done"));
+    // Empty progress → 0 focus days.
+    await waitFor(() => expect(done()).toBe(0));
 
     // Simulate daily completion: write updated progress then fire the in-tab event.
     const today = new Date().toISOString().slice(0, 10);
@@ -821,20 +818,15 @@ describe("HubScaffoldClient — Lite Mode", () => {
     );
     window.dispatchEvent(new CustomEvent("chesscito:daily-progress-changed"));
 
-    // The card must reflect the new streak immediately — no navigation required.
-    await waitFor(() => expect(filled()).toBe(1));
+    // The progress bar must reflect the new streak immediately — no navigation.
+    await waitFor(() => expect(done()).toBe(1));
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it("Challenge card clears the pending-day glow after daily completion event fires (no navigation)", async () => {
+  it("Challenge progress label updates after daily completion event fires (no navigation)", async () => {
     render(<HubScaffoldClientLite />);
-    await screen.findByTestId("challenge-card");
-    const glowing = () =>
-      screen
-        .getAllByTestId("focus-passport-slot")
-        .filter((d) => d.getAttribute("data-glow") === "true").length;
-    // Daily not done yet → the next-pending flame glows (the daily-pending cue).
-    await waitFor(() => expect(glowing()).toBe(1));
+    const progress = await screen.findByTestId("challenge-progress");
+    await waitFor(() => expect(progress.textContent).toMatch(/0\/21 focus days/i));
 
     // Simulate daily completion.
     const today = new Date().toISOString().slice(0, 10);
@@ -844,8 +836,8 @@ describe("HubScaffoldClient — Lite Mode", () => {
     );
     window.dispatchEvent(new CustomEvent("chesscito:daily-progress-changed"));
 
-    // Completed today → glow clears, reactively, with no navigation.
-    await waitFor(() => expect(glowing()).toBe(0));
+    // Visible label advances reactively, with no navigation.
+    await waitFor(() => expect(progress.textContent).toMatch(/1\/21 focus days/i));
     expect(pushMock).not.toHaveBeenCalled();
   });
 });

@@ -3201,6 +3201,7 @@ export const CHALLENGE_CARD_COPY = {
   dayProgress: "Day {day} / {total}",
   daysStat: "days",
   dayStat: "day",
+  focusDaysFormat: "{done}/{total} focus days",
   shieldsBonus: "+{count}",
   shieldsStat: "Shields",
   shieldsCount: "{count}",

@@ -7996,77 +7996,94 @@ button.hud-resource-chip:active:not(:disabled) {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(120, 70, 20, 0.5);
-  text-align: center;
+  text-align: left;
 }
-/* 7 flame sprites, flat (no panel art) — reuses the FocusPassport assets. */
-.challenge-card-flames {
+/* FOCUS PASSPORT progress bar: flame + "N/21 focus days" + a thin fill track. */
+.challenge-card-progress {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
 }
-.challenge-card-flame {
-  display: inline-flex;
-  align-items: flex-end;
-  height: 1.4rem;
-  flex-shrink: 0;
+.challenge-card-progress-flame {
+  flex: 0 0 auto;
+  width: 1rem;
   line-height: 0;
 }
-.challenge-card-flame > img {
-  height: 100%;
-  width: auto;
+.challenge-card-progress-flame > img {
+  width: 100%;
+  height: auto;
   display: block;
   filter: drop-shadow(0 1px 1px rgba(110, 65, 15, 0.3));
 }
-.challenge-card-flame[data-kind="gray"] > img {
-  opacity: 0.5;
+.challenge-card-progress-text {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6e4415;
+  white-space: nowrap;
 }
-.challenge-card-flame.is-glow > img {
-  opacity: 0.85;
-  filter: drop-shadow(0 0 5px rgba(255, 176, 60, 0.7));
+.challenge-card-progress-track {
+  flex: 1 1 auto;
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(120, 80, 30, 0.18);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+.challenge-card-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #ffb347, #ff8a1e);
 }
 
+/* Bottom row: inline stat chips + Join (offer). */
+.challenge-card-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .challenge-card-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 3px 14px;
+  padding: 7px 11px;
+  border-radius: 12px;
+  box-shadow: 2px 3px 3px rgba(110, 65, 15, 0.18);
 }
 .challenge-card-stat {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  gap: 0;
-  padding: 5px 3px;
-  border-radius: 12px;
-  /* No fill / solid border — just a soft drop to the right + bottom. */
-  box-shadow: 2px 3px 3px rgba(110, 65, 15, 0.2);
-}
-.challenge-card-stat-value {
-  font-size: 0.95rem;
-  font-weight: 800;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
   color: #4a2f12;
+  white-space: nowrap;
 }
-.challenge-card-stat-label {
-  font-size: 0.52rem;
-  font-weight: 600;
+.challenge-card-stat-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: 0 0 auto;
   color: #9a6a2e;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 /* Join Challenge — verde token + GPU-safe halo (opacity/transform only). */
 .challenge-card-join {
   position: relative;
-  align-self: center;
+  flex: 0 0 auto;
   width: auto;
-  padding: 0 34px;
-  margin-top: 2px;
-  min-height: 42px;
+  padding: 0 14px;
+  min-height: 44px;
   border-radius: 14px;
   background: var(--cta-primary-green-grad);
   border: 2px solid var(--cta-primary-green-border);
   box-shadow: var(--cta-primary-green-bevel);
   color: #fff;
-  font-size: 0.95rem;
+  font-size: 0.86rem;
   font-weight: 800;
   text-shadow: var(--cta-primary-green-text-shadow);
   cursor: pointer;
@@ -8114,14 +8131,6 @@ button.hud-resource-chip:active:not(:disabled) {
   font-weight: 800;
   letter-spacing: 0.06em;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-}
-.challenge-card-passport-bottom {
-  margin-top: 2px;
-}
-/* Active flames group tighter (centered) instead of spreading full width. */
-.challenge-card-passport-bottom .challenge-card-flames {
-  justify-content: center;
-  gap: 6px;
 }
 
 /* Start Focus — the flashy glossy gold of the TRAIN PIECES button

@@ -1740,6 +1740,7 @@ const messages = {
     dayProgress: "Día {day} / {total}",
     daysStat: "días",
     dayStat: "día",
+    focusDaysFormat: "{done}/{total} días de foco",
     shieldsBonus: "+{count}",
     shieldsStat: "Escudos",
     shieldsCount: "{count}",
