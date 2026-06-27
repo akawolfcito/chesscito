@@ -105,9 +105,12 @@ export function HubLiteScaffold({
       </header>
 
       <div className="hub-lite-mascot">
-        <p className="hub-lite-wordmark" aria-hidden="true">
-          CHESSCITO
-        </p>
+        {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+        <picture className="hub-lite-title">
+          <source srcSet="/art/title-chesscito.avif" type="image/avif" />
+          <source srcSet="/art/title-chesscito.webp" type="image/webp" />
+          <img src="/art/title-chesscito.png" alt="Chesscito" draggable={false} />
+        </picture>
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
         <picture className="hub-lite-avatar">
           <source srcSet="/art/avatar-lite-hub.avif" type="image/avif" />

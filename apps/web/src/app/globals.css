@@ -7870,20 +7870,23 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 11px;
+  gap: 6px;
   width: 100%;
   max-width: var(--app-max-width);
   margin: 0 auto;
   min-height: 100dvh;
-  padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 14px
     calc(env(safe-area-inset-bottom, 0px) + 16px);
-  background: linear-gradient(
-    180deg,
-    #4aa3e8 0%,
-    #7cc5f0 30%,
-    #9bd47a 62%,
-    #6bbf4a 100%
+  background: #7cc5f0 url("/art/bg-wallpaper-lite.png") center top / cover
+    no-repeat;
+  background-image: image-set(
+    url("/art/bg-wallpaper-lite.avif") type("image/avif"),
+    url("/art/bg-wallpaper-lite.webp") type("image/webp"),
+    url("/art/bg-wallpaper-lite.png") type("image/png")
   );
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
 }
 
 /* HUD */
@@ -7907,36 +7910,29 @@ button.hud-resource-chip:active:not(:disabled) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 0;
 }
-.hub-lite-wordmark {
-  margin: 0;
-  font-weight: 800;
-  font-size: 1.85rem;
-  letter-spacing: 0.05em;
-  color: #ffd34d;
-  text-shadow:
-    0 2px 0 #8a5a12,
-    0 0 3px rgba(0, 0, 0, 0.28);
+.hub-lite-title {
+  display: block;
+  width: clamp(196px, 56vw, 232px);
 }
+.hub-lite-title img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* Avatar art is self-framed — render it raw (no CSS ring / crop). Sized so the
+   mascot zone stays compact enough to keep Start Focus + Join above the
+   390x640 fold (P1-A). */
 .hub-lite-avatar {
   display: block;
-  width: clamp(146px, 42vw, 180px);
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 5px solid #f6c84a;
-  box-shadow:
-    0 0 0 3px #b9831f,
-    0 6px 14px rgba(0, 0, 0, 0.25);
-  background: radial-gradient(circle at 50% 32%, #c3e6ff, #6fa8d6);
+  width: clamp(140px, 41vw, 158px);
+  margin-top: -18px;
 }
 .hub-lite-avatar img {
   display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 26%;
+  height: auto;
 }
 
 /* 21-Day Mind Challenge card */
@@ -7944,8 +7940,8 @@ button.hud-resource-chip:active:not(:disabled) {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px 14px;
+  gap: 6px;
+  padding: 10px 14px 12px;
   border-radius: 20px;
   background: linear-gradient(180deg, #fdf2cf 0%, #f6e4b0 100%);
   border: 2px solid #e3b85a;
