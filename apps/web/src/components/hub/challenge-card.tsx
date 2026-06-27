@@ -67,29 +67,11 @@ export function ChallengeCard({
         focusPassport.todayDone,
       );
 
-  return (
-    <section
-      className="challenge-card"
-      data-testid="challenge-card"
-      data-state={isLoading ? "loading" : isActive ? "active" : "offer"}
-      aria-label={t("rootAriaLabel")}
-      aria-busy={isLoading || undefined}
-    >
-      <div className="challenge-card-top">
-        {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
-        <picture className="challenge-card-icon">
-          <source srcSet="/art/21-challenge-icon.avif" type="image/avif" />
-          <source srcSet="/art/21-challenge-icon.webp" type="image/webp" />
-          <img src="/art/21-challenge-icon.png" alt="" aria-hidden="true" draggable={false} />
-        </picture>
-        <div className="challenge-card-top-main">
-          <header className="challenge-card-head">
-            <h2 className="challenge-card-title">
-              {isActive ? t("joinedTitle") : t("notJoinedTitle")}
-            </h2>
-          </header>
-
-          <p className="challenge-card-passport-label">{t("passportLabel")}</p>
+  // FOCUS PASSPORT label + 7-flame row. Rendered in the top-main column when
+  // offering, or in the bottom CTA slot when the pass is active.
+  const flamesRow = (
+    <>
+      <p className="challenge-card-passport-label">{t("passportLabel")}</p>
       <div className="challenge-card-flames" role="list" aria-label={t("passportLabel")}>
         {slots.map((slot, i) => {
           const filled = slot.kind !== "gray";
@@ -119,7 +101,41 @@ export function ChallengeCard({
             </picture>
           );
         })}
-          </div>
+      </div>
+    </>
+  );
+
+  return (
+    <section
+      className="challenge-card"
+      data-testid="challenge-card"
+      data-state={isLoading ? "loading" : isActive ? "active" : "offer"}
+      aria-label={t("rootAriaLabel")}
+      aria-busy={isLoading || undefined}
+    >
+      <div className="challenge-card-top">
+        {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+        <picture className="challenge-card-icon">
+          <source srcSet="/art/21-challenge-icon.avif" type="image/avif" />
+          <source srcSet="/art/21-challenge-icon.webp" type="image/webp" />
+          <img src="/art/21-challenge-icon.png" alt="" aria-hidden="true" draggable={false} />
+        </picture>
+        <div className="challenge-card-top-main">
+          <header className="challenge-card-head">
+            <h2 className="challenge-card-title">
+              {isActive ? t("joinedTitle") : t("notJoinedTitle")}
+            </h2>
+            {isActive ? (
+              <span
+                className="challenge-card-active-chip"
+                data-testid="challenge-active-badge"
+              >
+                {t("activeBadge")}
+              </span>
+            ) : null}
+          </header>
+          {/* Offer: flames live up here. Active: they move to the bottom slot. */}
+          {isActive ? null : flamesRow}
         </div>
       </div>
 
@@ -151,12 +167,7 @@ export function ChallengeCard({
         </div>
       </div>
       {isActive ? (
-        <div
-          className="challenge-card-join challenge-card-active-pill"
-          data-testid="challenge-active-badge"
-        >
-          {t("activeBadge")}
-        </div>
+        <div className="challenge-card-passport-bottom">{flamesRow}</div>
       ) : (
         <button
           type="button"

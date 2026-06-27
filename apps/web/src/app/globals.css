@@ -8101,16 +8101,22 @@ button.hud-resource-chip:active:not(:disabled) {
 .challenge-card-join:disabled {
   cursor: default;
 }
-/* Active-pass status pill — same slot/size as Join, no buy glow, not a button. */
-.challenge-card-active-pill {
-  display: flex;
+/* Active-pass state: ACTIVE is a green chip beside the title, and the flame
+   row moves into the bottom slot (where Join Challenge sits when offering). */
+.challenge-card-active-chip {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #5bd16a, #2f9d43);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
   letter-spacing: 0.06em;
-  cursor: default;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
-.challenge-card-active-pill::after {
-  display: none;
+.challenge-card-passport-bottom {
+  margin-top: 2px;
 }
 
 /* Start Focus — the flashy glossy gold of the TRAIN PIECES button
