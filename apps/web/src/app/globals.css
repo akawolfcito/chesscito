@@ -8141,7 +8141,7 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 .hub-lite-start-focus-ring {
   position: absolute;
-  inset: -12px -16px;
+  inset: -4px 0px;
   z-index: 1;
   pointer-events: none;
 }
