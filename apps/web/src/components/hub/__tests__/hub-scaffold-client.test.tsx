@@ -789,7 +789,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
   it("renders the 21-Day Challenge card with passport dots in Lite Mode", async () => {
     render(<HubScaffoldClientLite />);
     expect(await screen.findByTestId("challenge-card")).toBeInTheDocument();
-    expect(screen.getAllByTestId("challenge-dot").length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("focus-passport-slot").length).toBeGreaterThan(0);
   });
 
   it("does not show MiniArena tile in Lite even when rook stars >= 12", async () => {
@@ -808,9 +808,9 @@ describe("HubScaffoldClient — Lite Mode", () => {
     await screen.findByTestId("challenge-card");
     const filled = () =>
       screen
-        .getAllByTestId("challenge-dot")
+        .getAllByTestId("focus-passport-slot")
         .filter((d) => d.getAttribute("data-filled") === "true").length;
-    // Empty progress → no lit dots.
+    // Empty progress → no lit flames.
     await waitFor(() => expect(filled()).toBe(0));
 
     // Simulate daily completion: write updated progress then fire the in-tab event.
@@ -831,9 +831,9 @@ describe("HubScaffoldClient — Lite Mode", () => {
     await screen.findByTestId("challenge-card");
     const glowing = () =>
       screen
-        .getAllByTestId("challenge-dot")
+        .getAllByTestId("focus-passport-slot")
         .filter((d) => d.getAttribute("data-glow") === "true").length;
-    // Daily not done yet → the next-pending dot glows (the daily-pending cue).
+    // Daily not done yet → the next-pending flame glows (the daily-pending cue).
     await waitFor(() => expect(glowing()).toBe(1));
 
     // Simulate daily completion.

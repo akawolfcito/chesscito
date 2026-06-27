@@ -7983,48 +7983,42 @@ button.hud-resource-chip:active:not(:disabled) {
   color: #9a5b1e;
 }
 .challenge-card-passport-label {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: 0.6rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #b07c34;
+  color: rgba(120, 70, 20, 0.5);
   text-align: center;
 }
-.challenge-card-dots {
+/* 7 flame sprites, flat (no panel art) — reuses the FocusPassport assets. */
+.challenge-card-flames {
   display: flex;
-  align-items: center;
-  gap: 3px;
-  padding: 6px 8px;
-  border-radius: 12px;
-  background: rgba(160, 110, 40, 0.12);
+  align-items: flex-end;
+  justify-content: center;
+  gap: 5px;
 }
-.challenge-card-dot {
-  flex: 1 1 0;
-  height: 11px;
-  max-width: 14px;
-  border-radius: 50%;
-  background: rgba(120, 80, 30, 0.22);
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
+.challenge-card-flame {
+  display: inline-flex;
+  align-items: flex-end;
+  height: 1.7rem;
+  flex-shrink: 0;
+  line-height: 0;
 }
-.challenge-card-dot.is-filled {
-  background: linear-gradient(180deg, #ffb347, #ff8a1e);
-  box-shadow: 0 0 4px rgba(255, 150, 40, 0.7);
+.challenge-card-flame > img {
+  height: 100%;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 1px 1px rgba(110, 65, 15, 0.3));
 }
-.challenge-card-dot.is-glow {
-  animation: challenge-dot-pulse 1.6s ease-in-out infinite;
+.challenge-card-flame[data-kind="gray"] > img {
+  opacity: 0.5;
 }
-@keyframes challenge-dot-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.85;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 1;
-  }
+.challenge-card-flame.is-glow > img {
+  opacity: 0.85;
+  filter: drop-shadow(0 0 5px rgba(255, 176, 60, 0.7));
 }
+
 .challenge-card-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -8225,7 +8219,6 @@ button.hud-resource-chip:active:not(:disabled) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .challenge-card-dot.is-glow,
   .challenge-card-join::after {
     animation: none;
   }

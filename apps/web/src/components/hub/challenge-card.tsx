@@ -2,7 +2,16 @@
 
 import { useTranslations } from "next-intl";
 
+import { type PassportSlotKind, passportSlots } from "@/lib/daily/passport";
 import type { HubFocusPassport, SeasonChallengeMeta } from "@/components/hub/use-hub-data";
+
+/** Flame sprite basenames in `public/art/focus-passport/` — same assets the
+ *  standalone FocusPassport uses. */
+const FLAME_ASSET: Record<PassportSlotKind, string> = {
+  color: "flame-color",
+  blue: "flame-blue",
+  gray: "flame-gray",
+};
 
 /** Season-pass slice the card needs. Discriminated so the `active` branch
  *  carries the day-of-challenge + shields it must render, and the offer
@@ -48,12 +57,15 @@ export function ChallengeCard({
     focusPassport.isLoading || (!seasonPass.active && seasonPass.isLoading);
 
   const { durationDays } = challenge;
-  const litCount = isLoading
-    ? 0
-    : Math.min(Math.max(focusPassport.streak, 0), durationDays);
-  // The next-pending pip glows only in the offer/active idle state when today
-  // is not yet done (never while loading), nudging the daily focus.
-  const glowIndex = !isLoading && !focusPassport.todayDone ? litCount : -1;
+
+  // 7-flame streak window — same slot logic as the standalone FocusPassport.
+  // Loading paints the safe empty (all-gray, no glow) shell.
+  const slots = focusPassport.isLoading
+    ? passportSlots(0, false).map((s) => ({ ...s, glow: false }))
+    : passportSlots(
+        focusPassport.streak < 0 ? 0 : focusPassport.streak,
+        focusPassport.todayDone,
+      );
 
   return (
     <section
@@ -81,25 +93,33 @@ export function ChallengeCard({
       ) : null}
 
       <p className="challenge-card-passport-label">{t("passportLabel")}</p>
-      <div className="challenge-card-dots" role="list" aria-label={t("passportLabel")}>
-        {Array.from({ length: durationDays }).map((_, i) => {
-          const filled = i < litCount;
+      <div className="challenge-card-flames" role="list" aria-label={t("passportLabel")}>
+        {slots.map((slot, i) => {
+          const filled = slot.kind !== "gray";
+          const asset = FLAME_ASSET[slot.kind];
           return (
-            <span
+            // eslint-disable-next-line jsx-a11y/aria-unsupported-elements
+            <picture
               key={i}
               role="listitem"
-              data-testid="challenge-dot"
+              data-testid="focus-passport-slot"
+              data-kind={slot.kind}
               data-filled={filled || undefined}
-              data-glow={i === glowIndex || undefined}
-              className={`challenge-card-dot${filled ? " is-filled" : ""}${
-                i === glowIndex ? " is-glow" : ""
-              }`}
-              aria-label={
-                filled
-                  ? t("dotFilledAria", { index: i + 1 })
-                  : t("dotEmptyAria", { index: i + 1 })
-              }
-            />
+              data-glow={slot.glow || undefined}
+              className={`challenge-card-flame${slot.glow ? " is-glow" : ""}`}
+            >
+              <source srcSet={`/art/focus-passport/${asset}.avif`} type="image/avif" />
+              <source srcSet={`/art/focus-passport/${asset}.webp`} type="image/webp" />
+              <img
+                src={`/art/focus-passport/${asset}.png`}
+                alt={
+                  filled
+                    ? t("dotFilledAria", { index: i + 1 })
+                    : t("dotEmptyAria", { index: i + 1 })
+                }
+                draggable={false}
+              />
+            </picture>
           );
         })}
       </div>

@@ -23,7 +23,7 @@ function passport(
 
 function filledDots(): number {
   return screen
-    .getAllByTestId("challenge-dot")
+    .getAllByTestId("focus-passport-slot")
     .filter((el) => el.getAttribute("data-filled") === "true").length;
 }
 
@@ -41,7 +41,7 @@ describe("<ChallengeCard>", () => {
         onJoinChallenge={() => {}}
       />,
     );
-    expect(screen.getAllByTestId("challenge-dot")).toHaveLength(21);
+    expect(screen.getAllByTestId("focus-passport-slot")).toHaveLength(7);
     expect(filledDots()).toBe(0);
     expect(screen.queryByTestId("challenge-join-cta")).toBeNull();
     expect(screen.getByTestId("challenge-card")).toHaveAttribute("aria-busy", "true");
@@ -70,7 +70,7 @@ describe("<ChallengeCard>", () => {
     expect(screen.queryByTestId("challenge-active-badge")).toBeNull();
   });
 
-  it("offer with streak > durationDays clamps lit dots at 21", () => {
+  it("offer with a long streak caps lit flames at 7 (FocusPassport window)", () => {
     render(
       <ChallengeCard
         focusPassport={passport({ streak: 40, todayDone: true })}
@@ -79,7 +79,7 @@ describe("<ChallengeCard>", () => {
         onJoinChallenge={() => {}}
       />,
     );
-    expect(filledDots()).toBe(21);
+    expect(filledDots()).toBe(7);
   });
 
   it("active (joined): ACTIVE badge, Day X/21, shields count, no Join CTA", () => {
