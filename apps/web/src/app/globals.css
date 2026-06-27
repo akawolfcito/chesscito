@@ -7915,11 +7915,11 @@ button.hud-resource-chip:active:not(:disabled) {
   gap: 0;
   /* Intentional overlap onto the card below — the avatar layers on top for a
      depth-y, stacked look (founder: overlap reads as better design). */
-  margin-bottom: -26px;
+  margin-bottom: -21px;
 }
 .hub-lite-title {
   display: block;
-  width: clamp(196px, 56vw, 232px);
+  width: clamp(157px, 45vw, 186px);
 }
 .hub-lite-title img {
   display: block;
@@ -7931,8 +7931,8 @@ button.hud-resource-chip:active:not(:disabled) {
    390x640 fold (P1-A). */
 .hub-lite-avatar {
   display: block;
-  width: clamp(140px, 41vw, 158px);
-  margin-top: -52px;
+  width: clamp(112px, 33vw, 126px);
+  margin-top: -42px;
 }
 .hub-lite-avatar img {
   display: block;
