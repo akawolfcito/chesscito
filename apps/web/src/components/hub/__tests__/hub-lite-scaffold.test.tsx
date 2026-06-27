@@ -84,7 +84,7 @@ describe("<HubLiteScaffold>", () => {
     expect(onJoin).toHaveBeenCalledTimes(1);
   });
 
-  it("Start Focus: label intent per variant, routes on press", () => {
+  it("Start Focus: always labelled 'Start Focus' (not per-variant), routes on press", () => {
     const onPress = vi.fn();
     render(
       <HubLiteScaffold
@@ -94,7 +94,9 @@ describe("<HubLiteScaffold>", () => {
       />,
     );
     const cta = screen.getByTestId("start-focus-cta");
-    expect(cta.textContent).toMatch(/Practice/i);
+    // Stable label regardless of the content-loop variant.
+    expect(cta.textContent).toMatch(/Start Focus/i);
+    expect(cta.textContent).not.toMatch(/Practice|Continue/i);
     fireEvent.click(cta);
     expect(onPress).toHaveBeenCalledTimes(1);
   });

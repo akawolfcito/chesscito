@@ -7913,13 +7913,12 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-direction: column;
   align-items: center;
   gap: 0;
-  /* Intentional overlap onto the card below — the avatar layers on top for a
-     depth-y, stacked look (founder: overlap reads as better design). */
-  margin-bottom: -21px;
+  /* Air between the avatar and the 21-Day panel below. */
+  margin-bottom: 8px;
 }
 .hub-lite-title {
   display: block;
-  width: clamp(157px, 45vw, 186px);
+  width: clamp(141px, 40vw, 167px);
 }
 .hub-lite-title img {
   display: block;
@@ -7931,8 +7930,8 @@ button.hud-resource-chip:active:not(:disabled) {
    390x640 fold (P1-A). */
 .hub-lite-avatar {
   display: block;
-  width: clamp(112px, 33vw, 126px);
-  margin-top: -42px;
+  width: clamp(101px, 30vw, 113px);
+  margin-top: -38px;
 }
 .hub-lite-avatar img {
   display: block;
@@ -8053,8 +8052,6 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-wrap: wrap;
   gap: 3px 14px;
   padding: 7px 11px;
-  border-radius: 12px;
-  box-shadow: 2px 3px 3px rgba(110, 65, 15, 0.18);
 }
 .challenge-card-stat {
   display: inline-flex;
@@ -8182,6 +8179,8 @@ button.hud-resource-chip:active:not(:disabled) {
 /* Training Path — horizontal piece roster (reuses RewardColumn, forced row). */
 .hub-lite-training-path {
   width: 100%;
+  /* Pin to the bottom of the screen — pushes past the flex gap to the floor. */
+  margin-top: auto;
   display: flex;
   flex-direction: column;
   align-items: center;

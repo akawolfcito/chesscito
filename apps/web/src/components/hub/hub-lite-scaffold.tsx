@@ -10,7 +10,6 @@ import {
   ChallengeCard,
   type ChallengeCardSeasonPass,
 } from "@/components/hub/challenge-card";
-import { startFocusLabelKey } from "@/lib/hub/start-focus-label";
 import type { ContentLoopAction } from "@/lib/hub/content-loop";
 import type {
   HubFocusPassport,
@@ -62,9 +61,9 @@ export function HubLiteScaffold({
   const t = useTranslations("HUB_LITE_COPY");
   const tHud = useTranslations("HUD_COPY");
 
-  // P1-C: the label is the i18n'd intent for the content-loop variant, never
-  // the content-loop `ctaEN`. Pre-hydration (null) → safe default key.
-  const startFocusLabel = t(startFocusLabelKey(primaryFocus.contentLoop?.variant ?? null));
+  // Start Focus always reads "Start Focus" (founder: stable label, not the
+  // per-variant intent). It still routes to /exercises in every state.
+  const startFocusLabel = t("startFocus");
 
   return (
     <main className="hub-lite-scaffold" aria-label={t("rootAriaLabel")}>
