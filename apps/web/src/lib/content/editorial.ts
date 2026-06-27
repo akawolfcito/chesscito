@@ -3192,6 +3192,23 @@ export const FOCUS_PASSPORT_COPY = {
   slotEmptyAria: "Day {index}",
 } as const;
 
+export const CHALLENGE_CARD_COPY = {
+  rootAriaLabel: "21-Day Mind Challenge",
+  notJoinedTitle: "21-Day Mind Challenge",
+  joinedTitle: "Mind Challenge",
+  passportLabel: "Focus Passport",
+  activeBadge: "ACTIVE",
+  dayProgress: "Day {day} / {total}",
+  daysStat: "days",
+  shieldsBonus: "+{count}",
+  shieldsStat: "Shields",
+  shieldsCount: "{count}",
+  joinCta: "Join Challenge",
+  joinAriaLabel: "Join the 21-Day Mind Challenge for {price}",
+  dotFilledAria: "Day {index} done",
+  dotEmptyAria: "Day {index}",
+} as const;
+
 export const LEADERBOARD_TABS_COPY = {
   tabs: {
     puzzlesWeek: "Puzzles this week",
