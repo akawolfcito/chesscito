@@ -8130,48 +8130,41 @@ button.hud-resource-chip:active:not(:disabled) {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* Start Focus — the flashy glossy gold of the TRAIN PIECES button
-   (.hub-scaffold-practice-cta): multi-layer gold gradient + 3D bottom edge +
-   gold glow halo, framed by a decorative gold ring. */
+/* Start Focus — glossy gold button framed by the gold ring. The wrap holds
+   the ring at its NATIVE aspect (no stretch / distortion); the button fits the
+   ring's inner opening so it reads as a single framed CTA (reference Image 12). */
 .hub-lite-start-focus-wrap {
   position: relative;
   align-self: center;
-  display: inline-flex;
   /* Extra breathing room above the button (founder), space below too. */
   margin: 24px 0 16px;
-}
-.hub-lite-start-focus-ring {
-  position: absolute;
-  inset: -14px -12px;
-  z-index: 1;
-  pointer-events: none;
-}
-.hub-lite-start-focus-ring img {
-  display: block;
-  width: 100%;
-  height: 100%;
+  width: clamp(250px, 74vw, 290px);
+  aspect-ratio: 1672 / 853;
+  background-image: url("/art/ring-start-focus.png");
+  background-image: image-set(
+    url("/art/ring-start-focus.avif") type("image/avif"),
+    url("/art/ring-start-focus.webp") type("image/webp"),
+    url("/art/ring-start-focus.png") type("image/png")
+  );
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 .hub-lite-start-focus {
-  width: auto;
-  min-height: 60px;
-  padding: 0 46px;
+  position: absolute;
+  inset: 13% 6% 14% 6%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  border-radius: 20px;
+  border-radius: 14px;
   background:
-    radial-gradient(circle at 30% 20%, rgba(255, 239, 100, 0.9), transparent 28%),
-    radial-gradient(circle at 75% 75%, rgba(180, 105, 0, 0.35), transparent 35%),
-    linear-gradient(145deg, #fbe04b 0%, #fcc00a 28%, #f3aa04 55%, #d38804 100%);
+    radial-gradient(circle at 30% 16%, rgba(255, 240, 130, 0.95), transparent 42%),
+    linear-gradient(180deg, #fbd64b 0%, #f7b528 55%, #e89a12 100%);
   box-shadow:
-    inset 0 3px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -5px 0 rgba(142, 78, 0, 0.35),
-    0 6px 0 #9a5a00,
-    0 0 0 2px rgba(255, 216, 74, 0.7),
-    0 6px 0 2px rgba(255, 216, 74, 0.7),
-    0 0 6px 2px rgba(255, 200, 40, 0.75),
-    0 8px 6px 2px rgba(255, 200, 40, 0.6),
-    0 12px 20px rgba(0, 0, 0, 0.35);
+    inset 0 3px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -4px 0 rgba(142, 78, 0, 0.3);
   color: #fff;
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   text-shadow:
@@ -8183,12 +8176,7 @@ button.hud-resource-chip:active:not(:disabled) {
   cursor: pointer;
 }
 .hub-lite-start-focus:active {
-  transform: translateY(3px);
-  box-shadow:
-    inset 0 3px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -3px 0 rgba(142, 78, 0, 0.4),
-    0 3px 0 #9a5a00,
-    0 5px 10px rgba(0, 0, 0, 0.3);
+  filter: brightness(0.95);
 }
 
 /* Training Path — horizontal piece roster (reuses RewardColumn, forced row). */
