@@ -125,8 +125,6 @@ export function HubLiteScaffold({
         onJoinChallenge={onJoinChallenge}
       />
 
-      {/* Start Focus framed by the gold ring: the wrap carries the ring at its
-          native aspect (no stretch) and the button fits the inner opening. */}
       <div className="hub-lite-start-focus-wrap">
         <button
           type="button"
@@ -137,6 +135,13 @@ export function HubLiteScaffold({
         >
           {startFocusLabel}
         </button>
+        {/* Decorative gold ring overlaid on top of the (unchanged) button. */}
+        {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+        <picture className="hub-lite-start-focus-ring" aria-hidden="true">
+          <source srcSet="/art/ring-start-focus.avif" type="image/avif" />
+          <source srcSet="/art/ring-start-focus.webp" type="image/webp" />
+          <img src="/art/ring-start-focus.png" alt="" draggable={false} />
+        </picture>
       </div>
 
       <section className="hub-lite-training-path" aria-label={t("trainingPathLabel")}>
