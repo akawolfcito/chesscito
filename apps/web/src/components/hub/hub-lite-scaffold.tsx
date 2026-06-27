@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { CandyIcon } from "@/components/redesign/candy-icon";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
-import { KingdomAnchor } from "@/components/kingdom/kingdom-anchor";
 import { RewardColumn, type RewardTile } from "@/components/kingdom/reward-column";
 import {
   ChallengeCard,
@@ -106,7 +105,15 @@ export function HubLiteScaffold({
       </header>
 
       <div className="hub-lite-mascot">
-        <KingdomAnchor variant="playhub" />
+        <p className="hub-lite-wordmark" aria-hidden="true">
+          CHESSCITO
+        </p>
+        {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+        <picture className="hub-lite-avatar">
+          <source srcSet="/art/avatar-lite-hub.avif" type="image/avif" />
+          <source srcSet="/art/avatar-lite-hub.webp" type="image/webp" />
+          <img src="/art/avatar-lite-hub.png" alt="" aria-hidden="true" draggable={false} />
+        </picture>
       </div>
 
       <ChallengeCard

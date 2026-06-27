@@ -13,9 +13,6 @@ vi.mock("@/components/hub/hub-daily-tile", () => ({
     <div data-testid="daily-tile-stub" data-variant={variant} />
   ),
 }));
-vi.mock("@/components/kingdom/kingdom-anchor", () => ({
-  KingdomAnchor: () => <div data-testid="kingdom-anchor-stub" />,
-}));
 vi.mock("@/components/hub/language-chip", () => ({
   LanguageChip: () => <div data-testid="language-chip-stub" />,
 }));
