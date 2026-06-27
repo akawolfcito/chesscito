@@ -7954,6 +7954,29 @@ button.hud-resource-chip:active:not(:disabled) {
     inset 0 2px 0 rgba(255, 255, 255, 0.6),
     0 4px 12px rgba(80, 50, 10, 0.18);
 }
+/* Header row — challenge icon on the left, title + flames stacked on the right. */
+.challenge-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.challenge-card-icon {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(58px, 17vw, 72px);
+}
+.challenge-card-icon img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.challenge-card-top-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
 .challenge-card-head {
   display: flex;
   align-items: center;
@@ -7989,13 +8012,13 @@ button.hud-resource-chip:active:not(:disabled) {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(120, 70, 20, 0.5);
-  text-align: center;
+  text-align: left;
 }
 /* 7 flame sprites, flat (no panel art) — reuses the FocusPassport assets. */
 .challenge-card-flames {
   display: flex;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: space-between;
   gap: 4px;
 }
 .challenge-card-flame {

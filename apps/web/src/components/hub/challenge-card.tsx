@@ -75,7 +75,15 @@ export function ChallengeCard({
       aria-label={t("rootAriaLabel")}
       aria-busy={isLoading || undefined}
     >
-      <header className="challenge-card-head">
+      <div className="challenge-card-top">
+        {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
+        <picture className="challenge-card-icon">
+          <source srcSet="/art/21-challenge-icon.avif" type="image/avif" />
+          <source srcSet="/art/21-challenge-icon.webp" type="image/webp" />
+          <img src="/art/21-challenge-icon.png" alt="" aria-hidden="true" draggable={false} />
+        </picture>
+        <div className="challenge-card-top-main">
+          <header className="challenge-card-head">
         <h2 className="challenge-card-title">
           {isActive ? t("joinedTitle") : t("notJoinedTitle")}
         </h2>
@@ -122,6 +130,8 @@ export function ChallengeCard({
             </picture>
           );
         })}
+          </div>
+        </div>
       </div>
 
       {isActive ? (
