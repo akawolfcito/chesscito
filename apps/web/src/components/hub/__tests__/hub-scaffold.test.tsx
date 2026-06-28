@@ -1,11 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { renderWithAppProviders as render } from "@/test-utils/render-with-app-providers";
 import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { HubScaffold } from "../hub-scaffold";
 import type { RewardTile } from "@/components/kingdom/reward-column";
-import type { ContentLoopAction } from "@/lib/hub/content-loop";
 
 vi.mock("@/lib/haptics", () => ({
   hapticTap: () => {},
@@ -47,16 +46,6 @@ describe("HubScaffold", () => {
     expect(container.querySelector(".hub-scaffold-hud")).not.toBeNull();
     expect(container.querySelector(".hub-scaffold-body")).not.toBeNull();
     expect(container.querySelector(".hub-scaffold-footer")).not.toBeNull();
-  });
-
-  it("does NOT render the Focus Passport in Full (CHESSCITO_LITE_MODE=false), even when data is passed", () => {
-    render(
-      <HubScaffold
-        {...baseProps}
-        focusPassport={{ streak: 5, totalCompleted: 9, todayDone: true, isLoading: false }}
-      />,
-    );
-    expect(screen.queryByTestId("focus-passport")).toBeNull();
   });
 
   it("mounts the trophy and PRO HUD chips with values from HUD_COPY formatters", () => {
@@ -301,27 +290,6 @@ describe("HubScaffold", () => {
     });
   });
 
-  describe("NextStepCard wiring — Full mode (CHESSCITO_LITE_MODE=false)", () => {
-    const mockAction: ContentLoopAction = {
-      variant: "daily-pending",
-      destination: "/daily",
-      ctaEN: "Daily Focus",
-      ctaES: "Enfoque Diario",
-      subEN: "Complete today's challenge",
-      subES: "Completa el reto de hoy",
-    };
-
-    it("does NOT render NextStepCard even when nextStepCard prop is passed", () => {
-      render(
-        <HubScaffold
-          {...baseProps}
-          nextStepCard={{ action: mockAction, isHydrated: true }}
-        />,
-      );
-      expect(screen.queryByTestId("next-step-card")).toBeNull();
-    });
-  });
-
   describe("SecondaryCta (Enter Arena) under Hero", () => {
     const heroAmber = {
       label: "CONTINUE TRAINING",
@@ -362,63 +330,4 @@ describe("HubScaffold", () => {
     });
   });
 
-});
-
-// ---------------------------------------------------------------------------
-// NextStepCard wiring — Lite Mode
-// vi.doMock (not hoisted) swaps CHESSCITO_LITE_MODE per-describe.
-// vi.resetModules() forces a fresh import so the flag takes effect.
-// ---------------------------------------------------------------------------
-describe("HubScaffold — NextStepCard wiring — Lite mode (CHESSCITO_LITE_MODE=true)", () => {
-  let HubScaffoldLite: typeof import("../hub-scaffold").HubScaffold;
-
-  const mockAction: ContentLoopAction = {
-    variant: "continue-path",
-    destination: "/exercises",
-    ctaEN: "Continue Training",
-    ctaES: "Continúa Entrenando",
-    subEN: "Next exercise ready",
-    subES: "Siguiente ejercicio listo",
-  };
-
-  beforeEach(async () => {
-    vi.resetModules();
-    vi.doMock("@/lib/feature-flags", () => ({ CHESSCITO_LITE_MODE: true }));
-    vi.doMock("@/lib/haptics", () => ({ hapticTap: () => {} }));
-    vi.doMock("@/lib/pro/use-is-pro-active", () => ({ useIsProActive: () => false }));
-    const mod = await import("../hub-scaffold");
-    HubScaffoldLite = mod.HubScaffold;
-  });
-
-  afterEach(() => {
-    cleanup();
-    vi.resetModules();
-  });
-
-  it("renders NextStepCard when nextStepCard prop is passed and isHydrated=true", () => {
-    render(
-      <HubScaffoldLite
-        {...baseProps}
-        nextStepCard={{ action: mockAction, isHydrated: true }}
-      />,
-    );
-    const card = screen.getByTestId("next-step-card");
-    expect(card).toBeInTheDocument();
-    expect(card).toHaveAttribute("data-variant", "continue-path");
-  });
-
-  it("does NOT render NextStepCard when isHydrated=false (hydration guard)", () => {
-    render(
-      <HubScaffoldLite
-        {...baseProps}
-        nextStepCard={{ action: mockAction, isHydrated: false }}
-      />,
-    );
-    expect(screen.queryByTestId("next-step-card")).toBeNull();
-  });
-
-  it("does NOT render NextStepCard when nextStepCard prop is null", () => {
-    render(<HubScaffoldLite {...baseProps} nextStepCard={null} />);
-    expect(screen.queryByTestId("next-step-card")).toBeNull();
-  });
 });

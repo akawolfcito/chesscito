@@ -341,7 +341,6 @@ export function HubScaffoldClient({
         trophies={trophies}
         pro={pro}
         shields={null}
-        focusPassport={focusPassport}
         isWalletConnected={isConnected}
         onConnectTap={() => {
           track("hub_connect_chip_tap");
@@ -411,21 +410,8 @@ export function HubScaffoldClient({
             router.push("/exercises");
           },
         }}
-        onArenaPress={CHESSCITO_LITE_MODE ? undefined : handleArenaPress}
-        miniArenaUnlocked={!CHESSCITO_LITE_MODE && (starsPerPiece.rook ?? 0) >= 12}
-        nextStepCard={
-          CHESSCITO_LITE_MODE && contentLoopAction
-            ? { action: contentLoopAction, isHydrated: isContentLoopHydrated }
-            : null
-        }
-        onSeasonPassPress={
-          // Gate on `loading` so the buy-CTA never flashes before the
-          // season-pass status resolves (FOUC: it briefly showed to pass
-          // holders, then vanished once `active` arrived).
-          CHESSCITO_LITE_MODE && !seasonPassStatus.loading && !seasonPassStatus.active
-            ? () => setSeasonPassSheetOpen(true)
-            : undefined
-        }
+        onArenaPress={handleArenaPress}
+        miniArenaUnlocked={(starsPerPiece.rook ?? 0) >= 12}
       />
       )}
       {process.env.NODE_ENV === "development" &&

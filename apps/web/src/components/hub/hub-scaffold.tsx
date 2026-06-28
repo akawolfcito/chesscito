@@ -14,19 +14,9 @@ import { HubTileStatusChip } from "@/components/hub/hub-tile-status-chip";
 import { LanguageChip } from "@/components/hub/language-chip";
 import { HubArenaTile } from "@/components/hub/hub-arena-tile";
 import { HubDailyTile } from "@/components/hub/hub-daily-tile";
-import { FocusPassport } from "@/components/hub/focus-passport";
-import { NextStepCard } from "@/components/hub/next-step-card";
-import type { ContentLoopAction } from "@/lib/hub/content-loop";
 import { HubProBadge } from "@/components/hub/hub-pro-badge";
 import { PeonesBalanceChip } from "@/components/peones/peones-balance-chip";
 import { MINI_ARENA_SETUPS } from "@/lib/game/mini-arena";
-import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
-import { getSeasonPass } from "@/lib/payments/rail-config";
-import { formatUsd } from "@/lib/contracts/tokens";
-
-// Season Pass CTA copy is derived from config — never hardcode the price.
-const SEASON_PASS = getSeasonPass("lite_season_pass_21");
-const SEASON_PASS_CTA_LABEL = `🛡️ ${SEASON_PASS.durationDays}-Day Pass · +${SEASON_PASS.shieldsOnPurchase} Shields · ${formatUsd(SEASON_PASS.priceUsd6)}`;
 
 /** Contextual Hero CTA — replaces the legacy PrimaryPlayCta when wired.
  *  `color` drives the visual tint (amber = default/onboarding, blue =
@@ -47,16 +37,6 @@ type HubScaffoldProps = {
    *  when inactive the chip collapses (parent decides to show a secondary
    *  PRO entry — e.g. <PremiumSlot inactive>). */
   pro: { active: true; daysRemaining: number } | { active: false };
-  /** Focus Passport data (Chesscito Lite P1, Lite-only). When provided AND
-   *  the build is Lite, the scaffold renders <FocusPassport> high in the
-   *  hub. `isLoading` paints the safe empty shell while the parent hydrates
-   *  localStorage. Full builds never pass this and never render it. */
-  focusPassport?: {
-    streak: number;
-    totalCompleted: number;
-    todayDone: boolean;
-    isLoading: boolean;
-  } | null;
   /** Optional secondary HUD row content. Each field is independently
    *  optional and the row collapses when all are null. */
   streak?: number | null;
@@ -125,15 +105,6 @@ type HubScaffoldProps = {
    *  active (K+R vs K mini-arena). Caller derives from rook stars ≥12
    *  so the threshold lives at the source of truth, not the scaffold. */
   miniArenaUnlocked?: boolean;
-  /** Content Loop v1 (Chesscito Lite only). When provided AND the build
-   *  is Lite, renders <NextStepCard> below the Hero CTA in center-stack.
-   *  Full builds never pass this prop and the card never renders. */
-  nextStepCard?: {
-    action: ContentLoopAction;
-    isHydrated: boolean;
-  } | null;
-  /** Season Pass CTA (Chesscito Lite only). Opens the SeasonPassSheet when tapped. */
-  onSeasonPassPress?: () => void;
   onError?: (
     context: import("@/components/error/primitive-boundary").PrimitiveBoundaryErrorContext,
   ) => void;
@@ -154,7 +125,6 @@ const ATMOSPHERE = "adventure";
 export function HubScaffold({
   trophies,
   pro,
-  focusPassport = null,
   streak = null,
   stars = null,
   shields = null,
@@ -183,8 +153,6 @@ export function HubScaffold({
   heroCta,
   onArenaPress,
   miniArenaUnlocked = false,
-  nextStepCard = null,
-  onSeasonPassPress,
   onError,
 }: HubScaffoldProps) {
   const tHud = useTranslations("HUD_COPY");
@@ -228,7 +196,7 @@ export function HubScaffold({
              *  useAccount(): renders null for guests, the canonical
              *  chip family for connected wallets. NO spend, NO top-up,
              *  read-only surface backed by /api/peones/balance. */}
-            {!CHESSCITO_LITE_MODE && wrap("PeonesBalanceChip", <PeonesBalanceChip />)}
+            {wrap("PeonesBalanceChip", <PeonesBalanceChip />)}
             {/* Language chip (founder 2026-06-11): flag + locale code,
              *  tap → confirm card to switch EN ↔ ES. */}
             {wrap("LanguageChip", <LanguageChip />)}
@@ -245,7 +213,7 @@ export function HubScaffold({
                 <span>{tHud("connectLabel")}</span>
               </button>
             ) : null}
-            {!CHESSCITO_LITE_MODE && wrap(
+            {wrap(
               "HubProBadge",
               <HubProBadge
                 active={pro.active}
@@ -290,39 +258,33 @@ export function HubScaffold({
           </div>
           <div className="hub-scaffold-center-stack">
             {wrap("MissionRibbon", <MissionRibbon surface="hub" />)}
-            {/* In Lite, the decorative pawn+guide+king strip is replaced by
-                the compact Focus Passport (return anchor) so the habit
-                tracker lives in the portal scene itself. Full keeps the
-                guide art. Lite-only via build flag. */}
-            {CHESSCITO_LITE_MODE && focusPassport ? (
-              wrap("FocusPassport", <FocusPassport {...focusPassport} />)
-            ) : (
-              <div className="hub-scaffold-guide" aria-hidden="true">
-                <picture className="hub-scaffold-guide-piece">
-                  <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
-                  <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
-                  <img src="/art/redesign/pieces/w-pawn.png" alt="" />
-                </picture>
-                <picture className="hub-scaffold-guide-sequence">
-                  <source srcSet="/art/scene-rooted/guide-secuencia.avif" type="image/avif" />
-                  <source srcSet="/art/scene-rooted/guide-secuencia.webp" type="image/webp" />
-                  {/* Intrinsic dims so the browser reserves layout space
-                      pre-load (PSI CLS audit 2026-06-12); CSS still owns
-                      the rendered size. */}
-                  <img
-                    src="/art/scene-rooted/guide-secuencia.png"
-                    alt=""
-                    width={289}
-                    height={121}
-                  />
-                </picture>
-                <picture className="hub-scaffold-guide-piece">
-                  <source srcSet="/art/redesign/pieces/w-king.avif" type="image/avif" />
-                  <source srcSet="/art/redesign/pieces/w-king.webp" type="image/webp" />
-                  <img src="/art/redesign/pieces/w-king.png" alt="" />
-                </picture>
-              </div>
-            )}
+            {/* Full hub: decorative pawn + guide + king strip. (The Lite hub
+                renders its own HubLiteScaffold; this scaffold is Full-only.) */}
+            <div className="hub-scaffold-guide" aria-hidden="true">
+              <picture className="hub-scaffold-guide-piece">
+                <source srcSet="/art/redesign/pieces/w-pawn.avif" type="image/avif" />
+                <source srcSet="/art/redesign/pieces/w-pawn.webp" type="image/webp" />
+                <img src="/art/redesign/pieces/w-pawn.png" alt="" />
+              </picture>
+              <picture className="hub-scaffold-guide-sequence">
+                <source srcSet="/art/scene-rooted/guide-secuencia.avif" type="image/avif" />
+                <source srcSet="/art/scene-rooted/guide-secuencia.webp" type="image/webp" />
+                {/* Intrinsic dims so the browser reserves layout space
+                    pre-load (PSI CLS audit 2026-06-12); CSS still owns
+                    the rendered size. */}
+                <img
+                  src="/art/scene-rooted/guide-secuencia.png"
+                  alt=""
+                  width={289}
+                  height={121}
+                />
+              </picture>
+              <picture className="hub-scaffold-guide-piece">
+                <source srcSet="/art/redesign/pieces/w-king.avif" type="image/avif" />
+                <source srcSet="/art/redesign/pieces/w-king.webp" type="image/webp" />
+                <img src="/art/redesign/pieces/w-king.png" alt="" />
+              </picture>
+            </div>
             {heroCta ? (
               wrap(
                 "HubHeroCta",
@@ -346,25 +308,6 @@ export function HubScaffold({
                   pieceIconSrc="/art/new-icons-chesscito/play-chess.png"
                 />,
               )
-            ) : null}
-            {CHESSCITO_LITE_MODE && nextStepCard ? (
-              wrap(
-                "NextStepCard",
-                <NextStepCard
-                  action={nextStepCard.action}
-                  isHydrated={nextStepCard.isHydrated}
-                />,
-              )
-            ) : null}
-            {CHESSCITO_LITE_MODE && onSeasonPassPress ? (
-              <button
-                type="button"
-                onClick={onSeasonPassPress}
-                className="hub-scaffold-season-pass-cta"
-                aria-label="Get 21-Day Mind Challenge Season Pass"
-              >
-                {SEASON_PASS_CTA_LABEL}
-              </button>
             ) : null}
           </div>
         </div>
