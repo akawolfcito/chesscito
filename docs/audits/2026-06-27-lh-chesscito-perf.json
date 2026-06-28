@@ -1,0 +1,161 @@
+{
+  "generatedAt": "2026-06-28T02:39:56Z",
+  "tool": "lighthouse",
+  "runsPerUrl": 3,
+  "threshold": 80,
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate"
+  },
+  "baseline": {
+    "path": "apps/web/lh-prod",
+    "found": false,
+    "note": "Baseline not found; comparison skipped."
+  },
+  "results": [
+    {
+      "label": "lite-preview /",
+      "url": "https://lite-preview.chesscito.com/",
+      "median": {
+        "performance": 72,
+        "accessibility": 89,
+        "bestPractices": 93,
+        "seo": 63,
+        "lcpSeconds": 6.35,
+        "tbtMs": 20,
+        "cls": 0.089
+      },
+      "runs": [
+        {
+          "run": 1,
+          "performance": 68,
+          "accessibility": 89,
+          "bestPractices": 93,
+          "seo": 63,
+          "lcpSeconds": 6.69,
+          "tbtMs": 58,
+          "cls": 0.022
+        },
+        {
+          "run": 2,
+          "performance": 72,
+          "accessibility": 89,
+          "bestPractices": 93,
+          "seo": 63,
+          "lcpSeconds": 6.35,
+          "tbtMs": 20,
+          "cls": 0.089
+        },
+        {
+          "run": 3,
+          "performance": 72,
+          "accessibility": 89,
+          "bestPractices": 93,
+          "seo": 63,
+          "lcpSeconds": 6.16,
+          "tbtMs": 19,
+          "cls": 0.091
+        }
+      ]
+    },
+    {
+      "label": "lite-preview /exercises",
+      "url": "https://lite-preview.chesscito.com/exercises",
+      "median": {
+        "performance": 83,
+        "accessibility": 83,
+        "bestPractices": 96,
+        "seo": 100,
+        "lcpSeconds": 4.71,
+        "tbtMs": 29,
+        "cls": 0.002
+      },
+      "runs": [
+        {
+          "run": 1,
+          "performance": 85,
+          "accessibility": 83,
+          "bestPractices": 96,
+          "seo": 100,
+          "lcpSeconds": 3.97,
+          "tbtMs": 28,
+          "cls": 0.002
+        },
+        {
+          "run": 2,
+          "performance": 83,
+          "accessibility": 83,
+          "bestPractices": 96,
+          "seo": 100,
+          "lcpSeconds": 4.71,
+          "tbtMs": 39,
+          "cls": 0.002
+        },
+        {
+          "run": 3,
+          "performance": 82,
+          "accessibility": 83,
+          "bestPractices": 96,
+          "seo": 100,
+          "lcpSeconds": 4.81,
+          "tbtMs": 29,
+          "cls": 0.002
+        }
+      ]
+    },
+    {
+      "label": "lite-preview /arena",
+      "url": "https://lite-preview.chesscito.com/arena",
+      "median": {
+        "performance": 82,
+        "accessibility": 89,
+        "bestPractices": 93,
+        "seo": 63,
+        "lcpSeconds": 4.63,
+        "tbtMs": 30,
+        "cls": 0.004
+      },
+      "runs": [
+        {
+          "run": 1,
+          "performance": 82,
+          "accessibility": 89,
+          "bestPractices": 93,
+          "seo": 63,
+          "lcpSeconds": 4.76,
+          "tbtMs": 33,
+          "cls": 0.004
+        },
+        {
+          "run": 2,
+          "performance": 83,
+          "accessibility": 89,
+          "bestPractices": 93,
+          "seo": 63,
+          "lcpSeconds": 4.63,
+          "tbtMs": 30,
+          "cls": 0.004
+        },
+        {
+          "run": 3,
+          "performance": 82,
+          "accessibility": 89,
+          "bestPractices": 93,
+          "seo": 63,
+          "lcpSeconds": 4.63,
+          "tbtMs": 26,
+          "cls": 0.074
+        }
+      ]
+    }
+  ],
+  "status": "fail",
+  "failingRoutes": [
+    {
+      "url": "https://lite-preview.chesscito.com/",
+      "performance": 72
+    }
+  ]
+}
