@@ -524,7 +524,7 @@ export const PHASE_FLASH_COPY = {
 } as const;
 
 export const SHOP_SHEET_COPY = {
-  title: "SHOP",
+  title: "Shop",
   description: "Tools to sharpen your training.",
   featured: "Featured",
   buyButton: "Buy",
@@ -555,7 +555,7 @@ export const SHOP_SHEET_COPY = {
 
 
 export const LEADERBOARD_SHEET_COPY = {
-  title: "LEADERS",
+  title: "Leaders",
   description: "Climb the board. Rule the board.",
   columnPlayer: "Player",
   columnScore: "Score",
@@ -893,7 +893,7 @@ export const VICTORY_CELEBRATION_COPY = {
 } as const;
 
 export const TROPHY_VITRINE_COPY = {
-  pageTitle: "TROPHIES",
+  pageTitle: "Trophies",
   pageDescription: "Your saved victories.",
   myVictories: "My Victories",
   hallOfFame: "Hall of Fame",
