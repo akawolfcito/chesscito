@@ -140,7 +140,14 @@ export function HubLiteScaffold({
         <picture className="hub-lite-start-focus-ring" aria-hidden="true">
           <source srcSet="/art/ring-start-focus.avif" type="image/avif" />
           <source srcSet="/art/ring-start-focus.webp" type="image/webp" />
-          <img src="/art/ring-start-focus.png" alt="" draggable={false} />
+          <img
+            src="/art/ring-start-focus.png"
+            alt=""
+            width={512}
+            height={260}
+            fetchPriority="high"
+            draggable={false}
+          />
         </picture>
       </div>
 

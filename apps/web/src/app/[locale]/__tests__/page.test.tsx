@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const redirectMock = vi.hoisted(() =>
   vi.fn((_url: string): never => {
@@ -53,11 +53,35 @@ function renderPage(
 
 describe("/ page (canonical Hub server route)", () => {
   beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_CHESSCITO_LITE_MODE", "false");
     redirectMock.mockClear();
     preloadMock.mockClear();
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   describe("LCP preload", () => {
+    it("preloads only the Start Focus ring in Lite mode", () => {
+      vi.stubEnv("NEXT_PUBLIC_CHESSCITO_LITE_MODE", "true");
+
+      renderPage({});
+
+      expect(preloadMock).toHaveBeenCalledTimes(1);
+      expect(preloadMock).toHaveBeenCalledWith(
+        "/art/ring-start-focus.avif",
+        { as: "image", type: "image/avif", fetchPriority: "high" },
+      );
+
+      const calls = preloadMock.mock.calls.map((args) => args[0] as string);
+      expect(calls).not.toContain("/art/redesign/bg/bg-new-hub.avif");
+      expect(calls).not.toContain("/art/hub/portal-chesscito-normal.avif");
+      expect(calls).not.toContain(
+        "/art/new-icons-chesscito/daily-icon-v1.avif",
+      );
+    });
+
     it("preloads the hub-scaffold background AVIF with high priority", () => {
       renderPage({});
       expect(preloadMock).toHaveBeenCalledWith(

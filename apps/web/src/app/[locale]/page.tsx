@@ -4,6 +4,7 @@ import { preload } from "react-dom";
 
 import { HubScaffoldClient } from "@/components/hub/hub-scaffold-client";
 import { routing } from "@/i18n/routing";
+import { isLiteModeServer } from "@/lib/feature-flags";
 import { EXERCISES } from "@/lib/game/exercises";
 import type { PieceId } from "@/lib/game/types";
 
@@ -111,23 +112,31 @@ export default function HomePage({
 
   const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
 
-  // These three AVIFs are the established root-Hub LCP candidates. Explicit
-  // preloads keep discovery ahead of CSS parsing and client hydration.
-  preload("/art/redesign/bg/bg-new-hub.avif", {
-    as: "image",
-    type: "image/avif",
-    fetchPriority: "high",
-  });
-  preload("/art/new-icons-chesscito/daily-icon-v1.avif", {
-    as: "image",
-    type: "image/avif",
-    fetchPriority: "high",
-  });
-  preload("/art/hub/portal-chesscito-normal.avif", {
-    as: "image",
-    type: "image/avif",
-    fetchPriority: "high",
-  });
+  if (isLiteModeServer()) {
+    preload("/art/ring-start-focus.avif", {
+      as: "image",
+      type: "image/avif",
+      fetchPriority: "high",
+    });
+  } else {
+    // These three AVIFs are the established Full root-Hub LCP candidates.
+    // Explicit preloads keep discovery ahead of CSS parsing and hydration.
+    preload("/art/redesign/bg/bg-new-hub.avif", {
+      as: "image",
+      type: "image/avif",
+      fetchPriority: "high",
+    });
+    preload("/art/new-icons-chesscito/daily-icon-v1.avif", {
+      as: "image",
+      type: "image/avif",
+      fetchPriority: "high",
+    });
+    preload("/art/hub/portal-chesscito-normal.avif", {
+      as: "image",
+      type: "image/avif",
+      fetchPriority: "high",
+    });
+  }
 
   return <HubScaffoldClient initialSheet={initialSheet} />;
 }

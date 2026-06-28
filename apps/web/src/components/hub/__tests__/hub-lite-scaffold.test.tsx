@@ -110,6 +110,22 @@ describe("<HubLiteScaffold>", () => {
     expect(screen.getByTestId("start-focus-cta").textContent).toMatch(/Start Focus/i);
   });
 
+  it("Start Focus: prioritizes the AVIF ring with intrinsic dimensions", () => {
+    const { container } = render(<HubLiteScaffold {...baseProps()} />);
+    const picture = container.querySelector(".hub-lite-start-focus-ring");
+    const sources = picture?.querySelectorAll("source");
+    const image = picture?.querySelector("img");
+
+    expect(sources).toHaveLength(2);
+    expect(sources?.[0]).toHaveAttribute("srcset", "/art/ring-start-focus.avif");
+    expect(sources?.[1]).toHaveAttribute("srcset", "/art/ring-start-focus.webp");
+    expect(image).toHaveAttribute("src", "/art/ring-start-focus.png");
+    expect(image).toHaveAttribute("width", "512");
+    expect(image).toHaveAttribute("height", "260");
+    expect(image).toHaveAttribute("fetchpriority", "high");
+    expect(image).toHaveAttribute("draggable", "false");
+  });
+
   it("Training Path: renders all 6 piece tiles", () => {
     render(<HubLiteScaffold {...baseProps()} />);
     const path = screen.getByRole("region", { name: /training path/i });
