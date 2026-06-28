@@ -108,12 +108,12 @@ export function HubLiteScaffold({
         <picture className="hub-lite-title">
           <source
             srcSet="/art/title-chesscito-288w.avif 288w, /art/title-chesscito-384w.avif 384w, /art/title-chesscito.avif 512w"
-            sizes="(max-width: 417px) 40vw, 167px"
+            sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
             type="image/avif"
           />
           <source
             srcSet="/art/title-chesscito-288w.webp 288w, /art/title-chesscito-384w.webp 384w, /art/title-chesscito.webp 512w"
-            sizes="(max-width: 417px) 40vw, 167px"
+            sizes="(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px"
             type="image/webp"
           />
           <img

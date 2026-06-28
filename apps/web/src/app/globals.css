@@ -7871,6 +7871,9 @@ button.hud-resource-chip:active:not(:disabled) {
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  /* Some MiniPay/WebView builds ignore `user-scalable=no`. Keep the hub's
+     vertical scroll while preventing pinch/double-tap zoom on this surface. */
+  touch-action: pan-y;
   width: 100%;
   max-width: var(--app-max-width);
   margin: 0 auto;

@@ -166,7 +166,7 @@ describe("<HubLiteScaffold>", () => {
     );
     expect(title?.querySelector("source")).toHaveAttribute(
       "sizes",
-      "(max-width: 417px) 40vw, 167px",
+      "(max-width: 352px) 141px, (max-width: 417px) 40vw, 167px",
     );
     expect(title?.querySelector("img")).toHaveAttribute("width", "512");
     expect(title?.querySelector("img")).toHaveAttribute("height", "249");
