@@ -106,15 +106,44 @@ export function HubLiteScaffold({
       <div className="hub-lite-mascot">
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
         <picture className="hub-lite-title">
-          <source srcSet="/art/title-chesscito.avif" type="image/avif" />
-          <source srcSet="/art/title-chesscito.webp" type="image/webp" />
-          <img src="/art/title-chesscito.png" alt="Chesscito" draggable={false} />
+          <source
+            srcSet="/art/title-chesscito-288w.avif 288w, /art/title-chesscito-384w.avif 384w, /art/title-chesscito.avif 512w"
+            sizes="(max-width: 417px) 40vw, 167px"
+            type="image/avif"
+          />
+          <source
+            srcSet="/art/title-chesscito-288w.webp 288w, /art/title-chesscito-384w.webp 384w, /art/title-chesscito.webp 512w"
+            sizes="(max-width: 417px) 40vw, 167px"
+            type="image/webp"
+          />
+          <img
+            src="/art/title-chesscito.png"
+            alt="Chesscito"
+            width={512}
+            height={249}
+            draggable={false}
+          />
         </picture>
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
         <picture className="hub-lite-avatar">
-          <source srcSet="/art/avatar-lite-hub.avif" type="image/avif" />
-          <source srcSet="/art/avatar-lite-hub.webp" type="image/webp" />
-          <img src="/art/avatar-lite-hub.png" alt="" aria-hidden="true" draggable={false} />
+          <source
+            srcSet="/art/avatar-lite-hub-224w.avif 224w, /art/avatar-lite-hub-340w.avif 340w, /art/avatar-lite-hub.avif 499w"
+            sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
+            type="image/avif"
+          />
+          <source
+            srcSet="/art/avatar-lite-hub-224w.webp 224w, /art/avatar-lite-hub-340w.webp 340w, /art/avatar-lite-hub.webp 499w"
+            sizes="(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px"
+            type="image/webp"
+          />
+          <img
+            src="/art/avatar-lite-hub.png"
+            alt=""
+            aria-hidden="true"
+            width={499}
+            height={560}
+            draggable={false}
+          />
         </picture>
       </div>
 

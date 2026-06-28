@@ -41,6 +41,17 @@ describe("<HubDailyTrigger>", () => {
     // Reuses the existing welcome-gift asset, not the daily tile icon.
     const img = btn.querySelector("img");
     expect(img?.getAttribute("src")).toBe("/art/shop/welcome-gift.png");
+    expect(img).toHaveAttribute("width", "512");
+    expect(img).toHaveAttribute("height", "520");
+    expect(btn.querySelector('source[type="image/avif"]')).toHaveAttribute(
+      "srcset",
+      "/art/shop/welcome-gift-96w.avif 96w, /art/shop/welcome-gift-128w.avif 128w, /art/shop/welcome-gift-160w.avif 160w, /art/shop/welcome-gift.avif 512w",
+    );
+    expect(btn.querySelector('source[type="image/webp"]')).toHaveAttribute(
+      "srcset",
+      "/art/shop/welcome-gift-96w.webp 96w, /art/shop/welcome-gift-128w.webp 128w, /art/shop/welcome-gift-160w.webp 160w, /art/shop/welcome-gift.webp 512w",
+    );
+    expect(btn.querySelector("source")).toHaveAttribute("sizes", "52px");
     expect(screen.getByTestId("test-badge")).toBeInTheDocument();
     // Corner is icon-only — the tile text label must not render.
     expect(screen.queryByText("Daily")).toBeNull();

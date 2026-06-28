@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent } from "@testing-library/react";
 import { renderWithIntl as render, screen } from "@/test-utils/render-with-intl";
@@ -58,6 +60,29 @@ afterEach(() => {
 });
 
 describe("<HubLiteScaffold>", () => {
+  it("responsive Lite image derivatives exist in public art", () => {
+    const paths = [
+      "art/avatar-lite-hub-224w.avif",
+      "art/avatar-lite-hub-340w.avif",
+      "art/avatar-lite-hub-224w.webp",
+      "art/avatar-lite-hub-340w.webp",
+      "art/title-chesscito-288w.avif",
+      "art/title-chesscito-384w.avif",
+      "art/title-chesscito-288w.webp",
+      "art/title-chesscito-384w.webp",
+      "art/shop/welcome-gift-96w.avif",
+      "art/shop/welcome-gift-128w.avif",
+      "art/shop/welcome-gift-160w.avif",
+      "art/shop/welcome-gift-96w.webp",
+      "art/shop/welcome-gift-128w.webp",
+      "art/shop/welcome-gift-160w.webp",
+    ];
+
+    for (const path of paths) {
+      expect(existsSync(resolve(process.cwd(), "public", path)), path).toBe(true);
+    }
+  });
+
   it("HUD: trophy chip (count + tap), language chip, daily corner-icon, guest Connect", () => {
     const onTrophyTap = vi.fn();
     const onConnectTap = vi.fn();
@@ -124,6 +149,42 @@ describe("<HubLiteScaffold>", () => {
     expect(image).toHaveAttribute("height", "260");
     expect(image).toHaveAttribute("fetchpriority", "high");
     expect(image).toHaveAttribute("draggable", "false");
+  });
+
+  it("Mascot: exposes responsive AVIF/WebP candidates with intrinsic fallbacks", () => {
+    const { container } = render(<HubLiteScaffold {...baseProps()} />);
+    const title = container.querySelector(".hub-lite-title");
+    const avatar = container.querySelector(".hub-lite-avatar");
+
+    expect(title?.querySelector('source[type="image/avif"]')).toHaveAttribute(
+      "srcset",
+      "/art/title-chesscito-288w.avif 288w, /art/title-chesscito-384w.avif 384w, /art/title-chesscito.avif 512w",
+    );
+    expect(title?.querySelector('source[type="image/webp"]')).toHaveAttribute(
+      "srcset",
+      "/art/title-chesscito-288w.webp 288w, /art/title-chesscito-384w.webp 384w, /art/title-chesscito.webp 512w",
+    );
+    expect(title?.querySelector("source")).toHaveAttribute(
+      "sizes",
+      "(max-width: 417px) 40vw, 167px",
+    );
+    expect(title?.querySelector("img")).toHaveAttribute("width", "512");
+    expect(title?.querySelector("img")).toHaveAttribute("height", "249");
+
+    expect(avatar?.querySelector('source[type="image/avif"]')).toHaveAttribute(
+      "srcset",
+      "/art/avatar-lite-hub-224w.avif 224w, /art/avatar-lite-hub-340w.avif 340w, /art/avatar-lite-hub.avif 499w",
+    );
+    expect(avatar?.querySelector('source[type="image/webp"]')).toHaveAttribute(
+      "srcset",
+      "/art/avatar-lite-hub-224w.webp 224w, /art/avatar-lite-hub-340w.webp 340w, /art/avatar-lite-hub.webp 499w",
+    );
+    expect(avatar?.querySelector("source")).toHaveAttribute(
+      "sizes",
+      "(max-width: 337px) 101px, (max-width: 377px) 30vw, 113px",
+    );
+    expect(avatar?.querySelector("img")).toHaveAttribute("width", "499");
+    expect(avatar?.querySelector("img")).toHaveAttribute("height", "560");
   });
 
   it("Training Path: renders all 6 piece tiles", () => {

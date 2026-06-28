@@ -49,9 +49,24 @@ export function HubDailyTrigger({
       >
         {/* eslint-disable-next-line jsx-a11y/aria-unsupported-elements */}
         <picture className="hub-daily-corner-icon">
-          <source srcSet="/art/shop/welcome-gift.avif" type="image/avif" />
-          <source srcSet="/art/shop/welcome-gift.webp" type="image/webp" />
-          <img src="/art/shop/welcome-gift.png" alt="" aria-hidden="true" draggable={false} />
+          <source
+            srcSet="/art/shop/welcome-gift-96w.avif 96w, /art/shop/welcome-gift-128w.avif 128w, /art/shop/welcome-gift-160w.avif 160w, /art/shop/welcome-gift.avif 512w"
+            sizes="52px"
+            type="image/avif"
+          />
+          <source
+            srcSet="/art/shop/welcome-gift-96w.webp 96w, /art/shop/welcome-gift-128w.webp 128w, /art/shop/welcome-gift-160w.webp 160w, /art/shop/welcome-gift.webp 512w"
+            sizes="52px"
+            type="image/webp"
+          />
+          <img
+            src="/art/shop/welcome-gift.png"
+            alt=""
+            aria-hidden="true"
+            width={512}
+            height={520}
+            draggable={false}
+          />
         </picture>
         {badge}
       </button>
