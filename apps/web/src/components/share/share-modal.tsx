@@ -1,26 +1,26 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { useTranslations } from "next-intl";
-import { ContextualHeader } from "@/components/ui/contextual-header";
-import { ShareGrid } from "@/components/share/share-grid";
-import { track } from "@/lib/telemetry";
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useTranslations } from 'next-intl'
+import { ContextualHeader } from '@/components/ui/contextual-header'
+import { ShareGrid } from '@/components/share/share-grid'
+import { track } from '@/lib/telemetry'
 
 type Props = {
   /** Modal visibility. */
-  open: boolean;
+  open: boolean
   /** Called when the user taps the close × or the dimmed scrim. */
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (open: boolean) => void
   /** Absolute URL to the preview PNG/JPEG rendered by an /api/og/* endpoint. */
-  cardUrl: string | null;
+  cardUrl: string | null
   /** Text to share (passed through to ShareGrid → service URLs). */
-  text: string;
+  text: string
   /** URL to share (falls back to SHARE_COPY.url). */
-  url?: string;
+  url?: string
   /** Modal header copy. Defaults to "Share". */
-  title?: string;
-};
+  title?: string
+}
 
 /**
  * ShareModal — Duolingo-style preview + share sheet.
@@ -38,38 +38,38 @@ export function ShareModal({
   url,
   title: titleProp,
 }: Props) {
-  const t = useTranslations("SHARE_MODAL_COPY");
-  const tShare = useTranslations("SHARE_COPY");
-  const title = titleProp ?? t("defaultTitle");
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [imgError, setImgError] = useState(false);
+  const t = useTranslations('SHARE_MODAL_COPY')
+  const tShare = useTranslations('SHARE_COPY')
+  const title = titleProp ?? t('defaultTitle')
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const [imgError, setImgError] = useState(false)
 
   useEffect(() => {
     if (!open) {
-      setImgLoaded(false);
-      setImgError(false);
-      return;
+      setImgLoaded(false)
+      setImgError(false)
+      return
     }
-    track("share_modal_open", {
+    track('share_modal_open', {
       title,
       has_card: Boolean(cardUrl),
-    });
-  }, [open, title, cardUrl]);
+    })
+  }, [open, title, cardUrl])
 
-  if (!open) return null;
+  if (!open) return null
   // Render via portal so the modal escapes any ancestor containing
   // block (parent CandyGlassShell modals use CSS animations that set
   // transform on the panel, which would otherwise constrain our
   // `fixed inset-0` to the panel rect instead of the viewport).
-  if (typeof document === "undefined") return null;
+  if (typeof document === 'undefined') return null
 
   return createPortal(
     <div
       className="fixed inset-0 z-[70] flex flex-col items-center justify-end candy-modal-scrim animate-in fade-in duration-200 overflow-hidden"
-      style={{ pointerEvents: "auto" }}
+      style={{ pointerEvents: 'auto' }}
       onClick={() => onOpenChange(false)}
       onKeyDown={(e) => {
-        if (e.key === "Escape") onOpenChange(false);
+        if (e.key === 'Escape') onOpenChange(false)
       }}
       role="dialog"
       aria-modal="true"
@@ -89,49 +89,52 @@ export function ShareModal({
           <div
             className="relative w-full max-w-[300px] max-h-full overflow-hidden rounded-xl animate-in zoom-in-95 fade-in duration-300"
             style={{
-              aspectRatio: "1080 / 1350",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
+              aspectRatio: '1080 / 1350',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
             }}
           >
             {cardUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={cardUrl}
-                alt={t("previewAlt")}
+                alt={t('previewAlt')}
                 className="h-full w-full object-contain transition-opacity duration-300 ease-out"
                 decoding="async"
                 style={{ opacity: imgLoaded ? 1 : 0 }}
                 onLoad={() => setImgLoaded(true)}
-                onError={() => { setImgLoaded(true); setImgError(true); }}
+                onError={() => {
+                  setImgLoaded(true)
+                  setImgError(true)
+                }}
               />
             ) : null}
             {!imgLoaded && (
               <div
                 className="absolute inset-0 flex flex-col items-center justify-center gap-3"
-                style={{ color: "rgba(110, 65, 15, 0.55)" }}
+                style={{ color: 'rgba(110, 65, 15, 0.55)' }}
               >
                 <div
                   className="h-6 w-6 animate-spin rounded-full border-2"
                   style={{
-                    borderColor: "rgba(110, 65, 15, 0.25)",
-                    borderTopColor: "rgba(110, 65, 15, 0.85)",
+                    borderColor: 'rgba(110, 65, 15, 0.25)',
+                    borderTopColor: 'rgba(110, 65, 15, 0.85)',
                   }}
                 />
                 <span
                   className="text-xs font-semibold"
-                  style={{ color: "rgba(110, 65, 15, 0.60)" }}
+                  style={{ color: 'rgba(110, 65, 15, 0.60)' }}
                 >
-                  {t("generatingCard")}
+                  {t('generatingCard')}
                 </span>
               </div>
             )}
             {imgError && (
               <div
                 className="absolute inset-0 flex items-center justify-center"
-                style={{ color: "rgba(110, 65, 15, 0.45)" }}
+                style={{ color: 'rgba(110, 65, 15, 0.45)' }}
               >
                 <span className="text-center text-xs leading-snug px-4">
-                  {t("previewUnavailable")}
+                  {t('previewUnavailable')}
                 </span>
               </div>
             )}
@@ -145,8 +148,8 @@ export function ShareModal({
           style={{
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
-            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)",
-            boxShadow: "0 -8px 24px rgba(0, 0, 0, 0.18)",
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)',
+            boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.18)',
           }}
         >
           <div className="border-b border-[rgba(110,65,15,0.30)]">
@@ -154,7 +157,10 @@ export function ShareModal({
               variant="close-control"
               icon="share"
               title={title}
-              close={{ onClick: () => onOpenChange(false), label: t("closeLabel") }}
+              close={{
+                onClick: () => onOpenChange(false),
+                label: t('closeLabel'),
+              }}
             />
           </div>
           {/* Cream candy-panel wraps the icon grid so the icons read as
@@ -168,17 +174,21 @@ export function ShareModal({
             <div
               className="rounded-[var(--candy-card-radius)] border border-[rgba(110,65,15,0.35)] p-4"
               style={{
-                background: "rgba(255, 245, 215, 0.92)",
+                background: 'rgba(255, 255, 255, 0.35)',
                 boxShadow:
-                  "0 4px 12px rgba(110, 65, 15, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.55)",
+                  '0 4px 12px rgba(110, 65, 15, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.55)',
               }}
             >
-              <ShareGrid text={text} url={url ?? tShare("url")} cardUrl={cardUrl ?? undefined} />
+              <ShareGrid
+                text={text}
+                url={url ?? tShare('url')}
+                cardUrl={cardUrl ?? undefined}
+              />
             </div>
           </div>
         </div>
       </div>
     </div>,
     document.body,
-  );
+  )
 }
