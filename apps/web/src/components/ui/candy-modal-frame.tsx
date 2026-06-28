@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 /**
  * CandyModalFrame — Sprint 6 commit B (2026-06-08).
@@ -31,56 +31,56 @@
  * pulling the feature into the primitive.
  */
 
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react'
 
 export type CandyModalFrameTone =
-  | "amber"   // hint / warm CTA / earn surfaces
-  | "sky"     // coach / cool / informational
-  | "neutral" // generic / first-impression
-  | "warning"; // failure / error feedback
+  | 'amber' // hint / warm CTA / earn surfaces
+  | 'sky' // coach / cool / informational
+  | 'neutral' // generic / first-impression
+  | 'warning' // failure / error feedback
 
 type Props = {
-  tone?: CandyModalFrameTone;
-  iconSlot?: ReactNode;
-  title?: string;
-  subtitle?: string;
-  children?: ReactNode;
-  footerSlot?: ReactNode;
-  className?: string;
-};
+  tone?: CandyModalFrameTone
+  iconSlot?: ReactNode
+  title?: string
+  subtitle?: string
+  children?: ReactNode
+  footerSlot?: ReactNode
+  className?: string
+}
 
 const TONE_CLASSES: Record<
   CandyModalFrameTone,
   { bg: string; ring: string; titleColor: string; subtitleColor: string }
 > = {
   amber: {
-    bg: "bg-amber-50/95",
-    ring: "ring-amber-800/15",
-    titleColor: "text-amber-950",
-    subtitleColor: "text-amber-900/70",
+    bg: 'bg-amber-50/95',
+    ring: 'ring-amber-800/15',
+    titleColor: 'text-amber-950',
+    subtitleColor: 'text-amber-900/70',
   },
   sky: {
-    bg: "bg-sky-50/95",
-    ring: "ring-sky-800/15",
-    titleColor: "text-sky-950",
-    subtitleColor: "text-sky-900/70",
+    bg: 'bg-sky-50/00',
+    ring: 'ring-sky-800/00',
+    titleColor: 'text-sky-950',
+    subtitleColor: 'text-sky-900/70',
   },
   neutral: {
-    bg: "bg-white/95",
-    ring: "ring-amber-800/15",
-    titleColor: "text-amber-950",
-    subtitleColor: "text-amber-900/70",
+    bg: 'bg-white/35',
+    ring: 'ring-amber-800/15',
+    titleColor: 'text-amber-950',
+    subtitleColor: 'text-amber-900/70',
   },
   warning: {
-    bg: "bg-rose-50/95",
-    ring: "ring-rose-800/15",
-    titleColor: "text-rose-950",
-    subtitleColor: "text-rose-900/70",
+    bg: 'bg-rose-50/95',
+    ring: 'ring-rose-800/15',
+    titleColor: 'text-rose-950',
+    subtitleColor: 'text-rose-900/70',
   },
-};
+}
 
 export function CandyModalFrame({
-  tone = "neutral",
+  tone = 'neutral',
   iconSlot,
   title,
   subtitle,
@@ -88,17 +88,17 @@ export function CandyModalFrame({
   footerSlot,
   className,
 }: Props) {
-  const palette = TONE_CLASSES[tone];
+  const palette = TONE_CLASSES[tone]
   return (
     <div
       className={[
-        "inline-flex w-full max-w-[20rem] flex-col items-center gap-3 rounded-3xl px-5 py-5 text-center shadow-lg ring-1",
+        'inline-flex w-full max-w-[20rem] flex-col items-center gap-3 rounded-3xl px-5 py-5 text-center shadow-lg ring-1',
         palette.bg,
         palette.ring,
-        className ?? "",
+        className ?? '',
       ]
         .filter(Boolean)
-        .join(" ")}
+        .join(' ')}
       data-testid="candy-modal-frame"
       data-tone={tone}
     >
@@ -143,5 +143,5 @@ export function CandyModalFrame({
         </div>
       ) : null}
     </div>
-  );
+  )
 }
