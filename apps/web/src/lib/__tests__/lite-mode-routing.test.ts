@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isFullOnlyPath,
-  getLiteHubTarget,
+  getLiteRootTarget,
 } from "@/lib/lite-mode-routing";
 
 const LOCALES = ["en", "es"] as const;
@@ -77,28 +77,28 @@ describe("isFullOnlyPath", () => {
   });
 });
 
-describe("getLiteHubTarget", () => {
-  it("returns /hub for bare /arena (default locale, no prefix)", () => {
-    expect(getLiteHubTarget("/arena", LOCALES, DEFAULT)).toBe("/hub");
+describe("getLiteRootTarget", () => {
+  it("returns / for bare /arena (default locale, no prefix)", () => {
+    expect(getLiteRootTarget("/arena", LOCALES, DEFAULT)).toBe("/");
   });
 
-  it("returns /es/hub for /es/arena", () => {
-    expect(getLiteHubTarget("/es/arena", LOCALES, DEFAULT)).toBe("/es/hub");
+  it("returns /es for /es/arena", () => {
+    expect(getLiteRootTarget("/es/arena", LOCALES, DEFAULT)).toBe("/es");
   });
 
-  it("returns /hub for /en/arena (default locale, strip /en prefix)", () => {
-    expect(getLiteHubTarget("/en/arena", LOCALES, DEFAULT)).toBe("/hub");
+  it("returns / for /en/arena (default locale, strip /en prefix)", () => {
+    expect(getLiteRootTarget("/en/arena", LOCALES, DEFAULT)).toBe("/");
   });
 
-  it("returns /hub for /coach/history", () => {
-    expect(getLiteHubTarget("/coach/history", LOCALES, DEFAULT)).toBe("/hub");
+  it("returns / for /coach/history", () => {
+    expect(getLiteRootTarget("/coach/history", LOCALES, DEFAULT)).toBe("/");
   });
 
-  it("returns /es/hub for /es/coach/history", () => {
-    expect(getLiteHubTarget("/es/coach/history", LOCALES, DEFAULT)).toBe("/es/hub");
+  it("returns /es for /es/coach/history", () => {
+    expect(getLiteRootTarget("/es/coach/history", LOCALES, DEFAULT)).toBe("/es");
   });
 
-  it("returns /hub for /victory/abc123", () => {
-    expect(getLiteHubTarget("/victory/abc123", LOCALES, DEFAULT)).toBe("/hub");
+  it("returns / for /victory/abc123", () => {
+    expect(getLiteRootTarget("/victory/abc123", LOCALES, DEFAULT)).toBe("/");
   });
 });

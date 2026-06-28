@@ -20,7 +20,7 @@ import { test, expect, type Page } from "@playwright/test";
  *     the mini-arena sheet.
  *
  * Source-of-truth references:
- *   - apps/web/src/app/hub/page.tsx                     (route mounts ExercisesScreen)
+ *   - apps/web/src/app/[locale]/page.tsx                (canonical Hub route)
  *   - apps/web/src/components/exercises/exercises-screen.tsx:1162-1183
  *   - apps/web/src/components/mini-arena/mini-arena-bridge-slot.tsx
  *   - apps/web/src/components/daily/daily-tactic-slot.tsx
@@ -31,7 +31,7 @@ import { test, expect, type Page } from "@playwright/test";
  * Audit doc: docs/reviews/ui-floating-actions-functional-audit-2026-05-01.md
  */
 
-const HUB_ROUTE = "/hub";
+const HUB_ROUTE = "/";
 
 /** Skip the splash + first-visit briefing AND the 3-card welcome overlay so
  *  the play-hub mounts straight to the interactive surface. Mirrors the

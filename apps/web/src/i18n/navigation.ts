@@ -7,8 +7,8 @@ import { routing } from "./routing";
  *
  * Use these instead of the raw `next/link` + `next/navigation` exports
  * whenever the target is an in-app route. They auto-prepend the active
- * locale segment so `<Link href="/hub">` resolves to `/en/hub` for an
- * EN session and `/es/hub` for an ES one — no manual locale threading
+ * locale segment so `<Link href="/">` resolves to `/` for an EN session
+ * and `/es` for an ES one — no manual locale threading
  * at every call site.
  *
  * When to keep raw next/navigation:

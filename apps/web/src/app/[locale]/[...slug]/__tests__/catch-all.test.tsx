@@ -9,7 +9,7 @@ describe("[locale]/[...slug] catch-all page", () => {
   });
 
   describe("Lite mode (CHESSCITO_LITE_MODE=true)", () => {
-    it("calls redirect('/hub')", async () => {
+    it("redirects the default locale to root", async () => {
       const redirectMock = vi.fn();
       vi.doMock("@/lib/feature-flags", () => ({ CHESSCITO_LITE_MODE: true }));
       vi.doMock("next/navigation", () => ({
@@ -18,10 +18,24 @@ describe("[locale]/[...slug] catch-all page", () => {
       }));
 
       const { default: CatchAllPage } = await import("../page");
-      CatchAllPage();
+      CatchAllPage({ params: { locale: "en" } });
 
-      expect(redirectMock).toHaveBeenCalledWith("/hub");
+      expect(redirectMock).toHaveBeenCalledWith("/");
       expect(redirectMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("redirects a non-default locale to its localized root", async () => {
+      const redirectMock = vi.fn();
+      vi.doMock("@/lib/feature-flags", () => ({ CHESSCITO_LITE_MODE: true }));
+      vi.doMock("next/navigation", () => ({
+        redirect: redirectMock,
+        notFound: vi.fn(),
+      }));
+
+      const { default: CatchAllPage } = await import("../page");
+      CatchAllPage({ params: { locale: "es" } });
+
+      expect(redirectMock).toHaveBeenCalledWith("/es");
     });
   });
 
@@ -35,7 +49,7 @@ describe("[locale]/[...slug] catch-all page", () => {
       }));
 
       const { default: CatchAllPage } = await import("../page");
-      CatchAllPage();
+      CatchAllPage({ params: { locale: "en" } });
 
       expect(notFoundMock).toHaveBeenCalledTimes(1);
     });

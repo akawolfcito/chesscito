@@ -6,14 +6,17 @@ import {
   shouldShowVersionPill,
 } from "../build-version-gate";
 
-const usePathnameMock = vi.hoisted(() => vi.fn(() => "/hub"));
+const usePathnameMock = vi.hoisted(() => vi.fn(() => "/"));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => usePathnameMock(),
 }));
 
 describe("shouldShowVersionPill", () => {
-  it("returns true for /hub exactly", () => {
+  it("returns true for canonical and legacy Hub roots", () => {
+    expect(shouldShowVersionPill("/")).toBe(true);
+    expect(shouldShowVersionPill("/en")).toBe(true);
+    expect(shouldShowVersionPill("/es")).toBe(true);
     expect(shouldShowVersionPill("/hub")).toBe(true);
   });
 
@@ -25,7 +28,6 @@ describe("shouldShowVersionPill", () => {
   });
 
   it("returns false for gameplay and content routes", () => {
-    expect(shouldShowVersionPill("/")).toBe(false);
     expect(shouldShowVersionPill("/exercises")).toBe(false);
     expect(shouldShowVersionPill("/exercises/rook")).toBe(false);
     expect(shouldShowVersionPill("/arena")).toBe(false);
@@ -60,8 +62,8 @@ describe("shouldShowVersionPill", () => {
 describe("BuildVersionGate", () => {
   afterEach(() => cleanup());
 
-  it("renders the build pill when usePathname returns /hub", () => {
-    usePathnameMock.mockReturnValueOnce("/hub");
+  it("renders the build pill when usePathname returns root", () => {
+    usePathnameMock.mockReturnValueOnce("/");
 
     render(<BuildVersionGate />);
 
@@ -85,4 +87,3 @@ describe("BuildVersionGate", () => {
     expect(screen.getByTestId("build-version")).toBeInTheDocument();
   });
 });
-

@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 
 /**
- * `/hub` is the kingdom launcher (the redesigned scaffold) — entry
- * point to PLAY (/arena), Practice pieces (/exercises), Trophies,
- * and PRO. The public landing at `/` is the indexable marketing
- * surface; `/hub` is the app shell, hidden from search engines so
- * the landing is the authoritative SEO target.
+ * `/hub` is a temporary compatibility alias for the canonical app root.
+ * Keep the legacy segment out of search results even if the route-level
+ * fallback renders before the config redirect in an unusual runtime.
  */
 export const metadata: Metadata = {
   title: "Chesscito",

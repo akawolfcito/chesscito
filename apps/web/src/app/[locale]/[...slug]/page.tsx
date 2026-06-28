@@ -5,9 +5,13 @@ import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
 // Using a page route (not not-found.tsx) guarantees redirect() works —
 // not-found.tsx runs inside Next.js's 404 error boundary where
 // NEXT_REDIRECT is not reliably propagated.
-export default function CatchAllPage() {
+export default function CatchAllPage({
+  params,
+}: {
+  params: { locale: string };
+}) {
   if (CHESSCITO_LITE_MODE) {
-    redirect("/hub");
+    redirect(params.locale === "en" ? "/" : `/${params.locale}`);
   }
   notFound();
 }

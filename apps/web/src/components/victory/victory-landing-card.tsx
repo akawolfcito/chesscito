@@ -113,7 +113,7 @@ export function VictoryLandingCard({ v }: { v: VictoryLandingInfo }) {
           </div>
 
           <Link
-            href="/hub"
+            href="/"
             className="arena-result-back-link mt-3 inline-flex min-h-[44px] items-center justify-center"
           >
             {t("backToHub")}

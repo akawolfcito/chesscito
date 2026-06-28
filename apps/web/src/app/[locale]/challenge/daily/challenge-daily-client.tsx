@@ -71,7 +71,7 @@ export function ChallengeDailyClient({ puzzleData, today }: Props) {
 
   function handleClose() {
     emitChallengeContinueToLite({ challengeId: today });
-    router.push("/hub");
+    router.push("/");
   }
 
   return (

@@ -23,7 +23,7 @@ export default async function AboutPage() {
   ];
 
   return (
-    <LegalPageShell title={tShell("aboutTitle")} backHref="/hub">
+    <LegalPageShell title={tShell("aboutTitle")} backHref="/">
       {/* Identity */}
       <div className="flex flex-col items-center gap-2 pb-2 text-center">
         <picture>

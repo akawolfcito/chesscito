@@ -31,7 +31,7 @@ export default function TrophiesPage() {
             iconSlot={<TileIconSlot src="/art/action-row/trofeo-epico" />}
             title={t("pageTitle")}
             subtitle={t(CHESSCITO_LITE_MODE ? "pageDescriptionLite" : "pageDescription")}
-            back={{ onClick: () => router.push("/hub"), label: t("backLabel") }}
+            back={{ onClick: () => router.push("/"), label: t("backLabel") }}
           />
         </header>
         {/* 2026-05-30: hero band hoisted outside the scroll container.

@@ -252,18 +252,18 @@ test.describe("a11y probe — Radix Sheet aria-hidden", () => {
     }
   });
 
-  test("anonymous /hub daily-tactic sheet", async ({ page }) => {
+  test("anonymous root Hub daily-tactic sheet", async ({ page }) => {
     const warnings: string[] = [];
     const findings: Finding[] = [];
     attachWarningCollector(page, warnings);
     await attachCdpAuditsListener(page, warnings);
 
     await bypassFirstVisit(page);
-    await page.goto("/hub", { waitUntil: "load", timeout: 30_000 });
+    await page.goto("/", { waitUntil: "load", timeout: 30_000 });
     await settle(page, 800);
 
     // DailyTacticSheet is opened from the StonePedestal "Daily tactic"
-    // pillar on /hub. Match the same selector used by visual-regression
+    // pillar on the root Hub. Match the same selector used by visual-regression
     // for vr2-hub-daily-tactic-sheet-open (button with aria-label
     // "Daily tactic").
     const dailyTrigger = page
@@ -286,7 +286,7 @@ test.describe("a11y probe — Radix Sheet aria-hidden", () => {
 
     console.log("[probe] findings:", JSON.stringify(findings, null, 2));
     console.log(
-      `[probe] summary — ${findings.length} aria-hidden warning(s) on /hub`,
+      `[probe] summary — ${findings.length} aria-hidden warning(s) on root Hub`,
     );
 
     if (STRICT_ASSERT) {

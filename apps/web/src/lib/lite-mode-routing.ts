@@ -47,17 +47,17 @@ export function isFullOnlyPath(
 }
 
 /**
- * Returns the locale-appropriate /hub target path to redirect to.
+ * Returns the locale-appropriate canonical root target.
  * Examples:
- *   /arena       → /hub
- *   /es/arena    → /es/hub
- *   /en/arena    → /hub  (EN is the default locale, no prefix)
+ *   /arena       → /
+ *   /es/arena    → /es
+ *   /en/arena    → /  (EN is the default locale, no prefix)
  */
-export function getLiteHubTarget(
+export function getLiteRootTarget(
   pathname: string,
   locales: readonly string[],
   defaultLocale: string,
 ): string {
   const { localePrefix } = stripLocalePrefix(pathname, locales, defaultLocale);
-  return `${localePrefix}/hub`;
+  return localePrefix || "/";
 }

@@ -1,7 +1,7 @@
 /**
  * Server-side wallet WebView detection from a User-Agent header.
  * Used by `/` to redirect MiniPay (and similar wallet) visitors
- * directly to `/hub`, bypassing the public landing.
+ * directly to the canonical app root.
  *
  * Detection is conservative: only fingerprints we have evidence of
  * shipping with a distinctive UA. Wallets we miss here fall through

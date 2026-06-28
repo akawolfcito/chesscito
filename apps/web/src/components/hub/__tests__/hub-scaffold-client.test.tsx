@@ -36,7 +36,7 @@ const useProStatusMock = vi.hoisted(() =>
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
-  usePathname: () => "/hub",
+  usePathname: () => "/",
 }));
 
 vi.mock("wagmi", () => ({
@@ -649,7 +649,7 @@ describe("HubScaffoldClient — Lite Mode", () => {
     // original module graph; after resetModules we need vi.doMock for each.
     vi.doMock("next/navigation", () => ({
       useRouter: () => ({ push: pushMock }),
-      usePathname: () => "/hub",
+      usePathname: () => "/",
     }));
     vi.doMock("wagmi", () => ({
       useAccount: () => useAccountMock(),

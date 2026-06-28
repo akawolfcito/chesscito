@@ -125,15 +125,9 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <body>
-        {/* The previous wrapper hard-clamped every route to
-            --app-max-width (390 px), which made sense when every
-            page was a mobile MiniPay surface. Now that "/" is the
-            public web-responsive landing, the constraint moves to
-            the routes that actually need it (exercises-screen, arena,
-            victory, LegalPageShell — they each carry their own
-            max-w wrapper). The flex justify-center stays so any
-            page that opts back into the 390 px constraint still
-            centers cleanly on desktop. */}
+        {/* Route surfaces own their mobile width constraints. The canonical
+            root now renders the Hub and DesktopAppFrame supplies its app
+            shell treatment without reintroducing a global 390px clamp. */}
         <NextIntlClientProvider locale={locale} messages={messages}>
           <div className="flex min-h-[100dvh] justify-center">
             <div className="relative flex w-full flex-col text-foreground">

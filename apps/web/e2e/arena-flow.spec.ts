@@ -20,6 +20,10 @@ async function dismissSoftGateIfPresent(page: Page) {
 
 test.describe("Arena — setup flow", () => {
   test("difficulty selector opens, PLAY CHESS starts a game with 32 pieces", async ({ page }) => {
+    // The CTA has an infinite, decorative transform pulse after 4s. Exercise
+    // the UI's real reduced-motion mode so Playwright can require normal
+    // actionability without bypassing hit-testing or event reception.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/arena");
     await page.waitForLoadState("networkidle");
     await dismissSoftGateIfPresent(page);
@@ -34,7 +38,10 @@ test.describe("Arena — setup flow", () => {
     // Pick Easy (also the default) then start. CTA label is "PLAY"
     // since the CTA-token unification (was "PLAY CHESS").
     await page.getByRole("button", { name: /Easy/ }).click();
-    await page.getByRole("button", { name: /^PLAY$/ }).click();
+    const playButton = page.getByRole("button", { name: /^PLAY$/ });
+    await expect(playButton).toBeVisible();
+    await expect(playButton).toBeEnabled();
+    await playButton.click();
 
     // Board renders with 32 pieces (16 white + 16 black) after the 400ms
     // "preparing AI" delay inside the arena page.
@@ -42,8 +49,8 @@ test.describe("Arena — setup flow", () => {
     await expect(pieces).toHaveCount(32, { timeout: 5000 });
 
     // And the 64 cells are present
-    const cells = page.locator("button.playhub-board-cell, button.arena-board-cell");
-    await expect(cells.first()).toBeVisible();
+    const cells = page.locator("button[data-square]");
+    await expect(cells).toHaveCount(64);
   });
 
   test("back button from difficulty selector returns to home", async ({ page }) => {
@@ -56,7 +63,7 @@ test.describe("Arena — setup flow", () => {
     // Use the header × which is explicitly aria-labelled, picked via
     // getByLabel to avoid strict-mode collisions.
     await page.getByLabel("Back to Hub").click();
-    await page.waitForURL("**/hub");
+    await page.waitForURL((url) => url.pathname === "/");
     await expect(page.locator(".hub-scaffold, .hub-v2-root")).toBeVisible();
   });
 });

@@ -20,8 +20,10 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.chesscito.com";
  *  locales carry the `/<locale>/` prefix. Order drives sitemap
  *  rank — high-traffic routes first. */
 const STATIC_PATHS = [
-  "", // default locale root → "/", non-default → "/<locale>"
-  "/hub",
+  // The canonical root of every apps/web deployment (Lite and Play) is the
+  // authenticated/app shell and explicitly noindex in [locale]/page.tsx.
+  // Omit both root and its legacy /hub alias from this deployment's sitemap;
+  // indexable child routes below remain owned by this sitemap.
   "/exercises",
   "/arena",
   "/trophies",
@@ -56,8 +58,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       entries.push({
         url: urlFor(locale, path),
         lastModified: now,
-        changeFrequency: path === "" ? "weekly" : "monthly",
-        priority: path === "" ? 1 : 0.7,
+        changeFrequency: "monthly",
+        priority: 0.7,
         alternates: { languages: alternates },
       });
     }

@@ -8,7 +8,7 @@ import { screen, fireEvent } from "@testing-library/react";
 
 const replaceMock = vi.fn();
 vi.mock("@/i18n/navigation", () => ({
-  usePathname: () => "/hub",
+  usePathname: () => "/",
   useRouter: () => ({ replace: replaceMock }),
 }));
 
@@ -40,7 +40,7 @@ describe("LanguageChip", () => {
     fireEvent.click(screen.getByTestId("language-chip"));
     fireEvent.click(screen.getByTestId("language-tile-es"));
     fireEvent.click(screen.getByTestId("language-chip-confirm"));
-    expect(replaceMock).toHaveBeenCalledWith("/hub", { locale: "es" });
+    expect(replaceMock).toHaveBeenCalledWith("/", { locale: "es" });
   });
 
   it("Apply with the active locale selected closes without navigation", () => {

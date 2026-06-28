@@ -467,9 +467,9 @@ function ArenaPageInner() {
   };
 
 
-  const handleBackToHub = () => router.push("/hub");
+  const handleBackToHub = () => router.push("/");
 
-  // handleBack — direct router.push to /hub. The unmount cleanup of
+  // handleBack — direct router.push to root. The unmount cleanup of
   // /arena recovers refs (persistAbortRef) and resets game state
   // implicitly. Calling game.reset() BEFORE router.push() caused the
   // status to flip to "selecting" for one render frame, producing a

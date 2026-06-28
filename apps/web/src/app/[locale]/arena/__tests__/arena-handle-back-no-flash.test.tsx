@@ -2,21 +2,21 @@
  * Regression guard for handleBack selector flash (2026-05-27 fix — commit 12489b06).
  *
  * Bug: When the user tapped BACK during an active game, the page briefly
- * mounted DifficultySelector for ~1 frame before navigating to /hub.
+ * mounted DifficultySelector for ~1 frame before navigating to root.
  *
  * Root cause: handleBack() called resetArenaState() + game.reset() before
  * handleBackToHub(). game.reset() flipped game.status to "selecting"
  * synchronously, causing the selector branch to re-render before
- * router.push("/hub") completed.
+ * router.push("/") completed.
  *
  * Fix: Remove resetArenaState() + game.reset() from handleBack. Direct
- * router.push("/hub") is sufficient. Unmount cleanup of /arena already
+ * router.push("/") is sufficient. Unmount cleanup of /arena already
  * recovers refs and resets game state via useEffect returns.
  *
  * This describe block replaces the tautology (expect(true).toBe(true)) that
  * shipped with the original fix. It mocks useChessGame + useRouter and
  * renders the full ArenaPage to assert the three invariants:
- *   1. router.push called with "/hub"
+ *   1. router.push called with "/"
  *   2. arena-difficulty-selector test-id absent from DOM
  *   3. game.reset NOT called
  */
@@ -237,7 +237,7 @@ describe("arena/handleBack — no selector flash (regression for 2026-05-27 fix)
     window.localStorage.clear();
   });
 
-  it("BACK during isEndState navigates to /hub WITHOUT mounting DifficultySelector first and without calling game.reset", async () => {
+  it("BACK during isEndState navigates to root WITHOUT mounting DifficultySelector first and without calling game.reset", async () => {
     render(<ArenaPage />);
 
     // With isEndState=true, ArenaBackChip skips the confirm state and fires
@@ -247,7 +247,7 @@ describe("arena/handleBack — no selector flash (regression for 2026-05-27 fix)
     const backBtn = await screen.findByRole("button", { name: /backToHubAria/i });
     act(() => fireEvent.click(backBtn));
 
-    expect(pushMock).toHaveBeenCalledWith("/hub");
+    expect(pushMock).toHaveBeenCalledWith("/");
     expect(screen.queryByTestId("arena-difficulty-selector")).toBeNull();
     expect(resetMock).not.toHaveBeenCalled();
   });
@@ -263,6 +263,6 @@ describe("arena/handleBack — no selector flash (regression for 2026-05-27 fix)
     act(() => fireEvent.click(backBtn));
 
     expect(window.localStorage.getItem(ARENA_GAME_KEY)).toBeNull();
-    expect(pushMock).toHaveBeenCalledWith("/hub");
+    expect(pushMock).toHaveBeenCalledWith("/");
   });
 });

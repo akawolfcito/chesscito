@@ -58,7 +58,7 @@ function liteHubPath(): string {
     .map((part) => part.trim())
     .find((part) => part.startsWith("NEXT_LOCALE="))
     ?.split("=")[1];
-  return locale === "es" ? "/es/hub" : "/hub";
+  return locale === "es" ? "/es" : "/";
 }
 
 /** Hidden, server-gated QA action. It has no user-facing controls. */

@@ -8,14 +8,15 @@ import {
   useDesktopAppFrameContainer,
 } from "../desktop-app-frame";
 
-const usePathnameMock = vi.hoisted(() => vi.fn(() => "/hub"));
+const usePathnameMock = vi.hoisted(() => vi.fn(() => "/"));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => usePathnameMock(),
 }));
 
 describe("isAppRoute", () => {
-  it("matches the six app-route prefixes exactly", () => {
+  it("matches the canonical root and app-route prefixes exactly", () => {
+    expect(isAppRoute("/")).toBe(true);
     expect(isAppRoute("/hub")).toBe(true);
     expect(isAppRoute("/exercises")).toBe(true);
     expect(isAppRoute("/arena")).toBe(true);
@@ -30,8 +31,9 @@ describe("isAppRoute", () => {
     expect(isAppRoute("/exercises/rook")).toBe(true);
   });
 
-  it("does NOT match the landing root", () => {
-    expect(isAppRoute("/")).toBe(false);
+  it("matches locale-prefixed canonical roots", () => {
+    expect(isAppRoute("/en")).toBe(true);
+    expect(isAppRoute("/es")).toBe(true);
   });
 
   it("does NOT match the share landing pages", () => {
@@ -91,8 +93,6 @@ describe("isAppRoute", () => {
   });
 
   it("does NOT match locale-prefixed non-app routes", () => {
-    expect(isAppRoute("/en")).toBe(false);
-    expect(isAppRoute("/es")).toBe(false);
     expect(isAppRoute("/en/share/daily")).toBe(false);
     expect(isAppRoute("/es/share/badge")).toBe(false);
   });
@@ -120,7 +120,7 @@ describe("DesktopAppFrame — portal container context", () => {
   }
 
   it("exposes the frame inner element to descendants on an app route", () => {
-    usePathnameMock.mockReturnValueOnce("/hub");
+    usePathnameMock.mockReturnValueOnce("/");
     const seen: Array<HTMLDivElement | null> = [];
 
     const { container } = render(
@@ -140,7 +140,7 @@ describe("DesktopAppFrame — portal container context", () => {
   });
 
   it("returns null on non-app routes (sheets fall back to body portal)", () => {
-    usePathnameMock.mockReturnValueOnce("/");
+    usePathnameMock.mockReturnValueOnce("/share/score");
     const seen: Array<HTMLDivElement | null> = [];
 
     render(

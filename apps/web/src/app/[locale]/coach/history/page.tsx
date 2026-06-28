@@ -59,7 +59,7 @@ export default function CoachHistoryPage() {
   if (!address) {
     return (
       <main className="tj-root">
-        <PageHeader onBack={() => router.push("/hub")} />
+        <PageHeader onBack={() => router.push("/")} />
         <p className="tj-no-wallet-text">{t("connectWalletForHistory")}</p>
       </main>
     );
@@ -90,7 +90,7 @@ export default function CoachHistoryPage() {
 
   return (
     <main className="tj-root">
-      <PageHeader onBack={() => router.push("/hub")} />
+      <PageHeader onBack={() => router.push("/")} />
       <div className="tj-content">
         {/* Review F6 (2026-06-13): a PLAY shortcut so the Journal is a fluid
             jumping-off point — especially after a 0-move game now lands here

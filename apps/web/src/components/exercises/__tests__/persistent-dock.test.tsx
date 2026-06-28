@@ -59,19 +59,19 @@ describe("PersistentDock — cross-route URL fallback", () => {
   // Same-route dock taps on /exercises and /arena now go through the
   // dock-sheet-store (see "store-based open action" below). The URL
   // fallback only fires on routes that don't host the auxiliary
-  // sheets (e.g. /hub) — the target page must mount via real navigation.
-  it("from /hub, sheet items route to their fallback destinations", async () => {
-    pathnameMock.mockReturnValue("/hub");
+  // sheets (e.g. root Hub) — the target page must mount via real navigation.
+  it("from /, sheet items route to their fallback destinations", async () => {
+    pathnameMock.mockReturnValue("/");
     pushMock.mockReset();
     const user = userEvent.setup();
 
     render(<PersistentDock />);
 
     await user.click(screen.getByRole("button", { name: /badges/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/hub?sheet=badges");
+    expect(pushMock).toHaveBeenLastCalledWith("/?sheet=badges");
 
     await user.click(screen.getByRole("button", { name: /shop/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/hub?sheet=shop");
+    expect(pushMock).toHaveBeenLastCalledWith("/?sheet=shop");
 
     // Trophies has its own standalone route as fallback.
     await user.click(screen.getByRole("button", { name: /trophies/i }));
@@ -198,14 +198,14 @@ describe("PersistentDock — store-based open action (no URL)", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it("on /hub (cross-route, no opener registered), side tap falls back to URL push", async () => {
-    pathnameMock.mockReturnValue("/hub");
+  it("on / (cross-route, no opener registered), side tap falls back to URL push", async () => {
+    pathnameMock.mockReturnValue("/");
     pushMock.mockReset();
     const user = userEvent.setup();
 
     render(<PersistentDock />);
 
     await user.click(screen.getByRole("button", { name: /badges/i }));
-    expect(pushMock).toHaveBeenLastCalledWith("/hub?sheet=badges");
+    expect(pushMock).toHaveBeenLastCalledWith("/?sheet=badges");
   });
 });

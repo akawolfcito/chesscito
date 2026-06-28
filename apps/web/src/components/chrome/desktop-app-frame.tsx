@@ -6,9 +6,8 @@ import { routing } from "@/i18n/routing";
 
 /**
  * Pathname prefixes that opt into the desktop phone-bezel chrome. The
- * landing (`/`), share landing pages (`/share/*`), and `/dev/*` fixture
- * routes render without the frame — they are full-width responsive
- * surfaces, not the mobile-first app shell.
+ * Share landing pages (`/share/*`) and `/dev/*` fixture routes render
+ * without the frame. The canonical root is the mobile-first Hub shell.
  *
  * Informational pages (`/about`, `/support`, `/why`, `/terms`,
  * `/privacy`) are framed too: they already render at 390 px via
@@ -17,6 +16,7 @@ import { routing } from "@/i18n/routing";
  * landing → hub journey.
  */
 const APP_ROUTE_PREFIXES = [
+  "/",
   "/hub",
   "/exercises",
   "/arena",

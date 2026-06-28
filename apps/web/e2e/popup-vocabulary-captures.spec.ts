@@ -222,7 +222,7 @@ test.describe("Exercises screen — sheets", () => {
 test.describe("Hub right rail sheets", () => {
   test("hub baseline", async ({ page }) => {
     await page.addInitScript(ONBOARDED);
-    await page.goto("/hub");
+    await page.goto("/");
     await shot(page, "hub-baseline");
   });
 
@@ -237,7 +237,7 @@ test.describe("Hub right rail sheets", () => {
         JSON.stringify({ stars: [3, 3, 3, 3, 3, 3] }),
       );
     });
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
     const trigger = page.locator('[data-testid="mini-arena-trigger"] button').first();
     if (await trigger.isVisible().catch(() => false)) {

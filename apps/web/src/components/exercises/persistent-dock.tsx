@@ -19,8 +19,7 @@ import { CHESSCITO_LITE_MODE } from "@/lib/feature-flags";
  *     post Stage 1.
  *   - `useRouter().push(href)` from this module preserves the active
  *     locale when navigating, so a user on `/es/*` who taps a dock
- *     item that falls back to `/hub` lands on `/es/hub`, never
- *     accidentally bouncing through `/en/hub`.
+ *     item that falls back to `/` lands on `/es`, preserving locale.
  */
 
 export type DockSlot = "badge" | "shop" | "arena" | "trophies" | "leaderboard";
@@ -40,7 +39,7 @@ type Item = {
    *  in-place sheet on /arena or /exercises. */
   sheet: string;
   /** Fallback route used when the user is on neither /arena nor
-   *  /exercises (e.g., /hub, /trophies, /coach). */
+   *  /exercises (e.g., /, /trophies, /coach). */
   fallback: string;
   /** Pathname prefix that activates this slot purely by URL. Sheet-only
    *  destinations leave this undefined so they never light up just from
@@ -129,10 +128,10 @@ function resolveBase(pathname: string): ModeDescriptor {
 }
 
 const SIDE_LEFT: ReadonlyArray<Item> = CHESSCITO_LITE_MODE
-  ? [{ id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/hub?sheet=badges" }]
+  ? [{ id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/?sheet=badges" }]
   : [
-      { id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/hub?sheet=badges" },
-      { id: "shop", labelKey: "shop", icon: "shop", iconSrc: "/art/shop-menu", sheet: "shop", fallback: "/hub?sheet=shop" },
+      { id: "badge", labelKey: "badge", icon: "shield", iconSrc: "/art/badge-menu", sheet: "badges", fallback: "/?sheet=badges" },
+      { id: "shop", labelKey: "shop", icon: "shop", iconSrc: "/art/shop-menu", sheet: "shop", fallback: "/?sheet=shop" },
     ];
 
 const SIDE_RIGHT: ReadonlyArray<Item> = [
@@ -178,7 +177,7 @@ function SideItem({
           // Same-route taps on pages that mount the auxiliary sheets
           // dispatch through the store — no URL involvement, no race
           // with Radix's pointerdown-outside or with router.replace.
-          // Cross-route taps (e.g. from /hub) still need the URL push
+          // Cross-route taps (e.g. from the root Hub) still need the URL push
           // so the target page mounts with the right deep-link.
           if (hostsOpener && requestOpenDockSheet(item.id)) return;
           router.push(href);

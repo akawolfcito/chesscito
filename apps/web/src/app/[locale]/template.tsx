@@ -3,7 +3,7 @@ import { BuildVersionGate } from "@/components/dev/build-version-gate";
 export default function Template({ children }: { children: React.ReactNode }) {
   // Hide the build pill on production deploys. It's a client component
   // that paints post-hydration, which anchored the LCP candidate late
-  // on /hub (Render Delay ~5.7s in PSI mobile). Local + preview keep
+  // on the Hub (Render Delay ~5.7s in PSI mobile). Local + preview keep
   // the pill so smoke-testers can still confirm the running bundle.
   // See docs/audits/2026-06-03-hub-render-delay-audit.md.
   const showBuildPill = process.env.VERCEL_ENV !== "production";
@@ -19,7 +19,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
       {children}
       {showBuildPill && (
         /* Tiny build chip — bottom-right, low opacity, zero layout impact.
-           Visible only on `/hub` + `/dev/*` (see BuildVersionGate). On
+           Visible only on the canonical/legacy Hub roots + `/dev/*` (see BuildVersionGate). On
            gameplay/content routes the pill obstructed the menu area in
            MiniPay sessions, so it was scoped down to the home surface
            where smoke-testers actually need it. */

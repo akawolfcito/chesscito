@@ -10,6 +10,6 @@ describe("[locale]/not-found", () => {
     expect(screen.getByText("Page not found")).toBeTruthy();
     const link = screen.getByRole("link", { name: "Back to Hub" });
     expect(link).toBeTruthy();
-    expect(link.getAttribute("href")).toBe("/hub");
+    expect(link.getAttribute("href")).toBe("/");
   });
 });

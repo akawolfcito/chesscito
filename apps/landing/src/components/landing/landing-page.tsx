@@ -4,8 +4,25 @@ import { PhoneFrame } from "@/components/landing/phone-frame";
 import { PhoneStack } from "@/components/landing/phone-stack";
 import { LANDING_COPY, WHY_PAGE_COPY } from "@/lib/content/editorial";
 
-const PLAY_URL = process.env.NEXT_PUBLIC_PLAY_URL ?? "https://lite.chesscito.com";
-const FULL_URL = process.env.NEXT_PUBLIC_FULL_URL ?? "https://play.chesscito.com";
+/**
+ * Deployment URLs are origins, not route prefixes. Normalizing through URL
+ * also removes stale `/hub` values left in an older environment configuration.
+ * apps/landing has no test runner; keep this pure and covered by its build/typecheck.
+ */
+function normalizeAppOrigin(value: string): string {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return value.trim().replace(/\/hub\/?$/, "").replace(/\/+$/, "");
+  }
+}
+
+const PLAY_URL = normalizeAppOrigin(
+  process.env.NEXT_PUBLIC_PLAY_URL ?? "https://lite.chesscito.com",
+);
+const FULL_URL = normalizeAppOrigin(
+  process.env.NEXT_PUBLIC_FULL_URL ?? "https://play.chesscito.com",
+);
 const LEGAL_URL = process.env.NEXT_PUBLIC_LEGAL_URL ?? PLAY_URL;
 
 const GHOST_CTA_CLASS =
@@ -60,7 +77,7 @@ export function LandingPage() {
         </span>
         <LandingGreenCtaLink
           size="medium"
-          href={`${PLAY_URL}/hub`}
+          href={`${PLAY_URL}/`}
           aria-label={LANDING_COPY.nav.primaryCta}
         >
           {LANDING_COPY.nav.primaryCta}
@@ -100,12 +117,12 @@ export function LandingPage() {
             <LandingGreenCtaLink
               size="medium"
               className="w-full max-w-[300px]"
-              href={`${PLAY_URL}/hub`}
+              href={`${PLAY_URL}/`}
               aria-label={LANDING_COPY.hero.primaryCta}
             >
               {LANDING_COPY.hero.primaryCta}
             </LandingGreenCtaLink>
-            <a href={`${FULL_URL}/hub`} className={GHOST_CTA_CLASS}>
+            <a href={`${FULL_URL}/`} className={GHOST_CTA_CLASS}>
               {LANDING_COPY.hero.secondaryCta}
             </a>
           </div>
@@ -442,7 +459,7 @@ export function LandingPage() {
             const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
             let ctaHref: string;
             if (tier.ctaKind === "internal") {
-              ctaHref = `${PLAY_URL}/hub`;
+              ctaHref = `${PLAY_URL}/`;
             } else if (supportEmail) {
               const subject = encodeURIComponent(`Chesscito · ${"ctaSubject" in tier ? tier.ctaSubject : ""}`);
               ctaHref = `mailto:${supportEmail}?subject=${subject}`;
@@ -773,12 +790,12 @@ export function LandingPage() {
           <LandingGreenCtaLink
             size="medium"
             className="w-full max-w-[300px]"
-            href={`${PLAY_URL}/hub`}
+            href={`${PLAY_URL}/`}
             aria-label={LANDING_COPY.finalCta.primaryCta}
           >
             {LANDING_COPY.finalCta.primaryCta}
           </LandingGreenCtaLink>
-          <a href={`${FULL_URL}/hub`} className={GHOST_CTA_CLASS}>
+          <a href={`${FULL_URL}/`} className={GHOST_CTA_CLASS}>
             {LANDING_COPY.finalCta.secondaryCta}
           </a>
         </div>

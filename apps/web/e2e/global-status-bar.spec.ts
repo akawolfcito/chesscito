@@ -4,8 +4,7 @@ import { test, expect, type Page } from "@playwright/test";
  * Locks the Phase-2 GlobalStatusBar (Z1) contract on the play-hub canary.
  * Per spec docs/specs/ui/global-status-bar-spec-2026-05-02.md §13.
  *
- * Targets `/hub` directly (Pixel 5 UA does not match the wallet table;
- * the public landing at `/` does not render the play-hub).
+ * Targets the canonical root directly.
  *
  * Most assertions cover the anonymous variant — Playwright in MiniPay
  * project has no wallet adapter, so `address` resolves to undefined and
@@ -41,11 +40,11 @@ async function contentHeight(page: Page, selector: string): Promise<number> {
 }
 
 test.describe("GlobalStatusBar — play-hub canary", () => {
-  test("Z1 mounts at the top of /hub with the correct attributes", async ({
+  test("Z1 mounts at the top of the root Hub with the correct attributes", async ({
     page,
   }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const z1 = page.locator('[data-component="global-status-bar"]');
@@ -57,7 +56,7 @@ test.describe("GlobalStatusBar — play-hub canary", () => {
 
   test("Z1 content height stays within the 40px budget", async ({ page }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const height = await contentHeight(page, '[data-component="global-status-bar"]');
@@ -68,7 +67,7 @@ test.describe("GlobalStatusBar — play-hub canary", () => {
     page,
   }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const z1Height = await contentHeight(
@@ -86,7 +85,7 @@ test.describe("GlobalStatusBar — play-hub canary", () => {
     page,
   }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const z2Box = await page
@@ -102,7 +101,7 @@ test.describe("GlobalStatusBar — play-hub canary", () => {
 
   test("Z1 anonymous variant displays the Guest label", async ({ page }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const z1 = page.locator('[data-component="global-status-bar"]');
@@ -113,7 +112,7 @@ test.describe("GlobalStatusBar — play-hub canary", () => {
     page,
   }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const z1 = page.locator('[data-component="global-status-bar"]');
@@ -131,7 +130,7 @@ test.describe("GlobalStatusBar — play-hub canary", () => {
 
   test("Z1 is not duplicated — only one instance mounts", async ({ page }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const count = await page
@@ -142,7 +141,7 @@ test.describe("GlobalStatusBar — play-hub canary", () => {
 
   test("legacy ProChip is no longer rendered alongside Z1", async ({ page }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     // The legacy chip used `aria-label="Get Chesscito PRO"` on the
@@ -155,7 +154,7 @@ test.describe("GlobalStatusBar — play-hub canary", () => {
 
   test("Z3 board mounts below Z1 + Z2 with no overlap", async ({ page }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const board = page.locator(".playhub-board-hitgrid");
@@ -186,7 +185,7 @@ test.describe("GlobalStatusBar — play-hub canary", () => {
 
   test("Z5 dock keeps its place at the viewport bottom", async ({ page }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const dock = page.locator(".chesscito-dock");

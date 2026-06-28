@@ -131,7 +131,7 @@ test.describe("Grant shots — Lite mode", () => {
   // 01 — Hub Lite: focus-first, no monetization surfaces
   test("01-hub-lite", async ({ page }) => {
     await seedFull(page);
-    await page.goto("/hub", { waitUntil: "load" });
+    await page.goto("/", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(1000);
     await screenshot(page, "01-hub-lite.png");
@@ -140,7 +140,7 @@ test.describe("Grant shots — Lite mode", () => {
   // 02 — Daily Focus: open sheet from hub, board ready to solve
   test("02-daily-focus", async ({ page }) => {
     await seedBase(page);
-    await page.goto("/hub", { waitUntil: "load" });
+    await page.goto("/", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(800);
     // Click the Daily Tactic tile — aria-label starts with "Play today's Daily Tactic"
@@ -155,7 +155,7 @@ test.describe("Grant shots — Lite mode", () => {
   // 03 — Focus Passport: 3-slot filled (3-day streak), lives on Hub
   test("03-focus-passport", async ({ page }) => {
     await seedFull(page);
-    await page.goto("/hub", { waitUntil: "load" });
+    await page.goto("/", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
     const passport = page.locator("[data-testid='focus-passport'], .focus-passport").first();
     if (await passport.isVisible({ timeout: 3_000 }).catch(() => false)) {
@@ -182,7 +182,7 @@ test.describe("Grant shots — Lite mode", () => {
 
   // 05 — Welcome Package: Claim Gift modal auto-opens (autoShowCount=0 → shouldAutoShow)
   test("05-claim-gift", async ({ page }) => {
-    await page.goto("/hub", { waitUntil: "domcontentloaded" });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     await page.evaluate(
       ({ streak, wp, rookProgress }) => {
         localStorage.setItem("chesscito:onboarded", "true");
@@ -193,7 +193,7 @@ test.describe("Grant shots — Lite mode", () => {
       },
       { streak: DAILY_3DAY_STREAK, wp: WP_PENDING_AUTOSHOW, rookProgress: ROOK_PROGRESS_WITH_LAB },
     );
-    await page.goto("/hub", { waitUntil: "load" });
+    await page.goto("/", { waitUntil: "load" });
     await expect(page.locator("body")).toBeVisible({ timeout: 15_000 });
     // shouldAutoShow=true → WelcomePackageModal renders on mount
     await page.waitForTimeout(1800);

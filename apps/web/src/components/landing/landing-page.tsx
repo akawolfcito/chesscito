@@ -89,7 +89,7 @@ export function LandingPage() {
     if (!minipay.isReady) return;
     if (minipay.isMiniPay) {
       track("landing_redirect", { via: "client", reason: "minipay" });
-      router.replace("/hub");
+      router.replace("/");
     }
   }, [minipay.isReady, minipay.isMiniPay, router]);
 
@@ -113,7 +113,7 @@ export function LandingPage() {
           size="medium"
           onClick={() => {
             onCta("nav-primary")();
-            router.push("/hub");
+            router.push("/");
           }}
           aria-label={LANDING_COPY.nav.primaryCta}
         >
@@ -156,7 +156,7 @@ export function LandingPage() {
               className="w-full max-w-[300px]"
               onClick={() => {
                 onCta("hero-primary")();
-                router.push("/hub");
+                router.push("/");
               }}
               aria-label={LANDING_COPY.hero.primaryCta}
             >
@@ -481,7 +481,7 @@ export function LandingPage() {
       </section>
 
       {/* §7 Plans — 4 tiers (Gratuito / Familia / Educadores / Aliados).
-          Internal tier routes to /hub; the rest open mailto: to the
+          Internal tier routes to the app root; the rest open mailto: to the
           support address with a pre-baked subject line. Falls back
           to GitHub when SUPPORT_EMAIL is not configured. */}
       <section
@@ -513,7 +513,7 @@ export function LandingPage() {
             const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
             let ctaHref: string;
             if (tier.ctaKind === "internal") {
-              ctaHref = "/hub";
+              ctaHref = "/";
             } else if (supportEmail) {
               const subject = encodeURIComponent(
                 `Chesscito · ${tier.ctaSubject}`,
@@ -886,7 +886,7 @@ export function LandingPage() {
             className="w-full max-w-[300px]"
             onClick={() => {
               onCta("final-primary")();
-              router.push("/hub");
+              router.push("/");
             }}
             aria-label={LANDING_COPY.finalCta.primaryCta}
           >

@@ -4,8 +4,7 @@ import { test, expect, type Page } from "@playwright/test";
  * Locks the Phase-2 ContextualHeader contract on the play-hub canary.
  * Per spec docs/specs/ui/contextual-header-spec-2026-05-01.md §13.
  *
- * Targets `/hub` directly (Pixel 5 UA does not match the wallet table;
- * the public landing at `/` does not render the play-hub).
+ * Targets the canonical root directly.
  */
 
 /** Skip the splash + first-visit briefing AND the 3-card welcome overlay
@@ -21,7 +20,7 @@ async function bypassFirstVisit(page: Page) {
 test.describe("ContextualHeader — play-hub canary", () => {
   test("Z2 strip mounts with the correct contract", async ({ page }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const header = page.locator('[data-component="contextual-header"]').first();
@@ -37,7 +36,7 @@ test.describe("ContextualHeader — play-hub canary", () => {
 
   test("piece-picker trigger opens the picker sheet", async ({ page }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const header = page.locator('[data-component="contextual-header"]').first();
@@ -57,7 +56,7 @@ test.describe("ContextualHeader — play-hub canary", () => {
     page,
   }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     // The mission peek button still lives below the header as a TODO
@@ -77,7 +76,7 @@ test.describe("ContextualHeader — play-hub canary", () => {
 
   test("Z2 contains no live timer and no monetization", async ({ page }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const header = page.locator('[data-component="contextual-header"]').first();
@@ -100,7 +99,7 @@ test.describe("ContextualHeader — play-hub canary", () => {
     page,
   }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const board = page.locator(".playhub-board-hitgrid");
@@ -123,7 +122,7 @@ test.describe("ContextualHeader — play-hub canary", () => {
 
   test("Z5 dock keeps its place at the viewport bottom", async ({ page }) => {
     await bypassFirstVisit(page);
-    await page.goto("/hub");
+    await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const dock = page.locator(".chesscito-dock");

@@ -1,136 +1,37 @@
-import { preload } from "react-dom";
 import { redirect } from "next/navigation";
-import { HubScaffoldClient } from "@/components/hub/hub-scaffold-client";
-import { EXERCISES } from "@/lib/game/exercises";
-import type { PieceId } from "@/lib/game/types";
 
-type SearchParams = {
-  /** Legacy bookmark redirect. `?legacy=1` used to render the
-   *  exercise-gameplay surface inline; that surface now lives at
-   *  `/exercises`. We honor the truthy flag for backward compat with
-   *  external bookmarks (Discord shares, share-card images, etc.). */
-  legacy?: string | string[];
-  /** Legacy bookmark redirect: pre-select a piece. Only honored
-   *  alongside `?legacy=1`. Forwarded to `/exercises?piece=`. */
-  piece?: string | string[];
-  /** Legacy bookmark redirect: open a sheet on first render. Only
-   *  honored alongside `?legacy=1`. `trophies` redirects to its own
-   *  page; `shop`/`pro`/`badges` become `/hub?sheet=...`. */
-  action?: string | string[];
-  /** Scaffold sheet deep link. `shop`, `pro`, and `badges` open
-   *  in-place after the client hydrates. Unknown values are ignored. */
-  sheet?: string | string[];
-};
+import { routing } from "@/i18n/routing";
 
-type HubInitialSheet = "shop" | "pro" | "badges" | "trophies" | "profile" | "settings";
+type SearchParams = Record<string, string | string[] | undefined>;
 
-function pieceHasExercises(piece: string): piece is PieceId {
-  const exercises = (EXERCISES as Record<string, unknown[] | undefined>)[piece];
-  return Array.isArray(exercises) && exercises.length > 0;
-}
-
-function firstParam(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function parseInitialSheet(value: string | undefined): HubInitialSheet | undefined {
-  return value === "shop" ||
-    value === "pro" ||
-    value === "badges" ||
-    value === "trophies" ||
-    value === "profile" ||
-    value === "settings"
-    ? value
-    : undefined;
+function appendSearchParams(target: URLSearchParams, searchParams: SearchParams): void {
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (Array.isArray(value)) {
+      for (const entry of value) target.append(key, entry);
+    } else if (value !== undefined) {
+      target.append(key, value);
+    }
+  }
 }
 
 /**
- * `/hub` — kingdom launcher (scaffold).
+ * Defensive route-level fallback for the legacy `/hub` URL.
  *
- * Renders `<HubScaffoldClient>` (HUD + reward column + primary play CTA
- * into `/arena`, plus a "Practice Pieces" tile into `/exercises`).
- *
- * Backward-compat redirects (server-side) for `?legacy=1` bookmarks:
- *   - `?legacy=1&piece=<rook|bishop|knight|pawn>` → `/exercises?piece=…`
- *   - `?legacy=1&action=trophies`                  → `/trophies`
- *   - `?legacy=1&action=shop|pro|badges`           → `/hub?sheet=…`
- *   - `?legacy=1` (any other shape)                → `/exercises`
- *
- * The `redirect()` helper from `next/navigation` requires a literal
- * URL string, so query params are constructed explicitly.
+ * `next.config.js` normally redirects before this page executes. Keeping the
+ * route makes the alias resilient if routing order changes, and explicitly
+ * preserves repeated query parameters without relying on config behavior.
  */
-export default function HubPage({
+export default function LegacyHubPage({
+  params,
   searchParams,
 }: {
+  params: { locale: string };
   searchParams: SearchParams;
 }) {
-  const legacyFlag = firstParam(searchParams.legacy);
-  const isLegacy = legacyFlag === "1" || legacyFlag === "true";
+  const root = params.locale === routing.defaultLocale ? "/" : `/${params.locale}`;
+  const query = new URLSearchParams();
+  appendSearchParams(query, searchParams);
+  const serialized = query.toString();
 
-  if (isLegacy) {
-    const action = firstParam(searchParams.action);
-
-    if (action === "trophies") {
-      redirect("/trophies");
-    }
-
-    const actionSheet = parseInitialSheet(action);
-    if (actionSheet) {
-      redirect(`/hub?sheet=${actionSheet}`);
-    }
-
-    const piece = firstParam(searchParams.piece);
-    const params = new URLSearchParams();
-    if (piece && pieceHasExercises(piece)) {
-      params.set("piece", piece);
-    }
-    const qs = params.toString();
-    redirect(`/exercises${qs ? `?${qs}` : ""}`);
-  }
-
-  const initialSheet = parseInitialSheet(firstParam(searchParams.sheet));
-
-  // LCP candidate on /hub mobile is the `<main.hub-scaffold>` background-image
-  // (`/art/redesign/bg/bg-new-hub`, declared in globals.css `.hub-scaffold`).
-  // CSS-gated discovery meant the browser only fetched it after parsing the
-  // render-blocking stylesheet — costing ~2.3s of LCP "Load Delay" on mobile
-  // Slow-4G. AVIF-only preload because MiniPay Chromium (~99% of audience)
-  // supports AVIF; iOS<16 still falls back through the CSS image-set chain
-  // (WebP/PNG) at a discovery cost. Doble-preloading WebP wasted ~126KB per
-  // visit. See `docs/audits/2026-06-03-hub-lcp-root-cause.md`.
-  preload("/art/redesign/bg/bg-new-hub.avif", {
-    as: "image",
-    type: "image/avif",
-    fetchPriority: "high",
-  });
-
-  // HubDailyTile gates its <img> behind a hydration flag (visible:hidden
-  // placeholder until useEffect flips state). The browser only discovers
-  // the icon URL after hydration → on mobile Slow-4G the daily icon
-  // arrives ~2.5s later than every other above-the-fold asset, becoming
-  // the new LCP candidate post the bg-new-hub preload. AVIF-only for the
-  // same MiniPay-first reason as above. See
-  // docs/audits/2026-06-03-hub-reward-rail-lcp-audit.md.
-  // 2026-06-12: the tile asset is daily-icon-v1 (hub-daily-tile.tsx:249);
-  // the previous ejercicio-diario-chess preload went stale when the tile
-  // art was swapped — it fetched 21KB never shown above the fold while
-  // the real icon still hydration-waited (prod LCP Load Delay ~5s).
-  preload("/art/new-icons-chesscito/daily-icon-v1.avif", {
-    as: "image",
-    type: "image/avif",
-    fetchPriority: "high",
-  });
-
-  // The kingdom portal became the /hub LCP element after the q35
-  // bg-new-hub re-encode dropped the background out of LCP candidacy
-  // (2026-06-12). KingdomAnchor is client-rendered, so the browser only
-  // discovers the portal URL post-hydration — same failure mode as the
-  // daily icon above. Preload closes that Load Delay window.
-  preload("/art/hub/portal-chesscito-normal.avif", {
-    as: "image",
-    type: "image/avif",
-    fetchPriority: "high",
-  });
-
-  return <HubScaffoldClient initialSheet={initialSheet} />;
+  redirect(`${root}${serialized ? `?${serialized}` : ""}`);
 }

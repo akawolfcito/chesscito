@@ -5,7 +5,7 @@ import { renderWithIntl as render, screen, fireEvent } from "@/test-utils/render
 const trackMock = vi.hoisted(() => vi.fn());
 const pushMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/telemetry", () => ({ track: trackMock }));
-const pathnameMock = vi.hoisted(() => vi.fn(() => "/hub"));
+const pathnameMock = vi.hoisted(() => vi.fn(() => "/"));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
   usePathname: pathnameMock,

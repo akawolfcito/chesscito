@@ -62,7 +62,7 @@ export function DailyLimitGuard({ children }: { children: React.ReactNode }) {
         <p className="text-2xl font-bold text-white">Great focus today.</p>
         <p className="text-base text-white/70">Come back tomorrow for more.</p>
         <button
-          onClick={() => router.push("/hub")}
+          onClick={() => router.push("/")}
           className="mt-2 rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white"
         >
           Back to Hub

@@ -54,14 +54,14 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
     // Bug 3 — when the viewer is in its no-record fallback (404 / load
     // error) the previous history entry is the arena flow that already
     // failed; router.back() would just bounce the user into the same
-    // broken state. Force a clean push to /hub so the dead-end is
+    // broken state. Force a clean push to root so the dead-end is
     // recoverable.
     if (!gameRecord) {
-      router.push("/hub");
+      router.push("/");
       return;
     }
     if (typeof window !== "undefined" && window.history.length > 1) router.back();
-    else router.push("/hub");
+    else router.push("/");
   }, [router, gameRecord]);
 
   const handlePlayAgain = useCallback(() => {
@@ -197,7 +197,7 @@ export function CoachGameClient({ gameRecord, walletAddress }: Props) {
       gameId: gameRecord?.gameId ?? "unknown",
       result: gameRecord?.result ?? "unknown",
     });
-    router.push("/hub");
+    router.push("/");
   }, [router, gameRecord]);
 
   const handleMoveJump = useCallback(

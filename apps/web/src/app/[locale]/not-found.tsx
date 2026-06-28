@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { NOT_FOUND_PAGE_COPY } from "@/lib/content/editorial";
 
 export default function NotFound() {
@@ -39,7 +39,7 @@ export default function NotFound() {
         {NOT_FOUND_PAGE_COPY.message}
       </p>
       <Link
-        href="/hub"
+        href="/"
         className="rounded-xl px-6 py-3 text-sm font-semibold transition active:scale-[0.97]"
         style={{
           background: "rgb(120, 65, 5)",

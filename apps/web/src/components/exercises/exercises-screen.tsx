@@ -713,7 +713,7 @@ export function ExercisesScreen({
               : false;
     if (!deepLinkSheetOpen) {
       deepLinkBounceConsumed.current = true;
-      router.push("/hub");
+      router.push("/");
     }
   }, [initialAction, activeDockTab, proSheetOpen, router]);
 
@@ -2544,7 +2544,7 @@ export function ExercisesScreen({
             variant="back-control"
             title={tDrawer("title")}
             back={{
-              onClick: () => router.push("/hub"),
+              onClick: () => router.push("/"),
               label: tStatus("backLabel"),
             }}
             trailingControl={
@@ -2592,7 +2592,7 @@ export function ExercisesScreen({
         {quotaDisplayState?.isAtLimit && (
           <DailyLimitBanner
             isHardMax={quotaDisplayState.isHardMax}
-            onBack={() => router.push("/hub")}
+            onBack={() => router.push("/")}
           />
         )}
         <MissionPanelCandy

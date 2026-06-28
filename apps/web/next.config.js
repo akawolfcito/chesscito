@@ -15,6 +15,16 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_SHA: (process.env.VERCEL_GIT_COMMIT_SHA || 'dev').slice(0, 7),
   },
+  async redirects() {
+    return [
+      // Temporary compatibility aliases while `/` becomes the canonical Hub.
+      // Next forwards request query parameters when the destination defines
+      // none, so `/hub?sheet=profile` becomes `/?sheet=profile`.
+      { source: '/hub', destination: '/', permanent: false },
+      { source: '/en/hub', destination: '/', permanent: false },
+      { source: '/es/hub', destination: '/es', permanent: false },
+    ];
+  },
   async rewrites() {
     return [
       // Legacy alias: /play-hub still points at /exercises. With the

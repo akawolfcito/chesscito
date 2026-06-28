@@ -7,18 +7,16 @@ import { test, expect } from "@playwright/test";
  * (trophies-candy.spec.ts); this one focuses on the hub surface.
  */
 test.describe("Hub redesign", () => {
-  test("first-visit onboarding card visible + dismiss persists", async ({
+  test("first direct root visit renders the canonical Hub", async ({
     page,
   }) => {
-    await page.goto("/hub");
-    await expect(page.getByText(/welcome to chesscito/i)).toBeVisible();
-    await page.getByRole("button", { name: /got it/i }).click();
-    await page.reload();
-    await expect(page.getByText(/welcome to chesscito/i)).not.toBeVisible();
+    await page.goto("/");
+    await expect(page).toHaveURL((url) => url.pathname === "/");
+    await expect(page.getByRole("main", { name: "Chesscito Hub" })).toBeVisible();
   });
 
   test("secondary Enter Arena navigates to /arena", async ({ page }) => {
-    await page.goto("/hub");
+    await page.goto("/");
     await page.getByRole("button", { name: /enter arena/i }).click();
     await expect(page).toHaveURL(/\/arena/);
   });
@@ -28,7 +26,7 @@ test.describe("Hub redesign", () => {
   // yet expose an avatar slot. When that follow-up lands, flip
   // `test.fixme` back to `test` and verify the data-testid below.
   test.fixme("avatar tap opens Profile sheet", async ({ page }) => {
-    await page.goto("/hub");
+    await page.goto("/");
     await page.locator('[data-testid="hub-avatar"]').click();
     await expect(page.getByText(/general stats/i)).toBeVisible();
   });
@@ -38,21 +36,75 @@ test.describe("Hub redesign", () => {
   }) => {
     await page.goto("/trophies");
     await expect(
-      page.getByRole("link", { name: /back to hub/i }),
+      page.getByRole("button", { name: /^back$/i }),
     ).toBeVisible();
   });
 
-  test("/hub?sheet=profile deep-links into the Profile sheet", async ({
+  test("/?sheet=profile deep-links into the Profile sheet", async ({
     page,
   }) => {
-    await page.goto("/hub?sheet=profile");
+    await page.goto("/?sheet=profile");
     await expect(page.getByText(/general stats/i)).toBeVisible();
   });
 
   test("?hub=v2 query is ignored (V2 retired)", async ({ page }) => {
-    await page.goto("/hub?hub=v2");
-    // V1-specific structure must render — the dock's Home slot is the
-    // cheapest unambiguous signal the user is on the V1 surface.
-    await expect(page.getByRole("button", { name: /home/i })).toBeVisible();
+    await page.goto("/?hub=v2");
+    await expect(page.getByRole("main", { name: "Chesscito Hub" })).toBeVisible();
+  });
+
+  test("canonical root is direct and legacy aliases redirect once with queries", async ({
+    page,
+  }) => {
+    const direct = await page.request.get("/", { maxRedirects: 0 });
+    expect(direct.status()).toBe(200);
+    expect(direct.headers().location).toBeUndefined();
+
+    const cases = [
+      ["/hub", "/"],
+      ["/hub?sheet=profile", "/?sheet=profile"],
+      ["/hub?legacy=1&piece=rook", "/?legacy=1&piece=rook"],
+      ["/hub?legacy=1&action=shop", "/?legacy=1&action=shop"],
+      ["/en/hub", "/"],
+      ["/es/hub?sheet=profile", "/es?sheet=profile"],
+    ] as const;
+
+    for (const [source, expected] of cases) {
+      const response = await page.request.get(source, { maxRedirects: 0 });
+      expect(response.status(), source).toBe(307);
+      const location = new URL(response.headers().location!, "http://localhost:3000");
+      expect(`${location.pathname}${location.search}`, source).toBe(expected);
+    }
+
+    const repeated = await page.request.get(
+      "/hub?piece=rook&piece=bishop",
+      { maxRedirects: 0 },
+    );
+    expect(repeated.status()).toBe(307);
+    const repeatedLocation = new URL(
+      repeated.headers().location!,
+      "http://localhost:3000",
+    );
+    expect(repeatedLocation.pathname).toBe("/");
+    expect(repeatedLocation.searchParams.getAll("piece")).toEqual([
+      "rook",
+      "bishop",
+    ]);
+
+    await page.goto("/hub");
+    await expect(page).toHaveURL((url) => url.pathname === "/");
+    await expect(page.locator(".hub-scaffold, .hub-v2-root")).toBeVisible();
+
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      /noindex.*nofollow/,
+    );
+    const canonical = await page
+      .locator('link[rel="canonical"]')
+      .getAttribute("href");
+    expect(new URL(canonical!).pathname).toBe("/");
+
+    const sitemap = await page.request.get("/sitemap.xml");
+    expect(sitemap.status()).toBe(200);
+    expect(await sitemap.text()).not.toContain("/hub");
   });
 });
